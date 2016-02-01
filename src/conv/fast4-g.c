@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,8 +46,12 @@
 #include "bn/plot3.h"
 
 
+/* NOTE: there should be no space after comma */
+#define STRCOMMA ","
+
+
 /* convenient macro for building regions */
-#define	MK_REGION(fp, headp, name, r_id, rgb) {\
+#define MK_REGION(fp, headp, name, r_id, rgb) {\
 	if (mode == 1) {\
 	    if (!quiet)\
 		bu_log("Making region: %s (PLATE)\n", name); \
@@ -63,7 +67,7 @@
     }
 
 
-#define	PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
+#define PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
 #define POP(structure, ptr) { \
 	if (BU_PTBL_END(&stack) == 0) \
 	    ptr = (struct structure *)NULL; \
@@ -72,7 +76,7 @@
 	    bu_ptbl_rm(&stack, (long *)ptr); \
 	} \
     }
-#define	PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
+#define PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
 	if (BU_PTBL_END(&stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
@@ -83,7 +87,7 @@
     }
 
 
-#define	NAME_TREE_MAGIC	0x55555555
+#define NAME_TREE_MAGIC 0x55555555
 #define CK_TREE_MAGIC(ptr) {\
 	if (!ptr)\
 	    bu_log("ERROR: Null name_tree pointer, file=%s, line=%d\n", __FILE__, __LINE__);\
@@ -92,35 +96,35 @@
     }
 
 
-#define	PLATE_MODE	1
-#define	VOLUME_MODE	2
+#define PLATE_MODE	1
+#define VOLUME_MODE	2
 
-#define	POS_CENTER	1	/* face positions for facets */
-#define	POS_FRONT	2
+#define POS_CENTER	1	/* face positions for facets */
+#define POS_FRONT	2
 
-#define	END_OPEN	1	/* End closure codes for cones */
-#define	END_CLOSED	2
+#define END_OPEN	1	/* End closure codes for cones */
+#define END_CLOSED	2
 
-#define	GRID_BLOCK	256	/* allocate space for grid points in blocks of 256 points */
+#define GRID_BLOCK	256	/* allocate space for grid points in blocks of 256 points */
 
-#define	CLINE		'l'
-#define	CHEX1		'p'
-#define	CHEX2		'b'
-#define	CTRI		't'
-#define	CQUAD		'q'
-#define	CCONE1		'c'
-#define	CCONE2		'd'
-#define	CCONE3		'e'
-#define	CSPHERE		's'
-#define	NMG		'n'
-#define	BOT		't'
-#define	COMPSPLT	'h'
+#define CLINE		'l'
+#define CHEX1		'p'
+#define CHEX2		'b'
+#define CTRI		't'
+#define CQUAD		'q'
+#define CCONE1		'c'
+#define CCONE2		'd'
+#define CCONE3		'e'
+#define CSPHERE		's'
+#define NMG		'n'
+#define BOT		't'
+#define COMPSPLT	'h'
 
 #define HOLE 1
 #define WALL 2
 #define INT_LIST_BLOCK		256	/* Number of int_list array slots to allocate */
-#define	MAX_LINE_SIZE			128	/* Length of char array for input line */
-#define	REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
+#define MAX_LINE_SIZE			128	/* Length of char array for input line */
+#define REGION_LIST_BLOCK	256	/* initial length of array of region ids to process */
 
 
 struct fast4_color {
@@ -191,48 +195,48 @@ static int hex_faces[12][3]={
 
 static struct fast4_color HeadColor;
 
-static char	line[MAX_LINE_SIZE+1];		/* Space for input line */
-static FILE	*fpin;			/* Input FASTGEN4 file pointer */
+static char line[MAX_LINE_SIZE+1];		/* Space for input line */
+static FILE *fpin;			/* Input FASTGEN4 file pointer */
 static struct rt_wdb *fpout;		/* Output BRL-CAD file pointer */
-static FILE	*fp_plot=NULL;		/* file for plot output */
-static FILE	*fp_muves=NULL;		/* file for MUVES data, output CHGCOMP and CBACKING data */
-static int	grid_size;		/* Number of points that will fit in current grid_pts array */
-static int	max_grid_no=0;		/* Maximum grid number used */
-static int	mode=0;			/* Plate mode (1) or volume mode (2), of current component */
-static int	group_id=(-1);		/* Group identification number from SECTION card */
-static int	comp_id=(-1);		/* Component identification number from SECTION card */
-static int	region_id=0;		/* Region id number (group id no X 1000 + component id no) */
-static int	region_id_max=0;
-static char	field[9];		/* Space for storing one field from an input line */
-static char	vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
-static int	name_count;		/* Count of number of times this name_name has been used */
-static int	pass;			/* Pass number (0 -> only make names, 1-> do geometry) */
-static int	bot=0;			/* Flag: >0 -> There are BOT's in current component */
-static int	warnings=0;		/* Flag: >0 -> Print warning messages */
-static int	debug=0;		/* Debug flag */
-static int	rt_debug=0;		/* RT_G_DEBUG */
-static int	quiet=0;		/* flag to not blather */
-static int	comp_count=0;		/* Count of components in FASTGEN4 file */
-static int	f4_do_skips=0;		/* flag indicating that not all components will be processed */
-static int	*region_list;		/* array of region_ids to be processed */
-static int	region_list_len=0;	/* actual length of the malloc'd region_list array */
-static int	f4_do_plot=0;		/* flag indicating plot file should be created */
+static FILE *fp_plot=NULL;		/* file for plot output */
+static FILE *fp_muves=NULL;		/* file for MUVES data, output CHGCOMP and CBACKING data */
+static int grid_size;		/* Number of points that will fit in current grid_pts array */
+static int max_grid_no=0;		/* Maximum grid number used */
+static int mode=0;			/* Plate mode (1) or volume mode (2), of current component */
+static int group_id=(-1);		/* Group identification number from SECTION card */
+static int comp_id=(-1);		/* Component identification number from SECTION card */
+static int region_id=0;		/* Region id number (group id no X 1000 + component id no) */
+static int region_id_max=0;
+static char field[9];		/* Space for storing one field from an input line */
+static char vehicle[17];		/* Title for BRL-CAD model from VEHICLE card */
+static int name_count;		/* Count of number of times this name_name has been used */
+static int pass;			/* Pass number (0 -> only make names, 1-> do geometry) */
+static int bot=0;			/* Flag: >0 -> There are BOT's in current component */
+static int warnings=0;		/* Flag: >0 -> Print warning messages */
+static int debug=0;		/* Debug flag */
+static int rt_debug=0;		/* RT_G_DEBUG */
+static int quiet=0;		/* flag to not blather */
+static int comp_count=0;		/* Count of components in FASTGEN4 file */
+static int f4_do_skips=0;		/* flag indicating that not all components will be processed */
+static int *region_list;		/* array of region_ids to be processed */
+static int region_list_len=0;	/* actual length of the malloc'd region_list array */
+static int f4_do_plot=0;		/* flag indicating plot file should be created */
 static struct wmember *group_head = (struct wmember *)NULL; /* Lists of regions for groups */
 static ssize_t group_head_cnt=0;
-static struct wmember  hole_head;	/* List of regions used as holes (not solid parts of model) */
+static struct wmember hole_head;	/* List of regions used as holes (not solid parts of model) */
 static struct bu_ptbl stack;		/* Stack for traversing name_tree */
 static struct bu_ptbl stack2;		/* Stack for traversing name_tree */
-static fastf_t	min_radius;		/* minimum radius for TGC solids */
+static fastf_t min_radius;		/* minimum radius for TGC solids */
 
-static int	*faces=NULL;	/* one triplet per face indexing three grid points */
-static fastf_t	*thickness;	/* thickness of each face */
-static char	*facemode;	/* mode for each face */
-static int	face_size=0;	/* actual length of above arrays */
-static int	face_count=0;	/* number of faces in above arrays */
+static int *faces=NULL;	/* one triplet per face indexing three grid points */
+static fastf_t *thickness;	/* thickness of each face */
+static char *facemode;	/* mode for each face */
+static int face_size=0;	/* actual length of above arrays */
+static int face_count=0;	/* number of faces in above arrays */
 
-/*static int	*int_list;*/		/* Array of integers */
-/*static int	int_list_count=0;*/	/* Number of ints in above array */
-/*static int	int_list_length=0;*/	/* Length of int_list array */
+/*static int *int_list;*/		/* Array of integers */
+/*static int int_list_count=0;*/	/* Number of ints in above array */
+/*static int int_list_length=0;*/	/* Length of int_list array */
 
 static point_t *grid_points = NULL;
 
@@ -430,7 +434,7 @@ Search_ident(struct name_tree *root, int reg_id, int *found)
     while (1) {
 	int diff;
 
-	diff = reg_id -  ptr->region_id;
+	diff = reg_id - ptr->region_id;
 
 	if (diff == 0) {
 	    *found = 1;
@@ -2135,8 +2139,8 @@ skip_section(void)
 }
 
 
-/*	cleanup from previous component and start a new one.
- *	This is called with final == 1 when ENDDATA is found
+/* cleanup from previous component and start a new one.
+ * This is called with final == 1 when ENDDATA is found
  */
 static void
 f4_do_section(int final)
@@ -2536,7 +2540,7 @@ make_region_list(char *str)
     region_list_len = REGION_LIST_BLOCK;
     f4_do_skips = 0;
 
-    ptr = strtok(str, ",");
+    ptr = strtok(str, STRCOMMA);
     while (ptr) {
 	if ((ptr2=strchr(ptr, '-'))) {
 	    int i, start, stop;
@@ -2565,7 +2569,7 @@ make_region_list(char *str)
 	    }
 	    region_list[f4_do_skips++] = atoi(ptr);
 	}
-	ptr = strtok((char *)NULL, ",");
+	ptr = strtok((char *)NULL, ", ");
     }
 }
 

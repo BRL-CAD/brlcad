@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -91,28 +91,6 @@
 #define YMAXSCREEN	1023
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
-
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-
-struct modifiable_ogl_vars {
-    dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
 
 HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
@@ -2281,6 +2259,7 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
 	*image = idata;
+	flip_display_image_vertically(*image, width, height);
     } else {
 	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
 	return TCL_ERROR;

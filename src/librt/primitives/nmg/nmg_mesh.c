@@ -1,7 +1,7 @@
 /*                      N M G _ M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
  * 0 t is outside angle ab
  * 1 t is inside angle ab
  */
-int
+HIDDEN int
 nmg_is_angle_in_wedge(double a, double b, double t)
 {
     /* XXX What tolerance to use here (in radians)? */

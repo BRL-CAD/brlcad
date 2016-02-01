@@ -45,7 +45,6 @@
 #include <vector>
 #include <list>
 #include <map>
-#include <stdio.h>
 
 /* library headers */
 #include "bio.h" /* needed to include windows.h with protections */

@@ -1,7 +1,7 @@
 /*                      B R N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,10 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-#include "common.h"
 
-/* systeam headers */
-#include <algorithm> // for std::max
+#include "common.h"
 
 /* library headers */
 extern "C" {

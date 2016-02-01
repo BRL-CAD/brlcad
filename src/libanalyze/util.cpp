@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -598,7 +598,7 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
     struct bu_ptbl temp_results = BU_PTBL_INIT_ZERO;
     struct minimal_partitions **ray_results;
 
-    if (!results || !rays || ray_cnt == 0 || !dbip || !obj || !tol) return 0;
+    if (!results || !rays || ray_cnt == 0 || ncpus == 0 || !dbip || !obj || !tol) return 0;
 
     if (!pstate) {
 	state = (struct rt_gen_worker_vars *)bu_calloc(ncpus+1, sizeof(struct rt_gen_worker_vars), "state");
@@ -640,7 +640,6 @@ analyze_get_solid_partitions(struct bu_ptbl *results, struct rt_gen_worker_vars 
 	state[i].ptr = (void *)&(local_state[i]);
     }
 
-    ret = 0;
     for (i = 0; i < ncpus+1; i++) {
 	state[i].rays_cnt = ray_cnt;
 	state[i].rays = rays;

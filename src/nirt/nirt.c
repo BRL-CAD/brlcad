@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,12 +31,12 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/env.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "sysv.h"
 
 /* private */
 #include "./nirt.h"
@@ -399,7 +399,7 @@ main(int argc, char *argv[])
 		rt_bot_minpieces = atoi(bu_optarg);
 		break;
 	    case 'T':
-		setenv("LIBRT_BOT_MINTIE", bu_optarg, 1);
+		bu_setenv("LIBRT_BOT_MINTIE", bu_optarg, 1);
 		break;
 	    case 'b':
 		do_backout = 1;

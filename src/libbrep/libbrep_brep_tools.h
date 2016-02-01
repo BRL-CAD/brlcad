@@ -1,7 +1,7 @@
 /*            L I B B R E P _ B R E P _ T O O L S . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,11 @@
 #include <vector>
 
 /* interface headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+#include "opennurbs.h"
 #include "brep.h"
+
 
 /* Directions */
 #ifndef NE

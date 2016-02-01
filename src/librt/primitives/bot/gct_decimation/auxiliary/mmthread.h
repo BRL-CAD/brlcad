@@ -192,14 +192,16 @@ static inline void mtSpinUnlock(mtSpin *spin)
 #endif
 #endif
 
-static void mtQuellPedantic()
+static void mtQuellPedantic(int var)
 {
+if (!var) {
   (void)mtSignalWaitTimeout(NULL, NULL, 0);
   (void)mtSpinInit(NULL);
   (void)mtSpinDestroy(NULL);
   (void)mtSpinLock(NULL);
   (void)mtSpinUnlock(NULL);
-  (void)mtQuellPedantic();
+  (void)mtQuellPedantic(1);
+}
 }
 
 #endif

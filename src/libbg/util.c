@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -60,6 +60,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
     dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
+    if (NEAR_ZERO(dist_pt_pt, VUNITIZE_TOL)) return -1;
     while (i < n) {
 	if (i != p_farthest_index) {
 	    vect_t temp_vect;

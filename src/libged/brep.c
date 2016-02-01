@@ -1,7 +1,7 @@
 /*                         B R E P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -218,6 +218,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tcsg            - convert BREP to implicit primitive CSG tree\n");
+	bu_vls_printf(gedp->ged_result_str, "\ttikz [file]    - generate a Tikz LaTeX version of the B-Rep edges\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
 	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output>     - BREP boolean evaluations\n");
@@ -341,6 +342,16 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_free(&bname_csg);
 	return _ged_brep_to_csg(gedp, argv[1], 1);
     }
+
+
+    if (BU_STR_EQUAL(argv[2], "tikz")) {
+	if (argc == 4) {
+	    return _ged_brep_tikz(gedp, argv[1], argv[3]);
+	} else {
+	    return _ged_brep_tikz(gedp, argv[1], NULL);
+	}
+    }
+
 
     /* make sure arg isn't --no-evaluate */
     if (argc > 2 && argv[2][1] != '-') {

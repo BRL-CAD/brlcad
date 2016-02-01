@@ -1,7 +1,7 @@
 /*                         P A R S E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2121,9 +2121,9 @@ parse_list_elem(const char *in, int idx)
 	    ptr++;
 	} else {
 	    while (*ptr &&
-		   (!isspace((int)(*ptr)) || *prev == '\\') &&
-		   (*ptr != '}' || *prev == '\\') &&
-		   (*ptr != '{' || *prev == '\\'))
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
 	    {
 		prev = ptr;
 		ptr++;
@@ -2209,9 +2209,9 @@ parse_list_length(const char *in)
 		count++;
 
 	    while (*ptr &&
-		   (!isspace((int)(*ptr)) || *prev == '\\') &&
-		   (*ptr != '}' || *prev == '\\') &&
-		   (*ptr != '{' || *prev == '\\'))
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
 	    {
 		prev = ptr;
 		ptr++;

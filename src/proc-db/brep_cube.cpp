@@ -1,7 +1,7 @@
 /*                   B R E P _ C U B E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,6 +51,7 @@
 
 #include "common.h"
 
+#include "bio.h"
 #include "bu/log.h"
 
 /* without OBJ_BREP, this entire procedural example is disabled */

@@ -53,9 +53,9 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND teste
 #      bu_file_mime testing    #
 ################################
 BRLCAD_ADDEXEC(tester_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
-add_test(NAME bu_file_mime_dxf   COMMAND tester_bu_file_mime dxf 5 1) # tests dxf extension in model context
-add_test(NAME bu_file_mime_stp   COMMAND tester_bu_file_mime stp 5 7) # tests stp extension in model context
-add_test(NAME bu_file_mime_png   COMMAND tester_bu_file_mime png 3 14) # tests png extension in image context
+add_test(NAME bu_file_mime_dxf   COMMAND tester_bu_file_mime dxf 12 1) # tests dxf extension in model context
+add_test(NAME bu_file_mime_stp   COMMAND tester_bu_file_mime stp 12 7) # tests stp extension in model context
+add_test(NAME bu_file_mime_png   COMMAND tester_bu_file_mime png 10 13) # tests png extension in image context
 
 #
 #  ************ bitv.c tests *************
@@ -489,6 +489,10 @@ add_test(NAME bu_opt_1_l_02  COMMAND tester_bu_opt 1 l 2)
 add_test(NAME bu_opt_1_f_01  COMMAND tester_bu_opt 1 f 1)
 add_test(NAME bu_opt_1_f_02  COMMAND tester_bu_opt 1 f 2)
 add_test(NAME bu_opt_1_f_03  COMMAND tester_bu_opt 1 f 3)
+
+# Multiple flag option testing
+add_test(NAME bu_opt_1_mf_01  COMMAND tester_bu_opt 1 m 1)
+add_test(NAME bu_opt_1_mf_02  COMMAND tester_bu_opt 1 m 2)
 
 # non-static var assignment option testing (and also complex
 # custom arg processing testing)

@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1865,7 +1865,7 @@ wgl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == WGL(ifp)->win_width &&
 	height == WGL(ifp)->win_height)
-	return;
+	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;

@@ -1,7 +1,7 @@
 /*                         A T T R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 
 #include <string.h>
 
+#include "bu/getopt.h"
 #include "bu/sort.h"
 #include "./ged_private.h"
 
@@ -170,10 +171,13 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct directory *dp;
     struct bu_attribute_value_pair *avpp;
-    static const char *usage = "{set|get|show|rm|append|sort} object [key [value] ... ]";
+    static const char *usage = "{[-c sep_char] set|get|show|rm|append|sort|list} object [key [value] ... ]";
     attr_cmd_t scmd;
     struct directory **paths = NULL;
     size_t path_cnt = 0;
+    int opt;
+    int c_sep = -1;
+    const char *cmd_name = argv[0];
 
     /* sort types */
     const char CASE[]         = "case";
@@ -188,12 +192,27 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_HELP;
     }
 
+    bu_optind = 1;      /* re-init bu_getopt() */
+    while ((opt = bu_getopt(argc, (char * const *)argv, "c:")) != -1) {
+	switch (opt) {
+	    case 'c':
+		c_sep = (int)bu_optarg[0];
+		break;
+	    default:
+		bu_vls_printf(gedp->ged_result_str, "Unrecognized option - %c", opt);
+		return GED_ERROR;
+	}
+    }
+
+    argc -= bu_optind - 1;
+    argv += bu_optind - 1;
+
     if (argc < 3) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 	return GED_ERROR;
     }
 
@@ -284,7 +303,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	    if (argc == 3) {
 		/* just list all the attributes */
 		for (i = 0, avpp = avs.avp; i < avs.count; i++, avpp++) {
-		    bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
+		    if (c_sep == -1)
+			bu_vls_printf(gedp->ged_result_str, "%s {%s} ", avpp->name, avpp->value);
+		    else {
+			if (i == 0)
+			    bu_vls_printf(gedp->ged_result_str, "%s%c%s", avpp->name, (char)c_sep, avpp->value);
+			else
+			    bu_vls_printf(gedp->ged_result_str, "%c%s%c%s", (char)c_sep, avpp->name, (char)c_sep, avpp->value);
+		    }
 		}
 	    } else {
 		const char *val;
@@ -301,7 +327,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 			return GED_ERROR;
 		    }
 		    if (do_separators) {
-			bu_vls_printf(gedp->ged_result_str, "{%s} ", val);
+			if (c_sep == -1)
+			    bu_vls_printf(gedp->ged_result_str, "{%s} ", val);
+			else {
+			    if (i == 3)
+				bu_vls_printf(gedp->ged_result_str, "%s", val);
+			    else
+				bu_vls_printf(gedp->ged_result_str, "%c%s", (char)c_sep, val);
+			}
 		    } else {
 			bu_vls_printf(gedp->ged_result_str, "%s", val);
 		    }
@@ -325,7 +358,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 		if (argc == 3) {
 		    /* just list all the attributes */
 		    for (j = 0, avpp = avs.avp; j < avs.count; j++, avpp++) {
-			bu_vls_printf(&obj_vals, "%s {%s} ", avpp->name, avpp->value);
+			if (c_sep == -1)
+			    bu_vls_printf(&obj_vals, "%s {%s} ", avpp->name, avpp->value);
+			else {
+			    if (j == 0)
+				bu_vls_printf(&obj_vals, "%s%c%s", avpp->name, (char)c_sep, avpp->value);
+			    else
+				bu_vls_printf(&obj_vals, "%c%s%c%s", (char)c_sep, avpp->name, (char)c_sep, avpp->value);
+			}
 		    }
 		} else {
 		    const char *val;
@@ -335,7 +375,14 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 			val = bu_avs_get(&avs, argv[j]);
 			if (val) {
 			    if (do_separators) {
-				bu_vls_printf(&obj_vals, "{%s} ", val);
+				if (c_sep == -1)
+				    bu_vls_printf(&obj_vals, "{%s} ", val);
+				else {
+				    if (j == 0)
+					bu_vls_printf(&obj_vals, "%s", val);
+				    else
+					bu_vls_printf(&obj_vals, "%c%s", (char)c_sep, val);
+				}
 			    } else {
 				bu_vls_printf(&obj_vals, "%s", val);
 			    }
@@ -578,7 +625,7 @@ ged_attr(struct ged *gedp, int argc, const char *argv[])
 	}
     } else {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: unrecognized attr subcommand %s\n", argv[1]);
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmd_name, usage);
 
 	return GED_ERROR;
     }

@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,8 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
+
+#include "bio.h"
 
 #include "vmath.h"
 #include "bu/log.h"
@@ -39,6 +40,7 @@
 
 #include "raytrace.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0

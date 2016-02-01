@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -472,6 +472,10 @@ do_rc(void)
     }
 
     bu_vls_free(&str);
+
+    /* No telling what the commands may have done to the result string -
+     * make sure we start with a clean slate */
+    bu_vls_trunc(gedp->ged_result_str, 0);
     return 0;
 }
 

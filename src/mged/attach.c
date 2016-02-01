@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,8 +41,8 @@
 #  include <GL/gl.h>
 #endif
 
-#include "sysv.h"
 #include "vmath.h"
+#include "bu/env.h"
 #include "ged.h"
 
 #include "./mged.h"
@@ -536,7 +536,6 @@ gui_setup(const char *dstr)
     /* set DISPLAY to dstr */
     if (dstr != (char *)NULL) {
 	Tcl_SetVar(INTERP, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
-	setenv("DISPLAY", dstr, 0);
     }
 
 #ifdef HAVE_TK

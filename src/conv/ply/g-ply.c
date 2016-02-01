@@ -1,7 +1,7 @@
 /*                  G - P L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,6 @@
 	(a)[Y] = (b)[Y]/25.4; \
 	(a)[Z] = (b)[Z]/25.4; \
     }
-
-extern double nmg_eue_dist;		/* from nmg_plot.c */
 
 static char	usage[] = "\
 Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\

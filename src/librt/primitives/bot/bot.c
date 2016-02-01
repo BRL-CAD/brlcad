@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2014 United States Government as represented by
+ * Copyright (c) 1999-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2776,8 +2776,8 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			return BRLCAD_ERROR;
 		    }
 		    bot->faces[i*3+2] = li;
-		    bu_free((char *)obj_array, "obj_array");
 		}
+		bu_free((char *)obj_array, "obj_array");
 	    } else {
 		li = atol(&argv[0][1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {

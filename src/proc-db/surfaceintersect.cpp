@@ -1,7 +1,7 @@
 /*             S U R F A C E I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -139,9 +139,9 @@ void
 SplitTrim(ON_BrepTrim *trim, double t)
 {
     ON_Curve *left, *right;
-    bool rv = trim->Split(t, left, right);
+    ON_BOOL32 rv = trim->Split(t, left, right);
 
-    if (rv) {
+    if (rv != 0) {
 	int lefti = trim->Brep()->AddTrimCurve(left);
 	int righti = trim->Brep()->AddTrimCurve(right);
 	trim->Loop()->m_ti.Remove(trim->m_trim_index);
@@ -711,12 +711,12 @@ GetStartPointsInternal(
     } else {
 	ON_Surface *N1, *S1, *N2, *S2, *Parts1[4], *Parts2[4]; /* = {SW, SE, NW, NE} */
 
-	assert(surf1->Split(0, surf1->Domain(0).Mid(), S1, N1));
-	assert(surf2->Split(0, surf2->Domain(0).Mid(), S2, N2));
-	assert(S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]));
-	assert(N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]));
-	assert(S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]));
-	assert(N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]));
+	surf1->Split(0, surf1->Domain(0).Mid(), S1, N1);
+	surf2->Split(0, surf2->Domain(0).Mid(), S2, N2);
+	S1->Split(1, S1->Domain(1).Mid(), Parts1[0], Parts1[1]);
+	N1->Split(1, N1->Domain(1).Mid(), Parts1[2], Parts1[3]);
+	S2->Split(1, S2->Domain(1).Mid(), Parts2[0], Parts2[1]);
+	N2->Split(1, N2->Domain(1).Mid(), Parts2[2], Parts2[3]);
 
 	int i, j;
 	return_value = false;

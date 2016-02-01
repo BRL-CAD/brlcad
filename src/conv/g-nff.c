@@ -1,7 +1,7 @@
 /*                         G - N F F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,6 +74,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 static void
 nmg_to_nff(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int UNUSED(material_id))

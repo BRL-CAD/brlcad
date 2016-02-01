@@ -1,7 +1,7 @@
 /*                        S S C A N F . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright (c) 1990, 1993 The Regents of the University of California.
@@ -109,20 +109,18 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
     int c;
     long flags;
     size_t i, width;
-    int numCharsConsumed, partConsumed;
-    int numFieldsAssigned, partAssigned;
+    int numCharsConsumed = 0;
+    int partConsumed = 0;
+    int numFieldsAssigned = 0;
+    int partAssigned = 0;
     struct bu_vls partFmt = BU_VLS_INIT_ZERO;
     const char *fmt;
 
+    /* If these fail, hard to guarantee safety - bomb */
     BU_ASSERT(src != NULL);
     BU_ASSERT(fmt0 != NULL);
 
     fmt = fmt0;
-
-    numFieldsAssigned = 0;
-    numCharsConsumed = 0;
-    partConsumed = 0;
-    partAssigned = 0;
 
 #define UPDATE_COUNTS \
     numCharsConsumed += partConsumed; \

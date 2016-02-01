@@ -1,7 +1,7 @@
 /*                   B R E P _ C O B B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Based off of code from Ayam:
@@ -43,6 +43,8 @@
  */
 
 #include "common.h"
+
+#include "bio.h"
 
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP

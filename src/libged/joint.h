@@ -1,7 +1,7 @@
 /*                        J O I N T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,21 +64,6 @@
 #ifndef TRUE
 #  define TRUE 1
 #endif
-
-/* Check if database pointer is NULL */
-#define CHECK_DBI_NULL \
-    if (dbip == DBI_NULL) { \
-	Tcl_AppendResult(INTERP, "A database is not open!\n", (char *)NULL); \
-	return TCL_ERROR; \
-    }
-
-/* Check if the database is read only, and if so return TCL_ERROR */
-#define CHECK_READ_ONLY	\
-    if (dbip->dbi_read_only) { \
-	Tcl_AppendResult(INTERP, "Sorry, this database is READ-ONLY\n", (char *)NULL); \
-	return TCL_ERROR; \
-    }
-
 
 /* NB: The quaternions should (MUST?) have zero twist! */
 struct arc {

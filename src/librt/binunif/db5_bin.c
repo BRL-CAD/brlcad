@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,8 +32,8 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "bnetwork.h"
 #include "bio.h"
+#include "bnetwork.h"
 
 
 #include "bu/cv.h"

@@ -1,7 +1,7 @@
 /*                  G - S H E L L - R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -224,6 +224,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -1690,61 +1691,61 @@ main(int argc, char **argv)
 			bu_exit(1, "Illegal ray direction (%c), must be X, Y, or Z!\n", *bu_optarg);
 		}
 		break;
-	    case 'a':	/* add an rpp for refining */
-		{
-		    char *ptr;
-		    struct refine_rpp *rpp;
-		    int bad_opt = 0;
+	    case 'a': {
+		/* add an rpp for refining */
+		char *ptr;
+		struct refine_rpp *rpp;
+		int bad_opt = 0;
 
-		    ptr = bu_optarg;
+		ptr = bu_optarg;
 
-		    rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
-		    ptr = strtok(bu_optarg, token_seps);
-		    if (!ptr) {
-			bu_log("Bad -a option '%s'\n", bu_optarg);
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    rpp->tolerance = atof(ptr);
-		    if (rpp->tolerance <= 0.0) {
-			bu_log("Illegal tolerance in -a option (%s)\n", ptr);
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    /* get minimum */
-		    for (i = 0; i < 3; i++) {
-			ptr = strtok((char *)NULL, token_seps);
-			if (!ptr) {
-			    bu_log("Unexpected end of option args for -a\n");
-			    bad_opt = 1;
-			    break;
-			}
-			rpp->min[i] = atof(ptr);
-		    }
-		    if (bad_opt) {
-			bu_free((char *)rpp, "rpp");
-			break;
-		    }
-
-		    /* get maximum */
-		    for (i = 0; i < 3; i++) {
-			ptr = strtok((char *)NULL, token_seps);
-			if (!ptr) {
-			    bu_log("Unexpected end of option args for -a\n");
-			    bad_opt = 1;
-			    break;
-			}
-			rpp->max[i] = atof(ptr);
-		    }
-		    if (bad_opt) {
-			bu_free((char *) rpp, "rpp");
-			break;
-		    }
-
-		    BU_LIST_APPEND(&add_rpp_head, &rpp->h);
+		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
+		ptr = strtok(bu_optarg, token_seps);
+		if (!ptr) {
+		    bu_log("Bad -a option '%s'\n", bu_optarg);
+		    bu_free((char *)rpp, "rpp");
+		    break;
 		}
+
+		rpp->tolerance = atof(ptr);
+		if (rpp->tolerance <= 0.0) {
+		    bu_log("Illegal tolerance in -a option (%s)\n", ptr);
+		    bu_free((char *)rpp, "rpp");
+		    break;
+		}
+
+		/* get minimum */
+		for (i = 0; i < 3; i++) {
+		    ptr = strtok((char *)NULL, token_seps);
+		    if (!ptr) {
+			bu_log("Unexpected end of option args for -a\n");
+			bad_opt = 1;
+			break;
+		    }
+		    rpp->min[i] = atof(ptr);
+		}
+		if (bad_opt) {
+		    bu_free((char *)rpp, "rpp");
+		    break;
+		}
+
+		/* get maximum */
+		for (i = 0; i < 3; i++) {
+		    ptr = strtok((char *)NULL, token_seps);
+		    if (!ptr) {
+			bu_log("Unexpected end of option args for -a\n");
+			bad_opt = 1;
+			break;
+		    }
+		    rpp->max[i] = atof(ptr);
+		}
+		if (bad_opt) {
+		    bu_free((char *) rpp, "rpp");
+		    break;
+		}
+
+		BU_LIST_APPEND(&add_rpp_head, &rpp->h);
+	    }
 		break;
 	    case 'n':	/* don't do extra raytracing to refine shape */
 		do_extra_rays = 0;

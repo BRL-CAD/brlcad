@@ -1,7 +1,7 @@
 /*                           P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,15 +39,17 @@ extern double *uchar2double(unsigned char *data, size_t size);
 int
 image_flip(unsigned char *buf, size_t width, size_t height)
 {
-    unsigned char *buf2;
-    size_t i;
-    size_t pitch = width * 3 * sizeof(char);
+    size_t i, j;
+    size_t row_bytes = width * 3 * sizeof(unsigned char);
+    size_t img_bytes = row_bytes * height;
+    unsigned char *inv_img = (unsigned char *)bu_malloc(img_bytes,
+	    "image flip");
 
-    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for (i=0 ; i<height ; i++)
-	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy(buf, buf2, height * pitch);
-    bu_free(buf2, "image flip");
+    for (i = 0, j = height - 1; i < height; ++i, --j) {
+	memcpy(inv_img + i * row_bytes, buf + j * row_bytes, row_bytes);
+    }
+    memcpy(buf, inv_img, img_bytes);
+    bu_free(inv_img, "image flip");
     return 0;
 }
 
@@ -56,7 +58,7 @@ ppm_write(icv_image_t *bif, const char *filename)
 {
     unsigned char *data;
     FILE *fp;
-    size_t ret, size;
+    size_t size = 0;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
@@ -74,17 +76,19 @@ ppm_write(icv_image_t *bif, const char *filename)
     data =  data2uchar(bif);
     size = (size_t) bif->width*bif->height*3;
     image_flip(data, bif->width, bif->height);
-    ret = fprintf(fp, "P6 %lu %lu 255\n", (unsigned long)bif->width, (unsigned long)bif->height);
-
-     ret = fwrite(data, 1, size, fp);
-
-     fclose(fp);
-     if (ret != size) {
-	 bu_log("ERROR : Short Write");
-	 return -1;
-     }
-     return 0;
- }
+    if (fprintf(fp, "P6 %lu %lu 255\n", (unsigned long)bif->width, (unsigned long)bif->height) < 0) {
+	bu_log("ERROR : fp write failure");
+	return -1;
+    } else {
+	size_t ret = fwrite(data, 1, size, fp);
+	fclose(fp);
+	if (ret != size) {
+	    bu_log("ERROR : Short Write");
+	    return -1;
+	}
+    }
+    return 0;
+}
 
 
 HIDDEN void

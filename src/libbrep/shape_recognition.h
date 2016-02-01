@@ -1,3 +1,5 @@
+/* FIXME: header missing, run sh/header.sh */
+
 #include "common.h"
 #include "bu/ptbl.h"
 #include "brep.h"
@@ -18,7 +20,6 @@
 
 void set_to_array(int **array, int *array_cnt, std::set<int> *set);
 void array_to_set(std::set<int> *set, int *array, int array_cnt);
-void set_key(struct bu_vls *key, int k, int *karray);
 
 #define ON_VMOVE(on, bn) { \
     on.x = bn[0]; \

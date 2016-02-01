@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
-#include "sysv.h"
 
 /* private headers */
 #include "brlcad_version.h"

@@ -1,7 +1,7 @@
 /*                 P U L L B A C K C U R V E . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -68,6 +68,7 @@ enum seam_direction {
     WEST_SEAM,
     UNKNOWN_SEAM_DIRECTION
 };
+
 
 #define PBC_TOL 0.000001
 #define PBC_FROM_OFFSET 0.001

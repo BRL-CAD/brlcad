@@ -1,7 +1,7 @@
 /*               P U L L B A C K C U R V E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -66,12 +66,14 @@ public:
     ON_2dPointArray controls;
 };
 
+
 bool
 isFlat(const ON_2dPoint& p1, const ON_2dPoint& m, const ON_2dPoint& p2, double flatness)
 {
     ON_Line line = ON_Line(ON_3dPoint(p1), ON_3dPoint(p2));
     return line.DistanceTo(ON_3dPoint(m)) <= flatness;
 }
+
 
 void
 utah_ray_planes(const ON_Ray &r, ON_3dVector &p1, double &p1d, ON_3dVector &p2, double &p2d)
@@ -121,11 +123,11 @@ seam_direction(ON_2dPoint uv1, ON_2dPoint uv2)
 
 ON_BOOL32
 GetDomainSplits(
-	const ON_Surface *surf,
-	const ON_Interval &u_interval,
-	const ON_Interval &v_interval,
-	ON_Interval domSplits[2][2]
-        )
+    const ON_Surface *surf,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    ON_Interval domSplits[2][2]
+    )
 {
     ON_3dPoint min, max;
     ON_Interval dom[2];
@@ -186,20 +188,20 @@ GetDomainSplits(
  * reevaluate at domain edge.
  */
 ON_BOOL32
-surface_EvNormal( // returns false if unable to evaluate
-	 const ON_Surface *surf,
-         double s, double t, // evaluation parameters (s,t)
-         ON_3dPoint& point,  // returns value of surface
-         ON_3dVector& normal, // unit normal
-         int side,       // optional - determines which side to evaluate from
-                         //         0 = default
-                         //         1 from NE quadrant
-                         //         2 from NW quadrant
-                         //         3 from SW quadrant
-                         //         4 from SE quadrant
-         int* hint       // optional - evaluation hint (int[2]) used to speed
-                         //            repeated evaluations
-         )
+surface_EvNormal(// returns false if unable to evaluate
+    const ON_Surface *surf,
+    double s, double t, // evaluation parameters (s, t)
+    ON_3dPoint& point,  // returns value of surface
+    ON_3dVector& normal, // unit normal
+    int side,       // optional - determines which side to evaluate from
+    //         0 = default
+    //         1 from NE quadrant
+    //         2 from NW quadrant
+    //         3 from SW quadrant
+    //         4 from SE quadrant
+    int* hint       // optional - evaluation hint (int[2]) used to speed
+    //            repeated evaluations
+    )
 {
     ON_BOOL32 rc = false;
 
@@ -244,12 +246,12 @@ static ON_SurfaceProxy *proxy_surface[MAX_PSW] = {NULL};
 
 ON_BOOL32
 surface_GetBoundingBox(
-	const ON_Surface *surf,
-	const ON_Interval &u_interval,
-	const ON_Interval &v_interval,
-        ON_BoundingBox& bbox,
-	ON_BOOL32 bGrowBox
-        )
+    const ON_Surface *surf,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    ON_BoundingBox& bbox,
+    ON_BOOL32 bGrowBox
+    )
 {
     int p = bu_parallel_id();
 
@@ -266,11 +268,11 @@ surface_GetBoundingBox(
     }
 
     ON_Interval domSplits[2][2] = { { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }, { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval }};
-    if (!GetDomainSplits(surf,u_interval,v_interval,domSplits)) {
+    if (!GetDomainSplits(surf, u_interval, v_interval, domSplits)) {
 	return false;
     }
 
-    bool growcurrent = (bool)bGrowBox;
+    bool growcurrent = bGrowBox != 0;
     for (int i=0; i<2; i++) {
 	if (domSplits[0][i] == ON_Interval::EmptyInterval)
 	    continue;
@@ -338,16 +340,16 @@ surface_GetBoundingBox(
 
 ON_BOOL32
 face_GetBoundingBox(
-	const ON_BrepFace &face,
-        ON_BoundingBox& bbox,
-	ON_BOOL32 bGrowBox
-        )
+    const ON_BrepFace &face,
+    ON_BoundingBox& bbox,
+    ON_BOOL32 bGrowBox
+    )
 {
     const ON_Surface *surf = face.SurfaceOf();
 
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
-    bool growcurrent = (bool)bGrowBox;
+    bool growcurrent = bGrowBox != 0;
     ON_3dPoint min, max;
     for (int li = 0; li < face.LoopCount(); li++) {
 	for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
@@ -359,7 +361,7 @@ face_GetBoundingBox(
 
     ON_Interval u_interval(min.x, max.x);
     ON_Interval v_interval(min.y, max.y);
-    if (!surface_GetBoundingBox(surf, u_interval,v_interval,bbox,growcurrent)) {
+    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox, growcurrent)) {
 	return false;
     }
 
@@ -369,31 +371,31 @@ face_GetBoundingBox(
 
 ON_BOOL32
 surface_GetIntervalMinMaxDistance(
-        const ON_3dPoint& p,
-        ON_BoundingBox &bbox,
-        double &min_distance,
-        double &max_distance
-        )
+    const ON_3dPoint& p,
+    ON_BoundingBox &bbox,
+    double &min_distance,
+    double &max_distance
+    )
 {
-	min_distance = bbox.MinimumDistanceTo(p);
-	max_distance = bbox.MaximumDistanceTo(p);
-	return true;
+    min_distance = bbox.MinimumDistanceTo(p);
+    max_distance = bbox.MaximumDistanceTo(p);
+    return true;
 }
 
 
 ON_BOOL32
 surface_GetIntervalMinMaxDistance(
-	const ON_Surface *surf,
-        const ON_3dPoint& p,
-	const ON_Interval &u_interval,
-	const ON_Interval &v_interval,
-        double &min_distance,
-        double &max_distance
-        )
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    const ON_Interval &u_interval,
+    const ON_Interval &v_interval,
+    double &min_distance,
+    double &max_distance
+    )
 {
     ON_BoundingBox bbox;
 
-    if (surface_GetBoundingBox(surf,u_interval,v_interval,bbox, false)) {
+    if (surface_GetBoundingBox(surf, u_interval, v_interval, bbox, false)) {
 	min_distance = bbox.MinimumDistanceTo(p);
 
 	max_distance = bbox.MaximumDistanceTo(p);
@@ -404,29 +406,29 @@ surface_GetIntervalMinMaxDistance(
 
 
 double
-surface_GetOptimalNormalUSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval,double tol)
+surface_GetOptimalNormalUSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval, double tol)
 {
     ON_3dVector normal[4];
     double u = u_interval.Mid();
 
-    if ((normal[0] = surf->NormalAt(u_interval.m_t[0],v_interval.m_t[0])) &&
-	(normal[2] = surf->NormalAt(u_interval.m_t[0],v_interval.m_t[1]))) {
+    if ((normal[0] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[0])) &&
+	(normal[2] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[1]))) {
 	double step = u_interval.Length()/2.0;
 	double stepdir = 1.0;
 	u = u_interval.m_t[0] + stepdir * step;
 
 	while (step > tol) {
-	    if ((normal[1] = surf->NormalAt(u,v_interval.m_t[0])) &&
-		(normal[3] = surf->NormalAt(u,v_interval.m_t[1]))) {
-		    double udot_1 = normal[0] * normal[1];
-		    double udot_2 = normal[2] * normal[3];
-		    if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
-			stepdir = -1.0;
-		    } else {
-			stepdir = 1.0;
-		    }
-		    step = step / 2.0;
-		    u = u + stepdir * step;
+	    if ((normal[1] = surf->NormalAt(u, v_interval.m_t[0])) &&
+		(normal[3] = surf->NormalAt(u, v_interval.m_t[1]))) {
+		double udot_1 = normal[0] * normal[1];
+		double udot_2 = normal[2] * normal[3];
+		if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
+		    stepdir = -1.0;
+		} else {
+		    stepdir = 1.0;
+		}
+		step = step / 2.0;
+		u = u + stepdir * step;
 	    }
 	}
     }
@@ -435,20 +437,20 @@ surface_GetOptimalNormalUSplit(const ON_Surface *surf, const ON_Interval &u_inte
 
 
 double
-surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval,double tol)
+surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_interval, const ON_Interval &v_interval, double tol)
 {
     ON_3dVector normal[4];
     double v = v_interval.Mid();
 
-    if ((normal[0] = surf->NormalAt(u_interval.m_t[0],v_interval.m_t[0])) &&
-	(normal[1] = surf->NormalAt(u_interval.m_t[1],v_interval.m_t[0]))) {
+    if ((normal[0] = surf->NormalAt(u_interval.m_t[0], v_interval.m_t[0])) &&
+	(normal[1] = surf->NormalAt(u_interval.m_t[1], v_interval.m_t[0]))) {
 	double step = v_interval.Length()/2.0;
 	double stepdir = 1.0;
 	v = v_interval.m_t[0] + stepdir * step;
 
 	while (step > tol) {
-	    if ((normal[2] = surf->NormalAt(u_interval.m_t[0],v)) &&
-		(normal[3] = surf->NormalAt(u_interval.m_t[1],v))) {
+	    if ((normal[2] = surf->NormalAt(u_interval.m_t[0], v)) &&
+		(normal[3] = surf->NormalAt(u_interval.m_t[1], v))) {
 		double vdot_1 = normal[0] * normal[2];
 		double vdot_2 = normal[1] * normal[3];
 		if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
@@ -466,13 +468,13 @@ surface_GetOptimalNormalVSplit(const ON_Surface *surf, const ON_Interval &u_inte
 
 
 //forward for cyclic
-double surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf,const ON_3dPoint& p,const ON_Interval& u_range,
-        const ON_Interval& v_range,double current_closest_dist,ON_2dPoint& p2d,ON_3dPoint& p3d,double same_point_tol, double within_distance_tol,int level);
+double surface_GetClosestPoint3dFirstOrderByRange(const ON_Surface *surf, const ON_3dPoint& p, const ON_Interval& u_range,
+						  const ON_Interval& v_range, double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d, double same_point_tol, double within_distance_tol, int level);
 
 double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
-        const ON_3dPoint& p, const ON_Interval &u_interval, double u, const ON_Interval &v_interval, double v,
-        double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
-        double same_point_tol, double within_distance_tol, int level)
+						      const ON_3dPoint& p, const ON_Interval &u_interval, double u, const ON_Interval &v_interval, double v,
+						      double current_closest_dist, ON_2dPoint& p2d, ON_3dPoint& p3d,
+						      double same_point_tol, double within_distance_tol, int level)
 {
     double min_distance = 0;
     double max_distance = 0;
@@ -485,51 +487,51 @@ double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 	for (int iv = 0; iv < 2; iv++) {
 	    new_v_interval.m_t[iv] = v_interval.m_t[iv];
 	    new_v_interval.m_t[1 - iv] = v;
-	    if (surface_GetIntervalMinMaxDistance(surf, p, new_u_interval,new_v_interval, min_distance, max_distance)) {
+	    if (surface_GetIntervalMinMaxDistance(surf, p, new_u_interval, new_v_interval, min_distance, max_distance)) {
 		double distance = DBL_MAX;
-		if ((min_distance < current_closest_dist) && NEAR_ZERO(min_distance,within_distance_tol)) {
+		if ((min_distance < current_closest_dist) && NEAR_ZERO(min_distance, within_distance_tol)) {
 		    /////////////////////////////////////////
 		    // Could check normals and CV angles here
 		    /////////////////////////////////////////
 		    ON_3dVector normal[4];
-		    if ((normal[0] = surf->NormalAt(new_u_interval.m_t[0],new_v_interval.m_t[0])) &&
-			(normal[1] = surf->NormalAt(new_u_interval.m_t[1],new_v_interval.m_t[0])) &&
-			(normal[2] = surf->NormalAt(new_u_interval.m_t[0],new_v_interval.m_t[1])) &&
-			(normal[3] = surf->NormalAt(new_u_interval.m_t[1],new_v_interval.m_t[1]))) {
+		    if ((normal[0] = surf->NormalAt(new_u_interval.m_t[0], new_v_interval.m_t[0])) &&
+			(normal[1] = surf->NormalAt(new_u_interval.m_t[1], new_v_interval.m_t[0])) &&
+			(normal[2] = surf->NormalAt(new_u_interval.m_t[0], new_v_interval.m_t[1])) &&
+			(normal[3] = surf->NormalAt(new_u_interval.m_t[1], new_v_interval.m_t[1]))) {
 
-			    double udot_1 = normal[0] * normal[1];
-			    double udot_2 = normal[2] * normal[3];
-			    double vdot_1 = normal[0] * normal[2];
-			    double vdot_2 = normal[1] * normal[3];
+			double udot_1 = normal[0] * normal[1];
+			double udot_2 = normal[2] * normal[3];
+			double vdot_1 = normal[0] * normal[2];
+			double vdot_2 = normal[1] * normal[3];
 
-			    if ((udot_1 < 0.0) || (udot_2 < 0.0) || (vdot_1 < 0.0) || (vdot_2 < 0.0)) {
-				double u_split,v_split;
-				if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
-				    //get optimal U split
-				    u_split = surface_GetOptimalNormalUSplit(surf,new_u_interval,new_v_interval,same_point_tol);
-				} else {
-				    u_split = new_u_interval.Mid();
-				}
-				if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
-				    //get optimal V split
-				    v_split = surface_GetOptimalNormalVSplit(surf,new_u_interval,new_v_interval,same_point_tol);
-				} else {
-				    v_split = new_v_interval.Mid();
-				}
-				distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,new_u_interval,u_split,new_v_interval,v_split,current_closest_dist,p2d,p3d,same_point_tol,within_distance_tol,level++);
-				if (distance < current_closest_dist) {
-				    current_closest_dist = distance;
-				    if (current_closest_dist < same_point_tol)
-					return current_closest_dist;
-				}
+			if ((udot_1 < 0.0) || (udot_2 < 0.0) || (vdot_1 < 0.0) || (vdot_2 < 0.0)) {
+			    double u_split, v_split;
+			    if ((udot_1 < 0.0) || (udot_2 < 0.0)) {
+				//get optimal U split
+				u_split = surface_GetOptimalNormalUSplit(surf, new_u_interval, new_v_interval, same_point_tol);
 			    } else {
-				distance = surface_GetClosestPoint3dFirstOrderByRange(surf,p,new_u_interval,new_v_interval,current_closest_dist,p2d,p3d,same_point_tol,within_distance_tol,level++);
-				if (distance < current_closest_dist) {
-				    current_closest_dist = distance;
-				    if (current_closest_dist < same_point_tol)
-					return current_closest_dist;
-				}
+				u_split = new_u_interval.Mid();
 			    }
+			    if ((vdot_1 < 0.0) || (vdot_2 < 0.0)) {
+				//get optimal V split
+				v_split = surface_GetOptimalNormalVSplit(surf, new_u_interval, new_v_interval, same_point_tol);
+			    } else {
+				v_split = new_v_interval.Mid();
+			    }
+			    distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, new_u_interval, u_split, new_v_interval, v_split, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    if (distance < current_closest_dist) {
+				current_closest_dist = distance;
+				if (current_closest_dist < same_point_tol)
+				    return current_closest_dist;
+			    }
+			} else {
+			    distance = surface_GetClosestPoint3dFirstOrderByRange(surf, p, new_u_interval, new_v_interval, current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+			    if (distance < current_closest_dist) {
+				current_closest_dist = distance;
+				if (current_closest_dist < same_point_tol)
+				    return current_closest_dist;
+			    }
+			}
 		    }
 		}
 	    }
@@ -541,17 +543,17 @@ double surface_GetClosestPoint3dFirstOrderSubdivision(const ON_Surface *surf,
 
 double
 surface_GetClosestPoint3dFirstOrderByRange(
-	const ON_Surface *surf,
-        const ON_3dPoint& p,
-        const ON_Interval& u_range,
-        const ON_Interval& v_range,
-        double current_closest_dist,
-        ON_2dPoint& p2d,
-        ON_3dPoint& p3d,
-        double same_point_tol,
-        double within_distance_tol,
-        int level
-        )
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    const ON_Interval& u_range,
+    const ON_Interval& v_range,
+    double current_closest_dist,
+    ON_2dPoint& p2d,
+    ON_3dPoint& p3d,
+    double same_point_tol,
+    double within_distance_tol,
+    int level
+    )
 {
     ON_3dPoint p0;
     ON_2dPoint p2d0;
@@ -578,15 +580,15 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		// Don't Subdivide just not getting any closer
 		///////////////////////////
 		/*
-		double distance =
-		        surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
-		                u_range, u_range.Mid(), v_range, v_range.Mid(),
-		                current_closest_dist, p2d, p3d, tol, level++);
-		if (distance < current_closest_dist) {
-		    current_closest_dist = distance;
-		    if (current_closest_dist < tol)
-			return current_closest_dist;
-		}
+		  double distance =
+		  surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
+		  u_range, u_range.Mid(), v_range, v_range.Mid(),
+		  current_closest_dist, p2d, p3d, tol, level++);
+		  if (distance < current_closest_dist) {
+		  current_closest_dist = distance;
+		  if (current_closest_dist < tol)
+		  return current_closest_dist;
+		  }
 		*/
 		break;
 	    }
@@ -613,19 +615,19 @@ surface_GetClosestPoint3dFirstOrderByRange(
 
 	if (vlength > 0.0) {
 	    if (ON_Pullback3dVector(vector, 0.0, ds, dt, dss, dst, dtt,
-		    pullback)) {
+				    pullback)) {
 		p2d0 = p2d0 + pullback;
 		if (!u_range.Includes(p2d0.x, false)) {
 		    int i = (u_range.m_t[0] <= u_range.m_t[1]) ? 0 : 1;
 		    p2d0.x =
-			    (p2d0.x < u_range.m_t[i]) ?
-			            u_range.m_t[i] : u_range.m_t[1 - i];
+			(p2d0.x < u_range.m_t[i]) ?
+			u_range.m_t[i] : u_range.m_t[1 - i];
 		}
 		if (!v_range.Includes(p2d0.y, false)) {
 		    int i = (v_range.m_t[0] <= v_range.m_t[1]) ? 0 : 1;
 		    p2d0.y =
-			    (p2d0.y < v_range.m_t[i]) ?
-			            v_range.m_t[i] : v_range.m_t[1 - i];
+			(p2d0.y < v_range.m_t[i]) ?
+			v_range.m_t[i] : v_range.m_t[1 - i];
 		}
 	    } else {
 		///////////////////////////
@@ -633,9 +635,9 @@ surface_GetClosestPoint3dFirstOrderByRange(
 		///////////////////////////
 		notdone = false;
 		distance =
-		        surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
-		                u_range, u_range.Mid(), v_range, v_range.Mid(),
-		                current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
+		    surface_GetClosestPoint3dFirstOrderSubdivision(surf, p,
+								   u_range, u_range.Mid(), v_range, v_range.Mid(),
+								   current_closest_dist, p2d, p3d, same_point_tol, within_distance_tol, level++);
 		if (distance < current_closest_dist) {
 		    current_closest_dist = distance;
 		    if (current_closest_dist < same_point_tol)
@@ -660,20 +662,20 @@ surface_GetClosestPoint3dFirstOrderByRange(
 
 
 bool surface_GetClosestPoint3dFirstOrder(
-	const ON_Surface *surf,
-        const ON_3dPoint& p,
-        ON_2dPoint& p2d,
-        ON_3dPoint& p3d,
-        double &current_distance,
-        int quadrant,	// optional - determines which quadrant to evaluate from
-				//         0 = default
-				//         1 from NE quadrant
-				//         2 from NW quadrant
-				//         3 from SW quadrant
-				//         4 from SE quadrant
-        double same_point_tol,
-        double within_distance_tol
-        )
+    const ON_Surface *surf,
+    const ON_3dPoint& p,
+    ON_2dPoint& p2d,
+    ON_3dPoint& p3d,
+    double &current_distance,
+    int quadrant,	// optional - determines which quadrant to evaluate from
+    //         0 = default
+    //         1 from NE quadrant
+    //         2 from NW quadrant
+    //         3 from SW quadrant
+    //         4 from SE quadrant
+    double same_point_tol,
+    double within_distance_tol
+    )
 {
     ON_3dPoint p0;
     ON_2dPoint p2d0;
@@ -705,7 +707,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	if (vspan)
 	    delete [] vspan;
 	if (bbox) {
-	    for( int i = 0 ; i < (prev_u_spancnt + 2) ; i++ )
+	    for(int i = 0 ; i < (prev_u_spancnt + 2) ; i++)
 		delete [] bbox[i] ;
 	    delete [] bbox;
 	}
@@ -715,7 +717,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	uspan = new double[u_spancnt + 2];
 	vspan = new double[v_spancnt + 2];
 	bbox = new ON_BoundingBox *[(u_spancnt + 2)];
-	for( int i = 0 ; i < (u_spancnt + 2) ; i++ )
+	for(int i = 0 ; i < (u_spancnt + 2) ; i++)
 	    bbox[i] = new ON_BoundingBox [v_spancnt + 2];
 
 	if (surf->GetSpanVector(0, uspan) && surf->GetSpanVector(1, vspan)) {
@@ -723,7 +725,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	    umid = surf->Domain(0).Mid();
 	    umid_index = u_spancnt/2;
 	    for (int u_span_index = 0; u_span_index < u_spancnt + 1;u_span_index++) {
-		if (NEAR_EQUAL(uspan[u_span_index],umid,same_point_tol)) {
+		if (NEAR_EQUAL(uspan[u_span_index], umid, same_point_tol)) {
 		    umid_index = u_span_index;
 		    break;
 		} else if (uspan[u_span_index] > umid) {
@@ -743,7 +745,7 @@ bool surface_GetClosestPoint3dFirstOrder(
 	    vmid = surf->Domain(1).Mid();
 	    vmid_index = v_spancnt/2;
 	    for (int v_span_index = 0; v_span_index < v_spancnt + 1;v_span_index++) {
-		if (NEAR_EQUAL(vspan[v_span_index],vmid,same_point_tol)) {
+		if (NEAR_EQUAL(vspan[v_span_index], vmid, same_point_tol)) {
 		    vmid_index = v_span_index;
 		    break;
 		} else if (vspan[v_span_index] > vmid) {
@@ -761,15 +763,15 @@ bool surface_GetClosestPoint3dFirstOrder(
 		}
 	    }
 	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
-		    u_span_index++) {
+		 u_span_index++) {
 		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
-			v_span_index++) {
+		     v_span_index++) {
 		    ON_Interval u_interval(uspan[u_span_index - 1],
-			    uspan[u_span_index]);
+					   uspan[u_span_index]);
 		    ON_Interval v_interval(vspan[v_span_index - 1],
-			    vspan[v_span_index]);
+					   vspan[v_span_index]);
 
-		    if (!surface_GetBoundingBox(surf,u_interval,v_interval,bbox[u_span_index-1][v_span_index-1], false)) {
+		    if (!surface_GetBoundingBox(surf, u_interval, v_interval, bbox[u_span_index-1][v_span_index-1], false)) {
 			std::cerr << "Error computing bounding box for surface interval" << std::endl;
 		    }
 		}
@@ -781,22 +783,22 @@ bool surface_GetClosestPoint3dFirstOrder(
     if (prev_surface == surf) {
 	if (quadrant == 0) {
 	    for (int u_span_index = 1; u_span_index < u_spancnt + 1;
-		    u_span_index++) {
+		 u_span_index++) {
 		for (int v_span_index = 1; v_span_index < v_spancnt + 1;
-			v_span_index++) {
+		     v_span_index++) {
 		    ON_Interval u_interval(uspan[u_span_index - 1],
-			    uspan[u_span_index]);
+					   uspan[u_span_index]);
 		    ON_Interval v_interval(vspan[v_span_index - 1],
-			    vspan[v_span_index]);
-		    double min_distance,max_distance;
+					   vspan[v_span_index]);
+		    double min_distance, max_distance;
 
 		    int level = 1;
-		    if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+		    if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 			    /////////////////////////////////////////
 			    // Could check normals and CV angles here
 			    /////////////////////////////////////////
-			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+			    double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 			    if (distance < current_distance) {
 				current_distance = distance;
 				if (current_distance < same_point_tol) {
@@ -813,23 +815,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 		goto cleanup;
 	    }
 	} else if (quadrant == 1) {
-	    if (surf->IsClosed(0)) { //NE,SE,NW.SW
+	    if (surf->IsClosed(0)) { //NE, SE, NW.SW
 		//         1 from NE quadrant
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -845,18 +847,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -872,18 +874,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -899,18 +901,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -922,23 +924,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 			}
 		    }
 		}
-	    } else { //NE,NW,SW,SE
+	    } else { //NE, NW, SW, SE
 		//         1 from NE quadrant
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -954,18 +956,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -981,18 +983,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1008,18 +1010,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1037,23 +1039,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 		goto cleanup;
 	    }
 	} else if (quadrant == 2) {
-	    if (surf->IsClosed(0)) { // NW,SW,NE,SE
+	    if (surf->IsClosed(0)) { // NW, SW, NE, SE
 		//         2 from NW quadrant
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1069,18 +1071,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1096,18 +1098,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1123,18 +1125,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1146,23 +1148,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 			}
 		    }
 		}
-	    } else { // NW,NE,SW,SE
+	    } else { // NW, NE, SW, SE
 		//         2 from NW quadrant
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1178,18 +1180,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1205,18 +1207,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1232,18 +1234,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1261,23 +1263,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 		goto cleanup;
 	    }
 	} else if (quadrant == 3) {
-	    if (surf->IsClosed(0)) { // SW,NW,SE,NE
+	    if (surf->IsClosed(0)) { // SW, NW, SE, NE
 		//         3 from SW quadrant
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1293,18 +1295,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1320,18 +1322,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1347,18 +1349,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1370,23 +1372,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 			}
 		    }
 		}
-	    } else { // SW,SE,NW,NE
+	    } else { // SW, SE, NW, NE
 		//         3 from SW quadrant
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1402,18 +1404,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1429,18 +1431,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1456,18 +1458,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1485,23 +1487,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 		goto cleanup;
 	    }
 	} else if (quadrant == 4) {
-	    if (surf->IsClosed(0)) { // SE,NE,SW,NW
+	    if (surf->IsClosed(0)) { // SE, NE, SW, NW
 		//         4 from SE quadrant
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1517,18 +1519,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1544,18 +1546,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1571,18 +1573,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1594,23 +1596,23 @@ bool surface_GetClosestPoint3dFirstOrder(
 			}
 		    }
 		}
-	    } else { // SE,SW,NE,NW
+	    } else { // SE, SW, NE, NW
 		//         4 from SE quadrant
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1626,18 +1628,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = 1; v_span_index < vmid_index+1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1653,18 +1655,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = umid_index+1; u_span_index < u_spancnt + 1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1680,18 +1682,18 @@ bool surface_GetClosestPoint3dFirstOrder(
 		for (int u_span_index = 1; u_span_index < umid_index+1; u_span_index++) {
 		    for (int v_span_index = vmid_index+1; v_span_index < v_spancnt + 1; v_span_index++) {
 			ON_Interval u_interval(uspan[u_span_index - 1],
-				uspan[u_span_index]);
+					       uspan[u_span_index]);
 			ON_Interval v_interval(vspan[v_span_index - 1],
-				vspan[v_span_index]);
-			double min_distance,max_distance;
+					       vspan[v_span_index]);
+			double min_distance, max_distance;
 
 			int level = 1;
-			if (surface_GetIntervalMinMaxDistance(p,bbox[u_span_index-1][v_span_index-1],min_distance,max_distance)) {
-			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance,within_distance_tol)) {
+			if (surface_GetIntervalMinMaxDistance(p, bbox[u_span_index-1][v_span_index-1], min_distance, max_distance)) {
+			    if ((min_distance < current_distance) && NEAR_ZERO(min_distance, within_distance_tol)) {
 				/////////////////////////////////////////
 				// Could check normals and CV angles here
 				/////////////////////////////////////////
-				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf,p,u_interval,u_interval.Mid(),v_interval,v_interval.Mid(),current_distance,p2d,p3d,same_point_tol,within_distance_tol,level++);
+				double distance = surface_GetClosestPoint3dFirstOrderSubdivision(surf, p, u_interval, u_interval.Mid(), v_interval, v_interval.Mid(), current_distance, p2d, p3d, same_point_tol, within_distance_tol, level++);
 				if (distance < current_distance) {
 				    current_distance = distance;
 				    if (current_distance < same_point_tol) {
@@ -1717,15 +1719,15 @@ cleanup:
 
 
 bool trim_GetClosestPoint3dFirstOrder(
-	const ON_BrepTrim& trim,
-        const ON_3dPoint& p,
-        ON_2dPoint& p2d,
-        double& t,
-        double& distance,
-        const ON_Interval* interval,
-        double same_point_tol,
-        double within_distance_tol
-        )
+    const ON_BrepTrim& trim,
+    const ON_3dPoint& p,
+    ON_2dPoint& p2d,
+    double& t,
+    double& distance,
+    const ON_Interval* interval,
+    double same_point_tol,
+    double within_distance_tol
+    )
 {
     bool rc = false;
     const ON_Surface *surf = trim.SurfaceOf();
@@ -1733,8 +1735,8 @@ bool trim_GetClosestPoint3dFirstOrder(
     double t0 = interval->Mid();
     ON_3dPoint p3d;
     ON_3dPoint p0;
-    ON_3dVector ds,dt,dss,dst,dtt;
-    ON_3dVector T,K;
+    ON_3dVector ds, dt, dss, dst, dtt;
+    ON_3dVector T, K;
     int prec = std::cerr.precision();
     ON_BoundingBox tight_bbox;
     std::vector<ON_BoundingBox> bbox;
@@ -1742,10 +1744,10 @@ bool trim_GetClosestPoint3dFirstOrder(
 
     ON_Curve *c = trim.Brep()->m_C2[trim.m_c2i];
     ON_NurbsCurve N;
-    if ( 0 == c->GetNurbForm(N) )
-      return false;
-    if ( N.m_order < 2 || N.m_cv_count < N.m_order )
-      return false;
+    if (0 == c->GetNurbForm(N))
+	return false;
+    if (N.m_order < 2 || N.m_cv_count < N.m_order)
+	return false;
 
     p2d = trim.PointAt(t);
     int quadrant = 0;     // optional - determines which quadrant to evaluate from
@@ -1771,96 +1773,96 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    quadrant = 3; //SW
 	}
     }
-    if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,distance,quadrant,same_point_tol,within_distance_tol)) {
+    if (surface_GetClosestPoint3dFirstOrder(surf, p, p2d, p3d, distance, quadrant, same_point_tol, within_distance_tol)) {
 	ON_BezierCurve B;
 	bool bGrowBox = false;
-	ON_3dVector d1,d2;
+	ON_3dVector d1, d2;
 	double max_dist_to_closest_pt = DBL_MAX;
 	ON_Interval *span_interval = new ON_Interval[N.m_cv_count - N.m_order + 1];
 	double *min_distance = new double[N.m_cv_count - N.m_order + 1];
 	double *max_distance = new double[N.m_cv_count - N.m_order + 1];
 	bool *skip = new bool[N.m_cv_count - N.m_order + 1];
 	bbox.resize(N.m_cv_count - N.m_order + 1);
-	for ( int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++ )
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
 	{
 	    skip[span_index] = true;
-	  if ( !(N.m_knot[span_index + N.m_order-2] < N.m_knot[span_index + N.m_order-1]) )
-	    continue;
+	    if (!(N.m_knot[span_index + N.m_order-2] < N.m_knot[span_index + N.m_order-1]))
+		continue;
 
-	  // check for span out of interval
-	  int i = (interval->m_t[0] <= interval->m_t[1]) ? 0 : 1;
-	  if ( N.m_knot[span_index + N.m_order-2] > interval->m_t[1-i] )
-	    continue;
-	  if ( N.m_knot[span_index + N.m_order-1] < interval->m_t[i] )
-	    continue;
+	    // check for span out of interval
+	    int i = (interval->m_t[0] <= interval->m_t[1]) ? 0 : 1;
+	    if (N.m_knot[span_index + N.m_order-2] > interval->m_t[1-i])
+		continue;
+	    if (N.m_knot[span_index + N.m_order-1] < interval->m_t[i])
+		continue;
 
-	  if ( !N.ConvertSpanToBezier( span_index, B ) )
-	    continue;
-	  ON_Interval bi = B.Domain();
-	  if ( !B.GetTightBoundingBox(tight_bbox,bGrowBox,NULL) )
-	    continue;
-	  bbox[span_index] = tight_bbox;
-	  d1 = tight_bbox.m_min - p2d;
-	  d2 = tight_bbox.m_max - p2d;
-	  min_distance[span_index] = tight_bbox.MinimumDistanceTo(p2d);
+	    if (!N.ConvertSpanToBezier(span_index, B))
+		continue;
+	    ON_Interval bi = B.Domain();
+	    if (!B.GetTightBoundingBox(tight_bbox, bGrowBox, NULL))
+		continue;
+	    bbox[span_index] = tight_bbox;
+	    d1 = tight_bbox.m_min - p2d;
+	    d2 = tight_bbox.m_max - p2d;
+	    min_distance[span_index] = tight_bbox.MinimumDistanceTo(p2d);
 
-	  if (min_distance[span_index] > max_dist_to_closest_pt) {
-	      max_distance[span_index] = DBL_MAX;
-	      continue;
-	  }
-	  skip[span_index] = false;
-	  span_interval[span_index].m_t[0] = ((N.m_knot[span_index + N.m_order-2]) < interval->m_t[i]) ? interval->m_t[i] : N.m_knot[span_index + N.m_order-2];
-	  span_interval[span_index].m_t[1] = ((N.m_knot[span_index + N.m_order-1]) > interval->m_t[1 -i]) ? interval->m_t[1 -i] : (N.m_knot[span_index + N.m_order-1]);
-	  ON_3dPoint d1sq(d1.x*d1.x,d1.y*d1.y,0.0),d2sq(d2.x*d2.x,d2.y*d2.y,0.0);
-	  double distancesq;
-	  if (d1sq.x < d2sq.x) {
-	    if (d1sq.y < d2sq.y) {
-		if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
-		    distancesq = d1sq.x + d2sq.y;
+	    if (min_distance[span_index] > max_dist_to_closest_pt) {
+		max_distance[span_index] = DBL_MAX;
+		continue;
+	    }
+	    skip[span_index] = false;
+	    span_interval[span_index].m_t[0] = ((N.m_knot[span_index + N.m_order-2]) < interval->m_t[i]) ? interval->m_t[i] : N.m_knot[span_index + N.m_order-2];
+	    span_interval[span_index].m_t[1] = ((N.m_knot[span_index + N.m_order-1]) > interval->m_t[1 -i]) ? interval->m_t[1 -i] : (N.m_knot[span_index + N.m_order-1]);
+	    ON_3dPoint d1sq(d1.x*d1.x, d1.y*d1.y, 0.0), d2sq(d2.x*d2.x, d2.y*d2.y, 0.0);
+	    double distancesq;
+	    if (d1sq.x < d2sq.x) {
+		if (d1sq.y < d2sq.y) {
+		    if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
+			distancesq = d1sq.x + d2sq.y;
+		    } else {
+			distancesq = d2sq.x + d1sq.y;
+		    }
 		} else {
-		    distancesq = d2sq.x + d1sq.y;
+		    if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
+			distancesq = d1sq.x + d1sq.y;
+		    } else {
+			distancesq = d2sq.x + d2sq.y;
+		    }
 		}
 	    } else {
-		if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
-		    distancesq = d1sq.x + d1sq.y;
+		if (d1sq.y < d2sq.y) {
+		    if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
+			distancesq = d1sq.x + d1sq.y;
+		    } else {
+			distancesq = d2sq.x + d2sq.y;
+		    }
 		} else {
-		    distancesq = d2sq.x + d2sq.y;
+		    if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
+			distancesq = d1sq.x + d2sq.y;
+		    } else {
+			distancesq = d2sq.x + d1sq.y;
+		    }
 		}
 	    }
-	  } else {
-	    if (d1sq.y < d2sq.y) {
-		if ((d1sq.x + d1sq.y) < (d2sq.x + d2sq.y)) {
-		    distancesq = d1sq.x + d1sq.y;
-		} else {
-		    distancesq = d2sq.x + d2sq.y;
-		}
-	    } else {
-		if ((d1sq.x + d2sq.y) < (d2sq.x + d1sq.y)) {
-		    distancesq = d1sq.x + d2sq.y;
-		} else {
-		    distancesq = d2sq.x + d1sq.y;
-		}
+	    max_distance[span_index] = sqrt(distancesq);
+	    if (max_distance[span_index] < max_dist_to_closest_pt) {
+		max_dist_to_closest_pt = max_distance[span_index];
 	    }
-	  }
-	  max_distance[span_index] = sqrt(distancesq);
-	  if (max_distance[span_index] < max_dist_to_closest_pt) {
-	      max_dist_to_closest_pt = max_distance[span_index];
-	  }
-	  if (max_distance[span_index] < min_distance[span_index]) {
-	      // should only be here for near equal fuzz
-	      min_distance[span_index] = max_distance[span_index];
-	  }
+	    if (max_distance[span_index] < min_distance[span_index]) {
+		// should only be here for near equal fuzz
+		min_distance[span_index] = max_distance[span_index];
+	    }
 	}
-	for ( int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++ )
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
 	{
 
-	  if ( skip[span_index] )
-	    continue;
+	    if (skip[span_index])
+		continue;
 
-	  if (min_distance[span_index] > max_dist_to_closest_pt) {
-	      skip[span_index] = true;
-	      continue;
-	  }
+	    if (min_distance[span_index] > max_dist_to_closest_pt) {
+		skip[span_index] = true;
+		continue;
+	    }
 
 	}
 
@@ -1868,7 +1870,7 @@ bool trim_GetClosestPoint3dFirstOrder(
 	ON_3dPoint point;
 	double closest_distance = DBL_MAX;
 	double closestT = DBL_MAX;
-	for ( int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++ )
+	for (int span_index = 0; span_index <= N.m_cv_count - N.m_order; span_index++)
 	{
 	    if (skip[span_index]) {
 		continue;
@@ -1880,19 +1882,19 @@ bool trim_GetClosestPoint3dFirstOrder(
 	    double previous_distance = DBL_MAX;
 	    ON_3dVector firstDervative, secondDervative;
 	    while (notdone
-		    && trim.Ev2Der(t0, point, firstDervative, secondDervative)
-		    && ON_EvCurvature(firstDervative, secondDervative, T, K)) {
+		   && trim.Ev2Der(t0, point, firstDervative, secondDervative)
+		   && ON_EvCurvature(firstDervative, secondDervative, T, K)) {
 		ON_Line line(point, point + 100.0 * T);
 		q = line.ClosestPointTo(p2d);
 		double delta_t = (firstDervative * (q - point))
-		        / (firstDervative * firstDervative);
+		    / (firstDervative * firstDervative);
 		double new_t0 = t0 + delta_t;
 		if (!span_interval[span_index].Includes(new_t0, false)) {
 		    // limit to interval
 		    int i = (span_interval[span_index].m_t[0] <= span_interval[span_index].m_t[1]) ? 0 : 1;
 		    new_t0 =
-			    (new_t0 < span_interval[span_index].m_t[i]) ?
-				    span_interval[span_index].m_t[i] : span_interval[span_index].m_t[1 - i];
+			(new_t0 < span_interval[span_index].m_t[i]) ?
+			span_interval[span_index].m_t[i] : span_interval[span_index].m_t[1 - i];
 		}
 		delta_t = new_t0 - t0;
 		t0 = new_t0;
@@ -2082,6 +2084,7 @@ getKnotInterval(BSpline& bspline, double u)
     return k;
 }
 
+
 ON_NurbsCurve*
 interpolateLocalCubicCurve(ON_2dPointArray &Q)
 {
@@ -2175,6 +2178,7 @@ interpolateLocalCubicCurve(ON_2dPointArray &Q)
     }
     return c;
 }
+
 
 ON_NurbsCurve*
 interpolateLocalCubicCurve(const ON_3dPointArray &Q)
@@ -2323,9 +2327,10 @@ IsAtSeam(const ON_Surface *surf, int dir, double u, double v, double tol)
     return rc;
 }
 
+
 /*
- *  Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
- *  the floating point equality used by openNURBS.
+ * Similar to openNURBS's surf->IsAtSeam() function but uses tolerance to do a near check versus
+ * the floating point equality used by openNURBS.
  * rc = 0 Not on seam, 1 on East/West seam(umin/umax), 2 on North/South seam(vmin/vmax), 3 seam on both U/V boundaries
  */
 int
@@ -2340,26 +2345,28 @@ IsAtSeam(const ON_Surface *surf, double u, double v, double tol)
     return rc;
 }
 
+
 int
 IsAtSeam(const ON_Surface *surf, int dir, const ON_2dPoint &pt, double tol)
 {
     int rc = 0;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
-    rc = IsAtSeam(surf,dir,unwrapped_pt.x,unwrapped_pt.y,tol);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSeam(surf, dir, unwrapped_pt.x, unwrapped_pt.y, tol);
 
     return rc;
 }
 
+
 /*
- *  Similar to IsAtSeam(surf,u,v,tol) function but takes a ON_2dPoint
- *  and unwraps any closed seam extents before passing on IsAtSeam(surf,u,v,tol)
+ * Similar to IsAtSeam(surf, u, v, tol) function but takes a ON_2dPoint
+ * and unwraps any closed seam extents before passing on IsAtSeam(surf, u, v, tol)
  */
 int
 IsAtSeam(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
     int rc = 0;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
-    rc = IsAtSeam(surf,unwrapped_pt.x,unwrapped_pt.y,tol);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSeam(surf, unwrapped_pt.x, unwrapped_pt.y, tol);
 
     return rc;
 }
@@ -2389,15 +2396,17 @@ IsAtSingularity(const ON_Surface *surf, double u, double v, double tol)
     return -1;
 }
 
+
 int
 IsAtSingularity(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
     int rc = 0;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
-    rc = IsAtSingularity(surf,unwrapped_pt.x,unwrapped_pt.y,tol);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
+    rc = IsAtSingularity(surf, unwrapped_pt.x, unwrapped_pt.y, tol);
 
     return rc;
 }
+
 
 ON_2dPointArray *
 pullback_samples(PBCData* data,
@@ -2453,14 +2462,14 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
+		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 	    }
 	    p = curve->PointAt(knots[i]);
 	    p3d = ON_3dPoint::UnsetPoint;
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 		samples->Append(pt);
 	    }
 	} else {
@@ -2469,13 +2478,13 @@ pullback_samples(PBCData* data,
 		for (int j = 1; j < samplesperknotinterval; j++) {
 		    p = curve->PointAt(knots[i - 1] + j * delta);
 		    p3d = ON_3dPoint::UnsetPoint;
-		    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
+		    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 			samples->Append(pt);
 		    }
 		}
 		p = curve->PointAt(knots[i]);
 		p3d = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
+		if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
 		    samples->Append(pt);
 		}
 	    }
@@ -2487,27 +2496,27 @@ pullback_samples(PBCData* data,
 
 
 /*
- *  Unwrap 2D UV point values to within actual surface UV. Points often wrap around the closed seam.
+ * Unwrap 2D UV point values to within actual surface UV. Points often wrap around the closed seam.
  */
 ON_2dPoint
-UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt, double tol)
+UnwrapUVPoint(const ON_Surface *surf, const ON_2dPoint &pt, double tol)
 {
     ON_2dPoint p = pt;
 
     for (int i=0; i<2; i++) {
-      if (!surf->IsClosed(i))
-        continue;
-      double length = surf->Domain(i).Length();
-      double dom_min = surf->Domain(i).Min() - ON_ZERO_TOLERANCE;
-      double dom_max = surf->Domain(i).Max() + ON_ZERO_TOLERANCE;
+	if (!surf->IsClosed(i))
+	    continue;
+	double length = surf->Domain(i).Length();
+	double dom_min = surf->Domain(i).Min() - ON_ZERO_TOLERANCE;
+	double dom_max = surf->Domain(i).Max() + ON_ZERO_TOLERANCE;
 
-      if (p[i] < surf->Domain(i).m_t[0] - tol) {
-	  int domains_away = (int)(((dom_min - p[i]) / length) + 1.0);
-	  p[i] += length*domains_away;
-      } else if (p[i] >= surf->Domain(i).m_t[1] + tol) {
-	  int domains_away = (int)(((p[i] - dom_max) / length) + 1.0);
-	  p[i] -= length * domains_away;
-      }
+	if (p[i] < surf->Domain(i).m_t[0] - tol) {
+	    int domains_away = (int)(((dom_min - p[i]) / length) + 1.0);
+	    p[i] += length*domains_away;
+	} else if (p[i] >= surf->Domain(i).m_t[1] + tol) {
+	    int domains_away = (int)(((p[i] - dom_max) / length) + 1.0);
+	    p[i] -= length * domains_away;
+	}
     }
 
     return p;
@@ -2515,22 +2524,22 @@ UnwrapUVPoint(const ON_Surface *surf,const ON_2dPoint &pt, double tol)
 
 
 double
-DistToNearestClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt)
+DistToNearestClosedSeam(const ON_Surface *surf, const ON_2dPoint &pt)
 {
     double dist = -1.0;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
     for (int i=0; i<2; i++) {
-      if (!surf->IsClosed(i))
-        continue;
-      dist = fabs(unwrapped_pt[i] - surf->Domain(i)[0]);
-      V_MIN(dist,fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
+	if (!surf->IsClosed(i))
+	    continue;
+	dist = fabs(unwrapped_pt[i] - surf->Domain(i)[0]);
+	V_MIN(dist, fabs(surf->Domain(i)[1]-unwrapped_pt[i]));
     }
     return dist;
 }
 
 
 void
-GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_pt, double UNUSED(tol)) {
+GetClosestExtendedPoint(const ON_Surface *surf, ON_2dPoint &pt, ON_2dPoint &prev_pt, double UNUSED(tol)) {
     if (surf->IsClosed(0)) {
 	double length = surf->Domain(0).Length();
 	double delta=pt.x-prev_pt.x;
@@ -2562,14 +2571,14 @@ GetClosestExtendedPoint(const ON_Surface *surf,ON_2dPoint &pt,ON_2dPoint &prev_p
 
 
 /*
- *  Simple check to determine if two consecutive points pulled back from 3d curve sampling
- *  to 2d UV parameter space crosses the seam of the closed UV. The assumption here is that
- *  the sampling of the 3d curve is a small fraction of the UV domain.
+ * Simple check to determine if two consecutive points pulled back from 3d curve sampling
+ * to 2d UV parameter space crosses the seam of the closed UV. The assumption here is that
+ * the sampling of the 3d curve is a small fraction of the UV domain.
  *
- *  // dir  - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
+ *  // dir - 0 = not crossing, 1 = south/east bound, 2 = north/west bound
  */
 bool
-ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,const ON_2dPoint &prev_pt, int &udir, int &vdir, double tol)
+ConsecutivePointsCrossClosedSeam(const ON_Surface *surf, const ON_2dPoint &pt, const ON_2dPoint &prev_pt, int &udir, int &vdir, double tol)
 {
     bool rc = false;
 
@@ -2578,11 +2587,11 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,con
      */
     int dir =0;
 
-    if (!IsAtSeam(surf,dir,pt,tol) && !IsAtSeam(surf,dir,prev_pt,tol)) {
+    if (!IsAtSeam(surf, dir, pt, tol) && !IsAtSeam(surf, dir, prev_pt, tol)) {
 	udir = vdir = 0;
 	if (surf->IsClosed(0)) {
-	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
-	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf, prev_pt);
 	    double delta=unwrapped_pt.x-unwrapped_prev_pt.x;
 	    if (fabs(delta) > surf->Domain(0).Length()/2.0) {
 		if (delta < 0.0) {
@@ -2595,10 +2604,10 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,con
 	}
     }
     dir = 1;
-    if (!IsAtSeam(surf,dir,pt,tol) && !IsAtSeam(surf,dir,prev_pt,tol)) {
+    if (!IsAtSeam(surf, dir, pt, tol) && !IsAtSeam(surf, dir, prev_pt, tol)) {
 	if (surf->IsClosed(1)) {
-	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt);
-	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf,prev_pt);
+	    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt);
+	    ON_2dPoint unwrapped_prev_pt = UnwrapUVPoint(surf, prev_pt);
 	    double delta=unwrapped_pt.y-unwrapped_prev_pt.y;
 	    if (fabs(delta) > surf->Domain(1).Length()/2.0) {
 		if (delta < 0.0) {
@@ -2614,15 +2623,16 @@ ConsecutivePointsCrossClosedSeam(const ON_Surface *surf,const ON_2dPoint &pt,con
     return rc;
 }
 
+
 /*
- *  If within UV tolerance to a seam force force to actually seam value so surface
- *  seam function can be used.
+ * If within UV tolerance to a seam force force to actually seam value so surface
+ * seam function can be used.
  */
 void
 ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
 {
     int seam;
-    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf,pt,tol);
+    ON_2dPoint unwrapped_pt = UnwrapUVPoint(surf, pt, tol);
     ON_2dVector wrap = ON_2dVector::ZeroVector;
     ON_Interval dom[2] = { ON_Interval::EmptyInterval, ON_Interval::EmptyInterval };
     double length[2] = { ON_UNSET_VALUE, ON_UNSET_VALUE};
@@ -2633,17 +2643,17 @@ ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
 	if (!surf->IsClosed(i))
 	    continue;
 	if (pt[i] > (dom[i].m_t[1] + tol)) {
-	  ON_2dPoint p = pt;
-	  while (p[i] > (dom[i].m_t[1] + tol)) {
-	      p[i] -= length[i];
-	      wrap[i] += 1.0;
-	  }
+	    ON_2dPoint p = pt;
+	    while (p[i] > (dom[i].m_t[1] + tol)) {
+		p[i] -= length[i];
+		wrap[i] += 1.0;
+	    }
 	} else if (pt[i] < (dom[i].m_t[0] - tol)) {
-	  ON_2dPoint p = pt;
-	  while (p[i] < (dom[i].m_t[0] - tol)) {
-	      p[i] += length[i];
-	      wrap[i] -= 1.0;
-	  }
+	    ON_2dPoint p = pt;
+	    while (p[i] < (dom[i].m_t[0] - tol)) {
+		p[i] += length[i];
+		wrap[i] -= 1.0;
+	    }
 	}
 	wrap[i] = wrap[i] * length[i];
     }
@@ -2679,8 +2689,8 @@ ForceToClosestSeam(const ON_Surface *surf, ON_2dPoint &pt, double tol)
 
 
 /*
- *  If point lies on a seam(s) swap to opposite side of UV.
- *  hint = 1 swap E/W, 2 swap N/S or default 3 swap both
+ * If point lies on a seam(s) swap to opposite side of UV.
+ * hint = 1 swap E/W, 2 swap N/S or default 3 swap both
  */
 void
 SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
@@ -2690,7 +2700,7 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
     dom[0] = surf->Domain(0);
     dom[1] = surf->Domain(1);
 
-    if ((seam=surf->IsAtSeam(p.x,p.y)) > 0) {
+    if ((seam=surf->IsAtSeam(p.x, p.y)) > 0) {
 	if (seam == 1) { // east/west seam
 	    if (fabs(p.x - dom[0].m_t[0]) > dom[0].Length()/2.0) {
 		p.x = dom[0].m_t[0]; // on east swap to west seam
@@ -2734,10 +2744,10 @@ SwapUVSeamPoint(const ON_Surface *surf, ON_2dPoint &p, int hint)
 
 
 /*
- *  Find where Pullback of 3d curve crosses closed seam of surface UV
+ * Find where Pullback of 3d curve crosses closed seam of surface UV
  */
 bool
-Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset),double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol,double same_point_tol,double within_distance_tol)
+Find3DCurveSeamCrossing(PBCData &data, double t0, double t1, double UNUSED(offset), double &seam_t, ON_2dPoint &from, ON_2dPoint &to, double tol, double same_point_tol, double within_distance_tol)
 {
     bool rc = true;
     const ON_Surface *surf = data.surf;
@@ -2758,20 +2768,20 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 	ON_3dPoint check_pt_3d = ON_3dPoint::UnsetPoint;
 	int udir=0;
 	int vdir=0;
-	if (surface_GetClosestPoint3dFirstOrder(surf,p0_3d,p0_2d,check_pt_3d,p0_distance,0,same_point_tol,within_distance_tol) &&
-		surface_GetClosestPoint3dFirstOrder(surf,p1_3d,p1_2d,check_pt_3d,p1_distance,0,same_point_tol,within_distance_tol) ) {
-	    if (ConsecutivePointsCrossClosedSeam(surf,p0_2d,p1_2d,udir,vdir,tol)) {
+	if (surface_GetClosestPoint3dFirstOrder(surf, p0_3d, p0_2d, check_pt_3d, p0_distance, 0, same_point_tol, within_distance_tol) &&
+	    surface_GetClosestPoint3dFirstOrder(surf, p1_3d, p1_2d, check_pt_3d, p1_distance, 0, same_point_tol, within_distance_tol)) {
+	    if (ConsecutivePointsCrossClosedSeam(surf, p0_2d, p1_2d, udir, vdir, tol)) {
 		ON_2dPoint p_2d;
 		//lets check to see if p0 || p1 are already on a seam
 		int seam0=0;
-		if ((seam0 = IsAtSeam(surf,p0_2d, tol)) > 0) {
+		if ((seam0 = IsAtSeam(surf, p0_2d, tol)) > 0) {
 		    ForceToClosestSeam(surf, p0_2d, tol);
 		}
 		int seam1 = 0;
-		if ((seam1 = IsAtSeam(surf,p1_2d, tol)) > 0) {
+		if ((seam1 = IsAtSeam(surf, p1_2d, tol)) > 0) {
 		    ForceToClosestSeam(surf, p1_2d, tol);
 		}
-		if (seam0 > 0 ) {
+		if (seam0 > 0) {
 		    if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
 			rc = false;
 		    } else { // just p0 on seam
@@ -2786,16 +2796,16 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 		} else { // crosses the seam somewhere in between the two points
 		    bool seam_not_found = true;
 		    while(seam_not_found) {
-			double d0 = DistToNearestClosedSeam(surf,p0_2d);
-			double d1 = DistToNearestClosedSeam(surf,p1_2d);
+			double d0 = DistToNearestClosedSeam(surf, p0_2d);
+			double d1 = DistToNearestClosedSeam(surf, p1_2d);
 			if ((d0 > 0.0) && (d1 > 0.0)) {
 			    double t = t0 + (t1 - t0)*(d0/(d0+d1));
 			    int seam;
 			    ON_3dPoint p_3d = data.curve->PointAt(t);
 			    double distance;
 
-			    if (surface_GetClosestPoint3dFirstOrder(surf,p_3d,p_2d,check_pt_3d,distance,0,same_point_tol,within_distance_tol)) {
-				if ((seam=IsAtSeam(surf,p_2d, tol)) > 0) {
+			    if (surface_GetClosestPoint3dFirstOrder(surf, p_3d, p_2d, check_pt_3d, distance, 0, same_point_tol, within_distance_tol)) {
+				if ((seam=IsAtSeam(surf, p_2d, tol)) > 0) {
 				    ForceToClosestSeam(surf, p_2d, tol);
 				    from = to = p_2d;
 				    seam_t = t;
@@ -2807,10 +2817,10 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 				    seam_not_found=false;
 				    rc = true;
 				} else {
-				    if (ConsecutivePointsCrossClosedSeam(surf,p0_2d,p_2d,udir,vdir,tol)) {
+				    if (ConsecutivePointsCrossClosedSeam(surf, p0_2d, p_2d, udir, vdir, tol)) {
 					p1_2d = p_2d;
 					t1 = t;
-				    } else if (ConsecutivePointsCrossClosedSeam(surf,p_2d,p1_2d,udir,vdir,tol)) {
+				    } else if (ConsecutivePointsCrossClosedSeam(surf, p_2d, p1_2d, udir, vdir, tol)) {
 					p0_2d = p_2d;
 					t0=t;
 				    } else {
@@ -2837,10 +2847,10 @@ Find3DCurveSeamCrossing(PBCData &data,double t0,double t1, double UNUSED(offset)
 
 
 /*
- *  Find where 2D trim curve crosses closed seam of surface UV
+ * Find where 2D trim curve crosses closed seam of surface UV
  */
 bool
-FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,ON_2dPoint &from,ON_2dPoint &to,double tol)
+FindTrimSeamCrossing(const ON_BrepTrim &trim, double t0, double t1, double &seam_t, ON_2dPoint &from, ON_2dPoint &to, double tol)
 {
     bool rc = true;
     const ON_Surface *surf = trim.SurfaceOf();
@@ -2853,23 +2863,23 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 	dom[0] = surf->Domain(0);
 	dom[1] = surf->Domain(1);
 
-	p0 = UnwrapUVPoint(surf,p0);
-	p1 = UnwrapUVPoint(surf,p1);
+	p0 = UnwrapUVPoint(surf, p0);
+	p1 = UnwrapUVPoint(surf, p1);
 
         int udir=0;
         int vdir=0;
-	if (ConsecutivePointsCrossClosedSeam(surf,p0,p1,udir,vdir,tol)) {
+	if (ConsecutivePointsCrossClosedSeam(surf, p0, p1, udir, vdir, tol)) {
 	    ON_2dPoint p;
 	    //lets check to see if p0 || p1 are already on a seam
 	    int seam0=0;
-	    if ((seam0 = IsAtSeam(surf,p0, tol)) > 0) {
+	    if ((seam0 = IsAtSeam(surf, p0, tol)) > 0) {
 		ForceToClosestSeam(surf, p0, tol);
 	    }
 	    int seam1 = 0;
-	    if ((seam1 = IsAtSeam(surf,p1, tol)) > 0) {
+	    if ((seam1 = IsAtSeam(surf, p1, tol)) > 0) {
 		ForceToClosestSeam(surf, p1, tol);
 	    }
-	    if (seam0 > 0 ) {
+	    if (seam0 > 0) {
 		if (seam1 > 0) { // both p0 & p1 on seam shouldn't happen report error and return false
 		    rc = false;
 		} else { // just p0 on seam
@@ -2884,13 +2894,13 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 	    } else { // crosses the seam somewhere in between the two points
 		bool seam_not_found = true;
 		while (seam_not_found) {
-		    double d0 = DistToNearestClosedSeam(surf,p0);
-		    double d1 = DistToNearestClosedSeam(surf,p1);
+		    double d0 = DistToNearestClosedSeam(surf, p0);
+		    double d1 = DistToNearestClosedSeam(surf, p1);
 		    if ((d0 > tol) && (d1 > tol)) {
 			double t = t0 + (t1 - t0)*(d0/(d0+d1));
 			int seam;
 			p = trim.PointAt(t);
-			if ((seam=IsAtSeam(surf,p, tol)) > 0) {
+			if ((seam=IsAtSeam(surf, p, tol)) > 0) {
 			    ForceToClosestSeam(surf, p, tol);
 			    from = to = p;
 			    seam_t = t;
@@ -2903,10 +2913,10 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 			    seam_not_found=false;
 			    rc = true;
 			} else {
-			    if (ConsecutivePointsCrossClosedSeam(surf,p0,p,udir,vdir,tol)) {
+			    if (ConsecutivePointsCrossClosedSeam(surf, p0, p, udir, vdir, tol)) {
 				p1 = p;
 				t1 = t;
-			    } else if (ConsecutivePointsCrossClosedSeam(surf,p,p1,udir,vdir,tol)) {
+			    } else if (ConsecutivePointsCrossClosedSeam(surf, p, p1, udir, vdir, tol)) {
 				p0 = p;
 				t0=t;
 			    } else {
@@ -2929,10 +2939,10 @@ FindTrimSeamCrossing(const ON_BrepTrim &trim,double t0,double t1,double &seam_t,
 
 void
 pullback_samples_from_closed_surface(PBCData* data,
-		 double t,
-		 double s,
-		 double same_point_tol,
-		 double within_distance_tol)
+				     double t,
+				     double s,
+				     double same_point_tol,
+				     double within_distance_tol)
 {
     if (!data)
 	return;
@@ -2993,8 +3003,8 @@ pullback_samples_from_closed_surface(PBCData* data,
 	    ON_3dPoint p = curve->PointAt(curr_t);
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,pt,p3d,distance,0,same_point_tol,within_distance_tol)) {
-		if (IsAtSeam(surf,pt,PBC_SEAM_TOL) > 0) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, pt, p3d, distance, 0, same_point_tol, within_distance_tol)) {
+		if (IsAtSeam(surf, pt, PBC_SEAM_TOL) > 0) {
 		    ForceToClosestSeam(surf, pt, PBC_SEAM_TOL);
 		}
 		if ((i == istart) && (j == 0)) {
@@ -3006,24 +3016,24 @@ pullback_samples_from_closed_surface(PBCData* data,
 		}
 		int udir= 0;
 		int vdir= 0;
-		if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir,PBC_SEAM_TOL)) {
-		    int pt_seam = surf->IsAtSeam(pt.x,pt.y);
-		    int prev_pt_seam = surf->IsAtSeam(prev_pt.x,prev_pt.y);
-		    if ( pt_seam > 0) {
+		if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+		    int pt_seam = surf->IsAtSeam(pt.x, pt.y);
+		    int prev_pt_seam = surf->IsAtSeam(prev_pt.x, prev_pt.y);
+		    if (pt_seam > 0) {
 			if ((prev_pt_seam > 0) && (samples->Count() == 1)) {
 			    samples->Empty();
-			    SwapUVSeamPoint(surf, prev_pt,pt_seam);
+			    SwapUVSeamPoint(surf, prev_pt, pt_seam);
 			    samples->Append(prev_pt);
 			} else {
 			    if (pt_seam == 3) {
 				if (prev_pt_seam == 1) {
 				    pt.x = prev_pt.x;
-				    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir,PBC_SEAM_TOL)) {
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
 					SwapUVSeamPoint(surf, pt, 2);
 				    }
 				} else if (prev_pt_seam == 2) {
 				    pt.y = prev_pt.y;
-				    if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir,PBC_SEAM_TOL)) {
+				    if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
 					SwapUVSeamPoint(surf, pt, 1);
 				    }
 				}
@@ -3038,9 +3048,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 			    samples->Append(prev_pt);
 			}
 		    } else if (data->curve->IsClosed()) {
-			ON_2dPoint from,to;
+			ON_2dPoint from, to;
 			double seam_t;
-			if (Find3DCurveSeamCrossing(*data,prev_t,curr_t,offset,seam_t,from,to,PBC_TOL,same_point_tol,within_distance_tol)) {
+			if (Find3DCurveSeamCrossing(*data, prev_t, curr_t, offset, seam_t, from, to, PBC_TOL, same_point_tol, within_distance_tol)) {
 			    samples->Append(from);
 			    data->segments->push_back(samples);
 			    samples= new ON_2dPointArray();
@@ -3074,9 +3084,9 @@ pullback_samples_from_closed_surface(PBCData* data,
 		for (std::list<ON_2dPointArray *>::reverse_iterator rit=data->segments->rbegin(); rit!=data->segments->rend(); ++seg) {
 		    samples = *rit;
 		    if (seg < numsegs-1) { // since end points should be repeated
-			reordered_samples->Append(samples->Count()-1,(const ON_2dPoint *)samples->Array());
+			reordered_samples->Append(samples->Count()-1, (const ON_2dPoint *)samples->Array());
 		    } else {
-			reordered_samples->Append(samples->Count(),(const ON_2dPoint *)samples->Array());
+			reordered_samples->Append(samples->Count(), (const ON_2dPoint *)samples->Array());
 		    }
 		    data->segments->erase((++rit).base());
 		    rit = data->segments->rbegin();
@@ -3124,10 +3134,10 @@ pullback_samples(const ON_Surface* surf,
 	    ON_3dPoint p3d = ON_3dPoint::UnsetPoint;
 	    double distance;
 	    int quadrant = 0; // optional - 0 = default, 1 from NE quadrant, 2 from NW quadrant, 3 from SW quadrant, 4 from SE quadrant
-	    if (surface_GetClosestPoint3dFirstOrder(surf,p,uv,p3d,distance,quadrant,same_point_tol,within_distance_tol)) {
+	    if (surface_GetClosestPoint3dFirstOrder(surf, p, uv, p3d, distance, quadrant, same_point_tol, within_distance_tol)) {
 		if (IsAtSeam(surf, uv, PBC_SEAM_TOL) > 0) {
-		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0,same_point_tol,within_distance_tol);
-		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax,same_point_tol,within_distance_tol);
+		    ON_2dPointArray *samples1 = pullback_samples(data, tmin, 0.0, same_point_tol, within_distance_tol);
+		    ON_2dPointArray *samples2 = pullback_samples(data, 0.0, tmax, same_point_tol, within_distance_tol);
 		    if (samples1 != NULL) {
 			data->segments->push_back(samples1);
 		    }
@@ -3135,7 +3145,7 @@ pullback_samples(const ON_Surface* surf,
 			data->segments->push_back(samples2);
 		    }
 		} else {
-		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
+		    ON_2dPointArray *samples = pullback_samples(data, tmin, tmax, same_point_tol, within_distance_tol);
 		    if (samples != NULL) {
 			data->segments->push_back(samples);
 		    }
@@ -3146,10 +3156,10 @@ pullback_samples(const ON_Surface* surf,
 		return NULL;
 	    }
 	} else {
-	    pullback_samples_from_closed_surface(data, tmin, tmax,same_point_tol,within_distance_tol);
+	    pullback_samples_from_closed_surface(data, tmin, tmax, same_point_tol, within_distance_tol);
 	}
     } else {
-	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax,same_point_tol,within_distance_tol);
+	ON_2dPointArray *samples = pullback_samples(data, tmin, tmax, same_point_tol, within_distance_tol);
 	if (samples != NULL) {
 	    data->segments->push_back(samples);
 	}
@@ -3917,7 +3927,7 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
 	    ON_2dPointArray *samples = (*si);
 	    for (int i = 0; i < samples->Count(); i++) {
 		pt = &(*samples)[i];
-		if (!IsAtSeam(surf,*pt,PBC_SEAM_TOL)) {
+		if (!IsAtSeam(surf, *pt, PBC_SEAM_TOL)) {
 		    if (prev_pt == NULL) {
 			prev_pt = pt;
 		    } else {
@@ -3926,7 +3936,7 @@ number_of_seam_crossings(std::list<PBCData*> &pbcs)
 		    int udir=0;
 		    int vdir=0;
 		    if (next_pt != NULL) {
-			if (ConsecutivePointsCrossClosedSeam(surf,*prev_pt,*next_pt,udir,vdir,PBC_SEAM_TOL)) {
+			if (ConsecutivePointsCrossClosedSeam(surf, *prev_pt, *next_pt, udir, vdir, PBC_SEAM_TOL)) {
 			    rc++;
 			}
 			prev_pt = next_pt;
@@ -3956,7 +3966,7 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
     std::list<PBCData*>::iterator cs = pbcs.begin();
     ON_2dPoint *prev_pt = NULL;
     int prev_seam = 0;
-    while ( cs != pbcs.end()) {
+    while (cs != pbcs.end()) {
 	PBCData *data = (*cs);
 	const ON_Surface *surf = data->surf;
 	std::list<ON_2dPointArray *>::iterator seg = data->segments->begin();
@@ -3964,7 +3974,7 @@ check_for_points_on_same_seam(std::list<PBCData*> &pbcs)
 	    ON_2dPointArray *points = (*seg);
 	    for (int i=0; i < points->Count(); i++) {
 		ON_2dPoint *pt = points->At(i);
-		int seam = IsAtSeam(surf,*pt,PBC_SEAM_TOL);
+		int seam = IsAtSeam(surf, *pt, PBC_SEAM_TOL);
 		if (seam > 0) {
 		    if (prev_seam > 0) {
 			if ((seam == 1) && ((prev_seam % 2) == 1)) {
@@ -4000,10 +4010,10 @@ extend_pullback_at_shared_3D_curve_seam(std::list<PBCData*> &pbcs)
 {
     const ON_Curve *next_curve = NULL;
     std::set<const ON_Curve *> set;
-    std::map<const ON_Curve *,int> map;
+    std::map<const ON_Curve *, int> map;
     std::list<PBCData*>::iterator cs = pbcs.begin();
 
-    while ( cs != pbcs.end()) {
+    while (cs != pbcs.end()) {
 	PBCData *data = (*cs++);
 	const ON_Curve *curve = data->curve;
 	const ON_Surface *surf = data->surf;
@@ -4068,7 +4078,7 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 	if (data->curve->IsClosed()) {
 	    int numseamcrossings = number_of_seam_crossings(pbcs);
 	    if (numseamcrossings == 1) {
-		ON_2dPointArray part1,part2;
+		ON_2dPointArray part1, part2;
 		ON_2dPointArray* curr_point_array = &part2;
 		while (si != data->segments->end()) {
 		    ON_2dPointArray *samples = (*si);
@@ -4081,13 +4091,13 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 			}
 			int udir= 0;
 			int vdir= 0;
-			if (ConsecutivePointsCrossClosedSeam(surf,pt,prev_pt,udir,vdir,PBC_SEAM_TOL)) {
-			    if (surf->IsAtSeam(pt.x,pt.y) > 0) {
+			if (ConsecutivePointsCrossClosedSeam(surf, pt, prev_pt, udir, vdir, PBC_SEAM_TOL)) {
+			    if (surf->IsAtSeam(pt.x, pt.y) > 0) {
 				SwapUVSeamPoint(surf, pt);
 				curr_point_array->Append(pt);
 				curr_point_array = &part1;
 				SwapUVSeamPoint(surf, pt);
-			    } else if (surf->IsAtSeam(prev_pt.x,prev_pt.y) > 0) {
+			    } else if (surf->IsAtSeam(prev_pt.x, prev_pt.y) > 0) {
 				SwapUVSeamPoint(surf, prev_pt);
 				curr_point_array->Append(prev_pt);
 			    } else {
@@ -4098,8 +4108,8 @@ shift_single_curve_loop_straddled_over_seam(std::list<PBCData*> &pbcs)
 			prev_pt = pt;
 		    }
 		    samples->Empty();
-		    samples->Append(part1.Count(),part1.Array());
-		    samples->Append(part2.Count(),part2.Array());
+		    samples->Append(part1.Count(), part1.Array());
+		    samples->Append(part2.Count(), part2.Array());
 		    if (si != data->segments->end())
 			si++;
 		}
@@ -4134,7 +4144,7 @@ extend_over_seam_crossings(std::list<PBCData*> &pbcs)
 		pt = &(*samples)[i];
 
 		if (prev_pt != NULL) {
-		    GetClosestExtendedPoint(data->surf,*pt,*prev_pt,PBC_SEAM_TOL);
+		    GetClosestExtendedPoint(data->surf, *pt, *prev_pt, PBC_SEAM_TOL);
 		}
 		prev_pt = pt;
 	    }
@@ -4179,7 +4189,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 	std::list<ON_2dPointArray *>::iterator si = data->segments->begin();
 	while (si != data->segments->end()) {
 	    ON_2dPointArray *samples = (*si);
-	    if (resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
+	    if (resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
 		// Found a starting point
 		//1) walk back up with resolved next point
 		next = (*samples).First();
@@ -4191,7 +4201,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    while (rsi != rdata->segments->rend()) {
 			ON_2dPointArray *rsamples = (*rsi);
 			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *rsamples,u_resolved,v_resolved)) {
+			if (!resolve_seam_segment(surf, *rsamples, u_resolved, v_resolved)) {
 			    resolve_seam_segment_from_next(surf, *rsamples, next);
 			}
 			next = (*rsamples).First();
@@ -4215,7 +4225,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    while (si != data->segments->end()) {
 			samples = (*si);
 			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
+			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
 			    resolve_seam_segment_from_prev(surf, *samples, prev);
 			}
 			if (samples->Count() > 1)
@@ -4238,7 +4248,7 @@ resolve_pullback_seams(std::list<PBCData*> &pbcs)
 		    while (si != data->segments->end()) {
 			samples = (*si);
 			// first try and resolve on own merits
-			if (!resolve_seam_segment(surf, *samples,u_resolved,v_resolved)) {
+			if (!resolve_seam_segment(surf, *samples, u_resolved, v_resolved)) {
 			    resolve_seam_segment_from_prev(surf, *samples, prev);
 			}
 			if (samples->Count() > 1)

@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include "bio.h"
 #include <assert.h>
 #include <vector>
 
@@ -1711,14 +1712,14 @@ typedef struct _gcp_data {
 bool
 gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv)
 {
-    bool evaluated = data.surf->Ev2Der(uv[0],
-				       uv[1],
-				       data.S,
-				       data.du,
-				       data.dv,
-				       data.duu,
-				       data.duv,
-				       data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
+    ON_BOOL32 evaluated = data.surf->Ev2Der(uv[0],
+					    uv[1],
+					    data.S,
+					    data.du,
+					    data.dv,
+					    data.duu,
+					    data.duv,
+					    data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
     if (!evaluated) return false;
     out_grad[0] = 2 * (data.du * (data.S - data.pt));
     out_grad[1] = 2 * (data.dv * (data.S - data.pt));
