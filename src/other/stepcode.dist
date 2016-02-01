@@ -132,6 +132,9 @@ src/express/generated/verification_info.cmake
 src/express/parse_data.h
 src/express/stack.h
 src/express/token_type.h
+src/express/test/CMakeLists.txt
+src/express/test/print_attrs.c
+src/express/test/print_schemas.c
 src/exp2cxx/classes.h
 src/exp2cxx/complexSupport.h
 src/exp2python
