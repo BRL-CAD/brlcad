@@ -2,7 +2,7 @@
 #                          G Q A . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2014 United States Government as represented by
+# Copyright (c) 2010-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -194,6 +194,11 @@ $CMD >> gqa.log 2>&1
 
 
 CMD="$GQA -g 50mm -Ao gqa.g closed_box.r"
+echo $CMD
+echo $CMD >> gqa.log 2>&1
+$CMD >> gqa.log 2>&1
+
+CMD="$GQA -Am gqa.g closed_box.r"
 echo $CMD
 echo $CMD >> gqa.log 2>&1
 $CMD >> gqa.log 2>&1

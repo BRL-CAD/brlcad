@@ -1,7 +1,7 @@
-/*                            D B . H
+/*                            D B 4 . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db.h
+/** @file rt/db4.h
  * @brief
  *		GED Database Format v4
  *

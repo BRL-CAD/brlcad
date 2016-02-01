@@ -7,6 +7,7 @@ set(bu_headers
   debug.h
   defines.h
   endian.h
+  env.h
   file.h
   getopt.h
   hash.h

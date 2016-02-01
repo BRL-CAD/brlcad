@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
- * windows when we cannot autogenerate it easily. do not include
+ * windows when we cannot auto-generate it easily. do not include
  * config.h if this file has been installed.  (public header files
  * should not use config defines)
  */
@@ -91,7 +91,7 @@ long int lrint(double x);
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+/* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *
  * TODO: test removal of __STRICT_ANSI__ on Windows.
@@ -234,23 +234,14 @@ typedef ptrdiff_t ssize_t;
 #  undef UNUSED
 #endif
 #if GCC_PREREQ(2, 5)
-   /* GCC-style */
+   /* GCC-style compilers have an attribute */
 #  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#elif defined(__cplusplus)
+   /* C++ allows the name to go away */
+#  define UNUSED(parameter) /* parameter */
 #else
-   /* MSVC/C++ */
-#  ifdef __cplusplus
-#    if defined(NDEBUG)
-#      define UNUSED(parameter) /* parameter */
-#    else /* some of them are asserted */
-#       define UNUSED(parameter) (parameter)
-#    endif
-#  else
-#    if defined(_MSC_VER)
-     /* disable reporting an "unreferenced formal parameter" */
-#      pragma warning( disable : 4100 )
-#    endif
-#    define UNUSED(parameter) (parameter)
-#  endif
+   /* some are asserted when !NDEBUG */
+#  define UNUSED(parameter) (parameter)
 #endif
 
 /**
@@ -342,6 +333,46 @@ typedef ptrdiff_t ssize_t;
 #define HAVE_CLANG_DIAG_PRAGMAS \
     (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
 
+/**
+ * globally disable certain warnings.  do NOT add new warnings here
+ * without discussion and research.  only warnings that cannot be
+ * quieted without objectively decreasing code quality should be
+ * added!  even warnings that are innocuous or produce false-positive
+ * should be quelled when possible.
+ *
+ * any warnings added should include a description and justification.
+ */
+#if defined(_MSC_VER)
+
+/* /W1 warning C4351: new behavior: elements of array '...' will be default initialized
+ *
+ * i.e., this is the "we now implement constructor member
+ * initialization correctly" warning that tells the user an
+ * initializer like this:
+ *
+ * Class::Class() : some_array() {}
+ *
+ * will now initialize all members of some_array.  previous to
+ * MSVC2005, behavior was to not initialize in some cases...
+ */
+#  pragma warning( disable : 4351 )
+
+/* dubious warnings that are not yet intentionally disabled:
+ *
+ * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
+ *
+ * this warning is caused by assigning an int (or other non-boolean
+ * value) to a bool like this:
+ *
+ * int i = 1; bool b = i;
+ *
+ * there is something to be said for making such assignments explicit,
+ * e.g., "b = (i != 0);", but this arguably decreases readability or
+ * clarity and the fix has potential for introducing logic errors.
+ */
+/*#  pragma warning( disable : 4800 ) */
+
+#endif
 
 /**
  * Provide a macro for different treatment of initialized extern const
@@ -362,6 +393,7 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 #endif  /* COMMON_H */
+
 /** @} */
 /*
  * Local Variables:

@@ -3232,11 +3232,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/fb-orle.php">Fb Orle</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/fb-pix.php">Fb pix</link>
       </para>
     </listitem>
@@ -3483,16 +3478,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/orle-fb.php">Orle Fb</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/orle-pix.php">Orle Pix</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/patch-g.php">Patch G</link>
       </para>
     </listitem>
@@ -3634,11 +3619,6 @@
     <listitem>
       <para>
         <link xlink:href="../../man1/en/pixmorph.php">Pix Morph</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/pix-orle.php">Pix orle</link>
       </para>
     </listitem>
     <listitem>

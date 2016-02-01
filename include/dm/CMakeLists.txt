@@ -6,7 +6,7 @@ set(dm_headers
 
 install(FILES ${dm_headers} DESTINATION ${INCLUDE_DIR}/brlcad/dm)
 
-CMAKEFILES(${dm_headers})
+CMAKEFILES(${dm_headers} dm-design.h)
 
 # Local Variables:
 # tab-width: 8

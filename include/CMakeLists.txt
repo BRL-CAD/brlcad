@@ -1,8 +1,11 @@
 add_subdirectory(bu)
 add_subdirectory(bn)
 add_subdirectory(bg)
+add_subdirectory(brep)
 add_subdirectory(dm)
 add_subdirectory(gcv)
+add_subdirectory(ged)
+add_subdirectory(icv)
 add_subdirectory(optical)
 add_subdirectory(rt)
 add_subdirectory(fb)
@@ -28,13 +31,11 @@ set(public_hdrs
   brlcad.i
   dm.h
   fb.h
-  fbserv_obj.h
   fft.h
   gcv.h
   icv.h
   libtermio.h
   nmg.h
-  obj.h
   optical.h
   photonmap.h
   pc.h
@@ -58,9 +59,6 @@ set(noinst_HEADERS
   bnetwork.h
   brlcad_ident.h
   brlcad_version.h
-  conf.h
-  fbmsg.h
-  sysv.h
   )
 CMAKEFILES(${noinst_HEADERS})
 

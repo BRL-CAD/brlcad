@@ -1,7 +1,7 @@
 #                     C M A K E L I S T S . T X T
 # BRL-CAD
 #
-# Copyright (c) 2010-2014 United States Government as represented by
+# Copyright (c) 2010-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -507,10 +507,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# To support "make check" (which will build the required targets for testing
-# in the style of GNU Autotools, we define a "check" target per
-# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
-# automatically assemble its targets into the check dependency list.
+# "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
 if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
@@ -520,25 +517,70 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
+  add_custom_target(check
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
+    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
+    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
+    )
+  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
+endif(NOT BRLCAD_IS_SUBBUILD)
+
+
+# To support "make unit" (which will build the required targets for testing
+# in the style of GNU Autotools "make check") we define a "unit" target per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the unit dependency list.
+if(NOT BRLCAD_IS_SUBBUILD)
+  include(ProcessorCount)
+  ProcessorCount(N)
+  if(NOT N EQUAL 0)
+    set(JFLAG "-j${N}")
+  else(NOT N EQUAL 0)
+    # Huh?  No j flag if we can't get a processor count
+    set(JFLAG)
+  endif(NOT N EQUAL 0)
+
   if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG})
+    set(CONFIG $<CONFIG>)
   else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG})
+    set(CONFIG $<CONFIGURATION>)
   endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
-  set_target_properties(check PROPERTIES FOLDER "BRL-CAD Unit Tests")
+
+  add_custom_target(unit
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"unit\" a.k.a. \"BRL-CAD Unit Testing\" target runs the"
+    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD's API unit tests that are expected to work (i.e.,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development).  All dependencies required"
+    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_CTEST_COMMAND} -C $CONFIG -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    )
+
+  set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
+
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
     if (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
+	add_dependencies(unit ${test_prog})
 	add_dependencies(check ${test_prog})
-      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
     else (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
+	add_dependencies(unit ${ARGV3})
 	add_dependencies(check ${ARGV3})
-      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
     endif (NOT "${test_name}" STREQUAL "NAME")
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+
 
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
@@ -660,6 +702,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "BRL-CAD high level build configuration")
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" Debug Release)
 endif(NOT BRLCAD_IS_SUBBUILD)
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+else(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
@@ -947,17 +994,6 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # party setup to use.
 include(${BRLCAD_CMAKE_DIR}/Fink_MacPorts.cmake)
 
-# Option for librtserver, used to help Java programs interface with librt.
-# Find Java and JNI, and conditionalize the default setting on Java's
-# availability
-FIND_PACKAGE(Java)
-FIND_PACKAGE(JNI)
-if(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." ON)
-else(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
-endif(JNI_FOUND AND JAVA_FOUND)
-
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
@@ -1092,6 +1128,8 @@ endif(BRLCAD_ENABLE_AQUA)
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Core_DIR)
+mark_as_advanced(Qt5Gui_DIR)
 if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
   message("QT interface requested, but QT5 is not found - disabling")
   set(BRLCAD_ENABLE_QT OFF)
@@ -1218,10 +1256,9 @@ endif(BRLCAD_ENABLE_STRICT)
 # Build with compiler optimization flags.  This should normally be on for
 # release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
-
-# By default, we don't want any error reports at all from src/other
-option(BRLCAD_DISABLE_SRC_OTHER_WARN "Disable warnings for src/other" ON)
-mark_as_advanced(BRLCAD_DISABLE_SRC_OTHER_WARN)
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(BRLCAD_FLAGS_OPTIMIZATION)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
@@ -1413,6 +1450,11 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook docum
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
+#----------------------------------------------------------------------
+# Load Doxygen related CMake macros
+include(${BRLCAD_CMAKE_DIR}/Doxygen.cmake)
+
+#----------------------------------------------------------------------
 # Load various wrapper macros for checking libraries, headers and
 # functions, some in use by src/other build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
@@ -1429,13 +1471,10 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 # a Bourne shell and other commands - check for them.
 include(${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake)
 
-# CMake can detect flex and bison, but apparently not generic lex/yacc.
-# Solution is to make our own generic lex/yacc Find routines that look
-# first for flex/bison, but will take whatever's available.  Since the
-# BRL-CAD project isn't supposed to rely on flex/bison specific features
-# anyway, there shouldn't be a problem.
+# CMake can detect flex, but apparently not generic lex.
+# Solution is to make our own generic lex Find routine that looks
+# first for flex, but will take whatever's available.
 include(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
-include(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
@@ -1560,12 +1599,6 @@ if(ENABLE_POSIX_COMPLIANCE)
   CHECK_CXX_FLAG("D_POSIX_C_SOURCE=200112L")
   CHECK_CXX_FLAG("D_XOPEN_SOURCE=500")
 endif()
-
-# Silence check for unused arguments (used to silence clang warnings about
-# unused options on the command line). By default clang generates a lot of
-# warnings about such arguments, and we don't really care.
-CHECK_C_FLAG(Qunused-arguments)
-CHECK_CXX_FLAG(Qunused-arguments)
 
 # 64bit compilation flags
 if(${CMAKE_WORD_SIZE} MATCHES "64BIT" AND NOT CMAKE_CL_64)
@@ -1698,6 +1731,65 @@ endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "ON")
 # TODO: Fixing these is a work in progress.
 # CHECK_C_COMPILER_FLAG("Wl,--no-undefined" NO_UNDEFINED_LINKER_FLAG)
 
+# ******************************************************************* #
+# For some tests, we need Werror to make sure the test actually fails
+
+set(CMAKE_REQUIRED_FLAGS_BAK ${CMAKE_REQUIRED_FLAGS})
+CHECK_C_FLAG(Werror VARS ERROR_FLAG)
+if (ERROR_FLAG)
+  set(CMAKE_REQUIRED_FLAGS "-Werror")
+endif (ERROR_FLAG)
+
+include(CheckCSourceCompiles)
+# Check whether the compiler supports __attribute__((__noreturn__))
+check_c_source_compiles("#include <stdlib.h>\n
+void noret() __attribute__((__noreturn__)); void noret(){exit(1);} int main(int argc, char *argv[]) {noret(); return 0;}" HAVE_NORETURN_ATTRIBUTE)
+if(HAVE_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((analyzer_noreturn))
+check_c_source_compiles("void anoret() __attribute__((analyzer_noreturn)); void anoret(){return;} int main(int argc, char *argv[]) {anoret(); return 0;}" HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ANALYZER_NORETURN_ATTRIBUTE 1\n")
+endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((always_inline))
+check_c_source_compiles("inline void always_inline() __attribute__((always_inline)); inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
+if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
+endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 1, 2)))
+check_c_source_compiles("int pf(const char *f, ...) __attribute__((format (__printf__, 1, 2))); int pf(const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf(\"%c\",'a');}" HAVE_PRINTF12_ATTRIBUTE)
+if(HAVE_PRINTF12_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF12_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF12_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__printf__, 2, 3)))
+check_c_source_compiles("int pf(void *o, const char *f, ...) __attribute__((format (__printf__, 2, 3))); int pf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {return pf((void *)0, \"%c\",'a');}" HAVE_PRINTF23_ATTRIBUTE)
+if(HAVE_PRINTF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_PRINTF23_ATTRIBUTE 1\n")
+endif(HAVE_PRINTF23_ATTRIBUTE)
+
+# Check whether the compiler supports __attribute__((format (__scanf__, 2, 3)))
+check_c_source_compiles("int sf(void *o, const char *f, ...) __attribute__((format (__scanf__, 2, 3))); int sf(void *o, const char *f, ...){return 1;} int main(int argc, char *argv[]) {int i = 1; return sf((void *)0, \"%d\", &i);}" HAVE_SCANF23_ATTRIBUTE)
+if(HAVE_SCANF23_ATTRIBUTE)
+  CONFIG_H_APPEND(BRLCAD "#define HAVE_SCANF23_ATTRIBUTE 1\n")
+endif(HAVE_SCANF23_ATTRIBUTE)
+
+
+# Silence check for unused arguments (used to silence clang warnings about
+# unused options on the command line). By default clang generates a lot of
+# warnings about such arguments, and we don't really care.
+CHECK_C_FLAG(Qunused-arguments)
+CHECK_CXX_FLAG(Qunused-arguments)
+
+
+set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS_BAK})
+
+# ******************************************************************* #
+
 if(NOT MSVC)
   # We could include this, but these tests are almost entirely for
   # gcc-style flags.  This file is intentionally included after we
@@ -1749,22 +1841,6 @@ if(APPLE)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
   mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
-
-# Do some extra Java related checks.
-if(JNI_FOUND AND JAVA_FOUND)
-  BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
-  BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H "${JNI_INCLUDE_DIRS}")
-  if(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but JNI header not found - disabling")
-  endif(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-else(JNI_FOUND AND JAVA_FOUND)
-  if(BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but Java+JNI not found - disabling")
-  endif(BRLCAD_ENABLE_RTSERVER)
-endif(JNI_FOUND AND JAVA_FOUND)
-mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
@@ -2033,7 +2109,6 @@ BRLCAD_FUNCTION_EXISTS(getprogname HAVE_GETPROGNAME) # bsd
 BRLCAD_FUNCTION_EXISTS(htonll HAVE_HTONLL)
 BRLCAD_FUNCTION_EXISTS(logb HAVE_LOGB REQUIRED_LIBS ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrand48 HAVE_LRAND48)
-BRLCAD_FUNCTION_EXISTS(memset HAVE_MEMSET)
 BRLCAD_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
 BRLCAD_FUNCTION_EXISTS(ntohll HAVE_NTOHLL)
 BRLCAD_FUNCTION_EXISTS(pipe HAVE_PIPE)
@@ -2044,19 +2119,16 @@ BRLCAD_FUNCTION_EXISTS(realpath HAVE_REALPATH)
 BRLCAD_FUNCTION_EXISTS(setenv HAVE_SETENV)
 BRLCAD_FUNCTION_EXISTS(setpgid HAVE_SETPGID)
 BRLCAD_FUNCTION_EXISTS(setpriority HAVE_SETPRIORITY)
-BRLCAD_FUNCTION_EXISTS(shmctl HAVE_SHMCTL)
 BRLCAD_FUNCTION_EXISTS(shmat HAVE_SHMAT)
+BRLCAD_FUNCTION_EXISTS(shmctl HAVE_SHMCTL)
 BRLCAD_FUNCTION_EXISTS(shmdt HAVE_SHMDT)
 BRLCAD_FUNCTION_EXISTS(shmget HAVE_SHMGET)
 BRLCAD_FUNCTION_EXISTS(srand48 HAVE_SRAND48)
 BRLCAD_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
-BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
-BRLCAD_FUNCTION_EXISTS(strchr HAVE_STRCHR)
 BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
 BRLCAD_FUNCTION_EXISTS(strlcpy HAVE_STRLCPY)
-BRLCAD_FUNCTION_EXISTS(strsep HAVE_STRSEP)
-BRLCAD_FUNCTION_EXISTS(strtok HAVE_STRTOK)
+BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
 BRLCAD_FUNCTION_EXISTS(sync HAVE_SYNC)
 BRLCAD_FUNCTION_EXISTS(sysconf HAVE_SYSCONF)
 BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
@@ -2107,6 +2179,15 @@ if("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_DECL_FILENO 1\n")
   endif(HAVE_DECL_FILENO)
 endif("${HAVE_DECL_FILENO}" MATCHES "^${HAVE_DECL_FILENO}$")
+
+# test for snprintf()
+BRLCAD_FUNCTION_EXISTS(snprintf HAVE_SNPRINTF)
+if(NOT HAVE_SNPRINTF)
+  BRLCAD_FUNCTION_EXISTS(_snprintf HAVE__SNPRINTF)
+  if(HAVE__SNPRINTF)
+    CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
+  endif(HAVE__SNPRINTF)
+endif(NOT HAVE_SNPRINTF)
 
 # GetFullPathName
 check_c_source_compiles("
@@ -2208,20 +2289,11 @@ endif()
 # On Windows, we need to check for hypot etc.  This test pertains
 # to the windows specific config file, not CONFIG_H_FILE - hence,
 # just run the test and it will be handled by configure_file later.
-include(CheckSymbolExists)
 if(WIN32)
 
-  # TODO: the windows build doesn't actually persist WX/Werror to the
-  # build targets, but there are lots of warnings that still need
-  # cleaning up.  this will do that:
-  #
   # consider all warnings as errors (MSVC)
   # CHECK_C_FLAG(WX)
   # CHECK_CXX_FLAG(WX)
-  #
-  # this doesn't actually do anything (or is maybe only used for a few
-  # tests that follow:
- set(CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS} /WX)
 
   CHECK_SYMBOL_EXISTS(hypot "math.h" HAVE_HYPOT)
   #If we don't have it, need to define it as _hypot in config_win
@@ -2389,7 +2461,8 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-INCLUDE(CTest)
+include(CTest)
+mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)
@@ -3003,6 +3076,22 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endwhile(${SETTINGLABELLENGTH} GREATER ${CURRENTLENGTH})
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+# Write out the Doxygen feature list
+BRLCAD_FEATURE_SUMMARY(${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox)
+
+add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
+  COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+  COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"test\" target runs all of BRL-CAD\\'s available unit tests"
+  COMMAND ${CMAKE_COMMAND} -E echo "      including tests for API currently under development.  It is not"
+  COMMAND ${CMAKE_COMMAND} -E echo "      necessarily cause for concern if any of these tests fail.  It is"
+  COMMAND ${CMAKE_COMMAND} -E echo "      always helpful to fix tests that are failing, except this one."
+  COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+  COMMAND ${CMAKE_COMMAND} -E echo ""
+  COMMAND false
+  )
+set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
+_add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:
 # tab-width: 8

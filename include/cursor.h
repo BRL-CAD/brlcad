@@ -1,7 +1,7 @@
 /*                        C U R S O R . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,12 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cursor.h
+/** @addtogroup libcursor
  *
  * These are declarations of functions provided by libcursor, a simple
  * wrapper library to terminal capabilities (termcap).
- *
  */
+/** @{ */
+/** @file cursor.h */
 
 #ifndef CURSOR_H
 #define CURSOR_H
@@ -127,6 +128,8 @@ CURSOR_EXPORT extern int ResetScrlReg(void);
 __END_DECLS
 
 #endif /* CURSOR_H */
+
+/** @} */
 
 /*
  * Local Variables:

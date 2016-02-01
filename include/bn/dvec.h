@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,10 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file dvec.h
- *
- *
- */
 
 #ifndef DVEC_H
 #define DVEC_H
@@ -28,6 +24,12 @@
 #include "common.h"
 
 #include <math.h>
+extern "C++" {
+/* Hide iostream from Doxygen with cond */
+/* @cond */
+#include <iostream>
+/* @endcond */
+}
 
 /* Needed for fastf_t definition */
 #include "bu/defines.h"
@@ -35,8 +37,11 @@
 /* Needed for VUNITIZE_TOL and NEAR_ZERO */
 #include "vmath.h"
 
+/** @addtogroup bn_vectormath */
+/** @{ */
+/** @file bn/dvec.h */
+
 extern "C++" {
-#include <iostream>
 
     const double VEQUALITY = 0.0000001;
 
@@ -124,6 +129,8 @@ extern "C++" {
 // use this to create 16-byte aligned memory on platforms that support it
 #define VEC_ALIGN
 
+/* Doxygen doesn't like these includes... */
+/* @cond */
 /*#undef __SSE2__*/ // Test FPU version
 #if defined(__SSE2__) && defined(__GNUC__) && defined(HAVE_EMMINTRIN_H) && defined(HAVE_EMMINTRIN)
 #  define __x86_vector__
@@ -132,6 +139,7 @@ extern "C++" {
 #  define __fpu_vector__
 #  include "bn/vector_fpu.h"
 #endif
+/* @endcond */
 
     inline bool vequals(const vec2d& a, const vec2d& b) {
 	return
@@ -196,6 +204,8 @@ extern "C++" {
 	a[1] = b[1];
     }
 }
+
+/** @} */
 
 #endif /* DVEC_H */
 

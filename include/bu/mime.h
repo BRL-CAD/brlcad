@@ -17,11 +17,12 @@
 
 #include "common.h"
 #include "bu/defines.h"
+#include "bu/path.h"
 
 __BEGIN_DECLS
 
 typedef enum {
-    MIME_APPLICATION,
+    MIME_APPLICATION = PATH_UNKNOWN + 1, /* Make mime_context_t compatible with path_component_t*/
     MIME_AUDIO,
     MIME_CHEMICAL,
     MIME_IMAGE,
@@ -691,7 +692,6 @@ typedef enum {
     MIME_IMAGE_IEF,
     MIME_IMAGE_JPEG,
     MIME_IMAGE_KTX,
-    MIME_IMAGE_ORLE,
     MIME_IMAGE_PIX,
     MIME_IMAGE_PNG,
     MIME_IMAGE_PPM,

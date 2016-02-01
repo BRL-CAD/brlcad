@@ -25,9 +25,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Most third party items have a list calling out files for distcheck -
 # these are stored in files in the dlists directory.  Ignore that
@@ -61,6 +59,7 @@ endforeach(ITEM ${dlists})
 # This is not to tell LEMON what template to use - that information is
 # usually hardcoded in LEMON itself - but to let FindLEMON.cmake know
 # there is a working LEMON installation.
+set(LEMON_SKIP_INSTALL 1)
 set(lemon_ALIASES ENABLE_LEMON)
 set(lemon_DESCRIPTION "
 Option for enabling and disabling compilation of the lemon parser
@@ -73,14 +72,12 @@ if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUN
   set(LEMON_TEMPLATE "${BRLCAD_SOURCE_DIR}/misc/tools/lemon/lempar.c" CACHE STRING "Lemon template file" FORCE)
 endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
-# Unless some parent logic has already defined the macro, we need to
-# load LEMON_Util to be able to define LEMON targets.
-if(NOT COMMAND LEMON_TARGET)
-  include(${BRLCAD_CMAKE_DIR}/LEMON_Util.cmake)
-endif(NOT COMMAND LEMON_TARGET)
+# Make sure we load FindLEMON.cmake to be able to define LEMON targets.
+include(${BRLCAD_CMAKE_DIR}/FindLEMON.cmake)
 SetTargetFolder(lemon "Compilation Utilities")
 SetTargetFolder(lempar_cp "Compilation Utilities")
 
+set(RE2C_SKIP_INSTALL 1)
 set(re2c_ALIASES ENABLE_RE2C)
 set(re2c_DESCRIPTION "
 Option for enabling and disabling compilation of the re2c scanner
@@ -90,15 +87,11 @@ first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY_EXECUTABLE(re2c re2c "BRLCAD_LEVEL2" re2c_ALIASES re2c_DESCRIPTION)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/Makefile)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_parser/parser.yy)
 SetTargetFolder(re2c "Compilation Utilities")
 SetTargetFolder(re2c_bootstrap "Compilation Utilities")
-
-# Unless some parent logic has already defined the macro, we need to
-# load RE2C_Util to be able to define RE2C targets.
-
-if(NOT COMMAND RE2C_TARGET)
-  include(${BRLCAD_SOURCE_DIR}/misc/CMake/RE2C_Util.cmake)
-endif(NOT COMMAND RE2C_TARGET)
+# Make sure we load FindRE2C.cmake to be able to define RE2C targets.
+include(${BRLCAD_CMAKE_DIR}/FindRE2C.cmake)
 
 # Perplex is set up as a misc/tools sub-build, but at this time it is
 # entirely a BRL-CAD effort and not distributed or maintained as its
@@ -109,6 +102,7 @@ endif(NOT COMMAND RE2C_TARGET)
 set(PERPLEX_TEMPLATE "${CMAKE_CURRENT_SOURCE_DIR}/perplex/perplex_template.c" CACHE STRING "Perplex template file" FORCE)
 mark_as_advanced(PERPLEX_TEMPLATE)
 
+set(PERPLEX_SKIP_INSTALL 1)
 set(perplex_ALIASES ENABLE_PERPLEX)
 set(perplex_DESCRIPTION "
 Option for enabling and disabling compilation of the perplex scanner
@@ -118,12 +112,11 @@ testing first for a system version if BRLCAD_BUNDLED_LIBS is also
 AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex "BRLCAD_LEVEL2" perplex_ALIASES perplex_DESCRIPTION NOSYS)
-# Unless some parent logic has already defined the macro, we need to
-# load PERPLEX_Util to be able to define PERPLEX targets.
-if(NOT COMMAND PERPLEX_TARGET)
-  include(${BRLCAD_SOURCE_DIR}/misc/CMake/PERPLEX_Util.cmake)
-endif(NOT COMMAND PERPLEX_TARGET)
+# Make sure we load FindPERPLEX.cmake to be able to define PERPLEX targets.
+include(${BRLCAD_CMAKE_DIR}/FindPERPLEX.cmake)
+
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/PERPLEX_parser/parser.y)
 SetTargetFolder(perplex "Compilation Utilities")
 SetTargetFolder(perplex_template_cp "Compilation Utilities")
 

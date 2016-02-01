@@ -238,9 +238,7 @@ are used.</para>
 returned an error code.
 Either the file is not in Edition-2 or Edition-3 RLE format,
 or the file has been damaged or truncated.
-If the file is in Edition-1 RLE format, the
-<emphasis remap="I">orle-fb(1)</emphasis>
-program can be used to display the file.</para>
+</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -290,7 +288,7 @@ were deemed worth this risk.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1988-2014 by the United States
+<para>This software is Copyright (c) 1988-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

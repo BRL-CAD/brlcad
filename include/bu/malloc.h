@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,6 +83,15 @@ BU_EXPORT extern void bu_free(void *ptr,
 BU_EXPORT extern void *bu_realloc(void *ptr,
 				     size_t siz,
 				     const char *str);
+
+/**
+ * overflow checking version of realloc for arrays, based on OpenBSD's
+ * reallocarray.
+ */
+BU_EXPORT extern void *bu_reallocarray(void *optr,
+                                       size_t nmemb,
+				       size_t size,
+				       const char *str);
 
 /**
  * Print map of memory currently in use.
