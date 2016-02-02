@@ -24,11 +24,13 @@
 
   <refsection xml:id="description"><title>DESCRIPTION</title>
     <para>
-      Deletes all occurrences of the listed paths from the specified
-      <emphasis>combination</emphasis> (if comb is specified and no options
-      override default behavior) or from the global database if no comb is
-      specified or flags override the default behavior.  Paths may be object
-      names or local path specifiers - see below.
+      Remove objects from the global database or from a combination's tree.
+    </para>
+    <para>
+      NOTE: currently rm will delete a list of objects from a combination if
+      the combination name is provided as the first argument and no options
+      override this behavior.  This mode is <emphasis>deprecated</emphasis>
+      and will be removed in a future release.
     </para>
     </refsection>
 
@@ -40,23 +42,8 @@
 	<term><emphasis remap="B" role="bold">--force</emphasis></term>
 	<listitem>
 	  <para>
-	    Rather than interpreting the first non-option argument as a
-	    combination context, treat it as another object even if the object
-	    name does specify a comb.  This means all objects specified in the
-	    paths list will be removed from the database.  Also impacts
-	    a recursive removal - see "-r".
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-F</emphasis></term>
-	<term><emphasis remap="B" role="bold">--force-refs</emphasis></term>
-	<listitem>
-	  <para>
-	    Like "-f", but also removes references to objects being removed from
-	    elsewhere in the database rather than simply removing the objects
-	    themselves.  Useful to avoid "dangling references" to objects no
-	    longer present.
+	    Remove all objects specified, even if a particular object is a comb
+	    with a non-empty tree. Also impacts recursive removal - see "-r".
 	  </para>
 	</listitem>
       </varlistentry>
@@ -73,6 +60,25 @@
 	  </para>
 	</listitem>
       </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-v [#]</emphasis></term>
+	<term><emphasis remap="B" role="bold">--verbose [#]</emphasis></term>
+	<listitem>
+	  <para>
+	    Control the verbosity of reporting during a <command>rm</command> operation.  Repeated
+	    specification of -v option will increase verbosity of reporting.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-n</emphasis></term>
+	<term><emphasis remap="B" role="bold">--no-op</emphasis></term>
+	<listitem>
+	  <para>
+	    Reports what operations would be performed without actually carrying them out on the .g file.
+	  </para>
+	</listitem>
+      </varlistentry>
     </variablelist>
 
   </refsection>
@@ -80,17 +86,13 @@
   <refsection xml:id="paths"><title>PATHS:</title>
     <para>
       Paths in the <command>rm</command> command may take one of two forms: a
-      single object name, or a one-deep path of the form: parent/obj. If the path
+      single object name, or a "full path" form: /group/parent/obj. If the path
       specifier is of the latter form, then obj is removed not from the global
-      database but from the parent in question.  Note that path entries of this
-      form will not be incorporated into recursive deletion requests, since the
-      specification of a specific comb implies local behavior.
-    </para>
-    <para>
-      Note that an in-path comb specification will override the command level
-      specification of a <emphasis>comb</emphasis> for that one path, but other
-      objects listed in path will still be removed from
-      <emphasis>comb</emphasis> unless option flags specify other behavior.
+      database but from the parent in question.  Path entries above parent are
+      ignored.  Note that full path arguments will not be incorporated
+      into recursive deletion requests.
+
+      (TODO - implement globbing behavior so /gr*/p*nt/obj* will do what is expected.)
     </para>
   </refsection>
 
@@ -99,7 +101,7 @@
      <para>The example shows the use of the <command>rm</command> command to delete all occurrences 	of specified members of a given combination.
     </para>
 
-    <example><title>Delete members of a given combination.</title>
+    <example><title>(DEPRECATED) Delete members of a given combination.</title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>rm group1 regiona</userinput>
@@ -109,13 +111,21 @@
       </para>
     </example>
 
-    <example><title>Delete all objects referenced by a combination.</title>
+    <example><title>Safe recursive removal of a combination.</title>
 
       <para>
 	<prompt>mged&gt;</prompt><userinput>rm -r regiona</userinput>
       </para>
-      <para>Deletes <emphasis>regiona</emphasis> and any objects below <emphasis>regiona</emphasis> in its hierarchy.
+      <para>Deletes <emphasis>regiona</emphasis> and any objects in the <emphasis>regiona</emphasis> hierarchy that are not in use elsewhere in the .g file..
+      </para>
+    </example>
 
+    <example><title>Forced recursive removal of a combination.</title>
+
+      <para>
+	<prompt>mged&gt;</prompt><userinput>rm -rf regiona</userinput>
+      </para>
+      <para>Deletes <emphasis>regiona</emphasis> and any objects in the <emphasis>regiona</emphasis> hierarchy, regardless of other uses in the .g file.  Note that this can leave dangling references to removed objects in other combs.
       </para>
     </example>
   </refsection>

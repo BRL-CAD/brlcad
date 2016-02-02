@@ -56,6 +56,36 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate updating our fnmatch code to use OpenBSD's non-recursive
+  implementation, added starting at revision 1.16:
+  http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c
+
+* implement a function to consolidate bu_brlcad_root, bu_brlcad_data,
+  and bu_brlcad_dir.  Pass in a bu_locate_t enum, the relative path,
+  and the log/no-log flag.  Intent is to support flexibility implied
+  by presence of BIN_DIR, LIB_DIR, etc. build settings.  Will need
+  great care to ensure correct behavior is preserved - bu_brlcad_root
+  and bu_brlcad_data will need verbose deprecation process, once
+  bu_locate is implemented.  Also will need matching tcl function.
+
+  const char *
+  bu_dir(const char *path, int (log*)(const char *, ...));
+
+  Examples:
+  bu_dir(B_ROOT, NULL); /* returns application "root" */
+  bu_dir(B_CWD, NULL); /* returns current working directory */
+  bu_dir(B_SHARE, bu_log); /* returns app share dir, logs via bu_log */
+  bu_dir(B_TEMP, NULL); /* returns an mkdtemp directory?? */
+  bu_dir(B_CACHE, NULL); /* returns a read/write cache dir */
+  bu_dir(B_CONFIG, NULL); /* returns a read/write config dir, e.g., ~/.brlcad */
+
+* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
+  that currently rely on it to take that path as a parameter from the
+  calling application.  The library shouldn't be responsible for managing
+  that path - there are too many issues with doing so.  The current approach
+  fixes some concerns but breaks if an application changes its notion of
+  the current working directory after initialization, for example.
+
 * make the idents command not list subtracted objects by default,
   optionally list everything
 
@@ -443,13 +473,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path it's supposed to be referencing.
 
-* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
-  that currently rely on it to take that path as a parameter from the
-  calling application.  The library shouldn't be responsible for managing
-  that path - there are too many issues with doing so.  The current approach
-  fixes some concerns but breaks if an application changes its notion of
-  the current working directory after initialization, for example.
-
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
@@ -595,15 +618,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make libbn/plot3.c functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
-
-* implement a "bu_locate" function to consolidate bu_brlcad_root,
-  bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
-  the relative path, and the log/no-log flag.  Intent is to support
-  flexibility implied by presence of BIN_DIR, LIB_DIR, etc. build
-  settings.  Will need great care to ensure correct behavior is
-  preserved - bu_brlcad_root and bu_brlcad_data will need verbose
-  deprecation process, once bu_locate is implemented.  Also will
-  need matching tcl function.
 
 * rendering of the 'part' primitive is wrong for cases where H is less
   than r1 (i.e., smaller cap is partially or fully within the larger

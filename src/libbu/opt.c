@@ -421,19 +421,21 @@ bu_opt_parse(struct bu_vls *msgs, int argc, const char **argv, const struct bu_o
 		 * processing situation, we've already verified that each entry
 		 * has a desc. */
 		desc_ind = 0;
-		desc_found = 0;
 		desc = &(ds[0]);
-		while (!desc_found && (desc && !opt_desc_is_null(desc))) {
+		while (desc && !opt_desc_is_null(desc)) {
 		    if (opt[0] == desc->shortopt[0]) {
-			desc_found = 1;
 			break;
 		    }
 		    desc_ind++;
 		    desc = &(ds[desc_ind]);
 		}
-		/* this is a flag - try to set an int */
-		flag_var = (int *)desc->set_var;
-		if (flag_var) (*flag_var) = 1;
+		/* this is a flag - if we don't have an arg processing function, try to set an int */
+		if (desc->arg_process) {
+		    (void)(*desc->arg_process)(msgs, 0, NULL, desc->set_var);
+		} else {
+		    flag_var = (int *)desc->set_var;
+		    if (flag_var) (*flag_var) = 1;
+		}
 	    }
 	    /* record the option in known args */
 	    bu_ptbl_ins(&known_args, (long *)argv[i]);

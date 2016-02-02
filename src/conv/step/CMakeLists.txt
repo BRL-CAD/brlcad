@@ -1,6 +1,18 @@
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
+
+# Quiet MSVC warnings for all step converters due to SDAI sources and
+# STEPcode headers used pervasively.  We intentionally do not quell
+# all warnings since there are plenty of valid detectable issues also
+# getting reported.
+#
+# FIXME: make STEPcode sources compile free of warnings
+CHECK_CXX_FLAG("wd4065") # switch contains default but no case labels
+CHECK_CXX_FLAG("wd4251") # exporting STL objects
+CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
+
+
 set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -43,22 +55,6 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
     ${SCHEMA_OUT_DIR}/compstructs.cc
     ${SCHEMA_OUT_DIR}/schema.cc
     )
-
-  # disable all warnings on generated files since they're from src/other
-  foreach(generated_file ${express_srcs})
-    if (NOT NOWARN_CXXFLAG)
-      CHECK_CXX_FLAG("W0" VARS NOWARN_CXXFLAG)
-    endif (NOT NOWARN_CXXFLAG)
-    if (NOT NOWARN_CXXFLAG)
-      CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
-    endif (NOT NOWARN_CXXFLAG)
-    if (NOT NOWARN_CXXFLAG)
-      CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
-    endif (NOT NOWARN_CXXFLAG)
-    if (NOWARN_CXXFLAG)
-      set_property(SOURCE ${generated_file} APPEND_STRING PROPERTY COMPILE_FLAGS " ${NOWARN_CXXFLAG}")
-    endif (NOWARN_CXXFLAG)
-  endforeach(generated_file ${express_srcs})
 
   # For the subdirectory add_custom_command definitions, need the generated
   # headers as well.

@@ -122,8 +122,10 @@
 /* #define mktemp _mktemp */
 #define open _open
 #define unlink _unlink
-/* why not just #define pipe _pipe? */
+
+/* io.h's _pipe func takes different args */
 #define pipe(_FD) (_pipe((_FD), 256, _O_TEXT))
+
 #define read _read
 #define setmode _setmode
 /* #define tell _tell */

@@ -146,6 +146,7 @@ typedef struct bu_list bu_list_t;
  * any memory.  call BU_LIST_MAGIC_SET() to change the list type.
  */
 #define BU_LIST_INIT(_hp) { \
+	BU_ASSERT((void *)(_hp) != (void *)NULL); \
 	(_hp)->forw = (_hp)->back = (_hp); \
 	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
@@ -200,7 +201,7 @@ typedef struct bu_list bu_list_t;
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
-	BU_ASSERT((void *)((old)->forw) != (void *)NULL); \
+	BU_ASSERT((void *)((new)->forw) != (void *)NULL); \
 	(new)->forw->back = (new);  }
 
 /**

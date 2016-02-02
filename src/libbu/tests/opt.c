@@ -167,7 +167,7 @@ set_msg_str(struct bu_vls *msg, int ac, const char **av)
 #define EXPECT_FAILURE(_name, _reason) { \
     set_msg_str(&parse_msgs, ac, av); \
     ret = bu_opt_parse(&parse_msgs, ac, av, d); \
-    if (!ret==-1) { \
+    if (ret != -1) { \
 	bu_vls_printf(&parse_msgs, "\nError - expected parser to fail with error and it didn't\n"); \
 	val_ok = 0; \
     } else { \

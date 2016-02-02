@@ -153,7 +153,6 @@ cone_implicit_params(struct subbrep_shoal_data *data, ON_SimpleArray<ON_Plane> *
 		C = M_PI - (M_PI/2 + acos(dpc)) - fabs(cone.AngleInRadians());
 		b = fabs(side * sin(fabs(cone.AngleInRadians())) / sin(C));
 
-		ON_3dVector avect, bvect;
 		ON_3dVector cone_unit_axis = cone.Axis();
 		cone_unit_axis.Unitize();
                 ON_3dVector pvect = cone.Axis() - ((*cone_planes)[i].Normal() * ON_DotProduct(cone_unit_axis, (*cone_planes)[i].Normal()));

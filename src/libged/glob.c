@@ -40,6 +40,7 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
     int flags = 0;
     flags |= DB_GLOB_HIDDEN;
     flags |= DB_GLOB_NON_GEOM;
+    flags |= DB_GLOB_SKIP_FIRST;
 
     /* Silently return */
     if (gedp == GED_NULL)

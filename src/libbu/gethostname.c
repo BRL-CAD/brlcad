@@ -25,6 +25,8 @@
 
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/endian.h"
+
 
 int
 bu_gethostname(char *hostname, size_t hostlen)

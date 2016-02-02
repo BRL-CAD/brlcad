@@ -2121,9 +2121,9 @@ parse_list_elem(const char *in, int idx)
 	    ptr++;
 	} else {
 	    while (*ptr &&
-		   (!isspace((int)(*ptr)) || *prev == '\\') &&
-		   (*ptr != '}' || *prev == '\\') &&
-		   (*ptr != '{' || *prev == '\\'))
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
 	    {
 		prev = ptr;
 		ptr++;
@@ -2209,9 +2209,9 @@ parse_list_length(const char *in)
 		count++;
 
 	    while (*ptr &&
-		   (!isspace((int)(*ptr)) || *prev == '\\') &&
-		   (*ptr != '}' || *prev == '\\') &&
-		   (*ptr != '{' || *prev == '\\'))
+		   (!isspace((int)(*ptr)) || (prev && *prev == '\\')) &&
+		   (*ptr != '}' || (prev && *prev == '\\')) &&
+		   (*ptr != '{' || (prev && *prev == '\\')))
 	    {
 		prev = ptr;
 		ptr++;
