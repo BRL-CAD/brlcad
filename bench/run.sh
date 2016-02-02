@@ -431,7 +431,6 @@ look_for ( ) {
     look_for_type="$1" ; shift
     look_for_label="$1" ; shift
     look_for_var="$1" ; shift
-    look_for_dirs="$*"
 
     if test "x$look_for_label" != "x" ; then
 	$VERBOSE_ECHO  "Looking for $look_for_label"
@@ -442,8 +441,8 @@ look_for ( ) {
     look_for_var_val="`eval \"${look_for_var_var}\"`"
 
     if test "x${look_for_var_val}" = "x" ; then
-	for look_for_dir in $look_for_dirs ; do
-
+	for look_for_dir in "$@" ; do
+	    shift
 	    opts="-r"
 	    case "x$look_for_type" in
 		xfile)
@@ -586,7 +585,7 @@ else
 fi
 
 # more sanity checks, make sure the binaries and scripts run
-eval \"$RT\" -s1 -F/dev/debug "${DB}/moss.g" LIGHT > /dev/null 2>&1
+eval \"$RT\" -s1 -F/dev/debug \"${DB}/moss.g\" LIGHT > /dev/null 2>&1
 ret=$?
 if test ! "x${ret}" = "x0" ; then
     $ECHO
@@ -690,7 +689,7 @@ if test "x`expr 1 - 1 2>/dev/null`" = "x0" ; then
     if test $estimate -gt $maxtime ; then
 	estimate="$maxtime"
     fi
-    $ECHO "Estimated time is `eval \"$ELP\" $estimate`"
+    $ECHO "Estimated time is `eval \\\"$ELP\\\" $estimate`"
     $ECHO
 else
     $ECHO "WARNING: expr is unavailable, unable to compute statistics"
@@ -722,7 +721,7 @@ run ( ) {
 
     eval \"$RT\" -B -M -s512 -H${run_hypersample} -J0 ${run_args} \
 	-o ${run_geomname}.pix \
-	"${DB}/${run_geomname}.g" ${run_geometry} 1>&2 <<EOF
+	\"${DB}/${run_geomname}.g\" ${run_geometry} 1>&2 <<EOF
 $run_view
 EOF
     retval=$?
@@ -996,7 +995,7 @@ EOF
 
 	    # compute how long we took, rounding up to at least one
 	    # second to prevent division by zero.
-	    bench_elapsed="`eval \"$ELP\" --seconds $bench_frame_start_time`"
+	    bench_elapsed="`eval \\\"$ELP\\\" --seconds $bench_frame_start_time`"
 	    if test "x$bench_elapsed" = "x" ; then
 		bench_elapsed=1
 	    fi
@@ -1064,7 +1063,7 @@ EOF
 	    fi
 
 	    # see if we need to break out early
-	    bench_overall_elapsed="`eval \"$ELP\" --seconds $bench_start_time`"
+	    bench_overall_elapsed="`eval \\\"$ELP\\\" --seconds $bench_start_time`"
 	    if test $bench_overall_elapsed -ge $MAXTIME ; then
 		break;
 	    fi
@@ -1102,7 +1101,7 @@ EOF
 	    break
 	fi
 
-	bench_overall_elapsed="`eval \"$ELP\" --seconds $bench_start_time`"
+	bench_overall_elapsed="`eval \\\"$ELP\\\" --seconds $bench_start_time`"
 
 	# undo the hypersample increase back one step
 	bench_hypersample="`expr \( \( $bench_hypersample + 1 \) / 2 \) - 1`"
@@ -1123,7 +1122,7 @@ EOF
 	ls -la *.pix*
     fi
     $VERBOSE_ECHO "DEBUG: $CMP $PIX/${bench_testname}.pix ${bench_testname}.pix"
-    cmp_result="`eval \"${CMP}\" \"${PIX}/${bench_testname}.pix\" ${bench_testname}.pix 2>&1`"
+    cmp_result="`eval \\\"${CMP}\\\" \\\"${PIX}/${bench_testname}.pix\\\" ${bench_testname}.pix 2>&1`"
     ret=$?
 
     $ECHO "$cmp_result"
@@ -1187,7 +1186,7 @@ perf ( ) {
 		fi
 	    fi
 	done
-	perf_ref_files="$perf_ref_files $perf_ref_log"
+	perf_ref_files="$perf_ref_files \"$perf_ref_log\""
 	perf_cur_files="$perf_cur_files $perf_cur_log"
     done
 
@@ -1197,8 +1196,8 @@ perf ( ) {
     #
     # FIXME: should really iterate one file at a time so we don't
     # just zero-pad at the end
-    perf_VGRREF=`grep RTFM $perf_ref_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
-    perf_CURVALS=`grep RTFM $perf_cur_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `
+    perf_VGRREF="`eval grep RTFM $perf_ref_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `"
+    perf_CURVALS="`eval grep RTFM $perf_cur_files | sed -n -e 's/^.*= *//' -e 's/ rays.*//p' | tr '\012' '\011' `"
 
     # if there were no reference values, we cannot compute timings
     if test "x$perf_VGRREF" = "x" ; then
@@ -1353,7 +1352,7 @@ ret=`expr $ret + $?`
 $ECHO
 $ECHO "... Done."
 $ECHO
-$ECHO "Total testing time elapsed: `eval \"$ELP\" $start`"
+$ECHO "Total testing time elapsed: `eval \\\"$ELP\\\" $start`"
 
 # see if we fail
 if test ! "x$ret" = "x0" ; then
@@ -1377,8 +1376,8 @@ fi
 # compute and output results #
 ##############################
 
+performance="`perf 'moss world star bldg391 m35 sphflake' $RTARGS 2>&1`"
 
-performance="`perf 'moss world star bldg391 m35 sphflake' $RTARGS`"
 if test $? = 0 ; then
     cat >> summary <<EOF
 $performance
