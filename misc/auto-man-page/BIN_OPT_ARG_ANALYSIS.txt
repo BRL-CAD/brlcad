@@ -130,14 +130,6 @@ Usage: /usr/local/src2/brlcad-build/bin/alias-pix [ -v ] < ALIASpixfile >BRLpixf
 
 ----- end usage -----------------------------------
 ***** end alias-pix ***********************************
-***** begin aliastorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end aliastorle ***********************************
 ***** begin all_sf ***********************************
 	result : (usage)
 	file(s):
@@ -1141,19 +1133,6 @@ REVOLVE
 
 ----- end usage -----------------------------------
 ***** end csgbrep ***********************************
-***** begin cubitorle ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-missing string argument
-usage : cubitorle [-o outfile] inprefix
-	Convert Cubicomp image to URT image.  Input image is in 3 files,
-	inprefix.r, inprefix.g, inprefix.b.
-
------ end usage -----------------------------------
-***** end cubitorle ***********************************
 ***** begin cv ***********************************
 	result : (usage)
 	file(s):
@@ -1693,19 +1672,6 @@ Usage: fb-fb [-v] [-F output_framebuffer]
 
 ----- end usage -----------------------------------
 ***** end fb-fb ***********************************
-***** begin fb-orle ***********************************
-	result : (usage)
-	file(s):
-	error  : 2:EOF
------ begin usage -----------------------------------
-
-Usage: fb-orle [-CScdHvw] [-l X Y] [-F Frame_buffer] [-p X Y] [file.rle]
-
-If no RLE file is specified, fb-orle will write to its standard output.
-If the environment variable FB_FILE is set, its value will be used.
-
------ end usage -----------------------------------
-***** end fb-orle ***********************************
 ***** begin fb-pix ***********************************
 	result : (usage)
 	file(s):
@@ -2481,14 +2447,6 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 
 ----- end usage -----------------------------------
 ***** end gif2fb ***********************************
-***** begin giftorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end giftorle ***********************************
 ***** begin globe ***********************************
 	result : (wait)
 	file(s):
@@ -2497,22 +2455,6 @@ Usage: gencolor [-r#] [val1 .. valN] > output_file
 
 ----- end usage -----------------------------------
 ***** end globe ***********************************
-***** begin graytorle ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 255
------ begin usage -----------------------------------
-missing decimal argument
-usage : graytorle [-a] [-h hdrsize] [-o outfile] xsize ysize files ...
-	Convert one or more raw images to an RLE image.
-	-a	First input file is alpha channel.  Normally first is red.
-	-h	Specify number of bytes to discard from input header.
-	xsize ysize	Size of input images.
-	Try rawtorle for more complex situations.
-
-
------ end usage -----------------------------------
-***** end graytorle ***********************************
 ***** begin halftone ***********************************
 	result : (usage)
 	file(s):
@@ -2971,41 +2913,6 @@ Usage: off-g file.off file.g
 
 ----- end usage -----------------------------------
 ***** end off-g ***********************************
-***** begin orle-fb ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-Usage: orle-fb [-Otdv] [-b (rgbwBG)] [-F Frame_buffer] [-p X Y] [file.rle]
-
-If no rle file is specified, orle-fb will read its standard input.
-If the environment variable FB_FILE is set, its value will be used
-to specify the framebuffer file or device to write to.
-
------ end usage -----------------------------------
-***** end orle-fb ***********************************
-***** begin orle-pix ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-DEPRECATED: orle-pix is no longer being maintained.  Use rle-pix instead.
-Usage: rle-pix [-dv] [-b (rgbBG)] [file.rle]
-
-If no rle file is specified, rle-pix will read its standard input.
-Pix(5B) format is written to the standard output.
-
-
------ end usage -----------------------------------
-***** end orle-pix ***********************************
-***** begin painttorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end painttorle ***********************************
 ***** begin patch-g ***********************************
 	result : (usage)
 	file(s):
@@ -3133,20 +3040,6 @@ Usage: pix-fb [-a -i -c -z -1] [-m #lines] [-F framebuffer]
 
 ----- end usage -----------------------------------
 ***** end pix-fb ***********************************
-***** begin pix-orle ***********************************
-	result : (usage)
-	file(s):
-	error  : 3:exit status: exit code 1
------ begin usage -----------------------------------
-
-Usage: pix-rle [-h -d -v] [-s squarefilesize]  [-C r/g/b]
-	[-w file_width] [-n file_height] [file.pix] [file.rle]
-
-If omitted, the .pix file is taken from stdin
-and the .rle file is written to stdout
-
------ end usage -----------------------------------
-***** end pix-orle ***********************************
 ***** begin pix-png ***********************************
 	result : (usage)
 	file(s):
@@ -4086,14 +3979,6 @@ Usage: /usr/local/src2/brlcad-build/bin/rawbot raw_vertex_file
 
 ----- end usage -----------------------------------
 ***** end rawbot ***********************************
-***** begin rawtorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end rawtorle ***********************************
 ***** begin re2c ***********************************
 	result : (usage)
 	file(s):
@@ -5244,14 +5129,6 @@ Usage:  tabsub prototype_file [table_file]
 
 ----- end usage -----------------------------------
 ***** end tankill-g ***********************************
-***** begin targatorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end targatorle ***********************************
 ***** begin tclsh ***********************************
 	result : (wait)
 	file(s):
@@ -5488,14 +5365,6 @@ Usage: ustats [ file ]
 
 ----- end usage -----------------------------------
 ***** end ustats ***********************************
-***** begin vcrtorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end vcrtorle ***********************************
 ***** begin vdeck ***********************************
 	result : (usage)
 	file(s):
@@ -5606,14 +5475,6 @@ Usage: wdb_example db_file.g
 
 ----- end usage -----------------------------------
 ***** end wish ***********************************
-***** begin xbmtorle ***********************************
-	result : (wait)
-	file(s):
-	error  : 1:TIMEOUT
------ begin usage -----------------------------------
-
------ end usage -----------------------------------
-***** end xbmtorle ***********************************
 ***** begin xmllint ***********************************
 	result : (usage)
 	file(s):

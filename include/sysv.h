@@ -53,24 +53,12 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-#ifndef HAVE_MEMSET
-SYSV_EXPORT extern void *memset(void *s, int c, size_t n);
-#endif
-
-#ifndef HAVE_STRCHR
-SYSV_EXPORT extern char *strchr(const char *sp, int c);
-#endif
-
 #ifndef HAVE_STRDUP
 SYSV_EXPORT extern char *strdup(const char *cp);
 #endif
 
 #ifndef HAVE_STRSEP
 SYSV_EXPORT extern char *strsep(char **stringp, const char *delim);
-#endif
-
-#ifndef HAVE_STRTOK
-SYSV_EXPORT extern char *strtok(char *s, const char *delim);
 #endif
 
 #ifndef HAVE_SETENV

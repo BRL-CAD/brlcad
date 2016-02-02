@@ -356,7 +356,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 
     if (union_shoal_cnt == 1) {
 	bu_vls_sprintf(&union_name, "%s", bu_vls_addr(&shoal_name));
-	bu_log("single union name: %s\n", bu_vls_addr(&union_name));
+	//bu_log("single union name: %s\n", bu_vls_addr(&union_name));
     }
 
     // Have unions, get subtractions.
@@ -403,7 +403,7 @@ make_island(struct bu_vls *msgs, struct subbrep_island_data *data, struct rt_wdb
 	(void)mk_addmember(bu_vls_addr(&island_name), &(pcomb->l), NULL, db_str2op(n_bool_op));
 
     // Debugging B-Reps - generates a B-Rep object for each island
-#if 1
+#if 0
     if (data->local_brep) {
 	unsigned char rgb[3];
 	struct wmember bcomb;

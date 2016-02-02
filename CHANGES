@@ -50,7 +50,7 @@ DEPRECATION POLICY
 
 If a change will intentionally alter, replace, or remove functionality
 that has been documented and published in at least TWO releases, it
-should mut first be announced as DEPRECATED.  Otherwise, changes to
+must first be announced as DEPRECATED.  Otherwise, changes to
 interfaces that have not been publicly announced or are not publicly
 documented for at least two releases may be changed without notice.
 

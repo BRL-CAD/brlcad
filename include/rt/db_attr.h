@@ -249,7 +249,12 @@ RT_EXPORT extern int db5_import_attributes(struct bu_attribute_value_set *avs,
  *
  * The on-disk encoding is:
  *
- * name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
+ *   name1 NULL value1 NULL ... nameN NULL valueN NULL NULL
+ *
+ * For binary attributes the on-disk encoding is:
+ *
+ *   bname1 NULL uchar valuelen1 comment1 NULL bvalue1 NULL ...
+ *     bnameN NULL uchar valuelenN commentN NULL bvalueN NULL NULL
  *
  * 'ext' is initialized on behalf of the caller.
  */
@@ -275,8 +280,8 @@ RT_EXPORT extern void db5_export_attributes(struct bu_external *ap,
  * 1 -> all attribute name/value pairs must be present and match
  * 2 -> at least one of the name/value pairs must be present and match
  *
- * returns a ptbl list of selected directory pointers an empty list
- * means nothing met the requirements a NULL return means something
+ * returns a ptbl list of selected directory pointers.  An empty list
+ * means nothing met the requirements and a NULL return means something
  * went wrong.
  */
 RT_EXPORT extern struct bu_ptbl *db_lookup_by_attr(struct db_i *dbip,

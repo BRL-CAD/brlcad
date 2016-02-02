@@ -192,10 +192,14 @@ avpp_val_compare(const char *val1, const char *val2, const struct bn_tol *diff_t
     float p1val1, p1val2, p1val3;
     float p2val1, p2val2, p2val3;
     char *endptr;
+
     /* Don't try a numerical comparison unless the strings differ -
      * numerical attempts when they are not needed can introduce
      * invalid changes */
     int retval = BU_STR_EQUAL(val1, val2);
+
+    /* If we've got NULL values, use the string comparison . */
+    if (!val1 || !val2 || !diff_tol) return retval;
 
     if (!retval) {
 	/* First, check for individual numbers */

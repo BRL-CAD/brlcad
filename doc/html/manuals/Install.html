@@ -1151,7 +1151,7 @@ your machine is a "Little-Endian" machine and your machine is not
 a VAX.  "Big-Endian" machines will work without modification.
 A Big-Endian machine has byte [0] on the left of the word, like IBM,
 while a Little-Endian machine has byte [0] on the right side of the word,
-like DEC.  Some of the <b>liborle</b> code needs to know.
+like DEC.
 <H2>
 libplot3/htond.c</H2>
 <P>
@@ -1631,10 +1631,6 @@ All earlier editions of the BRL-CAD package used Version 2 of the Utah
 The Utah Raster Toolkit uses Version 3, which is incompatible.
 In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
 to permit complete interoperability with all the Utah Toolkit software.
-For sites that may have stored images in the old RLE format,
-the old library now exists as <b>liborle</b>,
-and all the programs have had an "o" added to their name, e.g.,
-the version of <b>rle-fb</b> which uses the old library is now <b>orle-fb</b>.
 <H1>
 UPGRADING FROM RELEASE 3.0 to 3.7</H1>
 <P>

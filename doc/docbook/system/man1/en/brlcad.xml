@@ -144,12 +144,6 @@ providing functions
 originally from the University of Utah in a library package.
 Note that the current version of this library reads
 Edition-3 RLE files.
-[Edition-1 and Edition-2 RLE files can be read and written
-with the
-<emphasis remap='B'>liborle</emphasis>
-and
-<emphasis remap='B'>orle</emphasis>
-programs.]
 See
 <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
