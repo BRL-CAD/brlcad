@@ -98,7 +98,7 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
   if (RETVAL)
     message("")
     message("WARNING: Subversion does not seem to be working correctly.")
-    message("         Output from ${SVN_EXEC} info -R \"$@CMAKE_SOURCE_DIR@\":")
+    message("         Output from ${SVN_EXEC} info -R \"@CMAKE_SOURCE_DIR@\":")
     message("${SVN_STDERR}")
   endif (RETVAL)
 
