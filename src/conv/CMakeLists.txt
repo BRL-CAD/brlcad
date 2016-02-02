@@ -31,6 +31,7 @@ set(CONV_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
+  ${WFOBJ_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
@@ -107,13 +108,9 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
+BRLCAD_ADDEXEC(obj-g obj-g.c "libbu;libbn;librt;libwdb;libwfobj")
 
-# TODO - Until wfobj functionality is available as a libgcv API,
-# obj-g build logic is living in src/libgcv/wfobj. Once an API
-# for libgcv is devised that exposes the wfobj functionality move
-# obj-g build logic back here
-#BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu;libbn;librt;libwdb;libgcv")
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 

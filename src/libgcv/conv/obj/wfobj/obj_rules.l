@@ -1,5 +1,5 @@
 /*                   O B J _ R U L E S . R E
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ namespace gcv {
 namespace obj {
 
 /**
- *  convenience routines
+ * convenience routines
  */
 template<typename T>
 inline static objCombinedState::parser_state_type &get_state(T combinedState)
@@ -42,8 +42,9 @@ inline static objCombinedState::parser_state_type &get_state(T combinedState)
     return static_cast<objCombinedState*>(combinedState)->parser_state;
 }
 
+
 /**
- *  Local functions
+ * Local functions
  */
 static bool split_reference(const char *s, int val[3]);
 
@@ -58,20 +59,24 @@ void *obj_parser_get_extra(yyscan_t scanner)
     return perplexGetExtra(scanner);
 }
 
+
 void *obj_parser_get_state(yyscan_t scanner)
 {
     return static_cast<struct extra_t*>(perplexGetExtra(scanner))->state;
 }
+
 
 void obj_parser_set_extra(yyscan_t scanner, void *extra)
 {
     perplexSetExtra(scanner, extra);
 }
 
+
 void obj_parser_lex_destroy(yyscan_t scanner)
 {
     perplexFree(scanner);
 }
+
 
 %%
 vertex       = "v";
@@ -123,165 +128,173 @@ comment      = "#"[^"\r\n""\n"]*(newline);
 
 <INITIAL> {
 
-vertex            { return VERTEX; }
-t_vertex          { return T_VERTEX; }
-n_vertex          { return N_VERTEX; }
-point             { return POINT; }
-line              { return LINE; }
-face              { return FACE; }
-group => id_list_state {
-    return GROUP;
-}
-object => id_state {
-    return OBJECT;
-}
-smooth            {
-    return SMOOTH;
-}
-integer           {
-    yylval->integer = atoi(yytext);
-    return INTEGER;
-}
-real              {
-    yylval->real = atof(yytext);
-    return FLOAT;
-}
-usemtl => id_state {
-    return USEMTL;
-}
-mtllib => id_list_state {
-    return MTLLIB;
-}
-usemap => toggle_id_state {
-    return USEMAP;
-}
-maplib => id_list_state {
-    return MAPLIB;
-}
-bevel             {
-    return BEVEL;
-}
-c_interp {
-    return C_INTERP;
-}
-d_interp {
-    return D_INTERP;
-}
-lod {
-    return LOD;
-}
-shadow_obj => id_state {
-    return SHADOW_OBJ;
-}
-trace_obj => id_state {
-    return TRACE_OBJ;
-}
-on {
-    return ON;
-}
-off {
-    return OFF;
-}
-v_reference {
-    if (obj::split_reference(yytext, yylval->reference))
-	return V_REFERENCE;
-    return YYEOF;
-}
-v_tv_reference {
-    if (obj::split_reference(yytext, yylval->reference))
-	return TV_REFERENCE;
-    return YYEOF;
-}
-v_nt_reference {
-    if (obj::split_reference(yytext, yylval->reference))
-	return NV_REFERENCE;
-    return YYEOF;
-}
-v_tnv_reference_list {
-    if (obj::split_reference(yytext, yylval->reference))
-	return TNV_REFERENCE;
-    return YYEOF;
-}
+    vertex { return VERTEX; }
+    t_vertex { return T_VERTEX; }
+    n_vertex { return N_VERTEX; }
+    point { return POINT; }
+    line { return LINE; }
+    face { return FACE; }
+    group => id_list_state {
+	return GROUP;
+    }
+    object => id_state {
+	return OBJECT;
+    }
+    smooth {
+	return SMOOTH;
+    }
+    integer {
+	yylval->integer = atoi(yytext);
+	return INTEGER;
+    }
+    real {
+	yylval->real = atof(yytext);
+	return FLOAT;
+    }
+    usemtl => id_state {
+	return USEMTL;
+    }
+    mtllib => id_list_state {
+	return MTLLIB;
+    }
+    usemap => toggle_id_state {
+	return USEMAP;
+    }
+    maplib => id_list_state {
+	return MAPLIB;
+    }
+    bevel {
+	return BEVEL;
+    }
+    c_interp {
+	return C_INTERP;
+    }
+    d_interp {
+	return D_INTERP;
+    }
+    lod {
+	return LOD;
+    }
+    shadow_obj => id_state {
+	return SHADOW_OBJ;
+    }
+    trace_obj => id_state {
+	return TRACE_OBJ;
+    }
+    on {
+	return ON;
+    }
+    off {
+	return OFF;
+    }
+    v_reference {
+	if (obj::split_reference(yytext, yylval->reference))
+	    return V_REFERENCE;
+	return YYEOF;
+    }
+    v_tv_reference {
+	if (obj::split_reference(yytext, yylval->reference))
+	    return TV_REFERENCE;
+	return YYEOF;
+    }
+    v_nt_reference {
+	if (obj::split_reference(yytext, yylval->reference))
+	    return NV_REFERENCE;
+	return YYEOF;
+    }
+    v_tnv_reference_list {
+	if (obj::split_reference(yytext, yylval->reference))
+	    return TNV_REFERENCE;
+	return YYEOF;
+    }
 
-wspace { IGNORE_TOKEN; }
 
-comment|newline {
-    ++(obj::get_state(combinedState).file_stack.back().lineno);
-    return EOL;
-}
+    wspace { IGNORE_TOKEN; }
 
-. { IGNORE_TOKEN; }
+    comment|newline {
+	++(obj::get_state(combinedState).file_stack.back().lineno);
+	return EOL;
+    }
+
+
+    . { IGNORE_TOKEN; }
 
 } /* INITIAL */
 
 <id_state> {
-id => INITIAL {
-    /* Keywords are valid identifiers here
-     * Goto initial state after single token
-     */
-    obj::get_state(combinedState).working_string = yytext;
-    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    id => INITIAL {
+	/* Keywords are valid identifiers here
+	 * Goto initial state after single token
+	 */
+	obj::get_state(combinedState).working_string = yytext;
+	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    return ID;
-}
+	return ID;
+    }
 
-wspace { IGNORE_TOKEN; }
 
-comment|newline => INITIAL {
-    /* Goto initial state when we hit newline */
-    ++(obj::get_state(combinedState).file_stack.back().lineno);
-    return EOL;
-}
+    wspace { IGNORE_TOKEN; }
 
-. { IGNORE_TOKEN; }
+    comment|newline => INITIAL {
+	/* Goto initial state when we hit newline */
+	++(obj::get_state(combinedState).file_stack.back().lineno);
+	return EOL;
+    }
+
+
+    . { IGNORE_TOKEN; }
 
 } /* id_state */
 
 <toggle_id_state> {
-off => INITIAL {
-    // off is a valid token, not an id
-    return OFF;
-}
-id => INITIAL {
-    /* Keywords are valid identifiers here
-     * Goto initial state after single token
-     */
-    obj::get_state(combinedState).working_string = yytext;
-    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    off => INITIAL {
+	// off is a valid token, not an id
+	return OFF;
+    }
+    id => INITIAL {
+	/* Keywords are valid identifiers here
+	 * Goto initial state after single token
+	 */
+	obj::get_state(combinedState).working_string = yytext;
+	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    return ID;
-}
+	return ID;
+    }
 
-wspace { IGNORE_TOKEN; }
 
-comment|newline => INITIAL {
-    // Goto initial state when we hit newline
-    ++(obj::get_state(combinedState).file_stack.back().lineno);
-    return EOL;
-}
+    wspace { IGNORE_TOKEN; }
 
-. { IGNORE_TOKEN; }
+    comment|newline => INITIAL {
+	// Goto initial state when we hit newline
+	++(obj::get_state(combinedState).file_stack.back().lineno);
+	return EOL;
+    }
+
+
+    . { IGNORE_TOKEN; }
 
 } /* toggle_id_state */
 
 <id_list_state> {
-id {
-    // Keywords are valid identifiers here
-    obj::get_state(combinedState).working_string = yytext;
-    bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
+    id {
+	// Keywords are valid identifiers here
+	obj::get_state(combinedState).working_string = yytext;
+	bu_strlcpy(yylval->string, yytext, TOKEN_STRING_LEN);
 
-    return ID;
-}
+	return ID;
+    }
 
-wspace { IGNORE_TOKEN; }
 
-comment|newline => INITIAL {
-    // Goto initial state when we hit newline
-    ++(obj::get_state(combinedState).file_stack.back().lineno);
-    return EOL;
-}
+    wspace { IGNORE_TOKEN; }
 
-. { IGNORE_TOKEN; }
+    comment|newline => INITIAL {
+	// Goto initial state when we hit newline
+	++(obj::get_state(combinedState).file_stack.back().lineno);
+	return EOL;
+    }
+
+
+    . { IGNORE_TOKEN; }
 
 } /* id_list_state */
 
@@ -315,6 +328,7 @@ bool split_reference(const char *s, int val[3])
 
     return (*endptr == 0);
 }
+
 
 } /* namespace obj */
 } /* namespace gcv */

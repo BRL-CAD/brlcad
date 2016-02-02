@@ -1,7 +1,7 @@
 /*              F A S T G E N 4 _ W R I T E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
 
 #include "common.h"
 
+#include "gcv/api.h"
 #include "gcv/util.h"
-#include "../../plugin.h"
 
 #include <cmath>
 #include <fstream>
@@ -169,7 +169,6 @@ public:
 
     DBInternal();
     DBInternal(const db_i &db, const directory &dir);
-    DBInternal(const DBInternal &source);
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
@@ -178,6 +177,7 @@ public:
 
 
 private:
+    DBInternal(const DBInternal &source);
     DBInternal &operator=(const DBInternal &source);
 
     bool m_valid;
@@ -405,7 +405,7 @@ RecordWriter::Record::truncate_float(fastf_t value)
     result.erase(std::min(result.size(), std::max(end_point + 2, end_digit + 1)));
 
     if (end_point >= result.size() - 1)
-	throw std::runtime_error("value too large");
+	throw std::runtime_error("value exceeds width of field");
 
     if (result == "-0.0")
 	result.erase(0, 1);
@@ -530,7 +530,7 @@ FastgenWriter::take_next_section_id()
     const SectionID result = m_next_section_id;
 
     if (result.first > MAX_GROUP_ID)
-	throw std::length_error("maximum number of Sections");
+	throw std::length_error("maximum Sections exceeded");
 
     if (++m_next_section_id.second > MAX_SECTION_ID) {
 	++m_next_section_id.first;
@@ -583,12 +583,12 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 
     if (type == BOOL_HOLE) {
 	if (++m_num_holes > MAX_BOOLS)
-	    throw std::length_error("MAX_BOOLS exceeded for HOLE");
+	    throw std::length_error("maximum HOLE records exceeded");
 
 	record << "HOLE";
     } else if (type == BOOL_WALL) {
 	if (++m_num_walls > MAX_BOOLS)
-	    throw std::length_error("MAX_BOOLS exceeded for WALL");
+	    throw std::length_error("maximum WALL records exceeded");
 
 	record << "WALL";
     } else
@@ -689,7 +689,7 @@ void
 GridManager::write(RecordWriter &writer) const
 {
     if (m_next_grid_id - 1 > MAX_GRID_POINTS)
-	throw std::length_error("max grid points exceeded");
+	throw std::length_error("maximum grid points exceeded");
 
     for (std::map<Point, std::vector<std::size_t>, PointComparator>::const_iterator
 	 it = m_grids.begin(); it != m_grids.end(); ++it)
@@ -752,7 +752,6 @@ public:
 
 
 private:
-    static const std::size_t MAX_NAME_SIZE = RecordWriter::Record::FIELD_WIDTH * 3;
     static const bool CHECK_MODE_ERRORS = false;
 
     const bool m_volume_mode;
@@ -825,11 +824,12 @@ Section::write(RecordWriter &writer, const FastgenWriter::SectionID &id,
 	throw std::logic_error("empty Section");
 
     {
+	const std::size_t max_name_size = RecordWriter::Record::FIELD_WIDTH * 3;
 	std::string short_name = name;
 
-	if (short_name.size() > MAX_NAME_SIZE) {
+	if (short_name.size() > max_name_size) {
 	    writer.write_comment(short_name);
-	    short_name = "..." + short_name.substr(short_name.size() - MAX_NAME_SIZE + 3);
+	    short_name = "..." + short_name.substr(short_name.size() - max_name_size + 3);
 	}
 
 	RecordWriter::Record record(writer);
@@ -1148,7 +1148,7 @@ get_face_info(const rt_bot_internal &bot, std::size_t i)
     RT_BOT_CK_MAGIC(&bot);
 
     if (i > bot.num_faces)
-	throw std::invalid_argument("invalid face");
+	throw std::invalid_argument("invalid face index");
 
     // defaults
     std::pair<fastf_t, bool> result(1.0, true);
@@ -1473,22 +1473,18 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
     }
 
     if (!NEAR_ZERO(inner_radius2, RT_LEN_TOL)) {
-	if (end2_open) {
-	    const fastf_t temp_thickness = (radius2 - inner_radius2) * sin_angle;
+	fastf_t temp_thickness;
 
-	    if (thickness < 0.0)
-		thickness = temp_thickness;
-	    else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
-		return false;
-	} else {
-	    const fastf_t temp_thickness =
-		(inner_radius2 - radius2) / ((radius1 - radius2) / length - 1.0 / sin_angle);
+	if (end2_open)
+	    temp_thickness = (radius2 - inner_radius2) * sin_angle;
+	else
+	    temp_thickness = (inner_radius2 - radius2) / ((radius1 - radius2) / length -
+			     1.0 / sin_angle);
 
-	    if (thickness < 0.0)
-		thickness = temp_thickness;
-	    else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
-		return false;
-	}
+	if (thickness < 0.0)
+	    thickness = temp_thickness;
+	else if (!NEAR_EQUAL(temp_thickness, thickness, RT_LEN_TOL))
+	    return false;
     }
 
     vect_t point_b;
@@ -1505,7 +1501,7 @@ get_ccone1_cutout_helper(Section &section, const std::string &name,
 }
 
 
-// test for and create CCONE{1,2} elements
+// test for and create CCONE{1, 2} elements
 HIDDEN bool
 find_ccone_cutout(Section &section, const db_i &db,
 		  const db_full_path &parent_path, std::set<const directory *> &completed)
@@ -1897,7 +1893,7 @@ find_walls(const db_i &db, const directory &region_dir, const bn_tol &tol)
 struct FastgenConversion {
     class RegionManager;
 
-    FastgenConversion(const std::string &path, const db_i &db, const bn_tol &tol,
+    FastgenConversion(const db_i &db, const bn_tol &tol,
 		      const std::set<const directory *> &facetize_regions);
     ~FastgenConversion();
 
@@ -1906,6 +1902,8 @@ struct FastgenConversion {
 
     // NULL indicates toplevels
     bool do_force_facetize_region(const directory *region_dir) const;
+
+    void write(const std::string &path) const;
 
     const db_i &m_db;
     const bn_tol m_tol;
@@ -1916,7 +1914,6 @@ private:
     FastgenConversion(const FastgenConversion &source);
     FastgenConversion &operator=(const FastgenConversion &source);
 
-    const std::string m_path;
     const std::set<const directory *> m_facetize_regions;
     std::map<const directory *, RegionManager *> m_regions;
     Section m_toplevels;
@@ -2171,12 +2168,11 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 }
 
 
-FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
-				     const bn_tol &tol, const std::set<const directory *> &facetize_regions) :
+FastgenConversion::FastgenConversion(const db_i &db, const bn_tol &tol,
+				     const std::set<const directory *> &facetize_regions) :
     m_db(db),
     m_tol(tol),
     m_failed_regions(),
-    m_path(path),
     m_facetize_regions(facetize_regions),
     m_regions(),
     m_toplevels()
@@ -2203,11 +2199,11 @@ FastgenConversion::FastgenConversion(const std::string &path, const db_i &db,
 }
 
 
-FastgenConversion::~FastgenConversion()
+void FastgenConversion::write(const std::string &path) const
 {
-    FastgenWriter writer(m_path);
+    FastgenWriter writer(path);
     writer.write_comment(m_db.dbi_title);
-    writer.write_comment("g -> fastgen4 conversion");
+    writer.write_comment("libgcv fastgen4 conversion");
 
     if (!m_toplevels.empty())
 	m_toplevels.write(writer.get_section_writer(), writer.take_next_section_id(),
@@ -2227,11 +2223,17 @@ FastgenConversion::~FastgenConversion()
 	 it != sorted_regions.end(); ++it)
 	ids[it->second->first] = it->second->second->write(writer);
 
-    for (SortedRegionMap::iterator it = sorted_regions.begin();
-	 it != sorted_regions.end(); ++it) {
+    for (SortedRegionMap::const_iterator it = sorted_regions.begin();
+	 it != sorted_regions.end(); ++it)
 	it->second->second->write_walls(writer, ids);
-	delete it->second->second;
-    }
+}
+
+
+FastgenConversion::~FastgenConversion()
+{
+    for (std::map<const directory *, RegionManager *>::iterator it =
+	     m_regions.begin(); it != m_regions.end(); ++it)
+	delete it->second;
 }
 
 
@@ -2440,23 +2442,23 @@ convert_leaf(db_tree_state *tree_state, const db_full_path *path,
 	region_dir = NULL;
     }
 
-    if (!data.m_failed_regions.count(region_dir)) {
-	const bool facetize = data.do_force_facetize_region(region_dir);
-	const bool subtracted = (tree_state->ts_sofar & (TS_SOFAR_MINUS | TS_SOFAR_INTER)) != 0;
-	bool converted = false;
+    const bool facetize = data.do_force_facetize_region(region_dir);
+    const bool subtracted = (tree_state->ts_sofar & (TS_SOFAR_MINUS |
+			     TS_SOFAR_INTER)) != 0;
+    bool converted = false;
 
-	if (region_dir
-	    && data.get_region(*region_dir).member_ignored(*path))
-	    converted = true;
-	else if (!facetize)
-	    converted = convert_primitive(data, *path, *internal, subtracted);
+    if (data.m_failed_regions.count(region_dir) > 0)
+	converted = true;
+    else if (region_dir && data.get_region(*region_dir).member_ignored(*path))
+	converted = true;
+    else if (!facetize)
+	converted = convert_primitive(data, *path, *internal, subtracted);
 
-	if (!converted) {
-	    if (!facetize && subtracted)
-		data.m_failed_regions.insert(region_dir);
-	    else
-		return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
-	}
+    if (!converted) {
+	if (!facetize && subtracted)
+	    data.m_failed_regions.insert(region_dir);
+	else
+	    return nmg_booltree_leaf_tess(tree_state, path, internal, client_data);
     }
 
     tree *result;
@@ -2486,56 +2488,50 @@ convert_region_end(db_tree_state *tree_state, const db_full_path *path,
 
 
 HIDDEN std::set<const directory *>
-do_conversion(db_i &db, const std::string &path,
+do_conversion(const struct db_i &db, const struct gcv_opts &gcv_options,
+	      const std::string &path,
 	      const std::set<const directory *> &facetize_regions =
 		  std::set<const directory *>())
 {
     RT_CK_DBI(&db);
 
-    const rt_tess_tol ttol = {RT_TESS_TOL_MAGIC, 0.0, 1.0e-2, 0.0};
-    const bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6};
-
     AutoPtr<model, nmg_km> nmg_model;
     db_tree_state initial_tree_state = rt_initial_tree_state;
-    initial_tree_state.ts_tol = &tol;
-    initial_tree_state.ts_ttol = &ttol;
+    initial_tree_state.ts_tol = &gcv_options.calculational_tolerance;
+    initial_tree_state.ts_ttol = &gcv_options.tessellation_tolerance;;
     initial_tree_state.ts_m = &nmg_model.ptr;
 
-    AutoPtr<char *> object_names;
-    std::size_t num_objects;
-    {
-	AutoPtr<directory *> toplevel_dirs;
-	db_update_nref(&db, &rt_uniresource);
-	num_objects = db_ls(&db, DB_LS_TOPS, NULL, &toplevel_dirs.ptr);
-	object_names.ptr = db_dpv_to_argv(toplevel_dirs.ptr);
-    }
-
     nmg_model.ptr = nmg_mm();
-    FastgenConversion data(path, db, tol, facetize_regions);
-    const int ret = db_walk_tree(&db, static_cast<int>(num_objects),
-				 const_cast<const char **>(object_names.ptr), 1, &initial_tree_state,
-				 convert_region_start, convert_region_end, convert_leaf, &data);
+    FastgenConversion data(db, gcv_options.calculational_tolerance,
+			   facetize_regions);
+    const int ret = db_walk_tree(const_cast<db_i *>(&db),
+				 static_cast<int>(gcv_options.num_objects),
+				 const_cast<const char **>(gcv_options.object_names),
+				 1,
+				 &initial_tree_state,
+				 convert_region_start,
+				 convert_region_end, convert_leaf, &data);
 
     if (ret)
 	throw std::runtime_error("db_walk_tree() failed");
+
+    data.write(path);
 
     return data.m_failed_regions;
 }
 
 
 HIDDEN int
-gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
-		   const struct gcv_opts *UNUSED(gcv_options),
-		   const void *UNUSED(options_data))
+fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
+	       const void *UNUSED(options_data), const char *dest_path)
 {
-    RT_CK_DBI(source_dbip);
-
-    const std::set<const directory *> failed_regions = do_conversion(*source_dbip,
-	    dest_path);
+    const std::set<const directory *> failed_regions =
+	do_conversion(*context->dbip, *gcv_options, dest_path);
 
     // facetize all regions that contain incompatible boolean operations
     if (!failed_regions.empty())
-	if (!do_conversion(*source_dbip, dest_path, failed_regions).empty())
+	if (!do_conversion(*context->dbip, *gcv_options, dest_path,
+			   failed_regions).empty())
 	    throw std::runtime_error("failed to convert all regions");
 
     return 1;
@@ -2546,12 +2542,8 @@ gcv_fastgen4_write(const char *dest_path, struct db_i *source_dbip,
 
 
 extern "C" {
-
-
-    struct gcv_converter gcv_conv_fastgen4_write =
-    {MIME_MODEL_VND_FASTGEN, GCV_CONVERSION_WRITE, NULL, NULL, gcv_fastgen4_write};
-
-
+    struct gcv_filter gcv_conv_fastgen4_write =
+    {"FASTGEN4 Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
 }
 
 

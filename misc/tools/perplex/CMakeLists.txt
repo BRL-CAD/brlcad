@@ -2,7 +2,7 @@
 #
 # Perplex - re2c scanner input generator
 #
-# Copyright (c) 2012 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

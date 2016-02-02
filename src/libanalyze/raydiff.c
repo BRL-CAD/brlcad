@@ -1,7 +1,7 @@
 /*                       R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -205,7 +205,7 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
     struct bu_ptbl test_tbl = BU_PTBL_INIT_ZERO;
     struct resource *resp = (struct resource *)bu_calloc(ncpus+1, sizeof(struct resource), "resources");
 
-    if (!dbip || !left || !right|| !tol) {
+    if (!dbip || !left || !right|| !tol || ncpus == 0) {
 	ret = 0;
 	goto memfree;
     }

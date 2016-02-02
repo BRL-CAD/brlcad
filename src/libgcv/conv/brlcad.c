@@ -1,7 +1,7 @@
 /*                        B R L C A D . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,13 +26,13 @@
 
 #include "common.h"
 
-#include "../plugin.h"
+#include "gcv/api.h"
 
 
 HIDDEN int
-gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
-		const struct gcv_opts *UNUSED(gcv_options),
-		const void *UNUSED(options_data))
+brlcad_read(struct gcv_context *context,
+		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		const char *source_path)
 {
     int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
@@ -48,7 +48,7 @@ gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
 	return 0;
     }
 
-    ret = db_dump(dest_dbip->dbi_wdbp, in_dbip);
+    ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
     db_close(in_dbip);
 
     return ret == 0;
@@ -56,9 +56,9 @@ gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
 
 
 HIDDEN int
-gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
-		 const struct gcv_opts *UNUSED(gcv_options),
-		 const void *UNUSED(options_data))
+brlcad_write(struct gcv_context *context,
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *dest_path)
 {
     int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
@@ -68,19 +68,19 @@ gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
 	return 0;
     }
 
-    ret = db_dump(out_wdbp, source_dbip);
+    ret = db_dump(out_wdbp, context->dbip);
     wdb_close(out_wdbp);
 
     return ret == 0;
 }
 
 
-const struct gcv_converter gcv_conv_brlcad_read =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, gcv_brlcad_read};
+const struct gcv_filter gcv_conv_brlcad_read =
+{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_read};
 
 
-const struct gcv_converter gcv_conv_brlcad_write =
-{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, gcv_brlcad_write};
+const struct gcv_filter gcv_conv_brlcad_write =
+{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, brlcad_write};
 
 
 /*

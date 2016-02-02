@@ -1,7 +1,7 @@
 /*                      T R I _ F A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,11 +46,13 @@ get_first_shell(struct model *model)
     return shell;
 }
 
+
 HIDDEN struct model*
 get_faceuse_model(struct faceuse *fu)
 {
     return fu->s_p->r_p->m_p;
 }
+
 
 /* nmg construction routines */
 
@@ -68,6 +70,7 @@ make_nmg_vertex_g(struct model *model, double x, double y, double z, long index)
     return vg;
 }
 
+
 HIDDEN struct vertex*
 make_nmg_vertex(struct model *model, double x, double y, double z, long index)
 {
@@ -83,6 +86,7 @@ make_nmg_vertex(struct model *model, double x, double y, double z, long index)
     return v;
 }
 
+
 HIDDEN void
 attach_face_g_plane(struct model *model, struct face *f)
 {
@@ -97,6 +101,7 @@ attach_face_g_plane(struct model *model, struct face *f)
 
     f->g.plane_p = plane;
 }
+
 
 /* builds an nmg model containing a single faceuse which represents the face
  * specified in points[]
@@ -117,7 +122,7 @@ make_model_from_face(const double points[], size_t numPoints)
 
     /* copy each point into vertex to create verts array */
     verts = (struct vertex**)bu_malloc(sizeof(struct vertex*) * numPoints,
-	"verts");
+				       "verts");
 
     for (i = 0; i < numPoints; i++) {
 	p = &points[i * ELEMENTS_PER_POINT];
@@ -142,6 +147,7 @@ make_model_from_face(const double points[], size_t numPoints)
     return model;
 }
 
+
 struct faceuse*
 make_faceuse_from_face(const double points[], size_t numPoints)
 {
@@ -158,6 +164,7 @@ make_faceuse_from_face(const double points[], size_t numPoints)
 
     return fu;
 }
+
 
 /* triangulation routines */
 
@@ -187,6 +194,7 @@ getPointReference(
 
     return -1;
 }
+
 
 /* points is the specification of face points. It should contain consecutive
  * three-coordinate vertices that specify a planar N-gon in CCW/CW order.

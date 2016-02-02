@@ -1,7 +1,7 @@
 /*                           G C V . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -378,45 +378,6 @@ gcv_help(struct bu_vls *UNUSED(msg), int argc, const char **argv, void *set_var)
 
 
 HIDDEN int
-gcv_converter_process_arguments(
-	struct bu_vls *messages,
-	const struct gcv_converter *converter,
-	void **options_data,
-	size_t argc, const char **argv)
-{
-    int ret_argc;
-    struct bu_opt_desc *options_desc;
-
-    gcv_converter_create_options(converter, &options_desc, options_data);
-    ret_argc = argc ? bu_opt_parse(messages, argc, argv, options_desc) : 0;
-    bu_free(options_desc, "options_desc");
-
-    if (ret_argc) {
-	if (messages) {
-	    if (ret_argc == -1)
-		bu_vls_printf(messages, "Fatal error in bu_opt_parse()\n");
-	    else {
-		int i;
-
-		bu_vls_printf(messages, "Unknown arguments: ");
-
-		for (i = 0; i < ret_argc - 1; ++i)
-		    bu_vls_printf(messages, "%s, ", argv[i]);
-
-		bu_vls_printf(messages, "%s\n", argv[ret_argc - 1]);
-	    }
-	}
-
-	gcv_converter_free_options(converter, *options_data);
-	*options_data = NULL;
-	return 0;
-    }
-
-    return 1;
-}
-
-
-HIDDEN int
 gcv_do_conversion(
 	struct bu_vls *messages,
 	const char *in_path, mime_model_t in_type,
@@ -424,61 +385,41 @@ gcv_do_conversion(
 	size_t in_argc, const char **in_argv,
 	size_t out_argc, const char **out_argv)
 {
-    const struct gcv_converter *in_conv, *out_conv;
-    void *in_options_data = NULL, *out_options_data = NULL;
+    const struct bu_ptbl * const filters = gcv_list_filters();
+    const struct gcv_filter * const *entry;
+    const struct gcv_filter *in_filter = NULL, *out_filter = NULL;
+    struct gcv_context context;
 
-    {
-	struct bu_ptbl in_converters = gcv_find_converters(in_type, GCV_CONVERSION_READ);
-	struct bu_ptbl out_converters = gcv_find_converters(out_type, GCV_CONVERSION_WRITE);
-
-	if (!BU_PTBL_LEN(&in_converters) || !BU_PTBL_LEN(&out_converters)) {
-	    bu_log("No %s for given format\n", !BU_PTBL_LEN(&in_converters) ? "reader" : "writer");
-	    bu_ptbl_free(&in_converters);
-	    bu_ptbl_free(&out_converters);
-	    return 0;
-	}
-
-	in_conv = (struct gcv_converter *)BU_PTBL_GET(&in_converters, 0);
-	out_conv = (struct gcv_converter *)BU_PTBL_GET(&out_converters, 0);
-
-	bu_ptbl_free(&in_converters);
-	bu_ptbl_free(&out_converters);
+    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters)) {
+	if ((*entry)->filter_type == GCV_FILTER_READ && (*entry)->mime_type == in_type)
+	    in_filter = *entry;
+	else if ((*entry)->filter_type == GCV_FILTER_WRITE && (*entry)->mime_type == out_type)
+	    out_filter = *entry;
     }
 
-    if (!gcv_converter_process_arguments(messages, in_conv, &in_options_data, in_argc, in_argv))
+    if (!in_filter)
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(in_type, MIME_MODEL));
+    if (!out_filter)
+	bu_vls_printf(messages, "No filter for %s\n", bu_file_mime_str(out_type, MIME_MODEL));
+    if (!in_filter || !out_filter)
 	return 0;
 
-    if (!gcv_converter_process_arguments(messages, out_conv, &out_options_data, out_argc, out_argv)) {
-	gcv_converter_free_options(in_conv, in_options_data);
+    gcv_context_init(&context);
+
+    if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
+	bu_vls_printf(messages, "Read filter failed for '%s'\n", in_path);
+	gcv_context_destroy(&context);
 	return 0;
     }
 
-    {
-	struct db_i * const dbi = db_create_inmem();
-
-	if (!gcv_converter_convert(in_conv, in_path, dbi, NULL, in_options_data)) {
-	    bu_log("Import failed\n");
-	    db_close(dbi);
-	    gcv_converter_free_options(in_conv, in_options_data);
-	    gcv_converter_free_options(out_conv, out_options_data);
-	    return 0;
-	}
-
-	dbi->dbi_read_only = 1;
-
-	if (!gcv_converter_convert(out_conv, out_path, dbi, NULL, out_options_data)) {
-	    bu_log("Export failed\n");
-	    db_close(dbi);
-	    gcv_converter_free_options(in_conv, in_options_data);
-	    gcv_converter_free_options(out_conv, out_options_data);
-	    return 0;
-	}
-
-	db_close(dbi);
+    if (!gcv_execute(&context, out_filter, NULL, out_argc, out_argv, out_path)) {
+	bu_vls_printf(messages, "Write filter failed for '%s'\n", out_path);
+	gcv_context_destroy(&context);
+	return 0;
     }
 
-    gcv_converter_free_options(in_conv, in_options_data);
-    gcv_converter_free_options(out_conv, out_options_data);
+    gcv_context_destroy(&context);
+
     return 1;
 }
 

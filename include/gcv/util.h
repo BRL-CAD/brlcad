@@ -1,7 +1,7 @@
 /*                      G C V _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,22 @@
 
 
 __BEGIN_DECLS
+
+
+struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct rt_tess_tol *tess_tol);
+
+
+/*
+ * Topological test for determining whether the given BoT satisfies
+ * the conditions for solidity.
+ *
+ * Equivalent to bot_is_closed_fan() && bot_is_orientable()
+ */
+GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
 
 
 /**

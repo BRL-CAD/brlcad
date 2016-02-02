@@ -1,7 +1,7 @@
 /*                   E C O S Y S T E M . D O T
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source (Graphviz format) and 'compiled'
@@ -94,7 +94,6 @@ digraph BRLCADDeps{
 
 	// System (not bundled)
 	X11 [color = "red", style = bold, shape = box, label = "X11"];
-	autotools [color = "red", style = bold, shape = box, label = "GNU Autotools"];
 	cmake [color = "red", style = bold, shape = box, label = "CMake"];
 	fop [color = "red", style = bold, shape = box, label = "Apache FOP (Docbook->pdf)"];
 	make [color = "red", style = bold, shape = box, label = "Make"];
@@ -103,7 +102,7 @@ digraph BRLCADDeps{
 	xsltproc [color = "red", style = bold, shape = box, label = "XSLT processor (xsltproc)"];
 	crun [color = "red", style = bold, shape = box, label = "C/C++ Runtime"];
 
-	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; make; mesa; unixtools; xsltproc; }
+	{ rank = same; "System Requirements"; X11; cmake; crun; fop; make; mesa; unixtools; xsltproc; }
 
 	// BRL-CAD components
 	libbu [color = "green", style = bold, shape = box, label = "BRL-CAD Utility Library (libbu)"];

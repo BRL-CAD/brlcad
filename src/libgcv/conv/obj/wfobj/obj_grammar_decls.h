@@ -1,7 +1,7 @@
-/*                      S O L I D I T Y . H
+/*             O B J _ G R A M M A R _ D E C L S . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,46 +17,30 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libgcv/bot_solidity.h
+/** @file obj_grammar.h
  *
- * Topological tests for determining whether a given BoT satisfies
- * the conditions for solidity.
+ * Necessary declarations to parse grammar.
  *
  */
 
-
-#ifndef BOT_SOLIDITY_H
-#define BOT_SOLIDITY_H
-
+#ifndef LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
+#define LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
 
 #include "common.h"
-
-#include "gcv.h"
-
+#include "obj_grammar.hpp"
+#include "obj_rules.h"
+#include "obj_token_type.h"
 
 __BEGIN_DECLS
 
-
-/*
- * Topological test for determining whether the given BoT satisfies
- * the conditions for solidity.
- *
- * Equivalent to bot_is_closed_fan() && bot_is_orientable()
- */
-GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
-
-
-GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
-
-
-GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
-
+void *ParseAlloc(void *(*mallocProc)(size_t));
+void Parse(void *parser, int tokenType, YYSTYPE tokenValue, yyscan_t scanner);
+void ParseFree(void *p, void (*freeProc)(void*));
+void ParseTrace(FILE *stream, char *prefix);
 
 __END_DECLS
 
-
 #endif
-
 
 /*
  * Local Variables:

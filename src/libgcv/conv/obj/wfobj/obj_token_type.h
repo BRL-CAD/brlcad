@@ -1,7 +1,7 @@
-/*                      F A C E T I Z E . H
+/*                O B J _ T O K E N _ T Y P E . H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,28 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file facetize.h
+/** @file obj_token_type.h
  *
- * Convenience functions for facetization.
+ * Token object used by scanner and parser.
  *
  */
 
+#ifndef LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
+#define LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
+const int TOKEN_STRING_LEN = 80;
 
-#include "common.h"
-
-#include "gcv.h"
-
-
-__BEGIN_DECLS
-
-
-struct rt_bot_internal *gcv_facetize(struct db_i *db,
-				     const struct db_full_path *path, const struct bn_tol *tol,
-				     const struct rt_tess_tol *tess_tol);
-
-
-__END_DECLS
-
+typedef union YYSTYPE
+{
+    float real;
+    int integer;
+    int reference[3];
+    unsigned char toggle;
+    size_t index;
+    char string[TOKEN_STRING_LEN];
+} YYSTYPE;
+#endif
 
 /*
  * Local Variables:

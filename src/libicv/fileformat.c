@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -148,10 +148,9 @@ png_write(icv_image_t *bif, const char *filename)
 		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
 		 PNG_FILTER_TYPE_DEFAULT);
     png_write_info(png_ptr, info_ptr);
-    for (i = bif->height-1; i > 0; --i) {
+    for (i = 0; i < bif->height; ++i) {
 	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
     }
-    png_write_row(png_ptr, (png_bytep) (data + 0));
     png_write_end(png_ptr, info_ptr);
 
     png_destroy_write_struct(&png_ptr, &info_ptr);
