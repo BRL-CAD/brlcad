@@ -1,4 +1,4 @@
-/*                        S E T E N V . C
+/*                        E N V . C
  * BRL-CAD
  *
  * Copyright (c) 2014 United States Government as represented by
@@ -35,47 +35,54 @@
 
 #include "common.h"
 
-#ifndef HAVE_SETENV
-
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include "bio.h"
-#include "sysv.h"
+
+#include "bu/env.h"
+#include "bu/malloc.h"
 
 
 int
-setenv(const char *name, const char *value, int overwrite)
+bu_setenv(const char *name, const char *value, int overwrite)
 {
+#ifdef HAVE_SETENV
+    return setenv(name, value, overwrite);
+#else
     int errcode = 0;
 
     if (!overwrite) {
 	size_t envsize = 0;
 
-#ifdef HAVE_GETENV_S
+#  ifdef HAVE_GETENV_S
 	errcode = getenv_s(&envsize, NULL, 0, name);
-#else
+#  else
 	if (getenv(name) == NULL)
 	    errcode = EINVAL;
-#endif
+#  endif
 	if (errcode || envsize)
 	    return errcode;
     }
-#ifdef HAVE__PUTENV_S
+
+    /* set/overwrite value */
+#  ifdef HAVE__PUTENV_S
     return _putenv_s(name, value);
-#else
+#  else
     {
 	size_t maxlen = strlen(name)+strlen(value)+2;
-	char *keyval = (char *)malloc(maxlen);
-	if (!keyval)
-	    return ENOMEM;
+	char *keyval = (char *)bu_malloc(maxlen, "setenv key=value copy/leak");
 	snprintf(keyval, maxlen, "%s=%s", name, value);
-	return putenv(keyval);
-    }
+
+	/* NOTE: we intentionally cannot free our key=value memory
+	 * here due to legacy putenv() behavior.  the pointer becomes
+	 * part of the environment.
+	 */
+	return putenv(keyval); }
+#  endif
+
 #endif
 }
-
-#endif /* HAVE_SETENV */
 
 
 /*

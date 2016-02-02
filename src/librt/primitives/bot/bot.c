@@ -2776,8 +2776,8 @@ rt_bot_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 			return BRLCAD_ERROR;
 		    }
 		    bot->faces[i*3+2] = li;
-		    bu_free((char *)obj_array, "obj_array");
 		}
+		bu_free((char *)obj_array, "obj_array");
 	    } else {
 		li = atol(&argv[0][1]);
 		if (li < 0 || (size_t)li >= bot->num_faces) {

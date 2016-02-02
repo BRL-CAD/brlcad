@@ -111,7 +111,7 @@ _ged_build_dpp(struct ged *gedp,
      * First, build an array of the object's path components.
      * We store the list in av_orig below.
      */
-    newstr = strdup(path);
+    newstr = bu_strdup(path);
     begin = newstr;
     while ((end = strchr(begin, '/')) != NULL) {
 	*end = '\0';

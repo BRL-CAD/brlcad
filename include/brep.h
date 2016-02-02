@@ -1385,6 +1385,8 @@ sub_curve(const ON_Curve *in, double a, double b);
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
 
+extern BREP_EXPORT void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
 
 extern BREP_EXPORT int
 ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);

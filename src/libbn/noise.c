@@ -686,11 +686,9 @@ bn_noise_ridged(fastf_t *point, double h_val, double lacunarity, double octaves,
 double
 bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, double offset)
 {
-    double frequency = 1.0;
     struct fbm_spec *ep;
-    double result, weight, noise_signal, *spec_wgts;
+    double result, *spec_wgts;
     point_t pt;
-    int i;
 
     /* The first order of business is to see if we have pre-computed
      * the spectral weights table for these parameters in a previous
@@ -708,19 +706,29 @@ bn_noise_mf(fastf_t *point, double h_val, double lacunarity, double octaves, dou
     offset = 1.0;
 
     result = (bn_noise_perlin(pt) + offset) * spec_wgts[0];
-    weight = result;
 
-    for (i=1; i < octaves; i++) {
-	PSCALE(pt, lacunarity);
+#if 0
+    /* TODO - the code below doesn't contribute to the result - what
+     * should it be doing? */
+    {
+	double weight = result;
+	double noise_signal;
+	double frequency = 1.0;
+	int i;
 
-	V_MIN(weight, 1.0);
+	for (i=1; i < octaves; i++) {
+	    PSCALE(pt, lacunarity);
 
-	noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
+	    V_MIN(weight, 1.0);
 
-	noise_signal += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
-	frequency *= lacunarity;
-	PSCALE(pt, lacunarity);
+	    noise_signal = (bn_noise_perlin(pt) + offset) * spec_wgts[i];
+
+	    noise_signal += fabs(bn_noise_perlin(pt)) * pow(frequency, -h_val);
+	    frequency *= lacunarity;
+	    PSCALE(pt, lacunarity);
+	}
     }
+#endif
     return result;
 }
 

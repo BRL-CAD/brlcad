@@ -1,7 +1,7 @@
-/*                        S T R D U P . C
+/*                          E N V . H
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,53 +17,36 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libsysv/strdup.c
- *
- *  Duplicate a string.
- *
- *  Author -
- *	Michael John Muuss
- *
- */
+
+#ifndef BU_ENV_H
+#define BU_ENV_H
 
 #include "common.h"
 
-/* quell empty-compilation unit warnings */
-const int strdup_unused = 0;
+#include "bu/defines.h"
 
+__BEGIN_DECLS
 
-#ifndef HAVE_STRDUP
-#include "sysv.h"
-
-/* for malloc */
-#include <stdlib.h>
-#include <string.h>
-
-
-/*
- * Given a string, allocate enough memory to hold it using malloc(),
- * duplicate the strings, returns a pointer to the new string.
+/** @addtogroup bu_env
+ *
+ * @brief
+ * Platform-independent methods for interacting with the parent operating
+ * system environment.
+ *
  */
-char *
-strdup(register const char *cp)
-{
-    register char	*base;
-    register int	len;
+/** @{ */
+/** @file bu/env.h */
 
-    len = strlen( cp )+2;
-    if ( (base = (char *)malloc( len )) == (char *)0 )
-	return (char *)0;
+BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
 
-    memcpy(base, cp, len);
-    return base;
-}
+__END_DECLS
 
-#endif
+#endif /* BU_ENV_H */
 
 /*
  * Local Variables:
- * mode: C
  * tab-width: 8
+ * mode: C
  * indent-tabs-mode: t
  * c-file-style: "stroustrup"
  * End:

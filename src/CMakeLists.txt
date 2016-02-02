@@ -31,7 +31,6 @@ endif(MSVC)
 set(level_1_dirs
   libbu
   libbn
-  libsysv
   libbg
   libbrep
   librt

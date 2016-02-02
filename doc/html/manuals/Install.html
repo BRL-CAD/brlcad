@@ -296,7 +296,6 @@ SOFTWARE ORGANIZATION</H1>
 <tr></tr>
 <tr><td>librt</td><td>A solid-model ray-tracing library</td></tr>
 <tr><td>libspl</td><td>A B-spline library</td></tr>
-<tr><td>libsysv</td><td>Some System-V compatibility routines</td></tr>
 <tr><td>libpkg</td><td>A "message-passing" interface to TCP network links</td></tr>
 <tr><td>libfb</td><td>A generic frame-buffer library</td></tr>
 <tr><td>libtermio</td><td>A library to handle terminal mode setting</td></tr>
@@ -653,7 +652,7 @@ and then to conduct the actual benchmark test, run:
 </pre>
 The <b>cake benchmark</b> will process just the directories
 that are needed to run the benchmark:
-libsysv, libmalloc, conv, db, libpkg (if HAS_TCP==1),
+libmalloc, conv, db, libpkg (if HAS_TCP==1),
 libfb, libplot3, libspl, librt, rt.
 If any fatal errors occur during this process,
 consult the section on <a href="porting">SUPPORTING A NEW MACHINE</a>.
@@ -1451,8 +1450,6 @@ the SGI loader will produce the following warning(s):
 ld:
 The shared object /usr/lib/libm.so did not resolve any symbols.
         You may want to remove it from your link line.
-The shared object ../libsysv/libsysv.so did not resolve any symbols.
-        You may want to remove it from your link line.
 </pre>
 This warning can safely be ignored.
 The documentation states that the <b>-S</b> option given to the loader
@@ -1555,22 +1552,6 @@ If you are a Bourne Shell user and you experience this problem,
 try running <b>csh</b> before starting <b>mged</b>.
 <H2>
 DEC ALPHA PROBLEMS</H2>
-<P>
-The DEC Alpha system running DEC OSF/1 V3.0 has a bug in /bin/sh
-which causes the Shell to segmentation fault when executing this line:
-<pre>
-              eval `grep '^RELEASE=' ../gen.sh`
-</pre>
-in the files newvers.sh and sharedlibvers.sh, which is of course a
-perfectly good shell command.  The error message is a bit cryptic and
-will look like this:
-<pre>
- ../newvers.sh libsysv_version "BRL-CAD System V Compatibility Library"
- ../newvers.sh: no space
-</pre>
-There are workarounds included in both shell scripts, simply comment out
-the defective line and uncomment the workaround, and all will be well.
-A bug report has been filed with the vendor.
 <P>
 When the DEC loader builds a shared library, it insists on printout out
 a list of all the external symbols referenced by that library, even

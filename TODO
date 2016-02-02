@@ -56,6 +56,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* investigate merging functionality from the sig tools into libicv
+  and removing the tools themselves.  Also, need some documentation
+  for the sig functionality (currently none??)
+
 * investigate updating our fnmatch code to use OpenBSD's non-recursive
   implementation, added starting at revision 1.16:
   http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c

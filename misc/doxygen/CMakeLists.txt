@@ -7,7 +7,6 @@ set(DOX_LIBS
   libbu
   libbn
   libbg
-  libsysv
   libbrep
   librt
   libwdb

@@ -507,10 +507,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
 endif(NOT BRLCAD_IS_SUBBUILD)
 
-# To support "make check" (which will build the required targets for testing
-# in the style of GNU Autotools, we define a "check" target per
-# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
-# automatically assemble its targets into the check dependency list.
+# "make check" runs all of the tests (unit, benchmark, and regression) that are expected to work.
 if(NOT BRLCAD_IS_SUBBUILD)
   include(ProcessorCount)
   ProcessorCount(N)
@@ -520,31 +517,70 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # Huh?  No j flag if we can't get a processor count
     set(JFLAG)
   endif(NOT N EQUAL 0)
-  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check
-      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIG> -LE Regression -E ^regress- ${JFLAG}
-      )
-  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
-    add_custom_target(check
-      COMMAND ${CMAKE_COMMAND} -P ${BRLCAD_CMAKE_DIR}/make_check_msg.cmake
-      COMMAND ${CMAKE_CTEST_COMMAND} -C $<CONFIGURATION> -LE Regression -E ^regress- ${JFLAG}
-      )
-  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+  add_custom_target(check
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs"
+    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD's unit, system, integration, benchmark (performance), and"
+    COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_CTEST_COMMAND} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE|benchmark\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -R \"benchmark\" --output-on-failure ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -L \"Regression\" --output-on-failure ${JFLAG}
+    )
   set_target_properties(check PROPERTIES FOLDER "BRL-CAD Validation Testing")
+endif(NOT BRLCAD_IS_SUBBUILD)
+
+
+# To support "make unit" (which will build the required targets for testing
+# in the style of GNU Autotools "make check") we define a "unit" target per
+# http://www.cmake.org/Wiki/CMakeEmulateMakeCheck and have add_test
+# automatically assemble its targets into the unit dependency list.
+if(NOT BRLCAD_IS_SUBBUILD)
+  include(ProcessorCount)
+  ProcessorCount(N)
+  if(NOT N EQUAL 0)
+    set(JFLAG "-j${N}")
+  else(NOT N EQUAL 0)
+    # Huh?  No j flag if we can't get a processor count
+    set(JFLAG)
+  endif(NOT N EQUAL 0)
+
+  if(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    set(CONFIG $<CONFIG>)
+  else(${CMAKE_VERSION} VERSION_GREATER 2.99)
+    set(CONFIG $<CONFIGURATION>)
+  endif(${CMAKE_VERSION} VERSION_GREATER 2.99)
+
+  add_custom_target(unit
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"unit\" a.k.a. \"BRL-CAD Unit Testing\" target runs the"
+    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD's API unit tests that are expected to work (i.e.,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development).  All dependencies required"
+    COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
+    COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
+    COMMAND ${CMAKE_CTEST_COMMAND} -C $CONFIG -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    )
+
+  set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
+
   function(add_test test_name test_prog)
     _add_test(${test_name} ${test_prog} ${ARGN})
     if (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+      if (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
+	add_dependencies(unit ${test_prog})
 	add_dependencies(check ${test_prog})
-      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress-)
+      endif (NOT "${test_name}" MATCHES ^regress- AND NOT "${test_prog}" MATCHES ^regress- AND NOT "${test_name}" STREQUAL "benchmark")
     else (NOT "${test_name}" STREQUAL "NAME")
-      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+      if (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
+	add_dependencies(unit ${ARGV3})
 	add_dependencies(check ${ARGV3})
-      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress-)
+      endif (NOT "${ARGV1}" MATCHES ^regress- AND NOT "${ARGV3}" MATCHES ^regress- AND NOT "${ARGV1}" MATCHES "benchmark")
     endif (NOT "${test_name}" STREQUAL "NAME")
   endfunction(add_test)
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+
 
 #---------------------------------------------------------------------
 # Load macros that will be used to define the BRL-CAD
@@ -1431,13 +1467,10 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 # a Bourne shell and other commands - check for them.
 include(${BRLCAD_CMAKE_DIR}/FindShellDeps.cmake)
 
-# CMake can detect flex and bison, but apparently not generic lex/yacc.
-# Solution is to make our own generic lex/yacc Find routines that look
-# first for flex/bison, but will take whatever's available.  Since the
-# BRL-CAD project isn't supposed to rely on flex/bison specific features
-# anyway, there shouldn't be a problem.
+# CMake can detect flex, but apparently not generic lex.
+# Solution is to make our own generic lex Find routine that looks
+# first for flex, but will take whatever's available.
 include(${BRLCAD_CMAKE_DIR}/FindLEX.cmake)
-include(${BRLCAD_CMAKE_DIR}/FindYACC.cmake)
 
 # If using dtrace, we will need to find it
 if(BRLCAD_ENABLE_DTRACE)
@@ -1718,7 +1751,7 @@ if(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 endif(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
 
 # Check whether the compiler supports __attribute__((always_inline))
-check_c_source_compiles("void always_inline() __attribute__((always_inline)); void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
+check_c_source_compiles("inline void always_inline() __attribute__((always_inline)); inline void always_inline(){return;} int main(int argc, char *argv[]) {always_inline(); return 0;}" HAVE_ALWAYS_INLINE_ATTRIBUTE)
 if(HAVE_ALWAYS_INLINE_ATTRIBUTE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_ALWAYS_INLINE_ATTRIBUTE 1\n")
 endif(HAVE_ALWAYS_INLINE_ATTRIBUTE)
@@ -2098,17 +2131,17 @@ BRLCAD_FUNCTION_EXISTS(realpath HAVE_REALPATH)
 BRLCAD_FUNCTION_EXISTS(setenv HAVE_SETENV)
 BRLCAD_FUNCTION_EXISTS(setpgid HAVE_SETPGID)
 BRLCAD_FUNCTION_EXISTS(setpriority HAVE_SETPRIORITY)
-BRLCAD_FUNCTION_EXISTS(shmctl HAVE_SHMCTL)
 BRLCAD_FUNCTION_EXISTS(shmat HAVE_SHMAT)
+BRLCAD_FUNCTION_EXISTS(shmctl HAVE_SHMCTL)
 BRLCAD_FUNCTION_EXISTS(shmdt HAVE_SHMDT)
 BRLCAD_FUNCTION_EXISTS(shmget HAVE_SHMGET)
+BRLCAD_FUNCTION_EXISTS(snprintf HAVE_SNPRINTF)
 BRLCAD_FUNCTION_EXISTS(srand48 HAVE_SRAND48)
 BRLCAD_FUNCTION_EXISTS(strcasecmp HAVE_STRCASECMP)
-BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
 BRLCAD_FUNCTION_EXISTS(strdup HAVE_STRDUP)
 BRLCAD_FUNCTION_EXISTS(strlcat HAVE_STRLCAT)
 BRLCAD_FUNCTION_EXISTS(strlcpy HAVE_STRLCPY)
-BRLCAD_FUNCTION_EXISTS(strsep HAVE_STRSEP)
+BRLCAD_FUNCTION_EXISTS(strncasecmp HAVE_STRNCASECMP)
 BRLCAD_FUNCTION_EXISTS(sync HAVE_SYNC)
 BRLCAD_FUNCTION_EXISTS(sysconf HAVE_SYSCONF)
 BRLCAD_FUNCTION_EXISTS(sysctl HAVE_SYSCTL)
@@ -3058,6 +3091,7 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
+set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
 _add_test(NAME "NOTE:\\ some\\ tests\\ are\\ expected\\ to\\ fail" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:

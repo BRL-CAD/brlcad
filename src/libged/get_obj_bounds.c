@@ -28,6 +28,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/str.h"
 #include "ged.h"
 
 #include "./ged_private.h"
@@ -182,7 +183,7 @@ get_objpath_mat(struct ged *gedp,
 	char *av0;
 	gtdp->gtd_objpos = 0;
 
-	av0 = strdup(argv[0]);
+	av0 = bu_strdup(argv[0]);
 	tok = strtok(av0, "/");
 	while (tok) {
 	    if ((gtdp->gtd_obj[gtdp->gtd_objpos++] =
