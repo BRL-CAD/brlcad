@@ -3078,7 +3078,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 endif(NOT BRLCAD_IS_SUBBUILD)
 
 # Write out the Doxygen feature list
-BRLCAD_FEATURE_SUMMARY(${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox)
+DOXYGEN_FEATURE_SUMMARY(${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox)
 
 add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""

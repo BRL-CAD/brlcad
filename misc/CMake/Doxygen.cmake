@@ -42,7 +42,7 @@ define_property(GLOBAL PROPERTY DOXYGEN_FEATURES BRIEF_DOCS "Doxygen features" F
 
 # This macro provides the core custom command and target wiring for most of the DocBook
 # build targets.
-macro(BRLCAD_FEATURE label)
+macro(DOXYGEN_FEATURE label)
   if(${ARGC} GREATER 2)
     # Parse extra arguments
     CMAKE_PARSE_ARGUMENTS(FEATURE "" "" "DESCRIPTION;DIR" ${ARGN})
@@ -53,9 +53,9 @@ macro(BRLCAD_FEATURE label)
     set(FEATURE_STRING "@par ${label}\n\n")
   endif(FEATURE_DESCRIPTION)
   set_property(GLOBAL APPEND PROPERTY DOXYGEN_FEATURES "${FEATURE_STRING}")
-endmacro(BRLCAD_FEATURE)
+endmacro(DOXYGEN_FEATURE)
 
-macro(BRLCAD_FEATURE_SUMMARY filename)
+macro(DOXYGEN_FEATURE_SUMMARY filename)
   file(WRITE "${filename}" "/*! @page Features Features\n")
   get_property(DOXYGEN_FEATURE_LIST GLOBAL PROPERTY DOXYGEN_FEATURES)
   mark_as_advanced(DOXYGEN_FEATURE_LIST)
@@ -66,7 +66,7 @@ macro(BRLCAD_FEATURE_SUMMARY filename)
     file(APPEND "${filename}" "${feature}")
   endforeach(feature ${DOXYGEN_FEATURE_LIST})
   file(APPEND "${filename}" "*/\n")
-endmacro(BRLCAD_FEATURE_SUMMARY filename)
+endmacro(DOXYGEN_FEATURE_SUMMARY filename)
 
 # Local Variables:
 # tab-width: 8
