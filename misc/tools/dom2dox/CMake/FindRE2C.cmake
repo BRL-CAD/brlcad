@@ -29,11 +29,11 @@ FIND_PACKAGE_HANDLE_STANDARD_ARGS(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
 #   find_package(LEMON)
 #   find_package(RE2C)
 #
-#   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   RE2C_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp)
+#   LEMON_TARGET(MyParser parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
+#   RE2C_TARGET(MyScanner scanner.re  "${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp")
 #   ADD_RE2C_LEMON_DEPENDENCY(MyScanner MyParser)
 #
-#   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#   include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #   add_executable(Foo
 #      Foo.cc
 #      ${LEMON_MyParser_OUTPUTS}
@@ -103,7 +103,7 @@ if(NOT COMMAND RE2C_TARGET)
       ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
       COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
     set(RE2C_${Name}_DEFINED TRUE)
     set(RE2C_${Name}_OUTPUTS ${Output})
