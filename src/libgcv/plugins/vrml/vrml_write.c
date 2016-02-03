@@ -1377,10 +1377,15 @@ out:
 }
 
 
-const struct gcv_filter gcv_conv_vrml_write = {
+static const struct gcv_filter gcv_conv_vrml_write = {
     "VRML Writer", GCV_FILTER_WRITE, MIME_MODEL_VRML,
     vrml_write_create_opts, vrml_write_free_opts, vrml_write
 };
+
+
+extern const struct gcv_filter gcv_conv_vrml_read;
+static const struct gcv_filter *filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};
+const struct gcv_plugin gcv_plugin_info = {filters};
 
 
 /*

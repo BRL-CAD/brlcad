@@ -407,13 +407,13 @@ gcv_do_conversion(
     gcv_context_init(&context);
 
     if (!gcv_execute(&context, in_filter, NULL, in_argc, in_argv, in_path)) {
-	bu_vls_printf(messages, "Read filter failed for '%s'\n", in_path);
+	bu_vls_printf(messages, "Read filter ('%s') failed for '%s'\n", in_filter->name, in_path);
 	gcv_context_destroy(&context);
 	return 0;
     }
 
     if (!gcv_execute(&context, out_filter, NULL, out_argc, out_argv, out_path)) {
-	bu_vls_printf(messages, "Write filter failed for '%s'\n", out_path);
+	bu_vls_printf(messages, "Write filter ('%s') failed for '%s'\n", out_filter->name, out_path);
 	gcv_context_destroy(&context);
 	return 0;
     }

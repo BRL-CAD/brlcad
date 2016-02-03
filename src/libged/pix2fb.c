@@ -39,7 +39,6 @@
 
 #include "bu/getopt.h"
 #include "fb.h"
-#include "fbserv_obj.h"
 
 #include "pkg.h"
 #include "ged.h"

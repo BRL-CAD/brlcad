@@ -1,10 +1,10 @@
 /* Top level library group */
-/** @defgroup librt librt (geometry, raytracing) */
+/** @defgroup librt librt (Geometry I/O, Raytracing) */
 
 /* Second tier groups */
 
 /** @ingroup librt */
-/**  @defgroup rt_defines librt Definitions*/
+/**  @defgroup rt_defines Definitions*/
 
 /** @ingroup librt */
 /**  @defgroup rt_debug Debugging */
@@ -29,6 +29,9 @@
 /**  @addtogroup rt_nmg
      @brief Support for N-Manifold Geometry */
  */
+
+/** @ingroup librt */
+/**  @defgroup rt_timer Timer*/
 
 
 /* Third tier groups */

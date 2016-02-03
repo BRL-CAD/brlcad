@@ -1,10 +1,10 @@
 
 /* Top level library group */
-/** @defgroup libbu libbu (utility functions) */
+/** @defgroup libbu libbu (Utility Functions) */
 
 /* Second tier groups */
 /** @ingroup libbu */
-/**  @defgroup bu_defines libbu Definitions*/
+/**  @defgroup bu_defines Definitions*/
 
 /** @ingroup libbu */
 /**  @defgroup bu_container Data Containers */
@@ -32,12 +32,18 @@
      @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
  */
 /** @ingroup libbu */
-/**  @defgroup bu_binding Language Bindings */
-/**  @addtogroup bu_binding
-     @brief Language bindings.
+/**  @defgroup bu_env  Environment Management */
+/**  @addtogroup bu_env
+     @brief Cross platform API for interacting with the operating system environment.
  */
 /** @ingroup libbu */
 /**  @defgroup bu_version Version */
+/** @ingroup libbu */
+/**  @defgroup bu_bio System I/O Header Wrangler*/
+/** @ingroup libbu */
+/**  @defgroup bu_bnetwork System Network Header Wrangler*/
+/** @ingroup libbu */
+/**  @defgroup bu_bsocket System Socket Header Wrangler*/
 
 
 /* Data Containers */
@@ -114,10 +120,6 @@
 /**   @defgroup bu_thread Multithreading */
 /** @ingroup bu_parallel */
 /**   @defgroup bu_simd Single Instruction Multiple Data*/
-
-/* Language Bindings */
-/** @ingroup bu_binding */
-/**   @defgroup bu_tcl Tcl Interfacing */
 
 /*
  * Local Variables:

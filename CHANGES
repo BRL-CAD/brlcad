@@ -117,6 +117,12 @@ and new names should be listed for reference.
 
 7.26
 ----
+include/bu/cmd.h
+	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
+	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
+	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
+fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
+        All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
@@ -285,6 +291,8 @@ now no longer a part of BRL-CAD.
 
 7.26.0
 ------
+conf.h
+	removed - replaced with common.h [deprecated 7.0]
 libbu, libbn
         no longer utilize or require Tcl [7.26 architecture change]
 include/dg.h
@@ -1096,3 +1104,6 @@ s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
 	tcl library registrations moved to libtclcad [7.25]
 s/rt_grow_boolstack/rt_bool_growstack/g
 	 rename with consistent prefixes [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])obj\.h/\1dm\/bview.h/g
+s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
+	move view_obj to dm/bview.h [7.25]

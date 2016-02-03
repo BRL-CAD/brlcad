@@ -31,12 +31,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-
-#define USE_FBSERV 1
-
-#ifdef USE_FBSERV
-#  include "fbserv_obj.h"
-#endif
+#include "fb.h"
 
 #include "./dm/defines.h"
 

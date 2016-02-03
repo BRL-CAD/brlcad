@@ -43,8 +43,6 @@
 #include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
-#include "fbserv_obj.h"
-
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh(fb *ifp, int x, int y, int w, int h);

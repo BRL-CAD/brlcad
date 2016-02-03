@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 /* Start the global timer */
-/** @addtogroup timer */
+/** @addtogroup rt_timer */
 /** @{ */
 /**
  * To provide timing information for RT.

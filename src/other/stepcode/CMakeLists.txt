@@ -249,6 +249,10 @@ if(NOT SC_IS_SUBBUILD)
   SET( CMAKE_INSTALL_PREFIX ${SC_INSTALL_PREFIX} CACHE INTERNAL "Prefix prepended to install directories if target destination is not absolute, immutable" FORCE )
 endif(NOT SC_IS_SUBBUILD)
 
+if(SC_SKIP_EXEC_INSTALL)
+  set(SC_EXEC_NOINSTALL "NO_INSTALL")
+endif(SC_SKIP_EXEC_INSTALL)
+
 OPTION(SC_BUILD_EXPRESS_ONLY "Only build express parser." OFF)
 MARK_AS_ADVANCED(SC_BUILD_EXPRESS_ONLY)
 
@@ -444,9 +448,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-#if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
-#  ADD_SUBDIRECTORY( src/cllazyfile )
-#endif( NOT WIN32 )
+if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+  ADD_SUBDIRECTORY( src/cllazyfile )
+endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

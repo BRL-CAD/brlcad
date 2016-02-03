@@ -3035,10 +3035,15 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 }
 
 
-const struct gcv_filter gcv_conv_fastgen4_read = {
+static const struct gcv_filter gcv_conv_fastgen4_read = {
     "FASTGEN4 Reader", GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN,
     fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
 };
+
+
+extern const struct gcv_filter gcv_conv_fastgen4_write;
+static const struct gcv_filter *filters[] = {&gcv_conv_fastgen4_read, &gcv_conv_fastgen4_write, NULL};
+const struct gcv_plugin gcv_plugin_info = {filters};
 
 
 /*

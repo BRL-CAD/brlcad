@@ -28,13 +28,11 @@ set(public_hdrs
   brlcad.i
   dm.h
   fb.h
-  fbserv_obj.h
   fft.h
   gcv.h
   icv.h
   libtermio.h
   nmg.h
-  obj.h
   optical.h
   photonmap.h
   pc.h
@@ -58,8 +56,6 @@ set(noinst_HEADERS
   bnetwork.h
   brlcad_ident.h
   brlcad_version.h
-  conf.h
-  fbmsg.h
   )
 CMAKEFILES(${noinst_HEADERS})
 

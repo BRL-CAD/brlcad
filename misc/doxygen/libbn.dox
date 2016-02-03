@@ -1,10 +1,10 @@
 
 /* Top level library group */
-/** @defgroup libbn libbn (numerical functions) */
+/** @defgroup libbn libbn (Numerical Functions) */
 
 /* Second tier groups */
  /** @ingroup libbn */
-/**   @defgroup bn_defines libbn Definitions*/
+ /**  @defgroup bn_defines Definitions*/
  /** @ingroup libbn */
  /**  @defgroup bn_anim Animation */
  /** @ingroup libbn */
@@ -40,9 +40,9 @@
  /** @ingroup libbn */
  /**  @defgroup bn_poly Polynomials */
  /** @ingroup libbn */
- /**  @defgroup bn_tcl libbn Tcl interface */
- /** @ingroup libbn */
  /**  @defgroup bn_sphmap Spherical Maps */
+ /** @ingroup libbn */
+ /**  @defgroup bn_str String Data Encoding/Decoding */
  /** @ingroup libbn */
  /**  @defgroup bn_tabdata Tabulated Data */
  /** @ingroup libbn */
