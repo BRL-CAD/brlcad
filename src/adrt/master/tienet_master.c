@@ -48,55 +48,21 @@
 #endif
 
 #include "rt/tie.h"
+#include "bu/str.h"
+#include "bu/log.h"
+
 #include "adrt.h"
+
 #include "tienet.h"
 #include "tienet_master.h"
 
 #include "bio.h"
-
-#include "rt/tie.h"
-
-
 
 #include "master.h"
 
 #if TN_COMPRESSION
 # include <zlib.h>
 #endif
-
-
-void tienet_sem_init(tienet_sem_t *sem, int val)
-{
-    pthread_mutex_init(&sem->mut, 0);
-    pthread_cond_init(&sem->cond, 0);
-    sem->val = val;
-}
-
-
-void tienet_sem_free(tienet_sem_t *sem)
-{
-    pthread_mutex_destroy(&sem->mut);
-    pthread_cond_destroy(&sem->cond);
-}
-
-
-void tienet_sem_post(tienet_sem_t *sem)
-{
-    pthread_mutex_lock(&sem->mut);
-    sem->val++;
-    pthread_cond_signal(&sem->cond);
-    pthread_mutex_unlock(&sem->mut);
-}
-
-
-void tienet_sem_wait(tienet_sem_t *sem)
-{
-    pthread_mutex_lock(&sem->mut);
-    if (!sem->val)
-	pthread_cond_wait(&sem->cond, &sem->mut);
-    sem->val--;
-    pthread_mutex_unlock(&sem->mut);
-}
 
 
 typedef struct tienet_master_data_s {
@@ -271,7 +237,7 @@ void tienet_master_push(const void *data, size_t size)
     tienet_sem_wait(&tienet_master_sem_fill);
 
     /* Fill buffer, Grow if necessary */
-    if (sizeof(short) + sizeof(int) + size > tienet_master_buffer[tienet_master_pos_fill].size) {
+    if (sizeof(short) + sizeof(int) + size > (size_t)tienet_master_buffer[tienet_master_pos_fill].size) {
 	tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
 	tienet_master_buffer[tienet_master_pos_fill].data = bu_realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size, "master buffer data");
     }
@@ -289,7 +255,7 @@ void tienet_master_push(const void *data, size_t size)
 	TCOPY(int, &(socket->work.size), 0, &size, 0);
 
 	/* Fill buffer, Grow if necessary */
-	if (sizeof(short) + sizeof(int) + size > tienet_master_buffer[tienet_master_pos_fill].size) {
+	if (sizeof(short) + sizeof(int) + size > (size_t)tienet_master_buffer[tienet_master_pos_fill].size) {
 	    tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
 	    tienet_master_buffer[tienet_master_pos_fill].data = bu_realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size, "master buffer data");
 	}
@@ -449,7 +415,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 }
 
 
-void* tienet_master_listener(void *ptr)
+void* tienet_master_listener(void *UNUSED(ptr))
 {
     struct sockaddr_in master, slave;
     socklen_t addrlen;
@@ -686,7 +652,7 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 	TCOPY(int, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short), &size, 0);
 	tienet_send(sock->num, tienet_master_buffer[tienet_master_pos_read].data, sizeof(short) + sizeof(int) + size);
 
-	if (sizeof(short) + sizeof(int) + size > sock->work.size) {
+	if (sizeof(short) + sizeof(int) + (size_t)size > (size_t)sock->work.size) {
 	    sock->work.size = sizeof(short) + sizeof(int) + size;
 	    sock->work.data = bu_realloc(sock->work.data, sock->work.size, "work data");
 	}

@@ -33,16 +33,6 @@
 #  include <sys/time.h>
 #endif
 
-
-
-#include "camera.h"
-#include "dispatcher.h"		/* Dispatcher that creates work units */
-#include "compnet.h"		/* Component Networking, Sends Component Names via Network */
-#include "adrt.h"		/* adrt Defines */
-#include "adrt_struct.h"	/* adrt common structs */
-#include "tienet.h"
-#include "tienet_master.h"
-
 /* Networking Includes */
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -60,15 +50,31 @@
 #  include <arpa/inet.h>
 #endif
 
-#if ADRT_USE_COMPRESSION
-#  include <zlib.h>
-#endif
-
 #ifdef HAVE_GETOPT_H
 # include <getopt.h>
 #endif
 
+#include "adrt.h"		/* adrt Defines */
+
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
+# include <zlib.h>
+#endif
+
 #include "bio.h"
+
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
+
+#include "adrt_struct.h"	/* adrt common structs */
+#include "tienet.h"
+#include "tienet_master.h"
+#include "camera.h"
+#include "dispatcher.h"		/* Dispatcher that creates work units */
+#include "compnet.h"		/* Component Networking, Sends Component Names via Network */
+
 
 /* socket structure */
 typedef struct master_socket_s
@@ -109,6 +115,7 @@ typedef struct master_s
 } master_t;
 
 
+void master_dispatcher_init();
 void* master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
@@ -240,7 +247,7 @@ master_result(tienet_buffer_t *result)
 	case ADRT_WORK_SHOTLINE:
 	    {
 		tienet_buffer_t selection_buf;
-		uint32_t i, num, tind;
+		uint32_t num, tind;
 		uint8_t c;
 		char name[256];
 
@@ -556,7 +563,7 @@ master_networking(void *ptr)
 			/* Size of result data */
 			tienet_send(sock->num, &master.buf.ind, 4);
 
-#if ADRT_USE_COMPRESSION
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
 			{
 			    unsigned long dest_len;
 			    unsigned int comp_size;

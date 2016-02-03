@@ -28,14 +28,6 @@
 #ifdef HAVE_PTHREAD_H
 #  include <pthread.h>
 #endif
-#include "bio.h"
-
-#include "rt/tie.h"
-#include "adrt.h"
-
-#include "tienet_master.h"
-#include "dispatcher.h"
-#include "camera.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
@@ -45,6 +37,18 @@
 #  endif
 #  include <sys/sysctl.h>
 #endif
+
+#include "bio.h"
+
+#include "bu/malloc.h"
+#include "rt/tie.h"
+#include "adrt.h"
+
+#include "tienet.h"
+#include "tienet_master.h"
+#include "dispatcher.h"
+#include "camera.h"
+
 
 uint16_t dispatcher_frame;
 tienet_buffer_t dispatcher_mesg;

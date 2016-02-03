@@ -87,12 +87,14 @@ endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(isst_tcltk.c)
 
+add_subdirectory(master)
+# add_subdirectory(slave)
+
 set(adrt_ignore_files
   isst.h
   isst
   isst.bat
   load.h
-  master
   slave
   tienet.h
   )
