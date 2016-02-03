@@ -519,8 +519,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(NOT N EQUAL 0)
   add_custom_target(check
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"check\" a.k.a. \"BRL-CAD Validation Testing\" target runs"
-    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD's unit, system, integration, benchmark (performance), and"
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"check\\\" a.k.a. \\\"BRL-CAD Validation Testing\\\" target runs"
+    COMMAND ${CMAKE_COMMAND} -E echo "      BRL-CAD\\'s unit, system, integration, benchmark \\(performance\\), and"
     COMMAND ${CMAKE_COMMAND} -E echo "      regression tests.  To consider a build viable for production use,"
     COMMAND ${CMAKE_COMMAND} -E echo "      these tests must pass.  Dependencies are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
@@ -1450,6 +1450,11 @@ CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_PDF "Build PDF output from DocBook docum
 CMAKE_DEPENDENT_OPTION(BRLCAD_EXTRADOCS_VALIDATE "Perform validation for DocBook documentation" ON "BRLCAD_EXTRADOCS;BRLCAD_ENABLE_STRICT" OFF)
 mark_as_advanced(BRLCAD_EXTRADOCS_VALIDATE)
 
+#----------------------------------------------------------------------
+# Load Doxygen related CMake macros
+include(${BRLCAD_CMAKE_DIR}/Doxygen.cmake)
+
+#----------------------------------------------------------------------
 # Load various wrapper macros for checking libraries, headers and
 # functions, some in use by src/other build logic
 include(${BRLCAD_CMAKE_DIR}/BRLCAD_CheckFunctions.cmake)
@@ -2180,7 +2185,7 @@ BRLCAD_FUNCTION_EXISTS(snprintf HAVE_SNPRINTF)
 if(NOT HAVE_SNPRINTF)
   BRLCAD_FUNCTION_EXISTS(_snprintf HAVE__SNPRINTF)
   if(HAVE__SNPRINTF)
-    CONFIG_H_APPEND(BRLCAD "#cmakedefine snprintf _snprintf\n")
+    CONFIG_H_APPEND(BRLCAD "#define snprintf _snprintf\n")
   endif(HAVE__SNPRINTF)
 endif(NOT HAVE_SNPRINTF)
 
@@ -3072,6 +3077,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   message("${CONFIG_TIME_MSG_LABEL}..: ${CONFIG_TIME_MSG}")
 endif(NOT BRLCAD_IS_SUBBUILD)
 
+# Write out the Doxygen feature list
+DOXYGEN_FEATURE_SUMMARY(${BRLCAD_BINARY_DIR}/CMakeTmp/features.dox)
 
 add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""

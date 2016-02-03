@@ -207,7 +207,7 @@ set(c_contents "${c_contents}\n${mcstr}")
 
 
 # Public C mapping function - string to type
-set(enum_str "HIDDEN int\nbu_file_mime_int(const char *str)\n{")
+set(enum_str "int\nbu_file_mime_int(const char *str)\n{")
 foreach(c ${ACTIVE_TYPES})
   list(SORT ${c}_types)
   foreach(type ${${c}_types})

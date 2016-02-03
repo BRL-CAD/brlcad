@@ -108,7 +108,12 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(obj-g obj-g.c "libbu;libbn;librt;libwdb;libwfobj")
+# TODO - Ugh; need to either merge this into libgcv or remove it in favor of
+# that implementation...
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj)
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj/wfobj)
+set(obj-g_SRCS obj-g.c ../libgcv/plugins/obj/tri_face.c)
+BRLCAD_ADDEXEC(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libwdb;libwfobj")
 
 BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 

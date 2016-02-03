@@ -1,6 +1,15 @@
-#                  R E 2 C _ U T I L . C M A K E
+# The module defines the following variables:
+#  RE2C_EXECUTABLE - the path to the re2c executable
 #
-# Provides a macro to generate custom build rules:
+#=============================================================================
+
+find_program(RE2C_EXECUTABLE re2c DOC "path to the re2c executable")
+mark_as_advanced(RE2C_EXECUTABLE)
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(RE2C DEFAULT_MSG RE2C_EXECUTABLE)
+
+# Provide a macro to generate custom build rules:
 
 # RE2C_TARGET(Name RE2CInput RE2COutput [COMPILE_FLAGS <string>])
 # which creates a custom command  to generate the <RE2COutput> file from
@@ -73,54 +82,57 @@
 #
 # TODO - rework this macro to make use of CMakeParseArguments, see
 # http://www.cmake.org/pipermail/cmake/2012-July/051309.html
-#
-macro(RE2C_TARGET Name Input Output)
-  set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
-  if(${ARGC} GREATER 3)
-    if(${ARGC} EQUAL 5)
-      if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
-	set(RE2C_EXECUTABLE_opts  "${ARGV4}")
-	SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
+if(NOT COMMAND RE2C_TARGET)
+  macro(RE2C_TARGET Name Input Output)
+    set(RE2C_TARGET_usage "RE2C_TARGET(<Name> <Input> <Output> [COMPILE_FLAGS <string>]")
+    if(${ARGC} GREATER 3)
+      if(${ARGC} EQUAL 5)
+	if("${ARGV3}" STREQUAL "COMPILE_FLAGS")
+	  set(RE2C_EXECUTABLE_opts  "${ARGV4}")
+	  SEPARATE_ARGUMENTS(RE2C_EXECUTABLE_opts)
+	else()
+	  message(SEND_ERROR ${RE2C_TARGET_usage})
+	endif()
       else()
 	message(SEND_ERROR ${RE2C_TARGET_usage})
       endif()
-    else()
-      message(SEND_ERROR ${RE2C_TARGET_usage})
     endif()
-  endif()
 
-  add_custom_command(OUTPUT ${Output}
-    COMMAND ${RE2C_EXECUTABLE}
-    ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
-    DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
-    COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+    add_custom_command(OUTPUT ${Output}
+      COMMAND ${RE2C_EXECUTABLE}
+      ARGS ${RE2C_EXECUTABLE_opts} -o${Output} ${Input}
+      DEPENDS ${Input} ${RE2C_EXECUTABLE_TARGET}
+      COMMENT "[RE2C][${Name}] Building scanner with ${RE2C_EXECUTABLE}"
+      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
-  set(RE2C_${Name}_DEFINED TRUE)
-  set(RE2C_${Name}_OUTPUTS ${Output})
-  set(RE2C_${Name}_INPUT ${Input})
-  set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
-  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
-endmacro(RE2C_TARGET)
+    set(RE2C_${Name}_DEFINED TRUE)
+    set(RE2C_${Name}_OUTPUTS ${Output})
+    set(RE2C_${Name}_INPUT ${Input})
+    set(RE2C_${Name}_COMPILE_FLAGS ${RE2C_EXECUTABLE_opts})
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${Output}")
+  endmacro(RE2C_TARGET)
+endif(NOT COMMAND RE2C_TARGET)
 #============================================================
 
 #============================================================
 # ADD_RE2C_LEMON_DEPENDENCY (public macro)
 #============================================================
 #
-macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
+if(NOT COMMAND ADD_RE2C_LEMON_DEPENDENCY)
+  macro(ADD_RE2C_LEMON_DEPENDENCY RE2CTarget LemonTarget)
 
-  if(NOT RE2C_${RE2CTarget}_OUTPUTS)
-    message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
-  endif()
+    if(NOT RE2C_${RE2CTarget}_OUTPUTS)
+      message(SEND_ERROR "RE2C target `${RE2CTarget}' does not exists.")
+    endif()
 
-  if(NOT LEMON_${LemonTarget}_HDR)
-    message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
-  endif()
+    if(NOT LEMON_${LemonTarget}_HDR)
+      message(SEND_ERROR "Lemon target `${LemonTarget}' does not exists.")
+    endif()
 
-  set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
-    PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_HDR})
-endmacro(ADD_RE2C_LEMON_DEPENDENCY)
+    set_source_files_properties(${RE2C_${RE2CTarget}_OUTPUTS}
+      PROPERTIES OBJECT_DEPENDS ${LEMON_${LemonTarget}_HDR})
+  endmacro(ADD_RE2C_LEMON_DEPENDENCY)
+endif(NOT COMMAND ADD_RE2C_LEMON_DEPENDENCY)
 #============================================================
 
 # RE2C_Util.cmake ends here

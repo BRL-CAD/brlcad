@@ -1,3 +1,8 @@
+# Define high level features of BRL-CAD
+DOXYGEN_FEATURE("Portability Library" DESCRIPTION "Portability layer that makes sure basic low level system functionality is present across all platforms via a uniform API.")
+DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calculations that report not just first surface hits but in/out pairs of hits to support the characterization of closed geometric volumes.")
+
+
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used

@@ -27,20 +27,20 @@
  * contents in.  These functions are not thread-safe.
  */
 
-#include "common.h"
+extern "C" {
+#include "obj_util.h"
+}
 #include "obj_parser.h"
 #include "obj_parser_state.h"
 
 #include "obj_grammar_decls.h"
 #include "obj_rules.h"
 
+#include <stdint.h>
 #include <cerrno>
 #include <cstdio>
 #include <sstream>
 #include <iostream>
-
-#include "bu/malloc.h"
-#include "bu/log.h"
 
 extern int obj_parser_parse(yyscan_t);
 
@@ -117,28 +117,28 @@ struct lex_sentry {
 __BEGIN_DECLS
 
 static void*
-bu_malloc_wrapper(size_t size)
+malloc_wrapper(size_t size)
 {
-    return bu_malloc(size, "alloc lemon parser object");
+    return malloc(size);
 }
 
 
 static void
-bu_free_wrapper(void *ptr)
+free_wrapper(void *ptr)
 {
-    return bu_free(ptr, "free lemon parser object");
+    return free(ptr);
 }
 
 
 static void createParser(obj::parser_type *parser)
 {
-    *parser = ParseAlloc(bu_malloc_wrapper);
+    *parser = ParseAlloc(malloc_wrapper);
 }
 
 
 static void destroyParser(obj::parser_type *parser)
 {
-    ParseFree(*parser, bu_free_wrapper);
+    ParseFree(*parser, free_wrapper);
 }
 
 
@@ -147,7 +147,7 @@ static void destroyScanner(yyscan_t *scanner)
     struct extra_t *extra =
 	static_cast<struct extra_t*>(obj_parser_get_extra(*scanner));
 
-    BU_PUT(extra, struct extra_t);
+    WFOBJ_PUT(extra, struct extra_t);
     obj_parser_set_extra(*scanner, NULL);
 
     obj_parser_lex_destroy(*scanner);
@@ -158,14 +158,14 @@ static void setScannerExtra(yyscan_t scanner, obj::objCombinedState *state)
 {
     struct extra_t *extra;
 
-    BU_GET(extra, struct extra_t);
+    WFOBJ_GET(extra, struct extra_t);
     extra->state = static_cast<void*>(state);
 
     obj_parser_set_extra(scanner, static_cast<void*>(extra));
 }
 
 
-int obj_parser_create(obj_parser_t *parser)
+extern "C" WFOBJ_EXPORT int obj_parser_create(obj_parser_t *parser)
 {
     int err = 0;
 
@@ -174,25 +174,26 @@ int obj_parser_create(obj_parser_t *parser)
     } catch (std::bad_alloc &) {
 	err = ENOMEM;
     } catch (...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	err = -1;
     }
 
     return err;
 }
 
 
-void obj_parser_destroy(obj_parser_t parser)
+extern "C" WFOBJ_EXPORT void obj_parser_destroy(obj_parser_t parser)
 {
     try {
 	delete static_cast<obj::objParser*>(parser.p);
 	parser.p = 0;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
     }
 }
 
 
-int obj_parse(const char *filename, obj_parser_t parser,
+extern "C" WFOBJ_EXPORT int obj_parse(const char *filename, obj_parser_t parser,
 	      obj_contents_t *contents)
 {
     using obj::objParser;
@@ -204,7 +205,11 @@ int obj_parse(const char *filename, obj_parser_t parser,
     int err = 0;
 
     try {
+#ifdef HAVE_UNIQUE_PTR
+	std::unique_ptr<objFileContents> sentry(new objFileContents);
+#else
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
+#endif
 
 	objCombinedState state(p, sentry.get());
 
@@ -246,14 +251,15 @@ int obj_parse(const char *filename, obj_parser_t parser,
 	p->last_error = ex.what();
 	err = -1;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	err = -1;
     }
 
     return err;
 }
 
 
-int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
+extern "C" WFOBJ_EXPORT int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 {
     using obj::objParser;
     using obj::objFileContents;
@@ -264,7 +270,11 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
     int err = 0;
 
     try {
+#ifdef HAVE_UNIQUE_PTR
+	std::unique_ptr<objFileContents> sentry(new objFileContents);
+#else
 	std::auto_ptr<objFileContents> sentry(new objFileContents);
+#endif
 
 	objCombinedState state(p, sentry.get());
 
@@ -302,14 +312,15 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents)
 	p->last_error = ex.what();
 	err = -1;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	err = -1;
     }
 
     return err;
 }
 
 
-const char * obj_parse_error(obj_parser_t parser)
+extern "C" WFOBJ_EXPORT const char * obj_parse_error(obj_parser_t parser)
 {
     const char *err = 0;
 
@@ -320,27 +331,29 @@ const char * obj_parse_error(obj_parser_t parser)
 	    err = p->last_error.c_str();
 	}
     } catch (...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	err = NULL;
     }
 
     return err;
 }
 
 
-int obj_contents_destroy(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_contents_destroy(obj_contents_t contents)
 {
     try {
 	delete static_cast<obj::objFileContents*>(contents.p);
 	contents.p = 0;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
+extern "C" WFOBJ_EXPORT int obj_vertices(obj_contents_t contents, const float(*val_arr[])[4])
 {
     try {
 	obj::objFileContents *c =
@@ -353,14 +366,15 @@ size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4])
 
 	return c->gvertices_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_texture_coord(obj_contents_t contents, const float(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
@@ -373,14 +387,15 @@ size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3])
 
 	return c->tvertices_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
+extern "C" WFOBJ_EXPORT int obj_normals(obj_contents_t contents, const float(*val_arr[])[3])
 {
     try {
 	obj::objFileContents *c =
@@ -393,14 +408,15 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3])
 
 	return c->nvertices_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -412,14 +428,15 @@ size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->groupchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_num_groupsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_groupsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -427,14 +444,15 @@ size_t obj_num_groupsets(obj_contents_t contents)
 
 	return c->groupindex_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_groupset(obj_contents_t contents, size_t n,
+extern "C" WFOBJ_EXPORT int obj_groupset(obj_contents_t contents, size_t n,
 		    const size_t (*index_arr[]))
 {
     try {
@@ -447,14 +465,15 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
 
 	return c->groupindex_set[n].size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -466,14 +485,15 @@ size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->objectchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -485,14 +505,15 @@ size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->materialchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_materiallibs(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_materiallibs(obj_contents_t contents,
 			const char * const (*val_arr[]))
 {
     try {
@@ -505,14 +526,15 @@ size_t obj_materiallibs(obj_contents_t contents,
 
 	return c->materiallibchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_num_materiallibsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_materiallibsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -520,14 +542,15 @@ size_t obj_num_materiallibsets(obj_contents_t contents)
 
 	return c->materiallibindex_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*index_arr[]))
+extern "C" WFOBJ_EXPORT int obj_materiallibset(obj_contents_t contents, size_t n, const size_t(*index_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -539,14 +562,15 @@ size_t obj_materiallibset(obj_contents_t contents, size_t n, const size_t (*inde
 
 	return c->materiallibindex_set[n].size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -558,14 +582,15 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->texmapchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -577,14 +602,15 @@ size_t obj_texmaplibs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->texmaplibchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_num_texmaplibsets(obj_contents_t contents)
+extern "C" WFOBJ_EXPORT int obj_num_texmaplibsets(obj_contents_t contents)
 {
     try {
 	obj::objFileContents *c =
@@ -592,14 +618,15 @@ size_t obj_num_texmaplibsets(obj_contents_t contents)
 
 	return c->texmaplibindex_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_texmaplibset(obj_contents_t contents, size_t n,
+extern "C" WFOBJ_EXPORT int obj_texmaplibset(obj_contents_t contents, size_t n,
 			const size_t (*index_arr[]))
 {
     try {
@@ -612,14 +639,15 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t n,
 
 	return c->texmaplibindex_set[n].size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -631,14 +659,15 @@ size_t obj_shadow_objs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->shadow_objchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
+extern "C" WFOBJ_EXPORT int obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 {
     try {
 	obj::objFileContents *c =
@@ -650,14 +679,15 @@ size_t obj_trace_objs(obj_contents_t contents, const char * const (*val_arr[]))
 
 	return c->trace_objchar_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_attributes(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_attributes(obj_contents_t contents,
 				const obj_polygonal_attributes_t (*attr_list[]))
 {
     try {
@@ -670,14 +700,15 @@ size_t obj_polygonal_attributes(obj_contents_t contents,
 
 	return c->polyattributes_set.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_points(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_points(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -690,14 +721,15 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
 
 	return c->point_v_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[]))
 {
     try {
@@ -710,14 +742,15 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t face,
 
 	return c->point_v_loclist[face].second;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_lines(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_lines(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
@@ -730,14 +763,15 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
 
 	return c->line_v_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     try {
@@ -750,14 +784,15 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t face,
 
 	return c->line_v_loclist[face].second;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_tv_lines(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_lines(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -770,14 +805,14 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
 
 	return c->line_tv_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
-
-size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -791,14 +826,15 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 
 	return c->line_tv_loclist[face].second;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_faces(obj_contents_t contents,
 			     const size_t (*attindex_arr[]))
 {
     try {
@@ -811,14 +847,15 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
 
 	return c->polygonal_v_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 				     const size_t (*index_arr[]))
 {
     using obj::objFileContents;
@@ -835,14 +872,15 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t face,
 
 	return length;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_tv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -855,14 +893,15 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
 
 	return c->polygonal_tv_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -877,14 +916,15 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 	return c->polygonal_tv_loclist[face].second;
 
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_nv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_nv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]))
 {
     try {
@@ -897,14 +937,15 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
 
 	return c->polygonal_nv_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2])
 {
     try {
@@ -918,14 +959,15 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 
 	return c->polygonal_nv_loclist[face].second;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_tnv_faces(obj_contents_t contents,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tnv_faces(obj_contents_t contents,
 			       const size_t (*attindex_arr[]))
 {
     try {
@@ -938,14 +980,15 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
 
 	return c->polygonal_tnv_attr_list.size();
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;
 }
 
 
-size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
+extern "C" WFOBJ_EXPORT int obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3])
 {
     try {
@@ -959,7 +1002,8 @@ size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 
 	return c->polygonal_tnv_loclist[face].second;
     } catch(...) {
-	bu_bomb("unexpected error encountered\n");
+	printf("unexpected error encountered\n");
+	return -1;
     }
 
     return 0;

@@ -298,13 +298,13 @@ static inline void mmAtomicOr64(mmAtomic64 *v, int64_t i)
 }
 
 
-static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t old, int64_t vnew)
+static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t vold, int64_t vnew)
 {
     int64_t prev;
     __asm__ __volatile__(
 	"lock; cmpxchgq %1,%2"
 	:"=a"(prev)
-	:"r"(vnew), "m"(v->value), "a"(old) :"memory");
+	:"r"(vnew), "m"(v->value), "a"(vold) :"memory");
     return prev;
 }
 

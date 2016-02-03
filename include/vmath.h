@@ -21,23 +21,22 @@
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math
+ * @brief vector/matrix math, matrix representation
  *
  * This header file defines many commonly used 3D vector math macros,
  * and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
- * @brief matrix representation
  * 4 x 4 Matrix manipulation functions...
  *
  * Matrix array elements have the following positions in the matrix:
- @code
+ * @code
  *			|  0  1  2  3 |		| 0 |
  *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
  *			|  8  9 10 11 |		| 2 |
  *			| 12 13 14 15 |		| 3 |
  *
  * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
- @endcode
+ * @endcode
  *
  * Note that while many people in the computer graphics field use
  * post-multiplication with row vectors (i.e., vector * matrix * matrix
@@ -52,20 +51,20 @@
  * Furthermore, additional transformations are multiplied on the left,
  * i.e.:
  *
- <tt> @code
+ * @code
  * vec'  =  T1 * vec
  * vec'' =  T2 * T1 * vec  =  T2 * vec'
- @endcode </tt>
+ * @endcode
  *
  * The most notable implication of this is the location of the "delta"
  * (translation) values in the matrix, i.e.:
  *
- <tt> @code
+ * @code
  * x'   (R0  R1  R2 Dx) x
  * y' = (R4  R5  R6 Dy) * y
  * z'   (R8  R9 R10 Dz) z
  * w'   (0   0   0  1/s) w
- @endcode </tt>
+ * @endcode
  *
  * Note -
  *@n  vect_t objects are 3-tuples

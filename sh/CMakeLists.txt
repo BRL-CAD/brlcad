@@ -34,7 +34,6 @@ set(noinst_SCRIPTS
   make_rpm.sh
   news2tracker.sh
   template.sh
-  tracker.sh
   ws.sh
   )
 CMAKEFILES(${sh_SCRIPTS})
