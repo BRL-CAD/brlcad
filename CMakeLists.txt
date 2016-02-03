@@ -350,16 +350,16 @@ include("${BRLCAD_CMAKE_DIR}/Path_Setup.cmake")
 # is available, BRLCAD_PREFIX is used to store the value in the cache.)
 
 if(CMAKE_INSTALL_PREFIX)
-  if(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED ${CMAKE_INSTALL_PREFIX}/${LIB_DIR} ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
-  endif(NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr" AND NOT ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/local")
+  if(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
+    get_filename_component(PATH_NORMALIZED "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}" ABSOLUTE)
+    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+  endif(NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr" AND NOT "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/local")
 endif(CMAKE_INSTALL_PREFIX)
 if(BRLCAD_PREFIX)
-  if(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
-    get_filename_component(PATH_NORMALIZED ${BRLCAD_PREFIX}/${LIB_DIR} ABSOLUTE)
-    set(CMAKE_SYSTEM_IGNORE_PATH ${PATH_NORMALIZED})
-  endif(NOT ${BRLCAD_PREFIX} STREQUAL "/usr" AND NOT ${BRLCAD_PREFIX} STREQUAL "/usr/local")
+  if(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
+    get_filename_component(PATH_NORMALIZED "${BRLCAD_PREFIX}/${LIB_DIR}" ABSOLUTE)
+    set(CMAKE_SYSTEM_IGNORE_PATH "${PATH_NORMALIZED}")
+  endif(NOT "${BRLCAD_PREFIX}" STREQUAL "/usr" AND NOT "${BRLCAD_PREFIX}" STREQUAL "/usr/local")
 endif(BRLCAD_PREFIX)
 mark_as_advanced(CMAKE_SYSTEM_IGNORE_PATH)
 
@@ -733,19 +733,19 @@ if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
   set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE PATH "BRL-CAD install prefix" FORCE)
   set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
 endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT OR NOT CMAKE_INSTALL_PREFIX)
-set(BRLCAD_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "BRL-CAD install prefix")
+set(BRLCAD_PREFIX "${CMAKE_INSTALL_PREFIX}" CACHE STRING "BRL-CAD install prefix")
 mark_as_advanced(BRLCAD_PREFIX)
 
 # If we've a Release build with a Debug path or vice versa, warn about
 # it.  A "make install" of a Release build into a dev install
 # directory or vice versa is going to result in an install that
 # doesn't respect BRL-CAD standard naming conventions.
-if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
   message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/dev-${BRLCAD_VERSION}, but build type is set to Release!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
-if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Release" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/dev-${BRLCAD_VERSION}")
+if("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
   message(FATAL_ERROR "\nInstallation directory (CMAKE_INSTALL_PREFIX) is set to /usr/brlcad/rel-${BRLCAD_VERSION}, but build type is set to Debug!\n")
-endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND ${CMAKE_INSTALL_PREFIX} STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
+endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug" AND "${CMAKE_INSTALL_PREFIX}" STREQUAL "/usr/brlcad/rel-${BRLCAD_VERSION}")
 
 #---------------------------------------------------------------------
 # The following logic is what allows binaries to run successfully in
@@ -2826,7 +2826,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endif(UNIX)
 
   if(UNIX)
-    set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
+    set(CPACK_PACKAGING_INSTALL_PREFIX "${CMAKE_INSTALL_PREFIX}")
   endif(UNIX)
 
   if(UNIX AND NOT APPLE)
