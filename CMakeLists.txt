@@ -2137,6 +2137,12 @@ BRLCAD_FUNCTION_EXISTS(vfork HAVE_VFORK)
 BRLCAD_FUNCTION_EXISTS(vsscanf HAVE_VSSCANF)
 BRLCAD_FUNCTION_EXISTS(writev HAVE_WRITEV)
 
+# test for daemon(), which is deprecated on Mac OS X 10.5+
+BRLCAD_FUNCTION_EXISTS(daemon HAVE_DAEMON)
+if (HAVE_DAEMON)
+  check_c_source_compiles("#include <stdlib.h>\nint main() { (void)daemon; return 0; }" HAVE_WORKING_DAEMON_FUNCTION)
+endif (HAVE_DAEMON)
+
 # ntohll and htonll maybe harder to spot - do some extra tests
 if("${HAVE_NTOHLL}" STREQUAL "")
   CHECK_SYMBOL_EXISTS(ntohll "sys/_endian.h" HAVE_NTOHLL_SYS__ENDIAN)

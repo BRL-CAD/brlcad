@@ -22,6 +22,7 @@
  */
 
 #include "master.h"
+
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
@@ -382,8 +383,24 @@ master_networking(void *ptr)
 	while (master_listener_result == 1)
 	    sleep(0);
 	/* if both sockets are listening, background. */
-	if (master_listener_result == 0 && observer_listener_result == 0)
+	if (master_listener_result == 0 && observer_listener_result == 0) {
+#if defined(HAVE_DAEMON) && defined(HAVE_WORKING_DAEMON_FUNCTION)
 	    daemon(0, 0);
+#else
+	    switch(fork()) {
+	    case 0:
+		/* child lives */
+		break;
+	    case -1:
+		perror("fork failed");
+		bu_exit(1, NULL);
+		break;
+	    default:
+		/* kill parent */
+		bu_exit(0, NULL);
+	    }
+#endif
+	}
     }
 
     addrlen = sizeof(observer_addr);
