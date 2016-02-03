@@ -451,7 +451,10 @@ void* tienet_master_listener(void *UNUSED(ptr))
     FD_SET(master_socket, &readfds);
 
     /* Execute script - used for spawning slaves */
-    system(tienet_master_exec);
+    if (system(tienet_master_exec) == -1) {
+   	fprintf(stderr, "system call failed, exiting.\n");
+	exit(1);
+    }
 
     /* Process slave host list - used for connecting to running daemons */
     tienet_master_connect_slaves(&readfds);
