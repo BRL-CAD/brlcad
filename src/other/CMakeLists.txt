@@ -38,8 +38,8 @@ DISABLE_WARNINGS()
 # Ideally we wouldn't need this, but in a few cases we're using
 # BRL-CAD's include dirs.
 include_directories(
-  ${BRLCAD_BINARY_DIR}/include
-  ${BRLCAD_SOURCE_DIR}/include
+  "${BRLCAD_BINARY_DIR}/include"
+  "${BRLCAD_SOURCE_DIR}/include"
   )
 
 # Most third party items have a list calling out files for distcheck -
@@ -122,7 +122,7 @@ THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_ENABLE_OSG BRLCAD_L
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
   set(FREETYPE_INCLUDE_DIR_freetype2
-    ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
+    "${BRLCAD_SOURCE_DIR}/src/other/freetype/include"
     CACHE STRING "FreeType freetype2 include dir" FORCE
     )
   set(FREETYPE_INCLUDE_DIR_ft2build
@@ -293,7 +293,7 @@ endif(BRLCAD_UTAHRLE_BUILD)
 # routine which handles Tcl/Tk and its stubs, so trigger this using
 # the THIRD_PARTY macro for TCL.
 
-include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
+include("${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake")
 
 # Set Tcl/Tk requirements for BRL-CAD so FindTCL.cmake knows what to reject
 set(TCL_PATH_NOMATCH_PATTERNS "/usr/brlcad;brlcad-install;${CMAKE_INSTALL_PREFIX}" CACHE STRING "Paths to avoid when looking for tcl/tk" FORCE)
@@ -319,8 +319,8 @@ if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tcl "Third Party Libraries")
   SetTargetFolder(tclstub "Third Party Libraries")
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
-  set(TCL_SRC_PREFIX ${CMAKE_CURRENT_SOURCE_DIR}/tcl)
-  set(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
+  set(TCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tcl")
+  set(TCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_LIBRARIES tcl CACHE STRING "TCL_LIBRARY" FORCE)
   set(TCL_CONF_PREFIX "NONE-CMake" CACHE STRING "TCL_CONF_PREFIX" FORCE)
@@ -337,7 +337,7 @@ if(BRLCAD_TCL_BUILD)
   set(TCL_VERSION_MINOR "${TCL_VERSION_MINOR}" CACHE STRING "Tcl MINOR version" FORCE)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TCL_H 1\n")
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"\"\n")
-  include(${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist)
+  include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
   CMAKEFILES_IN_DIR(tcl_ignore_files tcl)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/Makefile")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tcl/doc/man1")
@@ -416,7 +416,7 @@ if(BRLCAD_TK_BUILD)
   set(TK_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
   set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TK_INCLUDE_PATH} CACHE STRING "Tcl include paths" FORCE)
   if(WIN32)
-    set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/tk/win ${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib CACHE STRING "Tcl include paths" FORCE)
+    set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tk/win" "${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib" CACHE STRING "Tcl include paths" FORCE)
   endif(WIN32)
   set(TCL_WISH_EXECUTABLE wish CACHE STRING "Tk shell" FORCE)
   set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
@@ -533,7 +533,7 @@ if(BRLCAD_ITCL_BUILD)
   get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
   set(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
   set(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
-  set(ITCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
+  set(ITCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl3.4")
   SetTargetFolder(itcl "Third Party Libraries")
@@ -903,9 +903,9 @@ endif(BRLCAD_LEVEL2)
 
 # Poly2Tri CDT library
 add_subdirectory(poly2tri)
-include(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist)
+include("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri.dist")
 CMAKEFILES_IN_DIR(poly2tri_ignore_files poly2tri)
-DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile)
+DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/poly2tri/Makefile")
 set(P2T_LIBRARY "p2t" CACHE STRING "Poly2Tri library" FORCE)
 set(P2T_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/poly2tri" CACHE STRING "Directory containing poly2tri header" FORCE)
 SetTargetFolder(p2t "Third Party Libraries")
@@ -918,9 +918,9 @@ mark_as_advanced(P2T_TESTS)
 
 # RPLY I/O library
 add_subdirectory(rply)
-include(${CMAKE_CURRENT_SOURCE_DIR}/rply.dist)
+include("${CMAKE_CURRENT_SOURCE_DIR}/rply.dist")
 CMAKEFILES_IN_DIR(rply_ignore_files rply)
-DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile)
+DISTCLEAN("${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile")
 set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
 set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
 SetTargetFolder(rply "Third Party Libraries")
