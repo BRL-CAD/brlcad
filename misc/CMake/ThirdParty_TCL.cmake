@@ -247,10 +247,10 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     # interested in, and collect the results.
     if(NOT ${PKGNAME_UPPER}_TEST_FAIL)
       set(CURRENT_TCL_PACKAGE_NAME ${pkgname})
-      set(pkg_test_file ${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl)
+      set(pkg_test_file "${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl")
       configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in ${pkg_test_file} @ONLY)
       EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
-      file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION pkgversion)
+      file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION" pkgversion)
       string(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
       if(${PKGNAME_UPPER}_PACKAGE_VERSION)
 	set(${PKGNAME_UPPER}_TCL_PASSED 1)

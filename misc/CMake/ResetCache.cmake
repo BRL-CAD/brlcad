@@ -35,8 +35,8 @@
 ###
 macro(RESET_CACHE_FILE)
   set(CACHE_FILE "")
-  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
-    file(READ ${CMAKE_BINARY_DIR}/CMakeCache.txt CACHE_FILE)
+  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
+    file(READ "${CMAKE_BINARY_DIR}/CMakeCache.txt" CACHE_FILE)
     string(REGEX REPLACE ";" "-" ENT1 "${CACHE_FILE}")
     string(REGEX REPLACE "\r?\n" ";" ENT "${ENT1}")
     foreach(line ${ENT})
@@ -51,7 +51,7 @@ macro(RESET_CACHE_FILE)
 	endif(NOT ${line} MATCHES "^//")
       endif(NOT ${line} MATCHES "^CMAKE_")
     endforeach(line ${ENT})
-  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt)
+  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
 endmacro()
 
 

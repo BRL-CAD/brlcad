@@ -114,11 +114,11 @@ if(LEX_EXECUTABLE)
 
   #Need to run a test lex file to determine if YYTEXT_POINTER needs
   #to be defined
-  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
+  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS "${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l" -o "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c" RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
   INCLUDE (CheckCSourceRuns)
   set(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
   if(NOT DEFINED YYTEXT_POINTER)
-    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" YYTEXT_POINTER)
   endif(NOT DEFINED YYTEXT_POINTER)
   set(FILE_RUN_DEFINITIONS)
   if(CONFIG_H_FILE)

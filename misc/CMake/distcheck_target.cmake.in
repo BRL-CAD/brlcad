@@ -43,7 +43,7 @@ if(BUILD_DIR_CONTENTS)
   message(FATAL_ERROR \"distclean failed in ${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${build_dir}\")
 endif(BUILD_DIR_CONTENTS)
 ")
-file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake "${check_distcheck}")
+file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake" "${check_distcheck}")
 
 add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive..."
@@ -70,7 +70,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule..."
   COMMAND ${CMAKE_COMMAND} -E remove -f "distcheck-${TARGET_SUFFIX}/${build_dir}/bench/summary"
   COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" ${CMAKE_COMMAND} --build . --target distclean @TARGET_REDIRECT@
-  COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake
+  COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-eval_distclean.cmake"
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Clear tgz archive sources and build directory..."
   COMMAND ${CMAKE_COMMAND} -E remove_directory "distcheck-${TARGET_SUFFIX}/${source_dir}"

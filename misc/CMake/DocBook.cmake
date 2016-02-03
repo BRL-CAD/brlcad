@@ -101,7 +101,7 @@ string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
 # Side effects:  sets scriptfile in parent scope and creates files in build directory
 function(DB_SCRIPT targetname outdir executable)
   if(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${outdir})
+    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${outdir}")
     configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake @ONLY)
     set(scriptfile ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake PARENT_SCOPE)
   else(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
@@ -112,7 +112,7 @@ function(DB_SCRIPT targetname outdir executable)
     # for the generation of flexible build targets.
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
-      file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${outdir})
+      file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${outdir}")
       # Temporarily store flexible values
       string(TOUPPER "${executable}" exec_upper)
       set(outfile_tmp "${outfile}")

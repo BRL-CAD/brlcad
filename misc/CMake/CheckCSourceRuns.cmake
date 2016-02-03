@@ -96,7 +96,7 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
 
     MESSAGE(STATUS "Performing Test ${VAR}")
     TRY_RUN(${VAR}_EXITCODE ${VAR}_COMPILED
-      ${CMAKE_BINARY_DIR}
+      "${CMAKE_BINARY_DIR}"
       ${CHECK_SRC}
       COMPILE_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS}
       CMAKE_FLAGS -DCOMPILE_DEFINITIONS:STRING=${MACRO_CHECK_FUNCTION_DEFINITIONS}
@@ -112,7 +112,7 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
     IF("${${VAR}_EXITCODE}" EQUAL 0)
       SET(${VAR} 1 CACHE INTERNAL "Test ${VAR}")
       MESSAGE(STATUS "Performing Test ${VAR} - Success")
-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log
+      FILE(APPEND "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeOutput.log"
         "Performing C SOURCE FILE Test ${VAR} succeeded with the following output:\n"
         "${OUTPUT}\n"
         "Return value: ${${VAR}}\n"
@@ -125,7 +125,7 @@ MACRO(CHECK_C_SOURCE_RUNS SOURCE VAR)
       ENDIF(CMAKE_CROSSCOMPILING AND "${${VAR}_EXITCODE}" MATCHES  "FAILED_TO_RUN")
 
       MESSAGE(STATUS "Performing Test ${VAR} - Failed")
-      FILE(APPEND ${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log
+      FILE(APPEND "${CMAKE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeError.log"
         "Performing C SOURCE FILE Test ${VAR} failed with the following output:\n"
         "${OUTPUT}\n"
         "Return value: ${${VAR}_EXITCODE}\n"
