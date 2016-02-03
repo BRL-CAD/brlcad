@@ -70,10 +70,6 @@ extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
-/***** variables shared with viewg3.c *****/
-struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
-/***** end variables shared with viewg3.c *****/
-
 /***** variables for frame buffer black pixel rendering *****/
 unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
 
@@ -428,7 +424,6 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
-    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     /* daisy-chain to additional app-specific parameters */
     {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
