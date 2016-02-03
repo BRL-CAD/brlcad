@@ -444,9 +444,9 @@ ADD_SUBDIRECTORY(src/clstepcore)
 ADD_SUBDIRECTORY(src/cleditor)
 ADD_SUBDIRECTORY(src/cldai)
 ADD_SUBDIRECTORY(src/clutils)
-if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
-  ADD_SUBDIRECTORY( src/cllazyfile )
-endif( NOT WIN32 )
+#if( NOT WIN32 ) # don't build cllazyfile on windows until export/import macros are in place
+#  ADD_SUBDIRECTORY( src/cllazyfile )
+#endif( NOT WIN32 )
 ADD_SUBDIRECTORY(include)
 ADD_SUBDIRECTORY(data)
 IF(SC_ENABLE_TESTING)

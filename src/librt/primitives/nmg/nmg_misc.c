@@ -3852,7 +3852,7 @@ struct nmg_split_loops_state
 };
 
 
-void
+HIDDEN void
 nmg_split_loops_handler(uint32_t *fu_p, void *sl_state, int UNUSED(unused))
 {
     struct faceuse *fu;
@@ -4570,7 +4570,7 @@ struct nmg_unbreak_state
  * and, if so, kills the second edgeuse.  Also moves the vu of the
  * first edgeuse mate to the vu of the killed edgeuse mate.
  */
-void
+HIDDEN void
 nmg_unbreak_handler(uint32_t *eup, void *state, int UNUSED(unused))
 {
     struct edgeuse *eu1, *eu2;
@@ -10143,7 +10143,7 @@ nmg_simplify_shell_edges(struct shell *s, const struct bn_tol *tol)
 
 #define EDGE_COLLAPSE_DEBUG 0
 
-int
+HIDDEN int
 nmg_select_collapse(const fastf_t max_dist1, const fastf_t max_dot1, const int flip1, const fastf_t max_dist2, const fastf_t max_dot2, const int flip2, const fastf_t max_dot, const fastf_t tol_dist)
 {
     unsigned int ret;

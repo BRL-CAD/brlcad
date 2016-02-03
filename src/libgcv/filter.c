@@ -156,7 +156,7 @@ _gcv_opts_check(const struct gcv_opts *gcv_options)
     BN_CK_TOL(&gcv_options->calculational_tolerance);
     RT_CK_TESS_TOL(&gcv_options->tessellation_tolerance);
 
-    if (gcv_options->debug_mode > 1)
+    if (gcv_options->debug_mode != 0 && gcv_options->debug_mode != 1)
 	bu_bomb("invalid gcv_opts.debug_mode");
 
     if (gcv_options->scale_factor <= 0.0)
@@ -219,6 +219,7 @@ gcv_list_filters(void)
 	REGISTER_FILTER(gcv_conv_obj_write);
 	REGISTER_FILTER(gcv_conv_stl_read);
 	REGISTER_FILTER(gcv_conv_stl_write);
+	REGISTER_FILTER(gcv_conv_vrml_read);
 	REGISTER_FILTER(gcv_conv_vrml_write);
 
 #undef REGISTER_FILTER
@@ -296,10 +297,10 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     RTG.debug |= gcv_options->rt_debug_flag;
     RTG.NMG_debug |= gcv_options->nmg_debug_flag;
 
-    if (filter->filter_type == GCV_FILTER_WRITE) {
-	dbi_read_only_orig = context->dbip->dbi_read_only;
+    dbi_read_only_orig = context->dbip->dbi_read_only;
+
+    if (filter->filter_type == GCV_FILTER_WRITE)
 	context->dbip->dbi_read_only = 1;
-    }
 
     if (!gcv_options->num_objects && filter->filter_type != GCV_FILTER_READ) {
 	size_t num_objects;
@@ -322,14 +323,15 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     } else
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
-    if (filter->filter_type == GCV_FILTER_WRITE)
-	context->dbip->dbi_read_only = dbi_read_only_orig;
-
+    context->dbip->dbi_read_only = dbi_read_only_orig;
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
     RTG.NMG_debug = nmg_debug_orig;
 
     _gcv_filter_options_free(filter, options_data);
+
+    if (result != 0 && result != 1)
+	bu_bomb("invalid result");
 
     return result;
 }

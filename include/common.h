@@ -35,7 +35,7 @@
 #define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
- * windows when we cannot autogenerate it easily. do not include
+ * windows when we cannot auto-generate it easily. do not include
  * config.h if this file has been installed.  (public header files
  * should not use config defines)
  */
@@ -91,7 +91,7 @@ long int lrint(double x);
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+/* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *
  * TODO: test removal of __STRICT_ANSI__ on Windows.
@@ -357,7 +357,7 @@ typedef ptrdiff_t ssize_t;
  */
 #  pragma warning( disable : 4351 )
 
-/* dubious warnings that are not yet intentinoally disabled:
+/* dubious warnings that are not yet intentionally disabled:
  *
  * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
  *
@@ -366,7 +366,7 @@ typedef ptrdiff_t ssize_t;
  *
  * int i = 1; bool b = i;
  *
- * there is something to be said for making such assignments explict,
+ * there is something to be said for making such assignments explicit,
  * e.g., "b = (i != 0);", but this arguably decreases readability or
  * clarity and the fix has potential for introducing logic errors.
  */

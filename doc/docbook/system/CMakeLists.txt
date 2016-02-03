@@ -28,7 +28,7 @@ endif(BRLCAD_EXTRADOCS_PDF)
 # appropriate directories to handle the customization (e.g., the
 # BRL-CAD manuals in books/en/CMakeLists.txt).
 set(XSL_PHP_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/wordpress.xsl")
-set(XSL_XHTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
+set(XSL_HTML_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-xhtml-stylesheet.xsl")
 set(XSL_MAN_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-stylesheet.xsl")
 set(XSL_FO_STYLESHEET "${CMAKE_CURRENT_BINARY_DIR}/../resources/brlcad/brlcad-man-fo-stylesheet.xsl")
 

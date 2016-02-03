@@ -20,9 +20,6 @@ if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLC
   # Wordpress
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/wordpress.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/wordpress.xsl)
-  #ppt
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/presentation.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/presentation.xsl)
 endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products

@@ -223,6 +223,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DOC_DIR})
 CMAKEFILES(
   README.OSCON-2014
   STARTERS
+  STRATEGY
   burst
   csv_to_comgeom.txt
   implicit_constraints.txt
