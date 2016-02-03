@@ -26,11 +26,12 @@
 #include <signal.h>
 #include <string.h>
 
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
+#endif
+
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
 #endif
 
 /* Networking Includes */
@@ -50,15 +51,10 @@
 #  include <arpa/inet.h>
 #endif
 
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
+#ifdef HAVE_PTHREAD_H
+#  include <pthread.h>
 #endif
-
-#include "adrt.h"		/* adrt Defines */
-
-#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
-# include <zlib.h>
-#endif
+#include <zlib.h>
 
 #include "bio.h"
 
@@ -68,6 +64,7 @@
 #include "bu/getopt.h"
 #include "bu/str.h"
 
+#include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
 #include "tienet.h"
 #include "tienet_master.h"
@@ -102,9 +99,7 @@ typedef struct master_s
     tienet_sem_t wait_sem;
 
     tienet_buffer_t buf;
-#if ADRT_USE_COMPRESSION
     tienet_buffer_t buf_comp;
-#endif
 
     uint32_t frame_ind;
     uint8_t slave_data[64];
@@ -133,9 +128,7 @@ master_setup()
     master.frame_ind = 0;
 
     TIENET_BUFFER_INIT(master.buf);
-#if ADRT_USE_COMPRESSION
     TIENET_BUFFER_INIT(master.buf_comp);
-#endif
 
     /* -1 indicates this slot is not used and thus does not contain an open project. */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
@@ -180,9 +173,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     master_dispatcher_free();
 
     TIENET_BUFFER_FREE(master.buf);
-#if ADRT_USE_COMPRESSION
     TIENET_BUFFER_FREE(master.buf_comp);
-#endif
 
     /* Wait for networking thread to end */
     pthread_join(master.networking_thread, NULL);

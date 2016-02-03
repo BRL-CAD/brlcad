@@ -46,6 +46,7 @@
 #ifdef HAVE_NETDB_H
 #  include <netdb.h>
 #endif
+#include <zlib.h>
 
 #include "rt/tie.h"
 #include "bu/str.h"
@@ -59,10 +60,6 @@
 #include "bio.h"
 
 #include "master.h"
-
-#if TN_COMPRESSION
-# include <zlib.h>
-#endif
 
 
 typedef struct tienet_master_data_s {
@@ -131,10 +128,7 @@ pthread_mutex_t tienet_master_send_mut;
 pthread_mutex_t tienet_master_push_mut;
 pthread_mutex_t tienet_master_broadcast_mut;
 
-
-#if TN_COMPRESSION
 tienet_buffer_t tienet_master_result_buffer_comp;
-#endif
 
 /* result data callback */
 typedef void tienet_master_fcb_result_t(tienet_buffer_t *result);
@@ -168,9 +162,7 @@ void tienet_master_init(int port, void fcb_result(tienet_buffer_t *result), char
     tienet_master_pos_read = 0;
 
     TIENET_BUFFER_INIT(tienet_master_result_buffer);
-#if TN_COMPRESSION
     TIENET_BUFFER_INIT(tienet_master_result_buffer_comp);
-#endif
 
     bu_strlcpy(tienet_master_list, list, sizeof(tienet_master_list));
     bu_strlcpy(tienet_master_exec, exec, sizeof(tienet_master_exec));
@@ -211,9 +203,8 @@ void tienet_master_free()
     tienet_sem_free(&tienet_master_sem_out);
 
     TIENET_BUFFER_FREE(tienet_master_result_buffer);
-#if TN_COMPRESSION
-    TIENET_BUFFER_FREE(tienet_master_result_buffer_bomp);
-#endif
+    TIENET_BUFFER_FREE(tienet_master_result_buffer_comp);
+
     bu_free(tienet_master_buffer, "tienet master buffer");
 
     for (i = 0; i < tienet_master_buffer_size; i++)
@@ -678,8 +669,8 @@ void tienet_master_send_work(tienet_master_socket_t *sock)
 
 void tienet_master_result(tienet_master_socket_t *sock)
 {
-#if TN_COMPRESSION
-    unsigned long dest_len;
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
+    unsigned long comp_len, dest_len;
 #endif
 
     /* A work unit has come in, this slave is officially active */
@@ -697,10 +688,12 @@ void tienet_master_result(tienet_master_socket_t *sock)
 
     /* allocate memory for result buffer if more is needed */
     TIENET_BUFFER_SIZE(tienet_master_result_buffer, tienet_master_result_buffer.ind);
-#if TN_COMPRESSION
+
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
     /* receive compressed length */
     tienet_recv(sock->num, &tienet_master_result_buffer_comp.ind, sizeof(unsigned int));
 
+    comp_len = tienet_master_result_buffer_comp.ind;
     TIENET_BUFFER_SIZE(tienet_master_result_buffer_comp, comp_len);
 
     tienet_recv(sock->num, tienet_master_result_buffer_comp.data, comp_len);
