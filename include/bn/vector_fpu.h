@@ -17,15 +17,15 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vector_fpu.h
- *
- *
- */
 
 #ifndef VECTOR_FPU_H
 #define VECTOR_FPU_H
 
 #include "common.h"
+
+/** @addtogroup bn_vectormath */
+/** @{ */
+/** @file bn/vector_fpu.h */
 
 #ifdef __GNUC__
 #undef VEC_ALIGN
@@ -315,6 +315,7 @@ operator<<(std::ostream& out, const vec2d& v)
     return out;
 }
 
+/** @} */
 #endif
 
 /*

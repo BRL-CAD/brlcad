@@ -31,6 +31,7 @@
 /* system headers */
 #include <cctype>
 #include <iomanip>
+#include <fstream>
 #include <limits>
 #include <map>
 #include <set>
@@ -76,7 +77,7 @@ get_basename(const std::string &path)
 }
 
 
-template <typename T> inline void
+template <typename T> void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
@@ -120,6 +121,7 @@ public:
     bool operator==(const Color &other) const;
     bool operator!=(const Color &other) const;
 
+    bool is_set() const;
     const unsigned char *get_rgb() const;
 
 
@@ -140,14 +142,14 @@ Color::random()
 }
 
 
-inline Color::Color(unsigned char red, unsigned char green,
+Color::Color(unsigned char red, unsigned char green,
 		    unsigned char blue)
 {
     VSET(m_rgb, red, green, blue);
 }
 
 
-inline Color::Color(const ON_Color &src)
+Color::Color(const ON_Color &src)
 {
     m_rgb[0] = static_cast<unsigned char>(src.Red());
     m_rgb[1] = static_cast<unsigned char>(src.Green());
@@ -155,7 +157,7 @@ inline Color::Color(const ON_Color &src)
 }
 
 
-inline bool
+bool
 Color::operator==(const Color &other) const
 {
     return m_rgb[0] == other.m_rgb[0]
@@ -164,17 +166,24 @@ Color::operator==(const Color &other) const
 }
 
 
-inline bool
+bool
 Color::operator!=(const Color &other) const
 {
     return !operator==(other);
 }
 
 
+bool
+Color::is_set() const
+{
+    return *this != Color(0, 0, 0) && *this != Color(128, 128, 128);
+}
+
+
 const unsigned char *
 Color::get_rgb() const
 {
-    if (*this != Color(0, 0, 0) && *this != Color(128, 128, 128))
+    if (is_set())
 	return m_rgb;
     else
 	return NULL;
@@ -182,7 +191,7 @@ Color::get_rgb() const
 
 
 struct UuidCompare {
-    inline bool operator()(const ON_UUID &left, const ON_UUID &right) const
+    bool operator()(const ON_UUID &left, const ON_UUID &right) const
     {
 	return ON_UuidCompare(&left, &right) == -1;
     }
@@ -219,7 +228,7 @@ xform2mat(const ON_Xform &source, mat_t dest)
 }
 
 
-static inline bool
+static bool
 is_toplevel(const ON_Layer &layer)
 {
     return layer.m_parent_layer_id == ROOT_UUID && layer.m_layer_id != ROOT_UUID;
@@ -384,8 +393,14 @@ extract_bitmap(const std::string &dir_path, const std::string &filename,
 static void
 load_pix(const std::string &path, std::size_t width, std::size_t height)
 {
-    char buf[BUFSIZ]; // libicv currently requires BUFSIZ
-    mime_image_t format = icv_guess_file_format(path.c_str(), buf);
+    struct bu_vls c = BU_VLS_INIT_ZERO;
+    mime_image_t format = MIME_IMAGE_UNKNOWN;
+
+    if (bu_path_component(&c, path.c_str(), (path_component_t)MIME_IMAGE)) {
+	format = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+    }
+    bu_vls_free(&c);
+
     AutoPtr<icv_image_t, int, icv_destroy> image(icv_read(path.c_str(), format,
 	    width, height));
 
@@ -514,7 +529,7 @@ RhinoConverter::ObjectManager::unique_name(const std::string &prefix,
 }
 
 
-inline RhinoConverter::ObjectManager::ObjectManager() :
+RhinoConverter::ObjectManager::ObjectManager() :
     m_obj_map(),
     m_name_count_map()
 {}
@@ -545,35 +560,35 @@ RhinoConverter::ObjectManager::register_member(
 }
 
 
-inline void
+void
 RhinoConverter::ObjectManager::mark_idef_member(const ON_UUID &uuid)
 {
     m_obj_map.at(uuid).m_idef_member = true;
 }
 
 
-inline bool
+bool
 RhinoConverter::ObjectManager::exists(const ON_UUID &uuid) const
 {
     return m_obj_map.count(uuid) > 0;
 }
 
 
-inline const std::string &
+const std::string &
 RhinoConverter::ObjectManager::get_name(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_name;
 }
 
 
-inline const std::set<ON_UUID, UuidCompare> &
+const std::set<ON_UUID, UuidCompare> &
 RhinoConverter::ObjectManager::get_members(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_members;
 }
 
 
-inline bool
+bool
 RhinoConverter::ObjectManager::is_idef_member(const ON_UUID &uuid) const
 {
     return m_obj_map.at(uuid).m_idef_member;
@@ -950,9 +965,9 @@ RhinoConverter::create_geom_comb(const ON_3dmObjectAttributes &geom_attrs)
 
     const bool do_inherit = false;
     const int ret = mk_comb(m_db, comb_name.c_str(), &members.l, false,
-			    shader.first.c_str(), shader.second.c_str(),
-			    get_color(geom_attrs).get_rgb(),
-			    0, 0, 0, 0, do_inherit, false, false);
+	    shader.first.c_str(), shader.second.c_str(),
+	    get_color(geom_attrs).get_rgb(),
+	    0, 0, 0, 0, do_inherit, false, false);
 
     if (ret)
 	throw std::runtime_error("mk_comb() failed");

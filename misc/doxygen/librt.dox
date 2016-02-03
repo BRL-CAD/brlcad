@@ -33,6 +33,14 @@
 /** @ingroup librt */
 /**  @defgroup rt_timer Timer*/
 
+/** @ingroup librt */
+/**  @defgroup rt_obj Object API*/
+
+/** @ingroup librt */
+/**  @defgroup rt_solid Solids Structure*/
+
+/** @ingroup librt */
+/**  @defgroup rt_tol librt Specific Tolerances */
 
 /* Third tier groups */
 

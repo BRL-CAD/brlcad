@@ -20,7 +20,7 @@
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup mat
+/** @addtogroup bn_mat
  *
  *  @brief
  *  Matrix and vector functionality

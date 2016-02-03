@@ -39,15 +39,17 @@ extern double *uchar2double(unsigned char *data, size_t size);
 int
 image_flip(unsigned char *buf, size_t width, size_t height)
 {
-    unsigned char *buf2;
-    size_t i;
-    size_t pitch = width * 3 * sizeof(char);
+    size_t i, j;
+    size_t row_bytes = width * 3 * sizeof(unsigned char);
+    size_t img_bytes = row_bytes * height;
+    unsigned char *inv_img = (unsigned char *)bu_malloc(img_bytes,
+	    "image flip");
 
-    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for (i=0 ; i<height ; i++)
-	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy(buf, buf2, height * pitch);
-    bu_free(buf2, "image flip");
+    for (i = 0, j = height - 1; i < height; ++i, --j) {
+	memcpy(inv_img + i * row_bytes, buf + j * row_bytes, row_bytes);
+    }
+    memcpy(buf, inv_img, img_bytes);
+    bu_free(inv_img, "image flip");
     return 0;
 }
 

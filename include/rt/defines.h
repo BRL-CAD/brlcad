@@ -17,11 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/defines.h
+/** @addtogroup rt_defines
  *
  * Common definitions for LIBRT
  *
  */
+
+/** @{ */
+/** @file rt/defines.h */
 
 #ifndef RT_DEFINES_H
 #define RT_DEFINES_H
@@ -212,6 +215,8 @@
 #define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 #endif /* RT_DEFINES_H */
+
+/** @} */
 
 /*
  * Local Variables:

@@ -1,13 +1,18 @@
 add_custom_target(libgcv_plugins)
+set_target_properties(libgcv_plugins PROPERTIES FOLDER "BRL-CAD Shared Libraries")
 
 
 function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
     set(target_name libgcv_${plugin_name})
-
-    BRLCAD_ADDLIB(${target_name} "${sources}" "${libs}" DYNAMIC NO_INSTALL FOLDER "LibGCV Plugins")
+    BRLCAD_ADDLIB(${target_name} "${sources}" "libgcv;${libs}" SHARED NO_INSTALL FOLDER "LibGCV Plugins")
+    target_include_directories(${target_name} PRIVATE "${GCV_INCLUDE_DIRS}")
     get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY)
     set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
-    install(TARGETS ${target_name} LIBRARY DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY})
+    install(TARGETS ${target_name}
+        RUNTIME DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
+        LIBRARY DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
+        ARCHIVE DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
+    )
 
     add_dependencies(libgcv_plugins ${target_name})
 endfunction(LIBGCV_ADD_PLUGIN plugin_name sources libs)

@@ -121,8 +121,15 @@ _gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filt
     if (!filter->filter_fn)
 	bu_bomb("null filter_fn");
 
-    if (bu_ptbl_ins_unique(filter_table, (long *)filter) != -1)
-	bu_bomb("filter already registered");
+    {
+	const struct gcv_filter * const *entry;
+
+	for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filter_table))
+	    if (!bu_strcmp((*entry)->name, filter->name))
+		bu_bomb("duplicate filter name");
+    }
+
+    bu_ptbl_ins(filter_table, (long *)filter);
 }
 
 
@@ -243,14 +250,24 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
     void *dl_handle;
 
     if (!(dl_handle = bu_dlopen(path, BU_RTLD_NOW))) {
-	bu_log("bu_dlopen() failed for '%s': '%s'\n", path, bu_dlerror());
+	const char * const error_msg = bu_dlerror();
+
+	if (error_msg)
+	    bu_log("%s\n", error_msg);
+
+	bu_log("bu_dlopen() failed for '%s'\n", path);
 	bu_bomb("bu_dlopen() failed");
     }
 
     plugin_info = (struct gcv_plugin *)bu_dlsym(dl_handle, "gcv_plugin_info");
 
     if (!plugin_info) {
-	bu_log("bu_dlsym() failed for '%s': '%s'\n", path, bu_dlerror());
+	const char * const error_msg = bu_dlerror();
+
+	if (error_msg)
+	    bu_log("%s\n", error_msg);
+
+	bu_log("bu_dlsym() failed for '%s'\n", path);
 	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
     }
 
@@ -337,6 +354,8 @@ gcv_list_filters(void)
     static struct bu_ptbl filter_table = BU_PTBL_INIT_ZERO;
 
     if (!BU_PTBL_LEN(&filter_table)) {
+	bu_ptbl_init(&filter_table, 64, "filter_table");
+
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_read);
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_write);
 

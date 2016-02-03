@@ -202,6 +202,7 @@ set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" 
 mark_as_advanced(PNG_MAN_DIR)
 set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
 mark_as_advanced(PNG_TESTS)
+mark_as_advanced(PNG_FRAMEWORK)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -284,17 +285,6 @@ if(BRLCAD_UTAHRLE_BUILD)
   mark_as_advanced(UTAHRLE_INCLUDE_DIR)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
 endif(BRLCAD_UTAHRLE_BUILD)
-
-
-# URTToolkit - Programs, not a library - needs libutahrle, but the
-# "check for system install" logic will be different here.  Ignore for
-# now, revisit later.
-
-if(BRLCAD_LEVEL3)
-  add_subdirectory(URToolkit)
-endif(BRLCAD_LEVEL3)
-include(${CMAKE_CURRENT_SOURCE_DIR}/URToolkit.dist)
-CMAKEFILES_IN_DIR(URToolkit_ignore_files URToolkit)
 
 # Tcl/Tk presents a number of complexities for BRL-CAD and CMake.
 # BRL-CAD requires far more knowledge of the details of a Tcl/Tk
@@ -940,12 +930,6 @@ mark_as_advanced(RPLY_INCLUDE_DIRS)
 # GCT is a collection of algorithms for geometry processing and conversion
 #add_subdirectory(gct)
 CMAKEFILES(gct)
-
-# TCLAP is used for option parsing - consists entirely of headers
-# and does not need to be installed, but does need to generate a
-# config file
-add_subdirectory(tclap)
-CMAKEFILES(tclap)
 
 if(BRLCAD_ENABLE_OSL)
   add_subdirectory(osl)

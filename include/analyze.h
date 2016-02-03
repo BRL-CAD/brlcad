@@ -23,7 +23,7 @@
  *
  */
 /** @{ */
-/** @file analyze.h */
+/** @file include/analyze.h */
 
 #ifndef ANALYZE_H
 #define ANALYZE_H

@@ -101,8 +101,6 @@
 #include <math.h>
 #include <signal.h>
 
-#include "tcl.h"
-
 #include "bu/cmd.h"
 #include "bn.h"
 #include "vmath.h"

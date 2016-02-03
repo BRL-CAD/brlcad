@@ -117,6 +117,10 @@ and new names should be listed for reference.
 
 7.26
 ----
+rtrad, bot_shell-vtk, rt_bot_faces, g-nmg, nmg-bot, nmg-rib, nmg-sgp, plot3-hpgl,
+plot3-tk, plot3-X, fix_polysolids, terrain, pixinfo.sh, png_info, dbcp, buffer,
+hex, bw-d, c-d, d-bw, d-f, d-i, d-u, f-d, f-i, i-d, -if, u-bw, u-d, u-f
+	remove obsolete commands [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,

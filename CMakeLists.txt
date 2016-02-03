@@ -702,6 +702,11 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "BRL-CAD high level build configuration")
   set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS "" Debug Release)
 endif(NOT BRLCAD_IS_SUBBUILD)
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+else(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(CMAKE_BUILD_TYPE)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 #---------------------------------------------------------------------
 # The location in which to install BRL-CAD.  Only do this if
@@ -989,17 +994,6 @@ endif(NOT CMAKE_CONFIGURATION_TYPES)
 # party setup to use.
 include(${BRLCAD_CMAKE_DIR}/Fink_MacPorts.cmake)
 
-# Option for librtserver, used to help Java programs interface with librt.
-# Find Java and JNI, and conditionalize the default setting on Java's
-# availability
-FIND_PACKAGE(Java)
-FIND_PACKAGE(JNI)
-if(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." ON)
-else(JNI_FOUND AND JAVA_FOUND)
-  option(BRLCAD_ENABLE_RTSERVER "Enable the librtserver target." OFF)
-endif(JNI_FOUND AND JAVA_FOUND)
-
 # Turn off the brlcad.dll build.
 # It's an expert's setting at the moment.
 option(BRLCAD_ENABLE_BRLCAD_LIBRARY "Build the brlcad.dll" OFF)
@@ -1134,6 +1128,8 @@ endif(BRLCAD_ENABLE_AQUA)
 find_package(Qt5Widgets QUIET)
 option(BRLCAD_ENABLE_QT "Enable features requiring Qt" OFF)
 mark_as_advanced(BRLCAD_ENABLE_QT)
+mark_as_advanced(Qt5Core_DIR)
+mark_as_advanced(Qt5Gui_DIR)
 if(NOT Qt5Widgets_FOUND AND BRLCAD_ENABLE_QT)
   message("QT interface requested, but QT5 is not found - disabling")
   set(BRLCAD_ENABLE_QT OFF)
@@ -1260,6 +1256,9 @@ endif(BRLCAD_ENABLE_STRICT)
 # Build with compiler optimization flags.  This should normally be on for
 # release builds.
 AUTO_OPTION(BRLCAD_FLAGS_OPTIMIZATION BRLCAD_OPTIMIZED_BUILD "OFF" "ON")
+if(CMAKE_CONFIGURATION_TYPES)
+  mark_as_advanced(BRLCAD_FLAGS_OPTIMIZATION)
+endif(CMAKE_CONFIGURATION_TYPES)
 
 # Build with full compiler lines visible by default (won't need make
 # VERBOSE=1) on command line
@@ -1837,22 +1836,6 @@ if(APPLE)
   mark_as_advanced(CMAKE_OSX_ARCHITECTURES CMAKE_OSX_DEPLOYMENT_TARGET CMAKE_OSX_SYSROOT)
   mark_as_advanced(CoreFoundation_LIBRARIES Cocoa_LIBRARIES)
 endif(APPLE)
-
-# Do some extra Java related checks.
-if(JNI_FOUND AND JAVA_FOUND)
-  BRLCAD_INCLUDE_FILE(JavaVM/jni.h HAVE_JAVAVM_JNI_H)
-  BRLCAD_INCLUDE_FILE(jni.h HAVE_JNI_H "${JNI_INCLUDE_DIRS}")
-  if(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but JNI header not found - disabling")
-  endif(NOT HAVE_JNI_H AND NOT HAVE_JAVAVM_JNI_H AND BRLCAD_ENABLE_RTSERVER)
-else(JNI_FOUND AND JAVA_FOUND)
-  if(BRLCAD_ENABLE_RTSERVER)
-    set(BRLCAD_ENABLE_RTSERVER OFF CACHE BOOL "RT server disabled due to unsatisfied Java requirements" FORCE)
-    message("librtserver build requested, but Java+JNI not found - disabling")
-  endif(BRLCAD_ENABLE_RTSERVER)
-endif(JNI_FOUND AND JAVA_FOUND)
-mark_as_advanced(BRLCAD_ENABLE_RTSERVER)
 
 # Mark X11 as available if it is enabled and we find Xlib.h
 if(BRLCAD_ENABLE_X11)
@@ -2473,7 +2456,8 @@ endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
 # testing.  TODO - probably should control this with an option.
-INCLUDE(CTest)
+include(CTest)
+mark_as_advanced(BUILD_TESTING)
 
 # We've done the toplevel configure steps, now add the subdirectories
 macro(verbose_add_subdirectory root dir)
@@ -3094,13 +3078,13 @@ add_custom_target(print-warning-message ${CMAKE_COMMAND} -E echo ""
   COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"test\" target runs all of BRL-CAD\\'s available unit tests"
   COMMAND ${CMAKE_COMMAND} -E echo "      including tests for API currently under development.  It is not"
   COMMAND ${CMAKE_COMMAND} -E echo "      necessarily cause for concern if any of these tests fail.  It is"
-  COMMAND ${CMAKE_COMMAND} -E echo "      always helpful to fix tests that are failing (except this one)."
+  COMMAND ${CMAKE_COMMAND} -E echo "      always helpful to fix tests that are failing, except this one."
   COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
   COMMAND ${CMAKE_COMMAND} -E echo ""
   COMMAND false
   )
 set_target_properties(print-warning-message PROPERTIES FOLDER "Compilation Utilities")
-_add_test(NAME "NOTE:\\ some\\ tests\\ are\\ expected\\ to\\ fail" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
+_add_test(NAME "NOTE:\\ some\\ 'test'\\ tests\\ are\\ expected\\ to\\ fail,\\ 'regress'\\ must\\ pass" COMMAND ${CMAKE_COMMAND} --build . --target print-warning-message)
 
 # Local Variables:
 # tab-width: 8

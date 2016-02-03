@@ -159,7 +159,7 @@ Convert_input(NODE *node)
 static void
 parseNodeData(NODE* node)
 {
-    int size = static_cast<float>(node->vertics.size());
+    size_t size = node->vertics.size();
     int i;
 
     if (size) {
@@ -178,8 +178,8 @@ parseNodeData(NODE* node)
 static void
 Parse_input(vector<NODE*> &childlist)
 {
-    int size = static_cast<float>(childlist.size());
-    int i;
+    size_t size = childlist.size();
+    size_t i;
 
     for (i = 0; i < size; i++) {
 	if (childlist[i]->nnodetype == NODE_CONE) {

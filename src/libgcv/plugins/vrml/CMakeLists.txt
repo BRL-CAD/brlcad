@@ -1,11 +1,3 @@
-include_directories(
-    ${BRLCAD_BINARY_DIR}/include
-    ${BRLCAD_SOURCE_DIR}/include
-    ${BU_INCLUDE_DIRS}
-    ${RT_INCLUDE_DIRS}
-    )
-
-
 set(LIBGCV_VRML_SOURCES
     vrml_read/file_util.cpp
     vrml_read/node.cpp

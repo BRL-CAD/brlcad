@@ -28,7 +28,7 @@
  *
  */
 /** @{ */
-/** @file nmg.h */
+/** @file include/nmg.h */
 
 #ifndef NMG_H
 #define NMG_H

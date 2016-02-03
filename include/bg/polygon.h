@@ -121,6 +121,7 @@ typedef enum {
  * @param[in] nholes Number of hole polygons contained in holes_array
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
+ * @param[in] type Type of triangulation 
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
@@ -151,6 +152,7 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
+ * @param[in] type Triangulation type
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful

@@ -69,7 +69,7 @@ __BEGIN_DECLS
 
 /** @addtogroup libwdb */
 /** @{ */
-/** @file wdb.h */
+/** @file include/wdb.h */
 
 /**
  * In-memory form of database combinations
@@ -670,7 +670,8 @@ WDB_EXPORT int mk_comb(
     int			los,			/**< line-of-sight thickness equivalence */
     int			inherit,		/**< whether objects below inherit from this comb */
     int			append_ok,		/**< 0 = obj must not exit */
-    int			gift_semantics);	/**<  0 = pure, 1 = gift */
+    int			gift_semantics		/**< 0 = pure, 1 = gift */
+);
 
 /**
  * Convenience interface to make a combination with a single member.

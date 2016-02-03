@@ -300,6 +300,9 @@ BU_EXPORT extern void bu_globfree(bu_glob_t *);
  * platform filesystem globbing to warrant it - the primary use case for this
  * right now is the .g database */
 #endif
+
+/** @} */
+
 __END_DECLS
 
 #endif  /* BU_PATH_H */

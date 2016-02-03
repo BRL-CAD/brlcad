@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv_api.h
+/** @file gcv/api.h
  *
  * Main public API of the LIBGCV geometry conversion library.
  *

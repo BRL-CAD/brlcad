@@ -41,13 +41,6 @@ set(level_1_dirs
 # the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
 # programs.
 
-# Only add librtserver if it's enabled
-if(BRLCAD_ENABLE_RTSERVER)
-  set(LIBRTSERVER_DIR librtserver)
-else(BRLCAD_ENABLE_RTSERVER)
-  CMAKEFILES(librtserver)
-endif(BRLCAD_ENABLE_RTSERVER)
-
 set(level_2_dirs
   libpkg
   libfb
@@ -61,7 +54,6 @@ set(level_2_dirs
   libicv
   libmultispectral
   libpc
-  ${LIBRTSERVER_DIR}
   libtclcad
   libtermio
   )

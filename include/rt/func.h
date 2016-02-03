@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt
+/** @addtogroup rt_obj
  *
  * @brief Primitive manipulation functions from former functab
  * callback table.
@@ -27,9 +27,6 @@
  * this message goes away.
  *
  */
-/** @{ */
-/** @file rt/func.h */
-
 #ifndef RTFUNC_H
 #define RTFUNC_H
 
@@ -54,6 +51,9 @@
 #include "rt/rt_instance.h"
 #include "rt/xray.h"
 #include "pc.h"
+
+/** @{ */
+/** @file rt/func.h */
 
 __BEGIN_DECLS
 

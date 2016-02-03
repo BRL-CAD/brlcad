@@ -2188,6 +2188,7 @@ osgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 
 	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel, sizeof(unsigned char), "rgb data");
 	    *image = idata;
+	    flip_display_image_vertically(*image, width, height);
 
 	    for (h = 0; h < height; h++) {
 		for (w = 0; w < width; w++) {

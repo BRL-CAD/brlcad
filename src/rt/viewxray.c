@@ -38,6 +38,7 @@
 
 #include "bu/parallel.h"
 #include "bu/mime.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
@@ -117,13 +118,16 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	pixsize = 0;
 	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
 	if (outputfile) {
+	    struct bu_vls c = BU_VLS_INIT_ZERO;
 	    char buf[BUFSIZ];
-	    int format = icv_guess_file_format(outputfile, buf);
-	    if (format != MIME_IMAGE_UNKNOWN) {
-		bu_strlcpy(buf, outputfile, BUFSIZ);
-		bu_strlcat(buf, floatfileext, BUFSIZ);
-		outputfile = floatfilename = bu_strdup(buf);
+	    if (bu_path_component(&c, outputfile, (path_component_t)MIME_IMAGE)) {
+		if (bu_file_mime_int(bu_vls_addr(&c)) != MIME_IMAGE_UNKNOWN) {
+		    bu_strlcpy(buf, outputfile, BUFSIZ);
+		    bu_strlcat(buf, floatfileext, BUFSIZ);
+		    outputfile = floatfilename = bu_strdup(buf);
+		}
 	    }
+	    bu_vls_free(&c);
 	}
     }
 

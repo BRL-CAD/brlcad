@@ -12,6 +12,8 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/bio.h")
 set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/bnetwork.h")
 set(lib_inputs "${lib_inputs}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bresource.h")
+set(lib_inputs "${lib_inputs}
 INPUT += ${CMAKE_SOURCE_DIR}/include/bsocket.h")
 
 set(lib_predefines)
@@ -60,6 +62,16 @@ INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}/")
 INPUT += ${CMAKE_SOURCE_DIR}/include/${sublibname}.h
     ")
   endif(EXISTS ${CMAKE_SOURCE_DIR}/include/${sublibname}.h)
+
+  # libbn header doesn't fit the template
+  if("${libname}" STREQUAL "libbn")
+  set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/vector_fpu.h
+    ")
+    set(INPUTS "${INPUTS}
+INPUT += ${CMAKE_SOURCE_DIR}/include/bn/dvec.h
+    ")
+  endif("${libname}" STREQUAL "libbn")
 
   # librt header doesn't fit the template
   if("${libname}" STREQUAL "librt")
