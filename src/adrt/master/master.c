@@ -384,7 +384,7 @@ master_networking(void *ptr)
 	    sleep(0);
 	/* if both sockets are listening, background. */
 	if (master_listener_result == 0 && observer_listener_result == 0) {
-#if defined(HAVE_DAEMON) && defined(HAVE_WORKING_DAEMON_FUNCTION)
+#ifdef HAVE_WORKING_DAEMON_FUNCTION
 	    daemon(0, 0);
 #else
 	    switch(fork()) {
