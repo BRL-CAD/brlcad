@@ -1,9 +1,13 @@
-						 -*- coding: utf-8 -*-
+					 -*- mode: org-mode; coding: utf-8; -*-
+
+This is an Emacs org-mode document. Keybindings: http://orgmode.org/orgcard.txt
 
 #+TAGS: { UX : U u } { Complex : C c }
 #+TAGS: { Comms : P p } { Market : M m }
 
+============================
 BRL-CAD Development Strategy
+============================
 
 This is a living org-mode document intended to help define and
 maintain a consistent develpment strategy that addresses core
@@ -54,7 +58,7 @@ strategic activities, and aims to coordinate development activity.
 *** conversion: import, processing, export                              :P:U:
 
 
-* Deploying Archer Tasks
+* Strategy: Deploy Archer
 
 ** command cleanup - ALPHA+
 *** TODO inventory + mapping + time
@@ -66,7 +70,7 @@ strategic activities, and aims to coordinate development activity.
 *** TODO multithreaded command execution
 *** TODO interface busy indicator
 *** TODO drawing indicator
-   
+    
 ** feature parity - ALPHA
 *** TODO classic console mode
 *** TODO review/finish edit keypointing (oed parity)
@@ -105,3 +109,14 @@ strategic activities, and aims to coordinate development activity.
 *** TODO apropos reading from docbook
 *** TODO web publishing + searching of docs
 
+* Strategy: Condense & Refactor
+
+** 
+
+* Strategy: New Website
+
+** 
+
+# Local Variables:
+# mode: org-mode
+# End:
