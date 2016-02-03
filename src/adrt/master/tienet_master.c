@@ -217,7 +217,7 @@ void tienet_master_free()
 
 void tienet_master_push(const void *data, size_t size)
 {
-    tienet_master_socket_t *socket, *tmp;
+    tienet_master_socket_t *tsocket, *tmp;
     short op;
 
     pthread_mutex_lock(&tienet_master_push_mut);
@@ -241,24 +241,24 @@ void tienet_master_push(const void *data, size_t size)
     tienet_sem_post(&tienet_master_sem_read);
 
     /* Process items in tienet_master_DeadSocketList */
-    for (socket = tienet_master_dead_socket_list; socket;) {
+    for (tsocket = tienet_master_dead_socket_list; tsocket;) {
 	tienet_sem_wait(&tienet_master_sem_fill);
-	TCOPY(int, &(socket->work.size), 0, &size, 0);
+	TCOPY(int, &(tsocket->work.size), 0, &size, 0);
 
 	/* Fill buffer, Grow if necessary */
 	if (sizeof(short) + sizeof(int) + size > (size_t)tienet_master_buffer[tienet_master_pos_fill].size) {
 	    tienet_master_buffer[tienet_master_pos_fill].size = sizeof(short) + sizeof(int) + size;
 	    tienet_master_buffer[tienet_master_pos_fill].data = bu_realloc(tienet_master_buffer[tienet_master_pos_fill].data, tienet_master_buffer[tienet_master_pos_fill].size, "master buffer data");
 	}
-	memcpy(tienet_master_buffer[tienet_master_pos_fill].data, socket->work.data, sizeof(short) + sizeof(int) + size);
+	memcpy(tienet_master_buffer[tienet_master_pos_fill].data, tsocket->work.data, sizeof(short) + sizeof(int) + size);
 
 	/* Circular Increment */
 	tienet_master_pos_fill = (tienet_master_pos_fill + 1) % tienet_master_buffer_size;
 
-	tmp = socket;
-	if (socket == tienet_master_dead_socket_list)
+	tmp = tsocket;
+	if (tsocket == tienet_master_dead_socket_list)
 	    tienet_master_dead_socket_list = tienet_master_dead_socket_list->next;
-	socket = socket->next;
+	tsocket = tsocket->next;
 
 	bu_free(tmp->work.data, "work data");
 	bu_free(tmp, "tmp socket");
@@ -272,10 +272,10 @@ void tienet_master_push(const void *data, size_t size)
      * This is the case where slaves have exhausted the work buffer,
      * then new work becomes available.
      */
-    for (socket = tienet_master_socket_list; socket; socket = socket->next) {
+    for (tsocket = tienet_master_socket_list; tsocket; tsocket = tsocket->next) {
 	/* Only if not master socket do we send data to slave */
-	if (socket->next && socket->idle)
-	    tienet_master_send_work(socket);
+	if (tsocket->next && tsocket->idle)
+	    tienet_master_send_work(tsocket);
     }
 
     pthread_mutex_unlock(&tienet_master_push_mut);
@@ -304,7 +304,7 @@ void tienet_master_wait()
 void tienet_master_connect_slaves(fd_set *readfds)
 {
     FILE *fh;
-    struct sockaddr_in daemon, slave;
+    struct sockaddr_in tdaemon, slave;
     struct hostent slave_ent;
     tienet_master_socket_t *tmp;
     short op;
@@ -347,11 +347,11 @@ void tienet_master_connect_slaves(fd_set *readfds)
 			exit(1);
 		    }
 
-		    daemon.sin_family = AF_INET;
-		    daemon.sin_addr.s_addr = htonl(INADDR_ANY);
-		    daemon.sin_port = htons(0);
+		    tdaemon.sin_family = AF_INET;
+		    tdaemon.sin_addr.s_addr = htonl(INADDR_ANY);
+		    tdaemon.sin_port = htons(0);
 
-		    if (bind(daemon_socket, (struct sockaddr *)&daemon, sizeof(daemon)) < 0) {
+		    if (bind(daemon_socket, (struct sockaddr *)&tdaemon, sizeof(tdaemon)) < 0) {
 			fprintf(stderr, "unable to bind socket, exiting.\n");
 			exit(1);
 		    }
@@ -731,7 +731,7 @@ void tienet_master_result(tienet_master_socket_t *sock)
 void tienet_master_shutdown()
 {
     short op;
-    tienet_master_socket_t *socket;
+    tienet_master_socket_t *tsocket;
 
 
     tienet_master_shutdown_state = 1;
@@ -740,11 +740,11 @@ void tienet_master_shutdown()
     tienet_master_halt_networking = 1;
 
     /* Close Sockets */
-    for (socket = tienet_master_socket_list; socket; socket = socket->next) {
-	if (socket->next) {
+    for (tsocket = tienet_master_socket_list; tsocket; tsocket = tsocket->next) {
+	if (tsocket->next) {
 	    /* Only if slave socket do we send data to it. */
 	    op = TN_OP_COMPLETE;
-	    tienet_send(socket->num, &op, sizeof(short));
+	    tienet_send(tsocket->num, &op, sizeof(short));
 
 	    /*
 	     * Wait on Recv.  When slave socket closes, select will be
@@ -754,8 +754,8 @@ void tienet_master_shutdown()
 	     * socket into an evil wait state
 	     */
 
-	    tienet_recv(socket->num, &op, sizeof(short));
-	    close(socket->num);
+	    tienet_recv(tsocket->num, &op, sizeof(short));
+	    close(tsocket->num);
 	}
     }
 
@@ -766,18 +766,18 @@ void tienet_master_shutdown()
 /* This function does not support message queuing right now, so don't try it. */
 void tienet_master_broadcast(const void *mesg, size_t mesg_len)
 {
-    tienet_master_socket_t *socket;
+    tienet_master_socket_t *tsocket;
 
     /* Prevent a Read and Write of the broadcast from occurring at the same time */
     pthread_mutex_lock(&tienet_master_broadcast_mut);
 
     /* Send a message to each available socket */
-    for (socket = tienet_master_socket_list; socket; socket = socket->next) {
+    for (tsocket = tienet_master_socket_list; tsocket; tsocket = tsocket->next) {
 	/* Only if not master socket */
-	if (socket->next) {
-	    socket->mesg.size = mesg_len;
-	    socket->mesg.data = bu_malloc(mesg_len, "message data");
-	    memcpy(socket->mesg.data, mesg, mesg_len);
+	if (tsocket->next) {
+	    tsocket->mesg.size = mesg_len;
+	    tsocket->mesg.data = bu_malloc(mesg_len, "message data");
+	    memcpy(tsocket->mesg.data, mesg, mesg_len);
 	}
     }
     pthread_mutex_unlock(&tienet_master_broadcast_mut);
@@ -787,10 +787,10 @@ void tienet_master_broadcast(const void *mesg, size_t mesg_len)
      * where slaves have exhausted the work buffer, then new work
      * becomes available.
      */
-    for (socket = tienet_master_socket_list; socket; socket = socket->next) {
+    for (tsocket = tienet_master_socket_list; tsocket; tsocket = tsocket->next) {
 	/* Only if not master socket do we send data to slave */
-	if (socket->next && socket->idle)
-	    tienet_master_send_work(socket);
+	if (tsocket->next && tsocket->idle)
+	    tienet_master_send_work(tsocket);
     }
 }
 
