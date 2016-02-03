@@ -53,7 +53,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # for distcheck regardless of the build configurations used.
 
   # Set up the script that will be used to verify the source archives
-  configure_file(${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
+  configure_file("${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
 
   # Define the repository verification build target
   add_custom_target(distcheck-repo_verify
