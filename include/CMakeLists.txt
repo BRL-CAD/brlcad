@@ -14,6 +14,7 @@ set(public_hdrs
   bio.h
   bresource.h
   bsocket.h
+  bnetwork.h
   RtServerImpl.h
   bn.h
   bu.h
@@ -48,15 +49,14 @@ CMAKEFILES(${public_hdrs})
 install(FILES ${public_hdrs} DESTINATION ${INCLUDE_DIR}/brlcad)
 
 # Configuration headers
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h DESTINATION ${INCLUDE_DIR}/brlcad)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/brlcad_config.h" DESTINATION ${INCLUDE_DIR}/brlcad)
 if(WIN32)
-  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/config_win.h DESTINATION ${INCLUDE_DIR}/brlcad)
+  install(FILES "${CMAKE_CURRENT_BINARY_DIR}/config_win.h" DESTINATION ${INCLUDE_DIR}/brlcad)
 endif(WIN32)
 
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 set(noinst_HEADERS
-  bnetwork.h
   brlcad_ident.h
   brlcad_version.h
   )
