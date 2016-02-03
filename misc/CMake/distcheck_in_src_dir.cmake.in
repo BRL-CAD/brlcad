@@ -85,7 +85,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cmake"
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... "
-  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} . @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir} @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} . @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX="${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir}" @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive..."
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@

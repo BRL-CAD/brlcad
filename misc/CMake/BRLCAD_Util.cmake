@@ -88,9 +88,9 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
-    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
       set(havevarname 1)
-    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
   endforeach(maybefilename ${${targetvar}})
 
   # Put the list contents in the targetvar variable and

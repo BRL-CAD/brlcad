@@ -22,9 +22,9 @@
 #
 #   find_package(LEX)
 #
-#   LEX_TARGET(MyScanner lexer.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
+#   LEX_TARGET(MyScanner lexer.l  lexer.cpp)
 #
-#   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#   include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #   add_executable(Foo
 #      Foo.cc
 #      ${LEX_MyScanner_OUTPUTS}
@@ -103,7 +103,7 @@ if(LEX_EXECUTABLE)
       ARGS ${LEX_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input}
       COMMENT "[LEX][${Name}] Building scanner with ${LEX_EXECUTABLE}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
     set(LEX_${Name}_DEFINED TRUE)
     set(LEX_${Name}_OUTPUTS ${Output})

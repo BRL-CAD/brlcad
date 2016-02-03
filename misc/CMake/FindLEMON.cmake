@@ -115,7 +115,7 @@ if(NOT COMMAND LEMON_TARGET)
 
     # Need a working directory
     if("${${LVAR_PREFIX}_WORKING_DIR}" STREQUAL "")
-      set(${LVAR_PREFIX}_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}/${LVAR_PREFIX})
+      set(${LVAR_PREFIX}_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/${LVAR_PREFIX}")
     endif("${${LVAR_PREFIX}_WORKING_DIR}" STREQUAL "")
     file(MAKE_DIRECTORY ${${LVAR_PREFIX}_WORKING_DIR})
 
@@ -146,7 +146,7 @@ if(NOT COMMAND LEMON_TARGET)
     if("${in_full}" STREQUAL "${Input}")
       set(lemon_in_file ${Input})
     else("${in_full}" STREQUAL "${Input}")
-      set(lemon_in_file ${CMAKE_CURRENT_SOURCE_DIR}/${Input})
+      set(lemon_in_file "${CMAKE_CURRENT_SOURCE_DIR}/${Input}")
     endif("${in_full}" STREQUAL "${Input}")
 
 

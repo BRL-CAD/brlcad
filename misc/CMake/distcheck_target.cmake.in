@@ -56,7 +56,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E make_directory "distcheck-${TARGET_SUFFIX}/${install_dir}"
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... "
-  COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" ${CMAKE_COMMAND} ../${source_dir} @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX=${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir} @TARGET_REDIRECT@
+  COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" ${CMAKE_COMMAND} ../${source_dir} @CMAKE_OPTS@ -DCMAKE_INSTALL_PREFIX="${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}/${install_dir}" @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Compiling using source from TGZ archive..."
   COMMAND ${CMAKE_COMMAND} -E chdir "distcheck-${TARGET_SUFFIX}/${build_dir}" @DISTCHECK_BUILD_CMD@ @TARGET_REDIRECT@
