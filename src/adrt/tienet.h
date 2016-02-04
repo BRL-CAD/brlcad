@@ -23,9 +23,7 @@
 
 #include "common.h"
 
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
+#include "tinycthread.h"
 
 #include "bu/malloc.h"
 
@@ -64,8 +62,8 @@ typedef struct tienet_buffer_s {
 
 typedef struct tienet_sem_s {
     int val;
-    pthread_mutex_t mut;
-    pthread_cond_t cond;
+    mtx_t mut;
+    cnd_t cond;
 } tienet_sem_t;
 
 

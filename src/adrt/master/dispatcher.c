@@ -25,9 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>

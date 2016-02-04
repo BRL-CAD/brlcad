@@ -72,35 +72,35 @@ tienet_recv(int socket, void* data, size_t size)
 
 void tienet_sem_init(tienet_sem_t *sem, int val)
 {
-    pthread_mutex_init(&sem->mut, 0);
-    pthread_cond_init(&sem->cond, 0);
+    mtx_init(&sem->mut, 0);
+    cnd_init(&sem->cond);
     sem->val = val;
 }
 
 
 void tienet_sem_free(tienet_sem_t *sem)
 {
-    pthread_mutex_destroy(&sem->mut);
-    pthread_cond_destroy(&sem->cond);
+    mtx_destroy(&sem->mut);
+    cnd_destroy(&sem->cond);
 }
 
 
 void tienet_sem_post(tienet_sem_t *sem)
 {
-    pthread_mutex_lock(&sem->mut);
+    mtx_lock(&sem->mut);
     sem->val++;
-    pthread_cond_signal(&sem->cond);
-    pthread_mutex_unlock(&sem->mut);
+    cnd_signal(&sem->cond);
+    mtx_unlock(&sem->mut);
 }
 
 
 void tienet_sem_wait(tienet_sem_t *sem)
 {
-    pthread_mutex_lock(&sem->mut);
+    mtx_lock(&sem->mut);
     if (!sem->val)
-	pthread_cond_wait(&sem->cond, &sem->mut);
+	cnd_wait(&sem->cond, &sem->mut);
     sem->val--;
-    pthread_mutex_unlock(&sem->mut);
+    mtx_unlock(&sem->mut);
 }
 
 

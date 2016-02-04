@@ -52,9 +52,7 @@
 #  include <arpa/inet.h>
 #endif
 
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
+#include <tinycthread.h>
 #include <zlib.h>
 
 #include "bio.h"
@@ -105,14 +103,14 @@ typedef struct master_s
     uint32_t frame_ind;
     uint8_t slave_data[64];
     uint32_t slave_data_len;
-    pthread_t networking_thread;
+    thrd_t networking_thread;
     uint32_t active_connections;
     uint32_t alive;
 } master_t;
 
 
 void master_dispatcher_init();
-void* master_networking(void *ptr);
+int* master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
@@ -148,7 +146,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
 
     /* Launch a thread to handle networking */
-    pthread_create(&master.networking_thread, NULL, master_networking, &obs_port);
+    thrd_create(&master.networking_thread, (thrd_start_t)master_networking, &obs_port);
 
     /* Connect to the component Server */
     compnet_connect(comp_host, ISST_COMPNET_PORT);
@@ -177,7 +175,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     TIENET_BUFFER_FREE(master.buf_comp);
 
     /* Wait for networking thread to end */
-    pthread_join(master.networking_thread, NULL);
+    thrd_join(master.networking_thread, NULL);
 }
 
 
@@ -331,7 +329,7 @@ master_result(tienet_buffer_t *result)
 }
 
 
-void*
+int *
 master_networking(void *ptr)
 {
     master_socket_t *sock, *tmp;
