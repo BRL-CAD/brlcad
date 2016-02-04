@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* added new algorithm to bot_decimate (via -f option) - Jon Engbert
 * fixed benchmark bug running from paths with spaces - Sean Morrison
 * removed support for RLE v1 and v2 ('orle') image format - Cliff Yapp
 * fixed datum type 'in' command unit conversion bug - Cliff Yapp
