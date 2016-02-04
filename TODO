@@ -160,7 +160,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   that Debian stable is using CMake >=3.0 we should be OK to require
   the more modern CMake.  Another TODO once we require the newer CMake
   is retiring our custom time stamping code in favor of using
-  the CMake time stamp mechanism.
+  the CMake time stamp mechanism.  Also get rid of the fallback in
+  src/libgcv/plugins/CMakeLists.txt (and any others that have crept
+  in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
