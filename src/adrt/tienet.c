@@ -24,18 +24,18 @@
 #include "bio.h"
 
 int
-tienet_send(int socket, void* data, size_t size)
+tienet_send(int tsocket, void* data, size_t size)
 {
     fd_set	 set;
     unsigned int ind = 0;
     int		 r;
 
     FD_ZERO(&set);
-    FD_SET(socket, &set);
+    FD_SET(tsocket, &set);
 
     do {
-	select(socket+1, NULL, &set, NULL, NULL);
-	r = write(socket, &((char*)data)[ind], size-ind);
+	select(tsocket+1, NULL, &set, NULL, NULL);
+	r = write(tsocket, &((char*)data)[ind], size-ind);
 	ind += r;
 	if (r <= 0) return 1;	/* Error, socket is probably dead */
     } while (ind < size);
@@ -44,18 +44,18 @@ tienet_send(int socket, void* data, size_t size)
 }
 
 int
-tienet_recv(int socket, void* data, size_t size)
+tienet_recv(int tsocket, void* data, size_t size)
 {
     fd_set	 set;
     unsigned int ind = 0;
     int		 r;
 
     FD_ZERO(&set);
-    FD_SET(socket, &set);
+    FD_SET(tsocket, &set);
 
     do {
-	select(socket+1, NULL, &set, NULL, NULL);
-	r = read(socket, &((char*)data)[ind], size-ind);
+	select(tsocket+1, NULL, &set, NULL, NULL);
+	r = read(tsocket, &((char*)data)[ind], size-ind);
 	ind += r;
 	if (r <= 0) return 1;	/* Error, socket is probably dead */
     } while (ind < size);
