@@ -33,6 +33,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix regressions in step-g
 
+* make sure libbu hash is working as a substitute for the Tcl hash
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
