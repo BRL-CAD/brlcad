@@ -118,7 +118,7 @@ libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_ENABLE_OSG BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
   set(FREETYPE_INCLUDE_DIR_freetype2
