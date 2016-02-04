@@ -37,12 +37,12 @@ install(TARGETS tinycthread
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if(BUILD_STATIC_LIBS)
-  add_library(tinycthread_static STATIC tinycthread.c)
+  add_library(tinycthread-static STATIC tinycthread.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(tinycthread PROPERTIES PREFIX "lib")
   endif(MSVC)
-  install(TARGETS tinycthread_static
+  install(TARGETS tinycthread-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
