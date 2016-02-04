@@ -2675,7 +2675,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     # slightly misuse the lines for MSVC, since we don't usually do the
     # install/benchmark routine there. (Benchmarks aren't currently supported
     # in MSVC anyway.)
-    set(INSTALL_LINE "To build, launch Visual Studio and open \"${CMAKE_BINARY_DIR}/BRLCAD.sln\"")
+    set(INSTALL_LINE "To build, launch Visual Studio and open ${CMAKE_BINARY_DIR}/BRLCAD.sln")
     set(BENCHMARK_LINE "Build the ALL_BUILD target.  To create an NSIS installer, build the PACKAGE target")
   endif(MSVC)
   configure_file("${BRLCAD_CMAKE_DIR}/test_srcs/builddelta_end.c.in"
