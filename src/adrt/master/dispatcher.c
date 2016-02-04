@@ -79,7 +79,7 @@ master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, 
     tienet_master_begin ();
 
     /* Copy data payload to front */
-    bcopy(data, dispatcher_mesg.data, data_len);
+    memcpy(dispatcher_mesg.data, data, data_len);
 
     tile.size_x = image_w / DISPATCHER_TILE_NUM;
     tile.size_y = image_h / DISPATCHER_TILE_NUM;

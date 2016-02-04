@@ -35,26 +35,10 @@
 #  include <getopt.h>
 #endif
 
-/* Networking Includes */
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#  include <arpa/inet.h>
-#endif
-
 #include <tinycthread.h>
 #include <zlib.h>
 
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/log.h"
@@ -219,7 +203,7 @@ master_result(tienet_buffer_t *result)
 
 	    /* Only does 24-bit right now */
 	    for (i = 0; i < tile.size_y; i++) {
-		bcopy(&rgb_data[3*ind], &master.buf.data[3*ind2], 3*tile.size_x);
+		memcpy(&master.buf.data[3*ind2], &rgb_data[3*ind], 3*tile.size_x);
 		ind += tile.size_x;
 		ind2 += master.image_w;
 	    }
@@ -279,7 +263,7 @@ master_result(tienet_buffer_t *result)
 		    tind += 1;
 
 		    /* the name */
-		    bcopy(&result->data[tind], name, c);
+		    memcpy(name, &result->data[tind], c);
 		    tind += c;
 
 		    /* skip over the thickness */
@@ -289,7 +273,7 @@ master_result(tienet_buffer_t *result)
 		    TCOPY(uint8_t, &c, 0, selection_buf.data, selection_buf.ind);
 		    selection_buf.ind += 1;
 
-		    bcopy(name, &selection_buf.data[selection_buf.ind], c);
+		    memcpy(&selection_buf.data[selection_buf.ind], name, c);
 		    selection_buf.ind += c;
 		}
 
@@ -302,7 +286,7 @@ master_result(tienet_buffer_t *result)
 		/* The data that will be sent to the observer */
 		TIENET_BUFFER_SIZE(master.buf, result->ind - ind + 1);
 		master.buf.ind = 0;
-		bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
+		memcpy(&master.buf.data[master.buf.ind], &result->data[ind], result->ind - ind);
 		master.buf.ind += result->ind - ind;
 	    }
 	    break;
@@ -311,7 +295,7 @@ master_result(tienet_buffer_t *result)
 	    /* The data that will be sent to the observer */
 	    TIENET_BUFFER_SIZE(master.buf, result->ind - ind);
 	    master.buf.ind = 0;
-	    bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
+	    memcpy(&master.buf.data[master.buf.ind], &result->data[ind], result->ind - ind);
 	    master.buf.ind += result->ind - ind;
 	    update = 1;
 	    break;
@@ -517,7 +501,7 @@ master_networking(void *ptr)
 			tienet_recv(sock->num, master.slave_data, master.slave_data_len);
 
 			op = master.slave_data[0];
-			bcopy(&master.slave_data[1], &wid, 2);
+			memcpy(&wid, &master.slave_data[1], 2);
 
 			switch (op) {
 			    case ADRT_WORK_FRAME_ATTR:

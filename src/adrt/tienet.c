@@ -20,14 +20,8 @@
 
 #include "tienet.h"
 
-#ifdef HAVE_UNISTD_H
-# include <unistd.h>
-#endif
-
-#ifdef HAVE_SELECT_H
-# include <sys/select.h>
-#endif
-
+#include "bnetwork.h"
+#include "bio.h"
 
 int
 tienet_send(int socket, void* data, size_t size)

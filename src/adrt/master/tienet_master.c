@@ -28,6 +28,10 @@
 
 #include <stdlib.h>
 #include <string.h>
+
+#include "bnetwork.h"
+#include "bio.h"
+
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
