@@ -28,8 +28,8 @@ endif(MSVC)
 add_library(tinycthread SHARED tinycthread.c)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
-  set_target_properties(rply PROPERTIES PREFIX "lib")
-  set_target_properties(rply PROPERTIES IMPORT_PREFIX "lib")
+  set_target_properties(tinycthread PROPERTIES PREFIX "lib")
+  set_target_properties(tinycthread PROPERTIES IMPORT_PREFIX "lib")
 endif(MSVC)
 install(TARGETS tinycthread
   RUNTIME DESTINATION ${BIN_DIR}
@@ -42,7 +42,7 @@ if(BUILD_STATIC_LIBS)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(tinycthread PROPERTIES PREFIX "lib")
   endif(MSVC)
-  install(TARGETS rply_static
+  install(TARGETS tinycthread_static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})
