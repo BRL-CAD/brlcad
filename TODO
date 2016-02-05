@@ -29,8 +29,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* fix MGED clear command
-
 * fix regressions in step-g
 
 * make sure libbu hash is working as a substitute for the Tcl hash
