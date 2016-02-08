@@ -69,7 +69,6 @@ set(LIBRT_SOURCES
   globals.c
   htbl.c
   ls.c
-  many.c
   mater.c
   memalloc.c
   mkbundle.c
