@@ -633,7 +633,7 @@ rt_shootrays(struct application_bundle *bundle)
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
 	nrays++;
     }
-    ray_aps = bu_calloc(nrays, sizeof(struct application), "app rays");
+    ray_aps = (struct application*)bu_calloc(nrays, sizeof(struct application), "app rays");
 
     /* PASS2: fill in our AoS */
     nrays = 0;
