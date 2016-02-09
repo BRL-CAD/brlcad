@@ -587,12 +587,14 @@ rt_shootrays(struct application_bundle *bundle)
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
 
-    struct application *ray_ap = NULL;
-    int hit;
     struct rt_i * rt_i = bundle->b_ap.a_rt_i;		/**< @brief this librt instance */
     struct resource * resource = bundle->b_ap.a_resource;	/**< @brief dynamic memory resources */
     struct xrays *r;
     struct partition_list *pl;
+
+    size_t nrays = 0;
+    struct application *ray_ap = NULL;
+    struct application *ray_aps = NULL;
 
     /*
      * temporarily hijack ap->a_uptr, ap->a_ray, ap->a_hit(), ap->a_miss()
@@ -626,8 +628,17 @@ rt_shootrays(struct application_bundle *bundle)
 
     bundle->b_uptr = (void *)pb;
 
+    /* PASS1: count up how many rays we have */
+    nrays = 0;
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
-	BU_ALLOC(ray_ap, struct application);
+	nrays++;
+    }
+    ray_aps = bu_calloc(nrays, sizeof(struct application), "app rays");
+
+    /* PASS2: fill in our AoS */
+    nrays = 0;
+    for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
+	ray_ap = &ray_aps[nrays];
 	*ray_ap = bundle->b_ap; /* structure copy */
 
 	ray_ap->a_ray = r->ray;
@@ -636,13 +647,14 @@ rt_shootrays(struct application_bundle *bundle)
 	ray_ap->a_rt_i = rt_i;
 	ray_ap->a_resource = resource;
 
-	hit = rt_shootray(ray_ap);
+	nrays++;
+    }
 
-	rt_i = ray_ap->a_rt_i;
-	resource = ray_ap->a_resource;
-
-	if (hit == 0)
-	    bu_free((void *)(ray_ap), "ray application structure");
+    /* PASS3: shoot our rays */
+    nrays = 0;
+    for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
+	rt_shootray(&ray_aps[nrays]);
+	nrays++;
     }
 
     if ((bundle->b_hit) && (pb->hits > 0)) {
@@ -667,6 +679,8 @@ rt_shootrays(struct application_bundle *bundle)
 	bu_free(pb->list, "free partition_list header");
     }
     bu_free(pb, "partition bundle");
+    bu_free(ray_aps, "app rays");
+
     /*
      * set back to original values before exiting
      */
