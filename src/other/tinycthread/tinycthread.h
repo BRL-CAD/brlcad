@@ -212,7 +212,7 @@ typedef pthread_mutex_t mtx_t;
 *   @li @c mtx_timed for a non-recursive mutex that supports timeout
 *   @li @c mtx_plain | @c mtx_recursive (same as @c mtx_plain, but recursive)
 *   @li @c mtx_timed | @c mtx_recursive (same as @c mtx_timed, but recursive)
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int mtx_init(mtx_t *mtx, int type);
@@ -227,7 +227,7 @@ TINYCTHREAD_EXPORT extern void mtx_destroy(mtx_t *mtx);
 * the calling thread already has a lock on the mutex, this call will block
 * forever.
 * @param mtx A mutex object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int mtx_lock(mtx_t *mtx);
@@ -240,7 +240,7 @@ TINYCTHREAD_EXPORT extern int mtx_timedlock(mtx_t *mtx, const struct timespec *t
 * The specified mutex shall support either test and return or timeout. If the
 * mutex is already locked, the function returns without blocking.
 * @param mtx A mutex object.
-* @return @ref thrd_success on success, or @ref thrd_busy if the resource
+* @return Returns @ref thrd_success on success, or @ref thrd_busy if the resource
 * requested is already in use, or @ref thrd_error if the request could not be
 * honored.
 */
@@ -248,7 +248,7 @@ TINYCTHREAD_EXPORT extern int mtx_trylock(mtx_t *mtx);
 
 /** Unlock the given mutex.
 * @param mtx A mutex object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int mtx_unlock(mtx_t *mtx);
@@ -266,7 +266,7 @@ typedef pthread_cond_t cnd_t;
 
 /** Create a condition variable object.
 * @param cond A condition variable object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int cnd_init(cnd_t *cond);
@@ -281,7 +281,7 @@ TINYCTHREAD_EXPORT extern void cnd_destroy(cnd_t *cond);
 * at the time of the call. If no threads are blocked on the condition variable
 * at the time of the call, the function does nothing and return success.
 * @param cond A condition variable object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int cnd_signal(cnd_t *cond);
@@ -291,7 +291,7 @@ TINYCTHREAD_EXPORT extern int cnd_signal(cnd_t *cond);
 * at the time of the call. If no threads are blocked on the condition variable
 * at the time of the call, the function does nothing and return success.
 * @param cond A condition variable object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int cnd_broadcast(cnd_t *cond);
@@ -303,7 +303,7 @@ TINYCTHREAD_EXPORT extern int cnd_broadcast(cnd_t *cond);
 * before it returns.
 * @param cond A condition variable object.
 * @param mtx A mutex object.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int cnd_wait(cnd_t *cond, mtx_t *mtx);
@@ -315,8 +315,8 @@ TINYCTHREAD_EXPORT extern int cnd_wait(cnd_t *cond, mtx_t *mtx);
 * becomes unblocked it locks the mutex before it returns.
 * @param cond A condition variable object.
 * @param mtx A mutex object.
-* @param xt A point in time at which the request will time out (absolute time).
-* @return @ref thrd_success upon success, or @ref thrd_timeout if the time
+* @param ts A point in time at which the request will time out (absolute time).
+* @return Returns @ref thrd_success upon success, or @ref thrd_timeout if the time
 * specified in the call was reached without acquiring the requested resource, or
 * @ref thrd_error if the request could not be honored.
 */
@@ -344,7 +344,7 @@ typedef int (*thrd_start_t)(void *arg);
 * @param func A function pointer to the function that will be executed in
 *        the new thread.
 * @param arg An argument to the thread function.
-* @return @ref thrd_success on success, or @ref thrd_nomem if no memory could
+* @return Returns @ref thrd_success on success, or @ref thrd_nomem if no memory could
 * be allocated for the thread requested, or @ref thrd_error if the request
 * could not be honored.
 * @note A thread’s identifier may be reused for a different thread once the
@@ -381,7 +381,7 @@ TINYCTHREAD_EXPORT extern void thrd_exit(int res) TTHREAD_NORETURN;
 * @param thr The thread to join with.
 * @param res If this pointer is not NULL, the function will store the result
 *        code of the given thread in the integer pointed to by @c res.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int thrd_join(thrd_t thr, int *res);
@@ -421,7 +421,7 @@ typedef void (*tss_dtor_t)(void *val);
 * @param key The unique key identifier that will be set if the function is
 *        successful.
 * @param dtor Destructor function. This can be NULL.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 * @note On Windows, the @c dtor will definitely be called when
 * appropriate for threads created with @ref thrd_create.  It will be
@@ -449,7 +449,7 @@ TINYCTHREAD_EXPORT extern void *tss_get(tss_t key);
 * @param key The thread-specific storage identifier.
 * @param val The value of the thread-specific storage to set for the current
 *        thread.
-* @return @ref thrd_success on success, or @ref thrd_error if the request could
+* @return Returns @ref thrd_success on success, or @ref thrd_error if the request could
 * not be honored.
 */
 TINYCTHREAD_EXPORT extern int tss_set(tss_t key, void *val);
