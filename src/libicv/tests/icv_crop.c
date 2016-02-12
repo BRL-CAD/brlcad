@@ -1,3 +1,28 @@
+/*                      I C V _ C R O P . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2016 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file icv_crop.c
+ *
+ * Brief description
+ *
+ */
+
 #include "common.h"
 
 #include <stdlib.h>
@@ -29,7 +54,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     int outx=0, outy=0;
     icv_image_t *bif;
-    mime_image_t format = MIME_IMAGE_AUTO;
+    bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
     int urx, ury, ulx, uly, llx, lly, lrx, lry;
     int ret;
 
@@ -62,16 +87,16 @@ int main(int argc, char* argv[])
 			out_file = bu_optarg;
 			break;
 		case 'b' :
-			format = MIME_IMAGE_BW;
+			format = BU_MIME_IMAGE_BW;
 			break;
 		case 'p' :
-			format = MIME_IMAGE_PIX;
+			format = BU_MIME_IMAGE_PIX;
 			break;
 		case 'd' :
-			format = MIME_IMAGE_DPIX;
+			format = BU_MIME_IMAGE_DPIX;
 			break;
 		case 'm' :
-			format = MIME_IMAGE_PPM;
+			format = BU_MIME_IMAGE_PPM;
 			break;
 		default: /* 'h' '?' */
 			usage();
@@ -126,3 +151,13 @@ int main(int argc, char* argv[])
     icv_destroy(bif);
     return 0;
 }
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

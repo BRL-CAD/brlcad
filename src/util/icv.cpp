@@ -68,14 +68,14 @@ int
 image_mime(struct bu_vls *msg, int argc, const char **argv, void *set_mime)
 {
     int type_int;
-    mime_image_t type = MIME_IMAGE_UNKNOWN;
-    mime_image_t *set_type = (mime_image_t *)set_mime;
+    bu_mime_image_t type = BU_MIME_IMAGE_UNKNOWN;
+    bu_mime_image_t *set_type = (bu_mime_image_t *)set_mime;
 
     BU_OPT_CHECK_ARGV0(msg, argc, argv, "mime format");
 
-    type_int = bu_file_mime(argv[0], MIME_IMAGE);
-    type = (type_int < 0) ? MIME_IMAGE_UNKNOWN : (mime_image_t)type_int;
-    if (type == MIME_IMAGE_UNKNOWN) {
+    type_int = bu_file_mime(argv[0], BU_MIME_IMAGE);
+    type = (type_int < 0) ? BU_MIME_IMAGE_UNKNOWN : (bu_mime_image_t)type_int;
+    if (type == BU_MIME_IMAGE_UNKNOWN) {
 	if (msg) bu_vls_sprintf(msg, "Error - unknown geometry file type: %s \n", argv[0]);
 	return -1;
     }
@@ -93,8 +93,8 @@ main(int ac, const char **av)
     int height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
-    static mime_image_t in_type = MIME_IMAGE_UNKNOWN;
-    static mime_image_t out_type = MIME_IMAGE_UNKNOWN;
+    static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
+    static bu_mime_image_t out_type = BU_MIME_IMAGE_UNKNOWN;
     static char *in_path_str = NULL;
     static char *out_path_str = NULL;
     int need_help = 0;
@@ -223,23 +223,23 @@ main(int ac, const char **av)
     }
 
     /* Find out what input file type we are dealing with */
-    if (in_type == MIME_IMAGE_UNKNOWN) {
+    if (in_type == BU_MIME_IMAGE_UNKNOWN) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&c, bu_vls_addr(&in_path_raw), (path_component_t)MIME_IMAGE)) {
-	    in_type = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	if (bu_path_component(&c, bu_vls_addr(&in_path_raw), (path_component_t)BU_MIME_IMAGE)) {
+	    in_type = (bu_mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
 	}
 	bu_vls_free(&c);
     }
-    if (out_type == MIME_IMAGE_UNKNOWN) {
+    if (out_type == BU_MIME_IMAGE_UNKNOWN) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&c, bu_vls_addr(&out_path_raw), (path_component_t)MIME_IMAGE)) {
-	    out_type = (mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	if (bu_path_component(&c, bu_vls_addr(&out_path_raw), (path_component_t)BU_MIME_IMAGE)) {
+	    out_type = (bu_mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
 	}
 	bu_vls_free(&c);
     }
 
     /* If we get to this point without knowing both input and output types, we've got a problem */
-    if (in_type == MIME_IMAGE_UNKNOWN) {
+    if (in_type == BU_MIME_IMAGE_UNKNOWN) {
 	if (bu_vls_strlen(&in_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
 	} else {
@@ -247,7 +247,7 @@ main(int ac, const char **av)
 	}
 	ret = 1;
     }
-    if (out_type == MIME_IMAGE_UNKNOWN) {
+    if (out_type == BU_MIME_IMAGE_UNKNOWN) {
 	if (bu_vls_strlen(&out_path) > 0) {
 	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
 	} else {
@@ -262,8 +262,8 @@ main(int ac, const char **av)
     /* If we've gotten this far, we know enough to try to convert. Until we
      * hook in conversion calls to libicv, print a summary of the option
      * parsing results for debugging. */
-    in_fmt = bu_file_mime_str((int)in_type, MIME_IMAGE);
-    out_fmt = bu_file_mime_str((int)out_type, MIME_IMAGE);
+    in_fmt = bu_file_mime_str((int)in_type, BU_MIME_IMAGE);
+    out_fmt = bu_file_mime_str((int)out_type, BU_MIME_IMAGE);
     bu_log("Input file format: %s\n", in_fmt);
     bu_log("Output file format: %s\n", out_fmt);
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));

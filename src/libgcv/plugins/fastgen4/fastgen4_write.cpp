@@ -2542,7 +2542,7 @@ fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 
 extern "C" {
     struct gcv_filter gcv_conv_fastgen4_write =
-    {"FASTGEN4 Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
+    {"FASTGEN4 Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
 }
 
 

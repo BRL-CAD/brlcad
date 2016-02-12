@@ -1074,7 +1074,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, MIME_IMAGE_AUTO);
+	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }
