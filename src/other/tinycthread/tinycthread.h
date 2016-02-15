@@ -109,7 +109,7 @@ extern "C" {
 #endif
 
 /* Compiler-specific information */
-#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L && !defined(__GNUC__) && !defined(__clang__)
   #define TTHREAD_NORETURN _Noreturn
 #elif defined(__GNUC__)
   #define TTHREAD_NORETURN __attribute__((__noreturn__))
