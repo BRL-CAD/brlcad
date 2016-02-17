@@ -35,6 +35,9 @@
 
 #include "./dm/defines.h"
 
+/* Use fbserv */
+#define USE_FBSERV 1
+
 #define DM_NULL (dm *)NULL
 #define DM_MIN (-2048)
 #define DM_MAX (2047)
