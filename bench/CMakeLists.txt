@@ -37,7 +37,7 @@ if(SH_EXEC)
     )
   add_dependencies(benchmark-check bldg391.g m35.g moss.g sphflake.g star.g world.g)
   if(TARGET check)
-    add_dependencies(check bldg391.g m35.g moss.g sphflake.g star.g world.g)
+    add_dependencies(check benchmark-check)
   endif(TARGET check)
 
   # Full run of the benchmark suite
