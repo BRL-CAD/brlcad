@@ -113,7 +113,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
   # Utility function for defining individual distcheck targets
-  macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir)
+  macro(CREATE_DISTCHECK TARGET_SUFFIX CMAKE_OPTS_IN source_dir build_dir install_dir)
     # Check if a custom template was specified (optional)
     if(NOT "${ARGV5}" STREQUAL "")
       set(distcheck_template_file "${BRLCAD_CMAKE_DIR}/${ARGV5}")
@@ -125,7 +125,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
     if(NOT TARGET distcheck-${TARGET_SUFFIX})
       # Need to set these locally so configure_file will pick them up...
       SET(TARGET_SUFFIX ${TARGET_SUFFIX})
-      SET(CMAKE_OPTS ${CMAKE_OPTS})
+      SET(CMAKE_OPTS ${CMAKE_OPTS_IN})
 
       # For configure_file, need to set these as variables not just input parameters
       set(source_dir "${source_dir}")
@@ -143,6 +143,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
 	set(DISTCHECK_REGRESS_CMD "$(MAKE) regress")
 	set(DISTCHECK_TEST_CMD "$(MAKE) test")
       elseif("${CMAKE_GENERATOR}" MATCHES "Ninja")
+	set(CMAKE_OPTS "-G Ninja ${CMAKE_OPTS}")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
 	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
 	  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
