@@ -129,7 +129,6 @@ CMAKEFILES(
   solidspix.asc
   spdi.sh
   spdipix.asc
-  testlib.c
   tgms/cgtest.cg
   tgms/comgeom-tgt-1-v4-documented.cg
   tgms/comgeom-tgt-1-v4.cg
