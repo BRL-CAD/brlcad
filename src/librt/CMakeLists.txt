@@ -283,7 +283,6 @@ set(LIBRT_SOURCES
 set(librt_ignored_files
   columnparse.c
   librt_private.h
-  namegen.c
   prcomb.c
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_edge.h
