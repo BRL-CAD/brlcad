@@ -107,7 +107,6 @@ CMAKEFILES(
   library.sh
   lights.sh
   lights_ref.asc
-  main.sh
   master_fetch.sh
   master_prep.sh
   mged
@@ -115,7 +114,6 @@ CMAKEFILES(
   mged_test.sh
   moss.sh
   mosspix.asc
-  nightly.sh
   nirt.sh
   nurbs/brep-3dm.tar.bz2
   quote.sh
