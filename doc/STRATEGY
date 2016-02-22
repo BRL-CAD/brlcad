@@ -49,14 +49,15 @@ strategic activities, and aims to coordinate development activity.
 *** leverage existing capability
 
 ** 4 Marketability                                                   :Market:
-*** performance (interactive ray tracing / opencl) -cjns                  :U:
-*** fulfilling specific user needs (e.g., killing overlaps)             :U:C:
-*** dispel FUD, educate runtime requirements                              :P:
+   
+   FIXME: these need to be sorted and ranked
+
+*** conversion: import, processing, export -s                           :P:U:
+*** geometry analysis performance (interactive ray tracing / opencl)      :U:
 *** 3D printing / polygonal export / gcode -s                           :P:U:
 *** industrial design: blueprinting, dimensioning, annotations          :P:U:
-*** advanced rendering, animation, simulation                           :P:U:
-*** conversion: import, processing, export                              :P:U:
-
+*** geometry preparation (killing overlaps, hierarchy, V&V)             :U:C:
+*** visuals: advanced rendering, animation, simulation                  :P:U:
 
 * Strategy: Deploy Archer
 
@@ -109,6 +110,7 @@ strategic activities, and aims to coordinate development activity.
 *** TODO apropos reading from docbook
 *** TODO web publishing + searching of docs
 
+
 * Strategy: Condense & Refactor
 
 ** 
@@ -116,6 +118,9 @@ strategic activities, and aims to coordinate development activity.
 * Strategy: New Website
 
 ** 
+
+
+*
 
 # Local Variables:
 # mode: org-mode
