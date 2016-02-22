@@ -25,8 +25,8 @@
 /** @{ */
 /** @file bu/cmd.h */
 
-#ifndef CMD_H
-#define CMD_H
+#ifndef BU_CMD_H
+#define BU_CMD_H
 
 #include "common.h"
 
@@ -138,7 +138,7 @@ DEPRECATED BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char
 
 __END_DECLS
 
-#endif  /* CMD_H */
+#endif  /* BU_CMD_H */
 
 /** @} */
 /*
