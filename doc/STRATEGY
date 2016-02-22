@@ -15,12 +15,13 @@ requirements for BRL-CAD.  It recognizes areas of deficiency, outlines
 strategic activities, and aims to coordinate development activity.
 
 
-* Priority Strategic Areas
+* Strategic Areas
 
   This section itemizes areas of strategic weakness and categories of
-  actions that can be taken to improve that area of interest.
+  actions that could be taken to address them.  From these areas, we
+  conceive projects that should be less than 3 months in scope.
 
-** 1 UX                                                                  :UX:
+** AREA 1: UX                                                            :UX:
 *** deploying Archer/MGED -cns                                          :p:C:
 *** UI simplification -s                                                  :C:
 *** undo / fault tolerance -n
@@ -31,7 +32,7 @@ strategic activities, and aims to coordinate development activity.
 *** bug reporting / feature requests                                      :P:
 *** portability                                                           :p:
 
-** 2 Complexity                                                     :Complex:
+** AREA 2: Complexity                                               :Complex:
 *** command / tool reduction -cjns                                        :U:
 *** API code reduce / simplification / modularity -cjs                    :U:
 *** searchability / info -n                                             :U:p:
@@ -40,7 +41,7 @@ strategic activities, and aims to coordinate development activity.
 *** restructure of file hierarchy
 *** continuous integration
 
-** 3 Communications                                                   :Comms:
+** AREA 3: Communications                                             :Comms:
 *** website -cjns                                                         :C:
 *** doc integration, website -cjns                                        :C:
 *** new content (audience / customer profiles), website                   :C:
@@ -48,7 +49,7 @@ strategic activities, and aims to coordinate development activity.
 *** CRM / IRC                                                           :U:C:
 *** leverage existing capability
 
-** 4 Marketability                                                   :Market:
+** AREA 4: Marketability                                             :Market:
    
    FIXME: these need to be sorted and ranked
 
@@ -59,90 +60,106 @@ strategic activities, and aims to coordinate development activity.
 *** geometry preparation (killing overlaps, hierarchy, V&V)             :U:C:
 *** visuals: advanced rendering, animation, simulation                  :P:U:
 
-* Strategy: Deploy Archer
+* Strategic Projects
 
-** command cleanup - ALPHA+
-*** TODO inventory + mapping + time
-*** TODO design UI / commands
-*** TODO QA acceptance from users
-*** TODO announce / share / sit with users
-   
-** interactivity / blocking indicators - ALPHA
-*** TODO multithreaded command execution
-*** TODO interface busy indicator
-*** TODO drawing indicator
+  This section itemizes projects conceived to address the above
+  strategic areas.  Each project focuses on a single area but should
+  have ancillary objectives for all areas for a consistent strategic
+  approach.
+
+** PROJECT: Deploy Archer
+
+*** command cleanup - ALPHA+
+**** TODO inventory + mapping + time
+**** TODO design UI / commands
+**** TODO QA acceptance from users
+**** TODO announce / share / sit with users
     
-** feature parity - ALPHA
-*** TODO classic console mode
-*** TODO review/finish edit keypointing (oed parity)
-*** TODO summarize features
-*** TODO create mapping from old to new
-*** TODO GUI matrix editing
-*** TODO reverse tempfile
-*** TODO query ray control GUI
-   
-** undo - BETA
-*** TODO implement libbu filesystem info
-*** TODO re-enable undo with fs awareness
-   
-** bug reporting / feedback / metrics - BETA
-*** TODO reliable backtrace
-*** TODO hook/enable bombardier
-*** TODO in-app feedback dialog
-*** TODO track metrics (archer commands, tips, docs)
-   
-** QA acceptance - BETA
-*** TODO run regression w/ archer
-*** TODO sit down reviews (discuss scripts)
-*** TODO define acceptance tasks
-*** TODO run with procedural web scripts
-   
-** announcements + migration plan - BETA+
-*** TODO write + publish strategy map
-*** TODO write + publish migration plan
-*** TODO review + update tutorials (docs)
-*** TODO create + give presentation
-*** TODO install new website (basic version)
-*** TODO discussion with core stakeholders
-   
-** searchable docs - FINAL
-*** TODO command line searching of doc content
-*** TODO apropos reading from docbook
-*** TODO web publishing + searching of docs
+*** interactivity / blocking indicators - ALPHA
+**** TODO multithreaded command execution
+**** TODO interface busy indicator
+**** TODO drawing indicator
+     
+*** feature parity - ALPHA
+**** TODO classic console mode
+**** TODO review/finish edit keypointing (oed parity)
+**** TODO summarize features
+**** TODO create mapping from old to new
+**** TODO GUI matrix editing
+**** TODO reverse tempfile
+**** TODO query ray control GUI
+    
+*** undo - BETA
+**** TODO implement libbu filesystem info
+**** TODO re-enable undo with fs awareness
+    
+*** bug reporting / feedback / metrics - BETA
+**** TODO reliable backtrace
+**** TODO hook/enable bombardier
+**** TODO in-app feedback dialog
+**** TODO track metrics (archer commands, tips, docs)
+    
+*** QA acceptance - BETA
+**** TODO run regression w/ archer
+**** TODO sit down reviews (discuss scripts)
+**** TODO define acceptance tasks
+**** TODO run with procedural web scripts
+    
+*** announcements + migration plan - BETA+
+**** TODO write + publish strategy map
+**** TODO write + publish migration plan
+**** TODO review + update tutorials (docs)
+**** TODO create + give presentation
+**** TODO install new website (basic version)
+**** TODO discussion with core stakeholders
+    
+*** searchable docs - FINAL
+**** TODO command line searching of doc content
+**** TODO apropos reading from docbook
+**** TODO web publishing + searching of docs
 
 
-* Strategy: Concentration
+** PROJECT: Concentration
 
-** revisit scope (vision, mission)
-*** TODO: communicate intent and updates
-*** TODO: develop high-level project roadmap
+*** revisit scope (vision, mission)
+**** TODO communicate intent and updates
+**** TODO develop high-level project roadmap
+**** TODO connect features to markets
 
-** develop command roadmap
-*** TODO: inventory of command-line commands, decide keep/refactor/kill
-*** TODO: communicate command-line changes
-*** TODO: take inventory of ged commands, decide keep/refactor/kill
-*** TODO: communicate ged command changes
-*** TODO: assess and mitigate deployment risks
+*** develop command roadmap
+**** TODO inventory of command-line commands, decide keep/refactor/kill
+**** TODO communicate command-line changes
+**** TODO take inventory of ged commands, decide keep/refactor/kill
+**** TODO communicate ged command changes
+**** TODO assess and mitigate deployment risks
 
-** unify docs
-*** TODO: convert/integrate/kill html+troff docs
-*** TODO: consolidate docs, one guide per interface
-*** TODO: stub new docs where missing
+*** unify docs
+**** TODO convert/integrate/kill html+troff docs
+**** TODO consolidate docs, one guide per interface
+**** TODO stub new docs where missing
 
 
-* Strategy: New Website
+** PROJECT: New Website
 
-** 
+***
 
-* Strategy: Deploy GCV
+** PROJECT: Deploy GCV
 
-** 
+***
 
-* Strategy: Performant Pipeline
+** PROJECT: Performant Pipeline
 
-**
+** TEMPLATE: Project Title
+
+   Here is an example project that summarizes the taxonomy and
+   structure of a strategic project.
+
+*** objective
+**** TODO task
 
 
 # Local Variables:
 # mode: org-mode
 # End:
+
+
