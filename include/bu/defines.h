@@ -115,13 +115,19 @@
  * shorthand declaration of a printf-style functions
  */
 #ifdef HAVE_PRINTF12_ATTRIBUTE
-#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#  define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#elif !defined(_BU_ATTR_PRINTF12)
+#  define _BU_ATTR_PRINTF12
 #endif
 #ifdef HAVE_PRINTF23_ATTRIBUTE
-#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#  define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#elif !defined(_BU_ATTR_PRINTF23)
+#  define _BU_ATTR_PRINTF23
 #endif
 #ifdef HAVE_SCANF23_ATTRIBUTE
-#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#elif !defined(_BU_ATTR_SCANF23)
+#  define _BU_ATTR_SCANF23
 #endif
 
 /**
