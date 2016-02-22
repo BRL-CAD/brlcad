@@ -111,16 +111,37 @@ strategic activities, and aims to coordinate development activity.
 *** TODO web publishing + searching of docs
 
 
-* Strategy: Condense & Refactor
+* Strategy: Concentration
 
-** 
+** revisit scope (vision, mission)
+*** TODO: communicate intent and updates
+*** TODO: develop high-level project roadmap
+
+** develop command roadmap
+*** TODO: inventory of command-line commands, decide keep/refactor/kill
+*** TODO: communicate command-line changes
+*** TODO: take inventory of ged commands, decide keep/refactor/kill
+*** TODO: communicate ged command changes
+*** TODO: assess and mitigate deployment risks
+
+** unify docs
+*** TODO: convert/integrate/kill html+troff docs
+*** TODO: consolidate docs, one guide per interface
+*** TODO: stub new docs where missing
+
 
 * Strategy: New Website
 
 ** 
 
+* Strategy: Deploy GCV
 
-*
+** 
+
+* Strategy: Performant Pipeline
+
+**
+
 
 # Local Variables:
 # mode: org-mode
