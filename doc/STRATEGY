@@ -139,23 +139,76 @@ strategic activities, and aims to coordinate development activity.
 **** TODO stub new docs where missing
 
 
-** PROJECT: New Website
+** PROJECT: Webulgation
 
-***
+   FIXME these need to be sorted and ranked
+
+*** publish docbook docs
+**** TODO design pdf stylesheet
+**** TODO integrate docs onto website (html+pdf)
+
+*** online doc editing
+*** new landing page
+*** customer profiles
+*** feature highlights
+*** comparisons
+*** publish developer documentation
+*** CI integration/dashboarding
+*** streamline downloads
+*** publish project vitality/stats
+
 
 ** PROJECT: Deploy GCV
 
-***
+*** announce
+**** TODO write and publish plugin policy
+**** TODO publish plugin policy
+**** TODO publish policy
+
+*** 3dm "round-tripping"
+**** TODO NURBS import/export support
+**** TODO integrate existing converter
+
+*** documentation
+**** TODO dev doc integration
+**** TODO feature profile on website
+
+*** CLI usability
+**** TODO review usage
+**** TODO provide logging/debugging interface
+
+*** robust deployment
+**** TODO convert tlib
+**** TODO integrate into archer
+**** TODO robust tessellation
+
 
 ** PROJECT: Performant Pipeline
+
+*** raytrace prep caching
+*** on-demand NURBS tree-building
+*** coherent Boolean evaluation
+*** coherent NURBS evaluation
+
 
 ** TEMPLATE: Project Title
 
    Here is an example project that summarizes the taxonomy and
-   structure of a strategic project.
+   structure of a strategic project.  A project should be scoped to
+   less than 3 months of full-time uninterrupted effort.  A project
+   must have at least 1 objective.
 
 *** objective
+
+    Objectives should be simple with identifiable completion criteria.
+    An objective should be achievable in less than 1 month with larger
+    objectives divided into separate smaller chunks.  Each objective
+    must have at least 1 task.
+
 **** TODO task
+
+     A task is immiently actionable and should take less than 1 month
+     of full-time uninterrupted effort.
 
 
 # Local Variables:
