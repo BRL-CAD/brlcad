@@ -39,7 +39,7 @@ __BEGIN_DECLS
  */
 struct bu_hash_entry {
     uint32_t magic;
-    unsigned char *key;
+    uint8_t *key;
     unsigned char *value;
     int key_len;
     struct bu_hash_entry *next;
@@ -155,7 +155,7 @@ typedef struct bu_hash_record bu_hash_record_t;
 /**
  * the hashing function
  */
-BU_EXPORT extern unsigned long bu_hash(const unsigned char *str, size_t len);
+BU_EXPORT extern unsigned long bu_hash(const uint8_t *str, size_t len);
 
 /**
  * Create an empty hash table
@@ -181,7 +181,7 @@ BU_EXPORT extern struct bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
  * not found.
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl,
-							const unsigned char *key,
+							const uint8_t *key,
 							int key_len,
 							struct bu_hash_entry **prev,
 							unsigned long *idx);
@@ -203,7 +203,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_value(const struct bu_hash_entry *hs
 /**
  * get the key pointer stored for the specified hash table entry
  */
-BU_EXPORT extern unsigned char *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
+BU_EXPORT extern uint8_t *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
 
 /**
  * Add an new entry to a hash table
@@ -222,7 +222,7 @@ BU_EXPORT extern unsigned char *bu_get_hash_key(const struct bu_hash_entry *hsh_
  * the specified key and key_len.
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
-						       const unsigned char *key,
+						       const uint8_t *key,
 						       int key_len,
 						       int *new_entry);
 

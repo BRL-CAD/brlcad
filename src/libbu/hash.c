@@ -29,29 +29,15 @@
 #include "bu/hash.h"
 
 unsigned long
-bu_hash(const unsigned char *str, size_t len)
+bu_hash(const uint8_t *key, size_t len)
 {
     unsigned long hash = 5381;
     size_t i;
-    unsigned char c;
 
-    /* Haven't got a proper string - use the pointer */
-    if (len == 0) {
-	hash = (unsigned long)str;
-	/* Use Wang hash as implemented in khash */
-	hash += ~(hash << 15);
-	hash ^=  (hash >> 10);
-	hash +=  (hash << 3);
-	hash ^=  (hash >> 6);
-	hash += ~(hash << 11);
-	hash ^=  (hash >> 16);
-	return hash;
-    }
+    if (!key) return hash;
 
-    for (i=0; i<len; i++) {
-	c = *str;
-	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
-	str++;
+    for (i = 0; i < len; i++) {
+	hash = ((hash << 5) + hash) + key[i]; /* hash * 33 + c */
     }
 
     return hash;
@@ -106,7 +92,7 @@ bu_hash_tbl_create(unsigned long tbl_size)
 }
 
 struct bu_hash_entry *
-bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -128,7 +114,7 @@ bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const unsigned char *key, in
 	*prev = NULL;
 	hsh_entry = hsh_tbl->lists[*idx];
 	while (hsh_entry) {
-	    const unsigned char *c1, *c2;
+	    const uint8_t *c1, *c2;
 	    int i;
 
 	    /* compare key lengths first for performance */
@@ -189,7 +175,7 @@ bu_get_hash_value(const struct bu_hash_entry *hsh_entry)
 }
 
 
-unsigned char *
+uint8_t *
 bu_get_hash_key(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
@@ -199,7 +185,7 @@ bu_get_hash_key(const struct bu_hash_entry *hsh_entry)
 
 
 struct bu_hash_entry *
-bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_len, int *new_entry)
+bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, int *new_entry)
 {
     struct bu_hash_entry *hsh_entry, *prev;
     unsigned long idx;
@@ -238,7 +224,7 @@ bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const unsigned char *key, int key_l
     hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
 
     /* make a copy of the key */
-    hsh_entry->key = (unsigned char *)malloc((size_t)key_len);
+    hsh_entry->key = (uint8_t *)malloc((size_t)key_len);
     memcpy(hsh_entry->key, key, (size_t)key_len);
 
     /* set "new" flag, increment count of entries, and return new
