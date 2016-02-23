@@ -58,6 +58,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Need to rethink libbu hash API - ideally should be much simpler and
+  expose much less to the user.
+
 * rtg3 fails when run without -c "set ray_data_file=..." with this:
   "RTG3: Invalid argument" and "Cannot open ray data output file"
 
