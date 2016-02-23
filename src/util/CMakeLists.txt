@@ -89,7 +89,7 @@ BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)
 
 # This is intended to replace all of the img-img utils eventually
-BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu")
+BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu" NO_INSTALL)
 
 BRLCAD_ADDEXEC(imgdims imgdims.c "libfb;libbu")
 BRLCAD_ADDEXEC(loop loop.c libbu)

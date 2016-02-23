@@ -1,6 +1,6 @@
 macro(Regression_Test testname depends_list)
   CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
-  add_test(NAME regress-${testname} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR})
+  add_test(NAME regress-${testname} COMMAND ${SH_EXEC} "${CMAKE_SOURCE_DIR}/regress/${testname}.sh" ${CMAKE_SOURCE_DIR})
   add_custom_target(regress-${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-${testname} --output-on-failure)
   set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   if(NOT ${testname}_EXCLUDE_FROM_REGRESS)
@@ -27,7 +27,7 @@ else(NOT N EQUAL 0)
   # Huh?  No j flag if we can't get a processor count
   set(JFLAG)
 endif(NOT N EQUAL 0)
-add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log ${CMAKE_BINARY_DIR}/regress_output.log ${JFLAG})
+add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log "${CMAKE_BINARY_DIR}/regress_output.log" ${JFLAG})
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
@@ -448,9 +448,9 @@ set(regress_outfiles
   )
 
 foreach(outfile ${regress_outfiles})
-  set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
+  set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} "${CMAKE_CURRENT_BINARY_DIR}/${outfile}")
 endforeach(outfile ${regress_outfiles})
-set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_BINARY_DIR}/regress_output.log)
+set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} "${CMAKE_BINARY_DIR}/regress_output.log")
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${regress_outfiles_fullpaths}")
 

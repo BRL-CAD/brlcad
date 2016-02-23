@@ -8,7 +8,7 @@ if(COMMAND CMAKE_POLICY)
 endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
-project(RPLY)
+project(TINYCTHREAD)
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -22,27 +22,27 @@ if(NOT LIB_DIR)
 endif(NOT LIB_DIR)
 
 if(MSVC)
-  add_definitions("-DRPLY_DLL_EXPORTS")
+  add_definitions("-DTINYCTHREAD_DLL_EXPORTS")
 endif(MSVC)
 
-add_library(rply rply.c)
+add_library(tinycthread SHARED tinycthread.c)
 if(MSVC)
   # msvc does not append 'lib' - do it here to have consistent name
-  set_target_properties(rply PROPERTIES PREFIX "lib")
-  set_target_properties(rply PROPERTIES IMPORT_PREFIX "lib")
+  set_target_properties(tinycthread PROPERTIES PREFIX "lib")
+  set_target_properties(tinycthread PROPERTIES IMPORT_PREFIX "lib")
 endif(MSVC)
-install(TARGETS rply
+install(TARGETS tinycthread
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if(BUILD_STATIC_LIBS)
-  add_library(rply-static STATIC rply.c)
+  add_library(tinycthread-static STATIC tinycthread.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
-    set_target_properties(rply PROPERTIES PREFIX "lib")
-  endif()
-  install(TARGETS rply-static
+    set_target_properties(tinycthread PROPERTIES PREFIX "lib")
+  endif(MSVC)
+  install(TARGETS tinycthread-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})

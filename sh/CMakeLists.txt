@@ -25,6 +25,7 @@ set(noinst_SCRIPTS
   copyright.sh
   enumerate.sh
   footer.sh
+  fs2org.sh
   header.sh
   indent.sh
   ios-icons.sh

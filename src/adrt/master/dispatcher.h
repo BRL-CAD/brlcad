@@ -26,9 +26,9 @@
 
 #define DISPATCHER_TILE_NUM 8
 
-extern void dispatcher_init();
-extern void dispatcher_free();
-extern void dispatcher_generate(void *data, int data_len, int img_w, int img_h, int image_format);
+extern void master_dispatcher_init();
+extern void master_dispatcher_free();
+extern void master_dispatcher_generate(void *data, int data_len, int img_w, int img_h, int image_format);
 
 #endif
 

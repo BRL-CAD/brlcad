@@ -1,7 +1,7 @@
-#                R E S E T C A C H E . C M A K E
+#             F I N D T I N Y C T H R E A D . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2013-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,27 +33,24 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-macro(RESET_CACHE_FILE)
-  set(CACHE_FILE "")
-  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
-    file(READ "${CMAKE_BINARY_DIR}/CMakeCache.txt" CACHE_FILE)
-    string(REGEX REPLACE ";" "-" ENT1 "${CACHE_FILE}")
-    string(REGEX REPLACE "\r?\n" ";" ENT "${ENT1}")
-    foreach(line ${ENT})
-      if(NOT ${line} MATCHES "^CMAKE_")
-	if(NOT ${line} MATCHES "^//")
-	  if(${line} MATCHES "FILEPATH=")
-	    if(${line} MATCHES "LIB")
-	      string(REGEX REPLACE ":.*" "" var ${line})
-	      set(${var} NOTFOUND CACHE FILEPATH "reset" FORCE)
-	    endif(${line} MATCHES "LIB")
-	  endif(${line} MATCHES "FILEPATH=")
-	endif(NOT ${line} MATCHES "^//")
-      endif(NOT ${line} MATCHES "^CMAKE_")
-    endforeach(line ${ENT})
-  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
-endmacro()
+# - Find C11 style thread portability wrapper 
+#
+# The following variables are set:
+#
+#  TINYCTHREAD_INCLUDE_DIRS   - where to find tinycthread.h.
+#  TINYCTHREAD_LIBRARIES      - List of libraries when using tinycthread.
+#  TINYCTHREAD_FOUND          - True if tinycthread found.
 
+find_path(TINYCTHREAD_INCLUDE_DIR tinycthread.h)
+find_library(TINYCTHREAD_LIBRARY NAMES tinycthread)
+
+include(FindPackageHandleStandardArgs)
+FIND_PACKAGE_HANDLE_STANDARD_ARGS(TINYCTHREAD DEFAULT_MSG TINYCTHREAD_LIBRARY TINYCTHREAD_INCLUDE_DIR)
+
+IF (TINYCTHREAD_FOUND)
+  set(TINYCTHREAD_INCLUDE_DIRS ${TINYCTHREAD_INCLUDE_DIR})
+  set(TINYCTHREAD_LIBRARIES    ${TINYCTHREAD_LIBRARY})
+endif()
 
 # Local Variables:
 # tab-width: 8

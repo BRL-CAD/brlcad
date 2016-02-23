@@ -1,7 +1,8 @@
-#                R E S E T C A C H E . C M A K E
+#!/usr/bin/env bash
+#                       F S 2 O R G . S H
 # BRL-CAD
 #
-# Copyright (c) 2011-2016 United States Government as represented by
+# Copyright (c) 2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -33,31 +34,22 @@
 # SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #
 ###
-macro(RESET_CACHE_FILE)
-  set(CACHE_FILE "")
-  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
-    file(READ "${CMAKE_BINARY_DIR}/CMakeCache.txt" CACHE_FILE)
-    string(REGEX REPLACE ";" "-" ENT1 "${CACHE_FILE}")
-    string(REGEX REPLACE "\r?\n" ";" ENT "${ENT1}")
-    foreach(line ${ENT})
-      if(NOT ${line} MATCHES "^CMAKE_")
-	if(NOT ${line} MATCHES "^//")
-	  if(${line} MATCHES "FILEPATH=")
-	    if(${line} MATCHES "LIB")
-	      string(REGEX REPLACE ":.*" "" var ${line})
-	      set(${var} NOTFOUND CACHE FILEPATH "reset" FORCE)
-	    endif(${line} MATCHES "LIB")
-	  endif(${line} MATCHES "FILEPATH=")
-	endif(NOT ${line} MATCHES "^//")
-      endif(NOT ${line} MATCHES "^CMAKE_")
-    endforeach(line ${ENT})
-  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt")
-endmacro()
+# A simple script to generate an Emacs Org mode file whose headings
+# match the specified file system heirarchy.
+###
 
+if (($# != 1)); then
+    echo "usage: ${0##*/} path" >&2
+    exit 1
+fi
 
-# Local Variables:
-# tab-width: 8
-# mode: cmake
-# indent-tabs-mode: t
-# End:
-# ex: shiftwidth=2 tabstop=8
+root_path="${1%/}"
+base_level="$(grep -o '/' <<< "$root_path" | wc -l)"
+
+while read path; do
+    level="$(grep -o '/' <<< "$path" | wc -l)"
+    ((level -= base_level))
+
+    printf '%*s' "$level" | tr ' ' '*'
+    echo " [[file:${path}][${path##*/}]]"
+done < <(find "$root_path" -mindepth 1 -not -path \*svn\*)

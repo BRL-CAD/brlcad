@@ -8,6 +8,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
+  ${TINYCTHREAD_INCLUDE_DIR}
   )
 
 set(LIBRENDER_SRCS
@@ -38,7 +39,7 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${TINYCTHREAD_LIBRARY}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(tie_HDRS
@@ -63,9 +64,9 @@ set(isst_dirs
 BRLCAD_INCLUDE_DIRS(isst_dirs)
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   if(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};${TINYCTHREAD_LIBRARY};opengl32.lib" NO_INSTALL)
   else(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};" NO_INSTALL)
+    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${TINYCTHREAD_LIBRARY}" NO_INSTALL)
   endif(WIN32)
   install(TARGETS issttcltk
     RUNTIME DESTINATION ${BIN_DIR}/isst0.1
@@ -87,12 +88,14 @@ endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
 CMAKEFILES(isst_tcltk.c)
 
+add_subdirectory(master)
+# add_subdirectory(slave)
+
 set(adrt_ignore_files
   isst.h
   isst
   isst.bat
   load.h
-  master
   slave
   tienet.h
   )

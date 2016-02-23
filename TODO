@@ -29,9 +29,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* fix MGED clear command
-
 * fix regressions in step-g
+
+* make sure libbu hash is working as a substitute for the Tcl hash
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -59,6 +59,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* rtg3 fails when run without -c "set ray_data_file=..." with this:
+  "RTG3: Invalid argument" and "Cannot open ray data output file"
 
 * consider whether the file introspection capabilities of libmagic
   (https://github.com/file/file) should be hooked into the libbu
@@ -157,7 +160,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   that Debian stable is using CMake >=3.0 we should be OK to require
   the more modern CMake.  Another TODO once we require the newer CMake
   is retiring our custom time stamping code in favor of using
-  the CMake time stamp mechanism.
+  the CMake time stamp mechanism.  Also get rid of the fallback in
+  src/libgcv/plugins/CMakeLists.txt (and any others that have crept
+  in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)

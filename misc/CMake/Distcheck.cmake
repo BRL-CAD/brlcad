@@ -53,7 +53,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # for distcheck regardless of the build configurations used.
 
   # Set up the script that will be used to verify the source archives
-  configure_file(${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake @ONLY)
+  configure_file("${BRLCAD_CMAKE_DIR}/distcheck_repo_verify.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake" @ONLY)
 
   # Define the repository verification build target
   add_custom_target(distcheck-repo_verify
@@ -136,7 +136,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       if("${CMAKE_GENERATOR}" MATCHES "Make")
 	if(NOT CMAKE_VERBOSE_DISTCHECK)
 	  set(TARGET_REDIRECT " >> distcheck-${TARGET_SUFFIX}.log 2>&1")
-	  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log)
+	  DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/distcheck-${TARGET_SUFFIX}.log")
 	endif(NOT CMAKE_VERBOSE_DISTCHECK)
 	set(DISTCHECK_BUILD_CMD "$(MAKE)")
 	set(DISTCHECK_INSTALL_CMD "$(MAKE) install")
@@ -151,8 +151,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
       endif("${CMAKE_GENERATOR}" MATCHES "Make")
 
       # Based on the build command, generate a distcheck target definition from the template
-      configure_file(${distcheck_template_file} ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake @ONLY)
-      include(${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake)
+      configure_file(${distcheck_template_file} "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake" @ONLY)
+      include("${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_target_${TARGET_SUFFIX}.cmake")
 
       # Keep track of the distcheck targets
       set(distcheck_targets ${distcheck_targets} distcheck-${TARGET_SUFFIX})

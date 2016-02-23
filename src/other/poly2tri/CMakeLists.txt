@@ -77,7 +77,7 @@ install(TARGETS ${P2T_LIB_NAME}
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if(BUILD_STATIC_LIBS)
-  set(P2T_LIB_NAME_STATIC ${P2T_LIB_NAME}_static)
+  set(P2T_LIB_NAME_STATIC ${P2T_LIB_NAME}-static)
   add_library(${P2T_LIB_NAME_STATIC} STATIC ${LIBP2T_SOURCES})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
