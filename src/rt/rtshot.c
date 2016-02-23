@@ -647,15 +647,16 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
 	    fastf_t out;
 	    matp_t inv_mat;
+	    unsigned long idx;
 	    const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
-	    struct bu_hash_entry *entry;
+	    struct bu_hash_entry *entry, *prev;
 
 	    bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
 	    entry = bu_hash_tbl_find((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl,
-		    (unsigned char *)key, strlen(key) + 1, NULL, NULL);
+		    (unsigned char *)key, 0, &prev, &idx);
 
 	    if (!entry) {
 		inv_mat = (matp_t) NULL;
