@@ -35,6 +35,19 @@ bu_hash(const unsigned char *str, size_t len)
     size_t i;
     unsigned char c;
 
+    /* Haven't got a proper string - use the pointer */
+    if (len == 0) {
+	hash = (unsigned long)str;
+	/* Use Wang hash as implemented in khash */
+	hash += ~(hash << 15);
+	hash ^=  (hash >> 10);
+	hash +=  (hash << 3);
+	hash ^=  (hash >> 6);
+	hash += ~(hash << 11);
+	hash ^=  (hash >> 16);
+	return hash;
+    }
+
     for (i=0; i<len; i++) {
 	c = *str;
 	hash = ((hash << 5) + hash) + c; /* hash * 33 + c */
