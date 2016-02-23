@@ -81,11 +81,11 @@ extern icv_image_t* ppm_read(const char *filename);
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-mime_image_t
+bu_mime_image_t
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
-#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return MIME_IMAGE_##name; }
+#define CMP(name) if (!bu_strncmp(filename, #name":", strlen(#name))) {bu_strlcpy(trimmedname, filename+strlen(#name)+1, BUFSIZ);return BU_MIME_IMAGE_##name; }
     CMP(PIX);
     CMP(PNG);
     CMP(PPM);
@@ -98,7 +98,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     bu_strlcpy(trimmedname, filename, BUFSIZ);
 
     /* and guess based on extension */
-#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return MIME_IMAGE_##name;
+#define CMP(name, ext) if (!bu_strncmp(filename+strlen(filename)-strlen(#name)-1, "."#ext, strlen(#name)+1)) return BU_MIME_IMAGE_##name;
     CMP(PIX, pix);
     CMP(PNG, png);
     CMP(PPM, ppm);
@@ -107,7 +107,7 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     CMP(DPIX, dpix);
 #undef CMP
     /* defaulting to PIX */
-    return MIME_IMAGE_PIX;
+    return BU_MIME_IMAGE_PIX;
 }
 
 HIDDEN int
@@ -164,21 +164,21 @@ png_write(icv_image_t *bif, const char *filename)
 /* begin public functions */
 
 icv_image_t *
-icv_read(const char *filename, mime_image_t format, size_t width, size_t height)
+icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height)
 {
-    if (format == MIME_IMAGE_AUTO) {
+    if (format == BU_MIME_IMAGE_AUTO) {
 	/* do some voodoo with the file magic or something... */
-	format = MIME_IMAGE_PIX;
+	format = BU_MIME_IMAGE_PIX;
     }
 
     switch (format) {
-	case MIME_IMAGE_PIX:
+	case BU_MIME_IMAGE_PIX:
 	    return pix_read(filename, width, height);
-	case MIME_IMAGE_BW :
+	case BU_MIME_IMAGE_BW :
 	    return bw_read(filename, width, height);
-	case MIME_IMAGE_DPIX :
+	case BU_MIME_IMAGE_DPIX :
 	    return dpix_read(filename, width, height);
-	case MIME_IMAGE_PPM :
+	case BU_MIME_IMAGE_PPM :
 	    return ppm_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
@@ -188,29 +188,29 @@ icv_read(const char *filename, mime_image_t format, size_t width, size_t height)
 
 
 int
-icv_write(icv_image_t *bif, const char *filename, mime_image_t format)
+icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 {
     /* FIXME: should not be introducing fixed size buffers */
     char buf[BUFSIZ] = {0};
 
-    if (format == MIME_IMAGE_AUTO) {
+    if (format == BU_MIME_IMAGE_AUTO) {
 	format = icv_guess_file_format(filename, buf);
     }
 
     ICV_IMAGE_VAL_INT(bif);
 
     switch (format) {
-	/* case MIME_IMAGE_BMP:
+	/* case BU_MIME_IMAGE_BMP:
 	   return bmp_write(bif, filename); */
-	case MIME_IMAGE_PPM:
+	case BU_MIME_IMAGE_PPM:
 	    return ppm_write(bif, filename);
-	case MIME_IMAGE_PNG:
+	case BU_MIME_IMAGE_PNG:
 	    return png_write(bif, filename);
-	case MIME_IMAGE_PIX:
+	case BU_MIME_IMAGE_PIX:
 	    return pix_write(bif, filename);
-	case MIME_IMAGE_BW:
+	case BU_MIME_IMAGE_BW:
 	    return bw_write(bif, filename);
-	case MIME_IMAGE_DPIX :
+	case BU_MIME_IMAGE_DPIX :
 	    return dpix_write(bif, filename);
 	default:
 	    bu_log("Unrecognized format.  Outputting in PIX format.\n");

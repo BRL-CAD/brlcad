@@ -228,6 +228,7 @@ CMAKEFILES(
   csv_to_comgeom.txt
   implicit_constraints.txt
   pad_file.xml.in
+  trunk_hierarchy.org
   )
 
 # Local Variables:

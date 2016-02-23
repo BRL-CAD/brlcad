@@ -84,7 +84,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t format, size_t width, size_t height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
 
 /**
  * Saves Image to a file or streams to stdout in respective format
@@ -96,7 +96,7 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t forma
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, mime_image_t format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned

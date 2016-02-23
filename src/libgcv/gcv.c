@@ -80,11 +80,11 @@ _gcv_brlcad_write(struct gcv_context *context,
 
 
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
@@ -98,15 +98,15 @@ _gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filt
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
-	    if (filter->mime_type == MIME_MODEL_AUTO
-		|| filter->mime_type == MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type == BU_MIME_MODEL_AUTO
+		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;

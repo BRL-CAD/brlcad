@@ -19,8 +19,8 @@ configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_D
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
 
 # Set locations for final mime C and header files
-set(MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
-set(MIME_H_FILE ${BRLCAD_SOURCE_DIR}/include/bu/mime.h)
+set(BU_MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
+set(BU_MIME_H_FILE ${BRLCAD_SOURCE_DIR}/include/bu/mime.h)
 
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
@@ -72,7 +72,7 @@ set(LIBBU_SOURCES
   magic.c
   malloc.c
   mappedfile.c
-  ${MIME_C_FILE}
+  ${BU_MIME_C_FILE}
   mread.c
   observer.c
   opt.c

@@ -2943,6 +2943,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   endforeach(clearpattern ${DISTCLEAN_OUTFILES})
   if("${CMAKE_GENERATOR}" MATCHES "Ninja")
     DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_log")
+    DISTCLEAN("${CMAKE_BINARY_DIR}/.ninja_deps")
   endif("${CMAKE_GENERATOR}" MATCHES "Ninja")
 
   # ----------------------------------------------------------------------------

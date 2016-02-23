@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	dousage();
 	bu_exit (1, NULL);
     }
-    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
 
@@ -226,7 +226,7 @@ main(int argc, char **argv)
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
 
-    icv_write(img, out_file, MIME_IMAGE_BW);
+    icv_write(img, out_file, BU_MIME_IMAGE_BW);
     return 0;
 }
 

@@ -122,11 +122,11 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
 	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_write(img, out_file, MIME_IMAGE_PIX);
+    icv_write(img, out_file, BU_MIME_IMAGE_PIX);
 
     icv_destroy(img);
     return 0;

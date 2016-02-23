@@ -3543,7 +3543,7 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 
 
 static const struct gcv_filter gcv_conv_obj_read = {
-    "OBJ Reader", GCV_FILTER_READ, MIME_MODEL_OBJ,
+    "OBJ Reader", GCV_FILTER_READ, BU_MIME_MODEL_OBJ,
     obj_read_create_opts, obj_read_free_opts, obj_read
 };
 

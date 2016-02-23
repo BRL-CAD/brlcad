@@ -1,13 +1,3 @@
-set(BWISH_INCLUDE_DIRS
-  ${BU_INCLUDE_DIRS}
-  ${TERMIO_INCLUDE_DIRS}
-  ${GED_INCLUDE_DIRS}
-  ${DM_INCLUDE_DIRS}
-  ${TCLCAD_INCLUDE_DIRS}
-  )
-list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
-include_directories(${BWISH_INCLUDE_DIRS})
-
 # Until we figure out how to package require instead
 # of using the internal C api, we need the internal
 # Tcl headers
@@ -17,6 +7,16 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
   ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
   )
+
+set(BWISH_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
+  ${TERMIO_INCLUDE_DIRS}
+  ${GED_INCLUDE_DIRS}
+  ${DM_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  )
+list(REMOVE_DUPLICATES BWISH_INCLUDE_DIRS)
+include_directories(${BWISH_INCLUDE_DIRS})
 
 # Which source files constitute btclsh, and which libraries
 # it needs, depends on the current OS.

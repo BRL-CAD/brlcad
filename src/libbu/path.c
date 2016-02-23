@@ -185,7 +185,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (UNLIKELY(!in_path) || UNLIKELY(strlen(in_path)) == 0) goto cleanup;
 
-    if (type == PATH_UNKNOWN || type >= (path_component_t)MIME_UNKNOWN) goto cleanup;
+    if (type == PATH_UNKNOWN || type >= (path_component_t)BU_MIME_UNKNOWN) goto cleanup;
 
     /* if we want something other than a mime type, we need to remove any mime: prefix from the
      * path.  If we're after a mime type, we need to check for a prefix */
@@ -261,8 +261,8 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
     } else {
 	/* If we have a mime prefix, use that.  Otherwise, it's up to the file extension. */
 	if (bu_vls_strlen(&mime_prefix) > 0) {
-	    int mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (mime_context_t)type);
-	    const char *mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
+	    int mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (bu_mime_context_t)type);
+	    const char *mime_str = bu_file_mime_str(mime_int, (bu_mime_context_t)type);
 	    bu_vls_sprintf(component, "%s", mime_str);
 	    ret = 1;
 	    bu_free((char *)mime_str, "free orig mime str");
@@ -278,8 +278,8 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    bu_vls_strncpy(&mime_ext, period_pos, strlen(period_pos)+1);
 		    bu_vls_nibble(&mime_ext, 1);
 		    /* actual mime bits */
-		    mime_int = bu_file_mime(bu_vls_addr(&mime_ext), (mime_context_t)type);
-		    mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
+		    mime_int = bu_file_mime(bu_vls_addr(&mime_ext), (bu_mime_context_t)type);
+		    mime_str = bu_file_mime_str(mime_int, (bu_mime_context_t)type);
 		    bu_vls_sprintf(component, "%s", mime_str);
 		    bu_free((char *)mime_str, "free orig mime str");
 		    ret = 1;

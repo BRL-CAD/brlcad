@@ -522,6 +522,12 @@ foreach(test_num RANGE 1 10)
   add_test(NAME "bu_date-time${test_num}" COMMAND tester_bu_date-time "${test_num}")
 endforeach()
 
+#
+#  *********** hash.c tests ************
+#
+
+BRLCAD_ADDEXEC(tester_bu_hash hash.c libbu NO_INSTALL)
+
 CMAKEFILES(
   bitv-tests.cmake
   test_internals.h
