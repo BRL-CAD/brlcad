@@ -658,6 +658,11 @@ exit
 		set(TCL_TCLSH_EXECUTABLE "${TCL_TCLSH_EXECUTABLE}/bin/tclsh-${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${TCL_EXE_SUFFIX}")
 	      ELSEif(EXISTS "${TCL_TCLSH_EXECUTABLE}/bin/tclsh")
 		set(TCL_TCLSH_EXECUTABLE "${TCL_TCLSH_EXECUTABLE}/bin/tclsh")
+	      ELSE()
+		# Apparently in some cases TCL_EXEC_PREFIX has nothing to do with where tclsh is
+	        # and we're helpless.  This is not good - as a last resort, go with plain tclsh and
+		# hope that the lead tclsh in the system path happens
+		set(TCL_TCLSH_EXECUTABLE "tclsh${TCL_EXE_SUFFIX}")
 	      endif()
 	    endif()
 	    if(${line} MATCHES "TCL_STUB_LIB_PATH")
