@@ -135,150 +135,147 @@ ON_Intersect(const ON_Surface *surfA,
 	</warning>
       </section>
       <section>
-        <title>Geometry</title>
-	<section>
-	  <title>2D and 3D Points</title>
-	  <para>
-	    The <classname>ON_2dPoint</classname> and <classname>ON_3dPoint</classname> classes implement the expected operators allowing points to be easily summed and scaled.
-	  </para>
-	  <para>
-	    The <function>operator[]</function> functions are notable because coordinates are not actually stored as arrays in these classes, but rather in the named members <varname>x</varname>, <varname>y</varname>, and <varname>z</varname>. So while accessing coordinates as <varname>pt[0]</varname>, <varname>pt[1]</varname> is possible, the more readable <varname>pt.x</varname>, <varname>pt.y</varname>, is more typically seen.
-	  </para>
+	<title>2D and 3D Points</title>
+	<para>
+	  The <classname>ON_2dPoint</classname> and <classname>ON_3dPoint</classname> classes implement the expected operators allowing points to be easily summed and scaled.
+	</para>
+	<para>
+	  The <function>operator[]</function> functions are notable because coordinates are not actually stored as arrays in these classes, but rather in the named members <varname>x</varname>, <varname>y</varname>, and <varname>z</varname>. So while accessing coordinates as <varname>pt[0]</varname>, <varname>pt[1]</varname> is possible, the more readable <varname>pt.x</varname>, <varname>pt.y</varname>, is more typically seen.
+	</para>
 
+	<para>
+	  The most frequently used member function is <function><![CDATA[DistanceTo(const ON_3dPoint &p)]]></function>, used to check inter-point distances, either as part of an intersection test or to identify closeable gaps or duplicate points.
+	</para>
+	<note>
 	  <para>
-	    The most frequently used member function is <function><![CDATA[DistanceTo(const ON_3dPoint &p)]]></function>, used to check inter-point distances, either as part of an intersection test or to identify closeable gaps or duplicate points.
+	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
 	  </para>
-	  <note>
-	    <para>
-	      <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
-	    </para>
-	  </note>
-	</section>
-	<section>
-	  <title>Domain Intervals</title>
+	</note>
+      </section>
+      <section>
+	<title>Domain Intervals</title>
+	<para>
+	  <classname>ON_Interval</classname> is used to represent the domains of parametric curves and surfaces. The domain <emphasis>starts</emphasis> at <varname>m_t[0]</varname> and <emphasis>ends</emphasis> at <varname>m_t[1]</varname>. These members can be set directly or via <function>Set(double t0, double t1)</function>.
+	</para>
+	<warning>
 	  <para>
-	    <classname>ON_Interval</classname> is used to represent the domains of parametric curves and surfaces. The domain <emphasis>starts</emphasis> at <varname>m_t[0]</varname> and <emphasis>ends</emphasis> at <varname>m_t[1]</varname>. These members can be set directly or via <function>Set(double t0, double t1)</function>.
+	    The start, end, and overall length of the domain are <emphasis>arbitrary</emphasis>, and <varname>m_t[0]</varname> need not be less than <varname>m_t[1]</varname>. If the numerically smaller or larger domain endpoint is needed, these should be accessed via the <function>Min</function> and <function>Max</function> member functions.
 	  </para>
-	  <warning>
-	    <para>
-	      The start, end, and overall length of the domain are <emphasis>arbitrary</emphasis>, and <varname>m_t[0]</varname> need not be less than <varname>m_t[1]</varname>. If the numerically smaller or larger domain endpoint is needed, these should be accessed via the <function>Min</function> and <function>Max</function> member functions.
-	    </para>
-	  </warning>
-          <para>
-            The <function>ParameterAt(double x)</function> function translate a normalized parameter (from a domain starting at 0.0 and ending at 1.0) into a real parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
-          </para>
-	</section>
-	<section>
-	  <title>Parametric Curves</title>
+	</warning>
+	<para>
+	  The <function>ParameterAt(double x)</function> function translate a normalized parameter (from a domain starting at 0.0 and ending at 1.0) into a real parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
+	</para>
+      </section>
+      <section>
+	<title>Parametric Curves</title>
+	<para>
+	  The most frequenlty used geomety class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
+	</para>
+	<warning>
 	  <para>
-	    The most frequenlty used geomety class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
+	    <function>PointAt</function> takes a real parameter; normalized parameters must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
 	  </para>
-	  <warning>
-	    <para>
-	      <function>PointAt</function> takes a real parameter; normalized parameters must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
-	    </para>
-	  </warning>
-	  <para>
-	    All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2d trim curves, the z coordinate will be 0.0.
-	  </para>
-	  <para>
-	    The curve's domain is frequently reversed using the <function>Reverse()</function> method to facilitate stitching curves together. The function has a boolean <type>int</type> return value that must be checked.
-	  </para>
-	  <para>
-	    <programlisting>
+	</warning>
+	<para>
+	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2d trim curves, the z coordinate will be 0.0.
+	</para>
+	<para>
+	  The curve's domain is frequently reversed using the <function>Reverse()</function> method to facilitate stitching curves together. The function has a boolean <type>int</type> return value that must be checked.
+	</para>
+	<para>
+	  <programlisting>
 <![CDATA[
 if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
-    if (curveA->Reverse()) {
-        curveA = link_curves(curveA, curveB);
-    }
+  if (curveA->Reverse()) {
+      curveA = link_curves(curveA, curveB);
+  }
 }
 ]]>
-	    </programlisting>
-	  </para>
-	  <warning>
-	    <para>
-	      Comparing curve endpoints, or even just bounding boxes (retrived via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
-	    </para>
-	  </warning>
+	  </programlisting>
+	</para>
+	<warning>
 	  <para>
-	    A copy of the curve can be easily made using <function>Duplicate()</function>, which simply wraps a standard copy procedure:
+	    Comparing curve endpoints, or even just bounding boxes (retrived via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
 	  </para>
-	  <programlisting>
+	</warning>
+	<para>
+	  A copy of the curve can be easily made using <function>Duplicate()</function>, which simply wraps a standard copy procedure:
+	</para>
+	<programlisting>
 ON_Curve* Duplicate()
 {
-    ON_Curve *p = new ON_Curve;
-    if (p) *p = *this;
-    return p;
+  ON_Curve *p = new ON_Curve;
+  if (p) *p = *this;
+  return p;
 }
-	  </programlisting>
-	  <para>
-	    This method is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
-	  </para>
-	</section>
-	<section>
-	  <title>Lines</title>
-	  <para>
-	    <classname>ON_Line</classname> is used to represent an infinite line, defined by two points, <varname>from</varname> and <varname>to</varname>.
-	  </para>
+	</programlisting>
+	<para>
+	  This method is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	</para>
+      </section>
+      <section>
+	<title>Lines</title>
+	<para>
+	  <classname>ON_Line</classname> is used to represent an infinite line, defined by two points, <varname>from</varname> and <varname>to</varname>.
+	</para>
 
-	  <para>
-	    <classname>ON_Line</classname> is not a subclass of <classname>ON_Curve</classname> and should not be confused with <classname>ON_LineCurve</classname> (which has an <classname>ON_Line</classname> member), though it does have some of the same methods as an <classname>ON_Curve</classname> class, including <function>PointAt(double t)</function>. However, because the line has an infinite domain, it can be evaluated at any <varname>t</varname> value, though evaluating at 0.0 returns <varname>from</varname> and evaluating at 1.0 returns <varname>to</varname>, as if the line was a parametric curve with a domain between 0.0 and 1.0.
-	  </para>
+	<para>
+	  <classname>ON_Line</classname> is not a subclass of <classname>ON_Curve</classname> and should not be confused with <classname>ON_LineCurve</classname> (which has an <classname>ON_Line</classname> member), though it does have some of the same methods as an <classname>ON_Curve</classname> class, including <function>PointAt(double t)</function>. However, because the line has an infinite domain, it can be evaluated at any <varname>t</varname> value, though evaluating at 0.0 returns <varname>from</varname> and evaluating at 1.0 returns <varname>to</varname>, as if the line was a parametric curve with a domain between 0.0 and 1.0.
+	</para>
 
-	  <para>
-	    <classname>ON_Line</classname> has helpful line-specific methods such as <function><![CDATA[ClosestPointTo(const ON_3dPoint &point)]]></function>. Again, because the line is treated as infinite, this function doesn't necessarily return a point in the segment between <varname>from</varname> and <varname>to</varname>.
-	  </para>
+	<para>
+	  <classname>ON_Line</classname> has helpful line-specific methods such as <function><![CDATA[ClosestPointTo(const ON_3dPoint &point)]]></function>. Again, because the line is treated as infinite, this function doesn't necessarily return a point in the segment between <varname>from</varname> and <varname>to</varname>.
+	</para>
 
-	  <para>
-	  </para>
-	</section>
-	<section>
-	  <title>Surfaces</title>
-	  <para>
-	    An <classname>ON_Surface</classname> has a similar interface to an <classname>ON_Curve</classname>, but adapted to support the surface's two domains, <parameter>u</parameter> and <parameter>v</parameter> (sometimes called <parameter>s</parameter> and <parameter>t</parameter>) which correspond with 0 and 1 (first example) or <parameter>x</parameter> and <parameter>y</parameter> (second example).
-	  </para>
-	  <example>
-	    <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3d.</title>
-	    <programlisting>
+	<para>
+	</para>
+      </section>
+      <section>
+	<title>Surfaces</title>
+	<para>
+	  An <classname>ON_Surface</classname> has a similar interface to an <classname>ON_Curve</classname>, but adapted to support the surface's two domains, <parameter>u</parameter> and <parameter>v</parameter> (sometimes called <parameter>s</parameter> and <parameter>t</parameter>) which correspond with 0 and 1 (first example) or <parameter>x</parameter> and <parameter>y</parameter> (second example).
+	</para>
+	<example>
+	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3d.</title>
+	  <programlisting>
 <![CDATA[
 ON_Interval udom = surface->Domain(0);
 ON_Interval vdom = surface->Domain(1);
 ON_3dPoint surf_midpt_3d = surface->PointAt(udom.ParameterAt(.5), vdom.ParameterAt(.5));
 ]]>
-	    </programlisting>
-	  </example>
-	  <example>
-	    <title>Projecting a trim-curve point into 3d.</title>
-	    <programlisting>
+	  </programlisting>
+	</example>
+	<example>
+	  <title>Projecting a trim-curve point into 3d.</title>
+	  <programlisting>
 <![CDATA[
 ON_Interval tdom = trim_curve->Domain();
 ON_3dPoint trim_midpt_uv = trim_curve->PointAt(tdom.ParameterAt(.5));
 ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
 ]]>
-	    </programlisting>
-	  </example>
-	</section>
-	<section>
-	  <title>Boundary Representation Objects</title>
-	  <para>
-	    <classname>ON_Brep</classname> is the top-level OpenNURBS class used to represent the two input objects and the evaluated result of the <function>ON_Boolean</function> function. The geometry is encoded as a collection of faces, which for our purposes should be topologically connected to enclose solid volumes.
-	  </para>
-	  <para>
-	    An object's faces are <classname>ON_BrepFace</classname> objects stored in the <classname>ON_Brep</classname> face array, <varname>m_F</varname>.
-	  </para>
-	  <para>
-	    Each <classname>ON_BrepFace</classname> is defined as the subset of an <classname>ON_Surface</classname> lying inside the face's <glossterm>outerloop</glossterm> (a.k.a. the <glossterm>face boundary</glossterm>) and outside all of its <glossterm>innerloops</glossterm> (a.k.a. <glossterm>trim loops</glossterm> or just <glossterm>trims</glossterm>). 
-	  </para>
-	  <para>
-	    The loops of an <classname>ON_BrepFace</classname> are listed in its loop array <varname>m_li</varname> as indexes into the associated <classname>ON_Brep</classname> object's <classname>ON_BrepLoop</classname> array, <varname>m_L</varname>. The first (and possibly only) loop listed in the face's loop index array is the outerloop, and all following loops are inner trim loops. The type of the loop is also recorded in the loop's <varname>m_type</varname> member.
-	  </para>
-	  <programlisting>
+	  </programlisting>
+	</example>
+      </section>
+      <section>
+	<title>Boundary Representation Objects</title>
+	<para>
+	  <classname>ON_Brep</classname> is the top-level OpenNURBS class used to represent the two input objects and the evaluated result of the <function>ON_Boolean</function> function. The geometry is encoded as a collection of faces, which for our purposes should be topologically connected to enclose solid volumes.
+	</para>
+	<para>
+	  An object's faces are <classname>ON_BrepFace</classname> objects stored in the <classname>ON_Brep</classname> face array, <varname>m_F</varname>.
+	</para>
+	<para>
+	  Each <classname>ON_BrepFace</classname> is defined as the subset of an <classname>ON_Surface</classname> lying inside the face's <glossterm>outerloop</glossterm> (a.k.a. the <glossterm>face boundary</glossterm>) and outside all of its <glossterm>innerloops</glossterm> (a.k.a. <glossterm>trim loops</glossterm> or just <glossterm>trims</glossterm>). 
+	</para>
+	<para>
+	  The loops of an <classname>ON_BrepFace</classname> are listed in its loop array <varname>m_li</varname> as indexes into the associated <classname>ON_Brep</classname> object's <classname>ON_BrepLoop</classname> array, <varname>m_L</varname>. The first (and possibly only) loop listed in the face's loop index array is the outerloop, and all following loops are inner trim loops. The type of the loop is also recorded in the loop's <varname>m_type</varname> member.
+	</para>
+	<programlisting>
 brep->m_L[brep->m_F[0]->m_li[0]].m_type;      // ON_BrepLoop::outer
 brep->m_L[brep->m_F[0]->m_li[1]].m_type;      // ON_BrepLoop::inner
 ...
 brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
-	  </programlisting>
-	</section>
+	</programlisting>
       </section>
       <section>
 	<title>Pitfalls</title>
