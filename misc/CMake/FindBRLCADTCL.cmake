@@ -661,7 +661,8 @@ exit
 	      ELSE()
 		# Apparently in some cases TCL_EXEC_PREFIX has nothing to do with where tclsh is
 	        # and we're helpless.  This is not good - as a last resort, go with plain tclsh and
-		# hope that the lead tclsh in the system path happens
+		# hope that the lead tclsh in the system path happens to be the tclsh associated with
+		# this particular Tcl installation...
 		set(TCL_TCLSH_EXECUTABLE "tclsh${TCL_EXE_SUFFIX}")
 	      endif()
 	    endif()
