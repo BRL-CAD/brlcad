@@ -40,7 +40,7 @@ __BEGIN_DECLS
 struct bu_hash_entry {
     uint32_t magic;
     uint8_t *key;
-    unsigned char *value;
+    uint8_t *value;
     int key_len;
     struct bu_hash_entry *next;
 };
@@ -193,12 +193,12 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl
  * maintain its own copy of this value.
  */
 BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
-					unsigned char *value);
+					uint8_t *value);
 
 /**
  * get the value pointer stored for the specified hash table entry
  */
-BU_EXPORT extern unsigned char *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
+BU_EXPORT extern uint8_t *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
 
 /**
  * get the key pointer stored for the specified hash table entry

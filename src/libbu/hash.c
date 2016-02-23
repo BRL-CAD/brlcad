@@ -157,7 +157,7 @@ bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_
 
 
 void
-bu_set_hash_value(struct bu_hash_entry *hsh_entry, unsigned char *value)
+bu_set_hash_value(struct bu_hash_entry *hsh_entry, uint8_t *value)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -166,7 +166,7 @@ bu_set_hash_value(struct bu_hash_entry *hsh_entry, unsigned char *value)
 }
 
 
-unsigned char *
+uint8_t *
 bu_get_hash_value(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
