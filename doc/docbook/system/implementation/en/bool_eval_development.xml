@@ -253,7 +253,7 @@ ON_3dPoint surf_midpt_3d = surface->PointAt(udom.ParameterAt(.5), vdom.Parameter
 <![CDATA[
 ON_Interval tdom = trim_curve->Domain();
 ON_3dPoint trim_midpt_uv = trim_curve->PointAt(tdom.ParameterAt(.5));
-ON_3dPoint trim_midpt_3d = surface->PointAt(start_uv.x, start_uv.y);
+ON_3dPoint trim_midpt_3d = surface->PointAt(trim_midpt_uv.x, trim_midpt_uv.y);
 ]]>
 	    </programlisting>
 	  </example>
