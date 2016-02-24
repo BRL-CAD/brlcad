@@ -313,31 +313,32 @@ bu_nhash_tbl *bu_nhash_tbl_create(size_t s);
 /* Deletes hash table and all entries */
 void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 
-/* Unpack the key from the entry */
-uint8_t *bu_nhash_entry_key(size_t *key_len, const bu_nhash_entry *e);
-
-/* Unpack the value from the entry */
-void *bu_nhash_entry_val(const bu_nhash_entry *e);
-
-/* returns entry on success, NULL on failure.  n is set to 1 if a new object is
- * created, 0 otherwise.  If an entry with key already exists, the existing
- * entry is returned and n is set to 0.  */
-bu_nhash_entry *bu_nhash_entry_create(int *n, bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
+/* returns 1 if a new entry is created, 0 if an existing value was updated, -1 on error.*/
+int bu_nhash_set(bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
 
 /* returns 0 on success, 1 on failure (not found) */
-int bu_nhash_entry_destroy(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+int bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
-/* returns 0 on success, 1 on failure (key not found in table) */
-int bu_nhash_set_val(bu_nhash_entry *e, void *val);
+/* returns value, or NULL if key is not found in table */
+void *bu_nhash_find(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
-/* returns entry, or NULL if key is not found in table */
-bu_nhash_entry *bu_nhash_find(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
-
+/* For iterating over a hash table, we need to be able to get:
+ * 1. a starting point
+ * 2. the next entry after a known entry
+ * 3. the value from an entr
+ *
+ * TODO - do we need the ability to delete a bu_nhash_entry during the course
+ * of an iteration?  If so, we need either bu_nhash_entry_del or a way to get
+ * the key from a bu_nhash_entry so we can use bu_nhash_del.
+ */
 /* returns first entry */
 bu_nhash_entry *bu_nhash_first(bu_nhash_tbl *t);
 
 /* returns next entry */
 bu_nhash_entry *bu_nhash_next(bu_nhash_entry *p);
+
+/* returns value of bu_nhash_entry */
+void *bu_nhash_entry_val(bu_nhash_entry *p);
 
 #endif
 
