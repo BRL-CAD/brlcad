@@ -155,7 +155,7 @@ typedef struct bu_hash_record bu_hash_record_t;
 /**
  * the hashing function
  */
-BU_EXPORT extern unsigned long bu_hash(const uint8_t *str, size_t len);
+BU_EXPORT extern unsigned long bu_hash(const uint8_t *key, size_t len);
 
 /**
  * Create an empty hash table
@@ -209,7 +209,7 @@ BU_EXPORT extern uint8_t *bu_get_hash_key(const struct bu_hash_entry *hsh_entry)
  * Add an new entry to a hash table
  *
  * @param[in] hsh_tbl - the hash table to accept the new entry
- * @param[in] key - the key (any byte string)
+ * @param[in] key - the key (any byte array)
  * @param[in] key_len - the number of bytes in the key
  *
  * @param[out] new_entry - a flag, non-zero indicates that a new entry
