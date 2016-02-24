@@ -319,8 +319,8 @@ int bu_nhash_set(bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
 /* returns value, or NULL if key is not found in table */
 void *bu_nhash_get(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
-/* returns 0 on success, 1 on failure (not found) */
-int bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+/* remove an entry associated with key from the tbl */
+void bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
 /* For iteration over a hash tbl - returns either first entry (if p is NULL) or
  * next entry (if p is NON-null).  Returns NULL when p is last entry in table. */
@@ -329,14 +329,19 @@ bu_nhash_entry *bu_nhash_next(bu_nhash_tbl *t, bu_nhash_entry *p);
 /* returns value and length of bu_nhash_entry key.  0 on success, 1 on failure */
 int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
 
-/* returns value of bu_nhash_entry */
-void *bu_nhash_entry_val(bu_nhash_entry *p);
+/* Thought - there's a problem with bu_nhash_get's interpretation if someone
+ * passes in a key/value set that has a NULL value - it will look like a failed
+ * lookup in bu_nhash_get's results.  Can/should we forbid NULL values in val
+ * slots?  I think there is a case that we can, because bu_nhash_get will return the
+ * expected result for a key that was not inserted at all in that case, without needing
+ * to go ahead and insert the key.  Then, bu_nhash_entry_val can serve two purposes
+ * - with a NULL entry in the set value, it can do the lookup - with a non-NULL
+ * value, it will do the val update. */
 
-/* set value of bu_nhash_entry - strictly speaking this could be done by
- * doing a bu_nhash_set with the key value, but that would require another
- * lookup for every single set operation when we already have the value we
- * want right here in the bu_nhash_entry. */
-void bu_nhash_set_entry_val(bu_nhash_entry *p, void *val);
+/* returns value of bu_nhash_entry if nval is NULL.
+ * returns NULL if nval was assigned to p's value.
+ * returns value if nval was equal to p->val (i.e. no update took place) */
+void *bu_nhash_entry_val(bu_nhash_entry *p, void *nval);
 
 #endif
 
