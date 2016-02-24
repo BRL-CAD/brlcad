@@ -47,6 +47,8 @@ const char *array2[] = {
     "r7"
 };
 
+int indices[] = {7,6,4,3,5,1,2};
+
 int
 hash_basic_test() {
     int i = 0;
@@ -56,25 +58,35 @@ hash_basic_test() {
     for (i = 0; i < 7; i++) {
 	int n = 0;
 	struct bu_hash_entry *b, *ne;
-	b = bu_hash_tbl_add(tbl, (const unsigned char *)array1[i], strlen(array1[i]), &n);
+	/* Test 1 - use strings as keys */
+	b = bu_hash_tbl_add(tbl, (uint8_t *)array1[i], strlen(array1[i]), &n);
 	if (n) {
-	    bu_set_hash_value(b, (unsigned char *)array2[i]);
+	    bu_set_hash_value(b, (uint8_t *)array2[i]);
 	}
 	n = 0;
-	ne = bu_hash_tbl_add(ntbl, (unsigned char *)&i, 1, &n);
+	/* Test 2 - use int indices as keys.  Note that we cannot use an
+	 * ephemeral key such as the value of i when creating entries, because
+	 * libbu's hash tables store only a pointer to the key and not a copy
+	 * of the value of the key. */
+	ne = bu_hash_tbl_add(ntbl, (uint8_t *)&(indices[i]), sizeof(indices[i]), &n);
 	if (n) {
-	    bu_set_hash_value(ne, (unsigned char *)array2[i]);
+	    bu_set_hash_value(ne, (uint8_t *)array2[i]);
 	}
 
     }
 
-    for (i = 0; i < 7; i++) {
+    for (i = 7; i >= 0; i--) {
 	struct bu_hash_entry *t, *p;
 	unsigned long idx;
-	t = bu_hash_tbl_find(tbl, (const unsigned char *)array1[i], strlen(array1[i]), &p, &idx);
-	bu_log("Hash lookup %d: %s -> %s,%s\n", i, array1[i], t->key, t->value);
-	t = bu_hash_tbl_find(ntbl, (unsigned char *)&i, 1, &p, &idx);
-	bu_log("Hash lookup %d: %s -> %s,%s\n", i, array1[i], t->key, t->value);
+	t = NULL;
+	if (array1[i])
+	    t = bu_hash_tbl_find(tbl, (uint8_t *)array1[i], strlen(array1[i]), &p, &idx);
+	if (t)
+	    bu_log("Hash string lookup %s: %s,%s\n", array1[i], t->key, t->value);
+	/* We can use an ephemeral key for lookup */
+	t = bu_hash_tbl_find(ntbl, (uint8_t *)&i, sizeof(i), &p, &idx);
+	if (t)
+	    bu_log("Hash int lookup    %d: %d,%s\n", i, (int)*t->key, t->value);
     }
 
     return 1;
