@@ -332,6 +332,12 @@ int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
 /* returns value of bu_nhash_entry */
 void *bu_nhash_entry_val(bu_nhash_entry *p);
 
+/* set value of bu_nhash_entry - strictly speaking this could be done by
+ * doing a bu_nhash_set with the key value, but that would require another
+ * lookup for every single set operation when we already have the value we
+ * want right here in the bu_nhash_entry. */
+void bu_nhash_set_entry_val(bu_nhash_entry *p, void *val);
+
 #endif
 
 
