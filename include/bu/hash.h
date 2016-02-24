@@ -314,15 +314,15 @@ bu_nhash_tbl *bu_nhash_tbl_create(size_t s);
 void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 
 /* Unpack the key from the entry */
-uint8_t *bu_nhash_entry_key(bu_nhash_entry *e, size_t *key_len);
+uint8_t *bu_nhash_entry_key(size_t *key_len, const bu_nhash_entry *e);
 
 /* Unpack the value from the entry */
-uint8_t *bu_nhash_entry_val(bu_nhash_entry *e);
+uint8_t *bu_nhash_entry_val(const bu_nhash_entry *e);
 
 /* returns entry on success, NULL on failure.  n is set to 1 if a new object is
  * created, 0 otherwise.  If an entry with key already exists, the existing
  * entry is returned and n is set to 0.  */
-bu_nhash_entry *bu_nhash_entry_create(bu_nhash_tbl *t, uint8_t *key, size_t key_len, uint8_t *val, int *n);
+bu_nhash_entry *bu_nhash_entry_create(int *n, bu_nhash_tbl *t, uint8_t *key, size_t key_len, uint8_t *val);
 
 /* returns 0 on success, 1 on failure (not found) */
 int bu_nhash_entry_destroy(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
