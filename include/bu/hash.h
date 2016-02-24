@@ -339,11 +339,6 @@ bu_nhash_entry *bu_nhash_first(bu_nhash_tbl *t);
 /* returns next entry */
 bu_nhash_entry *bu_nhash_next(bu_nhash_entry *p);
 
-/* The following may or may not be desirable - provide a method for users to provide
- * their own key hashing, if desired. */
-typedef unsigned long (bu_nhash_key) (const uint8_t *key, size_t key_len);
-int bu_nhash_tbl_set_key_hasher(bu_nhash_tbl_t *t, bu_nhash_key *h);
-
 #endif
 
 
