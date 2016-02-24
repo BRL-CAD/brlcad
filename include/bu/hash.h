@@ -308,10 +308,10 @@ typedef struct bu_nhash_entry bu_nhash_entry;
 typedef struct bu_nhash_tbl   bu_nhash_tbl;
 
 /* Initialize and return a new table */
-bu_nhash_tbl *bu_nhash_init_tbl();
+bu_nhash_tbl *bu_nhash_tbl_create(size_t s);
 
 /* Deletes hash table and all entries */
-void bu_nhash_del_tbl(const bu_nhash_tbl *t);
+void bu_nhash_tbl_destroy(const bu_nhash_tbl *t);
 
 /* Unpack the key from the entry */
 uint8_t *bu_nhash_entry_key(bu_nhash_entry *e, size_t *key_len);
@@ -322,10 +322,10 @@ uint8_t *bu_nhash_entry_val(bu_nhash_entry *e);
 /* returns entry on success, NULL on failure.  n is set to 1 if a new object is
  * created, 0 otherwise.  If an entry with key already exists, the existing
  * entry is returned and n is set to 0.  */
-bu_nhash_entry *bu_nhash_add(const bu_nhash_tbl *t, uint8_t *key, size_t key_len, uint8_t *val, int *n);
+bu_nhash_entry *bu_nhash_entry_create(const bu_nhash_tbl *t, uint8_t *key, size_t key_len, uint8_t *val, int *n);
 
 /* returns 0 on success, 1 on failure (not found) */
-int bu_nhash_del(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+int bu_nhash_entry_destroy(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
 /* returns 0 on success, 1 on failure (key not found in table) */
 int bu_nhash_set_val(bu_nhash_entry *e, uint8_t *val);
@@ -342,8 +342,7 @@ bu_nhash_entry *bu_nhash_next(bu_nhash_entry *p);
 /* The following may or may not be desirable - provide a method for users to provide
  * their own key hashing, if desired. */
 typedef unsigned long (bu_nhash_key) (const uint8_t *key, size_t key_len);
-typedef int (bu_nhash_cmp_key) (uint8_t *key1, uint8_t *key2);
-int bu_nhash_set_key_hasher(bu_nhash_tbl_t *t, bu_nhash_key *h, bu_nhash_key_cmp *c);
+int bu_nhash_tbl_set_key_hasher(bu_nhash_tbl_t *t, bu_nhash_key *h);
 
 #endif
 
