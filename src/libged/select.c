@@ -280,13 +280,13 @@ ged_get_object_selections(struct ged *gedp, const char *object_name)
     int int_new;
     struct bu_hash_entry *entry;
 
-    entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
+    entry = bu_hash_tbl_add(gedp->ged_selections, (uint8_t *)object_name,
 	    strlen(object_name), &int_new);
 
     if (int_new) {
 	struct rt_object_selections *obj_selections;
 	BU_ALLOC(obj_selections, struct rt_object_selections);
-	obj_selections->sets = bu_hash_tbl_create(0);
+	obj_selections->sets = bu_hash_tbl_create(32);
 	bu_set_hash_value(entry, (unsigned char *)obj_selections);
     }
 
@@ -302,13 +302,13 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
 
     obj_selections = ged_get_object_selections(gedp, object_name);
     entry = bu_hash_tbl_add(obj_selections->sets,
-		(const unsigned char *)selection_name, strlen(selection_name), &int_new);
+		(uint8_t *)selection_name, strlen(selection_name), &int_new);
 
     if (int_new) {
 	struct rt_selection_set *set;
 	BU_ALLOC(set, struct rt_selection_set);
 	BU_PTBL_INIT(&set->selections);
-	bu_set_hash_value(entry, (unsigned char *)set);
+	bu_set_hash_value(entry, (void *)set);
     }
 
     return (struct rt_selection_set *)bu_get_hash_value(entry);
