@@ -316,26 +316,18 @@ void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 /* returns 1 if a new entry is created, 0 if an existing value was updated, -1 on error.*/
 int bu_nhash_set(bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
 
+/* returns value, or NULL if key is not found in table */
+void *bu_nhash_get(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+
 /* returns 0 on success, 1 on failure (not found) */
 int bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
-/* returns value, or NULL if key is not found in table */
-void *bu_nhash_find(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+/* For iteration over a hash tbl - returns either first entry (if p is NULL) or
+ * next entry (if p is NON-null).  Returns NULL when p is last entry in table. */
+bu_nhash_entry *bu_nhash_next(bu_nhash_tbl *t, bu_nhash_entry *p);
 
-/* For iterating over a hash table, we need to be able to get:
- * 1. a starting point
- * 2. the next entry after a known entry
- * 3. the value from an entr
- *
- * TODO - do we need the ability to delete a bu_nhash_entry during the course
- * of an iteration?  If so, we need either bu_nhash_entry_del or a way to get
- * the key from a bu_nhash_entry so we can use bu_nhash_del.
- */
-/* returns first entry */
-bu_nhash_entry *bu_nhash_first(bu_nhash_tbl *t);
-
-/* returns next entry */
-bu_nhash_entry *bu_nhash_next(bu_nhash_entry *p);
+/* returns value and length of bu_nhash_entry key.  0 on success, 1 on failure */
+int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
 
 /* returns value of bu_nhash_entry */
 void *bu_nhash_entry_val(bu_nhash_entry *p);
