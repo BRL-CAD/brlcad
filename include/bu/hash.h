@@ -40,7 +40,7 @@ __BEGIN_DECLS
 struct bu_hash_entry {
     uint32_t magic;
     uint8_t *key;
-    uint8_t *value;
+    void *value;
     int key_len;
     struct bu_hash_entry *next;
 };
@@ -193,12 +193,12 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl
  * maintain its own copy of this value.
  */
 BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
-					uint8_t *value);
+					void *value);
 
 /**
  * get the value pointer stored for the specified hash table entry
  */
-BU_EXPORT extern uint8_t *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
+BU_EXPORT extern void *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
 
 /**
  * get the key pointer stored for the specified hash table entry
@@ -280,7 +280,7 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
  static int
  free_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
  {
-     bu_free(bu_get_hash_value(entry), "table value");
+     bu_free((char *)bu_get_hash_value(entry), "table value");
      return 0;
  }
 
@@ -317,18 +317,18 @@ void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 uint8_t *bu_nhash_entry_key(size_t *key_len, const bu_nhash_entry *e);
 
 /* Unpack the value from the entry */
-uint8_t *bu_nhash_entry_val(const bu_nhash_entry *e);
+void *bu_nhash_entry_val(const bu_nhash_entry *e);
 
 /* returns entry on success, NULL on failure.  n is set to 1 if a new object is
  * created, 0 otherwise.  If an entry with key already exists, the existing
  * entry is returned and n is set to 0.  */
-bu_nhash_entry *bu_nhash_entry_create(int *n, bu_nhash_tbl *t, uint8_t *key, size_t key_len, uint8_t *val);
+bu_nhash_entry *bu_nhash_entry_create(int *n, bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
 
 /* returns 0 on success, 1 on failure (not found) */
 int bu_nhash_entry_destroy(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
 
 /* returns 0 on success, 1 on failure (key not found in table) */
-int bu_nhash_set_val(bu_nhash_entry *e, uint8_t *val);
+int bu_nhash_set_val(bu_nhash_entry *e, void *val);
 
 /* returns entry, or NULL if key is not found in table */
 bu_nhash_entry *bu_nhash_find(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);

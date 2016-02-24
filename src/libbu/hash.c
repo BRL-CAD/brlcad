@@ -157,7 +157,7 @@ bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_
 
 
 void
-bu_set_hash_value(struct bu_hash_entry *hsh_entry, uint8_t *value)
+bu_set_hash_value(struct bu_hash_entry *hsh_entry, void *value)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
 
@@ -166,7 +166,7 @@ bu_set_hash_value(struct bu_hash_entry *hsh_entry, uint8_t *value)
 }
 
 
-uint8_t *
+void *
 bu_get_hash_value(const struct bu_hash_entry *hsh_entry)
 {
     BU_CK_HASH_ENTRY(hsh_entry);
@@ -252,7 +252,7 @@ bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl, const char *str)
 	hsh_entry = hsh_tbl->lists[idx];
 	while (hsh_entry) {
 	    BU_CK_HASH_ENTRY(hsh_entry);
-	    fprintf(stderr, "\tindex=%ld, key=%p, value=%p\n", idx, (void *)hsh_entry->key, (void *)hsh_entry->value);
+	    fprintf(stderr, "\tindex=%ld, key=%p, value=%p\n", idx, (void *)hsh_entry->key, hsh_entry->value);
 	    hsh_entry = hsh_entry->next;
 	}
     }
