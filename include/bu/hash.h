@@ -294,15 +294,8 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
 
-
-/** @} */
-
-__END_DECLS
-
-#endif  /* BU_HASH_H */
-
 /* The following represents some thoughts on what a streamlined libbu hashing API might look like */
-#if 0
+
 /* Use typedefs to hide the details of the hash entry and table structures */
 typedef struct bu_nhash_entry bu_nhash_entry;
 typedef struct bu_nhash_tbl   bu_nhash_tbl;
@@ -317,7 +310,7 @@ void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 int bu_nhash_set(bu_nhash_tbl *t, const uint8_t *key, size_t key_len, void *val);
 
 /* returns value, or NULL if key is not found in table */
-void *bu_nhash_get(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+void *bu_nhash_get(const bu_nhash_tbl *t, const uint8_t *key, size_t key_len);
 
 /* remove an entry associated with key from the tbl */
 void bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
@@ -343,8 +336,11 @@ int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
  * returns NULL on error */
 void *bu_nhash_entry_val(bu_nhash_entry *p, void *nval);
 
-#endif
+/** @} */
 
+__END_DECLS
+
+#endif  /* BU_HASH_H */
 
 
 /*

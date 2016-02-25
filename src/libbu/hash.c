@@ -607,7 +607,7 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
 }
 
 void
-bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
+bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, uint8_t *key, size_t key_len)
 {
     struct bu_nhash_entry *hsh_entry = NULL;
     struct bu_nhash_entry *prev_entry = NULL;
