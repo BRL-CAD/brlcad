@@ -308,13 +308,13 @@ typedef struct bu_nhash_entry bu_nhash_entry;
 typedef struct bu_nhash_tbl   bu_nhash_tbl;
 
 /* Initialize and return a new table */
-bu_nhash_tbl *bu_nhash_tbl_create(size_t s);
+bu_nhash_tbl *bu_nhash_tbl_create(unsigned long s);
 
 /* Deletes hash table and all entries */
 void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
 
 /* returns 1 if a new entry is created, 0 if an existing value was updated, -1 on error.*/
-int bu_nhash_set(bu_nhash_tbl *t, uint8_t *key, size_t key_len, void *val);
+int bu_nhash_set(bu_nhash_tbl *t, const uint8_t *key, size_t key_len, void *val);
 
 /* returns value, or NULL if key is not found in table */
 void *bu_nhash_get(const bu_nhash_tbl *t, uint8_t *key, size_t key_len);
