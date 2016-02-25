@@ -487,6 +487,7 @@ bu_nhash_tbl_destroy(struct bu_nhash_tbl *hsh_tbl)
 
     /* free the array of bins */
     free(hsh_tbl->lists);
+    hsh_tbl->lists = NULL;
 
     /* free the actual hash table structure */
     free(hsh_tbl);
@@ -583,17 +584,17 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
 
     /* If and only if we ended up with a null hsh_entry, create a new one */
     if (!hsh_entry) {
-	struct bu_nhash_entry *h  = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
-	h->next = NULL;
-	h->key_len = key_len;
-	h->magic = BU_HASH_ENTRY_MAGIC;
+	hsh_entry  = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
+	hsh_entry->next = NULL;
+	hsh_entry->key_len = key_len;
+	hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
 	/* make a copy of the key */
-	h->key = (uint8_t *)malloc((size_t)key_len);
-	memcpy(h->key, key, (size_t)key_len);
+	hsh_entry->key = (uint8_t *)malloc((size_t)key_len);
+	memcpy(hsh_entry->key, key, (size_t)key_len);
 	if (!end_entry) {
-	    hsh_tbl->lists[idx] = h;
+	    hsh_tbl->lists[idx] = hsh_entry;
 	} else {
-	    end_entry->next = h;
+	    end_entry->next = hsh_entry;
 	}
 	/* increment count of entries */
 	hsh_tbl->num_entries++;
