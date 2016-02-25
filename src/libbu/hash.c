@@ -652,6 +652,69 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 }
 
 
+struct bu_nhash_entry *
+bu_nhash_next(struct bu_nhash_tbl *hsh_tbl, struct bu_nhash_entry *e)
+{
+    unsigned long idx, l;
+    BU_CK_HASH_TBL(hsh_tbl);
+
+    if (hsh_tbl->num_entries == 0) {
+	/* this table is empty */
+	return (struct bu_nhash_entry *)NULL;
+    }
+
+    /* If we don't have an entry, find loop through all the bins in this hash
+     * table to find the first non-null entry
+     */
+    if (!e) {
+	for (l = 0; l < hsh_tbl->num_lists; l++) {
+	    if (hsh_tbl->lists[l]) return hsh_tbl->lists[l];
+	}
+	/* if we've got nothing (empty bins) we're "done" iterating - return
+	 * NULL */
+	return (struct bu_nhash_entry *)NULL;
+    }
+
+    if (e && e->next) return e->next;
+
+    /* If we've got the last entry in a bin, we need to find the next bin.
+     * Use the key hash to get the "current" bin, and proceed from there. */
+    idx = bu_hash(e->key, e->key_len) & hsh_tbl->mask;
+    idx++;
+    for (l = idx; l < hsh_tbl->num_lists; l++) {
+	if (hsh_tbl->lists[l]) return hsh_tbl->lists[l];
+	idx++;
+    }
+    /* if we've got nothing by this point we've reached the end */
+    return (struct bu_nhash_entry *)NULL;
+}
+
+int
+bu_hash_entry_key(struct bu_hash_entry *e, uint8_t **key, size_t *key_len)
+{
+    if (!e || !key || !key_len) return 1;
+
+    (*key) = e->key;
+    (*key_len) = e->key_len;
+
+    return 0;
+}
+
+
+void *
+bu_hash_entry_val(struct bu_hash_entry *e, void *val)
+{
+    if (!e) return NULL;
+
+    if (!val) return e->value;
+
+    e->value = val;
+
+    return e->value;
+}
+
+
+
 /*
  * Local Variables:
  * mode: C

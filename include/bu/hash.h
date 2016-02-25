@@ -339,8 +339,8 @@ int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
  * value, it will do the val update. */
 
 /* returns value of bu_nhash_entry if nval is NULL.
- * returns NULL if nval was assigned to p's value.
- * returns value if nval was equal to p->val (i.e. no update took place) */
+ * returns nval if nval was assigned to p's value.
+ * returns NULL on error */
 void *bu_nhash_entry_val(bu_nhash_entry *p, void *nval);
 
 #endif
