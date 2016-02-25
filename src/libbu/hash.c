@@ -643,7 +643,7 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 	    if (prev_entry) {
 		prev_entry->next = hsh_entry->next;
 	    } else {
-		hsh_tbl->lists[idx] = NULL;
+		hsh_tbl->lists[idx] = hsh_entry->next;
 	    }
 	    free(hsh_entry->key);
 	    free(hsh_entry);
