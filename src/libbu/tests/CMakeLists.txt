@@ -526,7 +526,7 @@ endforeach()
 #  *********** hash.c tests ************
 #
 
-BRLCAD_ADDEXEC(tester_bu_hash hash.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bu_hash hash.cxx libbu NO_INSTALL)
 
 CMAKEFILES(
   bitv-tests.cmake
