@@ -313,7 +313,7 @@ int bu_nhash_set(bu_nhash_tbl *t, const uint8_t *key, size_t key_len, void *val)
 void *bu_nhash_get(const bu_nhash_tbl *t, const uint8_t *key, size_t key_len);
 
 /* remove an entry associated with key from the tbl */
-void bu_nhash_del(bu_nhash_tbl *t, uint8_t *key, size_t key_len);
+void bu_nhash_del(bu_nhash_tbl *t, const uint8_t *key, size_t key_len);
 
 /* For iteration over a hash tbl - returns either first entry (if p is NULL) or
  * next entry (if p is NON-null).  Returns NULL when p is last entry in table. */

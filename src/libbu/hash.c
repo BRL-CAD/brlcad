@@ -608,7 +608,7 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
 }
 
 void
-bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, uint8_t *key, size_t key_len)
+bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 {
     struct bu_nhash_entry *hsh_entry = NULL;
     struct bu_nhash_entry *prev_entry = NULL;
@@ -629,10 +629,8 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, uint8_t *key, size_t key_len)
     hsh_entry = hsh_tbl->lists[idx];
     prev_entry = NULL;
     while (!found) {
-	if (!hsh_entry->next) break;
-
 	/* compare key lengths first for performance */
-	if (hsh_entry->key_len != hsh_entry->next->key_len) {
+	if (hsh_entry->key_len != key_len) {
 	    prev_entry = hsh_entry;
 	    hsh_entry = hsh_entry->next;
 	    continue;

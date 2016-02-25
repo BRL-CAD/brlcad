@@ -56,8 +56,11 @@ int hash_add_del_one() {
     bu_nhash_tbl *t = bu_nhash_tbl_create(0);
     if (bu_nhash_set(t, (const uint8_t *)array2[0], strlen(array2[0]), (void *)&indices[0]) == -1) return 1;
     val = (int *)bu_nhash_get(t, (const uint8_t *)"r1", strlen("r1"));
+    if (*val != 7) return 1;
+    bu_nhash_del(t, (const uint8_t *)"r1", strlen("r1"));
+    if (bu_nhash_get(t, (const uint8_t *)"r1", strlen("r1"))) return 1;
     bu_nhash_tbl_destroy(t);
-    return (*val == 7) ? 0 : 1;
+    return 0;
 }
 
 int
