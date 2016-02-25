@@ -8850,7 +8850,7 @@ to_mouse_otranslate(struct ged *gedp,
 	vect_t dvec;
 
 	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
-				(unsigned char *)path_string,
+				(uint8_t *)path_string,
 				sizeof(char) * strlen(path_string) + 1,
 				&is_entry_new);
 
