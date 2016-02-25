@@ -395,6 +395,22 @@ struct bu_nhash_tbl {
 };
 typedef struct bu_nhash_tbl bu_nhash_tbl_t;
 
+HIDDEN int _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
+{
+    const uint8_t *c1 = k1;
+    const uint8_t *c2 = k2;
+    size_t i = 0;
+    int match = 1;
+    for (i = 0; i < key_len; i++) {
+	if (*c1 != *c2) {
+	    match = 0;
+	    break;
+	}
+	c1++;
+	c2++;
+    }
+    return match;
+}
 
 struct bu_nhash_tbl *
 bu_nhash_tbl_create(unsigned long tbl_size)
@@ -500,9 +516,6 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 	prev = NULL;
 	hsh_entry = hsh_tbl->lists[idx];
 	while (hsh_entry) {
-	    const uint8_t *c1, *c2;
-	    size_t i;
-
 	    /* compare key lengths first for performance */
 	    if (hsh_entry->key_len != key_len) {
 		prev = hsh_entry;
@@ -511,17 +524,7 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 	    }
 
 	    /* key lengths are the same, now compare the actual keys */
-	    found = 1;
-	    c1 = key;
-	    c2 = hsh_entry->key;
-	    for (i=0; i<key_len; i++) {
-		if (*c1 != *c2) {
-		    found = 0;
-		    break;
-		}
-		c1++;
-		c2++;
-	    }
+	    found = _nhash_keycmp(key, hsh_entry->key, key_len);
 
 	    /* if we have a match, get out of this loop */
 	    if (found) break;
@@ -544,9 +547,10 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 int
 bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, void *val)
 {
-    struct bu_nhash_entry *hsh_entry;
+    struct bu_nhash_entry *hsh_entry, *end_entry;
     unsigned long idx;
     int ret = 0;
+    int found = 0;
 
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -557,76 +561,95 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
      * key will already return the expected value (null) so we don't need to add it. */
     if (!val) return 0;
 
-    /* Need new entry - use key hash to get bin, add entry to bin list */
+    /* Use key hash to get bin, add entry to bin list */
     idx = bu_hash(key, key_len) & hsh_tbl->mask;
-    if (hsh_tbl->lists[idx]) {
-	int found = 0;
-	int not_found = 0;
-	struct bu_nhash_entry *end = hsh_tbl->lists[idx];
-	hsh_entry = NULL;
 
-	while (end && !not_found && !found) {
-	    const uint8_t *c1, *c2;
-	    size_t i;
-
-	    /* compare key lengths first for performance */
-	    if (end->key_len != key_len) {
-		if (end == end->next) {
-		    end = end->next;
-		} else {
-		    not_found = 1;
-		}
-		continue;
-	    }
-
-	    /* key lengths are the same, now compare the actual keys */
-	    found = 1;
-	    c1 = key;
-	    c2 = hsh_entry->key;
-	    for (i=0; i<key_len; i++) {
-		if (*c1 != *c2) {
-		    found = 0;
-		    end = NULL;
-		    break;
-		}
-		c1++;
-		c2++;
-	    }
-	    if (found) hsh_entry = end;
-	    if (!found && !end->next) {
-		not_found = 1;
-	    }
+    /* If we have existing entries, go hunting.  Otherwise, just add */
+    hsh_entry = hsh_tbl->lists[idx];
+    end_entry = NULL;
+    while (hsh_entry && !found) {
+	/* compare key lengths first for performance */
+	if (hsh_entry->key_len != key_len) {
+	    end_entry = hsh_entry;
+	    hsh_entry = hsh_entry->next;
+	    continue;
 	}
-	if (!hsh_entry) {
-	    end->next = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
-	    hsh_entry = end->next;
-	    /* increment count of entries */
-	    hsh_tbl->num_entries++;
-	    ret = 1;
+	/* key lengths are the same, now compare the actual keys */
+	found = _nhash_keycmp(key, hsh_entry->key, key_len);
+	if (found) break;
+	end_entry = hsh_entry;
+	hsh_entry = hsh_entry->next;
+    }
+
+    /* If and only if we ended up with a null hsh_entry, create a new one */
+    if (!hsh_entry) {
+	struct bu_nhash_entry *h  = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
+	h->next = NULL;
+	h->key_len = key_len;
+	h->magic = BU_HASH_ENTRY_MAGIC;
+	/* make a copy of the key */
+	h->key = (uint8_t *)malloc((size_t)key_len);
+	memcpy(h->key, key, (size_t)key_len);
+	if (!end_entry) {
+	    hsh_tbl->lists[idx] = h;
+	} else {
+	    end_entry->next = h;
 	}
-    } else {
-	struct bu_nhash_entry *h = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
-	hsh_entry = h;
-	hsh_tbl->lists[idx] = h;
 	/* increment count of entries */
 	hsh_tbl->num_entries++;
 	ret = 1;
     }
 
-    /* fill in the structure */
+    /* Whether the structure is old or new, it gets the value */
     hsh_entry->value = val;
-    if (ret) {
-	hsh_entry->next = NULL;
-	hsh_entry->key_len = key_len;
-	hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
-	/* make a copy of the key */
-	hsh_entry->key = (uint8_t *)malloc((size_t)key_len);
-	memcpy(hsh_entry->key, key, (size_t)key_len);
-    }
 
     return ret;
 }
 
+void
+bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
+{
+    struct bu_nhash_entry *hsh_entry = NULL;
+    struct bu_nhash_entry *prev_entry = NULL;
+    unsigned long idx;
+    int found = 0;
+
+    BU_CK_HASH_TBL(hsh_tbl);
+
+    /* If we don't have a key, no-op */
+    if (!key || key_len == 0) return;
+
+    /* Use key hash to get bin, add entry to bin list */
+    idx = bu_hash(key, key_len) & hsh_tbl->mask;
+
+    /* Nothing in bin, we're done */
+    if (!hsh_tbl->lists[idx]) return;
+
+    hsh_entry = hsh_tbl->lists[idx];
+    prev_entry = NULL;
+    while (!found) {
+	if (!hsh_entry->next) break;
+
+	/* compare key lengths first for performance */
+	if (hsh_entry->key_len != hsh_entry->next->key_len) {
+	    prev_entry = hsh_entry;
+	    hsh_entry = hsh_entry->next;
+	    continue;
+	}
+
+	/* key lengths are the same, now compare the actual keys */
+	found = _nhash_keycmp(key, hsh_entry->key, key_len);
+	if (found) {
+	    if (prev_entry) {
+		prev_entry->next = hsh_entry->next;
+	    } else {
+		hsh_tbl->lists[idx] = NULL;
+	    }
+	    free(hsh_entry->key);
+	    free(hsh_entry);
+	}
+    }
+}
 
 
 /*
