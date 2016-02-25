@@ -1526,8 +1526,6 @@ HIDDEN int
 free_path_edit_params_entry(struct bu_hash_entry *entry, void *UNUSED(udata))
 {
     struct path_edit_params *pp = (struct path_edit_params *)bu_get_hash_value(entry);
-    char *key = (char *)bu_get_hash_key(entry);
-    bu_free(key, "free key");
     BU_PUT(pp, struct path_edit_params);
     return 0;
 }
@@ -1699,7 +1697,7 @@ Usage: go_open\n\
     bu_vls_init(&top->to_gop->go_rt_end_callback);
     BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
-    top->to_gop->go_edited_paths = bu_hash_tbl_create(32);
+    top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -6451,7 +6449,7 @@ to_idle_mode(struct ged *gedp,
 
     bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
     bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
-    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(32);
+    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
@@ -8845,16 +8843,15 @@ to_mouse_otranslate(struct ged *gedp,
     gedp->ged_gvp = gdvp->gdv_view;
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
-	const char *path_string = bu_strdup(argv[2]);
+	const char *path_string = argv[2];
 	struct path_edit_params *params;
 	int is_entry_new;
 	struct bu_hash_entry *entry;
 	vect_t dvec;
 
-	/* TODO - this uses argv[2] for a key - is that memory stable over the
-	 * entire use of the tbl? */
 	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
-				(uint8_t *)path_string, strlen(path_string) + 1,
+				(unsigned char *)path_string,
+				sizeof(char) * strlen(path_string) + 1,
 				&is_entry_new);
 
 	if (is_entry_new) {
