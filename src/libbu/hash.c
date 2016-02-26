@@ -500,7 +500,6 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
     struct bu_nhash_entry *hsh_entry=NULL;
     int found=0;
     unsigned long idx;
-    struct bu_nhash_entry *prev = NULL;
 
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -514,12 +513,10 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 
     /* look for the provided key in the list of entries in this bin */
     if (hsh_tbl->lists[idx]) {
-	prev = NULL;
 	hsh_entry = hsh_tbl->lists[idx];
 	while (hsh_entry) {
 	    /* compare key lengths first for performance */
 	    if (hsh_entry->key_len != key_len) {
-		prev = hsh_entry;
 		hsh_entry = hsh_entry->next;
 		continue;
 	    }
@@ -531,7 +528,6 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 	    if (found) break;
 
 	    /* step to next entry in this bin */
-	    prev = hsh_entry;
 	    hsh_entry = hsh_entry->next;
 	}
     }
