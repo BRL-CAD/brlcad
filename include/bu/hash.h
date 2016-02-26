@@ -112,8 +112,8 @@ BU_EXPORT extern void bu_hash_del(bu_hash_tbl *t, const uint8_t *key, size_t key
  * Supports iteration of all the contents in a hash table.
  *
  * @param[in] t - The hash table to look in
- * @param[in] p - the previous entry in the iteration 
- * 
+ * @param[in] p - the previous entry in the iteration
+ *
  * This example prints all values in a hash table:
  @code
  void print_vals(struct bu_hash_tbl *t) {
@@ -136,9 +136,9 @@ BU_EXPORT extern bu_hash_entry *bu_hash_next(bu_hash_tbl *t, bu_hash_entry *p);
  *
  * @param[in] e - The hash table to look in
  *
- * @param[out] key - the entry's key 
- * @param[out] key_len - the length of the entry's key 
- * 
+ * @param[out] key - the entry's key
+ * @param[out] key_len - the length of the entry's key
+ *
  * @return
  * Returns 0 on success, 1 on failure.
  */
@@ -153,10 +153,10 @@ BU_EXPORT extern int bu_hash_entry_key(bu_hash_entry *e, uint8_t **key, size_t *
  * Extracts or updates the void pointer value for a bu_hash_entry. If nval is
  * not NULL the entry will be updated.
  *
- * @param[in] e - The hash table to look in 
- * @param[in] nval - The new void pointer to assign to the entry's value slot, or NULL if no assignment is to be made. 
- * 
- * @return Returns the hash entry's value pointer, or NULL on error.  
+ * @param[in] e - The hash table to look in
+ * @param[in] nval - The new void pointer to assign to the entry's value slot, or NULL if no assignment is to be made.
+ *
+ * @return Returns the hash entry's value pointer, or NULL on error.
  */
 BU_EXPORT extern void *bu_hash_entry_val(bu_hash_entry *e, void *nval);
 
@@ -171,7 +171,6 @@ struct bu_hash_entry {
     int key_len;
     struct bu_hash_entry *next;
 };
-typedef struct bu_hash_entry bu_hash_entry_t;
 #define BU_HASH_ENTRY_NULL ((struct bu_hash_entry *)0)
 #define BU_CK_HASH_ENTRY(_ep) BU_CKMAG(_ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry")
 #define BU_HASH_ENTRY_INIT(_h) { \
@@ -189,7 +188,6 @@ struct bu_hash_tbl {
     unsigned long num_entries;
     struct bu_hash_entry **lists;
 };
-typedef struct bu_hash_tbl bu_hash_tbl_t;
 #define BU_HASH_TBL_NULL ((struct bu_hash_tbl *)0)
 #define BU_CK_HASH_TBL(_hp) BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
 #define BU_HASH_TBL_INIT(_h) { \
@@ -216,27 +214,26 @@ typedef struct bu_hash_record bu_hash_record_t;
     }
 #define BU_HASH_RECORD_INIT_ZERO { BU_HASH_RECORD_MAGIC, NULL, 0, NULL }
 #define BU_HASH_RECORD_IS_INITIALIZED(_h) (((struct bu_hash_record *)(_h) != BU_HASH_RECORD_NULL) && LIKELY((_h)->magic == BU_HASH_RECORD_MAGIC))
-BU_EXPORT extern unsigned long bu_hash(const uint8_t *key, size_t len);
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl,
+DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl,
 							const uint8_t *key,
 							int key_len,
 							struct bu_hash_entry **prev,
 							unsigned long *idx);
-BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
+DEPRECATED BU_EXPORT extern void bu_set_hash_value(struct bu_hash_entry *hsh_entry,
 					void *value);
-BU_EXPORT extern void *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
-BU_EXPORT extern uint8_t *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
+DEPRECATED BU_EXPORT extern void *bu_get_hash_value(const struct bu_hash_entry *hsh_entry);
+DEPRECATED BU_EXPORT extern uint8_t *bu_get_hash_key(const struct bu_hash_entry *hsh_entry);
+DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl,
 						       const uint8_t *key,
 						       int key_len,
 						       int *new_entry);
-BU_EXPORT extern void bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl,
+DEPRECATED BU_EXPORT extern void bu_hash_tbl_print(const struct bu_hash_tbl *hsh_tbl,
 					const char *str);
-BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl,
+DEPRECATED BU_EXPORT extern void bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl);
+DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl,
 							 struct bu_hash_record *rec);
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *rec);
-BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
+DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *rec);
+DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
 
 /** @} */
 
