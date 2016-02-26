@@ -62,6 +62,13 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /**
+ * Function to calculate (or make an educated guess) about the
+ * dimensions of an image, when the image doesn't supply such
+ * information
+ */
+ICV_EXPORT extern int icv_autosize(size_t file_size, bu_mime_image_t type, size_t *width, size_t *height);
+
+/**
  * Load a file into an ICV struct. For most formats, this will be
  * called with format=ICV_IMAGE_AUTO.
  *
