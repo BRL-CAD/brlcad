@@ -689,19 +689,19 @@ bu_nhash_next(struct bu_nhash_tbl *hsh_tbl, struct bu_nhash_entry *e)
 }
 
 int
-bu_hash_entry_key(struct bu_hash_entry *e, uint8_t **key, size_t *key_len)
+bu_nhash_entry_key(struct bu_nhash_entry *e, uint8_t **key, size_t *key_len)
 {
-    if (!e || !key || !key_len) return 1;
+    if (!e || (!key && !key_len)) return 1;
 
-    (*key) = e->key;
-    (*key_len) = e->key_len;
+    if (key)     (*key)     = e->key;
+    if (key_len) (*key_len) = e->key_len;
 
     return 0;
 }
 
 
 void *
-bu_hash_entry_val(struct bu_hash_entry *e, void *val)
+bu_nhash_entry_val(struct bu_nhash_entry *e, void *val)
 {
     if (!e) return NULL;
 

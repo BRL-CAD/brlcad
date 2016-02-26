@@ -19,11 +19,17 @@
  */
 
 #include "common.h"
+
+#include <map>
+#include <string>
+
 #include <limits.h>
 #include <string.h>
 #include "bu.h"
 
-/* generated from libsum.com - 275 words */
+/* Slightly tweaked and reformatted text originally generated from libsum.com -
+ * 275 words, one of which is an empty string (position 195 after "feugiat.")
+ * to test behavior in the NULL conditions */
 const char *lorem_ipsum[] = {"Lorem", "ipsum", "dolor", "sit", "amet,",
     "consectetur", "adipiscing", "elit.", "Nulla", "quis", "neque", "egetdui",
     "consequat", "sodales.", "Cras", "vitae", "quam", "ut", "neque", "rutrum",
@@ -106,17 +112,71 @@ int hash_add_del_one() {
     return 0;
 }
 
+/* Compare the behavior of libbu's hash to that of the C++ map using lorem
+ * ipsum strings as keys */
 int hash_loremipsum() {
     int i = 0;
+    int ret = 0;
+    std::map<std::string, int> cppmap;
+    std::map<std::string, int>::iterator c_it;
     int lorem_nums[275];
+
+    // Initialize table (will create default 64 bins
     bu_nhash_tbl *t = bu_nhash_tbl_create(0);
+
+    // Set up non-sequential numbers to use as values - easy to compare but
+    // shouldn't have any accidental alignments that could obscure bugs.
     for (i = 0; i < 275; i++) lorem_nums[i] = strlen(lorem_ipsum[i]) + i;
+
+    // Initial population of hash set and C++ map.  The hash table will refuse
+    // a null key, so make sure we skip putting that in the C++ map.  The key
+    // set deliberately contains duplicate keys with different associated
+    // values, and both assignments (C++ and hash table) should result in a
+    // "last assignment wins" value being stored for subsequent lookups.
     for (i = 0; i < 275; i++) {
 	int r = bu_nhash_set(t, (const uint8_t *)lorem_ipsum[i], strlen(lorem_ipsum[i]), (void *)&lorem_nums[i]);
-	if (r == 1) bu_log("new entry: %s -> %d\n", lorem_ipsum[i], lorem_nums[i]);
-	if (r == 0) bu_log("updated entry: %s -> %d\n", lorem_ipsum[i], lorem_nums[i]);
+	if (strlen(lorem_ipsum[i]) == 0 && r != -1) {
+	    bu_log("Error: %s -> %d should have failed to set and didn't!\n", lorem_ipsum[i], lorem_nums[i]);
+	    ret = 1;
+	}
+	if (r >= 0 && strlen(lorem_ipsum[i]) > 0) cppmap[std::string(lorem_ipsum[i])] = lorem_nums[i];
     }
-    return 0;
+
+    // Using the C++ map as an oracle, check the values that got stored in the hash
+    // table.  All values should match, and all should be present.
+    for (c_it = cppmap.begin(); c_it != cppmap.end(); c_it++) {
+	int *val = NULL;
+	const char *key = ((*c_it).first).c_str();
+	val = (int *)bu_nhash_get(t, (const uint8_t *)key, strlen(key));
+	//bu_log("%s reports %d in C++ map and %d in hash\n", key, (*c_it).second, *val);
+	if (*val != (*c_it).second) {
+	    bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *val);
+	    ret = 1;
+	}
+    }
+
+    // Iterate over hash and use find on the C++ map to validate each entry. Also
+    // confirms bu hash key copies are correct since any key in the hash table
+    // not found in the C++ map is reported as an error.
+    struct bu_nhash_entry *e = bu_nhash_next(t, NULL);
+    while (e) {
+	uint8_t *key;
+	void *val;
+	(void)bu_nhash_entry_key(e, &key, NULL);
+	val = bu_nhash_entry_val(e, NULL);
+	c_it = cppmap.find(std::string((const char *)key));
+	if (c_it == cppmap.end()) {
+	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", (const char *)key);
+	    ret = 1;
+	}
+	if (*(int *)val != (*c_it).second) {
+	    bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *(int *)val);
+	    ret = 1;
+	}
+	e = bu_nhash_next(t, e);
+    }
+
+    return ret;
 }
 
 int
@@ -138,11 +198,12 @@ main(int argc, const char **argv)
     switch (test_num) {
     case 0:
         ret = hash_noop_test();
+        break;
     case 1:
         ret = hash_add_del_one();
         break;
     case 2:
-	return hash_loremipsum();
+	ret = hash_loremipsum();
         break;
     }
 
