@@ -119,7 +119,7 @@ BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_
  void print_vals(struct bu_hash_tbl *t) {
      struct bu_hash_entry *e = bu_hash_next(t, NULL);
      while (e) {
-         bu_log("Value: %p\n", bu_hash_entry_val(e, NULL));
+         bu_log("Value: %p\n", bu_hash_value(e, NULL));
 	 e = bu_hash_next(t, e);
      }
  }
