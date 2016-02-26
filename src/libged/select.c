@@ -283,7 +283,7 @@ ged_get_object_selections(struct ged *gedp, const char *object_name)
 
     if (!obj_selections) {
 	BU_ALLOC(obj_selections, struct rt_object_selections);
-	obj_selections->sets = bu_hash_tbl_create(0);
+	obj_selections->sets = bu_hash_create(0);
 	(void)bu_hash_set(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name), (void *)obj_selections);
     }
 

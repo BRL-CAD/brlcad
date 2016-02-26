@@ -95,20 +95,20 @@ const char *array2[] = {
 int indices[] = {7,6,4,3,5,1,2};
 
 int hash_noop_test() {
-    bu_hash_tbl *t = bu_hash_tbl_create(0);
-    bu_hash_tbl_destroy(t);
+    bu_hash_tbl *t = bu_hash_create(0);
+    bu_hash_destroy(t);
     return 0;
 }
 
 int hash_add_del_one() {
     int *val = NULL;
-    bu_hash_tbl *t = bu_hash_tbl_create(0);
+    bu_hash_tbl *t = bu_hash_create(0);
     if (bu_hash_set(t, (const uint8_t *)array2[0], strlen(array2[0]), (void *)&indices[0]) == -1) return 1;
     val = (int *)bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"));
     if (*val != 7) return 1;
-    bu_hash_del(t, (const uint8_t *)"r1", strlen("r1"));
+    bu_hash_rm(t, (const uint8_t *)"r1", strlen("r1"));
     if (bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"))) return 1;
-    bu_hash_tbl_destroy(t);
+    bu_hash_destroy(t);
     return 0;
 }
 
@@ -122,7 +122,7 @@ int hash_loremipsum() {
     int lorem_nums[275];
 
     // Initialize table (will create default 64 bins
-    bu_hash_tbl *t = bu_hash_tbl_create(0);
+    bu_hash_tbl *t = bu_hash_create(0);
 
     // Set up non-sequential numbers to use as values - easy to compare but
     // shouldn't have any accidental alignments that could obscure bugs.
@@ -162,8 +162,8 @@ int hash_loremipsum() {
     while (e) {
 	uint8_t *key;
 	void *val;
-	(void)bu_hash_entry_key(e, &key, NULL);
-	val = bu_hash_entry_val(e, NULL);
+	(void)bu_hash_key(e, &key, NULL);
+	val = bu_hash_value(e, NULL);
 	c_it = cppmap.find(std::string((const char *)key));
 	if (c_it == cppmap.end()) {
 	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", (const char *)key);

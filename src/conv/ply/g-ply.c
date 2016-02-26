@@ -88,7 +88,7 @@ write_verts(struct bu_hash_tbl *t)
     struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
     while (v_entry) {
 	/* TODO - this shouldn't be possible now with new libbu hash API? */
-	double *coords = (double *)(bu_hash_entry_val(v_entry, NULL));
+	double *coords = (double *)(bu_hash_value(v_entry, NULL));
 	if (!coords) return v_entry;
 
 	/* PLY files are usually in meters */
@@ -167,13 +167,13 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		break;
 	}
 	if (!ply_fp) {
-	    bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to create PLY file");
 	    goto free_nmg;
 	}
 	if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
-	    bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to write to PLY file");
 	    goto free_nmg;
@@ -220,13 +220,13 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     /* RPly library cannot handle faces and vertices greater than the integer limit */
     if (nfaces >= INT_MAX) {
-	bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_log("ERROR: Number of faces (%ld) exceeds integer limit!\n", nfaces);
 	goto free_nmg;
     }
 
     f_sizes[cur_region] = (int) nfaces;
-    v_tbl_regs[cur_region] = bu_hash_tbl_create(nfaces * 3);
+    v_tbl_regs[cur_region] = bu_hash_create(nfaces * 3);
     f_regs[cur_region] = (long **) bu_calloc(nfaces, sizeof(long *), "reg_faces");
     v_regs[cur_region] = (double **) bu_calloc(nfaces * 3, sizeof(double *), "reg_verts"); /* chose to do this over dynamic array, but I may be wrong */
 
@@ -286,7 +286,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     }
 
     if (nvertices >= INT_MAX) {
-	bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_log("ERROR: Number of vertices (%ld) exceeds integer limit!\n", nvertices);
 	goto free_nmg;
     }
@@ -310,7 +310,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	ply_write_header(ply_fp);
 
 	if (write_verts(v_tbl_regs[cur_region])) {
-	    bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_log("ERROR: No coordinates found for vertex!\n");
 	    goto free_nmg;
 	}
@@ -340,7 +340,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     tot_vertices += nvertices;
 
     if (!merge_all) {
-	bu_hash_tbl_destroy(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_free(f_regs[cur_region], "reg_faces");
     }
     bu_free(region_name, "region_name");
@@ -821,7 +821,7 @@ main(int argc, char **argv)
 		bu_free(f_regs[ri][fi], "v_ind");
 	    }
 	    bu_free(f_regs[ri], "reg_faces");
-	    bu_hash_tbl_destroy(v_tbl_regs[ri]);
+	    bu_hash_destroy(v_tbl_regs[ri]);
 	}
 	ply_close(ply_fp);
     }

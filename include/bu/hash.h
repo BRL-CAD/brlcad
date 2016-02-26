@@ -51,7 +51,7 @@ typedef struct bu_hash_tbl   bu_hash_tbl;
  * bins.  This number will be rounded up to the nearest power of two, or a
  * minimal size if tbl_size is smaller than the internal minimum bin count.
  */
-BU_EXPORT extern bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
+BU_EXPORT extern bu_hash_tbl *bu_hash_create(unsigned long tbl_size);
 
 /**
  * Free all the memory associated with the specified hash table.
@@ -59,7 +59,7 @@ BU_EXPORT extern bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
  * Note that the keys are freed (they are copies), but the "values"
  * are not freed.  (The values are merely pointers)
  */
-BU_EXPORT extern void bu_hash_tbl_destroy(bu_hash_tbl *t);
+BU_EXPORT extern void bu_hash_destroy(bu_hash_tbl *t);
 
 /**
  * Get the value stored in the hash table entry corresponding to the provided key
@@ -106,7 +106,7 @@ BU_EXPORT extern int bu_hash_set(bu_hash_tbl *t, const uint8_t *key, size_t key_
  * @param[in] key - the key to look for
  * @param[in] key_len - the length of the key in bytes
  */
-BU_EXPORT extern void bu_hash_del(bu_hash_tbl *t, const uint8_t *key, size_t key_len);
+BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_len);
 
 /**
  * Supports iteration of all the contents in a hash table.
@@ -142,7 +142,7 @@ BU_EXPORT extern bu_hash_entry *bu_hash_next(bu_hash_tbl *t, bu_hash_entry *p);
  * @return
  * Returns 0 on success, 1 on failure.
  */
-BU_EXPORT extern int bu_hash_entry_key(bu_hash_entry *e, uint8_t **key, size_t *key_len);
+BU_EXPORT extern int bu_hash_key(bu_hash_entry *e, uint8_t **key, size_t *key_len);
 
 
 /* returns value of bu_hash_entry if nval is NULL.
@@ -158,7 +158,7 @@ BU_EXPORT extern int bu_hash_entry_key(bu_hash_entry *e, uint8_t **key, size_t *
  *
  * @return Returns the hash entry's value pointer, or NULL on error.
  */
-BU_EXPORT extern void *bu_hash_entry_val(bu_hash_entry *e, void *nval);
+BU_EXPORT extern void *bu_hash_value(bu_hash_entry *e, void *nval);
 
 
 

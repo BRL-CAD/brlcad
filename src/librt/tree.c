@@ -716,7 +716,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     if (argc <= 0) return -1;	/* FAIL */
 
-    tbl = bu_hash_tbl_create(64);
+    tbl = bu_hash_create(64);
     rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;

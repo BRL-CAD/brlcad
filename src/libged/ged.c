@@ -93,7 +93,7 @@ free_selection_set(struct bu_hash_tbl *t)
     void (*free_selection)(struct rt_selection *);
 
     while (entry) {
-	selection_set = (struct rt_selection_set *)bu_hash_entry_val(entry, NULL);
+	selection_set = (struct rt_selection_set *)bu_hash_value(entry, NULL);
 	selections = &selection_set->selections;
 	free_selection = selection_set->free_selection;
 
@@ -117,11 +117,11 @@ free_object_selections(struct bu_hash_tbl *t)
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
     while (entry) {
-	obj_selections = (struct rt_object_selections *)bu_hash_entry_val(entry, NULL);
+	obj_selections = (struct rt_object_selections *)bu_hash_value(entry, NULL);
 	/* free entries */
 	free_selection_set(obj_selections->sets);
 	/* free table itself */
-	bu_hash_tbl_destroy(obj_selections->sets);
+	bu_hash_destroy(obj_selections->sets);
 	/* free object */
 	bu_free(obj_selections, "ged selections entry");
 	/* Get next entry */
@@ -176,7 +176,7 @@ ged_free(struct ged *gedp)
     BU_PUT(gedp->freesolid, struct solid);
 
     free_object_selections(gedp->ged_selections);
-    bu_hash_tbl_destroy(gedp->ged_selections);
+    bu_hash_destroy(gedp->ged_selections);
 }
 
 
@@ -211,7 +211,7 @@ ged_init(struct ged *gedp)
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
-    gedp->ged_selections = bu_hash_tbl_create(32);
+    gedp->ged_selections = bu_hash_create(32);
 
     /* init the solid list */
     BU_GET(freesolid, struct solid);

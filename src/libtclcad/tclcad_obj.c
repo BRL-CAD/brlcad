@@ -1527,7 +1527,7 @@ free_path_edit_params(struct bu_hash_tbl *t)
 {
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
     while (entry) {
-	struct path_edit_params *pp = (struct path_edit_params *)bu_hash_entry_val(entry, NULL);
+	struct path_edit_params *pp = (struct path_edit_params *)bu_hash_value(entry, NULL);
 	BU_PUT(pp, struct path_edit_params);
 	entry = bu_hash_next(t, entry);
     }
@@ -1554,7 +1554,7 @@ to_deleteProc(ClientData clientData)
 	BU_PUT(top->to_gop->go_gedp, struct ged);
 
     free_path_edit_params(top->to_gop->go_edited_paths);
-    bu_hash_tbl_destroy(top->to_gop->go_edited_paths);
+    bu_hash_destroy(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	BU_LIST_DEQUEUE(&(gdvp->l));
@@ -1700,7 +1700,7 @@ Usage: go_open\n\
     bu_vls_init(&top->to_gop->go_rt_end_callback);
     BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
-    top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    top->to_gop->go_edited_paths = bu_hash_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -6305,12 +6305,12 @@ redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 
     while (entry) {
 
-	bu_hash_entry_key(entry, &key, NULL);
+	bu_hash_key(entry, &key, NULL);
 	draw_path = (char *)key;
 
 	data = (struct redraw_edited_path_data *)udata;
 
-	params = (struct path_edit_params *)bu_hash_entry_val(entry, NULL);
+	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
 	if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
 	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	    struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
@@ -6460,8 +6460,8 @@ to_idle_mode(struct ged *gedp,
     redraw_edited_paths(current_top->to_gop->go_edited_paths, &data);
 
     free_path_edit_params(current_top->to_gop->go_edited_paths);
-    bu_hash_tbl_destroy(current_top->to_gop->go_edited_paths);
-    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    bu_hash_destroy(current_top->to_gop->go_edited_paths);
+    current_top->to_gop->go_edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
@@ -14564,7 +14564,7 @@ key_matches_paths(struct bu_hash_tbl *t, void *udata)
     struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
     while (entry) {
-	(void)bu_hash_entry_key(entry, &key, NULL);
+	(void)bu_hash_key(entry, &key, NULL);
 	path_string = (char *)key;
 	if (db_string_to_path(&entry_fpath, data->dbip, path_string) < 0) {
 	    continue;
@@ -14598,7 +14598,7 @@ go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
     entry = key_matches_paths(gop->go_edited_paths, &data);
 
     if (entry != NULL) {
-	params = (struct path_edit_params *)bu_hash_entry_val(entry, NULL);
+	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
     }
     if (params) {
 	MAT_COPY(save_mat, gdvp->gdv_view->gv_model2view);
