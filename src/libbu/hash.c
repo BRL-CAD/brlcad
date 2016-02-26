@@ -50,7 +50,7 @@ bu_hash(const uint8_t *key, size_t len)
 }
 
 struct bu_hash_entry *
-bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+_bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
 {
     struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
@@ -58,7 +58,7 @@ bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_
     BU_CK_HASH_TBL(hsh_tbl);
 
     /* calculate the index into the bin array */
-    *idx = bu_hash(key, key_len) & hsh_tbl->mask;
+    *idx = _bu_hash(key, key_len) & hsh_tbl->mask;
     if (*idx >= hsh_tbl->num_lists) {
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		*idx, hsh_tbl->num_lists);
@@ -112,7 +112,11 @@ bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_
 	return (struct bu_hash_entry *)NULL;
     }
 }
-
+struct bu_hash_entry *
+bu_hash_tbl_find(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, struct bu_hash_entry **prev, unsigned long *idx)
+{
+    return _bu_hash_tbl_find(hsh_tbl, key, key_len, prev, idx);
+}
 
 void
 bu_set_hash_value(struct bu_hash_entry *hsh_entry, void *value)
@@ -155,7 +159,7 @@ bu_hash_tbl_add(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, int key_len, in
      * get the hash bin index for this key.
      * find the previous entry to link the new one to.
      */
-    hsh_entry = bu_hash_tbl_find(hsh_tbl, key, key_len, &prev, &idx);
+    hsh_entry = _bu_hash_tbl_find(hsh_tbl, key, key_len, &prev, &idx);
 
     if (hsh_entry) {
 	/* this key is already in the table, return the entry, with
@@ -251,7 +255,7 @@ bu_hash_tbl_free(struct bu_hash_tbl *hsh_tbl)
 
 
 struct bu_hash_entry *
-bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
+_bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
 {
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -280,9 +284,14 @@ bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
     return (struct bu_hash_entry *)NULL;
 }
 
+struct bu_hash_entry *
+bu_hash_tbl_first(const struct bu_hash_tbl *hsh_tbl, struct bu_hash_record *rec)
+{
+    return _bu_hash_tbl_first(hsh_tbl, rec);
+}
 
 struct bu_hash_entry *
-bu_hash_tbl_next(struct bu_hash_record *rec)
+_bu_hash_tbl_next(struct bu_hash_record *rec)
 {
     const struct bu_hash_tbl *hsh_tbl;
 
@@ -313,19 +322,25 @@ bu_hash_tbl_next(struct bu_hash_record *rec)
 }
 
 struct bu_hash_entry *
+bu_hash_tbl_next(struct bu_hash_record *rec)
+{
+    return _bu_hash_tbl_next(rec);
+}
+
+struct bu_hash_entry *
 bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg)
 {
     int ret;
     struct bu_hash_record rec;
     struct bu_hash_entry *entry;
 
-    entry = bu_hash_tbl_first(hsh_tbl, &rec);
+    entry = _bu_hash_tbl_first(hsh_tbl, &rec);
     while (entry) {
 	ret = func(entry, func_arg);
 	if (ret) {
 	    return entry;
 	}
-	entry = bu_hash_tbl_next(&rec);
+	entry = _bu_hash_tbl_next(&rec);
     }
     return NULL;
 }
