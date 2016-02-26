@@ -141,7 +141,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     size_t shader_len=0;
     struct rt_i *rtip;
     struct bu_hash_tbl *tbl = (struct bu_hash_tbl *)client_data;
-    struct bu_hash_entry *entry;
     matp_t inv_mat;
     struct bu_attribute_value_set avs;
     struct bu_attribute_value_pair *avpp;
@@ -223,7 +222,6 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
     bu_semaphore_release(RT_SEM_RESULTS);
 
     if (tbl && bu_avs_get(&tsp->ts_attrs, "ORCA_Comp")) {
-	int newentry;
 	const uint8_t *key = (uint8_t *)&(rp->reg_bit);
 
 	inv_mat = (matp_t)bu_calloc(16, sizeof(fastf_t), "inv_mat");
@@ -232,8 +230,7 @@ _rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 	/* enter critical section */
 	bu_semaphore_acquire(RT_SEM_RESULTS);
 
-	entry = bu_hash_tbl_add(tbl, key, sizeof(rp->reg_bit), &newentry);
-	bu_set_hash_value(entry, (void *)inv_mat);
+	(void)bu_hash_set(tbl, key, sizeof(rp->reg_bit), (void *)inv_mat);
 
 	/* leave critical section */
 	bu_semaphore_release(RT_SEM_RESULTS);
