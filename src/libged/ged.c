@@ -83,47 +83,50 @@ ged_close(struct ged *gedp)
     ged_free(gedp);
 }
 
-static int
-free_selection_set_entry(struct bu_hash_entry *entry, void *UNUSED(arg))
+static void
+free_selection_set(struct bu_hash_tbl *t)
 {
     int i;
     struct rt_selection_set *selection_set;
     struct bu_ptbl *selections;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
     void (*free_selection)(struct rt_selection *);
 
-    selection_set = (struct rt_selection_set *)bu_get_hash_value(entry);
-    selections = &selection_set->selections;
-    free_selection = selection_set->free_selection;
+    while (entry) {
+	selection_set = (struct rt_selection_set *)bu_hash_entry_val(entry, NULL);
+	selections = &selection_set->selections;
+	free_selection = selection_set->free_selection;
 
-    /* free all selection objects and containing items */
-    for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
-	long *s = BU_PTBL_GET(selections, i);
-	free_selection((struct rt_selection *)s);
-	bu_ptbl_rm(selections, s);
+	/* free all selection objects and containing items */
+	for (i = BU_PTBL_LEN(selections) - 1; i >= 0; --i) {
+	    long *s = BU_PTBL_GET(selections, i);
+	    free_selection((struct rt_selection *)s);
+	    bu_ptbl_rm(selections, s);
+	}
+	bu_ptbl_free(selections);
+	BU_FREE(selection_set, struct rt_selection_set);
+    	/* Get next entry */
+	entry = bu_hash_next(t, entry);
     }
-    bu_ptbl_free(selections);
-    BU_FREE(selection_set, struct rt_selection_set);
-
-    return 0;
 }
 
-static int
-free_object_selections(struct bu_hash_entry *entry, void *UNUSED(arg))
+static void
+free_object_selections(struct bu_hash_tbl *t)
 {
     struct rt_object_selections *obj_selections;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
-    obj_selections = (struct rt_object_selections *)bu_get_hash_value(entry);
-
-    /* free entries - one set for each kind of selection */
-    bu_hash_tbl_traverse(obj_selections->sets, free_selection_set_entry, NULL);
-
-    /* free table itself */
-    bu_hash_tbl_free(obj_selections->sets);
-
-    /* free object */
-    bu_free(obj_selections, "ged selections entry");
-
-    return 0;
+    while (entry) {
+	obj_selections = (struct rt_object_selections *)bu_hash_entry_val(entry, NULL);
+	/* free entries */
+	free_selection_set(obj_selections->sets);
+	/* free table itself */
+	bu_hash_tbl_destroy(obj_selections->sets);
+	/* free object */
+	bu_free(obj_selections, "ged selections entry");
+	/* Get next entry */
+	entry = bu_hash_next(t, entry);
+    }
 }
 
 void
@@ -172,8 +175,8 @@ ged_free(struct ged *gedp)
     }
     BU_PUT(gedp->freesolid, struct solid);
 
-    bu_hash_tbl_traverse(gedp->ged_selections, free_object_selections, NULL);
-    bu_hash_tbl_free(gedp->ged_selections);
+    free_object_selections(gedp->ged_selections);
+    bu_hash_tbl_destroy(gedp->ged_selections);
 }
 
 
