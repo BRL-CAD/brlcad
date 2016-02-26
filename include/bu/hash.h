@@ -158,14 +158,6 @@ typedef struct bu_hash_record bu_hash_record_t;
 BU_EXPORT extern unsigned long bu_hash(const uint8_t *key, size_t len);
 
 /**
- * Create an empty hash table
- *
- * The input is the number of desired hash bins.  This number will be
- * rounded up to the nearest power of two.
- */
-BU_EXPORT extern struct bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
-
-/**
  * Find the hash table entry corresponding to the provided key
  *
  * @param[in] hsh_tbl - The hash table to look in
@@ -294,47 +286,62 @@ BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *r
  */
 BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
 
+
+
+
 /* The following represents some thoughts on what a streamlined libbu hashing API might look like */
 
 /* Use typedefs to hide the details of the hash entry and table structures */
-typedef struct bu_nhash_entry bu_nhash_entry;
-typedef struct bu_nhash_tbl   bu_nhash_tbl;
+typedef struct bu_hash_entry bu_hash_entry;
+typedef struct bu_hash_tbl   bu_hash_tbl;
 
-/* Initialize and return a new table */
-bu_nhash_tbl *bu_nhash_tbl_create(unsigned long s);
+/**
+ * Create an initialize a hash table.  The input is the number of desired hash
+ * bins.  This number will be rounded up to the nearest power of two, or a
+ * minimal size if tbl_size is smaller than the internal minimum bin count.
+ */
+BU_EXPORT extern bu_hash_tbl *bu_hash_tbl_create(unsigned long tbl_size);
 
 /* Deletes hash table and all entries */
-void bu_nhash_tbl_destroy(bu_nhash_tbl *t);
+BU_EXPORT extern void bu_hash_tbl_destroy(bu_hash_tbl *t);
 
 /* returns 1 if a new entry is created, 0 if an existing value was updated, -1 on error.*/
-int bu_nhash_set(bu_nhash_tbl *t, const uint8_t *key, size_t key_len, void *val);
+BU_EXPORT extern int bu_hash_set(bu_hash_tbl *t, const uint8_t *key, size_t key_len, void *val);
 
 /* returns value, or NULL if key is not found in table */
-void *bu_nhash_get(const bu_nhash_tbl *t, const uint8_t *key, size_t key_len);
+BU_EXPORT extern void *bu_hash_get(const bu_hash_tbl *t, const uint8_t *key, size_t key_len);
 
 /* remove an entry associated with key from the tbl */
-void bu_nhash_del(bu_nhash_tbl *t, const uint8_t *key, size_t key_len);
+BU_EXPORT extern void bu_hash_del(bu_hash_tbl *t, const uint8_t *key, size_t key_len);
 
 /* For iteration over a hash tbl - returns either first entry (if p is NULL) or
  * next entry (if p is NON-null).  Returns NULL when p is last entry in table. */
-bu_nhash_entry *bu_nhash_next(bu_nhash_tbl *t, bu_nhash_entry *p);
+BU_EXPORT extern bu_hash_entry *bu_hash_next(bu_hash_tbl *t, bu_hash_entry *p);
 
-/* returns value and length of bu_nhash_entry key.  0 on success, 1 on failure */
-int bu_nhash_entry_key(bu_nhash_entry *p, uint8_t **key, size_t *key_len);
+/* returns value and length of bu_hash_entry key.  0 on success, 1 on failure */
+BU_EXPORT extern int bu_hash_entry_key(bu_hash_entry *p, uint8_t **key, size_t *key_len);
 
-/* Thought - there's a problem with bu_nhash_get's interpretation if someone
+/* Thought - there's a problem with bu_hash_get's interpretation if someone
  * passes in a key/value set that has a NULL value - it will look like a failed
- * lookup in bu_nhash_get's results.  Can/should we forbid NULL values in val
- * slots?  I think there is a case that we can, because bu_nhash_get will return the
+ * lookup in bu_hash_get's results.  Can/should we forbid NULL values in val
+ * slots?  I think there is a case that we can, because bu_hash_get will return the
  * expected result for a key that was not inserted at all in that case, without needing
- * to go ahead and insert the key.  Then, bu_nhash_entry_val can serve two purposes
+ * to go ahead and insert the key.  Then, bu_hash_entry_val can serve two purposes
  * - with a NULL entry in the set value, it can do the lookup - with a non-NULL
  * value, it will do the val update. */
 
-/* returns value of bu_nhash_entry if nval is NULL.
+/* returns value of bu_hash_entry if nval is NULL.
  * returns nval if nval was assigned to p's value.
  * returns NULL on error */
-void *bu_nhash_entry_val(bu_nhash_entry *p, void *nval);
+BU_EXPORT extern void *bu_hash_entry_val(bu_hash_entry *p, void *nval);
+
+
+
+
+/* Deprecated API */
+
+
+
 
 /** @} */
 

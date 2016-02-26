@@ -28,8 +28,8 @@
 #include "bu/magic.h"
 #include "bu/hash.h"
 
-unsigned long
-bu_hash(const uint8_t *key, size_t len)
+HIDDEN unsigned long
+_bu_hash(const uint8_t *key, size_t len)
 {
     unsigned long hash = 5381;
     size_t i;
@@ -43,52 +43,10 @@ bu_hash(const uint8_t *key, size_t len)
     return hash;
 }
 
-
-struct bu_hash_tbl *
-bu_hash_tbl_create(unsigned long tbl_size)
+unsigned long
+bu_hash(const uint8_t *key, size_t len)
 {
-    struct bu_hash_tbl *hsh_tbl;
-    unsigned long power_of_two=64;
-    int power=6;
-    int max_power=(sizeof(unsigned long) * 8) - 1;
-
-    /* allocate the table structure (do not use bu_malloc() as this
-     * may be used for MEM_DEBUG).
-     */
-    hsh_tbl = (struct bu_hash_tbl *)malloc(sizeof(struct bu_hash_tbl));
-    if (UNLIKELY(!hsh_tbl)) {
-	fprintf(stderr, "Failed to allocate hash table\n");
-	return (struct bu_hash_tbl *)NULL;
-    }
-
-    /* the number of bins in the hash table will be a power of two */
-    while (power_of_two < tbl_size && power < max_power) {
-	power_of_two = power_of_two << 1;
-	power++;
-    }
-
-    if (power == max_power) {
-	int i;
-
-	hsh_tbl->mask = 1;
-	for (i=1; i<max_power; i++) {
-	    hsh_tbl->mask = (hsh_tbl->mask << 1) + 1;
-	}
-	hsh_tbl->num_lists = hsh_tbl->mask + 1;
-    } else {
-	hsh_tbl->num_lists = power_of_two;
-	hsh_tbl->mask = power_of_two - 1;
-    }
-
-    /* allocate the bins (do not use bu_malloc() as this may be used
-     * for MEM_DEBUG)
-     */
-    hsh_tbl->lists = (struct bu_hash_entry **)calloc(hsh_tbl->num_lists, sizeof(struct bu_hash_entry *));
-
-    hsh_tbl->num_entries = 0;
-    hsh_tbl->magic = BU_HASH_TBL_MAGIC;
-
-    return hsh_tbl;
+    return _bu_hash(key, len);
 }
 
 struct bu_hash_entry *
@@ -376,24 +334,27 @@ bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_ent
 
 /* New API implementation */
 
-
-struct bu_nhash_entry {
+/* TODO - once deprecation is complete, bu_hash_entry becomes private */
+#if 0
+struct bu_hash_entry {
     uint32_t magic;
     uint8_t *key;
     void *value;
     size_t key_len;
-    struct bu_nhash_entry *next;
+    struct bu_hash_entry *next;
 };
-typedef struct bu_nhash_entry bu_nhash_entry_t;
+#endif
 
-struct bu_nhash_tbl {
+/* TODO - once deprecation is complete, bu_hash_entry becomes private */
+#if 0
+struct bu_hash_tbl {
     uint32_t magic;
     unsigned long mask;
     unsigned long num_lists;
     unsigned long num_entries;
-    struct bu_nhash_entry **lists;
+    struct bu_hash_entry **lists;
 };
-typedef struct bu_nhash_tbl bu_nhash_tbl_t;
+#endif
 
 HIDDEN int _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
 {
@@ -412,10 +373,11 @@ HIDDEN int _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
     return match;
 }
 
-struct bu_nhash_tbl *
-bu_nhash_tbl_create(unsigned long tbl_size)
+
+struct bu_hash_tbl *
+bu_hash_tbl_create(unsigned long tbl_size)
 {
-    struct bu_nhash_tbl *hsh_tbl;
+    struct bu_hash_tbl *hsh_tbl;
     unsigned long power_of_two=64;
     int power=6;
     int max_power=(sizeof(unsigned long) * 8) - 1;
@@ -423,10 +385,10 @@ bu_nhash_tbl_create(unsigned long tbl_size)
     /* allocate the table structure (do not use bu_malloc() as this
      * may be used for MEM_DEBUG).
      */
-    hsh_tbl = (struct bu_nhash_tbl *)malloc(sizeof(struct bu_nhash_tbl));
+    hsh_tbl = (struct bu_hash_tbl *)malloc(sizeof(struct bu_hash_tbl));
     if (UNLIKELY(!hsh_tbl)) {
 	fprintf(stderr, "Failed to allocate hash table\n");
-	return (struct bu_nhash_tbl *)NULL;
+	return (struct bu_hash_tbl *)NULL;
     }
 
     /* the number of bins in the hash table will be a power of two */
@@ -451,7 +413,7 @@ bu_nhash_tbl_create(unsigned long tbl_size)
     /* allocate the bins (do not use bu_malloc() as this may be used
      * for MEM_DEBUG)
      */
-    hsh_tbl->lists = (struct bu_nhash_entry **)calloc(hsh_tbl->num_lists, sizeof(struct bu_nhash_entry *));
+    hsh_tbl->lists = (struct bu_hash_entry **)calloc(hsh_tbl->num_lists, sizeof(struct bu_hash_entry *));
 
     hsh_tbl->num_entries = 0;
     hsh_tbl->magic = BU_HASH_TBL_MAGIC;
@@ -459,12 +421,11 @@ bu_nhash_tbl_create(unsigned long tbl_size)
     return hsh_tbl;
 }
 
-
 void
-bu_nhash_tbl_destroy(struct bu_nhash_tbl *hsh_tbl)
+bu_hash_tbl_destroy(struct bu_hash_tbl *hsh_tbl)
 {
     unsigned long idx;
-    struct bu_nhash_entry *hsh_entry, *tmp;
+    struct bu_hash_entry *hsh_entry, *tmp;
 
     BU_CK_HASH_TBL(hsh_tbl);
 
@@ -495,16 +456,16 @@ bu_nhash_tbl_destroy(struct bu_nhash_tbl *hsh_tbl)
 
 
 void *
-bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
+bu_hash_get(const struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 {
-    struct bu_nhash_entry *hsh_entry=NULL;
+    struct bu_hash_entry *hsh_entry=NULL;
     int found=0;
     unsigned long idx;
 
     BU_CK_HASH_TBL(hsh_tbl);
 
     /* calculate the index into the bin array */
-    idx = bu_hash(key, key_len) & hsh_tbl->mask;
+    idx = _bu_hash(key, key_len) & hsh_tbl->mask;
     if (idx >= hsh_tbl->num_lists) {
 	fprintf(stderr, "hash function returned too large value (%ld), only have %ld lists\n",
 		idx, hsh_tbl->num_lists);
@@ -516,7 +477,7 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 	hsh_entry = hsh_tbl->lists[idx];
 	while (hsh_entry) {
 	    /* compare key lengths first for performance */
-	    if (hsh_entry->key_len != key_len) {
+	    if ((size_t)hsh_entry->key_len != key_len) {
 		hsh_entry = hsh_entry->next;
 		continue;
 	    }
@@ -542,9 +503,9 @@ bu_nhash_get(const struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_
 }
 
 int
-bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, void *val)
+bu_hash_set(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, void *val)
 {
-    struct bu_nhash_entry *hsh_entry, *end_entry;
+    struct bu_hash_entry *hsh_entry, *end_entry;
     unsigned long idx;
     int ret = 0;
     int found = 0;
@@ -559,14 +520,14 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
     if (!val) return 0;
 
     /* Use key hash to get bin, add entry to bin list */
-    idx = bu_hash(key, key_len) & hsh_tbl->mask;
+    idx = _bu_hash(key, key_len) & hsh_tbl->mask;
 
     /* If we have existing entries, go hunting.  Otherwise, just add */
     hsh_entry = hsh_tbl->lists[idx];
     end_entry = NULL;
     while (hsh_entry && !found) {
 	/* compare key lengths first for performance */
-	if (hsh_entry->key_len != key_len) {
+	if ((size_t)hsh_entry->key_len != key_len) {
 	    end_entry = hsh_entry;
 	    hsh_entry = hsh_entry->next;
 	    continue;
@@ -580,7 +541,7 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
 
     /* If and only if we ended up with a null hsh_entry, create a new one */
     if (!hsh_entry) {
-	hsh_entry  = (struct bu_nhash_entry *)calloc(1, sizeof(struct bu_nhash_entry));
+	hsh_entry  = (struct bu_hash_entry *)calloc(1, sizeof(struct bu_hash_entry));
 	hsh_entry->next = NULL;
 	hsh_entry->key_len = key_len;
 	hsh_entry->magic = BU_HASH_ENTRY_MAGIC;
@@ -604,10 +565,10 @@ bu_nhash_set(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len, v
 }
 
 void
-bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
+bu_hash_del(struct bu_hash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 {
-    struct bu_nhash_entry *hsh_entry = NULL;
-    struct bu_nhash_entry *prev_entry = NULL;
+    struct bu_hash_entry *hsh_entry = NULL;
+    struct bu_hash_entry *prev_entry = NULL;
     unsigned long idx;
     int found = 0;
 
@@ -617,7 +578,7 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
     if (!key || key_len == 0) return;
 
     /* Use key hash to get bin, add entry to bin list */
-    idx = bu_hash(key, key_len) & hsh_tbl->mask;
+    idx = _bu_hash(key, key_len) & hsh_tbl->mask;
 
     /* Nothing in bin, we're done */
     if (!hsh_tbl->lists[idx]) return;
@@ -626,7 +587,7 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
     prev_entry = NULL;
     while (!found) {
 	/* compare key lengths first for performance */
-	if (hsh_entry->key_len != key_len) {
+	if ((size_t)hsh_entry->key_len != key_len) {
 	    prev_entry = hsh_entry;
 	    hsh_entry = hsh_entry->next;
 	    continue;
@@ -647,15 +608,15 @@ bu_nhash_del(struct bu_nhash_tbl *hsh_tbl, const uint8_t *key, size_t key_len)
 }
 
 
-struct bu_nhash_entry *
-bu_nhash_next(struct bu_nhash_tbl *hsh_tbl, struct bu_nhash_entry *e)
+struct bu_hash_entry *
+bu_hash_next(struct bu_hash_tbl *hsh_tbl, struct bu_hash_entry *e)
 {
     unsigned long idx, l;
     BU_CK_HASH_TBL(hsh_tbl);
 
     if (hsh_tbl->num_entries == 0) {
 	/* this table is empty */
-	return (struct bu_nhash_entry *)NULL;
+	return (struct bu_hash_entry *)NULL;
     }
 
     /* If we don't have an entry, find loop through all the bins in this hash
@@ -667,25 +628,25 @@ bu_nhash_next(struct bu_nhash_tbl *hsh_tbl, struct bu_nhash_entry *e)
 	}
 	/* if we've got nothing (empty bins) we're "done" iterating - return
 	 * NULL */
-	return (struct bu_nhash_entry *)NULL;
+	return (struct bu_hash_entry *)NULL;
     }
 
     if (e && e->next) return e->next;
 
     /* If we've got the last entry in a bin, we need to find the next bin.
      * Use the key hash to get the "current" bin, and proceed from there. */
-    idx = bu_hash(e->key, e->key_len) & hsh_tbl->mask;
+    idx = _bu_hash(e->key, e->key_len) & hsh_tbl->mask;
     idx++;
     for (l = idx; l < hsh_tbl->num_lists; l++) {
 	if (hsh_tbl->lists[l]) return hsh_tbl->lists[l];
 	idx++;
     }
     /* if we've got nothing by this point we've reached the end */
-    return (struct bu_nhash_entry *)NULL;
+    return (struct bu_hash_entry *)NULL;
 }
 
 int
-bu_nhash_entry_key(struct bu_nhash_entry *e, uint8_t **key, size_t *key_len)
+bu_hash_entry_key(struct bu_hash_entry *e, uint8_t **key, size_t *key_len)
 {
     if (!e || (!key && !key_len)) return 1;
 
@@ -697,7 +658,7 @@ bu_nhash_entry_key(struct bu_nhash_entry *e, uint8_t **key, size_t *key_len)
 
 
 void *
-bu_nhash_entry_val(struct bu_nhash_entry *e, void *val)
+bu_hash_entry_val(struct bu_hash_entry *e, void *val)
 {
     if (!e) return NULL;
 

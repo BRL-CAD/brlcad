@@ -95,20 +95,20 @@ const char *array2[] = {
 int indices[] = {7,6,4,3,5,1,2};
 
 int hash_noop_test() {
-    bu_nhash_tbl *t = bu_nhash_tbl_create(0);
-    bu_nhash_tbl_destroy(t);
+    bu_hash_tbl *t = bu_hash_tbl_create(0);
+    bu_hash_tbl_destroy(t);
     return 0;
 }
 
 int hash_add_del_one() {
     int *val = NULL;
-    bu_nhash_tbl *t = bu_nhash_tbl_create(0);
-    if (bu_nhash_set(t, (const uint8_t *)array2[0], strlen(array2[0]), (void *)&indices[0]) == -1) return 1;
-    val = (int *)bu_nhash_get(t, (const uint8_t *)"r1", strlen("r1"));
+    bu_hash_tbl *t = bu_hash_tbl_create(0);
+    if (bu_hash_set(t, (const uint8_t *)array2[0], strlen(array2[0]), (void *)&indices[0]) == -1) return 1;
+    val = (int *)bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"));
     if (*val != 7) return 1;
-    bu_nhash_del(t, (const uint8_t *)"r1", strlen("r1"));
-    if (bu_nhash_get(t, (const uint8_t *)"r1", strlen("r1"))) return 1;
-    bu_nhash_tbl_destroy(t);
+    bu_hash_del(t, (const uint8_t *)"r1", strlen("r1"));
+    if (bu_hash_get(t, (const uint8_t *)"r1", strlen("r1"))) return 1;
+    bu_hash_tbl_destroy(t);
     return 0;
 }
 
@@ -122,7 +122,7 @@ int hash_loremipsum() {
     int lorem_nums[275];
 
     // Initialize table (will create default 64 bins
-    bu_nhash_tbl *t = bu_nhash_tbl_create(0);
+    bu_hash_tbl *t = bu_hash_tbl_create(0);
 
     // Set up non-sequential numbers to use as values - easy to compare but
     // shouldn't have any accidental alignments that could obscure bugs.
@@ -134,7 +134,7 @@ int hash_loremipsum() {
     // values, and both assignments (C++ and hash table) should result in a
     // "last assignment wins" value being stored for subsequent lookups.
     for (i = 0; i < 275; i++) {
-	int r = bu_nhash_set(t, (const uint8_t *)lorem_ipsum[i], strlen(lorem_ipsum[i]), (void *)&lorem_nums[i]);
+	int r = bu_hash_set(t, (const uint8_t *)lorem_ipsum[i], strlen(lorem_ipsum[i]), (void *)&lorem_nums[i]);
 	if (strlen(lorem_ipsum[i]) == 0 && r != -1) {
 	    bu_log("Error: %s -> %d should have failed to set and didn't!\n", lorem_ipsum[i], lorem_nums[i]);
 	    ret = 1;
@@ -147,7 +147,7 @@ int hash_loremipsum() {
     for (c_it = cppmap.begin(); c_it != cppmap.end(); c_it++) {
 	int *val = NULL;
 	const char *key = ((*c_it).first).c_str();
-	val = (int *)bu_nhash_get(t, (const uint8_t *)key, strlen(key));
+	val = (int *)bu_hash_get(t, (const uint8_t *)key, strlen(key));
 	//bu_log("%s reports %d in C++ map and %d in hash\n", key, (*c_it).second, *val);
 	if (*val != (*c_it).second) {
 	    bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *val);
@@ -158,12 +158,12 @@ int hash_loremipsum() {
     // Iterate over hash and use find on the C++ map to validate each entry. Also
     // confirms bu hash key copies are correct since any key in the hash table
     // not found in the C++ map is reported as an error.
-    struct bu_nhash_entry *e = bu_nhash_next(t, NULL);
+    struct bu_hash_entry *e = bu_hash_next(t, NULL);
     while (e) {
 	uint8_t *key;
 	void *val;
-	(void)bu_nhash_entry_key(e, &key, NULL);
-	val = bu_nhash_entry_val(e, NULL);
+	(void)bu_hash_entry_key(e, &key, NULL);
+	val = bu_hash_entry_val(e, NULL);
 	c_it = cppmap.find(std::string((const char *)key));
 	if (c_it == cppmap.end()) {
 	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", (const char *)key);
@@ -173,7 +173,7 @@ int hash_loremipsum() {
 	    bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *(int *)val);
 	    ret = 1;
 	}
-	e = bu_nhash_next(t, e);
+	e = bu_hash_next(t, e);
     }
 
     return ret;
