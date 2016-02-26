@@ -28,6 +28,27 @@
 #include "bu/magic.h"
 #include "bu/hash.h"
 
+/* TODO - once deprecation is complete, bu_hash structs become private */
+#if 0
+struct bu_hash_entry {
+    uint32_t magic;
+    uint8_t *key;
+    void *value;
+    size_t key_len;
+    struct bu_hash_entry *next;
+};
+#define BU_CK_HASH_ENTRY(_ep) BU_CKMAG(_ep, BU_HASH_ENTRY_MAGIC, "bu_hash_entry")
+
+struct bu_hash_tbl {
+    uint32_t magic;
+    unsigned long mask;
+    unsigned long num_lists;
+    unsigned long num_entries;
+    struct bu_hash_entry **lists;
+};
+#define BU_CK_HASH_TBL(_hp) BU_CKMAG(_hp, BU_HASH_TBL_MAGIC, "bu_hash_tbl")
+#endif
+
 HIDDEN unsigned long
 _bu_hash(const uint8_t *key, size_t len)
 {
@@ -42,28 +63,6 @@ _bu_hash(const uint8_t *key, size_t len)
 
     return hash;
 }
-
-/* TODO - once deprecation is complete, bu_hash_entry becomes private */
-#if 0
-struct bu_hash_entry {
-    uint32_t magic;
-    uint8_t *key;
-    void *value;
-    size_t key_len;
-    struct bu_hash_entry *next;
-};
-#endif
-
-/* TODO - once deprecation is complete, bu_hash_entry becomes private */
-#if 0
-struct bu_hash_tbl {
-    uint32_t magic;
-    unsigned long mask;
-    unsigned long num_lists;
-    unsigned long num_entries;
-    struct bu_hash_entry **lists;
-};
-#endif
 
 HIDDEN int _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
 {
@@ -81,7 +80,6 @@ HIDDEN int _nhash_keycmp(const uint8_t *k1, const uint8_t *k2, size_t key_len)
     }
     return match;
 }
-
 
 struct bu_hash_tbl *
 bu_hash_create(unsigned long tbl_size)
@@ -381,7 +379,7 @@ bu_hash_value(struct bu_hash_entry *e, void *val)
 
 /* Old implementation code - remove once deprecation is complete */
 
-
+#if 1
 unsigned long
 bu_hash(const uint8_t *key, size_t len)
 {
@@ -683,7 +681,7 @@ bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_ent
     }
     return NULL;
 }
-
+#endif
 
 /*
  * Local Variables:

@@ -163,7 +163,7 @@ BU_EXPORT extern void *bu_hash_value(bu_hash_entry *e, void *nval);
 
 
 /* Deprecated API */
-
+#if 1
 struct bu_hash_entry {
     uint32_t magic;
     uint8_t *key;
@@ -234,7 +234,7 @@ DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_first(const struct
 							 struct bu_hash_record *rec);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_next(struct bu_hash_record *rec);
 DEPRECATED BU_EXPORT extern struct bu_hash_entry *bu_hash_tbl_traverse(struct bu_hash_tbl *hsh_tbl, int (*func)(struct bu_hash_entry *, void *), void *func_arg);
-
+#endif
 /** @} */
 
 __END_DECLS
