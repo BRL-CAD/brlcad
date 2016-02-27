@@ -91,8 +91,8 @@ main(int ac, const char **av)
 {
     int uac = 0;
     int ret = 0;
-    int width = 0;
-    int height = 0;
+    size_t width = 0;
+    size_t height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
@@ -271,19 +271,18 @@ main(int ac, const char **av)
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
 
-#if 0
     /* If we have no width or height specified, and we have an input format that
      * does not encode that information, make an educated guess */
     if (!width && !height && (in_type == BU_MIME_IMAGE_PIX || in_type == BU_MIME_IMAGE_BW)) {
+	struct stat sbuf;
 	if (stat(bu_vls_addr(&in_path), &sbuf) < 0) {
 	    bu_exit(1, "Unable to stat input file");
 	}
-	if (icv_autosize((size_t)sbuf.st_size, in_type, &width, &height)) {
+	if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, in_type, &width, &height)) {
 	    bu_log("Error - input image type does not have dimension information encoded, and icv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
 	    bu_exit(1, "image dimensional information insufficient");
 	}
     }
-#endif
 
     img = icv_read(bu_vls_addr(&in_path), in_type, width, height);
     icv_write(img, bu_vls_addr(&out_path), out_type);

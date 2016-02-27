@@ -64,9 +64,21 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 /**
  * Function to calculate (or make an educated guess) about the
  * dimensions of an image, when the image doesn't supply such
- * information
+ * information.
+ *
+ * @param[in] name       String identifying a particular size (pass NULL if not using)
+ * @param[in] dpi        Dots per inch of image (pass 0 if not using)
+ * @param[in] file_size  File or in-memory size of image (necessary if deducing an unspecified image size)
+ * @param[in] type       Image type (necessary if deducing an unspecified image size)
+ *
+ * @param[out] widthp    Pointer to variable that will hold image width
+ * @param[out] heightp   Pointer to variable that will hold image height
+ *
+ * @return
+ * Returns 1 if an image size was identified, zero otherwise.
+ *
  */
-ICV_EXPORT extern int icv_autosize(size_t file_size, bu_mime_image_t type, size_t *width, size_t *height);
+ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *width, size_t *height);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be

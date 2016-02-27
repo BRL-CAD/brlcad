@@ -36,6 +36,8 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/mime.h"
+#include "bu/str.h"
+#include "bu/units.h"
 
 
 struct xy_size {
@@ -99,12 +101,83 @@ struct xy_size icv_display_sizes[] = {
     { NULL,   0,    0 }
 };
 
+
+struct paper_size {
+    const char *label;
+    double width_mm;  /* width in mm */
+    double height_mm; /* height in mm */
+    double width_in;  /* width in inches */
+    double height_in; /* height in inches */
+};
+
+/* Specify the size in whatever unit the "standard"
+ * definition uses, and zero the other unit. */
+struct paper_size paper_sizes[] = {
+    { "Letter",   0,    0, 8.5,  11 },
+    { "Legal",    0,    0, 8.5,  14 },
+    { "Ledger",   0,    0,  17,  11 },
+
+    { "A0",     841, 1189,   0,   0 },
+    { "A1",     594,  841,   0,   0 },
+    { "A2",     420,  594,   0,   0 },
+    { "A3",     297,  420,   0,   0 },
+    { "A4",     210,  297,   0,   0 },
+    { "A5",     148,  210,   0,   0 },
+    { "A6",     105,  148,   0,   0 },
+    { "A7",      74,  105,   0,   0 },
+    { "A8",      52,   74,   0,   0 },
+    { "A9",      37,   52,   0,   0 },
+    { "A10",     26,   37,   0,   0 },
+
+    { "B0",    1000, 1414,   0,   0 },
+    { "B1",     707, 1000,   0,   0 },
+    { "B2",     500,  707,   0,   0 },
+    { "B3",     353,  500,   0,   0 },
+    { "B4",     250,  353,   0,   0 },
+    { "B5",     176,  250,   0,   0 },
+    { "B6",     125,  176,   0,   0 },
+    { "B7",      88,  125,   0,   0 },
+    { "B8",      62,   88,   0,   0 },
+    { "B9",      44,   62,   0,   0 },
+    { "B10",     31,   44,   0,   0 },
+
+    { "C0",     917, 1297,   0,   0 },
+    { "C1",     648,  917,   0,   0 },
+    { "C2",     458,  648,   0,   0 },
+    { "C3",     324,  458,   0,   0 },
+    { "C4",     229,  324,   0,   0 },
+    { "C5",     162,  229,   0,   0 },
+    { "C6",     114,  162,   0,   0 },
+    { "C7",      81,  114,   0,   0 },
+    { "C8",      57,   81,   0,   0 },
+    { "C9",      40,   57,   0,   0 },
+    { "C10",     28,   40,   0,   0 },
+
+    { "wallet",   0,    0,   2,   3 },
+    { "135mm",    0,    0,   4,   6 },
+    { "4D",       0,    0,   4.5, 6 },
+    { "6R",       0,    0,   6,   8 },
+    { "8R",       0,    0,   8,  10 },
+    { "S8R",      0,    0,   8,  12 },
+    { "10R",      0,    0,  10,  12 },
+    { "11R",      0,    0,  11,  14 },
+    { "S11R",     0,    0,  17,  11 },
+
+    { NULL,   0,    0,   0,   0 }
+};
+
+/* DPI settings */
+size_t dpi_array[] = {72, 96, 150, 300, 2540, 4000, 0};
+
 int
-icv_autosize(size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t *heightp)
+icv_image_size(const char *name, size_t udpi, size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t *heightp)
 {
     struct xy_size *sp;
+    struct paper_size *ps;
     size_t root;
     size_t npixels;
+    int dpi_ind = 0;
+    unsigned long i;
     int pixel_size = 3; /* Start with an assumption of 3 doubles per pixel */
     switch (img_type) {
 	case BU_MIME_IMAGE_PIX:
@@ -116,20 +189,66 @@ icv_autosize(size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t 
 	default:
 	    break;
     }
+
     npixels = (size_t)(file_size / pixel_size);
 
-    if (npixels <= 0)
-	return  0;
-
-    sp = icv_display_sizes;
-    while (sp->width != 0) {
-	if (npixels == sp->width * sp->height) {
-	    *widthp = sp->width;
-	    *heightp = sp->height;
-	    return      1;
+    /* If we have a name, try that first. */
+    if (name) {
+	/* First try the display sizes - they're not DPI dependent. */
+	sp = icv_display_sizes;
+	while (sp->label) {
+	    if (BU_STR_EQUAL(sp->label, name)) {
+		*widthp = sp->width;
+		*heightp = sp->height;
+		/* If we don't have a file size, just return success*/
+		if (!file_size) return 1;
+		/* If we *do* have a size, validate that the image dimensions match the
+		 * display size identified. */
+		return (npixels == sp->width * sp->height) ? 1 : 0;
+	    }
+	    sp++;
 	}
-	sp++;
+	/* Next, try the paper sizes. */
+	ps = paper_sizes;
+	while (ps->label) {
+	    if (BU_STR_EQUAL(ps->label, name)) {
+		/* For paper sizes, dimensions aren't enough by themselves.  We need a dpi.
+		 * If one was supplied, use it. */
+		if (udpi) {
+		    *widthp = (ps->width_mm > 0) ? (size_t)(ps->width_mm * udpi * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * udpi);
+		    *heightp = (ps->height_mm > 0) ? (size_t)(ps->height_mm * udpi * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * udpi);
+		    /* If we don't have a file size, just return success*/
+		    if (!file_size) return 1;
+		    /* If we *do* have a size, validate that the image dimensions match the
+		     * display size identified. */
+		    return (npixels == *widthp * *heightp) ? 1 : 0;
+		}
+		/* If not, and if we have a file size, try to find a matching fit in the DPI array */
+		if (file_size) {
+		    i = 0;
+		    while (dpi_array[i]) {
+			size_t tw = (ps->width_mm > 0) ? (size_t)(ps->width_mm * dpi_array[i] * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * dpi_array[i]);
+			size_t th = (ps->height_mm > 0) ? (size_t)(ps->height_mm * dpi_array[i] * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * dpi_array[i]);
+			if (npixels == tw * th) {
+			    *widthp = tw;
+			    *heightp = th;
+			    return 1;
+			}
+			i++;
+		    }
+		    return 0;
+		}
+		/* If we don't have a file size, go with 300 dpi */
+		*widthp = (ps->width_mm > 0) ? (size_t)(ps->width_mm * 300 * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * 300);
+		*heightp = (ps->height_mm > 0) ? (size_t)(ps->height_mm * 300 * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * 300);
+		return 1;
+	    }
+	    ps++;
+	}
     }
+
+    /* If we don't have a name or none of the names matched, try the image dimensions if we have them. */
+    if (npixels <= 0) return  0;
 
     /* If the size is a perfect square, then use that. */
     root = (size_t)(sqrt((double)npixels)+0.999);
@@ -137,6 +256,35 @@ icv_autosize(size_t file_size, bu_mime_image_t img_type, size_t *widthp, size_t 
 	*widthp = root;
 	*heightp = root;
 	return  1;
+    }
+
+
+    /* Check for "standard" display sized images */
+    sp = icv_display_sizes;
+    while (sp->width != 0) {
+	if (npixels == sp->width * sp->height) {
+	    *widthp = sp->width;
+	    *heightp = sp->height;
+	    return 1;
+	}
+	sp++;
+    }
+
+    /* Try paper sizes in various DPI settings */
+    ps = paper_sizes;
+    while (ps->label) {
+	dpi_ind = 0;
+	while (dpi_array[dpi_ind]) {
+	    size_t tw = (ps->width_mm > 0) ? (size_t)(ps->width_mm * dpi_array[dpi_ind] * 1/bu_units_conversion("inch")) : (size_t)(ps->width_in * dpi_array[dpi_ind]);
+	    size_t th = (ps->height_mm > 0) ? (size_t)(ps->height_mm * dpi_array[dpi_ind] * 1/bu_units_conversion("inch")) : (size_t)(ps->height_in * dpi_array[dpi_ind]);
+	    if (npixels == tw * th) {
+		*widthp = tw;
+		*heightp = th;
+		return 1;
+	    }
+	    dpi_ind++;
+	}
+	ps++;
     }
 
     /* Nope, we are clueless. */
