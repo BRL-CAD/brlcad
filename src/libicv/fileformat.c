@@ -37,19 +37,8 @@
 #include "vmath.h"
 #include "icv.h"
 
-
-/* c99 doesn't declare these, but C++ does */
-#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
-extern FILE *fdopen(int, const char *);
-#endif
-
-
 /* this might be a little better than saying 0444 */
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
-
-/* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, size_t size);
-extern unsigned char *data2uchar(const icv_image_t *bif);
 
 /* defined in bw.c */
 extern int bw_write(icv_image_t *bif, const char *filename);
@@ -62,6 +51,10 @@ extern icv_image_t *pix_read(const char* filename, size_t width, size_t height);
 /* defined in dpix.c */
 extern icv_image_t *dpix_read(const char* filename, size_t width, size_t height);
 extern int dpix_write(icv_image_t *bif, const char *filename);
+
+/* defined in png.c */
+extern int png_write(icv_image_t *bif, const char *filename);
+extern icv_image_t* png_read(const char *filename);
 
 /* defined in ppm.c */
 extern int ppm_write(icv_image_t *bif, const char *filename);
@@ -110,65 +103,6 @@ icv_guess_file_format(const char *filename, char *trimmedname)
     return BU_MIME_IMAGE_PIX;
 }
 
-HIDDEN int
-png_write(icv_image_t *bif, const char *filename)
-{
-    png_structp png_ptr = NULL;
-    png_infop info_ptr = NULL;
-    size_t i = 0;
-    int png_color_type;
-    unsigned char *data;
-    FILE *fh;
-
-    switch (bif->color_space) {
-	case ICV_COLOR_SPACE_GRAY:
-	    png_color_type = PNG_COLOR_TYPE_GRAY;
-	    break;
-	default:
-	    png_color_type = PNG_COLOR_TYPE_RGB;
-    }
-
-    fh = fopen(filename, "wb");
-    if (UNLIKELY(fh==NULL)) {
-	perror("fdopen");
-	bu_log("ERROR: png_write failed to get a FILE pointer\n");
-	return 0;
-    }
-
-    data = data2uchar(bif);
-
-    png_ptr = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
-    if (UNLIKELY(png_ptr == NULL)) {
-	fclose(fh);
-	return 0;
-    }
-
-    info_ptr = png_create_info_struct(png_ptr);
-    if (info_ptr == NULL || setjmp(png_jmpbuf(png_ptr))) {
-	png_destroy_read_struct(&png_ptr, info_ptr ? &info_ptr : NULL, NULL);
-	bu_log("ERROR: Unable to create png header\n");
-	fclose(fh);
-	return 0;
-    }
-
-    png_init_io(png_ptr, fh);
-    png_set_IHDR(png_ptr, info_ptr, (unsigned)bif->width, (unsigned)bif->height, 8, png_color_type,
-		 PNG_INTERLACE_NONE, PNG_COMPRESSION_TYPE_DEFAULT,
-		 PNG_FILTER_TYPE_DEFAULT);
-    png_write_info(png_ptr, info_ptr);
-    for (i = bif->height-1; i > 0; --i) {
-	png_write_row(png_ptr, (png_bytep) (data + bif->width*bif->channels*i));
-    }
-    png_write_row(png_ptr, (png_bytep) (data + 0));
-    png_write_end(png_ptr, info_ptr);
-
-    png_destroy_write_struct(&png_ptr, &info_ptr);
-    fclose(fh);
-    return 1;
-}
-
-/* end of private functions */
-
 /* begin public functions */
 
 icv_image_t *
@@ -180,6 +114,8 @@ icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t heig
     }
 
     switch (format) {
+	case BU_MIME_IMAGE_PNG:
+	    return png_read(filename);
 	case BU_MIME_IMAGE_PIX:
 	    return pix_read(filename, width, height);
 	case BU_MIME_IMAGE_BW :
