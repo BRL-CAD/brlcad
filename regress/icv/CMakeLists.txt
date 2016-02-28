@@ -28,8 +28,8 @@ macro(Add_Image_Test testname depends_list)
 endmacro()
 
 Add_Image_Test(pix_pix ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../../bench/ref/m35.pix"
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.log"
   )
