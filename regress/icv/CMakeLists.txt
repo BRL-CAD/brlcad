@@ -31,9 +31,26 @@ Add_Image_Test(pix_pix ""
   INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
   CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.pix"
-  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_icv.log"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_pix.log"
   )
 
+Add_Image_Test(png_pix ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.png"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_pix.log"
+  )
+
+# TODO - need different script to handle exports - need to go to file
+# target of choice, and from there to pix to do pixel comparison (pixcmp
+# only works on pix files...)
+# In essence, that means all pix->* tests should depend on the *->pix
+# test being run successfully first, since we need icv to be able to
+# boil the files back down to pix for comparison.
+
+CMAKEFILES(
+  m35.png
+  )
 
 # Local Variables:
 # tab-width: 8
