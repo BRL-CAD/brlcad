@@ -2994,6 +2994,8 @@ mark_as_advanced(CMAKE_C_COMPILER)
 # warning about out-of-sync files is printed but no automatic updating takes
 # place in the source tree.
 
+set(CONFIG_FATAL_ERROR 0)
+
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
@@ -3010,7 +3012,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_DIFFERENT)
-  message(FATAL_ERROR "\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
+  set(CONFIG_FATAL_ERROR 1)
+  message("\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
 endif(IS_DIFFERENT)
 
 # Do the same thing for the configure shell script - finish it and check
@@ -3023,8 +3026,13 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  message(FATAL_ERROR "\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
+  set(CONFIG_FATAL_ERROR 1)
+  message("\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
 endif(IS_CONFIG_SH_DIFFERENT)
+
+if(CONFIG_FATAL_ERROR)
+  message(FATAL_ERROR "Configure haulted.")
+endif(CONFIG_FATAL_ERROR)
 
 
 # Because the build-time-delta needs a configure-file but comes at the
