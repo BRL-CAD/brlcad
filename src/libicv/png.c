@@ -49,7 +49,7 @@ png_write(icv_image_t *bif, const char *filename)
     png_structp png_ptr = NULL;
     png_infop info_ptr = NULL;
     size_t i = 0;
-    int png_color_type;
+    static int png_color_type;
     unsigned char *data;
     FILE *fh;
 
