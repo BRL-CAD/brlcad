@@ -3,6 +3,7 @@ set(SRCIMG "@INPUT_IMAGE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
 set(TGTIMG "@TARGET_IMAGE@")
 set(LOGFILE "@LOG_FILE@")
+set(TGT "@TARGET_NAME@")
 set(BDIR "@CMAKE_BINARY_DIR@/@BIN_DIR@")
 
 set(ICV_EXEC "${BDIR}/../src/util/icv")
@@ -19,18 +20,35 @@ if(NOT EXISTS "${TGTIMG}")
   message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV_EXEC}, aborting.\nSee ${LOGFILE} for more details.")
 endif(NOT EXISTS "${TGTIMG}")
 
-# pixcmp the results with the control image to make sure icv got it right
-file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
+# Because we are exporting, we need to convert both the control image
+# and the target image to PIX format for pixcmp to do its check.
 execute_process(
-  COMMAND "${BDIR}/pixcmp" "${TGTIMG}" "${CTRLIMG}"
+  COMMAND "${ICV_EXEC}" "${CTRLIMG}" "${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix"
+  OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+set(icv_log)
+execute_process(
+  COMMAND "${ICV_EXEC}" "${TGTIMG}" "${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix"
+  OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+set(icv_log)
+
+# pixcmp the results with the control image to make sure icv got it right
+file(APPEND "${LOGFILE}" "\nComparing ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix to ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix:\n")
+execute_process(
+  COMMAND "${BDIR}/pixcmp" "${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix" "${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix"
   RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
   )
 file(APPEND "${LOGFILE}" "${icv_log}")
 
 if(${pixcmp_val})
-  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${BDIR}/pixcmp, aborting.\nSee ${LOGFILE} for more details.")
+  message(FATAL_ERROR "Differences found between ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix and ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix with ${BDIR}/pixcmp, aborting.\nSee ${LOGFILE} for more details.")
 else(${pixcmp_val})
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
 endif(${pixcmp_val})
 
