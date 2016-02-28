@@ -65,9 +65,25 @@ Add_Image_Test(pix_png EXPORT ""
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_png.log"
   )
 
+Add_Image_Test(ppm_pix IMPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_ppm.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/ppm_pix.log"
+  )
+
+Add_Image_Test(pix_ppm EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.ppm"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_ppm.log"
+  )
+
+
 
 CMAKEFILES(
   m35.png
+  m35.ppm
   )
 
 # Local Variables:

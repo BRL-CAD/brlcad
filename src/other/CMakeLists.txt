@@ -191,6 +191,23 @@ if(BRLCAD_TERMLIB_BUILD)
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
+# libnetpbm Library support for pnm,ppm,pbm, etc. image files
+set(netpbm_ALIASES ENABLE_NETPBM)
+set(netpbm_DESCRIPTION "
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${netpbm_ALIASES})
+if(BRLCAD_NETPBM_BUILD)
+  SetTargetFolder(libnetpbm "Third Party Libraries")
+  SetTargetFolder(libnetpbm-static "Third Party Libraries")
+endif(BRLCAD_NETPBM_BUILD)
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
+
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER
 # zlib to set the variables if using a local copy of zlib.  If not
 # using a local copy of zlib, FindZLIB results will be identical in
