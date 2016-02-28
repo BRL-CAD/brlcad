@@ -1,0 +1,40 @@
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(SRCIMG "@INPUT_IMAGE@")
+set(CTRLIMG "@CONTROL_IMAGE@")
+set(TGTIMG "@TARGET_IMAGE@")
+set(LOGFILE "@LOG_FILE@")
+set(BDIR "@CMAKE_BINARY_DIR@/@BIN_DIR@")
+
+# Start with the file using standard UNIX line endings
+file(APPEND "${LOGFILE}" "Converting ${SRCIMG} to ${TGTIMG}:\n")
+execute_process(
+  COMMAND "${BDIR}/../src/util/icv" "${SRCIMG}" "${TGTIMG}"
+  OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+set(icv_log)
+if(NOT EXISTS "${TGTIMG}")
+  message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${BDIR}/../src/util/icv, aborting.\nSee ${LOGFILE} for more details.")
+endif(NOT EXISTS "${TGTIMG}")
+
+# pixcmp the results with the control image to make sure icv got it right
+file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
+execute_process(
+  COMMAND "${BDIR}/pixcmp" "${TGTIMG}" "${CTRLIMG}"
+  RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+
+if(${pixcmp_val})
+  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${BDIR}/pixcmp, aborting.\nSee ${LOGFILE} for more details.")
+else(${pixcmp_val})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
+endif(${pixcmp_val})
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

@@ -29,6 +29,10 @@ add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
+# Image Conversion Regression Tests (experimental)
+#add_subdirectory(icv)
+CMAKEFILES(icv)
+
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
 
