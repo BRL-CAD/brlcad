@@ -162,7 +162,7 @@ typedef ptrdiff_t ssize_t;
 #    define S_IWUSR _S_IWRITE
 #  endif
 #  if !defined(S_ISREG)
-#    define S_ISREG(s) ((x) & S_IFREG)
+#    define S_ISREG(x) ((x) & S_IFREG)
 #  endif
 #endif
 
