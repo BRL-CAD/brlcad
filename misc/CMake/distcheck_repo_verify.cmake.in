@@ -274,9 +274,9 @@ endif(BUILD_FILES_NOT_IN_SVN)
 # Either of the previous two cases halts distcheck until fixed.
 mark_as_advanced(FORCE_DISTCHECK)
 if (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
-  if (NOT ${FORCE_DISTCHECK} MATCHES "ON")
+  if (NOT FORCE_DISTCHECK)
     message(FATAL_ERROR "ERROR: Distcheck cannot proceed until build files and repo are in sync (set -DFORCE_DISTCHECK=ON to override)")
-  endif (NOT ${FORCE_DISTCHECK} MATCHES "ON")
+  endif (NOT FORCE_DISTCHECK)
 endif (SVN_FILES_NOT_IN_BUILD OR BUILD_FILES_NOT_IN_SVN)
 
 # OK, no fatal errors - clean up the text files
