@@ -153,13 +153,12 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-
 /* For Windows */
 #if defined(_MSC_VER)
 #  define S_IRUSR _S_IREAD
 #  define S_IWUSR _S_IWRITE
+#  define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
 #endif
-
 
 
 /*
@@ -329,7 +328,7 @@ typedef long int pm_filepos;
    Netpbm program to access a file of the hacker's choosing when the
    Netpbm program means to access its own temporary file.
 */
-#ifdef __MINGW32__
+#if defined(__MINGW32__) || defined(_MSC_VER)
   #define HAVE_MKSTEMP 0
 #else
   #define HAVE_MKSTEMP 1
