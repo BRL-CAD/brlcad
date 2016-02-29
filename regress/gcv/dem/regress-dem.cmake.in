@@ -2,8 +2,8 @@
 execute_process(COMMAND "@CMAKE_COMMAND@" -E tar xjf "@CMAKE_CURRENT_SOURCE_DIR@/hawaii-c.tar.bz2" WORKING_DIRECTORY "@CMAKE_CURRENT_BINARY_DIR@")
 
 # Run the converter
-execute_process(COMMAND "@CMAKE_BINARY_DIR@/bin/dem-g" @CMAKE_CURRENT_BINARY_DIR@/hawaii-c OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
-file(WRITE @CMAKE_CURRENT_BINARY_DIR@/hawaii-c.log "${dem_g_log}")
+execute_process(COMMAND "@CMAKE_BINARY_DIR@/bin/dem-g" "@CMAKE_CURRENT_BINARY_DIR@/hawaii-c" OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
+file(WRITE "@CMAKE_CURRENT_BINARY_DIR@/hawaii-c.log" "${dem_g_log}")
 
 # Known "good" md5sum of output for comparision
 set(EXPECTED_MD5 "cf87c3b174840f18f5653c677af1f433")
