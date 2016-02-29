@@ -101,8 +101,6 @@ bu_file_exists(const char *path, int *fd)
 int
 bu_same_file(const char *fn1, const char *fn2)
 {
-    struct stat sb1, sb2;
-
     if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
     }
@@ -115,12 +113,29 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    if ((stat(fn1, &sb1) == 0) &&
-	(stat(fn2, &sb2) == 0) &&
-	(sb1.st_dev == sb2.st_dev) &&
-	(sb1.st_ino == sb2.st_ino)) {
-	return 1;
+#ifdef HAVE_SYMLINK
+    {
+	struct stat sb1, sb2;
+	if ((stat(fn1, &sb1) == 0) && (stat(fn2, &sb2) == 0) &&
+		(sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+	    return 1;
+	}
     }
+#else
+    {
+	/* On Windows, sb1 and sb2 reported identical in all of
+	 * the metrics tested above when fn1 and fn2 were different.
+	 * Fall back on a path check, since without symlinks those
+	 * should indicate separate files... */
+	char *rp1 = bu_realpath(fn1, NULL);	
+	char *rp2 = bu_realpath(fn2, NULL);
+	int ret = 0;
+	if (BU_STR_EQUAL(rp1, rp2)) ret = 1;
+	bu_free(rp1, "free rp1");
+	bu_free(rp2, "free rp2");
+	return ret;
+    }
+#endif
 
     return 0;
 }
