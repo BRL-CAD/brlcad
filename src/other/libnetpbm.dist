@@ -23,6 +23,11 @@ ppmdfont.h
 ppmdraw.h
 ppmfloyd.h
 ppm.h
+libpbmvms.c
+libsystem.c
+libsystem_dummy.c
+mkstemp.c
+standard.ppmdfont
 util/bitreverse.h
 util/intcode.h
 util/mallocvar.h
