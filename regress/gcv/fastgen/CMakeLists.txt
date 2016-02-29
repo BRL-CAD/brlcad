@@ -1,4 +1,4 @@
-configure_file(${CMAKE_CURRENT_SOURCE_DIR}/regress-fastgen.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/regress-fastgen.cmake @ONLY)
+configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-fastgen.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-fastgen.cmake" @ONLY)
 add_custom_command(
   OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/fastgen.done"
   COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-fastgen.cmake"
