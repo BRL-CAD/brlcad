@@ -149,7 +149,7 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  *     /dir1/dir2/file.ext
  */
 typedef enum {
-    PATH_ALL = 0,       /*!< full path, sans [mime]: prefix */
+    PATH_ALL = 0,       /*!< full path, sans [mime::] prefix */
     PATH_DIRNAME,       /*!< /dir1/dir2 */
     PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
     PATH_BASENAME,      /*!< file.ext */
@@ -167,11 +167,15 @@ typedef enum {
  *
  * bu_path_component will also accept a mime_type_t argument to type and return
  * the string form of the mime type associated with the file path in component.
+ * That mime type will be deduced either by a [mime::] prefix on the path, or
+ * by the file extension on the path.  If neither of these is successful, an
+ * unknown type will be returned.
+ *
  * The return value will still report success or failure (1/0) - to get the
  * integer form of the mime type found, use bu_file_mime_int to process
  * component:
  *
- * if (bu_path_component(c, "file.png", (path_component_t)MIME_IMAGE)) {
+ * if (bu_path_component(c, "file.png", (path_component_t)BU_MIME_IMAGE)) {
  *    mime_image_t t = (mime_image_t)bu_file_mime_int(bu_vls_addr(c));
  * }
  */

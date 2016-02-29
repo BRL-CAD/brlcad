@@ -108,6 +108,12 @@ main(int argc, char *argv[])
 	case 4:
 	    compare(argv[1], control, PATH_EXTENSION);
 	    break;
+	case 5:
+	    compare(argv[1], control, (path_component_t)BU_MIME_IMAGE);
+	    break;
+	case 6:
+	    compare(argv[1], control, (path_component_t)BU_MIME_MODEL);
+	    break;
 	default:
 	    bu_log("Error - unknown component\n");
 	    break;

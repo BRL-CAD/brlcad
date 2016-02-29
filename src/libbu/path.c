@@ -147,10 +147,10 @@ _extract_path_and_prefix(struct bu_vls *path, struct bu_vls *format, const char 
     if (UNLIKELY(strlen(input) == 0)) return 0;
     inputcpy = bu_strdup(input);
     colon_pos = strchr(inputcpy, ':');
-    if (colon_pos) {
+    if (colon_pos && colon_pos[1] == ':') {
 	/* path */
 	bu_vls_sprintf(&wpath, "%s", input);
-	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
+	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 2);
 	if (path && bu_vls_strlen(&wpath) > 0) {
 	    ret = 1;
 	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
