@@ -35,7 +35,6 @@ macro(Add_Image_Test testname testtype depends_list)
     ${STAMP_FILE}
     ${LOG_FILE}
     ${TARGET_IMAGE}
-    ${CMAKE_CURRENT_BINARY_DIR}/${testname}.done
     )
 endmacro()
 

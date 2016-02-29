@@ -17,11 +17,6 @@ DISTCLEAN(
   "${CMAKE_CURRENT_BINARY_DIR}/fastgen_dos.g"
   )
 
-CMAKEFILES(
-  fastgen_dos.fast4 
-  fastgen_box.fast4 
-  )
-
 # Local Variables:
 # tab-width: 8
 # mode: cmake

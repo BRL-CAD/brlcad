@@ -22,7 +22,7 @@ execute_process(COMMAND "@CMAKE_COMMAND@" -E tar xjf "${CSDIR}/hawaii-c.tar.bz2"
 
 # Run the converter
 execute_process(COMMAND "${DEMG}" "${CBDIR}/hawaii-c" OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
-file(WRITE "${CBDIR}/hawaii-c.log" "${dem_g_log}")
+file(WRITE "${CBDIR}/regress-dem.log" "${dem_g_log}")
 
 # Known "good" md5sum of output for comparision
 set(EXPECTED_MD5 "cf87c3b174840f18f5653c677af1f433")
@@ -36,8 +36,8 @@ string(STRIP "${genmd5}" genmd5)
 if("${EXPECTED_MD5}" STREQUAL "${genmd5}")
   execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "${CBDIR}/hawaii-c.done")
 else("${EXPECTED_MD5}" STREQUAL "${genmd5}")
-  file(APPEND "${CBDIR}/hawaii-c.log" "\n\ndem results differ for ${CBDIR}/hawaii-c.dsp: expected ${EXPECTED_MD5}, got ${genmd5}")
-  message(FATAL_ERROR "[dem-g] Failure while converting ${CBDIR}/hawaii-c, see ${CBDIR}/hawaii-c.log for more info.\n")
+  file(APPEND "${CBDIR}/regress-dem.log" "\n\ndem results differ for ${CBDIR}/hawaii-c.dsp: expected ${EXPECTED_MD5}, got ${genmd5}")
+  message(FATAL_ERROR "[dem-g] Failure while converting ${CBDIR}/hawaii-c, see ${CBDIR}/regress-dem.log for more info.\n")
 endif("${EXPECTED_MD5}" STREQUAL "${genmd5}")
 
 # Local Variables:
