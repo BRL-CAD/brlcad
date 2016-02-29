@@ -2385,7 +2385,7 @@ if(NOT DEFINED HAVE_SYMLINK)
     file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src")
   endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
 endif(NOT DEFINED HAVE_SYMLINK)
-CONFIG_H_APPEND(BRLCAD "#define HAVE_SYMLINK ${HAVE_SYMLINK}\n")
+CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_SYMLINK 1\n")
 
 
 # For Windows, we need some dlls to be redistributed with the
