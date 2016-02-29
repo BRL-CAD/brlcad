@@ -16,7 +16,7 @@ endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
 set(FAST4G "${BDIR}/fast4-g${EXE}")
-set(GDIFF "${BDIR}/gdiff${EXE}"
+set(GDIFF "${BDIR}/gdiff${EXE}")
 
 # Start with the file using standard UNIX line endings
 file(WRITE "${CBDIR}/fastgen.log" "Converting ${CSDIR}/fastgen_box.fast4 (UNIX line endings):\n")
