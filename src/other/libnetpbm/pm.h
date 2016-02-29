@@ -182,22 +182,22 @@ pm_perror (const char reason[]);
 void 
 pm_usage (const char usage[]);             
 
-FILE* 
+NETPBM_EXPORT extern FILE* 
 pm_openr (const char* const name);
          
-FILE*    
+NETPBM_EXPORT FILE*    
 pm_openw (const char* const name);
          
-FILE *
+NETPBM_EXPORT FILE *
 pm_openr_seekable(const char name[]);
 
-void     
+NETPBM_EXPORT void     
 pm_close (FILE* const f);
 
-void 
+NETPBM_EXPORT void 
 pm_closer (FILE* const f);
           
-void      
+NETPBM_EXPORT void      
 pm_closew (FILE* const f);
 
 
