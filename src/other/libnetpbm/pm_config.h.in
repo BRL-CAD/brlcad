@@ -122,10 +122,17 @@ extern int rand();
 typedef uint32_t uint32n;
 typedef int32_t int32n;
 
-#include <fcntl.h>
+#cmakedefine HAVE_FCNTL_H 1
+#ifdef HAVE_FCNTL_H
+#  include <fcntl.h>
+#endif
 #include <time.h>
 #include <stdlib.h>
-#include <unistd.h>
+
+#cmakedefine HAVE_UNISTD_H 1
+#ifdef HAVE_UNISTD_H
+#  include <unistd.h>
+#endif
 /* 
    Before Netpbm 9.0, atoi() and exit() were declared for everybody
    except MSDOS and Amiga, and time() and write() were declared for
