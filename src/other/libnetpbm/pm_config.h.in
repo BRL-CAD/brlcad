@@ -155,11 +155,16 @@ typedef ptrdiff_t ssize_t;
 
 /* For Windows */
 #if defined(_MSC_VER)
-#  define S_IRUSR _S_IREAD
-#  define S_IWUSR _S_IWRITE
-#  define S_ISREG(m) (((m) & S_IFMT) == S_IFREG)
+#  if !defined(S_IRUSR)
+#    define S_IRUSR _S_IREAD
+#  endif
+#  if !defined(S_IWUSR)
+#    define S_IWUSR _S_IWRITE
+#  endif
+#  if !defined(S_ISREG)
+#    define S_ISREG(s) ((x) & S_IFREG)
+#  endif
 #endif
-
 
 /*
    Before Netpbm 9.0, atoi() and exit() were declared for everybody
