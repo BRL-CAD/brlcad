@@ -11,20 +11,20 @@ macro(Add_Image_Test testname testtype depends_list)
   set(CONTROL_IMAGE ${${testname}_CONTROL_IMAGE})
   set(TARGET_IMAGE ${${testname}_TARGET_IMAGE})
   set(LOG_FILE ${${testname}_LOG_FILE})
-  set(STAMP_FILE ${CMAKE_CURRENT_BINARY_DIR}/${testname}.done)
+  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
   if ("${testtype}" STREQUAL "IMPORT")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_import.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake @ONLY)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_import.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   endif ("${testtype}" STREQUAL "IMPORT")
   if ("${testtype}" STREQUAL "EXPORT")
-    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_export.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake @ONLY)
+    configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_export.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   endif ("${testtype}" STREQUAL "EXPORT")
   add_custom_command(
     OUTPUT ${STAMP_FILE}
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
     DEPENDS pixcmp icv ${depends_list} ${INPUT_IMAGE} ${CONTROL_IMAGE}
     )
 
-  add_test(NAME regress-icv-${testname} COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake)
+  add_test(NAME regress-icv-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
   add_custom_target(regress-icv-${testname} DEPENDS ${depends_list} ${STAMP_FILE})
   set_target_properties(regress-icv-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   Add_Regression_Test(icv-${testname} "${depends_list}")
