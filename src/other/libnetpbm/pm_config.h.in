@@ -133,7 +133,36 @@ typedef int32_t int32n;
 #ifdef HAVE_UNISTD_H
 #  include <unistd.h>
 #endif
-/* 
+
+#cmakedefine HAVE_SYS_STAT_H 1
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
+
+
+#cmakedefine HAVE_SSIZE_T 1
+#ifndef HAVE_SSIZE_T
+#  ifdef HAVE_SYS_TYPES_H
+#    include <sys/types.h>
+#  endif
+#  include <limits.h>
+#  include <stddef.h>
+#  ifndef SSIZE_MAX
+typedef ptrdiff_t ssize_t;
+#    define HAVE_SSIZE_T 1
+#  endif
+#endif
+
+
+/* For Windows */
+#if defined(_MSC_VER)
+#  define S_IRUSR _S_IREAD
+#  define S_IWUSR _S_IWRITE
+#endif
+
+
+
+/*
    Before Netpbm 9.0, atoi() and exit() were declared for everybody
    except MSDOS and Amiga, and time() and write() were declared for
    everybody except MSDOS, Amiga, and __osf__.  fcntl.h, time.h, and
