@@ -740,6 +740,7 @@ tmpDir(void) {
 
 
 
+#if !defined(HAVE_MKSTEMP)
 static int
 mkstempx(char * const filenameBuffer) {
 /*----------------------------------------------------------------------------
@@ -794,15 +795,13 @@ mkstempx(char * const filenameBuffer) {
 
     return retval;
 }
-
+#endif
 
 
 static int
 mkstemp2(char * const filenameBuffer) {
 
 #if HAVE_MKSTEMP
-    if (0)
-        mkstempx(NULL);  /* defeat compiler unused function warning */
     return mkstemp(filenameBuffer);
 #else
     return mkstempx(filenameBuffer);
