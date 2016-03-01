@@ -102,10 +102,44 @@ Add_Image_Test(pix_dpix EXPORT ""
   )
 
 
+# Unpack compressed bw file
+execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.bw.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.bw")
+
+Add_Image_Test(bw_pix IMPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_pix.log"
+  )
+
+Add_Image_Test(pix_bw EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.bw"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_bw.log"
+  )
+
+Add_Image_Test(bw_png EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_bw_png.png"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_png.log"
+  )
+
+Add_Image_Test(png_bw EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35_bw.png"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_png_bw.bw"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/png_bw.log"
+  )
+
 CMAKEFILES(
   m35.png
+  m35_bw.png
   m35.ppm.tbz2
   m35.dpix.tbz2
+  m35.bw.tbz2
   )
 
 # Local Variables:

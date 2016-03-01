@@ -57,14 +57,14 @@ execute_process(
   )
 file(APPEND "${LOGFILE}" "${icv_log}")
 
-if(${pixcmp_val})
+if(${pixcmp_val} GREATER 0)
   message(FATAL_ERROR "Differences found between ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix and ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix with ${PIXCMP}, aborting.\nSee ${LOGFILE} for more details.")
-else(${pixcmp_val})
+else(${pixcmp_val} GREATER 0)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-ctrl.pix)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${CMAKE_CURRENT_BINARY_DIR}/${TGT}-out.pix)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
-endif(${pixcmp_val})
+endif(${pixcmp_val} GREATER 0)
 
 # Local Variables:
 # tab-width: 8
