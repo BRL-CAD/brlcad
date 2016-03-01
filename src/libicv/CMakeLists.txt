@@ -32,7 +32,10 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
-CMAKEFILES(TODO)
+CMAKEFILES(
+  TODO
+  icv_private.h
+  )
 
 # Local Variables:
 # tab-width: 8

@@ -28,9 +28,9 @@
 #include <sys/stat.h>  /* for file mode info in WRMODE */
 
 #include "bio.h"
-#include "bu/log.h"
-#include "icv.h"
 #include "vmath.h"
+#include "bu/log.h"
+#include "icv_private.h"
 
 #define WRMODE S_IRUSR|S_IRGRP|S_IROTH
 

@@ -35,30 +35,7 @@
 #include "bu/path.h"
 #include "bn.h"
 #include "vmath.h"
-#include "icv.h"
-
-/* this might be a little better than saying 0444 */
-#define WRMODE S_IRUSR|S_IRGRP|S_IROTH
-
-/* defined in bw.c */
-extern int bw_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *bw_read(const char *filename, size_t width, size_t height);
-
-/* defined in pix.c */
-extern int pix_write(icv_image_t *bif, const char *filename);
-extern icv_image_t *pix_read(const char* filename, size_t width, size_t height);
-
-/* defined in dpix.c */
-extern icv_image_t *dpix_read(const char* filename, size_t width, size_t height);
-extern int dpix_write(icv_image_t *bif, const char *filename);
-
-/* defined in png.c */
-extern int png_write(icv_image_t *bif, const char *filename);
-extern icv_image_t* png_read(const char *filename);
-
-/* defined in ppm.c */
-extern int ppm_write(icv_image_t *bif, const char *filename);
-extern icv_image_t* ppm_read(const char *filename);
+#include "icv_private.h"
 
 /* private functions */
 

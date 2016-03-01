@@ -25,12 +25,12 @@
 
 #include "common.h"
 #include <string.h>
+#include "ppm.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "icv.h"
-#include "ppm.h"
+#include "icv_private.h"
 
 int
 ppm_write(icv_image_t *bif, const char *filename)

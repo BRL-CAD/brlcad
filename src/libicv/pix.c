@@ -22,9 +22,10 @@
  * Contains routines related to pix format.
  *
  */
-#include "icv.h"
+#include "common.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "icv_private.h"
 
 /* defined in encoding.c */
 extern double *uchar2double(unsigned char *data, size_t size);
