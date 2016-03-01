@@ -184,11 +184,11 @@ ANALYZE_EXPORT extern fastf_t
 analyze_surf_area(struct raytracing_context *context, const char *name);
 
 ANALYZE_EXPORT extern int
-setup_raytracing_context(struct raytracing_context *context, struct db_i *dbip,
+analyze_setup_raytracing_context(struct raytracing_context *context, struct db_i *dbip,
     const char **names, int *flags);
 
 ANALYZE_EXPORT extern void
-free_raytracing_context(struct raytracing_context *context);
+analyze_free_raytracing_context(struct raytracing_context *context);
 
 struct rt_gen_worker_vars {
     struct rt_i *rtip;
