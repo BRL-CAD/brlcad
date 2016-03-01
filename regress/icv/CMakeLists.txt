@@ -106,6 +106,7 @@ CMAKEFILES(
   m35.png
   m35.ppm.tbz2
   m35.dpix.tbz2
+  m35.bw.tbz2
   )
 
 # Local Variables:
