@@ -64,8 +64,12 @@ Add_Image_Test(pix_png EXPORT ""
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_png.log"
   )
 
+# Unpack compressed ppm file
+execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.ppm")
+
 Add_Image_Test(ppm_pix IMPORT ""
-  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm"
+  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm"
   CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_ppm.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/ppm_pix.log"
@@ -73,16 +77,35 @@ Add_Image_Test(ppm_pix IMPORT ""
 
 Add_Image_Test(pix_ppm EXPORT ""
   INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/m35.ppm"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.ppm"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.ppm"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_ppm.log"
   )
 
 
+# Unpack compressed dpix file
+execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35.dpix.tbz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35.dpix")
+
+Add_Image_Test(dpix_pix IMPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_dpix.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/dpix_pix.log"
+  )
+
+Add_Image_Test(pix_dpix EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.dpix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.dpix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_dpix.log"
+  )
+
 
 CMAKEFILES(
   m35.png
-  m35.ppm
+  m35.ppm.tbz2
+  m35.dpix.tbz2
   )
 
 # Local Variables:
