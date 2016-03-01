@@ -21,7 +21,7 @@ macro(Add_Image_Test testname testtype depends_list)
   add_custom_command(
     OUTPUT ${STAMP_FILE}
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
-    DEPENDS pixcmp icv ${depends_list} ${INPUT_IMAGE} ${CONTROL_IMAGE}
+    DEPENDS pixcmp icv ${depends_list}
     )
 
   add_test(NAME regress-icv-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
