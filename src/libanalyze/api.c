@@ -165,7 +165,7 @@ static const struct cvt_tab units[3][3] = {
  *
  * this routine must be prepared to run in parallel
  */
-int
+HIDDEN int
 analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
 {
     /* see raytrace.h for all of these guys */
@@ -355,7 +355,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
  *
  * This routine must be prepared to run in parallel
  */
-int
+HIDDEN int
 analyze_miss(struct application *ap)
 {
     RT_CK_APPLICATION(ap);
@@ -368,7 +368,7 @@ analyze_miss(struct application *ap)
  * 0 on success
  * !0 on failure
  */
-int
+HIDDEN int
 densities_from_file(char *name)
 {
     struct stat sb;
@@ -411,7 +411,7 @@ densities_from_file(char *name)
  * 0 on success
  * !0 on failure
  */
-int
+HIDDEN int
 densities_from_database(struct rt_i *rtip)
 {
     struct directory *dp;
@@ -455,7 +455,7 @@ densities_from_database(struct rt_i *rtip)
 /**
  * This routine must be prepared to run in parallel
  */
-int
+HIDDEN int
 next_row(c_state *state)
 {
     int v;
@@ -481,7 +481,7 @@ next_row(c_state *state)
  * 0 terminate
  * 1 continue processing
  */
-static int
+HIDDEN int
 weight_volume_surf_area_terminate_check(c_state *state)
 {
     /* Both weight and volume computations rely on this routine to
@@ -629,7 +629,7 @@ weight_volume_surf_area_terminate_check(c_state *state)
  * 0 Terminate
  * 1 Continue processing
  */
-int
+HIDDEN int
 check_terminate(c_state *state)
 {
     int wv_status;
@@ -657,7 +657,7 @@ check_terminate(c_state *state)
 /**
  * This routine must be prepared to run in parallel
  */
-void
+HIDDEN void
 analyze_worker(int cpu, void *ptr)
 {
     struct application ap;
@@ -783,7 +783,7 @@ analyze_worker(int cpu, void *ptr)
  * 0 continue, ready to go
  * !0 error encountered, terminate processing
  */
-int
+HIDDEN int
 options_set(c_state *state)
 {
     struct rt_i *rtip = state->rtip;
@@ -876,7 +876,7 @@ options_set(c_state *state)
     return ANALYZE_OK;
 }
 
-int
+HIDDEN int
 find_cmd_obj(c_state *state, struct per_obj_data *obj_rpt, const char *name)
 {
     int i;
@@ -904,7 +904,7 @@ find_cmd_obj(c_state *state, struct per_obj_data *obj_rpt, const char *name)
  * Allocate data structures for tracking statistics on a per-view
  * basis for each of the view, object and region levels.
  */
-void
+HIDDEN void
 allocate_region_data(c_state *state, struct raytracing_context *context, const char *av[])
 {
     struct region *regp;
@@ -971,7 +971,7 @@ allocate_region_data(c_state *state, struct raytracing_context *context, const c
     }
 }
 
-struct raytracing_context *
+HIDDEN struct raytracing_context *
 perform_raytracing(void *ptr1, void *ptr2)
 {
     c_state *state = (c_state *)ptr1;
