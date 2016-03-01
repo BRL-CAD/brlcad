@@ -157,10 +157,10 @@ icv_write(icv_image_t *bif, const char *filename, bu_mime_image_t format)
 	case BU_MIME_IMAGE_DPIX :
 	    return dpix_write(bif, filename);
 	default:
-	    bu_log("Unrecognized format.  Outputting in PIX format.\n");
+	    bu_log("Unrecognized format.  Outputting in PNG format.\n");
     }
 
-    return pix_write(bif, filename);
+    return png_write(bif, filename);
 }
 
 
