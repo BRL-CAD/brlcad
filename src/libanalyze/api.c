@@ -1027,7 +1027,7 @@ perform_raytracing(void *ptr1, void *ptr2)
 	context->shots = state->shots;
     }
     else {
-	analyze_free_raytracing_context(context);
+	analyze_raytracing_context_clear(context);
     }
 
     rt_free_rti(state->rtip);
@@ -1035,8 +1035,8 @@ perform_raytracing(void *ptr1, void *ptr2)
     return context;
 }
 
-int 
-analyze_setup_raytracing_context(struct raytracing_context *context, struct db_i *dbip,
+int
+analyze_raytracing_context_init(struct raytracing_context *context, struct db_i *dbip,
 	const char *names[], int *flags)
 {
     int i;
@@ -1160,7 +1160,7 @@ analyze_setup_raytracing_context(struct raytracing_context *context, struct db_i
 }
 
 void
-analyze_free_raytracing_context(struct raytracing_context *context)
+analyze_raytracing_context_clear(struct raytracing_context *context)
 {
     int i;
     if (densities != NULL) {
