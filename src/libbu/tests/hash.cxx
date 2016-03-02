@@ -160,20 +160,25 @@ int hash_loremipsum() {
     // not found in the C++ map is reported as an error.
     struct bu_hash_entry *e = bu_hash_next(t, NULL);
     while (e) {
+	struct bu_vls key_str = BU_VLS_INIT_ZERO;
+	size_t keylen;
 	uint8_t *key;
 	void *val;
-	(void)bu_hash_key(e, &key, NULL);
+	(void)bu_hash_key(e, &key, &keylen);
 	val = bu_hash_value(e, NULL);
-	c_it = cppmap.find(std::string((const char *)key));
+	bu_vls_strncat(&key_str, (const char *)key, keylen);
+	c_it = cppmap.find(std::string(bu_vls_addr(&key_str)));
+	//bu_log("%s reports %d in C++ map and %d in hash\n", bu_vls_addr(&key_str), (*c_it).second, *(int *)val);
 	if (c_it == cppmap.end()) {
-	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", (const char *)key);
+	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", bu_vls_addr(&key_str));
 	    ret = 1;
 	} else {
 	    if (*(int *)val != (*c_it).second) {
-		bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *(int *)val);
+		bu_log("Error: %s reports %d in C++ map but %d in hash!\n", bu_vls_addr(&key_str), (*c_it).second, *(int *)val);
 		ret = 1;
 	    }
 	}
+	bu_vls_free(&key_str);
 	e = bu_hash_next(t, e);
     }
 
