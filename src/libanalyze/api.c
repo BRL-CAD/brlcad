@@ -129,7 +129,6 @@ static double gridSpacing;
 static double gridSpacingLimit;
 static int ncpu;
 static double Samples_per_model_axis = 2.0;
-static const fastf_t one_twelfth = 1.0 / 12.0;
 static int aborted = 0;
 static int verbose = 0;
 
