@@ -117,7 +117,7 @@ packBitsWithMmxSse(FILE *          const fileP,
             ) ];
     */
 
-    typedef int v8qi __attribute__ ((mode(V8QI)));
+    typedef int v8qi __attribute__ ((vector_size(8)));
     typedef int di __attribute__ ((mode(DI)));
 
     di const zero64 = 0;        /* to clear with PXOR */

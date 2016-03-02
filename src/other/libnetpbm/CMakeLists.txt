@@ -95,7 +95,6 @@ else(${INT_SIZE} GREATER ${LONG_SIZE})
   math(EXPR BITS_PER_WORD "${LONG_SIZE} * 8")
 endif(${INT_SIZE} GREATER ${LONG_SIZE})
 
-
 configure_file(pm_config.h.in ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h ${CMAKE_CURRENT_BINARY_DIR}/pm_config.h)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/pm_config_new.h)
