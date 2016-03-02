@@ -287,6 +287,54 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
 	</programlisting>
       </section>
       <section>
+        <title>Intersection Events</title>
+        <para>
+          There are two OpenNURBS classes for representing intersections. <classname>ON_X_EVENT</classname> is used for curve-curve and curve-surface intersections. <classname>ON_SSX_EVENT</classname> is used for surface-surface intersections.
+        </para>
+        <para>
+          These classes enumerate a number of intersection types. The <varname>m_type</varname> of intersection events is frequently checked to determine how to further process them over the course of the evaluation.
+        </para>
+        <variablelist>
+          <varlistentry>
+            <term><varname>ON_X_EVENT::ccx_overlap</varname></term>
+            <listitem>
+              <para>
+                Two curves are coincident with one another over a portion of their domains.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_overlap</varname></term>
+            <listitem>
+              <para>
+                Two surfaces are coincident over a portion of their domains.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_tangent</varname>, <varname>ON_SSX_EVENT::ssx_transverse</varname></term>
+            <listitem>
+              <para>
+                Two surfaces intersect in a curve. If the normals of the surfaces are parallel over all points of the curve, the intersection is tangent, and transverse otherwise.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_tangent_point</varname>, <varname>ON_SSX_EVENT::ssx_transverse_point</varname></term>
+            <listitem>
+              <para>
+                Two surfaces intersect at a point. The intersection is tangent if the normals of the two surfaces are parallel at that point, and transverse otherwise.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <note>
+          <para>
+            An additional class, <classname>ON_PX_EVENT</classname> has been implemented as an extension to the OpenNURBS API to represent point-point, point-curve, and point-surface intersection events.
+          </para>
+        </note>
+      </section>
+      <section>
 	<title>Pitfalls</title>
 	<para>Mistakes made.</para>
       </section>
