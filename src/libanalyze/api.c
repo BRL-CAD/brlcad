@@ -90,6 +90,7 @@ typedef struct current_state {
 }c_state;
 
 /* the entries in the density table */
+/* FIXME: this global table is NOT initialized or released safely */
 struct density_entry *densities = NULL;
 static int num_densities;
 
@@ -389,6 +390,9 @@ densities_from_file(char *name)
 	return ANALYZE_ERROR;
     }
 
+    /* FIXME: this global table is NOT initialized or released safely.
+     *        we potentially just clobbered something.
+     */
     densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
@@ -437,6 +441,9 @@ densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
+    /* FIXME: this global table is NOT initialized or released safely.
+     *        we potentially just clobbered something.
+     */
     densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
@@ -1163,6 +1170,10 @@ void
 analyze_raytracing_context_clear(struct raytracing_context *context)
 {
     int i;
+
+    /* FIXME: this global table is NOT initialized or released safely.
+     *        we potentially just set up a crash on next access.
+     */
     if (densities != NULL) {
 	bu_free(densities, "densities");
 	densities = NULL;
