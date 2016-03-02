@@ -153,6 +153,15 @@ ON_Intersect(const ON_Surface *surfA,
 	</note>
       </section>
       <section>
+	<title>Bounding Boxes</title>
+        <para>
+        <classname>ON_BoundingBox</classname> is returned by the <function>BoundingBox</function>, <function>GetTightBoundingBox</function>, and <function>GetBBox</function> functions, which are implemented by all geometry classes inheriting from <classname>ON_Geometry</classname>.
+        </para>
+        <para>
+          The most commonly used members of <classname>ON_BoundingBox</classname> are <function>Diagonal</function> (usually in an expression such as <varname>bbox.Diagonal().Length()</varname> used as a scalar size estimate), and <function>IsPointIn</function> and <function>MinimumDistanceTo</function> (used in intersection tests).
+        </para>
+      </section>
+      <section>
 	<title>Domain Intervals</title>
 	<para>
 	  <classname>ON_Interval</classname> is used to represent the domains of parametric curves and surfaces. The domain <emphasis>starts</emphasis> at <varname>m_t[0]</varname> and <emphasis>ends</emphasis> at <varname>m_t[1]</varname>. These members can be set directly or via <function>Set(double t0, double t1)</function>.
