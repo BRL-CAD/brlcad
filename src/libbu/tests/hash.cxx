@@ -168,10 +168,11 @@ int hash_loremipsum() {
 	if (c_it == cppmap.end()) {
 	    bu_log("Error: key %s found in hash table iteration was not found in C++ map.\n", (const char *)key);
 	    ret = 1;
-	}
-	if (*(int *)val != (*c_it).second) {
-	    bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *(int *)val);
-	    ret = 1;
+	} else {
+	    if (*(int *)val != (*c_it).second) {
+		bu_log("Error: %s reports %d in C++ map but %d in hash!\n", key, (*c_it).second, *(int *)val);
+		ret = 1;
+	    }
 	}
 	e = bu_hash_next(t, e);
     }
