@@ -54,17 +54,6 @@ struct cvt_tab {
     char name[32];
 };
 
-/* this table keeps track of the "current" or "user selected units and
- * the associated conversion values
- */
-#define LINE 0
-#define VOL 1
-#define WGT 2
-static const struct cvt_tab units[3][3] = {
-    {{1.0, "mm"}},	/* linear */
-    {{1.0, "cu mm"}},	/* volume */
-    {{1.0, "grams"}}	/* weight */
-};
 
 point_t *
 analyze_centroid(struct raytracing_context *context, const char *name)
