@@ -78,7 +78,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * Returns 1 if an image size was identified, zero otherwise.
  *
  */
-ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *width, size_t *height);
+ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
