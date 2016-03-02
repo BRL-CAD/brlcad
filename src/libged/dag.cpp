@@ -28,7 +28,6 @@
 #ifdef HAVE_ADAPTAGRAMS
 
 /* System Header */
-#include <stdint.h>
 #include <stdlib.h>
 #include <vector>
 

@@ -29,10 +29,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifdef HAVE_STDINT_H
-#   include <stdint.h>
-#endif
-
 #include "bio.h"
 
 #include "../bu_internals.h"

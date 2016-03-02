@@ -27,9 +27,6 @@
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include "bio.h"
 

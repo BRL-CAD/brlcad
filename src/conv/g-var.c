@@ -31,10 +31,6 @@
 #include <string.h>
 #include "bio.h"
 
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
-#endif
-
 #include <math.h>
 
 /* interface headers */

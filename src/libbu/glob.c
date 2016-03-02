@@ -64,17 +64,15 @@
 #include "common.h"
 
 #include <sys/stat.h>
-
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "bu/malloc.h"

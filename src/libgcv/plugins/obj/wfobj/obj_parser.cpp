@@ -36,7 +36,6 @@ extern "C" {
 #include "obj_grammar_decls.h"
 #include "obj_rules.h"
 
-#include <stdint.h>
 #include <cerrno>
 #include <cstdio>
 #include <sstream>

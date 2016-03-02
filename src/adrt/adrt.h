@@ -28,10 +28,6 @@
 
 #include "common.h"
 
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
-
 #include "adrt_struct.h"
 
 #define	ADRT_PORT		1982

@@ -26,10 +26,6 @@
 #include <stdarg.h>
 #include <assert.h>
 
-#ifdef HAVE_STDINT_H
-#   include <stdint.h>
-#endif
-
 #include "bio.h"
 
 #include "bu/log.h"
