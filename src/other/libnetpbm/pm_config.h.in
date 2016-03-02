@@ -10,9 +10,12 @@
 #ifndef PM_CONFIG_H
 #define PM_CONFIG_H
 
+#cmakedefine HAVE_STDINT_H 1
 #cmakedefine HAVE_INTTYPES_H 1
 
-#ifdef HAVE_INTTYPES_H
+#if defined(HAVE_STDINT_H)
+#  include <stdint.h>
+#elif defined(HAVE_INTTYPES_H)
 #  include <inttypes.h>
 #endif
 
