@@ -25,15 +25,6 @@
 #ifndef ICV_PRIVATE_H
 #define ICV_PRIVATE_H
 
-/* Internal private definition of icv_opts container */
-struct icv_opts {
-    bu_mime_image_t format;
-    size_t width;
-    size_t height;
-    void *p_in;  /* As a last resort, plugins can hang their own data here */
-    void *p_out; /* As a last resort, plugins can hang their own data here */
-};
-
 /* defined in bw.c */
 extern int bw_write(icv_image_t *bif, const char *filename);
 extern icv_image_t *bw_read(const char *filename, size_t width, size_t height);
