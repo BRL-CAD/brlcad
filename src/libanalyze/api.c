@@ -295,8 +295,10 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    switch(state->i_axis) {
 		case 0:
 		    cell_area = Ly*Ly;
+		    break;
 		case 1:
 		    cell_area = Lz*Lz;
+		    break;
 		case 2:
 		default:
 		    cell_area = Lx*Lx;
@@ -1163,7 +1165,7 @@ analyze_raytracing_context_init(struct raytracing_context *context, struct db_i 
 
     context = perform_raytracing((void *)&state, (void *)context);
     (*flags) = analysis_flags;
-    return ANALYZE_OK;
+    return (!context) ? ANALYZE_ERROR : ANALYZE_OK;
 }
 
 void
