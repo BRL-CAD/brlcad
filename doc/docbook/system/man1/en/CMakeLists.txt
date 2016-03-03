@@ -24,7 +24,6 @@ set(docbook_man1_EN
   bw-png.xml
   bw-ps.xml
   bw-rle.xml
-  bw3-pix.xml
   bwcrop.xml
   bwdiff.xml
   bwfilter.xml
@@ -132,7 +131,6 @@ set(docbook_man1_EN
   pictx.xml
   pix-alias.xml
   pix-bw.xml
-  pix-bw3.xml
   pix-fb.xml
   pix-png.xml
   pix-ppm.xml
