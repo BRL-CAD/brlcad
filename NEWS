@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* pix-bw conversion now rounds numbers to closest integer - users
+  will see slightly different output files - Cliff Yapp, Sean Morrison
 * removed pix-bw3 and bw3-pix tools - use pix-bw and bw-pix instead
         - Cliff Yapp, Sean Morrison
 * fixed pix-ppm to write out all image data - Sean Morrision

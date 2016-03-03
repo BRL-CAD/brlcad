@@ -115,12 +115,12 @@ Add_Image_Test(bw_pix IMPORT ""
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/bw_pix.log"
   )
 
-#Add_Image_Test(pix_bw EXPORT ""
-#  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
-#  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
-#  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.bw"
-#  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_bw.log"
-#  )
+Add_Image_Test(pix_bw EXPORT ""
+  INPUT_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/../../bench/ref/m35.pix"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_pix.bw"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/pix_bw.log"
+  )
 
 Add_Image_Test(bw_png EXPORT ""
   INPUT_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35.bw"
