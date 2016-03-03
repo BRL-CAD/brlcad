@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* teach bw-pix what bw3-pix used to do, i.e., merge one, two, or three
+  bw files into one pix image
+
 * make sure windows wireframes are not horked
 
 * make sure rt -I interactive mode still works... looks like code for
