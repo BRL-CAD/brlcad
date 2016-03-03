@@ -336,9 +336,7 @@ typedef long int pm_filepos;
    Netpbm program to access a file of the hacker's choosing when the
    Netpbm program means to access its own temporary file.
 */
-#if defined(__MINGW32__) || defined(_MSC_VER)
-  #define HAVE_MKSTEMP 0
-#else
+#if !defined(__MINGW32__) && !defined(_MSC_VER)
   #define HAVE_MKSTEMP 1
 #endif
 

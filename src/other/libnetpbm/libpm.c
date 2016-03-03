@@ -801,7 +801,7 @@ mkstempx(char * const filenameBuffer) {
 static int
 mkstemp2(char * const filenameBuffer) {
 
-#if HAVE_MKSTEMP
+#ifdef HAVE_MKSTEMP
     return mkstemp(filenameBuffer);
 #else
     return mkstempx(filenameBuffer);
