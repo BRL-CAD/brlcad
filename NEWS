@@ -14,10 +14,8 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
-* pix-bw conversion now rounds numbers to closest integer - users
-  will see slightly different output files - Cliff Yapp, Sean Morrison
-* removed pix-bw3 and bw3-pix tools - use pix-bw and bw-pix instead
-        - Cliff Yapp, Sean Morrison
+* improved pix-bw intensity averaging to closest integer - Cliff Yapp
+* removed pix-bw3 & bw3-pix tools, see pix-bw & bw-pix - Cliff Yapp
 * fixed pix-ppm to write out all image data - Sean Morrision
 * added new algorithm to bot_decimate (via -f option) - Jon Engbert
 * fixed benchmark bug running from paths with spaces - Sean Morrison
