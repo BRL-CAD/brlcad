@@ -185,8 +185,8 @@ main(int argc, char **argv)
 	    }
 	}
 	open_file(&rfp, rfile);
-	open_file(&bfp, gfile);
-	open_file(&gfp, bfile);
+	open_file(&gfp, gfile);
+	open_file(&bfp, bfile);
 
 	while (1) {
 	    unsigned char obuf[3*1024];
