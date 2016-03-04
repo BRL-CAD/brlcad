@@ -831,7 +831,7 @@ options_set(struct current_state *state)
     }
 
     /* if the vol/weight tolerances are not set, pick something */
-    if (analysis_flags & ANALYSIS_VOLUME) {	
+    if (analysis_flags & ANALYSIS_VOLUME) {
 	/*char *name = "volume.plot3";*/
 	if (state->volume_tolerance < 0.0) {
 	    /* using 1/1000th the volume as a default tolerance, no particular reason */
