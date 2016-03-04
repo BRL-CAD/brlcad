@@ -53,7 +53,7 @@
 #define ANALYSIS_MOMENTS 1024
 #define ANALYSIS_PLOT_OVERLAPS 2048
 
-typedef struct current_state {
+struct current_state {
     int curr_view; 	/* the "view" number we are shooting */
     int u_axis;    	/* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */
     int v_axis;    	/* is being used for the U, V, or invariant vector direction */
@@ -87,12 +87,8 @@ typedef struct current_state {
     fastf_t *m_lenTorque; /* torque vector for each view */
 
     struct resource *resp;
-}c_state;
-
-/* the entries in the density table */
-/* FIXME: this global table is NOT initialized or released safely */
-struct density_entry *densities = NULL;
-static int num_densities;
+    struct raytracing_context *context;
+};
 
 /* summary data structure for objects specified on command line */
 struct per_obj_data {
@@ -173,7 +169,7 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
     point_t pt;
     double dist;       /* the thickness of the partition */
     double val;
-    c_state *state = (c_state *)ap->A_STATE;
+    struct current_state *state = (struct current_state *)ap->A_STATE;
 
     if (!segs) /* unexpected */
 	return 0;
@@ -205,13 +201,13 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 	    }
 
 	    /* make sure mater index is within range of densities */
-	    if (pp->pt_regionp->reg_gmater >= num_densities) {
+	    if (pp->pt_regionp->reg_gmater >= state->context->num_densities) {
 		if(default_den == 0) {
 		    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
 		    bu_log("Density index %d on region %s is outside of range of table [1..%d]\nSet GIFTmater on region or add entry to density table\n",
 			    pp->pt_regionp->reg_gmater,
 			    pp->pt_regionp->reg_name,
-			    num_densities); /* XXX this should do something else */
+			    state->context->num_densities); /* XXX this should do something else */
 		    bu_semaphore_release(ANALYZE_SEM_WORKER);
 		    return ANALYZE_ERROR;
 		}
@@ -219,13 +215,13 @@ analyze_hit(struct application *ap, struct partition *PartHeadp, struct seg *seg
 
 	    /* make sure the density index has been set */
 	    bu_semaphore_acquire(ANALYZE_SEM_WORKER);
-	    if(default_den || (&densities[pp->pt_regionp->reg_gmater])->magic != DENSITY_MAGIC) {
+	    if(default_den || state->context->densities[pp->pt_regionp->reg_gmater].magic != DENSITY_MAGIC) {
 		BU_GET(de, struct density_entry);		/* Aluminium 7xxx series as default material */
 		de->magic = DENSITY_MAGIC;
 		de->grams_per_cu_mm = 2.74;
 		de->name = "Aluminium, 7079-T6";
 	    } else {
-		de = &densities[pp->pt_regionp->reg_gmater];
+		de = state->context->densities + pp->pt_regionp->reg_gmater;
 	    }
 	    bu_semaphore_release(ANALYZE_SEM_WORKER);
 	    if (de->magic == DENSITY_MAGIC) {
@@ -371,7 +367,7 @@ analyze_miss(struct application *ap)
  * !0 on failure
  */
 HIDDEN int
-densities_from_file(char *name)
+densities_from_file(struct raytracing_context *context, char *name)
 {
     struct stat sb;
 
@@ -392,18 +388,15 @@ densities_from_file(char *name)
 	return ANALYZE_ERROR;
     }
 
-    /* FIXME: this global table is NOT initialized or released safely.
-     *        we potentially just clobbered something.
-     */
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
+    context->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
+    context->num_densities = 128;
 
     /* a mapped file would make more sense here */
     buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
-    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, densities, NULL, &num_densities);
+    ret = parse_densities_buffer(buf, (unsigned long)sb.st_size, context->densities, NULL, &context->num_densities);
     bu_free(buf, "density buffer");
     fclose(fp);
 
@@ -417,7 +410,7 @@ densities_from_file(char *name)
  * !0 on failure
  */
 HIDDEN int
-densities_from_database(struct rt_i *rtip)
+densities_from_database(struct raytracing_context *context, struct rt_i *rtip)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -443,18 +436,15 @@ densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    /* FIXME: this global table is NOT initialized or released safely.
-     *        we potentially just clobbered something.
-     */
-    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
-    num_densities = 128;
+    context->densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
+    context->num_densities = 128;
 
     /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
     buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
-    ret = parse_densities_buffer(buf, bu->count, densities, NULL, &num_densities);
+    ret = parse_densities_buffer(buf, bu->count, context->densities, NULL, &context->num_densities);
     bu_free((void *)buf, "density buffer");
 
     return ret;
@@ -464,7 +454,7 @@ densities_from_database(struct rt_i *rtip)
  * This routine must be prepared to run in parallel
  */
 HIDDEN int
-next_row(c_state *state)
+next_row(struct current_state *state)
 {
     int v;
     /* look for more work */
@@ -490,7 +480,7 @@ next_row(c_state *state)
  * 1 continue processing
  */
 HIDDEN int
-weight_volume_surf_area_terminate_check(c_state *state)
+weight_volume_surf_area_terminate_check(struct current_state *state)
 {
     /* Both weight and volume computations rely on this routine to
      * compute values that are printed in summaries.  Hence, both
@@ -638,7 +628,7 @@ weight_volume_surf_area_terminate_check(c_state *state)
  * 1 Continue processing
  */
 HIDDEN int
-check_terminate(c_state *state)
+check_terminate(struct current_state *state)
 {
     int wv_status;
 
@@ -671,7 +661,7 @@ analyze_worker(int cpu, void *ptr)
     struct application ap;
     int u, v;
     double v_coord;
-    c_state *state = (c_state *)ptr;
+    struct current_state *state = (struct current_state *)ptr;
     unsigned long shot_cnt;
 
     if (aborted)
@@ -792,7 +782,7 @@ analyze_worker(int cpu, void *ptr)
  * !0 error encountered, terminate processing
  */
 HIDDEN int
-options_set(c_state *state)
+options_set(struct current_state *state)
 {
     struct rt_i *rtip = state->rtip;
     double newGridSpacing = gridSpacing;
@@ -805,14 +795,14 @@ options_set(c_state *state)
 	if (densityFileName) {
 	    if(debug)
 		bu_log("Density from file\n");
-	    if (densities_from_file(densityFileName) != ANALYZE_OK) {
+	    if (densities_from_file(state->context, densityFileName) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from file. Using default density.\n");
 		default_den = 1;
 	    }
 	} else {
 	    if(debug)
 		bu_log("Density from db\n");
-	    if (densities_from_database(rtip) != ANALYZE_OK) {
+	    if (densities_from_database(state->context, rtip) != ANALYZE_OK) {
 		bu_log("Couldn't load density table from database. Using default density.\n");
 		default_den = 1;
 	    }
@@ -869,9 +859,9 @@ options_set(c_state *state)
 	if (state->weight_tolerance < 0.0) {
 	    double max_den = 2.74;	/* Aluminium 7xxx series as default material */
 	    int i;
-	    for (i = 0; i < num_densities; i++) {
-		if (densities[i].grams_per_cu_mm > max_den)
-		    max_den = densities[i].grams_per_cu_mm;
+	    for (i = 0; i < state->context->num_densities; i++) {
+		if (state->context->densities[i].grams_per_cu_mm > max_den)
+		    max_den = state->context->densities[i].grams_per_cu_mm;
 	    }
 	    state->weight_tolerance = state->span[X] * state->span[Y] * state->span[Z] * 0.1 * max_den;
 	    bu_log("Setting weight tolerance to %g %s\n",
@@ -885,7 +875,7 @@ options_set(c_state *state)
 }
 
 HIDDEN int
-find_cmd_obj(c_state *state, struct per_obj_data *obj_rpt, const char *name)
+find_cmd_obj(struct current_state *state, struct per_obj_data *obj_rpt, const char *name)
 {
     int i;
     char *str = bu_strdup(name);
@@ -913,7 +903,7 @@ find_cmd_obj(c_state *state, struct per_obj_data *obj_rpt, const char *name)
  * basis for each of the view, object and region levels.
  */
 HIDDEN void
-allocate_region_data(c_state *state, struct raytracing_context *context, const char *av[])
+allocate_region_data(struct current_state *state, struct raytracing_context *context, const char *av[])
 {
     struct region *regp;
     struct rt_i *rtip = state->rtip;
@@ -980,10 +970,8 @@ allocate_region_data(c_state *state, struct raytracing_context *context, const c
 }
 
 HIDDEN struct raytracing_context *
-perform_raytracing(void *ptr1, void *ptr2)
+perform_raytracing(struct current_state *state, struct raytracing_context *context)
 {
-    c_state *state = (c_state *)ptr1;
-    struct raytracing_context *context = (struct raytracing_context *)ptr2;
     /* compute */
     do {
 	double inv_spacing = 1.0/gridSpacing;
@@ -1049,7 +1037,7 @@ analyze_raytracing_context_init(struct raytracing_context *context, struct db_i 
 	const char *names[], int *flags)
 {
     int i;
-    c_state state;
+    struct current_state state;
     struct rt_i *rtip;
     struct resource resp[MAX_PSW];
     char *densityfile = NULL;
@@ -1063,6 +1051,10 @@ analyze_raytracing_context_init(struct raytracing_context *context, struct db_i 
 
 #define maxm(a, b) (a>b?a:b)
 #define DENSITY_FILE ".density"
+
+    context->densities = NULL;
+    context->num_densities = 0;
+    state.context = context;
 
     analysis_flags = (*flags);
     i = maxm(strlen(curdir), strlen(homedir)) + strlen(DENSITY_FILE) + 2;
@@ -1163,7 +1155,7 @@ analyze_raytracing_context_init(struct raytracing_context *context, struct db_i 
     state.resp = resp;
     allocate_region_data(&state, context, names);
 
-    context = perform_raytracing((void *)&state, (void *)context);
+    context = perform_raytracing(&state, context);
     (*flags) = analysis_flags;
     return (!context) ? ANALYZE_ERROR : ANALYZE_OK;
 }
@@ -1173,12 +1165,15 @@ analyze_raytracing_context_clear(struct raytracing_context *context)
 {
     int i;
 
-    /* FIXME: this global table is NOT initialized or released safely.
-     *        we potentially just set up a crash on next access.
-     */
-    if (densities != NULL) {
-	bu_free(densities, "densities");
-	densities = NULL;
+    if (context->densities != NULL) {
+	for (i = 0; i < context->num_densities; ++i) {
+	    if (context->densities[i].name != 0)
+		bu_free(context->densities[i].name, "density name");
+	}
+
+	bu_free(context->densities, "densities");
+	context->densities = NULL;
+	context->num_densities = 0;
     }
 
     bu_free(context->shots, "m_shots");

@@ -158,6 +158,9 @@ struct raytracing_context {
     vect_t area;    /* area of the view for view with invariant at index */
 
     struct per_obj_data *objs;
+
+    struct density_entry *densities;
+    int num_densities;
 };
 
 ANALYZE_EXPORT int
