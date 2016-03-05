@@ -519,6 +519,13 @@ add_test(NAME bu_opt_2_color_13  COMMAND tester_bu_opt 2 C 13)
 add_test(NAME bu_opt_2_color_14  COMMAND tester_bu_opt 2 C 14)
 add_test(NAME bu_opt_2_color_15  COMMAND tester_bu_opt 2 C 15)
 
+# vector tests
+add_test(NAME bu_opt_3_vect_00  COMMAND tester_bu_opt 3 V 0)
+add_test(NAME bu_opt_3_vect_01  COMMAND tester_bu_opt 3 V 1)
+add_test(NAME bu_opt_3_vect_02  COMMAND tester_bu_opt 3 V 2)
+add_test(NAME bu_opt_3_vect_03  COMMAND tester_bu_opt 3 V 3)
+add_test(NAME bu_opt_3_vect_04  COMMAND tester_bu_opt 3 V 4)
+
 #
 #  *********** date-time.c tests ************
 #

@@ -335,6 +335,8 @@ BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv,
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 or 3 arguments to set a bu_color */
 BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 or 3 arguments to set a vect_t */
+BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** @} */
 
 
