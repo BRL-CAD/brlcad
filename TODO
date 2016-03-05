@@ -32,7 +32,11 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix regressions in step-g
 
-* make sure libbu hash is working as a substitute for the Tcl hash
+* figure out why the following is crashing:
+
+  bin/rtshot -R 1 -p 0 0 0 -d 1 0 0 share/db/havoc.g havoc
+
+  is it related to using bu_hash in some fashion?
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
