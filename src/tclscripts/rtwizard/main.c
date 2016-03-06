@@ -34,12 +34,15 @@
 
 #define RTWIZARD_HAVE_GUI 0
 
+#define RTWIZARD_SIZE_DEFAULT 512
+
 struct rtwizard_settings {
     struct bu_ptbl *color;
     struct bu_ptbl *ghost;
     struct bu_ptbl *line;
     int use_gui;
     int no_gui;
+    struct bu_vls *input_file;
     struct bu_vls *fb_dev;
     int port;
     size_t width;
@@ -64,6 +67,8 @@ struct rtwizard_settings {
 
 struct rtwizard_settings * rtwizard_settings_create() {
     struct rtwizard_settings *s;
+    fastf_t *white[3] = {255.0, 255.0, 255.0};
+    fastf_t *black[3] = {0.0, 0.0, 0.0};
     BU_GET(s, struct rtwizard_settings);
     BU_GET(s->color, struct bu_ptbl);
     BU_GET(s->ghost, struct bu_ptbl);
@@ -73,11 +78,27 @@ struct rtwizard_settings * rtwizard_settings_create() {
     bu_ptbl_init(s->line, 8, "line init");
     BU_GET(s->fb_dev, struct bu_vls);
     bu_vls_init(s->fb_dev);
+    BU_GET(s->input_file, struct bu_vls);
+    bu_vls_init(s->input_file);
     BU_GET(s->bkg_color, struct bu_color);
+    (void)bu_color_from_rgb_floats(s->bkg_color, white);
     BU_GET(s->line_color, struct bu_color);
+    (void)bu_color_from_rgb_floats(s->line_color, black);
     BU_GET(s->non_line_color, struct bu_color);
-    s->width = 0; s->height = 0; s->size = 0;
-    s->use_gui = 0; s->no_gui = 0;
+    (void)bu_color_from_rgb_floats(s->non_line_color, black);
+    s->az = 35;
+    s->el = 25;
+    s->tw = 0;
+    s->zoom = 1.0;
+    s->perspective = 0;
+    s->occlusion = 1;
+    s->ghosting_intensity = 12.0;
+    s->width = RTWIZARD_SIZE_DEFAULT;
+    s->height = RTWIZARD_SIZE_DEFAULT;
+    s->size = RTWIZARD_SIZE_DEFAULT;
+
+    s->use_gui = 0;
+    s->no_gui = 0;
     return s;
 }
 
@@ -96,8 +117,45 @@ void rtwizard_settings_destroy(struct rtwizard_settings *s) {
 
     bu_vls_free(s->fb_dev);
     BU_PUT(s->fb_dev, struct bu_vls);
+    bu_vls_free(s->input_file);
+    BU_PUT(s->input_file, struct bu_vls);
+
     BU_PUT(s, struct rtwizard_settings);
 }
+
+#define RTW_TERR_MSG(_t,_name,_opt) "Error: picture type _t specified, but no _name objects listed.\nPlease specify _name objects using the _opt option\n"
+
+int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, char type)
+{
+    int ret = 1;
+    if (!bu_vls_strlen(s->input_file)) {
+	bu_vls_printf(msg, "Error: No input Geometry Database (.g) file specified.\n");
+	ret = 0;
+    }
+    switch (type) {
+	case 'A':
+	    if (BU_PTBL_LEN(s->color) == 0) {
+		bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		ret = 0;
+	    }
+	    break;
+	case 'B':
+	    break;
+	case 'C':
+	    break;
+	case 'D':
+	    break;
+	case 'E':
+	    break;
+	default:
+	    /* If we don't have a type, make sure we've got *some* object in at
+	     * least one of the object lists */
+	    break;
+    }
+
+    return ret;
+}
+
 
 int
 opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
@@ -283,6 +341,15 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_free(&slog);
 }
 
+int rtwizard_imgformat_supported(const char *fmt) {
+    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_DPIX")) return 1;
+    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PIX")) return 1;
+    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PNG")) return 1;
+    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PPM")) return 1;
+    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_BW")) return 1;
+    return 0;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -292,7 +359,6 @@ main(int argc, char **argv)
     int uac = 0;
     int i = 0;
     char type = '\0';
-    struct bu_vls in_fname = BU_VLS_INIT_ZERO;
     struct bu_vls out_fname = BU_VLS_INIT_ZERO;
     struct bu_vls logfile = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
@@ -301,7 +367,7 @@ main(int argc, char **argv)
     BU_OPT(d[0], "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
     BU_OPT(d[1], "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
     BU_OPT(d[2], "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
-    BU_OPT(d[3], "i", "input-file",    "filename",  &bu_opt_vls,     &in_fname,     "Input .g database file");
+    BU_OPT(d[3], "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
     BU_OPT(d[4], "o", "output-file",   "filename",  &bu_opt_vls,     &out_fname,    "Image output file name");
     BU_OPT(d[5], "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
     BU_OPT(d[6], "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
@@ -345,10 +411,63 @@ main(int argc, char **argv)
 	bu_log("Image type: %c\n", type);
     }
 
-    print_rtwizard_state(s);
+    if (s->use_gui && s->no_gui) {
+	bu_log("Warning - both -gui and -no-gui supplied - enabling gui\n");
+	s->no_gui = 0;
+    }
 
+    print_rtwizard_state(s);
+    if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file))) {
+	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
+    }
+
+    /* Handle any leftover arguments per established conventions */
     for (i = 0; i < uac; i++) {
+	struct bu_vls c = BU_VLS_INIT_ZERO;
 	bu_log("av[%d]: %s\n", i, argv[i]);
+	/* First, see if we have an input .g file */
+	if (bu_vls_strlen(&in_fname) == 0) {
+	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_MODEL)) {
+		if (BU_STR_EQUAL(bu_vls_addr(&c), "BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY")) {
+		    if (bu_file_exists(argv[i])) {
+			bu_vls_sprintf(s->input_file, "%s", argv[i]);
+			/* This was the .g name - don't add it to the color list */
+			continue;
+		    } else {
+			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
+		    }
+		}
+	    }
+	}
+	bu_vls_trunc(&c, 0);
+	/* Next, see if we have an image specified as an output destination */
+	if (bu_vls_strlen(&out_fname) == 0 && bu_vls_strlen(s->fbdev) == 0) {
+	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_IMAGE)) {
+		if (rtwizard_imgformat_supported(bu_vls_addr(&c))) {
+		    bu_vls_sprintf(&out_fname, "%s", argv[i]);
+		    /* This looks like the output image name - don't add it to the color list */
+		    continue;
+		}
+	    }
+	}
+	/* If it's none of the above, assume a color object in the .g file */
+	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
+    }
+
+    /* At this point, if we know we're supposed to launch the GUI, do it */
+    if (s->use_gui) {
+	/* launch gui */
+    } else {
+	/* Check that we know enough to make an image. */
+	if (!rtwizard_info_sufficient(s, type)) {
+	    /* If we *can* launch the GUI in this situation, do it */
+	    if (s->no_gui) {
+		bu_exit(1, "Image type %c specified, but supplied information is not sufficient to generate a type %c image.\n", type, type);
+	    } else {
+		/* Launch GUI */
+	    }
+	}
+	/* We know enough - make our image */
     }
 
     return 0;
