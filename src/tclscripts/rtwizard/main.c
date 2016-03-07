@@ -26,6 +26,7 @@
 
 #include "vmath.h"
 #include "bu/color.h"
+#include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/ptbl.h"
@@ -67,8 +68,8 @@ struct rtwizard_settings {
 
 struct rtwizard_settings * rtwizard_settings_create() {
     struct rtwizard_settings *s;
-    fastf_t *white[3] = {255.0, 255.0, 255.0};
-    fastf_t *black[3] = {0.0, 0.0, 0.0};
+    fastf_t white[3] = {255.0, 255.0, 255.0};
+    fastf_t black[3] = {0.0, 0.0, 0.0};
     BU_GET(s, struct rtwizard_settings);
     BU_GET(s->color, struct bu_ptbl);
     BU_GET(s->ghost, struct bu_ptbl);
@@ -417,7 +418,7 @@ main(int argc, char **argv)
     }
 
     print_rtwizard_state(s);
-    if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file))) {
+    if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
@@ -426,10 +427,10 @@ main(int argc, char **argv)
 	struct bu_vls c = BU_VLS_INIT_ZERO;
 	bu_log("av[%d]: %s\n", i, argv[i]);
 	/* First, see if we have an input .g file */
-	if (bu_vls_strlen(&in_fname) == 0) {
+	if (bu_vls_strlen(s->input_file) == 0) {
 	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_MODEL)) {
 		if (BU_STR_EQUAL(bu_vls_addr(&c), "BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY")) {
-		    if (bu_file_exists(argv[i])) {
+		    if (bu_file_exists(argv[i],NULL)) {
 			bu_vls_sprintf(s->input_file, "%s", argv[i]);
 			/* This was the .g name - don't add it to the color list */
 			continue;
@@ -441,7 +442,7 @@ main(int argc, char **argv)
 	}
 	bu_vls_trunc(&c, 0);
 	/* Next, see if we have an image specified as an output destination */
-	if (bu_vls_strlen(&out_fname) == 0 && bu_vls_strlen(s->fbdev) == 0) {
+	if (bu_vls_strlen(&out_fname) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
 	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_IMAGE)) {
 		if (rtwizard_imgformat_supported(bu_vls_addr(&c))) {
 		    bu_vls_sprintf(&out_fname, "%s", argv[i]);
@@ -459,7 +460,7 @@ main(int argc, char **argv)
 	/* launch gui */
     } else {
 	/* Check that we know enough to make an image. */
-	if (!rtwizard_info_sufficient(s, type)) {
+	if (!rtwizard_info_sufficient(NULL, s, type)) {
 	    /* If we *can* launch the GUI in this situation, do it */
 	    if (s->no_gui) {
 		bu_exit(1, "Image type %c specified, but supplied information is not sufficient to generate a type %c image.\n", type, type);
