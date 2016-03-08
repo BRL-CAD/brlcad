@@ -185,21 +185,21 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (UNLIKELY(!in_path) || UNLIKELY(strlen(in_path)) == 0) goto cleanup;
 
-    if (type == PATH_UNKNOWN || type >= (path_component_t)BU_MIME_UNKNOWN) goto cleanup;
+    if (type == BU_PATH_UNKNOWN || type >= (path_component_t)BU_MIME_UNKNOWN) goto cleanup;
 
     /* if we want something other than a mime type, we need to remove any mime: prefix from the
      * path.  If we're after a mime type, we need to check for a prefix */
     if (!_extract_path_and_prefix(&working_path, &mime_prefix, in_path)) goto cleanup;
 
-    if (type < PATH_UNKNOWN) {
+    if (type < BU_PATH_UNKNOWN) {
 	switch (type) {
-	    case PATH_ALL:
+	    case BU_PATH_ALL:
 		ret = 1;
 		if (component) {
 		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
 		}
 		break;
-	    case PATH_DIRNAME:
+	    case BU_PATH_DIRNAME:
 		dirname = bu_dirname(bu_vls_addr(&working_path));
 		if (!(!dirname || strlen(dirname) == 0)) {
 		    ret = 1;
@@ -208,7 +208,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    }
 		}
 		break;
-	    case PATH_DIRNAME_CORE:
+	    case BU_PATH_SANS_EXT:
 		ret = 1;
 		if (component) {
 		    period_pos = strrchr(bu_vls_addr(&working_path), '.');
@@ -217,7 +217,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 			bu_vls_trunc(component, -1 * strlen(period_pos));
 		}
 		break;
-	    case PATH_BASENAME:
+	    case BU_PATH_BASENAME:
 		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
 		bu_basename(basename, bu_vls_addr(&working_path));
 		if (strlen(basename) > 0) {
@@ -227,7 +227,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    }
 		}
 		break;
-	    case PATH_BASENAME_CORE:
+	    case BU_PATH_BASEBASE:
 		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
 		bu_basename(basename, bu_vls_addr(&working_path));
 		if (strlen(basename) > 0) {
@@ -241,7 +241,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    }
 		}
 		break;
-	    case PATH_EXTENSION:
+	    case BU_PATH_EXT:
 		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
 		bu_basename(basename, bu_vls_addr(&working_path));
 		if (strlen(basename) > 0) {

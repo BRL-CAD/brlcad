@@ -201,7 +201,7 @@ main(int ac, const char **av)
     }
 
     /* See if we have input and output files specified */
-    if (!bu_path_component(&in_path, bu_vls_addr(&in_path_raw), PATH_ALL)) {
+    if (!bu_path_component(&in_path, bu_vls_addr(&in_path_raw), BU_PATH_ALL)) {
 	if (bu_vls_strlen(&in_path_raw) > 0) {
 	    bu_vls_printf(&slog, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
 	} else {
@@ -209,7 +209,7 @@ main(int ac, const char **av)
 	}
 	ret = 1;
     }
-    if (!bu_path_component(&out_path, bu_vls_addr(&out_path_raw), PATH_ALL)) {
+    if (!bu_path_component(&out_path, bu_vls_addr(&out_path_raw), BU_PATH_ALL)) {
 	if (bu_vls_strlen(&out_path_raw) > 0) {
 	    bu_vls_printf(&slog, "Error: no output path identified: %s\n", bu_vls_addr(&out_path_raw));
 	} else {

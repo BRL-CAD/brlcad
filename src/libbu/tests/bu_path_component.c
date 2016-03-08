@@ -70,13 +70,13 @@ main(int argc, char *argv[])
 
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	compare(NULL, NULL, PATH_DIRNAME);
+	compare(NULL, NULL, BU_PATH_DIRNAME);
 	return 0;
     }
 
     if (argc == 2) {
 	printf("Testing empty path handling\n");
-	compare("", NULL, PATH_DIRNAME);
+	compare("", NULL, BU_PATH_DIRNAME);
 	return 0;
     }
 
@@ -94,19 +94,19 @@ main(int argc, char *argv[])
     printf("Testing path \"%s\", component %d\n", argv[1], intarg);
     switch (intarg) {
 	case 0:
-	    compare(argv[1], control, PATH_DIRNAME);
+	    compare(argv[1], control, BU_PATH_DIRNAME);
 	    break;
 	case 1:
-	    compare(argv[1], control, PATH_DIRNAME_CORE);
+	    compare(argv[1], control, BU_PATH_SANS_EXT);
 	    break;
 	case 2:
-	    compare(argv[1], control, PATH_BASENAME);
+	    compare(argv[1], control, BU_PATH_BASENAME);
 	    break;
 	case 3:
-	    compare(argv[1], control, PATH_BASENAME_CORE);
+	    compare(argv[1], control, BU_PATH_BASEBASE);
 	    break;
 	case 4:
-	    compare(argv[1], control, PATH_EXTENSION);
+	    compare(argv[1], control, BU_PATH_EXT);
 	    break;
 	case 5:
 	    compare(argv[1], control, (path_component_t)BU_MIME_IMAGE);

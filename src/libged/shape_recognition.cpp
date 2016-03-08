@@ -476,7 +476,7 @@ _obj_brep_to_csg(struct ged *gedp, struct bu_vls *log, struct bu_attribute_value
     struct bu_vls core_name = BU_VLS_INIT_ZERO;
     struct bu_vls comb_name = BU_VLS_INIT_ZERO;
     struct bu_vls root_name = BU_VLS_INIT_ZERO;
-    bu_path_component(&core_name, dp->d_namep, PATH_BASENAME_CORE);
+    bu_path_component(&core_name, dp->d_namep, BU_PATH_BASEBASE);
     bu_vls_sprintf(&root_name, "%s-csg", bu_vls_addr(&core_name));
     bu_vls_sprintf(&comb_name, "csg_%s.c", bu_vls_addr(&core_name));
     if (retname) bu_vls_sprintf(retname, "%s", bu_vls_addr(&comb_name));
