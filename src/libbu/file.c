@@ -153,7 +153,7 @@ bu_same_file(const char *fn1, const char *fn2)
 	    if (got1 && got2 &&
 		(file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
 		(file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-		(file_info1.nFileIndexHight = file_info2.nFileIndexHight)) {
+		(file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
 		ret = 1;
 	    }
 #else
