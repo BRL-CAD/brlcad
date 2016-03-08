@@ -135,6 +135,20 @@ ON_Intersect(const ON_Surface *surfA,
 	</warning>
       </section>
       <section>
+        <title>Zero</title>
+        <para>
+          The OpenNURBS routines make extensive use of the symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations to test if a result is to be considered equal to zero, or if two values are to be considered equal.
+        </para>
+        <note>
+          <para>
+            The NURBS boolean evaluation implementation frequently uses the function <function>ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE)</function> to check if values are near zero, or to check if two values are identical (e.g <function>ON_NearZero(t - last_t)</function>).
+          </para>
+          <para>
+            This function is also used to determine if objects are close enough to be considered intersecting: <function>ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL)</function>.
+          </para>
+        </note>
+      </section>
+      <section>
 	<title>2D and 3D Points</title>
 	<para>
 	  The <classname>ON_2dPoint</classname> and <classname>ON_3dPoint</classname> classes implement the expected operators allowing points to be easily summed and scaled.
