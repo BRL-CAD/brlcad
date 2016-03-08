@@ -124,9 +124,47 @@ bu_same_file(const char *fn1, const char *fn2)
 
 	if (BU_STR_EQUAL(rp1, rp2))
 	    ret = 1;
-	else  if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
+	else {
+	    /* time to actually check whether they are the same file
+	     * on the filesystem
+	     */
+
+/* could build test specifically for HAVE_GETFILEINFORMATIONBYHANDLE,
+ * but we're going to assume GetFullPathname implies this will work
+ * given they're part of the same API.
+ */
+#ifdef HAVE_GETFULLPATHNAME
+	    BOOL got1 = FALSE, got2 = FALSE;
+	    HANDLE handle1, handle2;
+	    BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
+
+	    handle1 = CreateFile(rp1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	    if (handle1 != INVALID_HANDLE_VALUE) {
+		got1 = GetFileInformationByHandle(handle1, &file_info1);
+		CloseHandle(handle1);
+	    }
+
+	    handle2 = CreateFile(rp2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	    if (handle2 != INVALID_HANDLE_VALUE) {
+		got2 = GetFileInformationByHandle(handle2, &file_info2);
+		CloseHandle(handle2);
+	    };
+
+	    if (got1 && got2 &&
+		(file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+		(file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+		(file_info1.nFileIndexHight = file_info2.nFileIndexHight)) {
+		ret = 1;
+	    }
+#else
+	    /* stat() works on Windows, but does not set an inode
+	     * value for non-unix filesystems
+	     */
+	    if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
 		  (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
-	    ret = 1;
+		ret = 1;
+	    }
+#endif
 	}
 
 	bu_free(rp1, "free rp1");
