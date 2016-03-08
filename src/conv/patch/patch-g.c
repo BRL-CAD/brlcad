@@ -3374,11 +3374,12 @@ main(int argc, char **argv)
     int stop, num;
     char name[NAMESIZE+1];
 
-    /* These sizes are dictated by the specific format output by the
-     * 'rpatch' tool.  They are fixed-column files, so we read into
-     * fixed-size buffers.
+    /* This size is dictated by the specific format output by the
+     * 'rpatch' tool and expected material file.  They are
+     * fixed-column files that shouldn't even fill half this buffer
+     * reading one line at a time.
      */
-    char buf[99], s[132+2];
+    char buf[256];
 
     /* intentionally double for scan */
     double scan[3];
@@ -3641,9 +3642,9 @@ main(int argc, char **argv)
     if (mfp) {
 	int eqlos, matcode;
 
-	while (bu_fgets(s, 132+2, mfp) != NULL) {
+	while (bu_fgets(buf, sizeof(buf), mfp) != NULL) {
 
-	    if (sscanf(s, "%6d%*66c%3d%5d",
+	    if (sscanf(buf, "%6d%*66c%3d%5d",
 		       &i, &eqlos, &matcode) != 3) {
 
 		bu_exit(1, "Incomplete line in materials file for component '%.4d'\n", i);
@@ -3655,10 +3656,6 @@ main(int argc, char **argv)
 
     for (i = done = 0; !done; i++) {
 	char *bufp;
-	/* FIXME: this assumes unix-style input files but a carriage
-	 * return would represent one more byte.  should be using
-	 * bu_fgets() even if the lines are fixed length.
-	 */
 
 	/* read one line of file into a buffer */
 	bufp = bu_fgets(buf, sizeof(buf), fp);
