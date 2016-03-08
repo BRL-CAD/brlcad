@@ -101,6 +101,9 @@ bu_file_exists(const char *path, int *fd)
 int
 bu_same_file(const char *fn1, const char *fn2)
 {
+    int ret = 0;
+    char *rp1, *rp2;
+
     if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
     }
@@ -113,27 +116,25 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    {
-	int ret = 0;
-	char *rp1, *rp2;
-	struct stat sb1, sb2;
+    /* make sure symlinks to the same file report as same */
+    rp1 = bu_realpath(fn1, NULL);
+    rp2 = bu_realpath(fn2, NULL);
 
-	/* make sure symlinks to the same file report as same */
-	rp1 = bu_realpath(fn1, NULL);
-	rp2 = bu_realpath(fn2, NULL);
+    if (BU_STR_EQUAL(rp1, rp2)) {
+	ret = 1;
+    } else {
+	/* Time to actually check whether they are the same file on the
+	 * filesystem.  This test is platform specific; stat on Windows does
+	 * *not* correctly report files as being different - ino, per their
+	 * docs, is meaningless on their file systems.
+	 */
 
-	if (BU_STR_EQUAL(rp1, rp2))
-	    ret = 1;
-	else {
-	    /* time to actually check whether they are the same file
-	     * on the filesystem
-	     */
-
-/* could build test specifically for HAVE_GETFILEINFORMATIONBYHANDLE,
- * but we're going to assume GetFullPathname implies this will work
- * given they're part of the same API.
- */
 #ifdef HAVE_GETFULLPATHNAME
+	{
+	    /* Could build test specifically for HAVE_GETFILEINFORMATIONBYHANDLE,
+	     * but we're going to assume GetFullPathname implies this will work
+	     * given they're part of the same API.
+	     */
 	    BOOL got1 = FALSE, got2 = FALSE;
 	    HANDLE handle1, handle2;
 	    BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
@@ -151,29 +152,30 @@ bu_same_file(const char *fn1, const char *fn2)
 	    };
 
 	    if (got1 && got2 &&
-		(file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
-		(file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-		(file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+		    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+		    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+		    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
 		ret = 1;
 	    }
+	}
 #else
+	{
+	    struct stat sb1, sb2;
 	    /* stat() works on Windows, but does not set an inode
 	     * value for non-unix filesystems
 	     */
 	    if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
-		  (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+		    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
 		ret = 1;
 	    }
-#endif
 	}
-
-	bu_free(rp1, "free rp1");
-	bu_free(rp2, "free rp2");
-
-	return ret;
+#endif
     }
 
-    return 0;
+    bu_free(rp1, "free rp1");
+    bu_free(rp2, "free rp2");
+
+    return ret;
 }
 
 
@@ -336,10 +338,10 @@ bu_file_delete(const char *path)
 
     /* reject empty, special, or non-existent paths */
     if (!path
-	|| BU_STR_EQUAL(path, "")
-	|| BU_STR_EQUAL(path, ".")
-	|| BU_STR_EQUAL(path, "..")
-	|| !bu_file_exists(path, &fd))
+	    || BU_STR_EQUAL(path, "")
+	    || BU_STR_EQUAL(path, ".")
+	    || BU_STR_EQUAL(path, "..")
+	    || !bu_file_exists(path, &fd))
     {
 	return 0;
     }
