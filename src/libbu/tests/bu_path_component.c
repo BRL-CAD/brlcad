@@ -97,13 +97,13 @@ main(int argc, char *argv[])
 	    compare(argv[1], control, BU_PATH_DIRNAME);
 	    break;
 	case 1:
-	    compare(argv[1], control, BU_PATH_SANS_EXT);
+	    compare(argv[1], control, BU_PATH_EXTLESS);
 	    break;
 	case 2:
 	    compare(argv[1], control, BU_PATH_BASENAME);
 	    break;
 	case 3:
-	    compare(argv[1], control, BU_PATH_BASEBASE);
+	    compare(argv[1], control, BU_PATH_BASENAME_EXTLESS);
 	    break;
 	case 4:
 	    compare(argv[1], control, BU_PATH_EXT);

@@ -193,7 +193,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (type < BU_PATH_UNKNOWN) {
 	switch (type) {
-	    case BU_PATH_ALL:
+	    case BU_PATH_MIMELESS:
 		ret = 1;
 		if (component) {
 		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
@@ -208,7 +208,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    }
 		}
 		break;
-	    case BU_PATH_SANS_EXT:
+	    case BU_PATH_EXTLESS:
 		ret = 1;
 		if (component) {
 		    period_pos = strrchr(bu_vls_addr(&working_path), '.');
@@ -227,7 +227,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 		    }
 		}
 		break;
-	    case BU_PATH_BASEBASE:
+	    case BU_PATH_BASENAME_EXTLESS:
 		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
 		bu_basename(basename, bu_vls_addr(&working_path));
 		if (strlen(basename) > 0) {
