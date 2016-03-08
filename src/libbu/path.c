@@ -156,7 +156,7 @@ _extract_path_and_prefix(struct bu_vls *path, struct bu_vls *format, const char 
 	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
 	}
 	bu_vls_free(&wpath);
-	/* mime: prefix */
+	/* [mime]:: prefix */
 	bu_vls_sprintf(&wformat, "%s", input);
 	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
 	if (format && bu_vls_strlen(&wformat) > 0) {
@@ -187,8 +187,9 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (type == BU_PATH_UNKNOWN || type >= (path_component_t)BU_MIME_UNKNOWN) goto cleanup;
 
-    /* if we want something other than a mime type, we need to remove any mime: prefix from the
-     * path.  If we're after a mime type, we need to check for a prefix */
+    /* if we want something other than a mime type, we need to remove
+     * any [mime]:: prefix from the path.  If we're after a mime type,
+     * we need to check for a prefix */
     if (!_extract_path_and_prefix(&working_path, &mime_prefix, in_path)) goto cleanup;
 
     if (type < BU_PATH_UNKNOWN) {
