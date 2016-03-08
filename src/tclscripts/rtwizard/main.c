@@ -47,8 +47,11 @@ struct rtwizard_settings {
     struct bu_vls *fb_dev;
     int port;
     size_t width;
+    int width_set;
     size_t height;
+    int height_set;
     size_t size; /* Assumes square - width and height - overridden by width and height */
+    int size_set;
     struct bu_color *bkg_color;
     struct bu_color *line_color;
     struct bu_color *non_line_color;
@@ -95,8 +98,11 @@ struct rtwizard_settings * rtwizard_settings_create() {
     s->occlusion = 1;
     s->ghosting_intensity = 12.0;
     s->width = RTWIZARD_SIZE_DEFAULT;
+    s->width_set = 0;
     s->height = RTWIZARD_SIZE_DEFAULT;
+    s->height_set = 0;
     s->size = RTWIZARD_SIZE_DEFAULT;
+    s->size_set = 0;
 
     s->use_gui = 0;
     s->no_gui = 0;
@@ -157,6 +163,38 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
     return ret;
 }
 
+
+int
+opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
+{
+    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
+    int ret = bu_opt_int(msg, argc, argv, (void *)&s->width);
+    if (ret != -1) s->width_set = 1;
+    return ret;
+}
+
+
+int
+opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
+{
+    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
+    int ret = bu_opt_int(msg, argc, argv, (void *)&s->height);
+    if (ret != -1) s->height_set = 1;
+    return ret;
+}
+
+int
+opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
+{
+    struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
+    int ret = bu_opt_int(msg, argc, argv, (void *)&s->size);
+    if (ret != -1) {
+	s->size_set = 1;
+	if (!s->width_set) s->width = s->size;
+	if (!s->height_set) s->height = s->size;
+    }
+    return ret;
+}
 
 int
 opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
@@ -365,16 +403,16 @@ main(int argc, char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
     struct bu_opt_desc d[33];
-    BU_OPT(d[0], "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
-    BU_OPT(d[1], "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
-    BU_OPT(d[2], "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
-    BU_OPT(d[3], "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
-    BU_OPT(d[4], "o", "output-file",   "filename",  &bu_opt_vls,     &out_fname,    "Image output file name");
-    BU_OPT(d[5], "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
-    BU_OPT(d[6], "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
-    BU_OPT(d[7], "w", "width",         "#",         &bu_opt_int,     &s->width,     "Output image width");
-    BU_OPT(d[8], "n", "height",        "#",         &bu_opt_int,     &s->height,    "Output image height");
-    BU_OPT(d[9], "s", "size",          "#",         &bu_opt_int,     &s->size,      "Output width & height (for square image)");
+    BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
+    BU_OPT(d[1],  "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
+    BU_OPT(d[2],  "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
+    BU_OPT(d[3],  "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
+    BU_OPT(d[4],  "o", "output-file",   "filename",  &bu_opt_vls,     &out_fname,    "Image output file name");
+    BU_OPT(d[5],  "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
+    BU_OPT(d[6],  "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
+    BU_OPT(d[7],  "w", "width",         "#",         &opt_width,       s,            "Output image width (overrides -s)");
+    BU_OPT(d[8],  "n", "height",        "#",         &opt_height,      s,            "Output image height (overrides -s)");
+    BU_OPT(d[9],  "s", "size",          "#",         &opt_size,        s,            "Output width & height (for square image)");
     BU_OPT(d[10], "c", "color-objects", "obj1,...",  &opt_objs,        s->color,     "List of color objects to render");
     BU_OPT(d[11], "g", "ghost-objects", "obj1,...",  &opt_objs,        s->ghost,     "List of ghost objects to render");
     BU_OPT(d[12], "l", "line-objects",  "obj1,...",  &opt_objs,        s->line,      "List of line objects to render");
