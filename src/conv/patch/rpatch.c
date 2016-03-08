@@ -193,8 +193,6 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-    setmode(fileno(stdout), O_BINARY);
-
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "D3")) != -1) {
 	switch (c) {
