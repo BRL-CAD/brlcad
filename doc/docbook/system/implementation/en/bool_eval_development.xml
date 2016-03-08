@@ -311,6 +311,27 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
         <para>
           These classes enumerate a number of intersection types. The <varname>m_type</varname> of intersection events is frequently checked to determine how to further process them over the course of the evaluation.
         </para>
+        <note>
+          <para>
+            The <varname>m_type</varname> of an intersection determines how values in the <varname>m_a/m_b/m_A/m_B</varname> member arrays are to be interpreted (documented in <filename>opennurbs_x.h</filename>).
+          </para>
+          <para>
+            For example, for an <classname>ON_X_EVENT</classname> representing a curve-curve intersection whose <varname>m_type</varname> is <varname>ON_X_EVENT::ccx_overlap</varname>, (<varname>m_a[0]</varname>, <varname>m_a[1]</varname>) represents the portion of the first curve's domain that overlaps with the second curve, whereas in other cases <varname>m_a[1]</varname> is simply a duplicate of <varname>m_a[0]</varname>.
+          </para>
+          <para>
+            As a result, a pattern seen repeatedly in the NURBS boolean evaluation implementation is a loop over intersection events that gathers intersection points for processing, including overlap endpoints if the event represents an overlap.
+          </para>
+          <programlisting>
+            <![CDATA[
+for (int i = 0; i < x_event.Count(); ++i) {
+    x_points.Append(x_event[i].m_a[0]);
+    if (x_event[i].m_type == ON_X_EVENT::ccx_overlap) {
+        x_points.Append(x_event[i].m_a[1]);
+    }
+}
+            ]]>
+	  </programlisting>
+        </note>
         <variablelist>
           <varlistentry>
             <term><varname>ON_X_EVENT::ccx_overlap</varname></term>
