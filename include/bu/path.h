@@ -149,7 +149,7 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  *     /dir1/dir2/file.ext
  */
 typedef enum {
-    BU_PATH_MIMELESS = 0,      /*!< full path, sans any [mime::] prefix */
+    BU_PATH_FULL = 0,          /*!< full path, sans any [mime::] prefix */
     BU_PATH_DIRNAME,           /*!< /dir1/dir2 */
     BU_PATH_BASENAME,          /*!< file.ext */
     BU_PATH_BASENAME_EXTLESS,  /*!< file */

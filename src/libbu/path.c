@@ -193,7 +193,7 @@ bu_path_component(struct bu_vls *component, const char *in_path, path_component_
 
     if (type < BU_PATH_UNKNOWN) {
 	switch (type) {
-	    case BU_PATH_MIMELESS:
+	    case BU_PATH_FULL:
 		ret = 1;
 		if (component) {
 		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
