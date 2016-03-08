@@ -164,6 +164,9 @@ ON_Intersect(const ON_Surface *surfA,
 	  <para>
 	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
 	  </para>
+          <para>
+            The NURBS boolean evaluation implementation frequently constructs 2D curves by populating an <classname>ON_3dPointArray</classname> with 2D points, rather than using an <classname>ON_2dPointArray</classname>, as the 3D version of the class (besides having additional useful member functions), can be used to initialize an <classname>ON_PolylineCurve</classname>.
+          </para>
 	</note>
       </section>
       <section>
