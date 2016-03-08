@@ -70,6 +70,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* make mged work without a batch script
+
+* make archer work without a batch script
+
+* make isst work without a batch script
+
 * Need to rethink libbu hash API - ideally should be much simpler and
   expose much less to the user.
 
@@ -559,8 +565,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * review proc-db for promotion to src/shapes
 
 * provide a viable FindBRLCAD.cmake
-
-* replicate the GTK+ ISST interface in TCL
 
 * fix nurbs_ssi and nurbs_tester unit tests
 
@@ -1768,7 +1772,6 @@ fbpoint    (TERMLIB)
 fbzoom     (TERMLIB)
 ir-X       (X11 specific)
 irdisp     (X11 specific)
-isst       (Togl widget on Windows, possibly other issues)
 lgt        (TERMLIB)
 pl-X       (X11 specific)
 pl-dm      (possibly X11 specific)
