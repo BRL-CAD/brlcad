@@ -2366,28 +2366,6 @@ if(NOT EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt.prev")
   message("***********************************************************")
 endif(NOT EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt.prev")
 
-# Some of the more advanced build system features in BRL-CAD's CMake build as
-# well as libbu need to know whether symlink support is present on the current
-# OS - go ahead and do this test up front, caching the results.
-if(NOT DEFINED HAVE_SYMLINK)
-  message("--- Checking operating system support for file symlinking")
-  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "testing for symlink ability")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-  if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-    message("--- Checking operating system support for file symlinking - Supported")
-    set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
-    mark_as_advanced(HAVE_SYMLINK)
-    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-  else(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-    message("--- Checking operating system support for file symlinking - Unsupported")
-    set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
-    mark_as_advanced(HAVE_SYMLINK)
-    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src")
-  endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
-endif(NOT DEFINED HAVE_SYMLINK)
-CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_SYMLINK 1\n")
-
-
 # For Windows, we need some dlls to be redistributed with the
 # installer
 if(MSVC)
