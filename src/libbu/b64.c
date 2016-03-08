@@ -16,22 +16,22 @@
 #include "bu/malloc.h"
 
 typedef enum {
-        step_A, step_B, step_C
+	step_A, step_B, step_C
 } bu_b64_encodestep;
 
 typedef enum {
-        step_a, step_b, step_c, step_d
+	step_a, step_b, step_c, step_d
 } bu_b64_decodestep;
 
 
 typedef struct {
-        bu_b64_encodestep step;
+	bu_b64_encodestep step;
 	    signed char result;
-	        int stepcount;
+		int stepcount;
 } bu_b64_encodestate;
 
 typedef struct {
-        bu_b64_decodestep step;
+	bu_b64_decodestep step;
 	    signed char plainchar;
 } bu_b64_decodestate;
 
@@ -275,7 +275,6 @@ bu_b64_decode(signed char **output, const signed char *input)
 {
     return bu_b64_decode_block(output, input, strlen((const char *)input));
 }
-
 
 
 /*

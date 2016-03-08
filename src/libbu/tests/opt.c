@@ -573,7 +573,6 @@ int desc_1(const char *cgy, int test_num)
 }
 
 
-
 int
 isnum(const char *str) {
     int i, sl;
@@ -852,7 +851,6 @@ int desc_3(int test_num)
     bu_free((void *)av, "free av");
     return ret;
 }
-
 
 
 int

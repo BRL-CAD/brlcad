@@ -276,4 +276,3 @@ DISTCLEAN(${BU_MIME_C_FILE})
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=2 tabstop=8
-
