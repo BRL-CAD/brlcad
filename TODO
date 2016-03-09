@@ -43,6 +43,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
   open ray data output file"
 
+* move mime type bits out of bu_path_component - add necessary bu_mime
+  API to support those operations.  Simplicity trumps trying to minimize
+  API size by shoving mime into path component functionality - turned out
+  to not fit real well...
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
