@@ -101,7 +101,17 @@ if {[info exists argv]} {
   }
 }
 
-# Default to English
+# If we don't have a language specified, see if the environment
+# can provide us with info.
+set lang_list [split $::env(LANG) _]
+if {[llength $lang_list] > 0} {
+  set langval [lindex $lang_list 0]
+  if {[string length $langval] == 2} {
+      set ::man_language $langval
+  }
+}
+
+# If we still have no language, default to English
 if {![info exists ::man_language]} {set ::man_language "en"}
 
 if {[llength $argv2] > 2} {
