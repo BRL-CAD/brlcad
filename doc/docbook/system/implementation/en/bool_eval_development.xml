@@ -135,7 +135,7 @@ ON_Intersect(const ON_Surface *surfA,
 	</warning>
       </section>
       <section>
-        <title>Zero</title>
+        <title>Tolerance Tests</title>
         <para>
           The OpenNURBS routines make extensive use of the symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations to test if a result is to be considered equal to zero, or if two values are to be considered equal.
         </para>
@@ -189,7 +189,7 @@ ON_Intersect(const ON_Surface *surfA,
 	  </para>
 	</warning>
 	<para>
-	  The <function>ParameterAt(double x)</function> function translate a normalized parameter (from a domain starting at 0.0 and ending at 1.0) into a real parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
+	  The <function>ParameterAt(double x)</function> function translates a <emphasis>normalized</emphasis> parameter (from a domain starting at 0.0 and ending at 1.0) into a <emphasis>real</emphasis> parameter. Thus, the start of the domain is at <varname>domain.ParameterAt(0.0)</varname>, the midpoint is at <varname>domain.ParameterAt(.5)</varname>, etc.
 	</para>
       </section>
       <section>
@@ -199,7 +199,7 @@ ON_Intersect(const ON_Surface *surfA,
 	</para>
 	<warning>
 	  <para>
-	    <function>PointAt</function> takes a real parameter; normalized parameters must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
+	    <function>PointAt</function> takes a real parameter; parameters normalized to <inlineequation><mathphrase>[0, 1]</mathphrase></inlineequation> must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
 	  </para>
 	</warning>
 	<para>
@@ -225,7 +225,7 @@ if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
 	  </para>
 	</warning>
 	<para>
-	  A copy of the curve can be easily made using <function>Duplicate()</function>, which simply wraps a standard copy procedure:
+	  A copy of the curve can be easily made using the <function>Duplicate()</function> member function, which simply wraps a standard copy procedure:
 	</para>
 	<programlisting>
 ON_Curve* Duplicate()
@@ -236,7 +236,7 @@ ON_Curve* Duplicate()
 }
 	</programlisting>
 	<para>
-	  This method is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
 	</para>
       </section>
       <section>
