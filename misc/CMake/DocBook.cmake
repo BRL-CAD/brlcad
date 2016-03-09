@@ -130,8 +130,13 @@ set(MAN5_DIR "${DOC_DIR}/../man/")
 set(MANN_DIR "${DOC_DIR}/../man/")
 set(PDF_DIR "${DOC_DIR}/pdf/")
 
-string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXECUTABLE "${XSLTPROC_EXECUTABLE}")
+# The general pattern of the BRL-CAD build is to use CMAKE_CFG_INTDIR when
+# multi-configuration builds complicate the location of binaries.  In this
+# case, however, we are using a generated script with a different mechanism
+# for handling this situation, and we need to update the executable paths
+# accordingly if they are configuration dependent.
 string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXECUTABLE "${XMLLINT_EXECUTABLE}")
+string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXECUTABLE "${XSLTPROC_EXECUTABLE}")
 
 macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
