@@ -241,8 +241,8 @@ set(man1_EN
 # describe more than one command.  Those files need special
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
-set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN_OUTPUTS "asc2pix.1")
-set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN_OUTPUTS "chan_add.1")
+set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
+set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_add.1")
 
 ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1/en "")
 

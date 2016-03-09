@@ -38,11 +38,11 @@
 # know what the current build type is to configure the script -
 # depending on build type, output goes to different dirs.
 if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(CMAKE_CFG_INTDIR "Release")
+  set(BUILD_TYPE "Release")
 elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(CMAKE_CFG_INTDIR  "Debug")
+  set(BUILD_TYPE "Debug")
 else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(CMAKE_CFG_INTDIR)
+  set(BUILD_TYPE)
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 

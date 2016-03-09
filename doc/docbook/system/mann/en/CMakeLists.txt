@@ -252,7 +252,7 @@ set(mann_EN
 # describe more than one command.  Those files need special
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
-set_source_files_properties(gr.xml PROPERTIES EXTRA_MAN_OUTPUTS "dg.nged")
+set_source_files_properties(gr.xml PROPERTIES EXTRA_MANN_OUTPUTS "dg.nged")
 
 ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann/en "")
 
