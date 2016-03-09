@@ -1,4 +1,4 @@
-set(docbook_articles_EN
+set(articles_EN
   TEMPLATE.xml
   about.xml
   animation_tutorial.xml
@@ -17,7 +17,7 @@ set(docbook_articles_EN
   main_menu.xml
   )
 
-set(docbook_articles_EN_IMAGES
+set(articles_EN_IMAGES
   images/Lee_tux.gif
   images/animtbl.gif
   images/build_pattern_fig01.png
@@ -153,11 +153,9 @@ set(docbook_articles_EN_IMAGES
   images/rim.gif
   images/rim.jpg
   )
-ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
+ADD_DOC(articles_EN_IMAGES html/articles/en/images)
 
-DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
-DOCBOOK_TO_PHP(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
-DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en docbook_articles_EN_IMAGES_cp)
+ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles/en articles_EN_IMAGES_cp)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
 

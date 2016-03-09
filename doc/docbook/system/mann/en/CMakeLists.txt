@@ -1,4 +1,4 @@
-set(docbook_mann_EN
+set(mann_EN
   3ptarb.xml
   B.xml
   E.xml
@@ -248,22 +248,18 @@ set(docbook_mann_EN
   zoom.xml
   )
 
-set(docbook_mann_INTRO
-  Introduction.xml
-  )
-
 # Some DocBook man pages generate multiple output files, if they
 # describe more than one command.  Those files need special
 # handling, since the CMake logic has no way to know about the
 # extra outputs without being told.
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MAN_OUTPUTS "dg.nged")
 
-DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
-DOCBOOK_TO_PHP(mann docbook_mann_EN html/mann/en "")
-DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
-DOCBOOK_TO_PHP(mann docbook_mann_INTRO html/mann/en "")
-DOCBOOK_TO_MAN(mann docbook_mann_EN n nged mann "")
-DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
+ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann/en "")
+
+set(mann_INTRO
+  Introduction.xml
+  )
+ADD_DOCBOOK("HTML;PHP" mann_INTRO mann/en "")
 
 # Local Variables:
 # tab-width: 8

@@ -1,4 +1,4 @@
-set(docbook_man3_EN
+set(man3_EN
   libcursor.xml
   libfb.xml
   libplot3.xml
@@ -13,10 +13,7 @@ set(docbook_man3_EN
 # extra outputs without being told.
 #set_source_files_properties(bu_htond.xml PROPERTIES EXTRA_MAN_OUTPUTS "bu_ntohd.3")
 
-DOCBOOK_TO_HTML(man3 docbook_man3_EN html/man3/en "")
-DOCBOOK_TO_PHP(man3 docbook_man3_EN html/man3/en "")
-DOCBOOK_TO_MAN(man3 docbook_man3_EN 3 3 man3 "")
-DOCBOOK_TO_PDF(man3 docbook_man3_EN pdf/man3/en "")
+ADD_DOCBOOK("HTML;PHP;MAN3;PDF" man3_EN man3/en "")
 
 CMAKEFILES(libbu.xml libdm.xml TODO)
 

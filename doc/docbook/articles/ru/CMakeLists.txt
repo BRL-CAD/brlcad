@@ -1,10 +1,7 @@
-set(docbook_articles_RU
+set(articles_RU
   about_ru.xml
   )
-
-DOCBOOK_TO_HTML(article docbook_articles_RU html/articles/ru "")
-DOCBOOK_TO_PHP(article docbook_articles_RU html/articles/ru "")
-DOCBOOK_TO_PDF(article docbook_articles_RU pdf/articles/ru "")
+ADD_DOCBOOK("HTML;PHP;PDF" articles_RU articles/ru "")
 
 # Local Variables:
 # tab-width: 8

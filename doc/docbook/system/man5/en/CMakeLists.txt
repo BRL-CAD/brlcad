@@ -19,7 +19,7 @@ add_custom_target(attr_std_list_xml DEPENDS
   ${CMAKE_CURRENT_BINARY_DIR}/attr_std_list.xml)
 set_target_properties(attr_std_list_xml PROPERTIES FOLDER "DocBook")
 
-set(docbook_man5_EN
+set(man5_EN
   dsp.xml
   ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml
   bw.xml
@@ -28,22 +28,9 @@ set(docbook_man5_EN
   plot3.xml
   STEP.xml
   )
+set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 
-
-DOCBOOK_TO_HTML(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
-DOCBOOK_TO_PHP(man5 docbook_man5_EN html/man5/en "${attributes_DEPS}")
-DOCBOOK_TO_MAN(man5 docbook_man5_EN 5 5 man5 "${attributes_DEPS}")
-DOCBOOK_TO_PDF(man5 docbook_man5_EN pdf/man5/en "${attributes_DEPS}")
-
-add_dependencies(attributes_man5_HTML attr_std_list_xml attr_std_table_xml)
-
-if(BRLCAD_EXTRADOCS_MAN)
-  add_dependencies(attributes_man5_MAN attr_std_list_xml attr_std_table_xml)
-endif(BRLCAD_EXTRADOCS_MAN)
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  add_dependencies(attributes_man5_pdf attr_std_list_xml attr_std_table_xml)
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN html/man5/en "${attribute_DEPS}")
 
 # Local Variables:
 # tab-width: 8

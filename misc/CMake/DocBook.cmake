@@ -92,252 +92,137 @@ endif(CMAKE_CONFIGURATION_TYPES)
 string(REGEX REPLACE "/+" "/" bin_root "${bin_root}")
 string(REGEX REPLACE "/$" "" bin_root "${bin_root}")
 
-# Handle script generation in both single and multi configuration setups.  While we're at
-# it, this is a good place to make sure all the directories we'll be needing exist
-# (xsltproc needs the directory to already exist when multiple docs are building in
-# parallel.)  If CMAKE_CFG_INTDIR is just the current working directory, then everything
-# is flat even if we are multi-config and we proceed as normal.
-#
-# Side effects:  sets scriptfile in parent scope and creates files in build directory
-function(DB_SCRIPT targetname outdir executable)
-  if(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${outdir}")
-    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" @ONLY)
-    set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" PARENT_SCOPE)
-  else(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-    # Multi-configuration is more complex - for each configuration, the
-    # standard variables must reflect the final directory (not the CMAKE_CFG_INTDIR
-    # value used by the build tool) but after generating the config specific
-    # script the values must be restored to the values using CMAKE_CFG_INTDIR
-    # for the generation of flexible build targets.
-    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-      file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}")
-      file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${outdir}")
-      # Temporarily store flexible values
-      string(TOUPPER "${executable}" exec_upper)
-      set(outfile_tmp "${outfile}")
-      set(exec_tmp "${${exec_upper}_EXECUTABLE}")
-      # Generate final paths for configure_file
-      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" outfile "${outfile}")
-      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" ${exec_upper}_EXECUTABLE "${${exec_upper}_EXECUTABLE}")
-      string(REPLACE "${CMAKE_CFG_INTDIR}" "${CFG_TYPE}" executable "${executable}")
-      set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}/${targetname}.cmake")
-      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/${executable}.cmake.in" ${scriptfile} @ONLY)
-      # Restore flexible values
-      set(outfile "${outfile_tmp}")
-      set(${exec_upper}_EXECUTABLE "${exec_tmp}")
-    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    set(scriptfile "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${targetname}.cmake" PARENT_SCOPE)
-  endif(NOT CMAKE_CONFIGURATION_TYPES OR "${CMAKE_CFG_INTDIR}" STREQUAL ".")
-endfunction(DB_SCRIPT)
+set(OUTPUT_FORMATS)
+if(BRLCAD_EXTRADOCS_HTML)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} HTML)
+endif(BRLCAD_EXTRADOCS_HTML)
+if(BRLCAD_EXTRADOCS_PHP)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} PHP)
+endif(BRLCAD_EXTRADOCS_PHP)
+if(BRLCAD_EXTRADOCS_PPT)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} PPT)
+endif(BRLCAD_EXTRADOCS_PPT)
+if(BRLCAD_EXTRADOCS_MAN)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} MAN1)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} MAN3)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} MAN5)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} MANN)
+endif(BRLCAD_EXTRADOCS_MAN)
+if(BRLCAD_EXTRADOCS_PDF)
+  set(OUTPUT_FORMATS ${OUTPUT_FORMATS} PDF)
+endif(BRLCAD_EXTRADOCS_PDF)
 
-# Function to define individual validation commands.  In order to avoid defining
-# a validation command more than once for a given file, a global list of all files
-# for which validation commands have already been defined is maintained by CMake.
-#
-# Side effects: generates the script files used to run the validation step during build
-define_property(GLOBAL PROPERTY DB_VALIDATION_FILE_LIST
-  BRIEF_DOCS "DocBook files to validate"
-  FULL_DOCS "List used to track which files already have a validation command set up.")
+set(HTML_EXTENSION "html")
+set(PHP_EXTENSION "php")
+set(PPT_EXTENSION "ppt.html")
+set(MAN1_EXTENSION "1")
+set(MAN3_EXTENSION "3")
+set(MAN5_EXTENSION "5")
+set(MANN_EXTENSION "nged")
+set(PDF_EXTENSION "pdf")
 
-function(DB_VALIDATE_TARGET targetdir filename filename_root)
+set(HTML_DIR "${DOC_DIR}/html/")
+set(PHP_DIR "${DOC_DIR}/html/")
+set(PPT_DIR "${DOC_DIR}/html/")
+set(MAN1_DIR "${DOC_DIR}/../man/")
+set(MAN3_DIR "${DOC_DIR}/../man/")
+set(MAN5_DIR "${DOC_DIR}/../man/")
+set(MANN_DIR "${DOC_DIR}/../man/")
+set(PDF_DIR "${DOC_DIR}/pdf/")
 
-  # Get full path name, if we don't' already have it
-  if (EXISTS ${filename})
-    set(full_path_filename ${filename})
-  else (EXISTS ${filename})
-    set(full_path_filename "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-  endif (EXISTS ${filename})
+macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
-  # If we have already added a validation command for this file, don't add another one.  Otherwise,
-  # proceed to add a new custom command
-  get_property(DB_VALIDATION_FILE_LIST GLOBAL PROPERTY DB_VALIDATION_FILE_LIST)
-  set(IN_LIST)
-  list(FIND DB_VALIDATION_FILE_LIST "${full_path_filename}" IN_LIST)
-  if("${IN_LIST}" STREQUAL "-1")
-    set_property(GLOBAL APPEND PROPERTY DB_VALIDATION_FILE_LIST "${full_path_filename}")
-    DB_SCRIPT("${filename_root}_validate" "${targetdir}" "${VALIDATE_EXECUTABLE}")
-    set(xml_valid_stamp "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid")
-    add_custom_command(
-      OUTPUT ${xml_valid_stamp}
-      COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-      DEPENDS ${full_path_filename} ${XMLLINT_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES}
-      )
-  endif("${IN_LIST}" STREQUAL "-1")
+  # If we got the name of a list or an explicit list,
+  # translate into the form we need.
+  list(GET ${in_xml_files} 0 xml_files)
+  if("${xml_files}" MATCHES "NOTFOUND")
+    set(xml_files ${in_xml_files})
+  else("${xml_files}" MATCHES "NOTFOUND")
+    set(xml_files ${${in_xml_files}})
+  endif("${xml_files}" MATCHES "NOTFOUND")
 
-endfunction(DB_VALIDATE_TARGET)
-
-
-# This macro provides the core custom command and target wiring for most of the DocBook
-# build targets.
-macro(DOCBOOK_PROCESS targetname_suffix format xml_files extension targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_${format})
-    foreach(filename ${${xml_files}})
-      get_filename_component(filename_root "${filename}" NAME_WE)
-      set(xml_valid_stamp "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid")
-      set(outfile ${bin_root}/${targetdir}/${filename_root}.${extension})
-      set(targetname ${filename_root}_${targetname_suffix}_${format})
-      set(CURRENT_XSL_STYLESHEET ${XSL_${format}_STYLESHEET})
-      if (EXISTS ${filename})
-	set(full_path_filename ${filename})
-      else (EXISTS ${filename})
-	set(full_path_filename "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-      endif (EXISTS ${filename})
-
-      # If we have more outputs than the default, they need to be handled here.
-      set(EXTRAS)
-      get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_${format}_OUTPUTS)
-      foreach(extra_out ${EXTRA_OUTPUTS})
-	set(EXTRAS ${EXTRAS} ${bin_root}/${targetdir}/${extra_out})
-      endforeach(extra_out ${EXTRA_OUTPUTS})
-
-      if(BRLCAD_EXTRADOCS_VALIDATE)
-	DB_VALIDATE_TARGET(${targetdir} "${filename}" ${filename_root})
-      endif(BRLCAD_EXTRADOCS_VALIDATE)
-
-      # Generate the script that will be used to run the XSLT executable
-      DB_SCRIPT("${targetname}" "${targetdir}" "${XSLT_EXECUTABLE}")
-
-      add_custom_command(
-	OUTPUT ${outfile} ${EXTRAS}
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
-	)
-      add_custom_target(${targetname} ALL DEPENDS ${outfile})
-      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/${format}")
-
-      # CMAKE_CFG_INTDIR can't be used in installation rules:
-      # http://www.cmake.org/Bug/view.php?id=5747
-      if(CMAKE_CONFIGURATION_TYPES)
-	string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
-	if(EXTRAS)
-	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" EXTRAS "${EXTRAS}")
-	endif(EXTRAS)
-      endif(CMAKE_CONFIGURATION_TYPES)
-      install(FILES ${outfile} ${EXTRAS} DESTINATION ${targetdir})
-
-      # Add the current build target to the list of man page targets
-      get_property(BRLCAD_EXTRADOCS_${format}_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_${format}_TARGETS)
-      set(BRLCAD_EXTRADOCS_${format}_TARGETS ${BRLCAD_EXTRADOCS_${format}_TARGETS} ${targetname})
-      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_${format}_TARGETS "${BRLCAD_EXTRADOCS_${format}_TARGETS}")
-
-      # If multiple outputs are being generated from the same file, make sure
-      # one of them is run to completion before the others to avoid multiple
-      # triggerings of the XML validation command.
-      get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
-      if(1ST_TARGET)
-	add_dependencies(${targetname} ${1ST_TARGET})
-      else(1ST_TARGET)
-	set_property(SOURCE ${filename} PROPERTY 1ST_TARGET "${targetname}")
-      endif(1ST_TARGET)
-
-    endforeach(filename ${${xml_files}})
-  endif(BRLCAD_EXTRADOCS_${format})
   # Mark files for distcheck
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_PROCESS targetname_suffix format xml_files extension targetdir deps_list)
+  CMAKEFILES(${xml_files})
 
-# HTML output, the format used by BRL-CAD's graphical help systems
-macro(DOCBOOK_TO_HTML targetname_suffix xml_files targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_HTML)
-    DOCBOOK_PROCESS("${targetname_suffix}" HTML "${xml_files}" html "${DOC_DIR}/${targetdir}" "${deps_list}") 
-  endif(BRLCAD_EXTRADOCS_HTML)
-  # Mark input files for distcheck whether or not we're building them
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_HTML)
+  # Each file gets its own target, which handles all the outputs
+  # to be produced from that file
+  foreach(fname ${xml_files})
+    get_filename_component(fname_root "${fname}" NAME_WE)
+    get_filename_component(filename "${fname}" ABSOLUTE)
 
-# PHP HTML output
-macro(DOCBOOK_TO_PHP targetname_suffix xml_files targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_PHP)
-    DOCBOOK_PROCESS("${targetname_suffix}" PHP "${xml_files}" php "${DOC_DIR}/${targetdir}" "${deps_list}") 
-  endif(BRLCAD_EXTRADOCS_PHP)
-  # Mark input files for distcheck whether or not we're building them
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_PHP)
+    # Find out which outputs we're actually going to produce, between
+    # what's currently enabled and what the command says the target
+    # *can* produce
+    set(CURRENT_OUTPUT_FORMATS)
+    foreach(fmt ${fmts})
+      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+      if(NOT "${IN_LIST}" STREQUAL "-1")
+	set(CURRENT_OUTPUT_FORMATS ${CURRENT_OUTPUT_FORMATS} ${fmt})
+      endif(NOT "${IN_LIST}" STREQUAL "-1")
+    endforeach(fmt ${fmts})
 
-# Presentation style HTML output
-macro(DOCBOOK_TO_PPT targetname_suffix xml_files targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_PPT)
-    DOCBOOK_PROCESS("${targetname_suffix}" PPT "${xml_files}" ppt.html "${DOC_DIR}/${targetdir}" "${deps_list}") 
-  endif(BRLCAD_EXTRADOCS_PPT)
-  # Mark input files for distcheck whether or not we're building them
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_PPT)
+    # Now that we know our formats, prepare output paths
+    set(outputs)
+    foreach(fmt ${fmts})
+      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+      if(NOT "${IN_LIST}" STREQUAL "-1")
+	set(${fmt}_OUTFILE ${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION})
+	set(outputs ${outputs} ${${fmt}_OUTFILE})
+      endif(NOT "${IN_LIST}" STREQUAL "-1")
+    endforeach(fmt ${OUTPUT_FORMATS})
+    # If we have more outputs than the default, they need to be handled here.
+    foreach(fmt ${fmts})
+      list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+      if(NOT "${IN_LIST}" STREQUAL "-1")
+	set(${fmt}_EXTRAS)
+	get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_${fmt}_OUTPUTS)
+	foreach(extra_out ${EXTRA_OUTPUTS})
+	  set(${fmt}_EXTRAS ${${fmt}_EXTRAS} ${bin_root}/${${fmt}_DIR}${outdir}/${extra_out})
+	  set(outputs ${outputs} ${${fmt}_OUTFILE})
+	endforeach(extra_out ${EXTRA_OUTPUTS})
+      endif(NOT "${IN_LIST}" STREQUAL "-1")
+    endforeach(fmt ${fmts})
 
-# This macro produces Unix-style manual or "man" pages
-macro(DOCBOOK_TO_MAN targetname_suffix xml_files mannum manext targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_MAN)
-    DOCBOOK_PROCESS("${targetname_suffix}" MAN "${xml_files}" ${manext} "${MAN_DIR}/${targetdir}" "${deps_list}") 
-  endif(BRLCAD_EXTRADOCS_MAN)
-  # Mark input files for distcheck whether or not we're building them
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_MAN targetname_suffix srcfile outfile targetdir deps_list)
-
-# PDF output is generated in a two stage process - the XML file is first
-# converted to an "FO" file, and the FO file is in turn translated to PDF.
-macro(DOCBOOK_TO_PDF targetname_suffix xml_files targetdir deps_list)
-  if(BRLCAD_EXTRADOCS_PDF)
-    foreach(filename ${${xml_files}})
-      get_filename_component(filename_root "${filename}" NAME_WE)
-      set(xml_valid_stamp "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.valid")
-      if (EXISTS ${filename})
-	set(full_path_filename ${filename})
-      else (EXISTS ${filename})
-	set(full_path_filename "${CMAKE_CURRENT_SOURCE_DIR}/${filename}")
-      endif (EXISTS ${filename})
-
-      set(targetname ${filename_root}_${targetname_suffix}_fo)
-      if(CMAKE_CONFIGURATION_TYPES)
-	file(MAKE_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
-	set(outfile "${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${filename_root}.fo")
-      else(CMAKE_CONFIGURATION_TYPES)
-	set(outfile "${CMAKE_CURRENT_BINARY_DIR}/${filename_root}.fo")
-      endif(CMAKE_CONFIGURATION_TYPES)
-      set(fo_outfile ${outfile})
-      set(CURRENT_XSL_STYLESHEET ${XSL_FO_STYLESHEET})
-      if(BRLCAD_EXTRADOCS_VALIDATE)
-	DB_VALIDATE_TARGET(${targetdir} "${filename}" ${filename_root})
-      endif(BRLCAD_EXTRADOCS_VALIDATE)
-      DB_SCRIPT("${targetname}" "${DOC_DIR}/${targetdir}" "${XSLT_EXECUTABLE}")
+    # As long as we're outputting *something*, we have a target to produce
+    if(NOT "${outputs}" STREQUAL "")
+      string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
+      configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
       add_custom_command(
-	OUTPUT ${outfile}
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${full_path_filename} ${xml_valid_stamp} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
+	OUTPUT ${outputs}
+	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake
+	DEPENDS ${fname} ${XMLLINT_EXECUTABLE_TARGET} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
-      set(targetname ${filename_root}_${targetname_suffix}_pdf)
-      set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
-      DB_SCRIPT("${targetname}_pdf" "${DOC_DIR}/${targetdir}" "${PDF_CONV_EXECUTABLE}")
-      add_custom_command(
-	OUTPUT ${outfile}
-	COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
-	DEPENDS ${fo_outfile} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
-	)
-      add_custom_target(${targetname} ALL DEPENDS ${outfile})
-      set_target_properties(${targetname} PROPERTIES FOLDER "DocBook/PDF")
-      # CMAKE_CFG_INTDIR can't be used in installation rules:
+      add_custom_target(docbook-${fname_root}-${path_md5} ALL DEPENDS ${outputs})
+
+      set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
+
+      # Now, set up the install rules in such a way that they will pull output from
+      # the correct directory in single or multi configuration build situations.
+      # Note that CMAKE_CFG_INTDIR can't be used in installation rules (known limitation):
       # http://www.cmake.org/Bug/view.php?id=5747
-      if(CMAKE_CONFIGURATION_TYPES)
-	string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
-      endif(CMAKE_CONFIGURATION_TYPES)
-      install(FILES ${outfile} DESTINATION ${DOC_DIR}/${targetdir})
-      get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
-      set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
-      set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}")
+      foreach(fmt ${fmts})
+	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
+	if(NOT "${IN_LIST}" STREQUAL "-1")
+	  set(outfile ${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION})
+	  if(CMAKE_CONFIGURATION_TYPES)
+	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+	  endif(CMAKE_CONFIGURATION_TYPES)
+	  install(FILES ${outfile} DESTINATION ${${fmt}_DIR}${outdir})
+	  get_property(EXTRA_OUTPUTS SOURCE ${filename} PROPERTY EXTRA_${fmt}_OUTPUTS)
+	  foreach(extra_out ${EXTRA_OUTPUTS})
+	    set(outfile ${${fmt}_EXTRAS} ${bin_root}/${${fmt}_DIR}${outdir}/${extra_out})
+	    if(CMAKE_CONFIGURATION_TYPES)
+	      string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
+	    endif(CMAKE_CONFIGURATION_TYPES)
+	    install(FILES ${outfile} DESTINATION ${${fmt}_DIR}${outdir})
+	  endforeach(extra_out ${EXTRA_OUTPUTS})
+	endif(NOT "${IN_LIST}" STREQUAL "-1")
+      endforeach(fmt ${fmts})
+    endif(NOT "${outputs}" STREQUAL "")
 
-      # If multiple outputs are being generated from the same file, make sure
-      # one of them is run to completion before the others to avoid multiple
-      # triggerings of the XML validation command.
-      get_property(1ST_TARGET SOURCE ${filename} PROPERTY 1ST_TARGET)
-      if(1ST_TARGET)
-	add_dependencies(${targetname} ${1ST_TARGET})
-      else(1ST_TARGET)
-	set_property(SOURCE ${filename} PROPERTY 1ST_TARGET "${targetname}")
-      endif(1ST_TARGET)
+  endforeach(fname ${xml_files})
 
-    endforeach(filename ${${xml_files}})
-  endif(BRLCAD_EXTRADOCS_PDF)
-  CMAKEFILES(${${xml_files}})
-endmacro(DOCBOOK_TO_PDF targetname_suffix srcfile outfile targetdir deps_list)
+endmacro(ADD_DOCBOOK)
 
 # Local Variables:
 # tab-width: 8
