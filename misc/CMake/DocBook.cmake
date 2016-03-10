@@ -172,8 +172,8 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   set(all_outfiles)
 
-  # Each file gets its own target, which handles all the outputs
-  # to be produced from that file
+  # Each file gets its own script file and custom command, which handle all
+  # the outputs to be produced from that file.
   foreach(fname ${xml_files})
     get_filename_component(fname_root "${fname}" NAME_WE)
     get_filename_component(filename "${fname}" ABSOLUTE)
@@ -195,8 +195,8 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
       if(NOT "${IN_LIST}" STREQUAL "-1")
 	set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	# Use CMAKE_CFG_INTDIR for build system custom commands, but need BUILD_TYPE form for scripts
-	# and install commands.
+	# Use CMAKE_CFG_INTDIR for build system output list, but need
+	# BUILD_TYPE form of path for scripts and install commands.
 	if(CMAKE_CONFIGURATION_TYPES)
 	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
 	else(CMAKE_CONFIGURATION_TYPES)
@@ -206,16 +206,21 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	install(FILES "${${fmt}_OUTFILE}" DESTINATION ${${fmt}_DIR}${outdir})
       endif(NOT "${IN_LIST}" STREQUAL "-1")
     endforeach(fmt ${OUTPUT_FORMATS})
+
     # If we have more outputs than the default, they need to be handled here.
     foreach(fmt ${fmts})
       list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
       if(NOT "${IN_LIST}" STREQUAL "-1")
-	set(${fmt}_EXTRA)
+	set(${fmt}_EXTRAS)
 	get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
 	foreach(extra_out ${EXTRA_OUTPUTS})
+	  # Pass the file name to the script's extras list, in case the script
+	  # has to manually place the file in the correct directory...
+	  set(${fmt}_EXTRAS ${${fmt}_EXTRAS} "${extra_out}")
+
+	  # Use CMAKE_CFG_INTDIR for build system output list, but need
+	  # BUILD_TYPE form of path for scripts and install commands.
 	  set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
-	  # Use CMAKE_CFG_INTDIR for build system custom commands, but need BUILD_TYPE form for scripts
-	  # and install commands.
 	  if(CMAKE_CONFIGURATION_TYPES)
 	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
 	  else(CMAKE_CONFIGURATION_TYPES)
@@ -225,6 +230,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	  install(FILES "${${fmt}_EXTRA}" DESTINATION ${${fmt}_DIR}${outdir})
 	endforeach(extra_out ${EXTRA_OUTPUTS})
       endif(NOT "${IN_LIST}" STREQUAL "-1")
+
     endforeach(fmt ${fmts})
 
     set(all_outfiles ${all_outfiles} ${outputs})
