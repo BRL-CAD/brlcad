@@ -93,7 +93,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    The first stage of the surface-surface intersection algorithm attempts to identify overlap intersections (areas where the two surfaces are coincident). Our assumption is that the boundary curve of any overlap region must be formed from isocurves of the overlapping surfaces. Subcurves of isocurves that intersect both surfaces, such that the surfaces are coincident on one side of the curve but not the other, potentially form part of overlap boundaries. These curves are identified using <function>find_overlap_boundary_curves</function>, which may also return some intersection points and curves that aren't on overlap boundaries to avoid wasted effort. Then, the <function>split_overlaps_at_intersections</function> function is run, and curves that share endpoints are stitched together. Stitched curves that close to form loops are recorded as overlap intersection events.
 	</para>
 	<para>
-	The second stage of the surface-surface intersection algorithm attempts to identify other intersection curves and points. The input surfaces <parameter>surfA</parameter> and <parameter>surfB</parameter> are subdivided into four subsurfaces, whose bounding boxes are tested in pairs for intersection. This subdivision repeats to a fixed depth determined by <constant>MAX_SSI_DEPTH</constant>. Subsurfaces that lie completely inside an overlap region identified in the first stage are discarded. Each final pair of subsurfaces with intersecting bounding boxes is approximated with two triangles. The triangles are then intersected, and the average of all intersection points is used as the initial guess for a Newton iterative solver, implemented by <function>newton_ssi</function>, which searches for a point close to the guess point which lies on both surfaces. Solved points that lies inside an overlap region identified in the first stage are discarded. Nearby points in the set of solved intersection points between <parameter>surfA</parameter> and <parameter>surfB</parameter> are then stitched together into polyline curves. If a line or conic curve can be fit to the polyline curves in 2d, the fit curve replaces the original <parameter>surfA</parameter> and/or <parameter>surfB</parameter> polyline curve. 
+	The second stage of the surface-surface intersection algorithm attempts to identify other intersection curves and points. The input surfaces <parameter>surfA</parameter> and <parameter>surfB</parameter> are subdivided into four subsurfaces, whose bounding boxes are tested in pairs for intersection. This subdivision repeats to a fixed depth determined by <constant>MAX_SSI_DEPTH</constant>. Subsurfaces that lie completely inside an overlap region identified in the first stage are discarded. Each final pair of subsurfaces with intersecting bounding boxes is approximated with two triangles. The triangles are then intersected, and the average of all intersection points is used as the initial guess for a Newton iterative solver, implemented by <function>newton_ssi</function>, which searches for a point close to the guess point which lies on both surfaces. Solved points that lies inside an overlap region identified in the first stage are discarded. Nearby points in the set of solved intersection points between <parameter>surfA</parameter> and <parameter>surfB</parameter> are then stitched together into polyline curves. If a line or conic curve can be fit to the polyline curves in 2D, the fit curve replaces the original <parameter>surfA</parameter> and/or <parameter>surfB</parameter> polyline curve. 
 	</para>
       </section>
     </section>
@@ -124,7 +124,7 @@ ON_Intersect(const ON_Surface *surfA,
 	    The OpenNURBS array classes do not check for out-of-bounds indexing. This isn't a problem in the simple case where items are added with <function>Append</function> and elements <inlineequation><mathphrase>[0, </mathphrase></inlineequation><function>Count()</function><inlineequation><mathphrase> - 1]</mathphrase></inlineequation> are iterated over.
 	  </para>
 	  <para>
-	    However, if the array will be a fixed size whose items are assigned in a nonsequential order, both the <emphasis>capacity</emphasis> and <emphasis>count</emphasis> should be set, or else the reported <function>Count</function> will be incorrect, and copying arrays by assignment won't work.
+	    However, if the array will be a fixed size whose items are assigned in a non-sequential order, both the <emphasis>capacity</emphasis> and <emphasis>count</emphasis> should be set, or else the reported <function>Count</function> will be incorrect, and copying arrays by assignment won't work.
 	  </para>
 	  <programlisting>
 	<![CDATA[
@@ -162,7 +162,7 @@ ON_Intersect(const ON_Surface *surfA,
 	</para>
 	<note>
 	  <para>
-	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, wth their <varname>z</varname> coordinates set to 0.
+	    <classname>ON_2dPoint</classname> objects can be, and are, safely passed to functions that take <classname>ON_3dPoint</classname> arguments. The <classname>ON_3dPoint</classname> arguments are constructed from the provided <classname>ON_2dPoint</classname> objects, with their <varname>z</varname> coordinates set to 0.
 	  </para>
           <para>
             The NURBS boolean evaluation implementation frequently constructs 2D curves by populating an <classname>ON_3dPointArray</classname> with 2D points, rather than using an <classname>ON_2dPointArray</classname>, as the 3D version of the class (besides having additional useful member functions), can be used to initialize an <classname>ON_PolylineCurve</classname>.
@@ -195,7 +195,7 @@ ON_Intersect(const ON_Surface *surfA,
       <section>
 	<title>Parametric Curves</title>
 	<para>
-	  The most frequenlty used geomety class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
+	  The most frequently used geometry class is <classname>ON_Curve</classname>, a generic container for parametric curves. The curve is interrogated by using the <function>PointAt(double t)</function> method to evaluate points at arbitrary values inside the curve's domain, which is specified by the <classname>ON_Interval</classname> returned by the <function>Domain()</function> method. The start and end points of the curve have dedicated access methods, <function>PointAtStart()</function> and <function>PointAtEnd()</function>.
 	</para>
 	<warning>
 	  <para>
@@ -203,7 +203,7 @@ ON_Intersect(const ON_Surface *surfA,
 	  </para>
 	</warning>
 	<para>
-	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2d trim curves, the z coordinate will be 0.0.
+	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2D trim curves, the z coordinate will be 0.0.
 	</para>
 	<para>
 	  The curve's domain is frequently reversed using the <function>Reverse()</function> method to facilitate stitching curves together. The function has a boolean <type>int</type> return value that must be checked.
@@ -221,7 +221,7 @@ if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
 	</para>
 	<warning>
 	  <para>
-	    Comparing curve endpoints, or even just bounding boxes (retrived via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
+	    Comparing curve endpoints, or even just bounding boxes (retrieved via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
 	  </para>
 	</warning>
 	<para>
@@ -236,7 +236,7 @@ ON_Curve* Duplicate()
 }
 	</programlisting>
 	<para>
-	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are freqently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
+	  This function is common to all OpenNURBS geometry classes, but curves are by far the most frequently duplicated objects. However, if curves are simply being retained from a working set of container objects, the curve pointers are frequently stolen rather than copied, with curve members set to <constant>NULL</constant> so that the curves aren't destructed with the containers.
 	</para>
       </section>
       <section>
@@ -262,7 +262,7 @@ ON_Curve* Duplicate()
 	  An <classname>ON_Surface</classname> has a similar interface to an <classname>ON_Curve</classname>, but adapted to support the surface's two domains, <parameter>u</parameter> and <parameter>v</parameter> (sometimes called <parameter>s</parameter> and <parameter>t</parameter>) which correspond with 0 and 1 (first example) or <parameter>x</parameter> and <parameter>y</parameter> (second example).
 	</para>
 	<example>
-	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3d.</title>
+	  <title>Projecting an arbitrary <inlineequation><mathphrase>(u, v)</mathphrase></inlineequation> point into 3D.</title>
 	  <programlisting>
 <![CDATA[
 ON_Interval udom = surface->Domain(0);
@@ -412,7 +412,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <section>
           <title>Curve Traversal Directions</title>
           <para>
-            It's important to remember that because parameterizations are arbitrary, there is no correspondance whatsoever between a 2D curve in one surface's domain and another surface's domain, even when those curves evaluate to the same 3D curve. In particular, you cannot assume that traversing different curves along their domain from <varname>m_t[0]</varname> to <varname>m_t[1]</varname> translates to a consistent direction in 3D. Put more simply, you cannot assume that the start and end points of such curves correspond in any particular way.
+            It's important to remember that because parameterizations are arbitrary, there is no correspondence whatsoever between a 2D curve in one surface's domain and another surface's domain, even when those curves evaluate to the same 3D curve. In particular, you cannot assume that traversing different curves along their domain from <varname>m_t[0]</varname> to <varname>m_t[1]</varname> translates to a consistent direction in 3D. Put more simply, you cannot assume that the start and end points of such curves correspond in any particular way.
           </para>
           <warning>
             <para>
@@ -423,6 +423,46 @@ for (int i = 0; i < x_event.Count(); ++i) {
             </para>
             <para>
               If <varname>curve</varname> is a closed loop, then you can't assume even that much. You would have (within tolerance) <code>start == end</code>, <code>startA == endA</code>, <code>startB == endB</code>. However, it could be that the "break" in the loop is different in every parameterization, so that <code>start != startA != startB</code>.
+            </para>
+          </warning>
+        </section>
+      </section>
+      <section>
+        <title>Accumulated Error</title>
+        <para>
+          By the nature of the math involved in representing parametric geometry, converting between 2D and 3D, and solving intersections between objects with different parameterizations, values that are expected to be identical are generally only equal within a certain tolerance, or error.
+        </para>
+        <para>
+          Over the course of the evaluation, the same data is interrogated and processed a number of times. If ignored, the error introduced in one stage of the evaluation can grow over subsequent stages, causing an incorrect determination that leaves a curve unclosed, a surface unsplit, and ultimately an incorrect evaluated result.
+        </para>
+        <para>
+          As a consequence, it's generally a good idea to remove fuzziness when you find it, and avoid algorithms that introduce more error.
+        </para>
+        <section>
+          <title>Clamping</title>
+          <para>
+            Start and end points of closed curves are rarely identical. So if a curve is found to be closed within tolerance, it's a good idea to actually set the end point equal to the start point. Similarly, if an interval of a domain is calculated whose endpoints are within tolerance of the domain endpoints, the entire domain should be used.
+          </para>
+          <note>
+            <para>
+              Producing subcurves of existing curves is a common operation in the NURBS boolean evaluation implementation. This is a prime example of an operation that can introduce fuzziness into the evaluation. For example, we may be splitting a curve to remove a portion of it, and end up with two new curves with endpoints that used to align when part of the original curve, but no longer do.
+            </para>
+            <para>
+              The <function>Split</function> method of <classname>ON_Curve</classname> can be used to produce subcurves, but in the implementation it's much preferred to use the <function>sub_curve</function> function defined in <filename>intersect.cpp</filename> which wraps <function>Split</function> and correctly handles clamping of curve parameters to domain endpoints.
+            </para>
+          </note>
+        </section>
+        <section>
+          <title>Iterated Solutions</title>
+          <para>
+            The iterative method used to solve points on parametric curves and surfaces is expected to produce better answers given better inputs and more iterations. However, our algorithms can't always produce sufficient inputs, and the value the solver converges on isn't always the correct one.
+          </para>
+          <para>
+            This fuzziness produced in the solver's results can be mitigated in the context of finding intersection curves for example, because we solve many points and fit a curve between them. So, one unsolved point on the curve isn't going to cause an evaluation failure.
+          </para>
+          <warning>
+            <para>
+              It's tempting to test curve characteristics or make inside/outside determinations, etc. by using the <function>ON_Intersect</function> functions. However, there's a persistent risk that the error in the iteratively solved results will cause incorrect determinations that cascade into larger problems over the course of the evaluation. For this reason, the <function>ON_Intersect</function> functions should be avoided whenever possible.
             </para>
           </warning>
         </section>
