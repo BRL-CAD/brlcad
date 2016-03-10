@@ -372,19 +372,44 @@ for (int i = 0; i < x_event.Count(); ++i) {
           </para>
         </note>
       </section>
-      <section>
-	<title>Pitfalls</title>
-	<para>Mistakes made.</para>
-      </section>
     </section>
-
     <section>
-      <title>Code Conventions</title>
+      <title>Code Conventions and Pitfalls</title>
       <section>
-	<title>Pitfalls</title>
-	<para>Mistakes made.</para>
+        <title>2D vs 3D</title>
+        <para>
+          Implicit in working with parametric geometry is that some operations are done in 2D while others are done in 3D and it's very important to know the dimension currently being worked in at all times.
+        </para>
+        <para>
+          As mentioned in the section above on 2D and 3D points, 3D classes are often used in the implementation to store 2D points, and thus are not a reliable indication that an operation is happening in 3D.
+        </para>
+        <para>
+          Being that operations in 2D tend to be a lot simpler, 2D is normally the dimension being worked in. However, because parametric curves and surfaces of different objects have different parameterizations, determining where two objects intersect can't be done by comparing 2D parameters; it must happen in 3D.
+        </para>
+        <section>
+          <title>Naming Convention</title>
+          <para>
+            Generally, when 2D and 3D operations are taking place near one another, you'll see a naming convention being used to disambiguate 2D and 3D data. 3D identifiers are unadorned, while 2D names will be suffixed with 1/2 or A/B.
+          </para>
+          <para>
+            Suppose for example we have three arrays of corresponding points that are samples along an intersection curve between two surfaces. The 3D array might simply be named <varname>points</varname>. The corresponding 2D points in the domains of the two surfaces involved are then  very likely to be named <varname>points1</varname> and <varname>points2</varname> or <varname>pointsA</varname> and <varname>pointsB</varname>. Whether the 1/2 or A/B suffixes are used typically depends on whether the input surfaces have names like <varname>surf1</varname>/<varname>surf2</varname> or <varname>surfA</varname>/<varname>surfB</varname>. The latter is more likely to be used when processing intersection events, as members of the OpenNURBS intersection event classes are named <varname>m_a</varname> and <varname>m_b</varname>, etc.
+          </para>
+        </section>
+        <section>
+          <title>Intersection Tolerances</title>
+          <para>
+            The ON_Intersect intersection routines (<filename>intersect.cpp</filename>) generally take an <varname>isect_tol</varname> argument, which is a 3D tolerance normally equal to the constant <varname>ON_INTERSECTION_TOL</varname>. 2D tolerances, following the convention described above, are generally named <varname>isect_tolA</varname> and <varname>isect_tolB</varname>.
+          </para>
+          <para>
+            2D tolerance values for curves and surfaces are derived from the 3D tolerance value using the <function>tolerance_2d_from_3d</function> routines. The length of the diagonal of the 3D bounding box of the curve or surface is divided by the length of the 2D domain to get a rough estimate of what distance in the 2D domain corresponds to the 3D tolerance distance. In other words, the hope is that two points on a <varname>curveA</varname> or <varname>surfA</varname> that are <varname>isect_tolA</varname> units apart in 2D, will evaluate to two 3D points that are <varname>isect_tol</varname> units apart in 3D.
+          </para>
+          <warning>
+            <para>
+              The difference between <varname>isect_tol</varname> and <varname>isect_tolA</varname> and <varname>isect_tolB</varname> can be arbitrarily large, so it's import that the correct tolerance is used in all cases. However, it's sometimes tempting to use the wrong tolerance, for instance using the 2D <varname>isect_tolA</varname> in a 3D intersection test simply because the 3D points were evaluated from 2D points in the <varname>surfA</varname> domain.
+            </para>
+          </warning>
+        </section>
       </section>
     </section>
-
   </section>
 </article>
