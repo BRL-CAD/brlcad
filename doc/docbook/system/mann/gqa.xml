@@ -112,7 +112,7 @@
     </para>
 
     <literallayout class="normal">
-<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/>
+<xi:include xmlns:xi="http://www.w3.org/2001/XInclude" href="../../../../misc/GQA_SAMPLE_DENSITIES" parse="text"/>
    </literallayout>
 
     <para>
