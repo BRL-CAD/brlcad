@@ -165,7 +165,6 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
   while(TARGET docbook-${target_root})
     math(EXPR inc_num "${inc_num} + 1")
     set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
-    message("target_root: ${target_root}")
   endwhile(TARGET docbook-${target_root})
 
   # Mark files for distcheck
