@@ -991,7 +991,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
     acnum = bu_argv_from_string(avnum, 4, str1);
     if (acnum == 3) {
 	/* We might have three numbers - find out */
-	fastf_t v1, v2, v3 = 0.0;
+	fastf_t v1 = 0.0;
+	fastf_t v2 = 0.0;
+	fastf_t v3 = 0.0;
 	int have_three = 1;
 	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[0], &v1) == -1) {
 	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[0]);
@@ -1017,7 +1019,9 @@ bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
     }
     /* First string didn't have three numbers - maybe we have 3 args ? */
     if (argc >= 3) {
-	fastf_t v1, v2, v3 = 0.0;
+	fastf_t v1 = 0.0;
+	fastf_t v2 = 0.0;
+	fastf_t v3 = 0.0;
 	if (bu_opt_fastf_t(msg, 1, &argv[0], &v1) == -1) {
 	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[0]);
 	    bu_free(str1, "free tmp str");
