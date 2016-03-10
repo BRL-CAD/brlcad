@@ -81,7 +81,7 @@ endif(NOT DEFINED PDF_CONV_EXECUTABLE)
 
 # Get our root path
 if(CMAKE_CONFIGURATION_TYPES)
-  set(bin_root "${CMAKE_BINARY_DIR}/\${BUILD_TYPE}")
+  set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
 else(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}")
 endif(CMAKE_CONFIGURATION_TYPES)
@@ -135,8 +135,8 @@ set(PDF_DIR "${DOC_DIR}/pdf/")
 # case, however, we are using a generated script with a different mechanism
 # for handling this situation, and we need to update the executable paths
 # accordingly if they are configuration dependent.
-string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXECUTABLE "${XMLLINT_EXECUTABLE}")
-string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXECUTABLE "${XSLTPROC_EXECUTABLE}")
+string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
+string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
 
 # Convenience target to launch all DocBook builds
 add_custom_target(docbook ALL)
@@ -145,26 +145,28 @@ set_target_properties(docbook PROPERTIES FOLDER "DocBook")
 macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   # If we got the name of a list or an explicit list,
-  # translate into the form we need and set up the
-  # build target name accordingly.
+  # translate into the form we need.
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
-    string(MD5 target_root "${xml_files}")
   else("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${${in_xml_files}})
-    get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
-    get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
-    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
-    get_filename_component(dname_path2  "${dname_path1}" PATH)
-    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
-    set(inc_num 0)
-    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
-    while(TARGET docbook-${target_root})
-      math(EXPR inc_num "${inc_num} + 1")
-      set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
-    endwhile(TARGET docbook-${target_root})
   endif("${xml_files}" MATCHES "NOTFOUND")
+
+  # Get a target name that is unique but at least has
+  # some information about what/where the target is.
+  get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
+  get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
+  get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+  get_filename_component(dname_path2  "${dname_path1}" PATH)
+  get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+  set(inc_num 0)
+  set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
+  while(TARGET docbook-${target_root})
+    math(EXPR inc_num "${inc_num} + 1")
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
+    message("target_root: ${target_root}")
+  endwhile(TARGET docbook-${target_root})
 
   # Mark files for distcheck
   CMAKEFILES(${xml_files})
@@ -193,8 +195,15 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     foreach(fmt ${fmts})
       list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
       if(NOT "${IN_LIST}" STREQUAL "-1")
-	set(${fmt}_OUTFILE "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
-	set(outputs ${outputs} ${${fmt}_OUTFILE})
+	set(${fmt}_OUTFILE_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION}")
+	# Use CMAKE_CFG_INTDIR for build system custom commands, but need BUILD_TYPE form for scripts
+	# and install commands.
+	if(CMAKE_CONFIGURATION_TYPES)
+	  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
+	else(CMAKE_CONFIGURATION_TYPES)
+	  set(${fmt}_OUTFILE "${${fmt}_OUTFILE_RAW}")
+	endif(CMAKE_CONFIGURATION_TYPES)
+	set(outputs ${outputs} ${${fmt}_OUTFILE_RAW})
 	install(FILES ${${fmt}_OUTFILE} DESTINATION ${${fmt}_DIR}${outdir})
       endif(NOT "${IN_LIST}" STREQUAL "-1")
     endforeach(fmt ${OUTPUT_FORMATS})
@@ -205,9 +214,16 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	set(${fmt}_EXTRA)
 	get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
 	foreach(extra_out ${EXTRA_OUTPUTS})
-	  set(${fmt}_EXTRA "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
+	  set(${fmt}_EXTRA_RAW "${bin_root}/${${fmt}_DIR}${outdir}/${extra_out}")
+	  # Use CMAKE_CFG_INTDIR for build system custom commands, but need BUILD_TYPE form for scripts
+	  # and install commands.
+	  if(CMAKE_CONFIGURATION_TYPES)
+	    string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" ${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	  else(CMAKE_CONFIGURATION_TYPES)
+	    set(${fmt}_EXTRA "${${fmt}_EXTRA_RAW}")
+	  endif(CMAKE_CONFIGURATION_TYPES)
+	  set(outputs ${outputs} ${${fmt}_EXTRA_RAW})
 	  install(FILES ${${fmt}_EXTRA} DESTINATION ${${fmt}_DIR}${outdir})
-	  set(outputs ${outputs} ${${fmt}_EXTRA})
 	endforeach(extra_out ${EXTRA_OUTPUTS})
       endif(NOT "${IN_LIST}" STREQUAL "-1")
     endforeach(fmt ${fmts})

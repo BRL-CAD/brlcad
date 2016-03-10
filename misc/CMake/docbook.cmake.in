@@ -45,6 +45,8 @@ else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BUILD_TYPE)
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
+set(XSLTPROC_EXECUTABLE "@XSLTPROC_EXEC@")
+set(XMLLINT_EXECUTABLE "@XMLLINT_EXEC@")
 
 macro(XSLTPROC stylesheet filename outfile extras)
   set(ENV{XML_DEBUG_CATALOG} 1)
@@ -52,7 +54,7 @@ macro(XSLTPROC stylesheet filename outfile extras)
   # when building in parallel, due to a bug/limitation in xsltproc
   get_filename_component(output_dir "${outfile}" PATH)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}/")
-  execute_process(COMMAND "@XSLTPROC_EXECUTABLE@" -nonet -xinclude -o "${outfile}" "${stylesheet}" "${filename}"
+  execute_process(COMMAND "${XSLTPROC_EXECUTABLE}" -nonet -xinclude -o "${outfile}" "${stylesheet}" "${filename}"
     RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
   # For some reason, xsltproc doesn't always seem to respect the
@@ -89,7 +91,7 @@ set(SCHEMA_DIR "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema")
 
 if ("xmllint" MATCHES "${VE}")
 
-  execute_process(COMMAND "@XMLLINT_EXECUTABLE@" --xinclude --schema "${SCHEMA_DIR}/xsd/docbook.xsd" --noout --nonet "${filename}"
+  execute_process(COMMAND "${XMLLINT_EXECUTABLE}" --xinclude --schema "${SCHEMA_DIR}/xsd/docbook.xsd" --noout --nonet "${filename}"
     RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
 elseif ("rnv" MATCHES "${VE}")
