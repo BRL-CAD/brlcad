@@ -409,6 +409,23 @@ for (int i = 0; i < x_event.Count(); ++i) {
             </para>
           </warning>
         </section>
+        <section>
+          <title>Curve Traversal Directions</title>
+          <para>
+            It's important to remember that because parameterizations are arbitrary, there is no correspondance whatsoever between a 2D curve in one surface's domain and another surface's domain, even when those curves evaluate to the same 3D curve. In particular, you cannot assume that traversing different curves along their domain from <varname>m_t[0]</varname> to <varname>m_t[1]</varname> translates to a consistent direction in 3D. Put more simply, you cannot assume that the start and end points of such curves correspond in any particular way.
+          </para>
+          <warning>
+            <para>
+              Suppose you have an open 3D intersection <varname>curve</varname> spanning two 3D points <code>start = curve->PointAtStart()</code> and <code>end = curve->PointAtEnd()</code>. You also have the corresponding 2D curve in the domains of the two surfaces producing the intersection, a <varname>curveA</varname> spanning the points <code>startA = curveA->PointAtStart()</code> and <code>endA = curveA->PointAtEnd()</code>, and a <varname>curveB</varname> spanning the points <code>startB = curveB->PointAtStart()</code> and <code>endB = curveB->PointAtEnd()</code>.
+            </para>
+            <para>
+              In this example, you cannot assume that (within tolerance) <code>startA == startB == start</code>. It could be that <code>startA == start</code> but <code>startB == end</code>, or that <code>startB == start</code> but <code>startA == end</code>, or that <code>startA == startB == end</code>.
+            </para>
+            <para>
+              If <varname>curve</varname> is a closed loop, then you can't assume even that much. You would have (within tolerance) <code>start == end</code>, <code>startA == endA</code>, <code>startB == endB</code>. However, it could be that the "break" in the loop is different in every parameterization, so that <code>start != startA != startB</code>.
+            </para>
+          </warning>
+        </section>
       </section>
     </section>
   </section>
