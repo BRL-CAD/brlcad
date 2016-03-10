@@ -258,7 +258,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
   endforeach(fname ${xml_files})
 
   if(NOT "${all_outfiles}" STREQUAL "")
-    add_custom_target(docbook-${target_root} DEPENDS ${all_outfiles})
+    add_custom_target(docbook-${target_root} ALL DEPENDS ${all_outfiles})
     set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
     add_dependencies(docbook docbook-${target_root})
   endif(NOT "${all_outfiles}" STREQUAL "")
