@@ -135,8 +135,10 @@ set(PDF_DIR "${DOC_DIR}/pdf/")
 # case, however, we are using a generated script with a different mechanism
 # for handling this situation, and we need to update the executable paths
 # accordingly if they are configuration dependent.
-string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
-string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
+if(CMAKE_CONFIGURATION_TYPES)
+  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXEC "${XMLLINT_EXECUTABLE}")
+  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXEC "${XSLTPROC_EXECUTABLE}")
+endif(CMAKE_CONFIGURATION_TYPES)
 
 # Convenience target to launch all DocBook builds
 add_custom_target(docbook ALL)
