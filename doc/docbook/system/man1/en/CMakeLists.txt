@@ -244,7 +244,7 @@ set(man1_EN
 set_source_files_properties(pix2asc.xml PROPERTIES EXTRA_MAN1_OUTPUTS "asc2pix.1")
 set_source_files_properties(chan_mult.xml PROPERTIES EXTRA_MAN1_OUTPUTS "chan_add.1")
 
-ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1/en "")
+ADD_DOCBOOK("HTML;PHP;MAN1;PDF" man1_EN man1 "")
 
 CMAKEFILES(pictx.xml)
 

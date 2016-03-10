@@ -13,7 +13,7 @@ set(man3_EN
 # extra outputs without being told.
 #set_source_files_properties(bu_htond.xml PROPERTIES EXTRA_MAN_OUTPUTS "bu_ntohd.3")
 
-ADD_DOCBOOK("HTML;PHP;MAN3;PDF" man3_EN man3/en "")
+ADD_DOCBOOK("HTML;PHP;MAN3;PDF" man3_EN man3 "")
 
 CMAKEFILES(libbu.xml libdm.xml TODO)
 

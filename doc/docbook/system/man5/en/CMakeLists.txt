@@ -30,7 +30,7 @@ set(man5_EN
   )
 set(attribute_DEPS attr_std_list_xml attr_std_table_xml)
 
-ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN html/man5/en "${attribute_DEPS}")
+ADD_DOCBOOK("HTML;PHP;MAN5;PDF" man5_EN man5 "${attribute_DEPS}")
 
 # Local Variables:
 # tab-width: 8

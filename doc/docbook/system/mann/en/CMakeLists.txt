@@ -254,12 +254,12 @@ set(mann_EN
 # extra outputs without being told.
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MANN_OUTPUTS "dg.nged")
 
-ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann/en "")
+ADD_DOCBOOK("HTML;PHP;MANN;PDF" mann_EN mann "")
 
 set(mann_INTRO
   Introduction.xml
   )
-ADD_DOCBOOK("HTML;PHP" mann_INTRO mann/en "")
+ADD_DOCBOOK("HTML;PHP" mann_INTRO mann "")
 
 # Local Variables:
 # tab-width: 8
