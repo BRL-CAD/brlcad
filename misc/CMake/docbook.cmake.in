@@ -1,4 +1,4 @@
-#          D O C B O O K _ P R O C E S S . C M A K E . I N
+#                D O C B O O K . C M A K E . I N
 # BRL-CAD
 #
 # Copyright (c) 2012-2016 United States Government as represented by
@@ -200,7 +200,7 @@ foreach(fmt ${CURRENT_OUTPUT_FORMATS})
     set(ENV{FOP_OPTS} "-Djava.awt.headless=true  -Dlog4j.configuration=\"@CMAKE_SOURCE_DIR@/doc/docbook/log4j.properties\"")
 
     # Make sure the target directory exists
-    get_filename_component(output_dir "@outfile@" PATH)
+    get_filename_component(output_dir "${PDF_OUTFILE}" PATH)
     execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}")
 
     # Run FOP to actually generate the PDF
