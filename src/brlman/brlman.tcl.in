@@ -121,7 +121,7 @@ if {[llength $argv2] > 2} {
 
 # If we have a section number, grab it
 if {[llength $argv2] == 2} {
-# Count how many potentially valid section numbers we have
+   # Count how many potentially valid section numbers we have
    set numcount 0
    foreach manarg $argv2 {
       if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount}
@@ -177,68 +177,69 @@ if {![info exists ::enable_gui] && ![info exists ::disable_gui]} {
    if {$have_man != 1 && $have_tk == 1} {set ::enable_gui 1}
 }
 
-# Locate the file specified.
 if {[info exists ::enable_gui]} {
-   if {[info exists section_number]} {
-      if {[file exists [file join [bu_brlcad_data doc/html/man$section_number] $::man_language $argv2.html]]} {
-	 set man_file [file join [bu_brlcad_data doc/html/man$section_number] $::man_language $argv2.html]
-      } else {
-	 puts stderr "No man page found for $argv2 in section $section_number"
-	 if {[info exists argv]} {exit}
-      }
+   set ::data_dir doc/html/man
+   set ::file_ext html
+} else {
+   set ::data_dir @MAN_DIR@/man
+}
+
+# Locate the file specified.
+if {[info exists section_number]} {
+   if {[info exists ::file_ext]} {
+      set fe $::file_ext
    } else {
-      foreach i {1 3 5 n} {
-	 if {![info exists man_file] && [file exists [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]]} {
-	    set man_file [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]
-	    set section_number $i
-	 }
+      if {$section_number == "n"} {
+	 set fe nged
+      } else {
+	 set fe $section_number
       }
-      if {! [info exists man_file]} {
-	 puts stderr "No man page found for $argv2"
-	 if {[info exists argv]} {exit}
+   }
+   if {[file exists [file join [bu_brlcad_data $::data_dir$section_number] $::man_language $argv2.$fe]]} {
+      set man_file [file join [bu_brlcad_data $::data_dir$section_number] $::man_language $argv2.$fe]
+   } else {
+      if {[file exists [file join [bu_brlcad_data $::data_dir$section_number] en $argv2.$fe]]} {
+	 set man_file [file join [bu_brlcad_data $::data_dir$section_number] en $argv2.$fe]
+      } else {
+	 if {[file exists [file join [bu_brlcad_data $::data_dir$section_number] $argv2.$fe]]} {
+	    set man_file [file join [bu_brlcad_data $::data_dir$section_number] $argv2.$fe]
+	 } else {
+	    puts stderr "No man page found for $argv2 in section $section_number"
+	    if {[info exists argv]} {exit}
+	 }
       }
    }
 } else {
-   if {[info exists section_number]} {
-      foreach extension $manext($section_number) {
-	 if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]]} {
-	    set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]
+   foreach i {1 3 5 n} {
+      if {[info exists ::file_ext]} {
+	 set fe $::file_ext
+      } else {
+	 if {$i == "n"} {
+	    set fe nged
+	 } else {
+	    set fe $i
 	 }
       }
       if {![info exists man_file]} {
-	 foreach extension $manext($section_number) {
-	    if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]]} {
-	       set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]
-	    }
-	 }
-      }
-      if {![info exists man_file]} {
-	 puts stderr "No man page found for $argv2 in section $section_number"
-	 if {[info exists argv]} {exit}
-      }
-   } else {
-      foreach i {1 3 5 n} {
-	 foreach extension $manext($i) {
-	    if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]]} {
-	       set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]
+	 if {[file exists [file join [bu_brlcad_data $::data_dir$i] $::man_language $argv2.$fe]]} {
+	    set man_file [file join [bu_brlcad_data $::data_dir$i] $::man_language $argv2.$fe]
+	    set section_number $i
+	 } else {
+	    if {[file exists [file join [bu_brlcad_data $::data_dir$i] en $argv2.$fe]]} {
+	       set man_file [file join [bu_brlcad_data $::data_dir$i] en $argv2.$fe]
 	       set section_number $i
-	    }
-	 }
-      }
-      if {! [info exists man_file]} {
-	 foreach i {1 3 5 n} {
-	    foreach extension $manext($i) {
-	       if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]]} {
-		  set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]
+	    } else {
+	       if {[file exists [file join [bu_brlcad_data $::data_dir$i] $argv2.$fe]]} {
+		  set man_file [file join [bu_brlcad_data $::data_dir$i] $argv2.$fe]
 		  set section_number $i
 	       }
 	    }
 	 }
       }
-      if {! [info exists man_file]} {
-	 puts stderr "No man page found for $argv2"
-	 if {[info exists argv]} {exit}
-      }
+   }
+   if {! [info exists man_file]} {
+      puts stderr "No man page found for $argv2"
+      if {[info exists argv]} {exit}
    }
 }
 
