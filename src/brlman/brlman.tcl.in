@@ -80,35 +80,35 @@ if {![info exists os_ext]} {set os_ext ""}
 # results of its parsing directly in that array
 package require GetOpt
 getopt::init {
-        {gui 			"g"  	{::enable_gui}}
-        {no-gui 		""  	{::disable_gui}}
-        {language               "L"     {::have_lang ::man_language}}
+   {gui 	"g"  	{::enable_gui}}
+   {no-gui 	""  	{::disable_gui}}
+   {language    "L"     {::have_lang ::man_language}}
 }
 
 # Perform the actual option parsing
 if {[info exists argv]} {
-  set argv2 [getopt::getopt $argv]
-  set argv ""
-  if {! [info exists argv2]} {
-    # Exit if no args are provided
-    puts stderr "Error - please specify manual page"
-    if {[info exists argv]} {exit}
-  } else {
-    if {[llength $argv2] == 0} {
-       puts stderr "Error - please specify manual page"
-       if {[info exists argv]} {exit}
-    }
-  }
+   set argv2 [getopt::getopt $argv]
+   set argv ""
+   if {! [info exists argv2]} {
+   # Exit if no args are provided
+      puts stderr "Error - please specify manual page"
+      if {[info exists argv]} {exit}
+   } else {
+      if {[llength $argv2] == 0} {
+	 puts stderr "Error - please specify manual page"
+	 if {[info exists argv]} {exit}
+      }
+   }
 }
 
 # If we don't have a language specified, see if the environment
 # can provide us with info.
 set lang_list [split $::env(LANG) _]
 if {[llength $lang_list] > 0} {
-  set langval [lindex $lang_list 0]
-  if {[string length $langval] == 2} {
+   set langval [lindex $lang_list 0]
+   if {[string length $langval] == 2} {
       set ::man_language $langval
-  }
+   }
 }
 
 # If we still have no language, default to English
@@ -121,10 +121,10 @@ if {[llength $argv2] > 2} {
 
 # If we have a section number, grab it
 if {[llength $argv2] == 2} {
-   # Count how many potentially valid section numbers we have
+# Count how many potentially valid section numbers we have
    set numcount 0
    foreach manarg $argv2 {
-     if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount}
+      if {[string is integer -strict "$manarg"] || $manarg == "n"} {incr numcount}
    }
    if {$numcount == 0} {
       puts stderr "Usage: brlman \[section \#\] name"
@@ -132,11 +132,11 @@ if {[llength $argv2] == 2} {
    }
    if {$numcount == 1} {
       if {[string is integer -strict [lindex $argv2 0]] || [lindex $argv2 0] == "n"} {
-         set section_number [lindex $argv2 0]
-         set argv2 [lreplace $argv2 0 0]
+	 set section_number [lindex $argv2 0]
+	 set argv2 [lreplace $argv2 0 0]
       } else {
-         set section_number [lindex $argv2 1]
-         set argv2 [lreplace $argv2 1 1]
+	 set section_number [lindex $argv2 1]
+	 set argv2 [lreplace $argv2 1 1]
       }
    }
    if {$numcount == 2} {set section_number [lindex $argv2 1]}
@@ -181,97 +181,95 @@ if {![info exists ::enable_gui] && ![info exists ::disable_gui]} {
 if {[info exists ::enable_gui]} {
    if {[info exists section_number]} {
       if {[file exists [file join [bu_brlcad_data doc/html/man$section_number] $::man_language $argv2.html]]} {
-        set man_file [file join [bu_brlcad_data doc/html/man$section_number] $::man_language $argv2.html]
+	 set man_file [file join [bu_brlcad_data doc/html/man$section_number] $::man_language $argv2.html]
       } else {
-        puts stderr "No man page found for $argv2 in section $section_number"
-        if {[info exists argv]} {exit}
+	 puts stderr "No man page found for $argv2 in section $section_number"
+	 if {[info exists argv]} {exit}
       }
    } else {
       foreach i {1 3 5 n} {
-         if {![info exists man_file] && [file exists [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]]} {
-            set man_file [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]
-            set section_number $i
-         }
+	 if {![info exists man_file] && [file exists [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]]} {
+	    set man_file [file join [bu_brlcad_data doc/html/man$i] $::man_language $argv2.html]
+	    set section_number $i
+	 }
       }
       if {! [info exists man_file]} {
-        puts stderr "No man page found for $argv2"
-        if {[info exists argv]} {exit}
+	 puts stderr "No man page found for $argv2"
+	 if {[info exists argv]} {exit}
       }
    }
 } else {
    if {[info exists section_number]} {
       foreach extension $manext($section_number) {
-         if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]]} {
-           set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]
-         }
+	 if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]]} {
+	    set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $::man_language $argv2.$extension]
+	 }
       }
       if {![info exists man_file]} {
-         foreach extension $manext($section_number) {
-            if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]]} {
-              set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]
-            }
-         }
+	 foreach extension $manext($section_number) {
+	    if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]]} {
+	       set man_file [file join [bu_brlcad_root @MAN_DIR@/man$section_number] $argv2.$extension]
+	    }
+	 }
       }
       if {![info exists man_file]} {
-        puts stderr "No man page found for $argv2 in section $section_number"
-        if {[info exists argv]} {exit}
+	 puts stderr "No man page found for $argv2 in section $section_number"
+	 if {[info exists argv]} {exit}
       }
    } else {
       foreach i {1 3 5 n} {
-         foreach extension $manext($i) {
-            if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]]} {
-               set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]
-               set section_number $i
-            }
-         }
+	 foreach extension $manext($i) {
+	    if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]]} {
+	       set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $::man_language $argv2.$extension]
+	       set section_number $i
+	    }
+	 }
       }
       if {! [info exists man_file]} {
-         foreach i {1 3 5 n} {
-            foreach extension $manext($i) {
-               if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]]} {
-                  set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]
-                  set section_number $i
-               }
-            }
-         }
+	 foreach i {1 3 5 n} {
+	    foreach extension $manext($i) {
+	       if {![info exists man_file] && [file exists [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]]} {
+		  set man_file [file join [bu_brlcad_root @MAN_DIR@/man$i] $argv2.$extension]
+		  set section_number $i
+	       }
+	    }
+	 }
       }
       if {! [info exists man_file]} {
-        puts stderr "No man page found for $argv2"
-        if {[info exists argv]} {exit}
+	 puts stderr "No man page found for $argv2"
+	 if {[info exists argv]} {exit}
       }
    }
 }
 
 
 if {[info exists ::enable_gui]} {
-  package require Iwidgets
-  package require ManBrowser 1.0
-  wm state . withdrawn
-  set w [ ManBrowser .browser -useToC 0 ]
-  $w buttonconfigure 0 -text Close -command ::exit
-  wm title .browser "BRL-CAD Man Page ($section_number) - $argv2"
-  wm protocol .browser WM_DELETE_WINDOW ::exit
-  bind $w <Escape> ::exit
-  bind $w <q> ::exit
+   package require Iwidgets
+   package require ManBrowser 1.0
+   wm state . withdrawn
+   set w [ ManBrowser .browser -useToC 0 ]
+   $w buttonconfigure 0 -text Close -command ::exit
+   wm title .browser "BRL-CAD Man Page ($section_number) - $argv2"
+   wm protocol .browser WM_DELETE_WINDOW ::exit
+   bind $w <Escape> ::exit
+   bind $w <q> ::exit
 
-  $w loadPage $man_file
+   $w loadPage $man_file
 
-  $w center
-  $w activate
-  $w center
-  vwait forever
+   $w center
+   $w activate
+   $w center
+   vwait forever
 
-  update
-  puts "Graphical mode done."
+   update
+   puts "Graphical mode done."
 } else {
-  puts $man_file
+   puts $man_file
 }
 
 # Local Variables:
-# mode: sh
+# mode: tcl
 # tab-width: 8
-# sh-indentation: 4
-# sh-basic-offset: 4
 # indent-tabs-mode: t
 # End:
-# ex: shiftwidth=4 tabstop=8
+# ex: shiftwidth=3 tabstop=8
