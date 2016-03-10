@@ -138,19 +138,38 @@ set(PDF_DIR "${DOC_DIR}/pdf/")
 string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XMLLINT_EXECUTABLE "${XMLLINT_EXECUTABLE}")
 string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" XSLTPROC_EXECUTABLE "${XSLTPROC_EXECUTABLE}")
 
+# Convenience target to launch all DocBook builds
+add_custom_target(docbook ALL)
+set_target_properties(docbook PROPERTIES FOLDER "DocBook")
+
 macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 
   # If we got the name of a list or an explicit list,
-  # translate into the form we need.
+  # translate into the form we need and set up the
+  # build target name accordingly.
   list(GET ${in_xml_files} 0 xml_files)
   if("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${in_xml_files})
+    string(MD5 target_root "${xml_files}")
   else("${xml_files}" MATCHES "NOTFOUND")
     set(xml_files ${${in_xml_files}})
+    get_filename_component(dname_root1 "${CMAKE_CURRENT_SOURCE_DIR}" NAME_WE)
+    get_filename_component(dname_path1  "${CMAKE_CURRENT_SOURCE_DIR}" PATH)
+    get_filename_component(dname_root2 "${dname_path1}" NAME_WE)
+    get_filename_component(dname_path2  "${dname_path1}" PATH)
+    get_filename_component(dname_root3 "${dname_path2}" NAME_WE)
+    set(inc_num 0)
+    set(target_root "${dname_root3}-${dname_root2}-${dname_root1}")
+    while(TARGET docbook-${target_root})
+      math(EXPR inc_num "${inc_num} + 1")
+      set(target_root "${dname_root3}-${dname_root2}-${dname_root1}-${inc_num}")
+    endwhile(TARGET docbook-${target_root})
   endif("${xml_files}" MATCHES "NOTFOUND")
 
   # Mark files for distcheck
   CMAKEFILES(${xml_files})
+
+  set(all_outfiles)
 
   # Each file gets its own target, which handles all the outputs
   # to be produced from that file
@@ -191,6 +210,8 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
       endif(NOT "${IN_LIST}" STREQUAL "-1")
     endforeach(fmt ${fmts})
 
+    set(all_outfiles ${all_outfiles} ${outputs})
+
     # As long as we're outputting *something*, we have a target to produce
     if(NOT "${outputs}" STREQUAL "")
       string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
@@ -200,28 +221,24 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake
 	DEPENDS ${fname} ${XMLLINT_EXECUTABLE_TARGET} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} ${deps_list}
 	)
-      add_custom_target(docbook-${fname_root}-${path_md5} ALL DEPENDS ${outputs})
-      set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
-
-      # Now, set up the install rules in such a way that they will pull output from
-      # the correct directory in single or multi configuration build situations.
-      # Note that CMAKE_CFG_INTDIR can't be used in installation rules (known limitation):
-      # http://www.cmake.org/Bug/view.php?id=5747
-      foreach(fmt ${fmts})
-	list(FIND OUTPUT_FORMATS "${fmt}" IN_LIST)
-	if(NOT "${IN_LIST}" STREQUAL "-1")
-	  set(outfile ${bin_root}/${${fmt}_DIR}${outdir}/${fname_root}.${${fmt}_EXTENSION})
-	  install(FILES ${outfile} DESTINATION ${${fmt}_DIR}${outdir})
-	  get_property(EXTRA_OUTPUTS SOURCE ${fname} PROPERTY EXTRA_${fmt}_OUTPUTS)
-	  foreach(extra_out ${EXTRA_OUTPUTS})
-	    set(outfile ${bin_root}/${${fmt}_DIR}${outdir}/${extra_out})
-	    install(FILES ${outfile} DESTINATION ${${fmt}_DIR}${outdir})
-	  endforeach(extra_out ${EXTRA_OUTPUTS})
-	endif(NOT "${IN_LIST}" STREQUAL "-1")
-      endforeach(fmt ${fmts})
+      # For now, we'll skip generating per-input-file build targets - that's not normally how
+      # the docbook targets are built.
+      #add_custom_target(docbook-${fname_root}-${path_md5} DEPENDS ${outputs})
+      #set_target_properties(docbook-${fname_root}-${path_md5} PROPERTIES FOLDER "DocBook")
     endif(NOT "${outputs}" STREQUAL "")
 
   endforeach(fname ${xml_files})
+
+  if(NOT "${all_outfiles}" STREQUAL "")
+    add_custom_target(docbook-${target_root} DEPENDS ${all_outfiles})
+    set_target_properties(docbook-${target_root} PROPERTIES FOLDER "DocBook")
+
+    add_dependencies(docbook docbook-${target_root})
+
+    foreach(fname ${all_outfiles})
+      install(FILES ${fname} DESTINATION ${${fmt}_DIR}${outdir})
+    endforeach(fname ${all_outfiles})
+  endif(NOT "${all_outfiles}" STREQUAL "")
 
 endmacro(ADD_DOCBOOK)
 
