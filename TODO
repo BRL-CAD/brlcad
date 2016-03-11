@@ -43,6 +43,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * either finish new form of rm command or revert to previous version for
   release
 
+* rtwizard command line ghost image specification isn't working
+  reliably
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
