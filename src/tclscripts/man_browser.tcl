@@ -67,7 +67,7 @@ package provide ManBrowser 1.0
 #
 ::itcl::configbody ManBrowser::path {
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "doc/html"] mann en]
+	set path [file join [bu_brlcad_data "doc/html"] mann]
     }
 }
 
@@ -284,7 +284,7 @@ package provide ManBrowser 1.0
     pack $itk_component(browser) -side left -expand yes -fill both
 
     # Load Introduction.html if it's there, otherwise load first page
-    if {[file exists [file join $path introduction.html]]} {
+    if {[file exists [file join $path Introduction.html]]} {
 	loadPage Introduction
     } else {
 	loadPage [lindex $pages($this) 0]

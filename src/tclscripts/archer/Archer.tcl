@@ -2532,7 +2532,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann en $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
