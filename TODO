@@ -18,9 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* teach bw-pix what bw3-pix used to do, i.e., merge one, two, or three
-  bw files into one pix image
-
 * make sure windows wireframes are not horked
 
 * make sure rt -I interactive mode still works... looks like code for
@@ -43,10 +40,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
   open ray data output file"
 
-* move mime type bits out of bu_path_component - add necessary bu_mime
-  API to support those operations.  Simplicity trumps trying to minimize
-  API size by shoving mime into path component functionality - turned out
-  to not fit real well...
+* either finish new form of rm command or revert to previous version for
+  release
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
