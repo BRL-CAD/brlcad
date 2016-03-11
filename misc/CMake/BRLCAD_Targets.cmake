@@ -641,7 +641,9 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
     if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       # Unfortunately, a bug in the CMake SYSTEM option to
       # include_directories requires that these variables
-      # be explicitly set on OSX
+      # be explicitly set on OSX until we can require CMake
+      # version 3.6 - see
+      # https://public.kitware.com/Bug/view.php?id=15953
       if(APPLE)
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
