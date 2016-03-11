@@ -149,7 +149,6 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  *     /dir1/dir2/file.ext
  */
 typedef enum {
-    BU_PATH_FULL = 0,          /*!< full path, sans any [mime::] prefix */
     BU_PATH_DIRNAME,           /*!< /dir1/dir2 */
     BU_PATH_BASENAME,          /*!< file.ext */
     BU_PATH_BASENAME_EXTLESS,  /*!< file */
@@ -164,20 +163,6 @@ typedef enum {
  * returns 0 if the specified component was not found, 1 if it was.  If the
  * bu_vls pointer component is not NULL, the component will be written to the
  * vls.
- *
- * bu_path_component will also accept a mime_type_t argument to type and return
- * the string form of the mime type associated with the file path in component.
- * That mime type will be deduced either by a [mime::] prefix on the path, or
- * by the file extension on the path.  If neither of these is successful, an
- * unknown type will be returned.
- *
- * The return value will still report success or failure (1/0) - to get the
- * integer form of the mime type found, use bu_file_mime_int to process
- * component:
- *
- * if (bu_path_component(c, "file.png", (path_component_t)BU_MIME_IMAGE)) {
- *    mime_image_t t = (mime_image_t)bu_file_mime_int(bu_vls_addr(c));
- * }
  */
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
@@ -215,7 +200,7 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
 
 #if 0
 /* NOTE - the glob API below is a work in progress - until this notice is
- * removed it should not be consided functional, much less stable! */
+ * removed it should not be considered functional, much less stable! */
 #define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
 #define BU_GLOB_ERR        0x0004  /* Return on error. */
 #define BU_GLOB_NOCHECK    0x0010  /* Return pattern itself if nothing matches. */

@@ -23,11 +23,9 @@
 #include <string.h>
 #include <ctype.h>
 
-#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/path.h"
 #include "bu/malloc.h"
-#include "bu/mime.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 
@@ -46,18 +44,18 @@ bu_dirname(const char *cp)
 
     /* Special cases */
     if (UNLIKELY(!cp))
-	return bu_strdup(".");
+        return bu_strdup(".");
 
     if (BU_STR_EQUAL(cp, DSLASH))
-	return bu_strdup(DSLASH);
+        return bu_strdup(DSLASH);
     if (BU_STR_EQUAL(cp, FSLASH))
-	return bu_strdup(FSLASH);
+        return bu_strdup(FSLASH);
 
     if (BU_STR_EQUAL(cp, DOT)
-	|| BU_STR_EQUAL(cp, DOTDOT)
-	|| (strrchr(cp, BU_DIR_SEPARATOR) == NULL
-	    && strrchr(cp, '/') == NULL))
-	return bu_strdup(DOT);
+        || BU_STR_EQUAL(cp, DOTDOT)
+        || (strrchr(cp, BU_DIR_SEPARATOR) == NULL
+            && strrchr(cp, '/') == NULL))
+        return bu_strdup(DOT);
 
     /* Make a duplicate copy of the string, and shorten it in place */
     ret = bu_strdup(cp);
@@ -65,28 +63,28 @@ bu_dirname(const char *cp)
     /* A sequence of trailing slashes don't count */
     len = strlen(ret);
     while (len > 1
-	   && (ret[len-1] == BU_DIR_SEPARATOR
-	       || ret[len-1] == '/')) {
-	ret[len-1] = '\0';
-	len--;
+           && (ret[len-1] == BU_DIR_SEPARATOR
+               || ret[len-1] == '/')) {
+        ret[len-1] = '\0';
+        len--;
     }
 
     /* If no slashes remain, return "." */
     found_dslash = strrchr(ret, BU_DIR_SEPARATOR);
     found_fslash = strrchr(ret, '/');
     if (!found_dslash && !found_fslash) {
-	bu_free(ret, "bu_dirname");
-	return bu_strdup(DOT);
+        bu_free(ret, "bu_dirname");
+        return bu_strdup(DOT);
     }
 
     /* Remove trailing slash, unless it's at front */
     if (found_dslash == ret || found_fslash == ret) {
-	ret[1] = '\0';          /* ret == BU_DIR_SEPARATOR || "/" */
+        ret[1] = '\0';          /* ret == BU_DIR_SEPARATOR || "/" */
     } else {
-	if (found_dslash)
-	    *found_dslash = '\0';
-	if (found_fslash)
-	    *found_fslash = '\0';
+        if (found_dslash)
+            *found_dslash = '\0';
+        if (found_fslash)
+            *found_fslash = '\0';
     }
 
     return ret;
@@ -100,201 +98,116 @@ bu_basename(char *basename, const char *path)
     size_t len;
 
     if (UNLIKELY(!path)) {
-	bu_strlcpy(basename, ".", strlen(".")+1);
-	return;
+        bu_strlcpy(basename, ".", strlen(".")+1);
+        return;
     }
 
     /* skip the filesystem disk/drive name if we're on a DOS-capable
      * platform that uses '\' for paths, e.g., C:\ -> \
      */
     if (BU_DIR_SEPARATOR == '\\' && isalpha((int)(path[0])) && path[1] == ':') {
-	path += 2;
+        path += 2;
     }
 
     /* Skip leading separators, e.g., ///foo/bar -> foo/bar */
     for (p = path; *p != '\0'; p++) {
-	/* check native separator as well as / so we can use this
-	 * routine for geometry paths too.
-	 */
-	if ((p[0] == BU_DIR_SEPARATOR && p[1] != BU_DIR_SEPARATOR && p[1] != '\0')
-	    || (p[0] == '/' && p[1] != '/' && p[1] != '\0')) {
-	    path = p+1;
-	}
+        /* check native separator as well as / so we can use this
+         * routine for geometry paths too.
+         */
+        if ((p[0] == BU_DIR_SEPARATOR && p[1] != BU_DIR_SEPARATOR && p[1] != '\0')
+            || (p[0] == '/' && p[1] != '/' && p[1] != '\0')) {
+            path = p+1;
+        }
     }
 
     len = strlen(path);
 
     /* Remove trailing separators */
     while (len > 1 && (path[len - 1] == BU_DIR_SEPARATOR || path[len - 1] == '/'))
-	len--;
+        len--;
 
     if (len > 0) {
-	bu_strlcpy(basename, path, len+1);
+        bu_strlcpy(basename, path, len+1);
     } else {
-	basename[0] = '.';
+        basename[0] = '.';
     }
-}
-
-HIDDEN int
-_extract_path_and_prefix(struct bu_vls *path, struct bu_vls *format, const char *input)
-{
-    int ret = 0;
-    struct bu_vls wpath = BU_VLS_INIT_ZERO;
-    struct bu_vls wformat = BU_VLS_INIT_ZERO;
-    char *colon_pos = NULL;
-    char *inputcpy = NULL;
-    if (UNLIKELY(!input)) return 0;
-    if (UNLIKELY(strlen(input) == 0)) return 0;
-    inputcpy = bu_strdup(input);
-    colon_pos = strchr(inputcpy, ':');
-    if (colon_pos && colon_pos[1] == ':') {
-	/* path */
-	bu_vls_sprintf(&wpath, "%s", input);
-	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 2);
-	if (path && bu_vls_strlen(&wpath) > 0) {
-	    ret = 1;
-	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
-	}
-	bu_vls_free(&wpath);
-	/* [mime]:: prefix */
-	bu_vls_sprintf(&wformat, "%s", input);
-	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
-	if (format && bu_vls_strlen(&wformat) > 0) {
-	    ret = 1;
-	    bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
-	}
-	bu_vls_free(&wformat);
-    } else {
-	if (path) bu_vls_sprintf(path, "%s", input);
-	ret = 1;
-    }
-    if (inputcpy) bu_free(inputcpy, "input copy");
-    return ret;
 }
 
 
 int
-bu_path_component(struct bu_vls *component, const char *in_path, path_component_t type)
+bu_path_component(struct bu_vls *component, const char *path, path_component_t type)
 {
     int ret = 0;
     char *basename = NULL;
     char *dirname = NULL;
     char *period_pos = NULL;
-    struct bu_vls working_path = BU_VLS_INIT_ZERO;
-    struct bu_vls mime_prefix = BU_VLS_INIT_ZERO;
 
-    if (UNLIKELY(!in_path) || UNLIKELY(strlen(in_path)) == 0) goto cleanup;
+    if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
 
-    if (type == BU_PATH_UNKNOWN || type >= (path_component_t)BU_MIME_UNKNOWN) goto cleanup;
-
-    /* if we want something other than a mime type, we need to remove
-     * any [mime]:: prefix from the path.  If we're after a mime type,
-     * we need to check for a prefix */
-    if (!_extract_path_and_prefix(&working_path, &mime_prefix, in_path)) goto cleanup;
-
-    if (type < BU_PATH_UNKNOWN) {
-	switch (type) {
-	    case BU_PATH_FULL:
+    switch (type) {
+	case BU_PATH_DIRNAME:
+	    dirname = bu_dirname(path);
+	    if (!(!dirname || strlen(dirname) == 0)) {
 		ret = 1;
 		if (component) {
-		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+		    bu_vls_sprintf(component, "%s", dirname);
 		}
-		break;
-	    case BU_PATH_DIRNAME:
-		dirname = bu_dirname(bu_vls_addr(&working_path));
-		if (!(!dirname || strlen(dirname) == 0)) {
-		    ret = 1;
-		    if (component) {
-			bu_vls_sprintf(component, "%s", dirname);
-		    }
-		}
-		break;
-	    case BU_PATH_EXTLESS:
-		ret = 1;
-		if (component) {
-		    period_pos = strrchr(bu_vls_addr(&working_path), '.');
-		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
-		    if (period_pos && strlen(period_pos) > 0)
-			bu_vls_trunc(component, -1 * strlen(period_pos));
-		}
-		break;
-	    case BU_PATH_BASENAME:
-		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
-		bu_basename(basename, bu_vls_addr(&working_path));
-		if (strlen(basename) > 0) {
-		    ret = 1;
-		    if (component) {
-			bu_vls_sprintf(component, "%s", basename);
-		    }
-		}
-		break;
-	    case BU_PATH_BASENAME_EXTLESS:
-		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
-		bu_basename(basename, bu_vls_addr(&working_path));
-		if (strlen(basename) > 0) {
-		    ret = 1;
-		    if (component) {
-			period_pos = strrchr(basename, '.');
-			bu_vls_sprintf(component, "%s", basename);
-			if (period_pos) {
-			    bu_vls_trunc(component, -1 * strlen(period_pos));
-			}
-		    }
-		}
-		break;
-	    case BU_PATH_EXT:
-		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
-		bu_basename(basename, bu_vls_addr(&working_path));
-		if (strlen(basename) > 0) {
-		    period_pos = strrchr(basename, '.');
-		    if (period_pos && strlen(period_pos) > 1) {
-			ret = 1;
-			if (component) {
-			    bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
-			    bu_vls_nibble(component, 1);
-			}
-		    }
-		}
-		break;
-	    default:
-		break;
-	}
-    } else {
-	/* If we have a mime prefix, use that.  Otherwise, it's up to the file extension. */
-	if (bu_vls_strlen(&mime_prefix) > 0) {
-	    int mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (bu_mime_context_t)type);
-	    const char *mime_str = bu_file_mime_str(mime_int, (bu_mime_context_t)type);
-	    bu_vls_sprintf(component, "%s", mime_str);
+	    }
+	    break;
+	case BU_PATH_EXTLESS:
 	    ret = 1;
-	    bu_free((char *)mime_str, "free orig mime str");
-	} else {
-	    struct bu_vls mime_ext = BU_VLS_INIT_ZERO;
-	    basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
-	    bu_basename(basename, bu_vls_addr(&working_path));
+	    if (component) {
+		period_pos = strrchr(path, '.');
+		bu_vls_sprintf(component, "%s", path);
+		if (period_pos && strlen(period_pos) > 0)
+		    bu_vls_trunc(component, -1 * strlen(period_pos));
+	    }
+	    break;
+	case BU_PATH_BASENAME:
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
+	    bu_basename(basename, path);
+	    if (strlen(basename) > 0) {
+		ret = 1;
+		if (component) {
+		    bu_vls_sprintf(component, "%s", basename);
+		}
+	    }
+	    break;
+	case BU_PATH_BASENAME_EXTLESS:
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
+	    bu_basename(basename, path);
+	    if (strlen(basename) > 0) {
+		ret = 1;
+		if (component) {
+		period_pos = strrchr(basename, '.');
+		bu_vls_sprintf(component, "%s", basename);
+		    if (period_pos) {
+		bu_vls_trunc(component, -1 * strlen(period_pos));
+	    }
+		}
+	    }
+	    break;
+	case BU_PATH_EXT:
+	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
+	    bu_basename(basename, path);
 	    if (strlen(basename) > 0) {
 		period_pos = strrchr(basename, '.');
 		if (period_pos && strlen(period_pos) > 1) {
-		    int mime_int = -1;
-		    const char *mime_str = NULL;
-		    bu_vls_strncpy(&mime_ext, period_pos, strlen(period_pos)+1);
-		    bu_vls_nibble(&mime_ext, 1);
-		    /* actual mime bits */
-		    mime_int = bu_file_mime(bu_vls_addr(&mime_ext), (bu_mime_context_t)type);
-		    mime_str = bu_file_mime_str(mime_int, (bu_mime_context_t)type);
-		    bu_vls_sprintf(component, "%s", mime_str);
-		    bu_free((char *)mime_str, "free orig mime str");
 		    ret = 1;
+		    if (component) {
+			bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
+			bu_vls_nibble(component, 1);
+		    }
 		}
 	    }
-	    bu_vls_free(&mime_ext);
-	}
+	    break;
+	default:
+	    break;
     }
 
 cleanup:
     if (basename) bu_free(basename, "basename");
     if (dirname) bu_free(dirname, "dirname");
-    bu_vls_free(&working_path);
-    bu_vls_free(&mime_prefix);
     return ret;
 }
 
@@ -310,18 +223,18 @@ bu_argv_from_path(const char *path, int *ac)
     register int i;
 
     if (UNLIKELY(path == (char *)0 || path[0] == '\0'))
-	return (char **)0;
+        return (char **)0;
 
     newstr = bu_strdup(path);
 
     /* skip leading /'s */
     i = 0;
     while (newstr[i] == '/')
-	++i;
+        ++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-	bu_free((void *)newstr, "bu_argv_from_path");
-	return (char **)0;
+        bu_free((void *)newstr, "bu_argv_from_path");
+        return (char **)0;
     }
 
     /* If we get here, there is at least one path element */
@@ -331,30 +244,30 @@ bu_argv_from_path(const char *path, int *ac)
     /* First count the number of '/' */
     begin = headpath;
     while ((end = strchr(begin, '/')) != (char *)0) {
-	if (begin != end)
-	    ++*ac;
+        if (begin != end)
+            ++*ac;
 
-	begin = end + 1;
+        begin = end + 1;
     }
     av = (char **)bu_calloc((unsigned int)(*ac)+1, sizeof(char *), "bu_argv_from_path");
 
     begin = headpath;
     i = 0;
     while ((end = strchr(begin, '/')) != (char *)0) {
-	if (begin != end) {
-	    *end = '\0';
-	    av[i++] = bu_strdup(begin);
-	}
+        if (begin != end) {
+            *end = '\0';
+            av[i++] = bu_strdup(begin);
+        }
 
-	begin = end + 1;
+        begin = end + 1;
     }
 
     if (begin[0] != '\0') {
-	av[i++] = bu_strdup(begin);
-	av[i] = (char *)0;
+        av[i++] = bu_strdup(begin);
+        av[i] = (char *)0;
     } else {
-	av[i] = (char *)0;
-	--*ac;
+        av[i] = (char *)0;
+        --*ac;
     }
     bu_free((void *)newstr, "bu_argv_from_path");
 
@@ -412,48 +325,48 @@ bu_normalize(const char *path)
 loop:
     /* Skip any slash. */
     while (*path == '/')
-	path++;
+        path++;
 
     if (*path == 0) {
-	if (p == resolved)
-	    *p++ = '/';
-	*p = 0;
-	return (resolved);
+        if (p == resolved)
+            *p++ = '/';
+        *p = 0;
+        return (resolved);
     }
 
     /* Find the end of this component. */
     q = path;
     do
-	q++;
+        q++;
     while (*q != '/' && *q != 0);
 
     /* Test . or .. */
     if (path[0] == '.') {
-	if (q - path == 1) {
-	    path = q;
-	    goto loop;
-	}
-	if (path[1] == '.' && q - path == 2) {
-	    /* Trim the last component. */
-	    if (p != resolved)
-		while (*--p != '/')
-		    ;
-	    path = q;
-	    goto loop;
-	}
+        if (q - path == 1) {
+            path = q;
+            goto loop;
+        }
+        if (path[1] == '.' && q - path == 2) {
+            /* Trim the last component. */
+            if (p != resolved)
+                while (*--p != '/')
+                    ;
+            path = q;
+            goto loop;
+        }
     }
 
     /* Append this component. */
     if (p - resolved + 1 + q - path + 1 > MAXPATHLEN) {
-	if (p == resolved)
-	    *p++ = '/';
-	*p = 0;
-	return (NULL);
+        if (p == resolved)
+            *p++ = '/';
+        *p = 0;
+        return (NULL);
     }
     p[0] = '/';
     memcpy(&p[1], path,
-	   /* LINTED We know q > path. */
-	   q - path);
+           /* LINTED We know q > path. */
+           q - path);
     p[1 + q - path] = 0;
 
     /* Advance both resolved and unresolved path. */
