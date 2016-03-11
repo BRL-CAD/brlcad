@@ -20,7 +20,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * make sure windows wireframes are not horked
 
-* make sure rt -I interactive mode still works... looks like code for
+* make sure rt -i interactive mode still works... looks like code for
   it was removed.
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
