@@ -108,6 +108,17 @@ ON_Intersect(const ON_Surface *surfA,
       <para>
         BRL-CAD leverages the OpenNURBS library primarily for its classes that represent general (NURBS) b-rep, surface, curve, and point geometry. The following sections describe the OpenNURBS library symbols most frequently used in the NURBS boolean evaluation implementation, with relevant usage notes.
       </para>
+      <warning>
+        <para>
+          When using an OpenNURBS utility that hasn't been used elsewhere in the implementation, always check the documentation <emphasis>and</emphasis> the implementation to make sure it does what you expect.
+        </para>
+        <para>
+          Misleading methods have been misused in the past. For example, <function><![CDATA[bool ON_Line::InPlane(ON_Plane& plane)]]></function> appears to test if a line lies in the given plane, but actually constructs a plane that contains the line.
+        </para>
+        <para>
+          Another example is <function><![CDATA[double ON_Line::MinimumDistanceTo(const ON_Line&)]]></function>. While the function does indeed return the distance of the shortest path between one line and another, reading the implementation reveals an undocumented assumption that the <classname>ON_Line</classname> provided as an argument is not on the same infinite line as the instance the method is invoked on. That is, the <classname>ON_Line</classname>s can be parallel, but not coincident.
+        </para>
+      </warning>
       <section>
         <title>Arrays</title>
         <para>
