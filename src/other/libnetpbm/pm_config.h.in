@@ -326,6 +326,7 @@ typedef long int pm_filepos;
 #if defined(_PLAN9)
   #define TMPDIR "/tmp"
 #else
+  /* P_tmpdir is no-go on newer MSVC - see https://connect.microsoft.com/VisualStudio/feedback/details/1107169/vs-2015-ctp-5-c-c-p-tmpdir-is-never-defined */
   #if (_MSC_VER > 1800)
     #define TMPDIR GetTempPathA()
   #else
