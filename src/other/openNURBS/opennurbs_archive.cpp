@@ -13557,11 +13557,7 @@ bool ON_WriteOneObjectArchive(
 
   while(pObject)
   {
-    ON_String archive_msg("Archive created by ON_WriteOneObjectArchive ");
-    archive_msg.Append(__DATE__, strlen(__DATE__));
-    archive_msg.Append(" ", 1);
-    archive_msg.Append(__TIME__, strlen(__TIME__));
-    rc = archive.Write3dmStartSection( version, archive_msg.Array());
+    rc = archive.Write3dmStartSection( version, "Archive created by ON_WriteOneObjectArchive " __DATE__ " " __TIME__ );
     if ( !rc )
       break;
 
