@@ -64,7 +64,6 @@ double		viewsize = 42;
  */
 
 int		npsw = 1;		/* Run serially */
-int		interactive = 0;	/* human is watching results */
 
 point_t		start_point;
 point_t		goal_point;

@@ -824,17 +824,6 @@ do_frame(int framenumber)
     }
 
     /*
-     * If this image is unlikely to be for debugging,
-     * be gentle to the machine.
-     */
-    if (!interactive) {
-	if (npix > 512*512)
-	    bu_nice_set(14);
-	else if (npix > 256*256)
-	    bu_nice_set(10);
-    }
-
-    /*
      * Determine output file name
      * On UNIX only, check to see if this is a "restart".
      */

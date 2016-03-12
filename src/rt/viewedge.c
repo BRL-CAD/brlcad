@@ -320,7 +320,6 @@ usage(const char *argv0)
     bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
     bu_log(" -G #		Set grid cell height, in millimeters\n");
     bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -I		Turn on interactive mode\n");
     bu_log(" -J #		Set a bit vector for \"jitter\"\n");
     bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
     bu_log(" -O model.pix	Output .pix format file, double precision format\n");

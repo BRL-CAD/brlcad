@@ -21,9 +21,11 @@
  *
  * Ray Tracing program, lighting model manager.
  *
- * Output is either interactive to a frame buffer, or written in a
- * file.  The output format is a .PIX file (a byte stream of R, G, B
- * as u_char's).
+ * Output is either interactively displayed in a frame buffer, written
+ * out to a file, or both.  The default output format is a .PIX file
+ * (a byte stream of R, G, B as u_char's), but will automatically
+ * write out other file formats based on the provided file extension
+ * (e.g., .PNG).
  *
  * The extern "lightmodel" selects which one is being used:
  * 0 Full lighting model (default)
@@ -116,7 +118,6 @@ usage(const char *argv0)
     bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
     bu_log(" -G #		Set grid cell height, in millimeters\n");
     bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -I		Turn on interactive mode\n");
     bu_log(" -J #		Set a bit vector for \"jitter\"\n");
     bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
     bu_log(" -O model.pix	Output .pix format file, double precision format\n");
