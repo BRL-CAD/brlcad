@@ -434,14 +434,6 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-I</option></term>
-	<listitem>
-	  <para>turns on interactive mode.  If this flag is off and your image is
-	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
-	</listitem>
-      </varlistentry>
-
-      <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
 	  <para>This is the "jitter" flag, which is a bit vector.
