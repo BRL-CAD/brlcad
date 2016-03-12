@@ -261,9 +261,7 @@ mode server.  The same applies for texture map and bump map files.</para>
 <para><command>remrt</command>
 uses several different strategies for optimizing the dispatching of work.
 These can be controlled by the "allocate" command.
-If the
-<option>-I</option>
-(interactive) flag is given or "allocate frame" has been specified,
+If "allocate frame" has been specified,
 then the work allocation method is
 a "free for all", allocating work from one frame at a time
 to all servers as they become ready for more.
