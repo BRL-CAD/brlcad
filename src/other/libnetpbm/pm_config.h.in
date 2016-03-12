@@ -324,10 +324,14 @@ typedef long int pm_filepos;
 #endif
 
 #if defined(_PLAN9)
-#define TMPDIR "/tmp"
+  #define TMPDIR "/tmp"
 #else
-/* Use POSIX value P_tmpdir from libc */
-#define TMPDIR P_tmpdir
+  #if (_MSC_VER > 1800)
+    #define TMPDIR GetTempPathA()
+  #else
+    /* Use POSIX value P_tmpdir from libc */
+    #define TMPDIR P_tmpdir
+  #endif
 #endif
 
 /* Note that if you _don't_ have mkstemp(), you'd better have a safe
