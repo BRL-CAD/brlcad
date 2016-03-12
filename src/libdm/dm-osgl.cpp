@@ -195,28 +195,22 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-    int width;
-    int height;
+    XWindowAttributes xwa;
 
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    if (pubvars->top != pubvars->xtkwin) {
-	/* TODO: For some reason, the XGetWindowAttributes call from the ogl
-	 * version is shaving 8 off of the width and height in the final
-	 * call... not sure why yet. */
-	width = Tk_Width(Tk_Parent(pubvars->xtkwin)) - 8;
-	height = Tk_Height(Tk_Parent(pubvars->xtkwin)) - 8;
-    } else {
-	width = Tk_Width(pubvars->top);
-	height = Tk_Height(pubvars->top);
+    /* TODO - this introduces a Tk dependency, which is a Bad Thing, but
+     * XGetWindowAttributes seems to have some magical properties that
+     * simply checking the Tk_Width/Tk_Height doesn't trigger - it actually
+     * results in a visible change to the MGED window when stepping through
+     * in gdb. */
+    XGetWindowAttributes(pubvars->dpy, pubvars->win, &xwa);
+
+    if (!force && dmp->dm_height == xwa.height && dmp->dm_width == xwa.width) {
+	return TCL_OK;
     }
 
-    if (!force &&
-	    dmp->dm_height == height &&
-	    dmp->dm_width == width)
-	return TCL_OK;
-
-    osgl_reshape(dmp, width, height);
+    osgl_reshape(dmp, xwa.width, xwa.height);
     return TCL_OK;
 }
 
