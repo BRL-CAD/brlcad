@@ -681,7 +681,8 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     osgl_setZBuffer(dmp, dmp->dm_zbuffer);
     osgl_setLight(dmp, dmp->dm_light);
 
-    Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask|ButtonReleaseMask, OSGEventProc, (ClientData)dmp);
+    //Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask|ButtonReleaseMask, OSGEventProc, (ClientData)dmp);
+    Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
 
 #ifdef OSG_VIEWER_TEST
     privvars->testviewer = new osgViewer::Viewer();
