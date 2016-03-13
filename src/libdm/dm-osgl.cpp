@@ -352,15 +352,14 @@ osgl_close(struct dm_internal *dmp)
 }
 
 HIDDEN
-static void OSGUpdate(dm *dmp, int delta) {
+static void OSGUpdate(dm *dmp) {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     if (dmp->dm_debugLevel == 1)
 	bu_log("OSGUpdate()\n");
 
-
-    if (privvars->timer->time_m() - privvars->last_update_time > delta) {
+    if (!privvars->is_init) {
 	privvars->graphicsContext->swapBuffers();
-	privvars->last_update_time = privvars->timer->time_m();
+	privvars->is_init = 1;
     }
 }
 
@@ -369,7 +368,7 @@ OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
     dm *dmp = (dm *)clientData;
 
-    OSGUpdate(dmp, 10);
+    OSGUpdate(dmp);
 }
 
 /*
@@ -683,6 +682,9 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
 
     //Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask|ButtonReleaseMask, OSGEventProc, (ClientData)dmp);
     Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+
+    privvars->is_init = 0;
+
 
 #ifdef OSG_VIEWER_TEST
     privvars->testviewer = new osgViewer::Viewer();
