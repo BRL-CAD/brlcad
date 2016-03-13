@@ -104,7 +104,7 @@ set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
 if(MSVC)
   add_definitions(-DFREETYPE_DLL_EXPORTS)
-endif(MSVC
+endif(MSVC)
 
 # Compiler definitions for building the library
 add_definitions(-DFT2_BUILD_LIBRARY)
