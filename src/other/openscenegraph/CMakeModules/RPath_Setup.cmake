@@ -1,4 +1,4 @@
-# Copyright (c) 2010-2013 United States Government as represented by
+# Copyright (c) 2010-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,9 +47,12 @@ set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 if (NOT APPLE)
   set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}:\$ORIGIN/../${LIB_DIR}")
 endif(NOT APPLE)
-# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH
+# On OSX, we need to set INSTALL_NAME_DIR instead of RPATH for CMake < 3.0
 # http://www.cmake.org/cmake/help/cmake-2-8-docs.html#variable:CMAKE_INSTALL_NAME_DIR
-set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
+# http://www.cmake.org/cmake/help/v3.2/policy/CMP0042.html
+if ("${CMAKE_VERSION}" VERSION_LESS 3.0)
+  set(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/${LIB_DIR}")
+endif ("${CMAKE_VERSION}" VERSION_LESS 3.0)
 
 # add the automatically determined parts of the RPATH which point to
 # directories outside the build tree to the install RPATH
