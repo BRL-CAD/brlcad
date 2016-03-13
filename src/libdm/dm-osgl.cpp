@@ -359,7 +359,7 @@ static void OSGUpdate(dm *dmp, int delta) {
 
 
     if (privvars->timer->time_m() - privvars->last_update_time > delta) {
-	//privvars->graphicsContext->swapBuffers();
+	privvars->graphicsContext->swapBuffers();
 	privvars->last_update_time = privvars->timer->time_m();
     }
 }
