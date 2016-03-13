@@ -705,7 +705,6 @@ do_frame(int framenumber)
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
-    int npix = 0;			/* # of pixel values to be done */
     vect_t work, temp;
     quat_t quat;
 
