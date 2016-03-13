@@ -49,6 +49,7 @@ extern "C" {
 #include "tkPlatDecls.h"
 
 #include "vmath.h"
+#include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -351,8 +352,8 @@ osgl_close(struct dm_internal *dmp)
     return TCL_OK;
 }
 
-HIDDEN
-static void OSGUpdate(dm *dmp) {
+HIDDEN void
+OSGUpdate(dm *dmp) {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     if (dmp->dm_debugLevel == 1)
 	bu_log("OSGUpdate()\n");
@@ -363,7 +364,7 @@ static void OSGUpdate(dm *dmp) {
     }
 }
 
-static void
+HIDDEN void
 OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
     dm *dmp = (dm *)clientData;
