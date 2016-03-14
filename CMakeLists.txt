@@ -1046,8 +1046,11 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
-# test for X11 on all platforms since we don't know when/where we'll find it
-include("${BRLCAD_CMAKE_DIR}/FindX11.cmake")
+# test for X11 on all platforms since we don't know when/where we'll find it, unless
+# we've indicated we *don't* want an X11 build
+if(NOT BRLCAD_ENABLE_AQUA)
+  include("${BRLCAD_CMAKE_DIR}/FindX11.cmake")
+endif(NOT BRLCAD_ENABLE_AQUA)
 
 # Set whether X11 is enabled or disabled by default
 if(WIN32)
