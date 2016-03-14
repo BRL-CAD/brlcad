@@ -204,14 +204,14 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 	/* TODO - XGetWindowAttributes builds on Windows, but returns garbage.
 	 * Need to figure out a portable way to do this... */
 	HWND hwnd;
-	RECT xwa
+	RECT xwa;
 	hwnd = WindowFromDC(pubvars->hdc);
 	GetWindowRect(hwnd, &xwa);
 	if (!force && dmp->dm_height == (xwa.bottom-xwa.top) && dmp->dm_width == (xwa.right-xwa.left)) {
 	    return TCL_OK;
 	} else {
-	    width = xwa.width;
-	    height = xwa.height;
+	    width = xwa.right-xwa.left;
+	    height = xwa.bottom-xwa.top;
 	}
     }
 #else
