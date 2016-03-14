@@ -196,22 +196,44 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-    XWindowAttributes xwa;
-
+    int width, height;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
-    /* TODO - this introduces a Tk dependency, which is a Bad Thing, but
-     * XGetWindowAttributes seems to have some magical properties that
-     * simply checking the Tk_Width/Tk_Height doesn't trigger - it actually
-     * results in a visible change to the MGED window when stepping through
-     * in gdb. */
-    XGetWindowAttributes(pubvars->dpy, pubvars->win, &xwa);
-
-    if (!force && dmp->dm_height == xwa.height && dmp->dm_width == xwa.width) {
-	return TCL_OK;
+#if defined(_WIN32)
+    {
+	/* TODO - XGetWindowAttributes builds on Windows, but returns garbage.
+	 * Need to figure out a portable way to do this... */
+	HWND hwnd;
+	RECT xwa
+	hwnd = WindowFromDC(pubvars->hdc);
+	GetWindowRect(hwnd, &xwa);
+	if (!force && dmp->dm_height == (xwa.bottom-xwa.top) && dmp->dm_width == (xwa.right-xwa.left)) {
+	    return TCL_OK;
+	} else {
+	    width = xwa.width;
+	    height = xwa.height;
+	}
     }
+#else
+    {
+	/* TODO - this introduces an X11 dependency, which is a Bad Thing, but
+	 * XGetWindowAttributes seems to have some magical properties that
+	 * simply checking the Tk_Width/Tk_Height doesn't trigger - it actually
+	 * results in a visible change to the MGED window when stepping through
+	 * in gdb. */
+	XWindowAttributes xwa;
+	XGetWindowAttributes(pubvars->dpy, pubvars->win, &xwa);
 
-    osgl_reshape(dmp, xwa.width, xwa.height);
+	if (!force && dmp->dm_height == xwa.height && dmp->dm_width == xwa.width) {
+	    return TCL_OK;
+	} else {
+	    width = xwa.width;
+	    height = xwa.height;
+	}
+    }
+#endif
+
+    osgl_reshape(dmp, width, height);
     return TCL_OK;
 }
 
