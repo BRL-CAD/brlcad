@@ -144,18 +144,32 @@ strategic activities, and aims to coordinate development activity.
    FIXME these need to be sorted and ranked
 
 *** publish docbook docs
+**** TODO instantiate / set up sofat's doc interface
 **** TODO design pdf stylesheet
 **** TODO integrate docs onto website (html+pdf)
 
 *** online doc editing
-*** new landing page
-*** customer profiles
-*** feature highlights
-*** comparisons
-*** publish developer documentation
-*** CI integration/dashboarding
-*** streamline downloads
-*** publish project vitality/stats
+**** TODO review sofat edit interface
+**** TODO apply website theme to edit interface
+
+*** publish use cases
+**** TODO post 3+ customer profiles
+**** TODO post top-10 feature highlights
+**** TODO identify alternatives and their highlight mappings
+**** TODO post comparison table with 2+ alternatives
+
+*** set up developer corner
+**** TODO publish doxygen output to website
+**** TODO update doxygen stylesheet to fit theme
+**** TODO ensure buildbot is setup and running handsfree
+**** TODO update buildbot stylesheet to fit theme
+**** TODO post nightly builds
+**** TODO set up cron job to maintain CI and doc updates
+**** TODO announce dev corner to brlcad-devel/brlcad-news
+
+*** improve website usability
+**** TODO set up platform-detected downloads on main page
+**** TODO publish project vitality/stats (ohloh integration)
 
 
 ** PROJECT: Deploy GCV
