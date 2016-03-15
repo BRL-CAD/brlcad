@@ -196,9 +196,20 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-    int width, height;
+    int width = 0;
+    int height = 0;
+    int bl = 0;
+    int bt = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
+    bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
+    width = Tk_Width(pubvars->xtkwin) + bl;
+    height = Tk_Height(pubvars->xtkwin) + bt;
+    if (!force && dmp->dm_height == height && dmp->dm_width == width) {
+	return TCL_OK;
+    }
 
+#if 0
 #if defined(_WIN32)
     {
 	/* TODO - XGetWindowAttributes builds on Windows, but returns garbage.
@@ -232,7 +243,7 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 	}
     }
 #endif
-
+#endif
     osgl_reshape(dmp, width, height);
     return TCL_OK;
 }
