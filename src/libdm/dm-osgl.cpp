@@ -198,37 +198,19 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
     int width = 0;
     int height = 0;
-    int bl = 0;
-    int bt = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-    bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
-    bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
+#if !defined(_WIN32)
+    int bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
+    int bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
     width = Tk_Width(pubvars->xtkwin) + bl;
     height = Tk_Height(pubvars->xtkwin) + bt;
+#else
+    width = Tk_Width(pubvars->xtkwin);
+    height = Tk_Height(pubvars->xtkwin);
+#endif
     if (!force && dmp->dm_height == height && dmp->dm_width == width) {
 	return TCL_OK;
     }
-
-#if 0
-#if !defined(_WIN32)
-    {
-	/* TODO - this introduces an X11 dependency, which is a Bad Thing, but
-	 * XGetWindowAttributes seems to have some magical properties that
-	 * simply checking the Tk_Width/Tk_Height doesn't trigger - it actually
-	 * results in a visible change to the MGED window when stepping through
-	 * in gdb. */
-	XWindowAttributes xwa;
-	XGetWindowAttributes(pubvars->dpy, pubvars->win, &xwa);
-
-	if (!force && dmp->dm_height == xwa.height && dmp->dm_width == xwa.width) {
-	    return TCL_OK;
-	} else {
-	    width = xwa.width;
-	    height = xwa.height;
-	}
-    }
-#endif
-#endif
     osgl_reshape(dmp, width, height);
     return TCL_OK;
 }
