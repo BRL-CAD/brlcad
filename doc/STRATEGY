@@ -174,27 +174,27 @@ strategic activities, and aims to coordinate development activity.
 
 ** PROJECT: Deploy GCV
 
-*** announce
-**** TODO write and publish plugin policy
-**** TODO publish plugin policy
-**** TODO publish policy
-
 *** 3dm "round-tripping"
-**** TODO NURBS import/export support
-**** TODO integrate existing converter
+**** TODO integrate existing importer
+**** TODO NURBS export support
+**** TODO document entity support
 
 *** documentation
-**** TODO dev doc integration
-**** TODO feature profile on website
+**** TODO convert jon's write-up to docbook
+**** TODO integrate jon's plugin examples
+**** TODO write and publish plugin API policy
+**** TODO write and publish GCV feature profile on website
 
 *** CLI usability
-**** TODO review usage
+**** TODO design usage / synopsis
 **** TODO provide logging/debugging interface
 
 *** robust deployment
-**** TODO convert tlib
-**** TODO integrate into archer
-**** TODO robust tessellation
+**** TODO convert tlib via automated testing
+**** TODO automate extraction of sources from checkout
+**** TODO integrate gcv into mged/archer
+**** TODO troubleshoot JASP export memory issue
+**** TODO integrate bot_dump into gcv
 
 
 ** PROJECT: Performant Pipeline
