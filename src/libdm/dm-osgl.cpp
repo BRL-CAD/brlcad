@@ -200,17 +200,11 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
     int height = 0;
     int bl = 0;
     int bt = 0;
-    int wx, wy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
     bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
-    bu_log("borders(left,top): %d, %d\n", bl, bt);
     width = Tk_Width(pubvars->xtkwin) + bl;
     height = Tk_Height(pubvars->xtkwin) + bt;
-    bu_log("width,height): %d, %d\n", width, height);
-    wx = Tk_X(pubvars->xtkwin);
-    wy = Tk_Y(pubvars->xtkwin);
-    bu_log("x,y: %d, %d\n", wx, wy);
     if (!force && dmp->dm_height == height && dmp->dm_width == width) {
 	return TCL_OK;
     }
