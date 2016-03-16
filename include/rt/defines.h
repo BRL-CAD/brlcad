@@ -45,6 +45,8 @@
 
 #ifdef USE_OPENCL
 #include <limits.h>
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
 #include <CL/cl.h>
 
 #ifndef CL_VERSION_1_2
