@@ -88,7 +88,7 @@ usage(const char *argv0)
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
 #ifdef USE_OPENCL
-    bu_log(" -z 		Enable OpenCL ray-trace engine\n");
+    bu_log(" -z # 		Use OpenCL ray-trace engine: no/default (0), yes (1)\n");
 #endif
     bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
     bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
