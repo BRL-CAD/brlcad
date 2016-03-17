@@ -607,6 +607,7 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
+	/* TODO: .cl sources are being loaded from the current directory. the source files should be located in a smarter way. */
         clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=1");
         clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=0");
 
