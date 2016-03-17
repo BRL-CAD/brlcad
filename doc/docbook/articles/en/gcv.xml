@@ -1,0 +1,221 @@
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info>
+    <title>The Geometry Conversion Library</title>
+    <author>
+      <personname>
+        <firstname>Jon</firstname>
+        <surname>Engbert</surname>
+      </personname>
+      <affiliation>
+        <orgname>BRL-CAD Open Source</orgname>
+      </affiliation>
+    </author>
+  </info>
+
+  <section>
+    <title>Introduction</title>
+    <para>
+      The Geometry Conversion Library (GCV or libgcv) provides a unified API for geometry conversion capabilities under a plugin-based architecture.
+    </para>
+    <para>
+      The GCV public API is declared in C headers located within <code>include/gcv/</code>. The single <code>include/gcv.h</code> header includes the entire GCV public API.
+    </para>
+  </section>
+
+  <section>
+    <title>Architecture</title>
+    <para>
+      The Geometry Conversion Library consists of a stream-based API for geometry conversion and associated operations. Input and output are provided by "reader" and "writer" converters (provided by plugins). Intermediate operations are provided by "filters". Readers and writers are types of filters that provide input and output support for model formats, while basic filters apply transformations to models and geometry.
+    </para>
+    <para>
+      Geometry is stored in an in-memory BRL-CAD database (<code>struct db_i</code> in <code>include/rt/db_instance.h</code>) during the intermediate steps of conversion. For writer filters, this database is marked read-only and its geometry should not be modified. All names within a BRL-CAD database must be unique.
+    </para>
+    <para>
+      TODO: image
+    </para>
+  </section>
+
+  <section>
+    <title>Building GCV</title>
+    <para>
+      GCV can be built in a similar manner as other BRL-CAD libraries. After configuring with CMake, building the <code>libgcv</code> target will produce a dynamic library. For Unix-based systems, the procedure should be similar to the following:
+      <screen>
+        $ cd brlcad
+        $ mkdir build
+        $ cd build
+        $ cmake ..
+        $ make libgcv
+      </screen>
+    </para>
+    <para>
+      The command-line utility can be built under the <code>gcv</code> target. At this time, the <code>gcv</code> program is not installed automatically; the binary will be placed into <code>build/src/conv/gcv/</code>.
+    </para>
+  </section>
+
+  <section>
+    <title>Example: Using GCV in an Application</title>
+    <para>
+      TODO: embedded code
+    </para>
+  </section>
+
+  <section>
+    <title>GCV Public API</title>
+    <para>
+      The public API for interacting with GCV filter plugins is summarized below.
+    </para>
+    <table frame='none'>
+      <title>GCV public filter API</title>
+      <tgroup cols='2'>
+        <tbody>
+          <row>
+            <entry><code>struct gcv_context</code></entry>
+            <entry>Stores the conversion state. Plugins may store messages in the <code>bu_avs_t</code> member <code>messages</code>.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_context_init()</code></entry>
+            <entry>Initialize a <code>struct gcv_context</code>. Creates an in-memory <code>struct db_i</code> for conversion data.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_context_destroy()</code></entry>
+            <entry>Frees memory associated with a <code>struct gcv_context</code>.</entry>
+          </row>
+          <row>
+            <entry><code>struct gcv_filter</code></entry>
+            <entry>Stores characteristics of a filter.</entry>
+          </row>
+          <row>
+            <entry><code>struct gcv_opts</code></entry>
+            <entry>Store generic options applying to all filters.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_opts_default()</code></entry>
+            <entry>Initialize a <code>struct gcv_opts</code> with default values.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_list_filters()</code></entry>
+            <entry>Returns a pointer to a <code>const struct bu_ptbl</code> containing all registered filters as<code> const struct gcv_filter</code> pointers.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_execute()</code></entry>
+            <entry>Perform a filter operation on a <code>struct gcv_context</code>. Returns <code>1</code> on success and <code>0</code> on failure. If <code>gcv_options</code> is <code>NULL</code>, the defaults will be used as set by <code>gcv_opts_default()</code>. The parameters <code>argc</code> and <code>argv</code> are used for option parsing as specified by the struct gcv_filter.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+  </section>
+
+  <section>
+    <title>The Internal Plugin API</title>
+    <para>
+      The GCV plugin API is declared in <code>include/gcv/api.h</code>. Plugins provide an externally-visible <code>const struct gcv_plugin</code> defining their filters, which are described by <code>struct gcv_filter</code>.
+    </para>
+    <table frame='none'>
+      <title>The gcv_filter struct</title>
+      <tgroup cols='2'>
+        <tbody>
+          <row>
+            <entry><code>name</code></entry>
+            <entry>Specifies a unique name for the filter, allowing it to be identified by applicaiton code.</entry>
+          </row>
+          <row>
+            <entry><code>filter_type</code></entry>
+            <entry>Specifies the type of filter.</entry>
+          </row>
+          <row>
+            <entry><code>create_opts_fn</code></entry>
+            <entry>Optional pointer to a function that allocates and initializes <code>struct bu_opt_desc</code> data and an opaque pointer for storing the option data. If non-<code>NULL</code>, <code>free_opts_fn</code> must also be specified. This member is private for use by libgcv and the associated plugin.
+            </entry>
+          </row>
+          <row>
+            <entry><code>free_opts_fn</code></entry>
+            <entry>Optional pointer to a function that frees any opaque pointer allocated by <code>create_opts_fn</code>. This member is private for use by libgcv and the associated plugin.</entry>
+          </row>
+          <row>
+            <entry><code>filter_fn</code></entry>
+            <entry>Pointer to a function which performs the filter operation. The <code>db_i</code> passed to a writer function within a <code>gcv_context</code> is marked read-only (the pointer is to a non-<code>const</code> struct due to in-memory data that may be modified). Filters of type <code>GCV_FILTER_FILTER</code> receive a <code>NULL</code> value for <code>target</code>. Must return <code>1</code> on success and <code>0</code> on failure. This member is private for use by libgcv and the associated plugin.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+    <para>
+      As shown in the above table, filters may initialize data structures for processing command-line style option strings via <code>bu_opt</code>. Please refer to <code>include/bu/opt.h</code> for full documentation on the <code>bu_opt</code> API.
+    </para>
+    <section>
+      <title>Utility Functions</title>
+      <para>
+        In addition to availability of the rest of the BRL-CAD API, the Geometry Conversion Library provides a number of utility functions that may be useful during plugin development.
+      </para>
+      <table frame='none'>
+        <title>GCV utility functions</title>
+        <tgroup cols='2'>
+          <tbody>
+            <row>
+              <entry><code>gcv_bot_is_solid()</code>, <code>gcv_bot_is_closed()</code>, <code>gcv_bot_is_orientable()</code></entry>
+              <entry>Performs topological tests for determining whether a given triangular mesh is a manifold, orientable, closed fan satisfying requisite conditions for object solidity. <code>gcv_bot_is_solid()</code> is equivalent to <code>gcv_bot_is_closed &amp;&amp; gcv_bot_is_orientable()</code></entry>
+            </row>
+            <row>
+              <entry><code>gcv_facetize()</code></entry>
+              <entry>Produces a triangular mesh tessellation of the object at the given database path using the specified tolerances. Note that if the object at the given path is a combination, a single mesh will be produced from all objects within its tree, and so calling gcv_facetize() on a tree unnecessarily high in the hierarchy and containing many objects is more likely to fail during Boolean evaluation.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        There are also many relevant functions provided by the BRL-CAD API, including a new mesh decimation function.
+      </para>
+      <table frame='none'>
+        <title>BRL-CAD mesh decimation API</title>
+        <tgroup cols='2'>
+          <tbody>
+            <row>
+              <entry><code>rt_bot_decimate_gct()</code></entry>
+              <entry>Fast implementation of an iterative mesh decimation algorithm.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+  </section>
+
+  <section>
+    <title>Developing a Minimal Plugin</title>
+    <para>
+      TODO: embedded code
+    </para>
+    <section>
+      <title>Traversing the Database</title>
+      <para>
+        BRL-CAD provides the <code>db_walk_tree()</code> function for traversing the database in hierarchical order. You can specify your own visitor callbacks as documented in <code>include/rt/tree.h</code>, or use the region-end functions provided by GCV (<code>include/gcv/util.h</code>) to tessellate geometry at the region level.
+      </para>
+      <table frame='none'>
+        <title>GCV region-end tessellation callbacks</title>
+        <tgroup cols='2'>
+          <tbody>
+            <row>
+              <entry><code>gcv_region_end()</code></entry>
+              <entry>Apply Boolean evaluation to region-level tessellated meshes using the default NMG Boolean evaluator, replacing each region-level node and its subtree of tessellated leaf meshes with a single BoT structure that is then passed to the specified callback. The <code>client_data</code> pointer should point to a <code>struct gcv_region_end_data</code>. The individual leaf nodes must already be tessellated into BoTs. This can be done by specifying a <code>leaf_func</code> such as <code>nmg_booltree_leaf_tess()</code>. In the case of failure, an error message is emitted via <code>bu_log()</code> and the callback is not invoked. Any use of <code>bu_bomb()</code> produced by the callback is trapped and an error message is displayed while continuing the tree walk.</entry>
+            </row>
+            <row>
+              <entry><code>gcv_bottess_region_end()</code></entry>
+              <entry>Boolean evaluator roughly based on UnBBoolean's j3dbool (and associated papers). Does not take a callback.</entry>
+            </row>
+            <row>
+              <entry><code>gcv_region_end_mc()</code></entry>
+              <entry>Experimental variant of <code>gcv_region_end()</code> based on the marching-cubes algorithm. Tessellates leaves internally and does not require a <code>leaf_func</code>.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        The following example implements a filter that tessellates all geometry into BoT mesh objects and counts the total number of faces.
+      </para>
+      <para>
+        TODO: embedded code
+      </para>
+    </section>
+  </section>
+</article>

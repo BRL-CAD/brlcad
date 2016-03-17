@@ -6,6 +6,7 @@ set(articles_EN
   build_region.xml
   camo_shader.xml
   ebm_primitive.xml
+  gcv.xml
   ged.xml
   mgedrc.xml
   nirt.xml
