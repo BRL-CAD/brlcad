@@ -33,12 +33,6 @@
 
 #include "./ged_private.h"
 
-HIDDEN const char *
-gdiff_usage()
-{
-    return NULL;
-}
-
 int
 ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 {
@@ -63,7 +57,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     const char **av = argv+1;
 
     struct bu_opt_desc d[7];
-    BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance")
+    BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.")
     BU_OPT(d[1], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
     BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
     BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
@@ -80,7 +74,9 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (ret_ac != 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
+	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
+	bu_free((char *)usage, "help str");
 	return GED_ERROR;
     } else {
 	left_obj = av[0];
