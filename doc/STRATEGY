@@ -1,4 +1,4 @@
-				     # -*- mode: org-mode; coding: utf-8; -*- #
+					 # -*- mode: org; coding: utf-8; -*- #
 # This is an Emacs org-mode file.  Keybindings: http://orgmode.org/orgcard.txt
 
 # +TAGS: { UX : U u } { Complex : C c }
@@ -246,7 +246,5 @@ activities, and aims to coordinate development activity.
 
 
 # Local Variables:
-# mode: org-mode
+# mode: org
 # End:
-
-
