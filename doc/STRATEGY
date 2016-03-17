@@ -1,18 +1,15 @@
-					 -*- mode: org-mode; coding: utf-8; -*-
+				     # -*- mode: org-mode; coding: utf-8; -*- #
+# This is an Emacs org-mode file.  Keybindings: http://orgmode.org/orgcard.txt
 
-This is an Emacs org-mode document. Keybindings: http://orgmode.org/orgcard.txt
+# +TAGS: { UX : U u } { Complex : C c }
+# +TAGS: { Comms : P p } { Market : M m }
 
-#+TAGS: { UX : U u } { Complex : C c }
-#+TAGS: { Comms : P p } { Market : M m }
-
-============================
 BRL-CAD Development Strategy
-============================
 
-This is a living org-mode document intended to help define and
-maintain a consistent develpment strategy that addresses core
-requirements for BRL-CAD.  It recognizes areas of deficiency, outlines
-strategic activities, and aims to coordinate development activity.
+This is a living document intended to help define and maintain a
+consistent develpment strategy that addresses core requirements for
+BRL-CAD.  It recognizes areas of deficiency, outlines strategic
+activities, and aims to coordinate development activity.
 
 
 * Strategic Areas
