@@ -48,6 +48,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int view_right = 0;
     int view_overlap = 0;
     int grazereport = 0;
+    int print_help = 0;
     const char *left_obj;
     const char *right_obj;
     fastf_t len_tol = BN_TOL_DIST;
@@ -56,14 +57,15 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     int ac = argc - 1;
     const char **av = argv+1;
 
-    struct bu_opt_desc d[7];
-    BU_OPT(d[0], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.")
-    BU_OPT(d[1], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
-    BU_OPT(d[2], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
-    BU_OPT(d[3], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
-    BU_OPT(d[4], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
-    BU_OPT(d[5], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits (raytracing mode)")
-    BU_OPT_NULL(d[6]);
+    struct bu_opt_desc d[8];
+    BU_OPT(d[0], "h", "help",      "", NULL, (void *)&print_help, "Print help.")
+    BU_OPT(d[1], "t", "tol",      "#", &bu_opt_fastf_t, (void *)&len_tol, "Tolerance - when used with -R, controls spacing of test ray grids (units are mm.)  Otherwise, sets a numerical comparison tolerance.")
+    BU_OPT(d[2], "R", "ray-diff", "", NULL, (void *)&do_diff_raytrace, "Test for differences with raytracing")
+    BU_OPT(d[3], "l", "view-left", "", NULL, (void *)&view_left, "Visualize volumes added only by left object")
+    BU_OPT(d[4], "b", "view-both", "", NULL, (void *)&view_overlap, "Visualize volumes common to both objects")
+    BU_OPT(d[5], "r", "view-right", "", NULL, (void *)&view_right, "Visualize volumes added only by right object")
+    BU_OPT(d[6], "G", "grazing",    "", NULL, (void *)&grazereport, "Report differences in grazing hits (raytracing mode)")
+    BU_OPT_NULL(d[7]);
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -73,9 +75,16 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
+    if (print_help) {
+	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
+	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s\nNote that when visualizing differences with -R, red segments are those generated\nonly from intersections with \"left_obj\" while blue segments represent\nintersections unique to \"right_obj\".  White segments represent intersections\ncommon to both objects.", usage);
+	bu_free((char *)usage, "help str");
+	return GED_OK;
+    }
+
     if (ret_ac != 2) {
 	const char *usage = bu_opt_describe((struct bu_opt_desc *)&d, NULL);
-	bu_vls_printf(gedp->ged_result_str, "Usage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
+	bu_vls_printf(gedp->ged_result_str, "wrong number of args.\nUsage: gdiff [opts] left_obj right_obj\nOptions:\n%s", usage);
 	bu_free((char *)usage, "help str");
 	return GED_ERROR;
     } else {
