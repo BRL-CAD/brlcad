@@ -407,8 +407,10 @@ main(int argc, char **argv)
     _fb_disk_enable = 0;
     memset((void *)clients, 0, sizeof(struct pkg_conn *) * MAX_CLIENTS);
 
-#ifdef SIGALRM
+#ifdef SIGPIPE
     (void)signal( SIGPIPE, SIG_IGN );
+#endif
+#ifdef SIGALRM
     (void)signal( SIGALRM, sigalarm );
 #endif
     /*alarm(1)*/
