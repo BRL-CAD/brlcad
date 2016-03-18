@@ -18,6 +18,9 @@ Be specific.
 * 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
 
+* 'analyze' command: add per-face analysis of primitives like tgc, arb
+  to their respective analyze commands in libged
+
 * 'audit' command: determine if the model is valid, provide option(s)
   to fix any errors encountered.  this could be a refactoring or
   calling of g_lint and/or other tools.

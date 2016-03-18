@@ -1348,7 +1348,9 @@ LIBGED
 
 * the 'l' and 'analyze' commands now require an object be specified
   and won't use the currently highlighted solid.  undoubtedly related
-  to libged refactoring.  this is related to sf request 2954409.
+  to libged refactoring.  this is related to sf request 2954409.  this
+  needs to be handled in a generalized way so that most/all commands
+  have a notion of operating on the currently 'selected' object(s).
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
@@ -1370,9 +1372,6 @@ LIBGED
   libged/mged.  be sure to revive or at least check out the previous
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
-
-* add per-face analysis of primitives like tgc, arb to their
-  respective analyze commands in libged
 
 * refactor .density file and density database reading code in files
   src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
