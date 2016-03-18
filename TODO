@@ -1331,7 +1331,7 @@ comp.r4 ID 5678 material code 5 LOS 75
 LIBGED
 ------
 
-* See src/libged/TODO for new command ideas.
+* See src/libged/TODO for new command and subcommand ideas.
 
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in libged (or perhaps librt if

@@ -125,6 +125,26 @@ Be specific.
   offset piston -1.0 piston.interior piston.old
   # piston is now "u piston.old - piston.interior"
 
+* 'pipe from' subcommand that generates a pipe given an input object
+  (e.g., a BoT mesh).  Candidate synopsis:
+
+  pipe from {input.object} [-s startpt] [-e endpt] [-n npts] [output.pipe]
+
+  So that would look something like this in mged/archer:
+
+  mged> pipe from shaft4.bot
+  or
+  mged> pipe from shaft4.bot my_new.pipe
+  or
+  mged> pipe from -file shaft4.stl -s 1.3 3.21 9123.2 -e 1.3 3.21 0 shaft4.s
+  etc
+
+  This would allow the command to be extended to other input sources
+  or primitive types, but a default implementation could simply
+  tessellate the input object and work generically with a mesh form
+  under the hood.  Using ray tracing instead of mesh for calculating a
+  centerline is also a possibility.
+
 * 'redo' command: redoes the previous undone command(s).  Basically
   move forward in an undo chain.  See undo below.
 
