@@ -1346,20 +1346,12 @@ LIBGED
 * restore libged axis/grid commands code made in r44153 but with
   libged decoupled from libdm/libfb.
 
-* migrate / update screengrab command in libged (libfb/libdm dep)
-
 * the 'l' and 'analyze' commands now require an object be specified
   and won't use the currently highlighted solid.  undoubtedly related
   to libged refactoring.  this is related to sf request 2954409.
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
-
-* make the 'tree' command accept a full path, not just a combination
-
-* make the 'tables' ged command not call system() on the "sort" unix
-  command.  It should perform all sorting on the data directly in
-  memory, at least without creating another process.
 
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
@@ -1378,9 +1370,6 @@ LIBGED
   libged/mged.  be sure to revive or at least check out the previous
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
-
-* option to mged make command or new command that enters solid edit
-  mode, "med", "smake", "makes", "msed", etc.  same for cp command.
 
 * add per-face analysis of primitives like tgc, arb to their
   respective analyze commands in libged
