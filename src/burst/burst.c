@@ -102,14 +102,12 @@ setupSigs(void)
 		    (void) signal(i,  norml_sig);
 		}
 		break;
-	    case SIGCHLD :
-		break; /* leave SIGCLD alone */
+#ifdef HAVE_TERMLIB
 	    case SIGPIPE :
 		(void) signal(i, SIG_IGN);
 		break;
-	    case SIGQUIT :
-		break;
-	    case SIGTSTP :
+#endif
+	    default:
 		break;
 	}
     return;
