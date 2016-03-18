@@ -627,8 +627,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * temp colors and temp matrices during ray tracing, rt, rtwizard.
   need a command-line and mged method to override parameters.
 
-* test new edit command
-
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
 * test/fix patch-g on windows.  the input file read loops assume
@@ -1344,16 +1342,6 @@ LIBGED
   otherwise considered real objects in a given database.  this
   supports temporary additions to the wireframe (e.g., plot data from
   nirt from cvt_vlblock_to_solids()) and in-progress selections.
-
-* implement oed+tra/sca/rot functionality consistently in libged as
-  translate/scale/rotate with a signature similar to:
-
-  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:\
-    {object_name} | {3d position}] [--relative xdist [ydist [zdist]] \
-    | --absolute xpos [ypos [zpos]]] object_name(s)
-
-  where 'oed' is basically converted into the --keypoint option and
-  object(s) to work on.
 
 * restore libged axis/grid commands code made in r44153 but with
   libged decoupled from libdm/libfb.
