@@ -18,7 +18,7 @@
       The Geometry Conversion Library (GCV or libgcv) provides a unified API for geometry conversion capabilities under a plugin-based architecture.
     </para>
     <para>
-      The GCV public API is declared in C headers located within <code>include/gcv/</code>. The single <code>include/gcv.h</code> header includes the entire GCV public API.
+      The GCV public API is declared in C headers located within <literal>include/gcv/</literal>. The single <literal>include/gcv.h</literal> header includes the entire GCV public API.
     </para>
   </section>
 
@@ -28,7 +28,7 @@
       The Geometry Conversion Library consists of a stream-based API for geometry conversion and associated operations. Input and output are provided by "reader" and "writer" converters (provided by plugins). Intermediate operations are provided by "filters". Readers and writers are types of filters that provide input and output support for model formats, while basic filters apply transformations to models and geometry.
     </para>
     <para>
-      Geometry is stored in an in-memory BRL-CAD database (<code>struct db_i</code> in <code>include/rt/db_instance.h</code>) during the intermediate steps of conversion. For writer filters, this database is marked read-only and its geometry should not be modified. All names within a BRL-CAD database must be unique.
+      Geometry is stored in an in-memory BRL-CAD database (<code>struct db_i</code> in <literal>include/rt/db_instance.h</literal>) during the intermediate steps of conversion. For writer filters, this database is marked read-only and its geometry should not be modified. All names within a BRL-CAD database must be unique.
     </para>
     <para>
       TODO: image
@@ -38,7 +38,7 @@
   <section>
     <title>Building GCV</title>
     <para>
-      GCV can be built in a similar manner as other BRL-CAD libraries. After configuring with CMake, building the <code>libgcv</code> target will produce a dynamic library. For Unix-based systems, the procedure should be similar to the following:
+      GCV can be built in a similar manner as other BRL-CAD libraries. After configuring with CMake, building the <literal>libgcv</literal> target will produce a dynamic library. For Unix-based systems, the procedure should be similar to the following:
 <screen>
 $ cd brlcad
 $ mkdir build
@@ -48,19 +48,24 @@ $ make libgcv
 </screen>
     </para>
     <para>
-      The command-line utility can be built under the <code>gcv</code> target. At this time, the <code>gcv</code> program is not installed automatically; the binary will be placed into <code>build/src/conv/gcv/</code>.
+      Plugins can be built under <literal>gcv_<replaceable>plugin_name</replaceable></literal> targets, or collectively under the <literal>gcv_plugins</literal> target.
+    </para>
+    <para>
+      The command-line utility can be built under the <literal>gcv</literal> target. At this time, the <literal>gcv</literal> program is not installed automatically; the binary will be placed into <literal>build/src/conv/gcv/</literal>.
     </para>
   </section>
 
   <section>
-    <title>Example: Using GCV in an Application</title>
+    <title>Example: Using GCV in an application</title>
     <para>
       The following code illustrates a basic use of GCV from within an application. Note that there may be multiple filters providing import/export capabilities for a given format; the below code simply selects the first matching filter encountered.
     </para>
-    <bridgehead>Example: gcv_app.c</bridgehead>
-    <para>
-      TODO: embedded code
-    </para>
+    <example>
+      <title>gcv_app.c</title>
+      <para>
+        TODO: embedded code
+      </para>
+    </example>
   </section>
 
   <section>
@@ -98,7 +103,7 @@ $ make libgcv
           </row>
           <row>
             <entry><code>gcv_list_filters()</code></entry>
-            <entry>Returns a pointer to a <code>const struct bu_ptbl</code> containing all registered filters as<code> const struct gcv_filter</code> pointers.</entry>
+            <entry>Returns a pointer to a <code>const struct bu_ptbl</code> containing all registered filters as <code>const struct gcv_filter</code> pointers.</entry>
           </row>
           <row>
             <entry><code>gcv_execute()</code></entry>
@@ -194,32 +199,36 @@ $ make libgcv
       <orderedlist>
         <listitem>
           <para>
-            Add the following line to <code>misc/mime_cad.types</code>. This file is used to generate <code>include/bu/mime.h</code>:
+            Add the following line to <literal>misc/mime_cad.types</literal>. This file is used to generate <literal>include/bu/mime.h</literal>:
           </para>
 <programlisting>
 model/foo               bar
 </programlisting>
           <para>
-            This will associate the file extension <code>.bar</code> with a new <code>BU_MIME_MODEL_FOO</code> value of <code>bu_mime_model_t</code>.
+            This will associate the file extension <literal>.bar</literal> with a new <code>BU_MIME_MODEL_FOO</code> value of <code>bu_mime_model_t</code>.
           </para>
         </listitem>
         <listitem>
           <para>
-            Create the following file at <code>src/libgcv/plugins/foo/CMakeLists.txt</code>:
+            Create the following file at <literal>src/libgcv/plugins/foo/CMakeLists.txt</literal>:
           </para>
-          <bridgehead>Example: CMakeLists.txt</bridgehead>
+          <example>
+            <title>CMakeLists.txt</title>
 <programlisting>
 LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
 </programlisting>
+          </example>
         </listitem>
         <listitem>
           <para>
-            Create the following file at <code>src/libgcv/plugins/foo/foo_read.c</code>:
+            Create the following file at <literal>src/libgcv/plugins/foo/foo_read.c</literal>:
           </para>
-          <bridgehead>Example: foo_read.c</bridgehead>
-          <para>
-            TODO: embedded code
-          </para>
+          <example>
+            <title>foo_read.c</title>
+            <para>
+              TODO: embedded code
+            </para>
+          </example>
         </listitem>
       </orderedlist>
     </section>
@@ -227,7 +236,7 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
     <section>
       <title>Traversing the Database</title>
       <para>
-        BRL-CAD provides the <code>db_walk_tree()</code> function for traversing the database in hierarchical order. You can specify your own visitor callbacks as documented in <code>include/rt/tree.h</code>, or use the region-end functions provided by GCV (<code>include/gcv/util.h</code>) to tessellate geometry at the region level.
+        BRL-CAD provides the <code>db_walk_tree()</code> function for traversing the database in hierarchical order. You can specify your own visitor callbacks as documented in <literal>include/rt/tree.h</literal>, or use the region-end functions provided by GCV (<literal>include/gcv/util.h</literal>) to tessellate geometry at the region level.
       </para>
       <table frame='none'>
         <title>GCV region-end tessellation callbacks</title>
@@ -252,10 +261,12 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
       <para>
         The following example implements a filter that tessellates all geometry into BoT mesh objects and counts the total number of faces.
       </para>
-      <bridgehead>Example: tessellation_statistics.c</bridgehead>
-      <para>
-        TODO: embedded code
-      </para>
+      <example>
+        <title>tessellation_statistics.c</title>
+        <para>
+          TODO: embedded code
+        </para>
+      </example>
     </section>
 
     <section>
@@ -269,13 +280,13 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
     <section>
       <title>Comparing Geometry</title>
       <para>
-        When developing a filter, it is often useful to be able to compare different models during testing. This capability is provided by the <code>gdiff</code> tool. There are two versions of <code>gdiff</code>: the standalone command-line version and the <code>gdiff</code> provided within the MGED interface.
+        When developing a filter, it is often useful to be able to compare different models during testing. This capability is provided by the <literal>gdiff</literal> tool. There are two versions of <literal>gdiff</literal>: the standalone command-line version and the <literal>gdiff</literal> provided within the MGED interface.
       </para>
       <para>
-        The command-line <code>gdiff</code> quickly produces a textual summary for a two- or three- way diff of several BRL-CAD databases. Documentation for this utility is available under <code>brlman gdiff</code>.
+        The command-line <literal>gdiff</literal> quickly produces a textual summary for a two- or three- way diff of several BRL-CAD databases. Documentation for this utility is available under <code>brlman gdiff</code>.
       </para>
       <para>
-        The <code>gdiff</code> command available within the MGED interface provides a different capability. It uses BRL-CAD's ray tracer to produce a visual display of the differences between two objects within the same database. To compare geometry from separate databases, you can first merge the databases using the <code>dbconcat</code> command from within MGED. See <code>brlman dbconcat</code> for full documentation.
+        The <literal>gdiff</literal> command available within the MGED interface provides a different capability. It uses BRL-CAD's ray tracer to produce a visual display of the differences between two objects within the same database. To compare geometry from separate databases, you can first merge the databases using the <literal>dbconcat</literal> command from within MGED. See <code>brlman dbconcat</code> for full documentation.
       </para>
       <table frame='none'>
         <title>Usage of MGED's gdiff utility</title>
@@ -288,27 +299,27 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
           </thead>
           <tbody>
             <row>
-              <entry><code>--tol=#</code>, <code>-t#</code></entry>
+              <entry><literal>--tol=#</literal>, <literal>-t#</literal></entry>
               <entry>Tolerance in millimeters.</entry>
             </row>
             <row>
-              <entry><code>--ray-diff</code>, <code>-R</code></entry>
+              <entry><literal>--ray-diff</literal>, <literal>-R</literal></entry>
               <entry>Test for differences with raytracing.</entry>
             </row>
             <row>
-              <entry><code>--view-left</code>, <code>-l</code></entry>
+              <entry><literal>--view-left</literal>, <literal>-l</literal></entry>
               <entry>Visualize volumes added only by left object.</entry>
             </row>
             <row>
-              <entry><code>--view-both</code>, <code>-b</code></entry>
+              <entry><literal>--view-both</literal>, <literal>-b</literal></entry>
               <entry>Visualize volumes common to both objects.</entry>
             </row>
             <row>
-              <entry><code>--view-right</code>, <code>-r</code></entry>
+              <entry><literal>--view-right</literal>, <literal>-r</literal></entry>
               <entry>Visualize volumes added only by right object.</entry>
             </row>
             <row>
-              <entry><code>--grazing</code>, <code>-G</code></entry>
+              <entry><literal>--grazing</literal>, <literal>-G</literal></entry>
               <entry>Report differences in grazing hits (raytracing mode).</entry>
             </row>
           </tbody>
@@ -322,7 +333,7 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
     <section>
       <title>Creating Unit Tests</title>
       <para>
-        BRL-CAD provides a library of standard models that may be used for unit tests, located under <code>$BRLCAD_ROOT/share/db/</code> (note that these files are generated during the build process). Unit tests can be integrated into the build system using the <code>add_test</code> CMake command.  
+        BRL-CAD provides a library of standard models that may be used for unit tests, located under <literal>$BRLCAD_ROOT/share/db/</literal> (note that these files are generated during the build process). Unit tests can be integrated into the build system using the <code>add_test</code> CMake command.  
       </para>
     </section>
   </section>
@@ -330,43 +341,53 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
   <section>
     <title>Example: Extending an Application</title>
     <para>
-      The following example will leverage the filter in the above plugin example, <code>tessellation_statistics.c</code>, to implement a function that counts the number of faces in a model after tessellation.
+      The following example will leverage the filter in the above plugin example, <literal>tessellation_statistics.c</literal>, to implement a function that counts the number of faces in a model after tessellation.
     </para>
-    <bridgehead>Example: gcv_embedded.c</bridgehead>
-    <para>
-      TODO: embedded code
-    </para>
+    <example>
+      <title>gcv_embedded.c</title>
+      <para>
+        TODO: embedded code
+      </para>
+    </example>
   </section>
 
   <section>
     <title>The GCV Frontend</title>
     <para>
-      GCV includes a command-line front-end utility, <code>gcv</code>, implemented in <code>src/conv/gcv/gcv.c</code>. Full documentation is available under <code>brlman gcv</code> and <code>gcv --help</code>.
+      GCV includes a command-line front-end utility, <literal>gcv</literal>, implemented in <literal>src/conv/gcv/gcv.c</literal>. Full documentation is available under <code>brlman gcv</code> and <code>gcv --help</code>.
     </para>
-    <bridgehead>Example: Basic Usage</bridgehead>
+    <example>
+      <title>Basic usage of the gcv utility</title>
 <screen>
 $ <userinput>gcv --input=a.stl --output=b.fg4</userinput>
 Input file format: BU_MIME_MODEL_STL
 Output file format: BU_MIME_MODEL_VND_FASTGEN
 Input file path: a.stl
 Output file path: b.fg4
-Converting Part: all_cpu_cpw6_cw_cpubox_cpubox.a
-Using solid name: s.all_cpu_cpw6_cw_cpubox_cpubox.a
-Making region (all_cpu_cpw6_cw_cpubox_cpubox.a)
+    Converting Part: all_cpu_cpw6_cw_cpubox_cpubox.a
+    Using solid name: s.all_cpu_cpw6_cw_cpubox_cpubox.a
+    Making region (all_cpu_cpw6_cw_cpubox_cpubox.a)
 ...
 </screen>
-    <bridgehead>Example: Generic Options</bridgehead>
+    </example>
+    <example>
+      <title>Generic options</title>
 <screen>
 $ <userinput>gcv --input=a.fg4 --output=b.vrml --input-and-output-opts --verbosity=1 --output-only-opts --objects=comp_0001.r</userinput>
 </screen>
-    <bridgehead>Example: Filter-Specific Options</bridgehead>
+    </example>
+    <example>
+      <title>Filter-specific options</title>
 <screen>
 $ <userinput>gcv --input=a.fg4 --output=b.obj --input-only-opts --colors=a.fg4.colors --output-only-opts --vertex-normals</userinput>
 </screen>
-    <bridgehead>Example: Specifying Conversion Formats</bridgehead>
+    </example>
+    <example>
+      <title>Specifying conversion formats</title>
 <screen>
 $ <userinput>gcv --input=infile.txt --output=outfile.obj --input-format=stl</userinput>
 </screen>
+    </example>
   </section>
 
   <section>
@@ -386,23 +407,23 @@ $ <userinput>gcv --input=infile.txt --output=outfile.obj --input-format=stl</use
         <tbody>
           <row>
             <entry>BRL-CAD</entry>
-            <entry><code>.g</code></entry>
+            <entry><literal>.g</literal></entry>
           </row>
           <row>
             <entry>FASTGEN4</entry>
-            <entry><code>.fg4</code></entry>
+            <entry><literal>.fg4</literal></entry>
           </row>
           <row>
             <entry>WaveFront Object</entry>
-            <entry><code>.obj</code></entry>
+            <entry><literal>.obj</literal></entry>
           </row>
           <row>
             <entry>StereoLithography</entry>
-            <entry><code>.stl</code></entry>
+            <entry><literal>.stl</literal></entry>
           </row>
           <row>
             <entry>Virtual Reality Modeling Language</entry>
-            <entry><code>.vrml</code></entry>
+            <entry><literal>.vrml</literal></entry>
           </row>
         </tbody>
       </tgroup>
@@ -437,11 +458,15 @@ $ <userinput>gcv --input=infile.txt --output=outfile.obj --input-format=stl</use
               <entry><code>tessellation_tolerance</code></entry>
               <entry>
                 Tessellation tolerance. The default value is:
-<programlisting>
-abs = 0.0
-rel = 1.0e-2
-norm = 0.0
-</programlisting>
+                <para>
+                  <literal>abs = 0.0</literal>
+                </para>
+                <para>
+                  <literal>rel = 1.0e-2</literal>
+                </para>
+                <para>
+                  <literal>norm = 0.0</literal>
+                </para>
               </entry>
             </row>
             <row>
@@ -479,10 +504,247 @@ norm = 0.0
           </tbody>
         </tgroup>
       </table>
-      <bridgehead>Example: Using struct gcv_opts</bridgehead>
+      <example>
+        <title>Using struct gcv_opts</title>
+<programlisting>
+static int
+apply_filter_with_options(struct gcv_context *context, const struct gcv_filter *filter, const char *target)
+{
+    struct gcv_opts options;
+    const char *argv[] = { "--colors=", "colors.dat", "--continue" };
+    const size_t argc = sizeof(argv) / sizeof(argv[0]);
+
+    gcv_opts_default(&amp;options);
+    options->debug_mode = 1;
+
+    return gcv_execute(context, filter, &amp;options, argc, argv, target);
+}
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>FASTGEN4 Reader</title>
+      <table frame='none'>
+        <title>FASTGEN4 reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--colors=<replaceable>path</replaceable></literal></entry>
+              <entry>Path to a file specifying component colors.</entry>
+            </row>
+            <row>
+              <entry><literal>--muves=<replaceable>path</replaceable></literal></entry>
+              <entry>Create a MUVES input file containing any CHGCOMP and CBACKING components.</entry>
+            </row>
+            <row>
+              <entry><literal>--plot=<replaceable>path</replaceable></literal></entry>
+              <entry>Create a libplot3 plot file of all CTRI and CQUAD elements processed.</entry>
+            </row>
+            <row>
+              <entry><literal>--sections=<replaceable>list</replaceable></literal></entry>
+              <entry>Process only a list ("<literal>3001, 4082, 5347</literal>") or a range ("<literal>2315 - 3527</literal>") of section IDs.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>FASTGEN4 Writer</title>
       <para>
-        TODO: embedded code
+        At this time, the FASTGEN4 writer plugin does not make use of any filter-specific options.
       </para>
+    </section>
+
+    <section>
+      <title>OBJ Reader</title>
+      <table frame='none'>
+        <title>OBJ reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--continue</literal></entry>
+              <entry>Continue processing on nmg-bomb. Conversion will fall back to native BoT mode if a fatal error occurs when using the nmg or BoT-via-nmg modes.</entry>
+            </row>
+            <row>
+              <entry><literal>--fuse-vertices</literal></entry>
+              <entry>Fuse vertices that are near enough to be considered identical. Can make the solidity detection more reliable, but may significantly increase processing time during the conversion.</entry>
+            </row>
+            <row>
+              <entry><literal>--grouping=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select which OBJ face grouping is used to create BRL-CAD primitives.
+                <para>
+                  <literal>group</literal> = group (default)
+                </para>
+                <para>
+                  <literal>material</literal> = material
+                </para>
+                <para>
+                  <literal>none</literal> = none
+                </para>
+                <para>
+                  <literal>object</literal> = object
+                </para>
+                <para>
+                  <literal>texture</literal> = texture
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--conversion-mode=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select the conversion mode.
+                <para>
+                  <literal>bot</literal> = native BoT (default)
+                </para>
+                <para>
+                  <literal>nmg</literal> = NMG
+                </para>
+                <para>
+                  <literal>nmgbot</literal> = BoT via NMG
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--bot-plate-thickness=<replaceable>thickness</replaceable></literal></entry>
+              <entry>Thickness (mm) used when a BoT is not a closed volume and it's converted as a plate or plate-nocos BoT.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-ignore-normals</literal></entry>
+              <entry>Ignore the normals defined in the input file when using native BoT conversion mode.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-open-type=<replaceable>type</replaceable></literal></entry>
+              <entry>
+                Select the type used for BoTs that aren't closed volumes.
+                <para>
+                  <literal>surface</literal> = surface (default)
+                </para>
+                <para>
+                  <literal>plate</literal> = plate
+                </para>
+                <para>
+                  <literal>nocos</literal> = plate-nocos
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--bot-plot</literal></entry>
+              <entry>Creates a plot/overlay (<literal>.plot3</literal>) file of open edges for BoTs that aren't closed volumes. <literal><replaceable>bot_name</replaceable>.plot3</literal> will be created in the current directory and will overwrite any existing file with the same name.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-orientation=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select the BoT orientation mode.
+                <para>
+                  <literal>unoriented</literal> = unoriented (default)
+                </para>
+                <para>
+                  <literal>ccw</literal> = counterclockwise
+                </para>
+                <para>
+                  <literal>cw</literal> = clockwise
+                </para>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>OBJ Writer</title>
+      <table frame='none'>
+        <title>OBJ writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--vertex-normals</literal></entry>
+              <entry>Output vertex normals.</entry>
+            </row>
+            <row>
+              <entry><literal>--usemtl</literal></entry>
+              <entry>Place <literal>usemtl</literal> statements in the output file. These statements are fictional (they do not refer to any material database). The materials named provide information about the material codes assigned to the objects in the BRL-CAD database. The material names will be of the form "<literal><replaceable>aircode</replaceable>_<replaceable>los</replaceable>_<replaceable>material</replaceable></literal>", where <replaceable>aircode</replaceable> is the code number for the air represented by that region, if it does represent air; otherwise, this will be <literal>0</literal>. The <replaceable>los</replaceable> is the Line Of Sight thickness (<literal>0</literal> to <literal>100</literal>) assigned to the region, and <replaceable>material</replaceable> is the material code number assigned.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>STL Reader</title>
+      <table frame='none'>
+        <title>STL reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--binary</literal></entry>
+              <entry>Specify that the input file is in binary STL format (the default assumes ASCII).</entry>
+            </row>
+            <row>
+              <entry><literal>--starting-ident=<replaceable>number</replaceable></literal></entry>
+              <entry>Specify the starting ident for the regions created. The default is <literal>1000</literal>. This number will be incremented for each region, unless <literal>--constant-ident</literal> is specified.</entry>
+            </row>
+            <row>
+              <entry><literal>--constant-ident</literal></entry>
+              <entry>Specify that the starting ident should remain constant.</entry>
+            </row>
+            <row>
+              <entry><literal>--material=<replaceable>code</replaceable></literal></entry>
+              <entry>Specify the material code that will be assigned to all created regions (the default is <literal>1</literal>).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>STL Writer</title>
+      <table frame='none'>
+        <title>STL writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--binary</literal></entry>
+              <entry>Write output as a binary STL file. The default is ASCII. In the case of ASCII output, the region name is specified on the "solid" line of the STL file. In the case of binary output, all the regions are output as a single STL part.</entry>
+            </row>
+            <row>
+              <entry><literal>--output-dir</literal></entry>
+              <entry>Specify that the output path should be a directory. Each region converted is written to a separate file. File names are constructed from the full path names of each region (the path from the specified object to the region).  Any "<literal>/</literal>" characters in the path name are replaced by "<literal>@</literal>" characters and "<literal>.</literal>" and white space are replaced by "<literal>_</literal>" characters.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>VRML Reader</title>
+      <para>
+        At this time, the VRML reader plugin does not make use of any filter-specific options.
+      </para>
+    </section>
+
+    <section>
+      <title>VRML Writer</title>
+      <table frame='none'>
+        <title>STL writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--bot-dump</literal></entry>
+              <entry>BoT dump. Mutually exclusive with <literal>--evaluate-all</literal>.</entry>
+            </row>
+            <row>
+              <entry><literal>--evaluate-all</literal></entry>
+              <entry>Evaluate all, CSG and BoTs. Mutually exclusive with <literal>--bot-dump</literal>.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
     </section>
   </section>
 </article>
