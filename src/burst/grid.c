@@ -893,7 +893,7 @@ getRayOrigin(struct application *ap)
 	    /* 2-digit random number, 1's place gives X
 	       offset, 10's place gives Y offset.
 	    */
-#ifndef HAVE_LRAND48
+#ifdef HAVE_LRAND48
 	    /* Use random() only if lrand48() is not available.  */
 	    ap->a_user = lrand48() % 100;
 #else
