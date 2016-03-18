@@ -69,6 +69,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Extract bounding box code from both autoview.c and get_autoview.c
+  into a general bounding rpp function in librt and use accordingly
+  (particularly in libged).  Should combine autoview.c with
+  get_autoview.c (perhaps as a flag) and utilize the general function
+  in lots of places (e.g., the ged_arb() function).
+
 * make mged work without a batch script
 
 * make archer work without a batch script
@@ -1333,24 +1339,11 @@ LIBGED
 
 * See src/libged/TODO for new command and subcommand ideas.
 
-* Extract bounding box code from both autoview.c and get_autoview.c
-  into a general bounding rpp function in libged (or perhaps librt if
-  it generalizes sufficiently), and use accordingly.  Should combin
-  autoview.c with get_autoview.c (perhaps as a flag) and utilize the
-  general function in lots of libged places (e.g., the ged_arb()
-  function).
-
-* fix ged 'joint' command, need to figure out how libged should handle
-  non-object additions to the wireframe (or maybe they should be
-  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
-
-* break cyclic dependency between libdm and libged.  libged should not
-  be aware of libdm (screengrab command).  to implement a ged command
-  that updates the display, the gedp could provide a means to
-  register a callback so (for example) mged could register a function
-  that gets passed a dmp, and libged would call back into that
-  front-end client function instead of a direct call so library
-  encapsulation is maintained.
+* libged needs to support "temporary" objects that are in-memory only
+  and will disappear when the ged instance is destroyed, yet is
+  otherwise considered real objects in a given database.  this
+  supports temporary additions to the wireframe (e.g., plot data from
+  nirt from cvt_vlblock_to_solids()) and in-progress selections.
 
 * implement oed+tra/sca/rot functionality consistently in libged as
   translate/scale/rotate with a signature similar to:
