@@ -102,7 +102,7 @@ setupSigs(void)
 		    (void) signal(i,  norml_sig);
 		}
 		break;
-#ifdef HAVE_TERMLIB
+#ifdef SIGPIPE
 	    case SIGPIPE :
 		(void) signal(i, SIG_IGN);
 		break;
