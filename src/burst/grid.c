@@ -893,7 +893,7 @@ getRayOrigin(struct application *ap)
 	    /* 2-digit random number, 1's place gives X
 	       offset, 10's place gives Y offset.
 	    */
-	    ap->a_user = lrint(bn_randmt() * 99.0);
+	    ap->a_user = lrint(bn_randmt() * 100.0) % 100;
 	    xoffset = (ap->a_user%10)*0.1 - 0.5;
 	    yoffset = (ap->a_user/10)*0.1 - 0.5;
 	}
