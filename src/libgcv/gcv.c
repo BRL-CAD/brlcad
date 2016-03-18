@@ -35,8 +35,8 @@
 
 HIDDEN int
 _gcv_brlcad_read(struct gcv_context *context,
-		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		const char *source_path)
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *source_path)
 {
     int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
@@ -55,14 +55,19 @@ _gcv_brlcad_read(struct gcv_context *context,
     ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
     db_close(in_dbip);
 
-    return ret == 0;
+    if (ret) {
+	bu_log("db_dump() failed (from '%s')\n", source_path);
+	return 0;
+    }
+
+    return 1;
 }
 
 
 HIDDEN int
 _gcv_brlcad_write(struct gcv_context *context,
-		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		 const char *dest_path)
+		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		  const char *dest_path)
 {
     int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
@@ -75,7 +80,12 @@ _gcv_brlcad_write(struct gcv_context *context,
     ret = db_dump(out_wdbp, context->dbip);
     wdb_close(out_wdbp);
 
-    return ret == 0;
+    if (ret) {
+	bu_log("db_dump() failed (from context->dbip to '%s')\n", dest_path);
+	return 0;
+    }
+
+    return 1;
 }
 
 
@@ -88,7 +98,8 @@ static const struct gcv_filter _gcv_filter_brlcad_write =
 
 
 HIDDEN void
-_gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filter)
+_gcv_filter_register(struct bu_ptbl *filter_table,
+		     const struct gcv_filter *filter)
 {
     if (!filter_table || !filter)
 	bu_bomb("missing argument");
@@ -294,7 +305,8 @@ _gcv_plugins_get_path(void)
 	return NULL;
 
     bu_vls_init(&buffer);
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, LIBGCV_PLUGINS_DIRECTORY);
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
+		   LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
     bu_vls_free(&buffer);
 
