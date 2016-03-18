@@ -39,13 +39,13 @@
     <title>Building GCV</title>
     <para>
       GCV can be built in a similar manner as other BRL-CAD libraries. After configuring with CMake, building the <code>libgcv</code> target will produce a dynamic library. For Unix-based systems, the procedure should be similar to the following:
-      <screen>
-        $ cd brlcad
-        $ mkdir build
-        $ cd build
-        $ cmake ..
-        $ make libgcv
-      </screen>
+<screen>
+$ cd brlcad
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make libgcv
+</screen>
     </para>
     <para>
       The command-line utility can be built under the <code>gcv</code> target. At this time, the <code>gcv</code> program is not installed automatically; the binary will be placed into <code>build/src/conv/gcv/</code>.
@@ -54,6 +54,10 @@
 
   <section>
     <title>Example: Using GCV in an Application</title>
+    <para>
+      The following code illustrates a basic use of GCV from within an application. Note that there may be multiple filters providing import/export capabilities for a given format; the below code simply selects the first matching filter encountered.
+    </para>
+    <bridgehead>Example: gcv_app.c</bridgehead>
     <para>
       TODO: embedded code
     </para>
@@ -66,7 +70,7 @@
     </para>
     <table frame='none'>
       <title>GCV public filter API</title>
-      <tgroup cols='2'>
+      <tgroup cols='2' align='left'>
         <tbody>
           <row>
             <entry><code>struct gcv_context</code></entry>
@@ -112,11 +116,11 @@
     </para>
     <table frame='none'>
       <title>The gcv_filter struct</title>
-      <tgroup cols='2'>
+      <tgroup cols='2' align='left'>
         <tbody>
           <row>
             <entry><code>name</code></entry>
-            <entry>Specifies a unique name for the filter, allowing it to be identified by applicaiton code.</entry>
+            <entry>Specifies a unique name for the filter, allowing it to be identified by application code.</entry>
           </row>
           <row>
             <entry><code>filter_type</code></entry>
@@ -149,7 +153,7 @@
       </para>
       <table frame='none'>
         <title>GCV utility functions</title>
-        <tgroup cols='2'>
+        <tgroup cols='2' align='left'>
           <tbody>
             <row>
               <entry><code>gcv_bot_is_solid()</code>, <code>gcv_bot_is_closed()</code>, <code>gcv_bot_is_orientable()</code></entry>
@@ -168,7 +172,7 @@
       </para>
       <table frame='none'>
         <title>BRL-CAD mesh decimation API</title>
-        <tgroup cols='2'>
+        <tgroup cols='2' align='left'>
           <tbody>
             <row>
               <entry><code>rt_bot_decimate_gct()</code></entry>
@@ -182,9 +186,44 @@
 
   <section>
     <title>Developing a Minimal Plugin</title>
-    <para>
-      TODO: embedded code
-    </para>
+    <section>
+      <title>Basic Code</title>
+      <para>
+        The following steps will implement a minimal plugin providing a reader filter.
+      </para>
+      <orderedlist>
+        <listitem>
+          <para>
+            Add the following line to <code>misc/mime_cad.types</code>. This file is used to generate <code>include/bu/mime.h</code>:
+          </para>
+<programlisting>
+model/foo               bar
+</programlisting>
+          <para>
+            This will associate the file extension <code>.bar</code> with a new <code>BU_MIME_MODEL_FOO</code> value of <code>bu_mime_model_t</code>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Create the following file at <code>src/libgcv/plugins/foo/CMakeLists.txt</code>:
+          </para>
+          <bridgehead>Example: CMakeLists.txt</bridgehead>
+<programlisting>
+LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
+</programlisting>
+        </listitem>
+        <listitem>
+          <para>
+            Create the following file at <code>src/libgcv/plugins/foo/foo_read.c</code>:
+          </para>
+          <bridgehead>Example: foo_read.c</bridgehead>
+          <para>
+            TODO: embedded code
+          </para>
+        </listitem>
+      </orderedlist>
+    </section>
+
     <section>
       <title>Traversing the Database</title>
       <para>
@@ -192,7 +231,7 @@
       </para>
       <table frame='none'>
         <title>GCV region-end tessellation callbacks</title>
-        <tgroup cols='2'>
+        <tgroup cols='2' align='left'>
           <tbody>
             <row>
               <entry><code>gcv_region_end()</code></entry>
@@ -213,6 +252,234 @@
       <para>
         The following example implements a filter that tessellates all geometry into BoT mesh objects and counts the total number of faces.
       </para>
+      <bridgehead>Example: tessellation_statistics.c</bridgehead>
+      <para>
+        TODO: embedded code
+      </para>
+    </section>
+
+    <section>
+      <title>Converting Unsupported Entities</title>
+      <para>
+        Although BRL-CAD supports a wide array of common geometric primitives, you may encounter objects that can't be directly imported or exported into an analogous entity. In these cases, conversion filters usually tessellate the incompatible geometry (typically during export) or convert it into an approximation or a composite of several other primitives (often during import).
+      </para>
+      <para>TODO: image</para>
+    </section>
+
+    <section>
+      <title>Comparing Geometry</title>
+      <para>
+        When developing a filter, it is often useful to be able to compare different models during testing. This capability is provided by the <code>gdiff</code> tool. There are two versions of <code>gdiff</code>: the standalone command-line version and the <code>gdiff</code> provided within the MGED interface.
+      </para>
+      <para>
+        The command-line <code>gdiff</code> quickly produces a textual summary for a two- or three- way diff of several BRL-CAD databases. Documentation for this utility is available under <code>brlman gdiff</code>.
+      </para>
+      <para>
+        The <code>gdiff</code> command available within the MGED interface provides a different capability. It uses BRL-CAD's ray tracer to produce a visual display of the differences between two objects within the same database. To compare geometry from separate databases, you can first merge the databases using the <code>dbconcat</code> command from within MGED. See <code>brlman dbconcat</code> for full documentation.
+      </para>
+      <table frame='none'>
+        <title>Usage of MGED's gdiff utility</title>
+        <tgroup cols='2' align='left'>
+          <thead>
+            <row>
+              <entry>Usage:</entry>
+              <entry><code>gdiff [OPTION]... obj1 obj2</code></entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><code>--tol=#</code>, <code>-t#</code></entry>
+              <entry>Tolerance in millimeters.</entry>
+            </row>
+            <row>
+              <entry><code>--ray-diff</code>, <code>-R</code></entry>
+              <entry>Test for differences with raytracing.</entry>
+            </row>
+            <row>
+              <entry><code>--view-left</code>, <code>-l</code></entry>
+              <entry>Visualize volumes added only by left object.</entry>
+            </row>
+            <row>
+              <entry><code>--view-both</code>, <code>-b</code></entry>
+              <entry>Visualize volumes common to both objects.</entry>
+            </row>
+            <row>
+              <entry><code>--view-right</code>, <code>-r</code></entry>
+              <entry>Visualize volumes added only by right object.</entry>
+            </row>
+            <row>
+              <entry><code>--grazing</code>, <code>-G</code></entry>
+              <entry>Report differences in grazing hits (raytracing mode).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        TODO: image
+      </para>
+    </section>
+
+    <section>
+      <title>Creating Unit Tests</title>
+      <para>
+        BRL-CAD provides a library of standard models that may be used for unit tests, located under <code>$BRLCAD_ROOT/share/db/</code> (note that these files are generated during the build process). Unit tests can be integrated into the build system using the <code>add_test</code> CMake command.  
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Example: Extending an Application</title>
+    <para>
+      The following example will leverage the filter in the above plugin example, <code>tessellation_statistics.c</code>, to implement a function that counts the number of faces in a model after tessellation.
+    </para>
+    <bridgehead>Example: gcv_embedded.c</bridgehead>
+    <para>
+      TODO: embedded code
+    </para>
+  </section>
+
+  <section>
+    <title>The GCV Frontend</title>
+    <para>
+      GCV includes a command-line front-end utility, <code>gcv</code>, implemented in <code>src/conv/gcv/gcv.c</code>. Full documentation is available under <code>brlman gcv</code> and <code>gcv --help</code>.
+    </para>
+    <bridgehead>Example: Basic Usage</bridgehead>
+<screen>
+$ <userinput>gcv --input=a.stl --output=b.fg4</userinput>
+Input file format: BU_MIME_MODEL_STL
+Output file format: BU_MIME_MODEL_VND_FASTGEN
+Input file path: a.stl
+Output file path: b.fg4
+Converting Part: all_cpu_cpw6_cw_cpubox_cpubox.a
+Using solid name: s.all_cpu_cpw6_cw_cpubox_cpubox.a
+Making region (all_cpu_cpw6_cw_cpubox_cpubox.a)
+...
+</screen>
+    <bridgehead>Example: Generic Options</bridgehead>
+<screen>
+$ <userinput>gcv --input=a.fg4 --output=b.vrml --input-and-output-opts --verbosity=1 --output-only-opts --objects=comp_0001.r</userinput>
+</screen>
+    <bridgehead>Example: Filter-Specific Options</bridgehead>
+<screen>
+$ <userinput>gcv --input=a.fg4 --output=b.obj --input-only-opts --colors=a.fg4.colors --output-only-opts --vertex-normals</userinput>
+</screen>
+    <bridgehead>Example: Specifying Conversion Formats</bridgehead>
+<screen>
+$ <userinput>gcv --input=infile.txt --output=outfile.obj --input-format=stl</userinput>
+</screen>
+  </section>
+
+  <section>
+    <title>Conversion Filters</title>
+    <para>
+      GCV currently contains support for import and export into five model formats, detailed below.
+    </para>
+    <table frame='none'>
+      <title>Conversion formats supported by GCV</title>
+      <tgroup cols='2' align='left'>
+        <thead>
+          <row>
+            <entry>Format</entry>
+            <entry>File Extension</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>BRL-CAD</entry>
+            <entry><code>.g</code></entry>
+          </row>
+          <row>
+            <entry>FASTGEN4</entry>
+            <entry><code>.fg4</code></entry>
+          </row>
+          <row>
+            <entry>WaveFront Object</entry>
+            <entry><code>.obj</code></entry>
+          </row>
+          <row>
+            <entry>StereoLithography</entry>
+            <entry><code>.stl</code></entry>
+          </row>
+          <row>
+            <entry>Virtual Reality Modeling Language</entry>
+            <entry><code>.vrml</code></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+    <section>
+      <title>Common Conversion Options</title>
+      <para>
+        The <code>gcv_opts</code> struct stores generic options applying to many filters, detailed below. Not all options may be applicable to or respected by every filter.
+      </para>
+      <table frame='none'>
+        <title>Conversion formats supported by GCV</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><code>debug_mode</code></entry>
+              <entry>Print debugging info if set to <code>1</code>. Default is <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>verbosity_level</code></entry>
+              <entry>Verbosity level. The default, level <code>0</code>, is "quiet" (only error messages are produced).</entry>
+            </row>
+            <row>
+              <entry><code>scale_factor</code></entry>
+              <entry>Specify the scale factor to be applied during import or export, as units per mm. Default is <code>1.0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>calculational_tolerance</code></entry>
+              <entry>Calculational tolerance. Defaults to the RT defaults. If you use a non-default value, you should set the ray tracer tolerance to match it when using the resulting model.</entry>
+            </row>
+            <row>
+              <entry><code>tessellation_tolerance</code></entry>
+              <entry>
+                Tessellation tolerance. The default value is:
+<programlisting>
+abs = 0.0
+rel = 1.0e-2
+norm = 0.0
+</programlisting>
+              </entry>
+            </row>
+            <row>
+              <entry><code>tessellation_algorithm</code></entry>
+              <entry>Specify use of either the default, marching-cubes, or bottess-based tessellation algorithm.</entry>
+            </row>
+            <row>
+              <entry><code>max_cpus</code></entry>
+              <entry>Maximum number of processors to utilize where possible. Default is <code>0</code>, specifying the maximum available during execution.</entry>
+            </row>
+            <row>
+              <entry><code>num_objects</code></entry>
+              <entry>Number of objects to convert. If <code>0</code> (the default), all top-level objects will be converted.</entry>
+            </row>
+            <row>
+              <entry><code>object_names</code></entry>
+              <entry>Names of objects to convert (must have <code>num_objects</code> elements). Default is <code>NULL</code>.</entry>
+            </row>
+            <row>
+              <entry><code>default_name</code></entry>
+              <entry>Name assigned to objects without names. Defaults to "<code>unnamed</code>".</entry>
+            </row>
+            <row>
+              <entry><code>bu_debug_flag</code></entry>
+              <entry>Debug flag for libbu (see <code>include/bu/debug.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>rt_debug_flag</code></entry>
+              <entry>Debug flag for librt (see <code>include/rt/debug.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>nmg_debug_flag</code></entry>
+              <entry>Debug flag for libnmg (see <code>include/nmg.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <bridgehead>Example: Using struct gcv_opts</bridgehead>
       <para>
         TODO: embedded code
       </para>
