@@ -250,9 +250,8 @@ at_ref(const Array &array, int index)
 
 // according to openNURBS documentation, their own ON_CreateUuid()
 // only works on Windows, but the implementation shows it's also
-// implemented for XCode builds.  when it fails, we pretend to make a
-// uuid.  FIXME: this is a great candidate for a bu_uuid() function
-// (but with real uuid behavior).
+// implemented for XCode builds.  when it fails, we create a UUIDv4.
+// FIXME: this is a great candidate for a bu_uuid() function
 static ON_UUID
 generate_uuid()
 {
@@ -261,8 +260,6 @@ generate_uuid()
     if (ON_CreateUuid(result))
 	return result;
 
-    // sufficient for our use here, but
-    // officially UUIDv4 also requires certain bits to be set
     result.Data1 = static_cast<ON__UINT32>(drand48() *
 					   std::numeric_limits<ON__UINT32>::max() + 0.5);
     result.Data2 = static_cast<ON__UINT16>(drand48() *
@@ -274,6 +271,10 @@ generate_uuid()
 	result.Data4[i] = static_cast<unsigned char>(drand48() *
 			  std::numeric_limits<unsigned char>::max() + 0.5);
 
+    // set the UUIDv4 reserved bits
+    result.Data3 = (result.Data3 & 0x0fff) | 0x4000;
+    result.Data4[0] = (result.Data4[0] & 0x3f) | 0x80;
+
     return result;
 }
 
@@ -281,32 +282,41 @@ generate_uuid()
 // ONX_Model::Audit() fails to repair UUID issues on some platforms
 // because ON_CreateUuid() is not implemented.
 // This function repairs nil and duplicate UUIDs.
-static void
+static std::size_t
 repair_model_uuids(ONX_Model &model)
 {
+    std::size_t num_repairs = 0;
     std::set<ON_UUID, UuidCompare> uuids;
     uuids.insert(ROOT_UUID);
 
     for (int i = 0; i < model.m_idef_table.Count(); ++i) {
 	ON_UUID &idef_uuid = model.m_idef_table[i].m_uuid;
 
-	while (!uuids.insert(idef_uuid).second)
+	while (!uuids.insert(idef_uuid).second) {
 	    idef_uuid = generate_uuid();
+	    ++num_repairs;
+	}
     }
 
     for (int i = 0; i < model.m_object_table.Count(); ++i) {
 	ON_UUID &object_uuid = model.m_object_table[i].m_attributes.m_uuid;
 
-	while (!uuids.insert(object_uuid).second)
+	while (!uuids.insert(object_uuid).second) {
 	    object_uuid = generate_uuid();
+	    ++num_repairs;
+	}
     }
 
     for (int i = 0; i < model.m_layer_table.Count(); ++i) {
 	ON_UUID &layer_uuid = model.m_layer_table[i].m_layer_id;
 
-	while (!uuids.insert(layer_uuid).second)
+	while (!uuids.insert(layer_uuid).second) {
 	    layer_uuid = generate_uuid();
+	    ++num_repairs;
+	}
     }
+
+    return num_repairs;
 }
 
 
@@ -650,15 +660,21 @@ RhinoConverter::clean_model()
 {
     m_model.Polish(); // fill in defaults
 
-    repair_model_uuids(m_model);
-    int repair_count;
-    int num_problems = m_model.Audit(true, &repair_count, &m_log, NULL);
+    int num_problems;
+    int num_repairs = repair_model_uuids(m_model);
+
+    {
+	int temp;
+	num_problems = m_model.Audit(true, &temp, &m_log, NULL);
+	num_repairs += temp;
+    }
+
+    if (num_repairs)
+	m_log.Print("Repaired %d model issues.\n", num_repairs);
 
     if (num_problems) {
-	if (num_problems == repair_count)
-	    m_log.Print("Repair successful; model is now valid.\n");
-	else
-	    m_log.Print("WARNING: Repair of invalid model failed.\n");
+	m_log.Print("WARNING: Failed to repair %d model issues\n", num_problems);
+	m_log.Print("WARNING: Repair of invalid model failed.\n");
     }
 }
 
