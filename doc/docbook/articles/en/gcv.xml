@@ -511,7 +511,7 @@ static int
 apply_filter_with_options(struct gcv_context *context, const struct gcv_filter *filter, const char *target)
 {
     struct gcv_opts options;
-    const char *argv[] = { "--colors=", "colors.dat", "--continue" };
+    const char *argv[] = { "--colors=colors.dat", "--continue" };
     const size_t argc = sizeof(argv) / sizeof(argv[0]);
 
     gcv_opts_default(&amp;options);
