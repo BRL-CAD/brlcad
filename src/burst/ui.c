@@ -930,10 +930,12 @@ MerrorFile(HmItem *itemp)
 	return;
     }
     (void) close(2);
+#ifdef HAVE_TERMLIB
     if (fcntl(errfd, F_DUPFD, 2) == -1) {
 	locPerror("fcntl");
 	return;
     }
+#endif
     (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%s",
 		    itemp != NULL ? itemp->text : cmdname,
 		    errfile);
