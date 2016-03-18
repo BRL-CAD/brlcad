@@ -306,7 +306,6 @@ typedef int mode_t;
 #define getprogname() _pgmptr
 #cmakedefine rint(_X) (floor((_X) + 0.5))
 #define sleep(_SECONDS) (Sleep(1000 * (_SECONDS)))
-#define random() rand()
 
 #ifndef __cplusplus
 /*  Microsoft specific inline specifier */
