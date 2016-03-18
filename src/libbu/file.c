@@ -338,10 +338,10 @@ bu_file_delete(const char *path)
 
     /* reject empty, special, or non-existent paths */
     if (!path
-	    || BU_STR_EQUAL(path, "")
-	    || BU_STR_EQUAL(path, ".")
-	    || BU_STR_EQUAL(path, "..")
-	    || !bu_file_exists(path, &fd))
+	|| BU_STR_EQUAL(path, "")
+	|| BU_STR_EQUAL(path, ".")
+	|| BU_STR_EQUAL(path, "..")
+	|| !bu_file_exists(path, &fd))
     {
 	return 0;
     }
@@ -358,7 +358,8 @@ bu_file_delete(const char *path)
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
 	}
 
-	ret = (remove(path) == 0) ? 1 : 0;
+	if (remove(path) == 0)
+	    ret = 1;
 
     } while (ret == 0 && retry < 2);
     close(fd);
@@ -374,11 +375,12 @@ bu_file_delete(const char *path)
 	}
 	close(fd);
 	return 0;
-    } else {
-	/* deleted */
-	return 1;
     }
+
+    /* deleted */
+    return 1;
 }
+
 
 int
 bu_fseek(FILE *stream, off_t offset, int origin)
@@ -394,6 +396,7 @@ bu_fseek(FILE *stream, off_t offset, int origin)
     return ret;
 }
 
+
 off_t
 bu_ftell(FILE *stream)
 {
@@ -408,6 +411,7 @@ bu_ftell(FILE *stream)
 
     return ret;
 }
+
 
 /*
  * Local Variables:
