@@ -117,6 +117,9 @@ ged_kill(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     return GED_OK;
 }
 
