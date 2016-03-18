@@ -30,9 +30,14 @@
     <para>
       Geometry is stored in an in-memory BRL-CAD database (<code>struct db_i</code> in <literal>include/rt/db_instance.h</literal>) during the intermediate steps of conversion. For writer filters, this database is marked read-only and its geometry should not be modified. All names within a BRL-CAD database must be unique.
     </para>
-    <para>
-      TODO: image
-    </para>
+    <figure>
+      <title>GCV architecture</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="../../articles/en/images/gcv_architecture.png"/>
+        </imageobject>
+      </mediaobject>
+    </figure>
   </section>
 
   <section>
@@ -274,7 +279,14 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
       <para>
         Although BRL-CAD supports a wide array of common geometric primitives, you may encounter objects that can't be directly imported or exported into an analogous entity. In these cases, conversion filters usually tessellate the incompatible geometry (typically during export) or convert it into an approximation or a composite of several other primitives (often during import).
       </para>
-      <para>TODO: image</para>
+      <figure>
+        <title>Tessellation of incompatible entities</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="../../articles/en/images/gcv_unsupported_tessellation.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
     </section>
 
     <section>
@@ -325,9 +337,14 @@ LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
           </tbody>
         </tgroup>
       </table>
-      <para>
-        TODO: image
-      </para>
+      <figure>
+        <title>Using MGED's gdiff utility</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="../../articles/en/images/gcv_using_gdiff.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
     </section>
 
     <section>

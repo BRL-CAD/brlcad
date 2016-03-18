@@ -42,6 +42,9 @@ set(articles_EN_IMAGES
   images/equation.gif
   images/film.gif
   images/fn.gif
+  images/gcv_architecture.png
+  images/gcv_unsupported_tessellation.png
+  images/gcv_using_gdiff.png
   images/matrix.gif
   images/mgedrc_fig01.png
   images/mgedrc_fig02.png
