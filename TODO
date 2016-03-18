@@ -1340,8 +1340,6 @@ LIBGED
   general function in lots of libged places (e.g., the ged_arb()
   function).
 
-* hook marching cubes into libged facetize
-
 * fix ged 'joint' command, need to figure out how libged should handle
   non-object additions to the wireframe (or maybe they should be
   objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
