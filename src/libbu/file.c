@@ -74,11 +74,6 @@ bu_file_exists(const char *path, int *fd)
     /* capture file descriptor if requested */
     if (fd) {
 	*fd = open(path, O_RDONLY);
-	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	    bu_log("YES\n");
-	}
-	/* OK */
-	return 1;
     }
 
     /* does it exist as a filesystem entity? */
@@ -363,7 +358,7 @@ bu_file_delete(const char *path)
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
 	}
 
-	ret = (remove(path) == 0) ? 0 : 1;
+	ret = (remove(path) == 0) ? 1 : 0;
 
     } while (ret == 0 && retry < 2);
     close(fd);
