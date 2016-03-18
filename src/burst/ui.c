@@ -45,7 +45,9 @@
 #define DEBUG_UI 0
 
 static char promptbuf[LNBUFSZ];
+#ifdef HAVE_TERMLIB
 static const char *bannerp = "BURST (2.2)";
+#endif
 
 #define AddCmd(nm, f) \
 	{ \
@@ -146,7 +148,9 @@ static HmMenu *addMenu();
 static int getInput();
 static int unitStrToInt();
 static void addItem();
+#ifdef HAVE_TERMLIB
 static void banner();
+#endif
 
 typedef struct ftable Ftable;
 struct ftable
@@ -417,7 +421,7 @@ addMenu(Ftable *tp)
     return menup;
 }
 
-
+#ifdef HAVE_TERMLIB
 /*
   void banner(void)
 
@@ -431,7 +435,7 @@ banner()
     HmBanner(scrbuf, BORDER_CHR);
     return;
 }
-
+#endif
 
 void
 closeUi()
@@ -509,6 +513,7 @@ initMenus(Ftable *tp)
 int
 initUi()
 {
+#ifdef HAVE_TERMLIB
     if (tty) {
 	if (! ScInit(stdout))
 	    return 0;
@@ -525,6 +530,7 @@ initUi()
 	HmInit(MENU_LFT, MENU_TOP, MENU_MAXVISITEMS);
 	banner();
     }
+#endif
     initMenus(mainmenu);
     initCmds(mainmenu);
     return 1;
