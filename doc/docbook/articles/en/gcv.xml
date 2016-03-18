@@ -748,7 +748,7 @@ apply_filter_with_options(struct gcv_context *context, const struct gcv_filter *
     <section>
       <title>VRML Writer</title>
       <table frame='none'>
-        <title>STL writer options</title>
+        <title>VRML writer options</title>
         <tgroup cols='2' align='left'>
           <tbody>
             <row>
