@@ -24,6 +24,8 @@
 #include "common.h"
 #include "string.h"
 
+#include "tcl.h"
+
 #include "vmath.h"
 #include "bu/color.h"
 #include "bu/file.h"
@@ -32,6 +34,10 @@
 #include "bu/ptbl.h"
 #include "bu/opt.h"
 #include "bu/str.h"
+#include "tclcad.h"
+
+/* avoid including itcl.h due to their usage of internal headers */
+extern int Itcl_Init(Tcl_Interp *);
 
 #define RTWIZARD_HAVE_GUI 0
 
@@ -57,6 +63,7 @@ struct rtwizard_settings {
     struct bu_color *non_line_color;
     double ghosting_intensity;
     int occlusion;
+    int benchmark;
     int cpus;
     /* View model */
     double viewsize;
@@ -90,6 +97,9 @@ struct rtwizard_settings * rtwizard_settings_create() {
     (void)bu_color_from_rgb_floats(s->line_color, black);
     BU_GET(s->non_line_color, struct bu_color);
     (void)bu_color_from_rgb_floats(s->non_line_color, black);
+    s->benchmark = 0;
+    s->port = -1;
+    s->cpus = 0;
     s->az = 35;
     s->el = 25;
     s->tw = 0;
@@ -164,7 +174,7 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 }
 
 
-int
+    int
 opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -174,7 +184,7 @@ opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 }
 
 
-int
+    int
 opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -183,7 +193,7 @@ opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
     return ret;
 }
 
-int
+    int
 opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -196,7 +206,7 @@ opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
     return ret;
 }
 
-int
+    int
 opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
 {
     /* argv[0] should be either an object or a list. */
@@ -233,7 +243,7 @@ opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
     return (acnum > 0) ? 1 : -1;
 }
 
-int
+    int
 opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 {
     char *letter = (char *)l;
@@ -255,7 +265,7 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 }
 
 
-int
+    int
 opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 {
     int i = 0;
@@ -389,12 +399,87 @@ int rtwizard_imgformat_supported(const char *fmt) {
     return 0;
 }
 
+void
+Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
+{
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+
+    (void)Tcl_Eval(interp, "namespace eval RtWizard{}");
+
+    if (s->use_gui) {
+	bu_vls_sprintf(&tcl_cmd, "set ::use_gui 1");
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->no_gui) {
+	bu_vls_sprintf(&tcl_cmd, "set ::disable_gui 1");
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) %s", bu_vls_addr(s->input_file));
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    if (bu_vls_strlen(s->fb_dev)) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_device) %s", bu_vls_addr(s->fb_dev));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->port > -1) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_port) %d", s->port);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->width_set) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->width);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->height_set) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->height);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->size_set) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %d", s->size);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghosting_intensity) %0.15f", s->ghosting_intensity);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(occmode) %d", s->occlusion);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    if (s->benchmark) {
+	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode 1");
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->cpus) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(cpu_count) %d", s->cpus);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_azimuth) %0.15f", s->az);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_elevation) %0.15f", s->el);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_twist) %0.15f", s->tw);
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
+    if (s->perspective > 0) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(perspective) %0.15f", s->perspective);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+}
+
 int
 main(int argc, char **argv)
 {
     int verbose = 0;
     int need_help = 0;
-    int benchmark = 0;
     int uac = 0;
     int i = 0;
     char type = '\0';
@@ -421,7 +506,7 @@ main(int argc, char **argv)
     BU_OPT(d[15], "",  "non-line-color", "R/G/B",    &bu_opt_color,    s->non_line_color, "Color used for non-line rendering ??");
     BU_OPT(d[16], "G", "ghosting-intensity", "#[.#]", &bu_opt_fastf_t, &s->ghosting_intensity,    "Intensity of ghost objects");
     BU_OPT(d[17], "O", "occlusion",     "#",         &bu_opt_int,     &s->occlusion, "Occlusion mode");
-    BU_OPT(d[18], "",  "benchmark",     "",          NULL,            &benchmark,    "Benchmark mode");
+    BU_OPT(d[18], "",  "benchmark",     "",          NULL,            &s->benchmark,    "Benchmark mode");
     BU_OPT(d[19], "",  "cpu-count",     "#",         &bu_opt_int,     &s->cpus,      "Specify the number of CPUs to use");
     BU_OPT(d[20], "a", "azimuth",       "#[.#]",     &bu_opt_fastf_t, &s->az,        "Set azimuth");
     BU_OPT(d[21], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
@@ -493,6 +578,123 @@ main(int argc, char **argv)
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
     }
 
+    /* For now, all roads lead to Tcl. */
+
+    /* TODO - this tcl initialization is common (more or less) to btclsh, bwish,
+     * mged, and any other C programs wanting to lauch Tcl/Tk.  Should be
+     * refactored into a libtclcad function. */
+    {
+	int status = 0;
+	int try_auto_path = 0;
+	int init_tcl = 1;
+	int init_itcl = 1;
+
+	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	Tcl_Interp *interpreter = Tcl_CreateInterp();
+	const char *rtwizard = bu_brlcad_data("tclscripts/rtwizard", 1);
+
+	/* a two-pass init loop.  the first pass just tries default init
+	 * routines while the second calls tclcad_auto_path() to help it
+	 * find other, potentially uninstalled, resources.
+	 */
+	while (1) {
+
+	    /* not called first time through, give Tcl_Init() a chance */
+	    if (try_auto_path) {
+		/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
+		tclcad_auto_path(interpreter);
+	    }
+
+	    /* Initialize Tcl */
+	    Tcl_ResetResult(interpreter);
+	    if (init_tcl && Tcl_Init(interpreter) == TCL_ERROR) {
+		if (!try_auto_path) {
+		    try_auto_path = 1;
+		    continue;
+		}
+		bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+		break;
+	    }
+	    init_tcl = 0;
+
+	    /* Initialize [incr Tcl] */
+	    Tcl_ResetResult(interpreter);
+	    /* NOTE: Calling "package require Itcl" here is apparently
+	     * insufficient without other changes elsewhere (per MGED comment,
+	     * but package require should work - why doesn't it??).
+	     */
+	    if (init_itcl && Itcl_Init(interpreter) == TCL_ERROR) {
+		if (!try_auto_path) {
+		    Tcl_Namespace *nsp;
+
+		    try_auto_path = 1;
+		    /* Itcl_Init() leaves initialization in a bad state
+		     * and can cause retry failures.  cleanup manually.
+		     */
+		    Tcl_DeleteCommand(interpreter, "::itcl::class");
+		    nsp = Tcl_FindNamespace(interpreter, "::itcl", NULL, 0);
+		    if (nsp)
+			Tcl_DeleteNamespace(nsp);
+		    continue;
+		}
+		bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+		break;
+	    }
+	    init_itcl = 0;
+
+	    /* don't actually want to loop forever */
+	    break;
+
+	} /* end iteration over Init() routines that need auto_path */
+	Tcl_ResetResult(interpreter);
+
+	/* if we haven't loaded by now, load auto_path so we find our tclscripts */
+	if (!try_auto_path) {
+	    /* Locate the BRL-CAD-specific Tcl scripts */
+	    tclcad_auto_path(interpreter);
+	}
+
+	/*XXX FIXME: Should not be importing Itcl into the global namespace */
+	/* Import [incr Tcl] commands into the global namespace. */
+	if (Tcl_Import(interpreter, Tcl_GetGlobalNamespace(interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	    bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interpreter));
+	    Tcl_ResetResult(interpreter);
+	}
+
+	/* Initialize libbu */
+	if (Bu_Init(interpreter) == TCL_ERROR) {
+	    bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    Tcl_ResetResult(interpreter);
+	}
+
+	/* Initialize libbn */
+	if (Bn_Init(interpreter) == TCL_ERROR) {
+	    bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    Tcl_ResetResult(interpreter);
+	}
+
+	/* Initialize librt */
+	if (Rt_Init(interpreter) == TCL_ERROR) {
+	    bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    Tcl_ResetResult(interpreter);
+	}
+
+	/* Initialize libged */
+	if (Go_Init(interpreter) == TCL_ERROR) {
+	    bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+	    Tcl_ResetResult(interpreter);
+	}
+
+	Init_RtWizard_Vars(interpreter, s);
+
+	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
+	status = Tcl_Eval(interpreter, bu_vls_addr(&tcl_cmd));
+    }
+
+
+    /* Someday, we want to do this without Tcl via library calls unless
+     * the GUI is needed... */
+#if 0
     /* At this point, if we know we're supposed to launch the GUI, do it */
     if (s->use_gui) {
 	/* launch gui */
@@ -508,7 +710,7 @@ main(int argc, char **argv)
 	}
 	/* We know enough - make our image */
     }
-
+#endif
     return 0;
 }
 
