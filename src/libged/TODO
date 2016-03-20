@@ -19,7 +19,10 @@ Be specific.
   moves/rotates the source object into alignment.
 
 * 'analyze' command: add per-face analysis of primitives like tgc, arb
-  to their respective analyze commands in libged
+  to their respective analyze commands in libged.  See end of file for
+  some thoughts on a more ambitious re-think about the analyze command,
+  but bear in mind that these are preliminary thoughts only and not a
+  finished design that is ready to be implemented.
 
 * 'audit' command: determine if the model is valid, provide option(s)
   to fix any errors encountered.  this could be a refactoring or
@@ -280,4 +283,74 @@ Be specific.
 
     SELECT * FROM products
     WHERE category = 'book' AND desc LIKE '%algorithms%' AND stock >= 1;
+
+-------------------------------------------------------------------------------
+
+ANALYZE command design thoughts:
+
+If we consider consolidating what are currently "special purpose" analysis
+commands (bounding box calculators, convex hull, gqa's functionality, etc.)
+all underneath a single unified analyze command, we would need a different
+command option structure.  The outline below captures some early stage thoughts
+on how such a command might be organized.
+
+analyze
+
+--visualize
+
+--tolerance #
+
+--component:
+           default when unspecified is whole shape (only option currently for combs)
+
+           F (default all faces, accept number lists and ranges)
+           S (default all surfaces, "")
+           E (default all 3D edges, "")
+           V (default all 3d verts, "")
+
+           (primitive specific components as appropriate - for example, voxel data might allow
+            specified value ranges)
+
+
+--property: (accept 1 or a comma separated list, can specify multiple --property options as well)
+           volume (default for volume component if no property specified)
+           surface_area (default for surface component (F, S) if no property specified)
+           projected surface area
+           length (default for edge component if no property specified)
+
+           bounding-box[=bbox.s] (alias for aabb)
+           bbox[=bbox.s]
+           aabb[=bbox.s]
+           obb[=bbox.s]
+           convex-hull=obj.s
+           concave-hull=obj.s
+
+           inside-outside=obj.s (relative to another object)
+           centroid
+           moment-of-inertia
+           weight
+           overlaps[=<name_template>] (optionally generate volumes bounding overlaps)
+           voids[=<name_template>] (optionally generate volumes bounding voids)
+           exposed-air[=<name_template>]
+           adjacent-air[=<name_template>]
+
+--report-format:
+           default when unspecified would be ascii text
+
+           ascii
+           csv
+           json
+           xml
+           ...
+
+[args] obj1 [obj2 ...]
+
+Sample invocations:
+
+analyze --visualize --property bounding-box,centroid obj1.s
+
+analyze --component F 1-10,23-30 --property surface_area mesh.s
+
+analyze --property overlaps=overlap.s obj1.c obj2.c
+
 
