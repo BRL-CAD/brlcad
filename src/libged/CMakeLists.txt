@@ -210,7 +210,7 @@ set(LIBGED_SOURCES
   red.c
   regdef.c
   region.c
-  remove.cpp
+  remove.c
   report.c
   rfarb.c
   rmap.c

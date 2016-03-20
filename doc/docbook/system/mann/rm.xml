@@ -1,154 +1,61 @@
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="rm">
 
-  <refmeta>
-    <refentrytitle>RM</refentrytitle>
-    <manvolnum>nged</manvolnum>
-    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
-    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
-  </refmeta>
+<refmeta>
+  <refentrytitle>RM</refentrytitle>
+  <manvolnum>nged</manvolnum>
+  <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+  <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+</refmeta>
 
-  <refnamediv xml:id="name">
-    <refname>rm</refname>
-    <refpurpose>Removes/deletes objects from comb definitions and/or the database.</refpurpose>
-  </refnamediv>
+<refnamediv xml:id="name">
+  <refname>rm</refname>
+  <refpurpose>Deletes all occurrences of the listed members from the specified
+combination.
+   </refpurpose>
+</refnamediv>
 
-  <!-- body begins here -->
-  <refsynopsisdiv xml:id="synopsis">
-    <cmdsynopsis sepchar=" ">
-      <command>rm</command>
-      <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
-      <arg choice="opt" rep="norepeat"><replaceable>comb</replaceable></arg>
-      <arg choice="req" rep="repeat"><replaceable>paths</replaceable></arg>
-    </cmdsynopsis>
-  </refsynopsisdiv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+  <cmdsynopsis sepchar=" ">
+    <command>rm</command>
 
-  <refsection xml:id="description"><title>DESCRIPTION</title>
-    <para>
-      Remove objects from the global database or from a combination's tree.
-    </para>
-    <para>
-      NOTE: currently rm will delete a list of objects from a combination if
-      the combination name is provided as the first argument and no options
-      override this behavior.  This mode is <emphasis>deprecated</emphasis>
-      and will be removed in a future release.
-    </para>
-    </refsection>
+    <arg choice="req" rep="norepeat"><replaceable>combination</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>members</replaceable></arg>
+  </cmdsynopsis>
+</refsynopsisdiv>
 
-  <refsection xml:id="search_options"><title>OPTIONS</title>
+<refsection xml:id="description"><title>DESCRIPTION</title>
 
-    <variablelist remap="TP">
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-f</emphasis></term>
-	<term><emphasis remap="B" role="bold">--force</emphasis></term>
-	<listitem>
-	  <para>
-	    Remove all objects specified, even if a particular object is a comb
-	    with a non-empty tree. Also impacts recursive removal - see "-r".
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-r</emphasis></term>
-	<term><emphasis remap="B" role="bold">--recursive</emphasis></term>
-	<listitem>
-	  <para>
-	    Recursively delete objects in combination objects specified in the
-	    paths list.  If neither of the forcing options are enabled, do the
-	    deletions while checking to see if objects in the combination
-	    tree in question are used in other hierarchies in the .g file. Any
-	    objects in use elsewhere will be skipped.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-v [#]</emphasis></term>
-	<term><emphasis remap="B" role="bold">--verbose [#]</emphasis></term>
-	<listitem>
-	  <para>
-	    Control the verbosity of reporting during a <command>rm</command> operation.  Repeated
-	    specification of -v option will increase verbosity of reporting.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-n</emphasis></term>
-	<term><emphasis remap="B" role="bold">--no-op</emphasis></term>
-	<listitem>
-	  <para>
-	    Reports what operations would be performed without actually carrying them out on the .g file.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
+  <para>Deletes all occurrences of the listed members from the specified
+	<emphasis>combination</emphasis>. The <command>red, r, comb, c,</command> and <command>g	</command> commands provide other <emphasis>combination</emphasis> editing
+	capabilities.
+  </para>
+</refsection>
 
-  </refsection>
+<refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <refsection xml:id="paths"><title>PATHS:</title>
-    <para>
-      Paths in the <command>rm</command> command may take one of two forms: a
-      single object name, or a "full path" form: /group/parent/obj. If the path
-      specifier is of the latter form, then obj is removed not from the global
-      database but from the parent in question.  Path entries above parent are
-      ignored.  Note that full path arguments will not be incorporated
-      into recursive deletion requests.
+  <para>The example shows the use of the <command>rm</command> command to delete all occurrences 	of specified members of a given combination.
+  </para>
 
-      (TODO - implement globbing behavior so /gr*/p*nt/obj* will do what is expected.)
-    </para>
-  </refsection>
-
-
-  <refsection xml:id="examples"><title>EXAMPLES</title>
-     <para>The example shows the use of the <command>rm</command> command to delete all occurrences 	of specified members of a given combination.
-    </para>
-
-    <example><title>(DEPRECATED) Delete members of a given combination.</title>
-
-      <para>
-	<prompt>mged&gt;</prompt><userinput>rm group1 regiona</userinput>
-      </para>
-      <para>Deletes <emphasis>regiona</emphasis> from <emphasis>group1</emphasis>.
-
-      </para>
-    </example>
-
-    <example><title>Safe recursive removal of a combination.</title>
-
-      <para>
-	<prompt>mged&gt;</prompt><userinput>rm -r regiona</userinput>
-      </para>
-      <para>Deletes <emphasis>regiona</emphasis> and any objects in the <emphasis>regiona</emphasis> hierarchy that are not in use elsewhere in the .g file..
-      </para>
-    </example>
-
-    <example><title>Forced recursive removal of a combination.</title>
-
-      <para>
-	<prompt>mged&gt;</prompt><userinput>rm -rf regiona</userinput>
-      </para>
-      <para>Deletes <emphasis>regiona</emphasis> and any objects in the <emphasis>regiona</emphasis> hierarchy, regardless of other uses in the .g file.  Note that this can leave dangling references to removed objects in other combs.
-      </para>
-    </example>
-  </refsection>
-
-  <refsection xml:id="see_also"><title>SEE ALSO</title>
-    <para>
-      <citerefentry><refentrytitle>red</refentrytitle><manvolnum>nged</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>r</refentrytitle><manvolnum>nged</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>comb</refentrytitle><manvolnum>nged</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>c</refentrytitle><manvolnum>nged</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>g</refentrytitle><manvolnum>nged</manvolnum></citerefentry>,
-    </para>
-  </refsection>
-
-  <refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
-
-  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+  <example><title>Delete members of a given combination.</title>
 
     <para>
-      Reports of bugs or problems should be submitted via electronic
-      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+      <prompt>mged&gt;</prompt><userinput>rm group1 regiona</userinput>
     </para>
-  </refsection>
+    <para>Deletes <emphasis>regiona</emphasis> from <emphasis>group1</emphasis>.
+
+    </para>
+  </example>
+
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title><para>BRL-CAD Team</para></refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+
+  <para>
+    Reports of bugs or problems should be submitted via electronic
+    mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+  </para>
+</refsection>
 </refentry>
-
-<!-- vim: set shiftwidth=2 : -->
