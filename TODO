@@ -37,9 +37,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
   open ray data output file"
 
-* either finish new form of rm command or revert to previous version for
-  release
-
 * rtwizard command line ghost image specification isn't working
   reliably
 
@@ -68,6 +65,9 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* pull work on rm command out of history (commit r67394 reverted it)
+  and take it to a production ready stage.
 
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in librt and use accordingly
