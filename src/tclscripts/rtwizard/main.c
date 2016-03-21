@@ -44,41 +44,48 @@ extern int Itcl_Init(Tcl_Interp *);
 #define RTWIZARD_SIZE_DEFAULT 512
 
 struct rtwizard_settings {
+    int use_gui;
+    int no_gui;
+    int verbose;
+
     struct bu_ptbl *color;
     struct bu_ptbl *ghost;
     struct bu_ptbl *line;
-    int use_gui;
-    int no_gui;
+
     struct bu_vls *input_file;
     struct bu_vls *output_file;
     struct bu_vls *fb_dev;
+    int port;
     struct bu_vls *log_file;
     struct bu_vls *pid_file;
-    int port;
+
     size_t width;
     int width_set;
     size_t height;
     int height_set;
     size_t size; /* Assumes square - width and height - overridden by width and height */
     int size_set;
+
     struct bu_color *bkg_color;
     struct bu_color *line_color;
     struct bu_color *non_line_color;
+
     double ghosting_intensity;
     int occlusion;
     int benchmark;
     int cpus;
+
     /* View model */
     double viewsize;
     quat_t orientation;
     vect_t eye_pt;
+
     /* View settings */
     double az, el, tw;
     double perspective;
     double zoom;
     vect_t center;
 
-    int verbose;
 };
 
 struct rtwizard_settings * rtwizard_settings_create() {
@@ -384,36 +391,50 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 void print_rtwizard_state(struct rtwizard_settings *s) {
     size_t i = 0;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&slog, "color:");
+
+    bu_vls_printf(&slog, "use_gui: %d\n", s->use_gui);
+    bu_vls_printf(&slog, "no_gui: %d\n", s->no_gui);
+    bu_vls_printf(&slog, "verbose: %d\n", s->verbose);
+
+
+    bu_vls_printf(&slog, "color objs:");
     for (i = 0; i < BU_PTBL_LEN(s->color); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->color, i));
     }
-    bu_vls_printf(&slog, "\nghost:");
+    bu_vls_printf(&slog, "\nghost objs:");
     for (i = 0; i < BU_PTBL_LEN(s->ghost); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->ghost, i));
     }
-    bu_vls_printf(&slog, "\nline:");
+    bu_vls_printf(&slog, "\nline objs:");
     for (i = 0; i < BU_PTBL_LEN(s->line); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->line, i));
     }
     bu_vls_printf(&slog, "\n\n");
-    bu_vls_printf(&slog, "use_gui: %d\n", s->use_gui);
-    bu_vls_printf(&slog, "no_gui: %d\n", s->no_gui);
+
+    bu_vls_printf(&slog, "input_file: %s\n", bu_vls_addr(s->input_file));
+    bu_vls_printf(&slog, "output_file: %s\n", bu_vls_addr(s->output_file));
     bu_vls_printf(&slog, "fb_dev: %s\n", bu_vls_addr(s->fb_dev));
     bu_vls_printf(&slog, "port: %d\n", s->port);
-    bu_vls_printf(&slog, "size: %d\n", s->size);
-    bu_vls_printf(&slog, "width: %d\n", s->width);
-    bu_vls_printf(&slog, "height: %d\n", s->height);
+    bu_vls_printf(&slog, "log_file: %s\n", bu_vls_addr(s->log_file));
+    bu_vls_printf(&slog, "pid_file: %s\n", bu_vls_addr(s->pid_file));
+
+    bu_vls_printf(&slog, "width(%d): %d\n", s->width_set, s->width);
+    bu_vls_printf(&slog, "height(%d): %d\n", s->height_set, s->height);
+    bu_vls_printf(&slog, "size(%d): %d\n", s->size_set, s->size);
     bu_vls_printf(&slog, "bkg_color: %d,%d,%d\n", (int)s->bkg_color->buc_rgb[0], (int)s->bkg_color->buc_rgb[1], (int)s->bkg_color->buc_rgb[2]);
     bu_vls_printf(&slog, "line_color: %d,%d,%d\n", (int)s->line_color->buc_rgb[0], (int)s->line_color->buc_rgb[1], (int)s->line_color->buc_rgb[2]);
     bu_vls_printf(&slog, "non_line_color: %d,%d,%d\n", (int)s->non_line_color->buc_rgb[0], (int)s->non_line_color->buc_rgb[1], (int)s->non_line_color->buc_rgb[2]);
-    bu_vls_printf(&slog, "ghosting intensity: %f\n", s->ghosting_intensity);
+
+    bu_vls_printf(&slog, "\nghosting intensity: %f\n", s->ghosting_intensity);
     bu_vls_printf(&slog, "occlusion: %d\n", s->occlusion);
+    bu_vls_printf(&slog, "benchmark: %d\n", s->benchmark);
     bu_vls_printf(&slog, "cpus: %d\n", s->cpus);
-    bu_vls_printf(&slog, "viewsize: %f\n", s->viewsize);
+
+    bu_vls_printf(&slog, "\nviewsize: %f\n", s->viewsize);
     bu_vls_printf(&slog, "quat: %f,%f,%f,%f\n", s->orientation[0], s->orientation[1], s->orientation[2], s->orientation[3]);
     bu_vls_printf(&slog, "eye_pt: %f,%f,%f\n", s->eye_pt[0], s->eye_pt[1], s->eye_pt[2]);
-    bu_vls_printf(&slog, "az,el,tw: %f,%f,%f\n", s->az, s->el, s->tw);
+
+    bu_vls_printf(&slog, "\naz,el,tw: %f,%f,%f\n", s->az, s->el, s->tw);
     bu_vls_printf(&slog, "perspective: %f\n", s->perspective);
     bu_vls_printf(&slog, "zoom: %f\n", s->zoom);
     bu_vls_printf(&slog, "center: %f,%f,%f\n", s->center[0], s->center[1], s->center[2]);
@@ -446,6 +467,11 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 
     if (s->no_gui) {
 	bu_vls_sprintf(&tcl_cmd, "set ::disable_gui 1");
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->verbose) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(verbose) %d", s->verbose);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -616,7 +642,7 @@ main(int argc, char **argv)
     char type = '\0';
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[33];
+    struct bu_opt_desc d[34];
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
     BU_OPT(d[1],  "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
     BU_OPT(d[2],  "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
@@ -649,8 +675,8 @@ main(int argc, char **argv)
     BU_OPT(d[29], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "set eye point");
     BU_OPT(d[30], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
     BU_OPT(d[31], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
-    BU_OPT(d[31], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
-    BU_OPT_NULL(d[32]);
+    BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
+    BU_OPT_NULL(d[33]);
 
     /* Skip first arg */
     argv++; argc--;
