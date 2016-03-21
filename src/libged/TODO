@@ -163,6 +163,9 @@ Be specific.
   under the hood.  Using ray tracing instead of mesh for calculating a
   centerline is also a possibility.
 
+  Note the motivating need consists of only linear pipes without any
+  turns/bends/curves, but with changing inner/outer diameters.
+
 * 'redo' command: redoes the previous undone command(s).  Basically
   move forward in an undo chain.  See undo below.
 
