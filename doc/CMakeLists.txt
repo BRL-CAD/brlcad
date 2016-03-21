@@ -30,6 +30,7 @@ set(documentation_DATA
   code_review.txt
   cvs.txt
   description.txt
+  editors.txt
   ged.tr
   history.txt
   hypot.txt
