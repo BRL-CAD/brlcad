@@ -112,6 +112,9 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 	}
     } FOR_ALL_DIRECTORY_END;
 
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     return ret;
 }
 

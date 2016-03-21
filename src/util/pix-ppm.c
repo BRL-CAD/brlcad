@@ -177,7 +177,7 @@ main(int argc, char *argv[])
 	bu_exit (1, "%s\n", usage);
     }
 
-    size = file_width * pixbytes;
+    size = file_width * file_height * pixbytes;
 
     /* autosize input? */
     if (fileinput && autosize) {

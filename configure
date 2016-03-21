@@ -138,6 +138,10 @@ do
                                   shift;;
      --disable-termlib)                options="$options -DBRLCAD_TERMLIB=SYSTEM";
                                   shift;;
+     --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
+                                  shift;;
+     --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";
+                                  shift;;
      --enable-png)                options="$options -DBRLCAD_PNG=BUNDLED";
                                   shift;;
      --disable-png)                options="$options -DBRLCAD_PNG=SYSTEM";

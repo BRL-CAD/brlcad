@@ -92,4 +92,3 @@ BU_TESTS_EXPORT extern void random_hex_or_binary_string(struct bu_vls *v, const 
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

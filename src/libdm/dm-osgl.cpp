@@ -49,6 +49,7 @@ extern "C" {
 #include "tkPlatDecls.h"
 
 #include "vmath.h"
+#include "bu.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
@@ -195,24 +196,21 @@ osgl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsig
 HIDDEN int
 osgl_configureWin_guts(struct dm_internal *dmp, int force)
 {
-    int width;
-    int height;
-
+    int width = 0;
+    int height = 0;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
-
-    if (pubvars->top != pubvars->xtkwin) {
-	width = Tk_Width(Tk_Parent(pubvars->xtkwin));
-	height = Tk_Height(Tk_Parent(pubvars->xtkwin));
-    } else {
-	width = Tk_Width(pubvars->top);
-	height = Tk_Height(pubvars->top);
-    }
-
-    if (!force &&
-	    dmp->dm_height == height &&
-	    dmp->dm_width == width)
+#if !defined(_WIN32)
+    int bl = Tk_InternalBorderLeft(Tk_Parent(pubvars->xtkwin));
+    int bt = Tk_InternalBorderTop(Tk_Parent(pubvars->xtkwin));
+    width = Tk_Width(pubvars->xtkwin) + bl;
+    height = Tk_Height(pubvars->xtkwin) + bt;
+#else
+    width = Tk_Width(pubvars->xtkwin);
+    height = Tk_Height(pubvars->xtkwin);
+#endif
+    if (!force && dmp->dm_height == height && dmp->dm_width == width) {
 	return TCL_OK;
-
+    }
     osgl_reshape(dmp, width, height);
     return TCL_OK;
 }
@@ -354,25 +352,24 @@ osgl_close(struct dm_internal *dmp)
     return TCL_OK;
 }
 
-HIDDEN
-static void OSGUpdate(dm *dmp, int delta) {
+HIDDEN void
+OSGUpdate(dm *dmp) {
     struct osgl_vars *privvars = (struct osgl_vars *)dmp->dm_vars.priv_vars;
     if (dmp->dm_debugLevel == 1)
 	bu_log("OSGUpdate()\n");
 
-
-    if (privvars->timer->time_m() - privvars->last_update_time > delta) {
-	//privvars->graphicsContext->swapBuffers();
-	privvars->last_update_time = privvars->timer->time_m();
+    if (!privvars->is_init) {
+	privvars->graphicsContext->swapBuffers();
+	privvars->is_init = 1;
     }
 }
 
-static void
+HIDDEN void
 OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 {
     dm *dmp = (dm *)clientData;
 
-    OSGUpdate(dmp, 10);
+    OSGUpdate(dmp);
 }
 
 /*
@@ -684,7 +681,11 @@ osgl_open(Tcl_Interp *interp, int argc, char **argv)
     osgl_setZBuffer(dmp, dmp->dm_zbuffer);
     osgl_setLight(dmp, dmp->dm_light);
 
-    Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+    //Tk_CreateEventHandler(pubvars->xtkwin, PointerMotionMask|ExposureMask|StructureNotifyMask|FocusChangeMask|VisibilityChangeMask|ButtonReleaseMask, OSGEventProc, (ClientData)dmp);
+    Tk_CreateEventHandler(pubvars->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+
+    privvars->is_init = 0;
+
 
 #ifdef OSG_VIEWER_TEST
     privvars->testviewer = new osgViewer::Viewer();

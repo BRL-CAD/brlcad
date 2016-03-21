@@ -1,13 +1,9 @@
-set(docbook_implementation_EN
+set(implementation_EN
   bool_eval_development.xml
   )
 
-DOCBOOK_TO_HTML(implementation docbook_implementation_EN html/implementation/en "")
-DOCBOOK_TO_PHP(implementation docbook_implementation_EN html/implementation/en "")
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(implementation docbook_implementation_EN pdf/implementation/en "")
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+ADD_DOC(implementation_EN html/implementation/en)
+ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN html/implementation/en "")
 
 # Local Variables:
 # tab-width: 8

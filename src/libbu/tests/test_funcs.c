@@ -29,10 +29,6 @@
 #include <stdlib.h>
 #include <errno.h>
 
-#ifdef HAVE_STDINT_H
-#   include <stdint.h>
-#endif
-
 #include "bio.h"
 
 #include "../bu_internals.h"
@@ -137,7 +133,7 @@ dump_bitv(const struct bu_bitv *b)
     }
 
     if ((size_t)i < len - 1) {
-        goto NEXT;
+	goto NEXT;
     }
 
     bu_log("\n---------------------------------------------------------------------");
@@ -189,4 +185,3 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
  * End:
  * ex: shiftwidth=4 tabstop=8
  */
-

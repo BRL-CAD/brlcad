@@ -254,10 +254,10 @@ test_bu_bitv_to_hex(int argc, char **argv)
 
     if (BU_STR_EQUAL(bu_vls_cstr(&result), expected)) {
 	test_results = CTEST_PASS;
-        printf("\nbu_bitv_to_hex PASSED");
+	printf("\nbu_bitv_to_hex PASSED");
     } else {
 	test_results = CTEST_FAIL;
-        printf("\nbu_bitv_to_hex FAILED");
+	printf("\nbu_bitv_to_hex FAILED");
     }
 
     printf("\n  Input: '%s'", input);
@@ -565,7 +565,6 @@ test_bu_bitv_compare_equal2(int argc, char **argv)
 }
 
 
-
 static int
 test_bu_bitv_to_binary(int argc, char **argv)
 {
@@ -857,13 +856,13 @@ main(int argc, char **argv)
     sscanf(argv[1], "%d", &function_num);
 
     switch (function_num) {
-        case 0:
+	case 0:
 	    return test_bu_bitv_master();
 	    break;
-        case 1:
+	case 1:
 	    return test_bu_binary_to_bitv(argc, argv);
 	    break;
-        case 2:
+	case 2:
 	    return test_bu_bitv_to_binary(argc, argv);
 	    break;
 	case 3:
@@ -872,31 +871,31 @@ main(int argc, char **argv)
 	case 4:
 	    return test_bu_bitv_compare_equal2(argc, argv);
 	    break;
-        case 5:
+	case 5:
 	    return test_bu_binary_to_bitv2(argc, argv);
 	    break;
-        case 6:
+	case 6:
 	    return test_bu_bitv_and(argc, argv);
 	    break;
-        case 7:
+	case 7:
 	    return test_bu_bitv_or(argc, argv);
 	    break;
-        case 8:
+	case 8:
 	    return test_bu_bitv_shift();
 	    break;
-        case 9:
+	case 9:
 	    return test_bu_bitv_vls(argc, argv);
 	    break;
-        case 10:
+	case 10:
 	    return test_bu_bitv_to_hex(argc, argv);
 	    break;
-        case 11:
+	case 11:
 	    return test_bu_hex_to_bitv(argc, argv);
 	    break;
-        case 12:
+	case 12:
 	    return test_bu_hexstr_to_binstr(argc, argv);
 	    break;
-        case 13:
+	case 13:
 	    return test_bu_binstr_to_hexstr(argc, argv);
 	case 14:
 	    return test_bu_binstr_to_hexstr_empty_input(argc, argv);

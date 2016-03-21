@@ -53,6 +53,22 @@ struct output {
 };
 
 
+static long
+gdot_hash(uint8_t *key, size_t len)
+{
+    long hash = 5381;
+    size_t i;
+
+    if (!key) return hash;
+
+    for (i = 0; i < len; i++) {
+	hash = ((hash << 5) + hash) + key[i]; /* hash * 33 + c */
+    }
+
+    return hash;
+}
+
+
 static void
 dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 {
@@ -70,12 +86,12 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
     comb = (struct rt_comb_internal *)intern.idb_ptr;
 
     if (comb->region_flag) {
-	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	long hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
 	if (bu_ptbl_ins_unique(&(o->regions), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=blue shape=box3d ];\n", dp->d_namep);
 	}
     } else {
-	long hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+	long hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
 	if (bu_ptbl_ins_unique(&(o->groups), (long *)hash) == -1) {
 	    fprintf(o->outfp, "\t\"%s\" [ color=green ];\n", dp->d_namep);
 	}
@@ -150,7 +166,7 @@ dot_leaf(struct db_i *UNUSED(dbip), struct directory *dp, void *out)
     if (!o->outfp)
 	return;
 
-    hash = bu_hash((unsigned char *)dp->d_namep, strlen(dp->d_namep));
+    hash = gdot_hash((uint8_t *)dp->d_namep, strlen(dp->d_namep));
     if (bu_ptbl_ins_unique(&(o->primitives), (long *)hash) == -1) {
 	fprintf(o->outfp, "\t\"%s\" [ color=red shape=box rank=min ];\n", dp->d_namep);
     }

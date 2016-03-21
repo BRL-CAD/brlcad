@@ -513,7 +513,7 @@ extern double airdensity;
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
 
-static fb *clt_fbp;
+static fb *clt_fbp = FB_NULL;
 
 
 void
@@ -600,11 +600,11 @@ clt_run(int cur_pixel, int last_pixel)
 
     pixelp = pixels + cur_pixel*clt_o[2];
 
-    if (clt_fbp) {
+    if (clt_fbp != FB_NULL) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        count = fb_write(clt_fbp, a_x, a_y, pixelp, size);
+        count = fb_write(clt_fbp, a_x, a_y, pixelp, npix);
         bu_semaphore_release(BU_SEM_SYSCALL);
-        if (count < size)
+        if (count < npix)
             bu_exit(EXIT_FAILURE, "pixel fb_write error");
     }
     if (outfp) {
@@ -705,7 +705,6 @@ do_frame(int framenumber)
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
-    int npix = 0;			/* # of pixel values to be done */
     vect_t work, temp;
     quat_t quat;
 
@@ -821,17 +820,6 @@ do_frame(int framenumber)
     /* Allocate data for pixel map for rerendering of black pixels */
     if (pixmap == NULL) {
 	pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
-    }
-
-    /*
-     * If this image is unlikely to be for debugging,
-     * be gentle to the machine.
-     */
-    if (!interactive) {
-	if (npix > 512*512)
-	    bu_nice_set(14);
-	else if (npix > 256*256)
-	    bu_nice_set(10);
     }
 
     /*

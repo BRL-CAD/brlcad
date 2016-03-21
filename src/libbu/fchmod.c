@@ -33,7 +33,9 @@
 #  include <tchar.h>
 #  include <string.h>
 #  include <psapi.h>
-#  include <strsafe.h>
+#  ifdef HAVE_STRSAFE_H
+#    include <strsafe.h>
+#  endif
 #endif
 
 #include "bu/file.h"

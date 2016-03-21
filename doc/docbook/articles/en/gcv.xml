@@ -1,0 +1,767 @@
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info>
+    <title>The Geometry Conversion Library</title>
+    <author>
+      <personname>
+        <firstname>Jon</firstname>
+        <surname>Engbert</surname>
+      </personname>
+      <affiliation>
+        <orgname>BRL-CAD Open Source</orgname>
+      </affiliation>
+    </author>
+  </info>
+
+  <section>
+    <title>Introduction</title>
+    <para>
+      The Geometry Conversion Library (GCV or libgcv) provides a unified API for geometry conversion capabilities under a plugin-based architecture.
+    </para>
+    <para>
+      The GCV public API is declared in C headers located within <literal>include/gcv/</literal>. The single <literal>include/gcv.h</literal> header includes the entire GCV public API.
+    </para>
+  </section>
+
+  <section>
+    <title>Architecture</title>
+    <para>
+      The Geometry Conversion Library consists of a stream-based API for geometry conversion and associated operations. Input and output are provided by "reader" and "writer" converters (provided by plugins). Intermediate operations are provided by "filters". Readers and writers are types of filters that provide input and output support for model formats, while basic filters apply transformations to models and geometry.
+    </para>
+    <para>
+      Geometry is stored in an in-memory BRL-CAD database (<code>struct db_i</code> in <literal>include/rt/db_instance.h</literal>) during the intermediate steps of conversion. For writer filters, this database is marked read-only and its geometry should not be modified. All names within a BRL-CAD database must be unique.
+    </para>
+    <figure>
+      <title>GCV architecture</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="../../articles/en/images/gcv_architecture.png"/>
+        </imageobject>
+      </mediaobject>
+    </figure>
+  </section>
+
+  <section>
+    <title>Building GCV</title>
+    <para>
+      GCV can be built in a similar manner as other BRL-CAD libraries. After configuring with CMake, building the <literal>libgcv</literal> target will produce a dynamic library. For Unix-based systems, the procedure should be similar to the following:
+<screen>
+$ cd brlcad
+$ mkdir build
+$ cd build
+$ cmake ..
+$ make libgcv
+</screen>
+    </para>
+    <para>
+      Plugins can be built under <literal>gcv_<replaceable>plugin_name</replaceable></literal> targets, or collectively under the <literal>gcv_plugins</literal> target.
+    </para>
+    <para>
+      The command-line utility can be built under the <literal>gcv</literal> target. At this time, the <literal>gcv</literal> program is not installed automatically; the binary will be placed into <literal>build/src/conv/gcv/</literal>.
+    </para>
+  </section>
+
+  <section>
+    <title>Example: Using GCV in an application</title>
+    <para>
+      The following code illustrates a basic use of GCV from within an application. Note that there may be multiple filters providing import/export capabilities for a given format; the below code simply selects the first matching filter encountered.
+    </para>
+    <example>
+      <title>gcv_app.c</title>
+      <para>
+        TODO: embedded code
+      </para>
+    </example>
+  </section>
+
+  <section>
+    <title>GCV Public API</title>
+    <para>
+      The public API for interacting with GCV filter plugins is summarized below.
+    </para>
+    <table frame='none'>
+      <title>GCV public filter API</title>
+      <tgroup cols='2' align='left'>
+        <tbody>
+          <row>
+            <entry><code>struct gcv_context</code></entry>
+            <entry>Stores the conversion state. Plugins may store messages in the <code>bu_avs_t</code> member <code>messages</code>.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_context_init()</code></entry>
+            <entry>Initialize a <code>struct gcv_context</code>. Creates an in-memory <code>struct db_i</code> for conversion data.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_context_destroy()</code></entry>
+            <entry>Frees memory associated with a <code>struct gcv_context</code>.</entry>
+          </row>
+          <row>
+            <entry><code>struct gcv_filter</code></entry>
+            <entry>Stores characteristics of a filter.</entry>
+          </row>
+          <row>
+            <entry><code>struct gcv_opts</code></entry>
+            <entry>Store generic options applying to all filters.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_opts_default()</code></entry>
+            <entry>Initialize a <code>struct gcv_opts</code> with default values.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_list_filters()</code></entry>
+            <entry>Returns a pointer to a <code>const struct bu_ptbl</code> containing all registered filters as <code>const struct gcv_filter</code> pointers.</entry>
+          </row>
+          <row>
+            <entry><code>gcv_execute()</code></entry>
+            <entry>Perform a filter operation on a <code>struct gcv_context</code>. Returns <code>1</code> on success and <code>0</code> on failure. If <code>gcv_options</code> is <code>NULL</code>, the defaults will be used as set by <code>gcv_opts_default()</code>. The parameters <code>argc</code> and <code>argv</code> are used for option parsing as specified by the struct gcv_filter.</entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+  </section>
+
+  <section>
+    <title>The Internal Plugin API</title>
+    <para>
+      The GCV plugin API is declared in <code>include/gcv/api.h</code>. Plugins provide an externally-visible <code>const struct gcv_plugin</code> defining their filters, which are described by <code>struct gcv_filter</code>.
+    </para>
+    <table frame='none'>
+      <title>The gcv_filter struct</title>
+      <tgroup cols='2' align='left'>
+        <tbody>
+          <row>
+            <entry><code>name</code></entry>
+            <entry>Specifies a unique name for the filter, allowing it to be identified by application code.</entry>
+          </row>
+          <row>
+            <entry><code>filter_type</code></entry>
+            <entry>Specifies the type of filter.</entry>
+          </row>
+          <row>
+            <entry><code>create_opts_fn</code></entry>
+            <entry>Optional pointer to a function that allocates and initializes <code>struct bu_opt_desc</code> data and an opaque pointer for storing the option data. If non-<code>NULL</code>, <code>free_opts_fn</code> must also be specified. This member is private for use by libgcv and the associated plugin.
+            </entry>
+          </row>
+          <row>
+            <entry><code>free_opts_fn</code></entry>
+            <entry>Optional pointer to a function that frees any opaque pointer allocated by <code>create_opts_fn</code>. This member is private for use by libgcv and the associated plugin.</entry>
+          </row>
+          <row>
+            <entry><code>filter_fn</code></entry>
+            <entry>Pointer to a function which performs the filter operation. The <code>db_i</code> passed to a writer function within a <code>gcv_context</code> is marked read-only (the pointer is to a non-<code>const</code> struct due to in-memory data that may be modified). Filters of type <code>GCV_FILTER_FILTER</code> receive a <code>NULL</code> value for <code>target</code>. Must return <code>1</code> on success and <code>0</code> on failure. This member is private for use by libgcv and the associated plugin.
+            </entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+    <para>
+      As shown in the above table, filters may initialize data structures for processing command-line style option strings via <code>bu_opt</code>. Please refer to <code>include/bu/opt.h</code> for full documentation on the <code>bu_opt</code> API.
+    </para>
+    <section>
+      <title>Utility Functions</title>
+      <para>
+        In addition to availability of the rest of the BRL-CAD API, the Geometry Conversion Library provides a number of utility functions that may be useful during plugin development.
+      </para>
+      <table frame='none'>
+        <title>GCV utility functions</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><code>gcv_bot_is_solid()</code>, <code>gcv_bot_is_closed()</code>, <code>gcv_bot_is_orientable()</code></entry>
+              <entry>Performs topological tests for determining whether a given triangular mesh is a manifold, orientable, closed fan satisfying requisite conditions for object solidity. <code>gcv_bot_is_solid()</code> is equivalent to <code>gcv_bot_is_closed &amp;&amp; gcv_bot_is_orientable()</code></entry>
+            </row>
+            <row>
+              <entry><code>gcv_facetize()</code></entry>
+              <entry>Produces a triangular mesh tessellation of the object at the given database path using the specified tolerances. Note that if the object at the given path is a combination, a single mesh will be produced from all objects within its tree, and so calling gcv_facetize() on a tree unnecessarily high in the hierarchy and containing many objects is more likely to fail during Boolean evaluation.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        There are also many relevant functions provided by the BRL-CAD API, including a new mesh decimation function.
+      </para>
+      <table frame='none'>
+        <title>BRL-CAD mesh decimation API</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><code>rt_bot_decimate_gct()</code></entry>
+              <entry>Fast implementation of an iterative mesh decimation algorithm.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+  </section>
+
+  <section>
+    <title>Developing a Minimal Plugin</title>
+    <section>
+      <title>Basic Code</title>
+      <para>
+        The following steps will implement a minimal plugin providing a reader filter.
+      </para>
+      <orderedlist>
+        <listitem>
+          <para>
+            Add the following line to <literal>misc/mime_cad.types</literal>. This file is used to generate <literal>include/bu/mime.h</literal>:
+          </para>
+<programlisting>
+model/foo               bar
+</programlisting>
+          <para>
+            This will associate the file extension <literal>.bar</literal> with a new <code>BU_MIME_MODEL_FOO</code> value of <code>bu_mime_model_t</code>.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Create the following file at <literal>src/libgcv/plugins/foo/CMakeLists.txt</literal>:
+          </para>
+          <example>
+            <title>CMakeLists.txt</title>
+<programlisting>
+LIBGCV_ADD_PLUGIN(foo "foo_read.c" "librt;libbu")
+</programlisting>
+          </example>
+        </listitem>
+        <listitem>
+          <para>
+            Create the following file at <literal>src/libgcv/plugins/foo/foo_read.c</literal>:
+          </para>
+          <example>
+            <title>foo_read.c</title>
+            <para>
+              TODO: embedded code
+            </para>
+          </example>
+        </listitem>
+      </orderedlist>
+    </section>
+
+    <section>
+      <title>Traversing the Database</title>
+      <para>
+        BRL-CAD provides the <code>db_walk_tree()</code> function for traversing the database in hierarchical order. You can specify your own visitor callbacks as documented in <literal>include/rt/tree.h</literal>, or use the region-end functions provided by GCV (<literal>include/gcv/util.h</literal>) to tessellate geometry at the region level.
+      </para>
+      <table frame='none'>
+        <title>GCV region-end tessellation callbacks</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><code>gcv_region_end()</code></entry>
+              <entry>Apply Boolean evaluation to region-level tessellated meshes using the default NMG Boolean evaluator, replacing each region-level node and its subtree of tessellated leaf meshes with a single BoT structure that is then passed to the specified callback. The <code>client_data</code> pointer should point to a <code>struct gcv_region_end_data</code>. The individual leaf nodes must already be tessellated into BoTs. This can be done by specifying a <code>leaf_func</code> such as <code>nmg_booltree_leaf_tess()</code>. In the case of failure, an error message is emitted via <code>bu_log()</code> and the callback is not invoked. Any use of <code>bu_bomb()</code> produced by the callback is trapped and an error message is displayed while continuing the tree walk.</entry>
+            </row>
+            <row>
+              <entry><code>gcv_bottess_region_end()</code></entry>
+              <entry>Boolean evaluator roughly based on UnBBoolean's j3dbool (and associated papers). Does not take a callback.</entry>
+            </row>
+            <row>
+              <entry><code>gcv_region_end_mc()</code></entry>
+              <entry>Experimental variant of <code>gcv_region_end()</code> based on the marching-cubes algorithm. Tessellates leaves internally and does not require a <code>leaf_func</code>.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <para>
+        The following example implements a filter that tessellates all geometry into BoT mesh objects and counts the total number of faces.
+      </para>
+      <example>
+        <title>tessellation_statistics.c</title>
+        <para>
+          TODO: embedded code
+        </para>
+      </example>
+    </section>
+
+    <section>
+      <title>Converting Unsupported Entities</title>
+      <para>
+        Although BRL-CAD supports a wide array of common geometric primitives, you may encounter objects that can't be directly imported or exported into an analogous entity. In these cases, conversion filters usually tessellate the incompatible geometry (typically during export) or convert it into an approximation or a composite of several other primitives (often during import).
+      </para>
+      <figure>
+        <title>Tessellation of incompatible entities</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="../../articles/en/images/gcv_unsupported_tessellation.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Comparing Geometry</title>
+      <para>
+        When developing a filter, it is often useful to be able to compare different models during testing. This capability is provided by the <literal>gdiff</literal> tool. There are two versions of <literal>gdiff</literal>: the standalone command-line version and the <literal>gdiff</literal> provided within the MGED interface.
+      </para>
+      <para>
+        The command-line <literal>gdiff</literal> quickly produces a textual summary for a two- or three- way diff of several BRL-CAD databases. Documentation for this utility is available under <code>brlman gdiff</code>.
+      </para>
+      <para>
+        The <literal>gdiff</literal> command available within the MGED interface provides a different capability. It uses BRL-CAD's ray tracer to produce a visual display of the differences between two objects within the same database. To compare geometry from separate databases, you can first merge the databases using the <literal>dbconcat</literal> command from within MGED. See <code>brlman dbconcat</code> for full documentation.
+      </para>
+      <table frame='none'>
+        <title>Usage of MGED's gdiff utility</title>
+        <tgroup cols='2' align='left'>
+          <thead>
+            <row>
+              <entry>Usage:</entry>
+              <entry><code>gdiff [OPTION]... obj1 obj2</code></entry>
+            </row>
+          </thead>
+          <tbody>
+            <row>
+              <entry><literal>--tol=#</literal>, <literal>-t#</literal></entry>
+              <entry>Tolerance in millimeters.</entry>
+            </row>
+            <row>
+              <entry><literal>--ray-diff</literal>, <literal>-R</literal></entry>
+              <entry>Test for differences with raytracing.</entry>
+            </row>
+            <row>
+              <entry><literal>--view-left</literal>, <literal>-l</literal></entry>
+              <entry>Visualize volumes added only by left object.</entry>
+            </row>
+            <row>
+              <entry><literal>--view-both</literal>, <literal>-b</literal></entry>
+              <entry>Visualize volumes common to both objects.</entry>
+            </row>
+            <row>
+              <entry><literal>--view-right</literal>, <literal>-r</literal></entry>
+              <entry>Visualize volumes added only by right object.</entry>
+            </row>
+            <row>
+              <entry><literal>--grazing</literal>, <literal>-G</literal></entry>
+              <entry>Report differences in grazing hits (raytracing mode).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <figure>
+        <title>Using MGED's gdiff utility</title>
+        <mediaobject>
+          <imageobject>
+            <imagedata fileref="../../articles/en/images/gcv_using_gdiff.png"/>
+          </imageobject>
+        </mediaobject>
+      </figure>
+    </section>
+
+    <section>
+      <title>Creating Unit Tests</title>
+      <para>
+        BRL-CAD provides a library of standard models that may be used for unit tests, located under <literal>$BRLCAD_ROOT/share/db/</literal> (note that these files are generated during the build process). Unit tests can be integrated into the build system using the <code>add_test</code> CMake command.  
+      </para>
+    </section>
+  </section>
+
+  <section>
+    <title>Example: Extending an Application</title>
+    <para>
+      The following example will leverage the filter in the above plugin example, <literal>tessellation_statistics.c</literal>, to implement a function that counts the number of faces in a model after tessellation.
+    </para>
+    <example>
+      <title>gcv_embedded.c</title>
+      <para>
+        TODO: embedded code
+      </para>
+    </example>
+  </section>
+
+  <section>
+    <title>The GCV Frontend</title>
+    <para>
+      GCV includes a command-line front-end utility, <literal>gcv</literal>, implemented in <literal>src/conv/gcv/gcv.c</literal>. Full documentation is available under <code>brlman gcv</code> and <code>gcv --help</code>.
+    </para>
+    <example>
+      <title>Basic usage of the gcv utility</title>
+<screen>
+$ <userinput>gcv --input=a.stl --output=b.fg4</userinput>
+Input file format: BU_MIME_MODEL_STL
+Output file format: BU_MIME_MODEL_VND_FASTGEN
+Input file path: a.stl
+Output file path: b.fg4
+    Converting Part: all_cpu_cpw6_cw_cpubox_cpubox.a
+    Using solid name: s.all_cpu_cpw6_cw_cpubox_cpubox.a
+    Making region (all_cpu_cpw6_cw_cpubox_cpubox.a)
+...
+</screen>
+    </example>
+    <example>
+      <title>Generic options</title>
+<screen>
+$ <userinput>gcv --input=a.fg4 --output=b.vrml --input-and-output-opts --verbosity=1 --output-only-opts --objects=comp_0001.r</userinput>
+</screen>
+    </example>
+    <example>
+      <title>Filter-specific options</title>
+<screen>
+$ <userinput>gcv --input=a.fg4 --output=b.obj --input-only-opts --colors=a.fg4.colors --output-only-opts --vertex-normals</userinput>
+</screen>
+    </example>
+    <example>
+      <title>Specifying conversion formats</title>
+<screen>
+$ <userinput>gcv --input=infile.txt --output=outfile.obj --input-format=stl</userinput>
+</screen>
+    </example>
+  </section>
+
+  <section>
+    <title>Conversion Filters</title>
+    <para>
+      GCV currently contains support for import and export into five model formats, detailed below.
+    </para>
+    <table frame='none'>
+      <title>Conversion formats supported by GCV</title>
+      <tgroup cols='2' align='left'>
+        <thead>
+          <row>
+            <entry>Format</entry>
+            <entry>File Extension</entry>
+          </row>
+        </thead>
+        <tbody>
+          <row>
+            <entry>BRL-CAD</entry>
+            <entry><literal>.g</literal></entry>
+          </row>
+          <row>
+            <entry>FASTGEN4</entry>
+            <entry><literal>.fg4</literal></entry>
+          </row>
+          <row>
+            <entry>WaveFront Object</entry>
+            <entry><literal>.obj</literal></entry>
+          </row>
+          <row>
+            <entry>StereoLithography</entry>
+            <entry><literal>.stl</literal></entry>
+          </row>
+          <row>
+            <entry>Virtual Reality Modeling Language</entry>
+            <entry><literal>.vrml</literal></entry>
+          </row>
+        </tbody>
+      </tgroup>
+    </table>
+
+    <section>
+      <title>Common Conversion Options</title>
+      <para>
+        The <code>gcv_opts</code> struct stores generic options applying to many filters, detailed below. Not all options may be applicable to or respected by every filter.
+      </para>
+      <table frame='none'>
+        <title>Conversion formats supported by GCV</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><code>debug_mode</code></entry>
+              <entry>Print debugging info if set to <code>1</code>. Default is <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>verbosity_level</code></entry>
+              <entry>Verbosity level. The default, level <code>0</code>, is "quiet" (only error messages are produced).</entry>
+            </row>
+            <row>
+              <entry><code>scale_factor</code></entry>
+              <entry>Specify the scale factor to be applied during import or export, as units per mm. Default is <code>1.0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>calculational_tolerance</code></entry>
+              <entry>Calculational tolerance. Defaults to the RT defaults. If you use a non-default value, you should set the ray tracer tolerance to match it when using the resulting model.</entry>
+            </row>
+            <row>
+              <entry><code>tessellation_tolerance</code></entry>
+              <entry>
+                Tessellation tolerance. The default value is:
+                <para>
+                  <literal>abs = 0.0</literal>
+                </para>
+                <para>
+                  <literal>rel = 1.0e-2</literal>
+                </para>
+                <para>
+                  <literal>norm = 0.0</literal>
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><code>tessellation_algorithm</code></entry>
+              <entry>Specify use of either the default, marching-cubes, or bottess-based tessellation algorithm.</entry>
+            </row>
+            <row>
+              <entry><code>max_cpus</code></entry>
+              <entry>Maximum number of processors to utilize where possible. Default is <code>0</code>, specifying the maximum available during execution.</entry>
+            </row>
+            <row>
+              <entry><code>num_objects</code></entry>
+              <entry>Number of objects to convert. If <code>0</code> (the default), all top-level objects will be converted.</entry>
+            </row>
+            <row>
+              <entry><code>object_names</code></entry>
+              <entry>Names of objects to convert (must have <code>num_objects</code> elements). Default is <code>NULL</code>.</entry>
+            </row>
+            <row>
+              <entry><code>default_name</code></entry>
+              <entry>Name assigned to objects without names. Defaults to "<code>unnamed</code>".</entry>
+            </row>
+            <row>
+              <entry><code>bu_debug_flag</code></entry>
+              <entry>Debug flag for libbu (see <code>include/bu/debug.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>rt_debug_flag</code></entry>
+              <entry>Debug flag for librt (see <code>include/rt/debug.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+            <row>
+              <entry><code>nmg_debug_flag</code></entry>
+              <entry>Debug flag for libnmg (see <code>include/nmg.h</code>), applied via bitwise-OR with the original value. The original debug flag will be restored after conversion. Defaults to <code>0</code>.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+      <example>
+        <title>Using struct gcv_opts</title>
+<programlisting>
+static int
+apply_filter_with_options(struct gcv_context *context, const struct gcv_filter *filter, const char *target)
+{
+    struct gcv_opts options;
+    const char *argv[] = { "--colors=colors.dat", "--continue" };
+    const size_t argc = sizeof(argv) / sizeof(argv[0]);
+
+    gcv_opts_default(&amp;options);
+    options->debug_mode = 1;
+
+    return gcv_execute(context, filter, &amp;options, argc, argv, target);
+}
+</programlisting>
+      </example>
+    </section>
+
+    <section>
+      <title>FASTGEN4 Reader</title>
+      <table frame='none'>
+        <title>FASTGEN4 reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--colors=<replaceable>path</replaceable></literal></entry>
+              <entry>Path to a file specifying component colors.</entry>
+            </row>
+            <row>
+              <entry><literal>--muves=<replaceable>path</replaceable></literal></entry>
+              <entry>Create a MUVES input file containing any CHGCOMP and CBACKING components.</entry>
+            </row>
+            <row>
+              <entry><literal>--plot=<replaceable>path</replaceable></literal></entry>
+              <entry>Create a libplot3 plot file of all CTRI and CQUAD elements processed.</entry>
+            </row>
+            <row>
+              <entry><literal>--sections=<replaceable>list</replaceable></literal></entry>
+              <entry>Process only a list ("<literal>3001, 4082, 5347</literal>") or a range ("<literal>2315 - 3527</literal>") of section IDs.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>FASTGEN4 Writer</title>
+      <para>
+        At this time, the FASTGEN4 writer plugin does not make use of any filter-specific options.
+      </para>
+    </section>
+
+    <section>
+      <title>OBJ Reader</title>
+      <table frame='none'>
+        <title>OBJ reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--continue</literal></entry>
+              <entry>Continue processing on nmg-bomb. Conversion will fall back to native BoT mode if a fatal error occurs when using the nmg or BoT-via-nmg modes.</entry>
+            </row>
+            <row>
+              <entry><literal>--fuse-vertices</literal></entry>
+              <entry>Fuse vertices that are near enough to be considered identical. Can make the solidity detection more reliable, but may significantly increase processing time during the conversion.</entry>
+            </row>
+            <row>
+              <entry><literal>--grouping=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select which OBJ face grouping is used to create BRL-CAD primitives.
+                <para>
+                  <literal>group</literal> = group (default)
+                </para>
+                <para>
+                  <literal>material</literal> = material
+                </para>
+                <para>
+                  <literal>none</literal> = none
+                </para>
+                <para>
+                  <literal>object</literal> = object
+                </para>
+                <para>
+                  <literal>texture</literal> = texture
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--conversion-mode=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select the conversion mode.
+                <para>
+                  <literal>bot</literal> = native BoT (default)
+                </para>
+                <para>
+                  <literal>nmg</literal> = NMG
+                </para>
+                <para>
+                  <literal>nmgbot</literal> = BoT via NMG
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--bot-plate-thickness=<replaceable>thickness</replaceable></literal></entry>
+              <entry>Thickness (mm) used when a BoT is not a closed volume and it's converted as a plate or plate-nocos BoT.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-ignore-normals</literal></entry>
+              <entry>Ignore the normals defined in the input file when using native BoT conversion mode.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-open-type=<replaceable>type</replaceable></literal></entry>
+              <entry>
+                Select the type used for BoTs that aren't closed volumes.
+                <para>
+                  <literal>surface</literal> = surface (default)
+                </para>
+                <para>
+                  <literal>plate</literal> = plate
+                </para>
+                <para>
+                  <literal>nocos</literal> = plate-nocos
+                </para>
+              </entry>
+            </row>
+            <row>
+              <entry><literal>--bot-plot</literal></entry>
+              <entry>Creates a plot/overlay (<literal>.plot3</literal>) file of open edges for BoTs that aren't closed volumes. <literal><replaceable>bot_name</replaceable>.plot3</literal> will be created in the current directory and will overwrite any existing file with the same name.</entry>
+            </row>
+            <row>
+              <entry><literal>--bot-orientation=<replaceable>mode</replaceable></literal></entry>
+              <entry>
+                Select the BoT orientation mode.
+                <para>
+                  <literal>unoriented</literal> = unoriented (default)
+                </para>
+                <para>
+                  <literal>ccw</literal> = counterclockwise
+                </para>
+                <para>
+                  <literal>cw</literal> = clockwise
+                </para>
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>OBJ Writer</title>
+      <table frame='none'>
+        <title>OBJ writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--vertex-normals</literal></entry>
+              <entry>Output vertex normals.</entry>
+            </row>
+            <row>
+              <entry><literal>--usemtl</literal></entry>
+              <entry>Place <literal>usemtl</literal> statements in the output file. These statements are fictional (they do not refer to any material database). The materials named provide information about the material codes assigned to the objects in the BRL-CAD database. The material names will be of the form "<literal><replaceable>aircode</replaceable>_<replaceable>los</replaceable>_<replaceable>material</replaceable></literal>", where <replaceable>aircode</replaceable> is the code number for the air represented by that region, if it does represent air; otherwise, this will be <literal>0</literal>. The <replaceable>los</replaceable> is the Line Of Sight thickness (<literal>0</literal> to <literal>100</literal>) assigned to the region, and <replaceable>material</replaceable> is the material code number assigned.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>STL Reader</title>
+      <table frame='none'>
+        <title>STL reader options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--binary</literal></entry>
+              <entry>Specify that the input file is in binary STL format (the default assumes ASCII).</entry>
+            </row>
+            <row>
+              <entry><literal>--starting-ident=<replaceable>number</replaceable></literal></entry>
+              <entry>Specify the starting ident for the regions created. The default is <literal>1000</literal>. This number will be incremented for each region, unless <literal>--constant-ident</literal> is specified.</entry>
+            </row>
+            <row>
+              <entry><literal>--constant-ident</literal></entry>
+              <entry>Specify that the starting ident should remain constant.</entry>
+            </row>
+            <row>
+              <entry><literal>--material=<replaceable>code</replaceable></literal></entry>
+              <entry>Specify the material code that will be assigned to all created regions (the default is <literal>1</literal>).</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>STL Writer</title>
+      <table frame='none'>
+        <title>STL writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--binary</literal></entry>
+              <entry>Write output as a binary STL file. The default is ASCII. In the case of ASCII output, the region name is specified on the "solid" line of the STL file. In the case of binary output, all the regions are output as a single STL part.</entry>
+            </row>
+            <row>
+              <entry><literal>--output-dir</literal></entry>
+              <entry>Specify that the output path should be a directory. Each region converted is written to a separate file. File names are constructed from the full path names of each region (the path from the specified object to the region).  Any "<literal>/</literal>" characters in the path name are replaced by "<literal>@</literal>" characters and "<literal>.</literal>" and white space are replaced by "<literal>_</literal>" characters.
+              </entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+
+    <section>
+      <title>VRML Reader</title>
+      <para>
+        At this time, the VRML reader plugin does not make use of any filter-specific options.
+      </para>
+    </section>
+
+    <section>
+      <title>VRML Writer</title>
+      <table frame='none'>
+        <title>VRML writer options</title>
+        <tgroup cols='2' align='left'>
+          <tbody>
+            <row>
+              <entry><literal>--bot-dump</literal></entry>
+              <entry>BoT dump. Mutually exclusive with <literal>--evaluate-all</literal>.</entry>
+            </row>
+            <row>
+              <entry><literal>--evaluate-all</literal></entry>
+              <entry>Evaluate all, CSG and BoTs. Mutually exclusive with <literal>--bot-dump</literal>.</entry>
+            </row>
+          </tbody>
+        </tgroup>
+      </table>
+    </section>
+  </section>
+</article>

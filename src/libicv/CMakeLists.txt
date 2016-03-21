@@ -4,6 +4,7 @@ set(ICV_INCLUDE_DIRS
   ${BU_INCLUDE_DIRS}
   ${PNG_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
+  ${NETPBM_INCLUDE_DIR}
   )
 BRLCAD_LIB_INCLUDE_DIRS(icv ICV_INCLUDE_DIRS "")
 
@@ -18,16 +19,23 @@ set(LIBICV_SOURCES
   stat.c
   size.c
   pix.c
+  png.c
   ppm.c
   bw.c
   dpix.c
   )
 
-BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY}")
+BRLCAD_ADDLIB(libicv "${LIBICV_SOURCES}" "libbu;libbn;${PNG_LIBRARY};${NETPBM_LIBRARY}")
 set_target_properties(libicv PROPERTIES VERSION 20.0.1 SOVERSION 20)
+if(CPP_DLL_DEFINES)
+  set_property(TARGET libicv APPEND PROPERTY COMPILE_DEFINITIONS "NETPBM_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 add_subdirectory(tests)
 
-CMAKEFILES(TODO)
+CMAKEFILES(
+  TODO
+  icv_private.h
+  )
 
 # Local Variables:
 # tab-width: 8

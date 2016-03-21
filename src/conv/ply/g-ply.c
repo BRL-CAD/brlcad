@@ -82,23 +82,27 @@ static int		tot_regions = 0;
 static long		tot_polygons = 0;
 static long		tot_vertices = 0;
 
-static int
-write_vert(struct bu_hash_entry *v_entry, void *UNUSED(arg))
+static struct bu_hash_entry *
+write_verts(struct bu_hash_tbl *t)
 {
-    double *coords = (double *)(bu_get_hash_value(v_entry));
-    if (!coords) {
-	return 1;
+    struct bu_hash_entry *v_entry = bu_hash_next(t, NULL);
+    while (v_entry) {
+	/* TODO - this shouldn't be possible now with new libbu hash API? */
+	double *coords = (double *)(bu_hash_value(v_entry, NULL));
+	if (!coords) return v_entry;
+
+	/* PLY files are usually in meters */
+	ply_write(ply_fp, coords[0] / 1000);
+	ply_write(ply_fp, coords[1] / 1000);
+	ply_write(ply_fp, coords[2] / 1000);
+
+	/* keeping track of the order in which the vertices are input, to write the faces */
+	coords[3] = v_order;
+	v_order++;
+
+	v_entry = bu_hash_next(t, v_entry);
     }
-
-    /* PLY files are usually in meters */
-    ply_write(ply_fp, coords[0] / 1000);
-    ply_write(ply_fp, coords[1] / 1000);
-    ply_write(ply_fp, coords[2] / 1000);
-
-    /* keeping track of the order in which the vertices are input, to write the faces */
-    coords[3] = v_order;
-    v_order++;
-    return 0;
+    return NULL;
 }
 
 /* routine to output the faceted NMG representation of a BRL-CAD region */
@@ -163,13 +167,13 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		break;
 	}
 	if (!ply_fp) {
-	    bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to create PLY file");
 	    goto free_nmg;
 	}
 	if (!ply_add_comment(ply_fp, "converted from BRL-CAD")) {
-	    bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_free(region_file, "region_file");
 	    bu_log("ERROR: Unable to write to PLY file");
 	    goto free_nmg;
@@ -216,13 +220,13 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 
     /* RPly library cannot handle faces and vertices greater than the integer limit */
     if (nfaces >= INT_MAX) {
-	bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_log("ERROR: Number of faces (%ld) exceeds integer limit!\n", nfaces);
 	goto free_nmg;
     }
 
     f_sizes[cur_region] = (int) nfaces;
-    v_tbl_regs[cur_region] = bu_hash_tbl_create(nfaces * 3);
+    v_tbl_regs[cur_region] = bu_hash_create(nfaces * 3);
     f_regs[cur_region] = (long **) bu_calloc(nfaces, sizeof(long *), "reg_faces");
     v_regs[cur_region] = (double **) bu_calloc(nfaces * 3, sizeof(double *), "reg_verts"); /* chose to do this over dynamic array, but I may be wrong */
 
@@ -248,8 +252,6 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (verbose)
 		    bu_log("\tfacet:\n");
 		for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
-		    int new_ent = 0;
-		    struct bu_hash_entry *hsh_ent;
 		    NMG_CK_EDGEUSE(eu);
 
 		    v = eu->vu_p->v_p;
@@ -258,13 +260,12 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    if (verbose)
 			bu_log("\t\t(%g %g %g)\n", V3ARGS(v->vg_p->coord));
 
-		    hsh_ent = bu_hash_tbl_add(v_tbl_regs[cur_region], (const unsigned char *)(f_regs[cur_region][reg_faces_pos] + v_ind_pos), sizeof(long *), &new_ent);
-		    if (new_ent) {
+		    if (!bu_hash_get(v_tbl_regs[cur_region], (const uint8_t *)(f_regs[cur_region][reg_faces_pos] + v_ind_pos), sizeof(long *))) {
 			v_regs[cur_region][nvertices] = (double *) bu_calloc(4, sizeof(double), "v_coords");
 			v_regs[cur_region][nvertices][0] = (double)(v->vg_p->coord[0]);
 			v_regs[cur_region][nvertices][1] = (double)(v->vg_p->coord[1]);
 			v_regs[cur_region][nvertices][2] = (double)(v->vg_p->coord[2]);
-			bu_set_hash_value(hsh_ent, (unsigned char *)v_regs[cur_region][nvertices]);
+			(void)bu_hash_set(v_tbl_regs[cur_region], (const uint8_t *)(f_regs[cur_region][reg_faces_pos] + v_ind_pos), sizeof(long *), (void *)v_regs[cur_region][nvertices]);
 			nvertices++;
 		    }
 
@@ -285,7 +286,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     }
 
     if (nvertices >= INT_MAX) {
-	bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_log("ERROR: Number of vertices (%ld) exceeds integer limit!\n", nvertices);
 	goto free_nmg;
     }
@@ -293,10 +294,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     if (!merge_all) {
 	int fi;
 	int vi;
-	struct bu_hash_entry *prev = NULL;
-	unsigned long idx;
 	double *coords;
-	struct bu_hash_entry *hsh_ent = NULL;
 
 	ply_add_element(ply_fp, "vertex", nvertices);
 	ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
@@ -311,18 +309,16 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 	}
 	ply_write_header(ply_fp);
 
-	if (bu_hash_tbl_traverse(v_tbl_regs[cur_region], write_vert, NULL)) {
-	    bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	if (write_verts(v_tbl_regs[cur_region])) {
+	    bu_hash_destroy(v_tbl_regs[cur_region]);
 	    bu_log("ERROR: No coordinates found for vertex!\n");
 	    goto free_nmg;
 	}
 	for (fi = 0; fi < (int) nfaces; fi++) {
 	    ply_write(ply_fp, 3);
 	    for (vi = 0; vi < 3; vi++) {
-		hsh_ent = bu_hash_tbl_find(v_tbl_regs[cur_region], (const unsigned char *)(f_regs[cur_region][fi] + vi), sizeof(long), &prev, &idx);
-		if (hsh_ent)
-		    coords = (double *)(bu_get_hash_value(hsh_ent));
-		else {
+		coords = (double *)bu_hash_get(v_tbl_regs[cur_region], (const unsigned char *)(f_regs[cur_region][fi] + vi), sizeof(long));
+		if (!coords) {
 		    bu_log("ERROR: No vertex found for face with index %d!\n", f_regs[cur_region][fi][vi]);
 		    goto free_nmg;
 		}
@@ -344,7 +340,7 @@ nmg_to_ply(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     tot_vertices += nvertices;
 
     if (!merge_all) {
-	bu_hash_tbl_free(v_tbl_regs[cur_region]);
+	bu_hash_destroy(v_tbl_regs[cur_region]);
 	bu_free(f_regs[cur_region], "reg_faces");
     }
     bu_free(region_name, "region_name");
@@ -780,9 +776,6 @@ main(int argc, char **argv)
         int fi;
         int vi;
 	double *coords;
-        unsigned long idx;
-        struct bu_hash_entry *prev = NULL;
-	struct bu_hash_entry *hsh_ent;
 
         ply_add_element(ply_fp, "vertex", tot_vertices);
         ply_add_scalar_property(ply_fp, "x", PLY_FLOAT);
@@ -798,7 +791,7 @@ main(int argc, char **argv)
         ply_write_header(ply_fp);
 
 	for (ri = 0; ri < cur_region; ri++)
-	    if (bu_hash_tbl_traverse(v_tbl_regs[ri], write_vert, NULL)) {
+	    if (write_verts(v_tbl_regs[ri])) {
 		bu_log("ERROR: No coordinates found for vertex!\n");
 		ply_close(ply_fp);
 		goto free_all;
@@ -807,10 +800,8 @@ main(int argc, char **argv)
 	    for (fi = 0; fi < f_sizes[ri]; fi++) {
 		ply_write(ply_fp, 3);
 		for (vi = 0; vi < 3; vi++) {
-		    hsh_ent = bu_hash_tbl_find(v_tbl_regs[ri], (const unsigned char *)(f_regs[ri][fi] + vi), sizeof(long), &prev, &idx);
-		    if (hsh_ent)
-			coords = (double *)(bu_get_hash_value(bu_hash_tbl_find(v_tbl_regs[ri], (const unsigned char *)(f_regs[ri][fi] + vi), sizeof(long), &prev, &idx)));
-		    else {
+		    coords = (double *)bu_hash_get(v_tbl_regs[ri], (const unsigned char *)(f_regs[ri][fi] + vi), sizeof(long));
+		    if (!coords) {
 			bu_log("ERROR: No vertex found for face with index %d!\n", f_regs[ri][fi][vi]);
 			ply_close(ply_fp);
 			goto free_all;
@@ -830,7 +821,7 @@ main(int argc, char **argv)
 		bu_free(f_regs[ri][fi], "v_ind");
 	    }
 	    bu_free(f_regs[ri], "reg_faces");
-	    bu_hash_tbl_free(v_tbl_regs[ri]);
+	    bu_hash_destroy(v_tbl_regs[ri]);
 	}
 	ply_close(ply_fp);
     }

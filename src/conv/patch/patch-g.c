@@ -3363,9 +3363,9 @@ int
 main(int argc, char **argv)
 {
 
-    int fd, nread;
     FILE *gfp=NULL;
     FILE *mfp=NULL;
+    FILE *fp=NULL;
 
     int c;
     int j = 1;
@@ -3374,11 +3374,12 @@ main(int argc, char **argv)
     int stop, num;
     char name[NAMESIZE+1];
 
-    /* These sizes are dictated by the specific format output by the
-     * 'rpatch' tool.  They are fixed-column files, so we read into
-     * fixed-size buffers.
+    /* This size is dictated by the specific format output by the
+     * 'rpatch' tool and expected material file.  They are
+     * fixed-column files that shouldn't even fill half this buffer
+     * reading one line at a time.
      */
-    char buf[99], s[132+2];
+    char buf[256];
 
     /* intentionally double for scan */
     double scan[3];
@@ -3533,7 +3534,8 @@ main(int argc, char **argv)
     if (bu_optind >= argc) {
 	usage(1, argv[0]);
     }
-    if ((outfp = wdb_fopen(argv[bu_optind])) == RT_WDB_NULL) {
+    outfp = wdb_fopen(argv[bu_optind]);
+    if (outfp == RT_WDB_NULL) {
 	perror(argv[bu_optind]);
 	bu_exit(3, "ERROR: unable to open geometry database file (%s)\n", argv[bu_optind]);
     }
@@ -3556,24 +3558,27 @@ main(int argc, char **argv)
      */
 
     if (patchfile != (char *)0) {
-	if ((fd = open(patchfile, O_RDONLY)) < 0) {
+	fp = fopen(patchfile, "r");
+	if (fp == NULL) {
 	    perror(patchfile);
 	    bu_exit(1, "ERROR: unable to open patchfile (%s)\n", patchfile);
 	}
     } else {
-	fd = 0;		/* stdin */
+	fp = stdin;
 	patchfile = "stdin";
     }
 
     if (labelfile != (char *)0) {
-	if ((gfp = fopen(labelfile, "rb")) == NULL) {
+	gfp = fopen(labelfile, "rb");
+	if (gfp == NULL) {
 	    perror(labelfile);
 	    bu_exit(1, "ERROR: unable to open labelfile (%s)\n", labelfile);
 	}
     }
 
     if (matfile != (char *)0) {
-	if ((mfp = fopen(matfile, "rb")) == NULL) {
+	mfp = fopen(matfile, "rb");
+	if (mfp == NULL) {
 	    perror(matfile);
 	    bu_exit(1, "ERROR: unable to open matfile (%s)\n", matfile);
 	}
@@ -3637,9 +3642,9 @@ main(int argc, char **argv)
     if (mfp) {
 	int eqlos, matcode;
 
-	while (bu_fgets(s, 132+2, mfp) != NULL) {
+	while (bu_fgets(buf, sizeof(buf), mfp) != NULL) {
 
-	    if (sscanf(s, "%6d%*66c%3d%5d",
+	    if (sscanf(buf, "%6d%*66c%3d%5d",
 		       &i, &eqlos, &matcode) != 3) {
 
 		bu_exit(1, "Incomplete line in materials file for component '%.4d'\n", i);
@@ -3650,15 +3655,12 @@ main(int argc, char **argv)
     }
 
     for (i = done = 0; !done; i++) {
+	char *bufp;
 
-	/* FIXME: this assumes unix-style input files but a carriage
-	 * return would represent one more byte.  should be using
-	 * bu_fgets() even if the lines are fixed length.
-	 */
+	/* read one line of file into a buffer */
+	bufp = bu_fgets(buf, sizeof(buf), fp);
 
-	nread = read(fd, buf, sizeof(buf));     /* read one line of file into a buffer */
-
-	if (nread > 0) {
+	if (bufp) {
 	    /* For valid reads, assign values to the input array */
 
 	    sscanf(buf, "%lf %lf %lf %c %d %d %d %d %d %d %d %d %d %d %d %d %d %d",
@@ -3704,9 +3706,7 @@ main(int argc, char **argv)
 	    }
 	} else {
 	    /* Read hit EOF, set flag and process one last time.    */
-	    if (nread < 0) {
-		perror("READ ERROR");
-	    }
+	    perror("READ ERROR");
 	    done = 1;
 	    in[i].cc = -1;
 	}

@@ -191,6 +191,25 @@ if(BRLCAD_TERMLIB_BUILD)
   mark_as_advanced(HAVE_TERMCAP_H)
 endif(BRLCAD_TERMLIB_BUILD)
 
+# libnetpbm Library support for pnm,ppm,pbm, etc. image files
+set(netpbm_ALIASES ENABLE_NETPBM)
+set(netpbm_DESCRIPTION "
+Option for enabling and disabling compilation of the netpbm library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(libnetpbm NETPBM netpbm netpbm_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${netpbm_ALIASES})
+if(BRLCAD_NETPBM_BUILD)
+  SetTargetFolder(libnetpbm "Third Party Libraries")
+  SetTargetFolder(libnetpbm-static "Third Party Libraries")
+endif(BRLCAD_NETPBM_BUILD)
+SetTargetFolder(netpbm "Third Party Libraries")
+SetTargetFolder(netpbm-static "Third Party Libraries")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/version.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/compile.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/libnetpbm/pm_config.h")
+
 # libpng Library - Checks for ZLIB, so need to handle libpng AFTER
 # zlib to set the variables if using a local copy of zlib.  If not
 # using a local copy of zlib, FindZLIB results will be identical in
@@ -412,6 +431,9 @@ BRLCAD_TCL is set to AUTO or SYSTEM.  If BRLCAD_TK is set to BUNDLED,
 local copy is built even if a system version is present.  This option
 also depends on BRLCAD_ENABLE_TK being ON.
 ")
+if(BRLCAD_ENABLE_AQUA)
+  set(TK_ENABLE_AQUA ON CACHE STRING "BRL-CAD setting to enable AQUA" FORCE)
+endif(BRLCAD_ENABLE_AQUA)
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 if(BRLCAD_TK_BUILD)
   SetTargetFolder(wish "Third Party Executables")
@@ -434,13 +456,13 @@ if(BRLCAD_TK_BUILD)
   set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
   if(WIN32)
     set(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
-  ELSEif(APPLE)
+  elseif(APPLE)
     if(OPENGL_USE_AQUA)
       set(TK_SYSTEM_GRAPHICS "aqua" CACHE STRING "Tk system graphics" FORCE)
     ELSE(OPENGL_USE_AQUA)
       set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
     endif(OPENGL_USE_AQUA)
-  ELSEif(UNIX)
+  elseif(UNIX)
     set(TK_SYSTEM_GRAPHICS "x11" CACHE STRING "Tk system graphics" FORCE)
   endif(WIN32)
   CONFIG_H_APPEND(BRLCAD "#define HAVE_TK_H 1\n")
@@ -854,6 +876,8 @@ if(BRLCAD_OSG_BUILD)
   SetTargetFolder(osgGA "Third Party Libraries")
   SetTargetFolder(osgText "Third Party Libraries")
   SetTargetFolder(osgViewer "Third Party Libraries")
+  SetTargetFolder(osgUtil "Third Party Libraries")
+  SetTargetFolder(osgWidget "Third Party Libraries")
   SetTargetFolder(osgdb_freetype "Third Party Libraries")
   SetTargetFolder(osgdb_osg "Third Party Libraries")
   SetTargetFolder(osgdb_png "Third Party Libraries")

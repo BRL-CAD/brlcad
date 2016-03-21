@@ -1,10 +1,8 @@
-set(docbook_articles_HY
+set(articles_HY
   about_hy.xml
   )
 
-DOCBOOK_TO_HTML(article docbook_articles_HY html/articles/hy "")
-DOCBOOK_TO_PHP(article docbook_articles_HY html/articles/hy "")
-DOCBOOK_TO_PDF(article docbook_articles_HY pdf/articles/hy "")
+ADD_DOCBOOK("HTML;PHP;PDF" articles_HY articles/hy articles_EN_IMAGES_cp)
 
 # Local Variables:
 # tab-width: 8

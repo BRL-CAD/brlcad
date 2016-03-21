@@ -1,0 +1,881 @@
+# The colors in this color dictionary are from the following sources, in
+# order.  Some color names are defined multiple times, and sometimes
+# with different colors.  Many colors have multiple names.
+
+# - Netpbm originals
+# - Crayola crayons, as determined by John Thomas at Tektronix
+# - Hollasch at Microsoft Research
+# - HTML 4.0
+# - Some HTML extension that Internet Explorer understands
+# - XFree86 rgb.txt ca. 2001, derived from MIT X11
+
+# More details on the sources are above each group.
+
+# The preferred form of names is The X Window System standard, all one
+# word with the initial letter of each word capitalized.  But programs that
+# look up in this dictionary should convert the target color name and each
+# name in this dictionary to all lower case and remove spaces before
+# comparing.
+#
+# Numbered colors (e.g. blue4) are deprecated, but many are here for
+# compatibility with X.
+
+# These are the 72 colors from Crayola crayons, as determined by
+# John Thomas at Tektronix
+# (taken from http://www.swiss.ai.mit.edu/~jaffer/Color/thomas.txt on
+# 2002.09.03, with all the grayN removed).
+
+  0   0   0 Black
+255 255 255 White
+255   0   0 Red
+  0 255   0 Green
+  0   0 255 Blue
+  0 255 255 Cyan
+255   0 211 Magenta
+255 255   0 Yellow
+255 138   0 Orange
+159 211   0 GreenYellow
+  0 255 159 Spring Green
+  0 138 255 SkyBlue
+148   0 211 Violet
+255   0 148 VioletRed
+105 105 105 DimGray
+174 174 174 Gray
+174 174 174 Grey
+211 211 211 LightGrey
+211 211 211 LightGray
+105 105 105 DimGrey
+199  21 133 MediumVioletRed
+114  33 188 BlueViolet
+218 107 212 Orchid
+172  77 166 MediumOrchid
+106  37 102 DarkOrchid
+103   7  72 Maroon
+ 76  46  87 Plum
+146  62 112 Thistle
+171 197 255 LightBlue
+ 61  98 208 MediumBlue
+100 149 237 CornflowerBlue
+  0   0 142 NavyBlue
+  0   0 142 Navy
+ 12  62  99 MidnightBlue
+ 72 209 204 Turquoise
+ 62 172 181 MediumTurquoise
+ 29 111 117 DarkTurquoise
+ 52 152 202 LightSteelBlue
+ 55 121 153 SteelBlue
+126 125 160 CadetBlue
+117 134 190 SlateBlue
+ 95 109 154 MediumSlateBlue
+ 51  62  99 DarkSlateBlue
+ 60  64  74 DarkSlateGrey
+ 60  64  74 DarkSlateGray
+  0  83   0 DarkGreen
+ 79  79  47 DarkOliveGreen
+ 85 192  52 ForestGreen
+107 142  35 MediumForestGreen
+ 46 155  28 LimeGreen
+ 60 141  35 MediumSpringGreen
+152 255 152 PaleGreen
+ 43 167 112 SeaGreen
+ 27 134  86 MediumSeaGreen
+ 41 171 151 Aquamarine
+ 21 135 118 MediumAquamarine
+ 75 211   0 YellowGreen
+254 197  68 Gold
+184 134  11 MediumGoldenrod
+218 165  32 Goldenrod
+229 199 117 Wheat
+189 167 107 Khaki
+176 155 125 Tan
+178 143  86 SandyBrown
+142 107  35 Sienna
+103  67   0 Brown
+101  46  46 IndianRed
+255 174 185 Pink
+248 137 117 Coral
+248 109 104 Salmon
+226  65  42 OrangeRed
+136  18  13 Firebrick
+
+# The following 192 colors are from
+# http://www.research.microsoft.com/~hollasch/cgindex/color/colors.txt
+# on 2002.09.02.  See examples of them at
+# http://www.swiss.ai.mit.edu/~jaffer/Color/hollasch.pdf
+
+250 235 215 AntiqueWhite
+240 255 255 Azure
+255 228 196 Bisque
+255 235 205 BlanchedAlmond
+255 248 220 Cornsilk
+252 230 201 Eggshell
+255 250 240 FloralWhite
+220 220 220 Gainsboro
+248 248 255 GhostWhite
+240 255 240 Honeydew
+255 255 240 Ivory
+230 230 250 Lavender
+255 240 245 LavenderBlush
+255 250 205 LemonChiffon
+250 240 230 Linen
+245 255 250 MintCream
+255 228 225 MistyRose
+255 228 181 Moccasin
+255 222 173 NavajoWhite
+253 245 230 OldLace
+255 239 213 PapayaWhip
+255 218 185 PeachPuff
+255 245 238 Seashell
+255 250 250 Snow
+216 191 216 Thistle
+252 255 240 TitaniumWhite
+245 222 179 Wheat
+255 255 255 White
+245 245 245 WhiteSmoke
+253 248 255 ZincWhite
+128 138 135 ColdGrey
+105 105 105 DimGrey
+192 192 192 Grey
+211 211 211 LightGrey
+112 128 144 SlateGrey
+ 47  79  79 SlateGreyDark
+119 136 153 SlateGreyLight
+128 128 105 WarmGrey
+  0   0   0 Black
+ 41  36  33 IvoryBlack
+ 46  71  59 Lamp Black
+227  38  54 AlizarinCrimson
+156 102  31 Brick
+227  23  13 CadmiumRedDeep
+255 127  80 Coral
+240 128 128 CoralLight
+255  20 147 DeepPink
+212  61  26 EnglishRed
+178  34  34 Firebrick
+227  18  48 GeraniumLake
+255 105 180 HotPink
+176  23  31 IndianRed
+255 160 122 LightSalmon
+227  46  48 MadderLakeDeep
+176  48  96 Maroon
+255 192 203 Pink
+255 182 193 PinkLight
+135  38  87 Raspberry
+255   0   0 Red
+227  54  56 RoseMadder
+250 128 114 Salmon
+255  99  71 Tomato
+212  26  31 VenetianRed
+163 148 128 Beige
+128  42  42 Brown
+219  41  41 BrownMadder
+135  66  31 BrownOchre
+222 184 135 Burlywood
+138  54  15 BurntSienna
+138  51  36 BurntUmber
+210 105  30 Chocolate
+115  61  26 DeepOchre
+255 125  64 Flesh
+255  87  33 FleshOchre
+199 120  38 GoldOchre
+255  61  13 GreenishUmber
+240 230 140 Khaki
+189 183 107 KhakiDark
+245 245 220 LightBeige
+205 133  63 Peru
+188 143 143 RosyBrown
+199  97  20 RawSienna
+115  74  18 RawUmber
+ 94  38  18 Sepia
+160  82  45 Sienna
+139  69  19 SaddleBrown
+244 164  96 SandyBrown
+210 180 140 Tan
+ 94  38   5 VanDykeBrown
+255  97   3 CadmiumOrange
+255   3  13 CadmiumRedLight
+237 145  33 Carrot
+255 140   0 DarkOrange
+150  69  20 MarsOrange
+227 112  26 MarsYellow
+255 128   0 Orange
+255  69   0 OrangeRed
+227 130  23 YellowOchre
+255 168  36 AureolineYellow
+227 207  87 Banana
+255 227   3 CadmiumLemon
+255 153  18 CadmiumYellow
+255 176  15 CadmiumYellowLight
+255 215   0 Gold
+218 165  32 Goldenrod
+184 134  11 GoldenrodDark
+250 250 210 GoldenrodLight
+238 232 170 GoldenrodPale
+238 221 130 LightGoldenrod
+227 168 105 Melon
+255 168  18 NaplesYellowDeep
+255 255   0 Yellow
+255 255 224 YellowLight
+127 255   0 Chartreuse
+102 128  20 ChromeOxideGreen
+ 97 179  41 CinnabarGreen
+ 61 145  64 CobaltGreen
+  0 201  87 EmeraldGreen
+ 34 139  34 ForestGreen
+  0 255   0 Green
+  0 100   0 GreenDark
+152 251 152 GreenPale
+173 255  47 GreenYellow
+124 252   0 LawnGreen
+ 50 205  50 LimeGreen
+189 252 201 Mint
+ 59  94  43 Olive
+107 142  35 OliveDrab
+ 85 107  47 OliveGreenDark
+ 10 201  43 PermanentGreen
+ 48 128  20 SapGreen
+ 46 139  87 SeaGreen
+143 188 143 SeaGreenDark
+ 60 179 113 SeaGreenMedium
+ 32 178 170 SeaGreenLight
+  0 255 127 SpringGreen
+  0 250 154 SpringGreenMedium
+ 56  94  15 TerreVerte
+110 255 112 ViridianLight
+154 205  50 YellowGreen
+127 255 212 Aquamarine
+102 205 170 AquamarineMedium
+  0 255 255 Cyan
+224 255 255 CyanWhite
+ 64 224 208 Turquoise
+  0 206 209 TurquoiseDark
+ 72 209 204 TurquoiseMedium
+175 238 238 TurquoisePale
+240 248 255 AliceBlue
+  0   0 255 Blue
+173 216 230 BlueLight
+  0   0 205 BlueMedium
+ 95 158 160 Cadet
+ 61  89 171 Cobalt
+100 149 237 Cornflower
+  5 184 204 Cerulean
+ 30 144 255 DodgerBlue
+ 46   8  84 Indigo
+  3 168 158 ManganeseBlue
+ 25  25 112 MidnightBlue
+  0   0 128 Navy
+ 51 161 201 Peacock
+176 224 230 PowderBlue
+ 65 105 225 RoyalBlue
+106  90 205 SlateBlue
+ 72  61 139 SlateBlueDark
+132 112 255 SlateBlueLight
+123 104 238 SlateBlueMedium
+135 206 235 SkyBlue
+  0 191 255 SkyBlueDeep
+135 206 250 SkyBlueLight
+ 70 130 180 SteelBlue
+176 196 222 SteelBlueLight
+  0 199 140 TurquoiseBlue
+ 18  10 143 Ultramarine
+138  43 226 BlueViolet
+145  33 158 CobaltVioletDeep
+255   0 255 Magenta
+218 112 214 Orchid
+153  50 204 OrchidDark
+186  85 211 OrchidMedium
+219  38  69 PermanentRedViolet
+221 160 221 Plum
+160  32 240 Purple
+147 112 219 PurpleMedium
+ 92  36 110 UltramarineViolet
+143  94 153 Violet
+148   0 211 VioletDark
+208  32 144 VioletRed
+199  21 133 VioletRedMedium
+219 112 147 VioletRedPale
+#
+# From HTML 4.0 specification.  These are colors you can specify by name
+# in HTML tags.
+#
+# Actually, these are the colors as if HTML's sRGB values were actually
+# Rec. 709.  E.g. HTML 4.0 says silver is r=192, g=192, b=192, in the
+# SRGB system.
+# This file, which by definition contains Rec. 709 values, shows the same
+# three numbers (192,192,192).  So this file defines a slightly different
+# color than HTML does.
+#
+# There's some extension to HTML, apparently not blessed by W3C, that adds
+# all the MIT colors (see above).  Internet Explorer can render all of them.
+
+000 000 000 Black
+192 192 192 Silver
+128 128 128 Gray
+255 255 255 White
+128 000 000 Maroon
+255 000 000 Red
+128 000 128 Purple
+255 000 255 Fuchsia
+000 128 000 Green
+000 255 000 Lime
+128 128 000 Olive
+255 255 000 Yellow
+000 000 128 Navy
+000 000 255 Blue
+000 128 128 Teal
+000 255 255 Aqua
+
+# These are from XFree86 rgb.txt ca. 2001.  We have extracted the color names
+# that aren't already included above and also converted all the names to the
+# standard form and eliminated duplicates.
+#
+# The original file started with this line:
+#
+#! $XConsortium: rgb.txt,v 10.41 94/02/20 18:39:36 rws Exp $
+112 128 144 SlateGray
+119 136 153 LightSlateGray
+119 136 153 LightSlateGrey
+211 211 211 light grey
+100 149 237 CornflowerBlue
+132 112 255 LightSlateBlue
+  0 191 255 DeepSkyBlue
+135 206 250 LightSkyBlue
+175 238 238 PaleTurquoise
+224 255 255 LightCyan
+143 188 143 DarkSeaGreen
+ 32 178 170 LightSeaGreen
+189 183 107 DarkKhaki
+238 232 170 PaleGoldenrod
+250 250 210 LightGoldenrodYellow
+255 255 224 LightYellow
+233 150 122 DarkSalmon
+240 128 128 LightCoral
+255 182 193 LightPink
+219 112 147 PaleVioletRed
+148   0 211 DarkViolet
+147 112 219 MediumPurple
+255 250 250 Snow1
+238 233 233 Snow2
+205 201 201 Snow3
+139 137 137 Snow4
+255 245 238 Seashell1
+238 229 222 Seashell2
+205 197 191 Seashell3
+139 134 130 Seashell4
+255 239 219 AntiqueWhite1
+238 223 204 AntiqueWhite2
+205 192 176 AntiqueWhite3
+139 131 120 AntiqueWhite4
+255 228 196 Bisque1
+238 213 183 Bisque2
+205 183 158 Bisque3
+139 125 107 Bisque4
+255 218 185 PeachPuff1
+238 203 173 PeachPuff2
+205 175 149 PeachPuff3
+139 119 101 PeachPuff4
+255 222 173 NavajoWhite1
+238 207 161 NavajoWhite2
+205 179 139 NavajoWhite3
+139 121	 94 NavajoWhite4
+255 250 205 LemonChiffon1
+238 233 191 LemonChiffon2
+205 201 165 LemonChiffon3
+139 137 112 LemonChiffon4
+255 248 220 Cornsilk1
+238 232 205 Cornsilk2
+205 200 177 Cornsilk3
+139 136 120 Cornsilk4
+255 255 240 Ivory1
+238 238 224 Ivory2
+205 205 193 Ivory3
+139 139 131 Ivory4
+240 255 240 Honeydew1
+224 238 224 Honeydew2
+193 205 193 Honeydew3
+131 139 131 Honeydew4
+255 240 245 LavenderBlush1
+238 224 229 LavenderBlush2
+205 193 197 LavenderBlush3
+139 131 134 LavenderBlush4
+255 228 225 MistyRose1
+238 213 210 MistyRose2
+205 183 181 MistyRose3
+139 125 123 MistyRose4
+240 255 255 Azure1
+224 238 238 Azure2
+193 205 205 Azure3
+131 139 139 Azure4
+131 111 255 SlateBlue1
+122 103 238 SlateBlue2
+105  89 205 SlateBlue3
+ 71  60 139 SlateBlue4
+ 72 118 255 RoyalBlue1
+ 67 110 238 RoyalBlue2
+ 58  95 205 RoyalBlue3
+ 39  64 139 RoyalBlue4
+  0   0 255 Blue1
+  0   0 238 Blue2
+  0   0 205 Blue3
+  0   0 139 Blue4
+ 30 144 255 DodgerBlue1
+ 28 134 238 DodgerBlue2
+ 24 116 205 DodgerBlue3
+ 16  78 139 DodgerBlue4
+ 99 184 255 SteelBlue1
+ 92 172 238 SteelBlue2
+ 79 148 205 SteelBlue3
+ 54 100 139 SteelBlue4
+  0 191 255 DeepSkyBlue1
+  0 178 238 DeepSkyBlue2
+  0 154 205 DeepSkyBlue3
+  0 104 139 DeepSkyBlue4
+135 206 255 SkyBlue1
+126 192 238 SkyBlue2
+108 166 205 SkyBlue3
+ 74 112 139 SkyBlue4
+176 226 255 LightSkyBlue1
+164 211 238 LightSkyBlue2
+141 182 205 LightSkyBlue3
+ 96 123 139 LightSkyBlue4
+198 226 255 SlateGray1
+185 211 238 SlateGray2
+159 182 205 SlateGray3
+108 123 139 SlateGray4
+202 225 255 LightSteelBlue1
+188 210 238 LightSteelBlue2
+162 181 205 LightSteelBlue3
+110 123 139 LightSteelBlue4
+191 239 255 LightBlue1
+178 223 238 LightBlue2
+154 192 205 LightBlue3
+104 131 139 LightBlue4
+224 255 255 LightCyan1
+209 238 238 LightCyan2
+180 205 205 LightCyan3
+122 139 139 LightCyan4
+187 255 255 PaleTurquoise1
+174 238 238 PaleTurquoise2
+150 205 205 PaleTurquoise3
+102 139 139 PaleTurquoise4
+152 245 255 CadetBlue1
+142 229 238 CadetBlue2
+122 197 205 CadetBlue3
+ 83 134 139 CadetBlue4
+  0 245 255 Turquoise1
+  0 229 238 Turquoise2
+  0 197 205 Turquoise3
+  0 134 139 Turquoise4
+  0 255 255 Cyan1
+  0 238 238 Cyan2
+  0 205 205 Cyan3
+  0 139 139 Cyan4
+151 255 255 DarkSlateGray1
+141 238 238 DarkSlateGray2
+121 205 205 DarkSlateGray3
+ 82 139 139 DarkSlateGray4
+127 255 212 Aquamarine1
+118 238 198 Aquamarine2
+102 205 170 Aquamarine3
+ 69 139 116 Aquamarine4
+193 255 193 DarkSeaGreen1
+180 238 180 DarkSeaGreen2
+155 205 155 DarkSeaGreen3
+105 139 105 DarkSeaGreen4
+ 84 255 159 SeaGreen1
+ 78 238 148 SeaGreen2
+ 67 205 128 SeaGreen3
+ 46 139	 87 SeaGreen4
+154 255 154 PaleGreen1
+144 238 144 PaleGreen2
+124 205 124 PaleGreen3
+ 84 139	 84 PaleGreen4
+  0 255 127 SpringGreen1
+  0 238 118 SpringGreen2
+  0 205 102 SpringGreen3
+  0 139	 69 SpringGreen4
+  0 255	  0 Green1
+  0 238	  0 Green2
+  0 205	  0 Green3
+  0 139	  0 Green4
+127 255	  0 Chartreuse1
+118 238	  0 Chartreuse2
+102 205	  0 Chartreuse3
+ 69 139	  0 Chartreuse4
+192 255	 62 OliveDrab1
+179 238	 58 OliveDrab2
+154 205	 50 OliveDrab3
+105 139	 34 OliveDrab4
+202 255 112 DarkOliveGreen1
+188 238 104 DarkOliveGreen2
+162 205	 90 DarkOliveGreen3
+110 139	 61 DarkOliveGreen4
+255 246 143 Khaki1
+238 230 133 Khaki2
+205 198 115 Khaki3
+139 134	 78 Khaki4
+255 236 139 LightGoldenrod1
+238 220 130 LightGoldenrod2
+205 190 112 LightGoldenrod3
+139 129	 76 LightGoldenrod4
+255 255 224 LightYellow1
+238 238 209 LightYellow2
+205 205 180 LightYellow3
+139 139 122 LightYellow4
+255 255	  0 Yellow1
+238 238	  0 Yellow2
+205 205	  0 Yellow3
+139 139	  0 Yellow4
+255 215	  0 Gold1
+238 201	  0 Gold2
+205 173	  0 Gold3
+139 117	  0 Gold4
+255 193	 37 Goldenrod1
+238 180	 34 Goldenrod2
+205 155	 29 Goldenrod3
+139 105	 20 Goldenrod4
+255 185	 15 DarkGoldenrod1
+238 173	 14 DarkGoldenrod2
+205 149	 12 DarkGoldenrod3
+139 101	  8 DarkGoldenrod4
+255 193 193 RosyBrown1
+238 180 180 RosyBrown2
+205 155 155 RosyBrown3
+139 105 105 RosyBrown4
+255 106 106 IndianRed1
+238  99	 99 IndianRed2
+205  85	 85 IndianRed3
+139  58	 58 IndianRed4
+255 130	 71 Sienna1
+238 121	 66 Sienna2
+205 104	 57 Sienna3
+139  71	 38 Sienna4
+255 211 155 Burlywood1
+238 197 145 Burlywood2
+205 170 125 Burlywood3
+139 115	 85 Burlywood4
+255 231 186 Wheat1
+238 216 174 Wheat2
+205 186 150 Wheat3
+139 126 102 Wheat4
+255 165	 79 Tan1
+238 154	 73 Tan2
+205 133	 63 Tan3
+139  90	 43 Tan4
+255 127	 36 Chocolate1
+238 118	 33 Chocolate2
+205 102	 29 Chocolate3
+139  69	 19 Chocolate4
+255  48	 48 Firebrick1
+238  44	 44 Firebrick2
+205  38	 38 Firebrick3
+139  26	 26 Firebrick4
+255  64	 64 Brown1
+238  59	 59 Brown2
+205  51	 51 Brown3
+139  35	 35 Brown4
+255 140 105 Salmon1
+238 130	 98 Salmon2
+205 112	 84 Salmon3
+139  76	 57 Salmon4
+255 160 122 LightSalmon1
+238 149 114 LightSalmon2
+205 129	 98 LightSalmon3
+139  87	 66 LightSalmon4
+255 165	  0 Orange1
+238 154	  0 Orange2
+205 133	  0 Orange3
+139  90	  0 Orange4
+255 127	  0 DarkOrange1
+238 118	  0 DarkOrange2
+205 102	  0 DarkOrange3
+139  69	  0 DarkOrange4
+255 114	 86 Coral1
+238 106	 80 Coral2
+205  91	 69 Coral3
+139  62	 47 Coral4
+255  99	 71 Tomato1
+238  92	 66 Tomato2
+205  79	 57 Tomato3
+139  54	 38 Tomato4
+255  69	  0 OrangeRed1
+238  64	  0 OrangeRed2
+205  55	  0 OrangeRed3
+139  37	  0 OrangeRed4
+255   0	  0 Red1
+238   0	  0 Red2
+205   0	  0 Red3
+139   0	  0 Red4
+255  20 147 DeepPink1
+238  18 137 DeepPink2
+205  16 118 DeepPink3
+139  10	 80 DeepPink4
+255 110 180 HotPink1
+238 106 167 HotPink2
+205  96 144 HotPink3
+139  58  98 HotPink4
+255 181 197 Pink1
+238 169 184 Pink2
+205 145 158 Pink3
+139  99 108 Pink4
+255 174 185 LightPink1
+238 162 173 LightPink2
+205 140 149 LightPink3
+139  95 101 LightPink4
+255 130 171 PaleVioletRed1
+238 121 159 PaleVioletRed2
+205 104 137 PaleVioletRed3
+139  71	 93 PaleVioletRed4
+255  52 179 Maroon1
+238  48 167 Maroon2
+205  41 144 Maroon3
+139  28	 98 Maroon4
+255  62 150 VioletRed1
+238  58 140 VioletRed2
+205  50 120 VioletRed3
+139  34	 82 VioletRed4
+255   0 255 Magenta1
+238   0 238 Magenta2
+205   0 205 Magenta3
+139   0 139 Magenta4
+255 131 250 Orchid1
+238 122 233 Orchid2
+205 105 201 Orchid3
+139  71 137 Orchid4
+255 187 255 Plum1
+238 174 238 Plum2
+205 150 205 Plum3
+139 102 139 Plum4
+224 102 255 MediumOrchid1
+209  95 238 MediumOrchid2
+180  82 205 MediumOrchid3
+122  55 139 MediumOrchid4
+191  62 255 DarkOrchid1
+178  58 238 DarkOrchid2
+154  50 205 DarkOrchid3
+104  34 139 DarkOrchid4
+155  48 255 Purple1
+145  44 238 Purple2
+125  38 205 Purple3
+ 85  26 139 Purple4
+171 130 255 MediumPurple1
+159 121 238 MediumPurple2
+137 104 205 MediumPurple3
+ 93  71 139 MediumPurple4
+255 225 255 Thistle1
+238 210 238 Thistle2
+205 181 205 Thistle3
+139 123 139 Thistle4
+  0   0   0 Gray0
+  0   0   0 Grey0
+  3   3   3 Gray1
+  3   3   3 Grey1
+  5   5   5 Gray2
+  5   5   5 Grey2
+  8   8   8 Gray3
+  8   8   8 Grey3
+ 10  10  10 Gray4
+ 10  10  10 Grey4
+ 13  13  13 Gray5
+ 13  13  13 Grey5
+ 15  15  15 Gray6
+ 15  15  15 Grey6
+ 18  18  18 Gray7
+ 18  18  18 Grey7
+ 20  20  20 Gray8
+ 20  20  20 Grey8
+ 23  23  23 Gray9
+ 23  23  23 Grey9
+ 26  26  26 Gray10
+ 26  26  26 Grey10
+ 28  28  28 Gray11
+ 28  28  28 Grey11
+ 31  31  31 Gray12
+ 31  31  31 Grey12
+ 33  33  33 Gray13
+ 33  33  33 Grey13
+ 36  36  36 Gray14
+ 36  36  36 Grey14
+ 38  38  38 Gray15
+ 38  38  38 Grey15
+ 41  41  41 Gray16
+ 41  41  41 Grey16
+ 43  43  43 Gray17
+ 43  43  43 Grey17
+ 46  46  46 Gray18
+ 46  46  46 Grey18
+ 48  48  48 Gray19
+ 48  48  48 Grey19
+ 51  51  51 Gray20
+ 51  51  51 Grey20
+ 54  54  54 Gray21
+ 54  54  54 Grey21
+ 56  56  56 Gray22
+ 56  56  56 Grey22
+ 59  59  59 Gray23
+ 59  59  59 Grey23
+ 61  61  61 Gray24
+ 61  61  61 Grey24
+ 64  64  64 Gray25
+ 64  64  64 Grey25
+ 66  66  66 Gray26
+ 66  66  66 Grey26
+ 69  69  69 Gray27
+ 69  69  69 Grey27
+ 71  71  71 Gray28
+ 71  71  71 Grey28
+ 74  74  74 Gray29
+ 74  74  74 Grey29
+ 77  77  77 Gray30
+ 77  77  77 Grey30
+ 79  79  79 Gray31
+ 79  79  79 Grey31
+ 82  82  82 Gray32
+ 82  82  82 Grey32
+ 84  84  84 Gray33
+ 84  84  84 Grey33
+ 87  87  87 Gray34
+ 87  87  87 Grey34
+ 89  89  89 Gray35
+ 89  89  89 Grey35
+ 92  92  92 Gray36
+ 92  92  92 Grey36
+ 94  94  94 Gray37
+ 94  94  94 Grey37
+ 97  97  97 Gray38
+ 97  97  97 Grey38
+ 99  99  99 Gray39
+ 99  99  99 Grey39
+102 102 102 Gray40
+102 102 102 Grey40
+105 105 105 Gray41
+105 105 105 Grey41
+107 107 107 Gray42
+107 107 107 Grey42
+110 110 110 Gray43
+110 110 110 Grey43
+112 112 112 Gray44
+112 112 112 Grey44
+115 115 115 Gray45
+115 115 115 Grey45
+117 117 117 Gray46
+117 117 117 Grey46
+120 120 120 Gray47
+120 120 120 Grey47
+122 122 122 Gray48
+122 122 122 Grey48
+125 125 125 Gray49
+125 125 125 Grey49
+127 127 127 Gray50
+127 127 127 Grey50
+130 130 130 Gray51
+130 130 130 Grey51
+133 133 133 Gray52
+133 133 133 Grey52
+135 135 135 Gray53
+135 135 135 Grey53
+138 138 138 Gray54
+138 138 138 Grey54
+140 140 140 Gray55
+140 140 140 Grey55
+143 143 143 Gray56
+143 143 143 Grey56
+145 145 145 Gray57
+145 145 145 Grey57
+148 148 148 Gray58
+148 148 148 Grey58
+150 150 150 Gray59
+150 150 150 Grey59
+153 153 153 Gray60
+153 153 153 Grey60
+156 156 156 Gray61
+156 156 156 Grey61
+158 158 158 Gray62
+158 158 158 Grey62
+161 161 161 Gray63
+161 161 161 Grey63
+163 163 163 Gray64
+163 163 163 Grey64
+166 166 166 Gray65
+166 166 166 Grey65
+168 168 168 Gray66
+168 168 168 Grey66
+171 171 171 Gray67
+171 171 171 Grey67
+173 173 173 Gray68
+173 173 173 Grey68
+176 176 176 Gray69
+176 176 176 Grey69
+179 179 179 Gray70
+179 179 179 Grey70
+181 181 181 Gray71
+181 181 181 Grey71
+184 184 184 Gray72
+184 184 184 Grey72
+186 186 186 Gray73
+186 186 186 Grey73
+189 189 189 Gray74
+189 189 189 Grey74
+191 191 191 Gray75
+191 191 191 Grey75
+194 194 194 Gray76
+194 194 194 Grey76
+196 196 196 Gray77
+196 196 196 Grey77
+199 199 199 Gray78
+199 199 199 Grey78
+201 201 201 Gray79
+201 201 201 Grey79
+204 204 204 Gray80
+204 204 204 Grey80
+207 207 207 Gray81
+207 207 207 Grey81
+209 209 209 Gray82
+209 209 209 Grey82
+212 212 212 Gray83
+212 212 212 Grey83
+214 214 214 Gray84
+214 214 214 Grey84
+217 217 217 Gray85
+217 217 217 Grey85
+219 219 219 Gray86
+219 219 219 Grey86
+222 222 222 Gray87
+222 222 222 Grey87
+224 224 224 Gray88
+224 224 224 Grey88
+227 227 227 Gray89
+227 227 227 Grey89
+229 229 229 Gray90
+229 229 229 Grey90
+232 232 232 Gray91
+232 232 232 Grey91
+235 235 235 Gray92
+235 235 235 Grey92
+237 237 237 Gray93
+237 237 237 Grey93
+240 240 240 Gray94
+240 240 240 Grey94
+242 242 242 Gray95
+242 242 242 Grey95
+245 245 245 Gray96
+245 245 245 Grey96
+247 247 247 Gray97
+247 247 247 Grey97
+250 250 250 Gray98
+250 250 250 Grey98
+252 252 252 Gray99
+252 252 252 Grey99
+255 255 255 Gray100
+255 255 255 Grey100
+169 169 169 DarkGrey
+169 169 169 DarkGray
+0     0 139 DarkBlue
+0   139 139 DarkCyan
+139   0 139 DarkMagenta
+139   0   0 DarkRed
+144 238 144 LightGreen
+
+
+# These were more or less invented for use with Netpbm:
+255 255 255  D65

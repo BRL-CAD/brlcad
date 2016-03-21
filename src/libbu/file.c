@@ -74,11 +74,6 @@ bu_file_exists(const char *path, int *fd)
     /* capture file descriptor if requested */
     if (fd) {
 	*fd = open(path, O_RDONLY);
-	if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
-	    bu_log("YES\n");
-	}
-	/* OK */
-	return 1;
     }
 
     /* does it exist as a filesystem entity? */
@@ -101,7 +96,8 @@ bu_file_exists(const char *path, int *fd)
 int
 bu_same_file(const char *fn1, const char *fn2)
 {
-    struct stat sb1, sb2;
+    int ret = 0;
+    char *rp1, *rp2;
 
     if (UNLIKELY(!fn1 || !fn2)) {
 	return 0;
@@ -115,14 +111,71 @@ bu_same_file(const char *fn1, const char *fn2)
 	return 0;
     }
 
-    if ((stat(fn1, &sb1) == 0) &&
-	(stat(fn2, &sb2) == 0) &&
-	(sb1.st_dev == sb2.st_dev) &&
-	(sb1.st_ino == sb2.st_ino)) {
+    /* make sure symlinks to the same file report as same */
+    rp1 = bu_realpath(fn1, NULL);
+    rp2 = bu_realpath(fn2, NULL);
+
+    /* pretend identical paths could be tested atomically.  same name
+     * implies they're the same even if lookups would be different on
+     * a fast-changing filesystem..
+     */
+    if (BU_STR_EQUAL(rp1, rp2)) {
 	return 1;
     }
 
-    return 0;
+    /* Have different paths, so check whether they are the same thing
+     * on disk.  Testing this is platform and filesystem-specific.
+     */
+
+    {
+
+/* We could build check for HAVE_GETFILEINFORMATIONBYHANDLE, but
+ * instead assume GetFullPathname implies this method will work as
+ * they're part of the same API.
+ */
+#ifdef HAVE_GETFULLPATHNAME
+	/* On Windows, test if paths map to the same space on disk. */
+
+	BOOL got1 = FALSE, got2 = FALSE;
+	HANDLE handle1, handle2;
+	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
+
+	handle1 = CreateFile(rp1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (handle1 != INVALID_HANDLE_VALUE) {
+	    got1 = GetFileInformationByHandle(handle1, &file_info1);
+	    CloseHandle(handle1);
+	}
+
+	handle2 = CreateFile(rp2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+	if (handle2 != INVALID_HANDLE_VALUE) {
+	    got2 = GetFileInformationByHandle(handle2, &file_info2);
+	    CloseHandle(handle2);
+	};
+
+	if (got1 && got2 &&
+	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+	    ret = 1;
+	}
+#else
+	/* Everywhere else, see if stat() maps to the same device and inode.
+	 *
+	 * NOTE: stat() works on Windows, but does not set an inode
+	 * value for non-UNIX filesystems.
+	 */
+	struct stat sb1, sb2;
+	if ((stat(rp1, &sb1) == 0) && (stat(rp2, &sb2) == 0) &&
+	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+	    ret = 1;
+	}
+#endif
+    }
+
+    bu_free(rp1, "free rp1");
+    bu_free(rp2, "free rp2");
+
+    return ret;
 }
 
 
@@ -305,7 +358,8 @@ bu_file_delete(const char *path)
 	    bu_fchmod(fd, (sb.st_mode|S_IRWXU));
 	}
 
-	ret = (remove(path) == 0) ? 0 : 1;
+	if (remove(path) == 0)
+	    ret = 1;
 
     } while (ret == 0 && retry < 2);
     close(fd);
@@ -321,11 +375,12 @@ bu_file_delete(const char *path)
 	}
 	close(fd);
 	return 0;
-    } else {
-	/* deleted */
-	return 1;
     }
+
+    /* deleted */
+    return 1;
 }
+
 
 int
 bu_fseek(FILE *stream, off_t offset, int origin)
@@ -341,6 +396,7 @@ bu_fseek(FILE *stream, off_t offset, int origin)
     return ret;
 }
 
+
 off_t
 bu_ftell(FILE *stream)
 {
@@ -355,6 +411,7 @@ bu_ftell(FILE *stream)
 
     return ret;
 }
+
 
 /*
  * Local Variables:

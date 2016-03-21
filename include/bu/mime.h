@@ -22,7 +22,7 @@
 __BEGIN_DECLS
 
 typedef enum {
-    BU_MIME_APPLICATION = PATH_UNKNOWN + 1, /* Make bu_mime_context_t compatible with path_component_t*/
+    BU_MIME_APPLICATION = 0,
     BU_MIME_AUDIO,
     BU_MIME_CHEMICAL,
     BU_MIME_IMAGE,

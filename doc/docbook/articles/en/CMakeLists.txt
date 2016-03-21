@@ -1,4 +1,4 @@
-set(docbook_articles_EN
+set(articles_EN
   TEMPLATE.xml
   about.xml
   animation_tutorial.xml
@@ -6,6 +6,7 @@ set(docbook_articles_EN
   build_region.xml
   camo_shader.xml
   ebm_primitive.xml
+  gcv.xml
   ged.xml
   mgedrc.xml
   mged.xml
@@ -17,7 +18,7 @@ set(docbook_articles_EN
   main_menu.xml
   )
 
-set(docbook_articles_EN_IMAGES
+set(articles_EN_IMAGES
   images/animtbl.gif
   images/az_el.gif
   images/az_el.jpg
@@ -59,9 +60,9 @@ set(docbook_articles_EN_IMAGES
   images/fillet.jpg
   images/film.gif
   images/fn.gif
-  images/handle.gif
-  images/handle.jpg
-  images/Lee_tux.gif
+  images/gcv_architecture.png
+  images/gcv_unsupported_tessellation.png
+  images/gcv_using_gdiff.png
   images/matrix.gif
   images/mgedrc_fig01.png
   images/mgedrc_fig02.png
@@ -153,11 +154,9 @@ set(docbook_articles_EN_IMAGES
   images/v_eqn1.gif
   images/v_eqn2.gif
   )
-ADD_DOC(docbook_articles_EN_IMAGES html/articles/en/images)
+ADD_DOC(articles_EN_IMAGES html/articles/en/images)
 
-DOCBOOK_TO_HTML(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
-DOCBOOK_TO_PHP(article docbook_articles_EN html/articles/en docbook_articles_EN_IMAGES_cp)
-DOCBOOK_TO_PDF(article docbook_articles_EN pdf/articles/en docbook_articles_EN_IMAGES_cp)
+ADD_DOCBOOK("HTML;PHP;PDF" articles_EN articles/en articles_EN_IMAGES_cp)
 
 CMAKEFILES(images/tire_fig12.svg images/tire_fig13.svg)
 

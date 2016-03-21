@@ -1046,8 +1046,11 @@ mark_as_advanced(BRLCAD_ENABLE_AQUA)
 # Install example BRL-CAD Geometry Files
 option(BRLCAD_INSTALL_EXAMPLE_GEOMETRY "Install the example BRL-CAD geometry files." ON)
 
-# test for X11 on all platforms since we don't know when/where we'll find it
-include("${BRLCAD_CMAKE_DIR}/FindX11.cmake")
+# test for X11 on all platforms since we don't know when/where we'll find it, unless
+# we've indicated we *don't* want an X11 build
+if(NOT BRLCAD_ENABLE_AQUA)
+  include("${BRLCAD_CMAKE_DIR}/FindX11.cmake")
+endif(NOT BRLCAD_ENABLE_AQUA)
 
 # Set whether X11 is enabled or disabled by default
 if(WIN32)
@@ -1957,6 +1960,7 @@ BRLCAD_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
 BRLCAD_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
 BRLCAD_INCLUDE_FILE(string.h HAVE_STRING_H)
 BRLCAD_INCLUDE_FILE(strings.h HAVE_STRINGS_H)
+BRLCAD_INCLUDE_FILE(strsafe.h HAVE_STRSAFE_H)
 BRLCAD_INCLUDE_FILE(sys/_ioctl.h HAVE_SYS__IOCTL_H)
 BRLCAD_INCLUDE_FILE(sys/cpuset.h HAVE_SYS_CPUSET_H)
 BRLCAD_INCLUDE_FILE(sys/file.h HAVE_SYS_FILE_H)
@@ -2595,6 +2599,19 @@ string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
 string(STRIP ${BRLCAD_COMPILE_COUNT} BRLCAD_COMPILE_COUNT)
 
+if(NOT BRLCAD_COMPILE_DATE)
+  set(BRLCAD_COMPILE_DATE "\"date_unknown\"")
+endif(NOT BRLCAD_COMPILE_DATE)
+if(NOT BRLCAD_COMPILE_HOST)
+  set(BRLCAD_COMPILE_HOST "\"host_unknown\"")
+endif(NOT BRLCAD_COMPILE_HOST)
+if(NOT BRLCAD_COMPILE_USER)
+  set(BRLCAD_COMPILE_USER "\"user_unknown\"")
+endif(NOT BRLCAD_COMPILE_USER)
+if(NOT BRLCAD_COMPILE_COUNT)
+  set(BRLCAD_COMPILE_COUNT -1)
+endif(NOT BRLCAD_COMPILE_COUNT)
+
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
@@ -2994,6 +3011,8 @@ mark_as_advanced(CMAKE_C_COMPILER)
 # warning about out-of-sync files is printed but no automatic updating takes
 # place in the source tree.
 
+set(CONFIG_FATAL_ERROR 0)
+
 file(READ "${BRLCAD_SOURCE_DIR}/INSTALL" SRC_INSTALL_STR)
 string(REGEX REPLACE "${CONFIG_OPT_STRING}.*" "" INSTALL_PREFIX "${SRC_INSTALL_STR}")
 file(WRITE "${BRLCAD_BINARY_DIR}/INSTALL.new" "${INSTALL_PREFIX}")
@@ -3010,7 +3029,8 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_DIFFERENT)
-  message(FATAL_ERROR "\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
+  set(CONFIG_FATAL_ERROR 1)
+  message("\n\"${BRLCAD_SOURCE_DIR}/INSTALL\" is out of date.  An updated version has been generated at \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/INSTALL\" with \"${BRLCAD_BINARY_DIR}/INSTALL.new\"\n")
 endif(IS_DIFFERENT)
 
 # Do the same thing for the configure shell script - finish it and check
@@ -3023,8 +3043,13 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files
   RESULT_VARIABLE IS_CONFIG_SH_DIFFERENT OUTPUT_VARIABLE DIFF_OUTPUT ERROR_VARIABLE
   DIFF_ERROR)
 if(IS_CONFIG_SH_DIFFERENT)
-  message(FATAL_ERROR "\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
+  set(CONFIG_FATAL_ERROR 1)
+  message("\n\"${BRLCAD_SOURCE_DIR}/configure\" is out of date. An updated version has been generated at \"${BRLCAD_BINARY_DIR}/configure.new\"\nTo clear this warning, replace \"${BRLCAD_SOURCE_DIR}/configure\" with \"${BRLCAD_BINARY_DIR}/configure.new\"\n")
 endif(IS_CONFIG_SH_DIFFERENT)
+
+if(CONFIG_FATAL_ERROR)
+  message(FATAL_ERROR "Configure haulted.")
+endif(CONFIG_FATAL_ERROR)
 
 
 # Because the build-time-delta needs a configure-file but comes at the

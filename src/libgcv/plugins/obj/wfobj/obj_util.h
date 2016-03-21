@@ -21,6 +21,8 @@
 #ifndef WFOBJ_OBJ_UTIL_H
 #define WFOBJ_OBJ_UTIL_H
 
+#include "common.h"
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <ctype.h>

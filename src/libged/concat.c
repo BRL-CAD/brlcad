@@ -522,6 +522,9 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
 
     db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
 
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     /* Free the Hash tables */
     ptr = Tcl_FirstHashEntry(&name_tbl, &search);
     while (ptr) {

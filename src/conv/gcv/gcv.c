@@ -286,7 +286,7 @@ parse_model_string(struct bu_vls *format, struct bu_vls *slog, const char *opt, 
 
     /* If we have no prefix or the prefix didn't map to a model type, try file extension */
     if (type == BU_MIME_MODEL_UNKNOWN && extract_path(&path, input)) {
-	if (bu_path_component(format, bu_vls_addr(&path), PATH_EXTENSION)) {
+	if (bu_path_component(format, bu_vls_addr(&path), BU_PATH_EXT)) {
 	    type_int = bu_file_mime(bu_vls_addr(format), BU_MIME_MODEL);
 	    type = (type_int < 0) ? BU_MIME_MODEL_UNKNOWN : (bu_mime_model_t)type_int;
 	    if (type == BU_MIME_MODEL_UNKNOWN) {

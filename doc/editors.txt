@@ -1,0 +1,84 @@
+This file documents some of the editor configurations for commonly used
+text editors that will configure them to work more smoothly with BRL-CAD
+sources.  These are not "official", just tips based on experience.
+
+##############################################################################################
+
+Vim (http://www.vim.org/download.php) .vimrc file:
+
+" Enable file type detection
+filetype on
+
+" Turn on plugin loading and tailored indenting based on file type
+filetype plugin indent on
+
+" Enable syntax highlighting
+syntax enable
+
+" Make backspace work like most other apps
+" http://vim.wikia.com/wiki/Backspace_and_delete_problems
+set backspace=indent,eol,start
+" If your delete key terminal code is wrong, but the
+" code for backspace is alright, you can put ':fixdel' in
+" your .vimrc.  This works no matter what the actual code
+" for backspace is.
+" http://vimdoc.sourceforge.net/htmldoc/options.html#:fixdel
+fixdel
+
+" Set theme from http://www.vim.org/scripts/script.php?script_id=791
+:colorscheme relaxedgreen
+
+" Enable modeline support (http://vim.wikia.com/wiki/Modeline_magic)
+set modeline
+set modelines=5
+
+" Advanced LaTeX support:
+" http://vim-latex.sourceforge.net/
+"
+" LaTeX mode settings:
+" http://vim-latex.sourceforge.net/documentation/latex-suite/recommended-settings.html
+filetype plugin on
+set grepprg=grep\ -nH\ $*
+let g:tex_flavor='latex'
+
+" Go with US spelling
+set spell spelllang=en_us
+
+" Show trailing whitespace:
+highlight ExtraWhitespace ctermbg=red guibg=red
+autocmd ColorScheme * highlight ExtraWhitespace ctermbg=red guibg=red
+match ExtraWhitespace /\s\+$/
+
+" Fix C indenting behavior:
+" http://stackoverflow.com/questions/28217118/vim-indents-c-c-functions-badly-when-the-type-and-name-are-in-different-lines
+set cinoptions+=t0
+
+" CMake vim resources:
+"
+" Install into ~/.vim/indent/
+" https://github.com/Kitware/CMake/blob/master/Auxiliary/cmake-indent.vim
+"
+" Install into ~/.vim/syntax/
+" https://github.com/Kitware/CMake/blob/master/Auxiliary/cmake-syntax.vim
+
+" Trigger CMake mode for various file extensions
+:autocmd BufRead,BufNewFile *.cmake,CMakeLists.txt,*.cmake.in setf cmake
+:autocmd BufRead,BufNewFile *.ctest,*.ctest.in setf cmake
+
+" Tcl resources:
+" http://www.vim.org/scripts/script.php?script_id=1603
+" http://www.vim.org/scripts/script.php?script_id=1717
+:autocmd BufRead,BufNewFile *.tcl,*.tcl.in setf tcl
+
+
+##############################################################################################
+
+Emacs .emacs file:
+
+;; Nxml mode for DocBook:
+;; https://www.gnu.org/software/emacs/manual/html_mono/nxml-mode.html
+;; To set the DocBook 5 schema, select the file
+;; <path/to/brlcad>/doc/docbook/resources/other/docbook5xi.rnc
+;; using XMl->Set Schema->File... from the GUI or C-c C-s C-f in
+;; the editor itself.
+(add-to-list 'auto-mode-alist (cons (concat "\\." (regexp-opt '("xml") t) "\\'") 'nxml-mode))

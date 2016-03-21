@@ -1,0 +1,57 @@
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(SRCIMG "@INPUT_IMAGE@")
+set(CTRLIMG "@CONTROL_IMAGE@")
+set(TGTIMG "@TARGET_IMAGE@")
+set(LOGFILE "@LOG_FILE@")
+
+set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
+set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
+set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
+# Use the mechanism created to allow multiconfig builds to
+# know what the current build type is.
+if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${RBDIR}")
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
+  set(BDIR "${DBDIR}")
+else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${SBDIR}")
+endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+
+get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
+set(ICV "${BDIR}/icv${EXE}")
+set(PIXCMP "${BDIR}/pixcmp${EXE}")
+
+# Start with the file using standard UNIX line endings
+file(APPEND "${LOGFILE}" "Converting ${SRCIMG} to ${TGTIMG}:\n")
+execute_process(
+  COMMAND "${ICV}" "${SRCIMG}" "${TGTIMG}"
+  OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+set(icv_log)
+if(NOT EXISTS "${TGTIMG}")
+  message(FATAL_ERROR "Unable to convert ${SRCIMG} to ${TGTIMG} with ${ICV}, aborting.\nSee ${LOGFILE} for more details.")
+endif(NOT EXISTS "${TGTIMG}")
+
+# pixcmp the results with the control image to make sure icv got it right
+file(APPEND "${LOGFILE}" "\nComparing ${TGTIMG} to ${CTRLIMG}:\n")
+execute_process(
+  COMMAND "${PIXCMP}" "${TGTIMG}" "${CTRLIMG}"
+  RESULT_VARIABLE pixcmp_val OUTPUT_VARIABLE icv_log ERROR_VARIABLE icv_log
+  )
+file(APPEND "${LOGFILE}" "${icv_log}")
+
+if(${pixcmp_val} GREATER 0)
+  message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP}, aborting.\nSee ${LOGFILE} for more details.")
+else(${pixcmp_val} GREATER 0)
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
+endif(${pixcmp_val} GREATER 0)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

@@ -313,7 +313,6 @@ shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx,
 	/* Eye inside solid, orthoview */
 	normal = -r_dir;
     } else {
-	norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
 	normal = hitp->hit_normal;
     }
 
@@ -349,9 +348,9 @@ void do_segp(RESULT_TYPE *res, const uint idx,
 
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
+	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
 	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
-		    acc->lt_pos, acc->ids, acc->indexes,
-		    acc->prims, acc->regions);
+		    acc->lt_pos, acc->ids, acc->indexes, acc->prims, acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -419,13 +418,15 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
         double3 normal;
 	const uint idx = segp->seg_sti;
 
-	if (hitp->hit_dist < 0.0) {
-	    /* Eye inside solid, orthoview */
-	    normal = -r_dir;
-        } else {
-	    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-	    normal = hitp->hit_normal;
-        }
+	if (lightmodel != 4) {
+	    if (hitp->hit_dist < 0.0) {
+		/* Eye inside solid, orthoview */
+		normal = -r_dir;
+	    } else {
+		norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+		normal = hitp->hit_normal;
+	    }
+	}
 
         /*
          * Diffuse reflectance from each light source

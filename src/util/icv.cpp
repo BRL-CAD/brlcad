@@ -26,6 +26,8 @@
 #include "common.h"
 #include <stdlib.h>
 #include <string.h>
+#include <stdio.h>
+#include <sys/stat.h>
 
 #include "bu.h"
 #include "icv.h"
@@ -89,8 +91,8 @@ main(int ac, const char **av)
 {
     int uac = 0;
     int ret = 0;
-    int width = 0;
-    int height = 0;
+    size_t width = 0;
+    size_t height = 0;
     const char *in_fmt = NULL;
     const char *out_fmt = NULL;
     static bu_mime_image_t in_type = BU_MIME_IMAGE_UNKNOWN;
@@ -104,10 +106,8 @@ main(int ac, const char **av)
 
     struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
     struct bu_vls in_format = BU_VLS_INIT_ZERO;
-    struct bu_vls in_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls in_path = BU_VLS_INIT_ZERO;
     struct bu_vls out_format = BU_VLS_INIT_ZERO;
-    struct bu_vls out_path_raw = BU_VLS_INIT_ZERO;
     struct bu_vls out_path = BU_VLS_INIT_ZERO;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
 
@@ -171,11 +171,11 @@ main(int ac, const char **av)
 
     /* Did we get explicit options for an input and/or output file? */
     if (in_path_str) {
-	bu_vls_sprintf(&in_path_raw, "%s", in_path_str);
+	bu_vls_sprintf(&in_path, "%s", in_path_str);
 	skip_in++;
     }
     if (out_path_str) {
-	bu_vls_sprintf(&out_path_raw, "%s", out_path_str);
+	bu_vls_sprintf(&out_path, "%s", out_path_str);
 	skip_out++;
     }
 
@@ -183,37 +183,19 @@ main(int ac, const char **av)
      * be the last two arguments supplied */
     if (!(skip_in && skip_out)) {
 	if (skip_in && !skip_out) {
-	    bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
+	    bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
 	}
 	if (!skip_in && skip_out) {
-	    bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
+	    bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
 	}
 	if (!skip_in && !skip_out) {
 	    if (ac > 1) {
-		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 2]);
-		bu_vls_sprintf(&out_path_raw, "%s", av[uac - 1]);
+		bu_vls_sprintf(&in_path, "%s", av[uac - 2]);
+		bu_vls_sprintf(&out_path, "%s", av[uac - 1]);
 	    } else {
-		bu_vls_sprintf(&in_path_raw, "%s", av[uac - 1]);
+		bu_vls_sprintf(&in_path, "%s", av[uac - 1]);
 	    }
 	}
-    }
-
-    /* See if we have input and output files specified */
-    if (!bu_path_component(&in_path, bu_vls_addr(&in_path_raw), PATH_ALL)) {
-	if (bu_vls_strlen(&in_path_raw) > 0) {
-	    bu_vls_printf(&slog, "Error: no input path identified: %s\n", bu_vls_addr(&in_path_raw));
-	} else {
-	    bu_vls_printf(&slog, "Error: no input path.\n");
-	}
-	ret = 1;
-    }
-    if (!bu_path_component(&out_path, bu_vls_addr(&out_path_raw), PATH_ALL)) {
-	if (bu_vls_strlen(&out_path_raw) > 0) {
-	    bu_vls_printf(&slog, "Error: no output path identified: %s\n", bu_vls_addr(&out_path_raw));
-	} else {
-	    bu_vls_printf(&slog, "Error: no output path.\n");
-	}
-	ret = 1;
     }
 
     /* Make sure we have distinct input and output paths */
@@ -225,35 +207,33 @@ main(int ac, const char **av)
     /* Find out what input file type we are dealing with */
     if (in_type == BU_MIME_IMAGE_UNKNOWN) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&c, bu_vls_addr(&in_path_raw), (path_component_t)BU_MIME_IMAGE)) {
-	    in_type = (bu_mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	if (!bu_vls_strlen(&in_path)) {
+	    bu_vls_printf(&slog, "No input file specified - to use stdin, specify an image format for the data input stream\n");
+	    ret = 1;
+	} else {
+	    if (bu_path_component(&c, bu_vls_addr(&in_path), BU_PATH_EXT)) {
+		in_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
+	    } else {
+		bu_vls_printf(&slog, "No input file image type specified - need either a specified input image type or a path that provides MIME information.\n");
+		ret = 1;
+	    }
 	}
 	bu_vls_free(&c);
     }
     if (out_type == BU_MIME_IMAGE_UNKNOWN) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
-	if (bu_path_component(&c, bu_vls_addr(&out_path_raw), (path_component_t)BU_MIME_IMAGE)) {
-	    out_type = (bu_mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
+	if (!bu_vls_strlen(&out_path)) {
+	    bu_vls_printf(&slog, "No output file specified - to use stdout, specify an image format to use for the data stream\n");
+	    ret = 1;
+	} else {
+	    if (bu_path_component(&c, bu_vls_addr(&out_path), BU_PATH_EXT)) {
+		out_type = (bu_mime_image_t)bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE);
+	    } else {
+		bu_vls_printf(&slog, "No output file image type specified - need either a specified output image type or a path that provides MIME information.\n");
+		ret = 1;
+	    }
 	}
 	bu_vls_free(&c);
-    }
-
-    /* If we get to this point without knowing both input and output types, we've got a problem */
-    if (in_type == BU_MIME_IMAGE_UNKNOWN) {
-	if (bu_vls_strlen(&in_path) > 0) {
-	    bu_vls_printf(&slog, "Error: no format type identified for input path: %s\n", bu_vls_addr(&in_path));
-	} else {
-	    bu_vls_printf(&slog, "Error: no input format type identified.\n");
-	}
-	ret = 1;
-    }
-    if (out_type == BU_MIME_IMAGE_UNKNOWN) {
-	if (bu_vls_strlen(&out_path) > 0) {
-	    bu_vls_printf(&slog, "Error: no format type identified for output path: %s\n", bu_vls_addr(&out_path));
-	} else {
-	    bu_vls_printf(&slog, "Error: no output format type identified.\n");
-	}
-	ret = 1;
     }
 
     /* If everything isn't OK, we're done - report and clean up memory */
@@ -268,6 +248,19 @@ main(int ac, const char **av)
     bu_log("Output file format: %s\n", out_fmt);
     bu_log("Input file path: %s\n", bu_vls_addr(&in_path));
     bu_log("Output file path: %s\n", bu_vls_addr(&out_path));
+
+    /* If we have no width or height specified, and we have an input format that
+     * does not encode that information, make an educated guess */
+    if (!width && !height && (in_type == BU_MIME_IMAGE_PIX || in_type == BU_MIME_IMAGE_BW)) {
+	struct stat sbuf;
+	if (stat(bu_vls_addr(&in_path), &sbuf) < 0) {
+	    bu_exit(1, "Unable to stat input file");
+	}
+	if (!icv_image_size(NULL, 0, (size_t)sbuf.st_size, in_type, &width, &height)) {
+	    bu_log("Error - input image type does not have dimension information encoded, and icv was not able to deduce a size.  Please specify image width in pixels with the \"-w\" option and image height in pixels with the \"-n\" option.\n");
+	    bu_exit(1, "image dimensional information insufficient");
+	}
+    }
 
     img = icv_read(bu_vls_addr(&in_path), in_type, width, height);
     icv_write(img, bu_vls_addr(&out_path), out_type);

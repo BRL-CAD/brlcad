@@ -56,7 +56,7 @@ Following the build instructions in the INSTALL file.  You will need:
 gcc (3+, e.g. 4.0.3)
 g++ (3+, e.g. 4.0.3)
 make (e.g. gnu make 3.8.0)
-cmake (2.8.3 or newer)
+cmake (2.8.8 or newer)
 
 All three of those have implicit dependencies on other packages.
 

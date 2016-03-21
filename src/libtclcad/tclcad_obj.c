@@ -1529,12 +1529,15 @@ to_cmd(ClientData clientData,
 }
 
 
-HIDDEN int
-free_path_edit_params_entry(struct bu_hash_entry *entry, void *UNUSED(udata))
+HIDDEN void
+free_path_edit_params(struct bu_hash_tbl *t)
 {
-    struct path_edit_params *pp = (struct path_edit_params *)bu_get_hash_value(entry);
-    BU_PUT(pp, struct path_edit_params);
-    return 0;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
+    while (entry) {
+	struct path_edit_params *pp = (struct path_edit_params *)bu_hash_value(entry, NULL);
+	BU_PUT(pp, struct path_edit_params);
+	entry = bu_hash_next(t, entry);
+    }
 }
 
 
@@ -1557,8 +1560,8 @@ to_deleteProc(ClientData clientData)
     if (top->to_gop->go_gedp)
 	BU_PUT(top->to_gop->go_gedp, struct ged);
 
-    bu_hash_tbl_traverse(top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
-    bu_hash_tbl_free(top->to_gop->go_edited_paths);
+    free_path_edit_params(top->to_gop->go_edited_paths);
+    bu_hash_destroy(top->to_gop->go_edited_paths);
 
     while (BU_LIST_WHILE(gdvp, ged_dm_view, &top->to_gop->go_head_views.l)) {
 	BU_LIST_DEQUEUE(&(gdvp->l));
@@ -1704,7 +1707,7 @@ Usage: go_open\n\
     bu_vls_init(&top->to_gop->go_rt_end_callback);
     BU_LIST_INIT(&top->to_gop->go_observers.l);
     top->to_gop->go_refresh_on = 1;
-    top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    top->to_gop->go_edited_paths = bu_hash_create(0);
 
     BU_LIST_INIT(&top->to_gop->go_head_views.l);
 
@@ -6429,74 +6432,82 @@ struct redraw_edited_path_data {
 };
 
 
-HIDDEN int
-redraw_edited_path(struct bu_hash_entry *entry, void *udata)
+HIDDEN void 
+redraw_edited_paths(struct bu_hash_tbl *t, void *udata)
 {
     const char *av[5] = {0};
-    char *draw_path = (char *)bu_get_hash_key(entry);
+    uint8_t *key;
+    char *draw_path;
     struct redraw_edited_path_data *data;
     int ret, dmode = 0;
     struct bu_vls path_dmode = BU_VLS_INIT_ZERO;
     struct path_edit_params *params;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
-    data = (struct redraw_edited_path_data *)udata;
+    while (entry) {
 
-    params = (struct path_edit_params *)bu_get_hash_value(entry);
-    if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
-	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
-	struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
-	struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
-	mat_t dvec;
+	bu_hash_key(entry, &key, NULL);
+	draw_path = (char *)key;
 
-	MAT_DELTAS_GET(dvec, params->edit_mat);
-	VSCALE(dvec, dvec, data->gedp->ged_wdbp->dbip->dbi_base2local);
+	data = (struct redraw_edited_path_data *)udata;
 
-	bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
-	bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
-	bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
-	MAT_IDN(params->edit_mat);
+	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
+	if (params->edit_mode == TCLCAD_OTRANSLATE_MODE) {
+	    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	    struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
+	    struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
+	    struct bu_vls tran_z_vls = BU_VLS_INIT_ZERO;
+	    mat_t dvec;
 
-	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
-		      bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
-		      bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
-		      bu_vls_addr(&tran_z_vls));
-	Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+	    MAT_DELTAS_GET(dvec, params->edit_mat);
+	    VSCALE(dvec, dvec, data->gedp->ged_wdbp->dbip->dbi_base2local);
 
-	bu_vls_free(&tcl_cmd);
-	bu_vls_free(&tran_x_vls);
-	bu_vls_free(&tran_y_vls);
-	bu_vls_free(&tran_z_vls);
+	    bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
+	    bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
+	    bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
+	    MAT_IDN(params->edit_mat);
+
+	    bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
+		    bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
+		    bu_vls_addr(&tran_x_vls), bu_vls_addr(&tran_y_vls),
+		    bu_vls_addr(&tran_z_vls));
+	    Tcl_Eval(current_top->to_interp, bu_vls_addr(&tcl_cmd));
+
+	    bu_vls_free(&tcl_cmd);
+	    bu_vls_free(&tran_x_vls);
+	    bu_vls_free(&tran_y_vls);
+	    bu_vls_free(&tran_z_vls);
+	}
+
+	av[0] = "how";
+	av[1] = draw_path;
+	av[2] = NULL;
+	ret = ged_how(data->gedp, 2, av);
+	if (ret == GED_OK) {
+	    ret = bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
+	}
+	if (dmode == 5) {
+	    bu_vls_printf(&path_dmode, "-h");
+	} else {
+	    bu_vls_printf(&path_dmode, "-m%d", dmode);
+	}
+
+	av[0] = "erase";
+	ret = ged_erase(data->gedp, 2, av);
+
+	if (ret == GED_OK) {
+	    av[0] = "draw";
+	    av[1] = "-R";
+	    av[2] = bu_vls_cstr(&path_dmode);
+	    av[3] = draw_path;
+	    av[4] = NULL;
+	    ged_draw(data->gedp, 4, av);
+	}
+
+	*data->need_refresh = 1;
+
+	entry = bu_hash_next(t, entry);
     }
-
-    av[0] = "how";
-    av[1] = draw_path;
-    av[2] = NULL;
-    ret = ged_how(data->gedp, 2, av);
-    if (ret == GED_OK) {
-	ret = bu_sscanf(bu_vls_cstr(data->gedp->ged_result_str), "%d", &dmode);
-    }
-    if (dmode == 5) {
-	bu_vls_printf(&path_dmode, "-h");
-    } else {
-	bu_vls_printf(&path_dmode, "-m%d", dmode);
-    }
-
-    av[0] = "erase";
-    ret = ged_erase(data->gedp, 2, av);
-
-    if (ret == GED_OK) {
-	av[0] = "draw";
-	av[1] = "-R";
-	av[2] = bu_vls_cstr(&path_dmode);
-	av[3] = draw_path;
-	av[4] = NULL;
-	ged_draw(data->gedp, 4, av);
-    }
-
-    *data->need_refresh = 1;
-
-    return 0;
 }
 
 
@@ -6586,11 +6597,12 @@ to_idle_mode(struct ged *gedp,
     data.gedp = gedp;
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
-    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, redraw_edited_path, &data);
 
-    bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
-    bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
-    current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    redraw_edited_paths(current_top->to_gop->go_edited_paths, &data);
+
+    free_path_edit_params(current_top->to_gop->go_edited_paths);
+    bu_hash_destroy(current_top->to_gop->go_edited_paths);
+    current_top->to_gop->go_edited_paths = bu_hash_create(0);
     Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
@@ -8985,24 +8997,18 @@ to_mouse_otranslate(struct ged *gedp,
 
     if (0 < bu_vls_strlen(&gdvp->gdv_edit_motion_delta_callback)) {
 	const char *path_string = argv[2];
-	struct path_edit_params *params;
-	int is_entry_new;
-	struct bu_hash_entry *entry;
 	vect_t dvec;
+	struct path_edit_params *params = (struct path_edit_params *)bu_hash_get(current_top->to_gop->go_edited_paths,
+				(uint8_t *)path_string,
+				sizeof(char) * strlen(path_string) + 1);
 
-	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
-				(unsigned char *)path_string,
-				sizeof(char) * strlen(path_string) + 1,
-				&is_entry_new);
-
-	if (is_entry_new) {
+	if (!params) {
 	    BU_GET(params, struct path_edit_params);
 	    params->edit_mode = gdvp->gdv_view->gv_mode;
 	    params->dx = params->dy = 0.0;
-
-	    bu_set_hash_value(entry, (unsigned char *)params);
-	} else {
-	    params = (struct path_edit_params *)bu_get_hash_value(entry);
+	    (void)bu_hash_set(current_top->to_gop->go_edited_paths,
+		    (uint8_t *)path_string,
+		    sizeof(char) * strlen(path_string) + 1, (void *)params);
 	}
 
 	params->dx += dx;
@@ -14689,26 +14695,32 @@ struct path_match_data {
 };
 
 
-HIDDEN int
-key_matches_path(struct bu_hash_entry *entry, void *udata)
+HIDDEN struct bu_hash_entry *
+key_matches_paths(struct bu_hash_tbl *t, void *udata)
 {
     struct path_match_data *data = (struct path_match_data *)udata;
     struct db_full_path entry_fpath;
+    uint8_t *key;
     char *path_string;
-    int ret;
+    struct bu_hash_entry *entry = bu_hash_next(t, NULL);
 
-    path_string = (char *)bu_get_hash_key(entry);
-    if (db_string_to_path(&entry_fpath, data->dbip, path_string) < 0) {
-	return 0;
+    while (entry) {
+	(void)bu_hash_key(entry, &key, NULL);
+	path_string = (char *)key;
+	if (db_string_to_path(&entry_fpath, data->dbip, path_string) < 0) {
+	    continue;
+	}
+
+	if (db_full_path_match_top(&entry_fpath, data->s_fpath)) {
+	    db_free_full_path(&entry_fpath);
+	    return entry;
+	}
+
+	db_free_full_path(&entry_fpath);
+	entry = bu_hash_next(t, entry);
     }
 
-    ret = 0;
-    if (db_full_path_match_top(&entry_fpath, data->s_fpath)) {
-	ret = 1;
-    }
-
-    db_free_full_path(&entry_fpath);
-    return ret;
+    return NULL;
 }
 
 
@@ -14724,10 +14736,10 @@ go_draw_solid(struct ged_dm_view *gdvp, struct solid *sp)
 
     data.s_fpath = &sp->s_fullpath;
     data.dbip = gop->go_gedp->ged_wdbp->dbip;
-    entry = bu_hash_tbl_traverse(gop->go_edited_paths, key_matches_path, &data);
+    entry = key_matches_paths(gop->go_edited_paths, &data);
 
     if (entry != NULL) {
-	params = (struct path_edit_params *)bu_get_hash_value(entry);
+	params = (struct path_edit_params *)bu_hash_value(entry, NULL);
     }
     if (params) {
 	MAT_COPY(save_mat, gdvp->gdv_view->gv_model2view);

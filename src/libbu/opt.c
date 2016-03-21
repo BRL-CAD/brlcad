@@ -28,6 +28,7 @@
 #include <ctype.h> /* for isspace */
 #include <errno.h> /* for errno */
 
+#include "vmath.h"
 #include "bu/color.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -933,7 +934,7 @@ bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
     struct bu_color *set_color = (struct bu_color *)set_c;
     unsigned int rgb[3];
 
-    BU_OPT_CHECK_ARGV0(msg, argc, argv, "color");
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_color");
 
     /* First, see if the first string converts to rgb */
     if (!bu_str_to_rgb((char *)argv[0], (unsigned char *)&rgb)) {
@@ -963,6 +964,87 @@ bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_c)
 	/* yep, 1 did the job */
 	if (set_color) (void)bu_color_from_rgb_chars(set_color, (unsigned char *)&rgb);
 	return 1;
+    }
+
+    return -1;
+}
+
+
+int
+bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *vec)
+{
+    int i = 0;
+    int acnum = 0;
+    char *str1 = NULL;
+    char *avnum[4] = {NULL, NULL, NULL, NULL};
+    vect_t *v= (vect_t *)vec;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_vect_t");
+
+    /* First, see if the first string converts to a vect_t (should this be a func?)*/
+    str1 = bu_strdup(argv[0]);
+    while (str1[i]) {
+	/* If we have a separator, replace with a space */
+	if (str1[i] == ',' || str1[i] == '/') str1[i] = ' ';
+	i++;
+    }
+    acnum = bu_argv_from_string(avnum, 4, str1);
+    if (acnum == 3) {
+	/* We might have three numbers - find out */
+	fastf_t v1 = 0.0;
+	fastf_t v2 = 0.0;
+	fastf_t v3 = 0.0;
+	int have_three = 1;
+	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[0], &v1) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[0]);
+	    have_three = 0;
+	}
+	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[1], &v2) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[1]);
+	    have_three = 0;
+	}
+	if (bu_opt_fastf_t(msg, 1, (const char **)&avnum[2], &v3) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", avnum[2]);
+	    have_three = 0;
+	}
+	bu_free(str1, "free tmp str");
+	/* If we got here, we do have three numbers */
+	if (have_three) {
+	    VSET(*v, v1, v2, v3);
+	    return 1;
+	}
+    } else {
+	/* Can't be just the first arg */
+	bu_free(str1, "free tmp str");
+    }
+    /* First string didn't have three numbers - maybe we have 3 args ? */
+    if (argc >= 3) {
+	fastf_t v1 = 0.0;
+	fastf_t v2 = 0.0;
+	fastf_t v3 = 0.0;
+	if (bu_opt_fastf_t(msg, 1, &argv[0], &v1) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[0]);
+	    bu_free(str1, "free tmp str");
+	    return -1;
+	}
+	if (bu_opt_fastf_t(msg, 1, &argv[1], &v2) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[1]);
+	    bu_free(str1, "free tmp str");
+	    return -1;
+	}
+	if (bu_opt_fastf_t(msg, 1, &argv[2], &v3) == -1) {
+	    if (msg) bu_vls_sprintf(msg, "Not a number: %s.\n", argv[2]);
+	    bu_free(str1, "free tmp str");
+	    return -1;
+	}
+	/* If we got here, 3 did the job */
+	VSET(*v, v1, v2, v3);
+	return 3;
+    } else {
+	/* Not valid with 1 and don't have 3 - we require at least one, so
+	 * claim one argv as belonging to this option regardless. */
+	if (msg) bu_vls_sprintf(msg, "No valid vector found: %s\n", argv[0]);
+	return -1;
     }
 
     return -1;
