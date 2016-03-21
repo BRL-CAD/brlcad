@@ -443,12 +443,12 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_free(&slog);
 }
 
-int rtwizard_imgformat_supported(const char *fmt) {
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_DPIX")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PIX")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PNG")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PPM")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_BW")) return 1;
+int rtwizard_imgformat_supported(int fmt) {
+    if (fmt == BU_MIME_IMAGE_DPIX) return 1;
+    if (fmt == BU_MIME_IMAGE_PIX) return 1;
+    if (fmt == BU_MIME_IMAGE_PNG) return 1;
+    if (fmt == BU_MIME_IMAGE_PPM) return 1;
+    if (fmt == BU_MIME_IMAGE_BW) return 1;
     return 0;
 }
 
@@ -696,7 +696,6 @@ main(int argc, char **argv)
 	s->no_gui = 0;
     }
 
-    print_rtwizard_state(s);
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
@@ -707,8 +706,8 @@ main(int argc, char **argv)
 	bu_log("av[%d]: %s\n", i, argv[i]);
 	/* First, see if we have an input .g file */
 	if (bu_vls_strlen(s->input_file) == 0) {
-	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_MODEL)) {
-		if (BU_STR_EQUAL(bu_vls_addr(&c), "BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY")) {
+	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
+		if (bu_file_mime(bu_vls_addr(&c), BU_MIME_MODEL) == BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) {
 		    if (bu_file_exists(argv[i],NULL)) {
 			bu_vls_sprintf(s->input_file, "%s", argv[i]);
 			/* This was the .g name - don't add it to the color list */
@@ -722,8 +721,8 @@ main(int argc, char **argv)
 	bu_vls_trunc(&c, 0);
 	/* Next, see if we have an image specified as an output destination */
 	if (bu_vls_strlen(s->output_file) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
-	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_IMAGE)) {
-		if (rtwizard_imgformat_supported(bu_vls_addr(&c))) {
+	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
+		if (rtwizard_imgformat_supported(bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE))) {
 		    bu_vls_sprintf(s->output_file, "%s", argv[i]);
 		    /* This looks like the output image name - don't add it to the color list */
 		    continue;
@@ -734,6 +733,8 @@ main(int argc, char **argv)
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
     }
 
+    print_rtwizard_state(s);
+#if 0
     /* For now, all roads lead to Tcl. */
 
     /* TODO - this tcl initialization is common (more or less) to btclsh, bwish,
@@ -846,7 +847,7 @@ main(int argc, char **argv)
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
 	status = Tcl_Eval(interpreter, bu_vls_addr(&tcl_cmd));
     }
-
+#endif
 
     /* Someday, we want to do this without Tcl via library calls unless
      * the GUI is needed... */
