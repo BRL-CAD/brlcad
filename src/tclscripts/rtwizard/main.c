@@ -174,7 +174,7 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 }
 
 
-    int
+int
 opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -184,7 +184,7 @@ opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
 }
 
 
-    int
+int
 opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -193,7 +193,7 @@ opt_height(struct bu_vls *msg, int argc, const char **argv, void *settings)
     return ret;
 }
 
-    int
+int
 opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
 {
     struct rtwizard_settings *s = (struct rtwizard_settings *)settings;
@@ -206,7 +206,7 @@ opt_size(struct bu_vls *msg, int argc, const char **argv, void *settings)
     return ret;
 }
 
-    int
+int
 opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
 {
     /* argv[0] should be either an object or a list. */
@@ -243,7 +243,7 @@ opt_objs(struct bu_vls *msg, int argc, const char **argv, void *obj_tbl)
     return (acnum > 0) ? 1 : -1;
 }
 
-    int
+int
 opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 {
     char *letter = (char *)l;
@@ -265,7 +265,7 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 }
 
 
-    int
+int
 opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 {
     int i = 0;
