@@ -644,8 +644,8 @@ main(int argc, char **argv)
     struct rtwizard_settings *s = rtwizard_settings_create();
     struct bu_opt_desc d[34];
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
-    BU_OPT(d[1],  "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
-    BU_OPT(d[2],  "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
+    BU_OPT(d[1],  "",  "gui",           "",          NULL,            &s->use_gui,   "Force use of GUI.");
+    BU_OPT(d[2],  "",  "no-gui",        "",          NULL,            &s->no_gui,    "Do not use GUI, even if available information is insufficient to generate image.");
     BU_OPT(d[3],  "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
     BU_OPT(d[4],  "o", "output-file",   "filename",  &bu_opt_vls,     s->output_file, "Image output file name");
     BU_OPT(d[5],  "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
