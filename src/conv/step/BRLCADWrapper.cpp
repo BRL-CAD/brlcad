@@ -64,6 +64,7 @@ BRLCADWrapper::load(std::string &flnm)
 	bu_log("ERROR: db_dirbuild failed: (%s)\n", flnm.c_str());
 	return false;
     }
+    db_update_nref(dbip, &rt_uniresource);
 
     return true;
 }
