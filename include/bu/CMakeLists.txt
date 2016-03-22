@@ -30,6 +30,7 @@ set(bu_headers
   str.h
   time.h
   units.h
+  uuid.h
   version.h
   vfont.h
   vlb.h
