@@ -127,7 +127,7 @@ add_subdirectory(y2038)
 
 set(bu_ignore_files
   glob.c
-  bu_internals.h
+  bitv_internals.h
   charclass.h
   mime.cmake
   parallel.h

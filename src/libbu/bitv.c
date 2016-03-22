@@ -31,7 +31,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "./bu_internals.h"
+#include "./bitv_internals.h"
 
 /**
  * Private 32-bit recursive reduction using "SIMD Within A Register"
