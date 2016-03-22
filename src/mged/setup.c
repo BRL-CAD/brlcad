@@ -397,8 +397,6 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    const char *pathname;
-    char buffer[1024];
 
     /* from cmd.c */
     extern int glob_compat_mode;
@@ -413,12 +411,6 @@ cmd_setup(void)
 	(void)Tcl_CreateCommand(INTERP, bu_vls_addr(&temp), ctp->tcl_func,
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
-
-    /* overrides/wraps the built-in tree command */
-
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("tclscripts", 1);
-    snprintf(buffer, sizeof(buffer), "%s", pathname);
 
     /* link some tcl variables to these corresponding globals */
     Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
