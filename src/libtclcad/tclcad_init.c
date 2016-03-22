@@ -38,7 +38,7 @@ extern int Itk_Init(Tcl_Interp *);
 #endif
 
 int
-tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
+tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 {
     int try_auto_path = 0;
     int init_tcl = 1;
@@ -50,6 +50,13 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
     int ret = TCL_OK;
 
     if (!interp) return TCL_ERROR;
+
+#ifndef HAVE_TK
+    if (init_gui) {
+	if (tlog) bu_vls_printf(tlog, "tclcad_init ERROR: graphical initialization requested, no graphics support available.\n");
+	return TCL_ERROR;
+    }
+#endif
 
     /* a two-pass init loop.  the first pass just tries default init
      * routines while the second calls tclcad_auto_path() to help it
@@ -77,7 +84,7 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	init_tcl = 0;
 
 #ifdef HAVE_TK
-	if (flags & TCLCAD_GUI_INIT) {
+	if (init_gui) {
 	    /* Initialize Tk */
 	    Tcl_ResetResult(interp);
 	    if (init_tk && Tk_Init(interp) == TCL_ERROR) {
@@ -97,8 +104,9 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
 	/* NOTE: Calling "package require Itcl" here is apparently
-	 * insufficient without other changes elsewhere (per MGED comment,
-	 * but package require should work - why doesn't it??).
+	 * insufficient without other changes elsewhere.  The Combination
+	 * Editor in mged fails with an iwidgets class already loaded
+	 * error if we don't perform Itcl_Init() here (TODO: why??).
 	 */
 	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 	    if (!try_auto_path) {
@@ -121,7 +129,7 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	init_itcl = 0;
 
 #ifdef HAVE_TK
-	if (flags & TCLCAD_GUI_INIT) {
+	if (init_gui) {
 	    /* Initialize [incr Tk] */
 	    Tcl_ResetResult(interp);
 	    if (init_itk && Itk_Init(interp) == TCL_ERROR) {
@@ -149,6 +157,60 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	tclcad_auto_path(interp);
     }
 
+    /* Import Itcl/Itk and iwidgets
+     *
+     * TODO - this is probably a bad idea - figure out why we're doing it and
+     * whether we really need to... */
+
+    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		"::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	ret = TCL_ERROR;
+	Tcl_ResetResult(interp);
+    }
+#ifdef HAVE_TK
+    if (init_gui) {
+	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+		    "::itk::*", /* allowOverwrite */ 1) != TCL_OK) {
+	    if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    ret = TCL_ERROR;
+	    Tcl_ResetResult(interp);
+	}
+	if (Tcl_Eval(interp, "package require Iwidgets") != TCL_OK) {
+	    if (tlog) bu_vls_printf(tlog, "Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    ret = TCL_ERROR;
+	    Tcl_ResetResult(interp);
+	} else {
+	    if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp),
+			"::iwidgets::*", /* allowOverwrite */ 1) != TCL_OK) {
+		if (tlog) bu_vls_printf(tlog, "Tcl_Import ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		ret = TCL_ERROR;
+		Tcl_ResetResult(interp);
+	    }
+	}
+    }
+#endif
+
+    if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itcl::* }") != TCL_OK) {
+	bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	return TCL_ERROR;
+    }
+
+#ifdef HAVE_TK
+    if (init_gui) {
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::tk::* }") != TCL_OK) {
+	    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    return TCL_ERROR;
+	}
+	if (Tcl_Eval(interp, "auto_mkindex_parser::slavehook { _%@namespace import -force ::itk::* }") != TCL_OK) {
+	    bu_log("Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    return TCL_ERROR;
+	}
+    }
+#endif
+
+    /* BRL-CAD specific components */
+
     /* Initialize libbu */
     if (Bu_Init(interp) == TCL_ERROR) {
 	if (tlog) bu_vls_printf(tlog, "Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
@@ -171,23 +233,21 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
     }
     Tcl_StaticPackage(interp, "Rt", Rt_Init, (Tcl_PackageInitProc *) NULL);
 
-    if (flags & TCLCAD_DM_INIT) {
-	/* Initialize libdm */
-	if (Dm_Init(interp) == TCL_ERROR) {
-	    if (tlog) bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    ret = TCL_ERROR;
-	    Tcl_ResetResult(interp);
-	}
-	Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
-
-	/* Initialize libfb */
-	if (Fb_Init(interp) == TCL_ERROR) {
-	    if (tlog) bu_vls_printf(tlog, "Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    ret = TCL_ERROR;
-	    Tcl_ResetResult(interp);
-	}
-	Tcl_StaticPackage(interp, "Fb", Fb_Init, (Tcl_PackageInitProc *) NULL);
+    /* Initialize libdm */
+    if (Dm_Init(interp) == TCL_ERROR) {
+	if (tlog) bu_vls_printf(tlog, "Dm_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	ret = TCL_ERROR;
+	Tcl_ResetResult(interp);
     }
+    Tcl_StaticPackage(interp, "Dm", (int (*)(struct Tcl_Interp *))Dm_Init, (Tcl_PackageInitProc *) NULL);
+
+    /* Initialize libfb */
+    if (Fb_Init(interp) == TCL_ERROR) {
+	if (tlog) bu_vls_printf(tlog, "Fb_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	ret = TCL_ERROR;
+	Tcl_ResetResult(interp);
+    }
+    Tcl_StaticPackage(interp, "Fb", Fb_Init, (Tcl_PackageInitProc *) NULL);
 
     /* Initialize libged */
     if (Go_Init(interp) == TCL_ERROR) {
@@ -197,13 +257,11 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
     }
 
     /* Initialize history */
-    if (flags & TCLCAD_HIST_INIT) {
-	Cho_Init(interp);
-    }
+    Cho_Init(interp);
 
 #ifdef HAVE_TK
     /* If we're doing Tk, make sure we have a window */
-    if (flags & TCLCAD_GUI_INIT) {
+    if (init_gui) {
 	Tk_Window tkwin = Tk_MainWindow(interp);
 	if (!tkwin) ret = TCL_ERROR;
     }

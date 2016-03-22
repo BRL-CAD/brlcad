@@ -756,7 +756,7 @@ main(int argc, char **argv)
 
 	/* The subsequent Tcl scripts will take of Tk, so at this
 	 * level we need only the standard init */
-	status = tclcad_init(interp, TCLCAD_STD_INIT, &tlog);
+	status = tclcad_init(interp, 0, &tlog);
 	if (status == TCL_ERROR) {
 	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	}

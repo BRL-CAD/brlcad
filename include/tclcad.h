@@ -357,15 +357,9 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
  *
  * libbu, libbn, librt, libged, and Itcl are always initialized.
  *
- * The TCLCAD_TK_INIT flag turns on Tk/Itk initialization.
- * The TCLCAD_DM_INIT flag turns on libdm/libfb initialization.
- * The TCLCAD_HIST_INIT flag turns on cmd history initialization.
+ * To initialize graphical elements (Tk/Itk), set init_gui to 1.
  */
-#define TCLCAD_STD_INIT 0x0
-#define TCLCAD_GUI_INIT 0x1
-#define TCLCAD_DM_INIT 0x2
-#define TCLCAD_HIST_INIT 0x4
-TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog);
+TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
 
 
 __END_DECLS
