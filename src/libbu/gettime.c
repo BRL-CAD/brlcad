@@ -38,46 +38,6 @@
 #include "bu/time.h"
 
 
-int64_t
-bu_gettime(void)
-{
-#ifdef HAVE_SYS_TIME_H
-
-    struct timeval nowTime;
-
-    gettimeofday(&nowTime, NULL);
-    return ((int64_t)nowTime.tv_sec * (int64_t)1000000
-	    + (int64_t)nowTime.tv_usec);
-
-#else /* HAVE_SYS_TIME_H */
-#  ifdef HAVE_WINDOWS_H
-
-    LARGE_INTEGER count;
-	static LARGE_INTEGER freq = {0};
-
-    if (freq.QuadPart == 0)
-	if (QueryPerformanceFrequency(&freq) == 0) {
-	    bu_log("QueryPerformanceFrequency failed\n");
-	    return -1;
-	}
-
-    if (QueryPerformanceCounter(&count) == 0) {
-	bu_log("QueryPerformanceCounter failed\n");
-	return -1;
-    }
-
-    return 1e6*count.QuadPart/freq.QuadPart;
-
-#  else /* HAVE_WINDOWS_H */
-#    warning "bu_gettime() implementation missing for this machine type"
-    bu_log("WARNING, no bu_gettime implementation for this machine type.\n");
-    return -1;
-
-#  endif /* HAVE_WINDOWS_H */
-#endif /* HAVE_SYS_TIME_H */
-
-}
-
 /*
  * Local Variables:
  * mode: C
