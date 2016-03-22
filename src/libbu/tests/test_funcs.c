@@ -35,23 +35,6 @@
 #include "./test_internals.h"
 
 
-long int
-get_urandom_number()
-{
-    int rdata = open("/dev/urandom", O_RDONLY);
-    long int rnum;
-
-    ssize_t result = read(rdata, (char*)&rnum, sizeof(rnum));
-    if (result < 0) {
-	bu_log("ERROR:  Unable to read '/dev/urandom'.\n");
-	bu_exit(1, NULL);
-    }
-    close(rdata);
-
-    return rnum;
-}
-
-
 void
 dump_bitv(const struct bu_bitv *b)
 {
@@ -152,11 +135,8 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
     const char *chars = (typ & HEX) ? hex_chars : bin_chars;
     const int nchars = (typ & HEX) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
     int i;
-    long int seed;
 
-    /* get a random seed from system entropy to seed "random()" */
-    seed = get_urandom_number();
-    srand(seed);
+    srand((unsigned)time(NULL));
 
     bu_vls_trunc(v, 0);
     bu_vls_extend(v, nchars);
