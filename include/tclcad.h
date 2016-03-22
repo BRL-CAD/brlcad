@@ -362,7 +362,7 @@ TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const ch
  * The TCLCAD_HIST_INIT flag turns on cmd history initialization.
  */
 #define TCLCAD_STD_INIT 0x0
-#define TCLCAD_TK_INIT 0x1
+#define TCLCAD_GUI_INIT 0x1
 #define TCLCAD_DM_INIT 0x2
 #define TCLCAD_HIST_INIT 0x4
 TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog);

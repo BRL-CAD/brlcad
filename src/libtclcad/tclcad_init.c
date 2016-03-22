@@ -77,7 +77,7 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	init_tcl = 0;
 
 #ifdef HAVE_TK
-	if (flags & TCLCAD_TK_INIT) {
+	if (flags & TCLCAD_GUI_INIT) {
 	    /* Initialize Tk */
 	    Tcl_ResetResult(interp);
 	    if (init_tk && Tk_Init(interp) == TCL_ERROR) {
@@ -121,7 +121,7 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 	init_itcl = 0;
 
 #ifdef HAVE_TK
-	if (flags & TCLCAD_TK_INIT) {
+	if (flags & TCLCAD_GUI_INIT) {
 	    /* Initialize [incr Tk] */
 	    Tcl_ResetResult(interp);
 	    if (init_itk && Itk_Init(interp) == TCL_ERROR) {
@@ -203,7 +203,7 @@ tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog)
 
 #ifdef HAVE_TK
     /* If we're doing Tk, make sure we have a window */
-    if (flags & TCLCAD_TK_INIT) {
+    if (flags & TCLCAD_GUI_INIT) {
 	Tk_Window tkwin = Tk_MainWindow(interp);
 	if (!tkwin) ret = TCL_ERROR;
     }
