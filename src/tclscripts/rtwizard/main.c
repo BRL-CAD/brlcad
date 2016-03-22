@@ -636,6 +636,8 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 int
 main(int argc, char **argv)
 {
+    int ac;
+    char *args;
     int need_help = 0;
     int uac = 0;
     int i = 0;
@@ -677,6 +679,10 @@ main(int argc, char **argv)
     BU_OPT(d[31], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
     BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[33]);
+
+    /* Stash args for later Tcl use */
+    ac = argc - 1;
+    args = Tcl_Merge(argc-1, (const char * const *)argv+1);
 
     /* Skip first arg */
     argv++; argc--;
@@ -747,7 +753,7 @@ main(int argc, char **argv)
 	int init_itcl = 1;
 	const char *rtwizard = NULL;
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	Tcl_Interp *interpreter = Tcl_CreateInterp();
+	Tcl_Interp *interp = Tcl_CreateInterp();
 
 	/* a two-pass init loop.  the first pass just tries default init
 	 * routines while the second calls tclcad_auto_path() to help it
@@ -758,28 +764,28 @@ main(int argc, char **argv)
 	    /* not called first time through, give Tcl_Init() a chance */
 	    if (try_auto_path) {
 		/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-		tclcad_auto_path(interpreter);
+		tclcad_auto_path(interp);
 	    }
 
 	    /* Initialize Tcl */
-	    Tcl_ResetResult(interpreter);
-	    if (init_tcl && Tcl_Init(interpreter) == TCL_ERROR) {
+	    Tcl_ResetResult(interp);
+	    if (init_tcl && Tcl_Init(interp) == TCL_ERROR) {
 		if (!try_auto_path) {
 		    try_auto_path = 1;
 		    continue;
 		}
-		bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+		bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		break;
 	    }
 	    init_tcl = 0;
 
 	    /* Initialize [incr Tcl] */
-	    Tcl_ResetResult(interpreter);
+	    Tcl_ResetResult(interp);
 	    /* NOTE: Calling "package require Itcl" here is apparently
 	     * insufficient without other changes elsewhere (per MGED comment,
 	     * but package require should work - why doesn't it??).
 	     */
-	    if (init_itcl && Itcl_Init(interpreter) == TCL_ERROR) {
+	    if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
 		if (!try_auto_path) {
 		    Tcl_Namespace *nsp;
 
@@ -787,13 +793,13 @@ main(int argc, char **argv)
 		    /* Itcl_Init() leaves initialization in a bad state
 		     * and can cause retry failures.  cleanup manually.
 		     */
-		    Tcl_DeleteCommand(interpreter, "::itcl::class");
-		    nsp = Tcl_FindNamespace(interpreter, "::itcl", NULL, 0);
+		    Tcl_DeleteCommand(interp, "::itcl::class");
+		    nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
 		    if (nsp)
 			Tcl_DeleteNamespace(nsp);
 		    continue;
 		}
-		bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
+		bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
 		break;
 	    }
 	    init_itcl = 0;
@@ -802,51 +808,63 @@ main(int argc, char **argv)
 	    break;
 
 	} /* end iteration over Init() routines that need auto_path */
-	Tcl_ResetResult(interpreter);
+	Tcl_ResetResult(interp);
 
 	/* if we haven't loaded by now, load auto_path so we find our tclscripts */
 	if (!try_auto_path) {
 	    /* Locate the BRL-CAD-specific Tcl scripts */
-	    tclcad_auto_path(interpreter);
+	    tclcad_auto_path(interp);
 	}
 
 	/*XXX FIXME: Should not be importing Itcl into the global namespace */
 	/* Import [incr Tcl] commands into the global namespace. */
-	if (Tcl_Import(interpreter, Tcl_GetGlobalNamespace(interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
+	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
+	    bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
+	    Tcl_ResetResult(interp);
 	}
 
 	/* Initialize libbu */
-	if (Bu_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
+	if (Bu_Init(interp) == TCL_ERROR) {
+	    bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    Tcl_ResetResult(interp);
 	}
 
 	/* Initialize libbn */
-	if (Bn_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
+	if (Bn_Init(interp) == TCL_ERROR) {
+	    bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    Tcl_ResetResult(interp);
 	}
 
 	/* Initialize librt */
-	if (Rt_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
+	if (Rt_Init(interp) == TCL_ERROR) {
+	    bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    Tcl_ResetResult(interp);
 	}
 
 	/* Initialize libged */
-	if (Go_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
+	if (Go_Init(interp) == TCL_ERROR) {
+	    bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+	    Tcl_ResetResult(interp);
 	}
 
-	Init_RtWizard_Vars(interpreter, s);
+	/* Set argc/argv to allow rtwizard's Tcl mode to function as expected */
+	{
+	    char buf[TCL_INTEGER_SPACE] = {0};
+	    Tcl_DString argString;
+	    Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
+	    Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
+	    sprintf(buf, "%ld", (long)(argc-1));
+	    Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
+	    Tcl_DStringFree(&argString);
+	    ckfree(args);
+	}
+
+	Init_RtWizard_Vars(interp, s);
 
 	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
-	status = Tcl_Eval(interpreter, bu_vls_addr(&tcl_cmd));
-	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interpreter));
+	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interp));
     }
 #endif
 
