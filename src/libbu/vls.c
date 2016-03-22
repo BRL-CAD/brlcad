@@ -45,6 +45,9 @@ extern const char bu_strdup_message[];
 /* minimum initial allocation size */
 static const unsigned int _VLS_ALLOC_MIN = 32;
 
+/* minimum vls allocation increment size */
+static const size_t _VLS_ALLOC_STEP = 128;
+
 /* minimum vls buffer allocation size */
 static const unsigned int _VLS_ALLOC_READ = 4096;
 

@@ -23,9 +23,6 @@
 
 /* private constants */
 
-/* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
-
 /* constant bit flags  for var 'vp_part' */
 #define VP_UNKNOWN          0x0001
 #define VP_FLAG             0x0002
