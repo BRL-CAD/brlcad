@@ -68,13 +68,6 @@ BU_TESTS_EXPORT extern void dump_bitv(const struct bu_bitv *);
 
 
 /**
- * Get a random number from system entropy (typically used for seeding
- * the 'random' function).
- */
-BU_TESTS_EXPORT extern long int bu_get_urandom_number();
-
-
-/**
  * Get a random string of hex or binary characters (possibly with a
  * leading '0x' or '0b').
  */
