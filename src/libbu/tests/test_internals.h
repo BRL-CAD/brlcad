@@ -27,6 +27,7 @@
 #include "bu/vls.h"
 
 __BEGIN_DECLS
+
 #ifndef BU_TESTS_EXPORT
 #  if defined(BU_TESTS_DLL_EXPORTS) && defined(BU_TESTS_DLL_IMPORTS)
 #    error "Only BU_TESTS_DLL_EXPORTS or BU_TESTS_DLL_IMPORTS can be defined, not both."
@@ -39,39 +40,10 @@ __BEGIN_DECLS
 #  endif
 #endif
 
+const int CTEST_PASS = 0;
+const int CTEST_FAIL = 1;
 
-/* Define pass/fail per CMake/CTest testing convention; so any
- * individual test must return CTEST_PASS/CTEST_FAIL using the same
- * convention OR invert its value. */
-const int CTEST_PASS  = 0;
-const int CTEST_FAIL  = 1;
-
-#ifndef FALSE
-#define FALSE 0
-#endif
-#ifndef TRUE
-#define TRUE 1
-#endif
-
-typedef enum {
-    HEX         = 0x0001,
-    HEX_RAW     = 0x0011,
-    BINARY      = 0x0100,
-    BINARY_RAW  = 0x1100
-} hex_bin_enum_t;
-
-
-/**
- * Dump a bitv into a detailed bit format for debugging.
- */
-BU_TESTS_EXPORT extern void dump_bitv(const struct bu_bitv *);
-
-
-/**
- * Get a random string of hex or binary characters (possibly with a
- * leading '0x' or '0b').
- */
-BU_TESTS_EXPORT extern void random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const int nbytes);
+__END_DECLS
 
 #endif /* LIBBU_TESTS_TEST_INTERNALS_H */
 
