@@ -24,6 +24,7 @@
  * and modified for use in this application.
  *
  */
+#ifndef HAVE_WINDOWS_H
 
 #include "common.h"
 
@@ -561,6 +562,7 @@ insert_beep(void)
     bu_log("%c", 7);
 }
 
+#endif /* HAVE_WINDOWS_H */
 
 /*
  * Local Variables:

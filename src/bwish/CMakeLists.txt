@@ -24,11 +24,15 @@ if(WIN32)
   set(btclsh_srcs cadAppInit.c consoleMain.c)
   set(btclsh_libs libtclcad libged ${ITCL_LIBRARY})
 else(WIN32)
-  set(btclsh_srcs cmd.c input.c main.c tcl.c)
+  set(btclsh_srcs
+    cmd.c
+    input.c
+    main.c
+    )
   set(btclsh_libs libtclcad libbu libtermio ${ITCL_LIBRARY})
 endif(WIN32)
 # Regardless of OS , make sure all the tclsh files are marked for CMake
-CMAKEFILES(cmd.c input.c main.c tcl.c cadAppInit.c consoleMain.c)
+CMAKEFILES(cmd.c input.c main.c cadAppInit.c consoleMain.c)
 
 # Now, define the btclsh target
 BRLCAD_ADDEXEC(btclsh "${btclsh_srcs}" "${btclsh_libs}")
@@ -50,7 +54,7 @@ if(BRLCAD_ENABLE_TK)
   # Both platform cases get the compilation flag
   set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
 endif(BRLCAD_ENABLE_TK)
-CMAKEFILES(winMain.c cmd.c input.c main.c tcl.c)
+CMAKEFILES(winMain.c cmd.c input.c main.c)
 
 if(ITCL_LIBRARY MATCHES "^itcl$")
   add_dependencies(btclsh itcl)
