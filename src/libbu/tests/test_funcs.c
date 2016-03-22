@@ -36,7 +36,7 @@
 
 
 long int
-bu_get_urandom_number()
+get_urandom_number()
 {
     int rdata = open("/dev/urandom", O_RDONLY);
     long int rnum;
@@ -155,7 +155,7 @@ random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const in
     long int seed;
 
     /* get a random seed from system entropy to seed "random()" */
-    seed = bu_get_urandom_number();
+    seed = get_urandom_number();
     srand(seed);
 
     bu_vls_trunc(v, 0);
