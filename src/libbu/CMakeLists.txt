@@ -43,7 +43,7 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  date-time.c
+  datetime.c
   dlfcn.c
   encode.c
   endian.c
@@ -56,7 +56,6 @@ set(LIBBU_SOURCES
   getcwd.c
   gethostname.c
   getopt.c
-  gettime.c
   globals.c
   hash.c
   heap.c
