@@ -51,6 +51,10 @@ Tk_Window tkwin;
 
 Tcl_Interp *INTERP;
 
+#if defined(HAVE_WINDOWS_H) && defined(BWISH)
+static BOOL consoleRequired = TRUE;
+#endif
+
 /* We need to be careful about tty resetting - xcodebuild
  * and resetTty were locking up.  Add a tty check
  * along the lines of
@@ -76,13 +80,79 @@ extern void initInput(void);
 void TkpDisplayWarning();
 #endif
 
-void Cad_Exit(int status);
-
 #ifdef BWISH
-#  define CAD_RCFILENAME "~/.bwishrc"
+#  if defined(HAVE_WINDOWS_H)
+#    define CAD_RCFILENAME "~/.bwishrc.tcl"
+#  else
+#    define CAD_RCFILENAME "~/.bwishrc"
+#  endif
 #else
-#  define CAD_RCFILENAME "~/.btclshrc"
+#  if defined(HAVE_WINDOWS_H)
+#    define CAD_RCFILENAME "~/.btclshrc.tcl"
+#  else
+#    define CAD_RCFILENAME "~/.btclshrc"
+#  endif
 #endif
+
+#if defined(BWISH) && defined(HAVE_WINDOWS_H)
+/*
+ * BwishPanic --
+ *
+ * Display a message and exit.
+ *
+ * Results: None.
+ * Side effects: Exits the program.
+ */
+void
+BwishPanic(const char *format, ...)
+{
+    va_list argList;
+    char buf[1024];
+
+    va_start(argList, format);
+    vsnprintf(buf, 1024, format, argList);
+
+    MessageBeep(MB_ICONEXCLAMATION);
+    MessageBox(NULL, (LPCSTR)buf, (LPCSTR)"Fatal Error in bwish",
+	    MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
+#ifdef _MSC_VER
+    DebugBreak();
+#endif
+    ExitProcess(1);
+}
+#endif
+
+#ifdef HAVE_WINDOWS_H
+int
+Tcl_WinInit(Tcl_Interp *interp)
+{
+    int status = TCL_OK;
+#ifdef BWISH
+    status = tclcad_init(INTERP, 1, &tlog);
+    if (status != TCL_ERROR) {
+	if (consoleRequired) status = Tk_CreateConsoleWindow(interp);
+    }
+#else
+    status = tclcad_init(INTERP, 0, &tlog);
+#endif
+    if (status == TCL_ERROR) {
+#ifdef BWISH
+	struct bu_vls errstr = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&errstr, "Error in bwish:\n%s\n", bu_vls_addr(&tlog));
+	MessageBeep(MB_ICONEXCLAMATION);
+	MessageBox(NULL, (LPCSTR)Tcl_GetStringResult(interp), (LPCSTR)bu_vls_addr(&tlog),
+		MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
+	bu_vls_free(&errstr);
+	ExitProcess(1);
+#else
+	bu_log("tclcad_init failure:\n%s\n", bu_vls_addr(&tlog));
+#endif
+    }
+    Tcl_SetVar(interp, "tcl_rcFileName", CAD_RCFILENAME, TCL_GLOBAL_ONLY);
+    return TCL_OK;
+}
+#endif /* HAVE_WINDOWS_H */
+
 
 void
 Cad_Exit(int status)
@@ -97,10 +167,37 @@ Cad_Exit(int status)
     Tcl_Exit(status);
 }
 
-
+#if defined(BWISH) && defined(HAVE_WINDOWS_H)
+int APIENTRY
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine,
+	int nCmdShow)
+{
+    char **argv;
+    int argc;
+#else
 int
 main(int argc, char **argv)
 {
+#endif
+#if defined(BWISH) && defined(HAVE_WINDOWS_H)
+    Tcl_SetPanicProc(BwishPanic);
+
+    /* Create the console channels and install them as the standard channels.
+     * All I/O will be discarded until Tk_CreateConsoleWindow is called to
+     * attach the console to a text widget. */
+    consoleRequired = TRUE;
+#endif
+#if defined(HAVE_WINDOWS_H)
+    setlocale(LC_ALL, "C");
+#endif
+#if defined(BWISH) && defined(HAVE_WINDOWS_H)
+    /* Get our args from the c-runtime. Ignore lpszCmdLine. */
+    argc = __argc;
+    argv = __argv;
+#endif
+#if !defined(HAVE_WINDOWS_H)
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     int status = TCL_OK;
     char *filename = NULL;
@@ -112,9 +209,26 @@ main(int argc, char **argv)
     /* Create the interpreter */
     INTERP = Tcl_CreateInterp();
     Tcl_FindExecutable(argv[0]);
-
+#endif
+#if defined(HAVE_WINDOWS_H)
+    {
+	/* Forward slashes substituted for backslashes. */
+	char *p;
+	for (p = argv[0]; *p != '\0'; p++) {
+	    if (*p == '\\') {
+		*p = '/';
+	    }
+	}
+    }
+#endif
     bu_setprogname(argv[0]);
-
+#if defined(HAVE_WINDOWS_H)
+#  ifdef BWISH
+    Tk_Main(argc, argv, Tcl_WinInit);
+#  else
+    Tcl_Main(argc, argv, Tcl_WinInit);
+#  endif
+#else
     if ((argc > 1) && (argv[1][0] != '-')) {
 	filename = argv[1];
 	argc--;
@@ -213,7 +327,7 @@ main(int argc, char **argv)
     }
 
     Cad_Exit(TCL_OK);
-
+#endif /* HAVE_WINDOWS_H */
     return 0;
 }
 
