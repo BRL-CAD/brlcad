@@ -220,12 +220,6 @@ BRLCAD_ADDEXEC(test_bu_redblack bu_redblack.c libbu NO_INSTALL)
 add_test(NAME bu_redblack_test COMMAND test_bu_redblack)
 
 #
-#  ************ timer.c tests *************
-#
-BRLCAD_ADDEXEC(test_bu_timer bu_timer.c libbu NO_INSTALL)
-add_test(NAME bu_gettime_test COMMAND test_bu_timer)
-
-#
 #  ************ bu_semaphore.c tests *************
 #
 BRLCAD_ADDEXEC(test_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
@@ -532,7 +526,7 @@ add_test(NAME bu_opt_3_vect_04  COMMAND test_bu_opt 3 V 4)
 #
 
 BRLCAD_ADDEXEC(test_bu_datetime bu_datetime.c libbu NO_INSTALL)
-foreach(test_num RANGE 1 10)
+foreach(test_num RANGE 0 10)
   add_test(NAME "bu_datetime${test_num}" COMMAND test_bu_datetime "${test_num}")
 endforeach()
 

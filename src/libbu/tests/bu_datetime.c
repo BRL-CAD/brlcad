@@ -31,6 +31,37 @@ main(int argc, char **argv)
 	bu_exit(1, "ERROR: wrong number of parameters");
     sscanf(argv[1], "%d", &function_num);
     switch (function_num) {
+	case 0:	{
+	    int64_t time0, time1, time2;
+	    int64_t i = 0;
+	    size_t counter = 1;
+
+	    time0 = bu_gettime();
+	    sleep(1);
+	    time1 = bu_gettime();
+
+	    if (time1 - time0 <= 0)
+		bu_exit(1, "ERROR: We went back in time!\n");
+
+	    /* iterate for exactly 1 second */
+	    while (i < 1.0e6 && counter < 1.0e15) {
+		counter++;
+		time2 = bu_gettime();
+		i = time2 - time1;
+	    }
+
+	    if (time2 - time1 <= 0)
+		bu_exit(1, "ERROR: We looped back in time!\n");
+
+#if 0
+	    bu_log("Called bu_gettime() %zu times\n", counter);
+	    bu_log("Time1: %llu\n", (unsigned long)time1);
+	    bu_log("Time2: %llu\n", (unsigned long)time2);
+	    bu_log("Time delta (Time2-Time1): %d\n", i);
+#endif
+
+	    return 0;
+	}
 	case 1:
 	    curr_time = 1087449261LL;
 	    bu_utctime(&result, curr_time);
