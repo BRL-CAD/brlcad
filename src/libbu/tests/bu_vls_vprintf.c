@@ -29,7 +29,6 @@
 
 #include "bu.h"
 #include "../vls_internals.h"
-#include "./test_internals.h"
 
 
 /* Test against sprintf */

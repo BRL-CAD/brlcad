@@ -557,7 +557,6 @@ add_test(NAME bu_hash_lorem_ipsum  COMMAND tester_bu_hash 2)
 
 CMAKEFILES(
   bitv-tests.cmake
-  test_internals.h
   vls-tests.cmake
 )
 

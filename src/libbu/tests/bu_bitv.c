@@ -26,7 +26,6 @@
 
 #include "bu.h"
 #include "../bu_internals.h"
-#include "./test_internals.h"
 
 
 typedef enum {
