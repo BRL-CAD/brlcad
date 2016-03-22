@@ -544,11 +544,22 @@ add_test(NAME bu_hash_noop         COMMAND tester_bu_hash 0)
 add_test(NAME bu_hash_one_entry    COMMAND tester_bu_hash 1)
 add_test(NAME bu_hash_lorem_ipsum  COMMAND tester_bu_hash 2)
 
+#
+#  *********** uuid.c tests ************
+#
+
+#BRLCAD_ADDEXEC(tester_bu_uuid uuid.c libbu NO_INSTALL)
+#add_test(NAME bu_uuid_create  COMMAND tester_bu_uuid 0)
+#add_test(NAME bu_uuid_compare COMMAND tester_bu_uuid 1)
+#add_test(NAME bu_uuid_encode  COMMAND tester_bu_uuid 2)
+
+
 CMAKEFILES(
   bitv-tests.cmake
   test_internals.h
   vls-tests.cmake
 )
+
 
 # Local Variables:
 # tab-width: 8
