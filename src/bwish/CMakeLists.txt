@@ -50,7 +50,7 @@ if(BRLCAD_ENABLE_TK)
   # Both platform cases get the compilation flag
   set_target_properties(bwish PROPERTIES COMPILE_DEFINITIONS "BWISH=1")
 endif(BRLCAD_ENABLE_TK)
-CMAKEFILES(unixMain.c winMain.c cmd.c input.c main.c tcl.c)
+CMAKEFILES(winMain.c cmd.c input.c main.c tcl.c)
 
 if(ITCL_LIBRARY MATCHES "^itcl$")
   add_dependencies(btclsh itcl)
