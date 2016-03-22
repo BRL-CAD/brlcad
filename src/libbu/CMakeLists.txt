@@ -56,6 +56,7 @@ set(LIBBU_SOURCES
   getcwd.c
   gethostname.c
   getopt.c
+  gettime.c
   globals.c
   hash.c
   heap.c
@@ -102,7 +103,6 @@ set(LIBBU_SOURCES
   str.c
   temp.c
   thread.cpp
-  timer.c
   units.c
   vers.c
   vfont.c

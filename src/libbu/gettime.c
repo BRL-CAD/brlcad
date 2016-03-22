@@ -1,4 +1,4 @@
-/*                           T I M E R . C
+/*                         G E T T I M E . C
  * BRL-CAD
  *
  * Copyright (c) 2011-2016 United States Government as represented by
@@ -70,7 +70,7 @@ bu_gettime(void)
 
 #  else /* HAVE_WINDOWS_H */
 #    warning "bu_gettime() implementation missing for this machine type"
-    bu_log("timer.c: WARNING, no gettime implementation for this machine type.\n");
+    bu_log("WARNING, no bu_gettime implementation for this machine type.\n");
     return -1;
 
 #  endif /* HAVE_WINDOWS_H */
