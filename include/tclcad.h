@@ -344,6 +344,30 @@ TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp,
  */
 TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
+
+/**
+ * Set the variables "argc" and "argv" in interp.
+ */
+TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const char *argv);
+
+/**
+ * This is the "all-in-one" initialization intended for use by
+ * applications that are providing a Tcl_Interp and want to initialize
+ * all of the BRL-CAD Tcl/Tk interfaces.
+ *
+ * libbu, libbn, librt, libged, and Itcl are always initialized.
+ *
+ * The TCLCAD_TK_INIT flag turns on Tk/Itk initialization.
+ * The TCLCAD_DM_INIT flag turns on libdm/libfb initialization.
+ * The TCLCAD_HIST_INIT flag turns on cmd history initialization.
+ */
+#define TCLCAD_STD_INIT 0x0
+#define TCLCAD_TK_INIT 0x1
+#define TCLCAD_DM_INIT 0x2
+#define TCLCAD_HIST_INIT 0x4
+TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int flags, struct bu_vls *tlog);
+
+
 __END_DECLS
 
 #endif /* TCLCAD_H */

@@ -5,6 +5,7 @@ set(TCLCAD_INCLUDE_DIRS
   ${DM_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
   ${TCL_INCLUDE_DIRS}
+  ${TK_INCLUDE_DIRS}
   )
 
 # Include directories only needed by the implementation
@@ -24,11 +25,12 @@ set(LIBTCLCAD_SRCS
   tclcadAutoPath.c
   tclcad_obj.c
   tclcad_eval.c
+  tclcad_init.c
   tkImgFmtPIX.c
   cmdhist_obj.c
   )
 set_property(SOURCE tclcad_obj.c APPEND PROPERTY COMPILE_DEFINITIONS FB_USE_INTERNAL_API)
-BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCL_LIBRARY};${TCLCAD_XLIBS}")
+BRLCAD_ADDLIB(libtclcad "${LIBTCLCAD_SRCS}" "libged;libdm;${TCL_LIBRARY};${TK_LIBRARY};${ITCL_LIBRARY};${ITK_LIBRARY};${TCLCAD_XLIBS}")
 SET_TARGET_PROPERTIES(libtclcad PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set(tclcad_ignore_files tclcad_private.h)
 CMAKEFILES(${tclcad_ignore_files})
