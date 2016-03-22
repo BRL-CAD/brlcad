@@ -26,9 +26,9 @@
  *
  */
 
-#ifndef HAVE_WINDOWS_H
-
 #include "common.h"
+
+#ifndef HAVE_WINDOWS_H
 
 #include <stdlib.h>
 #include <string.h>

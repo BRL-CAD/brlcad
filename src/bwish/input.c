@@ -24,9 +24,10 @@
  * and modified for use in this application.
  *
  */
-#ifndef HAVE_WINDOWS_H
 
 #include "common.h"
+
+#ifndef HAVE_WINDOWS_H
 
 /* system headers */
 #include <string.h>
