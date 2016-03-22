@@ -29,7 +29,7 @@
 
 /* interface headers */
 #include "bu.h"
-#include "./rb_internals.h"
+#include "./rb.h"
 
 
 /**

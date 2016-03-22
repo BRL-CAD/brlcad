@@ -25,7 +25,7 @@
 #include <string.h>
 
 #include "bu.h"
-#include "../bitv_internals.h"
+#include "../bitv.h"
 
 
 typedef enum {

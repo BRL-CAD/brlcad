@@ -28,7 +28,7 @@
 #include <ctype.h>
 
 #include "bu.h"
-#include "../vls_internals.h"
+#include "../vls_vprintf.h"
 
 
 /* Test against sprintf */

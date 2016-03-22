@@ -127,14 +127,14 @@ add_subdirectory(y2038)
 
 set(bu_ignore_files
   glob.c
-  bitv_internals.h
+  bitv.h
   charclass.h
   mime.cmake
   parallel.h
-  rb_internals.h
+  rb.h
   uce-dirent.h
   vfont.h
-  vls_internals.h
+  vls_vprintf.h
   )
 CMAKEFILES(${bu_ignore_files})
 

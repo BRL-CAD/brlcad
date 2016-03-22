@@ -32,7 +32,7 @@
 #include "bu/log.h"
 #include "bu/vls.h"
 
-#include "./vls_internals.h"
+#include "./vls_vprintf.h"
 
 /* private constants */
 

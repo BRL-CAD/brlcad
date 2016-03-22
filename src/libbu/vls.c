@@ -34,7 +34,7 @@
 #include "bu/str.h"
 #include "bu/vls.h"
 
-#include "./vls_internals.h"
+#include "./vls_vprintf.h"
 
 /* non-published globals */
 extern const char bu_vls_message[];

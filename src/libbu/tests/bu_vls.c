@@ -26,7 +26,7 @@
 
 #include "bu.h"
 
-#include "./vls_internals.h"
+#include "./vls_vprintf.h"
 
 
 /* This prints out the values of the expected vls and compares it with
