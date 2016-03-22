@@ -395,8 +395,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     BU_CK_VLS(vls);
 
-    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
-
     sp = fmt;
     while (*sp) {
 	/* Initial state:  just printing chars */
