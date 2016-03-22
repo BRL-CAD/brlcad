@@ -61,7 +61,7 @@ void ell_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global 
     hitp->hit_normal = hitp->hit_normal * scale;
 
     /* tuck away this scale for the curvature routine */
-    hitp->hit_vpriv.x = scale;
+    //hitp->hit_vpriv.x = scale;
 }
 
 
