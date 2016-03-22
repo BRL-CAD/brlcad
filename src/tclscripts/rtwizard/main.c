@@ -458,7 +458,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     size_t i = 0;
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
-    (void)Tcl_Eval(interp, "namespace eval RtWizard{}");
+    (void)Tcl_Eval(interp, "namespace eval RtWizard {}");
 
     if (s->use_gui) {
 	bu_vls_sprintf(&tcl_cmd, "set ::use_gui 1");
@@ -543,19 +543,19 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->bkg_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) %d %d %d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) %d %d %d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->non_line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) %d %d %d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -587,7 +587,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_twist) %0.15f", s->tw);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
-    if (s->perspective > 0) {
+    if (s->perspective < DBL_MAX) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(perspective) %0.15f", s->perspective);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
@@ -734,7 +734,7 @@ main(int argc, char **argv)
     }
 
     print_rtwizard_state(s);
-#if 0
+#if 1
     /* For now, all roads lead to Tcl. */
 
     /* TODO - this tcl initialization is common (more or less) to btclsh, bwish,
@@ -745,10 +745,9 @@ main(int argc, char **argv)
 	int try_auto_path = 0;
 	int init_tcl = 1;
 	int init_itcl = 1;
-
+	const char *rtwizard = NULL;
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	Tcl_Interp *interpreter = Tcl_CreateInterp();
-	const char *rtwizard = bu_brlcad_data("tclscripts/rtwizard", 1);
 
 	/* a two-pass init loop.  the first pass just tries default init
 	 * routines while the second calls tclcad_auto_path() to help it
@@ -844,8 +843,10 @@ main(int argc, char **argv)
 
 	Init_RtWizard_Vars(interpreter, s);
 
+	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
 	status = Tcl_Eval(interpreter, bu_vls_addr(&tcl_cmd));
+	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interpreter));
     }
 #endif
 
