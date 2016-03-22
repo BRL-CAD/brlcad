@@ -3,7 +3,7 @@ set(implementation_EN
   )
 
 ADD_DOC(implementation_EN html/implementation/en)
-ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN html/implementation/en "")
+ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN implementation/en "")
 
 # Local Variables:
 # tab-width: 8
