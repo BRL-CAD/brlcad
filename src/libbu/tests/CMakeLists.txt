@@ -67,7 +67,7 @@ add_test(NAME bu_file_mime_png   COMMAND test_bu_file_mime png 10 13) # tests pn
 #
 #  ************ bitv.c tests *************
 #
-include(bitv-tests.cmake)
+include(tests_bitv.cmake)
 
 #
 #  ************ booleanize.c tests *************
@@ -251,7 +251,7 @@ endforeach()
 #
 #  ************ vls.c tests *************
 #
-include(vls-tests.cmake)
+include(tests_vls.cmake)
 
 
 #
@@ -556,8 +556,8 @@ add_test(NAME bu_hash_lorem_ipsum  COMMAND test_bu_hash 2)
 
 
 CMAKEFILES(
-  bitv-tests.cmake
-  vls-tests.cmake
+  tests_bitv.cmake
+  tests_vls.cmake
 )
 
 
