@@ -528,12 +528,12 @@ add_test(NAME bu_opt_3_vect_03  COMMAND test_bu_opt 3 V 3)
 add_test(NAME bu_opt_3_vect_04  COMMAND test_bu_opt 3 V 4)
 
 #
-#  *********** date-time.c tests ************
+#  *********** datetime.c tests ************
 #
 
-BRLCAD_ADDEXEC(test_bu_date-time bu_date-time.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_bu_datetime bu_datetime.c libbu NO_INSTALL)
 foreach(test_num RANGE 1 10)
-  add_test(NAME "bu_date-time${test_num}" COMMAND test_bu_date-time "${test_num}")
+  add_test(NAME "bu_datetime${test_num}" COMMAND test_bu_datetime "${test_num}")
 endforeach()
 
 #

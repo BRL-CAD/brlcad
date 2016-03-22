@@ -1,4 +1,4 @@
-/*                       B U _ D A T E - T I M E . C
+/*                    B U _ D A T E T I M E . C
  * BRL-CAD
  *
  * Copyright (c) 2014-2016 United States Government as represented by
