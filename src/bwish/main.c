@@ -33,6 +33,8 @@
 #ifdef BWISH
 #include "tk.h"
 #endif
+#include <locale.h>
+#include "bio.h"
 
 #include "libtermio.h"
 
@@ -49,7 +51,9 @@ extern int cmdInit(Tcl_Interp *interp);
 Tk_Window tkwin;
 #endif
 
+#ifndef HAVE_WINDOWS_H
 Tcl_Interp *INTERP;
+#endif
 
 #if defined(HAVE_WINDOWS_H) && defined(BWISH)
 static BOOL consoleRequired = TRUE;
@@ -126,29 +130,32 @@ BwishPanic(const char *format, ...)
 int
 Tcl_WinInit(Tcl_Interp *interp)
 {
+	struct bu_vls tlog = BU_VLS_INIT_ZERO;
     int status = TCL_OK;
 #ifdef BWISH
-    status = tclcad_init(INTERP, 1, &tlog);
+    status = tclcad_init(interp, 1, &tlog);
     if (status != TCL_ERROR) {
 	if (consoleRequired) status = Tk_CreateConsoleWindow(interp);
     }
 #else
-    status = tclcad_init(INTERP, 0, &tlog);
+    status = tclcad_init(interp, 0, &tlog);
 #endif
     if (status == TCL_ERROR) {
 #ifdef BWISH
 	struct bu_vls errstr = BU_VLS_INIT_ZERO;
 	bu_vls_sprintf(&errstr, "Error in bwish:\n%s\n", bu_vls_addr(&tlog));
 	MessageBeep(MB_ICONEXCLAMATION);
-	MessageBox(NULL, (LPCSTR)Tcl_GetStringResult(interp), (LPCSTR)bu_vls_addr(&tlog),
+	MessageBox(NULL, (LPCSTR)Tcl_GetStringResult(interp), (LPCSTR)bu_vls_addr(&errstr),
 		MB_ICONSTOP | MB_OK | MB_TASKMODAL | MB_SETFOREGROUND);
 	bu_vls_free(&errstr);
+	bu_vls_free(&tlog);
 	ExitProcess(1);
 #else
 	bu_log("tclcad_init failure:\n%s\n", bu_vls_addr(&tlog));
 #endif
     }
     Tcl_SetVar(interp, "tcl_rcFileName", CAD_RCFILENAME, TCL_GLOBAL_ONLY);
+	bu_vls_free(&tlog);
     return TCL_OK;
 }
 #endif /* HAVE_WINDOWS_H */
@@ -157,12 +164,14 @@ Tcl_WinInit(Tcl_Interp *interp)
 void
 Cad_Exit(int status)
 {
-#ifdef HAVE_SYS_SELECT_H
+#ifndef HAVE_WINDOWS_H
+  #ifdef HAVE_SYS_SELECT_H
     if (tty_usable(fileno(stdin))) {
       reset_Tty(fileno(stdin));
     }
-#else
+  #else
     reset_Tty(fileno(stdin));
+  #endif
 #endif
     Tcl_Exit(status);
 }
