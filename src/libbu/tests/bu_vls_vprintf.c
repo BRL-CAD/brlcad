@@ -36,7 +36,7 @@
 int
 test_vls(const char *fmt, ...)
 {
-    int status        = CTEST_PASS; /* okay */
+    int status        = BRLCAD_OK; /* okay */
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char output[80]   = {0};
     char buffer[1024] = {0};
@@ -58,7 +58,7 @@ test_vls(const char *fmt, ...)
 	printf("%-*s[PASS]\n", 60, output);
     } else {
 	printf("%-*s[FAIL]  (should be: '%s')\n", 60, output, buffer);
-	status = CTEST_FAIL;
+	status = BRLCAD_ERROR;
     }
 
     bu_vls_free(&vls);
@@ -70,7 +70,7 @@ test_vls(const char *fmt, ...)
 int
 check_format_chars(void)
 {
-  int status = CTEST_PASS; /* assume okay */
+  int status = BRLCAD_OK; /* assume okay */
   int i, flags;
   vflags_t f;
 
@@ -90,14 +90,14 @@ check_format_chars(void)
       if (!handle_format_part(vp_part, &f, c, VP_NOPRINT)) {
 	/* tell user */
 	printf("Unhandled valid char '%c'                                    [FAIL]\n", c);
-	status = CTEST_FAIL;
+	status = BRLCAD_ERROR;
       }
     } else if (flags & VP_OBSOLETE) {
       /* we need an obsolete part handler */
       if (!handle_obsolete_format_char(c, VP_NOPRINT)) {
 	/* tell user */
 	printf("Unhandled obsolete char '%c'                                 [FAIL]\n", c);
-	status = CTEST_FAIL;
+	status = BRLCAD_ERROR;
       }
     }
   }
@@ -337,7 +337,7 @@ main(int argc, char *argv[])
 	*/
     }
 
-    return CTEST_FAIL;
+    return BRLCAD_ERROR;
 }
 
 

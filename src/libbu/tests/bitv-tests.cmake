@@ -1,4 +1,4 @@
-BRLCAD_ADDEXEC(tester_bu_bitv bu_bitv.c "libbu;libbu_tests" NO_INSTALL)
+BRLCAD_ADDEXEC(tester_bu_bitv bu_bitv.c "libbu" NO_INSTALL)
 
 # The master to/from bitv test
 # args: function number

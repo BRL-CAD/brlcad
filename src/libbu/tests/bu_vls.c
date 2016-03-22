@@ -322,7 +322,7 @@ test_bu_vls_strncat(int argc, char *argv[])
     int n;                     /* argv[4] */
     char *expected_out_string; /* argv[5] */
 
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     struct bu_vls *actual_vls;
     size_t narg;
 
@@ -346,12 +346,12 @@ test_bu_vls_strncat(int argc, char *argv[])
     if (!bu_strcmp(bu_vls_cstr(actual_vls), expected_out_string)) {
 	printf("PASSED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
 	       in_string_1, in_string_2, n, (unsigned int)narg, bu_vls_cstr(actual_vls), expected_out_string);
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
     }
     else {
 	printf("FAILED Input1: '%s' Input2: '%s' n: %d narg: %u Output: '%s' Expected: '%s'",
 	       in_string_1, in_string_2, n, (unsigned int)narg, bu_vls_cstr(actual_vls), expected_out_string);
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
     }
 
     bu_vls_free(actual_vls);
@@ -639,7 +639,7 @@ test_bu_vls_substr(int argc, char **argv)
 
     struct bu_vls vsrc          = BU_VLS_INIT_ZERO;
     struct bu_vls vsubstr       = BU_VLS_INIT_ZERO;
-    int test_results            = CTEST_FAIL;
+    int test_results            = BRLCAD_ERROR;
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
@@ -657,10 +657,10 @@ test_bu_vls_substr(int argc, char **argv)
     bu_vls_substr(&vsubstr, &vsrc, begin, slen);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&vsubstr), expected_result)) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_vls_substr PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_vls_substr FAILED");
     }
     printf("\n  Input:    '%s'", bu_vls_cstr(&vsrc));

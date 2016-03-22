@@ -40,8 +40,6 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-const int CTEST_PASS = 0;
-const int CTEST_FAIL = 1;
 
 __END_DECLS
 
