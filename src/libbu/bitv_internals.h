@@ -1,4 +1,4 @@
-/*                  B U _ I N T E R N A L S . H
+/*                B I T V _ I N T E R N A L S . H
  * BRL-CAD
  *
  * Copyright (c) 2014-2016 United States Government as represented by the
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef LIBBU_BU_INTERNALS_H
-#define LIBBU_BU_INTERNALS_H seen
+#ifndef LIBBU_BITV_INTERNALS_H
+#define LIBBU_BITV_INTERNALS_H seen
 
 /* private constants */
 
@@ -32,7 +32,7 @@
 #define HEX_BASE          16
 #define BINARY_BASE        2
 
-#endif /* LIBBU_BU_INTERNALS_H */
+#endif /* LIBBU_BITV_INTERNALS_H */
 
 /*
  * Local Variables:
