@@ -227,14 +227,18 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   string(TOUPPER "${execname}" EXECNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   # Go all C++ if the settings request it
   SET_CXX_LANG("${srcslist}")
 
   # Call standard CMake commands
-  add_executable(${execname} ${srcslist})
+  if(${EXECNAME_UPPER}_GUI)
+    add_executable(${execname} WIN32 ${srcslist})
+  else(${EXECNAME_UPPER}_GUI)
+    add_executable(${execname} ${srcslist})
+  endif(${EXECNAME_UPPER}_GUI)
   target_link_libraries(${execname} ${libslist})
 
   # Check at comple time the standard BRL-CAD style rules
