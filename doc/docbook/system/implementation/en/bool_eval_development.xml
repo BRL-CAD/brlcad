@@ -146,6 +146,39 @@ ON_Intersect(const ON_Surface *surfA,
 	</warning>
       </section>
       <section>
+        <title>Memory</title>
+        <para>
+          Curves and surfaces are nearly always allocated on the heap and referenced by pointers, both in the OpenNURBS library, and in the NURBS boolean evaluation implementation.
+        </para>
+        <para>
+          Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, noteably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
+        </para>
+        <para>
+          Pointers to objects, curves in particular, are frequently stolen rather than creating a new copy of the object.
+          <warning>
+            <para>
+              Classes containing heap-allocated objects delete them in their destructors. Proper stealing of pointers requires the instance's members be set to NULL.
+            </para>
+	    <programlisting>
+	      <![CDATA[
+ON_SimpleArray<ON_SSX_EVENT> x;
+...
+for (int i = 0; i < csx_events.Count(); ++i) {
+    // copy event
+    x.Append(csx_events[i]);
+
+    // clear pointers from original so they aren't deleted by the
+    // ON_SSX_EVENT destructor
+    csx_events[i].m_curveA = NULL;
+    csx_events[i].m_curveB = NULL;
+    csx_events[i].m_curve3d = NULL;
+}
+	      ]]>
+	    </programlisting>
+          </warning>
+        </para>
+      </section>
+      <section>
         <title>Tolerance Tests</title>
         <para>
           The OpenNURBS routines make extensive use of the symbol <varname>ON_ZERO_TOLERANCE</varname> in calculations to test if a result is to be considered equal to zero, or if two values are to be considered equal.
