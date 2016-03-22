@@ -637,7 +637,7 @@ int
 main(int argc, char **argv)
 {
     int ac;
-    char *args;
+    char **av;
     int need_help = 0;
     int uac = 0;
     int i = 0;
@@ -680,15 +680,17 @@ main(int argc, char **argv)
     BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[33]);
 
-    /* Stash args for later Tcl use */
-    ac = argc - 1;
-    args = Tcl_Merge(argc-1, (const char * const *)argv+1);
-
     /* Skip first arg */
     argv++; argc--;
+
+    /* Save args for tcl */
+    ac = argc;
+    av = bu_dup_argv(argc, (const char **)argv);
+
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
+	bu_free_argv(ac, av);
 	bu_exit(1, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
@@ -703,6 +705,7 @@ main(int argc, char **argv)
     }
 
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
+	bu_free_argv(ac, av);
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
@@ -719,6 +722,7 @@ main(int argc, char **argv)
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
+			bu_free_argv(ac, av);
 			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
 		    }
 		}
@@ -740,124 +744,26 @@ main(int argc, char **argv)
     }
 
     print_rtwizard_state(s);
-#if 1
+
     /* For now, all roads lead to Tcl. */
 
-    /* TODO - this tcl initialization is common (more or less) to btclsh, bwish,
-     * mged, and any other C programs wanting to lauch Tcl/Tk.  Should be
-     * refactored into a libtclcad function. */
     {
 	int status = 0;
-	int try_auto_path = 0;
-	int init_tcl = 1;
-	int init_itcl = 1;
-	const char *rtwizard = NULL;
+	struct bu_vls tlog = BU_VLS_INIT_ZERO;
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+	const char *rtwizard = NULL;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 
-	/* a two-pass init loop.  the first pass just tries default init
-	 * routines while the second calls tclcad_auto_path() to help it
-	 * find other, potentially uninstalled, resources.
-	 */
-	while (1) {
-
-	    /* not called first time through, give Tcl_Init() a chance */
-	    if (try_auto_path) {
-		/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-		tclcad_auto_path(interp);
-	    }
-
-	    /* Initialize Tcl */
-	    Tcl_ResetResult(interp);
-	    if (init_tcl && Tcl_Init(interp) == TCL_ERROR) {
-		if (!try_auto_path) {
-		    try_auto_path = 1;
-		    continue;
-		}
-		bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-		break;
-	    }
-	    init_tcl = 0;
-
-	    /* Initialize [incr Tcl] */
-	    Tcl_ResetResult(interp);
-	    /* NOTE: Calling "package require Itcl" here is apparently
-	     * insufficient without other changes elsewhere (per MGED comment,
-	     * but package require should work - why doesn't it??).
-	     */
-	    if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
-		if (!try_auto_path) {
-		    Tcl_Namespace *nsp;
-
-		    try_auto_path = 1;
-		    /* Itcl_Init() leaves initialization in a bad state
-		     * and can cause retry failures.  cleanup manually.
-		     */
-		    Tcl_DeleteCommand(interp, "::itcl::class");
-		    nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
-		    if (nsp)
-			Tcl_DeleteNamespace(nsp);
-		    continue;
-		}
-		bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-		break;
-	    }
-	    init_itcl = 0;
-
-	    /* don't actually want to loop forever */
-	    break;
-
-	} /* end iteration over Init() routines that need auto_path */
-	Tcl_ResetResult(interp);
-
-	/* if we haven't loaded by now, load auto_path so we find our tclscripts */
-	if (!try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts */
-	    tclcad_auto_path(interp);
+	/* The subsequent Tcl scripts will take of Tk, so at this
+	 * level we need only the standard init */
+	status = tclcad_init(interp, TCLCAD_STD_INIT, &tlog);
+	if (status == TCL_ERROR) {
+	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	}
+	bu_vls_free(&tlog);
 
-	/*XXX FIXME: Should not be importing Itcl into the global namespace */
-	/* Import [incr Tcl] commands into the global namespace. */
-	if (Tcl_Import(interp, Tcl_GetGlobalNamespace(interp), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
-	}
-
-	/* Initialize libbu */
-	if (Bu_Init(interp) == TCL_ERROR) {
-	    bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
-	}
-
-	/* Initialize libbn */
-	if (Bn_Init(interp) == TCL_ERROR) {
-	    bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
-	}
-
-	/* Initialize librt */
-	if (Rt_Init(interp) == TCL_ERROR) {
-	    bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
-	}
-
-	/* Initialize libged */
-	if (Go_Init(interp) == TCL_ERROR) {
-	    bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    Tcl_ResetResult(interp);
-	}
-
-	/* Set argc/argv to allow rtwizard's Tcl mode to function as expected */
-	{
-	    char buf[TCL_INTEGER_SPACE] = {0};
-	    Tcl_DString argString;
-	    Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
-	    Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
-	    sprintf(buf, "%ld", (long)(argc-1));
-	    Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
-	    Tcl_DStringFree(&argString);
-	    ckfree(args);
-	}
+	tclcad_set_argv(interp, ac, (const char *)av);
+	bu_free_argv(ac,av);
 
 	Init_RtWizard_Vars(interp, s);
 
@@ -865,8 +771,8 @@ main(int argc, char **argv)
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
 	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interp));
+	bu_vls_free(&tcl_cmd);
     }
-#endif
 
     /* Someday, we want to do this without Tcl via library calls unless
      * the GUI is needed... */
