@@ -72,8 +72,6 @@ static struct isst_s *isst;
 
 /* ISST functions */
 #ifdef _WIN32
-__declspec(dllexport) int Isst_Init(Tcl_Interp *interp);
-__declspec(dllexport) extern int Issttcltk_Init(Tcl_Interp *interp) { return Isst_Init(interp); }
 #define DM_TYPE_ISST DM_TYPE_WGL
 #else
 #define DM_TYPE_ISST DM_TYPE_OGL
