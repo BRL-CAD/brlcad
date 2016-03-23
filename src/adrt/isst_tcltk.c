@@ -43,6 +43,7 @@
 #include "camera.h"
 #include "isst.h"
 #include "raytrace.h"
+#include "tclcad.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -590,6 +591,39 @@ Isst_Init(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+int
+main(int argc, const char **argv)
+{
+    int status;
+    const char *isst_tcl = NULL;
+    struct bu_vls tlog = BU_VLS_INIT_ZERO;
+    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+    Tcl_Interp *interp = Tcl_CreateInterp();
+
+    status = tclcad_init(interp, 1, &tlog);
+    if (status == TCL_ERROR) {
+	bu_log("Isst tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
+	bu_vls_free(&tlog);
+	bu_exit(1, "tcl init error");
+    }
+
+    status = Isst_Init(interp);
+    if (status == TCL_ERROR) {
+	bu_vls_free(&tlog);
+	bu_exit(1, "Isst Tcl/Tk init error");
+    }
+    bu_vls_free(&tlog);
+
+    /* Skip first arg */
+    argv++; argc--;
+    tclcad_set_argv(interp, argc, argv);
+
+    isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
+    bu_vls_sprintf(&tcl_cmd, "source %s", isst_tcl);
+    status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    bu_vls_free(&tcl_cmd);
+    return status;
+}
 
 /*
  * Local Variables:

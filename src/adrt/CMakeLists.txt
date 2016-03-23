@@ -64,31 +64,16 @@ set(isst_dirs
 BRLCAD_INCLUDE_DIRS(isst_dirs)
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-  set(isst_libs librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
+  set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
 
   if(CPP_DLL_DEFINES)
     set(isst_libs ${isst_libs} opengl32.lib)
   endif(CPP_DLL_DEFINES)
 
-  BRLCAD_ADDLIB(issttcltk isst_tcltk.c "${isst_libs}" NO_INSTALL)
+  BRLCAD_ADDEXEC(isst isst_tcltk.c "${isst_libs}" GUI)
 
-  install(TARGETS issttcltk
-    RUNTIME DESTINATION ${BIN_DIR}/isst0.1
-    LIBRARY DESTINATION ${LIB_DIR}/
-    ARCHIVE DESTINATION ${LIB_DIR}/isst0.1)
-
-  include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
-  TCL_PKGINDEX(issttcltk isst "0.1")
-  if(WIN32)
-    BRLCAD_MANAGE_FILES("isst.bat" ${BIN_DIR} EXEC)
-  endif(WIN32)
-  BRLCAD_MANAGE_FILES("isst" ${BIN_DIR} EXEC)
-
-  add_custom_target(isst-exec ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/isst)
-  set_target_properties(isst-exec PROPERTIES FOLDER "BRL-CAD Executables")
-  add_dependencies(isst-exec issttcltk bwish)
   foreach(item ${tclindex_target_list})
-    add_dependencies(isst-exec ${item})
+    add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})
 
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
@@ -100,8 +85,6 @@ add_subdirectory(master)
 
 set(adrt_ignore_files
   isst.h
-  isst
-  isst.bat
   load.h
   slave
   tienet.h
