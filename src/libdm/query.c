@@ -137,22 +137,29 @@ dm_bestXType(char *dpy_string)
     {
 	Display *dpy;
 	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+	if (dpy_string) {
+	    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+		if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+		    XCloseDisplay(dpy);
+		    return "ogl";
+		}
 		XCloseDisplay(dpy);
-		return "ogl";
 	    }
-	    XCloseDisplay(dpy);
+	} else {
+	    return "ogl";
 	}
     }
 #endif
 
 #ifdef DM_X
     {
+	if (dpy_string) {
 	Display *dpy;
 	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
 	    XCloseDisplay(dpy);
+	    return "X";
+	}
+	} else {
 	    return "X";
 	}
     }
@@ -164,6 +171,7 @@ dm_bestXType(char *dpy_string)
 
 #ifdef DM_RTGL
     {
+	if (dpy_string) {
 	Display *dpy;
 	int return_val;
 
@@ -173,6 +181,9 @@ dm_bestXType(char *dpy_string)
 		return "rtgl";
 	    }
 	    XCloseDisplay(dpy);
+	}
+	} else {
+	    return "rtgl";
 	}
     }
 #endif
