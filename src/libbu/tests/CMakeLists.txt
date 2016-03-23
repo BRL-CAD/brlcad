@@ -60,9 +60,9 @@ add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND test_
 BRLCAD_ADDEXEC(test_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
 
 # NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
-add_test(NAME bu_file_mime_dxf   COMMAND test_bu_file_mime dxf 12 1) # tests dxf extension in model context
-add_test(NAME bu_file_mime_stp   COMMAND test_bu_file_mime stp 12 7) # tests stp extension in model context
-add_test(NAME bu_file_mime_png   COMMAND test_bu_file_mime png 10 13) # tests png extension in image context
+add_test(NAME bu_file_mime_dxf   COMMAND test_bu_file_mime dxf 5 1) # tests dxf extension in model context
+add_test(NAME bu_file_mime_stp   COMMAND test_bu_file_mime stp 5 7) # tests stp extension in model context
+add_test(NAME bu_file_mime_png   COMMAND test_bu_file_mime png 3 13) # tests png extension in image context
 
 #
 #  ************ bitv.c tests *************
