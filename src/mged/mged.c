@@ -1473,6 +1473,7 @@ main(int argc, char *argv[])
 		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
 		status = Tcl_EvalFile(INTERP, archer_trans);
+		Tcl_DStringFree(&temp);
 	    }
 	    bu_vls_free(&vls);
 
