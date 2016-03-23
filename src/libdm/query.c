@@ -133,21 +133,6 @@ dm_bestXType(char *dpy_string)
     return "wgl";
 #endif
 
-#ifdef DM_RTGL
-    {
-	Display *dpy;
-	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return "rtgl";
-	    }
-	    XCloseDisplay(dpy);
-	}
-    }
-#endif
-
 #ifdef DM_OGL
     {
 	Display *dpy;
@@ -175,9 +160,24 @@ dm_bestXType(char *dpy_string)
 
 #ifdef DM_TK
     return "tk";
-#else
-    return "nu";
 #endif
+
+#ifdef DM_RTGL
+    {
+	Display *dpy;
+	int return_val;
+
+	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+		XCloseDisplay(dpy);
+		return "rtgl";
+	    }
+	    XCloseDisplay(dpy);
+	}
+    }
+#endif
+
+    return "nu";
 }
 
 /*
