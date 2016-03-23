@@ -1,4 +1,4 @@
-/*                    I S S T _ T C L T K . C
+/*                           I S S T  . C
  * BRL-CAD
  *
  * Copyright (c) 2005-2016 United States Government as represented by
@@ -17,10 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file isst_tcltk.c
+/** @file isst.c
  *
- *  Tcl/Tk wrapper for adrt/tie functionality, used by Tcl/Tk version
- *  of ISST.
+ *  Tcl/Tk version of ISST.
  *
  */
 
