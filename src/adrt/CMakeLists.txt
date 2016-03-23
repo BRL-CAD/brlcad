@@ -56,13 +56,16 @@ install(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
-set(isst_dirs
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${OPENGL_INCLUDE_DIR_GLX}
-  ${X11_INCLUDE_DIR}
-  )
-BRLCAD_INCLUDE_DIRS(isst_dirs)
+
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+
+  set(isst_dirs
+    ${TCLCAD_INCLUDE_DIRS}
+    ${DM_INCLUDE_DIRS}
+    ${OPENGL_INCLUDE_DIR_GL}
+    ${OPENGL_INCLUDE_DIR_GLX}
+    )
+  BRLCAD_INCLUDE_DIRS(isst_dirs)
 
   set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
 
@@ -70,21 +73,25 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
     set(isst_libs ${isst_libs} imm32.lib comctl32.lib opengl32.lib)
   endif(CPP_DLL_DEFINES)
 
+  BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
   BRLCAD_ADDEXEC(isst isst_tcltk.c "${isst_libs}" GUI)
+  add_dependencies(isst isst_tcl_cp)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})
 
+else(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+
+  CMAKEFILES(isst_tcltk.c)
+
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-CMAKEFILES(isst_tcltk.c)
 
 add_subdirectory(master)
 # add_subdirectory(slave)
 
 set(adrt_ignore_files
-  isst.h
   load.h
   slave
   tienet.h

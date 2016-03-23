@@ -42,7 +42,6 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "camera.h"
-#include "isst.h"
 #include "raytrace.h"
 #include "tclcad.h"
 
@@ -51,6 +50,25 @@
 #endif
 
 static dm *dmp;
+
+struct isst_s {
+    struct tie_s *tie;
+    struct render_camera_s camera;
+    struct camera_tile_s tile;
+    struct adrt_mesh_s *meshes;
+    tienet_buffer_t buffer_image;
+    int ogl, sflags, w, h, gs, ui;
+    double dt, fps, uic;
+    double rotx, roty;
+    int texid;
+    void *texdata;
+    vect_t camera_pos_init;
+    vect_t camera_focus_init;
+    int64_t t1;
+    int64_t t2;
+    int dirty;
+};
+
 static struct isst_s *isst;
 
 /* ISST functions */
@@ -647,7 +665,6 @@ const char *fullname;
     isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
     Tcl_DStringInit(&temp);
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
-    bu_log("Tcl fullname: %s\n", fullname);
     status = Tcl_EvalFile(interp, fullname);
     Tcl_DStringFree(&temp);
     return status;

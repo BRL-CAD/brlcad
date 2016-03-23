@@ -83,7 +83,6 @@ add_subdirectory(pl-dm)
 add_subdirectory(sdialogs)
 add_subdirectory(swidgets)
 add_subdirectory(util)
-add_subdirectory(isst)
 
 set(tclscripts_TCLSCRIPTS
   cad_clrpick.tcl
