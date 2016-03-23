@@ -67,7 +67,7 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
 
   if(CPP_DLL_DEFINES)
-    set(isst_libs ${isst_libs} opengl32.lib)
+    set(isst_libs ${isst_libs} imm32.lib comctl32.lib opengl32.lib)
   endif(CPP_DLL_DEFINES)
 
   BRLCAD_ADDEXEC(isst isst_tcltk.c "${isst_libs}" GUI)

@@ -618,6 +618,13 @@ main(int argc, const char **argv)
     argv = __argv;
 #endif
 
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
+
+#ifdef HAVE_WINDOWS_H
+   Tk_InitConsoleChannels(interp);
+#endif
+
     status = tclcad_init(interp, 1, &tlog);
     if (status == TCL_ERROR) {
 	bu_log("Isst tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
