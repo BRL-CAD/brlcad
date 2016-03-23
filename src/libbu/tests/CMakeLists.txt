@@ -51,10 +51,7 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND test_
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND test_bu_path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
 add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND test_bu_path_component "C:/usr/dir/file.ext" "C:/usr/dir/file" 1)
 add_test(NAME bu_path_component_mime_pix_ext                       COMMAND test_bu_path_component "/usr/dir/file.pix" "BU_MIME_IMAGE_PIX" 5)
-add_test(NAME bu_path_component_mime_pix_prefix                    COMMAND test_bu_path_component "pix::/usr/dir/file" "BU_MIME_IMAGE_PIX" 5)
 add_test(NAME bu_path_component_mime_stp_ext                       COMMAND test_bu_path_component "/usr/dir/file.stp" "BU_MIME_MODEL_STEP" 6)
-add_test(NAME bu_path_component_mime_stp_prefix                    COMMAND test_bu_path_component "stp::/usr/dir/file" "BU_MIME_MODEL_STEP" 6)
-add_test(NAME bu_path_component_mime_stp_prefix_win32              COMMAND test_bu_path_component "stp::C:/usr/dir/file" "BU_MIME_MODEL_STEP" 6)
 
 ################################
 #      bu_file_mime testing    #
