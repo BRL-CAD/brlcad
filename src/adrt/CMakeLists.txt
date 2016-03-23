@@ -74,18 +74,16 @@ if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
   endif(CPP_DLL_DEFINES)
 
   BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
-  BRLCAD_ADDEXEC(isst isst_tcltk.c "${isst_libs}" GUI)
+  BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
   add_dependencies(isst isst_tcl_cp)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})
 
-else(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-
-  CMAKEFILES(isst_tcltk.c)
-
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
+
+CMAKEFILES(isst.c)
 
 
 add_subdirectory(master)
