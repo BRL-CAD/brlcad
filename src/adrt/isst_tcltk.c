@@ -27,6 +27,7 @@
 #include "common.h"
 
 #include "bnetwork.h"
+#include "bio.h"
 
 #include <GL/gl.h>
 
@@ -591,14 +592,31 @@ Isst_Init(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+#ifdef HAVE_WINDOWS_H
+int APIENTRY
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine,
+	int nCmdShow)
+{
+    char **argv;
+    int argc;
+#else
 int
 main(int argc, const char **argv)
 {
+#endif
     int status;
     const char *isst_tcl = NULL;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
     Tcl_Interp *interp = Tcl_CreateInterp();
+
+#ifdef HAVE_WINDOWS_H
+    /* Get our args from the c-runtime. Ignore lpszCmdLine. */
+    argc = __argc;
+    argv = __argv;
+#endif
 
     status = tclcad_init(interp, 1, &tlog);
     if (status == TCL_ERROR) {
