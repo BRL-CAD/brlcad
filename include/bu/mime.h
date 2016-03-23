@@ -17,7 +17,6 @@
 
 #include "common.h"
 #include "bu/defines.h"
-#include "bu/path.h"
 
 __BEGIN_DECLS
 

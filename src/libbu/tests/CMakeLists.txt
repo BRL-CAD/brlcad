@@ -43,6 +43,8 @@ add_test(NAME bu_basename_sp__sp__sp_                            COMMAND test_bu
 BRLCAD_ADDEXEC(test_bu_path_component    bu_path_component.c    libbu NO_INSTALL)
 add_test(NAME bu_path_component_null                               COMMAND test_bu_path_component) # tests NULL
 add_test(NAME bu_path_component_empty                              COMMAND test_bu_path_component 0) # tests empty
+
+# NOTE: these test numbers correspond with the bu_path_component_t enum values in include/bu/path.h
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_ext          COMMAND test_bu_path_component "/usr/dir/file.ext" "ext" 4)
 add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_ext        COMMAND test_bu_path_component "C:/usr/dir/file.ext" "ext" 4)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base         COMMAND test_bu_path_component "/usr/dir/file.ext" "file.ext" 2)
@@ -50,13 +52,14 @@ add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base_core    COMMAND test_
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND test_bu_path_component "/usr/dir/file.ext" "/usr/dir" 0)
 add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND test_bu_path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
 add_test(NAME bu_path_component_c_sl_usr_sl_dir_sl_file_dir_core   COMMAND test_bu_path_component "C:/usr/dir/file.ext" "C:/usr/dir/file" 1)
-add_test(NAME bu_path_component_mime_pix_ext                       COMMAND test_bu_path_component "/usr/dir/file.pix" "BU_MIME_IMAGE_PIX" 5)
-add_test(NAME bu_path_component_mime_stp_ext                       COMMAND test_bu_path_component "/usr/dir/file.stp" "BU_MIME_MODEL_STEP" 6)
+
 
 ################################
 #      bu_file_mime testing    #
 ################################
 BRLCAD_ADDEXEC(test_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
+
+# NOTE: these test numbers correspond with the bu_mime_t enum values in include/bu/mime.h
 add_test(NAME bu_file_mime_dxf   COMMAND test_bu_file_mime dxf 12 1) # tests dxf extension in model context
 add_test(NAME bu_file_mime_stp   COMMAND test_bu_file_mime stp 12 7) # tests stp extension in model context
 add_test(NAME bu_file_mime_png   COMMAND test_bu_file_mime png 10 13) # tests png extension in image context
