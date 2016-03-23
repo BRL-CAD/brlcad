@@ -191,6 +191,37 @@ dm_bestXType(char *dpy_string)
     return "nu";
 }
 
+
+/**
+ * dm_default_type suggests a display manager
+ */
+
+int
+dm_default_type()
+{
+
+#ifdef DM_OSGL
+    return DM_TYPE_OSGL;
+#endif
+
+#ifdef DM_WGL
+    return DM_TYPE_WGL;
+#endif
+
+#ifdef DM_OGL
+    return DM_TYPE_OGL;
+#endif
+
+#ifdef DM_X
+    return DM_TYPE_X;
+#endif
+
+#ifdef DM_TK
+    return DM_TYPE_TK;
+#endif
+    return DM_TYPE_NULL;
+}
+
 /*
  * Local Variables:
  * mode: C

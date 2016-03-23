@@ -70,13 +70,6 @@ struct isst_s {
 
 static struct isst_s *isst;
 
-/* ISST functions */
-#ifdef _WIN32
-#define DM_TYPE_ISST DM_TYPE_WGL
-#else
-#define DM_TYPE_ISST DM_TYPE_OGL
-#endif
-
 void resize_isst(struct isst_s *);
 
 /* new window size or exposure */
@@ -553,7 +546,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");
