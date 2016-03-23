@@ -606,10 +606,11 @@ int
 main(int argc, const char **argv)
 {
 #endif
+    Tcl_DString temp;
+const char *fullname;
     int status;
     const char *isst_tcl = NULL;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
-    struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
     Tcl_Interp *interp = Tcl_CreateInterp();
 
 #ifdef HAVE_WINDOWS_H
@@ -644,9 +645,11 @@ main(int argc, const char **argv)
     tclcad_set_argv(interp, argc, argv);
 
     isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
-    bu_vls_sprintf(&tcl_cmd, "source %s", isst_tcl);
-    status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-    bu_vls_free(&tcl_cmd);
+    Tcl_DStringInit(&temp);
+    fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
+    bu_log("Tcl fullname: %s\n", fullname);
+    status = Tcl_EvalFile(interp, fullname);
+    Tcl_DStringFree(&temp);
     return status;
 }
 
