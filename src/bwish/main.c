@@ -27,7 +27,6 @@
  */
 
 #include "common.h"
-#include <stdio.h>
 #include <ctype.h>
 #include "tcl.h"
 #ifdef BWISH
