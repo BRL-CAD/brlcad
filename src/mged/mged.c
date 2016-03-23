@@ -1466,10 +1466,13 @@ main(int argc, char *argv[])
 		bu_vls_strcpy(&vls, "gui");
 		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
+		Tcl_DString temp;
 		const char *archer = bu_brlcad_root("bin/archer", 1);
+		const char *archer_trans;
+		Tcl_DStringInit(&temp);
+		archer_trans = Tcl_TranslateFileName(INTERP, archer, &temp);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
-		bu_vls_strcpy(&vls, archer);
-		status = Tcl_EvalFile(INTERP, bu_vls_addr(&vls));
+		status = Tcl_EvalFile(INTERP, archer_trans);
 	    }
 	    bu_vls_free(&vls);
 
