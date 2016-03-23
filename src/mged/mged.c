@@ -70,6 +70,7 @@
 #include "libtermio.h"
 #include "rt/db4.h"
 #include "ged.h"
+#include "tclcad.h"
 
 /* private */
 #include "./mged.h"
@@ -1465,17 +1466,10 @@ main(int argc, char *argv[])
 		bu_vls_strcpy(&vls, "gui");
 	    } else {
 		const char *archer = bu_brlcad_root("bin/archer", 1);
-
-		/* any remaining parameter should be the name of our
-		 * .g -- archer looks at the 'argv' global for a
-		 * database file name.
-		 */
-		if (argc >= 1)
-		    bu_vls_printf(&vls, "set argc %d; set argv %s; source %s", argc, argv[0], archer);
-		else
-		    bu_vls_printf(&vls, "source %s", archer);
+		tclcad_set_argv(INTERP, argc, (const char **)argv);
+		bu_vls_strcpy(&vls, archer);
 	    }
-	    status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
+	    status = Tcl_EvalFile(INTERP, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
 #ifdef HAVE_PIPE
