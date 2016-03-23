@@ -348,7 +348,7 @@ TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmd
 /**
  * Set the variables "argc" and "argv" in interp.
  */
-TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const char *argv);
+TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv);
 
 /**
  * This is the "all-in-one" initialization intended for use by

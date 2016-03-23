@@ -762,7 +762,7 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 
-	tclcad_set_argv(interp, ac, (const char *)av);
+	tclcad_set_argv(interp, ac, (const char **)av);
 	bu_free_argv(ac,av);
 
 	Init_RtWizard_Vars(interp, s);

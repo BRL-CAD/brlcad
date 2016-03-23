@@ -271,7 +271,7 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 }
 
 void
-tclcad_set_argv(Tcl_Interp *interp, int argc, const char *argv)
+tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv)
 {
     char buf[TCL_INTEGER_SPACE] = {0};
     char *args;
@@ -282,7 +282,7 @@ tclcad_set_argv(Tcl_Interp *interp, int argc, const char *argv)
     Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
 
     /* argv */
-    args = Tcl_Merge(argc-1, (const char * const *)argv);
+    args = Tcl_Merge(argc, (const char * const *)argv);
     Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
     Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
     Tcl_DStringFree(&argString);
