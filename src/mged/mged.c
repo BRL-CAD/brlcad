@@ -1464,12 +1464,13 @@ main(int argc, char *argv[])
 
 	    if (old_mged_gui) {
 		bu_vls_strcpy(&vls, "gui");
+		status = Tcl_Eval(INTERP, bu_vls_addr(&vls));
 	    } else {
 		const char *archer = bu_brlcad_root("bin/archer", 1);
 		tclcad_set_argv(INTERP, argc, (const char **)argv);
 		bu_vls_strcpy(&vls, archer);
+		status = Tcl_EvalFile(INTERP, bu_vls_addr(&vls));
 	    }
-	    status = Tcl_EvalFile(INTERP, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 
 #ifdef HAVE_PIPE
