@@ -19,7 +19,10 @@ if(CPP_DLL_DEFINES)
   set(brlman_libs ${brlman_libs} imm32.lib comctl32.lib)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDEXEC(brlman brlman.c "${brlman_libs}")
+# Building "GUI" doesn't matter except on Windows, but
+# on Windows brlman works only in graphical mode - might
+# as well behave "nicely" there.
+BRLCAD_ADDEXEC(brlman brlman.c "${brlman_libs}" GUI)
 add_dependencies(brlman brlman_tcl_cp)
 
 foreach(item ${tclindex_target_list})

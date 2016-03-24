@@ -33,6 +33,9 @@
 #include "bio.h"
 
 #include "tcl.h"
+#ifdef HAVE_TK
+#  include "tk.h"
+#endif
 
 #include "bu.h"
 #include "tclcad.h"
@@ -121,10 +124,20 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
     return ret;
 }
 
-
+#ifdef HAVE_WINDOWS_H
+int APIENTRY
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine,
+	int nCmdShow)
+{
+    char **argv;
+    int argc;
+#else
 int
 main(int argc, const char **argv)
 {
+#endif
 #if !defined(MAN_CMDLINE) && !defined(MAN_GUI)
     bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
 #else
@@ -145,6 +158,12 @@ main(int argc, const char **argv)
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_opt_desc d[4];
     const char sections[] = {'1', '3', '5', 'n', '\0'};
+
+#ifdef HAVE_WINDOWS_H
+    /* Get our args from the c-runtime. Ignore lpszCmdLine. */
+    argc = __argc;
+    argv = __argv;
+#endif
 
     /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
     bu_setprogname(argv[0]);
@@ -208,7 +227,7 @@ main(int argc, const char **argv)
 	disable_gui = 0;
 #endif
 #if !defined(MAN_GUI) && defined(MAN_CMDLINE)
-	bu_log("Warning - gui explicitly enabled *and* disabled? - platform only supports command line, disabling gui.\n");
+	bu_log("Warning - gui explicitly enabled *and* disabled? - platform only supports command line, disabling GUI.\n");
 #endif
 #if defined(MAN_GUI) && !defined(MAN_CMDLINE)
 	bu_log("Warning - gui explicitly enabled *and* disabled? - platform only supports GUI viewer, enabling GUI.\n");
@@ -294,6 +313,10 @@ main(int argc, const char **argv)
 	Tcl_DString temp, temp2;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
+
+#ifdef HAVE_WINDOWS_H
+	Tk_InitConsoleChannels(interp);
+#endif
 
 	status = tclcad_init(interp, enable_gui, &tlog);
 
