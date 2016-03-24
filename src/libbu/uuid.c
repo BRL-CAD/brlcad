@@ -27,7 +27,9 @@
 
 /* system headers */
 #include <stdio.h>
-#include <strings.h>
+#ifdef HAVE_STRINGS_H
+#  include <strings.h>
+#endif
 
 
 int
