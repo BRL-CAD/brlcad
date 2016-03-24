@@ -103,6 +103,7 @@ set(LIBBU_SOURCES
   temp.c
   thread.cpp
   units.c
+  uuid.c
   vers.c
   vfont.c
   vlb.c
