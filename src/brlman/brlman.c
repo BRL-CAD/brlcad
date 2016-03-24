@@ -310,7 +310,7 @@ main(int argc, const char **argv)
 	const char *tcl_man_file;
 	const char *brlman_tcl = NULL;
 	struct bu_vls tlog = BU_VLS_INIT_ZERO;
-	Tcl_DString temp, temp2;
+	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
@@ -340,13 +340,17 @@ main(int argc, const char **argv)
 
 	/* Pass the key variables into the interp */
 	if (man_file) {
+	    Tcl_Obj *pathP, *norm;
+
 	    bu_vls_sprintf(&tcl_cmd, "set ::man_name %s", man_name);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	    Tcl_DStringInit(&temp);
-	    tcl_man_file = Tcl_TranslateFileName(interp, man_file, &temp);
+
+	    pathP = Tcl_NewStringObj(man_file, -1);
+	    norm = Tcl_FSGetTranslatedPath(interp, pathP);
+	    tcl_man_file = Tcl_GetString(norm);
 	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
-	    Tcl_DStringFree(&temp);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+
 	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	} else {
@@ -355,10 +359,10 @@ main(int argc, const char **argv)
 	}
 
 	brlman_tcl = bu_brlcad_data("tclscripts/brlman/brlman.tcl", 1);
-	Tcl_DStringInit(&temp2);
-	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp2);
+	Tcl_DStringInit(&temp);
+	fullname = Tcl_TranslateFileName(interp, brlman_tcl, &temp);
 	status = Tcl_EvalFile(interp, fullname);
-	Tcl_DStringFree(&temp2);
+	Tcl_DStringFree(&temp);
 
 	result = Tcl_GetStringResult(interp);
 	if (strlen(result) > 0 && status == TCL_ERROR) {
