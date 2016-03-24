@@ -288,7 +288,7 @@ main(int argc, const char **argv)
 #ifdef MAN_GUI
 	const char *result;
 	const char *fullname;
-	const char *tcl_man_file_cmd;
+	const char *tcl_man_file;
 	const char *brlman_tcl = NULL;
 	struct bu_vls tlog = BU_VLS_INIT_ZERO;
 	Tcl_DString temp, temp2;
@@ -319,11 +319,11 @@ main(int argc, const char **argv)
 	if (man_file) {
 	    bu_vls_sprintf(&tcl_cmd, "set ::man_name %s", man_name);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", man_file);
 	    Tcl_DStringInit(&temp);
-	    tcl_man_file_cmd = Tcl_TranslateFileName(interp, bu_vls_addr(&tcl_cmd), &temp);
-	    (void)Tcl_Eval(interp, tcl_man_file_cmd);
+	    tcl_man_file = Tcl_TranslateFileName(interp, man_file, &temp);
+	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
 	    Tcl_DStringFree(&temp);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	} else {
