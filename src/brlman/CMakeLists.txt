@@ -57,7 +57,7 @@ file(COPY brlman.bat
 DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat)
 install(PROGRAMS ${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat DESTINATION ${BIN_DIR})
 
-CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat)
+CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat brlman.c)
 
 # Local Variables:
 # tab-width: 8
