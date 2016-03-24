@@ -322,6 +322,9 @@ main(int argc, const char **argv)
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	} else {
+	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_brlcad_dir("doc", 1));
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 
 	brlman_tcl = bu_brlcad_data("tclscripts/brlman/brlman.tcl", 1);
