@@ -396,6 +396,34 @@ int main(int ac, char *av[])
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 
+
+macro(BRLCAD_CHECK_STATIC_ARRAYS)
+  set(CHECK_STATIC_ARRAYS_SRC "
+#include <stdio.h>
+#include <string.h>
+
+int foobar(char arg[static 100])
+{
+  return (int)arg[0];
+}
+
+int main(int ac, char *av[])
+{
+  char hello[100];
+
+  if (ac > 0 && av)
+    foobar(hello);
+  return 0;
+}
+")
+  if(NOT DEFINED HAVE_STATIC_ARRAYS)
+    CHECK_C_SOURCE_RUNS("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+  endif(NOT DEFINED HAVE_STATIC_ARRAYS)
+  if(HAVE_STATIC_ARRAYS)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
+  endif(HAVE_STATIC_ARRAYS)
+endmacro(BRLCAD_CHECK_STATIC_ARRAYS)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
