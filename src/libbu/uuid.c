@@ -20,16 +20,13 @@
 
 #include "common.h"
 
-#include "string.h" /* memcmp */
 
 /* interface header */
 #include "bu/uuid.h"
 
 /* system headers */
 #include <stdio.h>
-#ifdef HAVE_STRINGS_H
-#  include <strings.h>
-#endif
+#include <string.h> /* memcmp */
 
 
 int
