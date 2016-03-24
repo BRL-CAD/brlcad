@@ -21,10 +21,19 @@
 #ifndef BU_UUID_H
 #define BU_UUID_H
 
-//#include "common.h"
+#include "common.h"
 
 #include <stdint.h> /* for uint8_t */
 #include <stdlib.h> /* for size_t */
+
+#include "bu/defines.h"
+
+
+#ifdef HAVE_STATIC_ARRAYS
+#define STATIC_ARRAY(x) static (x)
+#else
+#define STATIC_ARRAY(x) (x)
+#endif
 
 
 __BEGIN_DECLS
@@ -37,7 +46,7 @@ __BEGIN_DECLS
  * version 5 UUID suitable for repeatable identifier hashing.
  */
 int
-bu_uuid_create(uint8_t uuid[static 16], size_t nbytes, uint8_t *bytes);
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes);
 
 /**
  * This is a convenience UUID comparison routine compatible with
@@ -57,9 +66,9 @@ bu_uuid_compare(const void *uuid_left, const void *uuid_right);
  * Converts a UUID into a string representation of the following
  * style: "00112233-4455-6677-8899-AABBCCDDEEFF"
  *
- * The caller must provide a 36-byte array to write the result and
- * will need to manually convert this into a string or add braces as
- * desired by the calling application.  For example:
+ * The caller must provide a 36-byte + 1-byte (for nul) array to write
+ * the result and will need to manually convert this into a string or
+ * add braces as desired by the calling application.  For example:
  *
 @code
 uint8_t uuid[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
@@ -73,7 +82,7 @@ printf("UUID is %s\n", uuidstr);
 @endcode
  */
 BU_EXPORT int
-bu_uuid_encode(const uint8_t uuid[static 16], uint8_t cp[static 36]);
+bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)]);
 
 /**
  * Converts a string (e.g., "{12B01234-f543-39d9-BFE0-0098765432F1}")
@@ -82,7 +91,7 @@ bu_uuid_encode(const uint8_t uuid[static 16], uint8_t cp[static 36]);
  * missing.  The hex digits can be any mixture of upper or lower case.
  */
 BU_EXPORT int
-bu_uuid_decode(const char *cp, uint8_t uuid[static 16]);
+bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)]);
 
 
 __END_DECLS
