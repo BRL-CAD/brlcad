@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* improvements to brlman man page viewer - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
 * added facetize -m marching cubes option - Erik Greenwald
 * removed -I interactive option from rt/rtedge/remrt - Sean Morrison
