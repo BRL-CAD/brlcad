@@ -543,7 +543,9 @@ add_test(NAME bu_hash_lorem_ipsum  COMMAND test_bu_hash 2)
 #  *********** uuid.c tests ************
 #
 
-#BRLCAD_ADDEXEC(test_bu_uuid bu_uuid.c libbu NO_INSTALL)
+BRLCAD_ADDEXEC(test_bu_uuid bu_uuid.c libbu NO_INSTALL)
+add_test(NAME bu_uuid_encode COMMAND test_bu_uuid)
+
 #add_test(NAME bu_uuid_create  COMMAND test_bu_uuid 0)
 #add_test(NAME bu_uuid_compare COMMAND test_bu_uuid 1)
 #add_test(NAME bu_uuid_encode  COMMAND test_bu_uuid 2)
