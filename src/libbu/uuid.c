@@ -20,6 +20,8 @@
 
 #include "common.h"
 
+#include "string.h" /* memcmp */
+
 /* interface header */
 #include "bu/uuid.h"
 
