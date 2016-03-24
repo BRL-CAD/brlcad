@@ -129,10 +129,7 @@ main(int argc, const char **argv)
     bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
 #else
     int i = 0;
-    const char *result;
-    const char *fullname;
     int status;
-    struct bu_vls tlog = BU_VLS_INIT_ZERO;
     int uac = 0;
 #ifndef MAN_CMDLINE 
     int enable_gui = 1;
@@ -289,7 +286,10 @@ main(int argc, const char **argv)
 #endif
     } else {
 #ifdef MAN_GUI
+	const char *result;
+	const char *fullname;
 	const char *brlman_tcl = NULL;
+	struct bu_vls tlog = BU_VLS_INIT_ZERO;
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
