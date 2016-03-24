@@ -33,10 +33,18 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "tk.h"
 
 #include "bu.h"
 #include "tclcad.h"
+
+/* Confine the constraining build conditions here - ultimately, we care
+ * about graphical and non-graphical, whatever the reasons. */
+#ifdef HAVE_TK
+#  define MAN_GUI 1
+#endif
+#ifndef HAVE_WINDOWS_H
+#  define MAN_CMDLINE 1
+#endif
 
 /*
  * Checks that a string matches the two lower case letter form of ISO 639-1
@@ -113,38 +121,20 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
     return ret;
 }
 
-HIDDEN char *
-find_man_path(const char *man_name, const char *lang, char section, int gui)
-{
-    char *ret = NULL;
-    char *man_file = find_man_file(man_name, lang, section, gui);
-    struct bu_vls tmp = BU_VLS_INIT_ZERO;
-    struct bu_vls mpath = BU_VLS_INIT_ZERO;
-
-    if (!man_file) goto done;
-    if (!bu_path_component(&tmp, man_file, BU_PATH_DIRNAME)) goto done;
-    if (!bu_path_component(&mpath, bu_vls_addr(&tmp), BU_PATH_DIRNAME)) goto done;
-
-    ret = bu_strdup(bu_vls_addr(&mpath));
-
-done:
-    if (man_file) bu_free(man_file, "free file path");
-    bu_vls_free(&tmp);
-    bu_vls_free(&mpath);
-    return ret;
-}
 
 int
 main(int argc, const char **argv)
 {
+#if !defined(MAN_CMDLINE) && !defined(MAN_GUI)
+    bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
+#else
     int i = 0;
     const char *result;
     const char *fullname;
     int status;
-    const char *brlman_tcl = NULL;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
     int uac = 0;
-#ifdef HAVE_WINDOWS_H
+#ifndef MAN_CMDLINE 
     int enable_gui = 1;
 #else
     int enable_gui = 0;
@@ -216,8 +206,16 @@ main(int argc, const char **argv)
     }
 
     if (enable_gui && disable_gui) {
-	bu_log("Warning - gui explicitly enabled *and* disabled? - enabling.\n");
+#if defined(MAN_GUI) && defined(MAN_CMDLINE)
+	bu_log("Warning - gui explicitly enabled *and* disabled? - platform supports both, enabling GUI.\n");
 	disable_gui = 0;
+#endif
+#if !defined(MAN_GUI) && defined(MAN_CMDLINE)
+	bu_log("Warning - gui explicitly enabled *and* disabled? - platform only supports command line, disabling gui.\n");
+#endif
+#if defined(MAN_GUI) && !defined(MAN_CMDLINE)
+	bu_log("Warning - gui explicitly enabled *and* disabled? - platform only supports GUI viewer, enabling GUI.\n");
+#endif
     }
 
     /* If we're not graphical and we don't have a name at this point, we're done. */
@@ -227,15 +225,20 @@ main(int argc, const char **argv)
 
     /* If we're not graphical, make sure we have a man command to use */
     if (!enable_gui) {
+#ifndef MAN_CMDLINE 
+	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
+#else
 	man_cmd = bu_which("man");
 	if (!man_cmd) {
 	    if (disable_gui) {
 		bu_exit(EXIT_FAILURE, "Error: Graphical man display is disabled, but no man command is available.");
 	    } else {
 		/* Don't have any specific instructions - fall back on gui */
+		bu_log("Warning: Graphical mode was not specified, but no man command is available - enabling GUI.");
 		enable_gui = 1;
 	    }
 	}
+#endif
     }
 
     /* If we don't have a language, check environment */
@@ -260,17 +263,33 @@ main(int argc, const char **argv)
 	i = 0;
 	while(sections[i] != '\0') {
 	    man_file = find_man_file(man_name, bu_vls_addr(&lang), sections[i], enable_gui);
-	    if (man_file) break;
+	    if (man_file) {
+		man_section = sections[i];
+		break;
+	    }
 	    i++;
 	}
     }
 
-
     if (!enable_gui) {
+#ifdef MAN_CMDLINE 
+	if (!man_file) {
+	    if (man_section != '\0') {
+		bu_exit(EXIT_FAILURE, "No man page found for %s in section %c\n", man_name, man_section);
+	    } else {
+		bu_exit(EXIT_FAILURE, "No man page found for %s\n", man_name);
+	    }
+	}
 	/* Note - for reasons that are unclear, passing in man_cmd as the first
-	 * argument to execlp will *not) work... */
-	(void)execlp("man", man_cmd, man_file, (char *)NULL);
+	 * argument to execlp will *not* work... */
+	status = execlp("man", man_cmd, man_file, (char *)NULL);
+#else
+	/* Shouldn't get here - should be caught by above tests */
+	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
+#endif
     } else {
+#ifdef MAN_GUI
+	const char *brlman_tcl = NULL;
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
@@ -284,13 +303,25 @@ main(int argc, const char **argv)
 	}
 	bu_vls_free(&tlog);
 
-	/* Have gui but no man page - graphical failure notice */
-	if (enable_gui) {
-	    bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: Please specify man page\" -type ok");
+	/* Have gui flag and specified man page but no file found - graphical failure notice */
+	if (enable_gui && man_name && !man_file) {
+	    if (man_section != '\0') {
+		bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s in section %c\" -type ok", man_name, man_section);
+	    } else {
+		bu_vls_sprintf(&tcl_cmd, "tk_messageBox -message \"Error: man page not found for %s\" -type ok", man_name);
+	    }
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	    bu_exit(EXIT_FAILURE, "no man page");
-	} else {
-	    bu_exit(EXIT_FAILURE, "Error: Please specify man page");
+	    bu_exit(EXIT_FAILURE, NULL);
+	}
+
+	/* Pass the key variables into the interp */
+	if (man_file) {
+	    bu_vls_sprintf(&tcl_cmd, "set ::man_name %s", man_name);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", man_file);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
 
 	brlman_tcl = bu_brlcad_data("tclscripts/brlman/brlman.tcl", 1);
@@ -300,12 +331,16 @@ main(int argc, const char **argv)
 	Tcl_DStringFree(&temp);
 
 	result = Tcl_GetStringResult(interp);
-	if (strlen(result) > 0) {
+	if (strlen(result) > 0 && status == TCL_ERROR) {
 	    bu_log("%s\n", result);
 	}
-
+#else
+	/* Shouldn't get here - should be caught by above tests */
+	bu_exit(EXIT_FAILURE, "Error: graphical man display is not supported.");
+#endif
     }
     return status;
+#endif /* !defined(MAN_CMDLINE) && !defined(MAN_GUI) */
 }
 
 
