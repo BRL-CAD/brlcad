@@ -107,7 +107,7 @@ proc rtimage {rtimage_dict} {
 	    -c [eval list eye_pt $_eye_pt] \
 	    $_dbfile]
 
-	lappend $_benchmark_mode
+	lappend cmd $_benchmark_mode
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -160,7 +160,7 @@ proc rtimage {rtimage_dict} {
 				 -c [list [eval list eye_pt $_eye_pt]] \
 				 $_dbfile]
 
-		    lappend $_benchmark_mode
+		    lappend cmd $_benchmark_mode
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -201,7 +201,7 @@ proc rtimage {rtimage_dict} {
 		     -c [eval list eye_pt $_eye_pt] \
 		     $_dbfile]
 
-	lappend $_benchmark_mode
+	lappend cmd $_benchmark_mode
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -224,7 +224,7 @@ proc rtimage {rtimage_dict} {
 		     -c [eval list eye_pt $_eye_pt] \
 		     $_dbfile]
 
-	lappend $_benchmark_mode
+	lappend cmd $_benchmark_mode
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -292,7 +292,7 @@ proc rtimage {rtimage_dict} {
 		     -c [list [eval list eye_pt $_eye_pt]] \
 		     [list $_dbfile]]
 
-	lappend $_benchmark_mode
+	lappend cmd $_benchmark_mode
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
