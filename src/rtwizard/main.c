@@ -198,7 +198,7 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 	    break;
 	case 'B':
 	    if (BU_PTBL_LEN(s->line) == 0) {
-		bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-l"));
 		ret = 0;
 	    }
 	    break;
@@ -206,7 +206,7 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 	case 'D':
 	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->line) == 0) {
 		if (BU_PTBL_LEN(s->line) == 0) {
-		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-l"));
 		    ret = 0;
 		}
 		if (BU_PTBL_LEN(s->color) == 0) {
@@ -238,7 +238,7 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 		    ret = 0;
 		}
 		if (BU_PTBL_LEN(s->line) == 0) {
-		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-l"));
 		    ret = 0;
 		}
 	    }
