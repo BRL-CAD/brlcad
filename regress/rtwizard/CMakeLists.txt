@@ -12,7 +12,7 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
   set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   add_custom_command(
-    OUTPUT ${STAMP_FILE}
+    OUTPUT ${STAMP_FILE} ${TARGET_IMAGE} ${LOG_FILE}
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
     DEPENDS pixcmp rtwizard ${depends_list}
     )
