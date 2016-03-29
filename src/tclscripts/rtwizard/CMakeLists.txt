@@ -82,7 +82,7 @@ if(BRLCAD_ENABLE_TK)
   endforeach(item ${tclindex_target_list})
 endif(BRLCAD_ENABLE_TK)
 
-CMAKEFILES(examples main.c)
+CMAKEFILES(examples)
 
 # Local Variables:
 # tab-width: 8

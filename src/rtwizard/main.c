@@ -31,6 +31,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/path.h"
 #include "bu/ptbl.h"
 #include "bu/opt.h"
 #include "bu/str.h"
@@ -196,16 +197,59 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 	    }
 	    break;
 	case 'B':
+	    if (BU_PTBL_LEN(s->line) == 0) {
+		bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		ret = 0;
+	    }
 	    break;
 	case 'C':
-	    break;
 	case 'D':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->line) == 0) {
+		if (BU_PTBL_LEN(s->line) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+	    }
 	    break;
 	case 'E':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->ghost) == 0) {
+		if (BU_PTBL_LEN(s->ghost) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "ghost", "-g"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+	    }
+	    break;
+	case 'F':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->line) == 0 || BU_PTBL_LEN(s->ghost) == 0) {
+		if (BU_PTBL_LEN(s->ghost) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "ghost", "-g"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->line) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    ret = 0;
+		}
+	    }
 	    break;
 	default:
 	    /* If we don't have a type, make sure we've got *some* object in at
 	     * least one of the object lists */
+	    if (BU_PTBL_LEN(s->color) == 0 && BU_PTBL_LEN(s->line) == 0 && BU_PTBL_LEN(s->ghost) == 0) {
+		bu_vls_printf(msg, "Error: please specify at least one color, line, or ghost object.\n");
+		ret = 0;
+	    }
 	    break;
     }
 
@@ -293,7 +337,7 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 	return -1;
     }
 
-    if (argv[0][0] != 'A' && argv[0][0] != 'B' && argv[0][0] != 'C' && argv[0][0] != 'D' && argv[0][0] != 'E') {
+    if (argv[0][0] != 'A' && argv[0][0] != 'B' && argv[0][0] != 'C' && argv[0][0] != 'D' && argv[0][0] != 'E' && argv[0][0] != 'F') {
 	if (msg) bu_vls_printf(msg, "Invalid letter specifier for rtwizard type: %c\n", argv[0][0]);
 	return -1;
     }
@@ -508,21 +552,29 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     if (s->size_set) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %d", s->size);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	if (!s->width_set) {
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->size);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+	if (!s->height_set) {
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->size);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
     }
-
+    
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(color_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     if (BU_PTBL_LEN(s->color) > 0) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(color_objlist) {}");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	for (i = 0; i < BU_PTBL_LEN(s->color); i++) {
 	    const char *obj = (const char *)BU_PTBL_GET(s->color, i);
 	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(color_objlist) %s", obj);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
     }
-
+    
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     if (BU_PTBL_LEN(s->ghost) > 0) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_objlist) {}");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	for (i = 0; i < BU_PTBL_LEN(s->ghost); i++) {
 	    const char *obj = (const char *)BU_PTBL_GET(s->ghost, i);
 	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(ghost_objlist) %s", obj);
@@ -530,9 +582,9 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	}
     }
 
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(line_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     if (BU_PTBL_LEN(s->line) > 0) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(line_objlist) {}");
-	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	for (i = 0; i < BU_PTBL_LEN(s->line); i++) {
 	    const char *obj = (const char *)BU_PTBL_GET(s->line, i);
 	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(line_objlist) %s", obj);
@@ -643,6 +695,7 @@ main(int argc, char **argv)
     int i = 0;
     char type = '\0';
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
     struct bu_opt_desc d[34];
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
@@ -669,7 +722,7 @@ main(int argc, char **argv)
     BU_OPT(d[21], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
     BU_OPT(d[22], " ", "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
     BU_OPT(d[23], "P",  "perspective",  "#[.#]",     &bu_opt_fastf_t, &s->perspective, "Set perspective");
-    BU_OPT(d[24], "t", "type",          "A|B|C|D|E", &opt_letter,     &type,         "Specify RtWizard picture type");
+    BU_OPT(d[24], "t", "type",          "A|B|C|D|E|F", &opt_letter,     &type,         "Specify RtWizard picture type");
     BU_OPT(d[25], "z", "zoom",          "#[.#] ",    &bu_opt_fastf_t, &s->zoom,      "Set zoom");
     BU_OPT(d[26], "",  "center",        "x,y,z",     &bu_opt_vect_t,  &s->center,    "Set view center");
     BU_OPT(d[27], "",  "viewsize",      "#[.#}",     &bu_opt_fastf_t, &s->viewsize,  "Set view size");
@@ -742,6 +795,17 @@ main(int argc, char **argv)
 	/* If it's none of the above, assume a color object in the .g file */
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
     }
+
+    if (!rtwizard_info_sufficient(&info_msg, s, type)) {
+	if ((!s->use_gui) && (!s->no_gui)) {
+	    s->use_gui = 1;
+	} else {
+	    bu_log("%s", bu_vls_addr(&info_msg));
+	    bu_vls_free(&info_msg);
+	    bu_exit(EXIT_FAILURE, "Fatal: insufficient information to generate image");
+	}
+    }
+    bu_vls_free(&info_msg);
 
     print_rtwizard_state(s);
 

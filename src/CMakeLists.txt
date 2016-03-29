@@ -102,6 +102,7 @@ set(level_3_dirs
   adrt
   archer
   mged
+  rtwizard
   )
 
 # Now that we have our lists, proceed with the actual
