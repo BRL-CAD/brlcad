@@ -561,7 +561,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
     }
-    
+
     bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(color_objlist) {}");
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     if (BU_PTBL_LEN(s->color) > 0) {
@@ -571,7 +571,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	}
     }
-    
+
     bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_objlist) {}");
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     if (BU_PTBL_LEN(s->ghost) > 0) {
@@ -618,7 +618,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
     if (s->benchmark) {
-	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode 1");
+	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode \"-B\"");
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 

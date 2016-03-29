@@ -39,7 +39,7 @@ set_target_properties(regress-rtwizard PROPERTIES FOLDER "BRL-CAD Regression Tes
 execute_process(COMMAND "${CMAKE_COMMAND}" -E tar xjf "${CMAKE_CURRENT_SOURCE_DIR}/m35_rtwiz.tar.bz2" WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix")
 
-Add_RtWiz_Test(rtwiz_m35_A "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "all.g -s 512" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_A "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "all.g --benchmark -s 512" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.log"

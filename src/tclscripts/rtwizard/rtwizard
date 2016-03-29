@@ -73,6 +73,13 @@ if {![info exists ::RtWizard::wizard_state(verbose)]} {
     set ::RtWizard::wizard_state(verbose) 0
 }
 
+# Set benchmark mode, if not already set
+if {[info exists ::benchmark_mode]} {
+    set ::benchmark_mode "-B"
+} else {
+    set ::benchmark_mode ""
+}
+
 # If we're launching without enough arguments to fully specify an rtwizard
 # run or a gui run has been specifically requested, go graphical
 if {[info exists ::use_gui]} {
@@ -215,6 +222,7 @@ if {[info exists ::use_gui]} {
        _color_objects  $::RtWizard::wizard_state(color_objlist) \
        _ghost_objects  $::RtWizard::wizard_state(ghost_objlist) \
        _edge_objects  $::RtWizard::wizard_state(line_objlist) \
+       _benchmark_mode  $::benchmark_mode \
        _log_file  $::RtWizard::wizard_state(log_file) \
        _pid_filename $::RtWizard::wizard_state(pid_filename)
        ]
