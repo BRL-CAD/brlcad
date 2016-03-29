@@ -42,6 +42,28 @@ if {![info exists ::RtWizard::wizard_state(log_file)]} {
 
 # Geometry Database
 if {![info exists ::RtWizard::wizard_state(dbFile)]} { set ::RtWizard::wizard_state(dbFile) "" }
+# Initial orientation
+if {![info exists ::RtWizard::wizard_state(init_azimuth)]} { set ::RtWizard::wizard_state(init_azimuth) 35 }
+if {![info exists ::RtWizard::wizard_state(init_elevation)]} { set ::RtWizard::wizard_state(init_elevation) 25 }
+if {![info exists ::RtWizard::wizard_state(init_twist)]} { set ::RtWizard::wizard_state(init_twist) 0 }
+# Initial zoom
+if {![info exists ::RtWizard::wizard_state(zoom)]} { set ::RtWizard::wizard_state(zoom) 1 }
+# Initial perspective
+if {![info exists ::RtWizard::wizard_state(perspective)]} { set ::RtWizard::wizard_state(perspective) 0 }
+# Background color
+if {![info exists ::RtWizard::wizard_state(bg_color)]} { set ::RtWizard::wizard_state(bg_color) {255 255 255} }
+# Edge lines color
+if {![info exists ::RtWizard::wizard_state(e_color)]} { set ::RtWizard::wizard_state(e_color) {0 0 0} }
+# Edge not-lines color
+if {![info exists ::RtWizard::wizard_state(ne_color)]} { set ::RtWizard::wizard_state(ne_color) {0 0 0} }
+# Occlusion mode
+if {![info exists ::RtWizard::wizard_state(occmode)]} { set ::RtWizard::wizard_state(occmode) 1 }
+# Ghost intensity
+if {![info exists ::RtWizard::wizard_state(ghosting_intensity)]} { set ::RtWizard::wizard_state(ghosting_intensity) 12 }
+# Pix width
+if {![info exists ::RtWizard::wizard_state(width)]} { set ::RtWizard::wizard_state(width) 512 }
+# Pix height (number of scan lines)
+if {![info exists ::RtWizard::wizard_state(scanlines)]} { set ::RtWizard::wizard_state(scanlines) 512 }
 
 # Load the package that lets us output images
 package require cadwidgets::RtImage
