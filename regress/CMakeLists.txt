@@ -35,6 +35,9 @@ add_subdirectory(icv)
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
 
+# RtWizard Image Generation Regression Tests (experimental)
+add_subdirectory(rtwizard)
+
 # MGED command tests
 add_subdirectory(mged)
 
@@ -73,11 +76,6 @@ if(SH_EXEC)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
   Sh_Regression_Test(quote "" EXCLUDE_FROM_REGRESS)
-
-  set(rtwizard_deps btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
-    pixmatte asc2g asc2pix pixdiff rtwizard_TCLSCRIPTS_cp)
-  Sh_Regression_Test(rtwizard "${rtwizard_deps}" EXCLUDE_FROM_REGRESS)
-
   Sh_Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
   Sh_Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
 
@@ -132,8 +130,6 @@ CMAKEFILES(
   quote.sh
   red.sh
   repository.sh
-  rtwizard
-  rtwizard.sh
   shaders.sh
   shaderspix.asc
   slave_build.sh
@@ -407,12 +403,6 @@ set(regress_outfiles
   red.virgin.out.new
   region_ids
   regions
-  rtwizard.m35.g
-  rtwizard_test1.diff.pix
-  rtwizard_test1.pix
-  rtwizard_test1.pixdiff.log
-  rtwizard_test1_ref.asc
-  rtwizard_test1_ref.pix
   shaders.dat
   shaders.g
   shaders.log
