@@ -100,9 +100,9 @@ set(level_3_dirs
   # as dependencies for the targets in these directories
   tclscripts
   adrt
+  rtwizard
   archer
   mged
-  rtwizard
   )
 
 # Now that we have our lists, proceed with the actual

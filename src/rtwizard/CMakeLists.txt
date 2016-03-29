@@ -11,7 +11,11 @@ set(RTWIZARD_SRCS
   main.c
   )
 
-BRLCAD_ADDEXEC(rtwiz "${RTWIZARD_SRCS}" "libtclcad;librt;libfb;liboptical;libicv;${ITCL_LIBRARY};${ITK_LIBRARY};${CMAKE_THREAD_LIBS_INIT};${M_LIBRARY}")
+BRLCAD_ADDEXEC(rtwizard "${RTWIZARD_SRCS}" "libtclcad;librt;libfb;liboptical;libicv;${ITCL_LIBRARY};${ITK_LIBRARY};${CMAKE_THREAD_LIBS_INIT};${M_LIBRARY}")
+ADD_TARGET_DEPS(rtwizard rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb tkpng)
+foreach(item ${tclindex_target_list})
+  add_dependencies(rtwizard ${item})
+endforeach(item ${tclindex_target_list})
 
 # Local Variables:
 # tab-width: 8

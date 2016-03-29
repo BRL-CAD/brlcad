@@ -7,14 +7,6 @@ set(BRLMAN_INCLUDE_DIRS
 list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
 include_directories(${BRLMAN_INCLUDE_DIRS})
 
-macro(ARCHER_TCL_DEPS)
-  foreach(target ${ARGN})
-    if(TARGET ${target})
-      add_dependencies(archer ${target})
-    endif(TARGET ${target})
-  endforeach(target ${ARGN})
-endmacro(ARCHER_TCL_DEPS)
-
 BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
 set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
@@ -30,8 +22,8 @@ endif(CPP_DLL_DEFINES)
 if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)
-  add_dependencies(archer rtwizard-exec)
-  ARCHER_TCL_DEPS(archer Tkhtml tkpng Tktable)
+  add_dependencies(archer rtwizard)
+  ADD_TARGET_DEPS(archer Tkhtml tkpng Tktable)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})
