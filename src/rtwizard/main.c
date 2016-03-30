@@ -595,19 +595,19 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->bkg_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
     {
 	unsigned char rgb[3];
 	(void) bu_color_to_rgb_chars(s->non_line_color, (unsigned char *)rgb);
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) \"%d %d %d\"", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 

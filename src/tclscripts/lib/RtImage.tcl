@@ -144,25 +144,24 @@ proc rtimage {rtimage_dict} {
 		}
 
 		if {[llength $ce_objects]} {
-		    set coMode "-c {set ov=1}"
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd_root [concat [file join $binpath rtedge] -w $_w -n $_n]
+		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n]
 
-		    if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
+		    if {$_benchmark_mode != ""} {lappend cmd $_benchmark_mode}
 
-		    set cmd [concat $cmd_root [list -F $_port \
+		    lappend cmd  -F $_port \
 				 -V $ar \
 				 -R \
 				 -A 0.9 \
 				 -p $_perspective \
-				 -c [list $fgMode] \
-				 -c [list $bgMode] \
-				 $coMode \
-				 -c [list [list viewsize $_viewsize]] \
-				 -c [list [eval list orientation $_orientation]] \
-				 -c [list [eval list eye_pt $_eye_pt]] \
-				 $_dbfile]]
+				 -c $fgMode \
+				 -c $bgMode \
+				 -c {set ov=1} \
+				 -c [list viewsize $_viewsize] \
+				 -c [eval list orientation $_orientation] \
+				 -c [eval list eye_pt $_eye_pt] \
+				 $_dbfile
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -271,27 +270,31 @@ proc rtimage {rtimage_dict} {
 	}
 
 	if {[llength $occlude_objects]} {
-	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
-	    set coMode "-c {set ov=1}"
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd_root [concat [list [file join $binpath rtedge]] -w $_w -n $_n]
-	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
-	set cmd [concat $cmd_root [list -F $_port \
+	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n]
+	if {$_benchmark_mode != ""} {lappend cmd $_benchmark_mode}
+	lappend cmd  -F $_port \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
-		     -c [list $fgMode] \
-		     -c [list $bgMode] \
-		     $coMode \
-		     -c [list [list viewsize $_viewsize]] \
-		     -c [list [eval list orientation $_orientation]] \
-		     -c [list [eval list eye_pt $_eye_pt]] \
-		     [list $_dbfile]]]
+		     -c $fgMode \
+		     -c $bgMode
+	if {[llength $occlude_objects]} {
+	    set ocm "set om=$_occmode"
+	    set ocoo "set oo=\\\"$occlude_objects\\\""
+	    lappend cmd -c $ocm -c $ocoo
+	} else {
+	    lappend cmd -c {set ov=1}
+	}
+	lappend cmd  -c [list viewsize $_viewsize] \
+		     -c [eval list orientation $_orientation] \
+		     -c [eval list eye_pt $_eye_pt] \
+		     [list $_dbfile]
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
