@@ -97,7 +97,7 @@ proc rtimage {rtimage_dict} {
 
 	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
 
-	lappend cmd_root $_benchmark_mode
+	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
 
 	set cmd [concat $cmd_root [list -F $_port \
 	    -V $ar \
@@ -149,7 +149,7 @@ proc rtimage {rtimage_dict} {
 
 		    set cmd_root [concat [file join $binpath rtedge] -w $_w -n $_n]
 
-		    lappend cmd_root $_benchmark_mode
+		    if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
 
 		    set cmd [concat $cmd_root [list -F $_port \
 				 -V $ar \
@@ -162,7 +162,7 @@ proc rtimage {rtimage_dict} {
 				 -c [list [list viewsize $_viewsize]] \
 				 -c [list [eval list orientation $_orientation]] \
 				 -c [list [eval list eye_pt $_eye_pt]] \
-				 $_dbfile]
+				 $_dbfile]]
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -192,7 +192,7 @@ proc rtimage {rtimage_dict} {
 
 	set have_ghost_objects 1
 	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
-        lappend cmd_root $_benchmark_mode
+	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
 	set cmd [concat $cmd_root [list -o $tgi \
 		     -V $ar \
 		     -R \
@@ -202,7 +202,7 @@ proc rtimage {rtimage_dict} {
 		     -c [list viewsize $_viewsize] \
 		     -c [eval list orientation $_orientation] \
 		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+		     $_dbfile]]
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -214,7 +214,7 @@ proc rtimage {rtimage_dict} {
 	catch {eval exec $cmd >& $_log_file} curr_pid
 
 	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
-	lappend cmd_root $_benchmark_mode
+	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
 	set cmd [concat $cmd_root [list -o $tgfci \
 		     -V $ar \
 		     -R \
@@ -224,7 +224,7 @@ proc rtimage {rtimage_dict} {
 		     -c [list viewsize $_viewsize] \
 		     -c [eval list orientation $_orientation] \
 		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+		     $_dbfile]]
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -279,7 +279,7 @@ proc rtimage {rtimage_dict} {
 	}
 
 	set cmd_root [concat [list [file join $binpath rtedge]] -w $_w -n $_n]
-	lappend cmd_root $_benchmark_mode
+	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
 	set cmd [concat $cmd_root [list -F $_port \
 		     -V $ar \
 		     -R \
@@ -291,7 +291,7 @@ proc rtimage {rtimage_dict} {
 		     -c [list [list viewsize $_viewsize]] \
 		     -c [list [eval list orientation $_orientation]] \
 		     -c [list [eval list eye_pt $_eye_pt]] \
-		     [list $_dbfile]]
+		     [list $_dbfile]]]
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
