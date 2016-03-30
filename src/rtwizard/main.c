@@ -807,7 +807,7 @@ main(int argc, char **argv)
     }
     bu_vls_free(&info_msg);
 
-    print_rtwizard_state(s);
+    /*print_rtwizard_state(s);*/
 
     /* For now, all roads lead to Tcl. */
 
@@ -834,10 +834,10 @@ main(int argc, char **argv)
 	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
 	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interp));
-	bu_vls_free(&tcl_cmd);
 
+	bu_vls_free(&tcl_cmd);
 	Tcl_DeleteInterp(interp);
+	return status;
     }
 
     /* Someday, we want to do this without Tcl via library calls unless
