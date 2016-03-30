@@ -836,6 +836,8 @@ main(int argc, char **argv)
 	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interp));
 	bu_vls_free(&tcl_cmd);
+
+	Tcl_DeleteInterp(interp);
     }
 
     /* Someday, we want to do this without Tcl via library calls unless

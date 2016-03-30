@@ -657,6 +657,7 @@ const char *fullname;
     fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
     status = Tcl_EvalFile(interp, fullname);
     Tcl_DStringFree(&temp);
+    Tcl_DeleteInterp(interp);
     return status;
 }
 
