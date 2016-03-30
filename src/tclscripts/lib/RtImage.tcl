@@ -95,25 +95,23 @@ proc rtimage {rtimage_dict} {
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 
-	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
-
-	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
-
-	set cmd [concat $cmd_root [list -F $_port \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	    -F $_port \
 	    -V $ar \
 	    -R \
 	    -A 0.9 \
 	    -p $_perspective \
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-	    -c [list viewsize $_viewsize] \
-	    -c [eval list orientation $_orientation] \
-	    -c [eval list eye_pt $_eye_pt] \
-	    $_dbfile]]
+	    "-c {viewsize $_viewsize}" \
+	    "-c {orientation $_orientation}" \
+	    "-c {eye_pt $_eye_pt}" \
+	    $_dbfile]
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
 	}
 
+puts $cmd
 	#
 	# Run rt to generate the color insert
 	#
@@ -146,28 +144,26 @@ proc rtimage {rtimage_dict} {
 		if {[llength $ce_objects]} {
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n]
-
-		    if {$_benchmark_mode != ""} {lappend cmd $_benchmark_mode}
-
-		    lappend cmd  -F $_port \
+		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+		                 -F $_port \
 				 -V $ar \
 				 -R \
 				 -A 0.9 \
 				 -p $_perspective \
-				 -c $fgMode \
-				 -c $bgMode \
-				 -c {set ov=1} \
-				 -c [list viewsize $_viewsize] \
-				 -c [eval list orientation $_orientation] \
-				 -c [eval list eye_pt $_eye_pt] \
-				 $_dbfile
+				 "-c {$fgMode}" \
+				 "-c {$bgMode}" \
+				 "-c {set ov=1}" \
+				 "-c {viewsize $_viewsize}" \
+				 "-c {orientation $_orientation}" \
+				 "-c {eye_pt $_eye_pt}" \
+				 $_dbfile]
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
 		    }
 		}
 
+puts $cmd
 		#
 		# Run rtedge to generate the full-color with edges
 		#
@@ -190,45 +186,45 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
-	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
-	set cmd [concat $cmd_root [list -o $tgi \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgi \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]]
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     $_dbfile]
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
 	}
 
+puts $cmd
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
 	catch {eval exec $cmd >& $_log_file} curr_pid
 
-	set cmd_root [list [file join $binpath rt] -w $_w -n $_n]
-	if {$_benchmark_mode != ""} {lappend cmd_root $_benchmark_mode}
-	set cmd [concat $cmd_root [list -o $tgfci \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgfci \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]]
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     $_dbfile]
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
 	}
 
+puts $cmd
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
@@ -270,36 +266,31 @@ proc rtimage {rtimage_dict} {
 	}
 
 	if {[llength $occlude_objects]} {
+	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
+	    set coMode "-c {set ov=1}"
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n]
-	if {$_benchmark_mode != ""} {lappend cmd $_benchmark_mode}
-	lappend cmd  -F $_port \
+	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+	             -F $_port \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
-		     -c $fgMode \
-		     -c $bgMode
-	if {[llength $occlude_objects]} {
-	    set ocm "set om=$_occmode"
-	    set ocoo "set oo=\\\"$occlude_objects\\\""
-	    lappend cmd -c $ocm -c $ocoo
-	} else {
-	    lappend cmd -c {set ov=1}
-	}
-	lappend cmd  -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     [list $_dbfile]
+		     "-c {$fgMode}" \
+		     "-c {$bgMode}" \
+		     $coMode \
+	             "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     $_dbfile]
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
-
+puts $cmd
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
