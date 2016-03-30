@@ -1,6 +1,11 @@
 # Tests for the various image format conversions supported
 # by BRL-CAD
 
+# TODO: Hack to avoid running multiple rtwizard tests at once.  Correct
+# solution is to fix this, but until then make new targets depend on old
+# targets
+set(rtwizard_targets)
+
 macro(Add_RtWiz_Test testname input_file options depends_list)
   CMAKE_PARSE_ARGUMENTS(${testname} "" "CONTROL_IMAGE;TARGET_IMAGE;LOG_FILE" "" ${ARGN})
   set(TARGET_NAME ${testname})
@@ -21,6 +26,13 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
   add_custom_target(regress-rtwizard-${testname} DEPENDS ${depends_list} ${STAMP_FILE})
   set_target_properties(regress-rtwizard-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
   Add_Regression_Test(rtwizard-${testname} "${depends_list}")
+
+  foreach(tgt ${rtwizard_targets})
+    add_dependencies(regress-rtwizard-${testname} ${tgt})
+    set_property(TEST regress-rtwizard-${testname} APPEND PROPERTY DEPENDS ${tgt})
+  endforeach(tgt ${rtwizard_targets})
+
+  set(rtwizard_targets ${rtwizard_targets} regress-rtwizard-${testname})
 
   add_dependencies(regress-rtwizard regress-rtwizard-${testname})
 
