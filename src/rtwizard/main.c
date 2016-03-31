@@ -772,7 +772,6 @@ main(int argc, char **argv)
     /* Handle any leftover arguments per established conventions */
     for (i = 0; i < uac; i++) {
 	struct bu_vls c = BU_VLS_INIT_ZERO;
-	bu_log("av[%d]: %s\n", i, argv[i]);
 	/* First, see if we have an input .g file */
 	if (bu_vls_strlen(s->input_file) == 0) {
 	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
