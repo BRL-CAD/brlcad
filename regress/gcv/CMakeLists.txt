@@ -1,9 +1,15 @@
 # Tests for the various geometry format conversions supported
 # by BRL-CAD
 
+if(CMAKE_CONFIGURATION_TYPES)
+  set(cfg_testname "-${CMAKE_CFG_INTDIR}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(cfg_testname "")
+endif(CMAKE_CONFIGURATION_TYPES)
+
 macro(ADD_GCV_Test testname depends_list)
-  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.log")
-  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
+  set(LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/regress${cfg_testname}-${testname}.log")
+  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}${cfg_testname}.done")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-${testname}.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   add_custom_command(
     OUTPUT "${STAMP_FILE}"
