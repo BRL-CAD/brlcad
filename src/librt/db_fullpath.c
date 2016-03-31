@@ -609,7 +609,7 @@ cyclic_path(const struct db_full_path *fp, const char *name)
     if (name[0] != '\0') {
 	test_name = name;
     } else {
-	const struct directly *dp = DB_FULL_PATH_CUR_DIR(fp);
+	const struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
 	if (!dp)
 	    return 0;
 
