@@ -748,6 +748,13 @@ main(int argc, char **argv)
     }
     bu_vls_free(&optparse_msg);
 
+    for (i = 0; i < uac; i++) {
+	if (argv[i][0] == '-') {
+	    bu_free_argv(ac, av);
+	    bu_exit(1, "Error: unknown option %s.\n", argv[i]);
+	}
+    }
+
     if (type != '\0') {
 	bu_log("Image type: %c\n", type);
     }
