@@ -111,7 +111,6 @@ proc rtimage {rtimage_dict} {
 	    lappend cmd $obj
 	}
 
-puts $cmd
 	#
 	# Run rt to generate the color insert
 	#
@@ -163,7 +162,6 @@ puts $cmd
 		    }
 		}
 
-puts $cmd
 		#
 		# Run rtedge to generate the full-color with edges
 		#
@@ -202,7 +200,6 @@ puts $cmd
 	    lappend cmd $obj
 	}
 
-puts $cmd
 	#
 	# Run rt to generate the full-color version of the ghost image
 	#
@@ -224,7 +221,6 @@ puts $cmd
 	    lappend cmd $obj
 	}
 
-puts $cmd
 	#
 	# Run rt to generate the full-color version of the occlude_objects (i.e. color and ghost)
 	#
@@ -290,7 +286,6 @@ puts $cmd
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
-puts $cmd
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
