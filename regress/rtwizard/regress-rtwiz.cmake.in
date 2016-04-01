@@ -1,5 +1,5 @@
 set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
-set(SRCFILE "@INPUT_FILE@")
+set(INPUTFILE "@INPUT_FILE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
 set(TGTIMG "@TARGET_IMAGE@")
 set(LOGFILE "@LOG_FILE@")
@@ -24,6 +24,9 @@ endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
 set(RWIZ "${BDIR}/rtwizard${EXE}")
 set(PIXCMP "${BDIR}/pixcmp${EXE}")
+
+# Now that we know where the binary directory is, set the .g input path
+set(SRCFILE "${BDIR}/../${INPUTFILE}")
 
 # Clean up in case we've run before
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${TGTIMG}")

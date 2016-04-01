@@ -65,49 +65,49 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix")
 
-Add_RtWiz_Test(rtwiz_m35_A "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "all.g -t A --benchmark -s 512" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_A "${DATA_DIR}/db/m35.g" "all.g -t A --benchmark -s 512" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_A.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_B "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component -t B --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_B "${DATA_DIR}/db/m35.g" "-l component -t B --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_B_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_B.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_B.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_C "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-c component -l component -t C --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_C "${DATA_DIR}/db/m35.g" "-c component -l component -t C --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_C_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_C.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_C.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_D "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component -c component/suspension,component/power.train -t D --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_D "${DATA_DIR}/db/m35.g" "-l component -c component/suspension,component/power.train -t D --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_D_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_D.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_D.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_E "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-g component -c component/power.train -t E --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_E "${DATA_DIR}/db/m35.g" "-g component -c component/power.train -t E --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_E.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_E.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_F "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component -g component -c component/power.train -t F --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_F "${DATA_DIR}/db/m35.g" "-l component -g component -c component/power.train -t F --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_edge_only "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_edge_only "${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.log"
   )
 
-Add_RtWiz_Test(rtwiz_m35_edge_only_color "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30" "m35.g"
+Add_RtWiz_Test(rtwiz_m35_edge_only_color "${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.log"
