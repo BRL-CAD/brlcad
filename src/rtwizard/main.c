@@ -44,7 +44,11 @@ extern int Itcl_Init(Tcl_Interp *);
 
 #define RTWIZARD_SIZE_DEFAULT 512
 
+#define RTWIZARD_MAGIC 0x72747769 /**< rtwi */
+
 struct rtwizard_settings {
+    uint32_t magic;
+
     int use_gui;
     int no_gui;
     int verbose;
@@ -94,6 +98,7 @@ struct rtwizard_settings * rtwizard_settings_create() {
     fastf_t white[3] = {255.0, 255.0, 255.0};
     fastf_t black[3] = {0.0, 0.0, 0.0};
     BU_GET(s, struct rtwizard_settings);
+    s->magic = RTWIZARD_MAGIC;
     BU_GET(s->color, struct bu_ptbl);
     BU_GET(s->ghost, struct bu_ptbl);
     BU_GET(s->line,  struct bu_ptbl);
@@ -685,6 +690,21 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 
 }
 
+/* Help message printed when -h option is supplied */
+void
+rtwizard_help(struct bu_opt_desc *d)
+{
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    const char *option_help = bu_opt_describe(d, NULL);
+    bu_vls_sprintf(&str, "Usage: rtwizard [options]\n");
+    if (option_help) {
+	bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+    bu_log("%s", bu_vls_addr(&str));
+    bu_vls_free(&str);
+}
+
 int
 main(int argc, char **argv)
 {
@@ -747,6 +767,12 @@ main(int argc, char **argv)
 	bu_exit(1, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
+
+    if (need_help) {
+	rtwizard_help((struct bu_opt_desc *)&d);
+	bu_free_argv(ac, av);
+	bu_exit(0, NULL);
+    }
 
     for (i = 0; i < uac; i++) {
 	if (argv[i][0] == '-') {
