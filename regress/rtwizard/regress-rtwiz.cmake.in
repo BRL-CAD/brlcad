@@ -3,6 +3,7 @@ set(SRCFILE "@INPUT_FILE@")
 set(CTRLIMG "@CONTROL_IMAGE@")
 set(TGTIMG "@TARGET_IMAGE@")
 set(LOGFILE "@LOG_FILE@")
+set(TGTNAME "@TARGET_NAME@")
 
 set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
 set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
@@ -11,15 +12,21 @@ set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
 # know what the current build type is.
 if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BDIR "${RBDIR}")
+  set(test_suffix "-Release")
 elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
   set(BDIR "${DBDIR}")
+  set(test_suffix "-Debug")
 else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BDIR "${SBDIR}")
+  set(test_suffix "")
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
 set(RWIZ "${BDIR}/rtwizard${EXE}")
 set(PIXCMP "${BDIR}/pixcmp${EXE}")
+
+# Clean up in case we've run before
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${TGTIMG}")
 
 # Start with the file using standard UNIX line endings
 file(APPEND "${LOGFILE}" "Generating ${TGTIMG}:\n")
@@ -45,7 +52,7 @@ if(${pixcmp_val} GREATER 0)
   message(FATAL_ERROR "Differences found between ${TGTIMG} and ${CTRLIMG} with ${PIXCMP}, aborting.\nSee ${LOGFILE} for more details.")
 else(${pixcmp_val} GREATER 0)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E remove ${TGTIMG})
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@STAMP_FILE@")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/${TGTNAME}${test_suffix}.done")
 endif(${pixcmp_val} GREATER 0)
 
 # Local Variables:

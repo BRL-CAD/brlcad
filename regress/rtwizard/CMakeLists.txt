@@ -1,6 +1,13 @@
 # Tests for the various image format conversions supported
 # by BRL-CAD
 
+# For multi-config build tools
+if(CMAKE_CONFIGURATION_TYPES)
+  set(cfg_testname "-${CMAKE_CFG_INTDIR}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(cfg_testname "")
+endif(CMAKE_CONFIGURATION_TYPES)
+
 # TODO: Hack to avoid running multiple rtwizard tests at once.  Correct
 # solution is to fix this, but until then make new targets depend on old
 # targets
@@ -14,7 +21,8 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
   set(CONTROL_IMAGE ${${testname}_CONTROL_IMAGE})
   set(TARGET_IMAGE ${${testname}_TARGET_IMAGE})
   set(LOG_FILE ${${testname}_LOG_FILE})
-  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
+  set(TARGET_NAME ${testname})
+  set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}${cfg_testname}.done")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   add_custom_command(
     OUTPUT ${STAMP_FILE} ${TARGET_IMAGE} ${LOG_FILE}
