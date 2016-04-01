@@ -265,7 +265,7 @@ proc rtimage {rtimage_dict} {
 	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
-	    set coMode "-c {set ov=1}"
+	    set coMode ""
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
@@ -276,16 +276,15 @@ proc rtimage {rtimage_dict} {
 		     -A 0.9 \
 		     -p $_perspective \
 		     "-c {$fgMode}" \
-		     "-c {$bgMode}" \
-		     $coMode \
+		     "-c {$bgMode}" $coMode \
 	             "-c {viewsize $_viewsize}" \
 		     "-c {orientation $_orientation}" \
 		     "-c {eye_pt $_eye_pt}" \
 		     $_dbfile]
-
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}
+
 	#
 	# Run rtedge to generate the full-color version of the ghost image
 	#
