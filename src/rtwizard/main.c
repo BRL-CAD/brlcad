@@ -828,7 +828,7 @@ main(int argc, char **argv)
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
     }
 
-    if (!rtwizard_info_sufficient(&info_msg, s, type)) {
+    if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
 	if ((!s->use_gui) && (!s->no_gui)) {
 	    s->use_gui = 1;
 	} else {
