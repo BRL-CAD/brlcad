@@ -55,6 +55,7 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_C_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_D_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix")
 
 Add_RtWiz_Test(rtwiz_m35_A "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "all.g -t A --benchmark -s 512" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix"
@@ -90,6 +91,18 @@ Add_RtWiz_Test(rtwiz_m35_F "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l compon
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix"
   TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.pix"
   LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_F.log"
+  )
+
+Add_RtWiz_Test(rtwiz_m35_edge_only "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2" "m35.g"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only.log"
+  )
+
+Add_RtWiz_Test(rtwiz_m35_edge_only_color "${CMAKE_BINARY_DIR}/${DATA_DIR}/db/m35.g" "-l component --benchmark -z 2 --line-color 100/200/255 -C 30/30/30" "m35.g"
+  CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color_ref.pix"
+  TARGET_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.pix"
+  LOG_FILE "${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color.log"
   )
 
 CMAKEFILES(
