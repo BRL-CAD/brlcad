@@ -27,6 +27,7 @@
 /* system headers */
 #include <stdio.h>
 #include <string.h>
+#include <stdlib.h>
 
 
 int
@@ -39,6 +40,26 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
 
     memset(uuid, 0, sizeof(uint8_t) * 16);
 
+    switch (type) {
+	case 4: {
+	    size_t i;
+#ifdef HAVE_UUID_GENERATE
+	    uuid_t generated_uuid;
+	    uuid_generate(generated_uuid);
+	    for (i=0; i<16; i++)
+		uuid[i] = (uint8_t)generated_uuid[i];
+#else
+	    for (i=0; i< 16; i++) {
+		uuid[i] = drand48() * 0xFF + 0.5;
+	    }
+	    /* set the UUIDv4 reserved bits */
+	    uuid[6] = (uuid[6] & 0x0F) | 0x40;
+	    uuid[7] = (uuid[7] & 0xFF) | 0x00;
+	    uuid[8] = (uuid[8] & 0x3F) | 0x80;
+#endif /* HAVE_UUID_GENERATE */
+	    break;
+	}
+    }
     /* FIXME: create the UUID */
 
     return type;
