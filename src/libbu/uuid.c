@@ -29,6 +29,9 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
+#ifdef HAVE_UUID_UUID_H
+#  include <uuid/uuid.h>
+#endif
 
 /* implementation headers */
 #include "bu/log.h"
@@ -47,14 +50,14 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
     switch (type) {
 	case 4: {
 	    size_t i;
-#ifdef HAVE_UUID_GENERATE
+#ifdef HAVE_UUID_UUID_H
 	    uuid_t generated_uuid;
 	    uuid_generate(generated_uuid);
 	    for (i=0; i<16; i++)
 		uuid[i] = (uint8_t)generated_uuid[i];
 #else
 	    for (i=0; i< 16; i++) {
-		uuid[i] = drand48() * 0xFF + 0.5;
+		uuid[i] = drand48() * 0x100; /* uniform [0,255] */
 	    }
 	    /* set the UUIDv4 reserved bits */
 	    uuid[6] = (uuid[6] & 0x0F) | 0x40; /* version */
