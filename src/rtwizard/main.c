@@ -849,7 +849,6 @@ main(int argc, char **argv)
     {
 	int status = 0;
 	struct bu_vls tlog = BU_VLS_INIT_ZERO;
-	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	const char *rtwizard = NULL;
 	const char *fullname = NULL;
 	const char *result = NULL;
