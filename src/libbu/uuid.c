@@ -58,7 +58,6 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
 	    }
 	    /* set the UUIDv4 reserved bits */
 	    uuid[6] = (uuid[6] & 0x0F) | 0x40;
-	    uuid[7] = (uuid[7] & 0xFF) | 0x00;
 	    uuid[8] = (uuid[8] & 0x3F) | 0x80;
 #endif /* HAVE_UUID_GENERATE */
 	    break;
