@@ -753,6 +753,9 @@ main(int argc, char **argv)
     BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[33]);
 
+	/* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+	bu_setprogname(argv[0]);
+
     /* Skip first arg */
     argv++; argc--;
 
@@ -848,6 +851,9 @@ main(int argc, char **argv)
 	struct bu_vls tlog = BU_VLS_INIT_ZERO;
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 	const char *rtwizard = NULL;
+	const char *fullname = NULL;
+	const char *result = NULL;
+	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 
 	/* The subsequent Tcl scripts will take of Tk, so at this
@@ -864,11 +870,17 @@ main(int argc, char **argv)
 	Init_RtWizard_Vars(interp, s);
 
 	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
-	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
-	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	Tcl_DStringInit(&temp);
+	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
+	status = Tcl_EvalFile(interp, fullname);
+	Tcl_DStringFree(&temp);
 
-	bu_vls_free(&tcl_cmd);
-	Tcl_DeleteInterp(interp);
+	result = Tcl_GetStringResult(interp);
+	if (strlen(result) > 0 && status == TCL_ERROR) {
+		bu_log("%s\n", result);
+	}
+
+	/*Tcl_DeleteInterp(interp);*/
 	return status;
     }
 
