@@ -28,6 +28,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
+#include <ctype.h>
+
+/* implementation headers */
+#include "bu/log.h"
 
 
 int
@@ -94,23 +98,33 @@ bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)
 int
 bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
 {
+    const char *orig_cp = cp;
+
+    size_t count = 0;
+
     if (!cp)
 	return 1;
 
     while (*cp) {
-	const char *cpp = cp;
-	cp++;
-
-	switch (*cpp) {
-	    case '{':
-	    case '}':
-	    case '-':
-		continue;
-	    default:
-		/* FIXME: decode properly here */
-		uuid[0] = *cpp;
-		break;
+	if (isxdigit(*cp)) {
+	    count++;
 	}
+	cp++;
+    }
+
+    /* expecting exactly 2 hexchars per byte */
+    if (count != 32)
+	return 2;
+
+    count = 0;
+    cp = orig_cp;
+    while (*cp) {
+	if (isxdigit(*cp)) {
+	    int value;
+	    bu_sscanf(cp+2*count, "%02x", &value);
+	    uuid[count++] = (uint8_t)value;
+	}
+	cp++;
     }
 
     return 0;
