@@ -57,13 +57,14 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
 		uuid[i] = drand48() * 0xFF + 0.5;
 	    }
 	    /* set the UUIDv4 reserved bits */
-	    uuid[6] = (uuid[6] & 0x0F) | 0x40;
-	    uuid[8] = (uuid[8] & 0x3F) | 0x80;
+	    uuid[6] = (uuid[6] & 0x0F) | 0x40; /* version */
+	    uuid[8] = (uuid[8] & 0x3F) | 0x80; /* 0b10 high-order byte */
 #endif /* HAVE_UUID_GENERATE */
 	    break;
 	}
     }
-    /* FIXME: create the UUID */
+
+    /* FIXME: create v5 UUIDs */
 
     return type;
 }
@@ -118,12 +119,13 @@ bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
     count = 0;
     cp = orig_cp;
     while (*cp) {
+	int chars = 1;
 	if (isxdigit(*cp)) {
 	    int value;
-	    bu_sscanf(cp+2*count, "%02x", &value);
+	    bu_sscanf(cp, "%02X%n", &value, &chars);
 	    uuid[count++] = (uint8_t)value;
 	}
-	cp++;
+	cp += chars;
     }
 
     return 0;
