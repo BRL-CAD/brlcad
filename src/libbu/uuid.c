@@ -26,7 +26,23 @@
 
 /* system headers */
 #include <stdio.h>
-#include <string.h> /* memcmp */
+#include <string.h>
+
+
+int
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
+{
+    int type = 4; /* random */
+
+    if (nbytes > 0 && bytes)
+	type = 5;
+
+    memset(uuid, 0, sizeof(uint8_t) * 16);
+
+    /* FIXME: create the UUID */
+
+    return type;
+}
 
 
 int
@@ -49,6 +65,32 @@ bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)
     snprintf((char *)cp, 37, "%02X%02X%02X%02X-%02X%02X-%02X%02X-%02X%02X-%02X%02X%02X%02X%02X%02X",
 	     uuid[0], uuid[1], uuid[2], uuid[3], uuid[4], uuid[5], uuid[6], uuid[7],
 	     uuid[8], uuid[9], uuid[10], uuid[11], uuid[12], uuid[13], uuid[14], uuid[15]);
+
+    return 0;
+}
+
+
+int
+bu_uuid_decode(const char *cp, uint8_t uuid[STATIC_ARRAY(16)])
+{
+    if (!cp)
+	return 1;
+
+    while (*cp) {
+	const char *cpp = cp;
+	cp++;
+
+	switch (*cpp) {
+	    case '{':
+	    case '}':
+	    case '-':
+		continue;
+	    default:
+		/* FIXME: decode properly here */
+		uuid[0] = *cpp;
+		break;
+	}
+    }
 
     return 0;
 }

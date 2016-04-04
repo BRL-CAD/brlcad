@@ -95,6 +95,7 @@ set(LIBBU_SOURCES
   rb_walk.c
   realpath.c
   semaphore.c
+  sha1.c
   simd.c
   sort.c
   sscanf.c
@@ -133,6 +134,7 @@ set(bu_ignore_files
   mime.cmake
   parallel.h
   rb.h
+  sha1.h
   uce-dirent.h
   vfont.h
   vls_vprintf.h
