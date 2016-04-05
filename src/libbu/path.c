@@ -135,14 +135,16 @@ bu_basename(char *basename, const char *path)
 
 
 int
-bu_path_component(struct bu_vls *component, const char *path, path_component_t type)
+bu_path_component(struct bu_vls *component, const char *path, bu_path_component_t type)
 {
     int ret = 0;
     char *basename = NULL;
     char *dirname = NULL;
     char *period_pos = NULL;
 
-    if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
+    /* nothing to match is a match */
+    if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0)
+	return 0;
 
     switch (type) {
 	case BU_PATH_DIRNAME:
@@ -205,9 +207,11 @@ bu_path_component(struct bu_vls *component, const char *path, path_component_t t
 	    break;
     }
 
-cleanup:
-    if (basename) bu_free(basename, "basename");
-    if (dirname) bu_free(dirname, "dirname");
+    if (basename)
+	bu_free(basename, "basename");
+    if (dirname)
+	bu_free(dirname, "dirname");
+
     return ret;
 }
 

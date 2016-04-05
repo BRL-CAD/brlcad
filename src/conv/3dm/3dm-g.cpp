@@ -408,7 +408,7 @@ load_pix(const std::string &path, std::size_t width, std::size_t height)
     struct bu_vls c = BU_VLS_INIT_ZERO;
     bu_mime_image_t format = BU_MIME_IMAGE_UNKNOWN;
 
-    if (bu_path_component(&c, path.c_str(), (path_component_t)BU_MIME_IMAGE)) {
+    if (bu_path_component(&c, path.c_str(), (bu_path_component_t)BU_MIME_IMAGE)) {
 	format = (bu_mime_image_t)bu_file_mime_int(bu_vls_addr(&c));
     }
     bu_vls_free(&c);

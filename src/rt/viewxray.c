@@ -120,7 +120,7 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	if (outputfile) {
 	    struct bu_vls c = BU_VLS_INIT_ZERO;
 	    char buf[BUFSIZ];
-	    if (bu_path_component(&c, outputfile, (path_component_t)BU_MIME_IMAGE)) {
+	    if (bu_path_component(&c, outputfile, (bu_path_component_t)BU_MIME_IMAGE)) {
 		if (bu_file_mime_int(bu_vls_addr(&c)) != BU_MIME_IMAGE_UNKNOWN) {
 		    bu_strlcpy(buf, outputfile, BUFSIZ);
 		    bu_strlcat(buf, floatfileext, BUFSIZ);
