@@ -1856,6 +1856,9 @@ endif(BRLCAD_ENABLE_X11)
 # math library
 BRLCAD_CHECK_LIBRARY(M m cos)
 
+# uuid library
+BRLCAD_CHECK_LIBRARY(UUID uuid uuid_generate)
+
 # network socket library (linux, bsd)
 BRLCAD_CHECK_LIBRARY(SOCKET socket socket)
 
