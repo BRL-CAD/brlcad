@@ -21,6 +21,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/t
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
 
+# We do want to install the mime header
+install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
