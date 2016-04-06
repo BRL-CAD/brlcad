@@ -33,6 +33,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include "bio.h"
 
 #include "bu/str.h"
@@ -61,6 +64,7 @@ main(int argc, char *argv[])
     long offmany = 0;
 
     FILE *f1, *f2;
+    struct stat sf1, sf2;
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
@@ -77,6 +81,13 @@ main(int argc, char *argv[])
     else if ((f2 = fopen(argv[2], "r")) == NULL) {
 	perror(argv[2]);
 	return 1;
+    }
+
+    stat(argv[1], &sf1);
+    stat(argv[2], &sf2);
+
+    if (sf1.st_size != sf2.st_size) {
+	bu_exit(1, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixdiff.\n", argv[1], sf1.st_size, argv[2], sf2.st_size);
     }
 
     while (1) {
