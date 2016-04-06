@@ -38,6 +38,21 @@
 #include "bu/str.h"
 #include "bu/log.h"
 
+#define RGB_DIFF(c1,c2) \
+    if (c1 != c2) { \
+	if ((i = c1 - c2) < 0) i = -i; \
+	if (i > 1) { \
+	    putc(0xFF, stdout); \
+	    offmany++; \
+	} else { \
+	    putc(0xC0, stdout); \
+	    off1++; \
+	} \
+    } else { \
+	putc(0, stdout); \
+	matching++; \
+    }
+
 int
 main(int argc, char *argv[])
 {
@@ -78,47 +93,9 @@ main(int argc, char *argv[])
 
 	if (r1 != r2 || g1 != g2 || b1 != b2) {
 	    int i;
-
-	    /* Highlight differing channels */
-	    if (r1 != r2) {
-		if ((i = r1 - r2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
-	    if (g1 != g2) {
-		if ((i = g1 - g2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
-	    if (b1 != b2) {
-		if ((i = b1 - b2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
+	    RGB_DIFF(r1,r2)
+	    RGB_DIFF(g1,g2)
+	    RGB_DIFF(b1,b2)
 	} else {
 	    /* Common case: equal.  Give B&W NTSC average of 0.35 R +
 	     * 0.55 G + 0.10 B, calculated in fixed-point, output at
