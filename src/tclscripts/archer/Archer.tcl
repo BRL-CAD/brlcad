@@ -1093,7 +1093,7 @@ package provide Archer 1.0
 	set execpath [file dirname [file normalize $argv0]]
 
 	if {$tcl_platform(platform) == "windows"} {
-	    set rtwizname [file join $execpath rtwizard.bat]
+	    set rtwizname [file join $execpath rtwizard.exe]
 	} else {
 	    set rtwizname [file join $execpath rtwizard]
 	}
