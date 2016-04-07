@@ -15,6 +15,10 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtedge's overlay mode appears to be generating different results on
+  Windows and Linux for the m35 steering wheel (rtwizard rendering
+  mode D.)
+
 * pixdiff on Windows is reporting no differences with a pair of files
   that pixcmp can see differences in.
 
