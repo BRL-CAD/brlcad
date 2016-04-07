@@ -31,7 +31,6 @@ package require Iwidgets
 
 namespace eval RtWizard {
 
-    package require FrameBufferDialog 1.0
     package provide FbPage 1.0
 
     #
