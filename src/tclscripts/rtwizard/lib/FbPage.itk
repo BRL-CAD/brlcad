@@ -506,7 +506,7 @@ namespace eval RtWizard {
     # selectFbFile - called when the "browse" fb file is specified
     #
     ::itcl::body FbPage::selectFbFile { } {
-	set of [tk_getOpenFile]
+	set of [tk_getSaveFile -initialfile rtwizard.png]
 	set ::RtWizard::wizard_state(output_filename) $of
     }
 
