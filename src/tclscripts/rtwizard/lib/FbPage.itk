@@ -285,13 +285,6 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	itk_component add fsd {
-	    iwidgets::fileselectiondialog .fsd \
-		-modality application
-	} {
-	    usual
-	}
-
 	itk_component add browse {
 	    button $devCs.browse \
 		-text "Browse" \
@@ -513,8 +506,8 @@ namespace eval RtWizard {
     # selectFbFile - called when the "browse" fb file is specified
     #
     ::itcl::body FbPage::selectFbFile { } {
-	$itk_component(fsd) activate
-	set ::RtWizard::wizard_state(output_filename) [$itk_component(fsd) get]
+	set of [tk_getOpenFile]
+	set ::RtWizard::wizard_state(output_filename) $of
     }
 
     #
