@@ -202,7 +202,8 @@ namespace eval RtWizard {
 	       } else {
 		   set kill_cmd [auto_execok kill]
 	       }
-
+puts $kill_cmd
+puts $fbpid
 	       if {$kill_cmd != ""} {
 		   eval exec $kill_cmd $fbpid
 	       }
