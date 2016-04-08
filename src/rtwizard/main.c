@@ -261,6 +261,79 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
     return ret;
 }
 
+/* return 0 if there's no conflict (all user or all low level or defaults
+ * only), 1 otherwise */
+int rtwizard_view_opts_check(struct bu_vls *msg, struct rtwizard_settings *s)
+{
+    int high_level = 0;
+    int low_level = 0;
+    if (s->az < DBL_MAX || s->el < DBL_MAX || s->tw < DBL_MAX || s->perspective < DBL_MAX
+	    || s->zoom < DBL_MAX || s->center[0] < DBL_MAX) {
+	high_level = 1;
+    }
+    if (s->viewsize < DBL_MAX || s->orientation[0] < DBL_MAX || s->eye_pt[0] < DBL_MAX) {
+	low_level = 1;
+    }
+
+    if (low_level > 0) {
+	/* We've got a potential conflict.  If we have a complete low level specification,
+	 * that overrides the high level options.  Otherwise, it's the other way around. */
+	if (high_level > 0 && s->viewsize < DBL_MAX && s->orientation[0] < DBL_MAX && s->eye_pt[0] < DBL_MAX) {
+	    if (msg) bu_vls_printf(msg, "Warning - user level view modifiers supplied, but a complete low level view specification is present - overriding the following options:");
+	    if (s->az < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " azimuth ");
+		s->az = DBL_MAX;
+	    }
+	    if (s->el < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " elevation ");
+		s->el = DBL_MAX;
+	    }
+	    if (s->tw < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " twist ");
+		s->tw = DBL_MAX;
+	    }
+	    if (s->perspective < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " perspective ");
+		s->perspective = DBL_MAX;
+	    }
+	    if (s->zoom < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " zoom ");
+		s->zoom = DBL_MAX;
+	    }
+	    if (s->center[0] < DBL_MAX) {
+		if (msg) bu_vls_printf(msg, " center ");
+		s->center[0] = DBL_MAX;
+		s->center[1] = DBL_MAX;
+		s->center[2] = DBL_MAX;
+	    }
+	    return 1;
+	} else {
+	    if (!(s->viewsize < DBL_MAX && s->orientation[0] < DBL_MAX && s->eye_pt[0] < DBL_MAX)) {
+		if (msg) bu_vls_printf(msg, "Warning - low level view modifiers supplied, but a complete low level specification (viewsize, orientation, and eye_pt) was not present.  The following options will have no effect:");
+		if (s->viewsize < DBL_MAX) {
+		    if (msg) bu_vls_printf(msg, " viewsize ");
+		    s->viewsize = DBL_MAX;
+		}
+		if (s->orientation[0] < DBL_MAX) {
+		    if (msg) bu_vls_printf(msg, " orientation ");
+		    s->orientation[0] = DBL_MAX;
+		    s->orientation[1] = DBL_MAX;
+		    s->orientation[2] = DBL_MAX;
+		    s->orientation[3] = DBL_MAX;
+		}
+		if (s->eye_pt[0] < DBL_MAX) {
+		    if (msg) bu_vls_printf(msg, " eye_pt ");
+		    s->eye_pt[0] = DBL_MAX;
+		    s->eye_pt[1] = DBL_MAX;
+		    s->eye_pt[2] = DBL_MAX;
+		}
+		return 1;
+	    }
+	}
+    }
+
+    return 0;
+}
 
 int
 opt_width(struct bu_vls *msg, int argc, const char **argv, void *settings)
@@ -829,6 +902,11 @@ main(int argc, char **argv)
 	}
 	/* If it's none of the above, assume a color object in the .g file */
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
+    }
+
+    if (rtwizard_view_opts_check(&info_msg, s)) {
+	bu_log("%s\n", bu_vls_addr(&info_msg));
+	bu_vls_trunc(&info_msg, 0);
     }
 
     if (!s->use_gui && !rtwizard_info_sufficient(&info_msg, s, type)) {
