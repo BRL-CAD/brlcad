@@ -127,7 +127,6 @@ namespace eval RtWizard {
 	    method getChildren {parent}
 	    method selectNode {tags isOn}
 	    method clearDisplay {}
-	    method refreshDisplay {}
 	    method setAzEl {ignored}
 
 	    method updateStatus {}
@@ -321,12 +320,12 @@ namespace eval RtWizard {
 	}
 	set conFrameCS [ $itk_component(conFrame) childsite ]
 
-	# Refresh
-	itk_component add refresh {
-	    button $conFrameCS.refresh \
-		-text Refresh \
+	# Reset view based on current view contents
+	itk_component add autoview {
+	    button $conFrameCS.autoview \
+		-text AutoView\
 		-width 8 \
-		-command "[itcl::code $this refreshDisplay]"
+	        -command "eval $::mgedObj gedCmd autoview"
 	} {
 	    usual
 	}
@@ -398,7 +397,7 @@ namespace eval RtWizard {
 	    -column 0 \
 	    -padx 3 \
 	    -pady 3
-	grid $itk_component(refresh) \
+	grid $itk_component(autoview) \
 	    -row 0 \
 	    -column 1 \
 	    -padx 3 \
@@ -660,23 +659,6 @@ namespace eval RtWizard {
 
 	$itk_component(hier) selection clear
 	$::mgedObj gedCmd zap
-	updateStatus
-    }
-
-    #
-    # refreshDisplay - clears the mged display, and redraws the selected items.
-    #
-    ::itcl::body MGEDpage::refreshDisplay { } {
-
-	# get the list of currently selected items
-	set selected [$itk_component(hier) selection get]
-
-	# clear the display
-	$::mgedObj gedCmd zap
-
-	# redraw the selection list
-	draw $selected
-
 	updateStatus
     }
 
