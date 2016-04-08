@@ -892,8 +892,6 @@ namespace eval RtWizard {
 	#
 	set selected [$itk_component(hier) selection get]
 
-	puts $selected
-
 	if {[llength $selected] == 0 } {
 	    set status 0
 	    $::wizardInstance updateRenderMenu
