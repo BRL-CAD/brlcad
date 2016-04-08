@@ -110,19 +110,13 @@ namespace eval RtWizard {
 	    method onDeselect {}
 	    method getStepInfo {}
 	    method setHelpText {text}
+	    method draw {selected}
 	    method getObjects {}
-	    method getAzimuth {}
-	    method getElevation {}
-	    method getSize {}
-	    method getPerspective {}
-	    method getCenter {}
 	    method getOrientation
-	    method getEyepoint
 	    method getLineColor {} {return $lineColor}
 	    method getNonLineColor {} {return $nonLineColor}
 	    method getBackgroundColor {} {return $backgroundColor}
 	    method getIntensity {} {return [expr {$intensity + 1}]}
-	    method getEyeModel {}
 	    method getRegionColorFlag {} {return $useRegionColors}
 	    method getOcclusionMode {}
 
@@ -195,29 +189,17 @@ namespace eval RtWizard {
 	    # View storage and restoration
 
 	    variable selected ""
-	    variable currentEye {742.404 519.837 422.618}
-	    variable currentCenter {0 0 0}
-	    variable currentRmat \
-		{-0.573576  0.819152  0         0  \
-		     -0.346189 -0.242404  0.906308  0  \
-		     0.742404  0.519837  0.422618  0  \
-		     0         0         0         1}
-	    variable currentEyemodel ""
 
 	    # Azimuth Stuff
-	    variable currentAzimuth 35
 	    variable oldAzimuth
 
 	    # Elevation Stuff
-	    variable currentElevation 25
 	    variable oldElevation
 
 	    # Size Stuff
-	    variable currentSize 2000
 	    variable oldSize
 
 	    # Perspective Stuff
-	    variable currentPerspective 0
 	    variable oldPerspective
 
 	    # Line-color stuff
@@ -457,6 +439,21 @@ namespace eval RtWizard {
     }
 
     #
+    # draw
+    #
+    # draws with autoview if this is the first draw, otherwise
+    # regular draw.
+    #
+    itcl::body MGEDpage::draw {selected} {
+	if {$::first_draw == 1} {
+	    eval $::mgedObj gedCmd draw $selected
+	    set ::first_draw 0
+	} else {
+	    eval $::mgedObj gedCmd draw -R $selected
+	}
+    }
+
+    #
     # getStepInfo
     #
     # Returns the name of the this step, and the variable that monitors
@@ -559,7 +556,7 @@ namespace eval RtWizard {
 	    foreach sitem $selected {
 		$itk_component(hier) selection add $sitem
 	    }
-	    eval $::mgedObj gedCmd draw $selected
+	    draw $selected
 	}
 
 	if {$render_type == "ghost" && [llength $::RtWizard::wizard_state(ghost_objlist)] > 0 && [llength $selected] == 0 } {
@@ -569,7 +566,7 @@ namespace eval RtWizard {
 	    foreach sitem $selected {
 		$itk_component(hier) selection add $sitem
 	    }
-	    eval $::mgedObj gedCmd draw $selected
+	    draw $selected
 	}
 
 	if {$render_type == "line" && [llength $::RtWizard::wizard_state(line_objlist)] > 0 && [llength $selected] == 0 } {
@@ -579,7 +576,7 @@ namespace eval RtWizard {
 	    foreach sitem $selected {
 		$itk_component(hier) selection add $sitem
 	    }
-	    eval $::mgedObj gedCmd draw $selected
+	    draw $selected
 	}
     }
 
@@ -636,36 +633,6 @@ namespace eval RtWizard {
     }
 
     #
-    # getAzimuth - returns the current view azimuth
-    #
-    ::itcl::body MGEDpage::getAzimuth { } {
-	if {$isSelected == "true"} {
-	    set currentAzimuth [lindex [$::mgedObj gedCmd aet] 0 ]
-	}
-	return $currentAzimuth
-    }
-
-    #
-    # getElevation - returns the current view elevation
-    #
-    ::itcl::body MGEDpage::getElevation { } {
-	if {$isSelected == "true"} {
-	    set currentElevation [lindex [$::mgedObj gedCmd aet] 1 ]
-	}
-	return $currentElevation
-    }
-
-    #
-    # getSize - returns the current size
-    #
-    itcl::body MGEDpage::getSize {} {
-	if {$isSelected == "true"} {
-	    set currentSize [$::mgedObj gedCmd size]
-	}
-	return $currentSize
-    }
-
-    #
     # getOrientation - returns the current orientation quaternion
     #
     itcl::body MGEDpage::getOrientation {} {
@@ -673,47 +640,6 @@ namespace eval RtWizard {
 	    set currentRmat [ $::mgedObj gedCmd rmat ]
 	}
 	return [ quat_mat2quat $currentRmat]
-    }
-
-    #
-    # getEyeModel - returns the full specification of the view.
-    #
-    itcl::body MGEDpage::getEyeModel {} {
-	if {$isSelected == "true"} {
-	    set currentEyemodel [$::mgedObj gedCmd get_eyemodel]
-	}
-	return $currentEyemodel
-
-    }
-
-    #
-    # getEyepoint - returns the current eyepoint
-    #
-    itcl::body MGEDpage::getEyepoint {} {
-	if {$isSelected == "true"} {
-	    set currentEye [$::mgedObj gedCmd eye]
-	}
-	return $currentEye
-    }
-
-    #
-    # getPerspective - returns the current view perspective
-    #
-    itcl::body MGEDpage::getPerspective {} {
-	if {$isSelected == "true"} {
-	    set currentPerspective [$::mgedObj gedCmd perspective]
-	}
-	return $currentPerspective
-    }
-
-    #
-    # getCenter - returns the current view center
-    #
-    itcl::body MGEDpage::getCenter {} {
-	if {$isSelected == "true"} {
-	    set currentCenter [$::mgedObj gedCmd center]
-	}
-	return $currentCenter
     }
 
     #--------------------#
@@ -765,7 +691,7 @@ namespace eval RtWizard {
 	    $::mgedObj gedCmd erase $tag
 	    $itk_component(hier) selection remove $tag
 	} else {
-	    $::mgedObj gedCmd draw $tag
+	    draw $tag
 	    $itk_component(hier) selection add $tag
 	}
 	updateStatus
@@ -803,7 +729,7 @@ namespace eval RtWizard {
 	$::mgedObj gedCmd zap
 
 	# redraw the selection list
-	eval $::mgedObj gedCmd draw $selected
+	draw $selected
 
 	updateStatus
     }
@@ -829,19 +755,6 @@ namespace eval RtWizard {
 	if {$render_type == "line"} {
 	    #TODO - update anything specific that needs updating
 	}
-
-	getAzimuth
-	getElevation
-	getSize
-	getOrientation
-	getEyeModel
-	getPerspective
-	getCenter
-
-	set currentEye [$::mgedObj gedCmd eye]
-	set currentSize [$::mgedObj gedCmd size]
-	set currentRmat [$::mgedObj gedCmd rmat]
-	set currentCenter [$::mgedObj gedCmd center]
     }
 
     #
@@ -854,16 +767,8 @@ namespace eval RtWizard {
 	# Reselect the objects - XXX
 	#
 	if {[llength $selected] > 0} {
-	    eval $::mgedObj gedCmd draw $selected
+	    draw $selected
 	}
-
-	#
-	# Reset the view
-	#
-	$::mgedObj gedCmd eye $currentEye
-	$::mgedObj gedCmd center $currentCenter
-	$::mgedObj gedCmd size $currentSize
-	$::mgedObj gedCmd rmat $currentRmat
     }
 
     #
@@ -875,7 +780,6 @@ namespace eval RtWizard {
 	set el [ $itk_component(elevation) get ]
 	$::mgedObj gedCmd aet $az $el 0
 	updateStatus
-
     }
 
     #
@@ -943,7 +847,7 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	$itk_component(azimuth) set [ getAzimuth ]
+	$itk_component(azimuth) set [lindex [$::mgedObj gedCmd aet] 0 ]
 	$itk_component(azimuthDialog) hide Help
 	$itk_component(azimuthDialog) buttonconfigure OK \
 	    -command "[::itcl::code $this azimuthDialogOK]"
@@ -960,7 +864,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::azimuthDialogReveal {} {
-	set oldAzimuth [ getAzimuth ]
+	set oldAzimuth [lindex [$::mgedObj gedCmd aet] 0 ]
 	$itk_component(azimuth) set $oldAzimuth
 	$itk_component(azimuthDialog) activate
     }
@@ -1026,7 +930,7 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	$itk_component(elevation) set [ getElevation ]
+	$itk_component(elevation) set [lindex [$::mgedObj gedCmd aet] 1 ]
 	$itk_component(elevationDialog) hide Help
 	$itk_component(elevationDialog) buttonconfigure OK \
 	    -command "[::itcl::code $this elevationDialogOK]"
@@ -1043,7 +947,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::elevationDialogReveal {} {
-	set oldElevation [ getElevation ]
+	set oldElevation [lindex [$::mgedObj gedCmd aet] 1 ]
 	$itk_component(elevation) set $oldElevation
 	$itk_component(elevationDialog) activate
     }
@@ -1257,7 +1161,7 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	$itk_component(perspective) set [ getPerspective ]
+	$itk_component(perspective) set [$::mgedObj gedCmd perspective]
 	$itk_component(perspectiveDialog) hide Help
 	$itk_component(perspectiveDialog) buttonconfigure OK \
 	    -command "[::itcl::code $this perspectiveDialogOK]"
@@ -1274,7 +1178,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::perspectiveDialogReveal {} {
-	set oldPerspective [ getPerspective ]
+	set oldPerspective [$::mgedObj gedCmd perspective]
 	$itk_component(perspective) set $oldPerspective
 	$itk_component(perspectiveDialog) activate
     }
@@ -1315,7 +1219,7 @@ namespace eval RtWizard {
     ::itcl::body MGEDpage::createCenterDialog {parent} {
 
 	# Get current Center
-	set currCenter [ getCenter ]
+	set currCenter [$::mgedObj gedCmd center]
 
 	itk_component add centerDialog {
 	    iwidgets::dialog $parent.#auto -title Center
@@ -1370,7 +1274,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::centerDialogReveal {} {
-	set oldCenter [ getCenter ]
+	set oldCenter [$::mgedObj gedCmd center]
 	$itk_component(centerEntry) clear
 	$itk_component(centerEntry) insert 0 $oldCenter
 	$itk_component(centerDialog) activate
@@ -1399,7 +1303,7 @@ namespace eval RtWizard {
     # centerDialogCancel - executed when the close button is pressed.
     #
     ::itcl::body MGEDpage::centerDialogCancel {} {
-	set oldCenter [ getCenter ]
+	set oldCenter [$::mgedObj gedCmd center]
 	$::mgedObj gedCmd center $oldCenter
 	$itk_component(centerDialog) deactivate
 	updateStatus
