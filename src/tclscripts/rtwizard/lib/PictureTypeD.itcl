@@ -99,7 +99,6 @@ namespace eval RtWizard {
 	#
 	set fp [$::wizardInstance enable fullColor]
 	set lp [$::wizardInstance enable lines]
-	[$fp component useMe] select
     }
 
     #

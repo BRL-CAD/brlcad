@@ -94,7 +94,6 @@ namespace eval RtWizard {
 	# type.
 	#
 	set fcp [$::wizardInstance enable fullColor]
-	[$fcp component useMe] select
     }
 
     #

@@ -91,7 +91,6 @@ namespace eval RtWizard {
 	# type.
 	#
 	set hp [$::wizardInstance enable highlighted]
-	[$hp component useMe] select
     }
 
     #

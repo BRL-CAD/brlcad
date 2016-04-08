@@ -21,7 +21,7 @@
 #
 # GhostPage.itk
 #
-# This page supports selecting options for full-color images
+# This page supports selecting options for gray-scale ghost images
 #
 
 package require Itcl
@@ -76,7 +76,16 @@ namespace eval RtWizard {
 
 		$itk_component(helpPanel) configure -state disabled
 
-		set render_type "ghost"
+		if {[llength $::RtWizard::wizard_state(ghost_objlist)] > 0 && [llength $selected] == 0 } {
+		    set selected $::RtWizard::wizard_state(ghost_objlist)
+		    foreach sitem $selected {
+			$itk_component(hier) selection add $sitem
+		    }
+		    draw $selected
+
+		    updateStatus
+		}
+
 	    }
 	}
 

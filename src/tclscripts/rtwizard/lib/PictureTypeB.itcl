@@ -91,7 +91,6 @@ namespace eval RtWizard {
 	# type.
 	#
 	set lp [$::wizardInstance enable lines]
-	[$lp component useMe] select
     }
 
     #

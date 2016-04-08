@@ -120,7 +120,7 @@ namespace eval RtWizard {
 	    method getRegionColorFlag {} {return $useRegionColors}
 	    method getOcclusionMode {}
 
-	    variable render_type
+	    variable selected ""
 	}
 
 	protected {
@@ -186,9 +186,6 @@ namespace eval RtWizard {
 	    #
 	    variable isSelected false
 
-	    # View storage and restoration
-
-	    variable selected ""
 
 	    # Azimuth Stuff
 	    variable oldAzimuth
@@ -320,8 +317,7 @@ namespace eval RtWizard {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
 		-background #666699 \
 		-relief groove \
-		-labeltext {} \
-		-labelpos se
+		-labeltext "View Controls"
 	}
 	set conFrameCS [ $itk_component(conFrame) childsite ]
 
@@ -341,18 +337,6 @@ namespace eval RtWizard {
 		-text Clear \
 		-width 8 \
 		-command "[itcl::code $this clearDisplay]"
-	} {
-	    usual
-	}
-
-	#
-	# Create the selection radiobox
-	#
-	itk_component add useMe {
-	    radiobutton $conFrameCS.useMe \
-		-text "Use this view for image" \
-		-variable ::RtWizard::ExamplePage::viewPage \
-		-value $this
 	} {
 	    usual
 	}
@@ -412,21 +396,13 @@ namespace eval RtWizard {
 	grid $itk_component(clear) \
 	    -row 0 \
 	    -column 0 \
-	    -padx 10 \
-	    -pady 5
+	    -padx 3 \
+	    -pady 3
 	grid $itk_component(refresh) \
 	    -row 0 \
 	    -column 1 \
-	    -padx 10 \
-	    -pady 5
-	grid $itk_component(useMe) \
-	    -row 1 \
-	    -column 0 \
-	    -columnspan 2 \
-	    -padx 10 \
-	    -pady 5
-	#	grid $itk_component(prev) -row 2 -column 0
-	#	grid $itk_component(next) -row 2 -column 1
+	    -padx 3 \
+	    -pady 3
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
 
@@ -547,36 +523,6 @@ namespace eval RtWizard {
 
 	if {[cget -onSelectCallback] != ""} {
 	    eval [cget -onSelectCallback] $optionsMenu
-	}
-
-	if {$render_type == "color" && [llength $::RtWizard::wizard_state(color_objlist)] > 0 && [llength $selected] == 0 } {
-	    puts "color"
-	    puts $::RtWizard::wizard_state(color_objlist)
-	    set selected $::RtWizard::wizard_state(color_objlist)
-	    foreach sitem $selected {
-		$itk_component(hier) selection add $sitem
-	    }
-	    draw $selected
-	}
-
-	if {$render_type == "ghost" && [llength $::RtWizard::wizard_state(ghost_objlist)] > 0 && [llength $selected] == 0 } {
-	    puts "ghost"
-	    puts $::RtWizard::wizard_state(ghost_objlist)
-	    set selected $::RtWizard::wizard_state(ghost_objlist)
-	    foreach sitem $selected {
-		$itk_component(hier) selection add $sitem
-	    }
-	    draw $selected
-	}
-
-	if {$render_type == "line" && [llength $::RtWizard::wizard_state(line_objlist)] > 0 && [llength $selected] == 0 } {
-	    puts "line"
-	    puts $::RtWizard::wizard_state(line_objlist)
-	    set selected $::RtWizard::wizard_state(line_objlist)
-	    foreach sitem $selected {
-		$itk_component(hier) selection add $sitem
-	    }
-	    draw $selected
 	}
     }
 
@@ -745,16 +691,6 @@ namespace eval RtWizard {
 	# use them.
 	#
 	set selected  [$itk_component(hier) selection get]
-
-	if {$render_type == "color"} {
-	    #TODO - update anything specific that needs updating
-	}
-	if {$render_type == "ghost"} {
-	    #TODO - update anything specific that needs updating
-	}
-	if {$render_type == "line"} {
-	    #TODO - update anything specific that needs updating
-	}
     }
 
     #

@@ -93,7 +93,6 @@ namespace eval RtWizard {
 	#
 	set gp [$::wizardInstance enable ghost]
 	set fp [$::wizardInstance enable fullColor]
-	[$gp component useMe] select
     }
 
     #

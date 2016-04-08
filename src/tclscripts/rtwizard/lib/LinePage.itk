@@ -71,7 +71,16 @@ namespace eval RtWizard {
 
 		$itk_component(helpPanel) configure -state disabled
 
-		set render_type "line"
+		if {[llength $::RtWizard::wizard_state(line_objlist)] > 0 && [llength $selected] == 0 } {
+		    set selected $::RtWizard::wizard_state(line_objlist)
+		    foreach sitem $selected {
+			$itk_component(hier) selection add $sitem
+		    }
+		    draw $selected
+
+		    updateStatus
+		}
+
 	    }
 	}
 
