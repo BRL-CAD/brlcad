@@ -552,8 +552,6 @@ namespace eval RtWizard {
 	    eval [cget -onSelectCallback] $optionsMenu
 	}
 
-	puts "hierarchy" 
-
 	if {$render_type == "color" && [llength $::RtWizard::wizard_state(color_objlist)] > 0 && [llength $selected] == 0 } {
 	    puts "color"
 	    puts $::RtWizard::wizard_state(color_objlist)
