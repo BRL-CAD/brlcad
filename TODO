@@ -67,6 +67,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* get_eyemodel returns an eye_pt entry, but feeding the results to
+  archer's eye_pt command results in get_eyemodel returning a different
+  eye_pt, even when the units are all in mm.  is this expected?
+  intuitively, I would expected feeding the results of get_eyemodel to
+  eye_pt to result in no change, modulo unit conversions.
+
 * teach pixdiff, rt, and other tools that can/should support the
   capability to read/write (as appropriate) pixel index values and
   reproduce the ray fired to create that pixel.  rt's -j option can
