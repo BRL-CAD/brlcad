@@ -294,21 +294,34 @@ namespace eval RtWizard {
 	# mged window over its controls
 	#
 	itk_component add midFrame {
-	    frame $cs.midFrame \
+	    panedwindow $cs.midFrame \
 		-relief flat
 	} {
 	    usual
 	}
 
+
 	#
-	# Create a frame for the mged object and its controls
+	# Create a frame for the hierarchy widgets and controls
 	#
-	itk_component add mgedFrame {
-	    frame $itk_component(midFrame).mgedFrame \
+	itk_component add hierFrame {
+	    frame $cs.hierFrame \
 		-relief flat
 	} {
 	    usual
 	}
+	$cs.midFrame add $cs.hierFrame
+
+	#
+	# Create a frame for the mged object and its controls
+	#
+	itk_component add mgedFrame {
+	    frame $cs.mgedFrame \
+		-relief flat
+	} {
+	    usual
+	}
+	$cs.midFrame add $cs.mgedFrame
 
 	#
 	# Note that the MGED object is produced separately.
@@ -317,15 +330,6 @@ namespace eval RtWizard {
 	#
 
 
-	#
-	# Create a frame for the hierarchy widgets and controls
-	#
-	itk_component add hierFrame {
-	    frame $itk_component(midFrame).hierFrame \
-		-relief flat
-	} {
-	    usual
-	}
 
 	#
 	# Create a frame to manage the controls
@@ -443,14 +447,10 @@ namespace eval RtWizard {
 	#	grid $itk_component(next) -row 2 -column 1
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
-	pack $itk_component(conFrame) -anchor s
 
-	pack $itk_component(hierFrame) -side left -anchor w -fill both -expand 1
-	pack $itk_component(mgedFrame) -padx 10 -pady 23 \
-	    -expand 1 -fill both -anchor e -side right
-
-	pack $itk_component(helpPanel) -anchor s
 	pack $itk_component(midFrame) -expand 1 -fill both
+	pack $itk_component(conFrame) -anchor s
+	pack $itk_component(helpPanel) -anchor s -fill x
 
 	eval itk_initialize $args
 
