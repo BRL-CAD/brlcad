@@ -75,6 +75,8 @@ namespace eval RtWizard {
 		eval itk_initialize $args
 
 		$itk_component(helpPanel) configure -state disabled
+
+		set render_type "color"
 	    }
 	}
 

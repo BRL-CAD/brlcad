@@ -125,6 +125,8 @@ namespace eval RtWizard {
 	    method getEyeModel {}
 	    method getRegionColorFlag {} {return $useRegionColors}
 	    method getOcclusionMode {}
+
+	    variable render_type
 	}
 
 	protected {
@@ -549,6 +551,38 @@ namespace eval RtWizard {
 	if {[cget -onSelectCallback] != ""} {
 	    eval [cget -onSelectCallback] $optionsMenu
 	}
+
+	puts "hierarchy" 
+
+	if {$render_type == "color" && [llength $::RtWizard::wizard_state(color_objlist)] > 0 && [llength $selected] == 0 } {
+	    puts "color"
+	    puts $::RtWizard::wizard_state(color_objlist)
+	    set selected $::RtWizard::wizard_state(color_objlist)
+	    foreach sitem $selected {
+		$itk_component(hier) selection add $sitem
+	    }
+	    eval $::mgedObj gedCmd draw $selected
+	}
+
+	if {$render_type == "ghost" && [llength $::RtWizard::wizard_state(ghost_objlist)] > 0 && [llength $selected] == 0 } {
+	    puts "ghost"
+	    puts $::RtWizard::wizard_state(ghost_objlist)
+	    set selected $::RtWizard::wizard_state(ghost_objlist)
+	    foreach sitem $selected {
+		$itk_component(hier) selection add $sitem
+	    }
+	    eval $::mgedObj gedCmd draw $selected
+	}
+
+	if {$render_type == "line" && [llength $::RtWizard::wizard_state(line_objlist)] > 0 && [llength $selected] == 0 } {
+	    puts "line"
+	    puts $::RtWizard::wizard_state(line_objlist)
+	    set selected $::RtWizard::wizard_state(line_objlist)
+	    foreach sitem $selected {
+		$itk_component(hier) selection add $sitem
+	    }
+	    eval $::mgedObj gedCmd draw $selected
+	}
     }
 
     #
@@ -788,6 +822,16 @@ namespace eval RtWizard {
 	#
 	set selected  [$itk_component(hier) selection get]
 
+	if {$render_type == "color"} {
+	    #TODO - update anything specific that needs updating
+	}
+	if {$render_type == "ghost"} {
+	    #TODO - update anything specific that needs updating
+	}
+	if {$render_type == "line"} {
+	    #TODO - update anything specific that needs updating
+	}
+
 	getAzimuth
 	getElevation
 	getSize
@@ -847,6 +891,8 @@ namespace eval RtWizard {
 	# has been picked.
 	#
 	set selected [$itk_component(hier) selection get]
+
+	puts $selected
 
 	if {[llength $selected] == 0 } {
 	    set status 0
