@@ -90,6 +90,9 @@ namespace eval RaytraceWizard {
     #
     proc main { args } {
 
+	# As of now we haven't drawn anything
+	set ::first_draw 1
+
 	#
 	# Create the Feedback
 	#
