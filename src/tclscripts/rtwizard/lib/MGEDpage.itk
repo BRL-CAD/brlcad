@@ -127,6 +127,7 @@ namespace eval RtWizard {
 	    method getChildren {parent}
 	    method selectNode {tags isOn}
 	    method clearDisplay {}
+	    method refreshDisplay {}
 	    method setAzEl {ignored}
 
 	    method updateStatus {}
@@ -163,6 +164,12 @@ namespace eval RtWizard {
 	    method centerDialogOK {}
 	    method centerDialogApply {}
 	    method centerDialogCancel {}
+
+	    method createBotthresholdDialog {parent}
+	    method botthresholdDialogReveal {}
+	    method botthresholdDialogOK {}
+	    method botthresholdDialogApply {}
+	    method botthresholdDialogCancel {}
 
 	    method lineColorChooser {}
 	    method nonLineColorChooser {}
@@ -386,6 +393,7 @@ namespace eval RtWizard {
 	createSizeDialog        $itk_interior
 	createPerspectiveDialog $itk_interior
 	createCenterDialog $itk_interior
+	createBotthresholdDialog $itk_interior
 	createIntensityDialog $itk_interior
 	createOccModeDialog   $itk_interior
 
@@ -421,10 +429,10 @@ namespace eval RtWizard {
     #
     itcl::body MGEDpage::draw {selected} {
 	if {$::first_draw == 1} {
-	    eval $::mgedObj gedCmd draw $selected
+	    eval $::mgedObj gedCmd draw -L $::bot_threshold $selected
 	    set ::first_draw 0
 	} else {
-	    eval $::mgedObj gedCmd draw -R $selected
+	    eval $::mgedObj gedCmd draw -R -L $::bot_threshold $selected
 	}
     }
 
@@ -505,6 +513,10 @@ namespace eval RtWizard {
 	$w menubar add command .$viewMenu.center -label "Center..." \
 	    -helpstr "Set view center" \
 	    -command "[::itcl::code $this centerDialogReveal]"
+
+	$w menubar add command .$viewMenu.botthreshold -label "BoT Drawing Threshold..." \
+	    -helpstr "Set limit at which BoTs are drawn as boxes" \
+	    -command "[::itcl::code $this botthresholdDialogReveal]"
 
 	#
 	# Do the options menu, callback to the child
@@ -674,6 +686,26 @@ namespace eval RtWizard {
 	#
 	set selected  [$itk_component(hier) selection get]
     }
+
+
+    # refreshDisplay - clears the mged display, and redraws the selected items.
+    #
+    ::itcl::body MGEDpage::refreshDisplay { } {
+
+    # get the list of currently selected items
+	set selected [$itk_component(hier) selection get]
+
+	# clear the display
+	$::mgedObj gedCmd zap
+
+	# redraw the selection list
+	if {[llength $selected] > 0} {
+	    draw $selected
+	}
+
+	updateStatus
+    }
+
 
     #
     # restoreView - restores the mgedObj to its previous state.
@@ -1227,6 +1259,106 @@ namespace eval RtWizard {
 	updateStatus
     }
 
+
+    #----------------------------#
+    #    BoT Threshold Control   #
+    #----------------------------#
+    #
+    # createBotthresholdDialog - creates a dialog window that allows the user
+    #                            to set the bot drawing threshold
+    #
+    ::itcl::body MGEDpage::createBotthresholdDialog {parent} {
+
+	# Get current threshold
+	set currThreshold $::bot_threshold
+
+	itk_component add botthresholdDialog {
+	    iwidgets::dialog $parent.#auto -title "BoT Drawing Threshold"
+	} {
+	    usual
+	}
+
+	set cs [ eval $itk_component(botthresholdDialog) childsite ]
+#
+	# Build the current size indicator
+	#
+	itk_component add botthresholdLabel {
+	    iwidgets::labeledwidget $cs.scl \
+		-labeltext "Threshold:" \
+		-labelpos "w"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the size.
+	#
+	itk_component add botthresholdEntry {
+	    iwidgets::entryfield $cs.sze \
+		-labeltext "Threshold:" \
+		-labelpos w \
+		-width 30\
+		-command "[::itcl::code $this botthresholdDialogApply]"
+	} {
+	    usual
+	}
+
+	$itk_component(botthresholdDialog) hide Help
+	$itk_component(botthresholdDialog) buttonconfigure OK \
+	    -command "[::itcl::code $this botthresholdDialogOK]"
+	$itk_component(botthresholdDialog) buttonconfigure Apply \
+	    -command "[::itcl::code $this botthresholdDialogApply]"
+	$itk_component(botthresholdDialog) buttonconfigure Cancel \
+	    -command "[::itcl::code $this botthresholdDialogCancel]"
+	pack $itk_component(botthresholdLabel) -anchor c
+	pack $itk_component(botthresholdEntry) -anchor c
+	eval iwidgets::Labeledwidget::alignlabels \
+	    $itk_component(botthresholdLabel) \
+	    $itk_component(botthresholdEntry)
+
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $currThreshold
+	$itk_component(botthresholdDialog) deactivate
+    }
+
+    #
+    # botthresholdDialogReveal - executed when the botthreshold dialog window
+    #                       is requested from the menu bar
+    #
+    ::itcl::body MGEDpage::botthresholdDialogReveal {} {
+	set oldThreshold $::bot_threshold
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $oldThreshold
+	$itk_component(botthresholdDialog) activate
+    }
+
+    #
+    # botthresholdDialogOK - executed when the OK button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogOK {} {
+	set ::bot_threshold [ $itk_component(botthresholdEntry) get]
+	$itk_component(botthresholdDialog) deactivate
+	updateStatus
+	refreshDisplay
+    }
+
+    #
+    # botthresholdDialogApply - executed when the apply button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogApply {} {
+	set ::bot_threshold [ $itk_component(botthresholdEntry) get]
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $::bot_threshold
+	updateStatus
+	refreshDisplay
+    }
+
+    #
+    # botthresholdDialogCancel - executed when the close button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogCancel {} {
+	$itk_component(botthresholdDialog) deactivate
+    }
 
 
     #--------------------#
