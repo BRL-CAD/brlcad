@@ -62,6 +62,10 @@ struct rt_view_info {
      * density of the plot.
      */
     fastf_t curve_spacing;
+
+    /** Threshold value beyond which the primitive should return
+     * a bbox plot rather than the full vlist */
+    size_t threshold;
 };
 
 /**
