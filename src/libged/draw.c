@@ -765,7 +765,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			char *cp = bu_optarg;
 			if (cp) {
 			    t = atoi(cp);
-			    if (t > 0) {
+			    if (t >= 0) {
 				dgcdp.threshold = (size_t)t;
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
