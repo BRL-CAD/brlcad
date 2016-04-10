@@ -620,7 +620,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	gvp = gedp->ged_gvp;
 
-	threshold_cached = gvp->gv_threshold;
+	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_threshold;
 
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
@@ -927,7 +927,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Set the view threshold */
-		gedp->ged_gvp->gv_threshold = dgcdp.threshold;
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = dgcdp.threshold;
 
 		/* calculate plot vlists for solids of each draw path */
 		for (i = 0; i < argc; ++i) {
@@ -940,7 +940,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
 		    if (ret < 0) {
 			/* restore view threshold */
-			gedp->ged_gvp->gv_threshold = threshold_cached;
+			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = threshold_cached;
 
 			bu_vls_printf(gedp->ged_result_str, "%s: %s redraw failure\n", argv[0], argv[i]);
 			return GED_ERROR;
@@ -948,7 +948,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* restore view threshold */
-		gedp->ged_gvp->gv_threshold = threshold_cached;
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = threshold_cached;
 
 		bu_free(paths_to_draw, "draw paths");
 	    }
