@@ -24,16 +24,17 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
   set(TARGET_NAME ${testname})
   set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}${cfg_testname}.done")
   configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-rtwiz.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
+  set (dep_list pixcmp rtwizard ${depends_list})
   add_custom_command(
     OUTPUT ${STAMP_FILE} ${TARGET_IMAGE} ${LOG_FILE}
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
-    DEPENDS pixcmp rtwizard ${depends_list}
+    DEPENDS ${dep_list}
     )
 
   add_test(NAME regress-rtwizard-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
-  add_custom_target(regress-rtwizard-${testname} DEPENDS ${depends_list} ${STAMP_FILE})
+  add_custom_target(regress-rtwizard-${testname} DEPENDS ${dep_list} ${STAMP_FILE})
   set_target_properties(regress-rtwizard-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  Add_Regression_Test(rtwizard-${testname} "${depends_list}")
+  Add_Regression_Test(rtwizard-${testname} "${dep_list}")
 
   foreach(tgt ${rtwizard_targets})
     add_dependencies(regress-rtwizard-${testname} ${tgt})
