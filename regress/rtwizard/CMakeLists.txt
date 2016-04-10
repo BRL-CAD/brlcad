@@ -65,6 +65,7 @@ DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_D_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_E_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_F_ref.pix")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_ref.pix")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/m35_edge_only_color_ref.pix")
 
 Add_RtWiz_Test(rtwiz_m35_A "${DATA_DIR}/db/m35.g" "all.g -t A --benchmark -s 512" "m35.g"
   CONTROL_IMAGE "${CMAKE_CURRENT_BINARY_DIR}/m35_A_ref.pix"
