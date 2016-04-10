@@ -10,7 +10,10 @@ endif(CMAKE_CONFIGURATION_TYPES)
 
 # TODO: Hack to avoid running multiple rtwizard tests at once.  Correct
 # solution is to fix this, but until then make new targets depend on old
-# targets
+# targets.  This is also why the Add_Regression_Test command below sets
+# the EXCLUDE_FROM_REGRESS flag - a parallel distcheck may run multiple
+# rtwizards at the same time - each individual distchech has no way to
+# know what other distchecks are doing.
 set(rtwizard_targets)
 
 macro(Add_RtWiz_Test testname input_file options depends_list)
@@ -34,7 +37,7 @@ macro(Add_RtWiz_Test testname input_file options depends_list)
   add_test(NAME regress-rtwizard-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
   add_custom_target(regress-rtwizard-${testname} DEPENDS ${dep_list} ${STAMP_FILE})
   set_target_properties(regress-rtwizard-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  Add_Regression_Test(rtwizard-${testname} "${dep_list}")
+  Add_Regression_Test(rtwizard-${testname} "${dep_list}" EXCLUDE_FROM_REGRESS)
 
   foreach(tgt ${rtwizard_targets})
     add_dependencies(regress-rtwizard-${testname} ${tgt})
