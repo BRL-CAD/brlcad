@@ -69,6 +69,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} ${CMAKE_COMMAND} --build . --target check @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit, benchmark and regression testing... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory..."
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${install_dir}
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${build_dir} @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule..."
