@@ -771,8 +771,7 @@ rtwizard_help(struct bu_opt_desc *d)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     const char *option_help = NULL;
-
-    bu_vls_sprintf(&filtered, "benchmark viewsize orientation eye_pt log-file pid-file");
+    const char *always_filtered = "benchmark viewsize orientation eye_pt log-file pid-file";
 
     settings.format = BU_OPT_ASCII;
     settings.offset = BU_OPT_DEFAULT_OFFSET;
@@ -782,14 +781,36 @@ rtwizard_help(struct bu_opt_desc *d)
     settings.repeated = NULL;
     settings.optional = NULL;
     settings.show_all_longopts = 1;
-    settings.filtered = bu_vls_addr(&filtered);
 
+    bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
+
+    /* I/O options */
+    bu_vls_sprintf(&filtered, "%s w n s c g l C line-color non-line-color G O cpu-count a e twist P t z center", always_filtered);
+    settings.filtered = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
-    bu_vls_sprintf(&str, "Usage: rtwizard [options]\n");
     if (option_help) {
-	bu_vls_printf(&str, "Options:\n%s\n", option_help);
+	bu_vls_printf(&str, "Input/Output Options:\n%s\n", option_help);
 	bu_free((char *)option_help, "help str");
     }
+
+    /* Model View options */
+    bu_vls_sprintf(&filtered, "%s h gui no-gui i o d p w n s c g l C line-color non-line-color G O cpu-count t v", always_filtered);
+    settings.filtered = bu_vls_addr(&filtered);
+    option_help = bu_opt_describe(d, &settings);
+    if (option_help) {
+	bu_vls_printf(&str, "Model View Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
+    /* Image Generation options */
+    bu_vls_sprintf(&filtered, "%s h gui no-gui i o d p a e twist P z center v", always_filtered);
+    settings.filtered = bu_vls_addr(&filtered);
+    option_help = bu_opt_describe(d, &settings);
+    if (option_help) {
+	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
     bu_vls_free(&filtered);
@@ -818,9 +839,9 @@ main(int argc, char **argv)
     BU_OPT(d[7],  "w", "width",         "#",         &opt_width,       s,            "Output image width (overrides -s)");
     BU_OPT(d[8],  "n", "height",        "#",         &opt_height,      s,            "Output image height (overrides -s)");
     BU_OPT(d[9],  "s", "size",          "#",         &opt_size,        s,            "Output width & height (for square image)");
-    BU_OPT(d[10], "c", "color-objects", "obj1,...",  &opt_objs,        s->color,     "List of color objects to render");
-    BU_OPT(d[11], "g", "ghost-objects", "obj1,...",  &opt_objs,        s->ghost,     "List of ghost objects to render");
-    BU_OPT(d[12], "l", "line-objects",  "obj1,...",  &opt_objs,        s->line,      "List of line objects to render");
+    BU_OPT(d[10], "c", "color-objects", "obj1[,...]",  &opt_objs,        s->color,     "List of color objects to render");
+    BU_OPT(d[11], "g", "ghost-objects", "obj1[,...]",  &opt_objs,        s->ghost,     "List of ghost objects to render");
+    BU_OPT(d[12], "l", "line-objects",  "obj1[,...]",  &opt_objs,        s->line,      "List of line objects to render");
     BU_OPT(d[13], "C", "background-color", "R/G/B",  &bu_opt_color,    s->bkg_color, "Background image color");
     BU_OPT(d[14], "",  "line-color",    "R/G/B",     &bu_opt_color,    s->line_color, "Color used for line rendering");
     BU_OPT(d[15], "",  "non-line-color", "R/G/B",    &bu_opt_color,    s->non_line_color, "Color used for non-line rendering ??");
@@ -830,7 +851,7 @@ main(int argc, char **argv)
     BU_OPT(d[19], "",  "cpu-count",     "#",         &bu_opt_int,     &s->cpus,      "Specify the number of CPUs to use");
     BU_OPT(d[20], "a", "azimuth",       "#[.#]",     &bu_opt_fastf_t, &s->az,        "Set azimuth");
     BU_OPT(d[21], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
-    BU_OPT(d[22], " ", "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
+    BU_OPT(d[22], "",  "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
     BU_OPT(d[23], "P",  "perspective",  "#[.#]",     &bu_opt_fastf_t, &s->perspective, "Set perspective");
     BU_OPT(d[24], "t", "type",          "A|B|C|D|E|F", &opt_letter,     &type,         "Specify RtWizard picture type");
     BU_OPT(d[25], "z", "zoom",          "#[.#] ",    &bu_opt_fastf_t, &s->zoom,      "Set zoom");
