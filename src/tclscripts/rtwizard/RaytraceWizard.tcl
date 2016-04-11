@@ -94,7 +94,7 @@ namespace eval RaytraceWizard {
 	set ::first_draw 1
 
 	# Initial BoT drawing LoD limit arbitrarily set to this
-	# display threshold (in mm)
+	# display threshold (3 * # of faces in BoT)
 	set ::bot_threshold 5000
 
 	#
