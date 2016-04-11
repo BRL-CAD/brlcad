@@ -896,7 +896,7 @@ main(int argc, char **argv)
     BU_OPT(d[27], "",  "center",        "x,y,z",     &bu_opt_vect_t,  &s->center,    "Set view center");
     BU_OPT(d[28], "",  "viewsize",      "#[.#}",     &bu_opt_fastf_t, &s->viewsize,  "Set view size");
     BU_OPT(d[29], "",  "orientation",   "#[.#]/#[.#]/#[.#]/#[.#]", &opt_quat, &s->orientation,    "Set view orientation");
-    BU_OPT(d[30], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "set eye point");
+    BU_OPT(d[30], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "Set eye point");
     BU_OPT(d[31], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
     BU_OPT(d[32], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
