@@ -1273,31 +1273,29 @@ namespace eval RtWizard {
 	set currThreshold $::bot_threshold
 
 	itk_component add botthresholdDialog {
-	    iwidgets::dialog $parent.#auto -title "BoT Drawing Threshold"
+	    iwidgets::dialog $parent.#auto -title "BoT Drawing Threshold (max # of faces)"
 	} {
 	    usual
 	}
 
 	set cs [ eval $itk_component(botthresholdDialog) childsite ]
 #
-	# Build the current size indicator
+	# Build the label
 	#
 	itk_component add botthresholdLabel {
 	    iwidgets::labeledwidget $cs.scl \
-		-labeltext "Threshold:" \
+		-labeltext "BoT triangle count above which bounding boxes are drawn:" \
 		-labelpos "w"
 	} {
 	    usual
 	}
 
 	#
-	# Build the entry field for the size.
+	# Build the entry field for the threshold.
 	#
 	itk_component add botthresholdEntry {
 	    iwidgets::entryfield $cs.sze \
-		-labeltext "Threshold:" \
-		-labelpos w \
-		-width 30\
+		-width 50\
 		-command "[::itcl::code $this botthresholdDialogApply]"
 	} {
 	    usual
