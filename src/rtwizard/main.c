@@ -598,12 +598,12 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->input_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) %s", bu_vls_addr(s->input_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) [list %s]", bu_vls_addr(s->input_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (bu_vls_strlen(s->output_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) %s", bu_vls_addr(s->output_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) [list %s]", bu_vls_addr(s->output_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -751,12 +751,12 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->log_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) %s", bu_vls_addr(s->log_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) [list %s]", bu_vls_addr(s->log_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (bu_vls_strlen(s->pid_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) %s", bu_vls_addr(s->pid_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) [list %s]", bu_vls_addr(s->pid_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -882,8 +882,8 @@ main(int argc, char **argv)
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[34]);
 
-	/* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
-	bu_setprogname(argv[0]);
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
 
     /* Skip first arg */
     argv++; argc--;
@@ -995,6 +995,7 @@ main(int argc, char **argv)
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 
+
 	/* The subsequent Tcl scripts will take of Tk, so at this
 	 * level we need only the standard init */
 	status = tclcad_init(interp, 0, &tlog);
@@ -1003,13 +1004,25 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 
+	/* Normalize some paths, since they're headed for Tcl scripts */
+	Tcl_DStringInit(&temp);
+
+	if (bu_vls_strlen(s->input_file) > 0) {
+	    fullname = Tcl_TranslateFileName(interp, bu_vls_addr(s->input_file), &temp);
+	    bu_vls_sprintf(s->input_file, "%s", fullname);
+	}
+
+	if (bu_vls_strlen(s->output_file) > 0) {
+	    fullname = Tcl_TranslateFileName(interp, bu_vls_addr(s->output_file), &temp);
+	    bu_vls_sprintf(s->output_file, "%s", fullname);
+	}
+
 	tclcad_set_argv(interp, ac, (const char **)av);
 	bu_free_argv(ac,av);
 
 	Init_RtWizard_Vars(interp, s);
 
 	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
-	Tcl_DStringInit(&temp);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);
