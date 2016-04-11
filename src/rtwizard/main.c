@@ -767,8 +767,24 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 void
 rtwizard_help(struct bu_opt_desc *d)
 {
+    struct bu_opt_desc_opts settings;
     struct bu_vls str = BU_VLS_INIT_ZERO;
-    const char *option_help = bu_opt_describe(d, NULL);
+    struct bu_vls filtered = BU_VLS_INIT_ZERO;
+    const char *option_help = NULL;
+
+    bu_vls_sprintf(&filtered, "benchmark viewsize orientation eye_pt log-file pid-file");
+
+    settings.format = BU_OPT_ASCII;
+    settings.offset = BU_OPT_DEFAULT_OFFSET;
+    settings.option_columns = BU_OPT_DEFAULT_OPT_COLS;
+    settings.description_columns = BU_OPT_DEFAULT_DESC_COLS;
+    settings.required = NULL;
+    settings.repeated = NULL;
+    settings.optional = NULL;
+    settings.show_all_longopts = 1;
+    settings.filtered = bu_vls_addr(&filtered);
+
+    option_help = bu_opt_describe(d, &settings);
     bu_vls_sprintf(&str, "Usage: rtwizard [options]\n");
     if (option_help) {
 	bu_vls_printf(&str, "Options:\n%s\n", option_help);
@@ -776,6 +792,7 @@ rtwizard_help(struct bu_opt_desc *d)
     }
     bu_log("%s", bu_vls_addr(&str));
     bu_vls_free(&str);
+    bu_vls_free(&filtered);
 }
 
 int
