@@ -222,6 +222,13 @@ typedef enum {
     BU_OPT_DOCBOOK /* TODO */
 } bu_opt_format_t;
 
+
+/* Default values for offset, option columns and description columns - the "magic numbers"
+ * used to print help if the user doesn't specify anything */
+#define BU_OPT_DEFAULT_OFFSET 2
+#define BU_OPT_DEFAULT_OPT_COLS 28
+#define BU_OPT_DEFAULT_DESC_COLS 50
+
 /**
  * Construct a textual description of the options defined by
  * the array.
@@ -261,6 +268,9 @@ struct bu_opt_desc_opts {
     const char *accept;
     const char *reject;
 };
+
+#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, BU_OPT_DEFAULT_OFFSET, BU_OPT_DEFAULT_OPT_COLS, \
+    BU_OPT_DEFAULT_DESC_COLS, NULL, NULL, NULL, 1, NULL, NULL }
 
 /**
  *
@@ -316,12 +326,6 @@ struct bu_opt_desc_opts {
  * caller to free it with @link bu_free @endlink.
  */
 BU_EXPORT extern const char *bu_opt_describe(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings);
-
-/* Default values for offset, option columns and description columns - the "magic numbers"
- * used to print help if the user doesn't specify anything */
-#define BU_OPT_DEFAULT_OFFSET 2
-#define BU_OPT_DEFAULT_OPT_COLS 28
-#define BU_OPT_DEFAULT_DESC_COLS 50
 
 
 /** @} */

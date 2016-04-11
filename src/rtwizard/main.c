@@ -767,20 +767,10 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 void
 rtwizard_help(struct bu_opt_desc *d)
 {
-    struct bu_opt_desc_opts settings;
+    struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     const char *option_help = NULL;
-
-    settings.format = BU_OPT_ASCII;
-    settings.offset = BU_OPT_DEFAULT_OFFSET;
-    settings.option_columns = BU_OPT_DEFAULT_OPT_COLS;
-    settings.description_columns = BU_OPT_DEFAULT_DESC_COLS;
-    settings.required = NULL;
-    settings.repeated = NULL;
-    settings.optional = NULL;
-    settings.show_all_longopts = 1;
-    settings.reject = NULL;
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
@@ -821,21 +811,11 @@ rtwizard_help(struct bu_opt_desc *d)
 void
 rtwizard_help_dev(struct bu_opt_desc *d)
 {
-    struct bu_opt_desc_opts settings;
+    struct bu_opt_desc_opts settings = BU_OPT_DESC_OPTS_INIT_ZERO;
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     const char *option_help = NULL;
     const char *devopts = "benchmark viewsize orientation eye_pt log-file pid-file";
-
-    settings.format = BU_OPT_ASCII;
-    settings.offset = BU_OPT_DEFAULT_OFFSET;
-    settings.option_columns = BU_OPT_DEFAULT_OPT_COLS;
-    settings.description_columns = BU_OPT_DEFAULT_DESC_COLS;
-    settings.required = NULL;
-    settings.repeated = NULL;
-    settings.optional = NULL;
-    settings.show_all_longopts = 1;
-    settings.reject = NULL;
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
