@@ -45,14 +45,10 @@
     </para>
 
     <para>
-	    When specifying options on the command line, it is usually better to fully qualify what a particular item is - for example,
+	    When specifying options on the command line, it is usually better practice to fully qualify what a particular item is - for example,
 	    using <option>-i</option> to specifically identify the input file instead of relying on the .g suffix.  There is a limited ability to recognize
 	    common usage patterns (for example, "<command>rtwizard</command> file.g output_image.png geometry_object" will
-	    generate an image of geometry_object in the file output_image.png) but the potentially general nature of some of the option arguments can
-	    easily result in ambiguous cases.  For example, "<command>rtwizard</command> -c car.g old_car.g car.png" could be interpreted as
-	    "raytrace objects car.g, old_car.g and car.png in an unknown .g file" or "raytrace object car.g in old_car.g and output to car.png".
-	    or even "raytrace old_car.g in car.g and output to car.png, with the -c option being passed an empty list".  In that situation,
-	    the unambiguous "<command>rtwizard</command> -i old_car.g -c car.g -o car.png" is required.
+	    generate an image of geometry_object in the file output_image.png) but the most unambigous specification uses the options.
     </para>
     <para>
 	    The following options are recognized.
@@ -149,7 +145,7 @@
       </varlistentry>
     </variablelist>
 
-    <variablelist remap="TP"><title>Model View Options - User Level</title>
+    <variablelist remap="TP"><title>Model View Options</title>
     <para>
        When it comes to preparing the view for an RtWizard image, there are two options.  One
        is to use the "user level" controls, which reflect the view manipulations used by users
@@ -209,42 +205,6 @@
       </varlistentry>
     </variablelist>
 
-    <variablelist remap="TP"><title>Model View Options - Low Level</title>
-      <para>
-	 When specifying a low level view model is "all or nothing" - all options
-	 are required to correctly define the view.  To get parameters for a given
-	 view, use the Archer command <command>get_eyemodel</command>.
-      </para>
-      <varlistentry>
-	 <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
-	<listitem>
-	  <para>Set the view size.</para>
-	</listitem>
-	  </varlistentry>
-      <varlistentry>
-	<term><option>--orientation</option> "<replaceable>element_1 element_2 element_3 element_4</replaceable>"</term>
-	<listitem>
-	  <para>
-	    Set view quaternion.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><option>--eye_pt</option> "<replaceable>X Y Z</replaceable>"</term>
-	<listitem>
-	  <para>
-	    Set twist angle.
-	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-      <para>
-	      Note: The <option>orientation</option> and <option>eye_pt</option> options are
-	      <emphasis remap="I">required</emphasis> to be inside quotation marks - although there are multiple numbers supplied
-	      to each option, the underlying option parsing code expects only one argument
-	      in each case.
-      </para>
-
     <variablelist remap="TP"><title>Image Generation Options</title>
       <para>
 	      The three options that are used to input geometry object lists need to parse
@@ -255,11 +215,11 @@
       </para>
 
       <varlistentry>
-	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
-	<term><option>--color-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
+	<term><option>-c</option> <replaceable>obj1[,...]</replaceable> </term>
+	<term><option>--color-objects</option> <replaceable>obj1[,...]</replaceable> </term>
 	<listitem>
 	  <para>
-	    Specify objects to render using full color.
+	    Specify objects to render using full color using a comma separated list.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -273,11 +233,11 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-g</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
-	<term><option>--ghost-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
+	<term><option>-g</option> <replaceable>obj1[,...]</replaceable></term>
+	<term><option>--ghost-objects</option> <replaceable>obj1[,...]</replaceable></term>
 	<listitem>
 	  <para>
-	    Specify objects to be rendered using ghosting.
+	    Specify objects to be rendered using ghosting using a comma separated list.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -291,11 +251,11 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-l</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
-	<term><option>--line-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
+	<term><option>-l</option> <replaceable>obj1[,...]</replaceable></term>
+	<term><option>--line-objects</option> <replaceable>obj1[,...]</replaceable></term>
 	<listitem>
 	  <para>
-	    Specify objects to render lines with using rtedge.
+	    Specify objects to render lines with using rtedge using a comma separated list.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -467,6 +427,17 @@
 	Same as the previous image, except viewing the truck from a different direction and zoomed in closer.
       </para>
     </example>
+
+    <example><title>Multiple Color Objects</title>
+
+      <para>
+	<userinput>rtwizard -d /dev/ogl -i m35.g -c component/power.train,component/suspension -z 1.6</userinput>
+      </para>
+      <para>
+	View the power train and suspension of the truck as color objects.
+      </para>
+    </example>
+
   </refsection>
 
   <refsection xml:id="see_also"><title>SEE ALSO</title>
