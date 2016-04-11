@@ -63,9 +63,9 @@ struct rt_view_info {
      */
     fastf_t curve_spacing;
 
-    /** Threshold value beyond which the primitive should return
+    /** Face count beyond which the BoT primitive should return
      * a bbox plot rather than the full vlist */
-    size_t threshold;
+    size_t bot_threshold;
 };
 
 /**

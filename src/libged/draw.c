@@ -620,7 +620,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	gvp = gedp->ged_gvp;
 
-	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_threshold;
+	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_bot_threshold;
 
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
@@ -639,7 +639,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.wireframe_color_override = 0;
 	dgcdp.fastpath_count = 0;
 	dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
-	dgcdp.threshold = 0;
+	dgcdp.bot_threshold = 0;
 
 	/* default color - red */
 	dgcdp.wireframe_color[0] = 255;
@@ -766,7 +766,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			if (cp) {
 			    t = atoi(cp);
 			    if (t >= 0) {
-				dgcdp.threshold = (size_t)t;
+				dgcdp.bot_threshold = (size_t)t;
 			    } else {
 				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
 				--drawtrees_depth;
@@ -927,7 +927,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		}
 
 		/* Set the view threshold */
-		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = dgcdp.threshold;
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = dgcdp.bot_threshold;
 
 		/* calculate plot vlists for solids of each draw path */
 		for (i = 0; i < argc; ++i) {
@@ -939,16 +939,16 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
 		    if (ret < 0) {
-			/* restore view threshold */
-			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = threshold_cached;
+			/* restore view bot threshold */
+			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
 
 			bu_vls_printf(gedp->ged_result_str, "%s: %s redraw failure\n", argv[0], argv[i]);
 			return GED_ERROR;
 		    }
 		}
 
-		/* restore view threshold */
-		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_threshold = threshold_cached;
+		/* restore view bot threshold */
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
 
 		bu_free(paths_to_draw, "draw paths");
 	    }

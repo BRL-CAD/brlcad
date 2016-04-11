@@ -266,7 +266,7 @@ struct bview {
     fastf_t                     gv_point_scale;
     fastf_t                     gv_curve_scale;
     fastf_t                     gv_data_vZ;
-    size_t                      gv_threshold;
+    size_t                      gv_bot_threshold;
 };
 
 

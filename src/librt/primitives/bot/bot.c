@@ -923,7 +923,7 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
 	return 0;
 
-    if (!info || !info->threshold || (info->threshold > bot_ip->num_faces * 3)) {
+    if (!info || !info->bot_threshold || (info->bot_threshold > bot_ip->num_faces)) {
 	for (i = 0; i < bot_ip->num_faces; i++) {
 	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
 		continue; /* sanity */

@@ -130,7 +130,7 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
-    size_t threshold;
+    size_t bot_threshold;
 };
 
 

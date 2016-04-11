@@ -892,7 +892,7 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
 
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
-	info.threshold = (gvp) ? gvp->gv_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
 
@@ -903,7 +903,7 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
 
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
-	info.threshold = (gvp) ? gvp->gv_threshold : 0;
+	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
 	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
 		tsp->ts_tol, &info);
     }
