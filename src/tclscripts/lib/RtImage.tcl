@@ -110,7 +110,7 @@ proc rtimage {rtimage_dict} {
 	foreach obj $_color_objects {
 	    lappend cmd $obj
 	}
-puts $cmd
+
 	#
 	# Run rt to generate the color insert
 	#
