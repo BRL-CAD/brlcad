@@ -12,7 +12,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # solution is to fix this, but until then make new targets depend on old
 # targets.  This is also why the Add_Regression_Test command below sets
 # the EXCLUDE_FROM_REGRESS flag - a parallel distcheck may run multiple
-# rtwizards at the same time - each individual distchech has no way to
+# rtwizards at the same time - each individual distcheck has no way to
 # know what other distchecks are doing.
 set(rtwizard_targets)
 
