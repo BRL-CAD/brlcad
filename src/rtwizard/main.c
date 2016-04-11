@@ -1004,17 +1004,23 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 
-	/* Normalize some paths, since they're headed for Tcl scripts */
-	Tcl_DStringInit(&temp);
-
+	/* Normalize .g and output image file paths, since they're to be used
+	 * in Tcl scripts */
 	if (bu_vls_strlen(s->input_file) > 0) {
-	    fullname = Tcl_TranslateFileName(interp, bu_vls_addr(s->input_file), &temp);
-	    bu_vls_sprintf(s->input_file, "%s", fullname);
+	    Tcl_Obj *initPath, *normalPath;
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), bu_vls_strlen(s->input_file));
+	    Tcl_IncrRefCount(initPath);
+	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
+	    bu_vls_sprintf(s->input_file, "%s", Tcl_GetString(normalPath));
+	    Tcl_DecrRefCount(initPath);
 	}
-
 	if (bu_vls_strlen(s->output_file) > 0) {
-	    fullname = Tcl_TranslateFileName(interp, bu_vls_addr(s->output_file), &temp);
-	    bu_vls_sprintf(s->output_file, "%s", fullname);
+	    Tcl_Obj *initPath, *normalPath;
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), bu_vls_strlen(s->output_file));
+	    Tcl_IncrRefCount(initPath);
+	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
+	    bu_vls_sprintf(s->output_file, "%s", Tcl_GetString(normalPath));
+	    Tcl_DecrRefCount(initPath);
 	}
 
 	tclcad_set_argv(interp, ac, (const char **)av);
@@ -1022,6 +1028,9 @@ main(int argc, char **argv)
 
 	Init_RtWizard_Vars(interp, s);
 
+	/* We're using this path on the file system, not in Tcl: translate it
+	 * to the appropriate form before doing the eval */
+	Tcl_DStringInit(&temp);
 	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
