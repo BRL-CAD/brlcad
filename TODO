@@ -38,9 +38,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * rtwizard command line ghost image specification isn't working
   reliably
 
-* changing az/el via the gui doesn't appear to "take" in the raytrace
-  for rtwizard renderings
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
