@@ -81,13 +81,15 @@ if(CPACK_INSTALLED_DIRECTORIES)
 	endif(${skip_msg} EQUAL 0)
       endforeach(source_file ${final_list})
       message("CPack source directory ready: ${file_count} files copied.")
-
+      execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
     endif(NOT EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done")
 
-    set(CPACK_PACKAGING_INSTALL_PREFIX "")
     set(CPACK_INSTALLED_DIRECTORIES "@CMAKE_BINARY_DIR@/source_archive_contents;/")
   endif(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
 endif(CPACK_INSTALLED_DIRECTORIES)
+
+# Null out the install prefix regardless
+set(CPACK_PACKAGING_INSTALL_PREFIX "")
 
 # Local Variables:
 # tab-width: 8
