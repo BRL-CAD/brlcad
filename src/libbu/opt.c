@@ -87,19 +87,19 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
 }
 
 HIDDEN int
-opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av)
+opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
 {
     int i = 0;
-    if (!d || !f_av || f_ac == 0) return 0;
+    if (!d || !f_av || f_ac == 0) return accept;
     for (i = 0; i < f_ac; i++) {
 	if (d->shortopt && strlen(d->shortopt) > 0) {
-	    if (BU_STR_EQUAL(d->shortopt, f_av[i])) return 1;
+	    if (BU_STR_EQUAL(d->shortopt, f_av[i])) return !accept;
 	}
 	if (d->longopt && strlen(d->longopt) > 0) {
-	    if (BU_STR_EQUAL(d->longopt, f_av[i])) return 1;
+	    if (BU_STR_EQUAL(d->longopt, f_av[i])) return !accept;
 	}
     }
-    return 0;
+    return accept;
 }
 
 HIDDEN const char *
@@ -114,7 +114,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     char *input = NULL;
     char **filtered_argv = NULL;
     int filtered_argc = 0;
-
+    int accept = 0;
 
     /*
     bu_opt_desc_t desc_type = BU_OPT_FULL;
@@ -129,10 +129,15 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	if (settings->offset >= 0) offset = settings->offset;
 	if (settings->option_columns >= 0) opt_cols = settings->option_columns;
 	if (settings->description_columns >= 0) desc_cols = settings->description_columns;
-	if (settings->filtered) {
-	    input = bu_strdup(settings->filtered);
+	if (settings->reject && settings->accept) {
+	    bu_log("Error - bu_opt_describe_internal_ascii passed both an accept and a reject list for option filtering\n");
+	    return NULL;
+	}
+	if (settings->reject || settings->accept) {
+	    input = (settings->reject) ? bu_strdup(settings->reject) : bu_strdup(settings->accept);
 	    filtered_argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
 	    filtered_argc = bu_argv_from_string(filtered_argv, strlen(input), input);
+	    if (settings->accept) accept = 1;
 	}
     }
 
@@ -146,7 +151,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	struct bu_opt_desc *d;
 	curr = &(ds[i]);
 
-	if (!opt_is_filtered(curr, filtered_argc, filtered_argv)) {
+	if (!opt_is_filtered(curr, filtered_argc, filtered_argv, accept)) {
 	    if (!status[i]) {
 		struct bu_vls opts = BU_VLS_INIT_ZERO;
 		struct bu_vls help_str = BU_VLS_INIT_ZERO;
@@ -158,7 +163,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 		    d = &(ds[j]);
 		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
-			    if (!opt_is_filtered(d, filtered_argc, filtered_argv)) status[j] = 1;
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) status[j] = 1;
 			}
 		    }
 		    j++;
@@ -171,7 +176,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 		    d = &(ds[j]);
 		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
-			    if (!opt_is_filtered(d, filtered_argc, filtered_argv)) {
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->shortopt && strlen(d->shortopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
 				    int new_len = strlen(d->arg_helpstr);
@@ -205,7 +210,7 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 		    d = &(ds[j]);
 		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
 			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
-			    if (!opt_is_filtered(d, filtered_argc, filtered_argv)) {
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
 				if (d->longopt && strlen(d->longopt) > 0) {
 				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
 				    int new_len = strlen(d->arg_helpstr);

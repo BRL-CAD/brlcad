@@ -255,8 +255,11 @@ struct bu_opt_desc_opts {
     int show_all_longopts;
     /* It may not be desirable to print all options -
      * the caller may supply a space separated list
-     * of options to skip */
-    const char *filtered;
+     * of options to accept or reject.  Only one list
+     * may be supplied at a time - filtering is either
+     * accept or reject, not both at once.*/
+    const char *accept;
+    const char *reject;
 };
 
 /**

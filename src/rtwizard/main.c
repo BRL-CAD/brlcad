@@ -771,7 +771,6 @@ rtwizard_help(struct bu_opt_desc *d)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls filtered = BU_VLS_INIT_ZERO;
     const char *option_help = NULL;
-    const char *always_filtered = "benchmark viewsize orientation eye_pt log-file pid-file";
 
     settings.format = BU_OPT_ASCII;
     settings.offset = BU_OPT_DEFAULT_OFFSET;
@@ -781,12 +780,13 @@ rtwizard_help(struct bu_opt_desc *d)
     settings.repeated = NULL;
     settings.optional = NULL;
     settings.show_all_longopts = 1;
+    settings.reject = NULL;
 
     bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
 
     /* I/O options */
-    bu_vls_sprintf(&filtered, "%s w n s c g l C line-color non-line-color G O cpu-count a e twist P t z center", always_filtered);
-    settings.filtered = bu_vls_addr(&filtered);
+    bu_vls_sprintf(&filtered, "h help-dev gui no-gui i o d p v");
+    settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Input/Output Options:\n%s\n", option_help);
@@ -794,8 +794,8 @@ rtwizard_help(struct bu_opt_desc *d)
     }
 
     /* Model View options */
-    bu_vls_sprintf(&filtered, "%s h gui no-gui i o d p w n s c g l C line-color non-line-color G O cpu-count t v", always_filtered);
-    settings.filtered = bu_vls_addr(&filtered);
+    bu_vls_sprintf(&filtered, "a e twist P z center");
+    settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Model View Options:\n%s\n", option_help);
@@ -803,11 +803,47 @@ rtwizard_help(struct bu_opt_desc *d)
     }
 
     /* Image Generation options */
-    bu_vls_sprintf(&filtered, "%s h gui no-gui i o d p a e twist P z center v", always_filtered);
-    settings.filtered = bu_vls_addr(&filtered);
+    bu_vls_sprintf(&filtered, "w n s c g l C line-color non-line-color G O cpu-count t");
+    settings.accept = bu_vls_addr(&filtered);
     option_help = bu_opt_describe(d, &settings);
     if (option_help) {
 	bu_vls_printf(&str, "Image Generation Options:\n%s\n", option_help);
+	bu_free((char *)option_help, "help str");
+    }
+
+    bu_log("%s", bu_vls_addr(&str));
+    bu_vls_free(&str);
+    bu_vls_free(&filtered);
+}
+
+
+/* Help message printed when --help-dev option is supplied */
+void
+rtwizard_help_dev(struct bu_opt_desc *d)
+{
+    struct bu_opt_desc_opts settings;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls filtered = BU_VLS_INIT_ZERO;
+    const char *option_help = NULL;
+    const char *devopts = "benchmark viewsize orientation eye_pt log-file pid-file";
+
+    settings.format = BU_OPT_ASCII;
+    settings.offset = BU_OPT_DEFAULT_OFFSET;
+    settings.option_columns = BU_OPT_DEFAULT_OPT_COLS;
+    settings.description_columns = BU_OPT_DEFAULT_DESC_COLS;
+    settings.required = NULL;
+    settings.repeated = NULL;
+    settings.optional = NULL;
+    settings.show_all_longopts = 1;
+    settings.reject = NULL;
+
+    bu_vls_sprintf(&str, "\nUsage: rtwizard [options]\n\n");
+
+    bu_vls_sprintf(&filtered, "%s", devopts);
+    settings.accept = bu_vls_addr(&filtered);
+    option_help = bu_opt_describe(d, &settings);
+    if (option_help) {
+	bu_vls_printf(&str, "Options for developers:\n%s\n", option_help);
 	bu_free((char *)option_help, "help str");
     }
 
@@ -822,47 +858,49 @@ main(int argc, char **argv)
     int ac;
     char **av;
     int need_help = 0;
+    int need_help_dev = 0;
     int uac = 0;
     int i = 0;
     char type = '\0';
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
     struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[34];
+    struct bu_opt_desc d[35];
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
-    BU_OPT(d[1],  "",  "gui",           "",          NULL,            &s->use_gui,   "Force use of GUI.");
-    BU_OPT(d[2],  "",  "no-gui",        "",          NULL,            &s->no_gui,    "Do not use GUI, even if available information is insufficient to generate image.");
-    BU_OPT(d[3],  "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
-    BU_OPT(d[4],  "o", "output-file",   "filename",  &bu_opt_vls,     s->output_file, "Image output file name");
-    BU_OPT(d[5],  "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
-    BU_OPT(d[6],  "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
-    BU_OPT(d[7],  "w", "width",         "#",         &opt_width,       s,            "Output image width (overrides -s)");
-    BU_OPT(d[8],  "n", "height",        "#",         &opt_height,      s,            "Output image height (overrides -s)");
-    BU_OPT(d[9],  "s", "size",          "#",         &opt_size,        s,            "Output width & height (for square image)");
-    BU_OPT(d[10], "c", "color-objects", "obj1[,...]",  &opt_objs,        s->color,     "List of color objects to render");
-    BU_OPT(d[11], "g", "ghost-objects", "obj1[,...]",  &opt_objs,        s->ghost,     "List of ghost objects to render");
-    BU_OPT(d[12], "l", "line-objects",  "obj1[,...]",  &opt_objs,        s->line,      "List of line objects to render");
-    BU_OPT(d[13], "C", "background-color", "R/G/B",  &bu_opt_color,    s->bkg_color, "Background image color");
-    BU_OPT(d[14], "",  "line-color",    "R/G/B",     &bu_opt_color,    s->line_color, "Color used for line rendering");
-    BU_OPT(d[15], "",  "non-line-color", "R/G/B",    &bu_opt_color,    s->non_line_color, "Color used for non-line rendering ??");
-    BU_OPT(d[16], "G", "ghosting-intensity", "#[.#]", &bu_opt_fastf_t, &s->ghosting_intensity,    "Intensity of ghost objects");
-    BU_OPT(d[17], "O", "occlusion",     "#",         &bu_opt_int,     &s->occlusion, "Occlusion mode");
-    BU_OPT(d[18], "",  "benchmark",     "",          NULL,            &s->benchmark,    "Benchmark mode");
-    BU_OPT(d[19], "",  "cpu-count",     "#",         &bu_opt_int,     &s->cpus,      "Specify the number of CPUs to use");
-    BU_OPT(d[20], "a", "azimuth",       "#[.#]",     &bu_opt_fastf_t, &s->az,        "Set azimuth");
-    BU_OPT(d[21], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
-    BU_OPT(d[22], "",  "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
-    BU_OPT(d[23], "P",  "perspective",  "#[.#]",     &bu_opt_fastf_t, &s->perspective, "Set perspective");
-    BU_OPT(d[24], "t", "type",          "A|B|C|D|E|F", &opt_letter,     &type,         "Specify RtWizard picture type");
-    BU_OPT(d[25], "z", "zoom",          "#[.#] ",    &bu_opt_fastf_t, &s->zoom,      "Set zoom");
-    BU_OPT(d[26], "",  "center",        "x,y,z",     &bu_opt_vect_t,  &s->center,    "Set view center");
-    BU_OPT(d[27], "",  "viewsize",      "#[.#}",     &bu_opt_fastf_t, &s->viewsize,  "Set view size");
-    BU_OPT(d[28], "",  "orientation",   "#[.#]/#[.#]/#[.#]/#[.#]", &opt_quat, &s->orientation,    "Set view orientation");
-    BU_OPT(d[29], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "set eye point");
-    BU_OPT(d[30], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
-    BU_OPT(d[31], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
-    BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
-    BU_OPT_NULL(d[33]);
+    BU_OPT(d[1],  "",  "help-dev",      "",          NULL,            &need_help_dev,    "Print options intended for developer/programmatic use and exit.");
+    BU_OPT(d[2],  "",  "gui",           "",          NULL,            &s->use_gui,   "Force use of GUI.");
+    BU_OPT(d[3],  "",  "no-gui",        "",          NULL,            &s->no_gui,    "Do not use GUI, even if available information is insufficient to generate image.");
+    BU_OPT(d[4],  "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
+    BU_OPT(d[5],  "o", "output-file",   "filename",  &bu_opt_vls,     s->output_file, "Image output file name");
+    BU_OPT(d[6],  "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
+    BU_OPT(d[7],  "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
+    BU_OPT(d[8],  "w", "width",         "#",         &opt_width,       s,            "Output image width (overrides -s)");
+    BU_OPT(d[9],  "n", "height",        "#",         &opt_height,      s,            "Output image height (overrides -s)");
+    BU_OPT(d[10],  "s", "size",          "#",         &opt_size,        s,            "Output width & height (for square image)");
+    BU_OPT(d[11], "c", "color-objects", "obj1[,...]",  &opt_objs,        s->color,     "List of color objects to render");
+    BU_OPT(d[12], "g", "ghost-objects", "obj1[,...]",  &opt_objs,        s->ghost,     "List of ghost objects to render");
+    BU_OPT(d[13], "l", "line-objects",  "obj1[,...]",  &opt_objs,        s->line,      "List of line objects to render");
+    BU_OPT(d[14], "C", "background-color", "R/G/B",  &bu_opt_color,    s->bkg_color, "Background image color");
+    BU_OPT(d[15], "",  "line-color",    "R/G/B",     &bu_opt_color,    s->line_color, "Color used for line rendering");
+    BU_OPT(d[16], "",  "non-line-color", "R/G/B",    &bu_opt_color,    s->non_line_color, "Color used for non-line rendering ??");
+    BU_OPT(d[17], "G", "ghosting-intensity", "#[.#]", &bu_opt_fastf_t, &s->ghosting_intensity,    "Intensity of ghost objects");
+    BU_OPT(d[18], "O", "occlusion",     "#",         &bu_opt_int,     &s->occlusion, "Occlusion mode");
+    BU_OPT(d[19], "",  "benchmark",     "",          NULL,            &s->benchmark,    "Benchmark mode");
+    BU_OPT(d[20], "",  "cpu-count",     "#",         &bu_opt_int,     &s->cpus,      "Specify the number of CPUs to use");
+    BU_OPT(d[21], "a", "azimuth",       "#[.#]",     &bu_opt_fastf_t, &s->az,        "Set azimuth");
+    BU_OPT(d[22], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
+    BU_OPT(d[23], "",  "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
+    BU_OPT(d[24], "P",  "perspective",  "#[.#]",     &bu_opt_fastf_t, &s->perspective, "Set perspective");
+    BU_OPT(d[25], "t", "type",          "A|B|C|D|E|F", &opt_letter,     &type,         "Specify RtWizard picture type");
+    BU_OPT(d[26], "z", "zoom",          "#[.#] ",    &bu_opt_fastf_t, &s->zoom,      "Set zoom");
+    BU_OPT(d[27], "",  "center",        "x,y,z",     &bu_opt_vect_t,  &s->center,    "Set view center");
+    BU_OPT(d[28], "",  "viewsize",      "#[.#}",     &bu_opt_fastf_t, &s->viewsize,  "Set view size");
+    BU_OPT(d[29], "",  "orientation",   "#[.#]/#[.#]/#[.#]/#[.#]", &opt_quat, &s->orientation,    "Set view orientation");
+    BU_OPT(d[30], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "set eye point");
+    BU_OPT(d[31], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
+    BU_OPT(d[32], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
+    BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
+    BU_OPT_NULL(d[34]);
 
 	/* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
 	bu_setprogname(argv[0]);
@@ -884,6 +922,12 @@ main(int argc, char **argv)
 
     if (need_help) {
 	rtwizard_help((struct bu_opt_desc *)&d);
+	bu_free_argv(ac, av);
+	bu_exit(0, NULL);
+    }
+
+    if (need_help_dev) {
+	rtwizard_help_dev((struct bu_opt_desc *)&d);
 	bu_free_argv(ac, av);
 	bu_exit(0, NULL);
     }
