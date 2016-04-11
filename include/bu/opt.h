@@ -263,8 +263,17 @@ struct bu_opt_desc_opts {
     const char *reject;
 };
 
-#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, 2, 28, 50, NULL, NULL, NULL, \
-    1, NULL, NULL }
+/**
+ * initialize an bu_opt_desc_opts struct.
+ * offset = 2 is a default offset into ...
+ * option_columns = 28 is the index of ...
+ * description_columns = 50 is ...
+ *
+ * FIXME: these three new magic numbers must be documented (why these
+ * particular values), enough info to know how to update them or
+ * recognize that their value is right or wrong.
+ */
+#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, 2, 28, 50, NULL, NULL, NULL, 1, NULL, NULL }
 
 /**
  *
