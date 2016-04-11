@@ -1284,7 +1284,7 @@ namespace eval RtWizard {
 	#
 	itk_component add botthresholdLabel {
 	    iwidgets::labeledwidget $cs.scl \
-		-labeltext "BoT triangle count above which bounding boxes are drawn:" \
+		-labeltext "BoT triangle count above which bounding boxes are drawn\n(Note: a value of 0 disables bounding box drawing):" \
 		-labelpos "w"
 	} {
 	    usual
