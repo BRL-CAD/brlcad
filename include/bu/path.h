@@ -149,14 +149,13 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  *     /dir1/dir2/file.ext
  */
 typedef enum {
-    PATH_ALL = 0,       /*!< full path, sans [mime]: prefix */
-    PATH_DIRNAME,       /*!< /dir1/dir2 */
-    PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
-    PATH_BASENAME,      /*!< file.ext */
-    PATH_BASENAME_CORE, /*!< file */
-    PATH_EXTENSION,     /*!< ext */
-    PATH_UNKNOWN        /*!< marks end of path_component_t enums */
-} path_component_t;
+    BU_PATH_DIRNAME,           /*!< /dir1/dir2 */
+    BU_PATH_BASENAME,          /*!< file.ext */
+    BU_PATH_BASENAME_EXTLESS,  /*!< file */
+    BU_PATH_EXT,               /*!< ext */
+    BU_PATH_EXTLESS,           /*!< /dir1/dir2/file */
+    BU_PATH_UNKNOWN            /*!< marks end of bu_path_component_t enums */
+} bu_path_component_t;
 
 /**
  * Attempt to extract a component from a file path.
@@ -164,21 +163,11 @@ typedef enum {
  * returns 0 if the specified component was not found, 1 if it was.  If the
  * bu_vls pointer component is not NULL, the component will be written to the
  * vls.
- *
- * bu_path_component will also accept a mime_type_t argument to type and return
- * the string form of the mime type associated with the file path in component.
- * The return value will still report success or failure (1/0) - to get the
- * integer form of the mime type found, use bu_file_mime_int to process
- * component:
- *
- * if (bu_path_component(c, "file.png", (path_component_t)MIME_IMAGE)) {
- *    mime_image_t t = (mime_image_t)bu_file_mime_int(bu_vls_addr(c));
- * }
  */
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 	                               const char *path,
-	                               path_component_t type);
+	                               bu_path_component_t type);
 
 
 /**
@@ -211,7 +200,7 @@ BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int f
 
 #if 0
 /* NOTE - the glob API below is a work in progress - until this notice is
- * removed it should not be consided functional, much less stable! */
+ * removed it should not be considered functional, much less stable! */
 #define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
 #define BU_GLOB_ERR        0x0004  /* Return on error. */
 #define BU_GLOB_NOCHECK    0x0010  /* Return pattern itself if nothing matches. */

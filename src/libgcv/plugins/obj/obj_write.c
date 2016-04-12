@@ -568,7 +568,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 
 const struct gcv_filter gcv_conv_obj_write = {
-    "OBJ Writer", GCV_FILTER_WRITE, MIME_MODEL_OBJ,
+    "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ,
     obj_write_create_opts, obj_write_free_opts, obj_write
 };
 

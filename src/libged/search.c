@@ -276,6 +276,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     bu_ptbl_init(search_set, 8, "initialize search set table");
 
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* initialize result */

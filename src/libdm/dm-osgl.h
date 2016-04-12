@@ -84,6 +84,7 @@ struct osgl_vars {
     struct FONScontext *fs;
     int fontNormal;
     int ovec;		/* Old color map entry number */
+    int is_init;
 #ifdef __cplusplus
     GLclampf r, g, b;
 #endif

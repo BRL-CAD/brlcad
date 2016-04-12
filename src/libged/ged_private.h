@@ -99,6 +99,7 @@ struct _ged_id_to_names {
 
 
 struct _ged_client_data {
+    uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
     struct display_list *gdlp;
     int wireframe_color_override;
@@ -129,6 +130,7 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
+    size_t bot_threshold;
 };
 
 

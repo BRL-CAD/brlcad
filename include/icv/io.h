@@ -62,6 +62,25 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /**
+ * Function to calculate (or make an educated guess) about the
+ * dimensions of an image, when the image doesn't supply such
+ * information.
+ *
+ * @param[in] name       String identifying a particular size (pass NULL if not using)
+ * @param[in] dpi        Dots per inch of image (pass 0 if not using)
+ * @param[in] file_size  File or in-memory size of image (necessary if deducing an unspecified image size)
+ * @param[in] type       Image type (necessary if deducing an unspecified image size)
+ *
+ * @param[out] widthp    Pointer to variable that will hold image width
+ * @param[out] heightp   Pointer to variable that will hold image height
+ *
+ * @return
+ * Returns 1 if an image size was identified, zero otherwise.
+ *
+ */
+ICV_EXPORT extern int icv_image_size(const char *name, size_t dpi, size_t file_size, bu_mime_image_t type, size_t *widthp, size_t *heightp);
+
+/**
  * Load a file into an ICV struct. For most formats, this will be
  * called with format=ICV_IMAGE_AUTO.
  *
@@ -84,7 +103,7 @@ ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t format, size_t width, size_t height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, bu_mime_image_t format, size_t width, size_t height);
 
 /**
  * Saves Image to a file or streams to stdout in respective format
@@ -96,7 +115,7 @@ ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t forma
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, mime_image_t format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, bu_mime_image_t format);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned

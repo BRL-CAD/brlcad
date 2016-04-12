@@ -1,8 +1,8 @@
-set(docbook_articles_IT
+set(articles_IT
   about_it.xml
   )
 
-set(docbook_articles_IT_IMAGES
+set(articles_IT_IMAGES
   images/bc2.gif
   images/brlcad-overview-benchmark-Bldg_391.jpg
   images/brlcad-overview-benchmark-M35.jpg
@@ -13,11 +13,8 @@ set(docbook_articles_IT_IMAGES
   images/brlcad-overview-data-flow.png
   images/sflogo.png
   )
-ADD_DOC(docbook_articles_IT_IMAGES html/articles/it/images)
-
-DOCBOOK_TO_HTML(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
-DOCBOOK_TO_PHP(article docbook_articles_IT html/articles/it docbook_articles_IT_IMAGES_cp)
-DOCBOOK_TO_PDF(article docbook_articles_IT pdf/articles/it docbook_articles_IT_IMAGES_cp)
+ADD_DOC(articles_IT_IMAGES html/articles/it/images)
+ADD_DOCBOOK("HTML;PHP;PDF" articles_IT articles/it articles_IT_IMAGES_cp)
 
 # Local Variables:
 # tab-width: 8

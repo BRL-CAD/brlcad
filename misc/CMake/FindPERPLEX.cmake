@@ -80,11 +80,11 @@ mark_as_advanced(PERPLEX_TEMPLATE)
 #   find_package(RE2C)
 #   find_package(PERPLEX)
 #
-#   LEMON_TARGET(MyParser parser.y ${CMAKE_CURRENT_BINARY_DIR}/parser.cpp
-#   PERPLEX_TARGET(MyScanner scanner.re  ${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp ${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp)
+#   LEMON_TARGET(MyParser parser.y "${CMAKE_CURRENT_BINARY_DIR}/parser.cpp")
+#   PERPLEX_TARGET(MyScanner scanner.re  "${CMAKE_CURRENT_BINARY_DIR}/scanner.cpp" "${CMAKE_CURRENT_BINARY_DIR}/scanner_header.hpp")
 #   ADD_PERPLEX_LEMON_DEPENDENCY(MyScanner MyParser)
 #
-#   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#   include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #   add_executable(Foo
 #      Foo.cc
 #      ${LEMON_MyParser_OUTPUTS}
@@ -147,7 +147,7 @@ if(NOT COMMAND PERPLEX_TARGET)
 
     # Need a working directory
     if("${${PVAR_PREFIX}_WORKING_DIR}" STREQUAL "")
-      set(${PVAR_PREFIX}_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR}/${PVAR_PREFIX})
+      set(${PVAR_PREFIX}_WORKING_DIR "${CMAKE_CURRENT_BINARY_DIR}/${PVAR_PREFIX}")
     endif("${${PVAR_PREFIX}_WORKING_DIR}" STREQUAL "")
     file(MAKE_DIRECTORY ${${PVAR_PREFIX}_WORKING_DIR})
 
@@ -180,7 +180,7 @@ if(NOT COMMAND PERPLEX_TARGET)
     if("${in_full}" STREQUAL "${Input}")
       set(perplex_in_file ${Input})
     else("${in_full}" STREQUAL "${Input}")
-      set(perplex_in_file ${CMAKE_CURRENT_SOURCE_DIR}/${Input})
+      set(perplex_in_file "${CMAKE_CURRENT_SOURCE_DIR}/${Input}")
     endif("${in_full}" STREQUAL "${Input}")
 
     # Intermediate file

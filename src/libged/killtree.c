@@ -201,6 +201,11 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
+
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
@@ -245,6 +250,9 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
     bu_free(gktd.av, "free av");
     gktd.av = NULL;
+
+    /* Done removing stuff - update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     return GED_OK;
 }

@@ -18,20 +18,28 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* new bu mime symbols are not prefixed in accordance with rest of API
-
-* make sure windows wireframes are not horked
-
-* make sure rt -I interactive mode still works... looks like code for
-  it was removed.
-
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* fix MGED clear command
-
 * fix regressions in step-g
+
+* figure out why the following is crashing:
+
+  bin/rtshot -R 1 -p 0 0 0 -d 1 0 0 share/db/havoc.g havoc
+
+  is it related to using bu_hash in some fashion?  This test worked
+  as of r65575
+
+* quick rtg3 with -c option.  was failing when run without -c "set
+  ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
+  open ray data output file"
+
+* rtwizard command line ghost image specification isn't working
+  reliably
+
+* drawing datums far from origin result in huge arrowheads
+
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -59,6 +67,42 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* get_eyemodel returns an eye_pt entry, but feeding the results to
+  archer's eye_pt command results in get_eyemodel returning a different
+  eye_pt, even when the units are all in mm.  is this expected?
+  intuitively, I would expected feeding the results of get_eyemodel to
+  eye_pt to result in no change, modulo unit conversions.
+
+* teach pixdiff, rt, and other tools that can/should support the
+  capability to read/write (as appropriate) pixel index values and
+  reproduce the ray fired to create that pixel.  rt's -j option can
+  specify a sub-rectangle, but the key point (whatever the details of
+  implementation) is to be able to easily identify and reproduce the
+  ray that produces a given pixel when debugging.  For example,
+  pixdiff's -l option will report differing pixels by index - rt
+  should support those index specifications as an input option.
+  Another possibility would be to have rt support accepting an input
+  image as a "control" image and generating a file with nirt or rtshot
+  commands for each pixel that reports different from the control.
+
+* pull work on rm command out of history (commit r67394 reverted it)
+  and take it to a production ready stage.
+
+* Extract bounding box code from both autoview.c and get_autoview.c
+  into a general bounding rpp function in librt and use accordingly
+  (particularly in libged).  Should combine autoview.c with
+  get_autoview.c (perhaps as a flag) and utilize the general function
+  in lots of places (e.g., the ged_arb() function).
+
+* make mged work without a batch script
+
+* make archer work without a batch script
+
+* make isst work without a batch script
+
+* Need to rethink libbu hash API - ideally should be much simpler and
+  expose much less to the user.
 
 * consider whether the file introspection capabilities of libmagic
   (https://github.com/file/file) should be hooked into the libbu
@@ -157,7 +201,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   that Debian stable is using CMake >=3.0 we should be OK to require
   the more modern CMake.  Another TODO once we require the newer CMake
   is retiring our custom time stamping code in favor of using
-  the CMake time stamp mechanism.
+  the CMake time stamp mechanism.  Also get rid of the fallback in
+  src/libgcv/plugins/CMakeLists.txt (and any others that have crept
+  in over the years...)
 
 * convert usages of Tcl_InitHashTable() and friends to libbu
   containers (see src/conv/enf-g.c for example usage)
@@ -180,12 +226,17 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * look into whether db_dirbuild should call db_update_nref
 
-* evaluate replacing libfft with the KISS FFT library (BSD).  similar
-  to Priit Laes' work a couple years ago (see brlcad-devel mailing
-  list, he converted our tools to FFTW but license was not
-  compatible), we need to replace and test performance via dfft.
-  May also be worth looking at https://github.com/anthonix/ffts (has
-  a CMakeified version at https://github.com/henrygouk/ffts)
+* evaluate replacing libfft with the KISS FFT library
+  (http://kissfft.sourceforge.net, BSD) or the OpenCL-based clFFT
+  (https://github.com/clMathLibraries/clFFT, Apache2).  we need to
+  test correctness, precision, and performance via dfft.
+
+  May also be worth looking at https://github.com/anthonix/ffts (has a
+  CMakeified version at https://github.com/henrygouk/ffts)
+
+  Priit Laes converted our tools to FFTW (circa 2010, see
+  brlcad-devel), but FFTW is not license-compatible.  there is an sf
+  patch containing this conversion, untested.
 
 * update the rt* manual pages to note that they can all write out to
   various image formats like png just by specifying an output file
@@ -545,8 +596,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * provide a viable FindBRLCAD.cmake
 
-* replicate the GTK+ ISST interface in TCL
-
 * fix nurbs_ssi and nurbs_tester unit tests
 
 * get rid of the -P#processors user option (except rt* tools) common
@@ -602,8 +651,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * temp colors and temp matrices during ray tracing, rt, rtwizard.
   need a command-line and mged method to override parameters.
-
-* test new edit command
 
 * fix 64b detection across platforms. Fix rhel 32/64 confusion
 
@@ -1313,56 +1360,25 @@ comp.r4 ID 5678 material code 5 LOS 75
 LIBGED
 ------
 
-* See src/libged/TODO for new command ideas.
+* See src/libged/TODO for new command and subcommand ideas.
 
-* Extract bounding box code from both autoview.c and get_autoview.c
-  into a general bounding rpp function in libged (or perhaps librt if
-  it generalizes sufficiently), and use accordingly.  Should combin
-  autoview.c with get_autoview.c (perhaps as a flag) and utilize the
-  general function in lots of libged places (e.g., the ged_arb()
-  function).
-
-* hook marching cubes into libged facetize
-
-* fix ged 'joint' command, need to figure out how libged should handle
-  non-object additions to the wireframe (or maybe they should be
-  objects, but not mged's faked solids ala cvt_vlblock_to_solids()).
-
-* break cyclic dependency between libdm and libged.  libged should not
-  be aware of libdm (screengrab command).  to implement a ged command
-  that updates the display, the gedp could provide a means to
-  register a callback so (for example) mged could register a function
-  that gets passed a dmp, and libged would call back into that
-  front-end client function instead of a direct call so library
-  encapsulation is maintained.
-
-* implement oed+tra/sca/rot functionality consistently in libged as
-  translate/scale/rotate with a signature similar to:
-
-  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:\
-    {object_name} | {3d position}] [--relative xdist [ydist [zdist]] \
-    | --absolute xpos [ypos [zpos]]] object_name(s)
-
-  where 'oed' is basically converted into the --keypoint option and
-  object(s) to work on.
+* libged needs to support "temporary" objects that are in-memory only
+  and will disappear when the ged instance is destroyed, yet is
+  otherwise considered real objects in a given database.  this
+  supports temporary additions to the wireframe (e.g., plot data from
+  nirt from cvt_vlblock_to_solids()) and in-progress selections.
 
 * restore libged axis/grid commands code made in r44153 but with
   libged decoupled from libdm/libfb.
 
-* migrate / update screengrab command in libged (libfb/libdm dep)
-
 * the 'l' and 'analyze' commands now require an object be specified
   and won't use the currently highlighted solid.  undoubtedly related
-  to libged refactoring.  this is related to sf request 2954409.
+  to libged refactoring.  this is related to sf request 2954409.  this
+  needs to be handled in a generalized way so that most/all commands
+  have a notion of operating on the currently 'selected' object(s).
 
 * fix !!! in src/libged/tables.c where a temporary file is getting
   used.  needs to call bu_temp_file().
-
-* make the 'tree' command accept a full path, not just a combination
-
-* make the 'tables' ged command not call system() on the "sort" unix
-  command.  It should perform all sorting on the data directly in
-  memory, at least without creating another process.
 
 * refactor the libtclcad go_*() functions and invocation wrappers
   (also in mged) into libged where appropriate. the 'png' command
@@ -1381,12 +1397,6 @@ LIBGED
   libged/mged.  be sure to revive or at least check out the previous
   effort in src/mged/comb_bool_parse.y that already has support that
   recognizes the classical infix notation.
-
-* option to mged make command or new command that enters solid edit
-  mode, "med", "smake", "makes", "msed", etc.  same for cp command.
-
-* add per-face analysis of primitives like tgc, arb to their
-  respective analyze commands in libged
 
 * refactor .density file and density database reading code in files
   src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
@@ -1753,7 +1763,6 @@ fbpoint    (TERMLIB)
 fbzoom     (TERMLIB)
 ir-X       (X11 specific)
 irdisp     (X11 specific)
-isst       (Togl widget on Windows, possibly other issues)
 lgt        (TERMLIB)
 pl-X       (X11 specific)
 pl-dm      (possibly X11 specific)
@@ -1772,6 +1781,11 @@ missing on Windows due to needing lex.
 
 CONVERTERS
 ----------
+
+* integrate the submitted x3d-g (Web3D, VRML successor) importer
+  (pending patch on sf)
+
+* add support to x3d-g for NURBS entities
 
 * compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
   potential replacement for our compelx IGES conversion logic.
@@ -1801,9 +1815,6 @@ CONVERTERS
 
 * implement a g-dae (Collada) exporter and dae-g importer
   http://en.wikipedia.org/wiki/Collada
-
-* implement an x3d-g (Web3D, VRML successor) importer
-  http://en.wikipedia.org/wiki/X3D
 
 * implement a g-nc (g-code) exporter.  ideally this converts geometry
   to NURBS format, trims surfaces, evaluates boolean expressions, and

@@ -658,7 +658,7 @@ FunctionEnd
 ; Create desktop icons
 Function installdesktopicons
 SetOutPath $INSTDIR
-CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
+CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
 CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 FunctionEnd

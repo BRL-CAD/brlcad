@@ -1409,7 +1409,7 @@ proc rt_check_dest {id win} {
 	    set dm_list [split [dm_list] ',']
 	    set devtype "/dev/"
 	    append devtype [lindex $dm_list 0]
-	    rt_force_cook_dest %id $devtype
+	    rt_force_cook_dest $id $devtype
 	}
     }
 }

@@ -133,8 +133,45 @@ dm_bestXType(char *dpy_string)
     return "wgl";
 #endif
 
+#ifdef DM_OGL
+    {
+	Display *dpy;
+	int return_val;
+	if (dpy_string) {
+	    if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+		if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
+		    XCloseDisplay(dpy);
+		    return "ogl";
+		}
+		XCloseDisplay(dpy);
+	    }
+	} else {
+	    return "ogl";
+	}
+    }
+#endif
+
+#ifdef DM_X
+    {
+	if (dpy_string) {
+	Display *dpy;
+	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
+	    XCloseDisplay(dpy);
+	    return "X";
+	}
+	} else {
+	    return "X";
+	}
+    }
+#endif
+
+#ifdef DM_TK
+    return "tk";
+#endif
+
 #ifdef DM_RTGL
     {
+	if (dpy_string) {
 	Display *dpy;
 	int return_val;
 
@@ -145,39 +182,44 @@ dm_bestXType(char *dpy_string)
 	    }
 	    XCloseDisplay(dpy);
 	}
+	} else {
+	    return "rtgl";
+	}
     }
+#endif
+
+    return "nu";
+}
+
+
+/**
+ * dm_default_type suggests a display manager
+ */
+
+int
+dm_default_type()
+{
+
+#ifdef DM_OSGL
+    return DM_TYPE_OSGL;
+#endif
+
+#ifdef DM_WGL
+    return DM_TYPE_WGL;
 #endif
 
 #ifdef DM_OGL
-    {
-	Display *dpy;
-	int return_val;
-
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    if (XQueryExtension(dpy, "GLX", &return_val, &return_val, &return_val)) {
-		XCloseDisplay(dpy);
-		return "ogl";
-	    }
-	    XCloseDisplay(dpy);
-	}
-    }
+    return DM_TYPE_OGL;
 #endif
 
 #ifdef DM_X
-    {
-	Display *dpy;
-	if ((dpy = XOpenDisplay(dpy_string)) != NULL) {
-	    XCloseDisplay(dpy);
-	    return "X";
-	}
-    }
+    return DM_TYPE_X;
 #endif
 
 #ifdef DM_TK
-    return "tk";
-#else
-    return "nu";
+    return DM_TYPE_TK;
 #endif
+    return DM_TYPE_NULL;
 }
 
 /*

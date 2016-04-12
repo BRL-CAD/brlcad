@@ -53,7 +53,6 @@ extern point_t viewbase_model;
 
 extern int rpt_overlap;
 
-extern struct bu_vls ray_data_file;  /* file name for ray data output (declared in do.c) */
 extern FILE *outfp;
 
 static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BOT primitive hit */

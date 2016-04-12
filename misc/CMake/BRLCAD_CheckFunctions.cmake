@@ -325,7 +325,7 @@ macro(BRLCAD_HEADER_SYS_WAIT)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   if(NOT DEFINED WORKING_SYS_WAIT)
-    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
+    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" WORKING_SYS_WAIT)
   endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_WAIT_H 1\n")
@@ -341,7 +341,7 @@ macro(BRLCAD_ALLOCA)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   if(WORKING_ALLOC_H STREQUAL "")
-    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
+    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c" WORKING_ALLOCA_H)
     set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
   endif(WORKING_ALLOC_H STREQUAL "")
   if(WORKING_ALLOCA_H)
@@ -349,7 +349,7 @@ macro(BRLCAD_ALLOCA)
     set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
   endif(WORKING_ALLOCA_H)
   if(NOT DEFINED WORKING_ALLOCA)
-    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c WORKING_ALLOCA)
+    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c" WORKING_ALLOCA)
   endif(NOT DEFINED WORKING_ALLOCA)
   if(WORKING_ALLOCA)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ALLOCA 1\n")
@@ -395,6 +395,34 @@ int main(int ac, char *av[])
   set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS_BAK})
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
+
+
+macro(BRLCAD_CHECK_STATIC_ARRAYS)
+  set(CHECK_STATIC_ARRAYS_SRC "
+#include <stdio.h>
+#include <string.h>
+
+int foobar(char arg[static 100])
+{
+  return (int)arg[0];
+}
+
+int main(int ac, char *av[])
+{
+  char hello[100];
+
+  if (ac > 0 && av)
+    foobar(hello);
+  return 0;
+}
+")
+  if(NOT DEFINED HAVE_STATIC_ARRAYS)
+    CHECK_C_SOURCE_RUNS("${CHECK_STATIC_ARRAYS_SRC}" HAVE_STATIC_ARRAYS)
+  endif(NOT DEFINED HAVE_STATIC_ARRAYS)
+  if(HAVE_STATIC_ARRAYS)
+    CONFIG_H_APPEND(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
+  endif(HAVE_STATIC_ARRAYS)
+endmacro(BRLCAD_CHECK_STATIC_ARRAYS)
 
 # Local Variables:
 # tab-width: 8
