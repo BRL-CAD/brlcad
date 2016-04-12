@@ -344,7 +344,7 @@ set(CL_FILES
   primitives/bot/bot_shot.cl
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
-  #primitives/epa/epa_shot.cl
+  primitives/epa/epa_shot.cl
   primitives/sph/sph_shot.cl
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl
