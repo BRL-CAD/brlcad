@@ -2837,6 +2837,9 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
 if(NOT BRLCAD_IS_SUBBUILD)
+
+  configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
+
   option(BRLCAD_VERSIONED_RPM_NAME "Incorporate BRL-CAD version into RPM package name" OFF)
   mark_as_advanced(BRLCAD_VERSIONED_RPM_NAME)
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")
