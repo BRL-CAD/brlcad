@@ -336,6 +336,10 @@ ELSE(BRLCAD_ENABLE_TK)
   set(TCL_REQUIRE_TK 0)
 endif(BRLCAD_ENABLE_TK)
 
+# Turn off the man pages
+set(TCL_DISABLE_MANPAGES ON CACHE BOOL "disable Tcl man page generation" FORCE)
+set(TK_DISABLE_MANPAGES ON CACHE BOOL "disable Tk man page generation" FORCE)
+
 set(tcl_ALIASES ENABLE_TCL)
 set(tcl_DESCRIPTION "
 Option for enabling and disabling compilation of the Tcl library
