@@ -194,6 +194,7 @@ activities, and aims to coordinate development activity.
 **** TODO integrate bot_dump into gcv
 
 
+
 ** PROJECT: Performant Pipeline
 *** bundled ray dispatch
 **** TODO define ray bundling API
@@ -225,25 +226,31 @@ activities, and aims to coordinate development activity.
 **** TODO optimize libdb/libfb to remove bottleneck
 **** TODO update archer for interactive tracing display
 
+
+** PROJECT: Merge Archer/MGED
+
+*** do more good stuff
+
+
 ** TEMPLATE: Project Title
 
    Here is an example project that summarizes the taxonomy and
    structure of a strategic project.  A project should be scoped to
-   less than 3 months of full-time uninterrupted effort.  A project
+   less than 4 months of full-time uninterrupted effort.  A project
    must have at least 1 objective.
 
 *** objective
 
     Objectives should be simple with identifiable completion criteria.
-    An objective should be achievable in less than 1 month with larger
+    An objective should be achievable in 4 weeks or less with larger
     objectives divided into separate smaller chunks.  Each objective
     must have at least 1 task.
 
 **** TODO task
 
-     A task is actionable work that should take less than 1 month of
-     full-time uninterrupted effort, generally estimated as 0-4 weeks,
-     with 0 for tasks estimated to take less than 2 days.
+     A task is actionable work that should take someone 4 weeks or
+     less of full-time uninterrupted effort, estimated in weeks, with
+     0 for tasks less than 2 days.
 
 
 # Local Variables:
