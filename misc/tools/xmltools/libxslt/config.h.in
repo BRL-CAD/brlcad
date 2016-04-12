@@ -212,6 +212,7 @@
 #cmakedefine _WINSOCKAPI_
 
 /* Win32 Std C name mangling work-around */
+#include <stdio.h>
 #if !defined(snprintf) && defined(_WIN32)
 #   define snprintf _snprintf
 #endif

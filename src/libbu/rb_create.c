@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <math.h>
 #include "bu/rb.h"
-#include "./rb_internals.h"
+#include "./rb.h"
 
 
 struct bu_rb_tree *

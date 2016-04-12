@@ -1,7 +1,13 @@
 LIBICV To Do List
 ==================
 
-* Add fileformats for png,bmp,ppm type images.
+* Add fileformats for bmp, rle, mac, ps(?), sun, spm, and yuv type
+  images.
+
+* Check that the icv tool is able to exactly reproduce the outputs
+  of the various fmt-fmt image conversion tools.  This is a
+  necessary precursor to deprecating those tools in favor of a
+  single icv tool.
 
 * FIX fixed size buffers in fileformat.c.
 

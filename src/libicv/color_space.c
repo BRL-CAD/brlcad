@@ -76,7 +76,7 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 {
     double *out_data, *in_data;
     size_t in, out, size;
-    int multiple_colors = 1; /* will set to 0 if it's found only 1 color is referenced */
+    int multiple_colors = 0; /* will set to 0 if it's found only 1 color is referenced */
     int num_color_planes;
 
     double value;
@@ -98,19 +98,16 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	    red = 1;
 	    bweight = 0.0;
 	    gweight = 0.0;
-	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_G :
 	    green = 1;
 	    rweight = 0.0;
 	    bweight = 0.0;
-	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_B :
 	    blue = 1;
 	    rweight = 0.0;
 	    gweight = 0.0;
-	    multiple_colors = 0;
 	    break;
 	case ICV_COLOR_RG :
 	    red = 1;
@@ -128,14 +125,17 @@ icv_rgb2gray(icv_image_t *img, ICV_COLOR color, double rweight, double gweight, 
 	    rweight = 0.0;
 	    break;
 	case ICV_COLOR_RGB :
-	    red = 1;
-	    green = 1;
-	    blue = 1;
 	    break;
 	default :
 	    bu_log("ERROR: Wrong Arguments for Color");
 	    return -1;
     }
+
+    /* Hack for multiple color planes */
+    if (red + green + blue > 1 || !ZERO(rweight) || !ZERO(gweight) || !ZERO(bweight))
+	multiple_colors = 1;
+    else
+	multiple_colors = 0;
 
     /* Gets number of planes according to the status of arguments
        check */

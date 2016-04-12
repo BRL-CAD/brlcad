@@ -52,7 +52,7 @@
  * BU_GLOB_TILDE:
  *	expand ~user/foo to the /home/dir/of/user/foo
  * BU_GLOB_BRACE:
- *	expand {1,2}{a,b} to 1a 1b 2a 2b 
+ *	expand {1,2}{a,b} to 1a 1b 2a 2b
  * BU_GLOB_PERIOD:
  *	allow metacharacters to match leading dots in filenames.
  * BU_GLOB_NO_DOTDIRS:
@@ -64,17 +64,15 @@
 #include "common.h"
 
 #include <sys/stat.h>
-
 #include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <pwd.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
-#include <unistd.h>
+#  include <unistd.h>
 #endif
 
 #include "bu/malloc.h"
@@ -201,11 +199,11 @@ bu_glob(const char *pattern, int flags, bu_glob_t *pglob)
     bufnext = patbuf;
     bufend = bufnext + PATH_MAX - 1;
     if (flags & BU_GLOB_NOESCAPE)
-	while (bufnext < bufend && (c = *patnext++) != EOS) 
+	while (bufnext < bufend && (c = *patnext++) != EOS)
 	    *bufnext++ = c;
     else {
 	/* Protect the quoted characters. */
-	while (bufnext < bufend && (c = *patnext++) != EOS) 
+	while (bufnext < bufend && (c = *patnext++) != EOS)
 	    if (c == QUOTE) {
 		if ((c = *patnext++) == EOS) {
 		    c = QUOTE;
@@ -271,7 +269,7 @@ globexp2(const Char *ptr, const Char *pattern, bu_glob_t *pglob,
 	    for (pm = pe++; *pe != RBRACKET && *pe != EOS; pe++)
 		;
 	    if (*pe == EOS) {
-		/* 
+		/*
 		 * We could not find a matching RBRACKET.
 		 * Ignore and just look for RBRACE
 		 */
@@ -296,7 +294,7 @@ globexp2(const Char *ptr, const Char *pattern, bu_glob_t *pglob,
 		for (pl = pm++; *pm != RBRACKET && *pm != EOS; pm++)
 		    ;
 		if (*pm == EOS) {
-		    /* 
+		    /*
 		     * We could not find a matching RBRACKET.
 		     * Ignore and just look for RBRACE
 		     */
@@ -322,7 +320,7 @@ globexp2(const Char *ptr, const Char *pattern, bu_glob_t *pglob,
 		    for (lm = ls; (pl < pm); *lm++ = *pl++)
 			;
 
-		    /* 
+		    /*
 		     * Append the rest of the pattern after the
 		     * closing brace
 		     */
@@ -345,7 +343,6 @@ globexp2(const Char *ptr, const Char *pattern, bu_glob_t *pglob,
     }
     return 0;
 }
-
 
 
 /*
@@ -528,7 +525,7 @@ glob0(const Char *pattern, bu_glob_t *pglob, struct glob_lim *limitp)
 	return(err);
 
     /*
-     * If there was no match we are going to append the pattern 
+     * If there was no match we are going to append the pattern
      * if BU_GLOB_NOCHECK was specified or if BU_GLOB_NOMAGIC was specified
      * and the pattern did not contain any magic characters
      * BU_GLOB_NOMAGIC is there just for compatibility with csh.

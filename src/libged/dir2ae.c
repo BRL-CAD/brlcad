@@ -73,11 +73,11 @@ ged_dir2ae(struct ged *gedp, int argc, const char *argv[])
     }
     /* convert from double to fastf_t */
     VMOVE(dir, scan);
-    AZEL_FROM_V3DIR(az, el, dir);
 
     if (iflag)
 	VSCALE(dir, dir, -1);
 
+    AZEL_FROM_V3DIR(az, el, dir);
     bu_vls_printf(gedp->ged_result_str, "%lf %lf", az, el);
 
     return GED_OK;

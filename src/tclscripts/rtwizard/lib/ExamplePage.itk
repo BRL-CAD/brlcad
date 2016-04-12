@@ -454,6 +454,11 @@ namespace eval RtWizard {
 	    # Activate the introductory page
 	    #
 	    $::wizardInstance select intro
+
+	    # If we have command line args, we may
+	    # already be able to render a preview
+	    #
+	    $::wizardInstance updateRenderMenu
 	}
 
 	#

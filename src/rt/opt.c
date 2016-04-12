@@ -122,7 +122,6 @@ int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
 					 * also shared with view.c */
 char		*outputfile = (char *)NULL;	/* name of base of output file */
-int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 
 int		sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
@@ -343,9 +342,6 @@ get_args(int argc, const char *argv[])
 	    }
 	    case 'U':
 		use_air = atoi( bu_optarg );
-		break;
-	    case 'I':
-		interactive = 1;
 		break;
 	    case 'i':
 		incr_mode = 1;

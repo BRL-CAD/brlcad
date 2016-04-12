@@ -5344,6 +5344,8 @@ namespace eval ArcherCore {
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::OpenTarget {target} {
+    global tcl_platform
+
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""

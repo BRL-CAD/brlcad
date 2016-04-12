@@ -33,10 +33,28 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include "bio.h"
 
 #include "bu/str.h"
 #include "bu/log.h"
+
+#define RGB_DIFF(c1,c2) \
+    if (c1 != c2) { \
+	if ((i = c1 - c2) < 0) i = -i; \
+	if (i > 1) { \
+	    putc(0xFF, stdout); \
+	    offmany++; \
+	} else { \
+	    putc(0xC0, stdout); \
+	    off1++; \
+	} \
+    } else { \
+	putc(0, stdout); \
+	matching++; \
+    }
 
 int
 main(int argc, char *argv[])
@@ -46,6 +64,7 @@ main(int argc, char *argv[])
     long offmany = 0;
 
     FILE *f1, *f2;
+    struct stat sf1, sf2;
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: pixdiff f1.pix f2.pix >file.pix\n");
@@ -64,6 +83,13 @@ main(int argc, char *argv[])
 	return 1;
     }
 
+    stat(argv[1], &sf1);
+    stat(argv[2], &sf2);
+
+    if (sf1.st_size != sf2.st_size) {
+	bu_exit(1, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixdiff.\n", argv[1], sf1.st_size, argv[2], sf2.st_size);
+    }
+
     while (1) {
 	int r1, g1, b1;
 	int r2, g2, b2;
@@ -78,47 +104,9 @@ main(int argc, char *argv[])
 
 	if (r1 != r2 || g1 != g2 || b1 != b2) {
 	    int i;
-
-	    /* Highlight differing channels */
-	    if (r1 != r2) {
-		if ((i = r1 - r2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
-	    if (g1 != g2) {
-		if ((i = g1 - g2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
-	    if (b1 != b2) {
-		if ((i = b1 - b2) < 0) i = -i;
-		if (i > 1) {
-		    putc(0xFF, stdout);
-		    offmany++;
-		} else {
-		    putc(0xC0, stdout);
-		    off1++;
-		}
-	    } else {
-		putc(0, stdout);
-		matching++;
-	    }
+	    RGB_DIFF(r1,r2)
+	    RGB_DIFF(g1,g2)
+	    RGB_DIFF(b1,b2)
 	} else {
 	    /* Common case: equal.  Give B&W NTSC average of 0.35 R +
 	     * 0.55 G + 0.10 B, calculated in fixed-point, output at

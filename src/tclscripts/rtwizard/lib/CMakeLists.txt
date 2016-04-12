@@ -3,7 +3,6 @@ set(rtwizard_lib_TCLSCRIPTS
 	ExamplePage.itk
 	FbPage.itk
 	FeedbackDialog.itk
-	FrameBufferDialog.itk
 	FullColorPage.itk
 	GhostPage.itk
 	HelpPage.itk

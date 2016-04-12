@@ -35,10 +35,9 @@
 
 HIDDEN int
 _gcv_brlcad_read(struct gcv_context *context,
-		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		const char *source_path)
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *source_path)
 {
-    int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
 
     if (!in_dbip) {
@@ -52,19 +51,22 @@ _gcv_brlcad_read(struct gcv_context *context,
 	return 0;
     }
 
-    ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
-    db_close(in_dbip);
+    if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	bu_log("db_dump() failed (from '%s')\n", source_path);
+	db_close(in_dbip);
+	return 0;
+    }
 
-    return ret == 0;
+    db_close(in_dbip);
+    return 1;
 }
 
 
 HIDDEN int
 _gcv_brlcad_write(struct gcv_context *context,
-		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		 const char *dest_path)
+		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		  const char *dest_path)
 {
-    int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
 
     if (!out_wdbp) {
@@ -72,23 +74,28 @@ _gcv_brlcad_write(struct gcv_context *context,
 	return 0;
     }
 
-    ret = db_dump(out_wdbp, context->dbip);
-    wdb_close(out_wdbp);
+    if (db_dump(out_wdbp, context->dbip)) {
+	bu_log("db_dump() failed (from context->dbip to '%s')\n", dest_path);
+	wdb_close(out_wdbp);
+	return 0;
+    }
 
-    return ret == 0;
+    wdb_close(out_wdbp);
+    return 1;
 }
 
 
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
-_gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filter)
+_gcv_filter_register(struct bu_ptbl *filter_table,
+		     const struct gcv_filter *filter)
 {
     if (!filter_table || !filter)
 	bu_bomb("missing argument");
@@ -98,15 +105,15 @@ _gcv_filter_register(struct bu_ptbl *filter_table, const struct gcv_filter *filt
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
-	    if (filter->mime_type == MIME_MODEL_AUTO
-		|| filter->mime_type == MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type == BU_MIME_MODEL_AUTO
+		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;
@@ -294,7 +301,8 @@ _gcv_plugins_get_path(void)
 	return NULL;
 
     bu_vls_init(&buffer);
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, LIBGCV_PLUGINS_DIRECTORY);
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
+		   LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
     bu_vls_free(&buffer);
 

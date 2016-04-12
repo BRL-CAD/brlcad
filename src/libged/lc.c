@@ -280,6 +280,10 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (error_cnt > 0) { return GED_ERROR; }
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     group_name = argv[1];
 
     /* The 7 is for the "-name" and '\0' */

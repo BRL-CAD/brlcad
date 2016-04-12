@@ -94,7 +94,6 @@ extern int	desiredframe;		/* frame to start at */
 extern int	curframe;		/* current frame number,
 					 * also shared with view.c */
 extern char	*outputfile;		/* name of base of output file */
-extern int	interactive;		/* human is watching results */
 /***** end variables shared with do.c *****/
 
 

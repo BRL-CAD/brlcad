@@ -885,9 +885,32 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
+/* TODO - duplicated from brep_debug.cpp - probably should refactor into proper
+ * internal API (maybe even libbn, if that makes sense) ... */
+#define BOT_BBOX_ARB_FACE(valp, a, b, c, d)             \
+    RT_ADD_VLIST(vhead, valp[a], BN_VLIST_LINE_MOVE);   \
+    RT_ADD_VLIST(vhead, valp[b], BN_VLIST_LINE_DRAW);   \
+    RT_ADD_VLIST(vhead, valp[c], BN_VLIST_LINE_DRAW);   \
+    RT_ADD_VLIST(vhead, valp[d], BN_VLIST_LINE_DRAW);
+
+#define BOT_BB_PLOT_VLIST(_min, _max) {             \
+            fastf_t pt[8][3];                       \
+            VSET(pt[0], _max[X], _min[Y], _min[Z]); \
+            VSET(pt[1], _max[X], _max[Y], _min[Z]); \
+            VSET(pt[2], _max[X], _max[Y], _max[Z]); \
+            VSET(pt[3], _max[X], _min[Y], _max[Z]); \
+            VSET(pt[4], _min[X], _min[Y], _min[Z]); \
+            VSET(pt[5], _min[X], _max[Y], _min[Z]); \
+            VSET(pt[6], _min[X], _max[Y], _max[Z]); \
+            VSET(pt[7], _min[X], _min[Y], _max[Z]); \
+            BOT_BBOX_ARB_FACE(pt, 0, 1, 2, 3);      \
+            BOT_BBOX_ARB_FACE(pt, 4, 0, 3, 7);      \
+            BOT_BBOX_ARB_FACE(pt, 5, 4, 7, 6);      \
+            BOT_BBOX_ARB_FACE(pt, 1, 5, 6, 2);      \
+        }
 
 int
-rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *info)
 {
     struct rt_bot_internal *bot_ip;
     size_t i;
@@ -900,14 +923,21 @@ rt_bot_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     if (bot_ip->num_vertices <= 0 || !bot_ip->vertices || bot_ip->num_faces <= 0 || !bot_ip->faces)
 	return 0;
 
-    for (i = 0; i < bot_ip->num_faces; i++) {
-	if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
-	    continue; /* sanity */
+    if (!info || !info->bot_threshold || (info->bot_threshold > bot_ip->num_faces)) {
+	for (i = 0; i < bot_ip->num_faces; i++) {
+	    if (bot_ip->faces[i*3+2] < 0 || (size_t)bot_ip->faces[i*3+2] > bot_ip->num_vertices)
+		continue; /* sanity */
 
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
-	RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+1]*3], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+2]*3], BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, &bot_ip->vertices[bot_ip->faces[i*3+0]*3], BN_VLIST_LINE_DRAW);
+	}
+    } else {
+	/* too big - just draw the bbox */
+	point_t min, max;
+	(void)rt_bot_bbox(ip, &min, &max);
+	BOT_BB_PLOT_VLIST(min, max);
     }
 
     return 0;

@@ -344,6 +344,24 @@ TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp,
  */
 TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
+
+/**
+ * Set the variables "argc" and "argv" in interp.
+ */
+TCLCAD_EXPORT extern void tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv);
+
+/**
+ * This is the "all-in-one" initialization intended for use by
+ * applications that are providing a Tcl_Interp and want to initialize
+ * all of the BRL-CAD Tcl/Tk interfaces.
+ *
+ * libbu, libbn, librt, libged, and Itcl are always initialized.
+ *
+ * To initialize graphical elements (Tk/Itk), set init_gui to 1.
+ */
+TCLCAD_EXPORT extern int tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog);
+
+
 __END_DECLS
 
 #endif /* TCLCAD_H */

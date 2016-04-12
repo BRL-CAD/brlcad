@@ -55,7 +55,6 @@ repeat_test(size_t reps)
 }
 
 
-
 static void
 increment_thread(int cpu, void *pargs)
 {

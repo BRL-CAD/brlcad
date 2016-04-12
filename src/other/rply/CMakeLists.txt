@@ -37,12 +37,12 @@ install(TARGETS rply
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if(BUILD_STATIC_LIBS)
-  add_library(rply_static STATIC rply.c)
+  add_library(rply-static STATIC rply.c)
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name
     set_target_properties(rply PROPERTIES PREFIX "lib")
   endif()
-  install(TARGETS rply_static
+  install(TARGETS rply-static
     RUNTIME DESTINATION ${BIN_DIR}
     LIBRARY DESTINATION ${LIB_DIR}
     ARCHIVE DESTINATION ${LIB_DIR})

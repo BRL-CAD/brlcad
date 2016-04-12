@@ -28,7 +28,6 @@
 #include <iostream>
 #include <cstdio>
 #include <string.h>
-#include <stdbool.h>
 #include <cstdlib>
 
 #include "bu.h"

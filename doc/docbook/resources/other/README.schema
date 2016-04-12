@@ -31,3 +31,8 @@ License (as contained in docbook.rnc)
 
 docbookxi.nvdl:
 A slight customization of docbook.nvdl
+
+
+docbook5xi.rnc:
+A convenience rnc schema copy for use with validating editors
+such as Emacs Nxml mode.

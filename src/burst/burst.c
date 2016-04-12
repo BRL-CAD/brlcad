@@ -102,14 +102,12 @@ setupSigs(void)
 		    (void) signal(i,  norml_sig);
 		}
 		break;
-	    case SIGCHLD :
-		break; /* leave SIGCLD alone */
+#ifdef SIGPIPE
 	    case SIGPIPE :
 		(void) signal(i, SIG_IGN);
 		break;
-	    case SIGQUIT :
-		break;
-	    case SIGTSTP :
+#endif
+	    default:
 		break;
 	}
     return;
@@ -219,12 +217,17 @@ main(int argc, char *argv[])
     assert(armorids.i_next == NULL);
     assert(critids.i_next == NULL);
 
-    if (! isatty(0) || ! tty)
+    if (! isatty(0) || ! tty) {
 	readBatchInput(stdin);
-    if (tty)
-	(void) HmHit(mainhmenu);
-    exitCleanly(EXIT_SUCCESS);
-
+    } else {
+#ifdef HAVE_TERMLIB
+	if (tty)
+	    (void) HmHit(mainhmenu);
+	exitCleanly(EXIT_SUCCESS);
+#else
+	bu_exit(EXIT_FAILURE, "Error: This version of burst was not compiled with interactive menu support.  To process a batch file, use the -b option.\n");
+#endif
+    }
     /* not reached */
     return EXIT_SUCCESS;
 }

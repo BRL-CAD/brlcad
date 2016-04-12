@@ -28,6 +28,7 @@
 
 namespace eval cadwidgets {
     set cursorWaitcount 0
+    set ignoreCursorWait 0
 }
 
 # PROCEDURE: SetWaitCursor
@@ -41,6 +42,10 @@ namespace eval cadwidgets {
 #       None
 #
 proc SetWaitCursor {_w} {
+    if {$::cadwidgets::ignoreCursorWait} {
+	return
+    }
+
     incr ::cadwidgets::cursorWaitCount
 
     if {1 < $::cadwidgets::cursorWaitCount} {
@@ -66,6 +71,10 @@ proc SetWaitCursor {_w} {
 #       None
 #
 proc SetNormalCursor {_w} {
+    if {$::cadwidgets::ignoreCursorWait} {
+	return
+    }
+
     incr ::cadwidgets::cursorWaitCount -1
 
     if {$::cadwidgets::cursorWaitCount != 0} {

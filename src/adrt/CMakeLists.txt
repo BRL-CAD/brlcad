@@ -8,6 +8,7 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/adrt
   ${BRLCAD_SOURCE_DIR}/src/adrt/libcommon
   ${BRLCAD_SOURCE_DIR}/src/adrt/librender
+  ${TINYCTHREAD_INCLUDE_DIR}
   )
 
 set(LIBRENDER_SRCS
@@ -38,7 +39,7 @@ set(LIBRENDER_SRCS
   librender/texture_perlin.c
   librender/texture_stack.c
   )
-BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" libgcv)
+BRLCAD_ADDLIB(librender "${LIBRENDER_SRCS}" "libgcv;${TINYCTHREAD_LIBRARY}")
 set_target_properties(librender PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(tie_HDRS
@@ -55,44 +56,41 @@ install(FILES ${tie_HDRS} DESTINATION include/tie)
 CMAKEFILES(${tie_HDRS})
 
 # Tcl/Tk based ISST
-set(isst_dirs
-  ${OPENGL_INCLUDE_DIR_GL}
-  ${OPENGL_INCLUDE_DIR_GLX}
-  ${X11_INCLUDE_DIR}
-  )
-BRLCAD_INCLUDE_DIRS(isst_dirs)
+
 if(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  if(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};${OPENGL_LIBRARIES};opengl32.lib" NO_INSTALL)
-  else(WIN32)
-    BRLCAD_ADDLIB(issttcltk isst_tcltk.c "librender;libdm;${TCL_LIBRARIES};" NO_INSTALL)
-  endif(WIN32)
-  install(TARGETS issttcltk
-    RUNTIME DESTINATION ${BIN_DIR}/isst0.1
-    LIBRARY DESTINATION ${LIB_DIR}/
-    ARCHIVE DESTINATION ${LIB_DIR}/isst0.1)
-  include(${BRLCAD_SOURCE_DIR}/misc/CMake/TCL_PKGINDEX.cmake)
-  TCL_PKGINDEX(issttcltk isst "0.1")
-  if(WIN32)
-    BRLCAD_MANAGE_FILES("isst.bat" ${BIN_DIR} EXEC)
-  endif(WIN32)
-  BRLCAD_MANAGE_FILES("isst" ${BIN_DIR} EXEC)
-  add_custom_target(isst ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/isst)
-  set_target_properties(isst PROPERTIES FOLDER "BRL-CAD Executables")
-  add_dependencies(isst issttcltk bwish)
+
+  set(isst_dirs
+    ${TCLCAD_INCLUDE_DIRS}
+    ${DM_INCLUDE_DIRS}
+    ${OPENGL_INCLUDE_DIR_GL}
+    ${OPENGL_INCLUDE_DIR_GLX}
+    )
+  BRLCAD_INCLUDE_DIRS(isst_dirs)
+
+  set(isst_libs libtclcad librender libdm ${TCL_LIBRARIES} ${OPENGL_LIBRARIES} ${TINYCTHREAD_LIBRARY})
+
+  if(CPP_DLL_DEFINES)
+    set(isst_libs ${isst_libs} imm32.lib comctl32.lib opengl32.lib)
+  endif(CPP_DLL_DEFINES)
+
+  BRLCAD_ADDDATA(isst.tcl tclscripts/isst)
+  BRLCAD_ADDEXEC(isst isst.c "${isst_libs}" GUI)
+  add_dependencies(isst isst_tcl_cp)
+
   foreach(item ${tclindex_target_list})
     add_dependencies(isst ${item})
   endforeach(item ${tclindex_target_list})
+
 endif(BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
 
-CMAKEFILES(isst_tcltk.c)
+CMAKEFILES(isst.c)
+
+
+add_subdirectory(master)
+# add_subdirectory(slave)
 
 set(adrt_ignore_files
-  isst.h
-  isst
-  isst.bat
   load.h
-  master
   slave
   tienet.h
   )
