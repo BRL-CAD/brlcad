@@ -38,6 +38,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * rtwizard command line ghost image specification isn't working
   reliably
 
+* drawing datums far from origin result in huge arrowheads
+
+
+
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
