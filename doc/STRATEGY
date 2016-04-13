@@ -6,17 +6,18 @@
 
 BRL-CAD Development Strategy
 
-This is a living document intended to help define and maintain a
-consistent develpment strategy that addresses core requirements for
-BRL-CAD.  It recognizes areas of deficiency, outlines strategic
-activities, and aims to coordinate development activity.
+This is a living document that defines and aims to help maintain a
+consistent develpment strategy for addressing BRL-CAD requirements.
+It recognizes areas of strategic importance, outlines projects to
+bolster those areas, and identifies specific actionable objectives.
 
 
 * Strategic Areas
 
-  This section itemizes areas of strategic weakness and categories of
-  actions that could be taken to address them.  From these areas, we
-  conceive projects that should be less than 3 months in scope.
+  This section itemizes areas of strategic importance which coincide
+  closely with areas of categoric deficiency.  For each area, we
+  outline general activities that could strengthen them.  From these
+  areas, we conceive strategic projects and their associated tasks.
 
 ** AREA 1: UX                                                            :UX:
 *** deploying Archer/MGED -cns                                          :p:C:
@@ -59,10 +60,10 @@ activities, and aims to coordinate development activity.
 
 * Strategic Projects
 
-  This section itemizes projects conceived to address the above
-  strategic areas.  Each project focuses on a single area but should
-  have ancillary objectives for all areas for a consistent strategic
-  approach.
+  This section itemizes projects conceived to address BRL-CAD's
+  principal strategic areas.  Each project focuses on one or more
+  strategic areas devising measurable tasks that support the
+  particular objective.
 
 ** PROJECT: Deploy Archer
 
