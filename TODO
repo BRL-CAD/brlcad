@@ -40,6 +40,9 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * drawing datums far from origin result in huge arrowheads
 
+* multiple runs of rtcheck in mged result in only the first rtcheck
+  call working - after that, no overlaps are reported even when the
+  same geometry is shown
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
