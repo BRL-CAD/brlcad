@@ -23,6 +23,7 @@
     <arg choice="opt" rep="norepeat">-s</arg>
     <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C#/#/#</arg>
+    <arg choice="opt" rep="norepeat">-L #</arg>
     <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
     <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
 
@@ -60,6 +61,13 @@
 	 zbuffer and lighting is enabled. To enable these settings, from the MGED GUI, choose
 	 "Modes/Display Manager/OpenGL", "Misc/Z-buffer" and "Misc/Lighting". If the zbuffer and lighting is
 	 already enabled, toggle them off then back on to ensure they are enabled.
+</para>
+</listitem>
+<listitem>
+<para>
+	The <emphasis>-L</emphasis> option allows the user to specify a face count.  BoT primitives with more
+	faces than the user set threshold will be represented in wireframe drawing by their bounding boxes rather
+	than the full BoT wireframe.
 </para>
 </listitem>
 </itemizedlist>
