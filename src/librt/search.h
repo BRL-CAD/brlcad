@@ -74,9 +74,9 @@ enum db_search_ntype {
     N_ABOVE = 1,                        /* must start > 0 */
     N_AND, N_ATTR, N_BELOW,
     N_CLOSEPAREN, N_DEPTH, N_EXEC, N_EXECDIR, N_EXPR,
-    N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
+    N_FSIZE, N_FLAGS, N_INAME, N_IREGEX, N_LS, N_MAXDEPTH,
     N_MINDEPTH, N_NAME, N_NNODES, N_NOT, N_OK, N_OPENPAREN, N_OR, N_PATH,
-    N_PRINT, N_PRUNE, N_REGEX, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
+    N_PRINT, N_PRUNE, N_REGEX, N_SIZE, N_STDATTR, N_TYPE, N_BOOL, N_PARAM
 };
 
 
@@ -186,6 +186,8 @@ static int c_not(char *, char ***, int, struct db_plan_t **, int *, struct bu_pt
 static int c_or(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
 static int c_above(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
 static int c_below(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_fsize(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
+static int c_size(char *, char ***, int, struct db_plan_t **, int *, struct bu_ptbl *);
 
 __END_DECLS
 

@@ -116,6 +116,7 @@ static OPTION options[] = {
     { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
     { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
+    { "-fsize",     N_FSIZE,        c_fsize,        O_ARGV },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -129,6 +130,7 @@ static OPTION options[] = {
     { "-path",      N_PATH,         c_path,         O_ARGV },
     { "-print",     N_PRINT,        c_print,        O_ZERO },
     { "-regex",     N_REGEX,        c_regex,        O_ARGV },
+    { "-size",      N_SIZE,         c_size,         O_ARGV },
     { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
     { "-type",      N_TYPE,         c_type,	    O_ARGV },
 };
@@ -1100,6 +1102,158 @@ c_type(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
     return BRLCAD_OK;
 }
 
+
+/*
+ * -size function --
+ *
+ * True if the database object being examined satisfies
+ * the size criteria: [><=]size
+ */
+HIDDEN int
+f_size(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *UNUSED(dbip), struct bu_ptbl *UNUSED(results))
+{
+    struct directory *dp;
+    int ret = 0;
+    int checkval = 0;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
+    if (!dp) return 0;
+
+    /* Check for unescaped >, < or = characters.  If present, the
+     * attribute must not only be present but the value assigned to
+     * the attribute must satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument the behavior will
+     * follow ASCII lexicographical order.  In the case of equality
+     * between strings, fnmatch is used to support pattern matching
+     */
+
+    checkval = string_to_name_and_val(plan->depth_data, &name, &value);
+
+    if ((bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0]))
+	|| (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
+	switch (checkval) {
+	    case 0:
+		ret = ((int)dp->d_len == atol(bu_vls_addr(&name))) ? 1 : 0;
+		break;
+	    case 1:
+		ret = ((int)dp->d_len == atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 2:
+		ret = ((int)dp->d_len > atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 3:
+		ret = ((int)dp->d_len < atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 4:
+		ret = ((int)dp->d_len >= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 5:
+		ret = ((int)dp->d_len <= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    default:
+		ret = 0;
+		break;
+	}
+    }
+    bu_vls_free(&name);
+    bu_vls_free(&value);
+
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
+}
+
+
+HIDDEN int
+c_size(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_TYPE, f_size, tbl);
+    newplan->type_data = pattern;
+    (*resultplan) = newplan;
+
+    return BRLCAD_OK;
+}
+
+
+/*
+ * -fsize function --
+ *
+ * True if the database object being examined and all the objects needed to define that object satisfy
+ * the size criteria: [><=]size
+ */
+HIDDEN int
+f_fsize(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
+{
+    struct directory *dp;
+    int ret = 0;
+    int checkval = 0;
+    int fullsize;
+    struct bu_vls name = BU_VLS_INIT_ZERO;
+    struct bu_vls value = BU_VLS_INIT_ZERO;
+
+    dp = DB_FULL_PATH_CUR_DIR(db_node->path);
+    if (!dp) return 0;
+
+    fullsize = db5_get_full_size(dbip, dp);
+
+    /* Check for unescaped >, < or = characters.  If present, the
+     * attribute must not only be present but the value assigned to
+     * the attribute must satisfy the logical expression.  In the case
+     * where a > or < is used with a string argument the behavior will
+     * follow ASCII lexicographical order.  In the case of equality
+     * between strings, fnmatch is used to support pattern matching
+     */
+
+    checkval = string_to_name_and_val(plan->depth_data, &name, &value);
+
+    if ((bu_vls_strlen(&value) > 0 && isdigit((int)bu_vls_addr(&value)[0]))
+	|| (bu_vls_strlen(&value) == 0 && isdigit((int)bu_vls_addr(&name)[0]))) {
+	switch (checkval) {
+	    case 0:
+		ret = (fullsize == atol(bu_vls_addr(&name))) ? 1 : 0;
+		break;
+	    case 1:
+		ret = (fullsize == atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 2:
+		ret = (fullsize > atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 3:
+		ret = (fullsize < atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 4:
+		ret = (fullsize >= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    case 5:
+		ret = (fullsize <= atol(bu_vls_addr(&value))) ? 1 : 0;
+		break;
+	    default:
+		ret = 0;
+		break;
+	}
+    }
+    bu_vls_free(&name);
+    bu_vls_free(&value);
+
+    if (!ret) db_node->matched_filters = 0;
+    return ret;
+}
+
+
+HIDDEN int
+c_fsize(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+{
+    struct db_plan_t *newplan;
+
+    newplan = palloc(N_TYPE, f_fsize, tbl);
+    newplan->type_data = pattern;
+    (*resultplan) = newplan;
+
+    return BRLCAD_OK;
+}
 
 /*
  * -bool function --
