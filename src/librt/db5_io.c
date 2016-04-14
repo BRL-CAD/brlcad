@@ -1056,6 +1056,91 @@ db5_get_attributes(const struct db_i *dbip, struct bu_attribute_value_set *avs, 
     return 0;
 }
 
+/* TODO - should halt on recursive path, but need full path aware
+ * tree walk ala search for that... */
+#define DB_SIZE_CYCLIC_LIMIT 10000
+
+HIDDEN void
+_db5_calc_subsize(int *ret, union tree *tp, struct db_i *dbip, int *depth, int max_depth,
+	void (*traverse_func) (int *ret, struct directory *, struct db_i *, int *, int))
+{
+    struct directory *dp;
+    if (!tp) return;
+    RT_CHECK_DBI(dbip);
+    RT_CK_TREE(tp);
+    (*depth)++;
+    if (*depth > max_depth) {
+	(*depth)--;
+	return;
+    }
+    switch (tp->tr_op) {
+	case OP_UNION:
+	case OP_INTERSECT:
+	case OP_SUBTRACT:
+	case OP_XOR:
+	    _db5_calc_subsize(ret, tp->tr_b.tb_right, dbip, depth, max_depth, traverse_func);
+	case OP_NOT:
+	case OP_GUARD:
+	case OP_XNOP:
+	    _db5_calc_subsize(ret, tp->tr_b.tb_left, dbip, depth, max_depth, traverse_func);
+	    (*depth)--;
+	    break;
+	case OP_DB_LEAF:
+	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
+		(*depth)--;
+		return;
+	    } else {
+		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
+		    traverse_func(ret, dp, dbip, depth, max_depth);
+		}
+		(*depth)--;
+		break;
+	    }
+
+	default:
+	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
+	    bu_bomb("db_functree_subtree: unrecognized operator\n");
+    }
+    return;
+}
+
+HIDDEN void
+_db5_calc_size(int *ret, struct directory *dp, struct db_i *dbip, int *depth, int max_depth)
+{
+
+    /* If we don't have a variety of things, we're done*/
+    if (!dp || !ret || !dbip || !depth) return;
+
+    if (dp->d_flags & RT_DIR_COMB) {
+	/* If we have a comb, open it up. */
+	struct rt_db_internal in;
+	struct rt_comb_internal *comb;
+	(*ret) += dp->d_len;
+
+	if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) return;
+
+	comb = (struct rt_comb_internal *)in.idb_ptr;
+	_db5_calc_subsize(ret, comb->tree, dbip, depth, max_depth, _db5_calc_size);
+	rt_db_free_internal(&in);
+    } else {
+	/* Solid - just increment with its size */
+	(*ret) += dp->d_len;
+    }
+    return;
+}
+
+
+int
+db5_get_full_size(struct db_i *dbip, struct directory *dp)
+{
+    int full_size = 0;
+    int depth = 0;
+    if (!dp || !dbip) return 0;
+
+    _db5_calc_size(&full_size, dp, dbip, &depth, DB_SIZE_CYCLIC_LIMIT);
+
+    return full_size;
+}
 
 /** @} */
 /*

@@ -100,76 +100,6 @@ _ged_db_obj_type(struct db_i *dbip, struct directory *dp)
     return retstr;
 }
 
-HIDDEN void
-calc_subsize(int *ret, union tree *tp, struct db_i *dbip, int *depth, int max_depth,
-	void (*traverse_func) (int *ret, struct directory *, struct db_i *, int *, int))
-{
-    struct directory *dp;
-    if (!tp) return;
-    RT_CHECK_DBI(dbip);
-    RT_CK_TREE(tp);
-    (*depth)++;
-    if (*depth > max_depth) {
-	(*depth)--;
-	return;
-    }
-    switch (tp->tr_op) {
-	case OP_UNION:
-	case OP_INTERSECT:
-	case OP_SUBTRACT:
-	case OP_XOR:
-	    calc_subsize(ret, tp->tr_b.tb_right, dbip, depth, max_depth, traverse_func);
-	case OP_NOT:
-	case OP_GUARD:
-	case OP_XNOP:
-	    calc_subsize(ret, tp->tr_b.tb_left, dbip, depth, max_depth, traverse_func);
-	    (*depth)--;
-	    break;
-	case OP_DB_LEAF:
-	    if ((dp=db_lookup(dbip, tp->tr_l.tl_name, LOOKUP_QUIET)) == RT_DIR_NULL) {
-		(*depth)--;
-		return;
-	    } else {
-		if (!(dp->d_flags & RT_DIR_HIDDEN)) {
-		    traverse_func(ret, dp, dbip, depth, max_depth);
-		}
-		(*depth)--;
-		break;
-	    }
-
-	default:
-	    bu_log("db_functree_subtree: unrecognized operator %d\n", tp->tr_op);
-	    bu_bomb("db_functree_subtree: unrecognized operator\n");
-    }
-    return;
-}
-
-HIDDEN void
-calc_size(int *ret, struct directory *dp, struct db_i *dbip, int *depth, int max_depth)
-{
-
-    /* If we don't have a variety of things, we're done*/
-    if (!dp || !ret || !dbip || !depth) return;
-
-    if (dp->d_flags & RT_DIR_COMB) {
-	/* If we have a comb, open it up. */
-	struct rt_db_internal in;
-	struct rt_comb_internal *comb;
-	(*ret) += dp->d_len;
-
-	if (rt_db_get_internal(&in, dp, dbip, NULL, &rt_uniresource) < 0) return;
-
-	comb = (struct rt_comb_internal *)in.idb_ptr;
-	calc_subsize(ret, comb->tree, dbip, depth, max_depth, calc_size);
-	rt_db_free_internal(&in);
-    } else {
-	/* Solid - just increment with its size */
-	(*ret) += dp->d_len;
-    }
-    return;
-}
-
-#define CYCLIC_LIMIT 10000
 /**
  * Checks for the existence of a specified object.
  */
@@ -177,8 +107,6 @@ int
 ged_stat(struct ged *gedp, int argc, const char **argv)
 {
     char *type = NULL;
-    int full_size = 0;
-    int depth = 0;
     /* The directory struct is the closest analog to a filesystem's
      * stat structure.  Don't currently have things like create/access/modify
      * time stamps recorded in that struct, or for that matter in the
@@ -202,14 +130,8 @@ ged_stat(struct ged *gedp, int argc, const char **argv)
 
     type = _ged_db_obj_type(gedp->ged_wdbp->dbip, dp);
 
-    calc_size(&full_size, dp, gedp->ged_wdbp->dbip, &depth, 10000);
-    if (depth >= CYCLIC_LIMIT) {
-	bu_vls_printf(gedp->ged_result_str, "Error: depth greater than %d encountered, possible cyclic hierarchy.\n", CYCLIC_LIMIT);
-	return GED_ERROR;
-    }
-
     bu_vls_printf(gedp->ged_result_str, "Object: %s  Type: %s\n", dp->d_namep, type);
-    bu_vls_printf(gedp->ged_result_str, "Size(obj): %d Size(full): %d\n", dp->d_len, full_size, type);
+    bu_vls_printf(gedp->ged_result_str, "Size(obj): %d Size(full): %d\n", dp->d_len, db5_get_full_size(gedp->ged_wdbp->dbip,dp), type);
 
     bu_free(type, "free type string");
     return GED_OK;

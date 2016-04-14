@@ -897,6 +897,12 @@ RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
+/**
+ * Walk hierarchies to report the size of all elements needed to define a
+ * shape
+ */
+RT_EXPORT extern int db5_get_full_size(struct db_i *dbip, struct directory *dp);
+
 
 __END_DECLS
 
