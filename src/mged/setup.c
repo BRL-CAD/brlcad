@@ -329,6 +329,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"solids_on_ray", cmd_ged_plain_wrapper, ged_solids_on_ray},
     {"srot", f_be_s_rotate, GED_FUNC_PTR_NULL},
     {"sscale", f_be_s_scale, GED_FUNC_PTR_NULL},
+    {"stat", cmd_ged_plain_wrapper, ged_stat},
     {"status", f_status, GED_FUNC_PTR_NULL},
     {"stuff_str", cmd_stuff_str, GED_FUNC_PTR_NULL},
     {"summary", cmd_ged_plain_wrapper, ged_summary},
