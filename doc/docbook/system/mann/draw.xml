@@ -70,6 +70,15 @@
 	than the full BoT wireframe.
 </para>
 </listitem>
+<listitem>
+<para>
+	The <emphasis>-M</emphasis> option tells draw to be "minimalist" by skipping subtraction objects when drawing.
+	This is useful in situations where an object has many large objects subtracted from it but those objects have
+	relatively minimal impact on the shape - this results in the wireframe bearing little resemablance to the
+       	evaluated shape.
+</para>
+</listitem>
+
 </itemizedlist>
 </refsection>
 

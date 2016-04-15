@@ -938,12 +938,14 @@ redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, str
 
 
 int
-dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *))
+dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions)
 {
     int ret = 0;
     struct solid *sp;
     for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-	ret += redraw_solid(sp, dbip, tsp, gvp);
+	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
+	    ret += redraw_solid(sp, dbip, tsp, gvp);
+	}
     }
     if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
 	(*callback)(gdlp);
