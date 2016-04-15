@@ -14,7 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
-* added -fsize option to search command - Cliff Yapp
+* added -rsize recursive size filter to search command - Cliff Yapp
 * added -size option to search command - Cliff Yapp
 * added -L draw cmd option to draw bboxes for large bots - Cliff Yapp
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
