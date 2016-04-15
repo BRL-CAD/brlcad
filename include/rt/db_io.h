@@ -897,14 +897,6 @@ RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
-/**
- * Report object sizes.  If recursive is 0, report just the size of dp.  If
- * recursive is 1, walk hierarchies to report the size of all elements needed
- * to define a shape.
- */
-RT_EXPORT extern int db5_size(struct db_i *dbip, struct directory *dp, int recursive);
-
-
 __END_DECLS
 
 #endif /* RT_DB_IO_H */
