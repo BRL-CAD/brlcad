@@ -116,7 +116,6 @@ static OPTION options[] = {
     { "-bl",        N_BELOW,        c_below,        O_ZERO },
     { "-bool",      N_BOOL,         c_bool,	    O_ARGV },
     { "-depth",     N_DEPTH,        c_depth,        O_ARGV },
-    { "-fsize",     N_FSIZE,        c_fsize,        O_ARGV },
     { "-iname",     N_INAME,        c_iname,        O_ARGV },
     { "-iregex",    N_IREGEX,       c_iregex,       O_ARGV },
     { "-maxdepth",  N_MAXDEPTH,     c_maxdepth,     O_ARGV },
@@ -130,6 +129,7 @@ static OPTION options[] = {
     { "-path",      N_PATH,         c_path,         O_ARGV },
     { "-print",     N_PRINT,        c_print,        O_ZERO },
     { "-regex",     N_REGEX,        c_regex,        O_ARGV },
+    { "-rsize",     N_RSIZE,        c_rsize,        O_ARGV },
     { "-size",      N_SIZE,         c_size,         O_ARGV },
     { "-stdattr",   N_STDATTR,      c_stdattr,      O_ZERO },
     { "-type",      N_TYPE,         c_type,	    O_ARGV },
@@ -1179,13 +1179,13 @@ c_size(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_pla
 
 
 /*
- * -fsize function --
+ * -rsize function --
  *
  * True if the database object being examined and all the objects needed to define that object satisfy
  * the size criteria: [><=]size
  */
 HIDDEN int
-f_fsize(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
+f_rsize(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, struct bu_ptbl *UNUSED(results))
 {
     struct directory *dp;
     int ret = 0;
@@ -1244,11 +1244,11 @@ f_fsize(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
 
 
 HIDDEN int
-c_fsize(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
+c_rsize(char *pattern, char ***UNUSED(ignored), int UNUSED(unused), struct db_plan_t **resultplan, int *UNUSED(db_search_isoutput), struct bu_ptbl *tbl)
 {
     struct db_plan_t *newplan;
 
-    newplan = palloc(N_TYPE, f_fsize, tbl);
+    newplan = palloc(N_TYPE, f_rsize, tbl);
     newplan->type_data = pattern;
     (*resultplan) = newplan;
 
