@@ -266,7 +266,6 @@ set(LIBGED_SOURCES
   slew.c
   solids_on_ray.c
   sphgroup.c
-  stat.c
   summary.c
   sync.c
   tables.c

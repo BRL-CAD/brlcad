@@ -276,11 +276,6 @@ GED_EXPORT extern int ged_red(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_remove(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Report information about the specified database object.
- */
-GED_EXPORT extern int ged_stat(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Unset the "hidden" flag for the specified objects so they will appear in a "t" or "ls" command output
  */
 GED_EXPORT extern int ged_unhide(struct ged *gedp, int argc, const char *argv[]);
