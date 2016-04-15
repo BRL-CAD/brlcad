@@ -131,7 +131,7 @@ ged_stat(struct ged *gedp, int argc, const char **argv)
     type = _ged_db_obj_type(gedp->ged_wdbp->dbip, dp);
 
     bu_vls_printf(gedp->ged_result_str, "Object: %s  Type: %s\n", dp->d_namep, type);
-    bu_vls_printf(gedp->ged_result_str, "Size(obj): %d Size(full): %d\n", dp->d_len, db5_get_full_size(gedp->ged_wdbp->dbip,dp), type);
+    bu_vls_printf(gedp->ged_result_str, "Size(obj): %d Size(full): %d\n", dp->d_len, db5_size(gedp->ged_wdbp->dbip,dp, 1), type);
 
     bu_free(type, "free type string");
     return GED_OK;

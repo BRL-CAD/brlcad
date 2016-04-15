@@ -1131,11 +1131,14 @@ _db5_calc_size(int *ret, struct directory *dp, struct db_i *dbip, int *depth, in
 
 
 int
-db5_get_full_size(struct db_i *dbip, struct directory *dp)
+db5_size(struct db_i *dbip, struct directory *dp, int recursive)
 {
     int full_size = 0;
     int depth = 0;
     if (!dp || !dbip) return 0;
+
+    /* If we're not recursive, just return the d_len */
+    if (!recursive) return dp->d_len;
 
     _db5_calc_size(&full_size, dp, dbip, &depth, DB_SIZE_CYCLIC_LIMIT);
 

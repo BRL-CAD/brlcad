@@ -1197,7 +1197,7 @@ f_fsize(struct db_plan_t *plan, struct db_node_t *db_node, struct db_i *dbip, st
     dp = DB_FULL_PATH_CUR_DIR(db_node->path);
     if (!dp) return 0;
 
-    fullsize = db5_get_full_size(dbip, dp);
+    fullsize = db5_size(dbip, dp, 1);
 
     /* Check for unescaped >, < or = characters.  If present, the
      * attribute must not only be present but the value assigned to
