@@ -407,22 +407,6 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis remap="B" role="bold">-rsize</emphasis> <emphasis remap="I">[&gt;/&lt;/=]size</emphasis></term>
-	<listitem>
-	  <para>
-	    True if the "full" size of the object - the sum of the size of the object and any objects needed to define that object - is within the range specified.  For combs, this will sum the object sizes for the hierarchy below the comb.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
-	<term><emphasis remap="B" role="bold">-size</emphasis> <emphasis remap="I">[&gt;/&lt;/=]size</emphasis></term>
-	<listitem>
-	  <para>
-	    True if the size of the object is within the range specified.  For combs, this considers only the comb definition itself, not its child elements.  To consider the whole hierarchy size, see <option>-rsize</option>.
-	  </para>
-	</listitem>
-      </varlistentry>
-      <varlistentry>
 	<term><emphasis remap="B" role="bold">-stdattr</emphasis></term>
 	<listitem>
 	  <para>
