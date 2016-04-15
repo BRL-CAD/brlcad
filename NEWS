@@ -15,7 +15,7 @@ changes made.  See document footer for additional details.
 ----------------------------------------------------------------------
 
 * added -rsize recursive size filter to search command - Cliff Yapp
-* added -size option to search command - Cliff Yapp
+* added -size (object size filter) to search command - Cliff Yapp
 * added -L draw cmd option to draw bboxes for large bots - Cliff Yapp
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
