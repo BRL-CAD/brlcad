@@ -73,7 +73,7 @@ if("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUN
 endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED" OR "${BRLCAD_LEMON}" MATCHES "BUNDLED")
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/lemon/Makefile)
 # Make sure we load FindLEMON.cmake to be able to define LEMON targets.
-include(${BRLCAD_CMAKE_DIR}/FindLEMON.cmake)
+include(${CMAKE_SOURCE_DIR}/misc/CMake/FindLEMON.cmake)
 SetTargetFolder(lemon "Compilation Utilities")
 SetTargetFolder(lempar_cp "Compilation Utilities")
 
@@ -91,7 +91,7 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/re2c/re2cParse_parser/parser.yy)
 SetTargetFolder(re2c "Compilation Utilities")
 SetTargetFolder(re2c_bootstrap "Compilation Utilities")
 # Make sure we load FindRE2C.cmake to be able to define RE2C targets.
-include(${BRLCAD_CMAKE_DIR}/FindRE2C.cmake)
+include(${CMAKE_SOURCE_DIR}/misc/CMake/FindRE2C.cmake)
 
 # Perplex is set up as a misc/tools sub-build, but at this time it is
 # entirely a BRL-CAD effort and not distributed or maintained as its
@@ -113,7 +113,7 @@ AUTO.  perplex requires a working re2c.
 ")
 THIRD_PARTY_EXECUTABLE(perplex perplex "BRLCAD_LEVEL2" perplex_ALIASES perplex_DESCRIPTION NOSYS)
 # Make sure we load FindPERPLEX.cmake to be able to define PERPLEX targets.
-include(${BRLCAD_CMAKE_DIR}/FindPERPLEX.cmake)
+include(${CMAKE_SOURCE_DIR}/misc/CMake/FindPERPLEX.cmake)
 
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/Makefile)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/perplex/PERPLEX_parser/parser.y)

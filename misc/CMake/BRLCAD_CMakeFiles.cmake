@@ -57,106 +57,102 @@ define_property(GLOBAL PROPERTY CMAKE_IGNORE_FILES BRIEF_DOCS "distcheck ignore 
 define_property(GLOBAL PROPERTY CMAKE_IGNORE_DIRS BRIEF_DOCS "distcheck ignore dirs" FULL_DOCS "List of directories marked as fully known to CMake")
 
 macro(CMAKEFILES)
-  if(NOT BRLCAD_IS_SUBBUILD)
-    foreach(ITEM ${ARGN})
-      set(CMAKEFILES_DO_TEST 1)
-      # The build targets will use certain keywords for arguments -
-      # before we proceed to do any ignoring based on those names,
-      # make sure the file is there.  Normally attempting to ignore
-      # a non-existent file is a fatal error, but these keywords
-      # don't necessarily refer to files.
-      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE)
-      foreach(TARGET_FLAG ${TARGET_FLAGS})
-	if("${TARGET_FLAG}" STREQUAL "${ITEM}")
-	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-            set(CMAKEFILES_DO_TEST 0)
-	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	endif("${TARGET_FLAG}" STREQUAL "${ITEM}")
-      endforeach(TARGET_FLAG ${TARGET_FLAGS})
-      set(FUZZY_TARGET_FLAGS TARGET_OBJECTS)
-      foreach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
-	if("${ITEM}" MATCHES "${TARGET_FLAG}")
-	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-            set(CMAKEFILES_DO_TEST 0)
-	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	endif("${ITEM}" MATCHES "${TARGET_FLAG}")
-      endforeach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
+  foreach(ITEM ${ARGN})
+    set(CMAKEFILES_DO_TEST 1)
+    # The build targets will use certain keywords for arguments -
+    # before we proceed to do any ignoring based on those names,
+    # make sure the file is there.  Normally attempting to ignore
+    # a non-existent file is a fatal error, but these keywords
+    # don't necessarily refer to files.
+    set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE)
+    foreach(TARGET_FLAG ${TARGET_FLAGS})
+      if("${TARGET_FLAG}" STREQUAL "${ITEM}")
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  set(CMAKEFILES_DO_TEST 0)
+	endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      endif("${TARGET_FLAG}" STREQUAL "${ITEM}")
+    endforeach(TARGET_FLAG ${TARGET_FLAGS})
+    set(FUZZY_TARGET_FLAGS TARGET_OBJECTS)
+    foreach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
+      if("${ITEM}" MATCHES "${TARGET_FLAG}")
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  set(CMAKEFILES_DO_TEST 0)
+	endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      endif("${ITEM}" MATCHES "${TARGET_FLAG}")
+    endforeach(TARGET_FLAG ${FUZZY_TARGET_FLAGS})
 
-      # Handled target flags, proceeding with tests.
-      if(CMAKEFILES_DO_TEST)
-	get_filename_component(ITEM_PATH "${ITEM}" PATH)
-	get_filename_component(ITEM_NAME "${ITEM}" NAME)
-	if(NOT "${ITEM_PATH}" STREQUAL "")
-	  # If the build directory is not the same as the source
-          # directory, we can enforce the convention that only
-          # generated files be specified with their full name.
-          # If this becomes a problem with the third party build
-          # systems at some point in the future, we may have to
-          # exclude src/other paths from this check.
-	  if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-	    IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
-	    if("${SUBPATH_TEST}" STREQUAL "0")
-	      IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
-	      if("${SUBPATH_TEST}" STREQUAL "1")
-	        message(FATAL_ERROR "${ITEM} is listed in \"${CMAKE_CURRENT_SOURCE_DIR}\" using its absolute path.  Please specify the location of this file using a relative path.")
-	      endif("${SUBPATH_TEST}" STREQUAL "1")
-	    endif("${SUBPATH_TEST}" STREQUAL "0")
-	  endif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
-	  # Ignore files specified using full paths, since they
-          # should be generated files and are not part of the
-          # source code repository.
-	  get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
-	  if(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-	    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
-	    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    # Append files and directories to their respective lists.
-	    if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${ITEM_ABS_PATH}/${ITEM_NAME}")
-	    else(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	      set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}/${ITEM_NAME}")
-	    endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
-	    # Add the parent directories of the specified file or directory as well -
-	    # the convention is that once at least one file or directory in a path is recorded
-	    # by the build logic, the parent directories along that path have also been recorded.
-	    while(NOT "${ITEM_PATH}" STREQUAL "")
-	      get_filename_component(ITEM_NAME "${ITEM_PATH}" NAME)
-	      get_filename_component(ITEM_PATH "${ITEM_PATH}" PATH)
-	      if(NOT "${ITEM_PATH}" STREQUAL "")
-		get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
-		if(NOT "${ITEM_NAME}" STREQUAL "..")
-	          set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
-		endif(NOT "${ITEM_NAME}" STREQUAL "..")
-	      endif(NOT "${ITEM_PATH}" STREQUAL "")
-	    endwhile(NOT "${ITEM_PATH}" STREQUAL "")
-	  endif(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
-	else(NOT "${ITEM_PATH}" STREQUAL "")
-	  # The easy case - no path specified, so assume the current source directory.
+    # Handled target flags, proceeding with tests.
+    if(CMAKEFILES_DO_TEST)
+      get_filename_component(ITEM_PATH "${ITEM}" PATH)
+      get_filename_component(ITEM_NAME "${ITEM}" NAME)
+      if(NOT "${ITEM_PATH}" STREQUAL "")
+	# If the build directory is not the same as the source
+	# directory, we can enforce the convention that only
+	# generated files be specified with their full name.
+	# If this becomes a problem with the third party build
+	# systems at some point in the future, we may have to
+	# exclude src/other paths from this check.
+	if(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+	  IS_SUBPATH("${CMAKE_BINARY_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
+	  if("${SUBPATH_TEST}" STREQUAL "0")
+	    IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${ITEM_PATH}" SUBPATH_TEST)
+	    if("${SUBPATH_TEST}" STREQUAL "1")
+	      message(FATAL_ERROR "${ITEM} is listed in \"${CMAKE_CURRENT_SOURCE_DIR}\" using its absolute path.  Please specify the location of this file using a relative path.")
+	    endif("${SUBPATH_TEST}" STREQUAL "1")
+	  endif("${SUBPATH_TEST}" STREQUAL "0")
+	endif(NOT "${CMAKE_BINARY_DIR}" STREQUAL "${CMAKE_SOURCE_DIR}")
+	# Ignore files specified using full paths, since they
+	# should be generated files and are not part of the
+	# source code repository.
+	get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
+	if(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
 	  if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
 	    message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
 	  endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  # Append files and directories to their respective lists.
 	  if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
+	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${ITEM_ABS_PATH}/${ITEM_NAME}")
 	  else(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
+	    set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}/${ITEM_NAME}")
 	  endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
-	endif(NOT "${ITEM_PATH}" STREQUAL "")
-      endif(CMAKEFILES_DO_TEST)
-    endforeach(ITEM ${ARGN})
-  endif(NOT BRLCAD_IS_SUBBUILD)
+	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
+	  # Add the parent directories of the specified file or directory as well -
+	  # the convention is that once at least one file or directory in a path is recorded
+	  # by the build logic, the parent directories along that path have also been recorded.
+	  while(NOT "${ITEM_PATH}" STREQUAL "")
+	    get_filename_component(ITEM_NAME "${ITEM_PATH}" NAME)
+	    get_filename_component(ITEM_PATH "${ITEM_PATH}" PATH)
+	    if(NOT "${ITEM_PATH}" STREQUAL "")
+	      get_filename_component(ITEM_ABS_PATH "${ITEM_PATH}" ABSOLUTE)
+	      if(NOT "${ITEM_NAME}" STREQUAL "..")
+		set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${ITEM_ABS_PATH}")
+	      endif(NOT "${ITEM_NAME}" STREQUAL "..")
+	    endif(NOT "${ITEM_PATH}" STREQUAL "")
+	  endwhile(NOT "${ITEM_PATH}" STREQUAL "")
+	endif(NOT "${ITEM_PATH}" STREQUAL "${ITEM_ABS_PATH}")
+      else(NOT "${ITEM_PATH}" STREQUAL "")
+	# The easy case - no path specified, so assume the current source directory.
+	if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  message(FATAL_ERROR "Attempting to ignore non-existent file ${ITEM}, in directory \"${CMAKE_CURRENT_SOURCE_DIR}\"")
+	endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	if(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
+	else(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+	  set_property(GLOBAL APPEND PROPERTY CMAKE_IGNORE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM_NAME}")
+	endif(IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/${ITEM}")
+      endif(NOT "${ITEM_PATH}" STREQUAL "")
+    endif(CMAKEFILES_DO_TEST)
+  endforeach(ITEM ${ARGN})
 endmacro(CMAKEFILES FILESLIST)
 
 # Routine to tell distcheck to ignore a series of items in a directory.  Items may themselves
-# be directories.  Primarily useful when working with src/other dist lists.
+# be directories.
 macro(CMAKEFILES_IN_DIR filestoignore targetdir)
-  if(NOT BRLCAD_IS_SUBBUILD)
-    set(CMAKE_IGNORE_LIST "")
-    foreach(filepath ${${filestoignore}})
-      set(CMAKE_IGNORE_LIST ${CMAKE_IGNORE_LIST} "${targetdir}/${filepath}")
-    endforeach(filepath ${filestoignore})
-    CMAKEFILES(${CMAKE_IGNORE_LIST})
-  endif(NOT BRLCAD_IS_SUBBUILD)
+  set(CMAKE_IGNORE_LIST "")
+  foreach(filepath ${${filestoignore}})
+    set(CMAKE_IGNORE_LIST ${CMAKE_IGNORE_LIST} "${targetdir}/${filepath}")
+  endforeach(filepath ${filestoignore})
+  CMAKEFILES(${CMAKE_IGNORE_LIST})
 endmacro(CMAKEFILES_IN_DIR)
 
 # Local Variables:

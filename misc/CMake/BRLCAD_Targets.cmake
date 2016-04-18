@@ -45,7 +45,7 @@ include(CheckCCompilerFlag)
 macro(GET_TARGET_DEFINES targetname target_libs)
   # Take care of compile flags and definitions
   foreach(libitem ${target_libs})
-    list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
+    list(FIND PROJECT_LIBS ${libitem} FOUNDIT)
     if(NOT ${FOUNDIT} STREQUAL "-1")
       get_property(${libitem}_DEFINES GLOBAL PROPERTY ${libitem}_DEFINES)
       list(APPEND ${targetname}_DEFINES ${${libitem}_DEFINES})
@@ -68,7 +68,7 @@ macro(GET_TARGET_DLL_DEFINES targetname target_libs)
       list(REMOVE_ITEM ${targetname}_DLL_DEFINES ${targetname}_DLL_IMPORTS)
     endif(${targetname}_DLL_DEFINES)
     foreach(libitem ${target_libs})
-      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
+      list(FIND PROJECT_LIBS ${libitem} FOUNDIT)
       if(NOT ${FOUNDIT} STREQUAL "-1")
 	get_property(${libitem}_DLL_DEFINES GLOBAL PROPERTY ${libitem}_DLL_DEFINES)
 	list(APPEND ${targetname}_DLL_DEFINES ${${libitem}_DLL_DEFINES})
@@ -100,7 +100,7 @@ macro(GET_TARGET_FLAGS targetname target_libs)
   foreach(lang ${FLAG_LANGUAGES})
     get_property(${targetname}_${lang}_FLAGS GLOBAL PROPERTY ${targetname}_${lang}_FLAGS)
     foreach(libitem ${target_libs})
-      list(FIND BRLCAD_LIBS ${libitem} FOUNDIT)
+      list(FIND PROJECT_LIBS ${libitem} FOUNDIT)
       if(NOT ${FOUNDIT} STREQUAL "-1")
 	get_property(${libitem}_${lang}_FLAGS GLOBAL PROPERTY ${libitem}_${lang}_FLAGS)
 	list(APPEND ${targetname}_${lang}_FLAGS ${${libitem}_${lang}_FLAGS})
@@ -156,7 +156,7 @@ endmacro(CXX_NO_STRICT cxx_srcslist)
 # BRL-CAD style checking test
 macro(VALIDATE_STYLE srcslist targetname)
   if(BRLCAD_STYLE_VALIDATE)
-    include("${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake")
+    include("${CMAKE_SOURCE_DIR}/misc/CMake/style/test_list.cmake")
     make_directory("${CMAKE_CURRENT_BINARY_DIR}/validation")
 
     foreach(test_name ${BRLCAD_STYLE_TESTS})
@@ -180,7 +180,7 @@ macro(VALIDATE_STYLE srcslist targetname)
 	  set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
 	  set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
 	  set(stampfile_tmp "${stampfile}")
-	  configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
+	  configure_file("${CMAKE_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
 	  add_custom_command(
 	    OUTPUT ${outfiles_root}.checked
 	    COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
@@ -197,7 +197,7 @@ macro(VALIDATE_STYLE srcslist targetname)
       endforeach(srcfile ${srcslist})
 
       # Set up build targets that can be used to independently trigger the testing
-      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
+      configure_file("${CMAKE_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
       add_custom_target(regress-${test_name}-${targetname}
 	${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
 	DEPENDS ${test_stamp_files}
@@ -210,7 +210,7 @@ macro(VALIDATE_STYLE srcslist targetname)
     endforeach(test_name ${BRLCAD_STYLE_TESTS})
 
     # Set up build-integrated validation that is run automatically at compile time.
-    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake" @ONLY)
+    configure_file("${CMAKE_SOURCE_DIR}/misc/CMake/validate_style.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake" @ONLY)
     add_custom_command(
       TARGET ${targetname} PRE_LINK
       COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake"
@@ -349,9 +349,9 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   SET_CXX_LANG("${all_srcs}")
 
   # Add ${libname} to the list of BRL-CAD libraries
-  list(APPEND BRLCAD_LIBS ${libname})
-  list(REMOVE_DUPLICATES BRLCAD_LIBS)
-  set(BRLCAD_LIBS "${BRLCAD_LIBS}" CACHE STRING "BRL-CAD libraries" FORCE)
+  list(APPEND PROJECT_LIBS ${libname})
+  list(REMOVE_DUPLICATES PROJECT_LIBS)
+  set(PROJECT_LIBS "${PROJECT_LIBS}" CACHE STRING "BRL-CAD libraries" FORCE)
 
   # Collect the definitions and flags needed by this library
   GET_TARGET_DEFINES(${libname} "${libslist}")
@@ -547,7 +547,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   endif(CPP_DLL_DEFINES)
   set_property(GLOBAL PROPERTY ${libname}_DLL_DEFINES "${${libname}_DLL_DEFINES}")
 
-  mark_as_advanced(BRLCAD_LIBS)
+  mark_as_advanced(PROJECT_LIBS)
 
 endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 
@@ -596,7 +596,7 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
 
     # paths in BRL-CAD build dir
     foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${inc_path}" SUBPATH_TEST)
+      IS_SUBPATH("${CMAKE_BINARY_DIR}" "${inc_path}" SUBPATH_TEST)
       if("${SUBPATH_TEST}" STREQUAL "1")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
@@ -605,7 +605,7 @@ macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
 
     # paths in BRL-CAD source dir
     foreach(inc_path ${${DIR_LIST}})
-      IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${inc_path}" SUBPATH_TEST)
+      IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${inc_path}" SUBPATH_TEST)
       if("${SUBPATH_TEST}" STREQUAL "1")
 	set(NEW_DIR_LIST ${NEW_DIR_LIST} ${inc_path})
 	list(REMOVE_ITEM ${DIR_LIST} ${inc_path})
@@ -638,9 +638,9 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
 
   foreach(inc_dir ${INCLUDE_DIRS})
     get_filename_component(abs_inc_dir ${inc_dir} ABSOLUTE)
-    IS_SUBPATH("${BRLCAD_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
+    IS_SUBPATH("${CMAKE_SOURCE_DIR}" "${abs_inc_dir}" IS_LOCAL)
     if (NOT IS_LOCAL)
-      IS_SUBPATH("${BRLCAD_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
+      IS_SUBPATH("${CMAKE_BINARY_DIR}" "${abs_inc_dir}" IS_LOCAL)
     endif (NOT IS_LOCAL)
     if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       # Unfortunately, a bug in the CMake SYSTEM option to

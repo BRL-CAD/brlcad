@@ -243,7 +243,7 @@ macro(ADD_DOCBOOK fmts in_xml_files outdir deps_list)
     # As long as we're outputting *something*, we have a target to produce
     if(NOT "${outputs}" STREQUAL "")
       string(MD5 path_md5 "${CMAKE_CURRENT_SOURCE_DIR}/${fname}")
-      configure_file(${BRLCAD_CMAKE_DIR}/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
+      configure_file(${CMAKE_SOURCE_DIR}/misc/CMake/docbook.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake @ONLY)
       add_custom_command(
 	OUTPUT ${outputs}
 	COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/dbp_${fname_root}-${path_md5}.cmake

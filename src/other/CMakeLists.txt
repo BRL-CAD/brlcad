@@ -421,7 +421,7 @@ mark_as_advanced(M_LIBRARY)
 # building local Tcl/Tk, go ahead and enable all the packages as well - otherwise,
 # check the found Tcl/Tk and enable what it doesn't supply.  If doing a non-graphical
 # build, only compile extensions that don't use Tk.
-include("${BRLCAD_CMAKE_DIR}/ThirdParty_TCL.cmake")
+include("${CMAKE_SOURCE_DIR}/misc/CMake/ThirdParty_TCL.cmake")
 
 # The first package to settle is Tk itself
 set(tk_ALIASES ENABLE_TK)
