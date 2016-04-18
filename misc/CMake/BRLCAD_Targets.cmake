@@ -230,6 +230,8 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
     CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 3)
 
+  CMAKEFILES(${srcslist})
+
   # Go all C++ if the settings request it
   SET_CXX_LANG("${srcslist}")
 
@@ -344,6 +346,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
   endif(${ARGC} GREATER 3)
 
   set(all_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS} ${${LIBNAME_UPPER}_STATIC_SRCS})
+  CMAKEFILES(${all_srcs})
 
   # Go all C++ if the settings request it
   SET_CXX_LANG("${all_srcs}")
@@ -707,7 +710,7 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
   endif(${ARGC} GREATER 2)
 
   # Handle both a list of one or more files and variable holding a list of files -
-  # find out what we've got.
+  # find out what we've got, and handle CMAKEFILES itemization.
   NORMALIZE_FILE_LIST("${inputdata}" datalist fullpath_datalist targetname)
 
   #-----------------------------------------------------------------------------
