@@ -1,4 +1,6 @@
 # Decide whether to do a 32 or a 64 bit build.
+include(CheckTypeSize)
+
 set(WORD_SIZE_LABEL "Compile as 32BIT or 64BIT?")
 if(NOT BRLCAD_WORD_SIZE)
   set(BRLCAD_WORD_SIZE "AUTO" CACHE STRING WORD_SIZE_LABEL)

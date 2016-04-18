@@ -179,12 +179,7 @@ BINCLUDE("${CMAKE_SOURCE_DIR}/misc/CMake/command_overrides.cmake")
 include("${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Options.cmake")
 include("${CMAKE_SOURCE_DIR}/misc/CMake/BRLCAD_Targets.cmake")
 
-
-include(CheckTypeSize)
-include(CheckCSourceCompiles)
-include(CheckCXXSourceCompiles)
-
-# Check and set lang environment variable 
+# Check and set lang environment variable
 include("${CMAKE_SOURCE_DIR}/misc/CMake/lang_env.cmake")
 
 # Valid package creation with CMake depends on the value of umask
