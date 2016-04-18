@@ -147,6 +147,7 @@ set(VDS_HDRS
 #add_definitions(-DVDS_DEBUGPRINT)
 
 add_library(libvds SHARED ${CORE_SRCS})
+set_target_properties(libvds PROPERTIES PREFIX "")
 set_target_properties(libvds PROPERTIES VERSION 1.0.1 SOVERSION 1)
 if(SYS_LIBS)
   target_link_libraries(libvds ${SYS_LIBS})
@@ -175,6 +176,7 @@ endif(MSVC)
 
 if(BUILD_STATIC_LIBS)
   add_library(libvds-static STATIC ${CORE_SRCS})
+  set_target_properties(libvds-static PROPERTIES PREFIX "")
   if(CMAKE_CL_64)
     set_target_properties(libvds-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
   endif(CMAKE_CL_64)

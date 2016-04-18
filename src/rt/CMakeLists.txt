@@ -87,12 +87,14 @@ if(NOT MSVC)
 endif(NOT MSVC)
 
 add_library(libremrt STATIC ${LIBREMRT_SOURCES})
+set_target_properties(libremrt PROPERTIES PREFIX "")
 if(M_LIBRARY)
   target_link_libraries(libremrt ${M_LIBRARY})
 endif(M_LIBRARY)
 set_target_properties(libremrt PROPERTIES FOLDER "BRL-CAD Static Libraries")
 
 add_library(librttherm STATIC ${RT_COMMON_SRCS})
+set_target_properties(librttherm PROPERTIES PREFIX "")
 set_target_properties(librttherm PROPERTIES LINKER_LANGUAGE C)
 set_target_properties(librttherm PROPERTIES FOLDER "BRL-CAD Static Libraries")
 
