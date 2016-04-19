@@ -1023,6 +1023,8 @@ main(int argc, char **argv)
 	    Tcl_DecrRefCount(initPath);
 	}
 
+	/* Set a single argv so the Tcl scripts will run the main proc.  Not passing more args
+	 * because they can apparently cause problems with Tcl script execution. */
 	tclcad_set_argv(interp, 1, (const char **)av);
 	bu_free_argv(ac,av);
 
