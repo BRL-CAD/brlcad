@@ -1080,8 +1080,27 @@ append_solid_to_display_list(
 	    wire_color[BLU] = (unsigned char)bview_data->wireframe_color[BLU];
             solid_set_color_info(sp, wire_color, tsp);
         } else {
-            solid_set_color_info(sp, NULL, tsp);
-        }
+	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
+	    if (attr_color) {
+		int i;
+		unsigned char obj_color[3];
+		int color[3];
+		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
+		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
+		    for (i = 0; i < 3; i++) {
+			if (color[i] > 255) color[i] = 255;
+		    }
+		    obj_color[RED] = (unsigned char)color[RED];
+		    obj_color[GRN] = (unsigned char)color[GRN];
+		    obj_color[BLU] = (unsigned char)color[BLU];
+		    solid_set_color_info(sp, obj_color, tsp);
+		} else {
+		    solid_set_color_info(sp, NULL, tsp);
+		}
+	    } else {
+		solid_set_color_info(sp, NULL, tsp);
+	    }
+	}
     }
 
     sp->s_dlist = 0;
