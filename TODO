@@ -31,10 +31,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   is it related to using bu_hash in some fashion?  This test worked
   as of r65575
 
-* quick rtg3 with -c option.  was failing when run without -c "set
-  ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
-  open ray data output file"
-
 * rtwizard command line ghost image specification isn't working
   reliably
 
