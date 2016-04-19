@@ -66,6 +66,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* implement quasi-random unbiased iterative spherical ray sampling.
+  requires devising an algorithm whereby we obtain a set of points on
+  a sphere with rays randomly going through those points, so we sample
+  the volume evenly.  we need to be able to add additional sets of
+  points/rays (incrementally or step-wise) in order to evaluate
+  convergence and estimate error.  this feature is useful for checking
+  overlaps, surface area, volume, and moments of inertia.
+
 * get_eyemodel returns an eye_pt entry, but feeding the results to
   archer's eye_pt command results in get_eyemodel returning a different
   eye_pt, even when the units are all in mm.  is this expected?
