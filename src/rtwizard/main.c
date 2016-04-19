@@ -1023,7 +1023,7 @@ main(int argc, char **argv)
 	    Tcl_DecrRefCount(initPath);
 	}
 
-	tclcad_set_argv(interp, ac, (const char **)av);
+	tclcad_set_argv(interp, 1, (const char **)av);
 	bu_free_argv(ac,av);
 
 	Init_RtWizard_Vars(interp, s);
