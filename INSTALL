@@ -347,18 +347,6 @@ respectively.
 CONFIGURATION OPTIONS
 ---------------------
 
---- BRLCAD_BUNDLED_LIBS ---
-
-Enables compilation of all 3rd party sources that are provided within a BRL-CAD
-source distribution.  If used this option sets all other 3rd party library
-build flags to ON by default.  However, that setting can be overridden by
-manually setting individual variables. Default is "AUTO" - 3rd party sources
-are compiled only if they are not detected as being available and functioning
-as expected.
-
-Aliases:  ENABLE_ALL
-
-
 --- BRLCAD_ENABLE_OPENGL ---
 
 Enable support for OpenGL based Display Managers in BRL-CAD.
@@ -448,6 +436,18 @@ executable file (which on Linux is usually a shell script with 0755
 permissions).
 
 Aliases:  ENABLE_DOCS, ENABLE_EXTRA_DOCS, ENABLE_DOCBOOK
+
+
+--- BRLCAD_BUNDLED_LIBS ---
+
+Enables compilation of all 3rd party sources that are provided within a BRL-CAD
+source distribution.  If used this option sets all other 3rd party library
+build flags to ON by default.  However, that setting can be overridden by
+manually setting individual variables. Default is "AUTO" - 3rd party sources
+are compiled only if they are not detected as being available and functioning
+as expected.
+
+Aliases:  ENABLE_ALL
 
 
 --- BRLCAD_LEMON ---

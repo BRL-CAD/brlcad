@@ -258,10 +258,10 @@ set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
 set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
-set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
+set(OPTIMIZED_BUILD_LABEL "Build optimized release ")
 set(BRLCAD_FLAGS_DEBUG_LABEL "Build debuggable release")
 set(BRLCAD_ENABLE_PROFILING_LABEL "Build profile release ")
-set(BRLCAD_ENABLE_SMP_LABEL "Build SMP-capable release ")
+set(ENABLE_SMP_LABEL "Build SMP-capable release ")
 set(BUILD_STATIC_LIBS_LABEL "Build static libraries ")
 set(BUILD_SHARED_LIBS_LABEL "Build dynamic libraries ")
 set(BRLCAD_ENABLE_COMPILER_WARNINGS_LABEL "Print verbose compilation warnings ")
@@ -285,7 +285,7 @@ set(FEATURE_REPORT_ITEMS
     )
 
 set(OTHER_REPORT_ITEMS
-    BRLCAD_ARCH_BITSETTING BRLCAD_OPTIMIZED_BUILD
+    BRLCAD_ARCH_BITSETTING OPTIMIZED_BUILD
     BUILD_STATIC_LIBS BUILD_SHARED_LIBS
     BRLCAD_INSTALL_EXAMPLE_GEOMETRY BRLCAD_DOCBOOK_BUILD
     )
@@ -293,7 +293,7 @@ set(OTHER_REPORT_ITEMS
 if(BRLCAD_SUMMARIZE_DEV_SETTINGS)
   set(OTHER_REPORT_ITEMS ${OTHER_REPORT_ITEMS}
     BRLCAD_FLAGS_DEBUG
-    BRLCAD_ENABLE_SMP
+    ENABLE_SMP
     BRLCAD_ENABLE_PROFILING
     BRLCAD_ENABLE_COMPILER_WARNINGS
     BRLCAD_ENABLE_VERBOSE_PROGRESS
@@ -449,7 +449,7 @@ endif (BRLCAD_EXTRADOCS)
 
 # In multi-configuration builds, some features are
 # set at build time instead of configure time.
-set(MULTICONFIG_FEATURES "BRLCAD_OPTIMIZED_BUILD")
+set(MULTICONFIG_FEATURES "OPTIMIZED_BUILD")
 if(CMAKE_CONFIGURATION_TYPES)
   foreach(item ${MULTICONFIG_FEATURES})
     set(${item} "Build Configuration Dependent")

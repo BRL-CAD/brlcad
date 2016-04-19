@@ -10,10 +10,6 @@ while [ "$1" != "" ]
 do
    case $1
    in
-     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=ON";
-                                  shift;;
-     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=OFF";
-                                  shift;;
      --enable-opengl)                options="$options -DBRLCAD_ENABLE_OPENGL=ON";
                                   shift;;
      --disable-opengl)                options="$options -DBRLCAD_ENABLE_OPENGL=OFF";
@@ -89,6 +85,10 @@ do
      --enable-docbook)                options="$options -DBRLCAD_EXTRADOCS=ON";
                                   shift;;
      --disable-docbook)                options="$options -DBRLCAD_EXTRADOCS=OFF";
+                                  shift;;
+     --enable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=ON";
+                                  shift;;
+     --disable-all)                options="$options -DBRLCAD_BUNDLED_LIBS=OFF";
                                   shift;;
      --enable-lemon)                options="$options -DBRLCAD_LEMON=BUNDLED";
                                   shift;;

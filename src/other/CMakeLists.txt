@@ -733,7 +733,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
-  ${poissonrecon_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_SPR"  FLAGS NOSYS)
+  ${poissonrecon_ALIASES} REQUIRED_VARS "ENABLE_SPR"  FLAGS NOSYS)
 if(BRLCAD_SPR_BUILD)
   SetTargetFolder(PoissonRecon "Third Party Executables")
   SetTargetFolder(SurfaceTrimmer "Third Party Executables")
