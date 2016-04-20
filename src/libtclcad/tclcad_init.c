@@ -277,6 +277,8 @@ tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv)
     char *args;
     Tcl_DString argString;
 
+    if (argc == 0 || !argv || !interp) return;
+
     /* argc */
     sprintf(buf, "%ld", (long)(argc));
     Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
