@@ -213,19 +213,19 @@
 	    <row>
 	      <entry><command>read-2d-shot-file</command></entry>
 	      <entry><option>file</option></entry>
-	      <entry>read shot locations from file as grid offsets (see input-2d-shot)</entry>
+	      <entry>read shot locations from file as grid offsets (see <command>input-2d-shot</command>)</entry>
 	    </row>
 
 	    <row>
 	      <entry><command>read-3d-shot-file</command></entry>
 	      <entry><option>file</option></entry>
-	      <entry>read shot locations from file in target coordinates (see input-3d-shot)</entry>
+	      <entry>read shot locations from file in target coordinates (see <command>input-3d-shot</command>)</entry>
 	    </row>
 
 	    <row>
 	      <entry><command>read-burst-file</command></entry>
 	      <entry><option>file</option></entry>
-	      <entry>read burst point locations from file (see burst-coordinates)</entry>
+	      <entry>read burst point locations from file (see <command>burst-coordinates</command>)</entry>
 	    </row>
 
 	    <row>
