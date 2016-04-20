@@ -562,13 +562,128 @@
     <para>
       
     </para>
+    
+    <refsection xml:id="bursting_io_1">
+      <title>Target-Related Input Files</title>
+      <para>
+	
+      </para>
+      <refsection xml:id="bursting_io_1_1">
+	<title>Target Data Base File</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      <refsection xml:id="bursting_io_1_2">
+	<title>Ident List Input Files</title>
+	<para>
+	  
+	</para>
+	<refsection xml:id="bursting_io_1_2_1">
+	  <title>Burst-Armor and Burst-Air Ident Files</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+	<refsection xml:id="bursting_io_1_2_2">
+	  <title>Critical Component Idents</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+      </refsection>
+      <refsection xml:id="bursting_1_3">
+	<title>Color Mapping Input Files</title>
+	<para>
+	  
+	</para>
+      </refsection>
+    </refsection>
+
+    <refsection xml:id="bursting_io_2">
+      <title>Project-Related Input Files</title>
+      <para>
+	
+      </para>
+      <refsection xml:id="bursting_io_2_1">
+	<title>Reading Session Files</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      <refsection xml:id="bursting_io_2_2">
+	<title>Shotline and Burst Point Input Files</title>
+	<para>
+	  
+	</para>
+      </refsection>
+    </refsection>
+
+    
   </refsection>
   
   <refsection xml:id="burst_output_file_options">
-    <title></title>
+    <title>Output File Options</title>
     <para>
       
     </para>
+    
+    <refsection xml:id="burst_of_1">
+      <title>Burst Point Library File</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_2">
+      <title>Shotline File</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_3">
+      <title>Plot File</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_4">
+      <title>Frame Buffer Image</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_5">
+      <title>Grid File</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_6">
+      <title>Script File</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_7">
+      <title>Error Log</title>
+      <para>
+	
+      </para>
+    </refsection>
+        
+    <refsection xml:id="burst_of_8">
+      <title>Histogram File</title>
+      <para>
+	
+      </para>
+    </refsection>
+    
   </refsection>
 
   <refsection xml:id="burst_menu_system">
