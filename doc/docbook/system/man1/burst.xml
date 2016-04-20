@@ -44,14 +44,250 @@
     </varlistentry>
   </variablelist>
   </refsection>
-  
+
   <refsection xml:id="burst_commands">
     <title>COMMANDS</title>
     <para>
-      command docs
+      Commands are defined either via an interactive menu or an input file supplied to batch mode.
+      <table>
+	<title>Burst Commands</title>
+	<tgroup cols="3">
+	  <thead>
+	    <row>
+	      <entry>Command</entry>
+	      <entry>Arguments</entry>
+	      <entry>Description</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>attack-direction</entry>
+	      <entry>azim_angle elev_angle</entry>
+	      <entry>specify azimuth and elevation of attack relative to target</entry>
+	    </row>
+
+	    <row>
+	      <entry>burst-air-file</entry>
+	      <entry>file</entry>
+	      <entry>input burst air idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry>burst-armor-file</entry>
+	      <entry>file</entry>
+	      <entry>input burst armor idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry>burst-coordinates</entry>
+	      <entry>X Y Z</entry>
+	      <entry>input single burst point location in target coordinates</entry>
+	    </row>
+
+	    <row>
+	      <entry>burst-distance</entry>
+	      <entry>distance</entry>
+	      <entry>offset burst point along shotline</entry>
+	    </row>
+
+	    <row>
+	      <entry>burst-file</entry>
+	      <entry>file</entry>
+	      <entry>output burst point library to file</entry>
+	    </row>
+
+	    <row>
+	      <entry>cell-size</entry>
+	      <entry>distance</entry>
+	      <entry>specify shotline separation (equidistant horizontal and vertical)</entry>
+	    </row>
+
+	    <row>
+	      <entry>color-file</entry>
+	      <entry>file</entry>
+	      <entry>input ident to color mapping from file (for graphics)</entry>
+	    </row>
+
+	    <row>
+	      <entry>cone-half-angle</entry>
+	      <entry>angle</entry>
+	      <entry>specify limiting angle for spall ray generation</entry>
+	    </row>
+
+	    <row>
+	      <entry>critical-comp-file</entry>
+	      <entry>file</entry>
+	      <entry>input critical component idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry>deflect-spall-cone</entry>
+	      <entry>flag</entry>
+	      <entry>deflect axis of spall cone half way towards exit normal</entry>
+	    </row>
+
+	    <row>
+	      <entry>dither-cells</entry>
+	      <entry>flag</entry>
+	      <entry>if yes, randomly offset shotline within grid cell</entry>
+	    </row>
+
+	    <row>
+	      <entry>enclose-target</entry>
+	      <entry></entry>
+	      <entry>generate rectangular grid of shotlines for full target envelope</entry>
+	    </row>
+
+	    <row>
+	      <entry>enclose-portion</entry>
+	      <entry>left right bottom top</entry>
+	      <entry>generate partial envelope by specifying grid boundaries</entry>
+	    </row>
+
+	    <row>
+	      <entry>error-file</entry>
+	      <entry>file</entry>
+	      <entry>divert all diagnostics to file</entry>
+	    </row>
+
+	    <row>
+	      <entry>execute</entry>
+	      <entry></entry>
+	      <entry>initiate a run (no output produced without this command)</entry>
+	    </row>
+
+	    <row>
+	      <entry>grid-file</entry>
+	      <entry>file</entry>
+	      <entry>save shotline locations (Y' Z') in file</entry>
+	    </row>
+
+	    <row>
+	      <entry>ground-plane</entry>
+	      <entry>flag [Z +X -X +Y -Y]</entry>
+	      <entry>if yes, burst on ground</entry>
+	    </row>
+
+	    <row>
+	      <entry>histogram-file</entry>
+	      <entry>file</entry>
+	      <entry>write hit frequency histogram to file</entry>
+	    </row>
+
+	    <row>
+	      <entry>image-file</entry>
+	      <entry>file</entry>
+	      <entry>generate frame buffer image on a specified file or device</entry>
+	    </row>
+
+	    <row>
+	      <entry>input-2d-shot</entry>
+	      <entry>Y' Z'</entry>
+	      <entry>input single shotline location as grid offsets</entry>
+	    </row>
+
+	    <row>
+	      <entry>input-3d-shot</entry>
+	      <entry>X Y Z</entry>
+	      <entry>input single shotline location in target coordinates</entry>
+	    </row>
+
+	    <row>
+	      <entry>max-barriers</entry>
+	      <entry>count</entry>
+	      <entry>specify the maximum number of components to report along spall ray</entry>
+	    </row>
+
+	    <row>
+	      <entry>max-spall-rays</entry>
+	      <entry>count</entry>
+	      <entry>specify the desired number of spall rays generated per burst point</entry>
+	    </row>
+
+	    <row>
+	      <entry>plot-file</entry>
+	      <entry>file</entry>
+	      <entry>generate plot data in file</entry>
+	    </row>
+
+	    <row>
+	      <entry>read-2d-shot-file</entry>
+	      <entry>file</entry>
+	      <entry>read shot locations from file as grid offsets (see input-2d-shot)</entry>
+	    </row>
+
+	    <row>
+	      <entry>read-3d-shot-file</entry>
+	      <entry>file</entry>
+	      <entry>read shot locations from file in target coordinates (see input-3d-shot)</entry>
+	    </row>
+
+	    <row>
+	      <entry>read-burst-file</entry>
+	      <entry>file</entry>
+	      <entry>read burst point locations from file (see burst-coordinates)</entry>
+	    </row>
+
+	    <row>
+	      <entry>read-input-file</entry>
+	      <entry>file</entry>
+	      <entry>read key word commands from file</entry>
+	    </row>
+
+	    <row>
+	      <entry>report-overlaps</entry>
+	      <entry>flag</entry>
+	      <entry>if yes, log overlap diagnostics</entry>
+	    </row>
+
+	    <row>
+	      <entry>shotline-burst</entry>
+	      <entry>flag</entry>
+	      <entry>if yes, generate burst points along shotlines</entry>
+	    </row>
+
+	    <row>
+	      <entry>shotline-file</entry>
+	      <entry>file</entry>
+	      <entry>output shot line data to file</entry>
+	    </row>
+	    
+	    <row>
+	      <entry>target-file</entry>
+	      <entry>file</entry>
+	      <entry>read BRL-CAD database from file</entry>
+	    </row>
+
+	    <row>
+	      <entry>target-objects</entry>
+	      <entry>object0 [object1 object2 ...]</entry>
+	      <entry>list objects from BRL-CAD database to interrogate</entry>
+	    </row>
+
+	    <row>
+	      <entry>units</entry>
+	      <entry>name</entry>
+	      <entry>linear units (inches, feet, millimeters, centimeters,meters)</entry>
+	    </row>
+
+	    <row>
+	      <entry>write-input-file</entry>
+	      <entry>file</entry>
+	      <entry>save script of commands in file</entry>
+	    </row>
+
+	    <row>
+	      <entry>#</entry>
+	      <entry></entry>
+	      <entry>any line beginning with the '#' character is a comment</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
     </para>
   </refsection>
-  
+
   <refsection xml:id="bug_reports">
     <title>BUG REPORTS</title>
     <para>
