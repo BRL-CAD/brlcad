@@ -288,7 +288,7 @@ set mged_help_data(rtcheck)	$helplib_data(dgo_rtcheck)
 set mged_help_data(rtarea)	$helplib_data(dgo_rtarea)
 set mged_help_data(rtedge)	$helplib_data(dgo_rtedge)
 set mged_help_data(rtweight)	$helplib_data(dgo_rtweight)
-set mged_help_data(savekey)	{{file [time]}	{save keyframe in file (experimental)}}
+set mged_help_data(savekey)	{{file [time]}	{save keyframe in file}}
 set mged_help_data(saveview)	{{[-e command] [-l logfile] [-o outputfile] [-i inputfile] file [args]}	{
 Save the current view to specified 'file' as an rt render script
     Options:
