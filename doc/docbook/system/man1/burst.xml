@@ -728,9 +728,75 @@ truncated by this command.
 option is useful for examining the shotline and burst ray information graphically as a three-dimensional
 vector plot. Due to constraints inherent in the plot format, these plots must be displayed as a post-
 process step by using a BRL-CAD plotting utility such as pl-fb. Because some of these display
-programs do not support multiple plots per file, the file name should be changed between runs. Table 3
+programs do not support multiple plots per file, the file name should be changed between runs. The following table
 describes the color mapping associated with these plots.
-      </para>
+
+      <table>
+	<title>Color Key for Plots</title>
+	<tgroup cols="5">
+	  <thead>
+	    <row>
+	      <entry>Color</entry>
+	      <entry>R</entry>
+	      <entry>G</entry>
+	      <entry>B</entry>
+	      <entry>Representation</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>yellow</entry>
+	      <entry>255</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>grid cell centers</entry>
+	    </row>
+
+	    <row>
+	      <entry>red</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>burst cone</entry>
+	    </row>
+
+	    <row>
+	      <entry>blue</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>default component intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry>lt blue</entry>
+	      <entry>100</entry>
+	      <entry>100</entry>
+	      <entry>255</entry>
+	      <entry>default outside air intersection</entry>
+	    </row>
+	    
+	    <row>
+	      <entry>lt green</entry>
+	      <entry>100</entry>
+	      <entry>255</entry>
+	      <entry>100</entry>
+	      <entry>default inside air intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry>purple</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>default critical component intersection</entry>
+	    </row>
+	    
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+      
       <para>
 	If the user has specified a color mapping file with the <command>color-file</command> command, then those colors will be used
 rather than the above colors for all shotline/ray intersections.
@@ -742,7 +808,87 @@ rather than the above colors for all shotline/ray intersections.
       <para>
 	The <command>image-file</command> command will generate a color image that provides the user with immediate feedback about a run. The
 grid is displayed graphically and each cell location is dynamically color coded to show its current status.
-Table 4 describes the color mapping associated with the grid.
+The following table describes the color mapping associated with the grid:
+     <table>
+	<title>Color Key for Frame Buffer Image</title>
+	<tgroup cols="5">
+	  <thead>
+	    <row>
+	      <entry>Color</entry>
+	      <entry>R</entry>
+	      <entry>G</entry>
+	      <entry>B</entry>
+	      <entry>Representation</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>red</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>axis of grid</entry>
+	    </row>
+
+	    <row>
+	      <entry>black</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>grid cell boundaries</entry>
+	    </row>
+
+	    <row>
+	      <entry>blue</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>outside of grid</entry>
+	    </row>
+
+	    <row>
+	      <entry>lt grey</entry>
+	      <entry>200</entry>
+	      <entry>200</entry>
+	      <entry>200</entry>
+	      <entry>shot missed target</entry>
+	    </row>
+	    
+	    <row>
+	      <entry>white</entry>
+	      <entry>255</entry>
+	      <entry>255</entry>
+	      <entry>255</entry>
+	      <entry>shot hit target</entry>
+	    </row>
+
+	    <row>
+	      <entry>lt green</entry>
+	      <entry>200</entry>
+	      <entry>255</entry>
+	      <entry>200</entry>
+	      <entry>burst occurred but hit no critical components</entry>
+	    </row>
+
+	    <row>
+	      <entry>pink</entry>
+	      <entry>255</entry>
+	      <entry>200</entry>
+	      <entry>200</entry>
+	      <entry>burst occurred and hit some critical components</entry>
+	    </row>
+
+	    <row>
+	      <entry>purple</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>a ground burst occurred</entry>
+	    </row>
+	    
+	  </tbody>
+	</tgroup>
+      </table>
       </para>
       <para>
 In addition to the above cell colors, hits on critical components by burst rays are depicted as a colored pixel
