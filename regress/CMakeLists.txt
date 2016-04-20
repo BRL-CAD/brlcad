@@ -75,7 +75,6 @@ if(SH_EXEC)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
-  Sh_Regression_Test(quote "" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
   Sh_Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
 
@@ -127,7 +126,6 @@ CMAKEFILES(
   mosspix.asc
   nirt.sh
   nurbs/brep-3dm.tar.bz2
-  quote.sh
   red.sh
   repository.sh
   shaders.sh
