@@ -18,7 +18,7 @@
   <refsynopsisdiv xml:id="burst_synopsis">
     <cmdsynopsis sepchar=" ">
       <command>burst</command>
-      <arg choice="opt" rep="norepeat">-b</arg>
+      <arg choice="opt" rep="norepeat">-b &lt; input_file</arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -28,6 +28,22 @@
     <command>burst</command> uses LIBRT raytracing to prepare inputs to the
     Point Burst Damage Assessment Model (PDAM) in the form of shotline files
     and burst point library files.
+  </para>
+  <para>
+    The <command>burst</command> program is designed to allow many options to be
+    configured before any outputs are calculated. Unless otherwise stated in the
+    individual command descriptions, a given command will nullify any previous
+    occurrence of the same directive until an <command>execute</command> command
+    is given. For instance, the command <command>target-file</command> <option>tank1</option>
+    followed by <command>target-file</command> <option>tank2</option> will nullify
+    the reference to tank1. It is also important to remember that the
+    <command>units</command> command impacts how subsequent physical quantities
+    are read by other commands, and the output from an <command>execute</command>
+    command will use whatever units are current. Once the input parameters are specified,
+    the <command>execute</command> command will start a run.  Output will be
+    reported using the current setting for <command>units</command> at the
+    time the <command>execute</command> is run.  Many runs may occur during an instance of
+    the <command>burst</command> program. One such instance is referred to as a session.
   </para>
   </refsection>
 
@@ -48,7 +64,12 @@
   <refsection xml:id="burst_commands">
     <title>COMMANDS</title>
     <para>
-      Commands are defined either via an interactive menu or an input file supplied to batch mode.
+      Commands are defined either via an interactive menu or an input file supplied to batch mode.  The following
+      table provides a brief overview of the available commands, with subsequent sections covering key areas in
+      more detail.  In the table, flag arguments have yes or no values, an angle is expressed in degrees as a
+      floating-point quantity, distances and coordinates such as X, Y, Z, left, right, etc. are also floating-point
+      numbers, and count represents an integer. Square brackets delimit optional arguments.
+      
       <table>
 	<title>Burst Commands</title>
 	<tgroup cols="3">
@@ -287,7 +308,316 @@
       </table>
     </para>
   </refsection>
+  
+  <refsection xml:id="burst_user_preferences">
+    <title>User Preferences</title>
+    <refsection xml:id="burst_units">
+      <title>Units of Measure</title>
+      <para>
+	The <command>units</command> command will set the linear units for input and output. This command should be used before any
+	scalar quantities such as coordinates, distances, or sizes are input. The units may be changed to
+	accommodate input files of differing units, but the output from a particular run will reflect whatever the
+	units were set to when the <command>execute</command> command was given. One argument is expected out of the following list
+	and must be spelled correctly: millimeters, centimeters, meters, inches and feet. The default units are
+	millimeters. Angles are always expressed in degrees, not radians.
+      </para>
+    </refsection>
+    <refsection xml:id="burst_report_overlaps">
+      <title>Region Overlap Reporting</title>
+      <para>
+	It is considered an error if two regions in an mged file occupy the same space; we call this an overlap. The
+	ray tracing library (librt) will report overlapping regions that are intersected by shotlines or burst rays to
+	the burst application and the program will, by default, print out any that have a line of sight thickness of at
+	least 0.25 millimeters. Although a target may only have several overlaps, an error will be
+	reported for each ray that intersects one of them, so the messages will typically be repetitious. Although
+	these diagnostics are important for fixing problems in the geometric description of the target, the user may
+	wish to proceed with a production run and the printing of these errors can slow the execution time
+	considerably. A yes or no argument to the <command>report-overlaps</command> command will turn the diagnostics on or off. Regardless of
+	whether or not individual overlaps are reported, the total number detected will be logged.
+      </para>
+      <para>
+	When overlap reporting is enabled, the full path name of both regions is printed.  The zero enclosed in double
+	curly brackets is intended to
+	discriminate between instances1. Theoretically, isol and osol are the names of the starting and ending
+	solids associated with the boolean operations on the overlapping partition. In practice, these solid names
+	are typically not helpful in diagnosing the problem, but the region names should be sufficient. The depth is
+	the line-of-sight thickness of the overlapping partition in millimeters. In parentheses, are printed the target
+	coordinates of the intersection of the ray with the overlap. The x-2 and y1 reveal that the grid indices of the
+	shotline are -2, 1; this means that the shotline was 2 cells to the left, and one cell above the grid origin. If
+	lvl (meaning ray tracing recursion level) is zero, then the overlap resulted from a shotline, but if it is one, it
+	could represent either a burst ray intersection or a probe to calculate the normal thickness of a component
+	intersected by the shotline. The real purpose of the ray is stated last.
+      </para>
+    </refsection>
+  </refsection>
+  
+  <refsection xml:id="burst_shotlining_options">
+    <title>Shotlining Options</title>
+    <para>
+      Shotlining is a technique whereby lines are described in the target coordinate system and information is
+      requested about the geometry that intersects those lines in 3-space. This technique is useful for analysis
+      programs that must simulate threat/target interactions, and therefore must sample the geometry along the
+      threat path. Typically the lines are specified discretely, by a point and a direction, or a grid of lines is
+      generated that is oriented perpendicular to the direction of attack. A grid is rectangular, but is subdivided
+      along its height and width uniformly resulting in square cells. Gridding techniques include passing a line
+      called a shotline through the center of each cell, or alternatively, dithering each shotline’s position within its
+      respective cell’s boundaries.
+    </para>
+    <para>
+      The user is faced with several choices for generating shotlines; full-target envelope, partial envelopes, or
+      discrete shots. No matter what shotlining method is used, a grid always exists as a frame of reference for
+      specifying 2-dimensional coordinates in the plane normal to the direction of attack. This 2-dimensional
+      coordinate system is a projection of the shotline coordinate system (also referred to as the primed
+      coordinate system). For the simple case of a zero azimuth, zero elevation attack, the X’, Y’, and Z’ axes in
+      the shotline coordinate system coincide with the X, Y, and Z axes of the target coordinate system and the
+      shotline direction is parallel to the X’ axis and headed toward decreasing coordinates. Other orientations
+      are described by rotating the X’, Y’, and Z’ axes to keep the shotline direction always down the X’ axis.
+      This transformation involves two rotations; first a rotation of the primed coordinate system about the
+      coincident Z and Z’ axes by the specified azimuthal angle, followed by a rotation about the new Y’ axis by
+      the specified elevation angle. Since the grid is a 2-d projection of the shotline coordinate system, it has no
+      X coordinate; if the user’s viewpoint is from the direction of attack, the Y’ axis can be thought of as
+      horizontal with increasing coordinates to the right, and the Z’ axis as vertical and increasing in the upward
+      direction.
+    </para>
+    <refsection xml:id="burst_sh_1">
+      <title>Attack Direction</title>
+      <para>
+	The orientation of shotlines with respect to the coordinate system of the target are described by azimuth and
+	elevation angles. These angles must be specified in degrees as floating-point numbers via the <command>attack-direction</command>.
+      </para>
+    </refsection>
 
+    <refsection xml:id="burst_sh_2">
+      <title>Gridding</title>
+      <para>
+	An envelope refers to a grid that is dimensioned such that its rectangular area, projected normal to the grid,
+	will cover optionally all or part of the target. The <command>enclose-target</command> option will generate a grid that is guaranteed to cover the entire target. Since the mged modeler uses
+	combinatorial solid geometry, the dimensions of the target are not known, therefore a worst case bounding
+	rectangular parallel piped (RPP) is the only information available to the program and the grid may be larger
+	than necessary. In addition, depending on the attack aspect, the presented area of some targets may not fill
+	up a rectangular grid well. This should not be a problem since ray tracing outside the target boundaries is
+	cheap, but if desired, the grid can be trimmed down with the partial envelope option <command>enclose-portion</command>. The
+	grid origin is always aligned with the target origin.
+      </para>
+      <para>
+	The <command>enclose-portion</command> option allows the user to generate a sub-grid by specifying the distances from the grid origin to the sub-grid’s left, right, top, and bottom boundaries.
+      </para>
+    </refsection>
+    
+    <refsection xml:id="burst_sh_3">
+      <title>Cell Size</title>
+      <para>
+	The dimensions of a grid cell are input as floating-point values that represent the distances between the
+	centers of adjacent cells. <command>cell-size</command> also expresses the projected area of influence associated with a shotline
+	or burst ray. Therefore, <command>cell-size</command> must be specified even when a grid will not be generated, such as with
+	discrete shot or discrete burst point selection.
+      </para>
+    </refsection>
+    
+    <refsection xml:id="burst_sh_4">
+      <title>Dithering Shotlines</title>
+      <para>
+	When gridding, shotlines normally pass through the center of each cell, however, they may be also be
+	dithered via the <command>dither-cells</command> command. If the user chooses the latter, 2 random numbers are selected
+	for each cell that are used to offset the shotline in both parametric directions of the grid plane, but within the respective
+	cell’s boundaries.
+      </para>
+    </refsection>
+    
+    <refsection xml:id="burst_sh_5">
+      <title>Input Discrete Shots</title>
+      <para>
+	If the user wants to fire at a known point on the target, he or she may wish to describe the shotline location in
+	target coordinates. When coupled with the attack direction, each 3-dimensional coordinate uniquely
+	specifies a shotline.  The <command>input-3d-shot</command> command allows the user to type in a single shot
+	location as an X, Y, and Z coordinate that is run when the <command>execute</command> command is given, but
+	remember that no queueing of shots occurs in this mode; the last set of coordinates entered will be used.  For
+	inputing multiple shots, <command>read-3d-shot-file</command> can be used to loop
+	through every set of target coordinates in the named file after the <command>execute</command> command is run. The
+	file should contain three floating-point numbers on each line separated by white space (blanks or tabs).
+      </para>
+      <para>
+	Another way to describe a shot location is in the shotline coordinate system. Since the X’ location of the
+	shot is irrelevant (the shotline is parallel to the X’ axis) a shot may be specified as a Y’ and Z’ coordinate.
+	These coordinates can also be referred to as horizontal and vertical grid offsets.  The
+	<command>input-2d-shot</command> option allows the user to type in a single shot location as a Y’, and Z’
+	coordinate which will be run when the <command>execute</command> command is given, but like the 3d case no
+	queueing of shots occurs in this mode and only the last set of grid offsets entered will be used.  To input
+	multiple shots, the <command>read-2d-shot-file</command> can be used; <command>execute</command> will loop
+	through every set of grid offsets in the named file. The file should contain three floating-point numbers on
+	each line separated by white space (blanks or tabs).
+      </para>
+    </refsection>
+    
+  </refsection>
+  
+  <refsection xml:id="burst_bursting_options">
+    <title>Bursting Options</title>
+    <para>
+      
+    </para>
+
+    <refsection xml:id="bursting_1">
+      <title>Method of Locating Burst Point</title>
+      <para>
+	
+      </para>
+
+      <refsection xml:id="bursting_1_1">
+	<title>Input Discrete Burst Points</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      
+      <refsection xml:id="bursting_1_2">
+	<title>Burst on Contact</title>
+	<para>
+	  
+	</para>
+
+	
+	<refsection xml:id="bursting_1_2_1">
+	  <title>Burst on Armor</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+
+        
+	<refsection xml:id="bursting_1_2_2">
+	  <title>Ground Plane Bursting</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+	
+	
+      </refsection>
+      
+    </refsection>
+    
+    <refsection xml:id="bursting_2">
+      <title>Bursting Parameters</title>
+      <para>
+	
+      </para>
+      
+      <refsection xml:id="bursting_2_1">
+	<title>Burst Distance</title>
+	<para>
+	  
+	</para>
+
+	<refsection xml:id="bursting_2_1_1">
+	  <title>Interior Bursting</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+	
+	<refsection xml:id="bursting_2_1_2">
+	  <title>Exterior Bursting</title>
+	  <para>
+	    
+	  </para>
+	</refsection>
+      	
+      </refsection>
+      
+      <refsection xml:id="bursting_2_2">
+	<title>Sampling Cone Half Angle</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      
+      <refsection xml:id="bursting_2_3">
+	<title>Deflected Sampling Cone</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      
+      <refsection xml:id="bursting_2_4">
+	<title>Number of Sampling Rays</title>
+	<para>
+	  
+	</para>
+      </refsection>
+      
+      <refsection xml:id="bursting_2_5">
+	<title>Maximum Barriers</title>
+	<para>
+	  
+	</para>
+      </refsection>
+
+    </refsection>
+    
+  </refsection>
+  
+  <refsection xml:id="burst_input_file_options">
+    <title>Input File Options</title>
+    <para>
+      
+    </para>
+  </refsection>
+  
+  <refsection xml:id="burst_output_file_options">
+    <title></title>
+    <para>
+      
+    </para>
+  </refsection>
+
+  <refsection xml:id="burst_menu_system">
+    <title>Interactive Command Input Mode</title>
+    <para>
+      When an input file is not specified in batch mode, <command>burst</command>
+      will start a menu based interactive interface on those systems that support
+      it (it does not currently work on Windows.)  This system is not the recommended
+      way to use burst (it is likely to be removed entirely at some point in the future)
+      but for now it is available.
+    </para>
+    <para>
+      In interactive mode, the screen is divided into sections of one or more rows (lines) of text. The top line,
+      referred to as line 1, is reserved for CPU usage statistics. Starting on line 2, the hierarchical menu region
+      spans 12 lines of the screen. Below the menu region is a line used for user input related errors and help
+      messages that are generated by typing an ‘h’. Below that is a line used to prompt the user for
+      input and to inform him of ongoing processing. The next line contains the program name and version
+      number, and is intended as a divider between the scrolling window below it and the non-scrolling portion of
+      the screen. Once ray tracing has begun, grid index ranges will appear inside square brackets to the right of
+      the version number. The first number is the current horizontal index, and this is separated by a colon from
+      the right-most index for the grid. After the comma, is the current vertical index, followed by the top-most
+      index for the grid. As ray tracing commences, the current grid indices will reflect the current shotline being
+      calculated as the grid is traversed in a left-to-right, bottom-to-top fashion. The scrolling window region
+      takes up the remainder of the screen for the display of processed commands and processing-related errors
+      (i.e. from the ray tracer). Figure 1 shows what the various sections of the screen are used for, however in
+      practice, the status information, help message, and prompt would not be displayed concurrently. The
+      screen-oriented interface is terminal independent; it doesn’t use graphics per se but uses the terminal
+      capabilities information database to control the manipulation of text characters.
+    </para>
+    <para>
+      When using interactive mode, the current entry will be highlighted. The ‘v’ symbols at the bottom corners of the menu show that
+      there are more entries below. Attempting to move the cursor past the bottom entry will cause the menu to
+      scroll upwards. The ‘ˆ’ symbols at the top corners of the menu signify
+      that there are now hidden entries above that can be scrolled down by advancing the cursor upwards past the
+      top visible entry. If no scrolling is possible, that is, if no further entries exist, a ‘+’ symbol will mark the
+      corner of the menu. If a menu item is selected that has a sub-menu, the sub-menu will be drawn to the right
+      of its parent menu. The menu system remembers the last item selected in a given
+      menu; entering a menu that has been used before will cause the current item to be the same as it was when
+      that menu was last exited. If a menu has never been used, the top item will initially be current.
+    </para>
+    <para>
+      When running the burst program interactively, all diagnostic output is, by default, printed in a scrolling text
+      window at the bottom of the display. If there is enough output the user may find it difficult to read it all
+      before it scrolls out of sight. Also, the user may wish to save these diagnostics for later reference; overlap
+      diagnostics from the ray tracer are useful in fixing errors in the geometry of the target description. The
+      error-file command will divert this output to a file. 
+    </para>
+  </refsection>
+  
   <refsection xml:id="bug_reports">
     <title>BUG REPORTS</title>
     <para>
