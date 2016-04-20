@@ -65,56 +65,61 @@ bolster those areas, and identifies specific actionable objectives.
   strategic areas devising measurable tasks that support the
   particular objective.
 
-** PROJECT: Deploy Archer
 
-*** command cleanup - ALPHA+
-**** TODO inventory + mapping + time
-**** TODO design UI / commands
-**** TODO QA acceptance from users
-**** TODO announce / share / sit with users
+** PROJECT: Deploy Archer/MGED Beta (13)
+
+*** interactivity / blocking indicators - ALPHA (3)
+**** TODO multithreaded command execution (2)
+**** TODO interface busy indicator (1)
+
+*** command cleanup - ALPHA (3)
+**** TODO inventory + mapping + time (1)
+**** TODO design UI / commands (2)
+**** TODO sit with users to discuss command migration (0)
+
+*** feature parity - ALPHA (2)
+**** TODO review/finish edit keypointing (oed parity) (1)
+**** TODO GUI matrix editing (1)
     
-*** interactivity / blocking indicators - ALPHA
-**** TODO multithreaded command execution
-**** TODO interface busy indicator
-**** TODO drawing indicator
-     
-*** feature parity - ALPHA
-**** TODO classic console mode
-**** TODO review/finish edit keypointing (oed parity)
-**** TODO summarize features
-**** TODO create mapping from old to new
-**** TODO GUI matrix editing
-**** TODO reverse tempfile
-**** TODO query ray control GUI
-    
-*** undo - BETA
-**** TODO implement libbu filesystem info
-**** TODO re-enable undo with fs awareness
-    
-*** bug reporting / feedback / metrics - BETA
-**** TODO reliable backtrace
-**** TODO hook/enable bombardier
-**** TODO in-app feedback dialog
-**** TODO track metrics (archer commands, tips, docs)
-    
-*** QA acceptance - BETA
-**** TODO run regression w/ archer
-**** TODO sit down reviews (discuss scripts)
-**** TODO define acceptance tasks
-**** TODO run with procedural web scripts
-    
-*** announcements + migration plan - BETA+
-**** TODO write + publish strategy map
-**** TODO write + publish migration plan
-**** TODO review + update tutorials (docs)
-**** TODO create + give presentation
-**** TODO install new website (basic version)
-**** TODO discussion with core stakeholders
-    
-*** searchable docs - FINAL
-**** TODO command line searching of doc content
-**** TODO apropos reading from docbook
-**** TODO web publishing + searching of docs
+*** announcements + migration plan - BETA+ (3)
+**** TODO write + publish strategy map and migration plan (1)
+**** TODO archer manual page (1)
+**** TODO install basic version of new website (1)
+**** TODO discussion with core stakeholders (0)
+
+*** searchable docs - ALPHA (2)
+**** TODO command line searching of doc content, apropos (2)
+
+
+** PROJECT: Deploy Merged Archer/MGED Final (17)
+
+*** usability parity - BETA (4)
+**** TODO classic console mode (1)
+**** TODO map from old to new, publish summary (1)
+**** TODO reverse .g tempfile backup, edit live (1)
+**** TODO graphical query ray (1)
+
+*** undo - BETA (2)
+**** TODO implement libbu filesystem info (1)
+**** TODO re-enable undo with fs awareness (1)
+
+*** bug reporting / feedback / metrics - BETA (3)
+**** TODO reliable backtrace (1)
+**** TODO hook/enable bombardier (1)
+**** TODO track metrics (archer commands, tips, docs) (1)
+
+*** QA acceptance - BETA (4)
+**** TODO define acceptance tasks (1)
+**** TODO run regression w/ archer (1)
+**** TODO make wiki procedural web scripts work (1)
+**** TODO sit down overview / review (discuss tcl scripts) (1)
+
+*** announcements + migration plan - BETA+ (3)
+**** TODO review + update tutorials and docs (2)
+**** TODO create + give presentation (1)
+
+*** searchable docs - FINAL (1)
+**** TODO web publishing + searching of docs (1)
 
 
 ** PROJECT: Concentration
@@ -226,11 +231,6 @@ bolster those areas, and identifies specific actionable objectives.
 *** performant raytrace image display
 **** TODO optimize libdb/libfb to remove bottleneck
 **** TODO update archer for interactive tracing display
-
-
-** PROJECT: Merge Archer/MGED
-
-*** do more good stuff
 
 
 ** TEMPLATE: Project Title
