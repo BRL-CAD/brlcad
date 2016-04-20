@@ -66,7 +66,7 @@ bolster those areas, and identifies specific actionable objectives.
   particular objective.
 
 
-** PROJECT: Deploy Archer/MGED Beta (13)
+** PROJECT: Deploy Archer/MGED Beta (14)
 
 *** interactivity / blocking indicators - ALPHA (3)
 **** TODO multithreaded command execution (2)
@@ -81,17 +81,18 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO review/finish edit keypointing (oed parity) (1)
 **** TODO GUI matrix editing (1)
     
-*** announcements + migration plan - BETA+ (3)
+*** announcements + migration plan - BETA+ (4)
 **** TODO write + publish strategy map and migration plan (1)
+**** TODO preliminary discussion with users, discuss tcl scripts (0)
 **** TODO archer manual page (1)
 **** TODO install basic version of new website (1)
-**** TODO discussion with core stakeholders (0)
+**** TODO sit down review with users (1)
 
 *** searchable docs - ALPHA (2)
 **** TODO command line searching of doc content, apropos (2)
 
 
-** PROJECT: Deploy Merged Archer/MGED Final (17)
+** PROJECT: Deploy Merged Archer/MGED Final (16)
 
 *** usability parity - BETA (4)
 **** TODO classic console mode (1)
@@ -108,11 +109,10 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO hook/enable bombardier (1)
 **** TODO track metrics (archer commands, tips, docs) (1)
 
-*** QA acceptance - BETA (4)
+*** QA acceptance - BETA (3)
 **** TODO define acceptance tasks (1)
 **** TODO run regression w/ archer (1)
 **** TODO make wiki procedural web scripts work (1)
-**** TODO sit down overview / review (discuss tcl scripts) (1)
 
 *** announcements + migration plan - BETA+ (3)
 **** TODO review + update tutorials and docs (2)
