@@ -236,7 +236,6 @@ set mged_help_data(pathlist)	$helplib_data(wdb_pathlist)
 set mged_help_data(paths)	$helplib_data(wdb_paths)
 set mged_help_data(permute)	{{tuple}	{permute vertices of an ARB}}
 set mged_help_data(plot)	{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
-set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
 set mged_help_data(png)		{{[-c r/g/b] [-s size] file}	{save graphics window to PNG image file}}
 set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
 set mged_help_data(pov)		$helplib_data(vo_pov)

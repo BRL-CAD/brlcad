@@ -1518,62 +1518,6 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
 }
 
 
-/**
- * Experimental - like f_plot except we attach to dm-plot, passing
- * along any arguments.
- */
-int
-f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    int status;
-    const char *av[2];
-    struct dm_list *dml;
-    struct _view_state *vsp;
-
-    if (argc < 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "help pl");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (gedp == GED_NULL)
-	return TCL_OK;
-
-    dml = curr_dm_list;
-    gedp->ged_gvp = view_state->vs_gvp;
-    status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
-    if (status == TCL_ERROR)
-	return TCL_ERROR;
-
-    vsp = view_state;  /* save state info pointer */
-    view_state = dml->dml_view_state;  /* use dml's state info */
-    *mged_variables = *dml->dml_mged_variables; /* struct copy */
-
-    bu_free((void *)menu_state, "f_pl: menu_state");
-    menu_state = dml->dml_menu_state;
-
-    scroll_top = dml->dml_scroll_top;
-    scroll_active = dml->dml_scroll_active;
-    scroll_y = dml->dml_scroll_y;
-    memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
-
-    dirty = 1;
-    refresh();
-
-    view_state = vsp;  /* restore state info pointer */
-    av[0] = "release";
-    av[1] = NULL;
-    status = f_release(clientData, interpreter, 1, av);
-    curr_dm_list = dml;
-    gedp->ged_gvp = view_state->vs_gvp;
-
-    return status;
-}
-
-
 int
 f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const char *argv[])
 {

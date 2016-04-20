@@ -251,7 +251,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
     {"paths", cmd_ged_plain_wrapper, ged_pathsum},
     {"permute", f_permute, GED_FUNC_PTR_NULL},
-    {"pl", f_pl, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
     {"polybinout", f_polybinout, GED_FUNC_PTR_NULL},
