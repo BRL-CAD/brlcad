@@ -168,8 +168,7 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 	    /* center and normal points */
 	    VMOVE(up, datum_ip->dir);
 	    VUNITIZE(up);
-	    VSCALE(up, up, datum_ip->w);
-	    VADD2(tip, datum_ip->pnt, up);
+	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_POINT_DRAW);
 
@@ -179,6 +178,10 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 	    VCROSS(right, left, up);
 	    VREVERSE(nright, right);
 	    VREVERSE(nleft, left);
+	    VSCALE(left, left, MAGNITUDE(datum_ip->dir));
+	    VSCALE(nleft, nleft, MAGNITUDE(datum_ip->dir));
+	    VSCALE(right, right, MAGNITUDE(datum_ip->dir));
+	    VSCALE(nright, nright, MAGNITUDE(datum_ip->dir));
 
 	    /* line to normal point */
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
