@@ -45,7 +45,7 @@ export PATH || (echo "This isn't sh."; sh $0 $*; kill $$)
 
 TEST=quote
 TESTSCRIPT=$TEST.sh
-TESTEXE=test_quote
+TESTEXE=test_bu_escape
 TESTLOG=${TEST}.log
 TESTCMD="`ensearch $TESTEXE`"
 if test ! -f "$TESTCMD" ; then
