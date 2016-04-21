@@ -296,11 +296,14 @@ include/raytrace.h
 * OBSOLETE *
 ************
 
-Below are the interfaces that have followed deprecation policy and are
-now no longer a part of BRL-CAD.
+Below are the interfaces that have followed deprecation policy or were
+deemed minimally impacting and, regardless, are now no longer a part
+of BRL-CAD.
 
 7.26.0
 ------
+pl
+        removed, use plot command instead [minimally impacting]
 conf.h
 	removed - replaced with common.h [deprecated 7.0]
 libbu, libbn
@@ -1113,7 +1116,7 @@ s/([[:space:],\(,"])rt_tcl_rt/\1tclcad_rt/g
 s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
 	tcl library registrations moved to libtclcad [7.25]
 s/rt_grow_boolstack/rt_bool_growstack/g
-	 rename with consistent prefixes [7.25]
+	rename with consistent prefixes [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])obj\.h/\1dm\/bview.h/g
 s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
 	move view_obj to dm/bview.h [7.25]
