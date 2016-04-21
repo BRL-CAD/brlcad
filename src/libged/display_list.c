@@ -1496,7 +1496,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 
                     if (Three_D) {
                         /* Could check for differences from last color */
-                       /* Could check for differences from last color */
                         pl_color(fp,
                                  sp->s_color[0],
                                  sp->s_color[1],
