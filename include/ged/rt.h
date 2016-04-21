@@ -59,7 +59,7 @@ GED_EXPORT extern int ged_rtwizard(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_preview(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Save keyframe in file (experimental)
+ * Save keyframe in file
  */
 GED_EXPORT extern int ged_savekey(struct ged *gedp, int argc, const char *argv[]);
 
