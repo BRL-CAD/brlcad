@@ -988,6 +988,14 @@ components.
       error-file command will divert this output to a file. 
     </para>
   </refsection>
+
+  <refsection xml:id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>burst_point_library</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>burst_shotline_files</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+    </para>
+  </refsection>
   
   <refsection xml:id="bug_reports">
     <title>BUG REPORTS</title>
