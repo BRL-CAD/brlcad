@@ -5466,9 +5466,6 @@ x 					delete character
     <link linkend="permute">permute</link>
   </entry>
   <entry>
-    <link linkend="pl">pl</link>
-  </entry>
-  <entry>
     <link linkend="plot">plot</link>
   </entry>
   <entry>
@@ -12690,53 +12687,6 @@ foo.r_xpand/R
   <para>
     <emphasis role="strong"></emphasis>
   </para>
-  <variablelist xml:id="pl">
-    <varlistentry>
-      <term>
-        pl [<emphasis>-float</emphasis>] [<emphasis>-zclip</emphasis>]
-        [<emphasis>-2d</emphasis>] [<emphasis>-grid</emphasis>]
-        <emphasis>out_file</emphasis> | <quote>|</quote> filter
-      </term>
-      <listitem>
-        <para>
-          The <quote>pl</quote> command creates a UNIX plot of the
-          current MGED display. If an <emphasis>output_file</emphasis>
-          is specified, the plot is stored in that file. If a
-          <emphasis>filter</emphasis> is specified, the output is sent
-          to that <emphasis>filter</emphasis>. The
-          <emphasis>-float</emphasis> option requests a plot file with
-          real numbers rather than integers. The
-          <emphasis>-zclip</emphasis> option requests that the plot be
-          clipped to the viewing cube in the Z-direction. The
-          <emphasis>-2d</emphasis> option requests a two-dimensional
-          plot (the default is 3D). The <emphasis>-grid</emphasis>
-          option is intended to include a grid in the plot, but is
-          currently not implemented. This command uses the
-          <emphasis>dm-plot</emphasis> display manager. The
-          <link linkend="plot">plot</link> command performs the same
-          function, but does not use the <emphasis>dm-plot</emphasis>
-          display manager.
-        </para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term>
-        Examples:
-      </term>
-      <listitem>
-        <para>
-          mged&gt; pl -float | pldebug
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
-  <para>
-    – Create a UNIX plot of the current MGED display and pipe the
-    results to the <emphasis>pldebug</emphasis> command.
-  </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
   <variablelist xml:id="plot">
     <varlistentry>
       <term>
@@ -12758,11 +12708,7 @@ foo.r_xpand/R
           <emphasis>-2d</emphasis> option requests a two-dimensional
           plot (the default is 3D). The <emphasis>-grid</emphasis>
           option is intended to include a grid in the plot, but is
-          currently not implemented. This command does not use the
-          <emphasis>dm-plot</emphasis> display manager. The
-          <link linkend="pl">pl</link> command performs the same
-          function, but does use the <emphasis>dm-plot</emphasis>
-          display manager.
+          currently not implemented.
         </para>
       </listitem>
     </varlistentry>

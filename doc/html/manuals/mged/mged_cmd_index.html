@@ -2387,16 +2387,6 @@ foo.r_xpand/R
 
 <P><HR ALIGN="RIGHT"></P>
 </FONT><B><DL>
-<DT><A NAME="pl"></A>pl</B> [<I>-float</I>] [<I>-zclip</I>] [<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | &quot;|&quot; <I>filter</DT>
-</I><DD>The &quot;pl&quot; command creates a UNIX plot of the current MGED display.  If an <I>output_file</I> is specified, the plot is stored in that file.  If a <I>filter</I> is specified, the output is sent to that <I>filter</I>.  The <I>-float</I> option requests a plot file with real numbers rather than integers.  The <I>-zclip</I> option requests that the plot be clipped to the viewing cube in the Z-direction.  The <I>-2d</I> option requests a two-dimensional plot (the default is 3D). The <I>-grid</I> option is intended to include a grid in the plot, but is currently not implemented.  This command uses the <I>dm-plot</I> display manager.  The <A HREF="#plot">plot</A> command performs the same function, but does not use the <I>dm-plot</I> display manager.</DD>
-<FONT SIZE=4><DT>Examples:</DT>
-</FONT><TT><DD>mged&gt;</TT> <B>pl -float | pldebug</DD>
-</DL><DIR>
-
-</B><FONT SIZE=2><P>-- Create a UNIX plot of the current MGED display and pipe the results to the <I>pldebug</I> command.</P></DIR>
-
-<P><HR ALIGN="RIGHT"></P>
-</FONT><B><DL>
 <DT><A NAME="plot"></A>plot</B> [<I>-float</I>] [<I>-zclip</I>] [<I>-2d</I>] [<I>-grid</I>] <I>out_file</I> | &quot;|&quot; <I>filter</DT>
 </I><DD>The &quot;plot&quot; command creates a UNIX plot of the current MGED display.  If an <I>output_file</I> is specified, the plot is stored in that file.  If a <I>filter</I> is specified, the output is sent to that <I>filter</I>.  The <I>-float</I> option requests a plot file with real numbers rather than integers.  The <I>-zclip</I> option requests that the plot be clipped to the viewing cube in the Z-direction.  The <I>-2d</I> option requests a two-dimensional plot (the default is 3D). The <I>-grid</I> option is intended to include a grid in the plot, but is currently not implemented.  This command does not use the <I>dm-plot</I> display manager.  The <A HREF="#pl">pl</A> command performs the same function, but does use the <I>dm-plot</I> display manager.</DD>
 <FONT SIZE=4><DT>Examples:</DT>
