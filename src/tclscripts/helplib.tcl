@@ -199,7 +199,7 @@ set helplib_data(dgo_set_outputHandler)	{{[script]}	{get/set output handler scri
 set helplib_data(dgo_set_plOutputMode)	{{[binary|text]}	{get/set the plot output mode}}
 set helplib_data(dgo_set_transparency)	{{obj transparency}	{set transparency of the specified object}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
-set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Experimental drawing (cnuzman)}}
+set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{draw custom data into the wireframe view}}
 set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}
