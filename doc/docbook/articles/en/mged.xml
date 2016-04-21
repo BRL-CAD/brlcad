@@ -5471,9 +5471,6 @@ x 					delete character
   </row>
 <row>
   <entry>
-    <link linkend="pov">pov</link>
-  </entry>
-  <entry>
     <link linkend="prcolor">prcolor</link>
   </entry>
   <entry>
@@ -12724,21 +12721,6 @@ foo.r_xpand/R
     – Create a UNIX plot of the current MGED display and pipe the
     results to the <emphasis>pldebug</emphasis> command.
   </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term xml:id="pov">
-        pov args
-      </term>
-      <listitem>
-        <para>
-          Set the point-of-view (experimental).
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     <emphasis role="strong"></emphasis>
   </para>

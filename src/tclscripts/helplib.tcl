@@ -155,7 +155,6 @@ set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
 set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
 set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
 set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}
-set helplib_data(vo_pov)		{{center quat scale eye_pos perspective} {set point of view}}
 set helplib_data(vo_rmat)		{{[mat]} {set/get the rotation matrix}}
 set helplib_data(vo_rot)		{{"x y z"} {rotate the view}}
 set helplib_data(vo_rotate_about)	{{[e|k|m|v]} {set/get the rotate about point}}

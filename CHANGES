@@ -302,6 +302,8 @@ of BRL-CAD.
 
 7.26.0
 ------
+pov (mged)
+	removed, undocumented command with many alternatives [minimally impacting]
 polybinout (mged)
         removed, undocumented command, use plot [minimally impacting]
 pl (mged)

@@ -3827,7 +3827,6 @@
 *** [[file:../src/libged/comb_std.c][comb_std.c]]
 *** [[file:../src/libged/mater.c][mater.c]]
 *** [[file:../src/libged/prcolor.c][prcolor.c]]
-*** [[file:../src/libged/pov.c][pov.c]]
 *** [[file:../src/libged/inside.c][inside.c]]
 *** [[file:../src/libged/rot.c][rot.c]]
 *** [[file:../src/libged/bot_face_sort.c][bot_face_sort.c]]

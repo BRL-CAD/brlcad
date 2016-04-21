@@ -237,7 +237,6 @@ set mged_help_data(paths)	$helplib_data(wdb_paths)
 set mged_help_data(permute)	{{tuple}	{permute vertices of an ARB}}
 set mged_help_data(plot)	{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
 set mged_help_data(png)		{{[-c r/g/b] [-s size] file}	{save graphics window to PNG image file}}
-set mged_help_data(pov)		$helplib_data(vo_pov)
 set mged_help_data(prcolor)	$helplib_data(wdb_prcolor)
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}

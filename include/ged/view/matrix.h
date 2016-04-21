@@ -162,11 +162,6 @@ GED_EXPORT extern int ged_pmat(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_pmodel2view(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Set point of view
- */
-GED_EXPORT extern int ged_pov(struct ged *gedp, int argc, const char *argv[]);
-
-/**
  * Get/set the view orientation using a quaternion
  */
 GED_EXPORT extern int ged_quat(struct ged *gedp, int argc, const char *argv[]);
