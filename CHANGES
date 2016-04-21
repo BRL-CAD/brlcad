@@ -310,16 +310,16 @@ pl (mged)
         removed, use plot [minimally impacting]
 conf.h
 	removed - replaced with common.h [deprecated 7.0]
-libbu, libbn
-        no longer utilize or require Tcl [7.26 architecture change]
+Tcl in libbu and libbn
+        no longer utilize or require Tcl [dependency eliminated]
 include/dg.h
         implementation detail no longer being exposed, use libged [deprecated 7.22]
 autogen.sh && configure
 	GNU Autotools build system -> CMake build system [deprecated 7.20]
 Dunn camera and Canon printer tools
-	dunncolor [ deprecated 7.16 ]
-	dunnsnap [ deprecated 7.16 ]
-	canonize [ deprecated 7.16 ]
+	dunncolor [deprecated 7.16]
+	dunnsnap [deprecated 7.16]
+	canonize [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
 include/bu.h
@@ -351,7 +351,7 @@ mged
 	-n option -> -c option [deprecated 7.14]
 	per_line [deprecated 7.14]
 SGI-specific tools
-	pl-sgi -> pl-fb [ deprecated 7.16 ]
+	pl-sgi -> pl-fb [deprecated 7.16]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
 src/librt/cmd.c
