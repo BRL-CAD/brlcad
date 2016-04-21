@@ -23,6 +23,7 @@ set(man5_EN
   dsp.xml
   ${CMAKE_CURRENT_BINARY_DIR}/attributes.xml
   burst_point_library.xml
+  burst_shotline_files.xml
   bw.xml
   cmap.xml
   pix.xml
