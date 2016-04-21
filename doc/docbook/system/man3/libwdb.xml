@@ -348,8 +348,7 @@ as a region.
 "matname" is either a NULL pointer, or a pointer to a string
 containing the material property name.
 "matparm" is either a NULL pointer, or a pointer to a string
-containing the material property parameter information,
-which is material-specific (and still experimental).
+containing the material property parameter information specific to that material.
 Color is passed as an array of three unsigned chars in "rgb".
 Color "inherit" is a boolean, and if true, the color and material
 properties will be passed from upper-level objects to lower-level
