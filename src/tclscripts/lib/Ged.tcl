@@ -6450,7 +6450,7 @@ package provide cadwidgets::Ged 1.0
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add wmater		{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
     $help add x 		{{[lvl]} {print solid table & vector list}}
-    $help add xpush		{{object} {Experimental Push Command}}
+    $help add xpush		{{object} {push matrices onto primitives, creating copies as needed}}
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}

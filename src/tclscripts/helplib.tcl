@@ -134,7 +134,7 @@ set helplib_data(wdb_version)		{{} {returns the database version}}
 set helplib_data(wdb_whatid)		{{region} {return the specified region's id}}
 set helplib_data(wdb_whichair)		{{code(s)} {find regions with the specified air code(s)}}
 set helplib_data(wdb_whichid)		{{[-s] id(s)} {find regions with the specified id(s)}}
-set helplib_data(wdb_xpush)		{{object} {push object path transformations to solids, creating solids if necessary}}
+set helplib_data(wdb_xpush)		{{object} {push matrices onto primitives, creating copies as needed}}
 
 set helplib_data(vo_aet)		{{[-i] ["az el tw"]} {set/get the azimuth, elevation and twist}}
 set helplib_data(vo_ae2dir)		{{[-i] az el} {return the view direction}}
