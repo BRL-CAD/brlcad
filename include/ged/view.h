@@ -70,17 +70,6 @@ GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
 					       int allow_split,
 					       struct solid *freesolid);
 GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
-/* When finalized, this stuff belongs in a header file of its own */
-struct polygon_header {
-    uint32_t magic;             /* magic number */
-    int ident;                  /* identification number */
-    int interior;               /* >0 => interior loop, gives ident # of exterior loop */
-    vect_t normal;                      /* surface normal */
-    unsigned char color[3];     /* Color from containing region */
-    int npts;                   /* number of points */
-};
-#define POLYGON_HEADER_MAGIC 0x8623bad2
-GED_EXPORT extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
 GED_EXPORT extern int invent_solid(struct bu_list *hdlp, struct db_i *dbip, void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int), char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid, int csoltab);
 
@@ -120,11 +109,6 @@ GED_EXPORT extern int ged_plot(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_png(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_screen_grab(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Write out polygons (binary) of the currently displayed geometry.
- */
-GED_EXPORT extern int ged_polybinout(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Create a postscript file of the view.

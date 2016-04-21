@@ -253,7 +253,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"permute", f_permute, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
-    {"polybinout", f_polybinout, GED_FUNC_PTR_NULL},
     {"pov", cmd_pov, GED_FUNC_PTR_NULL},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},

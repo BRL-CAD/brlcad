@@ -4097,7 +4097,6 @@
 *** [[file:../src/libged/nmg_mm.c][nmg_mm.c]]
 *** [[file:../src/libged/red.c][red.c]]
 *** [[file:../src/libged/nmg_kill_f.c][nmg_kill_f.c]]
-*** [[file:../src/libged/polybinout.c][polybinout.c]]
 *** [[file:../src/libged/zoom][zoom]]
 **** [[file:../src/libged/zoom/zoom.c][zoom.c]]
 *** [[file:../src/libged/pmodel2view.c][pmodel2view.c]]

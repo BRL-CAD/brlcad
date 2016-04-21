@@ -147,7 +147,6 @@ extern int f_opendb(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_param(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_permute(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_plot(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_polybinout(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_prefix(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_press(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_ps(ClientData, Tcl_Interp *, int, const char *[]);

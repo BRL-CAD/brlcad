@@ -5468,9 +5468,6 @@ x 					delete character
   <entry>
     <link linkend="plot">plot</link>
   </entry>
-  <entry>
-    <link linkend="polybinout">polybinout</link>
-  </entry>
   </row>
 <row>
   <entry>
@@ -12727,21 +12724,6 @@ foo.r_xpand/R
     – Create a UNIX plot of the current MGED display and pipe the
     results to the <emphasis>pldebug</emphasis> command.
   </para>
-  <para>
-    <emphasis role="strong"></emphasis>
-  </para>
-  <variablelist>
-    <varlistentry>
-      <term xml:id="polybinout">
-        polybinout file
-      </term>
-      <listitem>
-        <para>
-          Store vlist polygons into polygon file (experimental).
-        </para>
-      </listitem>
-    </varlistentry>
-  </variablelist>
   <para>
     <emphasis role="strong"></emphasis>
   </para>

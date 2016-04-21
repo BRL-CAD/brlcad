@@ -302,8 +302,10 @@ of BRL-CAD.
 
 7.26.0
 ------
-pl
-        removed, use plot command instead [minimally impacting]
+polybinout (mged)
+        removed, undocumented command, use plot [minimally impacting]
+pl (mged)
+        removed, use plot [minimally impacting]
 conf.h
 	removed - replaced with common.h [deprecated 7.0]
 libbu, libbn
