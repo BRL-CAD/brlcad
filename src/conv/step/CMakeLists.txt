@@ -111,7 +111,7 @@ if(BRLCAD_ENABLE_AP242)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 
-# IFC work is experimental
+# FIXME: the IFC converter is incomplete
 if(BRLCAD_ENABLE_IFC)
   add_subdirectory(ifc-g)
 endif(BRLCAD_ENABLE_IFC)

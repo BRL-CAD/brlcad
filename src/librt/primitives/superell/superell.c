@@ -23,9 +23,8 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should be considered
- * experimental.  This primitive will exhibit several
- * instabilities in the existing root solver method.
+ * NOTICE: This primitive will exhibit several instabilities in the
+ * existing root solver with certain <n,e> value pairings.
  *
  */
 /** @} */

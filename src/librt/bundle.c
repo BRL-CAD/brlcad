@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/bundle.c
- *
- * NOTE:  This is experimental code right now.
- *
- */
-/** @} */
 
 #include "common.h"
 
