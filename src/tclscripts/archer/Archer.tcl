@@ -2259,43 +2259,47 @@ package provide Archer 1.0
 	}
     }
 
-    # only append bindings once
-    if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
-	bind $itk_interior <Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+    # This bit of code introduces a performance penalty when using the shift-grips --
+    # noticed when manipulating the view while displaying a fairly large geometry.
+    if {0} {
+	# only append bindings once
+	if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
+	    bind $itk_interior <Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+	    bind $itk_interior <Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Control-Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Control-Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <KeyRelease-Control_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Control_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+	}
     }
 
     $itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
