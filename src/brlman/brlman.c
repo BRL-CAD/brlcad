@@ -49,6 +49,9 @@
 #  define MAN_CMDLINE 1
 #endif
 
+/* Supported man sections */
+const char sections[] = {'1', '3', '5', 'n', '\0'};
+
 /*
  * Checks that a string matches the two lower case letter form of ISO 639-1
  * language codes.  List pulled from:
@@ -90,6 +93,29 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
     }
     return -1;
 }
+
+HIDDEN int
+opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    int i = 0;
+    char *s_set = (char *)set_var;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+
+    /* One char only */
+    if (strlen(argv[0]) != 1) return -1;
+
+    while(sections[i]) {
+	if (sections[i] == argv[0][0]) {
+	    if (s_set) (*s_set) = argv[0][0];
+	    return 1;
+	}
+	i++;
+    }
+
+    return -1;
+}
+
 
 HIDDEN char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
@@ -150,14 +176,14 @@ main(int argc, const char **argv)
     int enable_gui = 0;
 #endif
     int disable_gui = 0;
+    int print_help = 0;
     const char *man_cmd = NULL;
     const char *man_name = NULL;
     const char *man_file = NULL;
     char man_section = '\0';
     struct bu_vls lang = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[4];
-    const char sections[] = {'1', '3', '5', 'n', '\0'};
+    struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
@@ -169,10 +195,12 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
-    BU_OPT(d[0], "g", "gui",         "",       NULL, (void *)&enable_gui,  "Enable GUI");
-    BU_OPT(d[1], "",  "no-gui",      "",       NULL, (void *)&disable_gui, "Disable GUI");
-    BU_OPT(d[2], "L", "language",  "lg",  &opt_lang, (void *)&lang,        "Set language");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[0], "h", "help",        "",         NULL, (void *)&print_help,  "Print help and exit");
+    BU_OPT(d[1], "g", "gui",         "",         NULL, (void *)&enable_gui,  "Enable GUI");
+    BU_OPT(d[2], "",  "no-gui",      "",         NULL, (void *)&disable_gui, "Disable GUI");
+    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, (void *)&lang,        "Set language");
+    BU_OPT(d[4], "S", "section",    "#",  &opt_section, (void *)&man_section, "Set section");
+    BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
     argv++; argc--;
@@ -181,6 +209,17 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
+
+    /* If we want help, print help */
+    if (print_help) {
+	const char *option_help = bu_opt_describe(d, NULL);
+	bu_log("Usage: brlman [options] [man_page]\n");
+	if (option_help) {
+	    bu_log("Options:\n%s\n", option_help);
+	    bu_free((char *)option_help, "help str");
+	}
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
 
     /* If we only have one non-option arg, assume it's the man name */
     if (uac == 1) {
@@ -339,6 +378,11 @@ main(int argc, const char **argv)
 	}
 
 	/* Pass the key variables into the interp */
+	if (man_section != '\0') {
+	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+
 	if (man_file) {
 	    Tcl_Obj *pathP, *norm;
 
@@ -351,8 +395,6 @@ main(int argc, const char **argv)
 	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
-	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	} else {
 	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_brlcad_dir("doc", 1));
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
