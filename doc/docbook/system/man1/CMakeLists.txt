@@ -114,6 +114,7 @@ set(man1_EN
   gqa.xml
   halftone.xml
   hex.xml
+  icv.xml
   iges-g.xml
   imgdims.xml
   ir-X.xml
