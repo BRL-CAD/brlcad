@@ -403,6 +403,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	bn_ae_vec(&azimuth, &elevation, ap->a_ray.r_dir);
     }
 
+    if (dfirst > 250000) dfirst = 250000;
+    if (dlast < -250000) dlast = -250000;
+
     bu_vls_printf(&str, SHOT_FMT,
 		  hvcen[0], hvcen[1],
 		  hv[0], hv[1],
@@ -576,10 +579,14 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	}
 	comp_thickness *= MM2IN;
 	/* Check thickness fields for format overflow */
-	if (comp_thickness > 999.99 || air_thickness*MM2IN > 999.9)
-	    fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
-	else
-	    fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
+
+	/* TODO - Are the old limit checks comp_thickness > 999.99
+	 * or air_thickness*MM2IN > 999.9 not valid?  This clamps their
+	 * values to well below those limits... */
+	if (comp_thickness > 99.99) comp_thickness = 99.99;
+	if (air_thickness*MM2IN > 999.9) air_thickness = 999.9;
+	fmt = "%5d%5.2f%5.1f%5.1f%1d%5.1f";
+
 #ifdef SPRINTF_NOT_PARALLEL
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
