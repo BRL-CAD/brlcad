@@ -559,7 +559,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  several options. The location of the burst point is based on the triggering mechanism that
 	  is selected with the burst distance parameter.
 	</para>
-	
+
 	<refsection xml:id="bursting_1_2_1">
 	  <title>Burst on Armor</title>
 	  <para>
@@ -642,9 +642,9 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	    bursting methods, burst armor and burst air are not used.
 	  </para>
 	</refsection>
-      	
+
       </refsection>
-      
+
       <refsection xml:id="bursting_2_2">
 	<title>Sampling Cone Half Angle</title>
 	<para>
@@ -654,7 +654,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  angle is 45 degrees.
 	</para>
       </refsection>
-      
+
       <refsection xml:id="bursting_2_3">
 	<title>Deflected Sampling Cone</title>
 	<para>
@@ -668,7 +668,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  or no argument about whether or not to divert the cone axis.
 	</para>
       </refsection>
-      
+
       <refsection xml:id="bursting_2_4">
 	<title>Number of Sampling Rays</title>
 	<para>
@@ -678,7 +678,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  less.
 	</para>
       </refsection>
-      
+
       <refsection xml:id="bursting_2_5">
 	<title>Maximum Barriers</title>
 	<para>
@@ -694,18 +694,18 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
       </refsection>
 
     </refsection>
-    
+
   </refsection>
-  
+
   <refsection xml:id="burst_input_file_options">
     <title>Input File Options</title>
-    
+
      <refsection xml:id="bursting_io_1">
       <title>Target-Related Input Files</title>
       <para>
 	This group of commands is for specification of target-specific input files.
       </para>
-      
+
       <refsection xml:id="bursting_io_1_1">
 	<title>Target Data Base File</title>
 	<para>
@@ -723,7 +723,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  given.
 	</para>
       </refsection>
-      
+
       <refsection xml:id="bursting_io_1_2">
 	<title>Ident List Input Files</title>
 	<para>
@@ -741,7 +741,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 9005
 	  </literallayout>
 	</para>
-	
+
 	<refsection xml:id="bursting_io_1_2_1">
 	  <title>Burst-Armor and Burst-Air Ident Files</title>
 	  <para>
@@ -753,7 +753,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	    immediately followed by burst air a burst point will be triggered.
 	  </para>
 	</refsection>
-	
+
 	<refsection xml:id="bursting_io_1_2_2">
 	  <title>Critical Component Idents</title>
 	  <para>
@@ -763,9 +763,9 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	    <command>critical-comp-file</command> command if burst points are to be generated.
 	  </para>
 	</refsection>
-	
+
       </refsection>
-      
+
       <refsection xml:id="bursting_1_3">
 	<title>Color Mapping Input Files</title>
 	<para>
@@ -789,12 +789,12 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  </literallayout>
 	</para>
       </refsection>
-      
+
     </refsection>
 
     <refsection xml:id="bursting_io_2">
       <title>Project-Related Input Files</title>
-      
+
       <refsection xml:id="bursting_io_2_1">
 	<title>Reading Session Files</title>
 	<para>
@@ -804,7 +804,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  <link linkend="burst_commands">Command Input</link> for the format of this file.
 	</para>
       </refsection>
-      
+
       <refsection xml:id="bursting_io_2_2">
 	<title>Shotline and Burst Point Input Files</title>
 	<para>
@@ -813,11 +813,11 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	  <link linkend="bursting_1_1">Input Discrete Burst Points</link>.
 	</para>
       </refsection>
-      
+
     </refsection>
-    
+
   </refsection>
-  
+
   <refsection xml:id="burst_output_file_options">
     <title>Output File Options</title>
     <para>
@@ -832,7 +832,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
       file created by a previous session of the burst program, but these files may be concatenated
       after the fact.
     </para>
-    
+
     <refsection xml:id="burst_of_1">
       <title>Burst Point Library File</title>
       <para>
@@ -840,7 +840,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	point library. If the file exists, it will be truncated by this command.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_2">
       <title>Shotline File</title>
       <para>
@@ -848,7 +848,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	shotline file. If the file exists, it will be truncated by this command.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_3">
       <title>Plot File</title>
       <para>
@@ -904,7 +904,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	      <entry>255</entry>
 	      <entry>default outside air intersection</entry>
 	    </row>
-	    
+
 	    <row>
 	      <entry>lt green</entry>
 	      <entry>100</entry>
@@ -920,18 +920,18 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	      <entry>255</entry>
 	      <entry>default critical component intersection</entry>
 	    </row>
-	    
+
 	  </tbody>
 	</tgroup>
       </table>
     </para>
-      
+
       <para>
 	If the user has specified a color mapping file with the <command>color-file</command> command,
 	then those colors will be used rather than the above colors for all shotline/ray intersections.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_4">
       <title>Frame Buffer Image</title>
       <para>
@@ -939,7 +939,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	user with immediate feedback about a run. The grid is displayed graphically and each cell
 	location is dynamically color coded to show its current status. The following table describes
 	the color mapping associated with the grid:
-	
+
 	<table>
 	  <title>Color Key for Frame Buffer Image</title>
 	  <tgroup cols="5">
@@ -984,7 +984,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 		<entry>200</entry>
 		<entry>shot missed target</entry>
 	      </row>
-	      
+
 	      <row>
 		<entry>white</entry>
 		<entry>255</entry>
@@ -1016,7 +1016,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 		<entry>255</entry>
 		<entry>a ground burst occurred</entry>
 	      </row>
-	      
+
 	    </tbody>
 	  </tgroup>
 	</table>
@@ -1029,7 +1029,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	command and shaded using a lighting model illuminated from the viewing direction.
       </para>
     </refsection>
-    
+
     <refsection xml:id="burst_of_5">
       <title>Grid File</title>
       <para>
@@ -1041,7 +1041,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	information is not saved, just the grid offsets for each shotline.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_6">
       <title>Script File</title>
       <para>
@@ -1055,7 +1055,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	but the commands read in by the latter will.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_7">
       <title>Error Log</title>
       <para>
@@ -1066,7 +1066,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	or, if in batch mode, on the <command>burst</command> program’s standard error output.
       </para>
     </refsection>
-        
+
     <refsection xml:id="burst_of_8">
       <title>Histogram File</title>
       <para>
@@ -1076,7 +1076,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
 	a histogram, for instance, how many rays hit zero, one, two, three, etc. components.
       </para>
     </refsection>
-    
+
   </refsection>
 
   <refsection xml:id="burst_menu_system">
@@ -1121,7 +1121,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
       window at the bottom of the display. If there is enough output the user may find it difficult to read it all
       before it scrolls out of sight. Also, the user may wish to save these diagnostics for later reference; overlap
       diagnostics from the ray tracer are useful in fixing errors in the geometry of the target description. The
-      error-file command will divert this output to a file. 
+      error-file command will divert this output to a file.
     </para>
   </refsection>
 
@@ -1132,7 +1132,7 @@ depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
       <citerefentry><refentrytitle>burst_shotline_files</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     </para>
   </refsection>
-  
+
   <refsection xml:id="bug_reports">
     <title>BUG REPORTS</title>
     <para>
