@@ -19,6 +19,7 @@
     <command>lc</command>
        <group choice="opt" rep="norepeat">
 	 <arg choice="plain" rep="norepeat">-d</arg>
+	 <arg choice="plain" rep="norepeat">-m</arg>
 	 <arg choice="plain" rep="norepeat">-s</arg>
        </group>
        <arg choice="opt" rep="norepeat">-r</arg>
@@ -66,6 +67,18 @@
 	  'material_id' and 'los'.  In addition to the output of '-d', it lists
 	  those cases where 'region_id' is the same but 'material_id' and/or
 	  'los' are different.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-m</option></term>
+      <listitem>
+	<para>
+	  Specifies to list only regions with shared 'region_id' values where one
+	  or more of the objects in the set of objects defined by shared 'region_id'
+	  value reports a different 'material_id' and/or 'los'.  Essentially, this
+	  allows users to quickly find and resolve inconsistent 'material_id' and
+	  'los' settings within a 'region_id' group.
 	</para>
       </listitem>
     </varlistentry>
