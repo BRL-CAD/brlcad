@@ -84,6 +84,7 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
+  burst
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
