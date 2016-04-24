@@ -66,20 +66,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
-* explore possibility of expanding dm command to accept object names
-  as a way of tweaking display manager specific properties (wireframe vs
-  solid drawing, shading on normals, etc.) that are currently controlled
-  only via the draw command.  Many of the undocumented (or poorly documented)
-  draw options are very specific and there are many more possible similar
-  options that aren't defined.  Initial though is to allow passing "dm"
-  subcommands to draw (maybe --dm key=val or some such) and using the dm
-  command to offer display type aware hooks (for example, solid drawing isn't
-  a valid option in text mode display, so options about how to shade normals
-  don't make much sense.  On the other hand, a full scene graph could have many
-  per-object display options the user (or application) would want to tweak on a per
-  object basis, e.g. dm obj.r transparency 0.3. Hard wiring draw options isn't
-  going to be flexible or usable enough - need something similar to the new
-  dm ability to supply dm-backend specific options to the user.
+* Explore possibility of expanding dm command to accept object names
+  as a way of tweaking display manager specific properties (wireframe
+  vs solid drawing, shading on normals, etc.) that are currently
+  controlled only via the draw command.  Many of the undocumented (or
+  poorly documented) draw options are very specific and there are many
+  more possible similar options that aren't defined.  Initial thought
+  is to allow passing "dm" subcommands to draw (maybe --dm key=val or
+  some such) and using the dm command to offer display type aware
+  hooks (for example, solid drawing isn't a valid option in text mode
+  display, so options about how to shade normals don't make much
+  sense.  On the other hand, a full scene graph could have many
+  per-object display options the user (or application) would want to
+  tweak on a per object basis, e.g. dm obj.r transparency 0.3. Hard
+  wiring draw options isn't going to be flexible or user friendly;
+  need something similar to the new dm ability to supply dm-backend
+  specific options to the user.
 
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
