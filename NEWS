@@ -14,6 +14,8 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
+* extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
 * improved draw command manual page documenation - Cliff Yapp
 * added -m option to lc to report disjoint mat/los values - Cliff Yapp
 * added icv tool for image format conversion - Cliff Yapp
