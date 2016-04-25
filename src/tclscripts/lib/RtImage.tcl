@@ -95,19 +95,17 @@ proc rtimage {rtimage_dict} {
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
 	    -F $_port \
 	    -V $ar \
 	    -R \
 	    -A 0.9 \
 	    -p $_perspective \
 	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-	    -c [list viewsize $_viewsize] \
-	    -c [eval list orientation $_orientation] \
-	    -c [eval list eye_pt $_eye_pt] \
+	    "-c {viewsize $_viewsize}" \
+	    "-c {orientation $_orientation}" \
+	    "-c {eye_pt $_eye_pt}" \
 	    $_dbfile]
-
-	lappend $_benchmark_mode
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -143,24 +141,21 @@ proc rtimage {rtimage_dict} {
 		}
 
 		if {[llength $ce_objects]} {
-		    set coMode "-c {set ov=1}"
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n \
-				 -F $_port \
+		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+		                 -F $_port \
 				 -V $ar \
 				 -R \
 				 -A 0.9 \
 				 -p $_perspective \
-				 -c [list $fgMode] \
-				 -c [list $bgMode] \
-				 $coMode \
-				 -c [list [list viewsize $_viewsize]] \
-				 -c [list [eval list orientation $_orientation]] \
-				 -c [list [eval list eye_pt $_eye_pt]] \
+				 "-c {$fgMode}" \
+				 "-c {$bgMode}" \
+				 "-c {set ov=1}" \
+				 "-c {viewsize $_viewsize}" \
+				 "-c {orientation $_orientation}" \
+				 "-c {eye_pt $_eye_pt}" \
 				 $_dbfile]
-
-		    lappend $_benchmark_mode
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -189,19 +184,17 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -o $tgi \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgi \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
 		     $_dbfile]
-
-	lappend $_benchmark_mode
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -212,19 +205,17 @@ proc rtimage {rtimage_dict} {
 	#
 	catch {eval exec $cmd >& $_log_file} curr_pid
 
-	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -o $tgfci \
+	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	             -o $tgfci \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
 		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
+		     "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
 		     $_dbfile]
-
-	lappend $_benchmark_mode
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -274,26 +265,22 @@ proc rtimage {rtimage_dict} {
 	    set coMode "-c {set om=$_occmode} -c {set oo=\\\"$occlude_objects\\\"}"
 	    set bgMode [list set bg=[lindex $_necolor 0],[lindex $_necolor 1],[lindex $_necolor 2]]
 	} else {
-	    set coMode "-c {set ov=1}"
+	    set coMode ""
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n \
-		     -F $_port \
+	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+	             -F $_port \
 		     -V $ar \
 		     -R \
 		     -A 0.9 \
 		     -p $_perspective \
-		     -c [list $fgMode] \
-		     -c [list $bgMode] \
-		     $coMode \
-		     -c [list [list viewsize $_viewsize]] \
-		     -c [list [eval list orientation $_orientation]] \
-		     -c [list [eval list eye_pt $_eye_pt]] \
-		     [list $_dbfile]]
-
-	lappend $_benchmark_mode
-
+		     "-c {$fgMode}" \
+		     "-c {$bgMode}" $coMode \
+	             "-c {viewsize $_viewsize}" \
+		     "-c {orientation $_orientation}" \
+		     "-c {eye_pt $_eye_pt}" \
+		     $_dbfile]
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}

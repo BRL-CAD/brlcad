@@ -81,7 +81,6 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E remove_directory distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX} ${CMAKE_COMMAND} -E tar xzf ../${CPACK_SOURCE_PACKAGE_FILE_NAME}.tar.gz
-  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${install_dir}
   COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/distcheck-${TARGET_SUFFIX}-initstat.cmake
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Extracting TGZ archive... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Configuring... "
@@ -94,6 +93,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} ${CMAKE_COMMAND} --build . --target check @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Run build-directory unit, benchmark and regression testing... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory..."
+  COMMAND ${CMAKE_COMMAND} -E make_directory distcheck-${TARGET_SUFFIX}/${install_dir}
   COMMAND ${CMAKE_COMMAND} -E chdir distcheck-${TARGET_SUFFIX}/${CPACK_SOURCE_PACKAGE_FILE_NAME} @DISTCHECK_INSTALL_CMD@ @TARGET_REDIRECT@
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Install from tgz build directory... Done."
   COMMAND ${CMAKE_COMMAND} -E echo "-- distcheck-${TARGET_SUFFIX} - Test distclean rule..."

@@ -28,7 +28,7 @@
 
 /* If expected_str is NULL, check that return code is zero */
 void
-compare(const char *input, const char *expected_str, path_component_t type)
+compare(const char *input, const char *expected_str, bu_path_component_t type)
 {
     struct bu_vls component = BU_VLS_INIT_ZERO;
     int found = bu_path_component(&component, input, type);
@@ -107,12 +107,6 @@ main(int argc, char *argv[])
 	    break;
 	case 4:
 	    compare(argv[1], control, BU_PATH_EXT);
-	    break;
-	case 5:
-	    compare(argv[1], control, (path_component_t)BU_MIME_IMAGE);
-	    break;
-	case 6:
-	    compare(argv[1], control, (path_component_t)BU_MIME_MODEL);
 	    break;
 	default:
 	    bu_log("Error - unknown component\n");

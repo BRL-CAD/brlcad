@@ -90,6 +90,12 @@ namespace eval RaytraceWizard {
     #
     proc main { args } {
 
+	# As of now we haven't drawn anything
+	set ::first_draw 1
+
+	# Initial BoT drawing limit set to 5000
+	set ::bot_threshold 5000
+
 	#
 	# Create the Feedback
 	#

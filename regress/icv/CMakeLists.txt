@@ -12,6 +12,7 @@ macro(Add_Image_Test testname testtype depends_list)
   set(TARGET_IMAGE ${${testname}_TARGET_IMAGE})
   set(LOG_FILE ${${testname}_LOG_FILE})
   set(STAMP_FILE "${CMAKE_CURRENT_BINARY_DIR}/${testname}.done")
+  set(deps_list pixcmp icv ${depends_list})
   if ("${testtype}" STREQUAL "IMPORT")
     configure_file("${CMAKE_CURRENT_SOURCE_DIR}/regress-icv_import.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake" @ONLY)
   endif ("${testtype}" STREQUAL "IMPORT")
@@ -21,13 +22,13 @@ macro(Add_Image_Test testname testtype depends_list)
   add_custom_command(
     OUTPUT ${STAMP_FILE}
     COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake"
-    DEPENDS pixcmp icv ${depends_list}
+    DEPENDS pixcmp icv ${deps_list}
     )
 
   add_test(NAME regress-icv-${testname} COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_CURRENT_BINARY_DIR}/regress-${testname}.cmake")
-  add_custom_target(regress-icv-${testname} DEPENDS ${depends_list} ${STAMP_FILE})
+  add_custom_target(regress-icv-${testname} DEPENDS ${deps_list} ${STAMP_FILE})
   set_target_properties(regress-icv-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
-  Add_Regression_Test(icv-${testname} "${depends_list}")
+  Add_Regression_Test(icv-${testname} "${deps_list}")
 
   add_dependencies(regress-icv regress-icv-${testname})
 

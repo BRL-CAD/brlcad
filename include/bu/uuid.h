@@ -30,9 +30,9 @@
 
 
 #ifdef HAVE_STATIC_ARRAYS
-#define STATIC_ARRAY(x) static (x)
+#  define STATIC_ARRAY(x) static (x)
 #else
-#define STATIC_ARRAY(x) (x)
+#  define STATIC_ARRAY(x) (x)
 #endif
 
 
@@ -70,16 +70,16 @@ bu_uuid_compare(const void *uuid_left, const void *uuid_right);
  * the result and will need to manually convert this into a string or
  * add braces as desired by the calling application.  For example:
  *
-@code
-uint8_t uuid[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
-                    0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
-char uuidstr[39] = {0};
-(void)bu_uuid_encode(uuid, (uint8_t *)(uuidstr+1));
-uuidstr[0] = '{';
-uuidstr[sizeof(uuidstr)-2] = '}';
-uuidstr[sizeof(uuidstr)-1] = '\0';
-printf("UUID is %s\n", uuidstr);
-@endcode
+ @code
+ uint8_t uuid[16] = {0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+ 0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff};
+ char uuidstr[39] = {0};
+ (void)bu_uuid_encode(uuid, (uint8_t *)(uuidstr+1));
+ uuidstr[0] = '{';
+ uuidstr[sizeof(uuidstr)-2] = '}';
+ uuidstr[sizeof(uuidstr)-1] = '\0';
+ printf("UUID is %s\n", uuidstr);
+ @endcode
  */
 BU_EXPORT int
 bu_uuid_encode(const uint8_t uuid[STATIC_ARRAY(16)], uint8_t cp[STATIC_ARRAY(37)]);

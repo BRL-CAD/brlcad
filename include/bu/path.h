@@ -154,8 +154,8 @@ typedef enum {
     BU_PATH_BASENAME_EXTLESS,  /*!< file */
     BU_PATH_EXT,               /*!< ext */
     BU_PATH_EXTLESS,           /*!< /dir1/dir2/file */
-    BU_PATH_UNKNOWN            /*!< marks end of path_component_t enums */
-} path_component_t;
+    BU_PATH_UNKNOWN            /*!< marks end of bu_path_component_t enums */
+} bu_path_component_t;
 
 /**
  * Attempt to extract a component from a file path.
@@ -167,7 +167,7 @@ typedef enum {
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
 	                               const char *path,
-	                               path_component_t type);
+	                               bu_path_component_t type);
 
 
 /**

@@ -368,6 +368,7 @@ main(int argc, const char **argv)
 	if (strlen(result) > 0 && status == TCL_ERROR) {
 	    bu_log("%s\n", result);
 	}
+	Tcl_DeleteInterp(interp);
 #else
 	/* Shouldn't get here - should be caught by above tests */
 	bu_exit(EXIT_FAILURE, "Error: graphical man display is not supported.");

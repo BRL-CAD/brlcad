@@ -94,7 +94,6 @@ namespace eval RtWizard {
 	# type.
 	#
 	set fcp [$::wizardInstance enable fullColor]
-	[$fcp component useMe] select
     }
 
     #
@@ -131,8 +130,7 @@ namespace eval RtWizard {
 	#
 	# Get the view info
 	#
-	set viewPage [$::exp getViewPage]
-	set viewInfo [$viewPage getEyeModel]
+	set viewInfo [$::mgedObj gedCmd get_eyemodel]
 	set view_info [regsub -all ";" $viewInfo ""]
 	set vdata [split $view_info "\n"]
 	set viewsize [lindex [lindex $vdata 0] 1]
@@ -153,7 +151,7 @@ namespace eval RtWizard {
 
 	# Get the perspective angle
 	#
-	set perspective [$viewPage getPerspective]
+	set perspective [$::mgedObj gedCmd perspective]
 
 	if {$::tcl_platform(platform) == "windows"} {
 	    set pid_filename "NUL"
@@ -202,7 +200,6 @@ namespace eval RtWizard {
 	       } else {
 		   set kill_cmd [auto_execok kill]
 	       }
-
 	       if {$kill_cmd != ""} {
 		   eval exec $kill_cmd $fbpid
 	       }

@@ -108,6 +108,7 @@ main(int argc, const char **argv)
     if (strlen(result) > 0 && status == TCL_ERROR) {
 	bu_log("%s\n", result);
     }
+    Tcl_DeleteInterp(interp);
 
     return status;
 #endif /* HAVE_TK */

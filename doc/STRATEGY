@@ -241,8 +241,9 @@ activities, and aims to coordinate development activity.
 
 **** TODO task
 
-     A task is immiently actionable and should take less than 1 month
-     of full-time uninterrupted effort.
+     A task is actionable work that should take less than 1 month of
+     full-time uninterrupted effort, generally estimated as 0-4 weeks,
+     with 0 for tasks estimated to take less than 2 days.
 
 
 # Local Variables:

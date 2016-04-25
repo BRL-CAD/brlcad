@@ -86,15 +86,36 @@ opt_desc_is_null(const struct bu_opt_desc *ds)
     return (non_null > 0) ? 0 : 1;
 }
 
+HIDDEN int
+opt_is_filtered(struct bu_opt_desc *d, int f_ac, char **f_av, int accept)
+{
+    int i = 0;
+    if (!d || !f_av || f_ac == 0) return accept;
+    for (i = 0; i < f_ac; i++) {
+	if (d->shortopt && strlen(d->shortopt) > 0) {
+	    if (BU_STR_EQUAL(d->shortopt, f_av[i])) return !accept;
+	}
+	if (d->longopt && strlen(d->longopt) > 0) {
+	    if (BU_STR_EQUAL(d->longopt, f_av[i])) return !accept;
+	}
+    }
+    return accept;
+}
+
 HIDDEN const char *
 bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *settings)
 {
     size_t i = 0;
     size_t j = 0;
     size_t opt_cnt = 0;
-    int offset = 2;
-    int opt_cols = 28;
-    int desc_cols = 50;
+    int offset = BU_OPT_DEFAULT_OFFSET;
+    int opt_cols = BU_OPT_DEFAULT_OPT_COLS;
+    int desc_cols = BU_OPT_DEFAULT_DESC_COLS;
+    char *input = NULL;
+    char **filtered_argv = NULL;
+    int filtered_argc = 0;
+    int accept = 0;
+
     /*
     bu_opt_desc_t desc_type = BU_OPT_FULL;
     bu_opt_format_t format_type = BU_OPT_ASCII;
@@ -105,9 +126,19 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     if (!ds || opt_desc_is_null(&ds[0])) return NULL;
 
     if (settings) {
-	offset = settings->offset;
-	opt_cols = settings->option_columns;
-	desc_cols = settings->description_columns;
+	if (settings->offset >= 0) offset = settings->offset;
+	if (settings->option_columns >= 0) opt_cols = settings->option_columns;
+	if (settings->description_columns >= 0) desc_cols = settings->description_columns;
+	if (settings->reject && settings->accept) {
+	    bu_log("Error - bu_opt_describe_internal_ascii passed both an accept and a reject list for option filtering\n");
+	    return NULL;
+	}
+	if (settings->reject || settings->accept) {
+	    input = (settings->reject) ? bu_strdup(settings->reject) : bu_strdup(settings->accept);
+	    filtered_argv = (char **)bu_calloc(strlen(input) + 1, sizeof(char *), "argv array");
+	    filtered_argc = bu_argv_from_string(filtered_argv, strlen(input), input);
+	    if (settings->accept) accept = 1;
+	}
     }
 
     while (!opt_desc_is_null(&ds[i])) i++;
@@ -119,97 +150,111 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
 	struct bu_opt_desc *curr;
 	struct bu_opt_desc *d;
 	curr = &(ds[i]);
-	if (!status[i]) {
-	    struct bu_vls opts = BU_VLS_INIT_ZERO;
-	    struct bu_vls help_str = BU_VLS_INIT_ZERO;
 
-	    /* We handle all entries with the same set_var in the same
-	     * pass, so set the status flags accordingly */
-	    j = i;
-	    while (j < opt_cnt) {
-		d = &(ds[j]);
-		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
-		    status[j] = 1;
-		}
-		j++;
-	    }
+	if (!opt_is_filtered(curr, filtered_argc, filtered_argv, accept)) {
+	    if (!status[i]) {
+		struct bu_vls opts = BU_VLS_INIT_ZERO;
+		struct bu_vls help_str = BU_VLS_INIT_ZERO;
 
-	    /* Collect the short options first - may be multiple instances with
-	     * the same set_var, so accumulate all of them. */
-	    j = i;
-	    while (j < opt_cnt) {
-		d = &(ds[j]);
-		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
-		    if (d->shortopt && strlen(d->shortopt) > 0) {
-			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-			int new_len = strlen(d->arg_helpstr);
-			if (!new_len) {
-			    bu_vls_sprintf(&tmp_arg, "-%s", d->shortopt);
-			    new_len = 2;
-			} else {
-			    bu_vls_sprintf(&tmp_arg, "-%s %s", d->shortopt, d->arg_helpstr);
-			    new_len = new_len + 4;
+		/* We handle all entries with the same set_var in the same
+		 * pass, so set the status flags accordingly */
+		j = i;
+		while (j < opt_cnt) {
+		    d = &(ds[j]);
+		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) status[j] = 1;
 			}
-			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
-			} else {
-			    bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
-			}
-			bu_vls_free(&tmp_arg);
 		    }
-		    /* While we're at it, pick up the string.  The last string with
-		     * a matching key wins, as long as its not empty */
-		    if (strlen(d->help_string) > 0) bu_vls_sprintf(&help_str, "%s", d->help_string);
+		    j++;
 		}
-		j++;
-	    }
 
-	    /* Now do the long opts */
-	    j = i;
-	    while (j < opt_cnt) {
-		d = &(ds[j]);
-		if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
-		    if (d->longopt && strlen(d->longopt) > 0) {
-			struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
-			int new_len = strlen(d->arg_helpstr);
-			if (!new_len) {
-			    bu_vls_sprintf(&tmp_arg, "--%s", d->longopt);
-			    new_len = strlen(d->longopt) + 2;
-			} else {
-			    bu_vls_sprintf(&tmp_arg, "--%s %s", d->longopt, d->arg_helpstr);
-			    new_len = strlen(d->longopt) + new_len + 3;
+		/* Collect the short options first - may be multiple instances with
+		 * the same set_var, so accumulate all of them. */
+		j = i;
+		while (j < opt_cnt) {
+		    d = &(ds[j]);
+		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
+				if (d->shortopt && strlen(d->shortopt) > 0) {
+				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
+				    int new_len = strlen(d->arg_helpstr);
+				    if (!new_len) {
+					bu_vls_sprintf(&tmp_arg, "-%s", d->shortopt);
+					new_len = 2;
+				    } else {
+					bu_vls_sprintf(&tmp_arg, "-%s %s", d->shortopt, d->arg_helpstr);
+					new_len = new_len + 4;
+				    }
+				    if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+					bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+					bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
+				    } else {
+					bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
+				    }
+				    bu_vls_free(&tmp_arg);
+				}
+				/* While we're at it, pick up the string.  The last string with
+				 * a matching key wins, as long as its not empty */
+				if (strlen(d->help_string) > 0) bu_vls_sprintf(&help_str, "%s", d->help_string);
+			    }
 			}
-			if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
-			    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
-			    bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
-			} else {
-			    bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
-			}
-			bu_vls_free(&tmp_arg);
 		    }
+		    j++;
 		}
-		j++;
-	    }
 
-	    bu_vls_trunc(&opts, -2);
-	    bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
-	    if ((int)bu_vls_strlen(&opts) > opt_cols) {
-		bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
-	    } else {
-		bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
+		/* Now do the long opts */
+		j = i;
+		while (j < opt_cnt) {
+		    d = &(ds[j]);
+		    if (d == curr || (d->set_var && curr->set_var && d->set_var == curr->set_var)) {
+			if ((!d->arg_process && !curr->arg_process) || (d->arg_process && curr->arg_process && d->arg_process == curr->arg_process)) {
+			    if (!opt_is_filtered(d, filtered_argc, filtered_argv, accept)) {
+				if (d->longopt && strlen(d->longopt) > 0) {
+				    struct bu_vls tmp_arg = BU_VLS_INIT_ZERO;
+				    int new_len = strlen(d->arg_helpstr);
+				    if (!new_len) {
+					bu_vls_sprintf(&tmp_arg, "--%s", d->longopt);
+					new_len = strlen(d->longopt) + 2;
+				    } else {
+					bu_vls_sprintf(&tmp_arg, "--%s %s", d->longopt, d->arg_helpstr);
+					new_len = strlen(d->longopt) + new_len + 3;
+				    }
+				    if ((int)bu_vls_strlen(&opts) + new_len + offset + 2 > opt_cols + desc_cols) {
+					bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&opts));
+					bu_vls_sprintf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
+				    } else {
+					bu_vls_printf(&opts, "%s, ", bu_vls_addr(&tmp_arg));
+				    }
+				    bu_vls_free(&tmp_arg);
+				}
+			    }
+			}
+		    }
+		    j++;
+		}
+
+		bu_vls_trunc(&opts, -2);
+		bu_vls_printf(&description, "%*s%s", offset, " ", bu_vls_addr(&opts));
+		if ((int)bu_vls_strlen(&opts) > opt_cols) {
+		    bu_vls_printf(&description, "\n%*s", opt_cols + offset, " ");
+		} else {
+		    bu_vls_printf(&description, "%*s", opt_cols - (int)bu_vls_strlen(&opts), " ");
+		}
+		if ((int)bu_vls_strlen(&help_str) > desc_cols) {
+		    wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
+		}
+		bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
+		bu_vls_free(&help_str);
+		bu_vls_free(&opts);
+		status[i] = 1;
 	    }
-	    if ((int)bu_vls_strlen(&help_str) > desc_cols) {
-		wrap_help(&help_str, offset, opt_cols+offset, desc_cols);
-	    }
-	    bu_vls_printf(&description, "%*s%s\n", offset, " ", bu_vls_addr(&help_str));
-	    bu_vls_free(&help_str);
-	    bu_vls_free(&opts);
-	    status[i] = 1;
 	}
 	i++;
     }
     finalized = bu_strdup(bu_vls_addr(&description));
+    if (input) bu_free(input, "free filter copy");
     bu_vls_free(&description);
     return finalized;
 }
@@ -458,10 +503,10 @@ opt_is_flag(const char *opt, const struct bu_opt_desc *ds, const char *arg)
      * the option isn't a valid arg for this opt, opt can be a flag */
     if (desc && desc->arg_process) {
 	if (arg) {
-	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, NULL);
+	    arg_offset = (*desc->arg_process)(NULL, 1, &arg, desc->set_var);
 	    if (!arg_offset) return 1;
 	} else {
-	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, NULL);
+	    arg_offset = (*desc->arg_process)(NULL, 0, NULL, desc->set_var);
 	    if (!arg_offset) return 1;
 	}
     }

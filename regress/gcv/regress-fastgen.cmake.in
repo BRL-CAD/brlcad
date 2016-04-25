@@ -8,15 +8,22 @@ set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
 # know what the current build type is.
 if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BDIR "${RBDIR}")
+  set(test_suffix "-Release")
 elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
   set(BDIR "${DBDIR}")
+  set(test_suffix "-Debug")
 else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
   set(BDIR "${SBDIR}")
+  set(test_suffix)
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
 set(FAST4G "${BDIR}/fast4-g${EXE}")
 set(GDIFF "${BDIR}/gdiff${EXE}")
+
+# Clean up in case we've run before
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen_unix.g")
+execute_process(COMMAND "@CMAKE_COMMAND@" -E remove "${CBDIR}/fastgen_dos.g")
 
 # Start with the file using standard UNIX line endings
 file(WRITE "${CBDIR}/fastgen.log" "Converting ${CSDIR}/fastgen_box.fast4 (UNIX line endings):\n")
@@ -64,7 +71,7 @@ if(gdiff_result)
   file(APPEND "${CBDIR}/fastgen.log" "\n\ngdiff reports differences between ${CBDIR}/fastgen_unix.g and ${CBDIR}/fastgen_dos.g")
   message(FATAL_ERROR "[fast4-g] Failure, see ${CBDIR}/fastgen.log for more info.\n")
 else(gdiff_result)
-  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/fastgen.done")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@CMAKE_CURRENT_BINARY_DIR@/fastgen${test_suffix}.done")
 endif(gdiff_result)
 
 # Local Variables:

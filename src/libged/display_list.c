@@ -877,6 +877,7 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     struct bu_list vhead;
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
+    struct rt_view_info info;
 
     BU_LIST_INIT(&vhead);
 
@@ -888,10 +889,10 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     }
 
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
-	struct rt_view_info info;
 
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
+	info.threshold = (gvp) ? gvp->gv_threshold : 0;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
 
@@ -902,8 +903,9 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
 
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
+	info.threshold = (gvp) ? gvp->gv_threshold : 0;
 	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
+		tsp->ts_tol, &info);
     }
 
     rt_db_free_internal(ip);

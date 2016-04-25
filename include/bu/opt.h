@@ -222,6 +222,13 @@ typedef enum {
     BU_OPT_DOCBOOK /* TODO */
 } bu_opt_format_t;
 
+
+/* Default values for offset, option columns and description columns - the "magic numbers"
+ * used to print help if the user doesn't specify anything */
+#define BU_OPT_DEFAULT_OFFSET 2
+#define BU_OPT_DEFAULT_OPT_COLS 28
+#define BU_OPT_DEFAULT_DESC_COLS 50
+
 /**
  * Construct a textual description of the options defined by
  * the array.
@@ -234,6 +241,9 @@ typedef enum {
  *
  * Opt_col specifies how wide the options column is, and desc_cols
  * specifies how wide the description column is.
+ *
+ * This structure is currently experimental and likely will change
+ * as we find out what is needed.
  */
 
 /* TODO - support actually using the struct... */
@@ -250,7 +260,17 @@ struct bu_opt_desc_opts {
     /* Report the longopt version(s) of an option
      * even when it has a shortopt */
     int show_all_longopts;
+    /* It may not be desirable to print all options -
+     * the caller may supply a space separated list
+     * of options to accept or reject.  Only one list
+     * may be supplied at a time - filtering is either
+     * accept or reject, not both at once.*/
+    const char *accept;
+    const char *reject;
 };
+
+#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, BU_OPT_DEFAULT_OFFSET, BU_OPT_DEFAULT_OPT_COLS, \
+    BU_OPT_DEFAULT_DESC_COLS, NULL, NULL, NULL, 1, NULL, NULL }
 
 /**
  *
