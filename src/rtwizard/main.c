@@ -31,6 +31,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/path.h"
 #include "bu/ptbl.h"
 #include "bu/opt.h"
 #include "bu/str.h"
@@ -44,36 +45,48 @@ extern int Itcl_Init(Tcl_Interp *);
 #define RTWIZARD_SIZE_DEFAULT 512
 
 struct rtwizard_settings {
+    int use_gui;
+    int no_gui;
+    int verbose;
+
     struct bu_ptbl *color;
     struct bu_ptbl *ghost;
     struct bu_ptbl *line;
-    int use_gui;
-    int no_gui;
+
     struct bu_vls *input_file;
+    struct bu_vls *output_file;
     struct bu_vls *fb_dev;
     int port;
+    struct bu_vls *log_file;
+    struct bu_vls *pid_file;
+
     size_t width;
     int width_set;
     size_t height;
     int height_set;
     size_t size; /* Assumes square - width and height - overridden by width and height */
     int size_set;
+
     struct bu_color *bkg_color;
     struct bu_color *line_color;
     struct bu_color *non_line_color;
+
     double ghosting_intensity;
     int occlusion;
     int benchmark;
     int cpus;
+
     /* View model */
     double viewsize;
     quat_t orientation;
     vect_t eye_pt;
+
     /* View settings */
     double az, el, tw;
     double perspective;
     double zoom;
     vect_t center;
+
 };
 
 struct rtwizard_settings * rtwizard_settings_create() {
@@ -87,10 +100,18 @@ struct rtwizard_settings * rtwizard_settings_create() {
     bu_ptbl_init(s->color, 8, "color init");
     bu_ptbl_init(s->ghost, 8, "ghost init");
     bu_ptbl_init(s->line, 8, "line init");
-    BU_GET(s->fb_dev, struct bu_vls);
-    bu_vls_init(s->fb_dev);
+
     BU_GET(s->input_file, struct bu_vls);
     bu_vls_init(s->input_file);
+    BU_GET(s->output_file, struct bu_vls);
+    bu_vls_init(s->output_file);
+    BU_GET(s->fb_dev, struct bu_vls);
+    bu_vls_init(s->fb_dev);
+    BU_GET(s->log_file, struct bu_vls);
+    bu_vls_init(s->log_file);
+    BU_GET(s->pid_file, struct bu_vls);
+    bu_vls_init(s->pid_file);
+
     BU_GET(s->bkg_color, struct bu_color);
     (void)bu_color_from_rgb_floats(s->bkg_color, white);
     BU_GET(s->line_color, struct bu_color);
@@ -100,11 +121,21 @@ struct rtwizard_settings * rtwizard_settings_create() {
     s->benchmark = 0;
     s->port = -1;
     s->cpus = 0;
-    s->az = 35;
-    s->el = 25;
-    s->tw = 0;
-    s->zoom = 1.0;
-    s->perspective = 0;
+
+    s->az = DBL_MAX;
+    s->el = DBL_MAX;
+    s->tw = DBL_MAX;
+    s->perspective = DBL_MAX;
+    s->zoom = DBL_MAX;
+    VSETALL(s->center, DBL_MAX);
+
+    s->viewsize = DBL_MAX;
+    s->orientation[0] = DBL_MAX;
+    s->orientation[1] = DBL_MAX;
+    s->orientation[2] = DBL_MAX;
+    s->orientation[3] = DBL_MAX;
+    VSETALL(s->eye_pt, DBL_MAX);
+
     s->occlusion = 1;
     s->ghosting_intensity = 12.0;
     s->width = RTWIZARD_SIZE_DEFAULT;
@@ -116,6 +147,8 @@ struct rtwizard_settings * rtwizard_settings_create() {
 
     s->use_gui = 0;
     s->no_gui = 0;
+
+    s->verbose = 0;
     return s;
 }
 
@@ -136,6 +169,13 @@ void rtwizard_settings_destroy(struct rtwizard_settings *s) {
     BU_PUT(s->fb_dev, struct bu_vls);
     bu_vls_free(s->input_file);
     BU_PUT(s->input_file, struct bu_vls);
+    bu_vls_free(s->output_file);
+    BU_PUT(s->output_file, struct bu_vls);
+    bu_vls_free(s->log_file);
+    BU_PUT(s->log_file, struct bu_vls);
+    bu_vls_free(s->pid_file);
+    BU_PUT(s->pid_file, struct bu_vls);
+
 
     BU_PUT(s, struct rtwizard_settings);
 }
@@ -157,16 +197,59 @@ int rtwizard_info_sufficient(struct bu_vls *msg, struct rtwizard_settings *s, ch
 	    }
 	    break;
 	case 'B':
+	    if (BU_PTBL_LEN(s->line) == 0) {
+		bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		ret = 0;
+	    }
 	    break;
 	case 'C':
-	    break;
 	case 'D':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->line) == 0) {
+		if (BU_PTBL_LEN(s->line) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+	    }
 	    break;
 	case 'E':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->ghost) == 0) {
+		if (BU_PTBL_LEN(s->ghost) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "ghost", "-g"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+	    }
+	    break;
+	case 'F':
+	    if (BU_PTBL_LEN(s->color) == 0 || BU_PTBL_LEN(s->line) == 0 || BU_PTBL_LEN(s->ghost) == 0) {
+		if (BU_PTBL_LEN(s->ghost) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "ghost", "-g"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->color) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "color", "-c"));
+		    ret = 0;
+		}
+		if (BU_PTBL_LEN(s->line) == 0) {
+		    bu_vls_printf(msg, "%s", RTW_TERR_MSG(type, "line", "-e"));
+		    ret = 0;
+		}
+	    }
 	    break;
 	default:
 	    /* If we don't have a type, make sure we've got *some* object in at
 	     * least one of the object lists */
+	    if (BU_PTBL_LEN(s->color) == 0 && BU_PTBL_LEN(s->line) == 0 && BU_PTBL_LEN(s->ghost) == 0) {
+		bu_vls_printf(msg, "Error: please specify at least one color, line, or ghost object.\n");
+		ret = 0;
+	    }
 	    break;
     }
 
@@ -254,7 +337,7 @@ opt_letter(struct bu_vls *msg, int argc, const char **argv, void *l)
 	return -1;
     }
 
-    if (argv[0][0] != 'A' && argv[0][0] != 'B' && argv[0][0] != 'C' && argv[0][0] != 'D' && argv[0][0] != 'E') {
+    if (argv[0][0] != 'A' && argv[0][0] != 'B' && argv[0][0] != 'C' && argv[0][0] != 'D' && argv[0][0] != 'E' && argv[0][0] != 'F') {
 	if (msg) bu_vls_printf(msg, "Invalid letter specifier for rtwizard type: %c\n", argv[0][0]);
 	return -1;
     }
@@ -318,7 +401,7 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 	/* Can't be just the first arg */
 	bu_free(str1, "free tmp str");
     }
-    /* First string didn't have three numbers - maybe we have 4 args ? */
+    /* First string didn't have the numbers - maybe we have 4 args ? */
     if (argc >= 4) {
 	/* We might have four numbers - find out */
 	fastf_t q1, q2, q3, q4;
@@ -352,36 +435,50 @@ opt_quat(struct bu_vls *msg, int argc, const char **argv, void *inq)
 void print_rtwizard_state(struct rtwizard_settings *s) {
     size_t i = 0;
     struct bu_vls slog = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&slog, "color:");
+
+    bu_vls_printf(&slog, "use_gui: %d\n", s->use_gui);
+    bu_vls_printf(&slog, "no_gui: %d\n", s->no_gui);
+    bu_vls_printf(&slog, "verbose: %d\n", s->verbose);
+
+
+    bu_vls_printf(&slog, "color objs:");
     for (i = 0; i < BU_PTBL_LEN(s->color); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->color, i));
     }
-    bu_vls_printf(&slog, "\nghost:");
+    bu_vls_printf(&slog, "\nghost objs:");
     for (i = 0; i < BU_PTBL_LEN(s->ghost); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->ghost, i));
     }
-    bu_vls_printf(&slog, "\nline:");
+    bu_vls_printf(&slog, "\nline objs:");
     for (i = 0; i < BU_PTBL_LEN(s->line); i++) {
 	bu_vls_printf(&slog, " %s", (const char *)BU_PTBL_GET(s->line, i));
     }
     bu_vls_printf(&slog, "\n\n");
-    bu_vls_printf(&slog, "use_gui: %d\n", s->use_gui);
-    bu_vls_printf(&slog, "no_gui: %d\n", s->no_gui);
+
+    bu_vls_printf(&slog, "input_file: %s\n", bu_vls_addr(s->input_file));
+    bu_vls_printf(&slog, "output_file: %s\n", bu_vls_addr(s->output_file));
     bu_vls_printf(&slog, "fb_dev: %s\n", bu_vls_addr(s->fb_dev));
     bu_vls_printf(&slog, "port: %d\n", s->port);
-    bu_vls_printf(&slog, "size: %d\n", s->size);
-    bu_vls_printf(&slog, "width: %d\n", s->width);
-    bu_vls_printf(&slog, "height: %d\n", s->height);
+    bu_vls_printf(&slog, "log_file: %s\n", bu_vls_addr(s->log_file));
+    bu_vls_printf(&slog, "pid_file: %s\n", bu_vls_addr(s->pid_file));
+
+    bu_vls_printf(&slog, "width(%d): %d\n", s->width_set, s->width);
+    bu_vls_printf(&slog, "height(%d): %d\n", s->height_set, s->height);
+    bu_vls_printf(&slog, "size(%d): %d\n", s->size_set, s->size);
     bu_vls_printf(&slog, "bkg_color: %d,%d,%d\n", (int)s->bkg_color->buc_rgb[0], (int)s->bkg_color->buc_rgb[1], (int)s->bkg_color->buc_rgb[2]);
     bu_vls_printf(&slog, "line_color: %d,%d,%d\n", (int)s->line_color->buc_rgb[0], (int)s->line_color->buc_rgb[1], (int)s->line_color->buc_rgb[2]);
     bu_vls_printf(&slog, "non_line_color: %d,%d,%d\n", (int)s->non_line_color->buc_rgb[0], (int)s->non_line_color->buc_rgb[1], (int)s->non_line_color->buc_rgb[2]);
-    bu_vls_printf(&slog, "ghosting intensity: %f\n", s->ghosting_intensity);
+
+    bu_vls_printf(&slog, "\nghosting intensity: %f\n", s->ghosting_intensity);
     bu_vls_printf(&slog, "occlusion: %d\n", s->occlusion);
+    bu_vls_printf(&slog, "benchmark: %d\n", s->benchmark);
     bu_vls_printf(&slog, "cpus: %d\n", s->cpus);
-    bu_vls_printf(&slog, "viewsize: %f\n", s->viewsize);
+
+    bu_vls_printf(&slog, "\nviewsize: %f\n", s->viewsize);
     bu_vls_printf(&slog, "quat: %f,%f,%f,%f\n", s->orientation[0], s->orientation[1], s->orientation[2], s->orientation[3]);
     bu_vls_printf(&slog, "eye_pt: %f,%f,%f\n", s->eye_pt[0], s->eye_pt[1], s->eye_pt[2]);
-    bu_vls_printf(&slog, "az,el,tw: %f,%f,%f\n", s->az, s->el, s->tw);
+
+    bu_vls_printf(&slog, "\naz,el,tw: %f,%f,%f\n", s->az, s->el, s->tw);
     bu_vls_printf(&slog, "perspective: %f\n", s->perspective);
     bu_vls_printf(&slog, "zoom: %f\n", s->zoom);
     bu_vls_printf(&slog, "center: %f,%f,%f\n", s->center[0], s->center[1], s->center[2]);
@@ -390,21 +487,22 @@ void print_rtwizard_state(struct rtwizard_settings *s) {
     bu_vls_free(&slog);
 }
 
-int rtwizard_imgformat_supported(const char *fmt) {
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_DPIX")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PIX")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PNG")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_PPM")) return 1;
-    if (BU_STR_EQUAL(fmt, "BU_MIME_IMAGE_BW")) return 1;
+int rtwizard_imgformat_supported(int fmt) {
+    if (fmt == BU_MIME_IMAGE_DPIX) return 1;
+    if (fmt == BU_MIME_IMAGE_PIX) return 1;
+    if (fmt == BU_MIME_IMAGE_PNG) return 1;
+    if (fmt == BU_MIME_IMAGE_PPM) return 1;
+    if (fmt == BU_MIME_IMAGE_BW) return 1;
     return 0;
 }
 
 void
 Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 {
+    size_t i = 0;
     struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
 
-    (void)Tcl_Eval(interp, "namespace eval RtWizard{}");
+    (void)Tcl_Eval(interp, "namespace eval RtWizard {}");
 
     if (s->use_gui) {
 	bu_vls_sprintf(&tcl_cmd, "set ::use_gui 1");
@@ -416,13 +514,26 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) %s", bu_vls_addr(s->input_file));
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (s->verbose) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(verbose) %d", s->verbose);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (bu_vls_strlen(s->input_file)) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) %s", bu_vls_addr(s->input_file));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (bu_vls_strlen(s->output_file)) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) %s", bu_vls_addr(s->output_file));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
 
     if (bu_vls_strlen(s->fb_dev)) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_device) %s", bu_vls_addr(s->fb_dev));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
+
     if (s->port > -1) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(fbserv_port) %d", s->port);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
@@ -441,6 +552,63 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     if (s->size_set) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(size) %d", s->size);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	if (!s->width_set) {
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(width) %d", s->size);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+	if (!s->height_set) {
+	    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(scanlines) %d", s->size);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(color_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (BU_PTBL_LEN(s->color) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(s->color); i++) {
+	    const char *obj = (const char *)BU_PTBL_GET(s->color, i);
+	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(color_objlist) %s", obj);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghost_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (BU_PTBL_LEN(s->ghost) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(s->ghost); i++) {
+	    const char *obj = (const char *)BU_PTBL_GET(s->ghost, i);
+	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(ghost_objlist) %s", obj);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+    }
+
+    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(line_objlist) {}");
+    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    if (BU_PTBL_LEN(s->line) > 0) {
+	for (i = 0; i < BU_PTBL_LEN(s->line); i++) {
+	    const char *obj = (const char *)BU_PTBL_GET(s->line, i);
+	    bu_vls_sprintf(&tcl_cmd, "lappend ::RtWizard::wizard_state(line_objlist) %s", obj);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+    }
+
+    {
+	unsigned char rgb[3];
+	(void) bu_color_to_rgb_chars(s->bkg_color, (unsigned char *)rgb);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(bg_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    {
+	unsigned char rgb[3];
+	(void) bu_color_to_rgb_chars(s->line_color, (unsigned char *)rgb);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(e_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    {
+	unsigned char rgb[3];
+	(void) bu_color_to_rgb_chars(s->non_line_color, (unsigned char *)rgb);
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ne_color) %d/%d/%d", (int)rgb[0], (int)rgb[1], (int)rgb[2]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(ghosting_intensity) %0.15f", s->ghosting_intensity);
@@ -450,7 +618,7 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
     if (s->benchmark) {
-	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode 1");
+	bu_vls_sprintf(&tcl_cmd, "set ::benchmark_mode \"-B\"");
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -459,40 +627,82 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_azimuth) %0.15f", s->az);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_elevation) %0.15f", s->el);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_twist) %0.15f", s->tw);
-    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
-
-    if (s->perspective > 0) {
+    if (s->az < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_azimuth) %0.15f", s->az);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->el < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_elevation) %0.15f", s->el);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->tw < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(init_twist) %0.15f", s->tw);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->perspective < DBL_MAX) {
 	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(perspective) %0.15f", s->perspective);
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
+    if (s->zoom < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(zoom) %0.15f", s->zoom);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+    if (s->center[0] < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(x_center) %0.15f", s->center[0]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(y_center) %0.15f", s->center[1]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(z_center) %0.15f", s->center[2]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+
+    if (s->viewsize < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(viewsize) %0.15f", s->viewsize);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->orientation[0] < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(orientation) \"%0.15f %0.15f %0.15f %0.15f\"", s->orientation[0], s->orientation[1], s->orientation[2], s->orientation[3]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (s->eye_pt[0] < DBL_MAX) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(eye_pt) \"%0.15f %0.15f %0.15f\"", s->eye_pt[0], s->eye_pt[1], s->eye_pt[2]);
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (bu_vls_strlen(s->log_file)) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) %s", bu_vls_addr(s->log_file));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
+    if (bu_vls_strlen(s->pid_file)) {
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) %s", bu_vls_addr(s->pid_file));
+	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+    }
+
 
 }
 
 int
 main(int argc, char **argv)
 {
-    int verbose = 0;
+    int ac;
+    char **av;
     int need_help = 0;
     int uac = 0;
     int i = 0;
     char type = '\0';
-    struct bu_vls out_fname = BU_VLS_INIT_ZERO;
-    struct bu_vls logfile = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    struct bu_vls info_msg = BU_VLS_INIT_ZERO;
     struct rtwizard_settings *s = rtwizard_settings_create();
-    struct bu_opt_desc d[33];
+    struct bu_opt_desc d[34];
     BU_OPT(d[0],  "h", "help",          "",          NULL,            &need_help,    "Print help and exit");
-    BU_OPT(d[1],  "",  "gui",           "",          &bu_opt_int,     &s->use_gui,   "Force use of GUI.");
-    BU_OPT(d[2],  "",  "no-gui",        "",          &bu_opt_vls,     &s->no_gui,    "Do not use GUI, even if information is insufficient.");
+    BU_OPT(d[1],  "",  "gui",           "",          NULL,            &s->use_gui,   "Force use of GUI.");
+    BU_OPT(d[2],  "",  "no-gui",        "",          NULL,            &s->no_gui,    "Do not use GUI, even if available information is insufficient to generate image.");
     BU_OPT(d[3],  "i", "input-file",    "filename",  &bu_opt_vls,     s->input_file, "Input .g database file");
-    BU_OPT(d[4],  "o", "output-file",   "filename",  &bu_opt_vls,     &out_fname,    "Image output file name");
+    BU_OPT(d[4],  "o", "output-file",   "filename",  &bu_opt_vls,     s->output_file, "Image output file name");
     BU_OPT(d[5],  "d", "fbserv-device", "/dev/*",    &bu_opt_vls,      s->fb_dev,    "Device for framebuffer viewing");
     BU_OPT(d[6],  "p", "fbserv-port",   "#",         &bu_opt_int,     &s->port,      "Port # for framebuffer");
     BU_OPT(d[7],  "w", "width",         "#",         &opt_width,       s,            "Output image width (overrides -s)");
@@ -512,21 +722,28 @@ main(int argc, char **argv)
     BU_OPT(d[21], "e", "elevation",     "#[.#]",     &bu_opt_fastf_t, &s->el,        "Set elevation");
     BU_OPT(d[22], " ", "twist",         "#[.#]",     &bu_opt_fastf_t, &s->tw,        "Set twist");
     BU_OPT(d[23], "P",  "perspective",  "#[.#]",     &bu_opt_fastf_t, &s->perspective, "Set perspective");
-    BU_OPT(d[24], "t", "type",          "A|B|C|D|E", &opt_letter,     &type,         "Specify RtWizard picture type");
+    BU_OPT(d[24], "t", "type",          "A|B|C|D|E|F", &opt_letter,     &type,         "Specify RtWizard picture type");
     BU_OPT(d[25], "z", "zoom",          "#[.#] ",    &bu_opt_fastf_t, &s->zoom,      "Set zoom");
     BU_OPT(d[26], "",  "center",        "x,y,z",     &bu_opt_vect_t,  &s->center,    "Set view center");
     BU_OPT(d[27], "",  "viewsize",      "#[.#}",     &bu_opt_fastf_t, &s->viewsize,  "Set view size");
     BU_OPT(d[28], "",  "orientation",   "#[.#]/#[.#]/#[.#]/#[.#]", &opt_quat, &s->orientation,    "Set view orientation");
     BU_OPT(d[29], "",  "eye_pt",        "x,y,z",     &bu_opt_vect_t,  &s->eye_pt,    "set eye point");
-    BU_OPT(d[30], "v", "verbose",       "#",         &bu_opt_int,     &verbose,      "Verbosity");
-    BU_OPT(d[31], "",  "log-file",      "filename",  &bu_opt_vls,     &logfile,      "Log debugging output to this file");
-    BU_OPT_NULL(d[32]);
+    BU_OPT(d[30], "v", "verbose",       "#",         &bu_opt_int,     &s->verbose,      "Verbosity");
+    BU_OPT(d[31], "",  "log-file",      "filename",  &bu_opt_vls,     s->log_file,      "Log debugging output to this file");
+    BU_OPT(d[32], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
+    BU_OPT_NULL(d[33]);
 
     /* Skip first arg */
     argv++; argc--;
+
+    /* Save args for tcl */
+    ac = argc;
+    av = bu_dup_argv(argc, (const char **)argv);
+
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
+	bu_free_argv(ac, av);
 	bu_exit(1, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
@@ -540,8 +757,8 @@ main(int argc, char **argv)
 	s->no_gui = 0;
     }
 
-    print_rtwizard_state(s);
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
+	bu_free_argv(ac, av);
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
@@ -551,13 +768,14 @@ main(int argc, char **argv)
 	bu_log("av[%d]: %s\n", i, argv[i]);
 	/* First, see if we have an input .g file */
 	if (bu_vls_strlen(s->input_file) == 0) {
-	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_MODEL)) {
-		if (BU_STR_EQUAL(bu_vls_addr(&c), "BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY")) {
+	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
+		if (bu_file_mime(bu_vls_addr(&c), BU_MIME_MODEL) == BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY) {
 		    if (bu_file_exists(argv[i],NULL)) {
 			bu_vls_sprintf(s->input_file, "%s", argv[i]);
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
+			bu_free_argv(ac, av);
 			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
 		    }
 		}
@@ -565,10 +783,10 @@ main(int argc, char **argv)
 	}
 	bu_vls_trunc(&c, 0);
 	/* Next, see if we have an image specified as an output destination */
-	if (bu_vls_strlen(&out_fname) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
-	    if (bu_path_component(&c, argv[i], (path_component_t) BU_MIME_IMAGE)) {
-		if (rtwizard_imgformat_supported(bu_vls_addr(&c))) {
-		    bu_vls_sprintf(&out_fname, "%s", argv[i]);
+	if (bu_vls_strlen(s->output_file) == 0 && bu_vls_strlen(s->fb_dev) == 0) {
+	    if (bu_path_component(&c, argv[i], BU_PATH_EXT)) {
+		if (rtwizard_imgformat_supported(bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE))) {
+		    bu_vls_sprintf(s->output_file, "%s", argv[i]);
 		    /* This looks like the output image name - don't add it to the color list */
 		    continue;
 		}
@@ -578,119 +796,47 @@ main(int argc, char **argv)
 	bu_ptbl_ins(s->color, (long *)bu_strdup(argv[i]));
     }
 
+    if (!rtwizard_info_sufficient(&info_msg, s, type)) {
+	if ((!s->use_gui) && (!s->no_gui)) {
+	    s->use_gui = 1;
+	} else {
+	    bu_log("%s", bu_vls_addr(&info_msg));
+	    bu_vls_free(&info_msg);
+	    bu_exit(EXIT_FAILURE, "Fatal: insufficient information to generate image");
+	}
+    }
+    bu_vls_free(&info_msg);
+
+    print_rtwizard_state(s);
+
     /* For now, all roads lead to Tcl. */
 
-    /* TODO - this tcl initialization is common (more or less) to btclsh, bwish,
-     * mged, and any other C programs wanting to lauch Tcl/Tk.  Should be
-     * refactored into a libtclcad function. */
     {
 	int status = 0;
-	int try_auto_path = 0;
-	int init_tcl = 1;
-	int init_itcl = 1;
-
+	struct bu_vls tlog = BU_VLS_INIT_ZERO;
 	struct bu_vls tcl_cmd = BU_VLS_INIT_ZERO;
-	Tcl_Interp *interpreter = Tcl_CreateInterp();
-	const char *rtwizard = bu_brlcad_data("tclscripts/rtwizard", 1);
+	const char *rtwizard = NULL;
+	Tcl_Interp *interp = Tcl_CreateInterp();
 
-	/* a two-pass init loop.  the first pass just tries default init
-	 * routines while the second calls tclcad_auto_path() to help it
-	 * find other, potentially uninstalled, resources.
-	 */
-	while (1) {
-
-	    /* not called first time through, give Tcl_Init() a chance */
-	    if (try_auto_path) {
-		/* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-		tclcad_auto_path(interpreter);
-	    }
-
-	    /* Initialize Tcl */
-	    Tcl_ResetResult(interpreter);
-	    if (init_tcl && Tcl_Init(interpreter) == TCL_ERROR) {
-		if (!try_auto_path) {
-		    try_auto_path = 1;
-		    continue;
-		}
-		bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-		break;
-	    }
-	    init_tcl = 0;
-
-	    /* Initialize [incr Tcl] */
-	    Tcl_ResetResult(interpreter);
-	    /* NOTE: Calling "package require Itcl" here is apparently
-	     * insufficient without other changes elsewhere (per MGED comment,
-	     * but package require should work - why doesn't it??).
-	     */
-	    if (init_itcl && Itcl_Init(interpreter) == TCL_ERROR) {
-		if (!try_auto_path) {
-		    Tcl_Namespace *nsp;
-
-		    try_auto_path = 1;
-		    /* Itcl_Init() leaves initialization in a bad state
-		     * and can cause retry failures.  cleanup manually.
-		     */
-		    Tcl_DeleteCommand(interpreter, "::itcl::class");
-		    nsp = Tcl_FindNamespace(interpreter, "::itcl", NULL, 0);
-		    if (nsp)
-			Tcl_DeleteNamespace(nsp);
-		    continue;
-		}
-		bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-		break;
-	    }
-	    init_itcl = 0;
-
-	    /* don't actually want to loop forever */
-	    break;
-
-	} /* end iteration over Init() routines that need auto_path */
-	Tcl_ResetResult(interpreter);
-
-	/* if we haven't loaded by now, load auto_path so we find our tclscripts */
-	if (!try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts */
-	    tclcad_auto_path(interpreter);
+	/* The subsequent Tcl scripts will take of Tk, so at this
+	 * level we need only the standard init */
+	status = tclcad_init(interp, 0, &tlog);
+	if (status == TCL_ERROR) {
+	    bu_log("tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
 	}
+	bu_vls_free(&tlog);
 
-	/*XXX FIXME: Should not be importing Itcl into the global namespace */
-	/* Import [incr Tcl] commands into the global namespace. */
-	if (Tcl_Import(interpreter, Tcl_GetGlobalNamespace(interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	    bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
-	}
+	tclcad_set_argv(interp, ac, (const char **)av);
+	bu_free_argv(ac,av);
 
-	/* Initialize libbu */
-	if (Bu_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
-	}
+	Init_RtWizard_Vars(interp, s);
 
-	/* Initialize libbn */
-	if (Bn_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
-	}
-
-	/* Initialize librt */
-	if (Rt_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
-	}
-
-	/* Initialize libged */
-	if (Go_Init(interpreter) == TCL_ERROR) {
-	    bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(interpreter));
-	    Tcl_ResetResult(interpreter);
-	}
-
-	Init_RtWizard_Vars(interpreter, s);
-
+	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	bu_vls_sprintf(&tcl_cmd, "source %s", rtwizard);
-	status = Tcl_Eval(interpreter, bu_vls_addr(&tcl_cmd));
+	status = Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	bu_log("status %d:\n%s\n", status, Tcl_GetStringResult(interp));
+	bu_vls_free(&tcl_cmd);
     }
-
 
     /* Someday, we want to do this without Tcl via library calls unless
      * the GUI is needed... */

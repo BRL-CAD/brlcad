@@ -1,4 +1,4 @@
-/*                  V L S _ I N T E R N A L S . H
+/*                    V L S _ V P R I N T F . H
  * BRL-CAD
  *
  * Copyright (c) 1998-2016 United States Government as represented by
@@ -18,13 +18,10 @@
  * information.
  */
 
-#ifndef LIBBU_VLS_INTERNALS_H
-#define LIBBU_VLS_INTERNALS_H seen
+#ifndef LIBBU_VLS_VPRINTF_H
+#define LIBBU_VLS_VPRINTF_H seen
 
 /* private constants */
-
-/* minimum vls allocation increment size */
-static const size_t _VLS_ALLOC_STEP = 128;
 
 /* constant bit flags  for var 'vp_part' */
 #define VP_UNKNOWN          0x0001
@@ -57,7 +54,7 @@ BU_EXPORT extern int format_part_status(const char c);
 BU_EXPORT extern int handle_format_part(const int vp_part, vflags_t *f, const char c, const int print);
 BU_EXPORT extern int handle_obsolete_format_char(const char c, const int print);
 
-#endif /* LIBBU_VLS_INTERNALS_H */
+#endif /* LIBBU_VLS_VPRINTF_H */
 
 /*
  * Local Variables:

@@ -2083,6 +2083,9 @@ endif (HAVE_THREAD_LOCAL)
 # see if the compiler supports %z as a size_t print width specifier
 BRLCAD_CHECK_C99_FORMAT_SPECIFIERS()
 
+# see if the compiler supports [static] array hints
+BRLCAD_CHECK_STATIC_ARRAYS()
+
 
 # *******************************************************************
 if(NOT EXISTS "${CMAKE_BINARY_DIR}/CMakeCache.txt.prev")

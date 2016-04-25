@@ -1,4 +1,4 @@
-/*                       H A S H . C
+/*                    B U _ H A S H . C P P
  * BRL-CAD
  *
  * Copyright (c) 2015-2016 United States Government as represented by

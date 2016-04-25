@@ -159,13 +159,19 @@ int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const ui
 
 void rec_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec)
 {
+    double3 can_normal;	// normal to canonical rec
+
     hitp->hit_point = r_pt + r_dir * hitp->hit_dist;
     switch (hitp->hit_surfno) {
 	case REC_NORM_BODY:
-	    /* compute it */
-	    hitp->hit_vpriv.z = 0.0;
-	    hitp->hit_normal = MAT4X3VEC(rec->rec_invRoS, hitp->hit_vpriv);
+	    can_normal = (double3){
+		hitp->hit_vpriv.x,
+		hitp->hit_vpriv.y,
+	        0.0};
+	    hitp->hit_normal = MAT4X3VEC(rec->rec_invRoS, can_normal);
             hitp->hit_normal = normalize(hitp->hit_normal);
+
+	    //hitp->hit_vpriv.z = 0.0;
 	    break;
 	case REC_NORM_TOP:
 	    hitp->hit_normal = vload3(0, rec->rec_Hunit);

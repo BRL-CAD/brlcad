@@ -1,5 +1,4 @@
-#!/bin/sh
-#                         A R C H E R
+#                A R C H E R _ I N I T . T C L
 # BRL-CAD
 #
 # Copyright (c) 2002-2016 United States Government as represented by
@@ -20,7 +19,7 @@
 #
 ###
 #
-# Archer
+# Archer Initialization script
 #
 # Author(s):
 #    Bob Parker
@@ -28,39 +27,10 @@
 #
 # Description:
 #    Main for Archer.
-#
-#\
-ARCHER_HOME=`dirname "$0"`/..
-#\
-export ARCHER_HOME
-# restart using bwish \
-WISH="bwish"
-#\
-for ish in bwish bwish_d ; do
-# see if we're installed \
-    if test -f "${ARCHER_HOME}/bin/$ish" ; then
-#\
-	WISH="${ARCHER_HOME}/bin/$ish"
-#\
-	break;
-#\
-    fi
-# see if we're not installed yet \
-    if test -f "${ARCHER_HOME}/bwish/$ish" ; then
-#\
-	WISH="${ARCHER_HOME}/bwish/$ish"
-#\
-	break;
-#\
-    fi
-#\
-done
-#\
-exec "$WISH" "$0" "$@"
 
-# If we're not launching in the sh script mode (i.e. we're
-# launching via the mged command) argv0 doesn't seem to be
-# populated - try info nameofexecutable
+
+# If we're not launching with argv0 populated (i.e. we're
+# launching via the mged -o option ) try info nameofexecutable
 if {! [info exists argv0] } {
    set argv0 [info nameofexecutable]
 }
@@ -327,6 +297,7 @@ if { $::argc eq 1 } {
    }
 }
 
+
 # do main procedure
 if { [catch {main} _runnable] } {
 	puts "$_runnable"
@@ -335,13 +306,19 @@ if { [catch {main} _runnable] } {
 	puts "Aborting."
 	exit 1
 }
+
 set ::ArcherCore::showWindow 1
 
+# If we don't have bwish in the background, use vwait
+if { [info exists ::no_bwish] } {
+    vwait forever
+}
+
 # Local Variables:
-# mode: sh
+# mode: tcl
 # tab-width: 8
-# sh-indentation: 4
-# sh-basic-offset: 4
+# tcl-indent-level: 4
 # indent-tabs-mode: t
 # End:
 # ex: shiftwidth=4 tabstop=8
+

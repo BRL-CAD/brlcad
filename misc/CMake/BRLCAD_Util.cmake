@@ -239,6 +239,18 @@ macro(SRCS_LANG sourceslist resultvar targetname)
   endif(has_C AND has_CXX)
 endmacro(SRCS_LANG)
 
+#---------------------------------------------------------------------------
+# Add dependencies to a target, but only if they are defined as targets in
+# CMake
+macro(ADD_TARGET_DEPS tname)
+  if(TARGET ${tname})
+    foreach(target ${ARGN})
+      if(TARGET ${target})
+	add_dependencies(${tname} ${target})
+      endif(TARGET ${target})
+    endforeach(target ${ARGN})
+  endif(TARGET ${tname})
+endmacro(ADD_TARGET_DEPS tname)
 
 # Local Variables:
 # tab-width: 8

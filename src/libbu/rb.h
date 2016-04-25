@@ -1,4 +1,4 @@
-/*                  R B _ I N T E R N A L S . H
+/*                           R B . H
  * BRL-CAD
  *
  * Copyright (c) 1998-2016 United States Government as represented by
@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#ifndef LIBBU_RB_INTERNALS_H
-#define LIBBU_RB_INTERNALS_H seen
+#ifndef LIBBU_RB_H
+#define LIBBU_RB_H seen
 
 #include "bu/log.h"
 #include "bu/malloc.h"
@@ -178,7 +178,7 @@ extern void rb_free_node(struct bu_rb_node *node);
  */
 extern void rb_free_package(struct bu_rb_package *package);
 
-#endif /* LIBBU_RB_INTERNALS_H */
+#endif /* LIBBU_RB_H */
 
 
 /*

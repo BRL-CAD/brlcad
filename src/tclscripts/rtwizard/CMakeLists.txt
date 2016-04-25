@@ -65,24 +65,7 @@ set(PictureTypeF_DATA
   )
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
 
-if(BRLCAD_ENABLE_TK)
-  if(WIN32)
-    BRLCAD_MANAGE_FILES("rtwizard.bat" ${BIN_DIR} EXEC)
-  endif(WIN32)
-  BRLCAD_MANAGE_FILES("rtwizard" ${BIN_DIR} EXEC)
-
-  add_custom_target(rtwizard-exec ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard)
-  set_target_properties(rtwizard-exec PROPERTIES FOLDER "BRL-CAD Executables")
-  add_dependencies(rtwizard-exec bwish rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb)
-  if(TARGET tkpng)
-    add_dependencies(rtwizard-exec tkpng)
-  endif(TARGET tkpng)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(rtwizard-exec ${item})
-  endforeach(item ${tclindex_target_list})
-endif(BRLCAD_ENABLE_TK)
-
-CMAKEFILES(examples main.c)
+CMAKEFILES(examples)
 
 # Local Variables:
 # tab-width: 8

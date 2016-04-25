@@ -47,7 +47,7 @@ proc rtimage {rtimage_dict} {
     global tcl_platform
     global env
     set necessary_vars [list _dbfile _port _w _n _viewsize _orientation \
-    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma]
+    _eye_pt _perspective _bgcolor _ecolor _necolor _occmode _gamma _benchmark_mode]
     set necessary_lists [list _color_objects _ghost_objects _edge_objects]
 
     # It's the responsibility of the calling function
@@ -65,7 +65,6 @@ proc rtimage {rtimage_dict} {
     foreach var ${necessary_lists} {
       if {![info exists $var]} { set $var {} }
     }
-
 
     set ar [ expr $_w.0 / $_n.0 ]
 
@@ -95,17 +94,20 @@ proc rtimage {rtimage_dict} {
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1
+
 	set cmd [list [file join $binpath rt] -w $_w -n $_n \
-		     -F $_port \
-		     -V $ar \
-		     -R \
-		     -A 0.9 \
-		     -p $_perspective \
-		     -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
-		     -c [list viewsize $_viewsize] \
-		     -c [eval list orientation $_orientation] \
-		     -c [eval list eye_pt $_eye_pt] \
-		     $_dbfile]
+	    -F $_port \
+	    -V $ar \
+	    -R \
+	    -A 0.9 \
+	    -p $_perspective \
+	    -C [lindex $_bgcolor 0]/[lindex $_bgcolor 1]/[lindex $_bgcolor 2] \
+	    -c [list viewsize $_viewsize] \
+	    -c [eval list orientation $_orientation] \
+	    -c [eval list eye_pt $_eye_pt] \
+	    $_dbfile]
+
+	lappend $_benchmark_mode
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -158,6 +160,8 @@ proc rtimage {rtimage_dict} {
 				 -c [list [eval list eye_pt $_eye_pt]] \
 				 $_dbfile]
 
+		    lappend $_benchmark_mode
+
 		    foreach obj $ce_objects {
 			lappend cmd $obj
 		    }
@@ -197,6 +201,8 @@ proc rtimage {rtimage_dict} {
 		     -c [eval list eye_pt $_eye_pt] \
 		     $_dbfile]
 
+	lappend $_benchmark_mode
+
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
 	}
@@ -217,6 +223,8 @@ proc rtimage {rtimage_dict} {
 		     -c [eval list orientation $_orientation] \
 		     -c [eval list eye_pt $_eye_pt] \
 		     $_dbfile]
+
+	lappend $_benchmark_mode
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -283,6 +291,8 @@ proc rtimage {rtimage_dict} {
 		     -c [list [eval list orientation $_orientation]] \
 		     -c [list [eval list eye_pt $_eye_pt]] \
 		     [list $_dbfile]]
+
+	lappend $_benchmark_mode
 
 	foreach obj $_edge_objects {
 	    lappend cmd $obj

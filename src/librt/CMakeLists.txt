@@ -335,8 +335,25 @@ set(librt_ignored_files
   )
 CMAKEFILES(${librt_ignored_files})
 
+set(CL_FILES
+  primitives/common.cl
+  primitives/rt.cl
+  primitives/solver.cl
+
+  primitives/arb8/arb8_shot.cl
+  primitives/bot/bot_shot.cl
+  primitives/ehy/ehy_shot.cl
+  primitives/ell/ell_shot.cl
+  #primitives/epa/epa_shot.cl
+  primitives/sph/sph_shot.cl
+  primitives/rec/rec_shot.cl
+  primitives/tgc/tgc_shot.cl
+  primitives/tor/tor_shot.cl
+  )
+
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
+BRLCAD_ADDDATA(CL_FILES opencl)
 
 if(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)

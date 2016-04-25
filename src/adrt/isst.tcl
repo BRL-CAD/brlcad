@@ -1,5 +1,7 @@
-#!/bin/sh
-# Copyright (c) 2002-2016 United States Government as represented by
+#                        I S S T . T C L
+# BRL-CAD
+#
+# Copyright (c) 2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -15,31 +17,10 @@
 # License along with this file; see the file named COPYING for more
 # information.
 #
-#\
-ISST_HOME=`dirname $0`/..
-#\
-export ISST_HOME
-# restart using wish \
-WISH="wish"
-#\
-for ish in wish wish-8.5 ; do
-# see if we're installed \
-    if test -f ${ISST_HOME}/bin/$ish ; then
-#\
-        WISH="${ISST_HOME}/bin/$ish"
-#\
-        break;
-#\
-    fi
-#\
-done
-#\
-exec $WISH $0 $@
+###
 
 # open_dm uses this callback, but we don't load the tclscripts/libdm.tcl stuff any more
 proc _init_dm { func w } { }
-
-package require isst
 
 # create ::isst namespace
 namespace eval ::isst {
@@ -229,23 +210,30 @@ proc ::isst::RotMove2 {x y W} {
     set starty $y
 }
 
-if { [info script] == $argv0 } {
-    global az el oglwin
-    ::isst::setup
-    if {$argc == 1} {
-       ::isst::geomlist [lindex $argv 0]
-    }
-    if {$argc == 2} {
-       load_g $oglwin [lindex $argv 0] [lindex $argv 1]
-    }
-    # Do a couple operations to make sure
-    # the view is properly initialized on OSX
-    update
-    walk $oglwin 1
-    walk $oglwin -1
-    update
-    while 1 {
-	update
-	refresh_ogl $oglwin
-    }
+global az el oglwin
+::isst::setup
+if {$argc == 1} {
+   ::isst::geomlist [lindex $argv 0]
 }
+if {$argc == 2} {
+   load_g $oglwin [lindex $argv 0] [lindex $argv 1]
+}
+# Do a couple operations to make sure
+# the view is properly initialized on OSX
+update
+walk $oglwin 1
+walk $oglwin -1
+update
+while 1 {
+    update
+    refresh_ogl $oglwin
+}
+
+# Local Variables:
+# tab-width: 8
+# mode: Tcl
+# c-basic-offset: 4
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8

@@ -870,6 +870,7 @@ _ged_brep_tikz(struct ged *gedp, const char *dp_name, const char *outfile)
     ON_MinMaxInit(&(bbox.m_min), &(bbox.m_max));
     struct bu_ptbl breps = BU_PTBL_INIT_ZERO;
     const char *brep_search = "-type brep";
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
     (void)db_search(&breps, DB_SEARCH_TREE|DB_SEARCH_RETURN_UNIQ_DP, brep_search, 1, &dp, gedp->ged_wdbp->dbip);
     for(size_t i = 0; i < BU_PTBL_LEN(&breps); i++) {
 	struct rt_db_internal bintern;

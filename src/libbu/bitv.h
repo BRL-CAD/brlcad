@@ -1,8 +1,8 @@
-/*                    T E S T _ T I M E R . C
+/*                          B I T V . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2016 United States Government as represented by
- * the U.S. Army Research Laboratory.
+ * Copyright (c) 2014-2016 United States Government as represented by the
+ * U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public License
@@ -18,41 +18,22 @@
  * information.
  */
 
-#include "common.h"
+#ifndef LIBBU_BITV_H
+#define LIBBU_BITV_H seen
 
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
+/* private constants */
 
-#include "bu.h"
+/**
+ * some handy literals for bit twiddling
+ */
+#define BITS_PER_BYTE      8
+#define BITS_PER_HEXCHAR   4
+#define HEXCHARS_PER_BYTE  2
+#define HEX_BASE          16
+#define BINARY_BASE        2
 
+#endif /* LIBBU_BITV_H */
 
-int
-main(int argc, char **argv)
-{
-    int64_t time1, time2;
-    int i = 0;
-    unsigned long counter = 1;
-
-    if (argc > 1)
-	bu_exit(1, "ERROR: Unexpected parameter [%s]\n", argv[0]);
-
-    time1 = bu_gettime();
-    while (i < 1.0e6) {
-	counter++;
-	time2 = bu_gettime();
-	i = time2 - time1;
-    }
-    bu_log("Called bu_gettime() %lu times\n", counter);
-    bu_log("Time delta: %d\n", i);
-    bu_log("time1: %lu\n", (unsigned long)time1);
-    bu_log("time2: %lu\n", (unsigned long)time2);
-
-    return 0;
-}
-
-
-/** @} */
 /*
  * Local Variables:
  * mode: C

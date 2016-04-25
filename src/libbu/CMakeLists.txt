@@ -43,7 +43,7 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  date-time.c
+  datetime.c
   dlfcn.c
   encode.c
   endian.c
@@ -102,8 +102,8 @@ set(LIBBU_SOURCES
   str.c
   temp.c
   thread.cpp
-  timer.c
   units.c
+  uuid.c
   vers.c
   vfont.c
   vlb.c
@@ -128,14 +128,14 @@ add_subdirectory(y2038)
 
 set(bu_ignore_files
   glob.c
-  bu_internals.h
+  bitv.h
   charclass.h
   mime.cmake
   parallel.h
-  rb_internals.h
+  rb.h
   uce-dirent.h
   vfont.h
-  vls_internals.h
+  vls_vprintf.h
   )
 CMAKEFILES(${bu_ignore_files})
 

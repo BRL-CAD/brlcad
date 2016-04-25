@@ -1,4 +1,4 @@
-/*                    I S S T _ T C L T K . C
+/*                           I S S T  . C
  * BRL-CAD
  *
  * Copyright (c) 2005-2016 United States Government as represented by
@@ -17,16 +17,16 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file isst_tcltk.c
+/** @file isst.c
  *
- *  Tcl/Tk wrapper for adrt/tie functionality, used by Tcl/Tk version
- *  of ISST.
+ *  Tcl/Tk version of ISST.
  *
  */
 
 #include "common.h"
 
 #include "bnetwork.h"
+#include "bio.h"
 
 #include <GL/gl.h>
 
@@ -41,24 +41,34 @@
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "camera.h"
-#include "isst.h"
 #include "raytrace.h"
+#include "tclcad.h"
 
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
 static dm *dmp;
-static struct isst_s *isst;
 
-/* ISST functions */
-#ifdef _WIN32
-__declspec(dllexport) int Isst_Init(Tcl_Interp *interp);
-__declspec(dllexport) extern int Issttcltk_Init(Tcl_Interp *interp) { return Isst_Init(interp); }
-#define DM_TYPE_ISST DM_TYPE_WGL
-#else
-#define DM_TYPE_ISST DM_TYPE_OGL
-#endif
+struct isst_s {
+    struct tie_s *tie;
+    struct render_camera_s camera;
+    struct camera_tile_s tile;
+    struct adrt_mesh_s *meshes;
+    tienet_buffer_t buffer_image;
+    int ogl, sflags, w, h, gs, ui;
+    double dt, fps, uic;
+    double rotx, roty;
+    int texid;
+    void *texdata;
+    vect_t camera_pos_init;
+    vect_t camera_focus_init;
+    int64_t t1;
+    int64_t t2;
+    int dirty;
+};
+
+static struct isst_s *isst;
 
 void resize_isst(struct isst_s *);
 
@@ -536,7 +546,7 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = dm_open(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(interp, dm_default_type(), sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");
@@ -590,6 +600,65 @@ Isst_Init(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+#ifdef HAVE_WINDOWS_H
+int APIENTRY
+WinMain(HINSTANCE hInstance,
+	HINSTANCE hPrevInstance,
+	LPSTR lpszCmdLine,
+	int nCmdShow)
+{
+    char **argv;
+    int argc;
+#else
+int
+main(int argc, const char **argv)
+{
+#endif
+    Tcl_DString temp;
+const char *fullname;
+    int status;
+    const char *isst_tcl = NULL;
+    struct bu_vls tlog = BU_VLS_INIT_ZERO;
+    Tcl_Interp *interp = Tcl_CreateInterp();
+
+#ifdef HAVE_WINDOWS_H
+    /* Get our args from the c-runtime. Ignore lpszCmdLine. */
+    argc = __argc;
+    argv = __argv;
+#endif
+
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
+
+#ifdef HAVE_WINDOWS_H
+   Tk_InitConsoleChannels(interp);
+#endif
+
+    status = tclcad_init(interp, 1, &tlog);
+    if (status == TCL_ERROR) {
+	bu_log("Isst tclcad init failure:\n%s\n", bu_vls_addr(&tlog));
+	bu_vls_free(&tlog);
+	bu_exit(1, "tcl init error");
+    }
+
+    status = Isst_Init(interp);
+    if (status == TCL_ERROR) {
+	bu_vls_free(&tlog);
+	bu_exit(1, "Isst Tcl/Tk init error");
+    }
+    bu_vls_free(&tlog);
+
+    /* Skip first arg */
+    argv++; argc--;
+    tclcad_set_argv(interp, argc, argv);
+
+    isst_tcl = bu_brlcad_data("tclscripts/isst/isst.tcl", 1);
+    Tcl_DStringInit(&temp);
+    fullname = Tcl_TranslateFileName(interp, isst_tcl, &temp);
+    status = Tcl_EvalFile(interp, fullname);
+    Tcl_DStringFree(&temp);
+    return status;
+}
 
 /*
  * Local Variables:

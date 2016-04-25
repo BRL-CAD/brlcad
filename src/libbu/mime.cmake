@@ -55,7 +55,6 @@ set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
 set(h_contents "${h_contents}#define BU_MIME_H\n")
 set(h_contents "${h_contents}\n#include \"common.h\"\n")
 set(h_contents "${h_contents}#include \"bu/defines.h\"\n")
-set(h_contents "${h_contents}#include \"bu/path.h\"\n")
 set(h_contents "${h_contents}\n__BEGIN_DECLS\n")
 
 set(c_contents "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to mime definition files:\n * misc/mime.types and misc/mime_cad.types. */\n\n")
