@@ -84,17 +84,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   intuitively, I would expected feeding the results of get_eyemodel to
   eye_pt to result in no change, modulo unit conversions.
 
-* teach pixdiff, rt, and other tools that can/should support the
-  capability to read/write (as appropriate) pixel index values and
-  reproduce the ray fired to create that pixel.  rt's -j option can
-  specify a sub-rectangle, but the key point (whatever the details of
-  implementation) is to be able to easily identify and reproduce the
-  ray that produces a given pixel when debugging.  For example,
-  pixdiff's -l option will report differing pixels by index - rt
-  should support those index specifications as an input option.
-  Another possibility would be to have rt support accepting an input
-  image as a "control" image and generating a file with nirt or rtshot
-  commands for each pixel that reports different from the control.
+* make rt -b accept a pixel index in addition to x,y pixel coordinates
+
+* teach pixdiff and other tools that can/should support the capability
+  to read/write (as appropriate) pixel index values or x,y coordinates
+  and reproduce the ray fired to create that pixel. currently does -l
+  index but not xy coordinates.
 
 * pull work on rm command out of history (commit r67394 reverted it)
   and take it to a production ready stage.
