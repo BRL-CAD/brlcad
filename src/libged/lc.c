@@ -345,7 +345,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	int im = 0;
 	bu_sort((void *) regions, BU_PTBL_LEN(&results2), sizeof(struct region_record), cmp_regions, NULL);
 
-	while (im + 1 < (int)BU_PTBL_LEN(&results2)) {
+	while (im < (int)BU_PTBL_LEN(&results2)) {
 	    int found_all_matches = 0;
 	    int jm = im + 1;
 	    int mismatch = 0;
