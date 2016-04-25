@@ -31,6 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/time.h"
 #include "raytrace.h"
 
 

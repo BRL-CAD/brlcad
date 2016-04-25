@@ -14,6 +14,13 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* added brlman -S option to specify man page section  - Cliff Yapp
+* modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
+* extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
+* improved draw command manual page documenation - Cliff Yapp
+* added lc -m option to report multi-material/los regions - Cliff Yapp
+* added new 'icv' image conversion tool w/ pix, bw, dpix, png, ppm
+	- Mohit Daga, Cliff Yapp, Sean Morrison, Erik Greenwald
 * ported 'burst' tool (batch mode only) to Windows - Cliff Yapp
 * removed mged pl command, use plot command instead - Sean Morrison
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp

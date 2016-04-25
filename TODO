@@ -24,19 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * fix regressions in step-g
 
-* figure out why the following is crashing:
-
-  bin/rtshot -R 1 -p 0 0 0 -d 1 0 0 share/db/havoc.g havoc
-
-  is it related to using bu_hash in some fashion?  This test worked
-  as of r65575
-
-* rtwizard command line ghost image specification isn't working
-  reliably
-
-* drawing datums far from origin result in huge arrowheads
-
-* make sure burst is working
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -66,6 +53,23 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Explore possibility of expanding dm command to accept object names
+  as a way of tweaking display manager specific properties (wireframe
+  vs solid drawing, shading on normals, etc.) that are currently
+  controlled only via the draw command.  Many of the undocumented (or
+  poorly documented) draw options are very specific and there are many
+  more possible similar options that aren't defined.  Initial thought
+  is to allow passing "dm" subcommands to draw (maybe --dm key=val or
+  some such) and using the dm command to offer display type aware
+  hooks (for example, solid drawing isn't a valid option in text mode
+  display, so options about how to shade normals don't make much
+  sense.  On the other hand, a full scene graph could have many
+  per-object display options the user (or application) would want to
+  tweak on a per object basis, e.g. dm obj.r transparency 0.3. Hard
+  wiring draw options isn't going to be flexible or user friendly;
+  need something similar to the new dm ability to supply dm-backend
+  specific options to the user.
+
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
   a sphere with rays randomly going through those points, so we sample
@@ -80,17 +84,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   intuitively, I would expected feeding the results of get_eyemodel to
   eye_pt to result in no change, modulo unit conversions.
 
-* teach pixdiff, rt, and other tools that can/should support the
-  capability to read/write (as appropriate) pixel index values and
-  reproduce the ray fired to create that pixel.  rt's -j option can
-  specify a sub-rectangle, but the key point (whatever the details of
-  implementation) is to be able to easily identify and reproduce the
-  ray that produces a given pixel when debugging.  For example,
-  pixdiff's -l option will report differing pixels by index - rt
-  should support those index specifications as an input option.
-  Another possibility would be to have rt support accepting an input
-  image as a "control" image and generating a file with nirt or rtshot
-  commands for each pixel that reports different from the control.
+* make rt -b accept a pixel index in addition to x,y pixel coordinates
+
+* teach pixdiff and other tools that can/should support the capability
+  to read/write (as appropriate) pixel index values or x,y coordinates
+  and reproduce the ray fired to create that pixel. currently does -l
+  index but not xy coordinates.
 
 * pull work on rm command out of history (commit r67394 reverted it)
   and take it to a production ready stage.

@@ -330,27 +330,6 @@ osgl_setLight(struct dm_internal *dmp, int lighting_on)
     return TCL_OK;
 }
 
-/*
- * Gracefully release the display.
- */
-HIDDEN int
-osgl_close(struct dm_internal *dmp)
-{
-    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
-    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->releaseContext();
-
-    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
-	Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
-
-    bu_vls_free(&dmp->dm_pathName);
-    bu_vls_free(&dmp->dm_tkName);
-    bu_vls_free(&dmp->dm_dName);
-    bu_free(dmp->dm_vars.priv_vars, "osgl_close: osgl_vars");
-    bu_free(dmp->dm_vars.pub_vars, "osgl_close: dm_xvars");
-    bu_free(dmp, "osgl_close: dmp");
-
-    return TCL_OK;
-}
 
 HIDDEN void
 OSGUpdate(dm *dmp) {
@@ -371,6 +350,32 @@ OSGEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
 
     OSGUpdate(dmp);
 }
+
+/*
+ * Gracefully release the display.
+ */
+HIDDEN int
+osgl_close(struct dm_internal *dmp)
+{
+    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->makeCurrent();
+    ((struct osgl_vars *)dmp->dm_vars.priv_vars)->graphicsContext->releaseContext();
+
+
+    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin) {
+	Tk_DeleteEventHandler(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, OSGEventProc, (ClientData)dmp);
+	Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+    }
+
+    bu_vls_free(&dmp->dm_pathName);
+    bu_vls_free(&dmp->dm_tkName);
+    bu_vls_free(&dmp->dm_dName);
+    bu_free(dmp->dm_vars.priv_vars, "osgl_close: osgl_vars");
+    bu_free(dmp->dm_vars.pub_vars, "osgl_close: dm_xvars");
+    bu_free(dmp, "osgl_close: dmp");
+
+    return TCL_OK;
+}
+
 
 /*
  * Fire up the display manager, and the display processor.
