@@ -17,7 +17,7 @@ changes made.  See document footer for additional details.
 * modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
 * extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
 * improved draw command manual page documenation - Cliff Yapp
-* added -m option to lc to report disjoint mat/los values - Cliff Yapp
+* added lc -m option to report multi-material/los regions - Cliff Yapp
 * added icv tool for image format conversion - Cliff Yapp
 * ported 'burst' tool (batch mode only) to Windows - Cliff Yapp
 * removed mged pl command, use plot command instead - Sean Morrison
