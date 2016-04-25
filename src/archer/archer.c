@@ -47,7 +47,7 @@ WinMain(HINSTANCE hInstance,
 	int nCmdShow)
 {
     int argc = __argc;
-    char **argv = __argv;;
+    char **argv = __argv;
 #else
 int
 main(int argc, const char **argv)
