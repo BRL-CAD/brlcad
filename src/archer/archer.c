@@ -54,11 +54,12 @@ main(int argc, const char **argv)
 {
 #endif
 
+    int status = 0;
+
 #if !defined(HAVE_TK)
     bu_exit(EXIT_FAILURE, "Error: Archer requires Tk.");
 #else
 
-    int status;
     const char *archer_tcl = NULL;
     const char *fullname = NULL;
     struct bu_vls tlog = BU_VLS_INIT_ZERO;
@@ -110,8 +111,9 @@ main(int argc, const char **argv)
     }
     Tcl_DeleteInterp(interp);
 
-    return status;
 #endif /* HAVE_TK */
+
+    return status;
 }
 
 /*
