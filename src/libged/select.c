@@ -298,7 +298,7 @@ ged_get_selection_set(struct ged *gedp, const char *object_name, const char *sel
 
     obj_selections = ged_get_object_selections(gedp, object_name);
     set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
-    if (set) {
+    if (!set) {
 	BU_ALLOC(set, struct rt_selection_set);
 	BU_PTBL_INIT(&set->selections);
 	bu_hash_set(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name), (void *)set);

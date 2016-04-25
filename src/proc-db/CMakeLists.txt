@@ -7,11 +7,13 @@ LIST(REMOVE_DUPLICATES PROC_DB_INCLUDE_DIRS)
 include_directories(${PROC_DB_INCLUDE_DIRS})
 
 
-# DEVELOPMENT TESTING TOOLS
+# DEVELOPMENT DEMO & TESTING TOOLS
 #
-# these are experimental that are not intended for general use.  new
-# applications should start as NO_INSTALL until they reach a state
-# where they provide some conceivable value to an end user.
+# these are development demonstrations and testing tools that are not
+# intended for general use.  new tools should start as NO_INSTALL
+# until they reach a state where they provide some conceivable value
+# to an end user.  if a tool is fully developed, it should migrate to
+# src/shapes or some similar location.
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)

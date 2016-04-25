@@ -23,6 +23,7 @@
     <arg choice="opt" rep="norepeat">-s</arg>
     <arg choice="opt" rep="norepeat">-A -o<replaceable>attribute name/value pairs</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C#/#/#</arg>
+    <arg choice="opt" rep="norepeat">-L #</arg>
     <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
     <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
 
@@ -62,6 +63,22 @@
 	 already enabled, toggle them off then back on to ensure they are enabled.
 </para>
 </listitem>
+<listitem>
+<para>
+	The <emphasis>-L</emphasis> option allows the user to specify a face count.  BoT primitives with more
+	faces than the user set threshold will be represented in wireframe drawing by their bounding boxes rather
+	than the full BoT wireframe.
+</para>
+</listitem>
+<listitem>
+<para>
+	The <emphasis>-M</emphasis> option tells draw to be "minimalist" by skipping subtraction objects when drawing.
+	This is useful in situations where an object has many large objects subtracted from it but those objects have
+	relatively minimal impact on the shape - this results in the wireframe bearing little resemablance to the
+       	evaluated shape.
+</para>
+</listitem>
+
 </itemizedlist>
 </refsection>
 

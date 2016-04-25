@@ -276,13 +276,20 @@ tclcad_set_argv(Tcl_Interp *interp, int argc, const char **argv)
     char buf[TCL_INTEGER_SPACE] = {0};
     char *args;
     Tcl_DString argString;
+    char nstr = '\0';
+    const char **av;
+
+    if (!interp) return;
+
+    /* create the tcl variables, even if they're empty */
+    av = (!argv) ? (const char **)&nstr : argv;
 
     /* argc */
     sprintf(buf, "%ld", (long)(argc));
     Tcl_SetVar(interp, "argc", buf, TCL_GLOBAL_ONLY);
 
     /* argv */
-    args = Tcl_Merge(argc, (const char * const *)argv);
+    args = Tcl_Merge(argc, (const char * const *)av);
     Tcl_ExternalToUtfDString(NULL, args, -1, &argString);
     Tcl_SetVar(interp, "argv", Tcl_DStringValue(&argString), TCL_GLOBAL_ONLY);
     Tcl_DStringFree(&argString);

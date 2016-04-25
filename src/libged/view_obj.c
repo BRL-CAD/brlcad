@@ -1091,87 +1091,6 @@ vo_orientation_tcl(void *clientData,
 
 
 int
-vo_pov_cmd(struct view_obj *vop,
-	   int argc,
-	   const char *argv[])
-{
-    vect_t center;
-    quat_t quat;
-    vect_t eye_pos;
-
-    /* intentionally double for scan */
-    double scale;
-    double  perspective;
-
-    if (argc != 6) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias vo_pov %s", argv[0]);
-	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    /***************** Get the arguments *******************/
-
-    if (bn_decode_vect(center, argv[1]) != 3) {
-	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_pov: bad center - ", argv[1], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (bn_decode_quat(quat, argv[2]) != 4) {
-	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_pov: bad quat - ", argv[2], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[3], "%lf", &scale) != 1) {
-	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_pov: bad scale - ", argv[3], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (bn_decode_vect(eye_pos, argv[4]) != 3) {
-	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_pov: bad eye position - ", argv[4], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[5], "%lf", &perspective) != 1) {
-	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_pov: bad perspective - ", argv[5], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    /***************** Use the arguments *******************/
-
-    VSCALE(center, center, vop->vo_local2base);
-    MAT_DELTAS_VEC_NEG(vop->vo_center, center);
-    quat_quat2mat(vop->vo_rotation, quat);
-    vop->vo_scale = vop->vo_local2base * scale;
-    VSCALE(eye_pos, eye_pos, vop->vo_local2base);
-    VMOVE(vop->vo_eye_pos, eye_pos);
-    vop->vo_perspective = perspective;
-
-    vo_update(vop, 1);
-
-    return TCL_OK;
-}
-
-
-/*
- * Usage:
- * procname pov center quat scale eye_pos perspective
- */
-static int
-vo_pov_tcl(void *clientData,
-	   int argc,
-	   const char *argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo_pov_cmd(vop, argc-1, argv+1);
-}
-
-
-int
 vo_zoom(struct view_obj *vop,
 	fastf_t sf)
 {
@@ -2800,7 +2719,6 @@ vo_cmd(ClientData clientData,
 	{"perspective",		vo_perspective_tcl},
 	{"pmat",		vo_pmat_tcl},
 	{"pmodel2view",		vo_pmodel2view_tcl},
-	{"pov",			vo_pov_tcl},
 	{"rmat",		vo_rmat_tcl},
 	{"rot",			vo_rot_tcl},
 	{"rotate_about",	vo_rotate_about_tcl},

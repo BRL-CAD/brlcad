@@ -836,6 +836,10 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_DATUM;
 	internal.idb_meth = &OBJ[ID_DATUM];
+
+	/* Set a default color for datum objects */
+	bu_avs_add(&internal.idb_avs, "color", "255/255/0");
+
 	BU_ALLOC(internal.idb_ptr, struct rt_datum_internal);
 	datum_ip = (struct rt_datum_internal *)internal.idb_ptr;
 	datum_ip->magic = RT_DATUM_INTERNAL_MAGIC;

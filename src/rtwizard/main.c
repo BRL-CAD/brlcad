@@ -598,12 +598,12 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->input_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) %s", bu_vls_addr(s->input_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(dbFile) [list %s]", bu_vls_addr(s->input_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (bu_vls_strlen(s->output_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) %s", bu_vls_addr(s->output_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(output_filename) [list %s]", bu_vls_addr(s->output_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -751,12 +751,12 @@ Init_RtWizard_Vars(Tcl_Interp *interp, struct rtwizard_settings *s)
     }
 
     if (bu_vls_strlen(s->log_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) %s", bu_vls_addr(s->log_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(log_file) [list %s]", bu_vls_addr(s->log_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
     if (bu_vls_strlen(s->pid_file)) {
-	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) %s", bu_vls_addr(s->pid_file));
+	bu_vls_sprintf(&tcl_cmd, "set ::RtWizard::wizard_state(pid_filename) [list %s]", bu_vls_addr(s->pid_file));
 	(void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
     }
 
@@ -835,8 +835,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
 int
 main(int argc, char **argv)
 {
-    int ac;
-    char **av;
+    char *av0;
     int need_help = 0;
     int need_help_dev = 0;
     int uac = 0;
@@ -882,39 +881,32 @@ main(int argc, char **argv)
     BU_OPT(d[33], "",  "pid-file",      "filename",  &bu_opt_vls,     s->pid_file,      "File used to communicate PID numbers (for app developers)");
     BU_OPT_NULL(d[34]);
 
-	/* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
-	bu_setprogname(argv[0]);
+    /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
+    bu_setprogname(argv[0]);
+    av0 = argv[0];
 
     /* Skip first arg */
     argv++; argc--;
 
-    /* Save args for tcl */
-    ac = argc;
-    av = bu_dup_argv(argc, (const char **)argv);
-
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_free_argv(ac, av);
 	bu_exit(1, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
     if (need_help) {
 	rtwizard_help((struct bu_opt_desc *)&d);
-	bu_free_argv(ac, av);
 	bu_exit(0, NULL);
     }
 
     if (need_help_dev) {
 	rtwizard_help_dev((struct bu_opt_desc *)&d);
-	bu_free_argv(ac, av);
 	bu_exit(0, NULL);
     }
 
     for (i = 0; i < uac; i++) {
 	if (argv[i][0] == '-') {
-	    bu_free_argv(ac, av);
 	    bu_exit(1, "Error: unknown option %s.\n", argv[i]);
 	}
     }
@@ -929,7 +921,6 @@ main(int argc, char **argv)
     }
 
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
-	bu_free_argv(ac, av);
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
@@ -945,7 +936,6 @@ main(int argc, char **argv)
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
-			bu_free_argv(ac, av);
 			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
 		    }
 		}
@@ -995,6 +985,7 @@ main(int argc, char **argv)
 	Tcl_DString temp;
 	Tcl_Interp *interp = Tcl_CreateInterp();
 
+
 	/* The subsequent Tcl scripts will take of Tk, so at this
 	 * level we need only the standard init */
 	status = tclcad_init(interp, 0, &tlog);
@@ -1003,13 +994,35 @@ main(int argc, char **argv)
 	}
 	bu_vls_free(&tlog);
 
-	tclcad_set_argv(interp, ac, (const char **)av);
-	bu_free_argv(ac,av);
+	/* Normalize .g and output image file paths, since they're to be used
+	 * in Tcl scripts */
+	if (bu_vls_strlen(s->input_file) > 0) {
+	    Tcl_Obj *initPath, *normalPath;
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->input_file), bu_vls_strlen(s->input_file));
+	    Tcl_IncrRefCount(initPath);
+	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
+	    bu_vls_sprintf(s->input_file, "%s", Tcl_GetString(normalPath));
+	    Tcl_DecrRefCount(initPath);
+	}
+	if (bu_vls_strlen(s->output_file) > 0) {
+	    Tcl_Obj *initPath, *normalPath;
+	    initPath = Tcl_NewStringObj(bu_vls_addr(s->output_file), bu_vls_strlen(s->output_file));
+	    Tcl_IncrRefCount(initPath);
+	    normalPath = Tcl_FSGetNormalizedPath(interp, initPath);
+	    bu_vls_sprintf(s->output_file, "%s", Tcl_GetString(normalPath));
+	    Tcl_DecrRefCount(initPath);
+	}
+
+	/* Set a single argv so the Tcl scripts will run the main proc.  Not passing more args
+	 * because they can apparently cause problems with Tcl script execution. */
+	tclcad_set_argv(interp, 1, (const char **)&av0);
 
 	Init_RtWizard_Vars(interp, s);
 
-	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
+	/* We're using this path on the file system, not in Tcl: translate it
+	 * to the appropriate form before doing the eval */
 	Tcl_DStringInit(&temp);
+	rtwizard = bu_brlcad_data("tclscripts/rtwizard/rtwizard", 1);
 	fullname = Tcl_TranslateFileName(interp, rtwizard, &temp);
 	status = Tcl_EvalFile(interp, fullname);
 	Tcl_DStringFree(&temp);

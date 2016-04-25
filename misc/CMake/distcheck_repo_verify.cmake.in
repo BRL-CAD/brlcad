@@ -292,6 +292,9 @@ if(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
      message("\nFiles unknown to both Subversion and the Build logic (will not be incorporated into dist):\n${FS_FILE_LIST}\n")
   endif(FS_FILE_LIST)
 
+  # Write out ignored file list for subsequent CPack use
+  file(WRITE @CMAKE_BINARY_DIR@/cpack_ignore.cmake ${FS_FILE_LIST})
+
 else(SVN_EXEC AND EXISTS "@CMAKE_SOURCE_DIR@/.svn")
 
   # Different error message  - in fact, without Subversion to keep us straight, this is a fatal error.

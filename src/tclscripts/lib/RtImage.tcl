@@ -81,21 +81,21 @@ proc rtimage {rtimage_dict} {
     }
 
     set pid [pid]
-    set tgi [file join $dir $pid\_ghost.pix]
-    set tfci [file join $dir $pid\_fc.pix]
-    set tgfci [file join $dir $pid\_ghostfc.pix]
-    set tmi [file join $dir $pid\_merge.pix]
-    set tmi2 [file join $dir $pid\_merge2.pix]
-    set tbw [file join $dir $pid\_bw.bw]
-    set tmod [file join $dir $pid\_bwmod.bw]
-    set tbwpix [file join $dir $pid\_bwpix.pix]
+    set tgi [list [file join $dir $pid\_ghost.pix] ]
+    set tfci [list [file join $dir $pid\_fc.pix] ]
+    set tgfci [list [file join $dir $pid\_ghostfc.pix] ]
+    set tmi [list [file join $dir $pid\_merge.pix] ]
+    set tmi2 [list [file join $dir $pid\_merge2.pix] ]
+    set tbw [list [file join $dir $pid\_bw.bw] ]
+    set tmod [list [file join $dir $pid\_bwmod.bw] ]
+    set tbwpix [list [file join $dir $pid\_bwpix.pix] ]
 
     set binpath [bu_brlcad_root "bin"]
 
     if {[llength $_color_objects]} {
 	set have_color_objects 1
 
-	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
 	    -F $_port \
 	    -V $ar \
 	    -R \
@@ -105,7 +105,7 @@ proc rtimage {rtimage_dict} {
 	    "-c {viewsize $_viewsize}" \
 	    "-c {orientation $_orientation}" \
 	    "-c {eye_pt $_eye_pt}" \
-	    $_dbfile]
+	    [list $_dbfile]]
 
 	foreach obj $_color_objects {
 	    lappend cmd $obj
@@ -143,7 +143,7 @@ proc rtimage {rtimage_dict} {
 		if {[llength $ce_objects]} {
 		    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 
-		    set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+		    set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
 		                 -F $_port \
 				 -V $ar \
 				 -R \
@@ -155,7 +155,7 @@ proc rtimage {rtimage_dict} {
 				 "-c {viewsize $_viewsize}" \
 				 "-c {orientation $_orientation}" \
 				 "-c {eye_pt $_eye_pt}" \
-				 $_dbfile]
+				 [list $_dbfile]]
 
 		    foreach obj $ce_objects {
 			lappend cmd $obj
@@ -173,7 +173,7 @@ proc rtimage {rtimage_dict} {
 	set have_color_objects 0
 
 	# Put a blank image into the framebuffer
-	catch {exec [file join $binpath fbclear] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
+	catch {exec [list [file join $binpath fbclear]] -F $_port [lindex $_bgcolor 0] [lindex $_bgcolor 1] [lindex $_bgcolor 2]}
     }
 
     set occlude_objects [lsort -unique [concat $_color_objects $_ghost_objects]]
@@ -184,7 +184,7 @@ proc rtimage {rtimage_dict} {
 	catch {exec [file join $binpath fb-pix] -w $_w -n $_n -F $_port $tfci}
 
 	set have_ghost_objects 1
-	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
 	             -o $tgi \
 		     -V $ar \
 		     -R \
@@ -194,7 +194,7 @@ proc rtimage {rtimage_dict} {
 		     "-c {viewsize $_viewsize}" \
 		     "-c {orientation $_orientation}" \
 		     "-c {eye_pt $_eye_pt}" \
-		     $_dbfile]
+		     [list $_dbfile]]
 
 	foreach obj $_ghost_objects {
 	    lappend cmd $obj
@@ -205,7 +205,7 @@ proc rtimage {rtimage_dict} {
 	#
 	catch {eval exec $cmd >& $_log_file} curr_pid
 
-	set cmd [concat [file join $binpath rt] -w $_w -n $_n $_benchmark_mode \
+	set cmd [concat [list [file join $binpath rt]] -w $_w -n $_n $_benchmark_mode \
 	             -o $tgfci \
 		     -V $ar \
 		     -R \
@@ -215,7 +215,7 @@ proc rtimage {rtimage_dict} {
 		     "-c {viewsize $_viewsize}" \
 		     "-c {orientation $_orientation}" \
 		     "-c {eye_pt $_eye_pt}" \
-		     $_dbfile]
+		     [list $_dbfile]]
 
 	foreach obj $occlude_objects {
 	    lappend cmd $obj
@@ -269,7 +269,7 @@ proc rtimage {rtimage_dict} {
 	    set bgMode [list set bg=[lindex $_bgcolor 0],[lindex $_bgcolor 1],[lindex $_bgcolor 2]]
 	}
 
-	set cmd [concat [file join $binpath rtedge] -w $_w -n $_n $_benchmark_mode \
+	set cmd [concat [list [file join $binpath rtedge]] -w $_w -n $_n $_benchmark_mode \
 	             -F $_port \
 		     -V $ar \
 		     -R \
@@ -280,7 +280,7 @@ proc rtimage {rtimage_dict} {
 	             "-c {viewsize $_viewsize}" \
 		     "-c {orientation $_orientation}" \
 		     "-c {eye_pt $_eye_pt}" \
-		     $_dbfile]
+		     [list $_dbfile]]
 	foreach obj $_edge_objects {
 	    lappend cmd $obj
 	}

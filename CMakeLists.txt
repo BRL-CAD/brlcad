@@ -179,35 +179,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 
 
 #---------------------------------------------------------------------
-# If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows
-# advanced users to specify options or preferences they want to always
-# use by default even when doing clean BRL-CAD builds without a
-# CMakeCache.txt file - for example, to always enable all local libs
-# the following line can be added to BRL-CAD_CONFIG.GLOBAL:
-#
-# set(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs")
-
-# The user's configuration file can be defined by environment variable
-# "BRLCAD_USER_GLOBAL_CONFIG_FILE" or, in its absence, by a file named
-# "BRL-CAD_CONFIG.GLOBAL" located either above or in the BRL-CAD
-# source directory.
-set(BRLCAD_USER_GLOBAL_CONFIG_FILE "$ENV{BRLCAD_USER_GLOBAL_CONFIG_FILE}")
-if(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-  message("Reading user preference file '${BRLCAD_USER_GLOBAL_CONFIG_FILE}'")
-  include(${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-elseif(EXISTS "${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
-  message("Reading user preference file \"${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL\"")
-  include("${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
-elseif(EXISTS "${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL")
-  message("Reading user preference file \"${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL\"")
-  include("${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL")
-else(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-  if(BRLCAD_USER_GLOBAL_CONFIG_FILE)
-    message(WARNING "User preference file ${BRLCAD_USER_GLOBAL_CONFIG_FILE} specified but not found...")
-  endif(BRLCAD_USER_GLOBAL_CONFIG_FILE)
-endif(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-
-#---------------------------------------------------------------------
 # Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
 # but be noisy about it.  This is generally not a good idea.
 find_program(SLEEP_EXEC sleep)
@@ -2837,6 +2808,9 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.
 if(NOT BRLCAD_IS_SUBBUILD)
+
+  configure_file("${BRLCAD_CMAKE_DIR}/source_archive_setup.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake" @ONLY)
+
   option(BRLCAD_VERSIONED_RPM_NAME "Incorporate BRL-CAD version into RPM package name" OFF)
   mark_as_advanced(BRLCAD_VERSIONED_RPM_NAME)
   set(CPACK_PACKAGE_DESCRIPTION_SUMMARY "BRL-CAD - a powerful cross-platform open source solid modeling system")

@@ -476,7 +476,6 @@ package provide cadwidgets::Ged 1.0
 	method pane_pmodel2view {_pane args}
 	method pane_png {_pane args}
 	method pane_pngwf {_pane args}
-	method pane_pov {_pane args}
 	method pane_preview {_pane args}
 	method pane_protate_mode {_pane args}
 	method pane_ps {_pane args}
@@ -540,8 +539,6 @@ package provide cadwidgets::Ged 1.0
 	method pmodel2view {args}
 	method png {args}
 	method pngwf {args}
-	method polybinout {args}
-	method pov {args}
 	method prcolor {args}
 	method prefix {args}
 	method preview {args}
@@ -3116,14 +3113,6 @@ package provide cadwidgets::Ged 1.0
     eval $mGed pngwf $itk_component($_pane) $args
 }
 
-::itcl::body cadwidgets::Ged::pane_pov {_pane args} {
-    eval $mGed pov $itk_component($_pane) $args
-}
-
-::itcl::body cadwidgets::Ged::pane_preview {_pane args} {
-    eval $mGed preview $itk_component($_pane) $args
-}
-
 ::itcl::body cadwidgets::Ged::pane_protate_mode {_pane args} {
     eval $mGed protate_mode $itk_component($_pane) $args
 }
@@ -3389,14 +3378,6 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pngwf {args} {
     eval $mGed pngwf $itk_component($itk_option(-pane)) $args
-}
-
-::itcl::body cadwidgets::Ged::polybinout {args} {
-    eval $mGed polybinout $args
-}
-
-::itcl::body cadwidgets::Ged::pov {args} {
-    eval $mGed pov $itk_component($itk_option(-pane)) $args
 }
 
 ::itcl::body cadwidgets::Ged::prcolor {args} {
@@ -6360,8 +6341,6 @@ package provide cadwidgets::Ged 1.0
     $help add pmat		{{} {get the perspective matrix}}
     $help add pmodel2view	{{} {get the pmodel2view matrix}}
     $help add png		{{[-c r/g/b] [-s size] file} {creates a png file of the current view (wireframe only)}}
-    $help add polybinout	{{file}	{write out polygons (binary) of the currently displayed geometry}}
-    $help add pov		{{args}	{experimental:  set point-of-view}}
     $help add prcolor		{{} {print color and material table}}
     $help add prefix		{{new_prefix object(s)} {prefix each occurrence of object name(s)}}
     $help add preview		{{[-v] [-d sec_delay] [-D start frame] [-K last frame] rt_script_file} {preview new style RT animation script}}
@@ -6456,7 +6435,7 @@ package provide cadwidgets::Ged 1.0
     $help add who		{{[r(eal)|p(hony)|b(oth)]} {list the top-level objects currently being displayed}}
     $help add wmater		{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
     $help add x 		{{[lvl]} {print solid table & vector list}}
-    $help add xpush		{{object} {Experimental Push Command}}
+    $help add xpush		{{object} {push matrices onto primitives, creating copies as needed}}
     $help add ypr		{{yaw pitch roll} {set the view orientation given the yaw, pitch and roll}}
     $help add zap		{{} {clear screen}}
     $help add zoom		{{sf} {zoom view by specified scale factor}}

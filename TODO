@@ -31,18 +31,17 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   is it related to using bu_hash in some fashion?  This test worked
   as of r65575
 
-* quick rtg3 with -c option.  was failing when run without -c "set
-  ray_data_file=..." with this: "RTG3: Invalid argument" and "Cannot
-  open ray data output file"
-
 * rtwizard command line ghost image specification isn't working
   reliably
 
-* changing az/el via the gui doesn't appear to "take" in the raytrace
-  for rtwizard renderings
+* drawing datums far from origin result in huge arrowheads
+
+* make sure burst is working
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* reinstate 'stat' and search -size, see r67636 through r67646
 
 * turn on Bullet code (simulate command) unconditionally
 
@@ -66,6 +65,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement quasi-random unbiased iterative spherical ray sampling.
+  requires devising an algorithm whereby we obtain a set of points on
+  a sphere with rays randomly going through those points, so we sample
+  the volume evenly.  we need to be able to add additional sets of
+  points/rays (incrementally or step-wise) in order to evaluate
+  convergence and estimate error.  this feature is useful for checking
+  overlaps, surface area, volume, and moments of inertia.
 
 * get_eyemodel returns an eye_pt entry, but feeding the results to
   archer's eye_pt command results in get_eyemodel returning a different
@@ -2208,7 +2215,6 @@ DOCUMENTATION
     breplicator
     brickwall
     brlman
-    burst
     bw-a
     bw-d
     bwish
@@ -2356,9 +2362,8 @@ DOCUMENTATION
   CMake supports other generators, wouldn't hurt to detail how to
   trigger builds in them (MSVC is partially covered, make sure to
   coverage is complete - others include Eclipse, XCode once we get the
-  kinks ironed out there, CodeBlocks.  New experimental ninja build
-  tool and its (also experimental) CMake support are promising -
-  if/when CMake support goes mainstream, document that too.)
+  kinks ironed out there, CodeBlocks.  Ninja build tool and its
+  CMake support are worth documenting too.
 
 * all of the rt* tracers share common code and common options, but do
   not share common documentation.  refactor documentation to use

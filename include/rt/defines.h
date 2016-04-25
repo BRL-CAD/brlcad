@@ -47,7 +47,12 @@
 #include <limits.h>
 #define CL_USE_DEPRECATED_OPENCL_1_2_APIS
 #define CL_USE_DEPRECATED_OPENCL_2_0_APIS
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 #ifndef CL_VERSION_1_2
 #  error "OpenCL 1.2 required."

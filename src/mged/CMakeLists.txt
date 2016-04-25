@@ -48,7 +48,6 @@ set(MGED_SOURCES
   muves.c
   overlay.c
   plot.c
-  polyif.c
   predictor.c
   rect.c
   rtif.c

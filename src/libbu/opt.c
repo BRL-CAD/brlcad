@@ -108,9 +108,10 @@ bu_opt_describe_internal_ascii(struct bu_opt_desc *ds, struct bu_opt_desc_opts *
     size_t i = 0;
     size_t j = 0;
     size_t opt_cnt = 0;
-    int offset = BU_OPT_DEFAULT_OFFSET;
-    int opt_cols = BU_OPT_DEFAULT_OPT_COLS;
-    int desc_cols = BU_OPT_DEFAULT_DESC_COLS;
+    struct bu_opt_desc_opts dsettings = BU_OPT_DESC_OPTS_INIT_ZERO;
+    int offset = dsettings.offset;
+    int opt_cols = dsettings.option_columns;
+    int desc_cols = dsettings.description_columns;
     char *input = NULL;
     char **filtered_argv = NULL;
     int filtered_argc = 0;

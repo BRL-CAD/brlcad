@@ -18,6 +18,7 @@ set(man1_EN
   brlcad-config.xml
   brlcad.xml
   buffer.xml
+  burst.xml
   bw-fb.xml
   bw-imp.xml
   bw-pix.xml

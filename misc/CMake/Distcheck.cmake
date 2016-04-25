@@ -65,39 +65,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # right before we make the archive, since the CPack command has no awareness of the status
   # of the source files.  When we're doing distcheck, on the other hand, we CAN be intelligent
   # about triggering the copy rule - let's only do it once, since it's a rather slow operation.
-  set(create_source_archive_dir_script "
-  CMAKE_POLICY(SET CMP0007 OLD)
-  file(REMOVE_RECURSE \"${CMAKE_BINARY_DIR}/source_archive_contents\")
-  file(STRINGS \"${CMAKE_BINARY_DIR}/cmakefiles.cmake\" source_tree_files)
-  file(STRINGS \"${CMAKE_BINARY_DIR}/cmakedirs.cmake\" ignored_dirctories)
-  string(REPLACE \"${BRLCAD_SOURCE_DIR}\" \"------BRLCAD_SOURCE_DIR----\" ignored_directories \"${ignored_directories}\")
-  foreach(ITEM \${ignored_dirctories})
-    file(GLOB_RECURSE dir_files \"\${ITEM}/*\")
-    list(APPEND source_tree_files \${dir_files})
-    while(dir_files)
-      set(dir_files \"\${dir_files};\")
-      string(REGEX REPLACE \"[^/]*;\" \";\" dir_files \"\${dir_files}\")
-      string(REGEX REPLACE \"/;\" \";\" dir_files \"\${dir_files}\")
-      list(REMOVE_DUPLICATES dir_files)
-      list(APPEND source_tree_files \${dir_files})
-    endwhile(dir_files)
-  endforeach(ITEM \${ignored_dirctories})
-  string(REPLACE \"------BRLCAD_SOURCE_DIR----\" \"${BRLCAD_SOURCE_DIR}\" source_tree_files \"\${source_tree_files}\")
-  foreach(source_file \${source_tree_files})
-    if(NOT IS_DIRECTORY \${source_file})
-      string(REPLACE \"${CMAKE_SOURCE_DIR}/\" \"\" relative_name \"\${source_file}\")
-      if(NOT \"\${relative_name}\" MATCHES \".svn/\")
-   string(REPLACE \"${CMAKE_SOURCE_DIR}/\" \"${CMAKE_BINARY_DIR}/source_archive_contents/\" outfile \"\${source_file}\")
-   execute_process(COMMAND \"${CMAKE_COMMAND}\" -E copy \${source_file} \${outfile})
-      endif(NOT \"\${relative_name}\" MATCHES \".svn/\")
-    endif(NOT IS_DIRECTORY \${source_file})
-  endforeach(source_file \${source_tree_files})
-  ")
-  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake" "${create_source_archive_dir_script}")
   add_custom_target(distcheck-source_archive_dir
     COMMAND ${CMAKE_COMMAND} -E echo "*** Prepare directory with archive contents in build directory ***"
     COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
-    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake"
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/source_archive_setup.cmake"
     COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
     DEPENDS distcheck-repo_verify)
   set_target_properties(distcheck-source_archive_dir PROPERTIES FOLDER "BRL-CAD Distribution Checking")

@@ -29,13 +29,13 @@ add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-
 set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
-# Image Conversion Regression Tests (experimental)
+# Image Conversion Regression Tests
 add_subdirectory(icv)
 
-# Geometry Conversion Regression Tests (experimental)
+# Geometry Conversion Regression Tests
 add_subdirectory(gcv)
 
-# RtWizard Image Generation Regression Tests (experimental)
+# RtWizard Image Generation Regression Tests
 add_subdirectory(rtwizard)
 
 # MGED command tests
@@ -75,7 +75,6 @@ if(SH_EXEC)
   Sh_Regression_Test(red mged)
   Sh_Regression_Test(nirt "mged;nirt")
   Sh_Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
-  Sh_Regression_Test(quote "" EXCLUDE_FROM_REGRESS)
   Sh_Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
   Sh_Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
 
@@ -85,6 +84,7 @@ CMAKEFILES(
   analyze.asc
   asc2dsp.sh
   bots.sh
+  burst
   comgeom.sh
   dsp.sh
   dsp/asc2dsp-new.asc
@@ -127,7 +127,6 @@ CMAKEFILES(
   mosspix.asc
   nirt.sh
   nurbs/brep-3dm.tar.bz2
-  quote.sh
   red.sh
   repository.sh
   shaders.sh

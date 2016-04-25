@@ -198,12 +198,10 @@ set(LIBGED_SOURCES
   perspective.c
   pix2fb.c
   plot.c
-  polybinout.c
   pmat.c
   pmodel2view.c
   png.c
   polyclip.cpp
-  pov.c
   prcolor.c
   prefix.c
   preview.c

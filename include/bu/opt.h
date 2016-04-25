@@ -223,12 +223,6 @@ typedef enum {
 } bu_opt_format_t;
 
 
-/* Default values for offset, option columns and description columns - the "magic numbers"
- * used to print help if the user doesn't specify anything */
-#define BU_OPT_DEFAULT_OFFSET 2
-#define BU_OPT_DEFAULT_OPT_COLS 28
-#define BU_OPT_DEFAULT_DESC_COLS 50
-
 /**
  * Construct a textual description of the options defined by
  * the array.
@@ -269,8 +263,17 @@ struct bu_opt_desc_opts {
     const char *reject;
 };
 
-#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, BU_OPT_DEFAULT_OFFSET, BU_OPT_DEFAULT_OPT_COLS, \
-    BU_OPT_DEFAULT_DESC_COLS, NULL, NULL, NULL, 1, NULL, NULL }
+/**
+ * initialize an bu_opt_desc_opts struct.
+ * offset = 2 is a default offset into ...
+ * option_columns = 28 is the index of ...
+ * description_columns = 50 is ...
+ *
+ * FIXME: these three new magic numbers must be documented (why these
+ * particular values), enough info to know how to update them or
+ * recognize that their value is right or wrong.
+ */
+#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, 2, 28, 50, NULL, NULL, NULL, 1, NULL, NULL }
 
 /**
  *
