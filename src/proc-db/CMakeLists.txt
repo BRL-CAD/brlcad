@@ -20,7 +20,6 @@ BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIB
 BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL) # NOTE: has manual page
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(contours contours.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(csgbrep csgbrep.cpp libwdb NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(nmgmodel nmgmodel.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(pipetest pipetest.c libwdb NO_INSTALL)
