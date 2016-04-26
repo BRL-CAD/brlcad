@@ -343,8 +343,14 @@ pl (mged)
         removed, use plot [minimally impacting]
 conf.h
 	removed - replaced with common.h [deprecated 7.0]
+UtahRLE image tools
+	no longer installed by default with BRL-CAD - not used directly by
+        BRL-CAD tools [minimally impacting]
 Tcl in libbu and libbn
         no longer utilize or require Tcl [dependency eliminated]
+Tcl/Tk man pages
+	no longer installed by default with BRL-CAD when the bundled Tcl/Tk is used
+        to build [minimally impacting]
 include/dg.h
         implementation detail no longer being exposed, use libged [deprecated 7.22]
 autogen.sh && configure
