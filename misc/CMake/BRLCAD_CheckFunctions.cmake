@@ -398,6 +398,14 @@ endmacro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
 
 
 macro(BRLCAD_CHECK_STATIC_ARRAYS)
+  if (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    CHECK_C_FLAG("std=gnu89" VARS CSA_C89_FLAG)
+  endif (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  CHECK_C_FLAG("pedantic" VARS CSA_PEDANTIC_FLAG)
+  CHECK_C_FLAG("Werror" VARS CSA_WERROR_FLAG)
+  set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
+  set(CMAKE_C_FLAGS "${CSA_C89_FLAG} ${CSA_PEDANTIC_FLAG} ${CSA_WERROR_FLAG}")
+
   set(CHECK_STATIC_ARRAYS_SRC "
 #include <stdio.h>
 #include <string.h>
@@ -422,6 +430,8 @@ int main(int ac, char *av[])
   if(HAVE_STATIC_ARRAYS)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_STATIC_ARRAYS 1\n")
   endif(HAVE_STATIC_ARRAYS)
+
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 endmacro(BRLCAD_CHECK_STATIC_ARRAYS)
 
 # Local Variables:
