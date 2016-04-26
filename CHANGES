@@ -161,7 +161,6 @@ infrared & shapefactor tools
 misc tools
 	fix_polysolids' : obsolete primitive
 	remapid : superseded by reid+remat
-	rawbot
 	buffer : unnecesary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
