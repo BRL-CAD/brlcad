@@ -112,43 +112,54 @@ calls that can be updated must be updated at that time.
 The items listed below are interfaces that are deprecated.  They are
 categorized by the release in which the change was made.  If the
 change involved a removal of a command or function, both the original
-and new names should be listed for reference.
+and new names should be listed for reference.  If an item is marked
+with a "'" (single quote), that means it was not documented and may be
+removed at any time.
 
 
 7.26
 ----
 ray tracing tools
-	lgt, rtcell, rtfrac, rtpp, rtrad, rtrange, rtray, rtregis, rtsil
+	lgt : functionally replaced by nirt
+        rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis, rtsil'
 	Removed as part of distillation effort [deprecated 7.26]
 converter tools
-	bot-bldxf, bot_shell-vtk, rt_bot_faces, cell-fb, cy-g,
-	euclid-g, euclid_format, euclid_unformat, g-euclid, g-euclid1,
-	g-nmg, g-tankill, intaval-g.py, nmg-*, poly-bot, viewpoint-g,
-	plot3*
+	cell-fb, cy-g, euclid-g, euclid_format', euclid_unformat',
+	g-euclid, g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
+	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
+	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
+	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
+	poly-bot, rawbot, rt_bot_faces, : primitive-specific converters
 	Removed as part of distillation effort [deprecated 7.26]
 image tools
 	*cmap*, fbcmrot : colormap support obsolete
         fbed : outside scope
         fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
 	pixpaste : outside scope
+	alias-pix' : incorporating into icv
+	asc2pix' : incorporating into icv
+	pix-yuv', yuv-pix' : obsolete non-standard format
+	texturescale : obsolete implementation
 	Removed as part of distillation effort [deprecated 7.26]
-animation tools
-	anim_*, fbanim : outside scope
-        orbit.sh, rtwalk, scriptsort, script-tab, tabinterp, tabsup,
+video & animation tools
+	anim_*', fbanim, chan_add', pixflip-fb' : outside scope
+	pixfields', pixfieldsep' : outside scope
+        orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
 	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
 signal analysis tools
-	a-*, *-a : incorporating into cv
-	d-*, *-d, f-*, *-f, i-*, *-i, u-*, *-u : incorporating into cv
-	double-asc : incorporating into cv
-	dconv
+	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
+	d-a', d-bw', d-f', d-i', d-u' : incorporating into cv
+	a-d', bw-d', c-d', f-d', i-d', u-d' : incorporating into cv
+	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
+	d2-c', double-asc' : incorporating into cv
 	Removed as part of distillation effort [deprecated 7.26]
-infrared and shapefactor tools
-	all_sf, if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
-	ssamp-bw, ssampview, ssampview.tcl
+infrared & shapefactor tools
+	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	ssamp-bw, ssampview', ssampview.tcl'
 	Removed as part of distillation effort [deprecated 7.26]
 misc tools
-	fix_polysolids : obsolete primitive
+	fix_polysolids' : obsolete primitive
         remapid : superseded by reid+remat
         rawbot
         buffer : unnecesary network/stream buffering tool
