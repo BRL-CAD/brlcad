@@ -93,6 +93,22 @@ bu_file_exists(const char *path, int *fd)
 }
 
 
+#ifdef HAVE_GETFULLPATHNAME
+HIDDEN BOOL
+file_info(HANDLE handle, BY_HANDLE_FILE_INFORMATION *file_info)
+{
+    BOOL got = FALSE;
+
+    if (handle != INVALID_HANDLE_VALUE) {
+	got = GetFileInformationByHandle(handle, file_info);
+	CloseHandle(handle);
+    }
+
+    return got;
+}
+#endif /* HAVE_GETFULLPATHNAME */
+
+
 int
 bu_same_file(const char *fn1, const char *fn2)
 {
@@ -141,16 +157,9 @@ bu_same_file(const char *fn1, const char *fn2)
 	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
 
 	handle1 = CreateFile(rp1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (handle1 != INVALID_HANDLE_VALUE) {
-	    got1 = GetFileInformationByHandle(handle1, &file_info1);
-	    CloseHandle(handle1);
-	}
-
+	got1 = file_info(handle1, &file_info1);
 	handle2 = CreateFile(rp2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	if (handle2 != INVALID_HANDLE_VALUE) {
-	    got2 = GetFileInformationByHandle(handle2, &file_info2);
-	    CloseHandle(handle2);
-	};
+	got2 = file_info(handle2, &file_info2);
 
 	if (got1 && got2 &&
 	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
@@ -196,16 +205,9 @@ bu_same_fd(int fd1, int fd2)
 	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
 
 	handle1 = _get_osfhandle(fd1);
-	if (handle1 != INVALID_HANDLE_VALUE) {
-	    got1 = GetFileInformationByHandle(handle1, &file_info1);
-	    CloseHandle(handle1);
-	}
-
+	got1 = file_info(handle1, &file_info1);
 	handle2 = _get_osfhandle(fd2);
-	if (handle2 != INVALID_HANDLE_VALUE) {
-	    got2 = GetFileInformationByHandle(handle2, &file_info2);
-	    CloseHandle(handle2);
-	};
+	got2 = file_info(handle2, &file_info2);
 
 	if (got1 && got2 &&
 	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
