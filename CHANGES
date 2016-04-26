@@ -127,7 +127,7 @@ converter tools
 	plot3*
 	Removed as part of distillation effort [deprecated 7.26]
 image tools
-	*cmap* : obsolete hardware
+	*cmap*, fbcmrot : colormap support obsolete
         fbed : outside our domain
         fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
 	pixpaste : outside domain
