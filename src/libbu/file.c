@@ -94,17 +94,31 @@ bu_file_exists(const char *path, int *fd)
 
 
 #ifdef HAVE_GETFULLPATHNAME
-HIDDEN BOOL
-file_info(HANDLE handle, BY_HANDLE_FILE_INFORMATION *file_info)
+HIDDEN int
+file_compare_info(HANDLE handle1, HANDLE handle2)
 {
-    BOOL got = FALSE;
+    BOOL got1 = FALSE, got2 = FALSE;
+    BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
 
-    if (handle != INVALID_HANDLE_VALUE) {
-	got = GetFileInformationByHandle(handle, file_info);
-	CloseHandle(handle);
+    if (handle1 != INVALID_HANDLE_VALUE) {
+	got1 = GetFileInformationByHandle(handle1, &file_info1);
+	CloseHandle(handle1);
     }
 
-    return got;
+    if (handle2 != INVALID_HANDLE_VALUE) {
+	got2 = GetFileInformationByHandle(handle2, &file_info2);
+	CloseHandle(handle2);
+    }
+
+    /* On Windows, test if paths map to the same space on disk. */
+    if (got1 && got2 &&
+	(file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+	(file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+	(file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+	return 1;
+    }
+
+    return 0;
 }
 #endif /* HAVE_GETFULLPATHNAME */
 
@@ -150,23 +164,12 @@ bu_same_file(const char *fn1, const char *fn2)
  * they're part of the same API.
  */
 #ifdef HAVE_GETFULLPATHNAME
-	/* On Windows, test if paths map to the same space on disk. */
-
-	BOOL got1 = FALSE, got2 = FALSE;
 	HANDLE handle1, handle2;
-	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
 
 	handle1 = CreateFile(rp1, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	got1 = file_info(handle1, &file_info1);
 	handle2 = CreateFile(rp2, GENERIC_READ, FILE_SHARE_READ, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-	got2 = file_info(handle2, &file_info2);
 
-	if (got1 && got2 &&
-	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
-	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
-	    ret = 1;
-	}
+	ret = file_compare_info(handle1, handle2);
 #else
 	/* Everywhere else, see if stat() maps to the same device and inode.
 	 *
@@ -191,6 +194,7 @@ bu_same_file(const char *fn1, const char *fn2)
 int
 bu_same_fd(int fd1, int fd2)
 {
+    int ret = 0;
 
     if (UNLIKELY(fd1<0 || fd2<0)) {
 	return 0;
@@ -200,21 +204,12 @@ bu_same_fd(int fd1, int fd2)
 
 /* Ditto bu_same_file() reasoning, assume GetFullPathname implies we have HANDLEs */
 #ifdef HAVE_GETFULLPATHNAME
-	BOOL got1 = FALSE, got2 = FALSE;
 	HANDLE handle1, handle2;
-	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
 
 	handle1 = _get_osfhandle(fd1);
-	got1 = file_info(handle1, &file_info1);
 	handle2 = _get_osfhandle(fd2);
-	got2 = file_info(handle2, &file_info2);
 
-	if (got1 && got2 &&
-	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
-	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
-	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
-	    return 1;
-	}
+	ret = file_compare_info(handle1, handle2);
 #else
 	/* are these files the same inode on same device?
 	 *
@@ -222,14 +217,15 @@ bu_same_fd(int fd1, int fd2)
 	 * for non-UNIX filesystems.
 	 */
 	struct stat sb1, sb2;
-	if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) && (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
-	    return 1;
+	if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) &&
+	    (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+	    ret = 1;
 	}
 #endif /* HAVE_GETFULLPATHNAME */
 
     }
 
-    return 0;
+    return ret;
 }
 
 
