@@ -17,7 +17,7 @@ include_directories(${PROC_DB_INCLUDE_DIRS})
 BRLCAD_ADDEXEC(bottest bottest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cobb brep_cobb.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(brep_cube "brep_cube.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
-BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(brep_simple "brep_simple.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL) # NOTE: has manual page
 BRLCAD_ADDEXEC(brepintersect brepintersect.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(breplicator breplicator.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(contours contours.c libwdb NO_INSTALL)
@@ -28,7 +28,7 @@ BRLCAD_ADDEXEC(spltest spltest.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(surfaceintersect "surfaceintersect.cpp;twistedcube.cpp" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT NO_INSTALL)
 BRLCAD_ADDEXEC(tea_nmg tea_nmg.c libwdb NO_INSTALL)
 BRLCAD_ADDEXEC(tube tube.c "libwdb;${M_LIBRARY}" NO_INSTALL)
-BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(wdb_example wdb_example.c libwdb NO_INSTALL) # NOTE: has manual page
 
 add_subdirectory(naca)
 
