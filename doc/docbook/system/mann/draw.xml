@@ -25,6 +25,7 @@
       <arg choice="opt" rep="norepeat">-C#/#/#</arg>
       <arg choice="opt" rep="norepeat">-L #</arg>
       <arg choice="opt" rep="norepeat">-R</arg>
+      <arg choice="opt" rep="norepeat">-S</arg>
       <arg choice="opt" rep="norepeat"><replaceable>-m1</replaceable></arg>
       <arg choice="req" rep="norepeat"><replaceable>objects</replaceable></arg>
 
@@ -75,17 +76,21 @@
     </listitem>
     <listitem>
       <para>
-	The <emphasis>-M</emphasis> option tells draw to be "minimalist" by skipping subtraction objects when
-	drawing. This is useful in situations where an object has many large objects subtracted from it but
-	those objects have relatively minimal impact on the shape - this results in the default wireframe bearing
-	little resemablance to the evaluated shape.
+	The <emphasis>-R</emphasis> option tells draw to not change the view size when drawing new objects.
+	Without this flag, <command>draw</command> will automatically size the view to make the new object(s)
+	visible when the view was previously empty.
       </para>
     </listitem>
     <listitem>
       <para>
-	The <emphasis>-R</emphasis> option tells draw to not change the view size when drawing new objects.
-	Without this flag, <command>draw</command> will automatically size the view to make the new object(s)
-	visible when the view was previously empty.
+	The <emphasis>-S</emphasis> option tells draw to be
+	"simplified" by skipping subtraction objects when drawing, not
+	drawing NMG interior surfaces, and potentially more. Skipping
+	subtractions is useful in situations where an object has many
+	large objects subtracted from it but those objects have
+	relatively minimal impact on the shape.  This results in the
+	default wireframe bearing little resemablance to the evaluated
+	shape.
       </para>
     </listitem>
 
