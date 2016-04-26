@@ -73,7 +73,6 @@ main(int argc, char **argv)
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	printusage();
-	fprintf(stderr, "       Program continues running:\n");
     }
 
     if (! pars_Argv(argc, argv)) {

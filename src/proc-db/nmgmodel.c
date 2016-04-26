@@ -70,7 +70,6 @@ usage(char *str, int stopprog)
 		   "       Create NMG-to-mged database ",mfilename,
 		   "       and plot3 file ",plotfilename);
     if (stopprog) bu_exit(1, NULL);
-    fprintf(stderr,"       Program continues running:\n");
 }
 
 

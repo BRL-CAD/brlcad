@@ -410,7 +410,6 @@ main(int ac, char *av[])
     }
     if (ac == 1) {
 	usage(av[0]);
-    	fprintf(stderr,"       Program continues running:\n");
     }
     av += bu_optind;
     ac -= bu_optind;

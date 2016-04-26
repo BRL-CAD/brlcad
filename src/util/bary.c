@@ -154,7 +154,6 @@ main (int argc, char **argv)
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
 	bu_log("%s\n", usage);
-	bu_log("       Program continues running:\n");
     }
 
     BU_LIST_INIT(&site_list);

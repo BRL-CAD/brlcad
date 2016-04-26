@@ -255,7 +255,6 @@ main(int argc, char** argv)
     }
     if (argc >= 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file brep_cube.g):\n");
     }
 
     ON::Begin();

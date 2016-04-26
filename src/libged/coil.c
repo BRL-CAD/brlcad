@@ -396,7 +396,6 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     }
     if (argc == 1) {
 	usage(gedp);
-	bu_vls_printf(gedp->ged_result_str,"\n       Program continues running:\n\n");
     }
     if ((argc - bu_optind) == 1) {
 	have_name = 1;

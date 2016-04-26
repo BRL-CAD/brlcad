@@ -65,8 +65,6 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdout;
-	if (isatty(fileno(fp)))
-	    fprintf(stderr, "%s       Program continues running:\n", usage);
     }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)

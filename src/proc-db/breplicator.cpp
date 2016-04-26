@@ -403,7 +403,6 @@ main(int argc, char *argv[])
     }
     if (argc >= 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file breplicator.g):\n");
     }
 
     bu_log("Breplicating...please wait...\n");

@@ -1594,7 +1594,6 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 
     if (argc == 1 ) {
 	show_help(*argv, options);
-	printf("\n       Program continues running:\n\n");
     }
 
     /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */

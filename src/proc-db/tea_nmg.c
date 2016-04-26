@@ -190,7 +190,6 @@ main(int argc, char **argv)
 
     if (argc == 1) {
 	fprintf(stderr,"Usage: %s [-d]\n", *argv);
-    	bu_log("       Program continues running:\n");
     }
 
 

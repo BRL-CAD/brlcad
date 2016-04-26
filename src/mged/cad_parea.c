@@ -73,7 +73,6 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
 
     if (ttyin && ttyout && argc == 1) {
     		Usage();	/* print usage message */
-    		fprintf(stderr,"       Program continues running:\n");
     }
 
     saved = 0;

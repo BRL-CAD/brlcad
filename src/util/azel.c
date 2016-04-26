@@ -150,7 +150,6 @@ main (int argc, char **argv)
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
 	fprintf(stderr, "%s\n", usage);
-	fprintf(stderr, "       Program continues running:\n");
     }
 
     /* Handle command-line options */

@@ -57,7 +57,6 @@ printusage(int i)
     bu_log("%s\n", Usage);
     bu_log("       (Must redirect output; cannot send to tty)\n");
     if (i != 3) bu_exit(i, NULL);
-    fprintf(stderr, "       Program continues running:\n");
 }
 
 void

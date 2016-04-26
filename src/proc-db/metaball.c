@@ -237,7 +237,6 @@ main(int argc, char *argv[])
 
     if (argc == 1) {
 	fprintf(stderr,usage, *argv, COUNTMAX);
-    	fprintf(stderr,"       Program continues running:\n");
     }
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {

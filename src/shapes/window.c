@@ -105,7 +105,6 @@ main(int argc, char **argv)
 	printf("window.\n\n");
 
 	/* Find name of mged file to be created. */
-        printf("       Program continues running (in interactive mode):\n");
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);

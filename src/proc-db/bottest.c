@@ -56,7 +56,6 @@ main(int argc, char **argv)
     }
     if (argc == 1) {
 	printusage();
-	fprintf(stderr,"       Program continues running (will create file bot-test.g because 'filename' was blank):\n");
     }
     else if (argc > 1)
 	filename = argv[1];

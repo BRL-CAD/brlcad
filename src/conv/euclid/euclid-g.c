@@ -113,7 +113,6 @@ main(int argc, char **argv)
 
     if (argc == 1) {
 	bu_log("%s %s", argv[0], usage);
-	bu_log("       Program continues running (waiting for standard input):\n");
     }
     /* Get command line arguments. */
     else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {

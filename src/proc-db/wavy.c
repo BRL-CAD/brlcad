@@ -94,7 +94,6 @@ main(int argc, char **argv)
 
     if (argc == 1) {
     	printusage();
-    	bu_log("       Program continues running:\n");
     }
 
     outfp = wdb_fopen("wavy.g");

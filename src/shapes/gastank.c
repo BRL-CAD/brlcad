@@ -113,7 +113,6 @@ main(int argc, char **argv)
 
 	/* Print info about the window. */
 	explain();
-	bu_log("\n       Program continues running:\n\n");
 
 	/* Find name of mged file to be created. */
 	printf("Enter the mged file to be created (25 char max).\n\t");

@@ -100,7 +100,6 @@ main(int argc, char **argv)
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	printusage();
-	fprintf(stderr, "       Program continues running:\n");
     }
 
     if (!get_args(argc, argv)) {

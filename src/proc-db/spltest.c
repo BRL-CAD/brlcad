@@ -114,7 +114,6 @@ main(int argc, char *argv[])
     	printusage(argv);
 	if (helpflag)
 		bu_exit(1,NULL);
-	bu_log("       Program continues running:\n");
     }
 
     if (argc == 2)

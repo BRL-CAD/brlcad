@@ -80,7 +80,6 @@ main(int argc, char *argv[])
     bu_log(usage);
     if (argc > 1 && argv)
 	bu_exit(1, NULL);
-    printf("       Program continues running (in interactive mode):\n");
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';

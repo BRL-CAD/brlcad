@@ -120,7 +120,6 @@ main(int argc, char **argv)
 
 	/* Explain makings of handle. */
     	printusage();
-	printf("       Program continues running:\n\n");
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */

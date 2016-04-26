@@ -111,7 +111,6 @@ main(int argc, char **argv)
 
     if (argc == 1) {
 	bu_log("Usage: %s [-d]\n", *argv);
-    	bu_log("       Program continues running:\n");
     }
 
     outfp = wdb_fopen("teapot.g");

@@ -228,7 +228,6 @@ ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t
 
     if (argc == 1) {
     	printusage();
-	fprintf(stderr,"       Program continues running (will create file lens.g if no name supplied):\n");
     	return 0;
     }
 

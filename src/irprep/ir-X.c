@@ -132,8 +132,6 @@ main (int argc, char **argv)
 	}
     }
 
-    fprintf(stderr,"   Program continues running:\n");
-
     array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 
     /* Get file name to be read.  */

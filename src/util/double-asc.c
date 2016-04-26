@@ -63,7 +63,6 @@ print_usage(int willexit)
     if (willexit)
 	bu_exit(1, "%s%s", usage1, usage2);
     fprintf(stderr, "%s%s", usage1, usage2);
-    fprintf(stderr, "       Program continues running:\n");
 }
 
 

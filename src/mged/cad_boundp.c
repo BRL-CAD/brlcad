@@ -137,7 +137,6 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
 
 if (argc==1) {
     Usage();
-    fprintf(stderr,"       Program continues running:\n");
 }
 
 #ifdef DEBUG

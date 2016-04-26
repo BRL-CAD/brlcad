@@ -272,7 +272,6 @@ int parseArguments(int argc, char **argv)
     } else {
 	bu_strlcpy(progname, "fence\0", 6);
 	(void)argumentHelp(DEFAULT_VERBOSE_OUTPUT, progname, NULL);
-	bu_log("\n       Program continues running:\n\n");
     }
     fflush(stdout);
 

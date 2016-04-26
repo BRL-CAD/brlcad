@@ -132,8 +132,6 @@ main(int argc, char **argv)
 	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 		bu_exit(1,NULL);
     	}
-	else if (argc == 1)
-	    bu_log("       Program continues running:\n");
     }
 
     BU_LIST_INIT(&head.l);

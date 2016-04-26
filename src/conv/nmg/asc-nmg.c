@@ -65,7 +65,6 @@ main(int argc, char **argv)
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
 	usage();
-	bu_log("       Program continues running:\n");
     }
 
     bu_setprogname(argv[0]);
