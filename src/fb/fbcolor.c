@@ -77,7 +77,7 @@ main(int argc, char **argv)
     }
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-	fprintf(stderr, "Creating a window, waiting for user input:\n");
+	fprintf(stderr, "Opening a window, waiting for user input:\n");
     }
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {

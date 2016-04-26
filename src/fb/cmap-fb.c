@@ -120,6 +120,7 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdin;
+	fprintf(stderr, "Reading a colormap from user input:\n");
     }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)

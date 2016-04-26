@@ -98,13 +98,13 @@ main(int argc, char **argv)
     int i;
     struct timeval tv;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-	printusage();
-    }
-
     if (!get_args(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);
+    }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	fprintf(stderr, "Opening a window to work with\n");
     }
 
     if (fps > 0.0) {
