@@ -73,7 +73,6 @@ BRLCAD_ADDEXEC(cv cv.c libbu)
 BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libfb;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
-BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 
 # a new admin file (used also for option handling testing)
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp" "libbu;librt" NO_INSTALL)
