@@ -117,6 +117,44 @@ and new names should be listed for reference.
 
 7.26
 ----
+ray tracing tools
+	lgt, rtcell, rtfrac, rtpp, rtrad, rtrange, rtray, rtregis, rtsil
+	Removed as part of distillation effort [deprecated 7.26]
+converter tools
+	bot-bldxf, bot_shell-vtk, rt_bot_faces, cell-fb, cy-g,
+	euclid-g, euclid_format, euclid_unformat, g-euclid, g-euclid1,
+	g-nmg, g-tankill, intaval-g.py, nmg-*, poly-bot, viewpoint-g,
+	plot3*
+	Removed as part of distillation effort [deprecated 7.26]
+image tools
+	*cmap* : obsolete hardware
+        fbed : outside our domain
+        fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh
+	pixpaste : outside domain
+	Removed as part of distillation effort [deprecated 7.26]
+animation tools
+	anim_* : outside domain
+        orbit.sh, rtwalk, scriptsort, script-tab, tabinterp, tabsup,
+	azel, bary
+	Removed as part of distillation effort [deprecated 7.26]
+signal analysis tools
+	a-*, *-a : incorporating into cv
+	d-*, *-d, f-*, *-f, i-*, *-i, u-*, *-u : incorporating into cv
+	double-asc : incorporating into cv
+	dconv
+	Removed as part of distillation effort [deprecated 7.26]
+infrared and shapefactor tools
+	all_sf, if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	ssamp-bw, ssampview, ssampview.tcl
+	Removed as part of distillation effort [deprecated 7.26]
+misc tools
+	fix_polysolids : obsolete primitive
+        remapid : superseded by reid+remat
+        rawbot
+        buffer : unnecesary network/stream buffering tool
+        dbcp : superseded by scp
+        hex : superseded by hexdump
+	Removed as part of distillation effort [deprecated 7.26]
 include/bu/hash.h
 	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
         bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
