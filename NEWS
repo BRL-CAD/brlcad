@@ -25,8 +25,8 @@ changes made.  See document footer for additional details.
 * removed mged pl command, use plot command instead - Sean Morrison
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
-* added -M draw cmd option to skip subtraction solids - Cliff Yapp
-* added -L draw cmd option to draw bboxes for large bots - Cliff Yapp
+* added draw -S for simplied wireframes, no subtractions - Cliff Yapp
+* added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
