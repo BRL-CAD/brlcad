@@ -129,7 +129,7 @@ converter tools
 image tools
 	*cmap* : obsolete hardware
         fbed : outside our domain
-        fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh
+        fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
 	pixpaste : outside domain
 	Removed as part of distillation effort [deprecated 7.26]
 animation tools
@@ -161,9 +161,7 @@ include/bu/hash.h
         bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
         bu_hash_tbl will be made private.
         Replaced with new API [deprecated 7.26]
-rtrad, bot_shell-vtk, rt_bot_faces, g-nmg, nmg-bot, nmg-rib, nmg-sgp, plot3-hpgl,
-plot3-tk, plot3-X, fix_polysolids, terrain, pixinfo.sh, png_info, dbcp, buffer,
-hex, bw-d, c-d, d-bw, d-f, d-i, d-u, f-d, f-i, i-d, -if, u-bw, u-d, u-f
+terrain   
 	remove obsolete commands [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
