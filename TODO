@@ -2199,42 +2199,17 @@ DOCUMENTATION
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
     3dm-g
-    a-d
-    alias-pix
-    all_sf
-    anim_cascade
-    anim_fly
-    anim_hardtrack
-    anim_keyread
-    anim_lookat
-    anim_offset
-    anim_orient
     archer
-    asc2pix
     bolt
     bombardier
-    bot-bldxf
     brep_cube
     brep_simple
     brepintersect
     breplicator
     brickwall
     brlman
-    bw-a
-    bw-d
-    bwish
-    c-d
-    chan_add
-    check-express
     clutter
-    contours
     csgbrep
-    d-a
-    d-bw
-    d-f
-    d-i
-    d-u
-    d2-c
     damdf
     dauto
     dauto2
@@ -2243,22 +2218,13 @@ DOCUMENTATION
     dem-g
     dfft
     dmod
-    double-asc
     dpeak
     dsel
-    dsp_add
     dstats
     dwin
-    euclid_format
-    euclid_unformat
-    f-d
-    f-i
-    fbgammamod
     fence
     fhor
-    fix_polysolids
     g-dot
-    g-euclid1
     g-jack
     g-off
     g-step
@@ -2267,9 +2233,6 @@ DOCUMENTATION
     globe
     handle
     human
-    i-a
-    i-d
-    i-f
     ihist
     imod
     isst
@@ -2283,7 +2246,6 @@ DOCUMENTATION
     metaball
     mkbuilding
     molecule
-    nmg-sgp
     nmgmodel
     off-g
     pdb-g
@@ -2291,49 +2253,30 @@ DOCUMENTATION
     picket_fence
     pipe
     pix-spm
-    pix-yuv
     pix2g
     pix3filter
     pixcount
     pixelswap
     pixembed
-    pixfields
-    pixfieldsep
-    pixflip-fb
-    pixpaste
-    plot3-dm
     plot3stat
     pyramid
     raw-g
-    rawbot
     re2c
     ringworld
-    room
-    rtcell
-    rtfrac
-    rtrad
-    rtsil
     rtsrv
-    script-tab
     shp-g
     sketch
     smod
     sphflake
     spm-fb
-    ssampview
     step-g
-    surfaceintersec
+    surfaceintersect
     tea
     tea_nmg
-    texturescale
     tgf-g
     torii
     ttcp
     tube
-    u-a
-    u-bw
-    u-d
-    u-f
     umod
     ustats
     vegetation
@@ -2341,8 +2284,6 @@ DOCUMENTATION
     window
     window_frame
     wire
-    xyz-plot3
-    yuv-pix
 
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
