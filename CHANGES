@@ -128,12 +128,12 @@ converter tools
 	Removed as part of distillation effort [deprecated 7.26]
 image tools
 	*cmap*, fbcmrot : colormap support obsolete
-        fbed : outside our domain
+        fbed : outside scope
         fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
-	pixpaste : outside domain
+	pixpaste : outside scope
 	Removed as part of distillation effort [deprecated 7.26]
 animation tools
-	anim_* : outside domain
+	anim_*, fbanim : outside scope
         orbit.sh, rtwalk, scriptsort, script-tab, tabinterp, tabsup,
 	azel, bary
 	Removed as part of distillation effort [deprecated 7.26]
