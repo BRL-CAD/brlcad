@@ -70,11 +70,6 @@ BRLCAD_ADDEXEC(bwshrink bwshrink.c libbu)
 BRLCAD_ADDEXEC(bwstat bwstat.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(bwthresh bwthresh.c libbu)
 BRLCAD_ADDEXEC(cv cv.c libbu)
-# FIXME dbcp is a "copy program for UNIX" - will need some porting
-# work for Windows
-if(NOT WIN32)
-  BRLCAD_ADDEXEC(dbcp dbcp.c libbu)
-endif(NOT WIN32)
 BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libfb;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
