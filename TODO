@@ -53,6 +53,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* convert src/util/terrain.c to src/shapes/terrain.c writing out the
+  datafile to a binunif along with a referencing dsp.  perhaps add
+  command line option to skip .g to retain prior datafile capability.
+  need to review command line options to simplify complexity and
+  control randomization better.
+
 * Explore possibility of expanding dm command to accept object names
   as a way of tweaking display manager specific properties (wireframe
   vs solid drawing, shading on normals, etc.) that are currently
