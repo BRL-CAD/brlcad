@@ -27,6 +27,29 @@
   <section>
     <title>Overview of the Implementation</title>
     <section>
+      <title>Major Algorithms</title>
+      <section>
+        <para>
+          The overall NURBS Boolean Evaluation algorithm is based on
+          the paper <emphasis>BOOLE: A System to Compute Boolean
+          Combinations of Sculptured Solids.</emphasis> (S. Krishnan
+          et al., 1995). The main implementation file for the Boolean
+          Evaluation algoritm is
+          <filename>src/libbrep/boolean.cpp</filename>.
+        </para>
+        <para>
+          The NURBS Surface-Surface intersection algorithm is based on
+          the "NURBS Intersection Curve Evaluation" section of the
+          paper <emphasis>Performing Efficient NURBS Modeling
+          Operations on the GPU</emphasis> (A. Krishnamurthy et
+          al., 2008). A detailed outline of the algorithm, as
+          implemented, appears in the main implementation file for the
+          NURBS Surface-Surface intersection algorithm is
+          <filename>src/libbrep/intersection.cpp</filename>.
+        </para>
+      </section>        
+    </section>
+    <section>
       <title>Description of Major Functions</title>
       <section>
 	<title><filename>src/libbrep/boolean.cpp</filename></title>
@@ -97,12 +120,6 @@ ON_Intersect(const ON_Surface *surfA,
 	</para>
       </section>
     </section>
-
-    <section>
-      <title>Visualizing the Algorithm</title>
-      <para>Walking through an evaluation.</para>
-    </section>
-
     <section>
       <title>The OpenNURBS API</title>
       <para>
