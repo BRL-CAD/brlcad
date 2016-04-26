@@ -1095,11 +1095,11 @@ ged_dplot(struct ged *gedp, int argc, const char *argv[])
 	bu_vls_printf(gedp->ged_result_str,
 		"   isocsx N M (show intersections of ssx pair N, isocsx pair M)\n");
 	bu_vls_printf(gedp->ged_result_str,
-		"  fcurves N   (show clipped face curves of ssx pair N\n");
+		"  fcurves N   (show clipped face curves of ssx pair N)\n");
 	bu_vls_printf(gedp->ged_result_str,
-		"  lcurves     (show linked ssx curves used to split faces\n");
+		"  lcurves     (show linked ssx curves used to split faces)\n");
 	bu_vls_printf(gedp->ged_result_str,
-		"    faces     (show split faces used to construct result\n");
+		"    faces     (show split faces used to construct result)\n");
 	return GED_HELP;
     }
     filename = argv[1];
