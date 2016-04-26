@@ -2198,9 +2198,7 @@ DOCUMENTATION
 
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
-    3dm-g
     archer
-    bolt
     bombardier
     brlman
     damdf
@@ -2208,53 +2206,74 @@ DOCUMENTATION
     dauto2
     dconv
     ddisp
-    dem-g
     dfft
     dmod
     dpeak
     dsel
     dstats
     dwin
-    fence
     fhor
-    g-dot
-    g-jack
-    g-off
-    g-step
-    g-voxel
-    gastank
-    handle
-    human
     ihist
     imod
     isst
     istats
-    jack-g
     lowp
-    nmgmodel
-    off-g
-    perplex
-    picket_fence
-    pix-spm
     pix3filter
     pixcount
     pixelswap
     pixembed
     plot3stat
-    raw-g
-    re2c
     rtsrv
-    shp-g
     smod
-    spm-fb
-    step-g
-    tgf-g
-    ttcp
     umod
     ustats
+
+* these are matured shape tools that get installed with simple
+  usability but should still have basic docs and better names.  plan
+  to absorb them into ged as external plugins, but they'll still need
+  docs:
+
+    bolt
+    fence
+    gastank
+    handle
+    human
+    picket_fence
     window
     window_frame
     wire
+
+* misc / 3rd party tools we control / bundle, but need docs if anyone
+  else is to use them or contribute:
+
+    perplex
+    re2c
+
+* needs his own repo:
+
+    ttcp
+
+* need to revisit utility of spherical mapping, used by sh_spm and
+  sh_points, used for environment mapping (e.g., stars):
+
+    pix-spm
+    spm-fb
+
+* these eventually get put into gcv (hopefully not needing docs):
+
+    3dm-g
+    dem-g
+    g-dot
+    g-jack
+    g-off
+    g-step
+    g-voxel
+    jack-g
+    off-g
+    raw-g
+    shp-g
+    step-g
+    tgf-g
 
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
