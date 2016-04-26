@@ -182,15 +182,49 @@ bu_same_file(const char *fn1, const char *fn2)
 int
 bu_same_fd(int fd1, int fd2)
 {
-    struct stat sb1, sb2;
 
     if (UNLIKELY(fd1<0 || fd2<0)) {
 	return 0;
     }
 
-    /* ares files the same inode on same device? */
-    if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) && (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
-	return 1;
+    {
+
+/* Ditto bu_same_file() reasoning, assume GetFullPathname implies we have HANDLEs */
+#ifdef HAVE_GETFULLPATHNAME
+	BOOL got1 = FALSE, got2 = FALSE;
+	HANDLE handle1, handle2;
+	BY_HANDLE_FILE_INFORMATION file_info1, file_info2;
+
+	handle1 = _get_osfhandle(fd1);
+	if (handle1 != INVALID_HANDLE_VALUE) {
+	    got1 = GetFileInformationByHandle(handle1, &file_info1);
+	    CloseHandle(handle1);
+	}
+
+	handle2 = _get_osfhandle(fd2);
+	if (handle2 != INVALID_HANDLE_VALUE) {
+	    got2 = GetFileInformationByHandle(handle2, &file_info2);
+	    CloseHandle(handle2);
+	};
+
+	if (got1 && got2 &&
+	    (file_info1.dwVolumeSerialNumber == file_info2.dwVolumeSerialNumber) &&
+	    (file_info1.nFileIndexLow == file_info2.nFileIndexLow) &&
+	    (file_info1.nFileIndexHigh = file_info2.nFileIndexHigh)) {
+	    return 1;
+	}
+#else
+	/* are these files the same inode on same device?
+	 *
+	 * NOTE: fstat() works on Windows, but does not set an inode value
+	 * for non-UNIX filesystems.
+	 */
+	struct stat sb1, sb2;
+	if ((fstat(fd1, &sb1) == 0) && (fstat(fd2, &sb2) == 0) && (sb1.st_dev == sb2.st_dev) && (sb1.st_ino == sb2.st_ino)) {
+	    return 1;
+	}
+#endif /* HAVE_GETFULLPATHNAME */
+
     }
 
     return 0;
