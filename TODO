@@ -2202,14 +2202,7 @@ DOCUMENTATION
     archer
     bolt
     bombardier
-    brep_cube
-    brep_simple
-    brepintersect
-    breplicator
-    brickwall
     brlman
-    clutter
-    csgbrep
     damdf
     dauto
     dauto2
@@ -2230,7 +2223,6 @@ DOCUMENTATION
     g-step
     g-voxel
     gastank
-    globe
     handle
     human
     ihist
@@ -2238,49 +2230,28 @@ DOCUMENTATION
     isst
     istats
     jack-g
-    kurt
-    lens
     lowp
-    masonry
-    menger
-    metaball
-    mkbuilding
-    molecule
     nmgmodel
     off-g
-    pdb-g
     perplex
     picket_fence
-    pipe
     pix-spm
-    pix2g
     pix3filter
     pixcount
     pixelswap
     pixembed
     plot3stat
-    pyramid
     raw-g
     re2c
-    ringworld
     rtsrv
     shp-g
-    sketch
     smod
-    sphflake
     spm-fb
     step-g
-    surfaceintersect
-    tea
-    tea_nmg
     tgf-g
-    torii
     ttcp
-    tube
     umod
     ustats
-    vegetation
-    wavy
     window
     window_frame
     wire
