@@ -34,33 +34,37 @@ add_subdirectory(naca)
 
 # MORE THAN DEVELOPMENT TESTING
 #
-# these have reached a level of maturity where they provide some
-# (however remote) value to an end user, aren't just debugging aids,
-# but haven't yet reached a level of maturity where they might belong
-# elsewhere in the package (like src/shapes).
-BRLCAD_ADDEXEC(brickwall brickwall.c libwdb)
-BRLCAD_ADDEXEC(cchannel cchannel.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(globe globe.c libwdb)
-BRLCAD_ADDEXEC(kurt kurt.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(lens lens.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(masonry masonry.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(menger menger.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(metaball metaball.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(mkbuilding "mkbuilding.c;makebuilding/makebuilding.c" libwdb)
-BRLCAD_ADDEXEC(molecule molecule.c libwdb)
-BRLCAD_ADDEXEC(pdb-g pdb-g.c libwdb)
-BRLCAD_ADDEXEC(pipe pipe.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(pix2g pix2g.c libwdb)
-BRLCAD_ADDEXEC(pyramid pyramid.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(rawbot rawbot.c libwdb)
-BRLCAD_ADDEXEC(ringworld ringworld.c libwdb)
-BRLCAD_ADDEXEC(sketch sketch.c libwdb)
-BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(tea tea.c libwdb)
-BRLCAD_ADDEXEC(torii torii.c libwdb)
-BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}")
-BRLCAD_ADDEXEC(wavy wavy.c libwdb)
+# these have reached a level of maturity where they could provide some
+# value to an end user and aren't just debugging aids, but lack
+# documentation or still don't have adequate usability that would
+# compel them to live elsewhere in the package (e.g., src/shapes).
+#
+# we still DO NOT INSTALL them because they do not have documentation
+# and impact our perceived quality and complexity.
+
+BRLCAD_ADDEXEC(brickwall brickwall.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(cchannel cchannel.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(clutter "clutter.c;common.c" "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(globe globe.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(kurt kurt.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(lens lens.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(masonry masonry.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(menger menger.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(metaball metaball.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(mkbuilding "mkbuilding.c;makebuilding/makebuilding.c" libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(molecule molecule.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(pdb-g pdb-g.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(pipe pipe.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(pix2g pix2g.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(pyramid pyramid.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(rawbot rawbot.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(ringworld ringworld.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(sketch sketch.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(sphflake sphflake.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(tea tea.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(torii torii.c libwdb NO_INSTALL)
+BRLCAD_ADDEXEC(vegetation vegetation.c "libwdb;${M_LIBRARY}" NO_INSTALL)
+BRLCAD_ADDEXEC(wavy wavy.c libwdb NO_INSTALL)
 
 
 set(proc-db_ignore_files
