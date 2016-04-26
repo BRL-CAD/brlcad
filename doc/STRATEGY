@@ -200,7 +200,6 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO integrate bot_dump into gcv
 
 
-
 ** PROJECT: Performant Pipeline
 *** bundled ray dispatch
 **** TODO define ray bundling API
@@ -231,6 +230,23 @@ bolster those areas, and identifies specific actionable objectives.
 *** performant raytrace image display
 **** TODO optimize libdb/libfb to remove bottleneck
 **** TODO update archer for interactive tracing display
+
+
+** PROJECT: Progressive Geometry Display (11)
+
+*** ray trace display manager (4)
+**** TODO review rtgl code (1)
+**** TODO design incremental loading architecture (1)
+**** TODO implement incremental ray tracing (2)
+
+*** point cloud hashing (3)
+**** TODO design LoD point cloud storage approach (1)
+**** TODO calculate LoD point cloud utility metic (1)
+**** TODO implement LoD point cloud loading (3)
+
+*** asynchronous geometry display (4)
+**** TODO modify display loop to run in separate thread (2)
+**** TODO update draw command to dispatch (2)
 
 
 ** TEMPLATE: Project Title
