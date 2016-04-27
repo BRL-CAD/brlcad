@@ -58,11 +58,9 @@ static int d_per_l = 1;		/* doubles per line of output */
 
 
 void
-print_usage(int willexit)
+print_usage(void)
 {
-    if (willexit)
-	bu_exit(1, "%s%s", usage1, usage2);
-    fprintf(stderr, "%s%s", usage1, usage2);
+    bu_exit(1, "%s%s", usage1, usage2);
 }
 
 
@@ -109,11 +107,9 @@ get_args(int argc, char **argv)
 		d_per_l = atoi(bu_optarg);
 		break;
 	    default:
-		print_usage(1);
+		print_usage();
 	}
     }
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
-	print_usage(0);
 
     if (format == 0)
 	format = " %g";
@@ -137,11 +133,11 @@ get_args(int argc, char **argv)
 	    fileinput = 1;
 	    break;
 	default:
-	    print_usage(1);
+	    print_usage();
     }
 
     if (argc > ++bu_optind) {
-	print_usage(1);
+	print_usage();
     }
 
     return 1;		/* OK */
@@ -162,7 +158,7 @@ main (int argc, char **argv)
     int row, col;	/* coords within input stream */
 
     if (!get_args(argc, argv)) {
-	print_usage(1);
+	print_usage();
     }
 
     /* autosize input? */

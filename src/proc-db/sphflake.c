@@ -166,12 +166,13 @@ int main(int argc, char **argv)
 	}
     }
     if (bu_optind <= 1) {
-	usage(argv[0]);
 	fprintf(stderr,"Using all default parameters.\n");
 	memset(fileName, 0, MAX_INPUT_LENGTH);
 	bu_strlcpy(fileName, DEFAULT_FILENAME, sizeof(fileName));
 	inter = 0;
     }
+
+    bu_log("Writing out geometry to file [%s] ...", fileName);
 
     initializeInfo(&params, inter, fileName, depth);
 
@@ -199,6 +200,8 @@ int main(int argc, char **argv)
     wdb_close(fp);
     bu_free(wmemberArray, "free wmemberArray");
     bu_free(params.matArray, "free matArray");
+
+    bu_log(" done.\n");
 
     return 0;
 }

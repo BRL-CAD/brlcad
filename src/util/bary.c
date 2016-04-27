@@ -152,10 +152,6 @@ main (int argc, char **argv)
     /* intentionally double for scan */
     double x, y, z;
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
-	bu_log("%s\n", usage);
-    }
-
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (ch) {

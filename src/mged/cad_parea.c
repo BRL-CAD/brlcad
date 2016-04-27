@@ -61,18 +61,10 @@ main(int argc, const char *argv[])			/* "cad_parea" entry point */
     point first = {0.0, 0.0}; /* saved first point */
     int saved; /* "`first' valid" flag */
     double sum; /* accumulator */
-    int ttyin,ttyout;
-
-    ttyin = isatty(fileno(stdin));
-    ttyout = isatty(fileno(stdout));
 
     if (!GetArgs(argc, argv)) {
 	/* process command arguments */
 	return 1;
-    }
-
-    if (ttyin && ttyout && argc == 1) {
-    		Usage();	/* print usage message */
     }
 
     saved = 0;

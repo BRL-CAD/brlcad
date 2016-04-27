@@ -123,7 +123,7 @@ main(int argc, char **argv)
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */
-	printf("Enter the name of the mged file to be created ");
+	printf("\nEnter the name of the mged file to be created ");
 	printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);

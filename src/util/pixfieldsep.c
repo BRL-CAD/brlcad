@@ -75,9 +75,7 @@ get_args(int argc, char **argv)
     }
 
     if (bu_optind == argc) {
-    	if (argc == 1)
-		(void)fputs(usage, stderr);
-	(void)fputs("       Program continues running (output file names even.pix , odd.pix):\n",stderr);
+	(void)fputs("Writing out files even.pix and odd.pix:\n",stderr);
     } else {
 
     	if (bu_optind < argc) {
@@ -86,7 +84,7 @@ get_args(int argc, char **argv)
     	if (bu_optind < argc) {
 		odd_file = argv[bu_optind++];
     	} else {
-		(void)fputs("       Program continues running (2nd output file odd.pix):\n",stderr);
+		(void)fputs("Writing out file odd.pix:\n",stderr);
     	}
 
     	if (++bu_optind <= argc)

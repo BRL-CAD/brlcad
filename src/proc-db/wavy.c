@@ -92,9 +92,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-    	printusage();
-    }
+    bu_log("Writing out geometry to file [wavy.g] ...");
 
     outfp = wdb_fopen("wavy.g");
 
@@ -122,7 +120,8 @@ main(int argc, char **argv)
     mk_bspline(outfp, nurb_name, surfaces);
 
     wdb_close(outfp);
-    bu_log("Geometry saved to 'wavy.g'\n");
+
+    bu_log(" done.\n");
 
     return 0;
 }

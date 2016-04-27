@@ -68,7 +68,6 @@ main(int argc, char **argv)
 	fprintf(stderr, "WARNING: writing a binary colormap to stdout\n");
     }
 
-
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)
 	bu_exit(2, "Unable to open framebuffer\n");
 

@@ -236,7 +236,7 @@ MakeTwistedCube(ON_TextLog& error_log)
 
 static void
 printusage(void) {
-    fprintf(stderr,"Usage: brep_cube (takes no arguments)\n");
+    bu_exit(1, "Usage: brep_cube (takes no arguments)\n");
 }
 
 
@@ -253,14 +253,14 @@ main(int argc, char** argv)
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
     }
 
     ON::Begin();
 
     /* export brep to file */
-    bu_log("Writing a twisted cube b-rep...\n");
+    bu_log("Writing a twisted cube b-rep to [brep_cube.g]...\n");
     outfp = wdb_fopen("brep_cube.g");
     mk_id(outfp, id_name);
 

@@ -56,7 +56,10 @@ printusage(int i)
 {
     bu_log("%s\n", Usage);
     bu_log("       (Must redirect output; cannot send to tty)\n");
-    if (i != 3) bu_exit(i, NULL);
+    if (i != 3)
+	bu_exit(i, NULL);
+    else
+	bu_log("Writing pattern to your redirected output\n");
 }
 
 void
@@ -101,8 +104,10 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (isatty(fileno(stdout))) printusage(1);
-    if (argc == 1 ) printusage(3);
+    if (isatty(fileno(stdout)))
+	printusage(1);
+    if (argc == 1 )
+	printusage(3);
 
     return;
 }

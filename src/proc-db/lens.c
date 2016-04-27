@@ -137,7 +137,7 @@ MakeP(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_lengt
 	bu_vls_printf(&str, "%s.r", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
     } else {
-	bu_log("Error - specified parameters result in non-physical geometry");
+	bu_log("ERROR: specified parameters result in non-physical geometry");
     }
 }
 
@@ -212,7 +212,7 @@ MakeD(struct rt_wdb (*file), char *prefix, fastf_t diameter, fastf_t focal_lengt
 	bu_vls_printf(&str, "%s.r", prefix);
 	mk_lcomb(file, bu_vls_addr(&str), &lens, 1, "glass", "ri=1.5", NULL, 0);
     } else {
-	bu_log("Error - specified parameters result in non-physical geometry");
+	bu_log("ERROR: specified parameters result in non-physical geometry");
     }
 }
 
@@ -225,11 +225,6 @@ ReadArgs(int argc, char **argv, int *lens_1side_2side, fastf_t *ref_ind, fastf_t
     char *options="T:r:d:t:f:h?";
     int ltype;
     float refractive, diam, thick, focal;
-
-    if (argc == 1) {
-    	printusage();
-    	return 0;
-    }
 
     while ((c=bu_getopt(argc, argv, options)) != -1) {
 	switch (c) {
@@ -284,14 +279,16 @@ main(int ac, char *av[])
     /* Process arguments */
     ReadArgs(ac, av, &lens_1side_2side, &ref_ind, &diameter, &thickness, &focal_length);
 
+    bu_log("Writing out geometry to file [%s] ...\n", av[bu_optind]);
+
     /* Create file name if supplied, else use "lens.g" */
     if (av[bu_optind]) {
 	if (bu_file_exists(av[bu_optind], NULL))
-	    bu_exit(-1, "Error - refusing to overwrite pre-existing file %s", av[bu_optind]);
+	    bu_exit(-1, "ERROR: refusing to overwrite pre-existing file %s", av[bu_optind]);
 	db_fp = wdb_fopen(av[bu_optind]);
     } else {
 	if (bu_file_exists(DEFAULT_LENS_FILENAME, NULL))
-	    bu_exit(-1, "Error - no filename supplied and lens.g exists.");
+	    bu_exit(-1, "ERROR: no filename supplied and lens.g exists.");
 	db_fp = wdb_fopen(DEFAULT_LENS_FILENAME);
     }
 
@@ -328,6 +325,8 @@ main(int ac, char *av[])
 
     /* Close database */
     wdb_close(db_fp);
+
+    bu_log("Done.\n");
 
     return 0;
 }

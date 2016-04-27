@@ -258,8 +258,9 @@ main(int argc, char** argv)
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
+	return 1;
     }
 
     ON::Begin();

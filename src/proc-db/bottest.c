@@ -54,11 +54,10 @@ main(int argc, char **argv)
 	printusage();
 	return 0;
     }
-    if (argc == 1) {
-	printusage();
-    }
     else if (argc > 1)
 	filename = argv[1];
+
+    bu_log("Writing out geometry to file [%s] ...", filename);
 
     outfp = wdb_fopen(filename);
     mk_id(outfp, "BOT test");
@@ -324,6 +323,8 @@ main(int argc, char **argv)
     bu_free((char *)face_mode, "bottest: face_mode");
 
     wdb_close(outfp);
+
+    bu_log(" done.\n");
 
     return 0;
 }

@@ -57,9 +57,11 @@ main(int argc, char **argv)
     double base;
     int quant;
 
-    if (argc > 0) {
-	bu_log("Usage: %s\n", argv[0]);
+    if (argc > 1) {
+	bu_exit(1, "Usage: %s\n", argv[0]);
     }
+
+    bu_log("Writing out geometry to file [kurt.g] ...");
 
     outfp = wdb_fopen("kurt.g");
     mk_id(outfp, "Kurt's multi-valued function");
@@ -75,6 +77,8 @@ main(int argc, char **argv)
 	    do_cell(&val[ix][iy], x, y);
 	}
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }

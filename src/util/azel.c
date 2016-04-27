@@ -148,10 +148,6 @@ main (int argc, char **argv)
     int Ch;                 /* Input character */
     int i;                  /* Dummy variable for loop indexing */
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
-	fprintf(stderr, "%s\n", usage);
-    }
-
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1)
 	switch (Ch) {

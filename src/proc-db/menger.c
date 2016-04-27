@@ -408,9 +408,6 @@ main(int ac, char *av[])
 		bu_exit(0, NULL);
 	}
     }
-    if (ac == 1) {
-	usage(av[0]);
-    }
     av += bu_optind;
     ac -= bu_optind;
 

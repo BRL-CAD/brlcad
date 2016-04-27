@@ -188,10 +188,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-	fprintf(stderr,"Usage: %s [-d]\n", *argv);
-    }
-
+    bu_log("Writing out geometry to file [tea_nmg.g] ...");
 
     BU_LIST_INIT(&RTG.rtg_vlfree);
 
@@ -232,6 +229,8 @@ main(int argc, char **argv)
     } else {
 	rt_vlist_to_uplot(fp, &vhead);
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }

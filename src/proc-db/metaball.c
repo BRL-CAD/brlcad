@@ -228,16 +228,12 @@ make_spaghetti(const char *filename, const char *name, long count)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
+    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
     static const int COUNTMAX = 555;
 
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc;
     long count = COUNTMAX;
-
-    if (argc == 1) {
-	fprintf(stderr,usage, *argv, COUNTMAX);
-    }
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
         if (bu_optopt == '?') optc='h';

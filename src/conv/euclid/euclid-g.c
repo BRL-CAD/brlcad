@@ -111,11 +111,8 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (argc == 1) {
-	bu_log("%s %s", argv[0], usage);
-    }
     /* Get command line arguments. */
-    else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);
