@@ -1522,7 +1522,7 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 #     may still output SSE instructions (e.g., for cross-compiling).
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
-CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
+# CHECK_C_FLAG(msse3)
 
 # Check for c90 support with gnu extensions if we're not building for
 # a release so we get more broad portability testing.  Since the
@@ -1531,8 +1531,7 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a strictly standard compliant build, use the c** options instead
 # of the gnu variations
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  CHECK_C_FLAG("std=c99" BUILD_TYPES Debug)
-  CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
+  CHECK_C_FLAG("std=c99")
   # we need to define some things as "empty" to avoid false positives
   # for bu_* functions using varargs and print specifiers
   CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
@@ -1541,8 +1540,7 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_C_FLAG("DC99_POSIX_USE_BSD")
   #=== C++
-  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Debug)
-  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Release VARS CXX03_FLAG)
+  CHECK_CXX_FLAG("std=c++03")
   # for bu_* functions using varargs and print specifiers
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
@@ -1550,15 +1548,17 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
 else()
-  CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
-  CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
-  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
-  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    CHECK_C_FLAG("std=gnu99")
+  else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    CHECK_C_FLAG("std=gnu89")
+  endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  CHECK_CXX_FLAG("std=gnu++98")
 endif()
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
-# CHECK_C_FLAG("Za" BUILD_TYPES ALL)
+# CHECK_C_FLAG("Za")
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
