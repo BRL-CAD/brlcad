@@ -124,16 +124,16 @@ ray tracing tools
 	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis, rtsil'
 	Removed as part of distillation effort [deprecated 7.26]
 converter tools
-	cell-fb, cy-g, euclid-g, euclid_format', euclid_unformat',
-	g-euclid, g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
+	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
+	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
 	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
 	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
 	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
-	poly-bot, rawbot, rt_bot_faces, : primitive-specific converters
+	poly-bot, rt_bot_faces, : primitive-specific converters
 	Removed as part of distillation effort [deprecated 7.26]
 image tools
 	*cmap*, fbcmrot : colormap support obsolete
-	fbed : outside scope
+	fbed, cell-fb : outside scope
 	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
 	pixpaste : outside scope
 	alias-pix' : incorporating into icv
