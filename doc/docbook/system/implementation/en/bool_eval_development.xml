@@ -629,7 +629,57 @@ for (int i = 0; i < x_event.Count(); ++i) {
       <section>
         <title>The dplot Command</title>
         <para>
-          Stub.
+          The <function>dplot</function> command is used to visualize
+          the results of different stages of the NURBS Boolean
+          Evaluation algorithm. This makes it easier to isolate the
+          source of a problem in an evaluation.
+        </para>
+        <para>
+          Unlike the <function>brep</function> command, the
+          <function>dplot</function> command is purely a development
+          tool. It does not honor library boundaries and does not
+          conform to the typical conventions for editor commands, and
+          for this reason is only available as an Archer command in
+          the NURBS Boolean Evaluation development branch
+          (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
+        </para>
+        <para>
+          In the devlopment branch, the NURBS Boolean Evaluation
+          source code contains additional calls to
+          <classname>DebugPlot</classname> functions (implemented in
+          <filename>src/libbrep/debug_plot.*</filename>) that create
+          wireframe visualizations of data produced during the
+          evaluations.
+        </para>
+        <para>
+          For development convenience, these wireframes are not saved
+          as database objects, but rather are written as files in the
+          current directory, with names of the form
+          <filename>bool1_*.plot3</filename>.  An additional
+          <filename>bool1.dplot</filename> is written which describes
+          the <filename>.plot3</filename> files that were written in a
+          format understood by the <function>dplot</function> command.
+        </para>
+        <para>
+          One set of files is written for each evaluation. Between
+          evaluations, a static counter increments the numeric suffix
+          that's used in the output filenames. So for a combination
+          consisting of three objects, the <filename>bool1*</filename>
+          files will hold results from the intermediate boolean
+          evaluation between the first two objects in the combination,
+          and the <filename>bool2*</filename> files will hold results
+          from the final evaluation between the intermediate evaluated
+          object and the remaining leaf of the original comb.
+        </para>
+        <para>
+          The <classname>DebugPlot</classname> functions always use
+          the same file names and do not check if written files
+          already exist. It is assumed that you will run an
+          evaluation, inspect the generated files using the
+          <function>dplot</function> command, and then manually remove
+          (or just move) the generated <filename>.dplot</filename> and
+          <filename>.plot3</filename> files before performing another
+          evaluation with the <function>brep</function> command.
         </para>
       </section>
     </section>
