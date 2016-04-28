@@ -610,9 +610,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	max[i] += within_distance_tol;
 #endif
 	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
-	    if ((min[i] >= dom[i].m_t[0]) && (max[i] <= dom[i].m_t[1])) {
-		dom[i].Set(min[i],max[i]);
-	    }
+	    dom[i].Set(min[i],max[i]);
 	}
     }
     ON_Interval u = dom[0];
