@@ -4268,20 +4268,23 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 
     {
 	for (i = 0; i < bi->brep->m_E.Count(); i++) {
-	    int j, pnt_cnt;
+	    int j = 0;
+	    int pnt_cnt = 0;
 	    ON_3dPoint p;
 	    point_t pt1 = VINIT_ZERO;
 	    ON_Polyline poly;
 	    ON_BrepEdge& e = brep->m_E[i];
 	    const ON_Curve* crv = e.EdgeCurveOf();
 	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, tol->dist);
-	    p = poly[0];
-	    VMOVE(pt1, p);
-	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-	    for (j = 1; j < pnt_cnt; j++) {
-		p = poly[j];
+	    if (pnt_cnt > 1) {
+		p = poly[0];
 		VMOVE(pt1, p);
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		for (j = 1; j < pnt_cnt; j++) {
+		    p = poly[j];
+		    VMOVE(pt1, p);
+		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
+		}
 	    }
 	}
     }
