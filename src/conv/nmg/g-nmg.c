@@ -425,6 +425,9 @@ main(int argc, char **argv)
     int suppliedname = 0;
     double percent;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 

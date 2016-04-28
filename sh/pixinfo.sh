@@ -48,6 +48,9 @@
 #       eval `pixinfo.sh $FILE`         # Sets BASE, SUFFIX, WIDTH, HEIGHT
 #
 
+echo "DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n"
+sleep 1
+
 if test "$1" = "" ; then
     echo "Usage: pixinfo.sh filename"
     echo "  gives /bin/sh definitions for BASE SUFFIX WIDTH HEIGHT"

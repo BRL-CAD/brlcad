@@ -92,6 +92,9 @@ int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 1;

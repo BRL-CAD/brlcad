@@ -145,6 +145,9 @@ raymiss(struct application *UNUSED(ap))
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* report air regions */
     use_air = 1;
 

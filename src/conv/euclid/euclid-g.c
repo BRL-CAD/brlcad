@@ -99,6 +99,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     fpin = stdin;
     efile = NULL;
     bfile = "euclid.g";
