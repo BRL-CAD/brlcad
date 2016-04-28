@@ -34,6 +34,7 @@
 package require Tk
 package require Itcl
 package require hv3
+package require mousewheel 0.1
 package provide ManBrowser 1.0
 
 ::itcl::class ::ManBrowser {

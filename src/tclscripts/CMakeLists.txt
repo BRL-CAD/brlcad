@@ -97,6 +97,7 @@ set(tclscripts_TCLSCRIPTS
   man_browser.tcl
   menu_override.tcl
   mouse.tcl
+  mousewheel.tcl
   tkcon.tcl
   vmath.tcl
   )
