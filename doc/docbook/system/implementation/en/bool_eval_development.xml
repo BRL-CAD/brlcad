@@ -537,4 +537,101 @@ for (int i = 0; i < x_event.Count(); ++i) {
       </section>
     </section>
   </section>
+  <section>
+    <title>Debugging NURBS Boolean Evaluations</title>
+    <para>
+      The current ongoing development activity for NURBS Boolean Evaluation is debugging specific evaluation cases in order to find bugs and unhandled geometry cases in the implementation to support the evaluation of more geometry.
+    </para>
+    <para>
+      Because NURBS Boolean Evaluation is an immature feature still in development, new changes are made in a separate branch of the BRL-CAD code repository, <link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>.
+    </para>
+    <section>
+      <title>Debug Plotting</title>
+      <para>
+        There are two Archer commands that can be used to plot
+        individual components of brep NURBS objects to facilitate
+        debugging.
+      </para>
+      <para>
+        These commands work by creating temporary wireframe objects
+        that are drawn in the view window. While drawn, these objects
+        appear in the in-memory database, so the
+        <function>ls</function> command will show these objects (with
+        names like <varname><![CDATA[_BC_S_<obj>_646464]]></varname>
+        or <varname><![CDATA[bool1_brep1_surface03838ff]]></varname>,
+        but they are not saved with the database, and are deleted when
+        erased from the dislay.
+      </para>
+      <note>
+        <para>
+          Debug wireframe objects are not drawn the same way as
+          geometry, and do not trigger an automatic resize and refresh
+          of the view. This means that after running a plot command,
+          you may have to trigger a refresh manually (e.g. by running
+          the <function>autoview</function> command or interactively
+          rotating/resizing the view.
+        </para>
+        <para>
+          Also be aware that debug wireframes are drawn in a variety
+          of hard-coded colors to help distinguish different
+          subcomponents. These colors were designed to be best visible
+          using a view whose background color is black (this should be
+          the default, but can be easily changed in Archer via the
+          view window's right-click menu).
+        </para>
+      </note>
+      <para>
+      </para>
+      <section>
+        <title>The brep Command</title>
+        <para>
+          The Archer <function>brep</function> command (also
+          implemented in MGED) can be used to get structural
+          information about brep objects and visualize different
+          subcomponents.
+        </para>
+        <para>
+          Most importantly, <function>brep &lt;obj&gt; info</function>
+          will report summary information, including the number of
+          NURBS surfaces and faces and <function>brep &lt;obj&gt; plot
+          S &lt;index&gt;</function> can be used to plot individual
+          surfaces in 3D.
+        </para>
+        <para>
+          This is the primary way you can conceptually link a surface
+          or face index to the 3D geometry it represents. So if you
+          notice an error in an object while viewing it in the editor,
+          you can use the <function>brep</function> command to
+          determine the index of the surface with the error, and then
+          inspect the in-memory object in a debugger using that index
+          into the final surface array, tracing that surface object to
+          where it was created, etc.
+        </para>
+        <note>
+          <para>
+            For evaluations involving more than two objects, the final
+            brep NURBS object is made by converting two leaf objects
+            into breps, performing a boolean evaluation on them,
+            converting the next relevent object to brep and combining it
+            with the first intermediate evaluation to make a second
+            intermediate evaluation, and so on up the tree.
+          </para>
+          <para>
+            When debugging such cases, it's typically necessary to
+            manually create an intermediate combination (a subtree of
+            the one being evaluated), and use the
+            <function>brep</function> command to produce the
+            intermediate result so you can inspect the surfaces and
+            indices for that particular stage of the larger evaluation.
+          </para>
+        </note>
+      </section>
+      <section>
+        <title>The dplot Command</title>
+        <para>
+          Stub.
+        </para>
+      </section>
+    </section>
+  </section>
 </article>
