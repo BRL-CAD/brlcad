@@ -132,10 +132,11 @@ converter tools
 	poly-bot, rt_bot_faces, : primitive-specific converters
 	Removed as part of distillation effort [deprecated 7.26]
 image tools
-	*cmap*, fbcmrot : colormap support obsolete
+	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
 	fbed, cell-fb : outside scope
-	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh, png_info
-	pixpaste : outside scope
+	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh : obsolete
+	png_info : incorporating into icv
+	pixpaste : outside scope, license
 	alias-pix' : incorporating into icv
 	asc2pix' : incorporating into icv
 	pix-yuv', yuv-pix' : obsolete non-standard format
