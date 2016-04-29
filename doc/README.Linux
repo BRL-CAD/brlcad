@@ -98,7 +98,7 @@ libXext-devel
 libXi-devel
 freetype-devel
 fontconfig-devel
-
+mesa-libGL-devel
 
 To determine what particular version of Redhat or Fedora you are
 using, check these files:
