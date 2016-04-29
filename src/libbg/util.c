@@ -40,6 +40,12 @@
  *
  * See src/librt/test_bot2nurbs.cpp for an example of using Eigen to do calculations.  Probably
  * can make do with Matrix2d and Matrix3d rather than MatrixXd...
+ *
+ * I don't think it's relevant in this case (if we operate on 3D points as a matrix, the result
+ * won't be what the original BoT expects...) but when it comes to Eigen pay attention to Map,
+ * which may allow us to apply Eigen operations to BRL-CAD's libbn matricies:
+ *
+ * https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
  */
 
 
