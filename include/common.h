@@ -69,12 +69,14 @@ long int lrint(double x);
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */
-#ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
-#  define __END_DECLS     }              /**< if C++, set to } */
-#else
-#  define __BEGIN_DECLS /**< if C++, set to extern "C" { */
-#  define __END_DECLS   /**< if C++, set to } */
+#ifndef __BEGIN_DECLS
+#  ifdef __cplusplus
+#    define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#    define __END_DECLS     }              /**< if C++, set to } */
+#  else
+#    define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#    define __END_DECLS   /**< if C++, set to } */
+#  endif
 #endif
 
 /**
