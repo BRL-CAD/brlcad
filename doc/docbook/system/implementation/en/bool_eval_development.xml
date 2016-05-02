@@ -690,7 +690,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
                 ssx</function></emphasis> lets you interactively step
                 through the pairs of surfaces whose axis-aligned
                 bounding boxes were found to intersect. The wireframes
-                of the brep object being intersected are drawn with
+                of the brep objects being intersected are drawn with
                 the current surface pair highlighted. The
                 <varname>ssx_index</varname> assigned to the pair,
                 which can be used as an argument to other dplot
@@ -725,6 +725,48 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	    in <filename>src/libbrep/intersect.cpp</filename>.
 	  </para>
         </section>
+        <section>
+          <title>The isocsx Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		isocsx &lt;ssx_index&gt;</function></emphasis> lets
+		you step through the isocurve-surface intersections
+		from the pair of intersecting surfaces identified by
+		the given <varname>ssx_index</varname>. Wireframe
+		plots of the two surfaces are drawn, with one surface
+		and an intersecting isocurve of the second surface
+		highlighted. Each combination of isocurve and surface
+		is assigned an <varname>isocsx_index</varname> (shown
+		in the command window) that can be used as an argument
+		in the second form of the <function>isocsx</function>
+		subcommand.
+	      </para>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		isocsx &lt;ssx_index&gt;
+		&lt;isocsx_index&gt;</function></emphasis> shows the
+		actual intersection curve found between the isocurve
+		and surface pair identified by the given
+		<varname>ssx_index</varname> and
+		<varname>isocsx_index</varname>.
+	      </para>
+	      <para>
+		The plotted intersection curves are color-coded for
+		easy type-checking, e.g. overlap intersections are
+		drawn in green.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+	  <para>
+	    The isocsx curves are written in the
+	    <function>find_overlap_boundary_curves</function> function in
+	    <filename>src/libbrep/intersect.cpp</filename>.
+	  </para>
+	</section>
       </section>
     </section>
   </section>
