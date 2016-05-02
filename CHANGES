@@ -191,6 +191,9 @@ include/raytrace.h
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+include/rt/solid.h
+	shouldn't be public API - this level of detail belongs inside the display
+        manager [deprecated 7.26]
 include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
