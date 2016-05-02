@@ -681,6 +681,50 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <filename>.plot3</filename> files before performing another
           evaluation with the <function>brep</function> command.
         </para>
+        <section>
+          <title>The ssx Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+                <emphasis role="bold"><function>dplot bool1.dplot
+                ssx</function></emphasis> lets you interactively step
+                through the pairs of surfaces whose axis-aligned
+                bounding boxes were found to intersect. The wireframes
+                of the brep object being intersected are drawn with
+                the current surface pair highlighted. The
+                <varname>ssx_index</varname> assigned to the pair,
+                which can be used as an argument to other dplot
+                commands, is displayed in the command window.
+              </para>
+            </listitem>
+	    <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		&lt;ssx_index&gt;</function></emphasis> lets you
+		interactively step through the specific
+		surface-surface intersections found between the pair
+		of surfaces identified by an
+		<varname>ssx_index</varname>, excluding
+		isocurve-surface intersections (shown by
+		<function>dplot bool1.dplot isocsx</function>).
+              </para>
+	      <para>
+		To make it easier to check that drawn intersection
+		curves are of the correct type and are open or closed
+		curves as appropriate, intersections are color-coded
+		by type (e.g. transverse intersections are drawn in
+		yellow) and the ends of lines are decorated with
+		arrows to indicate open ends or perpendicular segments
+		to indicate coincident endpoints.
+	      </para>
+	    </listitem>
+          </itemizedlist>
+	  <para>
+	    The ssx pairs are recorded in the
+	    <function>find_overlap_boundary_curves</function> function
+	    in <filename>src/libbrep/intersect.cpp</filename>.
+	  </para>
+        </section>
       </section>
     </section>
   </section>
