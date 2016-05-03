@@ -313,7 +313,7 @@ typedef ptrdiff_t ssize_t;
  * have to add it for them
  */
 #if defined(_MSC_VER) && defined(__STDC__)
-   #include <tchar.h>
+#  include <tchar.h>
    /* MSVC++ misses this. */
    typedef _TCHAR TCHAR;
 #endif
