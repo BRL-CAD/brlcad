@@ -194,6 +194,12 @@ include/raytrace.h
 include/rt/solid.h
 	shouldn't be public API - this level of detail belongs inside the display
         manager [deprecated 7.26]
+include/ged/defines.h
+	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
+	remove freesolid from struct ged - exposes struct solid [deprecated 7.26]
+include/ged/view.h
+	remove current forms of dl_erasePathFromDisplay and invent_solid - they
+	expose the struct solid type [deprecated 7.26]
 include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
