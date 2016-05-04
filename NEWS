@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
 * improved rcodes command feedback in the no changes case - Cliff Yapp
