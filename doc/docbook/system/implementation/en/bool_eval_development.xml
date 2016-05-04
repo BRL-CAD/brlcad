@@ -838,6 +838,60 @@ for (int i = 0; i < x_event.Count(); ++i) {
           </para>
 	</section>
       </section>
+      <section>
+        <title>Plotting Arbitrary Evaluation Curves</title>
+        <para>
+          It's possible to write out custom curves from any part of
+          the evaluation (i.e. those not covered by
+          <function>dplot</function>) and view them in MGED/Archer.
+        </para>
+        <para>
+          You can pass a 3D <classname>ON_Curve</classname> to the
+          <function>DebugPlot::Plot3DCurve</function> function or a 2D
+          <classname>ON_Curve</classname> and an associated
+          <classname>ON_Surface</classname> to the
+          <function>DebugPlot::Plot3DCurve</function> function.
+        </para>
+        <para>
+          Both of these functions take an arbitrary filename for a
+          plot3 file the function will write, as well as a color for
+          the curve. The <function>DebugPlot::Plot3DCurve</function>
+          has an optional <varname>vlist</varname> parameter which you
+          should omit (see the full definitions in
+          <filename>src/libbrep/debug_plot.*</filename>).
+        </para>
+        <example>
+	  <title>Writing a 2D Curve as a plot3 File</title>
+	  <programlisting>
+            <![CDATA[
+// somewhere in boolean.cpp
+if (face1_curves.Count() > 0) {
+    static int calls = 0;
+    unsigned char mycolor[] = {0, 0, 62};
+    std::ostringstream plotname;
+
+    // generate a unique filename
+    plotname << "mycurve" << ++calls << ".plot3";
+
+    // plot using method of global DebugPlot instance 'dplot'
+    dplot->Plot3DCurveFrom2D(surf1, face1_curves[0],
+        plotname.str().c_str(), mycolor);
+}
+            ]]>
+	  </programlisting>
+        </example>
+        <para>
+          After running an evaluation that produces a custom plot3
+          file, you can draw it using the <function>overlay</function>
+          editor command.
+        </para>
+        <example>
+          <title>Drawing a plot3 File</title>
+          <screen>
+Archer> overlay mycurve1.plot3 1
+          </screen>
+	</example>
+      </section>
     </section>
   </section>
 </article>
