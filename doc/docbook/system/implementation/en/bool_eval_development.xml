@@ -767,6 +767,76 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	    <filename>src/libbrep/intersect.cpp</filename>.
 	  </para>
 	</section>
+        <section>
+          <title>Face-Evaluation Subcommands</title>
+          <itemizedlist>
+            <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		fcurves &lt;ssx_index&gt;</function></emphasis> lets
+		you step through the surface-surface intersection
+		curves identified by the given
+		<varname>ssx_index</varname> after they've been
+		clipped by face trimming curves.
+	      </para>
+	      <para>
+		The clipped 2D intersection curves for the first
+		surface are drawn projected to 3D, followed by the
+		matching curves for the second surface.
+	      </para>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		lcurves</function></emphasis> steps through the final
+		3D intersection curves used to split faces, after
+		contiguous face-clipped pieces have been linked
+		together.
+	      </para>
+	      <para>
+		After each curve is drawn independently, all curves are
+		drawn at the same time.
+	      </para>
+	      <para>
+		This subcommand doesn't draw any contextual geometry;
+		only the linked curves. Manually drawing a transparent
+		shaded view of the original geometry usually works
+		well for context.
+	      </para>
+	    </listitem>
+            <listitem>
+              <para>
+		<emphasis role="bold"><function>dplot bool1.dplot
+		faces</function></emphasis> lets you step through the
+		new set of faces formed by splitting the original
+		faces with the final linked intersection curves. Faces
+		that are considered part of the final result are drawn
+		highlighted, while faces that are discarded are drawn
+		dim.
+	      </para>
+	      <para>
+		After each face is drawn independently, all faces are
+		drawn at the same time.
+	      </para>
+	      <para>
+		This subcommand doesn't draw any contextual geometry;
+		only the face curves. Manually drawing a transparent
+		shaded view of the original geometry usually works
+		well for context.
+	      </para>
+	    </listitem>
+	  </itemizedlist>
+          <para>
+            The clipped face curves are recorded in
+            <function>get_face_intersection_curves</function> in
+            <filename>src/libbrep/boolean.cpp</filename>.
+          </para>
+          <para>
+            The linked curves and the categorized split faces are
+            recorded in <function>get_evaluated_faces</function> in
+            <filename>src/libbrep/boolean.cpp</filename>.
+          </para>
+	</section>
       </section>
     </section>
   </section>
