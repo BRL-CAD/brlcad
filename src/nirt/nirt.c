@@ -35,6 +35,7 @@
 #include "bu/getopt.h"
 #include "bu/list.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -128,8 +129,8 @@ void printusage(void)
 /**
  * List formats installed in global nirt data directory
  */
-void
-listformats(void)
+size_t
+listformats(char ***names)
 {
     size_t files, i;
     char **filearray = NULL;
@@ -144,14 +145,17 @@ listformats(void)
     /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
     files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
+    if (names)
+	*names = filearray;
 
-    /* open every nirt file we find and extract the description */
-    for (i = 0; i < files; i++) {
+    /* open every nirt file we find, extract, and print the description */
+    for (i = 0; i < files && !names; i++) {
 	bu_vls_trunc(&nirtpathtofile, 0);
-	bu_vls_trunc(&vlsfileline, 0);
 	bu_vls_printf(&nirtpathtofile, "%s/%s", bu_vls_addr(&nirtfilespath), filearray[i]);
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
+
 	fnddesc = 0;
+	bu_vls_trunc(&vlsfileline, 0);
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
 	    if (bu_strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 		fnddesc = 1;
@@ -163,10 +167,13 @@ listformats(void)
     }
 
     /* release resources */
-    bu_free_argv(files, filearray);
+    if (!names)
+	bu_free_argv(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
+
+    return files;
 }
 
 void
@@ -425,7 +432,7 @@ main(int argc, char *argv[])
 		    show_scripts(&script_list, "after enqueueing a file name");
 		break;
 	    case 'L':
-		listformats();
+		listformats(NULL);
 		bu_exit(EXIT_SUCCESS, NULL);
 	    case 'M':
 		mat_flag = 1;
@@ -525,6 +532,41 @@ main(int argc, char *argv[])
     }
 
     db_name = argv[bu_optind];
+
+    /* let users know that other output styles are available */
+    if (silent_flag != SILENT_YES) {
+	char **names = NULL;
+	size_t fmtcnt, i;
+	printf("Output format:");
+	if (bu_list_len(&script_list) == 0) {
+	    printf(" default");
+	} else {
+	    struct bu_vls name = BU_VLS_INIT_ZERO;
+
+	    /* last script listed wins */
+	    for (BU_LIST_FOR(srp, script_rec, &script_list)) {
+		if (srp->sr_type == READING_FILE) {
+		    bu_path_component(&name, bu_vls_addr(&(srp->sr_script)), BU_PATH_BASENAME_EXTLESS);
+		}
+	    }
+	    printf(" %s", bu_vls_addr(&name));
+	    bu_vls_free(&name);
+	}
+	printf(" (specify via -L option for descriptive listing)\n");
+
+	i = fmtcnt = listformats(&names);
+	if (i > 1) {
+	    printf("Formats available:");
+	    while (i-- > 0) {
+		char *dot = strchr(names[i], '.');
+		if (dot) /* trim off any filename suffix */
+		    *dot = '\0';
+		printf(" %s", names[i]);
+	    }
+	    printf(" (specify via -f option)\n");
+	}
+	bu_free_argv(fmtcnt, names);
+    }
 
     /* build directory for target object */
     if (silent_flag != SILENT_YES) {
