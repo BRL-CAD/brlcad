@@ -86,6 +86,9 @@ main(int argc, char *argv[])
     struct bu_ptbl faces;
     int done=0;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;

@@ -54,6 +54,9 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2) {
 	bu_exit(1, "Usage: %s (takes no arguments)\n", argv[0]);
     }
