@@ -34,6 +34,7 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
 #include <stdio.h>
 #include <stdlib.h>
