@@ -48,6 +48,9 @@ main(void)
     int i, j, k;			/* Loop counters.  */
     int matched;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");
     printf("temperature output file and raytrace and/or\n");
