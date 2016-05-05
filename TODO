@@ -654,10 +654,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   as API instead of expecting callers to use RT_DBNHASH and
   RT_DBHASH() manually.  consider using bu_hash or other container.
 
-* rename chan_add, chan_mult, chan_permute and look into possibly
-  merging them into one tool in the util directory.  similar to the
-  'join' command, but arguably easier to use.
-
 * temp colors and temp matrices during ray tracing, rt, rtwizard.
   need a command-line and mged method to override parameters.
 
