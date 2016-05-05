@@ -893,5 +893,295 @@ Archer> overlay mycurve1.plot3 1
 	</example>
       </section>
     </section>
+    <section>
+      <title>Debugging with the dplot Command</title>
+      <section>
+        <title>Tracing Output to the Code That Created It</title>
+        <para>
+          After you notice a problem in the output shown by the
+          <function>dplot</function> command, you need to locate the
+          source code that created the erroneous geometry so you can
+          start debugging. The following sections describe what
+          specific actions to take in the editor and a debugger to
+          start investigating some common issues.
+        </para>
+        <bridgehead>If the ssx subcommand shows that a surface-surface
+        intersection is missing...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Use the <function>info</function> and
+              <function>plot</function> subcommands of the
+              <function>brep</function> command to find the indexes
+              (<literal>&lt;i&gt;</literal> and
+              <literal>&lt;j&gt;</literal>) of the two faces involved
+              in the missing intersection.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to manually
+              create the appropriate intermediate evaluation,
+              corresponding to the
+              <filename>bool&lt;n&gt;.dplot</filename> showing the
+              error, to run the <function>brep</function> command on.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect</function> call in
+              <function>get_face_intersection_curves</function> with
+              the condition <userinput>i == &lt;i&gt; &amp;&amp; j ==
+              &lt;j&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start stepping through the
+              <classname>ON_Intersect</classname> call.
+            </para>
+          </listitem>          
+        </orderedlist>
+        <bridgehead>If the isocsx subcommand shows that an
+        isocurve-surface intersection is missing...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <function>isocsx</function> subcommand.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Use the <function>info</function> and
+              <function>plot</function> subcommands of the
+              <function>brep</function> command to find the indexes
+              (<literal>&lt;i&gt;</literal> and
+              <literal>&lt;j&gt;</literal>) of the two faces involved
+              in the missing intersection.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to manually
+              create the appropriate intermediate evaluation,
+              corresponding to the
+              <filename>bool&lt;n&gt;.dplot</filename> showing the
+              error, to run the <function>brep</function> command on.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect</function> call in
+              <function>get_face_intersection_curves</function> with
+              the condition <userinput>dplot->SurfacePairs() == &lt;n
+              - 1&gt; &amp;&amp; i == &lt;i&gt; &amp;&amp; j ==
+              &lt;j&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              When the break is reached, add a breakpoint at
+              <function>find_overlap_boundary_curves</function> and
+              advance to that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Step through the intersections, printing out the
+              isocurve endpoints and visualize them in the context of
+              the geometry in Archer (e.g. by centering the view at
+              those points, or creating spheres centered on them,
+              etc.) to find the isocurves of interest:
+              <programlisting>
+gdb) print surf1_isocurve->PointAtStart()
+gdb) print surf1_isocurve->PointAtEnd()
+              </programlisting>
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Investigate how the isocurves are processed.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the isocsx subcommand shows that isocurve
+        intersections bounding an overlap region were found, but
+        were stitched together improperly...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <function>isocsx</function> subcommand.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a break after the call to
+              <function>find_overlap_boundary_curves</function> in
+              <filename>intersect.cpp</filename> with the condition
+              <userinput>dplot->SurfacePairs() ==
+              &lt;n&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Inspect the <varname>overlaps</varname> array.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the ssx subcommand shows an incorrect
+        intersection curve...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <function>ssx</function> subcommand, and the index
+              <literal>&lt;k&gt;</literal> assigned to the incorrect
+              intersection event.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>ON_Intersect</function> call in
+              <function>get_face_intersection_curves</function> with
+              the condition <userinput>dplot->SurfacePairs() == &lt;n
+              - 1&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Step into <function>ON_Intersect</function> and wait for
+              <literal>x.Count() == &lt;k - 1&gt;</literal>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Investigate the creation of the next intersection event.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>
+          If the ssx subcommand shows the correct intersections for a
+          given surface pair, but the fcurves subcommand shows those
+          curves are not being correctly clipped by faces...
+        </bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> of the
+              surface-surface intersection used as the argument to the
+              <function>ssx</function> and
+              <function>fcurves</function> subcommands, and the index
+              <literal>&lt;k&gt;</literal> assigned by
+              <function>fcurves</function> to the incorrect clipped
+              curves.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>get_subcurves_inside_faces</function> call
+              inside <function>get_face_intersection_curves</function>
+              with the condition <userinput>dplot->SurfacePairs() ==
+              &lt;n + 1&gt; &amp;&amp; k == &lt;k&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Start stepping through
+              <function>get_face_intersection_curves</function> to
+              investigate how the event intersection curves are being
+              clipped.
+            </para>
+          </listitem>
+        </orderedlist>
+        <bridgehead>If the faces subcommand shows that an input face
+        was not split correctly, but the lcurves subcommand shows the
+        relevant intersection was accurate...</bridgehead>
+        <orderedlist>
+          <listitem>
+            <para>
+              Note the index <literal>&lt;n&gt;</literal> assigned by
+              <function>lcurves</function> to the relevant linked
+              curves.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Set a breakpoint at the
+              <function>split_trimmed_face</function> call inside
+              <function>get_evaluated_faces</function> with the
+              condition <userinput>dplot->LinkedCurves() >= &lt;n +
+              1&gt;</userinput>.
+            </para>
+            <para>
+              For a multi-part evaluation, you'll need to first skip
+              to the correct invocation of
+              <function>ON_Boolean</function>, either manually, or by
+              conditioning a breakpoint on the value of the static
+              <varname>calls</varname> variable defined at the top of
+              that function.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              Inside <function>split_trimmed_face</function>, check
+              the input face loops and ssx curves:
+            </para>
+            <programlisting>
+gdb) print orig_face->m_outerloop.m_a[i]->PointAtStart()
+gdb) print orig_face->m_outerloop.m_a[i]->PointAtEnd()
+gdb) print orig_face->m_innerloop.m_a[i]->PointAtStart()              
+gdb) print orig_face->m_innerloop.m_a[i]->PointAtEnd()              
+gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtStart()
+gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtEnd()
+            </programlisting>
+          </listitem>
+        </orderedlist>
+      </section>
+    </section>
   </section>
 </article>
