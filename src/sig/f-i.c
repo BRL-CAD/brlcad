@@ -52,6 +52,9 @@ main(int argc, char *argv[])
     float ibuf[512];
     short obuf[512];
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))
 	    scale = 32767.0;

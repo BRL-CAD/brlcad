@@ -32,6 +32,9 @@ main(void)
     short ibuf[16*1024];
     int n, i;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {
 	for (i=0; i < n; ++i)
 	    printf("%hd\n", ibuf[i]);
