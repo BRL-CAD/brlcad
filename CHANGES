@@ -143,7 +143,8 @@ image tools
 	texturescale : obsolete implementation
 	Removed as part of distillation effort [deprecated 7.26]
 video & animation tools
-	anim_*', fbanim, chan_add', pixflip-fb' : outside scope
+	anim_*', fbanim, chan_add', chan_mult, chan_permute,
+	pixflip-fb' : outside scope
 	pixfields', pixfieldsep' : outside scope
 	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
 	azel, bary
