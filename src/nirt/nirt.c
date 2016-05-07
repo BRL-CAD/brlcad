@@ -535,11 +535,12 @@ main(int argc, char *argv[])
 
     /* let users know that other output styles are available */
     if (silent_flag != SILENT_YES) {
+	const char *default_name = "default";
 	char **names = NULL;
 	size_t fmtcnt, i;
 	printf("Output format:");
 	if (bu_list_len(&script_list) == 0) {
-	    printf(" default");
+	    printf(" %s", default_name);
 	} else {
 	    struct bu_vls name = BU_VLS_INIT_ZERO;
 
@@ -549,20 +550,27 @@ main(int argc, char *argv[])
 		    bu_path_component(&name, bu_vls_addr(&(srp->sr_script)), BU_PATH_BASENAME_EXTLESS);
 		}
 	    }
+
+	    /* maybe no files, only execution scripts, so default output */
+	    if (bu_vls_strlen(&name) == 0)
+		bu_vls_printf(&name, default_name);
+
 	    printf(" %s", bu_vls_addr(&name));
 	    bu_vls_free(&name);
 	}
-	printf(" (specify via -L option for descriptive listing)\n");
+	printf(" (specify -L option for descriptive listing)\n");
 
-	i = fmtcnt = listformats(&names);
-	if (i > 1) {
+	i = 0;
+	fmtcnt = listformats(&names);
+	if (fmtcnt > 0) {
 	    printf("Formats available:");
-	    while (i-- > 0) {
+	    do {
 		char *dot = strchr(names[i], '.');
 		if (dot) /* trim off any filename suffix */
 		    *dot = '\0';
 		printf(" %s", names[i]);
-	    }
+	    } while (++i < fmtcnt);
+
 	    printf(" (specify via -f option)\n");
 	}
 	bu_free_argv(fmtcnt, names);
