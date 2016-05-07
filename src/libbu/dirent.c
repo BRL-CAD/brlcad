@@ -28,12 +28,13 @@
 #include "bu/file.h"
 #include "bu/path.h"
 #include "bu/malloc.h"
+#include "bu/sort.h"
 #include "bu/str.h"
 #include "uce-dirent.h"
 
 
 int
-cmpdir(const void *a, const void *b)
+cmpdir(const void *a, const void *b, void *UNUSED(context))
 {
     return (strcmp(*(const char **)a, *(const char **)b));
 }
@@ -78,7 +79,7 @@ bu_dir_list(const char *path, const char *pattern, char ***files)
     }
     (void)closedir(dir);
 
-    qsort(*files, filecount, sizeof(char *), cmpdir);
+    bu_sort(*files, filecount, sizeof(char *), cmpdir, NULL);
 
     return filecount;
 }
