@@ -31,6 +31,14 @@
 #include "bu/str.h"
 #include "uce-dirent.h"
 
+
+int
+cmpdir(const void *a, const void *b)
+{
+    return (strcmp(*(const char **)a, *(const char **)b));
+}
+
+
 size_t
 bu_dir_list(const char *path, const char *pattern, char ***files)
 {
@@ -69,6 +77,8 @@ bu_dir_list(const char *path, const char *pattern, char ***files)
 	}
     }
     (void)closedir(dir);
+
+    qsort(*files, filecount, sizeof(char *), cmpdir);
 
     return filecount;
 }
