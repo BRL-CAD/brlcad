@@ -49,7 +49,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 
     /* get the model2view matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view, 1);
 	return GED_OK;
     }
 

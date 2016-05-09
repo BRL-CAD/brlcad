@@ -413,7 +413,7 @@ vo_rmat_cmd(struct view_obj *vop,
     if (argc == 1) {
 	/* get rotation matrix */
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_rotation);
+	bn_encode_mat(&vls, vop->vo_rotation, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -555,7 +555,7 @@ vo_model2view_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_model2view);
+	bn_encode_mat(&vls, vop->vo_model2view, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -598,7 +598,7 @@ vo_pmodel2view_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_pmodel2view);
+	bn_encode_mat(&vls, vop->vo_pmodel2view, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -641,7 +641,7 @@ vo_view2model_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_view2model);
+	bn_encode_mat(&vls, vop->vo_view2model, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -746,7 +746,7 @@ vo_pmat_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_pmat);
+	bn_encode_mat(&vls, vop->vo_pmat, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 

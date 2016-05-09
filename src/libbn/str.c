@@ -96,18 +96,26 @@ bn_decode_hvect(fastf_t *v, const char *str)
 
 
 void
-bn_encode_mat(struct bu_vls *vp, const mat_t m)
+bn_encode_mat(struct bu_vls *vp, const mat_t m, int clamp)
 {
     if (m == NULL) {
 	bu_vls_putc(vp, 'I');
 	return;
     }
 
-    bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
-		  INTCLAMP(m[0]), INTCLAMP(m[1]), INTCLAMP(m[2]), INTCLAMP(m[3]),
-		  INTCLAMP(m[4]), INTCLAMP(m[5]), INTCLAMP(m[6]), INTCLAMP(m[7]),
-		  INTCLAMP(m[8]), INTCLAMP(m[9]), INTCLAMP(m[10]), INTCLAMP(m[11]),
-		  INTCLAMP(m[12]), INTCLAMP(m[13]), INTCLAMP(m[14]), INTCLAMP(m[15]));
+    if (clamp) {
+	bu_vls_printf(vp, "%g %g %g %g  %g %g %g %g  %g %g %g %g  %g %g %g %g",
+		INTCLAMP(m[0]), INTCLAMP(m[1]), INTCLAMP(m[2]), INTCLAMP(m[3]),
+		INTCLAMP(m[4]), INTCLAMP(m[5]), INTCLAMP(m[6]), INTCLAMP(m[7]),
+		INTCLAMP(m[8]), INTCLAMP(m[9]), INTCLAMP(m[10]), INTCLAMP(m[11]),
+		INTCLAMP(m[12]), INTCLAMP(m[13]), INTCLAMP(m[14]), INTCLAMP(m[15]));
+    } else {
+	bu_vls_printf(vp, "%.15g %.15g %.15g %.15g  %.15g %.15g %.15g %.15g  %.15g %.15g %.15g %.15g  %.15g %.15g %.15g %.15g",
+		m[0],m[1],m[2],m[3],
+		m[4],m[5],m[6],m[7],
+		m[8],m[9],m[10],m[11],
+		m[12],m[13],m[14],m[15]);
+    }
 }
 
 

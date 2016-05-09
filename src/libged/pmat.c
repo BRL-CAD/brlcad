@@ -46,7 +46,7 @@ ged_pmat(struct ged *gedp, int argc, const char *argv[])
 
     /* get the perspective matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmat);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmat, 1);
 	return GED_OK;
     } else if (argc == 2) {
 	/* set perspective matrix */
