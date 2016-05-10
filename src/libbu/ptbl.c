@@ -268,9 +268,12 @@ bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
 {
     BU_CK_PTBL(tbl);
 
-    if (tbl->end <= end)
+    if (end > tbl->blen) {
+	/* TODO: expand the allocation? */
 	return;
+    }
 
+    /* expand or reduce accordingly */
     tbl->end = end;
     return;
 }
