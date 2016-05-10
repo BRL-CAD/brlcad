@@ -36,7 +36,7 @@
 int
 cmpdir(const void *a, const void *b, void *UNUSED(context))
 {
-    return (strcmp(*(const char **)a, *(const char **)b));
+    return (bu_strcmp(*(const char **)a, *(const char **)b));
 }
 
 
