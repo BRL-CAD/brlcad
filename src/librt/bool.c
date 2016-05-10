@@ -944,12 +944,12 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	 * or vol/vol overlaps.  The list is terminated with a NULL
 	 * pointer, placed courtesy of bu_calloc().
 	 */
-	pp->pt_overlap_reg = (struct region **)bu_calloc(
-	    BU_PTBL_LEN(regiontable)+1, sizeof(struct region *),
-	    "pt_overlap_reg");
-	memcpy((char *)pp->pt_overlap_reg,
-	       (char *)BU_PTBL_BASEADDR(regiontable),
-	       BU_PTBL_LEN(regiontable) * sizeof(struct region *));
+	size_t rtlen = BU_PTBL_LEN(regiontable);
+	const void *rtp = (void *)BU_PTBL_BASEADDR(regiontable);
+	BU_ASSERT(rtlen > 0 && rtp);
+
+	pp->pt_overlap_reg = (struct region **)bu_calloc(rtlen+1, sizeof(struct region *), "pt_overlap_reg");
+	memcpy((char *)pp->pt_overlap_reg, rtp, rtlen * sizeof(struct region *));
     }
 
     /* Examine the overlapping regions, pairwise */
