@@ -305,7 +305,7 @@ vo_aet_cmd(struct view_obj *vop,
     if (argc == 1) {
 	/* get aet */
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, vop->vo_aet);
+	bn_encode_vect(&vls, vop->vo_aet, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -480,7 +480,7 @@ vo_center_cmd(struct view_obj *vop,
 	MAT_DELTAS_GET_NEG(center, vop->vo_center);
 	VSCALE(center, center, vop->vo_base2local);
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, center);
+	bn_encode_vect(&vls, center, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -800,7 +800,7 @@ vo_eye_cmd(struct view_obj *vop,
 	VSCALE(eye, eye, vop->vo_base2local);
 
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, eye);
+	bn_encode_vect(&vls, eye, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -1803,7 +1803,7 @@ vo_keypoint_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	VSCALE(tvec, vop->vo_keypoint, vop->vo_base2local);
-	bn_encode_vect(&vls, tvec);
+	bn_encode_vect(&vls, tvec, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
 	return TCL_OK;
@@ -2200,7 +2200,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	bu_vls_init(&vls);
 	bn_mat_inv(invRot, vop->vo_rotation);
 	MAT4X3PNT(modelPt, invRot, viewPt);
-	bn_encode_vect(&vls, modelPt);
+	bn_encode_vect(&vls, modelPt, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2282,7 +2282,7 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	MAT4X3PNT(viewPt, vop->vo_model2view, modelPt);
-	bn_encode_vect(&vls, viewPt);
+	bn_encode_vect(&vls, viewPt, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2368,7 +2368,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	MAT4X3PNT(modelPt, vop->vo_view2model, viewPt);
-	bn_encode_vect(&vls, modelPt);
+	bn_encode_vect(&vls, modelPt, 1);
 	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
@@ -2503,7 +2503,7 @@ vo_viewDir_cmd(struct view_obj *vop,
     MAT4X3PNT(model, invRot, view);
 
     bu_vls_init(&vls);
-    bn_encode_vect(&vls, model);
+    bn_encode_vect(&vls, model, 1);
     Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
@@ -2588,7 +2588,7 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	VSCALE(dir, dir, -1);
 
     bu_vls_init(&vls);
-    bn_encode_vect(&vls, dir);
+    bn_encode_vect(&vls, dir, 1);
     Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 

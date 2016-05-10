@@ -59,11 +59,11 @@ BN_EXPORT extern int bn_decode_hvect(hvect_t v,
 BN_EXPORT extern void bn_encode_mat(struct bu_vls *vp,
 				    const mat_t m, int clamp);
 BN_EXPORT extern void bn_encode_quat(struct bu_vls *vp,
-				     const quat_t q);
+				     const quat_t q, int clamp);
 BN_EXPORT extern void bn_encode_vect(struct bu_vls *vp,
-				     const vect_t v);
+				     const vect_t v, int clamp);
 BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
-				      const hvect_t v);
+				      const hvect_t v, int clamp);
 
 
 __END_DECLS

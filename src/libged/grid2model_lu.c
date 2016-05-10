@@ -65,7 +65,7 @@ ged_grid2model_lu(struct ged *gedp, int argc, const char *argv[])
     VADD2(view_pt, mo_view_pt, diff);
     MAT4X3PNT(model_pt, gedp->ged_gvp->gv_view2model, view_pt);
     VSCALE(model_pt, model_pt, gedp->ged_wdbp->dbip->dbi_base2local);
-    bn_encode_vect(gedp->ged_result_str, model_pt);
+    bn_encode_vect(gedp->ged_result_str, model_pt, 1);
 
     return GED_OK;
 

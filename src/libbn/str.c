@@ -120,23 +120,35 @@ bn_encode_mat(struct bu_vls *vp, const mat_t m, int clamp)
 
 
 void
-bn_encode_quat(struct bu_vls *vp, const mat_t q)
+bn_encode_quat(struct bu_vls *vp, const mat_t q, int clamp)
 {
-    bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
+    if (clamp) {
+	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(q));
+    } else {
+	bu_vls_printf(vp, "%.15g %.15g %.15g %.15g", V4ARGS(q));
+    }
 }
 
 
 void
-bn_encode_vect(struct bu_vls *vp, const mat_t v)
+bn_encode_vect(struct bu_vls *vp, const mat_t v, int clamp)
 {
-    bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
+    if (clamp) {
+	bu_vls_printf(vp, "%g %g %g", V3INTCLAMPARGS(v));
+    } else {
+	bu_vls_printf(vp, "%.15g %.15g %.15g", V3ARGS(v));
+    }
 }
 
 
 void
-bn_encode_hvect(struct bu_vls *vp, const mat_t v)
+bn_encode_hvect(struct bu_vls *vp, const mat_t v, int clamp)
 {
-    bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));
+    if (clamp) {
+	bu_vls_printf(vp, "%g %g %g %g", V4INTCLAMPARGS(v));
+    } else {
+	bu_vls_printf(vp, "%.15g %.15g %.15g %.15g", V4ARGS(v));
+    }
 }
 
 
