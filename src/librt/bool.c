@@ -1033,7 +1033,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		if (RT_G_DEBUG&DEBUG_PARTITION)
 		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
 			    code, lastregion->reg_name);
-		BU_PTBL_CLEAR_I(regiontable, i);
+		BU_PTBL_SET(regiontable, i, (long*)0);
 		break;
 	    case 2:
 		/* Keep partition, claiming region = regp */
@@ -1938,7 +1938,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 	    }
 
 	    if (!keep_open) {
-		BU_PTBL_CLEAR_I(&open_parts, i);
+		BU_PTBL_SET(&open_parts, i, (long*)0);
 	    }
 	}
 
