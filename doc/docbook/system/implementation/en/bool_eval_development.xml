@@ -1008,10 +1008,10 @@ Archer> overlay mycurve1.plot3 1
               the geometry in Archer (e.g. by centering the view at
               those points, or creating spheres centered on them,
               etc.) to find the isocurves of interest:
-              <programlisting>
-gdb) print surf1_isocurve->PointAtStart()
-gdb) print surf1_isocurve->PointAtEnd()
-              </programlisting>
+              <screen>
+(gdb) print surf1_isocurve->PointAtStart()
+(gdb) print surf1_isocurve->PointAtEnd()
+              </screen>
             </para>
           </listitem>
           <listitem>
@@ -1021,8 +1021,7 @@ gdb) print surf1_isocurve->PointAtEnd()
           </listitem>
         </orderedlist>
         <bridgehead>If the isocsx subcommand shows that isocurve
-        intersections bounding an overlap region were found, but
-        were stitched together improperly...</bridgehead>
+        intersections are incorrect...</bridgehead>
         <orderedlist>
           <listitem>
             <para>
@@ -1171,14 +1170,444 @@ gdb) print surf1_isocurve->PointAtEnd()
               Inside <function>split_trimmed_face</function>, check
               the input face loops and ssx curves:
             </para>
+            <screen>
+(gdb) print orig_face->m_outerloop.m_a[i]->PointAtStart()
+(gdb) print orig_face->m_outerloop.m_a[i]->PointAtEnd()
+(gdb) print orig_face->m_innerloop.m_a[i]->PointAtStart()              
+(gdb) print orig_face->m_innerloop.m_a[i]->PointAtEnd()              
+(gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtStart()
+(gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtEnd()
+            </screen>
+          </listitem>
+        </orderedlist>
+      </section>
+      <section>
+        <title>A Historical Example</title>
+        <para>
+          What follows is a step-by-step debugging of a real issue
+          affecting the <literal>X</literal> combination from the
+          BRL-CAD sample database <filename>axis.g</filename>.
+        </para>
+        <para>
+          This issue was fixed in revision 65179 in the NURBS Boolean
+          Evaluation development branch of the source repository
+          (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
+        </para>
+        <para>
+          If you want to follow along, you can reinstate the error in
+          a checkout of the development branch:
+          <screen>
+$ svn merge -r 65179:65178 ^/brlcad/branches/brep-debug
+          </screen>
+        </para>
+        <orderedlist>
+          <listitem>
+            <para>
+              Open <filename>axis.g</filename> in Archer and convert
+              the original combination to <type>brep</type>.
+              <screen>
+Archer> opendb axis.g
+Archer> brep X
+X_brep is made.
+              </screen>
+            </para>
+            <para>
+              The file <filename>bool1.dplot</filename> is created in
+              the current directory, as well as a few hundred
+              <filename>.plot3</filename> files.
+            </para>
+          </listitem>
+          <listitem>
+            <para>The object <literal>X</literal> is the union of two
+            intersecting arb8 boxes. The arb8s are perpendicularly
+            intersecting plates that create a 3D shape that looks like
+            a 2D letter "X" in the X-Y plane that has been extruded
+            along the Z axis.
+            </para>
+            <para>
+              The <function>ssx</function> subcommand of
+              <function>dplot</function> is used to check that all
+              expected surface-surface intersections were attempted
+              between the brep NURBS versions of the two arb8s,
+              hereafter referred to as <emphasis>brep1</emphasis> and
+              <emphasis>brep2</emphasis>.
+            </para>
+            <para>
+              <screen>
+Archer> dplot bool1.dplot ssx
+Press [Enter] to show surface-surface intersection 0
+...
+Press [Enter] to show surface-surface intersection 13
+              </screen>
+            </para>
+            <para>
+              All 14 expected intersection events are reported. Each
+              of the two larger-area faces of
+              <emphasis>brep1</emphasis> transversally intersects the
+              two similar faces of <emphasis>brep2</emphasis>
+              (<varname>ssx_index</varname> 0, 1, 4, 5). Two edges of
+              each of these faces lie in the same plane (the X-Y
+              plane and another plane parallel to it) as two of the
+              four smaller-area faces of the other brep
+              (<varname>ssx_index</varname> 2, 3, 6, 7, 8, 9, 11,
+              12). These two pairs of smaller area faces also
+              intersect each other in square overlap intersections
+              (<varname>ssx_index</varname> 10, 13).
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <function>ssx &lt;ssx_index&gt;</function> subcommand of
+              <function>dplot</function> is used to check the
+              individual intersection events.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot ssx 0
+...              
+Archer> dplot bool1.dplot ssx 13
+            </screen>
+            <para>
+              The surface-surface intersection with
+              <varname>ssx_index</varname> 10 appears incorrect
+              (compare to the other overlap intersection,
+              <varname>ssx_index</varname> 13). It's been correctly
+              identified as an overlap intersection, but it doesn't
+              contain the full, square area of the overlap.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The overlap intersection should have been created by
+              stitching together the four isocurve-surface
+              intersections that make each edge of the square overlap.
+            </para>
+            <para>
+              The <function>isocsx &lt;ssx_index&gt;</function> subcommand of
+              the <function>dplot</function> command is used to check
+              that all isocurve-surface intersections were attempted.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot ssx 10
+            </screen>
+            <para>
+              All four expected isocurve-surface intersections are
+              reported.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <function>isocsx &lt;ssx_index&gt;
+              &lt;isocsx_index&gt;</function> subcommand of the
+              <function>dplot</function> command is used to check each
+              isocurve-surface intersection curve.
+            </para>
+            <screen>
+Archer> dplot bool1.dplot isocsx 10 0
+Archer> dplot bool1.dplot isocsx 10 1
+Archer> dplot bool1.dplot isocsx 10 2
+Archer> dplot bool1.dplot isocsx 10 3
+            </screen>
+            <para>
+              Each of the four overlap curves appears correct.
+            </para>
+            <para>
+              At this point, the problem doesn't seem to be with the
+              intersection curves, but with how they were processed.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The <function>fcurves</function> subcommand of the
+              <function>dplot</function> command is used to check the
+              overlap intersection curve that resulted from stitching
+              together the four (correct) isocurve-surface
+              intersection curves. The command shows the 3D projection
+              of the 2D curve recorded in the
+              <emphasis>brep1</emphasis> and
+              <emphasis>brep2</emphasis> domains, after they were
+              clipped to fit inside the containing face (though
+              clipping was unnecessary in this case, as the outer
+              loops of the faces coincide with the boundaries of the
+              surfaces).
+            </para>
+            <screen>
+Archer> dplot bool1.dplot fcurves 10
+            </screen>
+            <para>
+              The clipped curves are shown to be incorrect. This
+              isolates the problem to a point between the time the
+              isocurve-surface intersections were found and the time
+              the clipped curves were created.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The isocsx plots are written by the
+              <function>DebugPlot::IsoCSX</function> method inside the
+              <function>find_overlap_boundary_curves</function>
+              routine in
+              <filename>src/libbrep/intersect.cpp</filename>.
+              <function>find_overlap_boundary_curves</function> is
+              called from <function>ON_Intersect</function>
+              surface-surface intersection function, also defined in
+              <filename>src/libbrep/intersect.cpp</filename>. The next
+              call after
+              <function>find_overlap_boundary_curves</function>
+              returns is
+              <function>split_overlaps_at_intersections</function>.
+            </para>
+            <para>
+              To quickly check if the splitting function changes the
+              overlap curves, we insert code to write out the overlap
+              curves as <filename>.plot3</filename> files just after
+              the <function>split_overlaps_at_intersections</function>
+              call.
+            </para>
+            <para>
+              Since the <varname>ssx_index</varname> values reported
+              by <function>dplot</function> are numbered from 0, the
+              intersection we want to investigate, whose
+              <varname>ssx_index</varname> is 10, will be the 11th
+              intersection recorded during the evaluation.
+            </para>
+            <para>
+              <varname>dplot->SurfacePairs()</varname> reports the
+              number of surface-surface intersections that have been
+              recorded, so we write our curves on the condition that
+              <literal>dplot->SurfacePairs() == 10</literal>. Then
+              we'll only get the curves from the 11th surface-surface
+              intersection.
+            </para>
             <programlisting>
-gdb) print orig_face->m_outerloop.m_a[i]->PointAtStart()
-gdb) print orig_face->m_outerloop.m_a[i]->PointAtEnd()
-gdb) print orig_face->m_innerloop.m_a[i]->PointAtStart()              
-gdb) print orig_face->m_innerloop.m_a[i]->PointAtEnd()              
-gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtStart()
-gdb) print ssx_curves.m_a[i].m_ssi_curves.m_a[i].m_curve->PointAtEnd()
+<![CDATA[
+ // intersect.cpp, inside
+ // ON_Intersect(const ON_Surface *surfA, const ON_Surface *surfB, ...)
+
+ split_overlaps_at_intersections(overlaps, surfA, surfB, treeA, treeB,
+                                 isect_tol, isect_tolA, isect_tolB);
+    
++if (dplot->SurfacePairs() == 10) {
++    for (int i = 0; i < overlaps.Count(); ++i) {
++        if (!overlaps[i]) {
++            continue;
++        }
++        unsigned char overlap_color[] = {0, 255, 0};
++        std::ostringstream plotname;
++
++        plotname << "split_overlap" << i << ".plot3";
++        dplot->Plot3DCurve(overlaps[i]->m_curve3d, plotname.str().c_str(),
++                overlap_color);
++    }
++}
++
+ // add csx_events
+ for (int i = 0; i &lt; csx_events.Count(); ++i) {
+     x.Append(csx_events[i]);
+]]>
             </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              After rebuilding the code, the evaluation is run again
+              in Archer to produce the custom plot files
+              <filename>split_overlap4.plot3</filename>,
+              <filename>split_overlap5.plot3</filename>,
+              <filename>split_overlap6.plot3</filename>, and
+              <filename>split_overlap7.plot3</filename>.
+            </para>
+            <para>
+              The <function>overlay</function> command is used to draw
+              the contents of the <filename>.plot3</filename> files.
+            </para>
+            <screen>
+Archer> brep X
+Archer> overlay split_overlap4.plot3 1 ol4
+Archer> overlay split_overlap5.plot3 1 ol5
+Archer> overlay split_overlap6.plot3 1 ol6
+Archer> overlay split_overlap7.plot3 1 ol7
+            </screen>
+            <para>
+              When the four curves are drawn, we see they are still
+              correct after splitting, and enclose the square overlap
+              region.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              The next step in processing the overlap curves is
+              linking contiguous curve segments together. We'll once
+              again modify the source code, this time to write out the
+              intermediate linked overlap curves.
+            </para>
+            <para>
+              Curve endpoints are tested to see if they coincide, and
+              contiguous curves are linked with the
+              <function>link_curves</function> routine, which returns
+              a linked curve that replaces the original curves in the
+              <varname>overlaps</varname> array. We'll write out each
+              such curve returned by <function>link_curves</function>.
+            </para>
+            <programlisting>
+<![CDATA[
+ // intersect.cpp, inside
+ // ON_Intersect(const ON_Surface *surfA, const ON_Surface *surfB, ...)
+ // after the calls to link_curves
+ 
+         overlaps[i]->m_curveB = link_curves(overlaps[i]->m_curveB, overlaps[j]->m_curveB);
+     }
+ }
++if (dplot->SurfacePairs() == 10) {
++    unsigned char linked_curve_color[] = {0, 0, 255};
++    std::ostringstream plotname;
++
++    plotname << "linked_" << i << "_" << j << ".plot3";
++    dplot->Plot3DCurve(overlaps[i]->m_curve3d, plotname.str().c_str(),
++                       linked_curve_color);
++}
+ if (!is_valid_overlap(overlaps[j])) {
+     delete overlaps[j];
+     overlaps[j] = NULL;
+
+]]>
+            </programlisting>
+          </listitem>
+          <listitem>
+            <para>
+              The code is re-compiled, <literal>X_brep</literal> is
+              removed from the database, and the dplot-related files
+              are once again cleared from the working directory before
+              re-running the evaluation.
+            </para>
+            <para>
+              We draw our four new linked curve
+              <filename>.plot3</filename> files.
+            </para>
+            <screen>
+Archer > overlay linked_4_5.plot3 1
+Archer > overlay linked_4_6.plot3 1
+Archer > overlay linked_4_7.plot3 1
+Archer > overlay linked_5_4.plot3 1
+            </screen>
+            <para>
+              The intermediate curve represented by
+              <literal>linked_4_7.plot3</literal> is clearly
+              incorrect, as it cuts diagonally through the square
+              overlap region.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              We'll perform the evaluation again via a
+              debugger. <literal>X_brep</literal> is removed from the
+              database, and the <filename>*.dplot</filename> and
+              <filename>*.plot3</filename> files are removed from the
+              working directory.
+            </para>
+            <para>
+              A breakpoint is set just before the calls to
+              <function>link_curves</function> in the
+              <function>ON_Intersect</function> surface-surface
+              intersection function (line 3885 in
+              <filename>intersect.cpp</filename> at the time of
+              writing), with the condition that
+              <literal>dplot->SurfacePairs() == 10</literal>, and
+              that the overlap indices <varname>i</varname> and
+              <varname>j</varname> match the linked curve of interest.
+            </para>
+            <screen>
+<![CDATA[
+$ gdb mged
+(gdb) set args axis.g brep X
+(gdb) start
+(gdb) break intersect.cpp:3885 if dplot->SurfacePairs() == 10 && i == 4 && j == 7
+(gdb) continue
+]]>
+            </screen>
+            <para>
+              Stepping from the breakpoint (e.g. with gdb's
+              <function>next</function> command) we see that the macro
+              test <literal>OVERLAPS_LINKED(Start, End)</literal>
+              evaluates as true, indicating that the start of the
+              <varname>overlaps[i]</varname> curves coincide with the
+              end of the <varname>overlaps[j]</varname> curves.
+            </para>
+            <para>
+              Looking at the implementation of
+              <function>link_curves</function> in
+              <filename>intersect.cpp</filename>, we can see that the
+              second curve argument is joined to the first curve
+              argument using the OpenNURBS
+              <function>ON_NurbsCurve::Append</function> member
+              function. So, the start point of the second curve
+              argument is joined to the end point of the first curve
+              argument.
+            </para>
+            <programlisting>
+<![CDATA[
+HIDDEN ON_Curve *   
+link_curves(ON_Curve *&c1, ON_Curve *&c2)
+{
+    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
+
+    ON_NurbsCurve *nc1 = c1->NurbsCurve();
+    ON_NurbsCurve *nc2 = c2->NurbsCurve();
+    if (nc1 && nc2) {
+        nc1->Append(*nc2);
+        delete c1;
+        delete c2;
+        c1 = NULL;
+        c2 = NULL;
+        delete nc2;
+        return nc1;
+    } else if (nc1) {
+        delete nc1;
+    } else if (nc2) {
+        delete nc2;
+    }
+    return NULL;
+}   
+]]>
+            </programlisting>
+            <para>
+              <function>link_curves</function> is here being called
+              with <varname>overlaps[j]->m_curve*</varname> as its
+              first argument and
+              <varname>overlaps[i]->m_curve*</varname> as its second
+              argument. This matches our intention to link the end of
+              <varname>overlaps[j]</varname> to the start of
+              <varname>overlaps[i]</varname>, which have been
+              determined to be coincident.
+            </para>
+            <para>
+              However, going back to the
+              <function>link_curves</function> implementation, we also
+              see a call to
+              <function>extend_curve_end_to_point</function> which may
+              modify the first curve argument.
+            </para>
+            <para>
+               This intent of this call is to ensure the end point of
+               the first curve meets the start point of the second
+               curve as tightly as possible (tighter than the
+               <varname>isect_tol</varname> value that was used to
+               determine the points were coincident) before the curves
+               are joined together.
+            </para>
+            <para>
+              However, we see the point argument passed to
+              <function>extend_curve_end_to_point</function> is
+              <varname>c2->PointAtEnd()</varname>, when it should be
+              <varname>c2->PointAtStart()</varname>.
+            </para>
+          </listitem>
+          <listitem>
+            <para>
+              This error is corrected and the code is rebuilt. The
+              evaluation is re-run, and we use the
+              <function>dplot</function> command to verify that the
+              overlap intersection associated with
+              <varname>ssx_index</varname> 10 is now correct.
+            </para>
           </listitem>
         </orderedlist>
       </section>
