@@ -1189,3 +1189,5 @@ s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
 	move view_obj to dm/bview.h [7.25]
 s/BU_PTBL_CLEAR_I\((.*)\)/BU_PTBL_SET(\1, (long*)0)/g
 	replace BU_PTBL_CLEAR_I into the BU_PTBL_SET command [7.25]
+s/BU_PTBL_END\(([^\)]*)\)/(\1)->end/g
+        replace BU_PTBL_END with direct ptbl peek or BU_PTBL_LEN [7.25]
