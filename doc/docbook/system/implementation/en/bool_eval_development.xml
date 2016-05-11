@@ -15,12 +15,50 @@
     <section>
       <title>Known Limitations</title>
       <itemizedlist>
-        <listitem><para>Frequently produces incorrect output due to unhandled intersection cases.</para></listitem>
-        <listitem><para>Unoptimized performance.</para></listitem>
-	<listitem><para>Material properties of source objects are discarded.</para></listitem>
-	<listitem><para>Some primitive conversions to NURBS are ill-defined.</para></listitem>
-	<listitem><para>Hollow objects are not built topologically continuous.</para></listitem>
+        <listitem>
+          <para>
+            Frequently produces incorrect output due to unhandled
+            intersection cases.
+          </para>
+        </listitem>
+        <listitem>
+          <para>
+            Unoptimized performance.
+          </para>
+        </listitem>
+	<listitem>
+          <para>
+            Material properties of source objects are discarded.
+          </para>
+        </listitem>
+	<listitem>
+          <para>
+            Some primitive conversions to NURBS are ill-defined.
+          </para>
+        </listitem>
+	<listitem>
+          <para>
+            Hollow objects are not built topologically continuous.
+          </para>
+        </listitem>
       </itemizedlist>
+    </section>
+    <section>
+      <title>Evaluating a Combination Using the brep Command</title>
+      <para>
+        The <function>brep</function> command is available in the MGED
+        and Archer applications. If the command is run with a single argument
+        <literal>obj</literal> naming a combination, the components
+        of the combination are converted into NURBS objects which are
+        combined into a single evaluated NURBS object according to the
+        Boolean operations in the combination.
+      </para>
+      <para>
+        The evaluated brep-type object is written to the database with
+        the name <literal>obj_brep</literal>. If a second argument is
+        provided to the <function>brep</function> command, then it is
+        used as the name for the evaluated brep.
+      </para>
     </section>
   </section>
 
