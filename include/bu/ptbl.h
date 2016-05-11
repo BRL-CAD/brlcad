@@ -93,16 +93,17 @@ typedef struct bu_ptbl bu_ptbl_t;
 /*
  * For those routines that have to "peek" into the ptbl a little bit.
  */
-#define BU_PTBL_BASEADDR(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((ptbl)->buffer):NULL)
-#define BU_PTBL_LASTADDR(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((ptbl)->buffer + (ptbl)->end - 1):NULL)
 #define BU_PTBL_LEN(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((size_t)(ptbl)->end):0)
 #define BU_PTBL_TEST(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((ptbl)->l.magic == BU_PTBL_MAGIC):0)
 #define BU_PTBL_GET(ptbl, i)	((ptbl)->buffer[(i)])
 #define BU_PTBL_SET(ptbl, i, val)	((ptbl)->buffer[(i)] = (long*)(val))
-#define BU_PTBL_CLEAR_I(_ptbl, _i) ((_ptbl)->buffer[(_i)] = (long *)0)
 
 /** DEPRECATED */
 #define BU_PTBL_END(ptbl)	((ptbl)->end)
+/** DEPRECATED */
+#define BU_PTBL_BASEADDR(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((ptbl)->buffer):NULL)
+/** DEPRECATED */
+#define BU_PTBL_LASTADDR(ptbl)	(((uintptr_t)ptbl != (uintptr_t)NULL)?((ptbl)->buffer + (ptbl)->end - 1):NULL)
 
 
 /**
