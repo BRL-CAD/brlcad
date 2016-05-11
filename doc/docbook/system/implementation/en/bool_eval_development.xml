@@ -210,29 +210,70 @@ ON_Intersect(const ON_Surface *surfA,
     <section>
       <title>The OpenNURBS API</title>
       <para>
-        BRL-CAD leverages the OpenNURBS library primarily for its classes that represent general (NURBS) b-rep, surface, curve, and point geometry. The following sections describe the OpenNURBS library symbols most frequently used in the NURBS boolean evaluation implementation, with relevant usage notes.
+        BRL-CAD leverages the OpenNURBS library primarily for its
+        classes that represent general (i.e. NURBS) b-rep, surface,
+        curve, and point geometry. The following sections describe the
+        OpenNURBS library symbols most frequently used in the NURBS
+        boolean evaluation implementation, with relevant usage notes.
       </para>
       <warning>
         <para>
-          When using an OpenNURBS utility that hasn't been used elsewhere in the implementation, always check the documentation <emphasis>and</emphasis> the implementation to make sure it does what you expect.
+          When using an OpenNURBS utility that hasn't been used
+          elsewhere in the implementation, always check the
+          documentation <emphasis>and the implementation</emphasis> to
+          make sure it does what you expect.
         </para>
         <para>
-          Misleading methods have been misused in the past. For example, <function><![CDATA[bool ON_Line::InPlane(ON_Plane& plane)]]></function> appears to test if a line lies in the given plane, but actually constructs a plane that contains the line.
+          Misleading methods have been misused in the past. For
+          example, <function>bool ON_Line::InPlane(ON_Plane&amp;
+          plane)</function> appears to test if a line lies in the
+          given plane, but actually constructs a plane that contains
+          the line.
         </para>
         <para>
-          Another example is <function><![CDATA[double ON_Line::MinimumDistanceTo(const ON_Line&)]]></function>. While the function does indeed return the distance of the shortest path between one line and another, reading the implementation reveals an undocumented assumption that the <classname>ON_Line</classname> provided as an argument is not on the same infinite line as the instance the method is invoked on. That is, the <classname>ON_Line</classname>s can be parallel, but not coincident.
+          Another example is <function>double
+          ON_Line::MinimumDistanceTo(const
+          ON_Line&amp;)</function>. While the function does indeed
+          return the distance of the shortest path between one line
+          and another, reading the implementation reveals an
+          undocumented assumption that the
+          <classname>ON_Line</classname> provided as an argument is
+          not on the same infinite line as the instance the method is
+          invoked on. That is, the <classname>ON_Line</classname>s can
+          be parallel, but not coincident.
         </para>
       </warning>
       <section>
         <title>Arrays</title>
         <para>
-          OpenNURBS includes two general array classes similar to C++'s <classname>std::vector</classname>, <classname>ON_ClassArray</classname> and <classname>ON_SimpleArray</classname>. Besides having slightly friendlier interfaces, they also feature some higher-level member functions like <function>Reverse</function> and <function>Quicksort</function>.
+          OpenNURBS includes two general array classes,
+          <classname>ON_ClassArray</classname> and
+          <classname>ON_SimpleArray</classname>, which are similar to
+          C++'s <classname>std::vector</classname>. Besides having
+          slightly friendlier interfaces, they also feature some
+          higher-level member functions like
+          <function>Reverse</function> and
+          <function>Quicksort</function>.
         </para>
         <para>
-          The primary difference between the two classes is that <classname>ON_SimpleArray</classname> doesn't bother constructing and destructing its items. This makes it more efficient than <classname>ON_ClassArray</classname>, but unsuitable for class objects (though pointers to objects are fine). <classname>ON_ClassArray</classname> requires items to have working copy/assignment functions.
+          The primary difference between the two classes is that
+          <classname>ON_SimpleArray</classname> doesn't bother
+          constructing and destructing its items. This makes it more
+          efficient than <classname>ON_ClassArray</classname>, but
+          unsuitable for class objects (though pointers to objects are
+          fine). <classname>ON_ClassArray</classname> requires items
+          to have correctly implemented copy and assignment functions.
         </para>
 	<para>
-	  The NURBS boolean evaluation implementation frequently employs a combined array of known size to index elements from two input objects. For example, if <parameter>brepA</parameter> has <inlineequation><mathphrase>i</mathphrase></inlineequation> faces and <parameter>brepB</parameter> has <inlineequation><mathphrase>j</mathphrase></inlineequation> faces, a single array of <inlineequation><mathphrase>i + j</mathphrase></inlineequation> elements is created.
+	  The NURBS boolean evaluation implementation frequently
+	  employs a combined array of known size to index elements
+	  from two input objects. For example, if
+	  <parameter>brepA</parameter> has
+	  <inlineequation><mathphrase>i</mathphrase></inlineequation>
+	  faces and <parameter>brepB</parameter> has
+	  <inlineequation><mathphrase>j</mathphrase></inlineequation>
+	  faces, a single array of <inlineequation><mathphrase>i +
+	  j</mathphrase></inlineequation> elements is created.
 	</para>
 	<warning>
 	  <para>
@@ -258,7 +299,8 @@ ON_Intersect(const ON_Surface *surfA,
           Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, noteably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
         </para>
         <para>
-          Pointers to objects, curves in particular, are frequently stolen rather than creating a new copy of the object.
+          Pointers to objects, curves in particular, are frequently
+          stolen to avoid having to create a new copy of the object.
           <warning>
             <para>
               Classes containing heap-allocated objects delete them in their destructors. Proper stealing of pointers requires the instance's members be set to NULL.
@@ -299,7 +341,11 @@ for (int i = 0; i < csx_events.Count(); ++i) {
       <section>
 	<title>2D and 3D Points</title>
 	<para>
-	  The <classname>ON_2dPoint</classname> and <classname>ON_3dPoint</classname> classes implement the expected operators allowing points to be easily summed and scaled.
+	  The <classname>ON_2dPoint</classname> and
+	  <classname>ON_3dPoint</classname> classes intuitively
+	  implement operators such as <literal>+</literal> and
+	  <literal>*</literal> to allow points to be easily summed and
+	  scaled.
 	</para>
 	<para>
 	  The <function>operator[]</function> functions are notable because coordinates are not actually stored as arrays in these classes, but rather in the named members <varname>x</varname>, <varname>y</varname>, and <varname>z</varname>. So while accessing coordinates as <varname>pt[0]</varname>, <varname>pt[1]</varname> is possible, the more readable <varname>pt.x</varname>, <varname>pt.y</varname>, is more typically seen.
@@ -347,14 +393,24 @@ for (int i = 0; i < csx_events.Count(); ++i) {
 	</para>
 	<warning>
 	  <para>
-	    <function>PointAt</function> takes a real parameter; parameters normalized to <inlineequation><mathphrase>[0, 1]</mathphrase></inlineequation> must be converted. For example, the midpoint of the curve can be found as <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function> <emphasis role="bold">does not check</emphasis> if the <parameter>t</parameter> value you give it is inside the curve's domain, so you have to get this right!
+	    <function>PointAt</function> takes a real parameter;
+	    parameters normalized to <inlineequation><mathphrase>[0,
+	    1]</mathphrase></inlineequation> must be converted. For
+	    example, the midpoint of the curve can be found as
+	    <varname>curve->PointAt(curve->Domain().ParameterAt(.5))</varname>. <function>PointAt</function>
+	    <emphasis>does not check</emphasis> if the
+	    <parameter>t</parameter> value you give it is inside the
+	    curve's domain, so you have to get this right!
 	  </para>
 	</warning>
 	<para>
 	  All the <function>PointAt</function> methods return an <classname>ON_3dPoint</classname>, though in the common case where <classname>ON_Curve</classname> objects are representing 2D trim curves, the z coordinate will be 0.0.
 	</para>
 	<para>
-	  The curve's domain is frequently reversed using the <function>Reverse()</function> method to facilitate stitching curves together. The function has a boolean <type>int</type> return value that must be checked.
+	  A curve's domain is frequently reversed using the
+	  <function>Reverse()</function> method to facilitate
+	  stitching curves together. The function has a boolean
+	  <literal>int</literal> return value that must be checked.
 	</para>
 	<para>
 	  <programlisting>
@@ -369,11 +425,25 @@ if (curveA->PointAtStart().DistanceTo(curveB->PointAtStart()) < dist_tol) {
 	</para>
 	<warning>
 	  <para>
-	    Comparing curve endpoints, or even just bounding boxes (retrieved via the <function>BoundingBox()</function> method), is often sufficient in the context of different intersection and stitching procedures. However, it's important to keep in mind that in the general case, the shape of the curve between its endpoints or within its bounding box could be anything. For example, two curves with matching endpoints could both be linear, creating a degenerate loop. A curve whose endpoints are equal within the OpenNURBS <constant>ON_ZERO_TOLERANCE</constant> (testable using the <function>IsClosed()</function> method), may be self-intersecting, or degenerate to a point.
+	    Comparing curve endpoints, or even just bounding boxes
+	    (retrieved via the <function>BoundingBox()</function>
+	    method), is often sufficient in the context of different
+	    intersection and stitching procedures. However, it's
+	    important to keep in mind that in the general case, the
+	    shape of the curve between its endpoints or within its
+	    bounding box could be anything. For example, two curves
+	    with identical start and end points could both be linear,
+	    creating a degenerate loop. A curve whose endpoints are
+	    equal within the OpenNURBS
+	    <constant>ON_ZERO_TOLERANCE</constant> (testable using the
+	    <function>IsClosed()</function> method), may be
+	    self-intersecting, or degenerate to a point.
 	  </para>
 	</warning>
 	<para>
-	  A copy of the curve can be easily made using the <function>Duplicate()</function> member function, which simply wraps a standard copy procedure:
+	  A copy of a curve is easily made using the
+	  <function>Duplicate()</function> member function, which
+	  simply wraps a standard copy procedure:
 	</para>
 	<programlisting>
 ON_Curve* Duplicate()
@@ -420,7 +490,7 @@ ON_3dPoint surf_midpt_3d = surface->PointAt(udom.ParameterAt(.5), vdom.Parameter
 	  </programlisting>
 	</example>
 	<example>
-	  <title>Projecting a trim-curve point into 3d.</title>
+	  <title>Projecting a trim-curve point into 3D.</title>
 	  <programlisting>
 <![CDATA[
 ON_Interval tdom = trim_curve->Domain();
@@ -454,29 +524,106 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
       <section>
         <title>Intersection Events</title>
         <para>
-          There are two OpenNURBS classes for representing intersections. <classname>ON_X_EVENT</classname> is used for curve-curve and curve-surface intersections. <classname>ON_SSX_EVENT</classname> is used for surface-surface intersections.
-        </para>
-        <para>
-          These classes enumerate a number of intersection types. The <varname>m_type</varname> of intersection events is frequently checked to determine how to further process them over the course of the evaluation.
+          There are two OpenNURBS classes for representing
+          intersections. <classname>ON_X_EVENT</classname> is used for
+          curve-curve and curve-surface
+          intersections. <classname>ON_SSX_EVENT</classname> is used
+          for surface-surface intersections.
         </para>
         <note>
           <para>
-            The <varname>m_type</varname> of an intersection event determines how values in the <varname>m_a/m_b/m_A/m_B</varname> array members of the event instance are to be interpreted (documented in <filename>opennurbs_x.h</filename>).
+            An additional class, <classname>ON_PX_EVENT</classname>
+            has been implemented as an extension to the OpenNURBS API
+            to represent point-point, point-curve, and point-surface
+            intersection events.
           </para>
-	  <warning>
-	    <para>
-	      It's very easy to confuse <varname>m_a</varname>, <varname>m_b</varname>, <varname>m_A</varname>, and <varname>m_B</varname>, as well as <varname>m_a[0]</varname> vs. <varname>m_a[1]</varname>, etc. This is especially true when copying and pasting code.
-	    </para>
-	  </warning>
+        </note>
+        <para>
+          The intersection classes enumerate a number of intersection
+          types. Over the course of an evaluation, the
+          <varname>m_type</varname> of intersection events is
+          frequently checked to determine how each event should be
+          processed.
+        </para>
+        <bridgehead>Descriptions for m_type Values:</bridgehead>
+        <variablelist>
+          <varlistentry>
+            <term><varname>ON_X_EVENT::ccx_overlap</varname></term>
+            <listitem>
+              <para>
+                Two curves are coincident with one another over a
+                portion of their domains.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_overlap</varname></term>
+            <listitem>
+              <para>
+                Two surfaces are coincident over a portion of their
+                domains.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_tangent</varname>,
+            <varname>ON_SSX_EVENT::ssx_transverse</varname></term>
+            <listitem>
+              <para>
+                Two surfaces intersect in a curve. If the normals of
+                the surfaces are parallel over all points of the
+                curve, the intersection is tangent, and transverse
+                otherwise.
+              </para>
+            </listitem>
+          </varlistentry>
+          <varlistentry>
+            <term><varname>ON_SSX_EVENT::ssx_tangent_point</varname>,
+            <varname>ON_SSX_EVENT::ssx_transverse_point</varname></term>
+            <listitem>
+              <para>
+                Two surfaces intersect at a point. The intersection is
+                tangent if the normals of the two surfaces are
+                parallel at that point, and transverse otherwise.
+              </para>
+            </listitem>
+          </varlistentry>
+        </variablelist>
+        <bridgehead>Interpreting Intersection Class Array Members</bridgehead>
+        <para>
+          The <varname>m_type</varname> of an intersection event
+          determines how values in the
+          <varname>m_a/m_b/m_A/m_B</varname> array members of the
+          event instance are to be interpreted (documented in
+          <filename>opennurbs_x.h</filename>).
+        </para>
+	<warning>
 	  <para>
+	    It's very easy to confuse <varname>m_a</varname>,
+	    <varname>m_b</varname>, <varname>m_A</varname>, and
+	    <varname>m_B</varname>, as well as
+	    <varname>m_a[0]</varname> vs. <varname>m_a[1]</varname>,
+	    etc. This is especially true when copying and pasting
+	    code.
 	  </para>
-          <para>
-            For an <classname>ON_X_EVENT</classname> representing a curve-curve intersection whose <varname>m_type</varname> is <varname>ON_X_EVENT::ccx_overlap</varname>, (<varname>m_a[0]</varname>, <varname>m_a[1]</varname>) represents the portion of the first curve's domain that overlaps with the second curve, whereas in other cases <varname>m_a[1]</varname> is simply a duplicate of <varname>m_a[0]</varname>.
-          </para>
-          <para>
-            As a result, a pattern seen repeatedly in the NURBS boolean evaluation implementation is a loop over intersection events that gathers intersection points for processing, including overlap endpoints if the event represents an overlap.
-          </para>
-          <programlisting>
+	</warning>
+        <para>
+          For an <classname>ON_X_EVENT</classname> representing a
+          curve-curve intersection whose <varname>m_type</varname> is
+          <varname>ON_X_EVENT::ccx_overlap</varname>,
+          (<varname>m_a[0]</varname>, <varname>m_a[1]</varname>)
+          represents the portion of the first curve's domain that
+          overlaps with the second curve, whereas in other cases
+          <varname>m_a[1]</varname> is simply a duplicate of
+          <varname>m_a[0]</varname>.
+        </para>
+        <para>
+          As a result, a pattern seen repeatedly in the NURBS boolean
+          evaluation implementation is a loop over intersection events
+          that gathers intersection points for processing, including
+          overlap endpoints if the event represents an overlap.
+        </para>
+        <programlisting>
             <![CDATA[
 for (int i = 0; i < x_event.Count(); ++i) {
     x_points.Append(x_event[i].m_a[0]);
@@ -485,47 +632,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
     }
 }
             ]]>
-	  </programlisting>
-        </note>
-        <variablelist>
-          <varlistentry>
-            <term><varname>ON_X_EVENT::ccx_overlap</varname></term>
-            <listitem>
-              <para>
-                Two curves are coincident with one another over a portion of their domains.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_overlap</varname></term>
-            <listitem>
-              <para>
-                Two surfaces are coincident over a portion of their domains.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_tangent</varname>, <varname>ON_SSX_EVENT::ssx_transverse</varname></term>
-            <listitem>
-              <para>
-                Two surfaces intersect in a curve. If the normals of the surfaces are parallel over all points of the curve, the intersection is tangent, and transverse otherwise.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_tangent_point</varname>, <varname>ON_SSX_EVENT::ssx_transverse_point</varname></term>
-            <listitem>
-              <para>
-                Two surfaces intersect at a point. The intersection is tangent if the normals of the two surfaces are parallel at that point, and transverse otherwise.
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-        <note>
-          <para>
-            An additional class, <classname>ON_PX_EVENT</classname> has been implemented as an extension to the OpenNURBS API to represent point-point, point-curve, and point-surface intersection events.
-          </para>
-        </note>
+	</programlisting>
       </section>
     </section>
     <section>
