@@ -1630,6 +1630,13 @@ NEW OBJECTS
   view (i.e., a grid of primary rays), and 3) rtgl point samples
   (which is a variant of 2 but potentially view independent).
 
+  Considerations:
+    fast dictionary with expiration by time? (eviction during writes)
+    cache rate read/write / sec > 10k @ 500bytes
+    remain fast with millions of entries
+    immediate retrieval (consistency)
+    provide for concurrent access (concurrency), perhaps via sharding (N locks)
+
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it
   encapsulates the idea of a symbolic reference for database objects.
