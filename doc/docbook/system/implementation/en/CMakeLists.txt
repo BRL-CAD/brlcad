@@ -2,7 +2,15 @@ set(implementation_EN
   bool_eval_development.xml
   )
 
+set(implementation_EN_IMAGES
+  images/ccx_overlap_event.png
+  images/ssx_overlap_event.png
+  images/ssx_tangent_event.png
+  images/ssx_transverse_event.png
+  )
+
 ADD_DOC(implementation_EN html/implementation/en)
+ADD_DOC(implementation_EN_IMAGES html/implementation/en/images)
 ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN implementation/en "")
 
 # Local Variables:

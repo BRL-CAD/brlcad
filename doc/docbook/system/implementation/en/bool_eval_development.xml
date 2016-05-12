@@ -545,51 +545,90 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           frequently checked to determine how each event should be
           processed.
         </para>
-        <bridgehead>Descriptions for m_type Values:</bridgehead>
-        <variablelist>
-          <varlistentry>
-            <term><varname>ON_X_EVENT::ccx_overlap</varname></term>
-            <listitem>
+        <para>
+          When two curves are coincident with one another over a
+          portion of their domains, <varname>m_type</varname> will be
+          <varname>ON_X_EVENT::ccx_overlap</varname>.
+          <figure>
+            <title>Curve-Curve Overlap Intersection</title>
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="images/ccx_overlap_event.png" />
+              </imageobject>
+            </mediaobject>
+            <caption>
               <para>
-                Two curves are coincident with one another over a
-                portion of their domains.
+                Two curves (red and blue) overlap over a portion
+                of their domains (white).
               </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_overlap</varname></term>
-            <listitem>
-              <para>
-                Two surfaces are coincident over a portion of their
-                domains.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_tangent</varname>,
-            <varname>ON_SSX_EVENT::ssx_transverse</varname></term>
-            <listitem>
-              <para>
-                Two surfaces intersect in a curve. If the normals of
-                the surfaces are parallel over all points of the
-                curve, the intersection is tangent, and transverse
-                otherwise.
-              </para>
-            </listitem>
-          </varlistentry>
-          <varlistentry>
-            <term><varname>ON_SSX_EVENT::ssx_tangent_point</varname>,
-            <varname>ON_SSX_EVENT::ssx_transverse_point</varname></term>
-            <listitem>
-              <para>
-                Two surfaces intersect at a point. The intersection is
-                tangent if the normals of the two surfaces are
-                parallel at that point, and transverse otherwise.
-              </para>
-            </listitem>
-          </varlistentry>
-        </variablelist>
-        <bridgehead>Interpreting Intersection Class Array Members</bridgehead>
+            </caption>
+          </figure>
+        </para>
+        <para>
+          When two surfaces are coincident over a portion of their
+          domains, <varname>m_type</varname> will be
+          <varname>ON_SSX_EVENT::ssx_overlap</varname>.
+        </para>
+        <figure>
+          <title>Surface-Surface Overlap Intersection</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/ssx_overlap_event.png" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (red and blue) overlap over a region
+              of their domains (green).
+            </para>
+          </caption>
+        </figure>
+        <para>
+          There are two ways that two surfaces can intersect in a
+          curve. If the normals of the surfaces are parallel over all
+          points of the curve, the intersection
+          <varname>m_type</varname> is
+          <varname>ON_SSX_EVENT::ssx_tangent</varname>, and
+          <varname>ON_SSX_EVENT::ssx_transverse</varname> otherwise.
+        </para>
+        <figure>
+          <title>Surface-Surface Tangent Intersection</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/ssx_tangent_event.png" scale="60" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (red and blue) intersect in a curve
+              (white). The normals of both surfaces are parallel
+              to each other everywhere along the curve.
+            </para>
+          </caption>
+        </figure>
+        <figure>
+          <title>Surface-Surface Transverse Intersection</title>
+          <mediaobject>
+            <imageobject>
+              <imagedata fileref="images/ssx_transverse_event.png" />
+            </imageobject>
+          </mediaobject>
+          <caption>
+            <para>
+              Two surfaces (red and blue) intersect in a curve
+              (yellow). The normals of both surfaces are not
+              parallel to each other along the curve.
+            </para>
+          </caption>
+        </figure>
+        <para>
+          Similarly, if two surfaces intersect at a point, the
+          intersection <varname>m_type</varname> is
+          <varname>ON_SSX_EVENT::ssx_tangent_point</varname> if the
+          normals of the two surfaces are parallel at that point, and
+          <varname>ON_SSX_EVENT::ssx_transverse_point</varname>
+          otherwise.
+        </para>
         <para>
           The <varname>m_type</varname> of an intersection event
           determines how values in the
