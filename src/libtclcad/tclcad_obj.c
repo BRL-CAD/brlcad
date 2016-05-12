@@ -13688,8 +13688,8 @@ to_more_args_func(struct ged *gedp,
 	/* allocate space for additional args */
 	total_ac += ac_more;
 	size_needed = total_ac * sizeof(char *);
-	if (size_needed >= total_alloc) {
-	    while (size_needed >= total_alloc)
+	if (size_needed > total_alloc) {
+	    while (size_needed > total_alloc)
 		total_alloc *= 2;
 	    av = (char **)bu_realloc((void *)av, total_alloc, "to_more_args_func additional");
 	}
