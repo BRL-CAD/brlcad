@@ -660,7 +660,14 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <section>
           <title>Intersection Tolerances</title>
           <para>
-            The ON_Intersect intersection routines (<filename>intersect.cpp</filename>) generally take an <varname>isect_tol</varname> argument, which is a 3D tolerance normally equal to the constant <varname>ON_INTERSECTION_TOL</varname>. 2D tolerances, following the convention described above, are generally named <varname>isect_tolA</varname> and <varname>isect_tolB</varname>.
+            The <function>ON_Intersect</function> intersection
+            routines (<filename>intersect.cpp</filename>) generally
+            take an <varname>isect_tol</varname> argument, which is a
+            3D tolerance normally equal to the constant
+            <varname>ON_INTERSECTION_TOL</varname>. 2D tolerances,
+            following the convention described above, are generally
+            named <varname>isect_tolA</varname> and
+            <varname>isect_tolB</varname>.
           </para>
           <para>
             2D tolerance values for curves and surfaces are derived from the 3D tolerance value using the <function>tolerance_2d_from_3d</function> routines. The length of the diagonal of the 3D bounding box of the curve or surface is divided by the length of the 2D domain to get a rough estimate of what distance in the 2D domain corresponds to the 3D tolerance distance. In other words, the hope is that two points on a <varname>curveA</varname> or <varname>surfA</varname> that are <varname>isect_tolA</varname> units apart in 2D, will evaluate to two 3D points that are <varname>isect_tol</varname> units apart in 3D.
@@ -674,25 +681,30 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <section>
           <title>Curve Traversal Directions</title>
           <para>
-            It's important to remember that because parameterizations are arbitrary, there is no correspondence whatsoever between a 2D curve in one surface's domain and another surface's domain, even when those curves evaluate to the same 3D curve. In particular, you cannot assume that traversing different curves along their domain from <varname>m_t[0]</varname> to <varname>m_t[1]</varname> translates to a consistent direction in 3D. Put more simply, you cannot assume that the start and end points of such curves correspond in any particular way.
+            It's important to remember that because parameterizations
+            are arbitrary, there is no correspondence whatsoever
+            between a 2D curve in one surface's domain and another
+            surface's domain, even when those 2D curves evaluate to
+            the same 3D curve. In particular, you cannot assume that
+            traversing different curves along their domain from
+            <varname>m_t[0]</varname> to <varname>m_t[1]</varname>
+            translates to a consistent traversal direction in 3D, or
+            even that each 2D curve's
+            <varname>m_t[0]</varname>/<varname>m_t[1]</varname>
+            corresponds to the same 3D starting point on a closed
+            curve.
           </para>
-          <warning>
-            <para>
-              Suppose you have an open 3D intersection <varname>curve</varname> spanning two 3D points <code>start = curve->PointAtStart()</code> and <code>end = curve->PointAtEnd()</code>. You also have the corresponding 2D curve in the domains of the two surfaces producing the intersection, a <varname>curveA</varname> spanning the points <code>startA = curveA->PointAtStart()</code> and <code>endA = curveA->PointAtEnd()</code>, and a <varname>curveB</varname> spanning the points <code>startB = curveB->PointAtStart()</code> and <code>endB = curveB->PointAtEnd()</code>.
-            </para>
-            <para>
-              In this example, you cannot assume that (within tolerance) <code>startA == startB == start</code>. It could be that <code>startA == start</code> but <code>startB == end</code>, or that <code>startB == start</code> but <code>startA == end</code>, or that <code>startA == startB == end</code>.
-            </para>
-            <para>
-              If <varname>curve</varname> is a closed loop, then you can't assume even that much. You would have (within tolerance) <code>start == end</code>, <code>startA == endA</code>, <code>startB == endB</code>. However, it could be that the "break" in the loop is different in every parameterization, so that <code>start != startA != startB</code>.
-            </para>
-          </warning>
         </section>
       </section>
       <section>
         <title>Accumulated Error</title>
         <para>
-          By the nature of the math involved in representing parametric geometry, converting between 2D and 3D, and solving intersections between objects with different parameterizations, values that are expected to be identical are generally only equal within a certain tolerance, or error.
+          By the nature of the math involved in representing
+          parametric geometry (e.g. converting between 2D and 3D, and
+          solving intersections between objects with different
+          parameterizations) values that are expected to be identical
+          are generally only equal within a certain tolerance, or
+          error.
         </para>
         <para>
           Over the course of the evaluation, the same data is interrogated and processed a number of times. If ignored, the error introduced in one stage of the evaluation can grow over subsequent stages, causing an incorrect determination that leaves a curve unclosed, a surface unsplit, and ultimately an incorrect evaluated result.
@@ -811,12 +823,13 @@ for (int i = 0; i < x_event.Count(); ++i) {
             intermediate evaluation, and so on up the tree.
           </para>
           <para>
-            When debugging such cases, it's typically necessary to
-            manually create an intermediate combination (a subtree of
+            In order to inspect the surfaces and indices for a
+            particular stage of the overall evaluation using the
+            <function>brep</function> command, it's necessary to
+            manually create the intermediate combination (a subtree of
             the one being evaluated), and use the
             <function>brep</function> command to produce the
-            intermediate result so you can inspect the surfaces and
-            indices for that particular stage of the larger evaluation.
+            intermediate NURBS result.
           </para>
         </note>
       </section>
@@ -831,10 +844,10 @@ for (int i = 0; i < x_event.Count(); ++i) {
         <para>
           Unlike the <function>brep</function> command, the
           <function>dplot</function> command is purely a development
-          tool. It does not honor library boundaries and does not
-          conform to the typical conventions for editor commands, and
-          for this reason is only available as an Archer command in
-          the NURBS Boolean Evaluation development branch
+          tool. Its implementation does not honor library boundaries
+          and does not conform to the typical conventions for editor
+          commands, and for this reason is only available as an Archer
+          command in the NURBS Boolean Evaluation development branch
           (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
         </para>
         <para>
@@ -1059,7 +1072,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
 	  <programlisting>
             <![CDATA[
 // somewhere in boolean.cpp
-if (face1_curves.Count() > 0) {
+if (face1_curves.Count() > 0 && face1_curves[0] != NULL) {
     static int calls = 0;
     unsigned char mycolor[] = {0, 0, 62};
     std::ostringstream plotname;
@@ -1095,9 +1108,9 @@ Archer> overlay mycurve1.plot3 1
           After you notice a problem in the output shown by the
           <function>dplot</function> command, you need to locate the
           source code that created the erroneous geometry so you can
-          start debugging. The following sections describe what
-          specific actions to take in the editor and a debugger to
-          start investigating some common issues.
+          start debugging. The following sections provide example
+          procedures you can perform in Archer and a debugger to start
+          investigating some common issues.
         </para>
         <bridgehead>If the ssx subcommand shows that a surface-surface
         intersection is missing...</bridgehead>
@@ -1124,8 +1137,8 @@ Archer> overlay mycurve1.plot3 1
               Set a breakpoint at the
               <function>ON_Intersect</function> call in
               <function>get_face_intersection_curves</function> with
-              the condition <userinput>i == &lt;i&gt; &amp;&amp; j ==
-              &lt;j&gt;</userinput>.
+              the condition <literal>i == &lt;i&gt; &amp;&amp; j ==
+              &lt;j&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1175,9 +1188,9 @@ Archer> overlay mycurve1.plot3 1
               Set a breakpoint at the
               <function>ON_Intersect</function> call in
               <function>get_face_intersection_curves</function> with
-              the condition <userinput>dplot->SurfacePairs() == &lt;n
+              the condition <literal>dplot->SurfacePairs() == &lt;n
               - 1&gt; &amp;&amp; i == &lt;i&gt; &amp;&amp; j ==
-              &lt;j&gt;</userinput>.
+              &lt;j&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1229,8 +1242,8 @@ Archer> overlay mycurve1.plot3 1
               Set a break after the call to
               <function>find_overlap_boundary_curves</function> in
               <filename>intersect.cpp</filename> with the condition
-              <userinput>dplot->SurfacePairs() ==
-              &lt;n&gt;</userinput>.
+              <literal>dplot->SurfacePairs() ==
+              &lt;n&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1264,8 +1277,8 @@ Archer> overlay mycurve1.plot3 1
               Set a breakpoint at the
               <function>ON_Intersect</function> call in
               <function>get_face_intersection_curves</function> with
-              the condition <userinput>dplot->SurfacePairs() == &lt;n
-              - 1&gt;</userinput>.
+              the condition <literal>dplot->SurfacePairs() == &lt;n
+              - 1&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1310,8 +1323,8 @@ Archer> overlay mycurve1.plot3 1
               Set a breakpoint at the
               <function>get_subcurves_inside_faces</function> call
               inside <function>get_face_intersection_curves</function>
-              with the condition <userinput>dplot->SurfacePairs() ==
-              &lt;n + 1&gt; &amp;&amp; k == &lt;k&gt;</userinput>.
+              with the condition <literal>dplot->SurfacePairs() ==
+              &lt;n + 1&gt; &amp;&amp; k == &lt;k&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1347,8 +1360,8 @@ Archer> overlay mycurve1.plot3 1
               Set a breakpoint at the
               <function>split_trimmed_face</function> call inside
               <function>get_evaluated_faces</function> with the
-              condition <userinput>dplot->LinkedCurves() >= &lt;n +
-              1&gt;</userinput>.
+              condition <literal>dplot->LinkedCurves() >= &lt;n +
+              1&gt;</literal>.
             </para>
             <para>
               For a multi-part evaluation, you'll need to first skip
@@ -1376,7 +1389,7 @@ Archer> overlay mycurve1.plot3 1
         </orderedlist>
       </section>
       <section>
-        <title>A Historical Example</title>
+        <title>A Historical Debugging Example</title>
         <para>
           What follows is a step-by-step debugging of a real issue
           affecting the <literal>X</literal> combination from the
@@ -1540,10 +1553,11 @@ Archer> dplot bool1.dplot fcurves 10
               <function>DebugPlot::IsoCSX</function> method inside the
               <function>find_overlap_boundary_curves</function>
               routine in
-              <filename>src/libbrep/intersect.cpp</filename>.
-              <function>find_overlap_boundary_curves</function> is
-              called from <function>ON_Intersect</function>
-              surface-surface intersection function, also defined in
+              <filename>src/libbrep/intersect.cpp</filename>. The
+              <function>find_overlap_boundary_curves</function>
+              routine is called from the
+              <function>ON_Intersect</function> surface-surface
+              intersection function, also defined in
               <filename>src/libbrep/intersect.cpp</filename>. The next
               call after
               <function>find_overlap_boundary_curves</function>
@@ -1551,10 +1565,11 @@ Archer> dplot bool1.dplot fcurves 10
               <function>split_overlaps_at_intersections</function>.
             </para>
             <para>
-              To quickly check if the splitting function changes the
-              overlap curves, we insert code to write out the overlap
-              curves as <filename>.plot3</filename> files just after
-              the <function>split_overlaps_at_intersections</function>
+              To quickly check if the splitting function introduced a
+              problem in the overlap curves, we insert code to write
+              out the overlap curves as <filename>.plot3</filename>
+              files just after the
+              <function>split_overlaps_at_intersections</function>
               call.
             </para>
             <para>
@@ -1732,9 +1747,8 @@ $ gdb mged
               second curve argument is joined to the first curve
               argument using the OpenNURBS
               <function>ON_NurbsCurve::Append</function> member
-              function. So, the start point of the second curve
-              argument is joined to the end point of the first curve
-              argument.
+              function. So, the start point of the second curve is
+              joined to the end point of the first curve.
             </para>
             <programlisting>
 <![CDATA[
@@ -1764,13 +1778,12 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
             </programlisting>
             <para>
               <function>link_curves</function> is here being called
-              with <varname>overlaps[j]->m_curve*</varname> as its
+              with <varname>overlaps[j]->m_curve3d</varname> as its
               first argument and
-              <varname>overlaps[i]->m_curve*</varname> as its second
+              <varname>overlaps[i]->m_curve3d</varname> as its second
               argument. This matches our intention to link the end of
-              <varname>overlaps[j]</varname> to the start of
-              <varname>overlaps[i]</varname>, which have been
-              determined to be coincident.
+              the <varname>overlaps[j]</varname> curves to the start
+              of the <varname>overlaps[i]</varname> curves.
             </para>
             <para>
               However, going back to the
@@ -1802,6 +1815,18 @@ link_curves(ON_Curve *&c1, ON_Curve *&c2)
               overlap intersection associated with
               <varname>ssx_index</varname> 10 is now correct.
             </para>
+            <programlisting>
+              <![CDATA[
+HIDDEN ON_Curve *   
+link_curves(ON_Curve *&c1, ON_Curve *&c2)
+{
+-    extend_curve_end_to_pt(c1, c2->PointAtEnd(), ON_ZERO_TOLERANCE);
++    extend_curve_end_to_pt(c1, c2->PointAtStart(), ON_ZERO_TOLERANCE);
+
+    ON_NurbsCurve *nc1 = c1->NurbsCurve();
+    ON_NurbsCurve *nc2 = c2->NurbsCurve();
+              ]]>
+            </programlisting>
           </listitem>
         </orderedlist>
       </section>
