@@ -72,7 +72,7 @@
           the paper <emphasis>BOOLE: A System to Compute Boolean
           Combinations of Sculptured Solids.</emphasis> (S. Krishnan
           et al., 1995). The main implementation file for the Boolean
-          Evaluation algoritm is
+          Evaluation algorithm is
           <filename>src/libbrep/boolean.cpp</filename>.
         </para>
         <para>
@@ -296,7 +296,7 @@ ON_Intersect(const ON_Surface *surfA,
           Curves and surfaces are nearly always allocated on the heap and referenced by pointers, both in the OpenNURBS library, and in the NURBS boolean evaluation implementation.
         </para>
         <para>
-          Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, noteably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
+          Mostly these allocations are simply done with the <code>new</code> keyword as with any other class. However, a few classes, notably <classname>ON_Brep</classname> have a <function>New()</function> function that wraps the allocation, which is preferred over using <code>new</code> directly for technical reasons specified in <filename>opennurbs_brep.h</filename>.
         </para>
         <para>
           Pointers to objects, curves in particular, are frequently
@@ -766,7 +766,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
         names like <varname><![CDATA[_BC_S_<obj>_646464]]></varname>
         or <varname><![CDATA[bool1_brep1_surface03838ff]]></varname>,
         but they are not saved with the database, and are deleted when
-        erased from the dislay.
+        erased from the display.
       </para>
       <note>
         <para>
@@ -818,7 +818,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
             For evaluations involving more than two objects, the final
             brep NURBS object is made by converting two leaf objects
             into breps, performing a boolean evaluation on them,
-            converting the next relevent object to brep and combining it
+            converting the next relevant object to brep and combining it
             with the first intermediate evaluation to make a second
             intermediate evaluation, and so on up the tree.
           </para>
@@ -851,7 +851,7 @@ for (int i = 0; i < x_event.Count(); ++i) {
           (<link>https://sourceforge.net/p/brlcad/code/HEAD/tree/brlcad/branches/brep-debug/</link>).
         </para>
         <para>
-          In the devlopment branch, the NURBS Boolean Evaluation
+          In the development branch, the NURBS Boolean Evaluation
           source code contains additional calls to
           <classname>DebugPlot</classname> functions (implemented in
           <filename>src/libbrep/debug_plot.*</filename>) that create
@@ -1450,7 +1450,7 @@ Press [Enter] to show surface-surface intersection 13
             <para>
               All 14 expected intersection events are reported. Each
               of the two larger-area faces of
-              <emphasis>brep1</emphasis> transversally intersects the
+              <emphasis>brep1</emphasis> transversely intersects the
               two similar faces of <emphasis>brep2</emphasis>
               (<varname>ssx_index</varname> 0, 1, 4, 5). Two edges of
               each of these faces lie in the same plane (the X-Y
