@@ -563,6 +563,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   (http://www.angusj.com/delphi/clipper.php) into libbg and use it
   as a pre-processing step for poly2tri's algorithm along the lines
   of what bitfighter did:  https://github.com/raptor/clip2tri
+  Some useful notes here: http://stackoverflow.com/a/16115775
 
 * Translate the poly2tri routines into libbg C code
 
