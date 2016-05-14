@@ -628,6 +628,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
 
+* investigate the possibility of using Appleseed (http://appleseedhq.net/)
+  to perform visual image rendering using librt shotline data for input.
+
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
   function but never carried out
