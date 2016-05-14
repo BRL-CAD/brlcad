@@ -106,10 +106,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make mged work without a batch script
 
-* make archer work without a batch script
-
-* make isst work without a batch script
-
 * Need to rethink libbu hash API - ideally should be much simpler and
   expose much less to the user.
 
