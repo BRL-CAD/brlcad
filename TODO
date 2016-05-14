@@ -559,6 +559,11 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
+* Translate logic from clipper polygon clipping library
+  (http://www.angusj.com/delphi/clipper.php) into libbg and use it
+  as a pre-processing step for poly2tri's algorithm along the lines
+  of what bitfighter did:  https://github.com/raptor/clip2tri
+
 * Translate the poly2tri routines into libbg C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
