@@ -559,10 +559,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
-* Translate the poly2tri routines into libbn C code
+* Translate the poly2tri routines into libbg C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
-  in libbn: http://geomalgorithms.com/a09-_intersect-3.html
+  in libbg: http://geomalgorithms.com/a09-_intersect-3.html
 
 * figure out what in f_matpick (or possibly some other related function)
   is causing ipathpos to get incremented to a number larger than the
