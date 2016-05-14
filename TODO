@@ -388,6 +388,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   other options supplied at the command line and in environment
   variables.  See whether we can pass a variable into CMAKE_C_FLAGS
   that will allow specification of build flags at make time.
+  Relevant link: https://cmake.org/Bug/view.php?id=12928
 
 * investigate the possibility of allowing functions to define
   their own custom filters for some version of the db_search API.
