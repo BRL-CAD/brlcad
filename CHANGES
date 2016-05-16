@@ -221,6 +221,9 @@ find
 em
 	replaced by search -attr MUVES_Component=<val1> -or -attr MUVES_Component=<val2>
 	and iterating over the saved search results (see search man page.) [deprecated 7.26]
+expand
+	replaced by search -name <pattern> (previous docs indicating matching of
+	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
 7.24
 ----
