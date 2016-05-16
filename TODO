@@ -102,7 +102,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   ls command.  dbfind's behavior can be emulated by search, but the
   speed of dbfind is not practical in search due to the potential
   generality of search's filters.  search would have to pre-process
-  its plan and prove it needed to example only a subset of the full
+  its plan and prove it needed to examine only a subset of the full
   hierarchy in advance.  ls */objname is a better match for what
   dbfind is actually doing, and if need be we could add a
   --print-parent option or some such to precisely mimic dbfind's
