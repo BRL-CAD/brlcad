@@ -216,9 +216,6 @@ kill, killtree, killall, killrefs
 	replaced with rm command [deprecated 7.26]
 rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
 	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
-em
-	replaced by search -attr MUVES_Component=<val1> -or -attr MUVES_Component=<val2>
-	and iterating over the saved search results (see search man page.) [deprecated 7.26]
 expand
 	replaced by search -name <pattern> (previous docs indicating matching of
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
