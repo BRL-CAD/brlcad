@@ -212,15 +212,16 @@ pixcut, pixpaste
 	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
-kill, killtree, killall, killrefs
-	replaced with rm command [deprecated 7.26]
-rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
+mged
+	kill, killtree, killall, killrefs - replaced with rm command [deprecated 7.26]
+
+	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
 	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
-expand
-	replaced by search -name <pattern> (previous docs indicating matching of
+
+	expand -> replaced by search -name <pattern> (previous docs indicating matching of
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
-pathlist
-	replaced by search /group1 /region2 ! -type comb [deprecated 7.26]
+
+	pathlist, paths -> replaced by search [deprecated 7.26]
 
 7.24
 ----
