@@ -219,6 +219,8 @@ rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from
 expand
 	replaced by search -name <pattern> (previous docs indicating matching of
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
+pathlist
+	replaced by search /group1 /region2 ! -type comb [deprecated 7.26]
 
 7.24
 ----
