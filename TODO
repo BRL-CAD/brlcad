@@ -18,6 +18,13 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* bu_dir_list -> bu_file_list
+* bu_*_argv -> bu_argv_*
+* obsd stack crashers
+* rt moss.g facetize rt bot bug
+* invoke graphical with console, play nicely
+* add qsort() to HACKING and repository testing
+
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
@@ -50,6 +57,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* OpenCL for enhanced performance boolweave sorting
+
+* create boolweave+boolfinal unit tests to validate weaving behavior
+  and performance.
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
   datafile to a binunif along with a referencing dsp.  perhaps add
@@ -1191,8 +1203,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * libfb + font rendering (perhaps through libbn's plot interface) for
   a posix terminal.
-
-* OpenCL for enhanced performance boolweave sorting
 
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
   separate out into new file.
