@@ -109,18 +109,18 @@ struct hitmiss {
             case NMG_RT_MISS_MAGIC: \
                 break; \
             case NMG_MISS_LIST: \
-                bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
             case NMG_HIT_LIST: \
-                bu_log(BU_FLSTR ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
+                bu_log(CPP_FILELINE ": struct hitmiss has NMG_MISS_LIST magic #\n"); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
             default: \
-                bu_log(BU_FLSTR ": bad struct hitmiss magic: %u:(0x%08x)\n", \
+                bu_log(CPP_FILELINE ": bad struct hitmiss magic: %u:(0x%08x)\n", \
                        hm->l.magic, hm->l.magic); \
                 bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
         }\
         if (!hm->hit.hit_private) { \
-            bu_log(BU_FLSTR ": NULL hit_private in hitmiss struct\n"); \
+            bu_log(CPP_FILELINE ": NULL hit_private in hitmiss struct\n"); \
             bu_bomb("NMG_CK_HITMISS: going down in flames\n"); \
         } \
     }

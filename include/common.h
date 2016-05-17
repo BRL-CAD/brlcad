@@ -442,10 +442,10 @@ typedef ptrdiff_t ssize_t;
 
 /**
  * Provide the current filename and linenumber as a static
- * preprocessor string in file:line format.
+ * preprocessor string in "file"":""line" format (e.g., "file:123").
  */
-#ifndef CPP_FLSTR
-#  define CPP_FLSTR __FILE__ ":" CPP_XSTR(__LINE__)
+#ifndef CPP_FILELINE
+#  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
 #endif
 
 

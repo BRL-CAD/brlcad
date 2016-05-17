@@ -44,7 +44,7 @@ __BEGIN_DECLS
  * file name and line number of any erroneous callers.
  */
 BU_EXPORT extern size_t bu_strlcatm(char *dst, const char *src, size_t size, const char *label);
-#define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, BU_FLSTR)
+#define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, CPP_FILELINE)
 
 /**
  * copies one string into another, returning the length of the dst
@@ -54,7 +54,7 @@ BU_EXPORT extern size_t bu_strlcatm(char *dst, const char *src, size_t size, con
  * file name and line number of any erroneous callers.
  */
 BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, const char *label);
-#define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
+#define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, CPP_FILELINE)
 
 /**
  * Given a string, allocate enough memory to hold it using
@@ -65,7 +65,7 @@ BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, con
  * number that can be used when bu debugging is enabled.
  */
 BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
-#define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
+#define bu_strdup(s) bu_strdupm(s, CPP_FILELINE)
 
 /**
  * Compares two strings for equality.  It performs the comparison more
