@@ -409,7 +409,7 @@ int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
-    char units_string[256] = {0};
+    char units_string[257] = {0};
     int i;
 
 
