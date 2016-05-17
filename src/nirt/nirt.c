@@ -168,7 +168,7 @@ listformats(char ***names)
 
     /* release resources */
     if (!names)
-	bu_free_argv(files, filearray);
+	bu_argv_free(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
 
 	    printf(" (specify via -f option)\n");
 	}
-	bu_free_argv(fmtcnt, names);
+	bu_argv_free(fmtcnt, names);
     }
 
     /* build directory for target object */

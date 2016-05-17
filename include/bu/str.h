@@ -304,10 +304,10 @@ BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
 /**
  * Deallocate all strings in a given argv array and the array itself
  *
- * This call presumes the array has been allocated with bu_dup_argv()
+ * This call presumes the array has been allocated with bu_argv_dup()
  * or bu_argv_from_path().
  */
-BU_EXPORT extern void bu_free_argv(size_t argc, char *argv[]);
+BU_EXPORT extern void bu_argv_free(size_t argc, char *argv[]);
 
 /**
  * free up to argc elements of memory allocated to an array without
@@ -321,9 +321,9 @@ BU_EXPORT extern void bu_free_array(size_t argc, char *argv[], const char *str);
  * Duplicate an argv array by duplicating all strings and the array
  * itself.  It is the caller's responsibility to free the array
  * returned including all elements in the array by calling bu_free()
- * or bu_free_argv().
+ * or bu_argv_free().
  */
-BU_EXPORT extern char **bu_dup_argv(size_t argc, const char *argv[]);
+BU_EXPORT extern char **bu_argv_dup(size_t argc, const char *argv[]);
 
 /**
  * Combine two argv arrays into one new (duplicated) argv array.
@@ -335,7 +335,7 @@ BU_EXPORT extern char **bu_dup_argv(size_t argc, const char *argv[]);
  * the insert argument is the position where the insertArgv array
  * elements will be merged with the specified argv array.
  */
-BU_EXPORT extern char **bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
+BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
 
 
 __END_DECLS

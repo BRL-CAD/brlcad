@@ -333,7 +333,7 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	    }
 
 	bu_vls_free(&buffer);
-	bu_free_argv(num_filenames, filenames);
+	bu_argv_free(num_filenames, filenames);
     }
 }
 
