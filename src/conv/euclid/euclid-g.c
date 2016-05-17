@@ -339,7 +339,7 @@ build_groups(struct rt_wdb *fpout)
 int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
-    char str[80] = {0};
+    char str[81] = {0};
     int reg_id = -1;
 
     /* skip first string in file (what is it??) */
