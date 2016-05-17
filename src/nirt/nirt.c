@@ -373,7 +373,7 @@ main(int argc, char *argv[])
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
     int print_ident_flag = 1;
-    char ocastring[1024] = {0};
+    char ocastring[1025] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
     extern outval ValTab[];
