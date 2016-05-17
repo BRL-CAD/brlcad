@@ -99,7 +99,7 @@ changes made.  See document footer for additional details.
 	- Wu Jianbang, Nick Reed, Cliff Yapp
 * improved step-g assembly hierarchy import support - Keith Bowman
 * fixed rtweight when using the -G grid spacing option - Sean Morrison
-* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* fixed memory leaks in a number of pix utilities - Cezar Elnazli
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
 * added -v verbose output option to mged 'search' command - Cliff Yapp
