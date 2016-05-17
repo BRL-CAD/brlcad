@@ -18,7 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* bu_dir_list -> bu_file_list
 * bu_*_argv -> bu_argv_*
 * obsd stack crashers
 * rt moss.g facetize rt bot bug

@@ -1201,3 +1201,5 @@ s/bu_free_argv/bu_argv_free/g
 s/bu_dup_argv/bu_argv_dup/g
 s/bu_dupinsert_argv/bu_argv_dupinsert/g
 	bu_*_argv -> bu_argv_* [7.25]
+s/bu_dir_list/bu_file_list/g
+	bu_dir_list -> bu_file_list [7.25]

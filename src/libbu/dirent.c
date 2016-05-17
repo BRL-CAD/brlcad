@@ -41,7 +41,7 @@ cmpdir(const void *a, const void *b, void *UNUSED(context))
 
 
 size_t
-bu_dir_list(const char *path, const char *pattern, char ***files)
+bu_file_list(const char *path, const char *pattern, char ***files)
 {
     size_t i = 0;
     size_t filecount = 0;

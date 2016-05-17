@@ -144,7 +144,7 @@ listformats(char ***names)
 
     /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
-    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
+    files = bu_file_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
     if (names)
 	*names = filearray;
 

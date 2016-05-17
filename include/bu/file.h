@@ -226,7 +226,7 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
  * It is the caller's responsibility to free a non-NULL array with
  * bu_argv_free().
  */
-BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
+BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
 /**
  * Call canonicalization routines to both expand and validate

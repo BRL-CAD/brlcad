@@ -324,7 +324,7 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	char **filenames;
 	size_t i;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
-	const size_t num_filenames = bu_dir_list(plugins_path, NULL, &filenames);
+	const size_t num_filenames = bu_file_list(plugins_path, NULL, &filenames);
 
 	for (i = 0; i < num_filenames; ++i)
 	    if (!bu_file_directory(filenames[i])) {
