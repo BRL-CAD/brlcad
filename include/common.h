@@ -394,6 +394,43 @@ typedef ptrdiff_t ssize_t;
   #define EXTERNVARINIT
 #endif
 
+/**
+ * Provide canonical preprocessor stringification.
+ */
+#ifndef CPP_STR
+#  define CPP_STR(x) # x
+#endif
+
+/**
+ * Provide canonical preprocessor expanded stringification.
+ */
+#ifndef CPP_XSTR
+#  define CPP_XSTR(x) CPP_STR(x)
+#endif
+
+/**
+ * Provide canonical preprocessor concatenation.
+ */
+#ifndef CPP_GLUE
+#  define CPP_GLUE(a, b) a ## b
+#endif
+
+/**
+ * Provide canonical preprocessor expanded concatenation.
+ */
+#ifndef CPP_XGLUE
+#  define CPP_XGLUE(a, b) CPP_GLUE
+#endif
+
+/**
+ * Provide the current filename and linenumber as a static
+ * preprocessor string in file:line format.
+ */
+#ifndef CPP_FLSTR
+#  define CPP_FLSTR __FILE__ ":" CPP_XSTR(__LINE__)
+#endif
+
+
 #endif  /* COMMON_H */
 
 /** @} */
