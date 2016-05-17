@@ -848,6 +848,17 @@
       </para>
     </example>
 
+    <example><title>Find All Combs Containing At Least One of Two Objects (dbfind)</title>
+
+      <para>
+	<userinput>search |. ( -depth 0 -above=1 -name obj1 ) -or ( -depth 0 -above=1 -name obj2 ) </userinput>
+      </para>
+      <para>
+	Prints all combs immediately above either obj1 or obj2.  This more or less mimics the results of
+	the dbfind command, although it will be somewhat slower (noticably so on large databases.)
+      </para>
+    </example>
+
     <example><title>Finding all Plate-Mode BoT Objects</title>
 
       <para>
