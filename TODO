@@ -22,7 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * obsd stack crashers
 * rt moss.g facetize rt bot bug
 * invoke graphical with console, play nicely
-* add qsort() to HACKING and repository testing
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
