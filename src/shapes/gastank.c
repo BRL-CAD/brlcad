@@ -52,7 +52,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hgt=0;       	/* Height, width, & depth of gas tank. */
     double wid=0;
     double dpt=0;
