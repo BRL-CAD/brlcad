@@ -70,6 +70,7 @@ changes made.  See document footer for additional details.
 * extensive improvements to NURBS Boolean evaluation - Nick Reed
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj
+* updated manual page for MGED's brep command - Peter Amidon
 * new manual page for the g-dot exporter - Shardul Chiplunkar
 * added sketch centroid support the analyze command - Peter Amidon
 * new Think. Invent. Create. splash screen for archer - Marc Tannous
