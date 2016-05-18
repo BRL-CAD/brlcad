@@ -71,6 +71,7 @@ changes made.  See document footer for additional details.
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj
 * new manual page for the g-dot exporter - Shardul Chiplunkar
+* added sketch centroid support the analyze command - Peter Amidon
 * new Think. Invent. Create. splash screen for archer - Marc Tannous
 * improved pix-bw to support dual output streams - Carl Moore
 * added list option to attr command - Cliff Yapp
