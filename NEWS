@@ -64,6 +64,7 @@ changes made.  See document footer for additional details.
 * swapped meanings of search's -above/-below options - Sean Morrison
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed
+* added example NURBS B-Rep geometry files from NIST - Cliff Yapp
 * removed "high resolution" options from all commands - Carl Moore
 * improved performance of archer loading large BoT models - Nick Reed
 * added evaluated shaded drawing preference mode and menu - Nick Reed
