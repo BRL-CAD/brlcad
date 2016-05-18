@@ -94,6 +94,7 @@ set(man1_EN
   g-nff.xml
   g-nmg.xml
   g-obj.xml
+  g-ply.xml
   g-raw.xml
   g-shell-rect.xml
   g-step.xml
