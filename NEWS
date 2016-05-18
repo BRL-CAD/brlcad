@@ -81,6 +81,7 @@ changes made.  See document footer for additional details.
 * gqa respects LIBRT_BOT_MINTIE environment variable - Ștefan Mirea
 * improved behavior of mged's draw command - Ștefan Mirea
 * fixed handling of extra whitespace in nirt commands - Ștefan Mirea
+* added ply-g importer for Polygon File Format - Rishub Jain
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
