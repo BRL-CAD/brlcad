@@ -22,7 +22,13 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   63621 63663 63804 63811 64696 64699 64700 64783 64806 65931 65981 66728 67174
 
 * brlcad-config build helper script is not working (not reporting
-  -llibs, reporting semicolon list for 'brlcad' lib)
+  -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
+  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze  
+
+  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
