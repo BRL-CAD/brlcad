@@ -52,7 +52,7 @@ _gcv_brlcad_read(struct gcv_context *context,
     }
 
     if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
-	bu_log("db_dump() failed (from '%s')\n", source_path);
+	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
 	db_close(in_dbip);
 	return 0;
     }
