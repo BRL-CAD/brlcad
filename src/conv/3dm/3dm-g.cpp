@@ -675,7 +675,7 @@ RhinoConverter::clean_model()
 	m_log.Print("Repaired %d model issues.\n", num_repairs);
 
     if (num_problems) {
-	m_log.Print("WARNING: Failed to repair %d model issues\n", num_problems);
+	m_log.Print("WARNING: Failed to repair %d model issues.\n", num_problems);
 	m_log.Print("WARNING: Repair of invalid model failed.\n");
     }
 }
