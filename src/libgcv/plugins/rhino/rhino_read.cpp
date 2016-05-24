@@ -47,14 +47,16 @@ namespace
 {
 
 
-template <typename T> void
+template <typename T>
+HIDDEN void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
 }
 
 
-template <typename T> void
+template <typename T>
+HIDDEN void
 autoptr_wrap_delete(T *ptr)
 {
     delete ptr;
