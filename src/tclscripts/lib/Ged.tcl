@@ -740,6 +740,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_scale {{_button 1}}
 	method init_data_poly_circ {{_button 1}}
 	method init_data_poly_cont {{_button1 1} {_button2 2}}
+	method init_data_poly_cont_flag {}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
 	method init_find_arb_edge {_obj {_button 1} {_callback {}}}
@@ -4024,13 +4025,16 @@ package provide cadwidgets::Ged 1.0
 
 ############################### Public Methods Specific to cadwidgets::Ged ###############################
 
+
 ::itcl::body cadwidgets::Ged::? {} {
     return [$help ? 20 8]
 }
 
+
 ::itcl::body cadwidgets::Ged::apropos {args} {
     return [eval $help apropos $args]
 }
+
 
 # Create a new arrow with both points the same.
 # Go into data move mode for this arrow and its second point.
@@ -4904,6 +4908,13 @@ package provide cadwidgets::Ged 1.0
 	bind $itk_component($dm) <ButtonRelease> ""
 	bind $itk_component($dm) <ButtonRelease-$_button1> ""
 	bind $itk_component($dm) <ButtonRelease-$_button2> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_data_poly_cont_flag {} {
+    foreach dm {ur ul ll lr} {
+	$mGed poly_cont_build_end $itk_component($dm)
     }
 }
 
