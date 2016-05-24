@@ -30,6 +30,7 @@
 #include "gcv/util.h"
 #include "wdb.h"
 
+#include <algorithm>
 #include <limits>
 #include <map>
 #include <set>
@@ -249,28 +250,30 @@ do { \
 }
 
 
-HIDDEN std::set<ON_UUID, UuidCompare>
-get_idef_members(const ONX_Model &model)
-{
-    std::set<ON_UUID, UuidCompare> result;
-
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = *model.m_idef_table.At(i);
-
-	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j)
-	    result.insert(*idef.m_object_uuid.At(j));
-    }
-
-    return result;
-}
-
-
 HIDDEN void
 matrix_from_xform(mat_t dest, const ON_Xform &source)
 {
     for (std::size_t i = 0; i < 4; ++i)
 	for (std::size_t j = 0; j < 4; ++j)
 	    dest[4 * i + j] = source[i][j];
+}
+
+
+HIDDEN void
+write_comb(rt_wdb &wdb, const std::string &name,
+	   const std::vector<std::string> &members, const mat_t matrix = NULL)
+{
+    wmember wmembers;
+    BU_LIST_INIT(&wmembers.l);
+
+    for (std::vector<std::string>::const_iterator it = members.begin();
+	 it != members.end(); ++it)
+	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
+		     WMOP_UNION);
+
+    if (mk_comb(&wdb, name.c_str(), &wmembers.l, false, NULL, NULL, NULL, 0, 0, 0,
+		0, false, false, false))
+	throw std::runtime_error("mk_comb() failed");
 }
 
 
@@ -284,12 +287,8 @@ import_object(rt_wdb &wdb, const std::string &name,
     mat_t matrix;
     matrix_from_xform(matrix, instance_ref.m_xform);
 
-    wmember members;
-    BU_LIST_INIT(&members.l);
-    mk_addmember(ON_String(idef.m_name).Array(), &members.l, matrix, WMOP_UNION);
-    if (mk_comb(&wdb, name.c_str(), &members.l, false, NULL, NULL, NULL, 0, 0, 0, 0,
-		false, false, false))
-	throw std::runtime_error("mk_comb() failed");
+    std::vector<std::string> members(1, ON_String(idef.m_name).Array());
+    write_comb(wdb, name, members, matrix);
 }
 
 
@@ -302,10 +301,8 @@ import_object(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 
 
 HIDDEN void
-import_object(rt_wdb &wdb, const std::string &name, const ON_Mesh &orig)
+import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 {
-    ON_Mesh mesh = orig;
-
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
     mesh.Compact();
@@ -412,6 +409,11 @@ import_object(rt_wdb &wdb, const std::string &name,
 	return true;
     }
 
+    if (const ON_Mesh * const temp = ON_Mesh::Cast(&object)) {
+	import_object(wdb, name, *temp);
+	return true;
+    }
+
     if (const ON_Geometry * const temp = ON_Geometry::Cast(&object)) {
 	if (temp->HasBrepForm()) {
 	    AutoPtr<ON_Brep> brep(temp->BrepForm());
@@ -419,11 +421,6 @@ import_object(rt_wdb &wdb, const std::string &name,
 	    return true;
 	} else
 	    return false;
-    }
-
-    if (const ON_Mesh * const temp = ON_Mesh::Cast(&object)) {
-	import_object(wdb, name, *temp);
-	return true;
     }
 
     return false;
@@ -455,20 +452,16 @@ HIDDEN void
 import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	    const ONX_Model &model)
 {
-    wmember members;
-    BU_LIST_INIT(&members.l);
+    std::vector<std::string> members;
 
     for (unsigned i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
 	const ONX_Model_Object &model_object = *model.m_object_table.At(
 		model.ObjectIndex(*idef.m_object_uuid.At(i)));
 
-	mk_addmember(ON_String(model_object.m_attributes.m_name).Array(), &members.l,
-		     NULL, WMOP_UNION);
+	members.push_back(ON_String(model_object.m_attributes.m_name).Array());
     }
 
-    if (mk_comb(&wdb, ON_String(idef.m_name).Array(), &members.l, false, NULL, NULL,
-		NULL, 0, 0, 0, 0, false, false, false))
-	throw std::runtime_error("mk_comb() failed");
+    write_comb(wdb, ON_String(idef.m_name).Array(), members);
 }
 
 
@@ -483,6 +476,84 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
+HIDDEN std::vector<std::string>
+get_idef_members(const ONX_Model &model)
+{
+    std::vector<std::string> result;
+
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
+	const ON_InstanceDefinition &idef = *model.m_idef_table.At(i);
+
+	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
+	    const ONX_Model_Object &object = *model.m_object_table.At(model.ObjectIndex(
+						 *idef.m_object_uuid.At(j)));
+	    result.push_back(ON_String(object.m_attributes.m_name).Array());
+	}
+    }
+
+    return result;
+}
+
+
+HIDDEN std::vector<std::string>
+get_layer_members(const ON_Layer &layer, const ONX_Model &model)
+{
+    std::vector<std::string> members;
+
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &current_layer = *model.m_layer_table.At(i);
+
+	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
+	    members.push_back(ON_String(current_layer.m_name).Array());
+    }
+
+    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+	const ONX_Model_Object &object = *model.m_object_table.At(i);
+
+	if (object.m_attributes.m_layer_index == layer.m_layer_index)
+	    members.push_back(ON_String(object.m_attributes.m_name).Array());
+    }
+
+    std::vector<std::string> model_idef_members = get_idef_members(model);
+    std::sort(model_idef_members.begin(), model_idef_members.end());
+    std::sort(members.begin(), members.end());
+    std::vector<std::string> result;
+    std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
+			model_idef_members.end(), std::back_inserter(result));
+
+    return result;
+}
+
+
+HIDDEN std::vector<std::string>
+get_root_layer_members(const ONX_Model &model)
+{
+    std::vector<std::string> result;
+
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &current_layer = *model.m_layer_table.At(i);
+
+	if (current_layer.m_parent_layer_id == ON_nil_uuid)
+	    result.push_back(ON_String(current_layer.m_name).Array());
+    }
+
+    return result;
+}
+
+
+HIDDEN void
+import_model_layers(rt_wdb &wdb, const ONX_Model &model)
+{
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &layer = *model.m_layer_table.At(i);
+	write_comb(wdb, ON_String(layer.m_name).Array(), get_layer_members(layer,
+		   model));
+    }
+
+    write_comb(wdb, "root", get_root_layer_members(model));
+}
+
+
 HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
@@ -490,10 +561,9 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     ONX_Model model;
     load_model(model, source_path, gcv_options->default_name);
 
-    const std::set<ON_UUID, UuidCompare> idef_members = get_idef_members(model);
-
-    import_model_objects(*context->dbip->dbi_wdbp, model);
+    import_model_layers(*context->dbip->dbi_wdbp, model);
     import_model_idefs(*context->dbip->dbi_wdbp, model);
+    import_model_objects(*context->dbip->dbi_wdbp, model);
 
     return 1;
 }
