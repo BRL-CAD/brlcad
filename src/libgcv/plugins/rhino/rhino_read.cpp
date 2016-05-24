@@ -448,6 +448,38 @@ import_object(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
+write_object_attributes(rt_wdb &wdb, const std::string &name,
+			const std::string &member_name, const ON_3dmObjectAttributes &attributes,
+			const ONX_Model &model)
+{
+    Shader shader;
+    {
+	ON_Material temp;
+	model.GetRenderMaterial(attributes, temp);
+	shader = get_shader(&temp);
+    }
+
+    unsigned char rgb[3];
+    rgb[0] = model.WireframeColor(attributes).Red();
+    rgb[1] = model.WireframeColor(attributes).Green();
+    rgb[2] = model.WireframeColor(attributes).Blue();
+
+
+    bool own_shader = true, own_rgb = true;
+
+    if (attributes.MaterialSource() == ON::material_from_parent)
+	own_shader = false;
+
+    if (attributes.ColorSource() == ON::color_from_parent)
+	own_rgb = false;
+
+    const std::vector<std::string> members(1, member_name);
+    write_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
+	       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL, NULL);
+}
+
+
+HIDDEN void
 import_model_objects(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
@@ -466,23 +498,8 @@ import_model_objects(rt_wdb &wdb, const ONX_Model &model)
 	    continue;
 	}
 
-	const std::vector<std::string> members(1, member_name);
-	Shader shader;
-
-	{
-	    ON_Material temp;
-	    model.GetRenderMaterial(model_object.m_attributes, temp);
-	    shader = get_shader(&temp);
-	}
-
-	unsigned char rgb[3];
-
-	rgb[0] = model.WireframeColor(model_object.m_attributes).Red();
-	rgb[1] = model.WireframeColor(model_object.m_attributes).Green();
-	rgb[2] = model.WireframeColor(model_object.m_attributes).Blue();
-
-	write_comb(wdb, name, members, shader.first.c_str(), shader.second.c_str(), rgb,
-		   NULL);
+	write_object_attributes(wdb, name, member_name, model_object.m_attributes,
+				model);
     }
 }
 
