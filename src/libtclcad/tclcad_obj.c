@@ -3528,7 +3528,8 @@ to_polygon_free(bview_polygon *gpp)
 	return;
 
     for (j = 0; j < gpp->gp_num_contours; ++j)
-	bu_free((void *)gpp->gp_contour[j].gpc_point, "gp_contour points");
+	if (gpp->gp_contour[j].gpc_num_points > 0)
+	    bu_free((void *)gpp->gp_contour[j].gpc_point, "gp_contour points");
 
     bu_free((void *)gpp->gp_contour, "gp_contour");
     bu_free((void *)gpp->gp_hole, "gp_hole");
