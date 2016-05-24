@@ -470,7 +470,6 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
     rgb[1] = model.WireframeColor(attributes).Green();
     rgb[2] = model.WireframeColor(attributes).Blue();
 
-
     bool own_shader = true, own_rgb = true;
 
     if (attributes.MaterialSource() == ON::material_from_parent)
