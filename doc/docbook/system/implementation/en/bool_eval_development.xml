@@ -1520,6 +1520,14 @@ Archer> dplot bool1.dplot ssx 13
               identified as an overlap intersection, but it doesn't
               contain the full, square area of the overlap.
             </para>
+            <figure>
+              <title>Comparison of Surface-Surface Intersection Event 10 Versus 13</title>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="images/ssx_10_vs_13.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
           </listitem>
           <listitem>
             <para>
@@ -1731,17 +1739,26 @@ Archer> overlay split_overlap7.plot3 1 ol7
               <filename>.plot3</filename> files.
             </para>
             <screen>
-Archer > overlay linked_4_5.plot3 1
-Archer > overlay linked_4_6.plot3 1
-Archer > overlay linked_4_7.plot3 1
-Archer > overlay linked_5_4.plot3 1
+Archer> overlay linked_4_5.plot3 1
+Archer> overlay linked_4_6.plot3 1
+Archer> overlay linked_4_7.plot3 1
+Archer> overlay linked_5_4.plot3 1
             </screen>
             <para>
               The intermediate curve represented by
-              <literal>linked_4_7.plot3</literal> is clearly
-              incorrect, as it cuts diagonally through the square
-              overlap region.
+              <filename>linked_4_7.plot3</filename> (and the
+              subsequent <filename>linked_5_4.plot3</filename>) is
+              clearly incorrect, as it cuts diagonally through the
+              square overlap region.
             </para>
+            <figure>
+              <title>Overlay Visualization of Intermediate Linked Curves</title>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="images/intermediate_linked_curves.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
           </listitem>
           <listitem>
             <para>

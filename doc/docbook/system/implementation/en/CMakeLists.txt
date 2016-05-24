@@ -4,9 +4,11 @@ set(implementation_EN
 
 set(implementation_EN_IMAGES
   images/ccx_overlap_event.png
-  images/ssx_overlap_event.png
-  images/ssx_tangent_event.png
   images/ssx_transverse_event.png
+  images/ssx_tangent_event.png
+  images/ssx_10_vs_13.png
+  images/intermediate_linked_curves.png
+  images/ssx_overlap_event.png
   )
 
 ADD_DOC(implementation_EN html/implementation/en)
