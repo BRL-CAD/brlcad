@@ -259,9 +259,37 @@ matrix_from_xform(mat_t dest, const ON_Xform &source)
 }
 
 
+typedef std::pair<std::string, std::string> Shader;
+
+
+HIDDEN Shader
+get_shader(const ON_Material *material)
+{
+    if (!material)
+	return std::make_pair("plastic", "");
+
+    std::ostringstream temp;
+
+    temp << "{"
+	 << " tr " << material->m_transparency
+	 << " re " << material->m_reflectivity
+	 << " sp " << material->m_specular
+	 << " di " << material->m_diffuse
+	 << " ri " << material->m_index_of_refraction
+	 << " sh " << material->m_shine
+	 // << " ex " << ??
+	 << " em " << material->m_emission
+	 << " }";
+
+    return std::make_pair("plastic", temp.str());
+}
+
+
 HIDDEN void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::vector<std::string> &members, const mat_t matrix = NULL)
+	   const std::vector<std::string> &members, const char *shader_name = NULL,
+	   const char *shader_options = NULL, const unsigned char *rgb = NULL,
+	   const mat_t matrix = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
@@ -271,8 +299,8 @@ write_comb(rt_wdb &wdb, const std::string &name,
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
 
-    if (mk_comb(&wdb, name.c_str(), &wmembers.l, false, NULL, NULL, NULL, 0, 0, 0,
-		0, false, false, false))
+    if (mk_comb(&wdb, name.c_str(), &wmembers.l, false, shader_name, shader_options,
+		rgb, 0, 0, 0, 0, false, false, false))
 	throw std::runtime_error("mk_comb() failed");
 }
 
@@ -287,8 +315,8 @@ import_object(rt_wdb &wdb, const std::string &name,
     mat_t matrix;
     matrix_from_xform(matrix, instance_ref.m_xform);
 
-    std::vector<std::string> members(1, ON_String(idef.m_name).Array());
-    write_comb(wdb, name, members, matrix);
+    const std::vector<std::string> members(1, ON_String(idef.m_name).Array());
+    write_comb(wdb, name, members, NULL, NULL, NULL, matrix);
 }
 
 
@@ -404,26 +432,18 @@ HIDDEN bool
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_Object &object)
 {
-    if (const ON_Brep * const temp = ON_Brep::Cast(&object)) {
-	import_object(wdb, name, *temp);
-	return true;
-    }
+    if (const ON_Brep * const brep = ON_Brep::Cast(&object)) {
+	import_object(wdb, name, *brep);
+    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&object)) {
+	import_object(wdb, name, *mesh);
+    } else if (ON_Geometry::Cast(&object)
+	       && ON_Geometry::Cast(&object)->HasBrepForm()) {
+	AutoPtr<ON_Brep> temp(ON_Geometry::Cast(&object)->BrepForm());
+	import_object(wdb, name, *temp.ptr);
+    } else
+	return false;
 
-    if (const ON_Mesh * const temp = ON_Mesh::Cast(&object)) {
-	import_object(wdb, name, *temp);
-	return true;
-    }
-
-    if (const ON_Geometry * const temp = ON_Geometry::Cast(&object)) {
-	if (temp->HasBrepForm()) {
-	    AutoPtr<ON_Brep> brep(temp->BrepForm());
-	    import_object(wdb, name, *brep.ptr);
-	    return true;
-	} else
-	    return false;
-    }
-
-    return false;
+    return true;
 }
 
 
@@ -433,17 +453,36 @@ import_model_objects(rt_wdb &wdb, const ONX_Model &model)
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &model_object = *model.m_object_table.At(i);
 	const std::string name = ON_String(model_object.m_attributes.m_name).Array();
+	const std::string member_name = name + ".s";
 
 	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(
 		model_object.m_object))
-	    import_object(wdb, name, *temp, model);
-	else if (!import_object(wdb, name, *model_object.m_object))
+	    import_object(wdb, member_name, *temp, model);
+	else if (!import_object(wdb, member_name, *model_object.m_object)) {
 	    std::cerr
 		    << "skipped "
 		    << model_object.m_object->ClassId()->ClassName()
-		    << " model object '"
-		    << ON_String(model_object.m_attributes.m_name).Array()
-		    << "'\n";
+		    << " model object '" << name << "'\n";
+	    continue;
+	}
+
+	const std::vector<std::string> members(1, member_name);
+	Shader shader;
+
+	{
+	    ON_Material temp;
+	    model.GetRenderMaterial(model_object.m_attributes, temp);
+	    shader = get_shader(&temp);
+	}
+
+	unsigned char rgb[3];
+
+	rgb[0] = model.WireframeColor(model_object.m_attributes).Red();
+	rgb[1] = model.WireframeColor(model_object.m_attributes).Green();
+	rgb[2] = model.WireframeColor(model_object.m_attributes).Blue();
+
+	write_comb(wdb, name, members, shader.first.c_str(), shader.second.c_str(), rgb,
+		   NULL);
     }
 }
 
@@ -542,15 +581,31 @@ get_root_layer_members(const ONX_Model &model)
 
 
 HIDDEN void
+import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
+{
+    const std::vector<std::string> members = get_layer_members(layer, model);
+    const Shader shader = get_shader(model.m_material_table.At(
+					 layer.m_material_index));
+    unsigned char rgb[3];
+
+    rgb[0] = static_cast<unsigned char>(layer.Color().Red());
+    rgb[1] = static_cast<unsigned char>(layer.Color().Green());
+    rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
+
+    write_comb(wdb, ON_String(layer.m_name).Array(), members, shader.first.c_str(),
+	       shader.second.c_str(), rgb, NULL);
+}
+
+
+HIDDEN void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 {
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = *model.m_layer_table.At(i);
-	write_comb(wdb, ON_String(layer.m_name).Array(), get_layer_members(layer,
-		   model));
-    }
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
+	import_layer(wdb, *model.m_layer_table.At(i), model);
 
-    write_comb(wdb, "root", get_root_layer_members(model));
+    ON_Layer root_layer;
+    root_layer.SetLayerName("root");
+    import_layer(wdb, root_layer, model);
 }
 
 
