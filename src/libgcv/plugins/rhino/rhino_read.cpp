@@ -587,22 +587,6 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 }
 
 
-HIDDEN std::vector<std::string>
-get_root_layer_members(const ONX_Model &model)
-{
-    std::vector<std::string> result;
-
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &current_layer = *model.m_layer_table.At(i);
-
-	if (current_layer.m_parent_layer_id == ON_nil_uuid)
-	    result.push_back(ON_String(current_layer.m_name).Array());
-    }
-
-    return result;
-}
-
-
 HIDDEN void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
