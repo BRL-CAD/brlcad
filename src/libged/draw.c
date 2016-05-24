@@ -677,6 +677,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'S':
 		    dgcdp.draw_no_surfaces = 1;
+		    skip_subtractions = 1;
 		    break;
 		case 'T':
 		    dgcdp.nmg_triangulate = 0;
@@ -695,9 +696,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'f':
 		    enable_fastpath = 1;
-		    break;
-		case 'M':
-		    skip_subtractions = 1;
 		    break;
 		case 'C':
 		    {

@@ -46,12 +46,14 @@ __BEGIN_DECLS
 typedef struct bu_hash_entry bu_hash_entry;
 typedef struct bu_hash_tbl   bu_hash_tbl;
 
+
 /**
  * Create and initialize a hash table.  The input is the number of desired hash
  * bins.  This number will be rounded up to the nearest power of two, or a
  * minimal size if tbl_size is smaller than the internal minimum bin count.
  */
 BU_EXPORT extern bu_hash_tbl *bu_hash_create(unsigned long tbl_size);
+
 
 /**
  * Free all the memory associated with the specified hash table.
@@ -60,6 +62,7 @@ BU_EXPORT extern bu_hash_tbl *bu_hash_create(unsigned long tbl_size);
  * are not freed.  (The values are merely pointers)
  */
 BU_EXPORT extern void bu_hash_destroy(bu_hash_tbl *t);
+
 
 /**
  * Get the value stored in the hash table entry corresponding to the provided key
@@ -73,6 +76,7 @@ BU_EXPORT extern void bu_hash_destroy(bu_hash_tbl *t);
  * NULL if no entry corresponding to key exists.
  */
 BU_EXPORT extern void *bu_hash_get(const bu_hash_tbl *t, const uint8_t *key, size_t key_len);
+
 
 /**
  * Set the value stored in the hash table entry corresponding to the provided
@@ -99,6 +103,7 @@ BU_EXPORT extern void *bu_hash_get(const bu_hash_tbl *t, const uint8_t *key, siz
  */
 BU_EXPORT extern int bu_hash_set(bu_hash_tbl *t, const uint8_t *key, size_t key_len, void *val);
 
+
 /**
  * Remove the hash table entry associated with key from the table.
  *
@@ -107,6 +112,7 @@ BU_EXPORT extern int bu_hash_set(bu_hash_tbl *t, const uint8_t *key, size_t key_
  * @param[in] key_len - the length of the key in bytes
  */
 BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_len);
+
 
 /**
  * Supports iteration of all the contents in a hash table.
@@ -130,6 +136,7 @@ BU_EXPORT extern void bu_hash_rm(bu_hash_tbl *t, const uint8_t *key, size_t key_
  * NULL when p is last entry in table.
  */
 BU_EXPORT extern bu_hash_entry *bu_hash_next(bu_hash_tbl *t, bu_hash_entry *p);
+
 
 /**
  * Supports iteration of all the contents in a hash table.

@@ -143,6 +143,9 @@ int main(int argc, char **argv)
 			/* from 1 position.  */
     int ret;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* Check to see if arguments implemented correctly.  */
     if (argc < 2 || argv[1] == NULL || argv[2] == NULL) {
 	fprintf(stderr, "\nUsage:  secpass file.g objects\n\n");

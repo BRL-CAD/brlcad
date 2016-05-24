@@ -59,7 +59,7 @@ ged_model2view_lu(struct ged *gedp, int argc, const char *argv[])
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
     f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(view_pt, view_pt, f);
-    bn_encode_vect(gedp->ged_result_str, view_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 
     return GED_OK;
 

@@ -99,6 +99,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     fpin = stdin;
     efile = NULL;
     bfile = "euclid.g";
@@ -111,12 +114,8 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (argc == 1) {
-	bu_log("%s %s", argv[0], usage);
-	bu_log("       Program continues running (waiting for standard input):\n");
-    }
     /* Get command line arguments. */
-    else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);

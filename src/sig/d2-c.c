@@ -61,6 +61,9 @@ main(int argc, char *argv[])
     double real[1024], imag[1024];
     size_t ret;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n");
     }

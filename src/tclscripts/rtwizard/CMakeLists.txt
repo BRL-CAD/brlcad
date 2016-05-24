@@ -3,7 +3,6 @@ add_subdirectory(lib)
 set(rtwizard_TCLSCRIPTS
   RaytraceWizard.tcl
   rtwizard
-  rtwizard.bat
   )
 BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
 pkgIndex_BUILD(tclscripts/rtwizard)

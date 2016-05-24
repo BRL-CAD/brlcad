@@ -118,8 +118,6 @@ main(int argc, char **argv)
 
     /* If there are no arguments ask questions. */
     if (argc == 1) {
-	printusage();
-	fprintf(stderr,"\n       Program continues running:\n\n");
 	/* START # 1 */
 
 	/* Find type of bolt to build. */

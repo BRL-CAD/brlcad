@@ -209,6 +209,7 @@ add_library(freetype
  #${PRIVATE_HEADERS}
   ${BASE_SRCS}
 )
+set_target_properties(freetype PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 6)
 
 if (BUILD_FRAMEWORK)
   set_property(SOURCE ${PUBLIC_CONFIG_HEADERS}

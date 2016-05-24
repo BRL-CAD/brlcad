@@ -41,12 +41,14 @@
 #endif
 
 /* provide declaration markers for header externals */
-#ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
-#  define __END_DECLS     }              /**< if C++, set to } */
-#else
-#  define __BEGIN_DECLS /**< if C++, set to extern "C" { */
-#  define __END_DECLS   /**< if C++, set to } */
+#ifndef __BEGIN_DECLS
+#  ifdef __cplusplus
+#    define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#    define __END_DECLS     }              /**< if C++, set to } */
+#  else
+#    define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#    define __END_DECLS   /**< if C++, set to } */
+#  endif
 #endif
 
 #ifndef GCC_PREREQ

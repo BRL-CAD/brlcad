@@ -67,6 +67,9 @@ main(int argc, char **argv)
     int num_rec;
     int first=1;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     bu_setprogname(argv[0]);
 
     ifp = stdin;

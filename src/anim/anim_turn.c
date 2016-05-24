@@ -104,6 +104,9 @@ main(int argc, char *argv[])
     double scan[3];
     double t /* time */;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
 	return 0;

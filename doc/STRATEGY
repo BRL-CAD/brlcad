@@ -122,24 +122,27 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO web publishing + searching of docs (1)
 
 
-** PROJECT: Concentration
+** PROJECT: Distilling BRL-CAD (11)
 
-*** revisit scope (vision, mission)
-**** TODO communicate intent and updates
-**** TODO develop high-level project roadmap
-**** TODO connect features to markets
+*** revisit scope (vision, mission) (3)
+**** TODO communicate intent and updates (1)
+**** TODO develop high-level project roadmap (1)
+**** TODO connect features to markets (1)
 
-*** develop command roadmap
-**** TODO inventory of command-line commands, decide keep/refactor/kill
-**** TODO communicate command-line changes
-**** TODO take inventory of ged commands, decide keep/refactor/kill
-**** TODO communicate ged command changes
-**** TODO assess and mitigate deployment risks
+*** develop command roadmap (4)
+**** TODO inventory of command-line commands, decide keep/refactor/kill (1)
+**** TODO communicate command-line changes (0)
+**** TODO develop command categorization (1)
+**** TODO take inventory of ged commands, decide keep/refactor/kill (1)
+**** TODO communicate ged command changes (0)
+**** TODO assess and mitigate deployment risks (1)
 
-*** unify docs
-**** TODO convert/integrate/kill html+troff docs
-**** TODO consolidate docs, one guide per interface
-**** TODO stub new docs where missing
+*** integrate docs (4)
+**** TODO plan what to do with html+troff docs (0)
+**** TODO stub new docs where missing (1)
+**** TODO consolidate docs, one guide per interface (2)
+**** TODO kill obsolete docs (0)
+**** TODO migrate e-mail and release notes to web (1)
 
 
 ** PROJECT: Webulgation
@@ -200,7 +203,6 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO integrate bot_dump into gcv
 
 
-
 ** PROJECT: Performant Pipeline
 *** bundled ray dispatch
 **** TODO define ray bundling API
@@ -231,6 +233,23 @@ bolster those areas, and identifies specific actionable objectives.
 *** performant raytrace image display
 **** TODO optimize libdb/libfb to remove bottleneck
 **** TODO update archer for interactive tracing display
+
+
+** PROJECT: Progressive Geometry Display (11)
+
+*** ray trace display manager (4)
+**** TODO review rtgl code (1)
+**** TODO design incremental loading architecture (1)
+**** TODO implement incremental ray tracing (2)
+
+*** point cloud hashing (3)
+**** TODO design LoD point cloud storage approach (1)
+**** TODO calculate LoD point cloud utility metic (1)
+**** TODO implement LoD point cloud loading (3)
+
+*** asynchronous geometry display (4)
+**** TODO modify display loop to run in separate thread (2)
+**** TODO update draw command to dispatch (2)
 
 
 ** TEMPLATE: Project Title

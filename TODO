@@ -22,8 +22,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
-* fix regressions in step-g
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -52,6 +50,12 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* convert src/util/terrain.c to src/shapes/terrain.c writing out the
+  datafile to a binunif along with a referencing dsp.  perhaps add
+  command line option to skip .g to retain prior datafile capability.
+  need to review command line options to simplify complexity and
+  control randomization better.
 
 * Explore possibility of expanding dm command to accept object names
   as a way of tweaking display manager specific properties (wireframe
@@ -649,10 +653,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * rework the database object hash to push the iteration up into librt
   as API instead of expecting callers to use RT_DBNHASH and
   RT_DBHASH() manually.  consider using bu_hash or other container.
-
-* rename chan_add, chan_mult, chan_permute and look into possibly
-  merging them into one tool in the util directory.  similar to the
-  'join' command, but arguably easier to use.
 
 * temp colors and temp matrices during ray tracing, rt, rtwizard.
   need a command-line and mged method to override parameters.
@@ -2192,151 +2192,81 @@ DOCUMENTATION
 
 * add missing manual pages (tbrowder2 generated list 2013-08):
 
-    3dm-g
-    a-d
-    alias-pix
-    all_sf
-    anim_cascade
-    anim_fly
-    anim_hardtrack
-    anim_keyread
-    anim_lookat
-    anim_offset
-    anim_orient
     archer
-    asc2pix
-    bolt
     bombardier
-    bot-bldxf
-    brep_cube
-    brep_simple
-    brepintersect
-    breplicator
-    brickwall
     brlman
-    bw-a
-    bw-d
-    bwish
-    c-d
-    chan_add
-    check-express
-    clutter
-    contours
-    csgbrep
-    d-a
-    d-bw
-    d-f
-    d-i
-    d-u
-    d2-c
     damdf
     dauto
     dauto2
     dconv
     ddisp
-    dem-g
     dfft
     dmod
-    double-asc
     dpeak
     dsel
-    dsp_add
     dstats
     dwin
-    euclid_format
-    euclid_unformat
-    f-d
-    f-i
-    fbgammamod
-    fence
-    fhor
-    fix_polysolids
-    g-dot
-    g-euclid1
-    g-jack
-    g-off
-    g-step
-    g-voxel
-    gastank
-    globe
-    handle
-    human
-    i-a
-    i-d
-    i-f
     ihist
     imod
     isst
     istats
-    jack-g
-    kurt
-    lens
     lowp
-    masonry
-    menger
-    metaball
-    mkbuilding
-    molecule
-    nmg-sgp
-    nmgmodel
-    off-g
-    pdb-g
-    perplex
-    picket_fence
-    pipe
-    pix-spm
-    pix-yuv
-    pix2g
     pix3filter
     pixcount
     pixelswap
     pixembed
-    pixfields
-    pixfieldsep
-    pixflip-fb
-    pixpaste
-    plot3-dm
     plot3stat
-    pyramid
-    raw-g
-    rawbot
-    re2c
-    ringworld
-    room
-    rtcell
-    rtfrac
-    rtrad
-    rtsil
     rtsrv
-    script-tab
-    shp-g
-    sketch
     smod
-    sphflake
-    spm-fb
-    ssampview
-    step-g
-    surfaceintersec
-    tea
-    tea_nmg
-    texturescale
-    tgf-g
-    torii
-    ttcp
-    tube
-    u-a
-    u-bw
-    u-d
-    u-f
     umod
     ustats
-    vegetation
-    wavy
+
+* these are matured shape tools that get installed with simple
+  usability but should still have basic docs and better names.  plan
+  to absorb them into ged as external plugins, but they'll still need
+  docs:
+
+    bolt
+    fence
+    gastank
+    handle
+    human
+    picket_fence
     window
     window_frame
     wire
-    xyz-plot3
-    yuv-pix
+
+* misc / 3rd party tools we control / bundle, but need docs if anyone
+  else is to use them or contribute:
+
+    perplex
+    re2c
+
+* needs his own repo:
+
+    ttcp
+
+* need to revisit utility of spherical mapping, used by sh_spm and
+  sh_points, used for environment mapping (e.g., stars):
+
+    pix-spm
+    spm-fb
+
+* these eventually get put into gcv (hopefully not needing docs):
+
+    3dm-g
+    dem-g
+    g-dot
+    g-jack
+    g-off
+    g-step
+    g-voxel
+    jack-g
+    off-g
+    raw-g
+    shp-g
+    step-g
+    tgf-g
 
 * DocBook: create a DB index.xml to generate a doc listing (with
   hot links) for the html and pdf collection
