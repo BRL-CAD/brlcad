@@ -49,7 +49,7 @@ int
 main(int argc, char **argv)
 {
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */

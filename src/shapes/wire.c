@@ -48,7 +48,7 @@ int
 main(int argc, char *argv[])
 {
     struct rt_wdb *fpw;			/* File to be created. */
-    char filemged[26] = {0};		/* Mged file name. */
+    char filemged[27] = {0};		/* Mged file name. */
     double numseg = -1.0;		/* Number of segments. */
     double scanseg;
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */

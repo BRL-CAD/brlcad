@@ -584,7 +584,7 @@ three_coord_out(FILE *fp, fastf_t *m)
 void
 two_dcoord_out(FILE *fp, fastf_t *m)
 {
-    unsigned char buf[2*8];
+    unsigned char buf[3*8];
     double p1[3];
     double p2[3];
     size_t ret;

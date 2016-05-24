@@ -1,4 +1,4 @@
-<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="burst1">
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="burst1" xmlns:xlink="http://www.w3.org/1999/xlink" >
 
   <refmeta>
     <refentrytitle>BURST</refentrytitle>
@@ -27,7 +27,9 @@
   <para>
     <command>burst</command> uses LIBRT raytracing to prepare inputs to the
     Point Burst Damage Assessment Model (PDAM) in the form of shotline files
-    and burst point library files.
+    and burst point library files.  For more information about PDAM, see
+    <link xlink:href="http://www.dtic.mil/docs/citations/ADA273171">ARL-CR-69:
+    A Guide to FASTGEN Target Geometric Modeling</link>.
   </para>
   <para>
     The <command>burst</command> program is designed to allow many options to be

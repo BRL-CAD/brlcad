@@ -350,7 +350,7 @@ main(int ac, char *av[])
 
 	/* specified objects */
 
-	objs = bu_dup_argv(ac - 1, (const char **)(av + 1));
+	objs = bu_argv_dup(ac - 1, (const char **)(av + 1));
     } else {
 	char **topobjs;
 	const char *tops[3] = {"tops", "-n", NULL};
@@ -361,7 +361,7 @@ main(int ac, char *av[])
 
 	topobjs = (char **)bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
 	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
-	objs = bu_dup_argv(c, (const char **)topobjs);
+	objs = bu_argv_dup(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");
     }
 
@@ -396,7 +396,7 @@ main(int ac, char *av[])
     if (gp)
 	BU_PUT(gp, struct ged);
 
-    bu_free_argv(c, objs);
+    bu_argv_free(c, objs);
 
     if (input)
 	bu_free(input, "free input");

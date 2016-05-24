@@ -166,6 +166,9 @@ misc tools
 	buffer : unnecesary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
+include/bu/ptbl.h
+        BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
+        Removed as private implementation detail [deprecated 7.26
 include/bu/hash.h
 	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
 	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
@@ -209,10 +212,16 @@ pixcut, pixpaste
 	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
-kill, killtree, killall, killrefs
-	replaced with rm command [deprecated 7.26]
-rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
+mged
+	kill, killtree, killall, killrefs - replaced with rm command [deprecated 7.26]
+
+	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
 	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
+
+	expand -> replaced by search -name <pattern> (previous docs indicating matching of
+	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
+
+	pathlist, paths -> replaced by search [deprecated 7.26]
 
 7.24
 ----
@@ -1125,7 +1134,7 @@ s/INTERSECT/'+'/g
 s/(#[[:space:]]*include[[:space:]]+["<])bselect\.h/\1bsocket.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
 	rename bselect.h and bin.h public headers to be more declaratively named [7.25]
-s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
+s/db5_enc_len\[(.*)\]/DB5_ENC_LEN(\1)/g
 	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]
 s/db_normalize/bu_normalize/g
 	move the path normalization routine to libbu [7.25]
@@ -1184,3 +1193,13 @@ s/rt_grow_boolstack/rt_bool_growstack/g
 s/(#[[:space:]]*include[[:space:]]+["<])obj\.h/\1dm\/bview.h/g
 s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
 	move view_obj to dm/bview.h [7.25]
+s/BU_PTBL_CLEAR_I\((.*)\)/BU_PTBL_SET(\1, (long*)0)/g
+	replace BU_PTBL_CLEAR_I into the BU_PTBL_SET command [7.25]
+s/BU_PTBL_END\(([^\)]*)\)/(\1)->end/g
+        replace BU_PTBL_END with direct ptbl peek or BU_PTBL_LEN [7.25]
+s/bu_free_argv/bu_argv_free/g
+s/bu_dup_argv/bu_argv_dup/g
+s/bu_dupinsert_argv/bu_argv_dupinsert/g
+	bu_*_argv -> bu_argv_* [7.25]
+s/bu_dir_list/bu_file_list/g
+	bu_dir_list -> bu_file_list [7.25]

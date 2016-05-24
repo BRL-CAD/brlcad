@@ -2260,7 +2260,9 @@ namespace eval ArcherCore {
     }
 
     set mTarget $target
-    file copy -force $mTargetCopy $mTarget
+    set t [::clock seconds]
+    ::file mtime $mTargetCopy $t
+    ::file copy -force $mTargetCopy $mTarget
 }
 
 ::itcl::body ArcherCore::exportDb {} {

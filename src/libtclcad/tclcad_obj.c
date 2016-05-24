@@ -13754,13 +13754,22 @@ to_more_args_func(struct ged *gedp,
 {
     register int i;
     int ac;
+    int total_ac;
+    size_t total_alloc;
+    size_t size_needed;
     int ret;
-    char *av[256];
+    char **av;
     struct bu_vls callback_cmd = BU_VLS_INIT_ZERO;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
 
-    /* copy all args */
     ac = argc;
+    total_ac = ac + 1;
+    total_alloc = total_ac * sizeof(char *);
+
+    /* allocate space for initial args */
+    av = (char **)bu_calloc(total_alloc, 1, "to_more_args_func");
+
+    /* copy all args */
     for (i = 0; i < ac; ++i)
 	av[i] = bu_strdup((char *)argv[i]);
     av[ac] = (char *)0;
@@ -13780,7 +13789,8 @@ to_more_args_func(struct ged *gedp,
 		bu_vls_trunc(gedp->ged_result_str, 0);
 		bu_vls_printf(gedp->ged_result_str, "%s", Tcl_GetStringResult(current_top->to_interp));
 		Tcl_ResetResult(current_top->to_interp);
-		return GED_ERROR;
+		ret = GED_ERROR;
+		goto end;
 	    }
 
 	    bu_vls_trunc(&temp, 0);
@@ -13816,22 +13826,35 @@ to_more_args_func(struct ged *gedp,
 	if (*avmp[ac_more-1] == '\0')
 	    --ac_more;
 
+	/* allocate space for additional args */
+	total_ac += ac_more;
+	size_needed = total_ac * sizeof(char *);
+	if (size_needed > total_alloc) {
+	    while (size_needed > total_alloc)
+		total_alloc *= 2;
+	    av = (char **)bu_realloc((void *)av, total_alloc, "to_more_args_func additional");
+	}
+
 	/* copy additional args */
 	for (i = 0; i < ac_more; ++i)
 	    av[ac++] = bu_strdup(avmp[i]);
-	av[ac+1] = (char *)0;
+	av[ac] = (char *)0;
 
 	Tcl_Free((char *)av_more);
     }
 
-    bu_vls_free(&callback_cmd);
-    bu_vls_free(&temp);
-
     bu_vls_printf(gedp->ged_result_str, "BUILT_BY_MORE_ARGS");
     for (i = 0; i < ac; ++i) {
 	bu_vls_printf(gedp->ged_result_str, "%s ", av[i]);
+    }
+
+end:
+    for (i = 0; i < ac; ++i) {
 	bu_free((void *)av[i], "to_more_args_func");
     }
+    bu_vls_free(&callback_cmd);
+    bu_vls_free(&temp);
+    bu_free((void *)av, "to_more_args_func");
 
     return ret;
 }

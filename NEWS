@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fixed crash in search when using -above option - Cliff Yapp
 * extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
@@ -63,13 +64,16 @@ changes made.  See document footer for additional details.
 * swapped meanings of search's -above/-below options - Sean Morrison
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed
+* added example NURBS B-Rep geometry files from NIST - Cliff Yapp
 * removed "high resolution" options from all commands - Carl Moore
 * improved performance of archer loading large BoT models - Nick Reed
 * added evaluated shaded drawing preference mode and menu - Nick Reed
 * extensive improvements to NURBS Boolean evaluation - Nick Reed
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj
+* updated manual page for MGED's brep command - Peter Amidon
 * new manual page for the g-dot exporter - Shardul Chiplunkar
+* added sketch centroid support the analyze command - Peter Amidon
 * new Think. Invent. Create. splash screen for archer - Marc Tannous
 * improved pix-bw to support dual output streams - Carl Moore
 * added list option to attr command - Cliff Yapp
@@ -80,6 +84,8 @@ changes made.  See document footer for additional details.
 * gqa respects LIBRT_BOT_MINTIE environment variable - Ștefan Mirea
 * improved behavior of mged's draw command - Ștefan Mirea
 * fixed handling of extra whitespace in nirt commands - Ștefan Mirea
+* added g-ply exporter for Stanford PLY geometry format - Rishub Jain
+* added ply-g importer for Stanford PLY geometry format - Rishub Jain
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
@@ -98,7 +104,7 @@ changes made.  See document footer for additional details.
 	- Wu Jianbang, Nick Reed, Cliff Yapp
 * improved step-g assembly hierarchy import support - Keith Bowman
 * fixed rtweight when using the -G grid spacing option - Sean Morrison
-* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* fixed memory leaks in a number of pix utilities - Cezar Elnazli
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
 * added -v verbose output option to mged 'search' command - Cliff Yapp

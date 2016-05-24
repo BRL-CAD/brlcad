@@ -378,10 +378,10 @@ int main(int arg, char **argv)
    typedef char stbtt__check_size32[sizeof(stbtt_int32)==4 ? 1 : -1];
    typedef char stbtt__check_size16[sizeof(stbtt_int16)==2 ? 1 : -1];
 
-   // #define your own STBTT_sort() to override this to avoid qsort
+   // #define your own STBTT_sort() to override this to avoid bu_sort
    #ifndef STBTT_sort
-   #include <stdlib.h>
-   #define STBTT_sort(data,num_items,item_size,compare_func)   qsort(data,num_items,item_size,compare_func)
+   #include "bu/sort.h"
+   #define STBTT_sort(data,num_items,item_size,compare_func)   bu_sort(data,num_items,item_size,compare_func, NULL)
    #endif
 
    // #define your own STBTT_ifloor/STBTT_iceil() to avoid math.h
@@ -1717,7 +1717,7 @@ static void stbtt__rasterize_sorted_edges(stbtt__bitmap *result, stbtt__edge *e,
       STBTT_free(scanline, userdata);
 }
 
-static int stbtt__edge_compare(const void *p, const void *q)
+static int stbtt__edge_compare(const void *p, const void *q, void *UNUSED(context))
 {
    stbtt__edge *a = (stbtt__edge *) p;
    stbtt__edge *b = (stbtt__edge *) q;

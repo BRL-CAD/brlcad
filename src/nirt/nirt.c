@@ -144,7 +144,7 @@ listformats(char ***names)
 
     /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
-    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
+    files = bu_file_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
     if (names)
 	*names = filearray;
 
@@ -168,7 +168,7 @@ listformats(char ***names)
 
     /* release resources */
     if (!names)
-	bu_free_argv(files, filearray);
+	bu_argv_free(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
@@ -373,7 +373,7 @@ main(int argc, char *argv[])
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
     int print_ident_flag = 1;
-    char ocastring[1024] = {0};
+    char ocastring[1025] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
     extern outval ValTab[];
@@ -573,7 +573,7 @@ main(int argc, char *argv[])
 
 	    printf(" (specify via -f option)\n");
 	}
-	bu_free_argv(fmtcnt, names);
+	bu_argv_free(fmtcnt, names);
     }
 
     /* build directory for target object */

@@ -50,7 +50,7 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes);
 
 /**
  * This is a convenience UUID comparison routine compatible with
- * stdlib sorting functions (e.g., qsort()).  The function expects
+ * stdlib sorting functions (e.g., bu_sort()).  The function expects
  * both left and right UUIDs to be uint8_t[16] arrays.
  *
  * Returns:

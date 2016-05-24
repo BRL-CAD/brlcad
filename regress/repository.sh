@@ -210,7 +210,7 @@ echo "running API usage check"
 # 89 - calloc
 # 21 - realloc
 FOUND=
-for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
+for func in fgets abort dirname getopt strcat strncat strlcat strcpy strdup strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove qsort ; do
     echo "Searching for $func ..."
     MATCH="`grep -n -e [^a-zA-Z0-9_:]$func\( $INCFILES $SRCFILES /dev/null`"
 

@@ -50,7 +50,7 @@ struct sphere *s_head = (struct sphere *) 0;
 
 struct atoms  {
     int a_id;
-    char a_name[128];
+    char a_name[129];
     unsigned char red, green, blue;
 };
 

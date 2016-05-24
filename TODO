@@ -18,13 +18,32 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* sync tgc/rec shot() behavior, sort results for proper normal.
-  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
-  and z=1524 (was hit/overlap, now misses).
+* check these commits for documentation:
+  63621 63663 63804 63811 64696 64699 64700 64783 64806 65931 65981 66728 67174
+
+* brlcad-config build helper script is not working (not reporting
+  -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
+  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lbrlcad -lged -lwdb -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS -lanalyze  
+
+  $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
+  -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* bu_*_argv -> bu_argv_*
+
+* obsd stack crashers
+
+* rt moss.g facetize rt bot bug
+
+* invoke graphical with console, play nicely
+
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
 
 * reinstate 'stat' and search -size, see r67636 through r67646
 
@@ -50,6 +69,11 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* OpenCL for enhanced performance boolweave sorting
+
+* create boolweave+boolfinal unit tests to validate weaving behavior
+  and performance.
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
   datafile to a binunif along with a referencing dsp.  perhaps add
@@ -98,6 +122,16 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * pull work on rm command out of history (commit r67394 reverted it)
   and take it to a production ready stage.
 
+* use the globbing work needed for proper rm support to enhance the
+  ls command.  dbfind's behavior can be emulated by search, but the
+  speed of dbfind is not practical in search due to the potential
+  generality of search's filters.  search would have to pre-process
+  its plan and prove it needed to examine only a subset of the full
+  hierarchy in advance.  ls */objname is a better match for what
+  dbfind is actually doing, and if need be we could add a
+  --print-parent option or some such to precisely mimic dbfind's
+  output.
+
 * Extract bounding box code from both autoview.c and get_autoview.c
   into a general bounding rpp function in librt and use accordingly
   (particularly in libged).  Should combine autoview.c with
@@ -105,10 +139,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   in lots of places (e.g., the ged_arb() function).
 
 * make mged work without a batch script
-
-* make archer work without a batch script
-
-* make isst work without a batch script
 
 * Need to rethink libbu hash API - ideally should be much simpler and
   expose much less to the user.
@@ -392,6 +422,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   other options supplied at the command line and in environment
   variables.  See whether we can pass a variable into CMAKE_C_FLAGS
   that will allow specification of build flags at make time.
+  Relevant link: https://cmake.org/Bug/view.php?id=12928
 
 * investigate the possibility of allowing functions to define
   their own custom filters for some version of the db_search API.
@@ -563,10 +594,16 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * decouple libwdb from librt, particularly the headers and relevant
   structures that cross over to both such as the rtgeom.h types.
 
-* Translate the poly2tri routines into libbn C code
+* Translate logic from clipper polygon clipping library
+  (http://www.angusj.com/delphi/clipper.php) into libbg and use it
+  as a pre-processing step for poly2tri's algorithm along the lines
+  of what bitfighter did:  https://github.com/raptor/clip2tri
+  Some useful notes here: http://stackoverflow.com/a/16115775
+
+* Translate the poly2tri routines into libbg C code
 
 * Implement Shamos-Hoey test for checking whether a polygon is simple
-  in libbn: http://geomalgorithms.com/a09-_intersect-3.html
+  in libbg: http://geomalgorithms.com/a09-_intersect-3.html
 
 * figure out what in f_matpick (or possibly some other related function)
   is causing ipathpos to get incremented to a number larger than the
@@ -624,6 +661,9 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate integrating Pixar's OpenSubdiv for subdivision surfaces:
   http://graphics.pixar.com/opensubdiv/
+
+* investigate the possibility of using Appleseed (http://appleseedhq.net/)
+  to perform visual image rendering using librt shotline data for input.
 
 * the scale structure in bn_cmd_noise_slice (bn_tcl.c) was never
   initialized. it looks like somebody has planned to extend the
@@ -1176,8 +1216,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * libfb + font rendering (perhaps through libbn's plot interface) for
   a posix terminal.
 
-* OpenCL for enhanced performance boolweave sorting
-
 * getexecname, "/proc/self/cmdline", program_invocation_short_name.
   separate out into new file.
 
@@ -1629,6 +1667,13 @@ NEW OBJECTS
   raytrace objects containing the intersection results for a given
   view (i.e., a grid of primary rays), and 3) rtgl point samples
   (which is a variant of 2 but potentially view independent).
+
+  Considerations:
+    fast dictionary with expiration by time? (eviction during writes)
+    cache rate read/write / sec > 10k @ 500bytes
+    remain fast with millions of entries
+    immediate retrieval (consistency)
+    provide for concurrent access (concurrency), perhaps via sharding (N locks)
 
 * alias objects.  this is an object handle in a geometry database that
   refers to another geometry database object.  in effect, it

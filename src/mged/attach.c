@@ -623,9 +623,9 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	tmp_dmp = dm_get();
 
 	opt_argc = argc - 1;
-	opt_argv = bu_dup_argv(opt_argc, argv + 1);
+	opt_argv = bu_argv_dup(opt_argc, argv + 1);
 	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, opt_argv);
-	bu_free_argv(opt_argc, opt_argv);
+	bu_argv_free(opt_argc, opt_argv);
 
 	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
 	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
