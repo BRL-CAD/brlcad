@@ -335,7 +335,10 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     mesh.CombineIdenticalVertices();
     mesh.Compact();
 
-    if (!mesh.m_V.UnsignedCount() || !mesh.m_F.UnsignedCount())
+    const std::size_t num_vertices = mesh.m_V.UnsignedCount();
+    const std::size_t num_faces = mesh.m_F.UnsignedCount();
+
+    if (!num_vertices || !num_faces)
 	return;
 
     unsigned char orientation = RT_BOT_UNORIENTED;
@@ -357,17 +360,17 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	    throw std::logic_error("unknown orientation");
     }
 
-    std::vector<fastf_t> vertices(3 * mesh.m_V.UnsignedCount());
+    std::vector<fastf_t> vertices(3 * num_vertices);
 
-    for (unsigned i = 0; i < mesh.m_V.UnsignedCount(); ++i) {
+    for (unsigned i = 0; i < num_vertices; ++i) {
 	fastf_t * const dest_vertex = &vertices.at(3 * i);
 	const ON_3fPoint &source_vertex = *mesh.m_V.At(i);
 	VMOVE(dest_vertex, source_vertex);
     }
 
-    std::vector<int> faces(3 * mesh.m_F.UnsignedCount());
+    std::vector<int> faces(3 * num_faces);
 
-    for (unsigned i = 0; i < mesh.m_F.UnsignedCount(); ++i) {
+    for (unsigned i = 0; i < num_faces; ++i) {
 	int * const dest_face = &faces.at(3 * i);
 	const int * const source_face = mesh.m_F.At(i)->vi;
 	VMOVE(dest_face, source_face);
@@ -378,8 +381,8 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	rt_bot_internal bot;
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
 	bot.orientation = orientation;
-	bot.num_vertices = vertices.size();
-	bot.num_faces = faces.size();
+	bot.num_vertices = num_vertices;
+	bot.num_faces = num_faces;
 	bot.vertices = &vertices.at(0);
 	bot.faces = &faces.at(0);
 	mode = gcv_bot_is_solid(&bot) ? RT_BOT_SOLID : RT_BOT_PLATE;
@@ -391,13 +394,13 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     if (mode == RT_BOT_PLATE) {
 	const fastf_t plate_thickness = 1.0;
 
-	thicknesses.assign(faces.size(), plate_thickness);
-	bitv.ptr = bu_bitv_new(faces.size());
+	thicknesses.assign(num_faces, plate_thickness);
+	bitv.ptr = bu_bitv_new(num_faces);
     }
 
-    if (mesh.m_FN.UnsignedCount() != mesh.m_F.UnsignedCount()) {
-	if (mk_bot(&wdb, name.c_str(), mode, orientation, 0, vertices.size(),
-		   faces.size(), &vertices.at(0), &faces.at(0),
+    if (mesh.m_FN.UnsignedCount() != num_faces) {
+	if (mk_bot(&wdb, name.c_str(), mode, orientation, 0, num_vertices,
+		   num_faces, &vertices.at(0), &faces.at(0),
 		   thicknesses.empty() ? NULL :  &thicknesses.at(0), bitv.ptr))
 	    throw std::runtime_error("mk_bot() failed");
 
@@ -421,9 +424,10 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     }
 
     if (mk_bot_w_normals(&wdb, name.c_str(), mode, orientation,
-			 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, vertices.size(), faces.size(),
-			 &vertices.at(0), &faces.at(0), thicknesses.empty() ? NULL : &thicknesses.at(0),
-			 bitv.ptr, face_normals.size(), &normals.at(0), &face_normals.at(0)))
+			 RT_BOT_HAS_SURFACE_NORMALS | RT_BOT_USE_NORMALS, num_vertices,
+			 num_faces, &vertices.at(0), &faces.at(0),
+			 thicknesses.empty() ? NULL : &thicknesses.at(0), bitv.ptr,
+			 num_faces, &normals.at(0), &face_normals.at(0)))
 	throw std::runtime_error("mk_bot_w_normals() failed");
 }
 
