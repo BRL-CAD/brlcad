@@ -151,7 +151,6 @@ replace_invalid_uuids(ONX_Model &model)
 {
     std::size_t num_repairs = 0;
     std::set<ON_UUID, UuidCompare> seen;
-    seen.insert(ON_nil_uuid); // UUIDs can't be nil
 
 #define REPLACE_UUIDS(array, member) \
 do { \
@@ -173,10 +172,12 @@ do { \
     } \
 } while (false)
 
+    REPLACE_UUIDS(model.m_layer_table, m_layer_id);
+    seen.insert(ON_nil_uuid); // UUIDs can't be nil, except for root layer
+
     REPLACE_UUIDS_POINTER(model.m_bitmap_table, m_bitmap_id);
     REPLACE_UUIDS(model.m_mapping_table, m_mapping_id);
     REPLACE_UUIDS(model.m_linetype_table, m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, m_layer_id);
     REPLACE_UUIDS(model.m_group_table, m_group_id);
     REPLACE_UUIDS(model.m_font_table, m_font_id);
     REPLACE_UUIDS(model.m_dimstyle_table, m_dimstyle_id);
@@ -608,10 +609,6 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
 	import_layer(wdb, *model.m_layer_table.At(i), model);
-
-    ON_Layer root_layer;
-    root_layer.SetLayerName("root");
-    import_layer(wdb, root_layer, model);
 }
 
 
