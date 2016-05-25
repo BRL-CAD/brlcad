@@ -289,14 +289,14 @@ get_shader(const ON_Material *material)
 
 HIDDEN void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::vector<std::string> &members, const char *shader_name = NULL,
+	   const std::set<std::string> &members, const char *shader_name = NULL,
 	   const char *shader_options = NULL, const unsigned char *rgb = NULL,
 	   const mat_t matrix = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
 
-    for (std::vector<std::string>::const_iterator it = members.begin();
+    for (std::set<std::string>::const_iterator it = members.begin();
 	 it != members.end(); ++it)
 	mk_addmember(it->c_str(), &wmembers.l, const_cast<fastf_t *>(matrix),
 		     WMOP_UNION);
@@ -317,7 +317,9 @@ import_object(rt_wdb &wdb, const std::string &name,
     mat_t matrix;
     matrix_from_xform(matrix, instance_ref.m_xform);
 
-    const std::vector<std::string> members(1, ON_String(idef.m_name).Array());
+    std::set<std::string> members;
+    members.insert(ON_String(idef.m_name).Array());
+
     write_comb(wdb, name, members, NULL, NULL, NULL, matrix);
 }
 
@@ -478,7 +480,9 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
     if (attributes.ColorSource() == ON::color_from_parent)
 	own_rgb = false;
 
-    const std::vector<std::string> members(1, member_name);
+    std::set<std::string> members;
+    members.insert(member_name);
+
     write_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
 	       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL, NULL);
 }
@@ -513,13 +517,13 @@ HIDDEN void
 import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	    const ONX_Model &model)
 {
-    std::vector<std::string> members;
+    std::set<std::string> members;
 
     for (unsigned i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
 	const ONX_Model_Object &model_object = *model.m_object_table.At(
 		model.ObjectIndex(*idef.m_object_uuid.At(i)));
 
-	members.push_back(ON_String(model_object.m_attributes.m_name).Array());
+	members.insert(ON_String(model_object.m_attributes.m_name).Array());
     }
 
     write_comb(wdb, ON_String(idef.m_name).Array(), members);
@@ -537,10 +541,10 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
-HIDDEN std::vector<std::string>
+HIDDEN std::set<std::string>
 get_idef_members(const ONX_Model &model)
 {
-    std::vector<std::string> result;
+    std::set<std::string> result;
 
     for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
 	const ON_InstanceDefinition &idef = *model.m_idef_table.At(i);
@@ -548,7 +552,7 @@ get_idef_members(const ONX_Model &model)
 	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
 	    const ONX_Model_Object &object = *model.m_object_table.At(model.ObjectIndex(
 						 *idef.m_object_uuid.At(j)));
-	    result.push_back(ON_String(object.m_attributes.m_name).Array());
+	    result.insert(ON_String(object.m_attributes.m_name).Array());
 	}
     }
 
@@ -556,31 +560,29 @@ get_idef_members(const ONX_Model &model)
 }
 
 
-HIDDEN std::vector<std::string>
+HIDDEN std::set<std::string>
 get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
-    std::vector<std::string> members;
+    std::set<std::string> members;
 
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
 	const ON_Layer &current_layer = *model.m_layer_table.At(i);
 
 	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-	    members.push_back(ON_String(current_layer.m_name).Array());
+	    members.insert(ON_String(current_layer.m_name).Array());
     }
 
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = *model.m_object_table.At(i);
 
 	if (object.m_attributes.m_layer_index == layer.m_layer_index)
-	    members.push_back(ON_String(object.m_attributes.m_name).Array());
+	    members.insert(ON_String(object.m_attributes.m_name).Array());
     }
 
-    std::vector<std::string> model_idef_members = get_idef_members(model);
-    std::sort(model_idef_members.begin(), model_idef_members.end());
-    std::sort(members.begin(), members.end());
-    std::vector<std::string> result;
+    const std::set<std::string> model_idef_members = get_idef_members(model);
+    std::set<std::string> result;
     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
-			model_idef_members.end(), std::back_inserter(result));
+			model_idef_members.end(), std::inserter(result, result.end()));
 
     return result;
 }
@@ -589,7 +591,7 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 HIDDEN void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
-    const std::vector<std::string> members = get_layer_members(layer, model);
+    const std::set<std::string> members = get_layer_members(layer, model);
     const Shader shader = get_shader(model.m_material_table.At(
 					 layer.m_material_index));
     unsigned char rgb[3];
