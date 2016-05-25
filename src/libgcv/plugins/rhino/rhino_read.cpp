@@ -116,6 +116,33 @@ struct UuidCompare {
 };
 
 
+template <template<class> class Array, typename T>
+T &at(Array<T> &array, std::size_t index)
+{
+    if (T * const result = array.At(static_cast<unsigned>(index)))
+	return *result;
+    else
+	throw std::invalid_argument("invalid index");
+}
+
+
+template <template<class> class Array, typename T>
+const T &at(const Array<T> &array, std::size_t index)
+{
+    return at(const_cast<Array<T> &>(array), index);
+}
+
+
+template <typename T, typename Array>
+const T &at(const Array &array, std::size_t index)
+{
+    if (const T * const result = array.At(static_cast<unsigned>(index)))
+	return *result;
+    else
+	throw std::invalid_argument("invalid index");
+}
+
+
 // ON_CreateUuid() is not implemented for all platforms.
 // When it fails, we create a UUIDv4.
 HIDDEN ON_UUID
@@ -156,8 +183,8 @@ replace_invalid_uuids(ONX_Model &model)
 #define REPLACE_UUIDS(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert((array).At(i)->member).second) { \
-	    (array).At(i)->member = generate_uuid(); \
+	while (!seen.insert(at((array), i).member).second) { \
+	    at((array), i).member = generate_uuid(); \
 	    ++num_repairs; \
 	} \
     } \
@@ -166,8 +193,8 @@ do { \
 #define REPLACE_UUIDS_POINTER(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert((*(array).At(i))->member).second) { \
-	    (*(array).At(i))->member = generate_uuid(); \
+	while (!seen.insert(at((array), i)->member).second) { \
+	    at((array), i)->member = generate_uuid(); \
 	    ++num_repairs; \
 	} \
     } \
@@ -240,7 +267,7 @@ load_model(ONX_Model &model, const std::string &path,
 #define REPLACE_NAMES(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) \
-	clean_name(seen, default_name, (array).At(i)->member); \
+	clean_name(seen, default_name, at((array), i).member); \
 } while (false)
 
     REPLACE_NAMES(model.m_layer_table, m_name);
@@ -326,8 +353,8 @@ HIDDEN void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model)
 {
-    const ON_InstanceDefinition &idef = *model.m_idef_table.At(model.IDefIndex(
-					    instance_ref.m_instance_definition_uuid));
+    const ON_InstanceDefinition &idef = at(model.m_idef_table,
+					   model.IDefIndex(instance_ref.m_instance_definition_uuid));
 
     mat_t matrix;
     matrix_from_xform(matrix, instance_ref.m_xform);
@@ -383,7 +410,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     for (unsigned i = 0; i < num_vertices; ++i) {
 	fastf_t * const dest_vertex = &vertices.at(3 * i);
-	const ON_3fPoint &source_vertex = *mesh.m_V.At(i);
+	const ON_3fPoint &source_vertex = at<ON_3fPoint>(mesh.m_V, i);
 	VMOVE(dest_vertex, source_vertex);
     }
 
@@ -391,7 +418,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     for (unsigned i = 0; i < num_faces; ++i) {
 	int * const dest_face = &faces.at(3 * i);
-	const int * const source_face = mesh.m_F.At(i)->vi;
+	const int * const source_face = at(mesh.m_F, i).vi;
 	VMOVE(dest_face, source_face);
     }
 
@@ -431,7 +458,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     for (unsigned i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	fastf_t * const dest_normal = &normals.at(3 * i);
-	const ON_3fVector &source_normal = *mesh.m_FN.At(i);
+	const ON_3fVector &source_normal = at<ON_3fVector>(mesh.m_FN, i);
 	VMOVE(dest_normal, source_normal);
     }
 
@@ -508,7 +535,7 @@ HIDDEN void
 import_model_objects(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &model_object = *model.m_object_table.At(i);
+	const ONX_Model_Object &model_object = at(model.m_object_table, i);
 	const std::string name = ON_String(model_object.m_attributes.m_name).Array();
 	const std::string member_name = name + ".s";
 
@@ -536,8 +563,8 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
     std::set<std::string> members;
 
     for (unsigned i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
-	const ONX_Model_Object &model_object = *model.m_object_table.At(
-		model.ObjectIndex(*idef.m_object_uuid.At(i)));
+	const ONX_Model_Object &model_object = at(model.m_object_table,
+					       model.ObjectIndex(at(idef.m_object_uuid, i)));
 
 	members.insert(ON_String(model_object.m_attributes.m_name).Array());
     }
@@ -553,7 +580,7 @@ HIDDEN void
 import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = *model.m_idef_table.At(i);
+	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
 
 	import_idef(wdb, idef, model);
     }
@@ -566,11 +593,11 @@ get_idef_members(const ONX_Model &model)
     std::set<std::string> result;
 
     for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = *model.m_idef_table.At(i);
+	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
 
 	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = *model.m_object_table.At(model.ObjectIndex(
-						 *idef.m_object_uuid.At(j)));
+	    const ONX_Model_Object &object = at(model.m_object_table,
+						model.ObjectIndex(at(idef.m_object_uuid, j)));
 	    result.insert(ON_String(object.m_attributes.m_name).Array());
 	}
     }
@@ -585,14 +612,14 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
     std::set<std::string> members;
 
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &current_layer = *model.m_layer_table.At(i);
+	const ON_Layer &current_layer = at(model.m_layer_table, i);
 
 	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
 	    members.insert(ON_String(current_layer.m_name).Array());
     }
 
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = *model.m_object_table.At(i);
+	const ONX_Model_Object &object = at(model.m_object_table, i);
 
 	if (object.m_attributes.m_layer_index == layer.m_layer_index)
 	    members.insert(ON_String(object.m_attributes.m_name).Array());
@@ -630,7 +657,7 @@ HIDDEN void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
-	import_layer(wdb, *model.m_layer_table.At(i), model);
+	import_layer(wdb, at(model.m_layer_table, i), model);
 
     ON_Layer root_layer;
     root_layer.SetLayerName("root");
