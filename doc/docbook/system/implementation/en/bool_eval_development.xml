@@ -1470,6 +1470,14 @@ X_brep is made.
             a 2D letter "X" in the X-Y plane that has been extruded
             along the Z axis.
             </para>
+            <figure>
+              <title>"X" from axis.g</title>
+              <mediaobject>
+                <imageobject>
+                  <imagedata fileref="images/axis_X.png" />
+                </imageobject>
+              </mediaobject>
+            </figure>
             <para>
               The <function>ssx</function> subcommand of
               <function>dplot</function> is used to check that all

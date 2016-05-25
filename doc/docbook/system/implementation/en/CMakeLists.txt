@@ -7,6 +7,7 @@ set(implementation_EN_IMAGES
   images/ssx_transverse_event.png
   images/ssx_tangent_event.png
   images/ssx_10_vs_13.png
+  images/axis_X.png
   images/intermediate_linked_curves.png
   images/ssx_overlap_event.png
   )
