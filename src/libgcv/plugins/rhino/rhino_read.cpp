@@ -308,6 +308,21 @@ write_comb(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
+write_uuid_attribute(rt_wdb &wdb, const std::string &object_name,
+		     const ON_UUID &uuid)
+{
+    // ON_UuidToString() buffers must be >= 37 chars
+    const std::size_t uuid_string_length = 37;
+    const char * const uuid_attribute = "rhino::uuid";
+    char temp[uuid_string_length];
+
+    if (db5_update_attribute(object_name.c_str(), uuid_attribute,
+			     ON_UuidToString(uuid, temp), wdb.dbip))
+	throw std::runtime_error("db5_update_attribute() failed");
+}
+
+
+HIDDEN void
 import_object(rt_wdb &wdb, const std::string &name,
 	      const ON_InstanceRef &instance_ref, const ONX_Model &model)
 {
@@ -485,6 +500,7 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
 
     write_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
 	       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL, NULL);
+    write_uuid_attribute(wdb, name, attributes.m_uuid);
 }
 
 
@@ -526,7 +542,10 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 	members.insert(ON_String(model_object.m_attributes.m_name).Array());
     }
 
-    write_comb(wdb, ON_String(idef.m_name).Array(), members);
+    const std::string name = ON_String(idef.m_name).Array();
+
+    write_comb(wdb, name, members);
+    write_uuid_attribute(wdb, name, idef.m_uuid);
 }
 
 
@@ -591,7 +610,6 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 HIDDEN void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
-    const std::set<std::string> members = get_layer_members(layer, model);
     const Shader shader = get_shader(model.m_material_table.At(
 					 layer.m_material_index));
     unsigned char rgb[3];
@@ -600,8 +618,11 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
     rgb[1] = static_cast<unsigned char>(layer.Color().Green());
     rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
 
-    write_comb(wdb, ON_String(layer.m_name).Array(), members, shader.first.c_str(),
+    const std::string name = ON_String(layer.m_name).Array();
+
+    write_comb(wdb, name, get_layer_members(layer, model), shader.first.c_str(),
 	       shader.second.c_str(), rgb, NULL);
+    write_uuid_attribute(wdb, name, layer.m_layer_id);
 }
 
 
