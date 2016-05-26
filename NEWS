@@ -438,7 +438,7 @@ received corrections and improvements.  The introductory article
 * improved tessellation of pipe bends for conversion - Richard Weiss
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
 * fixed eto error converting hyp objects with asc2g tool - Nick Reed
-# fixed mged bug processing edcodes command arguments - Bob Parker
+* fixed mged bug processing edcodes command arguments - Bob Parker
 * various improvements to NMG polygonal mesh processing robustness
 	- Nick Reed, Sean Morrison, Richard Weiss
 * improved bad face handling within the obj-g importer - Nick Reed
