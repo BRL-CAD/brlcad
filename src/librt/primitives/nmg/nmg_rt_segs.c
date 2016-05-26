@@ -826,8 +826,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	     */
 	    for (BU_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
 		if (hm == a_hit) {
-		    bu_log("======= State %d ======\n",
-			   ray_state);
+		    bu_log("======= State %d ======\n", ray_state);
 		    nmg_rt_print_hitmiss(hm);
 		    bu_log("================\n");
 		} else
@@ -842,6 +841,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	    bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		   V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
 	    segs_error(ERR_MSG);
+	    break;
 	}
 
 	ray_state = new_state;
