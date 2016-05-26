@@ -117,24 +117,24 @@ struct UuidCompare {
 
 
 template <template<class> class Array, typename T>
-T &at(Array<T> &array, std::size_t index)
+HIDDEN const T &at(const Array<T> &array, std::size_t index)
 {
-    if (T * const result = array.At(static_cast<unsigned>(index)))
+    if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
     else
-	throw std::invalid_argument("invalid index");
+	throw std::out_of_range("invalid index");
 }
 
 
 template <template<class> class Array, typename T>
-const T &at(const Array<T> &array, std::size_t index)
+HIDDEN T &at(Array<T> &array, std::size_t index)
 {
-    return at(const_cast<Array<T> &>(array), index);
+    return const_cast<T &>(at(const_cast<const Array<T> &>(array), index));
 }
 
 
 template <typename T, typename Array>
-const T &at(const Array &array, std::size_t index)
+HIDDEN const T &at(const Array &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
@@ -180,41 +180,30 @@ replace_invalid_uuids(ONX_Model &model)
     std::set<ON_UUID, UuidCompare> seen;
     seen.insert(ON_nil_uuid); // UUIDs can't be nil
 
-#define REPLACE_UUIDS(array, member) \
+#define REPLACE_UUIDS(array, access, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert(at((array), i).member).second) { \
-	    at((array), i).member = generate_uuid(); \
+	while (!seen.insert(at((array), i) access member).second) { \
+	    at((array), i) access member = generate_uuid(); \
 	    ++num_repairs; \
 	} \
     } \
 } while (false)
 
-#define REPLACE_UUIDS_POINTER(array, member) \
-do { \
-    for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert(at((array), i)->member).second) { \
-	    at((array), i)->member = generate_uuid(); \
-	    ++num_repairs; \
-	} \
-    } \
-} while (false)
+    REPLACE_UUIDS(model.m_bitmap_table, ->, m_bitmap_id);
+    REPLACE_UUIDS(model.m_mapping_table, ., m_mapping_id);
+    REPLACE_UUIDS(model.m_linetype_table, ., m_linetype_id);
+    REPLACE_UUIDS(model.m_layer_table, ., m_layer_id);
+    REPLACE_UUIDS(model.m_group_table, ., m_group_id);
+    REPLACE_UUIDS(model.m_font_table, ., m_font_id);
+    REPLACE_UUIDS(model.m_dimstyle_table, ., m_dimstyle_id);
+    REPLACE_UUIDS(model.m_light_table, ., m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_hatch_pattern_table, ., m_hatchpattern_id);
+    REPLACE_UUIDS(model.m_idef_table, ., m_uuid);
+    REPLACE_UUIDS(model.m_object_table, ., m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_history_record_table, ->, m_record_id);
+    REPLACE_UUIDS(model.m_userdata_table, ., m_uuid);
 
-    REPLACE_UUIDS_POINTER(model.m_bitmap_table, m_bitmap_id);
-    REPLACE_UUIDS(model.m_mapping_table, m_mapping_id);
-    REPLACE_UUIDS(model.m_linetype_table, m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, m_layer_id);
-    REPLACE_UUIDS(model.m_group_table, m_group_id);
-    REPLACE_UUIDS(model.m_font_table, m_font_id);
-    REPLACE_UUIDS(model.m_dimstyle_table, m_dimstyle_id);
-    REPLACE_UUIDS(model.m_light_table, m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_hatch_pattern_table, m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_idef_table, m_uuid);
-    REPLACE_UUIDS(model.m_object_table, m_attributes.m_uuid);
-    REPLACE_UUIDS_POINTER(model.m_history_record_table, m_record_id);
-    REPLACE_UUIDS(model.m_userdata_table, m_uuid);
-
-#undef REPLACE_UUIDS_POINTER
 #undef REPLACE_UUIDS
 
     if (num_repairs)
@@ -387,7 +376,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     if (!num_vertices || !num_faces)
 	return;
 
-    unsigned char orientation = RT_BOT_UNORIENTED;
+    unsigned char orientation;
 
     switch (mesh.SolidOrientation()) {
 	case 0:
@@ -462,7 +451,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 	VMOVE(dest_normal, source_normal);
     }
 
-    std::vector<int> face_normals(mesh.m_FN.UnsignedCount());
+    std::vector<int> face_normals(3 * mesh.m_FN.UnsignedCount());
 
     for (unsigned i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	int * const dest_face_normal = &face_normals.at(3 * i);
@@ -579,11 +568,8 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 HIDDEN void
 import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
-
-	import_idef(wdb, idef, model);
-    }
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
+	import_idef(wdb, at(model.m_idef_table, i), model);
 }
 
 
