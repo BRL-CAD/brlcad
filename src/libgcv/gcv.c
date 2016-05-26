@@ -251,6 +251,7 @@ _gcv_context_check(const struct gcv_context *context)
 HIDDEN void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 {
+    void *info_val;
     const struct gcv_plugin *(*plugin_info)();
     const struct gcv_filter * const *current;
     void *dl_handle;
@@ -265,7 +266,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("bu_dlopen() failed");
     }
 
-	plugin_info = (const struct gcv_plugin *(*)())bu_dlsym(dl_handle, "gcv_plugin_info");
+    info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
+    plugin_info = (const struct gcv_plugin *(*)())(intptr_t)info_val;
 
     if (!plugin_info) {
 	const char * const error_msg = bu_dlerror();
