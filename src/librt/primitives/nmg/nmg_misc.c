@@ -2584,12 +2584,14 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	    continue;
 
 	if (loop_size == 2) {
+	    struct edgeuse *eu1, *eu2;
+
 	    bu_ptbl_reset(&vert_tbl);
-	    eu = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[0]);
-	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu->vu_p->v_p);
-	    eu = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[1]);
-	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu->vu_p->v_p);
-	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu->eumate_p->vu_p->v_p);
+	    eu1 = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[0]);
+	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu1->vu_p->v_p);
+	    eu2 = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, idx[1]);
+	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu2->vu_p->v_p);
+	    (void)bu_ptbl_ins(&vert_tbl, (long *)&eu2->eumate_p->vu_p->v_p);
 	    if (!bn_3pts_collinear(
 		    ((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 0)))->vg_p->coord,
 		    ((*(struct vertex **)BU_PTBL_GET(&vert_tbl, 1)))->vg_p->coord,
@@ -2604,9 +2606,17 @@ nmg_close_shell(struct shell *s, const struct bn_tol *tol)
 	    } else
 		bu_log("Not making face, edges are collinear!\n");
 
+	    /* remove the two edges we just tried or we may loop forever */
+	    bu_ptbl_rm(&eu_tbl, (long *)eu1);
+	    bu_ptbl_rm(&eu_tbl, (long *)eu2);
+
 	    loop_size = 0;
 	    continue;
 	} else if (loop_size < 2) {
+	    /* remove at least one edge each iteration or we may loop forever */
+	    eu = (struct edgeuse *)BU_PTBL_GET(&eu_tbl, 0);
+	    bu_ptbl_rm(&eu_tbl, (long *)eu);
+
 	    loop_size = 0;
 	    continue;
 	}
