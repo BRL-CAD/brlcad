@@ -31,6 +31,7 @@
 #include "wdb.h"
 
 #include <algorithm>
+#include <cstring>
 #include <limits>
 #include <map>
 #include <set>
@@ -414,6 +415,7 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     unsigned char mode;
     {
 	rt_bot_internal bot;
+	std::memset(&bot, 0, sizeof(bot));
 	bot.magic = RT_BOT_INTERNAL_MAGIC;
 	bot.orientation = orientation;
 	bot.num_vertices = num_vertices;
