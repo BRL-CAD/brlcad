@@ -750,6 +750,23 @@ for (int i = 0; i < x_event.Count(); ++i) {
             corresponds to the same 3D starting point on a closed
             curve.
           </para>
+          <figure>
+            <title>Different Traversals of the Same Curve</title>
+            <mediaobject>
+              <imageobject>
+                <imagedata fileref="images/curve_traversal_directions.png" scale="60"/>
+              </imageobject>
+            </mediaobject>
+            <caption>
+              <para>
+                The projections (red and blue) of two 2D curves in
+                different domains represent the same 3D curve (within
+                tolerance). However, the start and end points as well
+                as the 3D traversal directions differ between the
+                projections.
+              </para>
+            </caption>
+          </figure>
         </section>
       </section>
       <section>
