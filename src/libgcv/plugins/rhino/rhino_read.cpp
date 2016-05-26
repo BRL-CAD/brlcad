@@ -240,8 +240,8 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 
 
 HIDDEN void
-load_model(ONX_Model &model, const std::string &path,
-	   const std::string &default_name)
+load_model(const gcv_opts &gcv_options, const std::string &path,
+	   ONX_Model &model)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed");
@@ -257,7 +257,7 @@ load_model(ONX_Model &model, const std::string &path,
 
     if (num_problems)
 	throw InvalidRhinoModelError("repair failed");
-    else if (num_repairs)
+    else if (num_repairs && gcv_options.verbosity_level)
 	std::cerr << "repaired " << num_repairs << " model issues\n";
 
     // clean and remove duplicate names
@@ -266,7 +266,7 @@ load_model(ONX_Model &model, const std::string &path,
 #define REPLACE_NAMES(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) \
-	clean_name(seen, default_name, at((array), i).member); \
+	clean_name(seen, gcv_options.default_name, at((array), i).member); \
 } while (false)
 
     REPLACE_NAMES(model.m_layer_table, m_name);
@@ -532,8 +532,11 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
-import_model_objects(rt_wdb &wdb, const ONX_Model &model)
+import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
+		     const ONX_Model &model)
 {
+    std::size_t success_count = 0;
+
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &model_object = at(model.m_object_table, i);
 	const std::string name = ON_String(model_object.m_attributes.m_name).Array();
@@ -543,16 +546,21 @@ import_model_objects(rt_wdb &wdb, const ONX_Model &model)
 		model_object.m_object))
 	    import_object(wdb, member_name, *temp, model);
 	else if (!import_object(wdb, member_name, *model_object.m_object)) {
-	    std::cerr
-		    << "skipped "
-		    << model_object.m_object->ClassId()->ClassName()
-		    << " model object '" << name << "'\n";
+	    if (gcv_options.verbosity_level)
+		std::cerr << "skipped " << model_object.m_object->ClassId()->ClassName() <<
+			  " model object '" << name << "'\n";
 	    continue;
 	}
 
 	write_object_attributes(wdb, name, member_name, model_object.m_attributes,
 				model);
+	++success_count;
     }
+
+    if (gcv_options.verbosity_level)
+	if (success_count != model.m_object_table.UnsignedCount())
+	    std::cerr << "imported " << success_count << " of " <<
+		      model.m_object_table.UnsignedCount() << " objects\n";
 }
 
 
@@ -668,10 +676,10 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 {
     try {
 	ONX_Model model;
-	load_model(model, source_path, gcv_options->default_name);
+	load_model(*gcv_options, source_path, model);
 	import_model_layers(*context->dbip->dbi_wdbp, model);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
-	import_model_objects(*context->dbip->dbi_wdbp, model);
+	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
