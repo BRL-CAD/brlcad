@@ -55,15 +55,19 @@ struct ef_data {
 
 #define CK_SEGP(_p) if (!(_p) || !(*(_p))) {\
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
-	nmg_rt_segs_error(ERR_MSG); }
+	segs_error(ERR_MSG); }
 
-#define DO_LONGJMP
 #ifdef DO_LONGJMP
 static jmp_buf nmg_longjump_env;
-#define nmg_rt_segs_error(_s) {bu_log("%s\n", _s); longjmp(nmg_longjump_env, -1);}
-#else
-#define nmg_rt_segs_error(_s) bu_log("%s\n", _s)
 #endif
+
+HIDDEN void
+segs_error(const char *str) {
+    bu_log("%s\n", str);
+#ifdef DO_LONGJMP
+    longjmp(nmg_longjump_env, -1);}
+#endif
+}
 
 
 HIDDEN void
@@ -265,7 +269,7 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
     /* if we don't have a seg struct yet, get one */
     if (*seg_p == (struct seg *)NULL)
-	nmg_rt_segs_error("bad seg pointer\n");
+	segs_error("bad seg pointer\n");
 
     /* copy the "out" hit */
     memcpy(&(*seg_p)->seg_out, &a_hit->hit, sizeof(struct hit));
@@ -338,7 +342,7 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -385,7 +389,7 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -479,7 +483,7 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -580,7 +584,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -666,7 +670,7 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -752,7 +756,7 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 	    break;
 	default:
 	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -837,7 +841,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 		   rd->ap->a_purpose);
 	    bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		   V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
 	}
 
 	ray_state = new_state;
@@ -856,7 +860,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	       stp->st_dp->d_namep,
 	       ap->a_x, ap->a_y, ap->a_level,
 	       ap->a_purpose);
-	nmg_rt_segs_error(ERR_MSG);
+	segs_error(ERR_MSG);
     }
 
     /* Insert the last segment if appropriate */
@@ -917,7 +921,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     if (!l_p) {
 	bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
-	nmg_rt_segs_error(ERR_MSG);
+	segs_error(ERR_MSG);
     }
 
     switch (*l_p) {
@@ -973,13 +977,13 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 		    default:
 			bu_log("Bogus vertexuse parent magic:%s.",
 			       bu_identify_magic(*vu->up.magic_p));
-			nmg_rt_segs_error(ERR_MSG);
+			segs_error(ERR_MSG);
 		}
 	    }
 	    break;
 	default:
 	    bu_log("Bogus magic number pointer:%s", bu_identify_magic(*l_p));
-	    nmg_rt_segs_error(ERR_MSG);
+	    segs_error(ERR_MSG);
     }
 }
 
