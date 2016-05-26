@@ -997,6 +997,22 @@ for (int i = 0; i < x_event.Count(); ++i) {
 		arrows to indicate open ends or perpendicular segments
 		to indicate coincident endpoints.
 	      </para>
+              <figure>
+                <title>Curve Endpoint Decoration</title>
+                <mediaobject>
+                  <imageobject>
+                    <imagedata fileref="images/compare_endpoint_style.png" />
+                  </imageobject>
+                </mediaobject>
+                <caption>
+                  <para>
+                    Endpoints of transverse surface-surface
+                    intersection curves (yellow) are decorated with
+                    arrows if open (left), and segments perpendicular
+                    to the curve if closed (right).
+                  </para>
+                </caption>
+              </figure>
 	    </listitem>
           </itemizedlist>
 	  <para>

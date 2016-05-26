@@ -6,6 +6,7 @@ set(implementation_EN_IMAGES
   images/ccx_overlap_event.png
   images/ssx_transverse_event.png
   images/ssx_tangent_event.png
+  images/compare_endpoint_style.png
   images/lcurves_with_shaded_context.png
   images/ssx_10_vs_13.png
   images/curve_traversal_directions.png
