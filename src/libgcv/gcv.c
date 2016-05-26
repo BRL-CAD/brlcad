@@ -248,11 +248,10 @@ _gcv_context_check(const struct gcv_context *context)
     BU_CK_AVS(&context->messages);
 }
 
-
 HIDDEN void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 {
-    const struct gcv_plugin *plugin_info;
+    const struct gcv_plugin *(*plugin_info)();
     const struct gcv_filter * const *current;
     void *dl_handle;
 
@@ -266,7 +265,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("bu_dlopen() failed");
     }
 
-    plugin_info = (struct gcv_plugin *)bu_dlsym(dl_handle, "gcv_plugin_info");
+	plugin_info = (const struct gcv_plugin *(*)())bu_dlsym(dl_handle, "gcv_plugin_info");
 
     if (!plugin_info) {
 	const char * const error_msg = bu_dlerror();
@@ -278,12 +277,12 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
     }
 
-    if (!plugin_info->filters) {
+    if (!plugin_info()->filters) {
 	bu_log("invalid gcv_plugin in '%s'\n", path);
 	bu_bomb("invalid gcv_plugin");
     }
 
-    for (current = plugin_info->filters; *current; ++current)
+	for (current = plugin_info()->filters; *current; ++current)
 	_gcv_filter_register(filter_table, *current);
 }
 

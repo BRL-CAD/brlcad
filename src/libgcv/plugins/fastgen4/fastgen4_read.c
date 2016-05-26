@@ -3043,8 +3043,11 @@ static const struct gcv_filter gcv_conv_fastgen4_read = {
 
 extern const struct gcv_filter gcv_conv_fastgen4_write;
 static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gcv_conv_fastgen4_write, NULL};
-const struct gcv_plugin gcv_plugin_info = {filters};
 
+const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+GCV_EXPORT const struct gcv_plugin *
+gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:
