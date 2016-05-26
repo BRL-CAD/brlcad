@@ -11,8 +11,16 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2014-XX-XX  Release 7.26.XX                                    ---
+--- 2016-05-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
+
+This major release update of BRL-CAD culminates several years of
+development efforts to provide robust boundary representation (BREP)
+NURBS import and ray tracing support.  Our NURBS capability gets us a
+step closer to full hybrid representation modeling, supporting
+seamless transitioning and mixing of boundary representation geometry
+(e.g., NURBS or polygonal meshes) with implicit representation
+geometry (e.g., primitives with CSG).
 
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
