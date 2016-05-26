@@ -301,15 +301,34 @@ get_shader(const ON_Material *material)
     temp << "{"
 	 << " tr " << material->m_transparency
 	 << " re " << material->m_reflectivity
-	 << " sp " << material->m_specular
-	 << " di " << material->m_diffuse
+	 << " sp " << 0
+	 << " di " << 0.3
 	 << " ri " << material->m_index_of_refraction
+	 << " ex " << 0
 	 << " sh " << material->m_shine
-	 // << " ex " << ??
 	 << " em " << material->m_emission
 	 << " }";
 
     return std::make_pair("plastic", temp.str());
+}
+
+
+HIDDEN void
+get_color(const ON_3dmObjectAttributes &attributes, const ONX_Model &model,
+	  unsigned char *rgb)
+{
+    rgb[0] = model.WireframeColor(attributes).Red();
+    rgb[1] = model.WireframeColor(attributes).Green();
+    rgb[2] = model.WireframeColor(attributes).Blue();
+
+    if (!rgb[0] && !rgb[1] && !rgb[2]) {
+	ON_Material material;
+	model.GetRenderMaterial(attributes, material);
+
+	rgb[0] = static_cast<unsigned char>(material.m_diffuse.Red());
+	rgb[1] = static_cast<unsigned char>(material.m_diffuse.Green());
+	rgb[2] = static_cast<unsigned char>(material.m_diffuse.Blue());
+    }
 }
 
 
@@ -510,23 +529,13 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
     }
 
     unsigned char rgb[3];
-    rgb[0] = model.WireframeColor(attributes).Red();
-    rgb[1] = model.WireframeColor(attributes).Green();
-    rgb[2] = model.WireframeColor(attributes).Blue();
-
-    bool own_shader = true, own_rgb = true;
-
-    if (attributes.MaterialSource() == ON::material_from_parent)
-	own_shader = false;
-
-    if (attributes.ColorSource() == ON::color_from_parent)
-	own_rgb = false;
+    get_color(attributes, model, rgb);
 
     std::set<std::string> members;
     members.insert(member_name);
 
-    write_comb(wdb, name, members, own_shader ? shader.first.c_str() : NULL,
-	       own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL, NULL);
+    write_comb(wdb, name, members, shader.first.c_str(), shader.second.c_str(), rgb,
+	       NULL);
     write_uuid_attribute(wdb, name, attributes.m_uuid);
 }
 
