@@ -1149,7 +1149,7 @@ invalid geometry is now more robust.
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
-* fixed nirt's dest cmd's handling of file name string - Cliff Yapp
+* fixed nirt 'dest' command file name string handling - Cliff Yapp
 * modified mged nirt command to include air in results - Bob Parker
 
 
