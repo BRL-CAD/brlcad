@@ -118,7 +118,8 @@ struct gcv_opts
 /**
  * Assign default option values.
  */
-void gcv_opts_default(struct gcv_opts *gcv_options);
+GCV_EXPORT void
+gcv_opts_default(struct gcv_opts *gcv_options);
 
 
 /**
