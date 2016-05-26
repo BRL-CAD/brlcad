@@ -27,7 +27,6 @@ BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
 set_source_files_properties(gcv.c PROPERTIES COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
 
-
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)
 if(CPP_DLL_DEFINES)
