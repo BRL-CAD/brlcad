@@ -1741,7 +1741,7 @@ The rtarea command was added to MGED as well, along with rtweight.
 * added a -noleaf option to the mged pathlist command - Bob Parker
 * fixed potential infinite loop bug in BoT primitive - Bob Parker
 * no longer install tclsh/wish, use btclsh/bwish - Sean Morrison
-* added bot_merge mged cmd (combine 2 bots into 1) - Lee Butler
+* added 'bot_merge' mged command (combine 2 bots into 1) - Lee Butler
 
 ----------------------------------------------------------------------
 --- 2005-06-07  Release 7.2.6                                      ---
