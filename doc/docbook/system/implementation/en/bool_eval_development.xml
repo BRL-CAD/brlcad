@@ -64,6 +64,23 @@
 
   <section>
     <title>Overview of the Implementation</title>
+    <figure>
+      <title>Evaluation of a Subtraction</title>
+      <mediaobject>
+        <imageobject>
+          <imagedata fileref="images/evaluation_overview.png" />
+        </imageobject>
+      </mediaobject>
+      <caption>
+        <para>
+          Two NURBS cubes (red and blue) are intersected (leftmost
+          image). The individual faces of each object are split by the
+          intersections and categorized as belonging (red, blue) or
+          not belonging (purple) in the final evaluated brep
+          (rightmost image).
+        </para>
+      </caption>
+    </figure>
     <section>
       <title>Major Algorithms</title>
       <section>

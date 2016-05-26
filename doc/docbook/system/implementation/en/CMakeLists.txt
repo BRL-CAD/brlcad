@@ -10,6 +10,7 @@ set(implementation_EN_IMAGES
   images/axis_X.png
   images/intermediate_linked_curves.png
   images/ssx_overlap_event.png
+  images/evaluation_overview.png
   )
 
 ADD_DOC(implementation_EN html/implementation/en)
