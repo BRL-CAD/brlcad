@@ -117,17 +117,26 @@ struct UuidCompare {
 };
 
 
-template <template<class> class Array, typename T>
+class InvalidRhinoModelError : public std::runtime_error
+{
+public:
+    InvalidRhinoModelError(const std::string &value) :
+	std::runtime_error(value)
+    {}
+};
+
+
+template <template<typename> class Array, typename T>
 HIDDEN const T &at(const Array<T> &array, std::size_t index)
 {
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
     else
-	throw std::out_of_range("invalid index");
+	throw InvalidRhinoModelError("invalid index");
 }
 
 
-template <template<class> class Array, typename T>
+template <template<typename> class Array, typename T>
 HIDDEN T &at(Array<T> &array, std::size_t index)
 {
     return const_cast<T &>(at(const_cast<const Array<T> &>(array), index));
@@ -140,7 +149,7 @@ HIDDEN const T &at(const Array &array, std::size_t index)
     if (const T * const result = array.At(static_cast<unsigned>(index)))
 	return *result;
     else
-	throw std::invalid_argument("invalid index");
+	throw InvalidRhinoModelError("invalid index");
 }
 
 
@@ -235,7 +244,7 @@ load_model(ONX_Model &model, const std::string &path,
 	   const std::string &default_name)
 {
     if (!model.Read(path.c_str()))
-	throw std::runtime_error("ONX_Model::Read() failed");
+	throw InvalidRhinoModelError("ONX_Model::Read() failed");
 
     int num_problems;
     int num_repairs = replace_invalid_uuids(model);
@@ -247,7 +256,7 @@ load_model(ONX_Model &model, const std::string &path,
     }
 
     if (num_problems)
-	throw std::runtime_error("repair failed");
+	throw InvalidRhinoModelError("repair failed");
     else if (num_repairs)
 	std::cerr << "repaired " << num_repairs << " model issues\n";
 
@@ -657,12 +666,16 @@ HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
-    ONX_Model model;
-    load_model(model, source_path, gcv_options->default_name);
-
-    import_model_layers(*context->dbip->dbi_wdbp, model);
-    import_model_idefs(*context->dbip->dbi_wdbp, model);
-    import_model_objects(*context->dbip->dbi_wdbp, model);
+    try {
+	ONX_Model model;
+	load_model(model, source_path, gcv_options->default_name);
+	import_model_layers(*context->dbip->dbi_wdbp, model);
+	import_model_idefs(*context->dbip->dbi_wdbp, model);
+	import_model_objects(*context->dbip->dbi_wdbp, model);
+    } catch (const InvalidRhinoModelError &exception) {
+	std::cerr << "invalid input file ('" << exception.what() << "')\n";
+	return 0;
+    }
 
     return 1;
 }
