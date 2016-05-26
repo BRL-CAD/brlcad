@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
 * fixed crash in search when using -above option - Cliff Yapp
 * extended nirt to list current and available formats - Sean Morrison
