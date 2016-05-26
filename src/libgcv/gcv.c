@@ -296,7 +296,7 @@ _gcv_plugins_get_path(void)
     struct bu_vls buffer;
     const char *result;
 
-    brlcad_libs_path = bu_brlcad_dir("lib", 0);
+    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
 
     if (!brlcad_libs_path)
 	return NULL;
