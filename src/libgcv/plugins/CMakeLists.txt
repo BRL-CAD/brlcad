@@ -12,11 +12,28 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   else("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
     include_directories("${GCV_INCLUDE_DIRS}")
   endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-  get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY)
-  set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
-  # Since we're installing to LIB_DIR in all cases, we need to override all of these...
-  set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
-  set_property(TARGET ${target_name} PROPERTY ARCHIVE_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY)
+    set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+    # Since we're installing to LIB_DIR in all cases, we need to override all of these...
+    set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+    set_property(TARGET ${target_name} PROPERTY ARCHIVE_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR})
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+	set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR}/${CFG_TYPE})
+      endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
+      set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+      # Since we're installing to LIB_DIR in all cases, we need to override all of these...
+      set_property(TARGET ${target_name} PROPERTY RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+      set_property(TARGET ${target_name} PROPERTY ARCHIVE_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+
   install(TARGETS ${target_name}
     RUNTIME DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
     LIBRARY DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
