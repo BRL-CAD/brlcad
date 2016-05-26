@@ -64,6 +64,7 @@ changes made.  See document footer for additional details.
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
 * fixed dbconcat -c crash when color table does not exist - Nick Reed
 * swapped meanings of search's -above/-below options - Sean Morrison
+* upgraded freetype to version 2.5.5 - Cliff Yapp
 * updated libregex to apply a fix for CVE-2015-2305 - Cliff Yapp
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed

@@ -19,7 +19,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * check these commits for documentation:
-  64699 64700 64783 64806 65931 65981 66728 67174
+  64783 64806 65931 65981 66728 67174
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
