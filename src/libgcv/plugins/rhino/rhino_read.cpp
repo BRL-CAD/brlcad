@@ -49,7 +49,7 @@ namespace
 
 
 template <typename T>
-HIDDEN void
+void
 autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
@@ -57,7 +57,7 @@ autoptr_wrap_bu_free(T *ptr)
 
 
 template <typename T>
-HIDDEN void
+void
 autoptr_wrap_delete(T *ptr)
 {
     delete ptr;
