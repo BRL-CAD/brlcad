@@ -51,17 +51,19 @@ main(int argc, char **argv)
     const char * const usage =
 	"Usage: 3dm-g [-v] -o output_file.g input_file.3dm\n";
 
-
-    const struct gcv_filter * const out_filter = find_filter(GCV_FILTER_WRITE,
-	    BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
-    const struct gcv_filter * const in_filter = find_filter(GCV_FILTER_READ,
-	    BU_MIME_MODEL_VND_RHINO);
+    const struct gcv_filter *out_filter;
+    const struct gcv_filter *in_filter;
 
     struct gcv_context context;
     struct gcv_opts gcv_options;
     const char *output_path = NULL;
     const char *input_path;
     int c;
+
+	bu_setprogname(argv[0]);
+
+	out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
+	in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO);
 
     gcv_opts_default(&gcv_options);
 
