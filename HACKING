@@ -873,6 +873,10 @@ Note that changes to publicly documented tools and library APIs must
 adhere to BRL-CAD's change policy.  This means changes to any tests
 may require thoughtful deployment.  See the CHANGES file for details.
 
+These tests are run nightly on BRL-CAD's server to catch problems
+quickly - developers should be aware of the status of BRL-CAD's tests
+as seen at http://brlcad.org/CDash
+
 To add new regression tests, look at regress/weight.sh for an
 integration test example and src/libbu/tests/bu_vls_vprintf.c for an
 API unit test example.  See their corresponding CMakeLists.txt build
