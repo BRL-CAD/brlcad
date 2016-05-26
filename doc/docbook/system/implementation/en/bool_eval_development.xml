@@ -1083,6 +1083,21 @@ for (int i = 0; i < x_event.Count(); ++i) {
 		shaded view of the original geometry usually works
 		well for context.
 	      </para>
+              <figure>
+                <title>Linked Curves in Context</title>
+                <mediaobject>
+                  <imageobject>
+                    <imagedata fileref="images/lcurves_with_shaded_context.png" scale="60"/>
+                  </imageobject>
+                </mediaobject>
+                <caption>
+                  <para>
+                    An evaluated brep is drawn shaded to give context
+                    to the linked intersection curves (yellow) drawn by
+                    <command>dplot bool1.dplot lcurves</command>.
+                  </para>
+                </caption>
+              </figure>
 	    </listitem>
             <listitem>
               <para>
