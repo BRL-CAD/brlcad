@@ -48,7 +48,7 @@ changes made.  See document footer for additional details.
 * added libnetpbm for ppm image format support in icv - Cliff Yapp
 * added new algorithm to bot_decimate (via -f option) - Jon Engbert
 * fixed benchmark bug running from paths with spaces - Sean Morrison
-* fixed crash in adjust cmd when working with BoTs - Daniel Roßberg
+* fixed adjust command crash when working with BoTs - Daniel Roßberg
 * removed support for RLE v1 and v2 ('orle') image format - Cliff Yapp
 * fixed datum type 'in' command unit conversion bug - Cliff Yapp
 * fixed rpatch / patch-g line handling on Windows - Daniel Roßberg
