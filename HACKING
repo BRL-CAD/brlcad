@@ -247,11 +247,21 @@ for memory allocation, threading, string handling, argument support,
 linked lists, and more.
 	Depends on: (threading) (malloc)
 
+libbg: The BRL-CAD Geometry library implements generic algorithms
+widely used in computational geometry, such as convex hull and
+triangle/triangle intersection calculations.
+	Depends on: libbn libbu
+
 libbn: The BRL-CAD Numerics library provides many floating-point math
 manipulation routines for vector and matrix math, a polynomial
 equation solver, noise functions, random number generators, complex
 number support, and more as well.
 	Depends on: libbu libm
+
+libbrep: The BRL-CAD Boundary Representation library implements
+routines needed for the manipulation and analysis of Non-Uniform
+Rational BSpline based boundary representations.
+	Depends on: libbg libbn libbu OpenNURBS
 
 libcursor: The cursor library is a lightweight cursor manipulation
 library similar to curses but with less overhead.

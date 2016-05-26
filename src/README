@@ -31,7 +31,9 @@ gtools - geometry processing tools (validation, transferring, comparing)
 halftone - tool for producing halftoned images from B&W images
 irprep - Infrared processing tools
 lgt - an interactive geometry rendering tool
+libbg - a computational geometry routines library
 libbn - the BRL-CAD numerics library
+libbrep - the BRL-CAD NURBS B-Rep library
 libbu - the BRL-CAD utility library
 libcursor - a 2D cursor manipulation library
 libdm - a 3D display manager library
