@@ -46,7 +46,7 @@ static const fastf_t inches_per_mm = 1.0 / 25.4;
 
 
 template <typename T> void
-autoptr_wrap_bu_free(T *ptr)
+HIDDEN autoptr_wrap_bu_free(T *ptr)
 {
     bu_free(ptr, "AutoPtr");
 }
