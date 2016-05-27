@@ -284,7 +284,7 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("invalid gcv_plugin");
     }
 
-	for (current = plugin_info()->filters; *current; ++current)
+    for (current = plugin_info()->filters; *current; ++current)
 	_gcv_filter_register(filter_table, *current);
 }
 
@@ -304,7 +304,8 @@ _gcv_plugins_get_path(void)
 
     bu_vls_init(&buffer);
     /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, LIBGCV_PLUGINS_DIRECTORY);
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
+		   LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
     bu_vls_free(&buffer);
 
