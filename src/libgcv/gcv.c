@@ -296,14 +296,15 @@ _gcv_plugins_get_path(void)
     struct bu_vls buffer;
     const char *result;
 
+    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
     brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
 
     if (!brlcad_libs_path)
 	return NULL;
 
     bu_vls_init(&buffer);
-    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
-		   LIBGCV_PLUGINS_DIRECTORY);
+    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR, LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
     bu_vls_free(&buffer);
 
@@ -327,6 +328,8 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
 	size_t num_filenames = 0;
 	struct bu_vls pattern = BU_VLS_INIT_ZERO;
+
+	/* LIBGCV_PLUGINS_SUFFIX is filename extension on libraries, defined via cppflag */
 	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGIN_SUFFIX);
 	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
 
