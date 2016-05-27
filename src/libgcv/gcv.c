@@ -325,10 +325,9 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	char **filenames;
 	size_t i;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
-	const char *plugin_suffix = LIBGCV_PLUGIN_SUFFIX;
-	size_t num_filenames;
+	size_t num_filenames = 0;
 	struct bu_vls pattern = BU_VLS_INIT_ZERO;
-	bu_vls_sprintf(&pattern, "*%s", plugin_suffix);
+	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGIN_SUFFIX);
 	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
 
 	for (i = 0; i < num_filenames; ++i)
