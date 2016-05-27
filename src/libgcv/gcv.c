@@ -325,7 +325,11 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	char **filenames;
 	size_t i;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
-	const size_t num_filenames = bu_file_list(plugins_path, NULL, &filenames);
+	const char *plugin_suffix = LIBGCV_PLUGIN_SUFFIX;
+	size_t num_filenames;
+	struct bu_vls pattern = BU_VLS_INIT_ZERO;
+	bu_vls_sprintf(&pattern, "*%s", plugin_suffix);
+	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
 
 	for (i = 0; i < num_filenames; ++i)
 	    if (!bu_file_directory(filenames[i])) {
@@ -334,6 +338,7 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	    }
 
 	bu_vls_free(&buffer);
+	bu_vls_free(&pattern);
 	bu_argv_free(num_filenames, filenames);
     }
 }
