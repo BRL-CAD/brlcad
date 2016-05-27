@@ -278,6 +278,54 @@ do { \
 }
 
 
+HIDDEN std::set<std::string>
+get_idef_members(const ONX_Model &model)
+{
+    std::set<std::string> result;
+
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
+	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
+
+	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
+	    const ONX_Model_Object &object = at(model.m_object_table,
+						model.ObjectIndex(at(idef.m_object_uuid, j)));
+	    result.insert(ON_String(object.m_attributes.m_name).Array());
+	}
+    }
+
+    return result;
+}
+
+
+// check that the model hierarchy is as expected for analysis purposes
+HIDDEN void
+check_model_hierarchy(ONX_Model &model)
+{
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &layer = at(model.m_layer_table, i);
+
+	if (layer.m_parent_layer_id != ON_nil_uuid)
+	    throw InvalidRhinoModelError("nested layers");
+    }
+
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
+	if (at(model.m_idef_table, i).m_object_uuid.UnsignedCount() > 1)
+	    throw InvalidRhinoModelError("multiple solids within layer");
+
+    const std::set<std::string> idef_members = get_idef_members(model);
+    std::set<int> seen_layers;
+
+    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+	const ONX_Model_Object &object = at(model.m_object_table, i);
+
+	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array())) {
+	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second)
+		throw InvalidRhinoModelError("multiple solids within layer");
+	}
+    }
+}
+
+
 HIDDEN void
 matrix_from_xform(mat_t dest, const ON_Xform &source)
 {
@@ -334,9 +382,9 @@ get_color(const ON_3dmObjectAttributes &attributes, const ONX_Model &model,
 
 HIDDEN void
 write_comb(rt_wdb &wdb, const std::string &name,
-	   const std::set<std::string> &members, const char *shader_name = NULL,
-	   const char *shader_options = NULL, const unsigned char *rgb = NULL,
-	   const mat_t matrix = NULL)
+	   const std::set<std::string> &members, const mat_t matrix = NULL,
+	   const char *shader_name = NULL, const char *shader_options = NULL,
+	   const unsigned char *rgb = NULL)
 {
     wmember wmembers;
     BU_LIST_INIT(&wmembers.l);
@@ -380,7 +428,7 @@ import_object(rt_wdb &wdb, const std::string &name,
     std::set<std::string> members;
     members.insert(ON_String(idef.m_name).Array());
 
-    write_comb(wdb, name, members, NULL, NULL, NULL, matrix);
+    write_comb(wdb, name, members, matrix);
 }
 
 
@@ -534,8 +582,8 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
     std::set<std::string> members;
     members.insert(member_name);
 
-    write_comb(wdb, name, members, shader.first.c_str(), shader.second.c_str(), rgb,
-	       NULL);
+    write_comb(wdb, name, members, NULL, shader.first.c_str(),
+	       shader.second.c_str(), rgb);
     write_uuid_attribute(wdb, name, attributes.m_uuid);
 }
 
@@ -602,25 +650,6 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 
 
 HIDDEN std::set<std::string>
-get_idef_members(const ONX_Model &model)
-{
-    std::set<std::string> result;
-
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
-
-	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = at(model.m_object_table,
-						model.ObjectIndex(at(idef.m_object_uuid, j)));
-	    result.insert(ON_String(object.m_attributes.m_name).Array());
-	}
-    }
-
-    return result;
-}
-
-
-HIDDEN std::set<std::string>
 get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
     std::set<std::string> members;
@@ -651,18 +680,9 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 HIDDEN void
 import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 {
-    const Shader shader = get_shader(model.m_material_table.At(
-					 layer.m_material_index));
-    unsigned char rgb[3];
-
-    rgb[0] = static_cast<unsigned char>(layer.Color().Red());
-    rgb[1] = static_cast<unsigned char>(layer.Color().Green());
-    rgb[2] = static_cast<unsigned char>(layer.Color().Blue());
-
     const std::string name = ON_String(layer.m_name).Array();
 
-    write_comb(wdb, name, get_layer_members(layer, model), shader.first.c_str(),
-	       shader.second.c_str(), rgb, NULL);
+    write_comb(wdb, name, get_layer_members(layer, model));
     write_uuid_attribute(wdb, name, layer.m_layer_id);
 }
 
@@ -686,6 +706,14 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model);
+
+	try {
+	    check_model_hierarchy(model);
+	} catch (const InvalidRhinoModelError &exception) {
+	    std::cerr << "WARNING: hierarchy is not as expected for analysis ('" <<
+		      exception.what() << "')\n";
+	}
+
 	import_model_layers(*context->dbip->dbi_wdbp, model);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
@@ -712,8 +740,11 @@ static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 extern "C"
 {
     extern const gcv_plugin gcv_plugin_info_s = {filters};
-	GCV_EXPORT const struct gcv_plugin *
-		gcv_plugin_info(){ return &gcv_plugin_info_s; }
+    GCV_EXPORT const struct gcv_plugin *
+    gcv_plugin_info()
+    {
+	return &gcv_plugin_info_s;
+    }
 }
 
 
