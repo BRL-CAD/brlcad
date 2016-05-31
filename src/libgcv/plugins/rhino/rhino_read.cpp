@@ -233,6 +233,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 	name = default_name.c_str();
 
     name.ReplaceWhiteSpace('_');
+    name.Replace('/', '_');
 
     if (const std::size_t number = seen[name]++)
 	name += ('_' + lexical_cast<std::string>(number + 1)).c_str();
@@ -314,20 +315,24 @@ get_shader(const ON_Material *material)
 
 
 HIDDEN void
-get_color(const ON_3dmObjectAttributes &attributes, const ONX_Model &model,
-	  unsigned char *rgb)
+get_object_material(const ON_3dmObjectAttributes &attributes,
+		    const ONX_Model &model, Shader &out_shader, unsigned char *out_rgb)
 {
-    rgb[0] = model.WireframeColor(attributes).Red();
-    rgb[1] = model.WireframeColor(attributes).Green();
-    rgb[2] = model.WireframeColor(attributes).Blue();
+    ON_Material temp;
+    model.GetRenderMaterial(attributes, temp);
+    out_shader = get_shader(&temp);
 
-    if (!rgb[0] && !rgb[1] && !rgb[2]) {
+    out_rgb[0] = model.WireframeColor(attributes).Red();
+    out_rgb[1] = model.WireframeColor(attributes).Green();
+    out_rgb[2] = model.WireframeColor(attributes).Blue();
+
+    if (!out_rgb[0] && !out_rgb[1] && !out_rgb[2]) {
 	ON_Material material;
 	model.GetRenderMaterial(attributes, material);
 
-	rgb[0] = static_cast<unsigned char>(material.m_diffuse.Red());
-	rgb[1] = static_cast<unsigned char>(material.m_diffuse.Green());
-	rgb[2] = static_cast<unsigned char>(material.m_diffuse.Blue());
+	out_rgb[0] = static_cast<unsigned char>(material.m_diffuse.Red());
+	out_rgb[1] = static_cast<unsigned char>(material.m_diffuse.Green());
+	out_rgb[2] = static_cast<unsigned char>(material.m_diffuse.Blue());
     }
 }
 
@@ -372,7 +377,8 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
 
 HIDDEN void
 import_object(rt_wdb &wdb, const std::string &name,
-	      const ON_InstanceRef &instance_ref, const ONX_Model &model)
+	      const ON_InstanceRef &instance_ref, const ONX_Model &model,
+	      const Shader &shader, const unsigned char *rgb)
 {
     const ON_InstanceDefinition &idef = at(model.m_idef_table,
 					   model.IDefIndex(instance_ref.m_instance_definition_uuid));
@@ -383,7 +389,8 @@ import_object(rt_wdb &wdb, const std::string &name,
     std::set<std::string> members;
     members.insert(ON_String(idef.m_name).Array());
 
-    write_comb(wdb, name, members, matrix);
+    write_comb(wdb, name, members, matrix, shader.first.c_str(),
+	       shader.second.c_str(), rgb);
 }
 
 
@@ -520,30 +527,6 @@ import_object(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
-write_object_attributes(rt_wdb &wdb, const std::string &member_name,
-			const ON_3dmObjectAttributes &attributes, const ONX_Model &model)
-{
-    const std::string name = ON_String(attributes.m_name).Array();
-
-    Shader shader;
-    {
-	ON_Material temp;
-	model.GetRenderMaterial(attributes, temp);
-	shader = get_shader(&temp);
-    }
-
-    unsigned char rgb[3];
-    get_color(attributes, model, rgb);
-
-    std::set<std::string> members;
-    members.insert(member_name);
-
-    write_comb(wdb, name, members, NULL, shader.first.c_str(),
-	       shader.second.c_str(), rgb);
-}
-
-
-HIDDEN void
 import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 		     const ONX_Model &model)
 {
@@ -554,16 +537,26 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	const std::string name = ON_String(object.m_attributes.m_name).Array();
 	const std::string member_name = name + ".s";
 
+	Shader shader;
+	unsigned char rgb[3];
+
+	get_object_material(object.m_attributes, model, shader, rgb);
+
 	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(object.m_object))
-	    import_object(wdb, member_name, *temp, model);
-	else if (!import_object(wdb, member_name, *object.m_object)) {
+	    import_object(wdb, name, *temp, model, shader, rgb);
+	else if (import_object(wdb, member_name, *object.m_object)) {
+	    std::set<std::string> members;
+	    members.insert(member_name);
+	    write_comb(wdb, name, members, NULL, shader.first.c_str(),
+		       shader.second.c_str(), rgb);
+	} else {
 	    if (gcv_options.verbosity_level)
 		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
 			  " model object '" << name << "'\n";
+
 	    continue;
 	}
 
-	write_object_attributes(wdb, member_name, object.m_attributes, model);
 	write_attributes(wdb, name, *object.m_object, object.m_attributes.m_uuid);
 	++success_count;
     }
