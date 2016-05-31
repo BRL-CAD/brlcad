@@ -666,6 +666,59 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 
 
 HIDDEN void
+remove_invalid_references_leaf_func(db_i *db, rt_comb_internal *UNUSED(comb),
+				    tree *comb_tree, void *user1, void *UNUSED(user2), void *UNUSED(user3),
+				    void *UNUSED(user4))
+{
+    std::set<std::string> &failed_members = *static_cast<std::set<std::string> *>
+					    (user1);
+
+    if (!db_lookup(db, comb_tree->tr_l.tl_name, false))
+	failed_members.insert(comb_tree->tr_l.tl_name);
+}
+
+
+HIDDEN void
+remove_invalid_references(db_i &db)
+{
+    bu_ptbl found = BU_PTBL_INIT_ZERO;
+    const AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+
+    if (0 > db_search(&found, DB_SEARCH_FLAT | DB_SEARCH_RETURN_UNIQ_DP,
+		      "-type comb", 0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
+
+    directory **entry;
+
+    for (BU_PTBL_FOR(entry, (directory **), &found)) {
+	rt_db_internal internal;
+
+	if (0 > rt_db_get_internal(&internal, *entry, &db, NULL, &rt_uniresource))
+	    throw std::runtime_error("rt_db_get_internal() failed");
+
+	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
+
+	rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
+	RT_CK_COMB(&comb);
+
+	std::set<std::string> failed_members;
+	db_tree_funcleaf(&db, &comb, comb.tree, remove_invalid_references_leaf_func,
+			 &failed_members, NULL, NULL, NULL);
+
+	for (std::set<std::string>::const_iterator it = failed_members.begin();
+	     it != failed_members.end(); ++it)
+	    if (0 != db_tree_del_dbleaf(&comb.tree, it->c_str(), &rt_uniresource, 0))
+		throw std::runtime_error("db_tree_del_dbleaf() failed");
+
+	if (rt_db_put_internal(*entry, &db, &internal, &rt_uniresource))
+	    throw std::runtime_error("rt_db_put_internal() failed");
+
+	autofree_internal.ptr = NULL;
+    }
+}
+
+
+HIDDEN void
 check_analysis_hierarchy(const ONX_Model &model,
 			 const std::set<std::string> &idef_members)
 {
@@ -687,10 +740,16 @@ check_analysis_hierarchy(const ONX_Model &model,
 	    return;
 	}
 
+    std::set<ON_UUID, UuidCompare> seen_idefs;
     std::set<int> seen_layers;
 
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table, i);
+
+	if (const ON_InstanceRef * const iref = ON_InstanceRef::Cast(object.m_object))
+	    if (!seen_idefs.insert(iref->m_instance_definition_uuid).second) {
+		std::cerr << message << "solids referenced in multiple places\n";
+	    }
 
 	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array()))
 	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second) {
@@ -716,6 +775,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
 	return 0;
     }
+
+    remove_invalid_references(*context->dbip);
 
     return 1;
 }
