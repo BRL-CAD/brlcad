@@ -278,54 +278,6 @@ do { \
 }
 
 
-HIDDEN std::set<std::string>
-get_idef_members(const ONX_Model &model)
-{
-    std::set<std::string> result;
-
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
-	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
-
-	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = at(model.m_object_table,
-						model.ObjectIndex(at(idef.m_object_uuid, j)));
-	    result.insert(ON_String(object.m_attributes.m_name).Array());
-	}
-    }
-
-    return result;
-}
-
-
-// check that the model hierarchy is as expected for analysis purposes
-HIDDEN void
-check_model_hierarchy(ONX_Model &model)
-{
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = at(model.m_layer_table, i);
-
-	if (layer.m_parent_layer_id != ON_nil_uuid)
-	    throw InvalidRhinoModelError("nested layers");
-    }
-
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
-	if (at(model.m_idef_table, i).m_object_uuid.UnsignedCount() > 1)
-	    throw InvalidRhinoModelError("multiple solids within layer");
-
-    const std::set<std::string> idef_members = get_idef_members(model);
-    std::set<int> seen_layers;
-
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-
-	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array())) {
-	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second)
-		throw InvalidRhinoModelError("multiple solids within layer");
-	}
-    }
-}
-
-
 HIDDEN void
 matrix_from_xform(mat_t dest, const ON_Xform &source)
 {
@@ -401,16 +353,19 @@ write_comb(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
-write_uuid_attribute(rt_wdb &wdb, const std::string &object_name,
-		     const ON_UUID &uuid)
+write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
+		 const ON_UUID &uuid)
 {
     // ON_UuidToString() buffers must be >= 37 chars
     const std::size_t uuid_string_length = 37;
-    const char * const uuid_attribute = "rhino::uuid";
     char temp[uuid_string_length];
 
-    if (db5_update_attribute(object_name.c_str(), uuid_attribute,
-			     ON_UuidToString(uuid, temp), wdb.dbip))
+    if (db5_update_attribute(name.c_str(), "rhino::type",
+			     object.ClassId()->ClassName(), wdb.dbip))
+	throw std::runtime_error("db5_update_attribute() failed");
+
+    if (db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
+			     temp), wdb.dbip))
 	throw std::runtime_error("db5_update_attribute() failed");
 }
 
@@ -565,10 +520,11 @@ import_object(rt_wdb &wdb, const std::string &name,
 
 
 HIDDEN void
-write_object_attributes(rt_wdb &wdb, const std::string &name,
-			const std::string &member_name, const ON_3dmObjectAttributes &attributes,
-			const ONX_Model &model)
+write_object_attributes(rt_wdb &wdb, const std::string &member_name,
+			const ON_3dmObjectAttributes &attributes, const ONX_Model &model)
 {
+    const std::string name = ON_String(attributes.m_name).Array();
+
     Shader shader;
     {
 	ON_Material temp;
@@ -584,7 +540,6 @@ write_object_attributes(rt_wdb &wdb, const std::string &name,
 
     write_comb(wdb, name, members, NULL, shader.first.c_str(),
 	       shader.second.c_str(), rgb);
-    write_uuid_attribute(wdb, name, attributes.m_uuid);
 }
 
 
@@ -595,22 +550,21 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
     std::size_t success_count = 0;
 
     for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &model_object = at(model.m_object_table, i);
-	const std::string name = ON_String(model_object.m_attributes.m_name).Array();
+	const ONX_Model_Object &object = at(model.m_object_table, i);
+	const std::string name = ON_String(object.m_attributes.m_name).Array();
 	const std::string member_name = name + ".s";
 
-	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(
-		model_object.m_object))
+	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(object.m_object))
 	    import_object(wdb, member_name, *temp, model);
-	else if (!import_object(wdb, member_name, *model_object.m_object)) {
+	else if (!import_object(wdb, member_name, *object.m_object)) {
 	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << model_object.m_object->ClassId()->ClassName() <<
+		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
 			  " model object '" << name << "'\n";
 	    continue;
 	}
 
-	write_object_attributes(wdb, name, member_name, model_object.m_attributes,
-				model);
+	write_object_attributes(wdb, member_name, object.m_attributes, model);
+	write_attributes(wdb, name, *object.m_object, object.m_attributes.m_uuid);
 	++success_count;
     }
 
@@ -628,16 +582,16 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
     std::set<std::string> members;
 
     for (unsigned i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
-	const ONX_Model_Object &model_object = at(model.m_object_table,
-					       model.ObjectIndex(at(idef.m_object_uuid, i)));
+	const ONX_Model_Object &object = at(model.m_object_table,
+					    model.ObjectIndex(at(idef.m_object_uuid, i)));
 
-	members.insert(ON_String(model_object.m_attributes.m_name).Array());
+	members.insert(ON_String(object.m_attributes.m_name).Array());
     }
 
     const std::string name = ON_String(idef.m_name).Array();
 
     write_comb(wdb, name, members);
-    write_uuid_attribute(wdb, name, idef.m_uuid);
+    write_attributes(wdb, name, idef, idef.m_uuid);
 }
 
 
@@ -646,6 +600,25 @@ import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
     for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
 	import_idef(wdb, at(model.m_idef_table, i), model);
+}
+
+
+HIDDEN std::set<std::string>
+get_all_idef_members(const ONX_Model &model)
+{
+    std::set<std::string> result;
+
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
+	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
+
+	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
+	    const ONX_Model_Object &object = at(model.m_object_table,
+						model.ObjectIndex(at(idef.m_object_uuid, j)));
+	    result.insert(ON_String(object.m_attributes.m_name).Array());
+	}
+    }
+
+    return result;
 }
 
 
@@ -668,7 +641,7 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 	    members.insert(ON_String(object.m_attributes.m_name).Array());
     }
 
-    const std::set<std::string> model_idef_members = get_idef_members(model);
+    const std::set<std::string> model_idef_members = get_all_idef_members(model);
     std::set<std::string> result;
     std::set_difference(members.begin(), members.end(), model_idef_members.begin(),
 			model_idef_members.end(), std::inserter(result, result.end()));
@@ -683,7 +656,7 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
     const std::string name = ON_String(layer.m_name).Array();
 
     write_comb(wdb, name, get_layer_members(layer, model));
-    write_uuid_attribute(wdb, name, layer.m_layer_id);
+    write_attributes(wdb, name, layer, layer.m_layer_id);
 }
 
 
@@ -699,6 +672,42 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
+HIDDEN void
+check_analysis_hierarchy(const ONX_Model &model,
+			 const std::set<std::string> &idef_members)
+{
+    const char * const message =
+	"WARNING: hierarchy is not as expected for analysis: ";
+
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &layer = at(model.m_layer_table, i);
+
+	if (layer.m_layer_id != ON_nil_uuid && layer.m_parent_layer_id != ON_nil_uuid) {
+	    std::cerr << message << "nested layers\n";
+	    return;
+	}
+    }
+
+    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
+	if (1 < at(model.m_idef_table, i).m_object_uuid.UnsignedCount()) {
+	    std::cerr << message << "multiple solids within layer\n";
+	    return;
+	}
+
+    std::set<int> seen_layers;
+
+    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+	const ONX_Model_Object &object = at(model.m_object_table, i);
+
+	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array()))
+	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second) {
+		std::cerr << message << "multiple solids within layer\n";
+		return;
+	    }
+    }
+}
+
+
 HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
@@ -706,14 +715,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model);
-
-	try {
-	    check_model_hierarchy(model);
-	} catch (const InvalidRhinoModelError &exception) {
-	    std::cerr << "WARNING: hierarchy is not as expected for analysis ('" <<
-		      exception.what() << "')\n";
-	}
-
+	check_analysis_hierarchy(model, get_all_idef_members(model));
 	import_model_layers(*context->dbip->dbi_wdbp, model);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
