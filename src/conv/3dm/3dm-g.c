@@ -45,11 +45,25 @@ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type)
 }
 
 
+static const struct gcv_filter *
+get_filter(const char *name)
+{
+    const struct gcv_filter * const *entry;
+    const struct bu_ptbl * const filters = gcv_list_filters();
+
+    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters))
+	if (!bu_strcmp((*entry)->name, name))
+	    return *entry;
+
+    return NULL;
+}
+
+
 int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-v] -o output_file.g input_file.3dm\n";
+	"Usage: 3dm-g [-v] [-e] -o output_file.g input_file.3dm\n";
 
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
@@ -60,14 +74,15 @@ main(int argc, char **argv)
     const char *input_path;
     int c;
 
-	bu_setprogname(argv[0]);
+    bu_setprogname(argv[0]);
 
-	out_filter = find_filter(GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
-	in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO);
+    out_filter = find_filter(GCV_FILTER_WRITE,
+			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
+    in_filter = get_filter("Rhino Analysis Hierarchy Reader");
 
     gcv_opts_default(&gcv_options);
 
-    while ((c = bu_getopt(argc, argv, "o:vh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:veh?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_path = bu_optarg;
@@ -75,6 +90,10 @@ main(int argc, char **argv)
 
 	    case 'v':
 		gcv_options.verbosity_level = 1;
+		break;
+
+	    case 'e':
+		in_filter = get_filter("Rhino Reader");
 		break;
 
 	    default:

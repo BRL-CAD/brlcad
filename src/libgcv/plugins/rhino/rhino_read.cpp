@@ -734,8 +734,12 @@ remove_invalid_references(db_i &db)
 }
 
 
+namespace analysis_hierarchy
+{
+
+
 HIDDEN void
-check_analysis_hierarchy(const ONX_Model &model,
+analysis_hierarchy_check(const ONX_Model &model,
 			 const std::set<std::string> &idef_members)
 {
     const char * const message =
@@ -776,6 +780,99 @@ check_analysis_hierarchy(const ONX_Model &model,
 }
 
 
+HIDDEN void
+analysis_hierarchy_import(const gcv_opts &gcv_options, rt_wdb &wdb,
+			  ONX_Model &model)
+{
+    // rename solids
+    for (unsigned i = 0, number = 0; i < model.m_object_table.UnsignedCount();
+	 ++i) {
+	ON_3dmObjectAttributes &attributes = at(model.m_object_table, i).m_attributes;
+	const ON_wString &layer_name = at(model.m_layer_table,
+					  attributes.m_layer_index).m_name;
+
+	attributes.m_name = layer_name + "_" + lexical_cast<std::string>
+			    (++number).c_str() + ".s";
+    }
+
+    // rename layers
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	ON_Layer &layer = at(model.m_layer_table, i);
+	layer.m_name += ".r";
+    }
+
+    // import objects
+    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+	const ONX_Model_Object &object = at(model.m_object_table, i);
+	const std::string name = ON_String(object.m_attributes.m_name).Array();
+
+	if (!import_object(wdb, name, *object.m_object))
+	    if (gcv_options.verbosity_level)
+		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
+			  " model object '" << name << "'\n";
+    }
+
+    // import layers
+    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+	const ON_Layer &layer = at(model.m_layer_table, i);
+	const std::string name = ON_String(layer.m_name).Array();
+
+	std::set<std::string> members;
+
+	for (unsigned j = 0; j < model.m_layer_table.UnsignedCount(); ++j) {
+	    const ON_Layer &current_layer = at(model.m_layer_table, j);
+
+	    if (current_layer.m_parent_layer_id == layer.ModelObjectId())
+		members.insert(ON_String(current_layer.m_name).Array());
+	}
+
+	for (unsigned j = 0; j < model.m_object_table.UnsignedCount(); ++j) {
+	    const ONX_Model_Object &object = at(model.m_object_table, j);
+
+	    if (object.m_attributes.m_layer_index == layer.m_layer_index)
+		members.insert(ON_String(object.m_attributes.m_name).Array());
+	}
+
+	write_comb(wdb, name, members, NULL, NULL, NULL, NULL);
+    }
+
+    ON_Layer root_layer;
+    root_layer.SetLayerName("root");
+    import_layer(wdb, root_layer, model);
+}
+
+
+HIDDEN int
+analysis_hierarchy_read(gcv_context *context, const gcv_opts *gcv_options,
+			const void *UNUSED(options_data), const char *source_path)
+{
+    try {
+	ONX_Model model;
+	load_model(*gcv_options, source_path, model);
+
+	analysis_hierarchy::analysis_hierarchy_check(model,
+		get_all_idef_members(model));
+	analysis_hierarchy::analysis_hierarchy_import(*gcv_options,
+		*context->dbip->dbi_wdbp, model);
+    } catch (const InvalidRhinoModelError &exception) {
+	std::cerr << "invalid input file ('" << exception.what() << "')\n";
+	return 0;
+    }
+
+    remove_invalid_references(*context->dbip);
+    return 1;
+}
+
+
+struct gcv_filter gcv_conv_rhino_analysis_hierarchy_read = {
+    "Rhino Analysis Hierarchy Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
+    NULL, NULL, analysis_hierarchy_read
+};
+
+
+}
+
+
 HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
@@ -783,7 +880,6 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model);
-	check_analysis_hierarchy(model, get_all_idef_members(model));
 	import_model_layers(*context->dbip->dbi_wdbp, model);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
@@ -793,7 +889,6 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
     }
 
     remove_invalid_references(*context->dbip);
-
     return 1;
 }
 
@@ -803,7 +898,7 @@ struct gcv_filter gcv_conv_rhino_read = {
     NULL, NULL, rhino_read
 };
 
-static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
+static const gcv_filter * const filters[] = {&analysis_hierarchy::gcv_conv_rhino_analysis_hierarchy_read, &gcv_conv_rhino_read, NULL};
 
 
 }
