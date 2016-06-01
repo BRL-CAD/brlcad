@@ -197,22 +197,21 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO troubleshoot JASP export memory issue (1)
 
 
-** PROJECT: Performant Pipeline (16)
-
-*** bundled ray dispatch (3)
-**** TODO define ray bundling API (1)
-**** TODO audit librt API, make task list (1)
-**** TODO convert RT to new bundled API (1)
+** PROJECT: Performant Pipeline (15)
 
 *** coherent Boolean evaluation (3)
 **** TODO preliminary OpenCL conversion (1)
 **** TODO eliminate branching (1)
 **** TODO V&V with specific test cases (1)
 
-*** bundled dispatch (3)
-**** TODO review and integrate Costa's GSoC work (1)
-**** TODO dispatch in bundles (1)
+*** audit ray dispatching (3)
+**** TODO define ray bundling API (1)
+**** TODO audit librt ray API, consolidate (1)
+
+*** implement bundled ray dispatch (2)
+**** TODO integrate Costa's GSoC work (1)
 **** TODO propagate bundle through spatial partition (1)
+**** TODO convert rt* to new bundled API (1)
 
 *** on-demand NURBS tree-build (4)
 **** TODO formulate a design / approach (1)
@@ -248,6 +247,10 @@ bolster those areas, and identifies specific actionable objectives.
 
 ** PROJECT: Progressive Geometry Display (11)
 
+*** asynchronous geometry display (4)
+**** TODO modify display loop to run in separate thread (2)
+**** TODO update draw command to dispatch (2)
+
 *** ray trace display manager (4)
 **** TODO review rtgl code (1)
 **** TODO design incremental loading architecture (1)
@@ -255,12 +258,8 @@ bolster those areas, and identifies specific actionable objectives.
 
 *** point cloud hashing (3)
 **** TODO design LoD point cloud storage approach (1)
-**** TODO calculate LoD point cloud utility metic (1)
+**** TODO calculate LoD point cloud utility metric (1)
 **** TODO implement LoD point cloud loading (3)
-
-*** asynchronous geometry display (4)
-**** TODO modify display loop to run in separate thread (2)
-**** TODO update draw command to dispatch (2)
 
 
 ** TEMPLATE: Project Title
