@@ -690,6 +690,9 @@ remove_invalid_references(db_i &db)
 
     directory **entry;
 
+    if (!BU_PTBL_LEN(&found))
+	return;
+
     for (BU_PTBL_FOR(entry, (directory **), &found)) {
 	rt_db_internal internal;
 
