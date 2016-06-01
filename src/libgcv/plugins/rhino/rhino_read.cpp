@@ -800,8 +800,11 @@ analysis_hierarchy_import(const gcv_opts &gcv_options,
 	const ON_wString &layer_name = at(model.m_layer_table,
 					  attributes.m_layer_index).m_name;
 
-	attributes.m_name = layer_name + "_" + lexical_cast<std::string>
-			    (++number).c_str() + ".s";
+	if (++number == 1)
+	    attributes.m_name = layer_name + ".s";
+	else
+	    attributes.m_name = layer_name + "_" + lexical_cast<std::string>
+				(number).c_str() + ".s";
     }
 
     // rename layers
