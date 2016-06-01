@@ -63,7 +63,9 @@ int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-v] [-e] -o output_file.g input_file.3dm\n";
+	"Usage: 3dm-g [-e] [-r] [-v] [-h] -o output_file.g input_file.3dm\n";
+
+    const char * args[] = {"--random-colors"};
 
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
@@ -72,6 +74,7 @@ main(int argc, char **argv)
     struct gcv_opts gcv_options;
     const char *output_path = NULL;
     const char *input_path;
+    int random_colors = 0;
     int c;
 
     bu_setprogname(argv[0]);
@@ -82,7 +85,7 @@ main(int argc, char **argv)
 
     gcv_opts_default(&gcv_options);
 
-    while ((c = bu_getopt(argc, argv, "o:veh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:ervh?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_path = bu_optarg;
@@ -95,6 +98,10 @@ main(int argc, char **argv)
 	    case 'e':
 		in_filter = get_filter("Rhino Reader");
 		break;
+
+            case 'r':
+                random_colors = 1;
+                break;
 
 	    default:
 		bu_log("%s", usage);
@@ -119,7 +126,7 @@ main(int argc, char **argv)
 
     gcv_context_init(&context);
 
-    if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
+    if (!gcv_execute(&context, in_filter, &gcv_options, random_colors ? sizeof(args) / sizeof(args[0]) : 0, args, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }

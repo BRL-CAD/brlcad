@@ -780,11 +780,20 @@ analysis_hierarchy_check(const ONX_Model &model,
 }
 
 
+struct AnalysisHierarchyReadOptions {
+    int m_random_colors;
+
+    AnalysisHierarchyReadOptions() :
+	m_random_colors(false)
+    {}
+};
+
+
 HIDDEN void
-analysis_hierarchy_import(const gcv_opts &gcv_options, rt_wdb &wdb,
-			  ONX_Model &model)
+analysis_hierarchy_import(const gcv_opts &gcv_options,
+			  const AnalysisHierarchyReadOptions &options, rt_wdb &wdb, ONX_Model &model)
 {
-    // rename solids
+    // rename objects
     for (unsigned i = 0, number = 0; i < model.m_object_table.UnsignedCount();
 	 ++i) {
 	ON_3dmObjectAttributes &attributes = at(model.m_object_table, i).m_attributes;
@@ -833,7 +842,26 @@ analysis_hierarchy_import(const gcv_opts &gcv_options, rt_wdb &wdb,
 		members.insert(ON_String(object.m_attributes.m_name).Array());
 	}
 
-	write_comb(wdb, name, members, NULL, NULL, NULL, NULL);
+	bool has_color = false;
+	unsigned char rgb[3] = {};
+
+	if (options.m_random_colors) {
+	    rgb[0] = drand48() * 255.0 + 0.5;
+	    rgb[1] = drand48() * 255.0 + 0.5;
+	    rgb[2] = drand48() * 255.0 + 0.5;
+	    has_color = true;
+	} else {
+	    rgb[0] = layer.Color().Red();
+	    rgb[1] = layer.Color().Green();
+	    rgb[2] = layer.Color().Blue();
+
+	    has_color = rgb[0] || rgb[1] || rgb[2];
+	}
+
+	write_comb(wdb, name, members, NULL, NULL, NULL, has_color ? rgb : NULL);
+
+	if (db5_update_attribute(name.c_str(), "region", "R", wdb.dbip))
+	    throw std::runtime_error("db5_update_attribute() failed");
     }
 
     ON_Layer root_layer;
@@ -842,17 +870,45 @@ analysis_hierarchy_import(const gcv_opts &gcv_options, rt_wdb &wdb,
 }
 
 
+HIDDEN void
+analysis_hierarchy_read_create_opts(struct bu_opt_desc **options_desc,
+				    void **dest_options_data)
+{
+    AnalysisHierarchyReadOptions * const options_data = new
+    AnalysisHierarchyReadOptions;
+    *dest_options_data = options_data;
+
+    *options_desc = static_cast<bu_opt_desc *>(bu_malloc(2 * sizeof(bu_opt_desc),
+		    "options_desc"));
+
+    BU_OPT((*options_desc)[0], NULL, "random-colors", NULL, NULL,
+	   &options_data->m_random_colors, "select BoT orientation mode");
+    BU_OPT_NULL((*options_desc)[1]);
+
+}
+
+
+HIDDEN void
+analysis_hierarchy_read_free_opts(void *options_data)
+{
+    delete static_cast<AnalysisHierarchyReadOptions *>(options_data);
+}
+
+
 HIDDEN int
 analysis_hierarchy_read(gcv_context *context, const gcv_opts *gcv_options,
-			const void *UNUSED(options_data), const char *source_path)
+			const void *options_data, const char *source_path)
 {
+    const AnalysisHierarchyReadOptions &options =
+	*static_cast<const AnalysisHierarchyReadOptions *>(options_data);
+
     try {
 	ONX_Model model;
 	load_model(*gcv_options, source_path, model);
 
 	analysis_hierarchy::analysis_hierarchy_check(model,
 		get_all_idef_members(model));
-	analysis_hierarchy::analysis_hierarchy_import(*gcv_options,
+	analysis_hierarchy::analysis_hierarchy_import(*gcv_options, options,
 		*context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
 	std::cerr << "invalid input file ('" << exception.what() << "')\n";
@@ -866,7 +922,7 @@ analysis_hierarchy_read(gcv_context *context, const gcv_opts *gcv_options,
 
 struct gcv_filter gcv_conv_rhino_analysis_hierarchy_read = {
     "Rhino Analysis Hierarchy Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
-    NULL, NULL, analysis_hierarchy_read
+    analysis_hierarchy_read_create_opts, analysis_hierarchy_read_free_opts, analysis_hierarchy_read
 };
 
 
