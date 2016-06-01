@@ -75,14 +75,10 @@ main(int argc, char **argv)
     const char *output_path = NULL;
     const char *input_path;
     int random_colors = 0;
+    int analysis_hierarchy = 1;
     int c;
 
     bu_setprogname(argv[0]);
-
-    out_filter = find_filter(GCV_FILTER_WRITE,
-			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
-    in_filter = get_filter("Rhino Analysis Hierarchy Reader");
-
     gcv_opts_default(&gcv_options);
 
     while ((c = bu_getopt(argc, argv, "o:ervh?")) != -1) {
@@ -96,12 +92,12 @@ main(int argc, char **argv)
 		break;
 
 	    case 'e':
-		in_filter = get_filter("Rhino Reader");
+		analysis_hierarchy = 0;
 		break;
 
-            case 'r':
-                random_colors = 1;
-                break;
+	    case 'r':
+		random_colors = 1;
+		break;
 
 	    default:
 		bu_log("%s", usage);
@@ -116,17 +112,29 @@ main(int argc, char **argv)
 
     input_path = argv[bu_optind];
 
+    if (analysis_hierarchy) {
+	bu_log("importing simplified hierarchy\n");
+	in_filter = get_filter("Rhino Analysis Hierarchy Reader");
+    } else {
+	bu_log("importing full hierarchy\n");
+	in_filter = get_filter("Rhino Reader");
+    }
+
+    out_filter = find_filter(GCV_FILTER_WRITE,
+			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
+
     if (!out_filter)
 	bu_bomb("could not find the BRL-CAD writer filter");
 
     if (!in_filter) {
-	bu_log("a Rhino reader filter is not loaded");
+	bu_log("could not find the Rhino reader filter");
 	return 1;
     }
 
     gcv_context_init(&context);
 
-    if (!gcv_execute(&context, in_filter, &gcv_options, random_colors ? sizeof(args) / sizeof(args[0]) : 0, args, input_path)) {
+    if (!gcv_execute(&context, in_filter, &gcv_options,
+		     random_colors ? sizeof(args) / sizeof(args[0]) : 0, args, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }

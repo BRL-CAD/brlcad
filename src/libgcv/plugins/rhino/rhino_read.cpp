@@ -960,7 +960,7 @@ struct gcv_filter gcv_conv_rhino_read = {
     NULL, NULL, rhino_read
 };
 
-static const gcv_filter * const filters[] = {&analysis_hierarchy::gcv_conv_rhino_analysis_hierarchy_read, &gcv_conv_rhino_read, NULL};
+static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, &analysis_hierarchy::gcv_conv_rhino_analysis_hierarchy_read, NULL};
 
 
 }
