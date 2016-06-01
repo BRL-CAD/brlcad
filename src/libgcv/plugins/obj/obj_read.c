@@ -3114,10 +3114,10 @@ parse_grouping_option(struct bu_vls *error_msg, int argc, const char **argv, voi
 	*value = 't';
     else {
 	bu_vls_printf(error_msg, "invalid grouping mode\n");
-	return 0;
+	return -1;
     }
 
-    return -1;
+    return 1;
 }
 
 
@@ -3253,7 +3253,7 @@ obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 
     BU_OPT((*options_desc)[0], NULL, "continue", NULL,
 	    NULL, &options_data->cont_on_nmg_bomb_flag,
-	    "continue processing on nmg-bomb; will fall back to native BoT mode if a bu_bomb occurs when using the nmg or BoT via nmg modes.");
+	    "continue processing on nmg-bomb; will fall back to native BoT mode if a bu_bomb occurs when using the nmg or BoT via nmg modes");
 
     BU_OPT((*options_desc)[1], NULL, "fuse-vertices", NULL,
 	    NULL, &options_data->fuse_vertices,
@@ -3277,7 +3277,7 @@ obj_read_create_opts(struct bu_opt_desc **options_desc, void **dest_options_data
 
     BU_OPT((*options_desc)[6], NULL, "bot-open-type", "type",
 	    parse_open_bot_output_mode_option, &options_data->open_bot_output_mode,
-	    "select type used for BoTs that aren;t closed volumes");
+	    "select type used for BoTs that aren't closed volumes");
 
     BU_OPT((*options_desc)[7], NULL, "bot-plot", NULL,
 	    parse_plot_mode_option, &options_data->plot_mode,
