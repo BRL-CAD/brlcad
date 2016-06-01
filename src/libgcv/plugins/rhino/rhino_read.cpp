@@ -710,10 +710,18 @@ remove_invalid_references(db_i &db)
 	    if (0 != db_tree_del_dbleaf(&comb.tree, it->c_str(), &rt_uniresource, 0))
 		throw std::runtime_error("db_tree_del_dbleaf() failed");
 
-	if (rt_db_put_internal(*entry, &db, &internal, &rt_uniresource))
-	    throw std::runtime_error("rt_db_put_internal() failed");
+	if (!comb.tree || !db_tree_nleaves(comb.tree)) {
+	    if (db_delete(&db, *entry) || db_dirdelete(&db, *entry))
+		throw std::runtime_error("failed to delete directory");
 
-	autofree_internal.ptr = NULL;
+	    remove_invalid_references(db);
+	    return;
+	} else {
+	    if (rt_db_put_internal(*entry, &db, &internal, &rt_uniresource))
+		throw std::runtime_error("rt_db_put_internal() failed");
+	    else
+		autofree_internal.ptr = NULL;
+	}
     }
 }
 
