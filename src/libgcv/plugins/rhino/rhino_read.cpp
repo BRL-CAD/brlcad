@@ -794,13 +794,16 @@ analysis_hierarchy_import(const gcv_opts &gcv_options,
 			  const AnalysisHierarchyReadOptions &options, rt_wdb &wdb, ONX_Model &model)
 {
     // rename objects
-    for (unsigned i = 0, number = 0; i < model.m_object_table.UnsignedCount();
+    std::map<std::string, std::size_t> counts;
+    for (unsigned i = 0; i < model.m_object_table.UnsignedCount();
 	 ++i) {
 	ON_3dmObjectAttributes &attributes = at(model.m_object_table, i).m_attributes;
 	const ON_wString &layer_name = at(model.m_layer_table,
 					  attributes.m_layer_index).m_name;
 
-	if (++number == 1)
+	const std::size_t number = ++counts[ON_String(layer_name).Array()];
+
+	if (number == 1)
 	    attributes.m_name = layer_name + ".s";
 	else
 	    attributes.m_name = layer_name + "_" + lexical_cast<std::string>
