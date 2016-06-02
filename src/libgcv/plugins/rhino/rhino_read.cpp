@@ -415,22 +415,19 @@ typedef std::pair<std::string, std::string> Shader;
 
 
 HIDDEN Shader
-get_shader(const ON_Material *material)
+get_shader(const ON_Material &material)
 {
-    if (!material)
-	return std::make_pair("plastic", "");
-
     std::ostringstream temp;
 
     temp << "{"
-	 << " tr " << material->m_transparency
-	 << " re " << material->m_reflectivity
+	 << " tr " << material.m_transparency
+	 << " re " << material.m_reflectivity
 	 << " sp " << 0
 	 << " di " << 0.3
-	 << " ri " << material->m_index_of_refraction
+	 << " ri " << material.m_index_of_refraction
 	 << " ex " << 0
-	 << " sh " << material->m_shine
-	 << " em " << material->m_emission
+	 << " sh " << material.m_shine
+	 << " em " << material.m_emission
 	 << " }";
 
     return std::make_pair("plastic", temp.str());
@@ -444,7 +441,7 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 {
     ON_Material temp;
     model.GetRenderMaterial(attributes, temp);
-    out_shader = get_shader(&temp);
+    out_shader = get_shader(temp);
     out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
 
     out_rgb[0] = model.WireframeColor(attributes).Red();
@@ -653,7 +650,11 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
     rgb[1] = layer.Color().Red();
     rgb[2] = layer.Color().Red();
 
-    write_comb(wdb, name, get_layer_members(layer, model), NULL, NULL, NULL, rgb);
+    const Shader &shader = get_shader(layer.RenderMaterialIndex() != -1 ?
+				      at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
+
+    write_comb(wdb, name, get_layer_members(layer, model), NULL,
+	       shader.first.c_str(), shader.second.c_str(), rgb);
     write_attributes(wdb, name, layer, layer.m_layer_id);
 }
 
