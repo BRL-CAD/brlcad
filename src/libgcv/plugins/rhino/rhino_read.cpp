@@ -280,7 +280,7 @@ do { \
 
 
 HIDDEN void
-import_object(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
     if (mk_brep(&wdb, name.c_str(), const_cast<ON_Brep *>(&brep)))
 	throw std::runtime_error("mk_brep() failed");
@@ -288,7 +288,7 @@ import_object(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 
 
 HIDDEN void
-import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
+write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 {
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
@@ -393,17 +393,16 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
 
 HIDDEN bool
-import_object(rt_wdb &wdb, const std::string &name,
-	      const ON_Object &object)
+write_geometry(rt_wdb &wdb, const std::string &name,
+	       const ON_Geometry &geometry)
 {
-    if (const ON_Brep * const brep = ON_Brep::Cast(&object)) {
-	import_object(wdb, name, *brep);
-    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&object)) {
-	import_object(wdb, name, *mesh);
-    } else if (ON_Geometry::Cast(&object)
-	       && ON_Geometry::Cast(&object)->HasBrepForm()) {
-	AutoPtr<ON_Brep> temp(ON_Geometry::Cast(&object)->BrepForm());
-	import_object(wdb, name, *temp.ptr);
+    if (const ON_Brep * const brep = ON_Brep::Cast(&geometry)) {
+	write_geometry(wdb, name, *brep);
+    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&geometry)) {
+	write_geometry(wdb, name, *mesh);
+    } else if (geometry.HasBrepForm()) {
+	AutoPtr<ON_Brep> temp(geometry.BrepForm());
+	write_geometry(wdb, name, *temp.ptr);
     } else
 	return false;
 
@@ -541,7 +540,8 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(object.m_object))
 	    import_object(wdb, name, *temp, model, own_shader ? shader.first.c_str() : NULL,
 			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	else if (import_object(wdb, member_name, *object.m_object)) {
+	else if (write_geometry(wdb, member_name,
+				*ON_Geometry::Cast(object.m_object))) {
 	    std::set<std::string> members;
 	    members.insert(member_name);
 	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
@@ -671,271 +671,6 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model)
 }
 
 
-HIDDEN void
-remove_invalid_references_leaf_func(db_i *db, rt_comb_internal *UNUSED(comb),
-				    tree *comb_tree, void *user1, void *UNUSED(user2), void *UNUSED(user3),
-				    void *UNUSED(user4))
-{
-    std::set<std::string> &failed_members = *static_cast<std::set<std::string> *>
-					    (user1);
-
-    if (!db_lookup(db, comb_tree->tr_l.tl_name, false))
-	failed_members.insert(comb_tree->tr_l.tl_name);
-}
-
-
-HIDDEN void
-remove_invalid_references(db_i &db)
-{
-    bu_ptbl found = BU_PTBL_INIT_ZERO;
-    const AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
-
-    if (0 > db_search(&found, DB_SEARCH_FLAT | DB_SEARCH_RETURN_UNIQ_DP,
-		      "-type comb", 0, NULL, &db))
-	throw std::runtime_error("db_search() failed");
-
-    directory **entry;
-
-    if (!BU_PTBL_LEN(&found))
-	return;
-
-    for (BU_PTBL_FOR(entry, (directory **), &found)) {
-	rt_db_internal internal;
-
-	if (0 > rt_db_get_internal(&internal, *entry, &db, NULL, &rt_uniresource))
-	    throw std::runtime_error("rt_db_get_internal() failed");
-
-	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
-
-	rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
-	RT_CK_COMB(&comb);
-
-	std::set<std::string> failed_members;
-	db_tree_funcleaf(&db, &comb, comb.tree, remove_invalid_references_leaf_func,
-			 &failed_members, NULL, NULL, NULL);
-
-	for (std::set<std::string>::const_iterator it = failed_members.begin();
-	     it != failed_members.end(); ++it)
-	    if (0 != db_tree_del_dbleaf(&comb.tree, it->c_str(), &rt_uniresource, 0))
-		throw std::runtime_error("db_tree_del_dbleaf() failed");
-
-	if (!comb.tree || !db_tree_nleaves(comb.tree)) {
-	    if (db_delete(&db, *entry) || db_dirdelete(&db, *entry))
-		throw std::runtime_error("failed to delete directory");
-
-	    remove_invalid_references(db);
-	    return;
-	} else {
-	    if (rt_db_put_internal(*entry, &db, &internal, &rt_uniresource))
-		throw std::runtime_error("rt_db_put_internal() failed");
-	    else
-		autofree_internal.ptr = NULL;
-	}
-    }
-}
-
-
-namespace analysis_hierarchy
-{
-
-
-HIDDEN void
-analysis_hierarchy_check(const ONX_Model &model,
-			 const std::set<std::string> &idef_members)
-{
-    const char * const message =
-	"WARNING: hierarchy is not as expected for analysis: ";
-
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = at(model.m_layer_table, i);
-
-	if (layer.m_layer_id != ON_nil_uuid && layer.m_parent_layer_id != ON_nil_uuid) {
-	    std::cerr << message << "nested layers\n";
-	    return;
-	}
-    }
-
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
-	if (1 < at(model.m_idef_table, i).m_object_uuid.UnsignedCount()) {
-	    std::cerr << message << "multiple solids within layer\n";
-	    return;
-	}
-
-    std::set<ON_UUID, UuidCompare> seen_idefs;
-    std::set<int> seen_layers;
-
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-
-	if (const ON_InstanceRef * const iref = ON_InstanceRef::Cast(object.m_object))
-	    if (!seen_idefs.insert(iref->m_instance_definition_uuid).second) {
-		std::cerr << message << "solids referenced in multiple places\n";
-	    }
-
-	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array()))
-	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second) {
-		std::cerr << message << "multiple solids within layer\n";
-		return;
-	    }
-    }
-}
-
-
-struct AnalysisHierarchyReadOptions {
-    int m_random_colors;
-
-    AnalysisHierarchyReadOptions() :
-	m_random_colors(false)
-    {}
-};
-
-
-HIDDEN void
-analysis_hierarchy_import(const gcv_opts &gcv_options,
-			  const AnalysisHierarchyReadOptions &options, rt_wdb &wdb, ONX_Model &model)
-{
-    // rename objects
-    std::map<std::string, std::size_t> counts;
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount();
-	 ++i) {
-	ON_3dmObjectAttributes &attributes = at(model.m_object_table, i).m_attributes;
-	const ON_wString &layer_name = at(model.m_layer_table,
-					  attributes.m_layer_index).m_name;
-
-	const std::size_t number = ++counts[ON_String(layer_name).Array()];
-
-	if (number == 1)
-	    attributes.m_name = layer_name + ".s";
-	else
-	    attributes.m_name = layer_name + "_" + lexical_cast<std::string>
-				(number).c_str() + ".s";
-    }
-
-    // rename layers
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	ON_Layer &layer = at(model.m_layer_table, i);
-	layer.m_name += ".r";
-    }
-
-    // import objects
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-	const std::string name = ON_String(object.m_attributes.m_name).Array();
-
-	if (!import_object(wdb, name, *object.m_object))
-	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
-			  " model object '" << name << "'\n";
-    }
-
-    // import layers
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = at(model.m_layer_table, i);
-	const std::string name = ON_String(layer.m_name).Array();
-
-	std::set<std::string> members;
-
-	for (unsigned j = 0; j < model.m_layer_table.UnsignedCount(); ++j) {
-	    const ON_Layer &current_layer = at(model.m_layer_table, j);
-
-	    if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-		members.insert(ON_String(current_layer.m_name).Array());
-	}
-
-	for (unsigned j = 0; j < model.m_object_table.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = at(model.m_object_table, j);
-
-	    if (object.m_attributes.m_layer_index == layer.m_layer_index)
-		members.insert(ON_String(object.m_attributes.m_name).Array());
-	}
-
-	bool has_color = false;
-	unsigned char rgb[3] = {};
-
-	if (options.m_random_colors) {
-	    rgb[0] = drand48() * 255.0 + 0.5;
-	    rgb[1] = drand48() * 255.0 + 0.5;
-	    rgb[2] = drand48() * 255.0 + 0.5;
-	    has_color = true;
-	} else {
-	    rgb[0] = layer.Color().Red();
-	    rgb[1] = layer.Color().Green();
-	    rgb[2] = layer.Color().Blue();
-
-	    has_color = rgb[0] || rgb[1] || rgb[2];
-	}
-
-	write_comb(wdb, name, members, NULL, NULL, NULL, has_color ? rgb : NULL);
-
-	if (db5_update_attribute(name.c_str(), "region", "R", wdb.dbip))
-	    throw std::runtime_error("db5_update_attribute() failed");
-    }
-
-    ON_Layer root_layer;
-    root_layer.SetLayerName("root");
-    import_layer(wdb, root_layer, model);
-}
-
-
-HIDDEN void
-analysis_hierarchy_read_create_opts(struct bu_opt_desc **options_desc,
-				    void **dest_options_data)
-{
-    AnalysisHierarchyReadOptions * const options_data = new
-    AnalysisHierarchyReadOptions;
-    *dest_options_data = options_data;
-
-    *options_desc = static_cast<bu_opt_desc *>(bu_malloc(2 * sizeof(bu_opt_desc),
-		    "options_desc"));
-
-    BU_OPT((*options_desc)[0], NULL, "random-colors", NULL, NULL,
-	   &options_data->m_random_colors, "select BoT orientation mode");
-    BU_OPT_NULL((*options_desc)[1]);
-
-}
-
-
-HIDDEN void
-analysis_hierarchy_read_free_opts(void *options_data)
-{
-    delete static_cast<AnalysisHierarchyReadOptions *>(options_data);
-}
-
-
-HIDDEN int
-analysis_hierarchy_read(gcv_context *context, const gcv_opts *gcv_options,
-			const void *options_data, const char *source_path)
-{
-    const AnalysisHierarchyReadOptions &options =
-	*static_cast<const AnalysisHierarchyReadOptions *>(options_data);
-
-    try {
-	ONX_Model model;
-	load_model(*gcv_options, source_path, model);
-
-	analysis_hierarchy::analysis_hierarchy_check(model,
-		get_all_idef_members(model));
-	analysis_hierarchy::analysis_hierarchy_import(*gcv_options, options,
-		*context->dbip->dbi_wdbp, model);
-    } catch (const InvalidRhinoModelError &exception) {
-	std::cerr << "invalid input file ('" << exception.what() << "')\n";
-	return 0;
-    }
-
-    remove_invalid_references(*context->dbip);
-    return 1;
-}
-
-
-struct gcv_filter gcv_conv_rhino_analysis_hierarchy_read = {
-    "Rhino Analysis Hierarchy Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
-    analysis_hierarchy_read_create_opts, analysis_hierarchy_read_free_opts, analysis_hierarchy_read
-};
-
-
-}
-
-
 HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
@@ -951,7 +686,7 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	return 0;
     }
 
-    remove_invalid_references(*context->dbip);
+    rt_reduce_db(context->dbip);
     return 1;
 }
 
@@ -961,7 +696,7 @@ struct gcv_filter gcv_conv_rhino_read = {
     NULL, NULL, rhino_read
 };
 
-static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, &analysis_hierarchy::gcv_conv_rhino_analysis_hierarchy_read, NULL};
+static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
 
 }

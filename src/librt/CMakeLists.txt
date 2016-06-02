@@ -265,6 +265,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
   reduce.c
+  reduce_db.cpp
   regionfix.c
   roots.c
   screened_poisson.cpp

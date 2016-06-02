@@ -180,9 +180,15 @@ RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *pla
 /**
  * reduce an object into some form of simpler representation
  */
-RT_EXPORT extern void rt_obj_reduce(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
+RT_EXPORT extern void rt_reduce_obj(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
 
-#define RT_OBJ_REDUCE_PRESERVE_VOLUME 0x1
+
+/**
+ * reduce the database hierarchy.
+ */
+RT_EXPORT extern void rt_reduce_db(struct db_i *dbip);
+
+#define RT_REDUCE_OBJ_PRESERVE_VOLUME 0x1
 
 __END_DECLS
 

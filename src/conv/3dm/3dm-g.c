@@ -45,27 +45,11 @@ find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type)
 }
 
 
-static const struct gcv_filter *
-get_filter(const char *name)
-{
-    const struct gcv_filter * const *entry;
-    const struct bu_ptbl * const filters = gcv_list_filters();
-
-    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters))
-	if (!bu_strcmp((*entry)->name, name))
-	    return *entry;
-
-    return NULL;
-}
-
-
 int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-e] [-r] [-v] [-h] -o output_file.g input_file.3dm\n";
-
-    const char * args[] = {"--random-colors"};
+	"Usage: 3dm-g [-v] [-h] -o output_file.g input_file.3dm\n";
 
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
@@ -74,14 +58,12 @@ main(int argc, char **argv)
     struct gcv_opts gcv_options;
     const char *output_path = NULL;
     const char *input_path;
-    int random_colors = 0;
-    int analysis_hierarchy = 1;
     int c;
 
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
 
-    while ((c = bu_getopt(argc, argv, "o:ervh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:vh?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_path = bu_optarg;
@@ -89,14 +71,6 @@ main(int argc, char **argv)
 
 	    case 'v':
 		gcv_options.verbosity_level = 1;
-		break;
-
-	    case 'e':
-		analysis_hierarchy = 0;
-		break;
-
-	    case 'r':
-		random_colors = 1;
 		break;
 
 	    default:
@@ -112,14 +86,7 @@ main(int argc, char **argv)
 
     input_path = argv[bu_optind];
 
-    if (analysis_hierarchy) {
-	bu_log("importing simplified hierarchy\n");
-	in_filter = get_filter("Rhino Analysis Hierarchy Reader");
-    } else {
-	bu_log("importing full hierarchy\n");
-	in_filter = get_filter("Rhino Reader");
-    }
-
+    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO);
     out_filter = find_filter(GCV_FILTER_WRITE,
 			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
 
@@ -133,8 +100,7 @@ main(int argc, char **argv)
 
     gcv_context_init(&context);
 
-    if (!gcv_execute(&context, in_filter, &gcv_options,
-		     random_colors ? sizeof(args) / sizeof(args[0]) : 0, args, input_path)) {
+    if (!gcv_execute(&context, in_filter, &gcv_options, 0, NULL, input_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to load input file");
     }
