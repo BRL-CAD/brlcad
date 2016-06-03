@@ -69,6 +69,18 @@ rt_generate_mesh(int **faces, int *num_faces, point_t **points, int *num_pnts,
 
 RT_EXPORT extern void rt_generic_make(const struct rt_functab *ftp, struct rt_db_internal *intern);
 
+/**
+ * reduce an object into some form of simpler representation
+ */
+RT_EXPORT extern void rt_reduce_obj(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
+
+#define RT_REDUCE_OBJ_PRESERVE_VOLUME 0x1
+
+/**
+ * reduce the database hierarchy
+ */
+RT_EXPORT extern void rt_reduce_db(struct db_i *dbip);
+
 __END_DECLS
 
 #endif /* RT_MISC_H */

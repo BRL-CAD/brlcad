@@ -26,8 +26,9 @@
 
 #include "common.h"
 
-#include "rt/func.h"
+#include "rt/functab.h"
 #include "rt/primitives/bot.h"
+#include "rt/misc.h"
 #include "rt/db5.h"
 
 
