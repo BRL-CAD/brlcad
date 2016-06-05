@@ -311,6 +311,8 @@ set(librt_ignored_files
   primitives/dsp/dsp.h
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
+  primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
@@ -346,6 +348,7 @@ set(CL_FILES
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
   primitives/sph/sph_shot.cl
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl

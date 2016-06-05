@@ -599,6 +599,7 @@ clt_init(void)
             "ehy_shot.cl",
             "ell_shot.cl",
             "epa_shot.cl",
+            "eto_shot.cl",
             "sph_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
@@ -663,6 +664,7 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
 	case ID_ARS:
 	case ID_BOT:    size = clt_bot_pack(pool, stp);	break;
 	case ID_EPA:    size = clt_epa_pack(pool, stp);	break;
+	case ID_ETO:    size = clt_eto_pack(pool, stp); break;
 	default:	size = 0;			break;
     }
     return size;

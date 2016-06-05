@@ -150,6 +150,45 @@ const struct bu_structparse rt_eto_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_eto_specific {
+    cl_double eto_V[3];        /* Vector to center of eto */
+    cl_double eto_r;       /* radius of revolution */
+    cl_double eto_rc;      /* semi-major axis of ellipse */
+    cl_double eto_rd;      /* semi-minor axis of ellipse */
+    cl_double eto_R[16];       /* Rot(vect) */
+    cl_double eto_invR[16];    /* invRot(vect') */
+    cl_double eu, ev, fu, fv;
+};
+
+size_t
+clt_eto_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct eto_specific *eto =
+        (struct eto_specific *)stp->st_specific;
+    struct clt_eto_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_eto_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->eto_V, eto->eto_V);
+    MAT_COPY(args->eto_R, eto->eto_R);
+    MAT_COPY(args->eto_invR, eto->eto_invR);
+    args->eto_r = eto->eto_r;
+    args->eto_rc = eto->eto_rc;
+    args->eto_rd = eto->eto_rd;
+    args->eu = eto->eu;
+    args->ev = eto->ev;
+    args->fu = eto->fu;
+    args->fv = eto->fv;
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Calculate bounding RPP of elliptical torus
  */
