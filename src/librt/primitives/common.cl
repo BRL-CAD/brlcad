@@ -11,6 +11,9 @@
 #define double4 float4
 #define double16 float16
 
+#define convert_double3 convert_float3
+#define as_ulong (ulong)
+
 #define DOUBLE_C(value) \
 	value ## f
 #else
