@@ -32,6 +32,7 @@
 #include "rt/nongeom.h"
 #include "rt/search.h"
 #include "rt/tree.h"
+#include "rt/db_attr.h"
 
 #include <map>
 #include <set>
@@ -140,46 +141,30 @@ namespace
 {
 
 
-struct Member {
-    Member(const directory &dir, int operation, const fastf_t *matrix);
-
-    bool operator==(const Member &other) const;
+class Hierarchy;
 
 
-    const directory *m_dir;
-    int m_operation;
-    mat_t m_matrix;
-};
-
-
-Member::Member(const directory &dir, int operation, const fastf_t *matrix) :
-    m_dir(&dir),
-    m_operation(operation),
-    m_matrix()
-{
-    if (matrix)
-	MAT_COPY(m_matrix, matrix);
-    else
-	MAT_IDN(m_matrix);
-}
-
-
-class Combination
-{
-public:
+struct Combination {
     Combination();
-    explicit Combination(db_i &db, directory &dir);
+    Combination(db_i &db, directory &dir);
     Combination(const Combination &source);
     Combination &operator=(const Combination &source);
 
     void write();
 
-    bool has_unmergeable_member_comb(const Combination &other) const;
+    bool has_unmergeable_member_comb(const Hierarchy &hierarchy,
+				     const Combination &other) const;
     void merge_member_comb_if_present(const Combination &other);
 
 
-private:
-    bool has_member(const directory &dir) const;
+    struct Member {
+	Member(directory &dir, int operation, const fastf_t *matrix);
+
+	directory *m_dir;
+	int m_operation;
+	mat_t m_matrix;
+    };
+
 
     db_i *m_db;
     directory *m_dir;
@@ -191,17 +176,16 @@ private:
 class Hierarchy
 {
 public:
-    Hierarchy(db_i &db);
+    explicit Hierarchy(db_i &db);
 
     void merge();
     void write();
 
+    typedef std::map<directory *, Combination> Combs;
+    Combs m_combinations;
 
 private:
-    typedef std::map<directory *, Combination> Combs;
-
     db_i &m_db;
-    Combs m_combinations;
     std::set<directory *> m_removed;
 };
 
@@ -215,7 +199,7 @@ Hierarchy::merge()
 	// check if the current comb can be merged by all parents
 	for (Combs::iterator j_it = m_combinations.begin();
 	     j_it != m_combinations.end(); ++j_it)
-	    if (j_it->second.has_unmergeable_member_comb(it->second)) {
+	    if (j_it->second.has_unmergeable_member_comb(*this, it->second)) {
 		possible = false;
 		break;
 	    }
@@ -254,8 +238,8 @@ Hierarchy::write()
 
 
 Hierarchy::Hierarchy(db_i &db) :
-    m_db(db),
     m_combinations(),
+    m_db(db),
     m_removed()
 {
     db_update_nref(&db, &rt_uniresource);
@@ -265,6 +249,19 @@ Hierarchy::Hierarchy(db_i &db) :
 
     for (std::size_t i = 0; i < num_combs; ++i)
 	m_combinations[comb_dirs.ptr[i]] = Combination(db, *comb_dirs.ptr[i]);
+}
+
+
+Combination::Member::Member(directory &dir, int operation,
+			    const fastf_t *matrix) :
+    m_dir(&dir),
+    m_operation(operation),
+    m_matrix()
+{
+    if (matrix)
+	MAT_COPY(m_matrix, matrix);
+    else
+	MAT_IDN(m_matrix);
 }
 
 
@@ -305,6 +302,15 @@ Combination::Combination(db_i &db, directory &dir) :
 	m_members.push_back(Member(*temp, tree_list.ptr[i].tl_op,
 				   tree_list.ptr[i].tl_tree->tr_l.tl_mat));
     }
+
+    bu_attribute_value_set avs;
+    const AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs;
+
+    if (db5_get_attributes(m_db, &avs, m_dir))
+	bu_bomb("db5_get_attributes() failed");
+
+    for (std::size_t i = 0; i < avs.count; ++i)
+	m_attributes[avs.avp[i].name] = avs.avp[i].value;
 }
 
 
@@ -323,6 +329,7 @@ Combination::operator=(const Combination &source)
 	m_db = source.m_db;
 	m_dir = source.m_dir;
 	m_members = source.m_members;
+	m_attributes = source.m_attributes;
     }
 
     return *this;
@@ -330,25 +337,44 @@ Combination::operator=(const Combination &source)
 
 
 bool
-Combination::has_member(const directory &dir) const
-{
-    for (std::list<Member>::const_iterator it = m_members.begin();
-	 it != m_members.end(); ++it)
-	if (it->m_dir == &dir)
-	    return true;
-
-    return false;
-}
-
-
-bool
-Combination::has_unmergeable_member_comb(const Combination &other) const
+Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
+	const Combination &other) const
 {
     if (!other.m_dir->d_nref)
 	return true;
 
-    if (!has_member(*other.m_dir))
+    bool is_member = false;
+
+    for (std::list<Member>::const_iterator it = m_members.begin();
+	 it != m_members.end(); ++it)
+	if (it->m_dir == other.m_dir) {
+	    if (it->m_operation != OP_UNION)
+		return true;
+	    else
+		is_member = true;
+	}
+
+    if (!is_member)
 	return false;
+
+    for (std::map<std::string, std::string>::const_iterator it =
+	     other.m_attributes.begin(); it != other.m_attributes.end(); ++it) {
+	// TODO: allow the user to specify ignored attributes
+	if (it->first == "rhino::type" || it->first == "rhino::uuid") continue;
+
+	const std::map<std::string, std::string>::const_iterator found =
+	    m_attributes.find(it->first);
+
+	if (found == m_attributes.end() || found->second != it->second)
+	    for (std::list<Member>::const_iterator kt = m_members.begin();
+		 kt != m_members.end(); ++kt) {
+		const Combination &temp = hierarchy.m_combinations.at(kt->m_dir);
+
+		if (!temp.m_attributes.count(it->first)
+		    || temp.m_attributes.at(it->first) != it->second)
+		    return true;
+	    }
+    }
 
     for (std::list<Member>::const_iterator it = other.m_members.begin();
 	 it != other.m_members.end(); ++it)
@@ -362,8 +388,7 @@ Combination::has_unmergeable_member_comb(const Combination &other) const
 void
 Combination::merge_member_comb_if_present(const Combination &other)
 {
-    if (!has_member(*other.m_dir))
-	return;
+    bool is_member = false;
 
     for (std::list<Member>::iterator it = m_members.begin(); it != m_members.end();)
 	if (it->m_dir == other.m_dir) {
@@ -378,11 +403,14 @@ Combination::merge_member_comb_if_present(const Combination &other)
 	    ++next;
 	    m_members.erase(it);
 	    it = next;
+	    is_member = true;
 	} else
 	    ++it;
 
-    // FIXME handle attributes in our member
-    std::list<Member> temp_members = other.m_members;
+    if (is_member)
+	for (std::map<std::string, std::string>::const_iterator it =
+		 other.m_attributes.begin(); it != other.m_attributes.end(); ++it)
+	    m_attributes[it->first] = it->second;
 }
 
 
@@ -426,6 +454,17 @@ void Combination::write()
 
     if (rt_db_put_internal(m_dir, m_db, &internal, &rt_uniresource))
 	bu_bomb("rt_db_put_internal() failed");
+
+    bu_attribute_value_set avs;
+    bu_avs_init(&avs, m_attributes.size(), "avs");
+
+    for (std::map<std::string, std::string>::const_iterator it =
+	     m_attributes.begin(); it != m_attributes.end(); ++it)
+	if (2 != bu_avs_add(&avs, it->first.c_str(), it->second.c_str()))
+	    bu_bomb("bu_avs_add() failed");
+
+    if (db5_replace_attributes(m_dir, &avs, m_db))
+	bu_bomb("db5_replace_attributes() failed");
 }
 
 
