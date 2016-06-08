@@ -11,6 +11,40 @@
   </info>
 
   <section>
+    <title>Introduction</title>
+    <para>
+      This document is intended to be a practical resource for
+      software developers making changes to BRL-CAD's NURBS Boolean
+      Evaluation implementation.
+    </para>
+    <para>
+      It is assumed that the reader is familiar with software
+      development and the BRL-CAD software package, including how to
+      acquire, modify, and rebuild the BRL-CAD source code, and how to
+      run its applications with a debugging program. It is also
+      assumed that the reader has a basic understanding of geometry
+      concepts including surface normal vectors, parametric functions,
+      and NURBS as a boundary representation (B-rep).
+    </para>
+    <para>
+      Section 2 of this document briefly describes NURBS Boolean
+      Evaluation in BRL-CAD from a user perspective.
+    </para>
+    <para>
+      Section 3 outlines the major algorithms being used and the files
+      and functions in the BRL-CAD source code that implement them. It
+      also explains important concepts helpful in understanding and
+      modifying the source code.
+    </para>
+    <para>
+      Section 4 covers the current process for debugging evaluation
+      issues. It describes available debugging tools, and provides
+      step-by-step instructions for applying them in common situations
+      as well as a complete example of debugging a real evaluation
+      issue.
+    </para>
+  </section>
+  <section>
     <title>NURBS Boolean Evaluation Using the brep Command</title>
     <section>
       <title>Known Limitations</title>
