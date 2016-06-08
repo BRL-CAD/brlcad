@@ -21,6 +21,8 @@
  *
  * Evaluate NURBS booleans (union, intersection and difference).
  *
+ * Additional documentation can be found in the "NURBS Boolean Evaluation
+ * Development Guide" docbook article (bool_eval_development.html).
  */
 
 #include "common.h"

@@ -21,6 +21,8 @@
  *
  * Implementation of intersection routines openNURBS left out.
  *
+ * Additional documentation can be found in the "NURBS Boolean Evaluation
+ * Development Guide" docbook article (bool_eval_development.html).
  */
 
 #include "common.h"
