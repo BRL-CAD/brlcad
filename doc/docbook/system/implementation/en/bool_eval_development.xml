@@ -22,9 +22,9 @@
       development and the BRL-CAD software package, including how to
       acquire, modify, and rebuild the BRL-CAD source code, and how to
       run its applications with a debugging program. It is also
-      assumed that the reader has a basic understanding of geometry
-      concepts including surface normal vectors, parametric functions,
-      and NURBS as a boundary representation (B-rep).
+      assumed that the reader has a basic understanding of concepts
+      from geometry such as surface normal vectors, parametric
+      functions, and NURBS used as a boundary representation (B-rep).
     </para>
     <para>
       Section 2 of this document briefly describes NURBS Boolean
@@ -39,61 +39,69 @@
     <para>
       Section 4 covers the current process for debugging evaluation
       issues. It describes available debugging tools, and provides
-      step-by-step instructions for applying them in common situations
-      as well as a complete example of debugging a real evaluation
-      issue.
+      step-by-step instructions for tracking down bugs based on debug
+      information, including a complete example of debugging a real
+      evaluation issue.
+    </para>
+    <para>
+      It should be noted that some of the information in this document
+      may become outdated due to future changes to the BRL-CAD
+      software suite. Any developer making significant changes to the
+      implementation should update the copy of this document that is
+      included with the BRL-CAD source code.
     </para>
   </section>
   <section>
     <title>NURBS Boolean Evaluation Using the brep Command</title>
-    <section>
-      <title>Known Limitations</title>
-      <itemizedlist>
-        <listitem>
-          <para>
-            Frequently produces incorrect output due to unhandled
-            intersection cases.
-          </para>
-        </listitem>
-        <listitem>
-          <para>
-            Unoptimized performance.
-          </para>
-        </listitem>
-	<listitem>
-          <para>
-            Material properties of source objects are discarded.
-          </para>
-        </listitem>
-	<listitem>
-          <para>
-            Some primitive conversions to NURBS are ill-defined.
-          </para>
-        </listitem>
-	<listitem>
-          <para>
-            Hollow objects are not built topologically continuous.
-          </para>
-        </listitem>
-      </itemizedlist>
-    </section>
-    <section>
-      <title>Evaluating a Combination Using the brep Command</title>
-      <para>
-        The <function>brep</function> command is available in the MGED
-        and Archer applications. If the command is run with a single argument
-        <literal>obj</literal> naming a combination, the components
-        of the combination are converted into NURBS objects which are
-        combined into a single evaluated NURBS object according to the
-        Boolean operations in the combination.
-      </para>
-      <para>
-        The evaluated brep-type object is written to the database with
-        the name <literal>obj_brep</literal>. If a second argument is
-        provided to the <function>brep</function> command, then it is
-        used as the name for the evaluated brep.
-      </para>
-    </section>
+    <para>
+      The <function>brep</function> command is available in BRL-CAD's
+      MGED and Archer applications. If the command is run with a
+      single argument naming a combination, the components of the
+      combination are converted into NURBS objects which are combined
+      into a single evaluated NURBS object according to the Boolean
+      operations in the combination.
+    </para>
+    <para>
+      By default, the evaluated brep-type object is written to the
+      database with its original name plus the suffix
+      <literal>_brep</literal> (e.g. running the
+      <function>brep</function> command on <literal>obj</literal>
+      produces <literal>obj_brep</literal>). If a specific name is
+      desired for the output object, it can be provided as the second
+      argument to the <function>brep</function> command.
+    </para>
+    <para>
+      There are a number of known limitations to the NURBS Boolean
+      Evaluator as currently implemented:
+    </para>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Frequently produces incorrect output due to unhandled
+          intersection cases.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Unoptimized performance.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Material properties of source objects are discarded.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Some primitive conversions to NURBS are ill-defined.
+        </para>
+      </listitem>
+      <listitem>
+        <para>
+          Hollow objects are not built topologically continuous.
+        </para>
+      </listitem>
+    </itemizedlist>
   </section>
 
   <section>
@@ -107,11 +115,14 @@
       </mediaobject>
       <caption>
         <para>
-          Two NURBS cubes (red and blue) are intersected (leftmost
-          image). The individual faces of each object are split by the
-          intersections and categorized as belonging (red, blue) or
-          not belonging (purple) in the final evaluated brep
-          (rightmost image).
+          One cube (red) is subtracted from another (blue). Leftmost
+          image: the two cubes are first converted to B-rep objects
+          and intersected. Middle images: the individual faces
+          involved in the intersection are split by the intersection
+          curves and categorized as belonging (red, blue) or not
+          belonging (purple) in the final evaluated object. Rightmost
+          image: the final object is stitched together from the
+          retained trimmed faces.
         </para>
       </caption>
     </figure>
@@ -127,21 +138,28 @@
           <filename>src/libbrep/boolean.cpp</filename>.
         </para>
         <para>
-          The NURBS Surface-Surface intersection algorithm is based on
+          The NURBS surface-surface intersection algorithm is based on
           the "NURBS Intersection Curve Evaluation" section of the
           paper <emphasis>Performing Efficient NURBS Modeling
           Operations on the GPU</emphasis> (A. Krishnamurthy et
           al., 2008). A detailed outline of the algorithm, as
           implemented, appears in the main implementation file for the
-          NURBS Surface-Surface intersection algorithm is
+          NURBS Surface-Surface intersection algorithm,
           <filename>src/libbrep/intersection.cpp</filename>.
         </para>
       </section>        
     </section>
     <section>
-      <title>Description of Major Functions</title>
+      <title>Descriptions of Major Functions</title>
       <section>
 	<title><filename>src/libbrep/boolean.cpp</filename></title>
+        <para>
+          The <function>ON_Boolean</function> function performs a
+          single evaluation. A single execution of the
+          <function>brep</function> command in MGED or Archer may
+          involve passing several successive pairs of B-rep objects to
+          this function.
+        </para>
 	<synopsis>
 	<![CDATA[
 int
@@ -153,7 +171,13 @@ ON_Boolean(
 	]]>
 	</synopsis>
 	<para>
-	In the nontrivial case where the bounding boxes of <parameter>brep1</parameter> and <parameter>brep2</parameter> intersect, <function>get_evaluated_faces</function> is called to get the trimmed NURBS faces of the evaluated boolean result. The faces are then combined into a single brep object returned via the <parameter>evaluated_brep</parameter> argument. 
+	  In the nontrivial case where the bounding boxes of
+	  <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> intersect,
+	  <function>get_evaluated_faces</function> is called to get
+	  the trimmed NURBS faces of the evaluated boolean result. The
+	  faces are then combined into a single brep object returned
+	  via the <parameter>evaluated_brep</parameter> argument.
 	</para>
 	<synopsis>
 	<![CDATA[
@@ -165,7 +189,20 @@ get_evaluated_faces(
 	]]>
 	</synopsis>
 	<para>
-	The intersection curves between the faces of <parameter>brep1</parameter> and <parameter>brep2</parameter> are found by <function>get_face_intersection_curves</function>. These curves are used to split the original surfaces into pieces, each becoming a new trimmed NURBS face. The <function>categorize_trimmed_faces</function> function is used to identify which pieces, based on the boolean operation, are part of the evaluated result. Each <classname>TrimmedFace</classname> whose <varname>m_belong_to_final</varname> member is marked <constant>TrimmedFace::BELONG</constant> is used by <function>ON_Boolean</function> to create the final evaluated result.
+	  The intersection curves between the faces of
+	  <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> are found by
+	  <function>get_face_intersection_curves</function>. These
+	  curves are used to split the original surfaces into pieces,
+	  each becoming a new trimmed NURBS face. The
+	  <function>categorize_trimmed_faces</function> function is
+	  used to identify which pieces, based on the boolean
+	  operation, are part of the evaluated result. Each
+	  <classname>TrimmedFace</classname> whose
+	  <varname>m_belong_to_final</varname> member is marked
+	  <constant>TrimmedFace::BELONG</constant> is used by
+	  <function>ON_Boolean</function> to create the final
+	  evaluated result.
 	</para>
 	<synopsis>
 	<![CDATA[
@@ -179,7 +216,15 @@ get_face_intersection_curves(
 	]]>
 	</synopsis>
 	<para>
-	    Each pair of <parameter>brep1</parameter> and <parameter>brep2</parameter> surfaces whose bounding boxes intersect are passed to the <function>ON_Intersect</function> surface-surface intersection routine. The surface-surface intersection curves are then clipped using the trimming curves of the associated faces by the <function>get_subcurves_inside_faces</function> routine.
+	  Each pair of <parameter>brep1</parameter> and
+	  <parameter>brep2</parameter> surfaces whose bounding boxes
+	  intersect are passed to the
+	  <function>ON_Intersect</function> surface-surface
+	  intersection routine. The
+	  <function>get_subcurves_inside_faces</function> routine is
+	  used to remove irrelevant parts of the surface-surface
+	  intersection curves based on the trimming curves of the
+	  associated faces.
 	</para>
       </section>
       <section>
@@ -210,49 +255,58 @@ ON_Intersect(const ON_Surface *surfA,
 	    surfaces.
         </para>
         <para>
-            Subcurves of isocurves that intersect both
-	    surfaces, such that the surfaces are coincident on one
-	    side of the curve but not the other, potentially form part
-	    of overlap boundaries. These curves are identified using
-	    <function>find_overlap_boundary_curves</function>, which
-	    may also return some intersection points and curves that
-	    aren't on overlap boundaries to avoid wasted effort.
+            Subcurves of isocurves that intersect both surfaces, such
+            that the surfaces are coincident on one side of the curve
+            but not the other, potentially form part of overlap
+            boundaries. These curves are identified using
+            <function>find_overlap_boundary_curves</function>. To
+            avoid wasted computations, this function also returns
+            intersection points and non-boundary intersection curves
+            which were found during the search for boundary curves.
         </para>
         <para>
             Then, the
             <function>split_overlaps_at_intersections</function>
-            function is run, and curves that share endpoints are
-            stitched together. Stitched curves that close to form
-            loops are recorded as overlap intersection events.
+            function is run, and curve pieces that share endpoints are
+            stitched together. The stitched boundary curves which
+            close to form loops are recorded as overlap intersection
+            events.
 	</para>
 	<para>
-	The second stage of the surface-surface intersection algorithm
-	attempts to identify other intersection curves and points. The
-	input surfaces <parameter>surfA</parameter> and
-	<parameter>surfB</parameter> are subdivided into four
-	subsurfaces, whose bounding boxes are tested in pairs for
-	intersection. This subdivision repeats to a fixed depth
-	determined by <constant>MAX_SSI_DEPTH</constant>.
+	  The second stage of the surface-surface intersection
+	  algorithm attempts to identify other intersection curves and
+	  points. The input surfaces <parameter>surfA</parameter> and
+	  <parameter>surfB</parameter> are subdivided into four
+	  subsurfaces, whose bounding boxes are tested in pairs to see
+	  which subsurfaces potentially intersect. This subdivision
+	  repeats to a fixed depth determined by the constant
+	  <constant>MAX_SSI_DEPTH</constant> (defined in
+	  <filename>src/libbrep/brep_defines.h</filename>).
         </para>
         <para>
           Subsurfaces that lie completely inside an overlap region
-          identified in the first stage are discarded. Each final pair
-          of subsurfaces with intersecting bounding boxes is
-          approximated with two triangles. The triangles are then
-          intersected, and the average of all intersection points is
-          used as the initial guess for a Newton iterative solver,
-          implemented by <function>newton_ssi</function>, which
-          searches for a point close to the initial guess point which
-          lies on both surfaces.
+          identified in the first stage are discarded. Each remaining
+          pair of subsurfaces with intersecting bounding boxes is
+          tested for intersection. This is accomplished by
+          approximating each subsurface with two triangles (i.e. a
+          planar quad whose corners coincide with those of the actual
+          subsurface patch, which has been split diagonally for a more
+          accurate fit). The triangles are then intersected, and the
+          average of all intersection points is used as the initial
+          guess for a Newton iterative solver, implemented by
+          <function>newton_ssi</function>, which searches for a point
+          close to the initial guess point which lies on both
+          surfaces.
         </para>
         <para>
           Solved points that lies inside an overlap region identified
-          in the first stage are discarded. Nearby points in the set
-          of solved intersection points between
+          in the first stage are discarded. Of the remaining points
+          solved intersection points between
           <parameter>surfA</parameter> and
-          <parameter>surfB</parameter> are then stitched together into
-          polyline curves. If a line or conic curve can be fit to the
-          polyline curves in 2D, the fit curve replaces the original
+          <parameter>surfB</parameter>, those which are near one
+          another are stitched together into polyline curves. If a
+          line or conic curve can be fit to the polyline curves in 2D,
+          the fit curve replaces the original
           <parameter>surfA</parameter> and/or
           <parameter>surfB</parameter> polyline curve.
 	</para>
