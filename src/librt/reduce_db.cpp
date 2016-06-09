@@ -165,8 +165,9 @@ struct Combination {
     bool is_unions() const;
     bool has_unmergeable_member_comb(const Hierarchy &hierarchy,
 				     const Combination &other) const;
-    void merge_member_comb_if_present(const Combination &other);
-    std::string get_mergeable_siblings_key() const;
+    void merge_member_comb_if_present(const Hierarchy &hierarchy,
+				      const Combination &other);
+    std::string get_mergeable_siblings_key(const Hierarchy &hierarchy) const;
     void get_mergeable_siblings(const Hierarchy &hierarchy,
 				std::set<directory *> &unmergeable,
 				std::map<std::string, std::map<directory *, Member> > &mergeable) const;
@@ -182,21 +183,20 @@ struct Combination {
 };
 
 
-class Hierarchy
-{
+struct Hierarchy {
 public:
-    explicit Hierarchy(db_i &db);
+    Hierarchy(db_i &db, const std::set<std::string> &preserved_attributes,
+	      const std::set<directory *> &preserved_combs);
 
     void merge_children();
     void merge_siblings();
     void write();
 
 
-    std::map<directory *, Combination> m_combinations;
-
-
-private:
     db_i &m_db;
+    const std::set<std::string> m_preserved_attributes;
+    const std::set<directory *> m_preserved_combs;
+    std::map<directory *, Combination> m_combinations;
     std::set<directory *> m_removed;
 };
 
@@ -222,13 +222,12 @@ Hierarchy::merge_children()
 
 	for (std::map<directory *, Combination>::iterator j_it = m_combinations.begin();
 	     j_it != m_combinations.end(); ++j_it)
-	    j_it->second.merge_member_comb_if_present(it->second);
+	    j_it->second.merge_member_comb_if_present(*this, it->second);
 
 	if (!m_removed.insert(it->first).second)
 	    bu_bomb("already removed");
 
-	const std::map<directory *, Combination>::iterator temp = it++;
-	m_combinations.erase(temp);
+	m_combinations.erase(it++);
     }
 }
 
@@ -236,7 +235,7 @@ Hierarchy::merge_children()
 void
 Hierarchy::merge_siblings()
 {
-    std::set<directory *> unmergeable;
+    std::set<directory *> unmergeable = m_preserved_combs;
     std::map<std::string, std::map<directory *, Combination::Member> > mergeable;
 
     for (std::map<directory *, Combination>::const_iterator it =
@@ -296,9 +295,13 @@ Hierarchy::write()
 }
 
 
-Hierarchy::Hierarchy(db_i &db) :
-    m_combinations(),
+Hierarchy::Hierarchy(db_i &db,
+		     const std::set<std::string> &preserved_attributes,
+		     const std::set<directory *> &preserved_combs) :
     m_db(db),
+    m_preserved_attributes(preserved_attributes),
+    m_preserved_combs(preserved_combs),
+    m_combinations(),
     m_removed()
 {
     db_update_nref(&db, &rt_uniresource);
@@ -376,9 +379,13 @@ Combination::Combination(db_i &db, directory &dir) :
     BU_ASSERT_SIZE_T(actual_count, ==, node_count);
 
     for (std::size_t i = 0; i < node_count; ++i) {
-	struct directory * const temp = db_lookup(&db,
-					tree_list.ptr[i].tl_tree->tr_l.tl_name, true);
-	m_members.push_back(Member(*temp, tree_list.ptr[i].tl_op,
+	struct directory * const member_dir = db_lookup(&db,
+					      tree_list.ptr[i].tl_tree->tr_l.tl_name, true);
+
+	if (!member_dir)
+	    bu_bomb("db_lookup() failed");
+
+	m_members.push_back(Member(*member_dir, tree_list.ptr[i].tl_op,
 				   tree_list.ptr[i].tl_tree->tr_l.tl_mat));
     }
 
@@ -430,7 +437,7 @@ bool
 Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 	const Combination &other) const
 {
-    if (!other.m_dir->d_nref)
+    if (!other.m_dir->d_nref || hierarchy.m_preserved_combs.count(other.m_dir))
 	return true;
 
     if (!other.is_unions())
@@ -450,8 +457,8 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 
     for (std::map<std::string, std::string>::const_iterator it =
 	     other.m_attributes.begin(); it != other.m_attributes.end(); ++it) {
-	// TODO: allow the user to specify ignored attributes
-	if (it->first == "rhino::type" || it->first == "rhino::uuid") continue;
+	if (hierarchy.m_preserved_attributes.count(it->first))
+	    continue;
 
 	if (!m_attributes.count(it->first) || m_attributes.at(it->first) != it->second)
 	    for (std::list<Member>::const_iterator kt = m_members.begin();
@@ -469,7 +476,8 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 
 
 void
-Combination::merge_member_comb_if_present(const Combination &other)
+Combination::merge_member_comb_if_present(const Hierarchy &hierarchy,
+	const Combination &other)
 {
     bool is_member = false;
 
@@ -482,8 +490,7 @@ Combination::merge_member_comb_if_present(const Combination &other)
 		m_members.push_back(temp);
 	    }
 
-	    std::list<Member>::iterator temp = it++;
-	    m_members.erase(temp);
+	    it = m_members.erase(it);
 	    is_member = true;
 	} else
 	    ++it;
@@ -491,19 +498,19 @@ Combination::merge_member_comb_if_present(const Combination &other)
     if (is_member)
 	for (std::map<std::string, std::string>::const_iterator it =
 		 other.m_attributes.begin(); it != other.m_attributes.end(); ++it)
-	    m_attributes[it->first] = it->second;
+	    if (!hierarchy.m_preserved_attributes.count(it->first))
+		m_attributes[it->first] = it->second;
 }
 
 
 std::string
-Combination::get_mergeable_siblings_key() const
+Combination::get_mergeable_siblings_key(const Hierarchy &hierarchy) const
 {
     std::string result;
 
     for (std::map<std::string, std::string>::const_iterator it =
 	     m_attributes.begin(); it != m_attributes.end(); ++it)
-	if (it->first != "rhino::type" && it->first != "rhino::uuid") {
-	    // TODO: allow the user to specify ignored attributes
+	if (!hierarchy.m_preserved_attributes.count(it->first)) {
 	    result.append(it->first);
 	    result.push_back('\0');
 	    result.append(it->second);
@@ -518,10 +525,9 @@ void
 Combination::remove_member(const directory &dir)
 {
     for (std::list<Member>::iterator it = m_members.begin(); it != m_members.end();)
-	if (it->m_dir == &dir) {
-	    std::list<Member>::iterator temp = it++;
-	    m_members.erase(temp);
-	} else
+	if (it->m_dir == &dir)
+	    it = m_members.erase(it);
+	else
 	    ++it;
 }
 
@@ -540,7 +546,7 @@ Combination::get_mergeable_siblings(const Hierarchy &hierarchy,
 	    if (!current_comb.is_unions())
 		continue;
 
-	    const std::string key = current_comb.get_mergeable_siblings_key();
+	    const std::string key = current_comb.get_mergeable_siblings_key(hierarchy);
 
 	    if (it->m_operation != OP_UNION) {
 		unmergeable.insert(it->m_dir);
@@ -626,10 +632,33 @@ extern "C"
 	RT_CK_DBI(db);
 
 	remove_dead_references(*db);
-	Hierarchy temp(*db);
-	temp.merge_children();
-	temp.merge_siblings();
-	temp.write();
+
+	std::set<std::string> preserved_attributes;
+	preserved_attributes.insert("rhino::uuid");
+	preserved_attributes.insert("rhino::type");
+
+	std::set<directory *> preserved_combs;
+	{
+	    bu_ptbl found;
+	    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+
+	    const int ret = db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
+				      "-attr rhino::type=ON_Layer", 0, NULL, db);
+
+	    if (ret < 0)
+		bu_bomb("db_search() failed");
+
+	    directory **entry;
+
+	    if (ret)
+		for (BU_PTBL_FOR(entry, (directory **), &found))
+		    preserved_combs.insert(*entry);
+	}
+
+	Hierarchy hierarchy(*db, preserved_attributes, preserved_combs);
+	hierarchy.merge_children();
+	hierarchy.merge_siblings();
+	hierarchy.write();
     }
 }
 
