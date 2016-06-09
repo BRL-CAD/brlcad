@@ -26,6 +26,7 @@
 
 #include "common.h"
 
+#include "bu/path.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 #include "wdb.h"
@@ -242,7 +243,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 
 HIDDEN void
 load_model(const gcv_opts &gcv_options, const std::string &path,
-	   ONX_Model &model)
+	   ONX_Model &model, std::string &root_name)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed");
@@ -263,6 +264,11 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 
     // clean and remove duplicate names
     std::map<ON_wString, std::size_t> seen;
+    {
+	ON_wString temp = root_name.c_str();
+	clean_name(seen, gcv_options.default_name, temp);
+	root_name = ON_String(temp).Array();
+    }
 
 #define REPLACE_NAMES(array, member) \
 do { \
@@ -660,13 +666,14 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 
 
 HIDDEN void
-import_model_layers(rt_wdb &wdb, const ONX_Model &model)
+import_model_layers(rt_wdb &wdb, const ONX_Model &model,
+		    const std::string &root_name)
 {
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
 	import_layer(wdb, at(model.m_layer_table, i), model);
 
     ON_Layer root_layer;
-    root_layer.SetLayerName("root");
+    root_layer.SetLayerName(root_name.c_str());
     import_layer(wdb, root_layer, model);
 }
 
@@ -675,10 +682,21 @@ HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
+    std::string root_name;
+    {
+	bu_vls temp = BU_VLS_INIT_ZERO;
+	AutoPtr<bu_vls, bu_vls_free> autofree_temp(&temp);
+
+	if (!bu_path_component(&temp, source_path, BU_PATH_BASENAME))
+	    return 1;
+
+	root_name = bu_vls_addr(&temp);
+    }
+
     try {
 	ONX_Model model;
-	load_model(*gcv_options, source_path, model);
-	import_model_layers(*context->dbip->dbi_wdbp, model);
+	load_model(*gcv_options, source_path, model, root_name);
+	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
