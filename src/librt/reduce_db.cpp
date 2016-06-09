@@ -225,7 +225,7 @@ Hierarchy::merge_children()
 	    j_it->second.merge_member_comb_if_present(it->second);
 
 	if (!m_removed.insert(it->first).second)
-	    bu_bomb("already processed");
+	    bu_bomb("already removed");
 
 	const std::map<directory *, Combination>::iterator temp = it++;
 	m_combinations.erase(temp);
@@ -269,7 +269,9 @@ Hierarchy::merge_siblings()
 		 kt != m_combinations.end(); ++kt)
 		kt->second.remove_member(*current_comb.m_dir);
 
-	    m_removed.insert(current_comb.m_dir);
+	    if (!m_removed.insert(current_comb.m_dir).second)
+		bu_bomb("already removed");
+
 	    m_combinations.erase(current_comb.m_dir);
 	}
     }
@@ -451,10 +453,7 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 	// TODO: allow the user to specify ignored attributes
 	if (it->first == "rhino::type" || it->first == "rhino::uuid") continue;
 
-	const std::map<std::string, std::string>::const_iterator found =
-	    m_attributes.find(it->first);
-
-	if (found == m_attributes.end() || found->second != it->second)
+	if (!m_attributes.count(it->first) || m_attributes.at(it->first) != it->second)
 	    for (std::list<Member>::const_iterator kt = m_members.begin();
 		 kt != m_members.end(); ++kt) {
 		const Combination &temp = hierarchy.m_combinations.at(kt->m_dir);
@@ -483,10 +482,8 @@ Combination::merge_member_comb_if_present(const Combination &other)
 		m_members.push_back(temp);
 	    }
 
-	    std::list<Member>::iterator next = it;
-	    ++next;
-	    m_members.erase(it);
-	    it = next;
+	    std::list<Member>::iterator temp = it++;
+	    m_members.erase(temp);
 	    is_member = true;
 	} else
 	    ++it;
