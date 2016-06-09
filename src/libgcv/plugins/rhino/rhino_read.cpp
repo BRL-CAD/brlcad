@@ -704,7 +704,17 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	return 0;
     }
 
-    rt_reduce_db(context->dbip);
+    const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
+    bu_ptbl found;
+    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
+		      "-attr rhino::type=ON_Layer", 0, NULL, context->dbip))
+	bu_bomb("db_search() failed");
+
+    rt_reduce_db(context->dbip,
+		 sizeof(ignored_attributes) / sizeof(ignored_attributes[0]), ignored_attributes,
+		 &found);
     return 1;
 }
 

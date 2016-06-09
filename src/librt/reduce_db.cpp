@@ -627,32 +627,29 @@ Combination::write()
 extern "C"
 {
     void
-    rt_reduce_db(db_i *db)
+    rt_reduce_db(db_i *db, std::size_t num_preserved_attributes,
+		 const char * const * preserved_attributes_array,
+		 const bu_ptbl *preserved_combs_dirs)
     {
 	RT_CK_DBI(db);
 
 	remove_dead_references(*db);
 
 	std::set<std::string> preserved_attributes;
-	preserved_attributes.insert("rhino::uuid");
-	preserved_attributes.insert("rhino::type");
-
 	std::set<directory *> preserved_combs;
-	{
-	    bu_ptbl found;
-	    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
-	    const int ret = db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
-				      "-attr rhino::type=ON_Layer", 0, NULL, db);
+	for (std::size_t i = 0; i < num_preserved_attributes; ++i)
+	    preserved_attributes.insert(preserved_attributes_array[i]);
 
-	    if (ret < 0)
-		bu_bomb("db_search() failed");
+	if (preserved_combs_dirs) {
+	    BU_CK_PTBL(preserved_combs_dirs);
 
-	    directory **entry;
+	    if (BU_PTBL_LEN(preserved_combs_dirs)) {
+		directory **entry;
 
-	    if (ret)
-		for (BU_PTBL_FOR(entry, (directory **), &found))
+		for (BU_PTBL_FOR(entry, (directory **), preserved_combs_dirs))
 		    preserved_combs.insert(*entry);
+	    }
 	}
 
 	Hierarchy hierarchy(*db, preserved_attributes, preserved_combs);

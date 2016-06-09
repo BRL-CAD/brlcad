@@ -79,7 +79,7 @@ RT_EXPORT extern void rt_reduce_obj(struct rt_db_internal *dest, const struct rt
 /**
  * reduce the database hierarchy
  */
-RT_EXPORT extern void rt_reduce_db(struct db_i *dbip);
+RT_EXPORT extern void rt_reduce_db(struct db_i *db, size_t num_preserved_attributes, const char * const * preserved_attributes, const struct bu_ptbl *preserved_combs_dirs);
 
 __END_DECLS
 
