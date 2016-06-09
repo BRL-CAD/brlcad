@@ -678,6 +678,38 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 }
 
 
+HIDDEN void
+polish_output(db_i &db)
+{
+    bu_ptbl found = BU_PTBL_INIT_ZERO;
+    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
+		      "-attr rhino::type=ON_Layer", 0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
+
+    const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
+    rt_reduce_db(&db, array_length(ignored_attributes), ignored_attributes, &found);
+
+    // apply region flag
+    bu_ptbl_free(&found);
+    BU_PTBL_INIT(&found);
+
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
+		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
+		      0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
+
+    if (BU_PTBL_LEN(&found)) {
+	directory **entry;
+
+	for (BU_PTBL_FOR(entry, (directory **), &found))
+	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
+    }
+}
+
+
 HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
@@ -704,16 +736,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	return 0;
     }
 
-    const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
-    bu_ptbl found;
-    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+    polish_output(*context->dbip);
 
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
-		      "-attr rhino::type=ON_Layer", 0, NULL, context->dbip))
-	bu_bomb("db_search() failed");
-
-    rt_reduce_db(context->dbip, array_length(ignored_attributes),
-		 ignored_attributes, &found);
     return 1;
 }
 
