@@ -145,25 +145,34 @@ class Hierarchy;
 
 
 struct Combination {
-    Combination();
-    Combination(db_i &db, directory &dir);
-    Combination(const Combination &source);
-    Combination &operator=(const Combination &source);
-
-    void write();
-
-    bool has_unmergeable_member_comb(const Hierarchy &hierarchy,
-				     const Combination &other) const;
-    void merge_member_comb_if_present(const Combination &other);
-
-
     struct Member {
 	Member(directory &dir, int operation, const fastf_t *matrix);
+
+	bool operator==(const Member &other) const;
+	bool operator!=(const Member &other) const;
 
 	directory *m_dir;
 	int m_operation;
 	mat_t m_matrix;
     };
+
+
+    Combination();
+    Combination(db_i &db, directory &dir);
+    Combination(const Combination &source);
+    Combination &operator=(const Combination &source);
+
+    bool is_unions() const;
+    bool has_unmergeable_member_comb(const Hierarchy &hierarchy,
+				     const Combination &other) const;
+    void merge_member_comb_if_present(const Combination &other);
+    std::string get_mergeable_siblings_key() const;
+    void get_mergeable_siblings(const Hierarchy &hierarchy,
+				std::set<directory *> &unmergeable,
+				std::map<std::string, std::map<directory *, Member> > &mergeable) const;
+    void remove_member(const directory &dir);
+
+    void write();
 
 
     db_i *m_db;
@@ -178,11 +187,13 @@ class Hierarchy
 public:
     explicit Hierarchy(db_i &db);
 
-    void merge();
+    void merge_children();
+    void merge_siblings();
     void write();
 
-    typedef std::map<directory *, Combination> Combs;
-    Combs m_combinations;
+
+    std::map<directory *, Combination> m_combinations;
+
 
 private:
     db_i &m_db;
@@ -191,13 +202,13 @@ private:
 
 
 void
-Hierarchy::merge()
+Hierarchy::merge_children()
 {
-    for (Combs::iterator it = m_combinations.begin(); it != m_combinations.end();) {
+    for (std::map<directory *, Combination>::iterator it = m_combinations.begin();
+	 it != m_combinations.end();) {
 	bool possible = true;
 
-	// check if the current comb can be merged by all parents
-	for (Combs::iterator j_it = m_combinations.begin();
+	for (std::map<directory *, Combination>::iterator j_it = m_combinations.begin();
 	     j_it != m_combinations.end(); ++j_it)
 	    if (j_it->second.has_unmergeable_member_comb(*this, it->second)) {
 		possible = false;
@@ -209,16 +220,59 @@ Hierarchy::merge()
 	    continue;
 	}
 
-	for (Combs::iterator j_it = m_combinations.begin();
+	for (std::map<directory *, Combination>::iterator j_it = m_combinations.begin();
 	     j_it != m_combinations.end(); ++j_it)
 	    j_it->second.merge_member_comb_if_present(it->second);
 
-	// now, `it` can be removed from the database; defer until write()
 	if (!m_removed.insert(it->first).second)
 	    bu_bomb("already processed");
 
-	const Combs::iterator temp = it++;
+	const std::map<directory *, Combination>::iterator temp = it++;
 	m_combinations.erase(temp);
+    }
+}
+
+
+void
+Hierarchy::merge_siblings()
+{
+    std::set<directory *> unmergeable;
+    std::map<std::string, std::map<directory *, Combination::Member> > mergeable;
+
+    for (std::map<directory *, Combination>::const_iterator it =
+	     m_combinations.begin(); it != m_combinations.end(); ++it)
+	it->second.get_mergeable_siblings(*this, unmergeable, mergeable);
+
+    for (std::map<std::string, std::map<directory *, Combination::Member> >::const_iterator
+	 it = mergeable.begin(); it != mergeable.end(); ++it) {
+	if (it->second.size() < 2)
+	    continue;
+
+	std::map<directory *, Combination::Member>::const_iterator jt =
+	    it->second.begin();
+	Combination &top = m_combinations.at(jt->second.m_dir);
+	mat_t inverse_top_matrix;
+	bn_mat_inverse(inverse_top_matrix, jt->second.m_matrix);
+
+	for (++jt; jt != it->second.end(); ++jt) {
+	    Combination &current_comb = m_combinations.at(jt->second.m_dir);
+
+	    for (std::list<Combination::Member>::const_iterator kt =
+		     current_comb.m_members.begin(); kt != current_comb.m_members.end(); ++kt) {
+		// TODO: matrices
+		Combination::Member temp = *kt;
+		bn_mat_mul2(jt->second.m_matrix, temp.m_matrix);
+		bn_mat_mul2(inverse_top_matrix, temp.m_matrix);
+		top.m_members.push_back(temp);
+	    }
+
+	    for (std::map<directory *, Combination>::iterator kt = m_combinations.begin();
+		 kt != m_combinations.end(); ++kt)
+		kt->second.remove_member(*current_comb.m_dir);
+
+	    m_removed.insert(current_comb.m_dir);
+	    m_combinations.erase(current_comb.m_dir);
+	}
     }
 }
 
@@ -231,9 +285,13 @@ Hierarchy::write()
 	if (db_delete(&m_db, *it) || db_dirdelete(&m_db, *it))
 	    bu_bomb("failed to delete object");
 
-    for (Combs::iterator it = m_combinations.begin(); it != m_combinations.end();
-	 ++it)
+    for (std::map<directory *, Combination>::iterator it = m_combinations.begin();
+	 it != m_combinations.end(); ++it) {
+	if (m_removed.count(it->first))
+	    bu_bomb("deleted but not removed");
+
 	it->second.write();
+    }
 }
 
 
@@ -262,6 +320,26 @@ Combination::Member::Member(directory &dir, int operation,
 	MAT_COPY(m_matrix, matrix);
     else
 	MAT_IDN(m_matrix);
+}
+
+
+bool
+Combination::Member::operator==(const Member &other) const
+{
+    if (m_dir != other.m_dir || m_operation != other.m_operation)
+	return false;
+
+    bn_tol tol;
+    BN_TOL_INIT(&tol);
+    rt_tol_default(&tol);
+    return bn_mat_is_equal(m_matrix, other.m_matrix, &tol);
+}
+
+
+bool
+Combination::Member::operator!=(const Member &other) const
+{
+    return !operator==(other);
 }
 
 
@@ -336,6 +414,17 @@ Combination::operator=(const Combination &source)
 }
 
 
+bool Combination::is_unions() const
+{
+    for (std::list<Member>::const_iterator it = m_members.begin();
+	 it != m_members.end(); ++it)
+	if (it->m_operation != OP_UNION)
+	    return false;
+
+    return true;
+}
+
+
 bool
 Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 	const Combination &other) const
@@ -343,15 +432,16 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
     if (!other.m_dir->d_nref)
 	return true;
 
+    if (!other.is_unions())
+	return true;
+
     bool is_member = false;
 
     for (std::list<Member>::const_iterator it = m_members.begin();
 	 it != m_members.end(); ++it)
 	if (it->m_dir == other.m_dir) {
-	    if (it->m_operation != OP_UNION)
-		return true;
-	    else
-		is_member = true;
+	    is_member = true;
+	    break;
 	}
 
     if (!is_member)
@@ -375,11 +465,6 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 		    return true;
 	    }
     }
-
-    for (std::list<Member>::const_iterator it = other.m_members.begin();
-	 it != other.m_members.end(); ++it)
-	if (it->m_operation != OP_UNION)
-	    return true;
 
     return false;
 }
@@ -414,7 +499,72 @@ Combination::merge_member_comb_if_present(const Combination &other)
 }
 
 
-void Combination::write()
+std::string
+Combination::get_mergeable_siblings_key() const
+{
+    std::string result;
+
+    for (std::map<std::string, std::string>::const_iterator it =
+	     m_attributes.begin(); it != m_attributes.end(); ++it)
+	if (it->first != "rhino::type" && it->first != "rhino::uuid") {
+	    // TODO: allow the user to specify ignored attributes
+	    result.append(it->first);
+	    result.push_back('\0');
+	    result.append(it->second);
+	}
+
+    return result;
+}
+
+
+void
+Combination::remove_member(const directory &dir)
+{
+    for (std::list<Member>::iterator it = m_members.begin(); it != m_members.end();)
+	if (it->m_dir == &dir) {
+	    std::list<Member>::iterator temp = it++;
+	    m_members.erase(temp);
+	} else
+	    ++it;
+}
+
+
+void
+Combination::get_mergeable_siblings(const Hierarchy &hierarchy,
+				    std::set<directory *> &unmergeable,
+				    std::map<std::string, std::map<directory *, Member> > &mergeable) const
+{
+    for (std::list<Member>::const_iterator it = m_members.begin();
+	 it != m_members.end(); ++it)
+	if (it->m_dir->d_minor_type == ID_COMBINATION
+	    && !unmergeable.count(it->m_dir)) {
+	    const Combination &current_comb = hierarchy.m_combinations.at(it->m_dir);
+
+	    if (!current_comb.is_unions())
+		continue;
+
+	    const std::string key = current_comb.get_mergeable_siblings_key();
+
+	    if (it->m_operation != OP_UNION) {
+		unmergeable.insert(it->m_dir);
+
+		if (mergeable.at(key).count(it->m_dir))
+		    mergeable.at(key).erase(it->m_dir);
+	    }
+
+	    if (mergeable.count(key) && mergeable.at(key).count(it->m_dir)
+		&& mergeable.at(key).at(it->m_dir) != *it) {
+		unmergeable.insert(it->m_dir);
+		mergeable.at(key).erase(it->m_dir);
+	    }
+
+	    mergeable[key].insert(std::make_pair(it->m_dir, *it));
+	}
+}
+
+
+void
+Combination::write()
 {
     if (m_members.empty())
 	bu_bomb("combination has no members");
@@ -480,7 +630,8 @@ extern "C"
 
 	remove_dead_references(*db);
 	Hierarchy temp(*db);
-	temp.merge();
+	temp.merge_children();
+	temp.merge_siblings();
 	temp.write();
     }
 }
