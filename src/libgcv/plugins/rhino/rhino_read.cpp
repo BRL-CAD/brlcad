@@ -712,9 +712,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 		      "-attr rhino::type=ON_Layer", 0, NULL, context->dbip))
 	bu_bomb("db_search() failed");
 
-    rt_reduce_db(context->dbip,
-		 sizeof(ignored_attributes) / sizeof(ignored_attributes[0]), ignored_attributes,
-		 &found);
+    rt_reduce_db(context->dbip, array_length(ignored_attributes),
+		 ignored_attributes, &found);
     return 1;
 }
 
