@@ -259,7 +259,6 @@ Hierarchy::merge_siblings()
 
 	    for (std::list<Combination::Member>::const_iterator kt =
 		     current_comb.m_members.begin(); kt != current_comb.m_members.end(); ++kt) {
-		// TODO: matrices
 		Combination::Member temp = *kt;
 		bn_mat_mul2(jt->second.m_matrix, temp.m_matrix);
 		bn_mat_mul2(inverse_top_matrix, temp.m_matrix);
