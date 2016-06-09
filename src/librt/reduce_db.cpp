@@ -510,6 +510,7 @@ Combination::get_mergeable_siblings_key() const
 	    result.append(it->first);
 	    result.push_back('\0');
 	    result.append(it->second);
+	    result.push_back('\0');
 	}
 
     return result;
