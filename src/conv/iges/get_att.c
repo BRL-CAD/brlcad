@@ -29,7 +29,8 @@
 void
 Get_att()
 {
-    int i, j;
+    size_t i;
+    int j;
     char *str;
 
     for (i = 0; i < totentities; i++) {

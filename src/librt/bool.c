@@ -1867,7 +1867,8 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
     struct region *pp_reg;
     struct partition *pp_open;
     struct bu_ptbl open_parts;
-    int i, j;
+    size_t i;
+    int j;
 
     RT_CK_PT_HD(PartHdp);
     RT_CK_AP(ap);
@@ -1885,7 +1886,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 	    continue;
 	}
 
-	for (i=0; i<BU_PTBL_END(&open_parts); i++) {
+	for (i=0; i<BU_PTBL_LEN(&open_parts); i++) {
 	    int keep_open=0;
 
 	    if (!pp)

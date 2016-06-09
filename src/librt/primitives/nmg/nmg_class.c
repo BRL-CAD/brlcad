@@ -2499,7 +2499,7 @@ nmg_classify_lu_lu(const struct loopuse *lu1, const struct loopuse *lu2, const s
 int
 nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 {
-    int i;
+    size_t i;
     int nmg_class;
     struct faceuse *fu;
     struct loopuse *lu;
@@ -2581,7 +2581,7 @@ nmg_classify_s_vs_s(struct shell *s2, struct shell *s, const struct bn_tol *tol)
 
     /* classification returned NMG_CLASS_AonB, so need to try other points */
     nmg_vertex_tabulate(&verts, &s2->l.magic);
-    for (i = 0; i < BU_PTBL_END(&verts); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 
 	v = (struct vertex *)BU_PTBL_GET(&verts, i);

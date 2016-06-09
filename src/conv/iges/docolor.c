@@ -42,7 +42,8 @@ void
 Docolor()
 {
 
-    int i, j;
+    size_t i;
+    int j;
     fastf_t a;
 
     for (i = 0; i < totentities; i++) {

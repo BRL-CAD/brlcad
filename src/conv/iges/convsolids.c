@@ -32,7 +32,8 @@ void
 Convsolids()
 {
 
-    int i, totsolids = 0, conv = 0;
+    size_t i;
+    size_t totsolids = 0, conv = 0;
 
     bu_log("\n\nConverting solid entities:\n");
 
@@ -80,7 +81,7 @@ Convsolids()
 		break;
 	}
     }
-    bu_log("Converted %d solids successfully out of %d total solids\n", conv, totsolids);
+    bu_log("Converted %zu solids successfully out of %zu total solids\n", conv, totsolids);
 }
 
 

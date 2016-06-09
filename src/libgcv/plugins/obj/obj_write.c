@@ -95,7 +95,7 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END(&verts);
+    numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (pstate->obj_write_options->do_normals)
@@ -277,7 +277,7 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     pstate->vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (pstate->obj_write_options->do_normals) {
-	pstate->norm_offset += BU_PTBL_END(&norms);
+	pstate->norm_offset += BU_PTBL_LEN(&norms);
 	bu_ptbl_free(&norms);
     }
     bu_free(region_name, "region name");

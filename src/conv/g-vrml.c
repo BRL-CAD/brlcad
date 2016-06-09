@@ -835,7 +835,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
     struct vrml_mat mat;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tok;
-    int i;
+    size_t i;
     int first = 1;
     int is_light = 0;
     point_t ave_pt = VINIT_ZERO;
@@ -963,9 +963,9 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    bu_log("Cannot open texture file (%s)\n", mat.tx_file);
 		    perror("g-vrml: ");
 		} else {
-		    long tex_len;
-		    long bytes_read = 0;
-		    long bytes_to_go = 0;
+		    size_t tex_len;
+		    size_t bytes_read = 0;
+		    size_t bytes_to_go = 0;
 
 		    /* Johns note - need to check (test) the texture stuff */
 		    fprintf(fp_out, "\t\t\t\ttextureTransform TextureTransform {\n");
@@ -976,7 +976,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 		    fprintf(fp_out, "\t\t\t\t\timage %d %d %d\n", mat.tx_w, mat.tx_n, 3);
 		    tex_len = mat.tx_w*mat.tx_n * 3;
 		    while (bytes_read < tex_len) {
-			int nbytes;
+			size_t nbytes;
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
@@ -1038,7 +1038,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	VSETALL(ave_pt, 0.0);
     }
 
-    for (i = 0; i < BU_PTBL_END(&verts); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 	struct vertex_g *vg;
 	point_t pt_meters;
@@ -1057,11 +1057,11 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 
 	if (first) {
 	    if (!is_light) {
-		fprintf(fp_out, " %10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
+		fprintf(fp_out, " %10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt_meters), (unsigned long)i);
 	    }
 	    first = 0;
 	} else if (!is_light) {
-	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %d\n", V3ARGS(pt_meters), i);
+	    fprintf(fp_out, "\t\t\t\t\t%10.10e %10.10e %10.10e, # point %lu\n", V3ARGS(pt_meters), (unsigned long)i);
 	}
     }
 
@@ -1069,7 +1069,7 @@ nmg_2_vrml(struct db_tree_state *tsp, const struct db_full_path *pathp, struct m
 	fprintf(fp_out, "\t\t\t\t\t]\n\t\t\t\t}\n");
     } else {
 	fastf_t one_over_count;
-	one_over_count = 1.0/(fastf_t)BU_PTBL_END(&verts);
+	one_over_count = 1.0/(fastf_t)BU_PTBL_LEN(&verts);
 	VSCALE(ave_pt, ave_pt, one_over_count);
     }
 
