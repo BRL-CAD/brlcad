@@ -477,6 +477,9 @@ Combination::has_unmergeable_member_comb(const Hierarchy &hierarchy,
 	if (!m_attributes.count(it->first) || m_attributes.at(it->first) != it->second)
 	    for (std::list<Member>::const_iterator kt = m_members.begin();
 		 kt != m_members.end(); ++kt) {
+		if (kt->m_dir->d_minor_type != ID_COMBINATION)
+		    continue;
+
 		const Combination &temp = hierarchy.m_combinations.at(kt->m_dir);
 
 		if (!temp.m_attributes.count(it->first)
