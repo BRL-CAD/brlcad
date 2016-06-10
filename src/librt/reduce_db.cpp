@@ -279,6 +279,21 @@ Hierarchy::merge_siblings()
 void
 Hierarchy::write()
 {
+    for (std::map<directory *, Combination>::iterator it = m_combinations.begin();
+	 it != m_combinations.end();)
+	if (it->second.m_members.empty()) {
+	    for (std::map<directory *, Combination>::iterator jt = m_combinations.begin();
+		 jt != m_combinations.end(); ++jt)
+		jt->second.remove_member(*it->first);
+
+	    if (!m_removed.insert(it->first).second)
+		bu_bomb("already removed");
+
+	    m_combinations.erase(it);
+	    it = m_combinations.begin();
+	} else
+	    ++it;
+
     for (std::set<directory *>::const_iterator it = m_removed.begin();
 	 it != m_removed.end(); ++it)
 	if (db_delete(&m_db, *it) || db_dirdelete(&m_db, *it))
