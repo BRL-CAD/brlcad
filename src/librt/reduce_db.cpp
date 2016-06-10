@@ -385,6 +385,8 @@ Combination::Combination(db_i &db, directory &dir) :
     rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
     RT_CK_COMB(&comb);
 
+    db_non_union_push(comb.tree, &rt_uniresource);
+
     const std::size_t node_count = db_tree_nleaves(comb.tree);
     AutoPtr<rt_tree_array> tree_list((struct rt_tree_array *)bu_calloc(node_count,
 				     sizeof(rt_tree_array), "tree list"));
@@ -621,10 +623,10 @@ Combination::write()
 	ptree->tr_l.tl_name = bu_strdup(it->m_dir->d_namep);
     }
 
-    comb.tree = db_mkbool_tree(nodes.ptr, m_members.size(), &rt_uniresource);
+    comb.tree = db_mkgift_tree(nodes.ptr, m_members.size(), &rt_uniresource);
 
     if (!comb.tree)
-	bu_bomb("db_mkbool_tree() failed");
+	bu_bomb("db_mkgift_tree() failed");
 
     if (rt_db_put_internal(m_dir, m_db, &internal, &rt_uniresource))
 	bu_bomb("rt_db_put_internal() failed");
