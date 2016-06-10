@@ -503,8 +503,9 @@ Combination::merge_member_comb_if_present(const Hierarchy &hierarchy,
 	    for (std::list<Member>::const_iterator member_it = other.m_members.begin();
 		 member_it != other.m_members.end(); ++member_it) {
 		Member temp = *member_it;
+		temp.m_operation = it->m_operation;
 		bn_mat_mul2(it->m_matrix, temp.m_matrix);
-		m_members.push_back(temp);
+		m_members.insert(it, temp);
 	    }
 
 	    it = m_members.erase(it);
@@ -603,8 +604,8 @@ Combination::write()
     RT_CK_COMB(&comb);
 
     db_free_tree(comb.tree, &rt_uniresource);
-    AutoPtr<rt_tree_array> nodes((struct rt_tree_array *)bu_calloc(m_members.size(),
-				 sizeof(rt_tree_array), "nodes"));
+    AutoPtr<rt_tree_array> nodes(static_cast<struct rt_tree_array *>(bu_calloc(
+				     m_members.size(), sizeof(rt_tree_array), "nodes")));
 
     std::size_t i = 0;
     for (std::list<Member>::const_iterator it = m_members.begin();
