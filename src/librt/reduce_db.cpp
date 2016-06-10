@@ -167,7 +167,6 @@ struct Combination {
 				     const Combination &other) const;
     void merge_member_comb_if_present(const Hierarchy &hierarchy,
 				      const Combination &other);
-    std::string get_mergeable_siblings_key(const Hierarchy &hierarchy) const;
     void remove_member(const directory &dir);
 
     void write();
@@ -184,8 +183,7 @@ struct Hierarchy {
     Hierarchy(db_i &db, const std::set<std::string> &preserved_attributes,
 	      const std::set<directory *> &preserved_combs);
 
-    void merge_children();
-    void merge_siblings();
+    void merge();
     void write();
 
 
@@ -198,7 +196,7 @@ struct Hierarchy {
 
 
 void
-Hierarchy::merge_children()
+Hierarchy::merge()
 {
     for (std::map<directory *, Combination>::iterator it = m_combinations.begin();
 	 it != m_combinations.end();) {
@@ -225,12 +223,6 @@ Hierarchy::merge_children()
 
 	m_combinations.erase(it++);
     }
-}
-
-
-void
-Hierarchy::merge_siblings()
-{
 }
 
 
@@ -481,24 +473,6 @@ Combination::merge_member_comb_if_present(const Hierarchy &hierarchy,
 }
 
 
-std::string
-Combination::get_mergeable_siblings_key(const Hierarchy &hierarchy) const
-{
-    std::string result;
-
-    for (std::map<std::string, std::string>::const_iterator it =
-	     m_attributes.begin(); it != m_attributes.end(); ++it)
-	if (!hierarchy.m_preserved_attributes.count(it->first)) {
-	    result.append(it->first);
-	    result.push_back('\0');
-	    result.append(it->second);
-	    result.push_back('\0');
-	}
-
-    return result;
-}
-
-
 void
 Combination::remove_member(const directory &dir)
 {
@@ -597,8 +571,7 @@ extern "C"
 	}
 
 	Hierarchy hierarchy(*db, preserved_attributes, preserved_combs);
-	hierarchy.merge_children();
-	hierarchy.merge_siblings();
+	hierarchy.merge();
 	hierarchy.write();
     }
 }
