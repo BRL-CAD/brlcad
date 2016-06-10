@@ -745,7 +745,7 @@ nmg_2_vrml(const struct conversion_state *pstate, struct db_tree_state *tsp, con
 			long readval;
 
 			bytes_to_go = tex_len - bytes_read;
-			CLAMP(bytes_to_go, 0, TXT_BUF_LEN * 3);
+			V_MIN(bytes_to_go, TXT_BUF_LEN * 3);
 
 			nbytes = 0;
 			while (nbytes < bytes_to_go) {
