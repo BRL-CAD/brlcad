@@ -184,7 +184,6 @@ struct Combination {
 
 
 struct Hierarchy {
-public:
     Hierarchy(db_i &db, const std::set<std::string> &preserved_attributes,
 	      const std::set<directory *> &preserved_combs);
 
@@ -551,14 +550,17 @@ Combination::get_mergeable_siblings(const Hierarchy &hierarchy,
 	    if (it->m_operation != OP_UNION) {
 		unmergeable.insert(it->m_dir);
 
-		if (mergeable.at(key).count(it->m_dir))
+		if (mergeable.count(key) && mergeable.at(key).count(it->m_dir))
 		    mergeable.at(key).erase(it->m_dir);
+
+		continue;
 	    }
 
 	    if (mergeable.count(key) && mergeable.at(key).count(it->m_dir)
 		&& mergeable.at(key).at(it->m_dir) != *it) {
 		unmergeable.insert(it->m_dir);
 		mergeable.at(key).erase(it->m_dir);
+		continue;
 	    }
 
 	    mergeable[key].insert(std::make_pair(it->m_dir, *it));
