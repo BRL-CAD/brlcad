@@ -142,7 +142,7 @@ namespace
 {
 
 
-class Hierarchy;
+struct Hierarchy;
 
 
 struct Combination {
