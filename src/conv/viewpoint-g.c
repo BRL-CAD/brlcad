@@ -400,7 +400,7 @@ main(int argc, char **argv)
 	rewind(elems);
     }
 
-    fprintf(stderr, "%zu polygons\n", no_of_faces);
+    bu_log("%zu polygons\n", no_of_faces);
 
     /* make a top level group with all the objects as members */
     BU_LIST_INIT(&reg_head.l);
