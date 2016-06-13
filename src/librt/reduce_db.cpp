@@ -33,6 +33,7 @@
 #include "rt/search.h"
 #include "rt/tree.h"
 #include "rt/db_attr.h"
+#include "rt/misc.h"
 
 #include <map>
 #include <set>
@@ -545,7 +546,7 @@ Combination::write()
 extern "C"
 {
     void
-    rt_reduce_db(db_i *db, std::size_t num_preserved_attributes,
+    rt_reduce_db(db_i *db, size_t num_preserved_attributes,
 		 const char * const * preserved_attributes_array,
 		 const bu_ptbl *preserved_combs_dirs)
     {
@@ -556,7 +557,7 @@ extern "C"
 	std::set<std::string> preserved_attributes;
 	std::set<directory *> preserved_combs;
 
-	for (std::size_t i = 0; i < num_preserved_attributes; ++i)
+	for (size_t i = 0; i < num_preserved_attributes; ++i)
 	    preserved_attributes.insert(preserved_attributes_array[i]);
 
 	if (preserved_combs_dirs) {
