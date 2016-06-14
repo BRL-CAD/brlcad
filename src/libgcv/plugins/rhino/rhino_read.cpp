@@ -699,12 +699,14 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	    if (DB_FULL_PATH_CUR_DIR(*entry)->d_nref != 1)
 		continue;
 
-	    for (ssize_t i = (*entry)->fp_len - 1; i >= 0; --i)
-		if (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
-		    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0)) {
-		    if (i == static_cast<ssize_t>((*entry)->fp_len) - 1)
-			break;
+	    for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
+		bu_attribute_value_set avs;
+		AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
 
+		if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
+		    throw std::runtime_error("db5_get_attributes() failed");
+
+		if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")) {
 		    const std::string prefix = (*entry)->fp_names[i]->d_namep;
 		    std::string suffix = ".s";
 		    std::size_t num = 1;
@@ -724,6 +726,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
 		    break;
 		}
+	    }
 	}
     }
 
