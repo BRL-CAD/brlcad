@@ -86,7 +86,7 @@ option can be used to set the units for the resulting X3D file (the default is m
 Any units name that MGED accepts will work here.</para>
 <para>
 The
-<option>-u</option>
+<option>-P</option>
 option sets the number of processors (default is 1).
 </para>
 </refsect1>
