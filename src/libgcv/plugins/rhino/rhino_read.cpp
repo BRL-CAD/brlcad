@@ -686,7 +686,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
     db_update_nref(&db, &rt_uniresource);
 
-    // rename shapes after their containing layers
+    // rename shapes after their parent combs
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      "-type shape -below -attr rhino::type=ON_Layer", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
