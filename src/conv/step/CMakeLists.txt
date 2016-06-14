@@ -21,7 +21,6 @@ include_directories(
   ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cldai
   ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/test
   ${CMAKE_BINARY_DIR}/src/other/stepcode/include
-  ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
 

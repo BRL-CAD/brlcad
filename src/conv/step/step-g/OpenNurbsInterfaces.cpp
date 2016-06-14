@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -938,7 +938,9 @@ FaceSurface::AddFace(ON_Brep *brep)
 	face.m_bRev = false;
     } else {
 	face.m_bRev = true;
-	face.Reverse(0);
+#ifndef FLIP_SURFACE_OF_REVERSED_FACE
+	face.Reverse(0); //need to remove here but check for reversed face in raytracer
+#endif
     }
 
     ON_id = face.m_face_index;
@@ -1380,7 +1382,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     // build surface tree making sure not to remove trimmed subsurfaces
     // since currently building trims and need full tree
     bool removeTrimmed = false;
-    brlcad::SurfaceTree *st = new brlcad::SurfaceTree((ON_BrepFace *) face, removeTrimmed);
 
     //TODO: remove debugging code
     if ((false) && (id == 24894)) {
@@ -1398,7 +1399,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	if ((false) && (id == 34193)) {
 	    std::cerr << "Debug:LoadONTrimmingCurves for Path:" << id << std::endl;
 	}
-	data = pullback_samples(st, curve);
+	data = pullback_samples(surface, curve);
 	if (data == NULL) {
 	    continue;
 	}
@@ -1508,7 +1509,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    if (end_current.DistanceTo(start_next) > PBC_TOL) {
 		// endpoints don't connect
 		int is;
-		const ON_Surface *surf = data->surftree->getSurface();
+		const ON_Surface *surf = data->surf;
 		if ((is = check_pullback_singularity_bridge(surf, end_current, start_next)) >= 0) {
 		    // insert trim
 		    // insert singular trim along
@@ -1613,7 +1614,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     }
 
     while (!curve_pullback_samples.empty()) {
-	PBCData *data = curve_pullback_samples.front();
+	data = curve_pullback_samples.front();
 	while (!data->segments.empty()) {
 	    delete data->segments.front();
 	    data->segments.pop_front();
@@ -1621,7 +1622,6 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	delete data;
 	curve_pullback_samples.pop_front();
     }
-    delete st;
 
     return true;
 }
@@ -1636,6 +1636,21 @@ Plane::LoadONBrep(ON_Brep *brep)
     }
 
     if (ON_id >= 0) {
+	ON_PlaneSurface *s = dynamic_cast<ON_PlaneSurface *>(brep->m_S[ON_id]);
+
+	if (s) {
+	    double bbdiag = trim_curve_3d_bbox->Diagonal().Length();
+
+	    // origin may not lie within face so include in extent
+	    double maxdist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_max);
+	    double mindist = s->m_plane.origin.DistanceTo(trim_curve_3d_bbox->m_min);
+	    bbdiag += FMAX(maxdist, mindist);
+
+	    ON_Interval extents(-bbdiag, bbdiag);
+	    s->Extend(0,extents);
+	    s->Extend(1,extents);
+	}
+
 	return true;    // already loaded
     }
 
@@ -1973,7 +1988,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dPoint circleP1, isect, circleP2, PM, PT;
     ON_3dVector tangentP1, tangentP2;
 
-    circleP1 = startpt;
+    circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
     tangentP1 = circle.TangentAt(t);
 
     for (int i = 0; i < narcs; i++) {

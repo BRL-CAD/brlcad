@@ -4,6 +4,7 @@ set(RT_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${BU_INCLUDE_DIRS}
   ${BN_INCLUDE_DIRS}
+  ${BREP_INCLUDE_DIRS}
   ${P2T_INCLUDE_DIR}
   ${OPENNURBS_INCLUDE_DIR}
   ${ZLIB_INCLUDE_DIR}
@@ -13,7 +14,6 @@ set(RT_INCLUDE_DIRS
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${TNT_INCLUDE_DIR}
   ${LIBVDS_INCLUDE_DIR}
   ${LIBGDIAM_INCLUDE_DIR}
   )
@@ -309,7 +309,7 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
   )
 
-#BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
