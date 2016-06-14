@@ -124,7 +124,7 @@ ged_how(struct ged *gedp, int argc, const char *argv[])
 
 good:
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "ged_how: directory pointers");
+	bu_free((void *)dpp, "ged_how: directory pointers");
 
     return GED_OK;
 }
@@ -190,7 +190,7 @@ _ged_build_dpp(struct ged *gedp,
 	    /* object is not currently being displayed */
 	    bu_vls_printf(gedp->ged_result_str, "-1");
 
-	    bu_free((genptr_t)dpp, "_ged_build_dpp: directory pointers");
+	    bu_free((void *)dpp, "_ged_build_dpp: directory pointers");
 	    Tcl_Free((char *)av_orig);
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;

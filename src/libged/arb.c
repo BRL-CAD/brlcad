@@ -86,7 +86,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     internal.idb_type = ID_ARB8;
     internal.idb_meth = &OBJ[ID_ARB8];
-    internal.idb_ptr = (genptr_t)arb;
+    internal.idb_ptr = (void *)arb;
     arb->magic = RT_ARB_INTERNAL_MAGIC;
 
     /* FIXME: we should be creating the arb at the center of the
@@ -123,7 +123,7 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
     for (i = 0; i < 4; i++)
 	VJOIN1(arb->pt[i+4], arb->pt[i], -50.8, norm1);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

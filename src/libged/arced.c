@@ -115,7 +115,7 @@ ged_arced(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bn_mat_is_identity(tp->tr_l.tl_mat)) {
-	bu_free((genptr_t)tp->tr_l.tl_mat, "tl_mat");
+	bu_free((void *)tp->tr_l.tl_mat, "tl_mat");
 	tp->tr_l.tl_mat = (matp_t)NULL;
     }
 

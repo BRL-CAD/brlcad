@@ -47,7 +47,7 @@ struct killtree_data {
 
 
 HIDDEN void
-killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+killtree_callback(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct killtree_data *gktdp = (struct killtree_data *)ptr;
 
@@ -90,7 +90,7 @@ killtree_callback(struct db_i *dbip, struct directory *dp, genptr_t ptr)
 		bu_vls_printf(gktdp->gedp->ged_result_str, "an error occurred while deleting %s\n", dp->d_namep);
 
 		/* Remove from list */
-		bu_free((genptr_t)gktdp->av[--gktdp->ac], "killtree_callback");
+		bu_free((void *)gktdp->av[--gktdp->ac], "killtree_callback");
 		gktdp->av[gktdp->ac] = (char *)0;
 	    }
 	}
@@ -168,7 +168,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
 	db_functree(gedp->ged_wdbp->dbip, dp,
 		    killtree_callback, killtree_callback,
-		    gedp->ged_wdbp->wdb_resp, (genptr_t)&gktd);
+		    gedp->ged_wdbp->wdb_resp, (void *)&gktd);
     }
 
     /* Close the sublist of would-be killed objects. Also open the
@@ -185,7 +185,7 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 	for (i = 1; i < gktd.ac; i++) {
 	    if (!gktd.nflag)
 		bu_vls_printf(gedp->ged_result_str, "Freeing %s\n", gktd.av[i]);
-	    bu_free((genptr_t)gktd.av[i], "killtree_data");
+	    bu_free((void *)gktd.av[i], "killtree_data");
 	    gktd.av[i] = NULL;
 	}
     }

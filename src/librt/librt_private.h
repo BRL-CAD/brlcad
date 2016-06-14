@@ -129,6 +129,15 @@ extern void plot_ellipse(
 	const vect_t b,
 	int num_points);
 
+
+/* db_diff.c */
+
+/**
+ * Function to convert an ft_get list of parameters into an avs.
+ * @return 0 if the conversion succeeds, -1 if it does not.
+ */
+extern int tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int offset);
+
 __END_DECLS
 
 /*

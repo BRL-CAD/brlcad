@@ -36,8 +36,8 @@ db5_scan(
     struct db_i *dbip,
     void (*handler)(struct db_i *,
 		    const struct db5_raw_internal *,
-		    off_t addr, genptr_t client_data),
-    genptr_t client_data)
+		    off_t addr, void *client_data),
+    void *client_data)
 {
     unsigned char header[8];
     struct db5_raw_internal raw;
@@ -186,7 +186,7 @@ struct directory *
 db5_diradd(struct db_i *dbip,
 	   const struct db5_raw_internal *rip,
 	   off_t laddr,
-	   genptr_t client_data)
+	   void *client_data)
 {
     struct directory **headp;
     register struct directory *dp;
@@ -271,7 +271,7 @@ db5_diradd_handler(
     struct db_i *dbip,
     const struct db5_raw_internal *rip,
     off_t laddr,
-    genptr_t client_data)	/* unused client_data from db5_scan() */
+    void *client_data)	/* unused client_data from db5_scan() */
 {
     RT_CK_DBI(dbip);
 
@@ -394,7 +394,7 @@ db_dirbuild(struct db_i *dbip)
     } else if (version == 4) {
 	/* things used to be pretty simple with v4 */
 
-	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, genptr_t))db_diradd, 1, NULL) < 0) {
+	if (db_scan(dbip, (int (*)(struct db_i *, const char *, off_t, size_t, int, void *))db_diradd, 1, NULL) < 0) {
 	    return -1;
 	}
 

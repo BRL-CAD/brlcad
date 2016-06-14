@@ -1,7 +1,7 @@
 /*                           C U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,6 +43,8 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
+#include "bu/sort.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -65,8 +67,6 @@ HIDDEN int rt_ct_old_assess(register union cutter *, register int, double *, dou
 
 
 /**
- * R T _ C U T _ O N E _ A X I S
- *
  * As a temporary aid until NUgrid is working, use NUgrid histogram to
  * perform a preliminary partitioning of space, along a single axis.
  * The tree built here is expected to be further refined.  The bu_ptbl
@@ -127,13 +127,11 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
 
 
 /**
- * R T _ C U T _ O P T I M I Z E _ P A R A L L E L
- *
  * Process all the nodes in the global array rtip->rti_cuts_waiting,
  * until none remain.  This routine is run in parallel.
  */
 void
-rt_cut_optimize_parallel(int cpu, genptr_t arg)
+rt_cut_optimize_parallel(int cpu, void *arg)
 {
     struct rt_i *rtip = (struct rt_i *)arg;
     union cutter *cp;
@@ -165,59 +163,59 @@ rt_cut_optimize_parallel(int cpu, genptr_t arg)
     (*(const struct soltab **)(_p1))->_memb[_ind] > \
     (*(const struct soltab **)(_p2))->_memb[_ind] ? 1 : 0
 
-/* Functions for use with qsort */
-HIDDEN int rt_projXmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projXmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projYmax_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmin_comp(const void * p1, const void * p2);
-HIDDEN int rt_projZmax_comp(const void * p1, const void * p2);
+/* Functions for use with bu_sort */
+HIDDEN int rt_projXmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projXmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projYmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmin_comp(const void * p1, const void * p2, void *UNUSED(arg));
+HIDDEN int rt_projZmax_comp(const void * p1, const void * p2, void *UNUSED(arg));
 
 HIDDEN int
-rt_projXmin_comp(const void *p1, const void *p2)
+rt_projXmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, X);
 }
 
 
 HIDDEN int
-rt_projXmax_comp(const void *p1, const void *p2)
+rt_projXmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, X);
 }
 
 
 HIDDEN int
-rt_projYmin_comp(const void *p1, const void *p2)
+rt_projYmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Y);
 }
 
 
 HIDDEN int
-rt_projYmax_comp(const void *p1, const void *p2)
+rt_projYmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Y);
 }
 
 
 HIDDEN int
-rt_projZmin_comp(const void *p1, const void *p2)
+rt_projZmin_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_min, Z);
 }
 
 
 HIDDEN int
-rt_projZmax_comp(const void *p1, const void *p2)
+rt_projZmax_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     return CMP(p1, p2, st_max, Z);
 }
 
 
 HIDDEN struct cmp_pair {
-    int (*cmp_min)(const void *, const void *);
-    int (*cmp_max)(const void *, const void *);
+    int (*cmp_min)(const void *, const void *, void *);
+    int (*cmp_max)(const void *, const void *, void *);
 } pairs[] = {
     { rt_projXmin_comp, rt_projXmax_comp },
     { rt_projYmin_comp, rt_projYmax_comp },
@@ -226,8 +224,6 @@ HIDDEN struct cmp_pair {
 
 
 /**
- * R T _ N U G R I D _ C U T
- *
  * Makes a NUGrid node (CUT_NUGRIDNODE), filling the cells with solids
  * from the given list.
  */
@@ -312,8 +308,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	    RT_NU_GFACTOR_DEFAULT);
     }
 
-    nu_ncells = (int)ceil(2.0 + rtip->rti_nu_gfactor *
-			  pow((double)fromp->bn_len, 1.0/3.0));
+    nu_ncells = lrint(ceil(2.0 + rtip->rti_nu_gfactor *
+			  pow((double)fromp->bn_len, 1.0/3.0)));
     if (rtip->rti_nugrid_dimlimit > 0 &&
 	nu_ncells > rtip->rti_nugrid_dimlimit)
 	nu_ncells = rtip->rti_nugrid_dimlimit;
@@ -439,10 +435,10 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
 	memcpy(list_max, fromp->bn_list, len*sizeof(struct soltab *));
 	for (i=0; i<3; i++) {
-	    qsort((genptr_t)list_min, len,
-		  sizeof(struct soltab *), pairs[i].cmp_min);
-	    qsort((genptr_t)list_max, len,
-		  sizeof(struct soltab *), pairs[i].cmp_max);
+	    bu_sort((void *)list_min, len,
+		  sizeof(struct soltab *), pairs[i].cmp_min, NULL);
+	    bu_sort((void *)list_max, len,
+		  sizeof(struct soltab *), pairs[i].cmp_max, NULL);
 	    nstart = nend = axi = 0;
 	    l1 = list_min;
 	    l2 = list_max;
@@ -499,8 +495,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		pos - nugnp->nu_axis[i][axi].nu_spos;
 	    nugnp->nu_cells_per_axis[i] = axi+1;
 	}
-	bu_free((genptr_t)list_min, "solid list min sort");
-	bu_free((genptr_t)list_max, "solid list max sort");
+	bu_free((void *)list_min, "solid list min sort");
+	bu_free((void *)list_max, "solid list max sort");
     }
 
 #endif
@@ -640,9 +636,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	}
     }
 
-    bu_free((genptr_t)nu_zbox.bn_list, "nu_zbox bn_list[]");
-    bu_free((genptr_t)nu_ybox.bn_list, "nu_ybox bn_list[]");
-    bu_free((genptr_t)nu_xbox.bn_list, "nu_xbox bn_list[]");
+    bu_free((void *)nu_zbox.bn_list, "nu_zbox bn_list[]");
+    bu_free((void *)nu_ybox.bn_list, "nu_ybox bn_list[]");
+    bu_free((void *)nu_xbox.bn_list, "nu_xbox bn_list[]");
 }
 
 
@@ -797,7 +793,7 @@ rt_cut_it(register struct rt_i *rtip, int ncpu)
      * (2**rtip->rti_cutdepth)*rtip->rti_cutlen potential leaf slots.
      * Also note that solids will typically span several leaves.
      */
-    rtip->rti_cutlen = (int)log((double)(rtip->nsolids+1));  /* ln ~= log2, nsolids+1 to avoid log(0) */
+    rtip->rti_cutlen = lrint(floor(log((double)(rtip->nsolids+1))));  /* ln ~= log2, nsolids+1 to avoid log(0) */
     rtip->rti_cutdepth = 2 * rtip->rti_cutlen;
     if (rtip->rti_cutlen < 3) rtip->rti_cutlen = 3;
     if (rtip->rti_cutdepth < 12) rtip->rti_cutdepth = 12;
@@ -970,7 +966,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 	} else {
 	    cutp->bn.bn_maxlen *= 8;
 	    cutp->bn.bn_list = (struct soltab **) bu_realloc(
-		(genptr_t)cutp->bn.bn_list,
+		(void *)cutp->bn.bn_list,
 		sizeof(struct soltab *) * cutp->bn.bn_maxlen,
 		"rt_cut_extend: list extend");
 	}
@@ -981,8 +977,6 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 
 #ifdef NEW_WAY
 /**
- * R T _ C T _ P L A N
- *
  * Attempt to make an "optimal" cut of the given boxnode.  Consider
  * cuts along all three axis planes, and choose the one with the
  * smallest "offcenter" metric.
@@ -1041,8 +1035,6 @@ rt_ct_plan(struct rt_i *rtip, union cutter *cutp)
 
 
 /**
- * R T _ C T _ A S S E S S
- *
  * Assess the possibility of making a cut along the indicated axis.
  *
  * Returns -
@@ -1128,8 +1120,6 @@ rt_ct_assess(register union cutter *cutp, register int axis, double *where_p, do
 
 
 /**
- * R T _ C T _ P O P U L A T E _ B O X
- *
  * Given that 'outp' has been given a bounding box smaller than that
  * of 'inp', copy over everything which still fits in the smaller box.
  *
@@ -1235,8 +1225,6 @@ rt_ct_populate_box(union cutter *outp, const union cutter *inp, struct rt_i *rti
 
 
 /**
- * R T _ C T _ B O X
- *
  * Cut the given box node with a plane along the given axis, at the
  * specified distance "where".  Convert the caller's box node into a
  * cut node, allocating two additional box nodes for the new leaves.
@@ -1313,8 +1301,6 @@ rt_ct_box(struct rt_i *rtip, register union cutter *cutp, register int axis, dou
 
 
 /**
- * R T _ C K _ O V E R L A P
- *
  * See if any part of the solid is contained within the bounding box
  * (RPP).
  *
@@ -1366,8 +1352,6 @@ fail:
 
 
 /**
- * R T _ C T _ P I E C E C O U N T
- *
  * Returns the total number of solids and solid "pieces" in a boxnode.
  */
 HIDDEN size_t
@@ -1391,8 +1375,6 @@ rt_ct_piececount(const union cutter *cutp)
 
 
 /*
- * R T _ C T _ O P T I M
- *
  * Optimize a cut tree.  Work on nodes which are over the pre-set
  * limits, subdividing until either the limit on tree depth runs out,
  * or until subdivision no longer gives different results, which could
@@ -1493,8 +1475,6 @@ rt_ct_optim(struct rt_i *rtip, register union cutter *cutp, size_t depth)
 
 
 /**
- * R T _ C T _ O L D _ A S S E S S
- *
  * NOTE: Changing from rt_ct_assess() to this seems to result in a
  * *massive* change in cut tree size.
  *
@@ -1614,8 +1594,6 @@ rt_ct_old_assess(register union cutter *cutp, register int axis, double *where_p
 
 
 /*
- * R T _ C T _ G E T
- *
  * This routine must run in parallel
  */
 HIDDEN union cutter *
@@ -1652,8 +1630,6 @@ rt_ct_get(struct rt_i *rtip)
 
 
 /*
- * R T _ C T _ R E L E A S E _ S T O R A G E
- *
  * Release subordinate storage
  */
 HIDDEN void
@@ -1689,11 +1665,11 @@ rt_ct_release_storage(register union cutter *cutp)
 	    break;
 
 	case CUT_NUGRIDNODE:
-	    bu_free((genptr_t)cutp->nugn.nu_grid, "NUGrid children");
+	    bu_free((void *)cutp->nugn.nu_grid, "NUGrid children");
 	    cutp->nugn.nu_grid = NULL; /* sanity */
 
 	    for (i=0; i<3; i++) {
-		bu_free((genptr_t)cutp->nugn.nu_axis[i],
+		bu_free((void *)cutp->nugn.nu_axis[i],
 			"NUGrid axis");
 		cutp->nugn.nu_axis[i] = NULL; /* sanity */
 	    }
@@ -1707,8 +1683,6 @@ rt_ct_release_storage(register union cutter *cutp)
 
 
 /*
- * R T _ C T _ F R E E
- *
  * This routine must run in parallel
  */
 HIDDEN void
@@ -1862,9 +1836,6 @@ rt_fr_cut(struct rt_i *rtip, register union cutter *cutp)
 }
 
 
-/*
- * R T _ P L O T _ C U T
- */
 HIDDEN void
 rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
 {
@@ -2015,8 +1986,6 @@ rt_plot_cut(FILE *fp, struct rt_i *rtip, register union cutter *cutp, int lvl)
 
 
 /*
- * R T _ C T _ M E A S U R E
- *
  * Find the maximum number of solids in a leaf node, and other
  * interesting statistics.
  */
@@ -2067,7 +2036,7 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 void
 rt_cut_clean(struct rt_i *rtip)
 {
-    genptr_t *p;
+    void **p;
 
     RT_CK_RTI(rtip);
 
@@ -2081,7 +2050,7 @@ rt_cut_clean(struct rt_i *rtip)
 	return;
 
     /* Release the blocks we got from bu_calloc() */
-    for (BU_PTBL_FOR(p, (genptr_t *), &rtip->rti_busy_cutter_nodes)) {
+    for (BU_PTBL_FOR(p, (void **), &rtip->rti_busy_cutter_nodes)) {
 	bu_free(*p, "rt_ct_get");
     }
     bu_ptbl_free(&rtip->rti_busy_cutter_nodes);
@@ -2119,7 +2088,7 @@ rt_pr_cut_info(const struct rt_i *rtip, const char *str)
 
     switch (rtip->rti_space_partition) {
 	case RT_PART_NUGRID:
-	    nugnp = &rtip->rti_CutHead.nugn;
+	    nugnp = (const struct nugridnode *)&rtip->rti_CutHead.nugn;
 	    if (nugnp->nu_type != CUT_NUGRIDNODE)
 		bu_bomb("rt_pr_cut_info: passed non-nugridnode");
 
@@ -2246,7 +2215,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 		    } else {
 			cutp->bn.bn_maxlen += 5;
 			cutp->bn.bn_list = (struct soltab **) bu_realloc(
-			    (genptr_t)cutp->bn.bn_list,
+			    (void *)cutp->bn.bn_list,
 			    sizeof(struct soltab *) * cutp->bn.bn_maxlen,
 			    "insert_in_bsp: list extend");
 		    }

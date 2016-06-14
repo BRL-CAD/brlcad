@@ -98,7 +98,7 @@ _X_copy_cmap(Display *dpy, Colormap dest, Colormap src, int low, int hi, int sto
 	}
     }
 
-    bu_free((genptr_t)colors, "dm_load_cmap: colors");
+    bu_free((void *)colors, "dm_load_cmap: colors");
 }
 
 void

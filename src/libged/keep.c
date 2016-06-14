@@ -45,7 +45,7 @@ struct keep_node_data {
  * Write each node encountered exactly once.
  */
 HIDDEN void
-node_write(struct db_i *dbip, struct directory *dp, genptr_t ptr)
+node_write(struct db_i *dbip, struct directory *dp, void *ptr)
 {
     struct keep_node_data *kndp = (struct keep_node_data *)ptr;
     struct rt_db_internal intern;
@@ -215,10 +215,10 @@ ged_keep(struct ged *gedp, int argc, const char *argv[])
 
 	if (!flag_R) {
 	    /* recursively keep objects */
-	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (genptr_t)&knd);
+	    db_functree(gedp->ged_wdbp->dbip, dp, node_write, node_write, &rt_uniresource, (void *)&knd);
 	} else {
 	    /* keep just this object */
-	    node_write(gedp->ged_wdbp->dbip, dp, (genptr_t)&knd);
+	    node_write(gedp->ged_wdbp->dbip, dp, (void *)&knd);
 	}
     }
 

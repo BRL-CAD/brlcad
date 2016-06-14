@@ -1265,7 +1265,7 @@ wgl_drawVList(struct dm *dmp, struct bn_vlist *vp)
  *
  */
 HIDDEN int
-wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+wgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

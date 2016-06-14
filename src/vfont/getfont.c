@@ -33,15 +33,15 @@
 #include "./vfont.h"
 
 
-struct vfont
+struct vfont_file
 get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...))
 {
-    struct vfont font;
+    struct vfont_file font;
     struct header lochdr;
     static char	fname[FONTNAMESZ];
 
     /* Initialize vfont */
-    memset(&font, 0, sizeof(struct vfont));
+    memset(&font, 0, sizeof(struct vfont_file));
 
     if (fontname == NULL)
 	fontname = FONTNAME;

@@ -379,6 +379,7 @@ typedef struct {
     mat_t		gdps_view2model;
     mat_t		gdps_model2view;
     ged_polygons	gdps_polygons;
+    fastf_t		gdps_data_vZ;
 } ged_data_polygon_state;
 
 struct ged_grid_state {
@@ -426,7 +427,7 @@ struct ged_run_rt {
 #  ifdef TCL_OK
     Tcl_Channel chan;
 #  else
-    genptr_t chan;
+    void *chan;
 #  endif
 #else
     int fd;
@@ -503,7 +504,7 @@ struct ged_view {
     mat_t			gv_view2model;
     mat_t			gv_pmat;		/**< @brief  perspective matrix */
     void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
-    genptr_t			gv_clientData;		/**< @brief  passed to gv_callback */
+    void *			gv_clientData;		/**< @brief  passed to gv_callback */
     fastf_t			gv_prevMouseX;
     fastf_t			gv_prevMouseY;
     fastf_t			gv_minMouseDelta;
@@ -1374,11 +1375,6 @@ GED_EXPORT extern int ged_make(struct ged *gedp, int argc, const char *argv[]);
  *   5)   default diameter of each point
  */
 GED_EXPORT extern int ged_make_pnts(struct ged *gedp, int argc, const char *argv[]);
-
-/**
- * Make a bounding box (rpp) around the specified objects
- */
-GED_EXPORT extern int ged_make_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Make a unique object name.

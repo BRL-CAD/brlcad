@@ -28,7 +28,9 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/endian.h"
+#include "bu/str.h"
 
 #define SWAB(shrt)	if (bu_byteorder() == BU_BIG_ENDIAN) (shrt=(((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00))
 #define SWABV(shrt)	(bu_byteorder() == BU_BIG_ENDIAN) ? ((((shrt)>>8) & 0xff) | (((shrt)<<8) & 0xff00)) : (shrt)
@@ -63,7 +65,7 @@ struct dispatch {
     short		width;
 };
 
-struct vfont {
+struct vfont_file {
     FILE		*ffdes;		/* File pointer for current font.	*/
     off_t		offset;		/* Current offset to character data.	*/
     struct header	hdr;		/* Header for font file.		*/
@@ -77,10 +79,10 @@ struct vfont {
  * get_font validates and loads the specified fontname, logging any
  * error messages via the provided log callback.
  *
- * the ffdes field of the returned struct vfont indicates whether the
+ * the ffdes field of the returned struct vfont_file indicates whether the
  * load was successful or not.
  */
-struct vfont
+struct vfont_file
 get_font(const char* fontname, void (*vfont_log)(const char *fmt, ...));
 
 

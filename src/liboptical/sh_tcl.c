@@ -87,10 +87,10 @@ struct bu_structparse tcl_parse_tab[] = {
 };
 
 
-HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void tcl_print(register struct region *rp, genptr_t dp);
-HIDDEN void tcl_free(genptr_t cp);
+HIDDEN int tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void tcl_print(register struct region *rp, void *dp);
+HIDDEN void tcl_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -116,7 +116,7 @@ struct mfuncs tcl_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+tcl_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -175,7 +175,7 @@ tcl_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * T C L _ P R I N T
  */
 HIDDEN void
-tcl_print(register struct region *rp, genptr_t dp)
+tcl_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, tcl_print_tab, (char *)dp);
 }
@@ -185,7 +185,7 @@ tcl_print(register struct region *rp, genptr_t dp)
  * T C L _ F R E E
  */
 HIDDEN void
-tcl_free(genptr_t cp)
+tcl_free(void *cp)
 {
     BU_PUT(cp, struct tcl_specific);
 }
@@ -199,7 +199,7 @@ tcl_free(genptr_t cp)
  * structure.
  */
 int
-tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tcl_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

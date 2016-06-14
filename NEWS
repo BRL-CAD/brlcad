@@ -9,15 +9,44 @@ first and are grouped by release.  Each release also includes optional
 descriptive text that emphasizes or further describes significant
 changes made.  See document footer for additional details.
 
-----------------------------------------------------------------------
---- 2015-08-31  Release 7.24.4                                     ---
-----------------------------------------------------------------------
-
-* initial support for datum points, lines, and planes - Sean Morrison
-
 
 ----------------------------------------------------------------------
---- 2014-06-02  Release 7.24.2                                     ---
+--- 2014-XX-XX  Release 7.26.XX                                    ---
+----------------------------------------------------------------------
+
+* fix submodel primitive crash - Cliff Yapp, Sean Morrison
+* support non-.g file import in Archer's file open dialog - Cliff Yapp
+* added brep support to g2asc and asc2g - Cliff Yapp
+* fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
+* fixed mged -c crash running view-modifying commands - Sean Morrison
+* improved kill, killall, killtree documentation - Sean Morrison
+* added killtree -f force flag to kill unconditionally - Sean Morrison
+* killtree now defaults to skipping referenced objects - Sean Morrison
+* nirt -h option is now help, old -h is -H - Carl Moore
+* implemented preliminary NURBS geometry Boolean evaluation
+	- Wu Jianbang, Nick Reed, Cliff Yapp
+* improved step-g assembly hierarchy import support - Keith Bowman
+* fixed rtweight when using the -G grid spacing option - Sean Morrison
+* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* improved NURBS ray tracing & tessellation robustness - Keith Bowman
+* improved step-g NURBS geometry import robustness - Keith Bowman
+* added -v verbose output option to MGED 'search' command - Cliff Yapp
+* fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
+* fixed crash of extrude with special case bezier curves - huskmate13
+* improved performance of 'terrain' & numerous shaders - Sean Morrison
+* new manual pages for rtexample and brep_simple - Shardul Chiplunkar
+* added key binding to reopen/focus mged command window - Emory Huff
+* added menu option to restore mged command window - Cezar Elnazli
+* search command now recognizes hyp and metaball types - Cliff Yapp
+* added -depth option to MGED 'search' command - Cliff Yapp
+* improved 'search' with 'flat' search path modifier - Cliff Yapp
+* improved 'search' with above/equal/below depth limits - Cliff Yapp
+* added comb -S option to stop when object already exists - Cliff Yapp
+* improved comb command documentation with many examples - Cliff Yapp
+
+
+----------------------------------------------------------------------
+--- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
 This patch release includes a plethora of significant bug fixes and
@@ -62,7 +91,7 @@ improved geometry interchange with other CAD systems.
 * improved NURBS ray tracing grazing hit behavior - Keith Bowman
 * print current grid information in gqa output - Cliff Yapp
 * added -f option for flattening combs to 'comb' command - Cliff Yapp
-* added support for boolean op filtering in search - Cliff Yapp
+* added support for -bool operation filtering in search - Cliff Yapp
 * added new g-raw geometry converter - Jon Engbert, Daniel Roßberg
 * improved g-stl usage and documentation - Jon Engbert
 * added -c and -r region flag options to the comb command - Cliff Yapp
@@ -168,6 +197,7 @@ including the STEP, Patch, and 3DM importers.
 * improved documentation consistency and authorship info - Tom Browder
 * new mouse-input unpushed matrix edit option in archer - Bob Parker
 * fixed bug during pipe editing with working units set - Bob Parker
+* added experimental 'bot_fuse' command to heal BoTs - Richard Weiss
 
 
 ----------------------------------------------------------------------

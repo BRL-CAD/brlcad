@@ -730,7 +730,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
     intern->idb_meth = &OBJ[ID_EBM];
-    intern->idb_ptr = (genptr_t)ebm;
+    intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
     bu_strlcpy(ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN);
@@ -757,7 +757,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
     intern->idb_meth = &OBJ[ID_SUBMODEL];
-    intern->idb_ptr = (genptr_t)sip;
+    intern->idb_ptr = (void *)sip;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
     bu_vls_init(&sip->treetop);
@@ -783,7 +783,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
@@ -820,7 +820,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
@@ -880,7 +880,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
     intern->idb_meth = &OBJ[ID_HF];
-    intern->idb_ptr = (genptr_t)hf;
+    intern->idb_ptr = (void *)hf;
     hf->magic = RT_HF_INTERNAL_MAGIC;
 
     bu_strlcpy(hf->cfile, cmd_argvs[3], sizeof(hf->cfile));
@@ -941,7 +941,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
     intern->idb_meth = &OBJ[ID_VOL];
-    intern->idb_ptr = (genptr_t)vol;
+    intern->idb_ptr = (void *)vol;
     vol->magic = RT_VOL_INTERNAL_MAGIC;
 
     bu_strlcpy(vol->file, cmd_argvs[3], sizeof(vol->file));
@@ -1025,7 +1025,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     intern->idb_meth = &OBJ[ID_BOT];
 
     BU_ALLOC(bot, struct rt_bot_internal);
-    intern->idb_ptr = (genptr_t)bot;
+    intern->idb_ptr = (void *)bot;
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->num_vertices = num_verts;
     bot->num_faces = num_faces;
@@ -3313,7 +3313,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 do_new_update:
     /* The function may have already written via LIBWDB */
     if (internal.idb_ptr != NULL) {
-	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);

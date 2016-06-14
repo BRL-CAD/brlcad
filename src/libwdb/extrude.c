@@ -62,7 +62,7 @@ mk_extrusion(
     extr->keypoint = keypoint;
     extr->skt = (struct rt_sketch_internal *)NULL;
 
-    return wdb_export(fp, name, (genptr_t)extr, ID_EXTRUDE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)extr, ID_EXTRUDE, mk_conv2mm);
 }
 
 

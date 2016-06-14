@@ -47,10 +47,10 @@ struct bu_structparse cloud_parse[] = {
 };
 
 
-HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void cloud_print(register struct region *rp, genptr_t dp);
-HIDDEN void cloud_free(genptr_t cp);
+HIDDEN int cloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int cloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void cloud_print(register struct region *rp, void *dp);
+HIDDEN void cloud_free(void *cp);
 
 struct mfuncs cloud_mfuncs[] = {
     {MF_MAGIC,	"cloud",	0,		MFI_UV,		0,
@@ -139,7 +139,7 @@ cloud_texture(register fastf_t x, register fastf_t y, fastf_t Contrast, fastf_t 
  * C L O U D _ S E T U P
  */
 HIDDEN int
-cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
     register struct cloud_specific *cp;
 
@@ -160,7 +160,7 @@ cloud_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t
  * C L O U D _ P R I N T
  */
 HIDDEN void
-cloud_print(register struct region *rp, genptr_t dp)
+cloud_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, cloud_parse, (char *)dp);
 }
@@ -170,7 +170,7 @@ cloud_print(register struct region *rp, genptr_t dp)
  * C L O U D _ F R E E
  */
 HIDDEN void
-cloud_free(genptr_t cp)
+cloud_free(void *cp)
 {
     BU_PUT(cp, struct cloud_specific);
 }
@@ -186,7 +186,7 @@ cloud_free(genptr_t cp)
  * thresh=0.35, range=0.3 for decent clouds.
  */
 int
-cloud_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+cloud_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     register struct cloud_specific *cp =
 	(struct cloud_specific *)dp;

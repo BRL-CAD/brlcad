@@ -59,23 +59,25 @@ nurbs_test(long int test_number, struct db_i *dbip)
 		if (get_surface("case_1_surface.s", dbip, &case_1_intern, &case_1_brep_ip)) return -1;
 		brep = case_1_brep_ip->brep;
 		ON_BrepFace& c1_face = brep->m_F[0];
-		brlcad::SurfaceTree* c1_st = new brlcad::SurfaceTree(&c1_face, false);
 
 		ON_2dPoint pt_2d_1, pt_2d_2;
 		ON_3dPoint pt_3d_1(11204.05366897583,-16726.489562988281, 3358.7263298034668);
 		ON_3dPoint pt_3d_2(11204.007682800293, -16726.479568481445, 3358.8327312469482);
-		(void)get_closest_point(pt_2d_1, &c1_face, pt_3d_1, c1_st);
-		(void)get_closest_point(pt_2d_2, &c1_face, pt_3d_2, c1_st);
+		ON_3dPoint p3d_pullback_1 = ON_3dPoint::UnsetPoint;
+		ON_3dPoint p3d_pullback_2 = ON_3dPoint::UnsetPoint;
+		bool p1_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_1,pt_2d_1,p3d_pullback_1,0,BREP_EDGE_MISS_TOLERANCE);
+		bool p2_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_2,pt_2d_2,p3d_pullback_2,0,BREP_EDGE_MISS_TOLERANCE);
 	        rt_db_free_internal(&case_1_intern);
-		delete c1_st;
                 if (pt_2d_1 == pt_2d_2) {
-		    std::cout << "NURBS test case 1 failure (get_closest_point):  Unexpectedly identical 2D pullbacks from different 3D points\n";
+		    std::cout << "NURBS test case 1 failure (surface_GetClosestPoint3dFirstOrder):  Unexpectedly identical 2D pullbacks from different 3D points\n";
 		    std::cout << std::setprecision(std::numeric_limits<double>::digits10) << "Inputs:  3d Point 1: " << pt_3d_1.x << "," << pt_3d_1.y << "," << pt_3d_1.z << "\n";
 		    std::cout << std::setprecision(std::numeric_limits<double>::digits10) << "         3d Point 2: " << pt_3d_2.x << "," << pt_3d_2.y << "," << pt_3d_2.z << "\n";
 		    std::cout << std::setprecision(std::numeric_limits<double>::digits10) << "Output:  2d Point 1: " << pt_2d_1.x << "," << pt_2d_1.y << "\n";
 		    std::cout << std::setprecision(std::numeric_limits<double>::digits10) << "         2d Point 2: " << pt_2d_2.x << "," << pt_2d_2.y << "\n";
 		    return -1;
 		}
+		if (p1_result == false) std::cout << "Warning - p1 pullback failed\n";
+		if (p2_result == false) std::cout << "Warning - p2 pullback failed\n";
                 return 0;
 	    }
 	default:

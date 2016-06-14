@@ -163,7 +163,7 @@ ged_annotate(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_vls_free(&objects);
-    bu_free((genptr_t)object_argv, "ged_annotate");
+    bu_free((void *)object_argv, "ged_annotate");
 
     return GED_OK;
 }

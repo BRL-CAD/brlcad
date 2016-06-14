@@ -31,12 +31,12 @@ bu_hook_list_init(struct bu_hook_list *hlp)
 {
     BU_LIST_INIT(&hlp->l);
     hlp->hookfunc = NULL;
-    hlp->clientdata = GENPTR_NULL;
+    hlp->clientdata = ((void *)0);
 }
 
 
 void
-bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
+bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
     struct bu_hook_list *new_hook;
 
@@ -49,7 +49,7 @@ bu_hook_add(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 
 
 void
-bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
+bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, void *clientdata)
 {
     struct bu_hook_list *cur = hlp;
 
@@ -65,7 +65,7 @@ bu_hook_delete(struct bu_hook_list *hlp, bu_hook_t func, genptr_t clientdata)
 
 
 void
-bu_hook_call(struct bu_hook_list *hlp, genptr_t buf)
+bu_hook_call(struct bu_hook_list *hlp, void *buf)
 {
     struct bu_hook_list *call_hook;
 

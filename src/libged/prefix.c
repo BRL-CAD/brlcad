@@ -34,7 +34,7 @@
 
 
 static void
-prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t prefix_ptr, genptr_t obj_ptr, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+prefix_do(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *prefix_ptr, void *obj_ptr, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     char *prefix, *obj;
     char tempstring_v4[NAMESIZE+1];
@@ -164,7 +164,7 @@ ged_prefix(struct ged *gedp, int argc, const char *argv[])
 
 	for (k = 2; k < argc; k++)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, prefix_do,
-			     (genptr_t)argv[1], (genptr_t)argv[k], (genptr_t)NULL, (genptr_t)NULL);
+			     (void *)argv[1], (void *)argv[k], (void *)NULL, (void *)NULL);
 	if (rt_db_put_internal(dp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource)) {
 	    bu_vls_printf(gedp->ged_result_str, "Database write error, aborting");
 	    return GED_ERROR;

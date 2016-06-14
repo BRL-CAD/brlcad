@@ -845,7 +845,7 @@ static int hit_nothing(struct application *ap)
 
 	VMOVE(ap->a_color, u.sw.sw_color);
 	ap->a_user = 1;		/* Signal view_pixel:  HIT */
-	ap->a_uptr = (genptr_t)&env_region;
+	ap->a_uptr = (void *)&env_region;
 	return 1;
     }
 
@@ -1034,7 +1034,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
 	 * sliver less than 0.05mm thick will be skipped (0.05 is a
 	 * SWAG).
 	 */
-	if ((genptr_t)pp->pt_regionp == ap->a_uptr &&
+	if ((void *)pp->pt_regionp == ap->a_uptr &&
 	    pp->pt_forw != PartHeadp &&
 	    pp->pt_outhit->hit_dist - pp->pt_inhit->hit_dist < 0.05)
 	    pp = pp->pt_forw;
@@ -1096,7 +1096,7 @@ colorview(struct application *ap, struct partition *PartHeadp, struct seg *finis
     hitp = pp->pt_inhit;
     RT_CK_HIT(hitp);
     RT_CK_RAY(hitp->hit_rayp);
-    ap->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
+    ap->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
     if (R_DEBUG&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",
@@ -1533,7 +1533,7 @@ extern int last_pixel;		/* last pixel number */
  * R E P R O J E C T _ W O R K E R
  */
 void
-reproject_worker(int UNUSED(cpu), genptr_t UNUSED(arg))
+reproject_worker(int UNUSED(cpu), void *UNUSED(arg))
 {
     int pixel_start;
     int pixelnum;

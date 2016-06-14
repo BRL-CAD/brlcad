@@ -108,7 +108,7 @@ ged_set_transparency(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (dpp != (struct directory **)NULL)
-	bu_free((genptr_t)dpp, "ged_set_transparency: directory pointers");
+	bu_free((void *)dpp, "ged_set_transparency: directory pointers");
 
     return GED_OK;
 }

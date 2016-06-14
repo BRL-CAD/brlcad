@@ -25,15 +25,6 @@
 # introspect primitive data parameters (form elements)
 #
 
-proc per_line { args } {
-    puts stderr "DEPRECATION WARNING: 'bots' and 'per_line' are temporary until 'search' is enhanced."
-    foreach list $args {
-	foreach item $list {
-	    puts "$item"
-	}
-    }
-}
-
 proc bots { args } {
 
     set extern_commands [list db tops]

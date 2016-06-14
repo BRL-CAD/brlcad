@@ -837,7 +837,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
      */
     skt.curve.count = vertcount;
     skt.curve.reverse = (int *)bu_calloc(skt.curve.count, sizeof(int), "sketch: reverse");
-    skt.curve.segment = (genptr_t *)bu_calloc(skt.curve.count, sizeof(genptr_t), "segs");
+    skt.curve.segment = (void **)bu_calloc(skt.curve.count, sizeof(void *), "segs");
 
 
     /* Insert all line segments except the last one */
@@ -846,7 +846,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
 	lsg->magic = CURVE_LSEG_MAGIC;
 	lsg->start = i;
 	lsg->end = i + 1;
-	skt.curve.segment[i] = (genptr_t)lsg;
+	skt.curve.segment[i] = (void *)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
@@ -854,7 +854,7 @@ MakeExtrude(struct rt_wdb (*file), char *suffix, point2d_t *verts,
     lsg->magic = CURVE_LSEG_MAGIC;
     lsg->start = vertcount - 1;
     lsg->end = 0;
-    skt.curve.segment[vertcount - 1] = (genptr_t)lsg;
+    skt.curve.segment[vertcount - 1] = (void *)lsg;
 
     /* Make the sketch */
     bu_vls_sprintf(&str, "sketch%s", suffix);

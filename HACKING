@@ -1441,7 +1441,7 @@ Release steps are as follows:
 	http://t2-project.org/packages/brlcad.html
 
     OpenSUSE package maintainer
-	https://build.opensuse.org/package/users?package=brlcad&project=Education
+        https://build.opensuse.org/package/users/Education/brlcad
 
     FreeBSD ports maintainer
 	http://www.freebsd.org/cgi/cvsweb.cgi/ports/cad/brlcad/

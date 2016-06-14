@@ -392,10 +392,10 @@ struct bu_structparse img_print_tab[] = {
 };
 
 
-HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void prj_print(register struct region *rp, genptr_t dp);
-HIDDEN void prj_free(genptr_t cp);
+HIDDEN int prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void prj_print(register struct region *rp, void *dp);
+HIDDEN void prj_free(void *cp);
 
 /**
  * The "mfuncs" structure defines the external interface to the shader.
@@ -422,7 +422,7 @@ struct mfuncs prj_mfuncs[] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -563,7 +563,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * P R J _ P R I N T
  */
 HIDDEN void
-prj_print(register struct region *rp, genptr_t dp)
+prj_print(register struct region *rp, void *dp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)dp;
     struct img_specific *img_sp;
@@ -578,7 +578,7 @@ prj_print(register struct region *rp, genptr_t dp)
  * P R J _ F R E E
  */
 HIDDEN void
-prj_free(genptr_t cp)
+prj_free(void *cp)
 {
     struct prj_specific *prj_sp = (struct prj_specific *)cp;
 
@@ -683,7 +683,7 @@ project_point(point_t sh_color, struct img_specific *img_sp, struct prj_specific
  * structure.
  */
 int
-prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+prj_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

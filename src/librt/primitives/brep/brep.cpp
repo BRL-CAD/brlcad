@@ -410,7 +410,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	BU_ALLOC(bs, struct brep_specific);
 	bs->brep = bi->brep;
 	bi->brep = NULL;
-	stp->st_specific = (genptr_t)bs;
+	stp->st_specific = (void *)bs;
     }
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
@@ -2108,7 +2108,7 @@ getEdgePoints(const ON_BrepTrim &trim,
     fastf_t t = (t1 + t2) / 2.0;
 
     if (trim.EvTangent(t, mid_2d, mid_tang)
-	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
 	ON_Line line3d(start_3d, end_3d);
 	double dist3d;
 
@@ -2222,9 +2222,9 @@ getEdgePoints(ON_BrepTrim &trim,
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(mid_range, mid_2d, mid_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
-		    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		    && surface_EvNormal(s,start_2d.x, start_2d.y, start_3d, start_norm)
+		    && surface_EvNormal(s,end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(
 			s->PointAt(trim.PointAt(range.m_t[0]).x,
 				trim.PointAt(range.m_t[0]).y));
@@ -2255,8 +2255,8 @@ getEdgePoints(ON_BrepTrim &trim,
 
 	    if (trim.EvTangent(range.m_t[0], start_2d, start_tang)
 		    && trim.EvTangent(range.m_t[1], end_2d, end_tang)
-		    && s->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		    && s->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		    && surface_EvNormal(s,start_2d.x, start_2d.y, start_3d, start_norm)
+		    && surface_EvNormal(s,end_2d.x, end_2d.y, end_3d, end_norm)) {
 		(*param_points)[0.0] = new ON_3dPoint(start_3d);
 		getEdgePoints(trim, range.m_t[0], start_2d, start_tang,
 			start_3d, start_norm, range.m_t[1], end_2d, end_tang,
@@ -2366,11 +2366,11 @@ getSurfacePoints(const ON_Surface *s,
 		on_surf_points.Append(p2d);
 	    }
 	}
-    } else if ((s->EvNormal(u1, v1, p[0], norm[0]))
-	    && (s->EvNormal(u2, v1, p[1], norm[1])) // for u
-	    && (s->EvNormal(u2, v2, p[2], norm[2]))
-	    && (s->EvNormal(u1, v2, p[3], norm[3]))
-	    && (s->EvNormal(u, v, mid, norm_mid))) {
+    } else if ((surface_EvNormal(s,u1, v1, p[0], norm[0]))
+	    && (surface_EvNormal(s,u2, v1, p[1], norm[1])) // for u
+	    && (surface_EvNormal(s,u2, v2, p[2], norm[2]))
+	    && (surface_EvNormal(s,u1, v2, p[3], norm[3]))
+	    && (surface_EvNormal(s,u, v, mid, norm_mid))) {
 	double udot;
 	double vdot;
 	ON_Line line1(p[0], p[2]);
@@ -2719,7 +2719,7 @@ getUVCurveSamples(const ON_Surface *s,
     fastf_t t = (t1 + t2) / 2.0;
 
     if (curve->EvTangent(t, mid_2d, mid_tang)
-	    && s->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
+	    && surface_EvNormal(s,mid_2d.x, mid_2d.y, mid_3d, mid_norm)) {
 	ON_Line line3d(start_3d, end_3d);
 	double dist3d;
 
@@ -2808,9 +2808,9 @@ getUVCurveSamples(const ON_Surface *surf,
 	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
 		&& curve->EvTangent(mid_range, mid_2d, mid_tang)
 		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
-		&& surf->EvNormal(mid_2d.x, mid_2d.y, mid_3d, mid_norm)
-		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		&& surface_EvNormal(surf,mid_2d.x, mid_2d.y, mid_3d, mid_norm)
+		&& surface_EvNormal(surf,start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surface_EvNormal(surf,end_2d.x, end_2d.y, end_3d, end_norm)) {
 	    (*param_points)[0.0] = new ON_3dPoint(
 		    surf->PointAt(curve->PointAt(range.m_t[0]).x,
 			    curve->PointAt(range.m_t[0]).y));
@@ -2841,8 +2841,8 @@ getUVCurveSamples(const ON_Surface *surf,
 
 	if (curve->EvTangent(range.m_t[0], start_2d, start_tang)
 		&& curve->EvTangent(range.m_t[1], end_2d, end_tang)
-		&& surf->EvNormal(start_2d.x, start_2d.y, start_3d, start_norm)
-		&& surf->EvNormal(end_2d.x, end_2d.y, end_3d, end_norm)) {
+		&& surface_EvNormal(surf,start_2d.x, start_2d.y, start_3d, start_norm)
+		&& surface_EvNormal(surf,end_2d.x, end_2d.y, end_3d, end_norm)) {
 	    (*param_points)[0.0] = new ON_3dPoint(start_3d);
 	    getUVCurveSamples(surf,curve, range.m_t[0], start_2d, start_tang,
 		    start_3d, start_norm, range.m_t[1], end_2d, end_tang,
@@ -3356,7 +3356,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
-		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+		    if (surface_EvNormal(s,p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
 			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
 				    pointmap->find(p);
@@ -3391,7 +3391,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		p2t::Point *p = NULL;
 		for (size_t j = 0; j < 3; j++) {
 		    p = t->GetPoint(j);
-		    if (s->EvNormal(p->x, p->y, pnt[j], norm[j])) {
+		    if (surface_EvNormal(s,p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
 			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
 				    pointmap->find(p);
@@ -3943,7 +3943,7 @@ class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
     RT_MemoryArchive();
-    RT_MemoryArchive(genptr_t memory, size_t len);
+    RT_MemoryArchive(void *memory, size_t len);
     virtual ~RT_MemoryArchive();
 
     // ON_BinaryArchive overrides
@@ -3976,7 +3976,7 @@ RT_MemoryArchive::RT_MemoryArchive()
 }
 
 
-RT_MemoryArchive::RT_MemoryArchive(genptr_t memory, size_t len)
+RT_MemoryArchive::RT_MemoryArchive(void *memory, size_t len)
     : ON_BinaryArchive(ON::read3dm), pos(0)
 {
     m_buffer.reserve(len);
@@ -4242,7 +4242,7 @@ rt_brep_ifree(struct rt_db_internal *ip)
     if (bi->brep != NULL)
 	delete bi->brep;
     bu_free(bi, "rt_brep_internal free");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -4340,7 +4340,7 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     bip_out->magic = RT_BREP_INTERNAL_MAGIC;
     bip_out->brep = brep_out;
     RT_DB_INTERNAL_INIT(out);
-    out->idb_ptr = (genptr_t)bip_out;
+    out->idb_ptr = (void *)bip_out;
     out->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     out->idb_meth = &OBJ[ID_BREP];
     out->idb_minor_type = ID_BREP;

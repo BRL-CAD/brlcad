@@ -126,7 +126,7 @@ int
 region_start(struct db_tree_state *UNUSED(tsp),
 	     const struct db_full_path *pathp,
 	     const struct rt_comb_internal *UNUSED(combp),
-	     genptr_t UNUSED(client_data))
+	     void *UNUSED(client_data))
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -157,7 +157,7 @@ union tree *
 region_end(struct db_tree_state *UNUSED(tsp),
 	   const struct db_full_path * pathp,
 	   union tree *curtree,
-	   genptr_t UNUSED(client_data))
+	   void *UNUSED(client_data))
 {
     if (debug&DEBUG_NAMES) {
 	char *name = db_path_to_string(pathp);
@@ -183,7 +183,7 @@ union tree *
 leaf_func (struct db_tree_state *UNUSED(tsp),
 	   const struct db_full_path *pathp,
 	   struct rt_db_internal *internp,
-	   genptr_t UNUSED(client_data))
+	   void *UNUSED(client_data))
 {
     /* the rt_db_internal structure is used to manage the payload of
      * "internal" or "in memory" representation of geometry as opposed
@@ -290,7 +290,7 @@ int main(int ac, char *av[])
 		 region_start,
 		 region_end,
 		 leaf_func,
-		 (genptr_t)&user_data);
+		 (void *)&user_data);
 
     /* at this point you can do things with the geometry you have obtained */
 

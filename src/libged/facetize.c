@@ -39,7 +39,7 @@ static union tree *
 facetize_region_end(struct db_tree_state *tsp,
 		    const struct db_full_path *pathp,
 		    union tree *curtree,
-		    genptr_t client_data)
+		    void *client_data)
 {
     struct bu_list vhead;
     union tree **facetize_tree;
@@ -182,7 +182,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 		     nmg_use_tnurbs ?
 		     nmg_booltree_leaf_tnurb :
 		     nmg_booltree_leaf_tess,
-		     (genptr_t)&facetize_tree
+		     (void *)&facetize_tree
 	);
 
 
@@ -286,7 +286,7 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_BOT;
 	intern.idb_meth = &OBJ[ID_BOT];
-	intern.idb_ptr = (genptr_t) bot;
+	intern.idb_ptr = (void *) bot;
     } else {
 
 	bu_vls_printf(gedp->ged_result_str, "facetize:  converting NMG to database format\n");
@@ -296,11 +296,11 @@ ged_facetize(struct ged *gedp, int argc, const char *argv[])
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_NMG;
 	intern.idb_meth = &OBJ[ID_NMG];
-	intern.idb_ptr = (genptr_t)nmg_model;
+	intern.idb_ptr = (void *)nmg_model;
 	nmg_model = (struct model *)NULL;
     }
 
-    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    dp=db_diradd(dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", newname);
 	return GED_ERROR;

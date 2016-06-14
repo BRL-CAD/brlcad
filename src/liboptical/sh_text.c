@@ -216,7 +216,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-txt_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+txt_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -439,7 +439,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bwtxt_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+bwtxt_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -559,7 +559,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
  * T X T _ S E T U P
  */
 HIDDEN int
-txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
     register struct txt_specific *tp;
     int pixelbytes = 3;
@@ -616,7 +616,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * T X T _ P R I N T
  */
 HIDDEN void
-txt_print(register struct region *rp, genptr_t UNUSED(dp))
+txt_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, txt_parse, (char *)rp->reg_udata);
 }
@@ -626,7 +626,7 @@ txt_print(register struct region *rp, genptr_t UNUSED(dp))
  * T X T _ F R E E
  */
 HIDDEN void
-txt_free(genptr_t cp)
+txt_free(void *cp)
 {
     struct txt_specific *tp =	(struct txt_specific *)cp;
 
@@ -659,7 +659,7 @@ struct bu_structparse ckr_parse[] = {
  * C K R _ R E N D E R
  */
 HIDDEN int
-ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, genptr_t dp)
+ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, void *dp)
 {
     register struct ckr_specific *ckp =
 	(struct ckr_specific *)dp;
@@ -691,7 +691,7 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
  * C K R _ S E T U P
  */
 HIDDEN int
-ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -722,7 +722,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *
  * C K R _ P R I N T
  */
 HIDDEN void
-ckr_print(register struct region *rp, genptr_t UNUSED(dp))
+ckr_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
 }
@@ -732,7 +732,7 @@ ckr_print(register struct region *rp, genptr_t UNUSED(dp))
  * C K R _ F R E E
  */
 HIDDEN void
-ckr_free(genptr_t cp)
+ckr_free(void *cp)
 {
     BU_PUT(cp, struct ckr_specific);
 }
@@ -745,7 +745,7 @@ ckr_free(genptr_t cp)
  * Mostly useful for debugging ft_uv() routines.
  */
 HIDDEN int
-tstm_render(struct application *ap, const struct partition *pp, register struct shadework *swp, genptr_t UNUSED(dp))
+tstm_render(struct application *ap, const struct partition *pp, register struct shadework *swp, void *UNUSED(dp))
 {
     VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 
@@ -773,7 +773,7 @@ static vect_t star_colors[] = {
  * S T A R _ R E N D E R
  */
 HIDDEN int
-star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t UNUSED(dp))
+star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *UNUSED(dp))
 {
     /* Probably want to diddle parameters based on what part of sky */
     if (bn_rand0to1(ap->a_resource->re_randptr) >= 0.98) {
@@ -811,7 +811,7 @@ star_render(register struct application *ap, const struct partition *pp, struct 
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-bmp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+bmp_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)dp;
@@ -890,7 +890,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
  * E N V M A P _ S E T U P
  */
 HIDDEN int
-envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+envmap_setup(register struct region *rp, struct bu_vls *matparm, void **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
     struct mfuncs *shaders = MF_NULL;
 
@@ -931,7 +931,7 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *UNUSE
  */
 /* VARARGS */
 int
-mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), struct shadework *UNUSED(c), genptr_t UNUSED(d))
+mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), struct shadework *UNUSED(c), void *UNUSED(d))
 {
     return 0;
 }
@@ -945,7 +945,7 @@ mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), stru
  */
 /* VARARGS */
 int
-mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), genptr_t *UNUSED(c), const struct mfuncs *UNUSED(d), struct rt_i *UNUSED(e))
+mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), void **UNUSED(c), const struct mfuncs *UNUSED(d), struct rt_i *UNUSED(e))
 {
     return 1;
 }
@@ -956,12 +956,12 @@ mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), genptr_t *UNUSED(c)
  */
 /* VARARGS */
 void
-mlib_void(struct region *UNUSED(a), genptr_t UNUSED(b))
+mlib_void(struct region *UNUSED(a), void *UNUSED(b))
 {
 }
 
 static void
-mlib_void2(genptr_t UNUSED(b))
+mlib_void2(void *UNUSED(b))
 {
 }
 

@@ -153,9 +153,6 @@ mged
 
 7.20
 ----
-liborle
-	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
-	pix-orle [deprecated 7.20]
 tclscripts/lib
 	Mged, Database, Db, Dm, Drawable, Display, QuadDisplay, View -> Ged [deprecated 7.20]
 librt
@@ -164,8 +161,7 @@ librt
 	hf primitive [deprecated 7.20]
 include/bu.h
 	bu_vls_init_if_uninit() -> bu_vls_init() [deprecated 7.20]
-autogen.sh && configure
-	GNU Autotools build system -> CMake build system [deprecated 7.20]
+GNU Autotools configure compatibility script
 	./configure -> cmake . [deprecated 7.20]
 include/raytrace.h
 	rt_load_attrs() -> rt_gettrees_and_attrs() or db5_import_attributs() [deprecated 7.20]
@@ -230,12 +226,6 @@ mged
 ----
 struct bu_structparse 'i' format
        'i' -> '%p' [deprecated 7.16]
-SGI-specific tools
-	pl-sgi -> pl-fb [ deprecated 7.16 ]
-Dunn camera and Canon printer tools
-	dunncolor [ deprecated 7.16 ]
-	dunnsnap [ deprecated 7.16 ]
-	canonize [ deprecated 7.16 ]
 reserved attributes and case-sensitivity
 	id -> region_id [deprecated 7.16]
 	GIFTmater -> material_id [deprecated 7.16]
@@ -244,63 +234,21 @@ reserved attributes and case-sensitivity
 	AIRCODE -> air [deprecated 7.16]
 	rgb -> color [deprecated 7.16]
 	oshader -> shader [deprecated 7.16]
-genptr_t/GENPTR_NULL
-	genptr_t -> void* [deprecated 7.16]
-any-png.sh
-	use pix tools [deprecated 7.16]
-cadbug.sh
-	use sf.net tracker [deprecated 7.16]
-cray.sh
-	obsolete hardware [deprecated 7.16]
-pixwrite.sh
-	obsolete hardware [deprecated 7.16]
-pixread.sh
-	obsolete hardware [deprecated 7.16]
-sgisnap.sh
-	obsolete hardware [deprecated 7.16]
-include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
 include/raytrace.h
 	rt_prep_timer() -> bu_timer() [deprecated 7.16]
 	rt_get_timer() -> bu_elapsed() [deprecated 7.16]
-mged
-	make_bb -> bb [deprecated 7.16]
 
 7.14
 ----
-include/dm_color.h
-	dm_color.h -> dm.h [deprecated 7.14]
-include/fb.h
-	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
-src/gtools
-	g_[toolname] -> g[toolname] [deprecated 7.14]
-include/raytrace.h
-	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
-	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
-	DIR_* -> RT_DIR_* [deprecated 7.14]
 mged
-	tops -g -u -> now default behavior [deprecated 7.14]
-	-n option -> -c option [deprecated 7.14]
-	bots, per_line [deprecated 7.14]
-include/vmath.h
-	VADD2_2D -> V2ADD2 [deprecated 7.14]
-	VSUB2_2D -> V2SUB2 [deprecated 7.14]
-	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
-	VDOT_2D -> V2DOT [deprecated 7.14]
-	VMOVE_2D -> V2MOVE [deprecated 7.14]
-	VSCALE_2D -> V2SCALE [deprecated 7.14]
-	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
+	src/tclscripts/mged/bots.tcl [deprecated 7.14]
 
 7.12
 ----
 include/raytrace.h
 	rt_functab size -> growing ft_label and new callbacks [deprecated 7.12]
-srt/librt/cmd.c
-	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
 src/rt/viewarea.c
 	terminology and output format [deprecated 7.12]
-include/raytrace.h
-	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
 
 pre 7.0
 -------
@@ -316,6 +264,61 @@ include/raytrace.h
 Below are the interfaces that have followed deprecation policy and are
 now no longer a part of BRL-CAD.
 
+7.26.0
+------
+autogen.sh && configure
+	GNU Autotools build system -> CMake build system [deprecated 7.20]
+Dunn camera and Canon printer tools
+	dunncolor [ deprecated 7.16 ]
+	dunnsnap [ deprecated 7.16 ]
+	canonize [ deprecated 7.16 ]
+genptr_t/GENPTR_NULL
+	genptr_t -> void* [deprecated 7.16]
+include/bu.h
+	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+include/dm_color.h
+	dm_color.h -> dm.h [deprecated 7.14]
+include/fb.h
+	FB_WPIXEL -> fb_wpixel [deprecated 7.14]
+include/raytrace.h
+	rt_fdiff -> NEAR_ZERO [deprecated 7.14]
+	rt_reldiff -> NEAR_ZERO [deprecated 7.14]
+	DIR_* -> RT_DIR_* [deprecated 7.14]
+	RT_HIT_NORM -> RT_HIT_NORMAL [deprecated 7.12]
+include/vmath.h
+	VADD2_2D -> V2ADD2 [deprecated 7.14]
+	VSUB2_2D -> V2SUB2 [deprecated 7.14]
+	MAGSQ_2D -> MAG2SQ [deprecated 7.14]
+	VDOT_2D -> V2DOT [deprecated 7.14]
+	VMOVE_2D -> V2MOVE [deprecated 7.14]
+	VSCALE_2D -> V2SCALE [deprecated 7.14]
+	VJOIN1_2D -> V2JOIN1 [deprecated 7.14]
+liborle
+	remove liborle and the tools using it, fb-orle, orle-fb, orle-pix and
+	pix-orle [deprecated 7.20]
+mged
+	make_bb -> bb [deprecated 7.16]
+	tops -g -u -> now default behavior [deprecated 7.14]
+	-n option -> -c option [deprecated 7.14]
+	per_line [deprecated 7.14]
+SGI-specific tools
+	pl-sgi -> pl-fb [ deprecated 7.16 ]
+src/gtools
+	g_[toolname] -> g[toolname] [deprecated 7.14]
+src/librt/cmd.c
+	rt_split_cmd() -> bu_argv_from_string() [deprecated 7.12]
+any-png.sh
+	use pix tools [deprecated 7.16]
+cadbug.sh
+	use sf.net tracker [deprecated 7.16]
+cray.sh
+	obsolete hardware [deprecated 7.16]
+pixwrite.sh
+	obsolete hardware [deprecated 7.16]
+pixread.sh
+	obsolete hardware [deprecated 7.16]
+sgisnap.sh
+	obsolete hardware [deprecated 7.16]
 
 7.24.2
 ------
@@ -985,7 +988,7 @@ s/bn_degtorad/DEG2RAD/g
 s/bn_radtodeg/RAD2DEG/g
 s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
         eliminated a number of libbn globals in favor of existing constants
-s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont-if.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
         library-specific public headers moved into a subdir [7.24]

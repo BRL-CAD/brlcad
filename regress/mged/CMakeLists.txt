@@ -33,7 +33,6 @@ set(MGED_TESTS
   knob.mged
   loadview.mged
   lookat.mged
-  make_bb.mged
   make.mged
   mirface.mged
   mirror.mged

@@ -1,7 +1,7 @@
 /*              T E S T _ B O T 2 N U R B S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -198,13 +198,13 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	ON_3dPoint center(0.0, 0.0, 0.0);
 	std::set<size_t> verts;
 	std::set<size_t>::iterator f_it, v_it;
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
 	}
 	point_t pt;
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
 	    center.x += pt[0]/verts.size();
 	    center.y += pt[1]/verts.size();
@@ -212,7 +212,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	}
         Eigen::MatrixXd A(3, verts.size());
 	int vert_cnt = 0;
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
 	    A(0,vert_cnt) = pt[0] - center.x;
 	    A(1,vert_cnt) = pt[1] - center.y;
@@ -228,6 +228,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	// 5.  Construct plane
 	ON_Plane new_plane(center, normal);
         (*plane) = new_plane;
+/* Uncomment to plot fitting planes */
 #if 0
 	struct bu_vls name;
 	bu_vls_init(&name);
@@ -237,7 +238,7 @@ fit_plane(size_t UNUSED(patch_id), std::set<size_t> *faces, struct Manifold_Info
 	int g = int(256*drand48() + 1.0);
 	int b = int(256*drand48() + 1.0);
         point_t pc;
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
             point_t p1, p2, p3;
             VMOVE(p1, &info->bot->vertices[info->bot->faces[(*f_it)*3+0]*3]);
             VMOVE(p2, &info->bot->vertices[info->bot->faces[(*f_it)*3+1]*3]);
@@ -278,12 +279,12 @@ planar_patch_test(size_t patch_id, std::set<size_t> *faces, struct Manifold_Info
         fastf_t max_dist = 0.0;
         ON_Plane best_fit_plane;
         fit_plane(patch_id, faces, info, &best_fit_plane);
-	for(f_it = faces->begin(); f_it != faces->end(); f_it++) {
+	for (f_it = faces->begin(); f_it != faces->end(); f_it++) {
 	    verts.insert(info->bot->faces[(*f_it)*3+0]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+1]*3);
 	    verts.insert(info->bot->faces[(*f_it)*3+2]*3);
 	}
-	for(v_it = verts.begin(); v_it != verts.end(); v_it++) {
+	for (v_it = verts.begin(); v_it != verts.end(); v_it++) {
 	    point_t pt;
 	    VMOVE(pt, &info->bot->vertices[*v_it]);
             fastf_t curr_dist = best_fit_plane.DistanceTo(ON_3dPoint(pt[0], pt[1], pt[2]));
@@ -585,8 +586,8 @@ shift_edge_triangles(std::map< size_t, std::set<size_t> > *patches, size_t curr_
 static void
 construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > *patches, struct Manifold_Info *info)
 {
-    if (faces->size() > 0){
-	while(faces->size() > 0) {
+    if (faces->size() > 0) {
+	while (faces->size() > 0) {
 	    info->patch_cnt++;
 	    size_t new_patch = info->patch_cnt;
 	    std::queue<size_t> face_queue;
@@ -603,8 +604,8 @@ construct_patches(std::set<size_t> *faces, std::map< size_t, std::set<size_t> > 
 		std::set<size_t>::iterator cf_it;
 		get_connected_faces(info->bot, face_num, &(info->edge_to_face), &connected_faces);
 		for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		    if(faces->find((*cf_it)) != faces->end()) {
-			if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		    if (faces->find((*cf_it)) != faces->end()) {
+			if (ON_DotProduct( *(*info).face_normals.At((int)(start_face_num)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			    face_queue.push((*cf_it));
 			    faces->erase((*cf_it));
 			}
@@ -644,8 +645,8 @@ split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map<
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_1, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end() ; cf_it++) {
-		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At((int)(start_face_num_1)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		if (faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_2].find(*cf_it) == (*patches)[new_patch_2].end()) {
+		    if (ON_DotProduct( *(*info).face_normals.At((int)(start_face_num_1)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue_1.push((*cf_it));
 			faces->erase((*cf_it));
 		    }
@@ -661,8 +662,8 @@ split_overlapping_patch(size_t face1, size_t face2, size_t orig_patch, std::map<
 	    std::set<size_t>::iterator cf_it;
 	    get_connected_faces(info->bot, face_num_2, &(info->edge_to_face), &connected_faces);
 	    for (cf_it = connected_faces.begin(); cf_it != connected_faces.end(); cf_it++) {
-		if(faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
-		    if(ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
+		if (faces->find((*cf_it)) != faces->end() && (*patches)[new_patch_1].find(*cf_it) == (*patches)[new_patch_1].end()) {
+		    if (ON_DotProduct( *(*info).face_normals.At(((int)start_face_num_2)),*(*info).face_normals.At((int)(*cf_it)) ) > 0.5) {
 			face_queue_2.push((*cf_it));
 			faces->erase((*cf_it));
 		    }
@@ -868,7 +869,7 @@ bot_partition(struct Manifold_Info *info)
 		    if (curr_face_area < (face_size_criteria*10) && curr_face_area > (face_size_criteria*0.1)) {
 			if (face_groups[info->face_to_plane[(*cf_it)]].find((*cf_it)) != face_groups[info->face_to_plane[(*cf_it)]].end()) {
 			    if (info->face_to_plane[(*cf_it)] == current_plane) {
-				//	if(ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
+				//	if (ON_DotProduct( *(*info).face_normals.At((start_face_num)),*(*info).face_normals.At((*cf_it)) ) > 0.5) {
 				// Large patches pose a problem for feature preservation - make an attempt to ensure "large"
 				// patches are flat.
 				if (patches[info->patch_cnt].size() > info->patch_size_threshold) {
@@ -1162,11 +1163,11 @@ find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loo
     } else {
 	std::map<size_t, std::vector<size_t> >::iterator l_it;
 	fastf_t diag_max = 0.0;
-	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
+	for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
 	    double boxmin[3] = {0.0, 0.0, 0.0};
 	    double boxmax[3] = {0.0, 0.0, 0.0};
 	    std::vector<size_t>::iterator v_it;
-	    for(v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
+	    for (v_it = (*l_it).second.begin(); v_it != (*l_it).second.end(); v_it++) {
 		ON_BrepEdge& edge = info->brep->m_E[(int)(*v_it)];
 		const ON_Curve* edge_curve = edge.EdgeCurveOf();
 		edge_curve->GetBBox((double *)&boxmin, (double *)&boxmax, 1);
@@ -1178,8 +1179,8 @@ find_outer_loop(std::map<size_t, std::vector<size_t> > *loops, size_t *outer_loo
 		diag_max = pmin.DistanceTo(pmax);
             }
 	}
-	for(l_it = loops->begin(); l_it != loops->end(); l_it++) {
-	    if((*l_it).first != *outer_loop) {
+	for (l_it = loops->begin(); l_it != loops->end(); l_it++) {
+	    if ((*l_it).first != *outer_loop) {
 		(*inner_loops).insert((*l_it).first);
 	    }
 	}
@@ -1206,18 +1207,18 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
     int vert_prev = -1;
     //std::cout << "Patch " << patch_id << " loop edges: \n";
     bool trim_rev = false;
-    for(loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
+    for (loop_it = loop_edges->begin(); loop_it != loop_edges->end(); loop_it++) {
 	size_t curr_edge = (*loop_it);
 	// Will we need to flip the trim?
 	ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
-	if(vert_prev != -1) {
+	if (vert_prev != -1) {
 	    if (vert_prev == edge.m_vi[0]) {
 		trim_rev = false;
 	    } else {
 		trim_rev = true;
 	    }
 	}
-	if(trim_rev) {
+	if (trim_rev) {
 	    vert_prev = edge.m_vi[0];
 	} else {
 	    vert_prev = edge.m_vi[1];
@@ -1236,13 +1237,14 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
         int istart = 1;
 
 	size_t pullback_failures;
-	if(loop_it == loop_edges->begin()) {
+	if (loop_it == loop_edges->begin()) {
 	    pullback_failures = 0;
 	    prev_trim_rev = trim_rev;
 	    int found_first_pt = 0;
-	    while(!found_first_pt && istart < 50) {
+	    while (!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st)) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			loop_anchor = pt_2d;
@@ -1251,7 +1253,13 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 			istart++;
                     }
 		} else {
-		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure on first pt (" << patch_id << "," << curr_edge << "," << (double)(istart-1)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
 		    istart++;
 		}
@@ -1261,38 +1269,52 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	}
 	// XXX todo: dynamically sample the curve - must use consistent method for all sampling, else
 	// surface may not contain points sought by curve
-	if(!trim_rev) {
+	if (!trim_rev) {
 	    for (int i = istart; i < 50; i++) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
 		}
 	    }
 	} else {
 	    for (int i = 50; i > istart; i--) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
-		if(get_closest_point(pt_2d, &face, pt_3d, st) && pt_2d != pt_2d_prev) {
+		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
 		    }
 		} else {
-		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "): " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Pullback failure (" << patch_id <<  "," << curr_edge << "," << (double)(i)/(double)50 << "):\n";
+		    std::cout << "Expected: " << pt_3d.x << "," << pt_3d.y << "," << pt_3d.z << "\n";
+		    std::cout << "Got: " << p3d_pullback.x << "," << p3d_pullback.y << "," << p3d_pullback.z << "\n";
+		    std::cout << "Got(2D): " << pt_2d.x << "," << pt_2d.y << "\n";
+		    ON_2dPoint pt_2d_cp;
+		    (void)get_closest_point(pt_2d_cp, &face, pt_3d, st);
+		    std::cout << "get_closest_point(2D): " << pt_2d_cp.x << "," << pt_2d_cp.y << "\n";
 		    pullback_failures++;
                 }
 	    }
 	}
         // For final curve, doesn't matter what last pullback is - we MUST force the loop to close.
-	if(loop_it+1 == loop_edges->end()) {
+	if (loop_it+1 == loop_edges->end()) {
 	    curve_pnts_2d.Append(loop_anchor);
 	}
-	//if(trim_rev) {curve_pnts_2d.Reverse();}
+	//if (trim_rev) {curve_pnts_2d.Reverse();}
 	ON_Curve *trim_curve = interpolateCurve(curve_pnts_2d);
 	int c2i = info->brep->AddTrimCurve(trim_curve);
 	ON_BrepTrim& trim = info->brep->NewTrim(edge, trim_rev, loop, c2i);
@@ -1306,7 +1328,6 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
     if (info->brep->LoopDirection(loop) != -1 && loop_type == ON_BrepLoop::inner) {
 	info->brep->FlipLoop(loop);
     }
-    delete st;
 }
 
 
@@ -1346,7 +1367,7 @@ find_loops(struct Manifold_Info *info)
 		edge_queue.pop();
 		loops[curr_loop].push_back(curr_edge);
 		ON_BrepEdge& edge = info->brep->m_E[(int)curr_edge];
-                if(vert_to_match == edge.m_vi[0]) {
+                if (vert_to_match == edge.m_vi[0]) {
 		    vert_to_match = edge.m_vi[1];
                 } else {
 		    vert_to_match = edge.m_vi[0];
@@ -1376,7 +1397,7 @@ find_loops(struct Manifold_Info *info)
 	size_t outer_loop;
         std::set<size_t> inner_loops;
 	find_outer_loop(&loops, &outer_loop, &inner_loops, info);
-	if(loops.size() > 1) {
+	if (loops.size() > 1) {
 	    std::cout << "Patch " << (*p_it).first << " outer loop: " << outer_loop << "\n";
 	}
 
@@ -1416,10 +1437,10 @@ PatchToVector3d(struct rt_bot_internal *bot, size_t curr_patch, struct Manifold_
         //pnts.Append(ON_3dPoint(V3ARGS(&bot->vertices[(*f_it)*3])));
     }
 
+    // Points on the edges of surfaces make problems for our current 2D uv pullback routine. Uncomment
+    // the following to try to force the surface edges away from the actual patch boundaries by adding
+    // "extension" points to the fit.
 #if 0
-    // Points on the edges of surfaces make problems for our current 2D uv pullback routine.
-    // Try to force the surface edges away from the actual patch boundaries by adding "extension"
-    // points to the fit.
     ON_BoundingBox bbox;
     pnts.GetTightBoundingBox(bbox);
     fastf_t diagonal = bbox.Diagonal().Length();
@@ -1639,10 +1660,6 @@ main(int argc, char *argv[])
 //#endif
 
 #if 0
-    // SSI intersection.  May need edge-based polycurves anyway to guide selection of "correct" intersection segment in the cases where
-    // fitted surfaces intersect multiple times - will want curves with at least the start and endpoints close to those
-    // of the polycurves, and the total absence of a candidate SSI curve for a given polycurve would give a local indication
-    // of a surface fitting problem.
     FILE* curve_plot = fopen("curve_plot.pl", "w");
     pl_color(curve_plot, 255, 255, 255);
     std::set<std::pair<size_t, size_t> > patch_interactions;

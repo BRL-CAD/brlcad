@@ -78,7 +78,7 @@ ged_cc(struct ged *gedp, int argc, const char *argv[])
     bu_vls_init(&(con_ip->expression));
     bu_vls_strcat(&(con_ip->expression), argv[2]);
 
-    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[1], RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM , (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     bu_vls_printf(gedp->ged_result_str, "Constraint saved");

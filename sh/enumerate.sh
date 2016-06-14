@@ -43,11 +43,6 @@
 #
 #   ./enumerate.sh
 #
-# Author -
-#   Christopher Sean Morrison
-#
-# Source -
-#   BRL-CAD Open Source
 ###
 
 SELF="$0"

@@ -249,7 +249,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 	if (cmd[0] == '!') {
 	    if (preview_currentframe < preview_desiredframe ||
 		(preview_finalframe && preview_currentframe > preview_finalframe)) {
-		bu_free((genptr_t)cmd, "preview ! cmd");
+		bu_free((void *)cmd, "preview ! cmd");
 		continue;
 	    }
 	}
@@ -260,7 +260,7 @@ ged_loadframe(struct ged *gedp, FILE *fp)
 
 	if (rt_do_cmd((struct rt_i *)0, cmd, ged_preview_cmdtab) < 0)
 	    bu_vls_printf(gedp->ged_result_str, "command failed: %s\n", cmd);
-	bu_free((genptr_t)cmd, "preview cmd");
+	bu_free((void *)cmd, "preview cmd");
     }
 
     if (end) {

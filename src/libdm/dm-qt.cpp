@@ -1,7 +1,7 @@
 /*                       D M - Q T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,6 +21,7 @@
  *
  */
 #include "common.h"
+#include <locale.h>
 
 #ifdef DM_QT
 
@@ -31,13 +32,20 @@
 #  include <sys/time.h>
 #endif
 
-#include "dm-qt.h"
+#include "dm/dm-qt.h"
 
 #include "tcl.h"
 #include "tk.h"
 #include "bu.h"
 #include "dm.h"
-#include "dm_xvars.h"
+#include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
+
+#define DM_QT_DEFAULT_POINT_SIZE 1.0
+
+
+/* token used to cancel previous scheduled function using Tcl_CreateTimerHandler */
+Tcl_TimerToken token = NULL;
 
 
 HIDDEN bool
@@ -47,9 +55,8 @@ qt_sendRepaintEvent(struct dm *dmp)
     QEvent e(QEvent::UpdateRequest);
     return privars->qapp->sendEvent(privars->win, &e);
 }
-/*
- * Q T _ C L O S E
- *
+
+/**
  * Release the display manager
  */
 HIDDEN int
@@ -58,21 +65,25 @@ qt_close(struct dm *dmp)
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    delete privars->font;
-    privars->win->close();
-    delete privars->win;
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_close\n");
+    }
 
-    if (privars->qapp)
-	privars->qapp->quit();
-    if (pubvars->xtkwin)
-	Tk_DestroyWindow(pubvars->xtkwin);
+    delete privars->font;
+    delete privars->painter;
+    delete privars->pix;
+    delete privars->win;
+    delete privars->parent;
+
+    privars->qapp->quit();
+    Tk_DestroyWindow(pubvars->xtkwin);
 
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
-    bu_free((genptr_t)dmp, "qt_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
+    bu_free((void *)dmp, "qt_close: dmp");
 
     return TCL_OK;
 }
@@ -81,13 +92,14 @@ qt_close(struct dm *dmp)
 HIDDEN int
 qt_drawBegin(struct dm *dmp)
 {
-    bu_log("qt_drawBegin called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawBegin\n");
+    }
 
     privars->pix->fill(privars->bg);
 
-    privars->painter = new QPainter(privars->pix);
     privars->painter->setPen(privars->fg);
     privars->painter->setFont(*privars->font);
 
@@ -98,36 +110,43 @@ qt_drawBegin(struct dm *dmp)
 HIDDEN int
 qt_drawEnd(struct dm *dmp)
 {
-    bu_log("qt_drawEnd called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
-    privars->painter->end();
-    delete privars->painter;
-    privars->painter = NULL;
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawEnd\n");
+    }
     privars->qapp->processEvents();
-
     qt_sendRepaintEvent(dmp);
     privars->qapp->processEvents();
 
     return TCL_OK;
 }
 
-
+/**
+ * Restore the display processor to a normal mode of operation (i.e.,
+ * not scaled, rotated, displaced, etc.).
+ */
 HIDDEN int
-qt_normal(struct dm *UNUSED(dmp))
+qt_normal(struct dm *dmp)
 {
-    bu_log("qt_normal not implemented\n");
-    return 0;
+    if (dmp->dm_debugLevel)
+	bu_log("qt_normal()\n");
+
+    return TCL_OK;
 }
 
-
+/**
+ * Load a new transformation matrix.  This will be followed by many
+ * calls to qt_draw().
+ */
 HIDDEN int
 qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 {
-    bu_log("qt_loadMatrix called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_loadMatrix\n");
+    }
 
     MAT_COPY(privars->qmat, mat);
 
@@ -135,21 +154,19 @@ qt_loadMatrix(struct dm *dmp, fastf_t *mat, int UNUSED(which_eye))
 }
 
 
-HIDDEN int
-qt_loadPMatrix(struct dm *UNUSED(dmp), fastf_t *UNUSED(mat))
-{
-    bu_log("qt_loadPMatrix not implemented\n");
-    return 0;
-}
-
-
+/**
+ * Output a string into the displaylist. The starting position of the
+ * beam is as specified.
+ */
 HIDDEN int
 qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
-    bu_log("qt_drawString2D called\n");
-
     int sx, sy;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawString2D\n");
+    }
 
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, use_aspect);
@@ -165,9 +182,12 @@ qt_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSE
 HIDDEN int
 qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
-    bu_log("qt_drawLine2D called\n");
     int sx1, sy1, sx2, sy2;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawLine2D\n");
+    }
 
     sx1 = dm_Normal2Xx(dmp, x_1);
     sx2 = dm_Normal2Xx(dmp, x_2);
@@ -183,26 +203,14 @@ qt_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2
 
 
 HIDDEN int
-qt_drawLine3D(struct dm *UNUSED(dmp), point_t UNUSED(pt1), point_t UNUSED(pt2))
-{
-    bu_log("qt_drawLine3D not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_drawLines3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points), int UNUSED(sflag))
-{
-    bu_log("qt_drawLines3D not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
 qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawPoint2D\n");
+    }
 
     sx = dm_Normal2Xx(dmp, x);
     sy = dm_Normal2Xy(dmp, y, 0);
@@ -216,26 +224,8 @@ qt_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-qt_drawPoint3D(struct dm *UNUSED(dmp), point_t UNUSED(point))
-{
-    bu_log("qt_drawPoint3D not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_drawPoints3D(struct dm *UNUSED(dmp), int UNUSED(npoints), point_t *UNUSED(points))
-{
-    bu_log("qt_drawPoints3D not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
 qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 {
-    bu_log("qt_drawVList called\n");
-
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
     QLine lines[1024];
@@ -244,7 +234,12 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
     fastf_t delta;
     point_t *pt_prev = NULL;
     fastf_t dist_prev=1.0;
+    fastf_t pointSize = DM_QT_DEFAULT_POINT_SIZE;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_drawVList\n");
+    }
 
     /* delta is used in clipping to insure clipped endpoint is
      * slightly in front of eye plane (perspective mode only).  This
@@ -386,6 +381,47 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 		    }
 		    break;
 		case BN_VLIST_POINT_DRAW:
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("before transformation:\n");
+			bu_log("pt - %lf %lf %lf\n", V3ARGS(*pt));
+		    }
+
+		    if (dmp->dm_perspective > 0) {
+			dist = VDOT(*pt, &privars->qmat[12]) + privars->qmat[15];
+
+			if (dist <= 0.0) {
+			    /* nothing to plot - point is behind eye plane */
+			    continue;
+			}
+		    }
+
+		    MAT4X3PNT(pnt, privars->qmat, *pt);
+
+		    pnt[0] *= 2047;
+		    pnt[1] *= 2047 * dmp->dm_aspect;
+		    pnt[2] *= 2047;
+
+		    if (dmp->dm_debugLevel > 2) {
+			bu_log("after clipping:\n");
+			bu_log("pt - %lf %lf %lf\n", pnt[X], pnt[Y], pnt[Z]);
+		    }
+
+		    if (pointSize <= DM_QT_DEFAULT_POINT_SIZE) {
+			privars->painter->drawPoint(GED_TO_Xx(dmp, pnt[0]), GED_TO_Xy(dmp, pnt[1]));
+		    } else {
+			int upperLeft[2];
+
+			upperLeft[X] = GED_TO_Xx(dmp, pnt[0]) - pointSize / 2.0;
+			upperLeft[Y] = GED_TO_Xy(dmp, pnt[1]) - pointSize / 2.0;
+
+			privars->painter->drawRect(upperLeft[X], upperLeft[Y], pointSize, pointSize);
+		    }
+		    break;
+		case BN_VLIST_POINT_SIZE:
+		    pointSize = (*pt)[0];
+		    if (pointSize < DM_QT_DEFAULT_POINT_SIZE) {
+			pointSize = DM_QT_DEFAULT_POINT_SIZE;
+		    }
 		    break;
 	    }
 	}
@@ -401,29 +437,38 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-qt_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
+qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
-    bu_log("qt_drawVListHiddenLine not implemented\n");
-    return 0;
-}
+    struct bn_vlist *vp;
 
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_draw\n");
+    }
 
-HIDDEN int
-qt_draw(struct dm *UNUSED(dmp), struct bn_vlist *(*callback_function)(void *), genptr_t *UNUSED(data))
-{
-    /* set callback_function as unused */
-    (void)callback_function;
-    bu_log("qt_draw not implemented\n");
-    return 0;
+    if (!callback_function) {
+	if (data) {
+	    vp = (struct bn_vlist *)data;
+	    qt_drawVList(dmp, vp);
+	}
+    } else {
+	if (!data) {
+	    return TCL_ERROR;
+	} else {
+	    (void)callback_function(data);
+	}
+    }
+    return TCL_OK;
 }
 
 
 HIDDEN int
 qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int UNUSED(strict), fastf_t UNUSED(transparency))
 {
-    bu_log("qt_setFGColor called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setFGColor\n");
+    }
 
     dmp->dm_fg[0] = r;
     dmp->dm_fg[1] = g;
@@ -444,9 +489,12 @@ qt_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 HIDDEN int
 qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
-    bu_log("qt_setBGColor called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setBGColor\n");
+    }
+
 
     privars->bg.setRgb(r, g, b);
 
@@ -454,7 +502,7 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
     dmp->dm_bg[1] = g;
     dmp->dm_bg[2] = b;
 
-    if(privars->pix == NULL)
+    if (privars->pix == NULL)
 	return TCL_ERROR;
     privars->pix->fill(privars->bg);
 
@@ -465,9 +513,11 @@ qt_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 HIDDEN int
 qt_setLineAttr(struct dm *dmp, int width, int style)
 {
-    bu_log("qt_setLineAttr called\n");
-
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setLineAttr\n");
+    }
 
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
@@ -492,7 +542,9 @@ qt_setLineAttr(struct dm *dmp, int width, int style)
 HIDDEN void
 qt_reshape(struct dm *dmp, int width, int height)
 {
-    bu_log("qt_reshape called\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_reshape\n");
+    }
 
     dmp->dm_height = height;
     dmp->dm_width = width;
@@ -504,8 +556,6 @@ qt_reshape(struct dm *dmp, int width, int height)
 HIDDEN int
 qt_configureWin(struct dm *dmp, int force)
 {
-    bu_log("qt_configureWin called\n");
-
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
 
@@ -519,7 +569,10 @@ qt_configureWin(struct dm *dmp, int force)
 
     qt_reshape(dmp, width, height);
     privars->win->resize(width, height);
+
+    privars->painter->end();
     *privars->pix = privars->pix->scaled(width, height);
+    privars->painter->begin(privars->pix);
 
     if (dmp->dm_debugLevel) {
 	bu_log("qt_configureWin()\n");
@@ -560,7 +613,9 @@ qt_configureWin(struct dm *dmp, int force)
 HIDDEN int
 qt_setWinBounds(struct dm *dmp, fastf_t *w)
 {
-    bu_log("qt_setWinBounds called\n");
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setWinBounds\n");
+    }
 
     dmp->dm_clipmin[0] = w[0];
     dmp->dm_clipmin[1] = w[2];
@@ -574,97 +629,70 @@ qt_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-qt_setLight(struct dm *UNUSED(dmp), int UNUSED(light_on))
+qt_setZBuffer(struct dm *dmp, int zbuffer_on)
 {
-    bu_log("qt_setLight not implemented\n");
-    return 0;
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_setZBuffer\n");
+    }
+
+    dmp->dm_zbuffer = zbuffer_on;
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setTransparency(struct dm *UNUSED(dmp), int UNUSED(transparency))
+qt_debug(struct dm *dmp, int lvl)
 {
-    bu_log("qt_setTransparency not implemented\n");
-    return 0;
+    dmp->dm_debugLevel = lvl;
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setDepthMask(struct dm *UNUSED(dmp), int UNUSED(mask))
+qt_logfile(struct dm *dmp, const char *filename)
 {
-    bu_log("qt_setDepthMask not implemented\n");
-    return 0;
+    bu_vls_sprintf(&dmp->dm_log, "%s", filename);
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_setZBuffer(struct dm *UNUSED(dmp), int UNUSED(zbuffer_on))
+qt_getDisplayImage(struct dm *dmp, unsigned char **image)
 {
-    bu_log("qt_setZBuffer not implemented\n");
-    return 0;
+    struct qt_vars *privars = (struct qt_vars *)dmp->dm_vars.priv_vars;
+    int i,j;
+    int height, width;
+
+    if (dmp->dm_debugLevel) {
+	bu_log("qt_getDisplayImage\n");
+    }
+
+    QImage qimage = privars->pix->toImage();
+    height = qimage.height();
+    width = qimage.width();
+
+    for (i = 0; i < height; i++) {
+	for (j = 0; j < width; j++) {
+	    image[i][j] = qimage.pixel(i,j);
+	}
+    }
+
+    return TCL_OK;
 }
 
 
 HIDDEN int
-qt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
+qt_setLight(struct dm *dmp, int light_on)
 {
-    bu_log("qt_debug not implemented\n");
-    return 0;
-}
+    if (dmp->dm_debugLevel)
+	bu_log("qt_setLight:\n");
 
+    dmp->dm_light = light_on;
 
-HIDDEN int
-qt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
-{
-    bu_log("qt_beginDList not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_endDList(struct dm *UNUSED(dmp))
-{
-    bu_log("qt_endDList not implemented\n");
-    return 0;
-}
-
-
-HIDDEN void
-qt_drawDList(unsigned int UNUSED(list))
-{
-    bu_log("qt_drawDList not implemented\n");
-}
-
-
-HIDDEN int
-qt_freeDLists(struct dm *UNUSED(dmp), unsigned int UNUSED(list), int UNUSED(range))
-{
-    bu_log("qt_freeDList not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_genDLists(struct dm *UNUSED(dmp), size_t UNUSED(range))
-{
-    bu_log("qt_genDLists not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_getDisplayImage(struct dm *UNUSED(dmp), unsigned char **UNUSED(image))
-{
-    bu_log("qt_getDisplayImage not implemented\n");
-    return 0;
-}
-
-
-HIDDEN int
-qt_makeCurrent(struct dm *UNUSED(dmp))
-{
-    bu_log("qt_makeCurrent not implemented\n");
-    return 0;
+    return TCL_OK;
 }
 
 
@@ -676,11 +704,32 @@ qt_processEvents(struct dm *dmp)
 }
 
 
+/**
+ * Function called in Tk event loop. It simply processes any
+ * pending Qt events.
+ *
+ */
+void processQtEvents(ClientData UNUSED(clientData), int UNUSED(flags)) {
+    qt_processEvents(&dm_qt);
+}
+
+
+/**
+ * Call when Tk is idle. It process Qt events then
+ * reschedules itself.
+ *
+ */
+void IdleCall(ClientData UNUSED(clientData)) {
+    qt_processEvents(&dm_qt);
+    Tcl_DeleteTimerHandler(token);
+
+    /* Reschedule the function so that it continuously tries to process Qt events */
+    token = Tcl_CreateTimerHandler(1, IdleCall, NULL);
+}
+
 __BEGIN_DECLS
 
 /*
- * Q T _ O P E N
- *
  * Fire up the display manager, and the display processor.
  *
  */
@@ -697,8 +746,9 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     struct dm_xvars *pubvars = NULL;
     struct qt_vars *privars = NULL;
 
-    if (argc < 0 || !argv)
+    if (argc < 0 || !argv) {
 	return DM_NULL;
+    }
 
     if ((tkwin = Tk_MainWindow(interp)) == NULL) {
 	return DM_NULL;
@@ -735,8 +785,9 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 	else
 	    bu_vls_strcpy(&dmp->dm_dName, ":0.0");
     }
-    if (bu_vls_strlen(&init_proc_vls) == 0)
+    if (bu_vls_strlen(&init_proc_vls) == 0) {
 	bu_vls_strcpy(&init_proc_vls, "bind_dm");
+    }
 
     /* initialize dm specific variables */
     pubvars->devmotionnotify = LASTEvent;
@@ -779,7 +830,7 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
 
     bu_vls_printf(&dmp->dm_tkName, "%s", (char *)Tk_Name(pubvars->xtkwin));
 
-    bu_vls_printf(&str, "_init_dm %V %V\n", &init_proc_vls, &dmp->dm_pathName);
+    bu_vls_printf(&str, "_init_dm %s %s\n", bu_vls_addr(&init_proc_vls), bu_vls_addr(&dmp->dm_pathName));
 
     if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
 	bu_log("qt_open: _init_dm failed\n");
@@ -832,25 +883,33 @@ qt_open(Tcl_Interp *interp, int argc, char **argv)
     Tk_MapWindow(pubvars->xtkwin);
     privars->qapp = new QApplication(argc, argv);
 
-    QWindow *window = QWindow::fromWinId(pubvars->win);
+    privars->parent = QWindow::fromWinId(pubvars->win);
 
     privars->pix = new QPixmap(dmp->dm_width, dmp->dm_height);
 
-    privars->win = new QTkMainWindow(privars->pix, window, dmp);
+    privars->win = new QTkMainWindow(privars->pix, privars->parent, dmp);
     privars->win->resize(dmp->dm_width, dmp->dm_height);
     privars->win->show();
 
     privars->font = NULL;
 
-    qt_configureWin(dmp, 1);
-
-    privars->painter = NULL;
+    privars->painter = new QPainter(privars->pix);
     qt_setFGColor(dmp, 1, 0, 0, 0, 0);
     qt_setBGColor(dmp, 0, 0, 0);
 
+    qt_configureWin(dmp, 1);
+
     MAT_IDN(privars->qmat);
 
-    bu_log("qt_open called\n");
+    /* inputs and outputs assume POSIX/C locale settings */
+    setlocale(LC_ALL, "POSIX");
+
+    /* Make Tcl_DoOneEvent call QApplication::processEvents */
+    Tcl_CreateEventSource(NULL, processQtEvents, NULL);
+
+    /* Try to process Qt events when idle */
+    Tcl_DoWhenIdle(IdleCall, NULL);
+
     return dmp;
 }
 
@@ -863,16 +922,16 @@ struct dm dm_qt = {
     qt_drawEnd,
     qt_normal,
     qt_loadMatrix,
-    qt_loadPMatrix,
+    null_loadPMatrix,
     qt_drawString2D,
     qt_drawLine2D,
-    qt_drawLine3D,
-    qt_drawLines3D,
+    null_drawLine3D,
+    null_drawLines3D,
     qt_drawPoint2D,
-    qt_drawPoint3D,
-    qt_drawPoints3D,
+    null_drawPoint3D,
+    null_drawPoints3D,
     qt_drawVList,
-    qt_drawVListHiddenLine,
+    qt_drawVList,
     qt_draw,
     qt_setFGColor,
     qt_setBGColor,
@@ -880,19 +939,19 @@ struct dm dm_qt = {
     qt_configureWin,
     qt_setWinBounds,
     qt_setLight,
-    qt_setTransparency,
-    qt_setDepthMask,
+    null_setTransparency,
+    null_setDepthMask,
     qt_setZBuffer,
     qt_debug,
-    qt_beginDList,
-    qt_endDList,
-    qt_drawDList,
-    qt_freeDLists,
-    qt_genDLists,
+    qt_logfile,
+    null_beginDList,
+    null_endDList,
+    null_drawDList,
+    null_freeDLists,
+    null_genDLists,
     qt_getDisplayImage,
     qt_reshape,
-    qt_makeCurrent,
-    qt_processEvents,
+    null_makeCurrent,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -919,6 +978,7 @@ struct dm dm_qt = {
     {GED_MIN, GED_MIN, GED_MIN},	/* clipmin */
     {GED_MAX, GED_MAX, GED_MAX},	/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */
@@ -935,18 +995,20 @@ struct dm dm_qt = {
  * ================================================== Event bindings declaration ==========================================================
  */
 
+/* left click press */
 char* qt_mouseButton1Press(QEvent *event) {
     if (event->type() ==  QEvent::MouseButtonPress) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
 	if (mouseEv->button() == Qt::LeftButton) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "<1>");
+	    bu_vls_printf(&str, "<1> -x %d -y %d", mouseEv->x(), mouseEv->y());
 	    return bu_vls_addr(&str);
 	}
     }
     return NULL;
 }
 
+/* left click release */
 char* qt_mouseButton1Release(QEvent *event) {
     if (event->type() ==  QEvent::MouseButtonRelease) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
@@ -959,24 +1021,52 @@ char* qt_mouseButton1Release(QEvent *event) {
     return NULL;
 }
 
-char* qt_mouseButton2Press(QEvent *event) {
+/* right click press */
+char* qt_mouseButton3Press(QEvent *event) {
     if (event->type() ==  QEvent::MouseButtonPress) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
 	if (mouseEv->button() == Qt::RightButton) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "<3>");
+	    bu_vls_printf(&str, "<3> -x %d -y %d", mouseEv->x(), mouseEv->y());
 	    return bu_vls_addr(&str);
 	}
     }
     return NULL;
 }
 
-char* qt_mouseButton2Release(QEvent *event) {
+/* right click release */
+char* qt_mouseButton3Release(QEvent *event) {
     if (event->type() ==  QEvent::MouseButtonPress) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
 	if (mouseEv->button() == Qt::RightButton) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
 	    bu_vls_printf(&str, "<ButtonRelease-3>");
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+/* middle mouse button press */
+char* qt_mouseButton2Press(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::MiddleButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<2> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+/* middle mouse button release */
+char* qt_mouseButton2Release(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::MiddleButton) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<ButtonRelease-2>");
 	    return bu_vls_addr(&str);
 	}
     }
@@ -995,6 +1085,42 @@ char* qt_controlMousePress(QEvent *event) {
     return NULL;
 }
 
+char* qt_altMousePress(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton && mouseEv->modifiers() == Qt::AltModifier) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<Alt-ButtonPress-1> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_altControlMousePress(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton && mouseEv->modifiers() & Qt::AltModifier && mouseEv->modifiers() & Qt::ControlModifier) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<Control-Alt-ButtonPress-1> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
+char* qt_controlShiftMousePress(QEvent *event) {
+    if (event->type() ==  QEvent::MouseButtonPress) {
+	QMouseEvent *mouseEv = (QMouseEvent *)event;
+	if (mouseEv->button() == Qt::LeftButton && mouseEv->modifiers() & Qt::ShiftModifier && mouseEv->modifiers() & Qt::ControlModifier) {
+	    struct bu_vls str = BU_VLS_INIT_ZERO;
+	    bu_vls_printf(&str, "<Shift-Alt-ButtonPress-1> -x %d -y %d", mouseEv->x(), mouseEv->y());
+	    return bu_vls_addr(&str);
+	}
+    }
+    return NULL;
+}
+
 char* qt_mouseMove(QEvent *event) {
     if (event->type() ==  QEvent::MouseMove) {
 	QMouseEvent *mouseEv = (QMouseEvent *)event;
@@ -1006,7 +1132,8 @@ char* qt_mouseMove(QEvent *event) {
 }
 
 char* qt_keyPress(QEvent *event) {
-    if (event->type() ==  6 /* Key Press */) {
+    /* FIXME numeric constant needs to be changed to QEvent::KeyPress but at this moment this does not compile */
+    if (event->type() ==  6 /* QEvent::KeyPress */) {
 	QKeyEvent *keyEv = (QKeyEvent *)event;
 	struct bu_vls str = BU_VLS_INIT_ZERO;
 	bu_vls_printf(&str, "<KeyPress-%s>", keyEv->text().data());
@@ -1015,11 +1142,28 @@ char* qt_keyPress(QEvent *event) {
     return NULL;
 }
 
+char* qt_keyRelease(QEvent *event) {
+    /* FIXME numeric constant needs to be changed to QEvent::KeyRelease but at this moment this does not compile */
+    if (event->type() ==  7 /* QEvent::KeyRelease */) {
+	QKeyEvent *keyEv = (QKeyEvent *)event;
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+	bu_vls_printf(&str, "<KeyRelease-%s>", keyEv->text().data());
+	return bu_vls_addr(&str);
+    }
+    return NULL;
+}
+
 static struct qt_tk_bind qt_bindings[] = {
     {qt_keyPress, "keypress"},
+    {qt_keyRelease, "keyrelease"},
     {qt_controlMousePress, "controlbutton1"},
+    {qt_altMousePress, "altbutton1"},
+    {qt_altControlMousePress, "altcontrolbutton1"},
+    {qt_controlShiftMousePress, "controlshiftbutton1"},
     {qt_mouseButton1Press, "button1press"},
     {qt_mouseButton1Release, "button1release"},
+    {qt_mouseButton3Press, "button3press"},
+    {qt_mouseButton3Release, "button3release"},
     {qt_mouseButton2Press, "button2press"},
     {qt_mouseButton2Release, "button2release"},
     {qt_mouseMove, "mouseMove"},
@@ -1038,6 +1182,12 @@ QTkMainWindow::QTkMainWindow(QPixmap *p, QWindow *win, struct dm *d)
     create();
     pixmap = p;
     dmp = d;
+}
+
+QTkMainWindow::~QTkMainWindow()
+{
+    delete m_backingStore;
+    close();
 }
 
 void QTkMainWindow::exposeEvent(QExposeEvent *)
@@ -1066,9 +1216,9 @@ bool QTkMainWindow::event(QEvent *ev)
 	char *tk_event = qt_bindings[index].bind_function(ev);
 	if (tk_event != NULL) {
 	    struct bu_vls str = BU_VLS_INIT_ZERO;
-	    bu_vls_printf(&str, "event generate %V %s", &dmp->dm_pathName, tk_event);
+	    bu_vls_printf(&str, "event generate %s %s", bu_vls_addr(&dmp->dm_pathName), tk_event);
 	    if (Tcl_Eval(dmp->dm_interp, bu_vls_addr(&str)) == TCL_ERROR) {
-		bu_log("error generate event\n");
+		bu_log("error generate event %s\n", tk_event);
 	    }
 	    return true;
 	}
@@ -1079,8 +1229,9 @@ bool QTkMainWindow::event(QEvent *ev)
 
 void QTkMainWindow::renderNow()
 {
-    if (!isExposed())
+    if (!isExposed()) {
 	return;
+    }
 
     QRect rect(0, 0, width(), height());
     m_backingStore->beginPaint(rect);

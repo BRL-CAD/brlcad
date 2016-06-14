@@ -245,7 +245,7 @@ _ged_editit(char *editstring, const char *filename)
 #endif
 
     if (editstring != NULL)
-	bu_free((genptr_t)avtmp, "ged_editit: avtmp");
+	bu_free((void *)avtmp, "ged_editit: avtmp");
 
     return 1;
 }

@@ -153,10 +153,10 @@ struct bu_structparse fire_parse_tab[] = {
 };
 
 
-HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void fire_print(register struct region *rp, genptr_t dp);
-HIDDEN void fire_free(genptr_t cp);
+HIDDEN int fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void fire_print(register struct region *rp, void *dp);
+HIDDEN void fire_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -204,7 +204,7 @@ const double flame_colors[18][3] = {
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -274,7 +274,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
  * F I R E _ P R I N T
  */
 HIDDEN void
-fire_print(register struct region *rp, genptr_t dp)
+fire_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, fire_print_tab, (char *)dp);
 }
@@ -284,7 +284,7 @@ fire_print(register struct region *rp, genptr_t dp)
  * F I R E _ F R E E
  */
 HIDDEN void
-fire_free(genptr_t cp)
+fire_free(void *cp)
 {
     BU_PUT(cp, struct fire_specific);
 }
@@ -298,7 +298,7 @@ fire_free(genptr_t cp)
  * structure.
  */
 int
-fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+fire_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

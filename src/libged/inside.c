@@ -359,7 +359,7 @@ arbin(struct ged *gedp,
 	ip->idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	ip->idb_type = ID_BOT;
 	ip->idb_meth = &OBJ[ID_BOT];
-	ip->idb_ptr = (genptr_t)bot;
+	ip->idb_ptr = (void *)bot;
     }
 
     return GED_OK;
@@ -1139,7 +1139,7 @@ ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const
     }
 
     /* Add to in-core directory */
-    dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&ip->idb_type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, newname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "%s: Database alloc error, aborting\n", argv[0]);
 	return GED_ERROR;

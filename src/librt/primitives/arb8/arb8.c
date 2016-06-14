@@ -724,7 +724,7 @@ rt_arb_setup(struct soltab *stp, struct rt_arb_internal *aip, struct rt_i *rtip,
 		sizeof(struct arb_specific) +
 		sizeof(struct aface) * (pa.pa_faces - 4),
 		"arb_specific");
-	    stp->st_specific = (genptr_t)arbp;
+	    stp->st_specific = (void *)arbp;
 	}
 	arbp->arb_nmfaces = pa.pa_faces;
 	memcpy((char *)arbp->arb_face, (char *)pa.pa_face,
@@ -1508,7 +1508,7 @@ rt_arb_ifree(struct rt_db_internal *ip)
 {
     RT_CK_DB_INTERNAL(ip);
     bu_free(ip->idb_ptr, "arb ifree");
-    ip->idb_ptr = (genptr_t)NULL;
+    ip->idb_ptr = (void *)NULL;
 }
 
 

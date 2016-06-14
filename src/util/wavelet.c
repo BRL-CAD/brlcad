@@ -167,7 +167,8 @@ void
 wlt_decompose_1d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
@@ -229,7 +230,8 @@ void
 wlt_decompose_2d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t sample_size;
     size_t scanline_size;
 
@@ -289,7 +291,8 @@ void
 wlt_reconstruct_1d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t i, n;
     size_t sample_size;	/* size of data type x #values/sample */
     size_t scanline_size;	/* # bytes in a scanline */
@@ -352,7 +355,8 @@ void
 wlt_reconstruct_2d(void)
 {
     size_t ret;
-    genptr_t buf, tbuf;
+    void *buf;
+    void *tbuf;
     size_t sample_size;
     size_t scanline_size;
 

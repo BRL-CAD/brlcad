@@ -113,7 +113,7 @@ mk_bot_w_normals(
 	bot->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)bot, ID_BOT, mk_conv2mm);
+    return wdb_export(fp, name, (void *)bot, ID_BOT, mk_conv2mm);
 }
 
 

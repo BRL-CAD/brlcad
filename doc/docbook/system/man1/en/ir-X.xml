@@ -22,12 +22,12 @@
 
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
-<para>ir-X is an interactive program that reads the information in the file
+<para><command>ir-X</command> is an interactive program that reads the information in the file
 created by showtherm and then draws an image on the screen.  The color
 of each pixel is based on the temperature of the region that pixel
 belongs to.</para>
 
-<para>ir-X is designed to be run in an X-windows environment.</para>
+<para><command>ir-X</command> is designed to be run in an X-windows environment.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

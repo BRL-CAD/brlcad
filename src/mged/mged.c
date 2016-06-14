@@ -201,7 +201,7 @@ void std_out_or_err(ClientData clientData, int mask);
 
 
 static int
-mged_bomb_hook(genptr_t clientData, genptr_t data)
+mged_bomb_hook(void *clientData, void *data)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *str = (char *)data;
@@ -383,7 +383,7 @@ new_edit_mats(void)
 
 void
 mged_view_callback(struct ged_view *gvp,
-		   genptr_t clientData)
+		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
 
@@ -1088,7 +1088,7 @@ main(int argc, char *argv[])
     }
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "a:d:hbicnorx:X:v?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -1099,9 +1099,6 @@ main(int argc, char *argv[])
 	    case 'r':
 		read_only_flag = 1;
 		break;
-	    case 'n':           /* "not new" == "classic" */
-		bu_log("WARNING: -n is deprecated.  used -c instead.\n");
-		/* fall through */
 	    case 'c':
 		classic_mged = 1;
 		break;
@@ -2507,7 +2504,7 @@ mged_finish(int exitcode)
     }
 
     /* no longer send bu_log() output to Tcl */
-    bu_log_delete_hook(gui_output, (genptr_t)INTERP);
+    bu_log_delete_hook(gui_output, (void *)INTERP);
 
     /* restore stdout/stderr just in case anyone tries to write before
      * we finally exit (e.g., an atexit() callback).
@@ -2823,7 +2820,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* release any allocated memory */
 	ged_free(gedp);
-	bu_free((genptr_t)gedp, "struct ged");
+	bu_free((void *)gedp, "struct ged");
 	gedp = NULL;
 
 	return TCL_ERROR;
@@ -2840,7 +2837,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* release any allocated memory */
 	ged_free(gedp);
-	bu_free((genptr_t)gedp, "struct ged");
+	bu_free((void *)gedp, "struct ged");
 	gedp = NULL;
 
 	return TCL_ERROR;
@@ -2854,7 +2851,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	/* release any allocated memory */
 	ged_free(gedp);
-	bu_free((genptr_t)gedp, "struct ged");
+	bu_free((void *)gedp, "struct ged");
 	gedp = NULL;
 
 	return TCL_ERROR;
@@ -2875,7 +2872,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
 
 	    /* release any allocated memory */
 	    ged_free(gedp);
-	    bu_free((genptr_t)gedp, "struct ged");
+	    bu_free((void *)gedp, "struct ged");
 	    gedp = NULL;
 
 	    return TCL_ERROR;

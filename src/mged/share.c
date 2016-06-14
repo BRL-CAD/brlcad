@@ -64,7 +64,7 @@
 	    /* must not be sharing this resource */ \
 	    if (dlp1->resource != dlp2->resource) { \
 		if (!--dlp2->resource->rc) \
-		    bu_free((genptr_t)dlp2->resource, error_msg); \
+		    bu_free((void *)dlp2->resource, error_msg); \
 \
 		dlp2->resource = dlp1->resource; \
 		++dlp1->resource->rc; \
@@ -391,7 +391,7 @@ usurp_all_resources(struct dm_list *dlp1, struct dm_list *dlp2)
 
     /* it doesn't make sense to save display list info */
     if (!--dlp2->dml_dlist_state->dl_rc)
-	bu_free((genptr_t)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
+	bu_free((void *)curr_dm_list->dml_dlist_state, "usurp_all_resources: _dlist_state");
 }
 
 
@@ -404,29 +404,29 @@ free_all_resources(struct dm_list *dlp)
 {
     if (!--dlp->dml_view_state->vs_rc) {
 	view_ring_destroy(dlp);
-	bu_free((genptr_t)dlp->dml_view_state, "free_all_resources: view_state");
+	bu_free((void *)dlp->dml_view_state, "free_all_resources: view_state");
     }
 
     if (!--dlp->dml_adc_state->adc_rc)
-	bu_free((genptr_t)dlp->dml_adc_state, "free_all_resources: adc_state");
+	bu_free((void *)dlp->dml_adc_state, "free_all_resources: adc_state");
 
     if (!--dlp->dml_menu_state->ms_rc)
-	bu_free((genptr_t)dlp->dml_menu_state, "free_all_resources: menu_state");
+	bu_free((void *)dlp->dml_menu_state, "free_all_resources: menu_state");
 
     if (!--dlp->dml_rubber_band->rb_rc)
-	bu_free((genptr_t)dlp->dml_rubber_band, "free_all_resources: rubber_band");
+	bu_free((void *)dlp->dml_rubber_band, "free_all_resources: rubber_band");
 
     if (!--dlp->dml_mged_variables->mv_rc)
-	bu_free((genptr_t)dlp->dml_mged_variables, "free_all_resources: mged_variables");
+	bu_free((void *)dlp->dml_mged_variables, "free_all_resources: mged_variables");
 
     if (!--dlp->dml_color_scheme->cs_rc)
-	bu_free((genptr_t)dlp->dml_color_scheme, "free_all_resources: color_scheme");
+	bu_free((void *)dlp->dml_color_scheme, "free_all_resources: color_scheme");
 
     if (!--dlp->dml_grid_state->gr_rc)
-	bu_free((genptr_t)dlp->dml_grid_state, "free_all_resources: grid_state");
+	bu_free((void *)dlp->dml_grid_state, "free_all_resources: grid_state");
 
     if (!--dlp->dml_axes_state->ax_rc)
-	bu_free((genptr_t)dlp->dml_axes_state, "free_all_resources: axes_state");
+	bu_free((void *)dlp->dml_axes_state, "free_all_resources: axes_state");
 }
 
 

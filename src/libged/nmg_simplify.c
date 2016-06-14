@@ -166,7 +166,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(arb_int, struct rt_arb_internal);
 
-	new_intern.idb_ptr = (genptr_t)(arb_int);
+	new_intern.idb_ptr = (void *)(arb_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &OBJ[ID_ARB8];
@@ -196,7 +196,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(tgc_int, struct rt_tgc_internal);
 
-	new_intern.idb_ptr = (genptr_t)(tgc_int);
+	new_intern.idb_ptr = (void *)(tgc_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_TGC;
 	new_intern.idb_meth = &OBJ[ID_TGC];
@@ -221,7 +221,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
 	RT_DB_INTERNAL_INIT(&new_intern);
 	BU_ALLOC(poly_int, struct rt_pg_internal);
 
-	new_intern.idb_ptr = (genptr_t)(poly_int);
+	new_intern.idb_ptr = (void *)(poly_int);
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_POLY;
 	new_intern.idb_meth = &OBJ[ID_POLY];
@@ -256,7 +256,7 @@ out1:
 		"Single vertexuse in shell of %s has been ignored in conversion\n", nmg_name);
 
     dp = db_diradd(gedp->ged_wdbp->dbip, new_name,
-	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type);
+	RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type);
 
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);

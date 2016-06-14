@@ -780,47 +780,47 @@ EOF
 # RUNNING THIS TEST. It also uses comb so run after the
 # comb test.
 
-cat > make_bb.mged_regress << EOF
-make_bb arb4_bb.s make_arb4.s
-make_bb arb5_bb.s make_arb5.s
-make_bb arb6_bb.s make_arb6.s
-make_bb arb7_bb.s make_arb7.s
-make_bb arb8_bb.s make_arb8.s
-make_bb arbn_bb.s make_arbn.s
-make_bb ars_bb.s make_ars.s
-make_bb bot_bb.s make_bot.s
-make_bb ehy_bb.s make_ehy.s
-make_bb ell_bb.s make_ell.s
-make_bb ell1_bb.s make_ell1.s
-make_bb epa_bb.s make_epa.s
-make_bb eto_bb.s make_eto.s
-make_bb extrude_bb.s in_extrude.s
-make_bb grip_bb.s make_grip.s
-make_bb half_bb.s make_half.s
-make_bb nmg_bb.s make_nmg.s
-make_bb part_bb.s make_part.s
-make_bb pipe_bb.s make_pipe.s
-make_bb rcc_bb.s make_rcc.s
-make_bb rec_bb.s make_rec.s
-make_bb rhc_bb.s make_rhc.s
-make_bb rpc_bb.s make_rpc.s
-make_bb rpp_bb.s make_rpp.s
-make_bb sketch_bb.s extrude_test_sketch
-make_bb sph_bb.s make_sph.s
-make_bb tec_bb.s make_tec.s
-make_bb tgc_bb.s make_tgc.s
-make_bb tor_bb.s make_tor.s
-make_bb trc_bb.s make_trc.s
+cat > bb.mged_regress << EOF
+bb -c arb4_bb.s make_arb4.s
+bb -c arb5_bb.s make_arb5.s
+bb -c arb6_bb.s make_arb6.s
+bb -c arb7_bb.s make_arb7.s
+bb -c arb8_bb.s make_arb8.s
+bb -c arbn_bb.s make_arbn.s
+bb -c ars_bb.s make_ars.s
+bb -c bot_bb.s make_bot.s
+bb -c ehy_bb.s make_ehy.s
+bb -c ell_bb.s make_ell.s
+bb -c ell1_bb.s make_ell1.s
+bb -c epa_bb.s make_epa.s
+bb -c eto_bb.s make_eto.s
+bb -c extrude_bb.s in_extrude.s
+bb -c grip_bb.s make_grip.s
+bb -c half_bb.s make_half.s
+bb -c nmg_bb.s make_nmg.s
+bb -c part_bb.s make_part.s
+bb -c pipe_bb.s make_pipe.s
+bb -c rcc_bb.s make_rcc.s
+bb -c rec_bb.s make_rec.s
+bb -c rhc_bb.s make_rhc.s
+bb -c rpc_bb.s make_rpc.s
+bb -c rpp_bb.s make_rpp.s
+bb -c sketch_bb.s extrude_test_sketch
+bb -c sph_bb.s make_sph.s
+bb -c tec_bb.s make_tec.s
+bb -c tgc_bb.s make_tgc.s
+bb -c tor_bb.s make_tor.s
+bb -c trc_bb.s make_trc.s
 comb bb_prim1.c u make_arb4.s u make_arb5.s u make_arb6.s u make_arb7.s u make_arb8.s u make_arbn.s
-make_bb comb_bb1.s bb_prim1.c
+bb -c comb_bb1.s bb_prim1.c
 comb bb_prim2.c u make_ars.s u make_bot.s u make_ehy.s u make_ell.s u make_ell1.s u make_epa.s
-make_bb comb_bb2.s bb_prim2.c
+bb -c comb_bb2.s bb_prim2.c
 comb bb_prim3.c u make_eto.s u in_extrude.s u make_grip.s u make_nmg.s u make_part.s u make_pipe.s
-make_bb comb_bb3.s bb_prim3.c
+bb -c comb_bb3.s bb_prim3.c
 comb bb_prim4.c u make_rcc.s u make_rec.s u make_rhc.s u make_rpc.s u make_rpp.s
-make_bb comb_bb4.s bb_prim4.c
+bb -c comb_bb4.s bb_prim4.c
 comb bb_prim5.c u extrude_test_sketch u make_sph.s u make_tec.s u make_tgc.s u make_tor.s u make_trc.s
-make_bb comb_bb5.s bb_prim5.c
+bb -c comb_bb5.s bb_prim5.c
 EOF
 
 #
@@ -1439,7 +1439,7 @@ cat arb.mged_regress >> mged.mged_regress
 cat comb.mged_regress >> mged.mged_regress
 cat g.mged_regress >> mged.mged_regress
 cat r.mged_regress >> mged.mged_regress
-cat make_bb.mged_regress >> mged.mged_regress
+cat bb.mged_regress >> mged.mged_regress
 cat cp.mged_regress >> mged.mged_regress
 cat cpi.mged_regress >> mged.mged_regress
 cat mv.mged_regress >> mged.mged_regress

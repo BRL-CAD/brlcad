@@ -56,7 +56,7 @@ mk_cline(
     cli->thickness = thickness;
     cli->radius = radius;
 
-    return wdb_export(fp, name, (genptr_t)cli, ID_CLINE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)cli, ID_CLINE, mk_conv2mm);
 }
 
 

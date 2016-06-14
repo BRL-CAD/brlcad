@@ -210,7 +210,6 @@ set mged_help_data(lm)          {{[-l] value [value value...]} {DEPRECATED: list
 set mged_help_data(lt)		$helplib_data(wdb_lt)
 set mged_help_data(M)		{{1|0 xpos ypos}	{invoke a traditional MGED mouse event}}
 set mged_help_data(make)	{{-t | name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|nmg|part|pipe|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>}	{create a primitive}}
-set mged_help_data(make_bb)	$helplib_data(wdb_make_bb)
 set mged_help_data(make_pnts)	{{object_name path_and_filename file_format units_or_conv_factor default_diameter} {creates a point-cloud}}
 set mged_help_data(match)	$helplib_data(wdb_match)
 set mged_help_data(mater)	{{comb [material]}	{assign/delete material to combination}}

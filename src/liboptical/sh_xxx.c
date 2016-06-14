@@ -131,10 +131,10 @@ struct bu_structparse xxx_parse_tab[] = {
 };
 
 
-HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void xxx_print(register struct region *rp, genptr_t dp);
-HIDDEN void xxx_free(genptr_t cp);
+HIDDEN int xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void xxx_print(register struct region *rp, void *dp);
+HIDDEN void xxx_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -162,7 +162,7 @@ struct mfuncs xxx_mfuncs[] = {
  * -1 failure
  */
 HIDDEN int
-xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -227,7 +227,7 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * X X X _ P R I N T
  */
 HIDDEN void
-xxx_print(register struct region *rp, genptr_t dp)
+xxx_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, xxx_print_tab, (char *)dp);
 }
@@ -237,7 +237,7 @@ xxx_print(register struct region *rp, genptr_t dp)
  * X X X _ F R E E
  */
 HIDDEN void
-xxx_free(genptr_t cp)
+xxx_free(void *cp)
 {
     BU_PUT(cp, struct xxx_specific);
 }
@@ -251,7 +251,7 @@ xxx_free(genptr_t cp)
  * structure.
  */
 int
-xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in ../h/shadework.h */

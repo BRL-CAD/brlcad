@@ -956,7 +956,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
     aaap.a_logoverlap = ap->a_logoverlap;
 
     /* Above Left */
-    aaap.a_uptr = (genptr_t)AL;
+    aaap.a_uptr = (void *)AL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -967,7 +967,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Above Right */
-    aaap.a_uptr = (genptr_t)AR;
+    aaap.a_uptr = (void *)AR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -978,7 +978,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Left */
-    aaap.a_uptr = (genptr_t)TL;
+    aaap.a_uptr = (void *)TL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -989,7 +989,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Left */
-    aaap.a_uptr = (genptr_t)UL;
+    aaap.a_uptr = (void *)UL;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1000,7 +1000,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Upper Right */
-    aaap.a_uptr = (genptr_t)UR;
+    aaap.a_uptr = (void *)UR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1011,7 +1011,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Top Right */
-    aaap.a_uptr = (genptr_t)TR;
+    aaap.a_uptr = (void *)TR;
     VADD2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1022,7 +1022,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Left */
-    aaap.a_uptr = (genptr_t)BL;
+    aaap.a_uptr = (void *)BL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1033,7 +1033,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Left */
-    aaap.a_uptr = (genptr_t)LL;
+    aaap.a_uptr = (void *)LL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1044,7 +1044,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Lower Right */
-    aaap.a_uptr = (genptr_t)LR;
+    aaap.a_uptr = (void *)LR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1055,7 +1055,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Bottom Right */
-    aaap.a_uptr = (genptr_t)BR;
+    aaap.a_uptr = (void *)BR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx3);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1066,7 +1066,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Left */
-    aaap.a_uptr = (genptr_t)DL;
+    aaap.a_uptr = (void *)DL;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VSUB2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1077,7 +1077,7 @@ get_intensity(double *intensity, struct application *ap, const struct cell *UNUS
 #endif
 
     /* Debajo Right */
-    aaap.a_uptr = (genptr_t)DR;
+    aaap.a_uptr = (void *)DR;
     VSUB2(aaap.a_ray.r_pt, ap->a_ray.r_pt, dy3);
     VADD2(aaap.a_ray.r_pt, aaap.a_ray.r_pt, dx);
     VMOVE(aaap.a_ray.r_dir, ap->a_ray.r_dir);
@@ -1275,7 +1275,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
     VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* below */
     VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-    a2.a_uptr = (genptr_t)&below;
+    a2.a_uptr = (void *)&below;
     rt_shootray(&a2);
 
     if (ap->a_x == 0) {
@@ -1287,7 +1287,7 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 	 */
 	VSUB2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* left */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&left;
+	a2.a_uptr = (void *)&left;
 	rt_shootray(&a2);
     } else {
 	left.c_ishit = saved[cpu]->c_ishit;
@@ -1302,12 +1302,12 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
     if (both_sides) {
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dy_model); /* above */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&above;
+	a2.a_uptr = (void *)&above;
 	rt_shootray(&a2);
 
 	VADD2(a2.a_ray.r_pt, ap->a_ray.r_pt, dx_model); /* right */
 	VMOVE(a2.a_ray.r_dir, ap->a_ray.r_dir);
-	a2.a_uptr = (genptr_t)&right;
+	a2.a_uptr = (void *)&right;
 	rt_shootray(&a2);
     }
 

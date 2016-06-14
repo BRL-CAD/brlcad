@@ -67,13 +67,13 @@ struct bu_structparse air_parse[] = {
 };
 
 
-HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void air_print(register struct region *rp, genptr_t dp);
-HIDDEN void air_free(genptr_t cp);
+HIDDEN int air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int airtest_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN int tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void air_print(register struct region *rp, void *dp);
+HIDDEN void air_free(void *cp);
 
 struct mfuncs air_mfuncs[] = {
     {MF_MAGIC,	"airtest",	0,		MFI_HIT, MFF_PROC,
@@ -113,7 +113,7 @@ dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char 
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip)
+air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -154,7 +154,7 @@ air_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
  * A I R _ P R I N T
  */
 HIDDEN void
-air_print(register struct region *rp, genptr_t dp)
+air_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, air_parse, dp);
 }
@@ -164,7 +164,7 @@ air_print(register struct region *rp, genptr_t dp)
  * A I R _ F R E E
  */
 HIDDEN void
-air_free(genptr_t cp)
+air_free(void *cp)
 {
     if (rdebug&RDEBUG_SHADE)
 	bu_log("air_free(%s:%d)\n", __FILE__, __LINE__);
@@ -179,7 +179,7 @@ air_free(genptr_t cp)
  * once for each hit point to be shaded.
  */
 int
-airtest_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t dp)
+airtest_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -212,7 +212,7 @@ airtest_render(struct application *ap, const struct partition *pp, struct shadew
  * transmission = e^(-Tau)
  */
 int
-air_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+air_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -293,7 +293,7 @@ tmist_miss(register struct application *UNUSED(ap))
  * once for each hit point to be shaded.
  */
 int
-tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+tmist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -341,7 +341,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
 	my_ap.a_miss = tmist_miss;
 	my_ap.a_logoverlap = ap->a_logoverlap;
 	my_ap.a_onehit = 0;
-	my_ap.a_uptr = (genptr_t)air_sp;
+	my_ap.a_uptr = (void *)air_sp;
 	rt_shootray(&my_ap);
 
 	/* XXX check my_ap.a_dist for distance to ground */
@@ -386,7 +386,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
  * once for each hit point to be shaded.
  */
 int
-emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+emist_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct air_specific *air_sp =
 	(struct air_specific *)dp;
@@ -457,7 +457,7 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
  * once for each hit point to be shaded.
  */
 int
-emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), genptr_t UNUSED(dp))
+emist_fbm_render(struct application *ap, const struct partition *pp, struct shadework *UNUSED(swp), void *UNUSED(dp))
 {
     point_t in_pt, out_pt;
     vect_t dist_v;

@@ -138,7 +138,7 @@ ged_copyeval(struct ged *gedp, int argc, const char *argv[])
     /* should call GED_DB_DIRADD() but need to deal with freeing the
      * internals on failure.
      */
-    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (genptr_t)&ip->idb_type);
+    dp=db_diradd(gedp->ged_wdbp->dbip, argv[2], RT_DIR_PHONY_ADDR, 0, gtd.gtd_obj[endpos-1]->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	rt_db_free_internal(&internal);
 	if (ip == &new_int)

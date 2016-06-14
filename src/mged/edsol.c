@@ -1622,7 +1622,7 @@ nmg_ed(int arg)
 		    cvt_vlblock_to_solids(vbp, "_EU_", 0);	/* swipe vlist */
 
 		    rt_vlblock_free(vbp);
-		    bu_free((genptr_t)tab, "nmg_ed tab[]");
+		    bu_free((void *)tab, "nmg_ed tab[]");
 		}
 		view_state->vs_flag = 1;
 	    }
@@ -2835,7 +2835,7 @@ get_file_name(char *str)
 	    *ptr2++ = *ptr1++;
 	*ptr2 = '\0';
 	Tcl_SetVar(INTERP, bu_vls_addr(&varname_vls), dir, TCL_GLOBAL_ONLY);
-	bu_free((genptr_t)dir, "get_file_name: directory string");
+	bu_free((void *)dir, "get_file_name: directory string");
     }
 
     bu_vls_printf(&cmd,
@@ -4568,7 +4568,7 @@ sedit(void)
 		    RT_DB_INTERNAL_INIT(&tmp_ip);
 		    tmp_ip.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		    tmp_ip.idb_type = ID_SKETCH;
-		    tmp_ip.idb_ptr = (genptr_t)extr->skt;
+		    tmp_ip.idb_ptr = (void *)extr->skt;
 		    tmp_ip.idb_meth = &OBJ[ID_SKETCH];
 		    rt_db_free_internal(&tmp_ip);
 		}
@@ -6093,8 +6093,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves++;
@@ -6135,8 +6135,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve++;
@@ -6181,8 +6181,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->ncurves--;
@@ -6237,8 +6237,8 @@ sedit(void)
 		}
 
 		for (i=0; i<ars->ncurves; i++)
-		    bu_free((genptr_t)ars->curves[i], "ars->curves[i]");
-		bu_free((genptr_t)ars->curves, "ars->curves");
+		    bu_free((void *)ars->curves[i], "ars->curves[i]");
+		bu_free((void *)ars->curves, "ars->curves");
 
 		ars->curves = curves;
 		ars->pts_per_curve--;

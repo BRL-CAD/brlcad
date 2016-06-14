@@ -51,7 +51,7 @@ mk_constraint(struct rt_wdb *wdbp, const char *name, const char *UNUSED(expr))
 
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_CONSTRAINT;
-    intern.idb_ptr = (genptr_t)constraint;
+    intern.idb_ptr = (void *)constraint;
     intern.idb_meth = &OBJ[ID_CONSTRAINT];
 
     /* Add data */
