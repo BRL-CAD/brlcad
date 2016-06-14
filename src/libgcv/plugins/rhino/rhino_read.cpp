@@ -678,42 +678,6 @@ import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 }
 
 
-HIDDEN std::string
-get_name(const db_i &db, const std::string &prefix, const std::string &suffix)
-{
-    std::string end = suffix;
-    std::size_t num = 1;
-
-    while (db_lookup(&db, (prefix + end).c_str(), false))
-	end = "_" + lexical_cast<std::string>(++num) + suffix;
-
-    return prefix + end;
-}
-
-
-HIDDEN void
-move_all(db_i &db, const std::string &name, const std::string &new_name)
-{
-    directory * const dir = db_lookup(&db, name.c_str(), true);
-
-    if (!dir)
-	throw std::runtime_error("db_lookup() failed");
-
-    if (db_rename(&db, dir, new_name.c_str()))
-	throw std::runtime_error("db_rename() failed");
-
-    AutoPtr<directory *> comb_dirs;
-    std::size_t num_combs = db_ls(&db, DB_LS_COMB, NULL, &comb_dirs.ptr);
-    bu_ptbl stack = BU_PTBL_INIT_ZERO;
-    AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
-
-    for (std::size_t i = 0; i < num_combs; ++i)
-	if (!db_comb_mvall(comb_dirs.ptr[i], &db, name.c_str(), new_name.c_str(),
-			   &stack))
-	    throw std::runtime_error("db_comb_mvall() failed");
-}
-
-
 HIDDEN void
 polish_output(const gcv_opts &gcv_options, db_i &db)
 {
@@ -722,35 +686,45 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
     db_update_nref(&db, &rt_uniresource);
 
-    std::map<std::string, std::string> to_rename;
-
     // rename shapes after their parent combs
     if (0 > db_search(&found, DB_SEARCH_TREE,
 		      "-type shape -below -attr rhino::type=ON_Layer", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
-	const std::string unnamed_pattern = gcv_options.default_name + std::string("*");
 	db_full_path **entry;
+	const std::string unnamed_pattern = gcv_options.default_name + std::string("*");
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
 	    if (DB_FULL_PATH_CUR_DIR(*entry)->d_nref != 1)
 		continue;
 
-	    for (ssize_t i = (*entry)->fp_len - 1; i >= 0; --i)
-
+	    for (ssize_t i = (*entry)->fp_len - 1; i >= 0; --i) {
 		if (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 		    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0)) {
-		    if (i != static_cast<ssize_t>((*entry)->fp_len) - 1)
-			move_all(db, DB_FULL_PATH_CUR_DIR(*entry)->d_namep, get_name(db,
-				 (*entry)->fp_names[i]->d_namep, ".s"));
+		    if (i == static_cast<ssize_t>((*entry)->fp_len) - 1)
+			break;
 
-		    for (ssize_t j = i + 1; j < static_cast<ssize_t>((*entry)->fp_len) - 1; ++j)
-			to_rename.insert(std::make_pair((*entry)->fp_names[j]->d_namep,
-							(*entry)->fp_names[i]->d_namep));
+		    const std::string prefix = (*entry)->fp_names[i]->d_namep;
+		    std::string suffix = ".s";
+		    std::size_t num = 1;
+
+		    while (db_lookup(&db, (prefix + suffix).c_str(), false))
+			suffix = "_" + lexical_cast<std::string>(++num) + ".s";
+
+		    bu_ptbl stack = BU_PTBL_INIT_ZERO;
+		    AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
+
+		    if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
+				       DB_FULL_PATH_CUR_DIR(*entry)->d_namep, (prefix + suffix).c_str(), &stack))
+			throw std::runtime_error("db_comb_mvall() failed");
+
+		    if (db_rename(&db, DB_FULL_PATH_CUR_DIR(*entry), (prefix + suffix).c_str()))
+			throw std::runtime_error("db_rename() failed");
 
 		    break;
 		}
+	    }
 	}
     }
 
@@ -780,12 +754,6 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
 		throw std::runtime_error("db5_update_attribute() failed");
     }
-
-    // rename combs after their contained shapes
-    for (std::map<std::string, std::string>::const_iterator it = to_rename.begin();
-	 it != to_rename.end(); ++it)
-	if (db_lookup(&db, it->first.c_str(), false))
-	    move_all(db, it->first, get_name(db, it->second, ".r"));
 }
 
 
