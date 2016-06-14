@@ -699,7 +699,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	    if (DB_FULL_PATH_CUR_DIR(*entry)->d_nref != 1)
 		continue;
 
-	    for (ssize_t i = (*entry)->fp_len - 1; i >= 0; --i) {
+	    for (ssize_t i = (*entry)->fp_len - 1; i >= 0; --i)
 		if (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
 		    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0)) {
 		    if (i == static_cast<ssize_t>((*entry)->fp_len) - 1)
@@ -724,14 +724,13 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 
 		    break;
 		}
-	    }
 	}
     }
 
     db_search_free(&found);
     BU_PTBL_INIT(&found);
 
-    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP | DB_SEARCH_FLAT,
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
 		      "-attr rhino::type=ON_Layer", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
