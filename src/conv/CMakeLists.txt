@@ -30,7 +30,11 @@ set(CONV_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
-BRLCAD_ADDEXEC(3dm-g 3dm/3dm-g.cpp "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT)
+set(3dm-g_SRCS
+  3dm/conv3dm-g.cpp
+  3dm/3dm-g.cpp
+  )
+BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;${OPENNURBS_LIBRARY}" NO_STRICT)
 
 BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
 

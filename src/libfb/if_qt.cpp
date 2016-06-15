@@ -127,9 +127,10 @@ qt_update(FBIO *ifp, int x1, int y1, int w, int h)
 {
     struct qtinfo *qi = QI(ifp);
 
-    memcpy(&(qi->qi_pix[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
+    memcpy(&(qi->qi_pix[((qi->qi_iheight - y1)*qi->qi_iwidth+x1)*sizeof(RGBpixel)]),
  	   &(qi->qi_mem[(y1*qi->qi_iwidth+x1)*sizeof(RGBpixel)]), w * h * sizeof(RGBpixel));
 
+    QApplication::sendEvent(qi->win, new QEvent(QEvent::UpdateRequest));
     qi->qapp->processEvents();
 }
 
@@ -157,6 +158,10 @@ qt_setup(FBIO *ifp, int width, int height)
     qi->win->setWidth(width);
     qi->win->setHeight(height);
     qi->win->show();
+
+    while(!qi->win->isExposed()) {
+	qi->qapp->processEvents();
+    }
 
     return 0;
 }

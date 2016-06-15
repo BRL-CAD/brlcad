@@ -1,6 +1,7 @@
 set(rt_headers
   arb_edit.h
   db_diff.h
+  db_fullpath.h
   defines.h
   search.h
   )

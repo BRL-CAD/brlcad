@@ -37,6 +37,7 @@
 #include  <memory.h>
 #include  <math.h>
 
+#include  <iostream>
 #include  <vector>
 #include  <algorithm>
 
@@ -1500,10 +1501,33 @@ static  void   remove_consecutive_dup( vec_point_2d  & in )
         in.pop_back();
 }
 
+
+// Copyright 2001 softSurfer, 2012 Dan Sunday
+// This code may be freely used and modified for any purpose
+// providing that this copyright notice is included with it.
+// SoftSurfer makes no warranty for this code, and cannot be held
+// liable for any real or imagined damage resulting from its use.
+// Users of this code must verify correctness for their application.
+// isLeft(): tests if a point is Left|On|Right of an infinite line.
+//    Input:  three points P0, P1, and P2
+//    Return: >0 for P2 left of the line through P0 and P1
+//            =0 for P2 on the line
+//            <0 for P2 right of the line
+//    See: Algorithm 1 on Area of Triangles
+inline float
+isLeft( const point2d &P0, const point2d &P1, const point2d &P2 )
+{
+    return (P1.x - P0.x)*(P2.y - P0.y) - (P2.x - P0.x)*(P1.y - P0.y);
+}
+
+
+
+
 // TODO - need to try switching to Monotone Chain Algorithm to avoid the area computation, which
 // is problematic for strict weak ordering when doing sorting.  Useful links:
 // http://stackoverflow.com/questions/1041620/most-efficient-way-to-erase-duplicates-and-sort-a-c-vector
 // http://geomalgorithms.com/a10-_hull-1.html
+
 void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 {
 
@@ -1521,6 +1545,7 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
         assert( in[ ind ] != NULL );
     }
 
+#if 1
     int  size;
 
     size = in.size();
@@ -1563,8 +1588,105 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 
     // we pushed in[ in.size() -1 ] twice in the output
     out.pop_back();
+    std::vector<point2d_ptr>::iterator it;
+    for(it = out.begin(); it != out.end(); it++){
+	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";
+    }
 
     //verify_convex_hull( in, out );
+#endif
+
+
+#if 0
+
+    // Copyright 2001 softSurfer, 2012 Dan Sunday
+    // This code may be freely used and modified for any purpose
+    // providing that this copyright notice is included with it.
+    // SoftSurfer makes no warranty for this code, and cannot be held
+    // liable for any real or imagined damage resulting from its use.
+    // Users of this code must verify correctness for their application.
+
+    int n = in.size();
+    sort( in.begin() + 1, in.end(), comp );
+    remove_consecutive_dup( in );
+    out.reserve(n);
+
+    // the output array out[] will be used as the stack
+    int    bot=0, top=(-1);   // indices for bottom and top of the stack
+    int    i;                 // array scan index
+
+
+    // Get the indices of points with min x-coord and min|max y-coord
+    int minmin = 0, minmax;
+    float xmin = in[0]->x;
+    for (i=1; i<n; i++)
+        if (in[i]->x != xmin) break;
+    minmax = i-1;
+    if (minmax == n-1) {       // degenerate case: all x-coords == xmin
+        out[++top] = in[minmin];
+        if (in[minmax]->y != in[minmin]->y) // a  nontrivial segment
+            out[++top] =  in[minmax];
+        out[++top] = in[minmin];            // add polygon endpoint
+        return;
+    }
+
+    // Get the indices of points with max x-coord and min|max y-coord
+    int maxmin, maxmax = n-1;
+    float xmax = in[n-1]->x;
+    for (i=n-2; i>=0; i--)
+        if (in[i]->x != xmax) break;
+    maxmin = i+1;
+
+    // Compute the lower hull on the stack H
+    out[++top] = in[minmin];      // push  minmin point onto stack
+    i = minmax;
+    while (++i <= maxmin)
+    {
+        // the lower line joins in[minmin]  with in[maxmin]
+        if (isLeft( *in[minmin], *in[maxmin], *in[i])  >= 0 && i < maxmin)
+            continue;           // ignore in[i] above or on the lower line
+
+        while (top > 0)         // there are at least 2 points on the stack
+        {
+            // test if  in[i] is left of the line at the stack top
+            if (isLeft(  *out[top-1], *out[top], *in[i]) > 0)
+                 break;         // in[i] is a new hull  vertex
+            else
+                 top--;         // pop top point off  stack
+        }
+        out[++top] = in[i];        // push in[i] onto stack
+    }
+    // Next, compute the upper hull on the stack out above  the bottom hull
+    if (maxmax != maxmin)      // if  distinct xmax points
+         out[++top] = in[maxmax];  // push maxmax point onto stack
+    bot = top;                  // the bottom point of the upper hull stack
+    i = maxmin;
+    while (--i >= minmax)
+    {
+        // the upper line joins in[maxmax]  with in[minmax]
+        if (isLeft( *in[maxmax], *in[minmax], *in[i])  >= 0 && i > minmax)
+            continue;           // ignore in[i] below or on the upper line
+
+            out.pop_back();
+        while (top > bot)     // at least 2 points on the upper stack
+        {
+            // test if  in[i] is left of the line at the stack top
+            if (isLeft( *out[top-1], *out[top], *in[i]) > 0)
+                 break;         // in[i] is a new hull  vertex
+            else
+                 top--;         // pop top point off  stack
+        }
+        out[++top] = in[i];        // push in[i] onto stack
+    }
+    if (minmax != minmin)
+        out[++top] = in[minmin];  // push  joining endpoint onto stack
+
+    std::vector<point2d_ptr>::iterator it;
+    for(it = out.begin(); it != out.end(); it++){
+	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";
+    }
+#endif
+
 }
 
 
