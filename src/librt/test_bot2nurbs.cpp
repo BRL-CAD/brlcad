@@ -1244,7 +1244,8 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    while (!found_first_pt && istart < 50) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(istart-1)/(double)50));
 		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
+		double distance = DBL_MAX;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,distance,0,BREP_SAME_POINT_TOLERANCE,10/* within tolerance */)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			loop_anchor = pt_2d;
@@ -1273,7 +1274,8 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    for (int i = istart; i < 50; i++) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
 		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
+		double distance = DBL_MAX;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,distance,0,BREP_SAME_POINT_TOLERANCE,10/* within tolerance */)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;
@@ -1293,7 +1295,8 @@ build_loop(size_t patch_id, size_t loop_index, ON_BrepLoop::TYPE loop_type, std:
 	    for (int i = 50; i > istart; i--) {
 		pt_3d = edge_curve->PointAt(dom.ParameterAt((double)(i)/(double)50));
 		ON_3dPoint p3d_pullback = ON_3dPoint::UnsetPoint;
-		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,0,10)) {
+		double distance = DBL_MAX;
+		if (surface_GetClosestPoint3dFirstOrder(face.SurfaceOf(),pt_3d,pt_2d,p3d_pullback,distance,0,BREP_SAME_POINT_TOLERANCE,10/* within tolerance */)) {
 		    if (xdom.Includes(pt_2d.x) && ydom.Includes(pt_2d.y)) {
 			curve_pnts_2d.Append(pt_2d);
 			pt_2d_prev = pt_2d;

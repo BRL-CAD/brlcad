@@ -1,4 +1,4 @@
-/*                 Line.h
+/*                 ProductDefinitionWithAssociatedDocuments.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -17,50 +17,55 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/Line.h
+/** @file step/ProductDefinitionWithAssociatedDocuments.h
  *
- * Class definition used to convert STEP "Line" to BRL-CAD BREP
+ * Class definition used to convert STEP "ProductDefinitionWithAssociatedDocuments" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_LINE_H
-#define CONV_STEP_STEP_G_LINE_H
+#ifndef CONV_STEP_STEP_G_PRODUCTDEFINITIONWITHASSOCIATEDDOCUMENTS_H
+#define CONV_STEP_STEP_G_PRODUCTDEFINITIONWITHASSOCIATEDDOCUMENTS_H
 
-#include "Curve.h"
+#include "STEPEntity.h"
 
-class CartesianPoint;
-class Vector;
+#include "sdai.h"
 
-class Line : public Curve
+#include "ProductDefinition.h"
+
+// forward declaration of class
+class ON_Brep;
+/*
+ * currently not loaded
+class Document;
+typedef list<Document *> LIST_OF_DOCUMENTS;
+ */
+
+class ProductDefinitionWithAssociatedDocuments: public ProductDefinition
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    CartesianPoint *pnt;
-    Vector *dir;
+    /*
+     * currently not loaded
+    LIST_OF_DOCUMENTS documentation_ids;
+     */
 
 public:
-    Line();
-    virtual ~Line();
-    Line(STEPWrapper *sw, int step_id);
-    virtual curve_type CurveType() {
-	return LINE;
-    };
-    void StartPoint(double *p);
-    void EndPoint(double *p);
+    ProductDefinitionWithAssociatedDocuments();
+    virtual ~ProductDefinitionWithAssociatedDocuments();
+    ProductDefinitionWithAssociatedDocuments(STEPWrapper *sw, int step_id);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void SetParameterTrim(double start, double end);
+    string ClassName();
     virtual void Print(int level);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_LINE_H */
+#endif /* CONV_STEP_STEP_G_PRODUCTDEFINITIONWITHASSOCIATEDDOCUMENTS_H */
 
 /*
  * Local Variables:

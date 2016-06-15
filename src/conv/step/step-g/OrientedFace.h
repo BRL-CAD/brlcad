@@ -1,4 +1,4 @@
-/*                 Line.h
+/*                 OrientedFace.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -17,50 +17,48 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/Line.h
+/** @file step/OrientedFace.h
  *
- * Class definition used to convert STEP "Line" to BRL-CAD BREP
+ * Class definition used to convert STEP "OrientedFace" to BRL-CAD BREP
  * structures.
  *
  */
 
-#ifndef CONV_STEP_STEP_G_LINE_H
-#define CONV_STEP_STEP_G_LINE_H
+#ifndef CONV_STEP_STEP_G_ORIENTEDFACE_H
+#define CONV_STEP_STEP_G_ORIENTEDFACE_H
 
-#include "Curve.h"
+#include "Face.h"
+#include "GeometricRepresentationItem.h"
 
-class CartesianPoint;
-class Vector;
+// forward declaration of class
+class Surface;
 
-class Line : public Curve
+class OrientedFace: public Face
 {
 private:
     static string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    CartesianPoint *pnt;
-    Vector *dir;
+    Face *face_element;
+    //LIST_OF_FACE_BOUNDS bounds;
+    Boolean orientation;
+
 
 public:
-    Line();
-    virtual ~Line();
-    Line(STEPWrapper *sw, int step_id);
-    virtual curve_type CurveType() {
-	return LINE;
-    };
-    void StartPoint(double *p);
-    void EndPoint(double *p);
+    OrientedFace();
+    virtual ~OrientedFace();
+    OrientedFace(STEPWrapper *sw, int step_id);
+    void AddFace(ON_Brep *brep);
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void SetParameterTrim(double start, double end);
     virtual void Print(int level);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_LINE_H */
+#endif /* CONV_STEP_STEP_G_ORIENTEDFACE_H */
 
 /*
  * Local Variables:

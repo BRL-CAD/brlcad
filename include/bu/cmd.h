@@ -40,6 +40,7 @@
 /* for timeval via windows.h */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  define NOMINMAX
+#  include <winsock.h>
 #  include <windows.h>
 #  include <io.h>
 

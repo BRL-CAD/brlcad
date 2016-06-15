@@ -65,8 +65,10 @@ nurbs_test(long int test_number, struct db_i *dbip)
 		ON_3dPoint pt_3d_2(11204.007682800293, -16726.479568481445, 3358.8327312469482);
 		ON_3dPoint p3d_pullback_1 = ON_3dPoint::UnsetPoint;
 		ON_3dPoint p3d_pullback_2 = ON_3dPoint::UnsetPoint;
-		bool p1_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_1,pt_2d_1,p3d_pullback_1,0,BREP_EDGE_MISS_TOLERANCE);
-		bool p2_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_2,pt_2d_2,p3d_pullback_2,0,BREP_EDGE_MISS_TOLERANCE);
+		double distance1 = DBL_MAX;
+		double distance2 = DBL_MAX;
+		bool p1_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_1,pt_2d_1,p3d_pullback_1,distance1,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE);
+		bool p2_result = surface_GetClosestPoint3dFirstOrder(c1_face.SurfaceOf(),pt_3d_2,pt_2d_2,p3d_pullback_2,distance2,0,BREP_SAME_POINT_TOLERANCE,BREP_EDGE_MISS_TOLERANCE);
 	        rt_db_free_internal(&case_1_intern);
                 if (pt_2d_1 == pt_2d_2) {
 		    std::cout << "NURBS test case 1 failure (surface_GetClosestPoint3dFirstOrder):  Unexpectedly identical 2D pullbacks from different 3D points\n";

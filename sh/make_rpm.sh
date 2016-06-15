@@ -96,7 +96,7 @@ if test "$DNAME" = "fedora" ;then
 fi
 
 if test "$DNAME" = "openSUSE" ;then
-    fcheck rpm
+    fcheck rpm-build
     fcheck fakeroot
     fcheck gcc-c++
     fcheck make
@@ -104,8 +104,8 @@ if test "$DNAME" = "openSUSE" ;then
     fcheck sed
     fcheck bison
     fcheck flex
-    fcheck libXi6-devel
-    fcheck libxslt
+    fcheck libXi-devel
+    fcheck libxslt1
     fcheck Mesa-devel
     fcheck pango-devel
 fi

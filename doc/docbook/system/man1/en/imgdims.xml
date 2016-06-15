@@ -21,9 +21,9 @@
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
     <arg choice='plain'><replaceable>file_name</replaceable></arg>
 </cmdsynopsis>
-<cmdsynopsis>
+<para>
     or
-</cmdsynopsis>
+</para>
 <cmdsynopsis>
   <command>imgdims</command>
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>

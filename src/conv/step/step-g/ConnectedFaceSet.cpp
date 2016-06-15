@@ -131,6 +131,10 @@ ConnectedFaceSet::Create(STEPWrapper *sw, SDAI_Application_instance *sse)
     return STEPEntity::CreateEntity(sw, sse, GetInstance, CLASSNAME);
 }
 
+#ifdef _DEBUG_TESTING_
+  static int _face_cnt_ = 0;
+#endif
+
 bool
 ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
 {
@@ -142,8 +146,10 @@ ConnectedFaceSet::LoadONBrep(ON_Brep *brep)
     LIST_OF_FACES::iterator i;
     int facecnt = 0;
     for (i = cfs_faces.begin(); i != cfs_faces.end(); ++i) {
-#ifdef PRINT_DEBUG
-	if (facecnt == 44) {
+#ifdef _DEBUG_TESTING_
+	if (facecnt != _face_cnt_) {
+	    facecnt++;
+	    continue;
 	    std::cerr << "We're here." << std::endl;
 	}
 #endif

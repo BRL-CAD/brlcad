@@ -925,6 +925,77 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
     }
     return true;
 }
+
+
+/*
+ * Overriding ON_BrepFace::Reverse(int dir) from OpenNURBS minimal change to duplicate original surface
+ * no matter the surface use count.
+ */
+ON_BOOL32 ON_BrepFace::Reverse(int dir)
+{
+    if (dir < 0 || dir > 1 || 0 == m_brep)
+	return false;
+    ON_Surface* srf = const_cast<ON_Surface*>(SurfaceOf());
+    if (!srf)
+	return false;
+    ON_Interval dom0 = srf->Domain(dir);
+    if (!dom0.IsIncreasing())
+	return false;
+
+// 2/18/03 GBA.  Destroy surface cache on face.
+    DestroyRuntimeCache(true);
+// keith - commenting out check on surface use count
+// want to duplicate surface regardless
+//    if (m_brep->SurfaceUseCount(m_si, 2) > 1) {
+	srf = srf->DuplicateSurface();
+	m_si = m_brep->AddSurface(srf);
+	SetProxySurface(srf);
+// keith
+//    }
+
+    if (!srf->Reverse(dir))
+	return false;
+
+    ON_Interval dom1 = dom0;
+    dom1.Reverse();
+    if (dom1 != srf->Domain(dir)) {
+	srf->SetDomain(dir, dom1);
+	dom1 = srf->Domain(dir);
+    }
+
+    // adjust location of 2d trim curves
+    ON_Xform xform(1);
+    xform.IntervalChange(dir, dom0, ON_Interval(dom1[1], dom1[0]));
+    TransformTrim(xform);
+
+    // reverse loop orientations.
+    int fli;
+    for (fli = 0; fli < m_li.Count(); fli++) {
+	ON_BrepLoop* loop = m_brep->Loop(m_li[fli]);
+	if (loop)
+	    m_brep->FlipLoop(*loop);
+    }
+
+    m_bRev = m_bRev ? false : true;
+
+    if (m_brep->m_is_solid == 1 || m_brep->m_is_solid == 2)
+	m_brep->m_is_solid = 0;
+
+    // Greg Arden 10 April 2003.  Fix TRR#9624.
+    // Update analysis and render meshes.
+    if (m_render_mesh) {
+	m_render_mesh->ReverseSurfaceParameters(dir);
+	m_render_mesh->ReverseTextureCoordinates(dir);
+    }
+    if (m_analysis_mesh) {
+	m_analysis_mesh->ReverseSurfaceParameters(dir);
+	m_analysis_mesh->ReverseTextureCoordinates(dir);
+    }
+
+    return true;
+}
+
+
 void
 FaceSurface::AddFace(ON_Brep *brep)
 {
@@ -934,13 +1005,11 @@ FaceSurface::AddFace(ON_Brep *brep)
     }
 
     ON_BrepFace &face = brep->NewFace(face_geometry->GetONId());
-    if (same_sense == 1) {
+    if (same_sense == BTrue) {
 	face.m_bRev = false;
     } else {
 	face.m_bRev = true;
-#ifndef FLIP_SURFACE_OF_REVERSED_FACE
 	face.Reverse(0); //need to remove here but check for reversed face in raytracer
-#endif
     }
 
     ON_id = face.m_face_index;
@@ -2564,6 +2633,32 @@ Parabola::LoadONBrep(ON_Brep *brep)
 }
 
 
+void
+Line::SetParameterTrim(double start_param, double end_param)
+{
+    double startpoint[3];
+    double endpoint[3];
+
+    t = start_param;
+    s = end_param;
+
+    ON_3dPoint start = pnt->Point3d();
+    ON_3dVector vdir =  dir->Orientation();
+    ON_3dPoint end = start + (vdir*dir->Magnitude());
+    ON_Line l(start, end);
+
+    if (s < t) {
+	double tmp = s;
+	s = t;
+	t = tmp;
+    }
+    VMOVE(startpoint,l.PointAt(t));
+    VMOVE(endpoint,l.PointAt(s));
+
+    SetPointTrim(startpoint, endpoint);
+}
+
+
 bool
 Line::LoadONBrep(ON_Brep *brep)
 {
@@ -2575,8 +2670,19 @@ Line::LoadONBrep(ON_Brep *brep)
     //if (ON_id >= 0)
     //	return true; // already loaded
 
-    ON_3dPoint startpnt = start->Point3d();
-    ON_3dPoint endpnt = end->Point3d();
+    ON_3dPoint startpnt = ON_3dPoint::UnsetPoint;
+    ON_3dPoint endpnt = ON_3dPoint::UnsetPoint;
+
+    if (trimmed) { //explicitly trimmed
+	startpnt = trim_startpoint;
+	endpnt = trim_endpoint;
+    } else if ((start != NULL) && (end != NULL)) { //not explicit let's try edge vertices
+	startpnt = start->Point3d();
+	endpnt = end->Point3d();
+    } else {
+	std::cerr << "Error: ::LoadONBrep(ON_Brep *brep<" << std::hex << brep << std::dec << ">) not endpoints for specified for curve " << entityname << std::endl;
+	return false;
+    }
 
     startpnt = startpnt * LocalUnits::length;
     endpnt = endpnt * LocalUnits::length;

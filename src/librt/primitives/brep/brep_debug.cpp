@@ -1481,6 +1481,70 @@ brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 
 
 int
+brep_surface_uv_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, ON_Interval &U, ON_Interval &V)
+{
+    ON_wString wstr;
+    ON_TextLog tl(wstr);
+
+    ON_Brep* brep = bs->brep;
+    if (brep == NULL) {
+	return -1;
+    }
+    if (!brep->IsValid(&tl)) {
+	bu_log("brep is NOT valid");
+    }
+
+    if ((index >= 0)&&(index < brep->m_S.Count())) {
+	ON_Surface *surf = brep->m_S[index];
+	register struct bu_list *vhead;
+	fastf_t pt1[3], pt2[3];
+	fastf_t delta = U.Length()/1000.0;
+
+	vhead = rt_vlblock_find(vbp, YELLOW);
+	for (int i = 0; i < 2; i++) {
+	    fastf_t v = V.m_t[i];
+	    for (fastf_t u = U.m_t[0]; u < U.m_t[1]; u = u + delta) {
+		ON_3dPoint p = surf->PointAt(u, v);
+		//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
+		VMOVE(pt1, p);
+		if (u + delta > U.m_t[1]) {
+		    p = surf->PointAt(U.m_t[1], v);
+		} else {
+		    p = surf->PointAt(u + delta, v);
+		}
+		//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
+		VMOVE(pt2, p);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	    }
+	}
+	delta = V.Length()/1000.0;
+	for (int i = 0; i < 2; i++) {
+	    fastf_t u = U.m_t[i];
+	    for (fastf_t v = V.m_t[0]; v < V.m_t[1]; v = v + delta) {
+		ON_3dPoint p = surf->PointAt(u, v);
+		//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y, p.x, p.y, p.z);
+		VMOVE(pt1, p);
+		if (v + delta > V.m_t[1]) {
+		    p = surf->PointAt(u,V.m_t[1]);
+		} else {
+		    p = surf->PointAt(u, v + delta);
+		}
+		//bu_log("p1 2d - %f, %f 3d - %f, %f, %f\n", pt.x, y+deltay, p.x, p.y, p.z);
+		VMOVE(pt2, p);
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
+	    }
+	}
+    }
+
+    bu_vls_printf(vls, ON_String(wstr).Array());
+
+    return 0;
+}
+
+
+int
 brep_surface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_brep_internal*, struct bn_vlblock *vbp, int index, int plotres)
 {
     ON_wString wstr;
@@ -2336,6 +2400,8 @@ plot_usage(struct bu_vls *vls)
     bu_vls_printf(vls, "mged>brep brepname.s plot\n");
     bu_vls_printf(vls, "\tplot - plot entire BREP\n");
     bu_vls_printf(vls, "\tplot S [index] or S [index-index]- plot specific BREP 'surface'\n");
+    bu_vls_printf(vls, "\tplot Suv index[-index] u v- plot specific BREP 'surface' 3d point at specified uv\n");
+    bu_vls_printf(vls, "\tplot UV index[-index] u1 u2 v1 v2 - plot specific BREP 'surface' 3d bounds at specified uv bounds\n");
     bu_vls_printf(vls, "\tplot F [index] or F [index-index]- plot specific BREP 'face'\n");
     bu_vls_printf(vls, "\tplot I [index] or I [index-index]- plot specific BREP 'isosurface'\n");
     bu_vls_printf(vls, "\tplot SN [index] or SN [index-index]- plot specific BREP 'surface normal'\n");
@@ -2865,6 +2931,24 @@ brep_command(struct bu_vls *vls, const char *solid_name, const struct rt_tess_to
 		    v = atof(vstr);
 		}
 		snprintf(commtag, 64, "_BC_Suv_");
+		for (int i = startindex; i <= endindex; i++) {
+		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, i, u, v);
+		}
+	    } else if (BU_STR_EQUAL(part, "UV")) {
+		ON_Interval u;
+		ON_Interval v;
+		if (argc == 9) {
+		    const char *u1str = argv[5];
+		    const char *u2str = argv[6];
+		    const char *v1str = argv[7];
+		    const char *v2str = argv[8];
+
+		    u.m_t[0] = atof(u1str);
+		    u.m_t[1] = atof(u2str);
+		    v.m_t[0] = atof(v1str);
+		    v.m_t[1] = atof(v2str);
+		}
+		snprintf(commtag, 64, "_BC_UV_");
 		for (int i = startindex; i <= endindex; i++) {
 		    ret = brep_surface_uv_plot(vls, bs, bi, vbp, i, u, v);
 		}

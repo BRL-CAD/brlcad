@@ -275,7 +275,7 @@
                   and tgc for rcc.  Note:  there are also a number of primitives whose parameters are not exposed in a way that
                   that <option>-param</option> can access them: arbn, ars, brep, bspline, dsp, metaball, nmg, pipe,
                   pnts, and poly.
-                  
+
 		  <table><title>Primitive Parameters</title>
 
 			<tgroup cols="2">

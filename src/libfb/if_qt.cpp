@@ -39,6 +39,7 @@
 #include <QWindow>
 #include <QBackingStore>
 #include <QResizeEvent>
+#include <QImage>
 
 #include "fb.h"
 #include "bu/file.h"
@@ -47,7 +48,7 @@
 class QMainWindow: public QWindow {
 
 public:
-    QMainWindow(QWindow *parent = 0);
+    QMainWindow(QImage *image, QWindow *parent = 0);
     ~QMainWindow();
 
     virtual void render(QPainter *painter);
@@ -61,7 +62,7 @@ protected:
     void exposeEvent(QExposeEvent *event);
 
 private:
-    QPixmap *pixmap;
+    QImage *image;
     QBackingStore *m_backingStore;
     bool m_update_pending;
 };
@@ -69,11 +70,15 @@ private:
 struct qtinfo {
     QApplication *qapp;
     QMainWindow *win;
+    QImage *qi_image;
 
     int alive;
 
     unsigned long qi_mode;
     unsigned long qi_flags;
+
+    unsigned char *qi_mem;
+    unsigned char *qi_pix;
 
     int qi_iwidth;
     int qi_iheight;
@@ -130,7 +135,14 @@ qt_setup(FBIO *ifp, int width, int height)
 
     qi->qapp = new QApplication(argc, argv);
 
-    qi->win = new QMainWindow();
+    if ((qi->qi_mem = (unsigned char *) calloc(2,
+	width*height)) == NULL) {
+	fb_log("qt_open: pix malloc failed");
+    }
+
+    qi->qi_image = new QImage(qi->qi_mem, width, height, QImage::Format_Mono);
+
+    qi->win = new QMainWindow(qi->qi_image);
     qi->win->setWidth(width);
     qi->win->setHeight(height);
     qi->win->show();
@@ -152,7 +164,7 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     struct qtinfo *qi;
 
     unsigned long mode;
-  /*  int getmem_stat; */
+    size_t size;
 
     FB_CK_FBIO(ifp);
 
@@ -223,7 +235,13 @@ qt_open(FBIO *ifp, const char *file, int width, int height)
     qi->qi_iwidth = width;
     qi->qi_iheight = height;
 
-    /* TODO allocate backing store */
+    /* allocate backing store */
+    size = ifp->if_max_height * ifp->if_max_width * sizeof(RGBpixel);
+    if ((qi->qi_mem = (unsigned char *)malloc(size)) == 0) {
+	fb_log("if_qt: Unable to allocate %d bytes of backing \
+		store\n  Run shell command 'limit datasize unlimited' and try again.\n", size);
+	return -1;
+    }
 
     /* Set up an Qt window */
     if (qt_setup(ifp, width, height) < 0) {
@@ -468,14 +486,13 @@ FBIO qt_interface =  {
  * ===================================================== Main window class ===============================================
  */
 
-QMainWindow::QMainWindow(QWindow *win)
+QMainWindow::QMainWindow(QImage *img, QWindow *win)
     : QWindow(win)
     , m_update_pending(false)
 {
     m_backingStore = new QBackingStore(this);
     create();
-    /* TODO fix this */
-    pixmap = new QPixmap(100, 100);
+    image = img;
 }
 
 QMainWindow::~QMainWindow()
@@ -528,7 +545,7 @@ void QMainWindow::renderNow()
 
 void QMainWindow::render(QPainter *painter)
 {
-    painter->drawPixmap(0, 0, *pixmap);
+    painter->drawPixmap(0, 0, QPixmap::fromImage(*image));
 }
 
 

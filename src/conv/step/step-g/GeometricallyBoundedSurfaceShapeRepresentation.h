@@ -1,4 +1,4 @@
-/*                 Line.h
+/*                 GeometricallyBoundedSurfaceShapeRepresentation.h
  * BRL-CAD
  *
  * Copyright (c) 1994-2014 United States Government as represented by
@@ -17,50 +17,47 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file step/Line.h
+/** @file step/GeometricallyBoundedSurfaceShapeRepresentation.h
  *
- * Class definition used to convert STEP "Line" to BRL-CAD BREP
+ * Class definition used to convert STEP "GeometricallyBoundedSurfaceShapeRepresentation" to BRL-CAD BREP
  * structures.
  *
  */
+#ifndef CONV_STEP_STEP_G_GEOMETRICALLYBOUNDEDSURFACESHAPEREPRESENTATION_H
+#define CONV_STEP_STEP_G_GEOMETRICALLYBOUNDEDSURFACESHAPEREPRESENTATION_H
 
-#ifndef CONV_STEP_STEP_G_LINE_H
-#define CONV_STEP_STEP_G_LINE_H
+#include "common.h"
 
-#include "Curve.h"
+/* interface header */
+#include "ShapeRepresentation.h"
 
-class CartesianPoint;
-class Vector;
+/* system headers */
+#include <string>
 
-class Line : public Curve
+
+class ON_Brep;
+
+class GeometricallyBoundedSurfaceShapeRepresentation : public ShapeRepresentation
 {
 private:
-    static string entityname;
+    static std::string entityname;
     static EntityInstanceFunc GetInstance;
 
 protected:
-    CartesianPoint *pnt;
-    Vector *dir;
 
 public:
-    Line();
-    virtual ~Line();
-    Line(STEPWrapper *sw, int step_id);
-    virtual curve_type CurveType() {
-	return LINE;
-    };
-    void StartPoint(double *p);
-    void EndPoint(double *p);
+    GeometricallyBoundedSurfaceShapeRepresentation();
+    GeometricallyBoundedSurfaceShapeRepresentation(STEPWrapper *sw, int step_id);
+    virtual ~GeometricallyBoundedSurfaceShapeRepresentation();
     bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
-    virtual bool LoadONBrep(ON_Brep *brep);
-    virtual void SetParameterTrim(double start, double end);
     virtual void Print(int level);
 
     //static methods
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* CONV_STEP_STEP_G_LINE_H */
+
+#endif /* CONV_STEP_STEP_G_GEOMETRICALLYBOUNDEDSURFACESHAPEREPRESENTATION_H */
 
 /*
  * Local Variables:

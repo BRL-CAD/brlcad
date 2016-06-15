@@ -1019,6 +1019,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   project as a possible means of procedurally generating plant models
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
+
 DATABASE MAINTENANCE/ADMINISTRATION
 -----------------------------------
 
@@ -1048,6 +1049,31 @@ comp.r4 ID 5678 material code 5 LOS 75
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications
+
+* evaluate performance of using an SQL/XML store for BRL-CAD geometry,
+  particularly as it pertains to rt_dirbuild() run times on large
+  models and db_lookup() times.
+
+* multiple-representation geometry.  support storing different
+  "versions" of a given combination node, as selectable subtrees where
+  one selectable subtree is always marked active/selected.  the
+  selectable subtrees could generally be entirely different
+  configurations (e.g., different poses) or different geometry
+  structure (e.g., a blast, signature, or lethality version of a given
+  model).  These could be implemented as a modification to the union
+  tree and exposed to the user as a parametric selection on a comb.
+  Something perhaps like this:
+
+  union tree {
+    ...
+    struct tree_representation {
+      uint32_t magic;
+      int tr_op;
+      const char *tr_name;
+      union tree *tr_subtree;
+    } tr_r;
+    ...
+  };
 
 
 LIBGED
