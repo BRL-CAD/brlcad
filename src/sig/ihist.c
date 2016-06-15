@@ -25,10 +25,12 @@
 
 #include <string.h>
 #include <stdlib.h>
+#include <limits.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 int

@@ -42,8 +42,11 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 
 

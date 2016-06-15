@@ -40,10 +40,6 @@
 /* for select */
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_UNISTD_H
-/* for select */
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
 #endif
@@ -56,18 +52,19 @@
 #  include <poll.h>
 #endif
 
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/units.h"
+#include "bu/version.h"
 #include "bn.h"
-#include "dg.h"
 #include "mater.h"
 #include "libtermio.h"
 #include "db.h"
@@ -142,13 +139,11 @@ int (*cmdline_hook)() = NULL;
 jmp_buf jmp_env;		/* For non-local gotos */
 double frametime;		/* time needed to draw last frame */
 
-struct solid MGED_FreeSolid;      /* Head of freelist */
-
 void (*cur_sigint)();	/* Current SIGINT status */
 int interactive = 1;	/* >0 means interactive */
 int cbreak_mode = 0;        /* >0 means in cbreak_mode */
 
-#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL)
+#if defined(DM_X) || defined(DM_TK) || defined(DM_OGL) || defined(DM_WGL) || defined(DM_OSGL)
 # if defined(HAVE_TK)
 int classic_mged=0;
 #  else
@@ -373,7 +368,7 @@ new_edit_mats(void)
 
 
 void
-mged_view_callback(struct ged_view *gvp,
+mged_view_callback(struct bview *gvp,
 		   void *clientData)
 {
     struct _view_state *vsp = (struct _view_state *)clientData;
@@ -1251,7 +1246,6 @@ main(int argc, char *argv[])
 #endif /* HAVE_PIPE */
 
     /* Set up linked lists */
-    BU_LIST_INIT(&MGED_FreeSolid.l);
     BU_LIST_INIT(&RTG.rtg_vlfree);
     BU_LIST_INIT(&RTG.rtg_headwdb.l);
 
@@ -1273,13 +1267,12 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&curr_dm_list->dml_p_vlist);
     predictor_init();
 
-    BU_ALLOC(dmp, struct dm);
-    *dmp = dm_null;
-    bu_vls_init(&dmp->dm_pathName);
-    bu_vls_init(&tkName);
-    bu_vls_init(&dName);
-    bu_vls_strcpy(&dmp->dm_pathName, "nu");
-    bu_vls_strcpy(&tkName, "nu");
+    dmp = dm_get();
+    dm_set_null(dmp);
+    bu_vls_init(tkName);
+    bu_vls_init(dName);
+    bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    bu_vls_strcpy(tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);
     *rubber_band = default_rubber_band;		/* struct copy */
@@ -1329,8 +1322,6 @@ main(int argc, char *argv[])
     mged_tol.dist_sq = mged_tol.dist * mged_tol.dist;
     mged_tol.perp = 1e-6;
     mged_tol.para = 1 - mged_tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     rt_prep_timer();		/* Initialize timer */
 
@@ -2300,10 +2291,10 @@ refresh(void)
 	    int restore_zbuffer = 0;
 
 	    if (mged_variables->mv_fb &&
-		dmp->dm_zbuffer) {
+		dm_get_zbuffer(dmp)) {
 		restore_zbuffer = 1;
-		(void)DM_MAKE_CURRENT(dmp);
-		(void)DM_SET_ZBUFFER(dmp, 0);
+		(void)dm_make_current(dmp);
+		(void)dm_set_zbuffer(dmp, 0);
 	    }
 
 	    dirty = 0;
@@ -2324,13 +2315,13 @@ refresh(void)
 	    if (mged_variables->mv_predictor)
 		predictor_frame();
 
-	    DM_DRAW_BEGIN(dmp);	/* update displaylist prolog */
+	    dm_draw_begin(dmp);	/* update displaylist prolog */
 
 	    if (dbip != DBI_NULL) {
 		/* do framebuffer underlay */
 		if (mged_variables->mv_fb && !mged_variables->mv_fb_overlay) {
 		    if (mged_variables->mv_fb_all)
-			fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+			fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
 		    else if (mged_variables->mv_mouse_behavior != 'z')
 			paint_rect_area();
 		}
@@ -2339,21 +2330,21 @@ refresh(void)
 		if (mged_variables->mv_fb &&
 		    mged_variables->mv_fb_overlay &&
 		    mged_variables->mv_fb_all) {
-		    fb_refresh(fbp, 0, 0, dmp->dm_width, dmp->dm_height);
+		    fb_refresh(fbp, 0, 0, dm_get_width(dmp), dm_get_height(dmp));
 
 		    if (restore_zbuffer)
-			DM_SET_ZBUFFER(dmp, 1);
+			dm_set_zbuffer(dmp, 1);
 		} else {
 		    if (restore_zbuffer)
-			DM_SET_ZBUFFER(dmp, 1);
+			dm_set_zbuffer(dmp, 1);
 
 		    /* Draw each solid in its proper place on the
 		     * screen by applying zoom, rotation, &
-		     * translation.  Calls DM_LOADMATRIX() and
-		     * DM_DRAW_VLIST().
+		     * translation.  Calls dm_loadmatrix() and
+		     * dm_draw_vlist().
 		     */
 
-		    if (dmp->dm_stereo == 0 ||
+		    if (dm_get_stereo(dmp) == 0 ||
 			mged_variables->mv_eye_sep_dist <= 0) {
 			/* Normal viewing */
 			dozoom(0);
@@ -2372,7 +2363,7 @@ refresh(void)
 
 
 		/* Restore to non-rotated, full brightness */
-		DM_NORMAL(dmp);
+		dm_normal(dmp);
 
 		/* only if not doing overlay */
 		if (!mged_variables->mv_fb ||
@@ -2408,14 +2399,14 @@ refresh(void)
 	    if (!mged_variables->mv_fb ||
 		mged_variables->mv_fb_overlay != 2) {
 		/* Draw center dot */
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_center_dot[0],
 			       color_scheme->cs_center_dot[1],
 			       color_scheme->cs_center_dot[2], 1, 1.0);
-		DM_DRAW_POINT_2D(dmp, 0.0, 0.0);
+		dm_draw_point_2d(dmp, 0.0, 0.0);
 	    }
 
-	    DM_DRAW_END(dmp);
+	    dm_draw_end(dmp);
 	}
     }
 
@@ -2459,7 +2450,7 @@ mged_finish(int exitcode)
 	BU_LIST_DEQUEUE(&(p->l));
 
 	if (p && p->dml_dmp) {
-	    DM_CLOSE(p->dml_dmp);
+	    dm_close(p->dml_dmp);
 	    RT_FREE_VLIST(&p->dml_p_vlist);
 	    mged_slider_free_vls(p);
 	    bu_free(p, "release: curr_dm_list");
@@ -2529,7 +2520,6 @@ mged_refresh_handler(void *UNUSED(clientdata))
     view_state->vs_flag = 1;
     refresh();
 }
-
 
 /**
  * Close the current database, if open, and then open a new database.
@@ -2798,32 +2788,24 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     (void)db_clone_dbi(dbip, NULL);
 
     /* Establish LIBWDB TCL access to both disk and in-memory databases */
-    if (wdb_init_obj(interpreter, wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
-	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&msg);
 
-	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+    /* initialize rt_wdb */
+    bu_vls_init(&wdbp->wdb_name);
+    bu_vls_strcpy(&wdbp->wdb_name, MGED_DB_NAME);
 
-	return TCL_ERROR;
-    }
+    BU_LIST_INIT(&wdbp->wdb_observers.l);
+    wdbp->wdb_interp = interpreter;
+
+    /* append to list of rt_wdb's */
+    BU_LIST_APPEND(&RTG.rtg_headwdb.l, &wdbp->l);
 
     /* This creates a "db" command object */
-    if (wdb_create_cmd(wdbp, MGED_DB_NAME) != TCL_OK) {
-	bu_vls_printf(&msg, "%s\n%s\n", Tcl_GetStringResult(interpreter), Tcl_GetVar(interpreter, "errorInfo", TCL_GLOBAL_ONLY));
-	Tcl_AppendResult(interpreter, bu_vls_addr(&msg), (char *)NULL);
-	bu_vls_free(&msg);
 
-	/* release any allocated memory */
-	ged_free(gedp);
-	bu_free((void *)gedp, "struct ged");
-	gedp = NULL;
+    /* Beware, returns a "token", not TCL_OK. */
+    (void)Tcl_CreateCommand(wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
 
-	return TCL_ERROR;
-    }
+    /* Return new function name as result */
+    Tcl_AppendResult(wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.

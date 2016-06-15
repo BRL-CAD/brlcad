@@ -53,15 +53,15 @@
 #  undef X_NOT_POSIX
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-tk.h"
-#include "dm/dm-X.h"
-#include "dm/dm-Null.h"
+#include "dm-tk.h"
+#include "dm-X.h"
+#include "dm-Null.h"
 #include "dm/dm_xvars.h"
+#include "dm_private.h"
 #include "solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
@@ -78,7 +78,7 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
  * Gracefully release the display.
  */
 HIDDEN int
-tk_close(struct dm *dmp)
+tk_close(struct dm_internal *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct x_vars *)dmp->dm_vars.priv_vars)->gc)
@@ -115,7 +115,7 @@ tk_close(struct dm *dmp)
  * This white-washes the dm's pixmap with the background color.
  */
 HIDDEN int
-tk_drawBegin(struct dm *dmp)
+tk_drawBegin(struct dm_internal *dmp)
 {
     XGCValues gcv;
 
@@ -149,7 +149,7 @@ tk_drawBegin(struct dm *dmp)
  * This copies the pixmap into the window.
  */
 HIDDEN int
-tk_drawEnd(struct dm *dmp)
+tk_drawEnd(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_drawEnd()\n");
@@ -177,7 +177,7 @@ tk_drawEnd(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+tk_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("tk_loadMatrix()\n");
@@ -202,7 +202,7 @@ tk_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
  */
 
 HIDDEN int
-tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
+tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     static vect_t spnt, lpnt, pnt;
     struct bn_vlist *tvp;
@@ -440,7 +440,7 @@ tk_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 int
-tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+tk_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -464,7 +464,7 @@ tk_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-tk_normal(struct dm *dmp)
+tk_normal(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_normal()\n");
@@ -479,7 +479,7 @@ tk_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+tk_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
 
@@ -514,7 +514,7 @@ tk_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 
 
 HIDDEN int
-tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
+tk_drawLine2D(struct dm_internal *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1, sx2, sy2;
 
@@ -542,7 +542,7 @@ tk_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 
 
 HIDDEN int
-tk_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
+tk_drawLine3D(struct dm_internal *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -552,7 +552,7 @@ tk_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 
 
 HIDDEN int
-tk_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+tk_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || (npoints > 0 && !points))
 	return TCL_ERROR;
@@ -562,7 +562,7 @@ tk_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 
 
 HIDDEN int
-tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+tk_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
 
@@ -584,7 +584,7 @@ tk_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+tk_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XColor color;
 
@@ -618,7 +618,7 @@ tk_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 
 
 HIDDEN int
-tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+tk_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     XColor color;
 
@@ -650,7 +650,7 @@ tk_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
 
 HIDDEN int
-tk_setLineAttr(struct dm *dmp, int width, int style)
+tk_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
     int linestyle;
 
@@ -678,7 +678,7 @@ tk_setLineAttr(struct dm *dmp, int width, int style)
 
 /* ARGSUSED */
 HIDDEN int
-tk_debug(struct dm *dmp, int lvl)
+tk_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -686,7 +686,7 @@ tk_debug(struct dm *dmp, int lvl)
 }
 
 HIDDEN int
-tk_logfile(struct dm *dmp, const char *filename)
+tk_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
@@ -696,7 +696,7 @@ tk_logfile(struct dm *dmp, const char *filename)
 
 
 HIDDEN int
-tk_setWinBounds(struct dm *dmp, fastf_t *w)
+tk_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setWinBounds()\n");
@@ -713,7 +713,7 @@ tk_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-tk_configureWin_guts(struct dm *dmp, int force)
+tk_configureWin_guts(struct dm_internal *dmp, int force)
 {
     int h, w;
 
@@ -771,7 +771,7 @@ tk_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-tk_configureWin(struct dm *dmp, int force)
+tk_configureWin(struct dm_internal *dmp, int force)
 {
     /* don't force */
     return tk_configureWin_guts(dmp, force);
@@ -779,7 +779,7 @@ tk_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-tk_setLight(struct dm *dmp, int light_on)
+tk_setLight(struct dm_internal *dmp, int light_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setLight:\n");
@@ -791,7 +791,7 @@ tk_setLight(struct dm *dmp, int light_on)
 
 
 HIDDEN int
-tk_setZBuffer(struct dm *dmp, int zbuffer_on)
+tk_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("tk_setZBuffer:\n");
@@ -801,8 +801,15 @@ tk_setZBuffer(struct dm *dmp, int zbuffer_on)
     return TCL_OK;
 }
 
+struct bu_structparse Tk_vparse[] = {
+    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
-struct dm dm_tk = {
+struct dm_internal dm_tk = {
     tk_close,
     tk_drawBegin,
     tk_drawEnd,
@@ -835,10 +842,13 @@ struct dm dm_tk = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
     null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -857,6 +867,8 @@ struct dm dm_tk = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -874,11 +886,13 @@ struct dm dm_tk = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    Tk_vparse,
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 
 
-struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
+struct dm_internal *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
 
 /* Display Manager package interface */
 
@@ -887,7 +901,7 @@ struct dm *tk_open_dm(Tcl_Interp *interp, int argc, char **argv);
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+struct dm_internal *
 tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -896,7 +910,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct dm *dmp = (struct dm *)NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin;
     Display *dpy = (Display *)NULL;
     XColor fg, bg;
@@ -908,7 +922,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_tk; /* struct copy */
     dmp->dm_interp = interp;

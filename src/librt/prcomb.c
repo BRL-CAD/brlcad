@@ -76,8 +76,6 @@ main(int argc, char *argv[])
 	return 1;
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* Scan the database */
     db_dirbuild(dbip);
 

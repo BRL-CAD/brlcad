@@ -32,8 +32,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define MAX_BYTES (128*1024)
 

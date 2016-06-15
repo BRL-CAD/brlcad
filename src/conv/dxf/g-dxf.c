@@ -29,7 +29,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
@@ -412,9 +411,6 @@ main(int argc, char *argv[])
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    /* init resources we might need */
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 

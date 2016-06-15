@@ -1102,8 +1102,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
 		    ztire);
 	for (j = 1; j <= 3; j++) {
 	    bu_vls_sprintf(&str, "extrude%d-%d%s", j, i+1, suffix);
-	    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL,
-			       WMOP_UNION);
+	    (void)mk_addmember(bu_vls_addr(&str), &treadpattern.l, NULL, WMOP_UNION);
 	}
     }
 

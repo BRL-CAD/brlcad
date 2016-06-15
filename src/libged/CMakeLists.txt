@@ -52,7 +52,6 @@ set(LIBGED_SOURCES
   cat.c
   cc.c
   center.c
-  clip.c
   clone.c
   coil.c
   color.c
@@ -76,8 +75,8 @@ set(LIBGED_SOURCES
   debugnmg.c
   decompose.c
   delay.c
-  dg_obj.c
   dir2ae.c
+  display_list.c
   draw.c
   draw_calc.cpp
   dump.c
@@ -116,7 +115,6 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
-  globals.c
   gqa.c
   grid.c
   grid2model_lu.c
@@ -290,13 +288,7 @@ set(LIBGED_SOURCES
   vrot.c
   vutil.c
   wcodes.c
-  wdb_comb_std.c
   wdb_importFg4Section.c
-  wdb_nirt.c
-  wdb_obj.c
-  wdb_qray.c
-  wdb_track.c
-  wdb_vdraw.c
   whatid.c
   which.c
   which_shader.c
@@ -347,7 +339,6 @@ set(ged_ignore_files
   simulate/simrt.h
   simulate/simulate.h
   simulate/simutils.h
-  wdb_qray.h
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

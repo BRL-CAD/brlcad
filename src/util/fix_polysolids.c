@@ -58,8 +58,8 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "db.h"
+#include "bu/getopt.h"
 #include "bn.h"
-#include "bu.h"
 
 int
 main(int argc, char *argv[])

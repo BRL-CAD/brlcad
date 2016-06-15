@@ -87,7 +87,7 @@
 #include <ctype.h>
 #include <time.h>
 #include <regex.h>
-#include "bio.h"
+#include <limits.h> /* for INT_MAX */
 
 #include "bu/cmd.h"
 

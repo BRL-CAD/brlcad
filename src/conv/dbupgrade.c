@@ -35,7 +35,6 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -75,8 +74,6 @@ main(int argc, char **argv)
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( argc != 3 && argc != 4 )  {
 	usage(argv[0]);

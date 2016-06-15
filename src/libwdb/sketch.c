@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include "bu.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 #include "wdb.h"

@@ -27,13 +27,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "db.h"
 #include "vmath.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "rtgeom.h"
 #include "raytrace.h"

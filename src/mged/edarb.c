@@ -24,13 +24,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "rt/arb_edit.h"
@@ -189,7 +186,7 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 {
     int i;
     vect_t slope;
-    fastf_t rot, fb;
+    fastf_t rot, fb_a;
 
     if (argc < 3 || 4 < argc) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -220,10 +217,10 @@ f_edgedir(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
      */
     if (argc == 3) {
 	rot = atof(argv[1]) * DEG2RAD;
-	fb = atof(argv[2]) * DEG2RAD;
-	slope[0] = cos(fb) * cos(rot);
-	slope[1] = cos(fb) * sin(rot);
-	slope[2] = sin(fb);
+	fb_a = atof(argv[2]) * DEG2RAD;
+	slope[0] = cos(fb_a) * cos(rot);
+	slope[1] = cos(fb_a) * sin(rot);
+	slope[2] = sin(fb_a);
     } else {
 	for (i=0; i<3; i++) {
 	    /* put edge slope in slope[] array */

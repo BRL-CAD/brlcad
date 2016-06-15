@@ -33,7 +33,10 @@
 #include "bio.h"
 
 /* interface headers */
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/malloc.h"
+#include "bu/getopt.h"
 #include "pkg.h"
 #include "ntp.h"
 

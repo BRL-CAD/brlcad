@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
@@ -35,8 +34,6 @@
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./mged.h"

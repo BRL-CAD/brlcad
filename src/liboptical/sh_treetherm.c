@@ -263,7 +263,7 @@ tthrm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, cons
     if (rdebug&RDEBUG_SHADE)
 	bu_log("Parsing: (%s)\n", bu_vls_addr(matparm));
 
-    if (bu_struct_parse(matparm, tthrm_parse, (char *)tthrm_sp) < 0) {
+    if (bu_struct_parse(matparm, tthrm_parse, (char *)tthrm_sp, NULL) < 0) {
 	bu_bomb(__FILE__);
     }
     if (tthrm_sp->tt_name[0] == '\0') {

@@ -365,6 +365,8 @@ private:
 inline
 BRNode::BRNode()
 {
+    m_start = ON_3dPoint::UnsetPoint;
+    m_end = ON_3dPoint::UnsetPoint;
 }
 
 inline
@@ -451,6 +453,8 @@ BRNode::BRNode(const ON_BoundingBox &node)
     m_vdot = 0.0;
     m_face = NULL;
     m_trim = NULL;
+    m_start = ON_3dPoint::UnsetPoint;
+    m_end = ON_3dPoint::UnsetPoint;
     for (int i = 0; i < 3; i++) {
 	double d = m_node.m_max[i] - m_node.m_min[i];
 	if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
@@ -503,8 +507,12 @@ BRNode::GetBBox(fastf_t *min, fastf_t *max) const
 {
     VSETALL(min, INFINITY);
     VSETALL(max, -INFINITY);
-    VMINMAX(min, max, m_start);
-    VMINMAX(min, max, m_end);
+    if (m_start != ON_3dPoint::UnsetPoint) {
+	VMINMAX(min, max, m_start);
+    }
+    if (m_end != ON_3dPoint::UnsetPoint) {
+	VMINMAX(min, max, m_end);
+    }
 }
 
 inline bool

@@ -26,12 +26,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "rtgeom.h"

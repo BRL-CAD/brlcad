@@ -38,9 +38,31 @@
 extracts a rectangular region from a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file. The default input image size is 512x512.
-The x,y coordinates of the origin (the defaults xorig=0, yorig=0 correspond to the
-lower left corner) and the dimension of the output image are passed as
+The x,y coordinates of the origin (the default xorig=0, yorig=0 corresponds to the
+lower left corner) are passed as
 command line arguments.</para>
+
+<para>The
+<option>-w </option><replaceable>file_width</replaceable>
+flag specifies the width of each scanline in the input file, in pixels.
+<option>-W </option><replaceable>scr_width</replaceable>
+does the same for the display device.</para>
+
+<para>The
+<option>-n </option><replaceable>file_height</replaceable>
+and
+<option>-N </option><replaceable>scr_height</replaceable>
+flags specifies the height in scanlines of the input file or display device
+respectively.</para>
+
+<para><option>-s </option><replaceable>squarefilesize</replaceable>
+and
+<option>-S </option><replaceable>squarescrsize</replaceable>
+set both the height and width to the size given (for input file and display device respectively).</para>
+
+<para><option>-o </option><replaceable>out_file.bw</replaceable> is a way of specifying output
+file name.</para>
+
 <para>This utility supports pipes and can read/write from/to them.
 </para>
 </refsect1>

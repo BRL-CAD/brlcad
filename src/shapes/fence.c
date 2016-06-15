@@ -35,6 +35,7 @@
 
 #include "./fence.h"
 
+#include "bu/getopt.h"
 
 /* command-line options are described in the parseArguments function
  */

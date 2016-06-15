@@ -24,17 +24,14 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
 #include "mater.h"
-#include "dg.h"
 #include "nmg.h"
 #include "./sedit.h"
 #include "./mged.h"
@@ -42,7 +39,7 @@
 #include "./cmd.h"
 
 
-extern void color_soltab(void);
+extern void mged_color_soltab(void);
 extern void set_absolute_tran(void); /* defined in set.c */
 extern void set_absolute_view_tran(void); /* defined in set.c */
 extern void set_absolute_model_tran(void); /* defined in set.c */
@@ -246,8 +243,8 @@ edit_com(int argc,
 	 const char *argv[],
 	 int kind)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct dm_list *dmlp;
     struct dm_list *save_dmlp;
     struct cmd_list *save_cmd_list;
@@ -265,12 +262,12 @@ edit_com(int argc,
     CHECK_DBI_NULL;
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    initial_blank_screen = 0;
 	    break;
 	}
@@ -459,12 +456,12 @@ edit_com(int argc,
 
 	gedp->ged_gvp = view_state->vs_gvp;
 
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	    if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 		non_empty = 1;
 		break;
 	    }
@@ -685,7 +682,7 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
 
     Tcl_AppendResult(interp, "regdebug=", debug_str, "\n", (char *)NULL);
 
-    DM_DEBUG(dmp, regdebug);
+    dm_debug(dmp, regdebug);
 
     return TCL_OK;
 }
@@ -695,8 +692,6 @@ f_regdebug(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const ch
  * To return all the free "struct bn_vlist" and "struct solid" items
  * lurking on their respective freelists, back to bu_malloc().
  * Primarily as an aid to tracking memory leaks.
- * WARNING:  This depends on knowledge of the macro GET_SOLID in mged/solid.h
- * and RT_GET_VLIST in h/raytrace.h.
  */
 void
 mged_freemem(void)
@@ -704,9 +699,9 @@ mged_freemem(void)
     struct solid *sp;
     struct bn_vlist *vp;
 
-    FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
-	GET_SOLID(sp, &MGED_FreeSolid.l);
-	bu_free((void *)sp, "mged_freemem: struct solid");
+    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_SOLID(sp, &gedp->freesolid->l);
     }
 
     while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
@@ -722,28 +717,17 @@ mged_freemem(void)
 int
 cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), const char *UNUSED(argv[]))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    void (*tmp_callback)(unsigned int, int) = gedp->ged_free_vlist_callback;
     char *av[2] = {"zap", (char *)0};
 
     CHECK_DBI_NULL;
 
     update_views = 1;
+    gedp->ged_free_vlist_callback = freeDListsAll;
 
     /* FIRST, reject any editing in progress */
     if (STATE != ST_VIEW) {
 	button(BE_REJECT);
-    }
-
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-	freeDListsAll(BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist,
-		      BU_LIST_LAST(solid, &gdlp->gdl_headSolid)->s_dlist -
-		      BU_LIST_FIRST(solid, &gdlp->gdl_headSolid)->s_dlist + 1);
-
-	gdlp = next_gdlp;
     }
 
     ged_zap(gedp, 1, (const char **)av);
@@ -755,6 +739,8 @@ cmd_zap(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(ar
 
     (void)chg_state(STATE, STATE, "zap");
     solid_list_callback();
+
+    gedp->ged_free_vlist_callback = tmp_callback;
 
     return TCL_OK;
 }
@@ -887,8 +873,8 @@ static char **path_parse (char *path);
 int
 f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     struct directory *dp;
     struct solid *sp;
     struct solid *lastfound = SOLID_NULL;
@@ -1015,12 +1001,12 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 	goto bail_out;
     }
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
+	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    int a_new_match;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
@@ -1132,8 +1118,8 @@ bail_out:
 int
 f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int is_empty = 1;
 
     CHECK_DBI_NULL;
@@ -1154,12 +1140,12 @@ f_sed(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     }
 
     /* Common part of illumination */
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	if (BU_LIST_NON_EMPTY(&gdlp->gdl_headSolid)) {
+	if (BU_LIST_NON_EMPTY(&gdlp->dl_headSolid)) {
 	    is_empty = 0;
 	    break;
 	}

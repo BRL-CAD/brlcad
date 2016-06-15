@@ -35,10 +35,9 @@
 #   include <sys/wait.h>
 #endif
 
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "solid.h"
+
 
 #include "./ged_private.h"
 
@@ -106,10 +105,7 @@ _ged_wait_status(struct bu_vls *logstr,
 static void
 rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
     int value;
-    struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
@@ -120,15 +116,7 @@ rtcheck_vector_handler(ClientData clientData, int UNUSED(mask))
 	Tcl_DeleteFileHandler(rtcp->fd);
 	fclose(rtcp->fp);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);
@@ -188,10 +176,7 @@ rtcheck_output_handler(ClientData clientData, int UNUSED(mask))
 void
 rtcheck_vector_handler(ClientData clientData, int mask)
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
     int value;
-    struct solid *sp;
     struct ged_rtcheck *rtcp = (struct ged_rtcheck *)clientData;
 
     /* Get vector output from rtcheck */
@@ -201,15 +186,7 @@ rtcheck_vector_handler(ClientData clientData, int mask)
 				 (ClientData)rtcp);
 	Tcl_Close(rtcp->interp, rtcp->chan);
 
-	gdlp = BU_LIST_NEXT(ged_display_list, rtcp->gedp->ged_gdp->gd_headDisplay);
-	while (BU_LIST_NOT_HEAD(gdlp, rtcp->gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	    FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-		sp->s_flag = DOWN;
-
-	    gdlp = next_gdlp;
-	}
+	dl_set_flag(rtcp->gedp->ged_gdp->gd_headDisplay, DOWN);
 
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(rtcp->gedp, rtcp->vbp, "OVERLAPS", 0);

@@ -31,13 +31,12 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 /* exit codes for argument processing errors */
 #define OPTS_ERROR 127

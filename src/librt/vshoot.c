@@ -355,13 +355,6 @@ freeup:
 	}
     }
 
-    /* Segs can't be freed until after a_hit() has returned */
-#if 0
-    /* FIXME: depends on commented out code above */
-    if (HeadSeg)
-	RT_FREE_SEG_LIST(HeadSeg, ap->a_resource);
-#endif
-
 out:
     bu_free((char *)ary_stp, "*ary_stp[]");
     bu_free((char *)ary_rp, "*ary_rp[]");

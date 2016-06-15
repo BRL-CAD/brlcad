@@ -29,9 +29,9 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -651,7 +651,7 @@ main(int argc, char **argv)
     int fudge;
     ColorMap cmap;
     ColorMap *cp = &cmap;
-    FBIO *fbp;
+    fb *fbp;
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	usage();

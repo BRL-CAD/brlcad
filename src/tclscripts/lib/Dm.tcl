@@ -264,6 +264,7 @@ if {$tcl_platform(os) != "Windows NT"} {
     switch $itk_option(-type) {
 	X -
 	ogl -
+	osgl -
 	wgl {
 	    if {$initializing} {
 		set priv_type $itk_option(-type)

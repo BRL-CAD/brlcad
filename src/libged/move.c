@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
 
@@ -37,7 +36,7 @@
 int
 ged_move(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     static const char *usage = "from to";
@@ -87,11 +86,11 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* Change object name if it matches the first element in the display list path. */
-    for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+    for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	int first = 1;
 	int found = 0;
 	struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
 	char *tok = strtok(dupstr, "/");
 
 	while (tok) {
@@ -110,8 +109,8 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	if (found) {
-	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
+	    bu_vls_free(&gdlp->dl_path);
+	    bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
 	}
 
 	free((void *)dupstr);

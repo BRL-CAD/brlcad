@@ -23,7 +23,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 /* this is for iges-g */
 void

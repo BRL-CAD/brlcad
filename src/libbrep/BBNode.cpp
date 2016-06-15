@@ -18,7 +18,11 @@
  * information.
  */
 #include "common.h"
-#include "bu.h"
+#include <algorithm> // for std::max
+#define NOMINMAX
+extern "C" {
+#include "bu/log.h"
+}
 #include "brep.h"
 
 namespace brlcad {

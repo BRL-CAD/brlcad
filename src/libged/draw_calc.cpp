@@ -24,7 +24,6 @@
  */
 
 #include "common.h"
-#include "bu.h"
 #include "brep.h"
 #include "raytrace.h"
 #include "rtgeom.h"

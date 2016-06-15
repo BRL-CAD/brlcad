@@ -26,13 +26,14 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
-
 #include "bio.h"
-#include "bu.h"
+
+#include "bu/getopt.h"
+#include "bu/log.h"
+
 #include "icv.h"
 
-int outx=0, outy=0;		/* Number of pixels in new map */
+int outx=0, outy=0;		/* Number of pixels (width, height) in new map */
 int xorig=0, yorig=0;		/* Bottom left corner to extract from */
 int inx=512, iny=512;
 char *out_file = NULL;
@@ -40,7 +41,7 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width ] [-N out_height]\n\
+Usage:  bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width] [-N out_height]\n\
 			[-x xorig] [-y yorig] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
 
 
@@ -87,9 +88,9 @@ get_args(int argc, char **argv)
 	    return 0;
 	}
     } else {
-        in_file = argv[bu_optind];
-        bu_optind++;
-        return 1;
+	in_file = argv[bu_optind];
+	bu_optind++;
+	return 1;
     }
 
 
@@ -109,14 +110,15 @@ int
 main(int argc, char **argv)
 {
     icv_image_t *img;
+
     if (!get_args(argc, argv)) {
-        bu_log("%s", usage);
-        return 1;
+	bu_log("%s", usage);
+	return 1;
     }
 
     img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
     if (img == NULL)
-        return 1;
+	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
     icv_write(img, out_file, ICV_IMAGE_BW);
 

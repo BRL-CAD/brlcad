@@ -143,7 +143,7 @@ int		use_air = 0;		/* whether librt should handle air */
 
 /***** variables shared with view.c *****/
 fastf_t		frame_delta_t = (fastf_t)(1.0/30.0); /* 1.0 / frames_per_second_playback */
-double		airdensity;    /* is the scene hazy (we shade the void space */
+double		airdensity;    /* is the scene hazy (we shade the void space) */
 double		haze[3] = { 0.8, 0.9, 0.99 };	      /* color of the haze */
 int             do_kut_plane = 0;
 plane_t         kut_plane;
@@ -161,6 +161,7 @@ fastf_t		rt_perp_tol = (fastf_t)0.0;	/* Value for rti_tol.perp */
 char		*framebuffer = (char *)NULL;		/* desired framebuffer */
 
 int		space_partition = 	/*space partitioning algorithm to use*/
+/* Do NOT insert value above for space_partition ; it's taken care of below. */
 
 /* TODO: need a run-time mechanism for toggling spatial partitioning
  * methods.  Use this compile-time switch to toggle between different
@@ -478,7 +479,7 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'p':
 		rt_perspective = atof( bu_optarg );
-		if ( rt_perspective < 0 || rt_perspective > 179 ) {
+		if ( rt_perspective < 0 || rt_perspective >= 180 ) {
 		    fprintf(stderr, "persp=%g out of range\n", rt_perspective);
 		    rt_perspective = 0;
 		}
@@ -554,21 +555,23 @@ get_args(int argc, const char *argv[])
 		bn_mathtab_constant();
 		break;
 	    case 'b':
-		/* Specify a single pixel to be done */
+		/* Specify a single pixel to be done; X and Y pixel coordinates need enclosing quotes. */
 		/* Actually processed in do_frame() */
 		string_pix_start = bu_optarg;
 		npsw = 1;	/* Cancel running in parallel */
 		break;
 	    case 'f':
-		/* set expected playback rate in frames-per-second.
-		 * This actually gets stored as the delta-t per frame.
+		/* input expected playback rate in frames-per-second;
+		 * actually stored as the delta-t per frame
 		 */
 		frame_delta_t = atof(bu_optarg);
 		if (ZERO(frame_delta_t)) {
-		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0\n",
+		    fprintf(stderr, "Invalid frames/sec (%s) == 0.0; set to default\n",
 			    bu_optarg);
 		    frame_delta_t = 30.0;
 		}
+		/* now convert to delta-t per frame
+		 */
 		frame_delta_t = 1.0 / frame_delta_t;
 		break;
 	    case 'V':
@@ -619,7 +622,7 @@ get_args(int argc, const char *argv[])
 	    break;
 	    default:		/* '?' */
 		if(bu_optopt != '?')
-		    fprintf(stderr, "ERROR: bad option specified\n");
+		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
 		return 0;	/* BAD */
 	}
     }

@@ -49,7 +49,6 @@ __BEGIN_DECLS
 #define _GED_TERMINAL_WIDTH 80
 #define _GED_COLUMNS ((_GED_TERMINAL_WIDTH + _GED_V4_MAXNAME - 1) / _GED_V4_MAXNAME)
 
-#define _GED_MAX_LEVELS 12
 #define _GED_CPEVAL      0
 #define _GED_LISTPATH    1
 #define _GED_LISTEVAL    2
@@ -66,6 +65,9 @@ __BEGIN_DECLS
 
 /* Container for defining sub-command structures */
 #define _GED_FUNTAB_UNLIMITED -1
+
+#define DG_GED_MAX 2047.0
+#define DG_GED_MIN -2048.0
 
 struct _ged_funtab {
     char *ft_name;
@@ -93,7 +95,7 @@ struct _ged_id_to_names {
 
 struct _ged_client_data {
     struct ged *gedp;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     int wireframe_color_override;
     int wireframe_color[3];
     int draw_nmg_only;
@@ -111,6 +113,7 @@ struct _ged_client_data {
     fastf_t transparency;
     int dmode;
     int hiddenLine;
+    struct solid *freesolid;
     /* bigE related members */
     struct application *ap;
     struct bu_ptbl leaf_list;
@@ -124,25 +127,11 @@ struct _ged_client_data {
 };
 
 
-struct _ged_trace_data {
-    struct ged *gtd_gedp;
-    struct directory *gtd_path[_GED_MAX_LEVELS];
-    struct directory *gtd_obj[_GED_MAX_LEVELS];
-    mat_t gtd_xform;
-    int gtd_objpos;
-    int gtd_prflag;
-    int gtd_flag;
-};
-
 void vls_col_item(struct bu_vls *str, const char *cp);
 void vls_col_eol(struct bu_vls *str);
 
 /* defined in facedef.c */
 extern int edarb_facedef(void *data, int argc, const char *argv[]);
-
-/* defined in globals.c */
-extern struct solid _FreeSolid;
-
 
 /* defined in ged.c */
 extern void _ged_print_node(struct ged *gedp,
@@ -161,7 +150,7 @@ extern struct directory *_ged_combadd(struct ged *gedp,
 				      struct directory *objp,
 				      char *combname,
 				      int region_flag,
-				      int relation,
+				      db_op_t relation,
 				      int ident,
 				      int air);
 extern int _ged_combadd2(struct ged *gedp,
@@ -169,22 +158,69 @@ extern int _ged_combadd2(struct ged *gedp,
 			 int argc,
 			 const char *argv[],
 			 int region_flag,
-			 int relation,
+			 db_op_t relation,
 			 int ident,
 			 int air);
+
+/* defined in display_list.c */
+extern void _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+					  const char *name,
+					  const int skip_first, struct solid *freesolid);
+extern void _dl_eraseAllPathsFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+					  const char *path,
+					  const int skip_first, struct solid *freesolid);
+extern void _dl_freeDisplayListItem(struct db_i *dbip,
+	        void (*callback)(unsigned int, int),
+				     struct display_list *gdlp, struct solid *freesolid);
+extern int headsolid_splitGDL(struct bu_list *hdlp, struct db_i *dbip, struct display_list *gdlp, struct db_full_path *path);
+extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int pflag);
+/* Returns a bu_ptbl of all solids referenced by the display list */
+extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
+
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid);
+
+extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
+extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
+int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
+void dl_set_flag(struct bu_list *hdlp, int flag);
+void dl_set_wflag(struct bu_list *hdlp, int wflag);
+void dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid);
+int dl_how(struct bu_list *hdlp, struct bu_vls *vls, struct directory **dpp, int both);
+void dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t center, fastf_t scale, int Three_D, int Z_clip);
+void dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_pos, size_t size, size_t half_size, unsigned char **image);
+
+#define PS_COORD(_x) ((int)((_x)+2048))
+#define PS_COLOR(_c) ((_c)*(1.0/255.0))
+void dl_ps(struct bu_list *hdlp, FILE *fp, int border, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset, mat_t model2view, fastf_t perspective, vect_t eye_pos, float red, float green, float blue);
+
+
+void dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, struct bu_vls *vls);
+
+void dl_bitwise_and_fullpath(struct bu_list *hdlp, int flag);
+
+void dl_write_animate(struct bu_list *hdlp, FILE *fp);
+
+int dl_select(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
+int dl_select_partial(struct bu_list *hdlp, mat_t model2view, struct bu_vls *vls, double vx, double vy, double vwidth, double vheight, int rflag);
+void dl_set_transparency(struct bu_list *hdlp, struct directory **dpp, double transparency, void (*callback)(struct display_list *));
+
+enum otype {
+    OTYPE_DXF = 1,
+    OTYPE_OBJ,
+    OTYPE_SAT,
+    OTYPE_STL
+};
+void _ged_bot_dump(struct directory *dp, struct rt_bot_internal *bot, FILE *fp, int fd, const char *file_ext, const char *db_name);
+void dl_botdump(struct bu_list *hdlp, struct db_i *dbip, FILE *fp, int fd, char *file_ext, int output_type, int *red, int *green, int *blue, fastf_t *alpha);
+
 
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
 				       const char *name,
 				       int copy);
-extern int _ged_invent_solid(struct ged *gedp,
-			     char *name,
-			     struct bu_list *vhead,
-			     long int rgb,
-			     int copy,
-			     fastf_t transparency,
-			     int dmode);
 extern int _ged_drawtrees(struct ged *gedp,
 			  int argc,
 			  const char *argv[],
@@ -194,7 +230,6 @@ extern void _ged_drawH_part2(int dashflag,
 			     struct bu_list *vhead,
 			     const struct db_full_path *pathp,
 			     struct db_tree_state *tsp,
-			     struct solid *existing_sp,
 			     struct _ged_client_data *dgcdp);
 
 /* defined in edbot.c */
@@ -225,27 +260,10 @@ extern void _ged_eraseobjall(struct ged *gedp,
 extern void _ged_eraseobj(struct ged *gedp,
 			  struct directory **dpp,
 			  int skip_first);
-extern void _ged_eraseAllNamesFromDisplay(struct ged *gedp,
-					  const char *name,
-					  const int skip_first);
-extern void _ged_eraseAllPathsFromDisplay(struct ged *gedp,
-					  const char *path,
-					  const int skip_first);
-extern void _ged_freeDisplayListItem(struct ged *gedp,
-				     struct ged_display_list *gdlp);
-
 
 /* defined in get_comb.c */
 extern void _ged_vls_print_matrix(struct bu_vls *vls,
 				  matp_t matrix);
-
-/* defined in get_obj_bounds.c */
-extern int _ged_get_obj_bounds(struct ged *gedp,
-			       int argc,
-			       const char *argv[],
-			       int use_air,
-			       point_t rpp_min,
-			       point_t rpp_max);
 
 extern int _ged_get_obj_bounds2(struct ged *gedp,
 				int argc,
@@ -452,13 +470,6 @@ struct directory **
 _ged_dir_getspace(struct db_i *dbip,
 		  int num_entries);
 
-/* defined in trace.c */
-extern void _ged_trace(struct directory *dp,
-		       int pathpos,
-		       const mat_t old_xlate,
-		       struct _ged_trace_data *gtdp,
-		       int verbose);
-
 /* defined in translate_extrude.c */
 extern int _ged_translate_extrude(struct ged *gedp,
 				  struct rt_extrude_internal *extrude,
@@ -474,7 +485,7 @@ extern int _ged_translate_tgc(struct ged *gedp,
 			      int rflag);
 
 /* defined in vutil.c */
-extern void _ged_mat_aet(struct ged_view *gvp);
+extern void _ged_mat_aet(struct bview *gvp);
 extern int _ged_do_rot(struct ged *gedp,
 		       char coord,
 		       mat_t rmat,
@@ -507,9 +518,6 @@ extern int _ged_results_init(struct ged_results *results);
  *
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
-
-/* defined in track.c */
-extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
 __END_DECLS
 

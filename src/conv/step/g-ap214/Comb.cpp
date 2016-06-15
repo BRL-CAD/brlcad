@@ -29,7 +29,7 @@
 
 #include "common.h"
 #include "AP_Common.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "raytrace.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"

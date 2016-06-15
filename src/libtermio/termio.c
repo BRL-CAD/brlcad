@@ -23,8 +23,6 @@
 
 #include "common.h"
 
-#include <fcntl.h>
-
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>
 #endif

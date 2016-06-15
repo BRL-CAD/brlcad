@@ -53,7 +53,7 @@
 #include <string.h>
 #include <math.h>
 #include <setjmp.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "bu/parallel.h"
@@ -219,7 +219,8 @@ hook_mtos_from_stom(
     const struct bu_structparse *sp,
     const char *sp_name,
     void *base,
-    const char *UNUSED(p))
+    const char *UNUSED(p),
+    void *UNUSED(data))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -236,7 +237,8 @@ hook_file(
     const struct bu_structparse *sp,
     const char *sp_name,
     void *base,
-    const char *UNUSED(p))
+    const char *UNUSED(p),
+    void *UNUSED(data))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -4232,7 +4234,7 @@ rt_dsp_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
     MAT_IDN(dsp_ip->dsp_mtos);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip) < 0) {
+    if (bu_struct_parse(&str, rt_dsp_parse, (char *)dsp_ip, NULL) < 0) {
 	if (BU_VLS_IS_INITIALIZED(&str)) bu_vls_free(&str);
 	IMPORT_FAIL("parse error");
     }
@@ -4608,7 +4610,8 @@ HIDDEN void
 hook_verify(const struct bu_structparse *sp,
 	    const char *sp_name,
 	    void *base,
-	    const char *UNUSED(p))
+	    const char *UNUSED(p),
+	    void *UNUSED(data))
 {
     struct rt_dsp_internal *dsp_ip = (struct rt_dsp_internal *)base;
 
@@ -4653,6 +4656,7 @@ hook_verify(const struct bu_structparse *sp,
 
 
 const struct bu_structparse fake_dsp_printab[] = {
+    {"%V",  1, "file", DSP_O(dsp_name), hook_file, NULL, NULL },
     {"%c",  1, "src", DSP_O(dsp_datasrc), hook_verify, NULL, NULL },
     {"%V",  1, "name", DSP_O(dsp_name), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",  1, "w",  DSP_O(dsp_xcnt), hook_verify, NULL, NULL },
@@ -4703,8 +4707,9 @@ rt_dsp_get(struct bu_vls *logstr, const struct rt_db_internal *intern, const cha
 	}
 
 	while (sp && sp->sp_name != NULL) {
-	    bu_vls_printf(logstr, " %s ", sp->sp_name);
+	    bu_vls_printf(logstr, " %s {", sp->sp_name);
 	    bu_vls_struct_item(logstr, sp, (char *)dsp_ip, ' ');
+	    bu_vls_printf(logstr, "}");
 	    ++sp;
 	}
 
@@ -4760,7 +4765,7 @@ rt_dsp_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 
     if (! sp) return BRLCAD_ERROR;
 
-    return bu_structparse_argv(logstr, argc, argv, sp, (char *)intern->idb_ptr);
+    return bu_structparse_argv(logstr, argc, argv, sp, (char *)intern->idb_ptr, NULL);
 }
 
 

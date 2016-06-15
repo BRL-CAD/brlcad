@@ -111,7 +111,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -658,7 +657,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     S = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t) * 6, "hrt bn_complex_t");
     complex = (bn_complex_t (*)[6])bu_malloc(n * sizeof(bn_complex_t) * 6, "hrt bn_complex_t");
     cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "hrt_proj");
-    
+
     /* Initialize seg_stp to assume hit (zero will then flag a miss) */
     for (i = 0; i < n; i++ )
 	segp[i].seg_stp = stp[i];
@@ -667,7 +666,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0)
 	    continue;		/* Skip this iteration */
-	
+
 	hrt = (struct hrt_specific *)stp[i]->st_specific;
 
 	/* Translate ray direction vector */
@@ -691,10 +690,10 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	cor_proj[i] = VDOT(pprime, dprime);
 	VSCALE(norm_pprime, dprime, cor_proj[i]);
 	VSUB2(norm_pprime, pprime, norm_pprime);
-	
+
 	/*
-	 * Generate sexic equation S(t) = 0 to be passed through the root finder
-	 */	
+	 * Generate sextic equation S(t) = 0 to be passed through the root finder
+	 */
 	/* X**2 */
 	Xsqr.dgr = 2;
 	Xsqr.cf[0] = dprime[X] * dprime[X];
@@ -760,7 +759,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
         S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
         S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
         S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
-    
+
     }
     for (i = 0; i < n; i++) {
 	continue;		/* Skip this iteration */
@@ -778,7 +777,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	    if (!reported) {
 		VPRINT("while shooting from: \t", rp[i]->r_pt);
 		VPRINT("while shooting at:\t", rp[i]->r_dir);
-		bu_log("Additional heart convergence failuer details will be suppressed.\n");
+		bu_log("Additional heart convergence failure details will be suppressed.\n");
 		reported = 1;
 	    }
 	}
@@ -789,7 +788,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0)
 	    continue;		/* Skip current iteration */
-    
+
     /* Only real roots indicate an intersection in real space.
      *
      * Look at each root returned; if the imaginary part is zero or
@@ -797,7 +796,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
      * for the intersections
      *
      * Reverse translation by adding distance to all 'real' values
-     * Reuse S to hold 'real' values 
+     * Reuse S to hold 'real' values
      */
     num_zero = 0;
     if (NEAR_ZERO(complex[i][0].im, ap->a_rt_i->rti_tol.dist)) {
@@ -905,14 +904,14 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[5], dprime);
 	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[4], dprime);
     }
-    
+
     }
 
     /* Free tmp space used */
     bu_free((char *)S, "hrt S");
     bu_free((char *)complex, "hrt complex");
     bu_free((char *)cor_proj, "hrt_cor_proj");
-    	
+
 }
 
 
@@ -944,7 +943,7 @@ rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 void
 rt_hrt_norm(register struct hit *hitp, register struct xray *rp)
 {
-    
+
     fastf_t w, fx, fy, fz;
     vect_t work;
 
@@ -1071,7 +1070,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     vect_t v2_left, xdir2_left, ydir2_left, top2_center_left, top2_center_right, v2_right, xdir2_right, ydir2_right;
     vect_t v3_left, xdir3_left, ydir3_left, top3_center_left, top3_center_right, v3_right, xdir3_right, ydir3_right;
     vect_t v4_left, xdir4_left, ydir4_left, top4_center_left, top4_center_right, v4_right, xdir4_right, ydir4_right;
-    
+
     struct rt_hrt_internal *hip;
 
     fastf_t top[24*3];
@@ -1087,7 +1086,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     fastf_t top4_left_lobe[24*3];
     fastf_t top4_right_lobe[24*3];
     fastf_t top5_upper_cusp[24*3];
-    
+
     fastf_t angle_c = 0.64656;  /* sin(40.2) */
     fastf_t angle_d = 0.80901;  /* sin(54.0) */
     fastf_t angle_e = 0.90350;  /* sin(64.5) */
@@ -1099,7 +1098,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
-    
+
     VSET(top01_center, 0 , 0 , hip->zdir[Z] * angle_g );
     VSET(top02_center, 0 , 0 , hip->zdir[Z] * angle_h );
     VSET(top1_center_left, -0.77 * hip->xdir[X], 0, hip->zdir[Z]);
@@ -1120,13 +1119,13 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     VSCALE(v3_right, top3_center_right, angle_e );
     VSCALE(v4_left, top4_center_left, angle_f );
     VSCALE(v4_right, top4_center_right, angle_f);
-    
+
     VSET(upper_cusp, (top3_center_left[X] + top3_center_right[X]) * 0.70,
 		     (top3_center_left[Y] + top3_center_right[Y]) * 0.50,
     		     hip->zdir[Z] * 0.64);
     VSET(highest_point_left, hip->xdir[X] * -0.50 , 0 , hip->zdir[Z] );
     VSET(highest_point_right, hip->xdir[X] * 0.50 , 0 , hip->zdir[Z] );
-    
+
     VSCALE(top_xdir, hip->xdir, 0.80);
     VSET(top01_xdir, hip->xdir[X] * 0.99, 0, 0);
     VSET(top02_xdir, hip->xdir[X] * 1.05, 0, 0);
@@ -1176,23 +1175,23 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     RT_ADD_VLIST(vhead, &top01[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top01[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    }    
+    }
 
     RT_ADD_VLIST(vhead, &top02[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top02[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
-    } 
+    }
 
     RT_ADD_VLIST(vhead, &top1[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top1[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    
+
     RT_ADD_VLIST(vhead, &top1_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top1_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    
+
     RT_ADD_VLIST(vhead, &top1_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top1_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
@@ -1232,13 +1231,13 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top5_upper_cusp[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
-    
-    /* 
+
+    /*
       Make connections between ellipses
-      This for repitition statement draws connectors between
+      This for repetition statement draws connectors between
       the nell-1 ellipses drawn above
      */
-        
+
     for (k = 1; k < 24; k++) {
 	RT_ADD_VLIST(vhead,
 	             &top01[k*ELEMENTS_PER_VECT],
@@ -1289,7 +1288,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 		     &top4_right_lobe[k*ELEMENTS_PER_VECT],
 		     BN_VLIST_LINE_DRAW);
     }
-    
+
     mag_h = MAGNITUDE(hip->zdir);
     r1 = MAGNITUDE(hip->xdir) * 0.80;
     r2 = MAGNITUDE(hip->ydir) * 0.61;
@@ -1329,7 +1328,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
     nb += rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol);
     nell = nb - 1;	/* Number of ellipses needed */
 
-    /* 
+    /*
      * construct positive half of hyperbola along semi-major axis of
      * ehy using same z coords as hyperbola along semi-minor axis
      */
@@ -1464,9 +1463,9 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 			 BN_VLIST_LINE_DRAW);
 	}
 
-    /* 
+    /*
      * Make connections between ellipses
-     * This for repitition statement draws connectors between
+     * This for repetition statement draws connectors between
      * the nell-1 ellipses drawn above
      */
 
@@ -1492,7 +1491,7 @@ rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tes
 	RT_ADD_VLIST(vhead,
 		     &ellipses[0][i*ELEMENTS_PER_VECT],
 		     BN_VLIST_LINE_DRAW);
-    } 
+    }
 
     /* free memory */
     for (i = 0; i < nell; i++) {
@@ -1694,9 +1693,19 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 
 
 void
-rt_hrt_surf_area(void)
+rt_hrt_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_surf_area: Not implemented yet!\n");
+    fastf_t area_hrt_YZ_plane;
+    struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    /* Area of ellipse in YZ-plane is PI * ydir[Y] *  ( zdir[Z] * 1.125 ) */
+    area_hrt_YZ_plane = M_PI * hip->ydir[Y] * hip->zdir[Z] * 1.125;
+
+    /* Area of heart = 180 * M_PI * Area of ellipse in YZ-plane
+     * The 180 * M_PI scalar comes from http://mathworld.wolfram.com/HeartCurve.html
+     */
+    *area = 180 * M_PI * area_hrt_YZ_plane;
 }
 
 
@@ -1706,11 +1715,15 @@ rt_hrt_volume(void)
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
 
-
+/**
+ * Computes centroid of a heart
+ */
 void
-rt_hrt_centroid(void)
+rt_hrt_centroid(point_t *cent, const struct rt_db_internal *ip)
 {
-    bu_log("rt_hrt_centroid: Not implemented yet!\n");
+    struct rt_hrt_internal *hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+    VSET(*cent, hip->xdir[X], hip->ydir[Y], hip->zdir[Z] * 0.125);
 }
 
 

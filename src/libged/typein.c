@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "rtgeom.h"
 #include "wdb.h"

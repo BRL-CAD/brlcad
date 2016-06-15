@@ -31,9 +31,7 @@
 #include <string.h>
 #include <errno.h>
 #include <ctype.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "db.h"

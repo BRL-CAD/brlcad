@@ -27,11 +27,11 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">Rtedge</emphasis> operates on the indicated
+      <command>rtedge</command> operates on the indicated
       <emphasis remap="I">objects</emphasis> in the input
       <emphasis remap="I">model.g</emphasis> and produces a BRL-CAD
       .pix file that indicates the 'edges' in the model file.
-      <emphasis remap="I">Rtedge</emphasis> produces images by drawing a
+      <command>rtedge</command> produces images by drawing a
       boundary whenever a change in region_id is detected.  It also recognizes
       and portrays abrupt changes in surface curvature and changes in surface
       height.  This permits the recognition of pits, protrusions, and changes in
@@ -43,7 +43,7 @@
       the <option>-a</option> and <option>-e</option>
       options, in which case the model will be autosized, and the grid
       will be centered on the centroid of the model, with ray spacing
-      chosen to span the entire set of <emphasis remap="I">objects.</emphasis>
+      chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
       Alternatively, with the <option>-M</option> option, a transformation
       matrix may be provided on standard input which maps model-space to view-space.
       In this case, the grid ranges from -1.0 &lt; = X,Y &lt; = +1.0 in view space,
@@ -189,9 +189,9 @@
   <refsection xml:id="additional_options"><title>ADDITIONAL OPTIONS</title>
 
     <para>
-      <emphasis remap="I">Rtedge</emphasis> replaces <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
+      <command>rtedge</command> replaces <citerefentry><refentrytitle>lgt</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
       In addition to the simple white edges on a black background (or black on white)
-      provided by <emphasis remap="I">lgt,</emphasis> <command>rtedge</command>
+      provided by <command>lgt</command>, <command>rtedge</command>
       allows arbitrary color combinations. It also allows rendering into an
       existing framebuffer and occlusion detection between two pieces of geometry.
       To configure its behavior, <command>rtedge</command> makes copious use of
@@ -200,7 +200,8 @@
 
     <para>
       Note that this approach is necessitated by the fact that
-      <emphasis remap="I">librt (3)</emphasis> has used up nearly the entire
+      <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+      has used up nearly the entire
       alphabet. A transition to GNU-style long option names is planned.
     </para>
     <variablelist remap="TP">
@@ -389,7 +390,7 @@
   <refsection xml:id="occlusion_checking"><title>OCCLUSION CHECKING</title>
 
     <para>
-      <emphasis remap="I">Rtedge</emphasis> has the ability to perform occlusion
+      <command>rtedge</command> has the ability to perform occlusion
       checking between two sets of BRL-CAD objects from the same database.
       Occlusion checking determines which set of geometry is closer
       to the eyepoint and thus should be rendered. The first
@@ -456,7 +457,7 @@
   <refsection xml:id="examples"><title>EXAMPLES</title>
 
     <para>
-      <emphasis remap="I">Rtedge</emphasis> can be somewhat complicated
+      <command>rtedge</command> can be somewhat complicated
       to configure. These examples illustrate both simple and complex examples.
       Hopefully they will be enough to get you started. These examples use
       the havoc.g target description that may be found in the
@@ -466,12 +467,12 @@
     <para>
       Note that in practice it will usually be easiest to use the
       <emphasis remap="I">saveview</emphasis> command in
-      <emphasis remap="I">mged</emphasis>
+      <command>mged</command>
       to produce a script and then modify that script to run
-      <emphasis remap="I">rtedge.</emphasis>
+      <command>rtedge</command> .
     </para>
 
-    <example><title>Rtedge rendering of havoc.g</title>
+    <example><title><command>rtedge</command> rendering of havoc.g</title>
 
       <para>
       <userinput>rtedge -s 1024 -o new.pix havoc.g havoc</userinput>
@@ -498,14 +499,14 @@
 
       <para>
 	The remaining examples will illustrate how to use <command>rtedge</command>
-	in concert with <emphasis remap="I">rt</emphasis> to produce interesting
+	in concert with <command>rt</command> to produce interesting
 	images. When merging <command>rtedge</command> and
-	<emphasis remap="I">rt</emphasis> images, it is best to use
+	<command>rt</command> images, it is best to use
 	<emphasis remap="I">saveview</emphasis> scripts. In
-	<emphasis remap="I">mged</emphasis>, configure your view, save it,
+	<command>mged</command>, configure your view, save it,
 	and then open the file in an editor. Duplicate the
-	<emphasis remap="I">rt</emphasis> command block. After duplicating
-	the block, change the second to <emphasis remap="I">rtedge.</emphasis></para>
+	<command>rt</command> command block. After duplicating
+	the block, change the second to <command>rtedge</command> .</para>
 
 	<para>
 	  This script will overlay bright orange edges on the Havoc.
@@ -590,7 +591,7 @@ EOF
 	</literallayout>
 
 	<para>
-	  In general, if you are mixing <emphasis remap="I">rt</emphasis>
+	  In general, if you are mixing <command>rt</command>
 	  and <command>rtedge</command> renderings, and the objects being
 	  rendered are different, occlusion checking should be used.
 	</para>

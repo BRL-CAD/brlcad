@@ -227,7 +227,7 @@ fire_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     memcpy(fire_sp, &fire_defaults, sizeof(struct fire_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, fire_parse_tab, (char *)fire_sp) < 0)
+    if (bu_struct_parse(matparm, fire_parse_tab, (char *)fire_sp, NULL) < 0)
 	return -1;
 
     if (!EQUAL(fire_sp->noise_size, -1.0)) {

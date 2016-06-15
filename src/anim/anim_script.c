@@ -35,7 +35,8 @@
 #include <bio.h>
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
 #include "bn.h"
 #include "anim.h"
 

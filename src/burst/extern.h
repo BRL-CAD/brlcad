@@ -31,9 +31,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio.h"
 #include "fb.h"
-#include "bu.h"
 
 #include "./burst.h"
 #include "./trie.h"
@@ -116,7 +114,7 @@ extern void brst_log(const char *, ...);
 extern int roundToInt(fastf_t f);
 
 extern Colors colorids;
-extern FBIO *fbiop;
+extern fb *fbiop;
 extern FILE *burstfp;
 extern FILE *gridfp;
 extern FILE *histfp;

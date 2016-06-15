@@ -882,9 +882,9 @@ WDB_EXPORT int mk_region1(
     const unsigned char *rgb );
 
 /* Values for wm_op.  These must track db.h */
-#define WMOP_INTERSECT	'+'
-#define WMOP_SUBTRACT	'-'
-#define WMOP_UNION	'u'
+#define WMOP_INTERSECT	DB_OP_INTERSECT
+#define WMOP_SUBTRACT	DB_OP_SUBTRACT
+#define WMOP_UNION	DB_OP_UNION
 
 /* Convenient definitions */
 #define mk_lfcomb(fp, name, headp, region)		mk_lcomb( fp, name, headp, \

@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio.h"
 
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -200,7 +199,7 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
     if ((ndp = db_lookup(gedp->ged_wdbp->dbip,  argv[1], LOOKUP_NOISY)) == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a solid or does not exist in database", argv[1]);
 	return GED_ERROR;
-    } 
+    }
 
     GED_DB_GET_INTERNAL(gedp, &intern, ndp, bn_mat_identity, &rt_uniresource, GED_ERROR);
 
@@ -208,12 +207,12 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
     RT_CK_DB_INTERNAL(&intern);
     /*
     ji = (struct rt_joint_internal*)intern.idb_ptr;
- 
+
     if (ji->magic != RT_JOINT_INTERNAL_MAGIC) {
 	bu_vls_printf(gedp->ged_result_str, "Error: %s is not a joint primitive.", ndp->d_namep);
 	return GED_ERROR;
     }
-    */ 
+    */
 
     /* check for selection command */
     if (BU_STR_EQUAL(argv[2], "selection")) {
@@ -224,7 +223,7 @@ ged_joint2(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern);
 	return ret;
     }
-   
+
     rt_db_free_internal(&intern);
 
     return GED_OK;

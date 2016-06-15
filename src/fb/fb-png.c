@@ -31,10 +31,11 @@
 #include <sys/stat.h>
 #include <zlib.h>
 #include <png.h>
-#include "bio.h"
-#include "bin.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -125,7 +126,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    FBIO *fbp;
+    fb *fbp;
     int y;
     int got;
     png_structp png_p;

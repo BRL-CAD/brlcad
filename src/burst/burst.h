@@ -28,7 +28,6 @@
 #include "common.h"
 
 /* for void **/
-#include "bu.h"
 #include "vmath.h"
 
 

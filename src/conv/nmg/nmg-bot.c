@@ -33,7 +33,6 @@
 
 #include "vmath.h"
 #include "db.h"
-#include "bu.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -98,8 +97,6 @@ main(int argc, char **argv)
 	    bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0]);
 	}
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     dbip = db_open(argv[argc-2], DB_OPEN_READONLY);
     if (dbip == DBI_NULL) {

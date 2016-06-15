@@ -33,12 +33,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "vmath.h"
 #include "db.h"
 #include "mater.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -49,9 +47,9 @@
  * mater structure.
  */
 void
-color_soltab(void)
+mged_color_soltab(void)
 {
-    ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
+    dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
     update_views = 1;		/* re-write control list with new colors */
 }
 

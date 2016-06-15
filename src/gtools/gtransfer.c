@@ -40,8 +40,9 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "raytrace.h"
-#include "bu.h"
 #include "pkg.h"
 
 

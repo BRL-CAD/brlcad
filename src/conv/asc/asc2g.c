@@ -31,11 +31,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
+#include "bu/units.h"
 #include "bn.h"
 #include "db.h"
 #include "nmg.h"
@@ -202,7 +205,7 @@ strsolbld(void)
 	BU_ALLOC(dsp, struct rt_dsp_internal);
 	bu_vls_init(&dsp->dsp_name);
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_DSP].ft_parsetab, (char *)dsp, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("dsp");
@@ -225,7 +228,7 @@ strsolbld(void)
 	MAT_IDN(ebm->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_EBM].ft_parsetab, (char *)ebm, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("ebm");
@@ -247,7 +250,7 @@ strsolbld(void)
 	MAT_IDN(vol->mat);
 
 	bu_vls_strcpy(&str, args);
-	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol) < 0) {
+	if (bu_struct_parse(&str, OBJ[ID_VOL].ft_parsetab, (char *)vol, NULL) < 0) {
 	    bu_log("strsolbld(%s): Unable to parse %s solid's args of '%s'\n",
 		   name, type, args);
 	    ftp = rt_get_functab_by_label("vol");
@@ -1552,8 +1555,6 @@ main(int argc, char *argv[])
     if (ifp == NULL || ofp == NULL) {
 	bu_exit(1, "asc2g: can't open files.");
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     bu_vls_extend(&line, SIZE);
     bu_vls_strcpy(&str_title, "title");

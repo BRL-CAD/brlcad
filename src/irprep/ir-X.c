@@ -36,12 +36,15 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */

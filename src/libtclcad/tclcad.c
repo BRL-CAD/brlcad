@@ -32,9 +32,6 @@
 #  include <tk.h>
 #endif
 
-#include "bio.h"
-
-#include "bu.h"
 #include "dm.h"
 #include "fb.h"
 #include "bn.h"

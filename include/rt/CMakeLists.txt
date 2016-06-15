@@ -3,6 +3,7 @@ set(rt_headers
   db_diff.h
   db_fullpath.h
   defines.h
+  op.h
   search.h
   )
 

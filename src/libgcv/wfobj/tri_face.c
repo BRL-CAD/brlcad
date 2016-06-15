@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "nmg.h"
 #include "raytrace.h"
 

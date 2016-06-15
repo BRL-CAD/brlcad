@@ -33,7 +33,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 #define OPT_STR "cih?"

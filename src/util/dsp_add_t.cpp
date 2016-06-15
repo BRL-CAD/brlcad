@@ -31,8 +31,13 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/cv.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 
 #include "bu_arg_parse_private.h"

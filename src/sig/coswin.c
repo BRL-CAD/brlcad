@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 

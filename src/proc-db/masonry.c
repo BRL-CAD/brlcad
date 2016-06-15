@@ -34,7 +34,8 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "raytrace.h"
 #include "wdb.h"
 

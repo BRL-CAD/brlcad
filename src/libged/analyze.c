@@ -29,7 +29,6 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bio.h"
 
 
 #include "vmath.h"

@@ -20,7 +20,7 @@
  */
 /** @file liboptical/sh_osl.c
  *
- * This shader is an interface for OSL shadying system. More information
+ * This shader is an interface for OSL shading system. More information
  * when more features are implemented.
  *
  */

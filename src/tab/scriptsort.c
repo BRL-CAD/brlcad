@@ -22,7 +22,11 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 #include "./tokens.h"
 

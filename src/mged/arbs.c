@@ -22,12 +22,10 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"

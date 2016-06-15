@@ -42,18 +42,17 @@
 #  include <netinet/in.h>		/* For htonl(), etc. */
 #endif
 #include <tcl.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "dm.h"
 
 #include "fbmsg.h"
 #include "fbserv_obj.h"
+#include "fb_private.h"
 
 
-static FBIO *curr_fbp;		/* current framebuffer pointer */
+static fb *curr_fbp;		/* current framebuffer pointer */
 
 
 /*

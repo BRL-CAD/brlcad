@@ -38,7 +38,6 @@
 #endif
 
 #include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"

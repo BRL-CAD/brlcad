@@ -27,7 +27,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "ged.h"
 
@@ -35,7 +34,7 @@
 
 
 int
-_ged_get_obj_bounds(struct ged *gedp,
+ged_get_obj_bounds(struct ged *gedp,
 		    int argc,
 		    const char *argv[],
 		    int use_air,
@@ -211,7 +210,7 @@ get_objpath_mat(struct ged *gedp,
     }
 
     MAT_IDN(gtdp->gtd_xform);
-    _ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
+    ged_trace(gtdp->gtd_obj[0], 0, bn_mat_identity, gtdp, 1);
 
     return GED_OK;
 }

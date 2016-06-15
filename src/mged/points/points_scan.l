@@ -60,7 +60,8 @@
 #endif
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 /* increase token limits of at&t and mk2 lex */
 #undef YYLMAX

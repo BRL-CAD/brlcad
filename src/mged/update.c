@@ -34,7 +34,6 @@
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 
 #include "./mged.h"
 

@@ -32,8 +32,7 @@
 #  include <X11/Xlib.h>
 #endif
 
-#include "bu.h"
-
+#include "bu/malloc.h"
 #include "dm/dm_xvars.h"
 
 

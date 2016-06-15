@@ -31,7 +31,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "db.h"
 

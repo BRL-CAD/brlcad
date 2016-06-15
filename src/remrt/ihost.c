@@ -44,7 +44,7 @@
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "vmath.h"

@@ -28,9 +28,7 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
@@ -39,19 +37,18 @@
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "mater.h"
 #include "raytrace.h"
 
 #include "dm.h"
-#include "dm/dm-ps.h"
-#include "dm/dm-Null.h"
+#include "dm-ps.h"
+#include "dm-Null.h"
 
 #include "solid.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 #define EPSILON 0.0001
 
@@ -70,7 +67,7 @@ static mat_t psmat;
  * Gracefully release the display.
  */
 HIDDEN int
-ps_close(struct dm *dmp)
+ps_close(dm *dmp)
 {
     if (!((struct ps_vars *)dmp->dm_vars.priv_vars)->ps_fp)
 	return TCL_ERROR;
@@ -95,7 +92,7 @@ ps_close(struct dm *dmp)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-ps_drawBegin(struct dm *dmp)
+ps_drawBegin(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -105,7 +102,7 @@ ps_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-ps_drawEnd(struct dm *dmp)
+ps_drawEnd(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -126,7 +123,7 @@ ps_drawEnd(struct dm *dmp)
  * many calls to ps_draw().
  */
 HIDDEN int
-ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+ps_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     Tcl_Obj *obj;
 
@@ -159,7 +156,7 @@ ps_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 /* ARGSUSED */
 HIDDEN int
-ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
+ps_drawVList(dm *dmp, struct bn_vlist *vp)
 {
     static vect_t last;
     struct bn_vlist *tvp;
@@ -294,7 +291,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 /* ARGSUSED */
 HIDDEN int
-ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+ps_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -319,7 +316,7 @@ ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **da
  * Turns off windowing.
  */
 HIDDEN int
-ps_normal(struct dm *dmp)
+ps_normal(dm *dmp)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -334,7 +331,7 @@ ps_normal(struct dm *dmp)
  */
 /* ARGSUSED */
 HIDDEN int
-ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
+ps_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int UNUSED(use_aspect))
 {
     int sx, sy;
 
@@ -368,7 +365,7 @@ ps_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size,
 
 
 HIDDEN int
-ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
+ps_drawLine2D(dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t ypos2)
 {
     int sx1, sy1;
     int sx2, sy2;
@@ -390,14 +387,14 @@ ps_drawLine2D(struct dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf
 
 
 HIDDEN int
-ps_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+ps_drawLine3D(dm *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
 HIDDEN int
-ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+ps_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -407,14 +404,14 @@ ps_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 
 
 HIDDEN int
-ps_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+ps_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 {
     return ps_drawLine2D(dmp, x, y, x, y);
 }
 
 
 HIDDEN int
-ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+ps_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
@@ -426,7 +423,7 @@ ps_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b,
 
 
 HIDDEN int
-ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+ps_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (!dmp) {
 	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
@@ -438,7 +435,7 @@ ps_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
 
 HIDDEN int
-ps_setLineAttr(struct dm *dmp, int width, int style)
+ps_setLineAttr(dm *dmp, int width, int style)
 {
     dmp->dm_lineWidth = width;
     dmp->dm_lineStyle = style;
@@ -454,21 +451,21 @@ ps_setLineAttr(struct dm *dmp, int width, int style)
 
 /* ARGSUSED */
 HIDDEN int
-ps_debug(struct dm *dmp, int lvl)
+ps_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
     return TCL_OK;
 }
 
 HIDDEN int
-ps_logfile(struct dm *dmp, const char *filename)
+ps_logfile(dm *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
     return TCL_OK;
 }
 
 HIDDEN int
-ps_setWinBounds(struct dm *dmp, fastf_t *w)
+ps_setWinBounds(dm *dmp, fastf_t *w)
 {
     /* Compute the clipping bounds */
     dmp->dm_clipmin[0] = w[0] / 2048.0;
@@ -488,7 +485,7 @@ ps_setWinBounds(struct dm *dmp, fastf_t *w)
 }
 
 
-struct dm dm_ps = {
+dm dm_ps = {
     ps_close,
     ps_drawBegin,
     ps_drawEnd,
@@ -521,10 +518,13 @@ struct dm dm_ps = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
     null_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -543,6 +543,8 @@ struct dm dm_ps = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -560,6 +562,8 @@ struct dm dm_ps = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 
@@ -568,14 +572,14 @@ struct dm dm_ps = {
  * Open the output file, and output the PostScript prolog.
  *
  */
-struct dm *
+dm *
 ps_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     static int count = 0;
-    struct dm *dmp;
+    dm *dmp;
     Tcl_Obj *obj;
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_ps;  /* struct copy */
     dmp->dm_interp = interp;

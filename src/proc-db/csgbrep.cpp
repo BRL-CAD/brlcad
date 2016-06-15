@@ -19,7 +19,8 @@
  */
 
 #include "common.h"
-#include "bu.h"
+#include "bu/parse.h"
+#include "bu/log.h"
 #include "opennurbs.h"
 #include "rtgeom.h"
 #include "wdb.h"

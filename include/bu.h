@@ -52,24 +52,8 @@
 #ifndef BU_H
 #define BU_H
 
-
 #include "./bu/defines.h"
-
-__BEGIN_DECLS
-
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
- */
-
-/**
- * returns the compile-time version of libbu
- */
-BU_EXPORT extern const char *bu_version(void);
-
-__END_DECLS
-
+#include "./bu/version.h"
 #include "./bu/avs.h"
 #include "./bu/bitv.h"
 #include "./bu/bu_tcl.h"

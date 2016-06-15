@@ -70,9 +70,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 
@@ -89,7 +92,7 @@ static int image = 0;		/* # of image to display (0 => all) */
 static char *gif_file = NULL;	/* GIF file name */
 static FILE *gfp = NULL;		/* GIF input stream handle */
 static char *fb_file = NULL;	/* frame buffer name */
-static FBIO *fbp = FBIO_NULL;	/* frame buffer handle */
+static fb *fbp = FB_NULL;	/* frame buffer handle */
 static int ht;			/* virtual frame buffer height */
 static int width, height;		/* overall "screen" size */
 static int write_width;		/* used width of screen, <= width */
@@ -112,7 +115,7 @@ static RGBpixel *cmap;			/* bu_malloc()ed local color map */
 
 /* in ioutil.c */
 void Message(const char *format, ...);
-void Fatal(FBIO *fbiop, const char *format, ...);
+void Fatal(fb *fbiop, const char *format, ...);
 
 
 static void
@@ -670,7 +673,7 @@ main(int argc, char **argv)
 
     pixbuf = (unsigned char *)bu_malloc(width * sizeof(RGBpixel), "pixbuf");
 
-    if ((fbp = fb_open(fb_file, width, height)) == FBIO_NULL) {
+    if ((fbp = fb_open(fb_file, width, height)) == FB_NULL) {
 	Fatal(fbp, "Couldn't open frame buffer");
     }
 
@@ -738,11 +741,11 @@ main(int argc, char **argv)
 		   also "screen clear", but they're impractical. */
 
 		if (fb_close(fbp) == -1) {
-		    fbp = FBIO_NULL;	/* avoid second try */
+		    fbp = FB_NULL;	/* avoid second try */
 		    Fatal(fbp, "Error closing frame buffer");
 		}
 
-		fbp = FBIO_NULL;
+		fbp = FB_NULL;
 
 		if (image > 0)
 		    Fatal(fbp, "Specified image not found");

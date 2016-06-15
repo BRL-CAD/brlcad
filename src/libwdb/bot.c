@@ -26,12 +26,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/bitv.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "rtgeom.h"

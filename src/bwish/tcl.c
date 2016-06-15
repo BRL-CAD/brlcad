@@ -44,7 +44,6 @@
 #  include <sys/select.h> /* for select */
 #endif
 
-#include "bu.h"
 #include "dm.h"
 
 /* We need to be careful about tty resetting - xcodebuild

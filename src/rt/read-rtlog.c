@@ -34,7 +34,7 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "raytrace.h"
 
 #define BUFF_LEN 256

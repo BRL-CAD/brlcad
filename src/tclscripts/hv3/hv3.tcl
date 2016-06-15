@@ -1549,6 +1549,7 @@ namespace eval ::hv3::hv3 {
 
       content-type {
 	foreach {a b enc} [::hv3::string::parseContentType $content] {}
+	if {[info exists $O(myDocumentHandle)]} {
 	if {
 	   ![$O(myDocumentHandle) cget -hastransportencoding] &&
 	   ![::hv3::encoding_isequal $enc [$me encoding]]
@@ -1592,6 +1593,7 @@ namespace eval ::hv3::hv3 {
 	      [$O(myDocumentHandle) isFinished] \
 	      [$O(myDocumentHandle) data]
 	}
+        }
       }
     }
   }

@@ -24,10 +24,16 @@
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
 
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "bu/color.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
+#include "bu/units.h"
+#include "bu/bu_tcl.h"
 #include "vmath.h"
 
 

@@ -37,13 +37,13 @@
 
 #include "common.h"
 
-#include "bu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "bin.h"
+#include "bnetwork.h"
+#include "bu/log.h"
 
 
 static char usage[] = "\

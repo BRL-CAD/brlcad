@@ -28,7 +28,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -2928,8 +2927,6 @@ main(int argc, char **argv)
     if (argc-bu_optind != 2) {
 	usage();
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     if ((fpin=fopen(argv[bu_optind], "rb")) == (FILE *)NULL) {
 	perror("fast4-g");

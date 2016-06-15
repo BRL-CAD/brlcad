@@ -40,7 +40,6 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 
 /* defined in read.c */

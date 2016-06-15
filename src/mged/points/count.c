@@ -29,7 +29,7 @@
 #include <stdio.h>
 #include <ctype.h> /* for isspace() */
 
-#include "bu.h"
+#include "bu/malloc.h"
 
 #include "./count.h"
 

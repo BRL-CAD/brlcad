@@ -38,13 +38,12 @@
 #include "tk.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
+
 #include "db.h"
 #include "raytrace.h"
-#include "bu.h"
 #include "bn.h"
 #include "dm.h"
-#include "dm/dm-X.h"
-
 
 struct cmdtab {
     char *ct_name;
@@ -59,7 +58,7 @@ struct cmdtab {
 #define APP_SCALE 180.0 / 512.0
 
 Tcl_Interp *INTERP;
-struct dm *dmp;
+dm *dmp;
 mat_t toViewcenter;
 mat_t Viewrot;
 mat_t model2view;
@@ -167,8 +166,8 @@ refresh() {
     size_t i;
     struct plot_list *plp;
 
-    DM_DRAW_BEGIN(dmp);
-    DM_LOADMATRIX(dmp, model2view, 0);
+    dm_draw_begin(dmp);
+    dm_loadmatrix(dmp, model2view, 0);
 
     for (BU_LIST_FOR(plp, plot_list, &HeadPlot.l)) {
 	if (plp->pl_draw)
@@ -177,14 +176,14 @@ refresh() {
 		    long rgb;
 
 		    rgb = plp->pl_vbp->rgb[i];
-		    DM_SET_FGCOLOR(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
+		    dm_set_fg(dmp, (rgb>>16) & 0xFF, (rgb>>8) & 0xFF, rgb & 0xFF, 0, (fastf_t)0.0);
 		}
-		DM_DRAW_VLIST(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
+		dm_draw_vlist(dmp, (struct bn_vlist *)&plp->pl_vbp->head[i]);
 	    }
     }
 
-    DM_NORMAL(dmp);
-    DM_DRAW_END(dmp);
+    dm_normal(dmp);
+    dm_draw_end(dmp);
 }
 
 
@@ -364,12 +363,13 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 		break;
 	    case MOUSE_MODE_TRANSLATE:
 		{
+		    int width, height;
 		    vect_t vdiff;
 
-		    vdiff[X] = (mx - omx) /
-			(fastf_t)dmp->dm_width * 2.0;
-		    vdiff[Y] = (omy - my) /
-			(fastf_t)dmp->dm_height * 2.0;
+		    width = dm_get_width(dmp);
+		    height = dm_get_height(dmp);
+		    vdiff[X] = (mx - omx) / width * 2.0;
+		    vdiff[Y] = (omy - my) / height * 2.0;
 		    vdiff[Z] = 0.0;
 
 		    (void)islewview(vdiff);
@@ -381,9 +381,9 @@ X_doEvent(ClientData UNUSED(clientData), XEvent *eventPtr)
 	    case MOUSE_MODE_ZOOM:
 		{
 		    double val;
+		    int height = dm_get_height(dmp);
 
-		    val = 1.0 + (omy - my) /
-			(fastf_t)dmp->dm_height;
+		    val = 1.0 + (omy - my) / height;
 
 		    zoom(INTERP, val);
 		    new_mats();
@@ -983,7 +983,7 @@ static int
 cmd_exit(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), int UNUSED(argc), char **UNUSED(argv))
 {
     if (dmp != DM_NULL)
-	DM_CLOSE(dmp);
+	dm_close(dmp);
 
     bu_exit (0, NULL);
 
@@ -1052,7 +1052,7 @@ X_dmInit()
     }
 
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_X);
-    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
 }
@@ -1078,7 +1078,7 @@ Ogl_dmInit()
     }
 
     Tk_CreateGenericHandler(X_doEvent, (ClientData)DM_TYPE_OGL);
-    DM_SET_WIN_BOUNDS(dmp, windowbounds);
+    dm_set_win_bounds(dmp, windowbounds);
 
     return TCL_OK;
 }

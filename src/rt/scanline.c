@@ -25,6 +25,8 @@
 
 #include "scanline.h"
 
+#include "bu/malloc.h"
+
 void
 free_scanlines(int height, struct scanline* scanline)
 {

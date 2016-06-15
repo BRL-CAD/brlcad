@@ -133,7 +133,7 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     memcpy(toon_sp, &toon_defaults, sizeof(struct toon_specific));
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp) < 0)
+    if (bu_struct_parse(matparm, toon_parse_tab, (char *)toon_sp, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {

@@ -24,9 +24,6 @@
 #include <time.h>
 #include "bio.h"
 
-#ifdef HAVE_WINDOWS_H
-#  include <windows.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif

@@ -31,15 +31,17 @@
 #include <string.h>
 #include <ctype.h>
 #include <time.h>
+#include <limits.h> /* for CHAR_MAX */
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
 #include "bio.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 /* interface headers */
 #include "tcl.h"
-#include "bu.h"
 #include "libtermio.h"
 
 

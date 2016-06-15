@@ -142,14 +142,28 @@ struct bu_structparse {
     void (*sp_hook)(const struct bu_structparse *,
 		    const char *,
 		    void *,
-		    const char *);	/**< Optional hooked function, or indir ptr */
+		    const char *,
+		    void *);	/**< Optional hooked function, or indir ptr */
     const char *sp_desc;		/**< description of element */
     void *sp_default;		       /**< ptr to default value */
 };
 typedef struct bu_structparse bu_structparse_t;
 #define BU_STRUCTPARSE_NULL ((struct bu_structparse *)0)
 
-#define BU_STRUCTPARSE_FUNC_NULL ((void(*)(const struct bu_structparse *, const char *, void *, const char *))0)
+#define BU_STRUCTPARSE_FUNC_NULL ((void(*)(const struct bu_structparse *, const char *, void *, const char *, void *))0)
+
+/* There are situations (such as the usage pattern in libdm)
+ * where applications may want to associate structparse
+ * functions with variables but not set up a full structparse
+ * table. */
+struct bu_structparse_map {
+    const char *sp_name;
+    void (*sp_hook)(const struct bu_structparse *,
+		    const char *,
+		    void *,
+		    const char *,
+		    void *);	/**< Optional hooked function, or indir ptr */
+};
 
 /**
  * assert the integrity of a bu_structparse struct.
@@ -254,7 +268,8 @@ typedef struct bu_external bu_external_t;
  */
 BU_EXPORT extern int bu_struct_parse(const struct bu_vls *in_vls,
 				     const struct bu_structparse *desc,
-				     const char *base);
+				     const char *base,
+				     void *data);
 
 /**
  * struct elements to ASCII.
@@ -279,7 +294,8 @@ BU_EXPORT extern int bu_struct_export(struct bu_external *ext,
  */
 BU_EXPORT extern int bu_struct_import(void *base,
 				      const struct bu_structparse *imp,
-				      const struct bu_external *ext);
+				      const struct bu_external *ext,
+				      void *data);
 
 /**
  * Put a structure in external form to a stdio file.  All formatting
@@ -429,7 +445,8 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 					 int argc,
 					 const char **argv,
 					 const struct bu_structparse *desc,
-					 char *base);
+					 char *base,
+					 void *data);
 
 /**
  * Skip the separator(s) (i.e. whitespace and open-braces)

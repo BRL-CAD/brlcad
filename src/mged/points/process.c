@@ -38,7 +38,10 @@
 #  endif
 #endif
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "bu/bu_tcl.h"
 #include "vmath.h"
 
 extern Tcl_Interp *twerp;

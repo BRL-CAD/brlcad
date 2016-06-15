@@ -58,8 +58,8 @@ HIDDEN void flat_free(void *cp);
 
 /* local sp_hook functions */
 /* these are two helper functions to process input color and transparency values */
-void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
-void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *);
+void normalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+void singleNormalizedInput_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /*
  * the shader specific structure contains all variables which are unique
@@ -139,7 +139,8 @@ void
 normalizedInput_hook(const struct bu_structparse *sdp,
 		     const char *UNUSED(name),
 		     void *base,
-		     const char *UNUSED(value))
+		     const char *UNUSED(value),
+		     void *UNUSED(data))
 {
     register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
@@ -176,12 +177,13 @@ void
 singleNormalizedInput_hook(const struct bu_structparse *sdp,
 			   const char *name,
 			   void *base,
-			   const char *value)
+			   const char *value,
+			   void *data)
 {
 
     register double *p = (double *)((char *)base + sdp->sp_offset);
 
-    normalizedInput_hook(sdp, name, base, value);
+    normalizedInput_hook(sdp, name, base, value, data);
 
     /* copy the first value into the next two locations */
     *(p+1) = *p;
@@ -228,7 +230,7 @@ flat_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
     }
 
     /* parse the user's arguments for this use of the shader. */
-    if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp) < 0)
+    if (bu_struct_parse(matparm, flat_parse_tab, (char *)flat_sp, NULL) < 0)
 	return -1;
 
     if (rdebug&RDEBUG_SHADE) {

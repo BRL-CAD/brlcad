@@ -25,7 +25,6 @@
 
 #include "ged.h" /* need GED_SEM_LIST - may have to re-think how to handle SEMS here. */
 #include "analyze.h"
-#include "bu.h"
 
 
 struct region_pair *

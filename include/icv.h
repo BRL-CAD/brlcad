@@ -27,6 +27,7 @@
 #define ICV_H
 
 #include "common.h"
+#include <stddef.h> /* for size_t */
 
 __BEGIN_DECLS
 

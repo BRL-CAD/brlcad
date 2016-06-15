@@ -36,8 +36,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
+#include "bu/log.h"
 #include "icv.h"
 
 

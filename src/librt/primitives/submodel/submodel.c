@@ -34,7 +34,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -803,7 +802,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
@@ -888,7 +887,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");

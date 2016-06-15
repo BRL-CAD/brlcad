@@ -6,7 +6,7 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-#include "bu_arg_parse.h" // includes bu.h
+#include "bu_arg_parse.h"
 #include "raytrace.h"
 
 using namespace std;

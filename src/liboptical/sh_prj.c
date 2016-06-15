@@ -38,7 +38,6 @@
 #include <sys/stat.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -98,7 +97,8 @@ HIDDEN void
 img_source_hook(const struct bu_structparse *UNUSED(sdp),
 		const char *sp_name,
 		void *base,
-		const char *UNUSED(value))
+		const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct img_specific *imageSpecific = (struct img_specific *)base;
     if (bu_strncmp(sp_name, "file", 4) == 0) {
@@ -209,7 +209,8 @@ HIDDEN void
 persp_hook(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *value)
+	   const char *value,
+	   void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -239,7 +240,8 @@ HIDDEN void
 dimen_hook(const struct bu_structparse *sdp,
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *value)
+	   const char *value,
+	   void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -277,7 +279,8 @@ static void
 orient_hook(const struct bu_structparse *UNUSED(sdp),
 	    const char *UNUSED(name),
 	    void *base,
-	    const char *UNUSED(value))
+	    const char *UNUSED(value),
+	    void *UNUSED(data))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -514,7 +517,7 @@ prj_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     prj_sp->prj_images.i_datasrc = IMG_SRC_AUTO;
 
     if (bu_struct_parse(&parameter_data, img_parse_tab,
-			(char *)&prj_sp->prj_images) < 0) {
+			(char *)&prj_sp->prj_images, NULL) < 0) {
 	bu_log("ERROR: Unable to properly parse projection shader parameters\n");
 	return -1;
     }

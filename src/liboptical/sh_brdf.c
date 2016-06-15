@@ -116,7 +116,7 @@ brdf_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dp
     pp->extinction = 0.0;
     pp->rms_slope = 0.05;
 
-    if (bu_struct_parse(matparm, brdf_parse, (char *)pp) < 0) {
+    if (bu_struct_parse(matparm, brdf_parse, (char *)pp, NULL) < 0) {
 	BU_PUT(pp, struct brdf_specific);
 	return -1;
     }

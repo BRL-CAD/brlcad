@@ -35,7 +35,6 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "bu.h"
 #include "db.h"
 
 #undef DEBUG

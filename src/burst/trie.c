@@ -28,7 +28,7 @@
 #include <stdio.h>
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 #include "./burst.h"
 #include "./trie.h"

@@ -25,9 +25,6 @@
 
 #include "tcl.h"
 
-#include <stdio.h>
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./mged.h"
@@ -159,30 +156,30 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
     switch (mptr->menu_arg) {
 	case BV_RATE_TOGGLE:
 	    if (mged_variables->mv_rateknobs) {
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_menu_text1[0],
 			       color_scheme->cs_menu_text1[1],
 			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, "Rate",
+		dm_draw_string_2d(dmp, "Rate",
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_menu_text2[0],
 			       color_scheme->cs_menu_text2[1],
 			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, "/Abs",
+		dm_draw_string_2d(dmp, "/Abs",
 				  GED2PM1(MENUX+4*40), GED2PM1(y-15), 0, 0);
 	    } else {
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_menu_text2[0],
 			       color_scheme->cs_menu_text2[1],
 			       color_scheme->cs_menu_text2[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, "Rate/",
+		dm_draw_string_2d(dmp, "Rate/",
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_menu_text1[0],
 			       color_scheme->cs_menu_text1[1],
 			       color_scheme->cs_menu_text1[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, "Abs",
+		dm_draw_string_2d(dmp, "Abs",
 				  GED2PM1(MENUX+5*40), GED2PM1(y-15), 0, 0);
 	    }
 	    break;
@@ -206,14 +203,14 @@ mmenu_display(int y_top)
     int y = y_top;
 
     menu_state->ms_top = y - MENU_DY / 2;
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
 
-    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
 
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top),
 		    GED2PM1(XMIN), GED2PM1(menu_state->ms_top));
 
@@ -227,32 +224,32 @@ mmenu_display(int y_top)
 		mged_highlight_menu_item(mptr, y);
 	    else {
 		if (mptr == *m)
-		    DM_SET_FGCOLOR(dmp,
+		    dm_set_fg(dmp,
 				   color_scheme->cs_menu_title[0],
 				   color_scheme->cs_menu_title[1],
 				   color_scheme->cs_menu_title[2], 1, 1.0);
 		else
-		    DM_SET_FGCOLOR(dmp,
+		    dm_set_fg(dmp,
 				   color_scheme->cs_menu_text2[0],
 				   color_scheme->cs_menu_text2[1],
 				   color_scheme->cs_menu_text2[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, mptr->menu_string,
+		dm_draw_string_2d(dmp, mptr->menu_string,
 				  GED2PM1(MENUX), GED2PM1(y-15), 0, 0);
 	    }
-	    DM_SET_FGCOLOR(dmp,
+	    dm_set_fg(dmp,
 			   color_scheme->cs_menu_line[0],
 			   color_scheme->cs_menu_line[1],
 			   color_scheme->cs_menu_line[2], 1, 1.0);
-	    DM_DRAW_LINE_2D(dmp,
+	    dm_draw_line_2d(dmp,
 			    GED2PM1(MENUXLIM), GED2PM1(y+(MENU_DY/2)),
 			    GED2PM1(XMIN), GED2PM1(y+(MENU_DY/2)));
 	    if (menu_state->ms_cur_item == item && menu_state->ms_cur_menu == menu && menu_state->ms_flag) {
 		/* prefix item selected with "==>" */
-		DM_SET_FGCOLOR(dmp,
+		dm_set_fg(dmp,
 			       color_scheme->cs_menu_arrow[0],
 			       color_scheme->cs_menu_arrow[1],
 			       color_scheme->cs_menu_arrow[2], 1, 1.0);
-		DM_DRAW_STRING_2D(dmp, "==>",
+		dm_draw_string_2d(dmp, "==>",
 				  GED2PM1(XMIN), GED2PM1(y-15), 0, 0);
 	    }
 	}
@@ -261,14 +258,14 @@ mmenu_display(int y_top)
     if (y == y_top)
 	return;	/* no active menus */
 
-    DM_SET_FGCOLOR(dmp,
+    dm_set_fg(dmp,
 		   color_scheme->cs_menu_line[0],
 		   color_scheme->cs_menu_line[1],
 		   color_scheme->cs_menu_line[2], 1, 1.0);
 
-    DM_SET_LINE_ATTR(dmp, mged_variables->mv_linewidth, 0);
+    dm_set_line_attr(dmp, mged_variables->mv_linewidth, 0);
 
-    DM_DRAW_LINE_2D(dmp,
+    dm_draw_line_2d(dmp,
 		    GED2PM1(MENUXLIM), GED2PM1(menu_state->ms_top-1),
 		    GED2PM1(MENUXLIM), GED2PM1(y-(MENU_DY/2)));
 }

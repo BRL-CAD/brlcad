@@ -67,6 +67,7 @@ set(LIBRT_SOURCES
   mater.c
   memalloc.c
   mkbundle.c
+  op.c
   oslo_calc.c
   oslo_map.c
   pr.c

@@ -31,8 +31,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 #define COMMENT_CHAR '#'
 

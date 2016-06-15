@@ -28,7 +28,7 @@
 
 #include <stdio.h>
 
-#include "bu.h"
+#include "bu/color.h"
 #include "fb.h"
 
 void

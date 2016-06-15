@@ -31,8 +31,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "plot3.h"
 

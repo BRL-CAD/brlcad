@@ -196,6 +196,7 @@ else (WIN32)
     find_path(OPENGL_INCLUDE_DIR_GL OpenGL/gl.h DOC "Include for OpenGL on OSX")
   else(OPENGL_USE_AQUA)
     # If we're on Apple and not using Aqua, we don't want frameworks
+    set(CMAKE_FIND_FRAMEWORK_CACHED "${CMAKE_FIND_FRAMEWORK}")
     set(CMAKE_FIND_FRAMEWORK "NEVER")
 
     find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h        ${OPENGL_INC_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
@@ -218,6 +219,8 @@ else (WIN32)
     endif(OPENGL_gl_LIBRARY)
 
     find_library(OPENGL_glu_LIBRARY NAMES GLU MesaGLU PATHS ${OPENGL_LIB_SEARCH_PATH} NO_CMAKE_SYSTEM_PATH)
+
+    set(CMAKE_FIND_FRAMEWORK "${CMAKE_FIND_FRAMEWORK_CACHED}")
   endif(OPENGL_USE_AQUA)
 
 endif(WIN32)

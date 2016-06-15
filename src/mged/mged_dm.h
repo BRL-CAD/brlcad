@@ -30,9 +30,7 @@
 
 #include "dm.h"	/* struct dm */
 #include "dm/dm_xvars.h"
-#include "dm/dm-Null.h"
 
-#include "fb.h" /* FBIO */
 #include "pkg.h" /* struct pkg_conn */
 #include "ged.h"
 
@@ -237,7 +235,7 @@ struct _view_state {
     int		vs_rc;
     int		vs_flag;
 
-    struct ged_view	*vs_gvp;
+    struct bview	*vs_gvp;
     fastf_t	vs_i_Viewscale;
     mat_t	vs_model2objview;
     mat_t	vs_objview2model;
@@ -395,8 +393,8 @@ struct _menu_state {
 
 struct dm_list {
     struct bu_list	l;
-    struct dm		*dml_dmp;
-    FBIO			*dml_fbp;
+    dm		*dml_dmp;
+    fb			*dml_fbp;
     int			dml_netfd;			/* socket used to listen for connections */
 #if defined(_WIN32) && !defined(__CYGWIN__)
     Tcl_Channel		dml_netchan;
@@ -462,9 +460,8 @@ struct dm_list {
 #define netchan curr_dm_list->dml_netchan
 #endif
 #define clients curr_dm_list->dml_clients
-#define tkName dmp->dm_tkName
-#define dName dmp->dm_dName
-#define displaylist dmp->dm_displaylist
+#define tkName dm_get_tkname(dmp)
+#define dName dm_get_dname(dmp)
 #define dirty curr_dm_list->dml_dirty
 #define mapped curr_dm_list->dml_mapped
 #define owner curr_dm_list->dml_owner
@@ -565,7 +562,7 @@ struct dm_list {
 		struct dm_list *tp; \
 \
 		FOR_ALL_DISPLAYS(tp, &head_dm_list.l) { \
-			if ((id) == tp->dml_dmp->dm_id) { \
+			if ((id) == dm_get_id(tp->dml_dmp)) { \
 				(p) = tp; \
 				break; \
 			} \
@@ -588,8 +585,17 @@ extern int doEvent(ClientData, XEvent *);
 extern int doEvent(ClientData, void *);
 #endif
 
+/* defined in attach.c */
+extern void dm_var_init(struct dm_list *initial_dm_list);
+
 /* defined in dm-generic.c */
 extern int common_dm(int argc, const char *argv[]);
+extern void view_state_flag_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+extern void dirty_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+extern void zclip_hook(const struct bu_structparse *, const char *, void *,const char *, void *);
+
+/* external sp_hook functions */
+extern void cs_set_bg(const struct bu_structparse *, const char *, void *, const char *, void *); /* defined in color_scheme.c */
 
 /* defined in setup.c */
 extern void mged_rtCmdNotify();
@@ -597,13 +603,23 @@ extern void mged_rtCmdNotify();
 struct w_dm {
     int	type;
     char	*name;
-    int	(*init)();
+    int	(*doevent)();
 };
 extern struct w_dm which_dm[];  /* defined in attach.c */
 
 /* indices into which_dm[] */
 #define DM_PLOT_INDEX 0
 #define DM_PS_INDEX 1
+
+struct mged_view_hook_state {
+    dm *hs_dmp;
+    struct _view_state *vs;
+    int *dirty_global;
+};
+extern void *set_hook_data(struct mged_view_hook_state *hs);
+
+int dm_commands(int argc, const char *argv[]);
+
 
 #endif /* MGED_MGED_DM_H */
 

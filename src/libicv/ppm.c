@@ -26,7 +26,8 @@
 #include "common.h"
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "icv.h"
 
 /* defined in encoding.c */

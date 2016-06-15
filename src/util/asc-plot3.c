@@ -32,8 +32,9 @@
 #include "bio.h"
 
 #include "plot3.h"
-#include "bu.h"
 
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define BUF_LEN 512
 #define FP_IN 0

@@ -29,8 +29,9 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 FILE *infp;
 
@@ -45,21 +46,16 @@ void widen_line(unsigned char *cp, int y);
 
 void interp_lines(int out, int i1, int i2);
 
-char usage[] = "\
-Usage: pixinterp2x [-h] [-s squarefilesize]\n\
-	[-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
+char usage[] =
+"Usage: pixinterp2x [-s squarefilesize] [-w file_width] [-n file_height] [file.pix] > outfile.pix\n";
 
 static int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024;
-		break;
 	    case 's':
 		/* square file size */
 		file_height = file_width = atoi(bu_optarg);
@@ -70,7 +66,7 @@ get_args(int argc, char **argv)
 	    case 'n':
 		file_height = atoi(bu_optarg);
 		break;
-	    case '?':
+	    default:
 		return 0;
 	}
     }

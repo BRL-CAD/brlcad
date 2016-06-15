@@ -85,6 +85,13 @@ non-parallel build will still succeed.  Another workaround is to build
 just subdirectories (e.g. src/other, doc, etc.) individually and then
 do a toplevel make in non-parallel mode to finalize the build.
 
+OpenSceneGraph and OSX
+----------------------
+For 32bit OSX builds of an X11+OpenSceneGraph BRL-CAD:
+cmake .. -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_OSG=ON
+-DBRLCAD_REGEX=SYSTEM -DBRLCAD_WORD_SIZE=32BIT -DOSG_WINDOWING_SYSTEM=X11
+
+
 Tips
 ----
 

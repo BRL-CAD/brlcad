@@ -30,8 +30,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "bu/debug.h"
 #include "bu/units.h"
@@ -149,8 +149,6 @@ main(int argc, char **argv)
     }
 
     Tcl_FindExecutable(argv[0]);
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* First, determine what version database this is */
     if (fread((char *)&record, sizeof record, 1, ifp) != 1) {

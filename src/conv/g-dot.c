@@ -33,7 +33,6 @@
 
 /* system headers */
 #include <string.h>
-#include "bio.h"
 
 /* interface headers */
 #include "bu/getopt.h"
@@ -115,13 +114,13 @@ dot_comb(struct db_i *dbip, struct directory *dp, void *out)
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = '+';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = 'x';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';

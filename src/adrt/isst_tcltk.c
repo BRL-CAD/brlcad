@@ -26,8 +26,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
+#include "bnetwork.h"
 #include "bio.h"
 
 #include <GL/gl.h>
@@ -47,15 +46,11 @@
 #include "isst.h"
 #include "raytrace.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
 
-static struct dm *dmp;
+static dm *dmp;
 static struct isst_s *isst;
 
 /* ISST functions */
@@ -233,7 +228,7 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 
 	isst->t1 = bu_gettime();
 
-	DM_MAKE_CURRENT(dmp);
+	dm_make_current(dmp);
 
 	glClear(glclrbts);
 	glLoadIdentity();
@@ -252,7 +247,7 @@ paint_window(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_Ob
 
 	isst->dirty = 0;
 
-	DM_DRAW_END(dmp);
+	dm_draw_end(dmp);
     }
     return TCL_OK;
 }
@@ -544,14 +539,14 @@ open_dm(ClientData UNUSED(cdata), Tcl_Interp *interp, int UNUSED(objc), Tcl_Obj 
 {
     char *av[] = { "Ogl_open", "-t", "0", "-n", ".w0", "-W", "800", "-N", "600", NULL };
 
-    dmp = DM_OPEN(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
+    dmp = dm_open(interp, DM_TYPE_ISST, sizeof(av)/sizeof(void*)-1, (const char **)av);
 
     if (dmp == DM_NULL) {
 	printf("dm failed?\n");
 	return TCL_ERROR;
     }
 
-    DM_SET_BGCOLOR(dmp, 0, 0, 0x30);
+    dm_set_bg(dmp, 0, 0, 0x30);
 
     return TCL_OK;
 

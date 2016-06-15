@@ -25,16 +25,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */

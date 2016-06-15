@@ -234,6 +234,7 @@ message(" ")
 ###################################################
 
 # Build options
+set(BRLCAD_BULLET_BUILD_LABEL "Compile Bullet ")
 set(BRLCAD_TCL_BUILD_LABEL "Compile Tcl ")
 set(BRLCAD_TK_BUILD_LABEL "Compile Tk ")
 set(BRLCAD_INCRTCL_BUILD_LABEL "Compile Itcl/Itk ")
@@ -271,7 +272,7 @@ set(ENABLE_ALL_CXX_COMPILE_LABEL "Build all C and C++ files with a C++ compiler 
 # Make sets to use for iteration over all report items
 set(BUILD_REPORT_ITEMS
     TCL TK INCRTCL IWIDGETS TKHTML TKPNG TKTABLE PNG REGEX ZLIB
-    TERMLIB UTAHRLE OPENNURBS SC)
+    TERMLIB UTAHRLE OPENNURBS SC BULLET)
 
 set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL

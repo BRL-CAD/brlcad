@@ -28,10 +28,10 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <limits.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "solid.h"
+#include "bu/getopt.h"
+
 
 #include "./ged_private.h"
 

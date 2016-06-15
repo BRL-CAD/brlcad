@@ -28,11 +28,10 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 
 
 

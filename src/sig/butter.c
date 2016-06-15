@@ -32,10 +32,8 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
 
 #include "fft.h"
-
 
 /*
  * Returns the magnitude of the transfer function Hs(s) for a 1/3

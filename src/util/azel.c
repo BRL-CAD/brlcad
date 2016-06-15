@@ -55,7 +55,8 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 
 #define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */

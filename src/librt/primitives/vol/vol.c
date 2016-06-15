@@ -30,7 +30,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
@@ -440,7 +439,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     VSETALL(vip->cellsize, 1);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
+    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
 	return -2;
     }
@@ -574,7 +573,7 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     VSETALL(vip->cellsize, 1);
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
-    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip) < 0) {
+    if (bu_struct_parse(&str, rt_vol_parse, (char *)vip, NULL) < 0) {
 	bu_vls_free(&str);
 	return -2;
     }

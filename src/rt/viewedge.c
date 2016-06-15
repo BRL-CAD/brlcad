@@ -92,7 +92,10 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "bu.h"
+#include "bu/parse.h"
+#include "bu/parallel.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 #include "icv.h"
 
 #include "./rtuif.h"
@@ -109,7 +112,7 @@
 #endif
 
 
-extern FBIO *fbp;	/* Framebuffer handle */
+extern fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -461,9 +464,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
+	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
 	    rt_init_resource(&occlusion_resources[i], i, occlusion_rtip);
-	    bn_rand_init(occlusion_resources[i].re_randptr, i);
 	}
 
 	db_close(dbip);			 /* releases original dbip */
@@ -796,7 +799,7 @@ view_eol(struct application *ap)
 	bu_semaphore_release(BU_SEM_SYSCALL);
     } /* end blend */
 
-    else if (fbp != FBIO_NULL) {
+    else if (fbp != FB_NULL) {
 	/*
 	 * Simple whole scanline write to a framebuffer.
 	 */

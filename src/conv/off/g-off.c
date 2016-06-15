@@ -32,7 +32,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -93,8 +94,6 @@ main(int argc, char **argv)
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     the_model = nmg_mm();
     BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */

@@ -28,16 +28,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 
 /* defined in region.c */

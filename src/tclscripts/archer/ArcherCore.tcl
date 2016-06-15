@@ -1020,7 +1020,8 @@ namespace eval ArcherCore {
 	set args [lindex $args 0]
     }
 
-    set mDisplayType [dm_bestXType $env(DISPLAY)]
+    set dm_list [split [dm_list] ',']
+    set mDisplayType [lindex $dm_list 0]
 
     # horizontal panes
     itk_component add hpane {
@@ -4415,7 +4416,7 @@ namespace eval ArcherCore {
     $color add command -label "Select..." \
 	-command [::itcl::code $this selectDisplayColor $_node]
 
-    if {($mDisplayType == "wgl" || $mDisplayType == "ogl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
+    if {($mDisplayType == "wgl" || $mDisplayType == "ogl" || $mDisplayType == "osgl") && ($_nodeType != "leaf" || 0 < $mRenderMode)} {
 	# Build transparency menu
 	$_menu add cascade -label "Transparency" \
 	    -menu $_menu.trans
@@ -5899,11 +5900,10 @@ namespace eval ArcherCore {
 	set size [winfo width $itk_component(ged)]
     }
 
-    if {$tcl_platform(platform) == "windows"} {
-	$itk_component(ged) $app -s $size -F /dev/wgll
-    } {
-	$itk_component(ged) $app -s $size -F /dev/ogll
-    }
+    set dm_list [split [dm_list] ',']
+    set devtype "/dev/"
+    append devtype [lindex $dm_list 0]
+    $itk_component(ged) $app -s $size -F $devtype
 }
 
 ::itcl::body ArcherCore::updateDisplaySettings {} {

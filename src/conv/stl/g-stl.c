@@ -34,8 +34,8 @@
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 /* interface headers */
 #include "bu/getopt.h"
@@ -335,9 +335,6 @@ main(int argc, char *argv[])
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    /* init resources we might need */
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
     the_model = nmg_mm();

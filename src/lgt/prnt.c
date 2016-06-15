@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/prnt.c
-    Author:		Gary S. Moss
-*/
 
 #include "common.h"
 
@@ -28,7 +25,9 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"

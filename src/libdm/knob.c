@@ -24,10 +24,8 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "dm.h"
 

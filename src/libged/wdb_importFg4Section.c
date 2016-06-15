@@ -35,7 +35,6 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bio.h"
 
 #include "bu/debug.h"
 #include "db.h"
@@ -43,6 +42,7 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
+#include "ged.h"
 #include "wdb.h"
 #include "plot3.h"
 

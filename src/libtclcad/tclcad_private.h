@@ -42,11 +42,15 @@ extern int library_initialized(int setit);
 
 
 /**
- * Evaluates a TCL command, escaping the list of arguments and optionally
- * preserving the TCL result object.
+ * Evaluates a TCL command, escaping the list of arguments.
  */
-extern int tclcad_eval(Tcl_Interp *interp, int preserve_result,
-        const char *command, size_t num_args, const char * const *args);
+extern int tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args, const char * const *args);
+
+
+/**
+ * Evaluates a TCL command, escaping the list of arguments and preserving the TCL result object.
+ */
+extern int tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args, const char * const *args);
 
 
 __END_DECLS

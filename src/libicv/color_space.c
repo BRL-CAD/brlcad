@@ -29,7 +29,8 @@
 
 #include "vmath.h"
 #include "bio.h"
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "icv.h"
 
 int

@@ -32,8 +32,10 @@
 #  include <X11/Xutil.h>
 #endif
 #include "bio.h"
-#include "bu.h"
 
+#include "bu/cv.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #define TBAD	0	/* no such command */
 #define TNONE	1	/* no arguments */

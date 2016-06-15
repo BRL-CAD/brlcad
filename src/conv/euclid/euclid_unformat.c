@@ -27,7 +27,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 
@@ -36,7 +35,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
-#include "bu.h"
 
 
 #define MAX_PTS	500

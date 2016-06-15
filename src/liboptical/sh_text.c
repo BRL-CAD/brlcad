@@ -56,8 +56,8 @@ struct txt_specific {
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
 /* local sp_hook functions */
-HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
-HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
+HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
@@ -89,7 +89,8 @@ HIDDEN void
 txt_source_hook(const struct bu_structparse *UNUSED(sdp),
 		const char *name,
 		void *base,
-		const char *UNUSED(value))
+		const char *UNUSED(value),
+		void *UNUSED(data))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
     if (bu_strncmp(name, "file", 4) == 0) {
@@ -109,7 +110,8 @@ HIDDEN void
 txt_transp_hook(const struct bu_structparse *sdp,
 		const char *name,
 		void *base,
-		const char *UNUSED(value))
+		const char *UNUSED(value),
+		void *UNUSED(data))
 {
     register struct txt_specific *tp =
 	(struct txt_specific *)base;
@@ -577,7 +579,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     tp->tx_mp = NULL;
 
     /* load given values */
-    if (bu_struct_parse(matparm, txt_parse, (char *)tp) < 0) {
+    if (bu_struct_parse(matparm, txt_parse, (char *)tp, NULL) < 0) {
 	BU_PUT(tp, struct txt_specific);
 	return -1;
     }
@@ -686,7 +688,7 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp
     ckp->ckr_a[0] = ckp->ckr_a[1] = ckp->ckr_a[2] = 255;
     ckp->ckr_b[0] = ckp->ckr_b[1] = ckp->ckr_b[2] = 0;
     ckp->ckr_scale = 2.0;
-    if (bu_struct_parse(matparm, ckr_parse, (char *)ckp) < 0) {
+    if (bu_struct_parse(matparm, ckr_parse, (char *)ckp, NULL) < 0) {
 	BU_PUT(ckp, struct ckr_specific);
 	return -1;
     }

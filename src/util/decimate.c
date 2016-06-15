@@ -36,9 +36,10 @@
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <limits.h> /* for INT_MAX */
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 static char usage[] = "\
 Usage: decimate nbytes/pixel width height [outwidth outheight]\n\

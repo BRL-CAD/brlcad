@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "raytrace.h"
 #include "wdb.h"

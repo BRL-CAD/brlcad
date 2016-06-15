@@ -56,9 +56,9 @@ comp_3(const void *str1, const void *str2, void *UNUSED(arg))
 int
 comp_4(const void *num1, const void *num2, void *cmp)
 {
-    if (abs(*(fastf_t *)num1 - *(fastf_t *)cmp) > abs((*(fastf_t *)num2)- *(fastf_t *)cmp))
+    if (fabs(*(fastf_t *)num1 - *(fastf_t *)cmp) > fabs((*(fastf_t *)num2)- *(fastf_t *)cmp))
 	return 1;
-    else if (abs(*(fastf_t *)num1 - *(fastf_t *)cmp) < abs((*(fastf_t *)num2)- *(fastf_t *)cmp))
+    else if (fabs(*(fastf_t *)num1 - *(fastf_t *)cmp) < fabs((*(fastf_t *)num2)- *(fastf_t *)cmp))
 	return -1;
     return 0;
 }

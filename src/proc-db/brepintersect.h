@@ -30,7 +30,6 @@
 #include "rtgeom.h"
 #include "wdb.h"
 #include "bn.h"
-#include "bu.h"
 #include "vmath.h"
 #include "opennurbs_array.h"
 

@@ -55,7 +55,7 @@
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/parse.h"
 #include "bn.h"
 
 

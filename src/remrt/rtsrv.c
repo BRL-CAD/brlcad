@@ -45,14 +45,13 @@
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #ifdef VMIN
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -74,7 +73,7 @@ struct pkg_queue {
 };
 
 /***** Variables shared with viewing model *** */
-FBIO *fbp = FBIO_NULL;	/* Framebuffer handle */
+fb *fbp = FB_NULL;	/* Framebuffer handle */
 FILE *outfp = NULL;		/* optional pixel output file */
 mat_t view2model;
 mat_t model2view;
@@ -300,13 +299,6 @@ main(int argc, char **argv)
     bu_log("using %d of %d cpus\n",
 	   npsw, avail_cpus);
 
-    /*
-     *  Initialize the non-parallel memory resource.
-     *  The parallel guys are initialized after the rt_dirbuild().
-     */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, MAX_PSW);
-
     BU_LIST_INIT(&WorkHead);
 
     for (;;)  {
@@ -460,9 +452,9 @@ ph_dirbuild(struct pkg_conn *UNUSED(pc), char *buf)
      *  Initialize all the per-CPU memory resources.
      *  Go for the max, as TCL interface may change npsw as we run.
      */
+    memset(resource, 0, sizeof(resource));
     for (n=0; n < MAX_PSW; n++)  {
 	rt_init_resource(&resource[n], n, rtip);
-	bn_rand_init(resource[n].re_randptr, n);
     }
 
     if (pkg_send(MSG_DIRBUILD_REPLY,

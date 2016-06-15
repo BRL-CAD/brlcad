@@ -28,9 +28,10 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
 #include "fb.h"
 
 char *Usage="[-F framebuffer] [-s|S squareframesize] [-w|W frame_width] [-n|N frame_height]\n";
@@ -43,7 +44,7 @@ main(int argc, char **argv)
 {
     int c;
     int x;
-    FBIO *fbp;
+    fb *fbp;
     int xsize, ysize;
     int len;
     char *framebuffer = (char *)NULL;
@@ -90,7 +91,7 @@ main(int argc, char **argv)
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	USAGE_EXIT(*argv);
 
-    if ((fbp = fb_open(framebuffer, xsize, ysize)) == FBIO_NULL)
+    if ((fbp = fb_open(framebuffer, xsize, ysize)) == FB_NULL)
 	bu_exit(1, NULL);
 
     if (xsize <= 0)

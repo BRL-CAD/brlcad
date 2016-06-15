@@ -31,7 +31,7 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 struct peaks {

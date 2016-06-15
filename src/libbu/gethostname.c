@@ -20,12 +20,8 @@
 
 #include "common.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "bu/log.h"
 #include "bu/str.h"

@@ -193,6 +193,22 @@ __BEGIN_DECLS
 
 #define GED_CMD_MAGIC			0x65786563 /**< exec */
 
+/* fb */
+
+#define FB_MAGIC			0xfbfb00fb /**< ???? */
+#define FB_WGL_MAGIC    0x574f4642 /**< WOFB */
+#define FB_OGL_MAGIC    0x584f4642 /**< XOFB */
+#define FB_X24_MAGIC    0x58324642 /**< X2FB */
+#define FB_TK_MAGIC     0x544b4642 /**< TKFB */
+#define FB_QT_MAGIC     0x51544642 /**< QTFB */
+#define FB_DEBUG_MAGIC  0x44424642 /**< DBFB */
+#define FB_DISK_MAGIC   0x44494642 /**< STFB */
+#define FB_STK_MAGIC    0x53544642 /**< STFB */
+#define FB_MEMORY_MAGIC 0x4d454642 /**< MEFB */
+#define FB_REMOTE_MAGIC 0x524d4642 /**< MEFB */
+#define FB_NULL_MAGIC   0x4e554642 /**< NUFB */
+#define FB_OSGL_MAGIC   0x4f474642 /**< OGFB */
+
 /* misc */
 
 #define ANIMATE_MAGIC			0x414e4963 /**< ANIc */
@@ -203,7 +219,6 @@ __BEGIN_DECLS
 #define DB5_RAW_INTERNAL_MAGIC		0x64357269 /**< d5ri */
 #define DBI_MAGIC			0x57204381 /**< W C? */
 #define DB_FULL_PATH_MAGIC		0x64626670 /**< dbfp */
-#define FB_MAGIC			0xfbfb00fb /**< ???? */
 #define LIGHT_MAGIC			0xdbddbdb7 /**< ???? */
 #define MF_MAGIC			0x55968058 /**< U??X */
 #define PIXEL_EXT_MAGIC 		0x50787400 /**< Pxt  */

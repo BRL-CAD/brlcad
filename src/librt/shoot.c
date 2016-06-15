@@ -21,7 +21,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -882,7 +881,8 @@ rt_shootray(register struct application *ap)
 #endif
     if (ap->a_resource == RESOURCE_NULL) {
 	ap->a_resource = &rt_uniresource;
-	if (RT_G_DEBUG)bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
+	if (RT_G_DEBUG)
+	    bu_log("rt_shootray:  defaulting a_resource to &rt_uniresource\n");
 	if (rt_uniresource.re_magic == 0)
 	    rt_init_resource(&rt_uniresource, 0, ap->a_rt_i);
     }

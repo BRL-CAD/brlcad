@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 #include "./ged_private.h"
 
 

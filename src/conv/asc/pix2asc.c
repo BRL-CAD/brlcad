@@ -25,7 +25,7 @@
 #include <limits.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
 
 int
 main(int UNUSED(ac), char **UNUSED(argv))

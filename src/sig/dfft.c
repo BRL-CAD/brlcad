@@ -33,7 +33,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 #define MAXFFT 4096

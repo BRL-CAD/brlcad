@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/getopt.h"
 #include "ged.h"
@@ -239,7 +238,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 
     /* if there are drawables, update their colors */
     if (gedp->ged_gdp)
-	ged_color_soltab(gedp->ged_gdp->gd_headDisplay);
+	dl_color_soltab(gedp->ged_gdp->gd_headDisplay);
 
     return GED_OK;
 }

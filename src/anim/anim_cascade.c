@@ -47,7 +47,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "anim.h"
 #include "vmath.h"

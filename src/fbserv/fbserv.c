@@ -76,13 +76,15 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bselect.h"
+#include "bsocket.h"
+#include "bnetwork.h"
 #include "bio.h"
-#include "bin.h"
 
+#include "../libfb/fb_private.h" /* for _fb_disk_enable */
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "pkg.h"
-#include "bu.h"
 #include "fbmsg.h"
 
 
@@ -109,7 +111,7 @@ int	verbose = 0;
 
 /* from server.c */
 extern const struct pkg_switch fb_server_pkg_switch[];
-extern FBIO	*fb_server_fbp;
+extern fb	*fb_server_fbp;
 extern fd_set	*fb_server_select_list;
 extern int	*fb_server_max_fd;
 extern int	fb_server_got_fb_free;       /* !0 => we have received an fb_free */
@@ -199,7 +201,7 @@ static void
 sigalarm(int UNUSED(code))
 {
     printf("alarm %s\n", fb_server_fbp ? "FBP" : "NULL");
-    if ( fb_server_fbp != FBIO_NULL ) {
+    if ( fb_server_fbp != FB_NULL ) {
 	fb_poll(fb_server_fbp);
     }
 #ifdef SIGALRM
@@ -317,19 +319,20 @@ main_loop(void)
     int	ncloses = 0;
 
     while ( !fb_server_got_fb_free ) {
+	long refresh_rate = 60000000; /* old default */
 	fd_set infds;
 	struct timeval tv;
 	int	i;
 
+	if (fb_server_fbp) {
+	    if (fb_poll_rate(fb_server_fbp) > 0)
+		refresh_rate = fb_poll_rate(fb_server_fbp);
+	}
+
 	infds = select_list;	/* struct copy */
 
-#ifdef _WIN32
 	tv.tv_sec = 0L;
-	tv.tv_usec = 250L;
-#else
-	tv.tv_sec = 60L;
-	tv.tv_usec = 0L;
-#endif
+	tv.tv_usec = refresh_rate;
 	if ((select( max_fd+1, &infds, (fd_set *)0, (fd_set *)0, (struct timeval *)&tv ) == 0)) {
 	    /* Process fb events while waiting for client */
 	    /*printf("select timeout waiting for client\n");*/
@@ -341,7 +344,7 @@ main_loop(void)
 	    continue;
 	}
 	/* Handle any events from the framebuffer */
-	if (fb_server_fbp && fb_server_fbp->if_selfd > 0 && FD_ISSET(fb_server_fbp->if_selfd, &infds)) {
+	if (fb_is_set_fd(fb_server_fbp, &infds)) {
 	    fb_poll(fb_server_fbp);
 	}
 
@@ -445,12 +448,9 @@ main(int argc, char **argv)
 	fb_server_retain_on_close = 1;	/* don't ever close the frame buffer */
 
 	/* open a frame buffer */
-	if ( (fb_server_fbp = fb_open(framebuffer, width, height)) == FBIO_NULL )
+	if ( (fb_server_fbp = fb_open(framebuffer, width, height)) == FB_NULL )
 	    bu_exit(1, NULL);
-	if ( fb_server_fbp->if_selfd > 0 )  {
-	    FD_SET(fb_server_fbp->if_selfd, &select_list);
-	    max_fd = fb_server_fbp->if_selfd;
-	}
+	max_fd = fb_set_fd(fb_server_fbp, &select_list);
 
 	/* check/default port */
 	if ( port_set ) {

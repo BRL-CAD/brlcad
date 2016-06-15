@@ -30,8 +30,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 unsigned char ibuf[3*1024];
 unsigned char red[1024], green[1024], blue[1024];

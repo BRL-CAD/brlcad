@@ -31,11 +31,15 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-/* #include "bu.h" */
 #include "vmath.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 #include "bn.h"
 
-#include "bu_arg_parse.h" /* includes bu.h */
+#include "bu_arg_parse.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";

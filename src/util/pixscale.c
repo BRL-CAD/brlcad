@@ -38,7 +38,10 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
 
 
 #define MAXBUFBYTES 3*1024*1024	/* max bytes to malloc in buffer space */
@@ -371,7 +374,7 @@ get_args(int argc, char **argv)
 		iny = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' , '?' */
 		return 0;
 	}
     }

@@ -37,7 +37,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 
 
 #define MAXBUFBYTES 4096*4096	/* max bytes to malloc in buffer space */

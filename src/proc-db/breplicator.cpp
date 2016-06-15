@@ -30,9 +30,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 #include "wdb.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "bu.h"
-
 
 static ON_Brep *
 generate_brep(int count, ON_3dPoint *points)

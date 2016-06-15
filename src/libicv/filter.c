@@ -24,7 +24,8 @@
  * images are taken care.
  */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "icv.h"
 
 #include "vmath.h"

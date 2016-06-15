@@ -58,7 +58,13 @@
 #include "ProNotify.h"
 #include "prodev_light.h"
 #include "vmath.h"
-#include "bu.h"
+#include "bu/hash.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/rb.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 #include "bn.h"
 
 int is_non_identity(ProMatrix xform);

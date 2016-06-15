@@ -33,7 +33,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 
 #define true 1
 #define false 0

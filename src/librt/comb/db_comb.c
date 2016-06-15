@@ -37,7 +37,6 @@
 #include "common.h"
 
 #include <limits.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -216,16 +215,16 @@ rt_comb_import4(
 	}
 
 	switch (rp[j+1].M.m_relation) {
-	    case '+':
+	    case DB_OP_INTERSECT:
 		rt_tree_array[j].tl_op = OP_INTERSECT;
 		break;
-	    case '-':
+	    case DB_OP_SUBTRACT:
 		rt_tree_array[j].tl_op = OP_SUBTRACT;
 		break;
 	    default:
 		bu_log("rt_comb_import4() unknown op=x%x, assuming UNION\n", rp[j+1].M.m_relation);
 		/* Fall through */
-	    case 'u':
+	    case DB_OP_UNION:
 		rt_tree_array[j].tl_op = OP_UNION;
 		break;
 	}
@@ -460,13 +459,13 @@ rt_comb_export4(
 	rp[j+1].u_id = ID_MEMB;
 	switch (rt_tree_array[j].tl_op) {
 	    case OP_INTERSECT:
-		rp[j+1].M.m_relation = '+';
+		rp[j+1].M.m_relation = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		rp[j+1].M.m_relation = '-';
+		rp[j+1].M.m_relation = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		rp[j+1].M.m_relation = 'u';
+		rp[j+1].M.m_relation = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("rt_comb_export4() corrupt rt_tree_array");
@@ -628,13 +627,13 @@ db_tree_flatten_describe(
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    default:
 		bu_bomb("db_tree_flatten_describe() corrupt rt_tree_array");
@@ -733,15 +732,15 @@ db_tree_describe(
 	    /* This node is known to be a binary op */
 	case OP_UNION:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "u ");
+	    bu_vls_printf(vls, "%c ", DB_OP_UNION);
 	    goto bin;
 	case OP_INTERSECT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "+ ");
+	    bu_vls_printf(vls, "%c ", DB_OP_INTERSECT);
 	    goto bin;
 	case OP_SUBTRACT:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);
-	    bu_vls_strcat(vls, "- ");
+	    bu_vls_printf(vls, "%c ", DB_OP_SUBTRACT);
 	    goto bin;
 	case OP_XOR:
 	    if (!indented) bu_vls_spaces(vls, 2*lvl);

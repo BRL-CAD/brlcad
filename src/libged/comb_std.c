@@ -26,9 +26,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
-#include "bio.h"
 
 #include "tcl.h"
 
@@ -141,29 +139,27 @@ append_rparen(struct bu_list *hp)
 
 
 HIDDEN int
-add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
+add_operator(struct ged *gedp, struct bu_list *hp, char *ptr, short int *last_tok)
 {
-    char illegal[2];
+    db_op_t op = db_str2op(ptr);
 
     BU_CK_LIST_HEAD(hp);
 
-    switch (ch) {
-	case 'u':
+    switch (op) {
+	case DB_OP_UNION:
 	    append_union(hp);
 	    *last_tok = TOK_UNION;
 	    break;
-	case '+':
+	case DB_OP_INTERSECT:
 	    append_inter(hp);
 	    *last_tok = TOK_INTER;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    append_subtr(hp);
 	    *last_tok = TOK_SUBTR;
 	    break;
 	default:
-	    illegal[0] = ch;
-	    illegal[1] = '\0';
-	    bu_vls_printf(gedp->ged_result_str, "Illegal operator: %s, aborting\n", illegal);
+	    bu_vls_printf(gedp->ged_result_str, "Illegal operator: %c (0x%x), aborting\n", ptr[0], ptr[0]);
 	    free_tokens(hp);
 	    return GED_ERROR;
     }
@@ -566,7 +562,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 
 	    if (last_tok == TOK_RPAREN) {
 		/* next token MUST be an operator */
-		if (add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
+		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) == GED_ERROR) {
 		    free_tokens(&tok_hd.l);
 		    return GED_ERROR;
 		}
@@ -584,7 +580,7 @@ ged_comb_std(struct ged *gedp, int argc, const char *argv[])
 		ptr += name_len;
 	    } else if (last_tok == TOK_TREE) {
 		/* must be an operator */
-		if (add_operator(gedp, &tok_hd.l, *ptr, &last_tok) == GED_ERROR) {
+		if (add_operator(gedp, &tok_hd.l, ptr, &last_tok) == GED_ERROR) {
 		    free_tokens(&tok_hd.l);
 		    return GED_ERROR;
 		}

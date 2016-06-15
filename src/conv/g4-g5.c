@@ -42,8 +42,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/debug.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -69,8 +69,6 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     bu_debug = BU_DEBUG_COREDUMP;
-
-    rt_init_resource( &rt_uniresource, 0, NULL );
 
     if ( argc != 3 )  {
 	fprintf(stderr, "Usage: %s v4.g v5.g\n", argv[0]);

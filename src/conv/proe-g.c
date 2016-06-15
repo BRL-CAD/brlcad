@@ -37,8 +37,9 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -1125,8 +1126,6 @@ main(int argc, char **argv)
 		break;
 	}
     }
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     input_file = argv[bu_optind];
     if ((fd_in=fopen(input_file, "rb")) == NULL) {

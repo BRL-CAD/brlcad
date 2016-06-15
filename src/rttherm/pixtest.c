@@ -32,7 +32,7 @@
 #include <math.h>
 
 
-#include "bu.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "vmath.h"
 #include "spectrum.h"

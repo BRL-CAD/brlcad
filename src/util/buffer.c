@@ -35,8 +35,9 @@
 
 #include <stdlib.h>
 #include "bio.h"
-
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 
 #define SIZE (1024*1024)

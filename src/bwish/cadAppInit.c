@@ -26,7 +26,7 @@
 
 #include "common.h"
 
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "itcl.h"
@@ -37,7 +37,6 @@
 #  include "fb.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "ged.h"

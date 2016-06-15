@@ -29,7 +29,6 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -479,8 +478,6 @@ main(int argc, char **argv)
     tree_state.ts_m = &the_model;
     tree_state.ts_tol = &tol;
     tree_state.ts_ttol = &ttol;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* For visualization purposes, in the debug plot files */
     {

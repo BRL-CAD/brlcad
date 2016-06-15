@@ -30,8 +30,10 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "brep.h"
 #include "libbrep_brep_tools.h"
 #include "dvec.h"
@@ -572,7 +574,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     // may be a smaller trimmed subset of surface so worth getting
     // face boundary
     bool bGrowBox = false;
-    ON_3dPoint min, max;
+    ON_3dPoint min = ON_3dPoint::UnsetPoint, max = ON_3dPoint::UnsetPoint;
     for (int li = 0; li < face->LoopCount(); li++) {
 	for (int ti = 0; ti < face->Loop(li)->TrimCount(); ti++) {
 	    ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
@@ -604,12 +606,14 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 	min[i] -= within_distance_tol;
 	max[i] += within_distance_tol;
 #endif
-	if ((min[i] >= dom[i].m_t[0]) && (max[i] <= dom[i].m_t[1])) {
-	    dom[i].Set(min[i],max[i]);
+	if ((min != ON_3dPoint::UnsetPoint) && (max != ON_3dPoint::UnsetPoint)) {
+	    if ((min[i] >= dom[i].m_t[0]) && (max[i] <= dom[i].m_t[1])) {
+		dom[i].Set(min[i],max[i]);
+	    }
 	}
     }
-    ON_Interval u(min[0], max[0]); //)= dom[0];
-    ON_Interval v(min[1], max[1]); // = dom[1];
+    ON_Interval u = dom[0];
+    ON_Interval v = dom[1];
 #endif
     double uq = u.Length()*0.25;
     double vq = v.Length()*0.25;

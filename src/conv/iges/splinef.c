@@ -22,9 +22,9 @@
 
 #include <stdio.h>
 
-#include "bu.h"
 #include "vmath.h"
 
+#include "bu/defines.h"
 
 /* spline functionality */
 fastf_t

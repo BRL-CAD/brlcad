@@ -29,14 +29,13 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
 #include "nmg.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -368,13 +367,13 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 
 	switch (tree_list[i].tl_op) {
 	    case OP_UNION:
-		op = 'u';
+		op = WMOP_UNION;
 		break;
 	    case OP_INTERSECT:
-		op = '+';
+		op = WMOP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = WMOP_SUBTRACT;
 		break;
 	    default:
 		bu_log("Unrecognized Boolean operator in combination (%s)\n", dp->d_namep);
@@ -438,8 +437,6 @@ main(int argc, char **argv)
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
-
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "t:a:n:o:r:bvx:P:X:h?")) != -1) {

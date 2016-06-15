@@ -32,7 +32,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 #define MmAllo(typ)		(typ *) bu_malloc(sizeof(typ), BU_FLSTR)
 #define MmFree(typ, ptr) bu_free((char *) ptr, BU_FLSTR)

@@ -29,8 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 static void
 usage(const char *argv0) {

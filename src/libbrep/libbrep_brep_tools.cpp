@@ -28,7 +28,7 @@
 #include <iostream>
 
 #include "opennurbs.h"
-#include "bu.h"
+#include "bu/log.h"
 #include "libbrep_brep_tools.h"
 
 bool ON_NearZero(double val, double epsilon) {

@@ -39,6 +39,9 @@
 #include <sstream>
 #include <iostream>
 
+#include "bu/malloc.h"
+#include "bu/log.h"
+
 extern int obj_parser_parse(yyscan_t);
 
 namespace cad {

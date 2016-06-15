@@ -28,11 +28,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 
 #include "vmath.h"
-#include "dg.h"
 #include "ged.h"
 
 #include "./qray.h"

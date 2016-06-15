@@ -17,9 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/tree.h
-    Author:		Gary S. Moss
-*/
 
 #ifndef LGT_TREE_H
 #define LGT_TREE_H

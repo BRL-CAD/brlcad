@@ -20,11 +20,7 @@
 
 #include "common.h"
 
-#include "bio.h"
-
-
 #include "ged.h"
-
 
 HIDDEN int
 zoom(struct ged *gedp, double sf)

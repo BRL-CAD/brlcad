@@ -28,7 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -201,9 +204,6 @@ main(int argc, char *argv[])
 	bu_log("Reading from [%s]\n", bu_vls_addr(&vls_in));
 	bu_log("Writing to [%s]\n\n", bu_vls_addr(&vls_out));
     }
-
-    /* initialize single threaded resource */
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* open the input */
     shapefile = SHPOpen(bu_vls_addr(&vls_in), "rb");

@@ -43,7 +43,8 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/getopt.h"
 
 
 #define MAC_HEIGHT 576	/* input height (y), in bits */

@@ -32,7 +32,11 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/avs.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 
 #include "./nirt.h"
 #include "./usrfmt.h"
