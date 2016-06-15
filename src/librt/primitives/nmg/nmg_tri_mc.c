@@ -392,6 +392,7 @@ rt_tri_mc_realize_cube(fastf_t *tris, int pv, point_t *edges)
     return fo;
 }
 
+
 int
 nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol *tol)
 {
@@ -434,7 +435,8 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	nmg_vertex_gv(vertl[0], edges[vi[0]]);
 	nmg_vertex_gv(vertl[1], edges[vi[1]]);
 	nmg_vertex_gv(vertl[2], edges[vi[2]]);
-	if (nmg_calc_face_g(fu)) {	/* this flips out and spins. */
+	if (nmg_calc_face_g(fu)) {
+	    /* this flips out and spins. */
 	    bu_log("Face calc failed\n");
 	    nmg_kfu(fu);
 	    bu_bomb("Bad face calc\n");
@@ -444,9 +446,9 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 	if (nmg_fu_planeeqn(fu, tol))
 	    bu_log("Tiny triangle! <%g %g %g> <%g %g %g> <%g %g %g> (%g %g %g)\n",
 		   V3ARGS(edges[vi[0]]), V3ARGS(edges[vi[1]]), V3ARGS(edges[vi[2]]),
-		   DIST_PT_PT(edges[vi[0]],edges[vi[1]]),
-		   DIST_PT_PT(edges[vi[0]],edges[vi[2]]),
-		   DIST_PT_PT(edges[vi[1]],edges[vi[2]]));
+		   DIST_PT_PT(edges[vi[0]], edges[vi[1]]),
+		   DIST_PT_PT(edges[vi[0]], edges[vi[2]]),
+		   DIST_PT_PT(edges[vi[1]], edges[vi[2]]));
 	/* UNLOCK */
 	bu_semaphore_release(RT_SEM_WORKER);
 
@@ -455,6 +457,7 @@ nmg_mc_realize_cube(struct shell *s, int pv, point_t *edges, const struct bn_tol
 
     return valids;
 }
+
 
 HIDDEN fastf_t bin(fastf_t val, fastf_t step) {return step*floor(val/step);}
 
@@ -465,6 +468,7 @@ struct whack {
     point_t hit;
     int in;	/* 1 for inhit, 2 for outhit, -1 to terminate */
 };
+
 
 HIDDEN int
 bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSED(s))
@@ -493,6 +497,7 @@ bangbang(struct application * a, struct partition *PartHeadp, struct seg * UNUSE
     return 0;
 }
 
+
 HIDDEN int
 missed(struct application *a)
 {
@@ -500,6 +505,7 @@ missed(struct application *a)
     t->in = NOHIT;
     return 0;
 }
+
 
 HIDDEN int
 bitdiff(unsigned char t, unsigned char a, unsigned char b)
@@ -511,6 +517,7 @@ bitdiff(unsigned char t, unsigned char a, unsigned char b)
     return hb == ma || hb == mb;
 }
 
+
 HIDDEN int
 rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, struct whack *muh, const fastf_t step, const struct bn_tol *tol)
 {
@@ -520,7 +527,7 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
 
     for (i = 0; i < MAX_INTERSECTS; i++) {
 	muh[i].in = 0;
-	VSETALL(muh[i].hit,VOODOO);
+	VSETALL(muh[i].hit, VOODOO);
     }
 
     VJOIN1(a->a_ray.r_pt, *p, -2*tol->dist, a->a_ray.r_dir);
@@ -541,8 +548,9 @@ rt_nmg_mc_crosspew(struct application *a, int edge, point_t *p, point_t *edges, 
     return 0;
 }
 
+
 HIDDEN int
-rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
+rt_nmg_mc_pew(struct shell *s, struct whack *primp[4], struct application *a, fastf_t x, fastf_t y, fastf_t b, fastf_t step, const struct bn_tol *tol)
 {
     int i, in[4] = { 0, 0, 0, 0}, count = 0;
     fastf_t last_b = -VOODOO;
@@ -577,7 +585,7 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	if (in[2] && primp[2]->hit[Z] > b+step) pv |= 0x90;
 	if (in[3] && primp[3]->hit[Z] > b+step) pv |= 0x60;
 
-#define MEH(A,I,O) \
+#define MEH(A, I, O) \
 	if (primp[A][1].in > 0 && primp[A][1].hit[Z] < b+step+tol->dist) primp[A]+=2; \
 	if (primp[A]->hit[Z] < b+step+tol->dist) {  \
 	    if (primp[A]->in==1) { in[A]=1; pv |= 1<<I;} \
@@ -591,51 +599,51 @@ rt_nmg_mc_pew(struct shell *s, struct whack  *primp[4], struct application *a, f
 	MEH(3, 5, 6);
 #undef MEH
 
-#define MUH(a,l) if (bitdiff(pv,edge_vertex[a][0],edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
+#define MUH(a, l) if (bitdiff(pv, edge_vertex[a][0], edge_vertex[a][1])) { VMOVE(edges[a], l->hit); l++; } /* we already have ray intersect data for these. */
 	for (i = 0; i < 12; i++)
 	    VSETALL(edges[i], VOODOO);
 
-	MUH(1 ,primp[1]);
-	MUH(3 ,primp[0]);
-	MUH(5 ,primp[3]);
-	MUH(7 ,primp[2]);
+	MUH(1 , primp[1]);
+	MUH(3 , primp[0]);
+	MUH(5 , primp[3]);
+	MUH(7 , primp[2]);
 #undef MUH
 
 	if (marching_cubes_use_midpoint) {
 	    if (marching_cubes_use_midpoint==1)
 		for (i = 1; i < 8; i += 2)
-		    if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+		    if (bitdiff(pv, edge_vertex[i][0], edge_vertex[i][1]))
 			VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	    for (i = 0; i < 7; i += 2)
-		if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+		if (bitdiff(pv, edge_vertex[i][0], edge_vertex[i][1]))
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	    for (i = 8; i < 12; i++)
-		if (bitdiff(pv,edge_vertex[i][0],edge_vertex[i][1]))
+		if (bitdiff(pv, edge_vertex[i][0], edge_vertex[i][1]))
 		    VADD2SCALE(edges[i], p[edge_vertex[i][0]], p[edge_vertex[i][1]], 0.5);
 	} else {
 	    /* the 'muh' list may have to be walked. */
-#define MEH(A,B,C) if (bitdiff(pv,B,C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
+#define MEH(A, B, C) if (bitdiff(pv, B, C)) rt_nmg_mc_crosspew(a, A, p+B, edges, muh, step, tol)
 	    VSET(a->a_ray.r_dir, 1, 0, 0);
-	    MEH(0 ,0,1);
-	    MEH(2 ,3,2);
-	    MEH(4 ,4,5);
-	    MEH(6 ,7,6);
+	    MEH(0 , 0, 1);
+	    MEH(2 , 3, 2);
+	    MEH(4 , 4, 5);
+	    MEH(6 , 7, 6);
 
 	    VSET(a->a_ray.r_dir, 0, 1, 0);
-	    MEH(8 ,0,4);
-	    MEH(9 ,1,5);
-	    MEH(10,2,6);
-	    MEH(11,3,7);
+	    MEH(8 , 0, 4);
+	    MEH(9 , 1, 5);
+	    MEH(10, 2, 6);
+	    MEH(11, 3, 7);
 #undef MEH
-#define MEH(A,B,C,D) if (NEAR_EQUAL(edges[B][Z], p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
-	    MEH(0,3,0,8);
-	    MEH(1,1,0,9);
-	    MEH(2,1,2,10);
-	    MEH(3,3,2,11);
-	    MEH(4,7,4,8);
-	    MEH(5,5,4,9);
-	    MEH(6,5,6,10);
-	    MEH(7,7,6,11);
+#define MEH(A, B, C, D) if (NEAR_EQUAL(edges[B][Z], p[A][Z], tol->dist)) { VMOVE(edges[C], p[A]); VMOVE(edges[D], p[A]); }
+	    MEH(0, 3, 0, 8);
+	    MEH(1, 1, 0, 9);
+	    MEH(2, 1, 2, 10);
+	    MEH(3, 3, 2, 11);
+	    MEH(4, 7, 4, 8);
+	    MEH(5, 5, 4, 9);
+	    MEH(6, 5, 6, 10);
+	    MEH(7, 7, 6, 11);
 #undef MEH
 	}
 
@@ -659,6 +667,7 @@ struct mci_s {
     unsigned long count;
     int ncpu;
 };
+
 
 HIDDEN void
 fire_row(int cpu, void * ptr)
@@ -723,9 +732,10 @@ fire_row(int cpu, void * ptr)
     /* free the rt stuff we don't need anymore */
 }
 
+
 /* rtip needs to be valid, s is where the results are stashed */
 int
-nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
+nmg_mc_evaluate(struct shell *s, struct rt_i *rtip, const struct db_full_path *pathp, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
     struct mci_s m;
     int i;
@@ -754,6 +764,7 @@ nmg_mc_evaluate (struct shell *s, struct rt_i *rtip, const struct db_full_path *
 
     return m.count;
 }
+
 
 void
 nmg_triangulate_model_mc(struct model *m, const struct bn_tol *tol)

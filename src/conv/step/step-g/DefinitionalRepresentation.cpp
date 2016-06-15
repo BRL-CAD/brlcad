@@ -57,8 +57,11 @@ DefinitionalRepresentation::Load(STEPWrapper *sw, SDAI_Application_instance *sse
 
     if (!Representation::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

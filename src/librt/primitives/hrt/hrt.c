@@ -633,13 +633,286 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 }
 
 
+#define RT_HRT_SEG_MISS(SEG)		(SEG).seg_stp=(struct soltab *) 0;
 /**
  * This is the Becker vector version
  */
 void
-rt_hrt_vshot(void)
+rt_hrt_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, struct application *ap)
 {
-    bu_log("rt_hrt_vshot: Not implemented yet!\n");
+    register struct hrt_specific *hrt;
+    vect_t dprime;
+    vect_t pprime;
+    vect_t work;
+    vect_t norm_pprime;
+    bn_poly_t Xsqr, Ysqr, Zsqr;
+    bn_poly_t A, Acube, Zcube;
+    bn_poly_t X2_Y2, Z3_X2_Y2;
+    bn_poly_t *S;
+    bn_complex_t (*complex)[6];
+    int num_roots, num_zero;
+    register int i;
+    fastf_t *cor_proj;
+
+    /* Allocate space for polynomials and roots */
+    S = (bn_poly_t *)bu_malloc(n * sizeof(bn_poly_t) * 6, "hrt bn_complex_t");
+    complex = (bn_complex_t (*)[6])bu_malloc(n * sizeof(bn_complex_t) * 6, "hrt bn_complex_t");
+    cor_proj = (fastf_t *)bu_malloc(n * sizeof(fastf_t), "hrt_proj");
+    
+    /* Initialize seg_stp to assume hit (zero will then flag a miss) */
+    for (i = 0; i < n; i++ )
+	segp[i].seg_stp = stp[i];
+
+    /* for each ray/heart pair */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;		/* Skip this iteration */
+	
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Translate ray direction vector */
+	MAT4X3VEC(dprime, hrt->hrt_SoR, rp[i]->r_dir);
+	VUNITIZE(dprime);
+
+	/* Use segp[i].seg_in.hit_normal as tmp to hold dprime */
+	VMOVE(segp[i].seg_in.hit_normal, dprime);
+	VSUB2(work, rp[i]->r_pt, hrt->hrt_V);
+	MAT4X3VEC(pprime, hrt->hrt_SoR, work);
+
+	/* use segp[i].seg_out.hit_normal as tmp to hold pprime */
+	VMOVE(segp[i].seg_out.hit_normal, pprime);
+
+	/* Normalize distance from the heart. Substitutes a corrected ray
+	 * point, which contains a translation along the ray direction to
+	 * the closest approach to vertex of the heart.Translating the ray
+	 * along the direction of the ray to the closest point near the
+	 * heart's center vertex. Thus, the New ray origin is normalized.
+	 */
+	cor_proj[i] = VDOT(pprime, dprime);
+	VSCALE(norm_pprime, dprime, cor_proj[i]);
+	VSUB2(norm_pprime, pprime, norm_pprime);
+	
+	/*
+	 * Generate sexic equation S(t) = 0 to be passed through the root finder
+	 */	
+	/* X**2 */
+	Xsqr.dgr = 2;
+	Xsqr.cf[0] = dprime[X] * dprime[X];
+        Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
+        Xsqr.cf[2] = pprime[X] * pprime[X];
+
+        /* 9/4 * Y**2*/
+        Ysqr.dgr = 2;
+        Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
+        Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
+        Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
+
+        /* Z**2 - 1 */
+        Zsqr.dgr = 2;
+        Zsqr.cf[0] = dprime[Z] * dprime[Z];
+        Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
+        Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
+
+        /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
+        A.dgr = 2;
+        A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
+        A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
+        A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
+
+        /* Z**3 */
+        Zcube.dgr = 3;
+        Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
+        Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
+        Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
+        Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
+
+	/* A**3 */
+        Acube.dgr = 6;
+        Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
+        Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
+        Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
+        Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
+        Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
+        Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
+        Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
+
+        /* X**2 + 9/80 Y**2 */
+        X2_Y2.dgr = 2;
+        X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
+        X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
+        X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
+
+        /* Z**3 * (X**2 + 9/80 * Y**2) */
+        Z3_X2_Y2.dgr = 5;
+        Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
+        Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
+        Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
+        Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
+        Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
+        Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
+
+	/* S(t) = 0 */
+        S[i].dgr = 6;
+        S[i].cf[0] = Acube.cf[0];
+        S[i].cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
+        S[i].cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
+        S[i].cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
+        S[i].cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
+        S[i].cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
+        S[i].cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
+    
+    }
+    for (i = 0; i < n; i++) {
+	continue;		/* Skip this iteration */
+    /*
+     * It is known that the equation is sextic (of order 6).
+     * Therefore, if the root finder returns other than six roots, Error
+     */
+    if ((num_roots = rt_poly_roots(&(S[i]), &(complex[i][0]), (*stp)->st_dp->d_namep)) != 6) {
+	if (num_roots > 0) {
+	    bu_log("hrt: rt_poly_roots() 6 != %d\n", num_roots);
+	    bn_pr_roots("hrt", complex[i], num_roots);
+	} else if (num_roots < 0) {
+	    static int reported = 0;
+	    bu_log("The root solver failed to converge on a solution for %s\n", stp[i]->st_dp->d_namep);
+	    if (!reported) {
+		VPRINT("while shooting from: \t", rp[i]->r_pt);
+		VPRINT("while shooting at:\t", rp[i]->r_dir);
+		bu_log("Additional heart convergence failuer details will be suppressed.\n");
+		reported = 1;
+	    }
+	}
+	RT_HRT_SEG_MISS(segp[i]);
+    }
+
+    /* for each ray/heart pair */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;		/* Skip current iteration */
+    
+    /* Only real roots indicate an intersection in real space.
+     *
+     * Look at each root returned; if the imaginary part is zero or
+     * sufficiently close, then use the real part as one value of 't'
+     * for the intersections
+     *
+     * Reverse translation by adding distance to all 'real' values
+     * Reuse S to hold 'real' values 
+     */
+    num_zero = 0;
+    if (NEAR_ZERO(complex[i][0].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][0].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][1].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][1].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][2].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][2].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][3].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][3].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][4].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][4].re - cor_proj[i];
+    }
+    if (NEAR_ZERO(complex[i][5].im, ap->a_rt_i->rti_tol.dist)) {
+	S[i].cf[num_zero++] = complex[i][5].re - cor_proj[i];
+    }
+    S[i].dgr = num_zero;
+
+    /* Here 'i' is the number of points found */
+    if (num_zero == 0) {
+	RT_HRT_SEG_MISS(segp[i]);		/* MISS */
+    } else if ((num_zero != 2 && num_zero != 4 ) && (num_zero != 6)) {
+		RT_HRT_SEG_MISS(segp[i]);	/* MISS */
+	    }
+    }
+
+    /* Process each one segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 2)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* segp[i].seg_in.hit_normal holds dprime */
+	/* segp[i].seg_out.hit_normal holds pprime */
+	if (S[i].cf[1] < S[i].cf[0]) {
+	    /* S[i].cf[1] is entry point */
+	    segp[i].seg_in.hit_dist = S[i].cf[1];
+	    segp[i].seg_in.hit_dist = S[i].cf[0];
+	    /* Set aside vector for rt_hrt_norm() later */
+	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	    VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+	    } else {
+		/* S[i].cf[0] is entry point */
+		segp[i].seg_in.hit_dist = S[i].cf[0];
+		segp[i].seg_in.hit_dist = S[i].cf[1];
+		/* Set aside vector for rt_hrt_norm() later */
+		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+		VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	    }
+    }
+
+    /* Process each two segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 4)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Sort most distant to least distant */
+	rt_pt_sort(S[i].cf, 4);
+	/* Now, t[0] > t[npts - 1] */
+	/* segp[i].seg_in.hit_normal holds dprime */
+	VMOVE(dprime, segp[i].seg_out.hit_normal);
+	/* segp[i].seg_out.hit_normal holds pprime */
+	VMOVE(pprime, segp[i].seg_out.hit_normal);
+
+	/* S[i].cf[1] is entry point */
+	segp[i].seg_in.hit_dist = S[i].cf[3];
+	segp[i].seg_in.hit_dist = S[i].cf[2];
+	/* Set aside vector for rt_hrt_norm() later */
+	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[1], segp[i].seg_in.hit_normal);
+	VJOIN1(segp[i].seg_in.hit_vpriv, segp[i].seg_out.hit_normal, S[i].cf[0], segp[i].seg_in.hit_normal);
+    }
+
+    /* Process each three segment hit */
+    for (i = 0; i < n; i++) {
+	if (segp[i].seg_stp == 0)
+	    continue;				/* Skip This Iteration */
+	if (S[i].dgr != 6)
+	    continue;				/* Not one segment */
+
+	hrt = (struct hrt_specific *)stp[i]->st_specific;
+
+	/* Sort most distant to least distant */
+	rt_pt_sort(S[i].cf, 6);
+	/* Now, t[0] > t[npts - 1] */
+	/* segp[i].seg_in.hit_normal holds dprime */
+	VMOVE(dprime, segp[i].seg_out.hit_normal);
+	/* segp[i].seg_out.hit_normal holds pprime */
+	VMOVE(pprime, segp[i].seg_out.hit_normal);
+
+	/* S[i].cf[1] is entry point */
+	segp[i].seg_in.hit_dist = S[i].cf[5];
+	segp[i].seg_in.hit_dist = S[i].cf[4];
+	/* Set aside vector for rt_hrt_norm() later */
+	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[5], dprime);
+	VJOIN1(segp[i].seg_in.hit_vpriv, pprime, S[i].cf[4], dprime);
+    }
+    
+    }
+
+    /* Free tmp space used */
+    bu_free((char *)S, "hrt S");
+    bu_free((char *)complex, "hrt complex");
+    bu_free((char *)cor_proj, "hrt_cor_proj");
+    	
 }
 
 
@@ -669,9 +942,9 @@ rt_hrt_vshot(void)
  * above equations by six here.
  */
 void
-rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
+rt_hrt_norm(register struct hit *hitp, register struct xray *rp)
 {
-    /*
+    
     fastf_t w, fx, fy, fz;
     vect_t work;
 
@@ -683,7 +956,7 @@ rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
     fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
     fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
-    */
+    VMOVE(hitp->hit_normal, work);
 }
 
 
@@ -717,6 +990,7 @@ rt_hrt_free(struct soltab *stp)
 /**
  * Similar to code used by the ELL
  */
+
 #define HRTOUT(n) ov+(n-1)*3
 void
 rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
@@ -774,30 +1048,459 @@ rt_hrt_adaptive_plot(void)
 
 
 int
-rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *ttol, const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    int i;
+    fastf_t c, dtol, mag_h, ntol = M_PI, r1, r2, **ellipses, theta_prev, theta_new;
+    int *pts_dbl;
+    int nseg; /* The number of line segments in a particular ellipse */
+    int j, k, jj, na, nb;
+    int nell; /* The number of ellipses in the parabola */
+    int recalc_b, i, ellipse_below, ellipse_above;
+    mat_t R;
+    mat_t invR;
+    point_t p1;
+    struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
+    vect_t A, Au, B, Bu, Cu;
+    vect_t V, Work;
+    vect_t lower_cusp, upper_cusp, upper_cusp_xdir;
+    vect_t highest_point_left, highest_point_right, top_xdir, top_ydir;
+    vect_t top01_center, top01_xdir, top01_ydir;
+    vect_t top1_center, top1_xdir, top1_ydir;
+    vect_t top02_center, top02_xdir, top02_ydir;
+    vect_t v1_left, xdir1_left, ydir1_left, top1_center_left, top1_center_right, v1_right, xdir1_right, ydir1_right;
+    vect_t v2_left, xdir2_left, ydir2_left, top2_center_left, top2_center_right, v2_right, xdir2_right, ydir2_right;
+    vect_t v3_left, xdir3_left, ydir3_left, top3_center_left, top3_center_right, v3_right, xdir3_right, ydir3_right;
+    vect_t v4_left, xdir4_left, ydir4_left, top4_center_left, top4_center_right, v4_right, xdir4_right, ydir4_right;
+    
     struct rt_hrt_internal *hip;
+
     fastf_t top[24*3];
-    fastf_t middle[24*3];
+    fastf_t top01[24*3];
+    fastf_t top02[24*3];
+    fastf_t top1[24*3];
+    fastf_t top1_left_lobe[24*3];
+    fastf_t top1_right_lobe[24*3];
+    fastf_t top2_left_lobe[24*3];
+    fastf_t top2_right_lobe[24*3];
+    fastf_t top3_left_lobe[24*3];
+    fastf_t top3_right_lobe[24*3];
+    fastf_t top4_left_lobe[24*3];
+    fastf_t top4_right_lobe[24*3];
+    fastf_t top5_upper_cusp[24*3];
+    
+    fastf_t angle_c = 0.64656;  /* sin(40.2) */
+    fastf_t angle_d = 0.80901;  /* sin(54.0) */
+    fastf_t angle_e = 0.90350;  /* sin(64.5) */
+    fastf_t angle_f = 0.95000;  /* sin(71.8) */
+    fastf_t angle_g = 0.33990;  /* sin(19.8) */
+    fastf_t angle_h = 0.48357;  /* sin(29.0) */
 
     BU_CK_LIST_HEAD(vhead);
     RT_CK_DB_INTERNAL(ip);
     hip = (struct rt_hrt_internal *)ip->idb_ptr;
     RT_HRT_CK_MAGIC(hip);
+    
+    VSET(top01_center, 0 , 0 , hip->zdir[Z] * angle_g );
+    VSET(top02_center, 0 , 0 , hip->zdir[Z] * angle_h );
+    VSET(top1_center_left, -0.77 * hip->xdir[X], 0, hip->zdir[Z]);
+    VSET(top1_center_right, hip->xdir[X] * 0.77, 0, hip->zdir[Z]);
+    VSET(top1_center, 0, 0, hip->zdir[Z] * 0.64);
+    VSET(top2_center_left, -1.00 * hip->xdir[X] * 0.63, 0, hip->zdir[Z]);
+    VSET(top2_center_right, hip->xdir[X] * 0.63, 0, hip->zdir[Z]);
+    VSET(top3_center_left, -1.00 * hip->xdir[X] * 0.55, 0, hip->zdir[Z]);
+    VSET(top3_center_right, hip->xdir[X] * 0.55, 0, hip->zdir[Z]);
+    VSET(top4_center_left, -1.00 * hip->xdir[X] * 0.38, 0, hip->zdir[Z] * 0.77 );
+    VSET(top4_center_right, hip->xdir[X] * 0.38, 0, hip->zdir[Z] * 0.77 );
 
-    rt_hrt_24pts(top, hip->v, hip->xdir, hip->ydir);
-    rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
+    VSCALE(v1_left, top1_center_left, angle_c);
+    VSCALE(v1_right, top1_center_right, angle_c);
+    VSCALE(v2_left, top2_center_left, angle_d );
+    VSCALE(v2_right, top2_center_right, angle_d );
+    VSCALE(v3_left, top3_center_left, angle_e );
+    VSCALE(v3_right, top3_center_right, angle_e );
+    VSCALE(v4_left, top4_center_left, angle_f );
+    VSCALE(v4_right, top4_center_right, angle_f);
+    
+    VSET(upper_cusp, (top3_center_left[X] + top3_center_right[X]) * 0.70,
+		     (top3_center_left[Y] + top3_center_right[Y]) * 0.50,
+    		     hip->zdir[Z] * 0.64);
+    VSET(highest_point_left, hip->xdir[X] * -0.50 , 0 , hip->zdir[Z] );
+    VSET(highest_point_right, hip->xdir[X] * 0.50 , 0 , hip->zdir[Z] );
+    
+    VSCALE(top_xdir, hip->xdir, 0.80);
+    VSET(top01_xdir, hip->xdir[X] * 0.99, 0, 0);
+    VSET(top02_xdir, hip->xdir[X] * 1.05, 0, 0);
+    VSET(top1_xdir, hip->xdir[X] * 1.01, 0, 0);
+    VSET(xdir1_left, v4_left[Z] * 0.68, 0, 0 );
+    VSET(xdir1_right, v4_right[Z] * 0.68, 0, 0 );
+    VSET(xdir2_left, v3_left[Z] * 0.45, 0, 0 );
+    VSET(xdir2_right, v3_right[Z] * 0.45, 0, 0 );
+    VSET(xdir3_left, v2_left[Z] * 0.40, 0, 0 );
+    VSET(xdir3_right, v2_right[Z] * 0.40, 0, 0 );
+    VSET(xdir4_left, v1_left[Z] * 0.01, 0, 0 );
+    VSET(xdir4_right, v1_right[Z] * 0.01, 0, 0 );
+
+    VSCALE(top_ydir, hip->ydir, 0.50);
+    VSET(top01_ydir, 0, hip->ydir[Y] * 0.61, 0 );
+    VSET(top02_ydir, 0, hip->ydir[Y] * 0.61, 0 );
+    VSET(top1_ydir, 0, hip->ydir[Y] * 0.53, 0 );
+    VSET(ydir1_left, 0, v4_left[Z] * 0.71, 0 );
+    VSET(ydir1_right, 0, v4_right[Z] * 0.71, 0 );
+    VSET(ydir2_left, 0, v3_left[Z] * 0.45, 0 );
+    VSET(ydir2_right, 0, v3_right[Z] * 0.45, 0 );
+    VSET(ydir3_left, 0, v2_left[Z] * 0.27, 0 );
+    VSET(ydir3_right, 0, v2_right[Z] * 0.27, 0 );
+    VSET(ydir4_left, 0, v1_left[Z] * 0.01, 0 );
+    VSET(ydir4_right, 0, v1_right[Z] * 0.01, 0 );
+    VSET(upper_cusp_xdir, 0 , v3_left[Z] * 0.01 , 0 );
+
+    rt_hrt_24pts(top, hip->v, top_xdir, top_ydir);
+    rt_hrt_24pts(top01, top01_center, top01_xdir, top01_ydir );
+    rt_hrt_24pts(top02, top02_center, top02_xdir, top02_ydir );
+    rt_hrt_24pts(top1, top1_center, top1_xdir, top1_ydir );
+    rt_hrt_24pts(top1_left_lobe, v1_left, xdir1_left, ydir1_left);
+    rt_hrt_24pts(top1_right_lobe, v1_right, xdir1_right, ydir1_right);
+    rt_hrt_24pts(top2_left_lobe, v2_left, xdir2_left, ydir2_left);
+    rt_hrt_24pts(top2_right_lobe, v2_right, xdir2_right, ydir2_right);
+    rt_hrt_24pts(top3_left_lobe, v3_left, xdir3_left, ydir3_left);
+    rt_hrt_24pts(top3_right_lobe, v3_right, xdir3_right, ydir3_right);
+    rt_hrt_24pts(top4_left_lobe, highest_point_left, xdir4_left, ydir4_left);
+    rt_hrt_24pts(top4_right_lobe, highest_point_right, xdir4_right, ydir4_right);
+    rt_hrt_24pts(top5_upper_cusp, upper_cusp, upper_cusp_xdir, upper_cusp_xdir);
 
     RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
 	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
 
-    RT_ADD_VLIST(vhead, &middle[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    RT_ADD_VLIST(vhead, &top01[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
     for (i = 0; i < 24; i++) {
-	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead, &top01[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }    
+
+    RT_ADD_VLIST(vhead, &top02[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top02[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    } 
+
+    RT_ADD_VLIST(vhead, &top1[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top1[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
     }
+    
+    RT_ADD_VLIST(vhead, &top1_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top1_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+    
+    RT_ADD_VLIST(vhead, &top1_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top1_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top2_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top2_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top2_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top2_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top3_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top3_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top3_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top3_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top4_left_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top4_left_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top4_right_lobe[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top4_right_lobe[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &top5_upper_cusp[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top5_upper_cusp[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+    
+    /* 
+      Make connections between ellipses
+      This for repitition statement draws connectors between
+      the nell-1 ellipses drawn above
+     */
+        
+    for (k = 1; k < 24; k++) {
+	RT_ADD_VLIST(vhead,
+	             &top01[k*ELEMENTS_PER_VECT],
+	             BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &top02[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+        RT_ADD_VLIST(vhead,
+		     &top02[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &top1[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+		     &top1_left_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+	             &top2_left_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+	             &top1_right_lobe[k*ELEMENTS_PER_VECT],
+	             BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+	             &top2_right_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+		     &top2_left_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &top3_left_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+		     &top2_right_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+	             &top3_left_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &top4_left_lobe[k*ELEMENTS_PER_VECT],
+	             BN_VLIST_LINE_DRAW);
+	RT_ADD_VLIST(vhead,
+	             &top3_right_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &top4_right_lobe[k*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+    }
+    
+    mag_h = MAGNITUDE(hip->zdir);
+    r1 = MAGNITUDE(hip->xdir) * 0.80;
+    r2 = MAGNITUDE(hip->ydir) * 0.61;
+    c = hip->d;
+
+    /* make unit vectors in A, B, and AxB directions */
+    VMOVE(Cu, hip->zdir);
+    VUNITIZE(Cu);
+    VMOVE(Au, hip->xdir);
+    VUNITIZE(Au);
+    VMOVE(Bu, hip->ydir);
+    VUNITIZE(Bu);
+
+    /* Compute R and Rinv matrices */
+    MAT_IDN(R);
+    VREVERSE(&R[0], Bu);
+    VMOVE(&R[4], Au);
+    VREVERSE(&R[8], Cu);
+    bn_mat_trn(invR, R);			/* inv of rot mat is trn */
+
+    dtol = primitive_get_absolute_tolerance(ttol, r2 * 2.00);
+
+    /*
+     * build ehy from 2 hyperbolas
+     */
+
+    /* approximate positive half of hyperbola along semi-minor axis */
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    BU_ALLOC(pts_b->next, struct rt_pt_node);
+
+    pts_b->next->next = NULL;
+    VSET(pts_b->p,       0, 0, 0);
+    VSET(pts_b->next->p, 0, 0, mag_h/3);
+    /* 2 endpoints in 1st approximation */
+    nb = 2;
+    /* recursively break segment 'til within error tolerances */
+    nb += rt_mk_hyperbola(pts_b, mag_h/3, mag_h, c, dtol, ntol);
+    nell = nb - 1;	/* Number of ellipses needed */
+
+    /* 
+     * construct positive half of hyperbola along semi-major axis of
+     * ehy using same z coords as hyperbola along semi-minor axis
+     */
+
+    BU_ALLOC(pts_a, struct rt_pt_node);
+    VMOVE(pts_a->p, pts_b->p);	/* 1st pt is the apex */
+    pts_a->next = NULL;
+    pos_b = pts_b->next;
+    pos_a = pts_a;
+    while (pos_b) {
+	/* copy node from b_hyperbola to a_hyperbola */
+	BU_ALLOC(pos_a->next, struct rt_pt_node);
+	pos_a = pos_a->next;
+	pos_a->p[Z] = pos_b->p[Z];
+	/* at given z, find y on hyperbola */
+	pos_a->p[Y] = r1
+		    * sqrt(((pos_b->p[Z] + mag_h + c)
+		    * (pos_b->p[Z] + mag_h + c) - c*c)
+		    / (mag_h*(mag_h + 2*c)));
+	pos_a->p[X] = 0;
+	pos_b = pos_b->next;
+    }
+    pos_a->next = NULL;
+
+    /* see if any segments need further breaking up */
+    recalc_b = 0;
+    pos_a = pts_a;
+    while (pos_a->next) {
+	na = rt_mk_hyperbola(pos_a, r1, mag_h, c, dtol, ntol);
+	if (na != 0) {
+	    recalc_b = 1;
+	    nell += na;
+	}
+	pos_a = pos_a->next;
+    }
+    /* if any segments were broken, recalculate hyperbola 'a' */
+    if (recalc_b) {
+	/* free mem for old approximation of hyperbola */
+	pos_b = pts_b;
+	while (pos_b) {
+	    struct rt_pt_node *next;
+
+	    /* get next node before freeing */
+	    next = pos_b->next;
+	    bu_free((char *)pos_b, "rt_pt_node");
+	    pos_b = next;
+    }
+
+    /* construct hyperbola along semi-major axis of ehy using same
+     * z coords as parabola along semi-minor axis
+     */
+    BU_ALLOC(pts_b, struct rt_pt_node);
+    pts_b->p[Z] = pts_a->p[Z];
+    pts_b->next = NULL;
+    pos_a = pts_a->next;
+    pos_b = pts_b;
+    while (pos_a) {
+	/* copy node from a_hyperbola to b_hyperbola */
+	BU_ALLOC(pos_b->next, struct rt_pt_node);
+	pos_b = pos_b->next;
+	pos_b->p[Z] = pos_a->p[Z];
+	/* at given z, find y on hyperbola */
+	pos_b->p[Y] = r2 * sqrt(((pos_a->p[Z] + mag_h + c)
+			 * (pos_a->p[Z] + mag_h + c) - c*c)
+			 / (mag_h*(mag_h + 2*c)));
+	pos_b->p[X] = 0;
+	pos_a = pos_a->next;
+	}
+	pos_b->next = NULL;
+    }
+
+    /* make array of ptrs to ehy ellipses */
+    ellipses = (fastf_t **)bu_malloc(nell * sizeof(fastf_t *), "fastf_t ell[]");
+    /* keep track of whether pts in each ellipse are doubled or not */
+    pts_dbl = (int *)bu_malloc(nell * sizeof(int), "dbl ints");
+
+    /* make ellipses at different levels in the +Z direction */
+    i = 0;
+    nseg = 0;
+    theta_prev = M_2PI;
+    pos_a = pts_a->next;	/* skip over lower cusp of heart ( at pts_a ) */
+    pos_b = pts_b->next;
+    while (pos_a) {
+	VSCALE(A, Au, pos_a->p[Y]);		/* semimajor axis */
+	VSCALE(B, Bu, pos_b->p[Y] * 0.80);	/* semiminor axis */
+	VJOIN1(V, hip->v, pos_a->p[Z], Cu);
+
+	VSET(p1, 0.00, pos_b->p[Y], 0.00);
+	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
+	if (nseg == 0) {
+	    nseg = (int)(M_2PI / theta_new) + 1;
+	    pts_dbl[i] = 0;
+	} else if (theta_new < theta_prev) {
+	    nseg *= 2;
+	    pts_dbl[i] = 1;
+	} else
+	    pts_dbl[i] = 0;
+	theta_prev = theta_new;
+
+	ellipses[i] = (fastf_t *)bu_malloc(3*(nseg+1)*sizeof(fastf_t),"pts ell");
+	rt_ell(ellipses[i], V, A, B, nseg);
+
+	i++;
+	pos_a = pos_a->next;
+	pos_b = pos_b->next;
+    }
+
+    /* Draw the top (largest) ellipse in the XY plane */
+    RT_ADD_VLIST(vhead,
+		 &ellipses[nell-1][(nseg-1)*ELEMENTS_PER_VECT],
+		 BN_VLIST_LINE_MOVE);
+    for (i = 0; i < nseg; i++) {
+	RT_ADD_VLIST(vhead,
+		     &ellipses[nell-1][i*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+    }
+
+    /* Connect ellipses skipping the top (largest) ellipse which is at index nell - 1 */
+    for (i = nell-2; i >= 0; i--) {
+	ellipse_above = i + 1;
+	ellipse_below = i;
+	if (pts_dbl[ellipse_above])
+	    nseg /= 2;	/* Number of line segments in 'ellipse_below' ellipse is halved if points double */
+
+	/* Draw the current ellipse */
+	RT_ADD_VLIST(vhead,
+		     &ellipses[ellipse_below][(nseg-1)*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	for (j = 0; j < nseg; j++) {
+	    RT_ADD_VLIST(vhead,
+			 &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
+			 BN_VLIST_LINE_DRAW);
+	}
+
+    /* 
+     * Make connections between ellipses
+     * This for repitition statement draws connectors between
+     * the nell-1 ellipses drawn above
+     */
+
+    for (j = 1; j < nseg; j++) {
+	if (pts_dbl[ellipse_above])
+	    jj = j + j;
+	else
+	    jj = j;
+	RT_ADD_VLIST(vhead,
+		     &ellipses[ellipse_below][j*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &ellipses[ellipse_above][jj*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+	}
+    }
+
+    VSET(lower_cusp,       0, 0, hip->zdir[Z] * -1.00);
+    VADD2(Work, hip->v, lower_cusp);
+    for (i = 0; i < nseg; i++) {
+	/* Draw connector */
+	RT_ADD_VLIST(vhead, Work, BN_VLIST_LINE_MOVE);
+	RT_ADD_VLIST(vhead,
+		     &ellipses[0][i*ELEMENTS_PER_VECT],
+		     BN_VLIST_LINE_DRAW);
+    } 
+
+    /* free memory */
+    for (i = 0; i < nell; i++) {
+	bu_free((char *)ellipses[i], "pts ell");
+    }
+    bu_free((char *)ellipses, "fastf_t ell[]");
+    bu_free((char *)pts_dbl, "dbl ints");
+
     return 0;
 }
 

@@ -30,7 +30,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>fast4-g</emphasis>
+<para><command>fast4-g</command>
 converts the specified
 <emphasis remap='I'>file.fastgen4</emphasis>
 to a BRL-CAD
@@ -72,14 +72,14 @@ file.</para>
 option allows the user to specify a restricted set of components to process from the
 input file. The
 <emphasis remap='I'>id_list</emphasis>
-may be a comma separated list of ident numbers and ranges. For example,
+may be a comma-separated list of ident numbers and ranges. For example,
 <option>-c 3002,5678,9213,1002-1100</option>
 will convert only the regions with idents of 3002,5678,9213, and everything from 1002 through 1100.</para>
 
 <para>If you have a FASTGEN2 or FASTGEN3 format file, they can be converted by processing them with
-<emphasis remap='I'>rpatch</emphasis>
+<command>rpatch</command>
 and then providing the resulting rpatch file to the
-<emphasis remap='I'>patch-g</emphasis>
+<command>patch-g</command>
 converter.  See their respective manual pages for more information.</para>
 
 <para>The
@@ -87,24 +87,21 @@ converter.  See their respective manual pages for more information.</para>
 file is expected to be in the FASTGEN 4.1 format as defined in the
 FASTGEN 4.1 User Manual.</para>
 
-<para><emphasis remap='I'>CCONE1, CCONE2,</emphasis>
+<para><emphasis remap='I'>CCONE1</emphasis>, <emphasis remap='I'>CCONE2</emphasis>,
 and
 <emphasis remap='I'>CCONE3</emphasis>
 elements are converted to BRL-CAD truncated right cylinders
-<emphasis remap='I'>(TRC). CHEX2</emphasis>
+(<emphasis remap='I'>TRC</emphasis>). <emphasis remap='I'>CHEX2</emphasis>
 elements are converted to BRL-CAD arbitrary convex polyhedrons
-<emphasis remap='I'>(ARB8).</emphasis>
-<emphasis remap='I'>CLINE</emphasis>
+(<emphasis remap='I'>ARB8</emphasis>). <emphasis remap='I'>CLINE</emphasis>
 elements are converted to BRL-CAD cline solids.
-<emphasis remap='I'>CQUAD</emphasis>
-,
-<emphasis remap='I'>CTRI</emphasis>
-, and
+<emphasis remap='I'>CQUAD</emphasis>,
+<emphasis remap='I'>CTRI</emphasis>, and
 <emphasis remap='I'>CHEX1</emphasis>
 elements are converted to faces of a BRL-CAD BOT (Bag Of Triangles).
 <emphasis remap='I'>CSPHERE</emphasis>
 elements are converted to BRL-CAD sphere
-<emphasis remap='I'>(SPH)</emphasis>
+(<emphasis remap='I'>SPH</emphasis>)
 solids. BRL-CAD region ident numbers are assigned by combining the
 FASTGEN4 group and component numbers:</para>
 
@@ -119,7 +116,7 @@ elements using an algorithm to create unique BRL-CAD names.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>fast4-g sample.fastgen4 sample.g</emphasis>
+$ fast4-g <emphasis remap='I'>sample.fastgen4 sample.g</emphasis>
 </synopsis>
 </refsect1>
 

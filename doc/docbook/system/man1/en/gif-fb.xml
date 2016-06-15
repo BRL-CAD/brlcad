@@ -119,7 +119,7 @@ can achieve animation effects.</para>
 <refsection xml:id="example"><title>EXAMPLE</title>
 <para>The following is a typical invocation:</para>
 <literallayout remap="RS" class="normal">
-<option>gif-fb</option> image.gif
+gif-fb image.gif
 </literallayout> <!-- remap='RE' -->
 </refsection>
 

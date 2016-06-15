@@ -1048,23 +1048,17 @@ wgl_clear(FBIO *ifp, unsigned char *pp)
 
     if (CJDEBUG) printf("entering wgl_clear\n");
 
-    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
-	fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
-    }
-
     /* Set clear colors */
     if (pp != RGBPIXEL_NULL) {
 	bg.alpha = 0;
 	bg.red   = (pp)[RED];
 	bg.green = (pp)[GRN];
 	bg.blue  = (pp)[BLU];
-	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
     } else {
 	bg.alpha = 0;
 	bg.red   = 0;
 	bg.green = 0;
 	bg.blue  = 0;
-	glClearColor(0, 0, 0, 0);
     }
 
     /* Flood rectangle in shared memory */
@@ -1076,31 +1070,38 @@ wgl_clear(FBIO *ifp, unsigned char *pp)
 	}
     }
 
-
-    /* Update screen */
     if (WGL(ifp)->use_ext_ctrl) {
-	glClear(GL_COLOR_BUFFER_BIT);
-    } else {
-	if (WGL(ifp)->copy_flag) {
-	    /* COPY mode: clear both buffers */
-	    if (WGL(ifp)->front_flag) {
-		glDrawBuffer(GL_BACK);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawBuffer(GL_FRONT);
-		glClear(GL_COLOR_BUFFER_BIT);
-	    } else {
-		glDrawBuffer(GL_FRONT);
-		glClear(GL_COLOR_BUFFER_BIT);
-		glDrawBuffer(GL_BACK);
-		glClear(GL_COLOR_BUFFER_BIT);
-	    }
-	} else {
-	    glClear(GL_COLOR_BUFFER_BIT);
-	    if (SGI(ifp)->mi_doublebuffer) {
-		SwapBuffers(WGL(ifp)->hdc);
-	    }
-	}
+	return 0;
+    }
 
+    if (wglMakeCurrent(WGL(ifp)->hdc, WGL(ifp)->glxc)==False) {
+	fb_log("Warning, wgl_clear: wglMakeCurrent unsuccessful.\n");
+    }
+
+    if (pp != RGBPIXEL_NULL) {
+	glClearColor(pp[RED]/255.0, pp[GRN]/255.0, pp[BLU]/255.0, 0.0);
+    } else {
+	glClearColor(0, 0, 0, 0);
+    }
+
+    if (WGL(ifp)->copy_flag) {
+	/* COPY mode: clear both buffers */
+	if (WGL(ifp)->front_flag) {
+	    glDrawBuffer(GL_BACK);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	    glDrawBuffer(GL_FRONT);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	} else {
+	    glDrawBuffer(GL_FRONT);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	    glDrawBuffer(GL_BACK);
+	    glClear(GL_COLOR_BUFFER_BIT);
+	}
+    } else {
+	glClear(GL_COLOR_BUFFER_BIT);
+	if (SGI(ifp)->mi_doublebuffer) {
+	    SwapBuffers(WGL(ifp)->hdc);
+	}
     }
 
     /* unattach context for other threads to use */
@@ -2093,7 +2094,10 @@ wgl_refresh(FBIO *ifp,
     glPopMatrix();
     glMatrixMode(mm);
 
-    glFlush();
+    if (!WGL(ifp)->use_ext_ctrl) {
+	glFlush();
+    }
+
     return 0;
 }
 

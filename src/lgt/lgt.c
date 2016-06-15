@@ -77,7 +77,6 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 1;
     else
 	RTG.rtg_parallel = 0;
-    bu_semaphore_init(RT_SEM_LAST);
 
     init_Lgts();
 

@@ -76,14 +76,17 @@ ShapeDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
 	    SdaiProduct_definition_shape *pds = *v;
 	    type = ShapeDefinition::PRODUCT_DEFINITION_SHAPE;
 	    definition = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, (SDAI_Application_instance *)pds));
+	    if (!definition) return false;
 	} else if (v->IsShape_aspect()) {
 	    SdaiShape_aspect *sa = *v;
 	    type = ShapeDefinition::SHAPE_ASPECT;
 	    definition = dynamic_cast<ShapeAspect *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sa));
+	    if (!definition) return false;
 	} else if (v->IsShape_aspect_relationship()) {
 	    SdaiShape_aspect_relationship *sar = *v;
 	    type = ShapeDefinition::SHAPE_ASPECT_RELATIONSHIP;
 	    definition = dynamic_cast<ShapeAspectRelationship *>(Factory::CreateObject(sw, (SDAI_Application_instance *)sar));
+	    if (!definition) return false;
 	} else {
 	    type = ShapeDefinition::UNKNOWN;
 	    definition = NULL;

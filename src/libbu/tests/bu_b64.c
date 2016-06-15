@@ -34,23 +34,22 @@
  *
  */
 int
-test_encode(const char *str)
+test_encode(const signed char *str)
 {
     int status = 0;
     int decoded_size = 0;
-    char *encoded = NULL;
-    char *decoded = NULL;
+    signed char *encoded = NULL;
+    signed char *decoded = NULL;
 
     encoded = bu_b64_encode(str);
     decoded_size = bu_b64_decode(&decoded, encoded);
 
-    if (BU_STR_EQUAL(str, decoded) && decoded_size == (int)strlen(str)) {
+    if (BU_STR_EQUAL((const char *)str, (const char *)decoded) && decoded_size == (int)strlen((const char *)str)) {
 	printf("%s -> %s -> %s [PASS]\n", str, encoded, decoded);
     } else {
 	printf("%s -> %s -> %s [FAIL]\n", str, encoded, decoded);
 	status = 1;
     }
-
     bu_free(encoded, "free encoded");
     bu_free(decoded, "free decoded");
 
@@ -64,8 +63,8 @@ main(int ac, char *av[])
     if (ac != 1)
 	fprintf(stderr,"Usage: %s \n", av[0]);
 
-    test_encode("hello world!");
-    test_encode("!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
+    test_encode((const signed char *)"hello world!");
+    test_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
 
     return 1;
 }

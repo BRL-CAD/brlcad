@@ -29,7 +29,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-euclid</emphasis>
+<para><command>g-euclid</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -59,7 +59,7 @@ option specifies the name of the file to receive the output
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-euclid -o sample.euclid sample.g sample_object</emphasis>
+$ g-euclid -o <emphasis remap='I'>sample.euclid sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 

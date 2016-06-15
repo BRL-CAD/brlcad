@@ -59,6 +59,7 @@ Parabola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Conic::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Conic." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -68,6 +69,7 @@ Parabola::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     focal_dist = step->getRealAttribute(sse, "focal_dist");
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

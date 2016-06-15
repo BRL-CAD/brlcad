@@ -67,7 +67,7 @@ print_matrix(char *rb_namep, mat_t t)
     }
 
     bu_vls_strcat(&buffer, "-------------------------------------------------------\n");
-    bu_log("%s", bu_vls_addr(&buffer));
+    bu_log("%s\n", bu_vls_addr(&buffer));
     bu_vls_free(&buffer);
 }
 
@@ -89,7 +89,7 @@ print_manifold_list(struct rigid_body *rb)
     for (i = 0; i < rb->num_bt_manifolds; i++) {
 
 	bu_log("--Manifold %d between %s & %s has %d contacts--\n",
-		   i+1,
+	       i+1,
 	       rb->bt_manifold[i].rbA->rb_namep,
 	       rb->bt_manifold[i].rbB->rb_namep,
 	       rb->bt_manifold[i].num_contacts);
@@ -114,15 +114,15 @@ print_command(char* cmd_args[], int argc)
 	sprintf(buffer, "%s %s", buffer, cmd_args[i]);
     }
 
-    bu_log(buffer);
+    bu_log("%s\n", buffer);
 }
 
 
 HIDDEN int
 find_solid(struct db_i *dbip,
-	 struct rt_comb_internal *comb,
-	 union tree *comb_leaf,
-	 void *object)
+	   struct rt_comb_internal *comb,
+	   union tree *comb_leaf,
+	   void *object)
 {
     char *obj_name;
 
@@ -146,9 +146,9 @@ check_tree_funcleaf(
     int (*leaf_func)(),
     void *user_ptr1)
 {
-	int rv = NOT_FOUND;
+    int rv = NOT_FOUND;
 
-	RT_CK_DBI(dbip);
+    RT_CK_DBI(dbip);
 
     if (!comb_tree)
 	return NOT_FOUND;
@@ -185,17 +185,17 @@ sim_kill(struct ged *gedp, char *name)
 
     /* Check if the duplicate already exists, and kill it if so */
     if (db_lookup(gedp->ged_wdbp->dbip, name, LOOKUP_QUIET) != RT_DIR_NULL) {
-		/* bu_log("kill: WARNING \"%s\" exists, deleting it\n", name); */
-		cmd_args[0] = bu_strdup("kill");
-		cmd_args[1] = bu_strdup(name);
-		cmd_args[2] = (char *)0;
+	/* bu_log("kill: WARNING \"%s\" exists, deleting it\n", name); */
+	cmd_args[0] = bu_strdup("kill");
+	cmd_args[1] = bu_strdup(name);
+	cmd_args[2] = (char *)0;
 
-		if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
-			bu_log("sim_kill: ERROR Could not delete existing \"%s\"\n", name);
-			return GED_ERROR;
-		}
+	if (ged_kill(gedp, argc, (const char **)cmd_args) != GED_OK) {
+	    bu_log("sim_kill: ERROR Could not delete existing \"%s\"\n", name);
+	    return GED_ERROR;
+	}
 
-		bu_free_array(argc, cmd_args, "sim_kill: free cmd_args");
+	bu_free_array(argc, cmd_args, "sim_kill: free cmd_args");
     }
 
     return GED_OK;
@@ -288,17 +288,26 @@ line(struct ged *gedp, char* name, point_t from, point_t to,
     cmd_args[5] = bu_strdup("1");
     cmd_args[6] = bu_strdup("1");
 
-    sprintf(buffer_str, "%f", from[0]); cmd_args[7] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[1]); cmd_args[8] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[2]); cmd_args[9] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[0]);
+    cmd_args[7] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[1]);
+    cmd_args[8] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[2]);
+    cmd_args[9] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", to[0]); cmd_args[10] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[1]); cmd_args[11] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[2]); cmd_args[12] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[0]);
+    cmd_args[10] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[1]);
+    cmd_args[11] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[2]);
+    cmd_args[12] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", from[0]); cmd_args[13] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[1]); cmd_args[14] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[2]); cmd_args[15] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[0]);
+    cmd_args[13] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[1]);
+    cmd_args[14] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[2]);
+    cmd_args[15] = bu_strdup(buffer_str);
 
     cmd_args[16] = bu_strdup("0");
     cmd_args[17] = bu_strdup("1");
@@ -363,17 +372,26 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     cmd_args[5] = bu_strdup("1");
     cmd_args[6] = bu_strdup("1");
 
-    sprintf(buffer_str, "%f", from[0]); cmd_args[7] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[1]); cmd_args[8] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[2]); cmd_args[9] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[0]);
+    cmd_args[7] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[1]);
+    cmd_args[8] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[2]);
+    cmd_args[9] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", to[0]); cmd_args[10] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[1]); cmd_args[11] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[2]); cmd_args[12] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[0]);
+    cmd_args[10] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[1]);
+    cmd_args[11] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[2]);
+    cmd_args[12] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", from[0]); cmd_args[13] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[1]); cmd_args[14] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", from[2]); cmd_args[15] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[0]);
+    cmd_args[13] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[1]);
+    cmd_args[14] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", from[2]);
+    cmd_args[15] = bu_strdup(buffer_str);
 
     cmd_args[16] = bu_strdup("0");
     cmd_args[17] = bu_strdup("1");
@@ -404,17 +422,25 @@ arrow(struct ged *gedp, char* name, point_t from, point_t to)
     cmd_args[1] = bu_strdup(prefixed_arrow_head);
     cmd_args[2] = bu_strdup("trc");
 
-    sprintf(buffer_str, "%f", to[0]); cmd_args[3] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[1]); cmd_args[4] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", to[2]); cmd_args[5] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[0]);
+    cmd_args[3] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[1]);
+    cmd_args[4] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", to[2]);
+    cmd_args[5] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", v[0]); cmd_args[6] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", v[1]); cmd_args[7] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", v[2]); cmd_args[8] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", v[0]);
+    cmd_args[6] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", v[1]);
+    cmd_args[7] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", v[2]);
+    cmd_args[8] = bu_strdup(buffer_str);
 
 
-    sprintf(buffer_str, "%f", ARROW_BASE_RADIUS); cmd_args[9] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", ARROW_TIP_RADIUS);  cmd_args[10] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", ARROW_BASE_RADIUS);
+    cmd_args[9] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", ARROW_TIP_RADIUS);
+    cmd_args[10] = bu_strdup(buffer_str);
 
     cmd_args[11] = (char *)0;
 
@@ -451,9 +477,12 @@ apply_material(struct ged *gedp,
     cmd_args[1] = bu_strdup(comb);
     cmd_args[2] = bu_strdup(material);
 
-    sprintf(buffer_str, "%d", r); cmd_args[3] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%d", g); cmd_args[4] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%d", b); cmd_args[5] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%d", r);
+    cmd_args[3] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%d", g);
+    cmd_args[4] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%d", b);
+    cmd_args[5] = bu_strdup(buffer_str);
 
     cmd_args[6] = bu_strdup("0");
     cmd_args[7] = (char *)0;
@@ -541,14 +570,20 @@ make_rpp(struct ged *gedp, vect_t min, vect_t max, char* name)
     cmd_args[1] = bu_strdup(name);
     cmd_args[2] = bu_strdup("rpp");
 
-    sprintf(buffer_str, "%f", min[0]); cmd_args[3] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", max[0]); cmd_args[4] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", min[0]);
+    cmd_args[3] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[0]);
+    cmd_args[4] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", min[1]); cmd_args[5] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", max[1]); cmd_args[6] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", min[1]);
+    cmd_args[5] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[1]);
+    cmd_args[6] = bu_strdup(buffer_str);
 
-    sprintf(buffer_str, "%f", min[2]); cmd_args[7] = bu_strdup(buffer_str);
-    sprintf(buffer_str, "%f", max[2]); cmd_args[8] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", min[2]);
+    cmd_args[7] = bu_strdup(buffer_str);
+    sprintf(buffer_str, "%f", max[2]);
+    cmd_args[8] = bu_strdup(buffer_str);
 
 
     cmd_args[9] = (char *)0;
@@ -612,82 +647,106 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[3] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[4] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[5] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[3] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[4] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[5] = bu_strdup(buffer);
 
     /* v2 */
     v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[6] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[7] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[8] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[6] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[7] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[8] = bu_strdup(buffer);
 
     /* v3 */
     v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[9]  = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[10] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[11] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[9]  = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[10] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[11] = bu_strdup(buffer);
 
     /* v4 */
     v[0] = current_node->btbb_center[0] + current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[12] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[13] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[14] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[12] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[13] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[14] = bu_strdup(buffer);
 
     /* Back face vertices */
     /* v5 */
     v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[15] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[16] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[17] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[15] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[16] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[17] = bu_strdup(buffer);
 
     /* v6 */
     v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] + current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[18] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[19] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[20] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[18] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[19] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[20] = bu_strdup(buffer);
 
     /* v7 */
     v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] + current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[21] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[22] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[23] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[21] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[22] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[23] = bu_strdup(buffer);
 
     /* v8 */
     v[0] = current_node->btbb_center[0] - current_node->btbb_dims[0]/2;
     v[1] = current_node->btbb_center[1] - current_node->btbb_dims[1]/2;
     v[2] = current_node->btbb_center[2] - current_node->btbb_dims[2]/2;
-    sprintf(buffer, "%f", v[0]); cmd_args[24] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[1]); cmd_args[25] = bu_strdup(buffer);
-    sprintf(buffer, "%f", v[2]); cmd_args[26] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[0]);
+    cmd_args[24] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[1]);
+    cmd_args[25] = bu_strdup(buffer);
+    sprintf(buffer, "%f", v[2]);
+    cmd_args[26] = bu_strdup(buffer);
 
-    bu_log("reached here");
+    bu_log("reached here\n");
 
     /* Finally make the bb primitive, phew ! */
     cmd_args[27] = (char *)0;
     rv = ged_in(gedp, argc, (const char **)cmd_args);
     if (rv != GED_OK) {
-	    bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
+	bu_log("insertAABB: WARNING Could not draw bounding box for \"%s\"\n",
 	       current_node->rb_namep);
     }
 
-    bu_log("after command");
+    bu_log("after command\n");
 
     bu_free_array(argc, cmd_args, "make_rpp: free cmd_args");
 
-    bu_log("after free");
+    bu_log("after free\n");
 
     /* Make the region for the bb primitive */
     add_to_comb(gedp, prefixed_reg_name, prefixed_name);
@@ -701,7 +760,7 @@ insert_AABB(struct ged *gedp, struct simulation_params *sim_params, struct rigid
     bu_vls_free(&buffer1);
     bu_vls_free(&buffer2);
 
-    bu_log("reached out");
+    bu_log("reached out\n");
 
     return GED_OK;
 
@@ -718,9 +777,9 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     char *prefix_reg = "mf_reg_";
     char *prefix_normal = "normal_";
     struct bu_vls name = BU_VLS_INIT_ZERO,
-	prefixed_name = BU_VLS_INIT_ZERO,
-	prefixed_reg_name = BU_VLS_INIT_ZERO,
-	prefixed_normal_name = BU_VLS_INIT_ZERO;
+			  prefixed_name = BU_VLS_INIT_ZERO,
+			  prefixed_reg_name = BU_VLS_INIT_ZERO,
+			  prefixed_normal_name = BU_VLS_INIT_ZERO;
     vect_t scaled_normal = VINIT_ZERO;
     point_t from = VINIT_ZERO;
     point_t to = VINIT_ZERO;
@@ -728,7 +787,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
     for (i = 0; i < rb->num_bt_manifolds; i++) {
 
 
-	if (rb->bt_manifold[i].num_contacts > 0){
+	if (rb->bt_manifold[i].num_contacts > 0) {
 
 	    /* Prepare prefixed bounding box primitive name */
 	    bu_vls_sprintf(&name, "%s_%s", rb->bt_manifold[i].rbA->rb_namep, rb->bt_manifold[i].rbB->rb_namep);
@@ -765,7 +824,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 
 	    switch (rb->bt_manifold[i].num_contacts) {
 		case 1:
-		    bu_log("1 contact got, no manifold drawn");
+		    bu_log("1 contact got, no manifold drawn\n");
 		    break;
 
 		case 2:
@@ -806,7 +865,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		case 3:
-		    bu_log("3 contacts got, no manifold drawn");
+		    bu_log("3 contacts got, no manifold drawn\n");
 		    break;
 
 		case 4:
@@ -835,7 +894,7 @@ insert_manifolds(struct ged *gedp, struct simulation_params *sim_params, struct 
 		    break;
 
 		default:
-		    bu_log("%d contacts got, no manifold drawn", rb->bt_manifold[i].num_contacts);
+		    bu_log("%d contacts got, no manifold drawn\n", rb->bt_manifold[i].num_contacts);
 		    cmd_args[2] = (char *)0;
 		    argc = 2;
 		    break;

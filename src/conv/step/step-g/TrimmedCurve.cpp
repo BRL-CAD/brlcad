@@ -86,7 +86,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedCurve::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedCurve." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -97,15 +97,17 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "basis_curve");
 	if (entity) {
 	    basis_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
-	} else {
+	}
+	if (!entity || !basis_curve) {
 	    std::cerr << CLASSNAME << ": Error loading entity attribute 'basis_curve'." << std::endl;
-	    return false;
+	    goto step_error;
 	}
     }
     if (trim_1.empty()) {
 	STEPattribute *attr = step->getAttribute(sse, "trim_1");
 	if (attr) {
 	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
 	    while (sn != NULL) {
@@ -115,7 +117,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
-		    return false;
+		    goto step_error;
 		}
 		trim_1.push_back(aTS);
 		sn = static_cast<SelectNode *>(sn->NextNode());
@@ -126,6 +128,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	STEPattribute *attr = step->getAttribute(sse, "trim_2");
 	if (attr) {
 	    SelectAggregate *sa = static_cast<SelectAggregate *>(attr->ptr.a);
+	    if (!sa) goto step_error;
 	    SelectNode *sn = static_cast<SelectNode *>(sa->GetHead());
 	    SDAI_Select *p;
 	    while (sn != NULL) {
@@ -135,7 +138,7 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (p && !aTS->Load(step, p)) {
 		    std::cout << CLASSNAME << ":Error loading TrimmingSelect from list." << std::endl;
 		    delete aTS;
-		    return false;
+		    goto step_error;
 		}
 		trim_2.push_back(aTS);
 		sn = static_cast<SelectNode *>(sn->NextNode());
@@ -146,7 +149,11 @@ TrimmedCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sense_agreement = step->getBooleanAttribute(sse, "sense_agreement");
     master_representation = (Trimming_preference)step->getEnumAttribute(sse, "master_representation");
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 const double *

@@ -83,6 +83,7 @@ CylindricalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ElementarySurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -91,6 +92,8 @@ CylindricalSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     radius = step->getRealAttribute(sse, "radius");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

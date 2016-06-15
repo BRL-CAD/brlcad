@@ -749,7 +749,6 @@ Rt_Init(Tcl_Interp *interp)
     if (!BU_LIST_IS_INITIALIZED(&RTG.rtg_vlfree)) {
 	if (bu_avail_cpus() > 1) {
 	    RTG.rtg_parallel = 1;
-	    bu_semaphore_init(RT_SEM_LAST);
 	}
 
 	/* initialize RT's global state */

@@ -23,7 +23,7 @@
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
 <para><command>ir-X</command> is an interactive program that reads the information in the file
-created by showtherm and then draws an image on the screen.  The color
+created by <command>showtherm</command> and then draws an image on the screen.  The color
 of each pixel is based on the temperature of the region that pixel
 belongs to.</para>
 

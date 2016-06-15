@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>png-fb</command>
-    <arg choice="opt" rep="norepeat">-Hhicvz1 </arg>
+    <arg choice="opt" rep="norepeat">-Hicvz1 </arg>
     <arg choice="opt" rep="norepeat">-gscreen_gamma </arg>
     <arg choice="opt" rep="norepeat">-Fframebuffer </arg>
     <arg choice="opt" rep="norepeat">-m#lines </arg>
@@ -33,7 +33,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Png-fb</emphasis>
+<para><command>png-fb</command>
 reads a
 <emphasis remap="I">PNG</emphasis>
 format file from the named file, or from
@@ -47,9 +47,8 @@ by using the
 <option>-F</option>
 flag.</para>
 
-<para>By default, the requested framebuffer size, is assumed to be 512x512 pixels.
-<option>-h</option>
-flag changes the size to 1024x1024.</para>
+<para>By default, the requested framebuffer size is assumed to be 512x512 pixels.
+</para>
 
 <para>The
 <option>-g</option>

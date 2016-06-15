@@ -25,16 +25,16 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Ap-pix</emphasis>
+<para><command>ap-pix</command>
 converts an
-<emphasis remap='I'>Applicon</emphasis>
+Applicon
 drum plotter image file into a
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file.</para>
 
 <para>The
-<emphasis remap='I'>Applicon</emphasis>
-file is assumed to consist of a number lines each 3456 bits long, the
+Applicon
+file is assumed to consist of a number lines each 3456 bits long; the
 resulting
 <emphasis remap='I'>pix</emphasis>
 file thus has scanlines of 3456 pixels.</para>

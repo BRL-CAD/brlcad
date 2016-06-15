@@ -188,6 +188,7 @@ SiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     // load base class attributes
     if (!NamedUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -204,6 +205,8 @@ SiUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (name > Si_unit_name_unset) {
 	name = Si_unit_name_unset;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

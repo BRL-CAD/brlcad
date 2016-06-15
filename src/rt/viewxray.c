@@ -173,16 +173,8 @@ view_eol(struct application *ap)
     if ( lightmodel == LGT_BW ) {
 
 	if (bif != NULL) {
-	    if (RTG.rtg_parallel) {
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    }
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    /* TODO : Add double type data to maintain resolution */
 	    icv_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if (RTG.rtg_parallel) {
-		bu_semaphore_release( BU_SEM_SYSCALL );
-	    }
 	} else if ( outfp != NULL ) {
 	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );

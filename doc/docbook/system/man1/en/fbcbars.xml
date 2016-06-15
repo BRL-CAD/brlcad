@@ -62,7 +62,7 @@ equal intensity.
 At this point, all the other color bars will display the correct chroma.</para>
 
 <para>The environment variable FB_FILE specifies
-the current framebuffer, see
+the current framebuffer; see
 <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.
 Alternatively, the framebuffer may be explicitly specified
 by using the
@@ -84,9 +84,8 @@ sets both the height and width to the size given.</para>
 </refsection>
 
 <refsection xml:id="inspirations"><title>INSPIRATIONS</title>
-<para>Mike Pique, University of North Carolina
-<!-- .br -->
-Doris Kochanek, National Film Board of Canada</para>
+<para>Mike Pique, University of North Carolina</para>
+<para>Doris Kochanek, National Film Board of Canada</para>
 </refsection>
 
 <refsection xml:id="author"><title>AUTHOR</title>

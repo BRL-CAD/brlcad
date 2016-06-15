@@ -244,15 +244,15 @@ main(int argc, char **argv)
     BU_GET(state, struct diff_state);
     diff_state_init(state);
 
-    while ((c = bu_getopt(argc, argv, "aC:cF:M:rt:uv:xh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "amF:M:dt:uv:xh?")) != -1) {
 	switch (c) {
 	    case 'a':
 		state->return_added = 1;
 		break;
-	    case 'r':
+	    case 'd':
 		state->return_removed = 1;
 		break;
-	    case 'c':
+	    case 'm':
 		state->return_changed = 1;
 		break;
 	    case 'u':
@@ -280,17 +280,12 @@ main(int argc, char **argv)
 		    bu_exit (1, NULL);
 		}
 		break;
-	    case 'C':   /* conflict reporting (1 is default) */
-		if (sscanf(bu_optarg, "%d", &(state->return_conflicts)) != 1) {
-		    bu_log("Invalid verbosity specification: '%s'\n", bu_optarg);
-		    gdiff_usage(diff_prog_name);
-		    bu_exit (1, NULL);
-		}
-		break;
 	    default:
 		gdiff_usage(diff_prog_name);
 	}
     }
+
+    state->return_conflicts = 1;
 
     if (state->return_added == -1 && state->return_removed == -1 && state->return_changed == -1 && state->return_unchanged == 0) {
 	state->return_added = 1; state->return_removed = 1; state->return_changed = 1;

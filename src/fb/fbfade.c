@@ -28,7 +28,7 @@
  *
  * Options:
  *
- * "-h" assumes 1024x1024 default input size instead of 512x512
+ * "-H" assumes 1024x1024 default input size instead of 512x512
  *
  * "-f in_fb_file" reads from the specified frame buffer file instead
  * of assuming constant black ("fade out") value
@@ -72,7 +72,7 @@
 
 typedef int bool_t;
 
-static bool_t hires = 0;		/* set for 1Kx1K; clear for 512x512 */
+static bool_t hires = 0;		/* set for 1024x1024; clear for 512x512 */
 static char *in_fb_file = NULL;		/* input image name */
 static char *out_fb_file = NULL;	/* output frame buffer name */
 static FBIO *fbp = FBIO_NULL;		/* libfb input/output handle */

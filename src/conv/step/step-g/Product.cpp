@@ -95,6 +95,7 @@ bool Product::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'frame_of_reference'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -102,6 +103,8 @@ bool Product::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	l->clear();
 	delete l;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

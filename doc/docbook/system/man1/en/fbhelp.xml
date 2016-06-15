@@ -22,22 +22,22 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbhelp</emphasis>
+<para><command>fbhelp</command>
 displays information about the selection of frame buffer devices
 available to the
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 frame buffer library and the whole family of
-<emphasis remap="B">fb∗</emphasis>
+<emphasis remap="B">fb</emphasis>
 programs in the BRL-CAD package, for the machine
 <command>fbhelp</command>
 is run on.</para>
 
-<para>The display device used by a program is taken first from a
-<option>-F </option><replaceable>framebuffer</replaceable>
+<para>The display device used by a program is taken first from the
+<option>-F </option><replaceable>framebuffer</replaceable>
 option if given, else from the environment variable
-<emphasis remap="SM">FB_FILE,</emphasis>
+<emphasis remap="SM">FB_FILE</emphasis>,
 or finally from whatever the default display is for that system.
-<emphasis remap="I">Fbhelp</emphasis>
+<command>fbhelp</command>
 will tell you what the available choices of frame buffers are,
 as well as detailed information about any options the currently
 selected device may have.</para>

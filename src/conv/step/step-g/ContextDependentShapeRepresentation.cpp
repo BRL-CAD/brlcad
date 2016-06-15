@@ -207,6 +207,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aRRWT);
 		    if (!aRRWT->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading RepresentationRelationshipWithTransformation" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -218,6 +219,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aSRR);
 		    if (!aSRR->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -229,6 +231,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aRR);
 		    if (!aRR->Load(step, sub_entity)) {
 			std::cout << CLASSNAME << ":Error loading RepresentationRelationship" << std::endl;
+			sw->entity_status[id] = STEP_LOAD_ERROR;
 			return false;
 		    }
 		}
@@ -238,6 +241,7 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 		    representation_relation.push_back(aSRR);
 		} else {
 		    std::cout << CLASSNAME << ":Error loading ShapeRepresentationRelationship" << std::endl;
+		    sw->entity_status[id] = STEP_LOAD_ERROR;
 		    return false;
 		}
 	    }
@@ -251,9 +255,12 @@ bool ContextDependentShapeRepresentation::Load(STEPWrapper *sw, SDAI_Application
 	    represented_product_relation = dynamic_cast<ProductDefinitionShape *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'represented_product_relation'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

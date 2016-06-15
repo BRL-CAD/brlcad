@@ -26,12 +26,12 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rt_Bot_Faces</emphasis>
+<para><command>rt_bot_faces</command>
 operates on the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
 <emphasis remap='I'>model.g</emphasis>
-and fires rays (the same as RT) keeping a list of all the first-hit BOT facets.</para>
+and fires rays (the same as <command>rt</command>), keeping a list of all the first-hit BOT facets.</para>
 
 <para>The orientation of the rays to be fired may be specified by
 the
@@ -64,14 +64,14 @@ conflict was not avoided.</para>
 <para>The following options are recognized.</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-s#</option></term>
+  <term><option>-s #</option></term>
   <listitem>
 <para>Number of rays to fire in X and Y directions (square grid).
 Default is 512 (512x512).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-a#</option></term>
+  <term><option>-a #</option></term>
   <listitem>
 <para>Select azimuth in degrees.  Used with
 <option>-e</option>
@@ -80,7 +80,7 @@ and conflicts with
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-e#</option></term>
+  <term><option>-e #</option></term>
   <listitem>
 <para>Select elevation in degrees.  Used with
 <option>-a</option>
@@ -99,7 +99,7 @@ and
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-g#</option></term>
+  <term><option>-g #</option></term>
   <listitem>
 <para>Select grid cell width.  Do not use with the
 <option>-s#</option>
@@ -107,7 +107,7 @@ option.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-G#</option></term>
+  <term><option>-G #</option></term>
   <listitem>
 <para>Select grid cell height.  If <emphasis remap='I'>not</emphasis> specified, cell height equals
 cell width.  Do not use with the
@@ -148,7 +148,7 @@ and the output file is overwritten with the accumulated data.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-x#</option></term>
+  <term><option>-x #</option></term>
   <listitem>
 <para>Set librt debug flags to (hexadecimal) number.</para>
   </listitem>
@@ -195,7 +195,7 @@ will be placed in "file".</para>
 </refsect1>
 
 <refsect1 xml:id='overlap_reporting'><title>OVERLAP REPORTING</title>
-<para><emphasis remap='I'>RT_BOT_FACES</emphasis> shares overlap handling and reporting with the rest of the
+<para><command>rt_bot_faces</command> shares overlap handling and reporting with the rest of the
 <emphasis remap='I'>RT</emphasis> family of applications.  A brief description of the overlap
 reporting follows.</para>
 

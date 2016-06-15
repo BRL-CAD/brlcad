@@ -59,6 +59,7 @@ AssemblyComponentUsage::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!ProductDefinitionUsage::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::TopologicalRepresentationItem." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -67,6 +68,7 @@ AssemblyComponentUsage::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     reference_designator = step->getStringAttribute(sse, "reference_designator");
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

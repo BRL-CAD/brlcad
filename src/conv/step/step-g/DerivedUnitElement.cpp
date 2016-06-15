@@ -72,14 +72,18 @@ DerivedUnitElement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    unit = dynamic_cast<NamedUnit *>(Factory::CreateObject(sw, se));
 	    if (unit == NULL) {
 		std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"unit\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
     exponent = step->getRealAttribute(sse, "exponent");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

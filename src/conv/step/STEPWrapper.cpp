@@ -27,6 +27,9 @@
 #include <cctype>
 #include <algorithm>
 
+#include <iostream>
+#include <fstream>
+
 /* interface header */
 #include "./STEPWrapper.h"
 #include "Factory.h"
@@ -58,13 +61,68 @@ STEPWrapper::~STEPWrapper()
     dotg = NULL;
 }
 
+int
+convert_WriteBrep(
+	AdvancedBrepShapeRepresentation *aBrep,
+	BRLCADWrapper *dot_g,
+	std::string *pname,
+	std::string *name,
+	int dry_run)
+{
+    if (dry_run) return 0;
+    LocalUnits::length = aBrep->GetLengthConversionFactor();
+    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
+    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
+    ON_Brep *onBrep = aBrep->GetONBrep();
+    if (!onBrep) {
+	return 1;
+    } else {
+	ON_TextLog tl;
+
+	if (!onBrep->IsValid(&tl)) {
+	    bu_log("WARNING: %s is not valid\n", name->c_str());
+	}
+
+	//onBrep->SpSplitClosedFaces();
+	//ON_Brep *tbrep = TightenBrep(onBrep);
+
+	mat_t mat;
+	MAT_IDN(mat);
+
+	Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
+	if (axis != NULL) {
+	    //assign matrix values
+	    double translate_to[3];
+	    const double *toXaxis = axis->GetXAxis();
+	    const double *toYaxis = axis->GetYAxis();
+	    const double *toZaxis = axis->GetZAxis();
+	    mat_t rot_mat;
+
+	    VMOVE(translate_to,axis->GetOrigin());
+	    VSCALE(translate_to,translate_to,LocalUnits::length);
+
+	    MAT_IDN(rot_mat);
+	    VMOVE(&rot_mat[0], toXaxis);
+	    VMOVE(&rot_mat[4], toYaxis);
+	    VMOVE(&rot_mat[8], toZaxis);
+	    bn_mat_inv(mat, rot_mat);
+	    MAT_DELTAS_VEC(mat, translate_to);
+	}
+
+	dot_g->WriteBrep(*pname, onBrep,mat);
+
+	delete onBrep;
+
+	return 0;
+    }
+}
 
 bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 {
     MAP_OF_PRODUCT_NAME_TO_ENTITY_ID name2id_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_NAME id2name_map;
     MAP_OF_ENTITY_ID_TO_PRODUCT_ID id2productid_map;
-    MAP_OF_PRODUCT_NAME_TO_ENTITY_ID::iterator niter = name2id_map.end();
+    MAP_OF_ENTITY_ID_TO_PRODUCT_ID process_map;
 
     if (!dot_g) {
 	return false;
@@ -106,59 +164,12 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			id2name_map[product_id] = pname;
 		    }
 		    id2productid_map[aBrep->GetId()] = product_id;
-
-		    if (Verbose()) {
-			if (!pname.empty() && (pname.compare("''") != 0)) {
-			    std::cerr << std::endl << "     Generating Product - " << pname ;
-			} else {
-			    std::cerr << std::endl << "     Generating Product";
-			}
-		    }
-
+		    /* This length is used in the hierarchy build - this is how
+		     * it was getting set when the Brep build came before the
+		     * hierarchy build, so leave it for now, but should there be
+		     * a look-up in the hierarchy build instead of here?*/
 		    LocalUnits::length = aBrep->GetLengthConversionFactor();
-		    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
-		    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
-		    ON_Brep *onBrep = aBrep->GetONBrep();
-		    if (!onBrep) {
-			delete sdr;
-			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-		    } else {
-			ON_TextLog tl;
 
-			if (!onBrep->IsValid(&tl)) {
-			    bu_log("WARNING: %s is not valid\n", name.c_str());
-			}
-
-			//onBrep->SpSplitClosedFaces();
-			//ON_Brep *tbrep = TightenBrep(onBrep);
-
-			mat_t mat;
-			MAT_IDN(mat);
-
-			Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-			if (axis != NULL) {
-			    //assign matrix values
-			    double translate_to[3];
-			    const double *toXaxis = axis->GetXAxis();
-			    const double *toYaxis = axis->GetYAxis();
-			    const double *toZaxis = axis->GetZAxis();
-			    mat_t rot_mat;
-
-			    VMOVE(translate_to,axis->GetOrigin());
-			    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-			    MAT_IDN(rot_mat);
-			    VMOVE(&rot_mat[0], toXaxis);
-			    VMOVE(&rot_mat[4], toYaxis);
-			    VMOVE(&rot_mat[8], toZaxis);
-			    bn_mat_inv(mat, rot_mat);
-			    MAT_DELTAS_VEC(mat, translate_to);
-			}
-
-			dotg->WriteBrep(pname, onBrep,mat);
-
-			delete onBrep;
-		    }
 		} else { // must be an assembly
 		    if (pname.empty() || (pname.compare("''") == 0)) {
 			std::string str = "Assembly@";
@@ -232,64 +243,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				id2name_map[aBrep->GetId()] = pname;
 			    }
 			    id2productid_map[brep_id] = product_id;
-
-			    if (Verbose()) {
-				if (!pname.empty() && (pname.compare("''") != 0)) {
-				    std::cerr << std::endl << "     Generating Product - " << pname ;
-				} else {
-				    std::cerr << std::endl << "     Generating Product";
-				}
-			    }
-
+			    /* This length is used in the hierarchy build - this is how
+			     * it was getting set when the Brep build came before the
+			     * hierarchy build, so leave it for now, but should there be
+			     * a look-up in the hierarchy build instead of here?*/
 			    LocalUnits::length = aBrep->GetLengthConversionFactor();
-			    LocalUnits::planeangle = aBrep->GetPlaneAngleConversionFactor();
-			    LocalUnits::solidangle = aBrep->GetSolidAngleConversionFactor();
-			    ON_Brep *onBrep = aBrep->GetONBrep();
-			    if (!onBrep) {
-				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
-			    } else {
-				ON_TextLog tl;
 
-				if (!onBrep->IsValid(&tl)) {
-				    bu_log("WARNING: %s is not valid\n", name.c_str());
-				}
-
-				//onBrep->SpSplitClosedFaces();
-				//ON_Brep *tbrep = TightenBrep(onBrep);
-
-				mat_t mat;
-				MAT_IDN(mat);
-
-				Axis2Placement3D *axis = aBrep->GetAxis2Placement3d();
-				if (axis != NULL) {
-				    //assign matrix values
-				    double translate_to[3];
-				    const double *toXaxis = axis->GetXAxis();
-				    const double *toYaxis = axis->GetYAxis();
-				    const double *toZaxis = axis->GetZAxis();
-				    mat_t rot_mat;
-
-				    VMOVE(translate_to,axis->GetOrigin());
-				    VSCALE(translate_to,translate_to,LocalUnits::length);
-
-				    MAT_IDN(rot_mat);
-				    VMOVE(&rot_mat[0], toXaxis);
-				    VMOVE(&rot_mat[4], toYaxis);
-				    VMOVE(&rot_mat[8], toZaxis);
-				    bn_mat_inv(mat, rot_mat);
-				    MAT_DELTAS_VEC(mat, translate_to);
-				}
-
-				dotg->WriteBrep(pname, onBrep,mat);
-
-				delete onBrep;
-			    }
 			    if (product_id != brep_id) {
 				mat_t mat;
 
 				MAT_IDN(mat);
 				string comb = id2name_map[product_id];
-				dotg->AddMember(comb,pname,mat);
+				if (!dry_run)
+				    dotg->AddMember(comb,pname,mat);
 			    }
 			}
 		    }
@@ -312,7 +278,7 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_context_dependent_shape_representation))) {
 	    ContextDependentShapeRepresentation *aCDSR = dynamic_cast<ContextDependentShapeRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
-	    if (aCDSR) {
+	    if (aCDSR && aCDSR->GetRepresentationRelationshipRep_1() && aCDSR->GetRepresentationRelationshipRep_2()) {
 		int rep_1_id = aCDSR->GetRepresentationRelationshipRep_1()->GetId();
 		int rep_2_id = aCDSR->GetRepresentationRelationshipRep_2()->GetId();
 		int pid_1 = id2productid_map[rep_1_id];
@@ -388,15 +354,141 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 			bn_mat_mul(mat, toinv_mat, from_mat);
 		    }
-
-		    dotg->AddMember(comb,member,mat);
+		    if (!dry_run)
+			dotg->AddMember(comb,member,mat);
 		}
 		Factory::DeleteObjects();
 	    }
 	}
     }
-    if (!dotg->WriteCombs()) {
-	std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
+    if (!dry_run) {
+	if (!dotg->WriteCombs()) {
+	    std::cerr << "Error writing BRL-CAD hierarchy." << std::endl;
+	}
+    }
+
+    for (int i = 0; i < num_ents; i++) {
+	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	if (sse == NULL) {
+	    continue;
+	}
+	std::string name = sse->EntityName();
+	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
+
+	/* Shape Definition Representation */
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_definition_representation))) {
+	    ShapeDefinitionRepresentation *sdr = dynamic_cast<ShapeDefinitionRepresentation *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (!sdr) {
+		bu_exit(1, "ERROR: unable to allocate a 'ShapeDefinitionRepresentation' entity\n");
+	    } else {
+		std::string pname  = sdr->GetProductName();
+		pname = dotg->CleanBRLCADName(pname);
+
+		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
+		if (aBrep) {
+
+		    if (Verbose()) {
+			if (!pname.empty() && (pname.compare("''") != 0)) {
+			    std::cerr << std::endl << "     Generating Product - " << pname ;
+			} else {
+			    std::cerr << std::endl << "     Generating Product";
+			}
+		    }
+
+		    LocalUnits::length = aBrep->GetLengthConversionFactor();
+		    if (convert_WriteBrep(aBrep, dot_g, &pname, &name, dry_run)) {
+			delete sdr;
+			bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
+		    }
+
+		}
+		Factory::DeleteObjects();
+	    }
+	}
+    }
+    for (int i = 0; i < num_ents; i++) {
+	/* Shape Representation Relationship */
+	SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	if (sse == NULL) {
+	    continue;
+	}
+	std::string name = sse->EntityName();
+	std::transform(name.begin(), name.end(), name.begin(), (int(*)(int))std::tolower);
+
+
+	if ((sse->STEPfile_id > 0) && (sse->IsA(SCHEMA_NAMESPACE::e_shape_representation_relationship))) {
+	    ShapeRepresentationRelationship *srr = dynamic_cast<ShapeRepresentationRelationship *>(Factory::CreateObject(this, (SDAI_Application_instance *)sse));
+	    if (srr) {
+		ShapeRepresentation *aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		AdvancedBrepShapeRepresentation *aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		if (!aBrep) { //try rep_1
+		    aBrep = dynamic_cast<AdvancedBrepShapeRepresentation *>(srr->GetRepresentationRelationshipRep_1());
+		    aSR = dynamic_cast<ShapeRepresentation *>(srr->GetRepresentationRelationshipRep_2());
+		}
+		if ((aSR) && (aBrep)) {
+		    int sr_id = aSR->GetId();
+		    MAP_OF_ENTITY_ID_TO_PRODUCT_ID::iterator it = id2productid_map.find(sr_id);
+		    if (it != id2productid_map.end()) { // product found
+			int product_id = (*it).second;
+			int brep_id = aBrep->GetId();
+
+			it = process_map.find(brep_id);
+			if (it == process_map.end()) { // brep not loaded yet so lets do that here.
+			    string pname = id2name_map[brep_id];
+			    if (Verbose()) {
+				if (!pname.empty() && (pname.compare("''") != 0)) {
+				    std::cerr << std::endl << "     Generating Product - " << pname ;
+				} else {
+				    std::cerr << std::endl << "     Generating Product";
+				}
+			    }
+
+			    LocalUnits::length = aBrep->GetLengthConversionFactor();
+			    if (convert_WriteBrep(aBrep, dotg, &pname, &name, dry_run)) {
+				bu_exit(1, "ERROR: failure creating advanced boundary representation from %s\n", stepfile.c_str());
+			    } else {
+				process_map[brep_id] = product_id;
+			    }
+			}
+		    }/**/
+		}
+		Factory::DeleteObjects();
+	    }
+	}
+    }
+
+    if (summary_log_file) {
+	ofstream step_log;
+	step_log.open(summary_log_file);
+	for (int i = 0; i < num_ents; i++) {
+	    SDAI_Application_instance *sse = instance_list->GetSTEPentity(i);
+	    if (sse == NULL) {
+		continue;
+	    }
+	    std::string pname = id2name_map[sse->StepFileId()];
+	    if (!pname.empty() && (pname.compare("''") != 0) && pname.length()) {
+		step_log << pname << ",";
+	    } else {
+		step_log << "''" << ",";
+	    }
+	    std::map<int, int>::iterator e_it = entity_status.find(sse->StepFileId());
+	    if (e_it != entity_status.end()) {
+		switch (e_it->second) {
+		    case STEP_LOADED:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",SUCCESS\n";
+			break;
+		    case STEP_LOAD_ERROR:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",LOAD_ERROR\n";
+			break;
+		    default:
+			step_log << sse->StepFileId() << "," << sse->EntityName() << ",UNKNOWN_STATUS\n";
+			break;
+		}
+	    } else {
+		step_log << sse->StepFileId() << "," << sse->EntityName() << ",NOT_PROCESSED\n";
+	    }
+	}
+	step_log.close();
     }
 
     return true;
@@ -781,24 +873,8 @@ STEPWrapper::getSuperType(int STEPid, const char *name)
 std::string
 STEPWrapper::getStringAttribute(int STEPid, const char *name)
 {
-    std::string retValue = "";
     SDAI_Application_instance *sse = instance_list->FindFileId(STEPid)->GetSTEPentity();
-
-    sse->ResetAttributes();
-
-    STEPattribute *attr;
-    while ((attr = sse->NextAttribute()) != NULL) {
-	std::string attrval;
-	std::string attrname = attr->Name();
-
-	if (attrname.compare(name) == 0) {
-	    retValue = attr->asStr(attrval);
-	    //if (retValue.empty())
-	    //	std::cout << "String retValue:" << retValue << ":" << std::endl;
-	    break;
-	}
-    }
-    return retValue;
+    return getStringAttribute(sse, name);
 }
 
 

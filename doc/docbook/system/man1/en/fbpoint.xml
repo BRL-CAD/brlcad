@@ -24,7 +24,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbpoint</emphasis>
+<para><command>fbpoint</command>
 allows you to move a non-destructive cursor around on the display.
 As the cursor is moved around,
 <command>fbpoint</command>
@@ -33,7 +33,7 @@ at by the cursor, and the red, green, and blue values of that
 pixel, on standard error
 <command>fbpoint</command>
 also writes the last set of coordinates pointed to on standard out on exit.
-The starting position is center-screen unless an optional
+The starting position is center-screen unless optional
 <emphasis remap="I">initx inity</emphasis>
 is given.</para>
 
@@ -42,24 +42,23 @@ is given.</para>
 ``<emphasis remap="B">j</emphasis>'',
 ``<emphasis remap="B">k</emphasis>'',
 and
-``<emphasis remap="B">l</emphasis>'',
+``<emphasis remap="B">l</emphasis>''
 commands step the cursor one pixel left, down, up, or right respectively, and
 the
 ``<emphasis remap="B">H</emphasis>'',
 ``<emphasis remap="B">J</emphasis>'',
 ``<emphasis remap="B">K</emphasis>'',
 and
-``<emphasis remap="B">L</emphasis>'',
-commands step the cursor in the corresponding direction in big increments.
+``<emphasis remap="B">L</emphasis>''
+commands step the cursor in the corresponding directions in big increments.
 The
 ``<emphasis remap="B">B</emphasis>'',
 ``<emphasis remap="B">N</emphasis>'',
-``<emphasis remap="B">P</emphasis>''.
+``<emphasis remap="B">P</emphasis>'',
 and
 ``<emphasis remap="B">L</emphasis>'',
 and
-``<emphasis remap="B">^B</emphasis>'',
-(control-B),
+``<emphasis remap="B">^B</emphasis>'' (control-B),
 ``<emphasis remap="B">^N</emphasis>'',
 ``<emphasis remap="B">^P</emphasis>'',
 and
@@ -70,9 +69,9 @@ are also little and big (respectively) cursor movement commands.</para>
 ``<emphasis remap="B">?</emphasis>''
 prints a short command summary,
 and typing
-``<emphasis remap="B">q</emphasis>'',
+``<emphasis remap="B">q</emphasis>''
 or
-``<emphasis remap="B">Q</emphasis>'',
+``<emphasis remap="B">Q</emphasis>''
 exits the program.</para>
 
 <para>Using this program with grave accents in a shell script in order to
@@ -91,21 +90,19 @@ This is to facilitate passing the output of this program as
 arguments to another.</para>
 </refsection>
 
-<refsection xml:id="example"><title>EXAMPLE</title>
+<refsection xml:id="example"><title>EXAMPLES</title>
 <para><command>fbpoint</command>
 <!-- .br -->
 by itself is used to pick coordinates or pixel values from a display.</para>
 
-<para><emphasis remap="I">fbscanplot `fbpoint -y`</emphasis>
-<!-- .br -->
-allows you to choose the scanline to plot using fbpoint.</para>
+<para>fbscanplot `fbpoint -y`</para>
+<para>allows you to choose the scanline to plot using fbpoint.</para>
 
-<para><emphasis remap="I">pix-fb `fbpoint -x-X -y-Y` file.pix</emphasis>
-<!-- .br -->
-will allow you to select an x, y screen coordinate and then
+<para>pix-fb `fbpoint -x-X -y-Y` <emphasis remap="I">file.pix</emphasis></para>
+<para>allows you to select an x, y screen coordinate location and then
 place the lower left corner of the image
 <emphasis remap="I">file.pix</emphasis>
-at that location.</para>
+there.</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

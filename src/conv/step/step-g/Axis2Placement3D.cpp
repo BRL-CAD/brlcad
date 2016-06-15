@@ -222,7 +222,7 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Placement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Placement." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -233,6 +233,10 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "axis");
 	if (entity) {
 	    axis = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
+	    if (!axis) {
+		/* If we had an entity but couldn't load it, error */
+		goto step_error;
+	    }
 	} else { // optional so no problem if not here
 	    axis = NULL;
 	}
@@ -242,6 +246,10 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	SDAI_Application_instance *entity = step->getEntityAttribute(sse, "ref_direction");
 	if (entity) {
 	    ref_direction = dynamic_cast<Direction *>(Factory::CreateObject(sw, entity));
+	    if (!ref_direction) {
+		/* If we had an entity but couldn't load it, error */
+		goto step_error;
+	    }
 	} else { // optional so no problem if not here
 	    ref_direction = NULL;
 	}
@@ -249,7 +257,12 @@ Axis2Placement3D::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     BuildAxis();
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
+step_error:
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void

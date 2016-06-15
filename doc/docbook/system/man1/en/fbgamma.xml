@@ -62,9 +62,9 @@ result of this is the ability saturate or desaturate an arbitrary
 colormap.</para>
 
 <para>By default, the display is assumed to be 512x512 pixels;
-by specifying the
+if the
 <option>-H</option>
-flag, the size is changed to 1024x1024.
+flag is specified, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.

@@ -51,6 +51,7 @@
 extern int X24_close_existing(FBIO *ifp);
 extern int ogl_close_existing(FBIO *ifp);
 extern int wgl_close_existing(FBIO *ifp);
+extern int qt_close_existing(FBIO *ifp);
 
 
 #define Malloc_Bomb(_bytes_)					\
@@ -348,6 +349,23 @@ fb_close_existing(FBIO *ifp)
 	}
     }
 #endif  /* IF_TK */
+
+#ifdef IF_QT
+    {
+	if (BU_STR_EQUIV(ifp->if_name, qt_interface.if_name)) {
+	    int status = -1;
+	    if ((status = qt_close_existing(ifp)) <= -1) {
+		fb_log("fb_close_existing: cannot close device \"%s\", ret=%d.\n", ifp->if_name, status);
+		return BRLCAD_ERROR;
+	    }
+	    if (ifp->if_pbase != PIXEL_NULL)
+		free((void *)ifp->if_pbase);
+	    free((void *)ifp->if_name);
+	    free((void *)ifp);
+	    return BRLCAD_OK;
+	}
+    }
+#endif  /* IF_QT */
 
     fb_log("fb_close_existing: cannot close device\nifp: %s\n", ifp->if_name);
 

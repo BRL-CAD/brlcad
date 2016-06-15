@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>euclid-g</emphasis>
+<para><command>euclid-g</command>
 converts the specified
 <emphasis remap='I'>euclid_file</emphasis>
 to a BRL-CAD
@@ -41,7 +41,7 @@ together all the objects with the same ID number.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>euclid-g sample.euclid sample.g</emphasis>
+$ euclid-g <emphasis remap='I'>sample.euclid sample.g</emphasis>
 </synopsis>
 </refsect1>
 

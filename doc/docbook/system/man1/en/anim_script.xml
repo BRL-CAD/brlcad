@@ -32,28 +32,28 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Anim_script</emphasis>
+<para><command>anim_script</command>
 is designed to produce an animation script for the
 animation of the virtual camera or one
 <emphasis remap='I'>brlcad</emphasis>
 object at a time. It is
 complementary to
-<emphasis remap='I'>tabsub</emphasis>
+<command>tabsub</command>
 in that it performs a similar
 function, but with a different philosophy.</para>
 
 <para>Both
 <command>anim_script</command>
 and
-<emphasis remap='I'>tabsub</emphasis>
+<command>tabsub</command>
 use one row of an animation table to
 produce one frame of an animation script. With
-<emphasis remap='I'>tabsub,</emphasis>
+<command>tabsub</command>,
 the user supplies
 a template file which controls the form of the animation frames. This
 allows the maximum user control, but also requires a good understanding
 of the script format. With
-<emphasis remap='I'>anim_script,</emphasis>
+<command>anim_script</command>,
 the user supplies all the necessary
 information on the command line. The range of possible output scripts is
 limited, but the user does not have to deal directly with the details.
@@ -69,7 +69,7 @@ animated, as it will appear in the output script. For example, if
 "hatch1"
 is a member of "turret" which is a member of "tank" which is one of the
 objects specified on the command line of the call to
-<emphasis remap='I'>rt,</emphasis>
+<command>rt</command>,
 then the objectname "tank/turret/hatch1" or simply "turret/hatch1" would be used to
 animate the hatch. The tank itself would be referred to by the name,
 "/tank". Note that top-level objects should be preceded by a slash.
@@ -130,16 +130,16 @@ representing no orientation change is (0,0,0,1).</para>
 <para>Permuted orientation. This option indicates that transformations defined by
 the quaternions should be applied to an object which has first been placed
 in
-<emphasis remap='I'>rt</emphasis>'s
+<command>rt</command>'s
 default eye orientation. Thus, the identity quaternion represents yawing the
 object 90 degrees to the left and then pitching it 90 degrees downward.
 The quaternions produced by
-<emphasis remap='I'>mged</emphasis>'s
+<command>mged</command>'s
 saveview command and used by
-<emphasis remap='I'>rt</emphasis>'s
+<command>rt</command>'s
 orientation command
 are quaternions of this type. See
-<emphasis remap='I'>anim_orient</emphasis>
+<command>anim_orient</command>
 for more information.</para>
   </listitem>
   </varlistentry>

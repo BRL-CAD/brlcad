@@ -1722,7 +1722,7 @@ RT_EXPORT extern struct rt_g RTG;
 #define RT_SEM_RESULTS	(RT_SEM_STATS+1)
 #define RT_SEM_MODEL	(RT_SEM_RESULTS+1)
 
-#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/**< @brief  Call bu_semaphore_init(RT_SEM_LAST); */
+#define RT_SEM_LAST	(RT_SEM_MODEL+1)
 
 
 /**
@@ -2218,9 +2218,10 @@ struct rt_functab {
 
     /** apply an operation to a selected subset of a primitive */
     int (*ft_process_selection)(struct rt_db_internal *,
+				struct db_i *,
 				const struct rt_selection *,
 				const struct rt_selection_operation *);
-#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_selection *, const struct rt_selection_operation *))_func)
+#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
 };
 
@@ -4977,8 +4978,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  * must be 1.
  *
  * If ncpu > 1, the caller is responsible for making sure that
- * RTG.rtg_parallel is non-zero, and that the bu_semaphore_init()
- * functions has been performed, first.
+ * RTG.rtg_parallel is non-zero.
  *
  * Plucks per-cpu resources out of rtip->rti_resources[].  They need
  * to have been initialized first.

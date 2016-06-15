@@ -56,6 +56,7 @@ avp_diff(struct diff_result *dr)
     if (left_right_diff) ret = 3;
     if (!left_diff && right_diff) ret = 2;
     if (left_diff && !right_diff) ret = 1;
+    if (!dr->dp_ancestor && !left_diff && !right_diff) ret = 1;
     if ((left_diff && right_diff) && !left_right_diff) ret = 1;
     return ret;
 }
@@ -70,6 +71,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
     struct bu_attribute_value_set *obj_avs;
     BU_GET(obj_avs, struct bu_attribute_value_set);
     BU_AVS_INIT(obj_avs);
+    if (BU_STR_EQUAL(dr->obj_name, "_GLOBAL")) return 0;
     for (i = 0; i < (int)BU_PTBL_LEN(dr->attr_diffs); i++) {
 	struct diff_avp *avp = (struct diff_avp *)BU_PTBL_GET(dr->attr_diffs, i);
 	if (avp->state == DIFF_ADDED) {
@@ -148,6 +150,7 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 	default:
 	    if (dr->dp_left != RT_DIR_NULL) {
 		struct directory *new_dp_left;
+		struct bu_attribute_value_pair *avpp;
 		struct bu_vls left_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_left;
 		bu_vls_sprintf(&left_name, "CONFLICT(%s).left", dr->dp_left->d_namep);
@@ -157,15 +160,20 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if (rt_db_get_internal(&ip_left, dr->dp_left, left_dbip, NULL, &rt_uniresource) < 0) {
 		    return -1;
 		}
-		bu_avs_free(&ip_left.idb_avs);
-		bu_avs_merge(&ip_left.idb_avs, obj_avs);
+		for (BU_AVS_FOR(avpp, obj_avs)) {
+		    if (avpp->value) {
+			bu_avs_add(&ip_left.idb_avs, avpp->name, avpp->value);
+		    } else {
+			bu_avs_add(&ip_left.idb_avs, avpp->name, "(null)");
+		    }
+		}
 		if (rt_db_put_internal(new_dp_left, merged_dbip, &ip_left, &rt_uniresource) < 0) {
 		    return -1;
 		}
-
 	    }
 	    if (dr->dp_right != RT_DIR_NULL) {
 		struct directory *new_dp_right;
+		struct bu_attribute_value_pair *avpp;
 		struct bu_vls right_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_right;
 		bu_vls_sprintf(&right_name, "CONFLICT(%s).right", dr->dp_right->d_namep);
@@ -175,14 +183,20 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if (rt_db_get_internal(&ip_right, dr->dp_right, right_dbip, NULL, &rt_uniresource) < 0) {
 		    return -1;
 		}
-		bu_avs_free(&ip_right.idb_avs);
-		bu_avs_merge(&ip_right.idb_avs, obj_avs);
+		for (BU_AVS_FOR(avpp, obj_avs)) {
+		    if (avpp->value) {
+			bu_avs_add(&ip_right.idb_avs, avpp->name, avpp->value);
+		    } else {
+			bu_avs_add(&ip_right.idb_avs, avpp->name, "(null)");
+		    }
+		}
 		if (rt_db_put_internal(new_dp_right, merged_dbip, &ip_right, &rt_uniresource) < 0) {
 		    return -1;
 		}
 	    }
 	    if (dr->dp_ancestor != RT_DIR_NULL) {
 		struct directory *new_dp_ancestor;
+		struct bu_attribute_value_pair *avpp;
 		struct bu_vls ancestor_name = BU_VLS_INIT_ZERO;
 		struct rt_db_internal ip_ancestor;
 		bu_vls_sprintf(&ancestor_name, "CONFLICT(%s).ancestor", dr->dp_ancestor->d_namep);
@@ -192,8 +206,13 @@ dp_changed_copy(struct db_i *merged_dbip, struct diff_result *dr,
 		if (rt_db_get_internal(&ip_ancestor, dr->dp_ancestor, ancestor_dbip, NULL, &rt_uniresource) < 0) {
 		    return -1;
 		}
-		bu_avs_free(&ip_ancestor.idb_avs);
-		bu_avs_merge(&ip_ancestor.idb_avs, obj_avs);
+		for (BU_AVS_FOR(avpp, obj_avs)) {
+		    if (avpp->value) {
+			bu_avs_add(&ip_ancestor.idb_avs, avpp->name, avpp->value);
+		    } else {
+			bu_avs_add(&ip_ancestor.idb_avs, avpp->name, "(null)");
+		    }
+		}
 		if (rt_db_put_internal(new_dp_ancestor, merged_dbip, &ip_ancestor, &rt_uniresource) < 0) {
 		    return -1;
 		}

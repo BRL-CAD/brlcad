@@ -1449,7 +1449,6 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 		BuildTree(Emit[i], PMap[i]->StoredPhotons, PMap[i]->Root);
 
 
-	bu_semaphore_init(PM_SEM_INIT);
 	bu_log("  Building Irradiance Cache...\n");
 	ap->a_level = 1;
 	ap->a_onehit = 0;

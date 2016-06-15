@@ -44,10 +44,6 @@
 #define Intersect 2
 #define Subtract 3
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /* Circularly linked list of files and names for external references */
 struct file_list
 {
@@ -217,117 +213,113 @@ struct iges_edge_list
 };
 
 
-char *iges_type(int type_no);
-char *Make_unique_brl_name(char *name);
-int Add_loop_to_face(struct shell *s, struct faceuse *fu, int entityno, int face_orient);
-int Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno);
-int arb_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int ell_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
-int null_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int planar_nurb(int entityno);
-int sph_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int tgc_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int tor_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-struct edge_g_cnurb *Get_cnurb(int entity_no);
-struct edge_g_cnurb *Get_cnurb_curve(int curve_de, int *linear);
-struct faceuse *Add_face_to_shell(struct shell *s, int entityno, int face_orient);
-struct faceuse *Make_nurb_face(struct shell *s, int surf_entityno);
-struct faceuse *Make_planar_face(struct shell *s, int entityno, int face_orient);
-struct iges_edge_list *Get_edge_list(struct iges_edge_use *edge);
-struct iges_edge_list *Read_edge_list(struct iges_edge_use *edge);
-struct iges_vertex *Get_iges_vertex(struct vertex *v);
-struct iges_vertex_list *Get_vertex_list(int vert_de);
-struct iges_vertex_list *Read_vertex_list(int vert_de);
-struct loopuse *Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *surf, struct faceuse *fu);
-struct shell *Add_inner_shell(struct nmgregion *r, int entityno);
-struct shell *Get_outer_shell(struct nmgregion *r, int entityno);
-struct face_g_snurb *Get_nurb_surf(int entity_no, struct model *m);
-struct vertex **Get_vertex(struct iges_edge_use *edge);
-union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree);
-void count_refs(struct db_i *dbip, struct directory *dp);
-void csg_comb_func(struct db_i *dbip, struct directory *dp);
-void csg_leaf_func(struct db_i *dbip, struct directory *dp);
-void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
-void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
-void w_start_global(FILE *fp_dir, FILE *fp_param, char *db_name, char *prog_name, char *output_file, char *id, char *version);
-void w_terminate(FILE *fp);
-void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-struct iges_edge *Get_edge(struct iges_edge_use *e_use);
-struct vertex *Get_edge_start_vertex(struct iges_edge *e);
-struct vertex *Get_edge_end_vertex(struct iges_edge *e);
-void usage();
-void Initstack();
-void Push(union tree *ptr);
-union tree *Pop();
-void Freestack();
-int Recsize();
-void Zero_counts();
-void Summary();
-void Readstart();
-void Readglobal(int file_count);
-int Findp();
-void Free_dir();
-void Makedir();
-void Docolor();
-void Gett_att();
-void Evalxform();
-void Check_names();
-void Conv_drawings();
-void Do_subfigs();
-void Convtrimsurfs();
-void Convsurfs();
-void Convinst();
-void Convsolids();
-void Get_att();
-void Convtree();
-void Convassem();
-int Readrec(int recno);
-void Readint(int *inum, char *id);
-void Readflt(fastf_t *inum, char *id);
-void Readdbl(double *inum, char *id);
-void Readstrg(char *id);
-void Readname(char **ptr, char *id);
-void Readcnv(fastf_t *inum, char *id);
-void Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf);
-void Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv);
-int Put_vertex(struct vertex *v, struct iges_edge_use *edge);
-int Getcurve(int curve, struct ptlist **curv_pts);
-void Orient_loops(struct nmgregion *r);
-int read_spline(int entityno, struct face_g_snurb **b_patch);
-void Freeknots();
+extern char *iges_type(int type_no);
+extern char *Make_unique_brl_name(char *name);
+extern int Add_loop_to_face(struct shell *s, struct faceuse *fu, int entityno, int face_orient);
+extern int Add_nurb_loop_to_face(struct shell *s, struct faceuse *fu, int loop_entityno);
+extern int arb_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int ell_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
+extern int null_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int planar_nurb(int entityno);
+extern int sph_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int tgc_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int tor_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
+extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern struct edge_g_cnurb *Get_cnurb(int entity_no);
+extern struct edge_g_cnurb *Get_cnurb_curve(int curve_de, int *linear);
+extern struct faceuse *Add_face_to_shell(struct shell *s, int entityno, int face_orient);
+extern struct faceuse *Make_nurb_face(struct shell *s, int surf_entityno);
+extern struct faceuse *Make_planar_face(struct shell *s, int entityno, int face_orient);
+extern struct iges_edge_list *Get_edge_list(struct iges_edge_use *edge);
+extern struct iges_edge_list *Read_edge_list(struct iges_edge_use *edge);
+extern struct iges_vertex *Get_iges_vertex(struct vertex *v);
+extern struct iges_vertex_list *Get_vertex_list(int vert_de);
+extern struct iges_vertex_list *Read_vertex_list(int vert_de);
+extern struct loopuse *Make_loop(int entity_no, int orientation, int on_surf_de, struct face_g_snurb *surf, struct faceuse *fu);
+extern struct shell *Add_inner_shell(struct nmgregion *r, int entityno);
+extern struct shell *Get_outer_shell(struct nmgregion *r, int entityno);
+extern struct face_g_snurb *Get_nurb_surf(int entity_no, struct model *m);
+extern struct vertex **Get_vertex(struct iges_edge_use *edge);
+extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree);
+extern void count_refs(struct db_i *dbip, struct directory *dp);
+extern void csg_comb_func(struct db_i *dbip, struct directory *dp);
+extern void csg_leaf_func(struct db_i *dbip, struct directory *dp);
+extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
+extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
+extern void w_start_global(FILE *fp_dir, FILE *fp_param, char *db_name, char *prog_name, char *output_file, char *id, char *version);
+extern void w_terminate(FILE *fp);
+extern void write_edge_list(struct nmgregion *r, int vert_de, struct bu_ptbl *etab, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
+extern struct iges_edge *Get_edge(struct iges_edge_use *e_use);
+extern struct vertex *Get_edge_start_vertex(struct iges_edge *e);
+extern struct vertex *Get_edge_end_vertex(struct iges_edge *e);
+extern void usage();
+extern void Initstack();
+extern void Push(union tree *ptr);
+extern union tree *Pop();
+extern void Freestack();
+extern int Recsize();
+extern void Zero_counts();
+extern void Summary();
+extern void Readstart();
+extern void Readglobal(int file_count);
+extern int Findp();
+extern void Free_dir();
+extern void Makedir();
+extern void Docolor();
+extern void Gett_att();
+extern void Evalxform();
+extern void Check_names();
+extern void Conv_drawings();
+extern void Do_subfigs();
+extern void Convtrimsurfs();
+extern void Convsurfs();
+extern void Convinst();
+extern void Convsolids();
+extern void Get_att();
+extern void Convtree();
+extern void Convassem();
+extern int Readrec(int recno);
+extern void Readint(int *inum, char *id);
+extern void Readflt(fastf_t *inum, char *id);
+extern void Readdbl(double *inum, char *id);
+extern void Readstrg(char *id);
+extern void Readname(char **ptr, char *id);
+extern void Readcnv(fastf_t *inum, char *id);
+extern void Assign_surface_to_fu(struct faceuse *fu, struct face_g_snurb *srf);
+extern void Assign_cnurb_to_eu(struct edgeuse *eu, struct edge_g_cnurb *crv);
+extern int Put_vertex(struct vertex *v, struct iges_edge_use *edge);
+extern int Getcurve(int curve, struct ptlist **curv_pts);
+extern void Orient_loops(struct nmgregion *r);
+extern int spline(int entityno, struct face_g_snurb **b_patch);
+extern void Freeknots();
 
 /* temp defs while working on replacing local function Matmult with libbn functions */
 /* #define USE_BN_MULT_ */
 #if defined(USE_BN_MULT_)
 #include "bn.h"
 #else
-void Matmult(mat_t a, mat_t b, mat_t c);
+extern void Matmult(mat_t a, mat_t b, mat_t c);
 #endif
 
-int Extrudcon(int entityno, int curve, vect_t evect);
-int Extrudcirc(int entityno, int curve, vect_t evect);
-void Read_att(int att_de, struct brlcad_att *att);
-int block(int entityno);
-int wedge(int entityno);
-int cyl(int entityno);
-int cone(int entityno);
-int sphere(int entityno);
-int torus(int entityno);
-int revolve(int entityno);
-int extrude(int entityno);
-int ell(int entityno);
-int brep(int entityno);
-void Readtime(char *id);
-void Readcols(char *id, int cols);
-void Readmatrix(int xform, mat_t rot);
-
-#ifdef __cplusplus
-}
-#endif
+extern int Extrudcon(int entityno, int curve, vect_t evect);
+extern int Extrudcirc(int entityno, int curve, vect_t evect);
+extern void Read_att(int att_de, struct brlcad_att *att);
+extern int block(int entityno);
+extern int wedge(int entityno);
+extern int cyl(int entityno);
+extern int cone(int entityno);
+extern int sphere(int entityno);
+extern int torus(int entityno);
+extern int revolve(int entityno);
+extern int extrude(int entityno);
+extern int ell(int entityno);
+extern int brep(int entityno);
+extern void Readtime(char *id);
+extern void Readcols(char *id, int cols);
+extern void Readmatrix(int xform, mat_t rot);
 
 #endif /* CONV_IGES_IGES_STRUCT_H */
 

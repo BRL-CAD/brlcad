@@ -2011,8 +2011,6 @@ f_Parallel(char **args)
     else
 	RTG.rtg_parallel = 0;
 
-    bu_semaphore_init(RT_SEM_LAST);
-
     return 1;
 }
 

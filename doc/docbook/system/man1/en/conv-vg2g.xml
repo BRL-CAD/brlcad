@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Conv-vg2g</emphasis>
+<para><command>conv-vg2g</command>
 converts several older forms of binary
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 databases to the current form.</para>

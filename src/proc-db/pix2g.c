@@ -242,14 +242,6 @@ main(int ac, char *av[])
     if (ncpu > 1)
 	bu_log("Found %d cpu\'s!  Sweet.\n", ncpu);
 
-    /* the first critical section semaphore is for coordinating work, the
-     * second for writing out the final record and cleaning up.
-     */
-    /* XXX must use RT_SEM_LAST if we plan on calling bu_parallel since the
-     * semaphore count is held in a global
-     */
-    bu_semaphore_init(P2G_INIT_COUNT);
-
     bu_log("Writing database...\n");
 
     /* write out the prototypical pixel object */

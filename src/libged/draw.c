@@ -603,10 +603,12 @@ static fastf_t
 solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
 {
     fastf_t radius, avg_view_size, avg_sample_spacing;
-    point_t p1, p2;
+    point2d_t p1, p2;
+
+    if (solid_width < SQRT_SMALL_FASTF)
+	solid_width = SQRT_SMALL_FASTF;
 
     avg_view_size = view_avg_size(gvp);
-    avg_sample_spacing = view_avg_sample_spacing(gvp);
 
     /* Now, for the sake of simplicity we're going to make
      * several assumptions:
@@ -638,7 +640,7 @@ solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
      * row. Here we place a plotted point p2 (y = radius -
      * avg_sample_spacing).
      *
-     * In theory the line segment between p1 and p2 passes
+     * In theory, the line segment between p1 and p2 passes
      * through all the same pixels that the actual curve does,
      * and thus produces the exact same rasterization as if
      * the curve between p1 and p2 was approximated with an
@@ -650,15 +652,21 @@ solid_point_spacing(struct ged_view *gvp, fastf_t solid_width)
      * the same rasterization as if we chose a point distance
      * of 0.
     */
-    p1[Z] = p2[Z] = 0.0;
-
-    p1[X] = 0.0;
     p1[Y] = radius;
+    p1[X] = 0.0;
 
-    p2[Y] = radius - (avg_sample_spacing);
-    p2[X] = sqrt(radius * radius - p2[Y] * p2[Y]);
+    avg_sample_spacing = view_avg_sample_spacing(gvp);
+    if (avg_sample_spacing < radius) {
+	p2[Y] = radius - (avg_sample_spacing);
+    } else {
+	/* no particular reason other than symmetry, just need
+	 * to prevent sqrt(negative).
+	 */
+	p2[Y] = radius;
+    }
+    p2[X] = sqrt((radius * radius) - (p2[Y] * p2[Y]));
 
-    return DIST_PT_PT(p1, p2);
+    return DIST_PT2_PT2(p1, p2);
 }
 
 /* Choose a point spacing for the given solid (sp, ip) s.t. solid
@@ -750,6 +758,7 @@ draw_solid_wireframe(struct ged *gedp, struct solid *sp)
 	info.tol = tsp->ts_tol;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
+
 	info.curve_spacing = sp->s_size / 2.0;
 
 	info.point_spacing /= gvp->gv_point_scale;
@@ -948,7 +957,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	/* catch */
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Boolean evaluation of %s failed!\n", sofar);
 	bu_free((void *)sofar, "path string");
     } BU_UNSETJUMP;
 
@@ -972,7 +981,7 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 	char *sofar = db_path_to_string(pathp);
 
-	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!!!\n", sofar);
+	bu_vls_printf(dgcdp->gedp->ged_result_str, "WARNING: Triangulation of %s failed!\n", sofar);
 	bu_free((void *)sofar, "path string");
 
     } BU_UNSETJUMP;
@@ -1763,8 +1772,9 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	    _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
 
 	    for (i = 0; i < (size_t)new_argc; ++i) {
-		bu_free(new_argv[i], "ged_draw_guts new_argv");
+		bu_free(new_argv[i], "ged_draw_guts new_argv[i] - bu_strdup(argv[i])");
 	    }
+	    bu_free(new_argv, "ged_draw_guts new_argv");
 	} else {
 	    _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
 	}

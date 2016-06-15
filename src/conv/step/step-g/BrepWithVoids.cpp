@@ -56,10 +56,11 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
+    LIST_OF_ENTITIES *l = NULL;
 
     if (!ManifoldSolidBrep::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ManifoldSolidBrep Item." << std::endl;
-	return false;
+	goto step_error;
     }
 
     // need to do this for local attributes to makes sure we have
@@ -67,33 +68,35 @@ bool BrepWithVoids::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     sse = step->getEntity(sse, ENTITYNAME);
 
     if (voids.empty()) {
-	LIST_OF_ENTITIES *l = step->getListOfEntities(sse, "voids");
+	l = step->getListOfEntities(sse, "voids");
 	LIST_OF_ENTITIES::iterator i;
 	for (i = l->begin(); i != l->end(); i++) {
 	    SDAI_Application_instance *entity = (*i);
 	    if (entity) {
 		OrientedClosedShell *aOCS = dynamic_cast<OrientedClosedShell *>(Factory::CreateObject(sw, entity)); //CreateSurfaceObject(sw,entity));
-
-		if (aOCS != NULL) {
-		    voids.push_back(aOCS);
-		} else {
+		if (!aOCS) {
 		    std::cerr << CLASSNAME << ": Unhandled entity in attribute 'voids'." << std::endl;
-		    l->clear();
-		    delete l;
-		    return false;
+		    goto step_error;
 		}
+		voids.push_back(aOCS);
 	    } else {
 		std::cerr << CLASSNAME << ": Unhandled entity in attribute 'voids'." << std::endl;
-		l->clear();
-		delete l;
-		return false;
+		goto step_error;
 	    }
 	}
 	l->clear();
 	delete l;
     }
 
+    sw->entity_status[id] = STEP_LOADED;
     return true;
+step_error:
+    if (l) {
+	l->clear();
+	delete l;
+    }
+    sw->entity_status[id] = STEP_LOAD_ERROR;
+    return false;
 }
 
 void BrepWithVoids::Print(int level)

@@ -220,17 +220,13 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
     double *dst;
     size_t width_size;
     unsigned char *p=NULL;
-    if (bif == NULL) {
-	bu_log("ERROR: trying to write a line to null bif\n");
+
+    if (bif == NULL || data == NULL)
 	return -1;
-    }
 
     ICV_IMAGE_VAL_INT(bif);
 
     if (y > bif->height || y < 0)
-        return -1;
-
-    if (data == NULL)
         return -1;
 
     width_size = (size_t) bif->width*bif->channels;

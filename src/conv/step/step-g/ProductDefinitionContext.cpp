@@ -57,6 +57,7 @@ bool ProductDefinitionContext::Load(STEPWrapper *sw, SDAI_Application_instance *
 
     if (!ApplicationContextElement::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ApplicationContextElement." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -65,6 +66,8 @@ bool ProductDefinitionContext::Load(STEPWrapper *sw, SDAI_Application_instance *
     sse = step->getEntity(sse, ENTITYNAME);
 
     life_cycle_stage = step->getStringAttribute(sse, "life_cycle_stage");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

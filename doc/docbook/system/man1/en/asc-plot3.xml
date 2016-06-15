@@ -26,7 +26,7 @@
 and converts it to
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format.
-<emphasis remap='I'>Asc-plot3</emphasis>
+<command>asc-plot3</command>
 reads from standard input and writes to standard output
 if file names are not supplied.</para>
 

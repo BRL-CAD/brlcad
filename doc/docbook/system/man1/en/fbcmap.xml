@@ -36,7 +36,7 @@ is used to change the color map of a frame buffer.</para>
             to be saved from.  If not given, the environment variable
             <acronym/><emphasis remap="B">FB_FILE</emphasis> is used
             to select the display device (see
-            <emphasis remap="I">brlcad(1)</emphasis>).  If
+            <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>).  If
             <acronym/><emphasis remap="B">FB_FILE</emphasis> has not
             been set, the default device for your system will be
             used.</para>

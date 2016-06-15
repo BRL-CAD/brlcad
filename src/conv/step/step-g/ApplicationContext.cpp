@@ -72,6 +72,8 @@ bool ApplicationContext::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     application = step->getStringAttribute(sse, "application");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

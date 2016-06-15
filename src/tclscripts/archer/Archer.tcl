@@ -323,6 +323,7 @@ package provide Archer 1.0
 	method buildEpaEditView {}
 	method buildEtoEditView {}
 	method buildExtrudeEditView {}
+	method buildJointEditView {}
 	method buildGripEditView {}
 	method buildHalfEditView {}
 	method buildHypEditView {}
@@ -356,6 +357,7 @@ package provide Archer 1.0
 	method initEpaEditView {_odata}
 	method initEtoEditView {_odata}
 	method initExtrudeEditView {_odata}
+	method initJointEditView {_odata}
 	method initGripEditView {_odata}
 	method initHalfEditView {_odata}
 	method initHypEditView {_odata}
@@ -428,6 +430,7 @@ package provide Archer 1.0
 	method createEpa {_name}
 	method createEto {_name}
 	method createExtrude {_name}
+	method createJoint {_name}
 	method createGrip {_name}
 	method createHalf {_name}
 	method createHyp {_name}
@@ -5196,6 +5199,9 @@ proc title_node_handler {node} {
 	-image $mImage_extrudeLabeled \
 	-command [::itcl::code $this createObj extrude]
     $itk_component(primitiveMenu) add command \
+	-label joint \
+	-command [::itcl::code $this createObj joint]
+    $itk_component(primitiveMenu) add command \
 	-image $mImage_halfLabeled \
 	-command [::itcl::code $this createObj half]
     $itk_component(primitiveMenu) add command \
@@ -6318,6 +6324,13 @@ proc title_node_handler {node} {
 
 	    return $itk_component(extrudeView)
 	}
+	"joint" {
+	    if {![info exists itk_component(jointView)]} {
+		buildJointEditView
+	    }
+
+	    return $itk_component(jointView)
+	}
 	"grip" {
 	    if {![info exists itk_component(gripView)]} {
 		buildGripEditView
@@ -6578,6 +6591,9 @@ proc title_node_handler {node} {
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
+	} elseif {$mSelectedObjType == "joint"} {
+	    bind $win <1> "$itk_component(ged) mouse_joint_select $obj %x %y; break"
+	    continue
 	} else {
 	    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 	}
@@ -6910,6 +6926,15 @@ proc title_node_handler {node} {
     set parent $itk_component(objEditView)
     itk_component add extrudeView {
 	ExtrudeEditFrame $parent.extrudeview \
+	    -units "mm"
+    } {}
+}
+
+
+::itcl::body Archer::buildJointEditView {} {
+    set parent $itk_component(objEditView)
+    itk_component add jointView {
+	JointEditFrame $parent.jointview \
 	    -units "mm"
     } {}
 }
@@ -7575,6 +7600,23 @@ proc title_node_handler {node} {
     $itk_component(extrudeView) initGeometry $odata
 
     pack $itk_component(extrudeView) \
+	-expand yes \
+	-fill both
+}
+
+
+::itcl::body Archer::initJointEditView {odata} {
+    $itk_component(jointView) configure \
+	-geometryObject $mSelectedObj \
+	-geometryObjectPath $mSelectedObjPath \
+	-geometryChangedCallback [::itcl::code $this updateObjEditView] \
+	-mged $itk_component(ged) \
+	-labelFont $mFontText \
+	-boldLabelFont $mFontTextBold \
+	-entryFont $mFontText
+    $itk_component(jointView) initGeometry $odata
+
+    pack $itk_component(jointView) \
 	-expand yes \
 	-fill both
 }
@@ -9549,6 +9591,10 @@ proc title_node_handler {node} {
 	    #	    set name [gedCmd make_name "extrude."]
 	    #	    createExtrude $name
 	}
+	"joint" {
+	    set name [gedCmd make_name "joint."]
+	    vmake $name joint
+	}
 	"grip" {
 	    set name [gedCmd make_name "grip."]
 	    createGrip $name
@@ -9771,6 +9817,19 @@ proc title_node_handler {node} {
 	    -mged $itk_component(ged)
     }
     $itk_component(extrudeView) createGeometry $name
+}
+
+
+::itcl::body Archer::createJoint {name} {
+    #XXX Not ready yet
+    return
+
+    if {![info exists itk_component(jointView)]} {
+	buildJointEditView
+	$itk_component(jointView) configure \
+	    -mged $itk_component(ged)
+    }
+    $itk_component(jointView) createGeometry $name
 }
 
 

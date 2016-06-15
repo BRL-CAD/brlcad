@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bary</emphasis>
+<para><command>bary</command>
 computes weighted sums of a set of sites in Euclidean 3-space,
 writing them on the standard output.
 The site weights are read from

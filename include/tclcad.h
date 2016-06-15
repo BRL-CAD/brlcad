@@ -96,6 +96,7 @@ struct ged_dm_view {
     struct dm			*gdv_dmp;
     struct fbserv_obj		gdv_fbs;
     struct ged_obj		*gdv_gop;
+    int	   			gdv_hide_view;
 };
 
 struct ged_obj {
@@ -110,6 +111,7 @@ struct ged_obj {
     int			go_refresh_on;
     int			go_dlist_on;
     Tcl_Interp		*interp;
+    struct bu_hash_tbl	*go_edited_paths;
 };
 #define GED_OBJ_NULL ((struct ged_obj *)0)
 

@@ -488,7 +488,6 @@ fit_prep(struct fitness_state *fstate, int rows, int cols)
     fstate->res[Y] = cols;
     fstate->ray = NULL;
 
-    bu_semaphore_init(TOTAL_SEMAPHORES);
     rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
     bn_rand_init(rt_uniresource.re_randptr, 0);
 }
@@ -501,7 +500,6 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
-    /* bu_semaphore_free(); */
 }
 
 

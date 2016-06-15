@@ -52,6 +52,7 @@ private:
     static int sol_reg_cnt;
 
 public:
+    int dry_run;
     BRLCADWrapper();
     virtual ~BRLCADWrapper();
     bool load(std::string &filename);

@@ -84,6 +84,7 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
 
     if (!ProductDefinitionFormation::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::ProductDefinitionFormation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -95,6 +96,8 @@ bool ProductDefinitionFormationWithSpecifiedSource::Load(STEPWrapper *sw, SDAI_A
     if (make_or_buy > Source_unset) {
 	make_or_buy = Source_unset;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

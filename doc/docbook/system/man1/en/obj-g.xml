@@ -215,7 +215,7 @@
       <listitem>
 	<para>
 	 Maximum distance, in mm units, where two vertices are
-	 considered the same. The default is 0.0005mm which matches
+	 considered the same. The default is 0.0005mm, which matches
 	 the default raytracer distance tolerance. Do not change this
 	 value unless you also change the raytracer distance
 	 tolerance.
@@ -291,7 +291,7 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="objg_examples"><title>EXAMPLE</title>
+<refsection xml:id="objg_examples"><title>EXAMPLES</title>
 
   <para>
     The following will convert the obj file <emphasis remap="I">input.obj</emphasis>

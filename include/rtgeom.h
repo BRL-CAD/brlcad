@@ -195,6 +195,22 @@ struct rt_grip_internal {
 };
 #define RT_GRIP_CK_MAGIC(_p) BU_CKMAG(_p, RT_GRIP_INTERNAL_MAGIC, "rt_grip_internal")
 
+/*
+ * ID_JOINT
+ */
+struct rt_joint_internal {
+    uint32_t magic;
+    point_t location;
+    struct bu_vls reference_path_1;
+    struct bu_vls reference_path_2;
+
+    /* Remaining elements are used for display purposes only */
+    vect_t vector1;
+    vect_t vector2;
+    fastf_t value;
+};
+#define RT_JOINT_CK_MAGIC(_p) BU_CKMAG(_p, RT_JOINT_INTERNAL_MAGIC, "rt_joint_internal")
+
 /**
  * ID_POLY
  */

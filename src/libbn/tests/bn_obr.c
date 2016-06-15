@@ -112,7 +112,8 @@ main(int argc, const char **argv)
 	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
 	    if (do_plotting) {
-		plot_obr(1, (const point_t *)output_3d_pnts, 4);
+		const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
+		plot_obr(1, const_output_3d_pnts, 4);
 	    }
 	}
     }
@@ -165,7 +166,8 @@ main(int argc, const char **argv)
 	    VSET(output_3d_pnts[2], output_pnts[2][0], output_pnts[2][1], 0);
 	    VSET(output_3d_pnts[3], output_pnts[3][0], output_pnts[3][1], 0);
 	    if (do_plotting) {
-		plot_obr(8, (const point_t *)output_3d_pnts, 4);
+		const point_t *const_output_3d_pnts = (const point_t *)output_3d_pnts;
+		plot_obr(8, const_output_3d_pnts, 4);
 	    }
 	}
 	if (retval) {return -1;} else {bu_log("Triangle Test Passed!\n");}
@@ -221,7 +223,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #002 Passed!\n");}
 	if (do_plotting) {
-	    plot_obr(2, (const point_t *)output_pnts, 4);
+	    const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    plot_obr(2, const_output_pnts, 4);
 	}
 
     }
@@ -276,7 +279,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #003 Passed!\n");}
 	if (do_plotting) {
-	    plot_obr(3, (const point_t *)output_pnts, 4);
+	    const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    plot_obr(3, const_output_pnts, 4);
 	}
 
 
@@ -324,7 +328,8 @@ main(int argc, const char **argv)
 	}
 	if (retval) {return -1;} else {bu_log("Test #004 Passed!\n");}
 	if (do_plotting) {
-	    plot_obr(4, (const point_t *)output_pnts, 4);
+	    const point_t *const_output_pnts = (const point_t *)output_pnts;
+	    plot_obr(4, const_output_pnts, 4);
 	}
 
     }

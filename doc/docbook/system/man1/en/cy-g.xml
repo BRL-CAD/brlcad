@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>cy-g</emphasis>
+<para><command>cy-g</command>
 converts the specified
 <emphasis remap='I'>input_cy_file</emphasis>
 to a BRL-CAD
@@ -38,7 +38,7 @@ scan format.  The result of the conversion is a single
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>cy-g sample.cy sample.g</emphasis>
+$ cy-g <emphasis remap='I'>sample.cy sample.g</emphasis>
 </synopsis>
 </refsect1>
 

@@ -148,6 +148,9 @@ set(LIBRT_SOURCES
   primitives/hyp/hyp.c
   primitives/hyp/hyp_brep.cpp
   primitives/hyp/hyp_mirror.c
+  primitives/joint/joint.c
+  primitives/joint/joint_brep.cpp
+  primitives/joint/joint_mirror.c
   primitives/metaball/metaball.c
   primitives/metaball/metaball_tri.c
   primitives/mirror.c
