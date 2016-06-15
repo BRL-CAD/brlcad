@@ -29,7 +29,7 @@
     <arg choice="opt" rep="norepeat"><replaceable>xn</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>yn</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>zn</replaceable></arg>
-    <arg choice="opt" rep="norepeat"><replaceable>-r</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-r</arg>
   </cmdsynopsis>
 </refsynopsisdiv>
 

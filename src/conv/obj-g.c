@@ -107,10 +107,15 @@ usage(const char *argv0)
 	   "\t\t\t3 = cw\n"
 	);
 
-    bu_log("  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
+    bu_log("  -f\t\tFuse vertices that are close enough to be considered the\n"
+	   "\t\tsame. Can make the solidity detection more reliable.\n"
+	   "\t\tMay significantly increase processing time during import.\n"
+	   "  -t mm\t\tDistance tolerance. Two vertices are considered to be the same\n"
 	   "\t\tif they are within this distance of one another. Default is\n"
-	   "\t\t.0005mm. You should not change this value without setting the\n"
-	   "\t\traytracer tolerance to match it.\n"
+	  );
+
+    bu_log("\t\t.0005mm. You should not change this value without setting the\n"
+	    "\t\traytracer tolerance to match it.\n"
 	   "  -u units\tSelect units for the obj file: (m|cm|mm|ft|in). Default is m.\n"
 	   "\t\tYou can also provide a custom conversion factor from file units\n"
 	   "\t\tto mm.\n"
@@ -2039,6 +2044,8 @@ populate_fuse_map(struct ga_t *ga,
 	fuse_offset = gfi->vertex_fuse_offset;
     }
 
+    /* the loop below is the expensive part of the fusing operation. */
+
     /* only set the flag for duplicates */
     idx1 = 0;
     while (idx1 < num_unique_index_list) {
@@ -3115,6 +3122,7 @@ process_b_mode_option(struct ga_t *ga,
 		      struct rt_wdb *outfp,
 		      fastf_t conv_factor,
 		      struct bn_tol *tol,
+		      int fuse_vertices,
 		      fastf_t bot_thickness, /* bot plate thickness (mm) */
 		      int normal_mode,       /* PROC_NORM, IGNR_NORM */
 		      int plot_mode,         /* PLOT_OFF, PLOT_ON */
@@ -3123,7 +3131,10 @@ process_b_mode_option(struct ga_t *ga,
 		      char bot_orientation,
 		      int face_test_type)    /* TEST_ALL, TEST_NUM_VERT */
 {
-    (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+    if (fuse_vertices) {
+        (void)fuse_vertex(ga, gfi, conv_factor, tol, FUSE_VERT, FUSE_EQUAL);
+    }
+
     (void)retest_grouping_faces(ga, gfi, conv_factor, face_test_type, tol);
     if (!test_closure(ga, gfi, conv_factor, plot_mode, face_test_type, tol)) {
 	(void)output_to_bot(ga, gfi, outfp, conv_factor, tol, bot_thickness,
@@ -3249,6 +3260,7 @@ main(int argc, char **argv)
     time_t overall_elapsed_time;
     struct tm *timep;
     char bot_orientation = RT_BOT_UNORIENTED;
+    int fuse_vertices = 0;
 
     bu_setprogname(argv[0]);
 
@@ -3277,7 +3289,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    while ((c = bu_getopt(argc, argv, "cpidx:X:vt:h:m:u:g:o:r:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "cpidfx:X:vt:h:m:u:g:o:r:")) != -1) {
 	switch (c) {
 	    case 'c': /* continue processing on nmg bomb */
 		cont_on_nmg_bomb_flag = 1;
@@ -3308,6 +3320,9 @@ main(int argc, char **argv)
 		break;
 	    case 'v': /* displays additional information of user interest */
 		verbose++;
+		break;
+	    case 'f': /* vertex fusing is very expensive; disabled by default */
+		fuse_vertices = 1;
 		break;
 	    case 't': /* distance tolerance in mm units */
 		dist_tmp = (double)atof(bu_optarg);
@@ -3630,7 +3645,7 @@ main(int argc, char **argv)
 		    switch (mode_option) {
 			case 'b':
 			    process_b_mode_option(&ga, gfi, fd_out, conv_factor,
-						  tol, bot_thickness, normal_mode, plot_mode,
+						  tol, fuse_vertices, bot_thickness, normal_mode, plot_mode,
 						  open_bot_output_mode, bot_orientation,
 						  native_face_test_type);
 			    break;
@@ -3687,7 +3702,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3734,7 +3749,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3781,7 +3796,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;
@@ -3828,7 +3843,7 @@ main(int argc, char **argv)
 
 			switch (mode_option) {
 			    case 'b':
-				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, bot_thickness,
+				process_b_mode_option(&ga, gfi, fd_out, conv_factor, tol, fuse_vertices, bot_thickness,
 						      normal_mode, plot_mode, open_bot_output_mode, bot_orientation,
 						      native_face_test_type);
 				break;

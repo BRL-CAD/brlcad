@@ -20,7 +20,7 @@
       <arg choice="opt" rep="norepeat">-b </arg>
       <arg choice="opt" rep="norepeat">-c </arg>
       <arg choice="opt" rep="norepeat">-d display</arg>
-      <arg choice="opt" rep="norepeat">-h </arg>
+      <arg choice="opt" rep="norepeat">-h|? </arg>
       <arg choice="opt" rep="norepeat">-r </arg>
       <arg choice="opt" rep="norepeat">-x#</arg>
       <arg choice="opt" rep="norepeat">-X#</arg>
@@ -124,7 +124,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-h </option></term>
+	<term><option>-h</option> or <option>-?</option></term>
 	<listitem>
 	  <para>
 	    Prints out a brief help statement showing the options available when starting

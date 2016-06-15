@@ -40,8 +40,8 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  bwrect [-h] [-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height]\n\
-			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
+Usage:  bwrect [-s squaresize] [-w width] [-n height] [-S out_squaresize] [-W out_width ] [-N out_height]\n\
+			[-x xorig] [-y yorig] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
 
 
 static int
@@ -54,20 +54,20 @@ get_args(int argc, char **argv)
 	    case 's':
 		inx = iny = atoi(bu_optarg);
 		break;
-	    case 'W':
-		outx = atoi(bu_optarg);
-		break;
 	    case 'w':
 		inx = atoi(bu_optarg);
-		break;
-	    case 'N':
-		outy = atoi(bu_optarg);
 		break;
 	    case 'n':
 		iny = atoi(bu_optarg);
 		break;
 	    case 'S':
 		outy = outx = atoi(bu_optarg);
+		break;
+	    case 'W':
+		outx = atoi(bu_optarg);
+		break;
+	    case 'N':
+		outy = atoi(bu_optarg);
 		break;
 	    case 'x':
 		xorig = atoi(bu_optarg);
@@ -78,8 +78,7 @@ get_args(int argc, char **argv)
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-	    case 'h' :
-	    default : /* '?' */
+	    default : /* '?' , 'h' */
 		return 0;
 	}
     }

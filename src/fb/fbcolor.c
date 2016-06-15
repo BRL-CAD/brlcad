@@ -57,8 +57,7 @@ int doKeyPad(void);
 
 static char usage[] = "\
 Usage: fbcolor [-F framebuffer]\n\
-	[-s squarescrsize] [-w scr_width] [-n scr_height]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n";
+	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n";
 
 void
 printusage(void)

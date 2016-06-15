@@ -165,7 +165,6 @@ plotsurfaceleafs(SurfaceTree* surf) {
 unsigned int
 plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
-    register int cnt = 0;
     register struct bu_list *vhead;
     fastf_t min[3], max[3];
     std::list<BBNode*> leaves;

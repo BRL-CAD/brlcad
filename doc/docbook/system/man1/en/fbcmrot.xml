@@ -18,13 +18,13 @@
   <command>fbcmrot</command>
     <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-i <replaceable>increment</replaceable></arg>
-    <arg choice="plain" rep="norepeat"><replaceable>steps_per_second</replaceable></arg>
+    <arg choice="plain" rep="norepeat"><replaceable>frames_per_second</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbcmrot</emphasis>
+<para><command>fbcmrot</command>
 rotates the color map, cycling each color map entry through all of the
 color map positions.
 The
@@ -40,7 +40,7 @@ of zero causes the program to make one step and then exit.</para>
 <para>Each step shifts the colormap one position toward smaller
 values (with a linear colormap this would cause displayed pixels
 to get brighter).  The
-<option>-i </option>increment
+<option>-i </option><replaceable>increment</replaceable>
 option allows a shift of more than one position.  If
 <emphasis remap="I">increment</emphasis>
 is negative, the colormap will be shifted the opposite

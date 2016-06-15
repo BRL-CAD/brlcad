@@ -41,7 +41,7 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-fname.g</option></term>
+      <term><option>-f </option><replaceable>name.g</replaceable></term>
       <listitem>
 	<para>
 	 BRL-CAD file name.
@@ -49,7 +49,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-n#</option></term>
+      <term><option>-n #</option></term>
       <listitem>
 	<para>
 	  The number of handles to be creates (must be less than or equal to 26).
@@ -57,7 +57,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-l#</option></term>
+      <term><option>-l #</option></term>
       <listitem>
 	<para>
 	 Length of handle in millimeters.
@@ -65,7 +65,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-H#</option></term>
+      <term><option>-H #</option></term>
       <listitem>
 	<para>
 	 Height of handle in millimeters.
@@ -73,7 +73,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-r1#</option></term>
+      <term><option>-r1 #</option></term>
       <listitem>
 	<para>
 	 Radius, r1, of the tori in millimeters.
@@ -81,7 +81,7 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-r2#</option></term>
+      <term><option>-r2 #</option></term>
       <listitem>
 	<para>
 	 Radius, r2, of the tori in millimeters.

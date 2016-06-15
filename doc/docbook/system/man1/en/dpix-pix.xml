@@ -27,10 +27,8 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>Outputs a dpix file to pix (see
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>)
-format.  If the
-<option>-v</option>
-option is given, a summary of plot command usage is given at the
-end of the file.  Standard input is read if a file name is not supplied.</para>
+format.
+Standard input is read if a file name is not supplied.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

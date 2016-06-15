@@ -16,7 +16,7 @@
 <refsynopsisdiv xml:id="synopsis">
 <cmdsynopsis sepchar=" ">
   <command>fbscanplot</command>
-    <arg choice="opt" rep="norepeat">-h </arg>
+    <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-v </arg>
     <arg choice="opt" rep="norepeat">-o </arg>
     <arg choice="opt" rep="norepeat">-c </arg>
@@ -29,7 +29,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbscanplot</emphasis>
+<para><command>fbscanplot</command>
 will plot the red, green, and blue, pixel intensities of a selected
 scanline of a framebuffer.  The line to be plotted has a first quadrant
 y coordinate of
@@ -43,16 +43,16 @@ is used to select the input display device (see
 If this variable is not set, the default device for your system will
 be used.
 The output will appear on this same device unless a
-<option>-F </option><replaceable>outframebuffer</replaceable>
+<option>-F </option><replaceable>outframebuffer</replaceable>
 flag is given to redirect the output.</para>
 
-<para>If no size if specified the selected device(s) will be opened at its
+<para>If no size is specified, the selected device(s) will be opened at its/their
 default size (usually the full screen).  The flag
-<option>-W </option><replaceable>scr_width</replaceable>
+<option>-W </option><replaceable>scr_width</replaceable>
 can be used to set a screen width (scanline length) other than this
 default.
 The
-<option>-h</option>
+<option>-H</option>
 flag is a shorthand for a size of 1024x1024.</para>
 
 <para>Either the bottom 256 or top 256 scanlines will be used to
@@ -64,12 +64,12 @@ bottom of the graph being intensity zero; the top 255.</para>
 
 <para>The
 <option>-o</option>
-flag will plot the scanline in overlay mode.  With this flag no background
+flag will plot the scanline in overlay mode.  With this flag, no background
 or grid lines are drawn, and the output always appears in the
-bottom 256 scanlines of the display.  Using this option more of the
+bottom 256 scanlines of the display.  Using this option, more of the
 image will remain visible, and multiple scanlines can be plotted
 on top of each other for comparison.  The image may make the plot
-harder to see however.</para>
+harder to see, however.</para>
 
 <para>If the
 <option>-r</option>
@@ -90,7 +90,7 @@ to the pixel values ("crunched") before plotting them.
 This allows the effects of the color map to be readily viewed.</para>
 </refsection>
 
-<refsection xml:id="example"><title>EXAMPLE</title>
+<refsection xml:id="example"><title>EXAMPLES</title>
 <para><userinput>fbscanplot -r 37</userinput>
 <!-- .br -->
 will plot the intensities of the scanline 37 up from the bottom.

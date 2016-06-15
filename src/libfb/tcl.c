@@ -109,6 +109,11 @@ extern int tk_refresh(FBIO *ifp, int x, int y, int w, int h);
 #endif
 #endif
 
+#ifdef IF_QT
+extern FBIO qt_interface;
+static const char *qt_device_name = "/dev/Qt";
+extern void qt_configureWindow(FBIO *ifp, int width, int height);
+#endif
 
 int
 #if !defined(IF_X) && !defined(IF_WGL) && !defined(IF_OGL) && !defined(IF_TK)
@@ -312,6 +317,11 @@ fb_configureWindow(FBIO *ifp, int width, int height)
     }
 #endif
 #endif  /* IF_TK */
+#ifdef IF_QT
+    if (!bu_strncmp(ifp->if_name, qt_device_name, strlen(qt_device_name))) {
+	qt_configureWindow(ifp, width, height);
+    }
+#endif
 }
 
 

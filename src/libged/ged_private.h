@@ -152,7 +152,7 @@ extern int _ged_combadd2(struct ged *gedp,
 /* defined in draw.c */
 extern void _ged_cvt_vlblock_to_solids(struct ged *gedp,
 				       struct bn_vlblock *vbp,
-				       char *name,
+				       const char *name,
 				       int copy);
 extern int _ged_invent_solid(struct ged *gedp,
 			     char *name,
@@ -467,7 +467,7 @@ extern int _ged_do_tra(struct ged *gedp,
  * the real definition of the struct goes here.  The public
  * header has only the notion of a ged_results structure.*/
 struct ged_results {
-        struct bu_ptbl *results_tbl;
+	struct bu_ptbl *results_tbl;
 };
 
 /* defined in ged_util.c */

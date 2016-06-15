@@ -391,7 +391,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		break;
 	    default:
 		usage(gedp);
-                return GED_ERROR;
+		return GED_ERROR;
 	}
     }
     if (argc == 1) {

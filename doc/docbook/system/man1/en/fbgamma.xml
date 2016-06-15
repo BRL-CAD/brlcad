@@ -19,7 +19,7 @@
     <arg choice="opt" rep="norepeat">-H </arg>
     <arg choice="opt" rep="norepeat">-o </arg>
     <arg choice="opt" rep="norepeat">-i </arg>
-    <arg choice="opt" rep="norepeat">-Fframebuffer </arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>val</replaceable></arg>
     <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat"><replaceable>gval</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>bval</replaceable></arg></arg>
 </cmdsynopsis>
@@ -27,7 +27,7 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><emphasis remap="I">Fbgamma</emphasis>
+<para><command>fbgamma</command>
 loads a gamma correcting colormap into a framebuffer.
 If a single value is given, that number is used for
 all three color channels.  If three values are specified,
@@ -42,7 +42,7 @@ saturate the colors.  An uncorrected monitor is usually too
 saturated.</para>
 
 <para>Note that since this program is intended for gamma
-<emphasis remap="I">correction</emphasis>
+<emphasis remap="I">correction</emphasis>,
 the exponent to which pixel values are raised is the inverse
 of the given value.  To linearize a display then, the given
 value will be equal to the gamma of the display (typically
@@ -68,10 +68,10 @@ flag, the size is changed to 1024x1024.
 This size distinction is important for devices like the Adage
 framebuffers which have different operating modes based on the
 display size.
-In general, the
+In general,
 <command>fbgamma</command>
 manipulates the RGB color maps in the graphics hardware, and
-has effect on the entire screen, not just the portion containing
+has an effect on the entire screen, not just the portion containing
 the current framebuffer display.
 As such, there is no need to match the display size on the
 command line.</para>
@@ -110,8 +110,8 @@ the inverse gamma power.</para>
 
 <para>It should be noted that getting the gamma values "right" involves
 careful calibration and measurement or your display device.
-The values are likely to be different for each color channel,
-will depend of the brightness setting, etc. (increasing the monitor
+The values are likely to be different for each color channel, and
+will depend on the brightness setting, etc. (increasing the monitor
 brightness often lowers the gammas, due to overdriving the high
 end of the display).  Also note that getting the correct colors
 from a display requires knowledge of the phosphor chromaticities.</para>
@@ -120,7 +120,7 @@ from a display requires knowledge of the phosphor chromaticities.</para>
 into a display or saving it as eight bit linear data.  This is
 because the response of the human visual system to brightness
 is also exponential in nature, and thus having "smaller steps"
-and the dark end of the display and larger ones near full bright
+at the dark end of the display, and larger ones near full bright
 (as an uncorrected display will have), fits this response well.
 Gamma correction via the colormap cannot exploit this.</para>
 

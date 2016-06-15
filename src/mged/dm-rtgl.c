@@ -117,7 +117,7 @@ Rtgl_dm_init(struct dm_list *o_dm_list,
     Tk_CreateGenericHandler(doEvent, (ClientData)NULL);
     (void)DM_CONFIGURE_WIN(dmp, 0);
 
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&pathName));
+    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(&dmp->dm_pathName));
     Tcl_Eval(INTERP, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 

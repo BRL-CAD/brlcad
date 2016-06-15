@@ -245,7 +245,7 @@ replot_original_solid(struct solid *sp)
 			 "): Unable to plot evaluated regions, skipping\n", (char *)NULL);
 	return -1;
     }
-    (void)db_full_path_transformation_matrix(mat, dbip, &sp->s_fullpath, sp->s_fullpath.fp_len-2);
+    (void)db_path_to_mat(dbip, &sp->s_fullpath, mat, sp->s_fullpath.fp_len-1, &rt_uniresource);
 
     if (rt_db_get_internal(&intern, dp, dbip, mat, &rt_uniresource) < 0) {
 	Tcl_AppendResult(INTERP, dp->d_namep, ":  solid import failure\n", (char *)NULL);

@@ -17,36 +17,33 @@
 <cmdsynopsis sepchar=" ">
   <command>fbfade</command>
     <arg choice="opt" rep="norepeat">-H </arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-f </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>image</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>square</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>size</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-w </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>width</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-f </arg><arg choice="plain" rep="norepeat"><replaceable>input_image_name</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-s </arg><arg choice="plain" rep="norepeat"><replaceable>input_square_size</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-w </arg><arg choice="plain" rep="norepeat"><replaceable>input_width</replaceable></arg></arg>
     <sbr/>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-n </arg><arg choice="plain" rep="norepeat"><replaceable>input</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>height</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-S </arg><arg choice="plain" rep="norepeat"><replaceable>output</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>square</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>size</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-W </arg><arg choice="plain" rep="norepeat"><replaceable>output</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>width</replaceable></arg></arg>
-    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-N </arg><arg choice="plain" rep="norepeat"><replaceable>output</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>height</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-n </arg><arg choice="plain" rep="norepeat"><replaceable>input_height</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-S </arg><arg choice="plain" rep="norepeat"><replaceable>output_square_size</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-W </arg><arg choice="plain" rep="norepeat"><replaceable>output_width</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="plain" rep="norepeat">-N </arg><arg choice="plain" rep="norepeat"><replaceable>output_height</replaceable></arg></arg>
     <sbr/>
-    <arg choice="opt" rep="norepeat"><arg choice="opt" rep="norepeat">-F </arg><arg choice="plain" rep="norepeat"><replaceable>output</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>frame</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>buffer</replaceable></arg><arg choice="plain" rep="norepeat"><replaceable>name</replaceable></arg></arg>
+    <arg choice="opt" rep="norepeat"><arg choice="opt" rep="norepeat">-F </arg><arg choice="plain" rep="norepeat"><replaceable>output_frame_buffer_name</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<!-- .lg 0  IGNORED -->
-<para>­fbfade
-<!-- .lg  IGNORED -->
+<para><command>fbfade</command>
 gradually displays an image on a frame buffer,
 one randomly chosen pixel at a time.</para>
 
 <refsection xml:id="options"><title>Options</title>
 <variablelist remap="TP">
   <varlistentry>
-  <term>­-H</term>
+  <term>-H</term>
   <listitem>
-<!-- .lg  IGNORED -->
-<para>(“high resolution”)Assumes 1024 by 1024 pixels for default input image size
+<para>(high resolution) Assumes 1024 by 1024 pixels for default input image size
 instead of 512 by 512.
-Explicitly specified sizes override the default,
+Explicitly-specified sizes override the default,
 and if actual input image size is smaller than requested,
 the actual size will be used.
 If output frame buffer size is not specified,
@@ -57,7 +54,7 @@ Actual sizes depend on details of specific frame buffers.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-f <emphasis remap="I">input image name</emphasis></term>
+  <term>-f <emphasis remap="I">input_image_name</emphasis></term>
   <listitem>
 <para>Inputs the image to be displayed
 from the specified frame buffer or <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry> file,
@@ -67,60 +64,54 @@ on the output frame buffer).</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-s<emphasis remap="P-&gt;I"> input square size</emphasis></term>
+  <term>-s<emphasis remap="P-&gt;I"> input_square_size</emphasis></term>
   <listitem>
 <para>Specifies input image width and height.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-w<emphasis remap="P-&gt;I"> input width</emphasis></term>
+  <term>-w<emphasis remap="P-&gt;I"> input_width</emphasis></term>
   <listitem>
 <para>Specifies input image width.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-n<emphasis remap="P-&gt;I"> input height</emphasis></term>
+  <term>-n<emphasis remap="P-&gt;I"> input_height</emphasis></term>
   <listitem>
 <para>Specifies input image height.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-S<emphasis remap="P-&gt;I"> output square size</emphasis></term>
+  <term>-S<emphasis remap="P-&gt;I"> output_square_size</emphasis></term>
   <listitem>
 <para>Specifies output frame buffer width and height.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-W<emphasis remap="P-&gt;I"> output width</emphasis></term>
+  <term>-W<emphasis remap="P-&gt;I"> output_width</emphasis></term>
   <listitem>
 <para>Specifies output frame buffer width.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-N<emphasis remap="P-&gt;I"> output height</emphasis></term>
+  <term>-N<emphasis remap="P-&gt;I"> output_height</emphasis></term>
   <listitem>
 <para>Specifies output frame buffer height.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term>-F<emphasis remap="P-&gt;I"> output frame buffer name</emphasis></term>
+  <term>-F<emphasis remap="P-&gt;I"> output_frame_buffer_name</emphasis></term>
   <listitem>
 <para>Outputs to the specified frame buffer
 instead of the one specified by the
-<!-- .lg 0  IGNORED -->
-­FB_FILE<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
+<emphasis remap="P-&gt;I">FB_FILE</emphasis>
 environment variable
 (or the default, if
-<!-- .lg 0  IGNORED -->
-­</emphasis>FB_FILE<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
+<emphasis remap="P-&gt;I">FB_FILE</emphasis>
 is not set).
 If this is the last option specified, the
-<!-- .lg 0  IGNORED -->
-­</emphasis>-F<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
-is optional.</emphasis></para>
+<emphasis remap="P-&gt;I">-F</emphasis>
+is optional.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -128,26 +119,18 @@ is optional.</emphasis></para>
 </refsection>
 
 <refsection xml:id="caveat"><title>CAVEAT</title>
-<!-- .lg 0  IGNORED -->
-<para>­fbfade<emphasis remap="P-&gt;I">
-<!-- .lg  IGNORED -->
-works best in conjunction with a frame buffer having very fast access to pixels.</emphasis></para>
+<para><command>fbfade</command>
+works best in conjunction with a frame buffer having very fast access to pixels.</para>
 </refsection>
 
 <refsection xml:id="example"><title>EXAMPLE</title>
-<para>The following shell script can be used to produce a slick “slide show”:</para>
+<para>The following shell script can be used to produce a slick slide show:</para>
   <blockquote remap="RS">
-<para>fbclear
-<!-- .br -->
-for  i  in  *.pix
-<!-- .br -->
-do	fbfade  -f $i
-<!-- .br -->
-	sleep  15
-<!-- .br -->
-done
-<!-- .br -->
-fbfade</para></blockquote> <!-- remap='RE' -->
+<para>fbclear</para>
+<para>for i in *.pix</para>
+<para>do	fbfade -f $i</para>
+<para>sleep 15</para>
+<para>done fbfade</para></blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>
@@ -159,7 +142,7 @@ fbfade</para></blockquote> <!-- remap='RE' -->
 </refsection>
 
 <refsection xml:id="authors"><title>AUTHORS</title>
-<para>Douglas A. Gwyn, BRL/VLD-VMB
+<para>Douglas A. Gwyn, BRL/VLD-VMB;
 <!-- .br -->
 Gary S. Moss, BRL/VLD-VMB</para>
 

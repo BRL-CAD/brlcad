@@ -1574,7 +1574,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	    break;
 
     if (dlp == &head_dm_list) {
-	Tcl_AppendResult(interpreter, "f_tie: unrecognized pathName - ",
+	Tcl_AppendResult(interpreter, "f_tie: unrecognized path name - ",
 			 bu_vls_addr(&vls), "\n", (char *)NULL);
 	bu_vls_free(&vls);
 	return TCL_ERROR;
@@ -1719,7 +1719,7 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	Tcl_AppendResult(interpreter, bu_vls_addr(&pathName), (char *)NULL);
+	Tcl_AppendResult(interpreter, bu_vls_addr(&dmp->dm_pathName), (char *)NULL);
 	return TCL_OK;
     }
 

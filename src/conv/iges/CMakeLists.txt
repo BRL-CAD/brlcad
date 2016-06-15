@@ -37,7 +37,7 @@ set(iges-g_SRCS
   convassem.c
   convinst.c
   convsolids.c
-  convsurf.c
+  convsurf.cpp
   convtree.c
   cyl.c
   do_subfigs.c

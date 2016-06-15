@@ -2210,38 +2210,6 @@ db_walk_tree(struct db_i *dbip,
     }
 }
 
-
-int
-db_path_to_mat(
-    struct db_i *dbip,
-    struct db_full_path *pathp,
-    mat_t mat,		/* result */
-    int depth,		/* number of arcs */
-    struct resource *resp)
-{
-    struct db_tree_state ts;
-    struct db_full_path null_path;
-    int ret;
-
-    RT_CHECK_DBI(dbip);
-    RT_CK_FULL_PATH(pathp);
-    if (!mat) bu_bomb("db_path_to_mat() NULL matrix pointer\n");
-
-    db_full_path_init(&null_path);
-    db_init_db_tree_state(&ts, dbip, resp);
-
-    ret = db_follow_path(&ts, &null_path, pathp, LOOKUP_NOISY, depth);
-    db_free_full_path(&null_path);
-    MAT_COPY(mat, ts.ts_mat);	/* implicit return */
-    db_free_db_tree_state(&ts);
-
-    if (ret < 0) {
-	return 0;	/* FAIL */
-    }
-    return 1;		/* OK */
-}
-
-
 void
 db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc, struct mater_info *materp)
 {

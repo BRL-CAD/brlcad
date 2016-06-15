@@ -1082,11 +1082,11 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 
 
 void
-_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
+_ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char *name, int copy)
 {
     size_t i;
-    char shortname[32];
-    char namebuf[64];
+    char shortname[32] = {0};
+    char namebuf[64] = {0};
 
     bu_strlcpy(shortname, name, sizeof(shortname));
 

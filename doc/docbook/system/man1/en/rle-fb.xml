@@ -19,9 +19,9 @@
     <arg choice="opt" rep="norepeat">-Ocd </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-S <replaceable>squarescrsize</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-W <replaceable>scr_width</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-N <replaceable>scr_height</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-s|S <replaceable>squarescrsize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-w|W <replaceable>scr_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-n|N <replaceable>scr_height</replaceable></arg>
     <arg choice="opt" rep="norepeat">-X <replaceable>scr_xoff</replaceable></arg>
     <arg choice="opt" rep="norepeat">-Y <replaceable>scr_yoff</replaceable></arg>
     <arg choice="opt" rep="norepeat"><replaceable>file.rle</replaceable></arg>
@@ -54,7 +54,7 @@ In the case where the RLE file contains a rectangle smaller than the
 screen, or where a portion of that rectangle has been positioned
 outside the bounds of the screen, then this program will only modify those
 screen pixels underneath the RLE image rectangle.
-While this is behavior can be a great boon when creating a montage of
+While this behavior can be a great boon when creating a montage of
 smaller images, it behooves the user to arrange for a suitable background.</para>
 
 <para>If the screen size is explicitly specified by a command line option,
@@ -74,19 +74,19 @@ command line options, as well as by using
 <emphasis remap="I">repos(1)</emphasis>.</para>
 <variablelist remap="TP">
   <varlistentry>
-  <term><option>-W </option><replaceable>scr_width</replaceable></term>
+  <term><option>-w|W </option><replaceable>scr_width</replaceable></term>
   <listitem>
 <para>specifies the desired width of the screen, in pixels.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-N </option><replaceable>scr_height</replaceable></term>
+  <term><option>-n|N </option><replaceable>scr_height</replaceable></term>
   <listitem>
 <para>specifies the desired height of the screen, in scanlines.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-S </option><replaceable>squarescrsize</replaceable></term>
+  <term><option>-s|S </option><replaceable>squarescrsize</replaceable></term>
   <listitem>
 <para>sets the screen width and height to the indicated value.</para>
   </listitem>

@@ -255,7 +255,7 @@ variable is either
 <emphasis remap='I'>[hostname:]</emphasis><filename>/dev/</filename><emphasis remap='I'>device_name[num]</emphasis>
 or
 <emphasis remap='I'>UNIX_path ,</emphasis>
-the pathname of a disk file to be used as a "virtual framebuffer."
+the pathname of a disk file to be used as a "virtual framebuffer".
 <emphasis remap='I'>Hostname</emphasis>
 is the name of a remote machine if the remote framebuffer interface
 is being used.
@@ -302,9 +302,9 @@ Here's a list of some of the common options you may encounter:</para>
 <para>The "high resolution" flag, increasing the default screen and file
 size of 512x512
 to 1024x1024.  Has same effect as
-<option>-s 1024 -S 1024</option>
+<option>-s</option> 1024 (or <option>-S</option> 1024)
 but exists as a convenient shorthand held over from the simple days
-when framebuffers where square, and only came in two resolutions.
+when framebuffers were square, and only came in two resolutions.
 This historical usage unfortunately preempts this letter from use
 as a height specifier, forcing that function to relocate under
 protest to

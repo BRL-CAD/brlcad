@@ -23,6 +23,7 @@
     <arg choice="opt" rep="norepeat">-d</arg>
     <arg choice="opt" rep="norepeat">-g<replaceable>grouping</replaceable></arg>
     <arg choice="opt" rep="norepeat">-h<replaceable>plate_thickness</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-f</arg>
     <arg choice="opt" rep="norepeat">-i</arg>
     <arg choice="opt" rep="norepeat">-m<replaceable>mode</replaceable></arg>
     <arg choice="opt" rep="norepeat">-o<replaceable>open_bot_type</replaceable></arg>
@@ -125,6 +126,17 @@
 	 created when the bot is not a closed volume. This option is
 	 ignored unless the open_bot_type is set to 'plate' or 'plate nocos'
 	 (see -o option).
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
+      <term><option>-f</option></term>
+      <listitem>
+        <para>
+	 Fuse vertices that are within <replaceable>distance_tolerance</replaceable>
+	 of each other. This can make the solidity detection more reliable,
+	 but may significantly increase processing time during conversion.
 	</para>
       </listitem>
     </varlistentry>

@@ -316,7 +316,7 @@ pars_Argv(int argc, char **argv)
 		scr_height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
