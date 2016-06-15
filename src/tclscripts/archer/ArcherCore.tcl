@@ -5253,6 +5253,8 @@ namespace eval ArcherCore {
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::Load {target} {
+    global tcl_platform
+
     SetWaitCursor $this
     if {$mNeedSave} {
 	askToSave
@@ -5270,7 +5272,8 @@ namespace eval ArcherCore {
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
+	if {[file writable $mTarget] ||
+	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1

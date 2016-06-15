@@ -1716,7 +1716,8 @@ package provide Archer 1.0
 
 
 ::itcl::body Archer::Load {_target} {
-    SetWaitCursor $this
+    global tcl_platform
+
     if {$mNeedSave} {
 	askToSave
     }
@@ -1739,7 +1740,8 @@ package provide Archer 1.0
 	set mDbShared 1
 	set mDbReadOnly 1
     } elseif {[file exists $mTarget]} {
-	if {[file writable $mTarget]} {
+	if {[file writable $mTarget] ||
+	    ($tcl_platform(platform) == "windows" && ![file attributes $mTarget -readonly])} {
 	    set mDbReadOnly 0
 	} else {
 	    set mDbReadOnly 1
@@ -1783,66 +1785,70 @@ package provide Archer 1.0
 	}
     }
 
+    SetWaitCursor $this
     $itk_component(ged) refresh_off
 
-    set mDbTitle [$itk_component(ged) title]
-    set mDbUnits [$itk_component(ged) units -s]
-    set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
-    set mPrevSelectedObjPath ""
-    set mPrevSelectedObj ""
-    set mSelectedObjPath ""
-    set mSelectedObj ""
-    set mSelectedObjType ""
-    set mColorObjects ""
-    set mGhostObjects ""
-    set mEdgeObjects ""
+    catch {
+	set mDbTitle [$itk_component(ged) title]
+	set mDbUnits [$itk_component(ged) units -s]
+	set mPrevObjViewMode $OBJ_ATTR_VIEW_MODE
+	set mPrevSelectedObjPath ""
+	set mPrevSelectedObj ""
+	set mSelectedObjPath ""
+	set mSelectedObj ""
+	set mSelectedObjType ""
+	set mColorObjects ""
+	set mGhostObjects ""
+	set mEdgeObjects ""
 
-    if {!$mViewOnly} {
-	initDbAttrView $mTarget
+	if {!$mViewOnly} {
+	    initDbAttrView $mTarget
 
-	set mTreeMode $TREE_MODE_TREE
-	set mPrevTreeMode $TREE_MODE_TREE
-	set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
-	toggleTreeView
+	    set mTreeMode $TREE_MODE_TREE
+	    set mPrevTreeMode $TREE_MODE_TREE
+	    set mPrevTreeMode2 $TREE_MODE_COLOR_OBJECTS
+	    toggleTreeView
 
-	applyPreferences
-	doLighting
-	updateWizardMenu
-	updateUtilityMenu
-	deleteTargetOldCopy
+	    applyPreferences
+	    doLighting
+	    updateWizardMenu
+	    updateUtilityMenu
+	    deleteTargetOldCopy
 
-	updateCreationButtons 1
-	#	updateRaytraceButtons 1
+	    updateCreationButtons 1
+	    #	updateRaytraceButtons 1
 
-	buildGroundPlane
-	showGroundPlane
-    } else {
-	applyPreferences
-	doLighting
+	    buildGroundPlane
+	    showGroundPlane
+	} else {
+	    applyPreferences
+	    doLighting
+	}
+
+	# update the units combobox in the General tab of the preferences panel
+	set utypes {}
+	foreach utype [split [$itk_component(ged) units -t] , ] {
+	    lappend utypes [string trim $utype]
+	}
+	$itk_component(unitsCB) configure \
+	    -values $utypes \
+	    -state readonly
+
+	# refresh tree contents
+	rebuildTree
+
+	if {$mBindingMode == "Default"} {
+	    set mDefaultBindingMode $VIEW_ROTATE_MODE
+	    beginViewRotate
+	}
+
+	set mSavedCenter ""
+	set mSavedViewEyePt ""
+	set mSavedSize ""
+
+	$itk_component(ged) edit_motion_delta_callback_all [::itcl::code $this editMotionDeltaCallback]
     }
 
-    # update the units combobox in the General tab of the preferences panel
-    set utypes {}
-    foreach utype [split [$itk_component(ged) units -t] , ] {
-	lappend utypes [string trim $utype]
-    }
-    $itk_component(unitsCB) configure \
-	-values $utypes \
-	-state readonly
-
-    # refresh tree contents
-    rebuildTree
-
-    if {$mBindingMode == "Default"} {
-	set mDefaultBindingMode $VIEW_ROTATE_MODE
-	beginViewRotate
-    }
-
-    set mSavedCenter ""
-    set mSavedViewEyePt ""
-    set mSavedSize ""
-
-    $itk_component(ged) edit_motion_delta_callback_all [::itcl::code $this editMotionDeltaCallback]
     $itk_component(ged) refresh_on
     $itk_component(ged) refresh_all
     SetNormalCursor $this

@@ -45,6 +45,10 @@ DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/astyle/Makefile)
 
 CMAKEFILES(astyle.dist)
 
+# dom2dox - Doc-O-Matic to Doxygen C++ source converter
+include(${CMAKE_CURRENT_SOURCE_DIR}/dom2dox.dist)
+CMAKEFILES_IN_DIR(dom2dox_ignore_files dom2dox)
+
 # Locac Variables:
 # tab-width: 8
 # mode: cmake

@@ -75,6 +75,7 @@ class SDAI_Application_instance;
 #include "Loop.h"
 #include "VertexLoop.h"
 #include "Face.h"
+#include "OrientedFace.h"
 #include "FaceBound.h"
 #include "FaceOuterBound.h"
 #include "FaceSurface.h"
@@ -1060,6 +1061,25 @@ FaceSurface::LoadONBrep(ON_Brep *brep)
 }
 
 
+bool
+OrientedFace::LoadONBrep(ON_Brep *brep)
+{
+    if (!brep) {
+	/* nothing to do */
+	return false;
+    }
+
+    // need edge bounds to determine extents for some of the infinitely
+    // defined surfaces like cones/cylinders/planes
+    if (!face_element->LoadONBrep(brep)) {
+	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+	return false;
+    }
+
+    return true;
+}
+
+
 void
 Point::AddVertex(ON_Brep *UNUSED(brep))
 {
@@ -1150,8 +1170,8 @@ Face::LoadONBrep(ON_Brep *brep)
     // direction perhaps offer input option possibly
     // check for outer spanning to bounds
     int cnt = 0;
-    LIST_OF_FACE_BOUNDS::reverse_iterator i;
-    for (i = bounds.rbegin(); i != bounds.rend(); i++) {
+    LIST_OF_FACE_BOUNDS::iterator i;
+    for (i = bounds.begin(); i != bounds.end(); i++) {
 	(*i)->SetFaceIndex(ON_id);
 	if (!(*i)->LoadONBrep(brep)) {
 	    std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
@@ -1729,6 +1749,8 @@ Plane::LoadONBrep(ON_Brep *brep)
     // ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     ON_Plane p(origin, xaxis, yaxis);
 
@@ -1774,6 +1796,8 @@ CylindricalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     // make sure origin is part of the bbox
     trim_curve_3d_bbox->Set(origin, true);
@@ -1821,13 +1845,23 @@ ConicalSurface::LoadONBrep(ON_Brep *brep)
     ON_3dVector norm = GetNormal();
 
     origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double tan_semi_angle = tan(semi_angle * LocalUnits::planeangle);
     double height = (radius * LocalUnits::length) / tan_semi_angle;
+
+    origin = origin + norm * (-height);
+    if (NEAR_ZERO(height, BN_TOL_DIST)) {
+	// make sure origin is part of the bbox
+	trim_curve_3d_bbox->Set(origin, true);
+
+	height = trim_curve_3d_bbox->Diagonal().Length();
+    }
+
     double hplus = height * 2.01;
     double r1 = hplus * tan_semi_angle;
 
-    origin = origin + norm * (-height);
     ON_Plane p(origin, xaxis, yaxis);
     ON_Cone c(p, hplus, r1);
 
@@ -1897,12 +1931,16 @@ Circle::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     ON_Plane p(origin, xaxis, yaxis);
-    ON_3dPoint center = origin * LocalUnits::length;
 
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle c(p, center, radius * LocalUnits::length);
+    ON_Circle c(p, origin, radius * LocalUnits::length);
 
     ON_3dPoint P = c.PointAt(t);
 
@@ -1942,12 +1980,15 @@ static double
 radians_from_xaxis_to_ellipse_point(Conic *conic, ON_3dPoint p, double a = 1.0, double b = 1.0)
 {
     ON_3dPoint origin = conic->GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = conic->GetXAxis();
     ON_3dVector yaxis = conic->GetYAxis();
 
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
+
     // get p after translating to origin
-    ON_3dPoint canonical_p = p - center;
+    ON_3dPoint canonical_p = p - origin;
 
     // decompose into x and y components
     double x = canonical_p * xaxis;
@@ -1977,16 +2018,18 @@ Circle::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint origin = GetOrigin();
-    ON_3dPoint center = origin * LocalUnits::length;
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dVector norm = GetNormal();
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double r = radius * LocalUnits::length;
     ON_Plane plane(origin, xaxis, yaxis);
     // Creates a circle parallel to the plane
     // with given center and radius.
-    ON_Circle circle(plane, center, r);
+    ON_Circle circle(plane, origin, r);
 
     ON_3dPoint startpt;
     ON_3dPoint endpt;
@@ -2058,7 +2101,7 @@ Circle::LoadONBrep(ON_Brep *brep)
     ON_3dVector tangentP1, tangentP2;
 
     circleP1 = circle.PointAt(angle); // was using 'startpt' from edge_curve but found case where not in tol
-    tangentP1 = circle.TangentAt(t);
+    tangentP1 = circle.TangentAt(angle);
 
     for (int i = 0; i < narcs; i++) {
 	angle = angle + dtheta;
@@ -2084,7 +2127,7 @@ Circle::LoadONBrep(ON_Brep *brep)
 	circleP1 = circleP2;
 	tangentP1 = tangentP2;
     }
-    cpts.Append(endpt);
+    cpts.Append(circle.PointAt(s));
     W[2 * narcs] = 1.0;
 
     int degree = 2;
@@ -2139,7 +2182,10 @@ Ellipse::SetParameterTrim(double start_param, double end_param)
     ON_3dPoint origin = GetOrigin();
     ON_3dVector xaxis = GetXAxis();
     ON_3dVector yaxis = GetYAxis();
-    // ON_3dPoint center = origin * LocalUnits::length;
+
+    origin = origin * LocalUnits::length;
+    xaxis.Unitize();
+    yaxis.Unitize();
 
     double a = semi_axis_1 * LocalUnits::length;
     double b = semi_axis_2 * LocalUnits::length;
@@ -2796,6 +2842,8 @@ SurfaceOfRevolution::LoadONBrep(ON_Brep *brep)
     }
 
     ON_3dPoint start = axis_position->GetOrigin();
+    start = start * LocalUnits::length;
+
     ON_3dVector dir = axis_position->GetNormal();
     ON_3dPoint end = start + dir;
 

@@ -7,6 +7,8 @@ endif(BRLCAD_EXTRADOCS)
 verbose_add_subdirectory(doc html)
 verbose_add_subdirectory(doc legal)
 
+CMAKEFILES(parsers)
+
 set(documentation_DATA
   IDEAS
   PROJECTS
@@ -23,12 +25,10 @@ set(documentation_DATA
   anim.txt
   archer_ack.txt
   benchmark.tr
-  bison_to_lemon.txt
   brep.txt
   BRL-CAD.bib
   cvs.txt
   description.txt
-  flex_to_re2c.txt
   ged.tr
   history.txt
   hypot.txt

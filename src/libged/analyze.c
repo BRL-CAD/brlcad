@@ -34,6 +34,7 @@
 
 #include "vmath.h"
 #include "bn.h"
+#include "rt/arb_edit.h"
 #include "raytrace.h"
 #include "rtgeom.h"
 
@@ -776,6 +777,7 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     struct poly_face face = POLY_FACE_INIT_ZERO;
     struct rt_arb_internal earb;
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
+    const int arb_faces[5][24] = rt_arb_faces;
     RT_ARB_CK_MAGIC(arb);
 
     /* find the specific arb type, in GIFT order. */
@@ -803,10 +805,10 @@ analyze_arb8(struct ged *gedp, const struct rt_db_internal *ip)
     for (face.npts = 0, i = 0; i < 6; face.npts = 0, i++) {
 	int a, b, c, d; /* 4 indices to face vertices */
 
-	a = rt_arb_faces[type][i*4+0];
-	b = rt_arb_faces[type][i*4+1];
-	c = rt_arb_faces[type][i*4+2];
-	d = rt_arb_faces[type][i*4+3];
+	a = arb_faces[type][i*4+0];
+	b = arb_faces[type][i*4+1];
+	c = arb_faces[type][i*4+2];
+	d = arb_faces[type][i*4+3];
 
 	if (a == -1) {
 	    table.rows[i].nfields = 0;

@@ -218,16 +218,17 @@ struct db_full_path {
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
-    matp_t 	      * fp_mat;		/**< @brief array of matrix pointers */
+    char 	     ** fp_mat;		/**< @brief array of matrix pointers */
 };
 #define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
 
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
-#define DB_FULL_PATH_CUR_MATRIX(_pp) ((_pp)->fp_mat[(_pp)->fp_len-1])
+#define DB_FULL_PATH_CUR_MATRIX(_pp) ((mat_t)((_pp)->fp_mat[(_pp)->fp_len-1]))
 #define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
 #define DB_FULL_PATH_SET_CUR_MATRIX(_pp, _m) { \
-    (_pp)->fp_mat[(_pp)->fp_len-1] = (matp_t)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
+    if (!(_pp)->fp_mat[(_pp)->fp_len-1]) \
+       (_pp)->fp_mat[(_pp)->fp_len-1] = (char *)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
     (void)memcpy((void *)((_pp)->fp_mat[(_pp)->fp_len-1]), (const void *)(_m), sizeof(mat_t)); \
     }
 #define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
@@ -236,7 +237,8 @@ struct db_full_path {
 #define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
 #define DB_FULL_PATH_GET_MATRIX(_pp, _i) ((_pp)->fp_mat[(_i)])
 #define DB_FULL_PATH_SET_MATRIX(_pp, _i, _m) { \
-    (_pp)->fp_mat[(_i)] = (matp_t)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
+    if (!(_pp)->fp_mat[(_i)]) \
+       (_pp)->fp_mat[(_i)] = (char *)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
     (void)memcpy((void *)((_pp)->fp_mat[(_i)]), (const void *)(_m), sizeof(mat_t)); \
     }
 
@@ -5414,19 +5416,6 @@ RT_EXPORT extern int rt_arb_edit(struct bu_vls		*error_msg_ret,
 				 plane_t			planes[6],
 				 const struct bn_tol	*tol);
 RT_EXPORT extern int rt_arb_find_e_nearest_pt2(int *edge, int *vert1, int *vert2, const struct rt_db_internal *ip, const point_t pt2, const mat_t mat, fastf_t ptol);
-
-RT_EXPORT extern const int rt_arb_faces[5][24];
-RT_EXPORT extern short earb8[12][18];
-RT_EXPORT extern short earb7[12][18];
-RT_EXPORT extern short earb6[10][18];
-RT_EXPORT extern short earb5[9][18];
-RT_EXPORT extern short earb4[5][18];
-
-RT_EXPORT extern short arb8_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb7_edge_vertex_mapping[12][2];
-RT_EXPORT extern short arb6_edge_vertex_mapping[10][2];
-RT_EXPORT extern short arb5_edge_vertex_mapping[9][2];
-RT_EXPORT extern short arb4_edge_vertex_mapping[5][2];
 
 /* epa.c */
 RT_EXPORT extern void rt_ell(fastf_t *ov,
