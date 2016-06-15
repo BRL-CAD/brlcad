@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file test_sscanf.c
+/** @file bu_sscanf.c
  *
  * Test bu_sscanf routine.
  *

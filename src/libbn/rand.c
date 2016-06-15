@@ -30,7 +30,7 @@
 
 #include <stdio.h>
 #include "vmath.h"
-#include "bn.h"
+#include "bn/rand.h"
 
 
 const float bn_rand_table[BN_RAND_TABSIZE] = {

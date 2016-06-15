@@ -58,7 +58,7 @@
 #include <stdio.h>		/* DEBUG need stderr for now... */
 #include <math.h>
 #include "vmath.h"
-#include "bn.h"
+#include "bn/qmath.h"
 
 
 void

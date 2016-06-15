@@ -183,7 +183,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	    char *cp;
 	    int count = 0;
 
-	    /* get 'r' format now; prepend its' format string with a newline */
+	    /* get 'r' format now; prepend its format string with a newline */
 	    val = bu_vls_addr(&gedp->ged_gdp->gd_qray_fmts[0].fmt);
 
 	    /* find first '"' */

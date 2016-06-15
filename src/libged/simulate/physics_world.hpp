@@ -28,13 +28,7 @@
 #define PHYSICS_WORLD_H
 
 
-#include "common.h"
-
-#include <vector>
-
 #include <btBulletDynamicsCommon.h>
-
-#include "vmath.h"
 
 
 namespace simulate
@@ -45,26 +39,19 @@ class PhysicsWorld
 {
 public:
     PhysicsWorld();
-    ~PhysicsWorld();
+    virtual ~PhysicsWorld();
 
     void step(btScalar seconds);
-    void add_object(const btVector3 &bounding_box, btScalar mass, matp_t matrix);
+    void add_rigid_body(btRigidBody &rigid_body);
+    void remove_rigid_body(btRigidBody &rigid_body);
 
 
-private:
-    class WorldObject;
-
-
-    PhysicsWorld(const PhysicsWorld &source);
-    PhysicsWorld &operator=(const PhysicsWorld &source);
-
+protected:
     btDbvtBroadphase m_broadphase;
     btDefaultCollisionConfiguration m_collision_config;
     btCollisionDispatcher m_collision_dispatcher;
     btSequentialImpulseConstraintSolver m_constraint_solver;
     btDiscreteDynamicsWorld m_world;
-
-    std::vector<WorldObject *> m_objects;
 };
 
 

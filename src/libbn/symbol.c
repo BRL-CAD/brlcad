@@ -80,9 +80,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
     MAT_DELTAS_VEC( xlate_to_origin, origin );
     bn_mat_mul( mat, xlate_to_origin, rot );
 
-    /* Check to see if initialization is needed */
-    if ( tp_cindex[040] == 0 )  tp_setup();
-
     /* Draw each character in the input string */
     offset = 0;
     for ( cp = (unsigned char *)string; *cp; cp++, offset += scale )  {
@@ -93,7 +90,7 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 	MAT4X3PNT( loc, mat, temp );
 	pdv_3move( fp, loc );
 
-	for ( p = tp_cindex[*cp]; (stroke= *p) != LAST; p++ )  {
+	for ( p = tp_getchar(cp); (stroke= *p) != LAST; p++ )  {
 	    int	draw;
 
 	    if ( stroke==NEGY )  {

@@ -147,7 +147,7 @@ int
 main(int argc, char *argv[])
 {
 
-    mat_t mod2view1;		/* first log matrix its view */
+    mat_t mod2view1;		/* first log matrix to its view */
     mat_t mod2view2;		/* second log matrix to its view*/
     mat_t regismat;		/* registration matrix */
     mat_t view2model;		/* matrix for converting from view to model space */

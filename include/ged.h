@@ -368,7 +368,7 @@ struct ged {
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
     void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after creating a vlist */
-    void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
+    void			(*ged_free_vlist_callback)(unsigned int, int);	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
     int 			ged_internal_call;
@@ -1168,6 +1168,11 @@ GED_EXPORT extern int ged_killrefs(struct ged *gedp, int argc, const char *argv[
  * Kill all paths belonging to objects
  */
 GED_EXPORT extern int ged_killtree(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * List attributes of regions within a group/combination.
+ */
+GED_EXPORT extern int ged_lc(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * List object information, verbose.

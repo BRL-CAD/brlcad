@@ -33,22 +33,27 @@ test_bu_rgb_to_hsv(int argc, char *argv[])
 {
     fastf_t expected_hsv_color[3];
     fastf_t actual_hsv_color[3];
-    unsigned int rgb_color[3];
+    unsigned int scanned_rgb_color[3];
+    unsigned char rgb_color[3];
 
     if (argc != 4) {
 	bu_exit(1, "ERROR: input format is rgb_values expected_hsv_values [%s]\n", argv[0]);
     }
 
-    sscanf(argv[2], "%u,%u,%u", &rgb_color[RED], &rgb_color[GRN], &rgb_color[BLU]);
+    sscanf(argv[2], "%u,%u,%u", &scanned_rgb_color[RED], &scanned_rgb_color[GRN], &scanned_rgb_color[BLU]);
+    VMOVE(rgb_color, scanned_rgb_color);
     sscanf(argv[3], "%lf,%lf,%lf", &expected_hsv_color[HUE], &expected_hsv_color[SAT], &expected_hsv_color[VAL]);
 
-    bu_rgb_to_hsv((unsigned char *)rgb_color, actual_hsv_color);
+    bu_rgb_to_hsv(rgb_color, actual_hsv_color);
 
     printf("Result: %f,%f,%f", actual_hsv_color[HUE], actual_hsv_color[SAT], actual_hsv_color[VAL]);
 
-    return !(EQUAL(expected_hsv_color[HUE], actual_hsv_color[HUE])
-	     && EQUAL(expected_hsv_color[SAT], actual_hsv_color[SAT])
-	     && EQUAL(expected_hsv_color[VAL], actual_hsv_color[VAL]));
+    /* Use 0.01 as tolerance to allow the numbers in CMakeLists.txt to
+     * be a reasonable length.
+     */
+    return !(NEAR_EQUAL(expected_hsv_color[HUE], actual_hsv_color[HUE], 0.01)
+	     && NEAR_EQUAL(expected_hsv_color[SAT], actual_hsv_color[SAT], 0.01)
+	     && NEAR_EQUAL(expected_hsv_color[VAL], actual_hsv_color[VAL], 0.01));
 }
 
 static int

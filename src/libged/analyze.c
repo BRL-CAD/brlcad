@@ -993,7 +993,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
 	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
-	    /* first triangular face, make sure its not a duplicate */
+	    /* first triangular face, make sure it's not a duplicate */
 	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
@@ -1016,7 +1016,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 		nfaces++;
 	    }
 
-	    /* second triangular face, make sure its not a duplicate */
+	    /* second triangular face, make sure it's not a duplicate */
 	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
@@ -1159,6 +1159,7 @@ HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area = -1;
+    point_t centroid;
 
     if (OBJ[ID_SKETCH].ft_surf_area)
 	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
@@ -1169,6 +1170,14 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 	    );
+    }
+
+    if (OBJ[ID_SKETCH].ft_centroid) {
+	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
     }
 }
 
@@ -1248,6 +1257,10 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
+        case ID_EXTRUDE:
 	    analyze_general(gedp, ip);
 	    break;
 

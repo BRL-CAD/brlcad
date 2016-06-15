@@ -27,13 +27,15 @@
 #include "bu/parallel.h"
 #include "bu/vls.h"
 
+#include "y2038/time64.h"
+
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 {
     static const char *nulltime = "0000-00-00T00:00:00Z";
     struct tm loctime;
     struct tm* retval;
-    time_t some_time;
+    Time64_T some_time;
     int fail = 0;
 
     if (!vls_gmtime)
@@ -41,8 +43,8 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
 
     BU_CK_VLS(vls_gmtime);
 
-    some_time = (time_t)time_val;
-    if (some_time == (time_t)(-1)) {
+    some_time = (Time64_T)time_val;
+    if (some_time == (Time64_T)(-1)) {
 	/* time error: but set something, an invalid "NULL" time. */
 	bu_vls_sprintf(vls_gmtime, nulltime);
 	return;
@@ -51,7 +53,7 @@ bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)
     memset(&loctime, 0, sizeof(loctime));
 
     bu_semaphore_acquire(BU_SEM_DATETIME);
-    retval = gmtime(&some_time);
+    retval = gmtime64(&some_time);
     if (retval)
 	loctime = *retval; /* struct copy */
     else

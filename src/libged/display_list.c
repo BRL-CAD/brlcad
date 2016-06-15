@@ -2203,8 +2203,8 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		    for (i = 0; i < nused; i++, cmd++, pt++) {
 			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				rt_vlist_cmd_descriptions[*cmd],
-				V3ARGS(*pt));
+				      rt_vlist_get_cmd_description(*cmd),
+				      V3ARGS(*pt));
 		    }
 		}
 

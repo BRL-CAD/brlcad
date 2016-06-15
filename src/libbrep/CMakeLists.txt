@@ -27,6 +27,7 @@ set(LIBBREP_SOURCES
   #opennurbs_fit.cpp
   px_event.cpp
   PullbackCurve.cpp
+  shape_recognition.cpp
   ssx_event.cpp
   Subcurve.cpp
   Subsurface.cpp
@@ -38,6 +39,7 @@ set(libbrep_ignored_files
   opennurbs_fit.h
   opennurbs_fit.cpp
   PullbackCurve.h
+  shape_recognition.h
   surface_tree_queue_tests.patch
   )
 CMAKEFILES(${libbrep_ignored_files})

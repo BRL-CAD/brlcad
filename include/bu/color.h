@@ -85,13 +85,13 @@ typedef struct bu_color bu_color_t;
  * or "constrained" random aka the BRLCADWrapper:getRandomColor
  * function.  Need a function that provides flexibility.  Possible
  * calling syntax:
- *
+ @code
  * bu_color_rand(cp, NULL, NULL,     NULL,     0);            #generate a totally random color value
  * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_SET_R);  #randomize the R value only, else use rgb_seed values
  * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_GOLDEN); #use the golden ratio constraining technique
  * bu_color_rand(cp, NULL, NULL,     hsv_seed, COLOR_GOLDEN); #use the golden ratio constraining technique with an hsv input
  * bu_color_rand(cp, seed, NULL,     NULL,     0);            #randomize, using bu_color seed
- *
+ @endcode
  * Passing multiple seeds would be an error - the multiple slots are for formatting convenience.  May be
  * better to use just one bu_color seed and make callers pre-package it - not sure yet.  If we go that
  * route, we'll have to implement the unimplemented utility functions below.

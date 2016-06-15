@@ -25,14 +25,14 @@
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'><replaceable>file.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>newfile.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixfilter</emphasis>
+<para><command>pixfilter</command>
 applies one of several 3x3 kernel filters to a color
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file.
@@ -56,7 +56,7 @@ choices include:</para>
   <varlistentry>
   <term><emphasis remap='B'>lo</emphasis></term>
   <listitem>
-<para>low pass, the default.</para>
+<para>low pass (the default)</para>
   </listitem>
   </varlistentry>
   <varlistentry>

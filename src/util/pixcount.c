@@ -52,7 +52,7 @@ int pixel_size = 3;		/* Bytes/pixel */
 FILE *outfp = NULL;		/* output file */
 
 static const char usage[]     = "Usage: pixcount [-# bytes_per_pixel] [infile.pix [outfile]]\n";
-static const char optstring[] = "#:?";
+static const char optstring[] = "#:h?";
 
 static
 void print_usage(void)
@@ -165,7 +165,7 @@ main(int argc, char **argv)
 {
     struct bu_rb_tree *palette;	/* Pixel palette */
     char *inf_name;	/* name of input stream */
-    char *outf_name;	/* " " output " */
+    char *outf_name;	/*  "   "  output  " */
     unsigned char *buf;		/* the current input pixel */
     FILE *infp = NULL;	/* input stream */
     int ch;		/* current char in command line */
@@ -182,17 +182,16 @@ main(int argc, char **argv)
 		    print_usage();
 		}
 		break;
-	    case '?':
-	    default:
+	    default: /* 'h' '?' */
 		print_usage();
 	}
     switch (argc - bu_optind) {
 	case 0:
 	    infp = stdin;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 1:
 	    outfp = stdout;
-	    /* Break intentionally missing */
+	    /* Break intentionally omitted */
 	case 2:
 	    break;
 	default:
@@ -214,7 +213,7 @@ main(int argc, char **argv)
     }
 
     /*
-     * Ensure that infp is kosher,
+     * Ensure that infp is kosher
      */
     if (infp == stdin) {
 	if (isatty(fileno(stdin))) {

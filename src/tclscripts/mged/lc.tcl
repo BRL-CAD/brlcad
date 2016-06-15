@@ -398,7 +398,7 @@ proc lc {args} {
     } else {
 	# convert columns from 1-5 to 0-4
 	set sort_column [expr ($sort_column - 1)]
-	
+
 	if { $descending_sort_flag_cnt == 1 } {
 	    set lines2 [lsort -dictionary -decreasing -index $sort_column $lines2]
 	} else {

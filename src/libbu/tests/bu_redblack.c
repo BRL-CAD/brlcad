@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file test_rbtree.c
+/** @file bu_redblack.c
  * Test unit for Red - Black Tree API
  */
 

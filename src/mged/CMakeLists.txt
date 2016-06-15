@@ -6,6 +6,7 @@ set(MGED_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${TCL_INCLUDE_PATH}
   ${TERMIO_INCLUDE_DIRS}
@@ -83,9 +84,9 @@ set(MGED_SOURCES
   )
 
 if(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libsysv;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
 else(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
+  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libsysv;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
 endif(NOT WIN32)
 if(${ITCL_LIBRARY} MATCHES "itcl")
   ADD_DEPENDENCIES(mged itcl)

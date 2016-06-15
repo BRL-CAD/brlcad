@@ -124,7 +124,7 @@ pull_comb(struct db_i *dbip,
 
 
 /* routine takes the maximum and minimum points from the AABB and determines the translation matrix
- * which moves the centrepoint to the origin and moves the primitive by the its inverse
+ * which moves the centrepoint to the origin and moves the primitive by its inverse
  * before pulling the translation.
  */
 void

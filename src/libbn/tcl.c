@@ -38,8 +38,14 @@
 
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
-
+#include "bn/mat.h"
+#include "bn/noise.h"
+#include "bn/plane_struct.h"
+#include "bn/plane_calc.h"
+#include "bn/qmath.h"
+#include "bn/rand.h"
+#include "bn/bn_tcl.h"
+#include "bn/tcl_encode.h"
 
 int
 bn_decode_mat(fastf_t *mat, const char *str)

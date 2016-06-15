@@ -18,14 +18,14 @@
 <cmdsynopsis>
   <command>pixcolors</command>
     <arg choice='opt'>-v </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>pixfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixcolors</emphasis>
+<para><command>pixcolors</command>
 reports on the standard output the number of distinct colors used in the
 <emphasis remap='I'>pix(5)</emphasis>
 format file on the standard input.</para>

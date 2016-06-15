@@ -34,16 +34,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-int
-db_regexp_match(register const char *pattern, register const char *string)
-{
-    if (bu_fnmatch(pattern, string, 0) == 0)
-	return 1;
-
-    return 0;
-}
-
-
+/* Deprecated - use db_ls */
 int
 db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 {

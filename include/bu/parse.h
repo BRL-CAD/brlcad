@@ -437,6 +437,7 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  * @param argv - contains the keyword-value pairs
  * @param desc - structure description
  * @param base - base addr of users struct
+ * @param data - user data to be passed to the sp_hook function
  *
  * @retval BRLCAD_OK if successful,
  * @retval BRLCAD_ERROR on failure

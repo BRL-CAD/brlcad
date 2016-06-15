@@ -53,7 +53,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "b:f:l:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "b:f:l:h?")) != -1) {
 	switch (c) {
 	    case 'b':
 		bytes_per_sample = atoi(bu_optarg);
@@ -64,7 +64,7 @@ get_args(int argc, char **argv)
 	    case 'l':
 		file_length = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

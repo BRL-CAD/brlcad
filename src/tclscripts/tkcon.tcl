@@ -84,7 +84,7 @@ if {$tcl_version < 8.4} {
 }
 
 # We need to load some package to get what's available, and we
-# choose ctext because we'll use it if its available in the editor
+# choose ctext because we'll use it if it's available in the editor
 catch {package require ctext}
 foreach pkg [info loaded {}] {
     set file [lindex $pkg 0]

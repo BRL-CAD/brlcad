@@ -41,7 +41,8 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/noise.h"
+#include "bn/rand.h"
 
 
 /**

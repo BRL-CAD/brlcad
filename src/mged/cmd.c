@@ -996,6 +996,9 @@ backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 /**
  * This routine is called to perform wildcard expansion and character
  * quoting on the given vls (typically input from the keyboard.)
+ *
+ * TODO: this and ged_glob share a good bit of logic - can ged_glob
+ * be used, and if not can the common logic be expressed in some API?
  */
 void
 mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
@@ -1062,9 +1065,24 @@ mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
 	 */
 
 	if (regexp) {
+	    register int i, num;
+	    register struct directory *dp;
 	    bu_vls_trunc(&temp, 0);
-	    if (db_regexp_match_all(&temp, dbip,
-				    bu_vls_addr(&word)) == 0) {
+	    for (i = num = 0; i < RT_DBNHASH; i++) {
+		for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
+			continue;
+		    if (num == 0)
+			bu_vls_strcat(&temp, dp->d_namep);
+		    else {
+			bu_vls_strcat(&temp, " ");
+			bu_vls_strcat(&temp, dp->d_namep);
+		    }
+		    ++num;
+		}
+	    }
+
+	    if (num == 0) {
 		debackslash(&temp, &word);
 		backslash_specials(dest, &temp);
 	    } else

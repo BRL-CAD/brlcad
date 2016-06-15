@@ -22,20 +22,20 @@
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
     <arg choice='plain'><replaceable>foreground.pix</replaceable></arg>
     <arg choice='plain'><replaceable>background.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><command>pixmerge</command>
-Given two streams of data, typically
+<para><command>pixmerge</command>,
+given two streams of data, typically
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 or
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 images,
-generate an output stream of the same size, where the value of
+generates an output stream of the same size, where the value of
 the output is determined by a formula involving the first
 (foreground) stream and a constant, or the value of the second
 (background) stream.
@@ -77,9 +77,9 @@ It is expected that there will be up to
 slash-separated constants given as a single parameter here.</para>
 
 <para>If no formula is specified, the default is to take all foreground
-pixels greater than black (all bytes zero), which can be specified
-as:
-<!-- .br -->
+pixels greater than black (black being specified with all bytes zero), which can be specified
+as:</para>
+<para>
    pixmerge -g -C 0/0/0 fg.pix bg.pix</para>
 </refsect1>
 
@@ -88,8 +88,8 @@ as:
       pixmerge -g -C 20/20/20 fg.pix - &gt; out.pix</para>
 
 <para>   pixbackgnd -t0 160 200 |
-      pixmerge -n -C 63/0/127 fg.pix - | pix-fb
-The second example is used to composite an
+      pixmerge -n -C 63/0/127 fg.pix - | pix-fb</para>
+<para>The second example is used to composite an
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 generated image on top of a shaded background.</para>
 </refsect1>

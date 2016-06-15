@@ -20,12 +20,6 @@
 
 /** @addtogroup cmd */
 /** @{ */
-/** @file cmdhist.c
- *
- * @brief
- * Routines for maintaining a command history
- *
- */
 
 #ifndef CMD_H
 #define CMD_H
@@ -75,6 +69,12 @@ struct bu_cmdhist_obj {
 
 __BEGIN_DECLS
 
+/** @file libbu/cmd.c
+ *
+ * @brief
+ * Routine(s) for processing subcommands
+ *
+ */
 /**
  * This function is intended to be used for parsing subcommands.  If
  * the command is found in the array of commands, the associated
@@ -92,6 +92,12 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
+/** @file cmdhist.c
+ *
+ * @brief
+ * Routines for maintaining a command history
+ *
+ */
 /**
  * @brief
  * Prints out the command history.

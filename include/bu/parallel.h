@@ -21,7 +21,7 @@
 /**  @defgroup parallel  Parallel Processing */
 /**   @defgroup thread Multithreading */
 
-/** @file parallel.h
+/** @file include/bu/parallel.h
  *
  */
 #ifndef BU_PARALLEL_H

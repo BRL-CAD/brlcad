@@ -227,7 +227,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 		    continue;
 		}
 		double v;
-		int trimstatus = br->isTrimmed(uv, v);
+		bool trimstatus = br->isTrimmed(uv, v);
 		if (v >= 0.0) {
 		    if (closest && *closest == NULL) {
 			currHeight = v;

@@ -126,7 +126,7 @@ include/raytrace.h
 	tcl_obj_to_fastf_array tcl_list_to_int_array
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
-
+	db_regexp_match_all() -> db_ls() [deprecated 7.26]
 pixcut, pixpaste
         copyright cleanup [deprecated 7.26]
 librt, fast4-g
@@ -1024,4 +1024,5 @@ s/INTERSECT/'+'/g
 s/(#[[:space:]]*include[[:space:]]+["<])bselect\.h/\1bsocket.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
         rename bselect.h and bin.h public headers to be more declaratively named [7.25]
-
+s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
+	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]

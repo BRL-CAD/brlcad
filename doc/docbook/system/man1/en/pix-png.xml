@@ -17,14 +17,14 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix-png</command>
-    <arg choice='opt'>-a </arg>
-    <arg choice='opt'>-ggamma </arg>
-    <arg choice='opt'>-ssquaresize </arg>
-    <arg choice='opt'>-wfile_width </arg>
-    <arg choice='opt'>-nfile_height </arg>
-    <arg choice='opt'>-oPNG_file </arg>
+    <arg choice='opt'>-a</arg>
+    <arg choice='opt'>-g <replaceable>gamma</replaceable></arg>
+    <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
+    <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='opt'>-o <replaceable>PNG_file</replaceable></arg>
     <arg choice='opt'><replaceable>PIX_file</replaceable></arg>
-    <arg choice='opt'><replaceable>&gt;PNG_file</replaceable></arg>
+    <arg choice='opt'>&gt; <replaceable>PNG_file</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -105,7 +105,7 @@ device as a safeguard.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

@@ -396,7 +396,7 @@ hiteye(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
     if (hitp->hit_dist < -1.0e-10) {
 	/* If we are under 1.0 units inside of a solid, we pushed into
 	 * it ourselves in trying to get away from the surface.
-	 * Otherwise, its hard to tell how we got in here!
+	 * Otherwise, it's hard to tell how we got in here!
 	 */
 	if (hitp->hit_dist < -1.001) {
 	    bu_log("hiteye: *** GAK2, eye inside solid (%g) ***\n", hitp->hit_dist);

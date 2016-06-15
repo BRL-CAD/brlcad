@@ -18,8 +18,6 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-+ merge rel8, minmax.grep @ clip.c
-
 * fix iges exporter (spaces after commas)
 
 * fix the bn_poly_sub unit test
@@ -54,6 +52,22 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* update the rt* manual pages to note that they can all write out to
+  various image formats like png just by specifying an output file
+  extension.
+
+* implement a means to store per object, face, and vertex information
+  on BoT mesh geometry.  useful for per-face/vertex shading as well as
+  storing analytic information during conversion (e.g., per-face
+  fastgen material codes)
+
+* import CTRI material information in fast4-g as per-face data.
+
+* improve performance of these commands that seem to have exponential
+  cost: bot_split, killtree
+
+* translate lc command to libged
 
 * Integrate ADRT into Archer as a visualization mode.
 
@@ -1291,6 +1305,13 @@ ARCHER
 ATTRIBUTES
 ----------
 
+* attr command option to output to a file
+
+* attr command change to only output non-standard attributes
+
+* attr command change to have an optional object argument and to work
+  with multiple objects.  make output format scriptable.
+
 * implement an attribute versioning system.  can hang attribute
   version off of _GLOBAL (ideally) or per-object so application codes
   (including our own tools) know whether they're compatible or whether
@@ -2037,7 +2058,6 @@ DOCUMENTATION
     g-off
     g-step
     g-voxel
-    gqa
     gastank
     globe
     handle

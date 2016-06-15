@@ -173,7 +173,6 @@ RT_EXPORT extern int db_full_path_subset(const struct db_full_path	*a,
 					 const struct db_full_path	*b,
 					 const int			skip_first);
 
-
 /**
  * Returns -
  * 1 if 'a' matches the top part of 'b'
@@ -203,11 +202,11 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  *
  * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
-RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
+RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    struct db_full_path	*pathp,
-				    mat_t                mat,   /* result */
-				    const int            depth, /* number of arcs */
-				    struct_resource     *resp);
+				    mat_t mat, /* result */
+				    int depth, /* number of arcs */
+				    struct resource *resp);
 
 
 #endif /*RT_DB_FULLPATH_H*/

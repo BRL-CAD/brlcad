@@ -55,7 +55,7 @@
 }
 
 
-static char usage[] = "[-bvi8] [-xX lvl] [-P num_cpus] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
+static char usage[] = "[-bvi8] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol] [-D dist_calc_tol] [-o output_file_name.stl | -m directory_name] brlcad_db.g object(s)\n";
 
 static void
 print_usage(const char *progname)
@@ -65,7 +65,6 @@ print_usage(const char *progname)
 
 static int verbose;
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
-static int ncpu = 1;			/* Number of processors */
 static int binary = 0;			/* Default output is ASCII */
 static char *output_file = NULL;	/* output filename */
 static char *output_directory = NULL;	/* directory name to hold output files */
@@ -346,7 +345,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:ih?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -373,9 +372,6 @@ main(int argc, char *argv[])
 		break;
 	    case 'v':
 		verbose++;
-		break;
-	    case 'P':
-		ncpu = atoi(bu_optarg);
 		break;
 	    case 'x':
 		sscanf(bu_optarg, "%x", (unsigned int *)&RTG.debug);
@@ -477,7 +473,7 @@ main(int argc, char *argv[])
 
     /* Walk indicated tree(s).  Each region will be output separately */
     (void) db_walk_tree(dbip, argc-1, (const char **)(argv+1),
-			1,			/* ncpu */
+			1,
 			&tree_state,
 			0,			/* take all regions */
 			use_mc?gcv_region_end_mc:gcv_region_end,

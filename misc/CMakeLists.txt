@@ -51,38 +51,13 @@ BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 if(DOXYGEN_FOUND)
-  configure_file(doxygen/Doxyfile.in ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile @ONLY)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html
-    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/Doxyfile
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-    )
-  add_custom_target(dox     DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-  add_custom_target(doxygen DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output/html/index.html)
-
-  configure_file(doxygen/DoxyfileLibs.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs @ONLY)
-  configure_file(doxygen/DoxyfileLibs-defaults.in ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs-defaults @ONLY)
-  add_custom_command(
-    OUTPUT ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html
-    COMMAND ${DOXYGEN_EXECUTABLE} ${CMAKE_BINARY_DIR}/CMakeTmp/DoxyfileLibs
-    WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/doc
-    )
-  add_custom_target(libdox DEPENDS ${CMAKE_BINARY_DIR}/doc/doxygen_output_libs/html/index.html)
-
+  add_subdirectory(doxygen)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
   Bullet_Box_Chain_Demo.cpp
   CMake
   Description.txt
-  doxygen/Doxyfile.in
-  doxygen/doxygen_intro.h
-  doxygen/doxygen_structure_libbu.h
-  doxygen/doxygen_structure_libbn.h
-  doxygen/doxygen_structure
-  doxygen/DoxyfileLibs.in
-  doxygen/DoxyfileLibs-defaults.in
-  doxygen/doxygen_structure_libs.txt
   profont/LICENSE
   profont/profont-IIx-charmap.png
   profont/profont_IIx_readme.pdf

@@ -24,7 +24,7 @@
 
 #include "bu/malloc.h"
 #include "bu/sort.h"
-#include "bn.h"
+#include "bn/chull.h"
 
 #include "./bn_private.h"
 

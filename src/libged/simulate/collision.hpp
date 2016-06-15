@@ -27,29 +27,36 @@
 #ifndef COLLISION_H
 #define COLLISION_H
 
+#include "rt_instance.hpp"
 
-#include <BulletCollision/CollisionShapes/btBoxShape.h>
-#include <BulletCollision/CollisionDispatch/btActivatingCollisionAlgorithm.h>
-#include <BulletCollision/CollisionDispatch/btCollisionCreateFunc.h>
+#include <string>
+
+#include <btBulletDynamicsCommon.h>
 
 
 namespace simulate
 {
 
 
-namespace collision
-{
-
-
-static const int RT_SHAPE_TYPE =
-    CUSTOM_POLYHEDRAL_SHAPE_TYPE;
-
-
 class RtCollisionShape : public btBoxShape
 {
 public:
-    RtCollisionShape(const btVector3 &half_extents);
-    virtual ~RtCollisionShape();
+    static const int RT_SHAPE_TYPE = CUSTOM_POLYHEDRAL_SHAPE_TYPE;
+
+
+    RtCollisionShape(const TreeUpdater &tree_updater, const std::string &db_path,
+		     const btVector3 &half_extents);
+
+    virtual const char *getName() const;
+    virtual void calculateLocalInertia(btScalar mass, btVector3 &inertia) const;
+
+    std::string get_db_path() const;
+    rt_i &get_rt_instance() const;
+
+
+private:
+    const TreeUpdater &m_tree_updater;
+    const std::string m_db_path;
 };
 
 
@@ -83,15 +90,12 @@ public:
 
 
 private:
-    RtCollisionAlgorithm(const RtCollisionAlgorithm &);
-    RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &);
+    RtCollisionAlgorithm(const RtCollisionAlgorithm &source);
+    RtCollisionAlgorithm &operator=(const RtCollisionAlgorithm &source);
 
     bool m_owns_manifold;
     btPersistentManifold *m_manifold;
 };
-
-
-}
 
 
 }

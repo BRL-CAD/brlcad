@@ -51,7 +51,7 @@
 #include "bu/malloc.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/tabdata.h"
 
 void
 bn_table_free(struct bn_table *tabp)

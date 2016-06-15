@@ -56,7 +56,10 @@
 #include <stdlib.h>
 
 #include "bu/malloc.h"
-#include "bn.h"
+#include "bn/chull.h"
+#include "bn/obr.h"
+#include "bn/plane_calc.h"
+#include "bn/tol.h"
 #include "./bn_private.h"
 
 #define F_NONE -1

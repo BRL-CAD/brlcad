@@ -28,7 +28,9 @@
 #include "bu/list.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/vectfont.h"
+#include "bn/vlist.h"
 #include "vectfont.h"
 
 
@@ -65,9 +67,6 @@ bn_vlist_3string(struct bu_list *vhead,
     MAT_DELTAS_VEC( xlate_to_origin, origin );
     bn_mat_mul( mat, xlate_to_origin, rot );
 
-    /* Check to see if initialization is needed */
-    if ( tp_cindex[040] == 0 )  tp_setup();
-
     /* Draw each character in the input string */
     offset = 0;
     for ( cp = (unsigned char *)string; *cp; cp++, offset += scale )  {
@@ -78,7 +77,7 @@ bn_vlist_3string(struct bu_list *vhead,
 	MAT4X3PNT( loc, mat, temp );
 	BN_ADD_VLIST(free_hd, vhead, loc, BN_VLIST_LINE_MOVE );
 
-	for ( p = tp_cindex[*cp]; ((stroke= *p)) != LAST; p++ )  {
+	for ( p = tp_getchar(cp); ((stroke= *p)) != LAST; p++ )  {
 	    int	draw;
 
 	    if ( (stroke)==NEGY )  {

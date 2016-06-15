@@ -121,7 +121,7 @@
  */
 extern struct bu_rb_node *rb_neighbor(struct bu_rb_node *node, int order, int sense);
 
-/** @file RB_ROTATE.c
+/** @file rb_rotate.c
  *
  * Routines to perform rotations on a red-black tree
  *

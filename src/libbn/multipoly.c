@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup multipoly */
+/** @addtogroup poly */
 /** @{ */
 /** @file libbn/multipoly.c
  *
@@ -34,7 +34,7 @@
 
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/multipoly.h"
 
 
 #define FAILSTR "failure in multipoly.c"

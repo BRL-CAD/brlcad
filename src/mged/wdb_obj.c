@@ -2424,7 +2424,23 @@ wdb_match_cmd(struct rt_wdb *wdbp,
 
     bu_vls_init(&matches);
     for (++argv; *argv != NULL; ++argv) {
-	if (db_regexp_match_all(&matches, wdbp->dbip, *argv) > 0)
+	register int i, num;
+	register struct directory *dp;
+	for (i = num = 0; i < RT_DBNHASH; i++) {
+	    for (dp = wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		    continue;
+		if (num == 0)
+		    bu_vls_strcat(&matches, dp->d_namep);
+		else {
+		    bu_vls_strcat(&matches, " ");
+		    bu_vls_strcat(&matches, dp->d_namep);
+		}
+		++num;
+	    }
+	}
+
+	if (num > 0)
 	    bu_vls_strcat(&matches, " ");
     }
     bu_vls_trimspace(&matches);

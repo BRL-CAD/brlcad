@@ -1191,7 +1191,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     if (vals_present > 1) {
 	num_curves = atoi(argv[4]);
 	if (num_curves < 3) {
-	    bu_vls_printf(gedp->ged_result_str, "points per waterline must be >= 3\n");
+	    bu_vls_printf(gedp->ged_result_str, "number of waterlines must be >= 3\n");
 	    intern->idb_meth = &OBJ[ID_ARS];
 	    return GED_ERROR;
 	}

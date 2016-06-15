@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixdsplit</emphasis>
+<para><command>pixdsplit</command>
 separates out interwoven characters and doubles
 from a single input stream.
 It treats the stream as consisting of successive "pixels",
@@ -35,6 +35,8 @@ followed by
 64-bit doubles,
 and writes the chars to one output stream
 and the doubles to another.
+(<emphasis remap='I'>n</emphasis> and <emphasis remap='I'>m</emphasis> are described below
+for the <option>-#</option> option.)
 The pixels are read from
 <emphasis remap='I'>infile</emphasis>
 if it is specified;
@@ -133,7 +135,7 @@ pixdsplit file.pixd | pix-fb
 <para>extracts the
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 data from
-<emphasis remap='I'>file.pixd,</emphasis>
+<emphasis remap='I'>file.pixd</emphasis>,
 sending it for display to
 <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 while</para>
@@ -147,7 +149,7 @@ pixdsplit -# 3.2 -c '' -d coords datafile
 <para>ignores the RGB information in
 <emphasis remap='I'>datafile</emphasis>
 but writes its pairs of doubles to
-<emphasis remap='I'>coords.</emphasis></para>
+<emphasis remap='I'>coords</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

@@ -35,7 +35,7 @@
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/poly.h"
 
 
 #define CUBEROOT(a)	(((a) > 0.0) ? pow(a, THIRD) : -pow(-(a), THIRD))

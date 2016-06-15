@@ -77,15 +77,15 @@ doit(FILE *fd)
 	    b = pixbuf[i+2];
 	    if (r < 0)
 		r = 0;
+	    else if (r > UCHAR_MAX)
+		r = UCHAR_MAX;
 	    if (g < 0)
 		g = 0;
+	    else if (g > UCHAR_MAX)
+		g = UCHAR_MAX;
 	    if (b < 0)
 		b = 0;
-	    if (r > UCHAR_MAX)
-		r = UCHAR_MAX;
-	    if (g > UCHAR_MAX)
-		g = UCHAR_MAX;
-	    if (b > UCHAR_MAX)
+	    else if (b > UCHAR_MAX)
 		b = UCHAR_MAX;
 	    pixel = r +	(g << 8) + (b << 16);
 
@@ -132,21 +132,26 @@ int main(int ac, char **av)
     /* get all the option flags from the command line
      */
     while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (c == 'v') verbose = ! verbose;
-	else usage();
+	if (c != 'v')
+	    usage();
+	verbose = ! verbose;
     }
 
 
-    if (bu_optind < ac-1) {
+    if (bu_optind < ac-1)
 	usage();
-    } else if (bu_optind == ac-1) {
+    if (bu_optind == ac-1) {
 	FILE *fd;
 	if ((fd=fopen(av[bu_optind], "r")) == (FILE *)NULL) {
 	    perror(av[bu_optind]);
 	    bu_exit (1, NULL);
-	} else doit(fd);
-    } else if (bu_optind >= ac) {
-	if (isatty(fileno(stdin))) usage();
+	}
+	doit(fd);
+    }
+/* (bu_optind >= ac) if arriving here */
+    else {
+	if (isatty(fileno(stdin)))
+	    usage();
 	doit(stdin);
     }
 

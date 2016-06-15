@@ -36,6 +36,7 @@
 #include "bsocket.h"
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "fbmsg.h"
 #include "vmath.h"

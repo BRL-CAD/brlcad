@@ -25,7 +25,7 @@
     <arg choice='opt'>-N <replaceable>out_height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>startframe</replaceable></arg>
     <arg choice='plain'><replaceable>basename</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
@@ -39,7 +39,7 @@
     <arg choice='plain'><replaceable>file1</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>file2</replaceable></arg>
     <arg choice='plain'><replaceable>fileN</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -63,7 +63,11 @@ Specifying the
 <option>-S</option>
 flag changes the default size to
 <emphasis remap='I'>squareoutsize</emphasis>
-pixels in width and height.</para>
+pixels in width and height. (The <option>-W</option> and <option>-N</option> flags
+are used for width and height, respectively.  For the input file, these functions
+are available through the <option>-s</option>, <option>-w</option>, and
+<option>-n</option> flags.)
+</para>
 
 <para>The files being produced as output will have names of the form
 <emphasis remap='I'>basename.num</emphasis>,
@@ -102,7 +106,7 @@ through
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>pixtile</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>pixtile</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 
 </refsect1>
 

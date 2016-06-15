@@ -35,10 +35,12 @@
  */
 
 #include "tkInt.h"
+#include <locale.h>
+
+#include "bu.h"
 #define WIN32_LEAN_AND_MEAN
 #include "bio.h"
 #undef WIN32_LEAN_AND_MEAN
-#include <locale.h>
 
 
 /*

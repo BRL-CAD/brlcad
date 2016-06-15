@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file vfont.h
+/** @file libbu/vfont.h
  *
  * Header file for putting fonts up.
  *

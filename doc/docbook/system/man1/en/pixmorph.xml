@@ -24,7 +24,7 @@
     <arg choice='plain'><replaceable>linesfile</replaceable></arg>
     <arg choice='plain'><replaceable>warpfrac</replaceable></arg>
     <arg choice='plain'><replaceable>dissolvefrac</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -38,7 +38,7 @@ are specified in the file "linesfile", which can be created
 using a utility such as
 <emphasis remap='I'>morphedit.tcl</emphasis>
 (see
-<emphasis remap='I'>morphedit(1)).</emphasis></para>
+<emphasis remap='I'>morphedit(1)</emphasis>).</para>
 
 <!-- .br -->
 <para>The output image is computed in the following fashion.
@@ -87,15 +87,16 @@ is of the form
    . -->
  linesegn_initial linesegn_final
 <!-- .br -->
-where
+ , where
 <emphasis remap='I'>n</emphasis>
 equals the number of line segments, and
-<emphasis remap='I'>a, b,</emphasis>
+<emphasis remap='I'>a</emphasis>,
+<emphasis remap='I'>b</emphasis>,
 and
 <emphasis remap='I'>p</emphasis>
 are constants that alter the nature of the morph.
 A line segment is represented as a list of four real numbers (and is
-interpreted as a directed line segment.)
+interpreted as a directed line segment).
 For example,
 <!-- .br -->
  0.1 2.0 0.2 2
@@ -117,23 +118,22 @@ in
 corresponds to the feature at
 <emphasis remap='I'>linesegi_final</emphasis>
 in
-<emphasis remap='I'>picB.pix.)</emphasis>
+<emphasis remap='I'>picB.pix</emphasis>).
 For instance,
 <emphasis remap='I'>lineseg1_initial</emphasis>
 might be a line segment running down the length of the nose of a person
 displayed in
-<emphasis remap='I'>picA.pix;</emphasis>
-then
+<emphasis remap='I'>picA.pix</emphasis>; then
 <emphasis remap='I'>lineseg1_final</emphasis>
 would be a line segment running down the length of the nose of the person
 featured in
-<emphasis remap='I'>picB.pix.</emphasis>
+<emphasis remap='I'>picB.pix</emphasis>.
 See
 <emphasis remap='I'>morphedit(1)</emphasis>
 for more information about creating a lines file.</para>
 
 <para>Now, for each line segment pair
-<emphasis remap='I'>(s,t),</emphasis>
+<emphasis remap='I'>(s,t)</emphasis>,
 we perform the following procedure:
 We interpolate between
 <emphasis remap='I'>s</emphasis>
@@ -142,7 +142,7 @@ and
 by factor
 <emphasis remap='I'>warpfrac</emphasis>
 to yield the interpolated line segment
-<emphasis remap='I'>s'.</emphasis>
+<emphasis remap='I'>s'</emphasis>.
 From the change in position, scale, and orientation of a line segment from
 its initial position
 <emphasis remap='I'>s</emphasis>
@@ -154,7 +154,7 @@ More specifically, if the line segment
 must undergo
 translation, stretching, and rotation
 to yield
-<emphasis remap='I'>s',</emphasis>
+<emphasis remap='I'>s'</emphasis>,
 we compute a linear transformation
 <emphasis remap='I'>T</emphasis>
 of the image space that
@@ -164,19 +164,19 @@ performs the same translation, stretching, and rotation.
 applied to
 <emphasis remap='I'>s</emphasis>
 yields
-<emphasis remap='I'>s'.)</emphasis>
+<emphasis remap='I'>s'</emphasis>.)
 The inverse
 <emphasis remap='I'>T*</emphasis>
 of this transformation maps
 <emphasis remap='I'>s'</emphasis>
 to
-<emphasis remap='I'>s;</emphasis>
+<emphasis remap='I'>s</emphasis>;
 for instance,
 <emphasis remap='I'>T*</emphasis>
 will take an endpoint of
 <emphasis remap='I'>s'</emphasis>
 to the corresponding endpoint of
-<emphasis remap='I'>s,</emphasis>
+<emphasis remap='I'>s</emphasis>,
 and will preserve the relationship of every other point
 to the line segment.
 We apply this inverse
@@ -187,7 +187,7 @@ to find an appropriate pixel in the original image.
 Along with this, we compute a weight based on the length of the line segment
 <emphasis remap='I'>s</emphasis>
 along with its distance from
-<emphasis remap='I'>(x,y).</emphasis>
+<emphasis remap='I'>(x,y)</emphasis>.
 This weight is equal to
 <!-- .br -->
        ( (length ** p) / (a + dist) ) ** b
@@ -197,14 +197,16 @@ This weight is equal to
 denotes exponentiation,
 <emphasis remap='I'>length</emphasis>
 is the length of
-<emphasis remap='I'>s,</emphasis>
+<emphasis remap='I'>s</emphasis>,
 <emphasis remap='I'>dist</emphasis>
 is the distance from
 <emphasis remap='I'>s</emphasis>
 to
-<emphasis remap='I'>(x,y), and</emphasis>
-<emphasis remap='I'>a, b, p</emphasis>
-are constants chosen by the user and stored in the lines file.)</para>
+<emphasis remap='I'>(x,y)</emphasis>, and
+<emphasis remap='I'>a</emphasis>,
+<emphasis remap='I'>b</emphasis>,
+<emphasis remap='I'>p</emphasis>
+are constants chosen by the user and stored in the lines file).</para>
 
 <para>The set
 <emphasis remap='I'>A</emphasis>
@@ -228,25 +230,25 @@ with the appropriate weights.</para>
 <para>In general, the user will wish to set
 <emphasis remap='I'>warpfrac</emphasis>
 =
-<emphasis remap='I'>dissolvefrac.</emphasis>
+<emphasis remap='I'>dissolvefrac</emphasis>.
 Typically, a morph animation will be produced by computing a sequence
 of images using
-<emphasis remap='I'>pixmorph,</emphasis>
+<emphasis remap='I'>pixmorph</emphasis>,
 each with slightly greater
 <emphasis remap='I'>warpfrac</emphasis>
 (and
-<emphasis remap='I'>dissolvefrac)</emphasis>
-(see the example.)
+<emphasis remap='I'>dissolvefrac</emphasis>)
+(see the example).
 <!-- .br -->
 For a clearer and more thorough explanation, see
 <!-- .br -->
- T. Beier and S. Neely.
- Feature-Based Image Metamorphosis.
- "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)"
- (Chicago, July 26-31, 1992). pp 35-42.
+ T. Beier and S. Neely,
+ Feature-Based Image Metamorphosis,
+ "SIGGRAPH 1992 Computer Graphics Proceedings (volume 26 number 2)",
+ (Chicago, July 26-31, 1992), pp 35-42,
 <!-- .br -->
 which presents the algorithm used by
-<emphasis remap='I'>pixmorph.</emphasis></para>
+<emphasis remap='I'>pixmorph</emphasis>.</para>
 
 </refsect1>
 
@@ -275,12 +277,12 @@ that the input images have height HEIGHT.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para>      pixmorph face1.pix face2.pix lf 0.0 0.0 &gt; frame0.pix
-      pixmorph face1.pix face2.pix lf 0.2 0.2 &gt; frame1.pix
-      pixmorph face1.pix face2.pix lf 0.4 0.4 &gt; frame2.pix
-      pixmorph face1.pix face2.pix lf 0.6 0.6 &gt; frame3.pix
-      pixmorph face1.pix face2.pix lf 0.8 0.8 &gt; frame4.pix
-      pixmorph face1.pix face2.pix lf 1.0 1.0 &gt; frame5.pix</para>
+<para>pixmorph face1.pix face2.pix lf 0.0 0.0 &gt; frame0.pix</para>
+<para>pixmorph face1.pix face2.pix lf 0.2 0.2 &gt; frame1.pix</para>
+<para>pixmorph face1.pix face2.pix lf 0.4 0.4 &gt; frame2.pix</para>
+<para>pixmorph face1.pix face2.pix lf 0.6 0.6 &gt; frame3.pix</para>
+<para>pixmorph face1.pix face2.pix lf 0.8 0.8 &gt; frame4.pix</para>
+<para>pixmorph face1.pix face2.pix lf 1.0 1.0 &gt; frame5.pix</para>
 
 <!-- .br -->
 <para>Note that the example above will result in
@@ -290,7 +292,7 @@ that the input images have height HEIGHT.</para>
 and
 <emphasis remap='I'>frame5.pix</emphasis>
 =
-<emphasis remap='I'>face2.pix.</emphasis></para>
+<emphasis remap='I'>face2.pix</emphasis>.</para>
 
 <!-- .br -->
 <para>      pixmorph face1.pix face2.pix lf 0.5 0.0 &gt; out.pix</para>
@@ -311,7 +313,7 @@ So the final image
 will consist entirely of values from
 <emphasis remap='I'>face1.pix</emphasis>
 warped 50% according to the linesfile
-<emphasis remap='I'>lf.</emphasis></para>
+<emphasis remap='I'>lf</emphasis>.</para>
 
 <!-- .br -->
 <para>      pixmorph face1.pix face2.pix lf 0.0 0.5 &gt; out.pix</para>
@@ -323,7 +325,7 @@ warped 50% according to the linesfile
 This will perform a simple 50% cross-dissolve between
 <emphasis remap='I'>face1.pix</emphasis>
 and
-<emphasis remap='I'>face2.pix.</emphasis></para>
+<emphasis remap='I'>face2.pix</emphasis>.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>

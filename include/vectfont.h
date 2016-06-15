@@ -41,8 +41,7 @@
 #define bneg(x, y)	NEGY, brt(x, y)
 #define dneg(x, y)	NEGY, drk(x, y)
 
-extern int *tp_cindex[256];	/**< @brief  index to stroke tokens */
-extern int tp_ctable[];		/**< @brief  table of strokes */
+int *tp_getchar(const unsigned char *c);
 
 #endif /* VECTFONT_H */
 

@@ -36,7 +36,7 @@
 #include "bu/log.h"
 
 /* declarations to support use of bu_getopt() system call */
-char options[] = "hs:w:n:d";
+char options[] = "s:w:n:dh?";
 char optflags[sizeof(options)];
 char noname[] = "(noname)";
 char *progname = noname;
@@ -302,8 +302,8 @@ void
 usage(void)
 {
 
-    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [ -d ]\n", progname);
-    fprintf(stderr, "\t< BRLpixfile > rasterfile\n");
+    fprintf(stderr, "Usage: %s [-s squaresize] [-w width] [-n height] [-d]", progname);
+    fprintf(stderr, " < BRLpixfile > rasterfile\n");
     bu_exit (1, NULL);
 }
 

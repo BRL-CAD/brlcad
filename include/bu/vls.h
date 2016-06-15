@@ -317,21 +317,6 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 
 /**
- * Format a string into a vls using a varargs list.
- *
- * %s continues to be a regular null-terminated 'C' string (char *).
- * %V is a libbu variable-length string (struct bu_vls *).
- *
- * Other format specifiers should behave identical to printf().
- *
- * This routine appends to the given vls similar to how vprintf
- * appends to stdout (see bu_vls_sprintf for overwriting the vls).
- */
-BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
-				     const char *fmt,
-				     va_list ap);
-
-/**
  * Format a string into a vls using standard variable arguments.
  *
  * %s continues to be a regular null-terminated 'C' string (char *).
@@ -406,6 +391,40 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
 BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src,
 				    size_t begin, size_t nchars);
 
+
+/** @file libbu/vls_vprintf.c
+ *
+ @brief
+ * Variable Length Strings
+ *
+ * This structure provides support for variable length strings,
+ * freeing the programmer from concerns about having character arrays
+ * large enough to hold strings.
+ *
+ * Assumption:  libc-provided sprintf() function is safe to use in parallel,
+ * on parallel systems.
+ */
+/**
+ * Format a string into a vls using a varargs list.
+ *
+ * %s continues to be a regular null-terminated 'C' string (char *).
+ * %V is a libbu variable-length string (struct bu_vls *).
+ *
+ * Other format specifiers should behave identical to printf().
+ *
+ * This routine appends to the given vls similar to how vprintf
+ * appends to stdout (see bu_vls_sprintf for overwriting the vls).
+ */
+BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
+				     const char *fmt,
+				     va_list ap);
+
+
+/** @file libbu/encode.c
+ *
+ @brief
+ * Routines to encode/decode strings into bu_vls structures.
+ */
 /**
  * given an input string, wrap the string in double quotes if there is
  * a space and append it to the provided bu_vls.  escape any existing

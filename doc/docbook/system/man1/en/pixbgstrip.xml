@@ -70,7 +70,7 @@ flag specifies the width of each scanline in the input file, in pixels.</para>
 
 <para>The
 <option>-n </option><replaceable>file_height</replaceable>
-flags specifies the height in scanlines of the input file.</para>
+flag specifies the height in scanlines of the input file.</para>
 
 <para><option>-s </option><replaceable>squarefilesize</replaceable>
 sets both the height and width to the size given.</para>

@@ -102,6 +102,11 @@ typedef struct bu_hook_list bu_hook_list_t;
  */
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
+/** @file libbu/bomb.c
+ *
+ * Main functions for exiting/bombing.
+ *
+ */
 /**
  * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
@@ -326,6 +331,11 @@ BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
  */
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
+/** @file libbu/sscanf.c
+ * libbu implementations of vsscanf/sscanf() with extra format
+ * specifiers.
+ */
+
 /**
  * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
  *
@@ -336,17 +346,17 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
  *    not include a maximum field width, the routine bombs in order to avoid
  *    an accidental buffer overrun.
  *
- *  - %V and %#V have been added as valid conversions. Both expect a pointer to
- *    a struct bu_vls as their argument.
+ *  - %V and %\#V have been added as valid conversions. Both expect a
+ *    pointer to a struct bu_vls as their argument.
  *
  *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
  *    characters from the source and store them in the vls buffer. The default
  *    maximum field width is infinity.
  *
- *    %#V is comparable to %s. It instructs bu_vsscanf to skip leading
- *    whitespace, and then read characters from the source and store them in the
- *    vls buffer until the next whitespace character is encountered. The default
- *    maximum field width is infinity.
+ *    %\#V is comparable to %s. It instructs bu_vsscanf to skip
+ *    leading whitespace, and then read characters from the source and
+ *    store them in the vls buffer until the next whitespace character
+ *    is encountered. The default maximum field width is infinity.
  *
  *  - 0 is always a valid field width for unsuppressed %c, %s, and %[...]
  *    conversions and causes '\0' to be written to the supplied char*
@@ -369,6 +379,32 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
  * compares its behavior to the system sscanf.
  */
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
+
+/** @file libbu/scan.c
+ * Routines for scanning certain kinds of data.
+ */
+
+/**
+ * Scans a sequence of fastf_t numbers from a string or stdin
+ *
+ * Scanning fastf_t numbers with bu_sscanf() is difficult, because
+ * doing so requires scanning to some intermediate type like double
+ * and then assigning to the fastf_t variable to convert the value to
+ * whatever type fastf_t really is.  This function makes it possible
+ * to scan a series of fastf_t numbers separated by some character(s)
+ * easily, by doing the required conversion internally to the
+ * functions.  As series of delimiter characters will be skipped,
+ * empty scan fields are not supported (e.g., "0.0,,0.0,1.0" will scan
+ * as 3 fields, not 4 with the 2nd skipped).
+ *
+ * @param[out] c Returns number of characters scanned by the function
+ * @param[in] src A source string to scan from, or NULL to read from stdin
+ * @param[in] delim Any delimiter character(s) to skip between scan values
+ * @param[in] n Number of fastf_t values to scan from the src input string
+ * @param[out] ... Pointers to fastf_t for storing scanned values (optional)
+ *
+ */
+BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...);
 
 /** @file libbu/dirname.c
  *
@@ -413,6 +449,12 @@ BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_S
  */
 BU_EXPORT extern char *bu_dirname(const char *path);
 
+/** @file libbu/basename.c
+ *
+ * A libbu re-implementation of basename() for cross-platform
+ * compatibility.
+ *
+ */
 /**
  * Given a string containing a hierarchical path, return a dynamic
  * string to the portion after the last path separator.

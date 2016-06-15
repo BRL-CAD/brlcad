@@ -75,6 +75,7 @@ public:
     double GetLengthMeasure();
     double GetPlaneAngleMeasure();
     double GetSolidAngleMeasure();
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     bool Load(STEPWrapper *sw, SDAI_Select *sse);
     virtual void Print(int level);
 

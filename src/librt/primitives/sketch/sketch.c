@@ -905,6 +905,181 @@ rt_sketch_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt
     return myret;
 }
 
+/**
+ * Given a sketch, bounds, and precision for rt_sketch_centroid, check
+ * if the precision is large enough (if the sample size is small
+ * enough) to intersect every curve of the given sketch.
+ *
+ * Returns -
+ * 0 precision is sufficiently large
+ * !0 precision is too small
+ */
+static int
+sketch_centroid_check_precision(const struct rt_sketch_internal *skt,
+				   fastf_t precision,
+				   fastf_t bounds[4])
+{
+    fastf_t x_inc, y_inc, min_inc;
+    fastf_t min_size = INFINITY;
+    unsigned int i;
+    const struct rt_curve *crv = &skt->curve;
+    x_inc = (bounds[1]-bounds[0])/precision;
+    y_inc = (bounds[3]-bounds[2])/precision;
+    min_inc = x_inc < y_inc ? x_inc : y_inc;
+    for (i = 0; i < crv->count; i++) {
+	point2d_t size;
+	const struct line_seg *lsg;
+	const struct carc_seg *csg;
+	const struct nurb_seg *nsg;
+	const struct bezier_seg *bsg;
+	const uint32_t *lng;
+	int j;
+	point2d_t min_pt, max_pt;
+
+	V2SETALL(min_pt, INFINITY);
+	V2SETALL(max_pt, -INFINITY);
+
+	lng = (uint32_t *)crv->segment[i];
+
+	switch (*lng) {
+	    case CURVE_LSEG_MAGIC:
+		lsg = (struct line_seg *)lng;
+		V2SUB2(size, skt->verts[lsg->end], skt->verts[lsg->start]);
+		V_MIN(min_size, MAGNITUDE2(size));
+		break;
+	    case CURVE_CARC_MAGIC:
+		csg = (struct carc_seg *)lng;
+		V2SUB2(size, skt->verts[csg->end], skt->verts[csg->start]);
+		V_MIN(min_size, MAGNITUDE2(size));
+		break;
+ 	    case CURVE_NURB_MAGIC:
+		nsg = (struct nurb_seg *)lng;
+		for (j = 0; j < nsg->c_size; j++) {
+		    V2MINMAX(min_pt, max_pt, skt->verts[nsg->ctl_points[j]]);
+		}
+		V2SUB2(size, max_pt, min_pt);
+		V_MIN(min_size, MAGNITUDE2(size));
+		break;
+     	    case CURVE_BEZIER_MAGIC:
+		bsg = (struct bezier_seg *)lng;
+		for (j = 0; j <= bsg->degree; j++) {
+		    V2MINMAX(min_pt, max_pt, skt->verts[bsg->ctl_points[j]]);
+		}
+		V2SUB2(size, max_pt, min_pt);
+		V_MIN(min_size, MAGNITUDE2(size));
+		break;
+	}
+    }
+    return (min_size < min_inc);
+}
+
+static long
+sketch_update_centroid_with_coords(point_t *cent,
+				   struct rt_sketch_internal *skt,
+				   long n,
+				   fastf_t i,
+				   fastf_t j)
+{
+    point2d_t pt;
+    point_t pt3d;
+    V2SET(pt, i, j);
+    VSET(pt3d, i, j, 0);
+    if (rt_sketch_contains(skt, pt)) {
+	VADD2(*cent, *cent, pt3d);
+	n++;
+    }
+    return n;
+}
+
+
+static long
+sketch_centroid_with_precision(point_t *cent,
+			       struct rt_sketch_internal *skt,
+			       fastf_t precision,
+			       long n,
+			       fastf_t bounds[4])
+{
+    fastf_t x_inc, y_inc;
+    fastf_t x_skip, y_skip;
+    fastf_t i, j;
+
+    x_inc = (bounds[1] - bounds[0])/precision;
+    y_inc = (bounds[3] - bounds[2])/precision;
+
+    x_skip = 2 * x_inc;
+    y_skip = 2 * y_inc;
+
+    if (n > 0) {
+	VSCALE(*cent, *cent, n);
+	for (i = bounds[0] + x_inc; i < bounds[1]; i += x_skip) {
+	    for (j = bounds[2]; j < bounds[3]; j += y_inc) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
+	    }
+	}
+	for (i = bounds[0]; i < bounds[1]; i += x_skip) {
+	    for (j = bounds[2] + y_inc; j < bounds[3]; j += y_skip) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
+	    }
+	}
+    } else {
+	for (i = bounds[0]; i < bounds[1]; i += x_inc) {
+	    for (j = bounds[2]; j < bounds[3]; j += y_inc) {
+		n = sketch_update_centroid_with_coords(cent, skt, n, i, j);
+	    }
+	}
+    }
+    VSCALE(*cent, *cent, 1.0 / (fastf_t)n);
+    return n;
+}
+
+void
+rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    /* With BN_TOL_DIST instead, even relatively simple sketches can
+     * bounce back and forth between points < 0.005 apart but > 0.0005
+     * for a long time.  Since calculating is very computationally
+     * intensive, using this TOLERANCE instead makes the computation
+     * finish significantly faster without a huge loss of accuracy
+     */
+    const fastf_t TOLERANCE = 0.005;
+    /* This is the initial precision that will be used as the
+     * precision for the first iteration, assuming that the sketch
+     * does not have any features that are small enough to escape
+     * detection with this precision.  1024 was chosen because
+     * smaller values tend to be very inaccurate, and oscillate enough
+     * that convergence is not achieved; 1024 is a good balance
+     * between (for the majority of sketches) being too large (and
+     * missing a smaller convergence) and being too small (and doing
+     * extra iterations for no reason).
+     */
+    fastf_t precision = 1024;
+    fastf_t bounds[4];
+    struct rt_sketch_internal *sketch_ip = (struct rt_sketch_internal *)ip->idb_ptr;
+    point_t current_cents[2];
+    point_t difference = {INFINITY, INFINITY, INFINITY};
+    long n[2] = {0, 0};
+    int i = 1;
+    RT_SKETCH_CK_MAGIC(sketch_ip);
+
+    VSETALL(*cent, 0.0);
+    VSETALL(current_cents[0], 0.0);
+    VSETALL(current_cents[1], 0.0);
+
+    rt_sketch_bounds(sketch_ip, bounds);
+    while (sketch_centroid_check_precision(sketch_ip, precision, bounds)) {
+	precision *= 2;
+    }
+
+    while (!NEAR_ZERO(MAGNITUDE(difference), TOLERANCE)) {
+	n[i] = sketch_centroid_with_precision(&current_cents[i], sketch_ip, precision, n[i], bounds);
+	precision *= M_SQRT2;
+	VSUB2(difference, current_cents[i], current_cents[!i]);
+	i = !i;
+    }
+
+    VMOVE(*cent, current_cents[!i]);
+}
+
 
 /**
  * Returns -

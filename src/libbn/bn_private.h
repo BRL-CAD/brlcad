@@ -29,6 +29,9 @@
 #ifndef LIBBN_BN_PRIVATE_H
 #define LIBBN_BN_PRIVATE_H
 
+#include "common.h"
+#include "vmath.h"
+
 /**
  * @brief
  * Find a 2D coordinate system for a set of co-planar 3D points

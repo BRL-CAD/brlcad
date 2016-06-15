@@ -128,12 +128,6 @@ package.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-a</option></term>
-  <listitem>
-<para>Process phantom armor.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-n</option></term>
   <listitem>
 <para>Process volume mode as plate mode.</para>

@@ -215,7 +215,10 @@ struct db5_raw_internal {
 };
 #define RT_CK_RIP(_ptr)		BU_CKMAG( _ptr, DB5_RAW_INTERNAL_MAGIC, "db5_raw_internal" )
 
-RT_EXPORT extern const int db5_enc_len[4];	/* convert wid to nbytes */
+/**
+ * Number of bytes used for each value of DB5HDR_WIDTHCODE_*
+ */
+#define DB5_ENC_LEN(len) (1 << len)
 
 RT_EXPORT extern unsigned char *db5_encode_length(unsigned char	*cp,
 						   size_t		val,

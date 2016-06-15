@@ -965,6 +965,8 @@ static struct tclcad_obj *current_top = TCLCAD_OBJ_NULL;
 
 struct path_edit_params {
     int edit_mode;
+    double dx;
+    double dy;
     mat_t edit_mat;
 };
 
@@ -1131,6 +1133,7 @@ static struct to_cmdtab to_cmds[] = {
     {"killrefs",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killrefs},
     {"killtree",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_killtree},
     {"l",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_list},
+    {"lc",      "[-d|-s|-r] [-z] [-0|-1|-2|-3|-4|-5] [-f {FileName}] {GroupName}", TO_UNLIMITED, to_pass_through_func, ged_lc},
     {"light",	"[0|1]", TO_UNLIMITED, to_light, GED_FUNC_PTR_NULL},
     {"list_views",	(char *)0, TO_UNLIMITED, to_list_views, GED_FUNC_PTR_NULL},
     {"listen",	"[port]", TO_UNLIMITED, to_listen, GED_FUNC_PTR_NULL},
@@ -5486,23 +5489,23 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 #endif
 
 	/* Idle Mode */
-	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <ButtonRelease> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_L> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <KeyRelease-Control_R> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_L> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <KeyRelease-Shift_R> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
@@ -5516,61 +5519,61 @@ to_init_default_bindings(struct ged_dm_view *gdvp)
 		bu_vls_addr(&gdvp->gdv_name));
 
 	/* Rotate Mode */
-	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-ButtonRelease-1> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-1> {%s rotate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-2> {%s rotate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-ButtonPress-3> {%s rotate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
 
 	/* Translate Mode */
-	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-1> {%s translate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-2> {%s translate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Shift-ButtonPress-3> {%s translate_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
 
 	/* Scale Mode */
-	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonRelease-1> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-1> {%s scale_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-2> {%s scale_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
-	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-Shift-ButtonPress-3> {%s scale_mode %s %%x %%y}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
 
 	/* Constrained Rotate Mode */
-	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s; break}; ",
+	bu_vls_printf(&bindings, "bind %s <Control-Lock-ButtonRelease-1> {%s idle_mode %s}; ",
 		bu_vls_addr(dm_get_pathname(gdvp->gdv_dmp)),
 		bu_vls_addr(&current_top->to_gop->go_name),
 		bu_vls_addr(&gdvp->gdv_name));
@@ -6244,6 +6247,7 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	bu_vls_printf(&tran_x_vls, "%lf", dvec[X]);
 	bu_vls_printf(&tran_y_vls, "%lf", dvec[Y]);
 	bu_vls_printf(&tran_z_vls, "%lf", dvec[Z]);
+	MAT_IDN(params->edit_mat);
 
 	bu_vls_printf(&tcl_cmd, "%s otranslate %s %s %s",
 		      bu_vls_addr(&data->gdvp->gdv_edit_motion_delta_callback),
@@ -6256,8 +6260,6 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	bu_vls_free(&tran_y_vls);
 	bu_vls_free(&tran_z_vls);
     }
-
-    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
 
     av[0] = "how";
     av[1] = draw_path;
@@ -6283,7 +6285,6 @@ redraw_edited_path(struct bu_hash_entry *entry, void *udata)
 	av[4] = NULL;
 	ged_draw(data->gedp, 4, av);
     }
-    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     *data->need_refresh = 1;
 
@@ -6373,6 +6374,7 @@ to_idle_mode(struct ged *gedp,
     }
 
     /* redraw any edited paths, then clear them from our table */
+    Tcl_Eval(current_top->to_interp, "SetWaitCursor $::ArcherCore::application");
     data.gedp = gedp;
     data.gdvp = gdvp;
     data.need_refresh = &need_refresh;
@@ -6381,6 +6383,7 @@ to_idle_mode(struct ged *gedp,
     bu_hash_tbl_traverse(current_top->to_gop->go_edited_paths, free_path_edit_params_entry, NULL);
     bu_hash_tbl_free(current_top->to_gop->go_edited_paths);
     current_top->to_gop->go_edited_paths = bu_hash_tbl_create(0);
+    Tcl_Eval(current_top->to_interp, "SetNormalCursor $::ArcherCore::application");
 
     if (need_refresh) {
 	to_refresh_all_views(current_top);
@@ -8702,8 +8705,8 @@ to_mouse_otranslate(struct ged *gedp,
     int width;
     fastf_t dx, dy;
     fastf_t inv_width;
-    point_t model;
-    point_t view;
+    point_t model = VINIT_ZERO;
+    point_t view = VINIT_ZERO;
     mat_t inv_rot;
     struct bu_vls tran_x_vls = BU_VLS_INIT_ZERO;
     struct bu_vls tran_y_vls = BU_VLS_INIT_ZERO;
@@ -8764,10 +8767,8 @@ to_mouse_otranslate(struct ged *gedp,
     /* ged_otranslate expects things to be in local units */
     dx *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
     dy *= inv_width * gdvp->gdv_view->gv_size * gedp->ged_wdbp->dbip->dbi_base2local;
-    VSET(view, dx, dy, 0.0);
-    bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
-    MAT4X3PNT(model, inv_rot, view);
 
+    VSET(view, dx, dy, 0.0);
     bu_vls_printf(&tran_x_vls, "%lf", model[X]);
     bu_vls_printf(&tran_y_vls, "%lf", model[Y]);
     bu_vls_printf(&tran_z_vls, "%lf", model[Z]);
@@ -8779,7 +8780,6 @@ to_mouse_otranslate(struct ged *gedp,
 	struct path_edit_params *params;
 	int is_entry_new;
 	struct bu_hash_entry *entry;
-	mat_t dmat, prev_mat;
 	vect_t dvec;
 
 	entry = bu_hash_tbl_add(current_top->to_gop->go_edited_paths,
@@ -8789,21 +8789,24 @@ to_mouse_otranslate(struct ged *gedp,
 
 	if (is_entry_new) {
 	    BU_GET(params, struct path_edit_params);
-	    MAT_IDN(params->edit_mat);
 	    params->edit_mode = gdvp->gdv_view->gv_mode;
+	    params->dx = params->dy = 0.0;
 
 	    bu_set_hash_value(entry, (unsigned char *)params);
 	} else {
 	    params = (struct path_edit_params *)bu_get_hash_value(entry);
 	}
 
-	MAT_IDN(dmat);
+	params->dx += dx;
+	params->dy += dy;
+	VSET(view, params->dx, params->dy, 0.0);
+	bn_mat_inv(inv_rot, gdvp->gdv_view->gv_rotation);
+	MAT4X3PNT(model, inv_rot, view);
+
+	MAT_IDN(params->edit_mat);
+	MAT4X3PNT(model, inv_rot, view);
 	VSCALE(dvec, model, gedp->ged_wdbp->dbip->dbi_local2base);
-	MAT_DELTAS_VEC(dmat, dvec);
-
-	MAT_COPY(prev_mat, params->edit_mat);
-	bn_mat_mul(params->edit_mat, prev_mat, dmat);
-
+	MAT_DELTAS_VEC(params->edit_mat, dvec);
 
 	to_refresh_view(gdvp);
     } else {

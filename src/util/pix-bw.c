@@ -120,13 +120,19 @@ get_args(int argc, char **argv)
 	}
     }
 
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-    	bu_log("pix-bw: cannot use both -o and >\n");
+/* Eliminate the "cannot send output to a tty" message if we
+ * detect the run-with-no-arguments situation.  For an actual
+ * run, we would need a least a color-scheme argument.
+ */
+    if (isatty(fileno(stdout)) && out_file == NULL) {
+	if (argc != 1)
+    	    bu_log("pix-bw: cannot send output to a tty\n");
 	return 0;
     }
 
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin))) {
+	    bu_log("pix-bw: cannot receive input from a tty\n");
 	    return 0;
 	}
     } else {
@@ -183,6 +189,10 @@ main(int argc, char **argv)
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
     icv_write(img, out_file, ICV_IMAGE_BW);
+
+    if (!isatty(fileno(stdout)) && out_file != NULL) {
+	icv_write(img, NULL, ICV_IMAGE_BW);
+    }
 
     return 0;
 }

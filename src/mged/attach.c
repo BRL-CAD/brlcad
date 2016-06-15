@@ -41,6 +41,7 @@
 #  include <GL/gl.h>
 #endif
 
+#include "sysv.h"
 #include "vmath.h"
 #include "ged.h"
 
@@ -543,9 +544,7 @@ gui_setup(const char *dstr)
     /* set DISPLAY to dstr */
     if (dstr != (char *)NULL) {
 	Tcl_SetVar(INTERP, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
-#ifdef HAVE_SETENV
 	setenv("DISPLAY", dstr, 0);
-#endif
     }
 
 #ifdef HAVE_TK

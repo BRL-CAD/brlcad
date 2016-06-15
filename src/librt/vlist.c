@@ -159,6 +159,34 @@ rt_vlblock_find(struct bn_vlblock *vbp, int r, int g, int b)
     return rt_vlblock_find(vbp, r, g, b);
 }
 
+const char *
+rt_vlist_get_cmd_description(int cmd)
+{
+    /* rt_vlist_cmd_descriptions contains descriptions of the first
+     * num_described_cmds vlist cmds
+     */
+    const int num_described_cmds = 13;
+    const char *rt_vlist_cmd_descriptions[] = {
+	"line move ",
+	"line draw ",
+	"poly start",
+	"poly move ",
+	"poly draw ",
+	"poly end  ",
+	"poly vnorm",
+	"tri start",
+	"tri move",
+	"tri draw",
+	"tri end",
+	"tri vnorm",
+	"point draw"
+    };
+    if (cmd < num_described_cmds) {
+	return rt_vlist_cmd_descriptions[cmd];
+    } else {
+	return "**unknown*";
+    }
+}
 
 int
 rt_ck_vlist(const struct bu_list *vhead)
@@ -189,7 +217,7 @@ rt_ck_vlist(const struct bu_list *vhead)
 		    /* Number is good */
 		} else {
 		    bu_log("  %s (%g, %g, %g)\n",
-			   rt_vlist_cmd_descriptions[*cmd],
+			   rt_vlist_get_cmd_description(*cmd),
 			   V3ARGS(*pt));
 		    bu_bomb("rt_ck_vlist() bad coordinate value\n");
 		}
