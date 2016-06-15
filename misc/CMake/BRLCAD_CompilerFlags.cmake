@@ -203,7 +203,7 @@ foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
 # TODO - figure out if this should be integrated above
-CHECK_COMPILER_FLAG(C "Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
+CHECK_COMPILER_FLAG(C "-Wunused-const-variable" HAVE_C_WUNUSED_CONST_VARIABLE)
 
 
 # Local Variables:

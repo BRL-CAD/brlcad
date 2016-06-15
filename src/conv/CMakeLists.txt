@@ -9,6 +9,7 @@ add_definitions(
   -DBRLCAD_DLL
   )
 
+add_subdirectory(3dm)
 add_subdirectory(step)
 
 add_subdirectory(iges)
@@ -29,12 +30,6 @@ set(CONV_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
-
-set(3dm-g_SRCS
-  3dm/conv3dm-g.cpp
-  3dm/3dm-g.cpp
-  )
-BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libwdb;libicv;${OPENNURBS_LIBRARY}" NO_STRICT)
 
 BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
 

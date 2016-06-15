@@ -1104,8 +1104,8 @@ view_2init(struct application *ap, char *UNUSED(framename))
     /* initial empty parent assembly */
     struct area *assembly;
 
-    /* cell_width and cell_height are global variables */
-    cell_area = cell_width * cell_height;
+    /* cell_width, cell_height, and hypersample are global variables */
+    cell_area = cell_width * cell_height / (hypersample + 1);
 
     /* create first parent-area record */
     BU_ALLOC(assembly, struct area);

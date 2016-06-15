@@ -58,12 +58,12 @@ fi
 
 # get a source and header file list so we only walk the sources once
 
-SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
+SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*src/libpkg.*' -not -regex '.*/shapelib/.*'`"
 
-INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
+INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
-BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
 CMakeLists.txt"
 
 
@@ -213,7 +213,7 @@ echo "running API usage check"
 FOUND=
 for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy strlcpy strcmp strcasecmp stricmp strncmp strncasecmp unlink rmdir remove ; do
     echo "Searching for $func ..."
-    MATCH="`grep -n -e [^a-zA-Z0-9_]$func\( $INCFILES $SRCFILES /dev/null`"
+    MATCH="`grep -n -e [^a-zA-Z0-9_:]$func\( $INCFILES $SRCFILES /dev/null`"
 
     # handle implementation exceptions
     MATCH="`echo \"$MATCH\" \
@@ -329,12 +329,12 @@ NEED_FIXING=200
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"
-	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0"
+	echo "FIXME: UPDATE THE PLATFORM SYMBOL COUNT IN $0 - expected $NEED_FIXING, found $FOUND"
 	echo "********************************************************"
     fi
     echo "-> platform symbol usage check succeeded"
 else
-    echo "-> platform symbol usage check FAILED"
+    echo "-> platform symbol usage check FAILED - expected $NEED_FIXING, found $FOUND"
     FAILED="`expr $FAILED + 1`"
 fi
 

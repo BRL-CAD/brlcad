@@ -1,3 +1,8 @@
+add_definitions(
+  -DHAVE_CONFIG_H
+  -DBRLCADBUILD=1
+  )
+
 # locally used but not needed by users of the library
 include_directories(
   ${BRLCAD_SOURCE_DIR}/include

@@ -14,6 +14,7 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fixed pix-ps -S -W -N output size options being ignored - Carl Moore
 * fixed crash exporting mixed mode merged BoT meshes - Sean Morrison
 * fixed submodel primitive crash - Cliff Yapp, Sean Morrison
 * support non-.g file import in Archer's file open dialog - Cliff Yapp

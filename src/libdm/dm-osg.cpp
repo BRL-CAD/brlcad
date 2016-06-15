@@ -41,6 +41,7 @@
 #include "dm.h"
 #include "dm/dm-osg.h"
 #include "dm/dm_xvars.h"
+#include "dm/dm-Null.h"
 
 #include "./dm_util.h"
 
@@ -139,6 +140,7 @@ struct dm dm_osg = {
     osg_getDisplayImage, /* display to image function */
     osg_reshape,
     osg_makeCurrent,
+    null_openFb,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

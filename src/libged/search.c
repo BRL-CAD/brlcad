@@ -239,7 +239,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 	    case 'v':
 		print_verbose_info |= DB_FP_PRINT_BOOL;
 		print_verbose_info |= DB_FP_PRINT_TYPE;
-		print_verbose_info |= DB_FP_PRINT_MATRIX;
 		break;
 
 	    case 'Q':

@@ -2099,6 +2099,7 @@ struct dm dm_wgl = {
     null_getDisplayImage,	/* display to image function */
     wgl_reshape,
     wgl_makeCurrent,
+    null_openFb,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

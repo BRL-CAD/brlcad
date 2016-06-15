@@ -175,7 +175,7 @@ Qt_fb_open(void)
     /* Mark OK by filling in magic number */
     fbp->if_magic = FB_MAGIC;
 
-    /*fbp->if_open(fbp, NULL, dmp->dm_width, dmp->dm_height);*/
+    dmp->dm_openFb(dmp, fbp);
 }
 
 

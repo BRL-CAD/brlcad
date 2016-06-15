@@ -534,6 +534,7 @@ struct dm dm_plot = {
     null_getDisplayImage,	/* display to image function */
     null_reshape,
     null_makeCurrent,
+    null_openFb,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

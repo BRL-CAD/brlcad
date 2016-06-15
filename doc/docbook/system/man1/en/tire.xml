@@ -31,13 +31,14 @@
     open database (when run from within MGED) or in <emphasis remap="I">tire.g</emphasis>
     when run from the command line.  If no dimensions are supplied defaults are used.  The
     default is to <emphasis remap="I">not</emphasis> model tread (due to performance
-    issues) but tread modeling is implemented and available as a user option with the
+    issues), but tread modeling is implemented and available as a user option with the
+    <option>-p</option> flag and the
     <option>-t</option> flag.
   </para>
   <para>
     <option>-a #</option> instructs <command>tire</command> to automatically add
     dimensional information to the toplevel object name used in the generated BRL-CAD
-    database tree.  Works with the <option>-n</option> option or standalone.  Output
+    database tree.  Works with the <option>-n</option> option or as stand-alone.  Output
     format uses '-' instead of '/' because the latter has significance in BRL-CAD
     object trees.
   </para>
@@ -126,8 +127,8 @@
 	<para>
 	  allows the user to specify a name other than 'tire' for the root name
 	  of the toplevel database object.  Works with the
-	  <emphasis remap="B">\a</emphasis>
-	  option or standalone.
+	  <emphasis remap="B">-a</emphasis>
+	  option or as stand-alone.
 	</para>
       </listitem>
     </varlistentry>

@@ -1779,8 +1779,8 @@ main(int argc, char **argv)
     if (!output_file)
 	bu_exit(1, "ERROR: Output file must be specified!\n");
     if ((fd_out = wdb_fopen(output_file)) == NULL) {
-        perror(argv[0]);
-        bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file);
+	perror(argv[0]);
+	bu_exit(1, "ERROR: Cannot open output file (%s)\n", output_file);
     }
     mk_id(fd_out, "test g-sgp");
 

@@ -248,6 +248,7 @@ struct dm {
     int (*dm_getDisplayImage)(struct dm *dmp, unsigned char **image);
     void (*dm_reshape)(struct dm *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm *dmp);
+    int (*dm_openFb)(struct dm *dmp, FBIO *ifp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */
