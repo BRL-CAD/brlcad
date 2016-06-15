@@ -20,8 +20,7 @@
 
 #include "common.h"
 
-#include "raytrace.h"
-
+#include "rt/func.h"
 
 int
 rt_obj_adjust(struct bu_vls *logstr, struct rt_db_internal *ip, int argc, const char **argv)

@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -38,10 +38,10 @@ template< class Vertex >
 Octree< Real >::SliceValues< Vertex >::SliceValues( void )
 {
 	_oldCCount = _oldECount = _oldFCount = _oldNCount = 0;
-	cornerValues = NullPointer< Real >() ; cornerNormals = NullPointer< Point3D< Real > >() ; cornerSet = NullPointer< char >();
-	edgeKeys = NullPointer< long long >() ; edgeSet = NullPointer< char >();
-	faceEdges = NullPointer< FaceEdges >() ; faceSet = NullPointer< char >();
-	mcIndices = NullPointer< char >();
+	cornerValues = NullPointer( Real ) ; cornerNormals = NullPointer( Point3D< Real > ) ; cornerSet = NullPointer( char );
+	edgeKeys = NullPointer( long long ) ; edgeSet = NullPointer( char );
+	faceEdges = NullPointer( FaceEdges ) ; faceSet = NullPointer( char );
+	mcIndices = NullPointer( char );
 }
 template< class Real >
 template< class Vertex >
@@ -90,7 +90,7 @@ void Octree< Real >::SliceValues< Vertex >::reset( bool nonLinearFit )
 		faceEdges = AllocPointer< FaceEdges >( _oldFCount );
 		faceSet = AllocPointer< char >( _oldFCount );
 	}
-
+	
 	if( sliceData.cCount>0 ) memset( cornerSet , 0 , sizeof( char ) * sliceData.cCount );
 	if( sliceData.eCount>0 ) memset(   edgeSet , 0 , sizeof( char ) * sliceData.eCount );
 	if( sliceData.fCount>0 ) memset(   faceSet , 0 , sizeof( char ) * sliceData.fCount );
@@ -100,8 +100,8 @@ template< class Vertex >
 Octree< Real >::XSliceValues< Vertex >::XSliceValues( void )
 {
 	_oldECount = _oldFCount = 0;
-	edgeKeys = NullPointer< long long >() ; edgeSet = NullPointer< char >();
-	faceEdges = NullPointer< FaceEdges >() ; faceSet = NullPointer< char >();
+	edgeKeys = NullPointer( long long ) ; edgeSet = NullPointer( char );
+	faceEdges = NullPointer( FaceEdges ) ; faceSet = NullPointer( char );
 }
 template< class Real >
 template< class Vertex >
@@ -137,7 +137,7 @@ void Octree< Real >::XSliceValues< Vertex >::reset( void )
 
 template< class Real >
 template< class Vertex >
-void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights , ConstPointer( Real ) solution , Real isoValue , CoredMeshData< Vertex >& mesh , bool nonLinearFit , bool addBarycenter , bool polygonMesh )
+void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , ConstPointer( Real ) solution , Real isoValue , CoredMeshData< Vertex >& mesh , bool nonLinearFit , bool addBarycenter , bool polygonMesh )
 {
 	typename BSplineData< 2 >::template CornerEvaluator< 2 > evaluator;
 	_fData.setCornerEvaluator( evaluator , 0 , 0 , _boundaryType==0 );
@@ -179,7 +179,7 @@ void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights 
 		// Copy edges from finer
 		if( d<maxDepth ) CopyFinerSliceIsoEdgeKeys( d , 0 , slabValues , threads );
 		SetSliceIsoCorners( solution , GetPointer( coarseSolution ) , isoValue , d , 0 , slabValues , evaluator , vStencils[d].stencil , vStencils[d].stencils , nStencils[d].stencil , nStencils[d].stencils , threads );
-		SetSliceIsoVertices( kernelDensityWeights , isoValue , d , 0 , vertexOffset , mesh , slabValues , threads );
+		SetSliceIsoVertices( kernelDensityWeights , colorData , isoValue , d , 0 , vertexOffset , mesh , slabValues , threads );
 		SetSliceIsoEdges( d , 0 , slabValues , threads );
 	}
 	// Iterate over the slices at the finest level
@@ -197,11 +197,11 @@ void Octree< Real >::GetMCIsoSurface( ConstPointer( Real ) kernelDensityWeights 
 
 			// Set the slice values/vertices
 			SetSliceIsoCorners( solution , GetPointer( coarseSolution ) , isoValue , d , o , slabValues , evaluator , vStencils[d].stencil , vStencils[d].stencils , nStencils[d].stencil , nStencils[d].stencils , threads );
-			SetSliceIsoVertices( kernelDensityWeights , isoValue , d , o , vertexOffset , mesh , slabValues , threads );
+			SetSliceIsoVertices( kernelDensityWeights , colorData , isoValue , d , o , vertexOffset , mesh , slabValues , threads );
 			SetSliceIsoEdges( d , o , slabValues , threads );
 
 			// Set the cross-slice edges
-			SetXSliceIsoVertices( kernelDensityWeights , isoValue , d , o-1 , vertexOffset , mesh , slabValues , threads );
+			SetXSliceIsoVertices( kernelDensityWeights , colorData , isoValue , d , o-1 , vertexOffset , mesh , slabValues , threads );
 			SetXSliceIsoEdges( d , o-1 , slabValues , threads );
 
 			// Add the triangles
@@ -247,7 +247,7 @@ Real Octree< Real >::GetIsoValue( ConstPointer( Real ) solution , const std::vec
 	for( int d=maxDepth ; d>=_minDepth ; d-- )
 	{
 		std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-		for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( d );
+		for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( d );
 #pragma omp parallel for num_threads( threads ) reduction( + : isoValue , weightSum )
 		for( int i=_sNodes.nodeCount[d] ; i<_sNodes.nodeCount[d+1] ; i++ )
 		{
@@ -272,15 +272,14 @@ Real Octree< Real >::GetIsoValue( ConstPointer( Real ) solution , const std::vec
 				int mn = 2+o , mx = (1<<d)-2-o;
 				bool isInterior = ( off[0]>=mn && off[0]<mx && off[1]>=mn && off[1]<mx && off[2]>=mn && off[2]<mx );
 
-				value = getCenterValue( neighborKey , node , solution , GetPointer( metSolution ) , evaluator , vStencils[d].stencil , vStencils[d].stencils[c] , isInterior );
+				value = getCenterValue( neighborKey , node , ( ConstPointer( Real ) )solution , ( ConstPointer( Real ) )GetPointer( metSolution ) , evaluator , vStencils[d].stencil , vStencils[d].stencils[c] , isInterior );
 			}
 			centerValues[i] = value;
 			Real w = centerWeights[ node->nodeData.nodeIndex ];
 			if( w!=0 ) isoValue += value * w , weightSum += w;
 		}
 	}
-	if( _boundaryType==-1 ) return isoValue/weightSum - Real(0.5);
-	else                    return isoValue/weightSum;
+	return isoValue / weightSum;
 }
 
 template< class Real >
@@ -296,7 +295,7 @@ void Octree< Real >::SetSliceIsoCorners( ConstPointer( Real ) solution , ConstPo
 {
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
@@ -353,18 +352,18 @@ void Octree< Real >::SetSliceIsoCorners( ConstPointer( Real ) solution , ConstPo
 
 template< class Real >
 template< class Vertex >
-void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , Real isoValue , int depth , int slice , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
+void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , Real isoValue , int depth , int slice , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
 {
-	if( slice>0          ) SetSliceIsoVertices( kernelDensityWeight , isoValue , depth , slice , 1 , vOffset , mesh , slabValues , threads );
-	if( slice<(1<<depth) ) SetSliceIsoVertices( kernelDensityWeight , isoValue , depth , slice , 0 , vOffset , mesh , slabValues , threads );
+	if( slice>0          ) SetSliceIsoVertices( kernelDensityWeight , colorData , isoValue , depth , slice , 1 , vOffset , mesh , slabValues , threads );
+	if( slice<(1<<depth) ) SetSliceIsoVertices( kernelDensityWeight , colorData , isoValue , depth , slice , 0 , vOffset , mesh , slabValues , threads );
 }
 template< class Real >
 template< class Vertex >
-void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , Real isoValue , int depth , int slice , int z , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
+void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , Real isoValue , int depth , int slice , int z , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
 {
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
@@ -387,7 +386,7 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 							int o , y;
 							Square::FactorEdgeIndex( e , o , y );
 							long long key = VertexData::EdgeIndex( leaf , Cube::EdgeIndex( o , y , z ) , _sNodes.maxDepth );
-							GetIsoVertex( kernelDensityWeight , isoValue , neighborKey , leaf , e , z , sValues , vertex );
+							GetIsoVertex( kernelDensityWeight , colorData , isoValue , neighborKey , leaf , e , z , sValues , vertex );
 							vertex.point = vertex.point * _scale + _center;
 							bool stillOwner = false;
 							std::pair< int , Vertex > hashed_vertex;
@@ -421,7 +420,12 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 										TreeOctNode* node = leaf;
 										int _depth = depth , _slice = slice;
 										bool _isNeeded = isNeeded;
+#if 1
+										// Bug fix courtesy of asmaloney
+										while( _isNeeded && node->parent && Cube::IsFaceCorner( (int)(node-node->parent->children) , f[k] ) )
+#else
 										while( _isNeeded = node->parent && Cube::IsFaceCorner( (int)(node-node->parent->children) , f[k] ) )
+#endif
 										{
 											node = node->parent , _depth-- , _slice >>= 1;
 											typename Octree< Real >::template SliceValues< Vertex >& _sValues = slabValues[_depth].sliceValues( _slice );
@@ -444,14 +448,14 @@ void Octree< Real >::SetSliceIsoVertices( ConstPointer( Real ) kernelDensityWeig
 }
 template< class Real >
 template< class Vertex >
-void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , Real isoValue , int depth , int slab , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
+void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWeight , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , Real isoValue , int depth , int slab , int& vOffset , CoredMeshData< Vertex >& mesh , std::vector< SlabValues< Vertex > >& slabValues , int threads )
 {
 	typename Octree< Real >::template  SliceValues< Vertex >& bValues = slabValues[depth].sliceValues ( slab   );
 	typename Octree< Real >::template  SliceValues< Vertex >& fValues = slabValues[depth].sliceValues ( slab+1 );
 	typename Octree< Real >::template XSliceValues< Vertex >& xValues = slabValues[depth].xSliceValues( slab   );
 
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab+1] ; i++ )
 	{
@@ -475,7 +479,7 @@ void Octree< Real >::SetXSliceIsoVertices( ConstPointer( Real ) kernelDensityWei
 						{
 							Vertex vertex;
 							long long key = VertexData::EdgeIndex( leaf , e , _sNodes.maxDepth );
-							GetIsoVertex( kernelDensityWeight , isoValue , neighborKey , leaf , c , bValues , fValues , vertex );
+							GetIsoVertex( kernelDensityWeight , colorData , isoValue , neighborKey , leaf , c , bValues , fValues , vertex );
 							vertex.point = vertex.point * _scale + _center;
 							bool stillOwner = false;
 							std::pair< int , Vertex > hashed_vertex;
@@ -656,7 +660,7 @@ void Octree< Real >::SetSliceIsoEdges( int depth , int slice , int z , std::vect
 {
 	typename Octree< Real >::template SliceValues< Vertex >& sValues = slabValues[depth].sliceValues( slice );
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slice-z+1] ; i++ )
 	{
@@ -716,7 +720,7 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 	typename Octree< Real >::template XSliceValues< Vertex >& xValues = slabValues[depth].xSliceValues( slab   );
 
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][slab+1] ; i++ )
 	{
@@ -787,12 +791,12 @@ void Octree< Real >::SetXSliceIsoEdges( int depth , int slab , std::vector< Slab
 }
 template< class Real >
 template< class Vertex >
-int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , const XSliceValues< Vertex >& xValues , CoredMeshData< Vertex >& mesh , bool polygonMesh , bool addBarycenter , int& vOffset , int threads )
+void Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , const XSliceValues< Vertex >& xValues , CoredMeshData< Vertex >& mesh , bool polygonMesh , bool addBarycenter , int& vOffset , int threads )
 {
 	std::vector< std::pair< int , Vertex > > polygon;
 	std::vector< typename TreeOctNode::ConstNeighborKey3 > neighborKeys( std::max< int >( 1 , threads ) );
 	std::vector< std::vector< IsoEdge > > edgess( std::max< int >( 1 , threads ) );
-	for( int i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
+	for( size_t i=0 ; i<neighborKeys.size() ; i++ ) neighborKeys[i].set( depth );
 #pragma omp parallel for num_threads( threads )
 	for( int i=_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][offset] ; i<_sNodes.nodeCount[depth]+_sNodes.sliceOffsets[depth][offset+1] ; i++ )
 	{
@@ -803,7 +807,7 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 		{
 			edges.clear();
 			unsigned char mcIndex = ( bValues.mcIndices[ i - bValues.sliceData.nodeOffset ] ) | ( fValues.mcIndices[ i - fValues.sliceData.nodeOffset ]<<4 );
-			// [WARNING] Just because the node looks empty doesn't mean it doesn't get edges from finer neighbors
+			// [WARNING] Just because the node looks empty doesn't mean it doesn't get eges from finer neighbors
 			{
 				// Gather the edges from the faces (with the correct orientation)
 				for( int f=0 ; f<Cube::FACES ; f++ )
@@ -829,7 +833,7 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 							if( iter!=sValues.faceEdgeMap.end() )
 							{
 								const std::vector< IsoEdge >& _edges = iter->second;
-								for( int j=0 ; j<_edges.size() ; j++ ) edges.push_back( IsoEdge( _edges[j][flip] , _edges[j][1-flip] ) );
+								for( size_t j=0 ; j<_edges.size() ; j++ ) edges.push_back( IsoEdge( _edges[j][flip] , _edges[j][1-flip] ) );
 							}
 							else fprintf( stderr , "[ERROR] Invalid faces: %d  %d %d\n" , i , d , o ) , exit( 0 );
 						}
@@ -849,7 +853,7 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 							if( iter!=xValues.faceEdgeMap.end() )
 							{
 								const std::vector< IsoEdge >& _edges = iter->second;
-								for( int j=0 ; j<_edges.size() ; j++ ) edges.push_back( IsoEdge( _edges[j][flip] , _edges[j][1-flip] ) );
+								for( size_t j=0 ; j<_edges.size() ; j++ ) edges.push_back( IsoEdge( _edges[j][flip] , _edges[j][1-flip] ) );
 							}
 							else fprintf( stderr , "[ERROR] Invalid faces: %d  %d %d\n" , i , d , o ) , exit( 0 );
 						}
@@ -866,7 +870,7 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 					while( current!=start )
 					{
 						int idx;
-						for( idx=0 ; idx<edges.size() ; idx++ ) if( edges[idx][0]==current ) break;
+						for( idx=0 ; idx<(int)edges.size() ; idx++ ) if( edges[idx][0]==current ) break;
 						if( idx==edges.size() )
 						{
 							typename hash_map< long long , long long >::const_iterator iter;
@@ -885,10 +889,10 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 					loops.back().push_back( start );
 				}
 				// Add the loops to the mesh
-				for( int j=0 ; j<loops.size() ; j++ )
+				for( size_t j=0 ; j<loops.size() ; j++ )
 				{
 					std::vector< std::pair< int , Vertex > > polygon( loops[j].size() );
-					for( int k=0 ; k<loops[j].size() ; k++ )
+					for( size_t k=0 ; k<loops[j].size() ; k++ )
 					{
 						long long key = loops[j][k];
 						typename hash_map< long long , std::pair< int , Vertex > >::const_iterator iter;
@@ -903,11 +907,20 @@ int Octree< Real >::SetIsoSurface( int depth , int offset , const SliceValues< V
 		}
 	}
 }
-template< class Real > void SetIsoVertexValue(      PlyVertex< float >& vertex , Real value ){ ; }
-template< class Real > void SetIsoVertexValue( PlyValueVertex< float >& vertex , Real value ){ vertex.value = float(value); }
+template< class Real > void SetColor( Point3D< Real >& color , unsigned char c[3] ){ for( int i=0 ; i<3 ; i++ ) c[i] = (unsigned char)std::max< int >( 0 , std::min< int >( 255 , (int)( color[i]+0.5 ) ) ); }
+
+template< class Real > void SetIsoVertex(              PlyVertex< float  >& vertex , Point3D< Real > color , Real value ){ ; }
+template< class Real > void SetIsoVertex(         PlyColorVertex< float  >& vertex , Point3D< Real > color , Real value ){ SetColor( color , vertex.color ); }
+template< class Real > void SetIsoVertex(         PlyValueVertex< float  >& vertex , Point3D< Real > color , Real value ){                                    vertex.value = float(value); }
+template< class Real > void SetIsoVertex( PlyColorAndValueVertex< float  >& vertex , Point3D< Real > color , Real value ){ SetColor( color , vertex.color ) , vertex.value = float(value); }
+template< class Real > void SetIsoVertex(              PlyVertex< double >& vertex , Point3D< Real > color , Real value ){ ; }
+template< class Real > void SetIsoVertex(         PlyColorVertex< double >& vertex , Point3D< Real > color , Real value ){ SetColor( color , vertex.color ); }
+template< class Real > void SetIsoVertex(         PlyValueVertex< double >& vertex , Point3D< Real > color , Real value ){                                    vertex.value = double(value); }
+template< class Real > void SetIsoVertex( PlyColorAndValueVertex< double >& vertex , Point3D< Real > color , Real value ){ SetColor( color , vertex.color ) , vertex.value = double(value); }
+
 template< class Real >
 template< class Vertex >
-bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , Real isoValue , typename TreeOctNode::ConstNeighborKey3& neighborKey3 , const TreeOctNode* node , int edgeIndex , int z , const SliceValues< Vertex >& sValues , Vertex& vertex )
+bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , Real isoValue , typename TreeOctNode::ConstNeighborKey3& neighborKey3 , const TreeOctNode* node , int edgeIndex , int z , const SliceValues< Vertex >& sValues , Vertex& vertex )
 {
 	Point3D< Real > position;
 	int c0 , c1;
@@ -941,11 +954,6 @@ bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , R
 	}
 
 	double dx0 = n0[o] , dx1 = n1[o];
-	{
-		double dAverage = ( dx0 + dx1 ) / 2.;
-		dx0 = dx0 * (1.-_normalSmooth) + dAverage * _normalSmooth;
-		dx1 = dx1 * (1.-_normalSmooth) + dAverage * _normalSmooth;
-	}
 
 	// The scaling will turn the Hermite Spline into a quadratic
 	double scl = (x1-x0) / ( (dx1+dx0 ) / 2 );
@@ -972,19 +980,22 @@ bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , R
 	}
 	position[o] = Real( center - width/2 + width*averageRoot );
 	vertex.point = position;
+	Point3D< Real > color;
+	Real depth(0);
 	if( kernelDensityWeights )
 	{
-		Real depth , weight;
+		Real weight;
 		const TreeOctNode* temp = node;
 		while( temp->depth()>_splatDepth ) temp=temp->parent;
-		GetSampleDepthAndWeight( kernelDensityWeights , temp , position , neighborKey3 , _samplesPerNode , depth , weight );
-		SetIsoVertexValue( vertex , depth );
+		GetSampleDepthAndWeight( kernelDensityWeights , temp , position , neighborKey3 , depth , weight );
 	}
+	if( colorData ) color = Point3D< Real >( _Evaluate( *colorData , position , neighborKey3 ) );
+	SetIsoVertex( vertex , color , depth );
 	return true;
 }
 template< class Real >
 template< class Vertex >
-bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , Real isoValue , typename TreeOctNode::ConstNeighborKey3& neighborKey3 , const TreeOctNode* node , int cornerIndex , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , Vertex& vertex )
+bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , const SparseNodeData< ProjectiveData< Point3D< Real > > >* colorData , Real isoValue , typename TreeOctNode::ConstNeighborKey3& neighborKey3 , const TreeOctNode* node , int cornerIndex , const SliceValues< Vertex >& bValues , const SliceValues< Vertex >& fValues , Vertex& vertex )
 {
 	Point3D< Real > position;
 
@@ -1008,11 +1019,6 @@ bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , R
 	position[1] = c[1] - width/2 + width*y;
 
 	double dx0 = n0[2] , dx1 = n1[2];
-	{
-		double dAverage = ( dx0 + dx1 ) / 2.;
-		dx0 = dx0 * (1.-_normalSmooth) + dAverage * _normalSmooth;
-		dx1 = dx1 * (1.-_normalSmooth) + dAverage * _normalSmooth;
-	}
 
 	// The scaling will turn the Hermite Spline into a quadratic
 	double scl = (x1-x0) / ( (dx1+dx0 ) / 2 );
@@ -1039,14 +1045,17 @@ bool Octree< Real >::GetIsoVertex( ConstPointer( Real ) kernelDensityWeights , R
 	}
 	position[2] = Real( center - width/2 + width*averageRoot );
 	vertex.point = position;
+	Point3D< Real > color;
+	Real depth(0);
 	if( kernelDensityWeights )
 	{
-		Real depth , weight;
+		Real weight;
 		const TreeOctNode* temp = node;
 		while( temp->depth()>_splatDepth ) temp=temp->parent;
-		GetSampleDepthAndWeight( kernelDensityWeights , temp , position , neighborKey3 , _samplesPerNode , depth , weight );
-		SetIsoVertexValue( vertex , depth );
+		GetSampleDepthAndWeight( kernelDensityWeights , temp , position , neighborKey3 , depth , weight );
 	}
+	if( colorData ) color = Point3D< Real >( _Evaluate( *colorData , position , neighborKey3 ) );
+	SetIsoVertex( vertex , color , depth );
 	return true;
 }
 
@@ -1077,9 +1086,11 @@ int Octree< Real >::AddIsoPolygons( CoredMeshData< Vertex >& mesh , std::vector<
 		if( isCoplanar )
 		{
 			Vertex c;
-			c *= 0;
-			for( int i=0 ; i<(int)polygon.size() ; i++ ) c += polygon[i].second;
-			c /= Real( polygon.size() );
+			typename Vertex::Wrapper _c;
+			_c *= 0;
+			for( int i=0 ; i<(int)polygon.size() ; i++ ) _c += typename Vertex::Wrapper( polygon[i].second );
+			_c /= Real( polygon.size() );
+			c = Vertex( _c );
 			int cIdx;
 #pragma omp critical (add_barycenter_point_access)
 			{

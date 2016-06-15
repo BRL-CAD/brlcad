@@ -42,9 +42,7 @@
 
 #include <math.h>
 #include <limits.h>
-#ifdef HAVE_FLOAT_H
-#  include <float.h>
-#endif
+#include <float.h>
 
 /* #define HAVE_IEEE754 1 */
 

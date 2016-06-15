@@ -57,7 +57,7 @@ rt_hrt_mirror(struct rt_db_internal *ip, register const plane_t plane)
     RT_CK_DB_INTERNAL(ip);
 
     hrt = (struct rt_hrt_internal *)ip->idb_ptr;
-    RT_ELL_CK_MAGIC(hrt);
+    RT_HRT_CK_MAGIC(hrt);
 
     MAT_IDN(mirmat);
 

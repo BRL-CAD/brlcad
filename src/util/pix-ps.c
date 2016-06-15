@@ -32,7 +32,6 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 
-
 #define DEFAULT_SIZE 6.75	/* default output size in inches */
 #define MAX_BYTES (3*64*128)	/* max bytes per image chunk */
 
@@ -49,15 +48,14 @@ static size_t ypoints;
 static size_t pagewidth = 612;	/* page size in points - 8.5 inches */
 static size_t pageheight = 792;	/* 11 inches */
 
+char Stdin[] = "[stdin]";
 static char *file_name;
 static FILE *infp;
-
 
 static char usage[] = "\
 Usage: pix-ps [-e] [-c|-l] [-L]\n\
 	[-s input_squaresize] [-w input_width] [-n input_height]\n\
 	[-S inches_square] [-W inches_width] [-N inches_height] [<] input.pix > output.ps\n";
-
 
 void
 prolog(FILE *fp, char *name, size_t w, size_t h)
@@ -132,8 +130,6 @@ hexout(FILE *fp, int byte)
     putc(symbol[low], fp);
 }
 
-char Stdin[] = "[stdin]";
-
 int
 get_args(int argc, char **argv)
 {
@@ -175,7 +171,7 @@ get_args(int argc, char **argv)
 		outheight = atof(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -265,7 +261,6 @@ main(int argc, char **argv)
     }
 
     postlog(ofp);
-
     return 0;
 }
 

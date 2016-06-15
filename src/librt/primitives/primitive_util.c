@@ -24,6 +24,8 @@
  * librt_private.h.
  */
 
+#include "bu/malloc.h"
+#include "bu/opt.h"
 #include "../librt_private.h"
 
 /**
@@ -377,3 +379,583 @@ plot_ellipse(
 	radian += radian_step;
     }
 }
+
+int
+_rt_tcl_list_to_int_array(const char *list, int **array, int *array_len)
+{
+    int i, len;
+    const char **argv;
+
+    if (!list || !array || !array_len) return 0;
+
+    /* split initial list */
+    if (bu_argv_from_tcl_list(list, &len, (const char ***)&argv) != 0) {
+	return 0;
+    }
+
+    if (len < 1) return 0;
+
+    if (*array_len < 1) {
+	*array = (int *)bu_calloc(len, sizeof(int), "array");
+	*array_len = len;
+    }
+
+    for (i = 0; i < len && i < *array_len; i++) {
+	(void)bu_opt_int(NULL, 1, &argv[i], &((*array)[i]));
+    }
+
+    bu_free((char *)argv, "argv");
+    return len < *array_len ? len : *array_len;
+}
+
+
+int
+_rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
+{
+    int i, len;
+    const char **argv;
+
+    if (!list || !array || !array_len) return 0;
+
+    /* split initial list */
+    if (bu_argv_from_tcl_list(list, &len, (const char ***)&argv) != 0) {
+	return 0;
+    }
+
+    if (len < 1) return 0;
+
+    if (*array_len < 1) {
+	*array = (fastf_t *)bu_calloc(len, sizeof(fastf_t), "array");
+	*array_len = len;
+    }
+
+    for (i = 0; i < len && i < *array_len; i++) {
+	(void)bu_opt_fastf_t(NULL, 1, &argv[i], &((*array)[i]));
+    }
+
+    bu_free((char *)argv, "argv");
+    return len < *array_len ? len : *array_len;
+}
+
+
+#ifdef USE_OPENCL
+const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
+
+static int clt_initialized = 0;
+static cl_device_id clt_device;
+static cl_context clt_context;
+static cl_command_queue clt_queue;
+static cl_program clt_program;
+static cl_kernel clt_shot_kernel, clt_norm_kernel, clt_frame_kernel;
+
+static size_t max_wg_size;
+static cl_uint max_compute_units;
+
+static cl_mem clt_rand_halftab;
+
+static cl_mem clt_db_ids, clt_db_indexes, clt_db_prims, clt_db_bvh;
+static cl_uint clt_db_nprims;
+
+
+
+/**
+ * For now, just get the first device from the first platform.
+ */
+cl_device_id
+clt_get_cl_device(void)
+{
+    cl_int error;
+    cl_platform_id platform;
+    cl_device_id device;
+    int using_cpu = 0;
+
+    error = clGetPlatformIDs(1, &platform, NULL);
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL platform");
+
+    error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_GPU, 1, &device, NULL);
+    if (error == CL_DEVICE_NOT_FOUND) {
+        using_cpu = 1;
+        error = clGetDeviceIDs(platform, CL_DEVICE_TYPE_CPU, 1, &device, NULL);
+    }
+    if (error != CL_SUCCESS) bu_bomb("failed to find an OpenCL device (using this method)");
+
+    if (using_cpu) bu_log("clt: no GPU devices available; using CPU for OpenCL\n");
+
+    clGetDeviceInfo(device, CL_DEVICE_MAX_WORK_GROUP_SIZE, sizeof(size_t), &max_wg_size, NULL);
+    clGetDeviceInfo(device, CL_DEVICE_MAX_COMPUTE_UNITS, sizeof(cl_uint), &max_compute_units, NULL);
+    return device;
+}
+
+
+static char *
+clt_read_code(const char *filename, size_t *length)
+{
+    FILE *fp;
+    char *data;
+
+    fp = fopen(filename , "r");
+    if (!fp) bu_exit(-1, "failed to read OpenCL code file (%s)\n", filename);
+
+    fseek(fp, 0, SEEK_END);
+    *length = ftell(fp);
+    rewind(fp);
+
+    data = (char*)bu_malloc((*length+1)*sizeof(char), "failed bu_malloc() in clt_read_code()");
+
+    if(fread(data, *length, 1, fp) != 1)
+    bu_bomb("failed to read OpenCL code");
+
+    fclose(fp);
+    return data;
+}
+
+cl_program
+clt_get_program(cl_context context, cl_device_id device, cl_uint count, const char *filenames[], const char *options)
+{
+    cl_int error;
+    cl_program program;
+    char **strings;
+    const char **pc_strings;
+    size_t *lengths;
+    const size_t *pc_lengths;
+    cl_uint i;
+
+    strings = (char**)bu_calloc(count, sizeof(char*), "strings");
+    pc_strings = (const char**)strings;
+    lengths = (size_t*)bu_calloc(count, sizeof(size_t), "lengths");
+    pc_lengths = (const size_t*)lengths;
+    for (i=0; i<count; i++) {
+        strings[i] = clt_read_code(filenames[i], &lengths[i]);
+    }
+
+    program = clCreateProgramWithSource(context, count, pc_strings, pc_lengths, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
+
+    error = clBuildProgram(program, 1, &device, options, NULL, NULL);
+    if (error != CL_SUCCESS) {
+        size_t log_size;
+        char *log_data;
+
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
+        log_data = (char*)bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
+        clGetProgramBuildInfo(program, device, CL_PROGRAM_BUILD_LOG, log_size, log_data, NULL);
+        bu_log("BUILD LOG:\n%s\n", log_data);
+        bu_bomb("failed to build OpenCL program");
+    } else {
+#if 0
+	cl_uint n;
+	size_t *sizes;
+	char **buffers;
+
+	clGetProgramInfo(program, CL_PROGRAM_NUM_DEVICES, sizeof(n), &n, NULL);
+
+	sizes = (size_t*)bu_calloc(n, sizeof(size_t), "sizes");
+
+	clGetProgramInfo(program, CL_PROGRAM_BINARY_SIZES, sizeof(size_t)*n, sizes,NULL);
+
+	buffers = (char**)bu_calloc(n, sizeof(char*), "buffers");
+	for (i=0; i<n; ++i) {
+	   buffers[i] = (char*)bu_calloc(sizes[i], sizeof(char), "buffers");
+	}
+	clGetProgramInfo(program, CL_PROGRAM_BINARIES, sizeof(char*)*n, buffers, NULL);
+
+	for (i=0; i<n; ++i) {
+	  FILE *fp;
+	  char outfile[64];
+
+	  snprintf(outfile, sizeof(outfile), "rt%u.ptx", i);
+	  fp = fopen(outfile, "w");
+	  if (!fp) bu_exit(-1, "failed to write OpenCL code file (%s)\n", outfile);
+
+	  if (fwrite(buffers[i], sizes[i], 1, fp) != 1)
+	      bu_bomb("failed to write OpenCL binaries");
+	  fclose(fp);
+	}
+#endif
+    }
+
+    bu_free(lengths, "failed bu_free() in clt_get_program()");
+    for (i=0; i<count; i++) {
+        bu_free(strings[i], "failed bu_free() in clt_get_program()");
+    }
+    bu_free(strings, "failed bu_free() in clt_get_program()");
+    return program;
+}
+
+
+static void
+clt_cleanup(void)
+{
+    if (!clt_initialized) return;
+
+    clReleaseMemObject(clt_rand_halftab);
+
+    clReleaseKernel(clt_frame_kernel);
+
+    clReleaseKernel(clt_norm_kernel);
+    clReleaseKernel(clt_shot_kernel);
+
+    clReleaseCommandQueue(clt_queue);
+    clReleaseProgram(clt_program);
+    clReleaseContext(clt_context);
+
+    clt_initialized = 0;
+}
+
+void
+clt_init(void)
+{
+    cl_int error;
+
+    bu_semaphore_acquire(clt_semaphore);
+    if (!clt_initialized) {
+        const char *main_files[] = {
+            "solver.cl",
+
+            "arb8_shot.cl",
+            "ehy_shot.cl",
+            "ell_shot.cl",
+            "sph_shot.cl",
+            "rec_shot.cl",
+            "tgc_shot.cl",
+            "tor_shot.cl",
+
+            "rt.cl",
+        };
+
+        clt_initialized = 1;
+        atexit(clt_cleanup);
+
+        clt_device = clt_get_cl_device();
+
+        clt_context = clCreateContext(NULL, 1, &clt_device, NULL, NULL, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL context");
+
+        clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
+
+        clt_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I.");
+
+        clt_shot_kernel = clCreateKernel(clt_program, "solid_shot", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+        clt_norm_kernel = clCreateKernel(clt_program, "solid_norm", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+
+        clt_frame_kernel = clCreateKernel(clt_program, "do_pixel", &error);
+        if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
+
+
+	clt_rand_halftab = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(bn_rand_halftab), bn_rand_halftab, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL rand_haltab buffer");
+    }
+    bu_semaphore_release(clt_semaphore);
+}
+
+
+size_t
+clt_solid_length(struct soltab *stp)
+{
+    switch (stp->st_id) {
+        case ID_TOR:    return clt_tor_length(stp);
+        case ID_TGC:    return clt_tgc_length(stp);
+        case ID_ELL:    return clt_ell_length(stp);
+        case ID_ARB8:   return clt_arb_length(stp);
+        case ID_REC:    return clt_rec_length(stp);
+        case ID_SPH:    return clt_sph_length(stp);
+        case ID_EHY:    return clt_ehy_length(stp);
+        default:        return 0;
+    }
+}
+
+void
+clt_solid_pack(void *dst, struct soltab *src)
+{
+    switch (src->st_id) {
+        case ID_TOR:    clt_tor_pack(dst, src);     break;
+        case ID_TGC:    clt_tgc_pack(dst, src);     break;
+        case ID_ELL:    clt_ell_pack(dst, src);     break;
+        case ID_ARB8:   clt_arb_pack(dst, src);     break;
+        case ID_REC:    clt_rec_pack(dst, src);     break;
+        case ID_SPH:    clt_sph_pack(dst, src);     break;
+        case ID_EHY:    clt_ehy_pack(dst, src);     break;
+        default:                                    break;
+    }
+}
+
+
+cl_int
+clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp, struct application *ap, struct seg *seghead)
+{
+    const size_t sz_args = clt_solid_length(stp);
+    char *args;
+
+    const cl_int id = stp->st_id;
+
+    cl_int i, len;
+    cl_double3 r_pt, r_dir;
+
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pin, plen, pout;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    args = (char*)bu_malloc(sz_args, "clt_shot");
+    clt_solid_pack(args, stp);
+
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_hits, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    plen = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sizeof(len), NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_shot_kernel, 0, sizeof(cl_mem), &plen);
+    error |= clSetKernelArg(clt_shot_kernel, 1, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_shot_kernel, 2, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_shot_kernel, 3, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_shot_kernel, 4, sizeof(cl_int), &id);
+    error |= clSetKernelArg(clt_shot_kernel, 5, sizeof(cl_mem), &pin);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_shot_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, plen, CL_TRUE, 0, sizeof(len), &len, 0, NULL, NULL);
+    clReleaseMemObject(plen);
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sz_hits, hits, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
+
+    bu_free(args, "clt_shot");
+
+    for (i=0; i<len; i+=2) {
+        struct seg *segp;
+        RT_GET_SEG(segp, ap->a_resource);
+        segp->seg_stp = stp;
+        segp->seg_in.hit_dist = hits[i].hit_dist;
+        segp->seg_in.hit_surfno = hits[i].hit_surfno;
+        segp->seg_out.hit_dist = hits[i+1].hit_dist;
+        segp->seg_out.hit_surfno = hits[i+1].hit_surfno;
+        /* Set aside vector for rt_tor_norm() later */
+        VMOVE(segp->seg_in.hit_vpriv, hits[i].hit_vpriv.s);
+        VMOVE(segp->seg_out.hit_vpriv, hits[i+1].hit_vpriv.s);
+        BU_LIST_INSERT(&(seghead->l), &(segp->l));
+    }
+    return len;
+}
+
+
+void
+clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
+{
+    const size_t sz_args = clt_solid_length(stp);
+    char *args;
+
+    const cl_int id = stp->st_id;
+
+    cl_double3 r_pt, r_dir;
+
+    const size_t hypersample = 1;
+    cl_int error;
+    cl_mem pin, pout;
+    struct cl_hit hit;
+
+    VMOVE(r_pt.s, rp->r_pt);
+    VMOVE(r_dir.s, rp->r_dir);
+
+    VMOVE(hit.hit_vpriv.s, hitp->hit_vpriv);
+    hit.hit_dist = hitp->hit_dist;
+    hit.hit_surfno = hitp->hit_surfno;
+
+    args = (char*)bu_malloc(sz_args, "clt_norm");
+    clt_solid_pack(args, stp);
+
+    pin = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sz_args, args, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL input buffer");
+    pout = clCreateBuffer(clt_context, CL_MEM_READ_WRITE|CL_MEM_COPY_HOST_PTR, sizeof(hit), &hit, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_norm_kernel, 0, sizeof(cl_mem), &pout);
+    error |= clSetKernelArg(clt_norm_kernel, 1, sizeof(cl_double3), &r_pt);
+    error |= clSetKernelArg(clt_norm_kernel, 2, sizeof(cl_double3), &r_dir);
+    error |= clSetKernelArg(clt_norm_kernel, 3, sizeof(cl_int), &id);
+    error |= clSetKernelArg(clt_norm_kernel, 4, sizeof(cl_mem), &pin);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_norm_kernel, 1, NULL, &hypersample, NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+    if (error != CL_SUCCESS) bu_bomb("failed to enqueue OpenCL kernel");
+
+    if (clFinish(clt_queue) != CL_SUCCESS) bu_bomb("failure in clFinish()");
+    clEnqueueReadBuffer(clt_queue, pout, CL_TRUE, 0, sizeof(hit), &hit, 0, NULL, NULL);
+    clReleaseMemObject(pout);
+    clReleaseMemObject(pin);
+
+    bu_free(args, "clt_norm");
+
+    VMOVE(hitp->hit_normal, hit.hit_normal.s);
+    VMOVE(hitp->hit_point, hit.hit_point.s);
+    VMOVE(hitp->hit_vpriv, hit.hit_vpriv.s);
+}
+
+
+void
+clt_db_store(size_t count, struct soltab *solids[])
+{
+    cl_int error;
+    cl_int *ids;
+    cl_uint *indexes;
+    char *prims;
+    size_t i;
+
+    if (count != 0) {
+	ids = (cl_int*)bu_calloc(count, sizeof(cl_int), "ids");
+	for (i=0; i < count; i++) {
+	    const struct soltab *stp = solids[i];
+	    ids[i] = stp->st_id;
+	}
+
+	indexes = (cl_uint*)bu_calloc(count+1, sizeof(cl_uint), "indexes");
+	indexes[0] = 0;
+	for (i=1; i <= count; i++) {
+	    size_t size;
+	    size = clt_solid_length(solids[i-1]);
+	    indexes[i] = indexes[i-1] + size;
+	}
+
+	if (indexes[count] != 0) {
+	    prims = (char*)bu_malloc(indexes[count], "prims");
+	    for (i=0; i<count; i++) {
+		clt_solid_pack(prims+indexes[i], solids[i]);
+	    }
+
+	    clt_db_prims = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, indexes[count], prims, &error);
+	    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	    bu_free(prims, "failed bu_free() in clt_db_store()");
+	}
+
+	clt_db_ids = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_int)*count, ids, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL ids buffer");
+	clt_db_indexes = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(cl_uint)*(count+1), indexes, &error);
+	if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL indexes buffer");
+
+	bu_free(indexes, "failed bu_free() in clt_db_store()");
+	bu_free(ids, "failed bu_free() in clt_db_store()");
+    }
+
+    clt_db_nprims = count;
+}
+
+void
+clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes)
+{
+    cl_int error;
+
+    clt_db_bvh = clCreateBuffer(clt_context, CL_MEM_READ_ONLY|CL_MEM_COPY_HOST_PTR, sizeof(struct clt_linear_bvh_node)*count, nodes, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL bvh buffer");
+}
+
+void
+clt_db_release(void)
+{
+    clReleaseMemObject(clt_db_bvh);
+    clReleaseMemObject(clt_db_prims);
+    clReleaseMemObject(clt_db_indexes);
+    clReleaseMemObject(clt_db_ids);
+
+    clt_db_nprims = 0;
+}
+
+void
+clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
+	  int width, int ibackground[3], int inonbackground[3],
+          mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+          fastf_t aspect, int lightmodel)
+{
+    const size_t npix = last_pixel-cur_pixel+1;
+
+    size_t sz_pixels;
+    size_t sz_hits;
+
+    struct {
+        cl_double16 view2model;
+        cl_double cell_width, cell_height, aspect;
+	cl_uint randhalftabsize;
+        cl_int cur_pixel, last_pixel, width;
+        cl_int lightmodel;
+        cl_uchar3 o;
+        cl_uchar3 ibackground, inonbackground;
+    }p;
+
+    cl_mem ppixels, phits;
+    cl_int error;
+
+    sz_pixels = sizeof(cl_uchar)*o[2]*npix;
+    sz_hits = sizeof(struct cl_hit)*npix;
+
+    p.randhalftabsize = bn_randhalftabsize;
+    p.cur_pixel = cur_pixel;
+    p.last_pixel = last_pixel;
+    p.width = width;
+    VMOVE(p.o.s, o);
+    VMOVE(p.ibackground.s, ibackground);
+    VMOVE(p.inonbackground.s, inonbackground);
+    MAT_COPY(p.view2model.s, view2model);
+    p.cell_width = cell_width;
+    p.cell_height = cell_height;
+    p.aspect = aspect;
+    p.lightmodel = lightmodel;
+
+    ppixels = clCreateBuffer(clt_context, CL_MEM_WRITE_ONLY, sz_pixels, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL output buffer");
+    phits = clCreateBuffer(clt_context, CL_MEM_READ_WRITE, sz_hits, NULL, &error);
+    if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL hits buffer");
+
+    bu_semaphore_acquire(clt_semaphore);
+    error = clSetKernelArg(clt_frame_kernel, 0, sizeof(cl_mem), &ppixels);
+    error |= clSetKernelArg(clt_frame_kernel, 1, sizeof(cl_uchar3), &p.o);
+    error |= clSetKernelArg(clt_frame_kernel, 2, sizeof(cl_mem), &phits);
+    error |= clSetKernelArg(clt_frame_kernel, 3, sizeof(cl_int), &p.cur_pixel);
+    error |= clSetKernelArg(clt_frame_kernel, 4, sizeof(cl_int), &p.last_pixel);
+    error |= clSetKernelArg(clt_frame_kernel, 5, sizeof(cl_int), &p.width);
+    error |= clSetKernelArg(clt_frame_kernel, 6, sizeof(cl_mem), &clt_rand_halftab);
+    error |= clSetKernelArg(clt_frame_kernel, 7, sizeof(cl_uint), &p.randhalftabsize);
+    error |= clSetKernelArg(clt_frame_kernel, 8, sizeof(cl_uchar3), &p.ibackground);
+    error |= clSetKernelArg(clt_frame_kernel, 9, sizeof(cl_uchar3), &p.inonbackground);
+    error |= clSetKernelArg(clt_frame_kernel, 10, sizeof(cl_double16), &p.view2model);
+    error |= clSetKernelArg(clt_frame_kernel, 11, sizeof(cl_double), &p.cell_width);
+    error |= clSetKernelArg(clt_frame_kernel, 12, sizeof(cl_double), &p.cell_height);
+    error |= clSetKernelArg(clt_frame_kernel, 13, sizeof(cl_double), &p.aspect);
+    error |= clSetKernelArg(clt_frame_kernel, 14, sizeof(cl_int), &lightmodel);
+    error |= clSetKernelArg(clt_frame_kernel, 15, sizeof(cl_uint), &clt_db_nprims);
+    error |= clSetKernelArg(clt_frame_kernel, 16, sizeof(cl_mem), &clt_db_ids);
+    error |= clSetKernelArg(clt_frame_kernel, 17, sizeof(cl_mem), &clt_db_bvh);
+    error |= clSetKernelArg(clt_frame_kernel, 18, sizeof(cl_mem), &clt_db_indexes);
+    error |= clSetKernelArg(clt_frame_kernel, 19, sizeof(cl_mem), &clt_db_prims);
+    if (error != CL_SUCCESS) bu_bomb("failed to set OpenCL kernel arguments");
+    error = clEnqueueNDRangeKernel(clt_queue, clt_frame_kernel, 1, NULL, &npix,
+                                   NULL, 0, NULL, NULL);
+    bu_semaphore_release(clt_semaphore);
+
+    clEnqueueReadBuffer(clt_queue, ppixels, CL_TRUE, 0, sz_pixels, pixels, 0,
+                        NULL, NULL);
+    clReleaseMemObject(ppixels);
+    clReleaseMemObject(phits);
+}
+#endif
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

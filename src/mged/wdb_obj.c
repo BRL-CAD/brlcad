@@ -53,6 +53,7 @@
 #include "ged.h"
 #include "wdb.h"
 #include "raytrace.h"
+#include "tclcad.h"
 #include "obj.h"
 
 #define WDB_TCL_READ_ERR { \
@@ -1626,148 +1627,6 @@ wdb_pathlist_leaf_func(struct db_tree_state *UNUSED(tsp),
 
 
 int
-wdb_bot_decimate_cmd(struct rt_wdb *wdbp,
-		     int argc,
-		     const char *argv[])
-{
-    int c;
-    struct rt_db_internal intern;
-    struct rt_bot_internal *bot;
-    struct directory *dp;
-    fastf_t max_chord_error=-1.0;
-    fastf_t max_normal_error=-1.0;
-    fastf_t min_edge_length=-1.0;
-
-    if (argc < 5 || argc > 9) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s", argv[0]);
-	Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    /* process args */
-    bu_optind = 1;
-    bu_opterr = 0;
-    while ((c=bu_getopt(argc, (char * const *)argv, "c:n:e:")) != -1) {
-	switch (c) {
-	    case 'c':
-		max_chord_error = atof(bu_optarg);
-		if (max_chord_error < 0.0) {
-		    Tcl_AppendResult(wdbp->wdb_interp,
-				     "Maximum chord error cannot be less than zero",
-				     (char *)NULL);
-		    return TCL_ERROR;
-		}
-		break;
-	    case 'n':
-		max_normal_error = atof(bu_optarg);
-		if (max_normal_error < 0.0) {
-		    Tcl_AppendResult(wdbp->wdb_interp,
-				     "Maximum normal error cannot be less than zero",
-				     (char *)NULL);
-		    return TCL_ERROR;
-		}
-		break;
-	    case 'e':
-		min_edge_length = atof(bu_optarg);
-		if (min_edge_length < 0.0) {
-		    Tcl_AppendResult(wdbp->wdb_interp,
-				     "minimum edge length cannot be less than zero",
-				     (char *)NULL);
-		    return TCL_ERROR;
-		}
-		break;
-	    default:
-		{
-		    struct bu_vls vls;
-
-		    bu_vls_init(&vls);
-		    bu_vls_printf(&vls, "helplib_alias wdb_bot_decimate %s",
-				  argv[0]);
-		    Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
-		    bu_vls_free(&vls);
-		    return TCL_ERROR;
-		}
-	}
-    }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-    /* make sure new solid does not already exist */
-    dp = db_lookup(wdbp->dbip, argv[0], LOOKUP_QUIET);
-    if (dp != RT_DIR_NULL) {
-	Tcl_AppendResult(wdbp->wdb_interp, argv[0], " already exists!!\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    /* make sure current solid does exist */
-    dp = db_lookup(wdbp->dbip, argv[1], LOOKUP_QUIET);
-    if (dp == RT_DIR_NULL) {
-	Tcl_AppendResult(wdbp->wdb_interp, argv[1], " Does not exist\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    /* import the current solid */
-    RT_DB_INTERNAL_INIT(&intern);
-    if (rt_db_get_internal(&intern, dp, wdbp->dbip, NULL, wdbp->wdb_resp) < 0) {
-	Tcl_AppendResult(wdbp->wdb_interp, "Failed to get internal form of ", argv[1],
-			 "\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    /* make sure this is a BOT solid */
-    if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
-	intern.idb_minor_type != DB5_MINORTYPE_BRLCAD_BOT) {
-	Tcl_AppendResult(wdbp->wdb_interp, argv[1], " is not a BOT solid\n", (char *)NULL);
-	rt_db_free_internal(&intern);
-	return TCL_ERROR;
-    }
-
-    bot = (struct rt_bot_internal *)intern.idb_ptr;
-
-    RT_BOT_CK_MAGIC(bot);
-
-    /* convert maximum error and edge length to mm */
-    max_chord_error = max_chord_error * wdbp->dbip->dbi_local2base;
-    min_edge_length = min_edge_length * wdbp->dbip->dbi_local2base;
-
-    /* do the decimation */
-    if (rt_bot_decimate(bot, max_chord_error, max_normal_error, min_edge_length) < 0) {
-	Tcl_AppendResult(wdbp->wdb_interp, "Decimation Error\n", (char *)NULL);
-	rt_db_free_internal(&intern);
-	return TCL_ERROR;
-    }
-
-    /* save the result to the database */
-    if (wdb_put_internal(wdbp, argv[0], &intern, 1.0) < 0) {
-	Tcl_AppendResult(wdbp->wdb_interp, "Failed to write decimated BOT back to database\n", (char *)NULL);
-	return TCL_ERROR;
-    }
-
-    return TCL_OK;
-}
-
-
-/*
- * Usage:
- * procname
- */
-static int
-wdb_bot_decimate_tcl(void *clientData,
-		     int argc,
-		     const char *argv[])
-{
-    struct rt_wdb *wdbp = (struct rt_wdb *)clientData;
-
-    return wdb_bot_decimate_cmd(wdbp, argc-1, argv+1);
-}
-
-
-int
 wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 		      int argc,
 		      const char *argv[])
@@ -1800,7 +1659,7 @@ wdb_move_arb_edge_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -1977,7 +1836,7 @@ wdb_move_arb_face_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -2133,7 +1992,7 @@ wdb_rotate_arb_face_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD ||
@@ -2496,7 +2355,7 @@ wdb_get_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     {
@@ -2565,7 +2424,7 @@ wdb_get_type_cmd(struct rt_wdb *wdbp,
 	return TCL_ERROR;
     }
 
-    if (rt_tcl_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
+    if (tclcad_rt_import_from_path(wdbp->wdb_interp, &intern, argv[1], wdbp) == TCL_ERROR)
 	return TCL_ERROR;
 
     if (intern.idb_major_type != DB5_MAJORTYPE_BRLCAD) {
@@ -2799,6 +2658,11 @@ wdb_put_cmd(struct rt_wdb *wdbp,
     return TCL_OK;
 }
 
+HIDDEN void
+_wdb_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 int
 wdb_adjust_cmd(struct rt_wdb *wdbp,
@@ -2866,7 +2730,7 @@ wdb_adjust_cmd(struct rt_wdb *wdbp,
     }
 
     /* notify observers */
-    bu_observer_notify(wdbp->wdb_interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name));
+    bu_observer_notify((void *)wdbp->wdb_interp, &wdbp->wdb_observers, bu_vls_addr(&wdbp->wdb_name), &(_wdb_eval));
 
     return status;
 }
@@ -3158,7 +3022,7 @@ wdb_rt_gettrees_cmd(struct rt_wdb *wdbp,
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, rt_tcl_rt,
+    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, tclcad_rt,
 			    (ClientData)ap, wdb_deleteProc_rt);
 
     /* Return new function name as result */
@@ -3226,7 +3090,7 @@ Do_showmats(struct db_i *dbip,
 	bu_vls_free(&vls);
     }
 
-    bn_tcl_mat_print(smdp->smd_interp, "", comb_leaf->tr_l.tl_mat);
+    tclcad_bn_mat_print(smdp->smd_interp, "", comb_leaf->tr_l.tl_mat);
     if (smdp->smd_count == 1) {
 	mat_t tmp_mat;
 	if (comb_leaf->tr_l.tl_mat) {
@@ -3306,7 +3170,7 @@ wdb_showmats_cmd(struct rt_wdb *wdbp,
     else
 	Tcl_AppendResult(wdbp->wdb_interp, "\nAccumulated matrix:\n", (char *)NULL);
 
-    bn_tcl_mat_print(wdbp->wdb_interp, "", sm_data.smd_mat);
+    tclcad_bn_mat_print(wdbp->wdb_interp, "", sm_data.smd_mat);
 
     return TCL_OK;
 }
@@ -10357,7 +10221,6 @@ static struct bu_cmdtab wdb_cmds[] = {
     {"attr",		wdb_attr_tcl},
     {"bo",		wdb_bo_tcl},
     {"bot_face_sort", 	wdb_bot_face_sort_tcl},
-    {"bot_decimate", 	wdb_bot_decimate_tcl},
     {"c",		wdb_comb_std_tcl},
     {"cat",		wdb_cat_tcl},
     {"comb",		wdb_comb_tcl},

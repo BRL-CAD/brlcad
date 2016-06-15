@@ -1536,6 +1536,7 @@ osgl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
+		    glEnable(GL_POINT_SMOOTH);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -1818,6 +1819,7 @@ osgl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1842,6 +1844,7 @@ osgl_drawPoint3D(struct dm_internal *dmp, point_t point)
     /* fastf_t to double */
     VMOVE(dpt, point);
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(dpt);
     glEnd();
@@ -1863,7 +1866,7 @@ osgl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 	bu_log("osgl_drawPoint3D():\n");
     }
 
-
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i) {
 	/* fastf_t to double */

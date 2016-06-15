@@ -143,6 +143,8 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 
+#include "../../librt_private.h"
+
 
 struct rec_specific {
     vect_t rec_V;		/* Vector to center of base of cylinder */
@@ -154,6 +156,39 @@ struct rec_specific {
     fastf_t rec_iAsq;	/* 1/MAGSQ(A) */
     fastf_t rec_iBsq;	/* 1/MAGSQ(B) */
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct rec_shot_specific {
+    cl_double rec_V[3];		/* Vector to center of base of cylinder */
+    cl_double rec_Hunit[3];	/* Unit H vector */
+    cl_double rec_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double rec_invRoS[16];	/* invRot(Scale(vect)) */
+};
+
+size_t
+clt_rec_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct rec_shot_specific);
+}
+
+void
+clt_rec_pack(void *dst, struct soltab *src)
+{
+    struct rec_specific *rec =
+        (struct rec_specific *)src->st_specific;
+    struct rec_shot_specific *args =
+        (struct rec_shot_specific *)dst;
+
+    VMOVE(args->rec_V, rec->rec_V);
+    VMOVE(args->rec_Hunit, rec->rec_Hunit);
+    MAT_COPY(args->rec_SoR, rec->rec_SoR);
+    MAT_COPY(args->rec_invRoS, rec->rec_invRoS);
+}
+#endif /* USE_OPENCL */
+
 
 /**
  * Calculate the RPP for an REC

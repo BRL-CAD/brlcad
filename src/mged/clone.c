@@ -899,27 +899,36 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 {
     size_t ret;
     struct spline s;
-    vect_t *verts  = (vect_t *)NULL;
-    struct link *links = (struct link *)NULL;
+    vect_t *verts;
+    struct link *links;
     int opt;
     size_t i, j, k, inc;
     size_t n_verts, n_links;
-    int arg = 1;
-    FILE *points = (FILE *)NULL;
+    int arg;
+    FILE *points;
     char tok[81] = {0}, line[81] = {0};
     char ch;
-    fastf_t totlen = 0.0;
+    fastf_t totlen;
     fastf_t len, olen;
     fastf_t dist_to_next;
     fastf_t min, max, mid;
-    fastf_t pt[3] = {0};
-    int no_draw = 0;
+    fastf_t pt[3];
+    int no_draw;
 
     /* allow interrupts */
     if (setjmp(jmp_env) == 0)
 	(void)signal(SIGINT, sig3);
     else
 	return TCL_OK;
+
+    /* initial values go here; silences warnings over setjmp/longjmp clobbering */
+    verts  = (vect_t *)NULL;
+    links = (struct link *)NULL;
+    arg = 1;
+    points = (FILE *)NULL;
+    totlen = 0.0;
+    VSETALL(pt, 0.0);
+    no_draw = 0;
 
     bu_optind = 1;
 

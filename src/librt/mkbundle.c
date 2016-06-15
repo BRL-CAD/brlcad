@@ -300,6 +300,113 @@ int rt_gen_rect(struct xrays *rays, const struct xray *center_ray,
     return count;
 }
 
+
+HIDDEN int
+rt_pattern_rect_orthogrid(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
+		const vect_t a_vec, const vect_t b_vec, const fastf_t da, const fastf_t db)
+{
+    int count = 0;
+    point_t pt;
+    vect_t a_dir;
+    vect_t b_dir;
+    fastf_t x, y;
+    fastf_t a_length = MAGNITUDE(a_vec);
+    fastf_t b_length = MAGNITUDE(b_vec);
+
+    if (!rays || !ray_cnt) return -1;
+
+    if (NEAR_ZERO(a_length, SMALL_FASTF) || NEAR_ZERO(b_length, SMALL_FASTF)) return -1;
+    if (NEAR_ZERO(da, SMALL_FASTF) || NEAR_ZERO(db, SMALL_FASTF)) return -1;
+
+    VMOVE(a_dir, a_vec);
+    VUNITIZE(a_dir);
+
+    VMOVE(b_dir, b_vec);
+    VUNITIZE(b_dir);
+
+    /* Find out how much memory we'll need and get it */
+    for (y = -b_length; y <= b_length; y += db) {
+	for (x = -a_length; x <= a_length; x += da) {
+	    count++;
+	}
+    }
+    *(rays) = (fastf_t *)bu_calloc(sizeof(fastf_t) * 6, count + 1, "rays");
+
+    /* Now that we have memory, reset count so it can
+     * be used to index into the array */
+    count = 0;
+
+    /* Build the rays */
+    for (y = -b_length; y <= b_length; y += db) {
+	for (x = -a_length; x <= a_length; x += da) {
+	    VJOIN2(pt, center_pt, x, a_dir, y, b_dir);
+	    (*rays)[6*count] = pt[0];
+	    (*rays)[6*count+1] = pt[1];
+	    (*rays)[6*count+2] = pt[2];
+	    (*rays)[6*count+3] = dir[0];
+	    (*rays)[6*count+4] = dir[1];
+	    (*rays)[6*count+5] = dir[2];
+	    count++;
+	}
+    }
+    *(ray_cnt) = count;
+    return count;
+}
+
+
+HIDDEN int
+rt_pattern_rect_perspgrid(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
+	       const vect_t a_vec, const vect_t b_vec,
+	       const fastf_t a_theta, const fastf_t b_theta,
+	       const fastf_t a_num, const fastf_t b_num)
+{
+    int count = 0;
+    vect_t rdir;
+    vect_t a_dir, b_dir;
+    fastf_t x, y;
+    fastf_t a_length = tan(a_theta);
+    fastf_t b_length = tan(b_theta);
+    fastf_t a_inc = 2 * a_length / (a_num - 1);
+    fastf_t b_inc = 2 * b_length / (b_num - 1);
+
+    VMOVE(a_dir, a_vec);
+    VUNITIZE(a_dir);
+    VMOVE(b_dir, b_vec);
+    VUNITIZE(b_dir);
+
+    /* Find out how much memory we'll need and get it */
+    for (y = -b_length; y <= b_length + BN_TOL_DIST; y += b_inc) {
+	for (x = -a_length; x <= a_length + BN_TOL_DIST; x += a_inc) {
+	    count++;
+	}
+    }
+    *(rays) = (fastf_t *)bu_calloc(sizeof(fastf_t) * 6, count + 1, "rays");
+
+    /* Now that we have memory, reset count so it can
+     * be used to index into the array */
+    count = 0;
+
+    /* This adds BN_TOL_DIST to the *_length variables in the
+     * condition because in some cases, floating-point problems can
+     * make extremely close numbers compare incorrectly. */
+    for (y = -b_length; y <= b_length + BN_TOL_DIST; y += b_inc) {
+	for (x = -a_length; x <= a_length + BN_TOL_DIST; x += a_inc) {
+	    VJOIN2(rdir, dir, x, a_dir, y, b_dir);
+	    VUNITIZE(rdir);
+	    (*rays)[6*count] = center_pt[0];
+	    (*rays)[6*count+1] = center_pt[1];
+	    (*rays)[6*count+2] = center_pt[2];
+	    (*rays)[6*count+3] = rdir[0];
+	    (*rays)[6*count+4] = rdir[1];
+	    (*rays)[6*count+5] = rdir[2];
+	    count++;
+
+	}
+    }
+    *(ray_cnt) = count;
+    return count;
+}
+
 HIDDEN int
 rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
        	const double radius, const int rays_per_ring, const int nring, const double delta)
@@ -308,7 +415,6 @@ rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
     double fraction = 1.0;
     double theta;
     double radial_scale;
-    int count = 0;
     vect_t avec, bvec;
     int ray_index = 0;
 
@@ -316,7 +422,7 @@ rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
     VCROSS(bvec, dir, avec);
     VUNITIZE(bvec);
 
-    if (!rays) return -1;
+    if (!rays || !ray_cnt) return -1;
 
     *(rays) = (fastf_t *)bu_calloc(sizeof(fastf_t) * 6, (rays_per_ring * nring) + 1, "rays");
 
@@ -345,7 +451,7 @@ rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt,
 	}
     }
     *(ray_cnt) = ray_index;
-    return count;
+    return ray_index;
 }
 
 int
@@ -353,9 +459,19 @@ rt_pattern(struct rt_pattern_data *data, rt_pattern_t type)
 {
     if (!data) return -1;
     switch (type) {
+	case RT_PATTERN_RECT_ORTHOGRID:
+	    if (data->pn < 2 || data->vn < 2) return -1;
+	    return rt_pattern_rect_orthogrid(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir,
+		    data->n_vec[0], data->n_vec[1], data->n_p[0], data->n_p[1]);
+	    break;
+	case RT_PATTERN_RECT_PERSPGRID:
+	    return rt_pattern_rect_perspgrid(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir,
+		    data->n_vec[0], data->n_vec[1], data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
+	    break;
 	case RT_PATTERN_CIRC_SPIRAL:
 	    if (data->pn < 4) return -1;
-	    return rt_pattern_circ_spiral(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir, data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
+	    return rt_pattern_circ_spiral(&(data->rays), &(data->ray_cnt), data->center_pt, data->center_dir,
+		    data->n_p[0], data->n_p[1], data->n_p[2], data->n_p[3]);
 	    break;
 	default:
 	    bu_log("Error - unknown pattern type %d\n", type);

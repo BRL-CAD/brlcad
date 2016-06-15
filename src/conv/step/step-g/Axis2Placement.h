@@ -56,7 +56,7 @@ public:
     const double *GetNormal();
     const double *GetXAxis();
     const double *GetYAxis();
-    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods

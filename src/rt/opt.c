@@ -100,6 +100,7 @@ size_t		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 int             random_mode = 0;        /* Mode to shoot rays at random directions */
+int		opencl_mode = 0;	/* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -194,7 +195,7 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
+	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
     	if (bu_optopt == '?')
@@ -608,6 +609,9 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'd':
 		rpt_dist = atoi( bu_optarg );
+		break;
+	    case 'z':
+		opencl_mode = atoi( bu_optarg );
 		break;
 	    case '+':
 	    {

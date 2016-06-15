@@ -10,8 +10,10 @@ add_definitions(
   )
 
 add_subdirectory(3dm)
+add_subdirectory(asc)
 add_subdirectory(gcv)
 add_subdirectory(step)
+add_subdirectory(csg)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
@@ -32,17 +34,7 @@ set(CONV_INCLUDE_DIRS
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
-BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
-
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
-
-BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
-
 BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt;libbu;${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt;libbu;${M_LIBRARY}")
 

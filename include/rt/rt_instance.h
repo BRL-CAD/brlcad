@@ -208,7 +208,7 @@ RT_EXPORT extern int rt_gettrees_and_attrs(struct rt_i *rtip,
 /**
  * User-called function to add a set of tree hierarchies to the active
  * set. Includes getting the indicated list of attributes and a
- * Tcl_HashTable for use with the ORCA man regions. (stashed in the
+ * bu_hash_tbl for use with the ORCA man regions. (stashed in the
  * rt_i structure).
  *
  * This function may run in parallel, but is not multiply re-entrant
@@ -348,6 +348,22 @@ RT_EXPORT extern void rt_fr_cut(struct rt_i *rtip,
  * Called once, from rt_prep(), before raytracing begins.
  */
 RT_EXPORT extern void rt_regionfix(struct rt_i *rtip);
+
+
+#ifdef USE_OPENCL
+RT_EXPORT extern void clt_init(void);
+
+RT_EXPORT extern void
+clt_db_store(size_t count, struct soltab *solids[]);
+
+RT_EXPORT extern void
+clt_db_store_bvh(size_t count, struct clt_linear_bvh_node *nodes);
+
+RT_EXPORT extern void clt_db_release(void);
+
+
+RT_EXPORT void clt_prep(struct rt_i *rtip);
+#endif
 
 
 __END_DECLS

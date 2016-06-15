@@ -27,7 +27,6 @@ if(MSVC)
     )
 endif(MSVC)
 
-
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(plot3-X plot3-X.c "libdm;libbu")
   if(BRLCAD_ENABLE_TK)
@@ -94,6 +93,9 @@ BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
 # ignore it for now
 CMAKEFILES(test_bu_arg_parse.c)
 
+# LIBBU advance option handling test
+BRLCAD_ADDEXEC(dsp_add_opt dsp_add_opt.c libbu NO_INSTALL)
+
 # a new admin file
 BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
 
@@ -132,6 +134,7 @@ BRLCAD_ADDEXEC(pixbustup pixbustup.c libbu)
 BRLCAD_ADDEXEC(pixclump pixclump.c "libbn;libbu")
 BRLCAD_ADDEXEC(pixcolors pixcolors.c libbu)
 BRLCAD_ADDEXEC(pixcount pixcount.c libbu)
+BRLCAD_ADDEXEC(pixcrop pixcrop.c libbu)
 BRLCAD_ADDEXEC(pixcut pixcut.c "libfb;libbu")
 BRLCAD_ADDEXEC(pixdiff pixdiff.c libbu)
 BRLCAD_ADDEXEC(pixdsplit pixdsplit.c libbu)

@@ -137,7 +137,7 @@ comment_lead = ((cpp_comment_lead)|(c_comment_lead));
 
 <param_text> {
 '\n'(optional_ws)(comment_lead)?(optional_ws)[_a-zA-Z][_a-zA-Z0-9]*[ \t]*"-" {
-    int i, start, end;
+    size_t i, start, end;
 
     /* trim everything but the actual name */
     start = end = 0;

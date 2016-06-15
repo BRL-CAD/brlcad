@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -62,6 +62,7 @@ void aligned_free( void* mem ) { free( ( ( void** )mem )[-1] ); }
 #include "Array.inl"
 #define      Pointer( ... )      Array< __VA_ARGS__ >
 #define ConstPointer( ... ) ConstArray< __VA_ARGS__ >
+#define  NullPointer( ... )      Array< __VA_ARGS__ >()
 template< class C > void        FreePointer( Array< C >& a ){ a.Free( ); }
 template< class C > void AlignedFreePointer( Array< C >& a ){ a.Free( ); }
 template< class C > void       VFreePointer( Array< C >& a ){ a.Free( ); }
@@ -72,7 +73,7 @@ template< class C > Array< C >        AllocPointer(                  size_t size
 template< class C > Array< C > AlignedAllocPointer(                  size_t size , size_t alignment , const char* name=NULL ){ return Array< C >::AlignedAlloc(     size , alignment , false , name ); }
 template< class C > Array< C >      ReAllocPointer( Array< C >&  a , size_t size ,                 const char* name=NULL ){ return Array< C >::ReAlloc     ( a , size ,             false , name ); }
 
-template< class C > Array< C > NullPointer( void ){ return Array< C >( ); }
+//template< class C > Array< C > NullPointer( void ){ return Array< C >( ); }
 
 template< class C >       C* PointerAddress(      Array< C >& a ) { return a.pointer(); }
 template< class C > const C* PointerAddress( ConstArray< C >& a ) { return a.pointer(); }
@@ -84,6 +85,7 @@ template< class C > ConstArray< C > GetPointer( const std::vector< C >& v ){ ret
 #else // !ARRAY_DEBUG
 #define      Pointer( ... )       __VA_ARGS__*
 #define ConstPointer( ... ) const __VA_ARGS__*
+#define  NullPointer( ... ) NULL
 
 #define        FreePointer( ... ) { if( __VA_ARGS__ )         free( __VA_ARGS__ ) ,                   __VA_ARGS__ = NULL; }
 #define AlignedFreePointer( ... ) { if( __VA_ARGS__ ) aligned_free( __VA_ARGS__ ) ,                   __VA_ARGS__ = NULL; }
@@ -94,7 +96,7 @@ template< class C > C*        AllocPointer(        size_t size ,                
 template< class C > C* AlignedAllocPointer(        size_t size , size_t alignment , const char* name=NULL ){ return (C*)aligned_malloc(        sizeof(C) * size , alignment ); }
 template< class C > C*      ReAllocPointer( C* c , size_t size ,                    const char* name=NULL ){ return (C*)       realloc( c    , sizeof(C) * size             ); }
 
-template< class C > C* NullPointer( void ){ return NULL; }
+//template< class C > C* NullPointer( void ){ return NULL; }
 
 template< class C >       C* PointerAddress(       C* c ){ return c; }
 template< class C > const C* PointerAddress( const C* c ){ return c; }

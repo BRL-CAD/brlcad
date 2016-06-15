@@ -18,22 +18,22 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* make sure windows wireframes are not horked
+
 * make sure rt -I interactive mode still works... looks like code for
   it was removed.
-
-* fix iges exporter (spaces after commas)
-
-* fix the bn_poly_sub unit test
-
-* fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
   and z=1524 (was hit/overlap, now misses).
 
+* fix MGED clear command
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* turn on Bullet code (simulate command) unconditionally
 
 * create a BRL-CAD .g with all possible object types embedded.  The
   csgbrep command is a good starting point, but only about half of
@@ -55,6 +55,46 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* start making use of the CMakePushCheckState macros - we are doing
+  this manually in several places
+
+* expand libbu parallelism with thread-level control, i.e., the
+  ability to start/stop/wait on individual threads in addition to the
+  existing bu_parallel() call.  bu_parallel() gets updated to call the
+  new thread-level control under the hood, but allows for more
+  expressive threading structures (e.g., a function similar to
+  bu_parallel() that is non-blocking).
+
+  One consideration would be to implement something similar to Intel's
+  Cilk API:
+
+  + bu_spawn() specifies that a function call to execute
+  asynchronously, without requiring the caller to wait for it to
+  return.  This allows for parallelism but does not mandate it (so
+  code will function as expected if it does block).
+
+  + bu_sync() specifies that all spawned calls must complete before
+  execution continues.  This allows for synchronization of data at
+  different phases of a computation.
+
+  + bu_for() specifies iterations of a loop body to be executed in
+  parallel.  This would be a way to easily parallelize existing code
+  without needing to create wrapper functions for bu_parallel().
+
+* Post 7.26.0 release, need to look at migrating CMake logic off of
+  the OLD behavior for policy 0026 (using LOCATION property.)  Now
+  that Debian stable is using CMake >=3.0 we should be OK to require
+  the more modern CMake.  Another TODO once we require the newer CMake
+  is retiring our custom time stamping code in favor of using
+  the CMake time stamp mechanism.
+
+* convert usages of Tcl_InitHashTable() and friends to libbu
+  containers (see src/conv/enf-g.c for example usage)
+
+* importer for LS-DYNA .k keyword files.  they support a variety of
+  geometry constructs.  their spec is freely available online.  no
+  existing libs are known.
 
 * analyze output that can characterize how much error or any other
   issues identified in a given object.  this is primarily intended for
@@ -119,7 +159,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * BoT mesh editing command.  Subtasks:
 
-  - enumerate functions desireable
+  - enumerate functions desirable
   - catalog features of other mesh manipulation tools
   - investigate mesh editing libraries and/or relying on NMG editing
   - bind GUI editing to the BoT mesh editing command
@@ -163,9 +203,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * create a joint articulation (manually is good, automatic is probably
   impossible) for ktank so the turret can spin and the gun barrel may
   be raised up/down within a given range.
-
-* make Lighting enabled by default in mged and archer (this is a libdm
-  issue).  currently unable to set/override in .mgedrc either.
 
 * need ability to report the smallest feature in a given hierarchy
   (smallest edge?) and/or largest error in a given boundary model
@@ -670,9 +707,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make bu_dirname not allocation memory.  have caller pass
   buffer in as a parameter with size ala snprintf/memcpy.
 
-* provide libdm mechanism for drawing spline curves (to help visualize
-  flight paths, show object trajectories, etc.).
-
 * provide option for displaying object bounding boxes while rotating.
   visualization feature to help with rotation operations, showing
   global object alignment with respect to its own coordinate space.
@@ -690,8 +724,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * vls name wrapping (reversible argv-to-vls, vls-to-argv).  look at
   src/libged/glob.c code, very similar.
-
-* release dm X get_color() memory
 
 * update g-xxx_facets to use libgcv
 
@@ -856,15 +888,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * implement -param support for 'search' command
 
-* mged crashes on Mac if using system Tcl/Tk with our incrTcl.
-  crashes with the following stack (same whether dm-X or dm-ogl):
-	XQueryExtension
-	...
-	glxGetConfig
-	ogl_choose_visual (dm-ogl.c:1359)
-	ogl_open (dm-ogl.c:401)
-	dm_open (dm-generic:82)
-
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
@@ -959,10 +982,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * better/consistent argument processing supporting both long and short
   option names, perhaps using argtable
-
-* decouple libdm from librt -- just one file in libdm uses librt,
-  including a whole nasty primitive switch statement.  need to push
-  that back over into librt.
 
 * Implement an optical shader for the new "pixelated" military
   camouflage style
@@ -1283,9 +1302,8 @@ LIBGED
   (also in mged) into libged where appropriate. the 'png' command
   comes to mind.
 
-* refactor wdb_obj and view_obj in libged.  with the de-tcl'ing of the
-  base libs, it should disappear but shouldn't have wdb_*() funcs in
-  libged regardless.  work in progress.
+* refactor wdb_obj and view_obj in libged. they should disappear but
+  shouldn't have wdb_*() funcs in libged regardless.
 
 * make ged command names aware of object arguments for automatic
   globbing and regular expression expansion:
@@ -1617,6 +1635,16 @@ NEW OBJECTS
   error, thrashing condition, etc.).
 
 * spheroid (quadratic) - special performance case of ell
+
+* ovoid - a 3D rotated oval "egg" shape.  can be constructed as the
+  union of two separate ell.  very similar to our pill/particle
+  primitive except that an elliptical curve connects the two shapes
+  (and depending on which oval curvature is used) -- could probably
+  use eto+sph evaluation for shot().
+
+  http://www.mathematische-basteleien.de/eggcurves.htm
+  http://www.geocities.jp/nyjp07/Egg/index_egg_E.html
+  https://en.wikipedia.org/wiki/Oval
 
 * conical edge (cubic) - unsure of this one's practical utility except
   as a means to construct a pinched tgc (unioning two halves).

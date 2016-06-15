@@ -36,17 +36,6 @@ RT_EXPORT extern int rt_mk_parabola(struct rt_pt_node *pts,
                                     fastf_t dtol,
                                     fastf_t ntol);
 
-
-RT_EXPORT extern struct bn_vlblock *rt_vlblock_init(void);
-
-
-RT_EXPORT extern void rt_vlblock_free(struct bn_vlblock *vbp);
-
-RT_EXPORT extern struct bu_list *rt_vlblock_find(struct bn_vlblock *vbp,
-                                                 int r,
-                                                 int g,
-                                                 int b);
-
 __END_DECLS
 
 /** @} */

@@ -328,27 +328,7 @@ find_package(ZeroConf)
 option(OSG_USE_QT "Enable to use Qt (build Qt-dependent libraries, plugins and examples)" ON)
 
 if(OSG_USE_QT)
-# To select a specific version of QT define DESIRED_QT_VERSION
-# via cmake -DDESIRED_QT_VERSION=5
-# QUIET option disables messages if the package cannot be found.
-
-  if(DESIRED_QT_VERSION)
-    if(DESIRED_QT_VERSION MATCHES 5)
-      find_package(Qt5Widgets)
-    else()
-      find_package(Qt4)
-    endif()
-  else()
-    find_package(Qt5Widgets QUIET)
-    if( NOT Qt5Widgets_FOUND )
-      find_package(Qt4)
-    endif()
-  endif()
-
-    #If we have found Qt5, let's try to top off by getting the webkit as well
-  if( Qt5Widgets_FOUND )
-    find_package(Qt5WebKitWidgets)
-  endif()
+  find_package(Qt5Widgets)
 endif()
 
 # Platform specific:

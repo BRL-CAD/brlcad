@@ -182,7 +182,7 @@ main(int argc, char **argv)
     int valid_function_number = 0;
     int process_test_case = 0;
     int early_exit = 0;
-    int found_eof = 0;
+    static int found_eof = 0; /* static due to longjmp */
 
     /* set initial values in tol structure */
     tol.magic = BN_TOL_MAGIC;

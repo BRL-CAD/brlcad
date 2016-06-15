@@ -4,6 +4,12 @@ set(RTBIN_INCLUDE_DIRS
   ${RT_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
+
+if(BRLCAD_ENABLE_OPENCL)
+  add_definitions(-DUSE_OPENCL)
+  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
+endif (BRLCAD_ENABLE_OPENCL)
+
 LIST(REMOVE_DUPLICATES RTBIN_INCLUDE_DIRS)
 include_directories(${RTBIN_INCLUDE_DIRS})
 
@@ -16,6 +22,10 @@ set(RT_COMMON_SRCS
 if(NOT MSVC)
   set(RT_COMMON_SRCS ${RT_COMMON_SRCS} heatgraph.c)
 endif(NOT MSVC)
+
+if(BRLCAD_ENABLE_OPENCL)
+  set(OPENCL_LIBS ${OPENCL_LIBRARIES})
+endif(BRLCAD_ENABLE_OPENCL)
 
 BRLCAD_ADDDATA(rtexample.c sample_applications)
 
@@ -31,7 +41,7 @@ BRLCAD_ADDEXEC(rtregis "read-rtlog.c;rtregis.c" "${CMAKE_THREAD_LIBS_INIT};librt
 
 BRLCAD_ADDEXEC(rtscale "read-rtlog.c;rtscale.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(rt "${RT_COMMON_SRCS};scanline.c;view.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
+BRLCAD_ADDEXEC(rt "${RT_COMMON_SRCS};scanline.c;view.c" "${OPENCL_LIBS};${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(rt_bot_faces "${RT_COMMON_SRCS};view_bot_faces.c" "${CMAKE_THREAD_LIBS_INIT};librt;libfb;liboptical;libicv;${M_LIBRARY}")
 

@@ -106,7 +106,7 @@ bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    CharacterizedDefinition *aCD = new CharacterizedDefinition();
 
 	    definition = aCD;
-	    if (!aCD->Load(step, select)) {
+	    if (!aCD->Load(step, (SDAI_Application_instance *)select)) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedDefinition from PropertyDefinition." << std::endl;
 		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;

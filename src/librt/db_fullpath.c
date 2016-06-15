@@ -291,7 +291,6 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 	if ((fp_flags & DB_FP_PRINT_TYPE) && dbip) {
 	    struct rt_db_internal intern;
 	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
-		if (intern.idb_meth->ft_label) {
 		    bu_vls_putc(vls, '(');
 		    switch (intern.idb_minor_type) {
 			case DB5_MINORTYPE_BRLCAD_ARB8:
@@ -328,7 +327,6 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 			    break;
 		    }
 
-		}
 		bu_vls_putc(vls, ')');
 		rt_db_free_internal(&intern);
 	    }

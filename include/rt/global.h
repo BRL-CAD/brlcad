@@ -25,6 +25,7 @@
 #define RT_GLOBAL_H
 
 #include "common.h"
+
 #include "vmath.h"
 #include "rt/defines.h"
 
@@ -70,6 +71,7 @@ RT_EXPORT extern struct rt_g RTG;
 
 /** Set a line width to apply to the vlist elements that follow. */
 #define RT_VLIST_SET_LINE_WIDTH(hd, width) BN_VLIST_SET_LINE_WIDTH(&RTG.rtg_vlfree, hd, width)
+
 
 
 __END_DECLS

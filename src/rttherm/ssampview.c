@@ -37,6 +37,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "spectrum.h"
+#include "tclcad.h"
 #include "fb.h"
 #include "tcl.h"
 #include "tk.h"

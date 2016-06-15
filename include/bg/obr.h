@@ -27,8 +27,8 @@
  *  @brief Routines for the computation of oriented bounding rectangles 2D and 3D
  */
 
-#ifndef GM_OBR_H
-#define GM_OBR_H
+#ifndef BG_OBR_H
+#define BG_OBR_H
 
 #include "common.h"
 #include "vmath.h"
@@ -70,7 +70,7 @@ __BEGIN_DECLS
  * @param points_2d	array of 2D points
  * @param pnt_cnt	number of points in pnts array
  */
-GM_EXPORT extern int bg_2d_obr(point2d_t *center,
+BG_EXPORT extern int bg_2d_obr(point2d_t *center,
 			       vect2d_t *u,
 			       vect2d_t *v,
 			       const point2d_t *points_2d,
@@ -90,7 +90,7 @@ GM_EXPORT extern int bg_2d_obr(point2d_t *center,
  * @param points_3d	array of coplanar 3D points
  * @param pnt_cnt	number of points in pnts array
  */
-GM_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
+BG_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
 			       vect_t *v1,
 			       vect_t *v2,
 			       const point_t *points_3d,
@@ -139,14 +139,14 @@ GM_EXPORT extern int bg_3d_coplanar_obr(point_t *center,
  * @param points_3d	array of coplanar 3D points
  * @param pnt_cnt	number of points in pnts array
  */
-GM_EXPORT extern int bg_3d_obb(point_t **pnts,
+BG_EXPORT extern int bg_3d_obb(point_t **pnts,
 			       const point_t *points_3d,
 			       int pnt_cnt);
 
 
 __END_DECLS
 
-#endif  /* GM_OBR_H */
+#endif  /* BG_OBR_H */
 /** @} */
 /*
  * Local Variables:

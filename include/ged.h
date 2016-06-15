@@ -380,6 +380,7 @@ struct ged {
     int (*add)(const struct ged_cmd *cmd);
     int (*del)(const char *name);
     int (*run)(int ac, char *av[]);
+    void *ged_interp; /* Temporary - do not rely on when designing new functionality */
 
     /* Interface to LIBDM */
     int ged_dm_width;
@@ -1312,6 +1313,11 @@ GED_EXPORT extern int ged_mrot(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_nirt(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_vnirt(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * NMG command with subcommands for altering NMG datastructure.
+ */
+GED_EXPORT extern int ged_nmg(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Decimate NMG primitive via edge collapse

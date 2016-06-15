@@ -466,7 +466,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 0);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 
 	/* handle overlaps */
 	while (bu_fgets(line, RT_MAXLINE, fp_out) != (char *)NULL) {
@@ -496,7 +496,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
 	qray_data_to_vlist(gedp, vbp, &HeadQRayData, dir, 1);
 	bu_list_free(&HeadQRayData.l);
 	_ged_cvt_vlblock_to_solids(gedp, vbp, bu_vls_addr(&gedp->ged_gdp->gd_qray_basename), 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 
     if (DG_QRAY_TEXT(gedp->ged_gdp)) {

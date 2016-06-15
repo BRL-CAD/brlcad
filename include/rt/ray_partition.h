@@ -36,6 +36,7 @@
 #include "vmath.h"
 #include "bu/ptbl.h"
 #include "rt/defines.h"
+#include "rt/seg.h"
 
 __BEGIN_DECLS
 

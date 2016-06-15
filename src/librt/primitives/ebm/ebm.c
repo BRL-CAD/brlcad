@@ -36,7 +36,6 @@
 #include <ctype.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -44,6 +43,7 @@
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "../fixpt.h"
+#include "../../librt_private.h"
 
 
 struct rt_ebm_specific {
@@ -1636,11 +1636,8 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    int len = 16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
-
-	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
-
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }

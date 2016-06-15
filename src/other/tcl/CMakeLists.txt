@@ -157,11 +157,19 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 # Windows specific flags
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline -DBUILD_tcl)
-ENDIF(WIN32)
+ENDIF(MSVC)
+
+IF(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
+  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+ENDIF(MINGW)
 
 IF(APPLE)
   ADD_TCL_CFLAG(MAC_OSX_TCL)
@@ -286,13 +294,13 @@ add_definitions(-DYYENABLE_NLS=0)
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
 # Test endianness 
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     ADD_TCL_CFLAG(WORDS_BIGENDIAN)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #--------------------------------------------------------------------
 #       Supply substitutes for missing POSIX library procedures, or
@@ -1027,8 +1035,12 @@ ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
+IF(MINGW)
+  set(TCL_MINGW_LIBS ws2_32)
+ENDIF(MINGW)
+
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}

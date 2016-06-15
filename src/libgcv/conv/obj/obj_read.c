@@ -3147,7 +3147,9 @@ process_nv_mode_option(struct ga_t *ga,
 
 
 HIDDEN int
-gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSED(options))
+gcv_obj_read(const char *source_path, struct db_i *dest_dbip,
+	const struct gcv_opts *UNUSED(gcv_options),
+	const void *UNUSED(options_data))
 {
     struct rt_wdb *fd_out;	     /* Resulting BRL-CAD file */
     int ret_val = 0;
@@ -3311,15 +3313,15 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 	bu_log("\tDebug messages disabled\n");
     }
 
-    bu_log("\tInput file name (%s)\n", path);
+    bu_log("\tInput file name (%s)\n", source_path);
 
-    if ((my_stream = fopen(path, "r")) == NULL) {
-	bu_log("Cannot open input file (%s)\n", path);
+    if ((my_stream = fopen(source_path, "r")) == NULL) {
+	bu_log("Cannot open input file (%s)\n", source_path);
 	perror("obj-g");
 	return 0;
     }
 
-    fd_out = wdbp;
+    fd_out = dest_dbip->dbi_wdbp;
 
     if ((ret_val = obj_parser_create(&ga.parser)) != 0) {
 	if (ret_val == ENOMEM) {
@@ -3664,12 +3666,8 @@ gcv_obj_read(const char *path, struct rt_wdb *wdbp, const struct gcv_opts *UNUSE
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"obj", gcv_obj_read, NULL},
-    {NULL, NULL, NULL}
-};
-
-const struct gcv_plugin_info gcv_plugin_conv_obj_read = {converters};
+const struct gcv_converter gcv_conv_obj_read =
+{MIME_MODEL_OBJ, GCV_CONVERSION_READ, NULL, NULL, gcv_obj_read};
 
 
 /*

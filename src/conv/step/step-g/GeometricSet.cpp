@@ -78,7 +78,7 @@ bool GeometricSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (aGSS) {
 		    elements.push_back(aGSS);
 
-		    if (!aGSS->Load(step, select)) {
+		    if (!aGSS->Load(step, (SDAI_Application_instance *)select)) {
 			std::cout << CLASSNAME << ":Error loading select attribute list 'elements' as GeometricSetSelect from GeometricSet." << std::endl;
 			return false;
 		    }

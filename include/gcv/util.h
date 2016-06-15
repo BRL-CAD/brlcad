@@ -29,21 +29,13 @@
 
 #include "common.h"
 
+#include "gcv/defines.h"
+
 #include "raytrace.h"
+
 
 __BEGIN_DECLS
 
-#ifndef GCV_EXPORT
-#  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
-#    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
-#  elif defined(GCV_DLL_EXPORTS)
-#    define GCV_EXPORT __declspec(dllexport)
-#  elif defined(GCV_DLL_IMPORTS)
-#    define GCV_EXPORT __declspec(dllimport)
-#  else
-#    define GCV_EXPORT
-#  endif
-#endif
 
 /**
  * write_region is a function pointer to a routine that will

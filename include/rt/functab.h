@@ -50,6 +50,7 @@
 #include "rt/tol.h"
 #include "rt/view.h"
 #include "rt/xray.h"
+#include "pc.h"
 #include "nmg.h"
 #include "brep.h"
 

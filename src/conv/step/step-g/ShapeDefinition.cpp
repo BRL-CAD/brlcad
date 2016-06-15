@@ -66,7 +66,7 @@ ShapeDefinition::GetProductDefinitionRelationship() {
 }
 */
 bool
-ShapeDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+ShapeDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {

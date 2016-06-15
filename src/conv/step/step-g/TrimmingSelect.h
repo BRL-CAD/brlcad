@@ -56,7 +56,7 @@ public:
     double GetParameterTrim();
     const double *GetPointTrim();
     bool IsParameterTrim();
-    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods

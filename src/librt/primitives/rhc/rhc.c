@@ -1793,7 +1793,7 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
     magB = MAGNITUDE(rip->rhc_B);
     height = MAGNITUDE(rip->rhc_H);
     a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
-    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + b * b);
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
     integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
     A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
 
@@ -1810,6 +1810,35 @@ rt_rhc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     *area = 2.0 * A + 2.0 * rip->rhc_r * height + arclen * height;
 }
+
+
+/**
+ * Computer volume of a right hyperbolic cylinder
+ */
+void
+rt_rhc_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_rhc_internal *rip;
+    fastf_t A, integralArea, a, b, magB, sqrt_ra, height;
+    if (volume == NULL || ip == NULL) {
+	return;
+    }
+
+    RT_CK_DB_INTERNAL(ip);
+    rip = (struct rt_rhc_internal *)ip->idb_ptr;
+    RT_RHC_CK_MAGIC(rip);
+
+    b = rip->rhc_c;
+    magB = MAGNITUDE(rip->rhc_B);
+    height = MAGNITUDE(rip->rhc_H);
+    a = (rip->rhc_r * b) / sqrt(magB * (2.0 * rip->rhc_c + magB));
+    sqrt_ra = sqrt(rip->rhc_r * rip->rhc_r + a * a);
+    integralArea = (b / a) * ((2.0 * rip->rhc_r * sqrt_ra) / 2.0 + ((a * a) / 2.0) * (log(sqrt_ra + rip->rhc_r) - log(sqrt_ra - rip->rhc_r)));
+    A = 2.0 * rip->rhc_r * (rip->rhc_c + magB) - integralArea;
+
+    *volume = A * height;
+}
+
 
 /**
  * Computes centroid of a right hyperbolic cylinder

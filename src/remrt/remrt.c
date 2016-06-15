@@ -75,9 +75,12 @@
 
 
 #ifndef HAVE_VFORK
-#  define vfork fork
+#  ifdef HAVE_FORK
+#    define vfork fork
+#  else
+#    define vfork() -1
+#  endif
 #endif
-
 
 #define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */

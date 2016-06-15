@@ -35,7 +35,6 @@
 #include "raytrace.h"
 #include "rt/db4.h"
 
-
 struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource = RT_RESOURCE_INIT_ZERO;

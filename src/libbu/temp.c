@@ -187,10 +187,8 @@ bu_temp_file(char *filepath, size_t len)
     const char *dir = NULL;
     const char *envdirs[] = {"TMPDIR", "TEMP", "TMP", NULL};
     const char *trydirs[] = {
-#ifdef _WIN32
 	"C:\\TEMP",
 	"C:\\WINDOWS\\TEMP",
-#endif
 	"/tmp",
 	"/usr/tmp",
 	"/var/tmp",

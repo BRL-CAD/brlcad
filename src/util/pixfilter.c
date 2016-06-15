@@ -109,7 +109,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		width = height = atoi(bu_optarg);
 		break;
-	    default:		/* '?' 'h' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

@@ -27,6 +27,7 @@
 #include "common.h"
 #include "bu/magic.h"
 #include "bu/avs.h"
+#include "bn/mat.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS

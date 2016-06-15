@@ -60,7 +60,7 @@ RepresentedDefinition::~RepresentedDefinition() {
 }
 
 bool
-RepresentedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+RepresentedDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     //TODO: Need to complete for AP203e2

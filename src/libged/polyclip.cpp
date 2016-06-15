@@ -911,7 +911,7 @@ void
 ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
 {
     register size_t i, j;
-    register fastf_t vx, vy, vZ;
+    register fastf_t vx, vy, vZ = 0.0;
     register size_t begin, end;
     point2d_t pt_2d;
     point_t pt;

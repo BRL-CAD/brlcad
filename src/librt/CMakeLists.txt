@@ -88,10 +88,23 @@ set(LIBRT_SOURCES
   primitives/ars/ars_mirror.c
   primitives/bot/bot.c
   primitives/bot/bot_brep.cpp
+  primitives/bot/bot_edge.c
   primitives/bot/bot_mirror.c
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
+  primitives/bot/gct_decimation/auxiliary/tinycthread.c
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.c
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.c
+  primitives/bot/gct_decimation/auxiliary/mm.c
+  primitives/bot/gct_decimation/auxiliary/mmhash.c
+  primitives/bot/gct_decimation/meshoptimization.c
+  primitives/bot/gct_decimation/meshoptimizer.c
+  primitives/bot/gct_decimation/meshdecimation.c
+  primitives/bot/gct_decimation/meshdecimationSSE2.c
+  primitives/bot/gct_decimation/meshdecimationSSE3.c
+  primitives/bot/gct_decimation/meshdecimationSSE4p1.c
+  primitives/bot/decimate.c
   primitives/brep/brep.cpp
   primitives/brep/brep_debug.cpp
   primitives/bspline/bspline.cpp
@@ -249,13 +262,14 @@ set(LIBRT_SOURCES
   primitives/vol/vol.c
   primitives/vol/vol_brep.cpp
   primitives/vol/vol_mirror.c
+  primitives/xxx/xxx.c
+  reduce.c
   regionfix.c
   roots.c
   screened_poisson.cpp
   search.c
   shoot.c
   spectrum.c
-  tcl.c
   tol.c
   transform.c
   tree.c
@@ -269,29 +283,53 @@ set(librt_ignored_files
   columnparse.c
   librt_private.h
   namegen.c
-  test_nurbsfit.cpp
-  test_bot2nurbs.cpp
-  test_root3-subd.cpp
-  subd_test_bot.asc
   prcomb.c
+  primitives/arb8/arb8_shot.cl
+  primitives/bot/bot_edge.h
+  primitives/bot/bot_wireframe.cpp
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
-  primitives/bot/bot_wireframe.cpp
-  primitives/bot/tieprivate.h
+  primitives/bot/gct_decimation/auxiliary/cc.h
+  primitives/bot/gct_decimation/auxiliary/cpuconfig.h
+  primitives/bot/gct_decimation/auxiliary/cpuinfo.h
+  primitives/bot/gct_decimation/auxiliary/mm.h
+  primitives/bot/gct_decimation/auxiliary/mmatomic.h
+  primitives/bot/gct_decimation/auxiliary/mmbinsort.h
+  primitives/bot/gct_decimation/auxiliary/mmbitmap.h
+  primitives/bot/gct_decimation/auxiliary/mmhash.h
+  primitives/bot/gct_decimation/auxiliary/mmthread.h
+  primitives/bot/gct_decimation/auxiliary/tinycthread.h
+  primitives/bot/gct_decimation/meshdecimation.h
+  primitives/bot/gct_decimation/meshoptimization.h
+  primitives/bot/gct_decimation/meshoptimizer.h
   primitives/bot/tie.c
   primitives/bot/tie_kdtree.c
+  primitives/bot/tieprivate.h
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
+  primitives/common.cl
+  primitives/datum/datum.h
   primitives/dsp/dsp.h
+  primitives/ehy/ehy_shot.cl
+  primitives/ell/ell_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
+  primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
+  primitives/rt.cl
+  primitives/solver.cl
   primitives/sph/benchmark.sh
   primitives/sph/sph_shot.cl
-  primitives/xxx/xxx.c
+  primitives/tgc/tgc_shot.cl
+  primitives/tor/tor_shot.cl
   primitives/xxx/xxx.h
   search.h
+  subd_test_bot.asc
+  test_bot2nurbs.cpp
+  test_brepreport.cpp
+  test_nurbsfit.cpp
+  test_root3-subd.cpp
   timer-nt.c
   timerhep.c
   timerunix.c
@@ -312,7 +350,11 @@ if(BRLCAD_ENABLE_OPENCL)
   set(OPENCL_LIBS ${OPENCL_LIBRARIES})
 endif(BRLCAD_ENABLE_OPENCL)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libSPR;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+if(BRLCAD_ENABLE_SPR)
+  set(SPR_LIB libSPR)
+endif(BRLCAD_ENABLE_SPR)
+
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -332,6 +374,7 @@ endif(CPP_DLL_DEFINES)
 #  )
 #
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
+#BRLCAD_ADDEXEC(test_brepreport test_brepreport.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_surfacetree test_surfacetree.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)

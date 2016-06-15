@@ -19,7 +19,8 @@
  */
 /** @file libgcv/bot_solidity.h
  *
- * Functions for determining whether a BoT is solid.
+ * Topological tests for determining whether a given BoT satisfies
+ * the conditions for solidity.
  *
  */
 
@@ -31,21 +32,24 @@
 #include "common.h"
 
 #include "gcv.h"
-#include "rt/geom.h"
 
 
 __BEGIN_DECLS
 
 
 /*
- * Determines whether a BoT is solid.
+ * Topological test for determining whether the given BoT satisfies
+ * the conditions for solidity.
+ *
  * Equivalent to bot_is_closed_fan() && bot_is_orientable()
  */
-GCV_EXPORT int gcv_bot_is_solid(const struct rt_bot_internal *bot);
+GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
 
-GCV_EXPORT int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
 
-GCV_EXPORT int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
+GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
+
+
+GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
 
 
 __END_DECLS

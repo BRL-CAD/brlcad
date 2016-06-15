@@ -32,11 +32,15 @@
 
 #include "vmath.h"
 #include "bu/getopt.h"
-#include "bu/malloc.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
+
+#define BYTESPERPIXEL 1
+#define ROWSIZE (file_width * BYTESPERPIXEL)
+#define SIZE (file_height * ROWSIZE)
 
 static long int file_width = 512;		/* default input width */
 static long int file_height = 512;		/* default input height */
@@ -44,11 +48,6 @@ static int autosize = 0;			/* !0 to autosize input */
 static int fileinput = 0;			/* file of pipe on input? */
 static char *file_name;
 static FILE *infp;
-
-#define BYTESPERPIXEL 1
-
-#define ROWSIZE (file_width * BYTESPERPIXEL)
-#define SIZE (file_height * ROWSIZE)
 
 static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.bw]\n";
@@ -77,7 +76,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* 'h' '?' */
+	    default: /* 'h' '?' */
 		return 0;
 	}
     }

@@ -45,7 +45,6 @@
  * ehy
  * metaball
  * nmg
- * rhc
  */
 
 /* Conversion factor for Gallons to cubic millimeters */
@@ -621,6 +620,7 @@ void print_faces_table(struct ged *gedp, table_t *table)
  * - eto
  * - epa
  * - part
+ * - rhc
  */
 HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
@@ -1261,7 +1261,11 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    analyze_general(gedp, ip);
 	    break;
 
-        case ID_EXTRUDE:
+	 case ID_EXTRUDE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_RHC:
 	    analyze_general(gedp, ip);
 	    break;
 

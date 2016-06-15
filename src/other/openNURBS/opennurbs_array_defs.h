@@ -393,8 +393,10 @@ void ON_SimpleArray<T>::Move( int dest_i, int src_i, int ele_cnt )
 {
   // private function for moving blocks of array memory
   // caller is responsible for updating m_count.
+  unsigned long tmp1 = (unsigned long)(src_i + ele_cnt);
+  unsigned long tmp2 = (unsigned long)m_count;
   if ( ele_cnt <= 0 || src_i < 0 || dest_i < 0 || src_i == dest_i || 
-       src_i + ele_cnt > m_count || dest_i > m_count )
+       tmp1 > tmp2 || dest_i > m_count )
     return;
 
   int capacity = dest_i + ele_cnt;

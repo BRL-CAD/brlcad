@@ -43,10 +43,8 @@
 #include "common.h"
 
 /* interface headers */
-#include "tcl.h"
 #include "bu/avs.h"
 #include "bu/bitv.h"
-#include "bu/bu_tcl.h"
 #include "bu/file.h"
 #include "bu/hash.h"
 #include "bu/hist.h"
@@ -119,6 +117,8 @@ __BEGIN_DECLS
 
 #include "./rt/view.h"
 
+#include "./rt/func.h"
+
 #include "./rt/functab.h"
 
 #include "./rt/private.h"
@@ -167,13 +167,9 @@ __BEGIN_DECLS
 
 #include "./rt/prep.h"
 
-#include "./rt/vlblock.h"
-
 #include "./rt/vlist.h"
 
 #include "./rt/htbl.h"
-
-#include "./rt/rt_tcl.h"
 
 #include "./rt/dspline.h"
 

@@ -55,38 +55,9 @@ DAMAGE.
 
 __BEGIN_DECLS
 
-struct spr_options {
-	const char *xform;
-	const char *voxelgrid;
-	const char *confidence;
-	const char *normalweights;
-	/* boolean */
-	int nonManifold;
-	int polygon;
-	/* int */
-	int depth;
-	int cgdepth;
-	int kerneldepth;
-	int adaptiveexponent;
-	int iters;
-	int voxeldepth;
-	int fulldepth;
-	int mindepth;
-	int maxsolvedepth;
-	int boundarytype;
-	int thread_cnt;
-
-	double samples_per_node;
-	double scale;
-	double cssolveraccuracy;
-	double pointweight;
-};
-
-#define SPR_OPTIONS_DEFAULT_INIT { NULL, NULL, NULL, NULL, 0, 0, 8, 0, 6, 1, 8, -1, 5, 0, 8, 1, 1, 1.0, 1.1, 0.001, 4.0 }
-
 SPR_EXPORT extern int
 spr_surface_build(int **faces, int *num_faces, double **points, int *num_pnts,
-		const struct cvertex **verts, int cnt, struct spr_options *opts);
+		const struct cvertex **verts, int cnt, int fidelity);
 
 __END_DECLS
 

@@ -34,152 +34,11 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "tcl.h"
-
 #include "vmath.h"
 #include "nmg.h"
 #include "rt/geom.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
-
-/* TODO - there has to be a better way to do this.  Seems like overkill to define
- * a functab function, but this is way too fragile */
-HIDDEN int
-rt_intern_struct_size(int type) {
-    if (type >= ID_MAXIMUM) return 0;
-    switch (type) {
-	case  ID_NULL       :/**< @brief Unused */
-	    return 0;
-	    break;
-	case  ID_TOR        :/**< @brief Toroid */
-	    return sizeof(struct rt_tor_internal);
-	    break;
-	case  ID_TGC        :/**< @brief Generalized Truncated General Cone */
-	    return sizeof(struct rt_tgc_internal);
-	    break;
-	case  ID_ELL        :/**< @brief Ellipsoid */
-	    return sizeof(struct rt_ell_internal);
-	    break;
-	case  ID_ARB8       :/**< @brief Generalized ARB.  V + 7 vectors */
-	    return sizeof(struct rt_arb_internal);
-	    break;
-	case  ID_ARS        :/**< @brief ARS */
-	    return sizeof(struct rt_ars_internal);
-	    break;
-	case  ID_HALF       :/**< @brief Half-space */
-	    return sizeof(struct rt_half_internal);
-	    break;
-	case  ID_REC        :/**< @brief Right Elliptical Cylinder [TGC special] */
-	    return sizeof(struct rt_tgc_internal);
-	    break;
-	case  ID_POLY       :/**< @brief Polygonal faceted object */
-	    return sizeof(struct rt_pg_face_internal);
-	    break;
-	case  ID_BSPLINE    :/**< @brief B-spline object */
-	    return sizeof(struct rt_nurb_internal);
-	    break;
-	case  ID_SPH        :/**< @brief Sphere */
-	    return sizeof(struct rt_ell_internal);
-	    break;
-	case  ID_NMG        :/**< @brief n-Manifold Geometry solid */
-	    return sizeof(struct model);
-	    break;
-	case  ID_EBM        :/**< @brief Extruded bitmap solid */
-	    return sizeof(struct rt_ebm_internal);
-	    break;
-	case  ID_VOL        :/**< @brief 3-D Volume */
-	    return sizeof(struct rt_vol_internal);
-	    break;
-	case  ID_ARBN       :/**< @brief ARB with N faces */
-	    return sizeof(struct rt_arbn_internal);
-	    break;
-	case  ID_PIPE       :/**< @brief Pipe (wire) solid */
-	    return sizeof(struct rt_pipe_internal);
-	    break;
-	case  ID_PARTICLE   :/**< @brief Particle system solid */
-	    return sizeof(struct rt_part_internal);
-	    break;
-	case  ID_RPC        :/**< @brief Right Parabolic Cylinder  */
-	    return sizeof(struct rt_rpc_internal);
-	    break;
-	case  ID_RHC        :/**< @brief Right Hyperbolic Cylinder  */
-	    return sizeof(struct rt_rhc_internal);
-	    break;
-	case  ID_EPA        :/**< @brief Elliptical Paraboloid  */
-	    return sizeof(struct rt_epa_internal);
-	    break;
-	case  ID_EHY        :/**< @brief Elliptical Hyperboloid  */
-	    return sizeof(struct rt_ehy_internal);
-	    break;
-	case  ID_ETO        :/**< @brief Elliptical Torus  */
-	    return sizeof(struct rt_eto_internal);
-	    break;
-	case  ID_GRIP       :/**< @brief Pseudo Solid Grip */
-	    return sizeof(struct rt_grip_internal);
-	    break;
-	case  ID_JOINT      :/**< @brief Pseudo Solid/Region Joint */
-	    return 0;
-	    break;
-	case  ID_HF         :/**< @brief Height Field */
-	    return sizeof(struct rt_hf_internal);
-	    break;
-	case  ID_DSP        :/**< @brief Displacement map */
-	    return sizeof(struct rt_dsp_internal);
-	    break;
-	case  ID_SKETCH     :/**< @brief 2D sketch */
-	    return sizeof(struct rt_sketch_internal);
-	    break;
-	case  ID_EXTRUDE    :/**< @brief Solid of extrusion */
-	    return sizeof(struct rt_extrude_internal);
-	    break;
-	case  ID_SUBMODEL   :/**< @brief Instanced submodel */
-	    return sizeof(struct rt_submodel_internal);
-	    break;
-	case  ID_CLINE      :/**< @brief FASTGEN4 CLINE solid */
-	    return sizeof(struct rt_cline_internal);
-	    break;
-	case  ID_BOT        :/**< @brief Bag o' triangles */
-	    return sizeof(struct rt_bot_internal);
-	    break;
-	case  ID_COMBINATION:/**< @brief Combination Record */
-	    return sizeof(struct rt_comb_internal);
-	    break;
-	case  ID_BINUNIF    :/**< @brief Uniform-array binary */
-	    return sizeof(struct rt_binunif_internal);
-	    break;
-	case  ID_CONSTRAINT :/**< @brief Constraint object */
-	    return sizeof(struct rt_constraint_internal);
-	    break;
-	case  ID_SUPERELL   :/**< @brief Superquadratic ellipsoid */
-	    return sizeof(struct rt_superell_internal);
-	    break;
-	case  ID_METABALL   :/**< @brief Metaball */
-	    return sizeof(struct rt_metaball_internal);
-	    break;
-	case  ID_BREP       :/**< @brief B-rep object */
-	    return sizeof(struct rt_brep_internal);
-	    break;
-	case  ID_HYP        :/**< @brief Hyperboloid of one sheet */
-	    return sizeof(struct rt_hyp_internal);
-	    break;
-	case  ID_REVOLVE    :/**< @brief Solid of Revolution */
-	    return sizeof(struct rt_revolve_internal);
-	    break;
-	case  ID_PNTS       :/**< @brief Collection of Points */
-	    return sizeof(struct rt_pnts_internal);
-	    break;
-	case  ID_ANNOTATION :/**< @brief Annotation */
-	    return sizeof(struct rt_annotation_internal);
-	    break;
-	case  ID_HRT        :/**< @brief Heart */
-	    return sizeof(struct rt_hrt_internal);
-	    break;
-	default:
-	    return 0;
-	    break;
-    }
-    return 0;
-}
 
 /* Exposed as private function to librt, but not (currently) beyond librt -
  * see librt_private.h */
@@ -190,14 +49,14 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
     int list_c = 0;
     const char **listv = (const char **)NULL;
 
-    if (Tcl_SplitList(NULL, tcl_list, &list_c, (const char ***)&listv) != TCL_OK) {
+    if (bu_argv_from_tcl_list(tcl_list, &list_c, (const char ***)&listv) != 0) {
 	return -1;
     }
 
     if (!BU_AVS_IS_INITIALIZED(avs)) BU_AVS_INIT(avs);
 
     if (!list_c) {
-	Tcl_Free((char *)listv);
+	bu_free((char *)listv, "listv");
 	return 0;
     }
 
@@ -209,7 +68,7 @@ tcl_list_to_avs(const char *tcl_list, struct bu_attribute_value_set *avs, int of
 	return -1;
     }
 
-    Tcl_Free((char *)listv);
+    bu_free((char *)listv, "listv");
     return 0;
 }
 
@@ -238,6 +97,7 @@ arb_type_to_str(int type) {
     }
     return NULL;
 }
+
 HIDDEN const char *
 type_to_str(const struct rt_db_internal *obj, int arb_type) {
     if (arb_type) return arb_type_to_str(arb_type);
@@ -607,7 +467,7 @@ db_diff_dp(const struct db_i *left,
 	/*compare the idb_ptr memory, if the types are the same.*/
 	if (left_components.bin_params && right_components.bin_params && left_components.idb_ptr && right_components.idb_ptr) {
 	    if (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type) {
-		int memsize = rt_intern_struct_size(left_components.intern->idb_minor_type);
+		int memsize = OBJ[left_components.intern->idb_type].ft_internal_size;
 		if (memcmp((void *)left_components.idb_ptr, (void *)right_components.idb_ptr, memsize)) {
 		    /* If we didn't pick up differences in the avs comparison, we need to use this result to flag a parameter difference */
 		    if (result->param_state == DIFF_UNCHANGED || result->param_state == DIFF_EMPTY) result->param_state |= DIFF_CHANGED;
@@ -972,7 +832,7 @@ db_diff3_dp(const struct db_i *left,
 	   if (left_components.idb_ptr && ancestor_components.idb_ptr && right_components.idb_ptr) {
 	    if ((left_components.intern->idb_minor_type == ancestor_components.intern->idb_minor_type) &&
 		    (left_components.intern->idb_minor_type == right_components.intern->idb_minor_type)) {
-		int memsize = rt_intern_struct_size(left_components.intern->idb_minor_type);
+		int memsize = OBJ[left_components.intern->idb_type].ft_internal_size;
 		if (memcmp((void *)left_components.idb_ptr, (void *)right_components.idb_ptr, memsize) &&
 			memcmp((void *)ancestor_components.idb_ptr, (void *)right_components.idb_ptr, memsize)) {
 		    /* If we didn't pick up differences in the avs comparison, we need to use this result to flag a parameter difference */

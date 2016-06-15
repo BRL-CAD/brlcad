@@ -88,7 +88,7 @@ Axis2Placement::GetYAxis()
 }
 
 bool
-Axis2Placement::Load(STEPWrapper *sw, SDAI_Select *sse)
+Axis2Placement::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 

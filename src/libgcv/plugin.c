@@ -27,98 +27,139 @@
 #include "common.h"
 
 #include "plugin.h"
-#include "gcv_private.h"
-
-#include <string.h>
 
 
-struct gcv_plugin {
-    struct bu_list l;
-
-    const struct gcv_plugin_info *plugin_info;
-};
-
-
-static inline struct bu_list *
-gcv_get_plugin_list(void)
+HIDDEN inline int
+_gcv_mime_is_valid(mime_model_t mime_type)
 {
-    static struct bu_list plugin_list = BU_LIST_INIT_ZERO;
-
-    if (!BU_LIST_IS_INITIALIZED(&plugin_list))
-	BU_LIST_INIT(&plugin_list);
-
-    return &plugin_list;
-}
-
-
-void
-gcv_plugin_register(const struct gcv_plugin_info *plugin_info)
-{
-    struct bu_list * const plugin_list = gcv_get_plugin_list();
-
-    struct gcv_plugin *plugin;
-
-    BU_GET(plugin, struct gcv_plugin);
-    BU_LIST_PUSH(plugin_list, &plugin->l);
-    plugin->plugin_info = plugin_info;
+    return mime_type != MIME_MODEL_AUTO && mime_type != MIME_MODEL_UNKNOWN;
 }
 
 
 HIDDEN void
-gcv_plugin_free(struct gcv_plugin *entry)
+_gcv_converter_insert(struct bu_ptbl *table,
+		      const struct gcv_converter *converter)
 {
-    BU_LIST_DEQUEUE(&entry->l);
-    BU_PUT(entry, struct gcv_plugin);
+    if (!converter)
+	bu_bomb("null converter");
+
+    if (!_gcv_mime_is_valid(converter->mime_type))
+	bu_bomb("invalid mime_type");
+
+    if (!converter->create_opts_fn != !converter->free_opts_fn)
+	bu_bomb("must have either both or none of create_opts_fn and free_opts_fn");
+
+    if (!converter->conversion_fn)
+	bu_bomb("null conversion_fn");
+
+    if (bu_ptbl_ins_unique(table, (long *)converter) != -1)
+	bu_bomb("converter already registered");
 }
 
 
-HIDDEN int
-gcv_extension_match(const char *path, const char *extension)
+const struct bu_ptbl *
+gcv_get_converters(void)
 {
-    path = strrchr(path, '.');
+    static struct bu_ptbl converter_table = BU_PTBL_INIT_ZERO;
 
-    if (!path++) return 0;
+    if (!BU_PTBL_LEN(&converter_table)) {
+#define CONVERTER(name) \
+    do { \
+	extern const struct gcv_converter (name); \
+	_gcv_converter_insert(&converter_table, &(name)); \
+    } while (0)
 
-    while (1) {
-	const char * const next = strchr(extension, ';');
+	CONVERTER(gcv_conv_brlcad_read);
+	CONVERTER(gcv_conv_brlcad_write);
+	CONVERTER(gcv_conv_fastgen4_read);
+	CONVERTER(gcv_conv_fastgen4_write);
+	CONVERTER(gcv_conv_obj_read);
+	CONVERTER(gcv_conv_obj_write);
+	CONVERTER(gcv_conv_stl_read);
+	CONVERTER(gcv_conv_stl_write);
+	CONVERTER(gcv_conv_vrml_write);
 
-	if (!next) break;
-
-	if (bu_strncasecmp(path, extension, next - 1 - extension) == 0)
-	    return 1;
-
-	extension = next + 1;
+#undef CONVERTER
     }
 
-    return bu_strcasecmp(path, extension) == 0;
+    return &converter_table;
 }
 
 
-const struct gcv_converter *
-gcv_converter_find(const char *path, enum gcv_conversion_type type)
+struct bu_ptbl
+gcv_find_converters(mime_model_t mime_type,
+		    enum gcv_conversion_type conversion_type)
 {
-    const struct bu_list * const plugin_list = gcv_get_plugin_list();
+    struct bu_ptbl result;
+    const struct gcv_converter * const *entry;
+    const struct bu_ptbl *converters;
 
-    const struct gcv_plugin *entry;
+    if (!_gcv_mime_is_valid(mime_type))
+	bu_bomb("invalid mime_type");
 
-    for (BU_LIST_FOR(entry, gcv_plugin, plugin_list)) {
-	const struct gcv_converter *converter = entry->plugin_info->converters;
+    converters = gcv_get_converters();
 
-	if (!converter) continue;
+    bu_ptbl_init(&result, 8, "result");
 
-	while (converter->file_extensions) {
-	    if (gcv_extension_match(path, converter->file_extensions)) {
-		if (type == GCV_CONVERSION_READ && converter->reader_fn)
-		    return converter;
-		else if (type == GCV_CONVERSION_WRITE && converter->writer_fn)
-		    return converter;
-	    }
+    for (BU_PTBL_FOR(entry, (const struct gcv_converter * const *), converters))
+	if ((*entry)->mime_type == mime_type)
+	    if ((*entry)->conversion_type == conversion_type)
+		bu_ptbl_ins(&result, (long *)*entry);
 
-	    ++converter;
-	}
+    return result;
+}
+
+
+void
+gcv_converter_create_options(const struct gcv_converter *converter,
+			     struct bu_opt_desc **options_desc, void **options_data)
+{
+    if (!converter || !options_desc || !options_data)
+	bu_bomb("missing arguments");
+
+    if (converter->create_opts_fn) {
+	*options_desc = NULL;
+	*options_data = NULL;
+
+	converter->create_opts_fn(options_desc, options_data);
+
+	if (!*options_desc || !*options_data)
+	    bu_bomb("converter->create_opts_fn() set null result");
+    } else {
+	*options_desc = (struct bu_opt_desc *)bu_malloc(sizeof(struct bu_opt_desc),
+			"options_desc");
+	BU_OPT_NULL(**options_desc);
+	*options_data = NULL;
     }
+}
 
-    return NULL;
+
+void
+gcv_converter_free_options(const struct gcv_converter *converter,
+			   void *options_data)
+{
+    if (!converter || (!converter->create_opts_fn != !options_data))
+	bu_bomb("missing arguments");
+
+    if (converter->create_opts_fn)
+	converter->free_opts_fn(options_data);
+}
+
+
+int
+gcv_converter_convert(const struct gcv_converter *converter, const char *path,
+		      struct db_i *dbip, const struct gcv_opts *gcv_options, const void *options_data)
+{
+    if (!converter || !path || !dbip
+	|| (!converter->create_opts_fn != !options_data))
+	bu_bomb("missing arguments");
+
+    if (gcv_options)
+	bu_bomb("struct gcv_opts unimplemented");
+
+    RT_CK_DBI(dbip);
+
+    return converter->conversion_fn(path, dbip, gcv_options, options_data);
 }
 
 

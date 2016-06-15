@@ -2672,6 +2672,11 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
     return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
 }
 
+HIDDEN void
+_dm_obj_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 #ifdef USE_FBSERV
 HIDDEN void
@@ -2682,7 +2687,7 @@ dmo_fbs_callback(void *clientData)
     if (!dmop)
 	return;
 
-    bu_observer_notify(dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name));
+    bu_observer_notify((void *)dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name), &(_dm_obj_eval));
 }
 #endif
 

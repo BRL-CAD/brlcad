@@ -26,24 +26,24 @@
 /** @{ */
 /** @file bg/defines.h */
 
-#ifndef GM_DEFINES_H
-#define GM_DEFINES_H
+#ifndef BG_DEFINES_H
+#define BG_DEFINES_H
 
 #include "common.h"
 
-#ifndef GM_EXPORT
-#  if defined(GM_DLL_EXPORTS) && defined(GM_DLL_IMPORTS)
-#    error "Only GM_DLL_EXPORTS or GM_DLL_IMPORTS can be defined, not both."
-#  elif defined(GM_DLL_EXPORTS)
-#    define GM_EXPORT __declspec(dllexport)
-#  elif defined(GM_DLL_IMPORTS)
-#    define GM_EXPORT __declspec(dllimport)
+#ifndef BG_EXPORT
+#  if defined(BG_DLL_EXPORTS) && defined(BG_DLL_IMPORTS)
+#    error "Only BG_DLL_EXPORTS or BG_DLL_IMPORTS can be defined, not both."
+#  elif defined(BG_DLL_EXPORTS)
+#    define BG_EXPORT __declspec(dllexport)
+#  elif defined(BG_DLL_IMPORTS)
+#    define BG_EXPORT __declspec(dllimport)
 #  else
-#    define GM_EXPORT
+#    define BG_EXPORT
 #  endif
 #endif
 
-#endif  /* GM_DEFINES_H */
+#endif  /* BG_DEFINES_H */
 /** @} */
 /*
  * Local Variables:

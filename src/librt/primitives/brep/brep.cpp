@@ -92,8 +92,6 @@ int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
 void rt_brep_ifree(struct rt_db_internal *ip);
 int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
 RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
@@ -102,10 +100,6 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 #ifdef __cplusplus
 }
 #endif
-
-
-/* FIXME: fugly */
-static int hit_count = 0;
 
 
 /********************************************************************************
@@ -344,7 +338,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	bu_semaphore_release(BU_SEM_LISTS);
 
 	if (index != -1) {
-	    bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount);
+	    /* bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount); */
 	    SurfaceTree* st = new SurfaceTree(&faces[index], true, 8);
 	    bbbp->faces[index] = st;
 	}
@@ -1081,7 +1075,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1117,7 +1110,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1213,7 +1205,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     HitList all_hits; // record all hits
     MissList misses;
     int s = 0;
-    hit_count = 0;
+
     for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
@@ -3091,7 +3083,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 
 	int seam = 0;
 	int i;
-	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
 	BrepTrimPoint end_btp;
 	ON_SimpleArray<BrepTrimPoint> part1;
@@ -3119,7 +3110,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		    part2.Append(btp);
 		}
 	    }
-	    prev_pt = &brep_loop_points[i].p2d;
 	}
 
 	brep_loop_points.Empty();
@@ -4837,21 +4827,6 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
 
     return 0;
 }
-
-
-int
-rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
-{
-    return 0;
-}
-
-
-int
-rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
-{
-    return 0;
-}
-
 
 int
 rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)

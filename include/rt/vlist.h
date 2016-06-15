@@ -30,74 +30,19 @@
 
 __BEGIN_DECLS
 
-/************************************************************************
- *                                                                      *
- *                      Generic BN_VLIST routines                       *
- *                                                                      *
- ************************************************************************/
-
 /**
- * Returns the description of a vlist cmd.
- */
-RT_EXPORT extern const char *rt_vlist_get_cmd_description(int cmd);
-
-/**
- * Validate an bn_vlist chain for having reasonable values inside.
- * Calls bu_bomb() if not.
- *
- * Returns -
- * npts Number of point/command sets in use.
- */
-RT_EXPORT extern int rt_ck_vlist(const struct bu_list *vhead);
-
-
-/**
- * Duplicate the contents of a vlist.  Note that the copy may be more
- * densely packed than the source.
+ * TODO - replace these with the appropriate libbn calls specifically
+ * passing &RTG.rtg_vlfree
  */
 RT_EXPORT extern void rt_vlist_copy(struct bu_list *dest,
                                     const struct bu_list *src);
-
-
-/**
- * The macro RT_FREE_VLIST() simply appends to the list
- * &RTG.rtg_vlfree.  Now, give those structures back to bu_free().
- */
-RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
-
-
-/**
- * XXX This needs to remain a LIBRT function.
- */
 RT_EXPORT extern void rt_vlist_cleanup(void);
-
-
-
-/************************************************************************
- *                                                                      *
- *                      Binary VLIST import/export routines             *
- *                                                                      *
- ************************************************************************/
-
-/**
- * Convert a vlist chain into a blob of network-independent binary,
- * for transmission to another machine.
- *
- * The result is stored in a vls string, so that both the address and
- * length are available conveniently.
- */
-RT_EXPORT extern void rt_vlist_export(struct bu_vls *vls,
-                                      struct bu_list *hp,
-                                      const char *name);
-
-
-/**
- * Convert a blob of network-independent binary prepared by
- * vls_vlist() and received from another machine, into a vlist chain.
- */
 RT_EXPORT extern void rt_vlist_import(struct bu_list *hp,
                                       struct bu_vls *namevls,
                                       const unsigned char *buf);
+RT_EXPORT extern struct bn_vlblock *    rt_vlblock_init(void);
+
+
 
 /************************************************************************
  *                                                                      *
@@ -144,6 +89,15 @@ RT_EXPORT extern int rt_uplot_to_vlist(struct bn_vlblock *vbp,
  */
 RT_EXPORT extern void rt_label_vlist_verts(struct bn_vlblock *vbp,
                                            struct bu_list *src,
+                                           mat_t mat,
+                                           double sz,
+                                           double mm2local);
+
+/**
+ * Used by MGED's "labelface" command.
+ */
+RT_EXPORT extern void rt_label_vlist_faces(struct bn_vlblock *vbp,
+                                           struct bu_list* f_list,
                                            mat_t mat,
                                            double sz,
                                            double mm2local);

@@ -3782,7 +3782,6 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
     bool complete = false;
     double umin, umax, umid;
     double vmin, vmax, vmid;
-    int prev_seam = 0;
 
     surface->GetDomain(0, &umin, &umax);
     surface->GetDomain(1, &vmin, &vmax);
@@ -3830,17 +3829,14 @@ resolve_seam_segment(const ON_Surface *surface, ON_2dPointArray &segment, bool &
 		//std::cerr << " at seam and no prev" << std::endl;
 		complete = false;
 	    }
-	    prev_seam = seam;
 	} else {
 	    if (singularity < 0) {
 		prev = &segment[i];
-		prev_seam = 0;
 	    } else {
 		prev = NULL;
 	    }
 	}
     }
-    prev_seam = 0;
     if ((!complete) && (prev != NULL)) {
 	complete = true;
 	for (int i = segment.Count() - 2; i >= 0; i--) {

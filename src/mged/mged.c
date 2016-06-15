@@ -849,10 +849,12 @@ mged_process_char(char ch)
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
-	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%s", bu_vls_addr(&input_str));
-	    input_str_index = bu_vls_strlen(&input_str);
+	    if (bu_vls_strlen(&input_str) > 0) {
+		if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+		    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+		bu_log("%s", bu_vls_addr(&input_str));
+		input_str_index = bu_vls_strlen(&input_str);
+	    }
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */

@@ -147,6 +147,46 @@ static const fastf_t nmg_uv_unitcircle[27] = {
     1.0,   .5,  1.0
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct tgc_shot_specific {
+    cl_double tgc_V[3];             /* Vector to center of base of TGC */
+    cl_double tgc_CdAm1;            /* (C/A - 1) */
+    cl_double tgc_DdBm1;            /* (D/B - 1) */
+    cl_double tgc_AAdCC;            /* (|A|**2)/(|C|**2) */
+    cl_double tgc_BBdDD;            /* (|B|**2)/(|D|**2) */
+    cl_double tgc_N[3];             /* normal at 'top' of cone */
+    cl_double tgc_ScShR[16];        /* Scale(Shear(Rot(vect))) */
+    cl_double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
+    cl_char tgc_AD_CB;              /* boolean:  A*D == C*B */
+};
+
+size_t
+clt_tgc_length(struct soltab *stp)
+{
+    (void)stp;
+    return sizeof(struct tgc_shot_specific);
+}
+
+void
+clt_tgc_pack(void *dst, struct soltab *src)
+{
+    struct tgc_specific *tgc =
+        (struct tgc_specific *)src->st_specific;
+    struct tgc_shot_specific *args =
+        (struct tgc_shot_specific *)dst;
+
+    VMOVE(args->tgc_V, tgc->tgc_V);
+    args->tgc_CdAm1 = tgc->tgc_CdAm1;
+    args->tgc_DdBm1 = tgc->tgc_DdBm1;
+    args->tgc_AAdCC = tgc->tgc_AAdCC;
+    args->tgc_BBdDD = tgc->tgc_BBdDD;
+    VMOVE(args->tgc_N, tgc->tgc_N);
+    MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
+    MAT_COPY(args->tgc_invRtShSc, tgc->tgc_invRtShSc);
+    args->tgc_AD_CB = tgc->tgc_AD_CB;
+}
+#endif /* USE_OPENCL */
 
 /**
  * Compute the bounding RPP for a truncated general cone

@@ -10,6 +10,9 @@
 #include "bg/tri_ray.h"
 #include "shape_recognition.h"
 
+#define L2_OFFSET 4
+#define L3_OFFSET 6
+
 HIDDEN void
 verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_verts, const ON_Brep *brep, const ON_BrepLoop *b_loop, int dir, int verts_offset)
 {
@@ -51,7 +54,7 @@ verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_vert
 }
 
 int
-subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces)
+subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces)
 {
     // Accumulate faces in a std::vector, since we don't know how many we're going to get
     std::vector<int> all_faces;
@@ -163,7 +166,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
 
 
     if (face_error || !faces) {
-	bu_log("bot build failed for face %d - no go\n", b_face->m_face_index);
+	if (msgs) bu_vls_printf(msgs, "%*sbot build failed for face %d - no go\n", L3_OFFSET, " ", b_face->m_face_index);
 	bu_free(verts2d, "free tmp 2d vertex array");
 	return 0;
     } else {
@@ -214,7 +217,7 @@ subbrep_polygon_tri(const ON_Brep *brep, const point_t *all_verts, int *loops, i
  */
 
 int
-negative_polygon(struct subbrep_object_data *data)
+negative_polygon(struct bu_vls *msgs, struct subbrep_object_data *data)
 {
     int io_state = 0;
     int all_faces_cnt = 0;
@@ -243,9 +246,9 @@ negative_polygon(struct subbrep_object_data *data)
     for (int i = 0; i < data->loops_cnt; i++) {
 	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
 	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(data->brep, all_verts, (int *)&(b_loop->m_loop_index), 1, &ffaces);
+	int num_faces = subbrep_polygon_tri(msgs, data->brep, all_verts, (int *)&(b_loop->m_loop_index), 1, &ffaces);
 	if (!num_faces) {
-	    bu_log("Error - triangulation failed for loop %d!\n", b_loop->m_loop_index);
+	    if (msgs) bu_vls_printf(msgs, "%*sError - triangulation failed for loop %d!\n", L2_OFFSET, " ", b_loop->m_loop_index);
 	    return 0;
 	}
 	if (!have_hit_pnt) {
@@ -363,7 +366,7 @@ negative_polygon(struct subbrep_object_data *data)
 
 
 int
-subbrep_is_planar(struct subbrep_object_data *data)
+subbrep_is_planar(struct bu_vls *msgs, struct subbrep_object_data *data)
 {
     int i = 0;
     // Check surfaces.  If a surface is anything other than a plane the verdict is no.
@@ -375,7 +378,7 @@ subbrep_is_planar(struct subbrep_object_data *data)
     }
     data->type = PLANAR_VOLUME;
 
-    if (negative_polygon(data) == -1) data->params->bool_op = '-';
+    if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
 
     return 1;
 }
@@ -493,7 +496,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 
     for (int i = 0; i < data->edges_cnt; i++) {
 	int c3i;
-	int new_edge_curve = 0;
 	const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
 	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
 
@@ -512,8 +514,8 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		vert_test = characterize_vert(data, old_edge->Vertex(vi));
 		if (vert_test) {
 		    skip_verts.insert(vert_ind);
-		    ON_3dPoint vp = old_edge->Vertex(vi)->Point();
-		    bu_log("vert %d (%f %f %f): %d\n", vert_ind, vp.x, vp.y, vp.z, vert_test);
+		    //ON_3dPoint vp = old_edge->Vertex(vi)->Point();
+		    //bu_log("vert %d (%f %f %f): %d\n", vert_ind, vp.x, vp.y, vp.z, vert_test);
 		} else {
 		    keep_verts.insert(vert_ind);
 		}
@@ -524,13 +526,13 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	}
 
 	if (use_edge == 0) {
-	    bu_log("skipping edge %d - both verts are skips\n", old_edge->m_edge_index);
+	    //bu_log("skipping edge %d - both verts are skips\n", old_edge->m_edge_index);
 	    skip_edges.insert(old_edge->m_edge_index);
 	    continue;
 	}
 
 	if (use_edge == 1) {
-	    bu_log("One of the verts for edge %d is a skip.\n", old_edge->m_edge_index);
+	    //bu_log("One of the verts for edge %d is a skip.\n", old_edge->m_edge_index);
 	    partial_edges.insert(old_edge->m_edge_index);
 	    continue;
 	}
@@ -546,7 +548,6 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		ON_Curve *c3 = new ON_LineCurve(old_edge->Vertex(0)->Point(), old_edge->Vertex(1)->Point());
 		c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
 		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
-		new_edge_curve = 1;
 	    }
 	} else {
 	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];
@@ -624,7 +625,7 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
 	    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
 	} else {
-	    bu_log("loop_cnt: %d\n", loop_cnt);
+	    //bu_log("loop_cnt: %d\n", loop_cnt);
 	    // If we ended up with multiple loops, one of them should be an outer loop
 	    // and the rest inner loops
 	    // Get the outer loop first
@@ -677,13 +678,13 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	    }
 
 	    if (evaluated.find(o_edge->m_edge_index) != evaluated.end()) {
-		bu_log("edge %d already handled, continuing...\n", o_edge->m_edge_index);
+		//bu_log("edge %d already handled, continuing...\n", o_edge->m_edge_index);
 		continue;
 	    }
 
 	    // Don't use a trim connected to an edge we are skipping
 	    if (skip_edges.find(o_edge->m_edge_index) != skip_edges.end()) {
-		bu_log("edge %d is skipped, continuing...\n", o_edge->m_edge_index);
+		//bu_log("edge %d is skipped, continuing...\n", o_edge->m_edge_index);
 		evaluated.insert(o_edge->m_edge_index);
 		continue;
 	    }
@@ -718,7 +719,7 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		// Partial edge - let the fun begin
 		ON_3dPoint p1, p2;
 		ON_BrepEdge *next_edge;
-		bu_log("working a partial edge: %d\n", o_edge->m_edge_index);
+		//bu_log("working a partial edge: %d\n", o_edge->m_edge_index);
 		int v[2];
 		v[0] = o_edge->Vertex(0)->m_vertex_index;
 		v[1] = o_edge->Vertex(1)->m_vertex_index;
@@ -746,16 +747,16 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    if (!next_edge) continue;
 		    if (skip_edges.find(next_edge->m_edge_index) == skip_edges.end()) {
 			if (partial_edges.find(next_edge->m_edge_index) != partial_edges.end()) {
-			    bu_log("found next partial edge %d\n", next_edge->m_edge_index);
+			    //bu_log("found next partial edge %d\n", next_edge->m_edge_index);
 			    evaluated.insert(next_edge->m_edge_index);
 			    c2_next = next_trim->TrimCurveOf()->Duplicate();
 			} else {
-			    bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);
+			    //bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);
 			    j_next--;
 			    walk_dir = -1;
 			}
 		    } else {
-			bu_log("skipping fully ignored edge %d\n", next_edge->m_edge_index);
+			//bu_log("skipping fully ignored edge %d\n", next_edge->m_edge_index);
 			evaluated.insert(next_edge->m_edge_index);
 		    }
 		}
@@ -801,8 +802,8 @@ subbrep_planar_init(struct subbrep_object_data *data)
 		    p1 = c2_orig->PointAt(c2_orig->Domain().Min());
 		    p2 = c2_next->PointAt(c2_orig->Domain().Max());
 		}
-		std::cout << "p1: " << pout(p1) << "\n";
-		std::cout << "p2: " << pout(p2) << "\n";
+		//std::cout << "p1: " << pout(p1) << "\n";
+		//std::cout << "p2: " << pout(p2) << "\n";
 		ON_Curve *c2 = new ON_LineCurve(p1, p2);
 		c2->ChangeDimension(2);
 		int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
@@ -915,10 +916,10 @@ subbrep_planar_init(struct subbrep_object_data *data)
 	//std::cout << "in ebb.s rpp " << pout(ebb.m_min) << " " << pout(ebb.m_max) << "\n";
 
 	if (ebb.Includes(pbb)) {
-	    bu_log("negative volume\n");
+	    //bu_log("negative volume\n");
 	    data->planar_obj->negative_shape = -1;
 	} else {
-	    bu_log("positive volume\n");
+	    //bu_log("positive volume\n");
 	    data->planar_obj->negative_shape = 1;
 	}
 	data->planar_obj->params->bool_op = (data->planar_obj->negative_shape == -1) ? '-' : 'u';
@@ -1008,6 +1009,11 @@ subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
     ON_SimpleArray<bool> reversed;
     std::map<int, int> vert_map;
     array_to_map(&vert_map, pdata->planar_obj_vert_map, pdata->planar_obj_vert_cnt);
+
+    /* If the index isn't in the array, something's wrong - bail */
+    if (vert_map[((*vert_loop)[0])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
+    if (vert_map[((*vert_loop)[1])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
+    if (vert_map[((*vert_loop)[2])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
 
     ON_3dPoint p1 = pdata->local_brep->m_V[vert_map[((*vert_loop)[0])->m_vertex_index]].Point();
     ON_3dPoint p2 = pdata->local_brep->m_V[vert_map[((*vert_loop)[1])->m_vertex_index]].Point();

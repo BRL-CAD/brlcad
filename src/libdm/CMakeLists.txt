@@ -133,30 +133,31 @@ if(BRLCAD_ENABLE_OSG)
   add_dependencies(libdm profont_ProFont_ttf_cp)
 endif(BRLCAD_ENABLE_OSG)
 set(libdm_ignore_files
-  dm-wgl.c
-  dm-X.c
-  dm-ogl.c
-  dm-osgl.cpp
-  dm-qt.cpp
-  dm-rtgl.c
-  dm-tk.c
-  osg_bob.cpp
-  osg-test.cpp
+  README
   TODO
-  dm-glx.h
   dm-Null.h
+  dm-X.c
+  dm-X.h
+  dm-glx.h
+  dm-ogl.c
   dm-ogl.h
+  dm-osgl.cpp
   dm-osgl.h
   dm-pex.h
   dm-plot.h
-  dm_private.h
   dm-ps.h
+  dm-qt.cpp
   dm-qt.h
+  dm-rtgl.c
   dm-rtgl.h
+  dm-tk.c
   dm-tk.h
+  dm-wgl.c
   dm-wgl.h
-  dm-X.h
+  dm_private.h
   fontstash
+  osg-test.cpp
+  osg_bob.cpp
   )
 CMAKEFILES(${libdm_ignore_files})
 CMAKEFILES(dm_private.h)

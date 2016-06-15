@@ -1,0 +1,14 @@
+* implement support for plotting point clouds to DM ps, plot, tk
+
+* make sure lighting is enabled by default
+
+* provide libdm mechanism for drawing spline curves (to help visualize
+  flight paths, show object trajectories, etc.).
+
+* release dm X get_color() memory
+
+* decouple libdm from librt -- just one file in libdm uses librt,
+  including a whole nasty primitive switch statement.  need to push
+  that back over into librt.
+
+* break cyclic dependency with libged, enable screengrab without libged being aware of libdm

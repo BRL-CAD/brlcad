@@ -30,55 +30,57 @@
 
 
 HIDDEN int
-gcv_brlcad_read(const char *path, struct rt_wdb *wdbp,
-		const struct gcv_opts *UNUSED(options))
+gcv_brlcad_read(const char *source_path, struct db_i *dest_dbip,
+		const struct gcv_opts *UNUSED(gcv_options),
+		const void *UNUSED(options_data))
 {
     int ret;
-    struct db_i *dbip = db_open(path, DB_OPEN_READONLY);
+    struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
 
-    if (!dbip) {
-	bu_log("db_open() failed for '%s'\n", path);
+    if (!in_dbip) {
+	bu_log("db_open() failed for '%s'\n", source_path);
 	return 0;
     }
 
-    if (db_dirbuild(dbip)) {
-	bu_log("db_dirbuild() failed for '%s'\n", path);
-	db_close(dbip);
+    if (db_dirbuild(in_dbip)) {
+	bu_log("db_dirbuild() failed for '%s'\n", source_path);
+	db_close(in_dbip);
 	return 0;
     }
 
-    ret = db_dump(wdbp, dbip);
-    db_close(dbip);
+    ret = db_dump(dest_dbip->dbi_wdbp, in_dbip);
+    db_close(in_dbip);
 
     return ret == 0;
 }
 
 
 HIDDEN int
-gcv_brlcad_write(const char *path, struct db_i *dbip,
-		 const struct gcv_opts *UNUSED(options))
+gcv_brlcad_write(const char *dest_path, struct db_i *source_dbip,
+		 const struct gcv_opts *UNUSED(gcv_options),
+		 const void *UNUSED(options_data))
 {
     int ret;
-    struct rt_wdb *wdbp = wdb_fopen(path);
+    struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
 
-    if (!wdbp) {
-	bu_log("wdb_fopen() failed for '%s'\n", path);
+    if (!out_wdbp) {
+	bu_log("wdb_fopen() failed for '%s'\n", dest_path);
 	return 0;
     }
 
-    ret = db_dump(wdbp, dbip);
-    wdb_close(wdbp);
+    ret = db_dump(out_wdbp, source_dbip);
+    wdb_close(out_wdbp);
 
     return ret == 0;
 }
 
 
-static const struct gcv_converter converters[] = {
-    {"g", gcv_brlcad_read, gcv_brlcad_write},
-    {NULL, NULL, NULL}
-};
+const struct gcv_converter gcv_conv_brlcad_read =
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_READ, NULL, NULL, gcv_brlcad_read};
 
-const struct gcv_plugin_info gcv_plugin_conv_brlcad = {converters};
+
+const struct gcv_converter gcv_conv_brlcad_write =
+{MIME_MODEL_VND_BRLCAD_PLUS_BINARY, GCV_CONVERSION_WRITE, NULL, NULL, gcv_brlcad_write};
 
 
 /*

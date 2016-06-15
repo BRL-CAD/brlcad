@@ -30,7 +30,7 @@
 compares two black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format files in one of several ways,
-and writes the results on standard out
+and writes the results on standard out.
 The default method of comparison is to record the differences
 as offsets from neutral, half-intensity grey (128).
 The value written will be brighter than this neutral grey

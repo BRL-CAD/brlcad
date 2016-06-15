@@ -8,14 +8,14 @@ are permitted provided that the following conditions are met:
 Redistributions of source code must retain the above copyright notice, this list of
 conditions and the following disclaimer. Redistributions in binary form must reproduce
 the above copyright notice, this list of conditions and the following disclaimer
-in the documentation and/or other materials provided with the distribution.
+in the documentation and/or other materials provided with the distribution. 
 
 Neither the name of the Johns Hopkins University nor the names of its contributors
 may be used to endorse or promote products derived from this software without specific
-prior written permission.
+prior written permission. 
 
 THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS" AND ANY
-EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES
+EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO THE IMPLIED WARRANTIES 
 OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT
 SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
 INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED
@@ -31,7 +31,7 @@ DAMAGE.
 
 #include <math.h>
 #include <vector>
-#include <cstdlib>
+#include <stdlib.h>
 #include "Hash.h"
 
 template<class Real>
@@ -42,6 +42,7 @@ struct Point3D
 {
 	Real coords[3];
 	Point3D( void ) { coords[0] = coords[1] = coords[2] = Real(0); }
+	Point3D( Real v ) { coords[0] = coords[1] = coords[2] = v; }
 	template< class _Real > Point3D( _Real v0 , _Real v1 , _Real v2 ){ coords[0] = Real(v0) , coords[1] = Real(v1) , coords[2] = Real(v2); }
 	template< class _Real > Point3D( const Point3D< _Real >& p ){ coords[0] = Real( p[0] ) , coords[1] = Real( p[1] ) , coords[2] = Real( p[2] ); }
 	inline       Real& operator[] ( int i )       { return coords[i]; }
@@ -222,7 +223,7 @@ public:
 		}
 		return Area()/d;
 	}
-
+	
 };
 class CoredPointIndex
 {
@@ -303,8 +304,6 @@ public:
 	virtual void resetIterator( void ) = 0;
 
 	virtual int addOutOfCorePoint( const Vertex& p ) = 0;
-	virtual int addPolygon( const std::vector< CoredVertexIndex >& vertices ) = 0;
-	virtual int addPolygon( const std::vector< int >& vertices ) = 0;
 	virtual int addOutOfCorePoint_s( const Vertex& p ) = 0;
 	virtual int addPolygon_s( const std::vector< CoredVertexIndex >& vertices ) = 0;
 	virtual int addPolygon_s( const std::vector< int >& vertices ) = 0;
@@ -329,8 +328,6 @@ public:
 	void resetIterator(void);
 
 	int addOutOfCorePoint( const Vertex& p );
-	int addPolygon( const std::vector< CoredVertexIndex >& vertices );
-	int addPolygon( const std::vector< int >& vertices );
 	int addOutOfCorePoint_s( const Vertex& p );
 	int addPolygon_s( const std::vector< CoredVertexIndex >& vertices );
 	int addPolygon_s( const std::vector< int >& vertices );
@@ -367,8 +364,6 @@ public:
 	void resetIterator( void );
 
 	int addOutOfCorePoint( const Vertex& p );
-	int addPolygon( const std::vector< CoredVertexIndex >& vertices );
-	int addPolygon( const std::vector< int >& vertices );
 	int addOutOfCorePoint_s( const Vertex& p );
 	int addPolygon_s( const std::vector< CoredVertexIndex >& vertices );
 	int addPolygon_s( const std::vector< int >& vertices );

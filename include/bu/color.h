@@ -136,13 +136,13 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
 BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);
 BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
+BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
 
 /* UNIMPLEMENTED
  *
- * BU_EXPORT export void bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
- * BU_EXPORT export int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
+ * BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
+ * BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
  */
 
 

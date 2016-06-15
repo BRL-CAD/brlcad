@@ -75,6 +75,14 @@ struct memqdebug {
 };
 
 
+struct bu_pool
+{
+    size_t block_size;
+    size_t block_pos, alloc_size;
+    uint8_t *block;
+};
+
+
 static struct bu_list *bu_memq = BU_LIST_NULL;
 static struct bu_list bu_memqhd = BU_LIST_INIT_ZERO;
 #define MEMQDEBUG_NULL ((struct memqdebug *)0)
@@ -688,6 +696,7 @@ bu_mem_barriercheck(void)
     return 0;			/* OK */
 }
 
+
 int
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 {
@@ -726,6 +735,43 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
 
 #endif
     return ret;
+}
+
+
+struct bu_pool *
+bu_pool_create(size_t block_size)
+{
+    struct bu_pool *pool;
+
+    pool = (struct bu_pool*)bu_malloc(sizeof(struct bu_pool), "bu_pool_create");
+    pool->block_size = block_size;
+    pool->block_pos = 0;
+    pool->alloc_size = 0;
+    pool->block = NULL;
+    return pool;
+}
+
+void *
+bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
+{
+    const size_t n_bytes = nelem * elsize;
+    void *ret;
+
+    if (pool->block_pos + n_bytes > pool->alloc_size) {
+    	pool->alloc_size += n_bytes < pool->block_size ? pool->block_size : n_bytes;
+	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
+    }
+
+    ret = pool->block + pool->block_pos;
+    pool->block_pos += n_bytes;
+    return ret;
+}
+
+void
+bu_pool_delete(struct bu_pool *pool)
+{
+    bu_free(pool->block, "bu_pool_delete");
+    bu_free(pool, "bu_pool_delete");
 }
 
 

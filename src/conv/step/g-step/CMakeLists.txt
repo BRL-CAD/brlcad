@@ -42,7 +42,6 @@ set(gstep_LIBS
 list(APPEND gstep_LIBS ${gstep_LIBS})
 
 BRLCAD_ADDEXEC(g-step "${gstep_SOURCES}" "${gstep_LIBS}" NO_STRICT)
-add_dependencies(g-step step-express-${SCHEMA_NAME}-gstep)
 
 if(MSVC)
   set(gstep_IMPORTS
@@ -73,6 +72,8 @@ set(IGNORE_FILES
   Trees.h
   )
 CMAKEFILES(${IGNORE_FILES})
+
+GENERATE_SCHEMA_INPUTS(${STEP_SCHEMA_FILE} list_elements)
 
 set(list_elements_srcs ${express_srcs} list_elements.cpp)
 BRLCAD_ADDEXEC(list_elements "${list_elements_srcs}" "${gstep_LIBS}" NO_STRICT NO_INSTALL)

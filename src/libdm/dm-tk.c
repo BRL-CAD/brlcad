@@ -32,6 +32,13 @@
 #include <limits.h>
 #include <string.h>
 
+/* FIXME: suboptimal, just picked the first mac-specific config symbol
+ * encountered to know when to turn on the AquaTk X bindings from Tk.
+ */
+#ifdef HAVE_MACH_THREAD_POLICY_H
+#  define MAC_OSX_TK 1
+#endif
+
 /* Even on a platform that has no real X, I should be able to use the
  * Xutil that comes with Tk
  */
@@ -90,7 +97,7 @@ tk_close(struct dm_internal *dmp)
 
 	/*XXX Possibly need to free the colormap */
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    Tk_FreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)

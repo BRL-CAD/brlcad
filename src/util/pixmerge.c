@@ -59,7 +59,6 @@ static long fg_cnt = 0;
 static long bg_cnt = 0;
 
 static int seen_const = 0;
-static int seen_formula = 0;
 
 static unsigned char pconst[32] = {0};
 
@@ -77,6 +76,7 @@ int
 get_args(int argc, char **argv)
 {
     int c;
+    int seen_formula = 0;
 
     while ((c = bu_getopt(argc, argv, "glenw:C:c:h?")) != -1) {
 	switch (c) {

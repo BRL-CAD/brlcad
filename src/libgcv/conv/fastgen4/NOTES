@@ -1,9 +1,12 @@
-Thicknesses:
-    - Have fast4-g place attributes on imported cones with thickness (imported as a cone within a cone).
-    - When exporting, confirm that the region still contains two such cones.
+GRID record limit:
+    - FASTGEN permits 50k GRID records per SECTION, and this is enforced by the export plugin.
+    - This limit is exceeded by db/goliath.g, for which the "toplevels" SECTION accumulates a very large number of primitives existing outside of regions.
+    - TODO: Fix by treating each toplevel primitive as a region
 
 Boolean operations:
-    - Unions on primitives may be representable using the WALL record.
-    - If an fg4 primitive has a facetized object subtracted from it, the facetized object will currently not be output (tree appears empty).
-    - HOLE records do not (appear to) propagate up to other HOLE/WALL records
+    - The FASTGEN format can represent only a very limited subset of Boolean operations
     - Objects subtracted using HOLE records must be completely enclosed within the containing object.
+
+Facetization is required when geometry can not be directly represented by the FASTGEN format:
+    - Primitives or Boolean operations that can't be represented
+    - Regions containing two or more objects that require different modes (Plate or Volume) for the SECTION

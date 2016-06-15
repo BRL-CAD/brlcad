@@ -87,7 +87,7 @@ TrimmingSelect::IsParameterTrim()
 }
 
 bool
-TrimmingSelect::Load(STEPWrapper *sw, SDAI_Select *sse)
+TrimmingSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
 

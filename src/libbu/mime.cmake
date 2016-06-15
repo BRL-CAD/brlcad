@@ -42,14 +42,23 @@ set(mime_c_file_tmp ${CMAKE_CURRENT_BINARY_DIR}/mime.c.tmp)
 
 file(READ ${BRLCAD_SOURCE_DIR}/misc/mime.types MIME_TYPES)
 file(READ ${BRLCAD_SOURCE_DIR}/misc/mime_cad.types CAD_TYPES)
-set(h_contents "/* Mime type mappings automatically generated from mime.types\n * and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
+set(h_contents "/**\n * Mime type definitions and mapping functions\n *\n")
+set(h_contents "${h_contents} * Do not edit these files directly - apply updates to mime definition files.\n")
+set(h_contents "${h_contents} * The file misc/mime.types is from:\n")
+set(h_contents "${h_contents} * http://svn.apache.org/repos/asf/httpd/httpd/trunk/docs/conf/mime.types\n")
+set(h_contents "${h_contents} * and should be kept in sync with that copy.\n *\n")
+set(h_contents "${h_contents} * The file misc/mime_cad.types holds local additions to the 'standard' mime types,\n")
+set(h_contents "${h_contents} * such as the addition of many additional geometry file formats. Any \"local\" mime\n")
+set(h_contents "${h_contents} * type definitions not part of the actual standards should be added there. */\n\n")
+set(h_contents "${h_contents}/* These sources are generated from the public domain data files and are in the public domain.*/\n\n")
 set(h_contents "${h_contents}#ifndef BU_MIME_H\n")
 set(h_contents "${h_contents}#define BU_MIME_H\n")
 set(h_contents "${h_contents}\n#include \"common.h\"\n")
 set(h_contents "${h_contents}#include \"bu/defines.h\"\n")
 set(h_contents "${h_contents}\n__BEGIN_DECLS\n")
 
-set(c_contents "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to include/bu source files. */\n\n")
+set(c_contents "/* Functions for mapping file extensions to mime type. Automatically\n * generated from mime.types and mime_cad.types.\n * Do not edit these files directly - apply updates to mime definition files:\n * misc/mime.types and misc/mime_cad.types. */\n\n")
+set(c_contents "${c_contents}/* These sources are generated from public domain data and are in the public domain.*/\n\n")
 set(c_contents "${c_contents}\n#include \"common.h\"\n")
 set(c_contents "${c_contents}#include \"bu/mime.h\"\n")
 set(c_contents "${c_contents}#include \"bu/file.h\"\n")
@@ -239,13 +248,20 @@ set(c_contents "${c_contents}\n${mcstr}")
 file(WRITE ${mime_h_file_tmp} "${h_contents}")
 file(WRITE ${mime_c_file_tmp} "${c_contents}")
 
-execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_h_file_tmp} ${MIME_H_FILE})
+# The header is checked in to the source tree, so to allow for
+# a "read-only" source tree we make an out of sync mime.h file
+# a configure failure that needs to be corrected.
+execute_process(COMMAND ${CMAKE_COMMAND} -E compare_files ${mime_h_file_tmp} ${MIME_H_FILE} RESULT_VARIABLE header_diff)
+if(header_diff)
+  message(FATAL_ERROR "${MIME_H_FILE} is out of date - please update with ${mime_h_file_tmp}")
+endif(header_diff)
+
+# The C file we generate in the build directory
 execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${mime_c_file_tmp} ${MIME_C_FILE})
 
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_h_file_tmp})
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${mime_c_file_tmp})
 
-DISTCLEAN(${MIME_H_FILE})
 DISTCLEAN(${MIME_C_FILE})
 
 # Local Variables:

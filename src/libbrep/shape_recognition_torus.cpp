@@ -47,8 +47,6 @@ subbrep_is_torus(struct subbrep_object_data *data, fastf_t torus_tol)
     }
 
     data->type = TORUS;
-    struct csg_object_params * obj;
-    BU_GET(obj, struct csg_object_params);
 
 #if 0
     data->params->bool_op= 'u';  // TODO - not always union

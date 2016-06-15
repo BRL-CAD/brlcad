@@ -34,7 +34,6 @@
 #include <ctype.h>
 #include "bnetwork.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "vmath.h"
 #include "rt/db4.h"
@@ -1254,11 +1253,8 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    j = atoi(ptr+1);
 		    len = 3;
 		    array = &ars->curves[i][j*3];
-		    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
-						&array,
-						&len)!= len) {
-			bu_vls_printf(logstr,
-				      "WARNING: incorrect number of parameters provided for a point\n");
+		    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len)!= len) {
+			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a point\n");
 		    }
 		} else {
 		    char *dupstr;
@@ -1277,7 +1273,7 @@ rt_ars_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		    if (!ars->curves[i]) {
 			ars->curves[i] = (fastf_t *)bu_calloc(ars->pts_per_curve * 3, sizeof(fastf_t), "ars->curves[i]");
 		    }
-		    if (tcl_list_to_fastf_array(brlcad_interp, dupstr,	&ars->curves[i], &len) != len) {
+		    if (_rt_tcl_list_to_fastf_array(dupstr, &ars->curves[i], &len) != len) {
 			bu_vls_printf(logstr, "WARNING: incorrect number of parameters provided for a curve\n");
 		    }
 		    bu_free(dupstr, "bu_strdup ars curve");

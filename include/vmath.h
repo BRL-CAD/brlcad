@@ -348,24 +348,24 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
- * INFINITY to -INFINITY inclusive.
+ * INFINITY to -INFINITY exclusive (open set).
  */
-#define INVALID(n) (!((n) >= -INFINITY && (n) <= INFINITY))
+#define INVALID(n) (!((n) > -INFINITY && (n) < INFINITY))
 
 /**
- * Evaluates truthfully whether all components of a vector are not
+ * Evaluates truthfully whether any components of a vector are not
  * within a valid range.
  */
 #define VINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]))
 
 /**
- * Evaluates truthfully whether all components of a 2D vector are not
+ * Evaluates truthfully whether any components of a 2D vector are not
  * within a valid range.
  */
 #define V2INVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]))
 
 /**
- * Evaluates truthfully whether all components of a 4D vector are not
+ * Evaluates truthfully whether any components of a 4D vector are not
  * within a valid range.
  */
 #define HINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]) || INVALID((v)[W]))
@@ -1299,6 +1299,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * @brief Project vector `a' onto `b'
  * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
+ *
+ * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
     VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
@@ -1456,9 +1458,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Similar to VELMUL. */
 #define VELDIV(a, b, c) do { \
-	(a)[0] = (b)[0] / (c)[0]; \
-	(a)[1] = (b)[1] / (c)[1]; \
-	(a)[2] = (b)[2] / (c)[2]; \
+	(a)[X] = (b)[X] / (c)[X]; \
+	(a)[Y] = (b)[Y] / (c)[Y]; \
+	(a)[Z] = (b)[Z] / (c)[Z]; \
     } while (0)
 
 /**

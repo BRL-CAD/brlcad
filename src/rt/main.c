@@ -400,6 +400,10 @@ int main(int argc, const char **argv)
 	(void)fb_view(fbp, width/2, height/2,
 		      zoom, zoom);
 	bu_semaphore_release(BU_SEM_SYSCALL);
+
+#ifdef USE_OPENCL
+        clt_connect_fb(fbp);
+#endif
     }
     if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
 	/* If not going to framebuffer, or to a file, then use stdout */

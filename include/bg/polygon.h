@@ -27,8 +27,8 @@
  *  @brief Functions for working with polygons
  */
 
-#ifndef GM_POLYGON_H
-#define GM_POLYGON_H
+#ifndef BG_POLYGON_H
+#define BG_POLYGON_H
 
 #include "common.h"
 #include "vmath.h"
@@ -58,7 +58,7 @@ __BEGIN_DECLS
  * @return 1 if polygon is clockwise
  * @return 0 if the test failed
  */
-GM_EXPORT extern int bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
+BG_EXPORT extern int bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
 
 
 /**
@@ -77,7 +77,7 @@ GM_EXPORT extern int bg_polygon_clockwise(size_t npts, const point2d_t *pts, con
  * @return 0 if point is outside polygon
  * @return 1 if point is inside polygon
  */
-GM_EXPORT extern int bg_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
+BG_EXPORT extern int bg_pt_in_polygon(size_t npts, const point2d_t *pts, const point2d_t *test_pt);
 
 /**
  * Triangulation is the process of finding a set of triangles that as a set cover
@@ -125,7 +125,7 @@ typedef enum {
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-GM_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const int *poly, const size_t poly_npts,
        	const int **holes_array, const size_t *holes_npts, const size_t nholes,
        	const point2d_t *pts, const size_t npts, triangulation_t type);
@@ -155,7 +155,7 @@ GM_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
  */
-GM_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
+BG_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d_t **out_pts, int *num_outpts,
 	const point2d_t *pts, const size_t npts, triangulation_t type);
 
 
@@ -179,7 +179,7 @@ GM_EXPORT extern int bg_polygon_triangulate(int **faces, int *num_faces, point2d
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-pointer
  */
-GM_EXPORT extern int bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
+BG_EXPORT extern int bg_3d_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
 
 
 /**
@@ -194,7 +194,7 @@ GM_EXPORT extern int bg_3d_polygon_area(fastf_t *area, size_t npts, const point_
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
  */
-GM_EXPORT extern int bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
+BG_EXPORT extern int bg_3d_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
 
 
 /**
@@ -209,7 +209,7 @@ GM_EXPORT extern int bg_3d_polygon_centroid(point_t *cent, size_t npts, const po
  *@return 0 if calculation was successful
  *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
  */
-GM_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+BG_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
 
 
 /**
@@ -228,13 +228,13 @@ GM_EXPORT extern int bg_3d_polygon_sort_ccw(size_t npts, point_t *pts, plane_t c
  * @return 0 if calculation was successful
  * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
  */
-GM_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+BG_EXPORT extern int bg_3d_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
 
 
 
 __END_DECLS
 
-#endif  /* GM_POLYGON_H */
+#endif  /* BG_POLYGON_H */
 /** @} */
 /*
  * Local Variables:

@@ -188,9 +188,15 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 #----------------------------------------------------------------------------
 # Define some platform specific flags
 
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-ENDIF(WIN32)
+ENDIF(MSVC)
+
+IF(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -DBUILD_tk -DBUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+ENDIF(MINGW)
 
 IF(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)
@@ -228,13 +234,13 @@ SC_TCL_64BIT_FLAGS()
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize some operations
 #--------------------------------------------------------------------
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     add_definitions(-DWORDS_BIGENDIAN=1)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #------------------------------------------------------------------------------
 #       Find out all about time handling differences.
@@ -773,9 +779,13 @@ install(TARGETS tkstub
 	ARCHIVE DESTINATION ${LIB_DIR})
 SET_PROPERTY(TARGET tkstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
+IF(MINGW)
+  set(TK_MINGW_LIBS comctl32 m dinput8 dxguid dxerr8 user32 gdi32 winmm imm32 ole32 oleaut32 shell32 version uuid)
+ENDIF(MINGW)
+
 add_library(tk ${TK_SRCS})
 IF(WIN32)
-  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS})
+  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS} ${TK_MINGW_LIBS})
 ELSE(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB}
 	  ${X11_TK_LIBS} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK}

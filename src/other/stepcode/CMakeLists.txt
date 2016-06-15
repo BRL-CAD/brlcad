@@ -42,7 +42,11 @@ PROJECT(SC)
 
 # SC version
 SET(SC_VERSION_MAJOR 0)
-SET(SC_VERSION_MINOR 7-dev)
+if(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7-dev)
+else(NOT SC_IS_SUBBUILD)
+	SET(SC_VERSION_MINOR 7)
+endif(NOT SC_IS_SUBBUILD)
 SET(SC_VERSION ${SC_VERSION_MAJOR}.${SC_VERSION_MINOR})
 
 # SC ABI version. SC_ABI_SOVERSION should be incremented
@@ -51,7 +55,7 @@ SET(SC_ABI_SOVERSION 2)
 SET(SC_ABI_VERSION ${SC_ABI_SOVERSION}.0.0)
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8.7)
+CMAKE_MINIMUM_REQUIRED(VERSION 2.8.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
@@ -376,22 +380,44 @@ get_property(CONFIG_H_FILE_CONTENTS GLOBAL PROPERTY SC_CONFIG_H_CONTENTS)
 file(WRITE ${CONFIG_H_FILE} "${CONFIG_H_FILE_CONTENTS}")
 configure_file(${CONFIG_H_FILE} ${SC_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_cf.h)
 
-################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
-# Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
-# command to always execute when the custom target is built. It works because
-# a file by that name never exists.
-configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
-add_custom_target(version_string ALL DEPENDS ver_string )
-# creates sc_version_string.h using cmake script
-add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-                   COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
-                                            -DBINARY_DIR=${SC_BINARY_DIR}
-                                            -P ${SC_BINARY_DIR}/sc_version_string.cmake)
-# sc_version_string.h is a generated file
-set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
-  PROPERTIES GENERATED TRUE
-  HEADER_FILE_ONLY TRUE )
-################
+if(NOT SC_IS_SUBBUILD)
+  ################ create sc_version_string.h, http://stackoverflow.com/questions/3780667
+  # Using 'ver_string' instead of 'sc_version_string.h' is a trick to force the
+  # command to always execute when the custom target is built. It works because
+  # a file by that name never exists.
+  configure_file(${SC_CMAKE_DIR}/sc_version_string.cmake ${SC_BINARY_DIR}/sc_version_string.cmake @ONLY)
+  add_custom_target(version_string ALL DEPENDS ver_string )
+  # creates sc_version_string.h using cmake script
+  add_custom_command(OUTPUT ver_string ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    COMMAND ${CMAKE_COMMAND} -DSOURCE_DIR=${SC_SOURCE_DIR}
+    -DBINARY_DIR=${SC_BINARY_DIR}
+    -P ${SC_BINARY_DIR}/sc_version_string.cmake)
+  # sc_version_string.h is a generated file
+  set_source_files_properties(${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h
+    PROPERTIES GENERATED TRUE
+    HEADER_FILE_ONLY TRUE )
+  ################
+else(NOT SC_IS_SUBBUILD)
+  set(vstring "
+//sc_version_string.h - written by cmake. Changes will be lost!\n
+#ifndef SC_VERSION_STRING\n
+#define SC_VERSION_STRING\n\n
+const char* sc_version() {\n
+return \"${SC_VERSION}\";\n
+}\n\n
+#endif\n"
+  )
+
+file(WRITE
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  "${vstring}")
+execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove
+  ${CMAKE_CURRENT_BINARY_DIR}/${INCLUDE_INSTALL_DIR}/sc_version_string.h.tmp)
+
+endif(NOT SC_IS_SUBBUILD)
 
 if(MSVC)
   # add_definitions( -Wall )
@@ -461,3 +487,11 @@ if(NOT SC_IS_SUBBUILD)
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/cmake_uninstall.cmake)
 
 endif(NOT SC_IS_SUBBUILD)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

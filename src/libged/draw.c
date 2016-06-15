@@ -406,7 +406,9 @@ out:
 static int
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
 {
-    int result = 1;
+    static int result; /* static due to jumping */
+
+    result = 1;
 
     if (!BU_SETJUMP) {
 	/* try */
@@ -428,7 +430,9 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 static int
 process_triangulation(struct db_tree_state *tsp, const struct db_full_path *pathp, struct _ged_client_data *dgcdp)
 {
-    int result = 1;
+    static int result; /* static due to jumping */
+
+    result = 1;
 
     if (!BU_SETJUMP) {
 	/* try */
@@ -766,7 +770,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		if (dgcdp.shaded_mode_override != _GED_SHADED_MODE_UNSET) {
 		    dgcdp.dmode = dgcdp.shaded_mode_override;
 		} else if (gedp->ged_gdp->gd_shaded_mode) {
- 		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
+		    dgcdp.dmode = gedp->ged_gdp->gd_shaded_mode;
 		}
 		break;
 	    case _GED_DRAW_NMG_POLY:
@@ -941,7 +945,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 		if (dgcdp.draw_edge_uses) {
 		    _ged_cvt_vlblock_to_solids(gedp, dgcdp.draw_edge_uses_vbp, "_EDGEUSES_", 0);
-		    rt_vlblock_free(dgcdp.draw_edge_uses_vbp);
+		    bn_vlblock_free(dgcdp.draw_edge_uses_vbp);
 		    dgcdp.draw_edge_uses_vbp = (struct bn_vlblock *)NULL;
 		}
 

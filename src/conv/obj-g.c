@@ -2785,7 +2785,7 @@ output_to_nmg(struct ga_t *ga,
     size_t vert_idx = 0;                 /* index into vertices within for-loop */
     size_t shell_vert_idx = 0;           /* index into vertices for entire nmg shell */
     size_t num_entities_fused = 0;
-    int ret = 1;                         /* function return value, default to failure */
+    int ret;                             /* function return value, default to failure */
     plane_t pl;                          /* plane equation for face */
     fastf_t tmp_v[3] = {0.0, 0.0, 0.0};  /* temporary vertex */
     fastf_t tmp_w = 0.0;                 /* temporary weight */
@@ -2798,7 +2798,7 @@ output_to_nmg(struct ga_t *ga,
 
     struct vertex **verts = (struct vertex **)NULL;
 
-    size_t num_faces_killed = 0; /* number of degenerate faces killed in the current shell */
+    size_t num_faces_killed;             /* number of degenerate faces killed in the current shell */
 
     m = nmg_mm();
     if (m == NULL)
@@ -2831,6 +2831,9 @@ output_to_nmg(struct ga_t *ga,
 
 	return 2; /* return code 2 indicates nmg bomb occurred */
     }
+
+    ret = 0;
+    num_faces_killed = 0;
 
     /* initialize tables */
     bu_ptbl_init(&faces, 64, " &faces ");

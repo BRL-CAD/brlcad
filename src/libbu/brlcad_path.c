@@ -88,7 +88,6 @@ Unable to locate where BRL-CAD %s is installed while searching:\n\
 This version of BRL-CAD was compiled to be installed at:\n\
 	%s\n\n", brlcad_version(), paths, BRLCAD_ROOT);
 
-#ifndef _WIN32
     bu_log("\
 You may specify where to locate BRL-CAD by setting the BRLCAD_ROOT\n\
 environment variable.  For example:\n\
@@ -97,7 +96,6 @@ for csh/tcsh users:\n\
 	setenv BRLCAD_ROOT /path/to/brlcad\n\
 for sh/bash users:\n\
 	BRLCAD_ROOT=/path/to/brlcad ; export BRLCAD_ROOT\n\n");
-#endif
 
     return;
 }
@@ -117,7 +115,6 @@ while searching:\n\
 This release of BRL-CAD expects data resources to be at:\n\
 	%s\n\n", brlcad_version(), paths, _brlcad_data());
 
-#ifndef _WIN32
     bu_log("\
 You may specify where to locate BRL-CAD data resources by setting\n\
 the BRLCAD_DATA environment variable.  For example:\n\
@@ -126,7 +123,6 @@ for csh/tcsh users:\n\
 	setenv BRLCAD_DATA /path/to/brlcad/data\n\
 for sh/bash users:\n\
 	BRLCAD_DATA=/path/to/brlcad/data ; export BRLCAD_DATA\n\n");
-#endif
 
     return;
 }

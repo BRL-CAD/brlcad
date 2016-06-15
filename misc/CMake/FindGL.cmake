@@ -111,25 +111,26 @@
 #=============================================================================
 
 if(WIN32)
-  if(CYGWIN)
 
-    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
+  if(CYGWIN)
 
     find_library(OPENGL_gl_LIBRARY opengl32 )
 
     find_library(OPENGL_glu_LIBRARY glu32 )
 
-  else (CYGWIN)
-
-    if(BORLAND)
-      set(OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
-      set(OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
-    else(BORLAND)
-      set(OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
-      set(OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
-    endif(BORLAND)
+    find_path(OPENGL_INCLUDE_DIR_GL GL/gl.h )
 
   endif(CYGWIN)
+
+  if(BORLAND)
+    set(OPENGL_gl_LIBRARY import32 CACHE STRING "OpenGL library for win32")
+    set(OPENGL_glu_LIBRARY import32 CACHE STRING "GLU library for win32")
+  endif(BORLAND)
+
+  if (NOT CYGWIN AND NOT BORLAND)
+    set(OPENGL_gl_LIBRARY opengl32 CACHE STRING "OpenGL library for win32")
+    set(OPENGL_glu_LIBRARY glu32 CACHE STRING "GLU library for win32")
+  endif (NOT CYGWIN AND NOT BORLAND)
 
 else (WIN32)
 

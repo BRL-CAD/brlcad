@@ -54,7 +54,7 @@ public:
     PCurveOrSurface();
     virtual ~PCurveOrSurface();
     PCurveOrSurface(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods
