@@ -269,13 +269,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* COPY argv_orig to argv; */
-    argv = bu_dup_argv(argc, argv_orig);
+    argv = bu_argv_dup(argc, argv_orig);
 
     /* initialize search set */
     BU_ALLOC(search_set, struct bu_ptbl);
     bu_ptbl_init(search_set, 8, "initialize search set table");
 
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* initialize result */
@@ -305,7 +307,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			bu_vls_trunc(gedp->ged_result_str, 0);
 		    }
 		    bu_vls_free(&argvls);
-		    bu_free_argv(argc, argv);
+		    bu_argv_free(argc, argv);
 		    _ged_free_search_set(search_set);
 		    return (wflag) ? GED_OK : GED_ERROR;
 		}
@@ -358,7 +360,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     if (wflag && db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL) != -1) {
 	bu_vls_free(&argvls);
 	bu_vls_free(&search_string);
-	bu_free_argv(argc, argv);
+	bu_argv_free(argc, argv);
 	_ged_free_search_set(search_set);
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	return (wflag) ? GED_OK : GED_ERROR;
@@ -470,7 +472,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Done - free memory */
     bu_vls_free(&argvls);
     bu_vls_free(&search_string);
-    bu_free_argv(argc, argv);
+    bu_argv_free(argc, argv);
     _ged_free_search_set(search_set);
     return GED_OK;
 }

@@ -377,7 +377,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 
     while (1) {
 	if (parent->started < parent->finished) {
-	    bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);
+	    /*bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);*/
 	    return;
 	}
 	threads = parent->started - parent->finished;

@@ -264,13 +264,16 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
 
 void
-bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
+bu_ptbl_trunc(struct bu_ptbl *tbl, size_t end)
 {
     BU_CK_PTBL(tbl);
 
-    if (tbl->end <= end)
+    if (end > tbl->blen) {
+	/* TODO: expand the allocation? */
 	return;
+    }
 
+    /* expand or reduce accordingly */
     tbl->end = end;
     return;
 }

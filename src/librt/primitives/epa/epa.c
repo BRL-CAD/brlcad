@@ -184,6 +184,36 @@ const struct bu_structparse rt_epa_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_epa_specific {
+    cl_double epa_V[3];     /* vector to epa origin */
+    cl_double epa_Hunit[3]; /* unit H vector */
+    cl_double epa_SoR[16];  /* Scale(Rot(vect)) */
+    cl_double epa_invRoS[16];   /* invRot(Scale(vect)) */
+};
+
+size_t
+clt_epa_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct epa_specific *epa =
+        (struct epa_specific *)stp->st_specific;
+    struct clt_epa_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_epa_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->epa_V, epa->epa_V);
+    VMOVE(args->epa_Hunit, epa->epa_Hunit);
+    MAT_COPY(args->epa_SoR, epa->epa_SoR);
+    MAT_COPY(args->epa_invRoS, epa->epa_invRoS);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
+
 /**
  * Create a bounding RPP for an epa
  */

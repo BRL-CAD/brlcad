@@ -944,12 +944,12 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	 * or vol/vol overlaps.  The list is terminated with a NULL
 	 * pointer, placed courtesy of bu_calloc().
 	 */
-	pp->pt_overlap_reg = (struct region **)bu_calloc(
-	    BU_PTBL_LEN(regiontable)+1, sizeof(struct region *),
-	    "pt_overlap_reg");
-	memcpy((char *)pp->pt_overlap_reg,
-	       (char *)BU_PTBL_BASEADDR(regiontable),
-	       BU_PTBL_LEN(regiontable) * sizeof(struct region *));
+	size_t rtlen = BU_PTBL_LEN(regiontable);
+	const void *rtp = (void *)BU_PTBL_BASEADDR(regiontable);
+	BU_ASSERT(rtlen > 0 && rtp);
+
+	pp->pt_overlap_reg = (struct region **)bu_calloc(rtlen+1, sizeof(struct region *), "pt_overlap_reg");
+	memcpy((char *)pp->pt_overlap_reg, rtp, rtlen * sizeof(struct region *));
     }
 
     /* Examine the overlapping regions, pairwise */
@@ -1033,7 +1033,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		if (RT_G_DEBUG&DEBUG_PARTITION)
 		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
 			    code, lastregion->reg_name);
-		BU_PTBL_CLEAR_I(regiontable, i);
+		BU_PTBL_SET(regiontable, i, (long*)0);
 		break;
 	    case 2:
 		/* Keep partition, claiming region = regp */
@@ -1938,7 +1938,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 	    }
 
 	    if (!keep_open) {
-		BU_PTBL_CLEAR_I(&open_parts, i);
+		BU_PTBL_SET(&open_parts, i, (long*)0);
 	    }
 	}
 

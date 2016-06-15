@@ -499,7 +499,11 @@ proc ::hv3::gui_bookmark {} {
 proc mann_pages {lang_type} {
    set disabledByDefault [list Introduction]
    set mann_list []
-   set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann/$lang_type] *.html ]
+   if {[file exists [file join [bu_brlcad_data html] mann/$lang_type]} {
+       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann/$lang_type] *.html ]
+   } else {
+       set manFiles [glob -nocomplain -directory [file join [bu_brlcad_data html] mann] *.html ]
+   }
    foreach manFile $manFiles {
       set rootName [file rootname [file tail $manFile]]
       set isDisabled [expr [lsearch -sorted -exact \
@@ -617,6 +621,18 @@ proc gui_build {widget_array} {
   pack .toolbar -fill x -side top
   pack .status -fill x -side bottom
 
+  set lang_list [split $::env(LANG) _]
+  if {[llength $lang_list] > 0} {
+      set langval [lindex $lang_list 0]
+      if {[string length $langval] == 2} {
+	  set ::man_language $langval
+      }
+  }
+
+  # If we still have no language, default to English
+  if {![info exists ::man_language]} {set ::man_language "en"}
+
+  # TODO - properly use ::man_language
 
  ::ttk::frame .middle.treeframe -borderwidth 1
   set mann_list [mann_pages en]
@@ -626,7 +642,7 @@ proc gui_build {widget_array} {
   foreach manFile $mann_list {
      .middle.treeframe.tree insert {} end -text "$manFile"
   }
-  bind .middle.treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/en/[.middle.treeframe.tree item [.middle.treeframe.tree focus] -text].html]}
+  bind .middle.treeframe.tree <<TreeviewSelect>> {gui_current goto file:///[file join [bu_brlcad_data html] mann/[.middle.treeframe.tree item [.middle.treeframe.tree focus] -text].html]}
   bind .middle.treeframe.tree <Control-f> {gui_current Find}
   bind .middle.treeframe.tree <Control-F> {gui_current Find}
 
@@ -1018,3 +1034,11 @@ eval [concat main $argv]
 proc print {args} { puts [join $args] }
 
 #--------------------------------------------------------------------------
+# Local Variables:
+# mode: tcl
+# tab-width: 8
+# tcl-indent-level: 4
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=4 tabstop=8
+

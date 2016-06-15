@@ -302,12 +302,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
     swp->sw_reflect = ps->reflect;
     swp->sw_refrac_index = ps->refrac_index;
     swp->sw_extinction = ps->extinction;
-#if SW_SET_TRANSMIT
-    if (swp->sw_phong_set_vector & SW_SET_TRANSMIT) swp->sw_transmit = swp->sw_phong_transmit;
-    if (swp->sw_phong_set_vector & SW_SET_REFLECT) swp->sw_reflect = swp->sw_phong_reflect;
-    if (swp->sw_phong_set_vector & SW_SET_REFRAC_INDEX) swp->sw_refrac_index = swp->sw_phong_ri;
-    if (swp->sw_phong_set_vector & SW_SET_EXTINCTION) swp->sw_extinction = swp->sw_phong_extinction;
-#endif /* SW_SET_TRANSMIT */
+
     if (swp->sw_xmitonly) {
 	if (swp->sw_xmitonly > 1)
 	    return 1;	/* done -- wanted parameters only */
@@ -349,15 +344,8 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 		VPRINT(" r_dir ", ap->a_ray.r_dir);
 		cosine = 1;
 	    }
-#if SW_SET_TRANSMIT
-	    if (swp->sw_phong_set_vector & SW_SET_AMBIENT) {
-		cosine *= swp->sw_phong_ambient;
-	    } else {
-		cosine *= AmbientIntensity;
-	    }
-#else
 	    cosine *= AmbientIntensity;
-#endif
+
 #ifdef RT_MULTISPECTRAL
 	    bn_tabdata_scale(swp->msw_color, ms_matcolor, cosine);
 #else
@@ -377,11 +365,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    float emission[3];
 	    struct bn_tabdata *ms_emission = BN_TABDATA_NULL;
 	    VMOVE(emission, ps->emission);
-#if SW_SET_TRANSMIT
-	    if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
-		VSETALL(emission, swp->sw_phong_emission);
-	    }
-#endif
+
 	    /* XXX Really should get a curve at prep, not expand RGB samples */
 	    BN_GET_TABDATA(ms_emission, spectrum);
 	    rt_spect_reflectance_rgb(ms_emission, emission);
@@ -389,17 +373,7 @@ phong_render(register struct application *ap, const struct partition *pp, struct
 	    bn_tabdata_free(ms_emission);
 	}
 #else
-#if SW_SET_TRANSMIT
-	if (swp->sw_phong_set_vector & SW_SET_EMISSION) {
-	    vect_t tmp;
-	    VSETALL(tmp, swp->sw_phong_emission);
-	    VADD2(swp->sw_color, swp->sw_color, tmp);
-	} else {
-	    VADD2(swp->sw_color, swp->sw_color, ps->emission);
-	}
-#else
 	VADD2(swp->sw_color, swp->sw_color, ps->emission);
-#endif /* SW_SET_TRANSMIT */
 #endif
 
 	/* With the advent of procedural shaders, the caller can no longer

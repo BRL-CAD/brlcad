@@ -351,7 +351,7 @@ rt_memclose(void)
 
     while ((mp = rt_mem_freemap) != MAP_NULL) {
 	rt_mem_freemap = mp->m_nxtp;
-	bu_free((char *)mp, "struct mem_map " BU_FLSTR);
+	bu_free((char *)mp, "struct mem_map " CPP_FILELINE);
     }
 }
 

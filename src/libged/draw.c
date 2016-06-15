@@ -31,6 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/time.h"
 #include "raytrace.h"
 
 
@@ -593,12 +594,14 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int c;
     int ncpu = 1;
     int nmg_use_tnurbs = 0;
+    int skip_subtractions = 0;
     int enable_fastpath = 0;
     struct model *nmg_model;
     struct _ged_client_data dgcdp;
     int i;
     int ac = 1;
     char *av[3];
+    int threshold_cached = 0;
 
     RT_CHECK_DBI(gedp->ged_wdbp->dbip);
 
@@ -618,6 +621,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.gedp = gedp;
 
 	gvp = gedp->ged_gvp;
+
+	if (gedp && gedp->ged_gvp) threshold_cached = gvp->gv_bot_threshold;
+
 	if (gvp && gvp->gv_adaptive_plot)
 	    dgcdp.autoview = 1;
 	else
@@ -635,6 +641,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 	dgcdp.wireframe_color_override = 0;
 	dgcdp.fastpath_count = 0;
 	dgcdp.shaded_mode_override = _GED_SHADED_MODE_UNSET;
+	dgcdp.bot_threshold = 0;
 
 	/* default color - red */
 	dgcdp.wireframe_color[0] = 255;
@@ -651,7 +658,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oR")) != -1) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:M")) != -1) {
 	    switch (c) {
 		case 'u':
 		    dgcdp.draw_edge_uses = 1;
@@ -670,6 +677,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'S':
 		    dgcdp.draw_no_surfaces = 1;
+		    skip_subtractions = 1;
 		    break;
 		case 'T':
 		    dgcdp.nmg_triangulate = 0;
@@ -753,6 +761,26 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'R':
 		    dgcdp.autoview = 0;
+		    break;
+		case 'L':
+		    {
+			int t = 0;
+			char *cp = bu_optarg;
+			if (cp) {
+			    t = atoi(cp);
+			    if (t >= 0) {
+				dgcdp.bot_threshold = (size_t)t;
+			    } else {
+				bu_vls_printf(gedp->ged_result_str, "invalid -L argument: %s\n", cp);
+				--drawtrees_depth;
+				return GED_ERROR;
+			    }
+			} else {
+			    bu_vls_printf(gedp->ged_result_str, "-L requires an option\n", c);
+			    --drawtrees_depth;
+			    return GED_ERROR;
+			}
+		    }
 		    break;
 		case 'A':
 		case 'o':
@@ -901,6 +929,9 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    ged_autoview(gedp, 1, autoview_args);
 		}
 
+		/* Set the view threshold */
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = dgcdp.bot_threshold;
+
 		/* calculate plot vlists for solids of each draw path */
 		for (i = 0; i < argc; ++i) {
 		    gdlp = paths_to_draw[i];
@@ -909,13 +940,18 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, skip_subtractions);
 		    if (ret < 0) {
-			bu_vls_printf(gedp->ged_result_str,
-				"%s: %s redraw failure\n", argv[0], argv[i]);
+			/* restore view bot threshold */
+			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
+
+			bu_vls_printf(gedp->ged_result_str, "%s: %s redraw failure\n", argv[0], argv[i]);
 			return GED_ERROR;
 		    }
 		}
+
+		/* restore view bot threshold */
+		if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
 
 		bu_free(paths_to_draw, "draw paths");
 	    }
@@ -1163,7 +1199,7 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 		 * provided separately (e.g. '-C 0/255/0' instead of
 		 * '-C0/255/0'), skip the argument too.
 		 */
-		if (strlen(argv[i]) == 2 && strchr("mxCP", argv[i][1])) {
+		if (strlen(argv[i]) == 2 && strchr("mxCPL", argv[i][1])) {
 		    i++;
 		}
 		continue;
@@ -1247,7 +1283,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
 		return GED_ERROR;
@@ -1283,7 +1319,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
 		    if (ret < 0) {
 			bu_vls_printf(gedp->ged_result_str,
 				"%s: %s redraw failure\n", argv[0], argv[i]);

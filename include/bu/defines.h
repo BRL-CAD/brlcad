@@ -99,29 +99,22 @@
 
 
 /**
- * @def BU_FLSTR
- *
- * Macro for getting a concatenated string of the current file and
- * line number.  Produces something of the form: "filename.c"":""1234"
- */
-#define bu_cpp_str(s) # s
-#define bu_cpp_xstr(s) bu_cpp_str(s)
-#define bu_cpp_glue(a, b) a ## b
-#define bu_cpp_xglue(a, b) bu_cpp_glue(a, b)
-#define BU_FLSTR __FILE__ ":" bu_cpp_xstr(__LINE__)
-
-
-/**
  * shorthand declaration of a printf-style functions
  */
 #ifdef HAVE_PRINTF12_ATTRIBUTE
-#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#  define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#elif !defined(_BU_ATTR_PRINTF12)
+#  define _BU_ATTR_PRINTF12
 #endif
 #ifdef HAVE_PRINTF23_ATTRIBUTE
-#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#  define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#elif !defined(_BU_ATTR_PRINTF23)
+#  define _BU_ATTR_PRINTF23
 #endif
 #ifdef HAVE_SCANF23_ATTRIBUTE
-#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#elif !defined(_BU_ATTR_SCANF23)
+#  define _BU_ATTR_SCANF23
 #endif
 
 /**

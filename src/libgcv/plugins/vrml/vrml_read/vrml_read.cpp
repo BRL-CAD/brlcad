@@ -273,7 +273,7 @@ vrml_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 extern "C" {
     struct gcv_filter gcv_conv_vrml_read =
-    {"VRML Reader", GCV_FILTER_READ, MIME_MODEL_VRML, NULL, NULL, vrml_read};
+    {"VRML Reader", GCV_FILTER_READ, BU_MIME_MODEL_VRML, NULL, NULL, vrml_read};
 }
 
 

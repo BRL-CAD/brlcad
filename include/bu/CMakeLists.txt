@@ -17,7 +17,6 @@ set(bu_headers
   magic.h
   malloc.h
   mapped_file.h
-  mime.h
   observer.h
   opt.h
   parallel.h
@@ -30,6 +29,7 @@ set(bu_headers
   str.h
   time.h
   units.h
+  uuid.h
   version.h
   vfont.h
   vlb.h

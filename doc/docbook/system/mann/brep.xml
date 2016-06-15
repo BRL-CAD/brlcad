@@ -1,0 +1,772 @@
+<?xml version="1.0" encoding="utf-8"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="brep">
+
+  <refmeta>
+    <refentrytitle>BREP</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD MGED User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id='name'>
+    <refname>brep</refname>
+    <refpurpose>
+    This command does a boundary representation which represents the solid geometry by describing the topology and corresponding geometry.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>brep</command>
+      <arg choice="req" rep="norepeat"><replaceable>obj</replaceable></arg>
+      <arg choice="opt" rep="norepeat">--no-evaluation</arg>
+      <group choice="opt" rep="norepeat">
+        <arg choice="plain" rep="norepeat"><replaceable>command</replaceable></arg>
+        <arg choice="plain" rep="norepeat"><replaceable>brepname</replaceable></arg>
+        <arg choice="plain" rep="norepeat"><replaceable>suffix</replaceable></arg>
+      </group>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      If <replaceable>obj</replaceable> is not a brep object, then
+      <command>brep</command> attempts to convert it to a brep object.
+      If <replaceable>brepname</replaceable> is given, then
+      <command>brep</command> defaults to
+      <replaceable>obj</replaceable>_brep; if --no-evaluation is
+      given, then <command>brep</command> attempts to convert a
+      combination to an unevaluated BREP named
+      <replaceable>suffix</replaceable> (again defaulting to
+      <replaceable>obj</replaceable>_brep).
+    </para>
+
+    <para>
+      Otherwise, the behavior of <command>brep</command> is determined
+      by which of these subcommands is specified:
+    </para>
+
+    <variablelist>
+      <cmdsynopsis>
+        <command>info</command>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return count information (surfaces, curves, etc.) for a
+            BREP.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info C</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP '3D curve'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info S</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'surface'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info F</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'face'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info T</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'trim'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info E</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'edge'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info TB</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'piecewise bezier trim'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>info SB</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Return information for a specific BREP 'piecewise bezier surface'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot S</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surface'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot Suv</command>
+        <group choice="req" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+        <arg choice="req" rep="norepeat"><replaceable>u</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>v</replaceable></arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surface' 3d point at specified uv.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot UV</command>
+        <group choice="req" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+        <arg choice="req" rep="norepeat"><replaceable>u1</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>u2</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>v1</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>v2</replaceable></arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surface' 3d bounds at specified
+            uv bounds.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot F</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'face'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot I</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'isosurface'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot SN</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surface normal'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot KN</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surface knot'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot F2d</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'face in 2d'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot SBB</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surfaceleafs'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot SBB2d</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'surfaceleafs in 2d'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot TD</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'trim direction'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot T</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'trim'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot T2d</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'trim in 2d'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot TBB</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'trimleafs'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot TBB2d</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'trimleafs in 2d'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot E</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'edge3d'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>plot SCV</command>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat"><replaceable>index</replaceable></arg>
+          <arg choice="plain" rep="norepeat">
+            <replaceable>index</replaceable>-<replaceable>index</replaceable>
+          </arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Plot a specific BREP 'nurbs control net'.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>translate</command>
+        <arg choice="req" rep="norepeat"><replaceable>SCV</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>index</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>i</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>j</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>dx</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>dy</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>dz</replaceable></arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Translate a surface control vertex
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>intersect</command>
+        <arg choice="req" rep="norepeat"><replaceable>obj2</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>i</replaceable></arg>
+        <arg choice="req" rep="norepeat"><replaceable>j</replaceable></arg>
+        <group choice="opt" rep="norepeat">
+          <arg choice="plain" rep="norepeat">PP</arg>
+          <arg choice="plain" rep="norepeat">PC</arg>
+          <arg choice="plain" rep="norepeat">PS</arg>
+          <arg choice="plain" rep="norepeat">CC</arg>
+          <arg choice="plain" rep="norepeat">CS</arg>
+          <arg choice="plain" rep="norepeat">SS</arg>
+        </group>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Visualize intersecting two BREP objects.  The last
+            argument specifies what portions of each to intersect; if
+            it is not specified, it defaults to SS:
+            <variablelist>
+              <varlistentry>
+                <term>PP</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  point from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>PC</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  curve from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>PS</term>
+                <listitem>
+                  <para>Intersect a point from the first object with a
+                  surface from the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>CC</term>
+                <listitem>
+                  <para>Intersect a curve from the first object with
+                  a curve from of the second.</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>CS</term>
+                <listitem>
+                  <para>Intersect a curve from the first object with a
+                  surface from the second</para>
+                </listitem>
+              </varlistentry>
+              <varlistentry>
+                <term>SS</term>
+                <listitem>
+                  <para>Intersect a surface from the first object with
+                  a surface from the second.</para>
+                </listitem>
+              </varlistentry>
+            </variablelist>
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>u</command>
+        <arg choice="req" rep="norepeat">obj2</arg>
+        <arg choice="req" rep="norepeat">output</arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the union of <replaceable>obj</replaceable> and
+            <replaceable>obj2</replaceable>, storing the result in
+            <replaceable>output</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>i</command>
+        <arg choice="req" rep="norepeat">obj2</arg>
+        <arg choice="req" rep="norepeat">output</arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the intersection of <replaceable>obj</replaceable>
+            and <replaceable>obj2</replaceable>, storing the result in
+            <replaceable>output</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>-</command>
+        <arg choice="req" rep="norepeat">obj2</arg>
+        <arg choice="req" rep="norepeat">output</arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the difference of <replaceable>obj</replaceable> and
+            <replaceable>obj2</replaceable>, storing the result in
+            <replaceable>output</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>x</command>
+        <arg choice="req" rep="norepeat">obj2</arg>
+        <arg choice="req" rep="norepeat">output</arg>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the exclusive or of <replaceable>obj</replaceable>
+            and <replaceable>obj2</replaceable>, storing the result in
+            <replaceable>output</replaceable>.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>csg</command>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the specified B-Rep and attempt to generate a CSG
+	    implicit boolean tree that will define the same solid
+	    shape.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection xml:id='examples'>
+    <title>EXAMPLES</title>
+    <example>
+      <title>Info</title>
+      <variablelist>
+        <varlistentry>
+          <term><prompt>mged&gt; </prompt><userinput>brep obj.randomobj info</userinput></term>
+          <listitem>
+            <para>This outputs general information about
+            obj.randomobj, including counts of various entity types
+            such as surfaces, curves, vertices, etc.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><prompt>mged&gt; </prompt><userinput>brep obj.randomobj info F 2</userinput></term>
+          <listitem>
+            <para>Output info about the 2nd face of the BREP object
+            obj.randomobj.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </example>
+    <example>
+      <title>Plot</title>
+      <variablelist>
+        <varlistentry>
+          <term><prompt>mged&gt; </prompt><userinput>brep obj.randomobj plot S 1-3</userinput></term>
+          <listitem>
+            <para>This plots the 1st through 3rd surfaces of
+            obj.randomobj in the graphics display window.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </example>
+    <example>
+      <title>Intersect</title>
+      <variablelist>
+        <varlistentry>
+          <term><prompt>mged&gt; </prompt><userinput>brep obj.randomobj intersect sph2.randomobj 2 4</userinput></term>
+          <listitem>
+            <para>This displays the intersection of obj.randomobj's
+            2nd surface with sph2.randomobj's 4th surface.</para>
+          </listitem>
+        </varlistentry>
+        <varlistentry>
+          <term><prompt>mged&gt; </prompt><userinput>brep obj.randomobj intersect sph2.randomobj 3 2 PC</userinput></term>
+          <listitem>
+            <para>This displays the intersection of obj.randomobj's
+            3rd point with sph2.randomobj's 2nd curve.</para>
+          </listitem>
+        </varlistentry>
+      </variablelist>
+    </example>
+
+  </refsection>
+
+  <refsection xml:id='author'>
+    <title>AUTHOR</title>
+    <para>BRLCAD-TEAM</para>
+  </refsection>
+
+  <refsection xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+</refentry>
+

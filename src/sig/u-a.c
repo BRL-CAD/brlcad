@@ -22,9 +22,7 @@
  */
 
 #include "common.h"
-
-#include <stdio.h>
-
+#include "bio.h"
 
 int
 main(void)
@@ -33,6 +31,9 @@ main(void)
     unsigned short ibuf[MAXBUF];
 
     int n, i;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {
 	for (i=0; i < n; ++i)

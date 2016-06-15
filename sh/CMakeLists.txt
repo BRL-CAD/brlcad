@@ -25,6 +25,7 @@ set(noinst_SCRIPTS
   copyright.sh
   enumerate.sh
   footer.sh
+  fs2org.sh
   header.sh
   indent.sh
   ios-icons.sh
@@ -34,7 +35,6 @@ set(noinst_SCRIPTS
   make_rpm.sh
   news2tracker.sh
   template.sh
-  tracker.sh
   ws.sh
   )
 CMAKEFILES(${sh_SCRIPTS})

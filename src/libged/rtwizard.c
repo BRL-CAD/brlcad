@@ -226,7 +226,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
-    char rt[256] = {0};
     char rtscript[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -238,20 +237,18 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_trunc(gedp->ged_result_str, 0);
 
     if (gedp->ged_gvp->gv_perspective > 0)
-	/* btclsh rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
-	/* btclsh rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
+	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
 	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-	snprintf(rt, 256, "%s/btclsh", bin);
 	snprintf(rtscript, 256, "%s/rtwizard", bin);
     } else {
-	snprintf(rt, 256, "btclsh");
 	snprintf(rtscript, 256, "rtwizard");
     }
 
@@ -263,7 +260,6 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = rt;
     *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";

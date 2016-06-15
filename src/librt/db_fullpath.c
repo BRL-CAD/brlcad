@@ -606,10 +606,14 @@ cyclic_path(const struct db_full_path *fp, const char *name)
 
     depth = fp->fp_len - 1;
 
-    if (name && !name[0] == '\0') {
+    if (name[0] != '\0') {
 	test_name = name;
     } else {
-	test_name = DB_FULL_PATH_CUR_DIR(fp)->d_namep;
+	const struct directory *dp = DB_FULL_PATH_CUR_DIR(fp);
+	if (!dp)
+	    return 0;
+
+	test_name = dp->d_namep;
     }
 
     /* check the path to see if it is groundhog day */

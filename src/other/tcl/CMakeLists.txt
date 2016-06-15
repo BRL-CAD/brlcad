@@ -133,7 +133,9 @@ INCLUDE(${TCL_SOURCE_DIR}/CMake/tcl.cmake)
 
 #-----------------------------------------------------------------------------
 # Our replacement for SC_CONFIG_MANPAGES
-ADD_SUBDIRECTORY(doc)
+if(NOT TCL_DISABLE_MANPAGES)
+  ADD_SUBDIRECTORY(doc)
+endif(NOT TCL_DISABLE_MANPAGES)
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets

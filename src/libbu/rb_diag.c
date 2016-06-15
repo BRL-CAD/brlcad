@@ -25,7 +25,7 @@
 #include <math.h>
 
 #include "bu/rb.h"
-#include "./rb_internals.h"
+#include "./rb.h"
 
 
 static int d_order;	/* Used by describe_node() */

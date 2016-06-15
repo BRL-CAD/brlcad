@@ -222,6 +222,7 @@ typedef enum {
     BU_OPT_DOCBOOK /* TODO */
 } bu_opt_format_t;
 
+
 /**
  * Construct a textual description of the options defined by
  * the array.
@@ -234,6 +235,9 @@ typedef enum {
  *
  * Opt_col specifies how wide the options column is, and desc_cols
  * specifies how wide the description column is.
+ *
+ * This structure is currently experimental and likely will change
+ * as we find out what is needed.
  */
 
 /* TODO - support actually using the struct... */
@@ -250,7 +254,26 @@ struct bu_opt_desc_opts {
     /* Report the longopt version(s) of an option
      * even when it has a shortopt */
     int show_all_longopts;
+    /* It may not be desirable to print all options -
+     * the caller may supply a space separated list
+     * of options to accept or reject.  Only one list
+     * may be supplied at a time - filtering is either
+     * accept or reject, not both at once.*/
+    const char *accept;
+    const char *reject;
 };
+
+/**
+ * initialize an bu_opt_desc_opts struct.
+ * offset = 2 is a default offset into ...
+ * option_columns = 28 is the index of ...
+ * description_columns = 50 is ...
+ *
+ * FIXME: these three new magic numbers must be documented (why these
+ * particular values), enough info to know how to update them or
+ * recognize that their value is right or wrong.
+ */
+#define BU_OPT_DESC_OPTS_INIT_ZERO { BU_OPT_ASCII, 2, 28, 50, NULL, NULL, NULL, 1, NULL, NULL }
 
 /**
  *
@@ -335,6 +358,8 @@ BU_EXPORT extern int bu_opt_str(struct bu_vls *msg, int argc, const char **argv,
 BU_EXPORT extern int bu_opt_vls(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** Process 1 or 3 arguments to set a bu_color */
 BU_EXPORT extern int bu_opt_color(struct bu_vls *msg, int argc, const char **argv, void *set_var);
+/** Process 1 or 3 arguments to set a vect_t */
+BU_EXPORT extern int bu_opt_vect_t(struct bu_vls *msg, int argc, const char **argv, void *set_var);
 /** @} */
 
 

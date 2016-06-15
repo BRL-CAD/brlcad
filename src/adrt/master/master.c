@@ -22,53 +22,39 @@
  */
 
 #include "master.h"
+
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
 
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
 
+#ifdef HAVE_GETOPT_H
+#  include <getopt.h>
+#endif
 
+#include <tinycthread.h>
+#include <zlib.h>
 
-#include "camera.h"
-#include "dispatcher.h"		/* Dispatcher that creates work units */
-#include "compnet.h"		/* Component Networking, Sends Component Names via Network */
+#include "bnetwork.h"
+#include "bio.h"
+
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
+
 #include "adrt.h"		/* adrt Defines */
 #include "adrt_struct.h"	/* adrt common structs */
 #include "tienet.h"
 #include "tienet_master.h"
+#include "camera.h"
+#include "dispatcher.h"		/* Dispatcher that creates work units */
+#include "compnet.h"		/* Component Networking, Sends Component Names via Network */
 
-/* Networking Includes */
-#ifdef HAVE_SYS_TYPES_H
-#  include <sys/types.h>
-#endif
-#ifdef HAVE_SYS_SOCKET_H
-#  include <sys/socket.h>
-#endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h>
-#endif
-#ifdef HAVE_NETINET_IN_H
-#  include <netinet/in.h>
-#endif
-#ifdef HAVE_ARPA_INET_H
-#  include <arpa/inet.h>
-#endif
-
-#if ADRT_USE_COMPRESSION
-#  include <zlib.h>
-#endif
-
-#ifdef HAVE_GETOPT_H
-# include <getopt.h>
-#endif
-
-#include "bio.h"
 
 /* socket structure */
 typedef struct master_socket_s
@@ -96,20 +82,19 @@ typedef struct master_s
     tienet_sem_t wait_sem;
 
     tienet_buffer_t buf;
-#if ADRT_USE_COMPRESSION
     tienet_buffer_t buf_comp;
-#endif
 
     uint32_t frame_ind;
     uint8_t slave_data[64];
     uint32_t slave_data_len;
-    pthread_t networking_thread;
+    thrd_t networking_thread;
     uint32_t active_connections;
     uint32_t alive;
 } master_t;
 
 
-void* master_networking(void *ptr);
+void master_dispatcher_init();
+int* master_networking(void *ptr);
 void master_result(tienet_buffer_t *result);
 
 master_t master;
@@ -126,9 +111,7 @@ master_setup()
     master.frame_ind = 0;
 
     TIENET_BUFFER_INIT(master.buf);
-#if ADRT_USE_COMPRESSION
     TIENET_BUFFER_INIT(master.buf_comp);
-#endif
 
     /* -1 indicates this slot is not used and thus does not contain an open project. */
     for (i = 0; i < ADRT_MAX_WORKSPACE_NUM; i++)
@@ -147,7 +130,7 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     tienet_master_init(port, master_result, list, exec, 5, ADRT_VER_KEY, bu_debug & BU_DEBUG_UNUSED_1);
 
     /* Launch a thread to handle networking */
-    pthread_create(&master.networking_thread, NULL, master_networking, &obs_port);
+    thrd_create(&master.networking_thread, (thrd_start_t)master_networking, &obs_port);
 
     /* Connect to the component Server */
     compnet_connect(comp_host, ISST_COMPNET_PORT);
@@ -173,12 +156,10 @@ master_init(int port, int obs_port, char *list, char *exec, char *comp_host)
     master_dispatcher_free();
 
     TIENET_BUFFER_FREE(master.buf);
-#if ADRT_USE_COMPRESSION
     TIENET_BUFFER_FREE(master.buf_comp);
-#endif
 
     /* Wait for networking thread to end */
-    pthread_join(master.networking_thread, NULL);
+    thrd_join(master.networking_thread, NULL);
 }
 
 
@@ -222,7 +203,7 @@ master_result(tienet_buffer_t *result)
 
 	    /* Only does 24-bit right now */
 	    for (i = 0; i < tile.size_y; i++) {
-		bcopy(&rgb_data[3*ind], &master.buf.data[3*ind2], 3*tile.size_x);
+		memcpy(&master.buf.data[3*ind2], &rgb_data[3*ind], 3*tile.size_x);
 		ind += tile.size_x;
 		ind2 += master.image_w;
 	    }
@@ -240,7 +221,7 @@ master_result(tienet_buffer_t *result)
 	case ADRT_WORK_SHOTLINE:
 	    {
 		tienet_buffer_t selection_buf;
-		uint32_t i, num, tind;
+		uint32_t num, tind;
 		uint8_t c;
 		char name[256];
 
@@ -282,7 +263,7 @@ master_result(tienet_buffer_t *result)
 		    tind += 1;
 
 		    /* the name */
-		    bcopy(&result->data[tind], name, c);
+		    memcpy(name, &result->data[tind], c);
 		    tind += c;
 
 		    /* skip over the thickness */
@@ -292,7 +273,7 @@ master_result(tienet_buffer_t *result)
 		    TCOPY(uint8_t, &c, 0, selection_buf.data, selection_buf.ind);
 		    selection_buf.ind += 1;
 
-		    bcopy(name, &selection_buf.data[selection_buf.ind], c);
+		    memcpy(&selection_buf.data[selection_buf.ind], name, c);
 		    selection_buf.ind += c;
 		}
 
@@ -305,7 +286,7 @@ master_result(tienet_buffer_t *result)
 		/* The data that will be sent to the observer */
 		TIENET_BUFFER_SIZE(master.buf, result->ind - ind + 1);
 		master.buf.ind = 0;
-		bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
+		memcpy(&master.buf.data[master.buf.ind], &result->data[ind], result->ind - ind);
 		master.buf.ind += result->ind - ind;
 	    }
 	    break;
@@ -314,7 +295,7 @@ master_result(tienet_buffer_t *result)
 	    /* The data that will be sent to the observer */
 	    TIENET_BUFFER_SIZE(master.buf, result->ind - ind);
 	    master.buf.ind = 0;
-	    bcopy(&result->data[ind], &master.buf.data[master.buf.ind], result->ind - ind);
+	    memcpy(&master.buf.data[master.buf.ind], &result->data[ind], result->ind - ind);
 	    master.buf.ind += result->ind - ind;
 	    update = 1;
 	    break;
@@ -332,7 +313,7 @@ master_result(tienet_buffer_t *result)
 }
 
 
-void*
+int *
 master_networking(void *ptr)
 {
     master_socket_t *sock, *tmp;
@@ -384,8 +365,24 @@ master_networking(void *ptr)
 	while (master_listener_result == 1)
 	    sleep(0);
 	/* if both sockets are listening, background. */
-	if (master_listener_result == 0 && observer_listener_result == 0)
+	if (master_listener_result == 0 && observer_listener_result == 0) {
+#ifdef HAVE_WORKING_DAEMON_FUNCTION
 	    daemon(0, 0);
+#else
+	    switch(fork()) {
+	    case 0:
+		/* child lives */
+		break;
+	    case -1:
+		perror("fork failed");
+		bu_exit(1, NULL);
+		break;
+	    default:
+		/* kill parent */
+		bu_exit(0, NULL);
+	    }
+#endif
+	}
     }
 
     addrlen = sizeof(observer_addr);
@@ -504,7 +501,7 @@ master_networking(void *ptr)
 			tienet_recv(sock->num, master.slave_data, master.slave_data_len);
 
 			op = master.slave_data[0];
-			bcopy(&master.slave_data[1], &wid, 2);
+			memcpy(&wid, &master.slave_data[1], 2);
 
 			switch (op) {
 			    case ADRT_WORK_FRAME_ATTR:
@@ -556,7 +553,7 @@ master_networking(void *ptr)
 			/* Size of result data */
 			tienet_send(sock->num, &master.buf.ind, 4);
 
-#if ADRT_USE_COMPRESSION
+#if defined(ADRT_USE_COMPRESSION) && ADRT_USE_COMPRESSION
 			{
 			    unsigned long dest_len;
 			    unsigned int comp_size;

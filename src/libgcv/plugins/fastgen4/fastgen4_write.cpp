@@ -32,10 +32,10 @@
 #include <cmath>
 #include <fstream>
 #include <iomanip>
+#include <map>
 #include <set>
 #include <sstream>
 #include <stdexcept>
-#include <map>
 
 
 namespace
@@ -1783,7 +1783,7 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
-// Returns the partition type and a pointer to the half's matrix within the region.
+// Returns the partition type and the halfspace's matrix within the region.
 enum CompspltPartitionType {compsplt_partition_none, compsplt_partition_intersected, compsplt_partition_subtracted};
 typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
 
@@ -1794,6 +1794,9 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     RT_CK_DBI(&db);
     RT_CK_DIR(&parent_region_dir);
     RT_CK_DIR(&half_dir);
+
+    if (half_dir.d_minor_type != ID_HALF)
+	throw std::logic_error("identify_compsplt(): not a halfspace");
 
     DBInternal parent_region_internal(db, parent_region_dir);
     const rt_comb_internal &parent_region = *static_cast<rt_comb_internal *>
@@ -2540,9 +2543,10 @@ fastgen4_write(struct gcv_context *context, const struct gcv_opts *gcv_options,
 }
 
 
-extern "C" {
+extern "C"
+{
     struct gcv_filter gcv_conv_fastgen4_write =
-    {"FASTGEN4 Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
+    {"FASTGEN4 Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_FASTGEN, NULL, NULL, fastgen4_write};
 }
 
 

@@ -82,7 +82,7 @@ ged_ocenter(struct ged *gedp, int argc, const char *argv[])
 
     if (argc == 2) {
 	VSCALE(center, oldCenter, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, center);
+	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return GED_OK;
     }

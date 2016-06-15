@@ -904,7 +904,7 @@ Engineering Company, 2002):</para>
 	  <para><option>-R refset_name</option> - specifies a desired reference set (which Unigraphics uses to provide additional control over assembly components), overriding the reference set specified in the Unigraphics model.</para>
 	</listitem>
 	<listitem>
-	  <para><option>-f</option> - facetizes all the geometry. If this option is not specified, the converter will attempt to create CSG equivalent geometry wherever possible. (Note that this option is experimental.)</para>
+	  <para><option>-f</option> - facetizes all the geometry. If this option is not specified, the converter will attempt to create CSG equivalent geometry wherever possible.</para>
 	</listitem>
 	<listitem>
 	  <para><option>-s</option> - lists all features that were attempted to convert to CSG. (This option and the <option>-f</option> option are mutually exclusive.)</para>

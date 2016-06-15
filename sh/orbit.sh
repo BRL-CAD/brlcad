@@ -43,6 +43,9 @@ WIDTH=512
 HEIGHT=512
 ELEVATION=35
 
+echo "DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n"
+sleep 1
+
 if test "$2" = "" ; then
     echo "Usage: orbit.sh [-w <width>] [-n <height>] [-e <elevation>] filename.g obj1 obj2..."
     exit 1

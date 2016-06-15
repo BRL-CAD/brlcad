@@ -2260,7 +2260,9 @@ namespace eval ArcherCore {
     }
 
     set mTarget $target
-    file copy -force $mTargetCopy $mTarget
+    set t [::clock seconds]
+    ::file mtime $mTargetCopy $t
+    ::file copy -force $mTargetCopy $mTarget
 }
 
 ::itcl::body ArcherCore::exportDb {} {
@@ -3755,25 +3757,20 @@ namespace eval ArcherCore {
 	return ""
     }
 
-    set i 0
+    set tlist [$itk_component(ged) lt -c " " $_comb]
+    set tlen [llength $tlist]
 
-    set tlist {}
-    foreach item [regsub -all {/|/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
-	lappend tlist [lindex $item 1]
-	incr i
+    if {$tlen >= $mMaxCombMembersShown} {
+	if {$_wflag} {
+	    set j [lsearch $mCombWarningList $_comb]
 
-	if {$i >= $mMaxCombMembersShown} {
-	    if {$_wflag} {
-		set j [lsearch $mCombWarningList $_comb]
-
-		if {$j == -1} {
-		    tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
-		    lappend mCombWarningList $_comb
-		}
+	    if {$j == -1} {
+		tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
+		lappend mCombWarningList $_comb
 	    }
-
-	    break
 	}
+
+	set tlist [lrange $tlist 0 $mMaxCombMembersShown-1]
     }
 
     return $tlist
@@ -5133,7 +5130,7 @@ namespace eval ArcherCore {
 
 	if {$mSelectedObj != ""} {
 	    if {$mEnableListView} {
-		selectTreePath $mSelectedObj
+		selectTreePath $mSelectedObj 
 	    } else {
 		if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
 		    if {[llength $paths]} {
@@ -5344,6 +5341,8 @@ namespace eval ArcherCore {
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::OpenTarget {target} {
+    global tcl_platform
+
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""

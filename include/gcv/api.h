@@ -132,7 +132,7 @@ struct gcv_filter {
     const enum gcv_filter_type filter_type;
 
     /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
-    const mime_model_t mime_type;
+    const bu_mime_model_t mime_type;
 
     /**
      * PRIVATE

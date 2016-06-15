@@ -57,7 +57,7 @@ ged_eye(struct ged *gedp, int argc, const char *argv[])
 	MAT4X3PNT(eye, gedp->ged_gvp->gv_view2model, xlate);
 	VSCALE(eye, eye, gedp->ged_wdbp->dbip->dbi_base2local);
 
-	bn_encode_vect(gedp->ged_result_str, eye);
+	bn_encode_vect(gedp->ged_result_str, eye, 1);
 	return GED_OK;
     }
 

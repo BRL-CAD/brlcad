@@ -877,6 +877,7 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     struct bu_list vhead;
     struct rt_db_internal dbintern;
     struct rt_db_internal *ip = &dbintern;
+    struct rt_view_info info;
 
     BU_LIST_INIT(&vhead);
 
@@ -888,10 +889,10 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     }
 
     if (gvp && gvp->gv_adaptive_plot && ip->idb_meth->ft_adaptive_plot) {
-	struct rt_view_info info;
 
 	info.vhead = &vhead;
 	info.tol = tsp->ts_tol;
+	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
 
 	info.point_spacing = solid_point_spacing_for_view(sp, ip, gvp);
 
@@ -902,8 +903,9 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
 
 	ret = ip->idb_meth->ft_adaptive_plot(ip, &info);
     } else if (ip->idb_meth->ft_plot) {
+	info.bot_threshold = (gvp) ? gvp->gv_bot_threshold : 0;
 	ret = ip->idb_meth->ft_plot(&vhead, ip, tsp->ts_ttol,
-		tsp->ts_tol, NULL);
+		tsp->ts_tol, &info);
     }
 
     rt_db_free_internal(ip);
@@ -936,12 +938,14 @@ redraw_solid(struct solid *sp, struct db_i *dbip, struct db_tree_state *tsp, str
 
 
 int
-dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *))
+dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions)
 {
     int ret = 0;
     struct solid *sp;
     for (BU_LIST_FOR(sp, solid, &gdlp->dl_headSolid)) {
-	ret += redraw_solid(sp, dbip, tsp, gvp);
+	if (!skip_subtractions || (skip_subtractions && !sp->s_soldash)) {
+	    ret += redraw_solid(sp, dbip, tsp, gvp);
+	}
     }
     if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
 	(*callback)(gdlp);
@@ -1076,8 +1080,27 @@ append_solid_to_display_list(
 	    wire_color[BLU] = (unsigned char)bview_data->wireframe_color[BLU];
             solid_set_color_info(sp, wire_color, tsp);
         } else {
-            solid_set_color_info(sp, NULL, tsp);
-        }
+	    const char *attr_color = bu_avs_get(&ip->idb_avs, db5_standard_attribute(ATTR_COLOR));
+	    if (attr_color) {
+		int i;
+		unsigned char obj_color[3];
+		int color[3];
+		int color_cnt = sscanf(attr_color, "%3i%*c%3i%*c%3i", color+0, color+1, color+2);
+		if (color_cnt == 3 && color[0] >= 0 && color[1] >= 0 && color[2] >= 0) {
+		    for (i = 0; i < 3; i++) {
+			if (color[i] > 255) color[i] = 255;
+		    }
+		    obj_color[RED] = (unsigned char)color[RED];
+		    obj_color[GRN] = (unsigned char)color[GRN];
+		    obj_color[BLU] = (unsigned char)color[BLU];
+		    solid_set_color_info(sp, obj_color, tsp);
+		} else {
+		    solid_set_color_info(sp, NULL, tsp);
+		}
+	    } else {
+		solid_set_color_info(sp, NULL, tsp);
+	    }
+	}
     }
 
     sp->s_dlist = 0;
@@ -1473,7 +1496,6 @@ dl_plot(struct bu_list *hdlp, FILE *fp, mat_t model2view, int floating, mat_t ce
 
                     if (Three_D) {
                         /* Could check for differences from last color */
-                       /* Could check for differences from last color */
                         pl_color(fp,
                                  sp->s_color[0],
                                  sp->s_color[1],
@@ -1769,124 +1791,6 @@ dl_png(struct bu_list *hdlp, mat_t model2view, fastf_t perspective, vect_t eye_p
     }
 }
 
-static struct bu_structparse polygon_desc[] = {
-    {"%d", 1, "magic", bu_offsetof(struct polygon_header, magic), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "ident", bu_offsetof(struct polygon_header, ident), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "interior", bu_offsetof(struct polygon_header, interior), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%f", 3, "normal", bu_offsetof(struct polygon_header, normal), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%c", 3, "color", bu_offsetof(struct polygon_header, color), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"%d", 1, "npts", bu_offsetof(struct polygon_header, npts), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",   0, NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-static struct bu_structparse vertex_desc[] = {
-    {"%f", 3, "vertex", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
-    {"",   0, (char *)0, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
-};
-
-void
-dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp)
-{
-    int pno = 1;
-
-    struct display_list *gdlp;
-    struct display_list *next_gdlp;
-    struct solid *sp;
-    struct bn_vlist *vp;
-#define MAX_VERTS 10000
-    vect_t verts[MAX_VERTS];
-    struct bu_external obuf;
-
-    gdlp = BU_LIST_NEXT(display_list, hdlp);
-    while (BU_LIST_NOT_HEAD(gdlp, hdlp)) {
-        next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
-
-        FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
-            for (BU_LIST_FOR(vp, bn_vlist, &(sp->s_vlist))) {
-                int i;
-                int nused = vp->nused;
-                int *cmd = vp->cmd;
-                point_t *pt = vp->pt;
-                for (i = 0; i < nused; i++, cmd++, pt++) {
-                    /* For each polygon, spit it out.  Ignore vectors */
-                    switch (*cmd) {
-                        case BN_VLIST_LINE_MOVE:
-                            /* Move, start line */
-                            break;
-                        case BN_VLIST_LINE_DRAW:
-                            /* Draw line */
-                            break;
-                        case BN_VLIST_POLY_VERTNORM:
-                        case BN_VLIST_TRI_VERTNORM:
-                            /* Ignore per-vertex normal */
-                            break;
-                        case BN_VLIST_POLY_START:
-                        case BN_VLIST_TRI_START:
-                            /* Start poly marker & normal, followed by POLY_MOVE */
-                            ph->magic = POLYGON_HEADER_MAGIC;
-                            ph->ident = pno++;
-                            ph->interior = 0;
-                            memcpy(ph->color, sp->s_basecolor, 3);
-                            ph->npts = 0;
-                            /* Set surface normal (vl_pnt points outward) */
-                            VMOVE(ph->normal, *pt);
-                            break;
-                        case BN_VLIST_POLY_MOVE:
-                        case BN_VLIST_TRI_MOVE:
-                            /* Start of polygon, has first point */
-                            /* fall through to... */
-                        case BN_VLIST_POLY_DRAW:
-                        case BN_VLIST_TRI_DRAW:
-                            /* Polygon Draw */
-                            if (ph->npts >= MAX_VERTS) {
-                                bu_log("excess vertex skipped\n");
-                                break;
-                            }
-                            VMOVE(verts[ph->npts], *pt);
-                            ph->npts++;
-                            break;
-                        case BN_VLIST_POLY_END:
-                        case BN_VLIST_TRI_END:
-                            /*
-                             * End Polygon.  Point given is repeat of
-                             * first one, ignore it.
-                             * XXX note:  if poly_markers was not set,
-                             * XXX poly will end with next POLY_MOVE.
-                             */
-                            if (ph->npts < 3) {
-                                bu_log("polygon with %d points discarded\n", ph->npts);
-                                break;
-                            }
-                            if (bu_struct_export(&obuf, (void *)&ph, polygon_desc) < 0) {
-                                bu_log("header export error\n");
-                                break;
-                            }
-                            if (bu_struct_put(fp, &obuf) != obuf.ext_nbytes) {
-                                perror("bu_struct_put");
-                                break;
-                            }
-                            bu_free_external(&obuf);
-                            /* Now export the vertices */
-                            vertex_desc[0].sp_count = ph->npts * 3;
-                            if (bu_struct_export(&obuf, (void *)verts, vertex_desc) < 0) {
-                                bu_log("vertex export error\n");
-                                break;
-                            }
-                            if (bu_struct_put(fp, &obuf) != obuf.ext_nbytes) {
-                                perror("bu_struct_wrap_buf");
-                                break;
-                            }
-                            bu_free_external(&obuf);
-                            ph->npts = 0;                /* sanity */
-                            break;
-                    }
-                }
-            }
-      }
-
-        gdlp = next_gdlp;
-    }
-}
 
 static void
 ps_draw_header(FILE *fp, char *font, char *title, char *creator, int linewidth, fastf_t scale, int xoffset, int yoffset)

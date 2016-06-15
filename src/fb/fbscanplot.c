@@ -107,6 +107,9 @@ main(int argc, char **argv)
     int x;
     int yoffset;	/* position of plot on screen */
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (!get_args(argc, argv)) {
 	bu_exit(1, "%s", usage);
     }

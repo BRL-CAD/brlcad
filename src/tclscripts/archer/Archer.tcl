@@ -1093,7 +1093,7 @@ package provide Archer 1.0
 	set execpath [file dirname [file normalize $argv0]]
 
 	if {$tcl_platform(platform) == "windows"} {
-	    set rtwizname [file join $execpath rtwizard.bat]
+	    set rtwizname [file join $execpath rtwizard.exe]
 	} else {
 	    set rtwizname [file join $execpath rtwizard]
 	}
@@ -2259,43 +2259,47 @@ package provide Archer 1.0
 	}
     }
 
-    # only append bindings once
-    if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
-	bind $itk_interior <Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+    # This bit of code introduces a performance penalty when using the shift-grips --
+    # noticed when manipulating the view while displaying a fairly large geometry.
+    if {0} {
+	# only append bindings once
+	if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
+	    bind $itk_interior <Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+	    bind $itk_interior <Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Control-Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Control-Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <KeyRelease-Control_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Control_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+	}
     }
 
     $itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
@@ -2532,7 +2536,7 @@ proc Archer::get_html_data {helpfile} {
 
 proc Archer::get_html_man_data {cmdname} {
     global archer_help_data
-    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann en $cmdname.html]]
+    set help_fd [open [file join [bu_brlcad_data "doc/html"] mann $cmdname.html]]
     set archer_help_data [read $help_fd]
     close $help_fd
 }
@@ -3438,7 +3442,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    ManBrowser $itk_interior.archerMan -parentName Archer
+    ManBrowser $itk_interior.archerMan -useToC 1 -listDir n -parentName Archer
     $itk_interior.archerMan center
 
     if {0} {

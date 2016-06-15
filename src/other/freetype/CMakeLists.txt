@@ -102,6 +102,10 @@ set(VERSION_MINOR "5")
 set(VERSION_PATCH "5")
 set(PROJECT_VERSION ${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_PATCH})
 
+if(MSVC)
+  add_definitions(-DFREETYPE_DLL_EXPORTS)
+endif(MSVC)
+
 # Compiler definitions for building the library
 add_definitions(-DFT2_BUILD_LIBRARY)
 
@@ -205,6 +209,7 @@ add_library(freetype
  #${PRIVATE_HEADERS}
   ${BASE_SRCS}
 )
+set_target_properties(freetype PROPERTIES VERSION ${PROJECT_VERSION} SOVERSION 6)
 
 if (BUILD_FRAMEWORK)
   set_property(SOURCE ${PUBLIC_CONFIG_HEADERS}

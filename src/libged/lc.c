@@ -138,6 +138,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     char *file_name = NULL;
     int file_name_flag_cnt = 0;
     int sort_column = 1;
+    int find_mismatched = 0;
     int sort_column_flag_cnt = 0;
     int find_duplicates_flag = 0;
     int skip_special_duplicates_flag = 0;
@@ -189,7 +190,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
 
     bu_optind = 1; /* re-init bu_getopt() */
-    while ((c = bu_getopt(argc, (char * const *)argv, "dsrz012345f:")) != -1) {
+    while ((c = bu_getopt(argc, (char * const *)argv, "dmsrz012345f:")) != -1) {
 	switch (c) {
 	    case '0':
 	    case '1':
@@ -203,6 +204,9 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	    case 'f':
 		file_name_flag_cnt++;
 		file_name = bu_optarg;
+		break;
+	    case 'm':
+		find_mismatched = 1;
 		break;
 	    case 's':
 		skip_special_duplicates_flag = 1;
@@ -280,6 +284,10 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 
     if (error_cnt > 0) { return GED_ERROR; }
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     group_name = argv[1];
 
     /* The 7 is for the "-name" and '\0' */
@@ -333,6 +341,35 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    if (find_mismatched) {
+	int im = 0;
+	bu_sort((void *) regions, BU_PTBL_LEN(&results2), sizeof(struct region_record), cmp_regions, NULL);
+
+	while (im < (int)BU_PTBL_LEN(&results2)) {
+	    int found_all_matches = 0;
+	    int jm = im + 1;
+	    int mismatch = 0;
+	    while (!found_all_matches) {
+		if (jm == (int)BU_PTBL_LEN(&results2) || bu_strcmp(regions[im].region_id, regions[jm].region_id)) {
+		    /* Found all matches - set ignore flags */
+		    int km = 0;
+		    int ignored = (mismatch) ? 0 : 1;
+		    found_all_matches = 1;
+		    for (km = im; km < jm; km++) {
+			regions[km].ignore = ignored;
+			if (ignored) ignored_cnt++;
+		    }
+		    im = jm;
+		    continue;
+		}
+		if (bu_strcmp(regions[im].material_id, regions[jm].material_id)) mismatch++;
+		if (bu_strcmp(regions[im].los, regions[jm].los)) mismatch++;
+		jm++;
+	    }
+	}
+	goto print_results;
+    }
+
     if (find_duplicates_flag) {
 
 	bu_sort((void *) regions, BU_PTBL_LEN(&results2), sizeof(struct region_record), cmp_regions, NULL);
@@ -364,6 +401,7 @@ ged_lc(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+print_results:
     if (sort_column > 0) {
 	bu_sort((void *) regions, BU_PTBL_LEN(&results2), sizeof(struct region_record), sort_regions, (void *)&sort_column);
     }

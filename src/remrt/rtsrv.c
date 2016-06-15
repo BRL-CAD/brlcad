@@ -235,14 +235,8 @@ main(int argc, char **argv)
 	setpgrp();
 #endif
 
-	/*
-	 *  Unless controller process has specifically said
-	 *  that this is an interactive session, e.g., for a demo,
-	 *  drop to the lowest sensible priority.
-	 */
-	if (!interactive)  {
-	    bu_nice_set(19);		/* lowest priority */
-	}
+	/* Drop to the lowest sensible priority. */
+	bu_nice_set(19);
 
 	/* Close off the world */
 	fclose(stdin);

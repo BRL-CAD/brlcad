@@ -27,6 +27,8 @@
 #include "rt/tie.h"
 #include "adrt.h"
 #include "render.h"
+#include "tienet.h"
+
 
 #define RENDER_CAMERA_DOF_SAMPLES	13
 #define RENDER_CAMERA_PERSPECTIVE	0x0

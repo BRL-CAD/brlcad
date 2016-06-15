@@ -55,6 +55,9 @@ main(int argc, char **argv)
     double scale = 1.0;
     size_t ret;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc == 1 && isatty(fileno(stdin)))
 	printusage();
 

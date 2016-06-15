@@ -386,8 +386,9 @@ generate_brep(int count, ON_3dPoint *points)
 static void
 printusage(void)
 {
-	fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
+    fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
 }
+
 
 int
 main(int argc, char *argv[])
@@ -401,9 +402,9 @@ main(int argc, char *argv[])
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file breplicator.g):\n");
+	return 1;
     }
 
     bu_log("Breplicating...please wait...\n");

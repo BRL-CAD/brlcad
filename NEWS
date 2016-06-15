@@ -11,11 +11,55 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2014-XX-XX  Release 7.26.XX                                    ---
+--- 2016-05-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+This major release update of BRL-CAD culminates several years of
+development efforts to provide robust boundary representation (BREP)
+NURBS import and ray tracing support.  Our NURBS capability gets us a
+step closer to full hybrid representation modeling, supporting
+seamless transitioning and mixing of boundary representation geometry
+(e.g., NURBS or polygonal meshes) with implicit representation
+geometry (e.g., primitives with CSG).
+
+* fixed patch-g tool and E command infinite loop bug - Sean Morrison
+* improved NMG ray tracing fault tolerance - Sean Morrison
+* fixed color preservation issue with 3dm-g importer - Jon Engbert
+* added csg implicit hierarchy conversion to brep command - Cliff Yapp
+* fixed crash in clone when told to make zero copies - Cliff Yapp
+* fixed crash in search when using -above option - Cliff Yapp
+* extended nirt to list current and available formats - Sean Morrison
+* fixed NURBS wireframe drawing crash - Cliff Yapp
+* fixed firing of single rays using the rtshot tool - Sean Morrision
+* improved rcodes command feedback in the no changes case - Cliff Yapp
+* added brlman -S option to specify man page section  - Cliff Yapp
+* modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
+* extended burst and rtg3 to output 5 digit ID numbers - Nick Gerstner
+* improved draw command manual page documenation - Cliff Yapp
+* added lc -m option to report multi-material/los regions - Cliff Yapp
+* added new 'icv' image conversion tool w/ pix, bw, dpix, png, ppm
+	- Mohit Daga, Cliff Yapp, Sean Morrison, Erik Greenwald
+* ported 'burst' tool (batch mode only) to Windows - Cliff Yapp
+* removed mged pl command, use plot command instead - Sean Morrison
+* improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
+* added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
+* added draw -S for simplied wireframes, no subtractions - Cliff Yapp
+* added draw -L# to draw bounding boxes for large objects - Cliff Yapp
+* minor rtwizard graphical user interface reorganization - Cliff Yapp
+* ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
+* added gdiff -h help command-line option - Cliff Yapp
+* added facetize -m marching cubes option - Erik Greenwald
+* removed -I interactive option from rt/rtedge/remrt - Sean Morrison
+* improved pix-bw intensity averaging to closest integer - Cliff Yapp
+* removed pix-bw3 & bw3-pix tools, see pix-bw & bw-pix - Cliff Yapp
+* fixed pix-ppm to write out all image data - Sean Morrision
+* added libnetpbm for ppm image format support in icv - Cliff Yapp
+* added new algorithm to bot_decimate (via -f option) - Jon Engbert
+* fixed benchmark bug running from paths with spaces - Sean Morrison
+* fixed adjust command crash when working with BoTs - Daniel Roßberg
 * removed support for RLE v1 and v2 ('orle') image format - Cliff Yapp
 * fixed datum type 'in' command unit conversion bug - Cliff Yapp
+* fixed rpatch / patch-g line handling on Windows - Daniel Roßberg
 * added 'arb8' surface area value to analyze command - Kalpit Thakkar
 * added 'part' centroid reporting to analyze command - Brad Hollister
 * added new pixcrop utility for cropping pix images - Carl Moore
@@ -33,15 +77,22 @@ changes made.  See document footer for additional details.
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
 * fixed dbconcat -c crash when color table does not exist - Nick Reed
 * swapped meanings of search's -above/-below options - Sean Morrison
+* upgraded freetype to version 2.5.5 - Cliff Yapp
+* updated libregex to apply a fix for CVE-2015-2305 - Cliff Yapp
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed
+* improved robustness of bb command oriented box option - Peter Amidon
+* added example NURBS B-Rep geometry files from NIST - Cliff Yapp
 * removed "high resolution" options from all commands - Carl Moore
 * improved performance of archer loading large BoT models - Nick Reed
 * added evaluated shaded drawing preference mode and menu - Nick Reed
 * extensive improvements to NURBS Boolean evaluation - Nick Reed
 * added 'bot chull' for creating convex hull envelopes - Cliff Yapp
 * new manual page for the g-voxel exporter - Mandarj
+* improved performance of lc command - Peter Amidon
+* updated manual page for MGED's brep command - Peter Amidon
 * new manual page for the g-dot exporter - Shardul Chiplunkar
+* added sketch centroid support the analyze command - Peter Amidon
 * new Think. Invent. Create. splash screen for archer - Marc Tannous
 * improved pix-bw to support dual output streams - Carl Moore
 * added list option to attr command - Cliff Yapp
@@ -52,6 +103,8 @@ changes made.  See document footer for additional details.
 * gqa respects LIBRT_BOT_MINTIE environment variable - Ștefan Mirea
 * improved behavior of mged's draw command - Ștefan Mirea
 * fixed handling of extra whitespace in nirt commands - Ștefan Mirea
+* added g-ply exporter for Stanford PLY geometry format - Rishub Jain
+* added ply-g importer for Stanford PLY geometry format - Rishub Jain
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
@@ -70,7 +123,7 @@ changes made.  See document footer for additional details.
 	- Wu Jianbang, Nick Reed, Cliff Yapp
 * improved step-g assembly hierarchy import support - Keith Bowman
 * fixed rtweight when using the -G grid spacing option - Sean Morrison
-* fixed memory leaks in a number of pix utilities - Cezar Elnazi
+* fixed memory leaks in a number of pix utilities - Cezar Elnazli
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
 * added -v verbose output option to mged 'search' command - Cliff Yapp
@@ -362,7 +415,7 @@ received corrections and improvements.  The introductory article
 * "About BRL-CAD" article translation to Armenian - Karen Mgebrova
 * "About BRL-CAD" article translation to Italian
 	- Unknown Contributor, Tom Browder
-* improved handling of rgb/color attributes by adjust cmd - Cliff Yapp
+* improved 'adjust' command rgb/color attribute handling - Cliff Yapp
 * added initial support for step-g import of assemblies - Keith Bowman
 * added a basic SWIG spec file - Erik Greenwald
 * fixed referenced object highlighting in archer treeview - Bob Parker
@@ -393,7 +446,7 @@ received corrections and improvements.  The introductory article
 * improved tessellation of pipe bends for conversion - Richard Weiss
 * fixed keypoint vertex bug when editing extrude objects - Nick Reed
 * fixed eto error converting hyp objects with asc2g tool - Nick Reed
-# fixed mged bug processing edcodes command arguments - Bob Parker
+* fixed mged bug processing edcodes command arguments - Bob Parker
 * various improvements to NMG polygonal mesh processing robustness
 	- Nick Reed, Sean Morrison, Richard Weiss
 * improved bad face handling within the obj-g importer - Nick Reed
@@ -1104,7 +1157,7 @@ invalid geometry is now more robust.
 * added new -c character option to the loop command - Dawn Thomas
 * tire now checks for files instead of overwriting - Cliff Yapp
 * add new nirt formatting options, -L listing option - C. Yapp
-* fixed nirt's dest cmd's handling of file name string - Cliff Yapp
+* fixed nirt 'dest' command file name string handling - Cliff Yapp
 * modified mged nirt command to include air in results - Bob Parker
 
 
@@ -1696,7 +1749,7 @@ The rtarea command was added to MGED as well, along with rtweight.
 * added a -noleaf option to the mged pathlist command - Bob Parker
 * fixed potential infinite loop bug in BoT primitive - Bob Parker
 * no longer install tclsh/wish, use btclsh/bwish - Sean Morrison
-* added bot_merge mged cmd (combine 2 bots into 1) - Lee Butler
+* added 'bot_merge' mged command (combine 2 bots into 1) - Lee Butler
 
 ----------------------------------------------------------------------
 --- 2005-06-07  Release 7.2.6                                      ---
