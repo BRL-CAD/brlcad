@@ -332,9 +332,9 @@ analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 memfree:
     /* Free memory not stored in tables */
     for (i = 0; i < ncpus+1; i++) {
-	BU_PUT(local_state[i].left, struct bu_ptbl);
-	BU_PUT(local_state[i].right, struct bu_ptbl);
-	BU_PUT(local_state[i].both, struct bu_ptbl);
+	if (local_state[i] && local_state[i].left) BU_PUT(local_state[i].left, struct bu_ptbl);
+	if (local_state[i] && local_state[i].right) BU_PUT(local_state[i].right, struct bu_ptbl);
+	if (local_state[i] && local_state[i].both) BU_PUT(local_state[i].both, struct bu_ptbl);
 	if (local_state[i].left_name)  bu_free((void *)local_state[i].left_name, "left name");
 	if (local_state[i].right_name) bu_free((void *)local_state[i].right_name, "right name");
 	/*BU_PUT(state[i].resp, struct resource);*/
