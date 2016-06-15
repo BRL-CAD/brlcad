@@ -18,6 +18,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* Check if make still draws object after creation - the following
+  doesn't currently raytrace:
+
+  bin/mged -c test.g "make sph sph ; rt"
+
 * check these commits for documentation:
 
 
