@@ -81,7 +81,6 @@ main(int argc, char** argv)
 	}
     }
 
-    argc -= bu_optind;
     argv += bu_optind;
     inputFileName  = argv[0];
 

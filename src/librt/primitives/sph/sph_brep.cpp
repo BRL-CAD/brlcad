@@ -42,7 +42,10 @@ rt_sph_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     RT_ELL_CK_MAGIC(tip);
 
     ON_Sphere sph(tip->v, MAGNITUDE(tip->a));
-    *b = ON_BrepSphere(sph);
+
+    ON_Brep *sph_brep = ON_BrepSphere(sph);
+    **b = *sph_brep;
+    delete sph_brep;
 }
 
 

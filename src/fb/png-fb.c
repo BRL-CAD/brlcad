@@ -33,6 +33,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
 
@@ -170,7 +171,7 @@ main(int argc, char **argv)
     int bit_depth;
     int color_type;
     png_color_16p input_backgrd;
-    double gamma=1.0;
+    double gammaval=1.0;
     int file_width, file_height;
     unsigned char *image;
 
@@ -254,12 +255,12 @@ main(int argc, char **argv)
     } else
 	png_set_background(png_p, &def_backgrd, PNG_BACKGROUND_GAMMA_FILE, 0, 1.0);
 
-    if (!png_get_gAMA(png_p, info_p, &gamma))
-	gamma = 0.5;
-    png_set_gamma(png_p, def_screen_gamma, gamma);
+    if (!png_get_gAMA(png_p, info_p, &gammaval))
+	gammaval = 0.5;
+    png_set_gamma(png_p, def_screen_gamma, gammaval);
     if (verbose)
 	bu_log("file gamma: %f, additional screen gamma: %f\n",
-	       gamma, def_screen_gamma);
+	       gammaval, def_screen_gamma);
 
     if (verbose) {
 	if (png_get_interlace_type(png_p, info_p) == PNG_INTERLACE_NONE)
@@ -319,8 +320,7 @@ main(int argc, char **argv)
 
     if (xout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if (xout > (file_width-file_xoff))
-	xout = (file_width-file_xoff);
+    V_MIN(xout, (file_width-file_xoff));
     scanpix = xout;				/* # pixels on scanline */
 
     if (inverse)
@@ -329,8 +329,7 @@ main(int argc, char **argv)
     yout = scr_height - scr_yoff;
     if (yout < 0)
 	bu_exit(0, NULL);			/* off screen */
-    if (yout > (file_height-file_yoff))
-	yout = (file_height-file_yoff);
+    V_MIN(yout, (file_height-file_yoff));
 
     /* Only in the simplest case use multi-line writes */
     if (!one_line_only && multiple_lines > 0 && !inverse && !zoom &&
@@ -348,8 +347,8 @@ main(int argc, char **argv)
 	/* Zoom in, and center the display.  Use square zoom. */
 	int newzoom;
 	newzoom = scr_width/xout;
-	if (scr_height/yout < newzoom)
-	    newzoom = scr_height/yout;
+	V_MIN(newzoom, scr_height/yout);
+
 	if (inverse) {
 	    fb_view(fbp,
 		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),

@@ -63,6 +63,7 @@
 #  include <netinet/in.h> /* sockaddr */
 #  include <netinet/tcp.h> /* for TCP_NODELAY sockopt */
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
+#  include <sys/socket.h> /* accept, connect, send, recv, ... */
 #endif
 
 #endif /* BNETWORK_H */

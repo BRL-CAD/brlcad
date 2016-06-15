@@ -122,7 +122,10 @@ rt_tor_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *U
     ON_3dVector normal(tip->h);
     ON_Plane p(origin, normal);
     ON_Torus tor(p, tip->r_a, tip->r_h);
-    *b = Torus_Brep(tor);
+
+    ON_Brep *tor_brep = Torus_Brep(tor);
+    **b = *tor_brep;
+    delete tor_brep;
 }
 
 

@@ -92,9 +92,10 @@
 
 #include "common.h"
 
-/* for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
+/* needed for additional math defines on Windows when including math.h */
 #define _USE_MATH_DEFINES 1
 
+/* for sqrt(), sin(), cos(), rint(), M_PI, INFINITY (HUGE_VAL), and more */
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
@@ -176,6 +177,36 @@ __BEGIN_DECLS
 #endif
 #ifndef RAD2DEG
 #  define RAD2DEG	57.2957795130823208767981548141051703   /**< 180/pi */
+#endif
+
+
+/**
+ * It is necessary to have a representation of 1.0/0.0 or log(0),
+ * i.e., "infinity" that fits within the dynamic range of the machine
+ * being used.  This constant places an upper bound on the size object
+ * which can be represented in the model.  With IEEE 754 floating
+ * point, this may print as 'inf' and is represented with all 1 bits
+ * in the biased-exponent field and all 0 bits in the fraction with
+ * the sign indicating positive (0) or negative (1) infinity.
+ * However, we do not assume or rely on IEEE 754 floating point.
+ */
+#ifndef INFINITY
+#  if defined(HUGE_VAL)
+#    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+#  elif defined(MAXDOUBLE)
+#    define INFINITY ((fastf_t)MAXDOUBLE)
+#  elif defined(MAXFLOAT)
+#    define INFINITY ((fastf_t)MAXFLOAT)
+#  else
+     /* all else fails, just pick something big slightly over 32-bit
+      * single-precision floating point that has worked well before.
+      */
+#    define INFINITY ((fastf_t)1.0e40)
+#  endif
 #endif
 
 
@@ -476,12 +507,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * equal within a minimum representation tolerance.
  */
 #define HEQUAL(_a, _b)  HNEAR_EQUAL((_a), (_b), SMALL_FASTF)
-
-
-/**
- * clamp a value to a low/high number.
- */
-#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
 
 
 /** @brief Compute distance from a point to a plane. */
@@ -1610,6 +1635,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define V2MINMAX(min, max, pt) do { \
 	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
+
+/**
+ * clamp a value to a low/high number.
+ */
+#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
+
 
 /**
  * @brief Divide out homogeneous parameter from hvect_t, creating

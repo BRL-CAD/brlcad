@@ -25,6 +25,7 @@
 #define BU_VERSION_H
 
 #include "common.h"
+#include "bu/defines.h"
 
 __BEGIN_DECLS
 

@@ -33,7 +33,6 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "vmath.h"
 #include "fb.h"
 
 

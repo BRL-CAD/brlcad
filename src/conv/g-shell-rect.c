@@ -46,9 +46,7 @@
 #include "wdb.h"
 
 
-#define MAKE_TRIANGLES	0
-
-#define ABS(_x)	((_x)<0.0?(-(_x)):(_x))
+#define MAKE_TRIANGLES 0
 
 #define IN_SEG(_x, _a, _b)	(((_x) > _a + tol.dist && (_x) < _b - tol.dist) || \
 				 ((_x) < _a - tol.dist && (_x) > _b + tol.dist))
@@ -59,6 +57,7 @@ struct refine_rpp
     point_t min, max;
     fastf_t tolerance;
 };
+
 
 static struct bu_list add_rpp_head;
 static struct bu_list subtract_rpp_head;
@@ -72,6 +71,7 @@ struct refine_data
     struct bu_ptbl *new_edges;
 };
 
+
 struct nmg_shot_data
 {
     struct shell *s;
@@ -79,11 +79,13 @@ struct nmg_shot_data
     char *manifolds;
 };
 
+
 struct end_pt
 {
     struct vertex *v;
     point_t pt;
 };
+
 
 struct local_part
 {
@@ -93,96 +95,95 @@ struct local_part
     struct end_pt *in, *out;
 };
 
+
 static struct bu_ptbl verts;
 static struct xray *xy_rays;
 static struct xray *xz_rays;
 static struct xray *yz_rays;
 static struct rt_i *rtip;
 static struct bn_tol tol;
-static char *usage="Usage: %s [-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n\
-	[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
+static const char *usage=
+    "[-a rpp_args] [-R edge_tol] [-p plotfile] [-X lvl]\n"
+    "\t[-d debug_level] [-b] [-n] [-i initial_ray_dir] [-g cell_size] -o brlcad_output_file database.g object1 object2...\n";
 static char dir_ch[3]={ 'X', 'Y', 'Z' };
 
 static struct local_part *xy_parts=(struct local_part *)NULL;
 static struct local_part *xz_parts=(struct local_part *)NULL;
 static struct local_part *yz_parts=(struct local_part *)NULL;
 
-static int	initial_ray_dir=-1;
-static int	do_extra_rays=1;
-static long	face_count=0;
-static fastf_t	cell_size=50.0;
-static fastf_t	cell_size_sq=2500.0;
-static fastf_t	edge_tol=0.0;
+static int initial_ray_dir=-1;
+static int do_extra_rays=1;
+static long face_count=0;
+static fastf_t cell_size=50.0;
+static fastf_t cell_size_sq=2500.0;
+static fastf_t edge_tol=0.0;
 static struct rt_wdb *fd_out=NULL;
-static FILE	*fd_plot=NULL;
-static char	*output_file=(char *)NULL;
-static char	*plotfile;
-static short	vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
-static int	debug=0;
-static char	*token_seps=" \t,;\n";
-static int	cur_dir=0;
-static int	cell_count[3];
-static fastf_t	decimation_tol=0.0;
-static fastf_t	min_angle=0.0;
-static int	bot=0;
+static FILE *fd_plot=NULL;
+static char *output_file=(char *)NULL;
+static char *plotfile;
+static short vert_ids[8]={1, 2, 4, 8, 16, 32, 64, 128};
+static int debug=0;
+static char *token_seps=" \t, ;\n";
+static int cur_dir=0;
+static int cell_count[3];
+static fastf_t decimation_tol=0.0;
+static fastf_t min_angle=0.0;
+static int bot=0;
 
-#define	XY_CELL(_i, _j)	((_i)*cell_count[Y] + (_j))
-#define	XZ_CELL(_i, _j)	((_i)*cell_count[Z] + (_j))
-#define	YZ_CELL(_i, _j)	((_i)*cell_count[Z] + (_j))
+#define XY_CELL(_i, _j)	((_i)*cell_count[Y] + (_j))
+#define XZ_CELL(_i, _j)	((_i)*cell_count[Z] + (_j))
+#define YZ_CELL(_i, _j)	((_i)*cell_count[Z] + (_j))
 #define ADJ1(_i)		(_i+1>3?0:_i+1)
 #define ADJ2(_i)		(_i-1<0?3:_i-1)
 
-#define	GET_Y_INDEX(_y)	((int)(((_y) - rtip->mdl_min[Y])/cell_size))
+#define GET_Y_INDEX(_y)	((int)(((_y) - rtip->mdl_min[Y])/cell_size))
 #define GET_Y_VALUE(_index)	(rtip->mdl_min[Y] + (fastf_t)(_index)*cell_size)
 
-#define NO		'n'
-#define	YES		'y'
-#define UNKNOWN		'\0'
+#define NO 'n'
+#define YES 'y'
+#define UNKNOWN '\0'
 
 
-#define	MAKE_FACE(_ep0, _ep1, _ep2, _s)	{\
+#define MAKE_FACE(_ep0, _ep1, _ep2, _s) {\
 	struct faceuse *_fu; \
 	struct vertex **_v[3]; \
-	if (debug > 3) \
-	{ \
-		bu_log("\t\tMaking face:\n"); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
+	if (debug > 3) { \
+	    bu_log("\t\tMaking face:\n"); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
 	} \
 	_v[0] = &_ep0->v; \
 	_v[1] = &_ep1->v; \
 	_v[2] = &_ep2->v; \
 	_fu = nmg_cmface(_s, _v, 3); \
 	if (!(*_v[0])->vg_p) \
-		nmg_vertex_gv(*_v[0], _ep0->pt); \
+	    nmg_vertex_gv(*_v[0], _ep0->pt); \
 	if (!(*_v[1])->vg_p) \
-		nmg_vertex_gv(*_v[1], _ep1->pt); \
+	    nmg_vertex_gv(*_v[1], _ep1->pt); \
 	if (!(*_v[2])->vg_p) \
-		nmg_vertex_gv(*_v[2], _ep2->pt); \
-	if (nmg_calc_face_g(_fu)) \
-	{ \
-		if (debug > 3) \
-			bu_log("Killing degenerate face\n"); \
-		(void)nmg_kfu(_fu); \
-		if ((*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[0])->vg_p = (struct vertex_g *)NULL; \
-		if ((*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[1])->vg_p = (struct vertex_g *)NULL; \
-		if ((*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[2])->vg_p = (struct vertex_g *)NULL; \
+	    nmg_vertex_gv(*_v[2], _ep2->pt); \
+	if (nmg_calc_face_g(_fu)) { \
+	    if (debug > 3) \
+		bu_log("Killing degenerate face\n"); \
+	    (void)nmg_kfu(_fu); \
+	    if ((*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[0])->vg_p = (struct vertex_g *)NULL; \
+	    if ((*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[1])->vg_p = (struct vertex_g *)NULL; \
+	    if ((*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[2])->vg_p = (struct vertex_g *)NULL; \
 	} \
-}
-#define	MAKE_FACE_R(_ep0, _ep1, _ep2, _ep3, _s)	{\
+    }
+#define MAKE_FACE_R(_ep0, _ep1, _ep2, _ep3, _s) {\
 	struct faceuse *_fu; \
 	struct vertex **_v[4]; \
-	if (debug > 3) \
-	{ \
-		bu_log("\t\tMaking face:\n"); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
-		bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep3, V3ARGS(_ep3->pt)); \
+	if (debug > 3) { \
+	    bu_log("\t\tMaking face:\n"); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep0, V3ARGS(_ep0->pt)); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep1, V3ARGS(_ep1->pt)); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep2, V3ARGS(_ep2->pt)); \
+	    bu_log("\t\t\t%p (%g %g %g)\n", (void *)_ep3, V3ARGS(_ep3->pt)); \
 	} \
 	_v[0] = &_ep0->v; \
 	_v[1] = &_ep1->v; \
@@ -190,33 +191,39 @@ static int	bot=0;
 	_v[3] = &_ep3->v; \
 	_fu = nmg_cmface(_s, _v, 4); \
 	if (!(*_v[0])->vg_p) \
-		nmg_vertex_gv(*_v[0], _ep0->pt); \
+	    nmg_vertex_gv(*_v[0], _ep0->pt); \
 	if (!(*_v[1])->vg_p) \
-		nmg_vertex_gv(*_v[1], _ep1->pt); \
+	    nmg_vertex_gv(*_v[1], _ep1->pt); \
 	if (!(*_v[2])->vg_p) \
-		nmg_vertex_gv(*_v[2], _ep2->pt); \
+	    nmg_vertex_gv(*_v[2], _ep2->pt); \
 	if (!(*_v[3])->vg_p) \
-		nmg_vertex_gv(*_v[3], _ep3->pt); \
-	if (nmg_calc_face_g(_fu)) \
-	{ \
-		if (debug > 3) \
-			bu_log("Killing degenerate face\n"); \
-		(void)nmg_kfu(_fu); \
-		if ((*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[0])->vg_p = (struct vertex_g *)NULL; \
-		if ((*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[1])->vg_p = (struct vertex_g *)NULL; \
-		if ((*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[2])->vg_p = (struct vertex_g *)NULL; \
-		if ((*_v[3])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
-			(*_v[3])->vg_p = (struct vertex_g *)NULL; \
+	    nmg_vertex_gv(*_v[3], _ep3->pt); \
+	if (nmg_calc_face_g(_fu)) { \
+	    if (debug > 3) \
+		bu_log("Killing degenerate face\n"); \
+	    (void)nmg_kfu(_fu); \
+	    if ((*_v[0])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[0])->vg_p = (struct vertex_g *)NULL; \
+	    if ((*_v[1])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[1])->vg_p = (struct vertex_g *)NULL; \
+	    if ((*_v[2])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[2])->vg_p = (struct vertex_g *)NULL; \
+	    if ((*_v[3])->vg_p->magic != NMG_VERTEX_G_MAGIC) \
+		(*_v[3])->vg_p = (struct vertex_g *)NULL; \
 	} \
-}
+    }
+
 
 /* flags for vertex status */
-#define	ON_SURFACE	1
-#define	OUTSIDE		2
-#define	INSIDE		3
+#define ON_SURFACE 1
+#define OUTSIDE 2
+#define INSIDE 3
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -260,6 +267,7 @@ pr_part(struct local_part *ptr)
     else
 	bu_log("\tout = NULL\n");
 }
+
 
 static void
 Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
@@ -313,7 +321,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 #else
 	    MAKE_FACE_R(lpart[1]->in, lpart[1]->out, lpart[3]->out, lpart[3]->in, s)
 #endif
-	      break;
+		break;
 	case 12:	/* top faces */
 #if MAKE_TRIANGLES
 	    MAKE_FACE(lpart[3]->in, lpart[3]->out, lpart[2]->out, s);
@@ -349,7 +357,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    ave_y /= 4.0;
 	    for (i = 0; i < 4; i++) {
 		diff[i] = lpart[i]->in->pt[Y] - ave_y;
-		diff[i] = ABS(diff[i]);
+		diff[i] = fabs(diff[i]);
 	    }
 	    max_diff = 0;
 	    for (i = 1; i < 4; i++) {
@@ -359,8 +367,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    if (max_diff == 1 || max_diff == 3) {
 		MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[2]->in, s);
 		MAKE_FACE(lpart[0]->in, lpart[2]->in, lpart[3]->in, s);
-	    }
-	    else {
+	    } else {
 		MAKE_FACE(lpart[0]->in, lpart[1]->in, lpart[3]->in, s);
 		MAKE_FACE(lpart[3]->in, lpart[1]->in, lpart[2]->in, s);
 	    }
@@ -371,7 +378,7 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    ave_y /= 4.0;
 	    for (i = 0; i < 4; i++) {
 		diff[i] = lpart[i]->out->pt[Y] - ave_y;
-		diff[i] = ABS(diff[i]);
+		diff[i] = fabs(diff[i]);
 	    }
 	    max_diff = 0;
 	    for (i = 1; i < 4; i++) {
@@ -381,14 +388,14 @@ Make_simple_faces(struct shell *s, int status, struct local_part **lpart)
 	    if (max_diff == 1 || max_diff == 3) {
 		MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[0]->out, s);
 		MAKE_FACE(lpart[2]->out, lpart[0]->out, lpart[3]->out, s);
-	    }
-	    else {
+	    } else {
 		MAKE_FACE(lpart[3]->out, lpart[1]->out, lpart[0]->out, s);
 		MAKE_FACE(lpart[2]->out, lpart[1]->out, lpart[3]->out, s);
 	    }
 	    break;
     }
 }
+
 
 static int
 Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
@@ -419,7 +426,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
     rd.seghead = &seghead;
 
     /* Compute the inverse of the direction cosines */
-    if (!ZERO(rp->r_dir[X]))  {
+    if (!ZERO(rp->r_dir[X])) {
 	rd.rd_invdir[X]=1.0 / rp->r_dir[X];
     } else {
 	rd.rd_invdir[X] = INFINITY;
@@ -460,6 +467,7 @@ Get_extremes(struct shell *s, struct application *ap, struct hitmiss **hitmiss,
 
     return ret;
 }
+
 
 static int
 shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
@@ -516,8 +524,8 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	vg = v->vg_p;
 
 	if ((ap->a_user == X || NEAR_EQUAL(ap->a_ray.r_pt[X], vg->coord[X], tol.dist)) &&
-	     (ap->a_user == Y || NEAR_EQUAL(ap->a_ray.r_pt[Y], vg->coord[Y], tol.dist)) &&
-	     (ap->a_user == Z || NEAR_EQUAL(ap->a_ray.r_pt[Z], vg->coord[Z], tol.dist))
+	    (ap->a_user == Y || NEAR_EQUAL(ap->a_ray.r_pt[Y], vg->coord[Y], tol.dist)) &&
+	    (ap->a_user == Z || NEAR_EQUAL(ap->a_ray.r_pt[Z], vg->coord[Z], tol.dist))
 	    ) {
 	    dist = vg->coord[ap->a_user] - ap->a_ray.r_pt[ap->a_user];
 	    if (dist < extreme_dist1) {
@@ -539,14 +547,14 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	if (debug) {
 	    bu_log("shrink_hit:\n\thit1_v=(%g %g %g), hit2_v=(%g %g %g)\n",
-		    V3ARGS(hit1_v->vg_p->coord),
-		    V3ARGS(hit2_v->vg_p->coord));
+		   V3ARGS(hit1_v->vg_p->coord),
+		   V3ARGS(hit2_v->vg_p->coord));
 	    bu_log("\tNMG extremes are (%g %g %g)<->(%g %g %g)\n",
-		    V3ARGS(hit1),
-		    V3ARGS(hit2));
+		   V3ARGS(hit1),
+		   V3ARGS(hit2));
 	    bu_log("\tmodel extremes are (%g %g %g)<->(%g %g %g)\n",
-		    V3ARGS(mhit1),
-		    V3ARGS(mhit2));
+		   V3ARGS(mhit1),
+		   V3ARGS(mhit2));
 	}
 
 	VSUB2(diff1, hit1_v->vg_p->coord, hit1);
@@ -585,8 +593,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 	    if (debug)
 		bu_log("\t\teliminating hit2_v\n");
 	    hit2_v = (struct vertex *)NULL;
-	}
-	else {
+	} else {
 	    if (debug)
 		bu_log("\t\teliminating hit1_v\n");
 	    hit1_v = (struct vertex *)NULL;
@@ -678,9 +685,9 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	    fu = nmg_find_fu_of_eu(eu);
 	    if (!fu)
-	      continue;
+		continue;
 	    if (fu->orientation != OT_SAME)
-	      continue;
+		continue;
 
 	    nmg_calc_face_g(fu);
 	    f = fu->f_p;
@@ -723,9 +730,9 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
 	    fu = nmg_find_fu_of_eu(eu);
 	    if (!fu)
-	      continue;
+		continue;
 	    if (fu->orientation != OT_SAME)
-	      continue;
+		continue;
 
 	    nmg_calc_face_g(fu);
 	    f = fu->f_p;
@@ -743,6 +750,7 @@ shrink_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     return 1;
 }
+
 
 static void
 Split_side_faces(struct shell *s, struct bu_ptbl *tab)
@@ -799,8 +807,8 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 	    VSUB2(edge_dir, vgb->coord, vga->coord);
 
 	    if ((EQUAL(cur_dir, X) && (!EQUAL(edge_dir[Y], 0.0) || !EQUAL(edge_dir[Z], 0.0))) ||
-		 (EQUAL(cur_dir, Y) && (!EQUAL(edge_dir[X], 0.0) || !EQUAL(edge_dir[Z], 0.0))) ||
-		 (EQUAL(cur_dir, Z) && (!EQUAL(edge_dir[Y], 0.0) || !EQUAL(edge_dir[X], 0.0))))
+		(EQUAL(cur_dir, Y) && (!EQUAL(edge_dir[X], 0.0) || !EQUAL(edge_dir[Z], 0.0))) ||
+		(EQUAL(cur_dir, Z) && (!EQUAL(edge_dir[Y], 0.0) || !EQUAL(edge_dir[X], 0.0))))
 		continue;
 
 	    if (edge_dir[cur_dir] > 0.0) {
@@ -808,9 +816,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		    min_coord1 = vga->coord[cur_dir];
 		    eu1 = eu;
 		}
-	    }
-	    else
-	    {
+	    } else {
 		if (vgb->coord[cur_dir] < min_coord2) {
 		    min_coord2 = vgb->coord[cur_dir];
 		    eu2 = eu->eumate_p;
@@ -863,8 +869,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		    eu1 = eu_tmp;
 		    vg1a = vg1b;
 		    vg1b = vg_tmp;
-		}
-		else
+		} else
 		    break;
 	    }
 
@@ -883,8 +888,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		    eu2 = eu_tmp;
 		    vg2a = vg2b;
 		    vg2b = vg_tmp;
-		}
-		else
+		} else
 		    break;
 	    }
 
@@ -902,8 +906,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 		bu_ptbl_ins(tab, (long *)eu1->vu_p->v_p);
 		vg1a = eu1->vu_p->v_p->vg_p;
 		vu1_cut = eu1->vu_p;
-	    }
-	    else if (EQUAL(vg1a->coord[cur_dir], cut_value))
+	    } else if (EQUAL(vg1a->coord[cur_dir], cut_value))
 		vu1_cut = eu1->vu_p;
 	    else if (EQUAL(vg1b->coord[cur_dir], cut_value))
 		vu1_cut = BU_LIST_PNEXT_CIRC(edgeuse, &eu1->l)->vu_p;
@@ -925,8 +928,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			break;
 		    }
 		}
-	    }
-	    else if (EQUAL(vg2a->coord[cur_dir], cut_value)) {
+	    } else if (EQUAL(vg2a->coord[cur_dir], cut_value)) {
 		vu_cut = (struct vertexuse *)NULL;
 		for (BU_LIST_FOR(vu_cut, vertexuse, &eu2->vu_p->v_p->vu_hd)) {
 		    if (nmg_find_lu_of_vu(vu_cut) == lu) {
@@ -934,8 +936,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 			break;
 		    }
 		}
-	    }
-	    else if (EQUAL(vg2b->coord[cur_dir], cut_value)) {
+	    } else if (EQUAL(vg2b->coord[cur_dir], cut_value)) {
 		vu_cut = (struct vertexuse *)NULL;
 		for (BU_LIST_FOR(vu_cut, vertexuse, &eu2->eumate_p->vu_p->v_p->vu_hd)) {
 		    if (nmg_find_lu_of_vu(vu_cut) == lu) {
@@ -963,6 +964,7 @@ Split_side_faces(struct shell *s, struct bu_ptbl *tab)
 
     bu_ptbl_free(&faces);
 }
+
 
 static void
 shrink_wrap(struct shell *s)
@@ -1062,9 +1064,9 @@ shrink_wrap(struct shell *s)
 
 	VUNITIZE(dir);
 
-	abs_dir[X] = ABS(dir[X]);
-	abs_dir[Y] = ABS(dir[Y]);
-	abs_dir[Z] = ABS(dir[Z]);
+	abs_dir[X] = fabs(dir[X]);
+	abs_dir[Y] = fabs(dir[Y]);
+	abs_dir[Z] = fabs(dir[Z]);
 
 	dir_index = X;
 	if (abs_dir[Y] > abs_dir[dir_index])
@@ -1082,6 +1084,7 @@ shrink_wrap(struct shell *s)
     bu_free(sd.manifolds, "manifolds");
     bu_free((char *)sd.hitmiss, "hitmiss");
 }
+
 
 static int
 refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
@@ -1110,8 +1113,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
 
     for (BU_LIST_FOR(rpp, refine_rpp, &add_rpp_head)) {
 	if (V3PT_IN_RPP(hit_pt, rpp->min, rpp->max)) {
-	    if (rpp->tolerance < use_tolerance)
-		use_tolerance = rpp->tolerance;
+	    V_MIN(use_tolerance, rpp->tolerance);
 	}
     }
 
@@ -1249,6 +1251,7 @@ refine_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUS
     return 1;
 }
 
+
 static int
 refine_edges(struct shell *s)
 {
@@ -1381,7 +1384,7 @@ refine_edges(struct shell *s)
 
 	    if (debug) {
 		bu_log("norm1=(%g %g %g), norm2=(%g %g %g), alpha=%g, ave_norm=(%g %g %g)\n",
-			V3ARGS(norm1), V3ARGS(norm2), alpha, V3ARGS(ave_norm));
+		       V3ARGS(norm1), V3ARGS(norm2), alpha, V3ARGS(ave_norm));
 		bu_log("\tmid_pt = (%g %g %g)\n", V3ARGS(mid_pt));
 		bu_log("\tray_pt=(%g %g %g), dir=(%g %g %g)\n", V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 	    }
@@ -1410,6 +1413,7 @@ refine_edges(struct shell *s)
 
     return breaks;
 }
+
 
 static void
 Make_shell(void)
@@ -1552,7 +1556,7 @@ Make_shell(void)
 
     if (decimation_tol > 0.0) {
 	bu_log("%d edges eliminated by decimation to tolerance of %gmm\n",
-		nmg_edge_collapse(m, &tol, decimation_tol, min_angle), decimation_tol);
+	       nmg_edge_collapse(m, &tol, decimation_tol, min_angle), decimation_tol);
     }
 
     if (do_extra_rays || edge_tol > 0.0 || decimation_tol > 0.0)
@@ -1572,6 +1576,7 @@ Make_shell(void)
     else
 	mk_nmg(fd_out, "shell", m);
 }
+
 
 static int
 hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs))
@@ -1636,6 +1641,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
     return 1;
 }
 
+
 int
 main(int argc, char **argv)
 {
@@ -1654,7 +1660,7 @@ main(int argc, char **argv)
 
     /* These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -1666,8 +1672,7 @@ main(int argc, char **argv)
     while ((c=bu_getopt(argc, argv, "bi:a:nR:g:o:d:p:X:h?")) != -1) {
 	switch (c) {
 	    case 'i':	/* set initial ray direction */
-		switch (*bu_optarg)
-		{
+		switch (*bu_optarg) {
 		    case 'x':
 		    case 'X':
 
@@ -1686,62 +1691,61 @@ main(int argc, char **argv)
 		}
 		break;
 	    case 'a':	/* add an rpp for refining */
-	    {
-		char *ptr;
-		struct refine_rpp *rpp;
-		int bad_opt = 0;
+		{
+		    char *ptr;
+		    struct refine_rpp *rpp;
+		    int bad_opt = 0;
 
-		ptr = bu_optarg;
+		    ptr = bu_optarg;
 
-		rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
-		ptr = strtok(bu_optarg, token_seps);
-		if (!ptr) {
-		    bu_log("Bad -a option '%s'\n", bu_optarg);
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
-
-		rpp->tolerance = atof(ptr);
-		if (rpp->tolerance <= 0.0) {
-		    bu_log("Illegal tolerance in -a option (%s)\n", ptr);
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
-
-		/* get minimum */
-		for (i = 0; i < 3; i++) {
-		    ptr = strtok((char *)NULL, token_seps);
+		    rpp = (struct refine_rpp *)bu_malloc(sizeof(struct refine_rpp), "add refine rpp");
+		    ptr = strtok(bu_optarg, token_seps);
 		    if (!ptr) {
-			bu_log("Unexpected end of option args for -a\n");
-			bad_opt = 1;
+			bu_log("Bad -a option '%s'\n", bu_optarg);
+			bu_free((char *)rpp, "rpp");
 			break;
 		    }
-		    rpp->min[i] = atof(ptr);
-		}
-		if (bad_opt) {
-		    bu_free((char *)rpp, "rpp");
-		    break;
-		}
 
-		/* get maximum */
-		for (i = 0; i < 3; i++) {
-		    ptr = strtok((char *)NULL, token_seps);
-		    if (!ptr)
-		    {
-			bu_log("Unexpected end of option args for -a\n");
-			bad_opt = 1;
+		    rpp->tolerance = atof(ptr);
+		    if (rpp->tolerance <= 0.0) {
+			bu_log("Illegal tolerance in -a option (%s)\n", ptr);
+			bu_free((char *)rpp, "rpp");
 			break;
 		    }
-		    rpp->max[i] = atof(ptr);
-		}
-		if (bad_opt) {
-		    bu_free((char *) rpp, "rpp");
-		    break;
-		}
 
-		BU_LIST_APPEND(&add_rpp_head, &rpp->h);
-	    }
-	    break;
+		    /* get minimum */
+		    for (i = 0; i < 3; i++) {
+			ptr = strtok((char *)NULL, token_seps);
+			if (!ptr) {
+			    bu_log("Unexpected end of option args for -a\n");
+			    bad_opt = 1;
+			    break;
+			}
+			rpp->min[i] = atof(ptr);
+		    }
+		    if (bad_opt) {
+			bu_free((char *)rpp, "rpp");
+			break;
+		    }
+
+		    /* get maximum */
+		    for (i = 0; i < 3; i++) {
+			ptr = strtok((char *)NULL, token_seps);
+			if (!ptr) {
+			    bu_log("Unexpected end of option args for -a\n");
+			    bad_opt = 1;
+			    break;
+			}
+			rpp->max[i] = atof(ptr);
+		    }
+		    if (bad_opt) {
+			bu_free((char *) rpp, "rpp");
+			break;
+		    }
+
+		    BU_LIST_APPEND(&add_rpp_head, &rpp->h);
+		}
+		break;
 	    case 'n':	/* don't do extra raytracing to refine shape */
 		do_extra_rays = 0;
 		break;
@@ -1769,12 +1773,12 @@ main(int argc, char **argv)
 		bu_log("%s: setting RTG.NMG_debug to x%x\n", argv[0], RTG.NMG_debug);
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     if (!output_file)
 	bu_exit(1, "ERROR: Output file must be specified!\n");
@@ -1828,15 +1832,14 @@ main(int argc, char **argv)
 	    cur_dir = Y;
 	if (bb_area[Z] > bb_area[cur_dir])
 	    cur_dir = Z;
-    }
-    else
+    } else
 	cur_dir = initial_ray_dir;
 
     cell_count[X] = (int)((rtip->mdl_max[X] - rtip->mdl_min[X])/cell_size) + 3;
     cell_count[Y] = (int)((rtip->mdl_max[Y] - rtip->mdl_min[Y])/cell_size) + 3;
     cell_count[Z] = (int)((rtip->mdl_max[Z] - rtip->mdl_min[Z])/cell_size) + 3;
     bu_log("cell size is %gmm\n\t%d cells in X-direction\n\t%d cells in Y-direction\n\t%d cells in Z-direction\n",
-	    cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
+	   cell_size, cell_count[X], cell_count[Y], cell_count[Z]);
 
     x_start = rtip->mdl_min[X] - ((double)cell_count[X] * cell_size - (rtip->mdl_max[X] - rtip->mdl_min[X]))/2.0;
     y_start = rtip->mdl_min[Y] - ((double)cell_count[Y] * cell_size - (rtip->mdl_max[Y] - rtip->mdl_min[Y]))/2.0;
@@ -1941,6 +1944,7 @@ main(int argc, char **argv)
     wdb_close(fd_out);
     return 0;
 }
+
 
 /*
  * Local Variables:

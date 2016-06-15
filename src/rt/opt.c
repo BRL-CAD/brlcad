@@ -194,9 +194,11 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:?"
+	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
+    	if (bu_optopt == '?')
+    	    c = 'h';
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -209,7 +211,7 @@ get_args(int argc, const char *argv[])
 		}
 		bn_randhalftabsize = i;
 		break;
-	    case 'h':
+	    case 'm':
 		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
 			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
 		break;
@@ -620,8 +622,8 @@ get_args(int argc, const char *argv[])
 		}
 	    }
 	    break;
-	    default:		/* '?' */
-		if(bu_optopt != '?')
+	    default:		/* '?' 'h' */
+		if(bu_optopt != 'h')
 		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
 		return 0;	/* BAD */
 	}

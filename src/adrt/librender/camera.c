@@ -503,9 +503,9 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
 
 	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
-		if (pixel[0] > 1) pixel[0] = 1;
-		if (pixel[1] > 1) pixel[1] = 1;
-		if (pixel[2] > 1) pixel[2] = 1;
+		V_MIN(pixel[0], 1);
+		V_MIN(pixel[1], 1);
+		V_MIN(pixel[2], 1);
 		((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel[0]);
 		((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel[1]);
 		((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel[2]);

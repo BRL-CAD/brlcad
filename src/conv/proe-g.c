@@ -482,43 +482,35 @@ do_modifiers(char *line1, int *start, struct wmember *head, char *name, fastf_t 
 	    dist = 0.0;
 	    VSET(rpp_corner, min[X], min[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], min[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, min[X], max[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], min[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], min[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    VSET(rpp_corner, max[X], max[Y], max[Z]);
 	    tmp_dist = DIST_PT_PLANE(rpp_corner, plane) * (fastf_t)orient;
-	    if (tmp_dist > dist)
-		dist = tmp_dist;
+	    V_MAX(dist, tmp_dist);
 
 	    for (i=0; i<4; i++) {
 		VJOIN1(arb_pt[i+4], arb_pt[i], dist*(fastf_t)orient, plane);
@@ -1036,7 +1028,7 @@ main(int argc, char **argv)
     /* this value selected as a reasonable compromise between eliminating
      * needed faces and keeping degenerate faces
      */
-    tol.dist = 0.0005;	/* default, same as MGED, RT, ... */
+    tol.dist = BN_TOL_DIST;	/* default, same as MGED, RT, ... */
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;

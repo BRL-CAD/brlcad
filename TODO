@@ -18,6 +18,10 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
++ merge rel8, minmax.grep @ clip.c
+
+* fix iges exporter (spaces after commas)
+
 * fix the bn_poly_sub unit test
 
 * fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
@@ -43,10 +47,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
 
-* Rework p2t so it doesn't take down the application when a NURBS
-  tessellation fails - should just abandon the problem input and
-  continue.
-
 * havoc.g s.nos5g reliably exhibits the grazing edge bug where only
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
@@ -55,12 +55,98 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* Integrate ADRT into Archer as a visualization mode.
+
+* Document a GUI feature list (prioritized).
+
+* Document a CLI feature list (prioritized).
+
+* create a catalog of all possible entity types.  including distinct
+  parameterizations with sufficient variety that conveys the object's
+  parameterization options (e.g. ell as sphere, flat disc, long spike,
+  etc).  this is necessarily defined per object type and possibly
+  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+
+* create a catalog of all possible/distinct/useful shader settings.
+  see regress/shaders.sh for a basic start.
+
+* high-performance VOL for medical data visualization.  consider
+  leveraging OpenVDB, PCL, Paraview/VTK, etc
+
+* multi-region VOL objects.  this basically will either introduce a
+  notion of data-reuse where multiple regions reference the same VOL
+  and get different spatial results, or a single primitive reports
+  distinct material/region/spatial information that will get
+  propagated up into separate region hits.  the prior is probably
+  easier and less error-prone.
+
+* BoT mesh editing command.  Subtasks:
+
+  - enumerate functions desireable
+  - catalog features of other mesh manipulation tools
+  - investigate mesh editing libraries and/or relying on NMG editing
+  - bind GUI editing to the BoT mesh editing command
+
+* establish the Basic Application Runtime (BAR), only consisting of
+  libbu and libbn, as a stand-alone self-contained project.  provide
+  an API that supports most C/C++ application development and
+  documents our facilities that help simplify code portability,
+  performance, and maintainability.  the scope is basic application
+  utility and numerics only.  this scope is particularly tailored
+  towards 3D and scientific application development.
+
+  the basic utility routines encapsulate platform-specific constructs
+  portably.  the basic numeric routines provide general math
+  facilities common to scientific application development with a
+  particular emphasis on being platform agnostic, high performance,
+  and validated.
+
+  the Apache Portable Runtime (APR) and GIMP Toolkit (GTK) are similar
+  alternatives (particularly to BAR's basic utility routines) but have
+  different emphases, scope, and development philosophies.
+
+  BAR API design aims to be minimally intrusive on application
+  developers, not requiring them to be aware of or adapt types or
+  functions until it provides some clear advantage (e.g., portability,
+  performance, and/or maintainability).
+
+* object error heuristic.  implement a function/command to report how
+  big of an error a given geometry object has.  the intent is to help
+  prioritize geometry modeling errors based on their spatial impact.
+  this is particularly relevant for nurbs/brep and nmg geometry where
+  there may be solidity gaps in the topology that need to be sealed or
+  dangling faces/surfaces of different sizes.  this is meant to be a
+  relative heuristic applicable across all geometry, not necessary an
+  exact measure.  this may make more sense added as an output option
+  to glint or as a warning category for a geometry debugger.
+
+* create a joint articulation (manually is good, automatic is better)
+  for the tin woodsman so he can move his arms, legs, neck, and head.
+
+* create a joint articulation (manually is good, automatic is probably
+  impossible) for ktank so the turret can spin and the gun barrel may
+  be raised up/down within a given range.
+
+* make Lighting enabled by default in mged and archer (this is a libdm
+  issue).  currently unable to set/override in .mgedrc either.
+
 * need ability to report the smallest feature in a given hierarchy
   (smallest edge?) and/or largest error in a given boundary model
   (largest edge gap or distance between two points that should be
   coincident).
 
-* geometry compiler
+* geometry compiler.  provides different levels of "optimization"
+  (ways of reducing the geometry complexity with or without
+  introducing 3D changes.  provides different stages of compilation
+  (e.g., similar to preprocessing, compilation, AST reduction,
+  optimization, encoding transformation, etc).  name ideas: bcg, cg
+
+* geometry debugger.  low-level geometry database tool with minimal/no
+  run-time dependencies on our own libraries.  the idea is a tool that
+  can inspect/repair a potentially corrupted/invalid .g file or help
+  debug library robustness issues.  using headers for identifiers and
+  codes in the implementation is okay (as are library functions, but
+  just don't rely on any).  name ideas: gdbg, dbadmin, dbtool, dbmaint
 
 * BU_SETJUMP/BU_UNSETJUMP into macros
 
@@ -112,12 +198,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * merge get_eyemodel's functionality  as a "view eyemodel"
   sub-command in MGED/Archer.
 
-* make gqa (and other apps that initialize similarly via libged or a
-  wdbip) utilize TIE if LIBRT_BOT_MINTIE is set.  it's bypassing
-  rt_dirbuild() so it never gets to where the environment variable is
-  read.  another case for pushing the environment variable check a
-  little lower (or somewhere in the path that gqa currently takes).
-
 * document gqa centroid and moments of inertia options
 
 * add support for custom and random views to gqa.  provide an option
@@ -139,6 +219,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
     Up to 129600 random views: -a #:#:# -e #:#:#
     Comprehensive "front" view, 1-degree increments: -a -90:90 -e -90:90
     Comprehensive orbital, 1/2-degree increments: -a 0:360:720
+
+* implement an overlap reporting function (boolean and volume)
 
 * have gqa calculate the volume of overlapping regions, not just
   shotline overlap distances.  that will allow output to be sorted by
@@ -1366,6 +1448,11 @@ NEW OBJECTS
   linear offset from a given surface or set of surfaces is usually
   desired.
 
+* minkowski and hull operations/objects.  These would be
+  meta-combination objects similar to blending where objects are
+  specified and a resulting operation is run on them.  minkowski sum
+  provides an intuitive means to blend and hull a means to simplify.
+
 * Cache objects.  These are proper non-geometric geometry database
   objects intended to store binary results that have a dependency on
   other object(s).  A named hash (e.g. md5) is recorded for each
@@ -1398,7 +1485,9 @@ NEW OBJECTS
 
 * support for fillets and chamfers as object/combination operations
 
-* image objects (tbd objects) for v5 geometry files
+* image objects (tbd objects) for v5 geometry files.  not only the
+  ability to have images in the 3D space, but to view-align them for
+  image underlay modeling.
 
 * material objects (non-geometric attribute-only objects) for v5
   geometry files.  instead of material attribute value becomes
@@ -1442,6 +1531,51 @@ NEW OBJECTS
 	arc := center point, radius, start angle, end angle
 	spline := degree, control points, knot values
 	text := string, insertion point, size, style, alignment
+
+* procedural geometry objects.  database objects that are described at
+  run-time by a scripted definition.  at core, this is a means to
+  define geometry via outboard descriptions that conform with a
+  particular syntax (e.g., tcl or python).
+
+  minimally, an object will need to define what parameters are
+  required, what parameters are optional, and what default values will
+  be used.  the object will also need to provide a procedural
+  definition (e.g., a function or set of functions/objects) that
+  receives parameter values in order to describe geometry on-demand.
+
+  similar to shader, material, and other object constructs, it'll
+  likely be desirable to support embedding of the procedural
+  definition within a .g file as well as the ability to reference an
+  external file that may be more conveniently edited.
+
+  care will need to be taken to avoid bad behavior when presented with
+  a malformed procedure (e.g., an infinite loop, fork bomb, syntax
+  error, thrashing condition, etc).
+
+* spheroid (quadratic) - special performance case of ell
+
+* conical edge (cubic) - unsure of this one's practical utility except
+  as a means to construct a pinched tgc (unioning two halves).
+
+* apple (quartic) - this is basically a continuation of torus where
+  the ID > OD/2.
+
+* cushion (quartic) - bowl shape, related to elliptical torus with
+  filled interior.
+
+* eight/piriform (quartic) - a conic/ellipsoid blending shape.
+
+* goursat/tanglecube/tooth (quartic) - related to superellipsoid
+  surface, provides corner/edge blending and rounding shapes.
+
+* lemon (quartic) - elliptical nose cap (requested shape) shape.
+
+* box-spline blend - blending object that is defined by an arb8
+  volume, blending any entities within that volume that intersect
+
+* lipschitz blend - means to procedurally blend surface edges based on
+  a blend function and sphere tracing. see "Combining CSG modeling
+  with soft blending using Lipschitz-based implicit surfaces".
 
 
 WINDOWS
@@ -1584,6 +1718,9 @@ BREP/NURBS
   mode BoTs, 'brep' objects need the ability to have a thickness
   described so you could automatically handle non-solid NURBS and
   sheet-metal style geometry without requiring surface solidity.
+
+* NURBS editing command, let you interactively
+  add/update/join/split/remove component points, edges, surfaces.
 
 
 NMG/BoT

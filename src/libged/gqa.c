@@ -54,7 +54,7 @@
 
 /* bu_getopt() options */
 char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
-char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
+char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
 #define ANALYSIS_WEIGHT 2
@@ -110,12 +110,12 @@ static FILE *plot_adjair;
 static FILE *plot_gaps;
 static FILE *plot_expair;
 
-static int overlap_color[3] = { 255, 255, 0 };	 /* yellow */
+static int overlap_color[3] = { 255, 255, 0 };	/* yellow */
 static int gap_color[3] = { 128, 192, 255 };    /* cyan */
 static int adjAir_color[3] = { 128, 255, 192 }; /* pale green */
 static int expAir_color[3] = { 255, 128, 255 }; /* magenta */
 
-static int debug;
+static int debug = 0;
 #define DLOG if (debug) bu_vls_printf
 
 /* Some defines for re-using the values from the application structure
@@ -575,9 +575,8 @@ parse_args(int ac, char *av[])
 		    double value1, value2;
 		    i = 0;
 
-
-		    /* find out if we have two or one args user can
-		     * separate them with, or - delimiter
+		    /* find out if we have two or one args; user can
+		     * separate them with , or - delimiter
 		     */
 		    p = strchr(bu_optarg, COMMA);
 		    if (p)

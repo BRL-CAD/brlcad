@@ -32,6 +32,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 #include "libtermio.h"
 
@@ -203,14 +204,8 @@ main(int argc, char **argv)
     clr_Echo(0);
 
     while (Run) {
-	if (curX < 0)
-	    curX = 0;
-	if (curX >= fb_getwidth(fbp))
-	    curX = fb_getwidth(fbp) -1;
-	if (curY < 0)
-	    curY = 0;
-	if (curY >= fb_getheight(fbp))
-	    curY = fb_getheight(fbp) -1;
+	CLAMP(curX, 0, fb_getwidth(fbp)-1);
+	CLAMP(curY, 0, fb_getheight(fbp)-1);
 
 	if (oldX != curX || oldY != curY) {
 	    /* get pixel value, move cursor */

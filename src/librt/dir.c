@@ -53,9 +53,6 @@ rt_dirbuild(const char *filename, char *buf, int len)
     if (rt_uniresource.re_magic == 0)
 	rt_init_resource(&rt_uniresource, 0, NULL);
 
-    if (getenv("LIBRT_BOT_MINTIE"))
-	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
-
     if ((dbip = db_open(filename, DB_OPEN_READONLY)) == DBI_NULL)
 	return RTI_NULL;		/* FAIL */
     RT_CK_DBI(dbip);

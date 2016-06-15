@@ -249,10 +249,16 @@ int
 rt_bot_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 {
     struct rt_bot_internal *bot_ip;
+    size_t rt_bot_mintie;
 
     RT_CK_DB_INTERNAL(ip);
     bot_ip = (struct rt_bot_internal *)ip->idb_ptr;
     RT_BOT_CK_MAGIC(bot_ip);
+
+    rt_bot_mintie = RT_DEFAULT_MINTIE;
+    if (getenv("LIBRT_BOT_MINTIE")) {
+	rt_bot_mintie = atoi(getenv("LIBRT_BOT_MINTIE"));
+    }
 
     if (rt_bot_mintie > 0 && bot_ip->num_faces >= rt_bot_mintie /* FIXME: (necessary?) && (bot_ip->face_normals != NULL || bot_ip->orientation != RT_BOT_UNORIENTED) */)
 	return bottie_prep_double(stp, bot_ip, rtip);
@@ -4709,8 +4715,7 @@ rt_bot_sync_func(struct rt_bot_internal *bot,
 		BU_LIST_DEQUEUE(&neighbor_tep->l);
 		BU_LIST_APPEND(&usedTep->l, &neighbor_tep->l);
 
-		/* Swap any two vertex references. Here we're swapping
-		 * 1 and 2. */
+		/* Swap any two vertex references. Here we're swapping 1 and 2. */
 		tmp_index = bot->faces[neighbor_tep->tri*3+1];
 		bot->faces[neighbor_tep->tri*3+1] = bot->faces[neighbor_tep->tri*3+2];
 		bot->faces[neighbor_tep->tri*3+2] = tmp_index;

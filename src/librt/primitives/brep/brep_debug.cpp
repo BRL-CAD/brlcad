@@ -2445,38 +2445,26 @@ plot_usage(struct bu_vls *vls)
 int
 single_conversion(struct rt_db_internal* intern, ON_Brep** brep, const struct db_i* dbip)
 {
-    if (*brep)
-	delete *brep;
-
-    if (intern->idb_type == ID_BREP) {
-	// already a brep
-	RT_BREP_CK_MAGIC(intern->idb_ptr);
-	*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
-	if (*brep != NULL)
-	    return 0;
-	return -2;
-    }
-
-    *brep = ON_Brep::New();
-    ON_Brep *old = *brep;
     struct bn_tol tol;
     tol.magic = BN_TOL_MAGIC;
     tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = SMALL_FASTF;
     tol.para = 1.0 - tol.perp;
-    if (intern->idb_type == ID_COMBINATION) {
+
+    if (intern->idb_type == ID_BREP) {
+	// already a brep
+	RT_BREP_CK_MAGIC(intern->idb_ptr);
+	**brep = *((struct rt_brep_internal *)intern->idb_ptr)->brep;
+    } else if (intern->idb_type == ID_COMBINATION) {
 	rt_comb_brep(brep, intern, &tol, dbip);
-    } else {
-	if (intern->idb_meth->ft_brep == NULL) {
-	    delete old;
-	    *brep = NULL;
-	    return -1;
-	}
+    } else if (intern->idb_meth->ft_brep != NULL) {
 	intern->idb_meth->ft_brep(brep, intern, &tol);
+    } else {
+	*brep = NULL;
+	return -1;
     }
     if (*brep == NULL) {
-	delete old;
 	return -2;
     }
     return 0;
@@ -2489,9 +2477,12 @@ brep_conversion(struct rt_db_internal* in, struct rt_db_internal* out, const str
     if (out == NULL)
 	return -1;
 
-    ON_Brep* brep = NULL;
+    ON_Brep *brep, *old;
+    old = brep = ON_Brep::New();
+
     int ret;
     if ((ret = single_conversion(in, &brep, dbip)) < 0) {
+	delete old;
 	return ret;
     }
 

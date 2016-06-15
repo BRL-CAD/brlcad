@@ -36,6 +36,8 @@
 
 #include "bu/log.h"
 #include "bu/str.h"
+#include "vmath.h"
+
 
 int
 main(void)
@@ -100,10 +102,7 @@ main(void)
 	    perror("scanf");
 	    bu_exit(1, "ERROR: failure to read number of groups\n");
 	}
-	if (ngrp < 0)
-	    ngrp = 0;
-	else if (ngrp > INT_MAX-1)
-	    ngrp = INT_MAX-1;
+	CLAMP(ngrp, 0, INT_MAX-1);
 
 	/* Read each group & put it in the variable showtherm.  */
 	j = 0;

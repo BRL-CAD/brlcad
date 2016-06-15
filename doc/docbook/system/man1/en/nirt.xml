@@ -95,16 +95,6 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-T</option><replaceable> rt_bot_mintie</replaceable></term>
-      <listitem>
-	<para>
-	  Causes <command>nirt</command> to adjust the setting of
-	  <emphasis remap="I">rt_bot_mintie</emphasis>
-	  to the indicated value.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-e</option><replaceable> script</replaceable></term>
       <listitem>
 	<para>

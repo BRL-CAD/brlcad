@@ -211,7 +211,9 @@ FB_EXPORT extern const char *fb_version(void);
 
 /* To avoid breaking things too badly, temporarily expose
  * what is now internal API */
-#include "../src/libfb/fb_private.h"
+#ifdef EXPOSE_FB_HEADER
+#  include "../src/libfb/fb_private.h"
+#endif
 
 typedef struct fb_internal FBIO;
 

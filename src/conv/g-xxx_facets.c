@@ -51,10 +51,19 @@ extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
-static char	usage[] = "\
-Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.0005)]\n\
-   -o output_file_name brlcad_db.g object(s)\n";
+#define CPP_QUOTE(string) #string
+#define CPP_XQUOTE(symbol) CPP_QUOTE(symbol)
+
+#define DEFAULT_ABS_TOL 0.0
+#define DEFAULT_REL_TOL 0.01
+#define DEFAULT_NORM_TOL 0.0
+
+static const char *usage =
+    "[-v][-xX lvl][-a abs_tess_tol (default: " CPP_XQUOTE(DEFAULT_ABS_TOL) ")]"
+    "[-r rel_tess_tol (default: " CPP_XQUOTE(DEFAULT_REL_TOL) ")]\n"
+    "\t[-n norm_tess_tol (default: " CPP_XQUOTE(DEFAULT_NORM_TOL) ")]"
+    "[-D dist_calc_tol (default: " CPP_XQUOTE(BN_TOL_DIST) ")]\n"
+    "\t-o output_file_name brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -69,6 +78,12 @@ static int		regions_tried = 0;
 static int		regions_converted = 0;
 static int		regions_written = 0;
 static size_t tot_polygons = 0;
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 int
 main(int argc, char **argv)
@@ -87,14 +102,14 @@ main(int argc, char **argv)
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
+    ttol.abs = DEFAULT_ABS_TOL;
+    ttol.rel = DEFAULT_REL_TOL;
+    ttol.norm = DEFAULT_NORM_TOL;
 
     /* Set up calculation tolerance defaults */
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -135,12 +150,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open output file */
 

@@ -873,7 +873,7 @@ int fonsAddFont(struct FONScontext* stash, const char* name, const char* path)
 	fseek(fp,0,SEEK_SET);
 	data = (unsigned char*)malloc(dataSize);
 	if (data == NULL) goto error;
-	fread(data, 1, dataSize, fp);
+	if (fread(data, 1, dataSize, fp) == 0) goto error;
 	fclose(fp);
 	fp = 0;
 
@@ -1233,7 +1233,7 @@ float fonsDrawText(struct FONScontext* stash,
 				   const char* str, const char* end)
 {
 	struct FONSstate* state = fons__getState(stash);
-	unsigned int codepoint;
+	unsigned int codepoint = 0;
 	unsigned int utf8state = 0;
 	struct FONSglyph* glyph = NULL;
 	struct FONSquad q;
@@ -1418,7 +1418,7 @@ float fonsTextBounds(struct FONScontext* stash,
 					 float* bounds)
 {
 	struct FONSstate* state = fons__getState(stash);
-	unsigned int codepoint;
+	unsigned int codepoint = 0;
 	unsigned int utf8state = 0;
 	struct FONSquad q;
 	struct FONSglyph* glyph = NULL;

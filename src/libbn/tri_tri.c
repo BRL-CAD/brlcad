@@ -58,7 +58,6 @@
 #include "common.h"
 #include <math.h>
 #include <bn.h>
-#define FABS(x) fabs(x)        /* implement as is fastest on your machine */
 
 /* if USE_EPSILON_TEST is true then we do a check:
    if |dv|<EPSILON then dv=0.0;
@@ -203,9 +202,9 @@ int bn_tri_tri_isect_coplanar(point_t V0, point_t V1, point_t V2,
     VSUB2(E2, V2, V0);
     VCROSS(N, E1, E2);
 
-    A[0]=FABS(N[0]);
-    A[1]=FABS(N[1]);
-    A[2]=FABS(N[2]);
+    A[0]=fabs(N[0]);
+    A[1]=fabs(N[1]);
+    A[2]=fabs(N[2]);
     if (A[0]>A[1]) {
 	if (A[0]>A[2]) {
 	    i0=1;      /* A[0] is greatest */
@@ -255,9 +254,9 @@ int coplanar_tri_tri(point_t N, point_t V0, point_t V1, point_t V2,
 
     /* first project onto an axis-aligned plane, that maximizes the area */
     /* of the triangles, compute indices: i0, i1. */
-    A[0]=FABS(N[0]);
-    A[1]=FABS(N[1]);
-    A[2]=FABS(N[2]);
+    A[0]=fabs(N[0]);
+    A[1]=fabs(N[1]);
+    A[2]=fabs(N[2]);
     if (A[0]>A[1]) {
 	if (A[0]>A[2]) {
 	    i0=1;      /* A[0] is greatest */
@@ -348,9 +347,9 @@ int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
 
     /* coplanarity robustness check */
 #if USE_EPSILON_TEST
-    if (FABS(du0)<EPSILON) du0=0.0;
-    if (FABS(du1)<EPSILON) du1=0.0;
-    if (FABS(du2)<EPSILON) du2=0.0;
+    if (fabs(du0)<EPSILON) du0=0.0;
+    if (fabs(du1)<EPSILON) du1=0.0;
+    if (fabs(du2)<EPSILON) du2=0.0;
 #endif
     du0du1=du0*du1;
     du0du2=du0*du2;
@@ -371,9 +370,9 @@ int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
     dv2=VDOT(N2, V2)+d2;
 
 #if USE_EPSILON_TEST
-    if (FABS(dv0)<EPSILON) dv0=0.0;
-    if (FABS(dv1)<EPSILON) dv1=0.0;
-    if (FABS(dv2)<EPSILON) dv2=0.0;
+    if (fabs(dv0)<EPSILON) dv0=0.0;
+    if (fabs(dv1)<EPSILON) dv1=0.0;
+    if (fabs(dv2)<EPSILON) dv2=0.0;
 #endif
 
     dv0dv1=dv0*dv1;
@@ -386,10 +385,10 @@ int bn_tri_tri_isect(point_t V0, point_t V1, point_t V2,
     VCROSS(D, N1, N2);
 
     /* compute and index to the largest component of D */
-    max=(float)FABS(D[0]);
+    max=(float)fabs(D[0]);
     index=0;
-    bb=(float)FABS(D[1]);
-    cc=(float)FABS(D[2]);
+    bb=(float)fabs(D[1]);
+    cc=(float)fabs(D[2]);
     if (bb>max) max=bb, index=1;
     if (cc>max) index=2;
 

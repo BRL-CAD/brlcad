@@ -113,9 +113,7 @@ BSplineCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");
     degree = step->getIntegerAttribute(sse, "degree");
     curve_form = (B_spline_curve_form)step->getEnumAttribute(sse, "curve_form");
-    if (curve_form > B_spline_curve_form_unset) {
-	curve_form = B_spline_curve_form_unset;
-    }
+    V_MIN(curve_form, B_spline_curve_form_unset);
 
     sw->entity_status[id] = STEP_LOADED;
 

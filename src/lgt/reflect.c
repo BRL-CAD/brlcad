@@ -269,8 +269,7 @@ render_Model(int frame)
     if (npsw > 1)
 	pix_buffered = B_LINE;
 
-    if (aperture_sz < 1)
-	aperture_sz = 1;
+    V_MAX(aperture_sz, 1);
     a_gridsz = anti_aliasing ? grid_sz * aperture_sz : grid_sz;
 
     if (ir_mapping & IR_OCTREE) {
@@ -351,10 +350,9 @@ render_Model(int frame)
     fatal_error = false;
 
     /* Get starting and ending scan line number. */
-    if (grid_x_fin >= fb_getwidth(fbiop))
-	grid_x_fin = fb_getwidth(fbiop) - 1;
-    if (grid_y_fin >= fb_getheight(fbiop))
-	grid_y_fin = fb_getheight(fbiop) - 1;
+    V_MIN(grid_x_fin, fb_getwidth(fbiop)-1);
+    V_MIN(grid_y_fin, fb_getheight(fbiop)-1);
+
     curr_scan = grid_y_org;
     last_scan = grid_y_fin;
 
@@ -1075,8 +1073,8 @@ glass_Refract(struct application *ap, struct partition *pp, Mat_Db_Entry *entry,
     refrac_total++;
 
     /* Guard against zero refractive index. */
-    if (entry->refrac_index < 0.001)
-	entry->refrac_index = 1.0;
+    if (ZERO(entry->refrac_index))
+	entry->refrac_index = RI_AIR;
 
     if (ZERO(entry->refrac_index - RI_AIR)) {
 	/* No refraction necessary. */

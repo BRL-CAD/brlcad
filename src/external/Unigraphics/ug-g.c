@@ -1720,13 +1720,9 @@ get_thru_faces_length( tag_t feat_tag,
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
 	if ( ret == 1 ) {
-	    if ( dist < min_exit ) {
-		min_exit = dist;
-	    }
+	    V_MIN(min_exit, dist);
 	} else if ( ret ==2 ) {
-	    if ( dist > max_entr ) {
-		max_entr = dist;
-	    }
+	    V_MAX(max_entr, dist);
 	}
 
 	VSETALLN( pl, 0.0, 4 );
@@ -1739,29 +1735,17 @@ get_thru_faces_length( tag_t feat_tag,
 	bu_log( "ret = %d, dist = %g\n", ret, dist );
 	/* 1 - exit, 2 - entrance, else miss */
 	if ( ret == 1 ) {
-	    if ( dist < min_exit ) {
-		min_exit = dist;
-	    }
+	    V_MIN(min_exit, dist);
 	} else if ( ret ==2 ) {
-	    if ( dist > max_entr ) {
-		max_entr = dist;
-	    }
+	    V_MAX(max_entr, dist);
 	}
     }
 
-    if ( min_exit < min_len ) {
-	min_len = min_exit;
-    }
-    if ( max_entr < min_len ) {
-	min_len = max_entr;
-    }
+    V_MIN(min_len, min_exit);
+    V_MIN(min_len, max_extr);
 
-    if ( min_exit > max_len ) {
-	max_len = min_exit;
-    }
-    if ( max_entr > max_len ) {
-	max_len = max_entr;
-    }
+    V_MAX(max_len, min_exit);
+    V_MAX(max_len, max_entr);
 
     if ( face2 ) {
 	if ( UF_MODL_ask_bounding_box( face2, bb ) ) {
@@ -1783,13 +1767,9 @@ get_thru_faces_length( tag_t feat_tag,
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
-		if ( dist < min_exit ) {
-		    min_exit = dist;
-		}
+		V_MIN(min_exit, dist);
 	    } else if ( ret ==2 ) {
-		if ( dist > max_entr ) {
-		    max_entr = dist;
-		}
+		V_MAX(max_entr, dist);
 	    }
 
 	    VSETALLN( pl, 0.0, 4 );
@@ -1798,29 +1778,17 @@ get_thru_faces_length( tag_t feat_tag,
 	    ret = bn_isect_line3_plane( &dist, base, dir, pl, &tol );
 	    /* 1 - exit, 2 - entrance, else miss */
 	    if ( ret == 1 ) {
-		if ( dist < min_exit ) {
-		    min_exit = dist;
-		}
+		V_MIN(min_exit, dist);
 	    } else if ( ret ==2 ) {
-		if ( dist > max_entr ) {
-		    max_entr = dist;
-		}
+		V_MAX(max_entr, dist);
 	    }
 	}
 
-	if ( min_exit < min_len ) {
-	    min_len = min_exit;
-	}
-	if ( max_entr < min_len ) {
-	    min_len = max_entr;
-	}
+	V_MIN(min_len, min_exit);
+	V_MIN(min_len, max_extr);
 
-	if ( min_exit > max_len ) {
-	    max_len = min_exit;
-	}
-	if ( max_entr > max_len ) {
-	    max_len = max_entr;
-	}
+	V_MAX(max_len, min_exit);
+	V_MAX(max_len, max_entr);
     }
 
 
@@ -2126,9 +2094,7 @@ do_rect_pocket(
     ylen_bottom = ylen - 2.0 * (depth-f_radius) * tan( angle );
     zlen_bottom = zlen - 2.0 * (depth-f_radius) * tan( angle );
     c_radius_bottom = c_radius - (depth-f_radius) * tan( angle );
-    if ( c_radius_bottom < 0.0 ) {
-	c_radius_bottom = 0.0;
-    }
+    V_MAX(c_radius_bottom, 0.0);
 
     DO_INDENT;
     bu_log( "\tbase = (%g %g %g), base_bottom = (%g %g %g), ylen_bottom = %g, zlen_bottom = %g\n",
@@ -2585,9 +2551,7 @@ do_cyl_pocket(
     }
     angle = tmp * DEG2RAD;
     radius2 = radius1 - ht * tan( angle );
-    if ( radius2 < MIN_RADIUS ) {
-	radius2 = MIN_RADIUS;
-    }
+    V_MAX(radius2, MIN_RADIUS);
 
     if ( get_exp_value( "Floor Radius", n_exps, exps, descs, &tmp ) ) {
 	bu_log( "Failed to get floor radius for cylindrical pocket.\n" );
@@ -2603,9 +2567,7 @@ do_cyl_pocket(
 	fastf_t tmp_ht, radius4;
 	point_t base2;
 
-	if ( round_rad > radius2 ) {
-	    round_rad = radius2;
-	}
+	V_MIN(round_rad, radius2);
 
 	tmp_ht = ht - round_rad * cos( angle );
 	if ( tmp_ht < SMALL_FASTF ) {
@@ -2613,9 +2575,8 @@ do_cyl_pocket(
 	}
 
 	radius3 = radius1 - tmp_ht * tan( angle );
-	if ( radius3 < MIN_RADIUS ) {
-	    radius3 = MIN_RADIUS;
-	}
+	V_MAX(radius3, MIN_RADIUS);
+
 	VSCALE( height, dir, tmp_ht );
 	radius4 = radius3 - round_rad * cos( angle );
 	if ( ZERO(radius2 - round_rad) ) {
@@ -2692,9 +2653,8 @@ do_cyl_pocket(
     } else {
 	/* no rounding */
 	radius3 = radius1 - ht * tan( angle );
-	if ( radius3 < MIN_RADIUS ) {
-	    radius3 = MIN_RADIUS;
-	}
+	V_MAX(radius3, MIN_RADIUS);
+
 	VSCALE( height, dir, ht );
 	solid_name = create_unique_brlcad_solid_name();
 	if ( mk_trc_h( wdb_fd, solid_name, base, height, radius1, radius3 ) ) {
@@ -2853,9 +2813,7 @@ do_rect_pad(
 
     d = depth * tan( angle );
     c_radius_end = c_radius - d;
-    if ( c_radius_end < MIN_RADIUS ) {
-	c_radius_end = MIN_RADIUS;
-    }
+    V_MAX(c_radius_end, MIN_RADIUS);
 
     bu_log( "Rectangular Pad:\n" );
     bu_log( "\tlocation = (%g %g %g), ylen = %g, zlen = %g, depth = %g\n", V3ARGS( base ), ylen, zlen, depth );
@@ -3736,12 +3694,8 @@ do_groove( int groove_type,
 		UF_func( UF_EVAL_is_arc( eval, &is_arc ) );
 		if ( is_arc ) {
 		    UF_func( UF_EVAL_ask_arc( eval, &arc ) );
-		    if ( arc.radius > outer_radius ) {
-			outer_radius = arc.radius;
-		    }
-		    if ( arc.radius < inner_radius ) {
-			inner_radius = arc.radius;
-		    }
+		    V_MAX(outer_radius, arc.radius);
+		    V_MIN(inner_radius, arc.radius);
 		}
 		UF_func( UF_EVAL_free( eval ) );
 	    }
@@ -4175,9 +4129,7 @@ convert_a_feature( tag_t feat_tag,
 	}
 	ang = tmp * DEG2RAD;
 	radius2 = radius1 - ht * tan( ang );
-	if ( radius2 < MIN_RADIUS ) {
-	    radius2 = MIN_RADIUS;
-	}
+	V_MAX(radius2, MIN_RADIUS);
 
 	solid_name = create_unique_brlcad_solid_name();
 	if ( mk_trc_h( wdb_fd, solid_name, base, Height, radius1, radius2 ) ) {

@@ -508,7 +508,7 @@ write_freeform(FILE *fp,	/* output file */
 				    curr_loc++;
 				}
 
-				if (s[curr_loc] == COMMA || s[curr_loc] == ';')
+				if (curr_loc < str_len && (s[curr_loc] == COMMA || s[curr_loc] == ';'))
 				    curr_loc++;
 
 				if (curr_loc > line_end) {
@@ -557,7 +557,7 @@ write_color_entity(unsigned char color[3],
     for (i = 0; i < 3; i++)
 	c[i] = (float)color[i]/2.55;
 
-    bu_vls_printf(&str, "314, %g, %g, %g;", c[0], c[1], c[2]);
+    bu_vls_printf(&str, "314,%g,%g,%g;", c[0], c[1], c[2]);
 
     dir_entry[1] = 314;
     dir_entry[2] = param_seq + 1;
@@ -605,16 +605,16 @@ write_attribute_definition(FILE *fp_dir, FILE *fp_param)
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "322, %ldH%s, 5001, 9", strlen(att_string), att_string);
-    bu_vls_printf(&str, ", 1, 3, 1"); /* material name */
-    bu_vls_printf(&str, ", 2, 3, 1"); /* material parameters */
-    bu_vls_printf(&str, ", 3, 6, 1"); /* region flag (logical value) */
-    bu_vls_printf(&str, ", 4, 1, 1"); /* ident number */
-    bu_vls_printf(&str, ", 5, 1, 1"); /* air code number */
-    bu_vls_printf(&str, ", 6, 1, 1"); /* material code number */
-    bu_vls_printf(&str, ", 7, 1, 1"); /* los density (X100) */
-    bu_vls_printf(&str, ", 8, 1, 1"); /* inheritance */
-    bu_vls_printf(&str, ", 9, 6, 1;"); /* color_defined (logical value) */
+    bu_vls_printf(&str, "322,%ldH%s,5001,9", strlen(att_string), att_string);
+    bu_vls_printf(&str, ",1,3,1"); /* material name */
+    bu_vls_printf(&str, ",2,3,1"); /* material parameters */
+    bu_vls_printf(&str, ",3,6,1"); /* region flag (logical value) */
+    bu_vls_printf(&str, ",4,1,1"); /* ident number */
+    bu_vls_printf(&str, ",5,1,1"); /* air code number */
+    bu_vls_printf(&str, ",6,1,1"); /* material code number */
+    bu_vls_printf(&str, ",7,1,1"); /* los density (X100) */
+    bu_vls_printf(&str, ",8,1,1"); /* inheritance */
+    bu_vls_printf(&str, ",9,6,1;"); /* color_defined (logical value) */
 
 
     /* remember where parameter data is going */
@@ -741,21 +741,21 @@ w_start_global(
     bu_vls_free(&str);
 
     /* Write Global Section */
-    bu_vls_printf(&str, ",, %zdH%s", strlen(db_name), db_name);
+    bu_vls_printf(&str, ",,%zdH%s", strlen(db_name), db_name);
 
     if (output_file == NULL)
-	bu_vls_printf(&str, ", 7Hstd_out");
+	bu_vls_printf(&str, ",7Hstd_out");
     else
-	bu_vls_printf(&str, ", %zdH%s", strlen(output_file), output_file);
+	bu_vls_printf(&str, ",%zdH%s", strlen(output_file), output_file);
 
-    bu_vls_printf(&str, ", %zdH%s, %zdH%s, 32, 38, 6, 308, 15, %zdH%s, 1.0, 2, 2HMM,, 1.0" ,
+    bu_vls_printf(&str, ",%zdH%s,%zdH%s,32,38,6,308,15,%zdH%s,1.0,2,2HMM,,1.0" ,
 		  strlen(version), version ,
 		  strlen(id), id,
 		  strlen(db_name), db_name);
 
     (void)time(&now);
     timep = localtime(&now);
-    bu_vls_printf(&str, ", 15H%04d%02d%02d.%02d%02d%02d",
+    bu_vls_printf(&str, ",15H%04d%02d%02d.%02d%02d%02d",
 		  timep->tm_year+1900,
 		  timep->tm_mon + 1,
 		  timep->tm_mday,
@@ -763,16 +763,16 @@ w_start_global(
 		  timep->tm_min,
 		  timep->tm_sec);
 
-    bu_vls_printf(&str, ", %g, 100000.0, 7HUnknown, 7HUnknown, 9, 0" ,
+    bu_vls_printf(&str, ",%g,100000.0,7HUnknown,7HUnknown,9,0" ,
 		  RT_LEN_TOL);
 
     if (stat(db_name, &db_stat)) {
 	bu_log("Cannot stat %s\n", db_name);
 	perror(prog_name);
-	bu_vls_strcat(&str, ", 15H00000101.000000;");
+	bu_vls_strcat(&str, ",15H00000101.000000;");
     } else {
 	timep = localtime(&db_stat.st_mtime);
-	bu_vls_printf(&str, ", 15H%04d%02d%02d.%02d%02d%02d;",
+	bu_vls_printf(&str, ",15H%04d%02d%02d.%02d%02d%02d;",
 		      timep->tm_year+1900,
 		      timep->tm_mon + 1,
 		      timep->tm_mday,
@@ -922,16 +922,16 @@ verts_to_copious_data(point_t *pts,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "106, %d, %d", pt_size-1, vert_count+1);
+    bu_vls_printf(&str, "106,%d,%d", pt_size-1, vert_count+1);
     if (pt_size == 2) {
-	bu_vls_printf(&str, ", 0.0");
+	bu_vls_printf(&str, ",0.0");
 	for (i = 0; i < vert_count; i++)
-	    bu_vls_printf(&str, ", %f, %f", pts[i][0], pts[i][1]);
-	bu_vls_printf(&str, ", %f, %f", pts[0][0], pts[0][1]);
+	    bu_vls_printf(&str, ",%f,%f", pts[i][0], pts[i][1]);
+	bu_vls_printf(&str, ",%f,%f", pts[0][0], pts[0][1]);
     } else if (pt_size == 3) {
 	for (i = 0; i < vert_count; i++)
-	    bu_vls_printf(&str, ", %f, %f, %f", V3ARGS(pts[i]));
-	bu_vls_printf(&str, ", %f, %f, %f", V3ARGS(pts[0]));
+	    bu_vls_printf(&str, ",%f,%f,%f", V3ARGS(pts[i]));
+	bu_vls_printf(&str, ",%f,%f,%f", V3ARGS(pts[0]));
     }
 
     bu_vls_strcat(&str, ";");
@@ -998,7 +998,7 @@ nmg_loop_to_tcurve(
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "142, 0, %d", surf_de);
+    bu_vls_printf(&str, "142,0,%d", surf_de);
 
     i = 0;
     for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -1020,21 +1020,16 @@ nmg_loop_to_tcurve(
 	VSUB2(from_base, vg->coord, base_pt);
 	u = VDOT(u_dir, from_base)/u_max;
 	v = VDOT(v_dir, from_base)/v_max;
-	if (u < 0.0)
-	    u = 0.0;
-	if (u > 1.0)
-	    u = 1.0;
-	if (v < 0.0)
-	    v = 0.0;
-	if (v > 1.0)
-	    v = 1.0;
+	CLAMP(u, 0.0, 1.0);
+	CLAMP(v, 0.0, 1.0);
+
 	VSET(param_pts[i], u, v, 0.0);
 
 	i++;
     }
 
-    bu_vls_printf(&str, ", %d", verts_to_copious_data(param_pts, vert_count, 2, fp_dir, fp_param));
-    bu_vls_printf(&str, ", %d, 0;", verts_to_copious_data(model_pts, vert_count, 3, fp_dir, fp_param));
+    bu_vls_printf(&str, ",%d", verts_to_copious_data(param_pts, vert_count, 2, fp_dir, fp_param));
+    bu_vls_printf(&str, ",%d,0;", verts_to_copious_data(model_pts, vert_count, 3, fp_dir, fp_param));
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -1106,9 +1101,9 @@ nmg_fu_to_tsurf(struct faceuse *fu,
 	curve_de[++i] = nmg_loop_to_tcurve(lu, surf_de, u_dir, v_dir, u_max, v_max, base_pt, fp_dir, fp_param);
     }
 
-    bu_vls_printf(&str, "144, %d, 0, %d", surf_de, loop_count-1);
+    bu_vls_printf(&str, "144,%d,0,%d", surf_de, loop_count-1);
     for (i = 0; i < loop_count; i++)
-	bu_vls_printf(&str, ", %d", curve_de[i]);
+	bu_vls_printf(&str, ",%d", curve_de[i]);
     bu_vls_strcat(&str, ";");
 
     bu_free((char *)curve_de, "nmg_fu_to_tsurf: curve_de");
@@ -1176,7 +1171,7 @@ write_vertex_list(struct nmgregion *r,
     nmg_vertex_tabulate(vtab, &r->l.magic);
 
     /* write parameter data for vertex list entity */
-    bu_vls_printf(&str, "502, %ld", (long int)BU_PTBL_END(vtab));
+    bu_vls_printf(&str, "502,%ld", (long int)BU_PTBL_END(vtab));
 
     for (i = 0; i < BU_PTBL_END(vtab); i++) {
 	struct vertex *v;
@@ -1189,7 +1184,7 @@ write_vertex_list(struct nmgregion *r,
 	    bu_log("No geometry for vertex %p #%d in table\n", (void *)v, i);
 	} else {
 	    NMG_CK_VERTEX_G(vg);
-	    bu_vls_printf(&str, ", %g, %g, %g",
+	    bu_vls_printf(&str, ",%g,%g,%g",
 			  vg->coord[X],
 			  vg->coord[Y],
 			  vg->coord[Z]);
@@ -1234,7 +1229,7 @@ write_line_entity(struct vertex_g *start_vg,
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "110, %g, %g, %g, %g, %g, %g;" ,
+    bu_vls_printf(&str, "110,%g,%g,%g,%g,%g,%g;" ,
 		  start_vg->coord[X],
 		  start_vg->coord[Y],
 		  start_vg->coord[Z],
@@ -1278,7 +1273,7 @@ write_linear_bspline(struct vertex_g *start_vg,
 	dir_entry[i] = DEFAULT;
 
     /* start with parameter data */
-    bu_vls_printf(&str, "126, 1, 1, 0, 0, 1, 0, 0., 0., 1., 1., 1., 1., %g, %g, %g, %g, %g, %g, 0., 1.;" ,
+    bu_vls_printf(&str, "126,1,1,0,0,1,0,0.,0.,1.,1.,1.,1.,%g,%g,%g,%g,%g,%g,0.,1.;" ,
 		  start_vg->coord[X],
 		  start_vg->coord[Y],
 		  start_vg->coord[Z],
@@ -1325,7 +1320,7 @@ write_edge_list(struct nmgregion *r,
     /* Build list of edge structures */
     nmg_edge_tabulate(etab, &r->l.magic);
 
-    bu_vls_printf(&str, "504, %ld", (long int)BU_PTBL_END(etab));
+    bu_vls_printf(&str, "504,%ld", (long int)BU_PTBL_END(etab));
 
     /* write parameter data for edge list entity */
     for (i = 0; i < BU_PTBL_END(etab); i++) {
@@ -1356,7 +1351,7 @@ write_edge_list(struct nmgregion *r,
 	    line_de = write_linear_bspline(start_vg, end_vg, fp_dir, fp_param);
 	else
 	    line_de = write_line_entity(start_vg, end_vg, fp_dir, fp_param);
-	bu_vls_printf(&str, ", %d, %d, %d, %d, %d",
+	bu_vls_printf(&str, ",%d,%d,%d,%d,%d",
 		      line_de,
 		      vert_de, bu_ptbl_locate(vtab, (long *)start_v) + 1,
 		      vert_de, bu_ptbl_locate(vtab, (long *)end_v) + 1);
@@ -1393,7 +1388,7 @@ write_point_entity(point_t pt,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "116, %g, %g, %g, 0;" ,
+    bu_vls_printf(&str, "116,%g,%g,%g,0;" ,
 		  pt[X],
 		  pt[Y],
 		  pt[Z]);
@@ -1427,7 +1422,7 @@ write_direction_entity(point_t pt,
     for (i = 0; i < 21; i++)
 	dir_entry[i] = DEFAULT;
 
-    bu_vls_printf(&str, "123, %g, %g, %g;" ,
+    bu_vls_printf(&str, "123,%g,%g,%g;" ,
 		  pt[X],
 		  pt[Y],
 		  pt[Z]);
@@ -1464,7 +1459,7 @@ write_plane_entity(plane_t plane,
 
     VSCALE(pt_on_plane, plane, plane[W]);
 
-    bu_vls_printf(&str, "190, %d, %d;" ,
+    bu_vls_printf(&str, "190,%d,%d;" ,
 		  write_point_entity(pt_on_plane, fp_dir, fp_param),
 		  write_direction_entity(plane, fp_dir, fp_param));
 
@@ -1567,21 +1562,21 @@ write_planar_nurb(struct faceuse *fu,
     *v_max = vmax - vmin;
 
     /* Put preliminary stuff for planar nurb in string */
-    bu_vls_printf(&str, "128, 1, 1, 1, 1, 0, 0, 1, 0, 0, 0., 0., 1., 1., 0., 0., 1., 1., 1., 1., 1., 1.");
+    bu_vls_printf(&str, "128,1,1,1,1,0,0,1,0,0,0.,0.,1.,1.,0.,0.,1.,1.,1.,1.,1.,1.");
 
     /* Now put control points in string */
     VJOIN2(ctl_pt, vg->coord, umin, u_dir, vmin, v_dir);
     VMOVE(base_pt, ctl_pt);
-    bu_vls_printf(&str, ", %g, %g, %g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
     VJOIN1(ctl_pt, ctl_pt, umax-umin, u_dir);
-    bu_vls_printf(&str, ", %g, %g, %g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
     VJOIN2(ctl_pt, vg->coord, umin, u_dir, vmax, v_dir);
-    bu_vls_printf(&str, ", %g, %g, %g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
     VJOIN1(ctl_pt, ctl_pt, umax-umin, u_dir);
-    bu_vls_printf(&str, ", %g, %g, %g", V3ARGS(ctl_pt));
+    bu_vls_printf(&str, ",%g,%g,%g", V3ARGS(ctl_pt));
 
     /* Now put parameter ranges last */
-    bu_vls_printf(&str, ", 0., 1., 0., 1.;");
+    bu_vls_printf(&str, ",0.,1.,0.,1.;");
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -1693,7 +1688,7 @@ write_shell_face_loop(char *name,
 		} else
 		    bu_log("write_shell_face_loop: loopuse mess up! (1)\n");
 
-		bu_vls_printf(&str, "508, %d", edge_count);
+		bu_vls_printf(&str, "508,%d", edge_count);
 
 		if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_EDGEUSE_MAGIC) {
 		    for (BU_LIST_FOR(eu, edgeuse, &lu->down_hd)) {
@@ -1708,7 +1703,7 @@ write_shell_face_loop(char *name,
 			else
 			    orientation = 0;
 
-			bu_vls_printf(&str, ", 0, %d, %d, %d, 0",
+			bu_vls_printf(&str, ",0,%d,%d,%d,0",
 				      edge_de ,
 				      bu_ptbl_locate(etab, (long *)(e)) + 1,
 				      orientation);
@@ -1717,7 +1712,7 @@ write_shell_face_loop(char *name,
 		    }
 		} else if (BU_LIST_FIRST_MAGIC(&lu->down_hd) == NMG_VERTEXUSE_MAGIC) {
 		    v = BU_LIST_PNEXT(vertexuse, &lu->down_hd)->v_p;
-		    bu_vls_printf(&str, ", 1, %d, %d, 1, 0",
+		    bu_vls_printf(&str, ",1,%d,%d,1,0",
 				  vert_de,
 				  bu_ptbl_locate(vtab, (long *)v)+1);
 		} else
@@ -1765,18 +1760,18 @@ write_shell_face_loop(char *name,
 		point_t base_pt;
 		fastf_t u_max, v_max;
 
-		bu_vls_printf(&str, "510, %d, %d, %d" ,
+		bu_vls_printf(&str, "510,%d,%d,%d" ,
 			      write_planar_nurb(fu, u_dir, v_dir, &u_max, &v_max, base_pt, fp_dir, fp_param),
 			      loop_count,
 			      outer_loop_flag);
 	    } else
-		bu_vls_printf(&str, "510, %d, %d, %d" ,
+		bu_vls_printf(&str, "510,%d,%d,%d" ,
 			      write_plane_entity(fu->f_p->g.plane_p->N, fp_dir, fp_param),
 			      loop_count,
 			      outer_loop_flag);
 
 	    for (i = 0; i < loop_count; i++)
-		bu_vls_printf(&str, ", %d", loop_list[i]);
+		bu_vls_printf(&str, ",%d", loop_list[i]);
 
 	    bu_vls_strcat(&str, ";");
 
@@ -1798,9 +1793,9 @@ write_shell_face_loop(char *name,
 	}
 
 	/* write shell entity */
-	bu_vls_printf(&str, "514, %d", face_count);
+	bu_vls_printf(&str, "514,%d", face_count);
 	for (i = 0; i < face_count; i++)
-	    bu_vls_printf(&str, ", %d, 1", face_list[i]);
+	    bu_vls_printf(&str, ",%d,1", face_list[i]);
 	bu_vls_strcat(&str, ";");
 
 	/* initialize directory entry */
@@ -1840,22 +1835,22 @@ write_shell_face_loop(char *name,
     }
 
     /* Put outer shell in BREP object first */
-    bu_vls_printf(&str, "186, %d, 1, %d", shell_list[0], shell_count-1);
+    bu_vls_printf(&str, "186,%d,1,%d", shell_list[0], shell_count-1);
 
     /* Add all other shells */
     for (i = 1; i < shell_count; i++) {
-	bu_vls_printf(&str, ", %d, 1", shell_list[i]);
+	bu_vls_printf(&str, ",%d,1", shell_list[i]);
     }
 
     if (prop_de || name_de) {
 	if (prop_de && name_de)
-	    bu_vls_strcat(&str, ", 0, 2");
+	    bu_vls_strcat(&str, ",0,2");
 	else
-	    bu_vls_printf(&str, ", 0, 1");
+	    bu_vls_printf(&str, ",0,1");
 	if (prop_de)
-	    bu_vls_printf(&str, ", %d", prop_de);
+	    bu_vls_printf(&str, ",%d", prop_de);
 	if (name_de)
-	    bu_vls_printf(&str, ", %d", name_de);
+	    bu_vls_printf(&str, ",%d", name_de);
 
     }
 
@@ -1973,9 +1968,9 @@ write_name_entity(char *name,
 
     /* write parameter data into a string */
     if (name_len >= NAMESIZE)
-	bu_vls_printf(&str, "406, 1, 16H%16.16s;", name);
+	bu_vls_printf(&str, "406,1,16H%16.16s;", name);
     else
-	bu_vls_printf(&str, "406, 1, %zdH%s;", strlen(name), name);
+	bu_vls_printf(&str, "406,1,%zdH%s;", strlen(name), name);
 
     /* remember where parameter data is going */
     dir_entry[2] = param_seq + 1;
@@ -2020,7 +2015,7 @@ tor_to_iges(struct rt_db_internal *ip,
     name_de = write_name_entity(name, fp_dir, fp_param);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "160, %g, %g, %g, %g, %g, %g, %g, %g, 0, 1, %d;",
+    bu_vls_printf(&str, "160,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
 		  tor->r_a,
 		  tor->r_h,
 		  tor->v[X], tor->v[Y], tor->v[Z],
@@ -2074,7 +2069,7 @@ sph_to_iges(struct rt_db_internal *ip,
     radius = MAGNITUDE(sph->a);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "158, %g, %g, %g, %g, 0, 1, %d;",
+    bu_vls_printf(&str, "158,%g,%g,%g,%g,0,1,%d;",
 		  radius,
 		  sph->v[X], sph->v[Y], sph->v[Z] ,
 		  name_de);
@@ -2141,7 +2136,7 @@ ell_to_iges(struct rt_db_internal *ip,
     VUNITIZE(c_dir);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "168, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, 0, 1, %d;",
+    bu_vls_printf(&str, "168,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
 		  radius_a, radius_b, radius_c ,
 		  ell->v[X], ell->v[Y], ell->v[Z] ,
 		  a_dir[X], a_dir[Y], a_dir[Z] ,
@@ -2225,7 +2220,7 @@ rpp_to_iges(struct rt_db_internal *ip,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "150, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, %g, 0, 1, %d;",
+    bu_vls_printf(&str, "150,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,%g,0,1,%d;",
 		  length_a, length_b, length_c ,
 		  arb->pt[0][X], arb->pt[0][Y], arb->pt[0][Z] ,
 		  a_dir[X], a_dir[Y], a_dir[Z] ,
@@ -2333,7 +2328,7 @@ tgc_to_iges(struct rt_db_internal *ip,
 	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
 	    /* it's an rcc */
 	    iges_type = 154;
-	    bu_vls_printf(&str, "154, %g, %g, %g, %g, %g, %g, %g, %g" ,
+	    bu_vls_printf(&str, "154,%g,%g,%g,%g,%g,%g,%g,%g" ,
 			  h_len, a_len ,
 			  tgc->v[X], tgc->v[Y], tgc->v[Z] ,
 			  h_dir[X], h_dir[Y], h_dir[Z]);
@@ -2354,13 +2349,13 @@ tgc_to_iges(struct rt_db_internal *ip,
 		VADD2(base, tgc->v, tgc->h);
 		VREVERSE(h_dir, h_dir);
 	    }
-	    bu_vls_printf(&str, "156, %g, %g, %g, %g, %g, %g, %g, %g, %g" ,
+	    bu_vls_printf(&str, "156,%g,%g,%g,%g,%g,%g,%g,%g,%g" ,
 			  h_len, bigger_r, smaller_r ,
 			  base[X], base[Y], base[Z] ,
 			  h_dir[X], h_dir[Y], h_dir[Z]);
 	}
 
-	bu_vls_printf(&str, ", 0, 1, %d;", name_de);
+	bu_vls_printf(&str, ",0,1,%d;", name_de);
 
 	/* remember where parameter data is going */
 	dir_entry[2] = param_seq + 1;
@@ -2415,19 +2410,19 @@ write_tree_of_unions(char *name,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "180, %d, %d", 2*length-1, -de_list[0]);
+    bu_vls_printf(&str, "180,%d,%d", 2*length-1, -de_list[0]);
     for (i = 1; i < length; i++)
-	bu_vls_printf(&str, ", %d, 1", -de_list[i]);
+	bu_vls_printf(&str, ",%d,1", -de_list[i]);
 
     if (prop_de || name_de) {
 	if (prop_de && name_de)
-	    bu_vls_strcat(&str, ", 0, 2");
+	    bu_vls_strcat(&str, ",0,2");
 	else
-	    bu_vls_printf(&str, ", 0, 1");
+	    bu_vls_printf(&str, ",0,1");
 	if (prop_de)
-	    bu_vls_printf(&str, ", %d", prop_de);
+	    bu_vls_printf(&str, ",%d", prop_de);
 	if (name_de)
-	    bu_vls_printf(&str, ", %d", name_de);
+	    bu_vls_printf(&str, ",%d", name_de);
 
     }
 
@@ -2488,21 +2483,21 @@ write_solid_assembly(char *name,
     }
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "184, %d", length);
+    bu_vls_printf(&str, "184,%d", length);
     for (i = 0; i < length; i++)
-	bu_vls_printf(&str, ", %d", de_list[i]);
+	bu_vls_printf(&str, ",%d", de_list[i]);
     for (i = 0; i < length; i++)
-	bu_vls_printf(&str, ", 0");
+	bu_vls_printf(&str, ",0");
 
     if (prop_de || name_de) {
 	if (prop_de && name_de)
-	    bu_vls_strcat(&str, ", 0, 2");
+	    bu_vls_strcat(&str, ",0,2");
 	else
-	    bu_vls_printf(&str, ", 0, 1");
+	    bu_vls_printf(&str, ",0,1");
 	if (prop_de)
-	    bu_vls_printf(&str, ", %d", prop_de);
+	    bu_vls_printf(&str, ",%d", prop_de);
 	if (name_de)
-	    bu_vls_printf(&str, ", %d", name_de);
+	    bu_vls_printf(&str, ",%d", name_de);
 
     }
 
@@ -2656,7 +2651,7 @@ write_xform_entity(mat_t mat,
     /* write parameter data into a string */
     bu_vls_strcpy(&str, "124");
     for (i = 0; i < 12; i++) {
-	bu_vls_printf(&str, ", %g", mat[i]);
+	bu_vls_printf(&str, ",%g", mat[i]);
     }
     bu_vls_strcat(&str, ";");
 
@@ -2691,7 +2686,7 @@ write_solid_instance(int orig_de,
     dir_entry[7] = write_xform_entity(mat, fp_dir, fp_param);
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "430, %d;", orig_de);
+    bu_vls_printf(&str, "430,%d;", orig_de);
 
     dir_entry[1] = 430;
     dir_entry[2] = param_seq + 1;
@@ -2726,25 +2721,25 @@ write_att_entity(struct iges_properties *props,
     /* material name */
     str_len = strlen(props->material_name);
     if (str_len)
-	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_name);
+	bu_vls_printf(&str, ",%zuH%s", str_len, props->material_name);
     else
-	bu_vls_strcat(&str, ", ");
+	bu_vls_strcat(&str, ",");
 
     /* material parameters */
     str_len = strlen(props->material_params);
     if (str_len)
-	bu_vls_printf(&str, ", %zuH%s", str_len, props->material_params);
+	bu_vls_printf(&str, ",%zuH%s", str_len, props->material_params);
     else
-	bu_vls_strcat(&str, ", ");
+	bu_vls_strcat(&str, ",");
 
     /* region flag */
     if (props->region_flag == 'R')
-	bu_vls_strcat(&str, ", 1");
+	bu_vls_strcat(&str, ",1");
     else
-	bu_vls_strcat(&str, ", 0");
+	bu_vls_strcat(&str, ",0");
 
     /* ident number, air code, material code, los density */
-    bu_vls_printf(&str, ", %d, %d, %d, %d, %d, %d;" ,
+    bu_vls_printf(&str, ",%d,%d,%d,%d,%d,%d;" ,
 		  props->ident ,
 		  props->air_code ,
 		  props->material_code ,
@@ -2809,17 +2804,17 @@ short_comb_to_iges(struct iges_properties *props,
 	color_de = 0;
 
     /* write parameter data into a string */
-    bu_vls_printf(&str, "430, %d", de_pointers[0]);
+    bu_vls_printf(&str, "430,%d", de_pointers[0]);
 
     if (props_de || name_de) {
 	if (props_de && name_de)
-	    bu_vls_strcat(&str, ", 0, 2");
+	    bu_vls_strcat(&str, ",0,2");
 	else
-	    bu_vls_printf(&str, ", 0, 1");
+	    bu_vls_printf(&str, ",0,1");
 	if (props_de)
-	    bu_vls_printf(&str, ", %d", props_de);
+	    bu_vls_printf(&str, ",%d", props_de);
 	if (name_de)
-	    bu_vls_printf(&str, ", %d", name_de);
+	    bu_vls_printf(&str, ",%d", name_de);
 
     }
     bu_vls_strcat(&str, ";");
@@ -2841,20 +2836,20 @@ short_comb_to_iges(struct iges_properties *props,
 
 
 int
-count_non_union_ops(union tree *tp)
+has_non_union_ops(union tree *tp)
 {
-    int count = 0;
-
     RT_CK_TREE(tp);
 
-    if (tp->tr_op != OP_UNION) {
-	count++;
+    if (tp->tr_op == OP_SOLID || tp->tr_op == OP_REGION || tp->tr_op == OP_NOP ||
+	tp->tr_op == OP_NMG_TESS || tp->tr_op == OP_DB_LEAF) {
+	return 0;
     }
 
-    count += count_non_union_ops(tp->tr_b.tb_left);
-    count += count_non_union_ops(tp->tr_b.tb_right);
+    if (tp->tr_op != OP_UNION) {
+	return 1;
+    }
 
-    return count;
+    return has_non_union_ops(tp->tr_b.tb_left) || has_non_union_ops(tp->tr_b.tb_right);
 }
 
 
@@ -2871,20 +2866,20 @@ igs_tree(struct bu_vls *str,
 	case OP_UNION:
 	    igs_tree(str, tp->tr_b.tb_left, length, de_pointers);
 	    igs_tree(str, tp->tr_b.tb_right, length, de_pointers);
-	    bu_vls_strcat(str, ", 1");
+	    bu_vls_strcat(str, ",1");
 	    break;
 	case OP_INTERSECT:
 	    igs_tree(str, tp->tr_b.tb_left, length, de_pointers);
 	    igs_tree(str, tp->tr_b.tb_right, length, de_pointers);
-	    bu_vls_strcat(str, ", 2");
+	    bu_vls_strcat(str, ",2");
 	    break;
 	case OP_SUBTRACT:
 	    igs_tree(str, tp->tr_b.tb_left, length, de_pointers);
 	    igs_tree(str, tp->tr_b.tb_right, length, de_pointers);
-	    bu_vls_strcat(str, ", 3");
+	    bu_vls_strcat(str, ",3");
 	    break;
 	case OP_DB_LEAF:
-	    bu_vls_printf(str, ", %d", -de_pointers[de_pointer_number]);
+	    bu_vls_printf(str, ",%d", -de_pointers[de_pointer_number]);
 	    de_pointer_number++;
 	    break;
 	default:
@@ -2903,7 +2898,7 @@ write_igs_tree(struct bu_vls *str,
     BU_CK_VLS(str);
     RT_CK_COMB(comb);
 
-    bu_vls_printf(str, "180, %d", 2*length-1);
+    bu_vls_printf(str, "180,%d", 2*length-1);
 
     de_pointer_number = 0;
     igs_tree(str, comb->tree, length, de_pointers);
@@ -2923,7 +2918,6 @@ tree_to_iges(struct rt_comb_internal *comb,
     int name_de;
     int props_de;
     int color_de = DEFAULT;
-    int non_union_count = 0;
     int status = 1;
     int entity_type;
     int i;
@@ -2958,9 +2952,7 @@ tree_to_iges(struct rt_comb_internal *comb,
     else
 	color_de = 0;
 
-    non_union_count = count_non_union_ops(comb->tree);
-
-    if (mode == CSG_MODE || non_union_count) {
+    if (mode == CSG_MODE || has_non_union_ops(comb->tree)) {
 	/* write the combination as a Boolean tree */
 	entity_type = 180;
 	write_igs_tree(&str, comb, length, de_pointers);
@@ -2968,22 +2960,22 @@ tree_to_iges(struct rt_comb_internal *comb,
 	/* write the combination as a solid assembly */
 	entity_type = 184;
 
-	bu_vls_printf(&str, "%d, %d", entity_type, length);
+	bu_vls_printf(&str, "%d,%d", entity_type, length);
 	for (i = 0; i < length; i++)
-	    bu_vls_printf(&str, ", %d", de_pointers[i]);
+	    bu_vls_printf(&str, ",%d", de_pointers[i]);
 	for (i = 0; i < length; i++)
-	    bu_vls_strcat(&str, ", 0");
+	    bu_vls_strcat(&str, ",0");
     }
 
     if (props_de || name_de) {
 	if (props_de && name_de)
-	    bu_vls_strcat(&str, ", 0, 2");
+	    bu_vls_strcat(&str, ",0,2");
 	else
-	    bu_vls_printf(&str, ", 0, 1");
+	    bu_vls_printf(&str, ",0,1");
 	if (props_de)
-	    bu_vls_printf(&str, ", %d", props_de);
+	    bu_vls_printf(&str, ",%d", props_de);
 	if (name_de)
-	    bu_vls_printf(&str, ", %d", name_de);
+	    bu_vls_printf(&str, ",%d", name_de);
 
     }
     bu_vls_strcat(&str, ";");

@@ -32,13 +32,13 @@
 #include <set>
 #include <map>
 #include <algorithm>
-#include <stdexcept>
 
 #include "vmath.h"
 #include "bio.h"
 #include "bu/log.h"
 #include "brep.h"
 #include "raytrace.h"
+#include "brep_except.h"
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
@@ -51,36 +51,6 @@
 // than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
 
-class InvalidBooleanOperation : public std::invalid_argument
-{
-public:
-    InvalidBooleanOperation(const std::string &msg = "") : std::invalid_argument(msg) {}
-};
-
-class InvalidGeometry : public std::invalid_argument
-{
-public:
-    InvalidGeometry(const std::string &msg = "") : std::invalid_argument(msg) {}
-};
-
-class AlgorithmError : public std::runtime_error
-{
-public:
-    AlgorithmError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
-
-class GeometryGenerationError : public std::runtime_error
-{
-public:
-    GeometryGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
-
-class IntervalGenerationError : public std::runtime_error
-{
-public:
-    IntervalGenerationError(const std::string &msg = "") : std::runtime_error(msg) {}
-};
-
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     double m_seg_t;	// param on the loop curve
@@ -91,7 +61,8 @@ struct IntersectPoint {
     enum {
 	UNSET,
 	IN,
-	OUT
+	OUT,
+	TANGENT
     } m_dir;		// dir is going inside/outside
     int m_split_li;	// between clx_points[m_split_li] and
 			// clx_points[m_split_li+1]
@@ -143,16 +114,21 @@ public:
 	m_curve = NULL;
     }
 
+    void Empty()
+    {
+	m_ssi_curves.Empty();
+	delete m_curve;
+	m_curve = NULL;
+    }
+
     ~LinkedCurve()
     {
-	if (m_curve) {
-	    delete m_curve;
-	}
-	m_curve = NULL;
+	Empty();
     }
 
     LinkedCurve &operator= (const LinkedCurve &_lc)
     {
+	Empty();
 	m_curve = _lc.m_curve ? _lc.m_curve->Duplicate() : NULL;
 	m_ssi_curves = _lc.m_ssi_curves;
 	return *this;
@@ -266,7 +242,12 @@ public:
 	if (c == NULL) {
 	    return NULL;
 	}
-	return sub_curve(c, t1, t2);
+	try {
+	    return sub_curve(c, t1, t2);
+	} catch (InvalidInterval &e) {
+	    bu_log("%s", e.what());
+	    return NULL;
+	}
     }
 };
 
@@ -347,10 +328,10 @@ loop_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 
 
 HIDDEN int
-curve_t_compare(IntersectPoint * const *p1, IntersectPoint * const *p2)
+curve_t_compare(const IntersectPoint *p1, const IntersectPoint *p2)
 {
     // Use for sorting an array. Use strict FP comparison.
-    return (*p1)->m_curve_t > (*p2)->m_curve_t ? 1 : ((*p1)->m_curve_t < (*p2)->m_curve_t ? -1 : 0);
+    return p1->m_curve_t > p2->m_curve_t ? 1 : (p1->m_curve_t < p2->m_curve_t ? -1 : 0);
 }
 
 
@@ -528,17 +509,18 @@ intersect_intervals(const ON_Interval &interval1, const ON_Interval &interval2)
 HIDDEN void
 replace_curve_with_subcurve(ON_Curve *&curve, const ON_Interval &interval)
 {
-    ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
-    delete curve;
-    curve = subcurve;
-
-    if (curve == NULL) {
-	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL subcurve\n");
+    try {
+	ON_Curve *subcurve = sub_curve(curve, interval.Min(), interval.Max());
+	delete curve;
+	curve = subcurve;
+    } catch (InvalidInterval &e) {
+	throw GeometryGenerationError("replace_curve_with_subcurve(): NULL "
+		"subcurve\n");
     }
 }
 
 HIDDEN ON_SimpleArray<ON_Interval>
-get_curve_intervals_inside_outerloop(
+get_curve_intervals_inside_or_on_outerloop(
     ON_Curve *curve2D,
     ON_SimpleArray<ON_Curve *> outerloop_curves,
     double isect_tol)
@@ -578,7 +560,7 @@ get_curve_intervals_inside_outerloop(
 	}
 	ON_2dPoint pt = curve2D->PointAt(interval.Mid());
 	try {
-	    if (is_point_inside_loop(pt, outerloop_curves)) {
+	    if (!is_point_outside_loop(pt, outerloop_curves)) {
 		intervals_inside_outerloop.Append(interval);
 	    }
 	} catch (InvalidGeometry &e) {
@@ -626,9 +608,9 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
 
     // 2. Find the intervals of the curves that are inside the outerloops.
     ON_SimpleArray<ON_Interval> intervals1, intervals2;
-    intervals1 = get_curve_intervals_inside_outerloop(event->m_curveA,
+    intervals1 = get_curve_intervals_inside_or_on_outerloop(event->m_curveA,
 	    outerloop1, INTERSECTION_TOL);
-    intervals2 = get_curve_intervals_inside_outerloop(event->m_curveB,
+    intervals2 = get_curve_intervals_inside_or_on_outerloop(event->m_curveB,
 	    outerloop2, INTERSECTION_TOL);
 
     // 3. Merge the intervals and get the final result.
@@ -665,6 +647,72 @@ get_subcurve_inside_faces(const ON_Brep *brep1, const ON_Brep *brep2, int face_i
     return 0;
 }
 
+HIDDEN double
+bbox_diagonal_length(ON_Curve *curve)
+{
+    double len = 0.0;
+    if (curve) {
+	ON_BoundingBox bbox;
+	if (curve->GetTightBoundingBox(bbox)) {
+	    len = bbox.Diagonal().Length();
+	} else {
+	    len = curve->PointAtStart().DistanceTo(curve->PointAtEnd());
+	}
+    }
+    return len;
+}
+
+HIDDEN void
+split_curve(ON_Curve *&left, ON_Curve *&right, const ON_Curve *in, double t)
+{
+    try {
+	left = sub_curve(in, in->Domain().m_t[0], t);
+    } catch (InvalidInterval &e) {
+	left = NULL;
+    }
+    try {
+	right = sub_curve(in, t, in->Domain().m_t[1]);
+    } catch (InvalidInterval &e) {
+	right = NULL;
+    }
+}
+
+HIDDEN double
+configure_for_linking(
+	LinkedCurve *&first,
+	LinkedCurve *&second,
+	LinkedCurve &in1,
+	LinkedCurve &in2)
+{
+    double dist_s1s2 = in1.PointAtStart().DistanceTo(in2.PointAtStart());
+    double dist_s1e2 = in1.PointAtStart().DistanceTo(in2.PointAtEnd());
+    double dist_e1s2 = in1.PointAtEnd().DistanceTo(in2.PointAtStart());
+    double dist_e1e2 = in1.PointAtEnd().DistanceTo(in2.PointAtEnd());
+
+    double min_dist = std::min(dist_s1s2, dist_s1e2);
+    min_dist = std::min(min_dist, dist_e1s2);
+    min_dist = std::min(min_dist, dist_e1e2);
+
+    first = second = NULL;
+    if (dist_s1e2 <= min_dist) {
+	first = &in2;
+	second = &in1;
+    } else if (dist_e1s2 <= min_dist) {
+	first = &in1;
+	second = &in2;
+    } else if (dist_s1s2 <= min_dist) {
+	if (in1.Reverse()) {
+	    first = &in1;
+	    second = &in2;
+	}
+    } else if (dist_e1e2 <= min_dist) {
+	if (in2.Reverse()) {
+	    first = &in1;
+	    second = &in2;
+	}
+    }
+    return min_dist;
+}
 
 HIDDEN ON_ClassArray<LinkedCurve>
 link_curves(const ON_SimpleArray<SSICurve> &in)
@@ -692,36 +740,75 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 	    }
 
 	    LinkedCurve *c1 = NULL, *c2 = NULL;
-	    double dis;
-	    // Link curves that share an end point.
-	    if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
-		// end -- start -- end -- start
-		c1 = &tmp[j];
-		c2 = &tmp[i];
-	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
-		// start -- end -- start -- end
-		c1 = &tmp[i];
-		c2 = &tmp[j];
-	    } else if ((dis = tmp[i].PointAtStart().DistanceTo(tmp[j].PointAtStart())) < INTERSECTION_TOL) {
-		// end -- start -- start -- end
-		if (tmp[i].Reverse()) {
-		    c1 = &tmp[i];
-		    c2 = &tmp[j];
+	    double dist = configure_for_linking(c1, c2, tmp[i], tmp[j]);
+
+	    if (dist > INTERSECTION_TOL) {
+		const ON_Curve *icurve = tmp[i].Curve();
+		const ON_Curve *jcurve = tmp[j].Curve();
+
+		ON_SimpleArray<ON_X_EVENT> events;
+		ON_Intersect(icurve, jcurve, events, INTERSECTION_TOL);
+
+		if (events.Count() == 0 || !icurve || !jcurve) {
+		    continue;
 		}
-	    } else if ((dis = tmp[i].PointAtEnd().DistanceTo(tmp[j].PointAtEnd())) < INTERSECTION_TOL) {
-		// start -- end -- end -- start
-		if (tmp[j].Reverse()) {
-		    c1 = &tmp[i];
-		    c2 = &tmp[j];
+
+		// intersecting ssx curves indicates an error in the curves
+		if (events.Count() > 1) {
+		    bu_log("couldn't link converging intersection curves\n");
+		    continue;
+		} else if (events.Count() == 1) {
+		    // For a single intersection, try to link the
+		    // curves anyway. Assume that one or both curve
+		    // endpoints is just a little past where it should
+		    // be. Split the curves at the intersection, and
+		    // discard the portion with the smaller bbox
+		    // diagonal.
+		    ON_Curve *ileft, *iright, *jleft, *jright;
+		    ileft = iright = jleft = jright = NULL;
+		    split_curve(ileft, iright, icurve, events[0].m_a[0]);
+		    split_curve(jleft, jright, jcurve, events[0].m_b[0]);
+
+		    if (bbox_diagonal_length(ileft) <
+			bbox_diagonal_length(iright))
+		    {
+			std::swap(ileft, iright);
+		    }
+		    ON_Curve *isub = ileft;
+		    delete iright;
+
+		    if (bbox_diagonal_length(jleft) <
+			bbox_diagonal_length(jright))
+		    {
+			std::swap(jleft, jright);
+		    }
+		    ON_Curve *jsub = jleft;
+		    delete jright;
+
+		    if (isub && jsub) {
+			// replace the original linked curves with the
+			// trimmed versions
+			SSICurve issi(isub), jssi(jsub);
+			isub = jsub = NULL;
+
+			tmp[i].Empty();
+			tmp[i].Append(issi);
+
+			tmp[j].Empty();
+			tmp[j].Append(jssi);
+
+			// proceed as if they're linkable
+			configure_for_linking(c1, c2, tmp[i], tmp[j]);
+		    }
+		    delete isub;
+		    delete jsub;
 		}
-	    } else {
-		continue;
 	    }
 
 	    if (c1 != NULL && c2 != NULL) {
 		LinkedCurve new_curve;
 		new_curve.Append(*c1);
-		if (dis > ON_ZERO_TOLERANCE) {
+		if (dist > ON_ZERO_TOLERANCE) {
 		    new_curve.Append(SSICurve(new ON_LineCurve(c1->PointAtEnd(), c2->PointAtStart())));
 		}
 		new_curve.Append(*c2);
@@ -752,6 +839,1135 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
     return out;
 }
 
+
+class CurvePoint {
+public:
+    int source_loop;
+    int loop_index;
+    double curve_t;
+    ON_2dPoint pt;
+
+    enum Location {
+	BOUNDARY,
+	INSIDE,
+	OUTSIDE
+    } location;
+
+    static CurvePoint::Location
+    PointCurveLocation(ON_2dPoint pt, ON_Curve *curve);
+
+    CurvePoint(
+	int loop,
+	int li,
+	double curve1_t,
+	ON_Curve *curve1,
+	ON_Curve *curve2)
+	: source_loop(loop), loop_index(li), curve_t(curve1_t)
+    {
+	pt = curve1->PointAt(curve1_t);
+	location = PointCurveLocation(pt, curve2);
+    }
+
+    CurvePoint(
+	int loop,
+	int li,
+	double t,
+	ON_2dPoint p,
+	CurvePoint::Location l)
+	: source_loop(loop), loop_index(li), curve_t(t), pt(p), location(l)
+    {
+    }
+
+    bool
+    operator<(const CurvePoint &other) const
+    {
+	// for points not on the same loop, compare the actual points
+	if (source_loop != other.source_loop) {
+	    if (ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL)) {
+		return false;
+	    }
+	    return pt < other.pt;
+	}
+
+	// for points on the same loop, compare loop position
+	if (loop_index == other.loop_index) {
+	    if (ON_NearZero(curve_t - other.curve_t, INTERSECTION_TOL)) {
+		return false;
+	    }
+	    return curve_t < other.curve_t;
+	}
+	return loop_index < other.loop_index;
+    }
+
+    bool
+    operator==(const CurvePoint &other) const
+    {
+	return ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
+    }
+
+    bool
+    operator!=(const CurvePoint &other) const
+    {
+	return !ON_NearZero(pt.DistanceTo(other.pt), INTERSECTION_TOL);
+    }
+};
+
+class CurvePointAbsoluteCompare {
+public:
+    bool
+    operator()(const CurvePoint &a, const CurvePoint &b) const
+    {
+	if (ON_NearZero(a.pt.DistanceTo(b.pt), INTERSECTION_TOL)) {
+	    return false;
+	}
+	return a.pt < b.pt;
+    }
+};
+
+CurvePoint::Location
+CurvePoint::PointCurveLocation(ON_2dPoint pt, ON_Curve *curve)
+{
+    ON_SimpleArray<ON_Curve *> loop;
+    loop.Append(curve);
+
+    if (is_point_on_loop(pt, loop)) {
+	return CurvePoint::BOUNDARY;
+    }
+    if (point_loop_location(pt, loop) == OUTSIDE_OR_ON_LOOP) {
+	return CurvePoint::OUTSIDE;
+    }
+    return CurvePoint::INSIDE;
+}
+
+class CurveSegment {
+public:
+    ON_SimpleArray<ON_Curve *> orig_loop;
+    CurvePoint from, to;
+    enum Location {
+	BOUNDARY,
+	INSIDE,
+	OUTSIDE
+    } location;
+
+    CurveSegment(
+	ON_SimpleArray<ON_Curve *> &loop,
+	CurvePoint f,
+	CurvePoint t,
+	CurveSegment::Location l)
+	: orig_loop(loop), from(f), to(t), location(l)
+    {
+    }
+
+    void
+    Reverse(void)
+    {
+	std::swap(from, to);
+    }
+
+    ON_Curve *
+    Curve(void) const
+    {
+	ON_Curve *from_curve = orig_loop[from.loop_index];
+	ON_Curve *to_curve = orig_loop[to.loop_index];
+	ON_Interval from_dom = from_curve->Domain();
+	ON_Interval to_dom = to_curve->Domain();
+
+	// if endpoints are on the same curve, just get the part between them
+	if (from.loop_index == to.loop_index) {
+	    ON_Curve *seg_curve =
+		sub_curve(from_curve, from.curve_t, to.curve_t);
+	    return seg_curve;
+	}
+	// if endpoints are on different curves, we may need a subcurve of
+	// just the 'from' curve, just the 'to' curve, or both
+	if (ON_NearZero(from.curve_t - from_dom.m_t[1], INTERSECTION_TOL)) {
+	    // starting at end of 'from' same as starting at start of 'to'
+	    ON_Curve *seg_curve = sub_curve(to_curve, to_dom.m_t[0],
+		    to.curve_t);
+	    return seg_curve;
+	}
+	if (ON_NearZero(to.curve_t - to_dom.m_t[0], INTERSECTION_TOL)) {
+	    // ending at start of 'to' same as ending at end of 'from'
+	    ON_Curve *seg_curve = sub_curve(from_curve, from.curve_t,
+		    from_dom.m_t[1]);
+	    return seg_curve;
+	}
+	ON_PolyCurve *pcurve = new ON_PolyCurve();
+	append_to_polycurve(sub_curve(from_curve, from.curve_t,
+		    from_dom.m_t[1]), *pcurve);
+	append_to_polycurve(sub_curve(to_curve, to_dom.m_t[0], to.curve_t),
+		*pcurve);
+	return pcurve;
+    }
+
+    bool
+    IsDegenerate(void)
+    {
+	ON_Curve *seg_curve = NULL;
+	try {
+	    seg_curve = Curve();
+	} catch (InvalidInterval &e) {
+	    return true;
+	}
+
+	double length = 0.0;
+	if (seg_curve->IsLinear(INTERSECTION_TOL)) {
+	    length = seg_curve->PointAtStart().DistanceTo(
+		    seg_curve->PointAtEnd());
+	} else {
+	    double min[3] = {0.0, 0.0, 0.0};
+	    double max[3] = {0.0, 0.0, 0.0};
+
+	    seg_curve->GetBBox(min, max, true);
+	    length = DIST_PT_PT(min, max);
+	}
+	delete seg_curve;
+	return length < INTERSECTION_TOL;
+    }
+
+    bool
+    operator<(const CurveSegment &other) const
+    {
+	return from < other.from;
+    }
+};
+
+#define LOOP_DIRECTION_CCW  1
+#define LOOP_DIRECTION_CW  -1
+#define LOOP_DIRECTION_NONE 0
+
+ON_Curve *
+get_loop_curve(const ON_SimpleArray<ON_Curve *> &loop)
+{
+    ON_PolyCurve *pcurve = new ON_PolyCurve();
+    for (int i = 0; i < loop.Count(); ++i) {
+	append_to_polycurve(loop[i]->Duplicate(), *pcurve);
+    }
+    return pcurve;
+}
+
+std::list<ON_SimpleArray<ON_Curve *> >::iterator
+find_innerloop(std::list<ON_SimpleArray<ON_Curve *> > &loops)
+{
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator k;
+    for (k = loops.begin(); k != loops.end(); ++k) {
+	ON_Curve *loop_curve = get_loop_curve(*k);
+
+	if (ON_ClosedCurveOrientation(*loop_curve, NULL) == LOOP_DIRECTION_CW) {
+	    delete loop_curve;
+	    return k;
+	}
+	delete loop_curve;
+    }
+    return loops.end();
+}
+
+bool
+set_loop_direction(ON_SimpleArray<ON_Curve *> &loop, int dir)
+{
+    ON_Curve *curve = get_loop_curve(loop);
+    int curr_dir = ON_ClosedCurveOrientation(*curve, NULL);
+    delete curve;
+
+    if (curr_dir == LOOP_DIRECTION_NONE) {
+	// can't set the correct direction
+	return false;
+    }
+    if (curr_dir != dir) {
+	// need reverse
+	for (int i = 0; i < loop.Count(); ++i) {
+	    if (!loop[i]->Reverse()) {
+		return false;
+	    }
+	}
+	loop.Reverse();
+    }
+    // curve already has the correct direction
+    return true;
+}
+
+void
+add_point_to_set(std::multiset<CurvePoint> &set, CurvePoint pt)
+{
+    if (set.count(pt) < 2) {
+	set.insert(pt);
+    }
+}
+
+std::multiset<CurveSegment>
+make_segments(
+    std::multiset<CurvePoint> &curve1_points,
+    ON_SimpleArray<ON_Curve *> &loop1,
+    ON_SimpleArray<ON_Curve *> &loop2)
+{
+    ON_Curve *loop2_curve = get_loop_curve(loop2);
+
+    std::multiset<CurveSegment> out;
+
+    std::multiset<CurvePoint>::iterator first = curve1_points.begin();
+    std::multiset<CurvePoint>::iterator curr = first;
+    std::multiset<CurvePoint>::iterator next = ++curve1_points.begin();
+
+    for (; next != curve1_points.end(); ++curr, ++next) {
+	CurvePoint from = *curr;
+	CurvePoint to = *next;
+	CurveSegment new_seg(loop1, from, to, CurveSegment::BOUNDARY);
+
+	if (new_seg.IsDegenerate()) {
+	    continue;
+	}
+
+	if (from.location == CurvePoint::BOUNDARY &&
+	      to.location == CurvePoint::BOUNDARY)
+	{
+	    ON_Curve *seg_curve = loop1[from.loop_index];
+
+	    double end_t = to.curve_t;
+	    if (from.loop_index != to.loop_index) {
+		end_t = seg_curve->Domain().m_t[1];
+	    }
+	    ON_2dPoint seg_midpt = seg_curve->PointAt(
+		    ON_Interval(from.curve_t, end_t).Mid());
+
+	    CurvePoint::Location midpt_location =
+		CurvePoint::PointCurveLocation(seg_midpt, loop2_curve);
+
+	    if (midpt_location == CurvePoint::INSIDE) {
+		new_seg.location = CurveSegment::INSIDE;
+	    } else if (midpt_location == CurvePoint::OUTSIDE) {
+		new_seg.location = CurveSegment::OUTSIDE;
+	    }
+	} else if (from.location == CurvePoint::INSIDE ||
+		    to.location == CurvePoint::INSIDE)
+	{
+	    new_seg.location = CurveSegment::INSIDE;
+	} else if (from.location == CurvePoint::OUTSIDE ||
+		     to.location == CurvePoint::OUTSIDE)
+	{
+	    new_seg.location = CurveSegment::OUTSIDE;
+	}
+	out.insert(new_seg);
+    }
+    delete loop2_curve;
+    return out;
+}
+
+void
+set_append_segment(
+    std::multiset<CurveSegment> &out,
+    const CurveSegment &seg)
+{
+    std::multiset<CurveSegment>::iterator i;
+    for (i = out.begin(); i != out.end(); ++i) {
+	if ((i->from == seg.to) && (i->to == seg.from)) {
+	    // if this segment is a reversed version of an existing
+	    // segment, it cancels the existing segment out
+	    out.erase(i);
+	    return;
+	}
+    }
+    out.insert(seg);
+}
+
+void
+set_append_segments_at_location(
+	std::multiset<CurveSegment> &out,
+	std::multiset<CurveSegment> &in,
+	CurveSegment::Location location,
+	bool reversed_segs_cancel)
+{
+    std::multiset<CurveSegment>::iterator i;
+    if (reversed_segs_cancel) {
+	for (i = in.begin(); i != in.end(); ++i) {
+	    if (i->location == location) {
+		set_append_segment(out, *i);
+	    }
+	}
+    } else {
+	for (i = in.begin(); i != in.end(); ++i) {
+	    if (i->location == location) {
+		out.insert(*i);
+	    }
+	}
+    }
+}
+
+std::multiset<CurveSegment>
+find_similar_segments(
+    std::multiset<CurveSegment> &set,
+    const CurveSegment &seg)
+{
+    std::multiset<CurveSegment> out;
+
+    std::multiset<CurveSegment>::iterator i;
+    for (i = set.begin(); i != set.end(); ++i) {
+	if (((i->from == seg.from) && (i->to == seg.to)) ||
+	    ((i->from == seg.to)   && (i->to == seg.from)))
+	{
+	    out.insert(*i);
+	}
+    }
+    return out;
+}
+
+std::multiset<CurveSegment>
+get_op_segments(
+	std::multiset<CurveSegment> &curve1_segments,
+	std::multiset<CurveSegment> &curve2_segments,
+	op_type op)
+{
+    std::multiset<CurveSegment> out;
+
+    if (op == BOOLEAN_INTERSECT) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::INSIDE, true);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::INSIDE, true);
+
+	std::multiset<CurveSegment> c1_boundary_segs;
+	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+		CurveSegment::BOUNDARY, false);
+
+	std::multiset<CurveSegment> c2_boundary_segs;
+	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+		CurveSegment::BOUNDARY, false);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1 || curve2_matches.size() > 1) {
+		continue;
+	    }
+	    if (curve1_matches.begin()->from == curve2_matches.begin()->from) {
+		out.insert(*i);
+	    }
+	}
+    } else if (op == BOOLEAN_DIFF) {
+	set_append_segments_at_location(out, curve1_segments,
+		CurveSegment::OUTSIDE, true);
+
+	set_append_segments_at_location(out, curve2_segments,
+		CurveSegment::INSIDE, true);
+
+	std::multiset<CurveSegment> c1_boundary_segs;
+	set_append_segments_at_location(c1_boundary_segs, curve1_segments,
+		CurveSegment::BOUNDARY, false);
+
+	std::multiset<CurveSegment> c2_boundary_segs;
+	set_append_segments_at_location(c2_boundary_segs, curve2_segments,
+		CurveSegment::BOUNDARY, false);
+
+	std::multiset<CurveSegment>::iterator i;
+	for (i = c1_boundary_segs.begin(); i != c1_boundary_segs.end(); ++i) {
+	    std::multiset<CurveSegment> curve1_matches =
+		find_similar_segments(c1_boundary_segs, *i);
+
+	    std::multiset<CurveSegment> curve2_matches =
+		find_similar_segments(c2_boundary_segs, *i);
+
+	    if (curve1_matches.size() > 1) {
+		continue;
+	    }
+	    if (curve1_matches.begin()->from == curve2_matches.begin()->from ||
+		curve2_matches.size() > 1)
+	    {
+		out.insert(*i);
+	    }
+	}
+    }
+
+    return out;
+}
+
+std::list<ON_SimpleArray<ON_Curve *> >
+construct_loops_from_segments(
+    std::multiset<CurveSegment> &segments)
+{
+    std::list<ON_SimpleArray<ON_Curve *> > out;
+
+    while (!segments.empty()) {
+	std::vector<std::multiset<CurveSegment>::iterator> loop_segs;
+	std::multiset<CurvePoint, CurvePointAbsoluteCompare> visited_points;
+
+	std::multiset<CurveSegment>::iterator curr_seg, prev_seg;
+        curr_seg = segments.begin();
+
+	loop_segs.push_back(curr_seg);
+	visited_points.insert(curr_seg->from);
+	visited_points.insert(curr_seg->to);
+
+	bool closed_curve = (curr_seg->from == curr_seg->to);
+	while (!closed_curve) {
+	    // look for a segment that connects to the previous
+	    prev_seg = curr_seg;
+	    for (curr_seg = segments.begin(); curr_seg != segments.end(); ++curr_seg) {
+		if (curr_seg->from == prev_seg->to) {
+		    break;
+		}
+	    }
+
+	    if (curr_seg == segments.end()) {
+		// no segment connects to the prev one
+		break;
+	    } else {
+		// Extend our loop with the joining segment.
+		// If we've visited its endpoint before, then the loop
+		// is now closed.
+		loop_segs.push_back(curr_seg);
+		visited_points.insert(curr_seg->to);
+		closed_curve = (visited_points.count(curr_seg->to) > 1);
+	    }
+	}
+
+	if (closed_curve) {
+	    // find the segment the closing segment connected to (it
+	    // may not be the first segment)
+	    size_t i;
+	    for (i = 0; i < loop_segs.size(); ++i) {
+		if (loop_segs[i]->from == loop_segs.back()->to) {
+		    break;
+		}
+	    }
+	    // Form a curve from the closed chain of segments.
+	    // Remove the used segments from the available set.
+	    ON_SimpleArray<ON_Curve *> loop;
+	    for (; i < loop_segs.size(); ++i) {
+		try {
+		    loop.Append(loop_segs[i]->Curve());
+		} catch (InvalidInterval &e) {
+		    bu_log("%s", e.what());
+		}
+		segments.erase(loop_segs[i]);
+	    }
+	    out.push_back(loop);
+	} else {
+	    // couldn't join to the last segment, discard it
+	    segments.erase(loop_segs.back());
+	    bu_log("construct_loops_from_segments: found unconnected segment\n");
+	}
+	loop_segs.clear();
+	visited_points.clear();
+    }
+    return out;
+}
+
+std::multiset<CurvePoint>
+get_loop_points(
+    int source_loop,
+    ON_SimpleArray<ON_Curve *> loop1,
+    ON_SimpleArray<ON_Curve *> loop2)
+{
+    std::multiset<CurvePoint> out;
+    ON_Curve *loop2_curve = get_loop_curve(loop2);
+
+    ON_Curve *loop1_seg = loop1[0];
+    out.insert(CurvePoint(source_loop, 0, loop1_seg->Domain().m_t[0], loop1_seg,
+		loop2_curve));
+
+    for (int i = 0; i < loop1.Count(); ++i) {
+	loop1_seg = loop1[i];
+	out.insert(CurvePoint(source_loop, i, loop1_seg->Domain().m_t[1],
+		    loop1_seg, loop2_curve));
+    }
+    delete loop2_curve;
+
+    return out;
+}
+
+// Get the result of a boolean combination of two loops. Based on the
+// algorithm from this paper:
+//
+// Margalit, Avraham and Gary D. Knott. 1989. "An Algorithm for
+// Computing the Union, Intersection or Difference of two Polygons."
+// Computers & Graphics 13:167-183.
+//
+// gvu.gatech.edu/people/official/jarek/graphics/papers/04PolygonBooleansMargalit.pdf
+std::list<ON_SimpleArray<ON_Curve *> >
+loop_boolean(
+    const ON_SimpleArray<ON_Curve *> &l1,
+    const ON_SimpleArray<ON_Curve *> &l2,
+    op_type op)
+{
+    std::list<ON_SimpleArray<ON_Curve *> > out;
+    ON_SimpleArray<ON_Curve *> loop1, loop2;
+
+    for (int i = 0; i < l1.Count(); ++i) {
+	loop1.Append(l1[i]->Duplicate());
+    }
+
+    if (op != BOOLEAN_INTERSECT && op != BOOLEAN_DIFF) {
+	bu_log("loop_boolean: unsupported operation\n");
+	out.push_back(loop1);
+	return out;
+    }
+
+    for (int i = 0; i < l2.Count(); ++i) {
+	loop2.Append(l2[i]->Duplicate());
+    }
+
+    // set curve directions based on operation
+    int loop1_dir, loop2_dir;
+
+    loop1_dir = loop2_dir = LOOP_DIRECTION_CCW;
+    if (op == BOOLEAN_DIFF) {
+	loop2_dir = LOOP_DIRECTION_CW;
+    }
+
+    if (!set_loop_direction(loop1, loop1_dir) ||
+	!set_loop_direction(loop2, loop2_dir))
+    {
+	bu_log("loop_boolean: couldn't standardize curve directions\n");
+	out.push_back(loop1);
+
+	for (int i = 0; i < l2.Count(); ++i) {
+	    delete loop2[i];
+	}
+	return out;
+    }
+
+    std::multiset<CurvePoint> loop1_points, loop2_points;
+
+    loop1_points = get_loop_points(1, loop1, loop2);
+    loop2_points = get_loop_points(2, loop2, loop1);
+
+    for (int i = 0; i < loop1.Count(); ++i) {
+	for (int j = 0; j < loop2.Count(); ++j) {
+	    ON_SimpleArray<ON_X_EVENT> x_events;
+	    ON_Intersect(loop1[i], loop2[j], x_events, INTERSECTION_TOL);
+
+	    for (int k = 0; k < x_events.Count(); ++k) {
+		add_point_to_set(loop1_points, CurvePoint(1, i,
+			    x_events[k].m_a[0], x_events[k].m_A[0],
+			    CurvePoint::BOUNDARY));
+
+		add_point_to_set(loop2_points, CurvePoint(2, j,
+			    x_events[k].m_b[0], x_events[k].m_B[0],
+			    CurvePoint::BOUNDARY));
+
+		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
+		    add_point_to_set(loop1_points, CurvePoint(1, i,
+				x_events[k].m_a[1], x_events[k].m_A[1],
+				CurvePoint::BOUNDARY));
+
+		    add_point_to_set(loop2_points, CurvePoint(2, j,
+				x_events[k].m_b[1], x_events[k].m_B[1],
+				CurvePoint::BOUNDARY));
+		}
+	    }
+	}
+    }
+
+    std::multiset<CurveSegment> loop1_segments, loop2_segments;
+    loop1_segments = make_segments(loop1_points, loop1, loop2);
+    loop2_segments = make_segments(loop2_points, loop2, loop1);
+
+    std::multiset<CurveSegment> out_segments =
+	get_op_segments(loop1_segments, loop2_segments, op);
+
+    out = construct_loops_from_segments(out_segments);
+
+    for (int i = 0; i < l1.Count(); ++i) {
+	delete loop1[i];
+    }
+    for (int i = 0; i < l2.Count(); ++i) {
+	delete loop2[i];
+    }
+    return out;
+}
+
+std::list<ON_SimpleArray<ON_Curve *> >
+innerloops_inside_outerloop(
+    ON_SimpleArray<ON_Curve *> &outerloop_curve,
+    const std::vector<ON_SimpleArray<ON_Curve *> > &innerloop_curves)
+{
+    std::list<ON_SimpleArray<ON_Curve *> > out;
+
+    for (size_t i = 0; i < innerloop_curves.size(); ++i) {
+	std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
+	new_innerloops = loop_boolean(outerloop_curve, innerloop_curves[i],
+		BOOLEAN_INTERSECT);
+
+	std::list<ON_SimpleArray<ON_Curve *> >::iterator j;
+	for (j = new_innerloops.begin(); j != new_innerloops.end(); ++j) {
+	    set_loop_direction(*j, LOOP_DIRECTION_CW);
+	    out.push_back(*j);
+	}
+    }
+    return out;
+}
+
+TrimmedFace *
+make_face_from_loops(
+	const TrimmedFace *orig_face,
+	ON_SimpleArray<ON_Curve *> &outerloop,
+	const std::vector<ON_SimpleArray<ON_Curve *> > &innerloops)
+{
+    TrimmedFace *face = new TrimmedFace();
+
+    face->m_face = orig_face->m_face;
+    face->m_outerloop.Append(outerloop.Count(), outerloop.Array());
+
+    std::list<ON_SimpleArray<ON_Curve *> > new_innerloops;
+    new_innerloops = innerloops_inside_outerloop(outerloop, innerloops);
+
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator i;
+    for (i = new_innerloops.begin(); i != new_innerloops.end(); ++i) {
+	face->m_innerloop.push_back(*i);
+    }
+    return face;
+}
+
+void
+append_faces_from_loops(
+	ON_SimpleArray<TrimmedFace *> &out,
+	const TrimmedFace *orig_face,
+	std::list<ON_SimpleArray<ON_Curve *> > &new_loops)
+{
+    // copy face inner loops
+    std::vector<ON_SimpleArray<ON_Curve *> > all_innerloops;
+    for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
+	ON_SimpleArray<ON_Curve *> loop;
+	loop.Append(orig_face->m_innerloop[i].Count(),
+		orig_face->m_innerloop[i].Array());
+	all_innerloops.push_back(loop);
+    }
+
+    // add new innerloops, removing them from the input list
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator innerloop;
+
+    size_t first_new = all_innerloops.size();
+
+    innerloop = find_innerloop(new_loops);
+    while (innerloop != new_loops.end()) {
+	all_innerloops.push_back(*innerloop);
+	new_loops.erase(innerloop);
+
+	innerloop = find_innerloop(new_loops);
+    }
+
+    // make a face from each outerloop, using appropriate innerloops
+    std::list<ON_SimpleArray<ON_Curve *> >::iterator i;
+    for (i = new_loops.begin(); i != new_loops.end(); ++i) {
+	out.Append(make_face_from_loops(orig_face, *i, all_innerloops));
+    }
+
+    // delete original innerloops from the new set
+    for (size_t loop = first_new; loop < all_innerloops.size(); ++loop) {
+	for (int j = 0; j < all_innerloops[loop].Count(); ++j) {
+	    delete all_innerloops[loop][j];
+	    all_innerloops[loop][j] = NULL;
+	}
+    }
+}
+
+/* Turn an open curve into a closed curve by using segments from the
+ * face outerloop to connect its endpoints.
+ *
+ * Returns false on failure, true otherwise.
+ */
+std::vector<ON_SimpleArray<ON_Curve *> >
+split_face_into_loops(
+    const TrimmedFace *orig_face,
+    LinkedCurve &linked_curve)
+{
+    std::vector<ON_SimpleArray<ON_Curve *> > out;
+
+    if (linked_curve.IsClosed()) {
+	ON_SimpleArray<ON_Curve *> loop;
+	for (int i = 0; i < orig_face->m_outerloop.Count(); ++i) {
+	    loop.Append(orig_face->m_outerloop[i]->Duplicate());
+	}
+	out.push_back(loop);
+	return out;
+    }
+
+    /* We followed the algorithms described in:
+     * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
+     * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
+     * Department of Computer Science, University of North Carolina, 1995.
+     * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
+     * Chains.
+     */
+
+    // Get the intersection points between the SSI curves and the outerloop.
+    ON_SimpleArray<IntersectPoint> clx_points;
+    bool intersects_outerloop = false;
+    for (int i = 0; i < orig_face->m_outerloop.Count(); i++) {
+	ON_SimpleArray<ON_X_EVENT> x_events;
+	ON_Intersect(orig_face->m_outerloop[i], linked_curve.Curve(),
+		x_events, INTERSECTION_TOL);
+
+	for (int j = 0; j < x_events.Count(); j++) {
+	    IntersectPoint tmp_pt;
+	    tmp_pt.m_pt = x_events[j].m_A[0];
+	    tmp_pt.m_seg_t = x_events[j].m_a[0];
+	    tmp_pt.m_curve_t = x_events[j].m_b[0];
+	    tmp_pt.m_loop_seg = i;
+	    clx_points.Append(tmp_pt);
+
+	    if (x_events[j].m_type == ON_X_EVENT::ccx_overlap) {
+		tmp_pt.m_pt = x_events[j].m_A[1];
+		tmp_pt.m_seg_t = x_events[j].m_a[1];
+		tmp_pt.m_curve_t = x_events[j].m_b[1];
+		clx_points.Append(tmp_pt);
+	    }
+	    if (x_events.Count()) {
+		intersects_outerloop = true;
+	    }
+	}
+    }
+
+    // can't close curves that don't partition the face
+    if (!intersects_outerloop || clx_points.Count() < 2) {
+	ON_SimpleArray<ON_Curve *> loop;
+	for (int i = 0; i < orig_face->m_outerloop.Count(); ++i) {
+	    loop.Append(orig_face->m_outerloop[i]->Duplicate());
+	}
+	out.push_back(loop);
+	return out;
+    }
+
+    // rank these intersection points
+    clx_points.QuickSort(curve_t_compare);
+    for (int i = 0; i < clx_points.Count(); i++) {
+	clx_points[i].m_curve_pos = i;
+    }
+
+    // classify intersection points
+    ON_SimpleArray<IntersectPoint> new_pts;
+    double curve_min_t = linked_curve.Domain().Min();
+    double curve_max_t = linked_curve.Domain().Max();
+
+    for (int i = 0; i < clx_points.Count(); i++) {
+	bool is_first_ipt = (i == 0);
+	bool is_last_ipt = (i == (clx_points.Count() - 1));
+
+	IntersectPoint *ipt = &clx_points[i];
+	double curve_t = ipt->m_curve_t;
+
+	ON_3dPoint prev = linked_curve.PointAtStart();
+	if (!is_first_ipt) {
+	    double prev_curve_t = clx_points[i - 1].m_curve_t;
+	    prev = linked_curve.PointAt((curve_t + prev_curve_t) * .5);
+	}
+	ON_3dPoint next = linked_curve.PointAtEnd();
+	if (!is_last_ipt) {
+	    double next_curve_t = clx_points[i + 1].m_curve_t;
+	    next = linked_curve.PointAt((curve_t + next_curve_t) * .5);
+	}
+	// If the point is on the boundary, we treat it with the same
+	// way as it's outside.
+	// For example, the prev side is inside, and the next's on
+	// boundary, that point should be IntersectPoint::OUT, the
+	// same as the next's outside the loop.
+	// Other cases are similar.
+	bool prev_in, next_in;
+	try {
+	    prev_in = is_point_inside_loop(prev, orig_face->m_outerloop);
+	    next_in = is_point_inside_loop(next, orig_face->m_outerloop);
+	} catch (InvalidGeometry &e) {
+	    bu_log("%s", e.what());
+	    // not a loop
+	    ipt->m_dir = IntersectPoint::UNSET;
+	    continue;
+	}
+	if (is_first_ipt && ON_NearZero(curve_t - curve_min_t)) {
+	    ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
+	    continue;
+	}
+	if (is_last_ipt && ON_NearZero(curve_t - curve_max_t)) {
+	    ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
+	    continue;
+	}
+	if (prev_in && next_in) {
+	    // tangent point, both sides in, duplicate that point
+	    new_pts.Append(*ipt);
+	    new_pts.Last()->m_dir = IntersectPoint::TANGENT;
+	    new_pts.Last()->m_curve_pos = ipt->m_curve_pos;
+	    ipt->m_dir = IntersectPoint::TANGENT;
+	} else if (!prev_in && !next_in) {
+	    // tangent point, both sides out, useless
+	    ipt->m_dir = IntersectPoint::UNSET;
+	} else if (prev_in && !next_in) {
+	    // transversal point, going outside
+	    ipt->m_dir = IntersectPoint::OUT;
+	} else {
+	    // transversal point, going inside
+	    ipt->m_dir = IntersectPoint::IN;
+	}
+    }
+
+    clx_points.Append(new_pts.Count(), new_pts.Array());
+    clx_points.QuickSort(loop_t_compare);
+
+    // Split the outer loop.
+    ON_SimpleArray<ON_Curve *> outerloop_segs;
+    int clx_i = 0;
+    for (int loop_seg = 0; loop_seg < orig_face->m_outerloop.Count(); loop_seg++) {
+	ON_Curve *remainder = orig_face->m_outerloop[loop_seg]->Duplicate();
+	if (remainder == NULL) {
+	    bu_log("ON_Curve::Duplicate() failed.\n");
+	    continue;
+	}
+	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
+	    IntersectPoint &ipt = clx_points[clx_i];
+	    ON_Curve *portion_before_ipt = NULL;
+	    if (remainder) {
+		double start_t = remainder->Domain().Min();
+		double end_t = remainder->Domain().Max();
+		if (ON_NearZero(ipt.m_seg_t - end_t)) {
+		    // Can't call Split() if ipt is at start (that
+		    // case is handled by the initialization) or ipt
+		    // is at end (handled here).
+		    portion_before_ipt = remainder;
+		    remainder = NULL;
+		} else if (!ON_NearZero(ipt.m_seg_t - start_t)) {
+		    if (!remainder->Split(ipt.m_seg_t, portion_before_ipt, remainder)) {
+			bu_log("Split failed.\n");
+			bu_log("Domain: [%f, %f]\n", end_t, start_t);
+			bu_log("m_seg_t: %f\n", ipt.m_seg_t);
+		    }
+		}
+	    }
+	    if (portion_before_ipt) {
+		outerloop_segs.Append(portion_before_ipt);
+	    }
+	    ipt.m_split_li = outerloop_segs.Count() - 1;
+	}
+	if (remainder) {
+	    outerloop_segs.Append(remainder);
+	}
+    }
+
+    // Append the first element at the last to handle some special cases.
+    if (clx_points.Count()) {
+	clx_points.Append(clx_points[0]);
+	clx_points.Last()->m_loop_seg += orig_face->m_outerloop.Count();
+	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
+	    ON_Curve *dup = outerloop_segs[i]->Duplicate();
+	    if (dup == NULL) {
+		bu_log("ON_Curve::Duplicate() failed.\n");
+	    }
+	    outerloop_segs.Append(dup);
+	}
+	clx_points.Last()->m_split_li = outerloop_segs.Count() - 1;
+    }
+
+    if (DEBUG_BREP_BOOLEAN) {
+	for (int i = 0; i < clx_points.Count(); i++) {
+	    IntersectPoint &ipt = clx_points[i];
+	    bu_log("clx_points[%d](count = %d): ", i, clx_points.Count());
+	    bu_log("m_curve_pos = %d, m_dir = %d\n", ipt.m_curve_pos, ipt.m_dir);
+	}
+    }
+
+    std::stack<int> s;
+    for (int i = 0; i < clx_points.Count(); i++) {
+	if (clx_points[i].m_dir == IntersectPoint::UNSET) {
+	    continue;
+	}
+	if (s.empty()) {
+	    s.push(i);
+	    continue;
+	}
+	const IntersectPoint &p = clx_points[s.top()];
+	const IntersectPoint &q = clx_points[i];
+
+	if (loop_t_compare(&p, &q) > 0 || q.m_split_li < p.m_split_li) {
+	    bu_log("stack error or sort failure.\n");
+	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
+	    bu_log("p->m_split_li = %d, q->m_split_li = %d\n", p.m_split_li, q.m_split_li);
+	    bu_log("p->m_loop_seg = %d, q->m_loop_seg = %d\n", p.m_loop_seg, q.m_loop_seg);
+	    bu_log("p->m_seg_t = %g, q->m_seg_t = %g\n", p.m_seg_t, q.m_seg_t);
+	    continue;
+	}
+	if (q.m_curve_pos - p.m_curve_pos == 1 &&
+	    q.m_dir != IntersectPoint::IN &&
+	    p.m_dir != IntersectPoint::OUT)
+	{
+	    s.pop();
+	} else if (p.m_curve_pos - q.m_curve_pos == 1 &&
+		   p.m_dir != IntersectPoint::IN &&
+		   q.m_dir != IntersectPoint::OUT)
+	{
+	    s.pop();
+	} else {
+	    s.push(i);
+	    continue;
+	}
+
+	// need to form a new loop
+	ON_SimpleArray<ON_Curve *> newloop;
+	int curve_count = q.m_split_li - p.m_split_li;
+	for (int j = p.m_split_li + 1; j <= q.m_split_li; j++) {
+	    // No need to duplicate the curve, because the pointer
+	    // in the array 'outerloop_segs' will be moved out later.
+	    newloop.Append(outerloop_segs[j]);
+	}
+
+	// The curves on the outer loop is from p to q, so the curves on the
+	// SSI curve should be from q to p (to form a loop)
+	double t1 = p.m_curve_t, t2 = q.m_curve_t;
+	bool need_reverse = true;
+	if (t1 > t2) {
+	    std::swap(t1, t2);
+	    need_reverse = false;
+	}
+	ON_Curve *seg_on_SSI = linked_curve.SubCurve(t1, t2);
+	if (seg_on_SSI == NULL) {
+	    bu_log("sub_curve() failed.\n");
+	    continue;
+	}
+	if (need_reverse) {
+	    if (!seg_on_SSI->Reverse()) {
+		bu_log("Reverse failed.\n");
+		continue;
+	    }
+	}
+	newloop.Append(seg_on_SSI);
+
+	ON_Curve *rev_seg_on_SSI = seg_on_SSI->Duplicate();
+	if (!rev_seg_on_SSI || !rev_seg_on_SSI->Reverse()) {
+	    bu_log("Reverse failed.\n");
+	    continue;
+	} else {
+	    // Update the outerloop
+	    outerloop_segs[p.m_split_li + 1] = rev_seg_on_SSI;
+	    int k = p.m_split_li + 2;
+	    for (int j = q.m_split_li + 1; j < outerloop_segs.Count(); j++) {
+		outerloop_segs[k++] = outerloop_segs[j];
+	    }
+	    while (k < outerloop_segs.Count()) {
+		outerloop_segs[outerloop_segs.Count() - 1] = NULL;
+		outerloop_segs.Remove();
+	    }
+	    // Update m_split_li
+	    for (int j = i + 1; j < clx_points.Count(); j++) {
+		clx_points[j].m_split_li -= curve_count - 1;
+	    }
+	}
+
+	// append the new loop if it's valid
+	if (is_loop_valid(newloop, ON_ZERO_TOLERANCE)) {
+	    ON_SimpleArray<ON_Curve *> loop;
+	    loop.Append(newloop.Count(), newloop.Array());
+	    out.push_back(loop);
+	} else {
+	    for (int j = 0; j < newloop.Count(); j++) {
+		delete newloop[j];
+	    }
+	}
+    }
+
+    // Remove the duplicated segments before the first intersection point.
+    if (clx_points.Count()) {
+	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
+	    delete outerloop_segs[0];
+	    outerloop_segs[0] = NULL;
+	    outerloop_segs.Remove(0);
+	}
+    }
+
+    if (out.size() > 0) {
+	// The remaining part after splitting some parts out.
+	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
+	    ON_SimpleArray<ON_Curve *> loop;
+	    loop.Append(outerloop_segs.Count(), outerloop_segs.Array());
+	    out.push_back(loop);
+	} else {
+	    for (int i = 0; i < outerloop_segs.Count(); i++)
+		if (outerloop_segs[i]) {
+		    delete outerloop_segs[i];
+		}
+	}
+    }
+    return out;
+}
+
+void
+free_loops(std::vector<ON_SimpleArray<ON_Curve *> > &loops)
+{
+    for (size_t i = 0; i < loops.size(); ++i) {
+	for (int j = 0; j < loops[i].Count(); ++j) {
+	    delete loops[i][j];
+	    loops[i][j] = NULL;
+	}
+    }
+}
+
+bool
+loop_is_degenerate(const ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() < 1) {
+	return true;
+    }
+    ON_Curve *loop_curve = get_loop_curve(loop);
+
+    ON_2dPoint joint = loop_curve->PointAtStart();
+    ON_2dPoint mid = loop_curve->PointAt(loop_curve->Domain().Mid());
+
+    ON_Curve *left = NULL, *right = NULL;
+    loop_curve->Split(loop_curve->Domain().Mid(), left, right);
+    delete loop_curve;
+
+    ON_SimpleArray<ON_X_EVENT> events;
+    ON_Intersect(left, right, events, INTERSECTION_TOL);
+    delete left;
+    delete right;
+
+    // two halves of loop should intersect at the start/end point and
+    // the midpoint, and nowhere else
+    if (events.Count() != 2) {
+	return true;
+    }
+    for (int i = 0; i < events.Count(); ++i) {
+	if (events[i].m_type != ON_X_EVENT::ccx_point) {
+	    return true;
+	}
+
+	ON_2dPoint ipt = events[i].m_A[0];
+	if (!ON_NearZero(ipt.DistanceTo(joint), INTERSECTION_TOL) &&
+	    !ON_NearZero(ipt.DistanceTo(mid), INTERSECTION_TOL)) {
+	    return true;
+	}
+    }
+    return false;
+}
+
+HIDDEN bool
+close_small_gap(ON_SimpleArray<ON_Curve *> &loop, int curr, int next)
+{
+    ON_3dPoint end_curr = loop[curr]->PointAtEnd();
+    ON_3dPoint start_next = loop[next]->PointAtStart();
+
+    double gap = end_curr.DistanceTo(start_next);
+    if (gap <= INTERSECTION_TOL && gap >= ON_ZERO_TOLERANCE) {
+	ON_Curve *closing_seg = new ON_LineCurve(end_curr, start_next);
+	loop.Insert(next, closing_seg);
+	return true;
+    }
+    return false;
+}
+
+HIDDEN void
+close_small_gaps(ON_SimpleArray<ON_Curve *> &loop)
+{
+    if (loop.Count() == 0) {
+	return;
+    }
+    for (int i = 0; i < loop.Count() - 1; ++i) {
+	if (close_small_gap(loop, i, i + 1)) {
+	    ++i;
+	}
+    }
+    close_small_gap(loop, loop.Count() - 1, 0);
+}
 
 // It might be worth investigating the following approach to building a set of faces from the splitting
 // in order to achieve robustness in the final result:
@@ -795,366 +2011,82 @@ split_trimmed_face(
     ON_ClassArray<LinkedCurve> &ssx_curves)
 {
     ON_SimpleArray<TrimmedFace *> out;
+    out.Append(orig_face->Duplicate());
+
     if (ssx_curves.Count() == 0) {
-	// No curve, no splitting
-	out.Append(orig_face->Duplicate());
+	// no curves, no splitting
 	return out;
     }
-    /* We followed the algorithms described in:
-     * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
-     * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
-     * Department of Computer Science, University of North Carolina, 1995.
-     * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
-     * Chains.
-     */
 
-    // Get the intersection points between the SSI curves and the outerloop.
-    ON_SimpleArray<IntersectPoint> clx_points;
-    ON_SimpleArray<bool> intersects_outerloop(ssx_curves.Count());
-    for (int i = 0; i < ssx_curves.Count(); i++) {
-	intersects_outerloop[i] = false;
+    ON_Curve *face_outerloop = get_loop_curve(orig_face->m_outerloop);
+    if (!face_outerloop->IsClosed()) {
+	// need closed outerloop
+	delete face_outerloop;
+	return out;
     }
+    delete face_outerloop;
 
-    for (int i = 0; i < orig_face->m_outerloop.Count(); i++) {
-	for (int j = 0; j < ssx_curves.Count(); j++) {
-	    ON_SimpleArray<ON_X_EVENT> x_events;
-	    ON_Intersect(orig_face->m_outerloop[i], ssx_curves[j].Curve(),
-		    x_events, INTERSECTION_TOL);
+    for (int i = 0; i < ssx_curves.Count(); ++i) {
+	std::vector<ON_SimpleArray<ON_Curve *> > ssx_loops;
 
-	    for (int k = 0; k < x_events.Count(); k++) {
-		IntersectPoint tmp_pt;
-		tmp_pt.m_pt = x_events[k].m_A[0];
-		tmp_pt.m_seg_t = x_events[k].m_a[0];
-		tmp_pt.m_curve_t = x_events[k].m_b[0];
-		tmp_pt.m_loop_seg = i;
-		tmp_pt.m_ssx_curve = j;
-		clx_points.Append(tmp_pt);
-
-		if (x_events[k].m_type == ON_X_EVENT::ccx_overlap) {
-		    tmp_pt.m_pt = x_events[k].m_A[1];
-		    tmp_pt.m_seg_t = x_events[k].m_a[1];
-		    tmp_pt.m_curve_t = x_events[k].m_b[1];
-		    clx_points.Append(tmp_pt);
-		}
-		if (x_events.Count()) {
-		    intersects_outerloop[j] = true;
-		}
-	    }
+	// get closed version of current ssx curve
+	if (ssx_curves[i].IsClosed()) {
+	    ON_SimpleArray<ON_Curve *> loop;
+	    loop.Append(ssx_curves[i].Curve()->Duplicate());
+	    ssx_loops.push_back(loop);
+	} else {
+	    ssx_loops = split_face_into_loops(orig_face, ssx_curves[i]);
 	}
-    }
 
-    // deal with the situations where there is no intersection
-    std::vector<ON_SimpleArray<ON_Curve *> > innerloops;
-    for (int i = 0; i < ssx_curves.Count(); i++) {
-	if (!intersects_outerloop[i]) {
-	    // The start point cannot be on the boundary of the loop, because
-	    // there is no intersections between ssx_curves[i] and the loop.
-	    try {
-		int curve_start_location = point_loop_location(
-			ssx_curves[i].PointAtStart(), orig_face->m_outerloop);
-
-		if (curve_start_location == INSIDE_OR_ON_LOOP &&
-		    ssx_curves[i].IsClosed())
-		{
-		    // curve is innerloop of original face
-		    ON_SimpleArray<ON_Curve *> loop_curves;
-		    ssx_curves[i].AppendCurvesToArray(loop_curves);
-		    innerloops.push_back(loop_curves);
-
-		    // curve is outerloop of new face
-		    TrimmedFace *new_face = new TrimmedFace();
-		    new_face->m_face = orig_face->m_face;
-		    ssx_curves[i].AppendCurvesToArray(new_face->m_outerloop);
-		    out.Append(new_face);
-		}
-	    } catch (InvalidGeometry &e) {
-		bu_log("%s", e.what());
-	    }
-	}
-    }
-
-    // rank these intersection points
-    // during the time using pts_on_curve(), must make sure that
-    // the capacity of clx_points[] never changes.
-    ON_ClassArray<ON_SimpleArray<IntersectPoint *> > pts_on_curve(ssx_curves.Count());
-    for (int i = 0; i < clx_points.Count(); i++) {
-	pts_on_curve[clx_points[i].m_ssx_curve].Append(&(clx_points[i]));
-    }
-    for (int i = 0; i < ssx_curves.Count(); i++) {
-	pts_on_curve[i].QuickSort(curve_t_compare);
-
-	for (int j = 0; j < pts_on_curve[i].Count(); j++) {
-	    pts_on_curve[i][j]->m_curve_pos = j;
-	}
-    }
-
-    ON_SimpleArray<IntersectPoint> new_pts;
-
-    // Determine whether it's going inside or outside (IntersectPoint::m_dir).
-    for (int i = 0; i < ssx_curves.Count(); i++) {
-	if (pts_on_curve[i].Count() == 1) {
-	    pts_on_curve[i][0]->m_dir = IntersectPoint::UNSET;
-	    continue;
-	}
-	for (int j = 0; j < pts_on_curve[i].Count(); j++) {
-	    bool first_pt = (j == 0);
-	    bool last_pt = (j == (pts_on_curve[i].Count() - 1));
-
-	    IntersectPoint *ipt = pts_on_curve[i][j];
-	    double curve_t = ipt->m_curve_t;
-
-	    ON_3dPoint prev = ssx_curves[i].PointAtStart();
-	    if (!first_pt) {
-		double prev_curve_t = pts_on_curve[i][j - 1]->m_curve_t;
-		prev = ssx_curves[i].PointAt((curve_t + prev_curve_t) * .5);
-	    }
-	    ON_3dPoint next = ssx_curves[i].PointAtEnd();
-	    if (!last_pt) {
-		double next_curve_t = pts_on_curve[i][j + 1]->m_curve_t;
-		next = ssx_curves[i].PointAt((curve_t + next_curve_t) * .5);
-	    }
-	    // If the point is on the boundary, we treat it with the same
-	    // way as it's outside.
-	    // For example, the prev side is inside, and the next's on
-	    // boundary, that point should be IntersectPoint::OUT, the
-	    // same as the next's outside the loop.
-	    // Other cases are similar.
-	    bool prev_in, next_in;
-	    try {
-		prev_in = is_point_inside_loop(prev, orig_face->m_outerloop);
-		next_in = is_point_inside_loop(next, orig_face->m_outerloop);
-	    } catch (InvalidGeometry &e) {
-		bu_log("%s", e.what());
-		// not a loop
-		ipt->m_dir = IntersectPoint::UNSET;
+	ON_SimpleArray<TrimmedFace *> next_out;
+	for (size_t j = 0; j < ssx_loops.size(); ++j) {
+	    if (loop_is_degenerate(ssx_loops[j])) {
 		continue;
 	    }
-	    double curve_min_t = ssx_curves[i].Domain().Min();
-	    if (first_pt && ON_NearZero(curve_t - curve_min_t)) {
-		ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
-		continue;
-	    }
-	    double curve_max_t = ssx_curves[i].Domain().Max();
-	    if (last_pt && ON_NearZero(curve_t - curve_max_t)) {
-		ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
-		continue;
-	    }
-	    if (prev_in && next_in) {
-		// tangent point, both sides in, duplicate that point
-		new_pts.Append(*ipt);
-		new_pts.Last()->m_dir = IntersectPoint::IN;
-		new_pts.Last()->m_curve_pos = ipt->m_curve_pos + 1;
-		for (int k = j + 1; k < pts_on_curve[i].Count(); k++) {
-		    pts_on_curve[i][k]->m_curve_pos++;
-		}
-		ipt->m_dir = IntersectPoint::OUT;
-	    } else if (!prev_in && !next_in) {
-		// tangent point, both sides out, useless
-		ipt->m_dir = IntersectPoint::UNSET;
-	    } else if (prev_in && !next_in) {
-		// transversal point, going outside
-		ipt->m_dir = IntersectPoint::OUT;
-	    } else {
-		// transversal point, going inside
-		ipt->m_dir = IntersectPoint::IN;
-	    }
-	}
-    }
 
-    clx_points.Append(new_pts.Count(), new_pts.Array());
-    clx_points.QuickSort(loop_t_compare);
+	    for (int k = 0; k < out.Count(); ++k) {
+		std::list<ON_SimpleArray<ON_Curve *> > intersect_loops, diff_loops;
 
-    // Split the outer loop.
-    ON_SimpleArray<ON_Curve *> outerloop_segs;
-    int clx_i = 0;
-    for (int loop_seg = 0; loop_seg < orig_face->m_outerloop.Count(); loop_seg++) {
-	ON_Curve *seg_curve = orig_face->m_outerloop[loop_seg]->Duplicate();
-	if (seg_curve == NULL) {
-	    bu_log("ON_Curve::Duplicate() failed.\n");
-	    continue;
-	}
-	for (; clx_i < clx_points.Count() && clx_points[clx_i].m_loop_seg == loop_seg; clx_i++) {
-	    IntersectPoint &ipt = clx_points[clx_i];
-	    ON_Curve *left = NULL;
-	    if (seg_curve) {
-		double seg_min_t = seg_curve->Domain().Min();
-		double seg_max_t = seg_curve->Domain().Max();
-		if (ON_NearZero(ipt.m_seg_t - seg_max_t)) {
-		    // Can't call Split() if ipt is at start (that
-		    // case is handled by the initialization) or ipt
-		    // is at end (handled here).
-		    left = seg_curve;
-		    seg_curve = NULL;
-		} else if (!ON_NearZero(ipt.m_seg_t - seg_min_t)) {
-		    if (!seg_curve->Split(ipt.m_seg_t, left, seg_curve)) {
-			bu_log("Split failed.\n");
-			bu_log("Domain: [%f, %f]\n", seg_max_t, seg_min_t);
-			bu_log("m_seg_t: %f\n", ipt.m_seg_t);
+		// get the portion of the current outerloop inside the
+		// closed ssx curve
+		intersect_loops = loop_boolean(out[k]->m_outerloop,
+			ssx_loops[j], BOOLEAN_INTERSECT);
+
+		if (ssx_curves[i].IsClosed()) {
+		    if (intersect_loops.size() == 0) {
+			// no intersection, just keep the face as-is
+			next_out.Append(out[k]->Duplicate());
+			continue;
 		    }
+
+		    // for a naturally closed intersection curve, we
+		    // also need the portion outside the curve
+		    diff_loops = loop_boolean(out[k]->m_outerloop, ssx_loops[j],
+			    BOOLEAN_DIFF);
 		}
-		if (left != NULL) {
-		    outerloop_segs.Append(left);
-		}
+
+		// make new faces from the loops
+		append_faces_from_loops(next_out, out[k], intersect_loops);
+		append_faces_from_loops(next_out, out[k], diff_loops);
 	    }
-	    ipt.m_split_li = outerloop_segs.Count() - 1;
 	}
-	if (seg_curve) {
-	    outerloop_segs.Append(seg_curve);
+	free_loops(ssx_loops);
+
+	if (next_out.Count() > 0) {
+	    // replace previous faces with the new ones
+	    for (int j = 0; j < out.Count(); ++j) {
+		delete out[j];
+	    }
+	    out.Empty();
+
+	    out.Append(next_out.Count(), next_out.Array());
 	}
     }
 
-    // Append the first element at the last to handle some special cases.
-    if (clx_points.Count()) {
-	clx_points.Append(clx_points[0]);
-	clx_points.Last()->m_loop_seg += orig_face->m_outerloop.Count();
-	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
-	    ON_Curve *dup = outerloop_segs[i]->Duplicate();
-	    if (dup == NULL) {
-		bu_log("ON_Curve::Duplicate() failed.\n");
-	    }
-	    outerloop_segs.Append(dup);
-	}
-	clx_points.Last()->m_split_li = outerloop_segs.Count() - 1;
-    }
-
-    if (DEBUG_BREP_BOOLEAN) {
-	for (int i = 0; i < clx_points.Count(); i++) {
-	    IntersectPoint &ipt = clx_points[i];
-	    bu_log("clx_points[%d](count = %d): ", i, clx_points.Count());
-	    bu_log("m_ssx_curve = %d, m_curve_pos = %d, m_dir = %d\n",
-		    ipt.m_ssx_curve, ipt.m_curve_pos, ipt.m_dir);
-	}
-    }
-
-    std::stack<int> s;
-    for (int i = 0; i < clx_points.Count(); i++) {
-	if (clx_points[i].m_dir == IntersectPoint::UNSET) {
-	    continue;
-	}
-	if (s.empty()) {
-	    s.push(i);
-	    continue;
-	}
-	const IntersectPoint &p = clx_points[s.top()];
-	const IntersectPoint &q = clx_points[i];
-
-	if (loop_t_compare(&p, &q) > 0 || q.m_split_li < p.m_split_li) {
-	    bu_log("stack error or sort failure.\n");
-	    bu_log("s.top() = %d, i = %d\n", s.top(), i);
-	    bu_log("p->m_split_li = %d, q->m_split_li = %d\n", p.m_split_li, q.m_split_li);
-	    bu_log("p->m_loop_seg = %d, q->m_loop_seg = %d\n", p.m_loop_seg, q.m_loop_seg);
-	    bu_log("p->m_seg_t = %g, q->m_seg_t = %g\n", p.m_seg_t, q.m_seg_t);
-	    continue;
-	}
-	if (q.m_ssx_curve != p.m_ssx_curve) {
-	    s.push(i);
-	    continue;
-	} else if (q.m_curve_pos - p.m_curve_pos == 1 && q.m_dir == IntersectPoint::OUT && p.m_dir == IntersectPoint::IN) {
-	    s.pop();
-	} else if (p.m_curve_pos - q.m_curve_pos == 1 && p.m_dir == IntersectPoint::OUT && q.m_dir == IntersectPoint::IN) {
-	    s.pop();
-	} else {
-	    s.push(i);
-	    continue;
-	}
-
-	// need to form a new loop
-	ON_SimpleArray<ON_Curve *> newloop;
-	int curve_count = q.m_split_li - p.m_split_li;
-	for (int j = p.m_split_li + 1; j <= q.m_split_li; j++) {
-	    // No need to duplicate the curve, because the pointer
-	    // in the array 'outerloop_segs' will be moved out later.
-	    newloop.Append(outerloop_segs[j]);
-	}
-
-	// The curves on the outer loop is from p to q, so the curves on the
-	// SSI curve should be from q to p (to form a loop)
-	double t1 = p.m_curve_t, t2 = q.m_curve_t;
-	bool need_reverse = true;
-	if (t1 > t2) {
-	    std::swap(t1, t2);
-	    need_reverse = false;
-	}
-	ON_Curve *seg_on_SSI = ssx_curves[p.m_ssx_curve].SubCurve(t1, t2);
-	if (seg_on_SSI == NULL) {
-	    bu_log("sub_curve() failed.\n");
-	    continue;
-	}
-	if (need_reverse) {
-	    if (!seg_on_SSI->Reverse()) {
-		bu_log("Reverse failed.\n");
-		continue;
-	    }
-	}
-	newloop.Append(seg_on_SSI);
-
-	ON_Curve *rev_seg_on_SSI = seg_on_SSI->Duplicate();
-	if (!rev_seg_on_SSI || !rev_seg_on_SSI->Reverse()) {
-	    bu_log("Reverse failed.\n");
-	    continue;
-	} else {
-	    // Update the outerloop
-	    outerloop_segs[p.m_split_li + 1] = rev_seg_on_SSI;
-	    int k = p.m_split_li + 2;
-	    for (int j = q.m_split_li + 1; j < outerloop_segs.Count(); j++) {
-		outerloop_segs[k++] = outerloop_segs[j];
-	    }
-	    while (k < outerloop_segs.Count()) {
-		outerloop_segs[outerloop_segs.Count() - 1] = NULL;
-		outerloop_segs.Remove();
-	    }
-	    // Update m_split_li
-	    for (int j = i + 1; j < clx_points.Count(); j++) {
-		clx_points[j].m_split_li -= curve_count - 1;
-	    }
-	}
-
-	// Append a trimmed face with newloop as its outerloop
-	// Don't add a face if the outerloop is not valid (e.g. degenerated).
-	if (is_loop_valid(newloop, ON_ZERO_TOLERANCE)) {
-	    TrimmedFace *new_face = new TrimmedFace();
-	    new_face->m_face = orig_face->m_face;
-	    new_face->m_outerloop.Append(newloop.Count(), newloop.Array());
-	    out.Append(new_face);
-	} else {
-	    for (int j = 0; j < newloop.Count(); j++) {
-		delete newloop[j];
-	    }
-	}
-    }
-
-    // Remove the duplicated segments before the first intersection point.
-    if (clx_points.Count()) {
-	for (int i = 0; i <= clx_points[0].m_split_li; i++) {
-	    delete outerloop_segs[0];
-	    outerloop_segs[0] = NULL;
-	    outerloop_segs.Remove(0);
-	}
-    }
-
-    if (out.Count() == 0) {
-	out.Append(orig_face->Duplicate());
-    } else {
-	// The remaining part after splitting some parts out.
-	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
-	    TrimmedFace *new_face = new TrimmedFace();
-	    new_face->m_face = orig_face->m_face;
-	    new_face->m_outerloop = outerloop_segs;
-	    // First copy the array with pointers, and then change
-	    // the pointers into copies.
-	    new_face->m_innerloop = orig_face->m_innerloop;
-	    for (unsigned int i = 0; i < orig_face->m_innerloop.size(); i++)
-		for (int j = 0; j < orig_face->m_innerloop[i].Count(); j++)
-		    if (orig_face->m_innerloop[i][j]) {
-			new_face->m_innerloop[i][j] = orig_face->m_innerloop[i][j]->Duplicate();
-		    }
-	    new_face->m_innerloop.insert(new_face->m_innerloop.end(), innerloops.begin(), innerloops.end());
-	    out.Append(new_face);
-	} else {
-	    for (int i = 0; i < outerloop_segs.Count(); i++)
-		if (outerloop_segs[i]) {
-		    delete outerloop_segs[i];
-		}
+    for (int i = 0; i < out.Count(); ++i) {
+	close_small_gaps(out[i]->m_outerloop);
+	for (size_t j = 0; j < out[i]->m_innerloop.size(); ++j) {
+	    close_small_gaps(out[i]->m_innerloop[j]);
 	}
     }
 
@@ -1170,7 +2102,9 @@ split_trimmed_face(
 		textlog.Print("Curve %d\n", j);
 		out[i]->m_outerloop[j]->Dump(textlog);
 	    }
-	    bu_log(ON_String(wstr).Array());
+	    if (ON_String(wstr).Array()) {
+		bu_log("%s", ON_String(wstr).Array());
+	    }
 
 	    for (unsigned int j = 0; j < out[i]->m_innerloop.size(); j++) {
 		bu_log("innerloop %d:\n", j);
@@ -1181,7 +2115,9 @@ split_trimmed_face(
 		    textlog2.Print("Curve %d\n", k);
 		    out[i]->m_innerloop[j][k]->Dump(textlog2);
 		}
-		bu_log(ON_String(wstr2).Array());
+		if (ON_String(wstr2).Array()) {
+		    bu_log("%s", ON_String(wstr2).Array());
+		}
 	    }
 	}
     }
@@ -1777,7 +2713,7 @@ get_face_intersection_curves(
     // determine which of the "fully used/fully non-used" faces are needed?
 
     if (DEBUG_BREP_BOOLEAN) {
-	bu_log("Summary of brep status: \n unused1: %d\n unused2: %d\n finalform1: %d\n finalform2 %d\nintersection_candidates(%d):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
+	bu_log("Summary of brep status: \n unused1: %zd\n unused2: %zd\n finalform1: %zd\n finalform2 %zd\nintersection_candidates(%zd):\n", unused1.size(), unused2.size(), finalform1.size(), finalform2.size(), intersection_candidates.size());
 	for (std::set<std::pair<int, int> >::iterator it = intersection_candidates.begin(); it != intersection_candidates.end(); ++it) {
 	    bu_log("     (%d,%d)\n", (*it).first, (*it).second);
 	}
@@ -1830,8 +2766,10 @@ get_face_intersection_curves(
 		}
 		ON_SimpleArray<ON_Curve *> curve_uv, curve_st;
 		for (int k = 0; k < events.Count(); k++) {
-		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent
-			|| events[k].m_type == ON_SSX_EVENT::ssx_transverse) {
+		    if (events[k].m_type == ON_SSX_EVENT::ssx_tangent ||
+			events[k].m_type == ON_SSX_EVENT::ssx_transverse ||
+			events[k].m_type == ON_SSX_EVENT::ssx_overlap)
+		    {
 			if (get_subcurve_inside_faces(brep1, brep2, i, j, &events[k]) < 0) {
 			    continue;
 			}
@@ -2091,9 +3029,6 @@ get_evaluated_faces(const ON_Brep *brep1, const ON_Brep *brep2, op_type operatio
 HIDDEN void
 standardize_loop_orientations(ON_Brep *brep)
 {
-#define LOOP_DIRECTION_CCW  1
-#define LOOP_DIRECTION_CW  -1
-#define LOOP_DIRECTION_NONE 0
     std::map<int, int> reversed_curve2d, reversed_edge;
     for (int face_idx = 0; face_idx < brep->m_F.Count(); ++face_idx) {
 	const ON_BrepFace &eb_face = brep->m_F[face_idx];
@@ -2247,7 +3182,9 @@ ON_Boolean(ON_Brep *evaluated_brep, const ON_Brep *brep1, const ON_Brep *brep2, 
     ON_wString ws;
     ON_TextLog log(ws);
     evaluated_brep->IsValid(&log);
-    bu_log(ON_String(ws).Array());
+    if (ON_String(ws).Array()) {
+	bu_log("%s", ON_String(ws).Array());
+    }
 
     return 0;
 }

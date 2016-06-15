@@ -1267,7 +1267,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
     /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
     MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
 
-    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
+    /* Build perspective matrix in place, substituting fov=2*atan(1, Z) */
     MAT_IDN(persp);
     /* From page 492 of Graphics Gems */
     persp[0] = sheared_eye[Z];  /* scaling: fov aspect term */

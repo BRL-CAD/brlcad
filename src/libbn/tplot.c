@@ -165,16 +165,13 @@ tp_fixsc(float *x,
     txmi=txma=x[0];
     i = 0;
     while ( i <= npts ) {
-	if ( x[i] < txmi)
-	    txmi = x[i];
-	if ( x[i] > txma)
-	    txma = x[i];
+	V_MIN(txmi, x[i]);
+	V_MAX(txma, x[i]);
 	i++;
     }
 
     diff = txma - txmi;
-    if ( diff < .000001f )
-	diff = .000001f;
+    V_MAX(diff, 0.000001f);
 
     tp_sep (diff, &coef, &ex);
     if ( coef < 2.0f )

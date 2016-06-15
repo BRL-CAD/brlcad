@@ -702,6 +702,12 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
     }
 
+    if (!argc) {
+	bu_vls_printf(gedp->ged_result_str, "Please specify one or more objects to be drawn.\n");
+	--drawtrees_depth;
+	return -1;
+    }
+
     switch (kind) {
 	default:
 	    bu_vls_printf(gedp->ged_result_str, "ERROR, bad kind\n");
@@ -874,6 +880,7 @@ int
 ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 {
     size_t i;
+    int drawtrees_retval;
     int flag_A_attr=0;
     int flag_o_nonunique=1;
     int last_opt=0;
@@ -1019,15 +1026,26 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	 */
 	for (i = 0; i < (size_t)new_argc; ++i) {
 	    /* Skip any options */
-	    if (new_argv[i][0] == '-')
+	    if (new_argv[i][0] == '-') {
+		/* If this option requires an argument which was
+		 * provided separately (e.g. '-C 0/255/0' instead of
+		 * '-C0/255/0'), skip the argument too.
+		 */
+		if (strlen(argv[i]) == 2 && strchr("mxCP", argv[i][1])) {
+		    i++;
+		}
 		continue;
+	    }
 
 	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, new_argv[i], 0, gedp->freesolid);
 	}
 
-	_ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
+	drawtrees_retval = _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
 	bu_vls_free(&vls);
 	bu_free((char *)new_argv, "ged_draw_guts new_argv");
+	if (drawtrees_retval) {
+	    return GED_ERROR;
+	}
     } else {
 	int empty_display;
 	bu_vls_free(&vls);
@@ -1042,8 +1060,16 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 	 */
 	for (i = 0; i < (size_t)argc; ++i) {
 	    /* Skip any options */
-	    if (argv[i][0] == '-')
+	    if (argv[i][0] == '-') {
+		/* If this option requires an argument which was
+		 * provided separately (e.g. '-C 0/255/0' instead of
+		 * '-C0/255/0'), skip the argument too.
+		 */
+		if (strlen(argv[i]) == 2 && strchr("mxCP", argv[i][1])) {
+		    i++;
+		}
 		continue;
+	    }
 
 	    dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
 	}
@@ -1061,14 +1087,17 @@ ged_draw_guts(struct ged *gedp, int argc, const char *argv[], int kind)
 		new_argv[i + 1] = bu_strdup(argv[i]);
 	    }
 
-	    _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
+	    drawtrees_retval = _ged_drawtrees(gedp, new_argc, (const char **)new_argv, kind, (struct _ged_client_data *)0);
 
 	    for (i = 0; i < (size_t)new_argc; ++i) {
 		bu_free(new_argv[i], "ged_draw_guts new_argv[i] - bu_strdup(argv[i])");
 	    }
 	    bu_free(new_argv, "ged_draw_guts new_argv");
 	} else {
-	    _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
+	    drawtrees_retval = _ged_drawtrees(gedp, argc, argv, kind, (struct _ged_client_data *)0);
+	}
+	if (drawtrees_retval) {
+	    return GED_ERROR;
 	}
     }
 

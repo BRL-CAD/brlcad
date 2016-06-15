@@ -41,14 +41,6 @@
 
 #define DEBUG_GRID	0
 #define DEBUG_SHOT	1
-#ifndef	EPSILON
-#  define EPSILON	0.000001
-#endif
-#define FABS(a)		((a) > 0 ? (a) : -(a))
-#define AproxEq(a, b, e)	(FABS((a)-(b)) < (e))
-#define AproxEqVec(A, B, e) (AproxEq((A)[X], (B)[X], (e)) && \
-			     AproxEq((A)[Y], (B)[Y], (e)) &&	\
-			     AproxEq((A)[Z], (B)[Z], (e)))
 
 /* local communication with multitasking process */
 static int currshot;	/* current shot index */
@@ -726,7 +718,7 @@ chkEntryNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *
     totalct++;
     /* Dot product of ray direction with normal *should* be negative. */
     f = VDOT(rayp->r_dir, normvec);
-    if (NEAR_ZERO(f, EPSILON)) {
+    if (ZERO(f)) {
 #ifdef DEBUG
 	brst_log("chkEntryNorm: near 90 degree obliquity.\n");
 	brst_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
@@ -772,7 +764,7 @@ chkExitNorm(struct partition *pp, struct xray *rayp, fastf_t normvec[3], char *p
     totalct++;
     /* Dot product of ray direction with normal *should* be positive. */
     f = VDOT(rayp->r_dir, normvec);
-    if (NEAR_ZERO(f, EPSILON)) {
+    if (ZERO(f)) {
 #ifdef DEBUG
 	brst_log("chkExitNorm: near 90 degree obliquity.\n");
 	brst_log("\tPnt %g, %g, %g\n\tDir %g, %g, %g\n\tNorm %g, %g, %g.\n",
@@ -1481,7 +1473,7 @@ spallInit()
     delta = sqrt(theta/nspallrays); /* angular ray delta */
     n = conehfangle / delta;
     phiinc = conehfangle / n;
-    philast = conehfangle + EPSILON;
+    philast = conehfangle + VUNITIZE_TOL;
     /* Crank through spall cone generation once to count actual number
        generated.
     */
@@ -1489,10 +1481,10 @@ spallInit()
 	fastf_t	sinphi = sin(phi);
 	fastf_t	gammaval, gammainc, gammalast;
 	int m;
-	sinphi = FABS(sinphi);
+	sinphi = fabs(sinphi);
 	m = (M_2PI * sinphi)/delta + 1;
 	gammainc = M_2PI / m;
-	gammalast = M_2PI-gammainc+EPSILON;
+	gammalast = M_2PI-gammainc + VUNITIZE_TOL;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc)
 	    spallct++;
     }
@@ -1563,8 +1555,8 @@ spallVec(fastf_t *dvec, fastf_t *s_rdir, fastf_t phi, fastf_t gammaval)
     fastf_t			fvec[3];
     fastf_t			evec[3];
 
-    if (AproxEqVec(dvec, zaxis, VEC_TOL)
-	||	AproxEqVec(dvec, negzaxis, VEC_TOL)
+    if (VNEAR_EQUAL(dvec, zaxis, VEC_TOL)
+	||	VNEAR_EQUAL(dvec, negzaxis, VEC_TOL)
 	) {
 	VMOVE(evec, xaxis);
     } else {
@@ -1603,10 +1595,10 @@ burstRay()
 	if (done)
 	    break;
 	sinphi = sin(phi);
-	sinphi = FABS(sinphi);
+	sinphi = fabs(sinphi);
 	m = (M_2PI * sinphi)/delta + 1;
 	gammainc = M_2PI / m;
-	gammalast = M_2PI - gammainc + EPSILON;
+	gammalast = M_2PI - gammainc + VUNITIZE_TOL;
 	for (gammaval = 0.0; gammaval <= gammalast; gammaval += gammainc) {
 	    int	ncrit;
 	    spallVec(a_burst.a_ray.r_dir, a_spall.a_ray.r_dir,

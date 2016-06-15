@@ -1406,7 +1406,7 @@ struct rt_piecelist {
 /* Used to set globals declared in bot.c */
 #define RT_DEFAULT_MINPIECES		32
 #define RT_DEFAULT_TRIS_PER_PIECE	4
-#define RT_DEFAULT_MINTIE		0	/* disabled by default */
+#define RT_DEFAULT_MINTIE		0	/* TODO: find the best value */
 
 /**
  * Per-CPU statistics and resources.
@@ -7821,7 +7821,6 @@ RT_EXPORT extern fastf_t rt_cline_radius;
 /* TODO - these global variables need to be rolled in to the rt_i structure */
 RT_EXPORT extern size_t rt_bot_minpieces;
 RT_EXPORT extern size_t rt_bot_tri_per_piece;
-RT_EXPORT extern size_t rt_bot_mintie;
 RT_EXPORT extern int rt_bot_sort_faces(struct rt_bot_internal *bot,
 				       size_t tris_per_piece);
 RT_EXPORT extern int rt_bot_decimate(struct rt_bot_internal *bot,

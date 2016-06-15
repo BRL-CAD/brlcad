@@ -463,8 +463,8 @@ ICV_EXPORT icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Change the saturation of image pixels.  If sat is set to 0.0 the
- * result will be monochromatic, if sat is made 1.0, the color will
- * not change, if sat is made greater than 1.0, the amount of color is
+ * result will be monochromatic; if sat is made 1.0, the color will
+ * not change; if sat is made greater than 1.0, the amount of color is
  * increased.
  *
  * @param img RGB Image to be saturated.

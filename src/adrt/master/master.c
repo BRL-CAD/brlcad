@@ -422,8 +422,7 @@ master_networking(void *ptr)
 		    master.socklist->prev = NULL;
 		    tienet_sem_init(&(master.socklist->frame_sem), 0);
 		    tmp->prev = master.socklist;
-		    if (new_socket > highest_fd)
-			highest_fd = new_socket;
+		    V_MAX(highest_fd, new_socket);
 		    master.active_connections++;
 		}
 		continue;
@@ -593,8 +592,7 @@ master_networking(void *ptr)
 	/* Rebuild select list for next select call */
 	highest_fd = 0;
 	for (sock = master.socklist; sock; sock = sock->next) {
-	    if (sock->num > highest_fd)
-		highest_fd = sock->num;
+	    V_MAX(highest_fd, sock->num);
 	    FD_SET(sock->num, &readfds);
 	}
     }

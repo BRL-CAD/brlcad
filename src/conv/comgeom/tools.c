@@ -26,6 +26,9 @@
 
 #include <stdlib.h>
 
+#include "vmath.h"
+
+
 #define PADCHR		~(1<<15)		/* non data value.*/
 
 char *
@@ -57,8 +60,8 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
     *max = -PADCHR;
     *min =  PADCHR;
     while (--n>0) {
-	if (*l > *max)	*max = *l;
-	if (*l < *min)	*min = *l;
+	V_MAX(*max, *l);
+	V_MIN(*min, *l);
 	++l;
     }
 }

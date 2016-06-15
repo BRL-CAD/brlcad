@@ -106,8 +106,9 @@ struct bu_structparse vrml_mat_parse[]={
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n\
-(units default to mm)\n";
+static const char *usage =
+    "[-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n"
+    "(units default to mm)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -128,6 +129,11 @@ static struct db_tree_state	tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_converted = 0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /*
  * Replace all occurrences of "old" with "new" in str.
@@ -374,7 +380,7 @@ main(int argc, char **argv)
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -430,12 +436,12 @@ main(int argc, char **argv)
 		scale_factor = 1.0 / scale_factor;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open( argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
@@ -706,8 +712,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 	{
 	    if ( mat.shininess < 0 )
 		mat.shininess = 10;
-	    if ( mat.transparency < 0.0 )
-		mat.transparency = 0.0;
+	    V_MAX(mat.transparency, 0.0);
 
 	    fprintf( fp, "\t\t\t<Material diffuseColor=\"%g %g %g\" shininess=\"%g\" transparency=\"%g\" specularColor=\"%g %g %g\"/>\n", r, g, b, 1.0-exp(-(double)mat.shininess/20.0), mat.transparency, 1.0, 1.0, 1.0);
 	}

@@ -17,8 +17,8 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>euclid-g</command>
-    <arg choice='plain'><replaceable>euclid_file</replaceable></arg>
-    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+    <arg choice="opt">&lt; <replaceable>euclid_file</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -37,6 +37,72 @@ of polygonal faces. Each face may be one of either a simple face (no holes),
 a complex face (contains at least one hole), or a simple hole.
 This converter creates a region for each object ID number by unioning
 together all the objects with the same ID number.</para>
+
+    <para>The following options are recognized:</para>
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-d tolerance</option></term>
+	<listitem>
+	  <para>
+	    sets tolerance (units of mm); default value is 0.0005
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-v</option></term>
+	<listitem>
+	  <para>
+	    turns on verbose mode, for debugging; its output is to standard error
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-i euclid_file_name</option></term>
+	<listitem>
+	  <para>
+	    sets input file name; default is to take standard input
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-o filename.g</option></term>
+	<listitem>
+	  <para>
+	    sets output file name; default file name is euclid.g
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-n</option></term>
+	<listitem>
+	  <para>
+	    indicates NOT to write as polysolids; opposite of <option>-p</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-p</option></term>
+	<listitem>
+	  <para>
+	    indicates to write as polysolids (this is default); opposite of <option>-n</option>
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-x #</option> and <option>-X #</option></term>
+	<listitem>
+	  <para>
+	    sets debug flags
+	  </para>
+	</listitem>
+    </varlistentry>
+</variablelist>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

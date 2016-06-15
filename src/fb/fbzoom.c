@@ -31,6 +31,8 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "vmath.h"
+
 #include "fb.h"
 #include "libtermio.h"
 
@@ -91,7 +93,7 @@ main(int argc, char **argv)
     clr_Echo(0);
 
     PanFactor = fb_getwidth(fbp)/16;
-    if (PanFactor < 2) PanFactor = 2;
+    V_MAX(PanFactor, 2);
 
     new_xPan = xPan;
     new_yPan = yPan;
@@ -99,12 +101,10 @@ main(int argc, char **argv)
     new_yZoom = yZoom;
     do {
 	/* Clip values against Min/Max */
-	if (new_xPan > MaxXPan) new_xPan = MaxXPan;
-	if (new_xPan < MinPan) new_xPan = MinPan;
-	if (new_yPan > MaxYPan) new_yPan = MaxYPan;
-	if (new_yPan < MinPan) new_yPan = MinPan;
-	if (new_xZoom < MinZoom) new_xZoom = MinZoom;
-	if (new_yZoom < MinZoom) new_yZoom = MinZoom;
+	CLAMP(new_xPan, MinPan, MaxXPan);
+	CLAMP(new_yPan, MinPan, MaxYPan);
+	V_MAX(new_xZoom, MinZoom);
+	V_MAX(new_yZoom, MinZoom);
 
 	if (new_xPan != xPan || new_yPan != yPan
 	    || new_xZoom != xZoom || new_yZoom != yZoom) {

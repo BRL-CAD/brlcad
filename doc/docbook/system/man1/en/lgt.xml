@@ -78,7 +78,7 @@ array of pixels and then outputs a linear average of the result.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>"R G B"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-b</option>"<replaceable>R G B</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the background color to
 <emphasis remap='I'>R G B</emphasis>,
@@ -97,7 +97,7 @@ a graphics device is being used.  The default is to disable the tracking-cursor.
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-d</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-d</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set automatic mapping offsets to
 <emphasis remap='I'>x</emphasis>
@@ -107,7 +107,7 @@ in the IR Module.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-t</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-t</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the grid translation to
 <emphasis remap='I'>x</emphasis>
@@ -117,7 +117,7 @@ This offsets the grid within the grid plane (perpendicular to the viewing axis).
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-D</option><replaceable>"x y"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-D</option>"<replaceable>x y</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the image translation to
 <emphasis remap='I'>x</emphasis>
@@ -167,7 +167,7 @@ only the portion of the model beyond the grid will be visible.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-G</option><replaceable>"n cflag gflag vsize"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-G</option>"<replaceable>n cflag gflag vsize</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Configure the grid.  If
 <emphasis remap='I'>cflag</emphasis>
@@ -351,7 +351,7 @@ is non-zero, enter the Infrared Module.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-x</option><replaceable>"a b"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-x</option>"<replaceable>a b</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the starting and ending pixel to
 <emphasis remap='I'>a</emphasis>
@@ -374,7 +374,7 @@ The default is to report overlaps.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-y</option><replaceable>"a b"</replaceable><emphasis remap='B'></emphasis></term>
+  <term><option>-y</option>"<replaceable>a b</replaceable>"<emphasis remap='B'></emphasis></term>
   <listitem>
 <para>Set the starting and ending scan line to
 <emphasis remap='I'>a</emphasis>
@@ -791,7 +791,7 @@ and
 of the target description in file
 <emphasis remap='I'>tank.g</emphasis>.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>lgt -o fictitious.brlcad.org: tank.g hull turret</emphasis>
+$ lgt -o fictitious.brlcad.org: tank.g hull turret
 </literallayout> <!-- remap='RE' -->
 
 <para>This command will start up an interactive session on an alternate device
@@ -803,13 +803,13 @@ and
 <option>-G</option>
 options take multiple arguments, their arguments must appear in double-quotes.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>lgt -G "512 0 0 0.0" -o fictitious.brlcad.org:/dev/ik1l -y "250 511" tank.g hull turret</emphasis>
+$ lgt -G "512 0 0 0.0" -o fictitious.brlcad.org:/dev/ik1l -y "250 511" tank.g hull turret
 </literallayout> <!-- remap='RE' -->
 
 <para>This will run the program as a detached process by executing a saved script called
 <emphasis remap='I'>tankscript</emphasis>.</para>
 <literallayout remap='RS'>
-$ <emphasis remap='I'>tankscript &lt; /dev/null &amp;</emphasis>
+$ tankscript &lt; /dev/null &amp;
 </literallayout> <!-- remap='RE' -->
 </refsect1>
 

@@ -45,6 +45,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "vmath.h"
 
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
@@ -402,8 +403,8 @@ main (int argc, char **argv)
 		min = pixval[j][i];
 		max = pixval[j][i];
 	    }
-	    if (min > pixval[j][i]) min = pixval[j][i];
-	    if (max < pixval[j][i]) max = pixval[j][i];
+	    V_MIN(min, pixval[j][i]);
+	    V_MAX(max, pixval[j][i]);
 	}
     }
 

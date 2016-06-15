@@ -249,10 +249,9 @@ set(LIBGED_SOURCES
   shader.c
   shells.c
   showmats.c
-  simulate/simphysics.cpp
-  simulate/simulate.c
-  simulate/simcollisionalgo.cpp
-  simulate/simutils.c
+  simulate/collision.cpp
+  simulate/physics_world.cpp
+  simulate/simulate.cpp
   simulate/simrt.c
   size.c
   slew.c
@@ -335,10 +334,9 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
-  simulate/simcollisionalgo.h
+  simulate/collision.hpp
+  simulate/physics_world.hpp
   simulate/simrt.h
-  simulate/simulate.h
-  simulate/simutils.h
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

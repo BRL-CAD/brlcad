@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Multiple-display Graphics EDitor (MGED)
+ * Main logic of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
 /* for select */
 #  include <sys/types.h>
@@ -1271,7 +1272,9 @@ main(int argc, char *argv[])
     dm_set_null(dmp);
     bu_vls_init(tkName);
     bu_vls_init(dName);
-    bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    if (dm_get_pathname(dmp)) {
+	bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    }
     bu_vls_strcpy(tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);

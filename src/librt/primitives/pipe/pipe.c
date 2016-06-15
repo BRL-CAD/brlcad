@@ -237,21 +237,21 @@ pipe_orient_from_normal(const vect_t norm)
 
 
 static struct pipe_segment *
-pipe_seg_first(struct rt_pipe_internal *pipe)
+pipe_seg_first(struct rt_pipe_internal *pipeobj)
 {
     struct bu_list *seghead;
     struct pipe_segment *first_seg = NULL;
     struct wdb_pipept *pt_1, *pt_2;
     vect_t cur_to_next;
 
-    RT_PIPE_CK_MAGIC(pipe);
+    RT_PIPE_CK_MAGIC(pipeobj);
 
     /* no points */
-    if (BU_LIST_IS_EMPTY(&pipe->pipe_segs_head)) {
+    if (BU_LIST_IS_EMPTY(&pipeobj->pipe_segs_head)) {
 	return NULL;
     }
 
-    seghead = &pipe->pipe_segs_head;
+    seghead = &pipeobj->pipe_segs_head;
     pt_1 = BU_LIST_FIRST(wdb_pipept, seghead);
     pt_2 = BU_LIST_NEXT(wdb_pipept, &pt_1->l);
 
@@ -1852,17 +1852,17 @@ pipe_bend_segments(
 
 static int
 pipe_connecting_arcs(
-    struct rt_pipe_internal *pipe,
+    struct rt_pipe_internal *pipeobj,
     const struct rt_view_info *info)
 {
     int dcount, num_arcs;
     struct pipe_segment *cur_seg;
     fastf_t avg_diameter, avg_circumference;
 
-    RT_PIPE_CK_MAGIC(pipe);
+    RT_PIPE_CK_MAGIC(pipeobj);
     BU_CK_LIST_HEAD(info->vhead);
 
-    cur_seg = pipe_seg_first(pipe);
+    cur_seg = pipe_seg_first(pipeobj);
     if (cur_seg == NULL) {
 	return 0;
     }
@@ -2301,20 +2301,20 @@ rt_pipe_adaptive_plot(
     struct rt_db_internal *ip,
     const struct rt_view_info *info)
 {
-    struct rt_pipe_internal *pipe;
+    struct rt_pipe_internal *pipeobj;
     struct pipe_segment *cur_seg;
 
     BU_CK_LIST_HEAD(info->vhead);
     RT_CK_DB_INTERNAL(ip);
-    pipe = (struct rt_pipe_internal *)ip->idb_ptr;
-    RT_PIPE_CK_MAGIC(pipe);
+    pipeobj = (struct rt_pipe_internal *)ip->idb_ptr;
+    RT_PIPE_CK_MAGIC(pipeobj);
 
-    cur_seg = pipe_seg_first(pipe);
+    cur_seg = pipe_seg_first(pipeobj);
     if (cur_seg == NULL) {
 	return 0;
     }
 
-    cur_seg->connecting_arcs = pipe_connecting_arcs(pipe, info);
+    cur_seg->connecting_arcs = pipe_connecting_arcs(pipeobj, info);
 
     draw_pipe_end_adaptive(info->vhead, cur_seg, info);
     pipe_seg_advance(cur_seg);
@@ -4715,14 +4715,14 @@ rt_pipe_surf_area(fastf_t *area, struct rt_db_internal *ip)
 	    switch (overlap) {
 		case 0: /* no overlap between the cross sections, the areas are both added, nothing to fix */
 		    break;
-		case 3: /* start cross section contained completely by the prev cross section, we swap start_ir with prev_or */
-		case 9: /* section between start_ir and prev_or overlap, we swap them */
-		case 12: /* prev cross section contained completely by the start cross section, we swap start_ir with prev_or */
+		case 3: /* start cross section contained completely by the prev cross section; we swap start_ir with prev_or */
+		case 9: /* section between start_ir and prev_or overlap; we swap them */
+		case 12: /* prev cross section contained completely by the start cross section; we swap start_ir with prev_or */
 		    tmpval = start_ir;
 		    start_ir = prev_or;
 		    prev_or = tmpval;
 		    break;
-		case 6: /* section between prev_ir and start_or overlap, we swap them */
+		case 6: /* section between prev_ir and start_or overlap; we swap them */
 		    tmpval = prev_ir;
 		    prev_ir = start_or;
 		    start_or = tmpval;

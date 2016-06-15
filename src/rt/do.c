@@ -423,7 +423,6 @@ struct bu_structparse set_parse[] = {
      * not known at compile-time.  they would needed to be added to
      * set_parse() during runtime initialization.
      */
-    {"%d",	1, "rt_bot_mintie",		bu_byteoffset(rt_bot_mintie),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_minpieces",		bu_byteoffset(rt_bot_minpieces),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },

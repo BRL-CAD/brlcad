@@ -43,6 +43,9 @@ IF(COMMAND CMAKE_POLICY)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 	  CMAKE_POLICY(SET CMP0026 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -590,8 +593,12 @@ ELSE(TK_ENABLE_XFT)
 ENDIF(TK_ENABLE_XFT)
 
 SET(TK_AQUA_SRCS
+  generic/tkFileFilter.c
+  generic/tkMacWinMenu.c
+  generic/tkPointer.c
   macosx/tkMacOSXBitmap.c
   macosx/tkMacOSXButton.c
+  macosx/tkMacOSXCarbonEvents.c
   macosx/tkMacOSXClipboard.c
   macosx/tkMacOSXColor.c
   macosx/tkMacOSXConfig.c
@@ -605,14 +612,15 @@ SET(TK_AQUA_SRCS
   macosx/tkMacOSXFont.c
   macosx/tkMacOSXHLEvents.c
   macosx/tkMacOSXInit.c
-  macosx/tkMacOSXKeyboard.c
   macosx/tkMacOSXKeyEvent.c
+  macosx/tkMacOSXKeyboard.c
   macosx/tkMacOSXMenu.c
   macosx/tkMacOSXMenubutton.c
   macosx/tkMacOSXMenus.c
   macosx/tkMacOSXMouseEvent.c
   macosx/tkMacOSXNotify.c
   macosx/tkMacOSXRegion.c
+  macosx/tkMacOSXScale.c
   macosx/tkMacOSXScrlbr.c
   macosx/tkMacOSXSend.c
   macosx/tkMacOSXSubwindows.c
@@ -620,10 +628,7 @@ SET(TK_AQUA_SRCS
   macosx/tkMacOSXWindowEvent.c
   macosx/tkMacOSXWm.c
   macosx/tkMacOSXXStubs.c
-  macosx/tkMacOSXCarbonEvents.c
-  generic/tkFileFilter.c
-  generic/tkMacWinMenu.c
-  generic/tkPointer.c
+  macosx/ttkMacOSXTheme.c
   unix/tkUnix3d.c
   unix/tkUnixScale.c
   xlib/xcolors.c
@@ -631,8 +636,8 @@ SET(TK_AQUA_SRCS
   xlib/xgc.c
   xlib/ximage.c
   xlib/xutil.c
-  generic/ttk/ttkMacOSXTheme.c
   )
+
 
 SET(TK_WIN_SRCS
   xlib/xcolors.c
@@ -729,18 +734,24 @@ include_directories(
   ${TK_X11_INCLUDE_DIRS}
   )
 
-SET(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB})
-IF(TK_ENABLE_XSS)
-  IF(X11_Xscreensaver_LIB)
-    SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
-  ENDIF(X11_Xscreensaver_LIB)
-ENDIF(TK_ENABLE_XSS)
+SET(X11_TK_LIBS "")
+IF(X11_X11_LIB)
+  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_X11_LIB})
+ENDIF(X11_X11_LIB)
+IF(X11_Xext_LIB)
+  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xext_LIB})
+ENDIF(X11_Xext_LIB)
 IF(X11_Xft_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
 ENDIF(X11_Xft_LIB)
 IF(X11_Xrender_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
 ENDIF(X11_Xrender_LIB)
+IF(TK_ENABLE_XSS)
+  IF(X11_Xscreensaver_LIB)
+    SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
+  ENDIF(X11_Xscreensaver_LIB)
+ENDIF(TK_ENABLE_XSS)
 
 IF(NOT LIB_DIR)
   SET(LIB_DIR lib)
@@ -762,7 +773,10 @@ add_library(tk ${TK_SRCS})
 IF(WIN32)
   target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${X11_TK_LIBS})
 ELSE(WIN32)
-  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${X11_TK_LIBS} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARIES} ${M_LIBRARY})
+  target_link_libraries(tk tkstub ${TCL_STUB_LIBRARY} ${TCL_THREADS_LIB}
+	  ${X11_TK_LIBS} ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK}
+	  ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${FREETYPE_LIBRARIES}
+	  ${PNG_LIBRARY} ${FONTCONFIG_LIBRARIES} ${M_LIBRARY})
 ENDIF(WIN32)
 install(TARGETS tk
 	RUNTIME DESTINATION ${BIN_DIR}
@@ -771,7 +785,7 @@ install(TARGETS tk
 SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 IF(TK_ENABLE_AQUA)
-  SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
+  SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c")
 ENDIF(TK_ENABLE_AQUA)
 
 TCL_PKGINDEX(tk Tk ${TK_PATCH_LEVEL})
@@ -783,9 +797,11 @@ IF(WIN32)
   target_link_libraries(wish tcl tk imm32.lib comctl32.lib)
 ELSE(WIN32)
   add_executable(wish ${WISH_SRCS})
-  target_link_libraries(wish ${TCL_LIBRARY} tk ${CoreFoundation_LIBRARIES} ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES} ${TCL_THREADS_LIB} ${M_LIBRARY} ${X11_TK_LIBS} ${FREETYPE_LIBRARIES} ${FONTCONFIG_LIBRARIES})
+  target_link_libraries(wish ${TCL_LIBRARY} tk ${CoreFoundation_LIBRARIES}
+	  ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES}
+	  ${TCL_THREADS_LIB} ${M_LIBRARY} ${FREETYPE_LIBRARIES} ${PNG_LIBRARY} ${FONTCONFIG_LIBRARIES})
   IF(TK_ENABLE_AQUA)
-    SET_PROPERTY(TARGET wish APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
+    SET_PROPERTY(TARGET wish APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c")
   ENDIF(TK_ENABLE_AQUA)
 ENDIF(WIN32)
 SET_TARGET_PROPERTIES(wish PROPERTIES VERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})

@@ -205,6 +205,11 @@ case $FILE in
 	wrap=0
 	commentprefix="#"
 	;;
+    *.php* )
+	echo "$FILE is a PHP source file"
+	wrap=1
+	commentprefix=" *"
+	;;
     *.pl )
 	echo "$FILE is a Perl source file"
 	wrap=0
@@ -344,12 +349,15 @@ titleline="${titleline}${title}"
 ###################################
 # figure out the copyright extent #
 ###################################
-copyright=""
-currentyear="`date +%Y`"
 copyrightline="`grep -i copyright $FILE | grep -v -i notice | grep -v -i '\.SH' | head -n 1`"
 if [ "x$copyrightline" = "x" ] ; then
     copyrightline="`grep -i copyright $FILE | grep -v -i united | grep -v -i '\.SH' | head -n 1`"
 fi
+copyrightline="`echo $copyrightline | head -n 1`"
+
+echo "copyrightline is [$copyrightline]"
+
+currentyear="`date +%Y`"
 if [ "x$copyrightline" = "x" ] ; then
     startyear="$currentyear"
 else
@@ -359,13 +367,13 @@ else
 	startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9],[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	echo "start2 is $startyear"
 	if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
-	    # didn't find a year, so use current year
 	    startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\),[0-9][0-9][0-9][0-9][^0-9].*/\1/'`"
 	    echo "start3 is $startyear"
 	    if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
 		startyear="`echo "$copyrightline" | sed 's/.*[^0-9]\([0-9][0-9][0-9][0-9]\)[^0-9].*/\1/'`"
 		echo "start4 is $startyear"
 		if [ `echo $startyear | wc | awk '{print $3}'` -gt 10 -o "x$startyear" = "x" ] ; then
+		    # didn't find a year, so use current year
 		    startyear="$currentyear"
 		fi
 	    fi
@@ -373,6 +381,7 @@ else
     fi
 fi
 
+copyright=""
 if [ "x$startyear" != "x$currentyear" ] ; then
     copyright="${startyear}-${currentyear}"
 else
@@ -632,6 +641,12 @@ case "x$lineone" in
 		skip=3
 		;;
 	esac
+	;;
+    "x<?"*)
+	echo "Found PHP web directive"
+	echo "$lineone" >> $FILE
+	skip=2
+	closeit=1
 	;;
     "x")
 	echo "Found empty line"

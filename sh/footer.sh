@@ -93,6 +93,9 @@ mode_vars=""
 wrap=0
 commentchar=""
 
+commentstart="/"
+commentend="/"
+
 case $FILE in
     *.sh )
 	echo "$FILE is a shell script"
@@ -191,6 +194,24 @@ case $FILE in
 	mode_vars="c-basic-offset tcl-indent-level"
 	wrap=0
 	commentchar="#"
+	;;
+    *.php* )
+	echo "$FILE is a PHP source file"
+	mode="php"
+	mode_vars="c-basic-offset"
+	wrap=1
+	commentchar=""
+	commentstart="<!--"
+	commentend="-->"
+	;;
+    *.htm* )
+	echo "$FILE is an HTML source file"
+	mode="html"
+	mode_vars="sgml-basic-offset"
+	wrap=1
+	commentchar=""
+	commentstart="<!--"
+	commentend="-->"
 	;;
     *.pl )
 	echo "$FILE is a Perl source file"
@@ -375,7 +396,7 @@ fi
 comment_block="
 "
 if [ "x$wrap" = "x1" ] ; then
-    comment_block="${comment_block}/${commentchar}
+    comment_block="${comment_block}${commentstart}${commentchar}
 "
 fi
 
@@ -404,7 +425,7 @@ comment_block="${comment_block}${prefixspace}${commentchar} ex: shiftwidth=$inde
 if [ "x$wrap" = "x1" ] ; then
     comment_block="${comment_block}
 "
-    comment_block="${comment_block} ${commentchar}/"
+    comment_block="${comment_block} ${commentchar}${commentend}"
 fi
 
 

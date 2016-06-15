@@ -4,6 +4,7 @@ macro(Regression_Test testname depends_list)
     DEPENDS ${depends_list}
     )
   set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  set_target_properties(regress-${testname} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 endmacro(Regression_Test)
 
 # Geometry Conversion Regression Tests (experimental)
@@ -54,6 +55,7 @@ if(SH_EXEC)
     regress-repository regress-red regress-nirt
     regress-comgeom regress-dsp regress-asc2dsp
     )
+  set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 endif(SH_EXEC)
 

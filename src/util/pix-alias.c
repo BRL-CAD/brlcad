@@ -48,7 +48,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char options[] = "hs:w:n:";
+char options[] = "s:w:n:h?";
 char optflags[sizeof(options)];
 char noname[] = "(noname)";
 char *progname = noname;
@@ -161,13 +161,14 @@ main(int ac, char **av)
 	switch (c) {
 	    case 'w' : x = atoi(bu_optarg); break;
 	    case 'n' : y = atoi(bu_optarg); break;
-	    case 's' : x = atoi(bu_optarg); y = atoi(bu_optarg); break;
+	    case 's' : x = y = atoi(bu_optarg); break;
 	    default	: usage(); break;
 	}
 
-    if (bu_optind >= ac) doit();
-    else usage();
-
+    if (bu_optind < ac) {
+	usage();
+    }
+    doit();
     return 0;
 }
 

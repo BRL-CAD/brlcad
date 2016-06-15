@@ -86,7 +86,8 @@ bn_spm_init(int N, int elsize)
     total = 0;
     for (i = 0; i < N/4; i++) {
 	nx = ceil(N*cos(i*M_2PI/N));
-	if (nx > N) nx = N;
+	V_MIN(nx, N);
+
 	mapp->nx[ N/4 + i ] = nx;
 	mapp->nx[ N/4 - i -1 ] = nx;
 

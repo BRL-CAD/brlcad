@@ -122,6 +122,7 @@ add_custom_target(distcheck-${TARGET_SUFFIX}
   DEPENDS distcheck-source_archives
   )
 set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+set_target_properties(distcheck-${TARGET_SUFFIX} PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
 # Local Variables:
 # tab-width: 8

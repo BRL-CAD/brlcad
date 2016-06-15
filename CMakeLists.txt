@@ -128,6 +128,10 @@ if(COMMAND CMAKE_POLICY)
     CMAKE_POLICY(SET CMP0026 OLD)
     CMAKE_POLICY(SET CMP0042 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
@@ -394,7 +398,15 @@ if(NOT BRLCAD_IS_SUBBUILD)
     if(${name} MATCHES "^lib*")
       set_target_properties(${name} PROPERTIES PREFIX "")
     endif(${name} MATCHES "^lib*")
-    set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
+    set(add_lib_to_list 1)
+    foreach(libarg ${ARGN})
+      if("${libarg}" STREQUAL "INTERFACE")
+	set(add_lib_to_list 0)
+      endif("${libarg}" STREQUAL "INTERFACE")
+    endforeach(libarg ${ARGN})
+    if (add_lib_to_list)
+      set_property(GLOBAL APPEND PROPERTY CMAKE_LIBRARY_TARGET_LIST ${name})
+    endif (add_lib_to_list)
   endfunction(add_library)
 
   # Override and wrap add_executable
@@ -703,6 +715,8 @@ CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MAJOR ${BRLCAD_VERSION_MAJOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_MINOR ${BRLCAD_VERSION_MINOR}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_VERSION_PATCH ${BRLCAD_VERSION_PATCH}\n")
 
+# Let programs know what the executable suffix is on this platform, if any
+CONFIG_H_APPEND(BRLCAD "#define EXECUTABLE_SUFFIX \"${CMAKE_EXECUTABLE_SUFFIX}\"\n")
 
 #----------------------------------------------------------------------
 # Decide whether to do a 32 or a 64 bit build.
@@ -1041,6 +1055,17 @@ if(BRLCAD_ENABLE_OSG)
   endif(APPLE AND NOT BRLCAD_ENABLE_AQUA)
 endif(BRLCAD_ENABLE_OSG)
 
+# Enable features requiring OpenCL
+option(BRLCAD_ENABLE_OPENCL "Enable features requiring OpenCL" OFF)
+mark_as_advanced(BRLCAD_ENABLE_OPENCL)
+if(BRLCAD_ENABLE_OPENCL)
+  find_package(OpenCL)
+  if(NOT OPENCL_FOUND)
+    message("OpenCL enablement requested, but OpenCL is not found - disabling")
+    set(BRLCAD_ENABLE_OPENCL OFF)
+  endif(NOT OPENCL_FOUND)
+endif(BRLCAD_ENABLE_OPENCL)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to
@@ -1216,6 +1241,11 @@ mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
 endif(BRLCAD_ENABLE_SMP)
+
+if(BRLCAD_HEADERS_OLD_COMPAT)
+  add_definitions(-DEXPOSE_FB_HEADER)
+  add_definitions(-DEXPOSE_DM_HEADER)
+endif(BRLCAD_HEADERS_OLD_COMPAT)
 
 #----------------------------------------------------------------------
 # Some generators in CMake support generating folders in IDEs for
@@ -2499,16 +2529,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     list(REMOVE_DUPLICATES CMAKE_EXTERNAL_TARGET_LIST)
   endif(CMAKE_EXTERNAL_TARGET_LIST)
   foreach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
-    #TODO - can this locate test be replaced with if(TARGET ${libtarget}) ?
-    if(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION)
-    else(NOT CMAKE_BUILD_TYPE)
-      get_target_property(target_location ${libtarget} LOCATION_${CMAKE_BUILD_TYPE})
-    endif(NOT CMAKE_BUILD_TYPE)
-    if(target_location)
+    if(TARGET ${libtarget})
       add_dependencies(${libtarget} timestamp)
       add_dependencies(buildtimedelta ${libtarget})
-    endif(target_location)
+    endif(TARGET ${libtarget})
   endforeach(libtarget ${CMAKE_LIBRARY_TARGET_LIST})
   foreach(exectarget ${CMAKE_EXEC_TARGET_LIST})
     if(NOT CMAKE_BUILD_TYPE)
@@ -2529,9 +2553,10 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif()
     if(NOT ${custtarget} MATCHES "buildtimedelta")
       get_target_property(not_in_all ${custtarget} EXCLUDE_FROM_ALL)
-      if(NOT not_in_all)
+      get_target_property(not_in_default ${custtarget} EXCLUDE_FROM_DEFAULT_BUILD)
+      if(NOT not_in_all AND NOT not_in_default)
 	add_dependencies(buildtimedelta ${custtarget})
-      endif(NOT not_in_all)
+      endif(NOT not_in_all AND NOT not_in_default)
     endif(NOT ${custtarget} MATCHES "buildtimedelta")
   endforeach(custtarget ${CMAKE_CUSTOM_TARGET_LIST})
   foreach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})

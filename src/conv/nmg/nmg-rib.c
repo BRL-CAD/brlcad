@@ -39,7 +39,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "ht";
+char *options = "th?";
 
 char *progname = "(noname)";
 int triangulate = 0;
@@ -72,14 +72,16 @@ parse_args(int ac, char **av)
     bu_opterr = 0;
 
     /* get all the option flags from the command line */
-    while ((c=bu_getopt(ac, av, options)) != -1)
+    while ((c=bu_getopt(ac, av, options)) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
-	    case 't'	: triangulate = !triangulate; break;
-	    case '?'	:
-	    case 'h'	:
-	    default		: usage("Bad or help flag specified\n"); break;
+	    case 't'	:
+		triangulate = !triangulate; break;
+	    case 'h'	: usage(""); break;
+	    default	: usage("Bad flag specified\n"); break;
 	}
-
+    }
     return bu_optind;
 }
 

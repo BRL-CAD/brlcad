@@ -612,11 +612,10 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Simple case, ends of output span are completely
 	     *  contained within one input span.
 	     *  Interpolate for both ends, take max.
-	     *  XXX this could be more efficiently written inline here.
 	     */
 	    newsamp->y[i] = bn_table_lin_interp(olddata, newtable->x[i]);
 	    tmp = bn_table_lin_interp(olddata, newtable->x[i+1]);
-	    if (tmp > newsamp->y[i])  newsamp->y[i] = tmp;
+	    V_MAX(newsamp->y[i], tmp);
 	} else {
 	    register fastf_t tmp, n;
 	    register int	s;
@@ -628,7 +627,8 @@ bn_tabdata_resample_max(const struct bn_table *newtable, const struct bn_tabdata
 	     */
 	    n = bn_table_lin_interp(olddata, newtable->x[i]);
 	    tmp = bn_table_lin_interp(olddata, newtable->x[i+1]);
-	    if (tmp > n)  n = tmp;
+	    V_MAX(n, tmp);
+
 	    for (s = j+1; s <= k; s++)  {
 		if ((tmp = olddata->y[s]) > n)
 		    n = tmp;
@@ -670,7 +670,6 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	     *  Simple case, ends of output span are completely
 	     *  contained within one input span.
 	     *  Interpolate for both ends, take average.
-	     *  XXX this could be more efficiently written inline here.
 	     */
 	    newsamp->y[i] = 0.5 * (
 				bn_table_lin_interp(olddata, newtable->x[i]) +
@@ -1106,8 +1105,8 @@ bn_tabdata_to_tcl(struct bu_vls *vp, const struct bn_tabdata *data)
     for (i=0; i < data->ny; i++)  {
 	register fastf_t val = data->y[i];
 	bu_vls_printf(vp, "%g ", val);
-	if (val < minval)  minval = val;
-	if (val > maxval)  maxval = val;
+	V_MIN(minval, val);
+	V_MAX(maxval, val);
     }
     bu_vls_printf(vp, "} nx %zu ymin %g ymax %g",
 		  tabp->nx, minval, maxval);
@@ -1241,7 +1240,8 @@ bn_table_merge2(const struct bn_table *a, const struct bn_table *b) {
 	    newtab->x[k++] = b->x[j++];
 	}
     }
-    if (k > newtab->nx)  bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
+    if (k > newtab->nx)
+	bu_bomb("bn_table_merge2() assertion failed, k>nx?\n");
     newtab->nx = k-1;
 
     if (bu_debug&BU_DEBUG_TABDATA) bu_log("bn_table_merge2(%p, %p) = %p\n", (void *)a, (void *)b, (void *)newtab);
@@ -1311,14 +1311,16 @@ bn_tabdata_mk_linear_filter(const struct bn_table *spectrum, double lower_wavele
     filt_range = spectrum->x[first+1] - lower_wavelen;
     cell_range = spectrum->x[first+1] - spectrum->x[first];
     frac = filt_range / cell_range;
-    if (frac > 1)  frac = 1;
+    V_MIN(frac, 1);
+
     BU_ASSERT((frac >= 0.0) && (frac <= 1.0));
     filt->y[first] = frac;
 
     filt_range = upper_wavelen - spectrum->x[last];
     cell_range = spectrum->x[last+1] - spectrum->x[last];
     frac = filt_range / cell_range;
-    if (frac > 1)  frac = 1;
+    V_MIN(frac, 1);
+
     BU_ASSERT((frac >= 0.0) && (frac <= 1.0));
     filt->y[last] = frac;
 

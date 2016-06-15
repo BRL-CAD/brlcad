@@ -249,9 +249,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 			udist = dist;
 			uclosest = br;
 		    } else {
-			if (dist < udist) {
-			    udist = dist;
-			}
+			V_MIN(udist, dist);
 			uclosest = br;
 		    }
 		}
@@ -322,12 +320,8 @@ void BBNode::BuildBBox()
 		m_node = ON_BoundingBox((*childnode)->m_node.m_min, (*childnode)->m_node.m_max);
 	    } else {
 		for (int j = 0; j < 3; j++) {
-		    if (m_node.m_min[j] > (*childnode)->m_node.m_min[j]) {
-			m_node.m_min[j] = (*childnode)->m_node.m_min[j];
-		    }
-		    if (m_node.m_max[j] < (*childnode)->m_node.m_max[j]) {
-			m_node.m_max[j] = (*childnode)->m_node.m_max[j];
-		    }
+		    V_MIN(m_node.m_min[j], (*childnode)->m_node.m_min[j]);
+		    V_MAX(m_node.m_max[j], (*childnode)->m_node.m_max[j]);
 		}
 	    }
 	}

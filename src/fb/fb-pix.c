@@ -32,6 +32,7 @@
 #include "bu/getopt.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -141,10 +142,8 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	bu_exit(12, NULL);
     }
 
-    if (screen_height > fb_getheight(fbp))
-	screen_height = fb_getheight(fbp);
-    if (screen_width > fb_getwidth(fbp))
-	screen_width = fb_getwidth(fbp);
+    V_MIN(screen_height, fb_getheight(fbp));
+    V_MIN(screen_width, fb_getwidth(fbp));
 
     if (crunch) {
 	if (fb_rmap(fbp, &cmap) == -1) {

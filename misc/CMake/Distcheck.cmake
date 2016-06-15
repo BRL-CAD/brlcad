@@ -185,6 +185,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       DEPENDS distcheck-enableall_debug distcheck-enableall_release)
     set_target_properties(distcheck-std PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+    set_target_properties(distcheck-std PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
     add_custom_target(distcheck-full
       # The source repository verification script is responsible for generating these files
@@ -192,6 +193,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
       COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
       DEPENDS ${distcheck_targets})
     set_target_properties(distcheck-full PROPERTIES FOLDER "BRL-CAD Distribution Checking")
+    set_target_properties(distcheck-full PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
     if(full_distcheck)
       add_custom_target(distcheck DEPENDS distcheck-full)

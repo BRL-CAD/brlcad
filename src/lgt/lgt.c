@@ -70,8 +70,8 @@ main(int argc, char **argv)
     bu_log("\nPress \"Enter\" to continue\n\n");
     (void)getchar();
     npsw = bu_avail_cpus();
-    if (npsw > MAX_PSW)
-	npsw = MAX_PSW;
+    CLAMP(npsw, 1, MAX_PSW);
+
     if (npsw > 1)
 	RTG.rtg_parallel = 1;
     else
@@ -236,7 +236,7 @@ intr_sig(int UNUSED(sig))
 
 
 /*
-   Set certain default lighting info.
+  Set certain default lighting info.
 */
 static void
 init_Lgts(void)

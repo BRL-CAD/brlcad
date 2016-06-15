@@ -806,12 +806,10 @@ BBNode::intersectedBy(ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_
 		t1 = t2;
 		t2 = tmp;
 	    }
-	    if (t1 > tnear) {
-		tnear = t1;
-	    }
-	    if (t2 < tfar) {
-		tfar = t2;
-	    }
+
+	    V_MAX(tnear, t1);
+	    V_MIN(tfar, t2);
+
 	    if (tnear > tfar) { /* box is missed */
 		untrimmedresult = false;
 	    }

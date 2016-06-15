@@ -2,6 +2,8 @@
 set(DM_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
+  ${BU_INCLUDE_DIRS}
+  ${BN_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${FB_INCLUDE_DIRS}
   ${X11_INCLUDE_DIR}
@@ -139,6 +141,7 @@ set(libdm_ignore_files
   dm-rtgl.c
   dm-tk.c
   osg_bob.cpp
+  osg-test.cpp
   TODO
   dm-glx.h
   dm-Null.h

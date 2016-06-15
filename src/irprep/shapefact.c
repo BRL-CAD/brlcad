@@ -186,8 +186,7 @@ int main(int argc, char **argv)
 	    bu_exit(-1, "scanf failure - number of rays to be fired");
 
 	/* clamp loops */
-	if (loops > UINT32_MAX)
-	    loops = UINT32_MAX;
+	V_MIN(loops, UINT32_MAX);
 
 	/* Set seed for random number generator.  */
 	seed = 1;

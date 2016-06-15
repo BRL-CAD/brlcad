@@ -210,7 +210,7 @@ main(int argc, char *argv[])
     /* Set up calculation tolerance defaults */
     /* FIXME: These need to be improved */
     gcvwriter.tol.magic = BN_TOL_MAGIC;
-    gcvwriter.tol.dist = 0.0005;
+    gcvwriter.tol.dist = BN_TOL_DIST;
     gcvwriter.tol.dist_sq = gcvwriter.tol.dist * gcvwriter.tol.dist;
     gcvwriter.tol.perp = 1e-6;
     gcvwriter.tol.para = 1 - gcvwriter.tol.perp;

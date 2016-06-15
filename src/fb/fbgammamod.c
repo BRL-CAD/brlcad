@@ -34,6 +34,8 @@
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "vmath.h"
+
 #include "fb.h"
 #include "pkg.h"
 
@@ -189,34 +191,28 @@ main(int argc, char **argv)
 	double t;
 	int val;
 
-	if ((t = (pow(i/255.0, pre_exp) + radd) * rmul) < 0)
-	    t = 0;
-	else if (t > 1)
-	    t = 1;
-	if ((val = (int)(65535 * pow(t, rexp))) < 0)
-	    val = 0;
-	else if (val > 65535)
-	    val = 65535;
+	t = (pow(i/255.0, pre_exp) + radd) * rmul;
+	CLAMP(t, 0, 1);
+
+	val = (int)(65535 * pow(t, rexp));
+	CLAMP(val, 0, 65535);
+
 	map.cm_red[i] = val;
 
-	if ((t = (pow(i/255.0, pre_exp) + gadd) * gmul) < 0)
-	    t = 0;
-	else if (t > 1)
-	    t = 1;
-	if ((val = (int)(65535 * pow(t, gexp))) < 0)
-	    val = 0;
-	else if (val > 65535)
-	    val = 65535;
+	t = (pow(i/255.0, pre_exp) + gadd) * gmul;
+	CLAMP(t, 0, 1);
+
+	val = (int)(65535 * pow(t, gexp));
+	CLAMP(val, 0, 65535);
+
 	map.cm_green[i] = val;
 
-	if ((t = (pow(i/255.0, pre_exp) + badd) * bmul) < 0)
-	    t = 0;
-	else if (t > 1)
-	    t = 1;
-	if ((val = (int)(65535 * pow(t, bexp))) < 0)
-	    val = 0;
-	else if (val > 65535)
-	    val = 65535;
+	t = (pow(i/255.0, pre_exp) + badd) * bmul;
+	CLAMP(t, 0, 1);
+
+	val = (int)(65535 * pow(t, bexp));
+	CLAMP(val, 0, 65535);
+
 	map.cm_blue[i] = val;
 
 	/* use cmap-fb format */

@@ -175,7 +175,7 @@ setup(int argc, char **argv)
 		break;
 	    case 'I':
 		Levels = atoi(bu_optarg)-1;
-		if (Levels < 1) Levels = 1;
+		V_MAX(Levels, 1);
 		break;
 /*
  * Tone scale processing is a little strange.  The -T option is followed

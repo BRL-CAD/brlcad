@@ -36,6 +36,9 @@
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
+#ifdef IF_WGL
+#include "tkWinInt.h"
+#endif
 
 #if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
 typedef void *Tk_Window;

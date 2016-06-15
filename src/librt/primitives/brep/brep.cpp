@@ -95,7 +95,7 @@ int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
 int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 #ifdef __cplusplus
@@ -336,7 +336,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	for (size_t i = 0; i < faceCount; i++) {
 	    if (bbbp->faces[i] == NULL) {
 		index = i;
-		bbbp->faces[i] = (SurfaceTree*)cpu+1; /* claim this one */
+		bbbp->faces[i] = (SurfaceTree*)(intptr_t)(cpu+1); /* claim this one */
 		break;
 	    }
 	}
@@ -4856,7 +4856,7 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 
 
 int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4871,19 +4871,22 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
 
-    int ret;
     op_type operation_type;
-    if (BU_STR_EQUAL(operation, "u"))
-	operation_type = BOOLEAN_UNION;
-    else if (BU_STR_EQUAL(operation, "i"))
-	operation_type = BOOLEAN_INTERSECT;
-    else if (BU_STR_EQUAL(operation, "-"))
-	operation_type = BOOLEAN_DIFF;
-    else if (BU_STR_EQUAL(operation, "x"))
-	operation_type = BOOLEAN_XOR;
-    else
-	return -1;
+    switch (operation) {
+	case DB_OP_UNION:
+	    operation_type = BOOLEAN_UNION;
+	    break;
+	case DB_OP_SUBTRACT:
+	    operation_type = BOOLEAN_DIFF;
+	    break;
+	case DB_OP_INTERSECT:
+	    operation_type = BOOLEAN_INTERSECT;
+	    break;
+	default:
+	    return -1;
+    }
 
+    int ret;
     if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
 	return ret;
 

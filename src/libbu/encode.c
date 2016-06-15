@@ -67,6 +67,8 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	    bu_vls_putc(vp, *str);
 	}
 	bu_vls_putc(vp, DQUOTE);
+    } else {
+	bu_vls_strcat(vp, str);
     }
 
     return bu_vls_addr(vp) + skip;

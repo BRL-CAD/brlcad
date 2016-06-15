@@ -34,6 +34,7 @@
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "bu/str.h"
+#include "vmath.h"
 #include "fb.h"
 
 /* FIXME */
@@ -1811,10 +1812,7 @@ f_Set_X_Pos() /* Move cursor's X location (image space). */
 	    cursor_pos.p_x -= decrement;
     } else			/* absolute move */
 	(void)sscanf(x_str, "%d", &cursor_pos.p_x);
-    if (cursor_pos.p_x > fb_getwidth(fbp))
-	cursor_pos.p_x = fb_getwidth(fbp);
-    if (cursor_pos.p_x < 0)
-	cursor_pos.p_x = 0;
+    CLAMP(cursor_pos.p_x, 0, fb_getwidth(fbp));
     reposition_cursor = true;
     return 1;
 }
@@ -1838,10 +1836,7 @@ f_Set_Y_Pos() /* Move cursor's Y location (image space). */
 	    cursor_pos.p_y -= decrement;
     } else
 	(void)sscanf(y_str, "%d", &cursor_pos.p_y);
-    if (cursor_pos.p_y > fb_getheight(fbp))
-	cursor_pos.p_y = fb_getheight(fbp);
-    if (cursor_pos.p_y < 0)
-	cursor_pos.p_y = 0;
+    CLAMP(cursor_pos.p_y, 0, fb_getheight(fbp));
     reposition_cursor = true;
     return 1;
 }
@@ -1909,13 +1904,13 @@ fb_Wind(void)
 
 
 HIDDEN void
-fb_Paint(int x0, int y0, int x1, int y1, RGBpixel (*color))
+fb_Paint(int x_0, int y_0, int x_1, int y_1, RGBpixel (*color))
 {
     Rect2D clipped_rect;
-    clipped_rect.r_origin.p_x = x0;
-    clipped_rect.r_corner.p_x = x1;
-    clipped_rect.r_origin.p_y = y0;
-    clipped_rect.r_corner.p_y = y1;
+    clipped_rect.r_origin.p_x = x_0;
+    clipped_rect.r_corner.p_x = x_1;
+    clipped_rect.r_origin.p_y = y_0;
+    clipped_rect.r_corner.p_y = y_1;
     clip_Rect2D(&clipped_rect);
     fillRect2D(&clipped_rect, color);
     return;

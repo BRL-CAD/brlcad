@@ -184,10 +184,7 @@ int main(int argc, char **argv)
 	ret = scanf("%d", &typeout);
 	if (ret == 0)
 	    perror("scanf");
-	if (typeout < 0)
-	    typeout = 0;
-	if (typeout > 1)
-	    typeout = 1;
+	CLAMP(typeout, 0, 1);
 
 	/* Read name of file to write conductivity information */
 	/* to for use in PRISM.  */

@@ -89,8 +89,8 @@ Extrudcon(int entityno, int curve, vect_t evect)
     tmp = fabs(a);
     if (fabs(b) < tmp && !ZERO(b))
 	tmp = fabs(b);
-    if (fabs(c) < tmp)
-	tmp = fabs(c);
+    V_MIN(tmp, fabs(c));
+
     a = a/tmp;
     b = b/tmp;
     c = c/tmp;

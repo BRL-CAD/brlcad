@@ -10,6 +10,11 @@ set(RT_INCLUDE_DIRS
   ${ZLIB_INCLUDE_DIR}
   )
 
+if(BRLCAD_ENABLE_OPENCL)
+  add_definitions(-DUSE_OPENCL)
+  set(RT_INCLUDE_DIRS ${RT_INCLUDE_DIRS} ${OPENCL_INCLUDE_DIRS})
+endif (BRLCAD_ENABLE_OPENCL)
+
 # locally used but not needed by users of the library
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
@@ -281,6 +286,8 @@ set(librt_ignored_files
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
   primitives/revolve/revolve.h
+  primitives/sph/benchmark.sh
+  primitives/sph/sph_shot.cl
   primitives/xxx/xxx.c
   primitives/xxx/xxx.h
   search.h
@@ -300,7 +307,11 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+if(BRLCAD_ENABLE_OPENCL)
+  set(OPENCL_LIBS ${OPENCL_LIBRARIES})
+endif(BRLCAD_ENABLE_OPENCL)
+
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -310,12 +321,14 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
-
-include_directories(
-  ${CMAKE_SOURCE_DIR}/src/other/Eigen
-  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
-  )
-
+# The following is build code for test applications used during
+# development
+#
+#include_directories(
+#  ${CMAKE_SOURCE_DIR}/src/other/Eigen
+#  ${CMAKE_CURRENT_SOURCE_DIR}/../libbrep
+#  )
+#
 #BRLCAD_ADDEXEC(test_bot2nurbs test_bot2nurbs.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_nurbsfit test_nurbsfit.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)
 #BRLCAD_ADDEXEC(test_root3-subd test_root3-subd.cpp "librt;libwdb;libbrep;libbu" NO_STRICT NO_INSTALL)

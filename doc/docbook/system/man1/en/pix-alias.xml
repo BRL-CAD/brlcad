@@ -19,19 +19,19 @@
   <command>pix-alias</command>
     <arg choice='opt'>-s <replaceable>squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>file_width</replaceable></arg>
-    <arg choice='opt'>-nfile_height </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='opt'>-n <replaceable>file_height</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>BRLpixfile</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>ALIASpixfile</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>pix-alias</emphasis>
-converts the
-<emphasis remap='I'>brl pix(5)</emphasis>
+<para><command>pix-alias</command>
+converts the (BRL)
+<emphasis remap='I'>pix(5)</emphasis>
 format file on the standard input to an
 <emphasis remap='I'>Alias pix</emphasis>
 format file on the standard output.</para>
@@ -43,10 +43,20 @@ format file on the standard output.</para>
   <term><option>-n </option><replaceable>file_height</replaceable></term>
   <listitem>
 <para>tells
-<emphasis remap='I'>pix-alias</emphasis>
+<command>pix-alias</command>
 that the input is
 <emphasis remap='I'>file_height</emphasis>
 scanlines tall</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w </option><replaceable>file_width</replaceable></term>
+  <listitem>
+<para>tells
+<command>pix-alias</command>
+that the input is
+<emphasis remap='I'>file_width</emphasis>
+pixels wide</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -54,17 +64,6 @@ scanlines tall</para>
   <listitem>
 <para>sets both the width and the height for the input to be
 <emphasis remap='I'>squaresize</emphasis></para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-  <term><option>-w </option><replaceable>file_width</replaceable></term>
-  <listitem>
-<para>tells
-<emphasis remap='I'>pix-alias</emphasis>
-that the input is
-<emphasis remap='I'>file_width</emphasis>
-pixels wide</para>
-
   </listitem>
   </varlistentry>
 </variablelist>

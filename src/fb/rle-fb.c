@@ -31,6 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 #include "rle.h"
 
@@ -228,8 +229,7 @@ main(int argc, char **argv)
 	screen_height = fb_getheight(fbp);
 
     /* Discard any scanlines which exceed screen height */
-    if (rle_dflt_hdr.ymax > screen_height-1)
-	rle_dflt_hdr.ymax = screen_height-1;
+    V_MIN(rle_dflt_hdr.ymax, screen_height-1);
 
     /* Clip left edge */
     screen_xlen = rle_dflt_hdr.xmax + 1;

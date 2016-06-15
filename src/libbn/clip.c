@@ -139,19 +139,22 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
 
     for (i = 0; i < 3; i++, pt++, dir++, max++, min++) {
         if (*dir < -EPSILON) {
-            if ((sv = (*min - *pt) / *dir) < 0.0)
+	    sv = (*min - *pt) / *dir;
+            if (sv < 0.0)
                 return 0;       /* MISS */
-            if (maxdist > sv)
-                maxdist = sv;
-            if (mindist < (st = (*max - *pt) / *dir))
-                mindist = st;
+
+	    st = (*max - *pt) / *dir;
+	    V_MAX(mindist, st);
+	    V_MIN(maxdist, sv);
+
         }  else if (*dir > EPSILON) {
-            if ((st = (*max - *pt) / *dir) < 0.0)
+	    st = (*max - *pt) / *dir;
+            if (st < 0.0)
                 return 0;       /* MISS */
-            if (maxdist > st)
-                maxdist = st;
-            if (mindist < ((sv = (*min - *pt) / *dir)))
-                mindist = sv;
+
+	    sv = (*min - *pt) / *dir;
+	    V_MAX(mindist, sv);
+	    V_MIN(maxdist, st);
         } else {
             /*
              * If direction component along this axis is NEAR 0,
@@ -172,10 +175,8 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
         return 1;       /* HIT, no clipping needed */
 
     /* Don't grow one end of a contained segment */
-    if (mindist < 0)
-        mindist = 0;
-    if (maxdist > 1)
-        maxdist = 1;
+    V_MAX(mindist, 0);
+    V_MIN(maxdist, 1);
 
     /* Compute actual intercept points */
     VJOIN1(b, a, maxdist, diff);                /* b must go first */

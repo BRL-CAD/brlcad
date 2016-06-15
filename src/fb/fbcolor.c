@@ -234,7 +234,8 @@ doKeyPad(void)
 	    curchan = 5;
 	    break;
 	case '/':
-	    if (++curchan >= 6) curchan = 0;
+	    if (++curchan >= 6)
+		curchan = 0;
 	    break;
 
 	    /* unit changes with -+ or , . */

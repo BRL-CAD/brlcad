@@ -48,6 +48,10 @@
 #  include <sys/select.h>
 #endif
 
+#ifdef HAVE_SYS_SOCKET_H
+#  include <sys/socket.h>
+#endif
+
 /* Windows Sockets provides select() and friends */
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
