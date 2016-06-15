@@ -1,7 +1,7 @@
 #              B R L C A D _ T A R G E T S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -336,7 +336,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   string(TOUPPER "${libname}" LIBNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   set(all_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS} ${${LIBNAME_UPPER}_STATIC_SRCS})
@@ -367,7 +367,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
-  if(BUILD_SHARED_LIBS)
+  if((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
 
     set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
 
@@ -452,11 +452,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
     endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
 
-  endif(BUILD_SHARED_LIBS)
+  endif((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
 
   # Handle static libraries (renaming requirements to both allow unique targets and
   # respect standard naming conventions.)
-  if(BUILD_STATIC_LIBS)
+  if((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
 
     set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
 
@@ -512,8 +512,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     # If we can't build this library strict, add the -Wno-error flag
-
-    # If we can't build this library strict, add the -Wno-error flag
     if(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
       CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
       if(NOERROR_FLAG)
@@ -530,7 +528,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
     endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
 
-  endif(BUILD_STATIC_LIBS)
+  endif((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
 
   # Mixed source STRICTNESS is handled separately (on a per-file basis) if we have mixed
   # sources via the NO_STRICT_CXX flag

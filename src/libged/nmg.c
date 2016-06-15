@@ -1,7 +1,7 @@
 /*                             N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,9 @@
 extern int ged_nmg_mm(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_nmg_cmface(struct ged *gedp, int argc, const char *argv[]);
 extern int ged_nmg_kill_v(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_kill_f(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_move_v(struct ged *gedp, int argc, const char *argv[]);
+extern int ged_nmg_make_v(struct ged *gedp, int argc, const char *argv[]);
 
 int
 ged_nmg(struct ged *gedp, int argc, const char *argv[])
@@ -63,6 +66,17 @@ ged_nmg(struct ged *gedp, int argc, const char *argv[])
             "coordinates) and higher-order topology containing the vertex. "
             "When specifying vertex to be removed, user generally will display "
             "vertex coordinates in object via the MGED command labelvert.\n");
+    bu_vls_printf(gedp->ged_result_str, "\tkill F         -  removes the "
+                "faceuse and face geometry of the selected face (via its "
+                "index). When specifying the face to be removed, user generally "
+                "will display face indices in object via the MGED command "
+                "labelface.\n");
+    bu_vls_printf(gedp->ged_result_str, "\tmove V         -  moves an existing "
+                "vertex specified by the coordinates x_initial y_initial "
+                "z_initial to the position with coordinates x_final y_final "
+                "z_final.\n");
+    bu_vls_printf(gedp->ged_result_str, "\tmake V         -  creates a new "
+                "vertex in the nmg object.\n");
     return GED_HELP;
     }
 
@@ -82,7 +96,24 @@ ged_nmg(struct ged *gedp, int argc, const char *argv[])
         ged_nmg_cmface(gedp, argc, argv);
     }
     else if( BU_STR_EQUAL( "kill", subcmd ) ) {
-        ged_nmg_kill_v(gedp, argc, argv);
+        const char* opt = argv[2];
+        if ( BU_STR_EQUAL( "V", opt ) ) {
+            ged_nmg_kill_v(gedp, argc, argv);
+        } else if ( BU_STR_EQUAL( "F", opt ) ) {
+            ged_nmg_kill_f(gedp, argc, argv);
+        }
+    }
+    else if( BU_STR_EQUAL( "move", subcmd ) ) {
+        const char* opt = argv[2];
+        if ( BU_STR_EQUAL( "V", opt ) ) {
+            ged_nmg_move_v(gedp, argc, argv);
+        }
+    }
+    else if( BU_STR_EQUAL( "make", subcmd ) ) {
+        const char* opt = argv[2];
+        if ( BU_STR_EQUAL( "V", opt ) ) {
+            ged_nmg_make_v(gedp, argc, argv);
+        }
     }
     else {
         bu_vls_printf(gedp->ged_result_str, "%s is not a subcommand.", subcmd );

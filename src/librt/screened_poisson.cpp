@@ -1,7 +1,7 @@
 /*            S C R E E N E D _ P O I S S O N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -280,7 +280,7 @@ sub_sample(struct rt_parallel_container *state,
      *  new value as to limit the # of points we were dealing with.  Right now we go ahead and
      *  save them because it is not hurting us and is easier */
 #if 0
-    if (differLeft && diffRight) {
+    if (diffLeft && diffRight) {
 	/* sample the the left and right of the middle ray */
 	sub_sample(state, prevRay, &middle_ray, pcont, depth+1, cpu);
 	sub_sample(state, &middle_ray, currRay, pcont, depth+1, cpu);

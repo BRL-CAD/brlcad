@@ -1,7 +1,7 @@
 /*                      D E C I M A T E . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2014 United States Government as represented by
+ * Copyright (c) 1999-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -401,7 +401,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	}
     }
 
-    if (max_chord_error > -1.0 - SMALL_FASTF || max_normal_error > -1.0 - SMALL_FASTF) {
+    if (max_chord_error + 1.0 > -SMALL_FASTF || max_normal_error + 1.0 > -SMALL_FASTF) {
 	/* check if surface is within max_chord_error of vertex to be
 	 * eliminated; loop through all affected faces.
 	 */
@@ -448,7 +448,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 
 	    /* max_normal_error is actually a minimum dot product */
 	    dot = VDOT(pla, plb);
-	    if (max_normal_error > -1.0 - SMALL_FASTF && dot < max_normal_error) {
+	    if (max_normal_error + 1.0 > -SMALL_FASTF && dot < max_normal_error) {
 		return 0;
 	    }
 
@@ -456,7 +456,7 @@ edge_can_be_decimated(struct rt_bot_internal *bot,
 	     * v1
 	     */
 	    dist = fabs(DIST_PT_PLANE(&vertices[v1*3], pla));
-	    if (max_chord_error > -1.0 - SMALL_FASTF && dist > max_chord_error) {
+	    if (max_chord_error + 1.0 > -SMALL_FASTF && dist > max_chord_error) {
 		return 0;
 	    }
 	}
@@ -536,7 +536,7 @@ rt_bot_decimate(struct rt_bot_internal *bot,	/* BOT to be decimated */
     RT_BOT_CK_MAGIC(bot);
 
     /* convert normal error to something useful (a minimum dot product) */
-    if (max_normal_error > -1.0 - SMALL_FASTF) {
+    if (max_normal_error + 1.0 > -SMALL_FASTF) {
 	max_normal_error = cos(max_normal_error * DEG2RAD);
     }
 

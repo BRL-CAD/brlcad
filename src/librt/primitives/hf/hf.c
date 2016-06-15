@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -762,7 +762,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
     right *= hf->hf_file2mm;
     answer = (right-left)/xright*xx+left;
 
-    if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+    if (loc[Z] - answer < SQRT_SMALL_FASTF) {
 	(*hp)->hit_magic = RT_HIT_MAGIC;
 	(*hp)->hit_dist = inout;
 	(*hp)->hit_surfno = plane;

@@ -1,7 +1,7 @@
 /*                        M S R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -172,7 +172,7 @@ BN_EXPORT extern long bn_unif_long_fill(struct bn_unif *p);
 */
 BN_EXPORT extern double bn_unif_double_fill(struct bn_unif *p);
 
-/*	bn_gauss_init	Initialize a random number struct for gaussian
+/*	bn_gauss_init	Initialize a random number struct for Gaussian
  *	numbers.
  *
  * @par Entry
@@ -180,7 +180,7 @@ BN_EXPORT extern double bn_unif_double_fill(struct bn_unif *p);
  *	method		method to use to generate numbers (not used)
  *
  * @par Exit
- *	Returns a pointer toa bn_msr_gauss structure.
+ *	Returns a pointer to a bn_msr_gauss structure.
  *	returns 0 on error.
  *
  * @par Calls
@@ -207,10 +207,10 @@ BN_EXPORT extern void bn_gauss_free(struct bn_gauss *p);
 
 /*	bn_gauss_fill	fill a random number table.
  *
- * Use the msrad algorithm to fill a random number table.
- * hese numbers can (and are) extracted from
- * the random number table via high speed macros and bn_msr_gauss_fill
- * called when the table is exhausted.
+ * Use the msrad algorithm to fill a random number table.  These
+ * numbers can (and are) extracted from the random number table via
+ * high speed macros and bn_msr_gauss_fill called when the table is
+ * exhausted.
  *
  * @par Entry
  *	p	pointer to a bn_msr_gauss structure.

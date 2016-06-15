@@ -1,7 +1,7 @@
 /*                        S H O O T . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -168,22 +168,20 @@ struct cl_hit {
     cl_double3 hit_vpriv;
     cl_double hit_dist;
     cl_int hit_surfno;
-    cl_uint hit_index;
 };
 
-
-RT_EXPORT extern cl_int
-clt_shot(size_t sz_hits, struct cl_hit *hits, struct xray *rp, struct soltab *stp,
-	 struct application *ap, struct seg *seghead);
-
-RT_EXPORT extern void
-clt_norm(struct hit *hitp, struct soltab *stp, struct xray *rp);
-
+struct cl_seg {
+    struct cl_hit seg_in;
+    struct cl_hit seg_out;
+    cl_uint seg_sti;
+};
 
 RT_EXPORT extern void
 clt_frame(void *pixels, uint8_t o[3], int cur_pixel, int last_pixel,
-	  int width, int background[3], int nonbackground[3], mat_t view2model,
-          fastf_t cell_width, fastf_t cell_height, fastf_t aspect, int lightmodel);
+	  int width, int ibackground[3], int inonbackground[3],
+	  double airdensity, double haze[3], fastf_t gamma,
+          mat_t view2model, fastf_t cell_width, fastf_t cell_height,
+          fastf_t aspect, int lightmodel);
 #endif
 
 

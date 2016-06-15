@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -202,7 +202,8 @@ struct loop_cuts {
     struct vertexuse *vu1;
     struct vertexuse *vu2;
 };
-int
+
+HIDDEN int
 nmg_face_state_transition(struct nmg_ray_state *rs,
 			  int pos,
 			  int multi,
@@ -261,7 +262,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	vect_t vect;
 	NMG_CK_VERTEXUSE(vu[i]);
 
-	if (mag[i] > MAX_FASTF - SMALL_FASTF) {
+	if (mag[i] - MAX_FASTF > -SMALL_FASTF) {
 	    VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
 	    mag[i] = VDOT(vect, dir);
 	}
@@ -524,7 +525,7 @@ nmg_vu_angle_measure(struct vertexuse *vu, fastf_t *x_dir, fastf_t *y_dir, int a
 }
 
 
-int
+HIDDEN int
 nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
 {
     register int i;
@@ -547,7 +548,7 @@ nmg_is_v_on_rs_list(const struct nmg_ray_state *rs, const struct vertex *v)
  * Even if there are edges which loop around to the same vertex
  * (with a different vertexuse), that (0-length) edge is ON the ray.
  */
-int
+HIDDEN int
 nmg_assess_eu(struct edgeuse *eu, int forw, struct nmg_ray_state *rs, int pos)
 {
     struct vertex *v;
@@ -706,7 +707,7 @@ out:
 }
 
 
-int
+HIDDEN int
 nmg_assess_vu(struct nmg_ray_state *rs, int pos)
 {
     struct vertexuse *vu;
@@ -807,7 +808,7 @@ static const char *nmg_wedgeclass_string[] = {
 };
 
 
-void
+HIDDEN void
 nmg_pr_vu_stuff(const struct nmg_vu_stuff *vs)
 {
     bu_log("nmg_pr_vu_stuff(%p) vu=%p, loop_index=%d, lsp=%p\n",
@@ -939,7 +940,7 @@ static const char *nmg_wedge2_string[] = {
  * WEDGE2_TOUCH_AT_BC AB touches CD at BC, but does not overlap
  * WEDGE2_TOUCH_AT_DA CD touches AB at DA, but does not overlap
  */
-static int
+HIDDEN int
 nmg_compare_2_wedges(double a, double b, double c, double d)
 {
     double t;
@@ -1088,7 +1089,7 @@ out:
  * the current best "candidate" so far,
  * and "this", the current one being considered.
  */
-static int
+HIDDEN int
 nmg_find_vu_in_wedge(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *skip_array)
 
 /* vu index of coincident range */
@@ -1212,7 +1213,7 @@ out:
  * 1 if wedge should be processed before cross
  * 0 if cross should be processed before wedge
  */
-static int
+HIDDEN int
 nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_stuff *cross)
 {
     int class2;
@@ -1276,7 +1277,7 @@ nmg_is_wedge_before_cross(const struct nmg_vu_stuff *wedge, const struct nmg_vu_
 #define A_LT_B {ret = -1; goto out;}
 #define AB_EQUAL {ret = 0; goto out;}
 #define A_GT_B {ret = 1; goto out;}
-static int
+HIDDEN int
 nmg_face_vu_compare(const void *aa, const void *bb, void *UNUSED(arg))
 {
     register const struct nmg_vu_stuff *a = (const struct nmg_vu_stuff *)aa;
@@ -1420,7 +1421,7 @@ out:
  * the vertexuse's into sequence by "angle" along the ray direction,
  * starting with the vertexuse that the ray first encounters.
  */
-static void
+HIDDEN void
 nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_ray_state *rs, int ass)
 {
     struct edgeuse *this_eu;
@@ -1491,7 +1492,7 @@ nmg_face_vu_dot(struct nmg_vu_stuff *vsp, struct loopuse *lu, const struct nmg_r
  * 1 Loops were cut or joined, need to reclassify everything
  * at this vertexuse.
  */
-static int
+HIDDEN int
 nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double lo_ang, double hi_ang, int wclass, int *exclude, const struct bn_tol *tol)
 
 /* vu index of coincident range */
@@ -1651,7 +1652,7 @@ again_inner:
  * Given co-incident vertexuses (same distance along the ray),
  * sort them into the "proper" order for driving the state machine.
  */
-int
+HIDDEN int
 nmg_face_coincident_vu_sort(struct nmg_ray_state *rs, int start, int end)
 
 /* first index */
@@ -1888,7 +1889,7 @@ nmg_sanitize_fu(struct faceuse *fu)
  * make this happen;  see the comments in nmg_inter.c for details, or
  * Mike's notes "The 'Left' Vector Choice" dated 27-Aug-93, page 1.
  */
-void
+HIDDEN void
 nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu1, struct faceuse *fu2, fastf_t *pt, fastf_t *dir, struct edge_g_lseg *eg, const struct bn_tol *tol)
 
 /* table of vertexuses in fu1 on intercept line */
@@ -2002,7 +2003,7 @@ nmg_face_rs_init(struct nmg_ray_state *rs, struct bu_ptbl *b, struct faceuse *fu
  *
  * See the comments in nmg_radial_join_eu() for the rationale.
  */
-void
+HIDDEN void
 nmg_edge_geom_isect_line(struct edgeuse *eu, struct nmg_ray_state *rs, const char *reason)
 {
     register struct edge_g_lseg *eg;
@@ -2061,7 +2062,7 @@ out:
 }
 
 
-static struct bu_ptbl *
+HIDDEN struct bu_ptbl *
 find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int next_start, int next_end, fastf_t *mid_pt, struct nmg_ray_state *rs)
 {
     struct loopuse *lu1, *lu2;
@@ -2407,7 +2408,7 @@ find_loop_to_cut(int *index1, int *index2, int prior_start, int prior_end, int n
 }
 
 
-static fastf_t
+HIDDEN fastf_t
 nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
 {
     struct faceuse *fu;
@@ -2440,7 +2441,7 @@ nmg_eu_angle(struct edgeuse *eu, struct vertex *vp)
 }
 
 
-static int
+HIDDEN int
 find_best_vu(int start, int end, struct vertex *other_vp, struct nmg_ray_state *rs)
 {
     struct edgeuse *eu;
@@ -2954,7 +2955,7 @@ nmg_unlist_v(struct bu_ptbl *b, fastf_t *mag, struct vertex *v)
  *
  * Must be called after vu list has been sorted.
  */
-int
+HIDDEN int
 nmg_onon_fix(struct nmg_ray_state *rs, struct bu_ptbl *b, struct bu_ptbl *ob, fastf_t *mag, fastf_t *omag)
 
 
@@ -3361,7 +3362,7 @@ static const struct state_transitions nmg_state_is_in[17] = {
  * Modifications to the NMG shell being operated on.
  * Updated state etc. in nmg_ray_state structure.
  */
-int
+HIDDEN int
 nmg_face_state_transition(struct nmg_ray_state *rs, int pos, int multi, int other_rs_state)
 {
     int assessment;

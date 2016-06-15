@@ -1,7 +1,7 @@
 /*                        S E A R C H . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -152,6 +152,34 @@ RT_EXPORT extern size_t db_ls(const struct db_i *dbip,
 /* TODO - implement this flag
 #define DB_LS_REGEX        0x40*/ /* interpret pattern using regex rules, instead of
                                               globbing rules (default) */
+
+
+/* db_glob.c */
+
+
+/* These are general globbing flags. */
+#define DB_GLOB_HIDDEN       0x1    /**< @brief include hidden objects in results */
+#define DB_GLOB_NON_GEOM     0x2    /**< @brief include non-geometry objects in results */
+#define DB_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
+
+/**
+ * db_glob takes a string and expands wildcard patterns in the string by
+ * matching object names in the database instance dbip according to globbing
+ * rules (see bu_fnmatch).
+ *
+ * The caller is responsible for providing a non-null vls destination buffer.
+ *
+ * Returns -
+ * number of dbip objects added to string
+ * expanded string in dest bu_vls
+ *
+ * TODO - use flags for skip first, do/don't expand hidden, etc.
+ *
+ * Note - deliberately did not name this fuction db_glob - probably want a more
+ * powerful globbing API than just strings for more general usage...
+ */
+RT_EXPORT int
+db_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int skip_first);
 
 
 

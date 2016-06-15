@@ -1,7 +1,7 @@
 /*                          T T C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,25 @@
 #  include <sys/times.h>
 #  include <sys/param.h>
 #else
-#  include <sys/resource.h>
+
+/* this ugly hack overcomes a c89 + -pedantic-errors bug in glibc <2.9
+ * where it raises a warning for a trailing comma when including the
+ * sys/resource.h system header.
+ *
+ * need a better solution that preserves pedantic c89 compilation,
+ * ideally without resorting to a sys/resource.h compilation feature
+ * test (which will vary with build flags).
+ */
+#if !defined(__USE_GNU) && defined(__GLIBC__) && (__GLIBC__ == 2) && (__GLIBC_MINOR__ < 9)
+#  define __USE_GNU 1
+#  define DEFINED_USE_GNU 1
+#endif
+#include <sys/resource.h>
+#ifdef DEFINED_USE_GNU
+#  undef __USE_GNU
+#  undef DEFINED_USE_GNU
+#endif
+
 #endif
 
 struct sockaddr_in sinme;

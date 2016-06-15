@@ -1,7 +1,7 @@
 /*                      P R O E - B R L . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2014 United States Government as represented by
+ * Copyright (c) 2001-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -818,7 +818,7 @@ add_to_empty_list( char *name )
     }
 
     ptr->next = NULL;
-    ptr->name = (char *)strdup( name );
+    ptr->name = (char *)bu_strdup( name );
 }
 
 void

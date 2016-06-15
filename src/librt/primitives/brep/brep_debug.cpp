@@ -1,7 +1,7 @@
 /*                     B R E P _ D E B U G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2355,9 +2355,9 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	    return;
 	}
     } else {
-	if (node->m_children.size() > 0) {
-	    for (std::vector<BBNode*>::iterator childnode = node->m_children.begin(); childnode
-		     != node->m_children.end(); childnode++) {
+	if (node->m_children->size() > 0) {
+	    for (std::vector<BBNode*>::iterator childnode = node->m_children->begin(); childnode
+		     != node->m_children->end(); childnode++) {
 		drawBBNode(st, vbp, *childnode);
 	    }
 	}
@@ -2666,6 +2666,7 @@ brep_conversion_tree(const struct db_i *dbip, const union tree *oldtree, union t
 		    if (BU_STR_EQUAL(intern->idb_meth->ft_name, "ID_BREP")) {
 			*brep = ((struct rt_brep_internal *)intern->idb_ptr)->brep->Duplicate();
 		    } else {
+			*brep = ON_Brep::New();
 			ret = single_conversion(intern, brep, dbip);
 			if (ret == -1) {
 			    bu_log("The brep conversion of %s is unsuccessful.\n", oldname);

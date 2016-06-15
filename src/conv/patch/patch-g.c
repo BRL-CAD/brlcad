@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -676,22 +676,25 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    mk_bot_from_nmg(outfp, name, s);
 	} else {
 	    nmg_shell_coplanar_face_merge(s, tol, 0);
-	    if (!nmg_simplify_shell(s))
-		mk_nmg(outfp, name, m);
+	    if (!nmg_simplify_shell(s)) {
+		struct model *m_copy = nmg_clone_model(m);
+		mk_nmg(outfp, name, m_copy); /* frees m_copy */
+	    }
 	}
 
 	/* if this solid is mirrored, don't go through the entire process again */
 	if (mirror_name[0]) {
 	    nmg_mirror_model(m);
 
-	    if (polysolid)
+	    if (polysolid) {
 		mk_bot_from_nmg(outfp, mirror_name, s);
+		nmg_km(m);
+	    }
 	    else
-		mk_nmg(outfp, mirror_name, m);
+		mk_nmg(outfp, mirror_name, m); /* frees m */
 	}
-
-	/* Kill the model */
-	nmg_km(m);
+	else
+	    nmg_km(m);
 
 	return 0;
     }
@@ -807,9 +810,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
     if (debug > 4) {
 	char tmp_name[NAMESIZE+1];
+	struct model *m_copy = nmg_clone_model(m);
 
 	snprintf(tmp_name, NAMESIZE+1, "out.%s", name);
-	mk_nmg(outfp, tmp_name, m);
+	mk_nmg(outfp, tmp_name, m_copy); /* frees m_copy */
     }
 
     /* Duplicate shell */
@@ -921,10 +925,12 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		char bad[NAMESIZE+5];
 
 		snprintf(bad, NAMESIZE+5, "%s.BAD", name);
-		mk_nmg(outfp, bad, m);
+		mk_nmg(outfp, bad, m); /* frees m */
 		bu_log("BAD shell written as %s\n", bad);
 	    }
-	    nmg_km(m);
+	    else
+		nmg_km(m);
+
 	    bu_free((char *)flags, "build_solid: flags");
 	    bu_free((char *)copy_tbl, "build_solid: copy_tbl");
 	    bu_ptbl_free(&verts_to_move);
@@ -939,9 +945,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 
     if (debug > 4) {
 	char tmp_name[NAMESIZE+6];
+	struct model *m_copy = nmg_clone_model(m);
 
 	snprintf(tmp_name, NAMESIZE+6, "open.%s", name);
-	mk_nmg(outfp, tmp_name, m);
+	mk_nmg(outfp, tmp_name, m_copy); /* frees m_copy */
     }
 
     nmg_make_faces_within_tol(is, tol);
@@ -954,9 +961,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	char bad[NAMESIZE+5];
 
 	snprintf(bad, NAMESIZE+5, "%s.BAD", name);
-	mk_nmg(outfp, bad, m);
+	mk_nmg(outfp, bad, m); /* frees m */
 	bu_log("BAD shell written as %s\n", bad);
-	nmg_km(m);
 	bu_free((char *)flags, "Build_solid: flags");
 	bu_free((char *)copy_tbl, "Build_solid: copy_tbl");
 	return 1;
@@ -994,8 +1000,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	mk_bot_from_nmg(outfp, name, s);
     } else {
 	nmg_shell_coplanar_face_merge(s, tol, 0);
-	if (!nmg_simplify_shell(s))
-	    mk_nmg(outfp, name, m);
+	if (!nmg_simplify_shell(s)) {
+	    struct model *m_copy = nmg_clone_model(m);
+	    mk_nmg(outfp, name, m_copy); /* frees m_copy */
+	}
     }
 
     /* if this solid is mirrored, don't go through the entire process again */
@@ -1007,13 +1015,12 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	if (debug)
 	    bu_log("writing  %s (mirrored) to BRL-CAD DB\n", mirror_name);
 
-	if (polysolid)
+	if (polysolid) {
 	    mk_bot_from_nmg(outfp, mirror_name, s);
+	    nmg_km(m);
+	}
 	else
-	    mk_nmg(outfp, mirror_name, m);
-
-	/* Kill the model */
-	nmg_km(m);
+	    mk_nmg(outfp, mirror_name, m); /* frees m */
     }
 
     return 0;

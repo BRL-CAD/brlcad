@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,16 +49,6 @@
 /* NOTE: do not rely on these values */
 #define BRLCAD_OK 0
 #define BRLCAD_ERROR 1
-
- /**
- * BU_IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- */
-#define BU_IGNORE(_parm) (void)(_parm)
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -124,25 +114,44 @@
 /**
  * shorthand declaration of a printf-style functions
  */
-#if !defined(_BU_ATTR_PRINTF12)
-#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#ifdef HAVE_PRINTF12_ATTRIBUTE
+#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
 #endif
-#if !defined(_BU_ATTR_PRINTF23)
-#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#ifdef HAVE_PRINTF23_ATTRIBUTE
+#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
 #endif
-#if !defined(_BU_ATTR_SCANF23)
-#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
+#ifdef HAVE_SCANF23_ATTRIBUTE
+#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
 #endif
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#ifdef HAVE_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
+#else
+#  define _BU_ATTR_NORETURN
+#endif
+
+/* For the moment, we need to specially flag some functions
+ * for clang.  It's not clear if we will always need to do
+ * this, but for now this suppresses a lot of noise in the
+ * reports */
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define _BU_ATTR_ANALYZE_NORETURN
+#endif
 
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+
+#ifdef HAVE_ALWAYS_INLINE_ATTRIBUTE
+#  define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+#else
+#  define _BU_ATTR_ALWAYS_INLINE
+#endif
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
@@ -190,7 +199,7 @@
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) BU_IGNORE((_equation))
+#  define BU_ASSERT(_equation) (void)(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -201,7 +210,7 @@
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -214,7 +223,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -227,7 +236,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -240,7 +249,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -253,7 +262,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \

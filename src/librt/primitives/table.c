@@ -1,7 +1,7 @@
 /*                         T A B L E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -915,7 +915,7 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_BBOX_CAST(rt_part_bbox),
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_part_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_part_surf_area),
-	NULL,
+	RTFUNCTAB_FUNC_CENTROID_CAST(rt_part_centroid),
 	NULL,
 	NULL,
 	NULL,

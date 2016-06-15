@@ -1,7 +1,7 @@
 /*                     N M G _ I N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -79,7 +79,7 @@ struct ee_2d_state {
 };
 
 
-static int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
+HIDDEN int nmg_isect_edge2p_face2p(struct nmg_inter_struct *is,
 				   struct edgeuse *eu, struct faceuse *fu,
 				   struct faceuse *eu_fu);
 
@@ -386,7 +386,7 @@ nmg_enlist_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, struct ve
  *
  * 'assoc_use' is either a pointer to a faceuse, or an edgeuse.
  */
-static void
+HIDDEN void
 nmg_get_2d_vertex(fastf_t *v2d, struct vertex *v, struct nmg_inter_struct *is, const uint32_t *assoc_use)
 /* a 3-tuple */
 
@@ -747,7 +747,7 @@ nmg_isect_vert2p_face2p(struct nmg_inter_struct *is, struct vertexuse *vu1, stru
  * XXX as a flag, so that nmg_find_v_in_face() wouldn't have to be called
  * XXX to re-determine what was just done.
  */
-static void
+HIDDEN void
 nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struct faceuse *fu)
 {
     struct vertexuse *vup;
@@ -801,7 +801,7 @@ nmg_isect_3vertex_3face(struct nmg_inter_struct *is, struct vertexuse *vu, struc
  * vu2_final is the returned value, and is in fu2.
  *
  */
-static struct vertexuse *
+HIDDEN struct vertexuse *
 nmg_break_3edge_at_plane(const fastf_t *hit_pt, struct faceuse *fu2, struct nmg_inter_struct *is, struct edgeuse *eu1)
 
 /* The face that eu intersects */
@@ -1638,7 +1638,7 @@ out:
  * 0 If everything went well
  * 1 If vu[] list along the intersection line needs to be re-done.
  */
-static int
+HIDDEN int
 nmg_isect_wireedge3p_face3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2)
 {
     struct vertexuse *vu1_final = (struct vertexuse *)NULL;
@@ -1936,7 +1936,7 @@ out:
  * 0 everything is ok
  * >0 vu[] list along intersection line needs to be re-done.
  */
-static int
+HIDDEN int
 nmg_isect_wireloop3p_face3p(struct nmg_inter_struct *bs, struct loopuse *lu, struct faceuse *fu)
 {
     struct edgeuse *eu;
@@ -2109,7 +2109,7 @@ nmg_isect_construct_nice_ray(struct nmg_inter_struct *is, struct faceuse *fu2)
  * 0 Topology is completely shared (or no sharing).  l1/l2 valid.
  * >0 Caller needs to invalidate his l1/l2 list.
  */
-static int
+HIDDEN int
 nmg_isect_edge2p_face2p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct faceuse *fu2, struct faceuse *fu1)
 
 /* edge to be intersected w/fu2 */
@@ -2333,7 +2333,7 @@ nmg_enlist_one_vu(struct nmg_inter_struct *is, const struct vertexuse *vu, fastf
 }
 
 
-static void
+HIDDEN void
 nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct bn_tol *tol)
 {
     struct bu_ptbl verts;
@@ -2378,7 +2378,7 @@ nmg_coplanar_face_vertex_fuse(struct faceuse *fu1, struct faceuse *fu2, struct b
 }
 
 
-static void
+HIDDEN void
 nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
 {
     struct model *m;
@@ -2389,8 +2389,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     struct bu_ptbl vert_list1, vert_list2;
     fastf_t *mag1, *mag2;
     int i, j;
-    const fastf_t opsff = (1.0 + SMALL_FASTF);
-    const fastf_t omsff = (1.0 - SMALL_FASTF);
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -2476,26 +2474,26 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * distance from p0->q1.
 		 */
 		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
-						(dist[1] < omsff))) ||
-		    ((dist[1] > SMALL_FASTF) && (dist[1] < omsff)
-		     && (dist[0] > opsff))) {
+						(dist[1] - 1.0 < -SMALL_FASTF))) ||
+		    ((dist[1] > SMALL_FASTF) && (dist[1] - 1.0 < -SMALL_FASTF)
+		     && (dist[0] - 1.0 > SMALL_FASTF))) {
 		    /* true when q1 is within p0->p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
-		} else if ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) &&
-			   (dist[1] > SMALL_FASTF) && (dist[1] < omsff)) {
+		} else if ((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) &&
+			   (dist[1] > SMALL_FASTF) && (dist[1] - 1.0 < -SMALL_FASTF)) {
 		    /* true when both q0 and q1 is within p0->p1 */
 		    hit_count = 2;
 		    /* dist[0] and dist[1] are already the correct values */
-		} else if (((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] < -SMALL_FASTF)) ||
-			   ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] > opsff))) {
+		} else if (((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) && (dist[1] < -SMALL_FASTF)) ||
+			   ((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) && (dist[1] - 1.0  > SMALL_FASTF))) {
 		    /* true when q0 is within p0->p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
-		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) ||
-			   ((dist[0] > opsff) && (dist[1] < -SMALL_FASTF))) {
+		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   ((dist[0] - 1.0 > SMALL_FASTF) && (dist[1] < -SMALL_FASTF))) {
 		    /* true when both p0 and p1 is within q0->q1 */
 		    /* eu1 is not cut */
 		    hit_count = 0; /* sanity */
@@ -2511,8 +2509,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    continue;
 		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
 			   (ZERO(dist[0]) && (dist[1] < -SMALL_FASTF)) ||
-			   (EQUAL(dist[0], 1.0) && (dist[1] > opsff)) ||
-			   (EQUAL(dist[1], 1.0) && (dist[0] > opsff))) {
+			   (EQUAL(dist[0], 1.0) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   (EQUAL(dist[1], 1.0) && (dist[0] - 1.0 > SMALL_FASTF))) {
 		    /* true when eu2 shares one of eu1 vertices and the
 		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
 		     */
@@ -2521,25 +2519,25 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) &&
-			    (dist[1] < omsff)) ||
+			    (dist[1] - 1.0 < -SMALL_FASTF)) ||
 			   ((dist[1] > SMALL_FASTF) &&
-			    (dist[1] < omsff) &&
+			    (dist[1] - 1.0 < -SMALL_FASTF) &&
 			    EQUAL(dist[0], 1.0))) {
 		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
 		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) &&
-			    (dist[0] < omsff)) ||
+			    (dist[0] - 1.0 < -SMALL_FASTF)) ||
 			   ((dist[0] > SMALL_FASTF) &&
-			    (dist[0] < omsff) &&
+			    (dist[0] - 1.0 < -SMALL_FASTF) &&
 			    EQUAL(dist[1], 1.0))) {
 		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
-		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
-			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
+		} else if ((ZERO(dist[0]) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   (ZERO(dist[1]) && (dist[0] - 1.0 > SMALL_FASTF)) ||
 			   (EQUAL(dist[0], 1.0) && (dist[1] < -SMALL_FASTF)) ||
 			   ((dist[0] < -SMALL_FASTF) && EQUAL(dist[1], 1.0))) {
 		    /* true when eu2 shares one of the vertices of eu1 and
@@ -2560,7 +2558,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		if (ZERO(dist[0]) || EQUAL(dist[0], 1.0)) {
 		    /* eu1 was hit on a vertex, nothing to cut */
 		    continue;
-		} else if (UNLIKELY((dist[0] < -SMALL_FASTF) || (dist[0] > opsff))) {
+		} else if (UNLIKELY((dist[0] < -SMALL_FASTF) || (dist[0] - 1.0 > SMALL_FASTF))) {
 		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
 		} else {
 		    hit_count = 1;
@@ -2572,7 +2570,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		struct vertex *hitv;
 		struct vertexuse *hit_vu;
 
-		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] > opsff)
+		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] - 1.0 > SMALL_FASTF)
 		    continue;
 
 		hitv = (struct vertex *)NULL;
@@ -4902,7 +4900,7 @@ rt_line_on_plane(const fastf_t *pt, const fastf_t *dir, const fastf_t *plane, co
  *
  * This is the HEART of the intersection code.
  */
-static void
+HIDDEN void
 nmg_isect_two_face3p(struct nmg_inter_struct *is, struct faceuse *fu1, struct faceuse *fu2)
 {
     struct bu_ptbl vert_list1, vert_list2;
@@ -5746,7 +5744,7 @@ nmg_faces_can_be_intersected(struct nmg_inter_struct *bs, const struct faceuse *
  * 0 = inconclusive
  *
  */
-int
+HIDDEN int
 nmg_no_isect_fu_pl(struct faceuse *fu1, struct faceuse *fu2, const struct bn_tol *tol)
 {
     register fastf_t dist;
@@ -5954,7 +5952,7 @@ nmg_isect_two_generic_faces(struct faceuse *fu1, struct faceuse *fu2, const stru
  *
  * Called from nmg_isect_edge3p_shell()
  */
-static void
+HIDDEN void
 nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct edgeuse *eu2)
 {
     struct vertexuse *vu1a;
@@ -6088,7 +6086,7 @@ nmg_isect_edge3p_edge3p(struct nmg_inter_struct *is, struct edgeuse *eu1, struct
 /**
  * Intersect a lone vertex from s1 with a single edge from s2.
  */
-static void
+HIDDEN void
 nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, struct edgeuse *eu2)
 {
     fastf_t dist;
@@ -6155,7 +6153,7 @@ nmg_isect_vertex3_edge3p(struct nmg_inter_struct *is, struct vertexuse *vu1, str
  *
  * Called by nmg_crackshells().
  */
-static void
+HIDDEN void
 nmg_isect_edge3p_shell(struct nmg_inter_struct *is, struct edgeuse *eu1, struct shell *s2)
 {
     struct faceuse *fu2;

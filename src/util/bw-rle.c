@@ -1,7 +1,7 @@
 /*                        B W - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 #include <string.h>
 
 #include "bu/log.h"
+#include "bu/str.h"
 
 #include "fb.h"
 
@@ -95,23 +96,23 @@ main(int argc, char **argv)
 
     /* Add comments to the header file, since we have one */
     snprintf(comment, 128, "converted_from=%s", infile);
-    rle_putcom(strdup(comment), &outrle);
+    rle_putcom(bu_strdup(comment), &outrle);
     now = time(0);
     sprintf(comment, "converted_date=%24.24s", ctime(&now));
-    rle_putcom(strdup(comment), &outrle);
+    rle_putcom(bu_strdup(comment), &outrle);
     if ((who = getenv("USER")) != (char *)0) {
 	snprintf(comment, 128, "converted_by=%s", who);
-	rle_putcom(strdup(comment), &outrle);
+	rle_putcom(bu_strdup(comment), &outrle);
     } else {
 	if ((who = getenv("LOGNAME")) != (char *)0) {
 	    snprintf(comment, 128, "converted_by=%s", who);
-	    rle_putcom(strdup(comment), &outrle);
+	    rle_putcom(bu_strdup(comment), &outrle);
 	}
     }
 #if HAVE_GETHOSTNAME
     gethostname(host, sizeof(host));
     snprintf(comment, 128, "converted_host=%s", host);
-    rle_putcom(strdup(comment), &outrle);
+    rle_putcom(bu_strdup(comment), &outrle);
 #endif
 
     rle_put_setup(&outrle);

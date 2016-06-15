@@ -1,7 +1,7 @@
 /*                         P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,11 @@
 #include <string.h>
 #include <ctype.h>
 
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/path.h"
 #include "bu/malloc.h"
+#include "bu/mime.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 
@@ -133,81 +135,165 @@ bu_basename(char *basename, const char *path)
     }
 }
 
+HIDDEN int
+_extract_path_and_prefix(struct bu_vls *path, struct bu_vls *format, const char *input)
+{
+    int ret = 0;
+    struct bu_vls wpath = BU_VLS_INIT_ZERO;
+    struct bu_vls wformat = BU_VLS_INIT_ZERO;
+    char *colon_pos = NULL;
+    char *inputcpy = NULL;
+    if (UNLIKELY(!input)) return 0;
+    if (UNLIKELY(strlen(input) == 0)) return 0;
+    inputcpy = bu_strdup(input);
+    colon_pos = strchr(inputcpy, ':');
+    if (colon_pos) {
+	/* path */
+	bu_vls_sprintf(&wpath, "%s", input);
+	bu_vls_nibble(&wpath, strlen(input) - strlen(colon_pos) + 1);
+	if (path && bu_vls_strlen(&wpath) > 0) {
+	    ret = 1;
+	    bu_vls_sprintf(path, "%s", bu_vls_addr(&wpath));
+	}
+	bu_vls_free(&wpath);
+	/* mime: prefix */
+	bu_vls_sprintf(&wformat, "%s", input);
+	bu_vls_trunc(&wformat, -1 * strlen(colon_pos));
+	if (format && bu_vls_strlen(&wformat) > 0) {
+	    ret = 1;
+	    bu_vls_sprintf(format, "%s", bu_vls_addr(&wformat));
+	}
+	bu_vls_free(&wformat);
+    } else {
+	if (path) bu_vls_sprintf(path, "%s", input);
+	ret = 1;
+    }
+    if (inputcpy) bu_free(inputcpy, "input copy");
+    return ret;
+}
+
 
 int
-bu_path_component(struct bu_vls *component, const char *path, path_component_t type)
+bu_path_component(struct bu_vls *component, const char *in_path, path_component_t type)
 {
     int ret = 0;
     char *basename = NULL;
     char *dirname = NULL;
     char *period_pos = NULL;
     struct bu_vls working_path = BU_VLS_INIT_ZERO;
+    struct bu_vls mime_prefix = BU_VLS_INIT_ZERO;
 
-    if (UNLIKELY(!path) || UNLIKELY(strlen(path)) == 0) goto cleanup;
+    if (UNLIKELY(!in_path) || UNLIKELY(strlen(in_path)) == 0) goto cleanup;
 
-    switch (type) {
-	case PATH_DIRNAME:
-	    dirname = bu_dirname(path);
-	    if (!(!dirname || strlen(dirname) == 0)) {
+    if (type == PATH_UNKNOWN || type >= (path_component_t)MIME_UNKNOWN) goto cleanup;
+
+    /* if we want something other than a mime type, we need to remove any mime: prefix from the
+     * path.  If we're after a mime type, we need to check for a prefix */
+    if (!_extract_path_and_prefix(&working_path, &mime_prefix, in_path)) goto cleanup;
+
+    if (type < PATH_UNKNOWN) {
+	switch (type) {
+	    case PATH_ALL:
 		ret = 1;
 		if (component) {
-		    bu_vls_sprintf(component, "%s", dirname);
+		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
 		}
-	    }
-	    break;
-	case PATH_DIRNAME_CORE:
-	    ret = 1;
-	    if (component) {
-		period_pos = strrchr(path, '.');
-		bu_vls_sprintf(component, "%s", path);
-		if (period_pos && strlen(period_pos) > 0)
-		    bu_vls_trunc(component, -1 * strlen(period_pos));
-	    }
-	    break;
-	case PATH_BASENAME:
-	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
-	    if (strlen(basename) > 0) {
-		ret = 1;
-		if (component) {
-		    bu_vls_sprintf(component, "%s", basename);
+		break;
+	    case PATH_DIRNAME:
+		dirname = bu_dirname(bu_vls_addr(&working_path));
+		if (!(!dirname || strlen(dirname) == 0)) {
+		    ret = 1;
+		    if (component) {
+			bu_vls_sprintf(component, "%s", dirname);
+		    }
 		}
-	    }
-	    break;
-	case PATH_BASENAME_CORE:
-	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
-	    if (strlen(basename) > 0) {
+		break;
+	    case PATH_DIRNAME_CORE:
 		ret = 1;
 		if (component) {
+		    period_pos = strrchr(bu_vls_addr(&working_path), '.');
+		    bu_vls_sprintf(component, "%s", bu_vls_addr(&working_path));
+		    if (period_pos && strlen(period_pos) > 0)
+			bu_vls_trunc(component, -1 * strlen(period_pos));
+		}
+		break;
+	    case PATH_BASENAME:
+		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
+		bu_basename(basename, bu_vls_addr(&working_path));
+		if (strlen(basename) > 0) {
+		    ret = 1;
+		    if (component) {
+			bu_vls_sprintf(component, "%s", basename);
+		    }
+		}
+		break;
+	    case PATH_BASENAME_CORE:
+		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
+		bu_basename(basename, bu_vls_addr(&working_path));
+		if (strlen(basename) > 0) {
+		    ret = 1;
+		    if (component) {
+			period_pos = strrchr(basename, '.');
+			bu_vls_sprintf(component, "%s", basename);
+			if (period_pos) {
+			    bu_vls_trunc(component, -1 * strlen(period_pos));
+			}
+		    }
+		}
+		break;
+	    case PATH_EXTENSION:
+		basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
+		bu_basename(basename, bu_vls_addr(&working_path));
+		if (strlen(basename) > 0) {
 		    period_pos = strrchr(basename, '.');
-		    bu_vls_sprintf(component, "%s", basename);
-		    bu_vls_trunc(component, -1 * strlen(period_pos));
+		    if (period_pos && strlen(period_pos) > 1) {
+			ret = 1;
+			if (component) {
+			    bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
+			    bu_vls_nibble(component, 1);
+			}
+		    }
 		}
-	    }
-	    break;
-	case PATH_EXTENSION:
-	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
+		break;
+	    default:
+		break;
+	}
+    } else {
+	/* If we have a mime prefix, use that.  Otherwise, it's up to the file extension. */
+	if (bu_vls_strlen(&mime_prefix) > 0) {
+	    int mime_int = bu_file_mime(bu_vls_addr(&mime_prefix), (mime_context_t)type);
+	    const char *mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
+	    bu_vls_sprintf(component, "%s", mime_str);
+	    ret = 1;
+	    bu_free((char *)mime_str, "free orig mime str");
+	} else {
+	    struct bu_vls mime_ext = BU_VLS_INIT_ZERO;
+	    basename = (char *)bu_calloc(strlen(bu_vls_addr(&working_path)) + 2, sizeof(char), "basename");
+	    bu_basename(basename, bu_vls_addr(&working_path));
 	    if (strlen(basename) > 0) {
 		period_pos = strrchr(basename, '.');
 		if (period_pos && strlen(period_pos) > 1) {
+		    int mime_int = -1;
+		    const char *mime_str = NULL;
+		    bu_vls_strncpy(&mime_ext, period_pos, strlen(period_pos)+1);
+		    bu_vls_nibble(&mime_ext, 1);
+		    /* actual mime bits */
+		    mime_int = bu_file_mime(bu_vls_addr(&mime_ext), (mime_context_t)type);
+		    mime_str = bu_file_mime_str(mime_int, (mime_context_t)type);
+		    bu_vls_sprintf(component, "%s", mime_str);
+		    bu_free((char *)mime_str, "free orig mime str");
 		    ret = 1;
-		    if (component) {
-			bu_vls_strncpy(component, period_pos, strlen(period_pos)+1);
-			bu_vls_nibble(component, 1);
-		    }
 		}
 	    }
-	    break;
-	default:
-	    break;
+	    bu_vls_free(&mime_ext);
+	}
     }
 
 cleanup:
     if (basename) bu_free(basename, "basename");
     if (dirname) bu_free(dirname, "dirname");
     bu_vls_free(&working_path);
+    bu_vls_free(&mime_prefix);
     return ret;
 }
 

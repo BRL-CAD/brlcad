@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -283,8 +283,7 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n",
-	       stp->st_name);
+	/*bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n", stp->st_name);*/
 	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
@@ -1239,7 +1238,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    } else {
 		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, choices are P, P#, P+, or N\n");
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    if (i >= arbn->neqn) {
 		bu_vls_printf(logstr, "ERROR: plane number out of range\n");

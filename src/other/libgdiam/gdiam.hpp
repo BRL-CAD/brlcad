@@ -56,6 +56,7 @@ typedef  const gdiam_real  * gdiam_point_cnt;
 #define __MINMAX_DEFINED
 
 #include<algorithm>
+#include<assert.h>
 #define min std::min
 #define max std::max
 

@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -762,11 +762,11 @@ package provide cadwidgets::Ged 1.0
 	method init_view_scale {{_button 1}}
 	method init_view_translate {{_button 1}}
 	method center_ray {{_pflag 0}}
-	method mouse_ray {_x _y {_pflag 0}}
+	method mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
 	method pane_mouse_3dpoint {_pane _x _y {_vflag 1}}
 	method pane_mouse_data_label {_pane _x _y}
 	method pane_mouse_data_pick {_pane _x _y}
-	method pane_mouse_ray {_pane _x _y {_pflag 0}}
+	method pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}}
 	method pane {args}
 	method init_shoot_ray {_rayname _prep _no_bool _onehit _bot_dflag _objects}
 	method shoot_ray_who {_start _op _target _prep _no_bool _onehit _bot_dflag}
@@ -5147,9 +5147,11 @@ package provide cadwidgets::Ged 1.0
     mouse_ray $x $y $_pflag
 }
 
-::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0}} {
-    pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag
+
+::itcl::body cadwidgets::Ged::mouse_ray {_x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
+    pane_mouse_ray $itk_option(-pane) $_x $_y $_pflag $_prflag $_nbflag $_ohflag $_bdflag
 }
+
 
 ## pane_mouse_3dpoint
 #
@@ -5245,7 +5247,7 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
-::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0}} {
+::itcl::body cadwidgets::Ged::pane_mouse_ray {_pane _x _y {_pflag 0} {_prflag 1} {_nbflag 1} {_ohflag 0} {_bdflag 1}} {
     set mLastMouseRayPos "$_x $_y"
 
     set view [$mGed screen2view $itk_component($_pane) $_x $_y]
@@ -5258,7 +5260,7 @@ package provide cadwidgets::Ged 1.0
     set mLastMouseRayStart [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] $vZ]
     set mLastMouseRayTarget [$mGed v2m_point $itk_component($_pane) [lindex $view 0] [lindex $view 1] 0]
 
-    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget 1 1 0 1} partitions]} {
+    if {[catch {shoot_ray_who $mLastMouseRayStart "at" $mLastMouseRayTarget $_prflag $_nbflag $_ohflag $_bdflag} partitions]} {
 	return $partitions
     }
 

@@ -1,7 +1,7 @@
 /*                 B O T _ S H E L L - V T K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ static struct vert_root *verts;
 static long *faces = NULL;
 static long max_faces = 0;
 static long num_faces = 0;
-#define FACES_BLOCK	512
+#define FACES_BLOCK 512
 
 static const char *usage = "[-m] [-n] [-d debug_level] [-g cell_size] -o vtk_polydata_output_file database.g object1 object2...\n";
 
@@ -86,6 +86,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 /* routine to replace default overlap handler.
  * overlaps are irrelevant to this application
@@ -102,6 +103,7 @@ miss(struct application *UNUSED(ap))
 {
     return 0;
 }
+
 
 HIDDEN void
 Add_face(int face[3])
@@ -134,6 +136,7 @@ Add_face(int face[3])
     VMOVE(&faces[num_faces*3], face);
     num_faces++;
 }
+
 
 HIDDEN int
 hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
@@ -177,7 +180,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 	}
 	if (debug) {
 	    bu_log("\thit at (%g %g %g) on %s surfno = %d\n",
-		    V3ARGS(p->pt_inhit->hit_point), stp->st_dp->d_namep, surfno);
+		   V3ARGS(p->pt_inhit->hit_point), stp->st_dp->d_namep, surfno);
 	}
 
 
@@ -203,7 +206,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		    face[0], x, y, z, nx, ny, nz);
+		   face[0], x, y, z, nx, ny, nz);
 	}
 
 	/* get the second vertex */
@@ -228,7 +231,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		    face[1], x, y, z, nx, ny, nz);
+		   face[1], x, y, z, nx, ny, nz);
 	}
 
 	/* get the third vertex */
@@ -253,7 +256,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
 	}
 	if (debug) {
 	    bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		    face[2], x, y, z, nx, ny, nz);
+		   face[2], x, y, z, nx, ny, nz);
 	}
 
 	/* add this face to our list (Add_face checks for duplicates) */
@@ -291,7 +294,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     if (debug) {
 	bu_log("\thit at (%g %g %g) on %s surfno = %d\n",
-		V3ARGS(p->pt_inhit->hit_point), stp->st_dp->d_namep, surfno);
+	       V3ARGS(p->pt_inhit->hit_point), stp->st_dp->d_namep, surfno);
     }
 
 
@@ -317,7 +320,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		face[0], x, y, z, nx, ny, nz);
+	       face[0], x, y, z, nx, ny, nz);
     }
 
     /* get the second vertex */
@@ -342,7 +345,7 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		face[1], x, y, z, nx, ny, nz);
+	       face[1], x, y, z, nx, ny, nz);
     }
 
     /* get the first vertex */
@@ -367,13 +370,14 @@ hit(struct application *ap, struct partition *part, struct seg *UNUSED(seg))
     }
     if (debug) {
 	bu_log("\tvertex %d = (%g %g %g), norm = (%g %g %g)\n",
-		face[2], x, y, z, nx, ny, nz);
+	       face[2], x, y, z, nx, ny, nz);
     }
 
     Add_face(face);
 
     return 1;
 }
+
 
 int
 main(int argc, char *argv[])
@@ -506,7 +510,7 @@ main(int argc, char *argv[])
 		    /* shoot a ray */
 		    if (debug) {
 			bu_log("Shooting a ray from (%g %g %g) in direction (%g %g %g)\n",
-				V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+			       V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		    }
 		    (void)rt_shootray(&ap);
 		    ap.a_ray.r_pt[grid_dir2] += cell_size;
@@ -554,9 +558,9 @@ main(int argc, char *argv[])
 		    VADD2(B, tri->tri_A, tri->tri_BA);
 		    VADD2(C, tri->tri_A, tri->tri_CA);
 		    bu_log("Shooting a ray from (%g %g %g) in direction (%g %g %g)\n",
-			    V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
+			   V3ARGS(ap.a_ray.r_pt), V3ARGS(ap.a_ray.r_dir));
 		    bu_log("\tAt triangle (%g %g %g) (%g %g %g) (%g %g %g)\n",
-			    V3ARGS(tri->tri_A), V3ARGS(B), V3ARGS(C));
+			   V3ARGS(tri->tri_A), V3ARGS(B), V3ARGS(C));
 		}
 		(void)rt_shootray(&ap);
 		tri = tri->tri_forw;
@@ -598,6 +602,7 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
 
 /*
  * Local Variables:

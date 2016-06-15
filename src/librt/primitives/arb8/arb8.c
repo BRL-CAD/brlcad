@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,33 +183,29 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct arb_shot_specific {
+struct clt_arb_specific {
     cl_double arb_peqns[4*6];
     cl_int arb_nmfaces;
 };
 
 size_t
-clt_arb_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct arb_shot_specific);
-}
-
-void
-clt_arb_pack(void *dst, struct soltab *src)
+clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct arb_specific *arb =
-        (struct arb_specific *)src->st_specific;
-    struct arb_shot_specific *args =
-        (struct arb_shot_specific *)dst;
+        (struct arb_specific *)stp->st_specific;
+    struct clt_arb_specific *args;
 
     const struct aface *afp;
     cl_int j;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_arb_specific*)bu_pool_alloc(pool, 1, size);
 
     for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
         HMOVE(args->arb_peqns+4*j, afp->peqn);
     }
     args->arb_nmfaces = arb->arb_nmfaces;
+    return size;
 }
 #endif /* USE_OPENCL */
 

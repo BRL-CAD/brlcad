@@ -30,6 +30,7 @@ macro(ADD_NIST_STEP_TARGET step_model folder)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
   set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
   set(LOG_FILES "${LOG_FILES};${log_file}")
+  DISTCLEAN(${log_file})
 endmacro(ADD_NIST_STEP_TARGET step_model folder)
 
 macro(ADD_NIST_3DM_TARGET rhino_model folder)
@@ -51,6 +52,7 @@ macro(ADD_NIST_3DM_TARGET rhino_model folder)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
   set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
   set(LOG_FILES "${LOG_FILES};${log_file}")
+  DISTCLEAN(${log_file})
 endmacro(ADD_NIST_3DM_TARGET rhino_model folder)
 
 

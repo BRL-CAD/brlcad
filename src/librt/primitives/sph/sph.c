@@ -1,7 +1,7 @@
 /*                           S P H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,30 +71,26 @@ struct sph_specific {
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct sph_shot_specific {
+struct clt_sph_specific {
     cl_double sph_V[3];     /* Vector to center of sphere */
     cl_double sph_radsq;    /* Radius squared */
     cl_double sph_invrad;   /* Inverse radius (for normal) */
 };
 
 size_t
-clt_sph_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct sph_shot_specific);
-}
-
-void
-clt_sph_pack(void *dst, struct soltab *src)
+clt_sph_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct sph_specific *sph =
-        (struct sph_specific *)src->st_specific;
-    struct sph_shot_specific *args =
-        (struct sph_shot_specific *)dst;
+        (struct sph_specific *)stp->st_specific;
+    struct clt_sph_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_sph_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->sph_V, sph->sph_V);
     args->sph_radsq = sph->sph_radsq;
     args->sph_invrad = sph->sph_invrad;
+    return size;
 }
 #endif /* USE_OPENCL */
 

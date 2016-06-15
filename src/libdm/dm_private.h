@@ -1,7 +1,7 @@
 /*                    D M _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,29 @@ struct dm_vars {
     void *pub_vars;
     void *priv_vars;
 };
+
+#if defined(DM_OGL) || defined(DM_WGL)
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+
+struct modifiable_ogl_vars {
+    dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+#endif
 
 /**
  * Interface to a specific Display Manager
@@ -73,7 +96,7 @@ struct dm_internal {
     int (*dm_freeDLists)(struct dm_internal *dmp, unsigned int list, int range);
     int (*dm_genDLists)(struct dm_internal *dmp, size_t range);
     int (*dm_draw_obj)(struct dm_internal *dmp, struct display_list *obj);
-    int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);
+    int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
     void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
     int (*dm_openFb)(struct dm_internal *dmp);
@@ -134,6 +157,9 @@ drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t 
 
 int
 draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2);
+
+void
+flip_display_image_vertically(unsigned char *image, size_t width, size_t height);
 
 void
 dm_generic_hook(const struct bu_structparse *sdp,

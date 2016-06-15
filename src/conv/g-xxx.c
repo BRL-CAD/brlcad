@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,9 +135,9 @@ describe_tree(union tree *tree,
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
- *      @param tsp tree state (for parsing the tree)
- *      @param pathp A listing of all the nodes traversed to get to this node in the database
- *      @param combp the combination record for this region
+ * @param tsp tree state (for parsing the tree)
+ * @param pathp A listing of all the nodes traversed to get to this node in the database
+ * @param combp the combination record for this region
  */
 int
 region_start(struct db_tree_state *tsp,
@@ -180,8 +180,8 @@ region_start(struct db_tree_state *tsp,
 /**
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
- * @param tsp     tree state
- * @param pathp   db path
+ * @param tsp tree state
+ * @param pathp db path
  * @param curtree current tree
  *
  * @return TREE_NULL if data in curtree was "stolen", otherwise db_walk_tree will
@@ -292,29 +292,29 @@ primitive_func(struct db_tree_state *tsp,
 
 	    case ID_BOT:	/* Bag O' Triangles */
 	    case ID_ARS:
-		    /* series of curves
-		     * each with the same number of points
-		     */
+		/* series of curves
+		 * each with the same number of points
+		 */
 	    case ID_HALF:
-		    /* half universe defined by a plane */
+		/* half universe defined by a plane */
 	    case ID_POLY:
-		    /* polygons (up to 5 vertices per) */
+		/* polygons (up to 5 vertices per) */
 	    case ID_BSPLINE:
-		    /* NURB surfaces */
+		/* NURB surfaces */
 	    case ID_NMG:
-		    /* N-manifold geometry */
+		/* N-manifold geometry */
 	    case ID_ARBN:
 	    case ID_DSP:
-		    /* Displacement map (terrain primitive) */
-		    /* the DSP primitive may reference an external file or binunif object */
+		/* Displacement map (terrain primitive) */
+		/* the DSP primitive may reference an external file or binunif object */
 	    case ID_HF:
-		    /* height field (terrain primitive) */
-		    /* the HF primitive references an external file */
+		/* height field (terrain primitive) */
+		/* the HF primitive references an external file */
 	    case ID_EBM:
-		    /* extruded bit-map */
-		    /* the EBM primitive references an external file */
+		/* extruded bit-map */
+		/* the EBM primitive references an external file */
 	    case ID_VOL:
-		    /* the VOL primitive references an external file */
+		/* the VOL primitive references an external file */
 	    case ID_PIPE:
 	    case ID_PARTICLE:
 	    case ID_RPC:
@@ -325,9 +325,9 @@ primitive_func(struct db_tree_state *tsp,
 	    case ID_GRIP:
 	    case ID_SKETCH:
 	    case ID_EXTRUDE:
-		    /* note that an extrusion references a sketch, make sure you convert
-		     * the sketch also
-		     */
+		/* note that an extrusion references a sketch, make sure you convert
+		 * the sketch also
+		 */
 	    default:
 		bu_log("Primitive %s is an unsupported or unrecognized type (%d)\n", dp->d_namep, ip->idb_type);
 		break;
@@ -354,6 +354,7 @@ primitive_func(struct db_tree_state *tsp,
     return (union tree *) NULL;
 }
 
+
 static void
 print_usage(const char *progname)
 {
@@ -361,6 +362,7 @@ print_usage(const char *progname)
 	"[-o out_file] brlcad_db.g object(s)\n";
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 int
 main(int argc, char *argv[])

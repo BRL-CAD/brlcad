@@ -1,4 +1,4 @@
-# Copyright (c) 2015 United States Government as represented by
+# Copyright (c) 2015-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -73,10 +73,6 @@ if(NOT DOM2DOX_IS_SUBBUILD)
   find_package(LEMON)
   find_package(RE2C)
   find_package(PERPLEX)
-
-  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/PERPLEX_Util.cmake)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/RE2C_Util.cmake)
 endif(NOT DOM2DOX_IS_SUBBUILD)
 
 include_directories(
@@ -84,7 +80,7 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   ${BRLCAD_SRC_INCLUDE_DIR}
   ${BRLCAD_BUILD_INCLUDE_DIR}
-  ${TCL_INCLUDE_DIR}
+  ${TCL_INCLUDE_DIRS}
   )
 
 

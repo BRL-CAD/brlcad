@@ -1,7 +1,7 @@
 /*                 T R I _ I N T E R S E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,10 +65,10 @@ gcv_fisect2(
 
 int
 gcv_compute_intervals_isectline(struct face_s *f,
-			    fastf_t VV0, fastf_t VV1, fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2,
-			    fastf_t D0D1, fastf_t D0D2, fastf_t *isect0, fastf_t *isect1,
-			    point_t *isectpoint0, point_t *isectpoint1,
-			    const struct bn_tol *tol)
+				fastf_t VV0, fastf_t VV1, fastf_t VV2, fastf_t D0, fastf_t D1, fastf_t D2,
+				fastf_t D0D1, fastf_t D0D2, fastf_t *isect0, fastf_t *isect1,
+				point_t *isectpoint0, point_t *isectpoint1,
+				const struct bn_tol *tol)
 {
     if (D0D1>0.0f)
 	/* here we know that D0D2<=0.0 */

@@ -1,7 +1,7 @@
 #                X M L L I N T . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -34,9 +34,9 @@
 #
 ###
 execute_process(COMMAND "@CMAKE_COMMAND@" -E remove -f "@xml_valid_stamp@")
-execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd" --noout --nonet "@full_path_filename@" RESULT_VARIABLE CMDRESULT)
+execute_process(COMMAND "@XMLLINT_EXECUTABLE@"  --xinclude --schema "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema/xsd/docbook.xsd" --noout --nonet "@full_path_filename@" RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 if(CMDRESULT)
-  message(FATAL_ERROR "xmllint failure: ${CMDRESULT}")
+  message(FATAL_ERROR "xmllint failure: ${CMDRESULT}\n${CMDOUT}\n${CMDERR}")
 else(CMDRESULT)
   execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "@xml_valid_stamp@")
 endif(CMDRESULT)

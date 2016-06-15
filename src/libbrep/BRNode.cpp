@@ -1,7 +1,7 @@
 /*                      B R N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,21 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 #include "common.h"
-#include <algorithm> // for std::max
-#define NOMINMAX
+
+/* library headers */
 extern "C" {
 #include "bu/log.h"
 }
 #include "brep.h"
 
+
 namespace brlcad {
 BRNode::~BRNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_children.size(); i++) {
-	delete m_children[i];
+    for (size_t i = 0; i < m_children->size(); i++) {
+	delete (*m_children)[i];
     }
+    delete m_children;
 }
 
 
@@ -39,8 +42,8 @@ int
 BRNode::depth()
 {
     int d = 0;
-    for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + std::max(d, m_children[i]->depth());
+    for (size_t i = 0; i < m_children->size(); i++) {
+	d = 1 + std::max(d, (*m_children)[i]->depth());
     }
     return d;
 }
@@ -48,9 +51,9 @@ BRNode::depth()
 void
 BRNode::getLeaves(std::list<BRNode *> &out_leaves)
 {
-    if (m_children.size() > 0) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->getLeaves(out_leaves);
+    if (m_children->size() > 0) {
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->getLeaves(out_leaves);
 	}
     } else {
 	out_leaves.push_back(this);
@@ -154,10 +157,10 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (m_children.size() > 0) {
-	    BRNode *closestNode = m_children[0];
-	    for (size_t i = 1; i < m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_children[i]);
+	if (m_children->size() > 0) {
+	    BRNode *closestNode = (*m_children)[0];
+	    for (size_t i = 1; i < m_children->size(); i++) {
+		closestNode = closer(pt, closestNode, (*m_children)[i]);
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	} else {

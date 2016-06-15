@@ -1,7 +1,7 @@
 /*                  D I S P L A Y _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "bu/ptbl.h"
+#include "bu/str.h"
 #include "bn/plot3.h"
 
 #include "rt/solid.h"
@@ -235,14 +237,16 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-		dp = FIRST_SOLID(sp);
-		RT_CK_DIR(dp);
-		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		    (void)db_dirdelete(dbip, dp);
-		}
+		if (sp) {
+		    dp = FIRST_SOLID(sp);
+		    RT_CK_DIR(dp);
+		    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+			(void)db_dirdelete(dbip, dp);
+		    }
 
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &freesolid->l);
+		    BU_LIST_DEQUEUE(&sp->l);
+		    FREE_SOLID(sp, &freesolid->l);
+		}
 	    }
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
@@ -345,7 +349,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dup_path = strdup(bu_vls_addr(&gdlp->dl_path));
+	dup_path = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	tok = strtok(dup_path, "/");
 	while (tok) {
 	    if (first) {
@@ -503,14 +507,16 @@ _dl_freeDisplayListItem (struct db_i *dbip,
 
     /* Free up the solids list associated with this display list */
     while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-	dp = FIRST_SOLID(sp);
-	RT_CK_DIR(dp);
-	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-	    (void)db_dirdelete(dbip, dp);
-	}
+	if (sp) {
+	    dp = FIRST_SOLID(sp);
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		(void)db_dirdelete(dbip, dp);
+	    }
 
-	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &freesolid->l);
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp, &freesolid->l);
+	}
     }
 
     /* Free up the display list */
@@ -873,7 +879,6 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     struct rt_db_internal *ip = &dbintern;
 
     BU_LIST_INIT(&vhead);
-    ret = -1;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&sp->s_fullpath),
 	    dbip, sp->s_mat, &rt_uniresource);
@@ -1258,11 +1263,14 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 void
 dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid)
 {
-    struct solid *sp;
-    struct display_list *gdlp;
-    struct directory *dp;
+    struct solid *sp = SOLID_NULL;
+    struct display_list *gdlp = NULL;
+    struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
+    struct directory *dp = RT_DIR_NULL;
+    size_t i = 0;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
+
 	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL && BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
 	    (*callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
@@ -1282,9 +1290,18 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);
+	/* queue up for free */
+	bu_ptbl_ins_unique(&dls, (long *)gdlp);
+	gdlp = NULL;
+    }
+
+    /* Free all display lists */
+    for(i = 0; i < BU_PTBL_LEN(&dls); i++) {
+	gdlp = (struct display_list *)BU_PTBL_GET(&dls, i);
 	bu_vls_free(&gdlp->dl_path);
 	free((void *)gdlp);
     }
+    bu_ptbl_free(&dls);
 }
 
 int

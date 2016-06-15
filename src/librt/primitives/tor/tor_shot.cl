@@ -1,7 +1,7 @@
 #include "common.cl"
 
 
-struct tor_shot_specific {
+struct tor_specific {
     double tor_alpha;       /* 0 < (R2/R1) <= 1 */
     double tor_r1;          /* for inverse scaling of k values. */
     double tor_V[3];        /* Vector to center of torus */
@@ -9,19 +9,22 @@ struct tor_shot_specific {
     double tor_invR[16];    /* invRot(vect') */
 };
 
-int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_shot_specific *tor)
+int tor_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tor_specific *tor)
 {
     double3 dprime;		// D'
     double3 pprime;		// P'
     double3 work;		// temporary vector
     double C[5];		// The final equation
     bn_complex_t val[4];	// The complex roots
+    int l;
+    int nroots;
     double k[4];		// The real roots
     int i;
     int j;
     double A[3];
     double Asqr[5];
     double X2_Y2[3];		// X**2 + Y**2
+    int npts;
     double3 cor_pprime;		// new ray origin
     double cor_proj;
 
@@ -34,11 +37,11 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     /* normalize distance from torus.  substitute corrected pprime
      * which contains a translation along ray direction to closest
      * approach to vertex of torus.  Translating ray origin along
-     * direction of ray to closest pt. to origin of solid's coordinate
+     * direction of ray to closest pt. to origin of solids coordinate
      * system, new ray origin is 'cor_pprime'.
      */
-    cor_proj = dot(pprime, dprime);
-    cor_pprime = pprime - dprime * cor_proj;
+    cor_proj = -dot(pprime, dprime);
+    cor_pprime = pprime + cor_proj * dprime;
 
     /* Given a line and a ratio, alpha, finds the equation of the unit
      * torus in terms of the variable 't'.
@@ -85,101 +88,72 @@ int tor_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
     /* It is known that the equation is 4th order.  Therefore, if the
      * root finder returns other than 4 roots, error.
      */
-    if ((i = rt_poly_roots(C, 4, val)) != 4) {
-	return 0;		// MISS
-    }
+    nroots = rt_poly_roots(C, 4, val);
 
     /* Only real roots indicate an intersection in real space.
      *
-     * Look at each root returned; if the imaginary part is zero or
-     * sufficiently close, then use the real part as one value of 't'
-     * for the intersections
+     * Look at each root returned; if the imaginary part is zero
+     * or sufficiently close, then use the real part as one value
+     * of 't' for the intersections
      */
-    for (j=0, i=0; j < 4; j++) {
-	if (NEAR_ZERO(val[j].im, RT_PCOEF_TOL))
-	    k[i++] = val[j].re;
+    for (l=0, npts=0; l < nroots; l++) {
+	if (NEAR_ZERO(val[l].im, RT_PCOEF_TOL)) {
+	    k[npts++] = val[l].re;
+	}
     }
 
-    /* reverse above translation by adding distance to all 'k' values.
+    /*
+     * Reverse above translation by adding distance to all 'k' values.
      */
-    for (j = 0; j < i; ++j)
-	k[j] -= cor_proj;
+    for (i = 0; i < npts; ++i) {
+	k[i] += cor_proj;
+    }
 
-    /* Here, 'i' is number of points found */
-    switch (i) {
-	default:
-	case 0:
-	    return 0;		// No hit
-	case 2:
-	    {
-		/* Sort most distant to least distant. */
-		double u;
-		if ((u=k[0]) < k[1]) {
+    /* Here, 'npts' is number of points found */
+    if (npts != 0 && npts != 2 && npts != 4) {
+	return 0;		/* No hit */
+    }
+
+    /* Sort Most distant to least distant: rt_pt_sort(k, npts) */
+    {
+	double u;
+	short n, lim;
+
+	/* Inline rt_pt_sort().  Sorts k[] into descending order. */
+	for (lim = npts-1; lim > 0; lim--) {
+	    for (n = 0; n < lim; n++) {
+		if ((u=k[n]) < k[n+1]) {
 		    /* bubble larger towards [0] */
-		    k[0] = k[1];
-		    k[1] = u;
+		    k[n] = k[n+1];
+		    k[n+1] = u;
 		}
 	    }
-	    break;
-	case 4:
-	    {
-		short n, lim;
-
-		/* Inline rt_pt_sort().  Sorts k[] into descending order. */
-		for (lim = i-1; lim > 0; lim--) {
-		    for (n = 0; n < lim; n++) {
-			double u;
-			if ((u=k[n]) < k[n+1]) {
-			    /* bubble larger towards [0] */
-			    k[n] = k[n+1];
-			    k[n+1] = u;
-			}
-		    }
-		}
-	    }
-	    break;
+	}
     }
 
     /* Now, t[0] > t[npts-1] */
     /* k[1] is entry point, and k[0] is farthest exit point */
-    struct hit hits[2];
-
-    hits[0].hit_dist = k[1]*tor->tor_r1;
-    hits[0].hit_surfno = 0;
-    hits[1].hit_dist = k[0]*tor->tor_r1;
-    hits[1].hit_surfno = 0;
-
-    /* Set aside vector for rt_tor_norm() later */
-    hits[0].hit_vpriv = pprime + k[1] * dprime;
-    hits[1].hit_vpriv = pprime + k[0] * dprime;
-
-    if (i == 2) {
-	do_hitp(res, 0, idx, &hits[0]);
-	do_hitp(res, 1, idx, &hits[1]);
-    	return 2;		// HIT
-    }
-
-    /* 4 points */
-    do_hitp(res, 2, idx, &hits[0]);
-    do_hitp(res, 3, idx, &hits[1]);
-
     /* k[3] is entry point, and k[2] is exit point */
-    hits[0].hit_surfno = 1;
-    hits[0].hit_dist = k[3]*tor->tor_r1;
-    hits[1].hit_surfno = 1;
-    hits[1].hit_dist = k[2]*tor->tor_r1;
+    for (i=npts-1; i>0; i -= 2) {
+        struct hit hits[2];
 
-    /* Set aside vector for rt_tor_norm() later */
-    hits[0].hit_vpriv = pprime + k[3] * dprime;
-    hits[1].hit_vpriv = pprime + k[2] * dprime;
+	hits[0].hit_dist = k[i] * tor->tor_r1;
+	hits[0].hit_surfno = i/2;
+	/* Set aside vector for rt_tor_norm() later */
+	hits[0].hit_vpriv = pprime + k[i] * dprime;
 
-    do_hitp(res, 0, idx, &hits[0]);
-    do_hitp(res, 1, idx, &hits[1]);
-    return 4;		// HIT
+	hits[1].hit_dist = k[i-1] * tor->tor_r1;
+	hits[1].hit_surfno = i/2;
+	/* Set aside vector for rt_tor_norm() later */
+	hits[1].hit_vpriv = pprime + k[i-1] * dprime;
+
+	do_segp(res, idx, &hits[0], &hits[1]);
+    }
+    return npts;
 }
 
 
-void tor_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_shot_specific *tor)
+void tor_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tor_specific *tor)
 {
     double w;
     double3 work;

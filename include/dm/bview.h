@@ -1,7 +1,7 @@
 /*                        B V I E W . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,23 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @{ */
-/** @file bview.h
+/** @addtogroup bview
  *
+ * @brief
  * Types and definitions related to display lists, angle distance cursor,
- * and other generic view constructs.  This header is intended to be
- * independent of any one BRL-CAD library and is specifically intended
- * to allow the easy definition of common display list types between
- * otherwise independent libraries (libdm and libged, for example).
+ * and other generic view constructs.
+ *
+ * This header is intended to be independent of any one BRL-CAD library and is
+ * specifically intended to allow the easy definition of common display list
+ * types between otherwise independent libraries (libdm and libged, for
+ * example).
+ *
  */
-
 #ifndef BVIEW_H
 #define BVIEW_H
 
 #include "common.h"
 #include "bu/list.h"
 #include "bu/vls.h"
+#include "bu/observer.h"
 #include "vmath.h"
+
+/** @{ */
+/** @file bview.h */
 
 #ifndef UP
 #  define UP 0
@@ -274,6 +280,36 @@ struct bview_client_data {
     void *freesolid;
 };
 
+/**
+ * A view object maintains state for controlling a view.
+ */
+struct view_obj {
+    struct bu_list      l;
+    struct bu_vls       vo_name;                /**< @brief  view object name/cmd */
+    fastf_t             vo_scale;
+    fastf_t             vo_size;                /**< @brief  2.0 * scale */
+    fastf_t             vo_invSize;             /**< @brief  1.0 / size */
+    fastf_t             vo_perspective;         /**< @brief  perspective angle */
+    fastf_t             vo_local2base;          /**< @brief  scale local units to base units (i.e. mm) */
+    fastf_t             vo_base2local;          /**< @brief  scale base units (i.e. mm) to local units */
+    vect_t              vo_aet;
+    vect_t              vo_eye_pos;             /**< @brief  eye position */
+    vect_t              vo_keypoint;
+    char                vo_coord;               /**< @brief  coordinate system */
+    char                vo_rotate_about;        /**< @brief  indicates what point rotations are about */
+    mat_t               vo_rotation;
+    mat_t               vo_center;
+    mat_t               vo_model2view;
+    mat_t               vo_pmodel2view;
+    mat_t               vo_view2model;
+    mat_t               vo_pmat;                /**< @brief  perspective matrix */
+    struct bu_observer  vo_observers;
+    void                (*vo_callback)();       /**< @brief  called in vo_update with vo_clientData and vop */
+    void *              vo_clientData;          /**< @brief  passed to vo_callback */
+    int                 vo_zclip;
+    void		*interp;
+};
+#define VIEW_OBJ_NULL ((struct view_obj *)0)
 
 #endif /* BVIEW_H */
 

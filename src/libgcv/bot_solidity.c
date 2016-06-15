@@ -1,7 +1,7 @@
 /*                  B O T _ S O L I D I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,9 @@
  */
 
 
-#include "bot_solidity.h"
+#include "common.h"
+
+#include "gcv/util.h"
 
 #include <stdlib.h>
 
@@ -55,7 +57,7 @@ set_edge(struct halfedge *edge, int va, int vb)
 
 
 HIDDEN int
-halfedge_compare(const void  *pleft, const void *pright)
+halfedge_compare(const void *pleft, const void *pright)
 {
     const struct halfedge * const left = (struct halfedge *)pleft;
     const struct halfedge * const right = (struct halfedge *)pright;
@@ -76,7 +78,7 @@ generate_edge_list(const struct rt_bot_internal *bot)
 
     num_edges = 3 * bot->num_faces;
     edge_list = (struct halfedge *)bu_calloc(num_edges, sizeof(struct halfedge),
-		"edge_list");
+					     "edge_list");
 
     for (face_index = 0; face_index < bot->num_faces; ++face_index) {
 	const int * const face = &bot->faces[face_index * 3];

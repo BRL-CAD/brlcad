@@ -1,7 +1,7 @@
 /*                          P I P E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -4565,7 +4565,7 @@ rt_pipe_adjust(
 	argv += 2;
     }
 
-    return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? TCL_OK : BRLCAD_ERROR;
+    return (rt_pipe_ck(&pip->pipe_segs_head) == 0) ? BRLCAD_OK : BRLCAD_ERROR;
 }
 
 

@@ -1,7 +1,7 @@
 /*                      B N E T W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,46 +17,35 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bnetwork.h
+/** @addtogroup bu_bnetwork
  *
- * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard system NETWORKING routines.
+ * @brief
+ * BRL-CAD system compatibility wrapper header that provides declarations for
+ * native and standard system NETWORKING routines.
  *
- * This header is commonly used in lieu of including the following:
- * winsock2.h (not select, fd_set), netinet/in.h, netinet/tcp.h,
- * arpa/inet.h (htonl, ntohl, etc)
+ * This header is commonly used in lieu of including the following: winsock2.h
+ * (not select, fd_set), netinet/in.h, netinet/tcp.h, arpa/inet.h (htonl,
+ * ntohl, etc)
  *
- * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
- *
- * The below logic should not rely on common.h's HAVE_* defines and
- * should not be including the common.h header.  This is intended to
- * be a stand-alone portability header intended to be independent of
- * build system, reusable by external projects.
+ * The logic in this header should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to be a
+ * stand-alone portability header intended to be independent of build system,
+ * reusable by external projects.
  */
+
+/** @{ */
+/** @file bnetwork.h */
 
 #ifndef BNETWORK_H
 #define BNETWORK_H
 
-/* make sure this header always comes before bio.h due to system
- * header ordering requirements.  this is mostly a windows issue, but
- * we want to detect the issue early.
- */
-#if defined(BIO_H)
-#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
-#endif
-
 #if defined(_WIN32) && !defined(__CYGWIN__)
 #  ifndef _WINSOCKAPI_
 #    include <winsock2.h> /* link against ws2_32 library */
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-
+#    include <ws2tcpip.h> /* provides extensions */
+#    undef rad1 /* Win32 radio button 1 */
+#    undef rad2 /* Win32 radio button 2 */
+#    undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
 #  endif
 #else
 #  include <sys/types.h>
@@ -67,6 +56,8 @@
 #endif
 
 #endif /* BNETWORK_H */
+
+/** @} */
 
 /*
  * Local Variables:

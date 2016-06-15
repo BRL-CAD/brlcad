@@ -1,7 +1,7 @@
 #                 D I S T C H E C K . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -58,7 +58,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # Define the repository verification build target
   add_custom_target(distcheck-repo_verify
     COMMAND ${CMAKE_COMMAND} -E echo "*** Check files in Source Repository against files specified in Build Logic ***"
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake)
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_repo_verify.cmake")
   set_target_properties(distcheck-repo_verify PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
   # When doing a raw package_source build, we have no choice but to copy the sources over
@@ -68,8 +68,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   set(create_source_archive_dir_script "
   CMAKE_POLICY(SET CMP0007 OLD)
   file(REMOVE_RECURSE \"${CMAKE_BINARY_DIR}/source_archive_contents\")
-  file(STRINGS ${CMAKE_BINARY_DIR}/cmakefiles.cmake source_tree_files)
-  file(STRINGS ${CMAKE_BINARY_DIR}/cmakedirs.cmake ignored_dirctories)
+  file(STRINGS \"${CMAKE_BINARY_DIR}/cmakefiles.cmake\" source_tree_files)
+  file(STRINGS \"${CMAKE_BINARY_DIR}/cmakedirs.cmake\" ignored_dirctories)
   string(REPLACE \"${BRLCAD_SOURCE_DIR}\" \"------BRLCAD_SOURCE_DIR----\" ignored_directories \"${ignored_directories}\")
   foreach(ITEM \${ignored_dirctories})
     file(GLOB_RECURSE dir_files \"\${ITEM}/*\")
@@ -93,12 +93,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
     endif(NOT IS_DIRECTORY \${source_file})
   endforeach(source_file \${source_tree_files})
   ")
-  file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake "${create_source_archive_dir_script}")
+  file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake" "${create_source_archive_dir_script}")
   add_custom_target(distcheck-source_archive_dir
     COMMAND ${CMAKE_COMMAND} -E echo "*** Prepare directory with archive contents in build directory ***"
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done
-    COMMAND ${CMAKE_COMMAND} -P ${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake
-    COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done
+    COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
+    COMMAND ${CMAKE_COMMAND} -P "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.cmake"
+    COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
     DEPENDS distcheck-repo_verify)
   set_target_properties(distcheck-source_archive_dir PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
@@ -107,8 +107,8 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # to make sure a repeated distcheck works correctly.
   add_custom_target(distcheck-source_archives
     COMMAND ${CMAKE_COMMAND} -E echo "*** Create source tgz, tbz2 and zip archives from toplevel archive ***"
-    COMMAND ${CPACK_EXEC} --config ${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake
-    COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done
+    COMMAND ${CPACK_EXEC} --config "${CMAKE_CURRENT_BINARY_DIR}/CPackSourceConfig.cmake"
+    COMMAND ${CMAKE_COMMAND} -E remove "${CMAKE_BINARY_DIR}/CMakeTmp/create_builddir_source_archive.done"
     DEPENDS distcheck-source_archive_dir)
   set_target_properties(distcheck-source_archives PROPERTIES FOLDER "BRL-CAD Distribution Checking")
 
@@ -181,16 +181,16 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
     add_custom_target(distcheck-std
       # The source repository verification script is responsible for generating these files
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid"
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message"
       DEPENDS distcheck-enableall_debug distcheck-enableall_release)
     set_target_properties(distcheck-std PROPERTIES FOLDER "BRL-CAD Distribution Checking")
     set_target_properties(distcheck-std PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
 
     add_custom_target(distcheck-full
       # The source repository verification script is responsible for generating these files
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_remove_archives_if_invalid"
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/CMakeTmp/distcheck_message"
       DEPENDS ${distcheck_targets})
     set_target_properties(distcheck-full PROPERTIES FOLDER "BRL-CAD Distribution Checking")
     set_target_properties(distcheck-full PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)

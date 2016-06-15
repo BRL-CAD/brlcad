@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -449,40 +449,28 @@ void
 clt_prep(struct rt_i *rtip)
 {
     struct soltab *stp;
-    union cutter *finp;	/* holds the finite solids */
+    long i;
 
     struct soltab **primitives;
     long n_primitives;
 
-    clt_init();
-
     RT_CK_RTI(rtip);
 
-    /* Make a list of all solids into one special boxnode, then refine. */
-    BU_ALLOC(finp, union cutter);
-    finp->cut_type = CUT_BOXNODE;
-    VMOVE(finp->bn.bn_min, rtip->mdl_min);
-    VMOVE(finp->bn.bn_max, rtip->mdl_max);
-    finp->bn.bn_len = 0;
-    finp->bn.bn_maxlen = rtip->nsolids+1;
-    finp->bn.bn_list = (struct soltab **)bu_calloc(
-        finp->bn.bn_maxlen, sizeof(struct soltab *),
-        "clt_prep: initial list alloc");
+    n_primitives = rtip->nsolids+1;
+    primitives = (struct soltab **)bu_calloc(n_primitives,
+        sizeof(struct soltab *), "primitives");
 
-    rtip->rti_inf_box.cut_type = CUT_BOXNODE;
-
+    i = 0;
     RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
         /* Ignore "dead" solids in the list.  (They failed prep) */
         if (stp->st_aradius <= 0) continue;
         /* Infinite solids make the BVH construction explode. */
         if (stp->st_aradius >= INFINITY) continue;
 
-        rt_cut_extend(finp, stp, rtip);
+        primitives[i++] = stp;
     } RT_VISIT_ALL_SOLTABS_END;
 
-    primitives = finp->bn.bn_list;
-    n_primitives = finp->bn.bn_len;
-    bu_free(finp, "union cutter");
+    n_primitives = i;
 
     if (n_primitives != 0) {
         /* Build BVH tree for primitives */
@@ -491,14 +479,13 @@ clt_prep(struct rt_i *rtip)
 	long *ordered_prims;
 	fastf_t *centroids;
 	fastf_t *bounds;
-	long i;
 
-	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "clt_prep");
+	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "centroids");
 	for (i=0; i<n_primitives; i++) {
 	    const struct soltab *primitive = primitives[i];
 	    VMOVE(&centroids[i*3], primitive->st_center);
 	}
-	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "clt_prep");
+	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "bounds");
 	for (i=0; i<n_primitives; i++) {
 	    const struct soltab *primitive = primitives[i];
 	    VMOVE(&bounds[i*6+0], primitive->st_min);
@@ -510,28 +497,28 @@ clt_prep(struct rt_i *rtip)
 	clt_linear_bvh_create(n_primitives, &nodes, &ordered_prims, centroids, bounds,
 			      &total_nodes);
 
-	bu_free(bounds, "clt_prep");
-	bu_free(centroids, "clt_prep");
+	bu_free(bounds, "bounds");
+	bu_free(centroids, "centroids");
 
         clt_db_store_bvh(total_nodes, nodes);
-	bu_free(nodes, "clt_prep");
+	bu_free(nodes, "nodes");
 
 	if (ordered_prims) {
 	    struct soltab **ordered_primitives;
 
 	    ordered_primitives = (struct soltab **)bu_calloc(n_primitives,
 							     sizeof(struct soltab *),
-							     "clt_prep");
+							     "ordered primitives");
 	    for (i=0; i<n_primitives; i++) {
 		ordered_primitives[i] = primitives[ordered_prims[i]];
 	    }
-	    bu_free(ordered_prims, "clt_prep");
-	    bu_free(primitives, "clt_prep");
+	    bu_free(ordered_prims, "ordered prims");
+	    bu_free(primitives, "primitives");
 	    primitives = ordered_primitives;
 	}
 
 	clt_db_store(n_primitives, primitives);
-	bu_free(primitives, "clt_prep");
+	bu_free(primitives, "ordered primitives");
     }
 }
 #endif
@@ -735,14 +722,13 @@ rt_init_resource(struct resource *resp,
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
-    {
+    if (resp != &rt_uniresource) {
 	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
 		   (void *)ores,
 		   (void *)resp);
-	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
     }
@@ -1165,7 +1151,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
     RT_CK_RESOURCE(resp);
 
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 
     *sp++ = TREE_NULL;
@@ -1189,7 +1175,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
 		*sp++ = treep->tr_b.tb_left;
 		if (sp >= stackend) {
 		    register int off = sp - resp->re_boolstack;
-		    rt_grow_boolstack(resp);
+		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}

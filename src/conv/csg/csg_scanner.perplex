@@ -1,7 +1,7 @@
 /*           C S G _ S C A N N E R . P E R P L E X
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,17 +21,6 @@
 /* perplex input file */
 #include "csg.h"
 
-/* Temporarily suppress some warnings, to make for easier development */
-#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
-#  pragma GCC diagnostic ignored "-Wunused-variable"
-#  pragma GCC diagnostic ignored "-Wunused-parameter"
-#  pragma GCC diagnostic ignored "-Wunused-function"
-#endif
-#if defined(__clang__)
-#  pragma clang diagnostic ignored "-Wunused-variable"
-#  pragma clang diagnostic ignored "-Wunused-parameter"
-#  pragma clang diagnostic ignored "-Wunused-function"
-#endif
 
 /* condition states - no idea what this enum does but I modified it according
 to what I used below */
@@ -53,7 +42,7 @@ eq = "=";
 optional_ws = [ \t]*;
 
 group_begin = "group() {";
-text = [a-z]+;
+txt = [a-z]+;
 group_end = "}";
 
 
@@ -64,8 +53,8 @@ group_end = "}";
     return GROUP_BEGIN;
     }
 
-(optional_ws)(text) {
-	  return TEXT;
+(optional_ws)(txt) {
+	  return TXT;
     }
 
 (optional_ws)(group_end) {

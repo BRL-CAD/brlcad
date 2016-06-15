@@ -1,7 +1,7 @@
 /*                 L I B R T _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -183,16 +183,19 @@ extern cl_program clt_get_program(cl_context context, cl_device_id device, cl_ui
 
 
 #define CLT_DECLARE_INTERFACE(name) \
-    extern size_t clt_##name##_length(struct soltab *stp); \
-    extern void clt_##name##_pack(void *dst, struct soltab *src)
+    extern size_t clt_##name##_pack(struct bu_pool *pool, struct soltab *stp)
 
 CLT_DECLARE_INTERFACE(tor);
 CLT_DECLARE_INTERFACE(tgc);
 CLT_DECLARE_INTERFACE(ell);
 CLT_DECLARE_INTERFACE(arb);
+CLT_DECLARE_INTERFACE(ars);
 CLT_DECLARE_INTERFACE(rec);
 CLT_DECLARE_INTERFACE(sph);
 CLT_DECLARE_INTERFACE(ehy);
+CLT_DECLARE_INTERFACE(bot);
+
+extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif
 
 __END_DECLS

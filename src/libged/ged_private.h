@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -525,6 +525,7 @@ extern int _ged_results_init(struct ged_results *results);
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
 extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
+extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
 
 __END_DECLS
 

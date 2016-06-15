@@ -1,7 +1,7 @@
 /*                       C O N V E R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -217,19 +217,15 @@ bu_cv_fmt_cookie(char *buf, size_t buflen, int cookie)
     switch (cookie & CV_CONVERT_MASK) {
 	case CV_CLIP:
 	    *cp++ = 'C';
-	    buflen -= 1;
 	    break;
 	case CV_NORMAL:
 	    *cp++ = 'N';
-	    buflen -= 1;
 	    break;
 	case CV_LIT:
 	    *cp++ = 'L';
-	    buflen -= 1;
 	    break;
 	default:
 	    *cp++ = 'X';
-	    buflen -= 1;
 	    break;
     }
     *cp = '\0';

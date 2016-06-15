@@ -1,13 +1,13 @@
 #include "common.cl"
 
 
-struct ell_shot_specific {
+struct ell_specific {
     double ell_V[3];         /* Vector to center of ellipsoid */
     double ell_SoR[16];      /* Scale(Rot(vect)) */
     double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
 };
 
-int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_shot_specific *ell)
+int ell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_specific *ell)
 {
     double3 dprime;	// D'
     double3 pprime;	// P'
@@ -43,14 +43,13 @@ int ell_shot(global struct hit *res, const double3 r_pt, const double3 r_dir, co
             hits[1].hit_surfno = 0;
 	}
 
-        do_hitp(res, 0, idx, &hits[0]);
-        do_hitp(res, 1, idx, &hits[1]);
+	do_segp(res, idx, &hits[0], &hits[1]);
 	return 2;	// HIT
     }
 }
 
 
-void ell_norm(global struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_shot_specific *ell)
+void ell_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_specific *ell)
 {
     double3 xlated;
     double scale;

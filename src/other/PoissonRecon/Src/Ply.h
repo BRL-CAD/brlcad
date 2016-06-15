@@ -532,33 +532,33 @@ inline bool PlyReadHeader( char* fileName , PlyProperty* properties , int proper
 		plist = ply_get_element_description( ply , elem_name , &num_elems , &nr_props );
 		if( !plist )
 		{
-			for( int i=0 ; i<nr_elems ; i++ )
+			for( int j=0 ; j<nr_elems ; j++ )
 			{
-				free( ply->elems[i]->name );
-				free( ply->elems[i]->store_prop );
-				for( int j=0 ; j<ply->elems[i]->nprops ; j++ )
+				free( ply->elems[j]->name );
+				free( ply->elems[j]->store_prop );
+				for( int k=0 ; k<ply->elems[j]->nprops ; j++ )
 				{
-					free( ply->elems[i]->props[j]->name );
-					free( ply->elems[i]->props[j] );
+					free( ply->elems[j]->props[k]->name );
+					free( ply->elems[j]->props[k] );
 				}
-				free( ply->elems[i]->props );
+				free( ply->elems[j]->props );
 			}
-			for( int i=0 ; i<nr_elems ; i++ ) free( ply->elems[i] );
+			for( int j=0 ; j<nr_elems ; j++ ) free( ply->elems[j] );
 			free( ply->elems );
-			for( int i=0 ; i<ply->num_comments ; i++ ) free( ply->comments[i] );
+			for( int j=0 ; j<ply->num_comments ; j++ ) free( ply->comments[j] );
 			free( ply->comments );
-			for( int i=0 ; i<ply->num_obj_info ; i++ ) free( ply->obj_info[i] );
+			for( int j=0 ; j<ply->num_obj_info ; j++ ) free( ply->obj_info[j] );
 			free( ply->obj_info );
 			ply_free_other_elements( ply->other_elems );
 			
-			for( int i=0 ; i<nr_elems ; i++ ) free( elist[i] );
+			for( int j=0 ; j<nr_elems ; i++ ) free( elist[j] );
 			free( elist );
 			ply_close( ply );
 			return 0;
 		}		
 		if( equal_strings( "vertex" , elem_name ) )
-			for( int i=0 ; i<propertyNum ; i++ )
-				if( readFlags ) readFlags[i] = ply_get_property( ply , elem_name , &properties[i] )!=0;
+			for( int j=0 ; j<propertyNum ; j++ )
+				if( readFlags ) readFlags[j] = ply_get_property( ply , elem_name , &properties[j] )!=0;
 
 		for( int j=0 ; j<nr_props ; j++ )
 		{
@@ -699,7 +699,7 @@ int PlyReadPolygons(char* fileName,
 	if(comments)
 	{
 		(*comments)=new char*[*commentNum+ply->num_comments];
-		for(int i=0;i<ply->num_comments;i++)
+		for(i=0;i<ply->num_comments;i++)
 			(*comments)[i]=_strdup(ply->comments[i]);
 		*commentNum=ply->num_comments;
 	}
@@ -709,34 +709,34 @@ int PlyReadPolygons(char* fileName,
 		plist = ply_get_element_description(ply, elem_name, &num_elems, &nr_props);
 		if(!plist)
 		{
-			for(i=0;i<nr_elems;i++){
-				free(ply->elems[i]->name);
-				free(ply->elems[i]->store_prop);
-				for(j=0;j<ply->elems[i]->nprops;j++){
-					free(ply->elems[i]->props[j]->name);
-					free(ply->elems[i]->props[j]);
+			for(j=0;j<nr_elems;j++){
+				free(ply->elems[j]->name);
+				free(ply->elems[j]->store_prop);
+				for(k=0;k<ply->elems[j]->nprops;k++){
+					free(ply->elems[j]->props[k]->name);
+					free(ply->elems[j]->props[k]);
 				}
-				free(ply->elems[i]->props);
+				free(ply->elems[j]->props);
 			}
-			for(i=0;i<nr_elems;i++){free(ply->elems[i]);}
+			for(j=0;j<nr_elems;j++){free(ply->elems[j]);}
 			free(ply->elems);
-			for(i=0;i<ply->num_comments;i++){free(ply->comments[i]);}
+			for(j=0;j<ply->num_comments;j++){free(ply->comments[j]);}
 			free(ply->comments);
-			for(i=0;i<ply->num_obj_info;i++){free(ply->obj_info[i]);}
+			for(j=0;j<ply->num_obj_info;j++){free(ply->obj_info[j]);}
 			free(ply->obj_info);
 			ply_free_other_elements (ply->other_elems);
 			
-			for(i=0;i<nr_elems;i++){free(elist[i]);}
+			for(j=0;j<nr_elems;j++){free(elist[j]);}
 			free(elist);
 			ply_close(ply);
 			return 0;
 		}		
 		if (equal_strings("vertex", elem_name))
 		{
-			for( int i=0 ; i<propertyNum ; i++)
+			for(j=0 ; j<propertyNum ; j++)
 			{
-				int hasProperty = ply_get_property(ply,elem_name,&properties[i]);
-				if( readFlags ) readFlags[i] = (hasProperty!=0);
+				int hasProperty = ply_get_property(ply,elem_name,&properties[j]);
+				if( readFlags ) readFlags[j] = (hasProperty!=0);
 			}
 			vertices.resize(num_elems);
 			for (j=0; j < num_elems; j++)	ply_get_element (ply, (void *) &vertices[j]);
@@ -803,7 +803,7 @@ int PlyWritePolygons( char* fileName , CoredMeshData< Vertex >* mesh , int file_
 	// describe vertex and face properties
 	//
 	ply_element_count( ply , "vertex" , nr_vertices );
-	for( int i=0 ; i<Vertex::Components ; i++ ) ply_describe_property( ply , "vertex" , &Vertex::Properties[i] );
+	for(i=0 ; i<Vertex::Components ; i++ ) ply_describe_property( ply , "vertex" , &Vertex::Properties[i] );
 	
 	ply_element_count( ply , "face" , nr_faces );
 	ply_describe_property( ply , "face" , &face_props[0] );
@@ -840,9 +840,9 @@ int PlyWritePolygons( char* fileName , CoredMeshData< Vertex >* mesh , int file_
 		mesh->nextPolygon( polygon );
 		ply_face.nr_vertices = int( polygon.size() );
 		ply_face.vertices = new int[ polygon.size() ];
-		for( int i=0 ; i<int(polygon.size()) ; i++ )
-			if( polygon[i].inCore ) ply_face.vertices[i] = polygon[i].idx;
-			else                    ply_face.vertices[i] = polygon[i].idx + int( mesh->inCorePoints.size() );
+		for( int j=0 ; j<int(polygon.size()) ; j++ )
+			if( polygon[j].inCore ) ply_face.vertices[j] = polygon[j].idx;
+			else                    ply_face.vertices[j] = polygon[j].idx + int( mesh->inCorePoints.size() );
 		ply_put_element( ply, (void *) &ply_face );
 		delete[] ply_face.vertices;
 	}  // for, write faces
@@ -867,7 +867,7 @@ int PlyWritePolygons( char* fileName , CoredMeshData< Vertex >* mesh , int file_
 	// describe vertex and face properties
 	//
 	ply_element_count( ply , "vertex" , nr_vertices );
-	for( int i=0 ; i<Vertex::WriteComponents ; i++ ) ply_describe_property( ply , "vertex" , &Vertex::WriteProperties[i] );
+	for(i=0 ; i<Vertex::WriteComponents ; i++ ) ply_describe_property( ply , "vertex" , &Vertex::WriteProperties[i] );
 	
 	ply_element_count( ply , "face" , nr_faces );
 	ply_describe_property( ply , "face" , &face_props[0] );
@@ -904,9 +904,9 @@ int PlyWritePolygons( char* fileName , CoredMeshData< Vertex >* mesh , int file_
 		mesh->nextPolygon( polygon );
 		ply_face.nr_vertices = int( polygon.size() );
 		ply_face.vertices = new int[ polygon.size() ];
-		for( int i=0 ; i<int(polygon.size()) ; i++ )
-			if( polygon[i].inCore ) ply_face.vertices[i] = polygon[i].idx;
-			else                    ply_face.vertices[i] = polygon[i].idx + int( mesh->inCorePoints.size() );
+		for( int j=0 ; j<int(polygon.size()) ; j++ )
+			if( polygon[j].inCore ) ply_face.vertices[j] = polygon[j].idx;
+			else                    ply_face.vertices[j] = polygon[j].idx + int( mesh->inCorePoints.size() );
 		ply_put_element( ply, (void *) &ply_face );
 		delete[] ply_face.vertices;
 	}  // for, write faces

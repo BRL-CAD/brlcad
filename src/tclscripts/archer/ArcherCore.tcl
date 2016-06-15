@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2014 United States Government as represented by
+# Copyright (c) 2002-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -3583,7 +3583,9 @@ namespace eval ArcherCore {
 	return
     }
 
-    set fractions [$itk_component(vpane) fraction]
+    if {[catch {$itk_component(vpane) fraction} fractions]} {
+	return
+    }
 
     switch -- [llength $fractions] {
 	2 {

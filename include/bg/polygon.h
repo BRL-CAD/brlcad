@@ -1,7 +1,7 @@
 /*                        P O L Y G O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,11 +54,11 @@ __BEGIN_DECLS
  *
  * If pt_indices is NULL, the first npts points in pts will be checked in array order.
  *
- * @return -1 if polygon is counter-clockwise
- * @return 1 if polygon is clockwise
+ * @return BG_CCW if polygon is counter-clockwise
+ * @return BG_CW if polygon is clockwise
  * @return 0 if the test failed
  */
-BG_EXPORT extern int bg_polygon_clockwise(size_t npts, const point2d_t *pts, const int *pt_indices);
+BG_EXPORT extern int bg_polygon_direction(size_t npts, const point2d_t *pts, const int *pt_indices);
 
 
 /**
@@ -121,6 +121,7 @@ typedef enum {
  * @param[in] nholes Number of hole polygons contained in holes_array
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
+ * @param[in] type Type of triangulation 
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful
@@ -151,6 +152,7 @@ BG_EXPORT extern int bg_nested_polygon_triangulate(int **faces, int *num_faces, 
  * @param[out] num_outpts number of output points, if an algorithm was selected that generates new points
  * @param[in] pts Array of points defining a polygon. Duplicated points
  * @param[in] npts Number of points pts contains
+ * @param[in] type Triangulation type
  *
  * @return 0 if triangulation is successful
  * @return 1 if triangulation is unsuccessful

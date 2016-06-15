@@ -1,7 +1,7 @@
 /*                       B S O C K E T . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,32 +17,23 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bsocket.h
+/** @addtogroup bu_bsocket
  *
- * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard system select() routines.
+ * @brief
+ * BRL-CAD system compatibility wrapper header that provides declarations for
+ * native and standard system select() routines.
  *
  * This header is commonly used in lieu of including the following:
  * sys/select.h, winsock2.h (select, fd_set)
- *
- * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
- *
  */
+
+/** @{ */
+/** @file bsocket.h */
 
 #ifndef BSOCKET_H
 #define BSOCKET_H
 
 #include "common.h"
-
-/* make sure this header always comes before bio.h due to system
- * header ordering requirements.  this is mostly a windows issue, but
- * we want to detect the issue early.
- */
-#if defined(BIO_H)
-#  error "The #include for bio.h must come after this header (Windows Sockets portability)."
-#endif
 
 #ifdef HAVE_SYS_SELECT_H
 #  include <sys/select.h>
@@ -83,6 +74,8 @@
 #endif /* GCC_PREREQ */
 
 #endif /* BSOCKET_H */
+
+/** @} */
 
 /*
  * Local Variables:

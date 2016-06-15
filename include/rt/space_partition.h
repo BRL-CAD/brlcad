@@ -1,7 +1,7 @@
 /*                 S P A C E _ P A R T I T I O N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -117,7 +117,7 @@ RT_EXPORT extern void fill_out_bsp(struct rt_i *rtip,
 
 struct bvh_build_node; /*forward declaration */
 RT_EXPORT extern struct bvh_build_node *
-hlbvh_create(int max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
+hlbvh_create(long max_prims_in_node, struct bu_pool *pool, const fastf_t *centroids_prims,
 	     const fastf_t *bounds_prims, long *total_nodes,
 	     const long n_primitives, long **ordered_prims);
 

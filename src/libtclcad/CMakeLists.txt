@@ -4,7 +4,7 @@ set(TCLCAD_INCLUDE_DIRS
   ${BRLCAD_SOURCE_DIR}/include
   ${DM_INCLUDE_DIRS}
   ${GED_INCLUDE_DIRS}
-  ${TCL_INCLUDE_DIR}
+  ${TCL_INCLUDE_DIRS}
   )
 
 # Include directories only needed by the implementation

@@ -1510,10 +1510,10 @@ int moOptimizeMesh(size_t vertexcount, size_t tricount, void *indices, int indic
 	vertexcachesize = MO_VERTEX_CACHE_SIZE_MAX - 1;
 
     mesh.vertexcachesize = vertexcachesize;
-    mesh.cachescore[0] = 0.85;
+    mesh.cachescore[0] = 0.85f;
 
     if (mesh.operationflags & MO_FLAGS_FIXED_CACHE_SIZE)
-	mesh.cachescore[0] = 0.75;
+	mesh.cachescore[0] = 0.75f;
 
     mesh.cachescore[mesh.vertexcachesize] = 0.0;
     factor = 1.0 / (mof)(mesh.vertexcachesize - 3);

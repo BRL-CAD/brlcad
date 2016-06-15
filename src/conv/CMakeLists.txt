@@ -31,6 +31,7 @@ set(CONV_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
+  ${WFOBJ_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
@@ -53,7 +54,7 @@ set(comgeom-g_SRCS
   )
 BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu;libsysv")
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu")
 
 BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
@@ -63,11 +64,11 @@ BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu;libsysv")
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu")
 
 BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
@@ -107,13 +108,14 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
+# TODO - Ugh; need to either merge this into libgcv or remove it in favor of
+# that implementation...
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj)
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj/wfobj)
+set(obj-g_SRCS obj-g.c ../libgcv/plugins/obj/tri_face.c)
+BRLCAD_ADDEXEC(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libwdb;libwfobj")
 
-# TODO - Until wfobj functionality is available as a libgcv API,
-# obj-g build logic is living in src/libgcv/wfobj. Once an API
-# for libgcv is devised that exposes the wfobj functionality move
-# obj-g build logic back here
-#BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu;libbn;librt;libwdb;libgcv")
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 

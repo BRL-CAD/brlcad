@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,14 +70,13 @@
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bsocket.h"
+
+#include "bresource.h"
 #include "bnetwork.h"
+#include "bsocket.h"
 #include "bio.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
@@ -86,8 +85,6 @@
 #include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
-#include "fbmsg.h"
-
 
 fd_set	select_list;			/* master copy */
 int	max_fd;

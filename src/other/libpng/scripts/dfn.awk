@@ -17,7 +17,7 @@
 BEGIN{
    out="/dev/null"       # as a flag
    out_count=0           # count of output lines
-   err=0                 # set if an error occured
+   err=0                 # set if an error occurred
    sort=0                # sort the output
    array[""]=""
 }
@@ -173,8 +173,7 @@ $1 ~ /^PNG_DFN_END_SORT/{
    sub(/ *$/, "", line)
 
    # Remove trailing CR
-   sub(/
-$/, "", line)
+   sub(/$/, "", line)
 
    if (sort) {
       if (split(line, parts) < sort) {

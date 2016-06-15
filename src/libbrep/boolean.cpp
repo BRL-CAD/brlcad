@@ -1,7 +1,7 @@
 /*                  B O O L E A N . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,16 @@
 #include <queue>
 #include <set>
 #include <map>
-#include <algorithm>
+
+#include "bio.h"
 
 #include "vmath.h"
-#include "bio.h"
 #include "bu/log.h"
 #include "brep.h"
+
 #include "raytrace.h"
 #include "brep_except.h"
+
 
 // Whether to output the debug messages about b-rep booleans.
 #define DEBUG_BREP_BOOLEAN 0
@@ -51,6 +53,7 @@
 // than the default one ON_PI/180.
 #define ANGLE_TOL ON_PI/1800.0
 
+
 struct IntersectPoint {
     ON_3dPoint m_pt;	// 3D intersection point
     double m_seg_t;	// param on the loop curve
@@ -60,8 +63,8 @@ struct IntersectPoint {
     double m_curve_t;	// param on the SSI curve
     enum {
 	UNSET,
-	IN,
-	OUT,
+	IN_HIT,
+	OUT_HIT,
 	TANGENT
     } m_dir;		// dir is going inside/outside
     int m_split_li;	// between clx_points[m_split_li] and
@@ -2504,11 +2507,11 @@ split_face_into_loops(
 	    continue;
 	}
 	if (is_first_ipt && ON_NearZero(curve_t - curve_min_t)) {
-	    ipt->m_dir = next_in ? IntersectPoint::IN : IntersectPoint::OUT;
+	    ipt->m_dir = next_in ? IntersectPoint::IN_HIT : IntersectPoint::OUT_HIT;
 	    continue;
 	}
 	if (is_last_ipt && ON_NearZero(curve_t - curve_max_t)) {
-	    ipt->m_dir = prev_in ? IntersectPoint::OUT : IntersectPoint::IN;
+	    ipt->m_dir = prev_in ? IntersectPoint::OUT_HIT : IntersectPoint::IN_HIT;
 	    continue;
 	}
 	if (prev_in && next_in) {
@@ -2522,10 +2525,10 @@ split_face_into_loops(
 	    ipt->m_dir = IntersectPoint::UNSET;
 	} else if (prev_in && !next_in) {
 	    // transversal point, going outside
-	    ipt->m_dir = IntersectPoint::OUT;
+	    ipt->m_dir = IntersectPoint::OUT_HIT;
 	} else {
 	    // transversal point, going inside
-	    ipt->m_dir = IntersectPoint::IN;
+	    ipt->m_dir = IntersectPoint::IN_HIT;
 	}
     }
 
@@ -2614,13 +2617,13 @@ split_face_into_loops(
 	    continue;
 	}
 	if (q.m_curve_pos - p.m_curve_pos == 1 &&
-	    q.m_dir != IntersectPoint::IN &&
-	    p.m_dir != IntersectPoint::OUT)
+	    q.m_dir != IntersectPoint::IN_HIT &&
+	    p.m_dir != IntersectPoint::OUT_HIT)
 	{
 	    s.pop();
 	} else if (p.m_curve_pos - q.m_curve_pos == 1 &&
-		   p.m_dir != IntersectPoint::IN &&
-		   q.m_dir != IntersectPoint::OUT)
+		   p.m_dir != IntersectPoint::IN_HIT &&
+		   q.m_dir != IntersectPoint::OUT_HIT)
 	{
 	    s.pop();
 	} else {

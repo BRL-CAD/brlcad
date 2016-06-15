@@ -52,10 +52,14 @@ BRLCAD_ADDDATA(nsis/archer.ico icons)
 
 if(DOXYGEN_FOUND)
   add_subdirectory(doxygen)
+else(DOXYGEN_FOUND)
+  set(misc_ignore_files doxygen)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
+  ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
+  clang-static-analyzer-run.sh
   CMake
   Description.txt
   profont/LICENSE

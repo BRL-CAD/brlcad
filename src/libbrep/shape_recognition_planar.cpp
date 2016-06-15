@@ -2,6 +2,7 @@
 
 #include <set>
 #include <map>
+#include <algorithm>
 
 #include "bu/log.h"
 #include "bu/str.h"
@@ -10,189 +11,472 @@
 #include "bg/tri_ray.h"
 #include "shape_recognition.h"
 
-#define L2_OFFSET 4
-#define L3_OFFSET 6
 
-HIDDEN void
-verts_assemble(point2d_t *verts2d, int *index, std::map<int, int> *local_to_verts, const ON_Brep *brep, const ON_BrepLoop *b_loop, int dir, int verts_offset)
+#define MAX_CNT_CONVEX_PLANE_TEST 15
+
+// Check for plane intersection points that are inside/outside the
+// arb.  If a set of three planes defines a point that is inside, those
+// planes are part of the final arb.  Based on the arbn prep test.
+void
+convex_plane_usage(ON_SimpleArray<ON_Plane> *planes, int **pu)
 {
-    if (!verts2d || !brep || !b_loop) return;
+    int *planes_used = (*pu);
 
-    /* Now the fun begins.  If we have an outer loop that isn't CCW or an inner loop
-     * that isn't CW, we need to assemble our verts2d polygon backwards */
-    if (brep->LoopDirection(brep->m_L[b_loop->m_loop_index]) != dir) {
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    int ti_rev = b_loop->m_ti.Count() - 1 - ti;
-	    const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti_rev]]);
-	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    const ON_Curve *trim_curve = trim->TrimCurveOf();
-	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Min());
-	    V2MOVE(verts2d[ti+verts_offset], cp);
-	    if (trim->m_bRev3d) {
-		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
-	    } else {
-		(*local_to_verts)[ti+verts_offset] = edge->Vertex(0)->m_vertex_index;
+    for (int i = 0; i < planes->Count()-2; i++) {
+	for (int j = i + 1; j < planes->Count()-1; j++) {
+	    // If normals are parallel, no intersection
+	    if ((*planes)[i].Normal().IsParallelTo((*planes)[j].Normal(), 0.0005)) continue;
+	    ON_Line l_plane;
+	    ON_Intersect((*planes)[i], (*planes)[j], l_plane);
+	    for (int k = j + 1; k < planes->Count(); k++) {
+		if ((*planes)[k].Normal().IsPerpendicularTo(l_plane.Direction(), 0.0005)) continue;
+		int not_used = 0;
+		double l_param;
+		ON_Plane p3 = (*planes)[k];
+		ON_Intersect(l_plane, (*planes)[k], &l_param);
+		ON_3dPoint p3d = l_plane.PointAt(l_param);
+		/* See if point is outside arb */
+		for (int m = 0; m < planes->Count(); m++) {
+		    if (m == i || m == j || m == k) continue;
+		    if (ON_DotProduct(p3d - (*planes)[m].origin, (*planes)[m].Normal()) > 0) {
+			not_used = 1;
+			break;
+		    }
+		}
+		if (not_used) continue;
+		planes_used[i]++;
+		planes_used[j]++;
+		planes_used[k]++;
 	    }
-	    if (index) index[ti] = ti+verts_offset;
-	}
-    } else {
-	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
-	    const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti]]);
-	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
-	    const ON_Curve *trim_curve = trim->TrimCurveOf();
-	    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
-	    V2MOVE(verts2d[ti+verts_offset], cp);
-	    if (trim->m_bRev3d) {
-		(*local_to_verts)[ti+verts_offset] = edge->Vertex(0)->m_vertex_index;
-	    } else {
-		(*local_to_verts)[ti+verts_offset] = edge->Vertex(1)->m_vertex_index;
-	    }
-	    if (index) index[ti] = ti+verts_offset;
 	}
     }
-
 }
 
+
 int
-subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all_verts, int *loops, int loop_cnt, int **ffaces)
+triangulate_array(ON_2dPointArray &on2dpts, int *verts_map, int **ffaces, int loop_dir, int *rev_status)
 {
-    // Accumulate faces in a std::vector, since we don't know how many we're going to get
-    std::vector<int> all_faces;
+    int num_faces = 0;
 
+    int *pt_ind = (int *)bu_calloc(on2dpts.Count(), sizeof(int), "pt_ind");
+    point2d_t *verts2d = (point2d_t *)bu_calloc(on2dpts.Count(), sizeof(point2d_t), "bot verts");
+    for (int i = 0; i < on2dpts.Count(); i++) {
+	V2MOVE(verts2d[i], on2dpts[i]);
+	pt_ind[i] = i;
+    }
+
+    int ccw = bg_polygon_direction(on2dpts.Count(), verts2d, pt_ind);
+
+    if (loop_dir && ccw == loop_dir) {
+	//bu_log("loop direction flipped - has consequences.\n");
+	(*rev_status) = 1;
+    }
+
+    if (ccw == 0) {
+	//bu_log("degenerate loop - skip\n");
+	bu_free(verts2d, "free verts2d");
+	bu_free(pt_ind, "free verts2d");
+	return 0;
+    }
+    if (ccw == BG_CW) {
+	for (int i = on2dpts.Count() - 1; i >= 0; i--) {
+	    int d = on2dpts.Count() - 1 - i;
+	    V2MOVE(verts2d[d], on2dpts[i]);
+	}
+	//bu_log("flip loop\n");
+	std::vector<int> vert_map;
+	for (int i = 0; i < on2dpts.Count(); i++) vert_map.push_back(verts_map[i]);
+	std::reverse(vert_map.begin(), vert_map.end());
+	for (int i = 0; i < on2dpts.Count(); i++) verts_map[i] = vert_map[i];
+    }
+
+    if (bg_polygon_triangulate(ffaces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, on2dpts.Count(), EAR_CLIPPING)) {
+	bu_free(verts2d, "free verts2d");
+	bu_free(pt_ind, "free verts2d");
+	return 0;
+    }
+
+    // fix up vertex indices
+    for (int i = 0; i < num_faces*3; i++) {
+	int old_ind = (*ffaces)[i];
+	(*ffaces)[i] = verts_map[old_ind];
+    }
+#if 0
+    for (int i = 0; i < num_faces; i++) {
+	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
+    }
+#endif
+
+    bu_free(verts2d, "free verts2d");
+    bu_free(pt_ind, "free verts2d");
+
+    return num_faces;
+}
+
+// This shouldn't actually be needed if we don't have self intersecting islands...
+int
+triangulate_array_with_holes(ON_2dPointArray &on2dpts, int *verts_map, int loop_cnt, int *loop_starts, int **ffaces, const ON_Brep *UNUSED(brep))
+{
+    int ccw;
     int num_faces;
-    int *faces;
-    int face_error;
-    const ON_BrepFace *b_face = NULL;
-    point2d_t *verts2d = NULL;
 
-    /* The triangulation will use only the points in the temporary verts2d
-     * array and return with faces indexed accordingly, so we need a map to
-     * translate them back to our final vert array */
-    std::map<int, int> local_to_verts;
+    // Only use this to triangulate loops with holes.
+    if (loop_cnt <= 1) return -1;
+
+    point2d_t *verts2d = (point2d_t *)bu_calloc(on2dpts.Count(), sizeof(point2d_t), "bot verts");
+    for (int i = 0; i < on2dpts.Count(); i++) {
+	V2MOVE(verts2d[i], on2dpts[i]);
+    }
+
+#if 0
+    for (int i = 0; i < 8; i++) {
+	ON_3dPoint p = brep->m_V[verts_map[i]].Point();
+	bu_log("vert(%d): %f, %f, %f\n", verts_map[i], p.x, p.y, p.z);
+    }
+#endif
+
+    // Outer loop first
+    size_t outer_npts = loop_starts[1] - loop_starts[0];
+    int *outer_pt_ind = (int *)bu_calloc(outer_npts, sizeof(int), "pt_ind");
+    for (unsigned int i = 0; i < outer_npts; i++) { outer_pt_ind[i] = i; }
+    ccw = bg_polygon_direction(outer_npts, verts2d, outer_pt_ind);
+    if (ccw == 0) {
+	//bu_log("outer loop is degenerate - skip\n");
+	bu_free(verts2d, "free verts2d");
+	bu_free(outer_pt_ind, "free verts2d");
+	return 0;
+    }
+    if (ccw == BG_CW) {
+	for (int i = outer_npts - 1; i >= 0; i--) {
+	    int d = outer_npts - 1 - i;
+	    V2MOVE(verts2d[d], on2dpts[i]);
+	}
+	ccw = bg_polygon_direction(outer_npts, verts2d, outer_pt_ind);
+	if (ccw == BG_CW) bu_log("huh?? loop ccw after flip??\n");
+	std::vector<int> vert_map;
+	for (unsigned int i = 0; i < outer_npts; i++) vert_map.push_back(verts_map[i]);
+	std::reverse(vert_map.begin(), vert_map.end());
+	for (unsigned int i = 0; i < outer_npts; i++) verts_map[i] = vert_map[i];
+	//bu_log("flip outer loop\n");
+    }
+
+    // Now, holes
+    std::vector<int *> holes_arrays;
+    std::vector<int> holes_npts;
+    size_t nholes = loop_cnt - 1;
+    for (int i = 1; i < loop_cnt; i++) {
+	size_t array_start = loop_starts[i];
+	size_t array_end = (i == loop_cnt - 1) ? on2dpts.Count() : loop_starts[i + 1];
+	size_t nhole_pts = array_end - array_start;
+	int *holes_array = (int *)bu_calloc(nhole_pts, sizeof(int), "hole array");
+	for (unsigned int j = 0; j < nhole_pts; j++) { holes_array[j] = array_start + j; }
+	ccw = bg_polygon_direction(nhole_pts, verts2d, holes_array);
+	if (ccw == 0) {
+	    //bu_log("inner loop is degenerate - skip\n");
+	    bu_free(holes_array, "free holes array");
+	    nholes--;
+	    continue;
+	}
+	if (ccw == BG_CCW) {
+	    for (unsigned int j = array_end - 1; j >= array_start; j--) {
+		int d = array_end - 1 - j;
+		V2MOVE(verts2d[d], on2dpts[j]);
+	    }
+	    std::vector<int> vert_map;
+	    for (unsigned int j = array_start; j < array_end ; j++) vert_map.push_back(verts_map[j]);
+	    std::reverse(vert_map.begin(), vert_map.end());
+	    for (unsigned int j = 0; j <= array_end - array_start; j++) verts_map[array_start + j] = vert_map[j];
+
+	    //bu_log("flip inner loop\n");
+	}
+	holes_arrays.push_back(holes_array);
+	holes_npts.push_back(nhole_pts);
+    }
+
+    int **h_arrays = (int **)bu_calloc(holes_arrays.size(), sizeof(int *), "holes array");
+    size_t *h_npts = (size_t *)bu_calloc(holes_npts.size(), sizeof(size_t), "hole size array");
+    for (unsigned int i = 0; i < holes_arrays.size(); i++) {
+	h_arrays[i] = holes_arrays[i];
+	h_npts[i] = holes_npts[i];
+    }
+
+    bg_nested_polygon_triangulate(ffaces, &num_faces, NULL, NULL, outer_pt_ind, outer_npts, (const int **)h_arrays, h_npts, nholes, (const point2d_t *)verts2d, on2dpts.Count(), EAR_CLIPPING);
+
+    // fix up vertex indices
+    for (int i = 0; i < num_faces*3; i++) {
+	int old_ind = (*ffaces)[i];
+	(*ffaces)[i] = verts_map[old_ind];
+    }
+#if 0
+    for (int i = 0; i < num_faces; i++) {
+	bu_log("face %d: %d, %d, %d\n", i, (*ffaces)[i*3], (*ffaces)[i*3+1], (*ffaces)[i*3+2]);
+    }
+#endif
+
+    bu_free(verts2d, "free verts2d");
+
+    return num_faces;
+}
+
+
+
+/* TODO -rename to planar_polygon_tri */
+int
+subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data, int *loops, int loop_cnt, int *rev_status, int **ffaces)
+{
+    const ON_Brep *brep = data->brep;
+    int num_faces;
+
+    // Get ignored vertices reported from shoal building - this is where they'll matter
+    std::set<int> ignored_verts;
+    array_to_set(&ignored_verts, data->null_verts, data->null_vert_cnt);
 
     /* Sanity check */
-    if (loop_cnt < 1 || !brep || !all_verts || !loops || !ffaces) return 0;
+    if (loop_cnt < 1 || !data || !loops || !ffaces) return 0;
 
     /* Only one loop is easier */
     if (loop_cnt == 1) {
-
+	ON_2dPointArray on2dpts;
 	const ON_BrepLoop *b_loop = &(brep->m_L[loops[0]]);
-	b_face = b_loop->Face();
-
-	if (!ffaces) return 0;
+	int loop_dir = 0;
 
 	/* We need to build a 2D vertex list for the triangulation, and as long
 	 * as we make sure the vertex mapping accounts for flipped trims in 3D,
 	 * the point indices returned for the 2D triangulation will correspond
 	 * to the correct 3D points without any additional work.  In essence,
 	 * we use the fact that the BRep gives us a ready-made 2D point
-	 * parameterization to same some work.*/
-
-	if (b_loop->m_ti.Count() == 0) {
-	    return 0;
+	 * parameterization to save some work.*/
+	std::vector<int> vert_array;
+	for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    int vert_ind;
+	    if (trim->m_bRev3d) {
+		vert_ind = edge->Vertex(0)->m_vertex_index;
+	    } else {
+		vert_ind = edge->Vertex(1)->m_vertex_index;
+	    }
+	    if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
+		const ON_Curve *trim_curve = trim->TrimCurveOf();
+		ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+		on2dpts.Append(cp);
+		vert_array.push_back(vert_ind);
+		//bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
+	    } else {
+		//bu_log("%d vertex %d ignored - need to check if loop dir changed\n", b_loop->m_loop_index, vert_ind);
+		loop_dir = brep->LoopDirection(brep->m_L[b_loop->m_loop_index]);
+	    }
 	}
 
-	verts2d = (point2d_t *)bu_calloc(b_loop->m_ti.Count(), sizeof(point2d_t), "bot verts");
+	// Degenerate - no triangulation
+	if (vert_array.size() == 0) return 0;
 
-	verts_assemble(verts2d, NULL, &local_to_verts, brep, b_loop, 1, 0);
-
-#if 0
-	if (!bn_polygon_clockwise(b_loop->m_ti.Count(), verts2d)) {
-	    bu_log("degenerate loop %d for face %d - no go\n", b_loop->m_loop_index, b_face->m_face_index);
-	    //return 0;
+	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
+	for (unsigned int i = 0; i < vert_array.size(); i++) {
+	    vert_map[i] = vert_array[i];
 	}
-#endif
 
-	/* The real work - triangulate the 2D polygon to find out triangles for
-	 * this particular B-Rep face */
-	face_error = bg_polygon_triangulate(&faces, &num_faces, NULL, NULL, (const point2d_t *)verts2d, b_loop->m_ti.Count(), EAR_CLIPPING);
+	num_faces = triangulate_array(on2dpts, vert_map, ffaces, loop_dir, rev_status);
 
     } else {
 
 	/* We've got multiple loops - more complex setup since we need to define a polygon
-	 * with holes */
-	size_t poly_npts, nholes, total_pnts;
-	int *poly;
-	int **holes_array;
-	size_t *holes_npts;
-	const ON_BrepLoop *b_oloop = &(brep->m_L[loops[0]]);
-	b_face = b_oloop->Face();
-
-	/* Set up the "parent" polygon's index based definition */
-	poly_npts = b_oloop->m_ti.Count();
-	poly = (int *)bu_calloc(poly_npts, sizeof(int), "outer polygon array");
-
-	/* Set up the holes */
-	nholes = loop_cnt - 1;
-	holes_npts = (size_t *)bu_calloc(nholes, sizeof(size_t), "hole size array");
-	holes_array = (int **)bu_calloc(nholes, sizeof(int *), "holes array");
-
-	/* Get a total point count and initialize the holes_npts array.  We
-	 * don't need to account for double-counting introduced by hole elimination
-	 * here, since we re-use the same points rather than adding new ones */
-	total_pnts = poly_npts;
-	for (int i = 1; i < loop_cnt; i++) {
-	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
-	    holes_npts[i-1] = b_loop->m_ti.Count();
-	    total_pnts += holes_npts[i-1];
+	 * with holes.  This shouldn't happen if we're restricting ourselves to non-self-intersecting
+	 * islands. */
+	ON_2dPointArray on2dpts;
+	std::vector<int> vert_array;
+	int *loop_starts = (int *)bu_calloc(loop_cnt, sizeof(int), "start of loop indicies");
+	// Ensure the outer loop is first
+	std::vector<int> ordered_loops;
+	int outer_loop = brep->m_L[loops[0]].Face()->OuterLoop()->m_loop_index;
+	ordered_loops.push_back(outer_loop);
+	for (int i = 0; i < loop_cnt; i++) {
+	    if (brep->m_L[loops[i]].m_loop_index != outer_loop)
+		ordered_loops.push_back(brep->m_L[loops[i]].m_loop_index);
 	}
-
-	/* Now we know how many points we're dealing with */
-	verts2d = (point2d_t *)bu_calloc(total_pnts, sizeof(point2d_t), "bot verts");
-
-	/* Use the loop definitions to assemble the final input arrays */
-	verts_assemble(verts2d, poly, &local_to_verts, brep, b_oloop, 1, 0);
-	int offset = poly_npts;
-	for (int i = 1; i < loop_cnt; i++) {
-	    const ON_BrepLoop *b_loop = &(brep->m_L[loops[i]]);
-	    holes_array[i-1] = (int *)bu_calloc(b_loop->m_ti.Count(), sizeof(int), "hole array");
-	    verts_assemble(verts2d, holes_array[i-1], &local_to_verts, brep, b_loop, -1, offset);
-	    offset += b_loop->m_ti.Count();
-	}
-
-	/* The real work - triangulate the 2D polygon to find out triangles for
-	 * this particular B-Rep face */
-	face_error = bg_nested_polygon_triangulate(&faces, &num_faces, NULL, NULL, poly, poly_npts, (const int **)holes_array, holes_npts, nholes, (const point2d_t *)verts2d, total_pnts, EAR_CLIPPING);
-
-	// We have the triangles now, so free up memory...
-	for (int i = 1; i < loop_cnt; i++) {
-	    bu_free(holes_array[i-1], "free hole array");
-	}
-	bu_free(holes_array, "free holes array cnts");
-	bu_free(holes_npts, "free array holding hole array cnts");
-	bu_free(poly, "free polygon index array");
-
-    }
-
-
-    if (face_error || !faces) {
-	if (msgs) bu_vls_printf(msgs, "%*sbot build failed for face %d - no go\n", L3_OFFSET, " ", b_face->m_face_index);
-	bu_free(verts2d, "free tmp 2d vertex array");
-	return 0;
-    } else {
-	/* We aren't done with the reversing fun - if the face is reversed, we need
-	 * to flip our triangles as well */
-	if (b_face->m_bRev) {
-	    for (int f_ind = 0; f_ind < num_faces; f_ind++) {
-		int itmp = faces[f_ind * 3 + 2];
-		faces[f_ind * 3 + 2] = faces[f_ind * 3 + 1];
-		faces[f_ind * 3 + 1] = itmp;
+	for (int i = 0; i < loop_cnt; i++) {
+	    const ON_BrepLoop *b_loop = &(brep->m_L[ordered_loops[i]]);
+	    loop_starts[i] = on2dpts.Count();
+	    for (int ti = 0; ti < b_loop->m_ti.Count(); ti++) {
+		const ON_BrepTrim *trim = &(brep->m_T[b_loop->m_ti[ti]]);
+		const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+		int vert_ind;
+		if (trim->m_bRev3d) {
+		    vert_ind = edge->Vertex(0)->m_vertex_index;
+		} else {
+		    vert_ind = edge->Vertex(1)->m_vertex_index;
+		}
+		if (ignored_verts.find(vert_ind) == ignored_verts.end()) {
+		    const ON_Curve *trim_curve = trim->TrimCurveOf();
+		    ON_2dPoint cp = trim_curve->PointAt(trim_curve->Domain().Max());
+		    on2dpts.Append(cp);
+		    vert_array.push_back(vert_ind);
+		    //bu_log("%d vertex: %d\n", b_loop->m_loop_index, vert_ind);
+		} else {
+		    //bu_log("%d vertex %d ignored\n", b_loop->m_loop_index, vert_ind);
+		}
 	    }
 	}
-	/* Now that we have our faces, map them from the local vertex
-	 * indices to the global ones and insert the faces into the
-	 * all_faces array */
-	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
-	    all_faces.push_back(local_to_verts[faces[f_ind]]);
+
+	// Degenerate - no triangulation
+	if (vert_array.size() == 0) return 0;
+
+	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
+	for (unsigned int i = 0; i < vert_array.size(); i++) {
+	    vert_map[i] = vert_array[i];
 	}
-	bu_free(verts2d, "free tmp 2d vertex array");
+
+	num_faces = triangulate_array_with_holes(on2dpts, vert_map, loop_cnt, loop_starts, ffaces, brep);
+    }
+    return num_faces;
+}
+
+// A shoal, unlike a planar face, may define it's bounding planar loop using
+// data from multiple face loops.  For this situation we walk the edges, and if
+// we hit a null vertex we need to use that vertex to find the next edge that
+// is not null.  The opposite vertex is then checked - if it is also null, continue
+// to the next non-null edge.  Otherwise, resume the loop building with that vertex.
+//
+// This will generate a loop using 3d points.  Next, project those points into the
+// 2D implicit plane from the shoal. Check the new 2D loop to determine if it is
+// counterclockwise - if not, reverse it.
+int
+shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, int **ffaces)
+{
+    int num_faces;
+    const ON_Brep *brep = data->i->brep;
+
+    // polygon verts
+    std::vector<int> polygon_verts;
+
+    // Get the set of ignored edges
+    std::set<int> ignored_edges;
+    array_to_set(&ignored_edges, data->i->null_edges, data->i->null_edge_cnt);
+
+    // Get the set of ignored verts
+    std::set<int> ignored_verts;
+    array_to_set(&ignored_verts, data->i->null_verts, data->i->null_vert_cnt);
+
+    // Get the set of edges associated with the shoal's loops.
+    std::set<int> faces;
+    std::set<int> shoal_edges;
+    std::set<int>::iterator se_it;
+    for (int i = 0; i < data->shoal_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(data->i->brep->m_L[data->shoal_loops[i]]);
+	faces.insert(loop->Face()->m_face_index);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (ignored_edges.find(edge->m_edge_index) == ignored_edges.end()) {
+		shoal_edges.insert(edge->m_edge_index);
+	    }
+	}
     }
 
-    /* Now we can build the final faces array */
-    (*ffaces) = (int *)bu_calloc(num_faces * 3, sizeof(int), "final bot verts");
-    for (int i = 0; i < num_faces*3; i++) {
-	(*ffaces)[i] = all_faces[i];
+    // Find a suitable seed vert
+    int seed_vert = -1;
+    const ON_BrepEdge *first_edge;
+    for (se_it = shoal_edges.begin(); se_it != shoal_edges.end(); se_it++) {
+	first_edge = &(brep->m_E[(int)(*se_it)]);
+	if (ignored_verts.find(first_edge->Vertex(0)->m_vertex_index) == ignored_verts.end()) {
+	    seed_vert = first_edge->Vertex(0)->m_vertex_index;
+	    break;
+	}
+	if (ignored_verts.find(first_edge->Vertex(1)->m_vertex_index) == ignored_verts.end()) {
+	    seed_vert = first_edge->Vertex(1)->m_vertex_index;
+	    break;
+	}
     }
+
+    // If we have the degenerate case, there is no triangulation.
+    if (seed_vert == -1) return 0;
+
+    polygon_verts.push_back(seed_vert);
+
+    // Walk the edges collecting non-ignored verts.
+    int curr_vert = -1;
+    int curr_edge = -1;
+    int prev_edge = -1;
+    //bu_log("first edge: %d\n", first_edge->m_edge_index);
+    while (curr_edge != first_edge->m_edge_index && curr_vert != seed_vert) {
+	// Once we're past the first edge, initialize our terminating condition if not already set.
+	if (curr_edge == -1) curr_edge = first_edge->m_edge_index;
+	if (curr_vert == -1) curr_vert = seed_vert;
+
+	for (int i = 0; i < brep->m_V[curr_vert].m_ei.Count(); i++) {
+	    const ON_BrepEdge *e = &(brep->m_E[brep->m_V[curr_vert].m_ei[i]]);
+	    int ce = e->m_edge_index;
+	    //bu_log("considering : %d\n", ce);
+	    if (ce != curr_edge && ignored_edges.find(ce) == ignored_edges.end()) {
+		int has_face_in_shoal = 0;
+		for (int j = 0; j < e->m_ti.Count(); j++) {
+		    const ON_BrepTrim *trim = &(brep->m_T[e->m_ti[j]]);
+		    const ON_BrepFace *f = trim->Face();
+		    if (faces.find(f->m_face_index) != faces.end()) {
+			has_face_in_shoal = 1;
+			break;
+		    } else {
+			//bu_log("face %d not in shoal\n", f->m_face_index);
+		    }
+		}
+		if (has_face_in_shoal) {
+		    // Have a viable edge - find our new vert.
+		    //bu_log("  passed: %d\n", ce);
+		    int nv = (e->Vertex(0)->m_vertex_index == curr_vert) ? e->Vertex(1)->m_vertex_index : e->Vertex(0)->m_vertex_index;
+		    if (ignored_verts.find(nv) == ignored_verts.end()) {
+			//bu_log("  next vert: %d\n", curr_vert);
+			polygon_verts.push_back(nv);
+		    }
+		    curr_vert = nv;
+		    prev_edge = curr_edge;
+		    curr_edge = ce;
+		    break;
+		    //bu_log("  next edge: %d\n", curr_edge);
+		}
+	    }
+	}
+	if (curr_edge == prev_edge) {
+	    bu_log("infinite loop?? - couldn't find next edge, fatal error\n");
+	    return 0;
+	}
+    }
+    // Don't double count the start/end vertex
+    polygon_verts.pop_back();
+
+    std::vector<int>::iterator v_it;
+    for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
+	//bu_log("shoal vert found: %d\n", (int)*v_it);
+    }
+
+    // Have the verts - now we need 2d coordinates in the implicit plane
+    ON_3dPoint imp_origin;
+    ON_3dVector imp_normal;
+    ON_VMOVE(imp_origin, data->params->implicit_plane_origin);
+    ON_VMOVE(imp_normal, data->params->implicit_plane_normal);
+    ON_Plane p(imp_origin, imp_normal);
+    ON_3dVector xaxis = p.Xaxis();
+    ON_3dVector yaxis = p.Yaxis();
+    //bu_log("implicit origin: %f, %f, %f\n", p.Origin().x, p.Origin().y, p.Origin().z);
+    //bu_log("implicit normal: %f, %f, %f\n", p.Normal().x, p.Normal().y, p.Normal().z);
+    ON_2dPointArray on2dpts;
+    for(v_it = polygon_verts.begin(); v_it != polygon_verts.end(); v_it++) {
+	const ON_BrepVertex *v = &(brep->m_V[(int)*v_it]);
+	ON_3dVector v3d = v->Point() - p.Origin();
+	double xcoord = ON_DotProduct(v3d, xaxis);
+	double ycoord = ON_DotProduct(v3d, yaxis);
+	on2dpts.Append(ON_2dPoint(xcoord,ycoord));
+	//bu_log("x,y: %f,%f\n", xcoord, ycoord);
+    }
+
+    if (polygon_verts.size() == 0) return 0;
+
+    int *vert_map = (int *)bu_calloc(polygon_verts.size(), sizeof(int), "vertex map");
+    for (unsigned int i = 0; i < polygon_verts.size(); i++) {
+	vert_map[i] = polygon_verts[i];
+    }
+
+    num_faces = triangulate_array(on2dpts, vert_map, ffaces, 0, NULL);
+
 
     return num_faces;
 }
@@ -202,86 +486,42 @@ subbrep_polygon_tri(struct bu_vls *msgs, const ON_Brep *brep, const point_t *all
  * test.  We will assume that determining the positive/negative status of one
  * face is sufficient - i.e., we will not check for flipped normals on faces.
  *
- * 1.  Iterate over the loops, and construct polygons.  Flip as needed per
- *     reversed faces.
-   2.  Triangulate those polygons, and accumulate the triangulations
-   3.  Construct a ray with a point outside the bounding box and
+   1.  Construct a ray with a point outside the bounding box and
  *     a point on one of the faces (try to make sure the face normal is not
  *     close to perpendicular relative to the constructed ray.)  Intersect this
  *     ray with all triangles in the BoT (unless BoTs regularly appear that are
  *     *far* larger than expected here, it's not worth building acceleration
  *     structures for a one time, one ray conversion process.
- * 4.  Count the intersections, and determine whether to test for an angle
+ * 2.  Count the intersections, and determine whether to test for an angle
  *     between the face normal and the ray of >ON_PI or <ON_PI.
- * 5.  Do the test as determined by #4.
+ * 3.  Do the test as determined by #2.
  */
 
+// How close to paralle will we tolerate before moving to another corner?
+#define NPOLY_DOTP_TOL 0.01
+
 int
-negative_polygon(struct bu_vls *msgs, struct subbrep_object_data *data)
+negative_polygon(struct bu_vls *UNUSED(msgs), struct csg_object_params *data)
 {
-    int io_state = 0;
-    int all_faces_cnt = 0;
-    std::vector<int> all_faces;
-    int *final_faces = NULL;
-    std::set<int> fol_faces;
 
-    /* This will get reused for all faces, so make it once */
-    point_t *all_verts = (point_t *)bu_calloc(data->brep->m_V.Count(), sizeof(point_t), "bot verts");
-    for (int vi = 0; vi < data->brep->m_V.Count(); vi++) {
-        VMOVE(all_verts[vi], data->brep->m_V[vi].Point());
-    }
-
-    array_to_set(&fol_faces, data->fol, data->fol_cnt);
-
-    // Check each face to see if it is fil or fol - the first fol face, stash its
-    // normal - don't even need the triangle face normal, we can just use the face's normal and
-    // a point from the center of one of the fol triangles on that particular face.
-    ON_3dPoint origin_pnt;
-    ON_3dVector triangle_normal;
-    int have_hit_pnt = 0;
-
-    /* Get triangles from the faces */
+    /* Get bounding box from the vertices */
     ON_BoundingBox vert_bbox;
     ON_MinMaxInit(&vert_bbox.m_min, &vert_bbox.m_max);
-    for (int i = 0; i < data->loops_cnt; i++) {
-	const ON_BrepLoop *b_loop = &(data->brep->m_L[data->loops[i]]);
-	int *ffaces = NULL;
-	int num_faces = subbrep_polygon_tri(msgs, data->brep, all_verts, (int *)&(b_loop->m_loop_index), 1, &ffaces);
-	if (!num_faces) {
-	    if (msgs) bu_vls_printf(msgs, "%*sError - triangulation failed for loop %d!\n", L2_OFFSET, " ", b_loop->m_loop_index);
-	    return 0;
-	}
-	if (!have_hit_pnt) {
-	    const ON_BrepFace *b_face = b_loop->Face();
-	    if (fol_faces.find(b_face->m_face_index) != fol_faces.end()) {
-		ON_3dPoint p1 = data->brep->m_V[ffaces[0]].Point();
-		ON_3dPoint p2 = data->brep->m_V[ffaces[1]].Point();
-		ON_3dPoint p3 = data->brep->m_V[ffaces[2]].Point();
-		ON_Plane fp;
-		ON_Surface *ts = b_face->SurfaceOf()->Duplicate();
-		(void)ts->IsPlanar(&fp, BREP_PLANAR_TOL);
-		delete ts;
-		triangle_normal = fp.Normal();
-		if (b_face->m_bRev) triangle_normal = triangle_normal * -1;
-		origin_pnt = (p1 + p2 + p3) / 3;
-		have_hit_pnt = 1;
-	    }
-	}
-
-	for (int f_ind = 0; f_ind < num_faces*3; f_ind++) {
-	    all_faces.push_back(ffaces[f_ind]);
-	    vert_bbox.Set(data->brep->m_V[ffaces[f_ind]].Point(), true);
-	}
-	if (ffaces) bu_free(ffaces, "free polygon face array");
-	all_faces_cnt += num_faces;
-
+    for (int i = 0; i < data->csg_vert_cnt; i++) {
+	ON_3dPoint p;
+	ON_VMOVE(p, data->csg_verts[i]);
+	vert_bbox.Set(p, true);
     }
 
-    /* Now we can build the final faces array */
-    final_faces = (int *)bu_calloc(all_faces_cnt * 3, sizeof(int), "final bot verts");
-    for (int i = 0; i < all_faces_cnt*3; i++) {
-	final_faces[i] = all_faces[i];
-    }
+    /* Get normal from first triangle in array - TODO - fiddle with this to get the correct normal... */
+    ON_3dPoint tp1, tp2, tp3;
+    ON_VMOVE(tp1, data->csg_verts[data->csg_faces[0]]);
+    ON_VMOVE(tp2, data->csg_verts[data->csg_faces[1]]);
+    ON_VMOVE(tp3, data->csg_verts[data->csg_faces[2]]);
+    ON_3dVector v1 = tp2 - tp1;
+    ON_3dVector v2 = tp3 - tp1;
+    ON_3dVector triangle_normal = ON_CrossProduct(v1, v2);
+    ON_3dPoint origin_pnt = (tp1 + tp2 + tp3) / 3;
 
     // Scale bounding box to make sure corners are away from the volume
     vert_bbox.m_min = vert_bbox.m_min * 1.1;
@@ -297,42 +537,31 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_object_data *data)
     while (!have_dir && corner < 8) {
 	rdir = box_corners[corner] - origin_pnt;
 	dotp = ON_DotProduct(triangle_normal, rdir);
-	(NEAR_ZERO(dotp, 0.01)) ? corner++ : have_dir = 1;
+	(NEAR_ZERO(dotp, NPOLY_DOTP_TOL)) ? corner++ : have_dir = 1;
     }
     if (!have_dir) {
 	bu_log("Error: NONE of the corners worked??\n");
 	return 0;
     }
     point_t origin, dir;
-    VMOVE(origin, origin_pnt);
-    VMOVE(dir, rdir);
-#if 0
-    std::cout << "working: " << bu_vls_addr(data->key) << "\n";
-    bu_log("in origin.s sph %f %f %f 1\n", origin[0], origin[1], origin[2]);
-    bu_log("in triangle_normal.s rcc %f %f %f %f %f %f 1 \n", origin_pnt.x, origin_pnt.y, origin_pnt.z, triangle_normal.x, triangle_normal.y, triangle_normal.z);
-    bu_log("in ray.s rcc %f %f %f %f %f %f 1 \n", origin[0], origin[1], origin[2], dir[0], dir[1], dir[2]);
-#endif
+    BN_VMOVE(origin, origin_pnt);
+    BN_VMOVE(dir, rdir);
+
     // Test the ray against the triangle set
     int hit_cnt = 0;
     point_t p1, p2, p3, isect;
     ON_3dPointArray hit_pnts;
-    for (int i = 0; i < all_faces_cnt; i++) {
+    for (int i = 0; i < data->csg_face_cnt; i++) {
 	ON_3dPoint onp1, onp2, onp3, hit_pnt;
-	VMOVE(p1, all_verts[all_faces[i*3+0]]);
-	VMOVE(p2, all_verts[all_faces[i*3+1]]);
-	VMOVE(p3, all_verts[all_faces[i*3+2]]);
-	onp1.x = p1[0];
-	onp1.y = p1[1];
-	onp1.z = p1[2];
-	onp2.x = p2[0];
-	onp2.y = p2[1];
-	onp2.z = p2[2];
-	onp3.x = p3[0];
-	onp3.y = p3[1];
-	onp3.z = p3[2];
+	VMOVE(p1, data->csg_verts[data->csg_faces[i*3+0]]);
+	VMOVE(p2, data->csg_verts[data->csg_faces[i*3+1]]);
+	VMOVE(p3, data->csg_verts[data->csg_faces[i*3+2]]);
+	ON_VMOVE(onp1, p1);
+	ON_VMOVE(onp2, p2);
+	ON_VMOVE(onp3, p3);
 	ON_Plane fplane(onp1, onp2, onp3);
 	int is_hit = bg_isect_tri_ray(origin, dir, p1, p2, p3, &isect);
-	VMOVE(hit_pnt, isect);
+	ON_VMOVE(hit_pnt, isect);
 	// Don't count the point on the ray origin
 	if (hit_pnt.DistanceTo(origin_pnt) < 0.0001) is_hit = 0;
 	if (is_hit) {
@@ -350,6 +579,7 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_object_data *data)
     //bu_log("hit count: %d\n", hit_cnt);
     //bu_log("dotp : %f\n", dotp);
 
+    int io_state;
     // Final inside/outside determination
     if (hit_cnt % 2) {
 	io_state = (dotp > 0) ? -1 : 1;
@@ -359,1016 +589,400 @@ negative_polygon(struct bu_vls *msgs, struct subbrep_object_data *data)
 
     //bu_log("inside out state: %d\n", io_state);
 
-    bu_free(all_verts, "free top level vertex array");
-    bu_free(final_faces, "free face array");
     return io_state;
 }
 
-
-int
-subbrep_is_planar(struct bu_vls *msgs, struct subbrep_object_data *data)
-{
-    int i = 0;
-    // Check surfaces.  If a surface is anything other than a plane the verdict is no.
-    // If any face has more than one loop, the verdict is no.
-    // If all surfaces are planes and the faces have only outer loops, then the verdict is yes.
-    for (i = 0; i < data->faces_cnt; i++) {
-	surface_t stype = GetSurfaceType(data->brep->m_F[data->faces[i]].SurfaceOf(), NULL);
-	if (stype != SURFACE_PLANE) return 0;
-    }
-    data->type = PLANAR_VOLUME;
-
-    if (negative_polygon(msgs, data) == -1) data->params->bool_op = '-';
-
-    return 1;
-}
-
-// Criteria:
+// Check for a hard-to-spot degenerate nucleus case that can crop up if we
+// have an island with one child.
 //
-// 1.  A linear edge associated with a planar face == 0
-// 2.  All linear edges associated with non-planar faces are part
-//     of the same CSG shape AND all non-linear edges' non-planar faces
-//     are also part of that same CSG shape = 1
-// 3.  If not 2, 0
+// Return 1 if degenerate, 0 otherwise
 int
-characterize_vert(struct subbrep_object_data *data, const ON_BrepVertex *v)
+arbn_nucleus_degeneracy(struct subbrep_island_data *data, std::set<int> *planar_faces)
 {
-    std::set<int> non_planar_faces;
-    std::set<int>::iterator f_it;
-    std::set<struct filter_obj *> fobjs;
-    std::set<struct filter_obj *>::iterator fo_it;
-    struct filter_obj *control = NULL;
+    const ON_Brep *brep = data->brep;
+    if (BU_PTBL_LEN(data->island_children) == 1) {
 
-    for (int i = 0; i < v->m_ei.Count(); i++) {
-	std::set<int> efaces;
-	const ON_BrepEdge *edge = &(data->brep->m_E[v->m_ei[i]]);
-	ON_Curve *tc = edge->EdgeCurveOf()->Duplicate();
-	int is_linear = tc->IsLinear();
-	delete tc;
-	// Get the faces associated with the edge
-	for (int j = 0; j < edge->TrimCount(); j++) {
-	    ON_BrepTrim *trim = edge->Trim(j);
-	    efaces.insert(trim->Face()->m_face_index);
-	}
-	for(f_it = efaces.begin(); f_it != efaces.end(); f_it++) {
-	    struct filter_obj *new_obj;
-	    BU_GET(new_obj, struct filter_obj);
-	    surface_t stype = GetSurfaceType(data->brep->m_F[*f_it].SurfaceOf(), new_obj);
-	    if (stype == SURFACE_PLANE) {
-		filter_obj_free(new_obj);
-		BU_PUT(new_obj, struct filter_obj);
-		if (is_linear) {
-		    for (fo_it = fobjs.begin(); fo_it != fobjs.end(); fo_it++) {
-			struct filter_obj *obj = (struct filter_obj *)(*fo_it);
-			filter_obj_free(obj);
-			BU_PUT(obj, struct filter_obj);
+	// Build the set of all arbn shoal planes
+	ON_SimpleArray<ON_Plane> arbn_planes;
+	for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	    if (d->shoal_children) {
+		for (size_t j = 0; j < BU_PTBL_LEN(d->shoal_children); j++) {
+		    struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(d->shoal_children, j);
+		    if (c->plane_cnt > 0) {
+			for (size_t k = 0; k < c->plane_cnt; k++) {
+			    ON_3dVector n;
+			    n.x = c->planes[k][0];
+			    n.y = c->planes[k][1];
+			    n.z = c->planes[k][2];
+			    ON_3dPoint o = n * c->planes[k][3];
+			    ON_Plane ap(o, n);
+			    arbn_planes.Append(ap);
+			}
 		    }
-		    return 0;
-		}
-	    } else {
-		if (!control) {
-		    control = new_obj;
-		} else {
-		    fobjs.insert(new_obj);
 		}
 	    }
 	}
-    }
-
-    // Can this happen?
-    if (fobjs.size() == 0) {
-	if (control) {
-	    filter_obj_free(control);
-	    BU_PUT(control, struct filter_obj);
+	if (arbn_planes.Count() > 0) {
+	    // Check if the island planar faces are coplanar with one of the shoal
+	    // arbn planes (if any).  If *all* the island planes are coplanar in
+	    // that fashion, the nucleus is degenerate.
+	    std::set<int> arbn_coplanar_faces;
+	    std::set<int>::iterator p_it;
+	    for (p_it = planar_faces->begin(); p_it != planar_faces->end(); p_it++) {
+		const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
+		ON_Plane p;
+		face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+		if (face->m_bRev) p.Flip();
+		// Check for face coplanarity with shoal arbns.
+		for (int i = 0; i < arbn_planes.Count(); i++) {
+		    if (arbn_planes[i].Normal().IsParallelTo(p.Normal(), BREP_PLANAR_TOL)) {
+			if (fabs(arbn_planes[i].DistanceTo(p.origin)) < BREP_PLANAR_TOL) {
+			    arbn_coplanar_faces.insert(face->m_face_index);
+			    //bu_log("found coplanar face: %d\n", face->m_face_index);
+			    break;
+			}
+		    }
+		}
+	    }
+	    if (arbn_coplanar_faces.size() == planar_faces->size()) return 1;
 	}
-	return 0;
     }
 
-    int equal = 1;
-    for(fo_it = fobjs.begin(); fo_it != fobjs.end(); fo_it++) {
-	if (equal && !filter_objs_equal(*fo_it, control)) equal = 0;
-	struct filter_obj *obj = (struct filter_obj *)(*fo_it);
-	filter_obj_free(obj);
-	BU_PUT(obj, struct filter_obj);
-    }
-    filter_obj_free(control);
-    BU_PUT(control, struct filter_obj);
-
-    return equal;
+    return 0;
 }
 
-void
-subbrep_planar_init(struct subbrep_object_data *data)
+int
+island_nucleus(struct bu_vls *msgs, struct subbrep_island_data *data)
 {
-    if (!data) return;
-    if (data->planar_obj) return;
-    BU_GET(data->planar_obj, struct subbrep_object_data);
-    subbrep_object_init(data->planar_obj, data->brep);
-    bu_vls_sprintf(data->planar_obj->key, "%s", bu_vls_addr(data->key));
-    data->planar_obj->obj_cnt = data->obj_cnt;
-    (*data->obj_cnt)++;
-    bu_vls_sprintf(data->planar_obj->name_root, "%s_%d", bu_vls_addr(data->name_root), *(data->obj_cnt));
-    data->planar_obj->type = PLANAR_VOLUME;
+    int negative_nucleus = 0;
+    int convex_polyhedron = 1;
+    int parallel_planes = 0;
+    int curr_vert = 0;
+    ON_Plane seed_plane;
+    std::map<int,int> vert_map;
+    std::vector<int> all_faces;
+    std::set<int> all_used_verts;
+    std::set<int>::iterator auv_it;
 
-    data->planar_obj->local_brep = ON_Brep::New();
-    std::map<int, int> face_map;
-    std::map<int, int> surface_map;
-    std::map<int, int> edge_map;
-    std::map<int, int> vertex_map;
-    std::map<int, int> loop_map;
-    std::map<int, int> c3_map;
-    std::map<int, int> c2_map;
-    std::map<int, int> trim_map;
-    std::set<int> faces;
-    std::set<int> fil;
-    std::set<int> loops;
-    std::set<int> skip_verts;
-    std::set<int> skip_edges;
-    std::set<int> keep_verts;
-    std::set<int> partial_edges;
-    std::set<int> isolated_trims;  // collect 2D trims whose parent loops aren't fully included here
-    array_to_set(&faces, data->faces, data->faces_cnt);
-    array_to_set(&fil, data->fil, data->fil_cnt);
-    array_to_set(&loops, data->loops, data->loops_cnt);
-    std::map<int, std::set<int> > face_loops;
-    std::map<int, std::set<int> >::iterator fl_it;
-    std::set<int>::iterator l_it;
+    const ON_Brep *brep = data->brep;
+    std::set<int> island_loops;
+    array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
 
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int c3i;
-	const ON_BrepEdge *old_edge = &(data->brep->m_E[data->edges[i]]);
-	//std::cout << "old edge: " << old_edge->Vertex(0)->m_vertex_index << "," << old_edge->Vertex(1)->m_vertex_index << "\n";
+    // Accumulate per face triangle information
+    std::vector< int * > face_arrays;
+    std::vector< int > face_cnts;
 
-	// See if the vertices from this edge play a role in the planar volume
-	int use_edge = 2;
-	for (int vi = 0; vi < 2; vi++) {
-	    int vert_test = -1;
-	    int vert_ind = old_edge->Vertex(vi)->m_vertex_index;
-	    if (skip_verts.find(vert_ind) != skip_verts.end()) {
-		vert_test = 1;
-	    }
-	    if (vert_test == -1 && keep_verts.find(vert_ind) != keep_verts.end()) {
-		vert_test = 0;
-	    }
-	    if (vert_test == -1) {
-		vert_test = characterize_vert(data, old_edge->Vertex(vi));
-		if (vert_test) {
-		    skip_verts.insert(vert_ind);
-		    //ON_3dPoint vp = old_edge->Vertex(vi)->Point();
-		    //bu_log("vert %d (%f %f %f): %d\n", vert_ind, vp.x, vp.y, vp.z, vert_test);
-		} else {
-		    keep_verts.insert(vert_ind);
-		}
-	    }
-	    if (vert_test == 1) {
-		use_edge--;
-	    }
-	}
+    // Collect the set of all planes for convexity testing - if convex, we'll use an arbn
+    // instead of a triangle mesh
+    ON_SimpleArray<ON_Plane> planes;
 
-	if (use_edge == 0) {
-	    //bu_log("skipping edge %d - both verts are skips\n", old_edge->m_edge_index);
-	    skip_edges.insert(old_edge->m_edge_index);
-	    continue;
-	}
-
-	if (use_edge == 1) {
-	    //bu_log("One of the verts for edge %d is a skip.\n", old_edge->m_edge_index);
-	    partial_edges.insert(old_edge->m_edge_index);
-	    continue;
-	}
-
-	// Get the 3D curves from the edges
-	if (c3_map.find(old_edge->EdgeCurveIndexOf()) == c3_map.end()) {
-	    ON_Curve *nc = old_edge->EdgeCurveOf()->Duplicate();
-	    ON_Curve *tc = old_edge->EdgeCurveOf()->Duplicate();
-	    if (tc->IsLinear()) {
-		c3i = data->planar_obj->local_brep->AddEdgeCurve(nc);
-		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
-	    } else {
-		ON_Curve *c3 = new ON_LineCurve(old_edge->Vertex(0)->Point(), old_edge->Vertex(1)->Point());
-		c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
-		c3_map[old_edge->EdgeCurveIndexOf()] = c3i;
-	    }
-	} else {
-	    c3i = c3_map[old_edge->EdgeCurveIndexOf()];
-	}
-
-
-	// Get the vertices from the edges
-	int v[2];
-	for (int vi = 0; vi < 2; vi++) {
-	    if (vertex_map.find(old_edge->Vertex(vi)->m_vertex_index) == vertex_map.end()) {
-		ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(old_edge->Vertex(vi)->Point(), old_edge->Vertex(vi)->m_tolerance);
-		v[vi] = newvvi.m_vertex_index;
-		vertex_map[old_edge->Vertex(vi)->m_vertex_index] = v[vi];
-	    } else {
-		v[vi] = vertex_map[old_edge->Vertex(vi)->m_vertex_index];
-	    }
-	}
-
-	ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[v[0]], data->planar_obj->local_brep->m_V[v[1]], c3i, NULL ,0);
-	edge_map[old_edge->m_edge_index] = new_edge.m_edge_index;
-
-	// Get the 2D curves from the trims
-	for (int j = 0; j < old_edge->TrimCount(); j++) {
-	    ON_BrepTrim *old_trim = old_edge->Trim(j);
-	    if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
-		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
-		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
-		    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
-		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-		    //std::cout << "c2i: " << c2i << "\n";
-		}
-	    }
-	}
-
-	// Get the faces and surfaces from the trims
-	for (int j = 0; j < old_edge->TrimCount(); j++) {
-	    ON_BrepTrim *old_trim = old_edge->Trim(j);
-	    if (face_map.find(old_trim->Face()->m_face_index) == face_map.end()) {
-		if (faces.find(old_trim->Face()->m_face_index) != faces.end()) {
-		    ON_Surface *ns = old_trim->Face()->SurfaceOf()->Duplicate();
-		    ON_Surface *ts = old_trim->Face()->SurfaceOf()->Duplicate();
-		    if (ts->IsPlanar(NULL, BREP_PLANAR_TOL)) {
-			int nsid = data->planar_obj->local_brep->AddSurface(ns);
-			surface_map[old_trim->Face()->SurfaceIndexOf()] = nsid;
-			ON_BrepFace &new_face = data->planar_obj->local_brep->NewFace(nsid);
-			face_map[old_trim->Face()->m_face_index] = new_face.m_face_index;
-			//std::cout << "old face " << old_trim->Face()->m_face_index << " is now " << new_face.m_face_index << "\n";
-			if (fil.find(old_trim->Face()->m_face_index) != fil.end()) {
-			    data->planar_obj->local_brep->FlipFace(new_face);
-			}
-		    }
-		}
-	    }
-	}
-
-	// Get the loops from the trims
-	for (int j = 0; j < old_edge->TrimCount(); j++) {
-	    ON_BrepTrim *old_trim = old_edge->Trim(j);
-	    ON_BrepLoop *old_loop = old_trim->Loop();
-	    if (face_map.find(old_trim->Face()->m_face_index) != face_map.end()) {
-		if (loops.find(old_loop->m_loop_index) != loops.end()) {
-		    if (loop_map.find(old_loop->m_loop_index) == loop_map.end()) {
-			face_loops[old_trim->Face()->m_face_index].insert(old_loop->m_loop_index);
-		    }
-		}
-	    }
-	}
-    }
-    for (fl_it = face_loops.begin(); fl_it != face_loops.end(); fl_it++) {
-	int loop_cnt = fl_it->second.size();
-	if (loop_cnt == 1) {
-	    // If we have only one loop on a face it's an outer loop,
-	    // whatever it was in the original brep.
-	    const ON_BrepLoop *old_loop = &(data->brep->m_L[*(fl_it->second.begin())]);
-	    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
-	    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-	} else {
-	    //bu_log("loop_cnt: %d\n", loop_cnt);
-	    // If we ended up with multiple loops, one of them should be an outer loop
-	    // and the rest inner loops
-	    // Get the outer loop first
-	    for (l_it = fl_it->second.begin(); l_it != fl_it->second.end(); l_it++) {
-		const ON_BrepLoop *old_loop = &(data->brep->m_L[*l_it]);
-		if (data->brep->LoopDirection(data->brep->m_L[*l_it]) == 1) {
-		    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::outer, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
-		    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-		}
-	    }
-	    // Now get the inner loops;
-	    for (l_it = fl_it->second.begin(); l_it != fl_it->second.end(); l_it++) {
-		const ON_BrepLoop *old_loop = &(data->brep->m_L[*l_it]);
-		if (data->brep->LoopDirection(data->brep->m_L[*l_it]) != 1) {
-		    ON_BrepLoop &nl = data->planar_obj->local_brep->NewLoop(ON_BrepLoop::inner, data->planar_obj->local_brep->m_F[face_map[fl_it->first]]);
-		    loop_map[old_loop->m_loop_index] = nl.m_loop_index;
-		}
-	    }
+    // For this step, loops alone are not enough.  It's quite possible to have
+    // an island containing a face with both inner and outer loops, so we need
+    // the set of planar faces and for each face the set of loops in the
+    // island.
+    std::set<int> planar_faces;
+    std::set<int>::iterator p_it;
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
+	const ON_BrepFace *face = loop->Face();
+	surface_t surface_type = ((surface_t *)data->face_surface_types)[face->m_face_index];
+	if (surface_type == SURFACE_PLANE) {
+	    planar_faces.insert(face->m_face_index);
 	}
     }
 
-    // Now, create new trims using the old loop definitions and the maps
-    std::map<int, int>::iterator loop_it;
-    std::set<int> evaluated;
-    for (loop_it = loop_map.begin(); loop_it != loop_map.end(); loop_it++) {
-	const ON_BrepLoop *old_loop = &(data->brep->m_L[(*loop_it).first]);
-	ON_BrepLoop &new_loop = data->planar_obj->local_brep->m_L[(*loop_it).second];
-	for (int j = 0; j < old_loop->TrimCount(); j++) {
-	    const ON_BrepTrim *old_trim = old_loop->Trim(j);
-	    ON_BrepEdge *o_edge = old_trim->Edge();
-	    if (!o_edge) {
-		/* If we didn't have an edge originally, we need to add the 2d curve here */
-		if (c2_map.find(old_trim->TrimCurveIndexOf()) == c2_map.end()) {
-		    ON_Curve *nc = old_trim->TrimCurveOf()->Duplicate();
-		    int c2i = data->planar_obj->local_brep->AddTrimCurve(nc);
-		    c2_map[old_trim->TrimCurveIndexOf()] = c2i;
-		}
-		if (vertex_map.find(old_trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
-		    ON_BrepVertex& newvs = data->planar_obj->local_brep->NewVertex(old_trim->Vertex(0)->Point(), old_trim->Vertex(0)->m_tolerance);
-		    vertex_map[old_trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(newvs, new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		} else {
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewSingularTrim(data->planar_obj->local_brep->m_V[vertex_map[old_trim->Vertex(0)->m_vertex_index]], new_loop, old_trim->m_iso, c2_map[old_trim->TrimCurveIndexOf()]);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		}
-		continue;
+    // Start out by checking for a single shoal island with all planar faces
+    // accounted for by the shoal - in that situation, no polyhedron nucleus is
+    // needed.
+    if (arbn_nucleus_degeneracy(data, &planar_faces)) goto degenerate;
+
+    // First, deal with planar faces
+    for (p_it = planar_faces.begin(); p_it != planar_faces.end(); p_it++) {
+	int f_lcnt;
+	int loop_rev = 0; // Check if loop flips when ignored verts are removed
+	int *f_loops = NULL;
+	std::set<int> active_loops;
+	const ON_BrepFace *face = &(brep->m_F[(int)*p_it]);
+	ON_Plane p;
+	face->SurfaceOf()->IsPlanar(&p, BREP_PLANAR_TOL);
+	//bu_log("face(%d): %f,%f,%f %f,%f,%f\n", face->m_face_index,  p.origin.x, p.origin.y, p.origin.z, p.Normal().x, p.Normal().y, p.Normal().z);
+
+	// Determine if we have 1 or a set of loops.
+	for (int i = 0; i < face->LoopCount(); i++) {
+	    if (island_loops.find(face->m_li[i]) != island_loops.end()) active_loops.insert(face->m_li[i]);
+	}
+	set_to_array(&f_loops, &f_lcnt, &active_loops);
+	int *faces;
+	int face_cnt = subbrep_polygon_tri(msgs, data, f_loops, f_lcnt, &loop_rev, &faces);
+	if (loop_rev) negative_nucleus++;
+	// If the face is flipped, flip the triangles and the plane so their normals are correct
+	if ((face->m_bRev && !loop_rev) || (!face->m_bRev && loop_rev)) {
+	    //bu_log("face %d is reversed - flip the plane.\n", face->m_face_index);
+	    for (int i = 0; i < face_cnt; i++) {
+		int tmp = faces[i*3+1];
+		faces[i*3+1] = faces[i*3+2];
+		faces[i*3+2] = tmp;
 	    }
+	    p.Flip();
+	}
 
-	    if (evaluated.find(o_edge->m_edge_index) != evaluated.end()) {
-		//bu_log("edge %d already handled, continuing...\n", o_edge->m_edge_index);
-		continue;
+	// One more possible flip - if this face comes to the island via a
+	// fil connection, flip it.  Don't flip a face with multiple loops
+	// active, since that face is not a mating face.
+	std::set<int> fil;
+	array_to_set(&fil, data->fil, data->fil_cnt);
+	if (active_loops.size() == 1 && fil.find(face->m_face_index) != fil.end()) {
+	    //bu_log("face %d came to us via inner loop - flip the plane.\n", face->m_face_index);
+	    for (int i = 0; i < face_cnt; i++) {
+		int tmp = faces[i*3+1];
+		faces[i*3+1] = faces[i*3+2];
+		faces[i*3+2] = tmp;
 	    }
+	    p.Flip();
+	}
 
-	    // Don't use a trim connected to an edge we are skipping
-	    if (skip_edges.find(o_edge->m_edge_index) != skip_edges.end()) {
-		//bu_log("edge %d is skipped, continuing...\n", o_edge->m_edge_index);
-		evaluated.insert(o_edge->m_edge_index);
-		continue;
-	    }
-
-	    int is_partial = 0;
-	    if (partial_edges.find(o_edge->m_edge_index) != partial_edges.end()) is_partial = 1;
-
-	    if (!is_partial) {
-		ON_BrepEdge &n_edge = data->planar_obj->local_brep->m_E[edge_map[o_edge->m_edge_index]];
-		ON_Curve *ec = o_edge->EdgeCurveOf()->Duplicate();
-		if (ec->IsLinear()) {
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2_map[old_trim->TrimCurveIndexOf()]);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		    nt.m_iso = old_trim->m_iso;
-		} else {
-		    // Wasn't linear, but wasn't partial either - replace with a line
-		    ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
-		    ON_3dPoint p1 = c2_orig->PointAt(c2_orig->Domain().Min());
-		    ON_3dPoint p2 = c2_orig->PointAt(c2_orig->Domain().Max());
-		    ON_Curve *c2 = new ON_LineCurve(p1, p2);
-		    c2->ChangeDimension(2);
-		    int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
-		    ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(n_edge, old_trim->m_bRev3d, new_loop, c2i);
-		    nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		    nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		    nt.m_iso = old_trim->m_iso;
-		    delete c2_orig;
-		}
-		delete ec;
-	    } else {
-		// Partial edge - let the fun begin
-		ON_3dPoint p1, p2;
-		ON_BrepEdge *next_edge;
-		//bu_log("working a partial edge: %d\n", o_edge->m_edge_index);
-		int v[2];
-		v[0] = o_edge->Vertex(0)->m_vertex_index;
-		v[1] = o_edge->Vertex(1)->m_vertex_index;
-		// figure out which trim point we can use, the min or max
-		int pos1 = 0;
-		if (skip_verts.find(v[0]) != skip_verts.end()) {
-		    pos1 = 1;
-		}
-		int j_next = j;
-		ON_Curve *c2_orig = old_trim->TrimCurveOf()->Duplicate();
-		ON_Curve *c2_next = NULL;
-		int walk_dir = 1;
-		// bump the loop iterator to get passed any skipped edges to
-		// the next partial
-		while (!c2_next) {
-		    (walk_dir == 1) ? j_next++ : j_next--;
-		    if (j_next == old_loop->TrimCount()) {
-			j_next = 0;
-		    }
-		    if (j_next == -1) {
-			j_next = old_loop->TrimCount() - 1;
-		    }
-		    const ON_BrepTrim *next_trim = old_loop->Trim(j_next);
-		    next_edge = next_trim->Edge();
-		    if (!next_edge) continue;
-		    if (skip_edges.find(next_edge->m_edge_index) == skip_edges.end()) {
-			if (partial_edges.find(next_edge->m_edge_index) != partial_edges.end()) {
-			    //bu_log("found next partial edge %d\n", next_edge->m_edge_index);
-			    evaluated.insert(next_edge->m_edge_index);
-			    c2_next = next_trim->TrimCurveOf()->Duplicate();
-			} else {
-			    //bu_log("partial edge %d followed by non-partial %d, need to go the other way\n", o_edge->m_edge_index, next_edge->m_edge_index);
-			    j_next--;
-			    walk_dir = -1;
-			}
-		    } else {
-			//bu_log("skipping fully ignored edge %d\n", next_edge->m_edge_index);
-			evaluated.insert(next_edge->m_edge_index);
-		    }
-		}
-		int v2[2];
-		v2[0] = next_edge->Vertex(0)->m_vertex_index;
-		v2[1] = next_edge->Vertex(1)->m_vertex_index;
-		// figure out which trim point we can use, the min or max
-		int pos2 = 0;
-		if (skip_verts.find(v2[0]) != skip_verts.end()) {
-		    pos2 = 1;
-		}
-
-		int vmapped[2];
-		if (vertex_map.find(o_edge->Vertex(pos1)->m_vertex_index) == vertex_map.end()) {
-		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(o_edge->Vertex(pos1)->Point(), o_edge->Vertex(pos1)->m_tolerance);
-		    vertex_map[o_edge->Vertex(pos1)->m_vertex_index] = newvvi.m_vertex_index;
-		}
-		if (vertex_map.find(next_edge->Vertex(pos2)->m_vertex_index) == vertex_map.end()) {
-		    ON_BrepVertex& newvvi = data->planar_obj->local_brep->NewVertex(next_edge->Vertex(pos2)->Point(), next_edge->Vertex(pos2)->m_tolerance);
-		    vertex_map[next_edge->Vertex(pos2)->m_vertex_index] = newvvi.m_vertex_index;
-		}
-
-		// If walk_dir is -1, need to flip things around (I think...) the verts and trim points
-		// will be swapped compared to a forward walk
-		if (walk_dir == -1) {
-		    vmapped[1] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
-		    vmapped[0] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
-		} else {
-		    vmapped[0] = vertex_map[o_edge->Vertex(pos1)->m_vertex_index];
-		    vmapped[1] = vertex_map[next_edge->Vertex(pos2)->m_vertex_index];
-		}
-
-		// New Edge curve
-		ON_Curve *c3 = new ON_LineCurve(o_edge->Vertex(pos1)->Point(), next_edge->Vertex(pos2)->Point());
-		int c3i = data->planar_obj->local_brep->AddEdgeCurve(c3);
-		ON_BrepEdge& new_edge = data->planar_obj->local_brep->NewEdge(data->planar_obj->local_brep->m_V[vmapped[0]], data->planar_obj->local_brep->m_V[vmapped[1]], c3i, NULL ,0);
-
-		// Again, flip if walk_dir is -1
-		if (walk_dir == -1) {
-		    p2 = c2_orig->PointAt(c2_orig->Domain().Min());
-		    p1 = c2_next->PointAt(c2_orig->Domain().Max());
-		} else {
-		    p1 = c2_orig->PointAt(c2_orig->Domain().Min());
-		    p2 = c2_next->PointAt(c2_orig->Domain().Max());
-		}
-		//std::cout << "p1: " << pout(p1) << "\n";
-		//std::cout << "p2: " << pout(p2) << "\n";
-		ON_Curve *c2 = new ON_LineCurve(p1, p2);
-		c2->ChangeDimension(2);
-		int c2i = data->planar_obj->local_brep->AddTrimCurve(c2);
-		ON_BrepTrim &nt = data->planar_obj->local_brep->NewTrim(new_edge, false, new_loop, c2i);
-		nt.m_tolerance[0] = old_trim->m_tolerance[0];
-		nt.m_tolerance[1] = old_trim->m_tolerance[1];
-		nt.m_iso = old_trim->m_iso;
-		delete c2_orig;
-		delete c2_next;
-	    }
+	// If the face is not degenerate in the nucleus, record it.
+	if (face_cnt > 0) {
+	    face_cnts.push_back(face_cnt);
+	    face_arrays.push_back(faces);
+	    planes.Append(p);
 	}
     }
 
-    // If there is a possibility of a negative volume for the planar solid, do a test.
-    // The only way to get a negative planar solid in this context is if that solid is
-    // "inside" a non-planar shape (it would be "part of" the parent shape if it were
-    // planar and it would be a separate shape altogether if it were not topologically
-    // connected.  So we take one partial edge, find its associated non-planar faces,
-    // and collect all the partial and skipped edges from that face and any non-planar
-    // faces associated with the other partial/skipped edges.
-    //
-    // TODO - We still have an unhandled possibility here - the self-intersecting
-    // planar_obj.  For example:
-    //
-    //           *                *
-    //       *       *        *       *
-    //     *     *      *   *    *      *
-    //    *     * *      * *    * *      *
-    //   *     *   *           *   *      *
-    //   * *  *     * * * * * *     *  *  *
-    //
-    if (partial_edges.size() > 0) {
-	std::queue<int> connected_faces;
-	std::set<int> relevant_edges;
-	std::set<int>::iterator re_it;
-	std::set<int> efaces;
-	std::set<int>::iterator f_it;
-	std::set<int> found_faces;
-	const ON_BrepEdge *seed_edge = &(data->brep->m_E[*partial_edges.begin()]);
-	for (int j = 0; j < seed_edge->TrimCount(); j++) {
-	    ON_BrepTrim *trim = seed_edge->Trim(j);
-	    efaces.insert(trim->Face()->m_face_index);
-	}
-	for(f_it = efaces.begin(); f_it != efaces.end(); f_it++) {
-	    surface_t stype = GetSurfaceType(data->brep->m_F[*f_it].SurfaceOf(), NULL);
-	    if (stype != SURFACE_PLANE) {
-		connected_faces.push(data->brep->m_F[*f_it].m_face_index);
+    // Second, deal with non-planar shoals.
+    for (size_t i = 0; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	if (d->params->have_implicit_plane) {
+	    int *faces;
+	    int face_cnt = shoal_polygon_tri(msgs, d, &faces);
+	    // If the face is not degenerate in the nucleus, record it.
+	    if (face_cnt > 0) {
+		face_cnts.push_back(face_cnt);
+		face_arrays.push_back(faces);
+		ON_3dPoint o;
+		ON_3dVector n;
+		ON_VMOVE(o, d->params->implicit_plane_origin);
+		ON_VMOVE(n, d->params->implicit_plane_normal);
+		ON_Plane p(o, n);
+
+		if (d->params->bool_op == '-') p.Flip();
+
+		planes.Append(p);
 	    }
 	}
-	while (!connected_faces.empty()) {
-	    int face_index = connected_faces.front();
-	    connected_faces.pop();
-	    std::set<int> local_edges;
-	    std::set<int>::iterator le_it;
-	    found_faces.insert(face_index);
-	    const ON_BrepFace *face = &(data->brep->m_F[face_index]);
-	    const ON_BrepLoop *loop = NULL;
-	    // Find the loop in this face that is associated with this subbrep
-	    for (int i = 0; i < face->LoopCount(); i++) {
-		int loop_ind = face->Loop(i)->m_loop_index;
-		if (loops.find(loop_ind) != loops.end()) {
-		    loop = &(data->brep->m_L[loop_ind]);
+    }
+    if (planes.Count() < 4) goto degenerate;
+
+    // Third, generate compact vertex list for csg params and create the final
+    // vertex array for the w
+    for (unsigned int i = 0; i < face_arrays.size(); i++) {
+	int *fa = face_arrays[i];
+	int fc = face_cnts[i];
+	for (int j = 0; j < fc*3; j++) all_used_verts.insert(fa[j]);
+	for (int j = 0; j < fc*3; j++) all_faces.push_back(fa[j]);
+    }
+
+    // Allocate and initialize nucleus
+    BU_GET(data->nucleus, struct subbrep_shoal_data);
+    subbrep_shoal_init(data->nucleus, data);
+    data->nucleus->params->csg_id = (*(data->obj_cnt))++;
+    data->nucleus->params->csg_type = PLANAR_VOLUME;
+    data->nucleus->shoal_id = data->nucleus->params->csg_id;
+    data->nucleus->shoal_type = PLANAR_VOLUME;
+
+    // The nucleus shoal in this configuration will have the same
+    // number of loops in play as the island itself.
+    data->nucleus->shoal_loops_cnt = data->island_loops_cnt;
+    data->nucleus->shoal_loops = (int *)bu_calloc(data->island_loops_cnt, sizeof(int), "shoal loops");
+    for (int m = 0; m != data->island_loops_cnt; m++) {
+	data->nucleus->shoal_loops[m] = data->island_loops[m];
+    }
+
+    // Assign the verts and faces to the csg parameters structure
+    data->nucleus->params->csg_verts = (point_t *)bu_calloc(all_used_verts.size(), sizeof(point_t), "final verts array");
+    data->nucleus->params->csg_vert_cnt = all_used_verts.size();
+    data->nucleus->params->csg_faces = (int *)bu_calloc(all_faces.size(), sizeof(int), "final faces array");
+    data->nucleus->params->csg_face_cnt = all_faces.size() / 3;
+    curr_vert = 0;
+    for (auv_it = all_used_verts.begin(); auv_it != all_used_verts.end(); auv_it++) {
+	ON_3dPoint vp = brep->m_V[(int)(*auv_it)].Point();
+	BN_VMOVE(data->nucleus->params->csg_verts[curr_vert], vp);
+	vert_map.insert(std::pair<int,int>((int)*auv_it, curr_vert));
+	curr_vert++;
+    }
+    for (unsigned int i = 0; i < all_faces.size(); i++) {
+	data->nucleus->params->csg_faces[i] = vert_map.find(all_faces[i])->second;
+    }
+
+
+    // Check whether the polyhedron nucleus is degenerate
+    seed_plane = planes[0];
+    parallel_planes++;
+    for (int i = 1; i < planes.Count(); i++) {
+	if (planes[i].Normal().IsParallelTo(seed_plane.Normal(), VUNITIZE_TOL)) parallel_planes++;
+    }
+    if (parallel_planes == planes.Count()) goto degenerate;
+
+
+    // Test for a negative polyhedron - if negative, handle accordingly
+    if (negative_polygon(msgs, data->nucleus->params) == -1) {
+	data->nucleus->params->negative = -1;
+	data->nucleus->params->bool_op = '-';
+	// Flip triangles and planes so the resulting BoT/arbn is a positive
+	// shape.  All csg params need to describe positive shapes for
+	// primitive creation - their "negative" flag preserves their original
+	// role per their original B-Rep face normals
+	for (int i = 0; i < data->nucleus->params->csg_face_cnt; i++) {
+	    int tmp = data->nucleus->params->csg_faces[i*3+1];
+	    data->nucleus->params->csg_faces[i*3+1] = data->nucleus->params->csg_faces[i*3+2];
+	    data->nucleus->params->csg_faces[i*3+2] = tmp;
+	}
+	for (int i = 0; i < planes.Count(); i++) {
+	    planes[i].Flip();
+	}
+    } else {
+	data->nucleus->params->negative = 1;
+	data->nucleus->params->bool_op = 'u';
+    }
+
+
+    // Test for a convex polyhedron. This can be an expensive test, so only do
+    // it for a small number of planes
+    if (planes.Count() < MAX_CNT_CONVEX_PLANE_TEST) {
+	int *planes_used = (int *)bu_calloc(planes.Count(), sizeof(int), "usage flags");
+	convex_plane_usage(&planes, &planes_used);
+	for (int i = 0; i < planes.Count(); i++) {
+	    if (planes_used[i] == 0) {
+		convex_polyhedron = 0;
+		break;
+	    }
+	}
+	bu_free(planes_used, "free used array");
+    } else {
+	convex_polyhedron = 0;
+    }
+
+    // If the planes can form an arbn, we still need to make sure that none of the known vertices
+    // from the planar faces are trimmed away by any of the arbn planes
+    if (convex_polyhedron) {
+	for (int v = 0; v < data->nucleus->params->csg_vert_cnt; v++) {
+	    ON_3dPoint p3d;
+	    ON_VMOVE(p3d, data->nucleus->params->csg_verts[v]);
+	    /* See if point is outside arb */
+	    for (int m = 0; m < planes.Count(); m++) {
+		double dotp = ON_DotProduct(p3d - planes[m].origin, planes[m].Normal());
+		if (dotp > 0 && !NEAR_ZERO(dotp, VUNITIZE_TOL)) {
+		    convex_polyhedron = 0;
 		    break;
 		}
 	    }
-	    // Collect the edges that are partial or skipped
-	    for (int i = 0; i < loop->TrimCount(); i++) {
-		const ON_BrepTrim *trim = loop->Trim(i);
-		ON_BrepEdge *edge = trim->Edge();
-		if (edge) {
-		    if (partial_edges.find(edge->m_edge_index) != partial_edges.end()) {
-			relevant_edges.insert(edge->m_edge_index);
-			local_edges.insert(edge->m_edge_index);
-		    }
-		    if (skip_edges.find(edge->m_edge_index) != skip_edges.end()) {
-			relevant_edges.insert(edge->m_edge_index);
-			local_edges.insert(edge->m_edge_index);
-		    }
-		}
-	    }
-	    // For each collected partial/skipped edge, add any faces not already
-	    // found to the queue.
-	    for (le_it = local_edges.begin(); le_it != local_edges.end(); le_it++) {
-		const ON_BrepEdge *edge = &(data->brep->m_E[*le_it]);
-		for (int j = 0; j < edge->TrimCount(); j++) {
-		    ON_BrepTrim *trim = edge->Trim(j);
-		    if (found_faces.find(trim->Face()->m_face_index) == found_faces.end()) {
-			found_faces.insert(trim->Face()->m_face_index);
-			connected_faces.push(trim->Face()->m_face_index);
-		    }
-		}
-	    }
-	}
-	// Build two bounding boxes - one with the new verts in planar_obj, and the other with
-	// the edges found above.
-	ON_BoundingBox pbb, ebb;
-	ON_MinMaxInit(&pbb.m_min, &pbb.m_max);
-	ON_MinMaxInit(&ebb.m_min, &ebb.m_max);
-	for (int i = 0; i < data->planar_obj->local_brep->m_V.Count(); i++) {
-	    const ON_BrepVertex *v = &(data->planar_obj->local_brep->m_V[i]);
-	    pbb.Set(v->Point(), true);
-	}
-	for (re_it = relevant_edges.begin(); re_it != relevant_edges.end(); re_it++) {
-	    const ON_BrepEdge *e = &(data->brep->m_E[*re_it]);
-	    ON_BoundingBox cbb = e->EdgeCurveOf()->BoundingBox();
-	    ebb.Set(cbb.m_min, true);
-	    ebb.Set(cbb.m_max, true);
-	}
-	//std::cout << "in pbb.s rpp " << pout(pbb.m_min) << " " << pout(pbb.m_max) << "\n";
-	//std::cout << "in ebb.s rpp " << pout(ebb.m_min) << " " << pout(ebb.m_max) << "\n";
-
-	if (ebb.Includes(pbb)) {
-	    //bu_log("negative volume\n");
-	    data->planar_obj->negative_shape = -1;
-	} else {
-	    //bu_log("positive volume\n");
-	    data->planar_obj->negative_shape = 1;
-	}
-	data->planar_obj->params->bool_op = (data->planar_obj->negative_shape == -1) ? '-' : 'u';
-    }
-
-    // Need to preserve the vertex map for this, since we're not done building up the brep
-    map_to_array(&(data->planar_obj->planar_obj_vert_map), &(data->planar_obj->planar_obj_vert_cnt), &vertex_map);
-
-    data->planar_obj->local_brep->SetTrimTypeFlags(true);
-
-}
-
-bool
-end_of_trims_match(ON_Brep *brep, ON_BrepLoop *loop, int lti)
-{
-    bool valid = true;
-    int ci0, ci1, next_lti;
-    ON_3dPoint P0, P1;
-    const ON_Curve *pC0, *pC1;
-    const ON_Surface *surf = loop->Face()->SurfaceOf();
-    double urange = surf->Domain(0)[1] - surf->Domain(0)[0];
-    double vrange = surf->Domain(1)[1] - surf->Domain(1)[0];
-    // end-of-trims matching test from opennurbs_brep.cpp
-    const ON_BrepTrim& trim0 = brep->m_T[loop->m_ti[lti]];
-    next_lti = (lti+1)%loop->TrimCount();
-    const ON_BrepTrim& trim1 = brep->m_T[loop->m_ti[next_lti]];
-    ON_Interval trim0_domain = trim0.Domain();
-    ON_Interval trim1_domain = trim1.Domain();
-    ci0 = trim0.m_c2i;
-    ci1 = trim1.m_c2i;
-    pC0 = brep->m_C2[ci0];
-    pC1 = brep->m_C2[ci1];
-    P0 = pC0->PointAt( trim0_domain[1] ); // end of this 2d trim
-    P1 = pC1->PointAt( trim1_domain[0] ); // start of next 2d trim
-    if ( !(P0-P1).IsTiny() )
-    {
-	// 16 September 2003 Dale Lear - RR 11319
-	//    Added relative tol check so cases with huge
-	//    coordinate values that agreed to 10 places
-	//    didn't get flagged as bad.
-	//double xtol = (fabs(P0.x) + fabs(P1.x))*1.0e-10;
-	//double ytol = (fabs(P0.y) + fabs(P1.y))*1.0e-10;
-	//
-	// Oct 12 2009 Rather than using the above check, BRL-CAD uses
-	// relative uv size
-	double xtol = (urange) * trim0.m_tolerance[0];
-	double ytol = (vrange) * trim0.m_tolerance[1];
-	if ( xtol < ON_ZERO_TOLERANCE )
-	    xtol = ON_ZERO_TOLERANCE;
-	if ( ytol < ON_ZERO_TOLERANCE )
-	    ytol = ON_ZERO_TOLERANCE;
-	double dx = fabs(P0.x-P1.x);
-	double dy = fabs(P0.y-P1.y);
-	if ( dx > xtol || dy > ytol ) valid = false;
-    }
-    return valid;
-}
-
-void
-subbrep_planar_close_obj(struct subbrep_object_data *data)
-{
-    struct subbrep_object_data *pdata = data->planar_obj;
-
-    pdata->local_brep->Compact();
-    pdata->local_brep->SetTrimIsoFlags();
-    pdata->local_brep->SetTrimTypeFlags(true);
-
-    pdata->brep = pdata->local_brep;
-    /* By this point, if it's not already determined to
-     * be negative, the volume is positive */
-    if (pdata->params->bool_op != '-') pdata->params->bool_op = 'u';
-}
-
-void
-subbrep_add_planar_face(struct subbrep_object_data *data, ON_Plane *pcyl,
-			ON_SimpleArray<const ON_BrepVertex *> *vert_loop, int neg_surf)
-{
-    // We use the planar_obj's local_brep to store new faces.  The planar local
-    // brep contains the relevant linear and planar components from its parent
-    // - our job here is to add the new surface, identify missing edges to
-    // create, find existing edges to re-use, and call NewFace with the
-    // results.  At the end we should have just the faces needed
-    // to define the planar volume of interest.
-    struct subbrep_object_data *pdata = data->planar_obj;
-    std::vector<int> edges;
-    ON_SimpleArray<ON_Curve *> curves_2d;
-    ON_SimpleArray<bool> reversed;
-    std::map<int, int> vert_map;
-    array_to_map(&vert_map, pdata->planar_obj_vert_map, pdata->planar_obj_vert_cnt);
-
-    /* If the index isn't in the array, something's wrong - bail */
-    if (vert_map[((*vert_loop)[0])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
-    if (vert_map[((*vert_loop)[1])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
-    if (vert_map[((*vert_loop)[2])->m_vertex_index] > pdata->local_brep->m_V.Count() - 1) return;
-
-    ON_3dPoint p1 = pdata->local_brep->m_V[vert_map[((*vert_loop)[0])->m_vertex_index]].Point();
-    ON_3dPoint p2 = pdata->local_brep->m_V[vert_map[((*vert_loop)[1])->m_vertex_index]].Point();
-    ON_3dPoint p3 = pdata->local_brep->m_V[vert_map[((*vert_loop)[2])->m_vertex_index]].Point();
-    ON_Plane loop_plane(p1, p2, p3);
-    ON_BoundingBox loop_pbox, cbox;
-
-    // get 2d trim curves
-    ON_Xform proj_to_plane;
-    proj_to_plane[0][0] = loop_plane.xaxis.x;
-    proj_to_plane[0][1] = loop_plane.xaxis.y;
-    proj_to_plane[0][2] = loop_plane.xaxis.z;
-    proj_to_plane[0][3] = -(loop_plane.xaxis*loop_plane.origin);
-    proj_to_plane[1][0] = loop_plane.yaxis.x;
-    proj_to_plane[1][1] = loop_plane.yaxis.y;
-    proj_to_plane[1][2] = loop_plane.yaxis.z;
-    proj_to_plane[1][3] = -(loop_plane.yaxis*loop_plane.origin);
-    proj_to_plane[2][0] = loop_plane.zaxis.x;
-    proj_to_plane[2][1] = loop_plane.zaxis.y;
-    proj_to_plane[2][2] = loop_plane.zaxis.z;
-    proj_to_plane[2][3] = -(loop_plane.zaxis*loop_plane.origin);
-    proj_to_plane[3][0] = 0.0;
-    proj_to_plane[3][1] = 0.0;
-    proj_to_plane[3][2] = 0.0;
-    proj_to_plane[3][3] = 1.0;
-
-    ON_PlaneSurface *s = new ON_PlaneSurface(loop_plane);
-    const int si = pdata->local_brep->AddSurface(s);
-
-    double flip = ON_DotProduct(loop_plane.Normal(), pcyl->Normal()) * neg_surf;
-
-    for (int i = 0; i < vert_loop->Count(); i++) {
-	int vind1, vind2;
-	const ON_BrepVertex *v1, *v2;
-	v1 = (*vert_loop)[i];
-	vind1 = vert_map[v1->m_vertex_index];
-	if (i < vert_loop->Count() - 1) {
-	    v2 = (*vert_loop)[i+1];
-	} else {
-	    v2 = (*vert_loop)[0];
-	}
-	vind2 = vert_map[v2->m_vertex_index];
-	ON_BrepVertex &new_v1 = pdata->local_brep->m_V[vind1];
-	ON_BrepVertex &new_v2 = pdata->local_brep->m_V[vind2];
-
-	// Because we may have already created a needed edge only in the new
-	// Brep with a previous face, we have to check all the edges in the new
-	// structure for a vertex match.
-	int edge_found = 0;
-	for (int j = 0; j < pdata->local_brep->m_E.Count(); j++) {
-	    int ev1 = pdata->local_brep->m_E[j].Vertex(0)->m_vertex_index;
-	    int ev2 = pdata->local_brep->m_E[j].Vertex(1)->m_vertex_index;
-
-	    ON_3dPoint pv1 = pdata->local_brep->m_E[j].Vertex(0)->Point();
-	    ON_3dPoint pv2 = pdata->local_brep->m_E[j].Vertex(1)->Point();
-
-	    if ((ev1 == vind1) && (ev2 == vind2)) {
-		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
-		edge_found = 1;
-
-		reversed.Append(false);
-
-		// Get 2D curve from this edge's 3D curve
-		const ON_Curve *c3 = pdata->local_brep->m_E[j].EdgeCurveOf();
-		ON_NurbsCurve *c2 = new ON_NurbsCurve();
-		c3->GetNurbForm(*c2);
-		c2->Transform(proj_to_plane);
-		c2->GetBoundingBox(cbox);
-		c2->ChangeDimension(2);
-		c2->MakePiecewiseBezier(2);
-		curves_2d.Append(c2);
-		loop_pbox.Union(cbox);
-		break;
-	    }
-	    if ((ev2 == vind1) && (ev1 == vind2)) {
-		edges.push_back(pdata->local_brep->m_E[j].m_edge_index);
-		edge_found = 1;
-		reversed.Append(true);
-
-		// Get 2D curve from this edge's points
-		ON_Curve *c3 = new ON_LineCurve(pv2, pv1);
-		ON_NurbsCurve *c2 = new ON_NurbsCurve();
-		c3->GetNurbForm(*c2);
-		c2->Transform(proj_to_plane);
-		c2->GetBoundingBox(cbox);
-		c2->ChangeDimension(2);
-		c2->MakePiecewiseBezier(2);
-		curves_2d.Append(c2);
-		loop_pbox.Union(cbox);
-		break;
-	    }
-	}
-	if (!edge_found) {
-	    int c3i = pdata->local_brep->AddEdgeCurve(new ON_LineCurve(new_v1.Point(), new_v2.Point()));
-	    // Get 2D curve from this edge's 3D curve
-	    const ON_Curve *c3 = pdata->local_brep->m_C3[c3i];
-	    ON_NurbsCurve *c2 = new ON_NurbsCurve();
-	    c3->GetNurbForm(*c2);
-	    c2->Transform(proj_to_plane);
-	    c2->GetBoundingBox(cbox);
-	    c2->ChangeDimension(2);
-	    c2->MakePiecewiseBezier(2);
-	    curves_2d.Append(c2);
-	    loop_pbox.Union(cbox);
-
-	    ON_BrepEdge &new_edge = pdata->local_brep->NewEdge(pdata->local_brep->m_V[vind1], pdata->local_brep->m_V[vind2], c3i, NULL ,0);
-	    edges.push_back(new_edge.m_edge_index);
+	    if (!convex_polyhedron) break;
 	}
     }
 
-    ON_BrepFace& face = pdata->local_brep->NewFace( si );
-    ON_BrepLoop& loop = pdata->local_brep->NewLoop(ON_BrepLoop::outer, face);
-    loop.m_pbox = loop_pbox;
-    for (int i = 0; i < vert_loop->Count(); i++) {
-	ON_NurbsCurve *c2 = (ON_NurbsCurve *)curves_2d[i];
-	int c2i = pdata->local_brep->AddTrimCurve(c2);
-	ON_BrepEdge &edge = pdata->local_brep->m_E[edges.at(i)];
-	ON_BrepTrim &trim = pdata->local_brep->NewTrim(edge, reversed[i], loop, c2i);
-	trim.m_type = ON_BrepTrim::mated;
-	trim.m_tolerance[0] = 0.0;
-	trim.m_tolerance[1] = 0.0;
-    }
-
-    // set face domain
-    s->SetDomain(0, loop.m_pbox.m_min.x, loop.m_pbox.m_max.x );
-    s->SetDomain(1, loop.m_pbox.m_min.y, loop.m_pbox.m_max.y );
-    s->SetExtents(0,s->Domain(0));
-    s->SetExtents(1,s->Domain(1));
-
-    // need to update trim m_iso flags because we changed surface shape
-    if (flip < 0) pdata->local_brep->FlipFace(face);
-    pdata->local_brep->SetTrimIsoFlags(face);
-    pdata->local_brep->SetTrimTypeFlags(true);
-}
-
-
-
-
-// TODO - need a way to detect if a set of planar faces would form a
-// self-intersecting polyhedron.  Self-intersecting polyhedrons are the ones
-// with the potential to make both positive and negative contributions to a
-// solid. One possible idea:
-//
-// For all edges in polyhedron test whether each edge intersects any face in
-// the polyhedron to which it does not belong.  The test can be simple - for
-// each vertex, construct a vector from the vertex to some point on the
-// candidate face (center point is probably a good start) and see if the dot
-// products of those two vectors with the face normal vector agree in sign.
-// For a given edge, if all dot products agree in pair sets, then the edge does
-// not intersect any face in the polyhedron.  If no edges intersect, the
-// polyhedron is not self intersecting.  If some edges do intersect (probably
-// at least three...) then those edges identify sub-shapes that need to be
-// constructed.
-//
-// Note that this is also a concern for non-planar surfaces that have been
-// reduced to planar surfaces as part of the process - probably should
-// incorporate a bounding box test to determine if such surfaces can be
-// part of sub-object definitions (say, a cone subtracted from a subtracting
-// cylinder to make a positive cone volume inside the cylinder) or if the
-// cone has to be a top level unioned positive object (if the cone's apex
-// point is outside the cylinder's subtracting area, for example, the tip
-// of the code will not be properly added as a positive volume if it is just
-// a subtraction from the cylinder.
-
-
-// Returns 1 if point set forms a convex polyhedron, 0 if the point set
-// forms a degenerate chull, and -1 if the point set is concave
-int
-convex_point_set(struct subbrep_object_data *, std::set<int> *)
-{
-    // Use chull3d to find the set of vertices that are on the convex
-    // hull.  If all of them are, the point set defines a convex polyhedron.
-    // If the points are coplanar, return 0 - not a volume
-    return 0;
-}
-
-/* These functions will return 2 if successful, 1 if unsuccessful but point set
- * is convex, 0 if unsuccessful and vertex set's chull is degenerate (i.e. the
- * planar component of this CSG shape contributes no positive volume),  and -1
- * if unsuccessful and point set is neither degenerate nor convex */
-int
-point_set_is_arb4(struct subbrep_object_data *data, std::set<int> *verts)
-{
-    int is_convex = convex_point_set(data, verts);
-    if (is_convex == 1) {
-	// TODO - deduce and set up proper arb4 point ordering
-	return 2;
-    }
-    return 0;
-}
-int
-point_set_is_arb5(struct subbrep_object_data *data, std::set<int> *verts)
-{
-    int is_convex = convex_point_set(data, verts);
-
-    if (is_convex) {
-	return is_convex;
-    }
-    // TODO - arb5 test
-    return 0;
-}
-int
-point_set_is_arb6(struct subbrep_object_data *data, std::set<int> *verts)
-{
-    int is_convex = convex_point_set(data, verts);
-
-    if (is_convex) {
-	return is_convex;
-    }
-    // TODO - arb6 test
-    return 0;
-}
-int
-point_set_is_arb7(struct subbrep_object_data *data, std::set<int> *verts)
-{
-    int is_convex = convex_point_set(data, verts);
-
-    if (is_convex) {
-	return is_convex;
-    }
-    // TODO - arb7 test
-    return 0;
-}
-int
-point_set_is_arb8(struct subbrep_object_data *data, std::set<int> *verts)
-{
-    int is_convex = convex_point_set(data, verts);
-
-    if (is_convex) {
-	return is_convex;
-    }
-    // TODO - arb8 test
-    return 0;
-}
-
-/* If we're going with an arbn, we need to add one plane for each face.  To
- * make sure the normal is in the correct direction, find the center point of
- * the verts and the center point of the face verts to construct a vector which
- * can be used in a dot product test with the face normal.*/
-int
-point_set_is_arbn(struct subbrep_object_data *data, std::set<int> *, std::set<int> *verts, int do_test)
-{
-    int is_convex;
-    if (!do_test) {
-	is_convex = 1;
+    if (convex_polyhedron) {
+	// If we do in fact have a convex polyhedron, we can create an arbn
+	// instead of a BoT for this nucleus shape
+	data->nucleus->params->csg_type = ARBN;
+	data->nucleus->shoal_type = ARBN;
+	data->nucleus->params->plane_cnt = planes.Count();
+	data->nucleus->params->planes = (plane_t *)bu_calloc(planes.Count(), sizeof(plane_t), "planes");
+	for (int i = 0; i < planes.Count(); i++) {
+	    ON_Plane p = planes[i];
+	    double d = p.DistanceTo(ON_3dPoint(0,0,0));
+	    data->nucleus->params->planes[i][0] = p.Normal().x;
+	    data->nucleus->params->planes[i][1] = p.Normal().y;
+	    data->nucleus->params->planes[i][2] = p.Normal().z;
+	    data->nucleus->params->planes[i][3] = -1 * d;
+	}
     } else {
-	is_convex = convex_point_set(data, verts);
+	// Otherwise, confirm as BoT
+	data->nucleus->params->csg_type = PLANAR_VOLUME;
     }
-    if (is_convex)
-	return is_convex;
 
-    // TODO - arbn assembly
-    return 2;
-}
+    // There is one final wrinkle.  It is possible for a polyhedron nucleus to
+    // be volumetrically inside a shoal (shape + arbn).  In this situation, the
+    // nucleus is subtracted from the shoal shape.
+    if (negative_nucleus > 0) {
+	//bu_log("flip nucleus and child\n");
+	if (BU_PTBL_LEN(data->island_children) != 1) {
+	    bu_log("huh? flipped loops and child count != 1?\n");
+	} else {
+	    struct subbrep_shoal_data *tmp_n = data->nucleus;
+	    struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+	    data->nucleus = d;
+	    bu_ptbl_rm(data->island_children, (long *)d);
+	    bu_ptbl_ins(data->island_children, (long *)tmp_n);
+	}
+    }
 
-// In the worst case, make a brep for later conversion into an nmg.
-// The other possibility here is an arbn csg tree, but that needs
-// more thought...
-int
-subbrep_make_planar_brep(struct subbrep_object_data *)
-{
-    // TODO - check for self intersections in the candidate shape, and handle
-    // if any are discovered.
-    return 0;
-}
+    return 1;
 
-int
-planar_switch(int ret, struct subbrep_object_data *data, std::set<int> *faces, std::set<int> *verts)
-{
-    switch (ret) {
-	case -1:
-	    return subbrep_make_planar_brep(data);
-	    break;
-	case 0:
-	    return 0;
-	    break;
-	case 1:
-	    return point_set_is_arbn(data, faces, verts, 0);
-	    break;
-	case 2:
+degenerate:
+    // If the polyhedron nucleus is degenerate, one of the shoals is the nucleus.
+    //
+    // First, check whether the shoal negative/positive flags are the same.
+    int shoal_same_status = 1;
+    struct subbrep_shoal_data *cn = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+    for (size_t i = 1; i < BU_PTBL_LEN(data->island_children); i++) {
+	struct subbrep_shoal_data *d = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, i);
+	if (cn->params->negative != d->params->negative) shoal_same_status = 0;
+    }
+    if (shoal_same_status) {
+	// If they all are the same, then any of them may serve as the
+	// nucleus and whether the nucleus is negative be based on the
+	// negative shape status of the shoal.  The island's children
+	// will be unioned.
+	//bu_log("shoal negative status is uniform\n");
+	subbrep_shoal_free(data->nucleus);
+	data->nucleus = cn;
+	bu_ptbl_rm(data->island_children, (long *)cn);
+    } else {
+	// If we get here and we've got more than two shoals, we don't currently
+	// handle it
+	if (BU_PTBL_LEN(data->island_children) != 2) return 0;
+	struct subbrep_shoal_data *s1 = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 0);
+	struct subbrep_shoal_data *s2 = (struct subbrep_shoal_data *)BU_PTBL_GET(data->island_children, 1);
+	volume_t s1t = (volume_t)s1->params->csg_type;
+	volume_t s2t = (volume_t)s2->params->csg_type;
+
+	// If we've got shoals with different boolean status, then we have
+	// to decide which shape is "inside" the other to make a call.  If
+	// two cylinders the smaller radius is the new nucleus, for
+	// example. cyl/cone is also possible - any others? sph/cyl with
+	// sph as end cap will be degenerate...  Need to give this some
+	// thought, but suspect a general solution isn't possible unless
+	// based on raytracing.  For the time being, use type
+	// specific rules.  Probably need to break this bit out into
+	// separate functions/routines.
+
+	if ((s1t == CYLINDER && s2t == CYLINDER)) {
+	    double r1 = s1->params->radius;
+	    double r2 = s2->params->radius;
+	    struct subbrep_shoal_data *smaller = (r1 < r2) ? s1 : s2;
+	    struct subbrep_shoal_data *larger = (r1 > r2) ? s1 : s2;
+	    cn = (larger->params->half_cyl != 1) ? larger : smaller;
+	    subbrep_shoal_free(data->nucleus);
+	    data->nucleus = cn;
+	    bu_ptbl_rm(data->island_children, (long *)cn);
 	    return 1;
-	    break;
+	}
+
+	//TODO with sphere and cylinder/cone, might be able to check the normal of the
+	//implicit face of the sphere against the normal of the cylinder's face that's
+	//connected with the sphere...
+
+	// Other option is to flag this island's shoals as all top-level
+	// objects.  The subtractions and then the unions will be made
+	// after all other csg logic has been built up.  Bad for locality
+	// but may serve as a fall-back if nucleus resolution doesn't resolve...
+	bu_log("\n\n\nshoals have different negative status - currently unhandled!\n\n\n");
     }
-    return 0;
+
+
+    return 1;
 }
-
-
-int
-subbrep_make_planar(struct subbrep_object_data *data)
-{
-    // First step is to count vertices, using the edges
-    std::set<int> subbrep_verts;
-    std::set<int> faces;
-    for (int i = 0; i < data->edges_cnt; i++) {
-	const ON_BrepEdge *edge = &(data->brep->m_E[data->edges[i]]);
-	subbrep_verts.insert(edge->Vertex(0)->m_vertex_index);
-	subbrep_verts.insert(edge->Vertex(1)->m_vertex_index);
-    }
-    array_to_set(&faces, data->faces, data->faces_cnt);
-
-    int vert_cnt = subbrep_verts.size();
-    int ret = 0;
-    switch (vert_cnt) {
-	case 0:
-	    bu_log("no verts???\n");
-	    return 0;
-	    break;
-	case 1:
-	    bu_log("one vertex - not a candidate for a planar volume\n");
-	    return 0;
-	    break;
-	case 2:
-	    bu_log("two vertices - not a candidate for a planar volume\n");
-	    return 0;
-	    break;
-	case 3:
-	    bu_log("three vertices - not a candidate for a planar volume\n");
-	    return 0;
-	    break;
-	case 4:
-	    if (point_set_is_arb4(data, &subbrep_verts) != 2) {
-		return 0;
-	    }
-	    return 1;
-	    break;
-	case 5:
-	    ret = point_set_is_arb5(data, &subbrep_verts);
-	    return planar_switch(ret, data, &faces, &subbrep_verts);
-	    break;
-	case 6:
-	    ret = point_set_is_arb6(data, &subbrep_verts);
-	    return planar_switch(ret, data, &faces, &subbrep_verts);
-	    break;
-	case 7:
-	    ret = point_set_is_arb7(data, &subbrep_verts);
-	    return planar_switch(ret, data, &faces, &subbrep_verts);
-	    break;
-	case 8:
-	    ret = point_set_is_arb8(data, &subbrep_verts);
-	    return planar_switch(ret, data, &faces, &subbrep_verts);
-	    break;
-	default:
-	    ret = point_set_is_arbn(data, &faces, &subbrep_verts, 1);
-	    return planar_switch(ret, data, &faces, &subbrep_verts);
-	    break;
-
-    }
-    return 0;
-}
-
-
-// TODO - need to check for self-intersecting planar objects - any
-// such object needs to be further deconstructed, since it has
-// components that may be making both positive and negative contributions
-
 
 // Local Variables:
 // tab-width: 8

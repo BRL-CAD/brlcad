@@ -18,6 +18,8 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* new bu mime symbols are not prefixed in accordance with rest of API
+
 * make sure windows wireframes are not horked
 
 * make sure rt -I interactive mode still works... looks like code for
@@ -28,6 +30,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   and z=1524 (was hit/overlap, now misses).
 
 * fix MGED clear command
+
+* fix regressions in step-g
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -55,6 +59,72 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* consider whether the file introspection capabilities of libmagic
+  (https://github.com/file/file) should be hooked into the libbu
+  mime type system to support more robust file type identification
+  beyond that offered by file extension + context.  In principle
+  we want the most powerful capability we can get, but there are
+  some not-entirely-trivial design issues involved.
+
+  - Do we want to use file introspection to replace the "context"
+    mechanism we're currently using to disambiguate file extensions?
+
+  - Is it practical to define enough "magic" for the file types we
+    will be interested in?  (the current "cad" entry just has a
+    few autodesk formats - would need considerable expansion.)
+
+  - How should we return the "human readable" string libmagic provides,
+    particularly in the context of bu_path_component - the mime type
+    is currently returned as a string.
+
+  - libmagic is capable of greater fidelity than the basic file
+    extension based mime types - should we define custom mime types
+    to allow that refinement?  e.g. MIME_MODEL_STEP if we don't know
+    what step version, and MIME_MODEL_STEP_AP203 if libmagic ids the
+    file as a particular version?  There are many situations where
+    this capability could be very useful, but we would have to
+    rethink how we are currently defining our mime types.  Ideally
+    we would want to generate specific mimes from the magic definition
+    files, but we would have to make sure all the magic files we
+    use for BRL-CAD provide mimes for all entires.
+
+* investigate merging functionality from the sig tools into libicv
+  and removing the tools themselves.  Also, need some documentation
+  for the sig functionality (currently none??)
+
+* investigate updating our fnmatch code to use OpenBSD's non-recursive
+  implementation, added starting at revision 1.16:
+  http://cvsweb.openbsd.org/cgi-bin/cvsweb/src/lib/libc/gen/fnmatch.c
+
+* implement a function to consolidate bu_brlcad_root, bu_brlcad_data,
+  and bu_brlcad_dir.  Pass in a bu_locate_t enum, the relative path,
+  and the log/no-log flag.  Intent is to support flexibility implied
+  by presence of BIN_DIR, LIB_DIR, etc. build settings.  Will need
+  great care to ensure correct behavior is preserved - bu_brlcad_root
+  and bu_brlcad_data will need verbose deprecation process, once
+  bu_locate is implemented.  Also will need matching tcl function.
+
+  const char *
+  bu_dir(const char *path, int (log*)(const char *, ...));
+
+  Examples:
+  bu_dir(B_ROOT, NULL); /* returns application "root" */
+  bu_dir(B_CWD, NULL); /* returns current working directory */
+  bu_dir(B_SHARE, bu_log); /* returns app share dir, logs via bu_log */
+  bu_dir(B_TEMP, NULL); /* returns an mkdtemp directory?? */
+  bu_dir(B_CACHE, NULL); /* returns a read/write cache dir */
+  bu_dir(B_CONFIG, NULL); /* returns a read/write config dir, e.g., ~/.brlcad */
+
+* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
+  that currently rely on it to take that path as a parameter from the
+  calling application.  The library shouldn't be responsible for managing
+  that path - there are too many issues with doing so.  The current approach
+  fixes some concerns but breaks if an application changes its notion of
+  the current working directory after initialization, for example.
+
+* make the idents command not list subtracted objects by default,
+  optionally list everything
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
@@ -114,6 +184,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   to Priit Laes' work a couple years ago (see brlcad-devel mailing
   list, he converted our tools to FFTW but license was not
   compatible), we need to replace and test performance via dfft.
+  May also be worth looking at https://github.com/anthonix/ffts (has
+  a CMakeified version at https://github.com/henrygouk/ffts)
 
 * update the rt* manual pages to note that they can all write out to
   various image formats like png just by specifying an output file
@@ -440,13 +512,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   is causing ipathpos to get incremented to a number larger than the
   number of objects in the full path it's supposed to be referencing.
 
-* Need to eliminate bu_argv0_full_path and rework the bu_brlcad_* functions
-  that currently rely on it to take that path as a parameter from the
-  calling application.  The library shouldn't be responsible for managing
-  that path - there are too many issues with doing so.  The current approach
-  fixes some concerns but breaks if an application changes its notion of
-  the current working directory after initialization, for example.
-
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
@@ -592,15 +657,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * make libbn/plot3.c functions parallel-safe so callers do not have to
   manually wrap with bu_semaphore_acquire().
-
-* implement a "bu_locate" function to consolidate bu_brlcad_root,
-  bu_brlcad_data, and bu_brlcad_dir.  Pass in a bu_locate_t enum,
-  the relative path, and the log/no-log flag.  Intent is to support
-  flexibility implied by presence of BIN_DIR, LIB_DIR, etc. build
-  settings.  Will need great care to ensure correct behavior is
-  preserved - bu_brlcad_root and bu_brlcad_data will need verbose
-  deprecation process, once bu_locate is implemented.  Also will
-  need matching tcl function.
 
 * rendering of the 'part' primitive is wrong for cases where H is less
   than r1 (i.e., smaller cap is partially or fully within the larger
@@ -1024,7 +1080,8 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   format if you concatenated N bw image slices into one file.  for a
   2x2 example, position=>coordinate: 0=>0,0,0; 1=>1,0,0; 2=>0,1,0;
   3=>1,1,0; 4=>0,0,1; 5=>1,0,1; 6=>0,1,1; 7=>1,1,1. See
-  http://support.echoview.com/WebHelp/Reference/File_formats/Export_file_formats/Volume_data_set_file_formats.htm
+  http://support.echoview.com/WebHelp/Reference/File_formats/
+    Export_file_formats/Volume_data_set_file_formats.htm
 
 * turn geometry converters and image converters into libraries
   (started as libraries libgcv and libicv)
@@ -1037,7 +1094,10 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * testing suite for all binaries:
 
-     for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat | perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; do echo command: $cmd2 ; done
+     for cmd2 in $(for cmd in `find . -name Makefile.am | xargs cat |\
+       perl -pi -e 's/\\\\\n//g'| grep -E "PROGRAMS ?=" | \
+       sed 's/.*=//g'` ; do echo $cmd ; done | sort | uniq ) ; \
+       do echo command: $cmd2 ; done
 
 * add geometry example of building 238
 
@@ -1096,28 +1156,29 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * add support for filesystem-based geometry collections
 
-* design plugin system to allow domain specific tools (say, for example,
-  a tool to create propeller parts) to identify themselves and their
-  features to BRL-CAD, and to allow BRL-CAD to incorporate those features
-  as an integrated part of interaction environments.
+* design plugin system to allow domain specific tools (say, for
+  example, a tool to create propeller parts) to identify themselves
+  and their features to BRL-CAD, and to allow BRL-CAD to incorporate
+  those features as an integrated part of interaction environments.
 
 * see if it is possible to use tec/ehy primitives to create a proc-db
-  for airfoil/wing shapes.  Interesting possibilities with boolean combinations
-  of these primitives, provided their continuity at the ends ensures
-  continuity all along "seams" - something to consider.
+  for airfoil/wing shapes.  Interesting possibilities with boolean
+  combinations of these primitives, provided their continuity at the
+  ends ensures continuity all along "seams" - something to consider.
 
-* incorporate some variety of spatial partitioning into the facetize command
-  (may involve just rewriting it) to try and realize MUCH faster tessellation
-  of CSG geometry.  Current routines are doing a lot of unnecessary work that
-  tends to result in explosive completion times for worst-case scenarios -
-  try to get closer to the "only do the work we need to" ideal.  Once a new
-  idea is proven in that command, it should be made into a libgcv routine
-  and converters/other commands retargeted to use it.
+* incorporate some variety of spatial partitioning into the facetize
+  command (may involve just rewriting it) to try and realize MUCH
+  faster tessellation of CSG geometry.  Current routines are doing a
+  lot of unnecessary work that tends to result in explosive completion
+  times for worst-case scenarios - try to get closer to the "only do
+  the work we need to" ideal.  Once a new idea is proven in that
+  command, it should be made into a libgcv routine and
+  converters/other commands retargeted to use it.
 
-* look into embedding both rgb[3] and complex[n] data types in a union to
-  allow unification of libmultispectral and liboptical APIs to a single
-  more general liboptical.  Need to be careful about performance and
-  maintainability concerns.
+* look into embedding both rgb[3] and complex[n] data types in a union
+  to allow unification of libmultispectral and liboptical APIs to a
+  single more general liboptical.  Need to be careful about
+  performance and maintainability concerns.
 
 * we need to define a libbu api for option handling that supports more
   features than getopt:
@@ -1126,42 +1187,45 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
     and -C)
 
   - need a way to consolidate documentation for options into one place
-    (DRY) that supports all of our various documentation styles.  Discussed
-    with Sean in the past - initial thoughts:
+    (DRY) that supports all of our various documentation styles.
+    Discussed with Sean in the past - initial thoughts:
 
-    + should be in C code - will be needed there, and easier to get it from
-      there to other formats than vice versa.
+    + should be in C code - will be needed there, and easier to get it
+      from there to other formats than vice versa.
 
-    + should support printing out the options and documentation in formatted
-      structures that allow our build system to build the command and have
-      the command itself supply a generated snippit of text or markup that
-      could be incorporated into the final document - e.g. the DocBook
-      man page for a command would be set up to expect the <command>_options.xml
-      file generated by <command> --print-options DocBook (or some other
-      mechanism, that's just an idea) and the CMake build could first build and
-      then run the command at compilation time to provide the absolute most
-      current option listing and short descriptions for the other docs.
+    + should support printing out the options and documentation in
+      formatted structures that allow our build system to build the
+      command and have the command itself supply a generated snippit
+      of text or markup that could be incorporated into the final
+      document - e.g. the DocBook man page for a command would be set
+      up to expect the <command>_options.xml file generated by
+      <command> --print-options DocBook (or some other mechanism,
+      that's just an idea) and the CMake build could first build and
+      then run the command at compilation time to provide the absolute
+      most current option listing and short descriptions for the other
+      docs.
 
-  - need to allow order dependent options (e.g. <command> inputfile outputfile)
-    that become order independent if enough information is available, e.g. the
-    above would work and <command> <opt1> -i inputfile <opt2> -o outputfile <opt3>
-    would also work.
+  - need to allow order dependent options (e.g. <command> inputfile
+    outputfile) that become order independent if enough information is
+    available, e.g. the above would work and <command> <opt1> -i
+    inputfile <opt2> -o outputfile <opt3> would also work.
 
-  - (maybe) incorporate some sort of sanity/bounds checking into the option
-    definitions API - i.e. in the C definition of an option, there could
-    be optional parameters to indicate the type and bounds of valid input
-    to that option.  Won't always be possible, but may be a good feature
-    to have if it can save lots of repetitive coding of bounds checking in
-    programs.
+  - (maybe) incorporate some sort of sanity/bounds checking into the
+    option definitions API - i.e. in the C definition of an option,
+    there could be optional parameters to indicate the type and bounds
+    of valid input to that option.  Won't always be possible, but may
+    be a good feature to have if it can save lots of repetitive coding
+    of bounds checking in programs.
 
-  *might* be worth taking a look at http://rpm5.org/files/popt/ to see if
-  they have any code we could snarf to make life easier, but regardless
-  we need a libbu API on top of any other code - at such a core level,
-  we can't introduce an external API.
+  *might* be worth taking a look at http://rpm5.org/files/popt/ to see
+  if they have any code we could snarf to make life easier, but
+  regardless we need a libbu API on top of any other code - at such a
+  core level, we can't introduce an external API.
 
 * investigate the libngpcore and libngput libraries from the ngPlant
   project as a possible means of procedurally generating plant models
-  in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
+  in BRL-CAD (libraries are BSD licensed:
+  http://ngplant.sourceforge.net)
 
 
 
@@ -1275,7 +1339,9 @@ LIBGED
 * implement oed+tra/sca/rot functionality consistently in libged as
   translate/scale/rotate with a signature similar to:
 
-  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:{object_name} | {3d position}] [--relative xdist [ydist [zdist]] | --absolute xpos [ypos [zpos]]] object_name(s)
+  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:\
+    {object_name} | {3d position}] [--relative xdist [ydist [zdist]] \
+    | --absolute xpos [ypos [zpos]]] object_name(s)
 
   where 'oed' is basically converted into the --keypoint option and
   object(s) to work on.
@@ -1319,8 +1385,8 @@ LIBGED
 * option to mged make command or new command that enters solid edit
   mode, "med", "smake", "makes", "msed", etc.  same for cp command.
 
-* add per-face analysis of primitives like tgc, arb to their respective
-  analyze commands in libged
+* add per-face analysis of primitives like tgc, arb to their
+  respective analyze commands in libged
 
 * refactor .density file and density database reading code in files
   src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
@@ -1391,7 +1457,7 @@ ATTRIBUTES
   command when new attribute attributes are added (e.g., creation
   date)
 
-* binary attributes, see binary-incompatible section for details.
+* binary attributes, see backwards-incompatible section for details.
 
 
 NEW OBJECTS
@@ -1493,7 +1559,8 @@ NEW OBJECTS
        font size (height)
        font style: bold/italic/regular
        font color
-       justification: left, center, right, bottom, middle, top  (combineable options, e.g., "top left")
+       justification: left, center, right, bottom, middle, top
+         (combineable options, e.g., "top left")
        placement: default, above, below, inline, interior, exterior
 
   Line properties:
@@ -1515,7 +1582,8 @@ NEW OBJECTS
        alignment: to datum (plane or axis) or to view
        draw bounding plane
        draw target axes at uv offset position
-       draw feature control frame  (characteristic tolerances in symbolic form: www.draftingzone.com/shoppingzone/6-1.pdf)
+       draw feature control frame (characteristic tolerances in
+         symbolic form: www.draftingzone.com/shoppingzone/6-1.pdf)
        3d thickness
 
 * offset surfaces.  provide feature edit operation to create a solid
@@ -1576,7 +1644,7 @@ NEW OBJECTS
   material object name.  material object encompasses hierarchical
   material traits.  some traits potentially of interest:
     - density
-    - young modulus
+    - Young's modulus
     - yield strength (in different dirs, e.g., rolling & transversal)
     - ultimate tensile strength (also in different dirs)
     - Poisson's ratio
@@ -1705,10 +1773,14 @@ missing on Windows due to needing lex.
 CONVERTERS
 ----------
 
+* compare libIGES (lgpl, https://github.com/cbernardo/libIGES) as
+  potential replacement for our compelx IGES conversion logic.
+  appropriate time for review when IGES gets added to libGCV.
+
 * investigate the asset import library (assimp.sf.net) to see whether
   we can replace a lot (but probably not all) of our bot-centric
-  importers/exports (ply, obj, stl, etc.) with the assimp library
-  to save us the time/effort of supporting those parser ourselves.
+  importers/exports (ply, obj, stl, etc.) with the assimp library to
+  save us the time/effort of supporting those parser ourselves.
 
 * make the converters export all top-level objects by default
 
@@ -1717,13 +1789,15 @@ CONVERTERS
 * validate primitives during export so that it is guaranteed that
   illegal primitives will not be written to file
 
-* add csv, xml, nff, bzw, pov, blend geometry import and export support
+* add csv, xml, nff, bzw, pov, blend geometry import and export
+  support
 
 * finish obj-g importer.  need to test more inputs and make sure all
   geometry is preserved on import in some form.  make sure new libobj
   parser works and is integrated with new front-end.
 
-* implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT options)
+* implement a g-step exporter (with NURBS, implicit CSG, and NMG/BoT
+  options)
 
 * implement a g-dae (Collada) exporter and dae-g importer
   http://en.wikipedia.org/wiki/Collada
@@ -1829,9 +1903,10 @@ BREP/NURBS
 
 * update to openNURBS 5.0 (2011-02-02)
 
-* identify useful concepts implemented in the old NURBS code that are not
-  present in openNURBS, and port that code to openNURBS data structures
-  and routines.  This will eventually allow us to remove the old NURBS code.
+* identify useful concepts implemented in the old NURBS code that are
+  not present in openNURBS, and port that code to openNURBS data
+  structures and routines.  This will eventually allow us to remove
+  the old NURBS code.
 
 * document the new NURBS/BREP primitive, capabilities and limitations
 
@@ -1898,9 +1973,9 @@ RTGL
 Need before enabling:
 
 Blasting havoc_tail when raytracing havoc doesn't result in a re-set
-of the raytracing - it just re-sizes the view to havoc_tail and continues
-with the original raytrace.  Track down why - should clear everything
-and start over.  (Appears on Linux, not on OSX).
+of the raytracing - it just re-sizes the view to havoc_tail and
+continues with the original raytrace.  Track down why - should clear
+everything and start over.  (Appears on Linux, not on OSX).
 
 Need general robustness testing - ensure no crashes when switching
 display manager types multiple times in multiple locations.
@@ -1909,11 +1984,11 @@ For cleanup:
 
 Move pattern raytracing logic into librt.
 
-Need a way to cache point data so we don't re-raytrace unchanged geometry
-over and over.
+Need a way to cache point data so we don't re-raytrace unchanged
+geometry over and over.
 
-Job server should be reworked into a general mechanism, instead of being
-rtgl specific.
+Job server should be reworked into a general mechanism, instead of
+being rtgl specific.
 
 Provide a generic mechanism in MGED run loop to hook in features like
 point cloud rendering, instead of hard-coding it.
@@ -1997,8 +2072,8 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 
 * remove the hf primitive
 
-* support for features either as primitives or operations or both
-  e.g. chamfer, fillet, round, cut, etc.
+* support for features either as primitives or operations or both,
+  e.g., chamfer, fillet, round, cut, etc.
 
 * a cut feature edit.  implementation could be represented as the cube
   that bounds a geometry object.  eight points somewhere on the edges
@@ -2024,7 +2099,7 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
 * see the CHANGES file for items that have been marked as deprecated
   or available to be removed as obsolete items.
 
-* make struct rt_functab's ft_label bigger and/or dynamic (e.g. vls)
+* make struct rt_functab's ft_label bigger and/or dynamic (e.g., vls)
 
 * remove the storage of the never-implemented keypoint parameter for
   extrude objects.
@@ -2042,12 +2117,19 @@ THESE BREAK PROTOCOL OR ARE BACKWARDS-INCOMPATIBLE
   import/export can be performed without relying on minor_type hacks
   in the API.
 
-* implement support for binary attributes.  the idea is to allow
-  arrays of {u,s}int{8,16,32,64}, float, double, and strings, typed as
-  such when written out to storage.  this idea overlaps with what
-  binunif objects provide, so need to reconcile and consolidate into
-  one attribute object entity that can do everything a binunif can do,
-  then allow attributes on objects to provide that same flexibility.
+* implement support for binary attributes.  the general idea is to
+  allow collections of (at a minimum) 64-bit integer, 64-bit floating
+  point, and strings.  the type needs to be encoded when written out
+  to storage.  there is high-desirability towards using a binary
+  encoding format already defined and in popular use like BSON,
+  UBJSON, or CBOR.
+
+  It's highly likely that binary attributes can be implemented in a
+  backwards-compatible manner.  The v5 spec separately tracks the size
+  of attributes and objects from the size of the strings that are
+  serialized out into them.  It may be possible to store a
+  shortened/empty string, but record a larger attribute/object size,
+  allowing for binary data beyond the attribute value '\0' termination.
 
 * change format of related programs (especially filters) so the
   input/output files are handled identically. two examples of
@@ -2263,9 +2345,9 @@ DOCUMENTATION
 * write up some documentation on other build tools besides make -
   CMake supports other generators, wouldn't hurt to detail how to
   trigger builds in them (MSVC is partially covered, make sure to
-  coverage is complete - others include Eclipse, XCode once we get
-  the kinks ironed out there, CodeBlocks.  New experimental ninja
-  build tool and its (also experimental) CMake support are promising -
+  coverage is complete - others include Eclipse, XCode once we get the
+  kinks ironed out there, CodeBlocks.  New experimental ninja build
+  tool and its (also experimental) CMake support are promising -
   if/when CMake support goes mainstream, document that too.)
 
 * all of the rt* tracers share common code and common options, but do

@@ -839,7 +839,7 @@ int OctNode< NodeData >::CompareByDepthAndXYZ( const void* v1 , const void* v2 )
 	return 0;
 }
 
-long long _InterleaveBits( int p[3] )
+inline long long _InterleaveBits( int p[3] )
 {
 	long long key = 0;
 	for( int i=0 ; i<32 ; i++ ) key |= ( ( p[0] & (1<<i) )<<(2*i) ) | ( ( p[1] & (1<<i) )<<(2*i+1) ) | ( ( p[2] & (1<<i) )<<(2*i+2) );

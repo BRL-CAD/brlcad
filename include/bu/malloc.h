@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -83,6 +83,15 @@ BU_EXPORT extern void bu_free(void *ptr,
 BU_EXPORT extern void *bu_realloc(void *ptr,
 				     size_t siz,
 				     const char *str);
+
+/**
+ * overflow checking version of realloc for arrays, based on OpenBSD's
+ * reallocarray.
+ */
+BU_EXPORT extern void *bu_reallocarray(void *optr,
+                                       size_t nmemb,
+				       size_t size,
+				       const char *str);
 
 /**
  * Print map of memory currently in use.
@@ -176,7 +185,12 @@ BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
  * Memory pools. To be used when you need to dynamically allocate
  * lots of small elements which will all be freed at the same time.
  */
-struct bu_pool;
+struct bu_pool
+{
+    size_t block_size;
+    size_t block_pos, alloc_size;
+    uint8_t *block;
+};
 
 BU_EXPORT extern struct bu_pool *bu_pool_create(size_t block_size);
 

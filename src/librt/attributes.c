@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -422,7 +422,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     bu_vls_free(&units);
     bu_avs_free(&avs);
 
-    /* protect from loosing memory and from freeing what we are
+    /* protect from losing memory and from freeing what we are
        about to dup */
     if (dbip->dbi_title) {
 	old_title = dbip->dbi_title;

@@ -1,7 +1,7 @@
 /*                      G C V _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv_util.h
+/** @file gcv/util.h
  *
  * Utility functions provided by the LIBGCV geometry conversion
  * library.
@@ -37,6 +37,25 @@
 __BEGIN_DECLS
 
 
+/*
+ * Tessellate the object at the specified path.
+ */
+struct rt_bot_internal *gcv_facetize(struct db_i *db, const struct db_full_path *path, const struct bn_tol *tol, const struct rt_tess_tol *tess_tol);
+
+
+/*
+ * Topological test for determining whether the given BoT satisfies
+ * the conditions for solidity.
+ *
+ * Equivalent to bot_is_closed_fan() && bot_is_orientable()
+ */
+GCV_EXPORT extern int gcv_bot_is_solid(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_closed_fan(const struct rt_bot_internal *bot);
+
+GCV_EXPORT extern int gcv_bot_is_orientable(const struct rt_bot_internal *bot);
+
+
 /**
  * write_region is a function pointer to a routine that will
  * write out the region in a given file format.
@@ -50,6 +69,8 @@ struct gcv_region_end_data
 };
 
 /**
+ * Perform Boolean evaluation on a tree of tessellated leaf nodes.
+ *
  * Usually specified as the db_walk_tree() region_end callback,
  * calling this routine for each positive region encountered.
  *

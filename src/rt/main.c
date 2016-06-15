@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United  States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include <signal.h>
 #include <math.h>
 
+#include "bu/endian.h"
 #include "bu/getopt.h"
 #include "bu/bitv.h"
 #include "bu/debug.h"
@@ -301,6 +302,25 @@ int main(int argc, const char **argv)
 	bu_log("%s: no objects specified -- raytrace aborted\n", argv[0]);
 	return 1;
     }
+
+#ifdef USE_OPENCL
+     if (opencl_mode) {
+	struct bu_vls str = BU_VLS_INIT_ZERO;
+
+	 bu_vls_strcat(&str, "\ncompiling OpenCL programs... ");
+	 bu_log("%s\n", bu_vls_addr(&str));
+	 bu_vls_free(&str);
+
+	 rt_prep_timer();
+
+	 clt_init();
+
+	 (void)rt_get_timer(&times, NULL);
+	 if (rt_verbosity & VERBOSE_STATS)
+	     bu_log("OCLINIT: %s\n", bu_vls_addr(&times));
+	 bu_vls_free(&times);
+     }
+#endif
 
     /* Echo back the command line arguments as given, in 3 Tcl commands */
     if (rt_verbosity & VERBOSE_MODELTITLE) {

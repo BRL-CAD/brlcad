@@ -1,7 +1,7 @@
 /*                          N M G . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -99,7 +99,7 @@ struct hitmiss {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS(hm) BU_IGNORE((hm))
+#  define NMG_CK_HITMISS(hm) (void)(hm)
 #else
 #  define NMG_CK_HITMISS(hm) \
     {\
@@ -127,7 +127,7 @@ struct hitmiss {
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define NMG_CK_HITMISS_LISTS(rd) BU_IGNORE((rd))
+#  define NMG_CK_HITMISS_LISTS(rd) (void)(rd)
 #else
 #  define NMG_CK_HITMISS_LISTS(rd) \
     { \
@@ -228,7 +228,7 @@ struct ray_data {
 
 
 #ifdef NO_BOMBING_MACROS
-#  define nmg_bu_bomb(rd, str) BU_IGNORE((rd))
+#  define nmg_bu_bomb(rd, str) (void)(rd)
 #else
 #  define nmg_bu_bomb(rd, str) { \
         bu_log("%s", str); \

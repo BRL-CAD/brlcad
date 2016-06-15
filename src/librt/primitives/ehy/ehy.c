@@ -1,7 +1,7 @@
 /*                           E H Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -190,7 +190,7 @@ static int ehy_is_valid(struct rt_ehy_internal *ehy);
 
 #ifdef USE_OPENCL
 /* largest data members first */
-struct ehy_shot_specific {
+struct clt_ehy_specific {
     cl_double ehy_V[3];		/* vector to ehy origin */
     cl_double ehy_Hunit[3];	/* unit H vector */
     cl_double ehy_SoR[16];	/* Scale(Rot(vect)) */
@@ -199,26 +199,23 @@ struct ehy_shot_specific {
 };
 
 size_t
-clt_ehy_length(struct soltab *stp)
-{
-    (void)stp;
-    return sizeof(struct ehy_shot_specific);
-}
-
-void
-clt_ehy_pack(void *dst, struct soltab *src)
+clt_ehy_pack(struct bu_pool *pool, struct soltab *stp)
 {
     struct ehy_specific *ehy =
-        (struct ehy_specific *)src->st_specific;
-    struct ehy_shot_specific *args =
-        (struct ehy_shot_specific *)dst;
+        (struct ehy_specific *)stp->st_specific;
+    struct clt_ehy_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ehy_specific*)bu_pool_alloc(pool, 1, size);
 
     VMOVE(args->ehy_V, ehy->ehy_V);
     VMOVE(args->ehy_Hunit, ehy->ehy_Hunit);
     MAT_COPY(args->ehy_SoR, ehy->ehy_SoR);
     MAT_COPY(args->ehy_invRoS, ehy->ehy_invRoS);
     args->ehy_cprime = ehy->ehy_cprime;
+    return size;
 }
+
 #endif /* USE_OPENCL */
 
 

@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -929,75 +929,6 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
 }
 
 
-/*
- * Overriding ON_BrepFace::Reverse(int dir) from OpenNURBS minimal change to duplicate original surface
- * no matter the surface use count.
- */
-ON_BOOL32 ON_BrepFace::Reverse(int dir)
-{
-    if (dir < 0 || dir > 1 || 0 == m_brep)
-	return false;
-    ON_Surface* srf = const_cast<ON_Surface*>(SurfaceOf());
-    if (!srf)
-	return false;
-    ON_Interval dom0 = srf->Domain(dir);
-    if (!dom0.IsIncreasing())
-	return false;
-
-// 2/18/03 GBA.  Destroy surface cache on face.
-    DestroyRuntimeCache(true);
-// keith - commenting out check on surface use count
-// want to duplicate surface regardless
-//    if (m_brep->SurfaceUseCount(m_si, 2) > 1) {
-	srf = srf->DuplicateSurface();
-	m_si = m_brep->AddSurface(srf);
-	SetProxySurface(srf);
-// keith
-//    }
-
-    if (!srf->Reverse(dir))
-	return false;
-
-    ON_Interval dom1 = dom0;
-    dom1.Reverse();
-    if (dom1 != srf->Domain(dir)) {
-	srf->SetDomain(dir, dom1);
-	dom1 = srf->Domain(dir);
-    }
-
-    // adjust location of 2d trim curves
-    ON_Xform xform(1);
-    xform.IntervalChange(dir, dom0, ON_Interval(dom1[1], dom1[0]));
-    TransformTrim(xform);
-
-    // reverse loop orientations.
-    int fli;
-    for (fli = 0; fli < m_li.Count(); fli++) {
-	ON_BrepLoop* loop = m_brep->Loop(m_li[fli]);
-	if (loop)
-	    m_brep->FlipLoop(*loop);
-    }
-
-    m_bRev = m_bRev ? false : true;
-
-    if (m_brep->m_is_solid == 1 || m_brep->m_is_solid == 2)
-	m_brep->m_is_solid = 0;
-
-    // Greg Arden 10 April 2003.  Fix TRR#9624.
-    // Update analysis and render meshes.
-    if (m_render_mesh) {
-	m_render_mesh->ReverseSurfaceParameters(dir);
-	m_render_mesh->ReverseTextureCoordinates(dir);
-    }
-    if (m_analysis_mesh) {
-	m_analysis_mesh->ReverseSurfaceParameters(dir);
-	m_analysis_mesh->ReverseTextureCoordinates(dir);
-    }
-
-    return true;
-}
-
-
 void
 FaceSurface::AddFace(ON_Brep *brep)
 {
@@ -1535,19 +1466,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	curve_pullback_samples.push_back(data);
 	if (!orientWithCurve) {
 	    list<ON_2dPointArray *>::iterator si;
-	    si = data->segments.begin();
+	    si = data->segments->begin();
 	    list<ON_2dPointArray *> rsegs;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		samples->Reverse();
 		rsegs.push_front(samples);
 		si++;
 	    }
-	    data->segments.clear();
+	    data->segments->clear();
 	    si = rsegs.begin();
 	    while (si != rsegs.end()) {
 		ON_2dPointArray *samples = (*si);
-		data->segments.push_back(samples);
+		data->segments->push_back(samples);
 		si++;
 	    }
 	    rsegs.clear();
@@ -1583,18 +1514,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	data = (*cs);
 	list<ON_2dPointArray *>::iterator si;
-	si = data->segments.begin();
+	si = data->segments->begin();
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
-	nsi = ndata->segments.begin();
+	nsi = ndata->segments->begin();
 	ON_2dPointArray *nsamples = (*nsi);
 
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    nsi = si;
 	    nsi++;
-	    if (nsi == data->segments.end()) {
+	    if (nsi == data->segments->end()) {
 		PBCData *nsidata = (*next_cs);
-		nsi = nsidata->segments.begin();
+		nsi = nsidata->segments->begin();
 	    }
 	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
@@ -1751,9 +1682,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
     while (!curve_pullback_samples.empty()) {
 	data = curve_pullback_samples.front();
-	while (!data->segments.empty()) {
-	    delete data->segments.front();
-	    data->segments.pop_front();
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
 	}
 	delete data;
 	curve_pullback_samples.pop_front();

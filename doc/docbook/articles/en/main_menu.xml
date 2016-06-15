@@ -720,7 +720,7 @@
 </listitem>
       <listitem>
       <para>
-        <link xlink:href="../../articles/en/projection_shader.php#">Projection Shader</link>
+        <link xlink:href="../../articles/en/projection_shader.php">Projection Shader</link>
       </para>
       <itemizedlist>
       <listitem>
@@ -874,7 +874,7 @@
         </listitem>
     <listitem>
       <para>
-      <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#1">BRL-CAD Tutorial Series-VolumeII</link>
+      <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">BRL-CAD Tutorial Series-VolumeII</link>
       </para>
       <itemizedlist>
         <listitem>
@@ -889,7 +889,7 @@
         </listitem>
         <listitem>
           <para>
-          <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#2">Creating Primitive Shapes</link>
+          <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-1">Creating Primitive Shapes</link>
           </para>
           <itemizedlist>
             <listitem>
@@ -991,7 +991,7 @@
         </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#3"> Learning the Viewing Options</link>
+        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-2"> Learning the Viewing Options</link>
         </para>
       <itemizedlist>
       <listitem>
@@ -1038,7 +1038,7 @@
       </listitem>
       <listitem>
         <para>
-        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#4">Command to Size and Place Shapes</link>
+        <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lessons-3">Using the Insert Command to Size and Place Shapes</link>
         </para>
        <itemizedlist>
       <listitem>
@@ -1089,7 +1089,7 @@
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Assigning Material Properties and Raytracing</link>
+<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-4">Assigning Material Properties and Raytracing</link>
 </para>
 <itemizedlist>
 <listitem>
@@ -1136,7 +1136,7 @@
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Learning About Boolean Expressions">Learning About Boolean Expressions</link>
+<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-5">Learning About Boolean Expressions</link>
 </para>
 <itemizedlist>
 <listitem>
@@ -1159,16 +1159,11 @@
 <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#learning_boolean_operations_review">Review</link>
 </para>
 </listitem>
-<listitem>
-<para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#learning_boolean_operations_review">Review</link>
-</para>
-</listitem>
 </itemizedlist>
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Creating a Goblet</link>
+<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-6">Creating a Goblet</link>
 </para>
 <itemizedlist>
 <listitem>
@@ -1210,7 +1205,7 @@
 </listitem>
 <listitem>
 <para>
-<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php"> Assigning Material Properties to Your Goblet</link>
+<link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-8"> Assigning Material Properties to Your Goblet</link>
 </para>
 <itemizedlist>
   <listitem>
@@ -1242,7 +1237,7 @@
 </listitem>
 <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Assigning More Material Properties to Your Goblet</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson">Assigning More Material Properties to Your Goblet</link>
   </para>
 <itemizedlist>
 <listitem>
@@ -1284,7 +1279,7 @@
  <itemizedlist>
   <listitem>
 <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Creating a Globe in a Display Box</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-9">Creating a Globe in a Display Box</link>
   </para>
 </listitem>
   <listitem>
@@ -1326,7 +1321,7 @@
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Refining the Mug</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-11">Refining the Mug</link>
   </para>
   <itemizedlist>
   <listitem>
@@ -1368,7 +1363,7 @@
 </listitem>
   <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Creating the Mug Through the GUI</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-12">Creating the Mug Through the GUI</link>
   </para>
   <itemizedlist>
   <listitem>
@@ -1400,59 +1395,7 @@
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Creating the Mug Through the GUI</link>
-  </para>
-  <itemizedlist>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_create_body">Mug gui create body</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_create_handle">Mug gui create handle</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_create_rim">Mug gui create rim</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_create_combinations">Mug gui create combinations</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_make_region">Mug gui make region</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_check_tree">Mug gui check tree</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_comb_edit_props">Mug gui comb edit props</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_gui_raytracing">Mug gui raytracing</link>
-  </para>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#mug_through_gui_review">Mug through gui review</link>
-  </para>
-</listitem>
-  </itemizedlist>
-</listitem>
-   <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Placing Shapes in 3-D Space</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-13">Placing Shapes in 3-D Space</link>
   </para>
   <itemizedlist>
    <listitem>
@@ -1504,7 +1447,7 @@
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Gaining More Practice Placing Shapes in Space</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-14">Gaining More Practice Placing Shapes in Space</link>
   </para>
   <itemizedlist>
    <listitem>
@@ -1556,7 +1499,7 @@
 </listitem>
    <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php">Creating a Toy Truck</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-15">Creating a Toy Truck</link>
   </para>
   <itemizedlist>
    <listitem>
@@ -1659,7 +1602,7 @@
 </listitem>
  <listitem>
   <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php"> Learning Modeling Techniques and Structures</link>
+  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeII.php#Lesson-16"> Learning Modeling Techniques and Structures</link>
   </para>
   <itemizedlist>
    <listitem>
@@ -1966,11 +1909,6 @@
   <listitem>
   <para>
   <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Unigraphics_Format">Converting From Unigraphics Format</link>
-  </para>
-  </listitem>
-  <listitem>
-  <para>
-  <link xlink:href="../../books/en/BRL-CAD_Tutorial_Series-VolumeIV.php#Converting_From_Viewpoint_Datalabs_Format">Converting From Viewpoint Datalabs Format</link>
   </para>
   </listitem>
   <listitem>
@@ -3294,11 +3232,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/fb-orle.php">Fb Orle</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/fb-pix.php">Fb pix</link>
       </para>
     </listitem>
@@ -3545,16 +3478,6 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/orle-fb.php">Orle Fb</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/orle-pix.php">Orle Pix</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
         <link xlink:href="../../man1/en/patch-g.php">Patch G</link>
       </para>
     </listitem>
@@ -3696,11 +3619,6 @@
     <listitem>
       <para>
         <link xlink:href="../../man1/en/pixmorph.php">Pix Morph</link>
-      </para>
-    </listitem>
-    <listitem>
-      <para>
-        <link xlink:href="../../man1/en/pix-orle.php">Pix orle</link>
       </para>
     </listitem>
     <listitem>
@@ -4050,7 +3968,7 @@
     </listitem>
     <listitem>
       <para>
-        <link xlink:href="../../man1/en/terrain.php">Terrian</link>
+        <link xlink:href="../../man1/en/terrain.php">Terrain</link>
       </para>
     </listitem>
     <listitem>

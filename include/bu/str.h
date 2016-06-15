@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -237,16 +237,35 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
  */
 BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
+
 /** @brief Routines for checking ctypes. */
+
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
+
+/** @brief routines for parsing boolean values from strings */
+
 /**
- * Get the current operating host's name.  This is usually also the
- * network name of the current host.  The name is written into the
- * provided hostname buffer of at least len size.  The hostname is
- * always null-terminated and should be sized accordingly.
+ * Returns truthfully if a given input string represents an
+ * "affirmative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.  Strings that strongly indicate true return as 1, other
+ * values still return as true but may be a value greater than 1.
  */
-BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
+BU_EXPORT extern int bu_str_true(const char *str);
+
+/**
+ * Returns truthfully if a given input string represents a
+ * "negative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as true.  Any other input value returns as
+ * false.
+ */
+BU_EXPORT extern int bu_str_false(const char *str);
+
 
 /** @brief Functions related to argv processing. */
 

@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2014 United States Government as represented by
+# Copyright (c) 2002-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1828,6 +1828,8 @@ package provide Archer 1.0
 	set mGridAnchor "$X $Y $Z"
 	set mGridRh [expr {$sf * $mGridRh}]
 	set mGridRv [expr {$sf * $mGridRv}]
+	set mGridRhPref $mGridRh
+	set mGridRvPref $mGridRv
 
 	if {[info exists itk_component(sketchView)]} {
 	    $itk_component(sketchView) configure -units $mDbUnits

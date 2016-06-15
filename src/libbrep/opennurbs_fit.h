@@ -39,11 +39,18 @@
 #ifndef LIBBREP_OPENNURBS_FIT_H
 #define LIBBREP_OPENNURBS_FIT_H
 
-#include "opennurbs.h"
+#include "common.h"
+
+/* system headers */
 #include <vector>
 #include <list>
 #include <map>
-#include <stdio.h>
+
+/* library headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+#include "opennurbs.h"
+
 
 #if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ < 6) && !defined(__clang__)
 #  pragma message "Disabling GCC shadow warnings via pragma due to Eigen headers..."

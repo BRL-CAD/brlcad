@@ -20,9 +20,6 @@ if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLC
   # Wordpress
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/wordpress.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/wordpress.xsl)
-  #ppt
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/presentation.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/presentation.xsl)
 endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products
@@ -67,8 +64,8 @@ if(BRLCAD_EXTRADOCS_PHP)
 endif(BRLCAD_EXTRADOCS_PHP)
 if(BRLCAD_EXTRADOCS_PPT)
   get_property(BRLCAD_EXTRADOCS_PPT_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PPT_TARGETS)
-  add_custom_target(doc_php DEPENDS ${BRLCAD_EXTRADOCS_PPT_TARGETS})
-  set_target_properties(doc_php PROPERTIES FOLDER "DocBook")
+  add_custom_target(doc_ppt DEPENDS ${BRLCAD_EXTRADOCS_PPT_TARGETS})
+  set_target_properties(doc_ppt PROPERTIES FOLDER "DocBook")
 endif(BRLCAD_EXTRADOCS_PPT)
 if(BRLCAD_EXTRADOCS_MAN)
   get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)

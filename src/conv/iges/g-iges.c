@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -444,7 +444,7 @@ main(int argc, char *argv[])
 static union tree *
 process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_full_path *pathp)
 {
-    union tree *result = NULL;
+    static union tree *result = NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {

@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2856,7 +2856,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	    }
 	    jp->dirs[i].current = hold;
 	    joint_adjust(gedp, jp);
-	    if (f0 < besteval-SQRT_SMALL_FASTF) {
+	    if (besteval - f0 > SQRT_SMALL_FASTF) {
 		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
 				  jp->name, i+3, x0, f0, besteval, besteval-f0);

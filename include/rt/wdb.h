@@ -1,7 +1,7 @@
 /*                          W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,6 @@
 #define RT_WDB_H
 
 #include "common.h"
-
-#include "tcl.h" /* for Tcl_Interp */
 
 #include "vmath.h"
 #include "bu/magic.h"
@@ -71,8 +69,7 @@ struct rt_wdb {
     /* These members are marked for removal */
     struct bu_vls       wdb_name;       /**< @brief  database object name */
     struct bu_observer  wdb_observers;
-    Tcl_Interp *        wdb_interp;
-
+    void *              wdb_interp; /**< @brief Tcl_Interp */
 };
 
 

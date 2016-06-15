@@ -1,7 +1,7 @@
 /*                         P A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include <stddef.h> /* for size_t */
 #include <stdlib.h> /* for getenv */
+#include <limits.h> /* for NAME_MAX */
 
 #ifdef HAVE_DLFCN_H
 #  include <dlfcn.h>   /* for RTLD_* */
@@ -148,20 +149,31 @@ BU_EXPORT extern const char *bu_normalize(const char *path);
  *     /dir1/dir2/file.ext
  */
 typedef enum {
-    PATH_DIRNAME = 0,   /*!< /dir1/dir2 */
+    PATH_ALL = 0,       /*!< full path, sans [mime]: prefix */
+    PATH_DIRNAME,       /*!< /dir1/dir2 */
     PATH_DIRNAME_CORE,  /*!< /dir1/dir2/file */
     PATH_BASENAME,      /*!< file.ext */
     PATH_BASENAME_CORE, /*!< file */
-    PATH_EXTENSION      /*!< ext */
+    PATH_EXTENSION,     /*!< ext */
+    PATH_UNKNOWN        /*!< marks end of path_component_t enums */
 } path_component_t;
-
 
 /**
  * Attempt to extract a component from a file path.
  *
- * returns 0 if the specified component was not found, 1
- * if it was.  If the bu_vls pointer component is not NULL,
- * the component will be written to the vls.
+ * returns 0 if the specified component was not found, 1 if it was.  If the
+ * bu_vls pointer component is not NULL, the component will be written to the
+ * vls.
+ *
+ * bu_path_component will also accept a mime_type_t argument to type and return
+ * the string form of the mime type associated with the file path in component.
+ * The return value will still report success or failure (1/0) - to get the
+ * integer form of the mime type found, use bu_file_mime_int to process
+ * component:
+ *
+ * if (bu_path_component(c, "file.png", (path_component_t)MIME_IMAGE)) {
+ *    mime_image_t t = (mime_image_t)bu_file_mime_int(bu_vls_addr(c));
+ * }
  */
 
 BU_EXPORT extern int bu_path_component(struct bu_vls *component,
@@ -197,7 +209,97 @@ BU_EXPORT extern char **bu_argv_from_path(const char *path, int *ac);
  */
 BU_EXPORT extern int bu_fnmatch(const char *pattern, const char *pathname, int flags);
 
+#if 0
+/* NOTE - the glob API below is a work in progress - until this notice is
+ * removed it should not be consided functional, much less stable! */
+#define BU_GLOB_APPEND     0x0001  /* Append to output from previous call. */
+#define BU_GLOB_ERR        0x0004  /* Return on error. */
+#define BU_GLOB_NOCHECK    0x0010  /* Return pattern itself if nothing matches. */
+#define BU_GLOB_NOSORT     0x0020  /* Don't sort. */
+#define BU_GLOB_NOESCAPE   0x1000  /* Disable backslash escaping. */
 
+#define BU_GLOB_NOSPACE    (-1)    /* Malloc call failed. */
+#define BU_GLOB_ABORTED    (-2)    /* Unignored error. */
+#define BU_GLOB_NOMATCH    (-3)    /* No match and GLOB_NOCHECK not set. */
+#define BU_GLOB_NOSYS      (-4)    /* Function not supported. */
+
+#define BU_GLOB_BRACE      0x0080  /* Expand braces ala csh. */
+#define BU_GLOB_MAGCHAR    0x0100  /* Pattern had globbing characters. */
+#define BU_GLOB_NOMAGIC    0x0200  /* GLOB_NOCHECK without magic chars (csh). */
+#define BU_GLOB_QUOTE      0x0400  /* Quote special chars with \. */
+#define BU_GLOB_LIMIT      0x0800  /* Limit pattern match output to ARG_MAX */
+#define	BU_GLOB_PERIOD	   0x2000  /* Allow metachars to match leading periods. */
+#define	BU_GLOB_NO_DOTDIRS 0x4000  /* Make . and .. vanish from wildcards. */
+#define	BU_GLOB_STAR       0x0040  /* Use glob ** to recurse w */
+#define BU_GLOB_KEEPSTAT   0x8000  /* Retain stat data for paths in gl_statv. */
+
+struct bu_dirent {
+    char *d_name;
+    void *d_data;
+};
+
+struct bu_stat {
+    const char *name;
+    void *s_data;
+};
+
+typedef struct {
+    int gl_pathc;           /* Count of total paths so far. */
+    int gl_matchc;          /* Count of paths matching pattern. */
+    int gl_flags;           /* Copy of flags parameter to glob. */
+    char **gl_pathv;        /* List of paths matching pattern. */
+    struct bu_stat **gl_statv; /* Stat entries corresponding to gl_pathv */
+    /* Optional error handling function. */
+    int (*gl_errfunc)(const char *, int, void *dptr);
+    /* Access methods for glob */
+    void (*gl_closedir)(void *, void *dptr);
+    int (*gl_readdir)(struct bu_dirent *, void *, void *dptr);
+    void *(*gl_opendir)(const char *, void *dptr);
+    int (*gl_lstat)(const char *, struct bu_stat *, void *dptr);
+    int (*gl_stat)(const char *, struct bu_stat *, void *dptr);
+    /* function to expand '~' */
+    int (*e_tilde)(char *, void *dptr);
+    /* Functions that know how to free bu_dirent's d_data slot and bu_stat'a s_data slot. */
+    int (*d_free)(void *data, void *dptr);
+    int (*s_free)(struct bu_stat *, void *dptr);
+    /* Void pointer to allow additional data not explicitly specified in
+     * bu_glob_t to be passed to various functions */
+    void *dptr;
+} bu_glob_t;
+
+/**
+ * bu_glob is a somewhat simplified and abstracted version of glob matching
+ * based on the rules specified in POSIX.2, 3.13.  Unlike operating system
+ * implementations of glob, bu_glob does not provide a default implementation
+ * of file-system-specific functionality and does not use operating system
+ * specific types such as dirent and DIR in its public API.  Some OS
+ * implementations support user specified "alternative" directory functions to
+ * allow glob to work with user-specified filesystems -  in the case of libbu
+ * these functions have been made mandatory instead of optional. *All* callers
+ * *must* supply functions, even if the desired behavior is the "typical"
+ * interaction with the operating system's filesystems.  This separates I/O
+ * logic from the core "globbing" logic.
+ *
+ * In addition to the "usual" callback functions needed by alternative
+ * directory implementations, bu_glob callers must also supply callbacks that
+ * handle the interpretation of special characters such as '~' - while this has
+ * a standard meaning on Unix-style operating systems, that meaning does not
+ * translate directly to (for example) .g database hierarchies.
+ *
+ * Note that by default, a pattern with no matches will return an empty list
+ * rather than the unevaluated wildcard (the current POSIX specified behaviour).
+ */
+BU_EXPORT extern int bu_glob(const char *, int, bu_glob_t *);
+
+/** Free a bu_glob_t structure, including any returned results */
+BU_EXPORT extern void bu_globfree(bu_glob_t *);
+/** @} */
+
+/* Possible TODO - add a bu_fs_glob for portable filesystem globbing (a closer
+ * analogy to the actual system glob) if there is enough need for cross
+ * platform filesystem globbing to warrant it - the primary use case for this
+ * right now is the .g database */
+#endif
 
 /** @} */
 
