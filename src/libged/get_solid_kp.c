@@ -352,6 +352,15 @@ _ged_get_solid_keypoint(struct ged *const gedp,
 		}
 		break;
 	    }
+	case ID_DATUM:
+	    {
+		struct rt_datum_internal *datum =
+		    (struct rt_datum_internal *)ip->idb_ptr;
+		RT_DATUM_CK_MAGIC(datum);
+
+		VMOVE(mpt, datum->pnt);
+		break;
+	    }
 	case ID_NMG:
 	    {
 		struct vertex *v;

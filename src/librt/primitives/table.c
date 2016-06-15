@@ -116,6 +116,7 @@ RT_DECLARE_INTERFACE(constraint);
 /* RT_DECLARE_INTERFACE(binunif); */
 RT_DECLARE_INTERFACE(pnts);
 RT_DECLARE_INTERFACE(hrt);
+RT_DECLARE_INTERFACE(datum);
 
 #if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
@@ -2224,6 +2225,52 @@ const struct rt_functab OBJ[] = {
 	RTFUNCTAB_FUNC_VOLUME_CAST(rt_hrt_volume),
 	RTFUNCTAB_FUNC_SURF_AREA_CAST(rt_hrt_surf_area),
 	RTFUNCTAB_FUNC_CENTROID_CAST(rt_hrt_centroid),
+	NULL,
+	NULL,
+	NULL,
+	NULL
+    },
+
+
+    {
+	/* 44 */
+	RT_FUNCTAB_MAGIC, "ID_DATUM", "datum",
+	1,
+	RTFUNCTAB_FUNC_PREP_CAST(rt_datum_prep),
+	RTFUNCTAB_FUNC_SHOT_CAST(rt_datum_shot),
+	RTFUNCTAB_FUNC_PRINT_CAST(rt_datum_print),
+	RTFUNCTAB_FUNC_NORM_CAST(rt_datum_norm),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_UV_CAST(rt_datum_uv),
+	RTFUNCTAB_FUNC_CURVE_CAST(rt_datum_curve),
+	RTFUNCTAB_FUNC_CLASS_CAST(rt_generic_class),
+	RTFUNCTAB_FUNC_FREE_CAST(rt_datum_free),
+	RTFUNCTAB_FUNC_PLOT_CAST(rt_datum_plot),
+	NULL,
+	NULL, /* vshot */
+	RTFUNCTAB_FUNC_TESS_CAST(rt_datum_tess),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_IMPORT5_CAST(rt_datum_import5),
+	RTFUNCTAB_FUNC_EXPORT5_CAST(rt_datum_export5),
+	NULL,
+	NULL,
+	RTFUNCTAB_FUNC_IFREE_CAST(rt_datum_ifree),
+	RTFUNCTAB_FUNC_DESCRIBE_CAST(rt_datum_describe),
+	RTFUNCTAB_FUNC_XFORM_CAST(rt_generic_xform),
+	NULL, /* parse */
+	sizeof(struct rt_datum_internal),
+	RT_DATUM_INTERNAL_MAGIC,
+	RTFUNCTAB_FUNC_GET_CAST(rt_generic_get),
+	RTFUNCTAB_FUNC_ADJUST_CAST(rt_generic_adjust),
+	RTFUNCTAB_FUNC_FORM_CAST(rt_generic_form),
+	NULL,
+	NULL, /* params */
+	NULL, /* bbox */
+	NULL, /* volume */
+	NULL, /* surface */
+	NULL, /* centroid */
 	NULL,
 	NULL,
 	NULL,
