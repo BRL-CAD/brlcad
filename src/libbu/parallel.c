@@ -340,7 +340,7 @@ bu_avail_cpus(void)
  * thread identifiers and for tracking a thread's parent context.
  */
 static struct parallel_info *
-parallel_mapping(parallel_action_t action, int id, int max)
+parallel_mapping(parallel_action_t action, int id, size_t max)
 {
     /* container for keeping track of recursive invocation data, limits, current values */
     static struct parallel_info mapping[MAX_PSW] = {{0,0,0,0,0}};
@@ -392,9 +392,14 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
     size_t threads = max_threads;
 
     while (1) {
+	if (parent->started < parent->finished) {
+	    bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);
+	    return;
+	}
 	threads = parent->started - parent->finished;
 
-	/* bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished); */
+	/*bu_log("threads=%d (start %d - done %d)\n", threads, parent->started, parent->finished);
+	bu_log("max_threads=%d, throttle: %d\n", max_threads, throttle);*/
 
 	if (threads < max_threads || !throttle) {
 	    return;
@@ -455,14 +460,14 @@ parallel_interface_arg_stub(struct thread_data *user_thread_data)
 
 
 void
-bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
+bu_parallel(void (*func)(int, void *), size_t ncpu, void *arg)
 {
 #ifndef PARALLEL
 
     if (!func)
 	return; /* nothing to do */
 
-    bu_log("bu_parallel(%d., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
+    bu_log("bu_parallel(%zu., %p):  Not compiled for PARALLEL machine, running single-threaded\n", ncpu, arg);
     /* do the work anyways */
     (*func)(0, arg);
 
@@ -470,13 +475,13 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     struct thread_data *thread_context;
     rt_thread_t thread_tbl[MAX_PSW];
-    int avail_cpus = 1;
-    int x;
-    int i;
+    size_t avail_cpus = 1;
+    size_t x;
+    size_t i;
 
     /* number of threads created/ended */
-    int nthreadc;
-    int nthreade;
+    size_t nthreadc;
+    size_t nthreade;
 
     char *libbu_affinity = NULL;
 
@@ -494,10 +499,10 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	return; /* nothing to do */
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	bu_log("bu_parallel(%d, %p)\n", ncpu, arg);
+	bu_log("bu_parallel(%zu, %p)\n", ncpu, arg);
 
     if (ncpu > MAX_PSW) {
-	bu_log("WARNING: bu_parallel() ncpu(%d) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
+	bu_log("WARNING: bu_parallel() ncpu(%zd) > MAX_PSW(%d), adjusting ncpu\n", ncpu, MAX_PSW);
 	ncpu = MAX_PSW;
     }
 
@@ -516,12 +521,12 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	/* otherwise, limit ourselves to what is actually available */
 	avail_cpus = bu_avail_cpus();
 	if (ncpu > avail_cpus) {
-	    bu_log("%d cpus requested, but only %d available\n", ncpu, avail_cpus);
+	    bu_log("%zd cpus requested, but only %d available\n", ncpu, avail_cpus);
 	    ncpu = avail_cpus;
 	}
     }
 
-    parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), (size_t)ncpu);
+    parent = parallel_mapping(PARALLEL_GET, bu_parallel_id(), ncpu);
 
     if (ncpu < 1) {
 	/* want to maximize threading potential, but have to throttle
@@ -531,7 +536,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
 	/* any "zero" limit scopes propagate upward */
 	while (parent->lim == 0 && parent->id > 0) {
-	    parent = parallel_mapping(PARALLEL_GET, parent->parent, (size_t)ncpu);
+	    parent = parallel_mapping(PARALLEL_GET, parent->parent, ncpu);
 	}
 
 	/* if the top-most parent is unspecified, use all available cpus */
@@ -560,7 +565,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     /* Fill in the data of thread_context structures of all threads */
     for (x = 0; x < ncpu; x++) {
-	struct parallel_info *next = parallel_mapping(PARALLEL_GET, -1, (size_t)ncpu);
+	struct parallel_info *next = parallel_mapping(PARALLEL_GET, -1, ncpu);
 
 	thread_context[x].user_func = func;
 	thread_context[x].user_arg  = arg;
@@ -578,11 +583,10 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     /* Give the thread system a hint... */
     {
-	static int concurrency = 0; /* Max concurrency we have set */
+	static size_t concurrency = 0; /* Max concurrency we have set */
 	if (ncpu > concurrency) {
-	    if (thr_setconcurrency(ncpu)) {
-		bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%d) failed\n",
-		       ncpu);
+	    if (thr_setconcurrency((int)ncpu)) {
+		bu_log("ERROR parallel.c/bu_parallel(): thr_setconcurrency(%zd) failed\n", ncpu);
 		/* Not much to do, lump it */
 	    } else {
 		concurrency = ncpu;
@@ -592,7 +596,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 
     /* Create the threads */
     for (x = 0; x < ncpu; x++) {
-	parallel_wait_for_slot(throttle, parent, (size_t)ncpu);
+	parallel_wait_for_slot(throttle, parent, ncpu);
 
 	if (thr_create(0, 0, (void *(*)(void *))parallel_interface_arg, &thread_context[x], 0, &thread)) {
 	    bu_log("ERROR: bu_parallel: thr_create(0x0, 0x0, 0x%x, 0x0, 0, 0x%x) failed for processor thread # %d\n",
@@ -600,7 +604,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	    /* Not much to do, lump it */
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-		bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%d)\n",
+		bu_log("bu_parallel(): created thread: (thread: 0x%x) (loop:%d) (nthreadc:%zu)\n",
 		       thread, x, nthreadc);
 
 	    thread_tbl[nthreadc] = thread;
@@ -620,7 +624,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     nthreade = 0;
     for (x = 0; x < nthreadc; x++) {
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): waiting for thread to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+	    bu_log("bu_parallel(): waiting for thread to complete:\t(loop:%d) (nthreadc:%zu) (nthreade:%zu)\n",
 		   x, nthreadc, nthreade);
 
 	if (thr_join((rt_thread_t)0, &thread, NULL)) {
@@ -644,13 +648,12 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	}
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+	    bu_log("bu_parallel(): thread completed: (thread: %d)\t(loop:%d) (nthreadc:%zu) (nthreade:%zu)\n",
 		   thread, x, nthreadc, nthreade);
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n",
-	       nthreadc, nthreade);
+	bu_log("bu_parallel(): %zu threads created.  %zud threads exited.\n", nthreadc, nthreade);
 #  endif	/* SUNOS */
 
 #  if defined(HAVE_PTHREAD_H)
@@ -665,15 +668,15 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	pthread_attr_init(&attrs);
 	pthread_attr_setstacksize(&attrs, 10*1024*1024);
 
-	parallel_wait_for_slot(throttle, parent, (size_t)ncpu);
+	parallel_wait_for_slot(throttle, parent, ncpu);
 
 	if (pthread_create(&thread, &attrs, (void *(*)(void *))parallel_interface_arg, &thread_context[x])) {
-	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %d\n",
+	    bu_log("ERROR: bu_parallel: pthread_create(0x0, 0x0, 0x%lx, 0x0, 0, %p) failed for processor thread # %zu\n",
 		   (unsigned long int)parallel_interface_arg, (void *)&thread, x);
 
 	} else {
 	    if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL)) {
-		bu_log("bu_parallel(): created thread: (thread: %p) (loop: %d) (nthreadc: %d)\n",
+		bu_log("bu_parallel(): created thread: (thread: %p) (loop: %zu) (nthreadc: %zu)\n",
 		       (void*)thread, x, nthreadc);
 	    }
 	    thread_tbl[nthreadc] = thread;
@@ -703,7 +706,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	int ret;
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+	    bu_log("bu_parallel(): waiting for thread %p to complete:\t(loop:%d) (nthreadc:%zu) (nthreade:%zu)\n",
 		   (void *)thread_tbl[x], x, nthreadc, nthreade);
 
 	if ((ret = pthread_join(thread_tbl[x], NULL)) != 0) {
@@ -716,13 +719,13 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	thread_tbl[x] = (rt_thread_t)-1;
 
 	if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	    bu_log("bu_parallel(): thread completed: (thread: %p)\t(loop:%d) (nthreadc:%d) (nthreade:%d)\n",
+	    bu_log("bu_parallel(): thread completed: (thread: %p)\t(loop:%zu) (nthreadc:%zu) (nthreade:%zu)\n",
 		   (void *)thread, x, nthreadc, nthreade);
 
     }
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	bu_log("bu_parallel(): %d threads created.  %d threads exited.\n", nthreadc, nthreade);
+	bu_log("bu_parallel(): %zu threads created.  %zu threads exited.\n", nthreadc, nthreade);
 
 #  endif /* end if posix threads */
 
@@ -731,7 +734,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     /* Create the Win32 threads */
     nthreadc = 0;
     for (i = 0; i < ncpu; i++) {
-	parallel_wait_for_slot(throttle, parent, (size_t)ncpu);
+	parallel_wait_for_slot(throttle, parent, ncpu);
 
 	thread = CreateThread(
 	    NULL,
@@ -755,7 +758,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     {
 	/* Wait for other threads in the array */
 	DWORD returnCode;
-	returnCode = WaitForMultipleObjects(nthreadc, thread_tbl, TRUE, INFINITE);
+	returnCode = WaitForMultipleObjects((DWORD)nthreadc, thread_tbl, TRUE, INFINITE);
 	if (returnCode == WAIT_FAILED) {
 	    bu_log("bu_parallel(): Error in WaitForMultipleObjects, Win32 error code %d.\n", GetLastError());
 	}
@@ -766,7 +769,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
 	int ret;
 	if ((ret = CloseHandle(thread_tbl[x]) == 0)) {
 	    /* Thread didn't close properly if return value is zero; don't retry and potentially loop forever.  */
-	    bu_log("bu_parallel(): Error closing thread %d of %d, Win32 error code %d.\n", x, nthreadc, GetLastError());
+	    bu_log("bu_parallel(): Error closing thread %zu of %zu, Win32 error code %d.\n", x, nthreadc, GetLastError());
 	}
 
 	nthreade++;
@@ -777,7 +780,7 @@ bu_parallel(void (*func)(int, void *), int ncpu, void *arg)
     parallel_mapping(PARALLEL_PUT, bu_parallel_id(), 0);
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PARALLEL))
-	bu_log("bu_parallel(%d) complete\n", ncpu);
+	bu_log("bu_parallel(%zd) complete\n", ncpu);
 
     bu_free(thread_context, "struct thread_data *thread_context");
 

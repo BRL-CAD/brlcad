@@ -39,15 +39,14 @@
 #include "tcl.h"
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
 
 #include "dm-plot.h"
 #include "dm-Null.h"
 
-#include "solid.h"
-#include "plot3.h"
+#include "rt/solid.h"
+#include "bn/plot3.h"
 
 #include "./dm_private.h"
 

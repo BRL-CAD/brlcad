@@ -23,7 +23,7 @@
 
 #include "bn.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "raytrace.h"
 
 

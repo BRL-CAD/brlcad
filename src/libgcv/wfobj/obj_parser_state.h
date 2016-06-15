@@ -65,7 +65,7 @@ struct tuple_compare {
 /* tuple comparison base case */
 template<typename T, std::size_t N>
 struct tuple_compare<T, N, 0> {
-    void compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
+    bool compare(tuple<T, N> &lhs, const tuple<T, N> &rhs) {
 	return lhs[0] == rhs[0];
     }
 };

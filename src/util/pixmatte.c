@@ -67,19 +67,21 @@ static char *obuf;		/* output buffer */
 #define GT 4
 #define NE 8
 #define APPROX 16
-static int wanted;		/* LT|EQ|GT conditions */
+static int wanted = 0;		/* LT|EQ|GT conditions */
 
 static long true_cnt = 0;
 static long false_cnt = 0;
 
+static int twoconstants;
+static int limit = 2;
 
 static const char usage_msg[] = "\
-Usage: pixmatte [-w bytes_wide] {-g -l -e -n -a}\n\
+Usage: pixmatte [-w width_in_bytes] {-g -l -e -n -a}\n\
 	in1 in2 true_out false_out > output\n\
 \n\
 where each of the 4 streams is either a file name, a constant of the\n\
 form =r/g/b with each byte specified in decimal, or '-' for stdin.\n\
-The default width is 3 bytes, suitable for processing .pix files.\n\
+The default width_in_bytes is 3 bytes, suitable for processing .pix files.\n\
 ";
 
 
@@ -132,7 +134,7 @@ open_file(int i, char *name)
 
     /* Obtain buffer */
     if ((buf[i] = (char *)malloc(width*CHUNK)) == (char *)0) {
-	bu_exit (3, "pixmatte:  input buffer malloc failure\n");
+	bu_exit (3, "pixmatte: input buffer malloc failure\n");
     }
 
     return 0;			/* OK */
@@ -146,7 +148,7 @@ get_args(int argc, char **argv)
     int seen_formula = 0;
     int i;
 
-    while ((c = bu_getopt(argc, argv, "glenaw:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "glenaw:h?")) != -1) {
 	switch (c) {
 	    case 'g':
 		wanted |= GT;
@@ -166,24 +168,25 @@ get_args(int argc, char **argv)
 		break;
 	    case 'a':
 		wanted |= APPROX;
-		/* Formula not seen */
+		/* This does NOT count as a formula, so seen_formula
+                 * is left unchanged.
+                 */
 		break;
 	    case 'w':
-		c = atoi(bu_optarg);
-		if (c >= 1 && c < EL_WIDTH)
-		    width = c;
-		else
-		    usage("Illegal width specified\n", 1);
+		width = atoi(bu_optarg);
+		if (width < 1 || width >= EL_WIDTH)
+		    usage("pixmatte: illegal width specified\n", 1);
 		break;
-	    default:		/* '?' */
-		usage("unknown option\n", 1);
+	    default:		/* '?' 'h' */
+		usage("", 1);
 		break;
 	}
     }
 
-    if (!seen_formula)
+    if (!seen_formula){
+    	if (argc == 1) usage("", 1);
 	usage("No formula specified\n", 1);
-
+    }
 
     if (bu_optind+NFILES > argc)
 	usage("insufficient number of input/output channels\n", 1);
@@ -193,6 +196,13 @@ get_args(int argc, char **argv)
 	if (open_file(i, argv[bu_optind++]) < 0)
 	    usage((char *)NULL, 1);
     }
+
+/* If both of the 1st 2 input streams were "=...", this is accounted
+ * for in true value of "twoconstants", and the program will later
+ * stop when it has created 512x512 file (otherwise, we get stuck
+ * in loop).
+ */
+    twoconstants = (fp[0] == NULL && fp[1] == NULL);
 
     if (argc > bu_optind)
 	bu_log("pixmatte: excess argument(s) ignored\n");
@@ -204,6 +214,8 @@ int
 main(int argc, char **argv)
 {
 
+    int chunkcount = 0;
+
     get_args(argc, argv);
 
     if (isatty(fileno(stdout)))
@@ -214,32 +226,52 @@ main(int argc, char **argv)
     setmode(fileno(stderr), O_BINARY);
 
     bu_log("pixmatte:\tif (%s ", file_name[0]);
-    if (wanted & LT) {
-	if (wanted & EQ)
-	    fputs("<=", stderr);
-	else
-	    fputs("<", stderr);
-    }
-    if (wanted & GT) {
-	if (wanted & EQ)
-	    fputs(">=", stderr);
-	else
-	    fputs(">", stderr);
-    }
-    if (wanted & APPROX) {
-	if (wanted & EQ) fputs("~~==", stderr);
-	if (wanted & NE) fputs("~~!=", stderr);
-    } else {
-	if (wanted & EQ) fputs("==", stderr);
-	if (wanted & NE) fputs("!=", stderr);
-    }
+
+    if (wanted & APPROX) fputs("~~", stderr);
+    if (wanted & LT) fputs("<", stderr);
+    if (wanted & EQ) fputs("=", stderr);
+    if (wanted & GT) fputs(">", stderr);
+    if (wanted & NE) fputs("!=", stderr);
+
     bu_log(" %s)\n", file_name[1]);
     bu_log("pixmatte:\t\tthen output %s\n", file_name[2]);
     bu_log("pixmatte:\t\telse output %s\n", file_name[3]);
 
     if ((obuf = (char *)malloc(width*CHUNK)) == (char *)0) {
-	bu_exit (3, "pixmatte:  obuf malloc failure\n");
+	bu_exit (3, "pixmatte: obuf malloc failure\n");
     }
+
+/* If "<>" is detected (in "wanted"), we change to "!=" because it's the same.
+ */
+    if ( (wanted & LT) && (wanted & GT)) {
+    	wanted |= NE;
+    	wanted ^= LT;
+    	wanted ^= GT;
+    }
+/* If NE is detected, then there is no point also having either LT or GT.
+ */
+    else if ( (wanted & NE) ){
+    	if (wanted & LT) wanted ^=LT;
+    	else
+    	if (wanted & GT) wanted ^=GT;
+    }
+
+    if (wanted & APPROX) {
+	if ( (wanted & GT) && (wanted & EQ) )
+	    limit = -1;
+    	    /* remember that limit defaulted to 2,
+	     * (for the case of APPROX/GT)
+	     */
+    	else if (wanted & LT) {
+    	    if (wanted & EQ)
+    		limit = 1;
+    	     else
+    		limit = -2;
+	     }
+    /* Remember that some cases are "don't care" w/r to "limit".
+     */
+    }
+
 
     while (1) {
 	unsigned char *cb0, *cb1;	/* current input buf ptrs */
@@ -248,6 +280,10 @@ main(int argc, char **argv)
 	unsigned char *ebuf;		/* end ptr in buf[0] */
 	size_t len;
 	int i;
+
+    	chunkcount++;
+	if ( chunkcount == 9 && twoconstants )
+	    bu_exit (1, NULL);
 
 	len = CHUNK;
 	for (i=0; i<NFILES; i++) {
@@ -285,22 +321,61 @@ main(int argc, char **argv)
 	    else
 		bp = &f_const[1][0];
 
-	    if (wanted == NE) {
-		for (ep = ap+width; ap < ep;) {
-		    if (*ap++ != *bp++)
-			goto success;
+	    if (wanted & NE) {
+/* If both NE and EQ are detected, all elements yield true result,
+ * and don't care about APPROX usage.
+ */
+	    	if (wanted & EQ) goto success;
+		if (!(wanted & APPROX)) {
+		    for (ep = ap+width; ap < ep;) {
+			if (*ap++ == *bp++) goto fail;
+		    }
+		    goto success;
 		}
-		goto fail;
-	    } else if (wanted & APPROX) {
+	    }
+	    if (wanted & APPROX) {
 		if (wanted & NE) {
 		    /* Want not even approx equal */
 		    for (ep = ap+width; ap < ep;) {
-			if ((i= *ap++ - *bp++) < -1 ||
-			    i > 1)
-			    goto success;
+			if ((i= *ap++ - *bp++) >= -1 &&
+			    i <= 1)
+			    goto fail;
 		    }
-		    goto fail;
-		} else {
+		    goto success;
+		}
+	    	/* Cannot get here with LT and GT both in use, because
+		 * if both LT and GT were detected, they would have been
+	    	 * turned off and replaced with NE.
+	    	 */
+		if (wanted & GT) {
+		    /* APPROX/GT/EQ (limit = -1):
+                     *   Want approx GT/EQ; in addition to ">=",
+                     *   we allow 1 on the OTHER side of equality.
+		     * APPROX/GT (limit = 2):
+		     *   Want approx GT; same as ">", except we
+                     *   stay more than 1 away from equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((*ap++ - *bp++) < limit)
+			    goto fail;
+		    }
+		    goto success;
+		}
+		if (wanted & LT) {
+		    /* APPROX/LT/EQ (limit = 1):
+		     *   Want approx LT/EQ; in addition to "<=",
+                     *   we allow 1 on the OTHER side of equality.
+		     * APPROX/LT (limit = -2):
+		     *   Want approx LT; same as "<", except we
+	             *   stay more than 1 away from equality.
+		     */
+		    for (ep = ap+width; ap < ep;) {
+			if ((*ap++ - *bp++) > limit)
+			    goto fail;
+		    }
+		    goto success;
+		}
+		if (wanted & EQ) {
 		    /* Want approx equal */
 		    for (ep = ap+width; ap < ep;) {
 			if ((i= *ap++ - *bp++) < -1 ||
@@ -309,20 +384,23 @@ main(int argc, char **argv)
 		    }
 		    goto success;
 		}
-	    } else {
-		for (ep = ap+width; ap < ep; ap++, bp++) {
-		    if (*ap > *bp) {
-			if (!(GT & wanted))
-			    goto fail;
-		    } else if (*ap == *bp) {
-			if (!(EQ & wanted))
-			    goto fail;
-		    } else {
-			if (!(LT & wanted))
-			    goto fail;
-		    }
+	    }
+
+/* (wanted & APPROX) is false if we arrive here.
+ */
+	    for (ep = ap+width; ap < ep; ap++, bp++) {
+		if (*ap > *bp) {
+		    if (!(GT & wanted))
+			goto fail;
+		} else if (*ap == *bp) {
+		    if (!(EQ & wanted))
+			goto fail;
+		} else {
+		    if (!(LT & wanted))
+			goto fail;
 		}
 	    }
+
 	success:
 	    if (buf[2] != NULL)
 		ap = cb2;
@@ -347,7 +425,7 @@ main(int argc, char **argv)
 	}
 	if (fwrite(obuf, width, len, stdout) != len) {
 	    perror("fwrite");
-	    bu_exit (1, "pixmatte:  write error\n");
+	    bu_exit (1, "pixmatte: write error\n");
 	}
     }
 

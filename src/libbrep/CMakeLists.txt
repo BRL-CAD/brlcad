@@ -28,6 +28,12 @@ set(LIBBREP_SOURCES
   px_event.cpp
   PullbackCurve.cpp
   shape_recognition.cpp
+  shape_recognition_cone.cpp
+  shape_recognition_cylinder.cpp
+  shape_recognition_planar.cpp
+  shape_recognition_sphere.cpp
+  shape_recognition_torus.cpp
+  shape_recognition_util.cpp
   ssx_event.cpp
   Subcurve.cpp
   Subsurface.cpp
@@ -56,7 +62,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libbrep_DEFINES "${libbrep_DEFINES}")
 
-BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(libbrep "${LIBBREP_SOURCES}" "libbg;libbn;libbu;${OPENNURBS_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 set_target_properties(libbrep PROPERTIES VERSION 20.0.1 SOVERSION 20)
 

@@ -237,7 +237,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 	    case 't':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 		/* remove C99 't' */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
 		/* Assume MSVC.
 		 *
@@ -256,7 +256,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 	    case 'z':
 #ifndef HAVE_C99_FORMAT_SPECIFIERS
 		/* remove C99 'z' */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 
 		/* Assume MSVC.
 		 *
@@ -285,7 +285,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		     * Will use %h[diouxX] with short instead, then cast into
 		     * char argument.
 		     */
-		    bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		    bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 #endif
 		    /* Since SHORT is set, the previous conversion character must
 		     * have been 'h'. With this second 'h', we know we have an "hh"
@@ -342,7 +342,7 @@ bu_vsscanf(const char *src, const char *fmt0, va_list ap)
 		 * implementations, and there is varying support for E/F/G.
 		 * Replace all with the most portable 'f' variant.
 		 */
-		bu_vls_trunc(&partFmt, bu_vls_strlen(&partFmt) - 1);
+		bu_vls_trunc(&partFmt, (int)(bu_vls_strlen(&partFmt) - 1));
 		bu_vls_putc(&partFmt, 'f');
 		c = CT_FLOAT;
 		break;

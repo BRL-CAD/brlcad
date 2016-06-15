@@ -33,7 +33,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 struct rt_g RTG = RT_G_INIT_ZERO;

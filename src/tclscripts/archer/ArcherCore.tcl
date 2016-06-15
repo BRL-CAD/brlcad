@@ -290,6 +290,7 @@ namespace eval ArcherCore {
 	method rmater              {args}
 	method rotate              {args}
 	method rotate_arb_face     {args}
+	method saveview		   {args}
 	method scale		   {args}
 	method search		   {args}
 	method sed		   {_prim}
@@ -588,7 +589,7 @@ namespace eval ArcherCore {
 	    nmg_simplify ocenter opendb orotate oscale otranslate p q \
 	    quit packTree prefix protate pscale ptranslate pull push put \
 	    put_comb putmat pwd r rcodes red rfarb rm rmater rotate \
-	    rotate_arb_face scale search sed shader shells tire title \
+	    rotate_arb_face saveview scale search sed shader shells tire title \
 	    track translate unhide units unpackTree vmake wmater xpush \
 	    Z zap
 	}
@@ -6842,6 +6843,19 @@ namespace eval ArcherCore {
 
 ::itcl::body ArcherCore::rotate_arb_face {args} {
     eval gedWrapper rotate_arb_face 0 0 1 0 $args
+}
+
+::itcl::body ArcherCore::saveview {args} {
+    # If no input database is specified and the open database is a
+    # working copy, specify the name of the original database so that
+    # the saveview script remains valid after the working copy is
+    # deleted on program exit.
+    set i [lsearch $args "-i"]
+    if {$i == -1 && $mTargetCopy != "" && !$mDbNoCopy} {
+	set args [linsert $args 0 "$mTarget"]
+	set args [linsert $args 0 "-i"]
+    }
+    eval gedWrapper saveview 0 0 0 0 $args
 }
 
 ::itcl::body ArcherCore::scale {args} {

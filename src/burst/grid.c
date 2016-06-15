@@ -34,7 +34,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./ascii.h"
 #include "./extern.h"

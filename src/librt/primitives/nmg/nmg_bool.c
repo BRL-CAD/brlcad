@@ -41,7 +41,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern int nmg_class_nothing_broken;

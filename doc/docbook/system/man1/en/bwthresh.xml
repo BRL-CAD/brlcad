@@ -18,7 +18,7 @@
 <cmdsynopsis>
   <command>bwthresh</command>
     <arg choice='plain' rep='repeat'><replaceable>val</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

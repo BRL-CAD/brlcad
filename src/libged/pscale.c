@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"

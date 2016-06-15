@@ -28,7 +28,7 @@
 #include "icv.h"
 
 /* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, long int size);
+extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
@@ -71,7 +71,7 @@ bw_write(icv_image_t *bif, const char *filename)
 }
 
 icv_image_t *
-bw_read(const char *filename, int width, int height)
+bw_read(const char *filename, size_t width, size_t height)
 {
     FILE *fp;
     unsigned char *data = NULL;

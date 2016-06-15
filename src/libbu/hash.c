@@ -29,10 +29,11 @@
 #include "bu/hash.h"
 
 unsigned long
-bu_hash(const unsigned char *str, int len)
+bu_hash(const unsigned char *str, size_t len)
 {
     unsigned long hash = 5381;
-    int i, c;
+    size_t i;
+    unsigned char c;
 
     for (i=0; i<len; i++) {
 	c = *str;

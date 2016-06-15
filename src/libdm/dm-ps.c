@@ -39,14 +39,13 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
 #include "raytrace.h"
 
 #include "dm.h"
 #include "dm-ps.h"
 #include "dm-Null.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 

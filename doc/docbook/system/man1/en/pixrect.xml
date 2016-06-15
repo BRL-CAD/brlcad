@@ -27,7 +27,7 @@
     <arg choice='opt'>-y <replaceable>yorig</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out_file.pix</replaceable></arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='opt'><replaceable>out_file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

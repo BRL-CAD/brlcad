@@ -36,7 +36,7 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 #define BUF_LEN 128

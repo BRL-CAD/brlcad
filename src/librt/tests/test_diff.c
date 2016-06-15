@@ -24,7 +24,6 @@
 
 #include "tcl.h"
 
-#include "mater.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
 

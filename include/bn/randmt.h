@@ -19,11 +19,8 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file randmt.h */
-/** @addtogroup rnd */
-/** @{ */
-
-/**
+/** @addtogroup bn_rmt
+ *
  * @brief
  * Mersenne Twister random number generation as defined by MT19937.
  *
@@ -42,6 +39,8 @@
  @endcode
  *
  */
+/** @{ */
+/** @file randmt.h */
 
 #ifndef BN_RANDMT_H
 #define BN_RANDMT_H

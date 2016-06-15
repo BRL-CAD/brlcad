@@ -26,8 +26,8 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
-#include "nurb.h"
+#include "rt/geom.h"
+#include "rt/nurb.h"
 
 
 /**

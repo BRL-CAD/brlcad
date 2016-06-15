@@ -28,13 +28,13 @@
 #include <string.h>
 #include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
 
 #include "vmath.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* FIXME: temporary until all mirror functions are migrated and the

@@ -18,9 +18,12 @@
  * information.
  */
 
-/** @addtogroup vfont */
-/** @{ */
-/** @file include/bu/vfont.h
+/** @addtogroup bu_vfont
+ *
+ * @brief
+ * Provide a machine-independent interface to files containing
+ * Berkeley VFONT format vector fonts, stored with VAX byte ordering and word
+ * alignment.
  *
  * This header file describes the in-memory format used by the BRL-CAD
  * Package routines for manipulating fonts stored in the Berkeley
@@ -62,6 +65,8 @@
  * Never seems to be any consistency in data formats.
  *
  */
+/** @{ */
+/** @file include/bu/vfont.h */
 
 #ifndef BU_VFONT_H
 #define BU_VFONT_H
@@ -89,16 +94,6 @@ struct vfont {
     char *vf_bits;
 };
 #define VFONT_NULL ((struct vfont *)NULL)
-
-/** @file vfont.c
- *
- * @brief Berkeley Vector Fonts
- *
- * Provide a machine-independent interface to files containing
- * Berkeley VFONT format fonts, stored with VAX byte ordering and word
- * alignment.
- *
- */
 
 __BEGIN_DECLS
 

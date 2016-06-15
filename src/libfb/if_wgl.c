@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_wgl.c
  *
@@ -56,7 +56,7 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/parallel.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "fb_private.h"

@@ -21,7 +21,7 @@
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -153,7 +153,7 @@ which is most useful when used with
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para>This section shows the ordinary usage of <command>rthide</command>.  For example,</para>
+<para>This section shows the ordinary usage of <command>rthide</command> .  For example,</para>
 
 <literallayout remap='.nf'>
 rthide -a# -e# -s32 model.g all.g &gt; file.plot3

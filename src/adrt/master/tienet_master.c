@@ -47,14 +47,14 @@
 #  include <netdb.h>
 #endif
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
 #include "tienet_master.h"
 
 #include "bio.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 
 
 

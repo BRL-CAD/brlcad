@@ -10,6 +10,21 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
+
+# Use configure_file to make copies of the mime input files,
+# so CMake will get notified for the need for a re-configure
+# if they are edited.
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+
+# Set locations for final mime C and header files
+set(MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
+set(MIME_H_FILE ${BRLCAD_BINARY_DIR}/${INCLUDE_DIR}/bu/mime.h)
+
+# Run the generation process
+include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
@@ -17,7 +32,6 @@ set(LIBBU_SOURCES
   b64.c
   backtrace.c
   badmagic.c
-  basename.c
   bitv.c
   bomb.c
   booleanize.c
@@ -29,7 +43,6 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  dirname.c
   date-time.c
   dlfcn.c
   encode.c
@@ -58,10 +71,12 @@ set(LIBBU_SOURCES
   magic.c
   malloc.c
   mappedfile.c
+  ${MIME_C_FILE}
   mread.c
   observer.c
   parallel.c
   parse.c
+  path.c
   printb.c
   process.c
   progname.c
@@ -111,11 +126,14 @@ endif(CPP_DLL_DEFINES)
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
+install(FILES ${MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
 add_subdirectory(tests)
 add_subdirectory(y2038)
 
 set(bu_ignore_files
   bu_internals.h
+  mime.cmake
   parallel.h
   rb_internals.h
   uce-dirent.h

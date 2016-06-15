@@ -30,7 +30,7 @@
 #include "bu/file.h"
 #include "bu/malloc.h"
 #include "bu/vls.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 

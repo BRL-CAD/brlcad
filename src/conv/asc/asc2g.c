@@ -39,12 +39,12 @@
 #include "bu/vls.h"
 #include "bu/units.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
 
@@ -102,17 +102,6 @@ nxt_spc(char *cp)
 	cp++;
     }
     return cp;
-}
-
-
-int
-ngran(int nfloat)
-{
-    int gran;
-    /* Round up */
-    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
-    gran = (gran * sizeof(float)) / sizeof(union record);
-    return gran;
 }
 
 
@@ -1520,7 +1509,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 		escapedcr = 0;
 	    }
 	}
-	ret = bu_vls_strlen(line);
+	ret = (int)bu_vls_strlen(line);
     }
     bu_vls_free(&tmp);
 
@@ -1561,8 +1550,8 @@ main(int argc, char *argv[])
 
     while (isComment) {
 	char *str;
-	int charIndex;
-	int len;
+	size_t charIndex;
+	size_t len;
 	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;

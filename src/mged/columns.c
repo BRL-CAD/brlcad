@@ -30,7 +30,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 

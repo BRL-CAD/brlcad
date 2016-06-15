@@ -30,21 +30,9 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/* @file vlist.h */
-/** @addtogroup vlist */
-/** @{ */
-
-/**
+/** @addtogroup bn_vlist
+ *
  * @brief
- * Definitions for handling lists of vectors (really vertices, or
- * points) and polygons in 3-space.  Intended for common handling of
- * wireframe display information, in the full resolution that is
- * calculated in.
- */
-
-#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
-
-/**
  * Definitions for handling lists of vectors (really vertices, or
  * points) and polygons in 3-space.  Intended for common handling of
  * wireframe display information, in the full resolution that is
@@ -68,6 +56,12 @@ __BEGIN_DECLS
  *		}
  *	}
  */
+/** @{ */
+/** @file bn/vlist.h */
+
+
+#define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
+
 struct bn_vlist  {
     struct bu_list l;		/**< @brief magic, forw, back */
     size_t nused;		/**< @brief elements 0..nused active */
@@ -177,21 +171,17 @@ struct bn_vlblock {
 #define BN_CK_VLBLOCK(_p)	BU_CKMAG((_p), BN_VLBLOCK_MAGIC, "bn_vlblock")
 
 
-/** @file libbn/font.c
- *
- */
-
 /**
  * Convert a string to a vlist.
  *
  * 'scale' is the width, in mm, of one character.
  *
- * @param vhead
+ * @param vhead   vhead
  * @param free_hd source of free vlists
  * @param string  string of chars to be plotted
- * @param origin	 lower left corner of 1st char
- * @param rot	 Transform matrix (WARNING: may xlate)
- * @param scale    scale factor to change 1x1 char sz
+ * @param origin  lower left corner of 1st char
+ * @param rot	  Transform matrix (WARNING: may xlate)
+ * @param scale   scale factor to change 1x1 char sz
  *
  */
 BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
@@ -207,7 +197,7 @@ BN_EXPORT extern void bn_vlist_3string(struct bu_list *vhead,
  * A simpler interface, for those cases where the text lies in the X-Y
  * plane.
  *
- * @param vhead
+ * @param vhead		vhead
  * @param free_hd	source of free vlists
  * @param string	string of chars to be plotted
  * @param x		lower left corner of 1st char

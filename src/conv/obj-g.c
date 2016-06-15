@@ -57,8 +57,8 @@
 #include "bu/sort.h"
 #include "bu/units.h"
 #include "nmg.h"
-#include "plot3.h"
-#include "rtgeom.h"
+#include "bn/plot3.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "obj_parser.h"
@@ -1007,7 +1007,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		for (groupid = 0 ; groupid < setsize ; groupid++) {
 		    /* if true, current face is in current group grouping */
 		    if (grouping_index == indexset_arr[groupid]) {
-			int groups_index = indexset_arr[groupid];
+			size_t groups_index = indexset_arr[groupid];
 			name_str = ga->str_arr_obj_groups[groups_index];
 			found = 1;
 		    }
@@ -1168,9 +1168,9 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		switch (face_type) {
 		    case FACE_V:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_1D,
-					       sizeof(size_t *) * (*gfi)->max_faces,
-					       "index_arr_faces");
+			    (arr_1D_t)bu_realloc(index_arr_faces_1D,
+						 sizeof(size_t *) * (*gfi)->max_faces,
+						 "index_arr_faces");
 
 			index_arr_faces_1D =
 			    (arr_1D_t)((*gfi)->index_arr_faces);
@@ -1179,7 +1179,7 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 		    case FACE_TV:
 		    case FACE_NV:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_2D,
+			    (arr_2D_t)bu_realloc(index_arr_faces_2D,
 					       sizeof(size_t (*)[2]) * (*gfi)->max_faces,
 					       "index_arr_faces");
 
@@ -1189,9 +1189,9 @@ collect_grouping_faces_indexes(struct ga_t *ga,
 			break;
 		    case FACE_TNV:
 			(*gfi)->index_arr_faces =
-			    (void *)bu_realloc(index_arr_faces_3D,
-					       sizeof(size_t (*)[3]) * (*gfi)->max_faces,
-					       "index_arr_faces");
+			    (arr_3D_t)bu_realloc(index_arr_faces_3D,
+						 sizeof(size_t (*)[3]) * (*gfi)->max_faces,
+						 "index_arr_faces");
 			index_arr_faces_3D =
 			    (arr_3D_t)((*gfi)->index_arr_faces);
 
@@ -1410,8 +1410,8 @@ populate_triangle_indexes(struct ga_t *ga,
 
 	    for (vert_idx = 0; vert_idx < num_new_tri; vert_idx++) {
 		triFaces[vert_idx * ELEMENTS_PER_POINT + X] = 0;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = vert_idx + 1;
-		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = vert_idx + 2;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Y] = (int)vert_idx + 1;
+		triFaces[vert_idx * ELEMENTS_PER_POINT + Z] = (int)vert_idx + 2;
 	    }
 
 	    nmg_km(fu->s_p->r_p->m_p);

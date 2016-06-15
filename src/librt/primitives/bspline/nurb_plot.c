@@ -33,8 +33,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "plot3.h"
+#include "rt/nurb.h"
+#include "bn/plot3.h"
 
 
 void

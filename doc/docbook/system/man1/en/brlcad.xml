@@ -202,7 +202,7 @@ See
 <citerefentry><refentrytitle>pixdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixfilter</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pixhist3d-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist3d-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixhist3d</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -254,7 +254,7 @@ is checked for the device to use.  The format of this
 variable is either
 <emphasis remap='I'>[hostname:]</emphasis><filename>/dev/</filename><emphasis remap='I'>device_name[num]</emphasis>
 or
-<emphasis remap='I'>UNIX_path ,</emphasis>
+<emphasis remap='I'>UNIX_path</emphasis> ,
 the pathname of a disk file to be used as a "virtual framebuffer".
 <emphasis remap='I'>Hostname</emphasis>
 is the name of a remote machine if the remote framebuffer interface

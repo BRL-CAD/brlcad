@@ -41,14 +41,13 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-Null.h"
 #include "dm-wgl.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_wgl.h"
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 

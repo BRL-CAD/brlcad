@@ -44,7 +44,6 @@
 #endif
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "fb.h"
 #include "bu/log.h"
@@ -52,10 +51,10 @@
 #include "bu/parallel.h"
 #include "bu/malloc.h"
 #include "spectrum.h"
-#include "shadefuncs.h"
-#include "shadework.h"
-#include "plot3.h"
-#include "light.h"
+#include "optical/shadefuncs.h"
+#include "optical/shadework.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 
 /* private */
 #include "../rt/rtuif.h"

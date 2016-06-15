@@ -36,6 +36,7 @@
 #include "bu/str.h"
 #include "bu/avs.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/vls.h"
 
 #include "./nirt.h"

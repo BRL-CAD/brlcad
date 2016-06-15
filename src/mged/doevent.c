@@ -45,7 +45,7 @@
 #endif
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "ged.h"
 #include "dm/dm_xvars.h"
 

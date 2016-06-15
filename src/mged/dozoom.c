@@ -275,7 +275,8 @@ createDListSolid(struct solid *sp)
     save_dlp = curr_dm_list;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dm_get_displaylist(dlp->dml_dmp) &&
+	if (dlp->dml_mapped &&
+		dm_get_displaylist(dlp->dml_dmp) &&
 		dlp->dml_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(dmp, 1);

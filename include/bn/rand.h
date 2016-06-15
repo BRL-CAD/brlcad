@@ -19,11 +19,8 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file rand.h */
-/** @addtogroup rnd */
-/** @{ */
-
-/**
+/** @addtogroup bn_rnt
+ *
  * @brief
  * A supply of fast pseudo-random numbers from table in bn/rand.c.
  * The values are in the open interval (i.e. exclusive) of 0.0 to 1.0
@@ -46,6 +43,8 @@
  * numbers from bn_rand_table do not change, because the procedural
  * noise would cease to exist.
  */
+/** @{ */
+/** @file rand.h */
 
 #ifndef BN_RAND_H
 #define BN_RAND_H

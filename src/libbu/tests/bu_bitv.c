@@ -275,9 +275,9 @@ ERROR_RETURN:
 
 
 static unsigned int
-power(const unsigned int base, const int exponent)
+power(const unsigned int base, const size_t exponent)
 {
-    int i ;
+    size_t i ;
     unsigned int product = 1;
 
     for (i = 0; i < exponent; i++)
@@ -290,7 +290,7 @@ power(const unsigned int base, const int exponent)
 static int
 test_bu_bitv_shift()
 {
-    int res;
+    size_t res;
     int test_results = CTEST_FAIL;
 
     printf("\nTesting bu_bitv_shift...");
@@ -632,7 +632,7 @@ test_bu_binary_to_bitv(int argc, char **argv)
     unsigned long int expected_num = strtol(argv[3], (char **)NULL, 16);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b;
-    unsigned i, len, err = 0;
+    size_t i, len, err = 0;
     unsigned ull_size = sizeof(unsigned long long);
 
     if (argc < 4)
@@ -691,7 +691,7 @@ test_bu_binary_to_bitv2(int argc, char **argv)
     unsigned ull_size = sizeof(unsigned long long);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b;
-    unsigned i, len, err = 0;
+    size_t i, len, err = 0;
 
     if (argc < 5)
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);

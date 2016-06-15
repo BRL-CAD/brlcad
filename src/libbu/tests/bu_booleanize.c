@@ -29,7 +29,8 @@ automatic_test(const char *input)
 {
 
     char buf_input[1000], buf_aux[1000];
-    int buf_len, check, res, ans;
+    size_t buf_len;
+    int check, res, ans;
 
     if (input) {
 	bu_strlcpy(buf_input, input, strlen(input)+1);

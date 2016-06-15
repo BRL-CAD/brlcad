@@ -81,7 +81,7 @@ file is expected to be a stereolithography file.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>stl-g sample.stl sample.g</emphasis>
+$ stl-g <emphasis remap='I'>sample.stl sample.g</emphasis>
 </synopsis>
 </refsect1>
 

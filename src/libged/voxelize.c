@@ -29,7 +29,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"

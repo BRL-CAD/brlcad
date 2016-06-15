@@ -38,7 +38,7 @@
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "a:b:c:d:f:m:pqrstv:h?"

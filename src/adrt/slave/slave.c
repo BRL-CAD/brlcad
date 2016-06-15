@@ -39,11 +39,11 @@
 #  include <getopt.h>
 #endif
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
-#include "tie.h"
+#include "rt/tie.h"
 #include "render_util.h"
 
 #include "slave.h"
@@ -432,7 +432,7 @@ static struct option longopts[] =
     { "version",	no_argument,		NULL, 'v' },
 };
 #endif
-static char shortopts[] = "Xdhp:t:v";
+static char shortopts[] = "Xdhp:t:vh?";
 
 
 static void finish(int sig)

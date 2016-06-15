@@ -24,7 +24,7 @@
    </arg>
     <arg choice='opt'>-o <replaceable>out.pix</replaceable></arg>
     <arg choice='opt'><replaceable>in.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='opt'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

@@ -72,14 +72,13 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-ogl.h"
 #include "dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 

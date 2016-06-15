@@ -567,7 +567,7 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-and</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -a)</term>
+	  <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-and</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. -a)</term>
 	  <listitem>
 		<para>
 		  The and operator operates like the logical AND operator - TRUE only if both
@@ -596,7 +596,7 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a !)</term>
+	  <term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. !)</term>
 	  <listitem>
 		<para>
 		  The logical NOT operator - returns the opposite of the evaluation result of
@@ -605,7 +605,7 @@
 	  </listitem>
 	</varlistentry>
 	<varlistentry>
-	  <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-or</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a -o)</term>
+	  <term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-or</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. -o)</term>
 	  <listitem>
 		<para>
 		  The logical OR operator - true if either expression is true.

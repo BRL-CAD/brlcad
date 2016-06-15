@@ -27,7 +27,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 #include "bn.h"
 #include "vmath.h"

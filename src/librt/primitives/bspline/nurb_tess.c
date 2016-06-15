@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /**
  * Algorithm -

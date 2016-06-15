@@ -36,8 +36,9 @@ test_bu_strlcatm(int argc, char *argv[])
     char *dst;
     char *expected_result = argv[6];
     int ret, expected_ret;
-    int size;
-    int len;
+    int scanned_size;
+    size_t size;
+    size_t len;
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
@@ -51,16 +52,18 @@ test_bu_strlcatm(int argc, char *argv[])
 	bu_exit(1, "ERROR: input format is string1 string2 result_size expected_ret expected_result [%s]\n", argv[0]);
     }
 
-    sscanf(argv[4], "%d", &size);
-    sscanf(argv[5], "%d", &expected_ret);
-    if (size > 0) {
-	dst = (char *)bu_malloc(size, "test_bu_strlcatm");
-    } else {
-	dst = (char *)bu_malloc(1, "test_bu_strlcatm");
-	dst[0] = '\0';
-    }
-    bu_strlcpym(dst, argv[2], size, "test_bu_strlcatm");
+    sscanf(argv[4], "%d", &scanned_size);
+    if (scanned_size < 1)
+	size = 1;
+    else if (scanned_size > 1024*1024 /* arbitrary upper limit */)
+	size = 1024*1024;
+    else
+	size = (size_t)scanned_size;
 
+    sscanf(argv[5], "%d", &expected_ret);
+
+    dst = (char *)bu_malloc(size, "test_bu_strlcatm");
+    bu_strlcpym(dst, argv[2], size, "test_bu_strlcatm");
     ret = bu_strlcatm(dst, argv[3], size, "test_bu_strlcatm");
     len = strlen(dst);
 
@@ -78,8 +81,9 @@ test_bu_strlcpym(int argc, char *argv[])
     char *dst;
     char *expected_result = argv[5];
     int ret, expected_ret;
-    int size;
-    int len;
+    int scanned_size;
+    size_t size;
+    size_t len;
 
     /* CMake won't pass empty strings as test parameters properly;
      * assume expected_result is supposed to be empty.
@@ -93,15 +97,17 @@ test_bu_strlcpym(int argc, char *argv[])
 	bu_exit(1, "ERROR: input format is string result_size expected_ret expected_result [%s]\n", argv[0]);
     }
 
-    sscanf(argv[3], "%d", &size);
-    sscanf(argv[4], "%d", &expected_ret);
-    if (size > 0) {
-	dst = (char *)bu_malloc(size, "test_bu_strlcpym");
-    } else {
-	dst = (char *)bu_malloc(1, "test_bu_strlcpym");
-	dst[0] = '\0';
-    }
+    sscanf(argv[3], "%d", &scanned_size);
+    if (scanned_size < 1)
+	size = 1;
+    else if (scanned_size > 1024*1024 /* arbitrary upper limit */)
+	size = 1024*1024;
+    else
+	size = (size_t)scanned_size;
 
+    sscanf(argv[4], "%d", &expected_ret);
+
+    dst = (char *)bu_malloc(size, "test_bu_strlcpym");
     ret = bu_strlcpym(dst, argv[2], size, "test_bu_strlcpym");
     len = strlen(dst);
 

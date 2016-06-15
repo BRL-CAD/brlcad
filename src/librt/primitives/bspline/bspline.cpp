@@ -45,10 +45,10 @@
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"		/* before nmg.h */
+#include "rt/nurb.h"		/* before nmg.h */
 #include "nmg.h"
 
 #ifdef CONVERT_TO_BREP

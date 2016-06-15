@@ -28,9 +28,9 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
-#include "bot.h"
-#include "tie.h"
+#include "rt/geom.h"
+#include "rt/primitives/bot.h"
+#include "rt/tie.h"
 
 #include "btg.h"
 

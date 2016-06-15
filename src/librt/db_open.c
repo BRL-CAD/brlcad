@@ -41,11 +41,11 @@
 #include "bio.h"
 
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "db.h"
 #include "wdb.h"
-#include "mater.h"
 
 
 #ifndef SEEK_SET

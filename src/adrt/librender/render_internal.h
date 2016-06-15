@@ -24,7 +24,7 @@
 #ifndef ADRT_LIBRENDER_RENDER_INTERNAL_H
 #define ADRT_LIBRENDER_RENDER_INTERNAL_H
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #ifndef RENDER_EXPORT
 #  if defined(RENDER_DLL_EXPORTS) && defined(RENDER_DLL_IMPORTS)

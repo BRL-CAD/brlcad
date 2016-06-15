@@ -27,10 +27,10 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>morphedit</emphasis>
+<para><command>morphedit</command>
 allows the user to set up line segment correspondences to be used
 by the utility
-<emphasis remap='I'>pixmorph.</emphasis></para>
+<command>pixmorph</command> .</para>
 
 <!-- .br -->
 <para>First, the program displays the two images and presents a dialog box
@@ -40,16 +40,16 @@ and
 <emphasis remap='I'>p</emphasis>
 (see
 <emphasis remap='I'>pixmorph(1)</emphasis>
-for details on these constants.)
+for details on these constants).
 [Note: after replacing these values, the user must press &lt;Enter&gt; for
 the new values to be recorded.]</para>
 
 <para>The user is now editing the lines file
-<emphasis remap='I'>linesfile.</emphasis>
+<emphasis remap='I'>linesfile</emphasis>.
 The purpose of writing a lines file is to set up correspondences between
 the two images to improve the quality of morphed images produced by
 utilities such as
-<emphasis remap='I'>pixmorph.</emphasis>
+<command>pixmorph</command> .
 To set up a correspondence, the user must create a (directed) line segment
 for each image that specifies which feature of the first image
 corresponds to which feature of the second.  These directed line segments
@@ -61,7 +61,7 @@ at the desired location in either image.  The point appears at the same
 location in the other image.  While the mouse button is held down, the
 endpoint may be dragged to any location (including off of the image...please
 do not misplace endpoints in this fashion -- they are very difficult to
-recover.)  Releasing the mouse button deposits the endpoint at that location.</para>
+recover).  Releasing the mouse button deposits the endpoint at that location.</para>
 
 <para>To specify the second endpoint, the user presses the left mouse button at a
 location in the image currently unoccupied by endpoints.  The line segment
@@ -83,25 +83,26 @@ of this feature to verify that their line segment correspondences make sense.</p
 
 <para>The "Save" button writes the currently displayed line segment correspondence
 set, along with the constants
-<emphasis remap='I'>a, b,</emphasis>
+<emphasis remap='I'>a</emphasis>,
+<emphasis remap='I'>b</emphasis>,
 and
-<emphasis remap='I'>p,</emphasis>
+<emphasis remap='I'>p</emphasis>,
 to the file
-<emphasis remap='I'>linesfile.</emphasis>
+<emphasis remap='I'>linesfile</emphasis>.
 The "Quit" button closes all associated windows and terminates the program.</para>
 
 <para>The "Preview" button, with corresponding
 <emphasis remap='I'>fraction</emphasis>
 entry box, spawns a process to display the morph specified by the
 given fraction and the last *saved* version of
-<emphasis remap='I'>linesfile.</emphasis>
+<emphasis remap='I'>linesfile</emphasis>.
 (Note: this currently uses the utilities
-<emphasis remap='I'>pixmorph</emphasis>
+<command>pixmorph</command>
 and
-<emphasis remap='I'>pix-fb.</emphasis>
+<command>pix-fb</command>.
 If the "Preview" button fails, verify that the paths to these
 utilities (specified in the first few lines of
-<emphasis remap='I'>morphedit.tcl)</emphasis>
+<emphasis remap='I'>morphedit.tcl</emphasis>)
 are correct.</para>
 
 <para>Note:
@@ -109,7 +110,7 @@ are correct.</para>
 uses
 <emphasis remap='I'>bwish</emphasis>
 instead of the standard Tcl/Tk
-<emphasis remap='I'>wish,</emphasis>
+<emphasis remap='I'>wish</emphasis>,
 since
 <emphasis remap='I'>bwish</emphasis>
 supports
@@ -117,11 +118,11 @@ supports
 images while
 <emphasis remap='I'>wish</emphasis>
 does not.  If you have difficulty running
-<emphasis remap='I'>morphedit.tcl,</emphasis>
+<emphasis remap='I'>morphedit.tcl</emphasis>,
 make sure the first line of
 <command>morphedit.tcl</command>
 (giving the path to
-<emphasis remap='I'>bwish)</emphasis>
+<emphasis remap='I'>bwish</emphasis>)
 is correct.</para>
 </refsect1>
 

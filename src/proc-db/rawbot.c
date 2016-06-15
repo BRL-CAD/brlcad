@@ -44,7 +44,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 struct rt_wdb *outfp;
 

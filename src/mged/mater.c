@@ -35,8 +35,8 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

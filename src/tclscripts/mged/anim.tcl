@@ -3438,6 +3438,7 @@ proc sketch_sort_entry1 { entry list nentry } {
 
 proc sketch_sort { sortp outfile list } {
     global mged_sketch_sort_temp mged_sketch_tab_path
+    global tcl_platform
 
     if { [info commands $sortp.fa] != "" } {
 	tk_dialog ._sketch_msg {Script already sorting} \
@@ -3464,7 +3465,12 @@ proc sketch_sort { sortp outfile list } {
 
     frame $sortp.fa
     label $sortp.fa.l0 -text "Sorting $outfile ..."
-    button $sortp.fa.b0 -text "Halt" -command "exec kill $pid"
+    if {$tcl_platform(platform) == "windows"} {
+	set kill_cmd taskkill
+    } else {
+	set kill_cmd kill
+    }
+    button $sortp.fa.b0 -text "Halt" -command "exec $kill_cmd $pid"
     pack $sortp.fa -side bottom -before $sortp.f3
     pack $sortp.fa.l0 $sortp.fa.b0 -side left -fill x
 

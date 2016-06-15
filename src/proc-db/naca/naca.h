@@ -86,10 +86,17 @@ struct fortran_array {
  *
  * Any of f, fp, fpp, and fppp may be null.
  *
- * @param[in] a, fa, fpa a, f(a), f'(a) at first point
- * @param[in] b, fb, fpb b, f(b), f'(b) at second point
- * @param[in] u The point to evaluate the function at.
- * @param[out] f fp fpp fppp f(u), f'(u), f''(u), f'''(u)
+ * @param[in] a     a at first point
+ * @param[in] fa    f(a) at first point
+ * @param[in] fpa   f'(a) at first point
+ * @param[in] b     b at second point
+ * @param[in] fb    f(b) at second point
+ * @param[in] fpb   f'(b) at second point
+ * @param[in] u     The point to evaluate the function at.
+ * @param[out] f    f(u)
+ * @param[out] fp   f'(u), f''(u), f'''(u)
+ * @param[out] fpp  f''(u), f'''(u)
+ * @param[out] fppp f'''(u)
  */
 extern void EvaluateCubicAndDerivs(fastf_t a, fastf_t fa, fastf_t fpa,
 				   fastf_t b, fastf_t fb, fastf_t fpb,
@@ -105,9 +112,14 @@ extern void FMMspline(struct fortran_array *x, struct fortran_array *y, struct f
 /**
  * Interpolate in a cubic spline at one point
  *
- * @param[in] x, y, yp Defines the cubic spline
- * @param[in] u Point where spline is to be evaluated
- * @param[out] f, fp, fpp, fppp f(u), f'(u), f''(u), f'''(u)
+ * @param[in] x     Defines the cubic spline
+ * @param[in] y     Defines the cubic spline
+ * @param[in] yp    Defines the cubic spline
+ * @param[in] u     Point where spline is to be evaluated
+ * @param[out] f    f(u)
+ * @param[out] fp   f'(u), f''(u), f'''(u)
+ * @param[out] fpp  f''(u), f'''(u)
+ * @param[out] fppp f'''(u)
  */
 extern void PClookup(struct fortran_array *x, struct fortran_array *y, struct fortran_array *yp,
 		     fastf_t u,
@@ -129,7 +141,8 @@ extern void SplineZero(struct fortran_array *x, struct fortran_array *f, struct 
  * Use polynomial evaluation for table lookup.  Find points ahead and
  * behind evaluation point to match order of interpolation desired.
  *
- * @param[in] x, y Data tables
+ * @param[in] x Data tables
+ * @param[in] y Data tables
  * @param[in] order Order of interpolation (1 = linear, 2 = quadratic ...)
  * @param[in] u x-coord where function is to be evaluated
  */
@@ -222,7 +235,7 @@ fastf_t LeadingEdgeRadius4M(fastf_t toc, fastf_t leIndex);
  * Compute the leading edge radius of a 6- or 6A-series thickness
  * distribution.
  *
- * @param[in] family
+ * @param[in] family family
  * @param[in] toc maximum value of t/c
  */
 fastf_t LeadingEdgeRadius6(fastf_t family, fastf_t toc);
@@ -243,8 +256,9 @@ void LoadX(int denCode, int nx, struct fortran_array *x);
  *
  * @param[in] cmax max. camber as fraction of chord
  * @param[in] xmaxc fraction of chord where the camber is max.
- * @param[in] x
- * @param[out] ym, ymp
+ * @param[in] x x
+ * @param[out] ym ym
+ * @param[out] ymp ymp
  */
 void MeanLine2(fastf_t cmax,
 	       fastf_t xmaxc,
@@ -263,8 +277,9 @@ void MeanLine2(fastf_t cmax,
  *
  * @param[in] cl design lift coefficient
  * @param[in] xmaxc x-coor of maximum camber
- * @param[in] x
- * @param[out] ym, ymp
+ * @param[in] x x
+ * @param[out] ym  ym
+ * @param[out] ymp ymp
  */
 void MeanLine3(fastf_t cl,
 	       fastf_t xmaxc,
@@ -283,8 +298,9 @@ void MeanLine3(fastf_t cl,
  *
  * @param[in] cl design lift coefficient
  * @param[in] xmaxc x-coor of maximum camber
- * @param[in] x
- * @param[out] ym, ymp
+ * @param[in] x x
+ * @param[out] ym ym
+ * @param[out] ymp ymp
  */
 void MeanLine3Reflex(fastf_t cl,
 		     fastf_t xmaxc,
@@ -336,9 +352,9 @@ void ParametrizeAirfoil(struct fortran_array *xupper, struct fortran_array *yupp
  *
  * REF - Discussed in AIAA-2001-5235
  *
- * @param[in] family, 1 = 63, 2 = 64, 3 = 65, 4 = 66, 5 = 67,
+ * @param[in] family  1 = 63, 2 = 64, 3 = 65, 4 = 66, 5 = 67,
  *                    6 = 63A, 7 = 64A, 8 = 65A
- * @param[in] tc desired t/c (fraction, not percent)
+ * @param[in] tc      desired t/c (fraction, not percent)
  */
 fastf_t ScaleFactor(int family, fastf_t tc);
 
@@ -350,7 +366,8 @@ fastf_t ScaleFactor(int family, fastf_t tc);
  * @param[in] family 1 = 63, 2 = 64, 3 = 65, 4 = 66, 5 = 67,
  *		     6 = 63A, 7 = 64A, 8 = 65A
  * @param[in] tc max value of t / c
- * @param[out] xt, yt
+ * @param[out] xt xt
+ * @param[out] yt yt
  */
 void SetSixDigitPoints(int family, fastf_t tc, struct fortran_array *xt, struct fortran_array *yt);
 
@@ -365,11 +382,13 @@ void Thickness4(fastf_t toc, struct fortran_array *x, struct fortran_array *y, s
  *
  * NOTE - First digit after dash is l.e. index; 2nd is loc of max thickness
  *
- * @param[in] toc
+ * @param[in] toc toc
  * @param[in] leIndex leading edge index
- * @param[in] xmaxt x-coor of maximum thickness (fraction of chord)
- * @param[in] x
- * @param[out] y, yp, ypp
+ * @param[in] xmaxt   x-coor of maximum thickness (fraction of chord)
+ * @param[in] x x
+ * @param[out] y y
+ * @param[out] yp yp
+ * @param[out] ypp ypp
  */
 void Thickness4M(fastf_t toc, fastf_t leIndex, fastf_t xmaxt,
 		 struct fortran_array *x, struct fortran_array *y, struct fortran_array *yp, struct fortran_array *ypp);

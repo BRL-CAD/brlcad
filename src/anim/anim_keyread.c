@@ -45,7 +45,7 @@
 #include "bn.h"
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "yzqrh?"

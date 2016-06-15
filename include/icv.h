@@ -29,6 +29,9 @@
 #include "common.h"
 #include <stddef.h> /* for size_t */
 
+#include "bu/mime.h"
+#include "bu/vls.h"
+
 __BEGIN_DECLS
 
 #ifndef ICV_EXPORT
@@ -43,28 +46,8 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** @addtogroup image */
-/** @ingroup data */
+/** @addtogroup libicv */
 /** @{ */
-
-typedef enum {
-    ICV_IMAGE_AUTO,
-    ICV_IMAGE_PIX,
-    ICV_IMAGE_BW,
-    ICV_IMAGE_DPIX,
-    ICV_IMAGE_ALIAS,
-    ICV_IMAGE_BMP,
-    ICV_IMAGE_CI,
-    ICV_IMAGE_ORLE,
-    ICV_IMAGE_PNG,
-    ICV_IMAGE_PPM,
-    ICV_IMAGE_PS,
-    ICV_IMAGE_RLE,
-    ICV_IMAGE_SPM,
-    ICV_IMAGE_SUN,
-    ICV_IMAGE_YUV,
-    ICV_IMAGE_UNKNOWN
-} ICV_IMAGE_FORMAT;
 
 typedef enum {
     ICV_COLOR_SPACE_RGB,
@@ -88,7 +71,7 @@ struct icv_image {
     ICV_COLOR_SPACE color_space;
     double *data;
     float gamma_corr;
-    int width, height, channels, alpha_channel;
+    size_t width, height, channels, alpha_channel;
     uint16_t flags;
 };
 
@@ -145,12 +128,15 @@ typedef struct icv_image icv_image_t;
 /**
  * Finds the Image format based on heuristics depending on the file
  * name.
+ *
+ * TODO - can we deprecated this in favor of the two functions below?
+ *
  * @param filename Filename of the image whose format is to be  know
  * @param trimmedname Buffer for storing filename after removing
  * extensions
  * @return File Format
  */
-ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, char *trimmedname);
+ICV_EXPORT extern mime_image_t icv_guess_file_format(const char *filename, char *trimmedname);
 
 /**
  * This function allocates memory for an image and returns the
@@ -161,7 +147,7 @@ ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, c
  * @param color_space Color space of the image (RGB, grayscale)
  * @return Image structure with allocated space and zeroed data array
  */
-ICV_EXPORT extern icv_image_t *icv_create(int width, int height, ICV_COLOR_SPACE color_space);
+ICV_EXPORT extern icv_image_t *icv_create(size_t width, size_t height, ICV_COLOR_SPACE color_space);
 
 /**
  * Write an image line to the data of ICV struct. Can handle unsigned
@@ -173,11 +159,11 @@ ICV_EXPORT extern icv_image_t *icv_create(int width, int height, ICV_COLOR_SPACE
  * @param bif ICV struct where data is to be written
  * @param y Index of the line at which data is to be written. 0 for
  * the first line
- * @data Line Data to be written
- * @type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
+ * @param data Line Data to be written
+ * @param type Type of data, e.g., uint8 data specify ICV_DATA_UCHAR or 1
  * @return on success 0, on failure -1
  */
-ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type);
+ICV_EXPORT int icv_writeline(icv_image_t *bif, size_t y, void *data, ICV_DATA type);
 
 /**
  * Writes a pixel to the specified coordinates in the data of ICV
@@ -187,10 +173,10 @@ ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
  * @param x x-dir coordinate of the pixel
  * @param y y-dir coordinate of the pixel. (0,0) coordinate is taken
  * as bottom left
- * @data Data to be written
+ * @param data Data to be written
  * @return on success 0, on failure -1
  */
-ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
+ICV_EXPORT int icv_writepixel(icv_image_t *bif, size_t x, size_t y, double *data);
 
 /**
  * Saves Image to a file or streams to stdout in respective format
@@ -202,7 +188,7 @@ ICV_EXPORT int icv_writepixel(icv_image_t *bif, int x, int y, double *data);
  * @param format Specific format of the file to be written.
  * @return on success 0, on failure -1 with log messages.
  */
-ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE_FORMAT format);
+ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, mime_image_t format);
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
@@ -219,19 +205,19 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
  * size = total bytes read
  *
  * @param filename File to read
- * @param hint_format Probable format of the file, typically
+ * @param format Probable format of the file, typically
  * ICV_IMAGE_AUTO
- * @param hint_width Width when passed as parameter from calling
+ * @param width Width when passed as parameter from calling
  * program.
- * @param hint_height Height when passed as parameter from calling
+ * @param height Height when passed as parameter from calling
  * program.
  * @return A newly allocated struct holding the loaded image info.
  */
-ICV_EXPORT extern icv_image_t *icv_read(const char *filename, int format, int width, int height);
+ICV_EXPORT extern icv_image_t *icv_read(const char *filename, mime_image_t format, size_t width, size_t height);
 
 /**
  * This function zeroes all the data entries of an image
- * @param img Image Structure
+ * @param bif Image Structure
  */
 ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
 
@@ -330,7 +316,7 @@ ICV_EXPORT int icv_rgb2gray(icv_image_t *img,
  * data in vertical direction.
  * @return 0 on success.
  */
-ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum, int ynum);
+ICV_EXPORT extern int icv_rect(icv_image_t *img, size_t xorig, size_t yorig, size_t xnum, size_t ynum);
 
 /**
  * This function crops an input image.
@@ -352,12 +338,12 @@ ICV_EXPORT extern int icv_rect(icv_image_t *img, int xorig, int yorig, int xnum,
  * @return 0 on success; on failure -1; and logs the error message.
  */
 ICV_EXPORT extern int icv_crop(icv_image_t *img,
-			       int ulx, int uly,
-			       int urx, int ury,
-			       int lrx, int lry,
-			       int llx, int lly,
-			       unsigned int ynum,
-			       unsigned int xnum);
+			       size_t ulx, size_t uly,
+			       size_t urx, size_t ury,
+			       size_t lrx, size_t lry,
+			       size_t llx, size_t lly,
+			       size_t ynum,
+			       size_t xnum);
 
 /** @file libicv/operations.c
  *
@@ -555,7 +541,7 @@ ICV_EXPORT extern int icv_fade(icv_image_t *img, double fraction);
  * is of size c X n_bins where c is the channels in the image.
  *
  */
-ICV_EXPORT size_t **icv_hist(icv_image_t* img, int n_bins);
+ICV_EXPORT size_t **icv_hist(icv_image_t* img, size_t n_bins);
 
 /**
  * Finds the minimum value in each channel of the image.
@@ -622,7 +608,7 @@ ICV_EXPORT double *icv_max(icv_image_t* img);
  * the mode values from histogram of each channel.
  *
  */
-ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, int n_bins);
+ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, size_t n_bins);
 
 /**
  * Calculates median of the values of each channel.
@@ -638,7 +624,7 @@ ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, int n_bins);
  * the mode values from histogram of each channel.
  *
  */
-ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, int n_bins);
+ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, size_t n_bins);
 
 /**
  * Calculates the skewness in data.
@@ -650,7 +636,7 @@ ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, int n_bins);
  * @return c length double array where c is the number of channels in
  * the img
  */
-ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
+ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, size_t n_bins);
 
 /**
  * Calculates the variance in data.
@@ -662,7 +648,7 @@ ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
  * @return c length double array where c is the number of channels in
  * the img
  */
-ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, int n_bins);
+ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, size_t n_bins);
 
 
 /** @file size.c
@@ -711,7 +697,7 @@ typedef enum {
  * shrunken
  * @return 0 on success and -1 on failure.
  */
-ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
+ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, size_t out_width, size_t out_height, size_t factor);
 
 /** @} */
 /* end image utilities */
@@ -721,7 +707,7 @@ ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned i
  * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
  *
  */
-ICV_EXPORT extern int icv_rot(int argv, char **argc);
+ICV_EXPORT extern int icv_rot(size_t argc, const char *argv[]);
 
 __END_DECLS
 

@@ -31,7 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "mater.h"
+#include "raytrace.h"
 
 
 #include "./ged_private.h"
@@ -165,9 +165,9 @@ _ged_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path 
 {
 
     if (dgcdp->wireframe_color_override) {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_callback, dgcdp->freesolid);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, (unsigned char *)&(dgcdp->wireframe_color), dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
     } else {
-	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_callback, dgcdp->freesolid);
+	dl_add_path(dgcdp->gdlp, dashflag, dgcdp->transparency, dgcdp->dmode, dgcdp->hiddenLine, vhead, pathp, tsp, NULL, dgcdp->gedp->ged_create_vlist_solid_callback, dgcdp->freesolid);
     }
 }
 
@@ -563,7 +563,7 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, const char 
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i])))
 	    continue;
 	snprintf(namebuf, 64, "%s%lx", shortname, vbp->rgb[i]);
-	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0, gedp->freesolid, 0);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_solid_callback, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0, 0, gedp->freesolid, 0);
     }
 }
 

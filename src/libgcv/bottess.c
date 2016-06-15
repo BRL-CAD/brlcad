@@ -39,11 +39,6 @@
 #include "./tri_intersect.h"
 
 
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-
-
 /* assume 4096, seems common enough. a portable way to get to PAGE_SIZE might be
  * better. */
 const int faces_per_page = 4096 / sizeof(struct face_s);
@@ -486,19 +481,12 @@ long int lsplitz=0;
 long int lsplitty=0;
 
 union tree *
-gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
+gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *ret_tree = TREE_NULL;
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
 
-    if (!tsp || !curtree || !pathp || !client_data) {
+    if (!tsp || !curtree || !pathp) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing parameters\n");
-	return TREE_NULL;
-    }
-
-    write_region = ((struct gcv_data *)client_data)->func;
-    if (!write_region) {
-	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
 

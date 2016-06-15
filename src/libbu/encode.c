@@ -34,7 +34,7 @@ const char *
 bu_vls_encode(struct bu_vls *vp, const char *str)
 {
     static const char *empty = "";
-    int skip = 0;
+    size_t skip = 0;
     const char *escape_chars = "\" {}\\$[]\0";
     const char *ec = NULL;
     int needs_escaping = 0;
@@ -80,7 +80,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
 {
     static const char *empty = "";
 
-    int skip = 0;
+    size_t skip = 0;
     int dquote = 0;
     int escape = 0;
 

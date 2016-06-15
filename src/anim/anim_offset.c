@@ -35,7 +35,7 @@
 
 #include "bu/getopt.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 

@@ -42,7 +42,7 @@
 #include <vector>
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "vmath.h"
 #include "brep.h"
 

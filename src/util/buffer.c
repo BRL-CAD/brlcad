@@ -61,7 +61,7 @@ main(int argc, char *argv[])
 
     if (argc > 1) {
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
-	bu_log("        Program continues running:\n", argv[0]);
+	bu_log("        Program continues running:\n");
     }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {

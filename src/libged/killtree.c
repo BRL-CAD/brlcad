@@ -65,7 +65,7 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
     /* FIXME: these should be wrapped in quotes, but need to dewrap
      * after bu_argv_from_string().
      */
-    bu_vls_printf(&str, "-not -below -name %s -name %s", topobj, obj);
+    bu_vls_printf(&str, "-depth >0 -not -below -name %s -name %s", topobj, obj);
 
     ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
 

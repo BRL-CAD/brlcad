@@ -659,17 +659,17 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (vp) {
 			BU_CK_VLS(vp);
 			if (f.flags & FIELDLEN) {
-			    int stringlen = bu_vls_strlen(vp);
+			    size_t stringlen = bu_vls_strlen(vp);
 
-			    if (stringlen >= f.fieldlen)
+			    if (stringlen >= (size_t)f.fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)f.fieldlen);
 			    else {
 				struct bu_vls padded = BU_VLS_INIT_ZERO;
-				int i;
+				size_t i;
 
 				if (f.left_justify)
 				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < f.fieldlen - stringlen; ++i)
+				for (i = 0; i < (size_t)f.fieldlen - stringlen; ++i)
 				    bu_vls_putc(&padded, ' ');
 				if (!f.left_justify)
 				    bu_vls_vlscat(&padded, vp);

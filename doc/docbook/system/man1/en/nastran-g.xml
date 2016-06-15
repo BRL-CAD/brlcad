@@ -58,7 +58,7 @@ elements.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>nastran-g -i nastran.file -o sample.g</emphasis>
+$ nastran-g -i <emphasis remap='I'>nastran.file</emphasis> -o <emphasis remap='I'>sample.g</emphasis>
 </synopsis>
 </refsect1>
 

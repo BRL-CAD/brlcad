@@ -158,7 +158,7 @@ FILES="`grep -I -e '#[[:space:]]*include' $SRCFILES $INCFILES | grep -E 'common.
 #done`"
 
 LEXERS="schema.h obj_grammar.c obj_grammar.cpp obj_scanner.h points_scan.c script.c"
-EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c $LEXERS"
+EXEMPT="bnetwork.h bio.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h $LEXERS"
 
 FOUND=
 for file in $FILES ; do
@@ -217,12 +217,14 @@ for func in fgets abort dirname getopt strcat strncat strlcat strcpy strncpy str
     # handle implementation exceptions
     MATCH="`echo \"$MATCH\" \
 | sed 's/.*\/bomb\.c:.*abort.*//g' \
+| sed 's/.*\/bu\/path\.h.*//' \
 | sed 's/.*\/bu\/str\.h.*//' \
 | sed 's/.*\/bu\/log\.h.*//' \
 | sed 's/.*\/cursor\.c.*//g' \
 | sed 's/.*\/CONFIG_CONTROL_DESIGN.*//' \
-| sed 's/.*\/db\.h.*strncpy.*//' \
+| sed 's/.*\/rt\/db4\.h.*strncpy.*//' \
 | sed 's/.*\/file\.c:.*remove.*//' \
+| sed 's/.*\/optionparser\.h.*//g' \
 | sed 's/.*\/str\.c:.*strcasecmp.*//' \
 | sed 's/.*\/str\.c:.*strcmp.*//' \
 | sed 's/.*\/str\.c:.*strlcat.*//' \
@@ -324,7 +326,7 @@ done
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=200
+NEED_FIXING=184
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"

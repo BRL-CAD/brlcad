@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */

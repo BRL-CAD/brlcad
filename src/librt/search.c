@@ -90,8 +90,9 @@
 #include <limits.h> /* for INT_MAX */
 
 #include "bu/cmd.h"
+#include "bu/path.h"
 
-#include "db.h"
+#include "rt/db4.h"
 #include "./librt_private.h"
 #include "./search.h"
 

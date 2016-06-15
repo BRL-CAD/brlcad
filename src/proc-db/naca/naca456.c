@@ -43,6 +43,9 @@
 int
 main(int argc, const char **argv)
 {
+    if (!argc || !argv)
+	return 1;
+
     return 0;
 }
 

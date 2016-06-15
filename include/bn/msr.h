@@ -19,11 +19,9 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file msr.h */
-/** @addtogroup msr */
-/** @{ */
-
-/** @brief
+/** @addtogroup bn_msr
+ *
+ * @brief
  * Minimal Standard RANdom number generator
  *
  * @par From:
@@ -32,6 +30,8 @@
  * @n	CACM vol 31 no 10, Oct 88
  *
  */
+/** @{ */
+/** @file msr.h */
 
 #ifndef BN_MSR_H
 #define BN_MSR_H

@@ -66,9 +66,9 @@
 #include "bu/units.h"
 #include "bu/version.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "libtermio.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "ged.h"
 
 /* private */
@@ -1073,6 +1073,7 @@ main(int argc, char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -1114,9 +1115,8 @@ main(int argc, char *argv[])
 		old_mged_gui = 0;
 		break;
 	    default:
-		bu_log("Unrecognized option (%c)\n", c);
+		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* Fall through to help */
-	    case '?':
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
@@ -2769,6 +2769,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GED_INIT(gedp, ged_wdbp);
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
+    gedp->ged_create_vlist_solid_callback = createDListSolid;
     gedp->ged_create_vlist_callback = createDListAll;
     gedp->ged_free_vlist_callback = freeDListsAll;
 

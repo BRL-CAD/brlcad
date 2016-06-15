@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "db.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
+#include "rt/db4.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
 		    am only looking to see what units we prefer... */
 
 #include "./rtuif.h"

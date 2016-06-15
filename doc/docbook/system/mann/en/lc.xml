@@ -9,7 +9,7 @@
 
 <refnamediv xml:id="name">
   <refname>lc</refname>
-  <refpurpose>Lists codes (i.e. region attributes) 'region_id', 'material_id' and 'los' within a group or combination.
+  <refpurpose>Lists codes (i.e. region attributes) 'region_id', 'material_id', 'los', 'region name', 'region parent' within a group or combination.
    </refpurpose>
 </refnamediv>
 
@@ -24,6 +24,8 @@
        <arg choice="opt" rep="norepeat">-r</arg>
        <arg choice="opt" rep="norepeat">-z</arg>
        <group choice="opt" rep="norepeat">
+	 <arg choice="plain" rep="norepeat">-0</arg>
+	 <arg choice="plain" rep="norepeat">-1</arg>
 	 <arg choice="plain" rep="norepeat">-2</arg>
 	 <arg choice="plain" rep="norepeat">-3</arg>
 	 <arg choice="plain" rep="norepeat">-4</arg>
@@ -42,7 +44,7 @@
 <refsection xml:id="description"><title>DESCRIPTION</title>
  <para>The 'lc' command lists a set of codes (i.e. attributes) of
  regions within a group/combination. Listed in columns are the
- following 'region_id', 'material_id', 'los', 'region name',
+ following: 'region_id', 'material_id', 'los', 'region name',
  'region parent'. If a value is unset, it is reported as '--'.</para>
 </refsection>
 
@@ -52,7 +54,7 @@
       <term><option>-d</option></term>
       <listitem>
 	<para>
-	  Specifies to list only regions with duplicate 'region_id'.
+	  Specifies to list only one region with each 'region_id'.
 	</para>
       </listitem>
     </varlistentry>
@@ -60,10 +62,10 @@
       <term><option>-s</option></term>
       <listitem>
 	<para>
-	  Same as '-d' except some duplicates will not be reported
-	  (i.e. skipped). Skipped duplicates will be those within the
-	  specified group, that have the same parent, 'material_id' and
-	  'los'.
+	  Specifies to list only one region with each combination of 'region_id',
+	  'material_id' and 'los'.  In addition to the output of '-d', it lists
+	  those cases where 'region_id' is the same but 'material_id' and/or
+	  'los' are different.
 	</para>
       </listitem>
     </varlistentry>
@@ -86,13 +88,19 @@
       </listitem>
     </varlistentry>
     <varlistentry>
+      <term><option>-0</option></term>
+      <term><option>-1</option></term>
       <term><option>-2</option></term>
       <term><option>-3</option></term>
       <term><option>-4</option></term>
       <term><option>-5</option></term>
       <listitem>
 	<para>
-	  Specifies sort column 2, 3, 4 or 5.
+	Specifies sort column 1, 2, 3, 4 or 5 (referring to columns listed in the description of this command);
+	1 is default.
+	If 0 is specified, the regions are listed in the order in which they are stored, but this will be overridden
+	if <option>-d</option> or <option>-s</option> is used, because of the sorting which needs to be done when
+        either of those options is used.
 	</para>
       </listitem>
     </varlistentry>

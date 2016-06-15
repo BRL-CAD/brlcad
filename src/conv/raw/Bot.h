@@ -41,9 +41,9 @@ public:
     void               setName(const std::string& value);
     void               setThickness(double value);
     size_t             addPoint(point_t& point);
-    void               addTriangle(int  a,
-				   int  b,
-				   int  c);
+    void               addTriangle(size_t a,
+				   size_t b,
+				   size_t c);
 
     const std::string& name(void) const;
     void               write(rt_wdb* wdbp) const;
@@ -53,7 +53,7 @@ private:
     std::string          m_name;
     double               m_thickness;
     std::vector<fastf_t> m_vertices;
-    std::vector<int>     m_faces;
+    std::vector<size_t>  m_faces;
 
     void writeSolid(rt_wdb* wdbp) const;
     void writePlate(rt_wdb* wdbp) const;

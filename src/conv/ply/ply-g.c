@@ -183,11 +183,10 @@ main(int argc, char *argv[])
     struct bu_list head;
     struct wmember *wmp = NULL;
     p_ply ply_fp;
-    char *bot_name = NULL;
-    char *region_name = NULL;
     char *periodpos = NULL;
     char *slashpos = NULL;
-    size_t size;
+    struct bu_vls bot_name = BU_VLS_INIT_ZERO;
+    struct bu_vls region_name = BU_VLS_INIT_ZERO;
     unsigned char rgb[3];
     int irgb[4] = {-1, -1, -1, 0};
     bu_setprogname(argv[0]);
@@ -280,35 +279,26 @@ main(int argc, char *argv[])
     /* generate object names */
     periodpos = strrchr(ply_file, '.');
     slashpos = strrchr(ply_file, '/');
-    if(!slashpos)
-	slashpos = ply_file;
-    else
-	slashpos++;
+    if (slashpos) ply_file = slashpos + 1;
 
+    bu_vls_sprintf(&bot_name, "%s", ply_file);
     if (periodpos)
-	size = periodpos - slashpos;
-    else
-	size = strlen(slashpos);
+	bu_vls_trunc(&bot_name, -1 * strlen(periodpos));
+    bu_vls_printf(&bot_name, ".bot");
+    bu_vls_sprintf(&region_name, "%s.r", bu_vls_addr(&bot_name));
 
-    bot_name = (char *)bu_calloc(size + 5, sizeof(char), "bot_name");
-    region_name = (char *)bu_calloc(size + 7, sizeof(char), "region_name");
-
-    bu_strlcat(bot_name, slashpos, size + 5);
-    bu_strlcat(bot_name, ".bot", size + 5);
-    sprintf(region_name, "%s.r", bot_name);
-
-    if (mk_bot(out_fp, bot_name, RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL, NULL)) {
-	bu_log("ERROR: Failed to write BOT(%s) to database\n", bot_name);
+    if (mk_bot(out_fp, bu_vls_addr(&bot_name), RT_BOT_SOLID, RT_BOT_UNORIENTED, 0, bot->num_vertices, bot->num_faces, bot->vertices, bot->faces, NULL, NULL)) {
+	bu_log("ERROR: Failed to write BOT(%s) to database\n", bu_vls_addr(&bot_name));
 	goto free_bot;
     }
 
     if (verbose) {
-	bu_log("Wrote BOT %s\n", bot_name);
+	bu_log("Wrote BOT %s\n", bu_vls_addr(&bot_name));
     }
 
     BU_LIST_INIT(&head);
-    if ((wmp=mk_addmember(bot_name, &head, NULL, WMOP_UNION)) == WMEMBER_NULL) {
-	bu_log("ERROR: Failed to add %s to region\n", bot_name);
+    if ((wmp=mk_addmember(bu_vls_addr(&bot_name), &head, NULL, WMOP_UNION)) == WMEMBER_NULL) {
+	bu_log("ERROR: Failed to add %s to region\n", bu_vls_addr(&bot_name));
 	goto free_bot;
     }
 
@@ -316,15 +306,15 @@ main(int argc, char *argv[])
 	if (verbose) {
 	    bu_log("No color information specified\n");
 	}
-	if (mk_comb(out_fp, region_name, &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", region_name);
+	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
+	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
 	    goto free_bot;
 	}
     }
     else if (irgb[3]) {
 	bu_log("All triangles are not the same color. No color information written!\n");
-	if (mk_comb(out_fp, region_name, &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
-	    bu_log("ERROR: Failed to write region(%s) to database\n", region_name);
+	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, NULL, 1000, 0, 1, 100, 0, 0, 0)) {
+	    bu_log("ERROR: Failed to write region(%s) to database\n", bu_vls_addr(&region_name));
 	    goto free_bot;
 	}
     }
@@ -332,7 +322,7 @@ main(int argc, char *argv[])
 	for (i = 0; i < 3; i++) {
 	    rgb[i] = (unsigned char) irgb[i];
 	}
-	if (mk_comb(out_fp, region_name, &head, 1, NULL, NULL, rgb, 1000, 0, 1, 100, 0, 0, 0)) {
+	if (mk_comb(out_fp, bu_vls_addr(&region_name), &head, 1, NULL, NULL, rgb, 1000, 0, 1, 100, 0, 0, 0)) {
 	    bu_log("ERROR: Failed to write region(%s) to database\n", region_name);
 	    goto free_bot;
 	}
@@ -352,10 +342,9 @@ free_mem:
 	bu_free(bot, "bot");
     if(out_fp)
 	bu_free(out_fp, "out_fp");
-    if(bot_name)
-	bu_free(bot_name, "bot_name");
-    if(region_name)
-	bu_free(region_name, "region_name");
+
+    bu_vls_free(&bot_name);
+    bu_vls_free(&region_name);
 
     return 0;
 }

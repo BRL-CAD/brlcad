@@ -25,9 +25,9 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"		/* for ID_POLY special support */
+#include "rt/geom.h"		/* for ID_POLY special support */
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -62,7 +62,7 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 
 	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
 	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
-	invent_solid(gedp->ged_gdp->gd_headDisplay, dbip, createDListAll, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, gedp->freesolid, 0);
+	invent_solid(gedp->ged_gdp->gd_headDisplay, dbip, createDListSolid, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, gedp->freesolid, 0);
     }
 }
 

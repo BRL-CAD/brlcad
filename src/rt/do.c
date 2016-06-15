@@ -40,6 +40,7 @@
 
 #include "bu/getopt.h"
 #include "bu/debug.h"
+#include "bu/mime.h"
 #include "bu/vls.h"
 #include "vmath.h"
 #include "raytrace.h"
@@ -638,7 +639,7 @@ do_frame(int framenumber)
     /* Process -b and ??? options now, for this frame */
     if (pix_start == -1) {
 	pix_start = 0;
-	pix_end = height * width - 1;
+	pix_end = (int)(height * width - 1);
     }
     if (string_pix_start) {
 	int xx, yy;
@@ -650,7 +651,7 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("only pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_start = yy * width + xx;
+	    pix_start = (int)(yy * width + xx);
 	    pix_end = pix_start;
 	}
     }
@@ -664,7 +665,7 @@ do_frame(int framenumber)
 	yy = atoi(cp);
 	bu_log("ending pixel %d %d\n", xx, yy);
 	if (xx * yy >= 0) {
-	    pix_end = yy * width + xx;
+	    pix_end = (int)(yy * width + xx);
 	}
     }
 
@@ -758,6 +759,7 @@ do_frame(int framenumber)
 
 	/* Ordinary case for creating output file */
 	if (outfp == NULL) {
+#ifndef RT_TXT_OUTPUT
 	    /* FIXME: in the case of rtxray, this is wrong.  it writes
 	     * out a bw image so depth should be just 1, not 3.
 	     */
@@ -768,6 +770,14 @@ do_frame(int framenumber)
 		if (matflag) return 0;	/* OK */
 		return -1;			/* Bad */
 	    }
+#else
+	    outfp = fopen(framename, "w");
+	    if (outfp == NULL) {
+		perror(framename);
+		if (matflag) return 0;	/* OK */
+		return -1;			/* Bad */
+	    }
+#endif
 	}
 
 	if (rt_verbosity & VERBOSE_OUTPUTFILE)
@@ -823,7 +833,7 @@ do_frame(int framenumber)
 
 	/* Reset values to full size, for next frame (if any) */
 	pix_start = 0;
-	pix_end = height*width - 1;
+	pix_end = (int)(height*width - 1);
     }
     utime = rt_get_timer(&times, &wallclock);
 
@@ -842,8 +852,8 @@ do_frame(int framenumber)
      * CPU time, regardless of the number of CPUs.
      */
     if (npsw > 1) {
-	int avail_cpus;
-	int ncpus;
+	size_t avail_cpus;
+	size_t ncpus;
 
 	avail_cpus = bu_avail_cpus();
 	if (npsw > avail_cpus) {
@@ -893,7 +903,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, ICV_IMAGE_AUTO);
+	icv_write(bif, framename, MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }
@@ -1009,7 +1019,7 @@ void
 res_pr(void)
 {
     register struct resource *res;
-    register int i;
+    register size_t i;
 
     bu_log("\nResource use summary, by processor:\n");
     res = &resource[0];

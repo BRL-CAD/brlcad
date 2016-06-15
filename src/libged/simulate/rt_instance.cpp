@@ -96,6 +96,9 @@ TreeUpdater::TreeUpdater(db_i &db_instance, directory &vdirectory) :
     if (rt_db_get_internal(&m_comb_internal, &m_directory, &m_db_instance,
 			   bn_mat_identity, &rt_uniresource) < 0)
 	throw std::runtime_error("rt_db_get_internal() failed");
+
+    if (m_comb_internal.idb_minor_type != ID_COMBINATION)
+	throw std::invalid_argument("object is not a combination");
 }
 
 

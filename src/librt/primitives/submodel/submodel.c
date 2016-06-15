@@ -40,9 +40,9 @@
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #define RT_SUBMODEL_O(m) bu_offsetof(struct rt_submodel_internal, m)

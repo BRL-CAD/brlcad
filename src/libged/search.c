@@ -36,6 +36,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 
 #include "./ged_private.h"
 
@@ -60,7 +61,7 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/')
 	islocal = 0;
 
-    normalized = db_normalize(bu_vls_addr(path));
+    normalized = bu_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
 	char *tbasename = (char *)bu_calloc(strlen(normalized), sizeof(char), "_path_scrub tbasename");
@@ -231,6 +232,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * any further than the max possible option count */
     bu_optind = 1;
     while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -246,7 +248,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		flags |= DB_SEARCH_QUIET;
 		break;
 	    case 'h':
-	    case '?':
 		want_help = 1;
 		break;
 	    default:

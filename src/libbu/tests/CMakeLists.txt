@@ -35,6 +35,28 @@ add_test(NAME bu_basename_p__p_                                  COMMAND tester_
 add_test(NAME bu_basename_p__p__p_                               COMMAND tester_bu_basename "...")
 add_test(NAME bu_basename_sp__sp__sp_                            COMMAND tester_bu_basename "   ")
 
+
+##########################################
+#      bu_file_path_component testing    #
+##########################################
+BRLCAD_ADDEXEC(tester_bu_path_component    bu_path_component.c    libbu NO_INSTALL)
+add_test(NAME bu_path_component_null                               COMMAND tester_bu_path_component) # tests NULL
+add_test(NAME bu_path_component_empty                              COMMAND tester_bu_path_component 0) # tests empty
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_ext          COMMAND tester_bu_path_component "/usr/dir/file.ext" "ext" 4)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base         COMMAND tester_bu_path_component "/usr/dir/file.ext" "file.ext" 2)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_base_core    COMMAND tester_bu_path_component "/usr/dir/file.ext" "file" 3)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir          COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir" 0)
+add_test(NAME bu_path_component_sl_usr_sl_dir_sl_file_dir_core     COMMAND tester_bu_path_component "/usr/dir/file.ext" "/usr/dir/file" 1)
+
+
+################################
+#      bu_file_mime testing    #
+################################
+BRLCAD_ADDEXEC(tester_bu_file_mime    bu_file_mime.c    libbu NO_INSTALL)
+add_test(NAME bu_file_mime_dxf   COMMAND tester_bu_file_mime dxf 5 1) # tests dxf extension in model context
+add_test(NAME bu_file_mime_stp   COMMAND tester_bu_file_mime stp 5 7) # tests stp extension in model context
+add_test(NAME bu_file_mime_png   COMMAND tester_bu_file_mime png 3 14) # tests png extension in image context
+
 #
 #  ************ bitv.c tests *************
 #

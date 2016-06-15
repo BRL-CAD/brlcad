@@ -221,7 +221,7 @@ bu_strcasecmp(const char *string1, const char *string2)
     if (string2)
 	s2 = string2;
 
-#if defined(HAVE_WORKING_STRCASECMP_FUNCTION)
+#if defined(strcasecmp) || defined(HAVE_STRCASECMP)
     return strcasecmp(s1, s2);
 #else
     while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
@@ -252,7 +252,7 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
     if (n == 0)
 	return 0;
 
-#if defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#if defined(strcasecmp) || defined(HAVE_STRCASECMP)
     return strncasecmp(s1, s2, n);
 #else
     while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {

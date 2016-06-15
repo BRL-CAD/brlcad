@@ -29,9 +29,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup list */
-/** @{*/
-/** @file libbu/list.c
+/** @addtogroup bu_list
  *
  * @brief Support routines for doubly-linked lists.
  *
@@ -114,6 +112,8 @@ __BEGIN_DECLS
  * NEXT / PREV - from the point of view of a list member
  * forw / back - the actual pointer names
  */
+/** @{*/
+/** @file bu/list.h */
 
 struct bu_list {
     uint32_t magic;		/**< @brief Magic # for mem id/check */

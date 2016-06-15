@@ -22,13 +22,13 @@
 
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
-<para><command>Fbfree</command>
+<para><command>fbfree</command>
 is used to free any resources associated with a frame buffer.
 Its most common use is to close down an
 <citerefentry><refentrytitle>fbserv</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 process and its associated frame buffer.
 This command can also be used to free any shared memory segments
-on e.g. Sun and SGI frame buffers.</para>
+on, e.g., Sun and SGI frame buffers.</para>
 
 <para>This program simply calls the fb_free() routine in
 <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>.</para>

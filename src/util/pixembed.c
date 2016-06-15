@@ -48,6 +48,8 @@ size_t yout = 512;
 
 size_t border_inset = 0;	/* Sometimes border pixels are bad */
 
+size_t inbase;
+
 void load_buffer(void), write_buffer(void);
 
 static char usage[] = "\
@@ -141,25 +143,26 @@ main(int argc, char **argv)
 	bu_exit (4, NULL);
     }
 
+    inbase = (xout - xin) / 2;
+
     /* Allocate storage for one output line */
     scanlen = 3*xout;
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
 
     /* Pre-fetch the first line (after skipping) */
-    for (i= -1; i<border_inset; i++) load_buffer();
+    for (i= 0; i<border_inset; i++) load_buffer();
 
-    /* Write out duplicates at bottom, including real copy of 1st line */
-    ydup = (yout - yin) / 2 + border_inset + 1;
+    /* Write out duplicates of 1st line */
+    ydup = (yout - yin) / 2 - border_inset;
     for (y = 0; y < ydup; y++) write_buffer();
 
-    /* Read and write the remaining lines */
-    for (; i < yin-border_inset; i++, y++) {
+    for (y = 0; y < yin; y++) {
 	load_buffer();
 	write_buffer();
     }
 
-    /* Write out duplicates at the top, until all done */
-    for (; y < yout; y++) write_buffer();
+    /* For the remaining lines, Write out duplicates of last line read */
+    for (y = 0; y < ydup; y++) write_buffer();
 
     bu_free(obuf, "obuf");
 
@@ -178,9 +181,6 @@ load_buffer(void)
     unsigned char r, g, b;
     unsigned char *cp;
     size_t i;
-    size_t inbase;
-
-    inbase = (xout - xin) / 2;
 
     ret = fread(obuf + inbase*3, 3, xin, buffp);
     if (ret != xin) {

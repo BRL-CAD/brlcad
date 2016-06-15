@@ -912,18 +912,23 @@ int ON_Surface::IsAtSeam(double s, double t) const
 void
 ON_Surface::UnwrapUV(double &u, double &v) const
 {
-    // first check for and unwrap extended UV if needed
-    for (int i=0; i<2; i++) {
+    ON_2dPoint p2d(u,v);
+
+    for (int i = 0; i < 2; i++) {
 	if (!IsClosed(i))
 	    continue;
 
-	ON_2dPoint p2d(u,v);
 	double length = Domain(i).Length();
-	while (p2d[i] < Domain(i).m_t[0] - ON_ZERO_TOLERANCE) {
-	      p2d[i] = p2d[i] + length;
+	double dom_min = Domain(i).Min() - ON_ZERO_TOLERANCE;
+	double dom_max = Domain(i).Max() + ON_ZERO_TOLERANCE; 
+
+	if (p2d[i] < dom_min) {
+	    int domains_away = (int)(((dom_min - p2d[i]) / length) + 1.0);
+	    p2d[i] += length * domains_away;
 	}
-	while (p2d[i] >= Domain(i).m_t[1] + ON_ZERO_TOLERANCE) {
-	    p2d[i] = p2d[i] - length;
+	if (p2d[i] >= dom_max) {
+	    int domains_away = (int)(((p2d[i] - dom_max) / length) + 1.0);
+	    p2d[i] -= length * domains_away;
 	}
 	if (i == 0) {
 	    u = p2d[i];

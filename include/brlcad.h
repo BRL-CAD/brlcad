@@ -51,13 +51,13 @@
 #include "bn.h"
 
 /* database format storage types */
-#include "db.h"
+#include "rt/db4.h"
 
 /* raytrace interface constructs */
 #include "raytrace.h"
 
 /* trimmed nurb routines */
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* the write-only database library interface */
 #include "wdb.h"
@@ -65,11 +65,11 @@
 /* in-memory representations of the database geometry objects.  these
  * are subject to change and should not be relied upon.
  */
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 /* database object functions
  */
-#include "rtfunc.h"
+#include "rt/func.h"
 
 #endif  /* BRLCAD_H */
 /** @} */

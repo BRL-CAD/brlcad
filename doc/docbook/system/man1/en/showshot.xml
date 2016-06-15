@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Showshot</emphasis>
+<para><command>showshot</command>
 reads the specification for a ray through some geometry
 and generates
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -45,7 +45,7 @@ and
 and
 (<emphasis remap='I'>x_out</emphasis>, <emphasis remap='I'>y_out</emphasis>, <emphasis remap='I'>z_out</emphasis>)
 are the points at which the ray enters and exits
-<emphasis remap='I'>object,</emphasis>
+<emphasis remap='I'>object</emphasis>,
 respectively.
 The first and last lines of input are assumed to correspond to
 the first and last objects encountered along the ray.
@@ -82,7 +82,7 @@ The ray solid and ray region will be called
 <emphasis remap='I'>name</emphasis>.s and <emphasis remap='I'>name</emphasis>.r,
 respectively,
 and the group will be called
-<emphasis remap='I'>name.</emphasis>
+<emphasis remap='I'>name</emphasis>.
 Default is ray.<emphasis remap='I'>PID</emphasis>,
 where
 <emphasis remap='I'>PID</emphasis>

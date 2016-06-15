@@ -18,10 +18,10 @@
  * information.
  */
 
-/** @file bu.h
+
+/** @addtogroup libbu
  *
- * Main header file for the BRL-CAD Utility Library, LIBBU.
- *
+ * @brief
  * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
  * library provides several layers of low-level utility routines,
  * providing features that make cross-platform coding easier.
@@ -49,6 +49,11 @@
  * from constantly having to check for NULL return codes.
  *
  */
+/** @{ */
+/** @brief Main header file for the BRL-CAD Utility Library, LIBBU. */
+/** @file bu.h */
+/** @} */
+
 #ifndef BU_H
 #define BU_H
 
@@ -63,6 +68,7 @@
 #include "./bu/debug.h"
 #include "./bu/endian.h"
 #include "./bu/file.h"
+#include "./bu/path.h"
 #include "./bu/getopt.h"
 #include "./bu/hash.h"
 #include "./bu/hist.h"
@@ -71,6 +77,7 @@
 #include "./bu/magic.h"
 #include "./bu/malloc.h"
 #include "./bu/mapped_file.h"
+#include "./bu/mime.h"
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
 #include "./bu/ptbl.h"
@@ -83,6 +90,7 @@
 #include "./bu/vfont.h"
 #include "./bu/vlb.h"
 #include "./bu/vls.h"
+
 
 #endif  /* BU_H */
 

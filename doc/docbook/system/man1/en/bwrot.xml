@@ -23,7 +23,7 @@
     <arg choice='opt'>-n <replaceable>in_height</replaceable></arg>
     <arg choice='opt'>-o <replaceable>out.bw</replaceable></arg>
     <arg choice='opt'><replaceable>file.bw</replaceable></arg>
-    <arg choice='opt'><arg choice='plain'><replaceable>&gt;</replaceable></arg><arg choice='plain'><replaceable>out.bw</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>&gt;</arg><arg choice='plain'><replaceable>out.bw</replaceable></arg></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 

@@ -37,7 +37,7 @@
 #include "bu/file.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "bn.h"
 
 #define UPPER_CASE(c)	((c)-32)
@@ -185,7 +185,7 @@ get_args(int argc, char **argv)
     MAT_IDN(rmat);
     scale = 1.0;
 
-    while ((c = bu_getopt(argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "S:m:vMga:e:x:y:z:X:Y:Z:s:h?")) != -1) {
 	switch (c) {
 	    case 'M':
 		/* take model RPP from space() command */
@@ -270,7 +270,7 @@ get_args(int argc, char **argv)
 		 */
 		if (!rpp) {
 		    MAT_IDN(tmp);
-		    tmp[15] = 1/scale;
+		    tmp[15] = 1./scale;
 		    MAT_COPY(m, rmat);
 		    bn_mat_mul(rmat, tmp, m);
 		    scale = 1.0;
@@ -290,8 +290,8 @@ get_args(int argc, char **argv)
 		pdv_3space(stdout, forced_space_min, forced_space_max);
 		forced_space = 1;
 		break;
-	    default:		/* '?' */
-		return 0;	/* Bad */
+	    default:		/* 'h' '?' */
+		return 0;	/* Bad, unless 'h' or '?' is used */
 	}
     }
 

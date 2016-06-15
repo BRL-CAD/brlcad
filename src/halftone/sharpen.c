@@ -69,7 +69,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
     static unsigned char *last, *cur=0, *next;
     static int linelen;
-    int result;
+    size_t result;
     int newvalue;
     int i, value;
     int idx;
@@ -79,7 +79,8 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  */
     if (ZERO(Beta)) {
 	result = fread(buf, size, num, file);
-	if (!result) return result;
+	if (!result)
+	    return result;
 	for (i=0; i<size*num; i++) {
 	    idx = buf[i];
 	    CLAMP(idx, 0, size*num);
@@ -112,7 +113,8 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	    CLAMP(idx, 0, size*num);
 	    cur[i] = Map[idx];
 	}
-	if (!result) return result;	/* nothing there! */
+	if (!result)
+	    return result;	/* nothing there! */
 	result = fread(next, 1, linelen, file);
 	if (!result) {
 	    free(next);

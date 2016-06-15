@@ -45,7 +45,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "sysv.h"
 #include "analyze.h"
 
@@ -53,7 +53,7 @@
 
 
 /* bu_getopt() options */
-char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:";
+char *options = "A:a:de:f:g:Gn:N:pP:qrS:s:t:U:u:vV:W:h?";
 char *options_str = "[-A A|a|b|c|e|g|m|o|p|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper,lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol]";
 
 #define ANALYSIS_VOLUME 1
@@ -727,9 +727,7 @@ parse_args(int ac, char *av[])
 		}
 		break;
 
-	    case '?':
-	    case 'h':
-	    default :
+	    default: /* '?' 'h' */
 		return -1;
 	}
     }

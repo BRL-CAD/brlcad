@@ -26,7 +26,7 @@
 #include "common.h"
 #include "brep.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 __BEGIN_DECLS
 

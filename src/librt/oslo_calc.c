@@ -42,7 +42,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #define AMAX(i, j)    ((i) > (j) ? (i) : (j))
 #define AMIN(i, j)    ((i) < (j) ? (i) : (j))

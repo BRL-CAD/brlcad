@@ -22,7 +22,7 @@
  * BRL-CAD private system compatibility wrapper header that provides
  * declarations for native and standard system select() routines.
  *
- * This header is commonly used in leu of including the following:
+ * This header is commonly used in lieu of including the following:
  * sys/select.h, winsock2.h (select, fd_set)
  *
  * This header does not belong to any BRL-CAD library but may used by

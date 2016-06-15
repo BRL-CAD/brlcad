@@ -93,14 +93,14 @@ poly_init(void)
 
 
 /* compares the values of the array and returns 0. */
-int
-check_results(fastf_t a[], fastf_t b[], int n)
+static size_t
+check_results(fastf_t a[], fastf_t b[], size_t n)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
 	if (!EQUAL(a[i], b[i]))
-	    return -1;
+	    return 1;
     }
 
     return 0;
@@ -108,9 +108,10 @@ check_results(fastf_t a[], fastf_t b[], int n)
 
 
 /*tests the polynomials to make sure bn_poly_mul() works properly.*/
-int test_bn_poly(void)
+static int
+test_bn_poly(void)
 {
-    int val, val1, val2;
+    size_t val, val1, val2;
     bn_poly_t a, b, c;
     a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
 
@@ -123,13 +124,14 @@ int test_bn_poly(void)
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
-	return val;
+	return 0;
 
-    return -1;
+    return 1;
 }
 
 
-int main(void)
+int
+main(void)
 {
     int ret;
 
@@ -137,16 +139,13 @@ int main(void)
 
     ret = test_bn_poly();
 
-    if (ret == 0) {
-	bu_log("\nFunction computes correctly\n");
-
+    if (ret != 0) {
+	bu_log("\nInvalid output.\n");
 	return ret;
     }
 
-    else {
-	bu_log("\nInvalid output.\n");
-    }
-    return -1;
+    bu_log("\nFunction computes correctly\n");
+    return 0;
 
 }
 

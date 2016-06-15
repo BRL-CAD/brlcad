@@ -34,7 +34,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* This doesn't seem to be used anymore: */
 /* extern fastf_t spl_crv_flat(); */

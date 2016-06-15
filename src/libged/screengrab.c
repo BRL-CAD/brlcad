@@ -112,7 +112,7 @@ ged_screen_grab(struct ged *gedp, int argc, const char *argv[])
     }
 
     if (bif != NULL) {
-	icv_write(bif, argv[1], ICV_IMAGE_AUTO);
+	icv_write(bif, argv[1], MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }

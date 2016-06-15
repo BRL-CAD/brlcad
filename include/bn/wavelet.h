@@ -19,11 +19,9 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file wavelet.h */
-/** @addtogroup wavelet */
-/** @{ */
-
-/** @brief
+/** @addtogroup bn_wavelet
+ *
+ * @brief
  *  This is a standard wavelet library that takes a given data buffer of some data
  *  type and then performs a wavelet transform on that data.
  *
@@ -140,6 +138,8 @@
  *  bn_wlt_haar_1d_*_reconstruct(tbuffer, buffer, dimen, channels, sub_sz, limit)
  *
  */
+/** @{ */
+/** @file wavelet.h */
 
 #ifndef BN_WAVELET_H
 #define BN_WAVELET_H
@@ -151,10 +151,10 @@
 __BEGIN_DECLS
 
 #define CK_POW_2(dimen) { \
-	register unsigned long j; \
-	register int ok; \
-	for (ok=0, j=0; j < sizeof(unsigned long) * 8; j++) { \
-	    if ((unsigned long)(1<<j) == dimen) { ok = 1;  break; } \
+	register size_t j; \
+	register size_t ok; \
+	for (ok=0, j=0; j < sizeof(size_t) * 8; j++) { \
+	    if ((size_t)(1<<j) == dimen) { ok = 1;  break; } \
 	} \
 	if (! ok) { \
 	    bu_log("%s:%d value %ld should be power of 2 (2^%ld)\n", \
@@ -165,227 +165,227 @@ __BEGIN_DECLS
 
 BN_EXPORT extern void bn_wlt_haar_1d_double_decompose(double *tbuf,
 						      double *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_double_reconstruct(double *tbuf,
 							double *buf,
-							unsigned long dimen,
-							unsigned long depth,
-							unsigned long subimage_size,
-							unsigned long limit);
+							size_t dimen,
+							size_t depth,
+							size_t subimage_size,
+							size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_1d_float_decompose(float *tbuf,
 						     float *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_float_reconstruct(float *tbuf,
 						       float *buf,
-						       unsigned long dimen,
-						       unsigned long depth,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t depth,
+						       size_t subimage_size,
+						       size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_1d_char_decompose(char *tbuf,
 						    char *buf,
-						    unsigned long dimen,
-						    unsigned long depth,
-						    unsigned long limit);
+						    size_t dimen,
+						    size_t depth,
+						    size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_char_reconstruct(char *tbuf, char *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long subimage_size,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t subimage_size,
+						      size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_1d_short_decompose(short *tbuf, short *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_short_reconstruct(short *tbuf, short *buf,
-						       unsigned long dimen,
-						       unsigned long depth,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t depth,
+						       size_t subimage_size,
+						       size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_1d_int_decompose(int *tbuf, int *buf,
-						   unsigned long dimen,
-						   unsigned long depth,
-						   unsigned long limit);
+						   size_t dimen,
+						   size_t depth,
+						   size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_int_reconstruct(int *tbuf,
 						     int *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long subimage_size,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t subimage_size,
+						     size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_1d_long_decompose(long *tbuf, long *buf,
-						    unsigned long dimen,
-						    unsigned long depth,
-						    unsigned long limit);
+						    size_t dimen,
+						    size_t depth,
+						    size_t limit);
 BN_EXPORT extern void bn_wlt_haar_1d_long_reconstruct(long *tbuf, long *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long subimage_size,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t subimage_size,
+						      size_t limit);
 
 
 BN_EXPORT extern void bn_wlt_haar_2d_double_decompose(double *tbuf,
 						      double *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_double_reconstruct(double *tbuf,
 							double *buf,
-							unsigned long dimen,
-							unsigned long depth,
-							unsigned long subimage_size,
-							unsigned long limit);
+							size_t dimen,
+							size_t depth,
+							size_t subimage_size,
+							size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_float_decompose(float *tbuf,
 						     float *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_float_reconstruct(float *tbuf,
 						       float *buf,
-						       unsigned long dimen,
-						       unsigned long depth,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t depth,
+						       size_t subimage_size,
+						       size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_char_decompose(char *tbuf,
 						    char *buf,
-						    unsigned long dimen,
-						    unsigned long depth,
-						    unsigned long limit);
+						    size_t dimen,
+						    size_t depth,
+						    size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_char_reconstruct(char *tbuf,
 						      char *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long subimage_size,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t subimage_size,
+						      size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_short_decompose(short *tbuf,
 						     short *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_short_reconstruct(short *tbuf,
 						       short *buf,
-						       unsigned long dimen,
-						       unsigned long depth,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t depth,
+						       size_t subimage_size,
+						       size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_int_decompose(int *tbuf,
 						   int *buf,
-						   unsigned long dimen,
-						   unsigned long depth,
-						   unsigned long limit);
+						   size_t dimen,
+						   size_t depth,
+						   size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_int_reconstruct(int *tbuf,
 						     int *buf,
-						     unsigned long dimen,
-						     unsigned long depth,
-						     unsigned long subimage_size,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t depth,
+						     size_t subimage_size,
+						     size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_long_decompose(long *tbuf,
 						    long *buf,
-						    unsigned long dimen,
-						    unsigned long depth,
-						    unsigned long limit);
+						    size_t dimen,
+						    size_t depth,
+						    size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct(long *tbuf,
 						      long *buf,
-						      unsigned long dimen,
-						      unsigned long depth,
-						      unsigned long subimage_size,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t depth,
+						      size_t subimage_size,
+						      size_t limit);
 
 
 BN_EXPORT extern void bn_wlt_haar_2d_double_decompose2(double *tbuf,
 						       double *buf,
-						       unsigned long dimen,
-						       unsigned long width,
-						       unsigned long height,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t width,
+						       size_t height,
+						       size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_double_reconstruct2(double *tbuf,
 							 double *buf,
-							 unsigned long dimen,
-							 unsigned long width,
-							 unsigned long height,
-							 unsigned long subimage_size,
-							 unsigned long limit);
+							 size_t dimen,
+							 size_t width,
+							 size_t height,
+							 size_t subimage_size,
+							 size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_float_decompose2(float *tbuf,
 						      float *buf,
-						      unsigned long dimen,
-						      unsigned long width,
-						      unsigned long height,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t width,
+						      size_t height,
+						      size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_float_reconstruct2(float *tbuf,
 							float *buf,
-							unsigned long dimen,
-							unsigned long width,
-							unsigned long height,
-							unsigned long subimage_size,
-							unsigned long limit);
+							size_t dimen,
+							size_t width,
+							size_t height,
+							size_t subimage_size,
+							size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_char_decompose2(char *tbuf,
 						     char *buf,
-						     unsigned long dimen,
-						     unsigned long width,
-						     unsigned long height,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t width,
+						     size_t height,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_char_reconstruct2(char *tbuf,
 						       char *buf,
-						       unsigned long dimen,
-						       unsigned long width,
-						       unsigned long height,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t width,
+						       size_t height,
+						       size_t subimage_size,
+						       size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_short_decompose2(short *tbuf,
 						      short *buf,
-						      unsigned long dimen,
-						      unsigned long width,
-						      unsigned long height,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t width,
+						      size_t height,
+						      size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_short_reconstruct2(short *tbuf,
 							short *buf,
-							unsigned long dimen,
-							unsigned long width,
-							unsigned long height,
-							unsigned long subimage_size,
-							unsigned long limit);
+							size_t dimen,
+							size_t width,
+							size_t height,
+							size_t subimage_size,
+							size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_int_decompose2(int *tbuf,
 						    int *buf,
-						    unsigned long dimen,
-						    unsigned long width,
-						    unsigned long height,
-						    unsigned long limit);
+						    size_t dimen,
+						    size_t width,
+						    size_t height,
+						    size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_int_reconstruct2(int *tbuf,
 						      int *buf,
-						      unsigned long dimen,
-						      unsigned long width,
-						      unsigned long height,
-						      unsigned long subimage_size,
-						      unsigned long limit);
+						      size_t dimen,
+						      size_t width,
+						      size_t height,
+						      size_t subimage_size,
+						      size_t limit);
 
 BN_EXPORT extern void bn_wlt_haar_2d_long_decompose2(long *tbuf,
 						     long *buf,
-						     unsigned long dimen,
-						     unsigned long width,
-						     unsigned long height,
-						     unsigned long limit);
+						     size_t dimen,
+						     size_t width,
+						     size_t height,
+						     size_t limit);
 BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
 						       long *buf,
-						       unsigned long dimen,
-						       unsigned long width,
-						       unsigned long height,
-						       unsigned long subimage_size,
-						       unsigned long limit);
+						       size_t dimen,
+						       size_t width,
+						       size_t height,
+						       size_t subimage_size,
+						       size_t limit);
 
 __END_DECLS
 

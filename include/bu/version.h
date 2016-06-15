@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file bu/version.h
- *
- */
 #ifndef BU_VERSION_H
 #define BU_VERSION_H
 
@@ -29,14 +26,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup version */
-/** @{ */
-
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
+/** @addtogroup bu_version
+ * @brief
+ * Version reporting for LIBBU
  */
+/** @{ */
+/** @file bu/version.h */
 
 /**
  * returns the compile-time version of libbu

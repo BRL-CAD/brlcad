@@ -30,7 +30,7 @@
 #include <stdio.h>
 
 #include "vmath.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define MAX_REACHED 0

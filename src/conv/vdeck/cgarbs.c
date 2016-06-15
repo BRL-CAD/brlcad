@@ -35,7 +35,7 @@
 #include <math.h>
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #define YES	1
 #define NO	0

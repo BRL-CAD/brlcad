@@ -40,7 +40,7 @@
 #include "bu/list.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 __BEGIN_DECLS

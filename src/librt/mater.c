@@ -36,8 +36,6 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "mater.h"
-
 
 /*
  * It is expected that entries on this mater list will be sorted in

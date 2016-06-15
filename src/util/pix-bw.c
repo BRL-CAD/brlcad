@@ -40,6 +40,7 @@
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 #include "icv.h"
 
 
@@ -162,7 +163,7 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
 
     if (img == NULL)
 	return 1;
@@ -188,10 +189,10 @@ main(int argc, char **argv)
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
-    icv_write(img, out_file, ICV_IMAGE_BW);
+    icv_write(img, out_file, MIME_IMAGE_BW);
 
     if (!isatty(fileno(stdout)) && out_file != NULL) {
-	icv_write(img, NULL, ICV_IMAGE_BW);
+	icv_write(img, NULL, MIME_IMAGE_BW);
     }
 
     return 0;

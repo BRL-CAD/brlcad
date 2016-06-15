@@ -61,7 +61,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     bu_opterr = 1;
 
     /* parse args */
-    while ((c=bu_getopt(argc, (char * const *)argv, "O:N:vh?")) != -1) {
+    while ((c=bu_getopt(argc, (char * const *)argv, "O:N:vhr?")) != -1) {
 	if (bu_optopt == '?')
 	    c='h';
 	switch (c) {
@@ -77,6 +77,9 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
 		break;
 	    case 'v' :
 		bu_log("Reporting mode is verbose");
+		break;
+	    case 'r' :
+		bu_log("Raytrace based evaluation of differences between objects.");
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());

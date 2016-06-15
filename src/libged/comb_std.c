@@ -32,7 +32,7 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 
 

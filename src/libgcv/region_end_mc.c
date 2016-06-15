@@ -30,11 +30,6 @@
 #include "bu/parallel.h"
 #include "gcv.h"
 
-/* FIXME: this be a dumb hack to avoid void* conversion */
-struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
-};
-
 
 /* in region_end.c */
 union tree * _gcv_cleanup(int state, union tree *tp);
@@ -53,15 +48,14 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     int NMG_debug_state = 0;
     int count = 0;
 
-    void (*write_region)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    struct gcv_region_end_data *data = (struct gcv_region_end_data *)client_data;
 
     if (!tsp || !pathp || !client_data) {
 	bu_log("INTERNAL ERROR: gcv_region_end_mc missing parameters\n");
 	return TREE_NULL;
     }
 
-    write_region = ((struct gcv_data *)client_data)->func;
-    if (!write_region) {
+    if (!data->write_region) {
 	bu_log("INTERNAL ERROR: gcv_region_end missing conversion callback function\n");
 	return TREE_NULL;
     }
@@ -143,7 +137,12 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
     if (empty_model)
 	return _gcv_cleanup(NMG_debug_state, tp);
 
-    if (BU_SETJUMP) {
+    if (!BU_SETJUMP) {
+	/* try */
+	/* Write the region out */
+	data->write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color, data->client_data);
+    } else {
+	/* catch */
 	/* Error, bail out */
 	char *sofar;
 
@@ -168,9 +167,6 @@ gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 	nmg_kr(r);
 
 	return _gcv_cleanup(NMG_debug_state, tp);
-    } else {
-	/* Write the region out */
-	write_region(r, pathp, tsp->ts_regionid, tsp->ts_gmater, tsp->ts_mater.ma_color);
 
     } BU_UNSETJUMP; /* Relinquish bomb protection */
 

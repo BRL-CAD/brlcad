@@ -110,7 +110,8 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
-    int i, idx, n;
+    int i, idx;
+    size_t n;
     int maxcolors;
     int code;
     int verbose=0;
@@ -165,10 +166,10 @@ main(int argc, char **argv)
 /*
  * read in the Header and then check for consistency.
  */
-    n= fread(&Header, 1, 13, fp);
+    n = fread(&Header, 1, 13, fp);
 
     if (n != 13) {
-	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in header.\n", argv[0], (long)n);
 	return 1;
     }
 
@@ -218,8 +219,8 @@ main(int argc, char **argv)
     n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
-	fprintf(stderr, "%s: only %d bytes in image header.\n",
-		argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in image header.\n",
+		argv[0], (long)n);
 	return 1;
     }
     if (verbose) {

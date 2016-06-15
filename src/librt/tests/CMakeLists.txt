@@ -2,6 +2,11 @@ BRLCAD_ADDEXEC(test_bundle test_bundle.c "librt" NO_INSTALL)
 add_test(NAME rt_test_bundle COMMAND test_bundle)
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES bundle.plot3)
 
+BRLCAD_ADDEXEC(rt_pattern rt_pattern.c "librt" NO_INSTALL)
+add_test(NAME rt_pattern_5 COMMAND rt_pattern 5)
+set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES rt_pattern_test_5.plot3)
+
+
 BRLCAD_ADDEXEC(test_dvec test_dvec.cpp "librt" NO_STRICT NO_INSTALL)
 add_test(NAME rt_test_dvec COMMAND test_dvec)
 

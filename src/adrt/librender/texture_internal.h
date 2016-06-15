@@ -28,7 +28,7 @@
 #define ADRT_LIBRENDER_TEXTURE_INTERNAL_H
 
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #define __TEXTURE_WORK_PROTOTYPE__ texture_t *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, vect_t *pixel
 

@@ -20,6 +20,7 @@
 /** @file util/pixborder.c
  *
  * Add a 1-pixel-wide border to regions of a specified color.
+ * (Do not confuse this with drawing border around the image.)
  *
  */
 

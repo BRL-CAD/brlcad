@@ -72,7 +72,7 @@ is specified with neither of the
 options,
 <command>imgdims</command>
 tries to extract the dimensions from
-<emphasis remap='I'>file_name,</emphasis>
+<emphasis remap='I'>file_name</emphasis>,
 and if that fails
 it computes the image size and guesses the width and height.
 If the
@@ -80,7 +80,7 @@ If the
 option is not specified,
 <command>imgdims</command>
 determines the pixel size based on the extension on
-<emphasis remap='I'>file_name.</emphasis>
+<emphasis remap='I'>file_name</emphasis>.
 If, additionally,
 <emphasis remap='I'>num_bytes</emphasis>
 was specified or

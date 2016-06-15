@@ -31,7 +31,7 @@
 
 
 #include "bu/getopt.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -90,7 +90,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != -1) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'o':
 	    case 'O':

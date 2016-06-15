@@ -36,11 +36,11 @@
 
 void addTriangle
 (
-    int*    faces,
+    int* faces,
     size_t& num_faces,
-    int     a,
-    int     b,
-    int     c
+    size_t a,
+    size_t b,
+    size_t c
 );
 
 

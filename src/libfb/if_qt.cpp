@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_qt.cpp
  *
@@ -35,6 +35,7 @@
 #include <ctype.h>
 
 #include "fb.h"
+#include "fb_private.h"
 #include "fb/fb_qt.h"
 #include "bu/malloc.h"
 #include "bu/file.h"

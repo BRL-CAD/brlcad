@@ -96,15 +96,15 @@ make_shape(struct rt_wdb *fd, int verbose, int debug, size_t idx, size_t num, po
     for (i = 0; i < num-1; i++) {
 	BU_ALLOC(lsg, struct line_seg);
 	lsg->magic = CURVE_LSEG_MAGIC;
-	lsg->start = i;
-	lsg->end = i + 1;
+	lsg->start = (int)i;
+	lsg->end = (int)i + 1;
 	skt.curve.segment[i] = (void *)lsg;
     }
 
     /* Connect the last connected vertex to the first vertex */
     BU_ALLOC(lsg, struct line_seg);
     lsg->magic = CURVE_LSEG_MAGIC;
-    lsg->start = num - 1;
+    lsg->start = (int)num - 1;
     lsg->end = 0;
     skt.curve.segment[num - 1] = (void *)lsg;
 
@@ -240,7 +240,7 @@ main(int argc, char *argv[])
 	int shp_part;
 	size_t j;
 
-	object = SHPReadObject(shapefile, i);
+	object = SHPReadObject(shapefile, (int)i);
 	if (!object) {
 	    if (opt_debug)
 		bu_log("Shape %zu of %zu is missing, skipping.\n", i+1, (size_t)shp_num_entities);

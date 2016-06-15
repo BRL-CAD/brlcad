@@ -28,9 +28,11 @@
 
 #include "common.h"
 
-#include <iostream>
-
 #include "conv3dm-g.hpp"
+
+#include <iostream>
+#include <stdexcept>
+
 #include "bu/getopt.h"
 
 
@@ -43,8 +45,8 @@ main(int argc, char** argv)
     bool verbose_mode = false;
     bool random_colors = false;
     bool use_uuidnames = false;
-    char* outputFileName = NULL;
-    const char* inputFileName;
+    const char *output_path = NULL;
+    const char *input_path;
 
     int c;
 
@@ -54,7 +56,7 @@ main(int argc, char** argv)
 		break;
 
 	    case 'o':	/* specify output file name */
-		outputFileName = bu_optarg;
+		output_path = bu_optarg;
 		break;
 
 	    case 'd':	/* debug */
@@ -82,15 +84,24 @@ main(int argc, char** argv)
     }
 
     argv += bu_optind;
-    inputFileName  = argv[0];
+    input_path = argv[0];
 
-    if (outputFileName == NULL) {
+    if (output_path == NULL) {
 	std::cerr << usage;
 	return 1;
     }
 
-    conv3dm::RhinoConverter converter(outputFileName, verbose_mode);
-    converter.write_model(inputFileName, use_uuidnames, random_colors);
+    conv3dm::RhinoConverter converter(output_path, verbose_mode);
+
+    try {
+	converter.write_model(input_path, use_uuidnames, random_colors);
+    } catch (const std::logic_error &e) {
+	std::cerr << "Conversion failed: " << e.what() << '\n';
+	return 1;
+    } catch (const std::runtime_error &e) {
+	std::cerr << "Conversion failed: " << e.what() << '\n';
+	return 1;
+    }
 
     return 0;
 }

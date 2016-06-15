@@ -32,12 +32,14 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup avs */
-/** @{ */
-/** @file libbu/avs.c
+/** @addtogroup bu_avs
  *
+ * @brief
  * Routines to manage attribute/value sets.
  */
+/** @{ */
+/** @file bu/avs.h */
+
 
 /** for attr and avs use.
  */

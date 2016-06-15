@@ -29,7 +29,7 @@
 #include <limits.h>
 
 #include "bu/log.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 int x, y, z;

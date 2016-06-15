@@ -119,6 +119,7 @@ and new names should be listed for reference.
 ----
 include/bn.h
 	bn_tcl_mat_print, removal of all tcl-specific API functions [deprecated 7.26]
+	tp_setup, no longer needs to be public API [deprecated 7.26]
 include/raytrace.h
 	curve_to_tcl_list rt_tcl_parse_ray rt_tcl_pr_cutter
 	rt_tcl_pr_hit rt_tcl_rt rt_tcl_import_from_path
@@ -504,6 +505,8 @@ may need adjustment (particularly quoting of '(', ')', and '|'
 characters) for other environments.  Most expressions will apply with:
 	perl -0777 -pi -e 'EXPRESSION' FILE
 
+To apply them to an entire SVN checkout, the following pattern is useful:
+find . -type f -not -path "*.svn/*" -regex '.*\(c\|cpp\|cxx\|h\|hpp\)$' -exec perl -0777 -pi -e 'EXPRESSION' {} \;
 
 6.0 (sed lines)
 ---
@@ -1026,3 +1029,45 @@ s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
         rename bselect.h and bin.h public headers to be more declaratively named [7.25]
 s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
 	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]
+s/db_normalize/bu_normalize/g
+	move the path normalization routine to libbu [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])bot\.h/\1rt\/primitives\/bot.h/g
+	consolidate bot header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])anim\.h/\1bn\/anim.h/g
+	consolidate anim header contents [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])plot3\.h/\1bn.h/g
+	plot3 implementation is in libbn, move header and replace plot3.h with bn.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])vectfont\.h/#define LAST -128\n\1bn\/vectfont.h/g
+	consolidate vectfont.h files [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])spm\.h/\1bn\/spm.h/g
+	move spm.h into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])dvec\.h/\1bn\/dvec.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_fpu\.h/\1bn\/vector_fpu.h/g
+s/(#[[:space:]]*include[[:space:]]+["<])vector_x86\.h/\1bn\/vector_x86.h/g
+	move dvec.h and friends into bn subheader directory [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db\.h/\1rt\/db4.h/g
+	move db.h to rt/db4.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])db5\.h/\1rt\/db5.h/g
+	move db5.h to rt/db5.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])mater\.h/\1raytrace.h/g
+	merge mater.h with rt/mater.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])nurb\.h/#include "raytrace.h"\n\1rt\/nurb.h/g
+	move nurb.h to rt/nurb.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])rtfunc\.h/#include "raytrace.h"\n\1rt\/func.h/g
+	move rtfunc.h to rt/func.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tol\.h/#include "bn.h"\n#include "raytrace.h"\n\1rt\/tol.h/g
+	consolidate tol.h and rt/tol.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])tie\.h/\1rt\/tie.h/g
+	move tie.h to rt/tie.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])solid\.h/#include "raytrace.h"\n\1rt\/solid.h/g
+	move solid.h to rt/solid.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadework\.h/\1optical\/shadework.h/g
+	move shadework.h to optical/shadework.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])shadefuncs\.h/\1optical.h/g
+	move shadefuncs.h to optical/shadefuncs.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])light\.h/#include "bn.h"\n#include "raytrace.h"\n\1optical\/light.h/g
+	move light.h to optical/light.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])plastic\.h/\1optical\/plastic.h/g
+	move plastic.h to optical/plastic.h [7.25]
+s/(#[[:space:]]*include[[:space:]]+["<])rtgeom\.h/\1rt\/geom.h/g
+	move rtgeom.h to rt/geom.h [7.25]

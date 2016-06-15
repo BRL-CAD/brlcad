@@ -78,7 +78,7 @@ uchar2double(unsigned char *data, size_t size)
 unsigned char *
 data2uchar(const icv_image_t *bif)
 {
-    long int size;
+    size_t size;
     unsigned char *uchar_data, *char_p;
     double *double_p;
 

@@ -18,12 +18,6 @@
  * information.
  */
 
-/**  @defgroup data Data Management */
-/**   @defgroup hist Histogram Handling */
-
-/** @file hist.h
- *
- */
 #ifndef BU_HIST_H
 #define BU_HIST_H
 
@@ -36,16 +30,17 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hist */
-/** @{ */
-/** @file libbu/hist.c
+/** @addtogroup bu_hist
  *
+ * @brief
  * General purpose histogram handling routines.
  *
  * The subroutine bu_hist_range() is used to record items that may
  * extend across multiple "bin"s.
  *
  */
+/** @{ */
+/** @file bu/hist.h */
 
 /**
  * histogram support

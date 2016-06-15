@@ -28,6 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/path.h"
 
 #include "./ged_private.h"
 

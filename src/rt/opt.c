@@ -96,7 +96,7 @@ size_t		incr_level = 0;		/* current incremental level */
 size_t		incr_nlevel = 0;	/* number of levels */
 size_t          full_incr_sample = 0;    /* current fully incremental sample */
 size_t          full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
-int		npsw = 1;		/* number of worker PSWs to run */
+size_t		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 int             random_mode = 0;        /* Mode to shoot rays at random directions */
@@ -514,26 +514,26 @@ get_args(int argc, const char *argv[])
 	    case 'P':
 	    {
 		/* Number of parallel workers */
-		int avail_cpus;
+		size_t avail_cpus;
 
 		avail_cpus = bu_avail_cpus();
 
 		npsw = atoi( bu_optarg );
 
 		if (npsw > avail_cpus ) {
-		    fprintf( stderr, "Requesting %d cpus, only %d available.",
-			     npsw, avail_cpus );
+		    fprintf( stderr, "Requesting %lu cpus, only %lu available.",
+			     (unsigned long)npsw, (unsigned long)avail_cpus );
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {
 			fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
 		    } else {
-			fprintf( stderr, "  Will use %d.\n", avail_cpus );
+			fprintf( stderr, "  Will use %lu.\n", (unsigned long)avail_cpus );
 			npsw = avail_cpus;
 		    }
 		}
-		if ( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-		    fprintf(stderr, "Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
+		if ( npsw < 1 || npsw > MAX_PSW )  {
+		    fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {

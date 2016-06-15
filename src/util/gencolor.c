@@ -56,13 +56,12 @@ int
 main(int argc, char **argv)
 {
     int i, len, times;
-    int32_t count;
+    int32_t count = -1;
     unsigned char *bp;
 
     if (argc == 1 || isatty(fileno(stdout)))
 	printusage(1);
 
-    count = -1;
     if (argc > 1 && bu_strncmp(argv[1], "-r", 2) == 0) {
 	count = atoi(&argv[1][2]);
 	if (count > INT32_MAX)

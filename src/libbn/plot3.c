@@ -69,7 +69,7 @@ ABDEGHIJKRTUYZ
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 static int pl_outputMode = PL_OUTPUT_MODE_BINARY;

@@ -37,13 +37,13 @@
 /* interface headers */
 #include "bu/debug.h"
 #include "bu/getopt.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 /* convenient macro for building regions */
@@ -264,7 +264,7 @@ get_line(void)
 	if (len < 0) goto out; /* eof or error */
 	if (len == 0) continue;
 	bu_vls_trimspace(&buffer);
-	len = bu_vls_strlen(&buffer);
+	len = (int)bu_vls_strlen(&buffer);
 	if (len == 0) continue;
 	done = 1;
     }

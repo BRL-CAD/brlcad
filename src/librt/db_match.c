@@ -29,9 +29,10 @@
 
 #include "bio.h"
 
+#include "bu/path.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 /* Deprecated - use db_ls */

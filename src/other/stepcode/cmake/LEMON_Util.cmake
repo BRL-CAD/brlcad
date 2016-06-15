@@ -19,23 +19,23 @@
 #
 # Originally based off of FindBISON.cmake from Kitware's CMake distribution
 #
-# Copyright (c) 2010-2012 United States Government as represented by
+# Copyright (c) 2010-2014 United States Government as represented by
 #                the U.S. Army Research Laboratory.
 # Copyright 2009 Kitware, Inc.
 # Copyright 2006 Tristan Carel
 # All rights reserved.
-# 
+#
 # Redistribution and use in source and binary forms, with or without
 # modification, are permitted provided that the following conditions
 # are met:
-#  
+#
 # * Redistributions of source code must retain the above copyright
 #   notice, this list of conditions and the following disclaimer.
-# 
+#
 # * Redistributions in binary form must reproduce the above copyright
 #   notice, this list of conditions and the following disclaimer in the
 #   documentation and/or other materials provided with the distribution.
-# 
+#
 # * The names of the authors may not be used to endorse or promote
 #   products derived from this software without specific prior written
 #   permission.
@@ -57,6 +57,10 @@
 # LEMON_TARGET (public macro)
 #============================================================
 #
+# TODO - rework this macro to make use of CMakeParseArguments, see
+# http://www.cmake.org/pipermail/cmake/2012-July/051309.html
+#
+
 macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
   if(NOT ${ARGC} EQUAL 4 AND NOT ${ARGC} EQUAL 5)
     message(SEND_ERROR "Usage")
@@ -106,9 +110,9 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     # rename generated outputs
     if(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
       add_custom_command(
-	OUTPUT ${LemonSource} 
+	OUTPUT ${LemonSource}
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_SOURCE} ${LemonSource}
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE} 
+	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_SOURCE}
 	)
       set(LEMON_${Name}_OUTPUTS ${LemonSource} ${LEMON_${Name}_OUTPUTS})
     endif(NOT "${LemonSource}" STREQUAL "${LEMON_GEN_SOURCE}")
@@ -116,7 +120,7 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
       add_custom_command(
 	OUTPUT ${LemonHeader}
 	COMMAND ${CMAKE_COMMAND} -E copy ${LEMON_GEN_HEADER} ${LemonHeader}
-	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER} 
+	DEPENDS ${LemonInput} ${LEMON_EXECUTABLE_TARGET} ${LEMON_GEN_HEADER}
 	)
       set(LEMON_${Name}_OUTPUTS ${LemonHeader} ${LEMON_${Name}_OUTPUTS})
     endif(NOT "${LemonHeader}" STREQUAL "${LEMON_GEN_HEADER}")
@@ -124,11 +128,10 @@ macro(LEMON_TARGET Name LemonInput LemonSource LemonHeader)
     set(LEMON_${Name}_OUTPUTS ${LEMON_GEN_OUT} ${LemonSource} ${LemonHeader})
 
     # make sure we clean up generated output and copied input
-    if("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}") 
-    else("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
-      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS};${LEMON_BIN_INPUT}") 
-    endif("${CMAKE_SOURCE_DIR}" STREQUAL "${CMAKE_BINARY_DIR}")
+    set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_${Name}_OUTPUTS}")
+    if(NOT ${LemonInputFull} STREQUAL ${LEMON_BIN_INPUT})
+      set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LEMON_BIN_INPUT}")
+    endif(NOT ${LemonInputFull} STREQUAL ${LEMON_BIN_INPUT})
 
     # macro ran successfully
     set(LEMON_${Name}_DEFINED TRUE)

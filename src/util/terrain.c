@@ -51,7 +51,7 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "w:n:s:L:H:O:S:V:D:f:co:v";
+char *options = "w:n:s:L:H:O:S:V:D:f:co:vh?";
 
 int do_convert = 1;
 char *progname = "(noname)";
@@ -569,6 +569,7 @@ parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 
     /* get all the option flags from the command line */
     while ((c = bu_getopt(ac, av, options)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'v':
 		debug = !debug;
@@ -651,10 +652,11 @@ parse_args(int ac, char **av, void (**terrain_func)(unsigned short *))
 			break;
 		}
 		break;
-	    case '?':
 	    case 'h':
-	    default :
-		usage("Bad or help flag specified\n");
+		usage("");
+		break;
+	    default:
+		usage("Bad flag specified\n");
 		break;
 	}
     }

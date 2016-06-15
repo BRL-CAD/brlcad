@@ -27,7 +27,7 @@
 
 #include "vmath.h"
 #include "brep.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 
 const int COUNT = 1000000;

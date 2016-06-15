@@ -32,7 +32,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 #define tthrm_MAGIC 0x7468726d	/* 'thrm' */

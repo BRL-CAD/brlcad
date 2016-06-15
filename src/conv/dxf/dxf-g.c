@@ -42,7 +42,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* private headers */
 #include "./dxf.h"

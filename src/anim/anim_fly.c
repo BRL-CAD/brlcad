@@ -39,7 +39,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 

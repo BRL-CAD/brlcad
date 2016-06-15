@@ -32,11 +32,10 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
-#include "plastic.h"
+#include "optical/light.h"
+#include "optical/plastic.h"
 #include "photonmap.h"
 
 #ifdef RT_MULTISPECTRAL

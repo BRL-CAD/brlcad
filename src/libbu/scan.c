@@ -29,16 +29,16 @@
 
 
 int
-bu_scan_fastf_t(int *c, const char *src, const char *delim, int n, ...)
+bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...)
 {
     va_list ap;
     int offset = 0;
     int current_n = 0, part_n = 0;
     int len, delim_len;
-    int i;
+    size_t i;
     char *delim_fmt;
 
-    if (UNLIKELY(!delim || n <= 0)) {
+    if (UNLIKELY(!delim || n < 1)) {
 	return 0;
     }
 

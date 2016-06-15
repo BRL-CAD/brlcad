@@ -456,7 +456,7 @@ itcl::class swidgets::tkgetdir {
 
     # change 07/19/99
     # If there are more dirs, permit display of one level down.
-    # Otherwise, block display and hilight selection in red.
+    # Otherwise, block display and highlight selection in red.
     set areDirs 0
     foreach f [glob -nocomplain [file join $newdir *]] {
 	if {[file isdirectory $f]} {

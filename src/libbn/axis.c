@@ -27,7 +27,8 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/mat.h"
+#include "bn/plot3.h"
 
 
 #define	TICK_YLEN	(char_width)	/**< @brief tick is 1 character height */

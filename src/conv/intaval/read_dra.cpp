@@ -71,9 +71,9 @@ size_t addBotPoint
 void addBotTriangle
 (
     Form& form,
-    int   a,
-    int   b,
-    int   c
+    size_t a,
+    size_t b,
+    size_t c
 ) {
     // all three points on a line?
     int ax = form.data.bot.vertices[a * 3] - form.data.bot.vertices[b * 3];
@@ -101,16 +101,16 @@ void readCadTypeBot
     form.data.bot.num_vertices = 0; // unknown yet how many different points are used
 
     for (size_t i = 0; i < form.npts; ++i) {
-	int x;
-	int y;
-	int z;
+	size_t x;
+	size_t y;
+	size_t z;
 
 	is >> x >> y >> z;
-	int a = addBotPoint(form, x, y, z);
+	size_t a = addBotPoint(form, x, y, z);
 	is >> x >> y >> z;
-	int b = addBotPoint(form, x, y, z);
+	size_t b = addBotPoint(form, x, y, z);
 	is >> x >> y >> z;
-	int c = addBotPoint(form, x, y, z);
+	size_t c = addBotPoint(form, x, y, z);
 
 	addBotTriangle(form, a, b, c);
     }
@@ -125,16 +125,16 @@ void readLongFormBot
     form.data.bot.num_faces    = 0; // unknown yet how many different faces are used
     form.data.bot.num_vertices = 0; // unknown yet how many different points are used
 
-    int x;
-    int y;
-    int z;
+    size_t x;
+    size_t y;
+    size_t z;
 
     is >> x >> y >> z;
-    int a = addBotPoint(form, x, y, z);
+    size_t a = addBotPoint(form, x, y, z);
     is >> x >> y >> z;
-    int b = addBotPoint(form, x, y, z);
+    size_t b = addBotPoint(form, x, y, z);
     is >> x >> y >> z;
-    int c = addBotPoint(form, x, y, z);
+    size_t c = addBotPoint(form, x, y, z);
 
     addBotTriangle(form, a, b, c);
 

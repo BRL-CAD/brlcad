@@ -54,9 +54,9 @@
 #include "bu/cv.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -1015,7 +1015,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	xCell = curloc[X]/xWidth;
@@ -1270,7 +1270,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	yCell = curloc[Y]/yWidth;

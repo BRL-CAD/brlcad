@@ -19,7 +19,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para>The benchmark suite will test the performance of a given system by
+<para>The <command>benchmark</command> suite will test the performance of a given system by
 iteratively rendering several well-known datasets into 512x512 images
 where performance metrics are documented and fairly well understood.
 The local machine performance is compared to the base system (called
@@ -191,13 +191,13 @@ benchmark analysis, leaving only the summary file and any
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>
-<para>Christopher Sean Morrison
+<para>Christopher Sean Morrison ,
 <!-- .br -->
-Michael John Muuss
+Michael John Muuss ,
 <!-- .br -->
 Susan Muuss</para>
 </refsect1>

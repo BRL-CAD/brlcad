@@ -19,13 +19,13 @@
  */
 
 /*----------------------------------------------------------------------*/
-/* @file multipoly.h */
-/** @addtogroup poly */
-/** @{ */
-
-/**
- *  @brief Polynomial data type
+/** @addtogroup bn_poly
+ *
+ * @brief Polynomial data type
+ *
  */
+/** @{ */
+/* @file multipoly.h */
 
 #ifndef BN_MULTIPOLY_H
 #define BN_MULTIPOLY_H

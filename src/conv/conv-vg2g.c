@@ -36,7 +36,7 @@
 #endif
 #include "bio.h"
 
-#include "db.h"
+#include "rt/db4.h"
 
 #include "bu/file.h"
 #include "bu/malloc.h"

@@ -57,7 +57,7 @@ Convert an ASCII DSP file to DSP binary form\n\
 static void
 output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 {
-    int ret = 0;
+    size_t ret = 0;
     unsigned long val;
     uint16_t hostshort;
     uint16_t netshort;

@@ -26,8 +26,6 @@
 #include "bu/log.h"
 #include "vmath.h"
 #include "bn/anim.h"
-#include "anim.h"
-
 
 #define NORMAL 0
 #define ERROR1 1

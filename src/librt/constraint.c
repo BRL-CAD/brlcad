@@ -34,7 +34,7 @@
 
 
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "pc.h"
 #include "raytrace.h"
 

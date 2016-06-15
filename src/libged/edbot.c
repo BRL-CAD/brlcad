@@ -28,9 +28,9 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "wdb.h"
 
 

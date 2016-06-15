@@ -30,7 +30,7 @@
 
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -186,7 +186,7 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     char commtag[64];
     char namebuf[64];
     int i, j, real_flag, valid_command, ret;
-    const char *commands[] = {"info", "plot", "translate", "intersect", "u", "i", "-"};
+    const char *commands[] = {"info", "plot", "translate", "intersect", "csg", "u", "i", "-"};
     int num_commands = (int)(sizeof(commands) / sizeof(const char *));
     db_op_t op = DB_OP_NULL;
 
@@ -201,16 +201,18 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
     if (argc < 2) {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s\n\t%s\n", argv[0], usage);
 	bu_vls_printf(gedp->ged_result_str, "commands:\n");
-	bu_vls_printf(gedp->ged_result_str, "\tinfo - return count information for specific BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tvalid          - report on validity of specific BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tinfo           - return count information for specific BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo S [index] - return information for specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tinfo F [index] - return information for specific BREP 'face'\n");
-	bu_vls_printf(gedp->ged_result_str, "\tplot - plot entire BREP\n");
+	bu_vls_printf(gedp->ged_result_str, "\tplot           - plot entire BREP\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot S [index] - plot specific BREP 'surface'\n");
 	bu_vls_printf(gedp->ged_result_str, "\tplot F [index] - plot specific BREP 'face'\n");
+	bu_vls_printf(gedp->ged_result_str, "\tcsg            - convert BREP to implicit primitive CSG tree\n");
 	bu_vls_printf(gedp->ged_result_str, "\ttranslate SCV index i j dx dy dz - translate a surface control vertex\n");
 	bu_vls_printf(gedp->ged_result_str, "\tintersect <obj2> <i> <j> [PP|PC|PS|CC|CS|SS] - BREP intersections\n");
-	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output> - BREP boolean evaluations\n");
-	bu_vls_printf(gedp->ged_result_str, "\t[brepname] - convert the non-BREP object to BREP form\n");
+	bu_vls_printf(gedp->ged_result_str, "\tu|i|- <obj2> <output>     - BREP boolean evaluations\n");
+	bu_vls_printf(gedp->ged_result_str, "\t[brepname]                - convert the non-BREP object to BREP form\n");
 	bu_vls_printf(gedp->ged_result_str, "\t --no-evaluation [suffix] - convert non-BREP comb to unevaluated BREP form\n");
 	return GED_HELP;
     }
@@ -239,6 +241,11 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 
     RT_CK_DB_INTERNAL(&intern);
     bi = (struct rt_brep_internal*)intern.idb_ptr;
+
+    if (BU_STR_EQUAL(argv[2], "valid")) {
+	int valid = rt_brep_valid(&intern, gedp->ged_result_str);
+	return (valid) ? GED_OK : GED_ERROR;
+    }
 
     if (BU_STR_EQUAL(argv[2], "intersect")) {
 	/* handle surface-surface intersection */
@@ -294,6 +301,20 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	rt_db_free_internal(&intern);
 	rt_db_free_internal(&intern2);
 	return GED_OK;
+    }
+
+    if (BU_STR_EQUAL(argv[2], "csg")) {
+	/* Call csg conversion routine */
+	struct bu_vls bname_csg;
+	bu_vls_init(&bname_csg);
+	bu_vls_sprintf(&bname_csg, "csg_%s", solid_name);
+	if (db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&bname_csg), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    bu_vls_printf(gedp->ged_result_str, "%s already exists.", bu_vls_addr(&bname_csg));
+	    bu_vls_free(&bname_csg);
+	    return GED_OK;
+	}
+	bu_vls_free(&bname_csg);
+	return _ged_brep_to_csg(gedp, argv[1]);
     }
 
     /* make sure arg isn't --no-evaluate */

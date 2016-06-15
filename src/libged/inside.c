@@ -34,9 +34,9 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./ged_private.h"
 

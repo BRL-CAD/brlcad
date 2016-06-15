@@ -71,7 +71,7 @@ displays a color histogram on a framebuffer.</para>
 <para><emphasis remap='B'>pixhist3d</emphasis>
 display three views of an RGB color space histogram on a framebuffer.</para>
 
-<para><emphasis remap='B'>pixhist3d-pl</emphasis>
+<para><emphasis remap='B'>pixhist3d-plot3</emphasis>
 unix plot of RGB color space utilization.</para>
 
 <para><emphasis remap='B'>pixdiff</emphasis>

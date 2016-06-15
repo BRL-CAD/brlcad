@@ -44,11 +44,11 @@
 extern "C" {
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "bu.h"
-#include "rtfunc.h"
+#include "rt/func.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 }
 
 /* Local headers */

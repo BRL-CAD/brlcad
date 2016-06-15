@@ -33,7 +33,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 static int col_count;		/* names listed on current line */

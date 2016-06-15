@@ -26,6 +26,7 @@ set(docbook_man5_EN
   cmap.xml
   pix.xml
   plot3.xml
+  STEP.xml
   )
 
 

@@ -31,7 +31,7 @@ to a STEP AP203 file,
 <emphasis remap='I'>output_file.stp</emphasis>.</para>
 
 
-<para>The following options are recognized</para>
+<para>The following options are recognized.</para>
 <variablelist remap='TP'>
   <varlistentry>
   <term><option>-o </option><emphasis remap='I'>output_file_or_directory</emphasis></term>
@@ -76,30 +76,6 @@ to a STEP AP203 file,
 			Writes out the hierarchies associated with the combs cab and suspension, along with all combs and solids needed to define those hierarchies.
 		</para>
 	</example>
-</refsect1>
-
-<refsect1 xml:id='see_also'><title>SEE ALSO</title>
-  <para>Further reading:</para>
-<variablelist remap='TP'>
-	<varlistentry>
-		<term></term>
-  <listitem>
-	  <para>
-		  <emphasis remap='I'>Recommended Practices for AP203</emphasis>
-		  PDES, Inc. Industry consortium, April 1998
-	  </para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
-		<term></term>
-  <listitem>
-	  <para>
-		  <emphasis remap='I'>Usage Guide for the STEP PDM Schema V1.2</emphasis>
-		  PDM Implementer Forum, Release 4.3, January 2002
-	  </para>
-  </listitem>
-  </varlistentry>
-</variablelist>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

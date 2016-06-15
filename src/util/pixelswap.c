@@ -50,7 +50,7 @@ usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -d ] r g b R G B [ < infile > outfile]\n",
+    (void) fprintf(stderr, "Usage: %s [ -d  pixeldepth ] r g b R G B < infile > outfile\n",
 		   progname);
     bu_exit (1, NULL);
 }
@@ -66,20 +66,15 @@ parse_args(int ac, char **av)
     else
 	++progname;
 
-    /* Turn off bu_getopt's error messages */
-    bu_opterr = 0;
-
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1) {
-	if (bu_optopt == '?') c = 'h';
 	switch (c) {
 	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
 		depth = c;
 	    else
 		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
 		break;
-	    case 'h'	: usage(""); break;
-	    default	: usage("Bad flag specified\n"); break;
+	    default	: usage(""); break;
 	}
     }
 
@@ -95,11 +90,16 @@ int main(int ac, char **av)
     unsigned char r, g, b, R, G, B;
     size_t ret;
 
-    if ((i=parse_args(ac, av))+6 > ac)
+    i=parse_args(ac, av);
+/* if ac == 1, there is only 1 argument; i.e., run-with-no-arguments
+ */
+    if (ac == 1) usage("");
+
+    if (i+6 > ac)
 	usage("missing pixel value(s)\n");
 
     if (isatty(fileno(stdout)) || isatty(fileno(stdin)))
-	usage("Redirect standard output\n");
+	usage("Redirect standard input and output\n");
 
     /* get pixel values */
     r = atoi(av[i++]);

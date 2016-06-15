@@ -64,17 +64,17 @@ size_t pixbytes = 1;
 
 
 int
-get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
+get_args(size_t argc, const char **argv, FILE **ifp, FILE **ofp, double *angle)
 {
     int c;
-    char *in_file_name = NULL;
-    char *out_file_name = NULL;
+    const char *in_file_name = NULL;
+    const char *out_file_name = NULL;
 
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "internal error processing arguments\n");
 
     bu_optind = bu_opterr = 1; /* skip the command name */
-    while ((c = bu_getopt(argc, argv, "fbrih#:a:s:o:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, (char *const*)argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'f':
 		minus90++;
@@ -87,10 +87,6 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		break;
 	    case 'i':
 		invert++;
-		break;
-	    case 'h':
-		/* high-res */
-		nxin = nyin = 1024;
 		break;
 	    case '#':
 		pixbytes = atoi(bu_optarg);
@@ -120,19 +116,19 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 		}
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		bu_log("ERROR: %s encountered unrecognized '-%c' option\n", argv[0], c);
 		return 0;
 	}
     }
 
     /* XXX - backward compatibility hack */
-    if (bu_optind+2 == argc) {
+    if ((size_t)(bu_optind+2) == argc) {
 	nxin = atoi(argv[bu_optind++]);
 	nyin = atoi(argv[bu_optind++]);
     }
 
-    if (bu_optind >= argc) {
+    if ((size_t)bu_optind >= argc) {
 	in_file_name = "-";
     } else {
 	in_file_name = argv[bu_optind];
@@ -158,7 +154,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
 	return 0;
     }
 
-    if (argc > ++bu_optind) {
+    if (argc > (size_t)(++bu_optind)) {
 	bu_log("WARNING: excess argument(s) ignored\n");
     }
 
@@ -286,7 +282,7 @@ arbrot(double a, FILE *ifp, unsigned char *buf)
 
 
 int
-icv_rot(int argc, char **argv)
+icv_rot(size_t argc, const char *argv[])
 {
     const size_t MAXPIXELS = 16768 * 16768; /* boo hiss */
 

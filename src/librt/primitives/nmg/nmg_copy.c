@@ -31,8 +31,8 @@
 
 #include <string.h>
 
-#include "nurb.h"
 #include "raytrace.h"
+#include "rt/nurb.h"
 
 
 static struct nmgregion_a *

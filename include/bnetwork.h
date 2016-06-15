@@ -22,7 +22,7 @@
  * BRL-CAD private system compatibility wrapper header that provides
  * declarations for native and standard system NETWORKING routines.
  *
- * This header is commonly used in leu of including the following:
+ * This header is commonly used in lieu of including the following:
  * winsock2.h (not select, fd_set), netinet/in.h, netinet/tcp.h,
  * arpa/inet.h (htonl, ntohl, etc)
  *

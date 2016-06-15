@@ -138,6 +138,11 @@ if(BRLCAD_FREETYPE_BUILD)
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h)
+mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_LIBRARIES)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -602,6 +607,9 @@ endif(BRLCAD_IWIDGETS_BUILD)
 CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 mark_as_advanced(IWIDGETS_VERSION)
 
+mark_as_advanced(COMPAT_SRCS)
+
+
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
 Option for enabling and disabling compilation of the Tkhtml HTML
@@ -679,7 +687,19 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 
-# STEPcode 
+# Screened Poisson Reconstruction Library
+set(poissonrecon_ALIASES ENABLE_SPR)
+set(poissonrecon_DESCRIPTION "
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+  ${poissonrecon_ALIASES} FLAGS NOSYS)
+SetTargetFolder(PoissonRecon "Third Party Libraries")
+
+# STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build
@@ -775,6 +795,7 @@ AUTO.
 ")
 THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ${libvds_ALIASES} FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
+mark_as_advanced(LIBVDS_INCLUDE_DIR)
 SetTargetFolder(libvds "Third Party Libraries")
 SetTargetFolder(libvds-static "Third Party Libraries")
 SetTargetFolder(stdvds "Third Party Libraries")
@@ -839,6 +860,7 @@ AUTO.
 THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ${libgdiam_ALIASES}
   FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
+mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
@@ -899,7 +921,7 @@ set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
 set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
 SetTargetFolder(rply "Third Party Libraries")
 SetTargetFolder(rply_static "Third Party Libraries")
-mark_as_advanced(RPLY_LIBRARYIES)
+mark_as_advanced(RPLY_LIBRARIES)
 mark_as_advanced(RPLY_INCLUDE_DIRS)
 
 # GCT is a collection of algorithms for geometry processing and conversion

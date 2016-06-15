@@ -77,7 +77,7 @@ drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu
 }
 
 int
-drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor)
+drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, const char *log_bu, float *wireColor)
 {
     register int i;
     static float black[4] = {0.0, 0.0, 0.0, 0.0};
@@ -102,7 +102,7 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag, co
 	bu_log("%g %g %g %g\n", pmat[3], pmat[7], pmat[11], pmat[15]);
     }
 
-    if (npoints < 2 || (!sflag && npoints%2))
+    if (npoints < 2 || (!lflag && npoints%2))
 	return TCL_OK;
 
     if (dmp->dm_light) {
@@ -115,8 +115,8 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int sflag, co
 	    glDisable(GL_BLEND);
     }
 
-    if (sflag)
-	glBegin(GL_LINE_STRIP);
+    if (lflag)
+	glBegin(GL_LINE_LOOP);
     else
 	glBegin(GL_LINES);
 

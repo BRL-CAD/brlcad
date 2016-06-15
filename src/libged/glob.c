@@ -29,6 +29,7 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/path.h"
 #include "./ged_private.h"
 
 

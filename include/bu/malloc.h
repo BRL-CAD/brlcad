@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file malloc.h
- *
- */
 #ifndef BU_MALLOC_H
 #define BU_MALLOC_H
 
@@ -32,12 +29,9 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup malloc */
-/** @{ */
-/** @file libbu/malloc.c
+/** @addtogroup bu_malloc
  *
- * @brief
- * Parallel-protected debugging-enhanced wrapper around system malloc().
+ * @brief Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  * Provides a parallel-safe interface to the system memory allocator
  * with standardized error checking, optional memory-use logging, and
@@ -48,6 +42,8 @@ __BEGIN_DECLS
  * to stderr, semaphore protected.
  *
  */
+/** @{ */
+/** @file bu/malloc.h */
 
 BU_EXPORT extern long bu_n_malloc;
 BU_EXPORT extern long bu_n_realloc;

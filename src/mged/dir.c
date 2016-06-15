@@ -27,7 +27,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"

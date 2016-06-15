@@ -22,7 +22,7 @@
 #include "bu/parse.h"
 #include "bu/log.h"
 #include "opennurbs.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #define DEFAULT_FILENAME "csgbrep.g"

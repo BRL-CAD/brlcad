@@ -52,14 +52,10 @@ get_args(int argc, char **argv)
     int c;
 
     bu_optind = 1;
-    while ((c = bu_getopt(argc, argv, "chiF:s:w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ciF:s:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		crunch = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
 		break;
 	    case 'i':
 		inverse = 1;
@@ -75,7 +71,7 @@ get_args(int argc, char **argv)
 		screen_height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

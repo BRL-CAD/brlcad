@@ -275,28 +275,28 @@ bool ON_Surface_SubSurface(
     ON_Surface_Create_Scratch_Surfaces(t1, t2, t3, t4);
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) {
 	if (last_split == 1) {target = t4;} else {target = t2;}
-	split = ssplit->Split(0, u_val->Min(), *t1, *target);
+	split = ssplit->Split(false, u_val->Min(), *t1, *target);
 	ssplit = *target;
     }
     if ((fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 2) {target = t4;} else {target = t1;}
-	split = ssplit->Split(0, u_val->Max(), *target, *t3);
+	split = ssplit->Split(false, u_val->Max(), *target, *t3);
 	ssplit = *target;
     }
     if ((fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 3) {target = t4;} else {target = t3;}
-	split = ssplit->Split(1, v_val->Min(), *t2, *target);
+	split = ssplit->Split(true, v_val->Min(), *t2, *target);
 	ssplit = *target;
     }
     if ((fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-	split = ssplit->Split(1, v_val->Max(), *t4, *t2);
+	split = ssplit->Split(true, v_val->Max(), *t4, *t2);
     }
     (*result) = *t4;
     if (t1_del) delete *t1;
     if (t2_del) delete *t2;
     if (t3_del) delete *t3;
-    (*result)->SetDomain(0,u_val->Min(), u_val->Max());
-    (*result)->SetDomain(1,v_val->Min(), v_val->Max());
+    (*result)->SetDomain(0, u_val->Min(), u_val->Max());
+    (*result)->SetDomain(1, v_val->Min(), v_val->Max());
     return split;
 }
 
@@ -326,7 +326,7 @@ bool ON_Surface_Quad_Split(
     }
 
     // First, get the north and south pieces
-    split_success = surf->Split(1, vpt, south, north);
+    split_success = surf->Split(true, vpt, south, north);
     if (!split_success || !south || !north) {
 	delete south;
 	delete north;
@@ -334,7 +334,7 @@ bool ON_Surface_Quad_Split(
     }
 
     // Split the south pieces to get q0 and q1
-    split_success = south->Split(0, upt, (*q0), (*q1));
+    split_success = south->Split(false, upt, (*q0), (*q1));
     if (!split_success || !(*q0) || !(*q1)) {
 	delete south;
 	delete north;

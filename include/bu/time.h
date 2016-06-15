@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file time.h
- *
- */
 #ifndef BU_TIME_H
 #define BU_TIME_H
 
@@ -36,18 +33,18 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_time */
+/** @addtogroup bu_time
+ * @brief
+ * Cross platform wrapper for microsecond accuracy timing functionality.
+ */
 /** @{ */
+/** @file bu/time.h */
 
-/** @file libbu/timer.c
+/**
  * Return microsecond accuracy time information.
  */
 BU_EXPORT extern int64_t bu_gettime(void);
 
-
-/** @file libbu/date-time.c
- * A libbu version of utctime.
- */
 /**
  * Evaluate the time_t input as UTC time in ISO format.
  *

@@ -19,7 +19,7 @@
  */
 /** @addtogroup libdm */
 /** @{ */
-/** @file defines.h
+/** @file dm/defines.h
  *
  */
 #ifndef DM_EXPORT

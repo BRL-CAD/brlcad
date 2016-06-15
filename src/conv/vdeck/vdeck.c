@@ -70,7 +70,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./vextern.h"
 
@@ -149,6 +149,12 @@ off_t		savsol;		/* File position of # of solids & regions	*/
 /* Structures.								*/
 mat_t		identity;
 
+/* Head of linked list of solids */
+struct soltab	sol_hd;
+
+struct db_i	*dbip;		/* Database instance ptr */
+
+
 extern void		menu();
 extern void		quit();
 
@@ -181,13 +187,31 @@ extern int		delete_obj();
 extern int		cgarbs();
 extern int		redoarb();
 
-extern void ewrite(FILE *fp, const char *buf, unsigned bytes);
-extern void blank_fill(FILE *fp, int count);
 
-/* Head of linked list of solids */
-struct soltab	sol_hd;
+/**
+ * Write with error checking.
+ */
+void
+ewrite(FILE *fp, const char *buf, size_t bytes)
+{
+    if (bytes == 0)  return;
 
-struct db_i	*dbip;		/* Database instance ptr */
+    if (fwrite(buf, bytes, 1, fp) != 1) {
+	perror("write");
+	fprintf(stderr, "vdeck: write error\n");
+	bu_exit(2, NULL);
+    }
+}
+
+
+/**
+ * Write count blanks to fildes.
+ */
+void
+blank_fill(FILE *fp, size_t count)
+{
+    ewrite(fp, BLANKS, count);
+}
 
 
 /*
@@ -266,7 +290,7 @@ main(int argc, char *argv[])
 		{
 		    int	i;
 		    if (arg_list[1] == 0) {
-			(void) col_prt(curr_list, curr_ct);
+			(void) col_prt(curr_list, (size_t)curr_ct);
 			break;
 		    }
 		    for (tmp_ct = 0, i = 0; i < curr_ct; i++)
@@ -403,7 +427,7 @@ region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tr
 #define OBUF_SIZE 128
     char			obuf[OBUF_SIZE];
     char			*cp;
-    int			left;
+    size_t			left;
     int			length;
     struct directory	*regdp = RT_DIR_NULL;
     size_t i;
@@ -1108,7 +1132,7 @@ addtgc(struct bu_vls *v, struct rt_tgc_internal *gp, char *name, int num)
 
 
 void
-ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
+ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, size_t curveno, int num)
 {
     while (todo > 0) {
 	vls_itoa(v, num, 5);
@@ -1129,7 +1153,7 @@ ars_curve_out(struct bu_vls *v, fastf_t *fp, int todo, int curveno, int num)
 	}
 
 	bu_vls_strcat(v, "curve ");
-	vls_itoa(v, curveno, 3);
+	vls_itoa(v, (int)curveno, 3);
 	bu_vls_strcat(v, "\n");
     }
 }
@@ -1156,22 +1180,6 @@ addars(struct bu_vls *v, struct rt_ars_internal *gp, char *name, int num)
     for (i = 0; i < gp->ncurves; i++) {
 	/* Output the points on this curve */
 	ars_curve_out(v, gp->curves[i], gp->pts_per_curve, i, num);
-    }
-}
-
-
-/**
- * Write with error checking.
- */
-void
-ewrite(FILE *fp, const char *buf, unsigned bytes)
-{
-    if (bytes == 0)  return;
-
-    if (fwrite(buf, bytes, 1, fp) != 1) {
-	perror("write");
-	fprintf(stderr, "vdeck: write error\n");
-	bu_exit(2, NULL);
     }
 }
 
@@ -1345,7 +1353,7 @@ list_toc(char *args[])
 #define MAX_COL	(NAMESIZE*5)
 #define SEND_LN()	{\
 	buf[column++] = '\n';\
-	ewrite(stdout, buf, (unsigned) column);\
+	ewrite(stdout, buf, column);\
 	column = 0;\
     }
 
@@ -1354,10 +1362,10 @@ list_toc(char *args[])
  * Print list of names in tabular columns.
  */
 int
-col_prt(char *list[], int ct)
+col_prt(char *list[], size_t ct)
 {
     char		buf[MAX_COL+2];
-    int	i, column, spaces;
+    size_t i, column, spaces;
 
     for (i = 0, column = 0; i < ct; i++) {
 	if (column + (int)strlen(list[i]) > MAX_COL) {
@@ -1699,16 +1707,6 @@ menu(char **addr)
 	(void) printf("%s\n", *sbuf++);
     (void) fflush(stdout);
     return;
-}
-
-
-/**
- * Write count blanks to fildes.
- */
-void
-blank_fill(FILE *fp, int count)
-{
-    ewrite(fp, BLANKS, (unsigned) count);
 }
 
 

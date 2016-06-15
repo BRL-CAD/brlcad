@@ -29,7 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "rtgeom.h"
+#include "bu/path.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 

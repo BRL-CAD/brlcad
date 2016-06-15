@@ -69,7 +69,7 @@ unsigned char *frames[MAXFRAMES];	/* Pointers to pixel arrays */
 int maxframe = 0;		/* Index of first unused slot in frames[] */
 
 char usage[] = "\
-Usage: pixflip-fb [-h]\n\
+Usage: pixflip-fb\n\
 	[-s square_file_size] [-w file_width] [-n file_height]\n\
 	[-S square_scr_size] [-W scr_width] [-N scr_height]\n\
 	[-f frames/sec] [-p passes] [-r] [-v] [-z]\n\
@@ -102,12 +102,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:f:p:rzv")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:o:f:p:rzvh?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		screen_height = screen_width = 1024;
-		break;
 	    case 's':
 		/* square input file size */
 		file_height = file_width = atoi(bu_optarg);
@@ -146,13 +142,13 @@ get_args(int argc, char **argv)
 	    case 'v':
 		verbose = 1;
 		break;
-	    default:		/* '?' */
-		return 0;	/* Bad */
+	    default:		/* '?' 'h' */
+		return 0;
 	}
     }
 
     if (bu_optind >= argc) {
-	fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
+	if (argc > 1) fprintf(stderr, "pixflip-fb: basename or filename(s) missing\n");
 	return 0;	/* Bad */
     }
 

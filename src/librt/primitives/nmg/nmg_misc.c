@@ -35,11 +35,11 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
-#include "db.h"		/* for debugging stuff at bottom */
+#include "rt/db4.h"		/* for debugging stuff at bottom */
 
 
 int

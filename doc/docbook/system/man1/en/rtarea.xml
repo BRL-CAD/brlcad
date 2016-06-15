@@ -25,7 +25,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      The <emphasis remap="I">rtarea</emphasis> command calculates the exposed, presented and centers of
+      The <command>rtarea</command> command calculates the exposed, presented and centers of
       surface areas of specified geometry objects from a particular view.  The summary
       output includes details for individual regions, assemblies (combinations that contain
       regions), and summarized totals.
@@ -267,7 +267,7 @@
   <refsection xml:id="see_also"><title>SEE ALSO</title>
 
     <para>
-    <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+    <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     </para>
   </refsection>
 

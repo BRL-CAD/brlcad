@@ -66,7 +66,7 @@ is rounded down to a multiple of 16.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para>od</para>
+<para><command>od</command></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

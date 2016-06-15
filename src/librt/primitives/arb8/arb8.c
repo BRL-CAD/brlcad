@@ -21,8 +21,8 @@
 /** @{ */
 /** @file primitives/arb8/arb8.c
  *
- * Intersect a ray with an Arbitrary Regular Polyhedron with as many
- * as 8 vertices.
+ * Intersect a ray with an Arbitrary Polyhedron with as many as 8
+ * vertices.
  *
  * An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6
  * (box) planes.  This analysis depends on the properties of objects
@@ -58,11 +58,11 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 

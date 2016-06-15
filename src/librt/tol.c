@@ -18,8 +18,11 @@
  * information.
  */
 
-#include "tol.h"
-
+#include "common.h"
+#include "bu/magic.h"
+#include "bu/malloc.h"
+#include "bn/tol.h"
+#include "rt/tol.h"
 
 struct bn_tol *
 rt_tol_default(struct bn_tol *tol)

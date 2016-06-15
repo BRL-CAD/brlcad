@@ -37,9 +37,12 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
-#include "bu/str.h"
 #include "bu/log.h"
+#include "bu/str.h"
 
+#define EL_WIDTH 32 /* Max width of one element */
+
+static int width = 3;
 
 static char *f1_name;
 static char *f2_name;
@@ -50,25 +53,25 @@ static FILE *f2;
 #define EQ 2
 #define GT 4
 #define NE 8
-static int wanted;			/* LT|EQ|GT conditions to pick fb */
+static int wanted = 0;			/* LT|EQ|GT conditions to pick fb */
 
-static int seen_const;
-static int seen_formula;
+static long fg_cnt = 0;
+static long bg_cnt = 0;
 
-static int width = 3;
-static unsigned char pconst[32];
+static int seen_const = 0;
+static int seen_formula = 0;
+
+static unsigned char pconst[32] = {0};
 
 #define CHUNK 1024
 static char *b1;			/* fg input buffer */
 static char *b2;			/* bg input buffer */
 static char *b3;			/* output buffer */
 
-static long fg_cnt;
-static long bg_cnt;
-
 static char usage[] = "\
 Usage: pixmerge [-g -l -e -n] [-w bytes_wide] [-C r/g/b]\n\
-	foreground.pix background.pix > out.pix\n";
+	foreground.pix [background.pix] > out.pix\n\
+	(stdout must go to a file or pipe)\n";
 
 int
 get_args(int argc, char **argv)
@@ -94,9 +97,12 @@ get_args(int argc, char **argv)
 		seen_formula = 1;
 		break;
 	    case 'w':
-		c = atoi(bu_optarg);
-		if (c > 1 && c < (int)sizeof(pconst))
-		    width = c;
+		width = atoi(bu_optarg);
+		if (width < 1 || width >= EL_WIDTH){
+		    (void)fputs("pixmerge: illegal width specified\n",stderr);
+		    (void)fputs(usage, stderr);
+		    bu_exit (1, NULL);
+		}
 		break;
 	    case 'C':
 	    case 'c':	/* backward compatibility */
@@ -114,13 +120,20 @@ get_args(int argc, char **argv)
 		seen_const = 1;
 		break;
 
-	    default:		/* 'h' '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
-    if (bu_optind+2 > argc)
-	return 0;
+    if (seen_formula) {
+	/* If seen_const is 1, we omit the bg argument in the command string. */
+	if (bu_optind+2-seen_const > argc) return 0;
+    } else {
+	if (bu_optind+1 > argc) return 0;
+	/* "wanted" is 0 if arrive here, unless APPROX had been activated */
+	wanted |= GT;
+	seen_const = 1;		/* Default is const of 0/0/0 */
+    }
 
     f1_name = argv[bu_optind++];
     if (BU_STR_EQUAL(f1_name, "-"))
@@ -133,15 +146,17 @@ get_args(int argc, char **argv)
 	return 0;
     }
 
-    f2_name = argv[bu_optind++];
-    if (BU_STR_EQUAL(f2_name, "-"))
-	f2 = stdin;
-    else if ((f2 = fopen(f2_name, "r")) == NULL) {
-	perror(f2_name);
-	fprintf(stderr,
+    if (!seen_const) {
+	f2_name = argv[bu_optind++];
+	if (BU_STR_EQUAL(f2_name, "-"))
+	    f2 = stdin;
+	else if ((f2 = fopen(f2_name, "r")) == NULL) {
+	    perror(f2_name);
+	    fprintf(stderr,
 		"pixmerge: cannot open \"%s\" for reading\n",
 		f2_name);
-	return 0;
+	    return 0;
+	}
     }
 
     if (argc > bu_optind)
@@ -159,11 +174,6 @@ main(int argc, char **argv)
     if (!get_args(argc, argv) || isatty(fileno(stdout))) {
 	(void)fputs(usage, stderr);
 	bu_exit (1, NULL);
-    }
-
-    if (!seen_formula) {
-	wanted = GT;
-	seen_const = 1;		/* Default is const of 0/0/0 */
     }
     fprintf(stderr, "pixmerge: Selecting foreground when fg ");
     if (wanted & LT) putc('<', stderr);
@@ -191,17 +201,33 @@ main(int argc, char **argv)
 	bu_exit (3, NULL);
     }
 
+/* If "<>" is detected (in "wanted"), we change to "!=" because it's the same.
+ */
+    if ( (wanted & LT) && (wanted & GT)) {
+    	wanted |= NE;
+    	wanted ^= LT;
+    	wanted ^= GT;
+    }
+/* If NE is detected, then there is no point also having either LT or GT.
+ */
+    else if ( (wanted & NE) ){
+    	if (wanted & LT) wanted ^=LT;
+    	else
+    	if (wanted & GT) wanted ^=GT;
+    }
+
     while (1) {
 	unsigned char *cb1, *cb2;	/* current input buf ptrs */
 	unsigned char *cb3; 	/* current output buf ptr */
 	unsigned char *ebuf;		/* end ptr in b1 */
-	int r1, r2, len;
+	int r2, len;
 
-	r1 = fread(b1, width, CHUNK, f1);
-	r2 = fread(b2, width, CHUNK, f2);
-	len = r1;
-	if (r2 < len)
-	    len = r2;
+	len = fread(b1, width, CHUNK, f1);
+	if (!seen_const) {
+	    r2 = fread(b2, width, CHUNK, f2);
+	    if (r2 < len)
+		len = r2;
+	}
 	if (len <= 0)
 	    break;
 
@@ -222,21 +248,25 @@ main(int argc, char **argv)
 		bp = pconst;
 	    else
 		bp = cb2;
+
 	    if (wanted & NE) {
+/* If both NE and EQ are detected, all elements yield true result.
+ */
+	    	if (wanted & EQ) goto success;
 		for (ep = cb1+width; ap < ep; ap++, bp++) {
-		    if (*ap != *bp)
-			goto success;
+		    if (*ap == *bp)
+			goto fail;
 		}
-		goto fail;
-	    } else {
-		for (ep = cb1+width; ap < ep; ap++, bp++) {
-		    if (*ap > *bp) {
-			if (!(GT & wanted)) goto fail;
-		    } else if (*ap == *bp) {
-			if (!(EQ & wanted)) goto fail;
-		    } else {
-			if (!(LT & wanted)) goto fail;
-		    }
+		goto success;
+	    }
+
+	    for (ep = cb1+width; ap < ep; ap++, bp++) {
+		if (*ap > *bp) {
+		    if (!(GT & wanted)) goto fail;
+		} else if (*ap == *bp) {
+		    if (!(EQ & wanted)) goto fail;
+		} else {
+		    if (!(LT & wanted)) goto fail;
 		}
 	    }
 	success:

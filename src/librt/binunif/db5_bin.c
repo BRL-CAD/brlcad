@@ -41,10 +41,10 @@
 #include "bu/cv.h"
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
-#include "rtgeom.h"
+#include "rt/db5.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* size of each element (in bytes) for the different BINUNIF types */

@@ -23,14 +23,14 @@
     <arg choice='opt'><arg choice='plain'>-G </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>
     <arg choice='opt'><arg choice='plain'>-B </arg><arg choice='opt'><replaceable>num</replaceable></arg></arg>
     <arg choice='opt'><replaceable>in.png</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pix-bw</emphasis>
+<para><command>png-bw</command>
 will convert a
 <emphasis remap='I'>PNG</emphasis>
 format
@@ -60,28 +60,22 @@ by a value.</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
-<para><emphasis remap='I'>png-bw -R -B &lt; file.png &gt; file.bw</emphasis>
-<!-- .br -->
-will equally blend the red and blue color planes.</para>
+<para>png-bw -R -B &lt; <emphasis remap='I'>file.png</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>will equally blend the red and blue color planes.</para>
 
-<para><emphasis remap='I'>png-bw bw_file.png &lt; file.bw</emphasis>
-will convert a b/w PNG file to
-<emphasis remap='I'>bw(5)</emphasis>
-format.</para>
+<para>png-bw <emphasis remap='I'>bw_file.png</emphasis> &lt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>will convert a b/w PNG file to <emphasis remap='I'>bw(5)</emphasis> format.</para>
 
-<para><emphasis remap='I'>png-bw -R0.30 -G0.59 -B0.11 &lt; file.png &gt; file.bw</emphasis>
-<!-- .br -->
-has the same effect as the
-<option>-ntsc</option>
-flag.
-<!-- .br -->
+<para>png-bw -R0.30 -G0.59 -B0.11 &lt; <emphasis remap='I'>file.png</emphasis> &gt; <emphasis remap='I'>file.bw</emphasis></para>
+<para>has the same effect as the <option>-ntsc</option> flag. </para>
+<para>
 [The
 <option>-crt</option>
 weights are: 0.26, 0.66, 0.08]</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>png-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-png</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='author'><title>AUTHOR</title>

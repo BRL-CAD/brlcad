@@ -27,7 +27,7 @@
 #include <signal.h>
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 
 #include "./mged.h"
 #include "./sedit.h"

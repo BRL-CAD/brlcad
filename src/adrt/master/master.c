@@ -620,7 +620,7 @@ static struct option longopts[] =
 };
 #endif
 
-static char shortopts[] = "bc:de:i:ho:p:vl:";
+static char shortopts[] = "bc:de:i:ho:p:vl:h?";
 
 unsigned char go_daemon_mode = 0;
 unsigned int master_listener_result = 1;
@@ -671,6 +671,7 @@ int main(int argc, char **argv) {
 #endif
 	       )!= -1)
     {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'c':
 		bu_strlcpy(comp_host, bu_optarg, 64);

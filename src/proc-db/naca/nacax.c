@@ -173,43 +173,6 @@ CombineThicknessAndCamber(struct fortran_array *x, struct fortran_array *thick, 
     }
 }
 
-/**
- * Create a mean line as a combination of one or more 6-series mean
- * lines, each weighted by its own lift coefficient.  This capability
- * was included in the original NACA6 program of TM X-3069.
- */
-static void
-Combo6seriesMeanLine(struct fortran_array *a, struct fortran_array *cl,
-		     struct fortran_array *x,
-		     struct fortran_array *y, struct fortran_array *yp)
-{
-    int k;
-    int n;
-    struct fortran_array *ytemp, *yptemp;
-
-    n = SIZE(x);
-    ALLOCATE(ytemp, n);
-    ALLOCATE(yptemp, n);
-
-    if ((SIZE(y) < n) || (SIZE(yp) < n)) {
-	fprintf(stderr, "DISASTER #1\n");
-	exit(1);
-    }
-
-    VSETALLN(F2C(y), 0.0, n);
-    VSETALLN(F2C(y), 0.0, n);
-
-    for (k = 1; k <= SIZE(a); k++) {
-	if (ZERO(INDEX(cl, k))) { continue; }
-	MeanLine6(INDEX(a, k), INDEX(cl,  k), x, ytemp, yptemp);
-	VADD2N(F2C(y), F2C(y), F2C(ytemp), n);
-	VADD2N(F2C(yp), F2C(yp), F2C(yptemp), n);
-    }
-
-    DEALLOCATE(yptemp);
-    DEALLOCATE(ytemp);
-}
-
 void
 GetRk1(fastf_t x, fastf_t *r, fastf_t *k1)
 {
@@ -545,15 +508,15 @@ LoadX(int denCode, int nx, struct fortran_array *x)
 			      0.96,0.97,0.975,0.98,0.985,0.99,0.995,0.999,1.0};
     switch (denCode) {
     case 2:
-	nx = 26;
+	nx = (int) (sizeof(MEDIUM) / sizeof(fastf_t));
 	VMOVEN(F2C(x), MEDIUM, nx);
 	break;
     case 3:
-	nx = 64;
+	nx = (int) (sizeof(FINE) / sizeof(fastf_t));
 	VMOVEN(F2C(x), FINE, nx);
 	break;
     default: /* denCode = 1 and anything else (probably an accident) */
-	nx = 98;
+	nx = (int) (sizeof(COARSE) / sizeof(fastf_t));
 	VMOVEN(F2C(x), COARSE, nx);
 	break;
     }
@@ -954,7 +917,7 @@ Thickness4(fastf_t toc, struct fortran_array *x, struct fortran_array *y, struct
     const fastf_t A4 = -0.1014;
     const fastf_t A42 = A4 + A4, A44 = A42 + A42;
     int k, n;
-    fastf_t srx, xx;
+    fastf_t srx = 0.0, xx = 0.0;
 
     n = SIZE(x);
     if (yp) { INDEX(yp, 1) = 1e22; }
@@ -1050,7 +1013,7 @@ Thickness4sharpTE(fastf_t toc, struct fortran_array *x, struct fortran_array *y,
     const fastf_t A4 = -0.1036;
     const fastf_t A42 = A4 + A4, A44 = A42 + A42;
     int k, n;
-    fastf_t srx, xx;
+    fastf_t srx = 0.0, xx = 0.0;
 
     n = SIZE(x);
     if (yp) { INDEX(yp, 1) = 1e22; }
@@ -1106,7 +1069,7 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
     if (ypp) { VSETALLN(F2C(ypp), 0.0, n); }
 
     SetSixDigitPoints(family, toc, xt, yt);
-    VSCALEN(F2C(minus_yt), F2C(yt), 201, -1);
+    VSCALEN(F2C(minus_yt), F2C(yt), -1, 201);
     ParametrizeAirfoil(xt, yt, xt, minus_yt, sLocal, xLocal, yLocal);
 
     FMMspline(sLocal, xLocal, xpLocal);
@@ -1146,46 +1109,6 @@ Thickness6(int family, fastf_t toc, struct fortran_array *x,
 	}
     }
 }
-
-/* The following two functions are not used by naca456 or avd, but
- * they might come in handy some day.
- */
-
-/**
- * Same eq. as MeanLine2, but as a function
- */
-static fastf_t
-TwoDigitMean(fastf_t x, fastf_t xmax, fastf_t ymax)
-{
-    fastf_t theta;
-
-    if (x <= xmax) {
-	theta = x / xmax;
-    } else {
-	theta = (1.0 - x) / (1.0 - xmax);
-    }
-
-    return ymax * theta * (2.0 - theta);
-}
-
-/**
- * Same equations as MeanLine2, but as a function
- */
-static fastf_t
-TwoDigitSlope(fastf_t x, fastf_t xmax, fastf_t ymax)
-{
-    fastf_t slope, theta;
-    if (x <= xmax) {
-	theta = x / xmax;
-	slope = 2.0 * ymax / xmax;
-    } else {
-	theta = (1.0 - x) / (1.0 - xmax);
-	slope = 2.0 * ymax / (xmax - 1.0);
-    }
-
-    return slope * (1.0 * theta);
-}
-
 
 /*
  * Local Variables:

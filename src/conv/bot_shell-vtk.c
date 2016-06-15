@@ -61,9 +61,9 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "bot.h"
+#include "rt/primitives/bot.h"
 
 
 static int debug = 0;

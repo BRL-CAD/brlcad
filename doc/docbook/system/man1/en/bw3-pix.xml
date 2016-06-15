@@ -20,7 +20,7 @@
     <arg choice='plain'><replaceable>redinput</replaceable></arg>
     <arg choice='plain'><replaceable>greeninput</replaceable></arg>
     <arg choice='plain'><replaceable>blueinput</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>

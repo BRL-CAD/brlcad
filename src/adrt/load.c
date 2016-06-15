@@ -30,7 +30,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "load.h"
 
 uint32_t slave_load_mesh_num;

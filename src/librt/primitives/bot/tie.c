@@ -22,7 +22,7 @@
  *
  */
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #include <math.h>
 #include <stdlib.h>

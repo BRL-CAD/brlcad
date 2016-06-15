@@ -34,7 +34,7 @@
 
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
+#include "rt/db5.h"
 #include "raytrace.h"
 
 /* this is the master source of standard and registered attribute information */

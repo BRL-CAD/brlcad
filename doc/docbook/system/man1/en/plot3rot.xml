@@ -26,16 +26,16 @@
     <arg choice='opt'>-m# </arg>
     <arg choice='opt'>-v </arg>
     <arg choice='opt'>-S# </arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>unix_plot</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Plot3rot</emphasis>
+<para><command>plot3rot</command>
 will rotate translate or scale a UnixPlot file (see
 <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>).
 Any number of the above options can be given.
@@ -49,11 +49,11 @@ gives a useful summary.</para>
 
 <para>The lower case
 <option>-x# -y# -z#</option>
-flags perform a rotation about the X, Y, and Z axis respectively by
+flags perform a rotation about the X, Y, and Z axes respectively by
 the given number of degrees.  A positive value indicates a right handed
 rotation.  Upper case
 <option>-X# -Y# -Z#</option>
-are translations along these axis in whatever units the plot file is in.
+are translations along these axes in whatever units the plot file is in.
 The
 <option>-s#</option>
 flag applies a scale factor up (&gt; 1) or down (&lt; 1) to the plot.</para>
@@ -88,10 +88,12 @@ flag is used.</para>
 
 <para>The
 <option>-S#</option>
-flags takes a quoted string of 6 floating point numbers,
-which are immediately output as a "space" command,
-and which override any "space" commands found in the input file
-or which are computed by</para>
+flag takes a quoted string of 6 floating point numbers
+("min_x min_y min_z max_x max_y max_z"), which are immediately output
+as a "space" command, and which override any spaces specified by
+"space" commands found in the input file, as well as any spaces which
+are computed by translating, rotating, or scaling from those input
+spaces as directed by other flags.</para>
 
 <para>The
 <option>-v</option>

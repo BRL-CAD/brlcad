@@ -20,7 +20,7 @@
  * IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{*/
 /** @file if_X24.c
  *

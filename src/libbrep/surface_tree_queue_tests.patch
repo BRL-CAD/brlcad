@@ -462,7 +462,7 @@ Index: src/libbrep/libbrep_curvetree.cpp
 +               // We're not below it - are we inside it?  If not, no intersection possible,
 +               // otherwise, need closer look
 +	       if (v < *c_vmax) {
-+                   // Decend the tree until either we're outside
++                   // Descend the tree until either we're outside
 +                   // the bboxes and can make a determination, or
 +                   // we find the leaf node containing the uv point
 +                   // and do the full curve test.
@@ -898,7 +898,7 @@ Index: src/libbrep/libbrep_surfacetree.cpp
 +    // Each node has a set of frames, but those frames are
 +    // often shared with parent and sibling nodes.  In order
 +    // to take at least some advantage of this, we store
-+    // all frames in an array and use vectors of indicies to
++    // all frames in an array and use vectors of indices to
 +    // point to a specific frame.  When a vector is no longer
 +    // needed, we queue it up in an "available" queue for reuse.
 +    std::queue<std::vector<int> *> frame_arrays;
@@ -1219,7 +1219,7 @@ Index: src/libbrep/libbrep_curvetree.h
 +	// One of the most important queries that can be made of a Curve tree is whether
 +	// a given point is trimmed or untrimmed by the loops of the tree.  This test
 +	// uses a modified PNPOLY test.  The two modifications are 1) a polygon is dynamically formed
-+	// for PNPOLY using the corsest polygon that can be constructed - once a point is
++	// for PNPOLY using the coarsest polygon that can be constructed - once a point is
 +	// outside a bounding box for a curve segment, the linear approximation for that
 +	// curve segment is sufficient for the test - and 2), when a point is too close
 +	// to a curve segment to be sufficient for the ray intersection test, use a test

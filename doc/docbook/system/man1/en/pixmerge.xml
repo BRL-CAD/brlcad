@@ -21,7 +21,7 @@
     <arg choice='opt'>-w <replaceable>bytes_wide</replaceable></arg>
     <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
     <arg choice='plain'><replaceable>foreground.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>background.pix</replaceable></arg>
+    <arg choice='opt'> <replaceable>background.pix</replaceable></arg>
     <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>
@@ -37,13 +37,23 @@ or
 images,
 generates an output stream of the same size, where the value of
 the output is determined by a formula involving the first
-(foreground) stream and a constant, or the value of the second
-(background) stream.
+(foreground) stream and the second (background) stream,
+with the option of using a constant in place of the background stream.
 This routine operates on a pixel-by-pixel basis, and thus
 is independent of the resolution of the image.
-More sophisticated processing can be performed by the
-<emphasis remap='I'>pixmatte</emphasis>
-program.</para>
+More sophisticated processing can be performed by
+<command>pixmatte</command> .</para>
+
+<para>If a constant is to be used in place of the background stream, it is supplied via the
+<option>-C r/g/b</option>
+option, with the constant color specified by r/g/b .
+(Exception: see below for default zeroes
+being used with default <option>-g</option> .)
+It is expected that there will be up to
+<replaceable>bytes_wide</replaceable>
+slash-separated constants given as a single parameter here.
+If <option>-C</option> is used, the <replaceable>background.pix</replaceable> argument is omitted.
+</para>
 
 <para>The formula can be any combination of
 <option>-g</option>
@@ -56,39 +66,35 @@ program.</para>
 (fg not equal to bg).
 For example,
 <option>-le</option>
-selects a foreground pixel when it
+selects the foreground pixel when it
 is lexically less than or equal to the background pixel,
-that is, when all bytes of the foreground pixel are less than
-or equal to the background pixel.
-The
+that is, when each byte of the foreground pixel is less than
+or equal to the corresponding byte of the background pixel; if said
+relationship is found to be false, the background pixel is selected.</para>
+
+<para>The
 <option>-w#</option>
 flag specifies the width (in bytes) of each "pixel";  the default is
 3, <emphasis remap='I'>i.e.</emphasis>
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 file format.  A width of 1 is used for processing
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
-files.  It is unclear if other widths are useful.
-If the
-<option>-C r/g/b</option>
-option is specified, then the constant color specified by r/g/b
-is used in place of the appropriate background pixel values.
-It is expected that there will be up to
-<emphasis remap='B'>width</emphasis>
-slash-separated constants given as a single parameter here.</para>
+files.  It is unclear if other widths are useful.</para>
 
-<para>If no formula is specified, the default is to take all foreground
-pixels greater than black (black being specified with all bytes zero), which can be specified
-as:</para>
+<para>If no formula is specified, the default is to use <option>-g</option>, taking all foreground
+pixels greater than a constant (<option>-C</option> parameter if that option is used, otherwise
+defaulting to black, which is specified with all bytes zero).  If the default formula and constant
+are used (and <option>-a</option> was NOT used), this is the same as:</para>
 <para>
-   pixmerge -g -C 0/0/0 fg.pix bg.pix</para>
+   pixmerge -g -C 0/0/0 fg.pix</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
 <para>   gencolor 200 0 200 |
-      pixmerge -g -C 20/20/20 fg.pix - &gt; out.pix</para>
+      pixmerge -g fg.pix - &gt; out.pix</para>
 
 <para>   pixbackgnd -t0 160 200 |
-      pixmerge -n -C 63/0/127 fg.pix - | pix-fb</para>
+      pixmerge -n fg.pix - | pix-fb</para>
 <para>The second example is used to composite an
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 generated image on top of a shaded background.</para>

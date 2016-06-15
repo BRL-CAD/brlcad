@@ -50,8 +50,7 @@ static FILE *infp;
 #define ROWSIZE (file_width * BYTESPERPIXEL)
 #define SIZE (file_height * ROWSIZE)
 
-static char usage[] = "\
-Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
+static char usage[] = "Usage: bw-png [-a] [-w file_width] [-n file_height]\n\
 	[-s square_file_size] [file.bw]\n";
 
 int
@@ -78,7 +77,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

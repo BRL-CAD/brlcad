@@ -18,21 +18,26 @@
  * information.
  */
 
-/*----------------------------------------------------------------------*/
-/* @file vectfont.h */
-/** @addtogroup plot */
-/** @{ */
+#ifndef BN_VECTFONT_H
+#define BN_VECTFONT_H
 
-/**
+#include "common.h"
+#include "bn/defines.h"
+
+__BEGIN_DECLS
+
+/** @addtogroup bn_vfont
  *
- *	Terminal Independent Graphics Display Package.
- *		Mike Muuss  July 31, 1978
+ *  @brief
+ *  Terminal Independent Graphics Display Package.
  *
- *	This routine is used to plot a string of ASCII symbols
+ *  Mike Muuss  July 31, 1978
+ *
+ *  This routine is used to plot a string of ASCII symbols
  *  on the plot being generated, using a built-in set of fonts
  *  drawn as vector lists.
  *
- *	Internally, the basic font resides in a 10x10 unit square.
+ *  Internally, the basic font resides in a 10x10 unit square.
  *  Externally, each character can be thought to occupy one square
  *  plotting unit;  the 'scale'
  *  parameter allows this to be changed as desired, although scale
@@ -44,23 +49,35 @@
  *  remote Houston Instruments pen plotter package for the
  *  GE Tymeshare system.
  *
+ *  Used by LIBPLOT3 and LIBRT for simple vector fonts.
+ *
+ *  Vector font definitions, for TIG-PACK fonts.
  */
+/** @{ */
+/** @file bn/vectfont.h */
 
-#ifndef BN_VECTFONT_H
-#define BN_VECTFONT_H
+/*
+ *	Motion encoding macros
+ *
+ * All characters reference absolute points within a 10 x 10 square
+ */
+#define	brt(x, y)	(11*x+y)
+#define drk(x, y)	-(11*x+y)
+#define	VFONT_LAST	-128		/**< @brief  0200 Marks end of stroke list */
+#define	NEGY		-127		/**< @brief  0201 Denotes negative y stroke */
+#define bneg(x, y)	NEGY, brt(x, y)
+#define dneg(x, y)	NEGY, drk(x, y)
 
-#include "common.h"
-#include "bn/defines.h"
+int *tp_getchar(const unsigned char *c);
 
-__BEGIN_DECLS
-
-/**
- * @brief
+/*
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  *  DEPRECATED: libplot3 has been merged into libbn, so this no longer needs to be public.
  */
 BN_EXPORT extern void tp_setup(void);
+
+/** @} */
 
 __END_DECLS
 

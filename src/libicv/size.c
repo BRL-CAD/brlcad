@@ -30,12 +30,12 @@
 #include "bu/malloc.h"
 
 HIDDEN int
-shrink_image(icv_image_t* bif, unsigned int factor)
+shrink_image(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p; /**< input and output pointers */
     double *p;
-    unsigned int facsq, py, px;
-    int x, y, c;
+    size_t facsq, py, px;
+    size_t x, y, c;
     size_t widthstep =  bif->width*bif->channels;
     if (UNLIKELY(factor < 1)) {
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
@@ -76,10 +76,10 @@ shrink_image(icv_image_t* bif, unsigned int factor)
 
 
 HIDDEN int
-under_sample(icv_image_t* bif, unsigned int factor)
+under_sample(icv_image_t* bif, size_t factor)
 {
     double *data_p, *res_p;
-    int x, y, widthstep;
+    size_t x, y, widthstep;
 
     if (UNLIKELY(factor < 1)) {
 	bu_log("Cannot shrink image to 0 factor, factor should be a positive value.");
@@ -105,13 +105,13 @@ under_sample(icv_image_t* bif, unsigned int factor)
 
 
 HIDDEN int
-ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
+ninterp(icv_image_t* bif, size_t out_width, size_t out_height)
 {
     double xstep, ystep;
-    unsigned int i, j;
-    int x, y;
-    int widthstep;
-    double *in_r, *in_c; /*<< Pointer to row and col of input buffers*/
+    size_t i, j;
+    size_t x, y;
+    size_t widthstep;
+    double *in_r, *in_c; /* Pointer to row and col of input buffers */
     double *out_data, *out_p;
     xstep = (double)(bif->width-1) / (double)(out_width) - 1.0e-06;
     ystep = (double)(bif->height-1) / (double)(out_height) - 1.0e-06;
@@ -152,16 +152,16 @@ ninterp(icv_image_t* bif, unsigned int out_width, unsigned int out_height)
 
 
 HIDDEN int
-binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_height)
+binterp(icv_image_t *bif, size_t out_width, size_t out_height)
 {
-    unsigned int i, j;
-    int c;
+    size_t i, j;
+    size_t c;
     double x, y, dx, dy, mid1, mid2;
     double xstep, ystep;
     double *out_data, *out_p;
-    double *upp_r, *low_r; /*<< upper and lower row */
+    double *upp_r, *low_r; /* upper and lower row */
     double *upp_c, *low_c;
-    int widthstep;
+    size_t widthstep;
 
     xstep = (double)(bif->width - 1) / (double)out_width - 1.0e-6;
     ystep = (double)(bif->height -1) / (double)out_height - 1.0e-6;
@@ -210,7 +210,7 @@ binterp(icv_image_t *bif, unsigned int out_width, unsigned int out_height)
 
 
 int
-icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor)
+icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, size_t out_width, size_t out_height, size_t factor)
 {
     ICV_IMAGE_VAL_INT(bif);
 

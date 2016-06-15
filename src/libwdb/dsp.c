@@ -27,10 +27,10 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 int
 mk_dsp(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_t ydim, const matp_t mat)

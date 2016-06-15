@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_paged_io.c
  *

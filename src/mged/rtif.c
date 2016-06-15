@@ -43,7 +43,7 @@
 #include "tcl.h"
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 
 #include "./sedit.h"
 #include "./mged.h"
