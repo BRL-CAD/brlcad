@@ -191,29 +191,29 @@ replace_invalid_uuids(ONX_Model &model)
     std::set<ON_UUID, UuidCompare> seen;
     seen.insert(ON_nil_uuid); // UUIDs can't be nil
 
-#define REPLACE_UUIDS(array, access, member) \
+#define REPLACE_UUIDS(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert(at((array), i) access member).second) { \
-	    at((array), i) access member = generate_uuid(); \
+	while (!seen.insert(at((array), i)member).second) { \
+	    at((array), i)member = generate_uuid(); \
 	    ++num_repairs; \
 	} \
     } \
 } while (false)
 
-    REPLACE_UUIDS(model.m_bitmap_table, ->, m_bitmap_id);
-    REPLACE_UUIDS(model.m_mapping_table, ., m_mapping_id);
-    REPLACE_UUIDS(model.m_linetype_table, ., m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, ., m_layer_id);
-    REPLACE_UUIDS(model.m_group_table, ., m_group_id);
-    REPLACE_UUIDS(model.m_font_table, ., m_font_id);
-    REPLACE_UUIDS(model.m_dimstyle_table, ., m_dimstyle_id);
-    REPLACE_UUIDS(model.m_light_table, ., m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_hatch_pattern_table, ., m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_idef_table, ., m_uuid);
-    REPLACE_UUIDS(model.m_object_table, ., m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_history_record_table, ->, m_record_id);
-    REPLACE_UUIDS(model.m_userdata_table, ., m_uuid);
+    REPLACE_UUIDS(model.m_bitmap_table, ->m_bitmap_id);
+    REPLACE_UUIDS(model.m_mapping_table, .m_mapping_id);
+    REPLACE_UUIDS(model.m_linetype_table, .m_linetype_id);
+    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
+    REPLACE_UUIDS(model.m_group_table, .m_group_id);
+    REPLACE_UUIDS(model.m_font_table, .m_font_id);
+    REPLACE_UUIDS(model.m_dimstyle_table, .m_dimstyle_id);
+    REPLACE_UUIDS(model.m_light_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_hatch_pattern_table, .m_hatchpattern_id);
+    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
+    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_history_record_table, ->m_record_id);
+    REPLACE_UUIDS(model.m_userdata_table, .m_uuid);
 
 #undef REPLACE_UUIDS
 
@@ -687,8 +687,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     db_update_nref(&db, &rt_uniresource);
 
     // rename shapes after their parent combs
-    if (0 > db_search(&found, DB_SEARCH_TREE,
-		      "-type shape -below -attr rhino::type=ON_Layer", 0, NULL, &db))
+    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
@@ -734,7 +733,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     BU_PTBL_INIT(&found);
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-		      "-attr rhino::type=ON_Layer", 0, NULL, &db))
+		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_Layer -or -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
+		       + std::string(gcv_options.default_name) + "* )").c_str(), 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
     const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
