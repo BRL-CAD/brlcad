@@ -1,7 +1,7 @@
 /*                       P C B A S I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Basic classes for Parametrics and Constraints Library
  *
  */
-#ifndef __PCBASIC_H__
-#define __PCBASIC_H__
+#ifndef LIBPC_PCBASIC_H
+#define LIBPC_PCBASIC_H
 
 #include "common.h"
 
@@ -35,9 +35,13 @@
 
 class pcException {
 public:
-    pcException() {};
-    pcException(const char *temp) {str=temp;};
-    ~pcException() {};
+    pcException() {
+    }
+    pcException(const char *temp) {
+	str=temp;
+    }
+    ~pcException() {
+    }
     std::string Error() const {
 	return str;
     }
@@ -51,8 +55,9 @@ private:
  */
 
 struct is_even {
-    bool operator () (int i) const
-    { return (i % 2) == 0; }
+    bool operator () (int i) const {
+	return (i % 2) == 0;
+    }
 };
 
 

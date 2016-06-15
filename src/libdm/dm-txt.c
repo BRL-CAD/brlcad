@@ -1,7 +1,7 @@
 /*                       D M - T X T . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -263,6 +263,14 @@ txt_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
 
 
 HIDDEN int
+txt_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
+{
+    bu_log("logfile called\n");
+    return 0;
+}
+
+
+HIDDEN int
 txt_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
 {
     bu_log("beginDList called\n");
@@ -324,14 +332,6 @@ txt_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
-HIDDEN void
-txt_processEvents(struct dm *UNUSED(dmp))
-{
-    bu_log("processEvents called\n");
-}
-
-
-
 struct dm dm_txt = {
     txt_close,
     txt_drawBegin,
@@ -359,6 +359,7 @@ struct dm dm_txt = {
     txt_setDepthMask,
     txt_setZBuffer,
     txt_debug,
+    txt_logfile,
     txt_beginDList,
     txt_endDList,
     txt_drawDList,
@@ -367,7 +368,6 @@ struct dm dm_txt = {
     txt_getDisplayImage,
     txt_reshape,
     txt_makeCurrent,
-    txt_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -394,6 +394,7 @@ struct dm dm_txt = {
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

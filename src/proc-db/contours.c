@@ -1,7 +1,7 @@
 /*                      C O N T O U R S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,7 +46,7 @@ main(int argc, char *argv[])
     pl_3space(stdout, -32768,  -32768,  -32768, 32767, 32767, 32767);
     while (!feof(stdin)) {
 	if (scanf("%d %d %128s", &npts, &z, name) != 3) break;
-	if(npts < 0) {
+	if (npts < 0) {
 	    bu_log("%s: Negative # of pts\n", argv[0]);
 	    return -1;
 	}

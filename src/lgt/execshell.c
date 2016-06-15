@@ -1,7 +1,7 @@
 /*                     E X E C S H E L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -68,7 +68,7 @@ loc_Perror(char *msg)
 	loc_Perror( error_buf ); \
 	return	-1;
 
-/*	e x e c _ S h e l l ( )
+/*
 	If args[0] is NULL, spawn a shell, otherwise execute the specified
 	command line.
 	Return the exit status of the program, or -1 if wait() or fork()

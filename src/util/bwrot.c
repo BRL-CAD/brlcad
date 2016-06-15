@@ -1,7 +1,7 @@
 /*                         B W R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@ ssize_t yin, xout, yout;
 int plus90, minus90, reverse, invert;
 size_t pixbytes = 1;
 
+char hyphen[] = "-";
 
 int
 get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
@@ -70,7 +71,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     if (!ifp || !ofp || !angle)
 	bu_exit(1, "bwrot: internal error processing arguments\n");
 
-    if ( isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1)
 	return 0;
 
     while ((c = bu_getopt(argc, argv, "fbri#:a:s:o:w:n:S:W:N:h?")) != -1) {
@@ -129,7 +130,7 @@ get_args(int argc, char **argv, FILE **ifp, FILE **ofp, double *angle)
     }
 
     if (bu_optind >= argc) {
-	in_file_name = "-";
+	in_file_name = hyphen;
     } else {
 	in_file_name = argv[bu_optind];
     }

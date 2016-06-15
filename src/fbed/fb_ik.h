@@ -1,7 +1,7 @@
 /*                         F B _ I K . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
  *	Author:		Gary S. Moss
  */
 
-#ifndef __FB_IK_H__
-#define __FB_IK_H__
+#ifndef FBED_FB_IK_H
+#define FBED_FB_IK_H
 
 #ifdef vax
 /* GSM : '' needed for Sys V emulation.					*/
@@ -164,7 +164,7 @@ struct ikdevice {
 #define X_CURSOR_OFFSET		(-15)
 #define Y_CURSOR_OFFSET		15
 
-#endif  /* __FB_IK_H__ */
+#endif  /* FBED_FB_IK_H */
 
 /*
  * Local Variables:

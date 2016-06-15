@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,9 @@
 /** @file mged/cmd.h
  *
  */
+
+#ifndef MGED_CMD_H
+#define MGED_CMD_H
 
 #include "common.h"
 
@@ -219,6 +222,7 @@ extern int f_bv_vsave(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomin(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_bv_zoomout(ClientData, Tcl_Interp *, int, const char *[]);
 
+#endif /* MGED_CMD_H */
 
 /*
  * Local Variables:

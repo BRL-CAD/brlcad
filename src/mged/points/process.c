@@ -1,7 +1,7 @@
 /*                       P R O C E S S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -93,7 +93,7 @@ create_cyl(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cylinder { %V }", &vls);
+    bu_vls_printf(&vls2, "cylinder { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -124,7 +124,7 @@ create_sphere(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "sph { %V }", &vls);
+    bu_vls_printf(&vls2, "sph { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -165,7 +165,7 @@ process_type(point_line_t *plt, const char *type, int code) {
     }
 
     plt->type = type;
-    plt->code = code;;
+    plt->code = code;
 
     return;
 }
@@ -220,7 +220,7 @@ condense_points(point_line_t **plta, int count) {
 	return 0;
     }
 
-    for (i=0; i < count; i++) {
+    for (i = 0; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (plt && plt->type) {
@@ -265,7 +265,7 @@ delete_points(point_line_t **plta, int count, double tolerance) {
     /*    INITIALIZE_POINT_LINE_T(average_plt); */
     previous_plt = &(*plta)[0];
 
-    for (i=1; i < count; i++) {
+    for (i = 1; i < count; i++) {
 	plt = &(*plta)[i];
 
 	if (DIST_PT_PT(previous_plt->val, plt->val) < tolerance) {
@@ -473,7 +473,7 @@ create_plate(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "plate { %V }", &vls);
+    bu_vls_printf(&vls2, "plate { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -504,7 +504,7 @@ create_arb(point_line_t **plta, int count) {
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
 	}
     }
-    bu_vls_printf(&vls2, "arb { %V }", &vls);
+    bu_vls_printf(&vls2, "arb { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -534,7 +534,7 @@ create_cylinder(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "cyls { %V }", &vls);
+    bu_vls_printf(&vls2, "cyls { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -564,7 +564,7 @@ create_pipe(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, "{ %f %f %f } ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "pipe { %V }", &vls);
+    bu_vls_printf(&vls2, "pipe { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif
@@ -594,7 +594,7 @@ create_points(point_line_t **plta, int count) {
 	if (plt && plt->type)
 	    bu_vls_printf(&vls, " %f %f %f  ", plt->val[X], plt->val[Y], plt->val[Z]);
     }
-    bu_vls_printf(&vls2, "points { %V }", &vls);
+    bu_vls_printf(&vls2, "points { %s }", bu_vls_addr(&vls));
 #if PRINT_SCRIPT
     fprintf(stderr, "%s\n", bu_vls_addr(&vls2));
 #endif

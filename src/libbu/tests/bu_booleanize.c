@@ -1,7 +1,7 @@
 /*                 T E S T _ B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,7 @@
 #include "bu.h"
 
 #include <string.h>
+
 
 int
 automatic_test(const char *input)
@@ -89,22 +90,21 @@ automatic_test(const char *input)
 }
 
 
-int main(int argc, char *argv[])
+int
+main(int argc, char *argv[])
 {
     int pass = 0;
 
-    if (argc > 2) {
-       printf("Usage: %s test_string\n", argv[0]);
-    }
+    if (argc > 2)
+       fprintf(stderr,"Usage: %s test_string\n", argv[0]);
 
     if (argc == 1) {
        pass = automatic_test(NULL);
        return !pass;
     }
 
-    if (argc > 1) {
+    if (argc > 1)
        pass = automatic_test(argv[1]);
-    }
 
     return !pass;
 }

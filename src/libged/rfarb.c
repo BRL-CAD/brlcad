@@ -1,7 +1,7 @@
 /*                         R F A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -96,8 +96,8 @@ ged_rfarb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    rota *= bn_degtorad;
-    fba *= bn_degtorad;
+    rota *= DEG2RAD;
+    fba *= DEG2RAD;
 
     /* calculate plane defined by these angles */
     norm[0] = cos(fba) * cos(rota);

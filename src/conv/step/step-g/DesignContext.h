@@ -1,7 +1,7 @@
 /*                 DesignContext.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef DESIGN_CONTEXT_H_
-#define DESIGN_CONTEXT_H_
+#ifndef CONV_STEP_STEP_G_DESIGNCONTEXT_H
+#define CONV_STEP_STEP_G_DESIGNCONTEXT_H
 
 #include "ProductDefinitionContext.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* DESIGN_CONTEXT_H_ */
+#endif /* CONV_STEP_STEP_G_DESIGNCONTEXT_H */
 
 /*
  * Local Variables:

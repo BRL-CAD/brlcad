@@ -1,7 +1,7 @@
 /*                 LengthContextDependentUnit.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LENGTHCONTEXTDEPENDENTUNIT_H_
-#define LENGTHCONTEXTDEPENDENTUNIT_H_
+#ifndef CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H
+#define CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H
 
 #include "LengthUnit.h"
 #include "ContextDependentUnit.h"
@@ -49,7 +49,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LENGTHCONTEXTDEPENDENTUNIT_H_ */
+#endif /* CONV_STEP_STEP_G_LENGTHCONTEXTDEPENDENTUNIT_H */
 
 /*
  * Local Variables:

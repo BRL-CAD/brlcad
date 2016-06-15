@@ -1,7 +1,7 @@
 /*                         V U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,9 @@ ged_view_update(struct ged_view *gvp)
 {
     vect_t work, work1;
     vect_t temp, temp1;
+
+    if (!gvp)
+	return;
 
     bn_mat_mul(gvp->gv_model2view,
 	       gvp->gv_rotation,
@@ -89,7 +92,7 @@ _ged_mat_aet(struct ged_view *gvp)
 		  0.0,
 		  270.0 - gvp->gv_aet[0]);
 
-    twist = -gvp->gv_aet[2] * bn_degtorad;
+    twist = -gvp->gv_aet[2] * DEG2RAD;
     c_twist = cos(twist);
     s_twist = sin(twist);
     bn_mat_zrot(tmat, s_twist, c_twist);
@@ -211,8 +214,6 @@ _ged_do_tra(struct ged *gedp,
 
 
 /**
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
  *
@@ -249,7 +250,7 @@ ged_persp_mat(mat_t m,
 
 /**
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
+ * with the actual eye position (not at Z=+1) specified in viewing
  * coords, into a related space where the eye has been sheared onto
  * the Z axis and repositioned at Z=(0, 0, 1), with the same
  * perspective field of view as before.

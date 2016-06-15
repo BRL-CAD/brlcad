@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2013 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,9 +53,8 @@ Usage: pixembed [-h] [-b border_inset] \n\
 	[-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
-/*
- * G E T _ A R G S
- */
+char hyphen[] = "-";
+
 int
 get_args(int argc, char **argv)
 {
@@ -99,7 +98,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -118,9 +117,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -174,8 +170,6 @@ main(int argc, char **argv)
 
 
 /*
- * L O A D _ B U F F E R
- *
  * Read one input scanline into the middle of the output scanline,
  * and duplicate the border pixels.
  */
@@ -220,8 +214,6 @@ load_buffer(void)
 
 
 /*
- * W R I T E _ B U F F E R
- *
  * Write the buffer to stdout, with error checking.
  */
 void

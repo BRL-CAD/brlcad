@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/parallel.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -138,8 +140,6 @@ typedef enum area_type {
 
 
 /*
- * A R E A _ C E N T E R
- *
  * This function receives a pointer to a point_list
  * structure, the number of points to calculate, and
  * the point address of where to record the information.
@@ -174,8 +174,6 @@ area_center(struct point_list * ptlist, size_t number, point_t *center)
 
 
 /*
- * V I E W _ P I X E L
- *
  * This routine is called from do_run(), and in this case does nothing.
  */
 void
@@ -211,7 +209,7 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
     assembly_head_ptr = cell->assembly;
 
     l = strlen(path);
-    buffer = bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
+    buffer = (char *)bu_calloc((unsigned int)l+1, sizeof(char), "increment_assembly_counter buffer allocation");
     bu_strlcpy(buffer, path, l+1);
 
     /* trim off the region name */
@@ -371,8 +369,6 @@ increment_assembly_counter(register struct area *cell, const char *path, area_ty
 
 
 /*
- * R A Y M I S S
- *
  * Null function -- handle a miss
  * This function is called by rt_shootray(), which is called by
  * do_frame().
@@ -384,10 +380,6 @@ raymiss(struct application *UNUSED(ap))
 }
 
 
-/*
- * R A Y H I T
- *
- */
 int
 rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
@@ -634,8 +626,6 @@ rayhit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
 
 
 /*
- * V I E W _ E O L
- *
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
@@ -644,8 +634,7 @@ void view_eol(struct application *UNUSED(ap))
 }
 
 
-/* p r i n t _ r e g i o n _ a r e a _ l i s t
- *
+/*
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of
@@ -790,8 +779,7 @@ print_region_area_list(size_t *count, struct rt_i *rtip, area_type_t type)
 }
 
 
-/* p r i n t _ a s s e m b l y _ a r e a _ l i s t
- *
+/*
  * Prints a list of region areas sorted alphabetically reporting
  * either the presented or exposed area 'type' and keeping track of
  * the 'count' of regions printed.  this routine returns the number of
@@ -934,10 +922,6 @@ print_assembly_area_list(struct rt_i *rtip, size_t max_depth, area_type_t type)
 }
 
 
-/*
- * V I E W _ E N D
- *
- */
 void
 view_end(struct application *ap)
 {
@@ -1024,10 +1008,10 @@ view_end(struct application *ap)
 	       bu_units_string(units)
 	    );
     }
-    bu_log("Number of Presented Regions:    %8d\n", presented_region_count);
-    bu_log("Number of Presented Assemblies: %8d\n", presented_assembly_count);
-    bu_log("Number of Exposed Regions:    %8d\n", exposed_region_count);
-    bu_log("Number of Exposed Assemblies: %8d\n", exposed_assembly_count);
+    bu_log("Number of Presented Regions:    %8u\n", (unsigned)presented_region_count);
+    bu_log("Number of Presented Assemblies: %8u\n", (unsigned)presented_assembly_count);
+    bu_log("Number of Exposed Regions:    %8u\n", (unsigned)exposed_region_count);
+    bu_log("Number of Exposed Assemblies: %8u\n", (unsigned)exposed_assembly_count);
     bu_log("\n"
 	   "********************************************************************\n"
 	   "WARNING: The terminology and output format of 'rtarea' is deprecated\n"
@@ -1108,8 +1092,6 @@ view_end(struct application *ap)
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * View_2init is called by do_frame(), which in turn is called by
  * main().
  */
@@ -1191,9 +1173,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 }
 
 
-/*
- * V I E W _ I N I T
- */
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {

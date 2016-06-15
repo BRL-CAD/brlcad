@@ -1,7 +1,7 @@
 /*                 GlobalUncertaintyAssignedContext.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,14 +50,7 @@ GlobalUncertaintyAssignedContext::GlobalUncertaintyAssignedContext(STEPWrapper *
 
 GlobalUncertaintyAssignedContext::~GlobalUncertaintyAssignedContext()
 {
-    /*
-      LIST_OF_UNCERTAINTY_MEASURE_WITH_UNIT::iterator i = uncertainty.begin();
-
-      while(i != uncertainty.end()) {
-      delete (*i);
-      i = uncertainty.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     uncertainty.clear();
 }
 

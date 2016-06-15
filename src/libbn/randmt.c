@@ -31,7 +31,8 @@
  * matumoto@math.keio.ac.jp
  */
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 
 /* Period parameters */
@@ -61,7 +62,7 @@ struct _internal_state_s {
 static struct _internal_state_s global_state = { MERSENNE_MAGIC, N+1, {0} };
 
 void *
-bn_randmt_state_create()
+bn_randmt_state_create(void)
 {
     struct _internal_state_s *is;
 
@@ -145,7 +146,7 @@ bn_randmt_seed(unsigned long seed)
     bn_randmt_state_seed(&global_state, (uint32_t)seed);
 }
 
-double bn_randmt()
+double bn_randmt(void)
 {
     return bn_randmt_state(&global_state);
 }

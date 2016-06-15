@@ -1,7 +1,7 @@
 /*                    N U R B _ S P L I T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -241,8 +241,6 @@ rt_nurb_s_split(struct bu_list *split_hd, const struct face_g_snurb *srf, int di
 
 
 /**
- * R T _ N U R B _ C _ S P L I T
- *
  * Split a NURB curve by inserting a multiple knot and return the
  * result of the two curves.
  *

@@ -212,7 +212,8 @@
     <variablelist remap="TP"><title>Model View Options - Low Level</title>
       <para>
 	 When specifying a low level view model is "all or nothing" - all options
-	 are required to correctly define the view.
+	 are required to correctly define the view.  To get parameters for a given
+	 view, use the Archer command <command>get_eyemodel</command>.
       </para>
       <varlistentry>
 	 <term><option>--viewsize</option> <replaceable>view_size(mm)</replaceable></term>
@@ -245,6 +246,14 @@
       </para>
 
     <variablelist remap="TP"><title>Image Generation Options</title>
+      <para>
+	      The three options that are used to input geometry object lists need to parse
+	      multiple arguments, so any options immediately following either of them need to use
+	      an explicit argument flag to signal termination of the input list to the option
+	      parser - for example, an input .g file needs to be specified with
+	      the <option>-i</option> if it comes after a list of ghost objects.
+      </para>
+
       <varlistentry>
 	<term><option>-c</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable> </term>
 	<term><option>--color-objects</option> <replaceable>obj1</replaceable> <replaceable>...</replaceable></term>
@@ -467,8 +476,8 @@
 
    <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
-    <para>This software is Copyright (c) 2001-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+    <para>This software is Copyright (c) 2001-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 
    <refsection xml:id="author"><title>AUTHOR</title>

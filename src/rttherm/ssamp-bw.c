@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,9 +69,6 @@ Usage: ssamp-bw [-s squarefilesize] [-w file_width] [-n file_height]\n\
 		file.ssamp\n";
 
 
-/*
- * G E T _ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
@@ -115,9 +112,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * F I N D _ M I N M A X
- */
 void
 find_minmax(void)
 {
@@ -138,9 +132,6 @@ find_minmax(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -160,7 +151,7 @@ main(int argc, char **argv)
 
     /* Read spectrum definition */
     snprintf(spectrum_name, 100, "%s.spect", datafile_basename);
-    if (!bu_file_exists(spectrum_name, NULL)){
+    if (!bu_file_exists(spectrum_name, NULL)) {
 	bu_free(datafile_basename, "datafile_basename realpath");
 	bu_exit(EXIT_FAILURE, "Spectrum file [%s] does not exist\n", spectrum_name);
     }
@@ -192,8 +183,8 @@ main(int argc, char **argv)
 	bn_pr_tabdata("filter", filt);
     }
 
-    /* Convert each of the spectral sample curves into scalor values */
-    pixels = bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
+    /* Convert each of the spectral sample curves into scalar values */
+    pixels = (fastf_t *)bu_malloc(sizeof(fastf_t) * width * height, "fastf_t pixels");
 
     for (i = width*height-1; i >= 0; i--) {
 	struct bn_tabdata *sp;

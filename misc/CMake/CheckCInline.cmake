@@ -1,7 +1,7 @@
 #              C H E C K C I N L I N E . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,12 +62,12 @@ macro(CHECK_C_INLINE RESULT)
 
   if(NOT DEFINED HAVE_INLINE)
 
-  # initialize to empty
-  set(${RESULT} "")
+    # initialize to empty
+    set(${RESULT} "")
 
-  # test candidates to find one that works
-  foreach(INLINE "inline" "__inline__" "__inline")
-    if(NOT HAVE_INLINE)
+    # test candidates to find one that works
+    foreach(INLINE "inline" "__inline__" "__inline")
+
       string(TOUPPER "HAVE_${INLINE}_KEYWORD" HAVE_INLINE_KEYWORD)
 
       set(PRE_CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS}")
@@ -84,18 +84,21 @@ macro(CHECK_C_INLINE RESULT)
 			       }
 			       int
 			       main(int argc, char *argv[]) {
-			         return 0;
+			         return (argc > 0 || argv)?0:1;
 			       }" ${HAVE_INLINE_KEYWORD})
 
       set(CMAKE_REQUIRED_FLAGS "${PRE_CMAKE_REQUIRED_FLAGS}")
 
       if(${HAVE_INLINE_KEYWORD})
         set(HAVE_INLINE "${INLINE}" CACHE INTERNAL "C compiler provides inlining support")
+	break()
       endif(${HAVE_INLINE_KEYWORD})
-    endif(NOT HAVE_INLINE)
-  endforeach(INLINE)
+
+    endforeach(INLINE)
+
   endif(NOT DEFINED HAVE_INLINE)
 
+  # still not defined?
   if(NOT DEFINED HAVE_INLINE)
     set(HAVE_INLINE "" CACHE INTERNAL "C compiler does not provide inlining support")
   endif(NOT DEFINED HAVE_INLINE)

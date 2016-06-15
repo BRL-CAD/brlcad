@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,6 +31,7 @@
 #include <regex.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "db.h"
 #include "raytrace.h"
 
@@ -570,7 +571,7 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	return GED_ERROR;
     }
 
-    if(db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
+    if (db5_replace_attributes(dp, &avs, gedp->ged_wdbp->dbip))
 	bu_vls_printf(gedp->ged_result_str, "build_comb %s: Failed to update attributes\n", dp->d_namep);
 
     bu_avs_free(&avs);

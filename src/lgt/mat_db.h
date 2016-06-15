@@ -1,7 +1,7 @@
 /*                        M A T _ D B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 /** @file lgt/mat_db.h
     Author:		Gary S. Moss
 */
-#ifndef INCL_MATDB
-#define INCL_MATDB
+#ifndef LGT_MAT_DB_H
+#define LGT_MAT_DB_H
 #define MAX_MAT_DB	100
 #define MAX_MAT_NM	81
 #define MF_USED		1

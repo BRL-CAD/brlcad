@@ -1,7 +1,7 @@
 /*                        S H _ F B M . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,9 +88,6 @@ struct mfuncs fbm_mfuncs[] = {
 };
 
 
-/*
- * F B M _ S E T U P
- */
 HIDDEN int
 fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 {
@@ -114,9 +111,6 @@ fbm_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-/*
- * F B M _ P R I N T
- */
 HIDDEN void
 fbm_print(register struct region *rp, void *dp)
 {
@@ -124,9 +118,6 @@ fbm_print(register struct region *rp, void *dp)
 }
 
 
-/*
- * F B M _ F R E E
- */
 HIDDEN void
 fbm_free(void *cp)
 {
@@ -134,9 +125,6 @@ fbm_free(void *cp)
 }
 
 
-/*
- * F B M _ R E N D E R
- */
 int
 fbm_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {

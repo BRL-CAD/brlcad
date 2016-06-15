@@ -1,7 +1,7 @@
 /*                       S I M U T I L S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SIMUTILS_H_
-#define SIMUTILS_H_
+#ifndef LIBGED_SIMULATE_SIMUTILS_H
+#define LIBGED_SIMULATE_SIMUTILS_H
 
 #if defined __cplusplus
 
@@ -232,7 +232,7 @@ make_rpp(struct ged *gedp, vect_t max, vect_t min, char* name);
 #endif
 
 
-#endif /* SIMUTILS_H_ */
+#endif /* LIBGED_SIMULATE_SIMUTILS_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                       R E A L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,32 +25,34 @@
 
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 char *
 bu_realpath(const char *path, char *resolved_path)
 {
-    char *dirpath;
     if (!resolved_path)
-	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char),
-		"resolved_path alloc");
-#ifdef HAVE_REALPATH
-    dirpath = realpath(path, resolved_path);
-    if (!dirpath) {
-	/* if path lookup failed, resort to simple copy */
-	bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	resolved_path = (char *) bu_calloc(MAXPATHLEN, sizeof(char), "resolved_path alloc");
+
+#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+    {
+	char *dirpath = NULL;
+	dirpath = realpath(path, resolved_path);
+	if (!dirpath) {
+	    /* if path lookup failed, resort to simple copy */
+	    bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
+	}
     }
-#else
+#elif defined(HAVE_GETFULLPATHNAME)
     /* Best solution currently available for Windows
      * See https://www.securecoding.cert.org/confluence/display/seccode/FIO02-C.+Canonicalize+path+names+originating+from+untrusted+sources */
-#  ifdef HAVE_GETFULLPATHNAME
     GetFullPathName(path, MAXPATHLEN, resolved_path, NULL);
-
-#  else
+#else
     /* Last resort - if NOTHING is defined, do a simple copy */
     bu_strlcpy(resolved_path, path, (size_t)MAXPATHLEN);
-#  endif
 #endif
+
     return resolved_path;
 }
 

@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -469,9 +470,9 @@ promote_ints(struct bu_list *head,
 		    a->seg_stp = ON_SURF;
 		    tmp = b;
 		    b = BU_LIST_PNEXT(seg, &b->l);
-		    BU_LIST_DEQUEUE(&tmp->l)
-			RT_FREE_SEG(tmp, dgcdp->ap->a_resource)
-			continue;;
+		    BU_LIST_DEQUEUE(&tmp->l);
+		    RT_FREE_SEG(tmp, dgcdp->ap->a_resource);
+		    continue;
 		}
 
 		if (ZERO(a->seg_out.hit_dist - b->seg_out.hit_dist))

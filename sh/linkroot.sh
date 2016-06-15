@@ -2,7 +2,7 @@
 #                     L I N K R O O T . S H
 # BRL-CAD
 #
-# Copyright (c) 2007-2013 United States Government as represented by
+# Copyright (c) 2007-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -78,6 +78,11 @@ EOF
     exit 1
 }
 
+same_file ( ) {
+    # same device and inode
+    [ "`stat -c '%d' "$1"`" -eq "`stat -c '%d' "$2"`" -a \
+      "`stat -c '%i' "$1"`" -eq "`stat -c '%i' "$2"`" ]
+}
 
 ###
 # make sure base root is valid
@@ -127,7 +132,7 @@ fi
 ###
 # validate that they are not one in the same
 ###
-if [ "$BASE" -ef "$STABLE" ] ; then
+if same_file "$BASE" "$STABLE"; then
     echo "ERROR: STABLE refers to the same directory as BASE.  Nothing to do."
     exit 2
 fi
@@ -185,7 +190,7 @@ eval "$cmd"
 ###
 # create stable link
 ###
-if [ "$BASE/`basename $STABLE`" -ef "$STABLE" ] ; then
+if same_file "$BASE/`basename $STABLE`" "$STABLE"; then
     cmd='ln -s "`basename $STABLE`"      "$BASE/stable"'
 else
     cmd='ln -s "$STABLE"      "$BASE/stable"'

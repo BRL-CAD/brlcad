@@ -1,7 +1,7 @@
 /*                         C O U N T . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef __COUNT_H__
-#define __COUNT_H__
+#ifndef MGED_POINTS_COUNT_H
+#define MGED_POINTS_COUNT_H
 
 
 typedef struct token {
@@ -85,7 +85,7 @@ long int get_lines();
 long int count_get_token(long int id);
 
 
-#endif  /* __COUNT_H__ */
+#endif  /* MGED_POINTS_COUNT_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                          A X E S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,8 @@ extern point_t es_keypoint;
 extern point_t e_axes_pos;
 extern point_t curr_e_axes_pos;
 
-static void ax_set_dirty_flag();
+/* local sp_hook function */
+static void ax_set_dirty_flag(const struct bu_structparse *, const char *, void *, const char *);
 
 struct _axes_state default_axes_state = {
     /* ax_rc */			1,
@@ -81,7 +82,10 @@ struct bu_structparse axes_vparse[] = {
 
 
 static void
-ax_set_dirty_flag()
+ax_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
+		  const char *UNUSED(name),
+		  void *UNUSED(base),
+		  const char *UNUSED(value))
 {
     struct dm_list *dmlp;
 

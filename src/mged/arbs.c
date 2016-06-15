@@ -1,7 +1,7 @@
 /*                          A R B S . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,8 +56,8 @@ char *p_rfin[] = {
 };
 
 
-/* F _ R F A R B () :	finds arb8 given.....
- *
+/*
+ * Finds arb8 given:
  * 1. one point
  * 2. 2 coordinates of 3 other points
  * 3. rot and fallback angles

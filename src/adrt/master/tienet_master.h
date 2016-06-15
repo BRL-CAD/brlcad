@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef _TIENET_MASTER_H
-#define _TIENET_MASTER_H
+#ifndef ADRT_MASTER_TIENET_MASTER_H
+#define ADRT_MASTER_TIENET_MASTER_H
 
 typedef struct tienet_sem_s {
     int val;

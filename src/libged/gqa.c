@@ -1,7 +1,7 @@
 /*                         G Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,9 @@
 #include <limits.h>			/* home of INT_MAX aka MAXINT */
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -448,8 +450,6 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 
 
 /**
- * P A R S E _ A R G S
- *
  * Parse through command line flags
  */
 static int
@@ -768,11 +768,11 @@ get_densities_from_file(char *name)
 	return GED_ERROR;
     }
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* a mapped file would make more sense here */
-    buf = bu_malloc(sb.st_size+1, "density buffer");
+    buf = (char *)bu_malloc(sb.st_size+1, "density buffer");
     sret = fread(buf, sb.st_size, 1, fp);
     if (sret != 1)
 	perror("fread");
@@ -817,13 +817,13 @@ get_densities_from_database(struct rt_i *rtip)
 
     RT_CHECK_BINUNIF (bu);
 
-    densities = bu_calloc(128, sizeof(struct density_entry), "density entries");
+    densities = (struct density_entry *)bu_calloc(128, sizeof(struct density_entry), "density entries");
     num_densities = 128;
 
     /* Acquire one extra byte to accommodate parse_densities_buffer()
      * (i.e. it wants to write an EOS in buf[bu->count]).
      */
-    buf = bu_malloc(bu->count+1, "density buffer");
+    buf = (char *)bu_malloc(bu->count+1, "density buffer");
     memcpy(buf, bu->u.int8, bu->count);
     ret = parse_densities_buffer(buf, bu->count, densities, _ged_current_gedp->ged_result_str, &num_densities);
     bu_free((void *)buf, "density buffer");
@@ -976,7 +976,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *segs)
     double gap_dist;
     double last_out_dist = -1.0;
     double val;
-    struct cstate *state = ap->A_STATE;
+    struct cstate *state = (struct cstate *)ap->A_STATE;
 
     if (!segs) /* unexpected */
 	return 0;
@@ -1433,9 +1433,6 @@ plane_worker (int cpu, void *ptr)
 }
 
 
-/**
- *
- */
 int
 find_cmd_line_obj(struct per_obj_data *obj_rpt, const char *name)
 {
@@ -1497,11 +1494,11 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
 	return;
     }
 
-    state->m_lenDensity = bu_calloc(num_views, sizeof(double), "densityLen");
-    state->m_len = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_volume = bu_calloc(num_views, sizeof(double), "volume");
-    state->m_weight = bu_calloc(num_views, sizeof(double), "volume");
-    state->shots = bu_calloc(num_views, sizeof(unsigned long), "volume");
+    state->m_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "densityLen");
+    state->m_len = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_volume = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->m_weight = (double *)bu_calloc(num_views, sizeof(double), "volume");
+    state->shots = (unsigned long *)bu_calloc(num_views, sizeof(unsigned long), "volume");
     state->m_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
     state->m_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
     state->m_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
@@ -1509,29 +1506,29 @@ allocate_per_region_data(struct cstate *state, int start, int ac, const char *av
     /* build data structures for the list of objects the user
      * specified on the command line
      */
-    obj_tbl = bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
+    obj_tbl = (struct per_obj_data *)bu_calloc(num_objects, sizeof(struct per_obj_data), "report tables");
     for (i = 0; i < num_objects; i++) {
 	obj_tbl[i].o_name = (char *)av[start+i];
-	obj_tbl[i].o_len = bu_calloc(num_views, sizeof(double), "o_len");
-	obj_tbl[i].o_lenDensity = bu_calloc(num_views, sizeof(double), "o_lenDensity");
-	obj_tbl[i].o_volume = bu_calloc(num_views, sizeof(double), "o_volume");
-	obj_tbl[i].o_weight = bu_calloc(num_views, sizeof(double), "o_weight");
+	obj_tbl[i].o_len = (double *)bu_calloc(num_views, sizeof(double), "o_len");
+	obj_tbl[i].o_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "o_lenDensity");
+	obj_tbl[i].o_volume = (double *)bu_calloc(num_views, sizeof(double), "o_volume");
+	obj_tbl[i].o_weight = (double *)bu_calloc(num_views, sizeof(double), "o_weight");
 	obj_tbl[i].o_lenTorque = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "lenTorque");
 	obj_tbl[i].o_moi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "moments of inertia");
 	obj_tbl[i].o_poi = (fastf_t *)bu_calloc(num_views, sizeof(vect_t), "products of inertia");
     }
 
     /* build objects for each region */
-    reg_tbl = bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
+    reg_tbl = (struct per_region_data *)bu_calloc(rtip->nregions, sizeof(struct per_region_data), "per_region_data");
 
 
     for (i = 0, BU_LIST_FOR (regp, region, &(rtip->HeadRegion)), i++) {
 	regp->reg_udata = &reg_tbl[i];
 
-	reg_tbl[i].r_lenDensity = bu_calloc(num_views, sizeof(double), "r_lenDensity");
-	reg_tbl[i].r_len = bu_calloc(num_views, sizeof(double), "r_len");
-	reg_tbl[i].r_volume = bu_calloc(num_views, sizeof(double), "len");
-	reg_tbl[i].r_weight = bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_lenDensity = (double *)bu_calloc(num_views, sizeof(double), "r_lenDensity");
+	reg_tbl[i].r_len = (double *)bu_calloc(num_views, sizeof(double), "r_len");
+	reg_tbl[i].r_volume = (double *)bu_calloc(num_views, sizeof(double), "len");
+	reg_tbl[i].r_weight = (double *)bu_calloc(num_views, sizeof(double), "len");
 
 	m = (int)strlen(regp->reg_name);
 	if (m > max_region_name_len) max_region_name_len = m;
@@ -1707,9 +1704,6 @@ options_prep(struct rt_i *rtip, vect_t span)
 }
 
 
-/**
- *
- */
 void
 view_reports(struct cstate *state)
 {

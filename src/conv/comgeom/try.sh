@@ -2,7 +2,7 @@
 #                          T R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -55,28 +55,34 @@ case $CASE in
 
 1)
 	comgeom-g $OPT -v4 m35.cg4 $DB
-	break;;
+	break
+	;;
 
 2)
 	comgeom-g $OPT m35a2.cg5 $DB
-	break;;
+	break
+	;;
 
 3)
 	comgeom-g $OPT apache.cg $DB
-	break;;
+	break
+	;;
 
 4)
 	comgeom-g $OPT avlb.cg5 $DB
-	break;;
+	break
+	;;
 
 5)
 	comgeom-g $OPT -v1 atr.cg1 $DB
-	break;;
+	break
+	;;
 
 *)
 	echo "Try /$1/ unknown"
-	exit 1;
-	break;;
+	exit 1
+	break
+	;;
 esac
 
 # Local Variables:

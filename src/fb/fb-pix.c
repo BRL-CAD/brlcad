@@ -1,7 +1,7 @@
 /*                        F B - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -133,9 +133,7 @@ Usage: fb-pix [-i -c] [-F framebuffer]\n\
 	bu_exit(1, NULL);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     scanpix = screen_width;
     scanbytes = scanpix * sizeof(RGBpixel);

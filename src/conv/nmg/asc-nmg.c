@@ -1,7 +1,7 @@
 /*                       A S C - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -43,19 +43,19 @@
 static int ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name);
 static void descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext);
 
-void usage(void){
+void
+usage(void)
+{
 	bu_log("Usage: asc-nmg [filein] [fileout] ; use - for stdin\n");
 }
 
 /*
- *	M a i n
- *
  *	Get ascii input file and output file names.
  */
 int
 main(int argc, char **argv)
 {
-    char		*afile, *bfile = "nmg.g";
+    char		*afile = "-", *bfile = "nmg.g";
     FILE		*fpin;
     struct rt_wdb	*fpout;
 
@@ -64,7 +64,7 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1){
+    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
     	usage();
 	bu_log("       Program continues running:\n");
     }
@@ -73,12 +73,9 @@ main(int argc, char **argv)
 
     /* Get ascii NMG input file name. */
     if (bu_optind >= argc || (int)(*argv[1]) == '-') {
-	afile = "-";
 	fpin = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpin), O_BINARY);
-#endif
-    bu_log("%s: will be reading from stdin\n",argv[0]);
+	bu_log("%s: will be reading from stdin\n",argv[0]);
     } else {
 	afile = argv[bu_optind];
 	if ((fpin = fopen(afile, "rb")) == NULL) {
@@ -90,14 +87,10 @@ main(int argc, char **argv)
     bu_log("%s: will be reading from file %s\n",argv[0],afile);
     }
 
-
     /* Get BRL-CAD output data base name. */
     bu_optind++;
-    if (bu_optind >= argc) {
-	bfile = "nmg.g";
-    } else {
+    if (bu_optind < argc)
 	bfile = argv[bu_optind];
-    }
     if ((fpout = wdb_fopen(bfile)) == NULL) {
 	fprintf(stderr, "%s: cannot open %s for writing\n",
 		argv[0], bfile);
@@ -112,8 +105,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	C r e a t e _ B r l c a d _ D b
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 void
@@ -124,8 +115,8 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 
     mk_id(fpout, "Ascii NMG");
 
-    rname = bu_malloc(size, "rname");	/* Region name. */
-    sname = bu_malloc(size, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(size, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(size, "sname");	/* Solid name. */
 
     snprintf(sname, size, "s.%s", reg_name);
     mk_nmg(fpout, sname,  m);		/* Make nmg object. */
@@ -137,8 +128,6 @@ create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *gr
 }
 
 /*
- *	A s c i i _ t o _ B r l c a d
- *
  *	Convert an ascii nmg description into a BRL-CAD data base.
  */
 static int
@@ -186,8 +175,6 @@ ascii_to_brlcad(FILE *fpin, struct rt_wdb *fpout, char *reg_name, char *grp_name
 }
 
 /*
- *	D e s c r _ t o _ N M G
- *
  *	Convert an ascii description of an nmg to an actual nmg.
  *	(This should be done with lex and yacc.)
  */
@@ -296,7 +283,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		if (token[1] == '\0')
 		    bu_exit(EXIT_FAILURE, "descr_to_nmg: vertices must be numbered.\n");
 		vert_num = atoi(token+1);
-		if(vert_num < 0 || vert_num >= MAXV) {
+		if (vert_num < 0 || vert_num >= MAXV) {
 		    bu_log("Vertex number out of bounds: %d\nAborting\n", vert_num);
 		    return;
 		}

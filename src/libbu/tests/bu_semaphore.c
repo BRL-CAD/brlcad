@@ -1,7 +1,7 @@
 /*                  B U _ S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ _exit_alarm_handler(UINT UNUSED(uTimerID), UINT UNUSED(uMsg), DWORD_PTR UNUSED(d
 int
 set_exit_alarm(unsigned seconds)
 {
-    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, NULL, TIME_ONESHOT);
+    return !!timeSetEvent(seconds*1000, 100, (LPTIMECALLBACK)_exit_alarm_handler, (DWORD_PTR)NULL, TIME_ONESHOT);
 }
 
 
@@ -88,7 +88,7 @@ repeat_test(unsigned long reps)
 
 
 static int
-single_thread_test()
+single_thread_test(void)
 {
     if (!set_exit_alarm(1)) {
 	bu_log("failed to start alarm; skipping single-thread bu_semaphore test");
@@ -109,7 +109,7 @@ struct increment_thread_args { int *parallel, *running; unsigned long reps, *cou
 static void
 increment_thread(int ncpu, void *pargs)
 {
-    struct increment_thread_args *args = pargs;
+    struct increment_thread_args *args = (struct increment_thread_args *)pargs;
     unsigned long i;
 
     (void)ncpu;

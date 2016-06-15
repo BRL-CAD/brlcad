@@ -1,7 +1,7 @@
 /*                       R T R E G I S . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,8 +66,6 @@ int verbose;		/* to be used for debugging */
 
 
 /**
- * P R I N T _ I N F O
- *
  * This routine takes as its input parameter a registration matrix.
  * Its sole task is to print this matrix out in a form usable by
  * plrot.  It also prints out the parameters for the new space command
@@ -89,8 +87,6 @@ print_info(fastf_t *mat)
 
 
 /**
- * M A T _ B U I L D
- *
  * This routine takes pointers to two matrices corresponding to the two
  * files to be registered and a registration matrix.  It builds the
  * registration matrix.  It returns success or failure.
@@ -144,8 +140,6 @@ mat_build(fastf_t *mat1, fastf_t *mat2, fastf_t *regismat)
 
 
 /*
- *
- * M A I N
  *
  * Main exists to coordinate the actions of the parts of this program.
  * It also processes its own arguments (argc and argv).

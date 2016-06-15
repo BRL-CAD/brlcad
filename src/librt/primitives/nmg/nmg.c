@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,6 +34,7 @@
 #include <string.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -61,9 +62,8 @@ struct tmp_v {
     struct vertex *v;
 };
 
+
 /**
- * R T _ N M G _ B B O X
- *
  * Calculate the bounding box for an N-Manifold Geometry
  */
 int
@@ -80,8 +80,6 @@ rt_nmg_bbox(struct rt_db_internal *ip, point_t *min, point_t * max, const struct
 
 
 /**
- * R T _ N M G _ P R E P
- *
  * Given a pointer to a ged database record, and a transformation
  * matrix, determine if this is a valid nmg, and if so, precompute
  * various terms of the formula.
@@ -124,9 +122,6 @@ rt_nmg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ N M G _ P R I N T
- */
 void
 rt_nmg_print(const struct soltab *stp)
 {
@@ -139,8 +134,6 @@ rt_nmg_print(const struct soltab *stp)
 
 
 /**
- * R T _ N M G _ S H O T
- *
  * Intersect a ray with a nmg.  If an intersection occurs, a struct
  * seg will be acquired and filled in.
  *
@@ -151,9 +144,9 @@ rt_nmg_print(const struct soltab *stp)
 int
 rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 
-    /* info about the ray */
+/* info about the ray */
 
-    /* intersection w/ ray */
+/* intersection w/ ray */
 {
     struct ray_data rd;
     int status;
@@ -230,8 +223,6 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
 
 
 /**
- * R T _ N M G _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -249,8 +240,6 @@ rt_nmg_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ N M G _ C U R V E
- *
  * Return the curvature of the nmg.
  */
 void
@@ -270,8 +259,6 @@ rt_nmg_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ N M G _ U V
- *
  * For a hit on the surface of an nmg, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  *
@@ -288,9 +275,6 @@ rt_nmg_uv(struct application *ap, struct soltab *stp, struct hit *hitp, struct u
 }
 
 
-/**
- * R T _ N M G _ F R E E
- */
 void
 rt_nmg_free(struct soltab *stp)
 {
@@ -303,19 +287,6 @@ rt_nmg_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ N M G _ C L A S S
- */
-int
-rt_nmg_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ N M G _ P L O T
- */
 int
 rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -333,10 +304,8 @@ rt_nmg_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ N M G _ T E S S
- *
  * XXX This routine "destroys" the internal nmg solid.  This means
- * that once you tesselate an NMG solid, your in-memory copy becomes
+ * that once you tessellate an NMG solid, your in-memory copy becomes
  * invalid, and you can't do anything else with it until you get a new
  * copy from disk.
  *
@@ -381,7 +350,7 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
     /* XXX The next two lines "destroy" the internal nmg solid.  This
-     * means that once you tesselate an NMG solid, your in-memory copy
+     * means that once you tessellate an NMG solid, your in-memory copy
      * becomes invalid, and you can't do anything else with it until
      * you get a new copy from disk.
      */
@@ -393,11 +362,11 @@ rt_nmg_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 
 #define NMG_CK_DISKMAGIC(_cp, _magic)	\
-	if (ntohl(*(uint32_t*)_cp) != _magic) { \
-		bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
-			ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
-		bu_bomb("bad magic\n"); \
-	}
+    if (ntohl(*(uint32_t*)_cp) != _magic) { \
+	bu_log("NMG_CK_DISKMAGIC: magic mis-match, got x%x, s/b x%x, file %s, line %d\n", \
+	       ntohl(*(uint32_t*)_cp), _magic, __FILE__, __LINE__); \
+	bu_bomb("bad magic\n"); \
+    }
 
 
 /* ----------------------------------------------------------------------
@@ -735,8 +704,6 @@ const char rt_nmg_kind_names[NMG_N_KINDS+2][18] = {
 
 
 /**
- * R T _ N M G _ M A G I C _ T O _ K I N D
- *
  * Given the magic number for an NMG structure, return the
  * manifest constant which identifies that structure kind.
  */
@@ -811,8 +778,6 @@ static unsigned int rt_nmg_cur_fastf_subscript;
 
 
 /**
- * R T _ N M G _ E X P O R T _ F A S T F
- *
  * Format a variable sized array of fastf_t's into external format
  * (IEEE big endian double precision) with a 2 element header.
  *
@@ -842,7 +807,7 @@ int
 rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 
 
-    /* If zero, means literal array of values */
+/* If zero, means literal array of values */
 
 {
     int i;
@@ -890,9 +855,6 @@ rt_nmg_export4_fastf(const fastf_t *fp, int count, int pt_type, double scale)
 }
 
 
-/**
- * R T _ N M G _ I M P O R T _ F A S T F
- */
 fastf_t *
 rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, long int subscript, const matp_t mat, int len, int pt_type)
 {
@@ -976,8 +938,6 @@ rt_nmg_import4_fastf(const unsigned char *base, struct nmg_exp_counts *ecnt, lon
 
 
 /**
- * R E I N D E X
- *
  * Depends on ecnt[0].byte_offset having been set to maxindex.
  *
  * There are some special values for the disk index returned here:
@@ -1004,12 +964,12 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
 	} else {
 	    ret = ecnt[idx].new_subscript;
 	    if (ecnt[idx].kind < 0) {
-		bu_log("reindex(p=x%x), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
+		bu_log("reindex(p=%p), p->index=%ld, ret=%ld, kind=%d\n", p, idx, ret, ecnt[idx].kind);
 		bu_bomb("reindex() This index not found in ecnt[]\n");
 	    }
 	    /* ret == 0 on suppressed loop_g ptrs, etc. */
 	    if (ret < 0 || ret > ecnt[0].byte_offset) {
-		bu_log("reindex(p=x%x) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
+		bu_log("reindex(p=%p) %s, p->index=%ld, ret=%ld, maxindex=%ld\n",
 		       p,
 		       bu_identify_magic(*(uint32_t *)p),
 		       idx, ret, ecnt[0].byte_offset);
@@ -1033,16 +993,14 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
 
 
 /**
- * R T _ N M G _ E D I S K
- *
  * Export a given structure from memory to disk format
  *
  * Scale geometry by 'local2mm'
  */
 void
 rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double local2mm)
-    /* base of disk array */
-    /* ptr to in-memory structure */
+/* base of disk array */
+/* ptr to in-memory structure */
 
 
 {
@@ -1412,11 +1370,11 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 #define INDEXL_HD(oo, ii, elem, hd) { \
 	int sub; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) \
-		(ii)->elem.forw = &(hd); \
-	else	(ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
+	    (ii)->elem.forw = &(hd); \
+	else (ii)->elem.forw = (struct bu_list *)ptrs[sub]; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) \
-		(ii)->elem.back = &(hd); \
-	else	(ii)->elem.back = (struct bu_list *)ptrs[sub]; }
+	    (ii)->elem.back = &(hd); \
+	else (ii)->elem.back = (struct bu_list *)ptrs[sub]; }
 
 /* For use with the edgeuse l2 / edge_g eu2_hd secondary list */
 /* The subscripts will point to the edgeuse, not the edgeuse's l2 rt_list */
@@ -1424,35 +1382,33 @@ rt_nmg_edisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, double lo
 	int sub; \
 	struct edgeuse *eu2; \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.forw))) < 0) { \
-		(ii)->elem.forw = &(hd); \
+	    (ii)->elem.forw = &(hd); \
 	} else { \
-		eu2 = (struct edgeuse *)ptrs[sub]; \
-		NMG_CK_EDGEUSE(eu2); \
-		(ii)->elem.forw = &eu2->l2; \
+	    eu2 = (struct edgeuse *)ptrs[sub]; \
+	    NMG_CK_EDGEUSE(eu2); \
+	    (ii)->elem.forw = &eu2->l2; \
 	} \
 	if ((sub = ntohl(*(uint32_t*)((oo)->elem.back))) < 0) { \
-		(ii)->elem.back = &(hd); \
+	    (ii)->elem.back = &(hd); \
 	} else { \
-		eu2 = (struct edgeuse *)ptrs[sub]; \
-		NMG_CK_EDGEUSE(eu2); \
-		(ii)->elem.back = &eu2->l2; \
+	    eu2 = (struct edgeuse *)ptrs[sub]; \
+	    NMG_CK_EDGEUSE(eu2); \
+	    (ii)->elem.back = &eu2->l2; \
 	} }
 
 
 /**
- * R T _ N M G _ I D I S K
- *
  * Import a given structure from disk to memory format.
  *
  * Transform geometry by given matrix.
  */
 int
 rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t **ptrs, const fastf_t *mat, const unsigned char *basep)
-    /* ptr to in-memory structure */
-    /* base of disk array */
+/* ptr to in-memory structure */
+/* base of disk array */
 
 
-    /* base of whole import record */
+/* base of whole import record */
 {
     int iindex;		/* index in ip */
 
@@ -1871,8 +1827,6 @@ rt_nmg_idisk(void *op, void *ip, struct nmg_exp_counts *ecnt, int idx, uint32_t 
 
 
 /**
- * R T _ N M G _ I A L L O C
- *
  * Allocate storage for all the in-memory NMG structures, in
  * preparation for the importation operation, using the GET_xxx()
  * macros, so that m->maxindex, etc., are all appropriately handled.
@@ -2067,8 +2021,6 @@ rt_nmg_ialloc(uint32_t **ptrs, struct nmg_exp_counts *ecnt, int *kind_counts)
 
 
 /**
- * R T _ N M G _ I 2 A L L O C
- *
  * Find the locations of all the variable-sized fastf_t arrays in the
  * input record.  Record that position as a byte offset from the very
  * front of the input record in ecnt[], indexed by subscript number.
@@ -2115,8 +2067,6 @@ rt_nmg_i2alloc(struct nmg_exp_counts *ecnt, unsigned char *cp, int *kind_counts)
 
 
 /**
- * R T _ N M G _ I M P O R T _ I N T E R N A L
- *
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  *
@@ -2171,7 +2121,7 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
     ecnt = (struct nmg_exp_counts *)bu_calloc(maxindex+3,
 					      sizeof(struct nmg_exp_counts), "ecnt[]");
     real_ptrs = (uint32_t **)bu_calloc(maxindex+3,
-					    sizeof(uint32_t *), "ptrs[]");
+				       sizeof(uint32_t *), "ptrs[]");
     /* So that indexing [-1] gives an appropriately bogus magic # */
     ptrs = real_ptrs+1;
     ptrs[-1] = &bad_magic;		/* [-1] gives bad magic */
@@ -2225,8 +2175,6 @@ rt_nmg_import4_internal(struct rt_db_internal *ip, const struct bu_external *ep,
 
 
 /**
- * R T _ N M G _ E X P O R T _ I N T E R N A L
- *
  * The name is added by the caller, in the usual place.
  *
  * When the "compact" flag is set, bounding boxes from (at present)
@@ -2407,7 +2355,7 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
     additional_grans = (tot_size + sizeof(union record)-1) / sizeof(union record);
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = (1 + additional_grans) * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external");
     rp = (union record *)ep->ext_buf;
     rp->nmg.N_id = DBID_NMG;
     rp->nmg.N_version = DISK_MODEL_VERSION;
@@ -2443,8 +2391,6 @@ rt_nmg_export4_internal(struct bu_external *ep, const struct rt_db_internal *ip,
 
 
 /**
- * R T _ N M G _ I M P O R T
- *
  * Import an NMG from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -2489,9 +2435,6 @@ rt_nmg_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 }
 
 
-/**
- * R T _ N M G _ I M P O R T 5
- */
 int
 rt_nmg_import5(struct rt_db_internal *ip,
 	       struct bu_external *ep,
@@ -2514,7 +2457,7 @@ rt_nmg_import5(struct rt_db_internal *ip,
     if (dbip) RT_CK_DBI(dbip);
 
     BU_CK_EXTERNAL(ep);
-    dp = (genptr_t)ep->ext_buf;
+    dp = (unsigned char *)ep->ext_buf;
 
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -2587,8 +2530,6 @@ rt_nmg_import5(struct rt_db_internal *ip,
 
 
 /**
- * R T _ N M G _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -2611,9 +2552,6 @@ rt_nmg_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 }
 
 
-/**
- * R T _ N M G _ E X P O R T 5
- */
 int
 rt_nmg_export5(
     struct bu_external *ep,
@@ -2757,7 +2695,7 @@ rt_nmg_export5(
     tot_size += SIZEOF_NETWORK_LONG*(NMG_N_KINDS + 1); /* one for magic */
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = tot_size;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "nmg external5");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "nmg external5");
     dp = ep->ext_buf;
     *(uint32_t *)dp = htonl(DISK_MODEL_VERSION);
     dp+=SIZEOF_NETWORK_LONG;
@@ -2787,8 +2725,6 @@ rt_nmg_export5(
 
 
 /**
- * R T _ N M G _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -2810,8 +2746,6 @@ rt_nmg_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ N M G _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -3104,15 +3038,203 @@ rt_nmg_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 }
 
 
-/**
- * R T _ N M G _ P A R A M S
- */
 int
 rt_nmg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/* contains information used to analyze a polygonal face */
+struct poly_face
+{
+    char label[5];
+    size_t npts;
+    point_t *pts;
+    plane_t plane_eqn;
+    fastf_t area;
+    fastf_t vol_pyramid;
+    point_t cent_pyramid;
+    point_t cent;
+};
+
+
+static void
+rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
+{
+    struct bu_ptbl nmg_faces;
+    unsigned int num_faces, i;
+    size_t *npts;
+    point_t **tmp_pts;
+    plane_t *eqs;
+    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    num_faces = BU_PTBL_LEN(&nmg_faces);
+    tmp_pts = (point_t **)bu_calloc(num_faces, sizeof(point_t *), "rt_nmg_faces_area: tmp_pts");
+    npts = (size_t *)bu_calloc(num_faces, sizeof(size_t), "rt_nmg_faces_area: npts");
+    eqs = (plane_t *)bu_calloc(num_faces, sizeof(plane_t), "rt_nmg_faces_area: eqs");
+
+    for (i = 0; i < num_faces; i++) {
+	struct face *f;
+	f = (struct face *)BU_PTBL_GET(&nmg_faces, i);
+	HMOVE(faces[i].plane_eqn, f->g.plane_p->N);
+	VUNITIZE(faces[i].plane_eqn);
+	tmp_pts[i] = faces[i].pts;
+	HMOVE(eqs[i], faces[i].plane_eqn);
+    }
+    bn_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
+    for (i = 0; i < num_faces; i++) {
+	faces[i].npts = npts[i];
+	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+    }
+    bu_free((char *)tmp_pts, "rt_nmg_faces_area: tmp_pts");
+    bu_free((char *)npts, "rt_nmg_faces_area: npts");
+    bu_free((char *)eqs, "rt_nmg_faces_area: eqs");
+}
+
+
+void
+rt_nmg_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct model *m;
+    struct nmgregion* r;
+
+    /*Iterate through all regions and shells */
+    m = (struct model *)ip->idb_ptr;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	struct shell* s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    struct bu_ptbl nmg_faces;
+	    unsigned int num_faces, i;
+	    struct poly_face *faces;
+
+	    /*get faces of this shell*/
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+	    num_faces = BU_PTBL_LEN(&nmg_faces);
+	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_surf_area: faces");
+
+	    for (i = 0; i < num_faces; i++) {
+		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_surf_area: pts");
+	    }
+	    rt_nmg_faces_area(faces, s);
+	    for (i = 0; i < num_faces; i++) {
+		*area += faces[i].area;
+	    }
+	    for (i = 0; i < num_faces; i++) {
+		bu_free((char *)faces[i].pts, "rt_nmg_surf_area: pts");
+	    }
+	    bu_free((char *)faces, "rt_nmg_surf_area: faces");
+	}
+    }
+}
+
+
+void
+rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct model *m;
+    struct nmgregion* r;
+    struct shell* s;
+    struct poly_face *faces;
+    struct bu_ptbl nmg_faces;
+    fastf_t volume = 0.0;
+    point_t arbit_point = VINIT_ZERO;
+    size_t num_faces, i;
+
+    *cent[0] = 0.0;
+    *cent[1] = 0.0;
+    *cent[2] = 0.0;
+    m = (struct model *)ip->idb_ptr;
+    r = BU_LIST_FIRST(nmgregion, &m->r_hd);
+    s = BU_LIST_FIRST(shell, &r->s_hd);
+
+    /*get faces*/
+    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+    num_faces = BU_PTBL_LEN(&nmg_faces);
+    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_centroid: faces");
+
+    for (i = 0; i < num_faces; i++) {
+	/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+	faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_centroid: pts");
+    }
+    rt_nmg_faces_area(faces, s);
+    for (i = 0; i < num_faces; i++) {
+	bn_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
+	VADD2(arbit_point, arbit_point, faces[i].cent);
+    }
+    VSCALE(arbit_point, arbit_point, (1/num_faces));
+
+    for (i = 0; i < num_faces; i++) {
+	vect_t tmp = VINIT_ZERO;
+
+	/* calculate volume */
+	volume = 0.0;
+	VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+	faces[i].vol_pyramid = (VDOT(faces[i].pts[0], tmp)/3);
+	volume += faces[i].vol_pyramid;
+	/*Vector from arbit_point to centroid of face, results in h of pyramid */
+	VSUB2(faces[i].cent_pyramid, faces[i].cent, arbit_point);
+	/*centroid of pyramid is 1/4 up from the bottom */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, 0.75f);
+	/* now cent_pyramid is back in the polyhedron */
+	VADD2(faces[i].cent_pyramid, faces[i].cent_pyramid, arbit_point);
+	/* weight centroid of pyramid by pyramid's volume */
+	VSCALE(faces[i].cent_pyramid, faces[i].cent_pyramid, faces[i].vol_pyramid);
+	/* add cent_pyramid to the centroid of the polyhedron */
+	VADD2(*cent, *cent, faces[i].cent_pyramid);
+    }
+    /* reverse the weighting */
+    VSCALE(*cent, *cent, (1/volume));
+    for (i = 0; i < num_faces; i++) {
+	bu_free((char *)faces[i].pts, "rt_nmg_centroid: pts");
+    }
+    bu_free((char *)faces, "rt_nmg_centroid: faces");
+}
+
+
+void
+rt_nmg_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct model *m;
+    struct nmgregion* r;
+
+    /*Iterate through all regions and shells */
+    m = (struct model *)ip->idb_ptr;
+    for (BU_LIST_FOR(r, nmgregion, &m->r_hd)) {
+	struct shell* s;
+
+	for (BU_LIST_FOR(s, shell, &r->s_hd)) {
+	    struct bu_ptbl nmg_faces;
+	    unsigned int num_faces, i;
+	    struct poly_face *faces;
+
+	    /*get faces of this shell*/
+	    nmg_face_tabulate(&nmg_faces, &s->l.magic);
+	    num_faces = BU_PTBL_LEN(&nmg_faces);
+	    faces = (struct poly_face *)bu_calloc(num_faces, sizeof(struct poly_face), "rt_nmg_volume: faces");
+
+	    for (i = 0; i < num_faces; i++) {
+		/* allocate array of pt structs, max number of verts per faces = (# of faces) - 1 */
+		faces[i].pts = (point_t *)bu_calloc(num_faces - 1, sizeof(point_t), "rt_nmg_volume: pts");
+	    }
+	    rt_nmg_faces_area(faces, s);
+	    for (i = 0; i < num_faces; i++) {
+		vect_t tmp = VINIT_ZERO;
+
+		/* calculate volume of pyramid*/
+		VSCALE(tmp, faces[i].plane_eqn, faces[i].area);
+		*volume = (VDOT(faces[i].pts[0], tmp)/3);
+	    }
+	    for (i = 0; i < num_faces; i++) {
+		bu_free((char *)faces[i].pts, "rt_nmg_volume: pts");
+	    }
+	    bu_free((char *)faces, "rt_nmg_volume: faces");
+	}
+    }
 }
 
 

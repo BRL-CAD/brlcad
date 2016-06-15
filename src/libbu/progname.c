@@ -1,7 +1,7 @@
 /*                      P R O G N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,11 @@
 #include <errno.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 /* internal storage for bu_getprogname/bu_setprogname */
 static char bu_progname[MAXPATHLEN] = {0};
@@ -72,6 +76,10 @@ bu_argv0_full_path(void)
     }
 
     /* running from relative dir */
+
+    /* FIXME: this is technically wrong.  if the current working
+     * directory is changed, we'll get the wrong path for argv0.
+     */
     bu_getcwd(buffer, MAXPATHLEN);
     snprintf(buffer+strlen(buffer), MAXPATHLEN-strlen(buffer), "%c%s", BU_DIR_SEPARATOR, argv0);
     if (bu_file_exists(buffer, NULL)) {
@@ -112,7 +120,8 @@ bu_getprogname(void)
 #endif
 
     /* want just the basename from paths, otherwise default result */
-    tmp_basename = bu_basename(name);
+    tmp_basename = (char *)bu_calloc(strlen(name), sizeof(char), "bu_getprogname tmp_basename");
+    bu_basename(tmp_basename, name);
     if (BU_STR_EQUAL(tmp_basename, ".") || BU_STR_EQUAL(tmp_basename, "/")) {
 	name = DEFAULT_PROGNAME;
     } else {

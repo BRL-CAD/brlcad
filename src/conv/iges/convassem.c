@@ -1,7 +1,7 @@
 /*                     C O N V A S S E M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -164,7 +164,7 @@ Convassem()
 #endif
 	    }
 
-	    wmem = mk_addmember(ptr->name, &head.l, NULL, operator[Union]);
+	    wmem = mk_addmember(ptr->name, &head.l, NULL, operators[Union]);
 	    flt = (fastf_t *)ptr->rot;
 	    for (j = 0; j < 16; j++) {
 		wmem->wm_mat[j] = (*flt);

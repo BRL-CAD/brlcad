@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -52,6 +52,7 @@ off_t buf_start = -1000;	/* First line in buffer */
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
+static char hyphen[] = "-";
 
 int rflag = 0;
 int inx = 512;
@@ -334,7 +335,7 @@ init_buffer(int len)
 	buflines = iny;
 
     buf_start = (-buflines);
-    buffer = bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
 }
 
 
@@ -391,7 +392,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	buffp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -413,7 +414,7 @@ main(int argc, char **argv)
 {
     int i;
 
-    if ( argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)) )
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
     if (!get_args(argc, argv) || isatty(fileno(stdout)))
 	bu_exit(1, "%s", usage);
@@ -428,7 +429,7 @@ main(int argc, char **argv)
     if (inx < outx) i = outx * 3;
     else i = inx * 3;
 
-    outbuf = bu_malloc(i, "outbuf");
+    outbuf = (unsigned char *)bu_malloc(i, "outbuf");
 
     /* Here we go */
     scale(stdout, inx, iny, outx, outy);

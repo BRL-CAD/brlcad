@@ -8,6 +8,8 @@
  * Edit include/makefile.src and the configuration file instead.
  */
 
+#include "common.h"
+
 #define USE_STDARG 1
 #define USE_PROTOTYPES 1
 
@@ -59,7 +61,7 @@ typedef	void *void_star;
 typedef char *void_star;
 #endif
 
-#ifdef USE_STDLIB_H
+#if defined(USE_STDLIB_H) || defined(HAVE_STDLIB_H)
 #include <stdlib.h>
 #else
 
@@ -93,7 +95,7 @@ extern char *getenv();
 
 #endif /* USE_STDLIB_H */
 
-#ifdef USE_STRING_H
+#if defined(USE_STRING_H) || defined(HAVE_STRING_H)
     /* SYS V string routines. */
 #   include <string.h>
 #   define index strchr
@@ -125,7 +127,5 @@ extern char *getenv();
 /* include common.h so that HAVE_ symbols may be used to work around
  * compilation support issues.  e.g. sys_errlist on solaris.
  */
-
-#include "common.h"
 
 /** @} */

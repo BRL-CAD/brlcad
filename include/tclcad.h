@@ -1,7 +1,7 @@
 /*                        T C L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,11 @@
  *
  */
 
-#ifndef __TCLCAD_H__
-#define __TCLCAD_H__
+#ifndef TCLCAD_H
+#define TCLCAD_H
 
 #include "common.h"
+#include "bu/cmd.h"
 #include "tcl.h"
 #include "ged.h"
 
@@ -79,6 +80,7 @@ __BEGIN_DECLS
 #define TCLCAD_MOVE_BOT_POINTS_MODE 24
 #define TCLCAD_DATA_MOVE_OBJECT_MODE 25
 #define TCLCAD_DATA_MOVE_POINT_MODE 26
+#define TCLCAD_DATA_SCALE_MODE 27
 
 #define TCLCAD_OBJ_FB_MODE_OFF 0
 #define TCLCAD_OBJ_FB_MODE_UNDERLAY 1
@@ -165,11 +167,11 @@ TCLCAD_EXPORT extern int cho_open_tcl(ClientData clientData, Tcl_Interp *interp,
  * @return
  * void
  */
-BU_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
+TCLCAD_EXPORT extern void tclcad_register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds);
 
 __END_DECLS
 
-#endif /* __TCLCAD_H__ */
+#endif /* TCLCAD_H */
 /** @} */
 /*
  * Local Variables:

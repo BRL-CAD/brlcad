@@ -1,7 +1,7 @@
 /*                       T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,8 +46,11 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "vmath.h"
-#include "bu.h"
 #include "bn.h"
 
 void
@@ -492,7 +495,6 @@ bn_tabdata_mul_area2(const struct bn_tabdata *in1, const struct bn_tabdata *in2)
 }
 
 /*
- *			B N _ T A B L E _ F I N D _ X
  *@brief
  *  Return the index in the table's x[] array of the interval which
  *  contains 'xval'.
@@ -676,7 +678,7 @@ bn_tabdata_resample_avg(const struct bn_table *newtable, const struct bn_tabdata
 	} else {
 	    /*
 	     *  Complex case: find average value.
-	     *  Interpolate both end, and consider all
+	     *  Interpolate both ends, and consider all
 	     *  intermediate old spans.
 	     *  There are three parts to sum:
 	     *	Partial interval from newx[i] to j+1

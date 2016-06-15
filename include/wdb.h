@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,10 +30,14 @@
  *
  */
 
-#ifndef __WDB_H__
-#define __WDB_H__
+#ifndef WDB_H
+#define WDB_H
 
-#include "bu.h"
+#include "common.h"
+
+#include "bu/magic.h"
+#include "bu/bitv.h"
+#include "bu/list.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "rtgeom.h"
@@ -69,32 +73,6 @@ struct wmember {
 #define WMEMBER_NULL	((struct wmember *)0)
 #define WDB_CK_WMEMBER(_p)	BU_CKMAG(_p, WMEMBER_MAGIC, "wmember" );
 
-/*
- * Definitions for pipe (wire) segments
- * FIXME: move to rtgeom.h?
- */
-
-struct wdb_pipept {
-    struct bu_list	l;		/**< @brief  doubly linked list support */
-    point_t		pp_coord;	/**< @brief  "control" point for pipe solid */
-    fastf_t		pp_id;		/**< @brief  inner diam, <=0 if solid (wire) */
-    fastf_t		pp_od;		/**< @brief  pipe outer diam */
-    fastf_t		pp_bendradius;	/**< @brief  bend radius to use for a bend at this point */
-};
-
-#define WDB_PIPESEG_NULL	((struct wdb_pipeseg *)0)
-
-struct wdb_metaballpt {
-    struct bu_list	l;
-    int		type;
-    fastf_t		fldstr;		/**< @brief  field strength */
-    fastf_t		sweat;		/**< @brief  beta value used for metaball and blob evaluation */
-    point_t		coord;
-    point_t		coord2;
-};
-#define WDB_METABALLPT_TYPE_POINT 0x0
-#define WDB_METABALLPT_TYPE_LINE 0x1
-#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
 
 /**
  *
@@ -370,7 +348,7 @@ WDB_EXPORT int mk_ehy(
 
 /**
  *
- * Make a hyperbolid at the given center point with a vertex, height
+ * Make a hyperboloid at the given center point with a vertex, height
  * vector, A vector, magnitude of the B vector, and neck to base
  * ratio.
  *
@@ -410,7 +388,14 @@ WDB_EXPORT int mk_metaball(
     const fastf_t threshold,
     const fastf_t *verts[5] );	/* X, Y, Z, fldstr, goo/Beta */
 
-WDB_EXPORT extern int mk_arbn(struct rt_wdb *fp, const char *name, size_t neqn, plane_t eqn[]);
+/**
+ * Caller is responsible for freeing eqn[]
+ *
+ * Returns:
+ * <0 ERROR
+ * 0 OK
+ */
+WDB_EXPORT extern int mk_arbn(struct rt_wdb *fp, const char *name, size_t neqn, const plane_t *eqn);
 
 WDB_EXPORT extern int mk_ars(struct rt_wdb *fp, const char *name, size_t ncurves, size_t pts_per_curve, fastf_t *curves[]);
 
@@ -772,9 +757,6 @@ WDB_EXPORT extern int mk_ebm(struct rt_wdb *fp, const char *name, const char *fi
 WDB_EXPORT extern int mk_hrt(struct rt_wdb *fp, const char *name, const point_t center,
 			     const vect_t x, const vect_t y, const vect_t z, const fastf_t dist);
 
-/**
- * M K _ V O L
- */
 WDB_EXPORT extern int mk_vol(struct rt_wdb *fp, const char *name, const char *file,
 			     size_t xdim, size_t ydim, size_t zdim, size_t lo, size_t hi,
 			     const vect_t cellsize, const matp_t mat);
@@ -950,9 +932,6 @@ WDB_EXPORT extern int mk_version;		/**< @brief  Which version database to write 
  *  Internal routines
  */
 
-/**
- * M K _ F R E E M E M B E R S
- */
 WDB_EXPORT void mk_freemembers( struct bu_list *headp );
 
 #define mk_export_fwrite(wdbp, name, gp, id)	wdb_export(wdbp, name, gp, id, mk_conv2mm)
@@ -976,11 +955,9 @@ WDB_EXPORT void mk_freemembers( struct bu_list *headp );
  * modified as follows:
  *
  *        before                          after
- *      |                       -
- *      |                          / \
- *      |                         /   \
- *  original combination tree                /     \
- *                    original combination tree   make_hole_X
+ *          |                              /\
+ *          u                             u  -
+ *   orig_comb_tree          orig_comb_tree  make_hole_X
  *
  * The modified combination is written to the struct rt_wdb. Note that
  * to do dynamic geometry a "wdb_dbopen" would normally be called on
@@ -1002,7 +979,6 @@ WDB_EXPORT extern int make_hole(struct rt_wdb *wdbp,
 
 
 /**
- *
  * This routine provides a quick approach to simply adding a hole to
  * existing prepped geometry.  The geometry must already be prepped
  * prior to calling this routine. After calling this routine, the
@@ -1032,7 +1008,7 @@ WDB_EXPORT extern int make_hole_in_prepped_regions(struct rt_wdb *wdbp,
 
 __END_DECLS
 
-#endif /* __WDB_H__ */
+#endif /* WDB_H */
 
 /** @} */
 

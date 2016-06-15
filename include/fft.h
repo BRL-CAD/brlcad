@@ -1,7 +1,7 @@
 /*                           F F T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,18 +21,21 @@
  *
  */
 
+#ifndef FFT_H
+#define FFT_H
+
 #include "common.h"
 
 #include <math.h>
 
+__BEGIN_DECLS
+
+/* NOTE: intentionally not using vmath.h to avoid dependency */
 #ifndef M_PI
 #  define M_PI 3.14159265358979323846264338328
 #endif
 #ifndef M_SQRT1_2
 #  define M_SQRT1_2 0.70710678118654752440084436210
-#endif
-#ifndef M_SQRT2
-#  define M_SQRT2 1.41421356237309504880168872421
 #endif
 
 #ifndef FFT_EXPORT
@@ -65,6 +68,10 @@ FFT_EXPORT extern void cdiv(COMPLEX *result, COMPLEX *val1, COMPLEX *val2);
  * CMake is live we'll just add the ones used by our current code */
 FFT_EXPORT extern void rfft256(register double X[]);
 FFT_EXPORT extern void irfft256(register double X[]);
+
+__END_DECLS
+
+#endif /* FFT_H */
 
 /*
  * Local Variables:

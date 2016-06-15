@@ -2,7 +2,7 @@
 #                    E N U M E R A T E . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2013 United States Government as represented by
+# Copyright (c) 2006-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -45,8 +45,6 @@
 #
 ###
 
-SELF="$0"
-ARGS="$*"
 BASE="`dirname $0`/.."
 
 # obtain the version of BRL-CAD from include/conf
@@ -74,17 +72,18 @@ sum ( ) {
 
 
 # print the summary
-printf -- "*****************************************\n"
-printf    "** BRL-CAD PROJECT ENUMERATION SUMMARY **\n"
-printf -- "*****************************************\n"
-printf "BRL-CAD Version: $BRLCAD_VERSION\n"
-printf "Enumeration Run: `date`\n"
-printf "\n"
-printf "Included below are various project enumeration statistics for BRL-CAD.\n"
-printf "The format/output of this script is subject to change without notice.\n"
-printf "Please contact devs@brlcad.org if there are any questions or comments.\n"
-printf "\n"
-printf "Now processing, please wait...\n\n"
+echo "*****************************************"
+echo "** BRL-CAD PROJECT ENUMERATION SUMMARY **"
+echo "*****************************************"
+echo "BRL-CAD Version: $BRLCAD_VERSION"
+echo "Enumeration Run: `date`"
+echo ""
+echo "Included below are various project enumeration statistics for BRL-CAD."
+echo "The format/output of this script is subject to change without notice."
+echo "Please contact devs@brlcad.org if there are any questions or comments."
+echo ""
+echo "Now processing, please wait..."
+echo ""
 
 
 # count number of installed libraries
@@ -116,19 +115,19 @@ apps_count="`echo $installed_apps_count $uninstalled_apps_count + p | dc`"
 # count installed 3rd party libraries
 preotherlibs="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
 premisclibs="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*LIBRARIES\" | grep -v 'noinst' | sed 's/.*=//g'`"
-otherlibs=`for app in $preotherlibs $premislibs ; do echo $app ; done | sort | uniq`
+otherlibs=`for app in $preotherlibs $premisclibs ; do echo $app ; done | sort | uniq`
 otherlibs_count="`echo \"$otherlibs\" | wc -l`"
 
 # count 3rd party installed applications
 preotherapps="`find \"$BASE\" -type f -name Makefile.am | grep '/other/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
 premiscapps="`find \"$BASE\" -type f -name Makefile.am | grep '/misc/' | xargs cat | perl -pi -e 's/\\\\\n//g' | grep \"^[a-zA-Z_]*PROGRAMS\" | grep '^bin' | sed 's/.*=//g'`"
-otherapps=`for app in $preotherapps $premisapps ; do echo $app ; done | sort | uniq`
+otherapps=`for app in $preotherapps $premiscapps ; do echo $app ; done | sort | uniq`
 otherapps_count="`echo \"$otherapps\" | wc -l`"
 
 # output summary of compilation products
-printf -- "-----------------------------------------\n"
-printf -- "--        COMPILATION PRODUCTS         --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--        COMPILATION PRODUCTS         --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$libs_count" "BRL-CAD Libraries"
 printf "\t%7d\t%s\n" "$installed_libs_count" "Installed"
 printf "\t%7d\t%s\n" "$uninstalled_libs_count" "Not Installed"
@@ -161,9 +160,9 @@ otherfile_count="`echo $otherdist_count $otherdata_count $othermans_count $other
 otherdir_count="`find \"$BASE\" -type d -regex '.*/other/.*' -not \( -regex '.*/\.svn.*' -or -regex '.*/CVS.*' -or -regex '.*/\.libs.*' -or -regex '.*/\.deps.*' -or -regex '.*autom4te.cache.*' \) | wc -l`"
 
 # output summary of filesystem organization
-printf -- "-----------------------------------------\n"
-printf -- "--       FILESYSTEM ORGANIZATION       --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--       FILESYSTEM ORGANIZATION       --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$file_count" "BRL-CAD Files"
 printf "%7d\t%s\n" "$dir_count" "BRL-CAD Directories"
 printf "%7d\t%s\n" "$otherfile_count" "3rd Party Files"
@@ -244,9 +243,9 @@ total_noncode="`echo \"$dc_lc_total p\" | dc`"
 total="`echo \"$total_code $total_noncode + p\" | dc`"
 
 # output summary of line count totals
-printf -- "-----------------------------------------\n"
-printf -- "--          LINE COUNT TOTALS          --\n"
-printf -- "-----------------------------------------\n"
+echo "-----------------------------------------"
+echo "--          LINE COUNT TOTALS          --"
+echo "-----------------------------------------"
 printf "%7d\t%s\n" "$total" "BRL-CAD Project Total"
 printf "\t%7d\t%s\n" "$dc_lc_total" "Documentation"
 printf "\t%7d\t%s\n" "$bic_lc_total" "Build Infrastructure"
@@ -258,7 +257,7 @@ printf "\t\t\t%7d\t%s\n" "$sourcebin_lc_total" "Application Code"
 printf "\t\t\t%7d\t%s\n" "$scripts_lc_total" "Scripts"
 printf "%7d\t%s\n" "$blank_lc_total" "Blank Lines (not counted above)"
 printf "%7d\t%s\n" "$other_lc_total" "3rd Party Code (not counted above)"
-printf -- "=========================================\n"
+echo "========================================="
 
 
 # Local Variables:

@@ -1,7 +1,7 @@
 /*                        B W H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ main(int argc, char **argv)
     unsigned char white[3*512];
     FILE *fp;
 
-    if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?") )
+    if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
 	bu_exit(1, "%s", Usage);
 
     /* check for verbose flag */

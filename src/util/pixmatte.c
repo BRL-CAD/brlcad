@@ -1,7 +1,7 @@
 /*                      P I X M A T T E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@ The default width is 3 bytes, suitable for processing .pix files.\n\
 
 
 void
-usage(char *s, int n)
+usage(const char *s, int n)
 {
     if (s && *s) (void)fputs(s, stderr);
 
@@ -91,9 +91,6 @@ usage(char *s, int n)
 }
 
 
-/*
- * O P E N _ F I L E
- */
 int
 open_file(int i, char *name)
 {
@@ -141,9 +138,6 @@ open_file(int i, char *name)
 }
 
 
-/*
- * G E T _ A R G S
- */
 void
 get_args(int argc, char **argv)
 {
@@ -214,11 +208,9 @@ main(int argc, char **argv)
     if (isatty(fileno(stdout)))
 	usage("Cannot write image to tty\n", 1);
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     bu_log("pixmatte:\tif (%s ", file_name[0]);
     if (wanted & LT) {

@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"                  /* includes bu.h */
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "bn.h"
 #include "db.h"
@@ -49,26 +49,26 @@
 #include "dm.h"
 
 #ifdef DM_X
-#  include "dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include <X11/Xutil.h>
-#  include "dm-X.h"
+#  include "dm/dm-X.h"
 #endif /* DM_X */
 
 #ifdef DM_TK
-#  include "dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include "tk.h"
-#  include "dm-tk.h"
+#  include "dm/dm-tk.h"
 #endif /* DM_TK */
 
 #ifdef DM_OGL
-#  include "dm_xvars.h"
-#  include "dm-ogl.h"
+#  include "dm/dm_xvars.h"
+#  include "dm/dm-ogl.h"
 #endif /* DM_OGL */
 
 #ifdef DM_WGL
-#  include "dm_xvars.h"
+#  include "dm/dm_xvars.h"
 #  include <tkwinport.h>
-#  include "dm-wgl.h"
+#  include "dm/dm-wgl.h"
 #endif /* DM_WGL */
 
 #ifdef USE_FBSERV
@@ -77,7 +77,6 @@
 
 
 /**
- * D M _ O B J
  *@brief
  * A display manager object is used for interacting with a display manager.
  */
@@ -90,7 +89,7 @@ struct dm_obj {
 #endif
     struct bu_observer dmo_observers;		/**< @brief fbserv observers */
     mat_t viewMat;
-    int (*dmo_drawLabelsHook)();
+    int (*dmo_drawLabelsHook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *dmo_drawLabelsHookClientData;
     Tcl_Interp *interp;
 };
@@ -133,7 +132,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_X:
 	    *dmop->dmo_fbs.fbs_fbp = X24_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/X")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/X", strlen("/dev/X")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -155,7 +154,7 @@ dmo_openFb(struct dm_obj *dmop)
 	case DM_TYPE_OGL:
 	    *dmop->dmo_fbs.fbs_fbp = ogl_interface; /* struct copy */
 
-	    dmop->dmo_fbs.fbs_fbp->if_name = bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
+	    dmop->dmo_fbs.fbs_fbp->if_name = (char *)bu_malloc((unsigned)strlen("/dev/ogl")+1, "if_name");
 	    bu_strlcpy(dmop->dmo_fbs.fbs_fbp->if_name, "/dev/ogl", strlen("/dev/ogl")+1);
 
 	    /* Mark OK by filling in magic number */
@@ -196,6 +195,22 @@ dmo_openFb(struct dm_obj *dmop)
 			       0);
 	    break;
 #endif
+	default: {
+	    Tcl_Obj *obj;
+
+	    free((void*)dmop->dmo_fbs.fbs_fbp);
+	    dmop->dmo_fbs.fbs_fbp = FBIO_NULL;
+
+	    obj = Tcl_GetObjResult(dmop->interp);
+	    if (Tcl_IsShared(obj))
+		obj = Tcl_DuplicateObj(obj);
+
+	    Tcl_AppendStringsToObj(obj, "openfb: failed to attach framebuffer interface (unsupported display manager type)\n",
+				   (char *)NULL);
+
+	    Tcl_SetObjResult(dmop->interp, obj);
+	    return TCL_ERROR;
+	}
     }
 
     return TCL_OK;
@@ -1770,7 +1785,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     }
 
     /* wrong number of arguments */
-    bu_vls_printf(&vls, "helplib_alias dm_linestyle %1", argv[1]);
+    bu_vls_printf(&vls, "helplib_alias dm_linestyle %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
@@ -2619,6 +2634,48 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
     return TCL_ERROR;
 }
 
+/*
+ * Get/set the display manager's log file.
+ *
+ * Usage:
+ * objname logfile [filename]
+ */
+HIDDEN int
+dmo_logfile_tcl(void *clientData, int argc, const char **argv)
+{
+    struct dm_obj *dmop = (struct dm_obj *)clientData;
+    struct bu_vls vls = BU_VLS_INIT_ZERO;
+    Tcl_Obj *obj;
+
+    if (!dmop || !dmop->interp)
+	return TCL_ERROR;
+
+    obj = Tcl_GetObjResult(dmop->interp);
+    if (Tcl_IsShared(obj))
+	obj = Tcl_DuplicateObj(obj);
+
+    /* get log file */
+    if (argc == 2) {
+	bu_vls_printf(&vls, "%d", bu_vls_addr(&(dmop->dmo_dmp->dm_log)));
+	Tcl_AppendStringsToObj(obj, bu_vls_addr(&vls), (char *)NULL);
+	bu_vls_free(&vls);
+
+	Tcl_SetObjResult(dmop->interp, obj);
+	return TCL_OK;
+    }
+
+    /* set log file */
+    if (argc == 3) {
+	return DM_LOGFILE(dmop->dmo_dmp, argv[3]);
+    }
+
+    bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
+    Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
+    bu_vls_free(&vls);
+    return TCL_ERROR;
+}
+
+
 
 /*
  * Flush the output buffer.
@@ -2863,7 +2920,7 @@ dmo_getDrawLabelsHook_tcl(void *clientData, int argc, const char **argv)
 HIDDEN int
 dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 {
-    void *hook;
+    int (*hook)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData);
     void *clientData;
 
     if (!dmop || !dmop->interp)
@@ -2878,7 +2935,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	return TCL_ERROR;
     }
 
-    if (sscanf(argv[1], "%p", &hook) != 1) {
+    if (sscanf(argv[1], "%p", (void **)((unsigned char *)&hook)) != 1) {
 	Tcl_DString ds;
 
 	Tcl_DStringInit(&ds);
@@ -2886,7 +2943,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)())0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2899,7 +2956,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	Tcl_DStringAppend(&ds, ": failed to set the drawLabels hook", -1);
 	Tcl_DStringResult(dmop->interp, &ds);
 
-	dmop->dmo_drawLabelsHook = (int (*)())0;
+	dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 	return TCL_ERROR;
     }
@@ -2907,7 +2964,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     /* FIXME: standard prohibits casting between function pointers and
      * void *.  find a better way.
      */
-    dmop->dmo_drawLabelsHook = (int (*)())(uintptr_t)hook;
+    dmop->dmo_drawLabelsHook = hook;
     dmop->dmo_drawLabelsHookClientData = clientData;
 
     return TCL_OK;
@@ -2948,8 +3005,6 @@ dmo_deleteProc(ClientData clientData)
 
 
 /*
- * D M _ C M D
- *
  * Generic interface for display manager object routines.
  * Usage:
  * objname cmd ?args?
@@ -2993,6 +3048,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"listen",		dmo_listen_tcl},
 #endif
 	{"loadmat",		dmo_loadmat_tcl},
+	{"logfile",		dmo_logfile_tcl},
 	{"normal",		dmo_normal_tcl},
 	{"observer",		dmo_observer_tcl},
 	{"perspective",		dmo_perspective_tcl},
@@ -3007,7 +3063,7 @@ dmo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"transparency",	dmo_transparency_tcl},
 	{"zbuffer",		dmo_zbuffer_tcl},
 	{"zclip",		dmo_zclip_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(dmo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
@@ -3148,7 +3204,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
     dmop->dmo_dmp = dmp;
     VSETALL(dmop->dmo_dmp->dm_clipmin, -2048.0);
     VSETALL(dmop->dmo_dmp->dm_clipmax, 2047.0);
-    dmop->dmo_drawLabelsHook = (int (*)())0;
+    dmop->dmo_drawLabelsHook = (int (*)(struct dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
 #ifdef USE_FBSERV
     dmop->dmo_fbs.fbs_listener.fbsl_fbsp = &dmop->dmo_fbs;

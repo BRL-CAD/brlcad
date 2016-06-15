@@ -191,8 +191,8 @@ namespace date_time {
       dates.  It is not exposed to users since that would require class
       users to understand the inner workings of the date class.
     */
-    explicit date(date_int_type days) : days_(days) {};
-    explicit date(date_rep_type days) : days_(days.as_number()) {};
+    explicit date(date_int_type days) : days_(days) {}
+    explicit date(date_rep_type days) : days_(days.as_number()) {}
     date_int_type days_;
 
   };

@@ -1,7 +1,7 @@
 /*                      V I E W E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2013 United States Government as represented by
+ * Copyright (c) 2001-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -350,9 +350,6 @@ static int occludes(struct application *ap, struct cell *here)
 }
 
 
-/**
- * R A Y H I T
- */
 int rayhit(struct application *ap, register struct partition *pt,
 	   struct seg *segp)
 {
@@ -361,9 +358,6 @@ int rayhit(struct application *ap, register struct partition *pt,
 }
 
 
-/**
- * R A Y M I S S
- */
 int raymiss(struct application *ap)
 {
     handle_main_ray(ap, NULL, NULL);
@@ -491,8 +485,8 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	 * geometry. Need one per cpu, the upper half does the per-
 	 * thread allocation in worker, but that's off limits.
 	 */
-	occlusion_apps = bu_calloc(npsw, sizeof(struct application *),
-				   "occlusion application structure array");
+	occlusion_apps = (struct application **)bu_calloc(npsw, sizeof(struct application *),
+							  "occlusion application structure array");
 	for (i=0; i<npsw; ++i) {
 	    BU_ALLOC(occlusion_apps[i], struct application);
 	    RT_APPLICATION_INIT(occlusion_apps[i]);
@@ -850,9 +844,6 @@ void view_end(struct application *UNUSED(ap))
 }
 
 
-/**
- * R A Y H I T 2
- */
 int rayhit2(struct application *ap, register struct partition *pt, struct seg *UNUSED(segp))
 {
     struct partition *pp = pt->pt_forw;
@@ -872,9 +863,6 @@ int rayhit2(struct application *ap, register struct partition *pt, struct seg *U
 }
 
 
-/**
- * R A Y M I S S 2
- */
 static int
 raymiss2(register struct application *ap)
 {
@@ -1202,10 +1190,6 @@ is_edge(double *intensity, struct application *ap, const struct cell *here,
 }
 
 
-/**
- * H A N D L E _ M A I N _ R A Y
- *
- */
 int
 handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 		struct seg *segp)

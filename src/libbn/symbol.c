@@ -1,7 +1,7 @@
 /*                        S Y M B O L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,13 +42,11 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/str.h"
 #include "vmath.h"
 #include "plot3.h"
 #include "vectfont.h"
 
-/*
- *			T P _ 3 S Y M B O L
- */
 void
 tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 
@@ -124,9 +122,6 @@ tp_3symbol(FILE *fp, char *string, fastf_t *origin, fastf_t *rot, double scale)
 }
 
 
-/*
- *			T P _ 2 S Y M B O L
- */
 void
 tp_2symbol(FILE *fp, char *string, double x, double y, double scale, double theta)
 

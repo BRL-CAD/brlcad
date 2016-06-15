@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="attr">
 <refmeta>
   <refentrytitle>ATTR</refentrytitle>
@@ -57,17 +55,7 @@ objects.
   </itemizedlist>
   </para>
   <para>The 'region' attribute is the 'region flag' mentioned in the
-  edcomb command.  Somewhat confusingly though, immediately upon
-  completing the 'r' (region) command in mged a message like this is
-  displayed:</para>
-
-  <programlisting>
-Defaulting item number to 1001
-Creating region with attrs: region_id=1000, air=0, los=0, material_id=1
-  </programlisting>
-
-  <para>However, the air attribute will not show in a 'attr show' command unless
-  it is set to a non-zero value.</para>
+  edcomb command.</para>
 
 </refsection>
 
@@ -129,8 +117,10 @@ Creating region with attrs: region_id=1000, air=0, los=0, material_id=1
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-    <para>This software is Copyright (c) 2008-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.</para>
+    <para>
+      This software is Copyright (c) 2008-2014 United States
+      Government as represented by the U.S. Army Research Laboratory.
+    </para>
 </refsection>
 
 <refsection xml:id="bug_reports"><title>BUG REPORTS</title>

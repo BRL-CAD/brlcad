@@ -1,7 +1,7 @@
 /*                       R E V O L V E . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * Intersect a ray with an 'revolve' primitive object.
  *
  */
+
+#ifndef LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H
+#define LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H
 
 #include "common.h"
 
@@ -53,6 +56,7 @@ const struct bu_structparse rt_revolve_parse[] = {
     { {'\0', '\0', '\0', '\0'}, 0, (char *)NULL, 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
+#endif /* LIBRT_PRIMITIVES_REVOLVE_REVOLVE_H */
 
 /*
  * Local Variables:

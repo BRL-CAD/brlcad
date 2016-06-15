@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bu.h"
+
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -43,7 +45,7 @@
 #define ROWS 5
 #define COLS 5
 
-static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h";
+static char *options="an:c:d:W:R:D:g:j:p:s:t:u:w:h?";
 
 /**
  * Help message printed when -h option is supplied
@@ -55,7 +57,7 @@ show_help(struct ged *gedp, const char *name)
     const char *cp = options;
 
     while (cp && *cp != '\0') {
-	if (*cp == ':') {
+	if (*cp == ':' || *cp == 'h' || *cp == '?') {
 	    cp++;
 	    continue;
 	}
@@ -66,22 +68,24 @@ show_help(struct ged *gedp, const char *name)
     bu_vls_printf(gedp->ged_result_str, "Usage: %s [-%s] [tire_name]\n", name, bu_vls_addr(&str));
     bu_vls_printf(gedp->ged_result_str, "options:\n");
     bu_vls_printf(gedp->ged_result_str, "\t-a\n\t\tAuto-generate top-level object name using\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\t(tire-<width>-<aspect>R<rim size>)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\ttire-<width>-<aspect>R<rim diameter>\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(\"tire\" overridden by -n argument, and ultimately by tire_name , if that is supplied)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(rest of name is derived from the ISO Metric system)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-n <name>\n\t\tSpecify custom top-level object name\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(overridden by tire_name , if that is supplied)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-c <count>\n\t\tSpecify number of tread patterns around tire\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-d <width>/<aspect>R<rim size>\n\t\tSpecify tire dimensions\n");
-    bu_vls_printf(gedp->ged_result_str, "\t\t(U.S. customary units, integer values only)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-d <width>/<aspect>R<rim diameter>\n\t\tSpecify tire dimensions\n");
+    bu_vls_printf(gedp->ged_result_str, "\t\t(U.S. customary units in the ISO metric system; integer values only)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-W <width>\n\t\tSpecify tire width in inches (overrides -d)\n");
     bu_vls_printf(gedp->ged_result_str, "\t-R <aspect>\n\t\tSpecify tire aspect ratio (#/100) (overrides -d)\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-D <rim size>\n\t\tSpecify rim size in inches (overrides -d)\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in terms of 32nds of an inch.\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches.\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-D <rim diameter>\n\t\tSpecify rim diameter in inches (overrides -d)\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-g <depth>\n\t\tSpecify tread depth in 32nds of an inch\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-j <width>\n\t\tSpecify rim width in inches\n");
     bu_vls_printf(gedp->ged_result_str, "\t-p <type>\n\t\tGenerate tread with tread pattern as specified\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify the radius of the maximum sidewall width\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-s <radius>\n\t\tSpecify radius of the maximum sidewall width, in mm\n");
     bu_vls_printf(gedp->ged_result_str, "\t-t <type>\n\t\tGenerate tread with tread type as specified\n");
     bu_vls_printf(gedp->ged_result_str, "\t-u <thickness>\n\t\tSpecify tire thickness in mm\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not\n");
-    bu_vls_printf(gedp->ged_result_str, "\t-h\n\t\tShow help\n\n");
+    bu_vls_printf(gedp->ged_result_str, "\t-w <0|1>\n\t\tWhether to include the wheel or not (default is 1, yes)\n");
 
     bu_vls_free(&str);
     return;
@@ -409,9 +413,8 @@ SolveEchelon(fastf_t **mat, fastf_t *result1)
     fastf_t inter;
     for (i = 4; i >= 0; i--) {
 	inter = mat[i][5];
-	for (j = 4; j > i; j--) {
+	for (j = 4; j > i; j--)
 	    inter -= mat[i][j] * result1[j];
-	}
 	result1[i]=inter;
     }
 }
@@ -969,7 +972,7 @@ MakeTreadPattern2(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
+	getYRotMat(&y, i * M_2PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1114,7 +1117,7 @@ MakeTreadPattern1(struct rt_wdb (*file), char *suffix, fastf_t dwidth,
     (void)mk_addmember(bu_vls_addr(&str2), &tread.l, NULL, WMOP_UNION);
     for (i = 1; i <= number_of_patterns; i++) {
 	bu_vls_sprintf(&str, "tread_master%s.c", suffix);
-	getYRotMat(&y, i * 2 * M_PI / number_of_patterns);
+	getYRotMat(&y, i * M_2PI / number_of_patterns);
 	(void)mk_addmember(bu_vls_addr(&str), &tread.l, y, WMOP_SUBTRACT);
     }
 
@@ -1625,11 +1628,10 @@ MakeTire(struct rt_wdb (*file), char *suffix, fastf_t dytred,
     /* Set Tire color */
     VSET(rgb, 40, 40, 40);
 
-    if (tread_type != 0) {
+    if (tread_type != 0)
 	ztire_with_offset = ztire - tread_depth*bu_units_conversion("in");
-    } else {
+    else
 	ztire_with_offset = ztire;
-    }
 
     matrixell1 = (fastf_t **)bu_malloc(5 * sizeof(fastf_t *), "matrixrows");
     for (i = 0; i < 5; i++)
@@ -1858,10 +1860,11 @@ ReadArgs(struct ged *gedp,
     /* skip command name */
     bu_optind = 1;
 
-    /* don't report errors */
-    bu_opterr = 0;
+    bu_opterr = 1;
 
     while ((c=bu_getopt(argc, (char * const *)argv, options)) != -1) {
+    	if (bu_optopt == '?')
+    	    c='h';
 	switch (c) {
 	    case 'a' :
 		*gen_name = 1;
@@ -1924,12 +1927,10 @@ ReadArgs(struct ged *gedp,
 		*usewheel = usewheelc;
 		break;
 	    default:
-		bu_vls_printf(gedp->ged_result_str, "%s: illegal option -- %c\n", argv[0], c);
 		show_help(gedp, argv[0]);
-		return GED_ERROR;
-	    case 'h':
-		show_help(gedp, argv[0]);
-		return GED_HELP;
+		if (c=='h')
+		    return GED_HELP;
+  	    	return GED_ERROR;
 	}
     }
 
@@ -1997,6 +1998,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
 		   &tread_depth, &tire_thickness, &hub_width,
 		   &pattern_type, &zside1, &usewheel);
 
+    if (overridearray[0] > 0) isoarray[0] = overridearray[0];
+    if (overridearray[1] > 0) isoarray[1] = overridearray[1];
+    if (overridearray[2] > 0) isoarray[2] = overridearray[2];
+
     if (ret != GED_OK) {
 	bu_vls_free(&name);
 	bu_vls_free(&dimen);
@@ -2008,29 +2013,25 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     /* Calculate floating point value for tread depth */
     tread_depth_float = tread_depth/32.0;
 
-    /* Based on arguments, assign name for toplevel object Default of
-     * "tire" is respected unless overridden by user supplied options.
+    /* Based on arguments, assign name for toplevel object; default of
+     * "tire" is used unless overridden by user supplied options.
+     * If -a option was not used, toplevel object keeps its entire name from -n argument (which is
+     * overridden by the last argument on command line).
      */
-    if (bu_vls_strlen(&name) != 0 && gen_name == 1) {
-	bu_vls_printf(&name, "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
-    }
-
-    if (bu_vls_strlen(&name) == 0 && gen_name == 1) {
-	bu_vls_printf(&name, "tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
+    if (gen_name == 1) {
+	    if (bu_vls_strlen(&name) == 0)
+		bu_vls_printf(&name,"tire-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
+    	    else
+		bu_vls_printf(&name,    "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
     }
 
     /* Use default dimensional info to create a suffix for names, if
      * not supplied in args.
      */
-    if (bu_vls_strlen(&dimen) == 0) {
+    if (bu_vls_strlen(&dimen) == 0)
 	bu_vls_printf(&dimen, "-%d-%dR%d", (int)isoarray[0], (int)isoarray[1], (int)isoarray[2]);
-    }
 
     mk_id(gedp->ged_wdbp, "Tire");
-
-    if (overridearray[0] > 0) isoarray[0] = overridearray[0];
-    if (overridearray[1] > 0) isoarray[1] = overridearray[1];
-    if (overridearray[2] > 0) isoarray[2] = overridearray[2];
 
     bu_vls_printf(gedp->ged_result_str, "width = %f\n", isoarray[0]);
     bu_vls_printf(gedp->ged_result_str, "ratio = %f\n", isoarray[1]);
@@ -2046,14 +2047,15 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     dytred = .8 * width;
     d1 = (ztire-zhub)/2.5;
 
-    if (ZERO(hub_width)) {
+    if (ZERO(hub_width))
 	dyhub = dytred;
-    } else {
+    else
 	dyhub = hub_width*bu_units_conversion("in");
-    }
 
     if (ZERO(zside1))
-	zside1 = ztire-((ztire-zhub)/2*1.2);
+	zside1 = 0.6*zhub + 0.4*ztire;
+/* The above is simplified from: */
+/*	zside1 = ztire-((ztire-zhub)/2*1.2); */
 
     dztred = .001*ratio*zside1;
 
@@ -2083,11 +2085,11 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     rim_thickness = tire_thickness/2.0;
 
     /* Make the wheel region*/
-    if (usewheel != 0) {
+    if (usewheel != 0)
 	MakeWheelRims(gedp->ged_wdbp, bu_vls_addr(&dimen),
 		      dyhub, zhub, bolts, bolt_diam, bolt_circ_diam,
 		      spigot_diam, fixing_offset, bead_height, bead_width, rim_thickness);
-    }
+
     /* Make the air region*/
     MakeAirRegion(gedp->ged_wdbp, bu_vls_addr(&dimen), dyhub, zhub, usewheel);
 
@@ -2097,10 +2099,10 @@ ged_tire(struct ged *gedp, int argc, const char *argv[])
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
     bu_vls_sprintf(&str, "air%s.r", bu_vls_addr(&dimen));
     (void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    if (usewheel != 0) {
+    if (usewheel != 0)
 	bu_vls_sprintf(&str, "wheel%s.r", bu_vls_addr(&dimen));
 	(void)mk_addmember(bu_vls_addr(&str), &wheel_and_tire.l, NULL, WMOP_UNION);
-    }
+
     mk_lcomb(gedp->ged_wdbp, bu_vls_addr(&name), &wheel_and_tire, 0,  NULL, NULL, NULL, 0);
 
     bu_vls_free(&str);

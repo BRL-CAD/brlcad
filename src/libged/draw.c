@@ -1,7 +1,7 @@
 /*                         D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,10 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
 #include "bio.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "mater.h"
 #include "solid.h"
 
@@ -115,7 +117,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
@@ -149,7 +151,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		    _ged_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else
-		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, client_data);
+		    _ged_drawtrees(dgcdp->gedp, ac, av, 3, (struct _ged_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
 		int save_shaded_mode = dgcdp->gedp->ged_gdp->gd_shaded_mode;
@@ -161,7 +163,7 @@ draw_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = _GED_WIREFRAME;
 
-		_ged_drawtrees(dgcdp->gedp, ac, av, 1, client_data);
+		_ged_drawtrees(dgcdp->gedp, ac, av, 1, (struct _ged_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->gedp->ged_gdp->gd_shaded_mode = save_shaded_mode;
@@ -371,8 +373,6 @@ solid_set_color_info(
 
 
 /**
- * G E D _ D R A W H _ P A R T 2
- *
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
  *
@@ -709,7 +709,7 @@ solid_point_spacing_for_view(
 		RT_BREP_CK_MAGIC(bi);
 
 		point_spacing = solid_point_spacing(gvp,
-			brep_est_avg_curve_len(bi) * (2.0 / M_PI) * 2.0);
+			brep_est_avg_curve_len(bi) * M_2_PI * 2.0);
 	    }
 		break;
 	    default:
@@ -803,8 +803,6 @@ redraw_solid(struct ged *gedp, struct solid *sp)
 
 
 /**
- * G E D _ N M G _ R E G I O N _ S T A R T
- *
  * When performing "ev" on a region, consider whether to process the
  * whole subtree recursively.
  *
@@ -984,8 +982,6 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 
 /**
- * G E D _ N M G _ R E G I O N _ E N D
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -1085,9 +1081,6 @@ draw_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp,
 }
 
 
-/**
- * C V T _ V L B L O C K _ T O _ S O L I D S
- */
 void
 _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name, int copy)
 {
@@ -1108,8 +1101,6 @@ _ged_cvt_vlblock_to_solids(struct ged *gedp, struct bn_vlblock *vbp, char *name,
 
 
 /*
- * G E D _ D R A W T R E E S
- *
  * This routine is the drawable geometry object's analog of rt_gettrees().
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
@@ -1381,7 +1372,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		 * view size for plotting.
 		 */
 		if (dgcdp.autoview) {
-		    const char *autoview_args[2] = {"autoview", '\0'};
+		    const char *autoview_args[2] = {"autoview", NULL};
 		    ged_autoview(gedp, 1, autoview_args);
 		}
 
@@ -1470,8 +1461,6 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 
 /*
- * I N V E N T _ S O L I D
- *
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
  * the given vector list.
@@ -1557,8 +1546,6 @@ _ged_invent_solid(struct ged *gedp,
 
 
 /*
- * C O L O R _ S O L T A B
- *
  * Pass through the solid table and set pointer to appropriate
  * mater structure.
  */
@@ -1845,9 +1832,7 @@ ged_addToDisplay(struct ged *gedp,
 	if (BU_STR_EQUAL(name, bu_vls_addr(&gdlp->gdl_path)))
 	    goto end;
 
-	/*
-	 */
-	if (found_namepath) {
+		if (found_namepath) {
 	    struct db_full_path gdlpath;
 
 	    if (db_string_to_path(&gdlpath, gedp->ged_wdbp->dbip, bu_vls_addr(&gdlp->gdl_path)) == 0) {

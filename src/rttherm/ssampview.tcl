@@ -1,7 +1,7 @@
 #                   S S A M P V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 1996-2013 United States Government as represented by
+# Copyright (c) 1996-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without

@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,6 +184,8 @@ main(int argc, char **argv)
     unsigned char *buffer;
     long int i;
     long int row, result;
+
+    bu_log("DEPRECATED: pixpaste is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     if (!get_args(argc, argv)) {
 	fprintf(stderr, "%s", usage);

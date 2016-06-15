@@ -1,7 +1,7 @@
 /*                          T I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,11 +48,9 @@ int main(int ac, char *av[])
     filename = DEFAULT_TIRE_FILENAME;
 
     /* Just using "tire.g" for now. */
-    if (!bu_file_exists(filename, NULL)) {
-	db_fp = wdb_fopen(filename);
-    } else {
+    if (bu_file_exists(filename, NULL))
 	bu_exit(1, "ERROR - refusing to overwrite existing [%s] file.", filename);
-    }
+    db_fp = wdb_fopen(filename);
     mk_id(db_fp, "Tire");
 
     GED_INIT(&ged, db_fp);
@@ -62,18 +60,15 @@ int main(int ac, char *av[])
 
     /* Close database */
     wdb_close(db_fp);
-
     if (ret) {
 	bu_file_delete(filename);
 	bu_log("%s", bu_vls_addr(ged.ged_result_str));
-	ged_free(&ged);
-	return 1;
-    }
+    } else
+	bu_log("tire.g file created\n");
 
     /* release our ged instance memory */
     ged_free(&ged);
-
-    return 0;
+    return ret;
 }
 
 

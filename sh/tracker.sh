@@ -2,7 +2,7 @@
 #                      T R A C K E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2006-2013 United States Government as represented by
+# Copyright (c) 2006-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -173,7 +173,7 @@ days ( ) {
 	12) _dys=334 ;;
     esac
 
-    echo "`expr \( $_yer \* 365 \) \+ $_dys \+ $_day`"
+    expr \( $_yer \* 365 \) \+ $_dys \+ $_day
     return 0;
 }
 

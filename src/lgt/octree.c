@@ -1,7 +1,7 @@
 /*                        O C T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ new_Octant(Octree *parentp, Octree **childpp, int bitv, int level)
     return	childp;
 }
 
-/*	f i n d _ O c t a n t ( )
+/*
 	Starting at "parentp" and descending, locate octree node suitable
 	for insertion of "pt".  Implicit return of tree level in "levelp".
 	Return node's address.

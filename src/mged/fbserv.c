@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,12 +53,10 @@
 
 
 /*
- * C O M M _ E R R O R
- *
  * Communication error.  An error occurred on the PKG link.
  */
 HIDDEN void
-communications_error(char *str)
+communications_error(const char *str)
 {
     bu_log(str);
 }
@@ -98,9 +96,6 @@ fbserv_setup_socket(int fd)
 }
 
 
-/*
- * D R O P _ C L I E N T
- */
 HIDDEN void
 fbserv_drop_client(int sub)
 {
@@ -240,9 +235,6 @@ fbserv_new_client_handler(ClientData clientData,
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -260,7 +252,7 @@ fbserv_set_port(void)
 	    fbserv_drop_client(i);
 
 	fd = (ClientData)netfd;
-	Tcl_DeleteChannelHandler(netchan, fbserv_new_client_handler, fd);
+	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
 	Tcl_Close(dmp->dm_interp, netchan);
 	netchan = NULL;
@@ -357,9 +349,6 @@ fbserv_makeconn(int fd,
 #else /* defined(_WIN32) && !defined(__CYGWIN__) */
 
 
-/*
- * N E W _ C L I E N T
- */
 HIDDEN void
 fbserv_new_client(struct pkg_conn *pcp)
 {
@@ -417,9 +406,6 @@ fbserv_new_client_handler(ClientData clientData, int UNUSED(mask))
 }
 
 
-/*
- * S E T _ P O R T
- */
 void
 fbserv_set_port(void)
 {
@@ -486,7 +472,7 @@ fbserv_set_port(void)
 void
 rfbunknown(struct pkg_conn *pcp, char *buf)
 {
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbunknown: null buffer\n");
 	return;
     }
@@ -504,7 +490,7 @@ rfbopen(struct pkg_conn *pcp, char *buf)
     char rbuf[5*NET_LONG_LEN+1];
     int want;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbopen: null buffer\n");
 	return;
     }
@@ -567,7 +553,7 @@ rfbclear(struct pkg_conn *pcp, char *buf)
     RGBpixel bg;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -592,7 +578,7 @@ rfbread(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -631,7 +617,7 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -650,9 +636,6 @@ rfbwrite(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B R E A D R E C T
- */
 void
 rfbreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -663,7 +646,7 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static size_t buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -696,9 +679,6 @@ rfbreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B W R I T E R E C T
- */
 void
 rfbwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -708,7 +688,7 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -730,9 +710,6 @@ rfbwriterect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W R E A D R E C T
- */
 void
 rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 {
@@ -743,7 +720,7 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
     static unsigned char *scanbuf = NULL;
     static int buflen = 0;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbbwreadrect: null buffer\n");
 	return;
     }
@@ -776,9 +753,6 @@ rfbbwreadrect(struct pkg_conn *pcp, char *buf)
 }
 
 
-/*
- * R F B B W W R I T E R E C T
- */
 void
 rfbbwwriterect(struct pkg_conn *pcp, char *buf)
 {
@@ -788,7 +762,7 @@ rfbbwwriterect(struct pkg_conn *pcp, char *buf)
     int ret;
     int type;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbbwwriterect: null buffer\n");
 	return;
     }
@@ -816,7 +790,7 @@ rfbcursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -856,7 +830,7 @@ rfbsetcursor(struct pkg_conn *pcp, char *buf)
     int xbits, ybits;
     int xorig, yorig;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -884,7 +858,7 @@ rfbscursor(struct pkg_conn *pcp, char *buf)
     int mode, x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbopen: null buffer\n");
 	return;
     }
@@ -906,7 +880,7 @@ rfbwindow(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }
@@ -927,7 +901,7 @@ rfbzoom(struct pkg_conn *pcp, char *buf)
     int x, y;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -948,7 +922,7 @@ rfbview(struct pkg_conn *pcp, char *buf)
     int xcenter, ycenter, xzoom, yzoom;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbreadrect: null buffer\n");
 	return;
     }
@@ -1004,8 +978,6 @@ rfbrmap(struct pkg_conn *pcp, char *buf)
 
 
 /*
- * R F B W M A P
- *
  * Accept a color map sent by the client, and write it to the
  * framebuffer.  Network format is to send each entry as a network
  * (IBM) order 2-byte short, 256 red shorts, followed by 256 green and
@@ -1019,7 +991,7 @@ rfbwmap(struct pkg_conn *pcp, char *buf)
     long ret;
     ColorMap map;
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwmap: null buffer\n");
 	return;
     }
@@ -1075,7 +1047,7 @@ rfbhelp(struct pkg_conn *pcp, char *buf)
     long ret;
     char rbuf[NET_LONG_LEN+1];
 
-    if(buf == NULL) {
+    if (buf == NULL) {
 	bu_log("rfbwindow: null buffer\n");
 	return;
     }

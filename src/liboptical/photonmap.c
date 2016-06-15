@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <time.h>
 
@@ -35,6 +36,7 @@
 #  include <signal.h>
 #endif
 
+#include "bu/parallel.h"
 #include "photonmap.h"
 
 
@@ -1034,10 +1036,10 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	for (j = 1; j <= N; j++) {
 #ifndef HAVE_DRAND48
 	    theta = asin(sqrt((j-rand()/(double)RAND_MAX)/M));
-	    phi = (2.0*M_PI)*((i-rand()/(double)RAND_MAX)/N);
+	    phi = (M_2PI)*((i-rand()/(double)RAND_MAX)/N);
 #else
 	    theta = asin(sqrt((j-drand48())/M));
-	    phi = (2.0*M_PI)*((i-drand48())/N);
+	    phi = (M_2PI)*((i-drand48())/N);
 #endif
 
 	    /* Assign pt */
@@ -1049,7 +1051,7 @@ Irradiance(int pid, struct Photon *P, struct application *ap)
 	    Polar2Euclidian(lap->a_ray.r_dir, P->Normal, theta, phi);
 
 	    /* Utilize the purpose pointer as a pointer to the Irradiance Color */
-	    lap->a_purpose = (void*)P->Irrad;
+	    lap->a_purpose = (const char *)P->Irrad;
 
 	    /* bu_log("Vec: [%.3f, %.3f, %.3f]\n", ap->a_ray.r_dir[0], ap->a_ray.r_dir[1], ap->a_ray.r_dir[2]);*/
 	    rt_shootray(lap);
@@ -1363,7 +1365,7 @@ BuildPhotonMap(struct application *ap, point_t eye_pos, int cpus, int width, int
 
 
 	GPM_RAYS = Rays;
-	GPM_ATOL = cos(AngularTolerance*bn_degtorad);
+	GPM_ATOL = cos(AngularTolerance*DEG2RAD);
 
 	PInit = 1;
 

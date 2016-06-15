@@ -1,7 +1,7 @@
 /*                    M A P P E D F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 
 #include "common.h"
 
+#include <limits.h> /* for INT_MAX */
 #include <math.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -36,7 +37,15 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/mapped_file.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
+#include "bu/vls.h"
 
 
 /* list of currently open mapped files */
@@ -54,7 +63,7 @@ bu_open_mapped_file(const char *name, const char *appl)
     struct stat sb;
     int fd = -1;	/* unix file descriptor */
     int readval;
-	ssize_t bytes_to_go, nbytes;
+    ssize_t bytes_to_go, nbytes;
 #else
     FILE *fp = (FILE *)NULL;	/* stdio file pointer */
 #endif
@@ -110,14 +119,14 @@ bu_open_mapped_file(const char *name, const char *appl)
 		if ((size_t)sb.st_size != mp->buflen) {
 		    bu_log("bu_open_mapped_file(%s) WARNING: File size changed from %ld to %ld, opening new version.\n", real_path, mp->buflen, sb.st_size);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
-		    mp->appl = "__STALE__";
+		    mp->appl = bu_strdup("__STALE__");
 		    /* Can't invalidate old copy, it may still be in use. */
 		    break;
 		}
 		if (sb.st_mtime != mp->modtime) {
 		    bu_log("bu_open_mapped_file(%s) WARNING: File modified since last mapped, opening new version.\n", real_path);
 		    /* mp doesn't reflect the file any longer.  Invalidate. */
-		    mp->appl = "__STALE__";
+		    mp->appl = bu_strdup("__STALE__");
 		    /* Can't invalidate old copy, it may still be in use. */
 		    break;
 		}
@@ -316,7 +325,7 @@ fail:
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MAPPED_FILE))
 	bu_log("bu_open_mapped_file(%s, %s) can't open file\n",
-		real_path, appl?appl:"(NIL)");
+		real_path, appl ? appl: "(NIL)");
 
     if (real_path) {
 	bu_free(real_path, "real_path alloc from bu_realpath");

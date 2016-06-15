@@ -1,7 +1,7 @@
 /*                        P R O E - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1023,9 +1023,6 @@ proe_usage(const char *argv0)
     bu_log("	The -x option specifies an RT debug flags (see raytrace.h).\n");
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char **argv)
 {

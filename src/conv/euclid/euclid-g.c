@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include "common.h"
 
 /* system headers */
+#include <limits.h>
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
@@ -34,6 +35,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -184,9 +186,7 @@ main(int argc, char **argv)
 	}
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
-#endif
 
     /* Output BRL-CAD database header.  No problem if more than one. */
     if ( efile == NULL )
@@ -227,8 +227,6 @@ main(int argc, char **argv)
 }
 
 /*
- *	A d d _ N M G _ t o _ D b
- *
  *	Write the nmg to a BRL-CAD style data base.
  */
 static void
@@ -247,8 +245,8 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
     s = BU_LIST_FIRST( shell, &r->s_hd );
 
     sprintf(id, "%d", reg_id);
-    rname = bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
-    sname = bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
+    rname = (char *)bu_malloc(sizeof(id) + 3, "rname");	/* Region name. */
+    sname = (char *)bu_malloc(sizeof(id) + 3, "sname");	/* Solid name. */
 
     snprintf(sname, 80, "%s.s", id);
     if ( polysolids )
@@ -351,8 +349,6 @@ build_groups(struct rt_wdb *fpout)
 }
 
 /*
- *	E u c l i d _ t o _ B r l C a d
- *
  *	Convert a Euclid data base into a BRL-CAD data base.  This might or
  *	might not be correct, but a Euclid data base of faceted objects is
  *	assumed to be an ascii file of records of the following form:
@@ -400,11 +396,11 @@ euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 	return 2;
     }
 
-    if(reg_id <= -INT_MAX) {
+    if (reg_id <= -INT_MAX) {
 	bu_log("ERROR: Magnitude of negative region_id too large.\n");
 	return 3;
     }
-    if(reg_id >= INT_MAX) {
+    if (reg_id >= INT_MAX) {
 	bu_log("region_id too large.\n");
 	return 4;
     }
@@ -452,8 +448,6 @@ kill_cracks_in_next_shell(struct nmgregion *r)
 
 
 /*
- *	R e a d _ E u c l i d _ R e g i o n
- *
  *	Make a list of indices into global vertex coordinate array.
  *	This list represents the face under construction.
  */
@@ -722,8 +716,6 @@ cvt_euclid_region(FILE *fp, struct rt_wdb *fpdb, int reg_id)
 
 
 /*
- * R e a d _ E u c l i d _ F a c e
- *
  * Read in vertices from a Euclid facet file and store them in an
  * array of nmg vertex structures.  Then make a list of indices of
  * these vertices in the vertex array.  This list represents the face
@@ -810,8 +802,6 @@ read_euclid_face(int *lst, int *ni, FILE *fp, struct vlist *vert, int *nv)
 }
 
 /*
- *	F i n d _ V e r t
- *
  *	Try to locate a geometric point in the list of vertices.  If found,
  *	return the index number within the vertex array, otherwise return
  *	a -1.
@@ -839,8 +829,6 @@ find_vert(struct vlist *vert, int nv, fastf_t x, fastf_t y, fastf_t z)
 }
 
 /*
- *	S t o r e _ V e r t
- *
  *	Store vertex in an array of vertices.
  */
 int

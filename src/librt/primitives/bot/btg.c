@@ -1,7 +1,7 @@
 /*                    B T G . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -76,30 +76,49 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     bot->bot_flags = bot_ip->bot_flags;
     if (bot_ip->thickness) {
 	bot->bot_thickness = (fastf_t *)bu_calloc(bot_ip->num_faces, sizeof(fastf_t), "bot_thickness");
-	for (tri_index=0; tri_index < bot_ip->num_faces; tri_index++)
+	for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++)
 	    bot->bot_thickness[tri_index] = bot_ip->thickness[tri_index];
+    } else {
+	bot->bot_thickness = NULL;
     }
-    if (bot_ip->face_mode)
+
+    if (bot_ip->face_mode) {
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
+    } else {
+	bot->bot_facemode = BU_BITV_NULL;
+    }
     bot->bot_facelist = NULL;
 
-    if((tie = bot_ip->tie = bot->tie = bottie_allocn_double(bot_ip->num_faces)) == NULL)
+    tie = (struct tie_s *)bottie_allocn_double(bot_ip->num_faces);
+    if (tie != NULL) {
+	bot_ip->tie = bot->tie = tie;
+    } else {
 	return -1;
-    if((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
+    }
+
+    if ((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
 	tie_free(tie);
 	return -1;
     }
-    if((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
+    if ((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
 	tie_free(tie);
 	bu_free(tribuf, "tribuf");
 	return -1;
     }
 
-    for(i=0;i<bot_ip->num_faces*3;i++) {
+    for (i = 0; i < bot_ip->num_faces*3; i++) {
 	tribufp[i] = &tribuf[i];
 	VMOVE(tribuf[i].v, (bot_ip->vertices+3*bot_ip->faces[i]));
     }
-    tie_push1(bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+
+    /* tie_pushX sig: (struct tie_s *,
+     *                 TIE_3 **,
+     *                 unsigned int,
+     *                 void *,
+     *                 unsigned int);
+     */
+    tie_push1((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+
     bu_free(tribuf, "tribuffer");
     bu_free(tribufp, "tribufp");
 
@@ -135,13 +154,14 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
     vect_t wxb;		/* vertex - ray_start */
     vect_t xp;		/* wxb cross ray_dir */
 
-    if(h->nhits > (MAXHITS-1)) {
+    if (h->nhits > (MAXHITS-1)) {
 	bu_log("Too many hits!\n");
 	return (void *)1;
     }
 
     hp = &h->hits[h->nhits];
-    tsp = hp->hit_private = &h->ts[h->nhits];
+    hp->hit_private = &h->ts[h->nhits];
+    tsp = (struct tri_specific *)hp->hit_private;
     h->nhits++;
 
 
@@ -154,7 +174,7 @@ hitfunc(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *UNUSED(tri
      * make_bot_segment(). BOT hits were disappearing from the segment
      * depending on hit_vpriv[X] uninitialized value.
      */
-    dn = VDOT(tsp->tri_wn, ray->dir);
+    dn = VDOT(tsp->tri_N, ray->dir);
     abs_dn = dn >= 0.0 ? dn : (-dn);
     VSUB2(wxb, tsp->tri_A, ray->pos);
     VCROSS(xp, wxb, ray->dir);
@@ -198,13 +218,16 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     tie_work1(tie, &ray, &id, hitfunc, &hitdata);
 
     /* use hitfunc to build the hit list */
-    if(hitdata.nhits == 0)
+    if (hitdata.nhits == 0)
 	return 0;
 
     /* adjust hit distances to initial ray origin */
-    for(i=0;i<hitdata.nhits;i++)
+    for (i = 0; i < hitdata.nhits; i++)
 	hitdata.hits[i].hit_dist = hitdata.hits[i].hit_dist - dirlen;
 
+    /* FIXME: we don't have the hit_surfno but at least initialize it */
+    for (i = 0; i < hitdata.nhits; i++)
+        hitdata.hits[i].hit_surfno = 0;
 
     return rt_bot_makesegs(hitdata.hits, hitdata.nhits, stp, rp, ap, seghead, NULL);
 }

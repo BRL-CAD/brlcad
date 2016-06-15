@@ -1,7 +1,7 @@
 /*                           D B 5 . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,10 @@
  *
  */
 
-#ifndef __DB5_H__
-#define __DB5_H__
+#ifndef DB5_H
+#define DB5_H
+
+#include "common.h"
 
 __BEGIN_DECLS
 
@@ -160,10 +162,8 @@ struct db5_ondisk_header {
 #define DB5_MINORTYPE_BRLCAD_CONSTRAINT		39
 
 #define DB5_MINORTYPE_BRLCAD_REVOLVE		40
-#define DB5_MINORTYPE_BRLCAD_PNTS		41
-#define DB5_MINORTYPE_BRLCAD_ANNOTATION		42
-#define DB5_MINORTYPE_BRLCAD_HRT		43
-#define DB5_MINORTYPE_BRLCAD_DATUM		44
+#define DB5_MINORTYPE_BRLCAD_ANNOTATION		41
+#define DB5_MINORTYPE_BRLCAD_HRT		42
 
 /* Uniform-array binary */
 #define DB5_MINORTYPE_BINU_WID_MASK		0x30
@@ -223,7 +223,7 @@ RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_in
 
 __END_DECLS
 
-#endif	/* __DB5_H__ */
+#endif	/* DB5_H */
 
 /** @} */
 /*

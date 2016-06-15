@@ -1,7 +1,7 @@
 /*             O B J _ P A R S E R _ S T A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef ARL_OBJ_PARSER_STATE_H
-#define ARL_OBJ_PARSER_STATE_H
+#ifndef LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
+#define LIBGCV_WFOBJ_OBJ_PARSER_STATE_H
 
 #include "common.h"
 
@@ -34,9 +34,6 @@
 #include <map>
 #include <algorithm>
 #include <cstring>
-
-#include <boost/shared_ptr.hpp>
-using boost::shared_ptr;
 
 inline bool operator<(const obj_polygonal_attributes_t &lhs,
 		      const obj_polygonal_attributes_t &rhs)
@@ -285,7 +282,7 @@ struct basic_parser_state {
 	string_type path;
 	string_type dir;
 	std::size_t lineno;
-	shared_ptr<FILE> file;
+	FILE *file;
     };
 
     std::vector<file_node> file_stack;

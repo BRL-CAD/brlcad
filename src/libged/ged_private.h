@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef __GED_PRIVATE_H__
-#define __GED_PRIVATE_H__
+#ifndef LIBGED_GED_PRIVATE_H
+#define LIBGED_GED_PRIVATE_H
 
 #include "common.h"
 
@@ -119,9 +119,6 @@ extern int edarb_facedef(void *data, int argc, const char *argv[]);
 /* defined in globals.c */
 extern struct solid _FreeSolid;
 
-/* defined in attr.c */
-extern int _ged_cmpattr(const void *p1,
-			const void *p2);
 
 /* defined in ged.c */
 extern void _ged_print_node(struct ged *gedp,
@@ -252,20 +249,20 @@ extern void _ged_do_list(struct ged *gedp,
 extern vect_t _ged_eye_model;
 extern mat_t _ged_viewrot;
 extern struct ged *_ged_current_gedp;
-extern int _ged_cm_vsize(int argc,
-			 char **argv);
-extern int _ged_cm_eyept(int argc,
-			 char **argv);
-extern int _ged_cm_lookat_pt(int argc,
-			     char **argv);
-extern int _ged_cm_vrot(int argc,
-			char **argv);
-extern int _ged_cm_orientation(int argc,
-			       char **argv);
-extern int _ged_cm_set(int argc,
-		       char **argv);
-extern int _ged_cm_null(int argc,
-			char **argv);
+extern int _ged_cm_vsize(const int argc,
+			 const char **argv);
+extern int _ged_cm_eyept(const int argc,
+			 const char **argv);
+extern int _ged_cm_lookat_pt(const int argc,
+			     const char **argv);
+extern int _ged_cm_vrot(const int argc,
+			const char **argv);
+extern int _ged_cm_orientation(const int argc,
+			       const char **argv);
+extern int _ged_cm_set(const int argc,
+		       const char **argv);
+extern int _ged_cm_null(const int argc,
+			const char **argv);
 
 
 /* defined in ls.c */
@@ -465,19 +462,34 @@ extern int _ged_do_tra(struct ged *gedp,
 		       vect_t tvec,
 		       int (*func)());
 
+/* Internal implementation of ged_results - since the
+ * details of the struct are not for public access,
+ * the real definition of the struct goes here.  The public
+ * header has only the notion of a ged_results structure.*/
+struct ged_results {
+        struct bu_ptbl *results_tbl;
+};
+
 /* defined in ged_util.c */
-extern int _ged_results_append_str(struct ged *gedp,
-				   char *result_string);
 
-extern int _ged_results_append_vls(struct ged *gedp,
-				   struct bu_vls *result_vls);
+/* Called by ged_init */
+extern int _ged_results_init(struct ged_results *results);
 
-extern int _ged_results_clear(struct ged *gedp);
+/* This function adds a copy of result_string into the results container.
+ * To duplicate a VLS string, use bu_vls_addr to wrap the vls before
+ * passing it to _ged_results_add, e.g.:
+ *
+ * _ged_results_add(gedp->ged_results, bu_vls_addr(my_vls_ptr));
+ *
+ */
+extern int _ged_results_add(struct ged_results *results, const char *result_string);
 
+/* defined in track.c */
+extern int _ged_track(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
 
 __END_DECLS
 
-#endif /* __GED_PRIVATE_H__ */
+#endif /* LIBGED_GED_PRIVATE_H */
 
 /** @} */
 /*

@@ -1,7 +1,7 @@
 #                        C O M B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -878,7 +878,7 @@ proc comb_apply { id } {
 
     set top .$id.comb
 
-    # get the Boolean expression fron the text widget
+    # get the Boolean expression from the text widget
     set comb_control($id,comb) [$top.combT get 0.0 end]
 
     # if someone has edited the combination name, take care about

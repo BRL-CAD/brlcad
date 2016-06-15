@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,8 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "dg.h"
 #include "solid.h"
 #include "raytrace.h"
@@ -113,8 +114,6 @@ static struct funtab joint_tab[] = {
 
 
 /**
- * J O I N T _ C M D
- *
  * Check a table for the command, check for the correct minimum and
  * maximum number of arguments, and pass control to the proper
  * function.  If the number of arguments is incorrect, print out a
@@ -213,8 +212,6 @@ ged_joint(struct ged *gedp, int argc, const char *argv[])
 }
 
 /**
- * H E L P C O M M
- *
  * Common code for help commands
  */
 HIDDEN int
@@ -247,8 +244,6 @@ helpcomm(struct ged *gedp, int argc, const char *argv[], struct funtab *function
 }
 
 /**
- * F _ H E L P
- *
  * Print a help message, two lines for each command.  Or, help with
  * the indicated commands.
  */
@@ -549,27 +544,30 @@ static const char *lex_name;
 static double mm2base, base2mm;
 
 static void
-parse_error(struct ged *gedp, struct bu_vls *str, char *error)
+parse_error(struct ged *gedp, struct bu_vls *vlsp, char *error)
 {
     char *text;
     size_t i;
+    size_t len;
+    const char *str = bu_vls_addr(vlsp);
 
     /* initialize result */
     bu_vls_trunc(gedp->ged_result_str, 0);
 
-    if (!str->vls_str) {
+    len = bu_vls_strlen(vlsp);
+    if (!len) {
 	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n", lex_name, lex_line, error);
 	return;
     }
-    text = bu_malloc(str->vls_offset+2, "error pointer");
-    for (i=0; i<str->vls_offset; i++) {
-	text[i]=(str->vls_str[i] == '\t')? '\t' : '-';
+    text = (char *)bu_malloc(len+2, "error pointer");
+    for (i=0; i<len; i++) {
+	text[i]=(str[i] == '\t')? '\t' : '-';
     }
-    text[str->vls_offset] = '^';
-    text[str->vls_offset+1] = '\0';
+    text[len] = '^';
+    text[len+1] = '\0';
 
     {
-	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str->vls_str, text);
+	bu_vls_printf(gedp->ged_result_str, "%s:%d %s\n%s\n%s\n", lex_name, lex_line, error, str, text);
     }
 
     bu_free(text, "error pointer");
@@ -692,7 +690,7 @@ skip_group(struct ged *gedp, FILE *fip, struct bu_vls *str)
 	}
     }
     if (joint_debug & DEBUG_J_PARSE) {
-	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n", (char *)NULL);
+	bu_vls_printf(gedp->ged_result_str, "skip_group: Done....\n");
     }
 
 }
@@ -2229,8 +2227,8 @@ hold_point_location(struct ged *gedp, fastf_t *loc, struct hold_point *hp)
 	 * this prints an error message instead of crashing MGED.
 	 */
 	if (!hp->path.fp_names) {
-	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! %s not found!\n",
-			  hp->path.fp_names);
+	    bu_vls_printf(gedp->ged_result_str, "hold_point_location(): null pointer! '%s' not found!\n",
+			  "hp->path.fp_names");
 	    return 0;
 	}
 	    if (rt_db_get_internal(&intern, hp->path.fp_names[hp->path.fp_maxlen-1], dbip, NULL, &rt_uniresource) < 0)
@@ -2305,8 +2303,8 @@ struct solve_stack {
     struct bu_list l;
     struct joint *jp;
     int freedom;
-    double old;
-    double new;
+    double oldval;
+    double newval;
 };
 #define SOLVE_STACK_MAGIC 0x76766767
 struct bu_list solve_head = {
@@ -2605,9 +2603,9 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	BU_GET(ssp, struct solve_stack);
 	ssp->jp = bestjoint;
 	ssp->freedom = bestfreedom;
-	ssp->old = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
+	ssp->oldval = (bestfreedom<3) ? bestjoint->rots[bestfreedom].current :
 	    bestjoint->dirs[bestfreedom-3].current;
-	ssp->new = bestvalue;
+	ssp->newval = bestvalue;
 	BU_LIST_PUSH(&solve_head, ssp);
     }
     if (bestfreedom < 3) {
@@ -2631,12 +2629,12 @@ reject_move(struct ged *gedp)
 
     if (joint_debug & DEBUG_J_SYSTEM) {
 	bu_vls_printf(gedp->ged_result_str, "reject_move: rejecting %s(%d, %g)->%g\n", ssp->jp->name,
-		      ssp->freedom, ssp->new, ssp->old);
+		      ssp->freedom, ssp->newval, ssp->oldval);
     }
     if (ssp->freedom<3) {
-	ssp->jp->rots[ssp->freedom].current = ssp->old;
+	ssp->jp->rots[ssp->freedom].current = ssp->oldval;
     } else {
-	ssp->jp->dirs[ssp->freedom-3].current = ssp->old;
+	ssp->jp->dirs[ssp->freedom-3].current = ssp->oldval;
     }
     joint_move(gedp, ssp->jp);
     BU_PUT(ssp, struct solve_stack);
@@ -3058,7 +3056,7 @@ static char *
 hold_point_to_string(struct ged *gedp, struct hold_point *hp)
 {
 #define HOLD_POINT_TO_STRING_LEN 1024
-    char *text = bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
+    char *text = (char *)bu_malloc(HOLD_POINT_TO_STRING_LEN, "hold_point_to_string");
     char *path;
     vect_t loc = VINIT_ZERO;
 
@@ -3514,17 +3512,16 @@ static struct db_tree_state mesh_initial_tree_state = {
 };
 
 /*
- * F _ J M E S H - function
  * The cvt_vlblock_to_solids() function is not converted it, a bu_bomb() function call
  * it is used temporarily to return from the function. The name variable is commented
  * for the moment, it is not used until the cvt_vlblock_to_solids() cand be fixed.
  * The UNUSED option must be removed from the int argc and const char *argv[] parameters
  * when the cvt_vlblock_to_solids() function it is fixed.
+ *
  * The joint accept option is not working properly, it needs f_Jmesh() function,
  * for the ANIM name parameter that currently it is commented. The same thing
  * applies for the mesh and solve options.
  */
-
 int
 f_Jmesh(struct ged *gedp, int UNUSED(argc), const char *UNUSED(argv[]))
 {

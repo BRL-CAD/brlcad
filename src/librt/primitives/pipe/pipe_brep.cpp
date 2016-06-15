@@ -1,7 +1,7 @@
 /*                    P I P E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,9 +31,6 @@
 #include "wdb.h"
 
 
-/**
- * R T _ P I P E _ B R E P
- */
 void
 generate_curves(fastf_t id, fastf_t od, ON_Plane *plane, ON_SimpleArray<ON_Curve*> *outer, ON_SimpleArray<ON_Curve*> *inner)
 {
@@ -248,11 +245,11 @@ rt_pipe_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
 	    VCROSS(norm, n1, n2);
 	    VUNITIZE(n1);
 	    VUNITIZE(n2);
-	    angle = bn_pi - acos(VDOT(n1, n2));
+	    angle = M_PI - acos(VDOT(n1, n2));
 	    dist_to_bend = curp->pp_bendradius * tan(angle/2.0);
 
 	    if (isnan(dist_to_bend) || VNEAR_ZERO(norm, SQRT_SMALL_FASTF) || NEAR_ZERO(dist_to_bend, SQRT_SMALL_FASTF)) {
-		// points are colinear, treat as linear segment
+		// points are collinear, treat as linear segment
 		VSUB2(pipe_dir, current_point, curp->pp_coord);
 		bn_vec_ortho(x_dir, pipe_dir);
 		VCROSS(y_dir, pipe_dir, x_dir);

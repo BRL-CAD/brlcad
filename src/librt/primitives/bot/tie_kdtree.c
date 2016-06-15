@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #endif
 
 #include "bio.h"
-#include "bu.h"
+
 #include "vmath.h"
 #include "rtgeom.h"
 #include "raytrace.h"
@@ -570,7 +570,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
     TIE_3 cmin[2], cmax[2], center[2], half_size[2];
     unsigned int i, j, n, split = 0, cnt[2];
 
-    if(node_gd == NULL) {
+    if (node_gd == NULL) {
 	bu_log("null geom, aborting\n");
 	return;
     }
@@ -652,8 +652,8 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	/* Resize Tri List to actual amount of memory used */
 	/* TODO: examine if this is correct. A 0 re-alloc is probably a very bad
 	 * thing. */
-	if( child[n]->tri_num == 0 ) {
-	    if( child[n]->tri_list ) {
+	if ( child[n]->tri_num == 0 ) {
+	    if ( child[n]->tri_list ) {
 		bu_free( child[n]->tri_list, "tri_list");
 		child[n]->tri_list = NULL;
 	    }

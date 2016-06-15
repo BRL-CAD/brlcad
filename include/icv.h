@@ -1,7 +1,7 @@
 /*                           I C V . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
  *
  */
 
-#ifndef __ICV_H__
-#define __ICV_H__
+#ifndef ICV_H
+#define ICV_H
+
+#include "common.h"
 
 __BEGIN_DECLS
 
@@ -40,26 +42,9 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/**
- * I C V _ R O T
- *
- * Rotate an image.
- * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
- *
- */
-ICV_EXPORT extern int icv_rot(int argv, char **argc);
-
-
 /** @addtogroup image */
 /** @ingroup data */
 /** @{ */
-/** @file libicv/fileformat.c
- *
- * image read/write routines
- *
- * read/write images in a variety of formats.
- *
- */
 
 typedef enum {
     ICV_IMAGE_AUTO,
@@ -130,21 +115,41 @@ typedef struct icv_image icv_image_t;
  */
 #define ICV_IMAGE_IS_INITIALIZED(_i) (((struct icv_image *)(_i) != ICV_IMAGE_NULL) && LIKELY((_i)->magic == ICV_IMAGE_MAGIC))
 
+/* Validation Macros */
+/**
+ * Validates input icv_struct, if failure (in validation) returns -1
+ */
+#define ICV_IMAGE_VAL_INT(_i)  if (!ICV_IMAGE_IS_INITIALIZED(_i)) return -1
+
+/**
+ * Validates input icv_struct, if failure (in validation) returns NULL
+ */
+#define ICV_IMAGE_VAL_PTR(_i) if (!ICV_IMAGE_IS_INITIALIZED(_i)) return NULL
+
 
 /* Data conversion MACROS  */
-
 /**
  * Converts to double (icv data) type from unsigned char(8bit).
  */
 #define ICV_CONV_8BIT(data) ((double)(data))/255.0
 
+/** @file libicv/fileformat.c
+ *
+ * image read/write routines
+ *
+ * read/write images in a variety of formats.
+ *
+ */
+
 /**
  * Finds the Image format based on heuristics depending on the file
- * name.  @param filename Filename of the image whose format is to be
- * know.  @param trimmedname Buffer for storing filename after
- * removing extensions @return File Format
+ * name.
+ * @param filename Filename of the image whose format is to be  know
+ * @param trimmedname Buffer for storing filename after removing
+ * extensions
+ * @return File Format
  */
-ICV_EXPORT extern int icv_guess_file_format(const char *filename, char *trimmedname);
+ICV_EXPORT extern ICV_IMAGE_FORMAT icv_guess_file_format(const char *filename, char *trimmedname);
 
 /**
  * This function allocates memory for an image and returns the
@@ -174,7 +179,8 @@ ICV_EXPORT extern icv_image_t *icv_create(int width, int height, ICV_COLOR_SPACE
 ICV_EXPORT int icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type);
 
 /**
- * Writes a pixel to the specified coordinates in the data of ICV struct.
+ * Writes a pixel to the specified coordinates in the data of ICV
+ * struct.
  *
  * @param bif ICV struct where data is to be written
  * @param x x-dir coordinate of the pixel
@@ -199,14 +205,10 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
 
 /**
  * Load a file into an ICV struct. For most formats, this will be
- * called with format=ICV_IMAGE_AUTO, hint_format=0, hint_width=0,
- * hint_height=0 and hint_depth=0 for default values. At the moment,
- * the data is packed into the data field as rgb24 (raw pix style).
+ * called with format=ICV_IMAGE_AUTO.
  *
- * For pix and bw files, having width and height set to 0 will trigger
- * a heuristic sizing algorithm based on file size, assuming that the
- * image is square at first, then looking through a set of common
- * sizes, finally assuming 512x512.
+ * The data is packed in icv_image struct in double format with varied
+ * channels as per the specification of image to be loaded.
  *
  * To read stream from stdin pass NULL pointer for filename.
  *
@@ -216,7 +218,6 @@ ICV_EXPORT extern int icv_write(icv_image_t *bif, const char*filename, ICV_IMAGE
  * size = total bytes read
  *
  * @param filename File to read
-
  * @param hint_format Probable format of the file, typically
  * ICV_IMAGE_AUTO
  * @param hint_width Width when passed as parameter from calling
@@ -237,7 +238,7 @@ ICV_EXPORT extern icv_image_t *icv_zero(icv_image_t *bif);
  * This function frees the allocated memory for a ICV Structure and
  * data.
  */
-ICV_EXPORT extern void icv_destroy(icv_image_t *bif);
+ICV_EXPORT extern int icv_destroy(icv_image_t *bif);
 
 /** @file libicv/color_space.c
  *
@@ -277,12 +278,12 @@ typedef enum {
 #define icv_rgb2gray_crt(_a) icv_rgb2gray(_a, ICV_COLOR_RGB, 0.26, 0.66, 0.08)
 
 /**
- * converts a three plane image to single plane image.  This function
- * will combine or select planes of the image based on the input
- * arguments
+ * converts a three channel rgb image to single channel gray-image.
+ * This function will combine or select planes of the image based on
+ * the input arguments.
  *
  * A normal calling of this functions is as follows:
- * icv_image_rgb2gray(bif, 0 ,0 ,0 ,0 ,0); where bif is the rgb image
+ * icv_image_rgb2gray(bif, 0, 0, 0, 0); where bif is the rgb image
  * to be converted.
  *
  * @param color Chooses color planes to be selected for combination.
@@ -371,11 +372,11 @@ ICV_EXPORT extern int icv_crop(icv_image_t *img,
  * All the pixels higher than the max range are set to MAX (1.0).
  * All the pixels lower than the min range are set to MIN (0.0).
  *
- * Note if an image(bif) is sanitized then,  (bif->flags&&ICV_SANITIZED)
- * is true.
+ * Note if an image(bif) is sanitized then,
+ * (bif->flags&&ICV_SANITIZED)  is true.
  *
  */
-ICV_EXPORT void icv_sanitize(icv_image_t* img);
+ICV_EXPORT int icv_sanitize(icv_image_t* img);
 
 /**
  * This adds a constant value to all the pixels of the image.  Also if
@@ -384,29 +385,30 @@ ICV_EXPORT void icv_sanitize(icv_image_t* img);
  *
  * Note to set the flag for a bif (icv_image struct);
  * bif->flags |= ICV_OPERATIONS_MODE;
+ *
  */
-ICV_EXPORT void icv_add_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_add_val(icv_image_t* img, double val);
 
 /**
  * This multiplies all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_multiply_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_multiply_val(icv_image_t* img, double val);
 
 /**
  * This divides all the pixels of the image with a constant Value.
  * Also if the flag ICV_OPERATIONS_MODE is set this doesn't sanitize
  * the image.
  */
-ICV_EXPORT void icv_divide_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_divide_val(icv_image_t* img, double val);
 
 /**
  * This raises all the pixels of the image to a constant exponential
  * power.  Also if the flag ICV_OPERATIONS_MODE is set this doesn't
  * sanitize the image.
  */
-ICV_EXPORT void icv_pow_val(icv_image_t* img, double val);
+ICV_EXPORT int icv_pow_val(icv_image_t* img, double val);
 
 /**
  * This routine adds pixel value of one image to pixel value of other
@@ -422,6 +424,11 @@ ICV_EXPORT icv_image_t *icv_add(icv_image_t *img1, icv_image_t *img2);
  * image.
  *
  * Also it sanitizes the image.
+ *
+ * @param img1 First Image.
+ * @param img2 Second Image.
+ * @return New icv_image (img1 - img2)
+ *
  */
 ICV_EXPORT icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
 
@@ -431,6 +438,11 @@ ICV_EXPORT icv_image_t *icv_sub(icv_image_t *img1, icv_image_t *img2);
  * image.
  *
  * Also it sanitizes the image.
+ *
+ * @param img1 First Image.
+ * @param img2 Second Image.
+ * @return New icv_image (img1 * img2)
+ *
  */
 ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
 
@@ -440,8 +452,13 @@ ICV_EXPORT icv_image_t *icv_multiply(icv_image_t *img1, icv_image_t *img2);
  * image.
  *
  * Also it sanitizes the image.
+ *
+ * @param img1 First Image.
+ * @param img2 Second Image.
+ * @return New icv_image (img1 / img2)
+ *
  */
-ICV_EXPORT icv_image_t *icv_divides(icv_image_t *img1, icv_image_t *img2);
+ICV_EXPORT icv_image_t *icv_divide(icv_image_t *img1, icv_image_t *img2);
 
 /**
  * Change the saturation of image pixels.  If sat is set to 0.0 the
@@ -471,14 +488,16 @@ typedef enum {
     ICV_FILTER_VERTICAL_GRAD,
     ICV_FILTER_HIGH_PASS,
     ICV_FILTER_NULL,
-    ICV_FILTER_BOXCAR_AVERAGE,
-    ICV_FILTER_3_LOW_PASS,
-    ICV_FILTER_3_HIGH_PASS,
-    ICV_FILTER_3_BOXCAR_AVERAGE,
-    ICV_FILTER_3_ANIMATION_SMEAR,
-    ICV_FILTER_3_NULL
+    ICV_FILTER_BOXCAR_AVERAGE
 } ICV_FILTER;
 
+typedef enum {
+    ICV_FILTER3_LOW_PASS,
+    ICV_FILTER3_HIGH_PASS,
+    ICV_FILTER3_BOXCAR_AVERAGE,
+    ICV_FILTER3_ANIMATION_SMEAR,
+    ICV_FILTER3_NULL
+} ICV_FILTER3;
 
 /**
  * Filters an image with the specified filter type. Basically
@@ -495,7 +514,8 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 /**
  * Filters a set of three image with the specified filter type.  Does
  * zero_padding for outbound pixels.  Finds the resultant pixel with
- * the help of neighbouring pixels in all the three images.
+ * the help of neighboring pixels in all the three images.
+ *
  *
  * @return Resultant image.
  *
@@ -503,7 +523,7 @@ ICV_EXPORT extern int icv_filter(icv_image_t *img, ICV_FILTER filter_type);
 ICV_EXPORT extern icv_image_t *icv_filter3(icv_image_t *old_img,
 					       icv_image_t *curr_img,
 					       icv_image_t *new_img,
-					       ICV_FILTER filter_type);
+					       ICV_FILTER3 filter_type);
 
 
 /**
@@ -588,16 +608,63 @@ ICV_EXPORT double *icv_sum(icv_image_t* img);
  */
 ICV_EXPORT double *icv_max(icv_image_t* img);
 
+/**
+ * Calculates mode of the values of each channel.
+ * Mode value are calculated for quantified data which is sent as
+ * bins(histogram Information). For any image mode is a 'c' length
+ * array where c is the number of channels.
+ *
+ * To calculate the mode of an icv_image, a default call is as follows
+ *   icv_mode(img, icv_hist(img, n_bins), n_bins);
+ *
+ * This call first calculates the histogram of the image. then finds
+ * the mode values from histogram of each channel.
+ *
+ */
 ICV_EXPORT int *icv_mode(icv_image_t* img, size_t** bins, int n_bins);
 
+/**
+ * Calculates median of the values of each channel.
+ * Median value are calculated for quantified data which is sent as
+ * bins(histogram information). For any image mode is a 'c' length
+ * array, where c is the number of channels.
+ *
+ * To calculate the median of an icv_image, a default call is as
+ * follows :
+ *    icv_median(img, icv_hist(img, n_bins), n_bins);
+ *
+ * This call first calculates the histogram of the image. then finds
+ * the mode values from histogram of each channel.
+ *
+ */
 ICV_EXPORT int *icv_median(icv_image_t* img, size_t** bins, int n_bins);
 
+/**
+ * Calculates the skewness in data.
+ *
+ * To calculate the skewness in an icv_image, a default call is as
+ * follows :
+ *   icv_skew(img, icv_hist(img, n_bins), n_bins);
+ *
+ * @return c length double array where c is the number of channels in
+ * the img
+ */
 ICV_EXPORT double *icv_skew(icv_image_t* img, size_t** bins, int n_bins);
 
+/**
+ * Calculates the variance in data.
+ *
+ * To calculate the variance in an icv_image, a default call is as
+ * follows :
+ *    icv_variance(img, icv_hist(img, n_bins), n_bins);
+ *
+ * @return c length double array where c is the number of channels in
+ * the img
+ */
 ICV_EXPORT double *icv_var(icv_image_t* img, size_t** bins, int n_bins);
 
 
-/** @file decimate.c
+/** @file size.c
  *
  * This file contains routines to scale down an image to a lower
  * resolution or scale up an image to an higher Resolution.
@@ -623,7 +690,7 @@ typedef enum {
  * e.g. icv_resize(bif, ICV_RESIZE_SHRINK,0,0,2);
  *  shrinks the image with a factor of 2.
  *
- * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbour
+ * c) ICV_RESIZE_NINTERP : This interpolates using nearest neighbor
  * method.
  * e.g. icv_resize(bif, ICV_RESIZE_NINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
@@ -633,17 +700,31 @@ typedef enum {
  * e.g. icv_resize(bif, ICV_RESIZE_BINTERP,1024,1024,0);
  *  interpolates the output image to have the size of 1024X1024.
  *
+ * resizes the image inplace.
+ *
+ * @param bif Image (packed in icv_image struct)
+ * @param method One of the modes.
+ * @param out_width Out Width.
+ * @param out_height Out Height.
+ * @param factor Integer type data representing the factor to be
+ * shrunken
+ * @return 0 on success and -1 on failure.
  */
-
 ICV_EXPORT int icv_resize(icv_image_t *bif, ICV_RESIZE_METHOD method, unsigned int out_width, unsigned int out_height, unsigned int factor);
-
 
 /** @} */
 /* end image utilities */
 
+/**
+ * Rotate an image.
+ * %s [-rifb | -a angle] [-# bytes] [-s squaresize] [-w width] [-n height] [-o outputfile] inputfile [> outputfile]
+ *
+ */
+ICV_EXPORT extern int icv_rot(int argv, char **argc);
+
 __END_DECLS
 
-#endif /* __ICV_H__ */
+#endif /* ICV_H */
 
 /*
  * Local Variables:

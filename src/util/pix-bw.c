@@ -1,7 +1,7 @@
 /*                        P I X - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,10 +35,10 @@
 #include <math.h>
 #include <string.h>
 #include "bio.h"
-#include "icv.h"
 
 #include "bu.h"
 #include "vmath.h"
+#include "icv.h"
 
 
 unsigned char ibuf[3*1024], obuf[1024];
@@ -68,17 +68,18 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "s:w:n:R:G:B:o:h?NC")) != -1) {
+    bu_optind = 1;
+    while ((c = bu_getopt(argc, argv, "e:s:w:n:R:G:B:o:h?NC")) != -1) {
 	switch (c) {
 	    case 'e' :
-	        if(BU_STR_EQUAL(bu_optarg, "ntsc")) {
+	        if (BU_STR_EQUAL(bu_optarg, "ntsc")) {
 		    rweight = 0.30;
 		    gweight = 0.59;
 		    bweight = 0.11;
 		    red = green = blue = 1;
 		    color = ICV_COLOR_RGB;
 		}
-		else if(BU_STR_EQUAL(bu_optarg, "crt")) {
+		else if (BU_STR_EQUAL(bu_optarg, "crt")) {
 		    rweight = 0.26;
 		    gweight = 0.66;
 		    bweight = 0.08;
@@ -149,12 +150,17 @@ main(int argc, char **argv)
 	bu_log("%s", usage);
 	return 1;
     }
+
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+    setmode(fileno(stderr), O_BINARY);
+
     img = icv_read(in_file, ICV_IMAGE_PIX, inx, iny);
 
     if (img == NULL)
 	return 1;
 
-    if(red && green && blue)
+    if (red && green && blue)
 	color = ICV_COLOR_RGB;
     else if (blue && green)
 	color = ICV_COLOR_BG;

@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
 #include "db.h"
 #include "vmath.h"
 #include "nmg.h"
@@ -887,6 +889,10 @@ Add_stragglers_to_groups(void)
 	/* visit node */
 	CK_TREE_MAGIC(ptr);
 
+	/* FIXME: should not be manually recreating the wmember list
+	 * when extending it.  just use a null-terminated list and
+	 * realloc as needed...
+	 */
 	if (!ptr->in_comp_group && ptr->region_id > 0 && !is_a_hole(ptr->region_id)) {
 	    /* add this component to a series */
 
@@ -895,7 +901,7 @@ Add_stragglers_to_groups(void)
 		ssize_t new_cnt, i;
 		struct bu_list *list_first;
 
-		new_cnt = (ssize_t)ceil(region_id_max/1000.0);
+		new_cnt = lrint(ceil(region_id_max/1000.0));
 		new_head = (struct wmember *)bu_calloc(new_cnt, sizeof(struct wmember), "group_head list");
 		bu_log("ptr->region_id=%d region_id_max=%d new_cnt=%ld\n", ptr->region_id, region_id_max, new_cnt);
 
@@ -1968,7 +1974,7 @@ f4_Add_bot_face(int pt1, int pt2, int pt3, fastf_t thick, int pos)
 	thickness[face_count] = thick;
 	facemode[face_count] = pos;
     } else {
-	thickness[face_count] = 0.0;
+	thickness[face_count] = 0, 0;
 	facemode[face_count] = 0;
     }
 
@@ -2150,7 +2156,7 @@ make_bot_object(void)
     for (i=0; i<face_count*3; i++)
 	faces[i] -= min_pt;
     bot_ip.num_faces = face_count;
-    bot_ip.faces = bu_calloc(face_count*3, sizeof(int), "BOT faces");
+    bot_ip.faces = (int *)bu_calloc(face_count*3, sizeof(int), "BOT faces");
     for (i=0; i<face_count*3; i++)
 	bot_ip.faces[i] = faces[i];
 

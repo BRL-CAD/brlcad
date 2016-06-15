@@ -14,6 +14,7 @@ set(LIBBU_SOURCES
   affinity.c
   argv.c
   avs.c
+  b64.c
   backtrace.c
   badmagic.c
   basename.c
@@ -31,6 +32,7 @@ set(LIBBU_SOURCES
   dirname.c
   date-time.c
   dlfcn.c
+  encode.c
   endian.c
   escape.c
   fchmod.c
@@ -64,7 +66,6 @@ set(LIBBU_SOURCES
   process.c
   progname.c
   ptbl.c
-  quote.c
   rb_create.c
   rb_delete.c
   rb_diag.c
@@ -78,6 +79,7 @@ set(LIBBU_SOURCES
   realpath.c
   semaphore.c
   simd.c
+  sort.c
   sscanf.c
   str.c
   tcl.c
@@ -108,6 +110,7 @@ BRLCAD_ADDDATA(nonie.r.12 vfont)
 add_subdirectory(tests)
 
 set(bu_ignore_files
+  bu_internals.h
   parallel.h
   rb_internals.h
   uce-dirent.h

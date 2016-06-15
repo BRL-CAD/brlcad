@@ -1,7 +1,7 @@
 #                     A R C H E R . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -254,7 +254,7 @@ package provide Archer 1.0
 	method buildViewAxesPreferences {}
 	method doAboutArcher {}
 	method doarcherHelp {}
-	method handleConfigure {}
+	method handleMap {}
 	method handleDisplayEscape {_dm}
 	method launchDisplayMenuBegin {_dm _m _x _y}
 	method launchDisplayMenuEnd {}
@@ -445,7 +445,6 @@ package provide Archer 1.0
 
     private {
 	variable mInstanceInit 1
-	method brepDragHandler {x y win startMode}
     }
 }
 
@@ -543,8 +542,8 @@ package provide Archer 1.0
 	gedCmd lod off
     }
 
-
-    bind [namespace tail $this] <Configure> [::itcl::code $this handleConfigure]
+    # resize and position window after it's drawn
+    bind [namespace tail $this] <Map> [::itcl::code $this handleMap]
 }
 
 
@@ -1138,7 +1137,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 				 -G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		} else {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    set ret [eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			--non-line-color [list $necolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
@@ -1153,7 +1170,25 @@ package provide Archer 1.0
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
 		}  {
+		    $itk_component(ged) refresh_off
+		    if {$mGhostObjects != ""} {
+			set wlist [$itk_component(ged) who]
+			set size [$itk_component(ged) size]
+			set center [$itk_component(ged) center]
+			eval $itk_component(ged) draw $mGhostObjects
+		    }
+		    set vparams [split [$itk_component(ged) get_eyemodel] "\n"]
+		    if {$mGhostObjects != ""} {
+			eval $itk_component(ged) erase $mGhostObjects
+			eval $itk_component(ged) draw $wlist
+			$itk_component(ged) size $size
+			$itk_component(ged) center $center
+		    }
+		    set eye_pt [lrange [concat [regsub {;$} [lindex $vparams 2] ""]] 1 end]
+		    $itk_component(ged) refresh_on
+
 		    eval $itk_component(ged) rtwizard \
+			--eye_pt [list $eye_pt] \
 			-C [list $bcolor] --line-color [list $ecolor] \
 			-w $w -n $n -p $port -c $mColorObjects -g $mGhostObjects -l $mEdgeObjects \
 			-G $mRtWizardGhostIntensity -O $mRtWizardOccMode
@@ -2123,8 +2158,12 @@ package provide Archer 1.0
 	    set mHPaneFraction1 80
 	    set mHPaneFraction2 20
 	} else {
-	    set xy [winfo pointerxy [namespace tail $this]]
-	    wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    if {$mCmdWindowGeometry != ""} {
+		wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry
+	    } else {
+		set xy [winfo pointerxy [namespace tail $this]]
+		wm geometry $itk_component(sepcmdT) "+[lindex $xy 0]+[lindex $xy 1]"
+	    }
 	}
 
 	after idle "$itk_component(cmd) configure -cmd_prefix \"[namespace tail $this] cmd\""
@@ -3124,13 +3163,18 @@ proc title_node_handler {node} {
     grid $itk_component(maxcombmembL) -column 0 -row $i -sticky e
     grid $itk_component(maxcombmembE) -column 1 -row $i -sticky ew
     incr i
-    set i [buildOtherGeneralPreferences $i]
+    set ilist [buildOtherGeneralPreferences $i]
+    set i [lindex $ilist 0]
+    set ri [lindex $ilist 1]
+    if {$ri == ""} {
+	set ri $i
+    }
     grid $itk_component(affectedTreeNodesModeCB) \
 	-columnspan 2 \
 	-column 0 \
 	-row $i \
 	-sticky sw
-    grid rowconfigure $itk_component(generalF) $i -weight 1
+    grid rowconfigure $itk_component(generalF) $ri -weight 1
     incr i
     grid $itk_component(listViewAllAffectedCB) \
 	-columnspan 2 \
@@ -3878,6 +3922,9 @@ proc title_node_handler {node} {
 	-command [::itcl::code $this askToSave] \
 	-state disabled
     $itk_component(${_prefix}filemenu) add command \
+	-label "Export..." \
+	-command [::itcl::code $this exportDb]
+    $itk_component(${_prefix}filemenu) add command \
 	-label "Revert" \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -4215,12 +4262,18 @@ proc title_node_handler {node} {
 
 }
 
-::itcl::body Archer::handleConfigure {} {
+::itcl::body Archer::handleMap {} {
     if {$mWindowGeometry != ""} {
-	wm geometry [namespace tail $this] $mWindowGeometry
+	after idle "wm geometry [namespace tail $this] $mWindowGeometry"
+    } else {
+	after idle "wm geometry [namespace tail $this] $itk_option(-geometry)"
     }
 
-    bind [namespace tail $this] <Configure> {}
+    if {$mSeparateCommandWindow && $mCmdWindowGeometry != ""} {
+	after idle [::itcl::code wm geometry $itk_component(sepcmdT) $mCmdWindowGeometry]
+    }
+
+    bind [namespace tail $this] <Map> {}
 }
 
 ::itcl::body Archer::handleDisplayEscape {_dm} {
@@ -5398,6 +5451,8 @@ proc title_node_handler {node} {
     $itk_component(menubar) menuconfigure .file.save \
 	-command [::itcl::code $this askToSave] \
 	-state disabled
+    $itk_component(menubar) menuconfigure .file.export \
+	-command [::itcl::code $this exportDb]
     $itk_component(menubar) menuconfigure .file.revert \
 	-command [::itcl::code $this askToRevert] \
 	-state disabled
@@ -6473,17 +6528,6 @@ proc title_node_handler {node} {
     $itk_component(ged) rect lwidth 0
 }
 
-::itcl::body Archer::brepDragHandler {x y win startMode} {
-    # if we've switched to a different (standard) editing mode or if
-    # the edit command has been unset to exit the current mode, then
-    # delete this binding and clear the edit state to ensure it isn't
-    # restored until we explicitly switch back
-    if {$mDefaultBindingMode != $startMode || $GeometryEditFrame::mEditCommand == ""} {
-	bind $win <Button1-Motion> ""
-	$itk_component(brepView) clearEditState
-    }
-}
-
 ::itcl::body Archer::beginObjTranslate {} {
     set obj $mSelectedObjPath
 
@@ -6522,7 +6566,9 @@ proc title_node_handler {node} {
 		    bind $win <1> "$itk_component(ged) pane_otranslate_mode $dname $obj %x %y; break"
 		}
 	    } elseif {$mSelectedObjType == "brep"} {
-		bind $win <Button1-Motion> "[::itcl::code $this brepDragHandler %x %y $win $mDefaultBindingMode]; break"
+		$itk_component(ged) brep [file tail $obj] plot SCV
+		bind $win <1> "$itk_component(ged) mouse_brep_selection_append $obj %x %y; break"
+		continue
 	    } else {
 		bind $win <1> "$itk_component(ged) pane_$GeometryEditFrame::mEditCommand\_mode $dname $obj $GeometryEditFrame::mEditParam1 %x %y; break"
 	    }
@@ -9380,6 +9426,10 @@ proc title_node_handler {node} {
     puts $_pfile "set mVPaneToggle5 $mVPaneToggle5"
 
     puts $_pfile "set mWindowGeometry [winfo geometry [namespace tail $this]]"
+
+    if {$mSeparateCommandWindow} {
+	puts $_pfile "set mCmdWindowGeometry [winfo geometry $itk_component(sepcmdT)]"
+    }
 
     puts $_pfile "set mShowViewAxes $mShowViewAxes"
     puts $_pfile "set mShowModelAxes $mShowModelAxes"

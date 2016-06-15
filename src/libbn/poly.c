@@ -1,7 +1,7 @@
 /*                          P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,13 @@
 
 #include "common.h"
 
+#include <stdlib.h>  /* for abs */
 #include <stdio.h>
 #include <math.h>
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "bn.h"
 

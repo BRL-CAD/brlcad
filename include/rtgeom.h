@@ -1,7 +1,7 @@
 /*                        R T G E O M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,13 +30,17 @@
  *
  */
 
-#ifndef __RTGEOM_H__
-#define __RTGEOM_H__
+#ifndef RTGEOM_H
+#define RTGEOM_H
 
 #include "common.h"
 
+#include "bu/bitv.h"
+#include "bu/color.h"
+#include "bu/list.h"
+#include "bu/mapped_file.h"
+#include "bu/vls.h"
 #include "vmath.h"
-#include "bu.h"
 
 #include "nmg.h" /* (temporarily?) needed for knot_vector */
 #include "brep.h"
@@ -194,14 +198,15 @@ struct rt_grip_internal {
 /**
  * ID_POLY
  */
+struct rt_pg_face_internal {
+    size_t npts;		/**< @brief number of points for this polygon */
+    fastf_t *verts;		/**< @brief has 3*npts elements */
+    fastf_t *norms;		/**< @brief has 3*npts elements */
+};			        /**< @brief has npoly elements */
 struct rt_pg_internal {
     uint32_t magic;
     size_t npoly;
-    struct rt_pg_face_internal {
-	size_t npts;		/**< @brief number of points for this polygon */
-	fastf_t *verts;		/**< @brief has 3*npts elements */
-	fastf_t *norms;		/**< @brief has 3*npts elements */
-    } *poly;			/**< @brief has npoly elements */
+    struct rt_pg_face_internal *poly;	/**< @brief has npoly elements */
     /* REMAINING ELEMENTS PROVIDED BY IMPORT, UNUSED BY EXPORT */
     size_t max_npts;		/**< @brief maximum value of npts in poly[] */
 };
@@ -480,8 +485,6 @@ struct rt_curve {
 
 
 /**
- * L I N E _ S E G,  C A R C _ S E G,  N U R B _ S E G
- *
  * used by the sketch and solid of extrusion
  */
 struct line_seg		/**< @brief line segment */
@@ -812,53 +815,6 @@ struct rt_annotation_internal
  */
 #define RT_ANNOTATION_CK_MAGIC(_p) BU_CKMAG(_p, RT_ANNOTATION_INTERNAL_MAGIC, "rt_annotation_internal")
 
-/*
- * ID_DATUM
- *
- * Datums provide basic geometric reference entities such as reference
- * frames, planes, lines, and/or points.  A datum reference frame is
- * generally a Cartesian coordinate system that consists of three
- * mutually perpendicular axes, three mutually perpendicular base
- * planes, and a point representing the origin.
- *
- * Planes distinguished by (!ZERO(w)) utilize 'pnt', 'dir', and 'w' to
- * define an unoriented plane.  The plane is defined by the vector
- * from 'pnt' in 'dir' direction multiplied by the 'w' scalar value.
- *
- * Lines distinguished by (MAGNITUDE(dir) > 0.0 && ZERO(w)) utilize
- * 'pnt' and 'dir' to define a line.
- *
- * Points only use the 'pnt' field to define an unoriented point.
- *
- * Datum references are stored as a simple NULL-terminated linked list
- * manually accessed through the 'next' pointer.
- * 
- * This characterization is derived from ASME Y14.5M
- *
- * TODO:
- * - edsol needs to do more than move the first datum
- * - tedit is untested
- * - wdb needs to support more than one datum
- * - validate the datum during prep
- * - add CK validation checks to all loops
- */
-struct rt_datum_internal
-{
-    uint32_t magic;
-
-    point_t pnt;
-    vect_t dir;
-    fastf_t w;
-
-    struct rt_datum_internal *next;
-};
-
-/**
- * validation macro to make sure an rt_datum_internal has the proper magic identifier.
- */
-#define RT_DATUM_CK_MAGIC(_p) BU_CKMAG(_p, RT_DATUM_INTERNAL_MAGIC, "rt_datum_internal")
-
-
 struct rt_hrt_internal
 {
     uint32_t hrt_magic;
@@ -870,9 +826,30 @@ struct rt_hrt_internal
 };
 #define RT_HRT_CK_MAGIC(_p) BU_CKMAG(_p, RT_HRT_INTERNAL_MAGIC, "rt_hrt_internal")
 
+
+struct wdb_pipept {
+    struct bu_list l;      /**< @brief  doubly linked list support */
+    point_t pp_coord;      /**< @brief  "control" point for pipe solid */
+    fastf_t pp_id;         /**< @brief  inner diam, <=0 if solid (wire) */
+    fastf_t pp_od;         /**< @brief  pipe outer diam */
+    fastf_t pp_bendradius; /**< @brief  bend radius to use for a bend at this point */
+};
+
+struct wdb_metaballpt {
+    struct bu_list l;
+    int type;
+    fastf_t fldstr; /**< @brief  field strength */
+    fastf_t sweat;  /**< @brief  beta value used for metaball and blob evaluation */
+    point_t coord;
+    point_t coord2;
+};
+#define WDB_METABALLPT_TYPE_POINT 0x0
+#define WDB_METABALLPT_TYPE_LINE 0x1
+#define WDB_METABALLPT_NULL	((struct wdb_metaballpt *)0)
+
 __END_DECLS
 
-#endif /* __RTGEOM_H__ */
+#endif /* RTGEOM_H */
 
 /** @} */
 /*

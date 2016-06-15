@@ -1,7 +1,7 @@
 /*                   P I X F I E L D S E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,10 @@ size_t file_width = 720;
 size_t bytes_per_sample = 3;
 int doubleit = 0;
 
-char *even_file = "even.pix";
-char *odd_file = "odd.pix";
+char Even_file[] = "even.pix";
+char Odd_file[]  = "odd.pix";
+char *even_file  = Even_file;
+char *odd_file   = Odd_file;
 
 static char usage[] = "\
 Usage: pixfieldsep [-w file_width] [-s square_size] [-# nbytes/pixel] \n\

@@ -1,7 +1,7 @@
 /*                         B O T _ D U M P . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,13 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
-#include "bu.h"
+
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -853,7 +856,7 @@ ged_bot_dump(struct ged *gedp, int argc, const char *argv[])
     struct rt_db_internal intern;
     struct rt_bot_internal *bot;
     struct directory *dp;
-    char *file_ext = '\0';
+    char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;
@@ -1292,7 +1295,7 @@ data_dump(struct ged *gedp, FILE *fp)
 		bu_vls_printf(&filepath, "%s/%s_data.obj", output_directory, cp);
 
 		if ((data_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %V\n", &filepath);
+		    bu_vls_printf(gedp->ged_result_str, "data_dump: failed to open %s\n", bu_vls_addr(&filepath));
 		    bu_vls_free(&filepath);
 		    return GED_ERROR;
 		}
@@ -1323,7 +1326,7 @@ int
 ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 {
     int ret;
-    char *file_ext = '\0';
+    char *file_ext = NULL;
     FILE *fp = (FILE *)0;
     int fd = -1;
     mat_t mat;
@@ -1450,10 +1453,10 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 		    bu_vls_trunc(&obj_materials_file, 0);
 		    bu_vls_printf(&obj_materials_file, "%s.mtl", cp);
 
-		    bu_vls_printf(&filepath, "%s/%V", output_directory, &obj_materials_file);
+		    bu_vls_printf(&filepath, "%s/%s", output_directory, bu_vls_addr(&obj_materials_file));
 
 		    if ((obj_materials_fp=fopen(bu_vls_addr(&filepath), "wb+")) == NULL) {
-			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &filepath);
+			bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&filepath));
 			bu_vls_free(&obj_materials_file);
 			bu_vls_free(&filepath);
 			return GED_ERROR;
@@ -1491,7 +1494,7 @@ ged_dbot_dump(struct ged *gedp, int argc, const char *argv[])
 	BU_LIST_INIT(&HeadObjMaterials);
 
 	if ((obj_materials_fp=fopen(bu_vls_addr(&obj_materials_file), "wb+")) == NULL) {
-	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %V\n", cmd_name, &obj_materials_file);
+	    bu_vls_printf(gedp->ged_result_str, "%s: failed to open %s\n", cmd_name, bu_vls_addr(&obj_materials_file));
 	    bu_vls_free(&obj_materials_file);
 	    fclose(fp);
 	    return GED_ERROR;

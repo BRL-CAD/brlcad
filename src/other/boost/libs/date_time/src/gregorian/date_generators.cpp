@@ -22,7 +22,7 @@ namespace date_time {
   //! Returns nth arg as string. 1 -> "first", 2 -> "second", max is 5.
   BOOST_DATE_TIME_DECL const char* nth_as_str(int ele)
   {
-    if(ele >= 1 || ele <= 5) {
+    if(ele >= 1 && ele <= 5) {
       return _nth_as_str[ele];
     } 
     else {

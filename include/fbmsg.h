@@ -1,7 +1,7 @@
 /*                          F B M S G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,9 @@
  *
  */
 /** @} */
+
+#ifndef FBMSG_H
+#define FBMSG_H
 
 #define	MSG_FBOPEN	1
 #define	MSG_FBCLOSE	2
@@ -58,6 +61,8 @@
 #define	MSG_ERROR	23
 
 #define	MSG_NORETURN	100
+
+#endif /* FBMSG_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*               P R I M I T I V E _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -363,7 +363,7 @@ plot_ellipse(
     point_t p;
     fastf_t radian, radian_step;
 
-    radian_step = bn_twopi / num_points;
+    radian_step = M_2PI / num_points;
 
     ellipse_point_at_radian(p, center, axis_a, axis_b,
 	    radian_step * (num_points - 1));

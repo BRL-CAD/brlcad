@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ C H E C K E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,24 +24,10 @@
  *
  */
 
+#include "bu/malloc.h"
 #include "texture.h"
 #include <stdlib.h>
 #include "adrt_struct.h"
-
-#include "bu.h"
-
-void
-texture_checker_init(struct texture_s *texture, int tile) {
-    struct texture_checker_s *td;
-
-    BU_ALLOC(texture->data, struct texture_checker_s);
-    texture->free = texture_checker_free;
-    texture->work = (texture_work_t *)texture_checker_work;
-
-    td = (struct texture_checker_s *)texture->data;
-    td->tile = tile;
-}
-
 
 void
 texture_checker_free(struct texture_s *texture) {

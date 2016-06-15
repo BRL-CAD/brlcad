@@ -1,7 +1,7 @@
 /*                 E U C L I D _ F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,10 +48,8 @@ main(void)
     int old_id=(-1);
     int face_count=0;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     while ( scanf( "%d %d %f %d %d", &ident, &face_type, &tmp_a, &tmp_i, &npts ) != EOF )
     {

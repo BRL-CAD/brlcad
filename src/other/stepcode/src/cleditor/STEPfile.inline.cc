@@ -214,7 +214,7 @@ istream * STEPfile::OpenInputFile( const std::string filename ) {
 
 /******************************************************/
 void STEPfile::CloseInputFile( istream * in ) {
-    if( in && in != &(std::cin) ) {
+    if( in && *in != std::cin ) {
         delete in;
     }
 

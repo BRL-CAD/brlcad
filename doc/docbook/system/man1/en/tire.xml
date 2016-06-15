@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="tire1">
 
 <refmeta>
@@ -211,8 +209,8 @@
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
 
   <para>
-    This software is Copyright (c) 2008-2013 United States Government as
-    represented by the U.S. Army Research Laboratory. All rights reserved.
+    This software is Copyright (c) 2008-2014 United States Government as
+    represented by the U.S. Army Research Laboratory.
   </para>
 </refsection>
 

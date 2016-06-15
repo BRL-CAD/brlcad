@@ -19,8 +19,7 @@ set(UTIL_LOCAL_INCLUDE_DIRS
   )
 
 set(UTIL_ALL_INCLUDE_DIRS ${UTIL_INCLUDE_DIRS} ${UTIL_LOCAL_INCLUDE_DIRS})
-BRLCAD_SORT_INCLUDE_DIRS(UTIL_ALL_INCLUDE_DIRS)
-include_directories(${UTIL_ALL_INCLUDE_DIRS})
+BRLCAD_INCLUDE_DIRS(UTIL_ALL_INCLUDE_DIRS)
 
 if(MSVC)
   add_definitions(
@@ -82,8 +81,30 @@ BRLCAD_ADDEXEC(double-asc double-asc.c "libfb;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
 BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 
+#=====================================================
+# TCLAP testing
+#=====================================================
 # a test copy for tclap/auto-man-page proof of concept:
-BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NOINSTALL)
+BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
+
+# tmp def for testing C wrapper for TCLAP
+BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
+
+# a test file for the entire TCLAP wrapper interface
+#BRLCAD_ADDEXEC(test_bu_arg_parse "test_bu_arg_parse.c;bu_arg_parse.cpp" libbu NO_INSTALL)
+# ignore it for now
+CMAKEFILES(test_bu_arg_parse.c)
+
+# a new admin file
+BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
+
+# tmp header to stand-in for bu.h (ignore it)
+CMAKEFILES(bu_arg_parse.h)
+# permanent private header for TCLAP customizations (ignore it)
+CMAKEFILES(bu_arg_parse_private.h)
+#=====================================================
+# end TCLAP testing
+#=====================================================
 
 BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)

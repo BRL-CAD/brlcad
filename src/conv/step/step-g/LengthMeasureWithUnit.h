@@ -1,7 +1,7 @@
 /*                 LengthMeasureWithUnit.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef LENGTH_MEASURE_WITH_UNIT_H_
-#define LENGTH_MEASURE_WITH_UNIT_H_
+#ifndef CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H
+#define CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H
 
 #include "MeasureWithUnit.h"
 
@@ -48,7 +48,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* LENGTH_MEASURE_WITH_UNIT_H_ */
+#endif /* CONV_STEP_STEP_G_LENGTHMEASUREWITHUNIT_H */
 
 /*
  * Local Variables:

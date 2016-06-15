@@ -1,7 +1,7 @@
 /*                           F - I . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,17 +39,17 @@
 #include "vmath.h"
 
 
-float ibuf[512];
-short obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
     int i, num;
     double scale = 1.0;
     double value;
     int clip_high, clip_low;
     size_t ret;
+
+    float ibuf[512];
+    short obuf[512];
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))

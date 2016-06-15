@@ -81,7 +81,7 @@ $ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emph
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2003-2013 by the United States
+<para>This software is Copyright (c) 2003-2014 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

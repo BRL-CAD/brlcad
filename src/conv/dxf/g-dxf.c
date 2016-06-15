@@ -1,7 +1,7 @@
 /*                         G - D X F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2013 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -78,7 +79,7 @@ usage(const char *argv0)
  -D #	Specify a calculation distance tolerance (in mm)\n\n");
 
     bu_log("\
- -P #	Specify number of CPUS to be used, and turn on flag to enable receiving of core dumps\n\n");
+ -P #	DISABLED: Specify number of CPUS to be used (value accepted, but not used)\n\n");
 
     bu_log("\
  -o dxf	Output to the specified dxf filename\n\n---\n");
@@ -373,8 +374,6 @@ static struct gcv_data gcvwriter = {nmg_to_dxf};
 
 
 /**
- * M A I N
- *
  * This is the gist for what is going on (not verified):
  *
  * 1. initialize tree_state (db_tree_state)
@@ -474,9 +473,7 @@ main(int argc, char *argv[])
 
     if (!output_file) {
 	fp = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp), O_BINARY);
-#endif
     } else {
 	/* Open output file */
 	if ((fp=fopen(output_file, "w+b")) == NULL) {

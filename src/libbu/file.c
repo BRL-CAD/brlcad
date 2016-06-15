@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,8 +37,10 @@
 
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 #ifndef R_OK
 #  define R_OK 4
@@ -142,8 +144,6 @@ bu_same_fd(int fd1, int fd2)
 
 
 /**
- * _ b u _ f i l e _ a c c e s s
- *
  * common guts to the file access functions that returns truthfully if
  * the current user has the ability permission-wise to access the
  * specified file.
@@ -215,7 +215,7 @@ file_access(const char *path, int access_level)
 #endif
 
     /* check other */
-    return sb.st_mode & (mask & oth_mask);;
+    return sb.st_mode & (mask & oth_mask);
 }
 
 

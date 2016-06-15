@@ -1,7 +1,7 @@
 /*                       V I E W R A D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -105,8 +105,6 @@ static int radmiss(struct application *ap);
 
 
 /*
- * V I E W _ I N I T
- *
  * Called at the start of a run.
  * Returns 1 if framebuffer should be opened, else 0.
  */

@@ -1,7 +1,7 @@
 /*                           B O T . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -138,7 +138,7 @@ mk_bot(
 				 * about hit point
 				 */
 {
-    return(mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
+    return (mk_bot_w_normals(fp, name, mode, orientation, flags, num_vertices, num_faces, vertices,
 			    faces, thickness, face_mode, 0, NULL, NULL));
 }
 

@@ -1,7 +1,7 @@
 /*         T E S T _ C U R V E _ I N T E R S E C T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,13 @@
 #include "brep.h"
 
 
-void
+static void
 test_cci(ON_Curve *c1, ON_Curve *c2)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_SimpleArray<ON_X_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(c1, c2, x);
 
@@ -52,12 +53,13 @@ test_cci(ON_Curve *c1, ON_Curve *c2)
 }
 
 
-void
+static void
 test_csi(ON_Curve *c1, ON_Surface *s2)
 {
     ON_wString wstr;
     ON_TextLog textlog(wstr);
     ON_SimpleArray<ON_X_EVENT> x;
+
     // Use default tolerance
     ON_Intersect(c1, s2, x);
 
@@ -106,7 +108,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_cci(curveA, curveB);
 	delete curveB;
     }
@@ -152,7 +154,7 @@ main(int, char**)
 	ON_Circle circleB(plane, centerB, radius);
 	ON_NurbsCurve *curveB = ON_NurbsCurve::New();
 	circleB.GetNurbForm(*curveB);
-	bu_log("Center of circleB: (%lf,%lf,%lf):\n", centerB.x, centerB.y, centerB.z);
+	bu_log("Center of circleB: (%f,%f,%f):\n", centerB.x, centerB.y, centerB.z);
 	test_csi(curveB, surfA);
 	delete curveB;
     }
@@ -190,6 +192,7 @@ main(int, char**)
     ON_NurbsSurface* torus_surface = ON_NurbsSurface::New();
     torus.GetNurbForm(*torus_surface);
     test_csi(&ray, torus_surface);
+    delete torus_surface;
 
     bu_log("All finished.\n");
     return 0;

@@ -1,7 +1,7 @@
 /*                          C T Y P E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,7 @@
 
 #include <string.h>
 #include <ctype.h>
-#include "bu.h"
-
+#include "bu/str.h"
 
 int
 bu_str_isprint(const char *cp)

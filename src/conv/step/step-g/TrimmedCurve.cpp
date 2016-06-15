@@ -1,7 +1,7 @@
 /*                 TrimmedCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,22 +62,20 @@ TrimmedCurve::TrimmedCurve(STEPWrapper *sw, int step_id)
 
 TrimmedCurve::~TrimmedCurve()
 {
-    /*
-      LIST_OF_TRIMMING_SELECT::iterator i = trim_1.begin();
-      while(i != trim_1.end()) {
-      delete (*i);
-      i = trim_1.erase(i);
-      }
+    LIST_OF_TRIMMING_SELECT::iterator i = trim_1.begin();
+    while (i != trim_1.end()) {
+	delete (*i);
+	i = trim_1.erase(i);
+    }
 
-      i = trim_2.begin();
-      while(i != trim_2.end()) {
-      delete (*i);
-      i = trim_2.erase(i);
-      }
-    */
-    basis_curve = NULL;
+    i = trim_2.begin();
+    while (i != trim_2.end()) {
+	delete (*i);
+	i = trim_2.erase(i);
+    }
     trim_1.clear();
     trim_2.clear();
+    basis_curve = NULL;
 }
 
 bool

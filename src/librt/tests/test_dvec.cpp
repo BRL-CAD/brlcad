@@ -1,7 +1,7 @@
 /*                   T E S T _ D V E C . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@ int
 main(int argc, char** argv)
 {
     if (argc > 1)
-	printf("Usage: %s\n", argv[0]);
+	fprintf(stderr,"Usage: %s\n", argv[0]);
 
 #ifdef __x86_vector__
     printf("using x86 vectorization\n");

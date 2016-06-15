@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -259,7 +259,7 @@ main(int argc, char **argv)
 	unsigned char *buf;
 	int npix = file_width * yout;
 
-	if ((buf = malloc(npix)) == NULL) {
+	if ((buf = (unsigned char *)malloc(npix)) == NULL) {
 	    perror("bw-fb malloc");
 	    goto general;
 	}
@@ -335,7 +335,7 @@ general:
 int
 skipbytes(int fd, off_t num)
 {
-    int n, try;
+    int n, tries;
 
     if (fileinput) {
 	(void)lseek(fd, num, 1);
@@ -343,8 +343,8 @@ skipbytes(int fd, off_t num)
     }
 
     while (num > 0) {
-	try = num > MAX_LINE ? MAX_LINE : num;
-	n = read(fd, ibuf, try);
+	tries = num > MAX_LINE ? MAX_LINE : num;
+	n = read(fd, ibuf, tries);
 	if (n <= 0) {
 	    return -1;
 	}

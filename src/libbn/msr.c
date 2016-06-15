@@ -1,7 +1,7 @@
 /*                           M S R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 
 #include <stdio.h>
 #include <math.h>
-#include "bu.h"
+
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -143,7 +145,7 @@ bn_unif_double_fill(struct bn_unif *p)
     test = A*(work_seed % Q) - R*(work_seed / Q);
     p->msr_seed = (test < 0) ? test+M : test;
 
-    return((p->msr_seed - M/2) * 1.0/DM);
+    return ((p->msr_seed - M/2) * 1.0/DM);
 }
 
 /*	bn_unif_free	free random number table

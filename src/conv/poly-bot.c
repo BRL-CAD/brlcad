@@ -1,7 +1,7 @@
 /*                      P O L Y - B O T . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -90,11 +90,9 @@ main(int argc, char **argv)
 	if (ifp == NULL || ofp == NULL) {
 	    bu_exit(1, "poly-bot: can't open files.");
 	}
-#if defined(_WIN32) && !defined(__CYGWIN__)
     } else {
 	setmode(fileno(ifp), O_BINARY);
 	setmode(fileno(ofp), O_BINARY);
-#endif
     }
     if (isatty(fileno(ifp))) {
 	bu_exit(1, "%s", usage);

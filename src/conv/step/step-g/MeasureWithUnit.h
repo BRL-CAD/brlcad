@@ -1,7 +1,7 @@
 /*                 MeasureWithUnit.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef MEASURE_WITH_UNIT_H_
-#define MEASURE_WITH_UNIT_H_
+#ifndef CONV_STEP_STEP_G_MEASUREWITHUNIT_H
+#define CONV_STEP_STEP_G_MEASUREWITHUNIT_H
 
 #include "STEPEntity.h"
 
@@ -56,7 +56,7 @@ public:
     static STEPEntity *Create(STEPWrapper *sw, SDAI_Application_instance *sse);
 };
 
-#endif /* MEASURE_WITH_UNIT_H_ */
+#endif /* CONV_STEP_STEP_G_MEASUREWITHUNIT_H */
 
 /*
  * Local Variables:

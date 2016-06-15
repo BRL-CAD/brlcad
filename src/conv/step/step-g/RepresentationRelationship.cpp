@@ -1,7 +1,7 @@
 /*                 RepresentationRelationship.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,11 +56,26 @@ RepresentationRelationship::RepresentationRelationship(STEPWrapper *sw, int step
 
 RepresentationRelationship::~RepresentationRelationship()
 {
+    // created through factory will be deleted there.
+    rep_1 = NULL;
+    rep_2 = NULL;
 }
 
 string RepresentationRelationship::ClassName()
 {
     return entityname;
+}
+
+Representation *
+RepresentationRelationship::GetRepresentationRelationshipRep_1()
+{
+    return rep_1;
+}
+
+Representation *
+RepresentationRelationship::GetRepresentationRelationshipRep_2()
+{
+    return rep_2;
 }
 
 bool RepresentationRelationship::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

@@ -1,7 +1,7 @@
 /*                        S C R O L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,8 +96,6 @@ struct scroll_item sl_adc_menu[] = {
 
 
 /*
- * S E T _ S C R O L L
- *
  * Set scroll_array.
  */
 void
@@ -122,8 +120,6 @@ set_scroll(void)
 
 
 /*
- * S L _ H A L T _ S C R O L L
- *
  * Reset all scroll bars to the zero position.
  */
 void
@@ -137,15 +133,19 @@ sl_halt_scroll(void)
 }
 
 
-/*
- * S L _ T O G G L E _ S C R O L L
- */
 void
 sl_toggle_scroll(void)
 {
     mged_variables->mv_sliders = mged_variables->mv_sliders ? 0 : 1;
 
-    set_scroll_private();
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	set_scroll_private(sdp, name, base, value);
+    }
 }
 
 
@@ -283,8 +283,6 @@ sl_itol(struct scroll_item *mptr, double val)
  ************************************************************************/
 
 /*
- * S C R O L L _ D I S P L A Y
- *
  * The parameter is the Y pixel address of the starting
  * screen Y to be used, and the return value is the last screen Y
  * position used.
@@ -696,8 +694,6 @@ scroll_display(int y_top)
 
 
 /*
- * S C R O L L _ S E L E C T
- *
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:

@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,6 +35,9 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -44,10 +47,13 @@
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code] [-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n\
+	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
+	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] = "\
 		v - verbose\n\
 		x - librt debug level\n\
 		X - NMG debug level\n\
+		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
 		a - absolute tolerance for tessellation\n\
 		r - relative tolerance for tessellation\n\
 		n - surface normal tolerance for tessellation\n\
@@ -382,12 +388,17 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
     bu_ptbl_free( &vertices );
 }
 
-/*
- *			M A I N
- */
+
+static void
+printusage(const char *arg) {
+	fprintf(stderr,usage,arg);
+	bu_exit(1, usage2);
+}
+
 int
 main(int argc, char **argv)
 {
+
     int		j;
     int	c;
     double		percent;
@@ -425,7 +436,7 @@ main(int argc, char **argv)
     BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:i:n:o:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -462,14 +473,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
-		break;
+		printusage(argv[0]);
 	}
     }
 
-    if (bu_optind+1 >= argc) {
-	bu_exit(1, usage, argv[0]);
-    }
+    if (bu_optind+1 >= argc)
+	printusage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL)
@@ -483,9 +492,7 @@ main(int argc, char **argv)
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{
@@ -652,8 +659,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *			D O _ R E G I O N _ E N D
- *
  *  Called from db_walk_tree().
  *
  *  This routine must be prepared to run in parallel.

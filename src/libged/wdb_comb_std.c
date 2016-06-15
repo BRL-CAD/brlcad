@@ -1,7 +1,7 @@
 /*                  W D B _ C O M B _ S T D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "rtgeom.h"
 #include "ged.h"
@@ -652,7 +653,7 @@ wdb_comb_std_cmd(struct rt_wdb *wdbp,
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    comb->region_flag = 1;
-	    comb->region_id = wdbp->wdb_item_default++;;
+	    comb->region_id = wdbp->wdb_item_default++;
 	    comb->aircode = wdbp->wdb_air_default;
 	    comb->los = wdbp->wdb_los_default;
 	    comb->GIFTmater = wdbp->wdb_mat_default;

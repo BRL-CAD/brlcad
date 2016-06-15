@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,8 +50,6 @@ unsigned char geometry_default_color[] = { 255, 0, 0 };
 
 
 /*
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix C
  * (Note:  SGI is left-handed, but the fix is done in the Display Manger).
@@ -251,8 +249,6 @@ drawSolid(struct solid *sp,
 
 
 /*
- * D O Z O O M
- *
  * This routine reviews all of the solids in the solids table,
  * to see if they are visible within the current viewing
  * window.  If they are, the routine computes the scale and appropriate

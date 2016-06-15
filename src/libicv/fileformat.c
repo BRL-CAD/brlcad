@@ -1,7 +1,7 @@
 /*                      F I L E F O R M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
 #include "icv.h"
 
 
-/* c99 doesn't declare these */
-#if !defined(_WIN32) || defined(__CYGWIN__)
+/* c99 doesn't declare these, but C++ does */
+#if (!defined(_WIN32) || defined(__CYGWIN__)) && !defined(__cplusplus)
 extern FILE *fdopen(int, const char *);
 #endif
 
@@ -65,22 +65,6 @@ extern icv_image_t* ppm_read(const char *filename);
 
 /* private functions */
 
-/* flip an image vertically */
-HIDDEN int
-image_flip(unsigned char *buf, int width, int height)
-{
-    unsigned char *buf2;
-    int i;
-    size_t pitch = width * 3 * sizeof(char);
-
-    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for (i=0 ; i<height ; i++)
-	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy(buf, buf2, height * pitch);
-    bu_free(buf2, "image flip");
-    return 0;
-}
-
 /*
  * Attempt to guess the file type. Understands ImageMagick style
  * FMT:filename as being preferred, but will attempt to guess based on
@@ -93,7 +77,7 @@ image_flip(unsigned char *buf, int width, int height)
  * return the string as as return type (making the int type be an int*
  * argument instead that gets set).
  */
-int
+ICV_IMAGE_FORMAT
 icv_guess_file_format(const char *filename, char *trimmedname)
 {
     /* look for the FMT: header */
@@ -132,7 +116,7 @@ png_write(icv_image_t *bif, const char *filename)
     unsigned char *data;
     FILE *fh;
 
-    fh = fopen(filename, "w");
+    fh = fopen(filename, "wb");
     if (UNLIKELY(fh==NULL)) {
 	perror("fdopen");
 	bu_log("ERROR: png_write failed to get a FILE pointer\n");
@@ -169,37 +153,6 @@ png_write(icv_image_t *bif, const char *filename)
     return 1;
 }
 
-HIDDEN int
-ppm_write(icv_image_t *bif, const char *filename)
-{
-    unsigned char *data;
-    int fd;
-    size_t ret, size;
-
-    /* FIXME: should not be introducing fixed size buffers */
-    char buf[BUFSIZ] = {0};
-
-    if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
-	icv_gray2rgb(bif);
-    } else if (bif->color_space != ICV_COLOR_SPACE_RGB) {
-	bu_log("ppm_write : Color Space conflict");
-	return -1;
-    }
-    data =  data2uchar(bif);
-    size = (size_t) bif->width*bif->height*3;
-    fd = open(filename, O_WRONLY|O_CREAT|O_TRUNC|O_BINARY, WRMODE);
-    image_flip(data, bif->width, bif->height);
-    snprintf(buf, BUFSIZ, "P6 %d %d 255\n", bif->width, bif->height);
-    ret = write(fd, buf, strlen(buf));
-    ret = write(fd, data, size);
-    close(fd);
-    if (ret != size) {
-	bu_log("ppm_write : Short Write");
-	return -1;
-    }
-    return 0;
-}
-
 /* end of private functions */
 
 /* begin public functions */
@@ -212,13 +165,15 @@ icv_read(const char *filename, int format, int width, int height)
 	format = ICV_IMAGE_PIX;
     }
 
-    switch(format) {
+    switch (format) {
 	case ICV_IMAGE_PIX:
 	    return pix_read(filename, width, height);
 	case ICV_IMAGE_BW :
 	    return bw_read(filename, width, height);
 	case ICV_IMAGE_DPIX :
 	    return dpix_read(filename, width, height);
+	case ICV_IMAGE_PPM :
+	    return ppm_read(filename);
 	default:
 	    bu_log("icv_read not implemented for this format\n");
 	    return NULL;
@@ -233,10 +188,12 @@ icv_write(icv_image_t *bif, const char *filename, ICV_IMAGE_FORMAT format)
     char buf[BUFSIZ] = {0};
 
     if (format == ICV_IMAGE_AUTO) {
-	format = icv_guess_file_format(filename, buf);
+	format = (ICV_IMAGE_FORMAT)icv_guess_file_format(filename, buf);
     }
 
-    switch(format) {
+    ICV_IMAGE_VAL_INT(bif);
+
+    switch (format) {
 	/* case ICV_IMAGE_BMP:
 	   return bmp_write(bif, filename); */
 	case ICV_IMAGE_PPM:
@@ -268,11 +225,19 @@ icv_writeline(icv_image_t *bif, int y, void *data, ICV_DATA type)
 	return -1;
     }
 
+    ICV_IMAGE_VAL_INT(bif);
+
+    if (y > bif->height || y < 0)
+        return -1;
+
+    if (data == NULL)
+        return -1;
+
     width_size = (size_t) bif->width*bif->channels;
     dst = bif->data + width_size*y;
 
     if (type == ICV_DATA_UCHAR) {
-	p = data;
+	p = (unsigned char *)data;
 	for (; width_size > 0; width_size--) {
 		*dst = ICV_CONV_8BIT(*p);
 		p++;
@@ -290,10 +255,18 @@ int
 icv_writepixel(icv_image_t *bif, int x, int y, double *data)
 {
     double *dst;
-    if (bif == NULL) {
-	bu_log("ERROR: trying to write the pixel to a null bif\n");
-	return -1;
-    }
+
+    ICV_IMAGE_VAL_INT(bif);
+
+    if (x > bif->width || x < 0)
+        return -1;
+
+    if (y > bif->height || y < 0)
+        return -1;
+
+    if (data == NULL)
+        return -1;
+
     dst = bif->data + (y*bif->width + x)*bif->channels;
 
     /* can copy float to double also double to double */
@@ -312,7 +285,7 @@ icv_create(int width, int height, ICV_COLOR_SPACE color_space)
     bif->color_space = color_space;
     bif->alpha_channel = 0;
     bif->magic = ICV_IMAGE_MAGIC;
-    switch(color_space) {
+    switch (color_space) {
 	case ICV_COLOR_SPACE_RGB :
 	    /* Add all the other three channel images here (eg. HSV, YCbCr etc.) */
 	    bif->data = (double *) bu_malloc(bif->height*bif->width*3*sizeof(double), "Image Data");
@@ -336,21 +309,25 @@ icv_zero(icv_image_t *bif)
     double *data;
     long size, i;
 
+    ICV_IMAGE_VAL_PTR(bif);
+
     data = bif->data;
     size = bif->width * bif->height * bif->channels;
-    for (i=0; i< size; i++)
+    for (i = 0; i < size; i++)
 	*data++ = 0;
 
     return bif;
 }
 
 
-void
+int
 icv_destroy(icv_image_t *bif)
 {
+    ICV_IMAGE_VAL_INT(bif);
+
     bu_free(bif->data, "Image Data");
     bu_free(bif, "ICV IMAGE Structure");
-    return;
+    return 0;
 }
 
 /*

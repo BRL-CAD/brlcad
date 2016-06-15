@@ -1,7 +1,7 @@
 /*                    M K B U I L D I N G . H
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef __MKBUILDING_H__
-#define __MKBUILDING_H__
+#ifndef PROC_DB_MKBUILDING_H
+#define PROC_DB_MKBUILDING_H
 
 #include "common.h"
 

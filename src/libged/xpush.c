@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -42,10 +42,6 @@ struct object_use
 };
 
 
-/**
- *
- *
- */
 static void
 increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(ptr))
 {
@@ -55,10 +51,6 @@ increment_uses(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(pt
 }
 
 
-/**
- *
- *
- */
 static void
 increment_nrefs(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(ptr))
 {
@@ -68,10 +60,6 @@ increment_nrefs(struct db_i *UNUSED(db_ip), struct directory *dp, void *UNUSED(p
 }
 
 
-/**
- *
- *
- */
 static void
 Free_uses(struct db_i *dbip)
 {
@@ -90,7 +78,7 @@ Free_uses(struct db_i *dbip)
 		if (!use->used) {
 		    if (use->dp->d_un.file_offset >= 0) {
 			/* was written to disk */
-			if(db_delete(dbip, use->dp) != 0)
+			if (db_delete(dbip, use->dp) != 0)
 			    bu_log("Free_uses: db_delete failure!\n");
 		    }
 		    if (db_dirdelete(dbip, use->dp) < 0) {
@@ -107,10 +95,6 @@ Free_uses(struct db_i *dbip)
 }
 
 
-/**
- *
- *
- */
 static void
 Make_new_name(struct db_i *dbip,
 	      struct directory *dp,
@@ -209,10 +193,6 @@ Make_new_name(struct db_i *dbip,
 /* Do_copy_membs() needs the forward declaration due to a cyclic dependency */
 static struct directory *Copy_object(struct ged *gedp, struct directory *dp, mat_t xform);
 
-/**
- *
- *
- */
 static void
 Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
@@ -256,10 +236,6 @@ Do_copy_membs(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 }
 
 
-/**
- *
- *
- */
 static struct directory *
 Copy_solid(struct ged *gedp,
 	   struct directory *dp,
@@ -333,10 +309,6 @@ Copy_solid(struct ged *gedp,
 }
 
 
-/**
- *
- *
- */
 static struct directory *
 Copy_comb(struct ged *gedp,
 	  struct directory *dp,
@@ -400,10 +372,6 @@ Copy_comb(struct ged *gedp,
 }
 
 
-/**
- *
- *
- */
 static struct directory *
 Copy_object(struct ged *gedp,
 	    struct directory *dp,
@@ -418,10 +386,6 @@ Copy_object(struct ged *gedp,
 }
 
 
-/**
- *
- *
- */
 static void
 Do_ref_incr(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {

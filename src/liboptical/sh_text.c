@@ -1,7 +1,7 @@
 /*                       S H _ T E X T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,9 +55,10 @@ struct txt_specific {
 #define TX_NULL ((struct txt_specific *)0)
 #define TX_O(m) bu_offsetof(struct txt_specific, m)
 
+/* local sp_hook functions */
+HIDDEN void txt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void txt_source_hook(const struct bu_structparse *, const char *, void *, const char *);
 
-HIDDEN void txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
-HIDDEN void txt_source_hook(const struct bu_structparse *ip, const char *sp_name, genptr_t base, char *p);
 HIDDEN int txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const long unsigned int size);
 
 
@@ -66,7 +67,7 @@ struct bu_structparse txt_parse[] = {
     {"%V",	1, "file", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "obj", TX_O(tx_name),		txt_source_hook, NULL, NULL },
     {"%V",	1, "object", TX_O(tx_name),		txt_source_hook, NULL, NULL },
-    {"%V",	1, "texture", TX_O(tx_name),	 BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
+    {"%V",	1, "texture", TX_O(tx_name),	        BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",		TX_O(tx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "l",		TX_O(tx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -85,31 +86,35 @@ struct bu_structparse txt_parse[] = {
  * fail.
  */
 HIDDEN void
-txt_source_hook(const struct bu_structparse *UNUSED(ip), const char *sp_name, genptr_t base, char *UNUSED(p))
+txt_source_hook(const struct bu_structparse *UNUSED(sdp),
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     struct txt_specific *textureSpecific = (struct txt_specific *)base;
-    if (bu_strncmp(sp_name, "file", 4)==0) {
+    if (bu_strncmp(name, "file", 4) == 0) {
 	textureSpecific->tx_datasrc=TXT_SRC_FILE;
-    } else if (bu_strncmp(sp_name, "obj", 3)==0) {
-	textureSpecific->tx_datasrc=TXT_SRC_OBJECT;
+    } else if (bu_strncmp(name, "obj", 3) == 0) {
+	textureSpecific->tx_datasrc = TXT_SRC_OBJECT;
     } else {
-	textureSpecific->tx_datasrc=TXT_SRC_AUTO;
+	textureSpecific->tx_datasrc = TXT_SRC_AUTO;
     }
 }
 
 
 /*
- * T X T _ T R A N S P _ H O O K
- *
  * Hooked function, called by bu_structparse
  */
 HIDDEN void
-txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
+txt_transp_hook(const struct bu_structparse *sdp,
+		const char *name,
+		void *base,
+		const char *UNUSED(value))
 {
     register struct txt_specific *tp =
-	(struct txt_specific *)cp;
+	(struct txt_specific *)base;
 
-    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && ptab == txt_parse) {
+    if (BU_STR_EQUAL(name, txt_parse[0].sp_name) && sdp == txt_parse) {
 	tp->tx_trans_valid = 1;
     } else {
 	bu_log("file:%s, line:%d txt_transp_hook name:(%s) instead of (%s)\n",
@@ -119,8 +124,6 @@ txt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(
 
 
 /*
- * t x t _ l o a d _ d a t a s o u r c e
- *
  * This is a helper routine used in txt_setup() to load a texture either from
  * a file or from a db object.  The resources are released in txt_free()
  * (there is no specific unload_datasource function).
@@ -136,7 +139,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 	bu_bomb("ERROR: txt_load_datasource() received NULL arg (struct txt_specific *)\n");
     }
 
-    bu_log("Loading texture %s [%V]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", &texture->tx_name);
+    bu_log("Loading texture %s [%s]...", texture->tx_datasrc==TXT_SRC_AUTO?"from auto-determined datasource":texture->tx_datasrc==TXT_SRC_OBJECT?"from a database object":texture->tx_datasrc==TXT_SRC_FILE?"from a file":"from an unknown source (ERROR)", bu_vls_addr(&texture->tx_name));
 
     /* if the source is auto or object, we try to load the object */
     if ((texture->tx_datasrc==TXT_SRC_AUTO) || (texture->tx_datasrc==TXT_SRC_OBJECT)) {
@@ -175,7 +178,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 
 	    /* check size of object */
 	    if (texture->tx_binunifp->count < size) {
-		bu_log("\nWARNING: %V needs %d bytes, binary object only has %lu\n", texture->tx_name, size, texture->tx_binunifp->count);
+		bu_log("\nWARNING: %s needs %d bytes, binary object only has %lu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_binunifp->count);
 	    } else if (texture->tx_binunifp->count > size) {
 		bu_log("\nWARNING: Binary object is larger than specified texture size\n\tBinary Object: %zu pixels\n\tSpecified Texture Size: %zu pixels\n...continuing to load using image subsection...", texture->tx_binunifp->count);
 	    }
@@ -193,7 +196,7 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 	    return -1;				/* FAIL */
 
 	if (texture->tx_mp->buflen < size) {
-	    bu_log("\nWARNING: %V needs %d bytes, file only has %lu\n", &texture->tx_name, size, texture->tx_mp->buflen);
+	    bu_log("\nWARNING: %s needs %d bytes, file only has %lu\n", bu_vls_addr(&texture->tx_name), size, texture->tx_mp->buflen);
 	} else if (texture->tx_mp->buflen > size) {
 	    bu_log("\nWARNING: Texture file size is larger than specified texture size\n\tInput File: %zu pixels\n\tSpecified Texture Size: %lu pixels\n...continuing to load using image subsection...", texture->tx_mp->buflen, size);
 	}
@@ -207,8 +210,6 @@ txt_load_datasource(struct txt_specific *texture, struct db_i *dbInstance, const
 
 
 /*
- * T X T _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  *
@@ -258,8 +259,8 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
      * texture isn't and can't be read, give debug colors
      */
 
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
-	bu_log("WARNING: texture [%V] could not be read\n", &tp->tx_name);
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+	bu_log("WARNING: texture [%s] could not be read\n", bu_vls_addr(&tp->tx_name));
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -320,7 +321,7 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     } else {
 	/* Calculate weighted average of cells in footprint */
 
-	fastf_t tot_area=0.0;
+	fastf_t tot_area = 0.0;
 	fastf_t cell_area;
 	int start_line, stop_line, line;
 	int start_col, stop_col, col;
@@ -399,9 +400,9 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
     if (!tp->tx_trans_valid) {
     opaque:
 	VSET(swp->sw_color,
-	     r * bn_inv255,
-	     g * bn_inv255,
-	     b * bn_inv255);
+	     r / 255.0,
+	     g / 255.0,
+	     b / 255.0);
 
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -430,8 +431,6 @@ txt_render(struct application *ap, const struct partition *pp, struct shadework 
 
 
 /*
- * B W T X T _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return the filtered intensity.
  *
@@ -457,7 +456,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
      * If no texture file present, or if
      * texture isn't and can't be read, give debug colors
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, uvc.uv_u, 0, uvc.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -509,7 +508,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (dx < 1) dx = 1;
     if (dy < 1) dy = 1;
     bw = 0;
-    for (line=0; line<dy; line++) {
+    for (line = 0; line < dy; line++) {
 	register unsigned char *cp=NULL;
 	register unsigned char *ep;
 
@@ -533,7 +532,7 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
     if (!tp->tx_trans_valid) {
     opaque:
 	VSETALL(swp->sw_color,
-		bw * bn_inv255 / (dx*dy));
+		(bw / 255.0) / (dx*dy));
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
 	return 1;
@@ -555,9 +554,6 @@ bwtxt_render(struct application *ap, const struct partition *pp, struct shadewor
 }
 
 
-/*
- * T X T _ S E T U P
- */
 HIDDEN int
 txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 {
@@ -591,7 +587,7 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
     if (tp->tx_n < 0) tp->tx_n = tp->tx_w;
     if (tp->tx_trans_valid) rp->reg_transmit = 1;
     BU_CK_VLS(&tp->tx_name);
-    if (bu_vls_strlen(&tp->tx_name)<=0) return -1;
+    if (bu_vls_strlen(&tp->tx_name) <= 0) return -1;
     /* !?! if (tp->tx_name[0] == '\0') return -1;	*/ /* FAIL, no file */
 
     if (BU_STR_EQUAL(mfp->mf_name, "bwtexture")) pixelbytes = 1;
@@ -612,9 +608,6 @@ txt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-/*
- * T X T _ P R I N T
- */
 HIDDEN void
 txt_print(register struct region *rp, void *UNUSED(dp))
 {
@@ -622,9 +615,6 @@ txt_print(register struct region *rp, void *UNUSED(dp))
 }
 
 
-/*
- * T X T _ F R E E
- */
 HIDDEN void
 txt_free(void *cp)
 {
@@ -633,8 +623,8 @@ txt_free(void *cp)
     bu_vls_free(&tp->tx_name);
     if (tp->tx_binunifp) rt_binunif_free(tp->tx_binunifp);
     if (tp->tx_mp) bu_close_mapped_file(tp->tx_mp);
-    tp->tx_binunifp = GENPTR_NULL; /* sanity */
-    tp->tx_mp = GENPTR_NULL; /* sanity */
+    tp->tx_binunifp = (struct rt_binunif_internal *)NULL; /* sanity */
+    tp->tx_mp = (struct bu_mapped_file *)NULL; /* sanity */
     BU_PUT(cp, struct txt_specific);
 }
 
@@ -655,9 +645,6 @@ struct bu_structparse ckr_parse[] = {
 };
 
 
-/*
- * C K R _ R E N D E R
- */
 HIDDEN int
 ckr_render(struct application *ap, const struct partition *pp, register struct shadework *swp, void *dp)
 {
@@ -676,9 +663,9 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
     }
 
     VSET(swp->sw_color,
-	 (unsigned char)cp[0] * bn_inv255,
-	 (unsigned char)cp[1] * bn_inv255,
-	 (unsigned char)cp[2] * bn_inv255);
+	 (unsigned char)cp[0] / 255.0,
+	 (unsigned char)cp[1] / 255.0,
+	 (unsigned char)cp[2] / 255.0);
 
     if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	(void)rr_render(ap, pp, swp);
@@ -687,13 +674,8 @@ ckr_render(struct application *ap, const struct partition *pp, register struct s
 }
 
 
-/*
- * C K R _ S E T U P
- */
 HIDDEN int
 ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
 /* New since 4.4 release */
 {
     register struct ckr_specific *ckp;
@@ -718,19 +700,13 @@ ckr_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp
 }
 
 
-/*
- * C K R _ P R I N T
- */
 HIDDEN void
 ckr_print(register struct region *rp, void *UNUSED(dp))
 {
-    bu_struct_print(rp->reg_name, ckr_parse, rp->reg_udata);
+    bu_struct_print(rp->reg_name, ckr_parse, (const char *)rp->reg_udata);
 }
 
 
-/*
- * C K R _ F R E E
- */
 HIDDEN void
 ckr_free(void *cp)
 {
@@ -739,8 +715,6 @@ ckr_free(void *cp)
 
 
 /*
- * T S T M _ R E N D E R
- *
  * Render a map which varies red with U and blue with V values.
  * Mostly useful for debugging ft_uv() routines.
  */
@@ -769,9 +743,6 @@ static vect_t star_colors[] = {
 };
 
 
-/*
- * S T A R _ R E N D E R
- */
 HIDDEN int
 star_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *UNUSED(dp))
 {
@@ -799,8 +770,6 @@ star_render(register struct application *ap, const struct partition *pp, struct 
 
 
 /*
- * B M P _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * compute a new surface normal.
  * For now we come up with a local coordinate system, and
@@ -825,7 +794,7 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
      * If no texture file present, or if
      * texture isn't and can't be read, give debug color.
      */
-    if ((bu_vls_strlen(&tp->tx_name)<=0) || (!tp->tx_mp && !tp->tx_binunifp)) {
+    if ((bu_vls_strlen(&tp->tx_name) <= 0) || (!tp->tx_mp && !tp->tx_binunifp)) {
 	VSET(swp->sw_color, swp->sw_uv.uv_u, 0, swp->sw_uv.uv_v);
 	if (swp->sw_reflect > 0 || swp->sw_transmit > 0)
 	    (void)rr_render(ap, pp, swp);
@@ -886,9 +855,6 @@ bmp_render(struct application *ap, const struct partition *pp, struct shadework 
 }
 
 
-/*
- * E N V M A P _ S E T U P
- */
 HIDDEN int
 envmap_setup(register struct region *rp, struct bu_vls *matparm, void **UNUSED(dpp), const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 {
@@ -916,7 +882,8 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, void **UNUSED(d
 	optical_shader_init(&shaders);
     }
     if (mlib_setup(&shaders, &env_region, rtip) < 0)
-	bu_log("envmap_setup() material '%s' failed\n", env_region.reg_mater);
+	bu_log("envmap_setup() material '%s' failed\n",
+	       env_region.reg_mater.ma_shader);
 
 
     return 0;		/* This region should be dropped */
@@ -924,8 +891,6 @@ envmap_setup(register struct region *rp, struct bu_vls *matparm, void **UNUSED(d
 
 
 /*
- * M L I B _ Z E R O
- *
  * Regardless of arguments, always return zero.
  * Useful mostly as a stub print, and/or free routine.
  */
@@ -938,8 +903,6 @@ mlib_zero(struct application *UNUSED(a), const struct partition *UNUSED(b), stru
 
 
 /*
- * M L I B _ O N E
- *
  * Regardless of arguments, always return one.
  * Useful mostly as a stub setup routine.
  */
@@ -951,9 +914,6 @@ mlib_one(struct region *UNUSED(a), struct bu_vls *UNUSED(b), void **UNUSED(c), c
 }
 
 
-/*
- * M L I B _ V O I D
- */
 /* VARARGS */
 void
 mlib_void(struct region *UNUSED(a), void *UNUSED(b))

@@ -1,7 +1,7 @@
 /*                          D M - Q T . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,19 +36,25 @@
 extern void dm_var_init(struct dm_list *initial_dm_list);		/* defined in attach.c */
 
 static void
-dirty_hook(void)
+dirty_hook(const struct bu_structparse *UNUSED(sdp),
+	   const char *UNUSED(name),
+	   void *UNUSED(base),
+	   const char *UNUSED(value))
 {
     dirty = 1;
 }
 
 
 static void
-zclip_hook(void)
+zclip_hook(const struct bu_structparse *sdp,
+	   const char *name,
+	   void *base,
+	   const char *value)
 {
     fastf_t bounds[6] = { GED_MIN, GED_MAX, GED_MIN, GED_MAX, GED_MIN, GED_MAX };
 
     view_state->vs_gvp->gv_zclip = dmp->dm_zclip;
-    dirty_hook();
+    dirty_hook(sdp, name, base, value);
 
     if (dmp->dm_zclip) {
 	bounds[4] = -1.0;
@@ -148,6 +154,28 @@ Qt_dm_init(struct dm_list *o_dm_list,
     bu_vls_free(&vls);
 
     return TCL_OK;
+}
+
+void
+Qt_fb_open(void)
+{
+    char *Qt_name = "/dev/Qt";
+
+    if ((fbp = (FBIO *)calloc(sizeof(FBIO), 1)) == FBIO_NULL) {
+	Tcl_AppendResult(INTERP, "Qt_fb_open: failed to allocate framebuffer memory\n",
+			 (char *)NULL);
+	return;
+    }
+
+    *fbp = qt_interface; /* struct copy */
+
+    fbp->if_name = (char *)bu_malloc((unsigned)strlen(Qt_name)+1, "if_name");
+    bu_strlcpy(fbp->if_name, Qt_name, strlen(Qt_name)+1);
+
+    /* Mark OK by filling in magic number */
+    fbp->if_magic = FB_MAGIC;
+
+    /*fbp->if_open(fbp, NULL, dmp->dm_width, dmp->dm_height);*/
 }
 
 

@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,11 +36,13 @@
 #  include <strsafe.h>
 #endif
 
-#include "bu.h"
-
+#include "bu/file.h"
+#include "bu/str.h"
 
 #ifdef HAVE_FCHMOD
-extern int fchmod(int, mode_t);
+/* extern int fchmod(int, mode_t); */
+/* use correct fchmod decl: */
+#  include <sys/stat.h>
 #else
 
 /* Presumably Windows, pulled from MSDN sample code */
@@ -115,12 +117,12 @@ GetFileNameFromHandle(HANDLE hFile, char filepath[])
 	CloseHandle(hFileMap);
     }
     if (sizeof(TCHAR) == sizeof(wchar_t)) {
-	wcstombs(filename, pszFilename, MAXPATHLEN);
+	wcstombs(filename, (const wchar_t *)pszFilename, MAXPATHLEN);
 	bu_strlcpy(filepath, filename, MAXPATHLEN);
     } else {
 	bu_strlcpy(filepath, pszFilename, MAXPATHLEN);
     }
-    return(bSuccess);
+    return (bSuccess);
 }
 #endif
 

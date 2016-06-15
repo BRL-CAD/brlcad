@@ -54,7 +54,9 @@ namespace date_time {
           os << std::setw(2) << std::setfill(os.widen('0')) << month.as_number();
           break;
         }
-     
+        default:
+          break;
+          
       }
       return os;
     } // format_month

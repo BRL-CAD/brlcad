@@ -1,7 +1,7 @@
 /*                        I F _ M E M . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,6 +33,9 @@
 #include <ctype.h>
 #include <string.h>
 
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
 
 

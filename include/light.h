@@ -1,7 +1,7 @@
 /*                         L I G H T . H
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,12 +26,13 @@
  *
  */
 
-#ifndef __LIGHT_H__
-#define __LIGHT_H__
+#ifndef LIGHT_H
+#define LIGHT_H
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/magic.h"
+#include "bu/list.h"
 #include "bn.h"
 #include "raytrace.h"
 
@@ -100,7 +101,7 @@ OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *s
 
 __END_DECLS
 
-#endif /* __LIGHT_H__ */
+#endif /* LIGHT_H */
 
 /** @} */
 /*

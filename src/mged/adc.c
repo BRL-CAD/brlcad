@@ -1,7 +1,7 @@
 /*                           A D C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -282,8 +282,6 @@ draw_ticks(fastf_t angle)
 
 
 /**
- * A D C U R S O R
- *
  * Compute and display the angle/distance cursor.
  */
 void
@@ -435,9 +433,6 @@ adc_print_vars(void)
 }
 
 
-/**
- * F _ A D C
- */
 int
 f_adc (
     ClientData UNUSED(clientData),

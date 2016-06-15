@@ -1,7 +1,7 @@
 /*                         H R T . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@
  *
  * The equation for the heart is:
  *
- *    [ X**2 + 9/4*Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80 * Z**3)  =  0
+ *    [ X**2 + 9/4*Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0
  *
  * First, find X, Y, and Z in terms of 't' for this line, then
  * substitute them into the equation above.
@@ -89,7 +89,7 @@
  *
  * Given that the sextic equation for the heart is:
  *
- *    [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80 * Z**3)  =  0.
+ *    [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0.
  *
  * let w =  X**2 + 9/4*Y**2 + Z**2 - 1 , then the sextic equation becomes:
  *
@@ -116,8 +116,8 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-
 #include "db.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -150,8 +150,6 @@ struct hrt_specific {
 
 
 /**
- * R T _ H R T _ B B O X
- *
  * Compute the bounding RPP for a heart.
  */
 int
@@ -183,17 +181,22 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
     VMOVE(&R[4], Yu);
     VMOVE(&R[8], Zu);
 
+    /**
+     * 1.0 stands for the length of xdir vector and 0.25 approximates some
+     * value which encloses the displacement from the Z-axis to the furthest
+     * point on the heart surface in either the -X or +X direction
+     */
     /* X */
     f = hip->xdir[X];
-    (*min)[X] = hip->v[X] - f;
-    (*max)[X] = hip->v[X] + f;
+    (*min)[X] = hip->v[X] - f * 1.25;
+    (*max)[X] = hip->v[X] + f * 1.25;
 
     /* Y */
     f = hip->ydir[Y];
     (*min)[Y] = hip->v[Y] - f;
     (*max)[Y] = hip->v[Y] + f;
 
-    /* Y */
+    /* Z */
     f = hip->zdir[Z];
     /**
      * 1.0 stands for the length of zdir vector and 0.25 closely approximates
@@ -208,8 +211,6 @@ rt_hrt_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ H R T _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation
  * matrix, determine if this is a valid heart, and if so, precompute
  * various terms of the formula.
@@ -339,9 +340,6 @@ rt_hrt_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ H R T _ P R I N T
- */
 void
 rt_hrt_print(register const struct soltab *stp)
 {
@@ -355,8 +353,6 @@ rt_hrt_print(register const struct soltab *stp)
 
 
 /**
- * R T _ H R T _ S H O T
- *
  * Intersect a ray with a heart, where all constant terms have been
  * precomputed by rt_hrt_prep().  If an intersection occurs, one or
  * two struct seg(s) will be acquired and filled in.
@@ -404,7 +400,10 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     vect_t pprime;              /* P' : The new shot point */
     vect_t trans;               /* Translated shot vector */
     vect_t norm_pprime;         /* P' with normalized distance from heart */
-    bn_poly_t S;                /* The sextic equation (of power 6) */
+    bn_poly_t Xsqr, Ysqr, Zsqr; /* X^2, 9/4*Y^2, Z^2 - 1 */
+    bn_poly_t  Acube, S;    /* The sextic equation (of power 6) and A^3 */
+    bn_poly_t Zcube, A;     /* Z^3 and  X^2 + 9/4 * Y^2 + Z^2 - 1 */
+    bn_poly_t X2_Y2, Z3_X2_Y2;  /* X^2 + 9/80*Y^2 and Z^3*(X^2 + 9/80*Y^2) */
     bn_complex_t complex[6];    /* The complex roots */
     double real[6];             /* The real roots */
     int i;
@@ -435,94 +434,70 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     /**
      * Generate the sextic equation S(t) = 0 to be passed through the root finder.
      */
+    /* X**2 */
+    Xsqr.dgr = 2;
+    Xsqr.cf[0] = dprime[X] * dprime[X];
+    Xsqr.cf[1] = 2 * dprime[X] * pprime[X];
+    Xsqr.cf[2] = pprime[X] * pprime[X];
+
+    /* 9/4 * Y**2*/
+    Ysqr.dgr = 2;
+    Ysqr.cf[0] = 9/4 * dprime[Y] * dprime[Y];
+    Ysqr.cf[1] = 9/2 * dprime[Y] * pprime[Y];
+    Ysqr.cf[2] = 9/4 * (pprime[Y] * pprime[Y]);
+
+    /* Z**2 - 1 */
+    Zsqr.dgr = 2;
+    Zsqr.cf[0] = dprime[Z] * dprime[Z];
+    Zsqr.cf[1] = 2 * dprime[Z] * pprime[Z];
+    Zsqr.cf[2] = pprime[Z] * pprime[Z] - 1.0 ;
+
+    /* A = X^2 + 9/4 * Y^2 + Z^2 - 1 */
+    A.dgr = 2;
+    A.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] + Zsqr.cf[0];
+    A.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] + Zsqr.cf[1];
+    A.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] + Zsqr.cf[2];
+
+    /* Z**3 */
+    Zcube.dgr = 3;
+    Zcube.cf[0] = dprime[Z] * Zsqr.cf[0];
+    Zcube.cf[1] = 1.5 * dprime[Z] * Zsqr.cf[1];
+    Zcube.cf[2] = 1.5 * pprime[Z] * Zsqr.cf[1];
+    Zcube.cf[3] = pprime[Z] * ( Zsqr.cf[2] + 1.0 );
+
+    Acube.dgr = 6;
+    Acube.cf[0] = A.cf[0] * A.cf[0] * A.cf[0];
+    Acube.cf[1] = 3.0 * A.cf[0] * A.cf[0] * A.cf[1];
+    Acube.cf[2] = 3.0 * (A.cf[0] * A.cf[0] * A.cf[2] + A.cf[0] * A.cf[1] * A.cf[1]);
+    Acube.cf[3] = 6.0 * A.cf[0] * A.cf[1] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[1];
+    Acube.cf[4] = 3.0 * (A.cf[0] * A.cf[2] * A.cf[2] + A.cf[1] * A.cf[1] * A.cf[2]);
+    Acube.cf[5] = 3.0 * A.cf[1] * A.cf[2] * A.cf[2];
+    Acube.cf[6] = A.cf[2] * A.cf[2] * A.cf[2];
+
+    /* X**2 + 9/80 Y**2 */
+    X2_Y2.dgr = 2;
+    X2_Y2.cf[0] = Xsqr.cf[0] + Ysqr.cf[0] / 20 ;
+    X2_Y2.cf[1] = Xsqr.cf[1] + Ysqr.cf[1] / 20 ;
+    X2_Y2.cf[2] = Xsqr.cf[2] + Ysqr.cf[2] / 20 ;
+
+    /* Z**3 * (X**2 + 9/80 * Y**2) */
+    Z3_X2_Y2.dgr = 5;
+    Z3_X2_Y2.cf[0] = Zcube.cf[0] * X2_Y2.cf[0];
+    Z3_X2_Y2.cf[1] = X2_Y2.cf[0] * Zcube.cf[1];
+    Z3_X2_Y2.cf[2] = X2_Y2.cf[0] * Zcube.cf[2] + X2_Y2.cf[1] * Zcube.cf[0] + X2_Y2.cf[1] * Zcube.cf[1] + X2_Y2.cf[2] * Zcube.cf[0];
+    Z3_X2_Y2.cf[3] = X2_Y2.cf[0] * Zcube.cf[3] + X2_Y2.cf[1] * Zcube.cf[2] + X2_Y2.cf[2] * Zcube.cf[1];
+    Z3_X2_Y2.cf[4] = X2_Y2.cf[1] * Zcube.cf[3] + X2_Y2.cf[2] * Zcube.cf[2];
+    Z3_X2_Y2.cf[5] = X2_Y2.cf[2] * Zcube.cf[3];
+
     S.dgr = 6;
-    S.cf[0] = 4320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] + 960.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z]
-            * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 320.0 * (dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X] * dprime[X]
-            + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 2160.0 * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X]
-            * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 4860.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]
-            * ( dprime[X] * dprime[X] + dprime[Z] * dprime[Z] ) - 36.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Z] * dprime[Z] * dprime[Z]
-            + 3645.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
+    S.cf[0] = Acube.cf[0];
+    S.cf[1] = Acube.cf[1] - Z3_X2_Y2.cf[0];
+    S.cf[2] = Acube.cf[2] - Z3_X2_Y2.cf[1];
+    S.cf[3] = Acube.cf[3] - Z3_X2_Y2.cf[2];
+    S.cf[4] = Acube.cf[4] - Z3_X2_Y2.cf[3];
+    S.cf[5] = Acube.cf[5] - Z3_X2_Y2.cf[4];
+    S.cf[6] = Acube.cf[6] - Z3_X2_Y2.cf[5];
 
-    S.cf[1] = 8640.0 * (dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + dprime[Y] * pprime[Y] * dprime[X]
-            * dprime[X] * dprime[Z] * dprime[Z] + dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]))
-            + 9720.0 * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 1920.0 * (dprime[X] * dprime[X]
-            * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z])) + 4320.0 * (dprime[X]
-            * dprime[X] * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * (dprime[Y] * pprime[Y])) + 3840.0 * (dprime[X]
-            * dprime[X] + dprime[Z] * dprime[Z]) * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 19440.0 * (dprime[Z] * dprime[Z] * dprime[Y] * dprime[Y]
-            + dprime[X] * dprime[Y] * dprime[Y]) * dprime[Y] * pprime[Y] - 108.0 * dprime[Y] * dprime[Z] * (dprime[Z] * dprime[Z] * dprime[Y] * pprime[Y] + pprime[Z]
-            * dprime[Z] * dprime[Y] * dprime[Y]) - 320.0 * dprime[X] * dprime[X] * dprime[Y] * dprime[Y] * dprime[Y] + 21870.0 * pprime[Y] * dprime[Y]
-            * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y];
-
-    S.cf[2] = 4320.0 * (dprime[X] * dprime[X] * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y]) + dprime[Y] * dprime[Y]
-            * (pprime[X] * pprime[X] * dprime[Z] * dprime[Z] - dprime[X] * dprime[X] - dprime[Z] * dprime[Z])) - 960.0 * (dprime[X] * dprime[X] * dprime[X]
-            * dprime[X] * (1.0 - pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] + dprime[Y] * dprime[Y] * (dprime[X] * dprime[X] * pprime[Y]
-            - dprime[Y] * dprime[Y] * pprime[X] * pprime[X])) + 4860.0 * (dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0))
-            + 4800.0 * (dprime[X] * dprime[X] * dprime[X] * dprime[X] * pprime[X] * pprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z])
-            + 2160.0 * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] * dprime[X] * dprime[X] + dprime[Z] * dprime[Z] * dprime[Z] * dprime[Z]) + 5760.0 * dprime[X] * dprime[X]
-            * dprime[Z] * dprime[Z] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z]) + 7680.0 * dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * (dprime[X] * dprime[X]
-            + dprime[Z] * dprime[Z]) + 17280.0 * ((dprime[X] * pprime[X] * dprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z]) * (dprime[X] * dprime[X]
-            + dprime[Z] * dprime[Z]) + dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y]) + 12960.0 * dprime[Y] * dprime[Y] * (dprime[X] * dprime[X]
-            * pprime[X] * pprime[X] + dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z]) + 29160.0 * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X]
-            + dprime[Z] * dprime[Z]) - 108.0 * dprime[Y] * dprime[Z]  * (dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y])
-            - 1920.0 * dprime[X] * dprime[X] * dprime[Z] * dprime[Z] - 54675.0 * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] * dprime[Y]- 324.0 * pprime[Z]
-            * dprime[Z] * dprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] - 640.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * dprime[Y];
-
-    S.cf[3] = 3840.0 * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) *  (dprime[X] * dprime[X] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X]
-            - dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 8640.0 * (dprime[X] * pprime[X] * (pprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] + dprime[Z] * dprime[Z]
-            * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[X] * pprime[X] + dprime[X] * dprime[X] * pprime[Y] * pprime[Y] - dprime[Y] * dprime[Y]) + dprime[Y]
-            * pprime[Y] * (dprime[X] * dprime[X] * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X] - dprime[X] * dprime[X] - dprime[Z] * dprime[Z])
-            + dprime[Z] * pprime[Z] * (dprime[X] * dprime[X] * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[X] * pprime[X] + dprime[Y] * pprime[Z] * pprime[Z]
-            + dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] - dprime[Y] * dprime[Y])) + 6400.0 * (dprime[X] * dprime[X] * dprime[X] * pprime[X] * pprime[X] * pprime[X]
-            + dprime[Z] * dprime[Z] * dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + 19440.0 * dprime[Y] * pprime[Y] * (dprime[Y] * dprime[Y] * (pprime[X] * pprime[X]
-            + pprime[Z] * pprime[Z] - 1.0) + pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z])) - 36.0 * (dprime[Y] * dprime[Y] * dprime[Y]
-            * pprime[Z] * pprime[Z] * pprime[Z] + dprime[Z]* dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] * pprime[Y]) + 11520.0 * (dprime[X] * pprime[X] * dprime[Z]
-            * pprime[Z] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]))- 324.0 * dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z] * (dprime[Y] * pprime[Z] + dprime[Z]
-            + pprime[Y]) + 25920.0 * dprime[Y] * pprime[Y] * (pprime[Z] * pprime[Z] * dprime[Z] * dprime[Z] + pprime[X] * pprime[X] * dprime[X] * dprime[X]) - 320.0
-            * pprime[X] * pprime[X] * dprime[Y] * dprime[Y] * dprime[Y] + 72900.0 * pprime[Y] * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] * dprime[Y] + 34560.0
-            * dprime[X] * pprime[X] * dprime[Y] * pprime[Y] * dprime[Z] * pprime[Z] + 58320.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
-            - 1920.0 * dprime[X] * pprime[X] * dprime[Y] * dprime[Y] * pprime[Y] + 58320.0 * dprime[Z] * pprime[Z] * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y]
-            - 960.0 * dprime[X] * dprime[X] * dprime[Y] * pprime[Y] * pprime[Y];
-
-    S.cf[4] = 960.0 * (dprime[X] * dprime[X] * (1.0 + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + dprime[Z] * dprime[Z] * (1.0 + pprime[X] * pprime[X] * pprime[X]
-            * pprime[X]) - dprime[Y] * dprime[Y] * pprime[X] * pprime[X] * pprime[Y]) + 2160.0 * dprime[Y] * dprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X]
-            + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]) + 4320.0 * (pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z] + dprime[X] * dprime[X]
-            * pprime[Z] * pprime[Z] + dprime[Z] * dprime[Z] * pprime[X] * pprime[X]) + dprime[Y] * dprime[Y] * (pprime[X] * pprime[X] * pprime[Z] * pprime[Z] - pprime[X]
-            * pprime[X] - pprime[Z] * pprime[Z])) + 4800.0 * (pprime[X] * pprime[X] * pprime[X] * pprime[X] * dprime[X] * dprime[X] + pprime[Z] * pprime[Z] * pprime[Z]
-            * pprime[Z] * dprime[Z] * dprime[Z]) + 4860.0 * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] + dprime[Z] * dprime[Z]) + 5760.0
-            * (pprime[Z] * pprime[Z] * dprime[Z] * dprime[Z] * (1.0 + pprime[X] * pprime[X]) + pprime[X] * pprime[X] * dprime[X] * dprime[X] * (pprime[Z] * pprime[Z] - 1.0))
-            +  7680.0 * dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0 - 1920.0 * (dprime[X] * dprime[X] * pprime[Z]
-            * pprime[Z] + dprime[Z] * dprime[Z]* pprime[X] * pprime[X] + dprime[X] * pprime[X] * pprime[Y] * pprime[Y] * dprime[Y]) + 17280.0 * (dprime[Y] * pprime[Y]
-            * (dprime[X] * pprime[X] * pprime[X] * pprime[X] - dprime[X] * pprime[X] + dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] - dprime[Z] * pprime[Z] + dprime[X]
-            * pprime[X] * pprime[Z] * pprime[Z]) + dprime[X] * pprime[X] * dprime[Z] * pprime[Z] * pprime[Y] * pprime[Y]) + 38880.0 * dprime[Y] * pprime[Y] * pprime[Y]
-            * pprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z]) + 12960.0 * pprime[Y] * pprime[Y] * (dprime[X] * dprime[X] * pprime[X] * pprime[X] - dprime[Z]
-            * dprime[Z] * pprime[Z] * pprime[Z]) + 29160.0 * dprime[Y] * dprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] - 1.0)
-            - 180.0 * pprime[Y] * pprime[Z] * dprime[Z] * dprime[Z] * pprime[Y] * pprime[Y] + dprime[Y] * dprime[Y] * pprime[Z] * pprime[Z]) - 320.0 * dprime[X]
-            * dprime[X] * pprime[Y] * pprime[Y] * pprime[Y] + 54675.0 * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * dprime[Y] * dprime[Y] ;
-
-    S.cf[5] = 1920.0 * ((dprime[X] * pprime[X] +  dprime[Z] * pprime[Z]) * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
-            * pprime[Z] * pprime[Z])) + 4320.0 * dprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
-            * pprime[Z] * pprime[Z]) + 8640.0 * (-dprime[Y] * pprime[Y] * pprime[Z] * pprime[Z] + dprime[X] * pprime[X] * pprime[Z] * pprime[Z]
-            * pprime[Y] * pprime[Y] + dprime[Z] * pprime[Z] * pprime[X] * pprime[X] * pprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * pprime[X]
-            * pprime[X] * pprime[Z] * pprime[Z] - dprime[X] * pprime[X] * pprime[Y] * pprime[Y] + dprime[X] * pprime[Y] * pprime[Y] + dprime[X] * pprime[X]
-            * pprime[X] * pprime[X] * pprime[Y] * pprime[Y] - dprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] + dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
-            * pprime[Y] * pprime[Y] - dprime[Y] * pprime[Y] * pprime[X] * pprime[X]) - 3840.0 * (dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] + dprime[X]
-            * pprime[X] * pprime[X] * pprime[X] + dprime[X] * pprime[X] * pprime[Z] * pprime[Z] - dprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[Z]
-            * pprime[Z] + dprime[Z] * pprime[Z] * pprime[X] * pprime[X] - dprime[Z] * pprime[Z] * pprime[Z] * pprime[Z] * pprime[X] * pprime[X])
-            - 19440.0 * (dprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (1.0 - pprime[X] * pprime[X] - pprime[Z] * pprime[Z])) + 9720.0 * (pprime[Y]
-            * pprime[Y] * pprime[Y] * pprime[Y] * (dprime[X] * pprime[X] + dprime[Z] * pprime[Z])) + 21870.0 * (dprime[Y] * pprime[Y] * pprime[Y]
-            * pprime[Y] * pprime[Y] * pprime[Y])- 640.0 * (dprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y] - dprime[Y] * pprime[Y] * pprime[Y]
-            * pprime[X] * pprime[X]) - 108.0 * (dprime[Z] * pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] * pprime[Y] + dprime[Y] * pprime[Y] * pprime[Y]
-            * pprime[Z] * pprime[Z] * pprime[Z]);
-
-    S.cf[6] = 320.0 * (-1.0 * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
-            * pprime[Z] * pprime[Z] - pprime[X] * pprime[X] * pprime[Y] * pprime[Y] * pprime[Y]) + 960.0 * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z]
-            + pprime[Z] * pprime[Z] * pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[X] * pprime[X] * pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]
-            - pprime[X] * pprime[X] * pprime[X] * pprime[X] - pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z])  + 4320.0 * (pprime[X] * pprime[X] * pprime[Y]
-            * pprime[Y] * pprime[Z] * pprime[Z] - pprime[X] * pprime[X] * pprime[Y] * pprime[Y] -pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y])
-            - 1920.0 * pprime[X] * pprime[X] * pprime[Z] * pprime[Z] - 36.0 * pprime[Z] * pprime[Z] * pprime[Z] * pprime[Y] * pprime[Y] * pprime[Y]
-            + 2160.0 * (pprime[Y] * pprime[Y] * (1.0 + pprime[X] * pprime[X] * pprime[X] * pprime[X] + pprime[Z] * pprime[Z] * pprime[Z] * pprime[Z]))
-            + 4860.0 * (pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * (pprime[X] * pprime[X] + pprime[Z] * pprime[Z] + 1.0)) + 3645.0 * pprime[Y]
-            * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] * pprime[Y] ;
     /* It is known that the equation is sextic (of order 6). Therefore, if the
      * root finder returns other than 6 roots, return an error.
      */
@@ -531,13 +506,13 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
             bu_log("hrt:  rt_poly_roots() 6!=%d\n", i);
             bn_pr_roots(stp->st_name, complex, i);
         } else if (i < 0) {
-            static int reported=0;
+            static int reported = 0;
             bu_log("The root solver failed to converge on a solution for %s\n", stp->st_dp->d_namep);
             if (!reported) {
                 VPRINT("while shooting from:\t", rp->r_pt);
                 VPRINT("while shooting at:\t", rp->r_dir);
                 bu_log("Additional heart convergence failure details will be suppressed.\n");
-                reported=1;
+                reported = 1;
             }
         }
         return 0;               /* MISS */
@@ -549,7 +524,7 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
      * sufficiently close, then use the real part as one value of 't'
      * for the intersections
      */
-    for (j=0, i=0; j < 6; j++) {
+    for (j = 0, i = 0; j < 6; j++) {
         if (NEAR_ZERO(complex[j].im, ap->a_rt_i->rti_tol.dist))
             real[i++] = complex[j].re;
     }
@@ -658,20 +633,16 @@ rt_hrt_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ H R T _ V S H O T
- *
  * This is the Becker vector version
  */
 void
-rt_hrt_vshot()
+rt_hrt_vshot(void)
 {
     bu_log("rt_hrt_vshot: Not implemented yet!\n");
 }
 
 
 /**
- * R T _ H R T _ N O R M
- *
  * Compute the normal to the heart, given a point on the heart
  * centered at the origin on the X-Y plane.  The gradient of the heart
  * at that point is in fact the normal vector, which will have to be
@@ -681,27 +652,25 @@ rt_hrt_vshot()
  *
  * Given that the equation for the heart is:
  *
- * [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Y**3 * (X**2 + 9/80*Z**3) = 0.
+ * [ X**2 + 9/4 * Y**2 + Z**2 - 1 ]**3 - Z**3 * (X**2 + 9/80*Y**2) = 0.
  *
  * let w = X**2 + 9/4 * Y**2 + Z**2 - 1, then the equation becomes:
  *
- * w**3 - Y**3 * (X**2 + 9/80 * Y**2)  =  0.
+ * w**3 - Z**3 * (X**2 + 9/80 * Y**2)  =  0.
  *
  * For f(x, y, z) = 0, the gradient of f() is (df/dx, df/dy, df/dz).
  *
- * df/dx = 6 * x * (w**2 - y**3)
- * df/dy = 6 * (12/27 * w**2 * y**2 - 1/2 * y**2 * (x**2 + 9 / 80*z**3))
- * df/dz = 6 * (w**2 * z - 160 / 9 * y**3 * z**2)
+ * df/dx = 6 * X * (w**2 - Z**3/3)
+ * df/dy = 6 * Y * (12/27 * w**2 - 80/3 * Z**3)
+ * df/dz = 6 * Z * ( w**2 - 1/2 * Z * (X**2 + 9/80 * Y**2))
  *
  * Since we rescale the gradient (normal) to unity, we divide the
  * above equations by six here.
  */
 void
-rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray *rp)
+rt_hrt_norm(register struct hit *UNUSED(hitp), register struct xray *UNUSED(rp))
 {
-    register struct hrt_specific *hrt =
-	(struct hrt_specific *)stp->st_specific;
-
+    /*
     fastf_t w, fx, fy, fz;
     vect_t work;
 
@@ -709,44 +678,31 @@ rt_hrt_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
     w = hitp->hit_vpriv[X] * hitp->hit_vpriv[X]
         + 9.0/4.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
         + hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] - 1.0;
-    fx = (w * w - hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]) * hitp->hit_vpriv[X];
-    fy = 0.5 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y] * (8.0/9.0 * w * w
-    - (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9.0 / 80.0 * hitp->hit_vpriv[Z]
-    * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]));
-    fz = w * w * hitp->hit_vpriv[Z] - 160.0/9.0 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y]
-    * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z];
+    fx = (w * w - 1/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]) * hitp->hit_vpriv[X];
+    fy = hitp->hit_vpriv[Y] * (12/27 * w * w - 80/3 * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z] * hitp->hit_vpriv[Z]);
+    fz = (w * w - 0.5 * hitp->hit_vpriv[Z] * (hitp->hit_vpriv[X] * hitp->hit_vpriv[X] + 9/80 * hitp->hit_vpriv[Y] * hitp->hit_vpriv[Y])) * hitp->hit_vpriv[Z];
     VSET(work, fx, fy, fz);
-    VUNITIZE(work);
-
-    MAT3X3VEC(hitp->hit_normal, hrt->hrt_invR, work);
+    */
 }
 
 
 /**
- * R T _ H R T _ C U R V E
- *
  * Return the curvature of the heart.
  */
 void
-rt_hrt_curve()
+rt_hrt_curve(void)
 {
     bu_log("rt_hrt_curve: Not implemented yet!\n");
 }
 
 
-/**
- * R T _ H R T _ U V
- */
 void
-rt_hrt_uv()
+rt_hrt_uv(void)
 {
     bu_log("rt_hrt_uv: Not implemented yet!\n");
 }
 
 
-/**
- * R T _ H R T _ F R E E
- */
 void
 rt_hrt_free(struct soltab *stp)
 {
@@ -758,42 +714,94 @@ rt_hrt_free(struct soltab *stp)
 
 
 /**
- * R T _ H R T _ C L A S S
+ * Similar to code used by the ELL
  */
-int
-rt_hrt_class(void)
+#define HRTOUT(n) ov+(n-1)*3
+void
+rt_hrt_24pts(fastf_t *ov, fastf_t *V, fastf_t *A, fastf_t *B)
 {
-    return 0;
+    static fastf_t c, d, e, f, g, h, i, j, k, l;
+
+    c = h = .96593;		/* cos(15.0 degrees) */
+    d = i = 0.86603;            /* cos(30.0 degrees) */
+    e = j = M_SQRT1_2;		/* cos(45.0 degrees) */
+    f = k = 0.5;                /* cos(60.0 degrees) */
+    g = l = .25882;		/* cos(75.0 degrees) */
+
+    /*
+     * For angle theta, compute surface point as
+     *
+     * V + cos(theta) * A + sin(theta) * B
+     *
+     * note that sin(theta) is cos(90-theta); arguments in degrees.
+     */
+
+    VADD2(HRTOUT(1), V, A);
+    VJOIN2(HRTOUT(2), V, c, A, h, B);
+    VJOIN2(HRTOUT(3), V, d, A, i, B);
+    VJOIN2(HRTOUT(4), V, e, A, j, B);
+    VJOIN2(HRTOUT(5), V, f, A, k, B);
+    VJOIN2(HRTOUT(6), V, g, A, l, B);
+    VADD2(HRTOUT(7), V, B);
+    VJOIN2(HRTOUT(8), V, -g, A, h, B);
+    VJOIN2(HRTOUT(9), V, -f, A, i, B);
+    VJOIN2(HRTOUT(10), V, -e, A, j, B);
+    VJOIN2(HRTOUT(11), V, -d, A, k, B);
+    VJOIN2(HRTOUT(12), V, -c, A, l, B);
+    VSUB2(HRTOUT(13), V, A);
+    VJOIN2(HRTOUT(14), V, -g, A, -l, B);
+    VJOIN2(HRTOUT(15), V, -f, A, -k, B);
+    VJOIN2(HRTOUT(16), V, -e, A, -j, B);
+    VJOIN2(HRTOUT(17), V, -d, A, -i, B);
+    VJOIN2(HRTOUT(18), V, -c, A, -h, B);
+    VSUB2(HRTOUT(19), V, B);
+    VJOIN2(HRTOUT(20), V, g, A, -h, B);
+    VJOIN2(HRTOUT(21), V, f, A, -i, B);
+    VJOIN2(HRTOUT(22), V, e, A, -j, B);
+    VJOIN2(HRTOUT(23), V, d, A, -k, B);
+    VJOIN2(HRTOUT(24), V, c, A, -l, B);
 }
 
 
-/**
- * R T _ H R T _ A D A P T I V E _ P L O T
- */
 int
-rt_hrt_adaptive_plot()
+rt_hrt_adaptive_plot(void)
 {
     bu_log("rt_adaptive_plot: Not implemented yet!\n");
     return 0;
 }
 
 
-/**
- * R T _ H R T _ P L O T
- */
 int
-rt_hrt_plot(const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
+rt_hrt_plot(struct bu_list *vhead, struct rt_db_internal *ip,const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
-    bu_log("rt_hrt_plot: Not implemented yet!\n");
+    int i;
+    struct rt_hrt_internal *hip;
+    fastf_t top[24*3];
+    fastf_t middle[24*3];
+
+    BU_CK_LIST_HEAD(vhead);
+    RT_CK_DB_INTERNAL(ip);
+    hip = (struct rt_hrt_internal *)ip->idb_ptr;
+    RT_HRT_CK_MAGIC(hip);
+
+    rt_hrt_24pts(top, hip->v, hip->xdir, hip->ydir);
+    rt_hrt_24pts(middle, hip->v, hip->xdir, hip->zdir);
+
+    RT_ADD_VLIST(vhead, &top[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &top[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
+
+    RT_ADD_VLIST(vhead, &middle[23*ELEMENTS_PER_VECT], BN_VLIST_LINE_MOVE);
+    for (i = 0; i < 24; i++) {
+	RT_ADD_VLIST(vhead, &middle[i*ELEMENTS_PER_VECT], BN_VLIST_LINE_DRAW);
+    }
     return 0;
 }
 
 
-/**
- * R T _ H R T _ T E S S
- */
 int
-rt_hrt_tess()
+rt_hrt_tess(void)
 {
     bu_log("rt_hrt_tess: Not implemented yet!\n");
     return 0;
@@ -801,8 +809,6 @@ rt_hrt_tess()
 
 
 /**
- * R T _ H R T _ E X P O R T 5
- *
  * The external form is:
  * V point
  * Xdir vector
@@ -826,7 +832,7 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * (ELEMENTS_PER_VECT*4 + 1);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "hrt external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "hrt external");
 
     /* scale values to local buffer */
     VSCALE(&hec[0*ELEMENTS_PER_VECT], hip->v, local2mm);
@@ -843,8 +849,6 @@ rt_hrt_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ H R T _ I M P O R T 5
- *
  * Import a heart from the database format to the internal format.
  *
  */
@@ -856,7 +860,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     /* must be double for import and export */
     double hec[ELEMENTS_PER_VECT*4 + 1];
 
-    if(dbip) RT_CK_DBI(dbip);
+    if (dbip) RT_CK_DBI(dbip);
 
     RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(ep);
@@ -875,7 +879,7 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_cv_ntohd((unsigned char *)hec, ep->ext_buf, ELEMENTS_PER_VECT*4 + 1);
 
     /* Apply modelling transformations */
-    if(mat == NULL) mat = bn_mat_identity;
+    if (mat == NULL) mat = bn_mat_identity;
     MAT4X3PNT(hip->v, mat, &hec[0*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->xdir, mat, &hec[1*ELEMENTS_PER_VECT]);
     MAT4X3PNT(hip->ydir, mat, &hec[2*ELEMENTS_PER_VECT]);
@@ -887,8 +891,6 @@ rt_hrt_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ H R T _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.  First
  * line describes type of solid.  Additional lines are indented one
  * tab, and give parameter values.
@@ -959,8 +961,6 @@ rt_hrt_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ H R T _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this
  * solid.
  */
@@ -979,10 +979,6 @@ rt_hrt_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H R T _ P A R A M S
- *
- */
 int
 rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -992,34 +988,22 @@ rt_hrt_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ H R T _ S U R F A C E _ A R E A
- *
- */
 void
-rt_hrt_surf_area()
+rt_hrt_surf_area(void)
 {
     bu_log("rt_hrt_surf_area: Not implemented yet!\n");
 }
 
 
-/**
- * R T _ H R T _ V O L U M E
- *
- */
 void
-rt_hrt_volume()
+rt_hrt_volume(void)
 {
     bu_log("rt_hrt_volume: Not implemented yet!\n");
 }
 
 
-/**
- * R T _ H R T _ C E N T R O I D
- *
- */
 void
-rt_hrt_centroid()
+rt_hrt_centroid(void)
 {
     bu_log("rt_hrt_centroid: Not implemented yet!\n");
 }

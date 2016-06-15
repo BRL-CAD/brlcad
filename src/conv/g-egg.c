@@ -1,7 +1,7 @@
 /*                         G - E G G . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2013 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 #include "gcv.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -178,9 +179,6 @@ nmg_to_egg(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -285,7 +283,7 @@ main(int argc, char *argv[])
     /* Open brl-cad database */
     argc -= bu_optind;
     argv += bu_optind;
-    if(argc < 2 || argv[0] == NULL || argv[1] == NULL)
+    if (argc < 2 || argv[0] == NULL || argv[1] == NULL)
 	usage(argv[0]);
 
     gcvwriter.func = nmg_to_egg;

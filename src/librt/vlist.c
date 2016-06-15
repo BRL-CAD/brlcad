@@ -1,7 +1,7 @@
 /*                         V L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2013 United States Government as represented by
+ * Copyright (c) 1992-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,8 +27,9 @@
 #include <string.h>
 #include "bin.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
-#include "bu.h"
+
 #include "bn.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -526,8 +527,6 @@ static const struct uplot rt_uplot_letters[] = {
 
 
 /**
- * g e t s h o r t
- *
  * Read VAX-order 16-bit number
  */
 static int

@@ -1,0 +1,8 @@
+SET(astyle_ignore_files
+ASLocalizer.h
+astyle.h
+astyle_main.h
+LICENSE
+gpl-3.0.txt
+README
+)

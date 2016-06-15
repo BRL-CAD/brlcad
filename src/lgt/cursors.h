@@ -1,7 +1,7 @@
 /*                       C U R S O R S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,10 @@
  * From AT&T's Teletype 5620 $DMD/icon directory, reformatted slightly
  * to be an array of 32 unsigned chars, rather than a Texture16.
  */
+
+#ifndef LGT_CURSORS_H
+#define LGT_CURSORS_H
+
 unsigned char menucursor[32] =
 {
     0xFF, 0xC0,
@@ -98,6 +102,8 @@ unsigned char	arrowcursor[32] =
     0x00, 0x06,
     0x00, 0x00
 };
+
+#endif /* LGT_CURSORS_H */
 
 /*
  * Local Variables:

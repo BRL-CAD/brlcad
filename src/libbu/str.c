@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,11 +21,19 @@
 #include "common.h"
 
 #include <string.h>
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION) ||  defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#include <strings.h>
+#endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
+#include <ctype.h>
+#include <stdio.h> /* for fprintf */
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 
 
 size_t
@@ -146,7 +154,7 @@ bu_strdupm(register const char *cp, const char *label)
     }
 
     len = strlen(cp)+1;
-    base = bu_malloc(len, label);
+    base = (char *)bu_malloc(len, label);
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
@@ -213,7 +221,17 @@ bu_strcasecmp(const char *string1, const char *string2)
     if (string2)
 	s2 = string2;
 
+#if defined(HAVE_WORKING_STRCASECMP_FUNCTION)
     return strcasecmp(s1, s2);
+#else
+    while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+	if (*s1 == '\0')
+	    return 0;
+	s1++;
+	s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+#endif
 }
 
 
@@ -231,7 +249,20 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
     if (string2)
 	s2 = string2;
 
+    if (n == 0)
+	return 0;
+
+#if defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
     return strncasecmp(s1, s2, n);
+#else
+    while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
+	if (--n == 0 || *s1 == '\0')
+	    return 0;
+	s1++;
+	s2++;
+    }
+    return tolower((unsigned char)*s1) - tolower((unsigned char)*s2);
+#endif
 }
 
 

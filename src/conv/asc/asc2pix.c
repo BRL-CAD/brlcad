@@ -1,7 +1,7 @@
 /*                       A S C 2 P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,10 +46,8 @@ main(void)
     int	a, b;
     int	i;
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
-#endif
 
     /* Init rmap */
 

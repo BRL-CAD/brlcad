@@ -1,7 +1,7 @@
 /*                        P I X C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -175,6 +175,8 @@ main(int argc, char **argv)
     long int i;
     unsigned char *cp;
     int finish, row, result;
+
+    bu_log("DEPRECATED: pixcut is no longer being maintained.\n\tContact devs@brlcad.org if you still use this tool.\n");
 
     for (i=0;i<SIZEBACK;i++) background[i] = 0;
     background[2] = 1;

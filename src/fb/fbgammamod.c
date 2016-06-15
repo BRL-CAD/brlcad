@@ -1,7 +1,7 @@
 /*                    F B G A M M A M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,9 +54,6 @@ double ga, gm, gg;
 double ba, bm, bg;
 double add, mul, pre_gam, post_gam;	/* globals */
 
-/*
- * D O _ F I L E
- */
 void
 do_file(void)
 {
@@ -101,9 +98,6 @@ do_file(void)
 }
 
 
-/*
- * D O _ F B
- */
 void
 do_fb(void)
 {
@@ -118,9 +112,6 @@ do_fb(void)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

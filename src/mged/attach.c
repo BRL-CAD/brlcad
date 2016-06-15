@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dg.h"
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 #include "ged.h"
 
 #include "./mged.h"
@@ -51,6 +51,7 @@
 #define NEED_GUI(_type) (\
 	IS_DM_TYPE_WGL(_type) || \
 	IS_DM_TYPE_OGL(_type) || \
+	IS_DM_TYPE_OSG(_type) || \
 	IS_DM_TYPE_RTGL(_type) || \
 	IS_DM_TYPE_GLX(_type) || \
 	IS_DM_TYPE_PEX(_type) || \
@@ -90,6 +91,11 @@ extern void Ogl_fb_open();
 # endif
 #endif /* DM_OGL */
 
+#ifdef DM_OSG
+extern int Osg_dm_init();
+extern void Osg_fb_open();
+#endif /* DM_OSG */
+
 #ifdef DM_RTGL
 extern int Rtgl_dm_init();
 extern void Rtgl_fb_open();
@@ -105,6 +111,7 @@ extern int Pex_dm_init();
 
 #ifdef DM_QT
 extern int Qt_dm_init();
+extern void Qt_fb_open();
 #endif /* DM_QT */
 
 extern void fbserv_set_port(void);		/* defined in fbserv.c */
@@ -138,6 +145,9 @@ struct w_dm which_dm[] = {
     { DM_TYPE_OGL, "ogl", Ogl_dm_init },
 #  endif
 #endif /* DM_OGL */
+#ifdef DM_OSG
+    { DM_TYPE_OSG, "osg", Osg_dm_init },
+#endif /* DM_OSG */
 #ifdef DM_RTGL
     { DM_TYPE_RTGL, "rtgl", Rtgl_dm_init },
 #endif /* DM_RTGL */
@@ -177,10 +187,20 @@ mged_fb_open(void)
 	Ogl_fb_open();
 #  endif
 #endif /* DM_OGL */
+#ifdef DM_OSG
+#if 0
+    if (dmp->dm_type == DM_TYPE_OSG)
+	Osg_fb_open();
+#endif
+#endif /* DM_OSG */
 #ifdef DM_RTGL
     if (dmp->dm_type == DM_TYPE_RTGL)
 	Rtgl_fb_open();
 #endif /* DM_RTGL */
+#ifdef DM_QT
+    if (dmp->dm_type == DM_TYPE_QT)
+	Qt_fb_open();
+#endif /* DM_QT */
 }
 
 
@@ -338,6 +358,10 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "ogl  ", (char *)NULL);
     i++;
 #endif /* DM_OGL */
+#ifdef DM_OSG
+    Tcl_AppendResult(interpreter, "osg  ", (char *)NULL);
+    i++;
+#endif /* DM_OSG*/
 #ifdef DM_RTGL
     Tcl_AppendResult(interpreter, "rtgl  ", (char *)NULL);
     i++;
@@ -350,7 +374,7 @@ print_valid_dm(Tcl_Interp *interpreter)
     Tcl_AppendResult(interpreter, "qt", (char *)NULL);
     i++;
 #endif /* DM_QT */
-    if (i==0) {
+    if (i == 0) {
 	Tcl_AppendResult(interpreter, "NONE AVAILABLE", (char *)NULL);
     }
     Tcl_AppendResult(interpreter, "\n", (char *)NULL);
@@ -541,7 +565,14 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     }
 
     /* initialize the background color */
-    cs_set_bg();
+    {
+	/* need dummy values for func signature--they are unused in the func */
+	const struct bu_structparse *sdp = 0;
+	const char name[] = "name";
+	void *base = 0;
+	const char value[] = "value";
+	cs_set_bg(sdp, name, base, value);
+    }
 
     mged_link_vars(curr_dm_list);
 
@@ -644,8 +675,6 @@ get_attached(void)
 
 
 /*
- * F _ D M
- *
  * Run a display manager specific command(s).
  */
 int
@@ -689,6 +718,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 	    Tcl_AppendResult(interpreter, "ogl", (char *)NULL);
 	}
 #endif /* DM_OGL */
+#ifdef DM_OSG
+	if (BU_STR_EQUAL(argv[argc-1], "osg")) {
+	    Tcl_AppendResult(interpreter, "osg", (char *)NULL);
+	}
+#endif /* DM_OSG*/
 #ifdef DM_RTGL
 	if (BU_STR_EQUAL(argv[argc-1], "rtgl")) {
 	    Tcl_AppendResult(interpreter, "rtgl", (char *)NULL);
@@ -720,8 +754,6 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
 
 
 /**
- * I S _ D M _ N U L L
- *
  * Returns -
  *  0  If the display manager goes to a real screen.
  * !0  If the null display manager is attached.
@@ -801,18 +833,18 @@ mged_link_vars(struct dm_list *p)
 {
     mged_slider_init_vls(p);
 
-    bu_vls_printf(&p->dml_fps_name, "%s(%V,fps)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_aet_name, "%s(%V,aet)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_ang_name, "%s(%V,ang)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_center_name, "%s(%V,center)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_size_name, "%s(%V,size)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
-    bu_vls_printf(&p->dml_adc_name, "%s(%V,adc)", MGED_DISPLAY_VAR,
-		  &p->dml_dmp->dm_pathName);
+    bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
+    bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,
+		  bu_vls_addr(&p->dml_dmp->dm_pathName));
 }
 
 

@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include "raytrace.h"
 #include "./mged.h"
 #include "./mged_dm.h"
-#include "dm-plot.h"
+#include "dm/dm-plot.h"
 
 extern void dm_var_init(struct dm_list *initial_dm_list);
 

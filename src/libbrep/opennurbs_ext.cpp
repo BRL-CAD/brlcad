@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -105,28 +105,6 @@ brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, p
 	mat2d_pt2d_mul(tmp, inv_jacob, R);
 	pt2dsub(out_uv, uv, tmp);
     } else {
-	TRACE2("inverse failed"); // XXX how to handle this?
-	move(out_uv, uv);
-    }
-}
-
-
-void
-brep_newton_iterate(const ON_Surface* UNUSED(surf), plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
-{
-    vect_t vsu, vsv;
-    VMOVE(vsu, su);
-    VMOVE(vsv, sv);
-
-    mat2d_t jacob = { VDOT(pr.n1, vsu), VDOT(pr.n1, vsv),
-		      VDOT(pr.n2, vsu), VDOT(pr.n2, vsv) };
-    mat2d_t inv_jacob;
-    if (mat2d_inverse(inv_jacob, jacob)) {
-	// check inverse validity
-	pt2d_t tmp;
-	mat2d_pt2d_mul(tmp, inv_jacob, R);
-	pt2dsub(out_uv, uv, tmp);
-    } else {
 	TRACE2("inverse failed"); // FIXME: how to handle this?
 	move(out_uv, uv);
     }
@@ -149,7 +127,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 //--------------------------------------------------------------------------------
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face) :
-    m_face(face), m_adj_face_index(-99)
+    m_face(face)
 {
     m_root = initialLoopBBox();
 
@@ -797,6 +775,28 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     if (found) {
 	return 1;
     }
+
+    nodes.clear();
+    (void)m_root->getLeavesBoundingPoint(pt, nodes);
+    for (i = nodes.begin(); i != nodes.end(); i++) {
+	BBNode* node = (*i);
+	if (brep_getSurfacePoint(pt, curr_uv, node)) {
+	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
+	    double dist = fp.DistanceTo(pt);
+	    if (NEAR_ZERO(dist, BREP_SAME_POINT_TOLERANCE)) {
+		uv = curr_uv;
+		found = true;
+		return 1; //close enough to same point so no sense in looking for one closer
+	    } else if (NEAR_ZERO(dist, tolerance)) {
+		if (dist < min_dist) {
+		    uv = curr_uv;
+		    min_dist = dist;
+		    found = true; //within tolerance but may be a point closer so keep looking
+		}
+	    }
+	}
+    }
+
     return -1;
 }
 
@@ -1627,7 +1627,8 @@ try_again:
 	}
     }
 
-    if (delete_tree) delete a_tree;
+    if (delete_tree)
+	delete a_tree;
     return found;
 }
 

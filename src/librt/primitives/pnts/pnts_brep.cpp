@@ -1,7 +1,7 @@
 /*                    P N T S _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,9 +31,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ P N T S _ B R E P
- */
 extern "C" void
 rt_pnts_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {

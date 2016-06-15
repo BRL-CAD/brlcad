@@ -1,7 +1,7 @@
 /*                    P C N E T W O R K . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,12 +43,12 @@ BinaryNetwork<T>::BinaryNetwork(std::vector<Variable<T> *> V, std::vector<Constr
     typename std::vector<Variable<T> *>::iterator i = V.begin();
     typename std::vector<Constraint *>::iterator j = C.begin();
 
-    while (i!=V.end()) {
+    while (i != V.end()) {
 	add_vertex(*i, G);
 	++i;
     }
 
-    while (j!=C.end()) {
+    while (j != C.end()) {
 	add_edge(*j, G);
 	++i;
     }
@@ -83,7 +83,8 @@ void BinaryNetwork<T>::add_vertex(Variable<T> *V)
 template<class T>
 void BinaryNetwork<T>::add_edge(Constraint *C)
 {
-    Vertex v1, v2;
+    Vertex v1 = Vertex();
+    Vertex v2 = Vertex();
     std::list<std::string> vl = C->getVariableList();
     getVertexbyID(vl.front(), v1);
     getVertexbyID(vl.back(), v2);

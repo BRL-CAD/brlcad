@@ -1,7 +1,7 @@
 /*                         W H I C H . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,10 @@
 #include <string.h>
 
 /* common headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 /* how big should PATH from getenv ever be */
@@ -45,6 +48,7 @@ bu_which(const char *cmd)
 
     char *directory = NULL;
     char *position = NULL;
+    char curr_dir[] = ".";
 
     if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
 	bu_log("bu_which: [%s]\n", cmd);
@@ -82,7 +86,7 @@ bu_which(const char *cmd)
 	if (!BU_STR_EQUAL(PATH, gotpath)) {
 	    position = strrchr(PATH, BU_PATH_SEPARATOR);
 	    if (position) {
-		position = '\0';
+		position = NULL;
 	    } else {
 		/* too much and no separator? wtf. */
 		if (UNLIKELY(bu_debug & BU_DEBUG_PATHS)) {
@@ -107,12 +111,13 @@ bu_which(const char *cmd)
     do {
 	position = strchr(directory, BU_PATH_SEPARATOR);
 	if (position) {
+	    /* 'directory' can't be const because we have to change a character here: */
 	    *position = '\0';
 	}
 
 	/* empty means use current dir */
 	if (strlen(directory) == 0) {
-	    directory = ".";
+	    directory = curr_dir; /* "."; */
 	}
 
 	snprintf(bu_which_result, MAXPATHLEN, "%s/%s", directory, cmd);

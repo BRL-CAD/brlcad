@@ -1,7 +1,7 @@
 /*                       S I M R T . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  *
  */
 
-#ifndef SIMRT_H_
-#define SIMRT_H_
+#ifndef LIBGED_SIMULATE_SIMRT_H
+#define LIBGED_SIMULATE_SIMRT_H
 
 #if defined __cplusplus
 
@@ -324,7 +324,7 @@ init_rayshot_results(void);
 #endif
 
 
-#endif /* SIMRT_H_ */
+#endif /* LIBGED_SIMULATE_SIMRT_H */
 
 /*
  * Local Variables:

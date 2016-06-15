@@ -1,7 +1,7 @@
 /*                 SurfaceCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,12 +23,6 @@
  * structures.
  *
  */
-
-#ifdef AP203e2
-#  define SCHEMA_NAMESPACE ap203_configuration_controlled_3d_design_of_mechanical_parts_and_assemblies_mim_lf
-#else
-#  define SCHEMA_NAMESPACE config_control_design
-#endif
 
 #include "STEPWrapper.h"
 #include "Factory.h"
@@ -68,7 +62,13 @@ SurfaceCurve::SurfaceCurve(STEPWrapper *sw, int step_id)
 SurfaceCurve::~SurfaceCurve()
 {
     curve_3d = NULL;
-    associated_geometry.clear();
+
+    LIST_OF_PCURVE_OR_SURFACE::iterator i = associated_geometry.begin();
+
+    while (i != associated_geometry.end()) {
+	delete (*i);
+	i = associated_geometry.erase(i);
+    }
 }
 
 bool
@@ -99,7 +99,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     /* TODO: get a sample to work with
        LIST_OF_ENTITIES *l = step->getListOfEntities(sse,"associated_geometry");
        LIST_OF_ENTITIES::iterator i;
-       for(i=l->begin();i!=l->end();i++) {
+       for (i=l->begin();i!=l->end();i++) {
        SDAI_Application_instance *entity = (*i);
        if (entity) {
        PCurveOrSurface *aPCOS = (PCurveOrSurface *)Factory::CreateObject(sw,entity);

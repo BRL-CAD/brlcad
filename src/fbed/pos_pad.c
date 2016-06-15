@@ -1,7 +1,7 @@
 /*                       P O S _ P A D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -45,27 +45,30 @@ static	int pfd;
 static	char *padfile = "/dev/pad";
 static	int npoints;
 
+
 int
 pad_open(int n)
 {
-    if ( (pfd = open(padfile, 2)) < 0 ) {
-	perror( padfile );
+    if ((pfd = open(padfile, 2)) < 0) {
+	perror(padfile);
 	return -1;
     }
-    save_Tty( pfd );
-    set_HUPCL( pfd );
-    set_Raw( pfd );
+    save_Tty(pfd);
+    set_HUPCL(pfd);
+    set_Raw(pfd);
     npoints = n;
     return pfd;
 }
 
+
 void
 pad_close(void)
 {
-    reset_Tty( pfd );
-    (void)close( pfd );
+    reset_Tty(pfd);
+    (void)close(pfd);
     return;
 }
+
 
 int
 getpos(Point *pos)
@@ -78,7 +81,7 @@ getpos(Point *pos)
     char *cend = (char *)NULL;
     char *last = (char *)NULL;
 
-    while ( nread < 9 ) {
+    while (nread < 9) {
 	if (empty(pfd)) {
 	    return -1;
 	}
@@ -95,17 +98,17 @@ getpos(Point *pos)
 
     cend = str + nread - 4;
     nread = 0;
-    for ( cp = str; cp < cend; cp++ ) {
+    for (cp = str; cp < cend; cp++) {
 	if (!(cp[0] & P_FLAG)) {
 	    continue;
 	}
 	last = cp;
-	if ( (buttons = ((cp[0]&P_BUTTONS) >> 2))) {
+	if ((buttons = ((cp[0]&P_BUTTONS) >> 2))) {
 	    break;
 	}
     }
 
-    if ( last == NULL ) {
+    if (last == NULL) {
 	return buttons;	/* no position parsed */
     }
     last++;

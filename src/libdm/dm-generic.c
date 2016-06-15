@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2013 United States Government as represented by
+ * Copyright (c) 1999-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "dm.h"
 
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 
 extern struct dm *plot_open(Tcl_Interp *interp, int argc, const char *argv[]);
 extern struct dm *ps_open(Tcl_Interp *interp, int argc, const char *argv[]);
@@ -57,6 +57,12 @@ extern void ogl_fogHint();
 extern int ogl_share_dlist();
 #  endif
 #endif /* DM_OGL */
+
+#ifdef DM_OSG
+extern struct dm *osg_open();
+extern void osg_fogHint();
+extern int osg_share_dlist();
+#endif /* DM_OSG*/
 
 #ifdef DM_RTGL
 extern struct dm *rtgl_open();
@@ -118,6 +124,10 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 	case DM_TYPE_OGL:
 	    return ogl_open(interp, argc, argv);
 #  endif
+#endif
+#ifdef DM_OSG
+	case DM_TYPE_OSG:
+	    return osg_open(interp, argc, argv);
 #endif
 #ifdef DM_RTGL
 	case DM_TYPE_RTGL:

@@ -1,7 +1,7 @@
 /*                        T I T L E S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,8 +59,6 @@ extern mat_t perspective_mat;  /* defined in dozoom.c */
 extern struct rt_db_internal es_int;
 
 /*
- * C R E A T E _ T E X T _ O V E R L A Y
- *
  * Prepare the numerical display of the currently edited solid/object.
  */
 void
@@ -167,8 +165,6 @@ create_text_overlay(struct bu_vls *vp)
 
 
 /*
- * S C R E E N _ V L S
- *
  * Output a vls string to the display manager,
  * as a text overlay on the graphics area (ugh).
  *
@@ -209,8 +205,6 @@ screen_vls(
 
 
 /*
- * D O T I T L E S
- *
  * Produce titles, etc., on the screen.
  * NOTE that this routine depends on being called AFTER dozoom();
  */
@@ -258,9 +252,11 @@ dotitles(struct bu_vls *overlay_vls)
 	RT_CK_FULL_PATH(dbfp);
 
 	for (i = 0; i < (size_t)ipathpos; i++) {
-	    dp = DB_FULL_PATH_GET(dbfp, i);
-	    if (dp && dp->d_namep) {
-		bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+	    if ((size_t)i < (size_t)dbfp->fp_len) {
+		dp = DB_FULL_PATH_GET(dbfp, i);
+		if (dp && dp->d_namep) {
+		    bu_vls_printf(&path_lhs, "/%s", dp->d_namep);
+		}
 	    }
 	}
 	for (; i < dbfp->fp_len; i++) {

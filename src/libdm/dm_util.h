@@ -1,7 +1,7 @@
 /*                        D M _ U T I L . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,21 +20,31 @@
 /** @file libdm/dm_util.h
  */
 
+#ifndef LIBDM_DM_UTIL_H
+#define LIBDM_DM_UTIL_H
+
+#include "common.h"
+
 #include "vmath.h"
 #include "dm.h"
 
+__BEGIN_DECLS
 
 int
-drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, char *log_bu, float *wireColor);
+drawLine3D(struct dm *dmp, point_t pt1, point_t pt2, const char *log_bu, float *wireColor);
 
 int
-drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, char *log_bu, float *wireColor);
+drawLines3D(struct dm *dmp, int npoints, point_t *points, int sflag, const char *log_bu, float *wireColor);
 
 int
-drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, char *log_bu);
+drawLine2D(struct dm *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t Y2, const char *log_bu);
 
 int
 draw_Line3D(struct dm *dmp, point_t pt1, point_t pt2);
+
+__END_DECLS
+
+#endif /* LIBDM_DM_UTIL_H */
 
 /*
  * Local Variables:

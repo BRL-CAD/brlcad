@@ -21,7 +21,7 @@
 //----------------------------------------------------------------------------//
 //                                                                            //
 //                           C++03 implementation of                          //
-//             20.7.6.2 Reference modifications [meta.trans.ref]              //
+//             20.9.7.2 Reference modifications [meta.trans.ref]              //
 //                          Written by Vicente J. Botet Escriba               //
 //                                                                            //
 // If T names an object or function type then the member typedef type
@@ -39,21 +39,19 @@ namespace type_traits_detail {
     struct add_rvalue_reference_helper
     { typedef T   type; };
 
+#if !defined(BOOST_NO_CXX11_RVALUE_REFERENCES) && !defined(BOOST_NO_TEMPLATE_PARTIAL_SPECIALIZATION)
     template <typename T>
     struct add_rvalue_reference_helper<T, true>
     {
-#if !defined(BOOST_NO_RVALUE_REFERENCES)
         typedef T&&   type;
-#else
-        typedef T   type;
-#endif
     };
+#endif
 
     template <typename T>
     struct add_rvalue_reference_imp
-    { 
+    {
        typedef typename boost::type_traits_detail::add_rvalue_reference_helper
-                  <T, (!is_void<T>::value && !is_reference<T>::value) >::type type; 
+                  <T, (is_void<T>::value == false && is_reference<T>::value == false) >::type type;
     };
 
 }

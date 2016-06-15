@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,6 +34,8 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -78,9 +80,6 @@ static int regions_converted = 0;
 static int regions_written = 0;
 static int inches = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {
@@ -181,9 +180,7 @@ main(int argc, char **argv)
     /* Open g-obj error log file */
     if (!error_file) {
 	fpe = stderr;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fpe), O_BINARY);
-#endif
     } else if ((fpe=fopen(error_file, "wb")) == NULL) {
 	perror(argv[0]);
 	bu_exit(1, "Cannot open output file (%s) for writing\n", error_file);
@@ -321,14 +318,14 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
 			bu_free(region_name, "region name");
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_exit(1, "ERROR: Can't find vertex in list!");
 		    }
 		}
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		} else if (vert_count < 3)
 		    continue;
@@ -430,7 +427,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		    loc = bu_ptbl_locate(&verts, (long *)v);
 		    if (loc < 0) {
 			bu_ptbl_free(&verts);
-			bu_log("Vertex from eu x%x is not in nmgregion x%x\n", eu, r);
+			bu_log("Vertex from eu %p is not in nmgregion %p\n", (void *)eu, (void *)r);
 			bu_free(region_name, "region name");
 			bu_exit(1, "Can't find vertex in list!\n");
 		    }
@@ -449,7 +446,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
 		if (vert_count > 3) {
 		    bu_ptbl_free(&verts);
 		    bu_free(region_name, "region name");
-		    bu_log("lu x%x has %d vertices!\n", lu, vert_count);
+		    bu_log("lu %p has %d vertices!\n", (void *)lu, vert_count);
 		    bu_exit(1, "ERROR: LU is not a triangle\n");
 		}
 	    }
@@ -556,8 +553,6 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- * D O _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.

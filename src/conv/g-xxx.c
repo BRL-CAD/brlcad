@@ -1,7 +1,7 @@
 /*                         G - X X X . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@
  * functions for your application use as a client_data pointer.
  */
 struct user_data {
-    int data;
+    long int data;
     struct bn_tol tol;
 };
 
@@ -63,10 +63,10 @@ describe_tree(union tree *tree,
 {
     struct bu_vls left = BU_VLS_INIT_ZERO;
     struct bu_vls right = BU_VLS_INIT_ZERO;
-    char *unionn=" u ";
-    char *sub=" - ";
-    char *inter=" + ";
-    char *xor=" ^ ";
+    char *op_union=" u ";
+    char *op_subtract=" - ";
+    char *op_intersect=" + ";
+    char *op_xor=" ^ ";
     char *op=NULL;
 
     BU_CK_VLS(str);
@@ -91,16 +91,16 @@ describe_tree(union tree *tree,
 	    bu_vls_strcat(str,  tree->tr_l.tl_name);
 	    break;
 	case OP_UNION:		/* union operator node */
-	    op = unionn;
+	    op = op_union;
 	    goto binary;
 	case OP_INTERSECT:	/* intersection operator node */
-	    op = inter;
+	    op = op_intersect;
 	    goto binary;
 	case OP_SUBTRACT:	/* subtraction operator node */
-	    op = sub;
+	    op = op_subtract;
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
-	    op = xor;
+	    op = op_xor;
 	binary:				/* common for all binary nodes */
 	    describe_tree(tree->tr_b.tb_left, &left);
 	    describe_tree(tree->tr_b.tb_right, &right);
@@ -135,8 +135,6 @@ describe_tree(union tree *tree,
 
 
 /**
- *      R E G I O N _ S T A R T
- *
  * @brief This routine is called when a region is first encountered in the
  * hierarchy when processing a tree
  *
@@ -183,9 +181,6 @@ region_start(struct db_tree_state *tsp,
 
 
 /**
- *      R E G I O N _ E N D
- *
- *
  * @brief This is called when all sub-elements of a region have been processed by leaf_func.
  *
  *      @param tsp

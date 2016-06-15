@@ -1,7 +1,7 @@
 /*                           V O L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -113,8 +114,6 @@ static int rt_vol_normtab[3] = { NORM_XPOS, NORM_YPOS, NORM_ZPOS };
 
 
 /**
- * R T _ V O L _ S H O T
- *
  * Transform the ray into local coordinates of the volume ("ideal space").
  * Step through the 3-D array, in local coordinates.
  * Return intersection segments.
@@ -146,19 +145,19 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
     /* Compute the inverse of the direction cosines */
     if (!ZERO(rp->r_dir[X])) {
-	invdir[X]=1.0/rp->r_dir[X];
+	invdir[X] = 1.0/rp->r_dir[X];
     } else {
 	invdir[X] = INFINITY;
 	rp->r_dir[X] = 0.0;
     }
     if (!ZERO(rp->r_dir[Y])) {
-	invdir[Y]=1.0/rp->r_dir[Y];
+	invdir[Y] = 1.0/rp->r_dir[Y];
     } else {
 	invdir[Y] = INFINITY;
 	rp->r_dir[Y] = 0.0;
     }
     if (!ZERO(rp->r_dir[Z])) {
-	invdir[Z]=1.0/rp->r_dir[Z];
+	invdir[Z] = 1.0/rp->r_dir[Z];
     } else {
 	invdir[Z] = INFINITY;
 	rp->r_dir[Z] = 0.0;
@@ -397,8 +396,6 @@ rt_vol_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ V O L _ I M P O R T
- *
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
@@ -421,7 +418,7 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     BU_CK_EXTERNAL(ep);
     rp = (union record *)ep->ext_buf;
     if (rp->u_id != DBID_STRSOL) {
-	bu_log("rt_ebm_import4: defective strsol record\n");
+	bu_log("rt_vol_import4: defective strsol record\n");
 	return -1;
     }
 
@@ -478,8 +475,8 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     /* Because of in-memory padding, read each scanline separately */
-    for (z=0; z < vip->zdim; z++) {
-	for (y=0; y < vip->ydim; y++) {
+    for (z = 0; z < vip->zdim; z++) {
+	for (y = 0; y < vip->ydim; y++) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -501,8 +498,6 @@ rt_vol_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ V O L _ E X P O R T
- *
  * The name will be added by the caller.
  */
 int
@@ -526,7 +521,7 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "vol external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "vol external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
@@ -541,8 +536,6 @@ rt_vol_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ V O L _ I M P O R T 5
- *
  * Read in the information from the string solid record.
  * Then, as a service to the application, read in the bitmap
  * and set up some of the associated internal variables.
@@ -616,8 +609,8 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
 
     /* Because of in-memory padding, read each scanline separately */
-    for (z=0; z < vip->zdim; z++) {
-	for (y=0; y < vip->ydim; y++) {
+    for (z = 0; z < vip->zdim; z++) {
+	for (y = 0; y < vip->ydim; y++) {
 	    bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
 	    ret = fread(&VOL(vip, 0, y, z), vip->xdim, 1, fp); /* res_syscall */
 	    bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
@@ -639,8 +632,6 @@ rt_vol_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 
 
 /**
- * R T _ V O L _ E X P O R T 5
- *
  * The name will be added by the caller.
  */
 int
@@ -665,7 +656,7 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     bu_vls_struct_print(&str, rt_vol_parse, (char *)&vol);
     ep->ext_nbytes = bu_vls_strlen(&str);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "vol external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "vol external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
@@ -675,8 +666,6 @@ rt_vol_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ V O L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -700,16 +689,17 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 /* bu_vls_struct_print(str, rt_vol_parse, (char *)vip);
    bu_vls_strcat(str, "\n"); */
 
-    bu_vls_printf(&substr, "  file=\"%s\" w=%zu n=%zu d=%zu lo=%zu hi=%zu size=%g %g %g\n   mat=",
-		  vip->file, vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
+    bu_vls_printf(&substr, "  file=\"%s\" w=%u n=%u d=%u lo=%u hi=%u size=%g %g %g\n   mat=",
+		  vip->file,
+		  vip->xdim, vip->ydim, vip->zdim, vip->lo, vip->hi,
 		  V3INTCLAMPARGS(local));
     bu_vls_vlscat(str, &substr);
-    for (i=0; i<15; i++) {
-	bu_vls_trunc2(&substr, 0);
+    for (i = 0; i < 15; i++) {
+	bu_vls_trunc(&substr, 0);
 	bu_vls_printf(&substr, "%g, ", INTCLAMP(vip->mat[i]));
 	bu_vls_vlscat(str, &substr);
     }
-    bu_vls_trunc2(&substr, 0);
+    bu_vls_trunc(&substr, 0);
     bu_vls_printf(&substr, "%g\n", INTCLAMP(vip->mat[i]));
     bu_vls_vlscat(str, &substr);
 
@@ -720,8 +710,6 @@ rt_vol_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ V O L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -744,9 +732,8 @@ rt_vol_ifree(struct rt_db_internal *ip)
     ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
+
 /**
- * R T _ V O L _ B B O X
- *
  * Calculate bounding RPP for vol
  */
 int
@@ -757,7 +744,7 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
     RT_CK_DB_INTERNAL(ip);
     vip = (struct rt_vol_internal *)ip->idb_ptr;
-    RT_EBM_CK_MAGIC(vip);
+    RT_VOL_CK_MAGIC(vip);
 
     /* Find bounding RPP of rotated local RPP */
     VSETALL(v1, 0);
@@ -768,8 +755,6 @@ rt_vol_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ V O L _ P R E P
- *
  * Returns -
  * 0 OK
  * !0 Failure
@@ -829,9 +814,6 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-/**
- * R T _ V O L _ P R I N T
- */
 void
 rt_vol_print(register const struct soltab *stp)
 {
@@ -839,7 +821,7 @@ rt_vol_print(register const struct soltab *stp)
 	(struct rt_vol_specific *)stp->st_specific;
 
     bu_log("vol file = %s\n", volp->vol_i.file);
-    bu_log("dimensions = (%zu, %zu, %zu)\n",
+    bu_log("dimensions = (%u, %u, %u)\n",
 	   volp->vol_i.xdim, volp->vol_i.ydim,
 	   volp->vol_i.zdim);
     VPRINT("model cellsize", volp->vol_i.cellsize);
@@ -848,8 +830,6 @@ rt_vol_print(register const struct soltab *stp)
 
 
 /**
- * R T _ V O L _ N O R M
- *
  * Given one ray distance, return the normal and
  * entry/exit point.
  * This is mostly a matter of translating the stored
@@ -895,8 +875,6 @@ rt_vol_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 
 
 /**
- * R T _ V O L _ C U R V E
- *
  * Everything has sharp edges.  This makes things easy.
  */
 void
@@ -913,8 +891,6 @@ rt_vol_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ V O L _ U V
- *
  * Map the hit point in 2-D into the range 0..1
  * untransformed X becomes U, and Y becomes V.
  */
@@ -931,9 +907,6 @@ rt_vol_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ V O L _ F R E E
- */
 void
 rt_vol_free(struct soltab *stp)
 {
@@ -949,16 +922,6 @@ rt_vol_free(struct soltab *stp)
 }
 
 
-int
-rt_vol_class(void)
-{
-    return 0;
-}
-
-
-/**
- * R T _ V O L _ P L O T
- */
 int
 rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -1054,9 +1017,6 @@ rt_vol_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 }
 
 
-/**
- * R T _ V O L _ P L A T E
- */
 void
 rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *mat, register struct bu_list *vhead, register struct rt_vol_internal *vip)
 {
@@ -1085,9 +1045,6 @@ rt_vol_plate(fastf_t *a, fastf_t *b, fastf_t *c, fastf_t *d, register fastf_t *m
 }
 
 
-/**
- * R T _ V O L _ T E S S
- */
 int
 rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
@@ -1113,9 +1070,9 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     r_tmp = nmg_mrsv(m_tmp);
     s = BU_LIST_FIRST(shell, &r_tmp->s_hd);
 
-    for (x=0; x<vip->xdim; x++) {
-	for (y=0; y<vip->ydim; y++) {
-	    for (z=0; z<vip->zdim; z++) {
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
 		point_t pt, pt1;
 
 		/* skip empty cells */
@@ -1126,7 +1083,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check z+1 */
 		if (!OK(vip, VOL(vip, x, y, z+1))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1154,7 +1111,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check z-1 */
 		if (!OK(vip, VOL(vip, x, y, z-1))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1182,7 +1139,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check y+1 */
 		if (!OK(vip, VOL(vip, x, y+1, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1210,7 +1167,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check y-1 */
 		if (!OK(vip, VOL(vip, x, y-1, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1238,7 +1195,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check x+1 */
 		if (!OK(vip, VOL(vip, x+1, y, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1266,7 +1223,7 @@ rt_vol_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
 		/* check x-1 */
 		if (!OK(vip, VOL(vip, x-1, y, z))) {
-		    for (i=0; i<4; i++)
+		    for (i = 0; i < 4; i++)
 			verts[i] = (struct vertex *)NULL;
 
 		    fu = nmg_cface(s, verts, 4);
@@ -1333,16 +1290,223 @@ fail:
 }
 
 
-/**
- * R T _ V O L _ P A R A M S
- *
- */
 int
 rt_vol_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
     if (ip) RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+void
+rt_vol_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    register struct rt_vol_internal *vip;
+    size_t x, y, z;
+    size_t cnt;
+    fastf_t x_tot, y_tot, z_tot;
+    point_t p;
+
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+
+    cnt = 0;
+    x_tot = y_tot = z_tot = 0.0;
+
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    x_tot += (x+.5) * (vip->cellsize[X]);
+		    y_tot += (y+.5) * (vip->cellsize[Y]);
+		    z_tot += (z+.5) * (vip->cellsize[Z]);
+		    cnt++;
+		}
+	    }
+	}
+    }
+
+    p[X]=x_tot/cnt;
+    p[Y]=y_tot/cnt;
+    p[Z]=z_tot/cnt;
+
+    MAT4X3PNT(*cent, vip->mat, p);
+}
+
+
+/*
+ * Computes the surface area of a volume by transforming each of the vertices by
+ * the matrix and then summing the area of the faces of each cell necessary.
+ * The vertices are numbered from left to right, front to back, bottom to top.
+ */
+void
+rt_vol_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    struct rt_vol_internal *vip;
+    unsigned int x, y, z;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d3_0, d2_1, d7_4, d6_5, d6_0, d4_2, d4_1, d5_0, d5_3, d7_1, d7_2, d6_3, _cross;
+    fastf_t _x, _y, _z, det, _area = 0.0;
+
+    if (area == NULL || ip == NULL) return;
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+
+    det = fabs(bn_mat_determinant(vip->mat));
+    if (EQUAL(det, 0.0)) {
+	*area = -1.0;
+	return;
+    }
+
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    _x = (fastf_t)x;
+		    _y = (fastf_t)y;
+		    _z = (fastf_t)z;
+
+		    VSET(_x0, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x1, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x2, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x3, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x4, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x5, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x6, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x7, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+
+		    MAT4X3PNT(x0, vip->mat, _x0);
+		    MAT4X3PNT(x1, vip->mat, _x1);
+		    MAT4X3PNT(x2, vip->mat, _x2);
+		    MAT4X3PNT(x3, vip->mat, _x3);
+		    MAT4X3PNT(x4, vip->mat, _x4);
+		    MAT4X3PNT(x5, vip->mat, _x5);
+		    MAT4X3PNT(x6, vip->mat, _x6);
+		    MAT4X3PNT(x7, vip->mat, _x7);
+
+		    if (!OK(vip, VOL(vip, x + 1, y, z))) {
+			VSUB2(d5_3, x5, x3);
+			VSUB2(d7_1, x7, x1);
+			VCROSS(_cross, d5_3, d7_1);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x - 1, y, z))) {
+			VSUB2(d6_0, x6, x0);
+			VSUB2(d4_2, x4, x2);
+			VCROSS(_cross, d6_0, d4_2);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+
+		    if (!OK(vip, VOL(vip, x, y + 1, z))) {
+			VSUB2(d7_2, x7, x2);
+			VSUB2(d6_3, x6, x3);
+			VCROSS(_cross, d7_2, d6_3);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x, y - 1, z))) {
+			VSUB2(d4_1, x4, x1);
+			VSUB2(d5_0, x5, x0);
+			VCROSS(_cross, d4_1, d5_0);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+
+		    if (!OK(vip, VOL(vip, x, y, z + 1))) {
+			VSUB2(d3_0, x3, x0);
+			VSUB2(d2_1, x2, x1);
+			VCROSS(_cross, d3_0, d2_1);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		    if (!OK(vip, VOL(vip, x, y, z - 1))) {
+			VSUB2(d7_4, x7, x4);
+			VSUB2(d6_5, x6, x5);
+			VCROSS(_cross, d7_4, d6_5);
+			_area += 0.5 * MAGNITUDE(_cross);
+		    }
+		}
+	    }
+	}
+    }
+    *area = _area;
+}
+
+
+/*
+ * A paper at http://www.osti.gov/scitech/servlets/purl/632793 gives a method
+ * for calculating the volume of hexahedrens from the eight vertices.
+ *
+ * The eight vertices are calculated, then transformed by the matrix and the
+ * volume calculated from that.
+ */
+void
+rt_vol_volume(fastf_t *volume, const struct rt_db_internal *ip)
+{
+    struct rt_vol_internal *vip;
+    unsigned int x, y, z;
+    point_t x0, x1, x2, x3, x4, x5, x6, x7;
+    point_t _x0, _x1, _x2, _x3, _x4, _x5, _x6, _x7;
+    vect_t d7_0, d1_0, d3_5, d4_0, d5_6, d2_0, d6_3, cross1, cross2, cross3;
+    fastf_t _x, _y, _z, det, _vol = 0.0;
+
+    if (volume == NULL || ip == NULL) return;
+    RT_CK_DB_INTERNAL(ip);
+    vip = (struct rt_vol_internal *)ip->idb_ptr;
+    RT_VOL_CK_MAGIC(vip);
+
+    det = fabs(bn_mat_determinant(vip->mat));
+    if (EQUAL(det, 0.0)) {
+	*volume = -1.0;
+	return;
+    }
+
+    for (x = 0; x < vip->xdim; x++) {
+	for (y = 0; y < vip->ydim; y++) {
+	    for (z = 0; z < vip->zdim; z++) {
+		if (OK(vip, VOL(vip, x, y, z))) {
+		    _x = (fastf_t)x;
+		    _y = (fastf_t)y;
+		    _z = (fastf_t)z;
+
+		    VSET(_x0, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x1, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x2, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x3, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z - 0.5 * vip->cellsize[Z]);
+		    VSET(_x4, _x - 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x5, _x + 0.5 * vip->cellsize[X], _y - 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x6, _x - 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+		    VSET(_x7, _x + 0.5 * vip->cellsize[X], _y + 0.5 * vip->cellsize[Y], _z + 0.5 * vip->cellsize[Z]);
+
+		    MAT4X3PNT(x0, vip->mat, _x0);
+		    MAT4X3PNT(x1, vip->mat, _x1);
+		    MAT4X3PNT(x2, vip->mat, _x2);
+		    MAT4X3PNT(x3, vip->mat, _x3);
+		    MAT4X3PNT(x4, vip->mat, _x4);
+		    MAT4X3PNT(x5, vip->mat, _x5);
+		    MAT4X3PNT(x6, vip->mat, _x6);
+		    MAT4X3PNT(x7, vip->mat, _x7);
+
+		    VSUB2(d7_0, x7, x0);
+		    VSUB2(d1_0, x1, x0);
+		    VSUB2(d3_5, x3, x5);
+		    VCROSS(cross1, d1_0, d3_5);
+
+		    VSUB2(d4_0, x4, x0);
+		    VSUB2(d5_6, x5, x6);
+		    VCROSS(cross2, d4_0, d5_6);
+
+		    VSUB2(d2_0, x2, x0);
+		    VSUB2(d6_3, x6, x3);
+		    VCROSS(cross3, d2_0, d6_3);
+
+		    _vol += (1.0/6.0) * (VDOT(d7_0, cross1) + VDOT(d7_0, cross2) + VDOT(d7_0, cross3));
+		}
+	    }
+	}
+    }
+    *volume = fabs(_vol);
 }
 
 

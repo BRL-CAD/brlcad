@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -72,7 +72,7 @@ set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_so
 set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
-set helplib_data(wdb_comb)		{{comb_name <operation solid>}	{create or extend combination w/booleans}}
+set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}
 set helplib_data(wdb_comb_std)		{{[-cr] comb_name <boolean_expr>}	{create or extend a combination using standard notation}}
 set helplib_data(wdb_concat)		{{[-t] [-u] [-c] [-s|-p] file.g [suffix|prefix]} {import a database into the current database using an auto-incrementing or custom affix}}
 set helplib_data(wdb_copy)		{{from to} {copy a database object}}
@@ -90,8 +90,8 @@ set helplib_data(wdb_hide)              {{<objects>} {set the "hidden" flag for 
 set helplib_data(wdb_instance)		{{obj comb [op]} {add instance of obj to comb}}
 set helplib_data(wdb_keep)		{{[-R] file object(s)} {save named objects in the specified file.  Does not recursively keep objects with the -R option.}}
 set helplib_data(wdb_kill)		{{<objects>} {kill/delete database objects}}
-set helplib_data(wdb_killall)		{{<objects>} {kill/delete database objects, removing all references}}
-set helplib_data(wdb_killtree)		{{[-a] <objects>} {kill all paths belonging to objects}}
+set helplib_data(wdb_killall)		{{[-n] <objects>} {kill/delete database objects, removing all references}}
+set helplib_data(wdb_killtree)		{{[-a|-f|-n] <objects>} {kill all paths belonging to objects}}
 set helplib_data(wdb_list)		{{[-r] <objects>} {list object information, verbose}}
 set helplib_data(wdb_listeval)		{{}	{lists 'evaluated' path solids}}
 set helplib_data(wdb_ls)		{{[-A name/value pairs] OR [-acrslop] object(s)} {list objects in this database}}
@@ -111,6 +111,7 @@ set helplib_data(wdb_observer)		{{cmd [args]} {Attach/detach observer to/from li
 set helplib_data(wdb_pathlist)		{{name(s)}	{list all paths from name(s) to leaves}}
 set helplib_data(wdb_paths)		{{pattern}	{lists all paths matching input path}}
 set helplib_data(wdb_prcolor)		{{} {print color table}}
+set helplib_data(wdb_pull)             {{object(s)} {pull object(s) path transformations from solids}}
 set helplib_data(wdb_push)		{{object(s)} {push object(s) path transformations to solids}}
 set helplib_data(wdb_put)		{{object type attrs} {create a database object}}
 set helplib_data(wdb_region)		{{object(s)} {create or append objects to a region}}

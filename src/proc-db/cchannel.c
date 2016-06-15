@@ -1,7 +1,7 @@
 /** @file cchannel.c
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,7 +59,7 @@ usage(char *s)
 	bu_log("%s\n", s);
     bu_exit(1, "Usage: %s %s\n%s\n",
 	    "cchannel", "-l length -d diameter -x X coordinate -y Y coordinate \n-z Z coordinate -H hole radius",
-	    "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from milimeters -f filename");
+	    "-t thickness -s slope -r corner-radius -R top-radius \n-u conversion factor from millimeters -f filename");
 }
 
 static void
@@ -138,7 +138,7 @@ addHoles(struct rt_wdb *db, struct channel parameters)
     struct wmember holeC;
     BU_LIST_INIT(&holeC.l);
 
-    while (i * (dist + .5 * parameters.holeR) < parameters.length){
+    while (i * (dist + .5 * parameters.holeR) < parameters.length) {
 	sprintf(name, "hole_%d", i);
 	VSET(pts[0], parameters.x + parameters.thickness, parameters.y + .5 * parameters.diameter - .5 * parameters.thickness, z2 + i * (dist + .5 * parameters.holeR));
 	VSET(pts[1], -1 * parameters.diameter - parameters.thickness * 2, 0, 0);
@@ -167,7 +167,7 @@ makeArb(struct rt_wdb *db, double a, double b, double c, double width, double he
 static double
 convert(double a, int all, struct channel *parameters)
 {
-    if (all == 0){
+    if (all == 0) {
 	a = a * parameters->conversionFactor;
     }
     else {
@@ -271,7 +271,7 @@ main (int argc, char **argv)
     mk_rcc (db, "corner_4", temp1, temp2, parameters.radius);
     /* round the corner of the first wall */
 
-    if (parameters.holes == 1){
+    if (parameters.holes == 1) {
 	addHoles(db, parameters);
     }
 

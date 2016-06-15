@@ -1,7 +1,7 @@
 /*                 Conic.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,9 @@ Conic::Conic(STEPWrapper *sw, int step_id)
 
 Conic::~Conic()
 {
-    delete position;
+    // not created through factory must delete here.
+    if (position)
+	delete position;
 }
 
 const double *

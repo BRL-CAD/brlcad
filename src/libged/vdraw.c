@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
@@ -747,7 +747,7 @@ vdraw_cmd(struct ged *gedp, int argc, const char *argv[])
 	{"params",		vdraw_params},
 	{"open",		vdraw_open},
 	{"vlist",		vdraw_vlist},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     static const char *usage = "write|insert|delete|read|send|params|open|vlist [args]";

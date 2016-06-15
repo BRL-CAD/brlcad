@@ -1,7 +1,7 @@
 /*                   D B _ F L I P . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -92,8 +92,6 @@ flip_fastf_float(fastf_t *ff, const dbfloat_t *fp, int n, int flip)
 
 
 /**
- * R T _ F A S T F _ F L O A T
- *
  * Convert TO fastf_t FROM 3xfloats (for database)
  *
  * DEPRECATED.
@@ -153,8 +151,6 @@ flip_mat_dbmat(fastf_t *ff, const dbfloat_t *dbp, int flip)
 
 
 /**
- * R T _ M A T _ D B M A T
- *
  * Convert TO fastf_t matrix FROM dbfloats (for database)
  *
  * DEPRECATED.
@@ -192,8 +188,6 @@ flip_dbmat_mat(dbfloat_t *dbp, const fastf_t *ff)
 
 
 /**
- * R T _ D B M A T _ M A T
- *
  * Convert FROM fastf_t matrix TO dbfloats (for updating database)
  *
  * DEPRECATED.

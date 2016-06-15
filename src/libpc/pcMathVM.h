@@ -1,7 +1,7 @@
 /*                       P C M A T H V M . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,32 @@
  * Code is based on concepts from YAC by Angus Leeming
  *
  */
-#ifndef __PCMATHVM_H__
-#define __PCMATHVM_H__
+#ifndef LIBPC_PCMATHVM_H
+#define LIBPC_PCMATHVM_H
 
 #include "common.h"
 
 #include <boost/shared_ptr.hpp>
 #include <boost/iterator/indirect_iterator.hpp>
+
+/* for g++ to quell -Wshadow warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start ignoring warnings */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* start ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include <boost/spirit/include/classic.hpp>
+
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #include <iostream>
 #include <string>

@@ -1,7 +1,7 @@
 /*                       B U _ H E A P . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,14 +49,14 @@ main (int ac, char *av[])
     size_t freecalls = 0;
 
     if (ac > 1) {
-	printf("Usage: %s\n", av[0]);
+	fprintf(stderr,"Usage: %s\n", av[0]);
 	return 1;
     }
 
     srand(time(0));
 
     for (i=0; i<1024*1024*10; i++) {
-	size_t sz = (((double)rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
+	size_t sz = ((rand() / (double)(RAND_MAX-1)) * (double)HEAP_BINS) + 1;
 	/* bu_log("allocating %d: %zd\n", i, sz); */
 #ifdef USE_MALLOC
 	ptr = malloc(sz);

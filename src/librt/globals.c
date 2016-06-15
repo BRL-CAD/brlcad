@@ -1,7 +1,7 @@
 /*                       G L O B A L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,11 +40,11 @@ struct rt_g RTG = RT_G_INIT_ZERO;
 
 struct resource rt_uniresource;
 
-void (*nmg_plot_anim_upcall)();
+void (*nmg_plot_anim_upcall)(void);
 
-void (*nmg_vlblock_anim_upcall)();
+void (*nmg_vlblock_anim_upcall)(void);
 
-void (*nmg_mged_debug_display_hack)();
+void (*nmg_mged_debug_display_hack)(void);
 
 double nmg_eue_dist = 0.05;
 

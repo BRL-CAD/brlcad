@@ -1,7 +1,7 @@
 /*                   I G E S _ S T R U C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,6 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
+#ifndef CONV_IGES_IGES_STRUCT_H
+#define CONV_IGES_IGES_STRUCT_H
 
 #include "common.h"
 
@@ -317,6 +320,8 @@ extern int brep(int entityno);
 extern void Readtime(char *id);
 extern void Readcols(char *id, int cols);
 extern void Readmatrix(int xform, mat_t rot);
+
+#endif /* CONV_IGES_IGES_STRUCT_H */
 
 /*
  * Local Variables:

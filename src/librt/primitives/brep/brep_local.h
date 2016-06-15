@@ -1,7 +1,7 @@
 /*                    B R E P _ L O C A L . H
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,6 +22,9 @@
  * Local data structures for brep primitive
  */
 
+#ifndef LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
+#define LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H
+
 /**
  * The b-rep specific data structure for caching the prepared
  * acceleration data structure.
@@ -31,6 +34,7 @@ struct brep_specific {
     BrepBoundingVolume* bvh;
 };
 
+#endif /* LIBRT_PRIMITIVES_BREP_BREP_LOCAL_H */
 
 /*
  * Local Variables:

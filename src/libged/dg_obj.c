@@ -1,7 +1,7 @@
 /*                        D G _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,9 +44,9 @@
 #include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "solid.h"
@@ -128,8 +128,6 @@ dgo_count_tops(const struct solid *headsp)
 
 
 /*
- * D G O _ B U I L D _ T O P S
- *
  * Build a command line vector of the tops of all objects in view.
  */
 int
@@ -373,8 +371,6 @@ dgo_label_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * E R A S E O B J A L L
- *
  * This routine goes through the solid table and deletes all solids
  * from the solid list which contain the specified object anywhere in their 'path'
  */
@@ -445,8 +441,6 @@ dgo_eraseobjall_callback(struct db_i *dbip,
 
 
 /*
- * E R A S E O B J
- *
  * This routine goes through the solid table and deletes all solids
  * from the solid list which contain the specified object at the
  * beginning of their 'path'
@@ -560,7 +554,7 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 	if (*av[ac-1] == '\0')
 	    --ac;
 
-	dpp = bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
+	dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "eraseobjpath: directory pointers");
 	for (j = 0; j < ac; ++j)
 	    if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[j], noisy)) != RT_DIR_NULL)
 		dpp[j] = dp;
@@ -584,8 +578,6 @@ dgo_eraseobjpath(struct dg_obj *dgop,
 
 
 /*
- * C O L O R _ S O L T A B
- *
  * Pass through the solid table and set pointer to appropriate
  * mater structure.
  */
@@ -714,8 +706,22 @@ dgo_E_tcl(void *clientData,
 	  const char **argv)
 {
     struct dg_obj *dgop = (struct dg_obj *)clientData;
+    struct ged ged;
+    int ret;
 
-    return dgo_E_cmd(dgop, argc-1, argv+1);
+    GED_INIT(&ged, dgop->dgo_wdbp);
+
+    ret = ged_E(&ged, argc-1, argv+1);
+
+    ged_free(&ged);
+
+    if (ret == GED_OK) {
+	return TCL_OK;
+    } else {
+	return TCL_ERROR;
+    }
+
+    return TCL_OK;
 }
 
 
@@ -872,7 +878,7 @@ dgo_build_dpp(struct dg_obj *dgop,
      * Next, we build an array of directory pointers that
      * correspond to the object's path.
      */
-    dpp = bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
+    dpp = (struct directory **)bu_calloc(ac+1, sizeof(struct directory *), "dgo_build_dpp: directory pointers");
     for (i = 0; i < ac; ++i) {
 	if ((dp = db_lookup(dgop->dgo_wdbp->dbip, av[i], 0)) != RT_DIR_NULL)
 	    dpp[i] = dp;
@@ -1057,9 +1063,6 @@ dgo_who_tcl(void *clientData, int argc, const char **argv)
 }
 
 
-/*
- * C V T _ V L B L O C K _ T O _ S O L I D S
- */
 void
 dgo_cvt_vlblock_to_solids(struct dg_obj *dgop, struct bn_vlblock *vbp, const char *name, int copy)
 {
@@ -1467,8 +1470,6 @@ dgo_get_eyemodel_cmd(struct dg_obj *dgop,
 
 
 /*
- * D G O _ R T _ W R I T E
- *
  * Write out the information that RT's -M option needs to show current view.
  * Note that the model-space location of the eye is a parameter,
  * as it can be computed in different ways.
@@ -1722,14 +1723,11 @@ dgo_get_eyemodel_tcl(void *clientData,
 }
 
 
-/*
- * D G O _ R U N _ R T
- */
 static int
 dgo_run_rt(struct dg_obj *dgop,
 	   struct view_obj *vop)
 {
-    size_t i;
+    ssize_t i;
     FILE *fp_in;
 #ifndef _WIN32
     int pipe_in[2];
@@ -2142,8 +2140,6 @@ struct rtcheck_output {
 
 
 /*
- * D G O _ W A I T _ S T A T U S
- *
  * Interpret the status return of a wait() system call,
  * for the edification of the watching luser.
  * Warning:  This may be somewhat system specific, most especially
@@ -2348,11 +2344,10 @@ dgo_rtcheck_command(struct dg_obj *dgop,
 		    const char **argv)
 {
     const char **vp;
-    size_t i;
+    ssize_t i;
     size_t args;
-    int ret;
-
 #ifndef _WIN32
+    int ret;
     int pid;
     int i_pipe[2];	/* object reads results for building vectors */
     int o_pipe[2];	/* object writes view parameters */
@@ -2380,7 +2375,7 @@ dgo_rtcheck_command(struct dg_obj *dgop,
     vp = (const char **)&dgop->dgo_rt_cmd[0];
     *vp++ = argv[0];
     *vp++ = "-M";
-    for (i = 1; i < (size_t)argc; i++)
+    for (i = 1; i < argc; i++)
 	*vp++ = argv[i];
     *vp++ = dgop->dgo_wdbp->dbip->dbi_filename;
 
@@ -2389,13 +2384,13 @@ dgo_rtcheck_command(struct dg_obj *dgop,
      * append the names of all stuff currently displayed.
      * Otherwise, simply append the remaining args.
      */
-    if (i == (size_t)argc) {
+    if (i == argc) {
 	dgop->dgo_rt_cmd_len = (char **)vp - (char **)dgop->dgo_rt_cmd;
 	dgop->dgo_rt_cmd_len += dgo_build_tops((struct solid *)&dgop->dgo_headSolid,
 					       vp,
 					       (const char **)&dgop->dgo_rt_cmd[args]);
     } else {
-	while (i < (size_t)argc)
+	while (i < argc)
 	    *vp++ = argv[i++];
 	*vp = 0;
 	vp = (const char **)&dgop->dgo_rt_cmd[0];
@@ -2761,8 +2756,6 @@ dgo_observer_tcl(void *clientData,
 
 
 /*
- * D G O _ P R _ S C H A I N
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the information
  * about each solid structure.
@@ -2855,8 +2848,6 @@ dgo_print_schain(struct dg_obj *dgop, int lvl)
 
 
 /*
- * D G O _ P R _ S C H A I N _ V L C M D S
- *
  * Given a pointer to a member of the circularly linked list of solids
  * (typically the head), chase the list and print out the vlist cmds
  * for each structure.
@@ -3341,6 +3332,9 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 		    V_MAX(zmax, (*pt)[Z]);
 		    break;
 		case BN_VLIST_POINT_DRAW:
+		    /* add a tiny bit of padding around points so that
+		     * single points being drawn don't vanish.
+		     */
 		    V_MIN(xmin, (*pt)[X]-1.0);
 		    V_MAX(xmax, (*pt)[X]+1.0);
 		    V_MIN(ymin, (*pt)[Y]-1.0);
@@ -3372,8 +3366,6 @@ dgo_bound_solid(Tcl_Interp *interp, struct solid *sp)
 
 
 /*
- * D M O _ D R A W h _ P A R T 2
- *
  * Once the vlist has been created, perform the common tasks
  * in handling the drawn solid.
  *
@@ -3456,8 +3448,6 @@ dgo_drawH_part2(int dashflag, struct bu_list *vhead, const struct db_full_path *
 
 
 /*
- * D G O _ W I R E F R A M E _ L E A F
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -3530,8 +3520,6 @@ dgo_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, 
 
 
 /*
- * D G O _ N M G _ R E G I O N _ S T A R T
- *
  * When performing "ev" on a region, consider whether to process
  * the whole subtree recursively.
  * Normally, say "yes" to all regions by returning 0.
@@ -3696,8 +3684,6 @@ process_triangulation(struct db_tree_state *tsp, const struct db_full_path *path
 
 
 /*
- * D G O _ N M G _ R E G I O N _ E N D
- *
  * This routine must be prepared to run in parallel.
  */
 static union tree *
@@ -3858,7 +3844,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = DGO_WIREFRAME;
 
-		dgo_drawtrees(dgcdp->dgop, ac, av, 1, client_data);
+		dgo_drawtrees(dgcdp->dgop, ac, av, 1, (struct dg_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
@@ -3885,7 +3871,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		    (void)rt_pg_plot_poly(&vhead, ip, tsp->ts_ttol, tsp->ts_tol);
 		    dgo_drawH_part2(0, &vhead, pathp, tsp, SOLID_NULL, dgcdp);
 		} else
-		    dgo_drawtrees(dgcdp->dgop, ac, av, 3, client_data);
+		    dgo_drawtrees(dgcdp->dgop, ac, av, 3, (struct dg_client_data *)client_data);
 	    } else {
 		/* save shaded mode states */
 		int save_dgo_shaded_mode = dgcdp->dgop->dgo_shaded_mode;
@@ -3897,7 +3883,7 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 		dgcdp->shaded_mode_override = -1;
 		dgcdp->dmode = DGO_WIREFRAME;
 
-		dgo_drawtrees(dgcdp->dgop, ac, av, 1, client_data);
+		dgo_drawtrees(dgcdp->dgop, ac, av, 1, (struct dg_client_data *)client_data);
 
 		/* restore shaded mode states */
 		dgcdp->dgop->dgo_shaded_mode = save_dgo_shaded_mode;
@@ -3915,8 +3901,6 @@ dgo_bot_check_leaf(struct db_tree_state *tsp,
 
 
 /*
- * D G O _ D R A W T R E E S
- *
  * This routine is the drawable geometry object's analog of rt_gettrees().
  * Add a set of tree hierarchies to the active set.
  * Note that argv[0] should be ignored, it has the command name in it.
@@ -4185,8 +4169,6 @@ dgo_drawtrees(struct dg_obj *dgop, int argc, const char **argv, int kind, struct
 
 
 /*
- * I N V E N T _ S O L I D
- *
  * Invent a solid by adding a fake entry in the database table,
  * adding an entry to the solid table, and populating it with
  * the given vector list.
@@ -4308,10 +4290,6 @@ dgo_zapall(struct rt_wdb *wdbp)
 }
 
 
-/**
- *
- *
- */
 int
 dgo_tree_cmd(struct dg_obj *dgop,
 	     int argc,
@@ -4433,8 +4411,6 @@ dgo_tree_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * D G O _ C M D
- *
  * Generic interface for drawable geometry objects.
  * Usage:
  * procname cmd ?args?
@@ -4480,7 +4456,7 @@ dgo_cmd(void *clientData, Tcl_Interp *UNUSED(interp), int argc, const char **arg
 	{"vnirt",		dgo_vnirt_tcl},
 	{"who",			dgo_who_tcl},
 	{"zap",			dgo_zap_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(dgo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

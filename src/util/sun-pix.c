@@ -1,7 +1,7 @@
 /*                       S U N - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -101,6 +101,7 @@ struct colors {
 struct colors Cmap[256];
 static size_t CMAP_MAX_INDEX = sizeof(Cmap) - 1;
 
+static char hyphen[] = "-";
 static char *file_name;
 static FILE *fp;
 
@@ -157,7 +158,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	fp = stdin;
     } else {
 	file_name = argv[bu_optind];

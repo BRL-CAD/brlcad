@@ -1,7 +1,7 @@
 /*                          I S S T . H
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,6 +18,8 @@
  * information.
  */
 
+#ifndef ADRT_ISST_H
+#define ADRT_ISST_H
 
 struct isst_s {
     struct tie_s *tie;
@@ -36,6 +38,8 @@ struct isst_s {
     int64_t t2;
     int dirty;
 };
+
+#endif /* ADRT_ISST_H */
 
 /*
  * Local Variables:

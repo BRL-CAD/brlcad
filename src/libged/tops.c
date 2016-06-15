@@ -1,7 +1,7 @@
 /*                         T O P S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -131,8 +131,6 @@ ged_tops(struct ged *gedp, int argc, const char *argv[])
 
 
 /*
- * G E D _ D I R _ G E T S P A C E
- *
  * This routine walks through the directory entry list and mallocs enough
  * space for pointers to hold:
  * a) all of the entries if called with an argument of 0, or

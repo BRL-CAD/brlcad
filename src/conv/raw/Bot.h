@@ -1,7 +1,7 @@
 /*                         B O T . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *	IABG mbH (Germany)
  */
 
-#ifndef BOT_INCLUDED
-#define BOT_INCLUDED
+#ifndef CONV_RAW_BOT_H
+#define CONV_RAW_BOT_H
 
 #include "common.h"
 #include <vector>
@@ -60,4 +60,4 @@ private:
 };
 
 
-#endif //BOT_INCLUDED
+#endif /* CONV_RAW_BOT_H */

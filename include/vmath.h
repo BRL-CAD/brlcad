@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -87,8 +87,8 @@
  * preserve source code formatting.
  */
 
-#ifndef __VMATH_H__
-#define __VMATH_H__
+#ifndef VMATH_H
+#define VMATH_H
 
 #include "common.h"
 
@@ -101,7 +101,7 @@
 #include <float.h>
 
 /* for fastf_t */
-#include "bu.h"
+#include "bu/defines.h"
 
 
 __BEGIN_DECLS
@@ -110,6 +110,9 @@ __BEGIN_DECLS
 #  define M_		XXX /**< all with 36-digits of precision */
 #endif
 
+#ifndef M_1_2PI
+#  define M_1_2PI	0.159154943091895335768883763372514362  /**< 1/(2*pi) */
+#endif
 #ifndef M_1_PI
 #  define M_1_PI	0.318309886183790671537767526745028724  /**< 1/pi */
 #endif
@@ -143,6 +146,9 @@ __BEGIN_DECLS
 #ifndef M_PI
 #  define M_PI		3.14159265358979323846264338327950288   /**< pi */
 #endif
+#ifndef M_2PI
+#  define M_2PI		6.28318530717958647692528676655900576   /**< 2*pi */
+#endif
 #ifndef M_PI_2
 #  define M_PI_2	1.57079632679489661923132169163975144   /**< pi/2 */
 #endif
@@ -153,7 +159,7 @@ __BEGIN_DECLS
 #  define M_PI_4	0.785398163397448309615660845819875721  /**< pi/4 */
 #endif
 #ifndef M_SQRT1_2
-#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< 1/sqrt(2) */
+#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< sqrt(1/2) */
 #endif
 #ifndef M_SQRT2
 #  define M_SQRT2	1.41421356237309504880168872420969808   /**< sqrt(2) */
@@ -332,7 +338,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether a value is within a specified epsilon
  * distance from zero.
  */
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#ifdef KEITH_WANTS_THIS
+/* this is a proposed change to equality/zero testing.  prior behavior
+ * evaluated as an open set.  this would change the behavior to that
+ * of a closed set so that you can perform exact comparisons against
+ * the tolerance and get a match.  examples that fail with the current
+ * macro: tol=0.1; 1.1 == 1.0 or tol=0; 1==1
+ *
+ * these need to be tested carefully to make sure we pass ALL
+ * regression and integration tests, which will require some
+ * concerted effort to coordinate prior to a release.  first step is
+ * to evaluate impact on performance and behavior of our tests.
+ */
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon) || ((val) > epsilon)))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon)) && !(((val) > epsilon)))
+#else
+#  define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#endif
 
 /**
  * Return truthfully whether all elements of a given vector are within
@@ -462,23 +484,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
 
 
-/** Clamp a 3D vector to zero if within tolerance of zero. */
-#define VCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-    } while (0)
-
-
-/** Clamp a 4D vector to zero if within tolerance of zero. */
-#define HCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-	if (ZERO((a)[H])) (a)[H] = 0.0; \
-    } while (0)
-
-
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
@@ -488,6 +493,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
 	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
 #define DIST_PT_PT(_a, _b) sqrt(DIST_PT_PT_SQ(_a, _b))
+
+/** @brief Compute distance between two 2D points. */
+#define DIST_PT2_PT2_SQ(_a, _b) \
+	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
+#define DIST_PT2_PT2(_a, _b) sqrt(DIST_PT2_PT2_SQ(_a, _b))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
@@ -1034,6 +1045,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
     } while (0)
 
+/** @brief Normalize 2D vector `a' to be a unit vector. */
+#define V2UNITIZE(a) do { \
+	register double _f = MAG2SQ(a); \
+	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
+		_f = sqrt(_f); \
+		if (_f < VDIVIDE_TOL) { \
+			V2SETALL((a), 0.0); \
+		} else { \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; \
+		} \
+	} \
+    } while (0)
+
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
@@ -1254,9 +1279,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
 #define MAG2SQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y])
 
-/** @brief Return scalar magnitude of vector at `a' */
+
+/**
+ * @brief Return scalar magnitude of the 3D vector `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
 
+/**
+ * @brief Return scalar magnitude of the 2D vector at `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
+#define MAGNITUDE2(a) sqrt(MAG2SQ(a))
 
 /**
  * Store cross product of 3D vectors at `b' and `c' in vector at `a'.
@@ -1324,7 +1358,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * replaced universally with fastf_t's since their epsilon is
  * considerably less than that of a double.
  */
-#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
+#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
+
+/** Clamp a 3D vector to nearby integer values. */
+#define VINTCLAMP(_v) do { \
+	(_v)[X] = INTCLAMP((_v)[X]); \
+	(_v)[Y] = INTCLAMP((_v)[Y]); \
+	(_v)[Z] = INTCLAMP((_v)[Z]); \
+    } while (0)
+
+
+/** Clamp a 4D vector to nearby integer values. */
+#define HINTCLAMP(_v) do { \
+	VINTCLAMP(_v); \
+	(_v)[H] = INTCLAMP((_v)[H]); \
+    } while (0)
+
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])
@@ -1524,16 +1573,42 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 #define V_MAX(r, s) if ((r) < (s)) r = (s)
 
+#ifdef VMIN
+#  undef VMIN
+#endif
 #define VMIN(r, s) do { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMAX
+#  undef VMAX
+#endif
 #define VMAX(r, s) do { \
 	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMINMAX
+#  undef VMINMAX
+#endif
 #define VMINMAX(min, max, pt) do { \
 	VMIN((min), (pt)); VMAX((max), (pt)); \
+    } while (0)
+
+/**
+ * @brief Included below are macros to update min and max X, Y
+ * values to contain a point
+ */
+
+#define V2MIN(r, s) do { \
+	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MAX(r, s) do { \
+	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MINMAX(min, max, pt) do { \
+	V2MIN((min), (pt)); V2MAX((max), (pt)); \
     } while (0)
 
 /**
@@ -1545,25 +1620,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] / (b)[H]; \
 	(a)[Z] = (b)[Z] / (b)[H]; \
     } while (0)
-
-/**
- * @brief Some 2-D versions of the 3-D macros given above.
- *
- * A better naming convention is V2MOVE() rather than VMOVE_2D().
- *
- * DEPRECATED: These xxx_2D names are slated to go away, use the
- * others.
- *
- * THESE ARE ALL DEPRECATED.
- */
-#define VADD2_2D(a, b, c) V2ADD2(a, b, c)
-#define VSUB2_2D(a, b, c) V2SUB2(a, b, c)
-#define MAGSQ_2D(a) MAG2SQ(a)
-#define VDOT_2D(a, b) V2DOT(a, b)
-#define VMOVE_2D(a, b) V2MOVE(a, b)
-#define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
-#define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
-
 
 /**
  * @brief Quaternion math definitions.
@@ -1941,7 +1997,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 __END_DECLS
 
-#endif /* __VMATH_H__ */
+#endif /* VMATH_H */
 
 /** @} */
 /*

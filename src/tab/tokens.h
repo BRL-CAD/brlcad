@@ -1,7 +1,7 @@
 /*                        T O K E N S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,6 +19,10 @@
  */
 /** @file tokens.h
  */
+
+#ifndef TAB_TOKENS_H
+#define TAB_TOKENS_H
+
 #define FLOAT	1
 #define INT	2
 #define	SHELL	3
@@ -50,6 +54,8 @@
 #define STRING	29
 #define SEMI	30
 #define PATH	31
+
+#endif /* TAB_TOKENS_H */
 
 /*
  * Local Variables:

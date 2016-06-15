@@ -1,7 +1,7 @@
 /*                       S H _ C A M O . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -67,23 +68,6 @@ struct camo_specific {
     mat_t xform;	/* model->region coord sys matrix */
 };
 #define CK_camo_SP(_p) BU_CKMAG(_p, camo_MAGIC, "camo_specific")
-
-/* This allows us to specify the "size" parameter as values like ".5m"
- * or "27in" rather than using mm all the time.
- */
-void
-camo_cvt_parse(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *value)
-/* structure description */
-/* struct member name */
-/* beginning of structure */
-/* string containing value */
-{
-    double *p = (double *)(base+sdp->sp_offset);
-
-    /* reconvert with optional units */
-    *p = bu_mm_value(value);
-}
-
 
 static struct camo_specific camo_defaults = {
     camo_MAGIC,
@@ -122,7 +106,8 @@ static struct camo_specific marble_defaults = {
 #define SHDR_NULL ((struct camo_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct camo_specific, m)
 
-void color_fix(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+/* local sp_hook function */
+void color_fix(const struct bu_structparse *, const char *, void *, const char *);
 
 struct bu_structparse camo_print_tab[] = {
     {"%g", 1, "lacunarity",	SHDR_O(noise_lacunarity),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -186,18 +171,21 @@ struct mfuncs camo_mfuncs[] = {
  * Used as a hooked function for input of color values
  */
 void
-color_fix(register const struct bu_structparse *sdp, register const char *UNUSED(name), char *base, const char *UNUSED(value))
+color_fix(const struct bu_structparse *sdp,
+	  const char *UNUSED(name),
+	  void *base,
+	  const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
 /* string containing value */
 {
-    register double *p = (double *)(base+sdp->sp_offset);
+    register double *p = (double *)((char *)base + sdp->sp_offset);
     size_t i;
     int ok;
 
     /* if all the values are in the range [0..1] there's nothing to do */
-    for (ok=1, i=0; i < sdp->sp_count; i++, p++) {
+    for (ok = 1, i = 0; i < sdp->sp_count; i++, p++) {
 	if (*p > 1.0) ok = 0;
     }
     if (ok) return;
@@ -205,8 +193,8 @@ color_fix(register const struct bu_structparse *sdp, register const char *UNUSED
     /* user specified colors in the range [0..255] so we need to
      * map those into [0..1]
      */
-    p = (double *)(base+sdp->sp_offset);
-    for (i=0; i < sdp->sp_count; i++, p++) {
+    p = (double *)((char *)base + sdp->sp_offset);
+    for (i = 0; i < sdp->sp_count; i++, p++) {
 	*p /= 255.0;
     }
 }
@@ -273,8 +261,7 @@ setup(register struct region *rp, struct bu_vls *matparm, void **dpp, struct rt_
 }
 
 
-/* C A M O _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -286,9 +273,6 @@ camo_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-/*
- * C A M O _ P R I N T
- */
 HIDDEN void
 camo_print(register struct region *rp, void *dp)
 {
@@ -296,9 +280,6 @@ camo_print(register struct region *rp, void *dp)
 }
 
 
-/*
- * C A M O _ F R E E
- */
 HIDDEN void
 camo_free(void *cp)
 {
@@ -307,8 +288,6 @@ camo_free(void *cp)
 
 
 /*
- * C A M O _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
@@ -364,8 +343,7 @@ camo_render(struct application *ap, const struct partition *pp, struct shadework
 
     return 1;
 }
-/* M A R B L E 2 _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -378,8 +356,6 @@ marble_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 
 
 /*
- * M A R B L E 2 _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */

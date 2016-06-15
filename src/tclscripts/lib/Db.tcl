@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -94,6 +94,7 @@
 	method pathlist {args}
 	method paths {args}
 	method prcolor {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method r {args}

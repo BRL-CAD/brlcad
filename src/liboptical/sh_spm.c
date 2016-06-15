@@ -1,7 +1,7 @@
 /*                        S H _ S P M . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,8 +65,6 @@ struct mfuncs spm_mfuncs[] = {
 
 
 /*
- * S P M _ R E N D E R
- *
  * Given a u, v coordinate within the texture (0 <= u, v <= 1.0),
  * return a pointer to the relevant pixel.
  */
@@ -106,8 +104,6 @@ spm_mfree(void *cp)
 
 
 /*
- * S P M _ S E T U P
- *
  * Returns -
  * <0 failed
  * >0 success
@@ -144,9 +140,6 @@ fail:
 }
 
 
-/*
- * S P M _ P R I N T
- */
 HIDDEN void
 spm_print(register struct region *rp, void *dp)
 {
@@ -154,7 +147,7 @@ spm_print(register struct region *rp, void *dp)
 
     spm = (struct spm_specific *)dp;
 
-    bu_log("spm_print(rp=x%x, dp = x%x)\n", rp, dp);
+    bu_log("spm_print(rp=%p, dp = %p)\n", (void *)rp, dp);
     (void)bu_struct_print("spm_print", spm_parse, (char *)dp);
     if (spm->sp_map) bn_spm_dump(spm->sp_map, 0);
 }

@@ -1,7 +1,7 @@
 /*                         V D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@
 
 #include "tcl.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
@@ -733,7 +733,7 @@ vdraw_cmd_tcl(struct dg_obj *dgop,
 	{"params",		vdraw_params_tcl},
 	{"open",		vdraw_open_tcl},
 	{"vlist",		vdraw_vlist_tcl},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(vdraw_cmds, argc-1, argv+1, 0, (ClientData)dgop, &ret) == BRLCAD_OK)

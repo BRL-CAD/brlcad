@@ -1,7 +1,7 @@
 /*                        P I X 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 
@@ -163,9 +163,7 @@ get_args(int argc, char **argv)
 			  file_name);
 	    bu_exit(1, NULL);
 	}
-#ifdef _WIN32
 	setmode(infd, O_BINARY);
-#endif
 	fileinput++;
     }
 

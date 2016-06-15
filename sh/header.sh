@@ -2,7 +2,7 @@
 #                       H E A D E R . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2013 United States Government as represented by
+# Copyright (c) 2004-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -470,7 +470,7 @@ $c 3. The name of the author may not be used to endorse or promote
 $c products derived from this documentation without specific prior
 $c written permission.
 $c
-$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY
+$c THIS DOCUMENTATION IS PROVIDED BY THE AUTHOR \`\`AS IS'' AND ANY
 $c EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
 $c IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
 $c PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
@@ -554,9 +554,9 @@ mv -f $FILE ${FILE}.backup
 
 closeit=0
 skip=1
-lineone="`cat ${FILE}.backup | head -n 1`"
-linetwo="`cat ${FILE}.backup | head -n 2 | tail -n 1`"
-linethree="`cat ${FILE}.backup | head -n 3 | tail -n 1`"
+lineone="`head -n 1 ${FILE}.backup`"
+linetwo="`head -n 2 ${FILE}.backup | tail -n 1`"
+linethree="`head -n 3 ${FILE}.backup | tail -n 1`"
 case "x$lineone" in
     "x/*"*${title})
 	echo "Found C comment start with file header"
@@ -721,7 +721,7 @@ case "x$lineone" in
 	echo "found batch command"
 	skip=0
 	;;
-    x\REM*)
+    xREM*)
 	echo "found batch comment"
 	skip=0
 	;;

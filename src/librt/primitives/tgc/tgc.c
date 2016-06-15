@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -149,8 +150,6 @@ static const fastf_t nmg_uv_unitcircle[27] = {
 
 
 /**
- * R T _ T G C _ B B O X
- *
  * Compute the bounding RPP for a truncated general cone
  */
 int
@@ -194,8 +193,6 @@ rt_tgc_bbox(struct rt_db_internal *ip, point_t *min, point_t *max, const struct 
 
 
 /**
- * R T _ T G C _ P R E P
- *
  * Given the parameters (in vector form) of a truncated general cone,
  * compute the constant terms and a transformation matrix needed for
  * solving the intersection of a ray with the cone.
@@ -406,8 +403,6 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
 /**
- * R T _ T G C _ R O T A T E
- *
  * To rotate vectors A and B (where A is perpendicular to B) to the X
  * and Y axes respectively, create a rotation matrix
  *
@@ -468,8 +463,6 @@ rt_tgc_rotate(fastf_t *A, fastf_t *B, fastf_t *Hv, fastf_t *Rot, fastf_t *Inv, s
 
 
 /**
- * R T _ T G C _ S H E A R
- *
  * To shear the H vector to the Z axis, every point must be shifted in
  * the X direction by -(Hx/Hz)*z, and in the Y direction by -(Hy/Hz)*z
  * This operation makes the equation for the standard cone much easier
@@ -503,9 +496,6 @@ rt_tgc_shear(const fastf_t *vect, int axis, fastf_t *Shr, fastf_t *Trn, fastf_t 
 }
 
 
-/**
- * R T _ T G C _ S C A L E
- */
 static void
 rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv)
 {
@@ -521,9 +511,6 @@ rt_tgc_scale(fastf_t a, fastf_t b, fastf_t h, fastf_t *Scl, fastf_t *Inv)
 }
 
 
-/**
- * R T _ T G C _ P R I N T
- */
 void
 rt_tgc_print(register const struct soltab *stp)
 {
@@ -554,8 +541,6 @@ rt_tgc_print(register const struct soltab *stp)
 
 
 /**
- * R T _ T G C _ S H O T
- *
  * Intersect a ray with a truncated general cone, where all constant
  * terms have been computed by rt_tgc_prep().
  *
@@ -913,18 +898,19 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
     }
 
     if (npts != 0 && npts != 2 && npts != 4) {
-	static int tgc_msgs = 0;
+	static size_t tgc_msgs = 0;
 	/* these are printed in 'mm' regardless of local units */
 
 	if (tgc_msgs++ < 100) {
 	    bu_log("tgc(%s):  %d intersects != {0, 2, 4}\n", stp->st_name, npts);
 	    bu_log("\tray: pt = (%g %g %g), dir = (%g %g %g), units in mm\n", V3ARGS(ap->a_ray.r_pt), V3ARGS(ap->a_ray.r_dir));
-	    for (i=0; i<npts; i++) {
+	    for (i = 0; i < npts; i++) {
 		bu_log("\t%g", k[i]*t_scale);
 	    }
 	    bu_log("\n");
 	} else if (tgc_msgs == 100) {
-	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n");
+	    bu_log("tgc(%s):  too many grazing intersections encountered.  further reporting suppressed.\n",
+		stp->st_name);
 	    tgc_msgs++;
 	}
 
@@ -968,8 +954,6 @@ rt_tgc_shot(struct soltab *stp, register struct xray *rp, struct application *ap
 
 
 /**
- * R T _ T G C _ V S H O T
- *
  * The Homer vectorized version.
  */
 void
@@ -1405,8 +1389,6 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 
 /**
- * R T _ P T _ S O R T
- *
  * Sorts the values in t[] in descending order.
  */
 void
@@ -1428,8 +1410,6 @@ rt_pt_sort(fastf_t t[], int npts)
 
 
 /**
- * R T _ T G C _ N O R M
- *
  * Compute the normal to the cone, given a point on the STANDARD CONE
  * centered at the origin of the X-Y plane.
  *
@@ -1521,9 +1501,6 @@ rt_tgc_norm(register struct hit *hitp, struct soltab *stp, register struct xray 
 }
 
 
-/**
- * R T _ T G C _ U V
- */
 void
 rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
 {
@@ -1546,7 +1523,7 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	    /* scale coords to unit circle (they are already scaled by bottom plate radii) */
 	    pprime[X] *= tgc->tgc_A / (tgc->tgc_A*(1.0 - pprime[Z]) + tgc->tgc_C*pprime[Z]);
 	    pprime[Y] *= tgc->tgc_B / (tgc->tgc_B*(1.0 - pprime[Z]) + tgc->tgc_D*pprime[Z]);
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    uvp->uv_v = pprime[Z];		/* height */
 	    break;
 	case TGC_NORM_TOP:
@@ -1554,14 +1531,14 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 	    /* scale coords to unit circle (they are already scaled by bottom plate radii) */
 	    pprime[X] *= tgc->tgc_A / tgc->tgc_C;
 	    pprime[Y] *= tgc->tgc_B / tgc->tgc_D;
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
 	    uvp->uv_v = len;		/* rim v = 1 */
 	    break;
 	case TGC_NORM_BOT:
 	    /* bottom plate */
 	    len = sqrt(pprime[X]*pprime[X]+pprime[Y]*pprime[Y]);
-	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / bn_twopi + 0.5;
+	    uvp->uv_u = atan2(pprime[Y], pprime[X]) / M_2PI + 0.5;
 	    uvp->uv_v = 1 - len;	/* rim v = 0 */
 	    break;
     }
@@ -1580,9 +1557,6 @@ rt_tgc_uv(struct application *ap, struct soltab *stp, register struct hit *hitp,
 }
 
 
-/**
- * R T _ T G C _ F R E E
- */
 void
 rt_tgc_free(struct soltab *stp)
 {
@@ -1593,16 +1567,7 @@ rt_tgc_free(struct soltab *stp)
 }
 
 
-int
-rt_tgc_class(void)
-{
-    return 0;
-}
-
-
 /**
- * R T _ T G C _ I M P O R T
- *
  * Import a TGC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1648,9 +1613,6 @@ rt_tgc_import4(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ T G C _ E X P O R T
- */
 int
 rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1666,7 +1628,7 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_calloc(1, ep->ext_nbytes, "tgc external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "tgc external");
     rec = (union record *)ep->ext_buf;
 
     rec->s.s_id = ID_SOLID;
@@ -1685,8 +1647,6 @@ rt_tgc_export4(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ T G C _ I M P O R T 5
- *
  * Import a TGC from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -1728,9 +1688,6 @@ rt_tgc_import5(struct rt_db_internal *ip, const struct bu_external *ep, register
 }
 
 
-/**
- * R T _ T G C _ E X P O R T 5
- */
 int
 rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double local2mm, const struct db_i *dbip)
 {
@@ -1748,7 +1705,7 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = SIZEOF_NETWORK_DOUBLE * ELEMENTS_PER_VECT*6;
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "tgc external");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "tgc external");
 
     /* scale 'em into local buffer */
     VSCALE(&vec[0*ELEMENTS_PER_VECT], tip->v, local2mm);
@@ -1766,8 +1723,6 @@ rt_tgc_export5(struct bu_external *ep, const struct rt_db_internal *ip, double l
 
 
 /**
- * R T _ T G C _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1853,8 +1808,6 @@ rt_tgc_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose
 
 
 /**
- * R T _ T G C _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1882,7 +1835,7 @@ draw_lines_between_rec_ellipses(
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
-    fastf_t radian_step = 2.0 * M_PI / num_lines;
+    fastf_t radian_step = M_2PI / num_lines;
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
@@ -1903,7 +1856,7 @@ draw_lines_between_ellipses(
 {
     int i;
     point_t ellipse1_point, ellipse2_point;
-    fastf_t radian_step = 2.0 * M_PI / num_lines;
+    fastf_t radian_step = M_2PI / num_lines;
 
     for (i = 0; i < num_lines; ++i) {
 	ellipse_point_at_radian(ellipse1_point, ellipse1.center,
@@ -1933,7 +1886,7 @@ tgc_points_per_ellipse(const struct rt_db_internal *ip, const struct rt_view_inf
     tgc_mag_d = MAGNITUDE(tgc->d);
 
     avg_radius = (tgc_mag_a + tgc_mag_b + tgc_mag_c + tgc_mag_d) / 4.0;
-    avg_circumference = bn_twopi * avg_radius;
+    avg_circumference = M_2PI * avg_radius;
 
     return avg_circumference / info->point_spacing;
 }
@@ -2014,7 +1967,7 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
 	pts = (point_t *)bu_malloc(sizeof(point_t) * points_per_ellipse,
 		"tgc points");
 
-	radian_step = bn_twopi / points_per_ellipse;
+	radian_step = M_2PI / points_per_ellipse;
 
 	/* calculate and plot first ellipse */
 	ellipse_point_at_radian(pts[0], tip->v, tip->a, tip->b,
@@ -2057,9 +2010,6 @@ rt_tgc_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     return 0;
 }
 
-/**
- * R T _ T G C _ P L O T
- */
 int
 rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_tess_tol *UNUSED(ttol), const struct bn_tol *UNUSED(tol), const struct rt_view_info *UNUSED(info))
 {
@@ -2100,8 +2050,6 @@ rt_tgc_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 
 
 /**
- * R T _ T G C _ C U R V E
- *
  * Return the curvature of the TGC.
  */
 void
@@ -2177,8 +2125,6 @@ rt_tgc_curve(register struct curvature *cvp, register struct hit *hitp, struct s
 
 
 /**
- * R T _ T G C _ T E S S
- *
  * Tessellation of the TGC.
  *
  * Returns -
@@ -2237,7 +2183,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     if (ttol->abs > 0.0 && ttol->abs < tol->dist) {
 	bu_log("WARNING: tessellation tolerance is %fmm while calculational tolerance is %fmm\n",
 	       ttol->abs, tol->dist);
-	bu_log("Cannot tesselate a TGC to finer tolerance than the calculational tolerance\n");
+	bu_log("Cannot tessellate a TGC to finer tolerance than the calculational tolerance\n");
 	abs_tol = tol->dist;
     } else {
 	abs_tol = ttol->abs;
@@ -2312,20 +2258,20 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	if ((radius * 0.2) < max_radius)
 	    alpha_tol = 2.0 * acos(1.0 - 2.0 * radius * 0.1 / max_radius);
 	else
-	    alpha_tol = bn_halfpi;
+	    alpha_tol = M_PI_2;
     } else {
 	if (abs_tol > 0.0)
 	    absolute = 2.0 * acos(1.0 - abs_tol/max_radius);
 	else
-	    absolute = bn_halfpi;
+	    absolute = M_PI_2;
 
 	if (ttol->rel > 0.0) {
 	    if (ttol->rel * 2.0 * radius < max_radius)
 		rel = 2.0 * acos(1.0 - ttol->rel * 2.0 * radius/max_radius);
 	    else
-		rel = bn_halfpi;
+		rel = M_PI_2;
 	} else
-	    rel = bn_halfpi;
+	    rel = M_PI_2;
 
 	if (ttol->norm > 0.0) {
 	    fastf_t norm_top, norm_bot;
@@ -2345,7 +2291,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    else
 		norm = norm_top;
 	} else
-	    norm = bn_halfpi;
+	    norm = M_PI_2;
 
 	if (absolute < rel)
 	    alpha_tol = absolute;
@@ -2356,7 +2302,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* get number of segments per quadrant */
-    nsegs = (int)(bn_halfpi / alpha_tol + 0.9999);
+    nsegs = (int)(M_PI_2 / alpha_tol + 0.9999);
     if (nsegs < 2)
 	nsegs = 2;
 
@@ -2400,7 +2346,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    VMOVE(B[top_ell], tip->c);
 	    reversed = 1;
 	}
-	ang = 2.0*bn_pi/((double)nsegs);
+	ang = M_2PI/((double)nsegs);
 	sin_ang = sin(ang);
 	cos_ang = cos(ang);
 	cos_m_1_sq = (cos_ang - 1.0)*(cos_ang - 1.0);
@@ -2553,7 +2499,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 
@@ -2698,7 +2644,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	    double alpha;
 	    double sin_alpha, cos_alpha;
 
-	    alpha = bn_twopi * (double)(2*j+1)/(double)(2*nsegs);
+	    alpha = M_2PI * (double)(2*j+1)/(double)(2*nsegs);
 	    sin_alpha = sin(alpha);
 	    cos_alpha = cos(alpha);
 
@@ -2854,8 +2800,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 }
 
 
-/** R T _ T G C _ T N U R B
- *
+/**
  * "Tessellate an TGC into a trimmed-NURB-NMG data structure.
  * Computing NURB surfaces and trimming curves to interpolate
  * the parameters of the TGC
@@ -3289,10 +3234,6 @@ nmg_tgc_nurb_cyl(struct faceuse *fu, fastf_t *top_mat, fastf_t *bot_mat)
 }
 
 
-/**
- * R T _ T G C _ P A R A M S
- *
- */
 int
 rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {
@@ -3302,9 +3243,6 @@ rt_tgc_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ T G C _ V O L U M E
- */
 void
 rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
 {
@@ -3340,9 +3278,6 @@ rt_tgc_volume(fastf_t *vol, const struct rt_db_internal *ip)
     }
 }
 
-/**
- * R T _ T G C _ S U R F _ A R E A
- */
 void
 rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 {
@@ -3368,7 +3303,7 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 
     switch (tgc_type) {
     case RCC:
-	*area = 2.0 * M_PI * mag_a * (mag_a + mag_h);
+	*area = M_2PI * mag_a * (mag_a + mag_h);
 	break;
     case TRC:
 	*area = M_PI * ((mag_a + mag_c) * sqrt((mag_a - mag_c) * (mag_a - mag_c) + magsq_h) + magsq_a + magsq_c);
@@ -3386,9 +3321,6 @@ rt_tgc_surf_area(fastf_t *area, const struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ T G C _ C E N T R O I D
- */
 void
 rt_tgc_centroid(point_t *cent, const struct rt_db_internal *ip)
 {

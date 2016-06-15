@@ -1,7 +1,7 @@
 /*                     I N T E R R U P T . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,17 +18,31 @@
  * information.
  */
 
+/* FIXME:  Should use sigaction(2) instead of BSD signal semantics for
+ * conformance, portability, and safety. */
+#if defined(C99_POSIX_USE_BSD)
+/* defining _BSD_SOURCE should ensure BSD signal semantics as well
+ * as sig_t for glibc on Linux according to 'man signal(2)'
+ */
+#if !defined(_BSD_SOURCE)
+#define _BSD_SOURCE
+#endif
+#endif
+
 #include "common.h"
 
 #include <signal.h>
 
-#include "bu.h"
+#include "bu/file.h"
+#include "bu/log.h"
 
-
+/* wrap for hack above */
+#if !defined(C99_POSIX_USE_BSD)
+/* orig code: */
 #ifndef HAVE_SIG_T
 typedef void (*sig_t)(int);
 #endif
-
+#endif
 
 /* hard-coded maximum signal number we can defer due to array we're
  * using for quick O(1) access in a single container for all signals.
@@ -94,7 +108,7 @@ interrupt_suspend_signal_handler(int signum)
  * Returns 1 if already suspended.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this HIDDEN function is
  * publicly exposed.
  */
 HIDDEN int
@@ -106,7 +120,13 @@ interrupt_suspend_signal(int signum)
 	return 1;
     }
 
+
+#if !defined(BRLCAD_USE_SIGACTION)
     interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
+#else
+    interrupt_signal_func[signum] = signal(signum, interrupt_suspend_signal_handler);
+#endif
+
     if (interrupt_signal_func[signum] == SIG_ERR) {
 	interrupt_signal_func[signum] = (sig_t)0;
 	return 2;
@@ -129,7 +149,7 @@ interrupt_suspend_signal(int signum)
  * Returns 1 if unexpected suspend state.
  * Returns 2 if signal failure.
  *
- * This comment should be moved to bu.h if this HIDDEN function is
+ * This comment should be moved to bu/file.h if this HIDDEN function is
  * publicly exposed.
  */
 HIDDEN int
@@ -148,7 +168,12 @@ interrupt_restore_signal(int signum)
 	    return 1;
 	}
 
+#if !defined(BRLCAD_USE_SIGACTION)
 	ret = signal(signum, interrupt_signal_func[signum]);
+#else
+	ret = signal(signum, interrupt_signal_func[signum]);
+#endif
+
 	interrupt_signal_func[signum] = (sig_t)0;
 	interrupt_signal_pending[signum] = 0;
 

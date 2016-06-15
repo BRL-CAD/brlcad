@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2013 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -41,8 +41,6 @@
 #include "wdb.h"
 
 /**
- * M K _ T R E E _ P U R E
- *
  * Given a list of wmember structures, build a tree that performs the
  * boolean operations in the given sequence.  No GIFT semantics or
  * precedence is provided.  For that, use mk_tree_gift().
@@ -93,8 +91,6 @@ mk_tree_pure(struct rt_comb_internal *comb, struct bu_list *member_hd)
 
 
 /**
- * M K _ T R E E _ G I F T
- *
  * Add some nodes to a new or existing combination's tree, with GIFT
  * precedence and semantics.
  *

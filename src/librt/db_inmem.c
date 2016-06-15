@@ -1,7 +1,7 @@
 /*                     D B _ I N M E M . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2013 United States Government as represented by
+ * Copyright (c) 2006-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ db_open_inmem(void)
     dbip->dbi_read_only = 0;
 
     /* Initialize fields */
-    for (i=0; i<RT_DBNHASH; i++) {
+    for (i = 0; i < RT_DBNHASH; i++) {
 	dbip->dbi_Head[i] = RT_DIR_NULL;
     }
 
@@ -144,7 +144,7 @@ db_inmem(struct directory *dp, struct bu_external *ext, int flags, struct db_i *
     dp->d_flags = flags | RT_DIR_INMEM;
 
     /* Empty out the external structure, but leave it w/valid magic */
-    ext->ext_buf = (genptr_t)NULL;
+    ext->ext_buf = (uint8_t *)NULL;
     ext->ext_nbytes = 0;
 }
 

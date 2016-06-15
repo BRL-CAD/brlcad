@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2013 United States Government as represented by
+ * Copyright (c) 2000-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,6 +39,7 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "db.h"
 #include "nmg.h"
@@ -67,8 +68,6 @@ struct submodel_specific {
 
 
 /**
- * R T _ S U B M O D E L _ P R E P
- *
  * Given a pointer to a GED database record, and a transformation matrix,
  * determine if this is a valid SUBMODEL, and if so, precompute various
  * terms of the formula.
@@ -246,9 +245,6 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
 }
 
 
-/**
- * R T _ S U B M O D E L _ P R I N T
- */
 void
 rt_submodel_print(const struct soltab *stp)
 {
@@ -261,7 +257,7 @@ rt_submodel_print(const struct soltab *stp)
     bn_mat_print("m2subm", submodel->m2subm);
 
     bu_log_indent_delta(4);
-    bu_log("submodel->rtip=x%x\n", submodel->rtip);
+    bu_log("submodel->rtip=%p\n", (void *)submodel->rtip);
 
     /* Loop through submodel's solid table printing them too. */
     RT_VISIT_ALL_SOLTABS_START(stp, submodel->rtip) {
@@ -271,9 +267,6 @@ rt_submodel_print(const struct soltab *stp)
 }
 
 
-/**
- * R T _ S U B M O D E L _ A _ M I S S
- */
 int
 rt_submodel_a_miss(struct application *ap)
 {
@@ -291,9 +284,6 @@ struct submodel_gobetween {
 };
 
 
-/**
- * R T _ S U B M O D E L _ A _ H I T
- */
 int
 rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segHeadp))
 {
@@ -441,8 +431,6 @@ rt_submodel_a_hit(struct application *ap, struct partition *PartHeadp, struct se
 
 
 /**
- * R T _ S U B M O D E L _ S H O T
- *
  * Intersect a ray with a submodel.
  * If an intersection occurs, a struct seg will be acquired
  * and filled in.
@@ -526,8 +514,6 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
 
 
 /**
- * R T _ S U B M O D E L _ N O R M
- *
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
@@ -551,8 +537,6 @@ rt_submodel_norm(struct hit *hitp, struct soltab *stp, struct xray *rp)
 
 
 /**
- * R T _ S U B M O D E L _ C U R V E
- *
  * Return the curvature of the submodel.
  */
 void
@@ -574,8 +558,6 @@ rt_submodel_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
 
 
 /**
- * R T _ S U B M O D E L _ U V
- *
  * For a hit on the surface of an submodel, return the (u, v) coordinates
  * of the hit point, 0 <= u, v <= 1.
  * u = azimuth
@@ -596,9 +578,6 @@ rt_submodel_uv(struct application *ap, struct soltab *stp, struct hit *hitp, str
 }
 
 
-/**
- * R T _ S U B M O D E L _ F R E E
- */
 void
 rt_submodel_free(struct soltab *stp)
 {
@@ -631,9 +610,6 @@ rt_submodel_free(struct soltab *stp)
 }
 
 
-/**
- * R T _ S U B M O D E L _ C L A S S
- */
 int
 rt_submodel_class(const struct soltab *stp, const fastf_t *min, const fastf_t *max, const struct bn_tol *tol)
 {
@@ -653,8 +629,6 @@ struct goodies {
 
 
 /**
- * R T _ S U B M O D E L _ W I R E F R A M E _ L E A F
- *
  * This routine must be prepared to run in parallel.
  * This routine should be generally exported for other uses.
  */
@@ -704,8 +678,6 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
 
 
 /**
- * R T _ S U B M O D E L _ P L O T
- *
  * Not unlike mged/dodraw.c drawtrees()
  *
  * Note:  The submodel will be drawn entirely in one color
@@ -777,8 +749,6 @@ rt_submodel_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct 
 
 
 /**
- * R T _ S U B M O D E L _ T E S S
- *
  * Returns -
  * -1 failure
  * 0 OK.  *r points to nmgregion that holds this tessellation.
@@ -800,8 +770,6 @@ rt_submodel_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *i
 
 
 /**
- * R T _ S U B M O D E L _ I M P O R T
- *
  * Import an SUBMODEL from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -858,8 +826,6 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
 
 /**
- * R T _ S U B M O D E L _ E X P O R T
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -878,7 +844,7 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
     BU_CK_EXTERNAL(ep);
     ep->ext_nbytes = sizeof(union record)*DB_SS_NGRAN;
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
     rec = (union record *)ep->ext_buf;
 
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
@@ -893,8 +859,6 @@ rt_submodel_export4(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ S U B M O D E L _ I M P O R T 5
- *
  * Import an SUBMODEL from the database format to the internal format.
  * Apply modeling transformations as well.
  */
@@ -947,8 +911,6 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
 
 /**
- * R T _ S U B M O D E L _ E X P O R T 5
- *
  * The name is added by the caller, in the usual place.
  */
 int
@@ -967,7 +929,7 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
     BU_CK_EXTERNAL(ep);
     bu_vls_struct_print(&str, rt_submodel_parse, (char *)sip);
     ep->ext_nbytes = bu_vls_strlen(&str);
-    ep->ext_buf = bu_calloc(1, ep->ext_nbytes, "submodel external");
+    ep->ext_buf = (uint8_t *)bu_calloc(1, ep->ext_nbytes, "submodel external");
 
     bu_strlcpy((char *)ep->ext_buf, bu_vls_addr(&str), ep->ext_nbytes);
     bu_vls_free(&str);
@@ -977,8 +939,6 @@ rt_submodel_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 
 
 /**
- * R T _ S U B M O D E L _ D E S C R I B E
- *
  * Make human-readable formatted presentation of this solid.
  * First line describes type of solid.
  * Additional lines are indented one tab, and give parameter values.
@@ -1004,8 +964,6 @@ rt_submodel_describe(struct bu_vls *str, const struct rt_db_internal *ip, int ve
 
 
 /**
- * R T _ S U B M O D E L _ I F R E E
- *
  * Free the storage associated with the rt_db_internal version of this solid.
  */
 void
@@ -1026,10 +984,6 @@ rt_submodel_ifree(struct rt_db_internal *ip)
 }
 
 
-/**
- * R T _ S U B M O D E L _ P A R A M S
- *
- */
 int
 rt_submodel_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)
 {

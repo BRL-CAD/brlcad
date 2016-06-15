@@ -1,5 +1,5 @@
 /*=============================================================================
-    Copyright (c) 2005 Joel de Guzman
+    Copyright (c) 2001-2011 Joel de Guzman
     Copyright (c) 2005 Eric Niebler
 
     Distributed under the Boost Software License, Version 1.0. (See accompanying 
@@ -13,11 +13,11 @@
 
 namespace boost { namespace fusion
 {
-    struct nil;
+    struct nil_;
 
     namespace result_of
     {
-        template <typename Car, typename Cdr = nil>
+        template <typename Car, typename Cdr = nil_>
         struct make_cons
         {
             typedef cons<typename detail::as_fusion_element<Car>::type, Cdr> type;

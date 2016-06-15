@@ -1,7 +1,7 @@
 #                   S O L C R E A T E . T C L
 # BRL-CAD
 #
-# Copyright (c) 1995-2013 United States Government as represented by
+# Copyright (c) 1995-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or

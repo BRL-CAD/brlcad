@@ -1,7 +1,7 @@
 /*                   N M G _ R T _ S E G S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,7 @@
 #include <math.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
@@ -71,18 +72,18 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 
     bu_log("Segment List (%d segments) (%s):\n", seg_count, s);
     /* print debugging data before returning */
-    bu_log("Seghead:\n0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n\n",
-	   seghead,
+    bu_log("Seghead:\n%p magic: %08x forw:%p back:%p\n\n",
+	   (void *)seghead,
 	   seghead->l.magic,
-	   seghead->l.forw,
-	   seghead->l.back);
+	   (void *)seghead->l.forw,
+	   (void *)seghead->l.back);
 
     for (BU_LIST_FOR(seg_p, seg, &seghead->l)) {
-	bu_log("0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n",
-	       seg_p,
+	bu_log("%p magic: %08x forw:%p back:%p\n",
+	       (void *)seg_p,
 	       seg_p->l.magic,
-	       seg_p->l.forw,
-	       seg_p->l.back);
+	       (void *)seg_p->l.forw,
+	       (void *)seg_p->l.back);
 	bu_log("dist %g  pt(%g, %g, %g) N(%g, %g, %g)  =>\n",
 	       seg_p->seg_in.hit_dist,
 	       seg_p->seg_in.hit_point[0],
@@ -177,8 +178,6 @@ pl_ray(struct ray_data *rd)
 
 
 /*
- * N E X T _ S T A T E _ T A B L E
- *
  *			Current_State
  *	Input	|  0   1     2    3    4    5    6
  *	-------------------------------------------
@@ -216,8 +215,8 @@ pl_ray(struct ray_data *rd)
 
 HIDDEN void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 
 
 {
@@ -254,8 +253,8 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 
 HIDDEN void
 set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 {
     if (!seg_p) {
 	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
@@ -296,10 +295,10 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
 HIDDEN int
 state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -350,10 +349,10 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -398,10 +397,10 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -494,10 +493,10 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -597,10 +596,10 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -771,10 +770,10 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 
 HIDDEN int
 state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 5);
@@ -783,19 +782,24 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
 }
 
 
-static int (*state_table[7])() = {
-    state0, state1, state2, state3,
-    state4, state5, state6
+static int (*state_table[7])(void) = {
+    (int (*)(void))state0,
+    (int (*)(void))state1,
+    (int (*)(void))state2,
+    (int (*)(void))state3,
+    (int (*)(void))state4,
+    (int (*)(void))state5,
+    (int (*)(void))state6
 };
 
 
@@ -803,7 +807,7 @@ HIDDEN int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
 
 
-    /* intersection w/ ray */
+/* intersection w/ ray */
 
 {
     int ray_state = 0;
@@ -814,11 +818,13 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
     int seg_count = 0;
 
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+	int (*state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
+
 	NMG_CK_HITMISS(a_hit);
 
-	new_state = state_table[ray_state](seghead, &seg_p,
-					   &seg_count, a_hit,
-					   stp, ap, rd->tol);
+	/* cast function pointers for use */
+	state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))state_table[ray_state];
+	new_state = state_table_func(seghead, &seg_p, &seg_count, a_hit, stp, ap, (struct bn_tol *)rd->tol);
 	if (new_state < 0) {
 	    /* state transition error.  Print out the hit list
 	     * and indicate where we were in processing it.
@@ -1012,13 +1018,13 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     b = &a_tbl->buffer[a_tbl->end];
     l_p = &a_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("topo table NEXT\n");
     b = &next_tbl->buffer[next_tbl->end];
     l_p = &next_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("<---Unable to fix state transition\n");
     pl_ray(rd);
@@ -1141,8 +1147,6 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 
 /**
- * N M G _ R A Y _ S E G S
- *
  * Obtain the list of ray segments which intersect with the nmg.
  * This routine does all of the "work" for rt_nmg_shot()
  *

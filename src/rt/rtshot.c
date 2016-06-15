@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2013 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,12 +29,14 @@
 
 #include "common.h"
 
+#include <limits.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <ctype.h>
 #include <math.h>
 
+#include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "plot3.h"
@@ -88,9 +90,6 @@ extern int miss(register struct application *ap);
 int bundle_hit(register struct application_bundle *bundle, struct partition_bundle *PartBundlep);
 int bundle_miss(register struct application_bundle *bundle);
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

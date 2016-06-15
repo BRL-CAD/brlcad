@@ -1,7 +1,7 @@
 /*                 BSplineSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -76,16 +76,11 @@ BSplineSurface::BSplineSurface(STEPWrapper *sw, int step_id)
 
 BSplineSurface::~BSplineSurface()
 {
-
-    LIST_OF_LIST_OF_POINTS::iterator i = control_points_list->begin();
-
-    while (i != control_points_list->end()) {
-	(*i)->clear();
-	delete(*i);
-	i = control_points_list->erase(i);
+    // elements created through factory will be deleted there.
+    if (control_points_list) {
+	control_points_list->clear();
+	delete control_points_list;
     }
-    control_points_list->clear();
-    delete control_points_list;
 }
 
 bool

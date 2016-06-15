@@ -1,7 +1,7 @@
 /*                 ProductDefinitionShape.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,9 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "CharacterizedDefinition.h"
 #include "ProductDefinitionShape.h"
+#include "ProductDefinition.h"
 
 #define CLASSNAME "ProductDefinitionShape"
 #define ENTITYNAME "Product_Definition_Shape"
@@ -37,12 +39,14 @@ ProductDefinitionShape::ProductDefinitionShape()
 {
     step = NULL;
     id = 0;
+    definition = NULL;
 }
 
 ProductDefinitionShape::ProductDefinitionShape(STEPWrapper *sw, int step_id)
 {
     step = sw;
     id = step_id;
+    definition = NULL;
 }
 
 ProductDefinitionShape::~ProductDefinitionShape()
@@ -52,6 +56,27 @@ ProductDefinitionShape::~ProductDefinitionShape()
 string ProductDefinitionShape::ClassName()
 {
     return entityname;
+}
+
+string ProductDefinitionShape::GetProductName()
+{
+    string pname = "";
+
+    pname = definition->GetProductName();
+
+    return pname;
+}
+
+int
+ProductDefinitionShape::GetProductId()
+{
+    int ret = 0;
+
+    if (definition) {
+	ret = definition->GetProductId();
+    }
+
+    return ret;
 }
 
 bool ProductDefinitionShape::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -97,8 +97,7 @@ struct mfuncs toon_mfuncs[] = {
 };
 
 
-/* T O O N _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -145,9 +144,6 @@ toon_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-/*
- * T O O N _ P R I N T
- */
 HIDDEN void
 toon_print(register struct region *rp, void *dp)
 {
@@ -155,9 +151,6 @@ toon_print(register struct region *rp, void *dp)
 }
 
 
-/*
- * T O O N _ F R E E
- */
 HIDDEN void
 toon_free(void *cp)
 {
@@ -166,8 +159,6 @@ toon_free(void *cp)
 
 
 /*
- * T O O N _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.

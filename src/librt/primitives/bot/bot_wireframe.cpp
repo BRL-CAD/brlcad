@@ -162,7 +162,7 @@ rt_bot_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info)
     }
     bu_free(face_normals, "face_normals");
 
-    /* Determine the maximun number of faces associated with any one vertex */
+    /* Determine the maximum number of faces associated with any one vertex */
     unsigned int *vert_face_cnt = (unsigned int *)bu_calloc(bot->num_vertices, sizeof(unsigned int), "vert face cnt");
     for (unsigned int i = 0; i < bot->num_faces; i++) {
         vert_face_cnt[bot->faces[i*3+0]]++;

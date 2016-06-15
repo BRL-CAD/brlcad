@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2013 United States Government as represented by
+# Copyright (c) 1998-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -194,6 +194,8 @@ package provide cadwidgets::Ged 1.0
 	method data_move_object_mode {_pane _x _y}
 	method data_move_point_mode {_pane _x _y}
 	method data_pick {args}
+	method data_scale_mode {args}
+	method data_vZ {args}
 	method dbconcat {args}
 	method dbfind {args}
 	method dbip {args}
@@ -239,6 +241,7 @@ package provide cadwidgets::Ged 1.0
 	method form {args}
 	method fracture {args}
 	method g {args}
+	method gdiff {args}
 	method get {args}
 	method get_autoview {args}
 	method get_bot_edges {args}
@@ -330,6 +333,7 @@ package provide cadwidgets::Ged 1.0
 	method more_args_callback {args}
 	method mouse_add_metaballpt {args}
 	method mouse_append_pipept {args}
+	method mouse_brep_selection_append {_obj _mx _my}
 	method mouse_constrain_rot {args}
 	method mouse_constrain_trans {args}
 	method mouse_find_arb_edge {_arb _mx _my _ptol}
@@ -396,6 +400,8 @@ package provide cadwidgets::Ged 1.0
 	method pane_center {_pane args}
 	method pane_constrain_rmode {_pane args}
 	method pane_constrain_tmode {_pane args}
+	method pane_data_scale_mode {_pane args}
+	method pane_data_vZ {_pane args}
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
 	method pane_fb2pix {_pane args}
@@ -535,6 +541,7 @@ package provide cadwidgets::Ged 1.0
 	method preview {args}
 	method prim_label {args}
 	method ps {args}
+	method pull {args}
 	method push {args}
 	method put {args}
 	method put_comb {args}
@@ -690,6 +697,7 @@ package provide cadwidgets::Ged 1.0
 	method begin_data_poly_cont {}
 	method begin_data_poly_ell {}
 	method begin_data_poly_rect {}
+	method begin_data_scale {_pane}
 	method begin_view_measure {_pane _part1_button _part1_button _x _y}
 	method begin_view_measure_part2 {_pane _button _x _y}
 	method default_views {}
@@ -703,6 +711,7 @@ package provide cadwidgets::Ged 1.0
 	method end_data_poly_cont {_pane {_button 1}}
 	method end_data_poly_ell {_pane {_button 1}}
 	method end_data_poly_rect {_pane {_button 1}}
+	method end_data_scale {_pane}
 	method end_view_measure {_pane _part1_button _part2_button}
 	method end_view_measure_part2 {_pane _button}
 	method end_view_rect {_pane {_button 1} {_pflag 0} {_bot ""}}
@@ -726,6 +735,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_move_object {{_button 1}}
 	method init_data_move_point {{_button 1}}
 	method init_data_pick {{_button 1}}
+	method init_data_scale {{_button 1}}
 	method init_data_poly_circ {{_button 1}}
 	method init_data_poly_cont {{_button 1}}
 	method init_data_poly_ell {{_button 1}}
@@ -780,6 +790,10 @@ package provide cadwidgets::Ged 1.0
 	method add_end_data_move_callback {_callback}
 	method clear_end_data_move_callback_list {}
 	method delete_end_data_move_callback {_callback}
+
+	method add_end_data_scale_callback {_callback}
+	method clear_end_data_scale_callback_list {}
+	method delete_end_data_scale_callback {_callback}
 
 	method add_mouse_data_callback {_callback}
 	method clear_mouse_data_callback_list {}
@@ -868,6 +882,7 @@ package provide cadwidgets::Ged 1.0
 	variable mEndDataArrowCallbacks ""
 	variable mEndDataLineCallbacks ""
 	variable mEndDataMoveCallbacks ""
+	variable mEndDataScaleCallbacks ""
 	variable mMouseDataCallbacks ""
 	variable mMouseRayCallbacks ""
 	variable mPrevGedMouseX 0
@@ -1540,6 +1555,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed data_pick $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::data_scale_mode {args} {
+    eval $mGed data_scale_mode $itk_component($itk_option(-pane)) $args
+}
+
+::itcl::body cadwidgets::Ged::data_vZ {args} {
+    eval $mGed data_vZ $itk_component($itk_option(-pane)) $args
+}
+
 ::itcl::body cadwidgets::Ged::dbconcat {args} {
     eval $mGed dbconcat $args
 }
@@ -1800,6 +1823,10 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::g {args} {
     set mRayNeedGettrees 1
     eval $mGed g $args
+}
+
+::itcl::body cadwidgets::Ged::gdiff {args} {
+    eval $mGed gdiff $args
 }
 
 ::itcl::body cadwidgets::Ged::get {args} {
@@ -2262,6 +2289,10 @@ package provide cadwidgets::Ged 1.0
     eval $mGed mouse_append_pipept $itk_component($itk_option(-pane)) $args
 }
 
+::itcl::body cadwidgets::Ged::mouse_brep_selection_append {_obj _mx _my} {
+    eval $mGed mouse_brep_selection_append $itk_component($itk_option(-pane)) $_obj $_mx $_my
+}
+
 ::itcl::body cadwidgets::Ged::mouse_constrain_rot {args} {
     eval $mGed mouse_constrain_rot $itk_component($itk_option(-pane)) $args
 }
@@ -2540,6 +2571,14 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::pane_constrain_tmode {_pane args} {
     eval $mGed constrain_tmode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_data_scale_mode {_pane args} {
+    eval $mGed data_scale_mode $itk_component($_pane) $args
+}
+
+::itcl::body cadwidgets::Ged::pane_data_vZ {_pane args} {
+    eval $mGed data_vZ $itk_component($_pane) $args
 }
 
 ::itcl::body cadwidgets::Ged::pane_eye {_pane args} {
@@ -4096,6 +4135,13 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::begin_data_scale {_pane} {
+    # Temporarily turn off view callbacks
+    set mSaveViewCallbacks($_pane) [$mGed view_callback $itk_component($_pane)]
+    $mGed view_callback $itk_component($_pane) ""
+}
+
+
 ::itcl::body cadwidgets::Ged::begin_view_measure {_pane _part1_button _part2_button _x _y} {
     measure_line_erase
 
@@ -4456,6 +4502,25 @@ package provide cadwidgets::Ged 1.0
 }
 
 
+::itcl::body cadwidgets::Ged::end_data_scale {_pane} {
+    set svcallback [$mGed view_callback $itk_component($_pane)]
+    $mGed view_callback $itk_component($_pane) ""
+
+    $mGed idle_mode $itk_component($_pane)
+
+    refresh_off
+
+    foreach callback $mEndDataScaleCallbacks {
+	catch {$callback}
+    }
+
+    refresh_on
+    refresh_all
+
+    $mGed view_callback $itk_component($_pane) $svcallback
+}
+
+
 ::itcl::body cadwidgets::Ged::end_view_measure {_pane _part1_button _part2_button} {
     $mGed idle_mode $itk_component($_pane)
 
@@ -4779,6 +4844,16 @@ package provide cadwidgets::Ged 1.0
     foreach dm {ur ul ll lr} {
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_data_pick $dm %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
+    }
+}
+
+
+::itcl::body cadwidgets::Ged::init_data_scale {{_button 1}} {
+    measure_line_erase
+
+    foreach dm {ur ul ll lr} {
+	bind $itk_component($dm) <$_button> "$mGed data_scale_mode $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <ButtonRelease-$_button> "[::itcl::code $this end_data_scale $dm]; break"
     }
 }
 
@@ -5449,6 +5524,26 @@ package provide cadwidgets::Ged 1.0
     }
 }
 
+::itcl::body cadwidgets::Ged::add_end_data_scale_callback {_callback} {
+    set i [lsearch $mEndDataScaleCallbacks $_callback]
+
+    # Add if not already in list
+    if {$i == -1} {
+	lappend mEndDataScaleCallbacks $_callback
+    }
+}
+
+::itcl::body cadwidgets::Ged::clear_end_data_scale_callback_list {} {
+    set mEndDataScaleCallbacks {}
+}
+
+::itcl::body cadwidgets::Ged::delete_end_data_scale_callback {_callback} {
+    set i [lsearch $mEndDataScaleCallbacks $_callback]
+    if {$i != -1} {
+	set mEndDataScaleCallbacks [lreplace $mEndDataScaleCallbacks $i $i]
+    }
+}
+
 ::itcl::body cadwidgets::Ged::add_mouse_ray_callback {_callback} {
     set i [lsearch $mMouseRayCallbacks $_callback]
 
@@ -5660,7 +5755,7 @@ package provide cadwidgets::Ged 1.0
 ::itcl::body cadwidgets::Ged::get_rgb_color {_color} {
     switch -- $_color {
 	"Grey" {
-	    return "64 64 64"
+	    return "128 128 128"
 	}
 	"Black" {
 	    return "0 0 0"
@@ -6144,7 +6239,7 @@ package provide cadwidgets::Ged 1.0
     $help add mat_zrot		{{sina cosa} {returns a rotation matrix}}
     $help add mat_lookat	{{dir yflip} {}}
     $help add mat_vec_ortho	{{vec} {returns a vector orthogonal to vec}}
-    $help add mat_vec_perp	{{vec} {returns a vector perpandicular to vec}}
+    $help add mat_vec_perp	{{vec} {returns a vector perpendicular to vec}}
     $help add mat_scale_about_pt {{pt scale} {}}
     $help add mat_xform_about_pt {{xform pt} {}}
     $help add mat_arb_rot	{{pt dir angle} {returns a rotation matrix}}

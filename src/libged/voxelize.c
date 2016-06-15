@@ -1,7 +1,7 @@
 /*                         V O X E L I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "rtgeom.h"
 #include "raytrace.h"
 
@@ -151,7 +151,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
 		break;
 
 	    case 't':
-		if(sscanf(bu_optarg, "%lf", &threshold) != 1) {
+		if (sscanf(bu_optarg, "%lf", &threshold) != 1) {
 		    bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 		    return GED_ERROR;
 		}
@@ -186,8 +186,8 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
-    while(argc > 0) {
-	if(rt_gettree(rtip,argv[0]) < 0) {
+    while (argc > 0) {
+	if (rt_gettree(rtip,argv[0]) < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "error: object '%s' does not exists, aborting\n", argv[1]);
 	    return GED_ERROR;
 	}

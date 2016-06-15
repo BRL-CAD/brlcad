@@ -1,7 +1,7 @@
 /*                         G - S T L . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2013 United States Government as represented by
+ * Copyright (c) 2003-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,8 @@
 #include "bin.h"
 
 /* interface headers */
+#include "bu/getopt.h"
+#include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -301,9 +303,6 @@ struct gcv_data {
 static struct gcv_data gcvwriter = {nmg_to_stl};
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -345,7 +344,7 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:i")) != -1) {
+    while ((c = bu_getopt(argc, argv, "a:b8m:n:o:r:vx:D:P:X:ih?")) != -1) {
 	switch (c) {
 	    case 'a':		/* Absolute tolerance. */
 		ttol.abs = atof(bu_optarg);
@@ -393,7 +392,6 @@ main(int argc, char *argv[])
 		break;
 	    default:
 		bu_exit(1, usage, argv[0]);
-		break;
 	}
     }
 

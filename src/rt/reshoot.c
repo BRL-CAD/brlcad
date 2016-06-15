@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -134,9 +134,6 @@ static const struct bu_structparse reg_sp[] = {
 };
 
 
-/**
- *	U S A G E --- tell user how to invoke this program, then exit
- */
 void
 usage(char *s)
 {
@@ -219,10 +216,10 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segs
 	    status = 1;
 	}
 	if (bu_vls_strlen(&result) > 0) {
-	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%V",
+	    bu_log("Ray Pt %g,%g,%g Dir %g,%g,%g\n%s",
 		   V3ARGS(sh->pt),
 		   V3ARGS(sh->dir),
-		   &result);
+		   bu_vls_addr(&result));
 	}
 
 	rh = BU_LIST_NEXT(reg_hit, &rh->l);

@@ -1,7 +1,7 @@
 /*                 ItemDefinedTransformation.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #include "STEPWrapper.h"
 #include "Factory.h"
 
+#include "Axis2Placement3D.h"
 #include "RepresentationItem.h"
 #include "ItemDefinedTransformation.h"
 
@@ -56,11 +57,38 @@ ItemDefinedTransformation::ItemDefinedTransformation(STEPWrapper *sw, int step_i
 
 ItemDefinedTransformation::~ItemDefinedTransformation()
 {
+    // created through factory will be deleted there.
+    transform_item_1 = NULL;
+    transform_item_2 = NULL;
 }
 
 string ItemDefinedTransformation::ClassName()
 {
     return entityname;
+}
+
+Axis2Placement3D *
+ItemDefinedTransformation::GetTransformItem_1()
+{
+    Axis2Placement3D *axis = NULL;
+
+    if (transform_item_1) {
+	axis = dynamic_cast<Axis2Placement3D *>(transform_item_1);
+    }
+
+    return axis;
+}
+
+Axis2Placement3D *
+ItemDefinedTransformation::GetTransformItem_2()
+{
+    Axis2Placement3D *axis = NULL;
+
+    if (transform_item_1) {
+	axis = dynamic_cast<Axis2Placement3D *>(transform_item_2);
+    }
+
+    return axis;
 }
 
 bool ItemDefinedTransformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)

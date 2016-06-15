@@ -1,7 +1,7 @@
 /*                       D M - N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
-#include "dm-Null.h"
+#include "dm/dm-Null.h"
 
 
 int
@@ -217,6 +217,11 @@ null_debug(struct dm *UNUSED(dmp), int UNUSED(lvl))
     return 0;
 }
 
+int
+null_logfile(struct dm *UNUSED(dmp), const char *UNUSED(filename))
+{
+    return 0;
+}
 
 int
 null_beginDList(struct dm *UNUSED(dmp), unsigned int UNUSED(list))
@@ -272,12 +277,6 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
-void
-null_processEvents(struct dm *UNUSED(dmp))
-{
-}
-
-
 struct dm dm_null = {
     null_close,
     null_drawBegin,
@@ -305,6 +304,7 @@ struct dm dm_null = {
     null_setDepthMask,
     null_setZBuffer,
     null_debug,
+    null_logfile,
     null_beginDList,
     null_endDList,
     null_drawDList,
@@ -313,7 +313,6 @@ struct dm dm_null = {
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
-    null_processEvents,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */
@@ -340,6 +339,7 @@ struct dm dm_null = {
     {0.0, 0.0, 0.0},		/* clipmin */
     {0.0, 0.0, 0.0},		/* clipmax */
     0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
     0,				/* no perspective */
     0,				/* no lighting */
     0,				/* no transparency */

@@ -10,6 +10,7 @@ set(LIBBN_SOURCES
   anim.c
   axis.c
   complex.c
+  chull.c
   font.c
   globals.c
   list.c
@@ -18,9 +19,11 @@ set(LIBBN_SOURCES
   msr.c
   multipoly.c
   noise.c
+  obr.c
   plane.c
   plot3.c
   poly.c
+  polygon.c
   qmath.c
   rand.c
   randmt.c
@@ -32,6 +35,7 @@ set(LIBBN_SOURCES
   tplot.c
   tri_tri.c
   ulp.c
+  util.c
   vectfont.c
   vector.c
   vers.c
@@ -49,6 +53,7 @@ add_subdirectory(tests)
 
 CMAKEFILES(
   README
+  bn_private.h
   bntester.dat
   )
 

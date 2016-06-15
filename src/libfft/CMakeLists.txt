@@ -10,9 +10,11 @@ set(FFT_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 BRLCAD_LIB_INCLUDE_DIRS(fft FFT_INCLUDE_DIRS FFT_LOCAL_INCLUDE_DIRS)
 
 add_executable(fftc fftc.c splitditc.c)
+SetTargetFolder(fftc "Compilation Utilities")
 target_link_libraries(fftc ${M_LIBRARY})
 
 add_executable(ifftc ifftc.c ditsplitc.c)
+SetTargetFolder(ifftc "Compilation Utilities")
 target_link_libraries(ifftc ${M_LIBRARY})
 
 # 512 and 1024 are tough in optimized compiles, don't
@@ -48,6 +50,7 @@ SET_TARGET_PROPERTIES(libfft PROPERTIES LINKER_LANGUAGE C)
 SET_TARGET_PROPERTIES(libfft PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 add_executable(fftest fftest.c)
+SetTargetFolder(fftest "Compilation Utilities")
 target_link_libraries(fftest libfft ${M_LIBRARY})
 
 # Local Variables:

@@ -1,7 +1,7 @@
 /*                         S H P - G . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -198,8 +198,8 @@ main(int argc, char *argv[])
     }
 
     if (opt_verbose) {
-	bu_log("Reading from [%V]\n", &vls_in);
-	bu_log("Writing to [%V]\n\n", &vls_out);
+	bu_log("Reading from [%s]\n", bu_vls_addr(&vls_in));
+	bu_log("Writing to [%s]\n\n", bu_vls_addr(&vls_out));
     }
 
     /* initialize single threaded resource */
@@ -208,7 +208,7 @@ main(int argc, char *argv[])
     /* open the input */
     shapefile = SHPOpen(bu_vls_addr(&vls_in), "rb");
     if (!shapefile) {
-	bu_log("ERROR: Unable to open shapefile [%V]\n", &vls_in);
+	bu_log("ERROR: Unable to open shapefile [%s]\n", bu_vls_addr(&vls_in));
 	bu_vls_free(&vls_in);
 	bu_vls_free(&vls_out);
 	bu_exit(4, NULL);    }
@@ -227,7 +227,7 @@ main(int argc, char *argv[])
 
     /* open the .g for writing */
     if ((fd_out = wdb_fopen(bu_vls_addr(&vls_out))) == NULL) {
-	bu_log("ERROR: Unable to open shapefile [%V]\n", &vls_out);
+	bu_log("ERROR: Unable to open shapefile [%s]\n", bu_vls_addr(&vls_out));
 	bu_vls_free(&vls_in);
 	bu_vls_free(&vls_out);
 	perror(argv0);
@@ -282,7 +282,7 @@ main(int argc, char *argv[])
 	}
 
 	num_verts = 0;
-	verts = bu_calloc((size_t)object->nVertices, sizeof(point2d_t), "alloc point array");
+	verts = (point2d_t *)bu_calloc((size_t)object->nVertices, sizeof(point2d_t), "alloc point array");
 
 	for (j = 0, shp_part = 1; j < (size_t)object->nVertices; j++) {
 	    if (shp_part < object->nParts

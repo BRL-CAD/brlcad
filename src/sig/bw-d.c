@@ -1,7 +1,7 @@
 /*                          B W - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,17 +36,20 @@
 #include "bu.h"
 #include "vmath.h"
 
-unsigned char ibuf[512];
-double obuf[512];
 
-void
+static void
 printusage(void)
 {
     bu_exit(1, "Usage: bw-d [-n || scale] < unsigned_chars > doubles\n");
 }
 
-int main(int argc, char **argv)
+
+int
+main(int argc, char **argv)
 {
+    unsigned char ibuf[512];
+    double obuf[512];
+
     int i, num;
     double scale = 1.0;
     size_t ret;

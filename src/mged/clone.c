@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2013 United States Government as represented by
+ * Copyright (c) 2005-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,6 +56,7 @@
 #include <string.h>
 
 #include "bio.h"
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -256,7 +257,7 @@ get_name(struct db_i *_dbip, struct directory *dp, struct clone_state *state, in
 		    snprintf(buf, CLONE_BUFSIZE, "%s%d", prefix, num);	/* save the name for the next pass */
 		    /* clear and set the name */
 		    bu_vls_trunc(newname, 0);
-		    bu_vls_printf(newname, "%V%s", obj_list.names[j].dest[iter], suffix);
+		    bu_vls_printf(newname, "%s%s", bu_vls_addr(&obj_list.names[j].dest[iter]), suffix);
 		} else
 		    bu_vls_printf(newname, "%zu%s", num+i*state->incr, suffix);
 	    else

@@ -1,7 +1,7 @@
 /*                      W D B _ Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  */
 /** @} */
 
-#ifndef SEEN_QRAY_H
-#define SEEN_QRAY_H
+#ifndef LIBGED_WDB_QRAY_H
+#define LIBGED_WDB_QRAY_H
 
 #define DG_QRAY_TEXT(_dgop) ((_dgop)->dgo_qray_effects == 't' || (_dgop)->dgo_qray_effects == 'b')
 #define DG_QRAY_GRAPHICS(_dgop) ((_dgop)->dgo_qray_effects == 'g' || (_dgop)->dgo_qray_effects == 'b')

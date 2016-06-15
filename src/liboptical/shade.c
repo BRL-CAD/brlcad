@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,8 +47,6 @@
 
 
 /**
- * P R _ S H A D E W O R K
- *
  * Pretty print a shadework structure.
  */
 void
@@ -59,7 +57,7 @@ pr_shadework(const char *str, const struct shadework *swp)
     if (!swp)
 	return;
 
-    bu_log("Shadework%s: 0x%x\n", str ? str : "", swp);
+    bu_log("Shadework%s: %p\n", str ? str : "", (void *)swp);
     bu_printb(" sw_inputs", swp->sw_inputs, MFI_FORMAT);
     if (swp->sw_inputs & MFI_HIT)
 	bu_log(" sw_hit.dist:%g @ sw_hit.point(%g %g %g)\n",
@@ -108,8 +106,6 @@ pr_shadework(const char *str, const struct shadework *swp)
 
 
 /**
- * S H A D E _ I N P U T S
- *
  * Compute the necessary fields in the shadework structure.
  *
  * Note that only hit_dist is valid in pp_inhit.  Must calculate it if
@@ -250,8 +246,6 @@ hit pt: %g %g %g end pt: %g %g %g\n",
 
 
 /**
- * V I E W S H A D E
- *
  * Call the material-specific shading function, after making certain
  * that all shadework fields desired have been provided.
  *

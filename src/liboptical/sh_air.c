@@ -1,7 +1,7 @@
 /*                        S H _ A I R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -55,7 +56,8 @@ static struct air_specific air_defaults = {
 #define SHDR_NULL ((struct air_specific *)0)
 #define SHDR_O(m) bu_offsetof(struct air_specific, m)
 
-static void dpm_hook(register const struct bu_structparse *sdp, register const char *name, char *base, const char *value);
+/* local sp_hook function */
+static void dpm_hook(const struct bu_structparse *, const char *name, void *, const char *);
 
 struct bu_structparse air_parse[] = {
     {"%g",  1, "dpm",		SHDR_O(d_p_mm),		dpm_hook, NULL, NULL },
@@ -94,8 +96,12 @@ struct mfuncs air_mfuncs[] = {
     {0,		(char *)0,	0,		0,	0,
      0,		0,		0,		0 }
 };
+
 static void
-dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char *UNUSED(name), char *base, const char *UNUSED(value))
+dpm_hook(const struct bu_structparse *UNUSED(sdp),
+	 const char *UNUSED(name),
+	 void *base,
+	 const char *UNUSED(value))
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -106,18 +112,15 @@ dpm_hook(register const struct bu_structparse *UNUSED(sdp), register const char 
 
     air_sp->d_p_mm *= meters_to_millimeters;
 }
-/* A I R _ S E T U P
- *
+
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
 air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct air_specific *air_sp;
@@ -150,19 +153,13 @@ air_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-/*
- * A I R _ P R I N T
- */
 HIDDEN void
 air_print(register struct region *rp, void *dp)
 {
-    bu_struct_print(rp->reg_name, air_parse, dp);
+    bu_struct_print(rp->reg_name, air_parse, (const char *)dp);
 }
 
 
-/*
- * A I R _ F R E E
- */
 HIDDEN void
 air_free(void *cp)
 {
@@ -173,8 +170,6 @@ air_free(void *cp)
 
 
 /*
- * A I R T E S T _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  */
@@ -199,8 +194,6 @@ airtest_render(struct application *ap, const struct partition *pp, struct shadew
     return 1;
 }
 /*
- * A I R _ R E N D E R
- *
  * This is called (from viewshade() in shade.c)
  * once for each hit point to be shaded.
  *
@@ -273,6 +266,8 @@ tmist_hit(register struct application *UNUSED(ap), struct partition *UNUSED(Part
      */
     return 0;
 }
+
+
 int
 tmist_miss(register struct application *UNUSED(ap))
 {
@@ -284,8 +279,6 @@ tmist_miss(register struct application *UNUSED(ap))
 
 
 /*
- * T M I S T _ R E N D E R
- *
  * Use height above named terrain object
  *
  *
@@ -333,7 +326,7 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     if (meters < 1) step_dist = dist;
     else step_dist = dist / (fastf_t)meters;
 
-    for (dt=0.0; dt <= dist; dt += step_dist) {
+    for (dt = 0.0; dt <= dist; dt += step_dist) {
 	memcpy((char *)&my_ap, (char *)ap, sizeof(struct application));
 	VJOIN1(my_ap.a_ray.r_pt, in_pt, dt, my_ap.a_ray.r_dir);
 	VSET(my_ap.a_ray.r_dir, 0.0, 0.0, -1.0);
@@ -365,11 +358,6 @@ tmist_render(struct application *ap, const struct partition *pp, struct shadewor
     return 1;
 }
 /*
- * E M I S T _ R E N D E R
- *
- *
- *
- *
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end
@@ -436,11 +424,6 @@ emist_render(struct application *ap, const struct partition *pp, struct shadewor
     return 1;
 }
 /*
- * F B M _ E M I S T _ R E N D E R
- *
- *
- *
- *
  * te = dist from pt to end of ray (out hit point)
  * Zo = elevation at ray start
  * Ze = elevation at ray end
@@ -486,7 +469,7 @@ emist_fbm_render(struct application *ap, const struct partition *pp, struct shad
     VSUB2(dist_v, out_pt, in_pt);
     dist = MAGNITUDE(dist_v);
 
-    for (delta=0; delta < dist; delta += 1.0) {
+    for (delta = 0; delta < dist; delta += 1.0) {
 	/* compute the current point in space */
 
 	/* Shoot a ray down the -Z axis to find our current height

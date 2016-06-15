@@ -1,7 +1,7 @@
 /*                    H A L F _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,9 +31,6 @@
 #include "brep.h"
 
 
-/**
- * R T _ H L F _ B R E P
- */
 extern "C" void
 rt_hlf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
 {
@@ -43,6 +40,9 @@ rt_hlf_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *)
     hip = (struct rt_half_internal *)ip->idb_ptr;
     RT_HALF_CK_MAGIC(hip);
 
+    /*TODO - we need to do *something* here - try ON_BrepTrimmedPlane
+     * with the trimming curves defined by the max dimensions of the model space
+     * intersecting with the plane. */
     *b = NULL;
 }
 

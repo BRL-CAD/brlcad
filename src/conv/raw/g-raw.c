@@ -1,7 +1,7 @@
 /*                         G - R A W . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 #include "bin.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -210,9 +211,6 @@ struct gcv_data {
 static struct gcv_data gcvwriter = {nmg_to_raw};
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

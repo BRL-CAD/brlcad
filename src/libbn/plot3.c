@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@ ABDEGHIJKRTUYZ
 
 #include <stdio.h>
 
+#include "bu/cv.h"
 #include "vmath.h"
 #include "plot3.h"
 
@@ -163,7 +164,7 @@ pl_3(register FILE *plotfp, int x, int y, int z, char c)
  */
 
 int
-pl_getOutputMode() {
+pl_getOutputMode(void) {
     return pl_outputMode;
 }
 
@@ -429,7 +430,7 @@ pl_3box(register FILE *plotfp, int px1, int py1, int pz1, int px2, int py2, int 
 void
 pd_point(register FILE *plotfp, double x, double y)
 {
-        pd( plotfp, x, y, 'x'); /* calling common function pd */
+	pd( plotfp, x, y, 'x'); /* calling common function pd */
 }
 
 void
@@ -604,37 +605,37 @@ pd_3space(register FILE *plotfp, double px1, double py1, double pz1, double px2,
 void
 pdv_3point(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'X'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'X'); /* calling common function pdv_3 */
 }
 
 void
 pd_3point(register FILE *plotfp, double x, double y, double z)
 {
-    pd_3(plotfp, x, y, z, 'X'); /* calling common fuction pd_3 */
+    pd_3(plotfp, x, y, z, 'X'); /* calling common function pd_3 */
 }
 
 void
 pdv_3move(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'O'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'O'); /* calling common function pdv_3 */
 }
 
 void
 pd_3move(register FILE *plotfp, double x, double y, double z)
 {
-   pd_3(plotfp, x, y, z, 'O'); /* calling common fuction pd_3 */
+   pd_3(plotfp, x, y, z, 'O'); /* calling common function pd_3 */
 }
 
 void
 pdv_3cont(register FILE *plotfp, const fastf_t *pt)
 {
-    pdv_3(plotfp, pt, 'Q'); /* calling common fuction pdv_3 */
+    pdv_3(plotfp, pt, 'Q'); /* calling common function pdv_3 */
 }
 
 void
 pd_3cont(register FILE *plotfp, double x, double y, double z)
 {
-    pd_3(plotfp, x, y, z, 'Q'); /* calling common fuction pd_3 */
+    pd_3(plotfp, x, y, z, 'Q'); /* calling common function pd_3 */
 }
 
 void

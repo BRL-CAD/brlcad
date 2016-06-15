@@ -1,7 +1,7 @@
 /*                      S H O W T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ Showtree(struct node *root)
 	    else
 		*tmp = '\0';
 	    bu_strlcat(tmp, opa, size);
-	    oper[1] = operator[ptr->op];
+	    oper[1] = operators[ptr->op];
 
 	    bu_strlcat(tmp, oper, size);
 	    bu_strlcat(tmp, opb, size);

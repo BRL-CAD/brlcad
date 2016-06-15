@@ -1,7 +1,7 @@
 /*                         I N S T A N C E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "wdb.h"
 
 #include "./ged_private.h"

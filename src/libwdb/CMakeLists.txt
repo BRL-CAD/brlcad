@@ -16,7 +16,6 @@ set(LIBWDB_SOURCES
   brep.cpp
   cline.c
   constraint.c
-  datum.c
   dsp.c
   dynamic_geometry.c
   ebm.c

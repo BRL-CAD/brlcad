@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -17,20 +17,21 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/* An x-windows program to create a picture by sending groups */
-/* of pixels to the display.  */
-/* This program reads a file that has as its first line the */
-/* width and height (integers) of the picture.  MAXPIX indicates */
-/* the maximum width and height.  Each line after the first */
-/* contains one floating point number, this is the value of */
-/* that pixel (such as a temperature).  The pixels are read */
-/* from left to right, top to bottom.  The program 'display' */
-/* will create a file with the appropriate format.  */
+/* An X-windows program to create a picture by sending groups
+ * of pixels to the display.
+ * This program reads a file that has as its first line the
+ * width and height (integers) of the picture.  MAXPIX indicates
+ * the maximum width and height.  Each line after the first
+ * contains one floating point number, which is the value of
+ * that pixel (such as a temperature).  The pixels are read
+ * from left to right, top to bottom.  The program 'display'
+ * will create a file with the appropriate format.
+ */
 
-/* This program currently has a choice of four colors:  shades */
-/* of gray; shades of red; black-blue-cyan-green-yellow-white;  */
-/* and black-blue-magenta-red-yellow-white.  */
-
+/* This program currently has a choice of four colors:  shades
+ * of gray; shades of red; black-blue-cyan-green-yellow-white;
+ * and black-blue-magenta-red-yellow-white.
+ */
 
 #include "common.h"
 
@@ -45,11 +46,11 @@
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
 #define MAXPIX 512		/* Maximum number of pixels is (512*512).  */
-#define MAXARR 120000		/* Maximum number of pixels that are the */
-				/* same color.  */
+#define MAXARR 65536		/* Maximum number of pixels that are the
+				 * same color.  */
 #define MAXCOL 128		/* Maximum number of colors.  */
-#define EXTRA 1			/* For colors where there are a lot of */
-				/* pixels.  */
+#define EXTRA 1			/* For colors where there are a lot of
+				 * pixels.  */
 
 /* Define the structure for each color.  */
 struct colstr
@@ -57,8 +58,8 @@ struct colstr
     short x1[MAXARR];	/* X vertex of square.  */
     short y1[MAXARR];	/* Y vertex of square.  */
     int cnt;		/* Counter.  */
-    int more;		/* 0=>no more, else this is array extra */
-    /* pixels are in.  */
+    int more;		/* 0=>no more, else this is array extra
+                         * pixels are in.  */
 };
 
 
@@ -75,17 +76,16 @@ main(void)
     GC my_gc;			/* Gc for my_window.  */
     XSizeHints window_hints;	/* Hints for 1st window.  */
     XEvent event_received;	/* Events.  */
-    long input_event_mask;	/* Input event mask that are to */
-				/* be responded to.  */
+    long input_event_mask;	/* Input event mask that are to
+				 * be responded to.  */
     unsigned long black;		/* Black pixel value.  */
     unsigned long white;		/* White pixel value.  */
     int screen=0;		/* Used for getting colors.  */
     XColor colval[MAXCOL];	/* Color values.  */
     XRectangle rect[MAXARR];	/* Array for drawing rectangles.  */
-    char **a=(char **)NULL;	/* Place holder for XSetStandard */
-				/* Properties.  */
-    char *winttl = "SEE";	/* Window title.  */
-    char *quit = "QUIT";		/* Exit label.  */
+    char **a=(char **)NULL;	/* Place holder for XSetStandard Properties.  */
+    const char winttl[] = "SEE";	/* Window title.  */
+    const char quit[] = "QUIT";		/* Exit label.  */
     Font font;			/* Structure for setting font.  */
 
     /* Other variables.  */
@@ -108,13 +108,14 @@ main(void)
     char string[11];		/* Used to write a label.  */
     int flag=0;			/* Color flag.  */
     int lstarr;			/* Last color array.  */
-    int flag_pix;		/* 0=>no pix file written, 1=>pix file */
-				/* written.  */
+    int flag_pix;		/* 0=>no pix file written, 1=>pix file written.  */
     char file_pix[MAXFIL];	/* Pix file name.  */
     unsigned char c;		/* Used to write pix file.  */
     int ret;
 
-    struct colstr array[MAXCOL + EXTRA];	/* Array for color information.  */
+    struct colstr *array = NULL;	/* Array for color information.  */
+
+    array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 
     /* Get file name to be read.  */
     printf("Enter name of file to be read (%d char max).\n\t", MAXFIL);
@@ -142,8 +143,9 @@ main(void)
     ret = scanf("%d", &flag_pix);
     if (ret == 0)
 	perror("scanf");
-    if (flag_pix != 1) flag_pix = 0;
-    if (flag_pix == 1) {
+    if (flag_pix != 1)
+	 flag_pix = 0;
+    else {
 	printf("Enter name of the pix file to be created ");
 	printf("(%d char max).\n\t", MAXFIL);
 	(void)fflush(stdout);
@@ -181,7 +183,7 @@ main(void)
 	}
     }
 
-    if (icol == 1) {
+    else if (icol == 1) {
 	/* Shades of red.  */
 	printf("- shades of red ");
 	(void)fflush(stdout);
@@ -192,7 +194,7 @@ main(void)
 	}
     }
 
-    if (icol == 2) {
+    else if (icol == 2) {
 	/* Black-blue-cyan-green-yellow-white.  */
 	printf("- black-blue-cyan-green-yellow-white ");
 	(void)fflush(stdout);
@@ -251,7 +253,7 @@ main(void)
 	}
     }
 
-    if (icol == 3) {
+    else if (icol == 3) {
 	/* Black-blue-magenta-red-yellow-white.  */
 	printf("- black-blue-magenta-red-yellow-white ");
 	(void)fflush(stdout);
@@ -654,11 +656,15 @@ main(void)
 			(void)fflush(stdout);
 		    }					/* END # 1.  */
 
+		    bu_free(array, "free colstr array");
 		    return 0;
 		}
 		break;
 	}
     }
+
+    bu_free(array, "free colstr array");
+    return 0;
 }
 
 

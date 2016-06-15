@@ -1,7 +1,7 @@
 /*                       C O L U M N S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,9 +42,6 @@ static int col_len;		/* length of previous name */
 #define TERMINAL_WIDTH 80 /* XXX */
 #define COLUMNS ((TERMINAL_WIDTH + NAMESIZE - 1) / NAMESIZE)
 
-/*
- * V L S _ C O L _ I T E M
- */
 void
 vls_col_item(
     struct bu_vls *str,
@@ -73,8 +70,6 @@ vls_col_item(
 }
 
 
-/*
- */
 void
 vls_col_eol(struct bu_vls *str)
 {
@@ -86,8 +81,6 @@ vls_col_eol(struct bu_vls *str)
 
 
 /*
- * C M P D I R N A M E
- *
  * Given two pointers to pointers to directory entries, do a string compare
  * on the respective names and return that value.
  */

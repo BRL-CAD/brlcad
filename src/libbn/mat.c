@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2013 United States Government as represented by
+ * Copyright (c) 1996-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,10 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -76,7 +79,7 @@ void
 bn_mat_print(const char *title,
 	     const mat_t m)
 {
-    char obuf[1024];	/* sprintf may be non-PARALLEL */
+    char obuf[1024];	/* snprintf may be non-PARALLEL */
 
     bn_mat_print_guts(title, m, obuf, 1024);
     bu_log("%s\n", obuf);
@@ -323,8 +326,8 @@ bn_mat_ae(register fastf_t *m, double azimuth, double elev)
     double sin_az, sin_el;
     double cos_az, cos_el;
 
-    azimuth *= bn_degtorad;
-    elev *= bn_degtorad;
+    azimuth *= DEG2RAD;
+    elev *= DEG2RAD;
 
     sin_az = sin(azimuth);
     cos_az = cos(azimuth);
@@ -356,14 +359,14 @@ bn_ae_vec(fastf_t *azp, fastf_t *elp, const vect_t v)
 {
     register fastf_t az;
 
-    if ((az = bn_atan2(v[Y], v[X]) * bn_radtodeg) < 0) {
+    if ((az = bn_atan2(v[Y], v[X]) * RAD2DEG) < 0) {
 	*azp = 360 + az;
     } else if (az >= 360) {
 	*azp = az - 360;
     } else {
 	*azp = az;
     }
-    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * bn_radtodeg;
+    *elp = bn_atan2(v[Z], hypot(v[X], v[Y])) * RAD2DEG;
 }
 
 
@@ -384,7 +387,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
     /* if elevation is +/-90 set twist to zero and calculate azimuth */
     if (NEAR_EQUAL(*el, 90.0, accuracy) || NEAR_ZERO(*el + 90.0, accuracy)) {
 	*twist = 0.0;
-	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * bn_radtodeg;
+	*az = bn_atan2(-vec_twist[X], vec_twist[Y]) * RAD2DEG;
     } else {
 	/* Calculate twist from vec_twist */
 	VSET(z_dir, 0, 0, 1);
@@ -393,7 +396,7 @@ bn_aet_vec(fastf_t *az, fastf_t *el, fastf_t *twist, fastf_t *vec_ae, fastf_t *v
 	VCROSS(ninety_twist, vec_ae, zero_twist);
 	VUNITIZE(ninety_twist);
 
-	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * bn_radtodeg;
+	*twist = bn_atan2(VDOT(vec_twist, ninety_twist), VDOT(vec_twist, zero_twist)) * RAD2DEG;
 
 	/* stabilize flutter between +/- 180 */
 	if (NEAR_EQUAL(*twist, -180.0, accuracy))
@@ -438,15 +441,15 @@ bn_mat_angles(register fastf_t *mat, double alpha_in, double beta_in, double gga
 	return;
     }
 
-    alpha = alpha_in * bn_degtorad;
-    beta = beta_in * bn_degtorad;
-    ggamma = ggamma_in * bn_degtorad;
+    alpha = alpha_in * DEG2RAD;
+    beta = beta_in * DEG2RAD;
+    ggamma = ggamma_in * DEG2RAD;
 
     calpha = cos(alpha);
     cbeta = cos(beta);
     cgamma = cos(ggamma);
 
-    /* sine of "180*bn_degtorad" will not be exactly zero and will
+    /* sine of "180*DEG2RAD" will not be exactly zero and will
      * result in errors when some codes try to convert this back to
      * azimuth and elevation.  do_frame() uses this technique!!!
      */
@@ -570,20 +573,20 @@ bn_eigen2x2(fastf_t *val1, fastf_t *val2, fastf_t *vec1, fastf_t *vec2, fastf_t 
 
 
 void
-bn_vec_perp(vect_t new, const vect_t old)
+bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
     register int i;
-    vect_t another;	/* Another vector, different */
+    vect_t another_vec;	/* Another vector, different */
 
     i = X;
-    if (fabs(old[Y])<fabs(old[i])) i=Y;
-    if (fabs(old[Z])<fabs(old[i])) i=Z;
-    VSETALL(another, 0);
-    another[i] = 1.0;
-    if (ZERO(old[X]) && ZERO(old[Y]) && ZERO(old[Z])) {
-	VMOVE(new, another);
+    if (fabs(old_vec[Y])<fabs(old_vec[i])) i=Y;
+    if (fabs(old_vec[Z])<fabs(old_vec[i])) i=Z;
+    VSETALL(another_vec, 0);
+    another_vec[i] = 1.0;
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VMOVE(new_vec, another_vec);
     } else {
-	VCROSS(new, another, old);
+	VCROSS(new_vec, another_vec, old_vec);
     }
 }
 
@@ -1011,7 +1014,7 @@ bn_mat_ck(const char *title, const mat_t m)
 
     /* NOTE: this tolerance cannot be any more tight than 0.00001 due
      * to default calculation tolerancing used by models.  Matrices
-     * exported to disk outside of tolerance and will fail import if
+     * exported to disk outside of tolerance will fail import if
      * set too restrictive.
      */
     if (!NEAR_ZERO(fx, 0.00001)

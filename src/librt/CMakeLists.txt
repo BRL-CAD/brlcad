@@ -14,8 +14,9 @@ set(RT_INCLUDE_DIRS
 set(RT_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${LIBVDS_INCLUDE_DIR}
-  ${LIBGDIAM_INCLUDE_DIR}
+  ${VDS_INCLUDE_DIR}
+  ${GDIAM_INCLUDE_DIR}
+  ${BRLCAD_BOOST_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -23,7 +24,7 @@ BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
 set(LIBRT_SOURCES
   attributes.c
   bbox.c
-  bezier_2d_isect.c
+  bezier.c
   binunif/binunif.c
   binunif/db5_bin.c
   bool.c
@@ -36,12 +37,15 @@ set(LIBRT_SOURCES
   constraint.c
   cut.c
   db5_alloc.c
+  db5_attr.c
+  db5_attr_registry.cpp
   db5_io.c
   db5_scan.c
   db5_types.c
   db_alloc.c
   db_anim.c
   db_corrupt.c
+  db_diff.c
   db_flags.c
   db_flip.c
   db_fullpath.c
@@ -59,6 +63,7 @@ set(LIBRT_SOURCES
   fortray.c
   globals.c
   htbl.c
+  ls.c
   many.c
   mater.c
   memalloc.c
@@ -112,7 +117,6 @@ set(LIBRT_SOURCES
   primitives/bspline/nurb_xsplit.c
   primitives/cline/cline.c
   primitives/cline/cline_brep.cpp
-  primitives/datum/datum.c
   primitives/dsp/dsp.c
   primitives/dsp/dsp_brep.cpp
   primitives/dsp/dsp_mirror.c
@@ -149,8 +153,8 @@ set(LIBRT_SOURCES
   primitives/mirror.c
   primitives/nmg/nmg.c
   primitives/nmg/nmg_bool.c
-  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_ck.c
+  primitives/nmg/nmg_brep.cpp
   primitives/nmg/nmg_class.c
   primitives/nmg/nmg_copy.c
   primitives/nmg/nmg_eval.c
@@ -268,7 +272,6 @@ set(librt_ignored_files
   primitives/bot/tie_kdtree.c
   primitives/brep/brep_debug.h
   primitives/brep/brep_local.h
-  primitives/datum/datum.h
   primitives/dsp/dsp.h
   primitives/fixpt.h
   primitives/metaball/metaball.h
@@ -293,7 +296,7 @@ else(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer42.c)
 endif(MSVC)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${LIBGDIAM_LIBRARY};${LIBVDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${GDIAM_LIBRARY};${VDS_LIBRARY};libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};libbrep;${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}" NO_STRICT_CXX)
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)

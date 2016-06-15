@@ -1,7 +1,7 @@
 /*                       M A C - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,12 +64,15 @@ int file_height = MAC_HEIGHT;	/* generally constant */
 int file_width = MAC_WIDTH;
 int file_xoff;
 int file_yoff;
-int scr_width = 1024;		/* "screen" tracks input file if zero */
+int scr_width = 1024;	/* If this and scr_height are later found to be zero,
+			 * they assume the values of file_width and file_height .
+			 */
 int scr_height = 1024;
 int scr_xoff;
 int scr_yoff;
 
 int bwflag;
+char hyphen[] = "-";
 char *file_name;
 FILE *infp;
 
@@ -85,7 +88,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "clbs:w:n:x:y:X:Y:S:W:N:C:h?")) != -1) {
 	switch (c) {
 	    case 'c':
 		/* Center in output */
@@ -145,7 +148,7 @@ get_args(int argc, char **argv)
 		}
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' or 'h' will get you here */
 		return 0;
 	}
 
@@ -163,7 +166,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return 0;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -215,8 +218,8 @@ main(int argc, char **argv)
 {
     int c;
     int x, y;
-    int x_1, x_2, x_3;		/* x zone widths */
-    int y_1, y_2, y_3;		/* y zone widths */
+    int x1, x2, x3;		/* x zone widths */
+    int y1, y2, y3;		/* y zone widths */
     int first_x;		/* x: first pixel to be output in pix[] */
     int first_y;		/* y: first pixel to be output in pix[] */
     size_t ret;
@@ -268,65 +271,65 @@ main(int argc, char **argv)
 
     /*
      * There are potentially 9 regions in the output file, only one
-     * will contain actual image.  x_1 is the width of the left border
-     * for each scanline, x_2 is the width of the image area,
-     * with the first pixel being first_x, and x_3 being the width
+     * will contain actual image.  x1 is the width of the left border
+     * for each scanline, x2 is the width of the image area,
+     * with the first pixel being first_x, and x3 being the width
      * of the right border.
      * Computations in y are similar.
      */
     first_y = file_yoff;		/* always >= 0 */
-    y_1 = scr_yoff;
-    if (y_1 < 0) {
-	y_1 = 0;
+    y1 = scr_yoff;
+    if (y1 < 0) {
+	y1 = 0;
 	first_y += -scr_yoff;
     }
-    y_2 = file_height - first_y;
-    if (y_1 + y_2 > scr_height)
-	y_2 = scr_height - y_1;
+    y2 = file_height - first_y;
+    if (y1 + y2 > scr_height)
+	y2 = scr_height - y1;
     if (first_y >= file_height)
-	y_2 = 0;
-    y_3 = scr_height - y_1 - y_2;
+	y2 = 0;
+    y3 = scr_height - y1 - y2;
 
     first_x = file_xoff;
-    x_1 = scr_xoff;
-    if (x_1 < 0) {
-	x_1 = 0;
+    x1 = scr_xoff;
+    if (x1 < 0) {
+	x1 = 0;
 	first_x += -scr_xoff;
     }
-    x_2 = file_width - first_x;
-    if (x_1 + x_2 > scr_width)
-	x_2 = scr_width - x_1;
+    x2 = file_width - first_x;
+    if (x1 + x2 > scr_width)
+	x2 = scr_width - x1;
     if (first_x >= file_width)
-	x_2 = 0;
-    x_3 = scr_width - x_1 - x_2;
+	x2 = 0;
+    x3 = scr_width - x1 - x2;
 
     if (bwflag) {
-	for (y = 0; y < y_1; y++) {
+	for (y = 0; y < y1; y++) {
 	    ret = fwrite(black, scr_width, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < y_2; y++) {
-	    ret = fwrite(black, x_1, 1, stdout);
+	for (y = 0; y < y2; y++) {
+	    ret = fwrite(black, x1, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
-	    ret = fwrite(&pix[(file_width*(y+first_y))+first_x], x_2, 1, stdout);
+	    ret = fwrite(&pix[(file_width*(y+first_y))+first_x], x2, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 
-	    ret = fwrite(black, x_3, 1, stdout);
+	    ret = fwrite(black, x3, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < y_3; y++) {
+	for (y = 0; y < y3; y++) {
 	    ret = fwrite(black, scr_width, 1, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
@@ -334,23 +337,23 @@ main(int argc, char **argv)
 	    }
 	}
     } else {
-	for (y = 0; y < y_1; y++) {
+	for (y = 0; y < y1; y++) {
 	    ret = fwrite(black, scr_width, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < y_2; y++) {
+	for (y = 0; y < y2; y++) {
 	    unsigned char *cp;
 
-	    ret = fwrite(black, x_1, 3, stdout);
+	    ret = fwrite(black, x1, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	    cp = &pix[(file_width*(y+first_y))+first_x];
-	    for (x = 0; x < x_2; x++) {
+	    for (x = 0; x < x2; x++) {
 		if (*cp++)
 		    ret = fwrite(color, 3, 1, stdout);
 		else
@@ -361,13 +364,13 @@ main(int argc, char **argv)
 		    break;
 		}
 	    }
-	    ret = fwrite(black, x_3, 3, stdout);
+	    ret = fwrite(black, x3, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");
 		break;
 	    }
 	}
-	for (y = 0; y < y_3; y++) {
+	for (y = 0; y < y3; y++) {
 	    ret = fwrite(black, scr_width, 3, stdout);
 	    if (ret == 0) {
 		perror("fwrite");

@@ -1,7 +1,7 @@
 /*                     N U R B _ K N O T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -93,8 +93,8 @@ rt_nurb_kvmult(struct knot_vector *new_kv, const struct knot_vector *kv, int num
 
     check.k_size = num - n;
     if (check.k_size <= 0) {
-	bu_log("rt_nurb_kvmult(new_kv=x%x, kv=x%x, num=%d, val=%g)\n",
-	       new_kv, kv, num, val);
+	bu_log("rt_nurb_kvmult(new_kv=%p, kv=%p, num=%d, val=%g)\n",
+	       (void *)new_kv, (void *)kv, num, val);
 	rt_nurb_pr_kv(kv);
 	bu_bomb("rt_nurb_kvmult\n");
     }

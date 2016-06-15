@@ -1,7 +1,7 @@
 /*                   N U R B _ R E F I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,8 +40,6 @@
 
 
 /**
- * R T _ N U R B _ S _ R E F I N E
- *
  * Returns a refined surface.  The original surface is unmodified.
  */
 struct face_g_snurb *

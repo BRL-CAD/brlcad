@@ -1,7 +1,7 @@
 /*                        S U R F E L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "bu.h"
 
+
+#include "bu/malloc.h"
 #include "render.h"
 #include "adrt_struct.h"
 
@@ -82,7 +83,7 @@ render_surfel_init(render_t *render, const char *buf)
 {
     render_surfel_t *d;
 
-    if(buf == NULL)
+    if (buf == NULL)
 	return -1;
 
     render->work = render_surfel_work;

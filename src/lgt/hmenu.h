@@ -1,7 +1,7 @@
 /*                         H M E N U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@ This code is derived in part from menuhit(9.3) in AT&T 9th Edition UNIX,
 Version 1 Programmer's Manual.
 
 */
-#ifndef INCL_HM
-#define INCL_HM
+#ifndef LGT_HMENU_H
+#define LGT_HMENU_H
 struct HMenu;
 
 /*	"dfn()" is called just before the submenu is invoked, and "bfn()"

@@ -113,6 +113,11 @@ endif(CMAKE_CONFIGURATION_TYPES)
 if(BRLCAD_EXTRADOCS_PDF)
   set(targetdir pdf/books/en)
   foreach(filename ${docbook_books_EN})
+    if (EXISTS ${filename})
+      set(full_path_filename ${filename})
+    else (EXISTS ${filename})
+      set(full_path_filename ${CMAKE_CURRENT_SOURCE_DIR}/${filename})
+    endif (EXISTS ${filename})
     string(REGEX REPLACE "([0-9a-z_-]*).xml" "\\1" filename_root "${filename}")
     if(CMAKE_CONFIGURATION_TYPES)
       file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/${CMAKE_CFG_INTDIR})
@@ -128,7 +133,7 @@ if(BRLCAD_EXTRADOCS_PDF)
       COMMAND ${CMAKE_COMMAND} -P ${scriptfile}
       DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${filename} ${XSLTPROC_EXECUTABLE_TARGET} ${DOCBOOK_RESOURCE_FILES} docbook_books_EN_IMAGES_cp
       )
-    set(outfile ${bin_root}/${DATA_DIR}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
+    set(outfile ${bin_root}/${DOC_DIR}/${targetdir}/${filename_root}.pdf)
     set(targetname "${filename_root}_book_pdf")
     DB_SCRIPT("${targetname}" "${targetdir}" "${PDF_CONV_EXECUTABLE}")
     add_custom_command(
@@ -142,7 +147,7 @@ if(BRLCAD_EXTRADOCS_PDF)
     if(CMAKE_CONFIGURATION_TYPES)
       string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" outfile "${outfile}")
     endif(CMAKE_CONFIGURATION_TYPES)
-    install(FILES ${outfile} DESTINATION ${DATA_DIR}/${DOC_DIR}/pdf/books/en)
+    install(FILES ${outfile} DESTINATION ${DOC_DIR}/pdf/books/en)
     get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
     set(BRLCAD_EXTRADOCS_PDF_TARGETS ${BRLCAD_EXTRADOCS_PDF_TARGETS} ${targetname})
     set_property(GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS "${BRLCAD_EXTRADOCS_PDF_TARGETS}")
@@ -150,6 +155,36 @@ if(BRLCAD_EXTRADOCS_PDF)
 endif(BRLCAD_EXTRADOCS_PDF)
 
 CMAKEFILES(tutorial_series_authors.xml)
+
+set(hacking_brlcad_images
+   images/hacking_brlcad_article_tire_pdf.png
+   images/hacking_brlcad_bearing_cc.png
+   images/hacking_brlcad_book_vol3_pdf.png
+   images/hacking_brlcad_brlcad_intro_hy.png
+   images/hacking_brlcad_brlcad-wiki.png
+   images/hacking_brlcad_csg.png
+   images/hacking_brlcad_cubit.png
+   images/hacking_brlcad_docbook_CMakeLists.png
+   images/hacking_brlcad_docbook_working_session.png
+   images/hacking_brlcad_doxygen_output.png
+   images/hacking_brlcad_emacs-nxml.png
+   images/hacking_brlcad_example_docbook_default_output.png
+   images/hacking_brlcad_g_spec_pdf.png
+   images/hacking_brlcad_havoc_c.png
+   images/hacking_brlcad_havoc_views_c.png
+   images/hacking_brlcad_M1A1_9x10_300dpi_cc.png
+   images/hacking_brlcad_man_page_search.png
+   images/hacking_brlcad_sflake2_cc.png
+   images/hacking_brlcad_Sgi_cube_cc.png
+   images/hacking_brlcad_stryker_slat.png
+   images/hacking_brlcad_tcl_tk_presentation.png
+   images/hacking_brlcad_teapot.png
+   images/hacking_brlcad_tracked_mine.png
+   images/hacking_brlcad_tutorial_1_pdf.png
+   images/hacking_brlcad_xyz.png
+   )
+CMAKEFILES(${hacking_brlcad_images})
+CMAKEFILES(HACKING_BRL-CAD.xml)
 
 # Local Variables:
 # tab-width: 8

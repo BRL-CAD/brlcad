@@ -17,6 +17,6 @@ topmenu\
 "
 
 for table in $tables ; do
-  gtbl $table.tbl > $table.mm
+  tbl $table.tbl > $table.mm
 done
 

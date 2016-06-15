@@ -1,7 +1,7 @@
 /*                            S C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,8 +37,8 @@ routine, programs that use this package should turn off TAB3
 in the terminal handler.
 
 **/
-#ifndef Sc_H_INCLUDE
-#define Sc_H_INCLUDE
+#ifndef BURST_SC_H
+#define BURST_SC_H
 #include "./burst.h"
 
 /**
@@ -164,7 +164,7 @@ extern int ScUpScroll(void);
 extern char ScTermcap[];
 extern char ScTermname[];
 
-#endif		/* Sc_H_INCLUDE */
+#endif		/* BURST_SC_H */
 
 
 /*

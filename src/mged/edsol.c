@@ -1,7 +1,7 @@
 /*                         E D S O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1578,8 +1578,6 @@ spline_ed(int arg)
     set_e_axes_pos(1);
 }
 /*
- * N M G _ E D
- *
  * Handler for events in the NMG menu.
  * Mostly just set appropriate state flags to prepare us for user's
  * next event.
@@ -2340,16 +2338,6 @@ get_solid_keypoint(fastf_t *pt, char **strp, struct rt_db_internal *ip, fastf_t 
 		}
 		break;
 	    }
-	case ID_DATUM:
-	    {
-		struct rt_datum_internal *datum = (struct rt_datum_internal *)ip->idb_ptr;
-		RT_DATUM_CK_MAGIC(datum);
-
-		/* Default */
-		VMOVE(mpt, datum->pnt);
-		*strp = "V";
-		break;
-	    }
 	case ID_NMG:
 	    {
 		struct vertex *v;
@@ -2490,8 +2478,6 @@ f_get_solid_keypoint(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interp), 
 
 
 /*
- * I N I T _ S E D I T
- *
  * First time in for this solid, set things up.
  * If all goes well, change state to ST_S_EDIT.
  * Solid editing is completed only via sedit_accept() / sedit_reject().
@@ -2628,8 +2614,6 @@ init_sedit_vars(void)
 
 
 /*
- * R E P L O T _ E D I T I N G _ S O L I D
- *
  * All solid edit routines call this subroutine after
  * making a change to es_int or es_mat.
  */
@@ -2664,10 +2648,6 @@ replot_editing_solid(void)
 }
 
 
-/*
- * T R A N S F O R M _ E D I T I N G _ S O L I D
- *
- */
 void
 transform_editing_solid(
     struct rt_db_internal *os,		/* output solid */
@@ -2681,9 +2661,6 @@ transform_editing_solid(
 
 
 /*
- * S E D I T _ M E N U
- *
- *
  * Put up menu header
  */
 void
@@ -2792,9 +2769,9 @@ get_rotation_vertex(void)
     }
     bu_vls_printf(&str, ") [%d]: ", arb_vertices[type][loc]);
 
-    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %V {Need vertex for solid rotate}\
- {%V} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
-		  &dName, &str, arb_vertices[type][loc]);
+    bu_vls_printf(&cmd, "cad_input_dialog .get_vertex %s {Need vertex for solid rotate}\
+ {%s} vertex_num %d 0 {{ summary \"Enter a vertex number to rotate about.\"}} OK",
+		  bu_vls_addr(&dName), bu_vls_addr(&str), arb_vertices[type][loc]);
 
     while (!valid) {
 	if (Tcl_Eval(INTERP, bu_vls_addr(&cmd)) != TCL_OK) {
@@ -2891,8 +2868,6 @@ dsp_scale(struct rt_dsp_internal *dsp, int idx)
 
 
 /*
- * P S C A L E
- *
  * Partial scaling of a solid.
  */
 void
@@ -3914,8 +3889,6 @@ pscale(void)
 
 
 /*
- * S E D I T
- *
  * A great deal of magic takes place here, to accomplish solid editing.
  *
  * Called from mged main loop after any event handlers:
@@ -4677,10 +4650,10 @@ sedit(void)
 		/* change D of planar equation */
 		es_peqn[es_menu][W]=VDOT(&es_peqn[es_menu][0], work);
 		/* find new vertices, put in record in vector notation */
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+                (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 	    break;
-
 	case ECMD_ARB_SETUP_ROTFACE:
 	    arb = (struct rt_arb_internal *)es_int.idb_ptr;
 	    RT_ARB_CK_MAGIC(arb);
@@ -4800,7 +4773,7 @@ sedit(void)
 		es_peqn[es_menu][W]=VDOT(eqp, tempvec);
 	    }
 
-	    (void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+	    (void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    MAT_IDN(incr_change);
 
 	    /* no need to calc_planes again */
@@ -6698,8 +6671,6 @@ update_edit_absolute_tran(vect_t view_pos)
 
 
 /*
- * S E D I T _ M O U S E
- *
  * Mouse (pen) press in graphics area while doing Solid Edit.
  * mousevec [X] and [Y] are in the range -1.0...+1.0, corresponding
  * to viewspace.
@@ -6887,7 +6858,8 @@ sedit_mouse(const vect_t mousevec)
 		    (struct rt_arb_internal *)es_int.idb_ptr;
 
 		RT_ARB_CK_MAGIC(arb);
-		(void)rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol);
+
+		(void)rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol);
 	    }
 
 	    break;
@@ -7284,9 +7256,6 @@ oedit_abs_scale(void)
 }
 
 
-/*
- * V L S _ S O L I D
- */
 void
 vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 {
@@ -7336,10 +7305,6 @@ vls_solid(struct bu_vls *vp, struct rt_db_internal *ip, const mat_t mat)
 }
 
 
-/*
- * I N I T _ O B J E D I T _ G U T S
- *
- */
 static void
 init_oedit_guts(void)
 {
@@ -7431,10 +7396,6 @@ init_oedit_vars(void)
 }
 
 
-/*
- * I N I T _ O B J E D I T
- *
- */
 void
 init_oedit(void)
 {
@@ -7570,7 +7531,7 @@ oedit_reject(void)
 }
 
 
-/* F _ E Q N ()
+/*
  * Gets the A, B, C of a planar equation from the command line and puts the
  * result into the array es_peqn[] at the position pointed to by the variable
  * 'es_menu' which is the plane being redefined. This function is only callable
@@ -7620,7 +7581,8 @@ f_eqn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     VMOVE(tempvec, arb->pt[fixv]);
     es_peqn[es_menu][W]=VDOT(es_peqn[es_menu], tempvec);
-    if (rt_arb_calc_points(arb, es_type, es_peqn, &mged_tol))
+
+    if (rt_arb_calc_points(arb, es_type, (const plane_t *)es_peqn, &mged_tol))
 	return CMD_BAD;
 
     /* draw the new version of the solid */
@@ -7957,8 +7919,6 @@ f_param(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 
 
 /*
- * L A B E L _ E D I T E D _ S O L I D
- *
  * Put labels on the vertices of the currently edited solid.
  * XXX This really should use import/export interface! Or be part of it.
  */
@@ -8561,8 +8521,6 @@ sedit_vpick(point_t v_pos)
 				((P1)[Z] - (P0)[Z])*((P1)[Z] - (P0)[Z]))
 
 /*
- * N U R B _ C L O S E S T 2 D
- *
  * Given a pointer (vhead) to vlist point coordinates, a reference
  * point (ref_pt), and a transformation matrix (mat), pass back in
  * "closest_pt" the original, untransformed 3 space coordinates of
@@ -9020,9 +8978,6 @@ f_put_sedit(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 }
 
 
-/*
- * F _ S E D I T _ R E S E T
- */
 int
 f_sedit_reset(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *UNUSED(argv[]))
 {

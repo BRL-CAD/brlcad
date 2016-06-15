@@ -1,7 +1,7 @@
 /*                    O B J _ P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 1995-2013 United States Government as represented by
+ * Copyright (c) 1995-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
  * Interface to Wavefront OBJ Parser.
  *
  */
-#ifndef ARL_OBJ_PARSER_H
-#define ARL_OBJ_PARSER_H
+#ifndef LIBGCV_WFOBJ_OBJ_PARSER_H
+#define LIBGCV_WFOBJ_OBJ_PARSER_H
 
 #include "common.h"
 #include <sys/types.h>

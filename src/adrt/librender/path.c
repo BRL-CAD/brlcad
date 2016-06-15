@@ -1,7 +1,7 @@
 /*                          P A T H . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 
 #include "adrt_struct.h"
 
-#include "bu.h"
+
+#include "bu/malloc.h"
 #include "bn.h"
 #include "vmath.h"
 
@@ -135,7 +136,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 		sin_theta = sqrt(cos_theta);
 		cos_theta = 1-cos_theta;
 
-		cos_phi = bn_randmt() * 2 * M_PI;
+		cos_phi = bn_randmt() * M_2PI;
 		sin_phi = sin(cos_phi);
 		cos_phi = cos(cos_phi);
 
@@ -166,7 +167,7 @@ render_path_init(render_t *render, const char *samples)
 {
     render_path_t *d;
 
-    if(samples == NULL)
+    if (samples == NULL)
 	return -1;
 
     render->work = render_path_work;

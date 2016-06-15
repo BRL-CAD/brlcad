@@ -1,7 +1,7 @@
 /*                       S H _ S T X T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,7 +43,9 @@ HIDDEN int mbound_render(struct application *ap, const struct partition *pp, str
 HIDDEN int rbound_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
 HIDDEN void stxt_print(register struct region *rp, void *dp);
 HIDDEN void stxt_free(void *cp);
-HIDDEN void stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *value);
+
+/* local sp_hook function */
+HIDDEN void stxt_transp_hook(const struct bu_structparse *, const char *, void *, const char *);
 
 #define STX_NAME_LEN 128
 struct stxt_specific {
@@ -64,7 +66,7 @@ struct stxt_specific {
 #define SOL_O(m) bu_offsetof(struct stxt_specific, m)
 
 struct bu_structparse stxt_parse[] = {
-    {"%d",	1, "transp",	SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
+    {"%d",	1, "transp",	        SOL_O(stx_transp),	stxt_transp_hook, NULL, NULL },
     {"%s",	STX_NAME_LEN, "file",	SOL_O(stx_file),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "w",			SOL_O(stx_w),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%d",	1, "n",			SOL_O(stx_n),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
@@ -84,12 +86,13 @@ struct mfuncs stxt_mfuncs[] = {
 
 
 /*
- * S T X T _ T R A N S P _ H O O K
- *
  * Hooked function, called by bu_structparse.
  */
 HIDDEN void
-stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED(value))
+stxt_transp_hook(const struct bu_structparse *ptab,
+		 const char *name,
+		 void *cp,
+		 const char *UNUSED(value))
 {
     register struct stxt_specific *stp =
 	(struct stxt_specific *)cp;
@@ -104,8 +107,6 @@ stxt_transp_hook(struct bu_structparse *ptab, char *name, char *cp, char *UNUSED
 
 
 /*
- * S T X T _ R E A D
- *
  * Load the texture into memory.
  * Returns 0 on failure, 1 on success.
  */
@@ -120,7 +121,7 @@ stxt_read(register struct stxt_specific *stp)
     int rd, rdd;
 
     /*** MEMORY HOG ***/
-    stp->stx_pixels = bu_malloc(
+    stp->stx_pixels = (char *)bu_malloc(
 	stp->stx_w * stp->stx_n * stp->stx_d * 3,
 	stp->stx_file);
 
@@ -129,7 +130,7 @@ stxt_read(register struct stxt_specific *stp)
     rd = 0;
 
     /* LOOP: through list of basename.n files */
-    for (frame=0; frame <= stp->stx_d-1; frame++) {
+    for (frame = 0; frame <= stp->stx_d-1; frame++) {
 
 	snprintf(name, 256, "%s.%d", stp->stx_file, frame);
 
@@ -138,7 +139,7 @@ stxt_read(register struct stxt_specific *stp)
 	    stp->stx_file[0] = '\0';
 	    return 0;
 	}
-	linebuf = bu_malloc(stp->stx_fw*3, "texture file line");
+	linebuf = (char *)bu_malloc(stp->stx_fw*3, "texture file line");
 
 	for (i = 0; i < stp->stx_n; i++) {
 	    if ((rd = (int)fread(linebuf, 1, stp->stx_fw*3, fp)) != stp->stx_fw*3) {
@@ -159,13 +160,8 @@ stxt_read(register struct stxt_specific *stp)
 }
 
 
-/*
- * S T X T _ S E T U P
- */
 HIDDEN int
 stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
-
-
 /* New since 4.4 release */
 {
     register struct stxt_specific *stp;
@@ -203,9 +199,6 @@ stxt_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
 }
 
 
-/*
- * S T X T _ F R E E
- */
 HIDDEN void
 stxt_free(void *cp)
 {
@@ -220,9 +213,6 @@ stxt_free(void *cp)
 }
 
 
-/*
- * S T X T _ P R I N T
- */
 HIDDEN void
 stxt_print(register struct region *rp, void *dp)
 {
@@ -312,17 +302,15 @@ brick_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp),
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) / 255.0,
+	 (g+0.5) / 255.0,
+	 (b+0.5) / 255.0);
 
     return 1;
 }
 
 
 /*
- * R B O U N D _ R E N D E R
- *
  * Use region RPP to bound solid texture (rbound).
  */
 HIDDEN int
@@ -383,17 +371,15 @@ rbound_render(struct application *UNUSED(ap), const struct partition *UNUSED(pp)
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) / 255.0,
+	 (g+0.5) / 255.0,
+	 (b+0.5) / 255.0);
 
     return 1;
 }
 
 
 /*
- * M B O U N D _ R E N D E R
- *
  * Use model RPP as solid texture bounds.  (mbound).
  */
 HIDDEN int
@@ -443,9 +429,9 @@ mbound_render(struct application *ap, const struct partition *UNUSED(pp), struct
     b = *cp++;
 
     VSET(swp->sw_color,
-	 (r+0.5) * bn_inv255,
-	 (g+0.5) * bn_inv255,
-	 (b+0.5) * bn_inv255);
+	 (r+0.5) / 255.0,
+	 (g+0.5) / 255.0,
+	 (b+0.5) / 255.0);
 
     return 1;
 }

@@ -1,7 +1,7 @@
 /*              T E S T _ B N _ P O L Y _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "magic.h"
 
 
 /* holds three polynomials to be used in test. */
@@ -97,7 +96,7 @@ check_results(fastf_t a[], fastf_t b[], int n)
     int i;
 
     for (i = 0; i < n; i++) {
-	if (!EQUAL(a[i],b[i]))
+	if (!EQUAL(a[i], b[i]))
 	    return -1;
     }
 
@@ -117,7 +116,7 @@ test_bn_poly_add(void)
     bn_poly_add(&b, &input[1], &input[1]);
     bn_poly_add(&c, &input[2], &input[2]);
 
-    val = check_results(a.cf,output[0].cf, output[0].dgr + 1);
+    val = check_results(a.cf, output[0].cf, output[0].dgr + 1);
     val1 = check_results(b.cf, output[1].cf, output[1].dgr + 1);
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 

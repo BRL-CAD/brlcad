@@ -1,7 +1,7 @@
 /*                          T R I E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -442,7 +442,7 @@ char_To_String(int i)
     return	buf;
 }
 
-/*	g e t _ R e g i o n _ N a m e ( )
+/*
 	TENEX-style name completion.
 	Returns a linked-list of pointers to octree leaf nodes.
 */

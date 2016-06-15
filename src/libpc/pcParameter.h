@@ -1,7 +1,7 @@
 /*                       P C P A R A M E T E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
  * Parameter Class abstraction over the Variable class
  *
  */
-#ifndef __PCPARAMETER_H__
-#define __PCPARAMETER_H__
+#ifndef LIBPC_PCPARAMETER_H
+#define LIBPC_PCPARAMETER_H
 
 #include "common.h"
 

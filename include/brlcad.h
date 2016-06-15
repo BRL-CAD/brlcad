@@ -1,7 +1,7 @@
 /*                        B R L C A D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
  *
  */
 
-#ifndef __BRLCAD_H__
-#define __BRLCAD_H__
+#ifndef BRLCAD_H
+#define BRLCAD_H
 
 #include "common.h"
 
@@ -71,7 +71,7 @@
  */
 #include "rtfunc.h"
 
-#endif  /* __BRLCAD_H__ */
+#endif  /* BRLCAD_H */
 /** @} */
 /*
  * Local Variables:

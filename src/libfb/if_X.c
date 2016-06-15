@@ -1,7 +1,7 @@
 /*                          I F _ X . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -46,12 +46,16 @@
 #  undef X_NOT_POSIX
 #endif
 
+#define class REDEFINE_CLASS_STRING_TO_AVOID_CXX_CONFLICT
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/cursorfont.h>
 #include <X11/Xatom.h>		/* for XA_RGB_BEST_MAP */
 #include "bio.h"
 
+#include "bu/color.h"
+#include "bu/file.h"
+#include "bu/str.h"
 #include "fb.h"
 
 #define TMP_FILE "/tmp/x.cmap"
@@ -119,7 +123,7 @@ static struct modeflags {
     char c;
     long mask;
     long value;
-    char *help;
+    const char *help;
 } modeflags[] = {
     { 'l',	MODE_1MASK, MODE_1LINGERING,
       "Lingering window" },
@@ -267,8 +271,7 @@ x_print_display_info(Display *dpy)
 	    printf("StaticGray: Fixed map (R=G=B), single index\n");
 	    break;
 	default:
-	    printf("Unknown visual class %d\n",
-		   visual->class);
+	    printf("Unknown visual class %d\n", visual->class);
 	    break;
     }
     printf("Map Entries: %d\n", visual->map_entries);
@@ -1618,8 +1621,6 @@ X_help(FBIO *ifp)
 
 
 /*
- * c o n v R G B
- *
  * convert a single RGBpixel to its corresponding entry in the Sun
  * colormap.
  */
@@ -1652,8 +1653,6 @@ HIDDEN unsigned char convRGB(register const unsigned char *v)
 
 
 /*
- * G E N M A P
- *
  * initialize the Sun hardware colormap
  */
 HIDDEN void genmap(unsigned char *rmap, unsigned char *gmap, unsigned char *bmap)
@@ -1743,6 +1742,11 @@ FBIO X_interface = {
     {0}  /* u6 */
 };
 
+/* Because class is actually used to access a struct
+ * entry in this file, preserve our redefinition
+ * of class for the benefit of avoiding C++ name
+ * collisions until the end of this file */
+#undef class
 
 #else
 

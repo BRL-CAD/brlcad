@@ -83,7 +83,7 @@ std::streampos sectionReader::findNormalString( const std::string & str, bool se
 const char * sectionReader::getDelimitedKeyword( const char * delimiters ) {
     static std::string str;
     char c;
-    str.assign( 0, 0 ); //clear() frees the memory
+    str.assign( (size_t) 0, 0 ); //clear() frees the memory
     str.reserve( 100 );
     skipWS();
     while( c = _file.get(), _file.good() ) {
@@ -314,3 +314,4 @@ STEPcomplex * sectionReader::CreateSubSuperInstance( const Registry * reg, insta
     //TODO still need the schema name
     return new STEPcomplex( ( const_cast<Registry *>( reg ) ), ( const char ** ) names, ( int ) fileid /*, schnm*/ );
 }
+

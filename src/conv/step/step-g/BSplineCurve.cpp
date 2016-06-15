@@ -1,7 +1,7 @@
 /*                 BSplineCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,14 +66,7 @@ BSplineCurve::BSplineCurve(STEPWrapper *sw, int step_id)
 
 BSplineCurve::~BSplineCurve()
 {
-    /*
-      LIST_OF_POINTS::iterator i = control_points_list.begin();
-
-      while(i != control_points_list.end()) {
-      delete (*i);
-      i = control_points_list.erase(i);
-      }
-    */
+    // elements created through factory will be deleted there.
     control_points_list.clear();
 }
 

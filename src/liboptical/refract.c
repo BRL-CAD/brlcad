@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,6 +27,8 @@
 #include <string.h>
 #include <math.h>
 
+#include "bu/sort.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "mater.h"
 #include "raytrace.h"
@@ -57,9 +59,6 @@ extern struct bn_tabdata *background;
 extern vect_t background;
 #endif
 
-/*
- * R R _ M I S S
- */
 HIDDEN int
 rr_miss(struct application *ap)
 {
@@ -69,8 +68,6 @@ rr_miss(struct application *ap)
 
 
 /*
- * R R _ H I T
- *
  * This routine is called when an internal reflection ray hits something
  * (which is ordinarily the case).
  *
@@ -285,8 +282,6 @@ out:
 
 
 /*
- * R E F R A C T
- *
  * Compute the refracted ray 'v_2' from the incident ray 'v_1' with
  * the refractive indices 'ri_2' and 'ri_1' respectively.
  * Using Schnell's Law:
@@ -357,9 +352,6 @@ rr_refract(vect_t v_1, vect_t norml, double ri_1, double ri_2, vect_t v_2)
 }
 
 
-/*
- * R R _ R E N D E R
- */
 int
 rr_render(register struct application *ap,
 	  const struct partition *pp,
@@ -701,7 +693,7 @@ vdraw open rr;vdraw params c 00ff00; vdraw write n 0 %g %g %g; vdraw wwrite n 1 
 	 * sw_extinction is in terms of fraction of light absorbed
 	 * per linear meter of glass.  a_cumlen is in mm.
 	 */
-/* XXX extinction should be a spectral curve, not scalor */
+/* XXX extinction should be a spectral curve, not scalar */
 	if (swp->sw_extinction > 0 && sub_ap.a_cumlen > 0) {
 	    attenuation = pow(10.0, -1.0e-3 * sub_ap.a_cumlen *
 			      swp->sw_extinction);

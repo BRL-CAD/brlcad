@@ -1,7 +1,7 @@
 /*                          M E N U . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -91,8 +91,6 @@ cmd_mmenu_get(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const
 
 
 /*
- * M M E N U _ I N I T
- *
  * Clear global data
  */
 void
@@ -104,10 +102,6 @@ mmenu_init(void)
     menu_state->ms_menus[MENU_GEN] = MENU_NULL;
 }
 
-
-/*
- * M M E N U _ S E T
- */
 
 void
 mmenu_set(int index, struct menu_item *value)
@@ -121,7 +115,7 @@ mmenu_set(int index, struct menu_item *value)
 
     Tcl_DStringInit(&ds_menu);
 
-    bu_vls_printf(&menu_string, "mmenu_set %V %d ", &curr_cmd_list->cl_name, index);
+    bu_vls_printf(&menu_string, "mmenu_set %s %d ", bu_vls_addr(&curr_cmd_list->cl_name), index);
 
     (void)Tcl_Eval(INTERP, bu_vls_addr(&menu_string));
 
@@ -199,8 +193,6 @@ mged_highlight_menu_item(struct menu_item *mptr, int y)
 
 
 /*
- * M M E N U _ D I S P L A Y
- *
  * Draw one or more menus onto the display.
  * If "menu_state->ms_flag" is non-zero, then the last selected
  * menu item will be indicated with an arrow.
@@ -283,8 +275,6 @@ mmenu_display(int y_top)
 
 
 /*
- * M M E N U _ S E L E C T
- *
  * Called with Y coordinate of pen in menu area.
  *
  * Returns:

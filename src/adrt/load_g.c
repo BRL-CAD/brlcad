@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+
 
 #include "gcv.h"
 
@@ -151,23 +151,23 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
     RT_CHECK_COMB(rci);
 
     /* abort cases, no fast loading. */
-    if(rci->tree == NULL)
+    if (rci->tree == NULL)
 	return 0;
     RT_CK_TREE(rci->tree);
-    if( rci->tree->tr_op != OP_DB_LEAF )
+    if ( rci->tree->tr_op != OP_DB_LEAF )
 	return 0;
-    if((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
+    if ((dir = db_lookup(dbip, rci->tree->tr_l.tl_name, 1)) == NULL) {
 	printf("Lookup failed: %s\n", rci->tree->tr_l.tl_name);
 	return 0;
     }
-    if(dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
+    if (dir->d_minor_type != ID_BOT && dir->d_minor_type != ID_NMG)
 	return 0;
-    if(rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
+    if (rt_db_get_internal(&intern, dir, dbip, (fastf_t *)NULL, &rt_uniresource) < 0) {
 	printf("Failed to load\n");
 	return 0;
     }
 
-    if(dir->d_minor_type == ID_NMG)
+    if (dir->d_minor_type == ID_NMG)
 	return 0;
 
     /* FIXME: where is this released? */
@@ -186,16 +186,16 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
     bu_strlcpy(mesh->name, db_path_to_string(path), sizeof(mesh->name));
 
-    if(intern.idb_minor_type == ID_NMG) {
+    if (intern.idb_minor_type == ID_NMG) {
 	nmg_to_adrt_internal(mesh, (struct nmgregion *)intern.idb_ptr);
 	return -1;
     } else if (intern.idb_minor_type == ID_BOT) {
 	size_t i;
-	struct rt_bot_internal *bot = intern.idb_ptr;
+	struct rt_bot_internal *bot = (struct rt_bot_internal *)intern.idb_ptr;
 
 	RT_BOT_CK_MAGIC(bot);
 
-	for(i=0;i<bot->num_faces;i++)
+	for (i=0;i<bot->num_faces;i++)
 	{
 	    VSCALE((*tribuf[0]).v, (bot->vertices+3*bot->faces[3*i+0]), 1.0/1000.0);
 	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);

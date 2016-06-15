@@ -1,31 +1,24 @@
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
+set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${CMAKE_CURRENT_SOURCE_DIR}
   ${BU_INCLUDE_DIRS}
   ${RT_INCLUDE_DIRS}
   ${WDB_INCLUDE_DIRS}
-  )
-LIST(REMOVE_DUPLICATES STEP_INCLUDE_DIRS)
-include_directories(${STEP_INCLUDE_DIRS})
-
-# local includes
-include_directories(
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${CMAKE_CURRENT_SOURCE_DIR}
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/include
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/base
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clstepcore
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cleditor
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/clutils
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/cldai
-  ${BRLCAD_SOURCE_DIR}/src/other/stepcode/src/test
+  ${STEPCODE_DIR}/include
+  ${STEPCODE_DIR}/src/base
+  ${STEPCODE_DIR}/src/clstepcore
+  ${STEPCODE_DIR}/src/cleditor
+  ${STEPCODE_DIR}/src/clutils
+  ${STEPCODE_DIR}/src/cldai
+  ${STEPCODE_DIR}/src/test
   ${CMAKE_BINARY_DIR}/src/other/stepcode/include
   ${BRLCAD_SOURCE_DIR}/src/libbrep #Temporary until headers reworked
   )
-
-set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203/ap203.exp)
-#set(STEP_SCHEMA_FILE ${BRLCAD_SOURCE_DIR}/src/other/stepcode/data/ap203e2/ap203e2_mim_lf.exp)
+BRLCAD_INCLUDE_DIRS(STEP_INCLUDE_DIRS)
 
 macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # This Schema determines which version of STEP the command will support
@@ -56,6 +49,8 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   set(EXPRESS_OUTPUT
     ${express_srcs}
     ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Helpers.h
+    ${SCHEMA_OUT_DIR}/Sdai${SCHEMA_NAME}Names.h
     ${SCHEMA_OUT_DIR}/Sdaiclasses.h
     ${SCHEMA_OUT_DIR}/schema.h
     )
@@ -65,24 +60,65 @@ macro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE TARGET_SUFFIX)
   # subdirectories to avoid multiple build targets trying to run exp2cxx
   # simultaneously to generate identical inputs (unknown if that is problematic)
   # and to add extra robustness for parallel build target ordering.
+  set(WATCHED_FILES ${EXPRESS_OUTPUT})
+  string(REPLACE " " "\\ " WATCHED_FILES "${WATCHED_FILES}")
+  set(STAMP_OUT_FILE ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  configure_file(${BRLCAD_CMAKE_DIR}/md5_compiletest.cmake.in
+    ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake @ONLY)
   add_custom_command(OUTPUT ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
     COMMAND ${EXP2CXX_EXEC} ARGS ${SCHEMA_FILE}
-    COMMAND ${CMAKE_COMMAND} -E touch ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done
+    COMMAND ${CMAKE_COMMAND} -P ${SCHEMA_OUT_DIR}/md5_${SCHEMA_NAME}_test.cmake
     DEPENDS ${SCHEMA_FILE} ${EXP2CXX_EXECUTABLE_TARGET}
     WORKING_DIRECTORY ${SCHEMA_OUT_DIR}
     COMMENT "Generating C++ code to express ${SCHEMA_NAME}..."
     VERBATIM)
   add_custom_target(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX}
-    DEPENDS ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+    DEPENDS ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_target_properties(step-express-${SCHEMA_NAME}-${TARGET_SUFFIX} PROPERTIES FOLDER "Compilation Utilities")
+
+  set(clean_files ${EXPRESS_OUTPUT} ${SCHEMA_OUT_DIR}/step_express_${SCHEMA_NAME}.done)
+  set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${clean_files}")
 endmacro(GENERATE_SCHEMA_INPUTS SCHEMA_FILE)
 
+# AP203
 add_subdirectory(step-g)
 add_subdirectory(g-step)
 
+# Support for AP203e2, AP214 and AP242 is under development and not
+# yet functional.  Since the large C++ files generated for these
+# tools take a hideously long time to build on Windows, and are
+# noticeable even on other platforms, wrap them with conditionals
+# until they do something useful.  It may be that work in STEPcode
+# to generate multiple files instead of single huge files will
+# help alleviate the issue - something to check into.
+if(BRLCAD_ENABLE_AP203E2)
+  add_subdirectory(g-ap203e2)
+  add_subdirectory(ap203e2-g)
+endif(BRLCAD_ENABLE_AP203E2)
+if(BRLCAD_ENABLE_AP214)
+  add_subdirectory(ap214-g)
+  add_subdirectory(g-ap214)
+endif(BRLCAD_ENABLE_AP214)
+if(BRLCAD_ENABLE_AP242)
+  add_subdirectory(ap242-g)
+  add_subdirectory(g-ap242)
+endif(BRLCAD_ENABLE_AP242)
+
 CMAKEFILES(
+  AP_Common.h
   BRLCADWrapper.h
   STEPWrapper.h
-)
+  ap_schema.h
+  ap203_elements.txt
+  ap203e2_elements.txt
+  ap214e3_elements.txt
+  ap203e2-g
+  ap214-g
+  ap242-g
+  g-ap203e2
+  g-ap214
+  g-ap242
+  )
 
 DISTCLEAN(${SCHEMA_OUT_DIR}/make_schema)
 

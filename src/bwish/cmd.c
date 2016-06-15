@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 #  include "tcl.h"
 #endif
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "libtermio.h"
 
 
@@ -86,8 +86,6 @@ historyInit(void)
 
 
 /*
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the history
  * vls'es.
  *
@@ -146,8 +144,6 @@ timediff(struct timeval *tvdiff, struct timeval *start, struct timeval *finish)
 
 
 /*
- * F _ H I S T O R Y
- *
  * Prints out the command history, either to bu_log or to a file.
  */
 int
@@ -221,9 +217,6 @@ cmd_history(void *clientData, int argc, const char **argv)
 }
 
 
-/**
- * H I S T O R Y _ P R E V
- */
 struct bu_vls *
 history_prev(void)
 {
@@ -239,9 +232,6 @@ history_prev(void)
 }
 
 
-/**
- * H I S T O R Y _ C U R
- */
 struct bu_vls *
 history_cur(void)
 {
@@ -252,9 +242,6 @@ history_cur(void)
 }
 
 
-/**
- * H I S T O R Y _ N E X T
- */
 struct bu_vls *
 history_next(void)
 {
@@ -347,7 +334,7 @@ cmd_hist(void *clientData, int argc, const char **argv)
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
 
     return ctp->ct_func(interp, argc, argv);
 }
@@ -380,7 +367,7 @@ cmdInit(Tcl_Interp *interp)
 	{"history",	cmd_history},
 	{"hist",	cmd_hist},
 	{"q",		cmd_quit},
-	{(char *)NULL,	BU_CMD_NULL}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     /* Register bwish/btclsh commands */

@@ -1,7 +1,7 @@
 /*                        D A T E - T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@
 #include <time.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/time.h"
+#include "bu/parallel.h"
+#include "bu/vls.h"
 
 void
 bu_utctime(struct bu_vls *vls_gmtime, const int64_t time_val)

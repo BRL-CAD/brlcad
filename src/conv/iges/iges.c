@@ -1,7 +1,7 @@
 /*                          I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -270,7 +270,7 @@ nmg_to_winged_edge(struct nmgregion *r)
 
 		    /* move the other edgeuse to the same edge */
 		    if (eu2 == eu1 || eu2 == eu1->eumate_p)
-			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", eu1, s);
+			bu_log("nmg_to_winged_edge: couldn't find second radial face for eu %p in shell %p\n", (void *)eu1, (void *)s);
 		    else
 			nmg_je(eu1, eu2);
 		}
@@ -1186,7 +1186,7 @@ write_vertex_list(struct nmgregion *r,
 	NMG_CK_VERTEX(v);
 	vg = v->vg_p;
 	if (!vg) {
-	    bu_log("No geometry for vertex %p #%d in table\n", v, i);
+	    bu_log("No geometry for vertex %p #%d in table\n", (void *)v, i);
 	} else {
 	    NMG_CK_VERTEX_G(vg);
 	    bu_vls_printf(&str, ", %g, %g, %g",
@@ -1791,7 +1791,7 @@ write_shell_face_loop(char *name,
 	    dir_entry[15] = 1;
 	    dir_entry[14] = write_freeform(fp_param, bu_vls_addr(&str), dir_seq+1, 'P');
 
-	    face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);;
+	    face_list[face_count++] = write_dir_entry(fp_dir, dir_entry);
 
 	    bu_free((char *)loop_list, "loop list");
 	    bu_vls_free(&str);
@@ -1885,8 +1885,7 @@ write_shell_face_loop(char *name,
 
 
 void
-w_terminate(fp)
-    FILE *fp;
+w_terminate(FILE *fp)
 {
     fprintf(fp, "S%07dG%07dD%07dP%07d%40.40sT0000001\n", start_len, global_len, dir_seq, param_seq, " ");
 }
@@ -2332,14 +2331,14 @@ tgc_to_iges(struct rt_db_internal *ip,
 	    dir_entry[i] = DEFAULT;
 
 	if (NEAR_EQUAL(a_len, c_len, tol.dist)) {
-	    /* its an rcc */
+	    /* it's an rcc */
 	    iges_type = 154;
 	    bu_vls_printf(&str, "154, %g, %g, %g, %g, %g, %g, %g, %g" ,
 			  h_len, a_len ,
 			  tgc->v[X], tgc->v[Y], tgc->v[Z] ,
 			  h_dir[X], h_dir[Y], h_dir[Z]);
 	} else {
-	    /* its a trc */
+	    /* it's a trc */
 
 	    fastf_t bigger_r, smaller_r;
 	    vect_t base;
@@ -2570,7 +2569,7 @@ nmg_to_iges(struct rt_db_internal *ip,
 	if (region_count == 0)
 	    return 0;
 	else if (region_count == 1)
-	    return(nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
+	    return (nmgregion_to_iges(name, BU_LIST_FIRST(nmgregion, &model->r_hd) ,
 				     dependent, fp_dir, fp_param));
 	else {
 	    /* make a boolean tree unioning all the regions */

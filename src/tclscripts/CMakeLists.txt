@@ -48,6 +48,7 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
 
   # convenience target
   add_custom_target(${name}_${cmd}.tcl ALL DEPENDS ${tclindex_outdir}/${outfile})
+  set_target_properties(${name}_${cmd}.tcl PROPERTIES FOLDER "BRL-CAD Tcl Scripts")
 
   # Maintain a list of all tclindex targets for dependency purposes
   set(tclindex_target_list ${tclindex_target_list} ${name}_${cmd}.tcl)
@@ -91,6 +92,7 @@ set(tclscripts_TCLSCRIPTS
   man_browser.tcl
   menu_override.tcl
   mouse.tcl
+  tkcon.tcl
   vmath.tcl
   )
 BRLCAD_ADDDATA(tclscripts_TCLSCRIPTS tclscripts)

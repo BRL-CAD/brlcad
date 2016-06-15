@@ -1,7 +1,7 @@
 /*                           G E D . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef __GED_H__
-#define __GED_H__
+#ifndef GED_H
+#define GED_H
 
 #include "common.h"
 
@@ -86,8 +86,6 @@ __BEGIN_DECLS
 #define GED_FREE_VLIST_CALLBACK_PTR_NULL ((ged_free_vlist_callback_ptr)0)
 
 /**
- * S E M A P H O R E S
- *
  * Definition of global parallel-processing semaphores.
  *
  */
@@ -538,10 +536,14 @@ struct ged_view {
     int				gv_y_samples;
     fastf_t			gv_point_scale;
     fastf_t			gv_curve_scale;
+    fastf_t			gv_data_vZ;
 };
 
 
 struct ged_cmd;
+
+/* struct details are private - use accessor functions to manipulate */
+struct ged_results;
 
 struct ged {
     struct bu_list		l;
@@ -550,19 +552,30 @@ struct ged {
     /** for catching log messages */
     struct bu_vls		*ged_log;
 
-    /** for setting results */
+    /* TODO: add support for returning an array of objects, not just a
+     * simple string.
+     *
+     * the calling application needs to be able to distinguish the
+     * individual object names from the "ls" command without resorting
+     * to quirky string encoding or format-specific quote wrapping.
+     *
+     * want to consider whether we need a json-style dictionary, but
+     * probably a literal null-terminated array will suffice here.
+     */
     struct bu_vls		*ged_result_str;
+    struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
     struct ged_view		*ged_gvp;
     struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
+    struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
     void			*ged_dmp;
     void			*ged_refresh_clientdata;	/**< @brief  client data passed to refresh handler */
-    void			(*ged_refresh_handler)();	/**< @brief  function for handling refresh requests */
-    void			(*ged_output_handler)();	/**< @brief  function for handling output */
+    void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
+    void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)();	/**< @brief  function to call after creating a vlist */
+    void			(*ged_create_vlist_callback)(struct solid *);	/**< @brief  function to call after creating a vlist */
     void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
@@ -578,7 +591,8 @@ struct ged {
     int ged_dm_width;
     int ged_dm_height;
     int ged_dmp_is_null;
-    void (*ged_dm_get_display_image)();
+    void (*ged_dm_get_display_image)(struct ged *, unsigned char **);
+
 };
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
@@ -601,6 +615,16 @@ struct ged_cmd {
     void (*unload)(struct ged *);
     int (*exec)(struct ged *, int, const char *[]);
 };
+
+/* accessor functions for ged_results - calling
+ * applications should not work directly with the
+ * internals of ged_results, which are not guaranteed
+ * to stay the same.
+ * defined in ged_util.c */
+GED_EXPORT extern size_t ged_results_count(struct ged_results *results);
+GED_EXPORT extern const char *ged_results_get(struct ged_results *results, size_t index);
+GED_EXPORT extern void ged_results_clear(struct ged_results *results);
+GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
 
 /* defined in adc.c */
@@ -763,7 +787,7 @@ GED_EXPORT extern int ged_autoview(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_bb(struct ged *gedp, int argc, const char *argv[]);
 
 /**
- * Tesselates each operand object, then performs the
+ * Tessellates each operand object, then performs the
  * boolean evaluation, storing result in 'new_obj'
  */
 GED_EXPORT extern int ged_bev(struct ged *gedp, int argc, const char *argv[]);
@@ -930,6 +954,11 @@ GED_EXPORT extern int ged_comb_std(struct ged *gedp, int argc, const char *argv[
  * Set/get comb's members.
  */
 GED_EXPORT extern int ged_combmem(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+ * create, update, remove, and list geometric and dimensional constraints.
+ */
+GED_EXPORT extern int ged_constraint(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Import a database into the current database using an auto-incrementing or custom affix
@@ -1171,6 +1200,11 @@ GED_EXPORT extern int ged_form(struct ged *gedp, int argc, const char *argv[]);
 GED_EXPORT extern int ged_fracture(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Calculate a geometry diff
+ */
+GED_EXPORT extern int ged_gdiff(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Get object attributes
  */
 GED_EXPORT extern int ged_get(struct ged *gedp, int argc, const char *argv[]);
@@ -1205,9 +1239,6 @@ GED_EXPORT extern int ged_get_type(struct ged *gedp, int argc, const char *argv[
  */
 GED_EXPORT extern int ged_glob(struct ged *gedp, int argc, const char *argv[]);
 
-/**
- *
- */
 GED_EXPORT extern int ged_gqa(struct ged *gedp, int argc, const char *argv[]);
 
 /**
@@ -1784,6 +1815,20 @@ GED_EXPORT extern int ged_search(struct ged *gedp, int argc, const char *argv[])
  */
 GED_EXPORT extern int ged_select(struct ged *gedp, int argc, const char *argv[]);
 
+/**
+ * Return ged selections for specified object. Created if it doesn't
+ * exist.
+ */
+GED_EXPORT struct rt_object_selections *ged_get_object_selections(struct ged *gedp,
+								  const char *object_name);
+
+/**
+ * Return ged selections of specified kind for specified object.
+ * Created if it doesn't exist.
+ */
+GED_EXPORT struct rt_selection_set *ged_get_selection_set(struct ged *gedp,
+							  const char *object_name,
+							  const char *selection_name);
 
 /**
  * Get/set the output handler script
@@ -1835,9 +1880,6 @@ GED_EXPORT extern int ged_size(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_simulate(struct ged *gedp, int argc, const char *argv[]);
 
-/**
- *
- */
 GED_EXPORT extern int ged_solids_on_ray(struct ged *gedp, int argc, const char *argv[]);
 
 /**
@@ -2073,7 +2115,7 @@ GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA,
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* GED_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                      B W T H R E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2013 United States Government as represented by
+ * Copyright (c) 1990-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ main (int argc, char **argv)
     int i;
     unsigned char *bin_color = (unsigned char *)0;/* resultant pixel values */
 
-    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
+    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2)
 	bu_exit(1, "%s", USAGE);
     if ((nm_threshs = argc - 1) < 1)
 	bu_exit(1, "%s", USAGE);

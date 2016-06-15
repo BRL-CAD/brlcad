@@ -1,7 +1,7 @@
 /*                       P N G - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 static png_color_16 def_backgrd={ 0, 0, 0, 0, 0 };
 static int verbose=0;
 
-static char *usage="Usage: %s [-v] [png_input_file] > pix_output_file\n";
+static const char *usage = "Usage: %s [-v] [png_input_file] > pix_output_file\n";
 
 int
 main(int argc, char **argv)

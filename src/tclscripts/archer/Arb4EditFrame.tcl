@@ -1,7 +1,7 @@
 #               A R B 4 E D I T F R A M E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2013 United States Government as represented by
+# Copyright (c) 2002-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -264,6 +264,18 @@
 	    -anchor e
     } {}
 
+    itk_component add checkpointButton {
+	::ttk::button $parent.checkpointButton \
+	-text {CheckPoint} \
+	-command "[::itcl::code $this checkpointGeometry]"
+    } {}
+
+    itk_component add revertButton {
+	::ttk::button $parent.revertButton \
+	-text {Revert} \
+	-command "[::itcl::code $this revertGeometry]"
+    } {}
+
     set row 0
     grid $itk_component(arb4Type) \
 	-row $row \
@@ -382,6 +394,21 @@
 	-row $row \
 	-column $col \
 	-sticky nsew
+    incr row
+    set col 0
+    grid $itk_component(checkpointButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+    incr col
+    incr col
+    grid $itk_component(revertButton) \
+	-row $row \
+	-column $col \
+	-columnspan 2 \
+	-sticky nsew
+
     grid columnconfigure $parent 1 -weight 1
     grid columnconfigure $parent 2 -weight 1
     grid columnconfigure $parent 3 -weight 1

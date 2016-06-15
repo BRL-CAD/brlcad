@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2013 United States Government as represented by
+ * Copyright (c) 1987-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@ rt_read_cmd(register FILE *fp)
 
     curpos = 0;
     curlen = 400;
-    buf = bu_malloc(curlen, "rt_read_cmd command buffer");
+    buf = (char *)bu_malloc(curlen, "rt_read_cmd command buffer");
 
     do {
 	c = fgetc(fp);
@@ -80,7 +80,7 @@ rt_read_cmd(register FILE *fp)
 	}
 	if (curpos >= curlen) {
 	    curlen *= 2;
-	    buf = bu_realloc(buf, curlen, "rt_read_cmd command buffer");
+	    buf = (char *)bu_realloc(buf, curlen, "rt_read_cmd command buffer");
 	}
 	buf[curpos++] = c;
     } while (c != '\0');
@@ -93,14 +93,6 @@ rt_read_cmd(register FILE *fp)
 
 
 #define MAXWORDS 4096	/* Max # of args per command */
-
-
-int
-rt_split_cmd(char **argv, int lim, char *lp)
-{
-    /* bu_argv_from_string doesn't count the NULL */
-    return bu_argv_from_string(argv, lim-1, lp);
-}
 
 
 int
@@ -132,7 +124,7 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
 	if ((nwords >= tp->ct_min)
 	    && ((tp->ct_max < 0) || (nwords <= tp->ct_max)))
 	{
-	    retval = tp->ct_func(nwords, cmd_args);
+	    retval = tp->ct_func(nwords, (const char **)cmd_args);
 	    bu_free(lp, "rt_do_cmd lp");
 	    return retval;
 	}

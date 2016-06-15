@@ -1,7 +1,7 @@
 /*                         E D A R B . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,7 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "ged_private.h"
 
 
@@ -88,8 +88,6 @@ mv_edge(struct ged *gedp,
 
 
 /*
- * E D I T A R B
- *
  * An ARB edge is moved by finding the direction of the line
  * containing the edge and the 2 "bounding" planes.  The new edge is
  * found by intersecting the new line location with the bounding
@@ -1018,7 +1016,7 @@ ged_edarb(struct ged *gedp, int argc, const char *argv[])
 	{"facedef",		edarb_facedef},
 	{"mirface",		edarb_mirface},
 	{"permute",		edarb_permute},
-	{(char *)0,		(int (*)())0 }
+	{(const char *)NULL, BU_CMD_NULL}
     };
     static const char *usage = "edgedir|extrude|mirror|permute arb [args]";
 

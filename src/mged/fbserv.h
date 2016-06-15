@@ -1,7 +1,7 @@
 /*                        F B S E R V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 /** @file mged/fbserv.h
  * Package Handlers.
  */
-#ifndef __FBSERV_H__
-#define __FBSERV_H__
+#ifndef MGED_FBSERV_H
+#define MGED_FBSERV_H
 
 #include "fbmsg.h"
 
@@ -73,7 +73,7 @@ static struct pkg_switch pkg_switch[] = {
 };
 
 
-#endif  /* __FBSERV_H__ */
+#endif  /* MGED_FBSERV_H */
 /*
  * Local Variables:
  * mode: C

@@ -1,7 +1,7 @@
 /*                      C A T T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -66,7 +66,7 @@ hyper_get_x(fastf_t a, fastf_t c, fastf_t s)
 fastf_t
 hyper_get_s(fastf_t a, fastf_t c, fastf_t x)
 {
-    return((sinh(a*(x-c))+sinh(a*c))/a);
+    return ((sinh(a*(x-c))+sinh(a*c))/a);
 }
 
 
@@ -113,7 +113,7 @@ eff(fastf_t a, fastf_t c, fastf_t x0, fastf_t x1, fastf_t delta_s)
     if (fabs(fprime) > VDIVIDE_TOL)
 	return f/fprime;
     else if ((a*a) > VDIVIDE_TOL)
-	return(f/(a*a));
+	return (f/(a*a));
     else if (fabs(a) > VDIVIDE_TOL)
 	return f/a;
     else

@@ -9,7 +9,6 @@ if(HAVE_TERMLIB)
 
   BRLCAD_ADDLIB(libtermio termio.c "${TERMLIB_LIBRARY}")
   SET_TARGET_PROPERTIES(libtermio PROPERTIES VERSION 20.0.1 SOVERSION 20)
-  CMAKEFILES(termio_win32.c)
 endif(HAVE_TERMLIB)
 
 # Local Variables:

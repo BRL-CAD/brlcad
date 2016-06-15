@@ -1,7 +1,7 @@
 /*                   S T E P W R A P P E R . H
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,9 @@
  * functions.
  *
  */
-#ifndef STEPWRAPPER_H_
-#define STEPWRAPPER_H_
+
+#ifndef CONV_STEP_STEPWRAPPER_H
+#define CONV_STEP_STEPWRAPPER_H
 
 #include "common.h"
 
@@ -48,11 +49,7 @@
 
 #include <BRLCADWrapper.h>
 
-#ifdef AP203e2
-#  include <SdaiAP203_CONFIGURATION_CONTROLLED_3D_DESIGN_OF_MECHANICAL_PARTS_AND_ASSEMBLIES_MIM_LF.h>
-#else
-#  include <SdaiCONFIG_CONTROL_DESIGN.h>
-#endif
+#include "ap_schema.h"
 
 /*
 class SDAI_Application_instance;
@@ -70,6 +67,8 @@ typedef std::list<std::string> LIST_OF_STRINGS;
 typedef std::list<SDAI_Application_instance *> LIST_OF_ENTITIES;
 typedef std::list<SDAI_Select *> LIST_OF_SELECTS;
 typedef std::map<std::string, STEPcomplex *> MAP_OF_SUPERTYPES;
+typedef std::map<int, std::string> MAP_OF_ENTITY_ID_TO_PRODUCT_NAME;
+typedef std::map<int, int> MAP_OF_ENTITY_ID_TO_PRODUCT_ID;
 typedef std::vector<double> VECTOR_OF_REALS;
 typedef std::list<int> LIST_OF_INTEGERS;
 typedef std::list<double> LIST_OF_REALS;
@@ -85,6 +84,7 @@ private:
     Registry  *registry;
     STEPfile  *sfile;
     BRLCADWrapper *dotg;
+    bool verbose;
 
     void printEntity(SDAI_Application_instance *se, int level);
     void printEntityAggregate(STEPaggregate *sa, int level);
@@ -142,9 +142,19 @@ public:
     LIST_OF_REALS *parseListOfReals(const char *in);
     LIST_OF_POINTS *parseListOfPointEntities(const char *in);
     void printLoadStatistics();
+
+    bool Verbose() const
+    {
+	return verbose;
+    }
+
+    void Verbose(bool value)
+    {
+	this->verbose = value;
+    }
 };
 
-#endif /* STEPWRAPPER_H_ */
+#endif /* CONV_STEP_STEPWRAPPER_H */
 
 /*
  * Local Variables:

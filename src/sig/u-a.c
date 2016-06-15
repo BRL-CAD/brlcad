@@ -1,7 +1,7 @@
 /*                           U - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,12 @@
 #include <stdio.h>
 
 
-#define MAXBUF 16*1024
-unsigned short ibuf[MAXBUF];
-
-int main(void)
+int
+main(void)
 {
+#define MAXBUF 16*1024
+    unsigned short ibuf[MAXBUF];
+
     int n, i;
 
     while ((n=fread(ibuf, sizeof(*ibuf), MAXBUF, stdin)) > 0) {

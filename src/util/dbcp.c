@@ -1,7 +1,7 @@
 /*                          D B C P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,9 +61,6 @@ Usage:  dbcp [-v] blocksize < input > output\n\
 	(blocksize = number of 512 byte 'blocks' per record)\n";
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

@@ -1,7 +1,7 @@
 /*                          C Y - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -395,7 +395,7 @@ main(int argc, char **argv)
     delta_z = (fastf_t)(ltincr)/scale;
 
     /* calculate angle between longitudinal measurements */
-    delta_angle = bn_twopi/(fastf_t)nlg;
+    delta_angle = M_2PI/(fastf_t)nlg;
 
     /* allocate memory to hold vertices */
     curves = (fastf_t **)bu_malloc((nlt+2)*sizeof(fastf_t *), "ars curve pointers");

@@ -1,7 +1,7 @@
 /*                    R B _ E X T R E M E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
-
+#include "bu/rb.h"
 #include "./rb_internals.h"
 
 
 /**
- * _ R B _ E X T R E M E
- *
  * Find the minimum or maximum node in one order of a red-black tree
  *
  * This function has four parameters: the root of the tree, the

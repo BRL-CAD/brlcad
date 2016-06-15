@@ -44,7 +44,7 @@ namespace boost {
       on_discover_vertex_num, on_finish_vertex_num, on_examine_vertex_num,
       on_examine_edge_num, on_tree_edge_num, on_non_tree_edge_num,
       on_gray_target_num, on_black_target_num,
-      on_forward_or_cross_edge_num, on_back_edge_num,
+      on_forward_or_cross_edge_num, on_back_edge_num, on_finish_edge_num,
       on_edge_relaxed_num, on_edge_not_relaxed_num,
       on_edge_minimized_num, on_edge_not_minimized_num
     };
@@ -75,6 +75,7 @@ namespace boost {
   struct on_forward_or_cross_edge {
     enum { num = detail::on_forward_or_cross_edge_num }; };
   struct on_back_edge { enum { num = detail::on_back_edge_num }; };
+  struct on_finish_edge { enum { num = detail::on_finish_edge_num }; };
 
   struct on_edge_relaxed { enum { num = detail::on_edge_relaxed_num }; };
   struct on_edge_not_relaxed {
@@ -269,7 +270,7 @@ namespace boost {
     {}
 
     template <typename VertexOrEdge, typename Graph>
-    void operator() (VertexOrEdge v, const Graph& g)
+    void operator() (VertexOrEdge v, const Graph&)
     {
       put (property_map_, v, value_);
     }
@@ -292,7 +293,7 @@ namespace boost {
     inline property_put <PropertyMap, EventTag>
     put_property (PropertyMap property_map,
                   typename property_traits <PropertyMap>::value_type value,
-                  EventTag tag)
+                  EventTag)
     {
       return property_put <PropertyMap, EventTag> (property_map, value);
     }

@@ -1,7 +1,7 @@
 /*                           T C L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include "bu.h"
 #include "vmath.h"
 #include "dm.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 
 /* private headers */
 #include "brlcad_version.h"
@@ -108,7 +108,7 @@ dm_bestXType_tcl(void *clientData, int argc, const char **argv)
 static int
 wrapper_func(ClientData data, Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;;
+    struct bu_cmdtab *ctp = (struct bu_cmdtab *)data;
 
     return ctp->ct_func(interp, argc, argv);
 }
@@ -126,12 +126,14 @@ register_cmds(Tcl_Interp *interp, struct bu_cmdtab *cmds)
 
 
 int
-Dm_Init(void *interp)
+Dm_Init(void *interpreter)
 {
+    Tcl_Interp *interp = (Tcl_Interp *)interpreter;
+
     static struct bu_cmdtab cmdtab[] = {
-	{"dm_validXType",	dm_validXType_tcl},
-	{"dm_bestXType",	dm_bestXType_tcl},
-	{(char *)0,		(int (*)())0}
+	{"dm_validXType", dm_validXType_tcl},
+	{"dm_bestXType", dm_bestXType_tcl},
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     struct bu_vls vls = BU_VLS_INIT_ZERO;

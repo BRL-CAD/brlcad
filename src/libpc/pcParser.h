@@ -1,7 +1,7 @@
 /*                    P C P A R S E R . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,14 +24,32 @@
  * EBNF Parser generation using boost:Spirit
  *
  */
-#ifndef __PCPARSER_H__
-#define __PCPARSER_H__
+#ifndef LIBPC_PCPARSER_H
+#define LIBPC_PCPARSER_H
 
 #include "common.h"
 
 #include <string>
 #include <iostream>
+
+/* for g++ to quell warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include <boost/spirit/include/classic.hpp>	/* deprecated header */
+
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #include "pcVCSet.h"
 #include "pcGenerator.h"

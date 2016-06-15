@@ -1,7 +1,7 @@
 /*                        F B - R L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -81,9 +81,6 @@ If omitted, the .rle file is written to stdout\n";
 extern void cmap_crunch(RGBpixel (*scan_buf), int pixel_ct, ColorMap *colormap);
 
 
-/*
- * G E T _ A R G S
- */
 static int
 get_args(int argc, char **argv)
 {
@@ -159,9 +156,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

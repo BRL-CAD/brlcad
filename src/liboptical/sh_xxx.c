@@ -1,7 +1,7 @@
 /*                        S H _ X X X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -67,6 +67,7 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
@@ -150,8 +151,7 @@ struct mfuncs xxx_mfuncs[] = {
 };
 
 
-/* X X X _ S E T U P
- *
+/*
  * This routine is called (at prep time)
  * once for each region which uses this shader.
  * Any shader-specific initialization should be done here.
@@ -163,10 +163,7 @@ struct mfuncs xxx_mfuncs[] = {
  */
 HIDDEN int
 xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
-
-
 /* pointer to reg_udata in *rp */
-
 /* New since 4.4 release */
 {
     register struct xxx_specific *xxx_sp;
@@ -223,9 +220,6 @@ xxx_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const 
 }
 
 
-/*
- * X X X _ P R I N T
- */
 HIDDEN void
 xxx_print(register struct region *rp, void *dp)
 {
@@ -233,9 +227,6 @@ xxx_print(register struct region *rp, void *dp)
 }
 
 
-/*
- * X X X _ F R E E
- */
 HIDDEN void
 xxx_free(void *cp)
 {
@@ -244,16 +235,12 @@ xxx_free(void *cp)
 
 
 /*
- * X X X _ R E N D E R
- *
  * This is called (from viewshade() in shade.c) once for each hit point
  * to be shaded.  The purpose here is to fill in values in the shadework
  * structure.
  */
 int
 xxx_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
-
-
 /* defined in ../h/shadework.h */
 /* ptr to the shader-specific struct */
 {

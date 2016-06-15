@@ -681,7 +681,7 @@ namespace eval ::hv3::hv3::selectionmanager {
     set to [$O(myHtml) node -index $x $y]
     foreach {toNode toIdx} $to {}
 
-    # $N containst the node-handle for the node that the cursor is
+    # $N contains the node-handle for the node that the cursor is
     # currently hovering over (according to the mousemanager component).
     # If $N is in a different stacking-context to the closest text,
     # do not update the highlighted region in this event.

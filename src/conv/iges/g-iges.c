@@ -1,7 +1,7 @@
 /*                        G - I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,6 +46,8 @@
 #include "raytrace.h"
 #include "rtgeom.h"
 
+#include "bu/parallel.h"
+#include "bu/getopt.h"
 /* private */
 #include "./iges.h"
 #include "brlcad_ident.h"
@@ -185,9 +187,6 @@ char **independent;
 size_t no_of_indeps = 0;
 int do_nurbs = 0;
 
-/*
- * M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -488,8 +487,6 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
 
 
 /*
- * D O _ N M G _ R E G I O N _ E N D
- *
  * Called from db_walk_tree().
  *
  * This routine must be prepared to run in parallel.
@@ -555,7 +552,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		/* construct a unique file name */
 		len = strlen(output_file) + strlen(dp->d_namep) + 6 + SUFFIX_LEN;
-		multi_name = bu_malloc(sizeof(char)*len, "multi_name");
+		multi_name = (char *)bu_malloc(sizeof(char)*len, "multi_name");
 		snprintf(multi_name, len, "%s/%s.igs", output_file, dp->d_namep);
 		bu_strlcpy(suffix, "a", sizeof(suffix));
 		suffix[0]--;
@@ -567,7 +564,7 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 
 		    /* not unique, try adding a suffix */
 		    len = strlen(suffix);
-		    i = len - 1;;
+		    i = len - 1;
 		    suffix[i]++;
 		    while (suffix[i] > 'z' && i > 0) {
 			suffix[i] = 'a';
@@ -659,11 +656,8 @@ do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, u
 static int de_pointer_number;
 
 int
-get_de_pointers(tp, dp, de_len, de_pointers)
-    union tree *tp;
-    struct directory *dp;
-    int de_len;
-    int *de_pointers;
+get_de_pointers(union tree *tp, struct directory *dp, int de_len,
+		int *de_pointers)
 {
     RT_CK_TREE(tp);
     RT_CK_DIR(dp);

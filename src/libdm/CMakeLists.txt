@@ -11,6 +11,7 @@ set(DM_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   ${TK_INCLUDE_PATH}
   ${Qt5Widgets_INCLUDE_DIRS}
+  ${OSG_INCLUDE_DIR}
   )
 
 # local includes
@@ -55,27 +56,35 @@ if(BRLCAD_ENABLE_TK AND NOT WIN32)
 endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 
 if(BRLCAD_ENABLE_QT)
-  BRLCAD_CHECK_CXX_FLAG(Wno-float-equal)
+  CHECK_CXX_FLAG(Wno-float-equal)
 
-  list(APPEND libdm_DEFINES DM_QT)
+  list(APPEND libdm_DEFINES DM_QT IF_QT)
   set(dmqt_srcs dm-qt.cpp)
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   add_definitions(${Qt5Widgets_DEFINITIONS})
+  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${Qt5Widgets_LIBRARIES})
 endif(BRLCAD_ENABLE_QT)
 
-set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
+if(BRLCAD_ENABLE_OSG)
+  list(APPEND libdm_DEFINES DM_OSG)
+  set(dmosg_srcs dm-osg.cpp)
+  set(OSG_LIBRARIES
+    ${OSG_LIBRARY}
+    ${OSGTEXT_LIBRARY}
+    ${OSGVIEWER_LIBRARY}
+    )
+  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
+endif(BRLCAD_ENABLE_OSG)
 
-# Unfortunately, on Mac OS X the OpenGL headers are not C90
-# compliant - anything pulling them in needs the C99 flag
-get_property(libdm_C_FLAGS GLOBAL PROPERTY libdm_C_FLAGS)
-list(APPEND libdm_C_DEFINES "${C99_FLAG}")
-set_property(GLOBAL PROPERTY libdm_C_FLAGS "${libdm_C_FLAGS}")
+
+set_property(GLOBAL PROPERTY libdm_DEFINES "${libdm_DEFINES}")
 
 set(LIBDM_SRCS
   ${dmx11_srcs}
   ${dmw32_srcs}
   ${dmogl_srcs}
+  ${dmosg_srcs}
   ${dmrtgl_srcs}
   ${dmtk_srcs}
   ${dmqt_srcs}
@@ -90,7 +99,6 @@ set(LIBDM_SRCS
   dm_obj.c
   dm_util.c
   dm-txt.c
-  focus.c
   grid.c
   knob.c
   labels.c
@@ -102,7 +110,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Carbon_LIBRARIES};${Qt5Widgets_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)
@@ -112,9 +120,11 @@ set(libdm_ignore_files
   dm-wgl.c
   dm-X.c
   dm-ogl.c
+  dm-osg.cpp
   dm-qt.cpp
   dm-rtgl.c
   dm-tk.c
+  osg.cpp
   TODO
   )
 CMAKEFILES(${libdm_ignore_files})

@@ -1,7 +1,7 @@
 /*                         T O O L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,6 +50,7 @@ strappend(char *s, char *t)	/* === */
     *s = '\0';
 }
 
+
 void
 maxmin(int *l, int n, int *max, int *min)	/*  === */
 {
@@ -61,6 +62,7 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
 	++l;
     }
 }
+
 
 /*
  * Local Variables:

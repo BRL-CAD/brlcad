@@ -48,7 +48,11 @@ ENDMACRO( DEFINE_DLL_IMPORTS tgt libs )
 # so either test the target or install it - but not both
 MACRO(EXCLUDE_OR_INSTALL target dest arg_3 )
     if( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )
-        INSTALL(TARGETS ${target} DESTINATION ${dest})
+        INSTALL(TARGETS ${target}
+	       	RUNTIME DESTINATION ${BIN_DIR}
+	       	LIBRARY DESTINATION ${LIB_DIR}
+	       	ARCHIVE DESTINATION ${LIB_DIR}
+		)
     else( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )
         set_target_properties( ${target} PROPERTIES EXCLUDE_FROM_ALL ON )
     endif( NOT ( ( SC_ENABLE_TESTING ) AND ( "${arg_3}" STREQUAL "TESTABLE" ) ) )

@@ -1,7 +1,7 @@
 /*                         P P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -131,16 +131,20 @@ main(int argc, char **argv)
     int scr_w=512, scr_h=512, scr_set=0;
     int ret;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(5);
+
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
-/* check invocation */
+
+    /* check invocation */
     if (argc<2) {
-	printf("Usage: pp-fb [options] PPfilename\n");
-	printf("(See BRL-CAD Package Documentation for more info)\n");
-	printf("Options:\n");
-	printf("  -F framebuffer");
-	printf(" (Alternatively set environment variable FB_FILE)\n");
-	printf("  -W screen_width\n");
-	printf("  -N screen_height\n");
+	fprintf(stderr,"Usage: pp-fb [options] PPfilename\n");
+	fprintf(stderr,"(See BRL-CAD Package Documentation for more info)\n");
+	fprintf(stderr,"Options:\n");
+	fprintf(stderr,"  -F framebuffer");
+	fprintf(stderr," (Alternatively set environment variable FB_FILE)\n");
+	fprintf(stderr,"  -W screen_width\n");
+	fprintf(stderr,"  -N screen_height\n");
 	bu_exit(10, NULL);
     }
     for (i=1;i<argc;i++) {

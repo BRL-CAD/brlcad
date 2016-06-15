@@ -1,7 +1,7 @@
 /*                         M O V E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <string.h>
 #include "bio.h"
 
-#include "cmd.h"
+#include "bu/cmd.h"
 
 #include "./ged_private.h"
 
@@ -111,7 +111,7 @@ ged_move(struct ged *gedp, int argc, const char *argv[])
 
 	if (found) {
 	    bu_vls_free(&gdlp->gdl_path);
-	    bu_vls_printf(&gdlp->gdl_path, "%V", &new_path);
+	    bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
 	}
 
 	free((void *)dupstr);

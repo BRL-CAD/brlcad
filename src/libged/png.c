@@ -1,7 +1,7 @@
 /*                         P N G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,8 @@
 #include <png.h>
 #include "bio.h"
 
-#include "bu.h"
+
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "bn.h"
 #include "solid.h"
@@ -58,7 +59,7 @@ struct stroke {
     struct coord pixel;	/* starting scan, nib */
     short xsign;	/* 0 or +1 */
     short ysign;	/* -1, 0, or +1 */
-    int ymajor; 	/* true iff Y is major dir. */
+    int ymajor; 	/* true if Y is major dir. */
     short major;	/* major dir delta (nonneg) */
     short minor;	/* minor dir delta (nonneg) */
     short e;		/* DDA error accumulator */

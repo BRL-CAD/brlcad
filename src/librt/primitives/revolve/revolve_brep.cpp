@@ -1,7 +1,7 @@
 /*                    R E V O L V E _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -141,9 +141,6 @@ void FindLoops(ON_Brep **b, const ON_Line* revaxis, const fastf_t ang) {
 }
 
 
-/**
- * R T _ R E V O L V E _ B R E P
- */
 extern "C" void
 rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *tol)
 {

@@ -1,7 +1,7 @@
 /*                           D V E C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,15 +22,15 @@
  *
  */
 
-#ifndef __DVEC_H__
-#define __DVEC_H__
+#ifndef DVEC_H
+#define DVEC_H
 
 #include "common.h"
 
 #include <math.h>
 
 /* Needed for fastf_t definition */
-#include "bu.h"
+#include "bu/defines.h"
 
 /* Needed for VUNITIZE_TOL and NEAR_ZERO */
 #include "vmath.h"
@@ -197,7 +197,7 @@ extern "C++" {
     }
 }
 
-#endif /* __DVEC_H__ */
+#endif /* DVEC_H */
 
 /*
  * Local Variables:

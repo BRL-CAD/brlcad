@@ -1,7 +1,7 @@
 /*              S I M C O L L I S I O N A L G O . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,18 @@
 #ifdef HAVE_BULLET
 
 /* system headers */
+
+/* quell warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* begin ignoring warnings */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* begin ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 #include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
 #include <BulletCollision/CollisionShapes/btBoxShape.h>
 #include <BulletCollision/CollisionDispatch/btCollisionObject.h>
@@ -36,6 +48,11 @@
 /* private headers */
 #include "./simcollisionalgo.h"
 
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #define USE_PERSISTENT_CONTACTS 1
 
@@ -77,7 +94,8 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 	return;
 
     //quellage
-    //bu_log("%d", dispatchInfo.m_stepCount);
+    // unquell: otherwise get unused param dispatchInfo warning
+    bu_log("%d", dispatchInfo.m_stepCount);
 
     /// report a contact. internally this will be kept persistent, and contact reduction is done
     resultOut->setPersistentManifold(m_manifoldPtr);
@@ -99,7 +117,7 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
 	   struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
 	   // Now add the RT contact pairs
-	   for (i=0; i<rt_mf->num_contacts; i++){
+	   for (i = 0; i < rt_mf->num_contacts; i++) {
 
 		   btVector3 ptA, ptB, normalWorldOnB;
 

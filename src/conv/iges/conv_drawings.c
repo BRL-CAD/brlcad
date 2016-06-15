@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -40,9 +40,7 @@ static char *default_drawing_name = "iges_drawing";
 struct bu_list free_hd;
 
 void
-Getstrg(str, id)
-    char **str;
-    char *id;
+Getstrg(char **str, char *id)
 {
     int i = (-1), length = 0, done = 0, lencard;
     char num[80];
@@ -108,9 +106,7 @@ Getstrg(str, id)
 
 
 void
-Note_to_vlist(entno, vhead)
-    int entno;
-    struct bu_list *vhead;
+Note_to_vlist(int entno, struct bu_list *vhead)
 {
     int entity_type;
     int nstrings = 0;
@@ -143,7 +139,7 @@ Note_to_vlist(entno, vhead)
 	Readcnv(&width, "");
 	Readcnv(&height, "");
 	Readint(&font_code, "");	/* not currently used */
-	slant_ang = bn_halfpi;
+	slant_ang = M_PI_2;
 	Readflt(&slant_ang, "");	/* not currently used */
 	Readflt(&rot_ang, "");
 	Readint(&mirror, "");	/* not currently used */
@@ -188,12 +184,12 @@ Note_to_vlist(entno, vhead)
 
 		bn_vlist_2string(vhead, &free_hd, one_char ,
 				 tmp_x, tmp_y, local_scale,
-				 (double)(rot_ang*180.0*bn_invpi));
+				 (double)(rot_ang*RAD2DEG));
 	    }
 	} else
 	    bn_vlist_2string(vhead, &free_hd, str ,
 			     (double)loc[X], (double)loc[Y], local_scale,
-			     (double)(rot_ang*180.0*bn_invpi));
+			     (double)(rot_ang*RAD2DEG));
 
 	bu_free(str, "Note_to_vlist: str");
     }
@@ -201,9 +197,7 @@ Note_to_vlist(entno, vhead)
 
 
 void
-Get_plane(pl, entno)
-    plane_t pl;
-    int entno;
+Get_plane(plane_t pl, int entno)
 {
     int entity_type;
     int i;
@@ -221,9 +215,7 @@ Get_plane(pl, entno)
 
 
 void
-Curve_to_vlist(vhead, ptlist)
-    struct bu_list *vhead;
-    struct ptlist *ptlist;
+Curve_to_vlist(struct bu_list *vhead, struct ptlist *ptlist)
 {
     struct ptlist *ptr;
 
@@ -246,9 +238,7 @@ Curve_to_vlist(vhead, ptlist)
 
 
 void
-Leader_to_vlist(entno, vhead)
-    int entno;
-    struct bu_list *vhead;
+Leader_to_vlist(int entno, struct bu_list *vhead)
 {
     int entity_type;
     int npts, i;
@@ -323,7 +313,7 @@ Leader_to_vlist(entno, vhead)
 	case 6: {
 	    fastf_t delta, cosdel, sindel, rx, ry;
 
-	    delta = bn_pi/10.0;
+	    delta = M_PI/10.0;
 	    cosdel = cos(delta);
 	    sindel = sin(delta);
 	    RT_ADD_VLIST(vhead, tmp2, BN_VLIST_LINE_MOVE);
@@ -464,7 +454,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 		    tmp_ptr = ptr->next;
 		    bu_free((char *)ptr, "Draw_entities: ptr");
-		    ptr = tmp_ptr;;
+		    ptr = tmp_ptr;
 		}
 		break;
 	}
@@ -512,8 +502,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 
 struct views_visible *
-Get_views_visible(entno)
-    int entno;
+Get_views_visible(int entno)
 {
     int entity_type;
     int no_of_views;
@@ -554,11 +543,8 @@ Get_views_visible(entno)
 
 
 void
-Do_view(m, view_vis_list, entno, x, y, ang)
-    struct model *m;
-    struct bu_ptbl *view_vis_list;
-    int entno;
-    fastf_t x, y, ang;
+Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
+	fastf_t x, fastf_t y, fastf_t ang)
 {
     int view_de;
     int entity_type;
@@ -658,9 +644,7 @@ Do_view(m, view_vis_list, entno, x, y, ang)
 
 
 void
-Get_drawing(entno, view_vis_list)
-    int entno;
-    struct bu_ptbl *view_vis_list;
+Get_drawing(int entno, struct bu_ptbl *view_vis_list)
 {
     int entity_type;
     int no_of_views;

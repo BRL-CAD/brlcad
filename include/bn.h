@@ -1,7 +1,7 @@
 /*                            B N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,15 +31,19 @@
  *
  */
 
-#ifndef __BN_H__
-#define __BN_H__
+#ifndef BN_H
+#define BN_H
 
 #include "common.h"
+
+#include <stdio.h> /* For FILE */
 
 __BEGIN_DECLS
 
 /* interface headers */
-#include "bu.h"		/* required for BU_CKMAG */
+#include "bu/magic.h"	/* required for BU_CKMAG */
+#include "bu/vls.h"	/* using bu_vls in some libbn function defs */
+#include "bu/bu_tcl.h"	/* need this as long as libbn is using Tcl */
 #include "vmath.h"	/* required for mat_t, vect_t */
 
 #ifndef BN_EXPORT
@@ -64,8 +68,6 @@ __BEGIN_DECLS
 /** @addtogroup tol */
 /** @{ */
 /**
- * B N _ T O L
- *
  * @brief Support for uniform tolerances
  *
  * A handy way of passing around the tolerance information needed to
@@ -468,29 +470,98 @@ BN_EXPORT extern void bn_encode_hvect(struct bu_vls *vp,
 /* The presence of Tcl_Interp as an arg prevents giving arg list */
 
 /**
- * B N _ T C L _ S E T U P
  *@brief
  * Add all the supported Tcl interfaces to LIBBN routines to
  * the list of commands known by the given interpreter.
  */
-BN_EXPORT extern void bn_tcl_setup();
+BN_EXPORT extern void bn_tcl_setup(Tcl_Interp *interp);
 
 /**
- * B N _ I N I T
  *@brief
- * Allows LIBBN to be dynamically loade to a vanilla tclsh/wish with
+ * Allows LIBBN to be dynamically loaded to a vanilla tclsh/wish with
  * "load /usr/brlcad/lib/libbn.so"
  *
  * The name of this function is specified by TCL.
  */
-BN_EXPORT extern int Bn_Init();
+BN_EXPORT extern int Bn_Init(Tcl_Interp *interp);
 
-/**
- * B N _ M A T _ P R I N T
- */
-BN_EXPORT extern void bn_tcl_mat_print();
+BN_EXPORT extern void bn_tcl_mat_print(Tcl_Interp *interp, const char *title, const mat_t m);
 
 /** @} */
+
+/*----------------------------------------------------------------------*/
+
+
+/* chull.c */
+/*
+ * Routines for the computation of convex hulls in 2D and 3D
+ */
+
+/**
+ * @brief
+ * Melkman's 2D simple polyline O(n) convex hull algorithm
+ *
+ * On-line construction of the convex hull of a simple polyline
+ * Melkman, Avraham A. Information Processing Letters 25.1 (1987): 11-12.
+ *
+ * See also <a href="http://geomalgorithms.com/a12-_hull-3.html">http://geomalgorithms.com/a12-_hull-3.html</a>
+ *
+ * @param[out]	hull convex hull array vertices in ccw orientation (max is n)
+ * @param	polyline The points defining the input polyline, stored with ccw orientation
+ * @param	n the number of points in polyline
+ * @return the number of points in the output hull array
+ */
+BN_EXPORT int bn_polyline_2d_chull(point2d_t** hull, const point2d_t* polyline, int n);
+
+/**
+ * @brief
+ * Find 2D convex hull for unordered co-planar point sets
+ *
+ * The monotone chain algorithm's sorting approach is used to do
+ * the initial ordering of the points:
+ *
+ * Another efficient algorithm for convex hulls in two dimensions.
+ * Andrew, A. M. Information Processing Letters 9.5 (1979): 216-219.
+ *
+ * See also <a href="http://geomalgorithms.com/a10-_hull-1.html">http://geomalgorithms.com/a10-_hull-1.html</a>
+ *
+ * From there, instead of using the monotonic chain hull assembly
+ * step, recognize that the points thus ordered can be viewed as
+ * defining a simple polyline and use Melkman's algorithm for the
+ * hull building.
+ *
+ * The input point array currently uses type point_t, but all Z
+ * values should be zero.
+ *
+ * @param[out]	hull 2D convex hull array vertices in ccw orientation (max is n)
+ * @param	points_2d The input 2d points for which a convex hull will be built
+ * @param	n the number of points in the input set
+ * @return the number of points in the output hull array or zero if error.
+ */
+BN_EXPORT int bn_2d_chull(point2d_t** hull, const point2d_t* points_2d, int n);
+
+/**
+ * @brief
+ * Find 3D coplanar point convex hull for unordered co-planar point sets
+ *
+ * This function assumes an input an array of 3D points which are coplanar
+ * in some arbitrary plane.  This function:
+ *
+ * 1. Finds the plane that fits the points and picks an origin, x-axis and y-axis
+ *    which allow 2D coordinates for all points to be calculated.
+ * 2. Calls 2D routines on the array found by step 1 to get a 2D convex hull
+ * 3. Translates the resultant 2D hull points back into 3D points so the hull array
+ *    contains the bounding hull expressed in the 3D coordinate space of the
+ *    original points.
+ *
+ * @param[out]	hull_3d convex hull array vertices using 3-space coordinates in ccw orientation (max is n)
+ * @param	points_3d The input points for which a convex hull will be built
+ * @param	n the number of points in the input set
+ * @return the number of points in the output hull array
+ */
+BN_EXPORT int bn_3d_coplanar_chull(point_t** hull, const point_t* points_3d, int n);
+
+
 
 
 /*----------------------------------------------------------------------*/
@@ -538,7 +609,6 @@ typedef struct bn_complex {
 	(ap)->im = (cp)->re * (bp)->im + (cp)->im * (bp)->re; }
 
 /**
- * B N _ C X _ D I V
  *@brief
  * Divide one complex by another
  *
@@ -549,7 +619,6 @@ BN_EXPORT extern void bn_cx_div(bn_complex_t *ap,
 				const bn_complex_t *bp);
 
 /**
- * B N _ C X _ S Q R T
  *@brief
  * Compute square root of complex number
  *
@@ -572,30 +641,19 @@ BN_EXPORT extern void bn_cx_sqrt(bn_complex_t *op,
 
 BN_EXPORT extern const mat_t bn_mat_identity;
 
-/**
- * B N _ M A T _ P R I N T
- */
 BN_EXPORT extern void bn_mat_print(const char *title,
 				   const mat_t m);
 
-/**
- *
- */
 BN_EXPORT extern void bn_mat_print_guts(const char *title,
 					const mat_t m,
 					char *buf,
 					int buflen);
 
-/**
- * B N _ M A T _ P R I N T _ V L S
- */
 BN_EXPORT extern void bn_mat_print_vls(const char *title,
 				       const mat_t m,
 				       struct bu_vls *vls);
 
 /**
- * B N _ A T A N 2
- *
  * A wrapper for the system atan2().  On the Silicon Graphics, and
  * perhaps on others, x==0 incorrectly returns infinity.
  */
@@ -647,8 +705,6 @@ BN_EXPORT extern double bn_atan2(double x, double y);
 
 
 /**
- * B N _ M A T _ M U L
- *
  * Multiply matrix "a" by "b" and store the result in "o".
  *
  * This is different from multiplying "b" by "a" (most of the time!)
@@ -659,8 +715,6 @@ BN_EXPORT extern void bn_mat_mul(mat_t o,
 				 const mat_t b);
 
 /**
- * B N _ M A T _ M U L 2
- *
  * o = i * o
  *
  * A convenience wrapper for bn_mat_mul() to update a matrix in place.
@@ -670,8 +724,6 @@ BN_EXPORT extern void bn_mat_mul2(const mat_t i,
 				  mat_t o);
 
 /**
- * B N _ M A T _ M U L 3
- *
  * o = a * b * c
  *
  * The output matrix may be the same as 'b' or 'c', but may not be
@@ -683,8 +735,6 @@ BN_EXPORT extern void bn_mat_mul3(mat_t o,
 				  const mat_t c);
 
 /**
- * B N _ M A T _ M U L 4
- *
  * o = a * b * c * d
  *
  * The output matrix may be the same as any input matrix.
@@ -696,8 +746,6 @@ BN_EXPORT extern void bn_mat_mul4(mat_t o,
 				  const mat_t d);
 
 /**
- * B N _ M A T X V E C
- *
  * Multiply the matrix "im" by the vector "iv" and store the result in
  * the vector "ov".  Note this is post-multiply, and operates on
  * 4-tuples.  Use MAT4X3VEC() to operate on 3-tuples.
@@ -707,8 +755,6 @@ BN_EXPORT extern void bn_matXvec(hvect_t ov,
 				 const hvect_t iv);
 
 /**
- * B N _ M A T _ I N V
- *
  * The matrix pointed at by "input" is inverted and stored in the area
  * pointed at by "output".
  *
@@ -718,8 +764,6 @@ BN_EXPORT extern void bn_mat_inv(mat_t output,
 				 const mat_t input);
 
 /**
- * B N _ M A T _ I N V E R S E
- *
  * The matrix pointed at by "input" is inverted and stored in the area
  * pointed at by "output".
  *
@@ -734,8 +778,6 @@ BN_EXPORT extern int bn_mat_inverse(mat_t output,
 				    const mat_t input);
 
 /**
- * B N _ V T O H _ M O V E
- *
  * Takes a pointer to a [x, y, z] vector, and a pointer to space for a
  * homogeneous vector [x, y, z, w], and builds [x, y, z, 1].
  */
@@ -743,8 +785,6 @@ BN_EXPORT extern void bn_vtoh_move(vect_t h,
 				   const vect_t v);
 
 /**
- * B N _ H T O V _ M O V E
- *
  * Takes a pointer to [x, y, z, w], and converts it to an ordinary
  * vector [x/w, y/w, z/w].  Optimization for the case of w==1 is
  * performed.
@@ -754,15 +794,10 @@ BN_EXPORT extern void bn_vtoh_move(vect_t h,
 BN_EXPORT extern void bn_htov_move(vect_t v,
 				   const vect_t h);
 
-/**
- * B N _ M A T _ T R N
- */
 BN_EXPORT extern void bn_mat_trn(mat_t om,
 				 const mat_t im);
 
 /**
- * B N _ M A T _ A E
- *
  * Compute a 4x4 rotation matrix given Azimuth and Elevation.
  *
  * Azimuth is +X, Elevation is +Z, both in degrees.
@@ -774,8 +809,6 @@ BN_EXPORT extern void bn_mat_ae(mat_t m,
 				double elev);
 
 /**
- * B N _ A E _ V E C
- *
  * Find the azimuth and elevation angles that correspond to the
  * direction (not including twist) given by a direction vector.
  */
@@ -784,8 +817,6 @@ BN_EXPORT extern void bn_ae_vec(fastf_t *azp,
 				const vect_t v);
 
 /**
- * B N _ A E T _ V E C
- *
  * Find the azimuth, elevation, and twist from two vectors.  Vec_ae is
  * in the direction of view (+z in mged view) and vec_twist points to
  * the viewers right (+x in mged view).  Accuracy (degrees) is used to
@@ -800,8 +831,6 @@ BN_EXPORT extern void bn_aet_vec(fastf_t *az,
 				 fastf_t accuracy);
 
 /**
- * B N _ V E C _ A E
- *
  * Find a unit vector from the origin given azimuth and elevation.
  */
 BN_EXPORT extern void bn_vec_ae(vect_t vec,
@@ -809,8 +838,6 @@ BN_EXPORT extern void bn_vec_ae(vect_t vec,
 				fastf_t el);
 
 /**
- * B N _ V E C _ A E D
- *
  * Find a vector from the origin given azimuth, elevation, and distance.
  */
 BN_EXPORT extern void bn_vec_aed(vect_t vec,
@@ -819,8 +846,6 @@ BN_EXPORT extern void bn_vec_aed(vect_t vec,
 				 fastf_t dist);
 
 /**
- * B N _ M A T _ A N G L E S
- *
  * This routine builds a Homogeneous rotation matrix, given alpha,
  * beta, and gamma as angles of rotation, in degrees.
  *
@@ -835,8 +860,6 @@ BN_EXPORT extern void bn_mat_angles(mat_t mat,
 				    double beta, double ggamma);
 
 /**
- * B N _ M A T _ A N G L E S _ R A D
- *
  * This routine builds a Homogeneous rotation matrix, given alpha,
  * beta, and gamma as angles of rotation, in radians.
  *
@@ -852,8 +875,6 @@ BN_EXPORT extern void bn_mat_angles_rad(mat_t mat,
 					double ggamma);
 
 /**
- * B N _ E I G E N 2 X 2
- *
  * Find the eigenvalues and eigenvectors of a symmetric 2x2 matrix.
  * (a b)
  * (b c)
@@ -870,8 +891,6 @@ BN_EXPORT extern void bn_eigen2x2(fastf_t *val1,
 				  fastf_t c);
 
 /**
- * B N _ V E C _ P E R P
- *
  * Given a vector, create another vector which is perpendicular to it.
  * The output vector will have unit length only if the input vector
  * did.
@@ -882,8 +901,6 @@ BN_EXPORT extern void bn_vec_perp(vect_t new_vec,
 				  const vect_t old_vec);
 
 /**
- * B N _ M A T _ F R O M T O
- *
  * Given two vectors, compute a rotation matrix that will transform
  * space by the angle between the two.  There are many candidate
  * matrices.
@@ -898,8 +915,6 @@ BN_EXPORT extern void bn_mat_fromto(mat_t m,
 				    const struct bn_tol *tol);
 
 /**
- * B N _ M A T _ X R O T
- *
  * Given the sin and cos of an X rotation angle, produce the rotation
  * matrix.
  */
@@ -908,8 +923,6 @@ BN_EXPORT extern void bn_mat_xrot(mat_t m,
 				  double cosx);
 
 /**
- * B N _ M A T _ Y R O T
- *
  * Given the sin and cos of a Y rotation angle, produce the rotation
  * matrix.
  */
@@ -918,8 +931,6 @@ BN_EXPORT extern void bn_mat_yrot(mat_t m,
 				  double cosy);
 
 /**
- * B N _ M A T _ Z R O T
- *
  * Given the sin and cos of a Z rotation angle, produce the rotation
  * matrix.
  */
@@ -928,8 +939,6 @@ BN_EXPORT extern void bn_mat_zrot(mat_t m,
 				  double cosz);
 
 /**
- * B N _ M A T _ L O O K A T
- *
  * Given a direction vector D of unit length, product a matrix which
  * rotates that vector D onto the -Z axis.  This matrix will be
  * suitable for use as a "model2view" matrix.
@@ -954,8 +963,6 @@ BN_EXPORT extern void bn_mat_lookat(mat_t rot,
 				    int yflip);
 
 /**
- * B N _ V E C _ O R T H O
- *
  * Given a vector, create another vector which is perpendicular to it,
  * and with unit length.  This algorithm taken from Gift's arvec.f; a
  * faster algorithm may be possible.
@@ -966,8 +973,6 @@ BN_EXPORT extern void bn_vec_ortho(vect_t out,
 				   const vect_t in);
 
 /**
- * B N _ M A T _ S C A L E _ A B O U T _ P T
- *
  * Build a matrix to scale uniformly around a given point.
  *
  * @return -1 if scale is too small.
@@ -980,8 +985,6 @@ BN_EXPORT extern int bn_mat_scale_about_pt(mat_t mat,
 					   const double scale);
 
 /**
- * B N _ M A T _ X F O R M _ A B O U T _ P T
- *
  * Build a matrix to apply arbitrary 4x4 transformation around a given
  * point.
  */
@@ -990,8 +993,6 @@ BN_EXPORT extern void bn_mat_xform_about_pt(mat_t mat,
 					    const point_t pt);
 
 /**
- * B N _ M A T _ I S _ E Q U A L
- *
  * @return 0 When matrices are not equal
  * @return 1 When matrices are equal
  */
@@ -1000,8 +1001,6 @@ BN_EXPORT extern int bn_mat_is_equal(const mat_t a,
 				     const struct bn_tol *tol);
 
 /**
- * B N _ M A T _ I S _ I D E N T I T Y
- *
  * This routine is intended for detecting identity matrices read in
  * from ascii or binary files, where the numbers are pure ones or
  * zeros.  This routine is *not* intended for tolerance-based
@@ -1015,8 +1014,6 @@ BN_EXPORT extern int bn_mat_is_equal(const mat_t a,
 BN_EXPORT extern int bn_mat_is_identity(const mat_t m);
 
 /**
- * B N _ M A T _ A R B _ R O T
- *
  * Construct a transformation matrix for rotation about an arbitrary
  * axis.  The axis is defined by a point (pt) and a unit direction
  * vector (dir).  The angle of rotation is "ang"
@@ -1029,16 +1026,12 @@ BN_EXPORT extern void bn_mat_arb_rot(mat_t m,
 				     const fastf_t ang);
 
 /**
- * B N _ M A T _ D U P
- *
  * Return a pointer to a copy of the matrix in dynamically allocated
  * memory.
  */
 BN_EXPORT extern matp_t bn_mat_dup(const mat_t in);
 
 /**
- * B N _ M A T _ C K
- *
  * Check to ensure that a rotation matrix preserves axis
  * perpendicularity.  Note that not all matrices are rotation
  * matrices.
@@ -1051,30 +1044,22 @@ BN_EXPORT extern int bn_mat_ck(const char *title,
 			       const mat_t m);
 
 /**
- * B N _ M A T _ D E T 3
- *
  * Calculates the determinant of the 3X3 "rotation" part of the passed
  * matrix.
  */
 BN_EXPORT extern fastf_t bn_mat_det3(const mat_t m);
 
 /**
- * B N _ M A T _ D E T E R M I N A N T
- *
  * Calculates the determinant of the 4X4 matrix
  */
 BN_EXPORT extern fastf_t bn_mat_determinant(const mat_t m);
 
 /**
- * B N _ M A T _ I S _ N O N _ U N I F
- *
  * FIXME: make tolerance configurable
  */
 BN_EXPORT extern int bn_mat_is_non_unif(const mat_t m);
 
 /**
- * B N _ W R T _ P O I N T _ D I R E C
- *
  * Given a model-space transformation matrix "change",
  * return a matrix which applies the change with-respect-to
  * given "point" and "direc".
@@ -1286,7 +1271,7 @@ BN_EXPORT extern void bn_gauss_free(struct bn_gauss *p);
  *	    a variance of 1.0.
  *
  * @par Calls
- *	BN_UNIF_CIRCLE to get to uniform random number whos radius is
+ *	BN_UNIF_CIRCLE to get to uniform random number whose radius is
  *	<= 1.0. I.e. sqrt(v1*v1 + v2*v2) <= 1.0
  *	BN_UNIF_CIRCLE is a macro which can call bn_unif_double_fill.
  *
@@ -1350,7 +1335,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * lattice points.  The functions should be evaluated at non-integer
  * locations for their nature to be realized.
  *
- * Conatins contributed code from:
+ * Contains contributed code from:
  * F. Kenton Musgrave
  * Robert Skinner
  *
@@ -1360,7 +1345,7 @@ BN_EXPORT extern double bn_gauss_fill(struct bn_gauss *p);
  * fractal noise support
  */
 
-BN_EXPORT extern void bn_noise_init();
+BN_EXPORT extern void bn_noise_init(void);
 
 /**
  *@brief
@@ -1406,7 +1391,7 @@ BN_EXPORT extern void bn_noise_vec(point_t point,
  * @li s.d.  0.306642
  * @li Var 0.0940295
  *
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1437,7 +1422,7 @@ BN_EXPORT extern double bn_noise_fbm(point_t point,
  * s.d. 0.174796
  * Var  0.0305536
  @endcode
- * The function call pow() is relatively expensive.  Therfore, this
+ * The function call pow() is relatively expensive.  Therefore, this
  * function pre-computes and saves the spectral weights in a table for
  * re-use in successive invocations.
  */
@@ -1468,6 +1453,76 @@ BN_EXPORT extern double bn_noise_ridged(point_t point,
 					double octaves,
 					double offset);
 
+/*----------------------------------------------------------------------*/
+
+
+/* obr.c */
+/*
+ * Routines for the computation of oriented bounding rectangles 2D and 3D
+ */
+
+
+/**
+ *@brief
+ * Uses the Rotating Calipers algorithm to find the
+ * minimum oriented bounding rectangle for a set of 2D
+ * points.  Returns 0 on success.
+ *
+ * The box will be described by a center point and 2
+ * vectors:
+ *
+ * \verbatim
+ * ----------------------------
+ * |            ^             |
+ * |            |             |
+ * |         v  |             |
+ * |            |             |
+ * |            *------------>|
+ * |         center     u     |
+ * |                          |
+ * |                          |
+ * ----------------------------
+ * \endverbatim
+ *
+ * Note that the box is oriented, and thus not necessarily axis
+ * aligned (u and v are perpendicular, but not necessarily parallel
+ * with the coordinate space V=0 and U=0 axis vectors.)
+ *
+ * @param[out] center	center of oriented bounding rectangle
+ * @param[out] u	vector in the direction of obr x with
+ * 			vector length of 0.5 * obr length
+ * @param[out] v	vector in the obr y direction with vector
+ * 			length of 0.5 * obr width
+ * @param points_2d	array of 2D points
+ * @param pnt_cnt	number of points in pnts array
+ */
+BN_EXPORT extern int bn_2d_obr(point2d_t *center,
+			       vect2d_t *u,
+			       vect2d_t *v,
+			       const point2d_t *points_2d,
+			       int pnt_cnt);
+
+/**
+ *@brief
+ * Uses the Rotating Calipers algorithm to find the
+ * minimum oriented bounding rectangle for a set of coplanar 3D
+ * points.  Returns 0 on success.
+ *
+ * @param[out] center	center of oriented bounding rectangle
+ * @param[out] v1	vector in the direction of obr x with
+ * 			vector length of 0.5 * obr length
+ * @param[out] v2	vector in the obr y direction with vector
+ * 			length of 0.5 * obr width
+ * @param points_3d	array of coplanar 3D points
+ * @param pnt_cnt	number of points in pnts array
+ */
+BN_EXPORT extern int bn_3d_coplanar_obr(point_t *center,
+			       vect_t *v1,
+			       vect_t *v2,
+			       const point_t *points_3d,
+			       int pnt_cnt);
+
+
 
 /*----------------------------------------------------------------------*/
 
@@ -1484,7 +1539,7 @@ BN_EXPORT extern double bn_noise_ridged(point_t point,
  */
 
 
-/** B N _ D I S T S Q _ L I N E 3 _ L I N E 3
+/**
  *@brief
  * Calculate the square of the distance of closest approach for two
  * lines.
@@ -1603,7 +1658,6 @@ BN_EXPORT extern int bn_dist_line3_line3(fastf_t dist[2],
 					 const struct bn_tol *tol);
 
 /**
- * B N _ D I S T _ P T 3 _ L S E G 3
  *@brief
  * Find the distance from a point P to a line segment described by the
  * two endpoints A and B, and the point of closest approach (PCA).
@@ -1644,8 +1698,6 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
 /**
  * PRIVATE: This is a new API and should be considered unpublished.
  *
- * B N _ D I S T S Q _ P T 3 _ L S E G 3 _ v 2
- *
  * Find the square of the distance from a point P to a line segment described
  * by the two endpoints A and B.
  *
@@ -1661,7 +1713,7 @@ BN_EXPORT extern int bn_dist_pt3_lseg3(fastf_t *dist,
  *		A      PCA	B
  *
  * There are six distinct cases, with these return codes -
- * Return code presidence: 1, 2, 0, 3, 4, 5
+ * Return code precedence: 1, 2, 0, 3, 4, 5
  *
  *	0	P is within tolerance of lseg AB.  *dist =  0.
  *	1	P is within tolerance of point A.  *dist = 0.
@@ -1686,7 +1738,6 @@ BN_EXPORT extern int bn_distsq_pt3_lseg3_v2(fastf_t *distsq,
 					    const struct bn_tol *tol);
 
 /**
- * B N _ 3 P T S _ C O L L I N E A R
  * @brief
  * Check to see if three points are collinear.
  *
@@ -1702,8 +1753,6 @@ BN_EXPORT extern int bn_3pts_collinear(point_t a,
 				       const struct bn_tol *tol);
 
 /**
- * B N _ P T 3 _ P T 3 _ E Q U A L
- *
  * @return 1	if the two points are equal, within the tolerance
  * @return 0	if the two points are not "the same"
  */
@@ -1712,7 +1761,6 @@ BN_EXPORT extern int bn_pt3_pt3_equal(const point_t a,
 				      const struct bn_tol *tol);
 
 /**
- * B N _ D I S T _ P T 2 _ L S E G 2
  *@brief
  * Find the distance from a point P to a line segment described by the
  * two endpoints A and B, and the point of closest approach (PCA).
@@ -1748,7 +1796,6 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
 				       const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L S E G 3 _ L S E G 3
  *@brief
  * Intersect two 3D line segments, defined by two points and two
  * vectors.  The vectors are unlikely to be unit length.
@@ -1756,8 +1803,8 @@ BN_EXPORT extern int bn_dist_pt2_lseg2(fastf_t *dist_sq,
  *
  * @return -3	missed
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param[out] dist
@@ -1797,8 +1844,6 @@ BN_EXPORT extern int bn_lseg3_lseg3_parallel(const point_t sg1pt1, const point_t
 					     const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L I N E 3 _ L I N E 3
- *
  * Intersect two line segments, each in given in parametric form:
  *
  * X = p0 + pdist * pdir_i   (i.e. line p0->p1)
@@ -1846,9 +1891,8 @@ BN_EXPORT extern int bn_isect_line3_line3(fastf_t *s, fastf_t *t,
 					      const struct bn_tol *tol);
 
 /**
- * B N _ 2 L I N E 3 _ C O L I N E A R
  * @brief
- * Returns non-zero if the 3 lines are colinear to within tol->dist
+ * Returns non-zero if the 3 lines are collinear to within tol->dist
  * over the given distance range.
  *
  * Range should be at least one model diameter for most applications.
@@ -1864,7 +1908,6 @@ BN_EXPORT extern int bn_2line3_colinear(const point_t p1,
 					const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ P T 2 _ L S E G 2
  * @brief
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
@@ -1897,7 +1940,6 @@ BN_EXPORT extern int bn_isect_pt2_lseg2(fastf_t *dist,
 					const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L I N E 2 _ L S E G 2
  *@brief
  * Intersect a line in parametric form:
  *
@@ -1941,14 +1983,13 @@ BN_EXPORT extern int bn_isect_line2_lseg2(fastf_t *dist,
 					  const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L S E G 2 _ L S E G 2
  *@brief
  * Intersect two 2D line segments, defined by two points and two
  * vectors.  The vectors are unlikely to be unit length.
  *
  * @return -2	missed (line segments are parallel)
- * @return -1	missed (colinear and non-overlapping)
- * @return 0	hit (line segments colinear and overlapping)
+ * @return -1	missed (collinear and non-overlapping)
+ * @return 0	hit (line segments collinear and overlapping)
  * @return 1	hit (normal intersection)
  *
  * @param dist  The value at dist[] is set to the parametric distance of the
@@ -1979,8 +2020,6 @@ BN_EXPORT extern int bn_isect_lseg2_lseg2(fastf_t *dist,
 					  const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L I N E 2 _ L I N E 2
- *
  * Intersect two lines, each in given in parametric form:
  @verbatim
 
@@ -2028,7 +2067,6 @@ BN_EXPORT extern int bn_isect_line2_line2(fastf_t *dist,
 					  const struct bn_tol *tol);
 
 /**
- * B N _ D I S T _ P T 3 _ P T 3
  * @brief
  * Returns distance between two points.
  */
@@ -2036,8 +2074,6 @@ BN_EXPORT extern double bn_dist_pt3_pt3(const point_t a,
 					const point_t b);
 
 /**
- * B N _ 3 P T S _ D I S T I N C T
- *
  * Check to see if three points are all distinct, i.e., ensure that
  * there is at least sqrt(dist_tol_sq) distance between every pair of
  * points.
@@ -2051,8 +2087,6 @@ BN_EXPORT extern int bn_3pts_distinct(const point_t a,
 				      const struct bn_tol *tol);
 
 /**
- * B N _ N P T S _ D I S T I N C T
- *
  * Check to see if the points are all distinct, i.e., ensure that
  * there is at least sqrt(dist_tol_sq) distance between every pair of
  * points.
@@ -2065,8 +2099,6 @@ BN_EXPORT extern int bn_npts_distinct(const int npts,
 				      const struct bn_tol *tol);
 
 /**
- * B N _ M K _ P L A N E _ 3 P T S
- *
  * Find the equation of a plane that contains three points.  Note that
  * normal vector created is expected to point out (see vmath.h), so
  * the vector from A to C had better be counter-clockwise (about the
@@ -2100,7 +2132,7 @@ BN_EXPORT extern int bn_npts_distinct(const int npts,
  *
  *  @return 0	OK
  *  @return -1	Failure.  At least two of the points were not distinct,
- *		or all three were colinear.
+ *		or all three were collinear.
  *
  * @param[out]	plane	The plane equation is stored here.
  * @param[in]	a	point 1
@@ -2115,7 +2147,6 @@ BN_EXPORT extern int bn_mk_plane_3pts(plane_t plane,
 				      const struct bn_tol *tol);
 
 /**
- * B N _ M K P O I N T _ 3 P L A N E S
  *@brief
  * Given the description of three planes, compute the point of intersection, if
  * any. The direction vectors of the planes need not be of unit length.
@@ -2149,8 +2180,6 @@ BN_EXPORT extern int bn_mkpoint_3planes(point_t pt,
 					const plane_t c);
 
 /**
- * B N _ I S E C T _ L I N E 3 _ P L A N E
- *
  * Intersect an infinite line (specified in point and direction vector
  * form) with a plane that has an outward pointing normal.  The
  * direction vector need not have unit length.  The first three
@@ -2175,7 +2204,6 @@ BN_EXPORT extern int bn_isect_line3_plane(fastf_t *dist,
 					  const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ 2 P L A N E S
  *@brief
  * Given two planes, find the line of intersection between them, if
  * one exists.  The line of intersection is returned in parametric
@@ -2213,7 +2241,6 @@ BN_EXPORT extern int bn_isect_2lines(fastf_t *t,
 				     const struct bn_tol *tol);
 
 /**
- * B N _ I S E C T _ L I N E _ L S E G
  *@brief
  * Intersect a line in parametric form:
  *
@@ -2251,8 +2278,6 @@ BN_EXPORT extern int bn_isect_line_lseg(fastf_t *t, const point_t p,
 					const struct bn_tol *tol);
 
 /**
- * B N _ D I S T _ L I N E 3_ P T 3
- *@brief
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point.
  *
@@ -2271,8 +2296,6 @@ BN_EXPORT extern double bn_dist_line3_pt3(const point_t pt,
 					  const point_t a);
 
 /**
- * B N _ D I S T S Q _ L I N E 3 _ P T 3
- *
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the square of the closest distance between the line and the
  * point.
@@ -2287,7 +2310,6 @@ BN_EXPORT extern double bn_distsq_line3_pt3(const point_t pt,
 					    const point_t a);
 
 /**
- * B N _ D I S T _ L I N E _ O R I G I N
  *@brief
  * Given a parametric line defined by PT + t * DIR, return the closest
  * distance between the line and the origin.
@@ -2300,7 +2322,6 @@ BN_EXPORT extern double bn_dist_line_origin(const point_t pt,
 					    const vect_t dir);
 
 /**
- * B N _ D I S T _ L I N E 2 _ P O I N T 2
  *@brief
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point.
@@ -2314,7 +2335,6 @@ BN_EXPORT extern double bn_dist_line2_point2(const point_t pt,
 					     const point_t a);
 
 /**
- * B N _ D I S T S Q _ L I N E 2 _ P O I N T 2
  *@brief
  * Given a parametric line defined by PT + t * DIR and a point A,
  * return the closest distance between the line and the point,
@@ -2330,7 +2350,6 @@ BN_EXPORT extern double bn_distsq_line2_point2(const point_t pt,
 					       const point_t a);
 
 /**
- * B N _ A R E A _ O F _ T R I A N G L E
  *@brief
  * Returns the area of a triangle. Algorithm by Jon Leech 3/24/89.
  */
@@ -2339,7 +2358,6 @@ BN_EXPORT extern double bn_area_of_triangle(const point_t a,
 					    const point_t c);
 
 /**
- * B N _ I S E C T _ P T _ L S E G
  *@brief
  * Intersect a point P with the line segment defined by two distinct
  * points A and B.
@@ -2384,7 +2402,6 @@ BN_EXPORT extern double bn_dist_pt_lseg(point_t pca,
 					const struct bn_tol *tol);
 
 /**
- * B N _ R O T A T E _ B B O X
  *@brief
  * Transform a bounding box (RPP) by the given 4x4 matrix.  There are
  * 8 corners to the bounding RPP.  Each one needs to be transformed
@@ -2398,7 +2415,6 @@ BN_EXPORT extern void bn_rotate_bbox(point_t omin,
 				     const point_t imax);
 
 /**
- * B N _ R O T A T E _ P L A N E
  *@brief
  * Transform a plane equation by the given 4x4 matrix.
  */
@@ -2407,7 +2423,6 @@ BN_EXPORT extern void bn_rotate_plane(plane_t oplane,
 				      const plane_t iplane);
 
 /**
- * B N _ C O P L A N A R
  *@brief
  * Test if two planes are identical.  If so, their dot products will
  * be either +1 or -1, with the distance from the origin equal in
@@ -2423,8 +2438,6 @@ BN_EXPORT extern int bn_coplanar(const plane_t a,
 				 const struct bn_tol *tol);
 
 /**
- * B N _ A N G L E _ M E A S U R E
- *
  * Using two perpendicular vectors (x_dir and y_dir) which lie in the
  * same plane as 'vec', return the angle (in radians) of 'vec' from
  * x_dir, going CCW around the perpendicular x_dir CROSS y_dir.
@@ -2457,7 +2470,6 @@ BN_EXPORT extern double bn_angle_measure(vect_t vec,
 					 const vect_t y_dir);
 
 /**
- * B N _ D I S T _ P T 3 _ A L O N G _ L I N E 3
  *@brief
  * Return the parametric distance t of a point X along a line defined
  * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
@@ -2469,7 +2481,6 @@ BN_EXPORT extern double bn_dist_pt3_along_line3(const point_t p,
 						const point_t x);
 
 /**
- * B N _ D I S T _ P T 2 _ A L O N G _ L I N E 2
  *@brief
  * Return the parametric distance t of a point X along a line defined
  * as a ray, i.e. solve X = P + t * D.  If the point X does not lie on
@@ -2491,8 +2502,6 @@ BN_EXPORT extern int bn_between(double left,
 				const struct bn_tol *tol);
 
 /**
- * B N _ D O E S _ R A Y _ I S E C T _ T R I
- *
  * @return 0	No intersection
  * @return 1	Intersection, 'inter' has intersect point.
  */
@@ -2504,7 +2513,6 @@ BN_EXPORT extern int bn_does_ray_isect_tri(const point_t pt,
 					   point_t inter);
 
 /**
- * B N _ H L F _ C L A S S
  *@brief
  * Classify a halfspace, specified by its plane equation, against a
  * bounding RPP.
@@ -2525,7 +2533,6 @@ BN_EXPORT extern int bn_hlf_class(const plane_t half_eqn,
 
 
 /**
- * B N _ I S E C T _ P L A N E S
  *@brief
  * Calculates the point that is the minimum distance from all the
  * planes in the "planes" array.  If the planes intersect at a single
@@ -2630,7 +2637,6 @@ BN_EXPORT extern struct bn_poly *bn_poly_sub(struct bn_poly *diff,
 					     const struct bn_poly *poly2);
 
 /**
- * s y n D i v
  * @brief
  * Divides any polynomial into any other polynomial using synthetic
  * division.  Both polynomials must have real coefficients.
@@ -2641,7 +2647,6 @@ BN_EXPORT extern void bn_poly_synthetic_division(struct bn_poly *quo,
 						 const struct bn_poly *dvsor);
 
 /**
- * b n _ p o l y _ q u a d r a t i c _ r o o t s
  *@brief
  * Uses the quadratic formula to find the roots (in `complex' form) of
  * any quadratic equation with real coefficients.
@@ -2653,7 +2658,6 @@ BN_EXPORT extern int bn_poly_quadratic_roots(struct bn_complex roots[],
 					     const struct bn_poly *quadrat);
 
 /**
- * b n _ p o l y _ c u b i c _ r o o t s
  *@brief
  * Uses the cubic formula to find the roots (in `complex' form)
  * of any cubic equation with real coefficients.
@@ -2686,7 +2690,6 @@ BN_EXPORT extern int bn_poly_cubic_roots(struct bn_complex roots[],
 					 const struct bn_poly *eqn);
 
 /**
- * b n _ p o l y _ q u a r t i c _ r o o t s
  *@brief
  * Uses the quartic formula to find the roots (in `complex' form)
  * of any quartic equation with real coefficients.
@@ -2719,16 +2722,12 @@ BN_EXPORT extern int bn_poly_roots(bn_poly_t *eqn,
 				   const char *name);
 
 /**
- * b n _ p r _ p o l y
- *
  * Print out the polynomial.
  */
 BN_EXPORT extern void bn_pr_poly(const char *title,
 				 const struct bn_poly *eqn);
 
 /**
- * b n _ p r _ r o o t s
- *
  * Print out the roots of a given polynomial (complex numbers)
  */
 BN_EXPORT extern void bn_pr_roots(const char *title,
@@ -2805,7 +2804,6 @@ typedef struct bn_multipoly {
 
 
 /**
- *			Q U A T _ M A T 2 Q U A T
  *@brief
  *
  *  Convert Matrix to Quaternion.
@@ -2814,7 +2812,6 @@ BN_EXPORT extern void quat_mat2quat(quat_t quat,
 				    const mat_t mat);
 
 /**
- *			Q U A T _ Q U A T 2 M A T
  *@brief
  *
  *  Convert Quaternion to Matrix.
@@ -2826,7 +2823,6 @@ BN_EXPORT extern void quat_quat2mat(mat_t mat,
 				    const quat_t quat);
 
 /**
- *			Q U A T _ D I S T A N C E
  *@brief
  *
  * Gives the euclidean distance between two quaternions.
@@ -2836,7 +2832,6 @@ BN_EXPORT extern double quat_distance(const quat_t q1,
 				      const quat_t q2);
 
 /**
- *			Q U A T _ D O U B L E
  *@brief
  * Gives the quaternion point representing twice the rotation
  *   from q1 to q2.
@@ -2848,7 +2843,6 @@ BN_EXPORT extern void quat_double(quat_t qout,
 				  const quat_t q2);
 
 /**
- *			Q U A T _ B I S E C T
  *@brief
  * Gives the bisector of quaternions q1 and q2.
  * (Could be done with quat_slerp and factor 0.5)
@@ -2859,7 +2853,6 @@ BN_EXPORT extern void quat_bisect(quat_t qout,
 				  const quat_t q2);
 
 /**
- *			Q U A T _ S L E R P
  *@brief
  * Do Spherical Linear Interpolation between two unit quaternions
  *  by the given factor.
@@ -2873,7 +2866,6 @@ BN_EXPORT extern void quat_slerp(quat_t qout,
 				 double f);
 
 /**
- *			Q U A T _ S B E R P
  *@brief
  * Spherical Bezier Interpolate between four quaternions by amount f.
  * These are intended to be used as start and stop quaternions along
@@ -2890,7 +2882,6 @@ BN_EXPORT extern void quat_sberp(quat_t qout,
 				 double f);
 
 /**
- *			Q U A T _ M A K E _ N E A R E S T
  *@brief
  *  Set the quaternion q1 to the quaternion which yields the
  *   smallest rotation from q2 (of the two versions of q1 which
@@ -2902,14 +2893,10 @@ BN_EXPORT extern void quat_sberp(quat_t qout,
 BN_EXPORT extern void quat_make_nearest(quat_t q1,
 					const quat_t q2);
 
-/**
- *			Q U A T _ P R I N T
- */
 BN_EXPORT extern void quat_print(const char *title,
 				 const quat_t quat);
 
 /**
- *			Q U A T _ E X P
  *@brief
  *  Exponentiate a quaternion, assuming that the scalar part is 0.
  *  Code by Ken Shoemake.
@@ -2918,7 +2905,6 @@ BN_EXPORT extern void quat_exp(quat_t out,
 			       const quat_t in);
 
 /**
- *			Q U A T _ L O G
  *@brief
  *  Take the natural logarithm of a unit quaternion.
  *  Code by Ken Shoemake.
@@ -3028,11 +3014,9 @@ BN_EXPORT extern float bn_rand_halftab[BN_RANDHALFTABSIZE];
 
 #define BN_SINTABSIZE 2048
 
-BN_EXPORT extern double bn_sin_scale;
-
 #define bn_tab_sin(_a)	(((_a) > 0) ? \
-			 (bn_sin_table[(int)((0.5+ (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]) :\
-			 (-bn_sin_table[(int)((0.5- (_a)*bn_sin_scale))&(BN_SINTABSIZE-1)]))
+			 (bn_sin_table[(int)((0.5+ (_a)*(BN_SINTABSIZE / M_2PI)))&(BN_SINTABSIZE-1)]) :\
+			 (-bn_sin_table[(int)((0.5- (_a)*(BN_SINTABSIZE / M_2PI)))&(BN_SINTABSIZE-1)]))
 
 /**
  * table of floating point sine values in the closed (i.e. inclusive)
@@ -3041,12 +3025,11 @@ BN_EXPORT extern double bn_sin_scale;
 BN_EXPORT extern const float bn_sin_table[BN_SINTABSIZE];
 
 /**
- *			M A T H T A B _ C O N S T A N T
  *@brief
  *  For benchmarking purposes, make the random number table predictable.
  *  Setting to all zeros keeps dithered values at their original values.
  */
-BN_EXPORT extern void bn_mathtab_constant();
+BN_EXPORT extern void bn_mathtab_constant(void);
 
 /** @} */
 
@@ -3077,7 +3060,7 @@ BN_EXPORT extern void bn_mathtab_constant();
  *
  */
 
-BN_EXPORT extern double bn_randmt();
+BN_EXPORT extern double bn_randmt(void);
 BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
 
 /** @} */
@@ -3151,7 +3134,7 @@ BN_EXPORT extern void bn_randmt_seed(unsigned long seed);
  *
  *  Rather than define all of these routines explicitly, we define
  *  2 macros "decompose" and "reconstruct" which embody the structure of
- *  the function (which is common to all of them).  We then instatiate
+ *  the function (which is common to all of them).  We then instantiate
  *  these macros once for each of the data types.  It's ugly, but it
  *  assures that a change to the structure of one operation type
  *  (decompose or reconstruct) occurs for all data types.
@@ -3452,75 +3435,9 @@ BN_EXPORT extern void bn_wlt_haar_2d_long_reconstruct2(long *tbuf,
 /*----------------------------------------------------------------------*/
 
 
-/** @file libbn/globals.c
- *
- * Global variables in LIBBN.
- *
- * New global variables are discouraged and refactoring in ways that
- * eliminates existing global variables without reducing functionality
- * is always encouraged.
- *
- */
-
-/**
- * pi
- */
-BN_EXPORT extern const fastf_t bn_pi;
-
-/**
- * pi*2
- */
-BN_EXPORT extern const fastf_t bn_twopi;
-
-/**
- * pi/2
- */
-BN_EXPORT extern const fastf_t bn_halfpi;
-
-/**
- * pi/4
- */
-BN_EXPORT extern const fastf_t bn_quarterpi;
-
-/**
- * 1/pi
- */
-BN_EXPORT extern const fastf_t bn_invpi;
-
-/**
- * 1/(pi*2)
- */
-BN_EXPORT extern const fastf_t bn_inv2pi;
-
-/**
- * 1/(pi*4)
- */
-BN_EXPORT extern const fastf_t bn_inv4pi;
-
-/**
- * 1.0/255.0
- */
-BN_EXPORT extern const fastf_t bn_inv255;
-
-/**
- * (pi*2)/360
- */
-BN_EXPORT extern const fastf_t bn_degtorad;
-
-/**
- * 360/(pi*2)
- */
-BN_EXPORT extern const fastf_t bn_radtodeg;
-
-
-/*----------------------------------------------------------------------*/
-
-
 /* tabdata.c */
 
 /**
- * T A B D A T A
- *
  * Data structures to assist with recording many sets of data sampled
  * along the same set of independent variables.
  *
@@ -3611,23 +3528,13 @@ struct bn_tabdata {
  */
 
 
-/*
- *			B N _ T A B L E _ F R E E
- */
 BN_EXPORT extern void bn_table_free(struct bn_table *tabp);
 
-/*
- *			B N _ T A B D A T A _ F R E E
- */
 BN_EXPORT extern void bn_tabdata_free(struct bn_tabdata *data);
 
-/*
- *			B N _ C K _ T A B L E
- */
 BN_EXPORT extern void bn_ck_table(const struct bn_table *tabp);
 
 /*
- *			B N _ T A B L E _ M A K E _ U N I F O R M
  *@brief
  *  Set up an independent "table margin" from 'first' to 'last',
  *  inclusive, using 'num' uniformly spaced samples.  Num >= 1.
@@ -3637,7 +3544,6 @@ BN_EXPORT extern struct bn_table *bn_table_make_uniform(size_t num,
 							double last);
 
 /*
- *			B N _ T A B D A T A _ A D D
  *@brief
  *  Sum the values from two data tables.
  */
@@ -3646,7 +3552,6 @@ BN_EXPORT extern void bn_tabdata_add(struct bn_tabdata *out,
 				     const struct bn_tabdata *in2);
 
 /*
- *			B N _ T A B D A T A _ M U L
  *@brief
  *  Element-by-element multiply the values from two data tables.
  */
@@ -3655,7 +3560,6 @@ BN_EXPORT extern void bn_tabdata_mul(struct bn_tabdata *out,
 				     const struct bn_tabdata *in2);
 
 /*
- *			B N _ T A B D A T A _ M U L 3
  *@brief
  *  Element-by-element multiply the values from three data tables.
  */
@@ -3665,9 +3569,8 @@ BN_EXPORT extern void bn_tabdata_mul3(struct bn_tabdata *out,
 				      const struct bn_tabdata *in3);
 
 /*
- *			B N _ T A B D A T A _ I N C R _ M U L 3 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from three data tables and a scalor.
+ *  Element-by-element multiply the values from three data tables and a scalar.
  *
  *	out += in1 * in2 * in3 * scale
  */
@@ -3678,9 +3581,8 @@ BN_EXPORT extern void bn_tabdata_incr_mul3_scale(struct bn_tabdata *out,
 						 double scale);
 
 /*
- *			B N _ T A B D A T A _ I N C R _ M U L 2 _ S C A L E
  *@brief
- *  Element-by-element multiply the values from two data tables and a scalor.
+ *  Element-by-element multiply the values from two data tables and a scalar.
  *
  *	out += in1 * in2 * scale
  */
@@ -3690,7 +3592,6 @@ BN_EXPORT extern void bn_tabdata_incr_mul2_scale(struct bn_tabdata *out,
 						 double scale);
 
 /*
- *			B N _ T A B D A T A _ S C A L E
  *@brief
  *  Multiply every element in a data table by a scalar value 'scale'.
  */
@@ -3699,7 +3600,6 @@ BN_EXPORT extern void bn_tabdata_scale(struct bn_tabdata *out,
 				       double scale);
 
 /*
- *			B N _ T A B L E _ S C A L E
  *@brief
  *  Scale the independent axis of a table by 'scale'.
  */
@@ -3707,7 +3607,6 @@ BN_EXPORT extern void bn_table_scale(struct bn_table *tabp,
 				     double scale);
 
 /*
- *			B N _ T A B D A T A _ J O I N 1
  *@brief
  *  Multiply every element in data table in2 by a scalar value 'scale',
  *  add it to the element in in1, and store in 'out'.
@@ -3719,7 +3618,6 @@ BN_EXPORT extern void bn_tabdata_join1(struct bn_tabdata *out,
 				       const struct bn_tabdata *in2);
 
 /*
- *			B N _ T A B D A T A _ J O I N 2
  *@brief
  *  Multiply every element in data table in2 by a scalar value 'scale2',
  *  plus in3 * scale3, and
@@ -3733,18 +3631,12 @@ BN_EXPORT extern void bn_tabdata_join2(struct bn_tabdata *out,
 				       double scale3,
 				       const struct bn_tabdata *in3);
 
-/*
- *			B N _ T A B D A T A _ B L E N D 2
- */
 BN_EXPORT extern void bn_tabdata_blend2(struct bn_tabdata *out,
 					double scale1,
 					const struct bn_tabdata *in1,
 					double scale2,
 					const struct bn_tabdata *in2);
 
-/*
- *			B N _ T A B D A T A _ B L E N D 3
- */
 BN_EXPORT extern void bn_tabdata_blend3(struct bn_tabdata *out,
 					double scale1,
 					const struct bn_tabdata *in1,
@@ -3754,7 +3646,6 @@ BN_EXPORT extern void bn_tabdata_blend3(struct bn_tabdata *out,
 					const struct bn_tabdata *in3);
 
 /*
- *			B N _ T A B D A T A _ A R E A 1
  *@brief
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
@@ -3763,7 +3654,6 @@ BN_EXPORT extern void bn_tabdata_blend3(struct bn_tabdata *out,
 BN_EXPORT extern double bn_tabdata_area1(const struct bn_tabdata *in);
 
 /*
- *			B N _ T A B D A T A _ A R E A 2
  *@brief
  *  Following interpretation #2, where y[j] stores the average
  *  value for the interval, return the area under
@@ -3773,7 +3663,6 @@ BN_EXPORT extern double bn_tabdata_area1(const struct bn_tabdata *in);
 BN_EXPORT extern double bn_tabdata_area2(const struct bn_tabdata *in);
 
 /*
- *			B N _ T A B D A T A _ M U L _ A R E A 1
  *@brief
  *  Following interpretation #1, where y[j] stores the total (integral
  *  or area) value within the interval, return the area under the whole curve.
@@ -3785,7 +3674,6 @@ BN_EXPORT extern double bn_tabdata_mul_area1(const struct bn_tabdata *in1,
 					     const struct bn_tabdata *in2);
 
 /*
- *			B N _ T A B D A T A _ M U L _ A R E A 2
  *@brief
  *  Following interpretation #2,
  *  return the area under the whole curve.
@@ -3796,7 +3684,6 @@ BN_EXPORT extern double bn_tabdata_mul_area2(const struct bn_tabdata *in1,
 					     const struct bn_tabdata *in2);
 
 /*
- *			B N _ T A B L E _ L I N _ I N T E R P
  *@brief
  *  Return the value of the curve at independent parameter value 'wl'.
  *  Linearly interpolate between values in the input table.
@@ -3806,7 +3693,6 @@ BN_EXPORT extern fastf_t bn_table_lin_interp(const struct bn_tabdata *samp,
 					     double wl);
 
 /*
- *			B N _ T A B D A T A _ R E S A M P L E _ M A X
  *@brief
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
@@ -3820,7 +3706,6 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_max(const struct bn_tabl
 							    const struct bn_tabdata *olddata);
 
 /*
- *			B N _ T A B D A T A _ R E S A M P L E _ A V G
  *@brief
  *  Given a set of sampled data 'olddata', resample it for different
  *  spacing, by linearly interpolating the values when an output span
@@ -3834,7 +3719,6 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_resample_avg(const struct bn_tabl
 							    const struct bn_tabdata *olddata);
 
 /*
- *			B N _ T A B L E _ W R I T E
  *@brief
  *  Write out the table structure in an ASCII file,
  *  giving the number of values (minus 1), and the
@@ -3844,7 +3728,6 @@ BN_EXPORT extern int bn_table_write(const char *filename,
 				    const struct bn_table *tabp);
 
 /*
- *			B N _ T A B L E _ R E A D
  *@brief
  *  Allocate and read in the independent variable values from an ASCII file,
  *  giving the number of samples (minus 1), and the
@@ -3852,20 +3735,13 @@ BN_EXPORT extern int bn_table_write(const char *filename,
  */
 BN_EXPORT extern struct bn_table *bn_table_read(const char *filename);
 
-/*
- *			B N _ P R _ T A B L E
- */
 BN_EXPORT extern void bn_pr_table(const char *title,
 				  const struct bn_table *tabp);
 
-/*
- *			B N _ P R _ T A B D A T A
- */
 BN_EXPORT extern void bn_pr_tabdata(const char *title,
 				    const struct bn_tabdata *data);
 
 /*
- *			B N _ P R I N T _ T A B L E _ A N D _ T A B D A T A
  *@brief
  *  Write out a given data table into an ASCII file,
  *  suitable for input to GNUPLOT.
@@ -3878,7 +3754,6 @@ BN_EXPORT extern int bn_print_table_and_tabdata(const char *filename,
 						const struct bn_tabdata *data);
 
 /*
- *			B N _ R E A D _ T A B L E _ A N D _ T A B D A T A
  *@brief
  *  Read in a file which contains two columns of numbers, the first
  *  column being the wavelength, the second column being the sample value
@@ -3890,15 +3765,11 @@ BN_EXPORT extern int bn_print_table_and_tabdata(const char *filename,
  */
 BN_EXPORT extern struct bn_tabdata *bn_read_table_and_tabdata(const char *filename);
 
-/*
- *			B N _ T A B D A T A _ B I N A R Y _ R E A D
- */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_binary_read(const char *filename,
 							   size_t num,
 							   const struct bn_table *tabp);
 
 /*
- *			B N _ T A B D A T A _ M A L L O C _ A R R A Y
  *@brief
  *  Allocate storage for, and initialize, an array of 'num' data table
  *  structures.
@@ -3908,19 +3779,12 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_binary_read(const char *filename,
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_malloc_array(const struct bn_table *tabp,
 							    size_t num);
 
-/*
- *			B N _ T A B D A T A _ C O P Y
- */
 BN_EXPORT extern void bn_tabdata_copy(struct bn_tabdata *out,
 				      const struct bn_tabdata *in);
 
-/*
- *			B N _ T A B D A T A _ D U P
- */
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_dup(const struct bn_tabdata *in);
 
 /*
- *			B N _ T A B D A T A _ G E T _ C O N S T V A L
  *@brief
  *  For a given table, allocate and return a tabdata structure
  *  with all elements initialized to 'val'.
@@ -3929,7 +3793,6 @@ BN_EXPORT extern struct bn_tabdata *bn_tabdata_get_constval(double val,
 							    const struct bn_table *tabp);
 
 /*
- *			B N _ T A B D A T A _ C O N S T V A L
  *@brief
  *  Set all the tabdata elements to 'val'
  */
@@ -3937,7 +3800,6 @@ BN_EXPORT extern void bn_tabdata_constval(struct bn_tabdata *data,
 					  double val);
 
 /*
- *			B N _ T A B D A T A _ T O _ T C L
  *@brief
  *  Convert an bn_tabdata/bn_table pair into a Tcl compatible string
  *  appended to a VLS.  It will have form:
@@ -3947,7 +3809,6 @@ BN_EXPORT extern void bn_tabdata_to_tcl(struct bu_vls *vp,
 					const struct bn_tabdata *data);
 
 /*
- *			B N _ T A B D A T A _ F R O M _ A R R A Y
  *@brief
  *  Given an array of (x, y) pairs, build the relevant bn_table and
  *  bn_tabdata structures.
@@ -3959,7 +3820,6 @@ BN_EXPORT extern void bn_tabdata_to_tcl(struct bu_vls *vp,
 BN_EXPORT extern struct bn_tabdata *bn_tabdata_from_array(const double *array);
 
 /*
- *			B N _ T A B D A T A _ F R E Q _ S H I F T
  *@brief
  *  Shift the data by a constant offset in the independent variable
  *  (often frequency), interpolating new sample values.
@@ -3969,7 +3829,6 @@ BN_EXPORT extern void bn_tabdata_freq_shift(struct bn_tabdata *out,
 					    double offset);
 
 /*
- *			B N _ T A B L E _ I N T E R V A L _ N U M _ S A M P L E S
  *@brief
  *  Returns number of sample points between 'low' and 'hi', inclusive.
  */
@@ -3978,7 +3837,6 @@ BN_EXPORT extern int bn_table_interval_num_samples(const struct bn_table *tabp,
 						   double hi);
 
 /*
- *			B N _ T A B L E _ D E L E T E _ S A M P L E _ P T S
  *@brief
  *  Remove all sampling points between subscripts i and j, inclusive.
  *  Don't bother freeing the tiny bit of storage at the end of the array.
@@ -3989,7 +3847,6 @@ BN_EXPORT extern int bn_table_delete_sample_pts(struct bn_table *tabp,
 						unsigned int j);
 
 /*
- *			B N _ T A B L E _ M E R G E 2
  *@brief
  *  A new table is returned which has sample points at places from
  *  each of the input tables.
@@ -3998,7 +3855,6 @@ BN_EXPORT extern struct bn_table *bn_table_merge2(const struct bn_table *a,
 						  const struct bn_table *b);
 
 /*
- *		B N _ T A B D A T A _ M K _ L I N E A R _ F I L T E R
  *@brief
  *  Create a filter to accept power in a given band.
  *  The first and last filter values will be in the range 0..1,
@@ -4059,8 +3915,6 @@ BN_EXPORT extern int bn_tri_tri_isect_with_line(point_t V0,
 #define BN_VLIST_CHUNK 35		/**< @brief 32-bit mach => just less than 1k */
 
 /**
- * B N _ V L I S T
- *
  * Definitions for handling lists of vectors (really vertices, or
  * points) and polygons in 3-space.  Intended for common handling of
  * wireframe display information, in the full resolution that is
@@ -4175,8 +4029,6 @@ struct bn_vlist  {
 }
 
 /**
- * B N _ V L B L O C K
- *
  * For plotting, a way of separating plots into separate color vlists:
  * blocks of vlists, each with an associated color.
  */
@@ -4286,29 +4138,29 @@ struct vert_root {
 #define BN_CK_VERT_TREE(_p) BU_CKMAG(_p, VERT_TREE_MAGIC, "vert_tree")
 
 
-/**		C R E A T E _ V E R T _ T R E E
+/**
  *@brief
  *	routine to create a vertex tree.
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree();
+BN_EXPORT extern struct vert_root *create_vert_tree(void);
 
-/**		C R E A T E _ V E R T _ T R E E _ W _ N O R M S
+/**
  *@brief
  *	routine to create a vertex tree.
  *
  *	Possible refinements include specifying an initial size
  */
-BN_EXPORT extern struct vert_root *create_vert_tree_w_norms();
+BN_EXPORT extern struct vert_root *create_vert_tree_w_norms(void);
 
-/**		F R E E _ V E R T_ T R E E
+/**
  *@brief
  *	Routine to free a vertex tree and all associated dynamic memory
  */
 BN_EXPORT extern void free_vert_tree(struct vert_root *tree_root);
 
-/**		A D D _ V E R T
+/**
  *@brief
  *	Routine to add a vertex to the current list of part vertices.
  *	The array is re-alloc'd if needed.
@@ -4320,7 +4172,7 @@ BN_EXPORT extern int Add_vert(double x,
 			      struct vert_root *tree_root,
 			      fastf_t local_tol_sq);
 
-/**		A D D _ V E R T _ A N D _ N O R M
+/**
  *@brief
  *	Routine to add a vertex and a normal to the current list of part vertices.
  *	The array is re-alloc'd if needed.
@@ -4335,7 +4187,7 @@ BN_EXPORT extern int Add_vert_and_norm(double x,
 				       struct vert_root *tree_root,
 				       fastf_t local_tol_sq);
 
-/**		C L E A N _ V E R T _ T R E E
+/**
  *@brief
  *	Routine to free the binary search tree and reset the current number of vertices.
  *	The vertex array is left untouched, for re-use later.
@@ -4380,7 +4232,7 @@ BN_EXPORT extern void clean_vert_tree(struct vert_root *tree_root);
  *  Once-only setup routine
  *  Used by libplot3/symbol.c, so it can't be static.
  */
-BN_EXPORT extern void tp_setup();
+BN_EXPORT extern void tp_setup(void);
 
 /**
  * report version information about LIBBN
@@ -4453,7 +4305,76 @@ struct tri_float_specific  {
 
 typedef struct tri_float_specific tri_specific_float;
 
-#endif /* __BN_H__ */
+
+/*----------------------------------------------------------------------*/
+
+
+/* polygon.c */
+
+
+/**
+ * calculate the interior area of a polygon.
+ *
+ * If npts > 4, Greens Theorem is used. The polygon mustn't
+ * be self-intersecting.
+ *
+ * @param[out] area The interior area of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts All points of the polygon, sorted counter-clockwise.
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_area(fastf_t *area, size_t npts, const point_t *pts);
+
+
+/**
+ * calculate the centroid of a non self-intersecting polygon
+ *
+ * @param[out] cent The centroid of the polygon
+ * @param[in] npts Number of point_ts, stored in pts
+ * @param[in] pts all points of the polygon, sorted counter-clockwise.
+ * The array mustn't contain duplicated points.
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one in-parameter is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_centroid(point_t *cent, size_t npts, const point_t *pts);
+
+
+/**
+ * calculate for an array of plane_eqs, which build a polyhedron, the
+ * point_t's for each face.
+ *
+ * @param[out] npts Array, which stores for every face the number of
+ * point_ts, added to pts. Needs to be allocated with npts[neqs] already.
+ * @param[out] pts 2D-array which stores the point_ts for every
+ * face. The array needs to be allocated with pts[neqs][neqs-1] already.
+ * @param[in] neqs Number of plane_ts, stored in eqs
+ * @param[in] eqs Array, that contains the plane equations, which
+ * build the polyhedron
+ *
+ * @return 0 if calculation was successful
+ * @return 1 if calculation failed, e.g. because one parameter is a NULL-Pointer
+ */
+BN_EXPORT extern int bn_polygon_mk_pts_planes(size_t *npts, point_t **pts, size_t neqs, const plane_t *eqs);
+
+
+/**
+ * sort an array of point_ts, building a convex polygon, counter-clockwise
+ *
+ *@param[in] npts Number of points, pts contains
+ *@param pts Array of point_ts, building a convex polygon. Duplicated points
+ *aren't allowed. The points in the array will be sorted counter-clockwise.
+ *@param[in] cmp Plane equation of the polygon
+ *
+ *@return 0 if calculation was successful
+ *@return 1 if calculation failed, e.g. because pts is a NULL-pointer
+ */
+BN_EXPORT extern int bn_polygon_sort_ccw(size_t npts, point_t *pts, plane_t cmp);
+
+#endif /* BN_H */
 
 /** @} */
 /*

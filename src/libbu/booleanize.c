@@ -1,7 +1,7 @@
 /*                    B O O L E A N I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2013 United States Government as represented by
+ * Copyright (c) 2010-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
 #include <string.h>
 #include <errno.h>
 
-#include "bu.h"
-
+#include "bu/parse.h"
+#include "bu/str.h"
 
 int
 bu_str_true(const char *str)

@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,19 +104,21 @@ void printusage(void)
 {
     bu_log("Usage: 'nirt [options] model.g objects...'\n");
     bu_log("Options:\n");
+    bu_log(" -A n       add attribute_name=n\n");
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
     bu_log(" -T n       set rt_bot_mintie=n\n");
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
+    bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
     bu_log(" -L         list output formatting options\n");
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -O action  handle overlap claims via action\n");
-    bu_log(" -s         run in silent (non-verbose) mode\n ");
-    bu_log(" -h n       enable/disable informational header\n ");
-    bu_log("            (on by default, always off in silent mode\n ");
-    bu_log(" -u n       set use_air=n (default 0)\n");
+    bu_log(" -s         run in silent (non-verbose) mode\n");
     bu_log(" -v         run in verbose mode\n");
+    bu_log(" -H n       flag (n) for enable/disable informational header\n");
+    bu_log("            (n=1 [on] by default, always off in silent mode)\n");
+    bu_log(" -u n       set use_air=n (default 0)\n");
     bu_log(" -x v       set librt(3) diagnostic flag=v\n");
     bu_log(" -X v       set nirt diagnostic flag=v\n");
 }
@@ -206,9 +208,9 @@ attrib_add(char *a, int *prep)
 	/* make sure we have space */
 	if (!a_tab.attrib || a_tab.attrib_use >= (a_tab.attrib_cnt-1)) {
 	    a_tab.attrib_cnt += 16;
-	    a_tab.attrib = bu_realloc(a_tab.attrib,
-				      a_tab.attrib_cnt * sizeof(char *),
-				      "attrib_tab");
+	    a_tab.attrib = (char **)bu_realloc(a_tab.attrib,
+					       a_tab.attrib_cnt * sizeof(char *),
+					       "attrib_tab");
 	}
 
 	/* add the attribute name(s) */
@@ -386,6 +388,7 @@ main(int argc, char *argv[])
 
     /* Handle command-line options */
     while ((Ch = bu_getopt(argc, argv, OPT_STRING)) != -1) {
+    	if (bu_optopt == '?') Ch='h';
 	switch (Ch) {
 	    case 'A':
 		attrib_add(bu_optarg, &need_prep);
@@ -447,17 +450,16 @@ main(int argc, char *argv[])
 		    return 1;
 		}
 		break;
-	    case 'h':
+	    case 'H':
 		if (sscanf(bu_optarg, "%d", &print_ident_flag) != 1) {
 		    (void) fprintf(stderr,
 				   "Illegal header output option specified: '%s'\n", bu_optarg);
 		    return 1;
 		}
 		break;
-	    case '?':
 	    default:
 		printusage();
-		bu_exit (Ch != '?', NULL);
+		bu_exit (Ch != 'h', NULL);
 	}
     } /* end while getopt */
 

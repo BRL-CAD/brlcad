@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2013 United States Government as represented by
+ * Copyright (c) 2002-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,9 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -556,9 +559,6 @@ Convert_input()
 }
 
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {

@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -276,8 +276,6 @@ new_rgb(void) {
 }
 
 
-/* p a r s _ A r g v ()
- */
 int
 pars_Argv(int argc, char **argv)
 {

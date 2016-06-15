@@ -1,7 +1,7 @@
 /*                       D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,6 +23,9 @@
  *
  */
 
+#ifndef RT_DEFINES_H
+#define RT_DEFINES_H
+
 #ifndef RT_EXPORT
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
@@ -34,6 +37,8 @@
 #    define RT_EXPORT
 #  endif
 #endif
+
+#endif /* RT_DEFINES_H */
 
 /*
  * Local Variables:

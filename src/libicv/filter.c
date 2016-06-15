@@ -1,7 +1,7 @@
 /*                        F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 HIDDEN void
 get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 {
-    switch(filter_type) {
+    switch (filter_type) {
 	case ICV_FILTER_LOW_PASS :
 	    kern[0] = 3.0/42.0; kern[1] = 5.0/42.0; kern[2] = 3.0/42.0;
 	    kern[3] = 5.0/42.0; kern[4] = 10.0/42.0; kern[5] = 5.0/42.0;
@@ -79,7 +79,19 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[6] = 0; kern[7] = 0; kern[8] = 0;
 	    *offset = 0;
 	    break;
-	case ICV_FILTER_3_LOW_PASS :
+	default :
+	    bu_log("Filter Type not Implemented.\n");
+	    bu_free(kern, "Freeing Kernel, Wrong filter");
+	    kern = NULL;
+    }
+    return;
+}
+
+HIDDEN void
+get_kernel3(ICV_FILTER3 filter_type, double *kern, double *offset)
+{
+    switch (filter_type) {
+	case ICV_FILTER3_LOW_PASS :
 	    kern[0] = 1.0/84; kern[1] = 3.0/84; kern[2] = 1.0/84;
 	    kern[3] = 3.0/84; kern[4] = 5.0/84; kern[5] = 3.0/84;
 	    kern[6] = 1.0/84; kern[7] = 3.0/84; kern[8] = 1.0/84;
@@ -91,7 +103,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[24] = 1.0/84; kern[25] = 3.0/84; kern[26] = 1.0/84;
 	    *offset = 0;
 	    break;
-	case ICV_FILTER_3_HIGH_PASS :
+	case ICV_FILTER3_HIGH_PASS :
 	    kern[0] = -1.0; kern[1] = -2.0; kern[2] = -1.0;
 	    kern[3] = -2.0; kern[4] = -4.0; kern[5] = -2.0;
 	    kern[6] = -1.0; kern[7] = -2.0; kern[8] = -1.0;
@@ -103,7 +115,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[24] = -1.0; kern[25] = -2.0; kern[26] = -1.0;
 	    *offset = 0;
 	    break;
-	case ICV_FILTER_3_BOXCAR_AVERAGE :
+	case ICV_FILTER3_BOXCAR_AVERAGE :
 	    kern[0] = 1.0/53; kern[1] = 1.0/53; kern[2] = 1.0/53;
 	    kern[3] = 1.0/53; kern[4] = 1.0/53; kern[5] = 1.0/53;
 	    kern[6] = 1.0/53; kern[7] = 1.0/53; kern[8] = 1.0/53;
@@ -115,7 +127,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[24] = 1.0/53; kern[25] = 1.0/53; kern[26] = 1.0/53;
 	    *offset = 0;
 	    break;
-	case ICV_FILTER_3_ANIMATION_SMEAR :
+	case ICV_FILTER3_ANIMATION_SMEAR :
 	    kern[0] = 1.0/69; kern[1] = 1.0/69; kern[2] = 1.0/69;
 	    kern[3] = 1.0/69; kern[4] = 1.0/69; kern[5] = 1.0/69;
 	    kern[6] = 1.0/69; kern[7] = 1.0/69; kern[8] = 1.0/69;
@@ -127,7 +139,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 	    kern[24] = 2.0/69; kern[25] = 2.0/69; kern[26] = 2.0/69;
 	    *offset = 0;
 	    break;
-	case ICV_FILTER_3_NULL :
+	case ICV_FILTER3_NULL :
 	    kern[0] = 0; kern[1] = 0; kern[2] = 0;
 	    kern[3] = 0; kern[4] = 0; kern[5] = 0;
 	    kern[6] = 0; kern[7] = 0; kern[8] = 0;
@@ -147,7 +159,6 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
     return;
 }
 
-
 /* end of private functions */
 
 /* begin public functions */
@@ -155,7 +166,7 @@ get_kernel(ICV_FILTER filter_type, double *kern, double *offset)
 int
 icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 {
-    double *kern=NULL, *kern_p=NULL;
+    double *kern = NULL, *kern_p = NULL;
     double c_val;
     double *out_data, *in_data, *data_p;
     double offset = 0;
@@ -173,11 +184,13 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
      * upon a library of filters or closed form definitions.
      */
 
-    kern = bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
+    ICV_IMAGE_VAL_INT(img);
+
+    kern = (double *)bu_malloc(k_dim*k_dim*sizeof(double), "icv_filter : Kernel Allocation");
     get_kernel(filter_type, kern, &offset);
 
-    if(!kern)
-        return -1;
+    if (!kern)
+	return -1;
 
     widthstep = img->width*img->channels;
 
@@ -187,7 +200,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
     img->data = out_data = (double*)bu_malloc(size*sizeof(double), "icv_filter : out_image_data");
 
     index = -1;
-    /* Kernel Dimension is always considered to be */
+    /* Kernel Dimension is always considered to be odd*/
     k_dim_half = k_dim/2*img->channels;
     k_dim_half_ceil = (k_dim - k_dim/2)*img->channels;
     index = 0;
@@ -215,6 +228,7 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 		}
 	    }
 	    *out_data = c_val + offset;
+	    out_data++;
 	    index++;
 	}
 	index = (h+1)*widthstep;
@@ -226,10 +240,10 @@ icv_filter(icv_image_t *img, ICV_FILTER filter_type)
 }
 
 icv_image_t *
-icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER filter_type)
+icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, ICV_FILTER3 filter_type)
 {
     icv_image_t *out_img;
-    double *kern=NULL;
+    double *kern = NULL;
     double *kern_old, *kern_curr, *kern_new;
     double c_val;
     double *out_data;
@@ -245,6 +259,10 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 			      * the nearby pixel in input image
 			      */
 
+    ICV_IMAGE_VAL_PTR(old_img);
+    ICV_IMAGE_VAL_PTR(curr_img);
+    ICV_IMAGE_VAL_PTR(new_img);
+
     if ((old_img->width == curr_img->width && curr_img->width == new_img->width) && \
 	(old_img->height == curr_img->height && curr_img->height == new_img->height) && \
 	(old_img->channels == curr_img->channels && curr_img->channels == new_img->channels)) {
@@ -252,11 +270,11 @@ icv_filter3(icv_image_t *old_img, icv_image_t *curr_img, icv_image_t *new_img, I
 	return NULL;
     }
 
-    kern = bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
-    get_kernel(filter_type, kern, &offset);
+    kern = (double *)bu_malloc(k_dim*k_dim*3*sizeof(double), "icv_filter3 : Kernel Allocation");
+    get_kernel3(filter_type, kern, &offset);
 
-    if(!kern)
-        return NULL;
+    if (!kern)
+	return NULL;
 
     widthstep = old_img->width*old_img->channels;
 
@@ -309,14 +327,21 @@ icv_fade(icv_image_t *img, double fraction)
     size_t size;
     double *data;
 
+    ICV_IMAGE_VAL_INT(img);
+
     size= img->height*img->width*img->channels;
 
-    data = img->data;
+   if (size == 0)
+	return -1;
 
-    if (fraction<0)
-	bu_exit(1, "Multiplier invalid. Image not Faded.");
+    if (fraction<0) {
+	bu_log("ERROR : Multiplier invalid. Image not Faded.");
+	return -1;
+    }
 
-    for (;size>0; size--) {
+     data = img->data;
+
+    while (size--) {
 	*data = *data*fraction;
 	if (*data > 1)
 	    *data= 1.0;

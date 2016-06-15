@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,6 +109,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
+    {"constraint", cmd_ged_plain_wrapper, ged_constraint},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
     {"copymat", cmd_ged_plain_wrapper, ged_copymat},
     {"cp", cmd_ged_plain_wrapper, ged_copy},
@@ -159,6 +160,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"fracture", cmd_ged_plain_wrapper, ged_fracture},
     {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
+    {"gdiff", cmd_ged_plain_wrapper, ged_gdiff},
     {"get", cmd_ged_plain_wrapper, ged_get},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
@@ -386,8 +388,6 @@ static struct cmdtab mged_cmdtab[] = {
 
 
 /**
- * C M D _ S E T U P
- *
  * Register all MGED commands.
  */
 HIDDEN void
@@ -509,7 +509,7 @@ mged_setup(Tcl_Interp **interpreter)
 		 */
 		Tcl_DeleteCommand(*interpreter, "::itcl::class");
 		nsp = Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0);
-		if(nsp)
+		if (nsp)
 		    Tcl_DeleteNamespace(nsp);
 		continue;
 	    }

@@ -1,7 +1,7 @@
 /*                 Axis2Placement3D.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -206,6 +206,12 @@ const double *
 Axis2Placement3D::GetYAxis()
 {
     return p[1];
+}
+
+const double *
+Axis2Placement3D::GetZAxis()
+{
+    return p[2];
 }
 
 bool

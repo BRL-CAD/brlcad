@@ -1,7 +1,7 @@
 /*                       V I E W R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -88,8 +88,6 @@ raymiss(struct application *UNUSED(ap))
 }
 
 /*
- *			R A Y H I T
- *
  *  Write a hit to the ray file.
  *  Also generate various forms of "paint".
  */
@@ -188,9 +186,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
     return 0;
 }
 
-/*
- *  			V I E W _ I N I T
- */
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {

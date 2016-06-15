@@ -1,7 +1,7 @@
 /*                     P I X E L S W A P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,9 @@
 #include "fb.h"
 
 
-char *options = "hd:";
-char *progname = "(noname)";
+char options[] = "hd:";
+char noname[] = "(noname)";
+char *progname = noname;
 
 int depth = 3;
 unsigned char ibuf[32767 * 3];
@@ -43,10 +44,9 @@ unsigned char obuf[32767 * 3];
 		      (a)[1] == (b)[1] && \
 		      (a)[2] == (b)[2])
 
-/*
- * U S A G E --- tell user how to invoke this program, then exit
- */
-void usage(char *s)
+
+void
+usage(const char *s)
 {
     if (s) (void)fputs(s, stderr);
 
@@ -56,10 +56,8 @@ void usage(char *s)
 }
 
 
-/*
- * P A R S E _ A R G S --- Parse through command line flags
- */
-int parse_args(int ac, char **av)
+int
+parse_args(int ac, char **av)
 {
     int c;
 
@@ -87,8 +85,6 @@ int parse_args(int ac, char **av)
     return bu_optind;
 }
 /*
- * M A I N
- *
  * Call parse_args to handle command line arguments first, then
  * process input.
  */

@@ -1,7 +1,7 @@
 /*                B R L C A D _ V E R S I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,6 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 /** @file brlcad_version.h
  *
  * PRIVATE container header for determining compile-time version
@@ -28,8 +29,8 @@
  *
  */
 
-#ifndef __BRLCAD_VERSION_H__
-#define __BRLCAD_VERSION_H__
+#ifndef BRLCAD_VERSION_H
+#define BRLCAD_VERSION_H
 
 #include "common.h"
 
@@ -93,6 +94,8 @@ static const int BRLCAD_PATCH = BRLCAD_VERSION_PATCH;
 static char BRLCAD_VERSION[32] = NUM2STR(BRLCAD_VERSION_MAJOR) "." NUM2STR(BRLCAD_VERSION_MINOR) "." NUM2STR(BRLCAD_VERSION_PATCH);
 
 
+__BEGIN_DECLS
+
 /**
  * Provides the version string in MAJOR.MINOR.PATCH triplet form.
  */
@@ -102,8 +105,10 @@ brlcad_version(void)
     return BRLCAD_VERSION;
 }
 
+__END_DECLS
 
-#endif /* __BRLCAD_IDENT_H__ */
+
+#endif /* BRLCAD_VERSION_H */
 
 /*
  * Local Variables:

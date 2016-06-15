@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,9 +113,6 @@ struct mfuncs scloud_mfuncs[] = {
 };
 
 
-/*
- * S C L O U D _ S E T U P
- */
 HIDDEN int
 scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip)
 
@@ -189,9 +186,6 @@ scloud_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, con
 }
 
 
-/*
- * S C L O U D _ P R I N T
- */
 HIDDEN void
 scloud_print(register struct region *rp, void *dp)
 {
@@ -199,9 +193,6 @@ scloud_print(register struct region *rp, void *dp)
 }
 
 
-/*
- * S C L O U D _ F R E E
- */
 HIDDEN void
 scloud_free(void *cp)
 {
@@ -210,8 +201,6 @@ scloud_free(void *cp)
 
 
 /*
- * T S P L A T _ R E N D E R
- *
  * Sort of a surface spot transparency shader.  Picks transparency
  * based upon noise value of surface spot.
  */
@@ -243,9 +232,6 @@ tsplat_render(struct application *ap, const struct partition *pp, struct shadewo
 }
 
 
-/*
- * S C L O U D _ R E N D E R
- */
 int
 scloud_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {

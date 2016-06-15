@@ -1,7 +1,7 @@
 /*                           B I N . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
  *
  */
 
-#ifndef __BIN_H__
-#define __BIN_H__
+#ifndef BIN_H
+#define BIN_H
 
 /* Do not rely on common.h's HAVE_* defines.  Do not include the
  * common.h header.  This is a stand-alone portability header intended
@@ -58,7 +58,7 @@
 #  include <arpa/inet.h> /* hton/ntoh, inet_addr functions */
 #endif
 
-#endif /* __BIN_H__ */
+#endif /* BIN_H */
 
 /*
  * Local Variables:

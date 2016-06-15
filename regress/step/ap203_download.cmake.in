@@ -1,0 +1,22 @@
+set(FILE_EXISTS 0)
+if(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/test_@testnum@)
+  set(FILE_EXISTS 1)
+  file(MD5 ${CMAKE_CURRENT_BINARY_DIR}/test_@testnum@ EXISTING_MD5)
+  if(NOT "${EXISTING_MD5}" STREQUAL "@md5_sum@")
+    set(FILE_EXISTS 0)
+    file(REMOVE ${CMAKE_CURRENT_BINARY_DIR}/test_@testnum@)
+  endif(NOT "${EXISTING_MD5}" STREQUAL "@md5_sum@")
+endif(EXISTS ${CMAKE_CURRENT_BINARY_DIR}/test_@testnum@)
+if(NOT FILE_EXISTS)
+  message("Downloading Sample AP203 Data File for test @testnum@ (@filename@, @comment@):")
+  file(DOWNLOAD http://www.steptools.com/support/stdev_docs/stpfiles/ap203/@filename@
+    ${CMAKE_CURRENT_BINARY_DIR}/test_@testnum@.stp INACTIVITY_TIMEOUT 3
+    SHOW_PROGRESS EXPECTED_MD5 @md5_sum@)
+endif(NOT FILE_EXISTS)
+
+  # Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8

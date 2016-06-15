@@ -1,7 +1,7 @@
 /*                    R E G T A B . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -128,7 +128,7 @@ void createRegions(struct rt_wdb* wdbp)
     struct wmember tophead;
     BU_LIST_INIT(&tophead.l);
 
-    for(std::map<std::string, Region*>::iterator it = regionTable.begin();
+    for (std::map<std::string, Region*>::iterator it = regionTable.begin();
 	it != regionTable.end();
 	++it) {
 	Region* regionp = it->second;

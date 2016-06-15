@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,9 +35,9 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+
 #include "bn.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "vmath.h"
 #include "ged.h"
 #include "obj.h"
@@ -124,7 +124,7 @@ vo_mat_aet(struct view_obj *vop)
 		  0.0,
 		  270.0 - vop->vo_aet[0]);
 
-    twist = -vop->vo_aet[2] * bn_degtorad;
+    twist = -vop->vo_aet[2] * DEG2RAD;
     c_twist = cos(twist);
     s_twist = sin(twist);
     bn_mat_zrot(tmat, s_twist, c_twist);
@@ -667,8 +667,6 @@ vo_view2model_tcl(void *clientData,
 
 
 /**
- * P E R S P _ M A T
- *
  * Compute a perspective matrix for a right-handed coordinate system.
  * Reference: SGI Graphics Reference Appendix f
  *
@@ -705,7 +703,7 @@ vo_persp_mat(mat_t m,
 
 /**
  * Create a perspective matrix that transforms the +/1 viewing cube,
- * with the acutal eye position (not at Z=+1) specified in viewing
+ * with the actual eye position (not at Z=+1) specified in viewing
  * coords, into a related space where the eye has been sheared onto
  * the Z axis and repositioned at Z=(0, 0, 1), with the same
  * perspective field of view as before.
@@ -2039,8 +2037,6 @@ vo_keypoint_tcl(void *clientData,
 
 
 /*
- * V O _ S E T V I E W
- *
  * Set the view.  Angles are DOUBLES, in degrees.
  *
  * Given that viewvec = scale . rotate . (xlate to view center) . modelvec,
@@ -2169,7 +2165,7 @@ vo_arot_cmd(struct view_obj *vop,
     VSETALL(pt, 0.0);
     VUNITIZE(axis);
 
-    bn_mat_arb_rot(newrot, pt, axis, angle*bn_degtorad);
+    bn_mat_arb_rot(newrot, pt, axis, angle*DEG2RAD);
 
     return vo_rot(vop, vop->vo_coord, vop->vo_rotate_about, newrot, func);
 }
@@ -2756,8 +2752,8 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	iflag = 0;
     }
 
-    az *= bn_degtorad;
-    el *= bn_degtorad;
+    az *= DEG2RAD;
+    el *= DEG2RAD;
     V3DIR_FROM_AZEL(dir, az, el);
 
     if (iflag)
@@ -2910,7 +2906,7 @@ vo_cmd(ClientData clientData,
 	{"viewDir",		vo_viewDir_tcl},
 	{"vrot",		vo_vrot_tcl},
 	{"zoom",		vo_zoom_tcl},
-	{(char *)0,		(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(vo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)

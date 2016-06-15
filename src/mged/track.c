@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2013 United States Government as represented by
+ * Copyright (c) 1994-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -62,10 +62,9 @@ void top(fastf_t *vec1, fastf_t *vec2, fastf_t *t);
 void crregion(char *region, char *op, int *members, int number, char *solidname, int maxlen);
 void itoa(int n, char *s, int w);
 
+
 /*
- *
- * F _ A M T R A C K () :	adds track given "wheel" info
- *
+ * adds track given "wheel" info
  */
 int
 f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
@@ -897,7 +896,7 @@ crregion(char *region, char *op, int *members, int number, char *solidname, int 
 }
 
 
-/*	==== I T O A ()
+/*
  * convert integer to ascii wd format
  */
 void

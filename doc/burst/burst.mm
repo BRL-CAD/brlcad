@@ -85,7 +85,7 @@ the screen is divided into sections of one or more rows (lines) of text.
 The top line,
 referred to as line 1,
 is reserved for
-.SM CPU
+CPU
 usage statistics.
 Starting on line 2,
 the hierarchical menu region spans 12 lines of the screen.
@@ -612,7 +612,7 @@ then a burst point will be located the absolute value of \fIburst distance\fR
 beyond the exit of the shotline from the component.
 This means that if \fIburst distance\fR is zero,
 the burst point will lie at the \fIburst armor/air\fR interface,
-and if its -5.5,
+and if it's -5.5,
 the burst point will lie 5.5 units inside the air compartment from the
 back surface of the armor.
 .Ce
@@ -933,7 +933,7 @@ that has long been a bottleneck to the vulnerability and lethality analyst,
 will increase dramatically.
 Another benefit will be increased accuracy of results due to the superior
 detail and accuracy afforded by a true combinatorial solid geometry modeler.
-.H 1 Acknowledgements
+.H 1 Acknowledgments
 The author would like to thank Leonard E. Bruenning, Jr. of Sverdrup
 Technology, Inc. for his thorough, concise and well-illustrated
 documentation\*F of the requirements to be met by the \*(b) program

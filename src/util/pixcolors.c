@@ -1,7 +1,7 @@
 /*                     P I X C O L O R S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,9 +37,10 @@
 
 
 /* declarations to support use of bu_getopt() system call */
-char *options = "v";
+char options[] = "v";
 char verbose = 0;
-char *progname = "(noname)";
+char noname[] = "(noname)";
+char *progname = noname;
 
 #define PIXELS 1024
 unsigned char pixbuf[BUFSIZ*3];
@@ -52,10 +53,12 @@ unsigned char pixbuf[BUFSIZ*3];
 /*NOBASE*/
 unsigned char vals[1L << (24-3)];
 
+
 /*
- * D O I T --- Main function of program
+ * Main function of program
  */
-void doit(FILE *fd)
+void
+doit(FILE *fd)
 {
     unsigned long pixel, count;
     int bytes;
@@ -110,8 +113,6 @@ void usage(void)
 
 
 /*
- * M A I N
- *
  * Perform miscellaneous tasks such as argument parsing and
  * I/O setup and then call "doit" to perform the task at hand
  */

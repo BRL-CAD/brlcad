@@ -1,7 +1,7 @@
 /*                       C H G T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -135,9 +135,6 @@ f_copy_inv(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv
 }
 
 
-/**
- * F I N D _ S O L I D _ W I T H _ P A T H
- */
 struct solid *
 find_solid_with_path(struct db_full_path *pathp)
 {
@@ -178,8 +175,6 @@ find_solid_with_path(struct db_full_path *pathp)
 
 
 /**
- * C M D _ O E D
- *
  * Transition from VIEW state to OBJECT EDIT state in a single
  * command, rather than requiring "press oill", "ill leaf", "matpick
  * a/b".

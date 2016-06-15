@@ -1,7 +1,7 @@
 /*                           I - A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include <stdio.h>
 
 
-short ibuf[16*1024];
-
-int main(void)
+int
+main(void)
 {
+    short ibuf[16*1024];
     int n, i;
 
     while ((n=fread(ibuf, sizeof(*ibuf), 1024, stdin)) > 0) {

@@ -1,7 +1,7 @@
 /*                        F B L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2013 United States Government as represented by
+ * Copyright (c) 1988-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@ struct stroke {
     struct coords pixel;	/* starting scan, nib */
     short xsign;		/* 0 or +1 */
     short ysign;		/* -1, 0, or +1 */
-    int ymajor; 		/* true iff Y is major dir. */
+    int ymajor; 		/* true if Y is major dir. */
 #undef major
 #undef minor
     short major;		/* major dir delta (nonneg) */
@@ -75,8 +75,6 @@ Usage: fbline [-c ] [-F framebuffer]\n\
 
 
 /*
- * E D G E L I M I T
- *
  * Limit generated positions to edges of screen
  * Really should clip to screen, instead.
  */
@@ -92,8 +90,6 @@ edgelimit(struct coords *ppos)
 
 
 /*
- * R A S T E R
- *
  * Raster - rasterize stroke.
  *
  * Method:
@@ -135,8 +131,6 @@ Raster(struct stroke *vp)
 
 
 /*
- * B U I L D S T R
- *
  * set up DDA parameters
  */
 void
@@ -178,9 +172,6 @@ BuildStr(struct coords *pt1, struct coords *pt2)
 }
 
 
-/*
- * G E T_ A R G S
- */
 int
 get_args(int argc, char **argv)
 {
@@ -235,9 +226,6 @@ get_args(int argc, char **argv)
 }
 
 
-/*
- * M A I N
- */
 int
 main(int argc, char **argv)
 {

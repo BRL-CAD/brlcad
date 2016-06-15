@@ -1,7 +1,7 @@
 /*                           X X X . H
  * BRL-CAD
  *
- * Copyright (c) 2012-2013 United States Government as represented by
+ * Copyright (c) 2012-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
  *
  * edit db.h add solidrec s_type define
  * edit rtgeom.h to add rt_xxx_internal
- * edit magic.h to add RT_XXX_INTERNAL_MAGIC
+ * edit bu/magic.h to add RT_XXX_INTERNAL_MAGIC
  * edit table.c:
  *	RT_DECLARE_INTERFACE()
  *	struct rt_functab entry
@@ -50,6 +50,9 @@
  *
  */
 
+#ifndef LIBRT_PRIMITIVES_XXX_XXX_H
+#define LIBRT_PRIMITIVES_XXX_XXX_H
+
 #include "common.h"
 
 #include "bu.h"
@@ -58,7 +61,7 @@
 
 /* EXAMPLE_INTERNAL shows how one would store the values that describe
  * or implement this primitive.  The internal structure should go into
- * rtgeom.h, the magic number should go into magic.h, and of course
+ * rtgeom.h, the magic number should go into bu/magic.h, and of course
  * the #if wrapper should go away.
  */
 #if defined(EXAMPLE_INTERNAL) || 1
@@ -83,6 +86,7 @@ struct xxx_specific {
     vect_t xxx_V;
 };
 
+#endif /* LIBRT_PRIMITIVES_XXX_XXX_H */
 
 /*
  * Local Variables:

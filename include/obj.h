@@ -1,7 +1,7 @@
 /*                           O B J . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef __OBJ_H__
-#define __OBJ_H__
+#ifndef OBJ_H
+#define OBJ_H
 
 #include "common.h"
 
@@ -37,8 +37,6 @@ __BEGIN_DECLS
 
 
 /**
- * V I E W _ O B J
- *
  * A view object maintains state for controlling a view.
  */
 struct view_obj {
@@ -92,7 +90,7 @@ GED_EXPORT extern int wdb_rt_gettrees_cmd(struct rt_wdb *wdbp, int argc, const c
 
 __END_DECLS
 
-#endif /* __GED_H__ */
+#endif /* OBJ_H */
 
 /*
  * Local Variables:

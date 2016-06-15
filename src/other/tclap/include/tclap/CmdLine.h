@@ -449,7 +449,6 @@ inline void CmdLine::parse(std::vector<std::string>& args)
 	try {
 		_progName = args.front();
 		args.erase(args.begin());
-
 		int requiredCount = 0;
 
 		for (int i = 0; static_cast<unsigned int>(i) < args.size(); i++) 
@@ -577,6 +576,7 @@ inline std::string& CmdLine::getVersion()
 
 inline std::string& CmdLine::getProgramName()
 {
+
 	return _progName;
 }
 

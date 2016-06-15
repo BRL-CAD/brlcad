@@ -1,7 +1,7 @@
 /*                       N M G - S G P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,7 @@
 #include <errno.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "rtgeom.h"
@@ -51,8 +52,7 @@ static int stats=0;
 
 /* returns 1 if faceuse was not written because it was empty */
 static int
-write_fu_as_sgp( fu )
-    struct faceuse *fu;
+write_fu_as_sgp(struct faceuse *fu)
 {
     struct loopuse *lu;
 
@@ -117,9 +117,6 @@ write_model_as_sgp(struct model *m)
     }
 }
 
-/*
- *			M A I N
- */
 int
 main(int argc, char *argv[])
 {
@@ -185,9 +182,7 @@ main(int argc, char *argv[])
 
     if (out_file == NULL) {
 	fp_out = stdout;
-#if defined(_WIN32) && !defined(__CYGWIN__)
 	setmode(fileno(fp_out), O_BINARY);
-#endif
     } else {
 	if ((fp_out = fopen( out_file, "wb")) == NULL)
 	{

@@ -1,7 +1,7 @@
 /*                         G 2 A S C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,6 +33,8 @@
 #include "bio.h"
 #include "bin.h"
 
+#include "bu/debug.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "db.h"
 #include "raytrace.h"
@@ -89,7 +91,7 @@ tclify_name(const char *name)
 
     if (max_len > tclified_name_buffer_len) {
 	tclified_name_buffer_len = max_len;
-	tclified_name = bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
+	tclified_name = (char *)bu_realloc(tclified_name, tclified_name_buffer_len, "tclified_name buffer");
     }
 
     dest = tclified_name;
@@ -114,11 +116,9 @@ main(int argc, char **argv)
 	bu_exit(1, "%s", usage);
     }
 
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
-#endif
 
     iname = "-";
     ifp = stdin;
@@ -410,8 +410,6 @@ main(int argc, char **argv)
 
 
 /*
- *			N A M E
- *
  *  Take a database name and null-terminate it,
  *  converting unprintable characters to something printable.
  *  Here we deal with names not being null-terminated.
@@ -450,8 +448,6 @@ char *encode_name(char *str)
 
 
 /*
- *			G E T _ E X T
- *
  *  Take "ngran" granules, and put them in memory.
  *  The first granule comes from the global extern "record",
  *  the remainder are read from ifp.
@@ -464,7 +460,7 @@ get_ext(struct bu_external *ep, size_t ngran)
     BU_EXTERNAL_INIT(ep);
 
     ep->ext_nbytes = ngran * sizeof(union record);
-    ep->ext_buf = (genptr_t)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
+    ep->ext_buf = (uint8_t *)bu_malloc(ep->ext_nbytes, "get_ext ext_buf");
 
     /* Copy the freebie (first) record into the array of records.  */
     memcpy((char *)ep->ext_buf, (char *)&record, sizeof(union record));
@@ -816,8 +812,7 @@ particle_dump(void)
 }
 
 
-/*			A R B N _ D U M P
- *
+/*
  *  Print out arbn information.
  *
  */
@@ -859,8 +854,6 @@ arbn_dump(void)
 
 
 /*
- *			C O M B D U M P
- *
  *  Note that for compatibility with programs such as FRED that
  *  (inappropriately) read .asc files, the member count has to be
  *  recalculated here.
@@ -978,8 +971,6 @@ combdump(void)	/* Print out Combination record information */
 }
 
 /*
- *			M E M B D U M P
- *
  *  Print out Member record information.
  *  Intended to be called by combdump only.
  */
@@ -1141,8 +1132,6 @@ bsurfdump(void)	/* Print d-spline surface description record information */
 }
 
 /*
- *			S T R C H O P
- *
  *  Take a string and a length, and null terminate,
  *  converting unprintable characters to something printable.
  */

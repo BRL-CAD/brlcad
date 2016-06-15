@@ -1,7 +1,7 @@
 /*                O B J _ T O K E N _ T Y P E . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef OBJ_TOKEN_TYPE_H
-#define OBJ_TOKEN_TYPE_H
+#ifndef LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
+#define LIBGCV_WFOBJ_OBJ_TOKEN_TYPE_H
 const int TOKEN_STRING_LEN = 80;
 
 typedef union YYSTYPE

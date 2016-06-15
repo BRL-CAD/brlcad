@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -43,6 +43,7 @@ include(CheckIncludeFileCXX)
 include(CheckTypeSize)
 include(CheckLibraryExists)
 include(CheckStructHasMember)
+include(CheckCInline)
 
 
 ###
@@ -268,7 +269,7 @@ macro(BRLCAD_CHECK_C99_FORMAT_SPECIFIERS)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
   set(CMAKE_REQUIRED_DEFINITIONS_BAK ${CMAKE_REQUIRED_DEFINITIONS})
-  CHECK_INCLUDE_file(stdint.h HAVE_STDINT_H)
+  CHECK_INCLUDE_FILE(stdint.h HAVE_STDINT_H)
   if(HAVE_STDINT_H)
     set(CMAKE_REQUIRED_DEFINITIONS "-DHAVE_STDINT_H=1")
   endif(HAVE_STDINT_H)

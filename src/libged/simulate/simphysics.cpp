@@ -1,7 +1,7 @@
 /*                    S I M P H Y S I C S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,7 +27,27 @@
 
 /* system headers */
 #include <iostream>
+
+/* quell warnings */
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic push /* begin ignoring warnings */
+#  pragma GCC diagnostic ignored "-Wshadow"
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic push /* begin ignoring warnings */
+#  pragma clang diagnostic ignored "-Wshadow"
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
 #include <btBulletDynamicsCommon.h>
+
+#if HAVE_GCC_DIAG_PRAGMAS
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif HAVE_CLANG_DIAG_PRAGMAS
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 /* public headers */
 #include "db.h"
@@ -53,8 +73,8 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
     sprintf(buffer, "------------Phy : Transformation matrices(%s)--------------\n",
 	    rb_namep);
 
-    for (i=0 ; i<4 ; i++) {
-	    for (j=0 ; j<4 ; j++) {
+    for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 4; j++) {
 		sprintf(buffer, "%st[%d]: %f\t", buffer, (j*4 + i), t[j*4 + i]);
 	    }
 	    sprintf(buffer, "%s\n", buffer);
@@ -62,8 +82,8 @@ print_matrices(char *rb_namep, mat_t t, btScalar *m)
 
     sprintf(buffer, "%s\n", buffer);
 
-    for (i=0 ; i<4 ; i++) {
-	    for (j=0 ; j<4 ; j++) {
+    for (i = 0; i < 4; i++) {
+	    for (j = 0; j < 4; j++) {
 		sprintf(buffer, "%sm[%d]: %f\t", buffer, (j*4 + i), m[j*4 + i]);
 	    }
 	    sprintf(buffer, "%s\n", buffer);
@@ -86,7 +106,8 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 				 btAlignedObjectArray<btCollisionShape*> collision_shapes)
 {
     struct rigid_body *current_node;
-    fastf_t volume;
+    // quell unused var warning
+    //fastf_t volume;
     btScalar mass;
     btScalar m[16];
     btVector3 v;
@@ -140,7 +161,9 @@ add_rigid_bodies(btDiscreteDynamicsWorld* dynamicsWorld,
 		    //btCollisionShape* bb_Shape = new btSphereShape(0.5);
 		collision_shapes.push_back(bb_Shape);
 
-		volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
+		// quell unused var warning
+		// volume = current_node->bb_dims[0] * current_node->bb_dims[1] * current_node->bb_dims[2];
+
 		mass = 1.0; //volume; // density is 1
 
 		btVector3 bb_Inertia(0, 0, 0);
@@ -222,7 +245,7 @@ get_transforms(btDiscreteDynamicsWorld* dynamicsWorld)
     const int num_bodies = dynamicsWorld->getNumCollisionObjects();
 
 
-    for (i=0; i < num_bodies; i++) {
+    for (i = 0; i < num_bodies; i++) {
 
 	    //Common properties among all rigid bodies
 	    btCollisionObject* bb_ColObj = dynamicsWorld->getCollisionObjectArray()[i];
@@ -297,7 +320,7 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
     //remove the rigid bodies from the dynamics world and delete them
     int i;
 
-    for (i=dynamicsWorld->getNumCollisionObjects()-1; i>=0; i--) {
+    for (i = dynamicsWorld->getNumCollisionObjects()-1; i >= 0; i--) {
 
 	btCollisionObject* obj = dynamicsWorld->getCollisionObjectArray()[i];
 	btRigidBody* body = btRigidBody::upcast(obj);
@@ -309,7 +332,7 @@ cleanup(btDiscreteDynamicsWorld* dynamicsWorld,
     }
 
     //delete collision shapes
-    for (i=0; i<collision_shapes.size(); i++) {
+    for (i = 0; i < collision_shapes.size(); i++) {
 	btCollisionShape* shape = collision_shapes[i];
 	delete shape;
     }
@@ -503,7 +526,7 @@ run_simulation(struct simulation_params *sp)
 
 	sim_params = sp;
 
-	//for (i=0 ; i < sim_params->duration ; i++) {
+	//for (i = 0 ; i < sim_params->duration ; i++) {
 
     //Initialize the physics world
     btDiscreteDynamicsWorld* dynamicsWorld;

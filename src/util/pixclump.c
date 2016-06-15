@@ -1,7 +1,7 @@
 /*                      P I X C L U M P . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -140,8 +140,6 @@ static void print_table (void)
 
 
 /*
- * C O L O R _ D I F F ()
- *
  * Returns the square of the Euclidean distance in RGB space
  * between a specified pixel (R/G/B triple) and a specified
  * entry in the color table.

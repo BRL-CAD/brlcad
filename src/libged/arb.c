@@ -1,7 +1,7 @@
 /*                         A R B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -78,8 +78,8 @@ ged_arb(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    rota *= bn_degtorad;
-    fb *= bn_degtorad;
+    rota *= DEG2RAD;
+    fb *= DEG2RAD;
 
     BU_ALLOC(arb, struct rt_arb_internal);
     RT_DB_INTERNAL_INIT(&internal);

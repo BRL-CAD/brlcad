@@ -1,7 +1,7 @@
 /*                 ON_Brep.h
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,12 +21,12 @@
  *
  */
 
-#ifndef ON_BREP_H_
-#define ON_BREP_H_
+#ifndef ON_BREP_H
+#define ON_BREP_H
 
-#include "STEPWrapper.h"
+#include "AP_Common.h"
 
-struct Exporter_Info_AP203 {
+struct ON_Brep_Info_AP203 {
     Registry *registry;
     InstMgr *instance_list;
     int split_closed;
@@ -45,14 +45,22 @@ struct Exporter_Info_AP203 {
     SdaiClosed_shell *closed_shell;
     SdaiManifold_solid_brep *manifold_solid_brep;
     SdaiAdvanced_brep_shape_representation *advanced_brep;
-    SdaiRepresentation *shape_rep;
 
+    std::map<STEPentity*, GenericAggregate * > surf_genagg;
     std::map<STEPentity*, std::vector<std::vector<STEPentity *> > > surface_cv;
 };
 
-bool ON_BRep_to_STEP(ON_Brep *brep, Exporter_Info_AP203 *info);
+void ON_3dPoint_to_Cartesian_point(ON_3dPoint *inpnt, SdaiCartesian_point *step_pnt);
+void ON_3dVector_to_Direction(ON_3dVector *invect, SdaiDirection *step_direction);
 
-#endif /* ON_BREP_H_ */
+bool ON_NurbsCurve_to_STEP(ON_NurbsCurve *n_curve, ON_Brep_Info_AP203 *info, int i);
+void ON_NurbsSurfaceCV_Finalize_GenericAggregates(ON_Brep_Info_AP203 *info);
+bool ON_NurbsSurface_to_STEP(ON_NurbsSurface *n_surface, ON_Brep_Info_AP203 *info, int i);
+
+void ON_BRep_to_STEP(struct directory *dp, ON_Brep *brep, AP203_Contents *sc,
+        STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold);
+
+#endif /* ON_BREP_H */
 
 /*
  * Local Variables:

@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -82,7 +82,7 @@
  *
  *  Rather than define all of these routines explicitly, we define
  *  2 macros "decompose" and "reconstruct" which embody the structure of
- *  the function (which is common to all of them).  We then instatiate
+ *  the function (which is common to all of them).  We then instantiate
  *  these macros once for each of the data types.  It's ugly, but it
  *  assures that a change to the structure of one operation type
  *  (decompose or reconstruct) occurs for all data types.
@@ -146,12 +146,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 
 /**
- * This source file uses C-styple "templates" where functions specific
+ * This source file uses C-style "templates" where functions specific
  * to a set of specified data types are automatically
  * declared/provided via one single macro implementation.
  */

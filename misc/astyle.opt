@@ -2,7 +2,7 @@
 style=k&r
 
 # Enable support for mixed tabs and spaces
-indent=force-tab-x
+indent=spaces=4
 
 # Indent goto labels rather than making them flush on the left
 indent-labels
@@ -12,9 +12,6 @@ indent-switches
 
 # We don't want to add additional indentation to conditionals
 min-conditional-indent=0
-
-# Allow deeper indenting of statements
-max-instatement-indent=120
 
 # Pad operators
 #pad-oper

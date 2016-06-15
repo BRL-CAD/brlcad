@@ -1,7 +1,7 @@
 /*                        M A R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -70,9 +70,6 @@ PL_FORTRAN(f2mark, F2MARK)(FILE **fp, int *c, float *x, float*y, float *scale)
     tp_2marker( *fp, *c, *x, *y, *scale );
 }
 
-/*
- *			T P _ 3 M A R K E R
- */
 void
 tp_3marker(FILE *fp, register int c, double x, double y, double z, double scale)
 {

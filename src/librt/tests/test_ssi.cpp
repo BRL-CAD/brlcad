@@ -1,7 +1,7 @@
 /*                   T E S T _ S S I . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -80,7 +80,7 @@ main(int argc, char** argv)
 	return -1;
     }
 
-    if (db_dirbuild(dbip) < 0){
+    if (db_dirbuild(dbip) < 0) {
 	bu_log("ERROR: Unable to read from %s\n", argv[1]);
 	return -1;
     }

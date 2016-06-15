@@ -1,7 +1,7 @@
 /*                           P K G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -136,7 +136,7 @@
 #endif
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
-extern int errno;
+#include <errno.h>
 #endif
 
 int pkg_nochecking = 0;	/* set to disable extra checking for input */
@@ -198,8 +198,6 @@ pkg_plong(char *buf, unsigned long l)
 
 
 /**
- * _ P K G _ T I M E S T A M P
- *
  * Output a timestamp to the log, suitable for starting each line
  * with.
  *
@@ -231,14 +229,12 @@ _pkg_timestamp(void)
 
 
 /**
- * _ P K G _ E R R L O G
- *
  * Default error logger.  Writes to stderr.
  *
  * This is a private implementation function.
  */
 static void
-_pkg_errlog(char *s)
+_pkg_errlog(const char *s)
 {
     if (_pkg_debug) {
 	_pkg_timestamp();
@@ -250,14 +246,12 @@ _pkg_errlog(char *s)
 
 
 /**
- * _ P K G _ P E R R O R
- *
  * Produce a perror on the error logging output.
  *
  * This is a private implementation function.
  */
 static void
-_pkg_perror(void (*errlog) (char *msg), char *s)
+_pkg_perror(void (*errlog)(const char *msg), const char *s)
 {
     snprintf(_pkg_errbuf, MAX_PKG_ERRBUF_SIZE, "%s: ", s);
 
@@ -273,8 +267,6 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
 
 
 /**
- * _ P K G _ M A K E C O N N
- *
  * Malloc and initialize a pkg_conn structure.  We have already
  * connected to a client or server on the given file descriptor.
  *
@@ -285,7 +277,7 @@ _pkg_perror(void (*errlog) (char *msg), char *s)
  */
 static
 struct pkg_conn *
-_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg))
+_pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
     struct pkg_conn *pc;
 
@@ -320,8 +312,6 @@ _pkg_makeconn(int fd, const struct pkg_switch *switchp, void (*errlog) (char *ms
 
 
 /**
- * _ P K G _ C K _ D E B U G
- *
  * This is a private implementation function.
  */
 static void
@@ -350,7 +340,7 @@ _pkg_ck_debug(void)
 
 
 struct pkg_conn *
-pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog) (char *msg))
+pkg_open(const char *host, const char *service, const char *protocol, const char *uname, const char *UNUSED(passwd), const struct pkg_switch *switchp, void (*errlog)(const char *msg))
 {
 #ifdef HAVE_WINSOCK_H
     LPHOSTENT lpHostEntry;
@@ -468,7 +458,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 	    return PKC_ERROR;
 	}
 	sinhim.sin_family = hp->h_addrtype;
-	memcpy((char *)&sinhim.sin_addr, hp->h_addr, (size_t)hp->h_length);
+	memcpy((char *)&sinhim.sin_addr, hp->h_addr_list[0], (size_t)hp->h_length);
     }
     addr = (struct sockaddr *) &sinhim;
     addrlen = sizeof(struct sockaddr_in);
@@ -508,7 +498,7 @@ pkg_open(const char *host, const char *service, const char *protocol, const char
 
 
 struct pkg_conn *
-pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
+pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(const char *))
 {
     struct pkg_conn *conn;
 
@@ -534,7 +524,7 @@ pkg_transerver(const struct pkg_switch *switchp, void (*errlog)(char *))
  * This is a private implementation function.
  */
 static int
-_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+_pkg_permserver_impl(struct in_addr iface, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct servent *sp;
     int pkg_listenfd;
@@ -700,7 +690,7 @@ _pkg_permserver_impl(struct in_addr iface, const char *service, const char *prot
 
 
 int
-pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog) (char *msg))
+pkg_permserver(const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct in_addr iface;
     iface.s_addr = INADDR_ANY;
@@ -709,7 +699,7 @@ pkg_permserver(const char *service, const char *protocol, int backlog, void (*er
 
 
 int
-pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(char *msg))
+pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *protocol, int backlog, void (*errlog)(const char *msg))
 {
     struct hostent* host;
     struct in_addr iface;
@@ -720,7 +710,7 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 	} else {
 	    /* XXX gethostbyname is deprecated on Windows */
 	    host = gethostbyname(ipOrHostname);
-	    iface = *(struct in_addr*)host->h_addr;
+	    iface = *(struct in_addr*)host->h_addr_list[0];
 	}
 	return _pkg_permserver_impl(iface, service, protocol, backlog, errlog);
     } else {
@@ -731,7 +721,7 @@ pkg_permserver_ip(const char *ipOrHostname, const char *service, const char *pro
 
 
 struct pkg_conn *
-pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog) (char *msg), int nodelay)
+pkg_getclient(int fd, const struct pkg_switch *switchp, void (*errlog)(const char *msg), int nodelay)
 {
     int s2;
 #ifdef HAVE_WINSOCK_H
@@ -853,8 +843,6 @@ pkg_close(struct pkg_conn *pc)
 
 
 /**
- * P K G _ I N G E T
- *
  * A functional replacement for bu_mread() through the first level
  * input buffer.
  *
@@ -888,8 +876,6 @@ _pkg_inget(struct pkg_conn *pc, char *buf, size_t count)
 
 
 /**
- * _ P K G _ C H E C K I N
- *
  * This routine is called whenever it is necessary to see if there is
  * more input that can be read.  If input is available, it is read
  * into pkc_inbuf[].  If nodelay is set, poll without waiting.
@@ -1293,8 +1279,6 @@ pkg_flush(struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ G E T H D R
- *
  * Get header from a new message.
  *
  * Returns 1 when there is some message to go look at and -1 on fatal
@@ -1512,8 +1496,6 @@ pkg_bwaitfor (int type, struct pkg_conn *pc)
 
 
 /**
- * _ P K G _ D I S P A T C H
- *
  * Given that a whole message has arrived, send it to the appropriate
  * User Handler, or else grouse.  Returns -1 on fatal error, 0 on no
  * handler, 1 if all's well.

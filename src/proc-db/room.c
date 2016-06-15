@@ -1,7 +1,7 @@
 /*                          R O O M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,6 @@
 #include "raytrace.h"
 #include "wdb.h"
 
-
 #define HEIGHT 4000		/* 4 meter high walls */
 
 #define EAST 1
@@ -44,7 +43,6 @@
 #define SOUTH 8
 
 mat_t identity;
-double degtorad = 0.0174532925199433;
 double sin60;
 
 struct mtab {
@@ -86,8 +84,12 @@ main(int argc, char **argv)
     vect_t lwh;		/* length, width, height */
     vect_t pbase;
 
-    if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+    if (argc > 0) {
+	bu_log("Usage: %s\n",argv[0]);
+    	if (argc != 1)
+	    bu_exit(1, NULL);
+	bu_log("       Program continues running:\n");
+    }
 
     BU_LIST_INIT(&head.l);
 
@@ -272,10 +274,10 @@ make_pillar(char *prefix, int ix, int iy, fastf_t *center, fastf_t *lwh, struct 
 
     BU_LIST_INIT(&head.l);
 
-    snprintf(pilname, 32, "%s%d, %d", prefix, ix, iy);
+    snprintf(pilname, 32, "%s%d,_%d", prefix, ix, iy);
     snprintf(rname, 32, "%s.r", pilname);
     snprintf(sname, 32, "%s.s", pilname);
-    snprintf(oname, 32, "Obj%d, %d", ix, iy);
+    snprintf(oname, 32, "Obj%d,_%d", ix, iy);
 
     VMOVE(min, center);
     min[X] -= lwh[X];

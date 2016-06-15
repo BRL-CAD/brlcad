@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2013 United States Government as represented by
+ * Copyright (c) 1998-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,13 +23,9 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "cmd.h"
-
+#include "bu/cmd.h"
 
 /**
- * H I S T O R Y _ R E C O R D
- *
  * Stores the given command with start and finish times in the
  * history vls'es. 'status' is either BRLCAD_OK or BRLCAD_ERROR.
  */

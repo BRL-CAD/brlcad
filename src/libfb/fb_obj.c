@@ -1,7 +1,7 @@
 /*                        F B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2013 United States Government as represented by
+ * Copyright (c) 1997-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,7 +37,7 @@
 
 #include "bio.h"
 #include "tcl.h"
-#include "cmd.h"
+#include "bu/cmd.h"
 #include "fb.h"
 #include "fbserv_obj.h"
 
@@ -628,14 +628,12 @@ fbo_rect_tcl(void *clientData, int argc, const char **argv)
     }
 
     if (sscanf(argv[2], "%d", &xmin) != 1) {
-	bu_log("fb_rect: bad xmin value - %s",
-			 argv[2], (char *)NULL);
+	bu_log("fb_rect: bad xmin value - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[3], "%d", &ymin) != 1) {
-	bu_log("fb_rect: bad ymin value - %s",
-			 argv[3], (char *)NULL);
+	bu_log("fb_rect: bad ymin value - %s", argv[3]);
 	return BRLCAD_ERROR;
     }
 
@@ -730,8 +728,6 @@ fbo_configure_tcl(void *clientData, int argc, const char **argv)
 
 
 /*
- * F B O _ C M D
- *
  * Generic interface for framebuffer object routines.
  * Usage:
  * procname cmd ?args?
@@ -758,7 +754,7 @@ fbo_cmd(ClientData clientData, Tcl_Interp *UNUSED(interp), int argc, const char 
 	{"listen",	fbo_listen_tcl},
 	{"rect",	fbo_rect_tcl},
 	{"refresh",	fbo_refresh_tcl},
-	{(char *)0,	(int (*)())0}
+	{(const char *)NULL, BU_CMD_NULL}
     };
 
     if (bu_cmd(fbo_cmds, argc, argv, 1, clientData, &ret) == BRLCAD_OK)
@@ -820,19 +816,18 @@ fbo_open_tcl(void *UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 		break;
 	    case '?':
 	    default:
-		bu_log("fb_open: bad option - %s",
-				 bu_optarg, (char *)NULL);
+		bu_log("fb_open: bad option - %s", bu_optarg);
 		return BRLCAD_ERROR;
 	}
     }
 
     if ((ifp = fb_open(argv[2], width, height)) == FBIO_NULL) {
-	bu_log("fb_open: bad device - %s", argv[2], (char *)NULL);
+	bu_log("fb_open: bad device - %s", argv[2]);
 	return BRLCAD_ERROR;
     }
 
     if (fb_ioinit(ifp) != 0) {
-	bu_log("fb_open: fb_ioinit() failed.", (char *) NULL);
+	bu_log("fb_open: fb_ioinit() failed.");
 	return BRLCAD_ERROR;
     }
 

@@ -194,3 +194,4 @@ inline Point* SweepContext::tail()
 }
 
 #endif
+

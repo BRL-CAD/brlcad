@@ -1,7 +1,7 @@
 /*                        B W C R O P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2014 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -104,7 +104,7 @@ fill_buffer(int y)
 int
 main(int argc, char **argv)
 {
-    float x_1, y_1, x_2, y_2, x, y;
+    float x1, y1, x2, y2, x, y;
     size_t row, col;
     ssize_t yindex;
     char value;
@@ -190,7 +190,7 @@ main(int argc, char **argv)
 	else
 	    return 1;
     } else {
-	float xval, yval;
+	double xval, yval;
 	unsigned long len;
 	/* Get info */
 	printf("Scanline length in input file: ");
@@ -202,7 +202,7 @@ main(int argc, char **argv)
 	    bu_exit(4, "bwcrop: scanlen = %zu, don't be ridiculous\n", scanlen);
 	}
 	printf("Line Length and Number of scan lines (in new file)?: ");
-	ret = scanf("%f%f", &xval, &yval);
+	ret = scanf("%lf%lf", &xval, &yval);
 	if (ret != 2) {
 	    perror("scanf");
 	}
@@ -256,16 +256,16 @@ main(int argc, char **argv)
     /* Move all points */
     for (row = 0; row < ynum; row++) {
 	/* calculate left point of row */
-	x_1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
-	y_1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
+	x1 = ((ulx-llx)/(fastf_t)(ynum-1)) * (fastf_t)row + llx;
+	y1 = ((uly-lly)/(fastf_t)(ynum-1)) * (fastf_t)row + lly;
 	/* calculate right point of row */
-	x_2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
-	y_2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
+	x2 = ((urx-lrx)/(fastf_t)(ynum-1)) * (fastf_t)row + lrx;
+	y2 = ((ury-lry)/(fastf_t)(ynum-1)) * (fastf_t)row + lry;
 
 	for (col = 0; col < xnum; col++) {
 	    /* calculate point along row */
-	    x = ((x_2-x_1)/(fastf_t)(xnum-1)) * (fastf_t)col + x_1;
-	    y = ((y_2-y_1)/(fastf_t)(xnum-1)) * (fastf_t)col + y_1;
+	    x = ((x2-x1)/(fastf_t)(xnum-1)) * (fastf_t)col + x1;
+	    y = ((y2-y1)/(fastf_t)(xnum-1)) * (fastf_t)col + y1;
 
 	    /* Make sure we are in the buffer */
 	    yindex = round(y) - buf_start;

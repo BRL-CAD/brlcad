@@ -1,4 +1,4 @@
-# Copyright (c) 2012-2013 United States Government as represented by
+# Copyright (c) 2012-2014 United States Government as represented by
 # the U.S. Army Research Laboratory.
 # Copyright (c) 2008, Federico Ferri
 #
