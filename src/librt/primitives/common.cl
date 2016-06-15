@@ -11,6 +11,9 @@
 #define double4 float4
 #define double16 float16
 
+#define convert_double3 convert_float3
+#define as_ulong (ulong)
+
 #define DOUBLE_C(value) \
 	value ## f
 #else
@@ -115,6 +118,7 @@ struct arb_specific;
 struct ehy_specific;
 struct ell_specific;
 struct epa_specific;
+struct eto_specific;
 struct rec_specific;
 struct sph_specific;
 struct tgc_specific;
@@ -125,6 +129,7 @@ extern int bot_shot(RESULT_TYPE *res, const double3 r_pt, double3 r_dir, const u
 extern int ehy_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ehy_specific *ehy);
 extern int ell_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct ell_specific *ell);
 extern int epa_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct epa_specific *epa);
+extern int eto_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct eto_specific *eto);
 extern int rec_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct rec_specific *rec);
 extern int sph_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct sph_specific *sph);
 extern int tgc_shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const uint idx, global const struct tgc_specific *tgc);
@@ -135,6 +140,7 @@ extern void bot_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, 
 extern void ehy_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ehy_specific *ehy);
 extern void ell_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct ell_specific *ell);
 extern void epa_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct epa_specific *epa);
+extern void eto_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct eto_specific *eto);
 extern void rec_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct rec_specific *rec);
 extern void sph_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct sph_specific *sph);
 extern void tgc_norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, global const struct tgc_specific *tgc);

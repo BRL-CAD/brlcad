@@ -447,7 +447,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     int code;
     struct bu_ptbl *restbl;
     struct resource *resp;
-    int cpu;
+    size_t cpu;
 
     RT_CK_SOLTAB(stp);
     RT_CK_RTI(ap->a_rt_i);
@@ -477,7 +477,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      */
     restbl = &submodel->rtip->rti_resources;	/* a ptbl */
     cpu = ap->a_resource->re_cpu;
-    BU_ASSERT_LONG(cpu, <, BU_PTBL_END(restbl));
+    BU_ASSERT_SIZE_T(cpu, <, BU_PTBL_LEN(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
 	BU_ALLOC(resp, struct resource);

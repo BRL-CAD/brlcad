@@ -49,13 +49,10 @@ int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-v] -o output_file.g input_file.3dm\n";
+	"Usage: 3dm-g [-v] [-h] -o output_file.g input_file.3dm\n";
 
-
-    const struct gcv_filter * const out_filter = find_filter(GCV_FILTER_WRITE,
-	    BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
-    const struct gcv_filter * const in_filter = find_filter(GCV_FILTER_READ,
-	    BU_MIME_MODEL_VND_RHINO);
+    const struct gcv_filter *out_filter;
+    const struct gcv_filter *in_filter;
 
     struct gcv_context context;
     struct gcv_opts gcv_options;
@@ -63,6 +60,7 @@ main(int argc, char **argv)
     const char *input_path;
     int c;
 
+    bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
 
     while ((c = bu_getopt(argc, argv, "o:vh?")) != -1) {
@@ -88,11 +86,15 @@ main(int argc, char **argv)
 
     input_path = argv[bu_optind];
 
+    in_filter = find_filter(GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO);
+    out_filter = find_filter(GCV_FILTER_WRITE,
+			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
+
     if (!out_filter)
 	bu_bomb("could not find the BRL-CAD writer filter");
 
     if (!in_filter) {
-	bu_log("a Rhino reader filter is not loaded");
+	bu_log("could not find the Rhino reader filter");
 	return 1;
     }
 

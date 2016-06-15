@@ -109,7 +109,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
     /* Get number of vertices */
 
-    numverts = BU_PTBL_END (&verts);
+    numverts = BU_PTBL_LEN (&verts);
 
 /* BEGIN CHECK SECTION */
 

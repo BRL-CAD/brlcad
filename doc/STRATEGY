@@ -145,97 +145,111 @@ bolster those areas, and identifies specific actionable objectives.
 **** TODO migrate e-mail and release notes to web (1)
 
 
-** PROJECT: Webulgation
+** PROJECT: Website Renovation (10)
 
-   FIXME these need to be sorted and ranked
+*** improve website usability (1)
+**** TODO set up platform-detected downloads on main page (0)
+**** TODO publish project vitality/stats (openhub integration) (0)
+**** TODO restore search interface (1)
 
-*** publish docbook docs
-**** TODO instantiate / set up sofat's doc interface
-**** TODO design pdf stylesheet
-**** TODO integrate docs onto website (html+pdf)
+*** publish docbook docs (3)
+**** TODO instantiate / set up sofat's doc interface (1)
+**** TODO design pdf stylesheet (1)
+**** TODO integrate docs onto website (html+pdf) (1)
 
-*** online doc editing
-**** TODO review sofat edit interface
-**** TODO apply website theme to edit interface
+*** publish use cases (3)
+**** TODO post 3+ customer profiles (1)
+**** TODO post top-10 feature highlights (1)
+**** TODO identify alternatives and their highlight mappings (1)
+**** TODO post comparison table with 2+ alternatives (0)
 
-*** publish use cases
-**** TODO post 3+ customer profiles
-**** TODO post top-10 feature highlights
-**** TODO identify alternatives and their highlight mappings
-**** TODO post comparison table with 2+ alternatives
-
-*** set up developer corner
-**** TODO publish doxygen output to website
-**** TODO update doxygen stylesheet to fit theme
-**** TODO ensure buildbot is setup and running handsfree
-**** TODO update buildbot stylesheet to fit theme
-**** TODO post nightly builds
-**** TODO set up cron job to maintain CI and doc updates
-**** TODO announce dev corner to brlcad-devel/brlcad-news
-
-*** improve website usability
-**** TODO set up platform-detected downloads on main page
-**** TODO publish project vitality/stats (ohloh integration)
+*** set up developer corner (3)
+**** TODO ensure buildbot is setup and running handsfree (1)
+**** TODO update buildbot stylesheet to fit theme (0)
+**** TODO post nightly builds (0)
+**** TODO set up cron job to maintain CI and doc updates (1)
+**** TODO announce dev corner to brlcad-devel/brlcad-news (0)
+**** TODO buildbot <-> cdash/lcov/coverity/gccfarm/swamp integration (1)
 
 
-** PROJECT: Deploy GCV
+** PROJECT: Deploy GCV (9)
 
-*** 3dm "round-tripping"
-**** TODO integrate existing importer
-**** TODO NURBS export support
-**** TODO document entity support
+*** 3dm "round-tripping" (2)
+**** TODO integrate existing importer (0)
+**** TODO NURBS export support (1)
+**** TODO document entity support (1)
 
-*** documentation
-**** TODO convert jon's write-up to docbook
-**** TODO integrate jon's plugin examples
-**** TODO write and publish plugin API policy
-**** TODO write and publish GCV feature profile on website
+*** documentation (3)
+**** TODO convert jon's write-up to docbook (0)
+**** TODO integrate jon's plugin examples (1)
+**** TODO write and publish plugin API policy (1)
+**** TODO write and publish GCV feature profile on website (1)
 
-*** CLI usability
-**** TODO design usage / synopsis
-**** TODO provide logging/debugging interface
+*** CLI usability (2)
+**** TODO design usage / synopsis (1)
+**** TODO provide logging/debugging interface (0)
+**** TODO integrate bot_dump into gcv (1)
 
-*** robust deployment
-**** TODO convert tlib via automated testing
-**** TODO automate extraction of sources from checkout
-**** TODO integrate gcv into mged/archer
-**** TODO troubleshoot JASP export memory issue
-**** TODO integrate bot_dump into gcv
+*** robust deployment (2)
+**** TODO convert tlib via automated testing (1)
+**** TODO automate extraction of sources from checkout (0)
+**** TODO integrate gcv into mged/archer (0)
+**** TODO troubleshoot JASP export memory issue (1)
 
 
-** PROJECT: Performant Pipeline
-*** bundled ray dispatch
-**** TODO define ray bundling API
-**** TODO audit librt API for performance
-**** TODO convert RT to new bundled API
+** PROJECT: Performant Pipeline (15)
 
-*** raytrace prep caching
-**** TODO implement libbu data caching API (3)
-**** TODO implement librt object prep caching (5)
-**** TODO update tools to utilize the prep cache (1+2)
+*** coherent Boolean evaluation (3)
+**** TODO preliminary OpenCL conversion (1)
+**** TODO eliminate branching (1)
+**** TODO V&V with specific test cases (1)
+
+*** audit ray dispatching (3)
+**** TODO define ray bundling API (1)
+**** TODO audit librt ray API, consolidate (1)
+
+*** implement bundled ray dispatch (2)
+**** TODO integrate Costa's GSoC work (1)
+**** TODO propagate bundle through spatial partition (1)
+**** TODO convert rt* to new bundled API (1)
+
+*** on-demand NURBS tree-build (4)
+**** TODO formulate a design / approach (1)
+**** TODO dynamic tree build with minimal malloc (2)
+**** TODO profile and validate results (1)
+
+*** coherent NURBS evaluation (1)
+**** TODO review 2006 paper (0)
+**** TODO convert openNURBS surface evaluation to OpenCL (1)
+
+*** performant raytrace image display (2)
+**** TODO optimize libdb/libfb to remove bottleneck (1)
+**** TODO update archer for interactive tracing display (1)
+
+
+** PROJECT: Raytrace Prep Caching (10)
+
+*** implement LIBBU data caching (3)
+**** TODO document libbu data caching API (1)
+**** TODO create data caching test cases (1)
+**** TODO implement libbu data caching (1)
+
+*** implment LIBRT object caching (4)
+**** TODO serialize BoT prep data to cache (1)
+**** TODO serialize NURBS prep data to cache (1)
+**** TODO serialize tess/plot data to cache (2)
+
+*** update tools to utilize the cache (3)
+**** TODO update rt* to use prep cache (1)
+**** TODO update mged/archer to use tess/plot cache (1)
 **** TODO document the prep cache interface (1)
-
-*** on-demand NURBS tree-building
-**** TODO dynamic tree build with minimal malloc
-**** TODO profile and validate results
-**** TODO formulate a design / approach
-
-*** coherent Boolean evaluation
-**** TODO OpenCL conversion
-**** TODO handle bundles of ray, eliminate branching
-**** TODO review and integrate Costa's GSoC work
-**** TODO V&V with specific test cases
-
-*** coherent NURBS evaluation
-**** TODO review 2006 paper
-**** TODO convert openNURBS surface evaluation to OpenCL
-
-*** performant raytrace image display
-**** TODO optimize libdb/libfb to remove bottleneck
-**** TODO update archer for interactive tracing display
 
 
 ** PROJECT: Progressive Geometry Display (11)
+
+*** asynchronous geometry display (4)
+**** TODO modify display loop to run in separate thread (2)
+**** TODO update draw command to dispatch (2)
 
 *** ray trace display manager (4)
 **** TODO review rtgl code (1)
@@ -244,12 +258,8 @@ bolster those areas, and identifies specific actionable objectives.
 
 *** point cloud hashing (3)
 **** TODO design LoD point cloud storage approach (1)
-**** TODO calculate LoD point cloud utility metic (1)
+**** TODO calculate LoD point cloud utility metric (1)
 **** TODO implement LoD point cloud loading (3)
-
-*** asynchronous geometry display (4)
-**** TODO modify display loop to run in separate thread (2)
-**** TODO update draw command to dispatch (2)
 
 
 ** TEMPLATE: Project Title
@@ -275,4 +285,4 @@ bolster those areas, and identifies specific actionable objectives.
 
 # Local Variables:
 # mode: org
-# End:
+     # End:

@@ -22,6 +22,10 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
+* mass-deprecation of 121 command-line utilities - BRL-CAD Developers
+* updated wireframe drawing to respect primitive colors - Cliff Yapp
+* updated pixdiff & pixcmp to only compare same sizes - Cliff Yapp
+* fixed running archer from read-only filesystems - Cliff Yapp
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
 * fixed color preservation issue with 3dm-g importer - Jon Engbert

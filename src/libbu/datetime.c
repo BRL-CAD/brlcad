@@ -35,6 +35,7 @@
 
 #include "bio.h"
 
+#include "bu/log.h"
 #include "bu/time.h"
 #include "bu/parallel.h"
 #include "bu/vls.h"

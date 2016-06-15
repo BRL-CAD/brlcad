@@ -86,6 +86,7 @@ add_subdirectory(mged)
 add_subdirectory(pl-dm)
 add_subdirectory(sdialogs)
 add_subdirectory(swidgets)
+add_subdirectory(tcllib)
 add_subdirectory(util)
 
 set(tclscripts_TCLSCRIPTS

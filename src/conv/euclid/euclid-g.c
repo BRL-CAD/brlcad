@@ -263,7 +263,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 static void
 build_groups(struct rt_wdb *fpout)
 {
-    int i, j;
+    size_t i, j;
     struct wmember head;
     struct wmember head_all;
     char group_name[18];
@@ -273,10 +273,10 @@ build_groups(struct rt_wdb *fpout)
 
     for (i=0; i<11; i++) {
 
-	if (BU_PTBL_END(&groups[i]) < 1)
+	if (BU_PTBL_LEN(&groups[i]) < 1)
 	    continue;
 
-	for (j=0; j<BU_PTBL_END(&groups[i]); j++) {
+	for (j=0; j<BU_PTBL_LEN(&groups[i]); j++) {
 	    char *region_name;
 
 	    region_name = (char *)BU_PTBL_GET(&groups[i], j);
@@ -286,7 +286,7 @@ build_groups(struct rt_wdb *fpout)
 	}
 
 	if (i < 10)
-	    sprintf(group_name, "%dxxx_series", i);
+	    sprintf(group_name, "%luxxx_series", (unsigned long)i);
 	else
 	    sprintf(group_name, "ids_over_9999");
 
