@@ -154,7 +154,7 @@ hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(segp
 
 	{
 	    /* precompute partition size */
-	    const fastf_t partition_volume = depth * cell_height * cell_width;
+	    const fastf_t partition_volume = depth * cell_height * cell_width / (hypersample + 1);
 
 	    /* convert reg_los percentage to factor */
 	    const fastf_t los_factor = (fastf_t)reg->reg_los * 0.01;

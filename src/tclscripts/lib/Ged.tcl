@@ -234,6 +234,7 @@ package provide cadwidgets::Ged 1.0
 	method faceplate {args}
 	method facetize {args}
 	method fb2pix {args}
+	method fbclear {args}
 	method find_bot_edge_in_face {_bot _face _mx _my}
 	method find_botpt_in_face {_bot _face _mx _my}
 	method find_pipept {args}
@@ -405,6 +406,7 @@ package provide cadwidgets::Ged 1.0
 	method pane_eye {_pane args}
 	method pane_eye_pos {_pane args}
 	method pane_fb2pix {_pane args}
+	method pane_fbclear {_pane args}
 	method pane_find_botpt {_pane args}
 	method pane_find_bot_edge_in_face {_pane _bot _face _mx _my}
 	method pane_find_botpt_in_face {_pane _bot _face _mx _my}
@@ -1789,8 +1791,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed voxelize $args
 }
 
+
 ::itcl::body cadwidgets::Ged::fb2pix {args} {
     eval $mGed fb2pix $itk_component($itk_option(-pane)) $args
+}
+
+
+::itcl::body cadwidgets::Ged::fbclear {args} {
+    eval $mGed fbclear $itk_component($itk_option(-pane)) $args
 }
 
 
@@ -2589,8 +2597,14 @@ package provide cadwidgets::Ged 1.0
     eval $mGed eye_pos $itk_component($_pane) $args
 }
 
+
 ::itcl::body cadwidgets::Ged::pane_fb2pix {_pane args} {
     eval $mGed fb2pix $itk_component($_pane) $args
+}
+
+
+::itcl::body cadwidgets::Ged::pane_fbclear {_pane args} {
+    eval $mGed fbclear $itk_component($_pane) $args
 }
 
 
