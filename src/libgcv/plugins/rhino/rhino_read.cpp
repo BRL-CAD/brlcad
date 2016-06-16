@@ -190,6 +190,7 @@ replace_invalid_uuids(ONX_Model &model)
     std::size_t num_repairs = 0;
     std::set<ON_UUID, UuidCompare> seen;
     seen.insert(ON_nil_uuid); // UUIDs can't be nil
+    srand48(time(NULL));
 
 #define REPLACE_UUIDS(array, member) \
 do { \
@@ -653,8 +654,8 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 
     unsigned char rgb[3];
     rgb[0] = layer.Color().Red();
-    rgb[1] = layer.Color().Red();
-    rgb[2] = layer.Color().Red();
+    rgb[1] = layer.Color().Green();
+    rgb[2] = layer.Color().Blue();
 
     const Shader &shader = get_shader(layer.RenderMaterialIndex() != -1 ?
 				      at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
@@ -718,6 +719,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
+	const std::string unnamed_pattern = gcv_options.default_name + std::string("*");
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
@@ -729,7 +731,9 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
 			throw std::runtime_error("db5_get_attributes() failed");
 
-		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")) {
+		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
+			|| (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
+			    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
 			const std::string prefix = (*entry)->fp_names[i]->d_namep;
 			std::string suffix = ".s";
 			std::size_t num = 1;
