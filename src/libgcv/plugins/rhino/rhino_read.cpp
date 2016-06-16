@@ -408,7 +408,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
     } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&geometry)) {
 	write_geometry(wdb, name, *mesh);
     } else if (geometry.HasBrepForm()) {
-	AutoPtr<ON_Brep> temp(geometry.BrepForm());
+	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry.BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
     } else
 	return false;
