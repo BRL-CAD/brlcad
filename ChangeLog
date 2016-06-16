@@ -1,3 +1,14 @@
+2016-06-16 14:57  starseeker
+
+	* [r68121] CMakeLists.txt:
+	  0 is a valid compile count, so do a string test instead to set
+	  the -1 error value.
+
+2016-06-16 14:34  starseeker
+
+	* [r68119] ChangeLog:
+	  Update ChangeLog. M.
+
 2016-06-16 14:27  starseeker
 
 	* [r68118] NEWS, include/conf/MINOR:
