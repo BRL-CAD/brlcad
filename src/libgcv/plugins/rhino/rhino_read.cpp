@@ -754,7 +754,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 			std::string suffix = ".s";
 			std::size_t num = 1;
 
-			while (db_lookup(&db, (prefix + suffix).c_str(), false))
+			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
+			       && db_lookup(&db, (prefix + suffix).c_str(), false))
 			    suffix = "_" + lexical_cast<std::string>(++num) + ".s";
 
 			renamed.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry),
