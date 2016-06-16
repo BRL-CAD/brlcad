@@ -49,7 +49,7 @@ int
 main(int argc, char **argv)
 {
     const char * const usage =
-	"Usage: 3dm-g [-v] [-h] -o output_file.g input_file.3dm\n";
+	"Usage: 3dm-g [-r] [-v] [-h] -o output_file.g input_file.3dm\n";
 
     const struct gcv_filter *out_filter;
     const struct gcv_filter *in_filter;
@@ -63,10 +63,14 @@ main(int argc, char **argv)
     bu_setprogname(argv[0]);
     gcv_opts_default(&gcv_options);
 
-    while ((c = bu_getopt(argc, argv, "o:vh?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "o:rvh?")) != -1) {
 	switch (c) {
 	    case 'o':
 		output_path = bu_optarg;
+		break;
+
+	    case 'r':
+		gcv_options.debug_mode = 1;
 		break;
 
 	    case 'v':
