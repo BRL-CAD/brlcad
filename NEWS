@@ -11,7 +11,7 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2016-05-XX  Release 7.26.XX                                    ---
+--- 2016-06-XX  Release 7.26.0                                     ---
 ----------------------------------------------------------------------
 
 This major release update of BRL-CAD culminates several years of
@@ -22,6 +22,7 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
+* improved hierarchy preservation in 3dm-g importer - Jon Engbert
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * updated wireframe drawing to respect primitive colors - Cliff Yapp
 * updated pixdiff & pixcmp to only compare same sizes - Cliff Yapp

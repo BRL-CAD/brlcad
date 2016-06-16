@@ -1283,7 +1283,7 @@ Release steps are as follows:
 
     # Manually check rt, mged, and archer.
     bin/rt        # should report usage with correct library versions
-    bin/mged -c test.g "make sph sph ; rt"   # pops up a sphere
+    bin/mged -c test.g "make sph sph ; draw sph ; rt"   # pops up a sphere
     bin/mged      # displays gui, run: opendb test.g ; draw sph ; rt
     bin/archer    # displays gui, run: opendb test.g ; draw sph ; rt
 
@@ -1480,10 +1480,6 @@ audience.  Always notify the following when a release is made:
 
     BRL-CAD SourceForge NEWS  (authorized can submit)
 	https://sourceforge.net/p/brlcad/news/new
-
-    Freshmeat  (anyone can submit update)
-	http://freecode.com/projects/BRL-CAD/
-	short summary without news details (sentence format)
 
     BRL-CAD on Facebook  (authorized can submit)
 	http://www.facebook.com/pages/BRL-CAD/387112738872

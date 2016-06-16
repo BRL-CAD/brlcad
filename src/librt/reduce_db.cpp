@@ -257,6 +257,8 @@ Hierarchy::write()
 
 	it->second.write();
     }
+
+    db_update_nref(&m_db, &rt_uniresource);
 }
 
 
