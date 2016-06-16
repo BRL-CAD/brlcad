@@ -408,7 +408,7 @@ write_geometry(rt_wdb &wdb, const std::string &name,
     } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&geometry)) {
 	write_geometry(wdb, name, *mesh);
     } else if (geometry.HasBrepForm()) {
-	AutoPtr<ON_Brep> temp(geometry.BrepForm());
+	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry.BrepForm());
 	write_geometry(wdb, name, *temp.ptr);
     } else
 	return false;
@@ -705,9 +705,25 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     if (BU_PTBL_LEN(&found)) {
 	directory **entry;
 
-	for (BU_PTBL_FOR(entry, (directory **), &found))
+	for (BU_PTBL_FOR(entry, (directory **), &found)) {
 	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
 		throw std::runtime_error("db5_update_attribute() failed");
+
+	    if (gcv_options.debug_mode) {
+		// random colors debug mode: TODO: move this into a filter after 7.26.0
+		std::string rgb;
+
+		for (std::size_t i = 0; i < 3; ++i)
+		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
+							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
+
+		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db))
+		    throw std::runtime_error("db5_update_attribute() failed");
+
+		if (db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
+		    throw std::runtime_error("db5_update_attribute() failed");
+	    }
+	}
     }
 
     // rename shapes after their parent layers
@@ -738,7 +754,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 			std::string suffix = ".s";
 			std::size_t num = 1;
 
-			while (db_lookup(&db, (prefix + suffix).c_str(), false))
+			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
+			       && db_lookup(&db, (prefix + suffix).c_str(), false))
 			    suffix = "_" + lexical_cast<std::string>(++num) + ".s";
 
 			renamed.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry),
