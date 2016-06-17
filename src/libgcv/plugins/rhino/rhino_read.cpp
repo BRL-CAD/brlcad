@@ -517,11 +517,9 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
     char temp[uuid_string_length];
 
     if (db5_update_attribute(name.c_str(), "rhino::type",
-			     object.ClassId()->ClassName(), wdb.dbip))
-	throw std::runtime_error("db5_update_attribute() failed");
-
-    if (db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
-			     temp), wdb.dbip))
+			     object.ClassId()->ClassName(), wdb.dbip)
+	|| db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
+				temp), wdb.dbip))
 	throw std::runtime_error("db5_update_attribute() failed");
 }
 
@@ -717,10 +715,8 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
 							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
 
-		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db))
-		    throw std::runtime_error("db5_update_attribute() failed");
-
-		if (db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
+		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db)
+		    || db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
 		    throw std::runtime_error("db5_update_attribute() failed");
 	    }
 	}
@@ -768,7 +764,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    }
 		}
 
-	    if ((*entry)->fp_len > 1) {
+	    if (renamed.count(DB_FULL_PATH_CUR_DIR(*entry)) && (*entry)->fp_len > 1) {
 		bu_ptbl stack = BU_PTBL_INIT_ZERO;
 		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
 
@@ -776,6 +772,77 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 				   renamed.at(DB_FULL_PATH_CUR_DIR(*entry)).c_str(),
 				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, &stack))
 		    throw std::runtime_error("db_comb_mvall() failed");
+	    }
+	}
+    }
+
+    // ensure that all solids are below regions
+    db_search_free(&found);
+    BU_PTBL_INIT(&found);
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      "-type shape -not -below -attr region=R", 0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
+
+    if (BU_PTBL_LEN(&found)) {
+	db_full_path **entry;
+
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
+	    std::string suffix = ".r";
+
+	    if (prefix.size() >= 2 && prefix.at(prefix.size() - 2) == '.'
+		&& prefix.at(prefix.size() - 1) == 's')
+		prefix.resize(prefix.size() - 2);
+
+	    std::size_t num = 1;
+
+	    while (db_lookup(&db, (prefix + suffix).c_str(), false))
+		suffix = "_" + lexical_cast<std::string>(++num) + ".r";
+
+	    const std::string region_name = prefix + suffix;
+
+	    if ((*entry)->fp_len >= 2) {
+		bu_ptbl stack = BU_PTBL_INIT_ZERO;
+		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
+
+		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
+				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, region_name.c_str(), &stack))
+		    throw std::runtime_error("db_comb_mvall() failed");
+	    }
+
+	    std::set<std::string> members;
+	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
+	    write_comb(*db.dbi_wdbp, region_name, members);
+
+	    if (db5_update_attribute(region_name.c_str(), "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
+
+	    bool has_rgb = false, has_shader = false;
+
+	    for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
+		bu_attribute_value_set avs;
+		AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
+
+		if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
+		    throw std::runtime_error("db5_get_attributes() failed");
+
+		if (!has_rgb)
+		    if (const char * const rgb_attr = bu_avs_get(&avs, "rgb")) {
+			has_rgb = true;
+
+			if (db5_update_attribute(region_name.c_str(), "rgb", rgb_attr, &db)
+			    || db5_update_attribute(region_name.c_str(), "color", rgb_attr, &db))
+			    throw std::runtime_error("db5_update_attribute() failed");
+		    }
+
+		if (!has_shader)
+		    if (const char * const shader_attr = bu_avs_get(&avs, "shader")) {
+			has_shader = true;
+
+			if (db5_update_attribute(region_name.c_str(), "shader", shader_attr, &db)
+			    || db5_update_attribute(region_name.c_str(), "oshader", shader_attr, &db))
+			    throw std::runtime_error("db5_update_attribute() failed");
+		    }
 	    }
 	}
     }

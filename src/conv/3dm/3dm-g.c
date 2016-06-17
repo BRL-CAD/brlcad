@@ -109,6 +109,8 @@ main(int argc, char **argv)
 	bu_exit(1, "failed to load input file");
     }
 
+    gcv_options.debug_mode = 0;
+
     if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, output_path)) {
 	gcv_context_destroy(&context);
 	bu_exit(1, "failed to export to output file");
