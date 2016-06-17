@@ -784,7 +784,6 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 	throw std::runtime_error("db_search() failed");
 
     if (BU_PTBL_LEN(&found)) {
-	const std::string unnamed_pattern = gcv_options.default_name + std::string("*");
 	db_full_path **entry;
 
 	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
@@ -828,7 +827,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    throw std::runtime_error("db5_get_attributes() failed");
 
 		if (!has_rgb)
-		    if (const char *rgb_attr = bu_avs_get(&avs, "rgb")) {
+		    if (const char * const rgb_attr = bu_avs_get(&avs, "rgb")) {
 			has_rgb = true;
 
 			if (db5_update_attribute(region_name.c_str(), "rgb", rgb_attr, &db)
@@ -837,7 +836,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
 		    }
 
 		if (!has_shader)
-		    if (const char *shader_attr = bu_avs_get(&avs, "shader")) {
+		    if (const char * const shader_attr = bu_avs_get(&avs, "shader")) {
 			has_shader = true;
 
 			if (db5_update_attribute(region_name.c_str(), "shader", shader_attr, &db)
