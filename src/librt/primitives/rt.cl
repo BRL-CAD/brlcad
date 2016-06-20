@@ -89,6 +89,7 @@ rt_in_rpp(const double3 pt,
 #define ID_ARS          5       /**< @brief ARS */
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
+#define ID_PARTICLE     16      /**< @brief Particle system solid */
 #define ID_EPA          19      /**< @brief Elliptical Paraboloid */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
 #define ID_ETO          21      /**< @brief Elliptical Torus  */
@@ -104,6 +105,7 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_ARB8:	return arb_shot(res, r_pt, r_dir, idx, args);
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
+    case ID_PARTICLE:	return part_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
     case ID_ARS:
     case ID_BOT:	return bot_shot(res, r_pt, r_dir, idx, args);
@@ -123,10 +125,11 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_PARTICLE:	part_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ARS:
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EPA:	epa_norm(hitp, r_pt, r_dir, args);	break;
-    case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);  break;
+    case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }
@@ -703,6 +706,28 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     }
 }
 #endif
+
+
+/**
+ * Sort an array of hits into ascending order.
+ */
+void
+rt_hitsort(struct hit *h, int nh)
+{
+    int i, j;
+    struct hit temp;
+
+    for (i = 0; i < nh-1; i++) {
+	for (j = i + 1; j < nh; j++) {
+	    if (h[i].hit_dist <= h[j].hit_dist)
+		continue;
+	    temp = h[j];		/* struct copy */
+	    h[j] = h[i];		/* struct copy */
+	    h[i] = temp;		/* struct copy */
+	}
+    }
+}
+
 
 /*
  * Local Variables:

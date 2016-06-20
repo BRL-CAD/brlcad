@@ -601,6 +601,7 @@ clt_init(void)
             "epa_shot.cl",
             "eto_shot.cl",
             "sph_shot.cl",
+	    "part_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
@@ -654,18 +655,19 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
     size_t size;
 
     switch (stp->st_id) {
-	case ID_TOR:    size = clt_tor_pack(pool, stp);	break;
-	case ID_TGC:    size = clt_tgc_pack(pool, stp);	break;
-	case ID_ELL:    size = clt_ell_pack(pool, stp);	break;
-	case ID_ARB8:   size = clt_arb_pack(pool, stp);	break;
-	case ID_REC:    size = clt_rec_pack(pool, stp);	break;
-	case ID_SPH:    size = clt_sph_pack(pool, stp);	break;
-	case ID_EHY:    size = clt_ehy_pack(pool, stp);	break;
+	case ID_TOR:		size = clt_tor_pack(pool, stp);	break;
+	case ID_TGC:		size = clt_tgc_pack(pool, stp);	break;
+	case ID_ELL:		size = clt_ell_pack(pool, stp);	break;
+	case ID_ARB8:		size = clt_arb_pack(pool, stp);	break;
+	case ID_REC:		size = clt_rec_pack(pool, stp);	break;
+	case ID_SPH:		size = clt_sph_pack(pool, stp);	break;
+	case ID_PARTICLE:	size = clt_part_pack(pool, stp);break;
+	case ID_EHY:		size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
-	case ID_BOT:    size = clt_bot_pack(pool, stp);	break;
-	case ID_EPA:    size = clt_epa_pack(pool, stp);	break;
-	case ID_ETO:    size = clt_eto_pack(pool, stp); break;
-	default:	size = 0;			break;
+	case ID_BOT:		size = clt_bot_pack(pool, stp);	break;
+	case ID_EPA:		size = clt_epa_pack(pool, stp);	break;
+	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
+	default:		size = 0;			break;
     }
     return size;
 }

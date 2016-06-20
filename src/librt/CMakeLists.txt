@@ -316,6 +316,7 @@ set(librt_ignored_files
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
   primitives/rt.cl
@@ -350,6 +351,7 @@ set(CL_FILES
   primitives/epa/epa_shot.cl
   primitives/eto/eto_shot.cl
   primitives/sph/sph_shot.cl
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl
