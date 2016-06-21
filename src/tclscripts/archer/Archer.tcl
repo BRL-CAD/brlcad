@@ -8546,6 +8546,7 @@ proc title_node_handler {node} {
     if {$mHideSubtractionsPref != $mHideSubtractions} {
 	set mHideSubtractions $mHideSubtractionsPref
 	gedCmd configure -hideSubtractions $mHideSubtractions
+	set wflag 1
     }
 
     if {$mWireframeModePref != $mWireframeMode} {
