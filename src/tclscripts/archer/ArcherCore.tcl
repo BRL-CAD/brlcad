@@ -498,6 +498,8 @@ namespace eval ArcherCore {
 	variable mDisplayListModePref ""
 	variable mWireframeMode 0
 	variable mWireframeModePref ""
+	variable mHideSubtractions 0
+	variable mHideSubtractionsPref ""
 
 	variable mDefaultDisplayMode $DISPLAY_MODE_WIREFRAME
 	variable mDefaultDisplayModePref ""
@@ -5918,6 +5920,7 @@ namespace eval ArcherCore {
     updatePerspective 0
     doLighting
     gedCmd dlist_on $mDisplayListMode
+    gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {
 	gedCmd lod on
