@@ -222,8 +222,8 @@ mged
 	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
 
 	pathlist, paths -> replaced by search [deprecated 7.26]
-busrt
-	remove termlib based menu interface [deprecated 7.26]
+burst
+	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.24
 ----
