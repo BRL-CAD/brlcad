@@ -5711,10 +5711,16 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::createTargetCopy {} {
+
+    package require fileutil
+
+    set tmpdir [::fileutil::tempdir]
+
     if {$mTarget == ""} {
-	set target "BBBBogusArcherTargetCopy"
+	set target "$tmpdir/BBBBogusArcherTargetCopy"
     } else {
-	set target $mTarget
+	set target_fname [file tail $mTarget]
+	set target "$tmpdir/$target_fname"
     }
 
     set mTargetOldCopy $mTargetCopy

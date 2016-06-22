@@ -118,7 +118,8 @@ struct gcv_opts
 /**
  * Assign default option values.
  */
-void gcv_opts_default(struct gcv_opts *gcv_options);
+GCV_EXPORT void
+gcv_opts_default(struct gcv_opts *gcv_options);
 
 
 /**
@@ -182,6 +183,7 @@ struct gcv_plugin {
  */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
 
+GCV_EXPORT const struct gcv_plugin *gcv_plugin_info();
 
 /**
  * Perform a filtering operation on a gcv_context.

@@ -1,0 +1,153 @@
+/*                         3 D M - G . C
+ * BRL-CAD
+ *
+ * Copyright (c) 2004-2016 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This program is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+/** @file 3dm-g.cpp
+ *
+ * Conversion of Rhino models (.3dm files) into BRL-CAD databases.
+ *
+ */
+
+
+#include "common.h"
+
+#include "bu/getopt.h"
+#include "gcv/api.h"
+
+
+static const struct gcv_filter *
+find_filter(enum gcv_filter_type filter_type, bu_mime_model_t mime_type)
+{
+    const struct gcv_filter * const *entry;
+    const struct bu_ptbl * const filters = gcv_list_filters();
+
+    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters))
+	if ((*entry)->filter_type == filter_type
+	    && (*entry)->mime_type == mime_type)
+	    return *entry;
+
+    return NULL;
+}
+
+
+static const struct gcv_filter *
+get_filter(const char *name)
+{
+    const struct gcv_filter * const *entry;
+    const struct bu_ptbl * const filters = gcv_list_filters();
+
+    for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filters))
+	if (!bu_strcmp((*entry)->name, name))
+	    return *entry;
+
+    return NULL;
+}
+
+
+int
+main(int argc, char **argv)
+{
+    const char * const usage =
+	"Usage: 3dm-g [-e] [-r] [-v] [-h] -o output_file.g input_file.3dm\n";
+
+    const char * args[] = {"--random-colors"};
+
+    const struct gcv_filter *out_filter;
+    const struct gcv_filter *in_filter;
+
+    struct gcv_context context;
+    struct gcv_opts gcv_options;
+    const char *output_path = NULL;
+    const char *input_path;
+    int random_colors = 0;
+    int c;
+
+    bu_setprogname(argv[0]);
+
+    out_filter = find_filter(GCV_FILTER_WRITE,
+			     BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY);
+    in_filter = get_filter("Rhino Analysis Hierarchy Reader");
+
+    gcv_opts_default(&gcv_options);
+
+    while ((c = bu_getopt(argc, argv, "o:ervh?")) != -1) {
+	switch (c) {
+	    case 'o':
+		output_path = bu_optarg;
+		break;
+
+	    case 'v':
+		gcv_options.verbosity_level = 1;
+		break;
+
+	    case 'e':
+		in_filter = get_filter("Rhino Reader");
+		break;
+
+            case 'r':
+                random_colors = 1;
+                break;
+
+	    default:
+		bu_log("%s", usage);
+		return 1;
+	}
+    }
+
+    if (bu_optind != argc - 1 || !output_path) {
+	bu_log("%s", usage);
+	return 1;
+    }
+
+    input_path = argv[bu_optind];
+
+    if (!out_filter)
+	bu_bomb("could not find the BRL-CAD writer filter");
+
+    if (!in_filter) {
+	bu_log("a Rhino reader filter is not loaded");
+	return 1;
+    }
+
+    gcv_context_init(&context);
+
+    if (!gcv_execute(&context, in_filter, &gcv_options, random_colors ? sizeof(args) / sizeof(args[0]) : 0, args, input_path)) {
+	gcv_context_destroy(&context);
+	bu_exit(1, "failed to load input file");
+    }
+
+    if (!gcv_execute(&context, out_filter, &gcv_options, 0, NULL, output_path)) {
+	gcv_context_destroy(&context);
+	bu_exit(1, "failed to export to output file");
+    }
+
+    gcv_context_destroy(&context);
+
+    return 0;
+}
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

@@ -1385,8 +1385,11 @@ static const struct gcv_filter gcv_conv_vrml_write = {
 
 extern const struct gcv_filter gcv_conv_vrml_read;
 static const struct gcv_filter * const filters[] = {&gcv_conv_vrml_read, &gcv_conv_vrml_write, NULL};
-const struct gcv_plugin gcv_plugin_info = {filters};
 
+const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+GCV_EXPORT const struct gcv_plugin *
+gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

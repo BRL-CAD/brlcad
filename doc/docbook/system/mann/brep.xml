@@ -683,6 +683,21 @@
         </listitem>
       </varlistentry>
     </variablelist>
+    <variablelist>
+      <cmdsynopsis>
+        <command>csg</command>
+      </cmdsynopsis>
+      <varlistentry>
+        <term></term>
+        <listitem>
+          <para>
+            Take the specified B-Rep and attempt to generate a CSG
+	    implicit boolean tree that will define the same solid
+	    shape.
+          </para>
+        </listitem>
+      </varlistentry>
+    </variablelist>
   </refsection>
 
   <refsection xml:id='examples'>
