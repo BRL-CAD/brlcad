@@ -49,19 +49,19 @@
 
 #define PUSH(ptr) bu_ptbl_ins(&pstate->stack, (long *)ptr)
 #define POP(structure, ptr) { \
-	if (BU_PTBL_END(&pstate->stack) == 0) \
+	if (BU_PTBL_LEN(&pstate->stack) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack, BU_PTBL_END(&pstate->stack)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack, BU_PTBL_LEN(&pstate->stack)-1); \
 	    bu_ptbl_rm(&pstate->stack, (long *)ptr); \
 	} \
     }
 #define PUSH2(ptr) bu_ptbl_ins(&pstate->stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
-	if (BU_PTBL_END(&pstate->stack2) == 0) \
+	if (BU_PTBL_LEN(&pstate->stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack2, BU_PTBL_END(&pstate->stack2)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack2, BU_PTBL_LEN(&pstate->stack2)-1); \
 	    bu_ptbl_rm(&pstate->stack2, (long *)ptr); \
 	} \
     }

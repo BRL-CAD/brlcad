@@ -85,6 +85,7 @@ package provide cadwidgets::Ged 1.0
     itk_option define -centerDotEnable centerDotEnable CenterDotEnable 1
     itk_option define -gridEnable gridEnable GridEnable 0
     itk_option define -gridSnap gridSnap GridSnap 0
+    itk_option define -hideSubtractions hideSubtractions HideSubtractions 0
     itk_option define -measuringStickColor measuringStickColor MeasuringStickColor Yellow
     itk_option define -measuringStickMode measuringStickMode MeasuringStickMode 0
     itk_option define -primitiveLabelColor primitiveLabelColor PrimitiveLabelColor Yellow
@@ -1248,7 +1249,12 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::blast {args} {
     set mRayNeedGettrees 1
-    eval $mGed blast $args
+
+    if {$itk_option(-hideSubtractions)} {
+	eval $mGed blast -S $args
+    } else {
+	eval $mGed blast $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::bn_dist_pt2_lseg2 {args} {
@@ -1630,7 +1636,12 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::draw {args} {
     set mRayNeedGettrees 1
-    eval $mGed draw $args
+
+    if {$itk_option(-hideSubtractions)} {
+	eval $mGed draw -S $args
+    } else {
+	eval $mGed draw $args
+    }
 }
 
 ::itcl::body cadwidgets::Ged::draw_ray {_start _partitions} {

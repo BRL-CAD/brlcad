@@ -26,12 +26,14 @@
 
 #include "common.h"
 
+#include "bu/path.h"
 #include "gcv/api.h"
 #include "gcv/util.h"
 #include "wdb.h"
 
 #include <algorithm>
 #include <cstring>
+#include <iterator>
 #include <limits>
 #include <map>
 #include <set>
@@ -189,30 +191,31 @@ replace_invalid_uuids(ONX_Model &model)
     std::size_t num_repairs = 0;
     std::set<ON_UUID, UuidCompare> seen;
     seen.insert(ON_nil_uuid); // UUIDs can't be nil
+    srand48(time(NULL));
 
-#define REPLACE_UUIDS(array, access, member) \
+#define REPLACE_UUIDS(array, member) \
 do { \
     for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
-	while (!seen.insert(at((array), i) access member).second) { \
-	    at((array), i) access member = generate_uuid(); \
+	while (!seen.insert(at((array), i)member).second) { \
+	    at((array), i)member = generate_uuid(); \
 	    ++num_repairs; \
 	} \
     } \
 } while (false)
 
-    REPLACE_UUIDS(model.m_bitmap_table, ->, m_bitmap_id);
-    REPLACE_UUIDS(model.m_mapping_table, ., m_mapping_id);
-    REPLACE_UUIDS(model.m_linetype_table, ., m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, ., m_layer_id);
-    REPLACE_UUIDS(model.m_group_table, ., m_group_id);
-    REPLACE_UUIDS(model.m_font_table, ., m_font_id);
-    REPLACE_UUIDS(model.m_dimstyle_table, ., m_dimstyle_id);
-    REPLACE_UUIDS(model.m_light_table, ., m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_hatch_pattern_table, ., m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_idef_table, ., m_uuid);
-    REPLACE_UUIDS(model.m_object_table, ., m_attributes.m_uuid);
-    REPLACE_UUIDS(model.m_history_record_table, ->, m_record_id);
-    REPLACE_UUIDS(model.m_userdata_table, ., m_uuid);
+    REPLACE_UUIDS(model.m_bitmap_table, ->m_bitmap_id);
+    REPLACE_UUIDS(model.m_mapping_table, .m_mapping_id);
+    REPLACE_UUIDS(model.m_linetype_table, .m_linetype_id);
+    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
+    REPLACE_UUIDS(model.m_group_table, .m_group_id);
+    REPLACE_UUIDS(model.m_font_table, .m_font_id);
+    REPLACE_UUIDS(model.m_dimstyle_table, .m_dimstyle_id);
+    REPLACE_UUIDS(model.m_light_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_hatch_pattern_table, .m_hatchpattern_id);
+    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
+    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_history_record_table, ->m_record_id);
+    REPLACE_UUIDS(model.m_userdata_table, .m_uuid);
 
 #undef REPLACE_UUIDS
 
@@ -242,7 +245,7 @@ clean_name(std::map<ON_wString, std::size_t> &seen,
 
 HIDDEN void
 load_model(const gcv_opts &gcv_options, const std::string &path,
-	   ONX_Model &model)
+	   ONX_Model &model, std::string &root_name)
 {
     if (!model.Read(path.c_str()))
 	throw InvalidRhinoModelError("ONX_Model::Read() failed");
@@ -263,6 +266,11 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 
     // clean and remove duplicate names
     std::map<ON_wString, std::size_t> seen;
+    {
+	ON_wString temp = root_name.c_str();
+	clean_name(seen, gcv_options.default_name, temp);
+	root_name = ON_String(temp).Array();
+    }
 
 #define REPLACE_NAMES(array, member) \
 do { \
@@ -280,7 +288,7 @@ do { \
 
 
 HIDDEN void
-import_object(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
+write_geometry(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 {
     if (mk_brep(&wdb, name.c_str(), const_cast<ON_Brep *>(&brep)))
 	throw std::runtime_error("mk_brep() failed");
@@ -288,7 +296,7 @@ import_object(rt_wdb &wdb, const std::string &name, const ON_Brep &brep)
 
 
 HIDDEN void
-import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
+write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 {
     mesh.ConvertQuadsToTriangles();
     mesh.CombineIdenticalVertices();
@@ -393,17 +401,16 @@ import_object(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
 
 HIDDEN bool
-import_object(rt_wdb &wdb, const std::string &name,
-	      const ON_Object &object)
+write_geometry(rt_wdb &wdb, const std::string &name,
+	       const ON_Geometry &geometry)
 {
-    if (const ON_Brep * const brep = ON_Brep::Cast(&object)) {
-	import_object(wdb, name, *brep);
-    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&object)) {
-	import_object(wdb, name, *mesh);
-    } else if (ON_Geometry::Cast(&object)
-	       && ON_Geometry::Cast(&object)->HasBrepForm()) {
-	AutoPtr<ON_Brep> temp(ON_Geometry::Cast(&object)->BrepForm());
-	import_object(wdb, name, *temp.ptr);
+    if (const ON_Brep * const brep = ON_Brep::Cast(&geometry)) {
+	write_geometry(wdb, name, *brep);
+    } else if (const ON_Mesh * const mesh = ON_Mesh::Cast(&geometry)) {
+	write_geometry(wdb, name, *mesh);
+    } else if (geometry.HasBrepForm()) {
+	AutoPtr<ON_Brep, autoptr_wrap_delete> temp(geometry.BrepForm());
+	write_geometry(wdb, name, *temp.ptr);
     } else
 	return false;
 
@@ -415,22 +422,19 @@ typedef std::pair<std::string, std::string> Shader;
 
 
 HIDDEN Shader
-get_shader(const ON_Material *material)
+get_shader(const ON_Material &material)
 {
-    if (!material)
-	return std::make_pair("plastic", "");
-
     std::ostringstream temp;
 
     temp << "{"
-	 << " tr " << material->m_transparency
-	 << " re " << material->m_reflectivity
+	 << " tr " << material.m_transparency
+	 << " re " << material.m_reflectivity
 	 << " sp " << 0
 	 << " di " << 0.3
-	 << " ri " << material->m_index_of_refraction
+	 << " ri " << material.m_index_of_refraction
 	 << " ex " << 0
-	 << " sh " << material->m_shine
-	 << " em " << material->m_emission
+	 << " sh " << material.m_shine
+	 << " em " << material.m_emission
 	 << " }";
 
     return std::make_pair("plastic", temp.str());
@@ -444,7 +448,7 @@ get_object_material(const ON_3dmObjectAttributes &attributes,
 {
     ON_Material temp;
     model.GetRenderMaterial(attributes, temp);
-    out_shader = get_shader(&temp);
+    out_shader = get_shader(temp);
     out_own_shader = attributes.MaterialSource() != ON::material_from_parent;
 
     out_rgb[0] = model.WireframeColor(attributes).Red();
@@ -514,11 +518,9 @@ write_attributes(rt_wdb &wdb, const std::string &name, const ON_Object &object,
     char temp[uuid_string_length];
 
     if (db5_update_attribute(name.c_str(), "rhino::type",
-			     object.ClassId()->ClassName(), wdb.dbip))
-	throw std::runtime_error("db5_update_attribute() failed");
-
-    if (db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
-			     temp), wdb.dbip))
+			     object.ClassId()->ClassName(), wdb.dbip)
+	|| db5_update_attribute(name.c_str(), "rhino::uuid", ON_UuidToString(uuid,
+				temp), wdb.dbip))
 	throw std::runtime_error("db5_update_attribute() failed");
 }
 
@@ -544,7 +546,8 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 	if (const ON_InstanceRef * const temp = ON_InstanceRef::Cast(object.m_object))
 	    import_object(wdb, name, *temp, model, own_shader ? shader.first.c_str() : NULL,
 			  own_shader ? shader.second.c_str() : NULL, own_rgb ? rgb : NULL);
-	else if (import_object(wdb, member_name, *object.m_object)) {
+	else if (write_geometry(wdb, member_name,
+				*ON_Geometry::Cast(object.m_object))) {
 	    std::set<std::string> members;
 	    members.insert(member_name);
 	    write_comb(wdb, name, members, NULL, own_shader ? shader.first.c_str() : NULL,
@@ -650,285 +653,200 @@ import_layer(rt_wdb &wdb, const ON_Layer &layer, const ONX_Model &model)
 
     unsigned char rgb[3];
     rgb[0] = layer.Color().Red();
-    rgb[1] = layer.Color().Red();
-    rgb[2] = layer.Color().Red();
+    rgb[1] = layer.Color().Green();
+    rgb[2] = layer.Color().Blue();
 
-    write_comb(wdb, name, get_layer_members(layer, model), NULL, NULL, NULL, rgb);
+    const Shader &shader = get_shader(layer.RenderMaterialIndex() != -1 ?
+				      at(model.m_material_table, layer.RenderMaterialIndex()) : ON_Material());
+
+    write_comb(wdb, name, get_layer_members(layer, model), NULL,
+	       shader.first.c_str(), shader.second.c_str(), rgb);
     write_attributes(wdb, name, layer, layer.m_layer_id);
 }
 
 
 HIDDEN void
-import_model_layers(rt_wdb &wdb, const ONX_Model &model)
+import_model_layers(rt_wdb &wdb, const ONX_Model &model,
+		    const std::string &root_name)
 {
     for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
 	import_layer(wdb, at(model.m_layer_table, i), model);
 
     ON_Layer root_layer;
-    root_layer.SetLayerName("root");
+    root_layer.SetLayerName(root_name.c_str());
     import_layer(wdb, root_layer, model);
 }
 
 
 HIDDEN void
-remove_invalid_references_leaf_func(db_i *db, rt_comb_internal *UNUSED(comb),
-				    tree *comb_tree, void *user1, void *UNUSED(user2), void *UNUSED(user3),
-				    void *UNUSED(user4))
-{
-    std::set<std::string> &failed_members = *static_cast<std::set<std::string> *>
-					    (user1);
-
-    if (!db_lookup(db, comb_tree->tr_l.tl_name, false))
-	failed_members.insert(comb_tree->tr_l.tl_name);
-}
-
-
-HIDDEN void
-remove_invalid_references(db_i &db)
+polish_output(const gcv_opts &gcv_options, db_i &db)
 {
     bu_ptbl found = BU_PTBL_INIT_ZERO;
-    const AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
+    AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
-    if (0 > db_search(&found, DB_SEARCH_FLAT | DB_SEARCH_RETURN_UNIQ_DP,
-		      "-type comb", 0, NULL, &db))
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
+		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_Layer -or -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
+		       + std::string(gcv_options.default_name) + "* )").c_str(), 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
-    directory **entry;
+    const char * const ignored_attributes[] = {"rhino::type", "rhino::uuid"};
+    rt_reduce_db(&db, array_length(ignored_attributes), ignored_attributes, &found);
 
-    if (!BU_PTBL_LEN(&found))
-	return;
+    // apply region flag
+    db_search_free(&found);
+    BU_PTBL_INIT(&found);
 
-    for (BU_PTBL_FOR(entry, (directory **), &found)) {
-	rt_db_internal internal;
+    if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
+		      "-type comb -attr rgb -not -above -attr rgb -or -attr shader -not -above -attr shader",
+		      0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
 
-	if (0 > rt_db_get_internal(&internal, *entry, &db, NULL, &rt_uniresource))
-	    throw std::runtime_error("rt_db_get_internal() failed");
+    if (BU_PTBL_LEN(&found)) {
+	directory **entry;
 
-	AutoPtr<rt_db_internal, rt_db_free_internal> autofree_internal(&internal);
+	for (BU_PTBL_FOR(entry, (directory **), &found)) {
+	    if (db5_update_attribute((*entry)->d_namep, "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
 
-	rt_comb_internal &comb = *static_cast<rt_comb_internal *>(internal.idb_ptr);
-	RT_CK_COMB(&comb);
+	    if (gcv_options.debug_mode) {
+		// random colors debug mode: TODO: move this into a filter after 7.26.0
+		std::string rgb;
 
-	std::set<std::string> failed_members;
-	db_tree_funcleaf(&db, &comb, comb.tree, remove_invalid_references_leaf_func,
-			 &failed_members, NULL, NULL, NULL);
+		for (std::size_t i = 0; i < 3; ++i)
+		    rgb.append(lexical_cast<std::string>(static_cast<unsigned>
+							 (drand48() * 255.0 + 0.5)) + (i != 2 ? "/" : ""));
 
-	for (std::set<std::string>::const_iterator it = failed_members.begin();
-	     it != failed_members.end(); ++it)
-	    if (0 != db_tree_del_dbleaf(&comb.tree, it->c_str(), &rt_uniresource, 0))
-		throw std::runtime_error("db_tree_del_dbleaf() failed");
-
-	if (!comb.tree || !db_tree_nleaves(comb.tree)) {
-	    if (db_delete(&db, *entry) || db_dirdelete(&db, *entry))
-		throw std::runtime_error("failed to delete directory");
-
-	    remove_invalid_references(db);
-	    return;
-	} else {
-	    if (rt_db_put_internal(*entry, &db, &internal, &rt_uniresource))
-		throw std::runtime_error("rt_db_put_internal() failed");
-	    else
-		autofree_internal.ptr = NULL;
-	}
-    }
-}
-
-
-namespace analysis_hierarchy
-{
-
-
-HIDDEN void
-analysis_hierarchy_check(const ONX_Model &model,
-			 const std::set<std::string> &idef_members)
-{
-    const char * const message =
-	"WARNING: hierarchy is not as expected for analysis: ";
-
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = at(model.m_layer_table, i);
-
-	if (layer.m_layer_id != ON_nil_uuid && layer.m_parent_layer_id != ON_nil_uuid) {
-	    std::cerr << message << "nested layers\n";
-	    return;
+		if (db5_update_attribute((*entry)->d_namep, "rgb", rgb.c_str(), &db)
+		    || db5_update_attribute((*entry)->d_namep, "color", rgb.c_str(), &db))
+		    throw std::runtime_error("db5_update_attribute() failed");
+	    }
 	}
     }
 
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
-	if (1 < at(model.m_idef_table, i).m_object_uuid.UnsignedCount()) {
-	    std::cerr << message << "multiple solids within layer\n";
-	    return;
+    // rename shapes after their parent layers
+    db_search_free(&found);
+    BU_PTBL_INIT(&found);
+    std::map<const directory *, std::string> renamed;
+
+    if (0 > db_search(&found, DB_SEARCH_TREE, "-type shape", 0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
+
+    if (BU_PTBL_LEN(&found)) {
+	const std::string unnamed_pattern = gcv_options.default_name + std::string("*");
+	db_full_path **entry;
+
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+	    if (!renamed.count(DB_FULL_PATH_CUR_DIR(*entry)))
+		for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
+		    bu_attribute_value_set avs;
+		    AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
+
+		    if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
+			throw std::runtime_error("db5_get_attributes() failed");
+
+		    if (!bu_strcmp(bu_avs_get(&avs, "rhino::type"), "ON_Layer")
+			|| (bu_fnmatch(unnamed_pattern.c_str(), (*entry)->fp_names[i]->d_namep, 0)
+			    && bu_fnmatch("IDef*", (*entry)->fp_names[i]->d_namep, 0))) {
+			const std::string prefix = (*entry)->fp_names[i]->d_namep;
+			std::string suffix = ".s";
+			std::size_t num = 1;
+
+			while ((prefix + suffix) != DB_FULL_PATH_CUR_DIR(*entry)->d_namep
+			       && db_lookup(&db, (prefix + suffix).c_str(), false))
+			    suffix = "_" + lexical_cast<std::string>(++num) + ".s";
+
+			renamed.insert(std::make_pair(DB_FULL_PATH_CUR_DIR(*entry),
+						      DB_FULL_PATH_CUR_DIR(*entry)->d_namep));
+
+			if (db_rename(&db, DB_FULL_PATH_CUR_DIR(*entry), (prefix + suffix).c_str()))
+			    throw std::runtime_error("db_rename() failed");
+
+			break;
+		    }
+		}
+
+	    if (renamed.count(DB_FULL_PATH_CUR_DIR(*entry)) && (*entry)->fp_len > 1) {
+		bu_ptbl stack = BU_PTBL_INIT_ZERO;
+		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
+
+		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
+				   renamed.at(DB_FULL_PATH_CUR_DIR(*entry)).c_str(),
+				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, &stack))
+		    throw std::runtime_error("db_comb_mvall() failed");
+	    }
 	}
+    }
 
-    std::set<ON_UUID, UuidCompare> seen_idefs;
-    std::set<int> seen_layers;
+    // ensure that all solids are below regions
+    db_search_free(&found);
+    BU_PTBL_INIT(&found);
+    if (0 > db_search(&found, DB_SEARCH_TREE,
+		      "-type shape -not -below -attr region=R", 0, NULL, &db))
+	throw std::runtime_error("db_search() failed");
 
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
+    if (BU_PTBL_LEN(&found)) {
+	db_full_path **entry;
 
-	if (const ON_InstanceRef * const iref = ON_InstanceRef::Cast(object.m_object))
-	    if (!seen_idefs.insert(iref->m_instance_definition_uuid).second) {
-		std::cerr << message << "solids referenced in multiple places\n";
+	for (BU_PTBL_FOR(entry, (db_full_path **), &found)) {
+	    std::string prefix = DB_FULL_PATH_CUR_DIR(*entry)->d_namep;
+	    std::string suffix = ".r";
+
+	    if (prefix.size() >= 2 && prefix.at(prefix.size() - 2) == '.'
+		&& prefix.at(prefix.size() - 1) == 's')
+		prefix.resize(prefix.size() - 2);
+
+	    std::size_t num = 1;
+
+	    while (db_lookup(&db, (prefix + suffix).c_str(), false))
+		suffix = "_" + lexical_cast<std::string>(++num) + ".r";
+
+	    const std::string region_name = prefix + suffix;
+
+	    if ((*entry)->fp_len >= 2) {
+		bu_ptbl stack = BU_PTBL_INIT_ZERO;
+		AutoPtr<bu_ptbl, bu_ptbl_free> autofree_stack(&stack);
+
+		if (!db_comb_mvall((*entry)->fp_names[(*entry)->fp_len - 2], &db,
+				   DB_FULL_PATH_CUR_DIR(*entry)->d_namep, region_name.c_str(), &stack))
+		    throw std::runtime_error("db_comb_mvall() failed");
 	    }
 
-	if (!idef_members.count(ON_String(object.m_attributes.m_name).Array()))
-	    if (!seen_layers.insert(object.m_attributes.m_layer_index).second) {
-		std::cerr << message << "multiple solids within layer\n";
-		return;
+	    std::set<std::string> members;
+	    members.insert(DB_FULL_PATH_CUR_DIR(*entry)->d_namep);
+	    write_comb(*db.dbi_wdbp, region_name, members);
+
+	    if (db5_update_attribute(region_name.c_str(), "region", "R", &db))
+		throw std::runtime_error("db5_update_attribute() failed");
+
+	    bool has_rgb = false, has_shader = false;
+
+	    for (ssize_t i = (*entry)->fp_len - 2; i >= 0; --i) {
+		bu_attribute_value_set avs;
+		AutoPtr<bu_attribute_value_set, bu_avs_free> autofree_avs(&avs);
+
+		if (db5_get_attributes(&db, &avs, (*entry)->fp_names[i]))
+		    throw std::runtime_error("db5_get_attributes() failed");
+
+		if (!has_rgb)
+		    if (const char * const rgb_attr = bu_avs_get(&avs, "rgb")) {
+			has_rgb = true;
+
+			if (db5_update_attribute(region_name.c_str(), "rgb", rgb_attr, &db)
+			    || db5_update_attribute(region_name.c_str(), "color", rgb_attr, &db))
+			    throw std::runtime_error("db5_update_attribute() failed");
+		    }
+
+		if (!has_shader)
+		    if (const char * const shader_attr = bu_avs_get(&avs, "shader")) {
+			has_shader = true;
+
+			if (db5_update_attribute(region_name.c_str(), "shader", shader_attr, &db)
+			    || db5_update_attribute(region_name.c_str(), "oshader", shader_attr, &db))
+			    throw std::runtime_error("db5_update_attribute() failed");
+		    }
 	    }
-    }
-}
-
-
-struct AnalysisHierarchyReadOptions {
-    int m_random_colors;
-
-    AnalysisHierarchyReadOptions() :
-	m_random_colors(false)
-    {}
-};
-
-
-HIDDEN void
-analysis_hierarchy_import(const gcv_opts &gcv_options,
-			  const AnalysisHierarchyReadOptions &options, rt_wdb &wdb, ONX_Model &model)
-{
-    // rename objects
-    for (unsigned i = 0, number = 0; i < model.m_object_table.UnsignedCount();
-	 ++i) {
-	ON_3dmObjectAttributes &attributes = at(model.m_object_table, i).m_attributes;
-	const ON_wString &layer_name = at(model.m_layer_table,
-					  attributes.m_layer_index).m_name;
-
-	if (++number == 1)
-	    attributes.m_name = layer_name + ".s";
-	else
-	    attributes.m_name = layer_name + "_" + lexical_cast<std::string>
-				(number).c_str() + ".s";
-    }
-
-    // rename layers
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	ON_Layer &layer = at(model.m_layer_table, i);
-	layer.m_name += ".r";
-    }
-
-    // import objects
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
-	const ONX_Model_Object &object = at(model.m_object_table, i);
-	const std::string name = ON_String(object.m_attributes.m_name).Array();
-
-	if (!import_object(wdb, name, *object.m_object))
-	    if (gcv_options.verbosity_level)
-		std::cerr << "skipped " << object.m_object->ClassId()->ClassName() <<
-			  " model object '" << name << "'\n";
-    }
-
-    // import layers
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
-	const ON_Layer &layer = at(model.m_layer_table, i);
-	const std::string name = ON_String(layer.m_name).Array();
-
-	std::set<std::string> members;
-
-	for (unsigned j = 0; j < model.m_layer_table.UnsignedCount(); ++j) {
-	    const ON_Layer &current_layer = at(model.m_layer_table, j);
-
-	    if (current_layer.m_parent_layer_id == layer.ModelObjectId())
-		members.insert(ON_String(current_layer.m_name).Array());
 	}
-
-	for (unsigned j = 0; j < model.m_object_table.UnsignedCount(); ++j) {
-	    const ONX_Model_Object &object = at(model.m_object_table, j);
-
-	    if (object.m_attributes.m_layer_index == layer.m_layer_index)
-		members.insert(ON_String(object.m_attributes.m_name).Array());
-	}
-
-	bool has_color = false;
-	unsigned char rgb[3] = {};
-
-	if (options.m_random_colors) {
-	    rgb[0] = drand48() * 255.0 + 0.5;
-	    rgb[1] = drand48() * 255.0 + 0.5;
-	    rgb[2] = drand48() * 255.0 + 0.5;
-	    has_color = true;
-	} else {
-	    rgb[0] = layer.Color().Red();
-	    rgb[1] = layer.Color().Green();
-	    rgb[2] = layer.Color().Blue();
-
-	    has_color = rgb[0] || rgb[1] || rgb[2];
-	}
-
-	write_comb(wdb, name, members, NULL, NULL, NULL, has_color ? rgb : NULL);
-
-	if (db5_update_attribute(name.c_str(), "region", "R", wdb.dbip))
-	    throw std::runtime_error("db5_update_attribute() failed");
     }
-
-    ON_Layer root_layer;
-    root_layer.SetLayerName("root");
-    import_layer(wdb, root_layer, model);
-}
-
-
-HIDDEN void
-analysis_hierarchy_read_create_opts(struct bu_opt_desc **options_desc,
-				    void **dest_options_data)
-{
-    AnalysisHierarchyReadOptions * const options_data = new
-    AnalysisHierarchyReadOptions;
-    *dest_options_data = options_data;
-
-    *options_desc = static_cast<bu_opt_desc *>(bu_malloc(2 * sizeof(bu_opt_desc),
-		    "options_desc"));
-
-    BU_OPT((*options_desc)[0], NULL, "random-colors", NULL, NULL,
-	   &options_data->m_random_colors, "select BoT orientation mode");
-    BU_OPT_NULL((*options_desc)[1]);
-
-}
-
-
-HIDDEN void
-analysis_hierarchy_read_free_opts(void *options_data)
-{
-    delete static_cast<AnalysisHierarchyReadOptions *>(options_data);
-}
-
-
-HIDDEN int
-analysis_hierarchy_read(gcv_context *context, const gcv_opts *gcv_options,
-			const void *options_data, const char *source_path)
-{
-    const AnalysisHierarchyReadOptions &options =
-	*static_cast<const AnalysisHierarchyReadOptions *>(options_data);
-
-    try {
-	ONX_Model model;
-	load_model(*gcv_options, source_path, model);
-
-	analysis_hierarchy::analysis_hierarchy_check(model,
-		get_all_idef_members(model));
-	analysis_hierarchy::analysis_hierarchy_import(*gcv_options, options,
-		*context->dbip->dbi_wdbp, model);
-    } catch (const InvalidRhinoModelError &exception) {
-	std::cerr << "invalid input file ('" << exception.what() << "')\n";
-	return 0;
-    }
-
-    remove_invalid_references(*context->dbip);
-    return 1;
-}
-
-
-struct gcv_filter gcv_conv_rhino_analysis_hierarchy_read = {
-    "Rhino Analysis Hierarchy Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_RHINO,
-    analysis_hierarchy_read_create_opts, analysis_hierarchy_read_free_opts, analysis_hierarchy_read
-};
-
-
 }
 
 
@@ -936,10 +854,21 @@ HIDDEN int
 rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	   const void *UNUSED(options_data), const char *source_path)
 {
+    std::string root_name;
+    {
+	bu_vls temp = BU_VLS_INIT_ZERO;
+	AutoPtr<bu_vls, bu_vls_free> autofree_temp(&temp);
+
+	if (!bu_path_component(&temp, source_path, BU_PATH_BASENAME))
+	    return 1;
+
+	root_name = bu_vls_addr(&temp);
+    }
+
     try {
 	ONX_Model model;
-	load_model(*gcv_options, source_path, model);
-	import_model_layers(*context->dbip->dbi_wdbp, model);
+	load_model(*gcv_options, source_path, model, root_name);
+	import_model_layers(*context->dbip->dbi_wdbp, model, root_name);
 	import_model_idefs(*context->dbip->dbi_wdbp, model);
 	import_model_objects(*gcv_options, *context->dbip->dbi_wdbp, model);
     } catch (const InvalidRhinoModelError &exception) {
@@ -947,7 +876,8 @@ rhino_read(gcv_context *context, const gcv_opts *gcv_options,
 	return 0;
     }
 
-    remove_invalid_references(*context->dbip);
+    polish_output(*gcv_options, *context->dbip);
+
     return 1;
 }
 
@@ -957,7 +887,7 @@ struct gcv_filter gcv_conv_rhino_read = {
     NULL, NULL, rhino_read
 };
 
-static const gcv_filter * const filters[] = {&analysis_hierarchy::gcv_conv_rhino_analysis_hierarchy_read, &gcv_conv_rhino_read, NULL};
+static const gcv_filter * const filters[] = {&gcv_conv_rhino_read, NULL};
 
 
 }

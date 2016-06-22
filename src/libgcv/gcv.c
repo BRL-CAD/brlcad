@@ -182,34 +182,45 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
     int ret_argc;
     struct bu_opt_desc *options_desc;
     struct bu_vls messages;
+    const char **temp;
+    int i;
+
+    if (argc)
+	temp = (const char **)bu_calloc(argc, sizeof(const char *), "temp");
+    else
+	temp = NULL;
+
+    for (i = 0; (size_t)i < argc; ++i)
+	temp[i] = argv[i];
 
     _gcv_filter_options_create(filter, &options_desc, options_data);
-
     BU_VLS_INIT(&messages);
-    ret_argc = argc ? bu_opt_parse(&messages, argc, (const char **)argv,
-				   options_desc) : 0;
+    ret_argc = argc ? bu_opt_parse(&messages, argc, temp, options_desc) : 0;
+    bu_free(options_desc, "options_desc");
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
-
-    bu_free(options_desc, "options_desc");
 
     if (ret_argc) {
 	if (ret_argc == -1)
 	    bu_log("fatal error in bu_opt_parse()\n");
 	else {
-	    int i;
-
 	    bu_log("unknown arguments: ");
 
 	    for (i = 0; i < ret_argc - 1; ++i)
-		bu_log("%s, ", argv[i]);
+		bu_log("%s, ", temp[i]);
 
-	    bu_log("%s\n", argv[i]);
+	    bu_log("%s\n", temp[i]);
 	}
+
+	if (temp)
+	    bu_free(temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
+
+    if (temp)
+	bu_free(temp, "temp");
 
     return 1;
 }

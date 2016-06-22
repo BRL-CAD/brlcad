@@ -177,13 +177,6 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
  */
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
 
-/**
- * reduce an object into some form of simpler representation
- */
-RT_EXPORT extern void rt_obj_reduce(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
-
-#define RT_OBJ_REDUCE_PRESERVE_VOLUME 0x1
-
 __END_DECLS
 
 #endif  /* RTFUNC_H */

@@ -25,7 +25,8 @@
 void
 Do_subfigs()
 {
-    int i, j;
+    size_t i;
+    int j;
     int entity_type;
     struct wmember head1;
     struct wmember *wmem;
@@ -37,7 +38,7 @@ Do_subfigs()
 
     for (i = 0; i < totentities; i++) {
 	int subfigdef_de;
-	int subfigdef_index;
+	size_t subfigdef_index;
 	int no_of_members;
 	int *members;
 	char *name = NULL;
@@ -133,7 +134,7 @@ Do_subfigs()
 
 	BU_LIST_INIT(&head2.l);
 	for (j = 0; j < no_of_members; j++) {
-	    int idx;
+	    size_t idx;
 
 	    idx = (members[j] - 1)/2;
 

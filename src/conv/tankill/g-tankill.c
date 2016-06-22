@@ -158,7 +158,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
     struct shell *s;
     struct bu_ptbl vertices;	/* vertex list in TANKILL order */
     long *flags;			/* array to insure that no loops are missed */
-    int i;
+    size_t i;
 
     NMG_CK_REGION( r );
     m = r->m_p;
@@ -330,7 +330,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		}
 
 		/* repeat the last vertex */
-		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_END( &vertices ) - 1 ) );
+		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_LEN( &vertices ) - 1 ) );
 
 		/* put first vertex of next loop on list twice */
 		lu = next_lu;
@@ -354,11 +354,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
+		     (unsigned long)BU_PTBL_LEN( &vertices ), id_counter, surr_code );
 	else
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
-	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
+		     (unsigned long)BU_PTBL_LEN( &vertices ), tsp->ts_regionid, surr_code );
+	for ( i=0; i<BU_PTBL_LEN( &vertices ); i++ )
 	{
 	    struct vertex *v;
 
@@ -368,7 +368,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	    else
 		fprintf( fp_out, " %.3f %.3f %.3f", V3ARGS( v->vg_p->coord ) );
 	}
-	if ( (BU_PTBL_END( &vertices )-2)%4 != 0 )
+	if ( (BU_PTBL_LEN( &vertices )-2)%4 != 0 )
 	    fprintf( fp_out, "\n" );
 
 	/* clear the vertices list for the next shell */

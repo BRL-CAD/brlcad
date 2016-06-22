@@ -34,8 +34,9 @@
 int
 Findp()
 {
-    int saverec, rec2, i;
-    long offset;
+    int saverec, rec2;
+    size_t i;
+    off_t offset;
     char str[8];
 
     str[7] = '\0';
@@ -72,7 +73,7 @@ Findp()
     /* make space for directory entries */
     totentities = (pstart - dstart)/2;
     if (totentities > 0) {
-	dir = (struct iges_directory **)bu_calloc(totentities ,
+	dir = (struct iges_directory **)bu_calloc(totentities,
 						  sizeof(struct iges_directory *),
 						  "IGES directory*");
 
@@ -93,7 +94,7 @@ Findp()
 void
 Free_dir()
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 124 || dir[i]->type == 700)
