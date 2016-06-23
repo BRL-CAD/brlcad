@@ -18,6 +18,11 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* regressed behavior in mged and archer: they seem to be defaulting
+  objects to black instead of white/gray.  wireframes and default
+  black-background rendering make newly created objects practically
+  invisible.
+
 * check these commits for documentation:
   CHANGES: 66929 - librtserver and Java Native Interface (JNI) bindings gone
   headers: 66524 - s/db_expand_str_glob/db_glob/g
@@ -1395,7 +1400,9 @@ LIBGED
   equal to zero, whether two objects are actually the same object
   (geometrically), etc.).
 
-* merge sed and oed commands
+* replace sed and oed commands: functionality provided by new 'edit'
+  command, but requires testing (unit tests) to make sure it's working
+  correctly.
 
 * make sure 'preview' works, particularly the 'tree' subcommand.
 
