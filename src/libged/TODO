@@ -9,8 +9,7 @@ Be specific.
 
 * merge bot_* commands into bot command subcommands
 
-* merge get_eyemodel's functionality  as a "view eyemodel"
-  sub-command in MGED/Archer.
+* merge get_eyemodel's functionality as "view eyemodel" sub-command
 
 
 --- NEW COMMANDS ---
