@@ -21,10 +21,15 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check these commits for documentation:
   CHANGES: 66929
 
+* check these commits for bugs:
+  66586 - no longer incrementing pattern after the loop yet we still reference it
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* pull work on rm command out of history (commit r67394 reverted it)
+  and take it to a production ready stage.
 
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
@@ -121,9 +126,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   to read/write (as appropriate) pixel index values or x,y coordinates
   and reproduce the ray fired to create that pixel. currently does -l
   index but not xy coordinates.
-
-* pull work on rm command out of history (commit r67394 reverted it)
-  and take it to a production ready stage.
 
 * use the globbing work needed for proper rm support to enhance the
   ls command.  dbfind's behavior can be emulated by search, but the
