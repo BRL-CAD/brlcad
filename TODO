@@ -26,7 +26,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check these commits for documentation:
 
 * check these commits for bugs:
-  66586 - no longer incrementing pattern after the loop yet we still reference it
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
