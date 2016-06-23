@@ -85,15 +85,6 @@ BU_EXPORT extern void *bu_realloc(void *ptr,
 				     const char *str);
 
 /**
- * overflow checking version of realloc for arrays, based on OpenBSD's
- * reallocarray.
- */
-BU_EXPORT extern void *bu_reallocarray(void *optr,
-                                       size_t nmemb,
-				       size_t size,
-				       const char *str);
-
-/**
  * Print map of memory currently in use.
  */
 BU_EXPORT extern void bu_prmem(const char *str);
