@@ -130,6 +130,7 @@ set(mann_EN
   loadtk.xml
   lookat.xml
   ls.xml
+  lt.xml
   make.xml
   make_pnts.xml
   mater.xml

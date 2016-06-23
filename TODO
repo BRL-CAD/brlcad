@@ -24,7 +24,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   invisible.
 
 * check these commits for documentation:
-  NEWS+docbook: 66470 - new option undocumented
 
 * check these commits for bugs:
   66586 - no longer incrementing pattern after the loop yet we still reference it
