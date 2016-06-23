@@ -1408,8 +1408,8 @@ LIBGED
   (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
 
 * deprecate dbfind - ensure functionality is fully captured by the
-  search command, make it report a deprecation statement on use and
-  utilize search under the hood.
+  search and ls commands, make it report a deprecation statement on
+  use and utilize ls under the hood.
 
 * implement some sort of archive/backup command in mged in order to
   save the currently open database out to a file.
