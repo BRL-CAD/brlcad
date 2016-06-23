@@ -1250,6 +1250,13 @@ LIBGED
 
 * See src/libged/TODO for new command and subcommand ideas.
 
+* the lt [-c] obj command looks like it should be replaceable with
+  a search command (search obj -depth 1) and a more powerful -print
+  option that can do things like mimic tcl style output and create
+  lists with user specified character separation.  Enhance search
+  to do more powerful printing, then make lt an alias to a search
+  call.
+
 * pull work on rm command out of history (commit r67394 reverted it)
   and take it to a production ready stage.
 
