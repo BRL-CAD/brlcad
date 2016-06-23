@@ -30,9 +30,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* pull work on rm command out of history (commit r67394 reverted it)
-  and take it to a production ready stage.
-
 * brlcad-config build helper script is not working (not reporting
   -llibs, reporting semicolon list for 'brlcad' lib).  Example working output:
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config brlcad
@@ -91,23 +88,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   need to review command line options to simplify complexity and
   control randomization better.
 
-* Explore possibility of expanding dm command to accept object names
-  as a way of tweaking display manager specific properties (wireframe
-  vs solid drawing, shading on normals, etc.) that are currently
-  controlled only via the draw command.  Many of the undocumented (or
-  poorly documented) draw options are very specific and there are many
-  more possible similar options that aren't defined.  Initial thought
-  is to allow passing "dm" subcommands to draw (maybe --dm key=val or
-  some such) and using the dm command to offer display type aware
-  hooks (for example, solid drawing isn't a valid option in text mode
-  display, so options about how to shade normals don't make much
-  sense.  On the other hand, a full scene graph could have many
-  per-object display options the user (or application) would want to
-  tweak on a per object basis, e.g. dm obj.r transparency 0.3. Hard
-  wiring draw options isn't going to be flexible or user friendly;
-  need something similar to the new dm ability to supply dm-backend
-  specific options to the user.
-
 * implement quasi-random unbiased iterative spherical ray sampling.
   requires devising an algorithm whereby we obtain a set of points on
   a sphere with rays randomly going through those points, so we sample
@@ -128,22 +108,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   to read/write (as appropriate) pixel index values or x,y coordinates
   and reproduce the ray fired to create that pixel. currently does -l
   index but not xy coordinates.
-
-* use the globbing work needed for proper rm support to enhance the
-  ls command.  dbfind's behavior can be emulated by search, but the
-  speed of dbfind is not practical in search due to the potential
-  generality of search's filters.  search would have to pre-process
-  its plan and prove it needed to examine only a subset of the full
-  hierarchy in advance.  ls */objname is a better match for what
-  dbfind is actually doing, and if need be we could add a
-  --print-parent option or some such to precisely mimic dbfind's
-  output.
-
-* Extract bounding box code from both autoview.c and get_autoview.c
-  into a general bounding rpp function in librt and use accordingly
-  (particularly in libged).  Should combine autoview.c with
-  get_autoview.c (perhaps as a flag) and utilize the general function
-  in lots of places (e.g., the ged_arb() function).
 
 * make mged work without a batch script
 
@@ -212,9 +176,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   that path - there are too many issues with doing so.  The current approach
   fixes some concerns but breaks if an application changes its notion of
   the current working directory after initialization, for example.
-
-* make the idents command not list subtracted objects by default,
-  optionally list everything
 
 * start making use of the CMakePushCheckState macros - we are doing
   this manually in several places
@@ -295,12 +256,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * import CTRI material information in fast4-g as per-face data.
 
-* improve performance of these commands that seem to have exponential
-  cost: bot_split, killtree
-
-* translate lc command to libged (discovered in Feb. 2015 to have already
-  been done -- need information regarding when this was done and committed).
-
 * Integrate ADRT into Archer as a visualization mode.
 
 * Document a GUI feature list (prioritized).
@@ -326,13 +281,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   propagated up into separate region hits.  the prior is probably
   easier and less error-prone.
 
-* BoT mesh editing command.  Subtasks:
-
-  - enumerate functions desirable
-  - catalog features of other mesh manipulation tools
-  - investigate mesh editing libraries and/or relying on NMG editing
-  - bind GUI editing to the BoT mesh editing command
-
 * establish the Basic Application Runtime (BAR), only consisting of
   libbu and libbn, as a stand-alone self-contained project.  provide
   an API that supports most C/C++ application development and
@@ -355,16 +303,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   developers, not requiring them to be aware of or adapt types or
   functions until it provides some clear advantage (e.g., portability,
   performance, and/or maintainability).
-
-* object error heuristic.  implement a function/command to report how
-  big of an error a given geometry object has.  the intent is to help
-  prioritize geometry modeling errors based on their spatial impact.
-  this is particularly relevant for nurbs/brep and nmg geometry where
-  there may be solidity gaps in the topology that need to be sealed or
-  dangling faces/surfaces of different sizes.  this is meant to be a
-  relative heuristic applicable across all geometry, not necessary an
-  exact measure.  this may make more sense added as an output option
-  to glint or as a warning category for a geometry debugger.
 
 * create a joint articulation (manually is good, automatic is better)
   for the tin woodsman so he can move his arms, legs, neck, and head.
@@ -410,17 +348,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * investigate INFINITY spatial partitioning issue.
 
-* implement a region anointment feature where the user can turn an
-  assembly into a region and change all lower or higher regions into
-  combinations.  basically consolidate or distribute region flags.
-  this is partially covered by the 'comb' command but it tries hard to
-  ensure geometry isn't left in a broken state.  needs to be a way to
-  do the simple consolidate/distribute operation regardless of
-  resulting state.
-
-* update search depth options (above + below) to make sure the logic
-  supports depth=0 / above=0 / below=0 meaning the current node.
-
 * kill material_head static global in src/librt/mater.c
 
 * add an mk_extrude() routine to libwdb.
@@ -438,9 +365,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   a corresponding mapping to the MGED command string?  As long
   as the functions satisfy the API templates used by the db_plan
   structures, wouldn't custom functions work?
-
-* merge get_eyemodel's functionality  as a "view eyemodel"
-  sub-command in MGED/Archer.
 
 * document gqa centroid and moments of inertia options
 
@@ -619,24 +543,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * change _mged_ command prefix to a simple '.' prefix to hide/protect
   the built-in commands.
 
-* the 'comb' command both updates and creates combinations.  this is a
-  problem because it's not possible to infer an intended result from
-  the command string alone.  it should either append to an existing
-  combination and fail if it doesn't exist (with flag to create) OR it
-  should create a combination and fail if there is an existing
-  combination (with flag to append).
-
-* Update the comb "region lift" capability to handle automatic duplication
-  and substitution of the duplicate into the tree of combs who can't have
-  their definitions changed without impacting other geometry in the .g file.
-
-* change 'mirror' command offset to be prior to mirror instead of
-  after, so that you can mirror intuitively over a specified point
-  along a given axis.
-
-* add option to 'mirror' command to delete the source object.  support
-  specification of a plane as the view plane, 3 points, XY, YZ, XZ.
-
 * refactor rt_mirror (src/librt/primitives/mirror.c) into the functab
 
 * refactor rt_functab accessors to go through an api call or calls so
@@ -722,11 +628,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   directory duplication
 
 * convert teapot to use nurbs surfaces instead of bspline
-
-* add an option to the bb command for calculating a bounding box that
-  encompasses subtracted objects and trimmed surfaces and default to
-  calculating a tight-fitting fbounding box once we have a robust path
-  from geom->NURBS+CSG->NURBS.
 
 * create a FASTGEN sample geometry with all entities defined and a
   corresponding regression test to make sure outputs don't change.
@@ -815,38 +716,13 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Mac OS X mouse input binding problem seems to be back with rotations
   stalling during interactive use.
 
-* killall command reports db_lookup failures if the target object
-  doesn't exist (maybe we only care about refs).  should keep quiet.
-
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
   (even though output is bytes, wtf?).  should probably report pixels
   and/or have a -b option for handling byte/bw input.
 
-* the new "exists" command is a beautiful corollary to the unix 'test'
-  command.  make the usage match, remove options that make no sense
-  after you've replaced instances of 'file' with 'object', and add
-  options specific to testing geometry (like whether two objects
-  overlap, whether an object's volume is greater than some value or
-  equal to zero, whether two objects are actually the same object
-  (geometrically), etc.).
-
 * investigate why epa primitive is so sensitive to coarse absolute
   value changes (run csgbrep, tol abs=1, facetize and get 321k poly)
-
-* implement a new "simulate" command for applying physics deformations
-  to geometry.  Each timestep (default steps==1) would get recorded as
-  new geometry unless updating the existing is requested.  Usage might
-  be something like this:
-
-     simulate [-k] [-g|-G] [-f x y z N] <time> [steps]
-
-  Examples:
-     simulate 10.5  # simulate 10.5s of time (default gravity)
-     simulate 3 10  # simulate 30s of time, 10s per timestep
-     simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
-     simulate -k 1.0  # simulate 1s of gravity, overwriting original
-     simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
 
 * implement http network transfer tool for crash reports and benchmark
   analyses (via libfetch)
@@ -870,8 +746,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   framebuffer is enabled and the window is resized.  initialize and
   refresh the new memory and zap the framebuffer.
 
-* merge sed and oed commands
-
 * make the right-hand path to oed optional
 
 * deprecate dbcp and merge functionality (and improved
@@ -881,8 +755,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   src/libged/glob.c code, very similar.
 
 * update g-xxx_facets to use libgcv
-
-* make sure 'preview' works, particularly the 'tree' subcommand.
 
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
@@ -895,9 +767,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   vector graphics.
 
 * investigate OpenEXR (BSD licensed HDE image format)
-
-* add support for a custom unit conversion factor to the units command
-  (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
 
 * usage statistics.  similar to the eclipse Usage Data Collector, keep
   track of which BRL-CAD command-line commands and MGED/libged
@@ -939,10 +808,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   obtain a bu_log()-style callback function returned from a
   logger registration function.
 
-* deprecate dbfind - ensure functionality is fully captured by the
-  search command, make it report a deprecation statement on use and
-  utilize search under the hood.
-
 * investigate impact of using lookup tables for root solving.
   implement lookup tables for a range of linear, quadratic, cubic, and
   quartic polynomial coefficients.  compare performance to root
@@ -983,9 +848,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   ignore negative regions (regions subtracted from regions or
   intersected with them) since, while bad practice, are valid
   geometrically.
-
-* implement some sort of archive/backup command in mged in order to
-  save the currently open database out to a file.
 
 * make sure there are no getenv() non-NULL assumptions within the
   code.  might want to see if there's a pattern of variables being
@@ -1034,15 +896,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * refactor mged's signal handling to make it possible to safely
   interrupt long-running commands
 
-* add a -color option to all mged commands that draw geometry (B, eid,
-  and E come to mind)
-
-* have mged record a timestamped command history by default
-
-* implement -exec support for 'search' command
-
-* implement -param support for 'search' command
-
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
@@ -1066,8 +919,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * calculate radii of gyration in 'analyze' and/or gqa output
 
-* implement 'analyze' command option to write output to a file
-
 * implement make, ted, edsol, mirror, and analyze for revolve
   primitive.  implement tess() too.
 
@@ -1081,13 +932,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * review librt polynomial root solver (cubic and quadratic case)
 
 * give bot-bldxf the axe (reconcile and merge with bot_dump)
-
-* implement mged object name globbing similar to tclsh's globbing
-  (i.e. via a globbing command and quoting globs that use []).  testing
-  shows db_glob doesn't seem to behave correctly, at least not like
-  glob.  hook globbing into all commands so glob_compat_mode
-  statefulness can go away.  a db_glob expression that doesn't match
-  anything should not return the expression.
 
 * come up with a new tool that automatically generates "inside"
   regions for a given model as a way to automatically model air.
@@ -1263,15 +1107,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   combinations of these primitives, provided their continuity at the
   ends ensures continuity all along "seams" - something to consider.
 
-* incorporate some variety of spatial partitioning into the facetize
-  command (may involve just rewriting it) to try and realize MUCH
-  faster tessellation of CSG geometry.  Current routines are doing a
-  lot of unnecessary work that tends to result in explosive completion
-  times for worst-case scenarios - try to get closer to the "only do
-  the work we need to" ideal.  Once a new idea is proven in that
-  command, it should be made into a libgcv routine and
-  converters/other commands retargeted to use it.
-
 * look into embedding both rgb[3] and complex[n] data types in a union
   to allow unification of libmultispectral and liboptical APIs to a
   single more general liboptical.  Need to be careful about
@@ -1412,6 +1247,9 @@ LIBGED
 
 * See src/libged/TODO for new command and subcommand ideas.
 
+* pull work on rm command out of history (commit r67394 reverted it)
+  and take it to a production ready stage.
+
 * libged needs to support "temporary" objects that are in-memory only
   and will disappear when the ged instance is destroyed, yet is
   otherwise considered real objects in a given database.  this
@@ -1452,6 +1290,151 @@ LIBGED
   src/rt/viewweight.c, src/libged/analyze.c and src/libged/gqa.c into
   common code in src/libanalyze (there may be more candidates around
   the tree)
+
+* Extract bounding box code from both autoview.c and get_autoview.c
+  into a general bounding rpp function in librt and use accordingly
+  (particularly in libged).  Should combine autoview.c with
+  get_autoview.c (perhaps as a flag) and utilize the general function
+  in lots of places (e.g., the ged_arb() function).
+
+* Explore possibility of expanding dm command to accept object names
+  as a way of tweaking display manager specific properties (wireframe
+  vs solid drawing, shading on normals, etc.) that are currently
+  controlled only via the draw command.  Many of the undocumented (or
+  poorly documented) draw options are very specific and there are many
+  more possible similar options that aren't defined.  Initial thought
+  is to allow passing "dm" subcommands to draw (maybe --dm key=val or
+  some such) and using the dm command to offer display type aware
+  hooks (for example, solid drawing isn't a valid option in text mode
+  display, so options about how to shade normals don't make much
+  sense.  On the other hand, a full scene graph could have many
+  per-object display options the user (or application) would want to
+  tweak on a per object basis, e.g. dm obj.r transparency 0.3. Hard
+  wiring draw options isn't going to be flexible or user friendly;
+  need something similar to the new dm ability to supply dm-backend
+  specific options to the user.
+
+* use the globbing work needed for proper rm support to enhance the
+  ls command.  dbfind's behavior can be emulated by search, but the
+  speed of dbfind is not practical in search due to the potential
+  generality of search's filters.  search would have to pre-process
+  its plan and prove it needed to examine only a subset of the full
+  hierarchy in advance.  ls */objname is a better match for what
+  dbfind is actually doing, and if need be we could add a
+  --print-parent option or some such to precisely mimic dbfind's
+  output.
+
+* make the idents command not list subtracted objects by default,
+  optionally list everything
+
+* improve performance of these commands that seem to have exponential
+  cost: bot_split, killtree
+
+* translate lc command to libged (discovered in Feb. 2015 to have already
+  been done -- need information regarding when this was done and committed).
+
+* BoT mesh editing command.  Subtasks:
+
+  - enumerate functions desirable
+  - catalog features of other mesh manipulation tools
+  - investigate mesh editing libraries and/or relying on NMG editing
+  - bind GUI editing to the BoT mesh editing command
+
+* object error heuristic.  implement a function/command to report how
+  big of an error a given geometry object has.  the intent is to help
+  prioritize geometry modeling errors based on their spatial impact.
+  this is particularly relevant for nurbs/brep and nmg geometry where
+  there may be solidity gaps in the topology that need to be sealed or
+  dangling faces/surfaces of different sizes.  this is meant to be a
+  relative heuristic applicable across all geometry, not necessary an
+  exact measure.  this may make more sense added as an output option
+  to glint or as a warning category for a geometry debugger.
+
+* implement a region anointment feature where the user can turn an
+  assembly into a region and change all lower or higher regions into
+  combinations.  basically consolidate or distribute region flags.
+  this is partially covered by the 'comb' command but it tries hard to
+  ensure geometry isn't left in a broken state.  needs to be a way to
+  do the simple consolidate/distribute operation regardless of
+  resulting state.
+
+* update search depth options (above + below) to make sure the logic
+  supports depth=0 / above=0 / below=0 meaning the current node.
+
+* the 'comb' command both updates and creates combinations.  this is a
+  problem because it's not possible to infer an intended result from
+  the command string alone.  it should either append to an existing
+  combination and fail if it doesn't exist (with flag to create) OR it
+  should create a combination and fail if there is an existing
+  combination (with flag to append).
+
+* Update the comb "region lift" capability to handle automatic duplication
+  and substitution of the duplicate into the tree of combs who can't have
+  their definitions changed without impacting other geometry in the .g file.
+
+* change 'mirror' command offset to be prior to mirror instead of
+  after, so that you can mirror intuitively over a specified point
+  along a given axis.
+
+* add option to 'mirror' command to delete the source object.  support
+  specification of a plane as the view plane, 3 points, XY, YZ, XZ.
+
+* add an option to the bb command for calculating a bounding box that
+  encompasses subtracted objects and trimmed surfaces and default to
+  calculating a tight-fitting fbounding box once we have a robust path
+  from geom->NURBS+CSG->NURBS.
+
+* killall command reports db_lookup failures if the target object
+  doesn't exist (maybe we only care about refs).  should keep quiet.
+
+* the new "exists" command is a beautiful corollary to the unix 'test'
+  command.  make the usage match, remove options that make no sense
+  after you've replaced instances of 'file' with 'object', and add
+  options specific to testing geometry (like whether two objects
+  overlap, whether an object's volume is greater than some value or
+  equal to zero, whether two objects are actually the same object
+  (geometrically), etc.).
+
+* merge sed and oed commands
+
+* make sure 'preview' works, particularly the 'tree' subcommand.
+
+* add support for a custom unit conversion factor to the units command
+  (e.g. 'units 9.3120223' or 'units metertons 9.3120223')
+
+* deprecate dbfind - ensure functionality is fully captured by the
+  search command, make it report a deprecation statement on use and
+  utilize search under the hood.
+
+* implement some sort of archive/backup command in mged in order to
+  save the currently open database out to a file.
+
+* add a -color option to all mged commands that draw geometry (B, eid,
+  and E come to mind)
+
+* have mged record a timestamped command history by default
+
+* implement -exec support for 'search' command
+
+* implement -param support for 'search' command
+
+* implement 'analyze' command option to write output to a file
+
+* implement mged object name globbing similar to tclsh's globbing
+  (i.e. via a globbing command and quoting globs that use []).  testing
+  shows db_glob doesn't seem to behave correctly, at least not like
+  glob.  hook globbing into all commands so glob_compat_mode
+  statefulness can go away.  a db_glob expression that doesn't match
+  anything should not return the expression.
+
+* incorporate some variety of spatial partitioning into the facetize
+  command (may involve just rewriting it) to try and realize MUCH
+  faster tessellation of CSG geometry.  Current routines are doing a
+  lot of unnecessary work that tends to result in explosive completion
+  times for worst-case scenarios - try to get closer to the "only do
+  the work we need to" ideal.  Once a new idea is proven in that
+  command, it should be made into a libgcv routine and
+  converters/other commands retargeted to use it.
 
 
 SHADED DISPLAYS

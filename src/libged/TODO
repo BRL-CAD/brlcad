@@ -3,7 +3,17 @@ Keep them sorted alphabetically.
 They are not all vetted.
 Be specific.
 
----
+--- REFACTORING ---
+
+* merge prcolor and color commands
+
+* merge bot_* commands into bot command subcommands
+
+* merge get_eyemodel's functionality  as a "view eyemodel"
+  sub-command in MGED/Archer.
+
+
+--- NEW COMMANDS ---
 
 * 'about' command: display version, contents of various doc files,
   customizable brlcad.msg file.  could also report summary information
@@ -217,6 +227,20 @@ Be specific.
 
   # select two objects,  create/return a temporary reference name
   select foo bar
+
+* "simulate" command: for applying physics deformations to geometry.
+  Each timestep (default steps==1) would get recorded as new geometry
+  unless updating the existing is requested.  Usage might be something
+  like this:
+
+     simulate [-k] [-g|-G] [-f x y z N] <time> [steps]
+
+  Examples:
+     simulate 10.5  # simulate 10.5s of time (default gravity)
+     simulate 3 10  # simulate 30s of time, 10s per timestep
+     simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
+     simulate -k 1.0  # simulate 1s of gravity, overwriting original
+     simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
 
 * 'tables' command: do not call system() on the "sort" unix command!
   It should perform all sorting on the data directly in memory, at
