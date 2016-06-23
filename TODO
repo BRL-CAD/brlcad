@@ -21,7 +21,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check these commits for documentation:
   CHANGES: 66929 - librtserver and Java Native Interface (JNI) bindings gone
   headers: 66524 - s/db_expand_str_glob/db_glob/g
-  docbook: 66470 - new option undocumented
+  NEWS+docbook: 66470 - new option undocumented
 
 * check these commits for bugs:
   66586 - no longer incrementing pattern after the loop yet we still reference it
