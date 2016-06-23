@@ -439,6 +439,9 @@ pixread.sh
 	obsolete hardware [deprecated 7.16]
 sgisnap.sh
 	obsolete hardware [deprecated 7.16]
+librtserver and Java Native Interface (JNI) bindings
+	removed, unused and undocumented, modern approach would be to
+	use a tool such as swig to generate bindings [minimally impacting]
 
 7.24.2
 ------

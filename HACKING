@@ -304,14 +304,6 @@ messages across stream connections.  The library supports a
 client-server communication model.
 	Depends on: libbu
 
-librtserver: The ray-trace server library is a thin interface over
-librt that simplifies the process of applying individual ray
-intersection tests against a given set of geometry.  The library
-supports communication with a BRL-CAD geometry repository and
-multithreaded ray dispatch.
-	Depends on: librt libbn libbu libtcl
-	Includes dependent libraries as part of this library
-
 libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
 	Depends on: libbn libbu libfb libtcl libtk
