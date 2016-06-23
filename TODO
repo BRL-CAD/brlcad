@@ -19,6 +19,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
 * check these commits for documentation:
+  CHANGES: 66929
+
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
@@ -68,6 +70,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* implement unit tests for bu dirent / stat API
 
 * OpenCL for enhanced performance boolweave sorting
 
