@@ -27,8 +27,9 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
-* improved hierarchy preservation in 3dm-g importer - Jon Engbert
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
+* improved hierarchy preservation in 3dm-g importer - Jon Engbert
+* fixed upside down 'screengrab' images on some platforms - Nick Reed
 * updated wireframe drawing to respect primitive colors - Cliff Yapp
 * updated pixdiff & pixcmp to only compare same sizes - Cliff Yapp
 * fixed running archer from read-only filesystems - Cliff Yapp
