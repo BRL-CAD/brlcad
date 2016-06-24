@@ -251,7 +251,7 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
 	    bu_vls_free(&gdlp->dl_path);
-	    free((void *)gdlp);
+	    BU_FREE(gdlp, struct display_list);
 
 	    break;
 	} else if (found_subpath) {
@@ -277,7 +277,7 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 	    if (BU_LIST_IS_EMPTY(&gdlp->dl_headSolid)) {
 		BU_LIST_DEQUEUE(&gdlp->l);
 		bu_vls_free(&gdlp->dl_path);
-		free((void *)gdlp);
+		BU_FREE(gdlp, struct display_list);
 	    } else if (allow_split && need_split) {
 		BU_LIST_DEQUEUE(&gdlp->l);
 
@@ -287,7 +287,7 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 
 		/* Free up the display list */
 		bu_vls_free(&gdlp->dl_path);
-		free((void *)gdlp);
+		BU_FREE(gdlp, struct display_list);
 	    }
 	}
 
@@ -381,7 +381,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 	    }
 	}
 
-	free((void *)dup_path);
+	bu_free((void *)dup_path, "dup_path");
 	gdlp = next_gdlp;
     }
 }
@@ -424,7 +424,7 @@ _dl_eraseFirstSubpath(struct bu_list *hdlp, struct db_i *dbip,
 
 	    /* Free up the display list */
 	    bu_vls_free(&gdlp->dl_path);
-	    free((void *)gdlp);
+	    BU_FREE(gdlp, struct display_list);
 
 	    return ret;
 	}
@@ -522,7 +522,7 @@ _dl_freeDisplayListItem (struct db_i *dbip,
     /* Free up the display list */
     BU_LIST_DEQUEUE(&gdlp->l);
     bu_vls_free(&gdlp->dl_path);
-    free((void *)gdlp);
+    BU_FREE(gdlp, struct display_list);
 }
 
 
@@ -1322,7 +1322,7 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
     for(i = 0; i < BU_PTBL_LEN(&dls); i++) {
 	gdlp = (struct display_list *)BU_PTBL_GET(&dls, i);
 	bu_vls_free(&gdlp->dl_path);
-	free((void *)gdlp);
+	BU_FREE(gdlp, struct display_list);
     }
     bu_ptbl_free(&dls);
 }
