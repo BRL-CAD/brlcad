@@ -66,7 +66,7 @@ extern "C++" {
 		~BRNode();
 
 		/** List of all children of a given node */
-		std::vector<BRNode *> m_children;
+		std::vector<BRNode *> * const m_children;
 
 		/** Bounding Box */
 		ON_BoundingBox m_node;
@@ -141,7 +141,7 @@ extern "C++" {
 
 	inline
 	    BRNode::BRNode() :
-		m_children(),
+		m_children(new std::vector<BRNode *>),
 		m_node(),
 		m_face(NULL),
 		m_u(),
@@ -174,7 +174,7 @@ extern "C++" {
 		    bool innerTrim /* = false */,
 		    bool checkTrim /* = true */,
 		    bool trimmed /* = false */) :
-		m_children(),
+		m_children(new std::vector<BRNode *>),
 		m_node(node),
 		m_face(face),
 		m_u(),
@@ -248,7 +248,7 @@ extern "C++" {
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
 	    BRNode::BRNode(const ON_BoundingBox &node) :
-		m_children(),
+		m_children(new std::vector<BRNode *>),
 		m_node(node),
 		m_face(NULL),
 		m_u(),
@@ -283,14 +283,14 @@ extern "C++" {
 	inline void
 	    BRNode::addChild(const ON_BoundingBox &child)
 	    {
-		m_children.push_back(new BRNode(child));
+		m_children->push_back(new BRNode(child));
 	    }
 
 	inline void
 	    BRNode::addChild(BRNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children.push_back(child);
+		    m_children->push_back(child);
 		}
 	    }
 
@@ -298,10 +298,10 @@ extern "C++" {
 	    BRNode::removeChild(BRNode *child)
 	    {
 		std::vector<BRNode *>::iterator i;
-		for (i = m_children.begin(); i != m_children.end();) {
+		for (i = m_children->begin(); i != m_children->end();) {
 		    if (*i == child) {
 			delete *i;
-			i = m_children.erase(i);
+			i = m_children->erase(i);
 		    } else {
 			++i;
 		    }
@@ -311,7 +311,7 @@ extern "C++" {
 	inline bool
 	    BRNode::isLeaf()
 	    {
-		if (m_children.empty()) {
+		if (m_children->empty()) {
 		    return true;
 		}
 		return false;

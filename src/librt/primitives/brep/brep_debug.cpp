@@ -2355,9 +2355,9 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	    return;
 	}
     } else {
-	if (node->m_children.size() > 0) {
-	    for (std::vector<BBNode*>::iterator childnode = node->m_children.begin(); childnode
-		     != node->m_children.end(); childnode++) {
+	if (!node->m_children->empty()) {
+	    for (std::vector<BBNode*>::iterator childnode = node->m_children->begin(); childnode
+		     != node->m_children->end(); childnode++) {
 		drawBBNode(st, vbp, *childnode);
 	    }
 	}
