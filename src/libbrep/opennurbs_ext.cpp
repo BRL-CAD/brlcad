@@ -299,7 +299,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
     point_t bmin, bmax;
     double dist;
     for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
@@ -319,7 +319,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 {
     point_t bmin, bmax;
     for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	if (bmax[X]+tol < pt.x)
@@ -339,7 +339,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
     point_t bmin, bmax;
     double dist;
     for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
@@ -359,7 +359,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 {
     point_t bmin, bmax;
     for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	if (bmax[Y]+tol < pt.y)
