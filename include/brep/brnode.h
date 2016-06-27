@@ -66,7 +66,7 @@ extern "C++" {
 		~BRNode();
 
 		/** List of all children of a given node */
-		std::vector<BRNode *> *m_children;
+		std::vector<BRNode *> m_children;
 
 		/** Bounding Box */
 		ON_BoundingBox m_node;
@@ -140,11 +140,11 @@ extern "C++" {
 	};
 
 	inline
-	    BRNode::BRNode()
+	    BRNode::BRNode() :
+                m_children()
 	    {
 		m_start = ON_3dPoint::UnsetPoint;
 		m_end = ON_3dPoint::UnsetPoint;
-		m_children = new std::vector<BRNode *>();
 	    }
 
 	inline
@@ -158,7 +158,7 @@ extern "C++" {
 		    bool innerTrim /* = false */,
 		    bool checkTrim /* = true */,
 		    bool trimmed /* = false */)
-	    : m_node(node), m_face(face), m_trim(curve), m_t(t),
+	    : m_children(), m_node(node), m_face(face), m_trim(curve), m_t(t),
 	    m_adj_face_index(adj_face_index), m_checkTrim(checkTrim),
 	    m_trimmed(trimmed), m_innerTrim(innerTrim), m_slope(0.0), m_vdot(0.0)
 	{
@@ -212,13 +212,12 @@ extern "C++" {
 		m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
 	    }
 	    m_bb_diag = DIST_PT_PT(m_start, m_end);
-	    m_children = new std::vector<BRNode *>();
 	}
 
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
 	    BRNode::BRNode(const ON_BoundingBox &node)
-	    : m_node(node)
+	    : m_children(), m_node(node)
 	    {
 		m_adj_face_index = -99;
 		m_checkTrim = true;
@@ -243,20 +242,19 @@ extern "C++" {
 		}
 		m_start = m_node.m_min;
 		m_end = m_node.m_max;
-		m_children = new std::vector<BRNode *>();
 	    }
 
 	inline void
 	    BRNode::addChild(const ON_BoundingBox &child)
 	    {
-		m_children->push_back(new BRNode(child));
+		m_children.push_back(new BRNode(child));
 	    }
 
 	inline void
 	    BRNode::addChild(BRNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children->push_back(child);
+		    m_children.push_back(child);
 		}
 	    }
 
@@ -264,10 +262,10 @@ extern "C++" {
 	    BRNode::removeChild(BRNode *child)
 	    {
 		std::vector<BRNode *>::iterator i;
-		for (i = m_children->begin(); i != m_children->end(); ++i) {
+		for (i = m_children.begin(); i != m_children.end(); ++i) {
 		    if (*i == child) {
 			delete *i;
-			m_children->erase(i);
+			m_children.erase(i);
 		    }
 		}
 	    }
@@ -275,7 +273,7 @@ extern "C++" {
 	inline bool
 	    BRNode::isLeaf()
 	    {
-		if (m_children->empty()) {
+		if (m_children.empty()) {
 		    return true;
 		}
 		return false;
