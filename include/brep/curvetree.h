@@ -70,15 +70,18 @@ extern "C++" {
 		int depth();
 
 	    private:
+		CurveTree(const CurveTree &source);
+		CurveTree &operator=(const CurveTree &source);
+
 		bool getHVTangents(const ON_Curve *curve, ON_Interval &t, std::list<fastf_t> &list);
 		bool isLinear(const ON_Curve *curve, double min, double max);
 		BRNode *subdivideCurve(const ON_Curve *curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
 		BRNode *curveBBox(const ON_Curve *curve, int adj_face_index, ON_Interval &t, bool leaf, bool innerTrim, const ON_BoundingBox &bb);
 		BRNode *initialLoopBBox();
 
-		const ON_BrepFace *m_face;
-		BRNode *m_root;
-		std::list<BRNode *> *m_sortedX;
+		const ON_BrepFace * const m_face;
+		BRNode * const m_root;
+		std::list<BRNode *> * const m_sortedX;
 	};
 
 

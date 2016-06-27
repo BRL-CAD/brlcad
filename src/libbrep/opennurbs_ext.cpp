@@ -131,10 +131,10 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 //--------------------------------------------------------------------------------
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face) :
-    m_face(face)
+    m_face(face),
+    m_root(initialLoopBBox()),
+    m_sortedX(new std::list<BRNode *>)
 {
-    m_root = initialLoopBBox();
-
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
 	ON_BrepLoop* loop = face->Loop(li);
@@ -241,8 +241,6 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 	}
     }
-
-    m_sortedX = new std::list<BRNode *>();
 
     getLeaves(*m_sortedX);
     m_sortedX->sort(sortX);
@@ -557,15 +555,17 @@ SurfaceTree::SurfaceTree()
     : m_removeTrimmed(false),
       ctree(NULL),
       m_face(NULL),
-      m_root(NULL)
-{
-    f_queue = new std::queue<ON_Plane *>();
-}
+      m_root(NULL),
+      f_queue(new std::queue<ON_Plane *>)
+{}
 
 
-SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol)
-    : m_removeTrimmed(removeTrimmed),
-      m_face(face)
+SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
+    m_removeTrimmed(removeTrimmed),
+    ctree(NULL),
+    m_face(face),
+    m_root(NULL),
+    f_queue(new std::queue<ON_Plane *>)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
@@ -632,7 +632,6 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
-    f_queue = new std::queue<ON_Plane *>();
     m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
 
     if (m_root) {

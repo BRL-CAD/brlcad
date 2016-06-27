@@ -94,9 +94,9 @@ extern "C++" {
 		BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[], int depth, int depthLimit, int prev_knot, double within_distance_tol);
 		BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval &u, const ON_Interval &v, double within_distance_tol);
 
-		const ON_BrepFace *m_face;
+		const ON_BrepFace * const m_face;
 		BBNode *m_root;
-		std::queue<ON_Plane *> *f_queue;
+		std::queue<ON_Plane *> * const f_queue;
 	};
 
     } /* namespace brlcad */

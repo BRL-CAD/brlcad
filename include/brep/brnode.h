@@ -100,12 +100,12 @@ extern "C++" {
 		void GetBBox(fastf_t *min, fastf_t *max) const;
 
 		/** Surface Information */
-		const ON_BrepFace *m_face;
+		const ON_BrepFace * const m_face;
 		ON_Interval m_u;
 		ON_Interval m_v;
 
 		/** Trim Curve Information */
-		const ON_Curve *m_trim;
+		const ON_Curve * const m_trim;
 		ON_Interval m_t;
 		int m_adj_face_index;
 

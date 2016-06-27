@@ -84,7 +84,7 @@ extern "C++" {
 		std::vector<BBNode *> * const m_children;
 
 		/** Curve Tree associated with the parent Surface Tree */
-		CurveTree *m_ctree;
+		CurveTree * const m_ctree;
 
 		/** Bounding Box */
 		ON_BoundingBox m_node;
