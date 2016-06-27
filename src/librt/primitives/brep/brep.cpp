@@ -1201,7 +1201,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     std::list<BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
-    if (inters.size() == 0) return 0; // MISS
+    if (inters.empty()) return 0; // MISS
 
     // find all the hits (XXX very inefficient right now!)
     HitList all_hits; // record all hits
@@ -1341,14 +1341,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    curr++;
 	}
 
-	if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
+	if (!hits.empty() && ((hits.size() % 2) != 0)) {
 	    brep_hit &curr_hit = hits.back();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		hits.pop_back();
 	    }
 	}
 
-	if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
+	if (!hits.empty() && ((hits.size() % 2) != 0)) {
 	    brep_hit &curr_hit = hits.front();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		hits.pop_front();
@@ -1434,7 +1434,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     all_hits = hits;
 
 
-    if (hits.size() > 0) {
+    if (!hits.empty()) {
 	// remove grazing hits with with normal to ray dot less than BREP_GRAZING_DOT_TOL (>= 89.999 degrees obliq)
 	TRACE("-- Remove grazing hits --");
 	int num = 0;
@@ -1459,7 +1459,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
 
-    if (hits.size() > 0) {
+    if (!hits.empty()) {
 	// we should have "valid" points now, remove duplicates or grazes(same point with in/out sign change)
 	HitList::iterator last = hits.begin();
 	HitList::iterator i = hits.begin();
@@ -1491,8 +1491,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     // remove multiple "INs" in a row assume last "IN" is the actual entering hit, for
     // multiple "OUTs" in a row assume first "OUT" is the actual exiting hit, remove unused
     // "INs/OUTs" from hit list.
-    //if ((hits.size() > 0) && ((hits.size() % 2) != 0)) {
-    if (hits.size() > 0) {
+    //if (!hits.empty() && ((hits.size() % 2) != 0)) {
+    if (!hits.empty()) {
 	// we should have "valid" points now, remove duplicates or grazes
 	HitList::iterator last = hits.begin();
 	HitList::iterator i = hits.begin();
@@ -1541,7 +1541,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 //#define KODDHIT
 #ifdef KODDHIT //ugly debugging hack to raytrace single surface and not worry about odd hits
 	static fastf_t diststep = 0.0;
-	bool hit_it = hits.size() > 0;
+	bool hit_it = !hits.empty();
 #else
 	bool hit_it = hits.size() % 2 == 0;
 #endif
@@ -2122,13 +2122,11 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 	    return;
 	}
     } else {
-	if (node->m_children.size() > 0) {
 	    for (std::vector<BBNode*>::iterator childnode =
 		     node->m_children.begin(); childnode
-		 != node->m_children.end(); childnode++) {
+		 != node->m_children.end(); ++childnode) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
-	}
     }
 }
 

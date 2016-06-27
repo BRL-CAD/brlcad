@@ -198,14 +198,14 @@ extern "C++" {
 		m_normal(),
 		m_trims_above()
 	{
-		for (int i = 0; i < 3; i++) {
-		    double d = m_node.m_max[i] - m_node.m_min[i];
-		    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-			m_node.m_min[i] -= 0.001;
-			m_node.m_max[i] += 0.001;
-		    }
+	    for (int i = 0; i < 3; i++) {
+		double d = m_node.m_max[i] - m_node.m_min[i];
+		if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		    m_node.m_min[i] -= 0.001;
+		    m_node.m_max[i] += 0.001;
 		}
 	    }
+	}
 
 	inline
 	    BBNode::BBNode(CurveTree *ct) :
