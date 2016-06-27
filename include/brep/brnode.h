@@ -141,7 +141,7 @@ extern "C++" {
 
 	inline
 	    BRNode::BRNode() :
-                m_children()
+		m_children()
 	    {
 		m_start = ON_3dPoint::UnsetPoint;
 		m_end = ON_3dPoint::UnsetPoint;
@@ -262,10 +262,12 @@ extern "C++" {
 	    BRNode::removeChild(BRNode *child)
 	    {
 		std::vector<BRNode *>::iterator i;
-		for (i = m_children.begin(); i != m_children.end(); ++i) {
+		for (i = m_children.begin(); i != m_children.end();) {
 		    if (*i == child) {
 			delete *i;
-			m_children.erase(i);
+			i = m_children.erase(i);
+		    } else {
+			++i;
 		    }
 		}
 	    }

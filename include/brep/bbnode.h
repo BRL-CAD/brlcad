@@ -245,10 +245,12 @@ extern "C++" {
 	    BBNode::removeChild(BBNode *child)
 	    {
 		std::vector<BBNode *>::iterator i;
-		for (i = m_children.begin(); i != m_children.end(); ++i) {
+		for (i = m_children.begin(); i != m_children.end();) {
 		    if (*i == child) {
 			delete *i;
-			m_children.erase(i);
+			i = m_children.erase(i);
+		    } else {
+			++i;
 		    }
 		}
 	    }
