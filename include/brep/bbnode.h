@@ -162,6 +162,9 @@ extern "C++" {
 		bool prepTrims();
 
 	    private:
+		BBNode(const BBNode &source);
+		BBNode &operator=(const BBNode &source);
+
 		BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
 		std::list<BRNode *> *m_trims_above;
 	};

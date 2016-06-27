@@ -128,6 +128,8 @@ extern "C++" {
 		bool doTrimming() const;
 
 	    private:
+		BRNode(const BRNode &source);
+		BRNode &operator=(const BRNode &source);
 		BRNode *closer(const ON_3dPoint &pt, BRNode *left, BRNode *right);
 		fastf_t m_slope;
 		fastf_t m_vdot;
