@@ -56,7 +56,7 @@ extern "C++" {
 		BRNode();
 		BRNode(const ON_BoundingBox &node);
 		BRNode(const ON_Curve *curve,
-			int m_adj_face_index,
+			int adj_face_index,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
 			const ON_Interval &t,
@@ -141,11 +141,27 @@ extern "C++" {
 
 	inline
 	    BRNode::BRNode() :
-		m_children()
-	    {
-		m_start = ON_3dPoint::UnsetPoint;
-		m_end = ON_3dPoint::UnsetPoint;
-	    }
+		m_children(),
+		m_node(),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_trim(NULL),
+		m_t(),
+		m_adj_face_index(-99),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_XIncreasing(false),
+		m_Horizontal(false),
+		m_Vertical(false),
+		m_innerTrim(false),
+		m_estimate(),
+		m_slope(0.0),
+		m_vdot(0.0),
+		m_bb_diag(0.0),
+		m_start(ON_3dPoint::UnsetPoint),
+		m_end(ON_3dPoint::UnsetPoint)
+	    {}
 
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
@@ -157,13 +173,28 @@ extern "C++" {
 		    const ON_Interval &t,
 		    bool innerTrim /* = false */,
 		    bool checkTrim /* = true */,
-		    bool trimmed /* = false */)
-	    : m_children(), m_node(node), m_face(face), m_trim(curve), m_t(t),
-	    m_adj_face_index(adj_face_index), m_checkTrim(checkTrim),
-	    m_trimmed(trimmed), m_innerTrim(innerTrim), m_slope(0.0), m_vdot(0.0)
+		    bool trimmed /* = false */) :
+		m_children(),
+		m_node(node),
+		m_face(face),
+		m_u(),
+		m_v(),
+		m_trim(curve),
+		m_t(t),
+		m_adj_face_index(adj_face_index),
+		m_checkTrim(checkTrim),
+		m_trimmed(trimmed),
+		m_XIncreasing(false),
+		m_Horizontal(false),
+		m_Vertical(false),
+		m_innerTrim(innerTrim),
+		m_estimate(),
+		m_slope(0.0),
+		m_vdot(0.0),
+		m_bb_diag(0.0),
+		m_start(curve->PointAt(m_t[0])),
+		m_end(curve->PointAt(m_t[1]))
 	{
-	    m_start = curve->PointAt(m_t[0]);
-	    m_end = curve->PointAt(m_t[1]);
 	    /* check for vertical segments they can be removed from trims
 	     * above (can't tell direction and don't need
 	     */
@@ -216,23 +247,28 @@ extern "C++" {
 
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
-	    BRNode::BRNode(const ON_BoundingBox &node)
-	    : m_children(), m_node(node)
-	    {
-		m_adj_face_index = -99;
-		m_checkTrim = true;
-		m_trimmed = false;
-		m_Horizontal = false;
-		m_Vertical = false;
-		m_XIncreasing = false;
-		m_innerTrim = false;
-		m_bb_diag = 0.0;
-		m_slope = 0.0;
-		m_vdot = 0.0;
-		m_face = NULL;
-		m_trim = NULL;
-		m_start = ON_3dPoint::UnsetPoint;
-		m_end = ON_3dPoint::UnsetPoint;
+	    BRNode::BRNode(const ON_BoundingBox &node) :
+		m_children(),
+		m_node(node),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_trim(NULL),
+		m_t(),
+		m_adj_face_index(-99),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_XIncreasing(false),
+		m_Horizontal(false),
+		m_Vertical(false),
+		m_innerTrim(false),
+		m_estimate(),
+		m_slope(0.0),
+		m_vdot(0.0),
+		m_bb_diag(0.0),
+		m_start(ON_3dPoint::UnsetPoint),
+		m_end(ON_3dPoint::UnsetPoint)
+	{
 		for (int i = 0; i < 3; i++) {
 		    double d = m_node.m_max[i] - m_node.m_min[i];
 		    if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {

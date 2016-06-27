@@ -170,14 +170,34 @@ extern "C++" {
 	};
 
 	inline
-	    BBNode::BBNode()
-	    : m_children(), m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
-	    {}
+	    BBNode::BBNode() :
+		m_children(),
+		m_ctree(NULL),
+		m_node(),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_estimate(),
+		m_normal(),
+		m_trims_above()
+	{}
 
 	inline
-	    BBNode::BBNode(const ON_BoundingBox &node)
-	    : m_children(), m_ctree(NULL), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
-	    {
+	    BBNode::BBNode(const ON_BoundingBox &node) :
+		m_children(),
+		m_ctree(NULL),
+		m_node(node),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_estimate(),
+		m_normal(),
+		m_trims_above()
+	{
 		for (int i = 0; i < 3; i++) {
 		    double d = m_node.m_max[i] - m_node.m_min[i];
 		    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
@@ -188,22 +208,42 @@ extern "C++" {
 	    }
 
 	inline
-	    BBNode::BBNode(CurveTree *ct)
-	    : m_children(), m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
-	    {}
+	    BBNode::BBNode(CurveTree *ct) :
+		m_children(),
+		m_ctree(ct),
+		m_node(),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_estimate(),
+		m_normal(),
+		m_trims_above()
+	{}
 
 	inline
-	    BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
-	    : m_children(), m_ctree(ct), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
-	    {
-		for (int i = 0; i < 3; i++) {
-		    double d = m_node.m_max[i] - m_node.m_min[i];
-		    if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-			m_node.m_min[i] -= 0.001;
-			m_node.m_max[i] += 0.001;
-		    }
+	    BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node) :
+		m_children(),
+		m_ctree(ct),
+		m_node(node),
+		m_face(NULL),
+		m_u(),
+		m_v(),
+		m_checkTrim(true),
+		m_trimmed(false),
+		m_estimate(),
+		m_normal(),
+		m_trims_above()
+	{
+	    for (int i = 0; i < 3; i++) {
+		double d = m_node.m_max[i] - m_node.m_min[i];
+		if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+		    m_node.m_min[i] -= 0.001;
+		    m_node.m_max[i] += 0.001;
 		}
 	    }
+	}
 
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
@@ -214,9 +254,18 @@ extern "C++" {
 		    const ON_Interval &u,
 		    const ON_Interval &v,
 		    bool checkTrim /* = false */,
-		    bool trimmed /* = false */)
-	    : m_children(), m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v),
-	    m_checkTrim(checkTrim), m_trimmed(trimmed), m_trims_above()
+		    bool trimmed /* = false */) :
+		m_children(),
+		m_ctree(ct),
+		m_node(node),
+		m_face(face),
+		m_u(u),
+		m_v(v),
+		m_checkTrim(checkTrim),
+		m_trimmed(trimmed),
+		m_estimate(),
+		m_normal(),
+		m_trims_above()
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
