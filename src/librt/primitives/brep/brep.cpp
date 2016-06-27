@@ -320,7 +320,7 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 {
     struct brep_build_bvh_parallel *bbbp = (struct brep_build_bvh_parallel *)data;
     int index;
-    ON_BrepFaceArray& faces = bbbp->bs->brep->m_F;
+    const ON_BrepFaceArray& faces = bbbp->bs->brep->m_F;
     size_t faceCount = faces.Count();
 
     do {
@@ -1760,10 +1760,10 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children->size(); i++) {
+    for (size_t i = 0; i < node->m_children.size(); i++) {
 	if (i < 1) {
-	    std::vector<brlcad::BBNode*> *nodes = node->m_children;
-	    plot_bbnode((*nodes)[i], vhead, depth + 1, start, limit);
+	    std::vector<brlcad::BBNode*> &nodes = node->m_children;
+	    plot_bbnode(nodes[i], vhead, depth + 1, start, limit);
 	}
     }
 }
@@ -2122,10 +2122,10 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 	    return;
 	}
     } else {
-	if (node->m_children->size() > 0) {
+	if (node->m_children.size() > 0) {
 	    for (std::vector<BBNode*>::iterator childnode =
-		     node->m_children->begin(); childnode
-		 != node->m_children->end(); childnode++) {
+		     node->m_children.begin(); childnode
+		 != node->m_children.end(); childnode++) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
 	}

@@ -81,7 +81,7 @@ extern "C++" {
 		~BBNode();
 
 		/** List of all children of a given node */
-		std::vector<BBNode *> *m_children;
+		std::vector<BBNode *> m_children;
 
 		/** Curve Tree associated with the parent Surface Tree */
 		CurveTree *m_ctree;
@@ -166,20 +166,17 @@ extern "C++" {
 		BBNode &operator=(const BBNode &source);
 
 		BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
-		std::list<BRNode *> *m_trims_above;
+		std::list<BRNode *> m_trims_above;
 	};
 
 	inline
 	    BBNode::BBNode()
-	    : m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false)
-	    {
-		m_children = new std::vector<BBNode *>();
-		m_trims_above = new std::list<BRNode *>();
-	    }
+	    : m_children(), m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
+	    {}
 
 	inline
 	    BBNode::BBNode(const ON_BoundingBox &node)
-	    : m_ctree(NULL), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false)
+	    : m_children(), m_ctree(NULL), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
 	    {
 		for (int i = 0; i < 3; i++) {
 		    double d = m_node.m_max[i] - m_node.m_min[i];
@@ -188,21 +185,16 @@ extern "C++" {
 			m_node.m_max[i] += 0.001;
 		    }
 		}
-		m_children = new std::vector<BBNode *>();
-		m_trims_above = new std::list<BRNode *>();
 	    }
 
 	inline
 	    BBNode::BBNode(CurveTree *ct)
-	    : m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false)
-	    {
-		m_children = new std::vector<BBNode *>();
-		m_trims_above = new std::list<BRNode *>();
-	    }
+	    : m_children(), m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
+	    {}
 
 	inline
 	    BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
-	    : m_ctree(ct), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false)
+	    : m_children(), m_ctree(ct), m_node(node), m_face(NULL), m_checkTrim(true), m_trimmed(false), m_trims_above()
 	    {
 		for (int i = 0; i < 3; i++) {
 		    double d = m_node.m_max[i] - m_node.m_min[i];
@@ -211,8 +203,6 @@ extern "C++" {
 			m_node.m_max[i] += 0.001;
 		    }
 		}
-		m_children = new std::vector<BBNode *>();
-		m_trims_above = new std::list<BRNode *>();
 	    }
 
 	inline
@@ -225,8 +215,8 @@ extern "C++" {
 		    const ON_Interval &v,
 		    bool checkTrim /* = false */,
 		    bool trimmed /* = false */)
-	    : m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v),
-	    m_checkTrim(checkTrim), m_trimmed(trimmed)
+	    : m_children(), m_ctree(ct), m_node(node), m_face(face), m_u(u), m_v(v),
+	    m_checkTrim(checkTrim), m_trimmed(trimmed), m_trims_above()
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
@@ -235,21 +225,19 @@ extern "C++" {
 		    m_node.m_max[i] += 0.001;
 		}
 	    }
-	    m_children = new std::vector<BBNode *>();
-	    m_trims_above = new std::list<BRNode *>();
 	}
 
 	inline void
 	    BBNode::addChild(const ON_BoundingBox &child)
 	    {
-		m_children->push_back(new BBNode(child));
+		m_children.push_back(new BBNode(child));
 	    }
 
 	inline void
 	    BBNode::addChild(BBNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children->push_back(child);
+		    m_children.push_back(child);
 		}
 	    }
 
@@ -257,10 +245,10 @@ extern "C++" {
 	    BBNode::removeChild(BBNode *child)
 	    {
 		std::vector<BBNode *>::iterator i;
-		for (i = m_children->begin(); i < m_children->end(); ++i) {
+		for (i = m_children.begin(); i != m_children.end(); ++i) {
 		    if (*i == child) {
 			delete *i;
-			m_children->erase(i);
+			m_children.erase(i);
 		    }
 		}
 	    }
@@ -268,7 +256,7 @@ extern "C++" {
 	inline bool
 	    BBNode::isLeaf()
 	    {
-		if (m_children->size() == 0) {
+		if (m_children.empty()) {
 		    return true;
 		}
 		return false;

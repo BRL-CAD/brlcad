@@ -130,6 +130,7 @@ extern "C++" {
 	    private:
 		BRNode(const BRNode &source);
 		BRNode &operator=(const BRNode &source);
+
 		BRNode *closer(const ON_3dPoint &pt, BRNode *left, BRNode *right);
 		fastf_t m_slope;
 		fastf_t m_vdot;
@@ -263,7 +264,7 @@ extern "C++" {
 	    BRNode::removeChild(BRNode *child)
 	    {
 		std::vector<BRNode *>::iterator i;
-		for (i = m_children->begin(); i < m_children->end(); ++i) {
+		for (i = m_children->begin(); i != m_children->end(); ++i) {
 		    if (*i == child) {
 			delete *i;
 			m_children->erase(i);
@@ -274,7 +275,7 @@ extern "C++" {
 	inline bool
 	    BRNode::isLeaf()
 	    {
-		if (m_children->size() == 0) {
+		if (m_children->empty()) {
 		    return true;
 		}
 		return false;

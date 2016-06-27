@@ -51,7 +51,7 @@ BRNode::depth()
 void
 BRNode::getLeaves(std::list<BRNode *> &out_leaves)
 {
-    if (m_children->size() > 0) {
+    if (!m_children->empty()) {
 	for (size_t i = 0; i < m_children->size(); i++) {
 	    (*m_children)[i]->getLeaves(out_leaves);
 	}
@@ -157,7 +157,7 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (m_children->size() > 0) {
+	if (!m_children->empty()) {
 	    BRNode *closestNode = (*m_children)[0];
 	    for (size_t i = 1; i < m_children->size(); i++) {
 		closestNode = closer(pt, closestNode, (*m_children)[i]);
