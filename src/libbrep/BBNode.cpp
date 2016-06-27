@@ -202,7 +202,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 	    double udist = 0.0;
 
 	    for (i = trims.begin(); i != trims.end(); i++) {
-		br = dynamic_cast<BRNode *>(*i);
+		br = *i;
 
 		/* skip if trim below */
 		if (br->m_node.m_max[1] + within_distance_tol < uv[Y]) {
@@ -300,7 +300,7 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) con
     point_t bmin, bmax;
     double dist;
     for (std::list<BRNode *>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
-	BRNode *br = dynamic_cast<BRNode *>(*i);
+	BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
 	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
@@ -349,7 +349,7 @@ BBNode::prepTrims()
     if (!m_trims_above.empty()) {
 	i = m_trims_above.begin();
 	while (i != m_trims_above.end()) {
-	    br = dynamic_cast<BRNode *>(*i);
+	    br = *i;
 	    if (br->m_Vertical) { /* check V to see if trim possibly overlaps */
 		br->GetBBox(curvemin, curvemax);
 		if (curvemin[Y] - dist <= m_v[1]) {
@@ -373,7 +373,7 @@ BBNode::prepTrims()
 	    m_checkTrim = false;
 	} else if (!m_trims_above.empty()) { /*trimmed above check contains */
 	    i = m_trims_above.begin();
-	    br = dynamic_cast<BRNode *>(*i);
+	    br = *i;
 	    br->GetBBox(curvemin, curvemax);
 	    dist = 0.000001; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
 	    if (curvemin[Y] - dist > m_v[1]) {
@@ -392,7 +392,7 @@ BBNode::prepTrims()
 		     * multiple overlaps.
 		     */
 		    BRNode *bs;
-		    bs = dynamic_cast<BRNode *>(*i);
+		    bs = *i;
 		    point_t smin, smax;
 		    bs->GetBBox(smin, smax);
 		    if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { /* can determine inside/outside without closer inspection */

@@ -1884,7 +1884,7 @@ plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf
     trim_hits.clear();
     std::list<BRNode *>::iterator i;
     for (i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Horizontal) {
@@ -1977,7 +1977,7 @@ plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf
     trim_hits.clear();
     for (std::list<BRNode*>::iterator i = m_trims_above.begin(); i
 	 != m_trims_above.end(); i++, cnt++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+	BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Vertical) {
