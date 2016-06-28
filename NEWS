@@ -88,6 +88,7 @@ geometry (e.g., primitives with CSG).
 * fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
+* modernized documents and improved infrastructure - Hitesh Sofat
 * added mirroring support for hrt primitive objects - Isaac Kamga
 * ported the mged Overlap Tool to Windows - Sean Morrison
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
