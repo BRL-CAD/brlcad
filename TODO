@@ -28,6 +28,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check these commits for documentation:
 
 * check these commits for bugs:
+  65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
