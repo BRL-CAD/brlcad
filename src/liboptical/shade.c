@@ -172,7 +172,7 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 		    }
 		}
 		counter++;
-s
+
 		if (R_DEBUG&RDEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);
 		    VPRINT("Norm", swp->sw_hit.hit_normal);
