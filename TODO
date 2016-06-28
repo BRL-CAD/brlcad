@@ -26,6 +26,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   invisible.
 
 * check these commits for documentation:
+  65282+65262 - NEWS, support for RHC (possibly consolidate with other news item)
   65489 (and others) - NEWS, preliminary conversion support for openscad file format
 
 * check these commits for bugs:
