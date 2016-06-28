@@ -30,7 +30,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   64992 - see if doc errors were in prior release, otherwise needs NEWS
   65003 - NEWS, fixed saveview usage
   65282+65262 - NEWS, support for RHC (possibly consolidate with other news item)
-  65489 (and others) - NEWS, preliminary conversion support for openscad file format
 
 * check these commits for bugs:
   65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
