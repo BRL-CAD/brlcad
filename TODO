@@ -26,6 +26,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   invisible.
 
 * check these commits for documentation:
+  64727 - NEWS, probably generalize to documentation infrastructure improvements
   64992 - see if doc errors were in prior release, otherwise needs NEWS
   65003 - NEWS, fixed saveview usage
   65282+65262 - NEWS, support for RHC (possibly consolidate with other news item)
