@@ -54,15 +54,10 @@ extern "C++" {
 	 * SurfaceTree declaration
 	 */
 	class BREP_EXPORT SurfaceTree {
-	    private:
-		bool m_removeTrimmed;
-
 	    public:
 		SurfaceTree();
 		SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 		~SurfaceTree();
-
-		CurveTree *ctree;
 
 		BBNode *getRootNode() const;
 
@@ -86,6 +81,8 @@ extern "C++" {
 		void getLeaves(std::list<BBNode *> &out_leaves);
 		int depth();
 
+		CurveTree *ctree;
+
 	    private:
 		bool isFlat(ON_Plane frames[]);
 		bool isStraight(ON_Plane frames[]);
@@ -94,6 +91,7 @@ extern "C++" {
 		BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[], int depth, int depthLimit, int prev_knot, double within_distance_tol);
 		BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval &u, const ON_Interval &v, double within_distance_tol);
 
+		const bool m_removeTrimmed;
 		const ON_BrepFace * const m_face;
 		BBNode *m_root;
 		std::queue<ON_Plane *> * const f_queue;

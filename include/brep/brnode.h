@@ -65,12 +65,6 @@ extern "C++" {
 			bool trimmed = false);
 		~BRNode();
 
-		/** List of all children of a given node */
-		std::vector<BRNode *> * const m_children;
-
-		/** Bounding Box */
-		ON_BoundingBox m_node;
-
 		/** Node management functions */
 		void addChild(const ON_BoundingBox &child);
 		void addChild(BRNode *child);
@@ -99,41 +93,51 @@ extern "C++" {
 		 */
 		void GetBBox(fastf_t *min, fastf_t *max) const;
 
-		/** Surface Information */
-		const ON_BrepFace * const m_face;
-		ON_Interval m_u;
-		ON_Interval m_v;
+		bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
+		bool doTrimming() const;
 
-		/** Trim Curve Information */
-		const ON_Curve * const m_trim;
-		ON_Interval m_t;
-		int m_adj_face_index;
-
-		/** Trimming Flags */
-		bool m_checkTrim;
-		bool m_trimmed;
-		bool m_XIncreasing;
-		bool m_Horizontal;
-		bool m_Vertical;
-		bool m_innerTrim;
-
-		ON_3dPoint m_estimate;
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
 		fastf_t getLinearEstimateOfV(fastf_t u);
 		fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
 		fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
 
-		bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
-		bool doTrimming() const;
+		/** Bounding Box */
+		ON_BoundingBox m_node;
+
+		/** Surface Information */
+		ON_Interval m_v;
+
+		/** Trim Curve Information */
+		int m_adj_face_index;
+
+		/** Trimming Flags */
+		bool m_XIncreasing;
+		bool m_Horizontal;
+		bool m_Vertical;
+		const bool m_innerTrim;
 
 	    private:
 		BRNode(const BRNode &source);
 		BRNode &operator=(const BRNode &source);
 
 		BRNode *closer(const ON_3dPoint &pt, BRNode *left, BRNode *right);
+
+		/** List of all children of a given node */
+		std::vector<BRNode *> * const m_children;
+
+		const ON_BrepFace * const m_face;
+		ON_Interval m_u;
+
+		const ON_Curve * const m_trim;
+		ON_Interval m_t;
+
+		const bool m_checkTrim;
+		const bool m_trimmed;
+
+		const ON_3dPoint m_estimate;
+
 		fastf_t m_slope;
-		fastf_t m_vdot;
 		fastf_t m_bb_diag;
 		ON_3dPoint m_start;
 		ON_3dPoint m_end;
@@ -141,23 +145,22 @@ extern "C++" {
 
 	inline
 	    BRNode::BRNode() :
-		m_children(new std::vector<BRNode *>),
 		m_node(),
-		m_face(NULL),
-		m_u(),
 		m_v(),
-		m_trim(NULL),
-		m_t(),
 		m_adj_face_index(-99),
-		m_checkTrim(true),
-		m_trimmed(false),
 		m_XIncreasing(false),
 		m_Horizontal(false),
 		m_Vertical(false),
 		m_innerTrim(false),
+		m_children(new std::vector<BRNode *>),
+		m_face(NULL),
+		m_u(),
+		m_trim(NULL),
+		m_t(),
+		m_checkTrim(true),
+		m_trimmed(false),
 		m_estimate(),
 		m_slope(0.0),
-		m_vdot(0.0),
 		m_bb_diag(0.0),
 		m_start(ON_3dPoint::UnsetPoint),
 		m_end(ON_3dPoint::UnsetPoint)
@@ -174,23 +177,22 @@ extern "C++" {
 		    bool innerTrim /* = false */,
 		    bool checkTrim /* = true */,
 		    bool trimmed /* = false */) :
-		m_children(new std::vector<BRNode *>),
 		m_node(node),
-		m_face(face),
-		m_u(),
 		m_v(),
-		m_trim(curve),
-		m_t(t),
 		m_adj_face_index(adj_face_index),
-		m_checkTrim(checkTrim),
-		m_trimmed(trimmed),
 		m_XIncreasing(false),
 		m_Horizontal(false),
 		m_Vertical(false),
 		m_innerTrim(innerTrim),
+		m_children(new std::vector<BRNode *>),
+		m_face(face),
+		m_u(),
+		m_trim(curve),
+		m_t(t),
+		m_checkTrim(checkTrim),
+		m_trimmed(trimmed),
 		m_estimate(),
 		m_slope(0.0),
-		m_vdot(0.0),
 		m_bb_diag(0.0),
 		m_start(curve->PointAt(m_t[0])),
 		m_end(curve->PointAt(m_t[1]))
@@ -248,23 +250,22 @@ extern "C++" {
 	inline
 	    _BU_ATTR_ALWAYS_INLINE
 	    BRNode::BRNode(const ON_BoundingBox &node) :
-		m_children(new std::vector<BRNode *>),
 		m_node(node),
-		m_face(NULL),
-		m_u(),
 		m_v(),
-		m_trim(NULL),
-		m_t(),
 		m_adj_face_index(-99),
-		m_checkTrim(true),
-		m_trimmed(false),
 		m_XIncreasing(false),
 		m_Horizontal(false),
 		m_Vertical(false),
 		m_innerTrim(false),
+		m_children(new std::vector<BRNode *>),
+		m_face(NULL),
+		m_u(),
+		m_trim(NULL),
+		m_t(),
+		m_checkTrim(true),
+		m_trimmed(false),
 		m_estimate(),
 		m_slope(0.0),
-		m_vdot(0.0),
 		m_bb_diag(0.0),
 		m_start(ON_3dPoint::UnsetPoint),
 		m_end(ON_3dPoint::UnsetPoint)

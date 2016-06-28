@@ -80,15 +80,6 @@ extern "C++" {
 			bool trimmed = false);
 		~BBNode();
 
-		/** List of all children of a given node */
-		std::vector<BBNode *> * const m_children;
-
-		/** Curve Tree associated with the parent Surface Tree */
-		CurveTree * const m_ctree;
-
-		/** Bounding Box */
-		ON_BoundingBox m_node;
-
 		/** Test if this node is a leaf node in the hierarchy */
 		bool isLeaf();
 
@@ -122,23 +113,6 @@ extern "C++" {
 		void GetBBox(float *min, float *max);
 		void GetBBox(double *min, double *max);
 
-		/** Surface Information */
-		const ON_BrepFace *m_face;
-		ON_Interval m_u;
-		ON_Interval m_v;
-
-		/** Trimming Flags */
-		bool m_checkTrim;
-		bool m_trimmed;
-
-		/** Point used for closeness testing - usually based on evaluation
-		 * of the curve/surface at the center of the parametric domain
-		 */
-		ON_3dPoint m_estimate;
-
-		/* Normal at the m_estimate point */
-		ON_3dVector m_normal;
-
 		/** Test whether a ray intersects the 3D bounding volume of the
 		 * node - if so, and node is not a leaf node, query children.  If
 		 * leaf node, and intersects, add to list.
@@ -161,18 +135,44 @@ extern "C++" {
 		void BuildBBox();
 		bool prepTrims();
 
+		/** List of all children of a given node */
+		std::vector<BBNode *> * const m_children;
+
+		/** Bounding Box */
+		ON_BoundingBox m_node;
+
+		/** Surface Information */
+		const ON_BrepFace *m_face;
+		ON_Interval m_u;
+		ON_Interval m_v;
+
+		/** Trimming Flags */
+		bool m_checkTrim;
+		bool m_trimmed;
+
+		/** Point used for closeness testing - usually based on evaluation
+		 * of the curve/surface at the center of the parametric domain
+		 */
+		ON_3dPoint m_estimate;
+
+		/* Normal at the m_estimate point */
+		ON_3dVector m_normal;
+
 	    private:
 		BBNode(const BBNode &source);
 		BBNode &operator=(const BBNode &source);
 
 		BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
+
+		/** Curve Tree associated with the parent Surface Tree */
+		CurveTree * const m_ctree;
+
 		std::list<BRNode *> * const m_trims_above;
 	};
 
 	inline
 	    BBNode::BBNode() :
 		m_children(new std::vector<BBNode *>),
-		m_ctree(NULL),
 		m_node(),
 		m_face(NULL),
 		m_u(),
@@ -181,13 +181,13 @@ extern "C++" {
 		m_trimmed(false),
 		m_estimate(),
 		m_normal(),
+		m_ctree(NULL),
 		m_trims_above(new std::list<BRNode *>)
 	{}
 
 	inline
 	    BBNode::BBNode(const ON_BoundingBox &node) :
 		m_children(new std::vector<BBNode *>),
-		m_ctree(NULL),
 		m_node(node),
 		m_face(NULL),
 		m_u(),
@@ -196,6 +196,7 @@ extern "C++" {
 		m_trimmed(false),
 		m_estimate(),
 		m_normal(),
+		m_ctree(NULL),
 		m_trims_above(new std::list<BRNode *>)
 	{
 	    for (int i = 0; i < 3; i++) {
@@ -210,7 +211,6 @@ extern "C++" {
 	inline
 	    BBNode::BBNode(CurveTree *ct) :
 		m_children(new std::vector<BBNode *>),
-		m_ctree(ct),
 		m_node(),
 		m_face(NULL),
 		m_u(),
@@ -219,13 +219,13 @@ extern "C++" {
 		m_trimmed(false),
 		m_estimate(),
 		m_normal(),
+		m_ctree(ct),
 		m_trims_above(new std::list<BRNode *>)
 	{}
 
 	inline
 	    BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node) :
 		m_children(new std::vector<BBNode *>),
-		m_ctree(ct),
 		m_node(node),
 		m_face(NULL),
 		m_u(),
@@ -234,6 +234,7 @@ extern "C++" {
 		m_trimmed(false),
 		m_estimate(),
 		m_normal(),
+		m_ctree(ct),
 		m_trims_above(new std::list<BRNode *>)
 	{
 	    for (int i = 0; i < 3; i++) {
@@ -256,7 +257,6 @@ extern "C++" {
 		    bool checkTrim /* = false */,
 		    bool trimmed /* = false */) :
 		m_children(new std::vector<BBNode *>),
-		m_ctree(ct),
 		m_node(node),
 		m_face(face),
 		m_u(u),
@@ -265,6 +265,7 @@ extern "C++" {
 		m_trimmed(trimmed),
 		m_estimate(),
 		m_normal(),
+		m_ctree(ct),
 		m_trims_above(new std::list<BRNode *>)
 	{
 	    for (int i = 0; i < 3; i++) {

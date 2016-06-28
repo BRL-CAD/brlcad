@@ -552,8 +552,8 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 //--------------------------------------------------------------------------------
 // SurfaceTree
 SurfaceTree::SurfaceTree()
-    : m_removeTrimmed(false),
-      ctree(NULL),
+    : ctree(NULL),
+      m_removeTrimmed(false),
       m_face(NULL),
       m_root(NULL),
       f_queue(new std::queue<ON_Plane *>)
@@ -561,8 +561,8 @@ SurfaceTree::SurfaceTree()
 
 
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
-    m_removeTrimmed(removeTrimmed),
     ctree(NULL),
+    m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
     f_queue(new std::queue<ON_Plane *>)
