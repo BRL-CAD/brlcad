@@ -1063,7 +1063,7 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
     if (converged) {
 	for (int i = 0; i < numhits; i++) {
 	    double closesttrim;
-	    BRNode* trimBR = NULL;
+	    const BRNode* trimBR = NULL;
 	    int trim_status = sbv->isTrimmed(ouv[i], &trimBR, closesttrim,BREP_EDGE_MISS_TOLERANCE);
 	    if (trim_status != 1) {
 		ON_3dPoint _pt;
@@ -1198,7 +1198,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
      * intersected, there is potentially a hit and more evaluation is
      * needed.  Otherwise, return a miss.
      */
-    std::list<BBNode*> inters;
+    std::list<const BBNode*> inters;
     ON_Ray r = toXRay(rp);
     bs->bvh->intersectsHierarchy(r, inters);
     if (inters.empty()) return 0; // MISS
@@ -1208,7 +1208,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     MissList misses;
     int s = 0;
 
-    for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
+    for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
@@ -1853,15 +1853,15 @@ plot_sum_surface(struct bu_list *vhead, const ON_Surface *surf, int isocurveres,
 
 
 void
-plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
+plotisoUCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t v)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
-    std::list<BRNode*> m_trims_right;
+    std::list<const BRNode*> m_trims_right;
     std::list<double> trim_hits;
 
     const ON_Surface *surf = st->getSurface();
-    CurveTree *ctree = st->ctree;
+    const CurveTree *ctree = st->m_ctree;
     double umin, umax;
 
     surf->GetDomain(0, &umin, &umax);
@@ -1882,9 +1882,9 @@ plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf
 
     //bu_log("V - %f\n", pt.x);
     trim_hits.clear();
-    std::list<BRNode *>::iterator i;
+    std::list<const BRNode *>::const_iterator i;
     for (i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
-	BRNode* br = *i;
+	const BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Horizontal) {
@@ -1948,15 +1948,15 @@ plotisoUCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf
 
 
 void
-plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
+plotisoVCheckForTrim(struct bu_list *vhead, const SurfaceTree* st, fastf_t from, fastf_t to, fastf_t u)
 {
     point_t pt1 = VINIT_ZERO;
     point_t pt2 = VINIT_ZERO;
-    std::list<BRNode*> m_trims_above;
+    std::list<const BRNode*> m_trims_above;
     std::list<double> trim_hits;
 
     const ON_Surface *surf = st->getSurface();
-    CurveTree *ctree = st->ctree;
+    const CurveTree *ctree = st->m_ctree;
     double vmin, vmax;
     surf->GetDomain(1, &vmin, &vmax);
 
@@ -1975,9 +1975,9 @@ plotisoVCheckForTrim(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf
 
     int cnt = 1;
     trim_hits.clear();
-    for (std::list<BRNode*>::iterator i = m_trims_above.begin(); i
+    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i
 	 != m_trims_above.end(); i++, cnt++) {
-	BRNode* br = *i;
+	const BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Vertical) {

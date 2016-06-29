@@ -56,7 +56,7 @@
 //#define _OLD_SUBDIVISION_
 
 void
-brep_get_plane_ray(ON_Ray& r, plane_ray& pr)
+brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 {
     vect_t v1;
     VMOVE(v1, r.m_dir);
@@ -94,7 +94,7 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 
 
 void
-brep_newton_iterate(plane_ray& pr, pt2d_t R, ON_3dVector& su, ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
+brep_newton_iterate(plane_ray& pr, pt2d_t R, const ON_3dVector& su, const ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
     vect_t vsu, vsv;
     VMOVE(vsu, su);
@@ -133,7 +133,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face),
     m_root(initialLoopBBox()),
-    m_sortedX(new std::list<BRNode *>)
+    m_sortedX(new std::list<const BRNode *>)
 {
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
@@ -141,10 +141,10 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	// for each trim
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    int adj_face_index = -99;
-	    ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
+	    const ON_BrepTrim& trim = face->Brep()->m_T[loop->m_ti[ti]];
 
 	    if (trim.m_ei != -1) { // does not lie on a portion of a singular surface side
-		ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
+		const ON_BrepEdge& edge = face->Brep()->m_E[trim.m_ei];
 		switch (trim.m_type) {
 		    case ON_BrepTrim::unknown:
 			bu_log("ON_BrepTrim::unknown on Face:%d\n", face->m_face_index);
@@ -264,40 +264,40 @@ CurveTree::getRootNode() const
 
 
 int
-CurveTree::depth()
+CurveTree::depth() const
 {
     return m_root->depth();
 }
 
 
 ON_2dPoint
-CurveTree::getClosestPointEstimate(const ON_3dPoint& pt)
+CurveTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 {
     return m_root->getClosestPointEstimate(pt);
 }
 
 
 ON_2dPoint
-CurveTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v)
+CurveTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) const
 {
     return m_root->getClosestPointEstimate(pt, u, v);
 }
 
 
 void
-CurveTree::getLeaves(std::list<BRNode*>& out_leaves)
+CurveTree::getLeaves(std::list<const BRNode*>& out_leaves) const
 {
     m_root->getLeaves(out_leaves);
 }
 
 
 void
-CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) const
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = *i;
+    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
@@ -313,11 +313,11 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 
 
 void
-CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
+CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = *i;
+    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	if (bmax[X]+tol < pt.x)
@@ -332,12 +332,12 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 
 
 void
-CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v)
+CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interval& u, const ON_Interval& v) const
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = *i;
+    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	dist = TOL;//0.03*DIST_PT_PT(bmin, bmax);
@@ -353,11 +353,11 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 
 
 void
-CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
+CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
-	BRNode* br = *i;
+    for (std::list<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
 	if (bmax[Y]+tol < pt.y)
@@ -372,7 +372,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, 
 
 
 bool
-CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_t>& list)
+CurveTree::getHVTangents(const ON_Curve* curve, const ON_Interval& t, std::list<fastf_t>& list) const
 {
     double x;
     double midpoint = (t[1]+t[0])/2.0;
@@ -409,14 +409,14 @@ CurveTree::getHVTangents(const ON_Curve* curve, ON_Interval& t, std::list<fastf_
 
 
 BRNode*
-CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
+CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, const ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb) const
 {
     BRNode* node;
     bool vdot = true;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BRNode(curve, adj_face_index, bb, m_face, t, vdot, innerTrim);
+	node = new BRNode(curve, adj_face_index, bb, m_face, t, vdot, innerTrim, false);
     } else {
 	node = new BRNode(bb);
     }
@@ -427,7 +427,7 @@ CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, 
 
 
 BRNode*
-CurveTree::initialLoopBBox()
+CurveTree::initialLoopBBox() const
 {
     ON_BoundingBox bb;
     m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
@@ -448,7 +448,7 @@ CurveTree::initialLoopBBox()
 
 
 BRNode*
-CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int divDepth)
+CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min, double max, bool innerTrim, int divDepth) const
 {
     ON_Interval dom = curve->Domain();
     ON_3dPoint points[2];
@@ -502,7 +502,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
  * Determine whether a given curve segment is linear
  */
 bool
-CurveTree::isLinear(const ON_Curve* curve, double min, double max)
+CurveTree::isLinear(const ON_Curve* curve, double min, double max) const
 {
     ON_3dVector tangent_start = curve->TangentAt(min);
     ON_3dVector tangent_end = curve->TangentAt(max);
@@ -551,21 +551,12 @@ CurveTree::isLinear(const ON_Curve* curve, double min, double max)
 
 //--------------------------------------------------------------------------------
 // SurfaceTree
-SurfaceTree::SurfaceTree()
-    : ctree(NULL),
-      m_removeTrimmed(false),
-      m_face(NULL),
-      m_root(NULL),
-      f_queue(new std::queue<ON_Plane *>)
-{}
-
-
 SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthLimit, double within_distance_tol) :
-    ctree(NULL),
+    m_ctree(NULL),
     m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
-    f_queue(new std::queue<ON_Plane *>)
+    m_f_queue(new std::queue<ON_Plane *>)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
@@ -592,9 +583,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
 
     // first, build the Curve Tree
     if (removeTrimmed)
-	ctree = new CurveTree(m_face);
+	m_ctree = new CurveTree(m_face);
     else
-	ctree = NULL;
+	m_ctree = NULL;
 
     TRACE("Creating surface tree for: " << face->m_face_index);
 
@@ -640,18 +631,18 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!f_queue->empty()) {
-	bu_free(f_queue->front(), "free subsurface frames array");
-	f_queue->pop();
+    while (!m_f_queue->empty()) {
+	bu_free(m_f_queue->front(), "free subsurface frames array");
+	m_f_queue->pop();
     }
 }
 
 
 SurfaceTree::~SurfaceTree()
 {
-    delete ctree;
+    delete m_ctree;
     delete m_root;
-    delete f_queue;
+    delete m_f_queue;
 }
 
 
@@ -663,42 +654,42 @@ SurfaceTree::getRootNode() const
 
 
 int
-SurfaceTree::depth()
+SurfaceTree::depth() const
 {
     return m_root->depth();
 }
 
 
 ON_2dPoint
-SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt)
+SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 {
     return m_root->getClosestPointEstimate(pt);
 }
 
 
 ON_2dPoint
-SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v)
+SurfaceTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) const
 {
     return m_root->getClosestPointEstimate(pt, u, v);
 }
 
 
 void
-SurfaceTree::getLeaves(std::list<BBNode*>& out_leaves)
+SurfaceTree::getLeaves(std::list<const BBNode*>& out_leaves) const
 {
     m_root->getLeaves(out_leaves);
 }
 
 
 const ON_Surface *
-SurfaceTree::getSurface()
+SurfaceTree::getSurface() const
 {
     return m_face->SurfaceOf();
 }
 
 
 int
-brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
+brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     plane_ray pr;
     const ON_Surface *surf = node->m_face->SurfaceOf();
     double umin, umax;
@@ -708,7 +699,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 
     ON_3dVector dir = node->m_normal;
     dir.Reverse();
-    ON_Ray ray((ON_3dPoint&)pt, dir);
+    ON_Ray ray(const_cast<ON_3dPoint &>(pt), dir);
     brep_get_plane_ray(ray, pr);
 
     //know use this as guess to iterate to closer solution
@@ -784,16 +775,16 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 int
 SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPoint& from, double tolerance) const
 {
-    std::list<BBNode*> nodes;
+    std::list<const BBNode*> nodes;
     (void)m_root->getLeavesBoundingPoint(from, nodes);
 
     double min_dist = MAX_FASTF;
     ON_2dPoint curr_uv(0.0, 0.0);
     bool found = false;
 
-    std::list<BBNode*>::iterator i;
+    std::list<const BBNode*>::const_iterator i;
     for (i = nodes.begin(); i != nodes.end(); i++) {
-	BBNode* node = (*i);
+	const BBNode* node = (*i);
 	if (brep_getSurfacePoint(pt, curr_uv, node)) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
@@ -817,7 +808,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
     nodes.clear();
     (void)m_root->getLeavesBoundingPoint(pt, nodes);
     for (i = nodes.begin(); i != nodes.end(); i++) {
-	BBNode* node = (*i);
+	const BBNode* node = (*i);
 	if (brep_getSurfacePoint(pt, curr_uv, node)) {
 	    ON_3dPoint fp = m_face->SurfaceOf()->PointAt(curr_uv.x, curr_uv.y);
 	    double dist = fp.DistanceTo(pt);
@@ -840,13 +831,13 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 
 
 //static int bb_cnt=0;
-BBNode*
+BBNode *
 SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	bool isLeaf,
 	ON_Plane *m_frames,
 	const ON_Interval& u,
 	const ON_Interval& v,
-	double within_distance_tol)
+	double within_distance_tol) const
 {
     point_t min, max, buffer;
 #ifdef _OLD_SUBDIVISION_
@@ -887,14 +878,11 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),
-						ON_3dPoint(max)),
-			  m_face,
-			  u, v);
+	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_face, u, v, false, false);
 	node->prepTrims();
 
     } else {
-	node = new BBNode(ctree, ON_BoundingBox(ON_3dPoint(min),
+	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min),
 						ON_3dPoint(max)));
     }
 
@@ -908,7 +896,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 
 
 BBNode*
-initialBBox(CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, const ON_Interval& u, const ON_Interval& v)
+initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, const ON_Interval& u, const ON_Interval& v)
 {
 #ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bb = surf->BoundingBox();
@@ -1013,7 +1001,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      int depthLimit,
 			      int prev_knot,
 			      double within_distance_tol
-    )
+    ) const
 {
     BBNode* quads[4];
     BBNode* parent = NULL;
@@ -1061,7 +1049,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #ifdef _OLD_SUBDIVISION_
 	int spanu_cnt = localsurf->SpanCount(0);
 	int spanv_cnt = localsurf->SpanCount(1);
-	parent = initialBBox(ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
 	if (spanu_cnt > 1) {
 	    double *spanu = new double[spanu_cnt+1];
 	    localsurf->GetSpanVector(0, spanu);
@@ -1095,7 +1083,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 		do_v_split = 1;
 	    }
 	}
-	parent = initialBBox(ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
 #endif
     }
     // Flatness
@@ -1103,7 +1091,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	bool isUFlat = isFlatU(frames);
 	bool isVFlat = isFlatV(frames);
 
-	parent = (divDepth == 0) ? initialBBox(ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
+	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    do_both_splits = 1;
@@ -1217,8 +1205,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!f_queue->empty()) {
-	    newframes = f_queue->front(); f_queue->pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1259,7 +1247,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete q3surf;
 #endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue->push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1406,8 +1394,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue->empty()) {
-	    newframes = f_queue->front(); f_queue->pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1446,7 +1434,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue->push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1576,8 +1564,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue->empty()) {
-	    newframes = f_queue->front(); f_queue->pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1615,7 +1603,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue->push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1662,28 +1650,28 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 
 bool
-SurfaceTree::isFlat(ON_Plane *frames)
+SurfaceTree::isFlat(ON_Plane *frames) const
 {
     return ON_Surface_IsFlat(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isStraight(ON_Plane *frames)
+SurfaceTree::isStraight(ON_Plane *frames) const
 {
     return ON_Surface_IsStraight(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isFlatU(ON_Plane *frames)
+SurfaceTree::isFlatU(ON_Plane *frames) const
 {
     return ON_Surface_IsFlat_U(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isFlatV(ON_Plane *frames)
+SurfaceTree::isFlatV(ON_Plane *frames) const
 {
     return ON_Surface_IsFlat_V(frames, BREP_SURFACE_FLATNESS);
 }
@@ -1834,7 +1822,7 @@ try_again:
 
 
 bool
-sortX(BRNode* first, BRNode* second)
+sortX(const BRNode* first, const BRNode* second)
 {
     point_t first_min, second_min;
     point_t first_max, second_max;
@@ -1850,7 +1838,7 @@ sortX(BRNode* first, BRNode* second)
 
 
 bool
-sortY(BRNode* first, BRNode* second)
+sortY(const BRNode* first, const BRNode* second)
 {
     point_t first_min, second_min;
     point_t first_max, second_max;
