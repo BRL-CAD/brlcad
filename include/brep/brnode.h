@@ -53,7 +53,7 @@ extern "C++" {
 	 */
 	class BREP_EXPORT BRNode {
 	    public:
-		BRNode(const ON_BoundingBox &node);
+		explicit BRNode(const ON_BoundingBox &node);
 		BRNode(const ON_Curve *curve,
 			int adj_face_index,
 			const ON_BoundingBox &node,
@@ -113,7 +113,6 @@ extern "C++" {
 		BRNode(const BRNode &source);
 		BRNode &operator=(const BRNode &source);
 
-		void addChild(const ON_BoundingBox &child);
 		void removeChild(BRNode *child);
 
 		/** Test if this node is a leaf node (i.e. m_children is empty) */
@@ -258,12 +257,6 @@ extern "C++" {
 		}
 		m_start = m_node.m_min;
 		m_end = m_node.m_max;
-	    }
-
-	inline void
-	    BRNode::addChild(const ON_BoundingBox &child)
-	    {
-		m_children->push_back(new BRNode(child));
 	    }
 
 	inline void

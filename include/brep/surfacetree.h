@@ -55,7 +55,7 @@ extern "C++" {
 	 */
 	class BREP_EXPORT SurfaceTree {
 	    public:
-		SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
+		explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 		~SurfaceTree();
 
 		BBNode *getRootNode() const;
@@ -82,6 +82,9 @@ extern "C++" {
 		const CurveTree *m_ctree;
 
 	    private:
+		SurfaceTree(const SurfaceTree &source);
+		SurfaceTree &operator=(const SurfaceTree &source);
+
 		int depth() const;
 		bool isFlat(const ON_Plane frames[9]) const;
 		bool isStraight(const ON_Plane frames[9]) const;

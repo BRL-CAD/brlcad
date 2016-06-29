@@ -256,7 +256,7 @@ CurveTree::~CurveTree()
 }
 
 
-BRNode*
+const BRNode*
 CurveTree::getRootNode() const
 {
     return m_root;

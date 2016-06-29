@@ -127,12 +127,12 @@ find_next_point(const ON_Curve* crv, double startdomval, double increment, doubl
     ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
     ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval + inc));
     if (prev_pt.DistanceTo(next_pt) > tolerance) {
-        stepcount++;
-        inc = inc / 2;
-        return find_next_point(crv, startdomval, inc, tolerance, stepcount);
+	stepcount++;
+	inc = inc / 2;
+	return find_next_point(crv, startdomval, inc, tolerance, stepcount);
     } else {
-        if (stepcount > 5) return 0.0;
-        return startdomval + inc;
+	if (stepcount > 5) return 0.0;
+	return startdomval + inc;
     }
 }
 
@@ -186,9 +186,6 @@ int ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, doubl
     }
     return 0;
 }
-
-
-
 
 
 bool ON_Surface_IsFlat(const ON_Plane frames[9], double f_tol)
@@ -278,7 +275,6 @@ bool ON_Surface_IsStraight(const ON_Plane frames[9], double s_tol)
 
     return true;
 }
-
 
 
 // Local Variables:

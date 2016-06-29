@@ -67,7 +67,7 @@ extern "C++" {
 	 */
 	class BREP_EXPORT BBNode {
 	    public:
-		BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
+		explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 		BBNode(const CurveTree *ct,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
@@ -149,7 +149,6 @@ extern "C++" {
 		BBNode(const BBNode &source);
 		BBNode &operator=(const BBNode &source);
 
-		void addChild(const ON_BoundingBox &child);
 		void removeChild(BBNode *child);
 
 		bool intersectedBy(ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
@@ -223,12 +222,6 @@ extern "C++" {
 		}
 	    }
 	}
-
-	inline void
-	    BBNode::addChild(const ON_BoundingBox &child)
-	    {
-		m_children->push_back(new BBNode(child));
-	    }
 
 	inline void
 	    BBNode::addChild(BBNode *child)

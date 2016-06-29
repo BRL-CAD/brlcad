@@ -46,7 +46,7 @@ extern "C++" {
 	 */
 	class BREP_EXPORT CurveTree {
 	    public:
-		CurveTree(const ON_BrepFace *face);
+		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
 
 		/**
@@ -61,7 +61,7 @@ extern "C++" {
 		CurveTree(const CurveTree &source);
 		CurveTree &operator=(const CurveTree &source);
 
-		BRNode *getRootNode() const;
+		const BRNode *getRootNode() const;
 
 		/**
 		 * Calculate, using the surface bounding volume hierarchy, a uv
