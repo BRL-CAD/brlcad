@@ -31,6 +31,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58145 - NEWS, minor but technically user visible and potentially significant if the assumptions made are incorrect (improved tire command usage statement)
 
 * check these commits for bugs:
+  58189 - see if interactive pipe command still works, #define is wrong/misleading as to whether it should be '\0', '\r', or '\n' (ascii 10)
   65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
 
 
