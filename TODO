@@ -91,6 +91,10 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* need routine that returns a color given a path, similar to
+  rt_comb_get_color() but full path so that inheritance is taken into
+  account and colors set correctly.
+
 * implement unit tests for bu dirent / stat API
 
 * OpenCL for enhanced performance boolweave sorting
