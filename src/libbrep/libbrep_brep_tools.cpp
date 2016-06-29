@@ -191,7 +191,7 @@ int ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, doubl
 
 
 
-bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
+bool ON_Surface_IsFlat(const ON_Plane frames[9], double f_tol)
 {
     double Ndot=1.0;
 
@@ -206,7 +206,7 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
     return true;
 }
 
-bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol)
+bool ON_Surface_IsFlat_U(const ON_Plane frames[9], double f_tol)
 {
     // check surface normals in U direction
     double Ndot = 1.0;
@@ -235,7 +235,7 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol)
     return true;
 }
 
-bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol)
+bool ON_Surface_IsFlat_V(const ON_Plane frames[9], double f_tol)
 {
     // check surface normals in V direction
     double Ndot = 1.0;
@@ -264,7 +264,7 @@ bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol)
     return true;
 }
 
-bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol)
+bool ON_Surface_IsStraight(const ON_Plane frames[9], double s_tol)
 {
     double Xdot=1.0;
 

@@ -834,7 +834,7 @@ SurfaceTree::getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const ON_3dPo
 BBNode *
 SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	bool isLeaf,
-	ON_Plane *m_frames,
+	const ON_Plane frames[9],
 	const ON_Interval& u,
 	const ON_Interval& v,
 	double within_distance_tol) const
@@ -862,8 +862,8 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
     // getClosestPointEstimate())
     ON_3dPoint estimate;
     ON_3dVector normal;
-    estimate = m_frames[4].origin;
-    normal = m_frames[4].zaxis;
+    estimate = frames[4].origin;
+    normal = frames[4].zaxis;
 
     BBNode* node;
     if (isLeaf) {
@@ -882,8 +882,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	node->prepTrims();
 
     } else {
-	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min),
-						ON_3dPoint(max)));
+	node = new BBNode(ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_ctree);
     }
 
     node->m_estimate = estimate;
@@ -996,7 +995,7 @@ BBNode*
 SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 			      const ON_Interval& u,
 			      const ON_Interval& v,
-			      ON_Plane frames[],
+			      ON_Plane frames[9],
 			      int divDepth,
 			      int depthLimit,
 			      int prev_knot,
@@ -1650,28 +1649,28 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 
 
 bool
-SurfaceTree::isFlat(ON_Plane *frames) const
+SurfaceTree::isFlat(const ON_Plane frames[9]) const
 {
     return ON_Surface_IsFlat(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isStraight(ON_Plane *frames) const
+SurfaceTree::isStraight(const ON_Plane frames[9]) const
 {
     return ON_Surface_IsStraight(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isFlatU(ON_Plane *frames) const
+SurfaceTree::isFlatU(const ON_Plane frames[9]) const
 {
     return ON_Surface_IsFlat_U(frames, BREP_SURFACE_FLATNESS);
 }
 
 
 bool
-SurfaceTree::isFlatV(ON_Plane *frames) const
+SurfaceTree::isFlatV(const ON_Plane frames[9]) const
 {
     return ON_Surface_IsFlat_V(frames, BREP_SURFACE_FLATNESS);
 }

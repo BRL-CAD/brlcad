@@ -83,12 +83,12 @@ extern "C++" {
 
 	    private:
 		int depth() const;
-		bool isFlat(ON_Plane frames[]) const;
-		bool isStraight(ON_Plane frames[]) const;
-		bool isFlatU(ON_Plane frames[]) const;
-		bool isFlatV(ON_Plane frames[]) const;
-		BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[], int depth, int depthLimit, int prev_knot, double within_distance_tol) const;
-		BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, ON_Plane frames[], const ON_Interval &u, const ON_Interval &v, double within_distance_tol) const;
+		bool isFlat(const ON_Plane frames[9]) const;
+		bool isStraight(const ON_Plane frames[9]) const;
+		bool isFlatU(const ON_Plane frames[9]) const;
+		bool isFlatV(const ON_Plane frames[9]) const;
+		BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[9], int depth, int depthLimit, int prev_knot, double within_distance_tol) const;
+		BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, const ON_Plane frames[9], const ON_Interval &u, const ON_Interval &v, double within_distance_tol) const;
 
 		const bool m_removeTrimmed;
 		const ON_BrepFace * const m_face;

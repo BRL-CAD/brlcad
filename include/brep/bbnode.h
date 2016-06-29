@@ -67,8 +67,7 @@ extern "C++" {
 	 */
 	class BREP_EXPORT BBNode {
 	    public:
-		BBNode(const ON_BoundingBox &node);
-		BBNode(const CurveTree *ct, const ON_BoundingBox &node);
+		BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 		BBNode(const CurveTree *ct,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
@@ -172,30 +171,7 @@ extern "C++" {
 	};
 
 	inline
-	    BBNode::BBNode(const ON_BoundingBox &node) :
-		m_children(new std::vector<BBNode *>),
-		m_node(node),
-		m_face(NULL),
-		m_u(),
-		m_v(),
-		m_checkTrim(true),
-		m_trimmed(false),
-		m_estimate(),
-		m_normal(),
-		m_ctree(NULL),
-		m_trims_above(new std::list<const BRNode *>)
-	{
-	    for (int i = 0; i < 3; i++) {
-		double d = m_node.m_max[i] - m_node.m_min[i];
-		if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
-		    m_node.m_min[i] -= 0.001;
-		    m_node.m_max[i] += 0.001;
-		}
-	    }
-	}
-
-	inline
-	    BBNode::BBNode(const CurveTree *ct, const ON_BoundingBox &node) :
+	    BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
 		m_children(new std::vector<BBNode *>),
 		m_node(node),
 		m_face(NULL),
