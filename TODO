@@ -30,6 +30,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58146 - NEWS, improved archer initialization, removed startup flashing
   58145 - NEWS, minor but technically user visible and potentially significant if the assumptions made are incorrect (improved tire command usage statement)
   58254 - NEWS, fixed bug you say? what bug?
+  58325 - NEWS, improved v5 specification formatting, added timestamp proposal
 
 * check these commits for bugs:
   58189 - see if interactive pipe command still works, #define is wrong/misleading as to whether it should be '\0', '\r', or '\n' (ascii 10)
