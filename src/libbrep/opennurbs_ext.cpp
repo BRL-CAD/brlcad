@@ -458,7 +458,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
     VSETALL(minpt, INFINITY);
     VSETALL(maxpt, -INFINITY);
     for (int i = 0; i < 2; i++)
-	VMINMAX(minpt, maxpt, ((double*)points[i]));
+	VMINMAX(minpt, maxpt, points[i]);
     points[0]=ON_3dPoint(minpt);
     points[1]=ON_3dPoint(maxpt);
     ON_BoundingBox bb(points[0], points[1]);
@@ -478,7 +478,7 @@ CurveTree::subdivideCurve(const ON_Curve* curve, int adj_face_index, double min,
 	VSETALL(minpt, MAX_FASTF);
 	VSETALL(maxpt, -MAX_FASTF);
 	for (int i = 0; i < BREP_BB_CRV_PNT_CNT; i++)
-	    VMINMAX(minpt, maxpt, ((double*)pnts[i]));
+	    VMINMAX(minpt, maxpt, pnts[i]);
 
 	VMOVE(pnt, minpt);
 	bb.Set(pnt, false);
@@ -1638,7 +1638,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
 
     if (!do_both_splits && !do_u_split && !do_v_split) {
-	((ON_Surface *)localsurf)->ClearBoundingBox();
+	(const_cast<ON_Surface *>(localsurf))->ClearBoundingBox();
 	delete parent;
 	return subdivideSurface(localsurf, u, v, frames, 0, depthLimit, 0, within_distance_tol);
     }

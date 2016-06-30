@@ -3824,7 +3824,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	    bool on_edge = false;
 	    for (int ri = 0; ri < results.Count(); ri++) {
 		double dist;
-		const ON_Line *l = (ON_Line *) *results.At(ri);
+		const ON_Line *l = (const ON_Line *) *results.At(ri);
 		dist = l->MinimumDistanceTo(*p);
 		if (NEAR_ZERO(dist, tol->dist)) {
 		    on_edge = true;
@@ -3847,7 +3847,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     if (results.Count() > 0) {
 	for (int ri = 0; ri < results.Count(); ri++) {
-	    const ON_Line *l = (ON_Line *) *results.At(ri);
+	    const ON_Line *l = (const ON_Line *)*results.At(ri);
 	    delete l;
 	}
     }
