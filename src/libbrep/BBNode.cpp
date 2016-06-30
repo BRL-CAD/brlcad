@@ -38,7 +38,7 @@ BBNode::~BBNode()
 }
 
 bool
-BBNode::intersectsHierarchy(ON_Ray &ray, std::list<const BBNode *> &results_opt) const
+BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results_opt) const
 {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);

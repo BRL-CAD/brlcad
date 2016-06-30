@@ -112,7 +112,7 @@ extern "C++" {
 		 * node - if so, and node is not a leaf node, query children.  If
 		 * leaf node, and intersects, add to list.
 		 */
-		bool intersectsHierarchy(ON_Ray &ray, std::list<const BBNode *> &results) const;
+		bool intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results) const;
 
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
 		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
@@ -151,7 +151,7 @@ extern "C++" {
 
 		void removeChild(BBNode *child);
 
-		bool intersectedBy(ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
+		bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
 		/** Report if a given uv point is within the uv boundaries defined
 		 * by a node.
@@ -277,7 +277,7 @@ extern "C++" {
 	    }
 
 	inline bool
-	    BBNode::intersectedBy(ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_opt /* = NULL */) const
+	    BBNode::intersectedBy(const ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_opt /* = NULL */) const
 	    {
 		double tnear = -DBL_MAX;
 		double tfar = DBL_MAX;

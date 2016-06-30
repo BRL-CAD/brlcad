@@ -2169,7 +2169,7 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
 
     int cnt = 1;
     trim_hits.clear();
-    for (std::list<const BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
+    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
 	const BRNode* br = *i;
 
 	point_t bmin, bmax;
@@ -2356,7 +2356,7 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	}
     } else {
 	if (!node->m_children->empty()) {
-	    for (std::vector<BBNode*>::iterator childnode = node->m_children->begin(); childnode
+	    for (std::vector<BBNode*>::const_iterator childnode = node->m_children->begin(); childnode
 		     != node->m_children->end(); childnode++) {
 		drawBBNode(st, vbp, *childnode);
 	    }
@@ -2904,7 +2904,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 	    const char *part = argv[3];
 	    const char *strindex = argv[4];
 	    std::set<int> elements;
-	    std::set<int>::iterator e_it;
+	    std::set<int>::const_iterator e_it;
 	    if (BU_STR_EQUAL(strindex, "all")) {
 		ON_Brep *brep = bs->brep;
 		if (BU_STR_EQUAL(part, "S")) {
@@ -3027,7 +3027,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 	    int numpoints = -1;
 	    int plotres = 100;
 	    std::set<int> elements;
-	    std::set<int>::iterator e_it;
+	    std::set<int>::const_iterator e_it;
 	    if (argc == 6) {
 		const char *strres = argv[5];
 		plotres = numpoints = atoi(strres);

@@ -236,7 +236,7 @@ getHorizontalTangent(const ON_Curve *curve, double min, double max)
 
 
 bool
-split_trims_hv_tangent(const ON_Curve* curve, ON_Interval& t, std::list<double>& list)
+split_trims_hv_tangent(const ON_Curve* curve, const ON_Interval& t, std::list<double>& list)
 {
     bool tanx1, tanx2, tanx_changed;
     bool tany1, tany2, tany_changed;
@@ -553,7 +553,7 @@ public:
     enum hit_direction direction;
     int m_adj_face_index;
     // XXX - calculate the dot of the dir with the normal here!
-    BBNode const * sbv;
+    const BBNode *sbv;
 
     brep_hit(const ON_BrepFace& f, const ON_Ray& ray, const point_t p, const vect_t n, const pt2d_t _uv)
 	: face(f), trimmed(false), closeToEdge(false), oob(false), hit(CLEAN_HIT), direction(ENTERING), m_adj_face_index(0), sbv(NULL)
@@ -674,7 +674,7 @@ utah_Fv(const ON_3dVector &Sv, const ON_3dVector &p1, const ON_3dVector &p2, dou
 
 
 double
-utah_calc_t(const ON_Ray &r, ON_3dPoint &S)
+utah_calc_t(const ON_Ray &r, const ON_3dPoint &S)
 {
     ON_3dVector d(r.m_dir);
     ON_3dVector oS(S - r.m_origin);
@@ -1043,7 +1043,7 @@ utah_isTrimmed(ON_2dPoint uv, const ON_BrepFace *face)
 
 #define MAX_BREP_SUBDIVISION_INTERSECTS 5
 int
-utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, ON_Ray& ray, HitList& hits)
+utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface* surf, pt2d_t& uv, const ON_Ray& ray, HitList& hits)
 {
     ON_3dVector N[MAX_BREP_SUBDIVISION_INTERSECTS];
     double t[MAX_BREP_SUBDIVISION_INTERSECTS];
@@ -1148,10 +1148,10 @@ sign(double val)
 
 
 bool
-containsNearMiss(HitList *hits)
+containsNearMiss(const HitList *hits)
 {
-    for (HitList::iterator i = hits->begin(); i != hits->end(); ++i) {
-	brep_hit&out = *i;
+    for (HitList::const_iterator i = hits->begin(); i != hits->end(); ++i) {
+	const brep_hit&out = *i;
 	if (out.hit == brep_hit::NEAR_MISS) {
 	    return true;
 	}
@@ -1161,10 +1161,10 @@ containsNearMiss(HitList *hits)
 
 
 bool
-containsNearHit(HitList *hits)
+containsNearHit(const HitList *hits)
 {
-    for (HitList::iterator i = hits->begin(); i != hits->end(); ++i) {
-	brep_hit&out = *i;
+    for (HitList::const_iterator i = hits->begin(); i != hits->end(); ++i) {
+	const brep_hit&out = *i;
 	if (out.hit == brep_hit::NEAR_HIT) {
 	    return true;
 	}
@@ -1253,12 +1253,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	HitList::iterator next;
 	HitList::iterator curr = hits.begin();
 	while (curr != hits.end()) {
-	    brep_hit &curr_hit = *curr;
+	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		if (curr != hits.begin()) {
 		    prev = curr;
 		    prev--;
-		    brep_hit &prev_hit = (*prev);
+		    const brep_hit &prev_hit = (*prev);
 		    if ((prev_hit.hit != brep_hit::NEAR_MISS) && (prev_hit.direction == curr_hit.direction)) {
 			//remove current miss
 			curr = hits.erase(curr);
@@ -1269,7 +1269,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		next = curr;
 		next++;
 		if (next != hits.end()) {
-		    brep_hit &next_hit = (*next);
+		    const brep_hit &next_hit = (*next);
 		    if ((next_hit.hit != brep_hit::NEAR_MISS) && (next_hit.direction == curr_hit.direction)) {
 			//remove current miss
 			curr = hits.erase(curr);
@@ -1284,7 +1284,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	// check for crack hits between adjacent faces
 	curr = hits.begin();
 	while (curr != hits.end()) {
-	    brep_hit &curr_hit = *curr;
+	    const brep_hit &curr_hit = *curr;
 	    if (curr != hits.begin()) {
 		if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		    prev = curr;
@@ -1315,12 +1315,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	// check for CH double enter or double leave between adjacent faces(represents overlapping faces)
 	curr = hits.begin();
 	while (curr != hits.end()) {
-	    brep_hit &curr_hit = *curr;
+	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::CLEAN_HIT) {
 		if (curr != hits.begin()) {
 		    prev = curr;
 		    prev--;
-		    brep_hit &prev_hit = (*prev);
+		    const brep_hit &prev_hit = (*prev);
 		    if ((prev_hit.hit == brep_hit::CLEAN_HIT) &&
 			(prev_hit.direction == curr_hit.direction) &&
 			(prev_hit.face.m_face_index == curr_hit.m_adj_face_index)) {
@@ -1328,7 +1328,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 			// until we get good solids with known normal directions assume
 			// first hit direction is "entering" todo check solid status and normals
 			HitList::iterator first = hits.begin();
-			brep_hit &first_hit = *first;
+			const brep_hit &first_hit = *first;
 			if (first_hit.direction == curr_hit.direction) { // assume "entering"
 			    curr = hits.erase(prev);
 			} else { // assume "exiting"
@@ -1342,14 +1342,14 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    brep_hit &curr_hit = hits.back();
+	    const brep_hit &curr_hit = hits.back();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		hits.pop_back();
 	    }
 	}
 
 	if (!hits.empty() && ((hits.size() % 2) != 0)) {
-	    brep_hit &curr_hit = hits.front();
+	    const brep_hit &curr_hit = hits.front();
 	    if (curr_hit.hit == brep_hit::NEAR_MISS) {
 		hits.pop_front();
 	    }
@@ -1385,12 +1385,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	HitList::iterator next;
 	HitList::iterator curr = hits.begin();
 	while (curr != hits.end()) {
-	    brep_hit &curr_hit = *curr;
+	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::NEAR_HIT) {
 		if (curr != hits.begin()) {
 		    prev = curr;
 		    prev--;
-		    brep_hit &prev_hit = (*prev);
+		    const brep_hit &prev_hit = (*prev);
 		    if ((prev_hit.hit != brep_hit::NEAR_HIT) && (prev_hit.direction == curr_hit.direction)) {
 			//remove current miss
 			curr = hits.erase(curr);
@@ -1400,7 +1400,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		next = curr;
 		next++;
 		if (next != hits.end()) {
-		    brep_hit &next_hit = (*next);
+		    const brep_hit &next_hit = (*next);
 		    if ((next_hit.hit != brep_hit::NEAR_HIT) && (next_hit.direction == curr_hit.direction)) {
 			//remove current miss
 			curr = hits.erase(curr);
@@ -1412,7 +1412,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	}
 	curr = hits.begin();
 	while (curr != hits.end()) {
-	    brep_hit &curr_hit = *curr;
+	    const brep_hit &curr_hit = *curr;
 	    if (curr_hit.hit == brep_hit::NEAR_HIT) {
 		if (curr != hits.begin()) {
 		    prev = curr;
@@ -1439,7 +1439,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	TRACE("-- Remove grazing hits --");
 	int num = 0;
 	for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-	    brep_hit &curr_hit = *i;
+	    const brep_hit &curr_hit = *i;
 	    if ((curr_hit.trimmed && !curr_hit.closeToEdge) || curr_hit.oob || NEAR_ZERO(VDOT(curr_hit.normal, rp->r_dir), BREP_GRAZING_DOT_TOL)) {
 		// remove what we were removing earlier
 		if (curr_hit.oob) {
@@ -1526,8 +1526,8 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     }
 
     if ((hits.size() > 1) && ((hits.size() % 2) != 0)) {
-	brep_hit &first_hit = hits.front();
-	brep_hit &last_hit = hits.back();
+	const brep_hit &first_hit = hits.front();
+	const brep_hit &last_hit = hits.back();
 	double firstDot = VDOT(first_hit.normal, rp->r_dir);
 	double lastDot = VDOT(last_hit.normal, rp->r_dir);
 	if (sign(firstDot) == sign(lastDot)) {
@@ -1547,12 +1547,12 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 #endif
 	if (hit_it) {
 	    // take each pair as a segment
-	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
-		brep_hit& in = *i;
+	    for (HitList::const_iterator i = hits.begin(); i != hits.end(); ++i) {
+		const brep_hit& in = *i;
 #ifndef KODDHIT  //ugly debugging hack to raytrace single surface and not worry about odd hits
 		i++;
 #endif
-		brep_hit& out = *i;
+		const brep_hit& out = *i;
 
 		register struct seg* segp;
 		RT_GET_SEG(segp, ap->a_resource);
@@ -1584,10 +1584,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    bu_log("dir %g %g %g \n", rp->r_dir[0], rp->r_dir[1], rp->r_dir[2]);
 	    bu_log("**** Current Hits: %lu\n", static_cast<unsigned long>(hits.size()));
 
-	    for (HitList::iterator i = hits.begin(); i != hits.end(); ++i) {
+	    for (HitList::const_iterator i = hits.begin(); i != hits.end(); ++i) {
 		point_t prev;
 
-		brep_hit &out = *i;
+		const brep_hit &out = *i;
 		VMOVE(prev, out.point);
 
 		if (i != hits.begin()) {
@@ -1605,10 +1605,10 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	    }
 	    bu_log("\n**** Orig Hits: %lu\n", static_cast<unsigned long>(orig.size()));
 
-	    for (HitList::iterator i = orig.begin(); i != orig.end(); ++i) {
+	    for (HitList::const_iterator i = orig.begin(); i != orig.end(); ++i) {
 		point_t prev;
 
-		brep_hit &out = *i;
+		const brep_hit &out = *i;
 		VMOVE(prev, out.point);
 
 		if (i != orig.begin()) {
@@ -2087,7 +2087,7 @@ plotisoV(struct bu_list *vhead, SurfaceTree* st, fastf_t from, fastf_t to, fastf
 
 
 void
-plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurveres, int gridres)
+plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int isocurveres, int gridres)
 {
     if (node->isLeaf()) {
 	//draw leaf
@@ -2122,7 +2122,7 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 	    return;
 	}
     } else {
-	    for (std::vector<BBNode*>::iterator childnode = node->m_children->begin(); childnode != node->m_children->end(); ++childnode) {
+	    for (std::vector<BBNode*>::const_iterator childnode = node->m_children->begin(); childnode != node->m_children->end(); ++childnode) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
     }
@@ -2132,7 +2132,7 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 void
 plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurveres, int gridres)
 {
-    BBNode *root = st->getRootNode();
+    const BBNode *root = st->getRootNode();
     plot_BBNode(vhead, st, root, isocurveres, gridres);
 }
 
@@ -2140,15 +2140,15 @@ plot_face_from_surface_tree(struct bu_list *vhead, SurfaceTree* st, int isocurve
 void
 getEdgePoints(const ON_BrepTrim &trim,
 	      fastf_t t1,
-	      ON_3dPoint &start_2d,
-	      ON_3dVector &start_tang,
-	      ON_3dPoint &start_3d,
-	      ON_3dVector &start_norm,
+	      const ON_3dPoint &start_2d,
+	      const ON_3dVector &start_tang,
+	      const ON_3dPoint &start_3d,
+	      const ON_3dVector &start_norm,
 	      fastf_t t2,
-	      ON_3dPoint &end_2d,
-	      ON_3dVector &end_tang,
-	      ON_3dPoint &end_3d,
-	      ON_3dVector &end_norm,
+	      const ON_3dPoint &end_2d,
+	      const ON_3dVector &end_tang,
+	      const ON_3dPoint &end_3d,
+	      const ON_3dVector &end_norm,
 	      fastf_t min_dist,
 	      fastf_t max_dist,
 	      fastf_t within_dist,
@@ -2595,7 +2595,7 @@ getSurfacePoints(const ON_Surface *s,
 
 
 void
-getSurfacePoints(ON_BrepFace &face,
+getSurfacePoints(const ON_BrepFace &face,
 		 const struct rt_tess_tol *ttol,
 		 const struct bn_tol *tol,
 		 const struct rt_view_info *UNUSED(info),
@@ -2603,7 +2603,7 @@ getSurfacePoints(ON_BrepFace &face,
 {
     double surface_width, surface_height;
     const ON_Surface *s = face.SurfaceOf();
-    ON_Brep *brep = face.Brep();
+    const ON_Brep *brep = face.Brep();
 
     if (s->GetSurfaceSize(&surface_width, &surface_height)) {
 	double dist = 0.0;
@@ -2621,7 +2621,7 @@ getSurfacePoints(ON_BrepFace &face,
 	ON_3dPoint min, max;
 	for (int li = 0; li < face.LoopCount(); li++) {
 	    for (int ti = 0; ti < face.Loop(li)->TrimCount(); ti++) {
-		ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
+		const ON_BrepTrim *trim = face.Loop(li)->Trim(ti);
 		trim->GetBoundingBox(min, max, bGrowBox);
 		bGrowBox = true;
 	    }
@@ -2810,15 +2810,15 @@ void
 getUVCurveSamples(const ON_Surface *s,
 		  const ON_Curve *curve,
 		  fastf_t t1,
-		  ON_3dPoint &start_2d,
-		  ON_3dVector &start_tang,
-		  ON_3dPoint &start_3d,
-		  ON_3dVector &start_norm,
+		  const ON_3dPoint &start_2d,
+		  const ON_3dVector &start_tang,
+		  const ON_3dPoint &start_3d,
+		  const ON_3dVector &start_norm,
 		  fastf_t t2,
-		  ON_3dPoint &end_2d,
-		  ON_3dVector &end_tang,
-		  ON_3dPoint &end_3d,
-		  ON_3dVector &end_norm,
+		  const ON_3dPoint &end_2d,
+		  const ON_3dVector &end_tang,
+		  const ON_3dPoint &end_3d,
+		  const ON_3dVector &end_norm,
 		  fastf_t min_dist,
 		  fastf_t max_dist,
 		  fastf_t within_dist,
@@ -2980,9 +2980,9 @@ int
 number_of_seam_crossings(const ON_Surface *surf,  ON_SimpleArray<BrepTrimPoint> &brep_trim_points)
 {
     int rc = 0;
-    ON_2dPoint *prev_non_seam_pt = NULL;
+    const ON_2dPoint *prev_non_seam_pt = NULL;
     for (int i = 0; i < brep_trim_points.Count(); i++) {
-	ON_2dPoint *pt = &brep_trim_points[i].p2d;
+	const ON_2dPoint *pt = &brep_trim_points[i].p2d;
 	if (!IsAtSeam(surf, *pt, BREP_SAME_POINT_TOLERANCE)) {
 	    int udir = 0;
 	    int vdir = 0;
@@ -3160,7 +3160,7 @@ get_loop_sample_points(
 
 	if (trim->m_type == ON_BrepTrim::singular) {
 	    BrepTrimPoint btp;
-	    ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
+	    const ON_BrepVertex& v1 = face.Brep()->m_V[trim->m_vi[0]];
 	    ON_3dPoint *p3d = new ON_3dPoint(v1.Point());
 	    //ON_2dPoint p2d_begin = trim->PointAt(trim->Domain().m_t[0]);
 	    //ON_2dPoint p2d_end = trim->PointAt(trim->Domain().m_t[1]);
@@ -3179,7 +3179,7 @@ get_loop_sample_points(
 	    if (lti < trim_count - 1)
 		continue;
 
-	    ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
+	    const ON_BrepVertex& v2 = face.Brep()->m_V[trim->m_vi[1]];
 	    btp.p3d = p3d;
 	    btp.p2d = v2.Point();
 	    btp.t = trim->Domain().m_t[1];
@@ -3549,7 +3549,7 @@ CloseOpenLoops(
  * lifted from Clipper private function and rework for brep_loop_points
  */
 static bool
-PointInPolygon(ON_2dPoint &pt, ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
+PointInPolygon(const ON_2dPoint &pt, ON_SimpleArray<BrepTrimPoint> &brep_loop_points)
 {
     bool result = false;
 
@@ -3761,7 +3761,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     // first simply load loop point samples
     for (int li = 0; li < loop_cnt; li++) {
-	ON_BrepLoop *loop = face.Loop(li);
+	const ON_BrepLoop *loop = face.Loop(li);
 	get_loop_sample_points(&brep_loop_points[li], face, loop, max_dist, ttol, tol, info);
     }
 
@@ -3816,7 +3816,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     for (int i = 0; i < on_surf_points.Count(); i++) {
 	ON_SimpleArray<void*> results;
-	ON_2dPoint *p = on_surf_points.At(i);
+	const ON_2dPoint *p = on_surf_points.At(i);
 
 	rt_trims.Search2d((const double *) p, (const double *) p, results);
 
@@ -3824,7 +3824,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	    bool on_edge = false;
 	    for (int ri = 0; ri < results.Count(); ri++) {
 		double dist;
-		ON_Line *l = (ON_Line *) *results.At(ri);
+		const ON_Line *l = (ON_Line *) *results.At(ri);
 		dist = l->MinimumDistanceTo(*p);
 		if (NEAR_ZERO(dist, tol->dist)) {
 		    on_edge = true;
@@ -3847,7 +3847,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
     if (results.Count() > 0) {
 	for (int ri = 0; ri < results.Count(); ri++) {
-	    ON_Line *l = (ON_Line *) *results.At(ri);
+	    const ON_Line *l = (ON_Line *) *results.At(ri);
 	    delete l;
 	}
     }
@@ -3874,7 +3874,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		    p = t->GetPoint(j);
 		    if (surface_EvNormal(s, p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
-			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
+			    std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii =
 				pointmap->find(p);
 			    if (ii != pointmap->end()) {
 				pnt[j] = *((*ii).second);
@@ -3909,7 +3909,7 @@ poly2tri_CDT(struct bu_list *vhead,
 		    p = t->GetPoint(j);
 		    if (surface_EvNormal(s, p->x, p->y, pnt[j], norm[j])) {
 			if (watertight) {
-			    std::map<p2t::Point *, ON_3dPoint *>::iterator ii =
+			    std::map<p2t::Point *, ON_3dPoint *>::const_iterator ii =
 				pointmap->find(p);
 			    if (ii != pointmap->end()) {
 				pnt[j] = *((*ii).second);
@@ -3956,13 +3956,13 @@ poly2tri_CDT(struct bu_list *vhead,
 	}
     } else if (plottype == 3) {
 	std::list<p2t::Triangle*> tris = cdt->GetMap();
-	std::list<p2t::Triangle*>::iterator it;
+	std::list<p2t::Triangle*>::const_iterator it;
 	point_t pt1 = VINIT_ZERO;
 	point_t pt2 = VINIT_ZERO;
 
 	for (it = tris.begin(); it != tris.end(); it++) {
 	    p2t::Triangle* t = *it;
-	    p2t::Point *p = NULL;
+	    const p2t::Point *p = NULL;
 	    for (size_t j = 0; j < 3; j++) {
 		if (j == 0) {
 		    p = t->GetPoint(2);
@@ -3985,7 +3985,7 @@ poly2tri_CDT(struct bu_list *vhead,
 	point_t pt = VINIT_ZERO;
 
 	for (size_t i = 0; i < points.size(); i++) {
-	    p2t::Point *p = NULL;
+	    const p2t::Point *p = NULL;
 	    p = (p2t::Point *) points[i];
 	    pt[0] = p->x;
 	    pt[1] = p->y;
@@ -4003,12 +4003,12 @@ poly2tri_CDT(struct bu_list *vhead,
     }
     delete pointmap;
 
-    std::list<std::map<double, ON_3dPoint *> *>::iterator bridgeIter = bridgePoints.begin();
+    std::list<std::map<double, ON_3dPoint *> *>::const_iterator bridgeIter = bridgePoints.begin();
     while (bridgeIter != bridgePoints.end()) {
 	std::map<double, ON_3dPoint *> *map = (*bridgeIter);
-	std::map<double, ON_3dPoint *>::iterator mapIter = map->begin();
+	std::map<double, ON_3dPoint *>::const_iterator mapIter = map->begin();
 	while (mapIter != map->end()) {
-	    ON_3dPoint *p = (*mapIter++).second;
+	    const ON_3dPoint *p = (*mapIter++).second;
 	    delete p;
 	}
 	map->clear();
@@ -4018,7 +4018,7 @@ poly2tri_CDT(struct bu_list *vhead,
     bridgePoints.clear();
 
     for (int li = 0; li < face.LoopCount(); li++) {
-	ON_BrepLoop *loop = face.Loop(li);
+	const ON_BrepLoop *loop = face.Loop(li);
 
 	for (int lti = 0; lti < loop->TrimCount(); lti++) {
 	    ON_BrepTrim *trim = loop->Trim(lti);
@@ -4026,9 +4026,9 @@ poly2tri_CDT(struct bu_list *vhead,
 	    if (trim->m_trim_user.p) {
 		std::map<double, ON_3dPoint *> *points = (std::map < double,
 			ON_3dPoint * > *) trim->m_trim_user.p;
-		std::map<double, ON_3dPoint *>::iterator i;
+		std::map<double, ON_3dPoint *>::const_iterator i;
 		for (i = points->begin(); i != points->end(); i++) {
-		    ON_3dPoint *p = (*i).second;
+		    const ON_3dPoint *p = (*i).second;
 		    delete p;
 		}
 		points->clear();
@@ -4051,7 +4051,7 @@ poly2tri_CDT(struct bu_list *vhead,
 
 
 void
-plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres, bool dim3d)
+plot_face_trim(struct bu_list *vhead, const ON_BrepFace &face, int plotres, bool dim3d)
 {
     const ON_Surface* surf = face.SurfaceOf();
     double umin, umax;
@@ -4067,7 +4067,7 @@ plot_face_trim(struct bu_list *vhead, ON_BrepFace &face, int plotres, bool dim3d
 	ON_BrepLoop* loop = face.Loop(i);
 	// for each trim
 	for (int j = 0; j < loop->m_ti.Count(); j++) {
-	    ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
+	    const ON_BrepTrim& trim = face.Brep()->m_T[loop->m_ti[j]];
 	    const ON_Curve* trimCurve = trim.TrimCurveOf();
 	    //trimCurve->Dump(tl);
 
@@ -4112,7 +4112,7 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
     int isocurveres = 100;
 
     for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace& face = brep->m_F[index];
+	const ON_BrepFace& face = brep->m_F[index];
 	const ON_Surface *surf = face.SurfaceOf();
 
 	if (surf->IsClosed(0) || surf->IsClosed(1)) {
@@ -4138,12 +4138,12 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
     }
 
     for (int index = 0; index < bi->brep->m_E.Count(); index++) {
-	ON_BrepEdge& e = brep->m_E[index];
+	const ON_BrepEdge& e = brep->m_E[index];
 	const ON_Curve* crv = e.EdgeCurveOf();
 
 	if (crv->IsLinear()) {
-	    ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
-	    ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
+	    const ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
+	    const ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
 	    VMOVE(pt1, v1.Point());
 	    VMOVE(pt2, v2.Point());
 	    RT_ADD_VLIST(info->vhead, pt1, BN_VLIST_LINE_MOVE);
@@ -4233,7 +4233,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     int isocurveres = 100;
 
     for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace& face = brep->m_F[index];
+	const ON_BrepFace& face = brep->m_F[index];
 	const ON_Surface *surf = face.SurfaceOf();
 
 	if (surf != NULL) {
@@ -4269,7 +4269,7 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    ON_3dPoint p;
 	    point_t pt1 = VINIT_ZERO;
 	    ON_Polyline poly;
-	    ON_BrepEdge& e = brep->m_E[i];
+	    const ON_BrepEdge& e = brep->m_E[i];
 	    const ON_Curve* crv = e.EdgeCurveOf();
 	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, tol->dist);
 	    if (pnt_cnt > 1) {
@@ -4339,7 +4339,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
     }
 #ifdef DRAW_FACE
     for (int index = 0; index < brep->m_E.Count(); index++) {
-	ON_BrepEdge& edge = brep->m_E[index];
+	const ON_BrepEdge& edge = brep->m_E[index];
 	if (edge.m_edge_user.p == NULL) {
 	    std::map<double, ON_3dPoint *> *points = getEdgePoints(edge, max_dist, ttol, tol, info);
 	}
@@ -4366,7 +4366,7 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
     }
 #else /* TESTIT */
     for (int index = 0; index < brep->m_F.Count(); index++) {
-	ON_BrepFace& face = brep->m_F[index];
+	const ON_BrepFace& face = brep->m_F[index];
 	SurfaceTree* st = new SurfaceTree(&face, true, 10);
 
 	plot_poly_from_surface_tree(vhead, st, face.m_bRev);
@@ -4376,12 +4376,12 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 #endif /* TESTIT */
 #ifdef WATERTIGHT
     for (int index = 0; index < brep->m_E.Count(); index++) {
-	ON_BrepEdge& edge = brep->m_E[index];
+	const ON_BrepEdge& edge = brep->m_E[index];
 	if (edge.m_edge_user.p != NULL) {
 	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)edge.m_edge_user.p;
-	    std::map<double, ON_3dPoint *>::iterator i;
+	    std::map<double, ON_3dPoint *>::const_iterator i;
 	    for (i = points->begin(); i != points->end(); i++) {
-		ON_3dPoint *p = (*i).second;
+		const ON_3dPoint *p = (*i).second;
 		delete p;
 	    }
 	    points->clear();
@@ -4394,9 +4394,9 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 	ON_BrepTrim& trim = brep->m_T[index];
 	if (trim.m_trim_user.p != NULL) {
 	    std::map<double, ON_3dPoint *> *points = (std::map<double, ON_3dPoint *> *)trim.m_trim_user.p;
-	    std::map<double, ON_3dPoint *>::iterator i;
+	    std::map<double, ON_3dPoint *>::const_iterator i;
 	    for (i = points->begin(); i != points->end(); i++) {
-		ON_3dPoint *p = (*i).second;
+		const ON_3dPoint *p = (*i).second;
 		delete p;
 	    }
 	    points->clear();
@@ -4437,7 +4437,7 @@ class RT_MemoryArchive : public ON_BinaryArchive
 {
 public:
     RT_MemoryArchive();
-    RT_MemoryArchive(void *memory, size_t len);
+    RT_MemoryArchive(const void *memory, size_t len);
     virtual ~RT_MemoryArchive();
 
     // ON_BinaryArchive overrides
@@ -4470,7 +4470,7 @@ RT_MemoryArchive::RT_MemoryArchive()
 }
 
 
-RT_MemoryArchive::RT_MemoryArchive(void *memory, size_t len)
+RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
     : ON_BinaryArchive(ON::read3dm), pos(0)
 {
     m_buffer.reserve(len);
@@ -4792,7 +4792,8 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     RT_BREP_CK_MAGIC(bip1);
     RT_BREP_CK_MAGIC(bip2);
 
-    ON_Brep *brep1, *brep2, *brep_out;
+    const ON_Brep *brep1, *brep2;
+    ON_Brep *brep_out;
     brep1 = bip1->brep;
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
@@ -4849,7 +4850,7 @@ struct brep_selection {
 };
 
 bool
-cmp_cv_startdist(brep_selectable_cv *c1, brep_selectable_cv *c2)
+cmp_cv_startdist(const brep_selectable_cv *c1, const brep_selectable_cv *c2)
 {
     if (c1->sqdist_to_start < c2->sqdist_to_start) {
 	return true;
@@ -4864,7 +4865,7 @@ brep_free_selection(struct rt_selection *s)
     struct brep_selection *bs = (struct brep_selection *)s->obj;
     std::list<brep_cv *> *cvs = bs->control_vertexes;
 
-    std::list<brep_cv *>::iterator cv;
+    std::list<brep_cv *>::const_iterator cv;
     for (cv = cvs->begin(); cv != cvs->end(); ++cv) {
 	delete *cv;
     }
@@ -4997,7 +4998,7 @@ rt_brep_process_selection(
     RT_BREP_CK_MAGIC(bip);
     ON_Brep *brep = bip->brep;
 
-    brep_selection *bs = (brep_selection *)selection->obj;
+    const brep_selection *bs = (brep_selection *)selection->obj;
     if (!brep || !bs || bs->control_vertexes->empty()) {
 	return -1;
     }
@@ -5006,7 +5007,7 @@ rt_brep_process_selection(
     fastf_t dy = op->parameters.tran.dy;
     fastf_t dz = op->parameters.tran.dz;
 
-    std::list<brep_cv *>::iterator cv = bs->control_vertexes->begin();
+    std::list<brep_cv *>::const_iterator cv = bs->control_vertexes->begin();
     for (; cv != bs->control_vertexes->end(); ++cv) {
 	// TODO: if another face references the same surface, the
 	// surface needs to be duplicated

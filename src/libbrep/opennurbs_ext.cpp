@@ -81,7 +81,7 @@ brep_get_plane_ray(const ON_Ray& r, plane_ray& pr)
 
 
 void
-brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
+brep_r(const ON_Surface* surf, const plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVector& su, ON_3dVector& sv, pt2d_t R)
 {
     vect_t vp;
 
@@ -94,7 +94,7 @@ brep_r(const ON_Surface* surf, plane_ray& pr, pt2d_t uv, ON_3dPoint& pt, ON_3dVe
 
 
 void
-brep_newton_iterate(plane_ray& pr, pt2d_t R, const ON_3dVector& su, const ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
+brep_newton_iterate(const plane_ray& pr, pt2d_t R, const ON_3dVector& su, const ON_3dVector& sv, pt2d_t uv, pt2d_t out_uv)
 {
     vect_t vsu, vsv;
     VMOVE(vsu, su);
@@ -137,7 +137,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 {
     for (int li = 0; li < face->LoopCount(); li++) {
 	bool innerLoop = (li > 0) ? true : false;
-	ON_BrepLoop* loop = face->Loop(li);
+	const ON_BrepLoop* loop = face->Loop(li);
 	// for each trim
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
 	    int adj_face_index = -99;
@@ -213,7 +213,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		    if (range.Length() > TOL)
 			getHVTangents(trimCurve, range, splitlist);
 		}
-		for (std::list<fastf_t>::iterator l = splitlist.begin(); l != splitlist.end(); l++) {
+		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
 			m_root->addChild(subdivideCurve(trimCurve, adj_face_index, min, xmax, innerLoop, 0));
@@ -433,7 +433,7 @@ CurveTree::initialLoopBBox() const
     m_face->SurfaceOf()->GetBBox(bb[0], bb[1]);
 
     for (int i = 0; i < m_face->LoopCount(); i++) {
-	ON_BrepLoop* loop = m_face->Loop(i);
+	const ON_BrepLoop* loop = m_face->Loop(i);
 	if (loop->m_type == ON_BrepLoop::outer) {
 	    if (loop->GetBBox(bb[0], bb[1], 0)) {
 		TRACE("BBox for Loop min<" << bb[0][0] << ", " << bb[0][1] ", " << bb[0][2] << ">");
@@ -571,7 +571,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     ON_3dPoint min = ON_3dPoint::UnsetPoint, max = ON_3dPoint::UnsetPoint;
     for (int li = 0; li < face->LoopCount(); li++) {
 	for (int ti = 0; ti < face->Loop(li)->TrimCount(); ti++) {
-	    ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
+	    const ON_BrepTrim *trim = face->Loop(li)->Trim(ti);
 	    trim->GetBoundingBox(min, max, bGrowBox);
 	    bGrowBox = true;
 	}
@@ -926,7 +926,7 @@ static ON_Interval dom[MAX_PSW][2] = {{ON_Interval::EmptyInterval, ON_Interval::
 static int span_cnt[MAX_PSW][2] = {{0, 0}};
 static double *span[MAX_PSW][2] = {{NULL, NULL}};
 bool
-hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,double &split)
+hasSplit(const ON_Surface *surf, const int dir, const ON_Interval& interval, double &split)
 {
     int p = bu_parallel_id();
     if (surf == NULL) {
@@ -1712,7 +1712,7 @@ gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv)
 
 
 bool
-gcp_newton_iteration(pt2d_t out_uv, GCPData& data, pt2d_t grad, pt2d_t in_uv)
+gcp_newton_iteration(pt2d_t out_uv, const GCPData& data, pt2d_t grad, pt2d_t in_uv)
 {
     ON_3dVector delta = data.S - data.pt;
     double g1du = 2 * (data.duu * delta) + 2 * (data.du * data.du);
@@ -1736,9 +1736,9 @@ gcp_newton_iteration(pt2d_t out_uv, GCPData& data, pt2d_t grad, pt2d_t in_uv)
 
 bool
 get_closest_point(ON_2dPoint& outpt,
-		  ON_BrepFace* face,
+		  const ON_BrepFace* face,
 		  const ON_3dPoint& point,
-		  SurfaceTree* tree,
+		  const SurfaceTree* tree,
 		  double tolerance)
 {
     int try_count = 0;
@@ -1754,7 +1754,7 @@ get_closest_point(ON_2dPoint& outpt,
     TRACE("get_closest_point: " << PT(point));
 
     // get initial estimate
-    SurfaceTree* a_tree = tree;
+    const SurfaceTree* a_tree = tree;
     if (a_tree == NULL) {
 	a_tree = new SurfaceTree(face);
 	delete_tree = true;
