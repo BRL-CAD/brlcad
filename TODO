@@ -34,7 +34,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58325 - NEWS, improved v5 specification formatting, added timestamp proposal
   64637 - NEWS, almost certainly fixed mysterious errors during dbconcat and db_opens with duplicate names found
   58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
-  58594 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
+  58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
 
 * check these commits for bugs:
   65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
