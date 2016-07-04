@@ -37,6 +37,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
   61168 - NEWS, new param option to search
   61507 - NEWS, jon added support for importing textures. said wip. any reason to not announce?
+  61529 - NEWS, ask jon if the performance improvement only affected a 7.26 dev version or will be user-vis
 
 * check these commits for bugs:
   65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
