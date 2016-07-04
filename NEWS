@@ -38,6 +38,7 @@ geometry (e.g., primitives with CSG).
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
 * fixed color preservation issue with 3dm-g importer - Jon Engbert
+* added 3dm-g support for layers, names, & random colors - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
 * fixed crash in search when using -above option - Cliff Yapp
