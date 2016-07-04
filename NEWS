@@ -58,6 +58,7 @@ geometry (e.g., primitives with CSG).
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
 * added draw -S for simplied wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
+* added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
