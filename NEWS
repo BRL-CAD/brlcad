@@ -122,6 +122,7 @@ geometry (e.g., primitives with CSG).
 * gqa respects LIBRT_BOT_MINTIE environment variable - Ștefan Mirea
 * improved behavior of mged's draw command - Ștefan Mirea
 * fixed handling of extra whitespace in nirt commands - Ștefan Mirea
+* renamed 'make_bb' mged command name to 'bb' - Cliff Yapp
 * added g-ply exporter for Stanford PLY geometry format - Rishub Jain
 * added ply-g importer for Stanford PLY geometry format - Rishub Jain
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
