@@ -36,6 +36,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
   58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
   61168 - NEWS, new param option to search
+  61507 - NEWS, jon added support for importing textures. said wip. any reason to not announce?
 
 * check these commits for bugs:
   65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
