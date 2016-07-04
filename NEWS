@@ -131,6 +131,8 @@ geometry (e.g., primitives with CSG).
 * support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
 * fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
+* renamed g_diff/g_lint/g_qa/g_transfer sans underscore - Cliff Yapp
+* removed mged -n option, use mged -c for classic mode - Cliff Yapp
 * fixed mged -c crash running view-modifying commands - Sean Morrison
 * improved kill, killall, killtree documentation - Sean Morrison
 * added killtree -f force flag to kill unconditionally - Sean Morrison
