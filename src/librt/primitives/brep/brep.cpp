@@ -4551,6 +4551,7 @@ RT_MemoryArchive::Write(const size_t amount, const void* buf)
     }
 
     std::copy((char *)buf, (char *)buf + amount, m_buffer.begin() + pos);
+    pos += amount;
     return amount;
 }
 
