@@ -4465,18 +4465,15 @@ private:
 
 
 RT_MemoryArchive::RT_MemoryArchive()
-    : ON_BinaryArchive(ON::write3dm), pos(0)
+    : ON_BinaryArchive(ON::write3dm), pos(0), m_buffer()
 {
 }
 
 
 RT_MemoryArchive::RT_MemoryArchive(const void *memory, size_t len)
-    : ON_BinaryArchive(ON::read3dm), pos(0)
+    : ON_BinaryArchive(ON::read3dm), pos(0),
+    m_buffer((char *)memory, (char *)memory + len)
 {
-    m_buffer.reserve(len);
-    for (size_t i = 0; i < len; i++) {
-	m_buffer.push_back(((char*)memory)[i]);
-    }
 }
 
 
@@ -4528,10 +4525,7 @@ uint8_t*
 RT_MemoryArchive::CreateCopy() const
 {
     uint8_t *memory = (uint8_t *)bu_malloc(m_buffer.size() * sizeof(uint8_t), "rt_memoryarchive createcopy");
-    const size_t size = m_buffer.size();
-    for (size_t i = 0; i < size; i++) {
-	memory[i] = m_buffer[i];
-    }
+    std::copy(m_buffer.begin(), m_buffer.end(), memory);
     return memory;
 }
 
@@ -4540,10 +4534,8 @@ size_t
 RT_MemoryArchive::Read(size_t amount, void* buf)
 {
     const size_t read_amount = (pos + amount > m_buffer.size()) ? m_buffer.size() - pos : amount;
-    const size_t start = pos;
-    for (; pos < (start + read_amount); pos++) {
-	((char*)buf)[pos - start] = m_buffer[pos];
-    }
+    std::copy(m_buffer.begin() + pos, m_buffer.begin() + pos + read_amount, (char *)buf);
+    pos += read_amount;
     return read_amount;
 }
 
@@ -4557,9 +4549,8 @@ RT_MemoryArchive::Write(const size_t amount, const void* buf)
     if (m_buffer.size() < (start + amount)) {
 	m_buffer.resize(start + amount);
     }
-    for (; pos < (start + amount); pos++) {
-	m_buffer[pos] = ((char*)buf)[pos - start];
-    }
+
+    std::copy((char *)buf, (char *)buf + amount, m_buffer.begin() + pos);
     return amount;
 }
 
