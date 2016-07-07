@@ -37,6 +37,75 @@ BBNode::~BBNode()
     delete m_trims_above;
 }
 
+
+BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, const ON_BrepFace &face) :
+    m_children(new std::vector<BBNode *>),
+    m_node(),
+    m_face(&face),
+    m_u(),
+    m_v(),
+    m_checkTrim(true),
+    m_trimmed(false),
+    m_estimate(),
+    m_normal(),
+    m_ctree(&ctree),
+    m_trims_above(new std::list<const BRNode *>)
+{
+    std::size_t num_children;
+    if (!archive.ReadBigSize(&num_children))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    for (std::size_t i = 0; i < num_children; ++i)
+	m_children->push_back(new BBNode(archive, ctree, *m_face));
+
+    if (!archive.ReadBoundingBox(m_node) || !archive.ReadInterval(m_u)
+	    || !archive.ReadInterval(m_v) || !archive.ReadBool(&m_checkTrim)
+	    || !archive.ReadBool(&m_trimmed) || !archive.ReadPoint(m_estimate)
+	    || !archive.ReadVector(m_normal))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    // m_trims_above
+
+    if (!archive.ReadBigSize(&num_children))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    std::vector<std::size_t> leaves_keys(num_children);
+
+    for (std::vector<std::size_t>::iterator it = leaves_keys.begin(); it != leaves_keys.end(); ++it)
+	if (!archive.ReadBigSize(&*it))
+	    bu_bomb("ON_BinaryArchive read failed");
+
+    *m_trims_above = m_ctree->serialize_get_leaves(leaves_keys);
+}
+
+
+void
+BBNode::serialize(ON_BinaryArchive &archive) const
+{
+    if (!archive.WriteBigSize(m_children->size()))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    for (std::vector<BBNode *>::const_iterator it = m_children->begin(); it != m_children->end(); ++it)
+	(*it)->serialize(archive);
+
+    if (!archive.WriteBoundingBox(m_node) || !archive.WriteInterval(m_u)
+	    || !archive.WriteInterval(m_v) || !archive.WriteBool(m_checkTrim)
+	    || !archive.WriteBool(m_trimmed) || !archive.WritePoint(m_estimate)
+	    || !archive.WriteVector(m_normal))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    const std::vector<std::size_t> leaves_keys = m_ctree->serialize_get_leaves_keys(*m_trims_above);
+
+    if (!archive.WriteBigSize(leaves_keys.size()))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    for (std::vector<std::size_t>::const_iterator it = leaves_keys.begin(); it != leaves_keys.end(); ++it)
+	if (!archive.WriteBigSize(*it))
+	    bu_bomb("ON_BinaryArchive write failed");
+
+    // SKIP: m_ctree
+}
+
 bool
 BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results_opt) const
 {

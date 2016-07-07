@@ -39,6 +39,96 @@ BRNode::~BRNode()
 }
 
 
+BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
+    m_node(),
+    m_v(),
+    m_adj_face_index(-99),
+    m_XIncreasing(false),
+    m_Horizontal(false),
+    m_Vertical(false),
+    m_innerTrim(false),
+    m_children(new std::vector<const BRNode *>),
+    m_face(NULL),
+    m_u(),
+    m_trim(NULL),
+    m_trim_index(-1),
+    m_t(),
+    m_checkTrim(true),
+    m_trimmed(false),
+    m_estimate(),
+    m_slope(0.0),
+    m_bb_diag(0.0),
+    m_start(ON_3dPoint::UnsetPoint),
+    m_end(ON_3dPoint::UnsetPoint)
+{
+    if (!archive.ReadBoundingBox(m_node) || !archive.ReadInterval(m_v)
+	    || !archive.ReadInt(&m_adj_face_index) || !archive.ReadBool(&m_XIncreasing)
+	    || !archive.ReadBool(&m_Horizontal) || !archive.ReadBool(&m_Vertical)
+	    || !archive.ReadBool(&m_innerTrim))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    std::size_t num_children;
+    if (!archive.ReadBigSize(&num_children))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    for (std::size_t i = 0; i < num_children; ++i)
+	m_children->push_back(new BRNode(archive, brep));
+
+    int face_index;
+    if (!archive.ReadInt(&face_index))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    if (face_index != -1 && !(m_face = brep.m_F.At(face_index)))
+	bu_bomb("invalid face index");
+
+    if (!archive.ReadInterval(m_u) || !archive.ReadInt(&m_trim_index))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    if (m_trim_index != -1 && !brep.m_T.At(m_trim_index))
+	bu_bomb("invalid trim index");
+
+    if (m_trim_index != -1) m_trim = brep.m_T[m_trim_index].TrimCurveOf();
+
+    double temp_slope, temp_bb_diag;
+
+    if (!archive.ReadInterval(m_t) || !archive.ReadBool(&m_checkTrim)
+	    || !archive.ReadBool(&m_trimmed) || !archive.ReadPoint(m_estimate)
+	    || !archive.ReadDouble(&temp_slope) || !archive.ReadDouble(&temp_bb_diag)
+	    || !archive.ReadPoint(m_start) || !archive.ReadPoint(m_end))
+	bu_bomb("ON_BinaryArchive read failed");
+
+    m_slope = temp_slope;
+    m_bb_diag = temp_bb_diag;
+}
+
+
+void
+BRNode::serialize(ON_BinaryArchive &archive) const
+{
+    if (!archive.WriteBoundingBox(m_node) || !archive.WriteInterval(m_v)
+	    || !archive.WriteInt(m_adj_face_index) || !archive.WriteBool(m_XIncreasing)
+	    || !archive.WriteBool(m_Horizontal) || !archive.WriteBool(m_Vertical)
+	    || !archive.WriteBool(m_innerTrim))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    if (!archive.WriteBigSize(m_children->size()))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    for (std::vector<const BRNode *>::const_iterator it = m_children->begin(); it != m_children->end(); ++it)
+	(*it)->serialize(archive);
+
+    if (!archive.WriteInt(m_face ? m_face->m_face_index : -1))
+	bu_bomb("ON_BinaryArchive write failed");
+
+    if (!archive.WriteInterval(m_u) || !archive.WriteInt(m_trim_index)
+	    || !archive.WriteInterval(m_t) || !archive.WriteBool(m_checkTrim)
+	    || !archive.WriteBool(m_trimmed) || !archive.WritePoint(m_estimate)
+	    || !archive.WriteDouble(m_slope) || !archive.WriteDouble(m_bb_diag)
+	    || !archive.WritePoint(m_start) || !archive.WritePoint(m_end))
+	bu_bomb("ON_BinaryArchive write failed");
+}
+
+
 int
 BRNode::depth() const
 {

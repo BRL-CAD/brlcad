@@ -77,6 +77,9 @@ extern "C++" {
 			bool trimmed);
 		~BBNode();
 
+		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, const ON_BrepFace &face);
+		void serialize(ON_BinaryArchive &archive) const;
+
 		/** Test if this node is a leaf node in the hierarchy */
 		bool isLeaf() const;
 

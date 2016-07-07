@@ -39,6 +39,9 @@
 __BEGIN_DECLS
 
 extern "C++" {
+#include <map>
+
+
     namespace brlcad {
 
 	/**
@@ -48,6 +51,12 @@ extern "C++" {
 	    public:
 		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
+
+		CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
+		void serialize(ON_BinaryArchive &archive) const;
+		std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
+		std::list<const BRNode *> serialize_get_leaves(const std::vector<std::size_t> &keys) const;
+		void serialize_cleanup() const;
 
 		/**
 		 * Return just the leaves of the surface tree
@@ -77,13 +86,14 @@ extern "C++" {
 
 		bool getHVTangents(const ON_Curve *curve, const ON_Interval &t, std::list<fastf_t> &list) const;
 		bool isLinear(const ON_Curve *curve, double min, double max) const;
-		BRNode *subdivideCurve(const ON_Curve *curve, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
-		BRNode *curveBBox(const ON_Curve *curve, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
+		BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
+		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
 		BRNode *initialLoopBBox() const;
 
-		const ON_BrepFace * const m_face;
-		BRNode * const m_root;
-		std::list<const BRNode *> * const m_sortedX;
+		const ON_BrepFace *m_face;
+		BRNode *m_root;
+		std::vector<const BRNode *> * const m_sortedX;
+		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
 
 

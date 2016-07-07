@@ -55,6 +55,7 @@ extern "C++" {
 	    public:
 		explicit BRNode(const ON_BoundingBox &node);
 		BRNode(const ON_Curve *curve,
+			int trim_curve_index,
 			int adj_face_index,
 			const ON_BoundingBox &node,
 			const ON_BrepFace *face,
@@ -63,6 +64,9 @@ extern "C++" {
 			bool checkTrim,
 			bool trimmed);
 		~BRNode();
+
+		BRNode(ON_BinaryArchive &archive, const ON_Brep &brep);
+		void serialize(ON_BinaryArchive &archive) const;
 
 		/** Node management functions */
 		void addChild(BRNode *child);
@@ -107,7 +111,7 @@ extern "C++" {
 		bool m_XIncreasing;
 		bool m_Horizontal;
 		bool m_Vertical;
-		const bool m_innerTrim;
+		bool m_innerTrim;
 
 	    private:
 		BRNode(const BRNode &source);
@@ -127,16 +131,17 @@ extern "C++" {
 		/** List of all children of a given node */
 		std::vector<const BRNode *> * const m_children;
 
-		const ON_BrepFace * const m_face;
+		const ON_BrepFace *m_face;
 		ON_Interval m_u;
 
-		const ON_Curve * const m_trim;
+		const ON_Curve *m_trim;
+		int m_trim_index;
 		ON_Interval m_t;
 
-		const bool m_checkTrim;
-		const bool m_trimmed;
+		bool m_checkTrim;
+		bool m_trimmed;
 
-		const ON_3dPoint m_estimate;
+		ON_3dPoint m_estimate;
 
 		fastf_t m_slope;
 		fastf_t m_bb_diag;
@@ -148,6 +153,7 @@ extern "C++" {
 	    _BU_ATTR_ALWAYS_INLINE
 	    BRNode::BRNode(
 		    const ON_Curve *curve,
+		    int trim_index,
 		    int adj_face_index,
 		    const ON_BoundingBox &node,
 		    const ON_BrepFace *face,
@@ -166,6 +172,7 @@ extern "C++" {
 		m_face(face),
 		m_u(),
 		m_trim(curve),
+		m_trim_index(trim_index),
 		m_t(t),
 		m_checkTrim(checkTrim),
 		m_trimmed(trimmed),
@@ -230,7 +237,7 @@ extern "C++" {
 	    BRNode::BRNode(const ON_BoundingBox &node) :
 		m_node(node),
 		m_v(),
-		m_adj_face_index(-99),
+		m_adj_face_index(-1),
 		m_XIncreasing(false),
 		m_Horizontal(false),
 		m_Vertical(false),
@@ -239,6 +246,7 @@ extern "C++" {
 		m_face(NULL),
 		m_u(),
 		m_trim(NULL),
+		m_trim_index(-1),
 		m_t(),
 		m_checkTrim(true),
 		m_trimmed(false),

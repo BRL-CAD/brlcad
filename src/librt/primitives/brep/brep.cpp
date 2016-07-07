@@ -33,8 +33,10 @@
 #include <map>
 #include <stack>
 #include <iostream>
+#include <fstream>
 #include <algorithm>
 #include <set>
+#include <sstream>
 #include <utility>
 
 #include "poly2tri/poly2tri.h"
@@ -348,8 +350,46 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 }
 
 
+/**
+ * XXX In order to facilitate exporting the ON_Brep object without a
+ * whole lot of effort, we're going to (for now) extend the
+ * ON_BinaryArchive to support an "in-memory" representation of a
+ * binary archive. Currently, the openNURBS library only supports
+ * file-based archiving operations. This implies the
+ */
+class RT_MemoryArchive : public ON_BinaryArchive
+{
+public:
+    RT_MemoryArchive();
+    RT_MemoryArchive(const void *memory, size_t len);
+    virtual ~RT_MemoryArchive();
+
+    // ON_BinaryArchive overrides
+    size_t CurrentPosition() const;
+    bool SeekFromCurrentPosition(int);
+    bool SeekFromStart(size_t);
+    bool AtEnd() const;
+
+    size_t Size() const;
+    /**
+     * Generate a byte-array copy of this memory archive.  Allocates
+     * memory using bu_malloc, so must be freed with bu_free
+     */
+    uint8_t* CreateCopy() const;
+
+protected:
+    size_t Read(size_t, void*);
+    size_t Write(size_t, const void*);
+    bool Flush();
+
+private:
+    size_t pos;
+    std::vector<char> m_buffer;
+};
+
+
 int
-brep_build_bvh(struct brep_specific* bs)
+brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -401,7 +441,43 @@ brep_build_bvh(struct brep_specific* bs)
      */
 
     //start = bu_gettime();
-    bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
+
+    if (true) {
+	std::cerr << "prepping to " << cache_path.c_str() << "\n";
+
+        if (bu_file_exists(cache_path.c_str(), NULL))
+            bu_bomb("cache file exists");
+
+	bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
+	RT_MemoryArchive archive;
+
+	for (std::size_t i = 0; i < faceCount; ++i)
+	    bbbp.faces[i]->serialize(archive);
+
+	uint8_t * const temp = archive.CreateCopy();
+	std::ofstream stream(cache_path.c_str(), std::ofstream::out);
+	stream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+	stream.write(reinterpret_cast<const char *>(temp), archive.Size());
+	bu_free(temp, "temp");
+	stream.flush();
+	stream.close();
+    } else {
+	std::cerr << "loading from " << cache_path << "\n";
+	std::ifstream stream(cache_path.c_str(), std::ifstream::in);
+	stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	stream.seekg(0, std::ios::end);
+	const std::size_t temp_size = stream.tellg();
+	stream.seekg(0, std::ios::beg);
+	uint8_t * const temp = new uint8_t[temp_size];
+	stream.read(reinterpret_cast<char *>(temp), temp_size);
+	stream.close();
+	RT_MemoryArchive archive(temp, temp_size);
+	delete[] temp;
+
+	for (std::size_t i = 0; i < faceCount; ++i)
+	    bbbp.faces[i] = new SurfaceTree(archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
+    }
 
     for (int i = 0; (size_t)i < faceCount; i++) {
 	ON_BrepFace& face = faces[i];
@@ -478,7 +554,15 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
     //start = bu_gettime();
-    if (brep_build_bvh(bs) < 0) {
+
+    std::ostringstream cache_path;
+    cache_path << "cache/" << stp->st_dp->d_un.file_offset;
+
+    if (stp->st_matp)
+	for (int i = 0; i < 16; ++i)
+	    cache_path << '_' << stp->st_matp[i];
+
+    if (brep_build_bvh(bs, cache_path.str()) < 0) {
 	return -1;
     }
     //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
@@ -4424,44 +4508,6 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
     /* XXX - implement me */
     return -1;
 }
-
-
-/**
- * XXX In order to facilitate exporting the ON_Brep object without a
- * whole lot of effort, we're going to (for now) extend the
- * ON_BinaryArchive to support an "in-memory" representation of a
- * binary archive. Currently, the openNURBS library only supports
- * file-based archiving operations. This implies the
- */
-class RT_MemoryArchive : public ON_BinaryArchive
-{
-public:
-    RT_MemoryArchive();
-    RT_MemoryArchive(const void *memory, size_t len);
-    virtual ~RT_MemoryArchive();
-
-    // ON_BinaryArchive overrides
-    size_t CurrentPosition() const;
-    bool SeekFromCurrentPosition(int);
-    bool SeekFromStart(size_t);
-    bool AtEnd() const;
-
-    size_t Size() const;
-    /**
-     * Generate a byte-array copy of this memory archive.  Allocates
-     * memory using bu_malloc, so must be freed with bu_free
-     */
-    uint8_t* CreateCopy() const;
-
-protected:
-    size_t Read(size_t, void*);
-    size_t Write(size_t, const void*);
-    bool Flush();
-
-private:
-    size_t pos;
-    std::vector<char> m_buffer;
-};
 
 
 RT_MemoryArchive::RT_MemoryArchive()
