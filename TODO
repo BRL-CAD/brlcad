@@ -41,9 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
 
-* check these commits for bugs:
-  65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -96,6 +93,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* V&V bwcrop is behaving correctly, as documented
 
 * need routine that returns a color given a path, similar to
   rt_comb_get_color() but full path so that inheritance is taken into
