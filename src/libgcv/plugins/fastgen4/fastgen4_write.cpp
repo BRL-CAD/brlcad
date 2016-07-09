@@ -1194,7 +1194,10 @@ write_bot(Section &section, const rt_bot_internal &bot)
 }
 
 
-// based on rt_sph_prep()
+/* FIXME: need to consolidate with similar code in rt_sph_prep(),
+ * possibly in libbg or handled as a typing interface in librt as
+ * other entities have similar needs, e.g., tgc, eto, superell, arb8.
+ */
 HIDDEN bool
 ell_is_sphere(const rt_ell_internal &ell)
 {
