@@ -57,6 +57,7 @@ geometry (e.g., primitives with CSG).
 * removed mged pl command, use plot command instead - Sean Morrison
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
+* improved wireframe display list performance - Keith Bowman
 * added draw -S for simplied wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
