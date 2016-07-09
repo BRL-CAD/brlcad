@@ -157,6 +157,8 @@ geometry (e.g., primitives with CSG).
 * added menu option to restore mged command window - Cezar Elnazli
 * search command now recognizes hyp and metaball types - Cliff Yapp
 * added -depth option to mged 'search' command - Cliff Yapp
+* initial support for rigging joints and constrained articulation
+	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
 * added comb -S option to stop when object already exists - Cliff Yapp
