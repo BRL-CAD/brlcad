@@ -94,6 +94,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
+  (http://www.openflipper.org) for smoothing, decimation, and
+  additional GCV conversion formats.
+
+* GCT decimation assumes no edge is shared by two triangles except
+  once in the reversed order (AB, BA).  Needs basic check to avoid
+  failures/crashing.
+
 * V&V bwcrop, pixembed are behaving correctly, as documented
 
 * need routine that returns a color given a path, similar to
