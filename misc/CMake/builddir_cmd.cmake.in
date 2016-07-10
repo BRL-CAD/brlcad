@@ -39,18 +39,30 @@
 # something in the install directory.
 set(ENV{BRLCAD_ROOT} "@CMAKE_BINARY_DIR@")
 
+# Set BUILD_DIR in case it is needed
+if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BUILD_DIR Release)
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
+  set(BUILD_DIR Debug)
+else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BUILD_DIR)
+endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+
 # Run Command
 set(CMD_EXEC "@CMD_EXEC@")
-execute_process(COMMAND "${CMD_EXEC}" @CMD_ARGS@
+set(CMD_ARGS @CMD_ARGS@)
+execute_process(COMMAND "${CMD_EXEC}" ${CMD_ARGS}
   RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
 # If we're supposed to put the output in log files, do that.
-if(DEFINED STDOUT_LOG)
+set(STDOUT_LOG "@STDOUT_LOG@")
+set(STDERR_LOG "@STDERR_LOG@")
+if(STDOUT_LOG)
   file(APPEND "${STDOUT_LOG}" "${CMDOUT}")
-endif(DEFINED STDOUT_LOG)
-if(DEFINED STDERR_LOG)
+endif(STDOUT_LOG)
+if(STDERR_LOG)
   file(APPEND "${STDERR_LOG}" "${CMDERR}")
-endif(DEFINED STDERR_LOG)
+endif(STDERR_LOG)
 
 if(CMDRESULT)
   message(FATAL_ERROR "${CMD_EXEC} failure: ${CMDRESULT}\n${CMDOUT}\n${CMDERR}")
