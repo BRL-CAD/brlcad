@@ -39,13 +39,13 @@
 # something in the install directory.
 set(ENV{BRLCAD_ROOT} "@CMAKE_BINARY_DIR@")
 
-# Set BUILD_DIR in case it is needed
+# Set BUILD_TYPE in case it is needed
 if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BUILD_DIR Release)
+  set(BUILD_TYPE Release)
 elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
-  set(BUILD_DIR Debug)
+  set(BUILD_TYPE Debug)
 else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
-  set(BUILD_DIR)
+  set(BUILD_TYPE)
 endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
 
 # Run Command
