@@ -37,6 +37,8 @@ geometry (e.g., primitives with CSG).
 * fixed running archer from read-only filesystems - Cliff Yapp
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
+* added 3dm-g support for layers and names - Keith Bowman
+* added 3dm-g support for random colors - Cliff Yapp
 * fixed color/shader preservation issue with 3dm-g importer - Jon Engbert
 * added 3dm-g support for mesh objects - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
