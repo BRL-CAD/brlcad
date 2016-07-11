@@ -59,24 +59,24 @@ const char sections[] = {'1', '3', '5', 'n', '\0'};
  * http://www.loc.gov/standards/iso639-2/php/English_list.php
  */
 const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
-    "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bh",
-    "bi", "nb", "bs", "br", "bg", "my", "es", "ca", "km", "ch", "ce", "ny",
-    "ny", "zh", "za", "cu", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da",
-    "dv", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fi", "nl",
-    "fr", "ff", "gd", "gl", "lg", "ka", "de", "ki", "el", "kl", "gn", "gu",
-    "ht", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id",
-    "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks",
-    "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "kj", "ky", "lo",
-    "la", "lv", "lb", "li", "li", "li", "ln", "lt", "lu", "lb", "mk", "mg",
-    "ms", "ml", "dv", "mt", "gv", "mi", "mr", "mh", "ro", "ro", "mn", "na",
-    "nv", "nv", "nd", "nr", "ng", "ne", "nd", "se", "no", "nb", "nn", "ii",
-    "ny", "nn", "ie", "oc", "oj", "cu", "cu", "cu", "or", "om", "os", "os",
-    "pi", "pa", "ps", "fa", "pl", "pt", "pa", "ps", "qu", "ro", "rm", "rn",
-    "ru", "sm", "sg", "sa", "sc", "gd", "sr", "sn", "ii", "sd", "si", "si",
-    "sk", "sl", "so", "st", "nr", "es", "su", "sw", "ss", "sv", "tl", "ty",
-    "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk",
-    "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
-    "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
+			  "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bh",
+			  "bi", "nb", "bs", "br", "bg", "my", "es", "ca", "km", "ch", "ce", "ny",
+			  "ny", "zh", "za", "cu", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da",
+			  "dv", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fi", "nl",
+			  "fr", "ff", "gd", "gl", "lg", "ka", "de", "ki", "el", "kl", "gn", "gu",
+			  "ht", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id",
+			  "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks",
+			  "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "kj", "ky", "lo",
+			  "la", "lv", "lb", "li", "li", "li", "ln", "lt", "lu", "lb", "mk", "mg",
+			  "ms", "ml", "dv", "mt", "gv", "mi", "mr", "mh", "ro", "ro", "mn", "na",
+			  "nv", "nv", "nd", "nr", "ng", "ne", "nd", "se", "no", "nb", "nn", "ii",
+			  "ny", "nn", "ie", "oc", "oj", "cu", "cu", "cu", "or", "om", "os", "os",
+			  "pi", "pa", "ps", "fa", "pl", "pt", "pa", "ps", "qu", "ro", "rm", "rn",
+			  "ru", "sm", "sg", "sa", "sc", "gd", "sr", "sn", "ii", "sd", "si", "si",
+			  "sk", "sl", "so", "st", "nr", "es", "su", "sw", "ss", "sv", "tl", "ty",
+			  "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk",
+			  "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
+			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
 
 HIDDEN int
 opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
@@ -93,6 +93,7 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
     }
     return -1;
 }
+
 
 HIDDEN int
 opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
@@ -150,27 +151,36 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
     return ret;
 }
 
-#ifdef HAVE_WINDOWS_H
-int APIENTRY
-WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpszCmdLine,
-	int nCmdShow)
-{
-    char **argv;
-    int argc;
+
+#ifndef HAVE_WINDOWS_H
+#  define APIENTRY
+#  define BRLMAN_MAIN main
 #else
-int
-main(int argc, const char **argv)
-{
+#  define BRLMAN_MAIN WinMain
 #endif
+
+/* main() */
+int APIENTRY
+BRLMAN_MAIN(
+#ifdef HAVE_WINDOWS_H
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPSTR lpszCmdLine,
+    int nCmdShow
+#else
+    int argc,
+    const char **argv
+#endif
+    )
+{
+
 #if !defined(MAN_CMDLINE) && !defined(MAN_GUI)
     bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
 #else
     int i = 0;
-    int status;
+    int status = BRLCAD_ERROR;
     int uac = 0;
-#ifndef MAN_CMDLINE 
+#ifndef MAN_CMDLINE
     int enable_gui = 1;
 #else
     int enable_gui = 0;
@@ -186,6 +196,9 @@ main(int argc, const char **argv)
     struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
+    char **argv;
+    int argc;
+
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
     argc = __argc;
     argv = __argv;
@@ -280,7 +293,7 @@ main(int argc, const char **argv)
 
     /* If we're not graphical, make sure we have a man command to use */
     if (!enable_gui) {
-#ifndef MAN_CMDLINE 
+#ifndef MAN_CMDLINE
 	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
 #else
 	man_cmd = bu_which("man");
@@ -327,7 +340,7 @@ main(int argc, const char **argv)
     }
 
     if (!enable_gui) {
-#ifdef MAN_CMDLINE 
+#ifdef MAN_CMDLINE
 	if (!man_file) {
 	    if (man_section != '\0') {
 		bu_exit(EXIT_FAILURE, "No man page found for %s in section %c\n", man_name, man_section);
