@@ -213,6 +213,9 @@ main(int argc, char **argv)
     struct uplot *up;
     int i;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;

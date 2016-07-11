@@ -168,13 +168,17 @@ nmg_to_rib(struct model *m)
  *	Call parse_args to handle command line arguments first, then
  *	process input.
  */
-int main(int ac, char **av)
+int
+main(int ac, char **av)
 {
     int arg_index;
     struct rt_db_internal ip;
     struct directory *dp;
     struct db_i *dbip;
     mat_t my_mat;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* parse command flags, and make sure there are arguments
      * left over for processing.

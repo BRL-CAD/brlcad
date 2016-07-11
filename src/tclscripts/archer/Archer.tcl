@@ -526,6 +526,7 @@ package provide Archer 1.0
     }
 
     gedCmd dlist_on $mDisplayListMode
+    gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {
 	gedCmd lod on
@@ -2259,43 +2260,47 @@ package provide Archer 1.0
 	}
     }
 
-    # only append bindings once
-    if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
-	bind $itk_interior <Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+    # This bit of code introduces a performance penalty when using the shift-grips --
+    # noticed when manipulating the view while displaying a fairly large geometry.
+    if {0} {
+	# only append bindings once
+	if {[string match "*BindingMode*" [bind $itk_interior <KeyRelease-Control_L>]] == 0} {
+	    bind $itk_interior <Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
+	    bind $itk_interior <Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_ROTATE_MODE]
 
-	bind $itk_interior <Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
+	    bind $itk_interior <Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_TRANSLATE_MODE]
 
-	bind $itk_interior <Control-Shift_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Control-Shift_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Control-Shift_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_L> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_L> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <Shift-Control_R> \
-	    +[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
+	    bind $itk_interior <Shift-Control_R> \
+		+[::itcl::code $this overrideBindingMode $VIEW_SCALE_MODE]
 
-	bind $itk_interior <KeyRelease-Control_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Control_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Control_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_L> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_L> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
 
-	bind $itk_interior <KeyRelease-Shift_R> \
-	    +[::itcl::code $this updateOverrideBindingMode %K]
+	    bind $itk_interior <KeyRelease-Shift_R> \
+		+[::itcl::code $this updateOverrideBindingMode %K]
+	}
     }
 
     $itk_component(primaryToolbar) itemconfigure edit_rotate -state normal
@@ -2852,6 +2857,11 @@ proc title_node_handler {node} {
 	    -text "Use Display Lists" \
 	    -variable [::itcl::scope mDisplayListModePref]
     } {}
+    itk_component add hideSubCB {
+	::ttk::checkbutton $parent.hideSubCB \
+	    -text "Hide Subtractions" \
+	    -variable [::itcl::scope mHideSubtractionsPref]
+    } {}
     itk_component add wireframeModeCB {
 	::ttk::checkbutton $parent.wireframeModeCB \
 	    -text "Use LOD Wireframes" \
@@ -2902,6 +2912,8 @@ proc title_node_handler {node} {
     grid $itk_component(dlistModeCB) -columnspan 2 -column 0 -row $i -sticky sw
     grid rowconfigure $parent $i -weight 1
     grid columnconfigure $parent 1 -weight 1
+    incr i
+    grid $itk_component(hideSubCB) -columnspan 2 -column 0 -row $i -sticky sw
     incr i
     grid $itk_component(wireframeModeCB) -columnspan 2 -column 0 -row $i -sticky sw
 
@@ -3438,7 +3450,7 @@ proc title_node_handler {node} {
     buildarcherHelp
 
     # Build manual browser
-    ManBrowser $itk_interior.archerMan -parentName Archer
+    ManBrowser $itk_interior.archerMan -useToC 1 -listDir n -parentName Archer
     $itk_interior.archerMan center
 
     if {0} {
@@ -8531,6 +8543,12 @@ proc title_node_handler {node} {
 	set rflag 1
     }
 
+    if {$mHideSubtractionsPref != $mHideSubtractions} {
+	set mHideSubtractions $mHideSubtractionsPref
+	gedCmd configure -hideSubtractions $mHideSubtractions
+	set wflag 1
+    }
+
     if {$mWireframeModePref != $mWireframeMode} {
 	set mWireframeMode $mWireframeModePref
 
@@ -9081,6 +9099,7 @@ proc title_node_handler {node} {
     set mLightingModePref $mLightingMode
     set mDefaultDisplayModePref $mDefaultDisplayMode
     set mDisplayListModePref $mDisplayListMode
+    set mHideSubtractionsPref $mHideSubtractions
     set mWireframeModePref $mWireframeMode
 
     $itk_component(preferencesDialog) center [namespace tail $this]
@@ -9246,6 +9265,7 @@ proc title_node_handler {node} {
     puts $_pfile "set mLightingMode $mLightingMode"
     puts $_pfile "set mDefaultDisplayMode $mDefaultDisplayMode"
     puts $_pfile "set mDisplayListMode $mDisplayListMode"
+    puts $_pfile "set mHideSubtractions $mHideSubtractions"
     puts $_pfile "set mWireframeMode $mWireframeMode"
 
     puts $_pfile "set mHPaneFraction1 $mHPaneFraction1"

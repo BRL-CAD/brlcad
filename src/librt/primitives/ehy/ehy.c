@@ -946,8 +946,9 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2;
     fastf_t **ellipses, theta_prev, theta_new;
-    int *pts_dbl, i, j, nseg;
-    int jj, na, nb, nell, recalc_b;
+    int *pts_dbl;
+    size_t i, j, nseg, nell;
+    int jj, na, nb, recalc_b;
     mat_t R;
     mat_t invR;
     point_t p1;
@@ -1128,12 +1129,12 @@ rt_ehy_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_te
     }
 
     /* connect ellipses */
-    for (i = nell-2; i >= 0; i--) {
+    for (i = nell-1; i > 0; i--) {
 	/* skip top ellipse */
 	int bottom, top;
 
-	top = i + 1;
-	bottom = i;
+	top = i;
+	bottom = i - 1;
 	if (pts_dbl[top])
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 
@@ -1192,8 +1193,10 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 {
     fastf_t c, dtol, mag_h, ntol, r1, r2, cprime;
     fastf_t **ellipses, theta_prev, theta_new;
-    int *pts_dbl, face, i, j, nseg;
-    int jj, na, nb, nell, recalc_b;
+    int *pts_dbl;
+    int idx;
+    size_t face, i, j, nseg, nell;
+    int jj, na, nb, recalc_b;
     mat_t R;
     mat_t invR;
     mat_t invRoS;
@@ -1366,7 +1369,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	VSET(p1, 0., pos_b->p[Y], 0.);
 	theta_new = ell_angle(p1, pos_a->p[Y], pos_b->p[Y], dtol, ntol);
 	if (nseg == 0) {
-	    nseg = (int)(M_2PI / theta_new) + 1;
+	    nseg = (size_t)(M_2PI / theta_new) + 1;
 	    pts_dbl[i] = 0;
 	    /* maximum number of faces needed for ehy */
 	    face = nseg*(1 + 3*((1 << (nell-1)) - 1));
@@ -1401,11 +1404,10 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
-    for (i = nell-1; i >= 0; i--) {
-	vells[i] = (struct vertex **)
-	    bu_malloc(j*sizeof(struct vertex *), "vertex []");
+    for (i = 0; i < nell; i++) {
+	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
 	if (i && pts_dbl[i])
-	    j /= 2;
+	    j /=2;
     }
 
     /* top face of ehy */
@@ -1441,12 +1443,12 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* connect ellipses with triangles */
-    for (i = nell-2; i >= 0; i--) {
+    for (idx = nell-2; idx >= 0; idx--) {
 	/* skip top ellipse */
 	int bottom, top;
 
-	top = i + 1;
-	bottom = i;
+	top = idx + 1;
+	bottom = idx;
 	if (pts_dbl[top])
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 	vertp[0] = (struct vertex *)0;
@@ -1577,7 +1579,7 @@ rt_ehy_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;

@@ -40,6 +40,7 @@ package provide ManBrowser 1.0
     inherit iwidgets::Dialog
 
     itk_option define -useToC useToC UseToC 1
+    itk_option define -listDir listDir ListDir 1
 
     public {
 	variable path
@@ -67,7 +68,7 @@ package provide ManBrowser 1.0
 #
 ::itcl::configbody ManBrowser::path {
     if {![info exists path] || ![file isdirectory $path]} {
-	set path [file join [bu_brlcad_data "doc/html"] mann]
+	set path [file join [bu_brlcad_data "doc/html"] man$itk_option(-listDir)]
     }
 }
 
@@ -156,7 +157,7 @@ package provide ManBrowser 1.0
 #
 ::itcl::body ManBrowser::loadPage {pageName} {
     # Get page
-    if {[file exists $pageName]} {set pathname $pageName}
+    if {[file exists $pageName] && ![file isdirectory $pageName]} {set pathname $pageName}
     if {![info exists pathname]} {
        if {[file exists [file join $path $pageName.html]]} {
 	  set pathname [file join $path $pageName.html]

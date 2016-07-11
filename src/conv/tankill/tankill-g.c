@@ -364,7 +364,7 @@ main(int argc, char **argv)
 	nmg_break_long_edges( s, &tol );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_LEN( &faces ), &tol );
 
 	/* re-initialize the face list */
 	bu_ptbl_reset( &faces );

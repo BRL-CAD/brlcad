@@ -68,7 +68,7 @@ ged_viewdir(struct ged *gedp, int argc, const char *argv[])
 
     bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(dir, invRot, view);
-    bn_encode_vect(gedp->ged_result_str, dir);
+    bn_encode_vect(gedp->ged_result_str, dir, 1);
 
     return GED_OK;
 }

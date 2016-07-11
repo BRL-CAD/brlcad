@@ -919,18 +919,23 @@ MerrorFile(HmItem *itemp)
     };
     Input *ip = input;
     static int errfd = -1;
-    if (getInput(ip))
+
+    if (getInput(ip)) {
 	bu_strlcpy(errfile, ip->buffer, LNBUFSZ);
-    else
-	bu_strlcpy(errfile, "/dev/tty", LNBUFSZ);
-    /* insure that error log is truncated */
-    errfd = open(errfile, O_BINARY|O_TRUNC|O_CREAT|O_WRONLY, 0644);
+	/* ensure that error log is truncated */
+	errfd = open(errfile, O_BINARY|O_TRUNC|O_CREAT|O_WRONLY, 0644);
+    } else {
+	errfd = 2; /* write to stderr */
+    }
+
     if (errfd == -1) {
 	locPerror(errfile);
 	return;
     }
-    (void) close(2);
+
+/* TODO: we need a copy of stderr on non-termlib platforms or this doesn't work */
 #ifdef HAVE_TERMLIB
+    close(2);
     if (fcntl(errfd, F_DUPFD, 2) == -1) {
 	locPerror("fcntl");
 	return;

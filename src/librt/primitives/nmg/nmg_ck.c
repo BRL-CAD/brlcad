@@ -1041,12 +1041,12 @@ nmg_ck_eg_verts(const struct edge_g_lseg *eg, const struct bn_tol *tol)
  *
  * returns number of vertices that do not lie on geometry
  */
-int
+size_t
 nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 {
     struct bu_ptbl g_tbl;
-    int i;
-    int count=0;
+    size_t i;
+    size_t count=0;
 
     NMG_CK_MODEL(m);
     BN_CK_TOL(tol);
@@ -1055,7 +1055,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     nmg_edge_g_tabulate(&g_tbl, &m->magic);
 
-    for (i=0; i<BU_PTBL_END(&g_tbl); i++) {
+    for (i=0; i<BU_PTBL_LEN(&g_tbl); i++) {
 	uint32_t *ep;
 	struct edge_g_lseg *eg;
 
@@ -1076,7 +1076,7 @@ nmg_ck_geometry(const struct model *m, const struct bn_tol *tol)
 
     nmg_face_tabulate(&g_tbl, &m->magic);
 
-    for (i=0; i<BU_PTBL_END(&g_tbl); i++) {
+    for (i=0; i<BU_PTBL_LEN(&g_tbl); i++) {
 	struct face *f;
 
 	f = (struct face *)BU_PTBL_GET(&g_tbl, i);

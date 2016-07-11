@@ -88,7 +88,7 @@ rt_new_rti(struct db_i *dbip)
 
     /* This table is used for discovering the per-cpu resource structures */
     bu_ptbl_init(&rtip->rti_resources, MAX_PSW, "rti_resources ptbl");
-    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
+    bu_ptbl_trunc(&rtip->rti_resources, MAX_PSW); /* Make 'em all available */
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 

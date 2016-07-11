@@ -79,19 +79,22 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 {
     struct bu_attribute_value_pair *app;
 
-    if (!avsp) return 0;
+    /* no work? */
+    if (!avsp && !name)
+	return 0;
 
-    BU_CK_AVS(avsp);
-
+    /* no source is okay even though nothing is added */
     if (UNLIKELY(!name)) {
-	bu_log("WARNING: bu_avs_add() received a null attribute name\n");
 	return 0;
     }
-
+    /* empty is unexpected, but not a reason to halt */
     if (UNLIKELY(strlen(name) == 0)) {
 	bu_log("WARNING: bu_avs_add() received an attribute name with zero length\n");
 	return 0;
     }
+
+    /* no target is not okay */
+    BU_CK_AVS(avsp);
 
     /* does this attribute already exist? */
     if (avsp->count) {

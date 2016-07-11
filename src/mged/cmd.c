@@ -48,6 +48,7 @@
 #include "bu/path.h"
 #include "bn.h"
 #include "rt/geom.h"
+#include "ged.h"
 #include "tclcad.h"
 
 #include "./mged.h"
@@ -999,11 +1000,41 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	int flags = 0;
-	flags |= DB_GLOB_HIDDEN;
-	flags |= DB_GLOB_NON_GEOM;
-	flags |= DB_GLOB_SKIP_FIRST;
-	(void)db_expand_str_glob(&globbed, bu_vls_addr(vp), dbip, flags);
+	const char **av;
+	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+	struct rt_wdb *tmpwdbp;
+	if (gedp == GED_NULL)
+	    return CMD_BAD;
+
+	/* Cache the state bits we might change in gedp */
+	tmpwdbp = gedp->ged_wdbp;
+	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(gedp->ged_result_str));
+
+	/* Make sure wdbp and gedp->ged_wdbp agree - if we're
+	 * in non-GUI mode gedp may not be properly initialized */
+	if (wdbp != gedp->ged_wdbp) gedp->ged_wdbp = wdbp;
+
+	/* Run ged_glob */
+	av = (const char **)bu_malloc(sizeof(char *)*3, "ged_glob argv");
+
+	av[0] = "glob";
+	av[1] = bu_vls_addr(vp);
+	av[2] = NULL;
+
+	(void)ged_glob(gedp, 2, (const char **)av);
+	if (bu_vls_strlen(gedp->ged_result_str) > 0) {
+	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(gedp->ged_result_str));
+	} else {
+	    bu_vls_vlscat(&globbed, vp);
+	}
+
+	/* put gedp back where it was */
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&tmpstr));
+	gedp->ged_wdbp = tmpwdbp;
+
+	/* cleanup */
+	bu_vls_free(&tmpstr);
+	bu_free((void *)av, "ged_glob argv");
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }
@@ -1497,62 +1528,6 @@ f_ps(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[
     vsp = view_state;  /* save state info pointer */
 
     bu_free((void *)menu_state, "f_ps: menu_state");
-    menu_state = dml->dml_menu_state;
-
-    scroll_top = dml->dml_scroll_top;
-    scroll_active = dml->dml_scroll_active;
-    scroll_y = dml->dml_scroll_y;
-    memmove((void *)scroll_array, (void *)dml->dml_scroll_array, sizeof(struct scroll_item *) * 6);
-
-    dirty = 1;
-    refresh();
-
-    view_state = vsp;  /* restore state info pointer */
-    av[0] = "release";
-    av[1] = NULL;
-    status = f_release(clientData, interpreter, 1, av);
-    curr_dm_list = dml;
-    gedp->ged_gvp = view_state->vs_gvp;
-
-    return status;
-}
-
-
-/**
- * Experimental - like f_plot except we attach to dm-plot, passing
- * along any arguments.
- */
-int
-f_pl(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[])
-{
-    int status;
-    const char *av[2];
-    struct dm_list *dml;
-    struct _view_state *vsp;
-
-    if (argc < 2) {
-	struct bu_vls vls = BU_VLS_INIT_ZERO;
-
-	bu_vls_printf(&vls, "help pl");
-	Tcl_Eval(interpreter, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    if (gedp == GED_NULL)
-	return TCL_OK;
-
-    dml = curr_dm_list;
-    gedp->ged_gvp = view_state->vs_gvp;
-    status = mged_attach(&which_dm[DM_PLOT_INDEX], argc, argv);
-    if (status == TCL_ERROR)
-	return TCL_ERROR;
-
-    vsp = view_state;  /* save state info pointer */
-    view_state = dml->dml_view_state;  /* use dml's state info */
-    *mged_variables = *dml->dml_mged_variables; /* struct copy */
-
-    bu_free((void *)menu_state, "f_pl: menu_state");
     menu_state = dml->dml_menu_state;
 
     scroll_top = dml->dml_scroll_top;

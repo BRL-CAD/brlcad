@@ -550,14 +550,10 @@
 	<listitem>
 	  <para>
 	    The below operator applies the expression to every
-	    object above the current full path to that object,
-	    and returns TRUE if one or more of them satisfies
-	    the expression.  E.g., searching with -below -name
-	    s\* on /component/region.r/start_comb.c/prim1.s
-	    would return TRUE for /component and
-	    /component/region.r as start_comb.c is below both of
-	    them, but would return FALSE for any deeper objects
-	    (i.e., prim1.s in this example).
+	    object below the matching object in the tree
+	    hierarchy.  E.g. searching with -below -name start\*
+	    on /component/region.r/start_comb.c/prim1.s would
+	    return prim1.s, as the object below start_comb.c
 	  </para>
 	  <para>
 	    Optionally, inequality and equality constraints on
@@ -581,12 +577,14 @@
 	<listitem>
 	  <para>
 	    The above operator applies the expression to every
-	    object below the current object in the tree
-	    hierarchy.  It finds objects that are above a given
-	    expression.  In effect, it does a "mini-search" up
-	    the tree using the current object path as a starting
-	    point and returns TRUE if the expression is
-	    satisfied by one or more objects in the sub-tree.
+	    object above the current full path to that object,
+	    and returns TRUE if one or more of them satisfies
+	    the expression.  E.g., searching with -above -name
+	    s\* on /component/region.r/start_comb.c/prim1.s
+	    would return TRUE for /component and
+	    /component/region.r as start_comb.c is below both of
+	    them, but would return FALSE for any deeper objects
+	    (i.e., prim1.s in this example).
 	  </para>
 	  <para>
 	    Optionally, inequality and equality constraints on
@@ -847,6 +845,17 @@
 	files may use <emphasis>rgb</emphasis> instead of color, so to be
 	comprehensive an <emphasis>-or</emphasis> option is used to check
 	both possibilities.
+      </para>
+    </example>
+
+    <example><title>Find All Combs Containing At Least One of Two Objects (dbfind)</title>
+
+      <para>
+	<userinput>search |. ( -depth 0 -above=1 -name obj1 ) -or ( -depth 0 -above=1 -name obj2 ) </userinput>
+      </para>
+      <para>
+	Prints all combs immediately above either obj1 or obj2.  This more or less mimics the results of
+	the dbfind command, although it will be somewhat slower (noticably so on large databases.)
       </para>
     </example>
 

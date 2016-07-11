@@ -179,35 +179,6 @@ endif(NOT BRLCAD_IS_SUBBUILD)
 
 
 #---------------------------------------------------------------------
-# If it exists, load a BRL-CAD_CONFIG.GLOBAL file.  This allows
-# advanced users to specify options or preferences they want to always
-# use by default even when doing clean BRL-CAD builds without a
-# CMakeCache.txt file - for example, to always enable all local libs
-# the following line can be added to BRL-CAD_CONFIG.GLOBAL:
-#
-# set(BRLCAD_BUNDLED_LIBS "Bundled" CACHE STRING "Enable all local libs")
-
-# The user's configuration file can be defined by environment variable
-# "BRLCAD_USER_GLOBAL_CONFIG_FILE" or, in its absence, by a file named
-# "BRL-CAD_CONFIG.GLOBAL" located either above or in the BRL-CAD
-# source directory.
-set(BRLCAD_USER_GLOBAL_CONFIG_FILE "$ENV{BRLCAD_USER_GLOBAL_CONFIG_FILE}")
-if(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-  message("Reading user preference file '${BRLCAD_USER_GLOBAL_CONFIG_FILE}'")
-  include(${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-elseif(EXISTS "${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
-  message("Reading user preference file \"${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL\"")
-  include("${BRLCAD_SOURCE_DIR}/../BRL-CAD_CONFIG.GLOBAL")
-elseif(EXISTS "${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL")
-  message("Reading user preference file \"${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL\"")
-  include("${BRLCAD_SOURCE_DIR}/BRL-CAD_CONFIG.GLOBAL")
-else(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-  if(BRLCAD_USER_GLOBAL_CONFIG_FILE)
-    message(WARNING "User preference file ${BRLCAD_USER_GLOBAL_CONFIG_FILE} specified but not found...")
-  endif(BRLCAD_USER_GLOBAL_CONFIG_FILE)
-endif(BRLCAD_USER_GLOBAL_CONFIG_FILE AND EXISTS ${BRLCAD_USER_GLOBAL_CONFIG_FILE})
-
-#---------------------------------------------------------------------
 # Allow the BRLCAD_ROOT environment variable to set CMAKE_INSTALL_PREFIX
 # but be noisy about it.  This is generally not a good idea.
 find_program(SLEEP_EXEC sleep)
@@ -554,12 +525,12 @@ if(NOT BRLCAD_IS_SUBBUILD)
 
   add_custom_target(unit
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \"unit\" a.k.a. \"BRL-CAD Unit Testing\" target runs the"
-    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD's API unit tests that are expected to work (i.e.,"
-    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development).  All dependencies required"
+    COMMAND ${CMAKE_COMMAND} -E echo "NOTE: The \\\"unit\\\" a.k.a. \\\"BRL-CAD Unit Testing\\\" target runs the"
+    COMMAND ${CMAKE_COMMAND} -E echo "      subset of BRL-CAD\\'s API unit tests that are expected to work \\(i.e.,"
+    COMMAND ${CMAKE_COMMAND} -E echo "      tests not currently under development\\).  All dependencies required"
     COMMAND ${CMAKE_COMMAND} -E echo "      by the tests are compiled automatically."
     COMMAND ${CMAKE_COMMAND} -E echo "\"**********************************************************************\""
-    COMMAND ${CMAKE_CTEST_COMMAND} -C $CONFIG -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
+    COMMAND ${CMAKE_CTEST_COMMAND} -C ${CONFIG} -LE \"Regression|NOT_WORKING\" -E \"^regress-|NOTE\" ${JFLAG}
     )
 
   set_target_properties(unit PROPERTIES FOLDER "BRL-CAD Validation Testing")
@@ -1552,7 +1523,7 @@ CHECK_CXX_FLAG(ftemplate-depth-128)
 #     may still output SSE instructions (e.g., for cross-compiling).
 # CHECK_C_FLAG(msse)
 # CHECK_C_FLAG(msse2)
-CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
+# CHECK_C_FLAG(msse3)
 
 # Check for c90 support with gnu extensions if we're not building for
 # a release so we get more broad portability testing.  Since the
@@ -1561,8 +1532,7 @@ CHECK_C_FLAG(msse3 BUILD_TYPES Debug)
 # a strictly standard compliant build, use the c** options instead
 # of the gnu variations
 if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
-  CHECK_C_FLAG("std=c99" BUILD_TYPES Debug)
-  CHECK_C_FLAG("std=c99" BUILD_TYPES Release VARS C99_FLAG)
+  CHECK_C_FLAG("std=c99")
   # we need to define some things as "empty" to avoid false positives
   # for bu_* functions using varargs and print specifiers
   CHECK_C_FLAG("D_BU_ATTR_PRINTF12=''")
@@ -1571,8 +1541,7 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_C_FLAG("DC99_POSIX_USE_BSD")
   #=== C++
-  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Debug)
-  CHECK_CXX_FLAG("std=c++03" BUILD_TYPES Release VARS CXX03_FLAG)
+  CHECK_CXX_FLAG("std=c++03")
   # for bu_* functions using varargs and print specifiers
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF12=''")
   CHECK_CXX_FLAG("D_BU_ATTR_PRINTF23=''")
@@ -1580,15 +1549,17 @@ if(ENABLE_STRICT_COMPILER_STANDARD_COMPLIANCE)
   # a hack to temp work around signal() handling in interrupt.c
   CHECK_CXX_FLAG("DC99_POSIX_USE_BSD")
 else()
-  CHECK_C_FLAG("std=gnu89" BUILD_TYPES Debug)
-  CHECK_C_FLAG("std=gnu99" BUILD_TYPES Release VARS C99_FLAG)
-  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Debug)
-  CHECK_CXX_FLAG("std=gnu++98" BUILD_TYPES Release VARS CXX03_FLAG)
+  if("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    CHECK_C_FLAG("std=gnu99")
+  else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+    CHECK_C_FLAG("std=gnu89")
+  endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
+  CHECK_CXX_FLAG("std=gnu++98")
 endif()
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
-# CHECK_C_FLAG("Za" BUILD_TYPES ALL)
+# CHECK_C_FLAG("Za")
 
 # What POSIX do we want to target, initially?  See
 # http://www.gnu.org/software/libc/manual/html_node/Feature-Test-Macros.html
@@ -2616,9 +2587,9 @@ endif(NOT BRLCAD_COMPILE_HOST)
 if(NOT BRLCAD_COMPILE_USER)
   set(BRLCAD_COMPILE_USER "\"user_unknown\"")
 endif(NOT BRLCAD_COMPILE_USER)
-if(NOT BRLCAD_COMPILE_COUNT)
+if("${BRLCAD_COMPILE_COUNT}" STREQUAL "")
   set(BRLCAD_COMPILE_COUNT -1)
-endif(NOT BRLCAD_COMPILE_COUNT)
+endif("${BRLCAD_COMPILE_COUNT}" STREQUAL "")
 
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")

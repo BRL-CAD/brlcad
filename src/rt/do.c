@@ -90,7 +90,7 @@ int
 old_frame(FILE *fp)
 {
     register int i;
-    char number[128];
+    char number[129];
 
     /* Visible part is from -1 to +1 in view space */
     if (fscanf(fp, "%128s", number) != 1) return -1;

@@ -835,8 +835,7 @@ rtwizard_help_dev(struct bu_opt_desc *d)
 int
 main(int argc, char **argv)
 {
-    int ac;
-    char **av;
+    char *av0;
     int need_help = 0;
     int need_help_dev = 0;
     int uac = 0;
@@ -884,37 +883,30 @@ main(int argc, char **argv)
 
     /* Need progname set for bu_brlcad_root/bu_brlcad_data to work */
     bu_setprogname(argv[0]);
+    av0 = argv[0];
 
     /* Skip first arg */
     argv++; argc--;
 
-    /* Save args for tcl */
-    ac = argc;
-    av = bu_dup_argv(argc, (const char **)argv);
-
     uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
 
     if (uac == -1) {
-	bu_free_argv(ac, av);
 	bu_exit(1, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
 
     if (need_help) {
 	rtwizard_help((struct bu_opt_desc *)&d);
-	bu_free_argv(ac, av);
 	bu_exit(0, NULL);
     }
 
     if (need_help_dev) {
 	rtwizard_help_dev((struct bu_opt_desc *)&d);
-	bu_free_argv(ac, av);
 	bu_exit(0, NULL);
     }
 
     for (i = 0; i < uac; i++) {
 	if (argv[i][0] == '-') {
-	    bu_free_argv(ac, av);
 	    bu_exit(1, "Error: unknown option %s.\n", argv[i]);
 	}
     }
@@ -929,7 +921,6 @@ main(int argc, char **argv)
     }
 
     if (bu_vls_strlen(s->input_file) && !bu_file_exists(bu_vls_addr(s->input_file), NULL)) {
-	bu_free_argv(ac, av);
 	bu_exit(1, "Specified %s as .g file, but file does not exist.\n", bu_vls_addr(s->input_file));
     }
 
@@ -945,7 +936,6 @@ main(int argc, char **argv)
 			/* This was the .g name - don't add it to the color list */
 			continue;
 		    } else {
-			bu_free_argv(ac, av);
 			bu_exit(1, "Specified %s as .g file, but file does not exist.\n", argv[i]);
 		    }
 		}
@@ -1023,8 +1013,9 @@ main(int argc, char **argv)
 	    Tcl_DecrRefCount(initPath);
 	}
 
-	tclcad_set_argv(interp, ac, (const char **)av);
-	bu_free_argv(ac,av);
+	/* Set a single argv so the Tcl scripts will run the main proc.  Not passing more args
+	 * because they can apparently cause problems with Tcl script execution. */
+	tclcad_set_argv(interp, 1, (const char **)&av0);
 
 	Init_RtWizard_Vars(interp, s);
 

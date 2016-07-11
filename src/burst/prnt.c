@@ -287,7 +287,7 @@ prntBurstHdr(fastf_t *bpt /* burst point in model coords */, fastf_t *shotdir /*
     }
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			vec[X]*unitconv, /* X' coordinate of burst point */
 			0.0,		/* LOS thickness of component */
@@ -451,7 +451,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
 
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			(standoff - cpp->pt_inhit->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */
@@ -489,7 +489,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
     exitangle = NEAR_EQUAL(ocosobliquity, 1.0, COS_TOL) ?
 	0.0 : acos(ocosobliquity) * RAD2DEG;
     if (fprintf(shotlnfp,
-		"%c % 8.2f % 7.3f % 7.2f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+		"%c % 8.2f % 7.3f % 7.2f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 		PS_SHOT_INTERSECT,
 		(standoff - cpp->pt_inhit->hit_dist)*unitconv,
 		/* X'-coordinate of intersection */
@@ -618,7 +618,7 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
     normthickness = getNormThickness(ap, pp, cosobliquity, entrynorm);
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     if (fprintf(outfp,
-		"%c % 10.3f % 9.3f % 9.3f %4d %4d % 6.3f\n",
+		"%c % 10.3f % 9.3f % 9.3f %4d %5d % 6.3f\n",
 		PB_REGION_HEADER,
 		ihitp->hit_dist*unitconv, /* distance from burst pt. */
 		(ohitp->hit_dist - ihitp->hit_dist)*unitconv, /* LOS */
@@ -804,7 +804,7 @@ prntPhantom(struct hit *hitp /* ptr. to phantom's intersection information */, i
 {
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.3f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.3f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			(standoff-hitp->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */
@@ -823,7 +823,7 @@ prntPhantom(struct hit *hitp /* ptr. to phantom's intersection information */, i
     }
     if (shotlnfile[0] != NUL
 	&&	fprintf(shotlnfp,
-			"%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+			"%c % 8.2f % 7.3f % 7.3f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
 			(standoff-hitp->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */

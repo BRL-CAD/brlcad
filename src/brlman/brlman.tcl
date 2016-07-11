@@ -22,7 +22,11 @@
 package require Iwidgets
 package require ManBrowser 1.0
 wm state . withdrawn
-set w [ ManBrowser .browser -useToC 1 ]
+if {[info exists ::section_number]} {
+    set w [ ManBrowser .browser -useToC 1 -listDir $::section_number ]
+} else {
+    set w [ ManBrowser .browser -useToC 1 -listDir 1 ]
+}
 $w buttonconfigure 0 -text Close -command ::exit
 
 if {[info exists ::man_file]} {

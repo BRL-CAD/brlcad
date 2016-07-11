@@ -44,7 +44,7 @@ ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
 
     /* get the pmodel2view matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view, 1);
 	return GED_OK;
     }
 

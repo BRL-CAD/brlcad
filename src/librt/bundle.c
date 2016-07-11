@@ -17,14 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file librt/bundle.c
- *
- * NOTE:  This is experimental code right now.
- *
- */
-/** @} */
 
 #include "common.h"
 
@@ -725,12 +717,14 @@ rt_shootrays(struct application_bundle *bundle)
 	    BU_LIST_DEQUEUE(&(pl->l));
 	    RT_FREE_SEG_LIST(&pl->segHeadp, resource);
 	    RT_FREE_PT_LIST(&pl->PartHeadp, resource);
-	    bu_free(pl->ap, "ray application structure");
 	    bu_free(pl, "free partition_list pl");
 	}
 	bu_free(pb->list, "free partition_list header");
     }
     bu_free(pb, "partition bundle");
+    /* Free all the pl->ap ray application structures - don't do it
+     * as part of the while loop above or we end up with a double
+     * free error. */
     bu_free(ray_aps, "app rays");
 
     /*

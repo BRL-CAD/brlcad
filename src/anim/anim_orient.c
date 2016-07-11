@@ -186,6 +186,9 @@ main(int argc, char *argv[])
     int num_read;
     fastf_t temp[3], temp2[3], angle[3], quat[4], matrix[16];
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();
     }

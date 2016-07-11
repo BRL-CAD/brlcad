@@ -18,6 +18,7 @@ set(man1_EN
   brlcad-config.xml
   brlcad.xml
   buffer.xml
+  burst.xml
   bw-fb.xml
   bw-imp.xml
   bw-pix.xml
@@ -93,6 +94,7 @@ set(man1_EN
   g-nff.xml
   g-nmg.xml
   g-obj.xml
+  g-ply.xml
   g-raw.xml
   g-shell-rect.xml
   g-step.xml
@@ -113,6 +115,7 @@ set(man1_EN
   gqa.xml
   halftone.xml
   hex.xml
+  icv.xml
   iges-g.xml
   imgdims.xml
   ir-X.xml

@@ -225,7 +225,6 @@ CMAKEFILES(
   README.OSCON-2014
   STARTERS
   STRATEGY
-  burst
   csv_to_comgeom.txt
   implicit_constraints.txt
   pad_file.xml.in

@@ -33,7 +33,9 @@ void
 Convsurfs()
 {
 
-    int i, totsurfs = 0, convsurf = 0;
+    size_t i;
+    size_t totsurfs = 0;
+    size_t convsurf = 0;
     struct face_g_snurb **surfs;
     struct face_g_snurb *srf;
 
@@ -42,7 +44,7 @@ Convsurfs()
     /* First count the number of surfaces */
     for (i = 0; i < totentities; i++) {
 	if (dir[i]->type == 128)
-	    totsurfs ++;
+	    totsurfs++;
     }
 
     surfs = (struct face_g_snurb **)bu_calloc(totsurfs+1, sizeof(struct face_g_snurb *), "surfs");
@@ -61,7 +63,7 @@ Convsurfs()
 	    mk_bspline(fdout, "nurb.s", surfs);
     }
 
-    bu_log("Converted %d NURBS successfully out of %d total NURBS\n", convsurf, totsurfs);
+    bu_log("Converted %zu NURBS successfully out of %zu total NURBS\n", convsurf, totsurfs);
     if (convsurf)
 	bu_log("\tCaution: All NURBS are assumed to be part of the same solid\n");
 }

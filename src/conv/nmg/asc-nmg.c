@@ -65,7 +65,6 @@ main(int argc, char **argv)
 
     if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
 	usage();
-	bu_log("       Program continues running:\n");
     }
 
     bu_setprogname(argv[0]);
@@ -185,7 +184,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 {
 #define MAXV	10000
 
-    char token[80] = {0};	/* Token read from ascii nmg file. */
+    char token[81] = {0};	/* Token read from ascii nmg file. */
     double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,

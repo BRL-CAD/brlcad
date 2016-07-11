@@ -4097,39 +4097,6 @@ cmd_sca(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char 
 }
 
 
-/**
- * Process the "pov" command to change the point of view.
- */
-int
-cmd_pov(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
-{
-    int ret;
-    Tcl_DString ds;
-
-    if (gedp == GED_NULL) {
-	return TCL_OK;
-    }
-
-    Tcl_DStringInit(&ds);
-
-    ret = ged_pov(gedp, argc, (const char **)argv);
-    Tcl_DStringAppend(&ds, bu_vls_addr(gedp->ged_result_str), -1);
-    Tcl_DStringResult(interp, &ds);
-
-    if (ret != GED_OK) {
-	return TCL_ERROR;
-    }
-
-    mged_variables->mv_perspective = view_state->vs_gvp->gv_perspective;
-
-    if (argc > 1) {
-	view_state->vs_flag = 1;
-    }
-
-    return TCL_OK;
-}
-
-
 /*
  * Local Variables:
  * mode: C

@@ -12,10 +12,34 @@ function(LIBGCV_ADD_PLUGIN plugin_name sources libs)
   else("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
     include_directories("${GCV_INCLUDE_DIRS}")
   endif("${CMAKE_VERSION}" VERSION_GREATER 2.8.11)
-  get_property(current_output_dir TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY)
-  set_property(TARGET ${target_name} PROPERTY LIBRARY_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+
+  set(DIR_TYPES LIBRARY RUNTIME ARCHIVE)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(DIR_TYPE ${DIR_TYPES})
+      get_property(current_output_dir TARGET ${target_name} PROPERTY ${DIR_TYPE}_OUTPUT_DIRECTORY)
+      set_property(TARGET ${target_name} PROPERTY ${DIR_TYPE}_OUTPUT_DIRECTORY "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+    endforeach(DIR_TYPE ${DIR_TYPES})
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR})
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      if(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+	set(CFG_ROOT ${${PROJECT_NAME}_BINARY_DIR}/${CFG_TYPE})
+      endif(NOT "${CMAKE_CFG_INTDIR}" STREQUAL ".")
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      foreach(DIR_TYPE ${DIR_TYPES})
+	get_property(current_output_dir TARGET ${target_name} PROPERTY ${DIR_TYPE}_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER})
+	set_property(TARGET ${target_name} PROPERTY ${DIR_TYPE}_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${current_output_dir}/${LIBGCV_PLUGINS_DIRECTORY}")
+      endforeach(DIR_TYPE ${DIR_TYPES})
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+
+  # We're using GCV_EXPORT for these plugins, so we need to set the DLL_EXPORTS accordingly
+  if(CPP_DLL_DEFINES)
+    set_property(TARGET ${target_name} APPEND PROPERTY COMPILE_DEFINITIONS "GCV_DLL_EXPORTS")
+  endif(CPP_DLL_DEFINES)
+
   install(TARGETS ${target_name}
-    RUNTIME DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
+    RUNTIME DESTINATION ${BIN_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
     LIBRARY DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
     ARCHIVE DESTINATION ${LIB_DIR}/${LIBGCV_PLUGINS_DIRECTORY}
     )

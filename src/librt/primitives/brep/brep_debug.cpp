@@ -128,11 +128,11 @@ void
 plotsurfaceleafs(SurfaceTree* surf) {
     vect_t min;
     vect_t max;
-    std::list<BBNode*> leaves;
+    std::list<const BBNode*> leaves;
     surf->getLeaves(leaves);
 
-    for (std::list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-	BBNode* bb = dynamic_cast<BBNode*>(*i);
+    for (std::list<const BBNode*>::const_iterator i = leaves.begin(); i != leaves.end(); i++) {
+	const BBNode* bb = *i;
 	if (bb->m_trimmed) {
 	    COLOR_PLOT(255, 0, 0);
 	} else if (bb->m_checkTrim) {
@@ -172,7 +172,7 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
 {
     register struct bu_list *vhead;
     fastf_t min[3], max[3];
-    std::list<BBNode*> leaves;
+    std::list<const BBNode*> leaves;
     surf->getLeaves(leaves);
 
     VSETALL(min, 0.0);
@@ -186,8 +186,8 @@ plotsurfaceleafs(SurfaceTree* surf, struct bn_vlblock *vbp, bool dim3d)
     vhead = bn_vlblock_find(vbp, MAGENTA);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
 
-    for (std::list<BBNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-	BBNode* bb = dynamic_cast<BBNode*>(*i);
+    for (std::list<const BBNode*>::const_iterator i = leaves.begin(); i != leaves.end(); i++) {
+	const BBNode* bb = *i;
 	if (bb->m_trimmed) {
 	    vhead = bn_vlblock_find(vbp, PURERED);
 	} else if (bb->m_checkTrim) {
@@ -214,8 +214,8 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     register struct bu_list *vhead;
     vect_t min;
     vect_t max;
-    std::list<BRNode*> leaves;
-    st->ctree->getLeaves(leaves);
+    std::list<const BRNode*> leaves;
+    st->m_ctree->getLeaves(leaves);
 
     VSETALL(min, 0.0);
 
@@ -228,8 +228,8 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
     vhead = bn_vlblock_find(vbp, MAGENTA);
     RT_ADD_VLIST(vhead, min, BN_VLIST_LINE_MOVE);
 
-    for (std::list<BRNode*>::iterator i = leaves.begin(); i != leaves.end(); i++) {
-	BRNode* bb = dynamic_cast<BRNode*>(*i);
+    for (std::list<const BRNode*>::const_iterator i = leaves.begin(); i != leaves.end(); i++) {
+	const BRNode* bb = *i;
 	if (bb->m_XIncreasing) {
 	    vhead = bn_vlblock_find(vbp, GREEN);
 	} else {
@@ -282,7 +282,7 @@ plotleaf3d(BBNode* bb,double within_distance_tol)
     M_COLOR_PLOT(YELLOW);
     point_t a, b;
     ON_3dPoint p;
-    BRNode* trimBR = NULL;
+    const BRNode* trimBR = NULL;
     const ON_BrepFace* f = bb->m_face;
     const ON_Surface* surf = f->SurfaceOf();
     fastf_t uinc = (bb->m_u[1] - bb->m_u[0])/100.0;
@@ -1879,18 +1879,18 @@ extern bool near_equal (double first, double second);
 
 
 void
-plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int gridres)
+plotFace(const SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int gridres)
 {
     register struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
     ON_2dPoint from, to;
-    std::list<BRNode*> m_trims_above_or_right;
+    std::list<const BRNode*> m_trims_above_or_right;
     std::list<fastf_t> trim_hits;
 
     vhead = bn_vlblock_find(vbp, PEACH);
 
     const ON_Surface *surf = st->getSurface();
-    CurveTree *ctree = st->ctree;
+    const CurveTree *ctree = st->m_ctree;
     ON_Interval udom = surf->Domain(0);
     ON_Interval vdom = surf->Domain(1);
     //bu_log("udom  %f, %f vdom %f, %f\n", udom.m_t[0], udom.m_t[1], vdom.m_t[0], vdom.m_t[1]);
@@ -1910,8 +1910,8 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int g
 	int cnt=1;
 	//bu_log("U - %f\n", pt.x);
 	trim_hits.clear();
-	for (std::list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++, cnt++) {
-	    BRNode* br = dynamic_cast<BRNode*>(*i);
+	for (std::list<const BRNode*>::const_iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++, cnt++) {
+	    const BRNode* br = *i;
 
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
@@ -1965,8 +1965,8 @@ plotFace(SurfaceTree* st, struct bn_vlblock *vbp, int UNUSED(isocurveres), int g
 	cnt=1;
 	//bu_log("V - %f\n", pt.x);
 	trim_hits.clear();
-	for (std::list<BRNode*>::iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++, cnt++) {
-	    BRNode* br = dynamic_cast<BRNode*>(*i);
+	for (std::list<const BRNode*>::const_iterator i = m_trims_above_or_right.begin(); i != m_trims_above_or_right.end(); i++, cnt++) {
+	    const BRNode* br = *i;
 
 	    point_t bmin, bmax;
 	    br->GetBBox(bmin, bmax);
@@ -2017,13 +2017,13 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
 {
     register struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
-    std::list<BRNode*> m_trims_right;
+    std::list<const BRNode*> m_trims_right;
     std::list<fastf_t> trim_hits;
 
     vhead = bn_vlblock_find(vbp, YELLOW);
 
     const ON_Surface *surf = st->getSurface();
-    CurveTree *ctree = st->ctree;
+    const CurveTree *ctree = st->m_ctree;
     fastf_t umin, umax;
     surf->GetDomain(0, &umin, &umax);
 
@@ -2042,8 +2042,8 @@ drawisoUCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
     int cnt = 1;
     //bu_log("V - %f\n", pt.x);
     trim_hits.clear();
-    for (std::list<BRNode*>::iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
-	BRNode* br = dynamic_cast<BRNode*> (*i);
+    for (std::list<const BRNode*>::const_iterator i = m_trims_right.begin(); i != m_trims_right.end(); i++, cnt++) {
+	const BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Horizontal) {
@@ -2145,13 +2145,13 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
 {
     register struct bu_list *vhead;
     fastf_t pt1[3], pt2[3];
-    std::list<BRNode*> m_trims_above;
+    std::list<const BRNode*> m_trims_above;
     std::list<fastf_t> trim_hits;
 
     vhead = bn_vlblock_find(vbp, YELLOW);
 
     const ON_Surface *surf = st->getSurface();
-    CurveTree *ctree = st->ctree;
+    const CurveTree *ctree = st->m_ctree;
     fastf_t vmin, vmax;
     surf->GetDomain(1, &vmin, &vmax);
 
@@ -2169,8 +2169,8 @@ drawisoVCheckForTrim(SurfaceTree* st, struct bn_vlblock *vbp, fastf_t from, fast
 
     int cnt = 1;
     trim_hits.clear();
-    for (std::list<BRNode*>::iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
-	BRNode* br = dynamic_cast<BRNode*>(*i);
+    for (std::list<const BRNode*>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++, cnt++) {
+	const BRNode* br = *i;
 
 	point_t bmin, bmax;
 	if (!br->m_Vertical) {
@@ -2355,8 +2355,8 @@ drawBBNode(SurfaceTree* st, struct bn_vlblock *vbp, BBNode * node) {
 	    return;
 	}
     } else {
-	if (node->m_children->size() > 0) {
-	    for (std::vector<BBNode*>::iterator childnode = node->m_children->begin(); childnode
+	if (!node->m_children->empty()) {
+	    for (std::vector<BBNode*>::const_iterator childnode = node->m_children->begin(); childnode
 		     != node->m_children->end(); childnode++) {
 		drawBBNode(st, vbp, *childnode);
 	    }
@@ -2904,7 +2904,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 	    const char *part = argv[3];
 	    const char *strindex = argv[4];
 	    std::set<int> elements;
-	    std::set<int>::iterator e_it;
+	    std::set<int>::const_iterator e_it;
 	    if (BU_STR_EQUAL(strindex, "all")) {
 		ON_Brep *brep = bs->brep;
 		if (BU_STR_EQUAL(part, "S")) {
@@ -3027,7 +3027,7 @@ brep_command(struct bu_vls *vls, const char *solid_name, struct bu_color *color,
 	    int numpoints = -1;
 	    int plotres = 100;
 	    std::set<int> elements;
-	    std::set<int>::iterator e_it;
+	    std::set<int>::const_iterator e_it;
 	    if (argc == 6) {
 		const char *strres = argv[5];
 		plotres = numpoints = atoi(strres);

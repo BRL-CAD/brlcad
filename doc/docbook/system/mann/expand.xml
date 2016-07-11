@@ -9,7 +9,7 @@
 
 <refnamediv xml:id="name">
   <refname>expand</refname>
-  <refpurpose>Performs matching of the <emphasis>regular_expression</emphasis> with the names
+  <refpurpose>Performs matching of the <emphasis>shell globbing pattern</emphasis> with the names
 of all the objects in the database. It returns all those that successfully match.
    </refpurpose>
 </refnamediv>
@@ -19,14 +19,14 @@ of all the objects in the database. It returns all those that successfully match
   <cmdsynopsis sepchar=" ">
     <command>expand</command>
 
-    <arg choice="req" rep="norepeat"><replaceable>regular_expression</replaceable></arg>
+    <arg choice="req" rep="norepeat"><replaceable>globbing_expression</replaceable></arg>
 
   </cmdsynopsis>
 </refsynopsisdiv>
 
 <refsection xml:id="description"><title>DESCRIPTION</title>
 
-  <para>Performs matching of the <emphasis>regular_expression</emphasis> with the names
+  <para>Performs matching of the <emphasis>globbing_expression</emphasis> with the names
 of all the objects in the database. It returns all those that successfully match.
   </para>
 </refsection>

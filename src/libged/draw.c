@@ -31,6 +31,7 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
+#include "bu/time.h"
 #include "raytrace.h"
 
 
@@ -593,6 +594,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
     int c;
     int ncpu = 1;
     int nmg_use_tnurbs = 0;
+    int skip_subtractions = 0;
     int enable_fastpath = 0;
     struct model *nmg_model;
     struct _ged_client_data dgcdp;
@@ -656,7 +658,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 
 	/* Parse options. */
 	bu_optind = 0;		/* re-init bu_getopt() */
-	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:")) != -1) {
+	while ((c = bu_getopt(argc, (char * const *)argv, "dfhm:nqstuvwx:C:STP:A:oRL:M")) != -1) {
 	    switch (c) {
 		case 'u':
 		    dgcdp.draw_edge_uses = 1;
@@ -675,6 +677,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 		    break;
 		case 'S':
 		    dgcdp.draw_no_surfaces = 1;
+		    skip_subtractions = 1;
 		    break;
 		case 'T':
 		    dgcdp.nmg_triangulate = 0;
@@ -937,7 +940,7 @@ _ged_drawtrees(struct ged *gedp, int argc, const char *argv[], int kind, struct 
 			continue;
 		    }
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, skip_subtractions);
 		    if (ret < 0) {
 			/* restore view bot threshold */
 			if (gedp && gedp->ged_gvp) gedp->ged_gvp->gv_bot_threshold = threshold_cached;
@@ -1280,7 +1283,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 	/* redraw everything */
 	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay))
 	{
-	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+	    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
 	    if (ret < 0) {
 		bu_vls_printf(gedp->ged_result_str, "%s: redraw failure\n", argv[0]);
 		return GED_ERROR;
@@ -1316,7 +1319,7 @@ ged_redraw(struct ged *gedp, int argc, const char *argv[])
 		    found_path = 1;
 		    db_free_full_path(&dl_path);
 
-		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback);
+		    ret = dl_redraw(gdlp, gedp->ged_wdbp->dbip, &gedp->ged_wdbp->wdb_initial_tree_state, gedp->ged_gvp, gedp->ged_create_vlist_callback, 0);
 		    if (ret < 0) {
 			bu_vls_printf(gedp->ged_result_str,
 				"%s: %s redraw failure\n", argv[0], argv[i]);

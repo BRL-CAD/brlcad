@@ -133,7 +133,7 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  * 'matches' array, and followed by a terminating NULL entry.
  *
  * If '*matches' is NULL, the caller is expected to free the matches
- * array with bu_free_argv() If '*matches' is non-NULL (i.e., string
+ * array with bu_argv_free() If '*matches' is non-NULL (i.e., string
  * array is already allocated or on the stack), the caller is expected
  * to ensure adequate entries are allocated and call bu_free_array()
  * to clean up.  If 'matches' is NULL, no entries will be allocated or
@@ -219,13 +219,14 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
 /**
  * Returns the number of directory entries for a given path matching
  * an optional glob pattern.  If the caller provides a pointer to an
- * argv-style 'files' array, this function will allocate the array
- * with dynamically allocated strings for any matching file(s).
+ * argv-style 'files' array, this function will dynamically allocate
+ * an array of strings, filled with the sorted listing of matching
+ * file(s).
  *
- * It is the caller's responsibility to free a non-NULL 'files' array
- * with bu_free_argv().
+ * It is the caller's responsibility to free a non-NULL array with
+ * bu_argv_free().
  */
-BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
+BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
 /**
  * Call canonicalization routines to both expand and validate

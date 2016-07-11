@@ -46,7 +46,7 @@
 #include "tinycthread.h"
 
 
-static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long milliseconds)
+static inline void mtSignalWaitTimeout(cnd_t *gsignal, mtx_t *mutex, long milliseconds)
 {
     uint64_t microsecs;
     struct timespec ts;
@@ -62,7 +62,7 @@ static inline void mtSignalWaitTimeout(cnd_t *signal, mtx_t *mutex, long millise
 
     ts.tv_nsec = microsecs * 1000;
 
-    if (cnd_timedwait(signal, mutex, &ts) == thrd_error)
+    if (cnd_timedwait(gsignal, mutex, &ts) == thrd_error)
 	bu_bomb("cnd_timedwait() failed");
 }
 

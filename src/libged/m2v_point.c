@@ -84,7 +84,7 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 
     /* Convert the incoming model point to a view point */
     MAT4X3PNT(view, gedp->ged_gvp->gv_model2view, model);
-    bn_encode_vect(gedp->ged_result_str, view);
+    bn_encode_vect(gedp->ged_result_str, view, 1);
 
     return GED_OK;
 }

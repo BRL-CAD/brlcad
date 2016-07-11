@@ -36,7 +36,8 @@
 int do_projection = 1;
 char eor, eof, card[256];
 fastf_t scale, inv_scale, conv_factor;
-int units, counter, pstart, dstart, totentities, dirarraylen;
+int units, counter, pstart, dstart;
+size_t totentities, dirarraylen;
 FILE *fd;
 struct rt_wdb *fdout;
 char brlcad_file[256];

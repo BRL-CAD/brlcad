@@ -77,7 +77,7 @@ and with @DEPRECATED in source code comments.  Where users are not
 adversely affected, a run-time DEPRECATION statement may be printed.
 
 Whenever published functionality is finally removed, move its entry
-from the DEPRECATED section below to the OBSOLETE section for the
+from the DEPRECATED section below to the REMOVED section for the
 version in which it was removed.  Make sure the entry retains a
 reference to the version in which the item was marked as deprecated.
 
@@ -112,32 +112,80 @@ calls that can be updated must be updated at that time.
 The items listed below are interfaces that are deprecated.  They are
 categorized by the release in which the change was made.  If the
 change involved a removal of a command or function, both the original
-and new names should be listed for reference.
+and new names should be listed for reference.  If an item is marked
+with a "'" (single quote), that means it was not documented and may be
+removed at any time.
 
 
 7.26
 ----
+ray tracing tools
+	lgt : functionally replaced by nirt
+	rtcell', rtfrac', rtpp, rtrad', rtrange, rtray, rtregis, rtsil'
+	Removed as part of distillation effort [deprecated 7.26]
+converter tools
+	cy-g, euclid-g, euclid_format', euclid_unformat', g-euclid,
+	g-euclid1', g-tankill, intaval-g.py, viewpoint-g : obsolete formats
+	plot3-X, plot3-hpgl, plot3-tek : obsolete interface, see overlay command
+	plot3debug, xyz-plot3 : see plot3-asc,asc-plot3
+	bot-bldxf', bot_shell-vtk, g-nmg, nmg-bot, nmg-rib, nmg-sgp',
+	poly-bot, rt_bot_faces, : primitive-specific converters
+	Removed as part of distillation effort [deprecated 7.26]
+image tools
+	cmap-fb, fb-cmap, fbcmrot : colormap support obsolete
+	fbed, cell-fb : outside scope
+	fbscanplot, polar-fb, pp-fb, bw-imp, pixinfo.sh : obsolete
+	png_info : incorporating into icv
+	pixpaste : outside scope, license
+	alias-pix' : incorporating into icv
+	asc2pix' : incorporating into icv
+	pix-yuv', yuv-pix' : obsolete non-standard format
+	texturescale : obsolete implementation
+	Removed as part of distillation effort [deprecated 7.26]
+video & animation tools
+	anim_*', fbanim, chan_add', chan_mult, chan_permute,
+	pixflip-fb' : outside scope
+	pixfields', pixfieldsep' : outside scope
+	orbit.sh, rtwalk, scriptsort, script-tab', tabinterp, tabsup,
+	azel, bary
+	Removed as part of distillation effort [deprecated 7.26]
+signal analysis tools
+	a-d', d-a', bw-a', i-a', u-a' : incorporating into cv
+	d-a', d-bw', d-f', d-i', d-u' : incorporating into cv
+	a-d', bw-d', c-d', f-d', i-d', u-d' : incorporating into cv
+	f-d', f-i', d-f', i-f', u-f', u-bw' : incorporating into cv
+	d2-c', double-asc' : incorporating into cv
+	Removed as part of distillation effort [deprecated 7.26]
+infrared & shapefactor tools
+	all_sf', if-X, ifdisp, pictx, showterm, firpass, secpass, shapefact
+	ssamp-bw, ssampview', ssampview.tcl'
+	Removed as part of distillation effort [deprecated 7.26]
+misc tools
+	fix_polysolids' : obsolete primitive
+	remapid : superseded by reid+remat
+	buffer : unnecesary network/stream buffering tool
+	hex : superseded by hexdump
+	Removed as part of distillation effort [deprecated 7.26]
+include/bu/ptbl.h
+        BU_PTBL_BASEADDR, BU_PTBL_LASTADDR, BU_PTBL_END
+        Removed as private implementation detail [deprecated 7.26
 include/bu/hash.h
 	bu_hash_tbl_find, bu_set_hash_value, bu_get_hash_value, bu_get_hash_key,
-        bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
-        bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
-        bu_hash_tbl will be made private.
-        Replaced with new API [deprecated 7.26]
-rtrad, bot_shell-vtk, rt_bot_faces, g-nmg, nmg-bot, nmg-rib, nmg-sgp, plot3-hpgl,
-plot3-tk, plot3-X, fix_polysolids, terrain, pixinfo.sh, png_info, dbcp, buffer,
-hex, bw-d, c-d, d-bw, d-f, d-i, d-u, f-d, f-i, i-d, -if, u-bw, u-d, u-f
-	remove obsolete commands [deprecated 7.26]
+	bu_hash_tbl_add, bu_hash_tbl_print, bu_hash_tbl_free, bu_hash_tbl_first,
+	bu_hash_tbl_next, bu_hash_tbl_traverse, public structs bu_hash_entry and
+	bu_hash_tbl will be made private.
+	Replaced with new API [deprecated 7.26]
 include/bu/cmd.h
 	remove struct bu_cmdhist and struct bu_cmdhist_obj [deprecated 7.26]
 	BU_CMDHIST_NULL, BU_CMDHIST_OBJ_NULL, bu_cmdhist_histor, bu_cmdhist_add,
 	bu_cmdhist_curr, bu_cmdhist_nest, bu_cmdhist_prev [deprecated 7.26]
 fb-rle, rle-fb, bw-rle, pix-rle, rle-pix
-        All tools focused specifically on the RLE image format. [deprecated 7.26]
+	All tools focused specifically on the RLE image format. [deprecated 7.26]
 nirt
 	-T - use LIBRT_BOT_MINTIE environment variable instead [deprecated 7.26]
 all global variables
 	global variables are no longer considered published public API [deprecated 7.26]
-        bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
+	bn_mat_identity -> MAT_INIT_IDN or MAT_IDN() or NULL
 include/bn.h
 	tp_setup, no longer needs to be public API [deprecated 7.26]
 include/raytrace.h
@@ -147,31 +195,48 @@ include/raytrace.h
 	tcl_list_to_fastf_array *_tcl_*, removal of all tcl-specific
 	API functions [deprecated 7.26]
 	db_regexp_match_all() -> db_ls() [deprecated 7.26]
+include/rt/solid.h
+	shouldn't be public API - this level of detail belongs inside the display
+        manager [deprecated 7.26]
+include/ged/defines.h
+	remove struct ged_drawable -  shouldn't be public API [deprecated 7.26]
+	remove freesolid from struct ged - exposes struct solid [deprecated 7.26]
+include/ged/view.h
+	remove current forms of dl_erasePathFromDisplay and invent_solid - they
+	expose the struct solid type [deprecated 7.26]
 include/tclcad.h
 	tclcad_bn_mat_print tclcad_rt_parse_ray tclcad_rt_pr_cutter
 	tclcad_rt_pr_hit tclcad_rt_rt tclcad_rt_import_from_path, removal of all
-        tcl-specific API functions [deprecated 7.26]
+	tcl-specific API functions [deprecated 7.26]
 pixcut, pixpaste
-        copyright cleanup [deprecated 7.26]
+	copyright cleanup [deprecated 7.26]
 librt, fast4-g
 	removal of CLINE entity support [deprecated 7.26]
-kill, killtree, killall, killrefs
-        replaced with rm command [deprecated 7.26]
-rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
-        original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
+mged
+	kill, killtree, killall, killrefs - replaced with rm command [deprecated 7.26]
+
+	rm comb obj1 obj2 comb1 ... -> new behavior: remove objects and empty combs from .g
+	original functionality replaced with rm comb/obj* comb/comb1 ... syntax [deprecated 7.26]
+
+	expand -> replaced by search -name <pattern> (previous docs indicating matching of
+	expand was regex were wrong - uses bu_fnmatch.) [deprecated 7.26]
+
+	pathlist, paths -> replaced by search [deprecated 7.26]
+burst
+	remove termlib-based interactive menu interface [deprecated 7.26]
 
 7.24
 ----
 fbed, pp-fb
-        removes termcap use, no known users [deprecated 7.24]
+	removes termcap use, no known users [deprecated 7.24]
 include/raytrace librt
-        db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
-        db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
-        db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
+	db_full_path_list_add(), db_free_full_path_list() [deprecated 7.24]
+	db_search_formplan(), db_search_freeplan(), db_search_full_paths() [deprecated 7.24]
+	db_search_unique_objects(), struct db_full_path_list [deprecated 7.24]
 src/irprep
-        all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
+	all_sf, firpass, ir-X, irdisp, pictx, secpass, shapefact, showterm [deprecated 7.24]
 include/raytrace.h librt
-        RT_DBHASH and RT_DBNHASH [deprecated 7.24]
+	RT_DBHASH and RT_DBNHASH [deprecated 7.24]
 
 7.22
 ----
@@ -180,9 +245,9 @@ include/raytrace.h librt
 	RT_GET_TREE -> BU_GET [deprecation 7.22]
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 include/bu.h
-        bu_parse_mm() [deprecated 7.22]
+	bu_parse_mm() [deprecated 7.22]
 librtserver
-        becoming stand-alone project, removes optional java dependency [deprecated 7.22]
+	becoming stand-alone project, removes optional java dependency [deprecated 7.22]
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
@@ -222,8 +287,6 @@ db.h
 	rt_fastf_float() -> ntohf() [deprecated 7.18]
 	rt_mat_dbmat() -> htonf() [deprecated 7.18]
 	rt_dbmat_mat() -> ntohf() [deprecated 7.18]
-dbcp
-	dbcp -> dd [deprecated 7.18]
 mged
 	?(*) -> ? -(*) [deprecated 7.18]
 	apropos(*) -> apropos -(*) [deprecated 7.18]
@@ -292,27 +355,42 @@ include/raytrace.h
 	struct hit.hit_normal -> RT_HIT_NORMAL [deprecated pre-7.0]
 
 
-************
-* OBSOLETE *
-************
+***********
+* REMOVED *
+***********
 
-Below are the interfaces that have followed deprecation policy and are
-now no longer a part of BRL-CAD.
+Below are the interfaces that have followed deprecation policy or were
+deemed minimally impacting and, regardless, are now no longer a part
+of BRL-CAD.
 
 7.26.0
 ------
+dbcp
+	dbcp -> dd [deprecated 7.18]
+pov (mged)
+	removed, undocumented command with many alternatives [minimally impacting]
+polybinout (mged)
+	removed, undocumented command, use plot [minimally impacting]
+pl (mged)
+	removed, use plot [minimally impacting]
 conf.h
 	removed - replaced with common.h [deprecated 7.0]
-libbu, libbn
-        no longer utilize or require Tcl [7.26 architecture change]
+UtahRLE image tools
+	no longer installed by default with BRL-CAD - not used directly by
+	BRL-CAD tools [minimally impacting]
+Tcl in libbu and libbn
+	no longer utilize or require Tcl [dependency eliminated]
+Tcl/Tk man pages
+	no longer installed by default with BRL-CAD when the bundled Tcl/Tk is used
+	to build [minimally impacting]
 include/dg.h
-        implementation detail no longer being exposed, use libged [deprecated 7.22]
+	implementation detail no longer being exposed, use libged [deprecated 7.22]
 autogen.sh && configure
 	GNU Autotools build system -> CMake build system [deprecated 7.20]
 Dunn camera and Canon printer tools
-	dunncolor [ deprecated 7.16 ]
-	dunnsnap [ deprecated 7.16 ]
-	canonize [ deprecated 7.16 ]
+	dunncolor [deprecated 7.16]
+	dunnsnap [deprecated 7.16]
+	canonize [deprecated 7.16]
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
 include/bu.h
@@ -344,7 +422,7 @@ mged
 	-n option -> -c option [deprecated 7.14]
 	per_line [deprecated 7.14]
 SGI-specific tools
-	pl-sgi -> pl-fb [ deprecated 7.16 ]
+	pl-sgi -> pl-fb [deprecated 7.16]
 src/gtools
 	g_[toolname] -> g[toolname] [deprecated 7.14]
 src/librt/cmd.c
@@ -361,6 +439,9 @@ pixread.sh
 	obsolete hardware [deprecated 7.16]
 sgisnap.sh
 	obsolete hardware [deprecated 7.16]
+librtserver and Java Native Interface (JNI) bindings
+	removed, unused and undocumented, modern approach would be to
+	use a tool such as swig to generate bindings [minimally impacting]
 
 7.24.2
 ------
@@ -994,23 +1075,23 @@ s/bu_count_path(.*)\);/bu_dir_list\1, NULL);/g
 	made bu_dir_list() return the number of entries [7.21]
 s/bu_strcmpm\((.*),([^,]*)\)/bu_strcmp(\1)/g
 	no use for label parameter, convert to bu_strcmp() [7.21]
-        bu_set_realtime() [deprecated 7.22]
+	bu_set_realtime() [deprecated 7.22]
 
 7.24
 ----
 s/bu_set_realtime\([[:space:]]\);//g
-        didn't do anything [7.23]
+	didn't do anything [7.23]
 s/.*bu_cpulimit_[sg]et\([[:space:]]\);//g
-        didn't do anything [7.23]
+	didn't do anything [7.23]
 s/rt_g\./RTG\./g
-        renamed rt_g global to RTG so it doesn't match the struct name [7.24]
+	renamed rt_g global to RTG so it doesn't match the struct name [7.24]
 s/rt_functab\[/OBJ\[/g
-        renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
+	renamed rt_functab global to OBJ so it doesn't match the struct name [7.24]
 s/redraw_vlist/draw/g
-        removed redraw_vlist mged command, just call draw or refresh [7.24]
+	removed redraw_vlist mged command, just call draw or refresh [7.24]
 s/RT_BADNUM/INVALID/g
 s/RT_BADVAL/VINVALID/g
-        moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
+	moved RT_BADNUM and RT_BADVEC to vmath.h as INVALID and VINVALID [7.24]
 s/bu_create_hash_tbl/bu_hash_tbl_create/g
 s/bu_find_hash_entry/bu_hash_tbl_find/g
 s/bu_hash_add_entry/bu_hash_tbl_add/g
@@ -1019,7 +1100,7 @@ s/bu_hash_tbl_pr/bu_hash_tbl_print/g
 s/dm_applicationfocus\([[:space:]]*\);//g
 	only useful in older os x versions, users can now do the same thing via XQuartz preferences [7.24]
 s/bu_vls_trunc2/bu_vls_trunc/g
-        removed duplicitous function in favor of more general version [7.24]
+	removed duplicitous function in favor of more general version [7.24]
 s/bn_pi/M_PI/g
 s/bn_twopi/M_2PI/g
 s/bn_halfpi/M_PI_2/g
@@ -1031,34 +1112,34 @@ s/bn_inv255/(1.0 \/ 255.0)/g
 s/bn_degtorad/DEG2RAD/g
 s/bn_radtodeg/RAD2DEG/g
 s/bn_sin_scale/(BN_SINTABSIZE \/ M_2PI)/g
-        eliminated a number of libbn globals in favor of existing constants [7.24]
+	eliminated a number of libbn globals in favor of existing constants [7.24]
 s/(#[[:space:]]*include[[:space:]]+["<])vfont-if\.h/\1bu\/vfont.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])cmd\.h/\1bu\/cmd.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])hist\.h/\1bu\/hist.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])magic\.h/\1bu\/magic.h/g
-        library-specific public headers moved into a subdir [7.24]
+	library-specific public headers moved into a subdir [7.24]
 s/([^_])([nh]to[hn][fd])/\1bu_cv_\2/g
-        ntohf, ntohd, htonf, htond renamed with bu_cv_ prefix [7.24]
+	ntohf, ntohd, htonf, htond renamed with bu_cv_ prefix [7.24]
 
 7.26
 ----
 s/bu_kill_parallel\([[:space:]]*\);//g
-        didn't do anything unless called from forked process, use bu_terminate() [7.25]
+	didn't do anything unless called from forked process, use bu_terminate() [7.25]
 s/bu_jmpbuf/bu_jmpbuf[0]/g
 s/bu_setjmp_valid/bu_setjmp_valid[0]/g
-        can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
+	can replace 0 with bu_parallel_id() to get thread-safe jumping [7.25]
 s/bu_semaphore_reinit/bu_semaphore_init/g
-        no longer need to manually reinitialize (or initialize) semaphores [7.25]
+	no longer need to manually reinitialize (or initialize) semaphores [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])fbio\.h/\1bu\/fb.h/g
-        fbio.h is now part of fb.h [7.25]
+	fbio.h is now part of fb.h [7.25]
 s/UNION/'u'/g
 s/SUBTRACT/'-'/g
 s/INTERSECT/'+'/g
-        old db.h db4 preprocessor symbols removed, use char or DB_OP_* [7.25]
+	old db.h db4 preprocessor symbols removed, use char or DB_OP_* [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])bselect\.h/\1bsocket.h/g
 s/(#[[:space:]]*include[[:space:]]+["<])bin\.h/\1bnetwork.h/g
-        rename bselect.h and bin.h public headers to be more declaratively named [7.25]
-s/db5_enc_len[(.*)]/DB5_ENC_LEN(\1)/g
+	rename bselect.h and bin.h public headers to be more declaratively named [7.25]
+s/db5_enc_len\[(.*)\]/DB5_ENC_LEN(\1)/g
 	replaced db5_enc_len[] global array with DB5_ENC_LEN() macro [7.25]
 s/db_normalize/bu_normalize/g
 	move the path normalization routine to libbu [7.25]
@@ -1107,13 +1188,25 @@ s/rt_ck_vlist/bn_ck_vlist/g
 s/rt_vlist_export/bn_vlist_export/g
 s/rt_vlblock_free/bn_vlblock_free/g
 s/rt_vlblock_find/bn_vlblock_find/g
-        move vlist functions from librt to libbn [7.25]
+	move vlist functions from librt to libbn [7.25]
 s/([[:space:],\(,"])bn_tcl/\1tclcad_bn/g
 s/([[:space:],\(,"])rt_tcl_rt/\1tclcad_rt/g
 s/([[:space:],\(,"])rt_tcl/\1tclcad_rt/g
 	tcl library registrations moved to libtclcad [7.25]
 s/rt_grow_boolstack/rt_bool_growstack/g
-	 rename with consistent prefixes [7.25]
+	rename with consistent prefixes [7.25]
 s/(#[[:space:]]*include[[:space:]]+["<])obj\.h/\1dm\/bview.h/g
 s/GED_VIEW_OBJ_NULL/VIEW_OBJ_NULL/g
 	move view_obj to dm/bview.h [7.25]
+s/BU_PTBL_CLEAR_I\((.*)\)/BU_PTBL_SET(\1, (long*)0)/g
+	replace BU_PTBL_CLEAR_I into the BU_PTBL_SET command [7.25]
+s/BU_PTBL_END\(([^\)]*)\)/(\1)->end/g
+        replace BU_PTBL_END with direct ptbl peek or BU_PTBL_LEN [7.25]
+s/bu_free_argv/bu_argv_free/g
+s/bu_dup_argv/bu_argv_dup/g
+s/bu_dupinsert_argv/bu_argv_dupinsert/g
+	bu_*_argv -> bu_argv_* [7.25]
+s/bu_dir_list/bu_file_list/g
+	bu_dir_list -> bu_file_list [7.25]
+s/BU_FNMATCH_NOMATCH/1/g
+	don't use an explicit define for the non-matching case [7.25]

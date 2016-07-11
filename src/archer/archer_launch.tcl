@@ -50,9 +50,15 @@ if {! [info exists argv0] } {
 # the root path against the argv0 path.
 set check_root_dir [file normalize [bu_brlcad_root [bu_brlcad_dir bin]]]
 set check_bin_dir [file dirname [file normalize $argv0]]
-set dir_same [string compare $check_root_dir $check_bin_dir]
-if {!$dir_same == 0} {
-    puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
+
+# Because there are conditions where we don't know our argv0 full path
+# reliably, make sure the "normalized" argv0 executable actually exists at that
+# path before we start complaining.
+if {[file exists [file normalize $argv0]]} {
+    set dir_same [string compare $check_root_dir $check_bin_dir]
+    if {!$dir_same == 0} {
+	puts "WARNING - bu_brlcad_root is set to [file dirname $check_root_dir], but binary being run is located in [file dirname $check_bin_dir].  This probably means you are running [file tail $argv0] from a non-install directory with BRL-CAD already present in [file dirname $check_root_dir] - be aware that .tcl files from [file dirname $check_root_dir] will be loaded INSTEAD OF local files. Tcl script changes made to source files for testing purposes will not be loaded, even though [file tail $argv0] will most likely 'work'.  To test local changes, either clear [file dirname $check_root_dir], specify a different install prefix (i.e. a directory *without* BRL-CAD installed) while building, or manually set the BRLCAD_ROOT environment variable."
+    }
 }
 
 # Itk's default class doesn't keep the menu, but Archer needs it - redefine itk:Toplevel
