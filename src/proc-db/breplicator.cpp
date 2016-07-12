@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 #include "bu/log.h"
 #include "bn.h"
@@ -386,8 +386,9 @@ generate_brep(int count, ON_3dPoint *points)
 static void
 printusage(void)
 {
-	fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
+    fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
 }
+
 
 int
 main(int argc, char *argv[])
@@ -401,9 +402,9 @@ main(int argc, char *argv[])
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file breplicator.g):\n");
+	return 1;
     }
 
     bu_log("Breplicating...please wait...\n");

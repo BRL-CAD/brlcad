@@ -1,7 +1,7 @@
 /*	                  C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,9 +56,8 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
-#include "obj.h"
 
 #include "./mged.h"
 #include "./cmd.h"
@@ -421,7 +420,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (db_lookup(wdbp->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
 	    } else {
 		bu_log("%s: already exists\n", bu_vls_addr(name));
 	    }
@@ -430,7 +429,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
 	if (db_get_external(&external, proto2, wdbp->dbip)) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database read error, aborting\n");
 	    }
@@ -440,7 +439,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	dp = db_diradd(wdbp->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
 	if (dp == RT_DIR_NULL) {
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
 	    } else {
 		bu_log("An error has occurred while adding a new object to the database.");
 	    }
@@ -450,7 +449,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
 	    bu_free_external(&external);
 	    if (wdbp->wdb_interp) {
-		Tcl_AppendResult(wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
+		Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
 	    } else {
 		bu_log("Database write error, aborting\n");
 	    }
@@ -898,27 +897,36 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 {
     size_t ret;
     struct spline s;
-    vect_t *verts  = (vect_t *)NULL;
-    struct link *links = (struct link *)NULL;
+    vect_t *verts;
+    struct link *links;
     int opt;
     size_t i, j, k, inc;
     size_t n_verts, n_links;
-    int arg = 1;
-    FILE *points = (FILE *)NULL;
+    int arg;
+    FILE *points;
     char tok[81] = {0}, line[81] = {0};
     char ch;
-    fastf_t totlen = 0.0;
+    fastf_t totlen;
     fastf_t len, olen;
     fastf_t dist_to_next;
     fastf_t min, max, mid;
-    fastf_t pt[3] = {0};
-    int no_draw = 0;
+    fastf_t pt[3];
+    int no_draw;
 
     /* allow interrupts */
     if (setjmp(jmp_env) == 0)
 	(void)signal(SIGINT, sig3);
     else
 	return TCL_OK;
+
+    /* initial values go here; silences warnings over setjmp/longjmp clobbering */
+    verts  = (vect_t *)NULL;
+    links = (struct link *)NULL;
+    arg = 1;
+    points = (FILE *)NULL;
+    totlen = 0.0;
+    VSETALL(pt, 0.0);
+    no_draw = 0;
 
     bu_optind = 1;
 

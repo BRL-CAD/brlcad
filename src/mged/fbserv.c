@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,12 +29,9 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#ifdef HAVE_WINSOCK_H
-#  include <process.h>
-#  include <winsock.h>
-#else
-#  include <sys/socket.h>
-#  include <netinet/in.h>		/* For htonl(), etc. */
+#include "bnetwork.h"
+#ifndef HAVE_WINSOCK_H
+#  include <sys/socket.h> /* TODO - should this be in bsocket.h? */
 #endif
 
 #include "tcl.h"
@@ -102,7 +99,10 @@ fbserv_drop_client(int sub)
 	Tcl_DeleteChannelHandler(clients[sub].c_chan,
 				 clients[sub].c_handler,
 				 (ClientData)clients[sub].c_fd);
-	Tcl_Close(dmp->dm_interp, clients[sub].c_chan);
+
+	if (dm_interp(dmp) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), clients[sub].c_chan);
+	}
 	clients[sub].c_chan = NULL;
 #else
 	Tcl_DeleteFileHandler(clients[sub].c_fd);
@@ -251,7 +251,9 @@ fbserv_set_port(void)
 	fd = (ClientData)netfd;
 	Tcl_DeleteChannelHandler(netchan, (Tcl_ChannelProc *)fbserv_new_client_handler, fd);
 
-	Tcl_Close(dmp->dm_interp, netchan);
+	if (dm_interp(dmp) != NULL) {
+	    Tcl_Close((Tcl_Interp *)dm_interp(dmp), netchan);
+	}
 	netchan = NULL;
 
 	closesocket(netfd);
@@ -285,7 +287,10 @@ fbserv_set_port(void)
 	/*
 	 * Hang an unending listen for PKG connections
 	 */
-	netchan = Tcl_OpenTcpServer(dmp->dm_interp, port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+
+	if (dm_interp(dmp) != NULL) {
+	    netchan = Tcl_OpenTcpServer((Tcl_Interp *)dm_interp(dmp), port, hostname, fbserv_new_client_handler, (ClientData)curr_dm_list);
+	}
 
 	if (netchan == NULL)
 	    ++port;

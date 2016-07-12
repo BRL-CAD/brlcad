@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,8 @@
 #include <stdio.h>
 
 #include "bu/parallel.h"
+#include "bu/mime.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
@@ -116,13 +118,16 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	pixsize = 0;
 	/* force change of 'outputfile' to short circuit libicv for LGT_FLOAT outputs, adds '.los' extension */
 	if (outputfile) {
+	    struct bu_vls c = BU_VLS_INIT_ZERO;
 	    char buf[BUFSIZ];
-	    int format = icv_guess_file_format(outputfile, buf);
-	    if (format != ICV_IMAGE_UNKNOWN) {
-		bu_strlcpy(buf, outputfile, BUFSIZ);
-		bu_strlcat(buf, floatfileext, BUFSIZ);
-		outputfile = floatfilename = bu_strdup(buf);
+	    if (bu_path_component(&c, outputfile, BU_PATH_EXT)) {
+		if (bu_file_mime(bu_vls_addr(&c), BU_MIME_IMAGE) != BU_MIME_IMAGE_UNKNOWN) {
+		    bu_strlcpy(buf, outputfile, BUFSIZ);
+		    bu_strlcat(buf, floatfileext, BUFSIZ);
+		    outputfile = floatfilename = bu_strdup(buf);
+		}
 	    }
+	    bu_vls_free(&c);
 	}
     }
 

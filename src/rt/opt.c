@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,10 +96,11 @@ size_t		incr_level = 0;		/* current incremental level */
 size_t		incr_nlevel = 0;	/* number of levels */
 size_t          full_incr_sample = 0;    /* current fully incremental sample */
 size_t          full_incr_nsamples = 0;  /* number of samples in the fully incremental mode */
-int		npsw = 1;		/* number of worker PSWs to run */
+size_t		npsw = 1;		/* number of worker PSWs to run */
 struct resource	resource[MAX_PSW];	/* memory resources */
 int		transpose_grid = 0;     /* reverse the order of grid traversal */
 int             random_mode = 0;        /* Mode to shoot rays at random directions */
+int		opencl_mode = 0;	/* enable/disable OpenCL */
 /***** end variables shared with worker() *****/
 
 /***** Photon Mapping Variables *****/
@@ -121,7 +122,6 @@ int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
 					 * also shared with view.c */
 char		*outputfile = (char *)NULL;	/* name of base of output file */
-int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 
 int		sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
@@ -194,9 +194,11 @@ get_args(int argc, const char *argv[])
 
 
 #define GETOPT_STR	\
-	".:,:@:a:b:c:d:e:f:g:h:ij:k:l:n:o:p:q:rs:tu:v:w:x:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:?"
+	".:,:@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ( (c=bu_getopt( argc, (char * const *)argv, GETOPT_STR )) != -1 )  {
+    	if (bu_optopt == '?')
+    	    c = 'h';
 	switch ( c )  {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -209,9 +211,11 @@ get_args(int argc, const char *argv[])
 		}
 		bn_randhalftabsize = i;
 		break;
-	    case 'h':
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
+	    case 'm':
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		if ( i != 4 ) {
+		    bu_exit( EXIT_FAILURE, "ERROR: bad air density + haze\n" );
+		}
 		break;
 	    case 't':
 		transpose_grid = 1;
@@ -338,9 +342,6 @@ get_args(int argc, const char *argv[])
 	    }
 	    case 'U':
 		use_air = atoi( bu_optarg );
-		break;
-	    case 'I':
-		interactive = 1;
 		break;
 	    case 'i':
 		incr_mode = 1;
@@ -512,26 +513,26 @@ get_args(int argc, const char *argv[])
 	    case 'P':
 	    {
 		/* Number of parallel workers */
-		int avail_cpus;
+		size_t avail_cpus;
 
 		avail_cpus = bu_avail_cpus();
 
 		npsw = atoi( bu_optarg );
 
 		if (npsw > avail_cpus ) {
-		    fprintf( stderr, "Requesting %d cpus, only %d available.",
-			     npsw, avail_cpus );
+		    fprintf( stderr, "Requesting %lu cpus, only %lu available.",
+			     (unsigned long)npsw, (unsigned long)avail_cpus );
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {
 			fprintf(stderr, "\nAllowing surplus cpus due to debug flag.\n");
 		    } else {
-			fprintf( stderr, "  Will use %d.\n", avail_cpus );
+			fprintf( stderr, "  Will use %lu.\n", (unsigned long)avail_cpus );
 			npsw = avail_cpus;
 		    }
 		}
-		if ( npsw == 0 || npsw < -MAX_PSW || npsw > MAX_PSW )  {
-		    fprintf(stderr, "Numer of requested cpus (%d) is out of range 1..%d", npsw, MAX_PSW);
+		if ( npsw < 1 || npsw > MAX_PSW )  {
+		    fprintf(stderr, "Numer of requested cpus (%lu) is out of range 1..%d", (unsigned long)npsw, MAX_PSW);
 
 		    if ((bu_debug & BU_DEBUG_PARALLEL) ||
 			(RT_G_DEBUG & DEBUG_PARALLEL)) {
@@ -607,6 +608,9 @@ get_args(int argc, const char *argv[])
 	    case 'd':
 		rpt_dist = atoi( bu_optarg );
 		break;
+	    case 'z':
+		opencl_mode = atoi( bu_optarg );
+		break;
 	    case '+':
 	    {
 		register char	*cp = bu_optarg;
@@ -620,8 +624,8 @@ get_args(int argc, const char *argv[])
 		}
 	    }
 	    break;
-	    default:		/* '?' */
-		if(bu_optopt != '?')
+	    default:		/* '?' 'h' */
+		if(bu_optopt != 'h')
 		    fprintf(stderr, "ERROR: argument missing or bad option specified\n");
 		return 0;	/* BAD */
 	}

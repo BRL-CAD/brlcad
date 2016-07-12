@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,7 +22,7 @@
 #include "bu/parse.h"
 #include "bu/log.h"
 #include "opennurbs.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #define DEFAULT_FILENAME "csgbrep.g"
@@ -97,12 +97,11 @@ main(int argc, char** argv)
     tol.para = 1.0 - tol.perp;
 
     if (argc > 1)
-	bu_log("Usage: %s (arguments ignored)\n", argv[0]);
+	bu_exit(1, "Usage: %s\n(unexpected arguments encountered)\n", argv[0]);
     else
 	bu_log("Usage: %s\n", argv[0]);
 
-    bu_log("       Program continues running (will create file csgbrep.g):\n");
-    bu_log("Writing objects to %s:\n", DEFAULT_FILENAME);
+    bu_log("Writing objects to [%s]:\n", DEFAULT_FILENAME);
 
     ON::Begin();
 

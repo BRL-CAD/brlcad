@@ -1,7 +1,7 @@
 /*                        A T T A C H . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #  include "tk.h"
 #endif
 
-#include "bin.h"
+#include "bnetwork.h"
 
 /* Make sure this comes after bio.h (for Windows) */
 #ifdef HAVE_GL_GL_H
@@ -42,6 +42,7 @@
 #endif
 
 #include "vmath.h"
+#include "bu/env.h"
 #include "ged.h"
 
 #include "./mged.h"
@@ -133,14 +134,10 @@ ogl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	if (!dm_make_current(dmp))
-	    /* allow further processing of this event */
-	    return TCL_OK;
+	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
+	return TCL_OK;
     }
     /* allow further processing of this event */
     return TCL_OK;
@@ -154,14 +151,10 @@ osgl_doevent(void *UNUSED(vclientData), void *veventPtr)
     /*ClientData clientData = (ClientData)vclientData;*/
     XEvent *eventPtr= (XEvent *)veventPtr;
     if (eventPtr->type == Expose && eventPtr->xexpose.count == 0) {
-	if (!dm_make_current(dmp))
-	    /* allow further processing of this event */
-	    return TCL_OK;
+	(void)dm_make_current(dmp);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
 	dirty = 1;
-	/* no further processing for this event */
-	return TCL_RETURN;
+	return TCL_OK;
     }
     /* allow further processing of this event */
     return TCL_OK;
@@ -293,8 +286,10 @@ mged_dm_init(struct dm_list *o_dm_list,
 #endif
     (void)dm_configure_win(dmp, 0);
 
-    bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
-    Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    if (dm_get_pathname(dmp)) {
+	bu_vls_printf(&vls, "mged_bind_dm %s", bu_vls_addr(dm_get_pathname(dmp)));
+	Tcl_Eval(INTERP, bu_vls_addr(&vls));
+    }
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -347,7 +342,7 @@ release(char *name, int need_close)
 	    return TCL_OK;  /* Ignore */
 
 	FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	    if (!BU_STR_EQUAL(name, bu_vls_addr(dm_get_pathname(p->dml_dmp))))
+	    if (dm_get_pathname(p->dml_dmp) && !BU_STR_EQUAL(name, bu_vls_addr(dm_get_pathname(p->dml_dmp))))
 		continue;
 
 	    /* found it */
@@ -363,7 +358,7 @@ release(char *name, int need_close)
 			     " not found\n", (char *)NULL);
 	    return TCL_ERROR;
 	}
-    } else if (dmp && BU_STR_EQUAL("nu", bu_vls_addr(dm_get_pathname(dmp))))
+    } else if (dmp && dm_get_pathname(dmp) && BU_STR_EQUAL("nu", bu_vls_addr(dm_get_pathname(dmp))))
 	return TCL_OK;  /* Ignore */
 
     if (fbp) {
@@ -541,9 +536,6 @@ gui_setup(const char *dstr)
     /* set DISPLAY to dstr */
     if (dstr != (char *)NULL) {
 	Tcl_SetVar(INTERP, "env(DISPLAY)", dstr, TCL_GLOBAL_ONLY);
-#ifdef HAVE_SETENV
-	setenv("DISPLAY", dstr, 0);
-#endif
     }
 
 #ifdef HAVE_TK
@@ -631,11 +623,11 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
 	tmp_dmp = dm_get();
 
 	opt_argc = argc - 1;
-	opt_argv = bu_dup_argv(opt_argc, argv + 1);
+	opt_argv = bu_argv_dup(opt_argc, argv + 1);
 	dm_processOptions(tmp_dmp, &tmp_vls, opt_argc, opt_argv);
-	bu_free_argv(opt_argc, opt_argv);
+	bu_argv_free(opt_argc, opt_argv);
 
-	if (strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
+	if (dm_get_dname(tmp_dmp) && strlen(bu_vls_addr(dm_get_dname(tmp_dmp)))) {
 	    if (gui_setup(bu_vls_addr(dm_get_dname(tmp_dmp))) == TCL_ERROR) {
 		bu_free((void *)curr_dm_list, "f_attach: dm_list");
 		curr_dm_list = o_dm_list;
@@ -678,8 +670,10 @@ mged_attach(struct w_dm *wp, int argc, const char *argv[])
     mged_link_vars(curr_dm_list);
 
     Tcl_ResetResult(INTERP);
-    Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(dmp), " (", dm_get_dm_lname(dmp),
-		     ")\n", (char *)NULL);
+    if (dm_get_dm_name(dmp) && dm_get_dm_lname(dmp)) {
+	Tcl_AppendResult(INTERP, "ATTACHING ", dm_get_dm_name(dmp), " (", dm_get_dm_lname(dmp),
+		")\n", (char *)NULL);
+    }
 
     share_dlist(curr_dm_list);
 
@@ -848,9 +842,11 @@ f_dm(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const cha
     }
 
     if (!cmd_hook) {
-	Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(dmp),
-			 "' display manager does not support local commands.\n",
-			 (char *)NULL);
+	if (dm_get_dm_name(dmp)) {
+	    Tcl_AppendResult(interpreter, "The '", dm_get_dm_name(dmp),
+		    "' display manager does not support local commands.\n",
+		    (char *)NULL);
+	}
 	return TCL_ERROR;
     }
 
@@ -938,19 +934,20 @@ void
 mged_link_vars(struct dm_list *p)
 {
     mged_slider_init_vls(p);
-
-    bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-    bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-    bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-    bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-    bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
-    bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,
-		  bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+    if (dm_get_pathname(p->dml_dmp)) {
+	bu_vls_printf(&p->dml_fps_name, "%s(%s,fps)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+	bu_vls_printf(&p->dml_aet_name, "%s(%s,aet)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+	bu_vls_printf(&p->dml_ang_name, "%s(%s,ang)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+	bu_vls_printf(&p->dml_center_name, "%s(%s,center)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+	bu_vls_printf(&p->dml_size_name, "%s(%s,size)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+	bu_vls_printf(&p->dml_adc_name, "%s(%s,adc)", MGED_DISPLAY_VAR,
+		bu_vls_addr(dm_get_pathname(p->dml_dmp)));
+    }
 }
 
 
@@ -969,9 +966,10 @@ f_get_dm_list(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, 
 	return TCL_ERROR;
     }
 
-    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(dlp->dml_dmp)));
-
+    FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
+	if (dm_get_pathname(dlp->dml_dmp))
+	    Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(dlp->dml_dmp)));
+    }
     return TCL_OK;
 }
 

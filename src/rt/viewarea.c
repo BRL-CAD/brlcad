@@ -1,7 +1,7 @@
 /*                      V I E W A R E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,13 +37,11 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
 
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 

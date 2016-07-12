@@ -1,7 +1,7 @@
 /*                           R E G . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -184,7 +184,16 @@ mk_addmember(
     mat_t mat,
     int op)
 {
-    struct wmember *wp;
+    struct wmember *wp = WMEMBER_NULL;
+
+    /* If we can't append it to anything, we can't add it. */
+    if (!headp) return WMEMBER_NULL;
+
+    /* Empty names aren't very useful and can produce lots of weird errors. */
+    if (!name || strlen(name) == 0) {
+	bu_log("mk_addmember() cannot make a member with an empty name\n");
+	return WMEMBER_NULL;
+    }
 
     BU_ALLOC(wp, struct wmember);
     wp->l.magic = WMEMBER_MAGIC;

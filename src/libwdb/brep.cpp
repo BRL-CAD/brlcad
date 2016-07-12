@@ -1,7 +1,7 @@
 /*                          B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include "bio.h"
 
 #include "bu/log.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
 #include "wdb.h"

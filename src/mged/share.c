@@ -1,7 +1,7 @@
 /*                         S H A R E . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -114,7 +114,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
     }
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l)
-	if (BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
+	if (dm_get_pathname(dlp1->dml_dmp) && BU_STR_EQUAL(argv[2], bu_vls_addr(dm_get_pathname(dlp1->dml_dmp))))
 	    break;
 
     if (dlp1 == &head_dm_list) {
@@ -127,7 +127,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 
     if (!uflag) {
 	FOR_ALL_DISPLAYS(dlp2, &head_dm_list.l)
-	    if (BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
+	    if (dm_get_pathname(dlp2->dml_dmp) && BU_STR_EQUAL(argv[3], bu_vls_addr(dm_get_pathname(dlp2->dml_dmp))))
 		break;
 
 	if (dlp2 == &head_dm_list) {
@@ -436,7 +436,7 @@ share_dlist(struct dm_list *dlp2)
 
     FOR_ALL_DISPLAYS(dlp1, &head_dm_list.l) {
 	if (dlp1 != dlp2 &&
-	    dm_get_type(dlp1->dml_dmp) == dm_get_type(dlp2->dml_dmp) &&
+	    dm_get_type(dlp1->dml_dmp) == dm_get_type(dlp2->dml_dmp) && dm_get_dname(dlp1->dml_dmp) && dm_get_dname(dlp2->dml_dmp) &&
 	    !bu_vls_strcmp(dm_get_dname(dlp1->dml_dmp), dm_get_dname(dlp2->dml_dmp))) {
 	    if (dm_share_dlist(dlp1->dml_dmp, dlp2->dml_dmp) == TCL_OK) {
 		struct bu_vls vls = BU_VLS_INIT_ZERO;

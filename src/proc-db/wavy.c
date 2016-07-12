@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
+#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 
@@ -92,10 +92,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-    	printusage();
-    	bu_log("       Program continues running:\n");
-    }
+    bu_log("Writing out geometry to file [wavy.g] ...");
 
     outfp = wdb_fopen("wavy.g");
 
@@ -123,7 +120,8 @@ main(int argc, char **argv)
     mk_bspline(outfp, nurb_name, surfaces);
 
     wdb_close(outfp);
-    bu_log("Geometry saved to 'wavy.g'\n");
+
+    bu_log(" done.\n");
 
     return 0;
 }

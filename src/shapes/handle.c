@@ -1,7 +1,7 @@
 /*                        H A N D L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -65,7 +65,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hgt = 0.0;		/* Height of handle. */
     double len = 0.0;		/* Length of handle. */
     double r1 = 0.0;		/* Radius of tori & radius of cylinders. */
@@ -120,11 +120,10 @@ main(int argc, char **argv)
 
 	/* Explain makings of handle. */
     	printusage();
-	printf("       Program continues running:\n\n");
 	(void)fflush(stdout);
 
 	/* Find name of mged file to create. */
-	printf("Enter the name of the mged file to be created ");
+	printf("\nEnter the name of the mged file to be created ");
 	printf("(25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);

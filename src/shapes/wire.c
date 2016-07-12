@@ -1,7 +1,7 @@
 /*                          W I R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -48,7 +48,7 @@ int
 main(int argc, char *argv[])
 {
     struct rt_wdb *fpw;			/* File to be created. */
-    char filemged[26] = {0};		/* Mged file name. */
+    char filemged[27] = {0};		/* Mged file name. */
     double numseg = -1.0;		/* Number of segments. */
     double scanseg;
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
@@ -80,7 +80,6 @@ main(int argc, char *argv[])
     bu_log(usage);
     if (argc > 1 && argv)
 	bu_exit(1, NULL);
-    printf("       Program continues running (in interactive mode):\n");
 
     /* Set up solid, region, & group names. */
     solcyl[0] = 's';

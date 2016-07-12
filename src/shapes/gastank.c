@@ -1,7 +1,7 @@
 /*                       G A S T A N K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
@@ -52,7 +52,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hgt=0;       	/* Height, width, & depth of gas tank. */
     double wid=0;
     double dpt=0;
@@ -113,7 +113,6 @@ main(int argc, char **argv)
 
 	/* Print info about the window. */
 	explain();
-	bu_log("\n       Program continues running:\n\n");
 
 	/* Find name of mged file to be created. */
 	printf("Enter the mged file to be created (25 char max).\n\t");

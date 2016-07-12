@@ -1,7 +1,7 @@
 /*                    V I E W W E I G H T . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 
-#include "db.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
+#include "rt/db4.h"  /* FIXME: Yes, I know I shouldn't be peeking, put I
 		    am only looking to see what units we prefer... */
 
 #include "./rtuif.h"

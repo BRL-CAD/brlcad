@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -190,8 +190,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	a.a_x <<= (incr_nlevel-incr_level);
 	a.a_y <<= (incr_nlevel-incr_level);
     } else {
-	a.a_y = pixelnum/width;
-	a.a_x = pixelnum - (a.a_y * width);
+	a.a_y = (int)(pixelnum/width);
+	a.a_x = (int)(pixelnum - (a.a_y * width));
 	/* a.a_x = pixelnum%width; */
     }
 
@@ -456,8 +456,6 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * In order to reduce the traffic through the res_worker critical
  * section, a multiple pixel block may be removed from the work queue
  * at once.
- *
- * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
 worker(int cpu, void *UNUSED(arg))
@@ -692,13 +690,11 @@ grid_setup(void)
 
 /**
  * Compute a run of pixels, in parallel if the hardware permits it.
- *
- * For a general-purpose version, see LIBRT rt_shoot_many_rays().
  */
 void
 do_run(int a, int b)
 {
-    int cpu;
+    size_t cpu;
 
 #ifdef USE_FORKED_THREADS
     int pid, wpid;

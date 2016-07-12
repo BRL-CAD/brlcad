@@ -1,7 +1,7 @@
 /*                   T C L C A D _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ int
 tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
 	    const char * const *args)
 {
-    int result;
+    int ret;
     size_t i;
 
     Tcl_DString script;
@@ -43,9 +43,10 @@ tclcad_eval(Tcl_Interp *interp, const char *command, size_t num_args,
     for (i = 0; i < num_args; ++i)
 	Tcl_DStringAppendElement(&script, args[i]);
 
-    result = Tcl_Eval(interp, Tcl_DStringValue(&script));
+    ret = Tcl_Eval(interp, Tcl_DStringValue(&script));
     Tcl_DStringFree(&script);
-    return result;
+
+    return ret;
 }
 
 
@@ -53,14 +54,15 @@ int
 tclcad_eval_noresult(Tcl_Interp *interp, const char *command, size_t num_args,
 		     const char * const *args)
 {
-    int result;
+    int ret;
+
     Tcl_Obj *saved_result = Tcl_GetObjResult(interp);
     Tcl_IncrRefCount(saved_result);
-    result = tclcad_eval(interp, command, num_args, args);
+    ret = tclcad_eval(interp, command, num_args, args);
     Tcl_SetObjResult(interp, saved_result);
     Tcl_DecrRefCount(saved_result);
 
-    return result;
+    return ret;
 }
 
 

@@ -1,7 +1,7 @@
 /*                       R E S H O O T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,7 +104,6 @@ struct shot {
 };
 
 /**
- * @struct shot_sp
  * The parse table for a struct shot
  */
 static const struct bu_structparse shot_sp[] = {
