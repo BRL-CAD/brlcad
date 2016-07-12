@@ -1,7 +1,7 @@
 /*                    M E T A B A L L _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,11 +49,11 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 #include "wdb.h"
 
 #include "metaball.h"

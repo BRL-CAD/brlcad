@@ -1,7 +1,7 @@
 /*                    T I E _ K D T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,19 +22,16 @@
  *
  */
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #include <math.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include "bio.h"
 
 #include "vmath.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "tieprivate.h"
@@ -153,7 +150,7 @@ tie_kdtree_prep_head(struct tie_s *tie, struct tie_tri_s *tri_list, unsigned int
     VSETALL(tie->min, +INFINITY);
     VSETALL(tie->max, -INFINITY);
 
-    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), __FUNCTION__);
+    g->tri_list = (struct tie_tri_s **)bu_calloc(tri_num, sizeof(struct tie_tri_s *), "tie_kdtree_prep_head()");
 
     /* form bounding box of scene */
     for (i = 0; i < tri_num; i++) {
@@ -487,8 +484,10 @@ find_split_optimal(struct tie_s *tie, struct tie_kdtree_s *node, TIE_3 *cmin, TI
      * triangles lack any sort of coherent structure.
      */
     if ((tfloat)(gap[d][1] - gap[d][0]) / (tfloat)slice_num > MIN_SPAN && node_gd->tri_num > 500) {
+	int gap0 = gap[d][0] - slice_num/2;
+	int gap1 = gap[d][1] - slice_num/2;
 	split = d;
-	if (abs(gap[d][0] - slice_num/2) < abs(gap[d][1] - slice_num/2)) {
+	if (abs(gap0) < abs(gap1)) {
 	    /* choose gap[d][0] as splitting plane */
 	    split_coef = ((tfloat)gap[d][0] / (tfloat)(slice_num-1)) * (tfloat)(slice_num-2) / (tfloat)slice_num + (tfloat)1 / (tfloat)slice_num;
 	    split_slice = gap[d][0];
@@ -595,7 +594,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 	bu_bomb("Illegal tie kdtree method\n");
 
     /* Allocate 2 children nodes for the parent node */
-    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), __FUNCTION__);
+    node->data = bu_calloc(2, sizeof(struct tie_kdtree_s), "tie_kdtree_build()");
     node->b = 0;
 
     BU_ALLOC(((struct tie_kdtree_s *)(node->data))[0].data, struct tie_geom_s);
@@ -658,7 +657,7 @@ tie_kdtree_build(struct tie_s *tie, struct tie_kdtree_s *node, unsigned int dept
 		child[n]->tri_list = NULL;
 	    }
 	} else {
-	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, __FUNCTION__);
+	    child[n]->tri_list = (struct tie_tri_s **)bu_realloc(child[n]->tri_list, sizeof(struct tie_tri_s *)*child[n]->tri_num, "tie_kdtree_build()");
 	}
     }
 

@@ -1,7 +1,7 @@
 /*                          A R B N . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,10 @@
 /** @{ */
 /** @file primitives/arbn/arbn.c
  *
- * Intersect a ray with an Arbitrary Regular Polyhedron with an
- * arbitrary number of faces.
+ * This implements polyhedron with an arbitrary number of faces.  The
+ * polyhedron is defined by a set four or more plane equations.  The
+ * volume must be convex and is defined as the intersection of all the
+ * halfspaces prescribed by the plane equations.
  *
  */
 
@@ -33,15 +35,16 @@
 #include <string.h>
 #include <math.h>
 #include <ctype.h>
-#include "bin.h"
+#include "bnetwork.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
+#include "bg/polygon.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
+#include "../../librt_private.h"
 
 /**
  * Calculate a bounding RPP for an ARBN
@@ -280,8 +283,7 @@ rt_arbn_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct
 
     /* Validate */
     if (iplane == -1 || oplane == -1) {
-	bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n",
-	       stp->st_name);
+	/*bu_log("rt_arbn_shoot(%s): 1 hit => MISS\n", stp->st_name);*/
 	return 0;	/* MISS */
     }
     if (in >= out || out >= INFINITY)
@@ -498,7 +500,7 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 	edge2 = 0;
 	while (!done) {
 	    size_t edge3;
-	    size_t tmp_v1, tmp_v2;
+	    size_t tmp;
 
 	    /* Look for out of order edge (edge2) */
 	    while (++edge2 < edge_count[face] &&
@@ -521,18 +523,18 @@ Sort_edges(struct arbn_edges *edges, size_t *edge_count, const struct rt_arbn_in
 
 	    if (edge2 != edge3) {
 		/* swap edge2 and edge3 */
-		tmp_v1 = edges[LOC(face, edge2)].v1_no;
-		tmp_v2 = edges[LOC(face, edge2)].v2_no;
+		tmp = edges[LOC(face, edge2)].v1_no;
 		edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge3)].v1_no;
+		edges[LOC(face, edge3)].v1_no = tmp;
+		tmp = edges[LOC(face, edge2)].v2_no;
 		edges[LOC(face, edge2)].v2_no = edges[LOC(face, edge3)].v2_no;
-		edges[LOC(face, edge3)].v1_no = tmp_v1;
-		edges[LOC(face, edge3)].v2_no = tmp_v2;
+		edges[LOC(face, edge3)].v2_no = tmp;
 	    }
 	    if (edges[LOC(face, edge1)].v2_no == edges[LOC(face, edge2)].v2_no) {
 		/* reverse order of edge */
-		tmp_v1 = edges[LOC(face, edge2)].v1_no;
+		tmp = edges[LOC(face, edge2)].v1_no;
 		edges[LOC(face, edge2)].v1_no = edges[LOC(face, edge2)].v2_no;
-		edges[LOC(face, edge2)].v2_no = tmp_v1;
+		edges[LOC(face, edge2)].v2_no = tmp;
 	    }
 
 	    edge1 = edge2;
@@ -1209,7 +1211,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 		c++;
 	    }
 	    len = 0;
-	    (void)tcl_list_to_fastf_array(brlcad_interp, argv[1], &new_planes, &len);
+	    (void)_rt_tcl_list_to_fastf_array(argv[1], &new_planes, &len);
 
 	    if (len%ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
@@ -1236,7 +1238,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    } else {
 		bu_vls_printf(logstr,
 			      "ERROR: illegal argument, choices are P, P#, P+, or N\n");
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	    if (i >= arbn->neqn) {
 		bu_vls_printf(logstr, "ERROR: plane number out of range\n");
@@ -1244,8 +1246,7 @@ rt_arbn_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, c
 	    }
 	    len = ELEMENTS_PER_PLANE;
 	    array = (fastf_t *)&arbn->eqn[i];
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1],
-					&array, &len) != ELEMENTS_PER_PLANE) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &array, &len) != ELEMENTS_PER_PLANE) {
 		bu_vls_printf(logstr,
 			      "ERROR: incorrect number of coefficients for a plane\n");
 		return BRLCAD_ERROR;
@@ -1305,11 +1306,11 @@ rt_arbn_faces_area(struct poly_face* faces, struct rt_arbn_internal* aip)
 	tmp_pts[i] = faces[i].pts;
     	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
     for (i = 0; i < aip->neqn; i++) {
 	faces[i].npts = npts[i];
-    	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
-    	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+    	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+    	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_arbn_faces_area: tmp_pts");
     bu_free((char *)npts, "rt_arbn_faces_area: npts");
@@ -1363,7 +1364,7 @@ rt_arbn_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_arbn_faces_area(faces, aip);
     for (i = 0; i < aip->neqn; i++) {
-	bn_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
+	bg_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
 
     }

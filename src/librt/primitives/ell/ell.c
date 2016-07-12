@@ -1,7 +1,7 @@
 /*                           E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,11 +34,11 @@
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -164,6 +164,33 @@ struct ell_specific {
 
 
 #define ELL_NULL ((struct ell_specific *)0)
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_ell_specific {
+    cl_double ell_V[3];         /* Vector to center of ellipsoid */
+    cl_double ell_SoR[16];      /* Scale(Rot(vect)) */
+    cl_double ell_invRSSR[16];  /* invRot(Scale(Scale(Rot(vect)))) */
+};
+
+size_t
+clt_ell_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct ell_specific *ell =
+        (struct ell_specific *)stp->st_specific;
+    struct clt_ell_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_ell_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->ell_V, ell->ell_V);
+    MAT_COPY(args->ell_SoR, ell->ell_SoR);
+    MAT_COPY(args->ell_invRSSR, ell->ell_invRSSR);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Compute the bounding RPP for an ellipsoid

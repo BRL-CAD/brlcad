@@ -1,7 +1,7 @@
 /*                     N U R B _ P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "plot3.h"
+#include "rt/nurb.h"
+#include "bn/plot3.h"
 
 
 void

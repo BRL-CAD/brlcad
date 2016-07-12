@@ -1,7 +1,7 @@
 /*                            H F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,9 +54,9 @@
 #include "bu/cv.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -762,7 +762,7 @@ axis_plane_isect(int plane, fastf_t inout, struct xray *rp, struct hf_specific *
     right *= hf->hf_file2mm;
     answer = (right-left)/xright*xx+left;
 
-    if (loc[Z]-SQRT_SMALL_FASTF < answer) {
+    if (loc[Z] - answer < SQRT_SMALL_FASTF) {
 	(*hp)->hit_magic = RT_HIT_MAGIC;
 	(*hp)->hit_dist = inout;
 	(*hp)->hit_surfno = plane;
@@ -1015,7 +1015,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	xCell = curloc[X]/xWidth;
@@ -1270,7 +1270,7 @@ rt_hf_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct s
 	 * samples and the scaling factor is used.  Second, the math
 	 * is nice to us.  IF we are entering at the far end
 	 * (curloc[X] == Xlen || curloc[Y] == Ylen) then the result we
-	 * will get back is of the cell following this (out of bounds)
+	 * will get back is of the cell following this (out of bounds).
 	 * So we add a check for that problem.
 	 */
 	yCell = curloc[Y]/yWidth;

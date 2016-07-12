@@ -1,7 +1,7 @@
 /*                   N U R B _ B E Z I E R . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /**

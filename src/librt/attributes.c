@@ -1,7 +1,7 @@
 /*                    A T T R I B U T E S . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,8 +44,9 @@ db5_import_attributes(struct bu_attribute_value_set *avs, const struct bu_extern
     cp = (const char *)ap->ext_buf;
     ep = (const char *)ap->ext_buf+ap->ext_nbytes;
 
-    /* Null "name" string (a pair of NULLs) indicates end of attribute
-     * list (for the original ASCII-valued attributes) */
+    /* An empty "name" string (a pair of nul bytes) indicates end of
+     * attribute list (for the original ASCII-valued attributes).
+     */
     while (*cp != '\0') {
 	if (cp >= ep) {
 	    bu_log("db5_import_attributes() ran off end of buffer, database is probably corrupted\n");
@@ -155,6 +156,7 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     const struct bu_attribute_value_pair *avpp;
     char *cp;
     size_t i;
+    size_t len;
 
     BU_CK_AVS(avs);
     BU_EXTERNAL_INIT(ext);
@@ -170,19 +172,17 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     /* First pass -- determine how much space is required */
     need = 0;
     avpp = avs->avp;
-    for (i = 0; i < (size_t)avs->count; i++, avpp++) {
+    for (i = 0; i < avs->count; i++, avpp++) {
 	if (avpp->name) {
-	    need += (int)strlen(avpp->name) + 1; /* include room for NULL */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->name);
 	}
+	need += 1; /* include room for nul byte */
 	if (avpp->value) {
-	    need += (int)strlen(avpp->value) + 1; /* include room for NULL */
-	} else {
-	    need += 1;
+	    need += strlen(avpp->value);
 	}
+	need += 1; /* include room for nul byte */
     }
-    /* include final null */
+    /* include a final nul byte */
     need += 1;
 
     if (need <= 1) {
@@ -197,23 +197,21 @@ db5_export_attributes(struct bu_external *ext, const struct bu_attribute_value_s
     cp = (char *)ext->ext_buf;
     avpp = avs->avp;
     for (i = 0; i < avs->count; i++, avpp++) {
-	int len;
-
 	if (avpp->name) {
-	    len = (int)strlen(avpp->name);
+	    len = strlen(avpp->name);
 	    memcpy(cp, avpp->name, len);
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
 
 	if (avpp->value) {
-	    len = (int)strlen(avpp->value);
+	    len = strlen(avpp->value);
 	    memcpy(cp, avpp->value, strlen(avpp->value));
-	    cp += len + 1;
+	    cp += len;
 	}
-	*cp = '\0'; /* pad null */
+	*(cp++) = '\0'; /* pad nul byte */
     }
-    *(cp++) = '\0'; /* final null */
+    *(cp++) = '\0'; /* final nul byte */
 
     /* sanity check */
     need = cp - ((char *)ext->ext_buf);
@@ -424,7 +422,7 @@ int db5_update_ident(struct db_i *dbip, const char *title, double local2mm)
     bu_vls_free(&units);
     bu_avs_free(&avs);
 
-    /* protect from loosing memory and from freeing what we are
+    /* protect from losing memory and from freeing what we are
        about to dup */
     if (dbip->dbi_title) {
 	old_title = dbip->dbi_title;

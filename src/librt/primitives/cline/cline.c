@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,14 +32,14 @@
 #include <math.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../../librt_private.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -533,15 +533,17 @@ struct cline_vert {
 int
 rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, const struct rt_tess_tol *ttol, const struct bn_tol *tol)
 {
-    struct shell *s;
-    struct rt_cline_internal *cline_ip;
     fastf_t ang_tol, abs_tol, norm_tol, rel_tol;
-    int nsegs, seg_no, i;
+    point_t top;
+    size_t i;
+    size_t nsegs;
+    size_t seg_no;
+    struct bu_ptbl faces;
     struct cline_vert *base_outer, *base_inner, *top_outer, *top_inner;
     struct cline_vert base_center, top_center;
+    struct rt_cline_internal *cline_ip;
+    struct shell *s;
     vect_t v1, v2;
-    point_t top;
-    struct bu_ptbl faces;
 
     RT_CK_DB_INTERNAL(ip);
     cline_ip = (struct rt_cline_internal *)ip->idb_ptr;
@@ -631,7 +633,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     bu_ptbl_init(&faces, 64, "faces");
     /* build outer faces */
     for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	int next_seg;
+	size_t next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
 
@@ -657,7 +659,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     /* build inner faces */
     if (cline_ip->thickness > 0.0 && cline_ip->thickness < cline_ip->radius) {
 	for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	    int next_seg;
+	    size_t next_seg;
 	    struct vertex **verts[3];
 	    struct faceuse *fu;
 
@@ -685,7 +687,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     top_center.v = (struct vertex *)NULL;
     VMOVE(top_center.pt, top);
     for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	int next_seg;
+	size_t next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
 
@@ -718,7 +720,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     base_center.v = (struct vertex *)NULL;
     VMOVE(base_center.pt, cline_ip->v);
     for (seg_no = 0; seg_no < nsegs; seg_no++) {
-	int next_seg;
+	size_t next_seg;
 	struct vertex **verts[3];
 	struct faceuse *fu;
 
@@ -773,7 +775,7 @@ rt_cline_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, 
     }
 
     /* Associate face plane equations */
-    for (i = 0; i < BU_PTBL_END(&faces); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&faces); i++) {
 	struct faceuse *fu;
 
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
@@ -1056,14 +1058,14 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 
 	if (*argv[0] == 'V') {
 	    newval = cli->v;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    newval = cli->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for point\n");
 		return BRLCAD_ERROR;

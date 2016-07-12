@@ -1,7 +1,7 @@
 /*                       N M G _ M O D . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 void
@@ -2844,18 +2844,18 @@ nmg_get_touching_jaunts(const struct loopuse *lu, struct bu_ptbl *tbl, int *need
  * next_start_eu - edgeuse that will be first in the next loop
  */
 static void
-nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu, int *visit_count, int *jaunt_status, const struct bu_ptbl *jaunt_tbl, const int jaunt_no, const int which_loop)
+nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu, int *visit_count, int *jaunt_status, const struct bu_ptbl *jaunt_tbl, const size_t jaunt_no, const int which_loop)
 {
     struct edgeuse *loop_eu;
     struct edgeuse *last_eu;
-    int j;
+    size_t j;
     int done = 0;
 
     NMG_CK_EDGEUSE(start_eu);
     BU_CK_PTBL(jaunt_tbl);
 
     /* Initialize the count */
-    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++)
+    for (j = 0; j < BU_PTBL_LEN(jaunt_tbl); j++)
 	visit_count[j] = 0;
 
     /* walk through the proposed new loop, updating the visit_count
@@ -2864,7 +2864,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     last_eu = NULL;
     loop_eu = start_eu;
     while (!done) {
-	for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
+	for (j = 0; j < BU_PTBL_LEN(jaunt_tbl); j++) {
 	    struct edgeuse *jaunt_eu;
 
 	    /* Don't worry about this jaunt */
@@ -2903,7 +2903,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
     /* check all jaunts to see if they are still touching jaunts in
      * the proposed loop
      */
-    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
+    for (j = 0; j < BU_PTBL_LEN(jaunt_tbl); j++) {
 	if (jaunt_status[j] == JS_JAUNT) {
 	    /* proposed loop contains this jaunt */
 	    if (visit_count[j] > 1)	/* it's still a touching jaunt */
@@ -2915,7 +2915,7 @@ nmg_check_proposed_loop(struct edgeuse *start_eu, struct edgeuse **next_start_eu
      * proposed loop will split the jaunt, so set its status to
      * JS_SPLIT.
      */
-    for (j = 0; j < BU_PTBL_END(jaunt_tbl); j++) {
+    for (j = 0; j < BU_PTBL_LEN(jaunt_tbl); j++) {
 	struct edgeuse *jaunt_eu;
 	struct edgeuse *jaunt_eu2;
 
@@ -3000,13 +3000,15 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     struct loopuse *new_lu;
     struct edgeuse *eu;
     struct edgeuse *eu2;
-    int count = 0;
+
     int jaunt_count;
-    int jaunt_no;
+
+    size_t count = 0;
+    size_t jaunt_no;
     int need_init = 1;
     int *visit_count;
     int *jaunt_status;
-    int i;
+    size_t i;
 
     NMG_CK_LOOPUSE(lu);
     BN_CK_TOL(tol);
@@ -3028,7 +3030,7 @@ top:
 	bu_log("nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu %p\n",
 	       jaunt_count, (void *)lu);
 	if (jaunt_count) {
-	    for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
+	    for (i = 0; i < BU_PTBL_LEN(&jaunt_tbl); i++) {
 		eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
 		bu_log("\t%p\n", (void *)eu);
 	    }
@@ -3108,19 +3110,19 @@ top:
     if (jaunt_status)
 	bu_free((char *)jaunt_status, "nmg_loop_split_at_touching_jaunt: jaunt_status[]\n");
 
-    visit_count = (int *)bu_calloc(BU_PTBL_END(&jaunt_tbl), sizeof(int),
+    visit_count = (int *)bu_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
 				   "nmg_loop_split_at_touching_jaunt: visit_count[]");
-    jaunt_status = (int *)bu_calloc(BU_PTBL_END(&jaunt_tbl), sizeof(int),
+    jaunt_status = (int *)bu_calloc(BU_PTBL_LEN(&jaunt_tbl), sizeof(int),
 				    "nmg_loop_split_at_touching_jaunt: jaunt_status[]");
 
     /* consider each jaunt as a possible location for splitting the loop */
-    for (jaunt_no = 0; jaunt_no < BU_PTBL_END(&jaunt_tbl); jaunt_no++) {
+    for (jaunt_no = 0; jaunt_no < BU_PTBL_LEN(&jaunt_tbl); jaunt_no++) {
 	struct edgeuse *start_eu1;	/* EU that will start a new loop upon split */
 	struct edgeuse *start_eu2;	/* EU that will start the remaining loop */
 	int do_split = 1;		/* flag: 1 -> this jaunt is a good choice for making the split */
 
 	/* initialize the status of each jaunt to unknown */
-	for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++)
+	for (i = 0; i < BU_PTBL_LEN(&jaunt_tbl); i++)
 	    jaunt_status[i] = JS_UNKNOWN;
 
 	/* consider splitting lu at this touching jaunt */
@@ -3144,7 +3146,7 @@ top:
 				jaunt_status, &jaunt_tbl, jaunt_no, 1);
 
 	if (RTG.NMG_debug & DEBUG_CUTLOOP) {
-	    for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
+	    for (i = 0; i < BU_PTBL_LEN(&jaunt_tbl); i++) {
 		struct edgeuse *tmp_eu;
 
 		tmp_eu = (struct edgeuse *)BU_PTBL_GET(&jaunt_tbl, i);
@@ -3173,7 +3175,7 @@ top:
 	 * one must be either split or still a touching jaunt.  Any
 	 * other status will create loops of two edgeuses!!!
 	 */
-	for (i = 0; i < BU_PTBL_END(&jaunt_tbl); i++) {
+	for (i = 0; i < BU_PTBL_LEN(&jaunt_tbl); i++) {
 	    if (jaunt_status[i] != JS_SPLIT && jaunt_status[i] != JS_TOUCHING_JAUNT) {
 		do_split = 0;
 		break;

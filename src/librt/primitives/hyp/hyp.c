@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,10 +40,10 @@
 /* interface headers */
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "../../librt_private.h"
 
@@ -700,10 +700,12 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t c, dtol, f, mag_a, mag_h, ntol, r1, r2, r3, cprime;
     fastf_t **ellipses = NULL;
     fastf_t theta_new;
-    int *pts_dbl, face, i, j, nseg;
-    int jj, nell;
-    mat_t invRoS;
-    mat_t SoR;
+    int *pts_dbl;
+    int idx;
+    size_t face, i, j, nseg;
+    size_t jj, nell;
+    mat_t invRoS = MAT_INIT_IDN;
+    mat_t SoR = MAT_INIT_IDN;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
@@ -716,9 +718,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
-
-    MAT_ZERO(invRoS);
-    MAT_ZERO(SoR);
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;
@@ -917,11 +916,10 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     vells = (struct vertex ***)
 	bu_malloc(nell*sizeof(struct vertex **), "vertex [][]");
     j = nseg;
-    for (i = nell-1; i >= 0; i--) {
-	vells[i] = (struct vertex **)
-	    bu_malloc(j*sizeof(struct vertex *), "vertex []");
+    for (i = 0; i < nell; i++) {
+	vells[i] = (struct vertex **)bu_malloc(j*sizeof(struct vertex *), "vertex []");
 	if (i && pts_dbl[i])
-	    j /= 2;
+	    j /=2;
     }
 
     /* top face of hyp */
@@ -958,12 +956,12 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* connect ellipses with triangles */
 
-    for (i = nell-2; i >= 0; i--) {
+    for (idx = nell-2; idx >= 0; idx--) {
 	/* skip top ellipse */
 	int bottom, top;
 
-	top = i + 1;
-	bottom = i;
+	top = idx + 1;
+	bottom = idx;
 	if (pts_dbl[top])
 	    nseg /= 2;	/* # segs in 'bottom' ellipse */
 	vertp[0] = (struct vertex *)0;
@@ -1114,7 +1112,7 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign vertexuse normals */
     nmg_vertex_tabulate(&vert_tab, &s->l.magic);
-    for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	point_t pt_prime, tmp_pt;
 	vect_t norm, rev_norm, tmp_vect;
 	struct vertex_g *vg;

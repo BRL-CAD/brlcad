@@ -1,7 +1,7 @@
 /*                   N M G _ E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,9 +33,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
@@ -92,10 +92,10 @@ verts_in_nmg_face(struct faceuse *fu)
 void
 nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 {
-    int cnt,		/* Number of vertices in face. */
-	cur,
-	i,
-	in_there;
+    int in_there;
+    size_t i;
+    size_t cnt; /* Number of vertices in face. */
+    size_t cur;
     struct vertex **verts;	/* List of verts in face. */
     struct edgeuse *eu;
     struct loopuse *lu;
@@ -144,7 +144,7 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
 
     /* Move edge geometry */
     nmg_edge_g_tabulate(&edge_g_tbl, &fu->l.magic);
-    for (i=0; i<BU_PTBL_END(&edge_g_tbl); i++) {
+    for (i=0; i<BU_PTBL_LEN(&edge_g_tbl); i++) {
 	long *ep;
 	struct edge_g_lseg *eg;
 
@@ -347,12 +347,12 @@ nmg_start_new_loop(struct edgeuse *start_eu, struct loopuse *lu1, struct loopuse
 		struct edgeuse *eu2;
 		struct loopuse *lu_tmp;
 		int loop_started=0;
-		int i;
+		size_t i;
 
 		eu2 = vu2->up.eu_p;
 
 		/* check if a loop has already been started here */
-		for (i=0; i<BU_PTBL_END(loops); i++) {
+		for (i=0; i<BU_PTBL_LEN(loops); i++) {
 		    struct bu_ptbl *loop_tab;
 		    struct edgeuse *loop_start_eu;
 
@@ -416,7 +416,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
     struct faceuse *fu;
     struct edgeuse *start_eu;
     struct bu_ptbl loops;
-    int i;
+    size_t i;
 
     NMG_CK_SHELL(s);
 
@@ -623,11 +623,11 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	nmg_start_new_loop(start_eu, lu1, lu2, &loops);
 
 	/* use loops table to create the new loops */
-	for (i=0; i<BU_PTBL_END(&loops); i++) {
+	for (i=0; i<BU_PTBL_LEN(&loops); i++) {
 	    struct loopuse *new_lu;
 	    struct loopuse *new_lu_mate;
 	    struct bu_ptbl *loop_tab;
-	    int eu_no;
+	    size_t eu_no;
 
 	    /* each table represents a new loopuse to be
 	     * constructed
@@ -637,7 +637,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 	    /* if there are some entries in this table, make a new
 	     * loopuse
 	     */
-	    if (BU_PTBL_END(loop_tab)) {
+	    if (BU_PTBL_LEN(loop_tab)) {
 		/* create new loop */
 		new_lu = nmg_mlv(&fu->l.magic, (struct vertex *)NULL, OT_SAME);
 		new_lu_mate = new_lu->lumate_p;
@@ -647,7 +647,7 @@ nmg_fix_overlapping_loops(struct shell *s, const struct bn_tol *tol)
 		nmg_kvu(BU_LIST_FIRST(vertexuse, &new_lu_mate->down_hd));
 
 		/* move edgeuses to new loops */
-		for (eu_no=0; eu_no<BU_PTBL_END(loop_tab); eu_no++) {
+		for (eu_no=0; eu_no<BU_PTBL_LEN(loop_tab); eu_no++) {
 		    struct edgeuse *mv_eu;
 
 		    /* get edgeuse to be moved */
@@ -993,7 +993,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     struct bu_ptbl shells;
     long *flags;
     long **copy_tbl;
-    int shell_no;
+    size_t shell_no;
     int is_void;
     int s_tmp_is_closed;
 
@@ -1039,7 +1039,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
 	bu_ptbl_ins(&shells, (long *)s_tmp);
 
     /* extrude a copy of each shell, one at a time */
-    for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no ++) {
+    for (shell_no=0; shell_no<BU_PTBL_LEN(&shells); shell_no ++) {
 	s_tmp = (struct shell *)BU_PTBL_GET(&shells, shell_no);
 
 	/* first make a copy of this shell */
@@ -1148,7 +1148,7 @@ nmg_hollow_shell(struct shell *s, const fastf_t thick, const int approximate, co
     }
 
     /* put it all back together */
-    for (shell_no=0; shell_no<BU_PTBL_END(&shells); shell_no++) {
+    for (shell_no=0; shell_no<BU_PTBL_LEN(&shells); shell_no++) {
 	struct shell *s2;
 
 	s2 = (struct shell *)BU_PTBL_GET(&shells, shell_no);
@@ -1187,7 +1187,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
     struct shell *s_tmp, *s2;
     struct bu_ptbl shells;
     struct bu_ptbl verts;
-    int shell_no;
+    size_t shell_no;
     int failed=0;
 
     NMG_CK_SHELL(s);
@@ -1231,8 +1231,8 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
     bu_ptbl_init(&verts, 64, " &verts ");
 
     /* extrude each shell */
-    for (shell_no=0; shell_no < BU_PTBL_END(&shells); shell_no++) {
-	int vert_no;
+    for (shell_no=0; shell_no < BU_PTBL_LEN(&shells); shell_no++) {
+	size_t vert_no;
 	int is_void;
 	long *flags;
 	struct faceuse *fu;
@@ -1269,7 +1269,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	nmg_vertex_tabulate(&verts, &s_tmp->l.magic);
 
 	/* now move all the vertices */
-	for (vert_no = 0; vert_no < BU_PTBL_END(&verts); vert_no++) {
+	for (vert_no = 0; vert_no < BU_PTBL_LEN(&verts); vert_no++) {
 	    struct vertex *new_v;
 
 	    new_v = (struct vertex *)BU_PTBL_GET(&verts, vert_no);

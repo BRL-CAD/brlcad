@@ -1,7 +1,7 @@
 /*                      D B _ M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,21 +29,13 @@
 
 #include "bio.h"
 
+#include "bu/path.h"
 #include "vmath.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
-int
-db_regexp_match(register const char *pattern, register const char *string)
-{
-    if (bu_fnmatch(pattern, string, 0) == 0)
-	return 1;
-
-    return 0;
-}
-
-
+/* Deprecated - use db_ls */
 int
 db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 {

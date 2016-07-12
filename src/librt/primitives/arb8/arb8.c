@@ -1,7 +1,7 @@
 /*                          A R B 8 . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
 /** @{ */
 /** @file primitives/arb8/arb8.c
  *
- * Intersect a ray with an Arbitrary Regular Polyhedron with as many
- * as 8 vertices.
+ * Intersect a ray with an Arbitrary Polyhedron with as many as 8
+ * vertices.
  *
  * An ARB is a convex volume bounded by 4 (pyramid), 5 (wedge), or 6
  * (box) planes.  This analysis depends on the properties of objects
@@ -58,11 +58,11 @@
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -179,6 +179,35 @@ const short local_arb4_edge_vertex_mapping[6][2] = {
     {1, 4},	/* edge 24 */
     {2, 4},	/* edge 34 */
 };
+
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_arb_specific {
+    cl_double arb_peqns[4*6];
+    cl_int arb_nmfaces;
+};
+
+size_t
+clt_arb_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct arb_specific *arb =
+        (struct arb_specific *)stp->st_specific;
+    struct clt_arb_specific *args;
+
+    const struct aface *afp;
+    cl_int j;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_arb_specific*)bu_pool_alloc(pool, 1, size);
+
+    for (afp = &arb->arb_face[j=0]; j < 6; j++, afp++) {
+        HMOVE(args->arb_peqns+4*j, afp->peqn);
+    }
+    args->arb_nmfaces = arb->arb_nmfaces;
+    return size;
+}
+#endif /* USE_OPENCL */
 
 
 /* rt_arb_get_cgtype(), rt_arb_std_type(), and rt_arb_centroid()
@@ -2219,6 +2248,61 @@ rt_arb_params(struct pc_pc_set * UNUSED(ps), const struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     return 0;			/* OK */
+}
+
+
+/**
+ * compute surface area of an arb8 by dividing it into
+ * it's component faces and summing the face areas.
+ */
+void
+rt_arb_surf_area(fastf_t *area, const struct rt_db_internal *ip)
+{
+    const int arb_faces[5][24] = rt_arb_faces;
+    int i, a, b, c, type;
+    vect_t b_a, c_a, area_;
+    plane_t plane;
+    struct bn_tol tmp_tol, tol;
+    struct rt_arb_internal *aip = (struct rt_arb_internal *)ip->idb_ptr;
+    RT_ARB_CK_MAGIC(aip);
+
+    /* set up tolerance for rt_arb_std_type */
+    tol.magic = BN_TOL_MAGIC;
+    tol.dist = 0.0001; /* to get old behavior of rt_arb_std_type() */
+    tol.dist_sq = tol.dist * tol.dist;
+    tol.perp = 1e-5;
+    tol.para = 1 - tol.perp;
+
+    type = rt_arb_std_type(ip, &tol) - 4;
+
+    /* tol struct needed for bn_mk_plane_3pts,
+     * can't be passed to the function since it
+     * must fit into the rt_functab interface */
+    tmp_tol.magic = BN_TOL_MAGIC;
+    tmp_tol.dist = RT_LEN_TOL;
+    tmp_tol.dist_sq = tmp_tol.dist * tmp_tol.dist;
+
+    for (i = 0; i < 6; i++) {
+	if (arb_faces[type][i*4] == -1)
+	    break;	/* faces are done */
+
+	/* a, b, c = face of the GENARB8 */
+	a = arb_faces[type][i*4];
+	b = arb_faces[type][i*4+1];
+	c = arb_faces[type][i*4+2];
+
+	/* create a plane from a, b, c */
+	if (bn_mk_plane_3pts(plane, aip->pt[a], aip->pt[b], aip->pt[c], &tmp_tol) < 0) {
+	    continue;
+	}
+
+	/* calculate area of the face */
+	VSUB2(b_a, aip->pt[b], aip->pt[a]);
+	VSUB2(c_a, aip->pt[c], aip->pt[a]);
+	VCROSS(area_, b_a, c_a);
+
+	*area += MAGNITUDE(area_);
+    }
 }
 
 

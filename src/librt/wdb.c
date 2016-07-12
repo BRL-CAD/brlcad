@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -284,6 +284,11 @@ wdb_export(
     intern.idb_type = id;
     intern.idb_ptr = gp;
     intern.idb_meth = &OBJ[id];
+
+    if (id == ID_DATUM) {
+	/* Set a default color for datum objects */
+	bu_avs_add(&intern.idb_avs, "color", "255/255/0");
+    }
 
     return wdb_put_internal(wdbp, name, &intern, local2mm);
 }

@@ -1,7 +1,7 @@
 /*                      M E M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -351,7 +351,7 @@ rt_memclose(void)
 
     while ((mp = rt_mem_freemap) != MAP_NULL) {
 	rt_mem_freemap = mp->m_nxtp;
-	bu_free((char *)mp, "struct mem_map " BU_FLSTR);
+	bu_free((char *)mp, "struct mem_map " CPP_FILELINE);
     }
 }
 
