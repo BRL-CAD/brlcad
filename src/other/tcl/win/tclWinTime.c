@@ -216,6 +216,11 @@ TclpGetClicks(void)
  *----------------------------------------------------------------------
  */
 
+/* TODO - make this part of the CMake testing */
+#if (_MSC_VER > 1800)
+  #define timezone _timezone
+#endif
+
 int
 TclpGetTimeZone(
     unsigned long currentTime)

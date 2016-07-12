@@ -31,6 +31,8 @@ include_directories(
     ${SC_SOURCE_DIR}/src/base
 )
 
-SC_ADDEXEC(exp2cxx "${exp2cxx_SOURCES}" "libexppp;express;base")
+SC_ADDEXEC(exp2cxx "${exp2cxx_SOURCES}" "libexppp;express;base" ${SC_EXEC_NOINSTALL})
 
-add_dependencies( exp2cxx version_string )
+if (NOT SC_IS_SUBBUILD)
+	add_dependencies( exp2cxx version_string )
+endif (NOT SC_IS_SUBBUILD)
