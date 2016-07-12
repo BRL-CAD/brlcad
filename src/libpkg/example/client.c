@@ -1,7 +1,7 @@
 /*                        C L I E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2006-2014 United States Government as represented by
+ * Copyright (c) 2006-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -232,7 +232,8 @@ main(int argc, char *argv[]) {
     const char *file = NULL;
 
     /* process the command-line arguments after the application name */
-    while ((c = bu_getopt(argc, argv, "p:P:hH")) != -1) {
+    while ((c = bu_getopt(argc, argv, "p:P:hH?")) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'p':
 	    case 'P':

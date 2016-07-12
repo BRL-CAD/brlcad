@@ -1,7 +1,7 @@
 /*                      T R I M S U R F . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -330,14 +330,8 @@ Assign_vu_geom(struct vertexuse *vu, fastf_t u, fastf_t v, struct face_g_snurb *
 	       srf->u.knots[0], srf->v.knots[0],
 	       srf->u.knots[srf->u.k_size-1], srf->v.knots[srf->v.k_size-1]);
 
-	if (u < srf->u.knots[0])
-	    u = srf->u.knots[0];
-	if (v < srf->v.knots[0])
-	    v = srf->v.knots[0];
-	if (u > srf->u.knots[srf->u.k_size-1])
-	    u = srf->u.knots[srf->u.k_size-1];
-	if (v > srf->v.knots[srf->v.k_size-1])
-	    v = srf->v.knots[srf->v.k_size-1];
+	CLAMP(u, srf->u.knots[0], srf->u.knots[srf->u.k_size-1]);
+	CLAMP(v, srf->v.knots[0], srf->v.knots[srf->v.k_size-1]);
 
 	moved = 1;
     }
@@ -1359,7 +1353,9 @@ void
 Convtrimsurfs()
 {
 
-    int i, convsurf = 0, totsurfs = 0;
+    size_t i;
+    size_t convsurf = 0;
+    size_t totsurfs = 0;
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
@@ -1394,7 +1390,7 @@ Convtrimsurfs()
 
     nmg_rebound(m, &tol);
 
-    bu_log("\n\t%d surfaces converted, adjusting surface normals....\n", convsurf);
+    bu_log("\n\t%zu surfaces converted, adjusting surface normals....\n", convsurf);
 
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1439,7 +1435,7 @@ Convtrimsurfs()
 
     }
 
-    bu_log("Converted %d Trimmed Surfaces successfully out of %d total Trimmed Surfaces\n", convsurf, totsurfs);
+    bu_log("Converted %zu Trimmed Surfaces successfully out of %zu total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();

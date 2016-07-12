@@ -1,7 +1,7 @@
 /*                         S T L - G . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/cv.h"
@@ -42,7 +42,7 @@
 #include "bu/units.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -111,7 +111,7 @@ mk_unique_brlcad_name(struct bu_vls *name)
 {
     char *c;
     int count=0;
-    int len;
+    size_t len;
 
     c = bu_vls_addr(name);
 

@@ -1,7 +1,7 @@
 /*                  G - X X X _ F A C E T S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,12 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
-#define VSETIN(a, b)	{\
+#define VSETIN(a, b) {\
 	(a)[X] = (b)[X]/25.4; \
 	(a)[Y] = (b)[Y]/25.4; \
 	(a)[Z] = (b)[Z]/25.4; \
@@ -49,31 +49,46 @@
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-extern double nmg_eue_dist;		/* from nmg_plot.c */
+#define CPP_QUOTE(string) #string
+#define CPP_XQUOTE(symbol) CPP_QUOTE(symbol)
 
-static char	usage[] = "\
-Usage: %s [-v][-xX lvl][-a abs_tess_tol (default: 0.0)][-r rel_tess_tol (default: 0.01)]\n\
-  [-n norm_tess_tol (default: 0.0)][-D dist_calc_tol (default: 0.0005)]\n\
-   -o output_file_name brlcad_db.g object(s)\n";
+#define DEFAULT_ABS_TOL 0.0
+#define DEFAULT_REL_TOL 0.01
+#define DEFAULT_NORM_TOL 0.0
 
-static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
-static int	verbose;
-static struct db_i		*dbip;
-static struct rt_tess_tol	ttol;	/* tessellation tolerance in mm */
-static struct bn_tol		tol;	/* calculation tolerance */
-static struct model		*the_model;
+static const char *usage =
+    "[-v][-xX lvl][-a abs_tess_tol (default: " CPP_XQUOTE(DEFAULT_ABS_TOL) ")]"
+    "[-r rel_tess_tol (default: " CPP_XQUOTE(DEFAULT_REL_TOL) ")]\n"
+    "\t[-n norm_tess_tol (default: " CPP_XQUOTE(DEFAULT_NORM_TOL) ")]"
+    "[-D dist_calc_tol (default: " CPP_XQUOTE(BN_TOL_DIST) ")]\n"
+    "\t-o output_file_name brlcad_db.g object(s)\n";
 
-static struct db_tree_state	tree_state;	/* includes tol & model */
+static int NMG_debug;	/* saved arg of -X, for longjmp handling */
+static int verbose;
+static struct db_i *dbip;
+static struct rt_tess_tol ttol;	/* tessellation tolerance in mm */
+static struct bn_tol tol;	/* calculation tolerance */
+static struct model *the_model;
 
-static int		regions_tried = 0;
-static int		regions_converted = 0;
-static int		regions_written = 0;
+static struct db_tree_state tree_state;	/* includes tol & model */
+
+static int regions_tried = 0;
+static int regions_converted = 0;
+static int regions_written = 0;
 static size_t tot_polygons = 0;
+
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
 
 int
 main(int argc, char **argv)
 {
-    int	c;
+    int c;
     double percent;
 
     bu_setprogname(argv[0]);
@@ -87,14 +102,14 @@ main(int argc, char **argv)
     /* Set up tessellation tolerance defaults */
     ttol.magic = RT_TESS_TOL_MAGIC;
     /* Defaults, updated by command line options. */
-    ttol.abs = 0.0;
-    ttol.rel = 0.01;
-    ttol.norm = 0.0;
+    ttol.abs = DEFAULT_ABS_TOL;
+    ttol.rel = DEFAULT_REL_TOL;
+    ttol.norm = DEFAULT_NORM_TOL;
 
     /* Set up calculation tolerance defaults */
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -135,12 +150,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open output file */
 
@@ -166,9 +181,9 @@ main(int argc, char **argv)
 	for (i = 1; i < argc; i++)
 	    bu_log(" %s", argv[i]);
 	bu_log("\nTessellation tolerances:\n\tabs = %g mm\n\trel = %g\n\tnorm = %g\n",
-		tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
+	       tree_state.ts_ttol->abs, tree_state.ts_ttol->rel, tree_state.ts_ttol->norm);
 	bu_log("Calculational tolerances:\n\tdist = %g mm perp = %g\n",
-		tree_state.ts_tol->dist, tree_state.ts_tol->perp);
+	       tree_state.ts_tol->dist, tree_state.ts_tol->perp);
     }
 
     /* Walk indicated tree(s).  Each region will be output separately */
@@ -191,7 +206,7 @@ main(int argc, char **argv)
     if (regions_tried > 0) {
 	percent = ((double)regions_written * 100) / regions_tried;
 	bu_log("                  %d triangulated successfully. %g%%\n",
-		regions_written, percent);
+	       regions_written, percent);
     }
 
     bu_log("%zd triangles written\n", tot_polygons);
@@ -209,6 +224,7 @@ main(int argc, char **argv)
 
     return 0;
 }
+
 
 /* routine to output the faceted NMG representation of a BRL-CAD region */
 static void
@@ -327,7 +343,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -336,7 +352,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 	(void)nmg_model_fuse(*tsp->ts_m, tsp->ts_tol);
 	ret_tree = nmg_booltree_evaluate(curtree, tsp->ts_tol, &rt_uniresource);
 
-    } else  {
+    } else {
 	/* catch */
 	char *name = db_path_to_string(pathp);
 
@@ -371,15 +387,15 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 /*
- *  Called from db_walk_tree().
+ * Called from db_walk_tree().
  *
- *  This routine must be prepared to run in parallel.
+ * This routine must be prepared to run in parallel.
  */
 union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
-    union tree		*ret_tree;
-    struct bu_list		vhead;
-    struct nmgregion	*r;
+    union tree *ret_tree;
+    struct bu_list vhead;
+    struct nmgregion *r;
 
     RT_CK_FULL_PATH(pathp);
     RT_CK_TREE(curtree);
@@ -390,7 +406,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     BU_LIST_INIT(&vhead);
 
     {
-	char	*sofar = db_path_to_string(pathp);
+	char *sofar = db_path_to_string(pathp);
 	bu_log("\ndo_region_end(%d %d%%) %s\n",
 	       regions_tried,
 	       regions_tried>0 ? (regions_converted * 100) / regions_tried : 0,
@@ -460,11 +476,11 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     }
 
     /*
-     *  Dispose of original tree, so that all associated dynamic
-     *  memory is released now, not at the end of all regions.
-     *  A return of TREE_NULL from this routine signals an error,
-     *  and there is no point to adding _another_ message to our output,
-     *  so we need to cons up an OP_NOP node to return.
+     * Dispose of original tree, so that all associated dynamic
+     * memory is released now, not at the end of all regions.
+     * A return of TREE_NULL from this routine signals an error,
+     * and there is no point to adding _another_ message to our output,
+     * so we need to cons up an OP_NOP node to return.
      */
 
 
@@ -475,6 +491,7 @@ union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *
     curtree->tr_op = OP_NOP;
     return curtree;
 }
+
 
 /*
  * Local Variables:

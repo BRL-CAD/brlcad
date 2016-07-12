@@ -1,7 +1,7 @@
 /*                        S P L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -96,8 +96,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     for (i = 0; i <= n1+2*m1; i++) {
 	Readdbl(&scan, "");
 	(*b_patch)->u.knots[i] = scan; /* double to fastf_t */
-	if ((*b_patch)->u.knots[i] < min_knot)
-	    min_knot = (*b_patch)->u.knots[i];
+	V_MIN(min_knot, (*b_patch)->u.knots[i]);
     }
 
     if (min_knot < 0.0) {
@@ -111,8 +110,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
     for (i = 0; i <= n2+2*m2; i++) {
 	Readdbl(&scan, "");
 	(*b_patch)->v.knots[i] = scan; /* double to fastf_t */
-	if ((*b_patch)->v.knots[i] < min_knot)
-	    min_knot = (*b_patch)->v.knots[i];
+	V_MIN(min_knot, (*b_patch)->v.knots[i]);
     }
     if (min_knot < 0.0) {
 	for (i = 0; i <= n2+2*m2; i++) {
@@ -129,8 +127,7 @@ spline(int entityno, struct face_g_snurb **b_patch)
 	    if (point_size == 4) {
 		Readdbl(&scan, "");
 		(*b_patch)->ctl_points[count*4 + 3] = scan; /* double to fastf_t */
-		if ((*b_patch)->ctl_points[count*4 + 3] > max_wt)
-		    max_wt = (*b_patch)->ctl_points[count*4 + 3];
+		V_MAX(max_wt, (*b_patch)->ctl_points[count*4 + 3]);
 	    } else {
 		Readdbl(&max_wt, "");
 	    }

@@ -1,7 +1,7 @@
 /*                     O N _ B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -107,7 +107,7 @@ Add_Edge(ON_BrepTrim *trim, SdaiPath *e_loop_path, ON_Brep_Info_AP203 *info)
 	    // add the edge
 	    oriented_edge->orientation_((Boolean)!trim->m_bRev3d);
 	    info->oriented_edges.push_back(new_oriented_edge);
-	    i = info->oriented_edges.size() - 1;
+	    i = (int)info->oriented_edges.size() - 1;
 	    e_loop_path->edge_list_()->AddNode(new EntityNode((SDAI_Application_instance *)(info->oriented_edges.at(i))));
 	}
     }
@@ -201,7 +201,7 @@ Populate_Instance_List(ON_Brep_Info_AP203 *info)
 
 //TODO - technically, we'll have to create a full set of STEP
 //objects for the empty brep to be "valid" - currently, the Closed_Shell
-//will warn about invalidity on import.  Not sure if its worth it.
+//will warn about invalidity on import.  Not sure if it's worth it.
 void
 STEP_Empty_BRep(struct directory *dp, AP203_Contents *sc, STEPentity **brep_shape, STEPentity **brep_product, STEPentity **brep_manifold)
 {

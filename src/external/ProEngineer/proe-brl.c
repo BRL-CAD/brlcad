@@ -1,7 +1,7 @@
 /*                      P R O E - B R L . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2014 United States Government as represented by
+ * Copyright (c) 2001-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -818,7 +818,7 @@ add_to_empty_list( char *name )
     }
 
     ptr->next = NULL;
-    ptr->name = (char *)strdup( name );
+    ptr->name = (char *)bu_strdup( name );
 }
 
 void
@@ -3043,8 +3043,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringToString( astr, tmp_str );
     ProWstringFree( tmp_str );
     reg_id = atoi( astr );
-    if ( reg_id < 1 )
-	reg_id = 1;
+    V_MAX(reg_id, 1);
 
     /* get max error */
     status = ProUIInputpanelValueGet( "proe_brl", "max_error", &tmp_str );
@@ -3070,8 +3069,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     min_error = atof( astr );
 
-    if (max_error < min_error)
-	max_error = min_error;
+    V_MAX(max_error, min_error);
 
     /* get the max angle control */
     status = ProUIInputpanelValueGet( "proe_brl", "max_angle_ctrl", &tmp_str );
@@ -3097,8 +3095,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
     ProWstringFree( tmp_str );
     min_angle_cntrl = atof( astr );
 
-    if (max_angle_cntrl < min_angle_cntrl)
-	max_angle_cntrl = min_angle_cntrl;
+    V_MAX(max_angle_cntrl, min_angle_cntrl);
 
     /* get the max to min steps */
     status = ProUIInputpanelValueGet( "proe_brl", "isteps", &tmp_str );
@@ -3167,8 +3164,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	min_hole_diameter = atof( astr );
-	if ( min_hole_diameter < 0.0 )
-	    min_hole_diameter = 0.0;
+	V_MAX(min_hole_diameter, 0.0);
 
 	/* get the minimum chamfer dimension */
 	status = ProUIInputpanelValueGet( "proe_brl", "min_chamfer", &tmp_str );
@@ -3181,8 +3177,7 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringToString( astr, tmp_str );
 	ProWstringFree( tmp_str );
 	min_chamfer_dim = atof( astr );
-	if ( min_chamfer_dim < 0.0 )
-	    min_chamfer_dim = 0.0;
+	V_MAX(min_chamfer_dim, 0.0);
 
 	/* get the minimum round radius */
 	status = ProUIInputpanelValueGet( "proe_brl", "min_round", &tmp_str );
@@ -3196,8 +3191,8 @@ doit( char *dialog, char *compnent, ProAppData appdata )
 	ProWstringFree( tmp_str );
 	min_round_radius = atof( astr );
 
-	if ( min_round_radius < 0.0 )
-	    min_round_radius = 0.0;
+	V_MAX(min_round_radius, 0.0);
+
     } else {
 	min_hole_diameter = 0.0;
 	min_round_radius = 0.0;

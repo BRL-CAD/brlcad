@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -291,29 +291,6 @@ mat_inv(matp_t output, matp_t input)
     return;
 }
 
-
-/*
- * Takes a pointer to [x, y, z, w], and converts it to
- * an ordinary vector [x/w, y/w, z/w].
- * Optimization for the case of w==1 is performed.
- */
-void
-htov_move(float *v, float *h)
-{
-    static float inv;
-
-    if (ZERO(h[3] - 1.0)) {
-	*v++ = *h++;
-	*v++ = *h++;
-	*v   = *h;
-    }  else {
-	inv = 1 / h[3];
-
-	*v++ = *h++ * inv;
-	*v++ = *h++ * inv;
-	*v   = *h   * inv;
-    }
-}
 
 /*
  * Local Variables:

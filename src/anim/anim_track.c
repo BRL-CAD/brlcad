@@ -1,7 +1,7 @@
 /*                    A N I M _ T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 #include "./cattrack.h"
@@ -432,7 +432,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    VSCALE(temp, (x[i].t.dir), dist);
 	    VADD2(pos, x[i].t.pos1, temp);
 	    *angle_p = atan2(x[i].t.dir[2], x[i].t.dir[0]);
-	    return 2*i;
+	    return (int)2*i;
 	}
 	if ((dist -= x[i].w.rad*x[i].w.arc) < 0) {
 	    *angle_p = dist/x[i].w.rad;
@@ -441,7 +441,7 @@ get_link(fastf_t *pos, fastf_t *angle_p, fastf_t dist)
 	    pos[Y] = x[i].w.pos[Y];
 	    pos[Z] = x[i].w.pos[Z] + x[i].w.rad*sin(*angle_p);
 	    *angle_p -= M_PI_2; /*angle of clockwise tangent to circle*/
-	    return 2*i+1;
+	    return (int)2*i+1;
 	}
     }
 
@@ -497,6 +497,9 @@ main(int argc, char *argv[])
     MAT_IDN(wmat);
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage(argv0);

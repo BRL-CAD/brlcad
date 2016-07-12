@@ -1,0 +1,30 @@
+BRL-CAD has a long history of pithy attempts at constraint solving.
+
+There is a relatively simple forward-kinematic solver that was
+implemented as a GED command (see 'joint' command).  It utilizes
+'grip' objects and outboard text files that describe constraint
+relationships.  It remained broken and unused for about 20 years until
+it was fixed in 2014.  It surprisingly works, and seems to work well
+solving linear relationships (3D geometric constraints).
+
+There is a relatively new system that utilizes 'joint' objects,
+currently creating a 6DoF relationship between objects but with the
+intention of expanding it into supporting other (more constrained)
+joint types like hinges, pivots, saddles, etc.  This system is
+integrated into MGED/Archer and is interactively editable with mouse
+controls.
+
+The scope of libpc is to serve as a wrapper over a geometric
+constraint evaluation system with the likely expectation that one or
+more 3rd-party solver will be incorporated to solve parametric
+constraints and joint articulation.  The intention and target purpose
+is for librt to rely on this library for data types and evaluation.
+
+
+GECODE
+http://www.gecode.org
+mit
+
+GLOP
+https://developers.google.com/optimization
+apache2

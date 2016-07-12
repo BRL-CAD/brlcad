@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,6 @@
 #include <string.h>
 #include "bio.h"
 
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
-#endif
-
 #include <math.h>
 
 /* interface headers */
@@ -54,7 +50,14 @@ struct mesh {
 };
 
 
-static const char usage[] = "Usage: %s [-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+static const char usage[] = "[-v] [-y] [-s scale] [-f] [-o out_file] tgm.g object\n";
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
+
 
 static int verbose = 0;
 static int yup = 0;
@@ -104,8 +107,8 @@ void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 	curr->next = NULL;
     }
     /* accumulate counts */
-    total_vertex_count += curr->bot->num_vertices;
-    total_face_count += curr->bot->num_faces;
+    total_vertex_count += (uint32_t)curr->bot->num_vertices;
+    total_face_count += (uint32_t)curr->bot->num_faces;
     mesh_count++;
 }
 
@@ -176,7 +179,7 @@ void write_header(struct db_i *dbip)
 }
 
 
-void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
+void get_vertex(struct rt_bot_internal *bot, size_t idx, float *dest)
 {
     dest[0] = bot->vertices[3*idx] * scale;
     dest[1] = bot->vertices[3*idx+1] * scale;
@@ -184,7 +187,7 @@ void get_vertex(struct rt_bot_internal *bot, int idx, float *dest)
 
     if (yup) {
 	/* perform 90deg x-axis rotation */
-	float q = -(M_PI_2);
+	float q = (float)-(M_PI_2);
 	float y = dest[1];
 	float z = dest[2];
 	dest[1] = y * cos(q) - z * sin(q);
@@ -290,8 +293,8 @@ void write_mesh_data()
 	ret = fwrite(curr->name, 1, len, fp_out);
 	if (ret != len)
 	    perror("fwrite");
-	nvert = curr->bot->num_vertices;
-	nface = curr->bot->num_faces;
+	nvert = (uint32_t)curr->bot->num_vertices;
+	nface = (uint32_t)curr->bot->num_faces;
 	/* number of vertices */
 	ret = fwrite(&nvert, sizeof(uint32_t), 1, fp_out);
 	if (ret != 1)
@@ -429,12 +432,12 @@ int main(int argc, char *argv[])
 		break;
 
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
     /* param check */
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* get database filename and object */
     db_file = argv[bu_optind++];

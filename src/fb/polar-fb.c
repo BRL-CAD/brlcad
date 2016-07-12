@@ -1,7 +1,7 @@
 /*                      P O L A R - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -346,7 +346,7 @@ PrintUsage (int ShoOpts)
 	for (oPtr = ExplainOpts; **oPtr != '\0'; oPtr++)
 	    (void)fputs(*oPtr, stderr);
     } else
-	(void)fputs(" -? option for help\n", stderr);
+	(void)fputs(" -h or -? option for help\n", stderr);
 }
 
 
@@ -388,6 +388,9 @@ main (int argc, char **argv)
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
     void (*Fill_Func)(unsigned char *, double, double, int, int) = Fill_Empty;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* Initialize things */
     ProgName = *argv;

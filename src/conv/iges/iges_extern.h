@@ -1,7 +1,7 @@
 /*                   I G E S _ E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,12 +35,12 @@ extern int units; /* IGES file units code */
 extern int counter; /* keep track of where we are in the "card" buffer */
 extern int pstart; /* record number where parameter section starts */
 extern int dstart; /* record number where directory section starts */
-extern int totentities; /* total number of entities in the IGES file */
-extern int dirarraylen;	/* number of elements in the "dir" array */
+extern size_t totentities; /* total number of entities in the IGES file */
+extern size_t dirarraylen;	/* number of elements in the "dir" array */
 extern int reclen; /* IGES file record length (in bytes) */
 extern int currec; /* current record number in the "card" buffer */
-extern int ntypes; /* Number of different types of IGES entities recognized by
-		      this code */
+extern size_t ntypes; /* Number of different types of IGES entities recognized by
+			 this code */
 extern int brlcad_att_de; /* DE sequence number for BRL-CAD attribute
 			     definition entity */
 extern int do_bots; /* flag indicating NMG solids should be written as BOT solids */

@@ -1,7 +1,7 @@
 /*                        D E M - G . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -74,9 +74,9 @@
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 
 const char *progname ="dem-g";
@@ -89,6 +89,7 @@ const char record_type_names[4][24] = {
     "logical record type 'B'",
     "logical record type 'C'"
 };
+
 
 typedef enum _lrt {
     type_a=1,
@@ -190,9 +191,7 @@ output_elevation(long int in_value, FILE *fp)
     int status = BRLCAD_ERROR;
 
     /* allow for clipping */
-    if (in_value > DSP_MAX_RAW_ELEVATION) {
-	in_value = DSP_MAX_RAW_ELEVATION;
-    }
+    CLAMP(in_value, 0, DSP_MAX_RAW_ELEVATION);
 
     if (flip_high_low_bytes(in_value, buf) == BRLCAD_OK) {
 	if (fwrite(buf, 2, 1, fp) == 1) {
@@ -215,7 +214,7 @@ void remove_whitespace(char *input_string)
 {
     char *idx = NULL;
     int idx2 = 0;
-    int input_string_length = 0;
+    size_t input_string_length = 0;
     char *firstp = NULL;
     char *lastp = NULL;
     int found_start = 0;
@@ -1553,6 +1552,7 @@ read_dem(
     return status;
 }
 
+
 /* convert 'load-by-column to load-by-row' */
 int
 convert_load_order(
@@ -1601,6 +1601,7 @@ convert_load_order(
 
     return BRLCAD_OK;
 }
+
 
 int
 create_model(

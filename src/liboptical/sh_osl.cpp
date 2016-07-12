@@ -2,7 +2,7 @@
 /*                        S H _ O S L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 #define OSL_MAGIC 0x1837    /* make this a unique number for each shader */
 #define CK_OSL_SP(_p) BU_CKMAG(_p, OSL_MAGIC, "osl_specific")

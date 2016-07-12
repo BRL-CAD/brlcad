@@ -1,7 +1,7 @@
 /*                        G I F - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,12 +70,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <limits.h>
 
 #include "bu/color.h"
 #include "bu/getopt.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -578,23 +580,14 @@ main(int argc, char **argv)
 
 	width = desc[1] << 8 | desc[0];
 	height = desc[3] << 8 | desc[2];
-	if (width < 0)
-	    width = 0;
-	else if (width > INT_MAX-1)
-	    width = INT_MAX-1;
-	if (height < 0)
-	    height = 0;
-	else if (height > INT_MAX-1)
-	    height = INT_MAX-1;
+	CLAMP(width, 0, INT_MAX-1);
+	CLAMP(height, 0, INT_MAX-1);
 
 	M_bit = (desc[4] & 0x80) != 0;
 	cr = (desc[4] >> 4 & 0x07) + 1;
 	g_pixel = (desc[4] & 0x07) + 1;
 	background = desc[5];
-	if (background < 0)
-	    background = 0;
-	else if (background > CHAR_MAX)
-	    background = CHAR_MAX;
+	CLAMP(background, 0, CHAR_MAX);
 
 	if (verbose) {
 	    Message("screen %dx%d", width, height);
@@ -690,11 +683,11 @@ main(int argc, char **argv)
 	    Message("Frame buffer (%dx%d) larger than GIF screen", wt, ht);
 
 	write_width = width;
-	if (write_width > wt) write_width = wt;
+	V_MIN(write_width, wt);
 
 	zoom = fb_getwidth(fbp)/width;
-	if (fb_getheight(fbp)/height < zoom)
-	    zoom = fb_getheight(fbp)/height;
+	V_MIN(zoom, fb_getheight(fbp)/height);
+
 	if (do_zoom && zoom > 1) {
 	    (void)fb_view(fbp, width/2, height/2,
 			  zoom, zoom);

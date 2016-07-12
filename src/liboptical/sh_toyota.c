@@ -1,7 +1,7 @@
 /*                     S H _ T O Y O T A . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2014 United States Government as represented by
+ * Copyright (c) 1992-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,11 +40,10 @@
 #include <string.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
-#include "light.h"
+#include "bn/plot3.h"
+#include "optical/light.h"
 
 
 /* Sky onditions for luminance calculations. */

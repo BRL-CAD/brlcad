@@ -1,7 +1,7 @@
 /*                 BSplineSurfaceWithKnots.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -142,9 +142,7 @@ BSplineSurfaceWithKnots::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     knot_spec = (Knot_type)step->getEnumAttribute(sse, "knot_spec");
-    if (knot_spec > Knot_type_unset) {
-	knot_spec = Knot_type_unset;
-    }
+    V_MIN(knot_spec, Knot_type_unset);
 
     sw->entity_status[id] = STEP_LOADED;
     return true;

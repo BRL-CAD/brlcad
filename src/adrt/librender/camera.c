@@ -1,7 +1,7 @@
 /*                        C A M E R A . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -503,9 +503,9 @@ render_camera_render_thread(int UNUSED(cpu), void *ptr)
 
 
 	    if (td->tile->format == RENDER_CAMERA_BIT_DEPTH_24) {
-		if (pixel[0] > 1) pixel[0] = 1;
-		if (pixel[1] > 1) pixel[1] = 1;
-		if (pixel[2] > 1) pixel[2] = 1;
+		V_MIN(pixel[0], 1);
+		V_MIN(pixel[1], 1);
+		V_MIN(pixel[2], 1);
 		((char *)(td->res_buf))[res_ind+0] = (unsigned char)(255 * pixel[0]);
 		((char *)(td->res_buf))[res_ind+1] = (unsigned char)(255 * pixel[1]);
 		((char *)(td->res_buf))[res_ind+2] = (unsigned char)(255 * pixel[2]);

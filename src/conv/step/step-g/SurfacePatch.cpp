@@ -1,7 +1,7 @@
 /*                 SurfacePatch.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,13 +99,10 @@ SurfacePatch::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     u_transition = (Transition_code)step->getEnumAttribute(sse, "u_transition");
-    if (u_transition > Transition_code_unset) {
-	u_transition = Transition_code_unset;
-    }
+    V_MIN(u_transition, Transition_code_unset);
+
     v_transition = (Transition_code)step->getEnumAttribute(sse, "v_transition");
-    if (v_transition > Transition_code_unset) {
-	v_transition = Transition_code_unset;
-    }
+    V_MIN(v_transition, Transition_code_unset);
 
     u_sense = step->getBooleanAttribute(sse, "u_sense");
     v_sense = step->getBooleanAttribute(sse, "v_sense");

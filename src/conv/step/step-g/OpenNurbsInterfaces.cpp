@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@ class SDAI_Application_instance;
 
 /* must come after nist step headers */
 #include "brep.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "STEPEntity.h"
 #include "Axis1Placement.h"
@@ -416,9 +416,8 @@ RationalBSplineCurveWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != knot_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > degree) {
-		multiplicity = degree;
-	    }
+	    V_MIN(multiplicity, degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		curve->SetKnot(knot_index, knot_value);
 	    }
@@ -620,9 +619,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -636,9 +634,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != u_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > u_degree) {
-		multiplicity = u_degree;
-	    }
+
+	    V_MIN(multiplicity, u_degree);
+
 	    for (int j = 0; j < multiplicity; j++) {
 		surf->SetKnot(0, knot_index++, knot_value);
 	    }
@@ -669,9 +667,8 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 		break;
 	    }
 
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -685,9 +682,9 @@ BSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
 	while (m != v_multiplicities.end()) {
 	    int multiplicity = (*m);
 	    double knot_value = (*r);
-	    if (multiplicity > v_degree) {
-		multiplicity = v_degree;
-	    }
+
+	    V_MIN(multiplicity, v_degree);
+
 	    for (int j = 0; j < multiplicity; j++, knot_index++) {
 		surf->SetKnot(1, knot_index, knot_value);
 	    }
@@ -837,9 +834,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != u_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > u_degree) {
-	    multiplicity = u_degree;
-	}
+
+	V_MIN(multiplicity, u_degree);
+
 	for (int j = 0; j < multiplicity; j++, knot_index++) {
 	    surf->SetKnot(0, knot_index, knot_value);
 	}
@@ -852,9 +849,9 @@ RationalBSplineSurfaceWithKnots::LoadONBrep(ON_Brep *brep)
     while (m != v_multiplicities.end()) {
 	int multiplicity = (*m);
 	double knot_value = (*r);
-	if (multiplicity > v_degree) {
-	    multiplicity = v_degree;
-	}
+
+	V_MIN(multiplicity, v_degree);
+
 	for (int j = 0; j < multiplicity; j++) {
 	    surf->SetKnot(1, knot_index++, knot_value);
 	}
@@ -928,75 +925,6 @@ UniformSurface::LoadONBrep(ON_Brep *brep)
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
 	return false;
     }
-    return true;
-}
-
-
-/*
- * Overriding ON_BrepFace::Reverse(int dir) from OpenNURBS minimal change to duplicate original surface
- * no matter the surface use count.
- */
-ON_BOOL32 ON_BrepFace::Reverse(int dir)
-{
-    if (dir < 0 || dir > 1 || 0 == m_brep)
-	return false;
-    ON_Surface* srf = const_cast<ON_Surface*>(SurfaceOf());
-    if (!srf)
-	return false;
-    ON_Interval dom0 = srf->Domain(dir);
-    if (!dom0.IsIncreasing())
-	return false;
-
-// 2/18/03 GBA.  Destroy surface cache on face.
-    DestroyRuntimeCache(true);
-// keith - commenting out check on surface use count
-// want to duplicate surface regardless
-//    if (m_brep->SurfaceUseCount(m_si, 2) > 1) {
-	srf = srf->DuplicateSurface();
-	m_si = m_brep->AddSurface(srf);
-	SetProxySurface(srf);
-// keith
-//    }
-
-    if (!srf->Reverse(dir))
-	return false;
-
-    ON_Interval dom1 = dom0;
-    dom1.Reverse();
-    if (dom1 != srf->Domain(dir)) {
-	srf->SetDomain(dir, dom1);
-	dom1 = srf->Domain(dir);
-    }
-
-    // adjust location of 2d trim curves
-    ON_Xform xform(1);
-    xform.IntervalChange(dir, dom0, ON_Interval(dom1[1], dom1[0]));
-    TransformTrim(xform);
-
-    // reverse loop orientations.
-    int fli;
-    for (fli = 0; fli < m_li.Count(); fli++) {
-	ON_BrepLoop* loop = m_brep->Loop(m_li[fli]);
-	if (loop)
-	    m_brep->FlipLoop(*loop);
-    }
-
-    m_bRev = m_bRev ? false : true;
-
-    if (m_brep->m_is_solid == 1 || m_brep->m_is_solid == 2)
-	m_brep->m_is_solid = 0;
-
-    // Greg Arden 10 April 2003.  Fix TRR#9624.
-    // Update analysis and render meshes.
-    if (m_render_mesh) {
-	m_render_mesh->ReverseSurfaceParameters(dir);
-	m_render_mesh->ReverseTextureCoordinates(dir);
-    }
-    if (m_analysis_mesh) {
-	m_analysis_mesh->ReverseSurfaceParameters(dir);
-	m_analysis_mesh->ReverseTextureCoordinates(dir);
-    }
-
     return true;
 }
 
@@ -1076,7 +1004,9 @@ OrientedFace::LoadONBrep(ON_Brep *brep)
     // need edge bounds to determine extents for some of the infinitely
     // defined surfaces like cones/cylinders/planes
     if (!face_element->LoadONBrep(brep)) {
+#ifndef AP242
 	std::cerr << "Error: " << entityname << "::LoadONBrep() - Error loading openNURBS brep." << std::endl;
+#endif
 	return false;
     }
 
@@ -1440,9 +1370,7 @@ Path::ShiftSurfaceSeam(ON_Brep *brep, double *t)
 	    curve->GetDomain(&tmin, &tmax);
 
 	    if (((tmin < 0.0) && (tmax > 0.0)) && ((tmin > smin) || (tmax < smax))) {
-		if (tmin < ang_min) {
-		    ang_min = tmin;
-		}
+		V_MIN(ang_min, tmin);
 	    }
 
 	}
@@ -1476,6 +1404,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
 
+#if 0
     if (surface) {
 	double surface_width, surface_height;
 	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
@@ -1486,6 +1415,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    face->SetDomain(1, 0.0, surface_height);
 	}
     }
+#endif
 #ifdef _DEBUG_TESTING_
     if (_debug_print_) {
 	int curve_cnt = 0;
@@ -1538,19 +1468,19 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	curve_pullback_samples.push_back(data);
 	if (!orientWithCurve) {
 	    list<ON_2dPointArray *>::iterator si;
-	    si = data->segments.begin();
+	    si = data->segments->begin();
 	    list<ON_2dPointArray *> rsegs;
-	    while (si != data->segments.end()) {
+	    while (si != data->segments->end()) {
 		ON_2dPointArray *samples = (*si);
 		samples->Reverse();
 		rsegs.push_front(samples);
 		si++;
 	    }
-	    data->segments.clear();
+	    data->segments->clear();
 	    si = rsegs.begin();
 	    while (si != rsegs.end()) {
 		ON_2dPointArray *samples = (*si);
-		data->segments.push_back(samples);
+		data->segments->push_back(samples);
 		si++;
 	    }
 	    rsegs.clear();
@@ -1586,18 +1516,18 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	}
 	data = (*cs);
 	list<ON_2dPointArray *>::iterator si;
-	si = data->segments.begin();
+	si = data->segments->begin();
 	PBCData *ndata = (*next_cs);
 	list<ON_2dPointArray *>::iterator nsi;
-	nsi = ndata->segments.begin();
+	nsi = ndata->segments->begin();
 	ON_2dPointArray *nsamples = (*nsi);
 
-	while (si != data->segments.end()) {
+	while (si != data->segments->end()) {
 	    nsi = si;
 	    nsi++;
-	    if (nsi == data->segments.end()) {
+	    if (nsi == data->segments->end()) {
 		PBCData *nsidata = (*next_cs);
-		nsi = nsidata->segments.begin();
+		nsi = nsidata->segments->begin();
 	    }
 	    ON_2dPointArray *samples = (*si);
 	    nsamples = (*nsi);
@@ -1754,9 +1684,9 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 
     while (!curve_pullback_samples.empty()) {
 	data = curve_pullback_samples.front();
-	while (!data->segments.empty()) {
-	    delete data->segments.front();
-	    data->segments.pop_front();
+	while (!data->segments->empty()) {
+	    delete data->segments->front();
+	    data->segments->pop_front();
 	}
 	delete data;
 	curve_pullback_samples.pop_front();

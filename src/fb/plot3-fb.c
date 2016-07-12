@@ -1,7 +1,7 @@
 /*                      P L O T 3 - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -83,7 +83,7 @@
 #include "bu/log.h"
 #include "bu/parallel.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define COMMA ','
 
@@ -540,8 +540,7 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 't':
 		line_thickness = atoi(bu_optarg);
-		if (line_thickness <= 0)
-		    line_thickness = 1;
+		V_MAX(line_thickness, 1);
 		break;
 	    case 'i':
 		immediate = 1;
@@ -569,7 +568,7 @@ get_args(int argc, char **argv)
 	    case 'n':
 		Nscanlines = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -599,7 +598,7 @@ get_args(int argc, char **argv)
 
 static char usage[] = "\
 Usage: plot3-fb [-d -O|o -i] [-t thickness] [-F framebuffer]\n\
-	[-S|s squaresize] [-W|w width] [-N|n height] [file.plot3]\n";
+	[-S|s squaresize] [-W|w width] [-N|n height] [<] file.plot3\n";
 
 
 /*
@@ -765,10 +764,8 @@ GetCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug)
 	fprintf(stderr, "Pixel: (%d, %d)\n", coop->x, coop->y);
@@ -818,10 +815,8 @@ int Get3DCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug) {
 	fprintf(stderr, "Coord3: (%g, %g) ", out[0], out[1]);
@@ -857,10 +852,8 @@ GetDCoords(coords *coop)
     coop->y = (short)(y * Nscanlines / (double)delta + 0.5);
 
     /* limit right, top */
-    if (coop->x > XMAX)
-	coop->x = XMAX;
-    if (coop->y > YMAX)
-	coop->y = YMAX;
+    V_MIN(coop->x, XMAX);
+    V_MIN(coop->y, YMAX);
 
     if (debug) {
 	fprintf(stderr, "Coord2: (%g, %g) ", out[0], out[1]);
@@ -876,11 +869,8 @@ GetDCoords(coords *coop)
 void
 edgelimit(coords *ppos)
 {
-    if (ppos->x >= Npixels)
-	ppos->x = Npixels -1;
-
-    if (ppos->y >= Nscanlines)
-	ppos->y = Nscanlines -1;
+    V_MIN(ppos->x, Npixels-1);
+    V_MIN(ppos->y, Nscanlines-1);
 }
 
 
@@ -1214,8 +1204,7 @@ DoFile(void)	/* returns vpl status code */
 		spacend:
 		    delta = space.right - space.left;
 		    deltao2 = space.top - space.bottom;
-		    if (deltao2 > delta)
-			delta = deltao2;
+		    V_MAX(delta, deltao2);
 		    if (delta <= 0) {
 			fprintf(stderr, "plot3-fb: delta = %g, bad space()\n", delta);
 			return Foo(-42);

@@ -1,7 +1,7 @@
 /*                         G - O F F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,15 +36,15 @@
 #include "bu/vls.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
-static const char usage[] = "Usage: %s [-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] [-P #_of_CPUs] brlcad_db.g object(s)\n";
+static const char *usage = "[-v] [-d] [-xX lvl] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-p prefix] [-P #_of_CPUs] brlcad_db.g object(s)\n";
 
 static int	NMG_debug;	/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -65,6 +65,12 @@ static int	regions_done = 0;
 
 static void nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf);
 static void jack_faces(struct nmgregion *r, FILE *fp_psurf, int *map);
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 int
 main(int argc, char **argv)
@@ -130,12 +136,12 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     argc -= bu_optind;
@@ -199,7 +205,7 @@ main(int argc, char **argv)
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if ( !BU_SETJUMP ) {
@@ -391,7 +397,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 /* NMG region to be converted. */
 /* Jack format file to write vertex list to. */
 {
-    int			i;
+    size_t		i;
     int			*map;	/* map from v->index to Jack vert # */
     struct bu_ptbl		vtab;	/* vertex table */
 
@@ -403,7 +409,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     /* FIXME: What to do if 0 vertices?  */
 
     /* Print list of unique vertices and convert from mm to cm. */
-    for (i = 0; i < BU_PTBL_END(&vtab); i++)  {
+    for (i = 0; i < BU_PTBL_LEN(&vtab); i++)  {
 	struct vertex			*v;
 	struct vertex_g	*vg;
 	v = (struct vertex *)BU_PTBL_GET(&vtab, i);

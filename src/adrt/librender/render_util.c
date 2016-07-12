@@ -1,7 +1,7 @@
 /*                   R E N D E R _ U T I L . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ render_util_shotline_list(struct tie_s *tie, struct tie_ray_s *ray, void **data,
     struct tie_id_s id;
     struct render_shotline_s shotline;
     uint32_t i;
-    uint8_t c;
+    size_t c;
 
     shotline.seglist = NULL;
     shotline.segnum = 0;
@@ -202,7 +202,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
     sray.pos = shotline.in;
 
     /* allocate memory for 32 spall rays */
-    vec_list = (TIE_3 *)malloc(32 * sizeof(TIE_3));
+    vec_list = (TIE_3 *)bu_malloc(32 * sizeof(TIE_3), "vec_list");
     if (!vec_list) {
 	perror("vec_list");
 	exit(1);
@@ -229,7 +229,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
 	tie_work(tie, &sray, &id, shot_hit, &shotline);
     }
 
-    free(vec_list);
+    bu_free(vec_list, "vec_list");
 
     shotline.in = in;
     shotline.out = out;

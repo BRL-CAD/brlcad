@@ -13,6 +13,8 @@ def mashup(l):
         s += '_' + i
     return s
 
+print 'DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n'
+
 if len(sys.argv) < 3 or len(sys.argv) > 4:
     print 'Usage: %s intaval_input.geom mged_output.tcl [input.matl]' % (sys.argv[0])
     sys.exit()

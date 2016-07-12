@@ -1,7 +1,7 @@
 /*                   I G E S _ S T R U C T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -222,7 +222,6 @@ extern int ell_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE
 extern int nmg_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int null_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
-extern int planar_nurb(int entityno);
 extern int sph_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 extern int tgc_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);
 extern int tor_to_iges(struct rt_db_internal *ip, char *name, FILE *fp_dir, FILE *fp_param);

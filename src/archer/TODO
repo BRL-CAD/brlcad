@@ -30,6 +30,9 @@ Attribute Editor                    |                     DONE (can be done with
 				    |    General tab will become Attribute tab.  Will need to be able to
 				    |    customize the standard attribute/value display to support things like
 				    |    the color picker for rgb attribute
+Keypoints			    |                     UNKNOWN - NEED TO TEST
+				    |    Reports of keypoint (primitive implicit or possibly specified) being ignored in
+				    |    rotation, relative edit, and possibly unknown other commands.
 Sweep Zoom Rectangle                |                     INCOMPLETE - Need to see if this can be integrated as an option to the scale mode
 Settings -> Constraint Coords.      |                     INCOMPLETE - This is worth preserving, but needs some though on how to integrate it.
 Settings -> Rotate About            |                     INCOMPLETE - Save ability to rotate around view and maybe a specified keypoint to allow for flexibility
@@ -63,6 +66,8 @@ Help -> Apropos                     |                     INCOMPLETE, not workin
   acknowledgements is out of date (should remove or just put AUTHORS
   file).
 
+* dm command is currently mged specific - need to migrate to libged
+  and rework to allow usage by arbitrary GUIs.
 
 ---- BETA ISSUES ----
 stability & usability
@@ -114,9 +119,69 @@ stability & usability
   origin.  should provide for mouse behavior settings so classic mged
   defaults are available.
 
-* double-clicking the tree view show-list to display/undisplay
+* double-clicking the tree view show-list to display/undisplay.
+  toggling visibility should ideally be moved to an adjacent icon,
+  with double-clicking reserved to expanding or hiding the subtree.
 
 * make sure archer behaves properly with relative paths to dbopen.
   Windows in particular is doing something different in
   src/librt/db_open.c that should be a problem as it only records the
   file name (so gui will work, but dbopen + cd + rt will not).
+
+* make it move comb members to other combs via drag and drop
+  (currently copy and paste are options in the right-click menu).
+
+* path names dragged from the tree view should drop into the command
+  window as a path name. Currently the selected object's path is
+  available in the command window's right-click menu.
+
+* improve tab completion to cycle between matches Windows-style, and
+  change listed results as you change the input, rather than just
+  dumping all matches.
+
+* should remove edit modes, or at least make them easily escapable
+
+* visual indication (e.g. wireframe highlight) for currently selected
+  object
+
+* have a mechanism (e.g. right-click menu entry) to select nothing
+
+* B command should select the object in the tree (might be true for
+  other commands as well)
+
+* support precise movement of selected bot faces
+
+* interactive rotate/zoom needs to be linked to the canvas size. For
+  example, a rotation drag from edge to edge should always result in
+  a 360 degree rotations regardless of how fast you drag.
+
+* "Apply" and "Reset" edit panel buttons should be in a fixed location.
+
+* add option to hide the button toolbar for the benefit of advanced users.
+
+* decide whether/how to support mouse bindings for interactive
+  editing; currently only work for view edits
+
+* shouldn't be able to edit things that aren't drawn
+
+* horizontal scrollbar in the tree view needs to be made functional;
+  it currently just spans the width of the widget.
+
+* component select is slow for some models (particularly breps). Could
+  be reworked to generate an ordered list based on projection of vlist
+  convex hulls instead of ray intersection.
+
+* an rm affecting a member of a large comb that's draw hangs a while,
+  possibly because of repeated redraws from a chain of triggered
+  commands.
+
+* large bots can't be interactively edited without "Always Allow Edit"
+  enable. This enables a table which is currently required by the
+  implementation for storing selections, but is slow to load.
+
+* support deleting triangles from bots. It's unknown what users want
+  this for (model simplification, removing degenerate triangles,
+  fitting models together, etc.).
+
+* for bots, support joining faces in the same plane. It's unknown what
+  users want this for.

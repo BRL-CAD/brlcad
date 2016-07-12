@@ -8,7 +8,6 @@ BRLCAD_LIB_INCLUDE_DIRS(pkg PKG_INCLUDE_DIRS "")
 
 set(LIBPKG_SOURCES
   pkg.c
-  tcl.c
   vers.c
   )
 

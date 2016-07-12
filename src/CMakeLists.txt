@@ -1,3 +1,8 @@
+# Define high level features of BRL-CAD
+DOXYGEN_FEATURE("Portability Library" DESCRIPTION "Portability layer that makes sure basic low level system functionality is present across all platforms via a uniform API.")
+DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calculations that report not just first surface hits but in/out pairs of hits to support the characterization of closed geometric volumes.")
+
+
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used
@@ -31,7 +36,7 @@ endif(MSVC)
 set(level_1_dirs
   libbu
   libbn
-  libsysv
+  libbg
   libbrep
   librt
   libwdb
@@ -40,13 +45,6 @@ set(level_1_dirs
 # Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
 # programs.
-
-# Only add librtserver if it's enabled
-if(BRLCAD_ENABLE_RTSERVER)
-  set(LIBRTSERVER_DIR librtserver)
-else(BRLCAD_ENABLE_RTSERVER)
-  CMAKEFILES(librtserver)
-endif(BRLCAD_ENABLE_RTSERVER)
 
 set(level_2_dirs
   libpkg
@@ -61,7 +59,6 @@ set(level_2_dirs
   libicv
   libmultispectral
   libpc
-  ${LIBRTSERVER_DIR}
   libtclcad
   libtermio
   )
@@ -103,6 +100,7 @@ set(level_3_dirs
   # as dependencies for the targets in these directories
   tclscripts
   adrt
+  rtwizard
   archer
   mged
   )

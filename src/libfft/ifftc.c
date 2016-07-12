@@ -1,7 +1,7 @@
 /*                         I F F T C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,6 @@
 
 #include "./fft.h"
 
-extern int irfft_adds, irfft_mults;
-
 int
 main(int argc, char **argv)
 {
@@ -51,7 +49,6 @@ main(int argc, char **argv)
 
     m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
     ditsplit( n, m );
-    fprintf( stderr, "adds = %d, mults = %d\n", irfft_adds, irfft_mults );
     return 0;
 }
 

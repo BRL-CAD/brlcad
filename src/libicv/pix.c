@@ -1,7 +1,7 @@
 /*                           P I X . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,12 +22,13 @@
  * Contains routines related to pix format.
  *
  */
-#include "icv.h"
+#include "common.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
+#include "icv_private.h"
 
 /* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, long int size);
+extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
@@ -64,7 +65,7 @@ pix_write(icv_image_t *bif, const char *filename)
 
 
 icv_image_t *
-pix_read(const char* filename, int width, int height)
+pix_read(const char* filename, size_t width, size_t height)
 {
     FILE* fp;
     unsigned char *data = 0;

@@ -1,7 +1,7 @@
 /*                        L O A D _ G . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,10 +44,10 @@
 /* interface headers */
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 
@@ -57,13 +57,13 @@ static struct tie_s *cur_tie;
 static struct db_i *dbip;
 TIE_3 **tribuf;
 
-static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
+static void nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3], void *client_data);
 
 struct gcv_data {
-    void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
+    struct gcv_region_end_data region_end_data;
     struct adrt_mesh_s **meshes;
 };
-static struct gcv_data gcvwriter = {nmg_to_adrt_gcvwrite, NULL};
+static struct gcv_data gcvwriter = {{nmg_to_adrt_gcvwrite, NULL}, NULL};
 
 
 /* load the region into the tie image */
@@ -135,6 +135,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 
     /* region_name must not be freed until we're done with the tie engine. */
 }
+
 
 int
 nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, const struct rt_comb_internal *rci, void *UNUSED(client_data))
@@ -212,7 +213,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 
 
 static void
-nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3])
+nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(region_id), int material_id, float color[3], void *UNUSED(client_data))
 {
     struct model *m;
     struct adrt_mesh_s *mesh;
@@ -245,7 +246,7 @@ nmg_to_adrt_gcvwrite(struct nmgregion *r, const struct db_full_path *pathp, int 
 
 
 int
-load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
+load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **meshes)
 {
     struct model *the_model;
     struct rt_tess_tol ttol;		/* tessellation tolerance in mm */

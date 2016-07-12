@@ -1,7 +1,7 @@
 /*                 RepresentedDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,7 +60,7 @@ RepresentedDefinition::~RepresentedDefinition() {
 }
 
 bool
-RepresentedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+RepresentedDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     //TODO: Need to complete for AP203e2

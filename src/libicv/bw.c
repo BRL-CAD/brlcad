@@ -1,7 +1,7 @@
 /*                            B W . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,10 +25,10 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "icv.h"
+#include "icv_private.h"
 
 /* defined in encoding.c */
-extern double *uchar2double(unsigned char *data, long int size);
+extern double *uchar2double(unsigned char *data, size_t size);
 extern unsigned char *data2uchar(const icv_image_t *bif);
 
 int
@@ -40,7 +40,7 @@ bw_write(icv_image_t *bif, const char *filename)
     size_t ret, size;
 
     if (bif->color_space == ICV_COLOR_SPACE_RGB) {
-	icv_rgb2gray_ntsc(bif);
+	icv_rgb2gray(bif, ICV_COLOR_RGB, 0, 0, 0);
     } else if (bif->color_space != ICV_COLOR_SPACE_GRAY) {
 	bu_log("bw_write : Color Space conflict");
 	return -1;
@@ -71,7 +71,7 @@ bw_write(icv_image_t *bif, const char *filename)
 }
 
 icv_image_t *
-bw_read(const char *filename, int width, int height)
+bw_read(const char *filename, size_t width, size_t height)
 {
     FILE *fp;
     unsigned char *data = NULL;

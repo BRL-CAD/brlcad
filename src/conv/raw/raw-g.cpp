@@ -1,7 +1,7 @@
 /*                         R A W - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 
 #include "common.h"
 #include <cassert>
+#include <fstream>
 
 #include "RegionList.h"
 
@@ -132,13 +133,13 @@ int main(int   argc,
 		    point_t p;
 
 		    getPoint(triangleLine[0], triangleLine[1], triangleLine[2], p);
-		    int a = bot.addPoint(p);
+		    size_t a = bot.addPoint(p);
 
 		    getPoint(triangleLine[3], triangleLine[4], triangleLine[5], p);
-		    int b = bot.addPoint(p);
+		    size_t b = bot.addPoint(p);
 
 		    getPoint(triangleLine[6], triangleLine[7], triangleLine[8], p);
-		    int c = bot.addPoint(p);
+		    size_t c = bot.addPoint(p);
 
 		    bot.addTriangle(a, b, c);
 

@@ -1,7 +1,7 @@
 /*                   A D R T _ S T R U C T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 #include "bu/list.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "texture_internal.h"
 #include "render.h"
 

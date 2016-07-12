@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,8 +34,8 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
@@ -45,6 +45,7 @@
 #include "bu/getopt.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "vmath.h"
 
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
@@ -119,6 +120,9 @@ main (int argc, char **argv)
 
     struct colstr *array = NULL;	/* Array for color information.  */
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     bu_opterr = 0;
     while ((ch = bu_getopt(argc, argv, "h?")) != -1)
     {	if (bu_optopt == '?') ch = 'h';
@@ -130,8 +134,6 @@ main (int argc, char **argv)
 		break;
 	}
     }
-
-    fprintf(stderr,"   Program continues running:\n");
 
     array = (struct colstr *)bu_calloc(MAXCOL + EXTRA, sizeof(struct colstr), "allocate colstr array");
 
@@ -402,8 +404,8 @@ main (int argc, char **argv)
 		min = pixval[j][i];
 		max = pixval[j][i];
 	    }
-	    if (min > pixval[j][i]) min = pixval[j][i];
-	    if (max < pixval[j][i]) max = pixval[j][i];
+	    V_MIN(min, pixval[j][i]);
+	    V_MAX(max, pixval[j][i]);
 	}
     }
 

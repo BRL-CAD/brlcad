@@ -1,7 +1,7 @@
 /*                   A N I M _ S C R I P T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "bu/getopt.h"
 #include "bu/str.h"
 #include "bn.h"
-#include "anim.h"
+#include "bn/anim.h"
 
 
 #define OPT_STR "a:b:c:d:f:m:pqrstv:h?"
@@ -167,6 +167,9 @@ main(int argc, char *argv[])
 
     /* intentionally double for scan */
     double scan[4];
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

@@ -1,7 +1,7 @@
 /*                          A D R T . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,6 @@
 #define ADRT_ADRT_H
 
 #include "common.h"
-
-#ifdef HAVE_STDINT_H
-# include <stdint.h>
-#endif
 
 #include "adrt_struct.h"
 
@@ -96,45 +92,7 @@ enum
 #define ADRT_LOAD_FORMAT_REG 43
 #define ADRT_LOAD_FORMAT_KDTREE 44
 
-
-/*************************** tienet stuff ***********************************/
-
-
-#define	TN_COMPRESSION		0		/* 0 = off, 1 = on.  Compress the result buffer */
-
-#define	TN_MASTER_PORT		1980
-#define	TN_SLAVE_PORT		1981
-
-#define	TN_OP_PREP		0x0010
-#define	TN_OP_REQWORK		0x0011
-#define	TN_OP_SENDWORK		0x0012
-#define	TN_OP_RESULT		0x0013
-#define	TN_OP_COMPLETE		0x0014
-#define	TN_OP_SHUTDOWN		0x0015
-#define TN_OP_OKAY		0x0016
-#define	TN_OP_MESSAGE		0x0017
-
-
-#define TIENET_BUFFER_INIT(_b) { \
-	_b.data = NULL; \
-	_b.size = 0; \
-	_b.ind = 0; }
-
-#define TIENET_BUFFER_FREE(_b) bu_free(_b.data, "tienet buffer");
-
-#define TIENET_BUFFER_SIZE(_b, _s) { \
-	if (_s > _b.size) { \
-	    _b.data = (uint8_t *)bu_realloc(_b.data, _s, "tienet buffer size");	\
-	    _b.size = _s; \
-	} }
-
-typedef struct tienet_buffer_s {
-    uint8_t *data;
-    uint32_t size;
-    uint32_t ind;
-} tienet_buffer_t;
-
-BU_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
+RENDER_EXPORT extern int load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct adrt_mesh_s **);
 
 #endif
 

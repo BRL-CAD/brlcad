@@ -1,7 +1,7 @@
 /*                           P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,37 +25,21 @@
 
 #include "common.h"
 #include <string.h>
+#include "ppm.h"
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "icv.h"
-
-/* defined in encoding.c */
-extern unsigned char *data2uchar(const icv_image_t *bif);
-extern double *uchar2double(unsigned char *data, long int size);
-
-/* flip an image vertically */
-int
-image_flip(unsigned char *buf, int width, int height)
-{
-    unsigned char *buf2;
-    int i;
-    size_t pitch = width * 3 * sizeof(char);
-
-    buf2 = (unsigned char *)bu_malloc((size_t)(height * pitch), "image flip");
-    for (i=0 ; i<height ; i++)
-	memcpy(buf2+i*pitch, buf+(height-i)*pitch, pitch);
-    memcpy(buf, buf2, height * pitch);
-    bu_free(buf2, "image flip");
-    return 0;
-}
+#include "vmath.h"
+#include "icv_private.h"
 
 int
 ppm_write(icv_image_t *bif, const char *filename)
 {
-    unsigned char *data;
     FILE *fp;
-    size_t ret, size;
+    pixel *pixelrow;
+    int p, q = 0;
+    int rows = (int)bif->height;
+    int cols = (int)bif->width;
 
     if (bif->color_space == ICV_COLOR_SPACE_GRAY) {
 	icv_gray2rgb(bif);
@@ -70,135 +54,84 @@ ppm_write(icv_image_t *bif, const char *filename)
 	bu_log("ERROR : Cannot open file for saving\n");
 	return -1;
     }
-    data =  data2uchar(bif);
-    size = (size_t) bif->width*bif->height*3;
-    image_flip(data, bif->width, bif->height);
-    ret = fprintf(fp, "P6 %d %d 255\n", bif->width, bif->height);
 
-    ret = fwrite(data, 1, size, fp);
+    ppm_writeppminit(fp, cols, rows, (pixval)255, 0 );
 
-    fclose(fp);
-    if (ret != size) {
-	bu_log("ERROR : Short Write");
-	return -1;
+    pixelrow = ppm_allocrow((int)bif->width);
+    for (p = 0; p < rows; p++) {
+	for (q = 0; q < cols; q++) {
+	    int offset = ((rows - 1) * cols * 3) - (p * cols * 3);
+	    pixelrow[q].r = lrint(bif->data[offset + q*3+0]*255.0);
+	    pixelrow[q].g = lrint(bif->data[offset + q*3+1]*255.0);
+	    pixelrow[q].b = lrint(bif->data[offset + q*3+2]*255.0);
+	}
+	ppm_writeppmrow(fp, pixelrow, cols, (pixval) 255, 0 );
     }
+
+    ppm_freerow(pixelrow);
+
+    pm_close(fp);
+
     return 0;
 }
-
-
-HIDDEN void
-ppm_nextline(FILE *fp)
-{
-    int c;
-
-    /* skip to the binary data section, starting on next line.
-     * supports mac, unix, windows line endings.
-     */
-    do {
-	c = fgetc(fp);
-	if (c == '\r') {
-	    c = fgetc(fp);
-	    if (c != '\n') {
-		ungetc(c, fp);
-		c = '\n'; /* pretend we're not an old mac file */
-	    }
-	}
-    } while (c != '\n');
-}
-
 
 icv_image_t*
 ppm_read(const char *filename)
 {
-    char buff[3]; /* To ensure that the format. And thus read "P6" */
     FILE *fp;
-    char c;
     icv_image_t *bif;
-    int rgb_comp_color;
-    unsigned char *data;
-    size_t size,ret;
+    int rows, cols, format;
+    int row;
+    pixval maxval;
+    pixel **pixels;
+    int p,q;
+
+    double *data;
 
     if (filename == NULL) {
 	fp = stdin;
-    } else if ((fp = fopen(filename, "rb")) == NULL) {
+    } else if ((fp = pm_openr(filename)) == NULL) {
 	bu_log("ERROR: Cannot open file for reading\n");
 	return NULL;
     }
 
-    if (!bu_fgets(buff, sizeof(buff), fp)) {
-	bu_log("ERROR : Invalid Image");
-	return NULL;
+    ppm_readppminit(fp, &cols, &rows, &maxval, &format);
+
+    /* For now, only handle PPM - should handle all variations */
+    if (PPM_FORMAT_TYPE(format) != PPM_TYPE) return NULL;
+
+    pixels = ppm_allocarray(cols, rows);
+
+    for (row = 0; row < rows; row++) {
+	ppm_readppmrow(fp, pixels[row], cols, maxval, format);
     }
 
-    /* check the image format */
-    if (buff[0] != 'P' || buff[1] != '6') {
-	bu_log("ERROR: Invalid image format (must be 'P6')\n");
-	return NULL;
-    }
+    pm_close(fp);
+
+
 
     BU_ALLOC(bif, struct icv_image);
     ICV_IMAGE_INIT(bif);
 
-    /* check for comments lines in PPM image header */
-    c = getc(fp);
-    while (c == '#') {
-	/* encountered comment, skip to next line */
-	ppm_nextline(fp);
-	c = getc(fp);
+    bif->width = (size_t)cols;
+    bif->height = (size_t)rows;
+
+    data = (double *)bu_malloc(bif->width * bif->height * 3 * sizeof(double), "image data");
+    for (p = 0; p < rows ; p++) {
+	pixel *r = pixels[p];
+	for (q = 0; q < cols; q++) {
+	    int offset = ((rows - 1) * cols * 3) - (p * cols * 3);
+	    data[offset + q*3+0] = (double)r[q].r/(double)255.0;
+	    data[offset + q*3+1] = (double)r[q].g/(double)255.0;
+	    data[offset + q*3+2] = (double)r[q].b/(double)255.0;
+	}
     }
 
-    ungetc(c, fp);
-
-    /* read image size information */
-    if (fscanf(fp, "%d %d", &bif->width, &bif->height) != 2) {
-	fprintf(stderr, "Invalid image size (error loading '%s')\n", filename);
-	bu_free(bif, "icv_image structure");
-	return NULL;
-    }
-
-    /* read rgb component */
-    if (fscanf(fp, "%d", &rgb_comp_color) != 1) {
-	bu_log("ERROR: Invalid rgb component\n");
-	bu_free(bif, "icv_image structure");
-	return NULL;
-    }
-
-    /* check rgb component depth */
-    if (rgb_comp_color!= 255) {
-	bu_log("ERROR: Image does not have 8-bits components\n");
-	bu_free(bif, "icv_image structure");
-	return NULL;
-    }
-
-    /* skip to the binary data section, starting on next line.
-     * supports mac, unix, windows line endings.
-     */
-    ppm_nextline(fp);
-
-    /* memory allocation for pixel data */
-    data = (unsigned char*) bu_malloc(bif->width * bif->height * 3, "image data");
-
-    size = 3 * bif->width * bif->height;
-    /* read pixel data from file */
-    ret = fread(data, 1, size, fp);
-    if (ret!=0 && ferror(fp)) {
-	bu_log("Error Occurred while Reading\n");
-	bu_free(data, "icv_image data");
-	bu_free(bif, "icv_structure");
-	fclose(fp);
-	return NULL;
-    }
-
-    fclose(fp);
-
-    image_flip(data, bif->width, bif->height);
-
-    bif->data = uchar2double(data, size);
-    bu_free(data, "ppm_read : unsigned char data");
+    bif->data = data;
+    ppm_freearray(pixels, rows);
     bif->magic = ICV_IMAGE_MAGIC;
     bif->channels = 3;
     bif->color_space = ICV_COLOR_SPACE_RGB;
-    fclose(fp);
     return bif;
 }
 

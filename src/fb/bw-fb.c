@@ -1,7 +1,7 @@
 /*                         B W - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,6 +41,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/file.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -54,8 +55,8 @@ static RGBpixel obuf[MAX_LINE];
 static int fileinput = 0;		/* file of pipe on input? */
 static int autosize = 0;		/* !0 to autosize input */
 
-static unsigned long int file_width = 512;	/* default input width */
-static unsigned long int file_height = 512;	/* default input height */
+static size_t file_width = 512;	/* default input width */
+static size_t file_height = 512;	/* default input height */
 static int scr_width = 0;		/* screen tracks file if not given */
 static int scr_height = 0;
 static int file_xoff, file_yoff;
@@ -228,17 +229,14 @@ main(int argc, char **argv)
 	xskip = 0;
 	xstart = scr_xoff;
     }
-    if (xout < 0) xout = 0;
-    if ((unsigned)xout > (file_width-file_xoff))
-	xout = (file_width-file_xoff);
+    CLAMP(xout, 0, (long)(file_width-file_xoff));
 
     if (inverse)
 	scr_yoff = (-scr_yoff);
 
     yout = scr_height - scr_yoff;
-    if (yout < 0) yout = 0;
-    if ((unsigned)yout > (file_height-file_yoff))
-	yout = (file_height-file_yoff);
+    CLAMP(yout, 0, (long)(file_height-file_yoff));
+
     if (xout > MAX_LINE) {
 	fprintf(stderr, "bw-fb: can't output %ld pixel lines.\n", xout);
 	return 2;

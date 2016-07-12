@@ -1,7 +1,7 @@
 /*                    O P E R A T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -266,7 +266,7 @@ int icv_saturate(icv_image_t* img, double sat)
     double bw;			/* monochrome intensity */
     double rwgt, gwgt, bwgt;
     double rt, gt, bt;
-    long size;
+    size_t size;
 
     ICV_IMAGE_VAL_INT(img);
 

@@ -1,7 +1,7 @@
 /*                       T E X T U R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,8 +39,8 @@
 #define DEBUG_TEXTURE	0
 
 typedef unsigned short	icon_t;
-#define BIT_TEST( w, b )	(b == 0 ? (int)(w)&1 : (int)(w)&(1<<(b)))
-#define Fb_Lookup( fbp, u, v )	(fbp->map + (v) * fbp->wid + (u))
+#define BIT_TEST(w, b)	(b == 0 ? (int)(w)&1 : (int)(w)&(1<<(b)))
+#define Fb_Lookup(fbp, u, v)	(fbp->map + (v) * fbp->wid + (u))
 #define BITS_PER_BYTE	8
 #define BYTES_WIDE	(wid/BITS_PER_BYTE)
 #define ITEMS_WIDE	(BYTES_WIDE/sizeof(icon_t))
@@ -55,7 +55,7 @@ struct icon_texture
     int			hgt;
     struct icon_texture	*next;
 }
-*icons = NULL;
+    *icons = NULL;
 
 struct fb_texture
 {
@@ -65,19 +65,20 @@ struct fb_texture
     int			hgt;
     struct fb_texture	*next;
 }
-*fbs = NULL;
+    *fbs = NULL;
 
 static char *
 suffix(char *str)
 {
-    char	*p = str + strlen( str ) - 1;
-    while ( *p != '.' && p != str )
+    char	*p = str + strlen(str) - 1;
+    while (*p != '.' && p != str)
 	p--;
-    if ( *p == '.' )
+    if (*p == '.')
 	return	p+1;
     else
 	return	p;
 }
+
 
 static RGBpixel	*
 icon_Lookup(struct icon_texture	*iconp, int u, int v)
@@ -88,11 +89,12 @@ icon_Lookup(struct icon_texture	*iconp, int u, int v)
     int	offset = (iconp->hgt-1-v)*iconp->wid/word_sz + u/word_sz;
     int	bit = (word_sz-1) - (u % word_sz);
     icon_t	word = iconp->map[offset];
-    if ( BIT_TEST( word, bit ) )
+    if (BIT_TEST(word, bit))
 	return	(RGBpixel *) black_pixel;
     else
 	return	(RGBpixel *) white_pixel;
 }
+
 
 static struct icon_texture *
 init_Icon_Texture(char *file, Mat_Db_Entry *entry)
@@ -102,29 +104,28 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
     icon_t	*iconmap;
     int	wid = entry->df_rgb[0] << 3;
     int	hgt = entry->df_rgb[1] << 3;
-    if ( (iconfp = fopen( file, "rb" )) == NULL )
-    {
-	bu_log( "Can't open icon texture \"%s\" for reading.\n",
-		file );
+    if ((iconfp = fopen(file, "rb")) == NULL) {
+	bu_log("Can't open icon texture \"%s\" for reading.\n",
+	       file);
 	return	NULL;
     }
-    iconmap = (icon_t *) bu_malloc( (size_t)BYTES_WIDE*hgt, "iconmap" );
+    iconmap = (icon_t *) bu_malloc((size_t)BYTES_WIDE*hgt, "iconmap");
 #if DEBUG_TEXTURE
-    bu_log( "init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
-    bu_log( "%d bytes allocated for texture map.\n",
-	    BYTES_WIDE*hgt );
+    bu_log("init_Icon_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt);
+    bu_log("%d bytes allocated for texture map.\n",
+	   BYTES_WIDE*hgt);
 #endif
-    if ( fread( iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp )
-	 != ITEMS_WIDE*hgt )
+    if (fread(iconmap, sizeof(icon_t), ITEMS_WIDE*hgt, iconfp)
+	!= ITEMS_WIDE*hgt)
     {
-	bu_log( "Read of icon texture map failed.\n" );
+	bu_log("Read of icon texture map failed.\n");
 	fclose(iconfp);
 	return	NULL;
     }
     BU_ALLOC(iconp, struct icon_texture);
-    iconp->filenm = (char *)bu_malloc( strlen(file)+1, "iconp->filenm");
+    iconp->filenm = (char *)bu_malloc(strlen(file)+1, "iconp->filenm");
 
-    bu_strlcpy( iconp->filenm, file, strlen(file)+1);
+    bu_strlcpy(iconp->filenm, file, strlen(file)+1);
     iconp->map = iconmap;
     iconp->wid = wid;
     iconp->hgt = hgt;
@@ -133,18 +134,18 @@ init_Icon_Texture(char *file, Mat_Db_Entry *entry)
 #if DEBUG_TEXTURE
     {
 	int	u, v;
-	for ( v = 0; v < hgt; v++ )
-	    for ( u = 0; u < wid; u++ )
-	    {
+	for (v = 0; v < hgt; v++)
+	    for (u = 0; u < wid; u++) {
 		RGBpixel	*pixel;
-		pixel = icon_Lookup( iconp, u, v );
-		prnt_Pixel( *pixel, u, v );
+		pixel = icon_Lookup(iconp, u, v);
+		prnt_Pixel(*pixel, u, v);
 	    }
     }
 #endif
-    (void) fclose( iconfp );
+    (void) fclose(iconfp);
     return	iconp;
 }
+
 
 static struct fb_texture *
 init_Fb_Texture(char *file, Mat_Db_Entry *entry)
@@ -154,22 +155,21 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
     RGBpixel	*fbmap;
     int		wid = entry->df_rgb[0] << 3;
     int		hgt = entry->df_rgb[1] << 3;
-    if ( (txfbiop = fb_open( file, wid, hgt )) == FB_NULL )
+    if ((txfbiop = fb_open(file, wid, hgt)) == FB_NULL)
 	return	NULL;
-    fbmap =	(RGBpixel *) bu_malloc( wid*hgt*sizeof(RGBpixel), "fbmap" );
+    fbmap =	(RGBpixel *) bu_malloc(wid*hgt*sizeof(RGBpixel), "fbmap");
 #if DEBUG_TEXTURE
-    bu_log( "init_Fb_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt );
-    bu_log( "%d bytes allocated for texture map.\n",
-	    wid*hgt*sizeof(RGBpixel) );
+    bu_log("init_Fb_Texture(%s) wid=%d hgt=%d\n", file, wid, hgt);
+    bu_log("%d bytes allocated for texture map.\n",
+	   wid*hgt*sizeof(RGBpixel));
 #endif
-    if ( fb_read( txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt ) == -1 )
-    {
-	bu_log( "Read of frame buffer texture failed.\n" );
+    if (fb_read(txfbiop, 0, 0, (unsigned char *)fbmap, wid*hgt) == -1) {
+	bu_log("Read of frame buffer texture failed.\n");
 	return	NULL;
     }
     BU_ALLOC(fbp, struct fb_texture);
-    fbp->filenm = (char *)bu_malloc( strlen(file)+1, "fbp->filenm");
-    bu_strlcpy( fbp->filenm, file, strlen(file)+1 );
+    fbp->filenm = (char *)bu_malloc(strlen(file)+1, "fbp->filenm");
+    bu_strlcpy(fbp->filenm, file, strlen(file)+1);
     fbp->map = fbmap;
     fbp->wid = wid;
     fbp->hgt = hgt;
@@ -178,30 +178,31 @@ init_Fb_Texture(char *file, Mat_Db_Entry *entry)
 #if DEBUG_TEXTURE
     {
 	int	u, v;
-	for ( v = 0; v < hgt; v++ )
-	    for ( u = 0; u < wid; u++ )
-	    {
+	for (v = 0; v < hgt; v++)
+	    for (u = 0; u < wid; u++) {
 		RGBpixel	*pixel;
-		pixel = Fb_Lookup( fbp, u, v );
-		prnt_Pixel( pixel, u, v );
+		pixel = Fb_Lookup(fbp, u, v);
+		prnt_Pixel(pixel, u, v);
 	    }
     }
 #endif
-    (void) fb_close( txfbiop );
+    (void) fb_close(txfbiop);
     return	fbp;
 }
+
 
 int
 tex_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
 {
-    if ( BU_STR_EQUAL( ICON_SUFFIX, suffix( entry->name ) ) )
-	return	icon_Entry( uvp, entry );
+    if (BU_STR_EQUAL(ICON_SUFFIX, suffix(entry->name)))
+	return	icon_Entry(uvp, entry);
     else
-	if ( BU_STR_EQUAL( FB_SUFFIX, suffix( entry->name ) ) )
-	    return	fb_Entry( uvp, entry );
+	if (BU_STR_EQUAL(FB_SUFFIX, suffix(entry->name)))
+	    return	fb_Entry(uvp, entry);
 	else
 	    return	0;
 }
+
 
 int
 icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
@@ -211,34 +212,35 @@ icon_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     RGBpixel		*pixel;
     struct icon_texture	*iconp;
     char				*file = entry->name + TEX_KEYLEN;
-    bu_semaphore_acquire( RT_SEM_RESULTS );
-    for (	iconp = icons;
-		iconp != NULL && !BU_STR_EQUAL( iconp->filenm, file );
-		iconp = iconp->next )
+    bu_semaphore_acquire(RT_SEM_RESULTS);
+    for (iconp = icons;
+	 iconp != NULL && !BU_STR_EQUAL(iconp->filenm, file);
+	 iconp = iconp->next)
 	;
-    if ( iconp == NULL )
-	iconp = init_Icon_Texture( file, entry );
-    bu_semaphore_release( RT_SEM_RESULTS );
-    if ( iconp == NULL )
+    if (iconp == NULL)
+	iconp = init_Icon_Texture(file, entry);
+    bu_semaphore_release(RT_SEM_RESULTS);
+    if (iconp == NULL)
 	return	0;
-    if (	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
-		||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
+    if (uvp->uv_u > 1.0 || uvp->uv_u < 0.0
+	||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 	)
     {
-	bu_log( "uv coordinates out of range: u=%g v=%g\n",
-		uvp->uv_u, uvp->uv_v );
+	bu_log("uv coordinates out of range: u=%g v=%g\n",
+	       uvp->uv_u, uvp->uv_v);
 	return	0;
     }
     ui = uvp->uv_u * iconp->wid;
     vi = uvp->uv_v * iconp->hgt;
 #if DEBUG_TEXTURE
-    bu_log( "uvp->uv_u=%g ui=%d uvp->uv_v=%g vi=%d\n",
-	    uvp->uv_u, ui, uvp->uv_v, vi );
+    bu_log("uvp->uv_u=%g ui=%d uvp->uv_v=%g vi=%d\n",
+	   uvp->uv_u, ui, uvp->uv_v, vi);
 #endif
-    pixel = icon_Lookup( iconp, ui, vi );
-    COPYRGB( entry->df_rgb, *pixel );
+    pixel = icon_Lookup(iconp, ui, vi);
+    COPYRGB(entry->df_rgb, *pixel);
     return	1;
 }
+
 
 int
 fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
@@ -248,40 +250,41 @@ fb_Entry(struct uvcoord *uvp, Mat_Db_Entry *entry)
     RGBpixel		*pixel;
     struct fb_texture	*fbp;
     char				*file = entry->name + TEX_KEYLEN;
-    bu_semaphore_acquire( RT_SEM_RESULTS );
-    for (	fbp = fbs;
-		fbp != NULL && !BU_STR_EQUAL( fbp->filenm, file );
-		fbp = fbp->next )
+    bu_semaphore_acquire(RT_SEM_RESULTS);
+    for (fbp = fbs;
+	 fbp != NULL && !BU_STR_EQUAL(fbp->filenm, file);
+	 fbp = fbp->next)
 	;
-    if ( fbp == NULL )
-	fbp = init_Fb_Texture( file, entry );
-    bu_semaphore_release( RT_SEM_RESULTS );
-    if ( fbp == NULL )
+    if (fbp == NULL)
+	fbp = init_Fb_Texture(file, entry);
+    bu_semaphore_release(RT_SEM_RESULTS);
+    if (fbp == NULL)
 	return	0;
-    if (	uvp->uv_u > 1.0 || uvp->uv_u < 0.0
-		||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
+    if (uvp->uv_u > 1.0 || uvp->uv_u < 0.0
+	||	uvp->uv_v > 1.0 || uvp->uv_v < 0.0
 	)
     {
-	bu_log( "uv coordinates out of range: u=%g v=%g\n",
-		uvp->uv_u, uvp->uv_v );
+	bu_log("uv coordinates out of range: u=%g v=%g\n",
+	       uvp->uv_u, uvp->uv_v);
 	return	0;
     }
     ui = uvp->uv_u * fbp->wid;
     vi = uvp->uv_v * fbp->hgt;
-    pixel = Fb_Lookup( fbp, ui, vi );
-    COPYRGB( entry->df_rgb, *pixel );
+    pixel = Fb_Lookup(fbp, ui, vi);
+    COPYRGB(entry->df_rgb, *pixel);
 #if DEBUG_TEXTURE
-    bu_log( "uvp->uv_u=%g uvp->uv_v=%g\n",
-	    uvp->uv_u, uvp->uv_v );
-    bu_log( "fbp->map[%d]=<%d,%d,%d>\n",
-	    vi*fbp->wid + ui,
-	    (*(fbp->map+vi*fbp->wid+ui))[0],
-	    (*(fbp->map+vi*fbp->wid+ui))[1],
-	    (*(fbp->map+vi*fbp->wid+ui))[2] );
-    prnt_Pixel( pixel, ui, vi );
+    bu_log("uvp->uv_u=%g uvp->uv_v=%g\n",
+	   uvp->uv_u, uvp->uv_v);
+    bu_log("fbp->map[%d]=<%d, %d, %d>\n",
+	   vi*fbp->wid + ui,
+	   (*(fbp->map+vi*fbp->wid+ui))[0],
+	   (*(fbp->map+vi*fbp->wid+ui))[1],
+	   (*(fbp->map+vi*fbp->wid+ui))[2]);
+    prnt_Pixel(pixel, ui, vi);
 #endif
     return	1;
 }
+
 
 /*
  * Local Variables:

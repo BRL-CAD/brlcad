@@ -1,7 +1,7 @@
 /*                       D O C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,8 @@ void
 Docolor()
 {
 
-    int i, j;
+    size_t i;
+    int j;
     fastf_t a;
 
     for (i = 0; i < totentities; i++) {

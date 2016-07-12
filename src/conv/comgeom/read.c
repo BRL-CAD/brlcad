@@ -1,7 +1,7 @@
 /*                          R E A D . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,26 +44,13 @@ void namecvt(int n, char **cp, int c);
 int
 get_line(char *cp, int buflen, char *title)
 {
-    int c;
-    int count = buflen;
-
-    while ((c = fgetc(infp)) == '\n') /* Skip blank lines.		*/
-	;
-    while (c != EOF && c != '\n') {
-	*cp++ = c;
-	count--;
-	if (count <= 0) {
-	    printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
-		   (unsigned long)cp, buflen, title);
-	    break;
-	}
-	c = fgetc(infp);
-    }
-    if (c == EOF)
-	return EOF;
-    while (count-- > 0)
-	*cp++ = 0;
-    return c;
+    int c = 0;
+    struct bu_vls str = BU_VLS_INIT_ZERO;
+    c = bu_vls_gets(&str, infp);
+    if (c > buflen)
+	printf("get_line(x%lx, %d) input record overflows buffer for %s\n",
+		(unsigned long)cp, buflen, title);
+    return bu_strlcpy(cp, bu_vls_addr(&str), buflen);
 }
 
 
@@ -71,10 +58,10 @@ int
 getint(char *cp, int start, size_t len)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    int result;
+    int result = 0;
 
     bu_vls_strncpy(&vls, cp+start, len);
-    result = atoi(vls.vls_str);
+    result = atoi(bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return result;
@@ -85,10 +72,10 @@ double
 getdouble(char *cp, int start, size_t len)
 {
     struct bu_vls vls = BU_VLS_INIT_ZERO;
-    double result;
+    double result = 0.0;
 
     bu_vls_strncpy(&vls, cp+start, len);
-    result = atof(vls.vls_str);
+    result = atof(bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return result;

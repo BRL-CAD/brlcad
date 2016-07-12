@@ -1,7 +1,7 @@
 /*                      I C V _ F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,13 +30,14 @@
 
 #include "bio.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 #include "bu/getopt.h"
 #include "icv.h"
 
 void usage()
 {
     bu_log("\n\
-	    [-h] [-b -p -d -m]\n\
+	    [-b -p -d -m]\n\
 	    [-%% percentage] [-f fraction]\n\
 	    [-o out_file] [file] > [out_file]\n");
 
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
     int c;
     int inx=0, iny=0;
     icv_image_t *bif;
-    ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
+    bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
     double multiplier=0.2;
     if (argc<2) {
 	usage();
@@ -86,18 +87,17 @@ int main(int argc, char* argv[])
 		    bu_exit(1,"tester_icv_fade : fraction is negative");
 		break;
 	    case 'b' :
-		format = ICV_IMAGE_BW;
+		format = BU_MIME_IMAGE_BW;
 		break;
 	    case 'p' :
-		format = ICV_IMAGE_PIX;
+		format = BU_MIME_IMAGE_PIX;
 		break;
 	    case 'd' :
-		format = ICV_IMAGE_DPIX;
+		format = BU_MIME_IMAGE_DPIX;
 		break;
 	    case 'm' :
-		format = ICV_IMAGE_PPM;
+		format = BU_MIME_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;

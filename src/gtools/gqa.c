@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
-	bu_free(av, "av");
+	bu_free((void *)av, "av");
 	bu_exit(1, usage, argv[0]);
     }
 
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
     if (gedp)
 	BU_PUT(gedp, struct ged);
 
-    bu_free(av, "av");
+    bu_free((void *)av, "av");
 
     return 0;
 }

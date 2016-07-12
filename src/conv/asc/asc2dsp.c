@@ -1,7 +1,7 @@
 /*                       A S C 2 D S P . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include <stdlib.h>
 #include <ctype.h>
 
-#include "bin.h"
+#include "bnetwork.h"
 #include "bu/log.h"
 
 
@@ -57,7 +57,7 @@ Convert an ASCII DSP file to DSP binary form\n\
 static void
 output_netshort(char *buf, unsigned *nchars, FILE *fpo)
 {
-    int ret = 0;
+    size_t ret = 0;
     unsigned long val;
     uint16_t hostshort;
     uint16_t netshort;

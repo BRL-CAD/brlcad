@@ -1,7 +1,7 @@
 /*                            F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,8 +54,7 @@ imageInit()
     }
     if (zoom * gridsz == devwid)
 	zoom--;
-    if (zoom < 1)
-	zoom = 1;
+    V_MAX(zoom, 1);
 
     /* Determine whether it is necessary to open fbfile. */
     if (fbiop == FB_NULL || fb_getwidth(fbiop) != devwid)

@@ -1,7 +1,7 @@
 /*                 PCurveOrSurface.h
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,7 +54,7 @@ public:
     PCurveOrSurface();
     virtual ~PCurveOrSurface();
     PCurveOrSurface(STEPWrapper *sw, int step_id);
-    bool Load(STEPWrapper *sw, SDAI_Select *sse);
+    bool Load(STEPWrapper *sw, SDAI_Application_instance *sse);
     virtual void Print(int level);
 
     //static methods

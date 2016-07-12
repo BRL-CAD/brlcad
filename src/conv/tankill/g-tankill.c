@@ -1,7 +1,7 @@
 /*                     G - T A N K I L L . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,26 +39,29 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static const char usage[] = "Usage:\n\
-	%s [-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n\
-	[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
-static const char usage2[] = "\
-		v - verbose\n\
-		x - librt debug level\n\
-		X - NMG debug level\n\
-		P - enable core dumps (dummy argument is currently-disabled # of processors)\n\
-		a - absolute tolerance for tessellation\n\
-		r - relative tolerance for tessellation\n\
-		n - surface normal tolerance for tessellation\n\
-		s - surroundings code to use in tankill file\n\
-		i - assign new idents sequentially and output ident list\n\
-		o - TANKILL output file\n";
+/* usage string length is longer than ISO C90 compilers are required
+ * to support, hence it is split into two parts
+ */
+static const char usage[] =
+    "[-v] [-xX lvl] [-P dummy_arg] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-s surroundings_code]\n"
+    "\t[-i idents_output_file] [-o out_file] brlcad_db.g object(s)\n";
+static const char usage2[] =
+    "\t\tv - verbose\n"
+    "\t\tx - librt debug level\n"
+    "\t\tX - NMG debug level\n"
+    "\t\tP - enable core dumps (dummy argument is currently-disabled # of processors)\n"
+    "\t\ta - absolute tolerance for tessellation\n"
+    "\t\tr - relative tolerance for tessellation\n"
+    "\t\tn - surface normal tolerance for tessellation\n"
+    "\t\ts - surroundings code to use in tankill file\n"
+    "\t\ti - assign new idents sequentially and output ident list\n"
+    "\t\to - TANKILL output file\n";
 
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
 static int	verbose;
@@ -155,7 +158,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
     struct shell *s;
     struct bu_ptbl vertices;	/* vertex list in TANKILL order */
     long *flags;			/* array to insure that no loops are missed */
-    int i;
+    size_t i;
 
     NMG_CK_REGION( r );
     m = r->m_p;
@@ -327,7 +330,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 		}
 
 		/* repeat the last vertex */
-		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_END( &vertices ) - 1 ) );
+		bu_ptbl_ins( &vertices, BU_PTBL_GET( &vertices, BU_PTBL_LEN( &vertices ) - 1 ) );
 
 		/* put first vertex of next loop on list twice */
 		lu = next_lu;
@@ -351,11 +354,11 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	/* Now write the data out */
 	if ( fp_id )	/* Use id count instead of actual id */
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), id_counter, surr_code );
+		     (unsigned long)BU_PTBL_LEN( &vertices ), id_counter, surr_code );
 	else
 	    fprintf( fp_out, "%lu %d %d           " ,
-		     (unsigned long)BU_PTBL_END( &vertices ), tsp->ts_regionid, surr_code );
-	for ( i=0; i<BU_PTBL_END( &vertices ); i++ )
+		     (unsigned long)BU_PTBL_LEN( &vertices ), tsp->ts_regionid, surr_code );
+	for ( i=0; i<BU_PTBL_LEN( &vertices ); i++ )
 	{
 	    struct vertex *v;
 
@@ -365,7 +368,7 @@ Write_tankill_region(struct nmgregion *r, struct db_tree_state *tsp, const struc
 	    else
 		fprintf( fp_out, " %.3f %.3f %.3f", V3ARGS( v->vg_p->coord ) );
 	}
-	if ( (BU_PTBL_END( &vertices )-2)%4 != 0 )
+	if ( (BU_PTBL_LEN( &vertices )-2)%4 != 0 )
 	    fprintf( fp_out, "\n" );
 
 	/* clear the vertices list for the next shell */
@@ -389,18 +392,19 @@ outt:	bu_free( (char *)flags, "g-tankill: flags" );
 
 
 static void
-printusage(const char *arg) {
-	fprintf(stderr,usage,arg);
-	bu_exit(1, usage2);
+printusage(const char *progname) {
+    bu_exit(1, "Usage:\n%s %s\n%s", progname, usage, usage2);
 }
 
 int
 main(int argc, char **argv)
 {
-
     int		j;
     int	c;
     double		percent;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_setprogname(argv[0]);
     bu_setlinebuf( stderr );
@@ -612,7 +616,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if ( !BU_SETJUMP ) {

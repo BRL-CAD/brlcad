@@ -1,7 +1,7 @@
 /*                      B B N O D E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
+
 #include "common.h"
-#include <algorithm> // for std::max
-#define NOMINMAX
+
 extern "C" {
 #include "bu/log.h"
 }
@@ -29,28 +29,31 @@ namespace brlcad {
 BBNode::~BBNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_children.size(); i++) {
-	delete m_children[i];
+    for (size_t i = 0; i < m_children->size(); i++) {
+	delete (*m_children)[i];
     }
+
+    delete m_children;
+    delete m_trims_above;
 }
 
 bool
-BBNode::intersectsHierarchy(ON_Ray &ray, std::list<BBNode *> &results_opt)
+BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results_opt) const
 {
     double tnear, tfar;
     bool intersects = intersectedBy(ray, &tnear, &tfar);
     if (intersects && isLeaf()) {
 	results_opt.push_back(this);
     } else if (intersects) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->intersectsHierarchy(ray, results_opt);
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->intersectsHierarchy(ray, results_opt);
 	}
     }
     return intersects;
 }
 
 bool
-BBNode::containsUV(const ON_2dPoint &uv)
+BBNode::containsUV(const ON_2dPoint &uv) const
 {
     if ((uv[0] > m_u[0]) && (uv[0] < m_u[1]) && (uv[1] > m_v[0]) && (uv[1] < m_v[1])) {
 	return true;
@@ -60,29 +63,29 @@ BBNode::containsUV(const ON_2dPoint &uv)
 }
 
 int
-BBNode::depth()
+BBNode::depth() const
 {
     int d = 0;
-    for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + std::max(d, m_children[i]->depth());
+    for (size_t i = 0; i < m_children->size(); i++) {
+	d = 1 + std::max(d, (*m_children)[i]->depth());
     }
     return d;
 }
 
 void
-BBNode::getLeaves(std::list<BBNode *> &out_leaves)
+BBNode::getLeaves(std::list<const BBNode *> &out_leaves) const
 {
-    if (m_children.size() > 0) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->getLeaves(out_leaves);
+    if (!m_children->empty()) {
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->getLeaves(out_leaves);
 	}
     } else {
 	out_leaves.push_back(this);
     }
 }
 
-BBNode *
-BBNode::closer(const ON_3dPoint &pt, BBNode *left, BBNode *right)
+const BBNode *
+BBNode::closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const
 {
     double ldist = pt.DistanceTo(left->m_estimate);
     double rdist = pt.DistanceTo(right->m_estimate);
@@ -95,14 +98,14 @@ BBNode::closer(const ON_3dPoint &pt, BBNode *left, BBNode *right)
 }
 
 ON_2dPoint
-BBNode::getClosestPointEstimate(const ON_3dPoint &pt)
+BBNode::getClosestPointEstimate(const ON_3dPoint &pt) const
 {
     ON_Interval u, v;
     return getClosestPointEstimate(pt, u, v);
 }
 
 ON_2dPoint
-BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v)
+BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
 {
     if (isLeaf()) {
 	double uvs[5][2] = {{m_u.Min(), m_v.Min()}, {m_u.Max(), m_v.Min()},
@@ -142,10 +145,10 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (m_children.size() > 0) {
-	    BBNode *closestNode = m_children[0];
-	    for (size_t i = 1; i < m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_children[i]);
+	if (!m_children->empty()) {
+	    const BBNode *closestNode = (*m_children)[0];
+	    for (size_t i = 1; i < m_children->size(); i++) {
+		closestNode = closer(pt, closestNode, (*m_children)[i]);
 		TRACE("\t" << PT(closestNode->m_estimate));
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
@@ -155,7 +158,7 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 }
 
 int
-BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out)
+BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<const BBNode *> &out) const
 {
     if (isLeaf()) {
 	double min[3], max[3];
@@ -171,29 +174,29 @@ BBNode::getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out)
 	return 0;
     } else {
 	int sum = 0;
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    sum += m_children[i]->getLeavesBoundingPoint(pt, out);
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    sum += (*m_children)[i]->getLeavesBoundingPoint(pt, out);
 	}
 	return sum;
     }
 }
 
-int
-BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const
+bool
+BBNode::isTrimmed(const ON_2dPoint &uv, const BRNode **closest, double &closesttrim, double within_distance_tol) const
 {
-    BRNode *br;
-    std::list<BRNode *> trims;
+    const BRNode *br;
+    std::list<const BRNode *> trims;
 
     closesttrim = -1.0;
     if (m_checkTrim) {
 	getTrimsAbove(uv, trims);
 
 	if (trims.empty()) {
-	    return 1;
+	    return true;
 	} else { /* find closest BB */
-	    std::list<BRNode *>::iterator i;
-	    BRNode *vclosest = NULL;
-	    BRNode *uclosest = NULL;
+	    std::list<const BRNode *>::const_iterator i;
+	    const BRNode *vclosest = NULL;
+	    const BRNode *uclosest = NULL;
 	    fastf_t currHeight = (fastf_t)0.0;
 	    bool currTrimStatus = false;
 	    bool verticalTrim = false;
@@ -202,7 +205,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 	    double udist = 0.0;
 
 	    for (i = trims.begin(); i != trims.end(); i++) {
-		br = dynamic_cast<BRNode *>(*i);
+		br = *i;
 
 		/* skip if trim below */
 		if (br->m_node.m_max[1] + within_distance_tol < uv[Y]) {
@@ -227,7 +230,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 		    continue;
 		}
 		double v;
-		int trimstatus = br->isTrimmed(uv, v);
+		bool trimstatus = br->isTrimmed(uv, v);
 		if (v >= 0.0) {
 		    if (closest && *closest == NULL) {
 			currHeight = v;
@@ -249,9 +252,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 			udist = dist;
 			uclosest = br;
 		    } else {
-			if (dist < udist) {
-			    udist = dist;
-			}
+			V_MIN(udist, dist);
 			uclosest = br;
 		    }
 		}
@@ -269,7 +270,7 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 			*closest = uclosest;
 		    }
 		}
-		return 1;
+		return true;
 	    } else {
 		closesttrim = currHeight;
 		if ((verticalTrim) && (vdist < closesttrim)) {
@@ -289,20 +290,20 @@ BBNode::isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, d
 	}
     } else {
 	if (m_trimmed) {
-	    return 1;
+	    return true;
 	} else {
-	    return 0;
+	    return false;
 	}
     }
 }
 
 void
-BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) const
+BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leaves) const
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode *>::const_iterator i = m_trims_above.begin(); i != m_trims_above.end(); i++) {
-	BRNode *br = dynamic_cast<BRNode *>(*i);
+    for (std::list<const BRNode *>::const_iterator i = m_trims_above->begin(); i != m_trims_above->end(); i++) {
+	const BRNode *br = *i;
 	br->GetBBox(bmin, bmax);
 	dist = 0.000001; /* 0.03*DIST_PT_PT(bmin, bmax); */
 	if ((uv[X] > bmin[X] - dist) && (uv[X] < bmax[X] + dist)) {
@@ -313,21 +314,17 @@ BBNode::getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) con
 
 void BBNode::BuildBBox()
 {
-    if (m_children.size() > 0) {
-	for (std::vector<BBNode *>::iterator childnode = m_children.begin(); childnode != m_children.end(); childnode++) {
+    if (!m_children->empty()) {
+	for (std::vector<BBNode *>::const_iterator childnode = m_children->begin(); childnode != m_children->end(); childnode++) {
 	    if (!(*childnode)->isLeaf()) {
 		(*childnode)->BuildBBox();
 	    }
-	    if (childnode == m_children.begin()) {
+	    if (childnode == m_children->begin()) {
 		m_node = ON_BoundingBox((*childnode)->m_node.m_min, (*childnode)->m_node.m_max);
 	    } else {
 		for (int j = 0; j < 3; j++) {
-		    if (m_node.m_min[j] > (*childnode)->m_node.m_min[j]) {
-			m_node.m_min[j] = (*childnode)->m_node.m_min[j];
-		    }
-		    if (m_node.m_max[j] < (*childnode)->m_node.m_max[j]) {
-			m_node.m_max[j] = (*childnode)->m_node.m_max[j];
-		    }
+		    V_MIN(m_node.m_min[j], (*childnode)->m_node.m_min[j]);
+		    V_MAX(m_node.m_max[j], (*childnode)->m_node.m_max[j]);
 		}
 	    }
 	}
@@ -337,25 +334,25 @@ void BBNode::BuildBBox()
 bool
 BBNode::prepTrims()
 {
-    CurveTree *ct = m_ctree;
-    std::list<BRNode *>::iterator i;
-    BRNode *br;
+    const CurveTree *ct = m_ctree;
+    std::list<const BRNode *>::iterator i;
+    const BRNode *br;
     point_t curvemin, curvemax;
     double dist = 0.000001;
     bool trim_already_assigned = false;
 
-    m_trims_above.clear();
+    m_trims_above->clear();
 
     if (LIKELY(ct != NULL)) {
-	ct->getLeavesAbove(m_trims_above, m_u, m_v);
+	ct->getLeavesAbove(*m_trims_above, m_u, m_v);
     }
 
-    m_trims_above.sort(sortY);
+    m_trims_above->sort(sortY);
 
-    if (!m_trims_above.empty()) {
-	i = m_trims_above.begin();
-	while (i != m_trims_above.end()) {
-	    br = dynamic_cast<BRNode *>(*i);
+    if (!m_trims_above->empty()) {
+	i = m_trims_above->begin();
+	while (i != m_trims_above->end()) {
+	    br = *i;
 	    if (br->m_Vertical) { /* check V to see if trim possibly overlaps */
 		br->GetBBox(curvemin, curvemax);
 		if (curvemin[Y] - dist <= m_v[1]) {
@@ -365,7 +362,7 @@ BBNode::prepTrims()
 		    trim_already_assigned = true;
 		    i++;
 		} else {
-		    i = m_trims_above.erase(i);
+		    i = m_trims_above->erase(i);
 		}
 	    } else {
 		i++;
@@ -374,18 +371,18 @@ BBNode::prepTrims()
     }
 
     if (!trim_already_assigned) { /* already contains possible vertical trim */
-	if (m_trims_above.empty() /*|| m_trims_right.empty()*/) {
+	if (m_trims_above->empty() /*|| m_trims_right.empty()*/) {
 	    m_trimmed = true;
 	    m_checkTrim = false;
-	} else if (!m_trims_above.empty()) { /*trimmed above check contains */
-	    i = m_trims_above.begin();
-	    br = dynamic_cast<BRNode *>(*i);
+	} else if (!m_trims_above->empty()) { /*trimmed above check contains */
+	    i = m_trims_above->begin();
+	    br = *i;
 	    br->GetBBox(curvemin, curvemax);
 	    dist = 0.000001; /* 0.03*DIST_PT_PT(curvemin, curvemax); */
 	    if (curvemin[Y] - dist > m_v[1]) {
 		i++;
 
-		if (i == m_trims_above.end()) { /* easy only trim in above list */
+		if (i == m_trims_above->end()) { /* easy only trim in above list */
 		    if (br->m_XIncreasing) {
 			m_trimmed = true;
 			m_checkTrim = false;
@@ -397,8 +394,8 @@ BBNode::prepTrims()
 		    /* check for trim bbox overlap TODO: look for
 		     * multiple overlaps.
 		     */
-		    BRNode *bs;
-		    bs = dynamic_cast<BRNode *>(*i);
+		    const BRNode *bs;
+		    bs = *i;
 		    point_t smin, smax;
 		    bs->GetBBox(smin, smax);
 		    if ((smin[Y] >= curvemax[Y]) || (smin[X] >= curvemax[X]) || (smax[X] <= curvemin[X])) { /* can determine inside/outside without closer inspection */

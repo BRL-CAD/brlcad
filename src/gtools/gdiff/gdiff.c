@@ -1,7 +1,7 @@
 /*                     G D I F F 2 . C
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -342,6 +342,7 @@ main(int argc, char **argv)
 	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
+	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
@@ -356,6 +357,7 @@ main(int argc, char **argv)
 	    db_close(right_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
+	db_update_nref(right_dbip, &rt_uniresource);
 
 	diff_return = do_diff(left_dbip, right_dbip, state);
     }
@@ -395,6 +397,7 @@ main(int argc, char **argv)
 	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[0]);
 	}
+	db_update_nref(left_dbip, &rt_uniresource);
 
 	if ((ancestor_dbip = db_open(argv[1], DB_OPEN_READONLY)) == DBI_NULL) {
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[1]);
@@ -409,6 +412,7 @@ main(int argc, char **argv)
 	    db_close(ancestor_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[1]);
 	}
+	db_update_nref(ancestor_dbip, &rt_uniresource);
 
 	if ((right_dbip = db_open(argv[2], DB_OPEN_READONLY)) == DBI_NULL) {
 	    bu_exit(1, "Cannot open geometry database file %s\n", argv[2]);
@@ -423,6 +427,7 @@ main(int argc, char **argv)
 	    db_close(left_dbip);
 	    bu_exit(1, "db_dirbuild failed on geometry database file %s\n", argv[2]);
 	}
+	db_update_nref(right_dbip, &rt_uniresource);
 
 	diff_return = do_diff3(left_dbip, ancestor_dbip, right_dbip, state);
     }

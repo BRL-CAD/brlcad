@@ -1,7 +1,7 @@
 /*            L I B B R E P _ B R E P _ T O O L S . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,12 @@
 
 #include "common.h"
 
+/* system headers */
 #include <vector>
 
+/* interface headers */
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
 #include "opennurbs.h"
 #include "brep.h"
 
@@ -180,7 +184,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
   @param f_tol Flatness tolerance - 0 always evaluates to flat, 1 would be a perfectly flat surface. Generally something in the range 0.8-0.9 should suffice in raytracing subdivision (per <a href="http://www.uni-koblenz.de/~cg/Diplomarbeiten/DA_Oliver_Abert.pdf">Abert, 2005</a>)
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat(const ON_Plane frames[9], double f_tol);
 
 /**
   \brief Perform flatness test of surface in U only
@@ -188,10 +192,10 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat_U(const ON_Plane frames[9], double f_tol);
 
 
 /**
@@ -200,10 +204,10 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
   Array index conventions are the same as ::ON_Surface_IsFlat.
 
   @param frames Array of 9 frenet frames
-  @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
+  @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat_V(const ON_Plane frames[9], double f_tol);
 
 
 /**
@@ -217,96 +221,7 @@ bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
   @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol);
-
-
-/**
-  \brief Create a surface based on a subset of a parent surface
-
-  Create a NURBS surface that corresponds to a subset
-  of an input surface, as defined by UV intervals. The
-  t parameters may be NULL, in which case working surfaces
-  will be created by the function.  If supplied, existing
-  surfaces are reused to avoid extra malloc operations
-  and memory usage associated with creating the working
-  surfaces.
-
-  @param srf parent ON_Surface
-  @param u_val U interval of proposed subsurface
-  @param v_val V interval of proposed subsurface
-  @param t1 surface used during split algorithm
-  @param t2 surface used during split algorithm
-  @param t3 surface used during split algorithm
-  @param t4 surface holding final result of split passes
-  @param[out] result final subsurface - holds *t4 if it was non-NULL as an input, else holds a pointer to the new ON_Surface
-
-  @return @c true if surface creation is successful or if the subsurface
-  is the same as the parent surface, @c false if one or more split
-  operations failed.
-*/
-BREP_EXPORT
-bool ON_Surface_SubSurface(
-	const ON_Surface *srf,
-	ON_Interval *u_val,
-	ON_Interval *v_val,
-	ON_Surface **t1,
-	ON_Surface **t2,
-	ON_Surface **t3,
-	ON_Surface **t4,
-	ON_Surface **result
-	);
-
-/**
-  \brief Create four sub-surfaces from a parent surface
-
-  Create four NURBS surfaces that corresponds to subsets
-  of an input surface, as defined by UV intervals and a
-  point within the U and V intervals.
-
-  \verbatim
-     *---------------------*
-     |          |          |
-     |    q3    |    q2    |
-     |          |          |
-   V |----------+----------|
-     |          |          |
-     |    q0    |    q1    |
-     |          |          |
-     *---------------------*
-	       U
-
-  + is the point (upt, vpt) that defines the quads
-  * points represent the mins and maxes of the U and V domains
-
-  \endverbatim
-
-
-  @param srf parent ON_Surface
-  @param u U interval of parent surface
-  @param v V interval of parent surface
-  @param upt U interval point for quad definition
-  @param upt U interval point for quad definition
-  @param q0 surface calculated by split algorithm
-  @param q1 surface calculated by split algorithm
-  @param q2 surface calculated by split algorithm
-  @param q3 surface calculated by split algorithm
-
-  @return @c true if surfaces are successfully created, @c false if one or more split
-  operations failed, the q* containers are not NULL, or the upt,vpt coordinates are
-  not contained within the UV interval.
-*/
-BREP_EXPORT
-bool ON_Surface_Quad_Split(
-	const ON_Surface *srf,
-	const ON_Interval& u,
-	const ON_Interval& v,
-	double upt,
-	double vpt,
-	ON_Surface **q0,
-	ON_Surface **q1,
-	ON_Surface **q2,
-	ON_Surface **q3
-	);
+bool ON_Surface_IsStraight(const ON_Plane frames[9], double s_tol);
 
 
 #endif /* LIBBREP_LIBBREP_BREP_TOOLS_H */

@@ -1,7 +1,7 @@
 /*                        S H _ T O O N . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define TOON_MAGIC 0x746F6F6E    /* make this a unique number for each shader */

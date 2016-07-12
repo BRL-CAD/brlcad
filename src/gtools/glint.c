@@ -1,7 +1,7 @@
 /*                        G _ L I N T . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,7 @@
 #include "bu/rb.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define made_it()	bu_log("Made it to %s:%d\n", __FILE__, __LINE__);

@@ -1,7 +1,7 @@
 /*                       C E L L - F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -526,10 +526,9 @@ display_Cells(long int ncells)
 	 */
 	scr_min = H2SCRX(xmin);
 	scr_max = H2SCRX(xmax);
-	if (scr_min < 0) scr_min = 0;
-	if (scr_min > fb_width) scr_min = fb_width;
-	if (scr_max < 0) scr_max = 0;
-	if (scr_max > fb_width) scr_max = fb_width;
+	CLAMP(scr_min, 0, fb_width);
+	CLAMP(scr_max, 0, fb_width);
+
 	scr_center = (scr_max + scr_min)/2;
 	if ((center_cell = VPX2CX(SCRX2VPX(scr_center))) < 5)
 	    center_cell = 5;
@@ -930,6 +929,9 @@ int
 main(int argc, char **argv)
 {
     static long ncells;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     bu_debug = BU_DEBUG_MEM_CHECK | BU_DEBUG_MEM_LOG;
     bu_debug = 0;

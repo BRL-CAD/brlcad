@@ -1,7 +1,7 @@
 /*                 GeometricSetSelect.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,11 +70,11 @@ GeometricSetSelect::GetSurfaceElement() {
 }
 
 bool
-GeometricSetSelect::Load(STEPWrapper *sw,SDAI_Select *sse) {
+GeometricSetSelect::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (element == NULL) {
-	SdaiGeometric_set_select *v = (SdaiGeometric_set_select *) sse;
+	SdaiGeometric_set_select *v = (SdaiGeometric_set_select *)sse;
 
 	if (v->IsPoint()) {
 	    SdaiPoint *point_select = *v;

@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,7 +42,7 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* private headers */
 #include "./dxf.h"
@@ -647,9 +647,7 @@ process_blocks_code(int code)
 	case 5:		/* block handle */
 	    if (curr_block && BU_STR_EMPTY(curr_block->handle)) {
 		len = strlen(line);
-		if (len > 16) {
-		    len = 16;
-		}
+		V_MIN(len, 16);
 		bu_strlcpy(curr_block->handle, line, len);
 	    }
 	    break;
@@ -1276,7 +1274,8 @@ process_solid_entities_code(int code)
 	case 23:
 	case 33:
 	    vert_no = code % 10;
-	    if (vert_no > last_vert_no) last_vert_no = vert_no;
+	    V_MAX(last_vert_no, vert_no);
+
 	    coord = code / 10 - 1;
 	    solid_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
@@ -1858,9 +1857,8 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 		    *cp++ = '\n';
 		    c += 2;
 		    lineCount++;
-		    if (lineLen > *maxLineLen) {
-			*maxLineLen = lineLen;
-		    }
+		    V_MAX(*maxLineLen, lineLen);
+
 		    lineLen = 0;
 		    break;
 		case 'A':
@@ -1886,9 +1884,7 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 	lineCount++;
     }
 
-    if (lineLen > *maxLineLen) {
-	*maxLineLen = lineLen;
-    }
+    V_MAX(*maxLineLen, lineLen);
 
     return lineCount;
 }
@@ -2610,9 +2606,8 @@ process_arc_entities_code(int code)
 		bu_log("arc has %d segs\n", num_segs);
 	    }
 
-	    if (num_segs < 1) {
-		num_segs = 1;
-	    }
+	    V_MAX(num_segs, 1);
+
 	    VSET(circle_pts[0], radius * cos(start_angle), radius * sin(start_angle), 0.0);
 	    for (i=1; i<num_segs; i++) {
 		circle_pts[i][X] = circle_pts[i-1][X]*cos_delta - circle_pts[i-1][Y]*sin_delta;
@@ -3293,12 +3288,14 @@ main(int argc, char *argv[])
     BU_LIST_INIT(&head_all);
     for (i = 0; i < next_layer; i++) {
 	struct bu_list head;
-	int j;
+	size_t j;
 
 	BU_LIST_INIT(&head);
 
-	if (layers[i]->color_number < 0) layers[i]->color_number = 7;
-	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->m) {
+	if (layers[i]->color_number < 0)
+	    layers[i]->color_number = 7;
+
+	if (layers[i]->curr_tri || BU_PTBL_LEN(&layers[i]->solids) || layers[i]->m) {
 	    bu_log("LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS(&rgb[layers[i]->color_number*3]));
 	}
 
@@ -3313,7 +3310,7 @@ main(int argc, char *argv[])
 	    }
 	}
 
-	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
+	for (j = 0; j < BU_PTBL_LEN(&layers[i]->solids); j++) {
 	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head, NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}

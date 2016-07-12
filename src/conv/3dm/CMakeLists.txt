@@ -1,24 +1,10 @@
-if(MSVC)
-  add_definitions(-DON_DLL_IMPORTS)
-endif(MSVC)
-
 set(3DM_INCLUDE_DIRS
-  ${OPENNURBS_INCLUDE_DIRS}
   ${GCV_INCLUDE_DIRS}
-  ${ICV_INCLUDE_DIRS}
-  ${WDB_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(3DM_INCLUDE_DIRS)
 
-set(3dm-g_SRCS
-  conv3dm-g.cpp
-  3dm-g.cpp
-  )
-BRLCAD_ADDEXEC(3dm-g "${3dm-g_SRCS}" "libgcv;libwdb;libicv;${OPENNURBS_LIBRARY}")
-
-CMAKEFILES(
-  conv3dm-g.hpp
-  )
+BRLCAD_ADDEXEC(3dm-g 3dm-g.c "libgcv")
+add_dependencies(3dm-g libgcv_plugins)
 
 # Local Variables:
 # tab-width: 8

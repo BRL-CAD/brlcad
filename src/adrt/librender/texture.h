@@ -1,7 +1,7 @@
 /*                       T E X T U R E . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,6 +28,7 @@
 #define ADRT_LIBRENDER_TEXTURE_H
 
 #include "texture_internal.h"
+#include "render_internal.h"
 
 #define TEXTURE_BLEND 0x0200
 #define TEXTURE_BUMP 0x0201
@@ -46,9 +47,9 @@ struct texture_perlin_s {
 };
 
 
-BU_EXPORT extern void texture_perlin_init(struct texture_perlin_s *P);
-BU_EXPORT extern void texture_perlin_free(struct texture_perlin_s *P);
-BU_EXPORT extern fastf_t texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
+RENDER_EXPORT extern void texture_perlin_init(struct texture_perlin_s *P);
+RENDER_EXPORT extern void texture_perlin_free(struct texture_perlin_s *P);
+RENDER_EXPORT extern fastf_t texture_perlin_noise3(struct texture_perlin_s *P, vect_t V, fastf_t Size, int Depth);
 
 
 struct texture_blend_s {
@@ -58,8 +59,8 @@ struct texture_blend_s {
 
 
 
-BU_EXPORT extern void texture_blend_free(struct texture_s *texture);
-BU_EXPORT extern void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_blend_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_blend_work(__TEXTURE_WORK_PROTOTYPE__);
 
 struct texture_bump_s {
     vect_t coef;
@@ -67,8 +68,8 @@ struct texture_bump_s {
 
 
 
-BU_EXPORT extern void texture_bump_free(struct texture_s *texture);
-BU_EXPORT extern void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_bump_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_bump_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_camo_s {
@@ -83,8 +84,8 @@ struct texture_camo_s {
 
 
 
-BU_EXPORT extern void texture_camo_free(struct texture_s *texture);
-BU_EXPORT extern void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_camo_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_camo_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_checker_s {
@@ -93,8 +94,8 @@ struct texture_checker_s {
 
 
 
-BU_EXPORT extern void texture_checker_free(struct texture_s *texture);
-BU_EXPORT extern void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_checker_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_checker_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_clouds_s {
@@ -108,8 +109,8 @@ struct texture_clouds_s {
 
 
 
-BU_EXPORT extern void texture_clouds_free(struct texture_s *texture);
-BU_EXPORT extern void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_clouds_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_clouds_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_gradient_s {
@@ -118,8 +119,8 @@ struct texture_gradient_s {
 
 
 
-BU_EXPORT extern void texture_gradient_free(struct texture_s *texture);
-BU_EXPORT extern void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_gradient_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_gradient_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_image_s {
@@ -130,8 +131,8 @@ struct texture_image_s {
 
 
 
-BU_EXPORT extern void texture_image_free(struct texture_s *texture);
-BU_EXPORT extern void texture_image_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_image_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_image_work(__TEXTURE_WORK_PROTOTYPE__);
 
 struct texture_mix_s {
     struct texture_s *texture1;
@@ -141,8 +142,8 @@ struct texture_mix_s {
 
 
 
-BU_EXPORT extern void texture_mix_free(struct texture_s *texture);
-BU_EXPORT extern void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_mix_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_mix_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 struct texture_stack_s {
@@ -152,8 +153,8 @@ struct texture_stack_s {
 
 
 
-BU_EXPORT extern void texture_stack_free(struct texture_s *texture);
-BU_EXPORT extern void texture_stack_work(__TEXTURE_WORK_PROTOTYPE__);
+RENDER_EXPORT extern void texture_stack_free(struct texture_s *texture);
+RENDER_EXPORT extern void texture_stack_work(__TEXTURE_WORK_PROTOTYPE__);
 
 
 #endif

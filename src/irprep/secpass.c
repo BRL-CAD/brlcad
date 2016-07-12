@@ -1,7 +1,7 @@
 /*                       S E C P A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -143,6 +143,9 @@ int main(int argc, char **argv)
 			/* from 1 position.  */
     int ret;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* Check to see if arguments implemented correctly.  */
     if (argc < 2 || argv[1] == NULL || argv[2] == NULL) {
 	fprintf(stderr, "\nUsage:  secpass file.g objects\n\n");
@@ -184,10 +187,7 @@ int main(int argc, char **argv)
 	ret = scanf("%d", &typeout);
 	if (ret == 0)
 	    perror("scanf");
-	if (typeout < 0)
-	    typeout = 0;
-	if (typeout > 1)
-	    typeout = 1;
+	CLAMP(typeout, 0, 1);
 
 	/* Read name of file to write conductivity information */
 	/* to for use in PRISM.  */

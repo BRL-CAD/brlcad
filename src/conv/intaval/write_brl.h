@@ -1,7 +1,7 @@
 /*                    W R I T E _ B R L . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,11 +36,11 @@
 
 void addTriangle
 (
-    int*    faces,
+    int* faces,
     size_t& num_faces,
-    int     a,
-    int     b,
-    int     c
+    size_t a,
+    size_t b,
+    size_t c
 );
 
 

@@ -1,7 +1,7 @@
 /*                 CharacterizedProductDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -120,7 +120,7 @@ CharacterizedProductDefinition::GetRelatedProductDefinition()
 }
 
 bool
-CharacterizedProductDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+CharacterizedProductDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {

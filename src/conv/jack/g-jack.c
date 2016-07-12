@@ -1,7 +1,7 @@
 /*                        G - J A C K . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,6 +22,16 @@
  * Program to convert a BRL-CAD model (in a .g file) to a JACK Psurf
  * file, by calling on the NMG booleans.
  *
+ * Jack, originally from the University of Pennsylvania's Computer
+ * Graphics Research Laboratory, is a package used for human figure
+ * animation and ergonomic analysis.
+ *
+ * This converter was written prior to JACK becoming a commercial
+ * product in 1996, but it should be compatible with the more modern
+ * Tecnomatix Jack version distributed by Siemens (maintainers of the
+ * NX and Parasolid CAD software).  It reportedly still supports JACK
+ * 5.1 JT files.
+ *
  */
 
 #include "common.h"
@@ -35,17 +45,16 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
-static const char usage[] =
-  "Usage: %s [-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
-  "       [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
-  "       [-D dist_calc_tol] [-p prefix]\n"
-  "       [-P #_of_cpus] brlcad_db.g object(s)\n"
-  ;
+static const char *usage =
+    "[-v] [-d] [-f] [-xX lvl] [-u eu_dist]\n"
+    "\t[-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+    "\t[-D dist_calc_tol] [-p prefix]\n"
+    "\t[-P #_of_cpus] brlcad_db.g object(s)\n";
 
 static const char optstring[] = "a:dfn:p:r:u:vx:D:P:X:h?";
 
@@ -67,6 +76,11 @@ static struct db_tree_state	jack_tree_state;	/* includes tol & model */
 static int	regions_tried = 0;
 static int	regions_done = 0;
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 /*
  *	Continues the conversion of an nmg into Jack format.  Before
@@ -180,7 +194,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     /* NMG region to be converted. */
     /* Jack format file to write vertex list to. */
 {
-    int			i;
+    size_t		i;
     int			*map;	/* map from v->index to Jack vert # */
     struct bu_ptbl		vtab;	/* vertex table */
 
@@ -192,7 +206,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
     /* FIXME: What to do if 0 vertices?  */
 
     /* Print list of unique vertices and convert from mm to cm. */
-    for (i = 0; i < BU_PTBL_END(&vtab); i++)  {
+    for (i = 0; i < BU_PTBL_LEN(&vtab); i++)  {
 	struct vertex			*v;
 	struct vertex_g	*vg;
 	v = (struct vertex *)BU_PTBL_GET(&vtab, i);
@@ -217,7 +231,7 @@ nmg_to_psurf(struct nmgregion *r, FILE *fp_psurf)
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -485,13 +499,13 @@ main(int argc, char **argv)
 		NMG_debug = RTG.NMG_debug;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     argc -= bu_optind;

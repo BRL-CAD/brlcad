@@ -1,7 +1,7 @@
 /*                         O F F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 static struct bn_tol tol;
@@ -150,7 +150,7 @@ int read_faces(struct model *m, FILE *fgeom)
 
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
-    char title[64], geom_fname[64];
+    char title[64], geom_fname[65];
     char rname[67], sname[67];
     char buf[200], buf2[200];
 
@@ -165,7 +165,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	if (sscanf(buf, "name %[^\n]s", buf2) > 0)
 	    bu_strlcpy(title, buf2, sizeof(title));
 	if (sscanf(buf, "geometry %200[^\n]s", buf2) > 0) {
-	    char dtype[40], format[40];
+	    char dtype[41], format[41];
 	    if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
 	    if (!BU_STR_EQUAL(dtype, "indexed_poly"))
