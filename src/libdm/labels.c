@@ -1,7 +1,7 @@
 /*                          L A B E L S . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,12 +24,12 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "nurb.h"
-#include "solid.h"
+#include "rt/geom.h"
+#include "rt/nurb.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm_private.h"
 

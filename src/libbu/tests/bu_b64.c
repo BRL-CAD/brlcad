@@ -1,7 +1,7 @@
 /*                    B U _ B 6 4 . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,10 +33,10 @@
  *   3. decoded string should be the same as input
  *
  */
-int
+static void
 test_encode(const signed char *str)
 {
-    int status = 0;
+    int passed = 1;
     int decoded_size = 0;
     signed char *encoded = NULL;
     signed char *decoded = NULL;
@@ -48,12 +48,14 @@ test_encode(const signed char *str)
 	printf("%s -> %s -> %s [PASS]\n", str, encoded, decoded);
     } else {
 	printf("%s -> %s -> %s [FAIL]\n", str, encoded, decoded);
-	status = 1;
+	passed = 0;
     }
     bu_free(encoded, "free encoded");
     bu_free(decoded, "free decoded");
 
-    return status;
+    if (!passed) {
+	bu_exit(1, "");
+    }
 }
 
 
@@ -66,7 +68,7 @@ main(int ac, char *av[])
     test_encode((const signed char *)"hello world!");
     test_encode((const signed char *)"!@#&#$%@&#$^@(*&^%(#$@&^#*$nasty_string!<>?");
 
-    return 1;
+    return 0;
 }
 
 

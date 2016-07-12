@@ -1,7 +1,7 @@
 /*                     B A C K T R A C E . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,7 +38,7 @@
 #ifdef HAVE_PROCESS_H
 #  include <process.h>
 #endif
-#include "bselect.h"
+#include "bsocket.h"
 #include "bio.h"
 
 /* common headers */

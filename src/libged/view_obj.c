@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,9 +38,11 @@
 #include "bn.h"
 #include "bu/cmd.h"
 #include "bu/units.h"
+#include "dm/bview.h"
 #include "vmath.h"
 #include "ged.h"
-#include "obj.h"
+
+#define GED_VIEW_OBJ_NULL ((struct view_obj *)0)
 
 
 /* FIXME: this should not exist.  pass from application code, not
@@ -62,6 +64,11 @@ vo_deleteProc(void *clientData)
     BU_PUT(vop, struct view_obj);
 }
 
+HIDDEN void
+_vo_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 void
 vo_update(struct view_obj *vop,
@@ -107,7 +114,7 @@ vo_update(struct view_obj *vop,
     if (vop->vo_callback)
 	(*vop->vo_callback)(vop->vo_clientData, vop);
     else if (oflag)
-	bu_observer_notify(vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+	bu_observer_notify((void *)vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name), &(_vo_eval));
 }
 
 
@@ -199,7 +206,7 @@ vo_size_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%g", vop->vo_size * vop->vo_base2local);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -208,7 +215,7 @@ vo_size_cmd(struct view_obj *vop,
     /* set view size */
     if (argc == 2) {
 	if (sscanf(argv[1], "%lf", &size) != 1 || size < SMALL_FASTF) {
-	    Tcl_AppendResult(vop->interp, "bad size - ", argv[1], (char *)NULL);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "bad size - ", argv[1], (char *)NULL);
 	    return TCL_ERROR;
 	}
 
@@ -219,7 +226,7 @@ vo_size_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_size %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -253,7 +260,7 @@ vo_invSize_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%g", vop->vo_invSize * vop->vo_base2local);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -262,7 +269,7 @@ vo_invSize_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_invSize %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -298,8 +305,8 @@ vo_aet_cmd(struct view_obj *vop,
     if (argc == 1) {
 	/* get aet */
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, vop->vo_aet);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, vop->vo_aet, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -336,18 +343,18 @@ vo_aet_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_aet: bad azimuth - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_aet: bad azimuth - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_aet: bad elevation - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_aet: bad elevation - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (argc == 4) {
 	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-		Tcl_AppendResult(vop->interp, "vo_aet: bad twist - ", argv[3], "\n", (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_aet: bad twist - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 	} else
@@ -371,7 +378,7 @@ bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_aet %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -406,8 +413,8 @@ vo_rmat_cmd(struct view_obj *vop,
     if (argc == 1) {
 	/* get rotation matrix */
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_rotation);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_mat(&vls, vop->vo_rotation, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -425,7 +432,7 @@ vo_rmat_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_rmat %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -473,8 +480,8 @@ vo_center_cmd(struct view_obj *vop,
 	MAT_DELTAS_GET_NEG(center, vop->vo_center);
 	VSCALE(center, center, vop->vo_base2local);
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, center);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, center, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -489,17 +496,17 @@ vo_center_cmd(struct view_obj *vop,
 	    double scan[3];
 
 	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-		Tcl_AppendResult(vop->interp, "vo_center: bad X value - ", argv[1], "\n", (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_center: bad X value - ", argv[1], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 
 	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-		Tcl_AppendResult(vop->interp, "vo_center: bad Y value - ", argv[2], "\n", (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_center: bad Y value - ", argv[2], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 
 	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-		Tcl_AppendResult(vop->interp, "vo_center: bad Z value - ", argv[3], "\n", (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_center: bad Z value - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 
@@ -515,7 +522,7 @@ bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_center %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -548,8 +555,8 @@ vo_model2view_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_model2view);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_mat(&vls, vop->vo_model2view, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -558,7 +565,7 @@ vo_model2view_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_model2view %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -591,8 +598,8 @@ vo_pmodel2view_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_pmodel2view);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_mat(&vls, vop->vo_pmodel2view, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -601,7 +608,7 @@ vo_pmodel2view_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_pmodel2view %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -634,8 +641,8 @@ vo_view2model_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_view2model);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_mat(&vls, vop->vo_view2model, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -644,7 +651,7 @@ vo_view2model_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_view2model %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -679,7 +686,7 @@ vo_perspective_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%g", vop->vo_perspective);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -688,7 +695,7 @@ vo_perspective_cmd(struct view_obj *vop,
     /* set the perspective angle */
     if (argc == 2) {
 	if (sscanf(argv[1], "%lf", &perspective) != 1) {
-	    Tcl_AppendResult(vop->interp, "bad perspective angle - ",
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "bad perspective angle - ",
 			     argv[1], (char *)NULL);
 	    return TCL_ERROR;
 	}
@@ -706,7 +713,7 @@ vo_perspective_cmd(struct view_obj *vop,
     /* Compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_perspective %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -739,8 +746,8 @@ vo_pmat_cmd(struct view_obj *vop,
 
     if (argc == 1) {
 	bu_vls_init(&vls);
-	bn_encode_mat(&vls, vop->vo_pmat);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_mat(&vls, vop->vo_pmat, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -749,7 +756,7 @@ vo_pmat_cmd(struct view_obj *vop,
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_pmat %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -793,8 +800,8 @@ vo_eye_cmd(struct view_obj *vop,
 	VSCALE(eye, eye, vop->vo_base2local);
 
 	bu_vls_init(&vls);
-	bn_encode_vect(&vls, eye);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, eye, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -810,17 +817,17 @@ vo_eye_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -847,7 +854,7 @@ vo_eye_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_eye %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -888,17 +895,17 @@ vo_eye_pos_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye_pos: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye_pos: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_eye_pos: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_eye_pos: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -920,7 +927,7 @@ vo_eye_pos_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_eye_pos %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -966,17 +973,17 @@ vo_lookat_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_lookat: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_lookat: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_lookat: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_lookat: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_lookat: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_lookat: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -1006,7 +1013,7 @@ vo_lookat_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_lookat %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1062,7 +1069,7 @@ vo_orientation_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_orient %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1084,92 +1091,11 @@ vo_orientation_tcl(void *clientData,
 
 
 int
-vo_pov_cmd(struct view_obj *vop,
-	   int argc,
-	   const char *argv[])
-{
-    vect_t center;
-    quat_t quat;
-    vect_t eye_pos;
-
-    /* intentionally double for scan */
-    double scale;
-    double  perspective;
-
-    if (argc != 6) {
-	struct bu_vls vls;
-
-	bu_vls_init(&vls);
-	bu_vls_printf(&vls, "helplib_alias vo_pov %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
-	bu_vls_free(&vls);
-	return TCL_ERROR;
-    }
-
-    /***************** Get the arguments *******************/
-
-    if (bn_decode_vect(center, argv[1]) != 3) {
-	Tcl_AppendResult(vop->interp, "vo_pov: bad center - ", argv[1], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (bn_decode_quat(quat, argv[2]) != 4) {
-	Tcl_AppendResult(vop->interp, "vo_pov: bad quat - ", argv[2], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[3], "%lf", &scale) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_pov: bad scale - ", argv[3], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (bn_decode_vect(eye_pos, argv[4]) != 3) {
-	Tcl_AppendResult(vop->interp, "vo_pov: bad eye position - ", argv[4], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    if (sscanf(argv[5], "%lf", &perspective) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_pov: bad perspective - ", argv[5], "\n", (char *)0);
-	return TCL_ERROR;
-    }
-
-    /***************** Use the arguments *******************/
-
-    VSCALE(center, center, vop->vo_local2base);
-    MAT_DELTAS_VEC_NEG(vop->vo_center, center);
-    quat_quat2mat(vop->vo_rotation, quat);
-    vop->vo_scale = vop->vo_local2base * scale;
-    VSCALE(eye_pos, eye_pos, vop->vo_local2base);
-    VMOVE(vop->vo_eye_pos, eye_pos);
-    vop->vo_perspective = perspective;
-
-    vo_update(vop, 1);
-
-    return TCL_OK;
-}
-
-
-/*
- * Usage:
- * procname pov center quat scale eye_pos perspective
- */
-static int
-vo_pov_tcl(void *clientData,
-	   int argc,
-	   const char *argv[])
-{
-    struct view_obj *vop = (struct view_obj *)clientData;
-
-    return vo_pov_cmd(vop, argc-1, argv+1);
-}
-
-
-int
 vo_zoom(struct view_obj *vop,
 	fastf_t sf)
 {
     if (sf <= SMALL_FASTF || INFINITY < sf) {
-	Tcl_AppendResult(vop->interp, "vo_zoom - scale factor out of range\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_zoom - scale factor out of range\n", (char *)0);
 	return TCL_ERROR;
     }
 
@@ -1196,14 +1122,14 @@ vo_zoom_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_zoom %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &sf) != 1) {
-	Tcl_AppendResult(vop->interp, "bad zoom value - ", argv[1], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "bad zoom value - ", argv[1], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
@@ -1237,7 +1163,7 @@ vo_units_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%s", bu_units_string(vop->vo_local2base));
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -1251,7 +1177,7 @@ vo_units_cmd(struct view_obj *vop,
 	if (ZERO(uval)) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "unrecognized unit type - %s\n", argv[1]);
-	    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	    bu_vls_free(&vls);
 
 	    return TCL_ERROR;
@@ -1265,7 +1191,7 @@ vo_units_cmd(struct view_obj *vop,
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_units %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -1300,14 +1226,14 @@ vo_base2local_cmd(struct view_obj *vop,
 
     if (argc != 1) {
 	bu_vls_printf(&vls, "helplib_alias vo_base2local %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
 
     bu_vls_printf(&vls, "%g", vop->vo_base2local);
-    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1342,14 +1268,14 @@ vo_local2base_cmd(struct view_obj *vop,
 
     if (argc != 1) {
 	bu_vls_printf(&vls, "helplib_alias vo_local2base %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 
 	return TCL_ERROR;
     }
 
     bu_vls_printf(&vls, "%g", vop->vo_local2base);
-    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -1422,7 +1348,7 @@ vo_rot(struct view_obj *vop,
 
 		bu_vls_init(&vls);
 		bu_vls_printf(&vls, "vo_rot_tcl: bad rotate_about - %c\n", rotate_about);
-		Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)0);
 		bu_vls_free(&vls);
 		return TCL_ERROR;
 	    }
@@ -1477,17 +1403,17 @@ vo_rot_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_rot: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_rot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_rot: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_rot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_rot: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_rot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -1503,7 +1429,7 @@ vo_rot_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_rot %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -1592,17 +1518,17 @@ vo_tra_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_tra: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_tra: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_tra: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_tra: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_tra: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_tra: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -1615,7 +1541,7 @@ vo_tra_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_tra %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -1678,18 +1604,18 @@ vo_slew_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_slew: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_slew: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_slew: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_slew: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (argc == 4) {
 	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-		Tcl_AppendResult(vop->interp, "vo_slew: bad Z value - ", argv[3], "\n", (char *)0);
+		Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_slew: bad Z value - ", argv[3], "\n", (char *)0);
 		return TCL_ERROR;
 	    }
 	} else
@@ -1704,7 +1630,7 @@ vo_slew_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_slew %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -1770,7 +1696,7 @@ vo_coord_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%c", vop->vo_coord);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
@@ -1788,7 +1714,7 @@ vo_coord_cmd(struct view_obj *vop,
     /* return help message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_coord %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1822,7 +1748,7 @@ vo_rotate_about_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "%c", vop->vo_rotate_about);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
@@ -1842,7 +1768,7 @@ vo_rotate_about_cmd(struct view_obj *vop,
     /* return help message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_rotate_about %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1877,8 +1803,8 @@ vo_keypoint_cmd(struct view_obj *vop,
     if (argc == 1) {
 	bu_vls_init(&vls);
 	VSCALE(tvec, vop->vo_keypoint, vop->vo_base2local);
-	bn_encode_vect(&vls, tvec);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)0);
+	bn_encode_vect(&vls, tvec, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)0);
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
@@ -1891,17 +1817,17 @@ vo_keypoint_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_keypoint: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_keypoint: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_keypoint: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_keypoint: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -1915,7 +1841,7 @@ vo_keypoint_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_keypoint %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -1972,17 +1898,17 @@ vo_setview_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_setview_cmd: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_setview_cmd: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	    Tcl_AppendResult(vop->interp, "vo_setview_cmd: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_setview_cmd: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -1996,7 +1922,7 @@ vo_setview_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_setview %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2036,23 +1962,23 @@ vo_arot_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_arot %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_arot: bad X value - ", argv[1], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_arot: bad X value - ", argv[1], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_arot: bad Y value - ", argv[2], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_arot: bad Y value - ", argv[2], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_arot: bad Z value - ", argv[3], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_arot: bad Z value - ", argv[3], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
@@ -2060,7 +1986,7 @@ vo_arot_cmd(struct view_obj *vop,
     VMOVE(axis, scan);
 
     if (sscanf(argv[4], "%lf", &angle) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_arot: bad angle - ", argv[4], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_arot: bad angle - ", argv[4], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
@@ -2107,17 +2033,17 @@ vo_vrot_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_vrot: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_vrot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_vrot: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_vrot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_vrot: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_vrot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -2133,7 +2059,7 @@ vo_vrot_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_vrot %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2174,17 +2100,17 @@ vo_mrot_cmd(struct view_obj *vop,
 	double scan[3];
 
 	if (sscanf(argv[1], "%lf", &scan[X]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_mrot: bad X value - ", argv[1], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_mrot: bad X value - ", argv[1], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[2], "%lf", &scan[Y]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_mrot: bad Y value - ", argv[2], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_mrot: bad Y value - ", argv[2], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
 	if (sscanf(argv[3], "%lf", &scan[Z]) < 1) {
-	    Tcl_AppendResult(vop->interp, "vo_mrot: bad Z value - ", argv[3], "\n", (char *)0);
+	    Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_mrot: bad Z value - ", argv[3], "\n", (char *)0);
 	    return TCL_ERROR;
 	}
 
@@ -2200,7 +2126,7 @@ vo_mrot_cmd(struct view_obj *vop,
 bad:
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_mrot %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
     return TCL_ERROR;
 }
@@ -2241,7 +2167,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	    double scan[3];
 
 	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_mrotPoint: bad X value - ",
 				 argv[1],
 				 "\n",
@@ -2250,7 +2176,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_mrotPoint: bad Y value - ",
 				 argv[2],
 				 "\n",
@@ -2259,7 +2185,7 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_mrotPoint: bad Z value - ",
 				 argv[3],
 				 "\n",
@@ -2274,8 +2200,8 @@ vo_mrotPoint_cmd(struct view_obj *vop,
 	bu_vls_init(&vls);
 	bn_mat_inv(invRot, vop->vo_rotation);
 	MAT4X3PNT(modelPt, invRot, viewPt);
-	bn_encode_vect(&vls, modelPt);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, modelPt, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -2285,7 +2211,7 @@ bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_mrotPoint %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -2327,7 +2253,7 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 		goto bad;
 	} else {
 	    if (sscanf(argv[1], "%lf", &modelPt[X]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_m2vPoint: bad X value - ",
 				 argv[1],
 				 "\n",
@@ -2336,7 +2262,7 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[2], "%lf", &modelPt[Y]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_m2vPoint: bad Y value - ",
 				 argv[2],
 				 "\n",
@@ -2345,7 +2271,7 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[3], "%lf", &modelPt[Z]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_m2vPoint: bad Z value - ",
 				 argv[3],
 				 "\n",
@@ -2356,8 +2282,8 @@ vo_m2vPoint_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	MAT4X3PNT(viewPt, vop->vo_model2view, modelPt);
-	bn_encode_vect(&vls, viewPt);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, viewPt, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -2367,7 +2293,7 @@ bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_m2vPoint %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -2410,7 +2336,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 	    double scan[3];
 
 	    if (sscanf(argv[1], "%lf", &scan[X]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_v2mPoint: bad X value - ",
 				 argv[1],
 				 "\n",
@@ -2419,7 +2345,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[2], "%lf", &scan[Y]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_v2mPoint: bad Y value - ",
 				 argv[2],
 				 "\n",
@@ -2428,7 +2354,7 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 	    }
 
 	    if (sscanf(argv[3], "%lf", &scan[Z]) != 1) {
-		Tcl_AppendResult(vop->interp,
+		Tcl_AppendResult((Tcl_Interp *)vop->interp,
 				 "vo_v2mPoint: bad Z value - ",
 				 argv[3],
 				 "\n",
@@ -2442,8 +2368,8 @@ vo_v2mPoint_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	MAT4X3PNT(modelPt, vop->vo_view2model, viewPt);
-	bn_encode_vect(&vls, modelPt);
-	Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+	bn_encode_vect(&vls, modelPt, 1);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
 	return TCL_OK;
@@ -2453,7 +2379,7 @@ bad:
     /* compose error message */
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "helplib_alias vo_v2mPoint %s", argv[0]);
-    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
     return TCL_ERROR;
@@ -2512,13 +2438,13 @@ vo_sca_cmd(struct view_obj *vop,
 
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_sca %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &sf) != 1) {
-	Tcl_AppendResult(vop->interp, "vo_sca: bad scale factor - ", argv[1], "\n", (char *)0);
+	Tcl_AppendResult((Tcl_Interp *)vop->interp, "vo_sca: bad scale factor - ", argv[1], "\n", (char *)0);
 	return TCL_ERROR;
     }
 
@@ -2555,7 +2481,7 @@ vo_viewDir_cmd(struct view_obj *vop,
     if (2 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_viewDir %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2577,8 +2503,8 @@ vo_viewDir_cmd(struct view_obj *vop,
     MAT4X3PNT(model, invRot, view);
 
     bu_vls_init(&vls);
-    bn_encode_vect(&vls, model);
-    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+    bn_encode_vect(&vls, model, 1);
+    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -2614,7 +2540,7 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
     if (argc < 3 || 4 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2626,7 +2552,7 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	    argv[1][2] != '\0') {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
-	    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -2635,7 +2561,7 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	    sscanf(argv[3], "%lf", &el) != 1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
-	    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -2646,7 +2572,7 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	    sscanf(argv[2], "%lf", &el) != 1) {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "helplib_alias vo_ae2dir %s", argv[0]);
-	    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -2662,8 +2588,8 @@ vo_ae2dir_cmd(struct view_obj *vop, int argc, const char *argv[])
 	VSCALE(dir, dir, -1);
 
     bu_vls_init(&vls);
-    bn_encode_vect(&vls, dir);
-    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+    bn_encode_vect(&vls, dir, 1);
+    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -2700,7 +2626,7 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
     if (argc < 4 || 5 < argc) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2712,7 +2638,7 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
 	    argv[1][2] != '\0') {
 	    bu_vls_init(&vls);
 	    bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
-	    Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	    Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	    bu_vls_free(&vls);
 	    return TCL_ERROR;
 	}
@@ -2725,7 +2651,7 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
 	sscanf(argv[3], "%lf", &scan[Z]) != 1) {
 	bu_vls_init(&vls);
 	bu_vls_printf(&vls, "helplib_alias vo_dir2ae %s", argv[0]);
-	Tcl_Eval(vop->interp, bu_vls_addr(&vls));
+	Tcl_Eval((Tcl_Interp *)vop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
 	return TCL_ERROR;
     }
@@ -2740,7 +2666,7 @@ vo_dir2ae_cmd(struct view_obj *vop, int argc, const char *argv[])
 
     bu_vls_init(&vls);
     bu_vls_printf(&vls, "%lf %lf", az, el);
-    Tcl_AppendResult(vop->interp, bu_vls_addr(&vls), (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)vop->interp, bu_vls_addr(&vls), (char *)NULL);
     bu_vls_free(&vls);
 
     return TCL_OK;
@@ -2793,7 +2719,6 @@ vo_cmd(ClientData clientData,
 	{"perspective",		vo_perspective_tcl},
 	{"pmat",		vo_pmat_tcl},
 	{"pmodel2view",		vo_pmodel2view_tcl},
-	{"pov",			vo_pov_tcl},
 	{"rmat",		vo_rmat_tcl},
 	{"rot",			vo_rot_tcl},
 	{"rotate_about",	vo_rotate_about_tcl},
@@ -2844,7 +2769,7 @@ vo_open_tcl(ClientData UNUSED(clientData),
     (void)Tcl_DeleteCommand(interp, argv[1]);
 
     vop = vo_open_cmd(argv[1]);
-    vop->interp = interp;
+    vop->interp = (void *)interp;
     (void)Tcl_CreateCommand(interp,
 			    bu_vls_addr(&vop->vo_name),
 			    (Tcl_CmdProc *)vo_cmd,

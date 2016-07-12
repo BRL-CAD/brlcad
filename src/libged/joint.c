@@ -1,7 +1,7 @@
 /*                      J O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -274,7 +274,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
      * each grip to every other grip in that list.
      */
     vbp = rt_vlblock_init();
-    vhead = rt_vlblock_find(vbp, 0x00, 0xff, 0xff);
+    vhead = bn_vlblock_find(vbp, 0x00, 0xff, 0xff);
 
     for (BU_LIST_FOR(jp, artic_joints, &artic_head)) {
 	i=0;
@@ -295,7 +295,7 @@ joint_mesh(struct ged *gedp, int argc, const char *argv[])
 
     _ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 
-    rt_vlblock_free(vbp);
+    bn_vlblock_free(vbp);
     while (BU_LIST_WHILE(jp, artic_joints, &artic_head)) {
 	while (BU_LIST_WHILE(gp, artic_grips, &jp->head)) {
 	    BU_LIST_DEQUEUE(&gp->l);
@@ -2856,7 +2856,7 @@ part_solve(struct ged *gedp, struct hold *hp, double limits, double tol)
 	    }
 	    jp->dirs[i].current = hold;
 	    joint_adjust(gedp, jp);
-	    if (f0 < besteval-SQRT_SMALL_FASTF) {
+	    if (besteval - f0 > SQRT_SMALL_FASTF) {
 		if (J_DEBUG & DEBUG_J_SOLVE) {
 		    bu_vls_printf(gedp->ged_result_str, "part_solve: NEW min %s(%d, %g) %g <%g delta=%g\n",
 				  jp->name, i+3, x0, f0, besteval, besteval-f0);

@@ -1,7 +1,7 @@
 /*                         N M G _ S I M P L I F Y . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -53,7 +53,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     int success = 0;
     int shell_count=0;
     int ret = GED_ERROR;
-    long i;
+    size_t i;
 
     static const char *usage = "[arb|tgc|poly] new_prim nmg_prim";
 
@@ -130,7 +130,7 @@ ged_nmg_simplify(struct ged *gedp, int argc, const char *argv[])
     /* check that all faces are planar */
     nmg_face_tabulate(&faces, &m->magic);
 
-    for (i = 0 ; i < BU_PTBL_END(&faces) ; i++) {
+    for (i = 0 ; i < BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	if (fp->g.magic_p != NULL && *(fp->g.magic_p) != NMG_FACE_G_PLANE_MAGIC) {
 	    bu_ptbl_free(&faces);

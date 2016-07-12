@@ -1,7 +1,7 @@
 /*                     S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,38 +34,44 @@
  * multithreading support for SunOS 5.X / Solaris 2.x
  */
 #if defined(SUNOS) && SUNOS >= 52
-#	include <sys/unistd.h>
-#	include <thread.h>
-#	include <synch.h>
-#	define SEMAPHORE_INIT DEFAULEMUTEX
+#  include <sys/unistd.h>
+#  include <thread.h>
+#  include <synch.h>
+#  define SEMAPHORE_INIT DEFAULTMUTEX
 struct bu_semaphores {
     uint32_t magic;
     mutex_t mu;
 };
-#	define DEFINED_BU_SEMAPHORES 1
+
+static mutext_t bu_init_lock = SEMAPHORE_INIT;
+#  define DEFINED_BU_SEMAPHORES 1
 
 /*
  * multithread support built on POSIX Threads (pthread) library.
  */
 #elif defined(HAVE_PTHREAD_H)
-#	include <pthread.h>
-#	define SEMAPHORE_INIT PTHREAD_MUTEX_INITIALIZER
+#  include <pthread.h>
+#  define SEMAPHORE_INIT PTHREAD_MUTEX_INITIALIZER
 struct bu_semaphores {
     uint32_t magic;
     pthread_mutex_t mu;
 };
-#	define DEFINED_BU_SEMAPHORES 1
+
+static pthread_mutex_t bu_init_lock = SEMAPHORE_INIT;
+#  define DEFINED_BU_SEMAPHORES 1
 
 /*
  * multithread support based on the Windows kernel.
  */
 #elif defined(_WIN32) && !defined(__CYGWIN__)
-#	define SEMAPHORE_INIT {0}
+#  define SEMAPHORE_INIT {0}
 struct bu_semaphores {
     uint32_t magic;
     CRITICAL_SECTION mu;
 };
-#	define DEFINED_BU_SEMAPHORES 1
+
+static LONG bu_init_lock = 0;
+#  define DEFINED_BU_SEMAPHORES 1
 #endif
 
 #define SEMAPHORE_MAGIC 0x62757365
@@ -103,39 +109,58 @@ bu_semaphore_init(unsigned int nsemaphores)
      * Begin vendor-specific initialization sections.
      */
 
-#	if defined(SUNOS)
+#  if defined(SUNOS)
+    if (mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	if (mutex_init(&bu_semaphores[i].mu, USYNC_THREAD, NULL)) {
-	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d]\n", i+1, nsemaphores - bu_nsemaphores);
+	    fprintf(stderr, "bu_semaphore_init(): mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
-#	elif defined(HAVE_PTHREAD_H)
+    bu_nsemaphores = nsemaphores;
+    if (mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+
+#  elif defined(HAVE_PTHREAD_H)
+    if (pthread_mutex_lock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
 	if (pthread_mutex_init(&bu_semaphores[i].mu,  NULL)) {
 	    fprintf(stderr, "bu_semaphore_init(): pthread_mutex_init() failed on [%d] of [%d]\n", i+1, nsemaphores - bu_nsemaphores);
 	    bu_bomb("fatal semaphore acquisition failure");
 	}
     }
-#	elif defined(_WIN32) && !defined(__CYGWIN__)
+    bu_nsemaphores = nsemaphores;
+    if (pthread_mutex_unlock(&bu_init_lock)) {
+	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on init lock\n");
+	bu_bomb("fatal semaphore acquisition failure");
+    }
+
+#  elif defined(_WIN32) && !defined(__CYGWIN__)
+    while (InterlockedCompareExchange(&bu_init_lock, 1, 0)) {
+	/* someone else has the lock, spin-wait */
+    }
+    /* lock acquired */
     for (i=bu_nsemaphores; i < nsemaphores; i++) {
+	memset(&bu_semaphores[i], 0, sizeof(struct bu_semaphores));
 	bu_semaphores[i].magic = SEMAPHORE_MAGIC;
-	memset(&bu_semaphores[i].mu, 0, sizeof(struct bu_semaphores));
-	/* This cannot fail except for very low memory situations in XP. */
 	InitializeCriticalSection(&bu_semaphores[i].mu);
     }
-#	endif
-
-    /*
-     * This should be last thing done before returning, so that
-     * any subroutines called (e.g. bu_calloc()) won't think that
-     * parallel operation has begun yet, and do acquire/release.
-     */
     bu_nsemaphores = nsemaphores;
+    /* release lock */
+    InterlockedExchange(&bu_init_lock, 0);
+#  endif
 #endif	/* PARALLEL */
 }
 
@@ -151,25 +176,25 @@ bu_semaphore_free(void)
     unsigned int i;
 
     /* Close out the mutexes already created. */
-#	if defined(SUNOS)
+#  if defined(SUNOS)
     for (i = 0; i < bu_nsemaphores; i++) {
 	if (mutex_destroy(&bu_semaphores[i].mu)) {
 	    fprintf(stderr, "bu_semaphore_free(): mutex_destroy() failed on [%d] of [%d]\n", i+1, bu_nsemaphores);
 	}
     }
 
-#	elif defined(HAVE_PTHREAD_H)
+#  elif defined(HAVE_PTHREAD_H)
     for (i = 0; i < bu_nsemaphores; i++) {
 	if (pthread_mutex_destroy(&bu_semaphores[i].mu)) {
 	    fprintf(stderr, "bu_semaphore_free(): pthread_mutex_destroy() failed on [%d] of [%d]\n", i+1, bu_nsemaphores);
 	}
     }
 
-#	elif defined(_WIN32) && !defined(__CYGWIN__)
+#  elif defined(_WIN32) && !defined(__CYGWIN__)
     for (i = 0; i < bu_nsemaphores; i++) {
 	DeleteCriticalSection(&bu_semaphores[i].mu);
     }
-#	endif
+#  endif
 
     bu_nsemaphores = 0;
 #endif	/* PARALLEL */
@@ -193,22 +218,24 @@ bu_semaphore_acquire(unsigned int i)
      * Begin vendor-specific initialization sections.
      */
 
-#	ifdef SUNOS
+#  ifdef SUNOS
     if (mutex_lock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): mutex_lock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
-#	endif
-#	if defined(HAVE_PTHREAD_H)
+#  endif
+
+#  if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_lock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_lock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
-#	endif
-#	if defined(_WIN32) && !defined(__CYGWIN__)
+#  endif
+
+#  if defined(_WIN32) && !defined(__CYGWIN__)
     /* This only fails if the timeout exceeds 30 days. */
     EnterCriticalSection(&bu_semaphores[i].mu);
-#	endif
+#  endif
 
 #endif
 }
@@ -231,22 +258,24 @@ bu_semaphore_release(unsigned int i)
      * Begin vendor-specific initialization sections.
      */
 
-#	ifdef SUNOS
+#  ifdef SUNOS
     if (mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): mutex_unlock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
-#	endif
-#	if defined(HAVE_PTHREAD_H)
+#  endif
+
+#  if defined(HAVE_PTHREAD_H)
     if (pthread_mutex_unlock(&bu_semaphores[i].mu)) {
 	fprintf(stderr, "bu_semaphore_acquire(): pthread_mutex_unlock() failed on [%d]\n", i);
 	bu_bomb("fatal semaphore acquisition failure");
     }
-#	endif
+#  endif
 
-#	if defined(_WIN32) && !defined(__CYGWIN__)
+#  if defined(_WIN32) && !defined(__CYGWIN__)
     LeaveCriticalSection(&bu_semaphores[i].mu);
-#	endif
+#  endif
+
 #endif
 }
 

@@ -1,7 +1,7 @@
 /*              T E S T _ B N _ P O L Y _ S U B . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,10 +88,10 @@ poly_init(void)
 
 
 /* compares the values of the array and returns 0. */
-int
-check_results(fastf_t a[], fastf_t b[], int n)
+size_t
+check_results(fastf_t a[], fastf_t b[], size_t n)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
 	if (!EQUAL(a[i], b[i]))
@@ -106,8 +106,9 @@ check_results(fastf_t a[], fastf_t b[], int n)
 int
 test_bn_poly_sub(void)
 {
-    int val, val1, val2;
+    size_t val, val1, val2;
     bn_poly_t a, b, c;
+
     a = bn_Zero_poly, b = bn_Zero_poly, c = bn_Zero_poly;
 
     bn_poly_sub(&a, &input[0], &input[0]);
@@ -119,9 +120,9 @@ test_bn_poly_sub(void)
     val2 = check_results(c.cf, output[2].cf, output[2].dgr + 1);
 
     if (val == 0 && val1 == 0 && val2 == 0)
-	return val;
+	return 0;
 
-    return -1;
+    return 1;
 }
 
 
@@ -129,17 +130,16 @@ int
 main(void)
 {
     int ret;
+
     poly_init();
+
     ret = test_bn_poly_sub();
-
-    if (ret == 0) {
-
-	bu_log("Function computes correctly\n");
-	exit(EXIT_SUCCESS);
-    } else
+    if (ret != 0) {
 	exit(EXIT_FAILURE);
+    }
 
-    return 0;
+    bu_log("Function computes correctly\n");
+    return EXIT_SUCCESS;
 }
 
 

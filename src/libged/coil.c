@@ -1,7 +1,7 @@
 /*                          C O I L . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -394,10 +394,6 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
 		return GED_ERROR;
 	}
     }
-    if (argc == 1) {
-	usage(gedp);
-	bu_vls_printf(gedp->ged_result_str,"\n       Program continues running:\n\n");
-    }
     if ((argc - bu_optind) == 1) {
 	have_name = 1;
 	bu_vls_sprintf(name, "%s", argv[bu_optind]);
@@ -405,6 +401,7 @@ ReadArgs(struct ged *gedp, int argc, const char *argv[], struct bu_vls *name, st
     if (!have_name) {
 	bu_vls_sprintf(name, "%s", DEFAULT_COIL_OBJECT);
     }
+
     return GED_OK;
 }
 
@@ -415,7 +412,6 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 
     struct bu_vls name;
     struct rt_wdb *db_fp = gedp->ged_wdbp;
-    struct bu_vls str = BU_VLS_INIT_ZERO;
     fastf_t mean_outer_diameter, wire_diameter, overall_length, nominal_length;
     fastf_t helix_angle, pitch;
 
@@ -430,7 +426,6 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
 
     /* initialize result */
-    bu_vls_trunc(gedp->ged_result_str, 0);
     bu_vls_init(&name);
     BU_LIST_INIT(&sections);
 
@@ -446,7 +441,6 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
 
     /* Process arguments */
     if (ReadArgs(gedp, argc, argv, &name, &sections, &mean_outer_diameter, &wire_diameter, &helix_angle, &pitch, &nt, &start_cap_type, &end_cap_type, &overall_length, &lhf) != GED_OK) {
-/*	bu_vls_printf(gedp->ged_result_str, "Nothing created"); */
 	return GED_ERROR;
     }
 
@@ -455,7 +449,7 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
     if (BU_LIST_IS_EMPTY(&sections)) {
 
 	if (usedefaults)
-	    bu_vls_printf(gedp->ged_result_str, "Creating %s with default parameters.\n",DEFAULT_COIL_FILENAME);
+	    bu_vls_printf(gedp->ged_result_str, "Creating %s with default parameters.\n", bu_vls_addr(&name));
 
 	if (mean_outer_diameter < 0 || wire_diameter < 0 || helix_angle < 0 || pitch < 0 || nt < 0 || start_cap_type < 0 || end_cap_type < 0) {
 	    bu_vls_printf(gedp->ged_result_str, "negative value in one or more arguments supplied to coil");
@@ -554,9 +548,8 @@ ged_coil(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* do it. */
-    make_coil(db_fp, DEFAULT_COIL_OBJECT, &sections, start_cap_type, end_cap_type);
+    make_coil(db_fp, bu_vls_addr(&name), &sections, start_cap_type, end_cap_type);
 
-    bu_vls_free(&str);
     bu_vls_free(&name);
 
     return GED_OK;

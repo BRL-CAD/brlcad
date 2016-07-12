@@ -1,7 +1,7 @@
 /*                     I F _ R E M O T E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_remote.c
  *
@@ -54,10 +54,10 @@
 
 #include "bu/color.h"
 #include "bu/str.h"
+#include "bu/log.h"
 #include "pkg.h"
 #include "fb_private.h"
 #include "fb.h"
-#include "fbmsg.h"
 
 
 #define NET_LONG_LEN 4	/* # bytes to network long */

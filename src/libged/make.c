@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 
 
 #include "bu/getopt.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -72,7 +72,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     struct rt_metaball_internal *metaball_ip;
     struct rt_pnts_internal *pnts_ip;
 
-    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
+    static const char *usage = "-h | -t | -o origin -s sf name <arb8|arb7|arb6|arb5|arb4|arbn|ars|bot|datum|ehy|ell|ell1|epa|eto|extrude|grip|half|hyp|nmg|part|pipe|pnts|rcc|rec|rhc|rpc|rpp|sketch|sph|tec|tgc|tor|trc>";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_READ_ONLY(gedp, GED_ERROR);
@@ -90,7 +90,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != -1) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'o':
 	    case 'O':
@@ -112,7 +113,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    case 't':
 	    case 'T':
 		if (argc == 2) {
-		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
+		    bu_vls_printf(gedp->ged_result_str, "arb8 arb7 arb6 arb5 arb4 arbn ars bot datum ehy ell ell1 epa eto extrude grip half hyp nmg part pipe pnts rcc rec rhc rpc rpp sketch sph tec tgc tor trc superell metaball");
 		    return GED_HELP;
 		}
 
@@ -827,6 +828,74 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 
 	bu_log("metaball being made with %f threshold and two points using the %s rendering method\n",
 	       metaball_ip->threshold, rt_metaball_lookup_type_name(metaball_ip->method));
+
+    } else if (BU_STR_EQUAL(argv[bu_optind+1], "datum")) {
+	struct rt_datum_internal *datum_ip;
+	struct rt_datum_internal *next_ip;
+
+	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
+	internal.idb_type = ID_DATUM;
+	internal.idb_meth = &OBJ[ID_DATUM];
+
+	/* Set a default color for datum objects */
+	bu_avs_add(&internal.idb_avs, "color", "255/255/0");
+
+	BU_ALLOC(internal.idb_ptr, struct rt_datum_internal);
+	datum_ip = (struct rt_datum_internal *)internal.idb_ptr;
+	datum_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+
+	/* create a full coordinate system, 7 datums chained: one
+	 * center point, three vectors, and three planes
+	 */
+
+	/* center point */
+	VSET(datum_ip->pnt, origin[X], origin[Y], origin[Z]);
+
+	/* X-axis */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 1.0, 0.0, 0.0);
+	datum_ip->next = next_ip;
+
+	/* Y-axis */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 0.0, 1.0, 0.0);
+	datum_ip->next->next = next_ip;
+
+	/* Z-axis */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 0.0, 0.0, 1.0);
+	datum_ip->next->next->next = next_ip;
+
+	/* X-plane */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 1.0, 0.0, 0.0);
+	next_ip->w = 1.0;
+	datum_ip->next->next->next->next = next_ip;
+
+	/* Y-plane */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 0.0, 1.0, 0.0);
+	next_ip->w = 1.0;
+	datum_ip->next->next->next->next->next = next_ip;
+
+	/* Z-plane */
+	BU_ALLOC(next_ip, struct rt_datum_internal);
+	next_ip->magic = RT_DATUM_INTERNAL_MAGIC;
+	VSET(next_ip->pnt, origin[X], origin[Y], origin[Z]);
+	VSET(next_ip->dir, 0.0, 0.0, 1.0);
+	next_ip->w = 1.0;
+	datum_ip->next->next->next->next->next->next = next_ip;
+
     } else {
 	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
 	return GED_ERROR;

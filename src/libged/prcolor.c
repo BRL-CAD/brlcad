@@ -1,7 +1,7 @@
 /*                         P R C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,8 +29,8 @@
 #include <ctype.h>
 #include <string.h>
 
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 
 #include "./ged_private.h"
 

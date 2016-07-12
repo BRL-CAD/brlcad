@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,16 +27,12 @@
 #include <assert.h>
 #include <math.h>
 
-#ifdef HAVE_STDINT_H
-#   include <stdint.h>
-#endif
-
 #include "bio.h"
 
 #include "bu/log.h"
 #include "bu/vls.h"
 
-#include "./vls_internals.h"
+#include "./vls_vprintf.h"
 
 /* private constants */
 
@@ -399,8 +395,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 
     BU_CK_VLS(vls);
 
-    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
-
     sp = fmt;
     while (*sp) {
 	/* Initial state:  just printing chars */
@@ -659,17 +653,17 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
 		    if (vp) {
 			BU_CK_VLS(vp);
 			if (f.flags & FIELDLEN) {
-			    int stringlen = bu_vls_strlen(vp);
+			    size_t stringlen = bu_vls_strlen(vp);
 
-			    if (stringlen >= f.fieldlen)
+			    if (stringlen >= (size_t)f.fieldlen)
 				bu_vls_strncat(vls, bu_vls_addr(vp), (size_t)f.fieldlen);
 			    else {
 				struct bu_vls padded = BU_VLS_INIT_ZERO;
-				int i;
+				size_t i;
 
 				if (f.left_justify)
 				    bu_vls_vlscat(&padded, vp);
-				for (i = 0; i < f.fieldlen - stringlen; ++i)
+				for (i = 0; i < (size_t)f.fieldlen - stringlen; ++i)
 				    bu_vls_putc(&padded, ' ');
 				if (!f.left_justify)
 				    bu_vls_vlscat(&padded, vp);

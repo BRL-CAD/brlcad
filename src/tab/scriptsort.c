@@ -326,6 +326,9 @@ main(int argc, char *argv[])
 
     int base, count;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (!get_args(argc, argv)) {
 	return 1;
     }

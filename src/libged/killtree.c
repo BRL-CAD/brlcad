@@ -1,7 +1,7 @@
 /*                         K I L L T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -65,9 +65,9 @@ find_reference(struct db_i *dbip, const char *topobj, const char *obj)
     /* FIXME: these should be wrapped in quotes, but need to dewrap
      * after bu_argv_from_string().
      */
-    bu_vls_printf(&str, "-not -below -name %s -name %s", topobj, obj);
+    bu_vls_printf(&str, "-depth >0 -not -below -name %s -name %s", topobj, obj);
 
-    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip->dbi_wdbp->dbip);
+    ret = db_search(NULL, DB_SEARCH_TREE, bu_vls_cstr(&str), 0, NULL, dbip);
 
     bu_vls_free(&str);
 
@@ -201,6 +201,11 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
     argc -= (bu_optind - 1);
     argv += (bu_optind - 1);
 
+
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     /* Objects that would be killed are in the first sublist */
     if (gktd.print)
 	bu_vls_printf(gedp->ged_result_str, "{");
@@ -245,6 +250,9 @@ ged_killtree(struct ged *gedp, int argc, const char *argv[])
 
     bu_free(gktd.av, "free av");
     gktd.av = NULL;
+
+    /* Done removing stuff - update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     return GED_OK;
 }

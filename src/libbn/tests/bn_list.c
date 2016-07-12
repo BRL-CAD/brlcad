@@ -1,7 +1,7 @@
 /*                  T E S T _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 
 #include "bn.h"
 #include "bu.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BUFFER_SIZE 2000
 #define MAX_POINTS 30
@@ -73,7 +73,7 @@ compare_result(char *expected_buf, FILE *result_fd)
 }
 
 /* Checks the result length and closes the result fd */
-int
+static size_t
 check_result_len(FILE *result_fd)
 {
     size_t ret;

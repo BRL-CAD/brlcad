@@ -1,7 +1,7 @@
 /*                   B R L C A D _ P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,9 +32,9 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "bu/vls.h"
-#include "sysv.h"
 
 /* private headers */
 #include "brlcad_version.h"
@@ -75,7 +75,7 @@ _brlcad_data(void)
 
 
 /**
- *print out an error/warning message if we cannot find the specified
+ * print out an error/warning message if we cannot find the specified
  * BRLCAD_ROOT (compile-time install path)
  */
 HIDDEN void
@@ -87,7 +87,6 @@ Unable to locate where BRL-CAD %s is installed while searching:\n\
 This version of BRL-CAD was compiled to be installed at:\n\
 	%s\n\n", brlcad_version(), paths, BRLCAD_ROOT);
 
-#ifndef _WIN32
     bu_log("\
 You may specify where to locate BRL-CAD by setting the BRLCAD_ROOT\n\
 environment variable.  For example:\n\
@@ -96,7 +95,6 @@ for csh/tcsh users:\n\
 	setenv BRLCAD_ROOT /path/to/brlcad\n\
 for sh/bash users:\n\
 	BRLCAD_ROOT=/path/to/brlcad ; export BRLCAD_ROOT\n\n");
-#endif
 
     return;
 }
@@ -116,7 +114,6 @@ while searching:\n\
 This release of BRL-CAD expects data resources to be at:\n\
 	%s\n\n", brlcad_version(), paths, _brlcad_data());
 
-#ifndef _WIN32
     bu_log("\
 You may specify where to locate BRL-CAD data resources by setting\n\
 the BRLCAD_DATA environment variable.  For example:\n\
@@ -125,7 +122,6 @@ for csh/tcsh users:\n\
 	setenv BRLCAD_DATA /path/to/brlcad/data\n\
 for sh/bash users:\n\
 	BRLCAD_DATA=/path/to/brlcad/data ; export BRLCAD_DATA\n\n");
-#endif
 
     return;
 }

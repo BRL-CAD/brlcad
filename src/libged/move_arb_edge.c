@@ -1,7 +1,7 @@
 /*                         M O V E _ A R B _ E D G E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
 

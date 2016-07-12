@@ -1,7 +1,7 @@
 /*                        G E T C W D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ bu_getcwd(char *buf, size_t size)
 	&& strlen(cwd) > 0
 	&& bu_file_exists(cwd, NULL))
     {
-#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+#ifdef HAVE_REALPATH
 	/* FIXME: shouldn't have gotten here with -std=c99 (HAVE_REALPATH test not working right?) */
 	char rbuf[MAXPATHLEN] = {0};
 	char *rwd = bu_realpath(cbuf, rbuf);
@@ -74,7 +74,7 @@ bu_getcwd(char *buf, size_t size)
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
 	    return buf;
 	}
-#endif /* HAVE_WORKING_REALPATH_FUNCTION */
+#endif /* HAVE_REALPATH */
 	BU_ASSERT(sz > strlen(cwd)+1);
 	bu_strlcpy(buf, cwd, strlen(cwd)+1);
 	return buf;
@@ -91,7 +91,7 @@ bu_getcwd(char *buf, size_t size)
 	&& strlen(pwd) > 0
 	&& bu_file_exists(pwd, NULL))
     {
-#if defined(HAVE_WORKING_REALPATH_FUNCTION)
+#ifdef HAVE_REALPATH
 	char rbuf[MAXPATHLEN] = {0};
 	char *rwd = realpath(pwd, rbuf);
 	if (rwd
@@ -102,7 +102,7 @@ bu_getcwd(char *buf, size_t size)
 	    bu_strlcpy(buf, rwd, strlen(rwd)+1);
 	    return buf;
 	}
-#endif /* HAVE_WORKING_REALPATH_FUNCTION */
+#endif /* HAVE_REALPATH */
 	BU_ASSERT(sz > strlen(pwd)+1);
 	bu_strlcpy(buf, pwd, strlen(pwd)+1);
 	return buf;

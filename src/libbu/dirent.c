@@ -1,7 +1,7 @@
 /*                           D I R E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2014 United States Government as represented by
+ * Copyright (c) 2001-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,12 +26,22 @@
 #include <sys/types.h>
 
 #include "bu/file.h"
+#include "bu/path.h"
 #include "bu/malloc.h"
+#include "bu/sort.h"
 #include "bu/str.h"
 #include "uce-dirent.h"
 
+
+int
+cmpdir(const void *a, const void *b, void *UNUSED(context))
+{
+    return (bu_strcmp(*(const char **)a, *(const char **)b));
+}
+
+
 size_t
-bu_dir_list(const char *path, const char *pattern, char ***files)
+bu_file_list(const char *path, const char *pattern, char ***files)
 {
     size_t i = 0;
     size_t filecount = 0;
@@ -68,6 +78,8 @@ bu_dir_list(const char *path, const char *pattern, char ***files)
 	}
     }
     (void)closedir(dir);
+
+    bu_sort(*files, filecount, sizeof(char *), cmpdir, NULL);
 
     return filecount;
 }

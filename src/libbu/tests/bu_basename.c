@@ -1,7 +1,7 @@
 /*                 T E S T _ B A S E N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,41 +29,60 @@
 
 #include "bu.h"
 
-
-/* Test against basename UNIX tool */
-void
-automatic_test(const char *input)
-{
-
-    char buf_input[1000];
-    char *ans = NULL;
-    char *res = (char *)bu_calloc(strlen(buf_input), sizeof(char), "automatic_test res");
-
 #ifdef HAVE_BASENAME
-    if (input)
-	bu_strlcpy(buf_input, input, strlen(input)+1);
+/* These two functions wrap the system and bu implementations to
+ * standardize the memory behavior. The input string is unmodified,
+ * the output string is dynamically allocated and must be freed by the
+ * caller.
+ */
 
-    /* build UNIX 'basename' command */
-    if (!input)
-	ans = basename(NULL);
-    else
-	ans = basename(buf_input);
+char *
+get_system_output(const char *input)
+{
+    char *in = input ? bu_strdup(input) : NULL;
+    char *out = bu_strdup(basename(in));
 
-    if (!input)
-	bu_basename(res, NULL);
-    else
-	bu_basename(res, buf_input);
+    if (in) {
+	bu_free(in, "input copy");
+    }
+    return out;
+}
 
-    if (BU_STR_EQUAL(res, ans))
-	printf("%24s -> %24s [PASSED]\n", input, res);
-    else
-	bu_exit(EXIT_FAILURE, "%24s -> %24s (should be: %s) [FAIL]\n", input, res, ans);
-    bu_free(res, NULL);
+char *
+get_bu_output(const char *input)
+{
+    /* basename should return "." when given a NULL string */
+    size_t null_result_chars = sizeof(".") / sizeof(char);
+    size_t max_result_chars = input ? strlen(input) + 1 : null_result_chars;
 
-#else
-    printf("BASENAME not available on this platform\n");
+    char *out = (char *)bu_calloc(max_result_chars, sizeof(char), "bu output");
+
+    bu_basename(out, input);
+
+    return out;
+}
 #endif
-    /* FIXME: this does not functionally halt */
+
+void
+compare_bu_to_system_basename(const char *input)
+{
+#ifdef HAVE_BASENAME
+    char *sys_out = get_system_output(input);
+    char *bu_out = get_bu_output(input);
+
+    if (BU_STR_EQUAL(sys_out, bu_out)) {
+	printf("%24s -> %24s [PASSED]\n", input, bu_out);
+	bu_free(bu_out, "bu output");
+	bu_free(sys_out, "system output");
+    } else {
+	bu_log("%24s -> %24s (should be: %s) [FAIL]\n", input, bu_out, sys_out);
+	bu_free(bu_out, "bu output");
+	bu_free(sys_out, "system output");
+	bu_exit(EXIT_FAILURE, "");
+    }
+#else
+    bu_exit(EXIT_FAILURE, "BASENAME not available on this platform\n");
+#endif
 }
 
 
@@ -72,13 +91,13 @@ main(int argc, char *argv[])
 {
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	automatic_test(NULL);
+	compare_bu_to_system_basename(NULL);
     }
 
     /* If we have something, print it and test it */
     if (argc > 1) {
        printf("Testing string \"%s\"\n", argv[1]);
-       automatic_test(argv[1]);
+       compare_bu_to_system_basename(argv[1]);
     }
 
     return 0;

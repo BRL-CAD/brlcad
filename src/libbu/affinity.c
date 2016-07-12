@@ -1,7 +1,7 @@
 /*                         A F F I N I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -104,8 +104,8 @@ parallel_set_affinity(int cpu)
     return 0;
 
 #elif defined(HAVE_WINDOWS_H)
-
-    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), 1ul << cpu % bu_avail_cpus());
+    DWORD_PTR cpumask = (DWORD_PTR)1 << cpu % bu_avail_cpus();
+    BOOL ret = SetThreadAffinityMask(GetCurrentThread(), cpumask);
     if (ret  == 0)
 	return -1;
 

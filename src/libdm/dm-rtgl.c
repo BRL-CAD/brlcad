@@ -1,7 +1,7 @@
 /*                        D M - R T G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@
 #include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 
@@ -1132,123 +1132,6 @@ ignoreMiss(struct application *app)
 }
 
 
-HIDDEN double
-jitter(double range)
-{
-    if (rand() % 2)
-	return fmod(rand(), range);
-
-    return (-1 *(fmod(rand(), range)));
-}
-
-
-HIDDEN void
-randShots(fastf_t *center, fastf_t radius, int flag)
-{
-    int i, j;
-    vect_t view, dir;
-    point_t pt;
-    view[2] = 0;
-
-    glDisable(GL_LIGHTING);
-
-    for (i = 0; i < 360; i += 1) {
-	for (j = 0; j < 90; j += 1) {
-	    view[0] = i;
-	    view[1] = j;
-
-	    /* use view vector for direction */
-	    bn_vec_aed(dir, view[0]*DEG2RAD, view[1]*DEG2RAD, radius);
-	    VADD2(dir, dir, center);
-	    VMOVE(app.a_ray.r_pt, dir);
-
-	    /* use opposite sphere point for origin */
-	    VSUB2(pt, dir, center);
-	    VREVERSE(pt, pt);
-	    VADD2(pt, pt, center);
-
-	    /* jitter point */
-	    VMOVE(app.a_ray.r_dir, pt);
-
-	    if (flag) {
-		/* shoot ray */
-		rt_shootray(&app);
-	    }
-
-	    if (!flag) {
-		glPointSize(5);
-		glBegin(GL_POINTS);
-		glColor3d(0.0, 1.0, 0.0);
-		glVertex3dv(pt);
-		glColor3d(1.0, 0.0, 0.0);
-		glVertex3dv(dir);
-		glEnd();
-
-		glColor4d(0.0, 0.0, 1.0, .1);
-		glBegin(GL_LINES);
-		glVertex3dv(pt);
-		glVertex3dv(dir);
-		glEnd();
-	    }
-	}
-    }
-
-    glEnable(GL_LIGHTING);
-}
-
-
-HIDDEN void
-swapItems(struct bu_list *a, struct bu_list *b)
-{
-    struct bu_list temp;
-
-    if (a->forw == b) {
-	/* a immediately followed by b */
-
-	/* fix surrounding links */
-	a->back->forw = b;
-	b->forw->back = a;
-
-	/* fix a and b links */
-	a->forw = b->forw;
-	b->back = a->back;
-	a->back = b;
-	b->forw = a;
-    } else if (b->forw == a) {
-	/* b immediately followed by a */
-
-	/* fix surrounding links */
-	b->back->forw = a;
-	a->forw->back = b;
-
-	/* fix a and b links */
-	b->forw = a->forw;
-	a->back = b->back;
-	b->back = a;
-	a->forw = b;
-    } else {
-	/* general case */
-
-	/* fix surrounding links */
-	a->back->forw = b;
-	a->forw->back = b;
-
-	b->back->forw = a;
-	b->forw->back = a;
-
-	/* switch a and b links */
-	temp.forw = a->forw;
-	temp.back = a->back;
-
-	a->forw = b->forw;
-	a->back = b->back;
-
-	b->forw = temp.forw;
-	b->back = temp.back;
-    }
-}
-
-
 struct jobList **jobsArray = NULL;
 
 /* get nth job from job list */
@@ -1458,6 +1341,8 @@ drawPoints(float *view, int pointSize)
 	for (BU_LIST_FOR (rtgljob.currItem, ptInfoList, head)) {
 	    used = rtgljob.currItem->used;
 
+	    /* might want to disable for performance */
+	    glEnable(GL_POINT_SMOOTH);
 	    glBegin(GL_POINTS);
 	    for (i = 0; i < used; i += 3) {
 
@@ -1942,6 +1827,7 @@ rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %lu\tx - %lf\ty - %lf\n", (unsigned long)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1961,6 +1847,7 @@ rtgl_drawPoint3D(dm *dmp, point_t point)
 	bu_log("\tdmp: %llu\tpt - %lf %lf %lf\n", (unsigned long long)dmp, V3ARGS(point));
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(point);
     glEnd();
@@ -1981,6 +1868,7 @@ rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	bu_log("rtgl_drawPoint3D():\n");
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i)
 	glVertex3dv(points[i]);

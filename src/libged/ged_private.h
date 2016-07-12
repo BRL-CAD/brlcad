@@ -1,7 +1,7 @@
 /*                   G E D _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 
 #include <time.h>
 
-#include "db.h"
-#include "mater.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "raytrace.h"
+#include "rt/geom.h"
 #include "ged.h"
 
 __BEGIN_DECLS
@@ -54,11 +54,16 @@ __BEGIN_DECLS
 #define _GED_LISTEVAL    2
 #define _GED_EVAL_ONLY   3
 
-#define _GED_WIREFRAME        0
-#define _GED_SHADED_MODE_BOTS 1
-#define _GED_SHADED_MODE_ALL  2
-#define _GED_BOOL_EVAL        3
-#define _GED_HIDDEN_LINE      4
+#define _GED_SHADED_MODE_UNSET -1
+#define _GED_WIREFRAME          0
+#define _GED_SHADED_MODE_BOTS   1
+#define _GED_SHADED_MODE_ALL    2
+#define _GED_BOOL_EVAL          3
+#define _GED_HIDDEN_LINE        4
+#define _GED_SHADED_MODE_EVAL   5
+
+#define _GED_DRAW_WIREFRAME 1
+#define _GED_DRAW_NMG_POLY  3
 
 #define _GED_TREE_AFLAG 0x01
 #define _GED_TREE_CFLAG 0x02
@@ -94,6 +99,7 @@ struct _ged_id_to_names {
 
 
 struct _ged_client_data {
+    uint32_t magic;  /* add this so a pointer to the struct and a pointer to any of its active elements will differ */
     struct ged *gedp;
     struct display_list *gdlp;
     int wireframe_color_override;
@@ -124,6 +130,7 @@ struct _ged_client_data {
     int do_polysolids;
     int num_halfs;
     int autoview;
+    size_t bot_threshold;
 };
 
 
@@ -179,9 +186,9 @@ extern int dl_bounding_sph(struct bu_list *hdlp, vect_t *min, vect_t *max, int p
 /* Returns a bu_ptbl of all solids referenced by the display list */
 extern struct bu_ptbl *dl_get_solids(struct display_list *gdlp);
 
-extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid);
+extern void dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *), struct solid *freesolid);
 
-extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *));
+extern int dl_redraw(struct display_list *gdlp, struct db_i *dbip, struct db_tree_state *tsp, struct bview *gvp, void (*callback)(struct display_list *), int skip_subtractions);
 extern union tree * append_solid_to_display_list(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data);
 int dl_set_illum(struct display_list *gdlp, const char *obj, int illum);
 void dl_set_flag(struct bu_list *hdlp, int flag);
@@ -518,6 +525,9 @@ extern int _ged_results_init(struct ged_results *results);
  *
  */
 extern int _ged_results_add(struct ged_results *results, const char *result_string);
+
+extern int _ged_brep_to_csg(struct ged *gedp, const char *obj_name, int verify);
+extern int _ged_brep_tikz(struct ged *gedp, const char *obj_name, const char *outfile);
 
 __END_DECLS
 

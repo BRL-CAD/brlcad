@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,6 +36,7 @@
 
 #include "bu/cmd.h"
 #include "bu/getopt.h"
+#include "bu/path.h"
 
 #include "./ged_private.h"
 
@@ -60,7 +61,7 @@ _path_scrub(struct bu_vls *path)
     if (bu_vls_addr(path)[0] == '/')
 	islocal = 0;
 
-    normalized = db_normalize(bu_vls_addr(path));
+    normalized = bu_normalize(bu_vls_addr(path));
 
     if (normalized && !BU_STR_EQUAL(normalized, "/")) {
 	char *tbasename = (char *)bu_calloc(strlen(normalized), sizeof(char), "_path_scrub tbasename");
@@ -231,6 +232,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
      * any further than the max possible option count */
     bu_optind = 1;
     while ((bu_optind < (optcnt + 1)) && ((c = bu_getopt(argc, (char * const *)argv_orig, "?aQhv")) != -1)) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		aflag = 1;
@@ -246,7 +248,6 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		flags |= DB_SEARCH_QUIET;
 		break;
 	    case 'h':
-	    case '?':
 		want_help = 1;
 		break;
 	    default:
@@ -268,13 +269,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     }
 
     /* COPY argv_orig to argv; */
-    argv = bu_dup_argv(argc, argv_orig);
+    argv = bu_argv_dup(argc, argv_orig);
 
     /* initialize search set */
     BU_ALLOC(search_set, struct bu_ptbl);
     bu_ptbl_init(search_set, 8, "initialize search set table");
 
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
     db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* initialize result */
@@ -304,15 +307,15 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 			bu_vls_trunc(gedp->ged_result_str, 0);
 		    }
 		    bu_vls_free(&argvls);
-		    bu_free_argv(argc, argv);
+		    bu_argv_free(argc, argv);
 		    _ged_free_search_set(search_set);
 		    return (wflag) ? GED_OK : GED_ERROR;
 		}
 		if (!is_specific) {
-		    if (!is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
-		    if (!is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
-		    if (is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, &(new_search->paths));
-		    if (is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, &(new_search->paths));
+		    if (!is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+		    if (!is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
+		    if (is_flat && !aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, 0, NULL, &(new_search->paths));
+		    if (is_flat && aflag && !flat_only) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_HIDDEN, NULL, &(new_search->paths));
 		} else {
 		    /* _ged_search_characterize_path verified that the db_lookup will succeed */
 		    struct directory *local_dp = db_lookup(gedp->ged_wdbp->dbip, bu_vls_addr(&argvls), LOOKUP_QUIET);
@@ -335,8 +338,8 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
 		    /* We have a plan but not path - in that case, do a non-full-path tops search */
 		    struct ged_search *new_search;
 		    BU_ALLOC(new_search, struct ged_search);
-		    if (!aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &(new_search->paths));
-		    if (aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, &(new_search->paths));
+		    if (!aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &(new_search->paths));
+		    if (aflag) new_search->path_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS | DB_LS_HIDDEN, NULL, &(new_search->paths));
 		    new_search->search_type = 1;
 		    bu_ptbl_ins(search_set, (long *)new_search);
 		}
@@ -357,7 +360,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     if (wflag && db_search(NULL, flags, bu_vls_addr(&search_string), 0, NULL, NULL) != -1) {
 	bu_vls_free(&argvls);
 	bu_vls_free(&search_string);
-	bu_free_argv(argc, argv);
+	bu_argv_free(argc, argv);
 	_ged_free_search_set(search_set);
 	bu_vls_trunc(gedp->ged_result_str, 0);
 	return (wflag) ? GED_OK : GED_ERROR;
@@ -469,7 +472,7 @@ ged_search(struct ged *gedp, int argc, const char *argv_orig[])
     /* Done - free memory */
     bu_vls_free(&argvls);
     bu_vls_free(&search_string);
-    bu_free_argv(argc, argv);
+    bu_argv_free(argc, argv);
     _ged_free_search_set(search_set);
     return GED_OK;
 }

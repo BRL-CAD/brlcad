@@ -10,6 +10,20 @@ set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
 BRLCAD_LIB_INCLUDE_DIRS(bu BU_INCLUDE_DIRS BU_LOCAL_INCLUDE_DIRS)
 
+
+# Use configure_file to make copies of the mime input files,
+# so CMake will get notified for the need for a re-configure
+# if they are edited.
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
+execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
+
+# Run the generation process
+include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
+
+# We do want to install the mime header
+install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
+
 set(LIBBU_SOURCES
   affinity.c
   argv.c
@@ -17,7 +31,6 @@ set(LIBBU_SOURCES
   b64.c
   backtrace.c
   badmagic.c
-  basename.c
   bitv.c
   bomb.c
   booleanize.c
@@ -29,11 +42,11 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  dirname.c
-  date-time.c
+  datetime.c
   dlfcn.c
   encode.c
   endian.c
+  env.c
   escape.c
   fchmod.c
   fgets.c
@@ -58,10 +71,13 @@ set(LIBBU_SOURCES
   magic.c
   malloc.c
   mappedfile.c
+  ${BU_MIME_C_FILE}
   mread.c
   observer.c
+  opt.c
   parallel.c
   parse.c
+  path.c
   printb.c
   process.c
   progname.c
@@ -78,15 +94,16 @@ set(LIBBU_SOURCES
   rb_walk.c
   realpath.c
   semaphore.c
+  sha1.c
   simd.c
   sort.c
   sscanf.c
+  scan.c
   str.c
-  tcl.c
   temp.c
   thread.cpp
-  timer.c
   units.c
+  uuid.c
   vers.c
   vfont.c
   vlb.c
@@ -97,25 +114,28 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${TCL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY}")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${UUID_LIBRARY};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
-get_directory_property(BRLCAD_TCL_BUILD DIRECTORY ${BRLCAD_SOURCE_DIR}/src/other DEFINITION BRLCAD_TCL_BUILD)
-if("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
-  add_dependencies(libbu tcl)
-endif("${BRLCAD_TCL_BUILD}" STREQUAL "ON")
+if(CPP_DLL_DEFINES)
+  set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
+endif(CPP_DLL_DEFINES)
 
 BRLCAD_ADDDATA(fix.6r vfont)
 BRLCAD_ADDDATA(nonie.r.12 vfont)
 
 add_subdirectory(tests)
+add_subdirectory(y2038)
 
 set(bu_ignore_files
-  bu_internals.h
+  bitv.h
+  charclass.h
+  mime.cmake
   parallel.h
-  rb_internals.h
+  rb.h
+  sha1.h
   uce-dirent.h
   vfont.h
-  vls_internals.h
+  vls_vprintf.h
   )
 CMAKEFILES(${bu_ignore_files})
 

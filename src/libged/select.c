@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -260,59 +260,51 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-
 	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-		    gedp->ged_gvp->gv_rect.y,
-		    gedp->ged_gvp->gv_rect.width,
-		    gedp->ged_gvp->gv_rect.height,
-		    0);
+				     gedp->ged_gvp->gv_rect.y,
+				     gedp->ged_gvp->gv_rect.width,
+				     gedp->ged_gvp->gv_rect.height,
+				     0);
 	else
-	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-			       gedp->ged_gvp->gv_rect.y,
-			       gedp->ged_gvp->gv_rect.width,
-			       gedp->ged_gvp->gv_rect.height,
-			       0);
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
+			     gedp->ged_gvp->gv_rect.y,
+			     gedp->ged_gvp->gv_rect.width,
+			     gedp->ged_gvp->gv_rect.height,
+			     0);
     }
 }
 
 struct rt_object_selections *
 ged_get_object_selections(struct ged *gedp, const char *object_name)
 {
-    int int_new;
-    struct bu_hash_entry *entry;
+    struct rt_object_selections *obj_selections;
 
-    entry = bu_hash_tbl_add(gedp->ged_selections, (unsigned char *)object_name,
-	    strlen(object_name), &int_new);
+    obj_selections = (struct rt_object_selections *)bu_hash_get(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name));
 
-    if (int_new) {
-	struct rt_object_selections *obj_selections;
+    if (!obj_selections) {
 	BU_ALLOC(obj_selections, struct rt_object_selections);
-	obj_selections->sets = bu_hash_tbl_create(0);
-	bu_set_hash_value(entry, (unsigned char *)obj_selections);
+	obj_selections->sets = bu_hash_create(0);
+	(void)bu_hash_set(gedp->ged_selections, (uint8_t *)object_name, strlen(object_name), (void *)obj_selections);
     }
 
-    return (struct rt_object_selections *)bu_get_hash_value(entry);
+    return obj_selections;
 }
 
 struct rt_selection_set *
 ged_get_selection_set(struct ged *gedp, const char *object_name, const char *selection_name)
 {
     struct rt_object_selections *obj_selections;
-    struct bu_hash_entry *entry;
-    int int_new;
+    struct rt_selection_set *set;
 
     obj_selections = ged_get_object_selections(gedp, object_name);
-    entry = bu_hash_tbl_add(obj_selections->sets,
-		(const unsigned char *)selection_name, strlen(selection_name), &int_new);
-
-    if (int_new) {
-	struct rt_selection_set *set;
+    set = (struct rt_selection_set *)bu_hash_get(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name));
+    if (!set) {
 	BU_ALLOC(set, struct rt_selection_set);
 	BU_PTBL_INIT(&set->selections);
-	bu_set_hash_value(entry, (unsigned char *)set);
+	bu_hash_set(obj_selections->sets, (uint8_t *)selection_name, strlen(selection_name), (void *)set);
     }
 
-    return (struct rt_selection_set *)bu_get_hash_value(entry);
+    return set;
 }
 
 /*

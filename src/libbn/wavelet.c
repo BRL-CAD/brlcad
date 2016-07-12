@@ -1,7 +1,7 @@
 /*                       W A V E L E T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -146,10 +146,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include "vmath.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "vmath.h"
-#include "bn.h"
+#include "bn/wavelet.h"
 
 /**
  * This source file uses C-style "templates" where functions specific
@@ -162,22 +162,22 @@
 /*
  * DATATYPE *tbuffer;      // temporary buffer
  * DATATYPE *buffer;       // data buffer
- * unsigned long dimen;	   // # of samples in data buffer
- * unsigned long channels; // # of data values per sample
- * unsigned long limit;	   // extent of decomposition
+ * size_t dimen;	   // # of samples in data buffer
+ * size_t channels; // # of data values per sample
+ * size_t limit;	   // extent of decomposition
  */
 
 #define make_wlt_haar_1d_decompose(DATATYPE)				\
     void								\
     decompose_1d(DATATYPE)						\
-	( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit ) \
+	( DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t limit ) \
     {									\
 	register DATATYPE *detail;					\
 	register DATATYPE *avg;						\
-	unsigned long img_size;						\
-	unsigned long half_size;					\
+	size_t img_size;						\
+	size_t half_size;					\
 	int do_free = 0;						\
-	unsigned long x, x_tmp, d, i, j_idx;				\
+	size_t x, x_tmp, d, i, j_idx;				\
 	register fastf_t onehalf = (fastf_t)0.5;			\
 									\
 	CK_POW_2( dimen );						\
@@ -229,14 +229,14 @@
 #define make_wlt_haar_1d_reconstruct( DATATYPE )			\
     void								\
     reconstruct(DATATYPE)						\
-	( DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long subimage_size, unsigned long limit ) \
+	( DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t subimage_size, size_t limit ) \
     {									\
 	register DATATYPE *detail;					\
 	register DATATYPE *avg;						\
-	unsigned long img_size;						\
-	unsigned long dbl_size;						\
+	size_t img_size;						\
+	size_t dbl_size;						\
 	int do_free = 0;						\
-	unsigned long x_tmp, d, x, i, j_idx;				\
+	size_t x_tmp, d, x, i, j_idx;				\
 									\
 	CK_POW_2( subimage_size );					\
 	CK_POW_2( dimen );						\
@@ -323,13 +323,13 @@ make_wlt_haar_1d_reconstruct(long)
 #define make_wlt_haar_2d_decompose(DATATYPE)				\
     void								\
     decompose_2d(DATATYPE)						\
-	(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long dimen, unsigned long channels, unsigned long limit) \
+	(DATATYPE *tbuffer, DATATYPE *buffer, size_t dimen, size_t channels, size_t limit) \
     {									\
 	register DATATYPE *detail;					\
 	register DATATYPE *avg;						\
-	unsigned long img_size;						\
-	unsigned long half_size;					\
-	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx;			\
+	size_t img_size;						\
+	size_t half_size;					\
+	size_t x, y, x_tmp, y_tmp, d, i, j_idx;			\
 	register fastf_t onehalf = (fastf_t)0.5;			\
 									\
 	CK_POW_2( dimen );						\
@@ -416,14 +416,14 @@ make_wlt_haar_1d_reconstruct(long)
 #define make_wlt_haar_2d_reconstruct(DATATYPE)				\
     void								\
     reconstruct_2d(DATATYPE)						\
-	(DATATYPE *tbuf, DATATYPE *buf, unsigned long width, unsigned long channels, unsigned long avg_size, unsigned long limit) \
+	(DATATYPE *tbuf, DATATYPE *buf, size_t width, size_t channels, size_t avg_size, size_t limit) \
     {									\
 	register DATATYPE *detail;					\
 	register DATATYPE *avg;						\
-	unsigned long img_size;						\
-	unsigned long dbl_size;						\
-	unsigned long x_tmp, d, x, i, j_idx;				\
-	unsigned long y, row_len, row_start;				\
+	size_t img_size;						\
+	size_t dbl_size;						\
+	size_t x_tmp, d, x, i, j_idx;				\
+	size_t y, row_len, row_start;				\
 									\
 	CK_POW_2( avg_size );						\
 	CK_POW_2( width );						\
@@ -532,15 +532,15 @@ make_wlt_haar_2d_reconstruct(long)
 #define make_wlt_haar_2d_decompose2(DATATYPE)				\
     void								\
     decompose_2d_2(DATATYPE)						\
-	(DATATYPE *tbuffer, DATATYPE *buffer, unsigned long width, unsigned long height, unsigned long channels, unsigned long limit) \
+	(DATATYPE *tbuffer, DATATYPE *buffer, size_t width, size_t height, size_t channels, size_t limit) \
     {									\
 	register DATATYPE *detail;					\
 	register DATATYPE *avg;						\
-	unsigned long img_wsize;					\
-	unsigned long img_hsize;					\
-	unsigned long half_wsize;					\
-	unsigned long half_hsize;					\
-	unsigned long x, y, x_tmp, y_tmp, d, i, j_idx;			\
+	size_t img_wsize;					\
+	size_t img_hsize;					\
+	size_t half_wsize;					\
+	size_t half_hsize;					\
+	size_t x, y, x_tmp, y_tmp, d, i, j_idx;			\
 	register fastf_t onehalf = (fastf_t)0.5;			\
 									\
 	CK_POW_2( width );						\

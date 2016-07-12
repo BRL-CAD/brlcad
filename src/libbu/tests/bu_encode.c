@@ -1,7 +1,7 @@
 /*                    T E S T _ E N C O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -37,9 +37,9 @@ int
 test_encode(const char *str)
 {
     int status = 0;
-    int len_s = str ? strlen(str) : 0;
-    int len_d = 0; /* for length of decoded */
-    int f_wid = 28; /* desired total field width */
+    size_t len_s = str ? strlen(str) : 0;
+    size_t len_d = 0; /* for length of decoded */
+    size_t f_wid = 28; /* desired total field width */
     struct bu_vls encoded = BU_VLS_INIT_ZERO;
     struct bu_vls decoded = BU_VLS_INIT_ZERO;
 
@@ -59,16 +59,16 @@ test_encode(const char *str)
 	if (len_s == 0)
 	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [PASS]\n",
-	       len_s, str, f_wid - len_s, " ",
-	       len_d, bu_vls_addr(&decoded), f_wid - len_d, " "
+	       (int)len_s, str, (int)(f_wid - len_s), " ",
+	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " "
 	       );
     } else {
 	/* a hack for str showing '(null)' in printf if zero length */
 	if (len_s == 0)
 	    len_s = 6;
 	printf("{%*s}%*s -> {%*s}%*s [FAIL]  (should be: {%s})\n",
-	       len_s, str, f_wid - len_s, " ",
-	       len_d, bu_vls_addr(&decoded), f_wid - len_d, " ",
+	       (int)len_s, str, (int)(f_wid - len_s), " ",
+	       (int)len_d, bu_vls_addr(&decoded), (int)(f_wid - len_d), " ",
 	       str
 	       );
 	status = 1;

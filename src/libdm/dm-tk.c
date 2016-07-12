@@ -1,7 +1,7 @@
 /*                          D M - T K . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,6 +32,13 @@
 #include <limits.h>
 #include <string.h>
 
+/* FIXME: suboptimal, just picked the first mac-specific config symbol
+ * encountered to know when to turn on the AquaTk X bindings from Tk.
+ */
+#ifdef HAVE_MACH_THREAD_POLICY_H
+#  define MAC_OSX_TK 1
+#endif
+
 /* Even on a platform that has no real X, I should be able to use the
  * Xutil that comes with Tk
  */
@@ -55,14 +62,13 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-tk.h"
 #include "dm-X.h"
 #include "dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "dm_private.h"
-#include "solid.h"
+#include "rt/solid.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -91,7 +97,7 @@ tk_close(struct dm_internal *dmp)
 
 	/*XXX Possibly need to free the colormap */
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap)
-	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
+	    Tk_FreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
 	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)

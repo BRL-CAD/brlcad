@@ -1,7 +1,7 @@
 /*                       I F _ N U L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_null.c
  *
@@ -38,7 +38,7 @@
 
 
 HIDDEN int
-null_open(fb *ifp, const char *UNUSED(file), int width, int height)
+null_fb_open(fb *ifp, const char *UNUSED(file), int width, int height)
 {
     FB_CK_FB(ifp);
 
@@ -64,7 +64,7 @@ null_put_fbps(struct fb_platform_specific *UNUSED(fbps))
 }
 
 HIDDEN int
-null_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+null_fb_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
 {
         return 0;
 }
@@ -257,8 +257,8 @@ null_help(fb *ifp)
 fb null_interface =  {
     0,
     FB_NULL_MAGIC,
-    null_open,		/* device_open */
-    null_open_existing,	/* existing device_open */
+    null_fb_open,		/* device_open */
+    null_fb_open_existing,	/* existing device_open */
     null_close_existing,/* existing device_close */
     null_get_fbps,
     null_put_fbps,

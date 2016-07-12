@@ -1,7 +1,7 @@
 /*                       G E T H O S T N A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,15 +20,13 @@
 
 #include "common.h"
 
-#ifdef HAVE_WINSOCK_H
-#  include <winsock.h>
-#endif
-
-#include "bin.h"
+#include "bnetwork.h"
 #include "bio.h"
 
 #include "bu/log.h"
 #include "bu/str.h"
+#include "bu/endian.h"
+
 
 int
 bu_gethostname(char *hostname, size_t hostlen)
@@ -45,7 +43,7 @@ bu_gethostname(char *hostname, size_t hostlen)
 	bu_log("ERROR: unable to initialize networking\n");
 #endif
 
-#if defined(HAVE_WORKING_GETHOSTNAME_FUNCTION)
+#ifdef HAVE_GETHOSTNAME
     status = gethostname(hostname, hostlen);
 #else
 

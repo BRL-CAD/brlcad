@@ -1,7 +1,7 @@
 /*                         H O W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
-
+#include "bu/str.h"
 
 #include "./ged_private.h"
 
@@ -111,7 +111,7 @@ _ged_build_dpp(struct ged *gedp,
      * First, build an array of the object's path components.
      * We store the list in av_orig below.
      */
-    newstr = strdup(path);
+    newstr = bu_strdup(path);
     begin = newstr;
     while ((end = strchr(begin, '/')) != NULL) {
 	*end = '\0';
@@ -123,7 +123,7 @@ _ged_build_dpp(struct ged *gedp,
 
     list = bu_vls_addr(&vls);
 
-    if (Tcl_SplitList((Tcl_Interp *)brlcad_interp, list, &ac, &av_orig) != TCL_OK) {
+    if (bu_argv_from_tcl_list(list, &ac, &av_orig) != 0) {
 	bu_vls_printf(gedp->ged_result_str, "-1");
 	bu_vls_free(&vls);
 	return (struct directory **)NULL;
@@ -153,7 +153,7 @@ _ged_build_dpp(struct ged *gedp,
 	    bu_vls_printf(gedp->ged_result_str, "-1");
 
 	    bu_free((void *)dpp, "_ged_build_dpp: directory pointers");
-	    Tcl_Free((char *)av_orig);
+	    bu_free((char *)av_orig, "free av_orig");
 	    bu_vls_free(&vls);
 	    return (struct directory **)NULL;
 	}
@@ -161,7 +161,7 @@ _ged_build_dpp(struct ged *gedp,
 
     dpp[i] = RT_DIR_NULL;
 
-    Tcl_Free((char *)av_orig);
+    bu_free((char *)av_orig, "free av_orig");
     bu_vls_free(&vls);
     return dpp;
 }

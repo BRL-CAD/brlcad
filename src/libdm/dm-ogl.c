@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -59,6 +59,7 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+
 #undef remainder
 #undef access
 #undef index
@@ -72,14 +73,13 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "raytrace.h"
 #include "dm.h"
 #include "dm-ogl.h"
 #include "dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 
@@ -91,28 +91,6 @@
 #define YMAXSCREEN	1023
 #define YSTEREO		491	/* subfield height, in scanlines */
 #define YOFFSET_LEFT	532	/* YSTEREO + YBLANK ? */
-
-#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
-
-struct modifiable_ogl_vars {
-    dm *this_dm;
-    int cueing_on;
-    int zclipping_on;
-    int zbuffer_on;
-    int lighting_on;
-    int transparency_on;
-    int fastfog;
-    double fogdensity;
-    int zbuf;
-    int rgb;
-    int doublebuffer;
-    int depth;
-    int debug;
-    struct bu_vls log;
-    double bound;
-    int boundFlag;
-};
-
 
 HIDDEN XVisualInfo *ogl_choose_visual(struct dm_internal *dmp, Tk_Window tkwin);
 
@@ -1781,6 +1759,7 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		    if (first == 0)
 			glEnd();
 		    first = 0;
+		    glEnable(GL_POINT_SMOOTH);
 		    glBegin(GL_POINTS);
 		    glVertex3dv(dpt);
 		    break;
@@ -1941,6 +1920,7 @@ ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	bu_log("\tdmp: %p\tx - %lf\ty - %lf\n", (void *)dmp, x, y);
     }
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex2f(x, y);
     glEnd();
@@ -1965,6 +1945,7 @@ ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
     /* fastf_t to double */
     VMOVE(dpt, point);
 
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     glVertex3dv(dpt);
     glEnd();
@@ -1986,7 +1967,7 @@ ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
 	bu_log("ogl_drawPoint3D():\n");
     }
 
-
+    glEnable(GL_POINT_SMOOTH);
     glBegin(GL_POINTS);
     for (i = 0; i < npoints; ++i) {
 	/* fastf_t to double */
@@ -2264,85 +2245,21 @@ ogl_draw_obj(struct dm_internal *dmp, struct display_list *obj)
 HIDDEN int
 ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 {
-    unsigned char *idata = NULL;
-    int width = 0;
-    int height = 0;
-    int bytes_per_pixel = 3; /*rgb no alpha for raw pix */
-    GLuint *pixels;
-    unsigned int pixel;
-    unsigned int red_mask = 0xff000000;
-    unsigned int green_mask = 0x00ff0000;
-    unsigned int blue_mask = 0x0000ff00;
-    int h, w;
-#if defined(DM_WGL)
-    unsigned int alpha_mask = 0x000000ff;
-    int big_endian;
-    int swap_bytes;
-
-    if ((bu_byteorder() == BU_BIG_ENDIAN))
-	big_endian = 1;
-    else
-	big_endian = 0;
-
-    /* WTF */
-    swap_bytes = !big_endian;
-#endif
-
     if (dmp->dm_type == DM_TYPE_WGL || dmp->dm_type == DM_TYPE_OGL) {
+	unsigned char *idata;
+	int width;
+	int height;
+
 	width = dmp->dm_width;
 	height = dmp->dm_height;
 
-	pixels = (GLuint *)bu_calloc(width * height, sizeof(GLuint), "pixels");
+	idata = (unsigned char*)bu_calloc(height * width * 3, sizeof(unsigned char), "rgb data");
 
-	{
-	    glReadBuffer(GL_FRONT);
-#if defined(DM_WGL)
-	    /* XXX GL_UNSIGNED_INT_8_8_8_8 is currently not
-	     * available on windows.  Need to update when it
-	     * becomes available.
-	     */
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, pixels);
-#else
-	    glReadPixels(0, 0, width, height, GL_RGBA, GL_UNSIGNED_INT_8_8_8_8, pixels);
-#endif
-
-	    idata = (unsigned char *)bu_calloc(height * width * bytes_per_pixel, sizeof(unsigned char), "rgb data");
-	    *image = idata;
-
-	    for (h = 0; h < height; h++) {
-		for (w = 0; w < width; w++) {
-		    int i = h*width + w;
-		    int i_h_inv = (height - h - 1)*width + w;
-		    int j = i*bytes_per_pixel;
-		    unsigned char *value = (unsigned char *)(idata + j);
-#if defined(DM_WGL)
-		    unsigned char alpha;
-#endif
-
-		    pixel = pixels[i_h_inv];
-
-		    value[0] = (pixel & red_mask) >> 24;
-		    value[1] = (pixel & green_mask) >> 16;
-		    value[2] = (pixel & blue_mask) >> 8;
-
-#if defined(DM_WGL)
-		    alpha = pixel & alpha_mask;
-		    if (swap_bytes) {
-			unsigned char tmp_byte;
-
-			value[0] = alpha;
-			/* swap byte1 and byte2 */
-			tmp_byte = value[1];
-			value[1] = value[2];
-			value[2] = tmp_byte;
-		    }
-#endif
-		}
-
-	    }
-
-	    bu_free(pixels, "pixels");
-	}
+	glReadBuffer(GL_FRONT);
+	glPixelStorei(GL_PACK_ALIGNMENT, 1);
+	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
+	*image = idata;
+	flip_display_image_vertically(*image, width, height);
     } else {
 	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
 	return TCL_ERROR;

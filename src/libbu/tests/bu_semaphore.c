@@ -1,7 +1,7 @@
 /*                  B U _ S E M A P H O R E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,6 @@ repeat_test(size_t reps)
 }
 
 
-
 static void
 increment_thread(int cpu, void *pargs)
 {
@@ -105,6 +104,15 @@ parallel_test(size_t ncpu, size_t reps)
     args.running = &running;
     args.reps = reps;
     args.counter = &counter;
+
+    /* By default, bu_parallel() refuses to create more threads than
+     * there are CPUs on the host system.  Setting the
+     * BU_DEBUG_PARALLEL flag makes bu_debug() create the specified
+     * number of threads even if the host system doesn't have that
+     * many actual CPUs.  This permits multithreaded testing on
+     * systems with fewer than necessary (e.g. 1) cores.
+     */
+    bu_debug |= BU_DEBUG_PARALLEL;
 
     bu_parallel(increment_thread, ncpu, &args);
 

@@ -1,7 +1,7 @@
 /*                    P O L Y C L I P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include <clipper.hpp>
 
+#include "bu/sort.h"
 #include "ged.h"
 
 
@@ -879,6 +880,258 @@ end:
     bu_free((void *)polyB_2d.p_contour, "p_contour");
 
     return ret;
+}
+
+
+HIDDEN int
+sort_by_X(const void *p1, const void *p2, void *UNUSED(arg))
+{
+    point2d_t *pt1 = (point2d_t *)p1;
+    point2d_t *pt2 = (point2d_t *)p2;
+
+    if (*pt1[X] < *pt2[X]) {
+	return -1;
+    }
+
+    if (*pt1[X] > *pt2[X]) {
+	return 1;
+    }
+
+    return 0;
+}
+
+
+void
+ged_polygon_fill_segments(struct ged *gedp, bview_polygon *poly, vect2d_t vfilldir, fastf_t vfilldelta)
+{
+    register size_t i, j;
+    register fastf_t vx, vy, vZ = 0.0;
+    register size_t begin, end;
+    point2d_t pt_2d;
+    point_t pt;
+    point_t hit_pt;
+    polygon_2d poly_2d;
+    size_t ecount;
+    size_t icount;
+    size_t final_icount;
+    struct bu_vls result_vls;
+    point2d_t *isect2;
+    point2d_t *final_isect2;
+    int tweakCount;
+    static size_t isectSize = 8;
+    static int maxTweaks = 10;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    if (poly->gp_num_contours < 1 || poly->gp_contour[0].gpc_num_points < 3)
+	return;
+
+    if (vfilldelta < 0)
+	vfilldelta = -vfilldelta;
+
+    isect2 = (point2d_t *)bu_calloc(isectSize, sizeof(point2d_t), "isect2");
+    final_isect2 = (point2d_t *)bu_calloc(isectSize, sizeof(point2d_t), "final_isect2");
+
+    /* Project poly onto the view plane */
+    poly_2d.p_num_contours = poly->gp_num_contours;
+    poly_2d.p_hole = (int *)bu_calloc(poly->gp_num_contours, sizeof(int), "p_hole");
+    poly_2d.p_contour = (poly_contour_2d *)bu_calloc(poly->gp_num_contours, sizeof(poly_contour_2d), "p_contour");
+
+    for (i = 0; i < poly->gp_num_contours; ++i) {
+	poly_2d.p_hole[i] = poly->gp_hole[i];
+	poly_2d.p_contour[i].pc_num_points = poly->gp_contour[i].gpc_num_points;
+	poly_2d.p_contour[i].pc_point = (point2d_t *)bu_calloc(poly->gp_contour[i].gpc_num_points, sizeof(point2d_t), "pc_point");
+
+	for (j = 0; j < poly->gp_contour[i].gpc_num_points; ++j) {
+	    point_t vpoint;
+
+	    MAT4X3PNT(vpoint, gedp->ged_gvp->gv_model2view, poly->gp_contour[i].gpc_point[j]);
+	    V2MOVE(poly_2d.p_contour[i].pc_point[j], vpoint);
+	    vZ = vpoint[Z];
+	}
+    }
+
+    VUNITIZE(vfilldir);
+    bu_vls_init(&result_vls);
+
+    /* Intersect diagonal view lines with the 2d polygon */
+    pt_2d[X] = -1.0;
+    for (vy = 1.0 - vfilldelta; vy > -1.0; vy -= vfilldelta) {
+	tweakCount = 0;
+	pt_2d[Y] = vy;
+
+    try_y_tweak:
+        ecount = 0;
+        icount = 0;
+	for (i = 0; i < poly_2d.p_num_contours; ++i) {
+	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
+		vect2d_t distvec;
+		vect2d_t pdir;
+		int ret;
+
+		/* wrap around */
+		if (begin == poly_2d.p_contour[i].pc_num_points-1)
+		    end = 0;
+		else
+		    end = begin + 1;
+
+		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
+
+		if ((ret = bn_isect_line2_lseg2(distvec,
+						pt_2d, vfilldir,
+						poly_2d.p_contour[i].pc_point[begin], pdir,
+						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+		    /* We have an intersection */
+		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
+
+		    if (ret == 1 || ret == 2) {
+			++ecount;
+
+			if (ecount > 1 && tweakCount < maxTweaks) {
+			    ++tweakCount;
+			    pt_2d[Y] = pt_2d[Y] - vfilldelta*0.01;
+			    goto try_y_tweak;
+			}
+		    }
+
+		    if (icount >= isectSize) {
+			isectSize *= 2;
+			isect2 = (point2d_t *)bu_realloc((void *)isect2, isectSize*sizeof(point2d_t), "isect2");
+			final_isect2 = (point2d_t *)bu_realloc((void *)final_isect2, isectSize*sizeof(point2d_t), "final_isect2");
+		    }
+
+		    V2MOVE(isect2[icount], pt);
+		    ++icount;
+		}
+	    }
+	}
+
+	if (icount) {
+	    final_icount = icount;
+
+	    bu_sort(isect2, icount, sizeof(point2d_t), sort_by_X, NULL);
+	    V2MOVE(final_isect2[0], isect2[0]);
+
+	    /* remove duplicates */
+	    j = 1;
+	    for (i = 1; i < icount; ++i) {
+		if (V2NEAR_EQUAL(final_isect2[j-1], isect2[i], SMALL_FASTF)) {
+		    --final_icount;
+		    continue;
+		}
+
+		V2MOVE(final_isect2[j], isect2[i]);
+		++j;
+	    }
+
+	    if (!(final_icount%2)) {
+		for (i = 0; i < final_icount; ++i) {
+		    V2MOVE(pt, final_isect2[i]);
+		    pt[Z] = vZ;
+		    MAT4X3PNT(hit_pt, gedp->ged_gvp->gv_view2model, pt);
+		    bu_vls_printf(&result_vls, "{%lf %lf %lf} ", V3ARGS(hit_pt));
+		}
+	    } else if (tweakCount < maxTweaks) {
+		++tweakCount;
+		pt_2d[Y] = pt_2d[Y] - vfilldelta*0.01;
+		goto try_y_tweak;
+	    }
+	}
+    }
+
+    if (vfilldir[X]*vfilldir[Y] < 0)
+	pt_2d[Y] = 1.0;
+    else
+	pt_2d[Y] = -1.0;
+
+    for (vx = -1.0; vx < 1.0; vx += vfilldelta) {
+	tweakCount = 0;
+	pt_2d[X] = vx;
+
+    try_x_tweak:
+        ecount = 0;
+        icount = 0;
+	for (i = 0; i < poly_2d.p_num_contours; ++i) {
+	    for (begin = 0; begin < poly_2d.p_contour[i].pc_num_points; ++begin) {
+		vect2d_t distvec;
+		vect2d_t pdir;
+		int ret;
+
+		/* wrap around */
+		if (begin == poly_2d.p_contour[i].pc_num_points-1)
+		    end = 0;
+		else
+		    end = begin + 1;
+
+
+		V2SUB2(pdir, poly_2d.p_contour[i].pc_point[end], poly_2d.p_contour[i].pc_point[begin]);
+
+		if ((ret = bn_isect_line2_lseg2(distvec,
+						pt_2d, vfilldir,
+						poly_2d.p_contour[i].pc_point[begin], pdir,
+						&gedp->ged_wdbp->wdb_tol)) >= 0) {
+		    /* We have an intersection */
+		    V2JOIN1(pt, poly_2d.p_contour[i].pc_point[begin], distvec[1], pdir);
+
+		    if (ret == 1 || ret == 2) {
+			++ecount;
+
+			if (ecount > 1 && tweakCount < maxTweaks) {
+			    ++tweakCount;
+			    pt_2d[X] = pt_2d[X] + vfilldelta*0.01;
+			    goto try_x_tweak;
+			}
+		    }
+
+		    if (icount >= isectSize) {
+			isectSize *= 2;
+			isect2 = (point2d_t *)bu_realloc((void *)isect2, isectSize*sizeof(point2d_t), "isect2");
+			final_isect2 = (point2d_t *)bu_realloc((void *)final_isect2, isectSize*sizeof(point2d_t), "final_isect2");
+		    }
+
+		    V2MOVE(isect2[icount], pt);
+		    ++icount;
+		}
+	    }
+	}
+
+	if (icount) {
+	    final_icount = icount;
+
+	    bu_sort(isect2, icount, sizeof(point2d_t), sort_by_X, NULL);
+	    V2MOVE(final_isect2[0], isect2[0]);
+
+	    /* remove duplicates */
+	    j = 1;
+	    for (i = 1; i < icount; ++i) {
+		if (V2NEAR_EQUAL(final_isect2[j-1], isect2[i], SMALL_FASTF)) {
+		    --final_icount;
+		    continue;
+		}
+
+		V2MOVE(final_isect2[j], isect2[i]);
+		++j;
+	    }
+
+	    if (!(final_icount%2)) {
+		for (i = 0; i < final_icount; ++i) {
+		    V2MOVE(pt, final_isect2[i]);
+		    pt[Z] = vZ;
+		    MAT4X3PNT(hit_pt, gedp->ged_gvp->gv_view2model, pt);
+		    bu_vls_printf(&result_vls, "{%lf %lf %lf} ", V3ARGS(hit_pt));
+		}
+	    } else if (tweakCount < maxTweaks) {
+		++tweakCount;
+		pt_2d[X] = pt_2d[X] + vfilldelta*0.01;
+		goto try_x_tweak;
+	    }
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%s", bu_vls_addr(&result_vls));
+    bu_free((void *)isect2, "isect2");
+    bu_free((void *)final_isect2, "final_isect2");
 }
 
 

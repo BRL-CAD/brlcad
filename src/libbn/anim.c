@@ -1,7 +1,7 @@
 /*                          A N I M . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,7 @@
 
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
-#include "anim.h"
-
+#include "bn/anim.h"
 
 #define NORMAL 0
 #define ERROR1 1

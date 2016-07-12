@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_wgl.c
  *
@@ -37,12 +37,13 @@
 
 #ifdef IF_WGL
 
-#include "bin.h"
-#include "bio.h"
-
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+/* winsock (bsocket.h) first, ordering matters */
+#include "bsocket.h"
+#include "bio.h"
 #include <windowsx.h>
 
 #ifdef HAVE_GL_GL_H
@@ -55,11 +56,10 @@
 #include "bu/color.h"
 #include "bu/str.h"
 #include "bu/parallel.h"
-#include "vmath.h"
-#include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "fb_private.h"
 #include "fb/fb_wgl.h"
 
 #define CJDEBUG 0
@@ -71,7 +71,6 @@
 /* Internal callbacks etc.*/
 HIDDEN void wgl_do_event(fb *ifp);
 HIDDEN void expose_callback(fb *ifp, int eventPtr);
-void wgl_configureWindow(fb *ifp, int width, int height);
 
 /* Other Internal routines */
 HIDDEN void wgl_clipper(fb *ifp);
@@ -1861,12 +1860,12 @@ expose_callback(fb *ifp, int eventPtr)
 }
 
 
-void
+int
 wgl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == WGL(ifp)->win_width &&
 	height == WGL(ifp)->win_height)
-	return;
+	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
@@ -1882,6 +1881,8 @@ wgl_configureWindow(fb *ifp, int width, int height)
 
     wgl_getmem(ifp);
     wgl_clipper(ifp);
+
+    return 0;
 }
 
 

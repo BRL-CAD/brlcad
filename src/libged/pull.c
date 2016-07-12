@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -124,7 +124,7 @@ pull_comb(struct db_i *dbip,
 
 
 /* routine takes the maximum and minimum points from the AABB and determines the translation matrix
- * which moves the centrepoint to the origin and moves the primitive by the its inverse
+ * which moves the centrepoint to the origin and moves the primitive by its inverse
  * before pulling the translation.
  */
 void
@@ -138,7 +138,7 @@ translate(matp_t matrix, mat_t tm, point_t min, point_t max)
      * following this algorithm: cen[i] = bbx_min[i] + bbx_max[i]) / 2.0
      */
     VADD2(c_pt, max, min);
-    VSCALE(c_pt, c_pt, 1/2);
+    VSCALE(c_pt, c_pt, 0.5);
 
     /* translates the centrepoint to the origin. and computes the inverse of this transformation which will be applied to the primitive */
     VREVERSE(t_vec, c_pt);

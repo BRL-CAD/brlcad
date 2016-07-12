@@ -1,7 +1,7 @@
 /*                         B O T _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 
 #include "bu/getopt.h"
 #include "bu/parallel.h"
-#include "rtgeom.h"
-#include "plot3.h"
+#include "rt/geom.h"
+#include "bn/plot3.h"
 
 #include "./ged_private.h"
 
@@ -64,14 +64,14 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	vbp = rt_vlblock_init();
-	vhead = rt_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
+	vhead = bn_vlblock_find(vbp, 0xFF, 0xFF, 0x00);
     }
 
     bu_ptbl_init(&faces, 64, "faces buffer");
     nmg_face_tabulate(&faces, magic_p);
 
     cnt = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;
@@ -127,7 +127,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     if (out_type == 1) {
 	/* Add overlay */
 	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
 	bu_log("Showing open edges...\n");
     } else if (out_type == 2) {
 	if (plotfp) {

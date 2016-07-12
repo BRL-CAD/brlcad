@@ -1,7 +1,7 @@
 /*                  C O M B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -261,7 +261,7 @@ comb_flatten(struct ged *gedp, struct directory *dp)
 
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
@@ -347,7 +347,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     }
 
     /* Find the combs NOT in the tree */
-    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, &all_paths);
+    obj_cnt = db_ls(gedp->ged_wdbp->dbip, DB_LS_TOPS, NULL, &all_paths);
     bu_vls_init(&plan_string);
     bu_vls_sprintf(&plan_string, "-mindepth 1 ! -below -name %s -type comb", dp->d_namep);
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
@@ -565,6 +565,10 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Update references once before we start all of this - db_search
+     * needs nref to be current to work correctly. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     /* If we aren't performing one of the option operations,
      * proceed with the standard comb build */
     if (standard_comb_build) {
@@ -665,6 +669,9 @@ ged_comb(struct ged *gedp, int argc, const char *argv[])
 	}
     }
 
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
+
     return GED_OK;
 }
 
@@ -693,6 +700,9 @@ _ged_combadd(struct ged *gedp,
 
     if (_ged_combadd2(gedp, combname, ac, av, region_flag, relation, ident, air) == GED_ERROR)
 	return RT_DIR_NULL;
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     return db_lookup(gedp->ged_wdbp->dbip, combname, LOOKUP_QUIET);
 }
@@ -846,6 +856,9 @@ addmembers:
     GED_DB_PUT_INTERNAL(gedp, dp, &intern, &rt_uniresource, 0);
 
     bu_free((char *)tree_list, "combadd: tree_list");
+
+    /* Done changing stuff - update nref. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     return GED_OK;
 }

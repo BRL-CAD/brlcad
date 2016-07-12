@@ -1,7 +1,7 @@
 /*                         C L O N E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -58,7 +58,7 @@
 
 #include "bu/getopt.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -791,6 +791,8 @@ deep_copy_object(struct resource *resp, struct ged_clone_state *state)
     struct directory *copy = (struct directory *)NULL;
     int i, j;
 
+    if (!resp || !state || !state->n_copies) return RT_DIR_NULL;
+
     init_list(&obj_list, state->n_copies);
 
     /* do the actual copying */
@@ -861,7 +863,8 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
     state->miraxis = W;
     state->updpos = 0;
 
-    while ((k = bu_getopt(argc, argv, "a:b:chgi:m:n:p:r:t:v")) != -1) {
+    while ((k = bu_getopt(argc, argv, "a:b:cgi:m:n:p:r:t:vh?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'a':
 		state->n_copies = atoi(bu_optarg);
@@ -887,10 +890,6 @@ get_args(struct ged *gedp, int argc, char **argv, struct ged_clone_state *state)
 		break;
 	    case 'g':
 		state->autoview = 0;
-		break;
-	    case 'h':
-		print_usage(gedp->ged_result_str);
-		return GED_ERROR;
 		break;
 	    case 'i':
 		state->incr = atoi(bu_optarg);
