@@ -184,7 +184,6 @@ void cad_register_commands(CADApp *app)
     app->register_command(QString("plot"), ged_plot);
     app->register_command(QString("png"), ged_png);  // also a to_png in libtclcad...
     app->register_command(QString("pngwf"), ged_png);  // to_view_func
-    app->register_command(QString("polybinout"), ged_polybinout);
     app->register_command(QString("pov"), ged_pmat);
     app->register_command(QString("prcolor"), ged_prcolor);
     app->register_command(QString("prefix"), ged_prefix);
