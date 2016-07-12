@@ -32,7 +32,9 @@ geometry (e.g., primitives with CSG).
 * fixed running archer from read-only filesystems - Cliff Yapp
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
-* fixed color preservation issue with 3dm-g importer - Jon Engbert
+* added 3dm-g support for layers and names - Keith Bowman
+* fixed color/shader preservation issue with 3dm-g importer - Jon Engbert
+* added 3dm-g support for mesh objects - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
 * fixed crash in search when using -above option - Cliff Yapp
@@ -51,8 +53,10 @@ geometry (e.g., primitives with CSG).
 * removed mged pl command, use plot command instead - Sean Morrison
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
+* improved wireframe display list performance - Keith Bowman
 * added draw -S for simplied wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
+* added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
@@ -75,11 +79,15 @@ geometry (e.g., primitives with CSG).
 	- Jon Engbert, Vasco Costa
 * improved point cloud plot visualization - Sean Morrison
 * fixed program freezing bug in MGED grouper command - Bob Parker
+* added 'rhc' reporting to analyze command - Kalpit Thakkar
 * improved help option consistency across numerous tools - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert
 * improved option parsing and output options for gencolor - Carl Moore
+* fixed saveview usage help string and running from archer - Nick Reed
+* fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
+* modernized documents and improved infrastructure - Hitesh Sofat
 * added mirroring support for hrt primitive objects - Isaac Kamga
 * ported the mged Overlap Tool to Windows - Sean Morrison
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
@@ -111,6 +119,7 @@ geometry (e.g., primitives with CSG).
 * gqa respects LIBRT_BOT_MINTIE environment variable - Ștefan Mirea
 * improved behavior of mged's draw command - Ștefan Mirea
 * fixed handling of extra whitespace in nirt commands - Ștefan Mirea
+* renamed 'make_bb' mged command name to 'bb' - Cliff Yapp
 * added g-ply exporter for Stanford PLY geometry format - Rishub Jain
 * added ply-g importer for Stanford PLY geometry format - Rishub Jain
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
@@ -122,6 +131,8 @@ geometry (e.g., primitives with CSG).
 * support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
 * fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
+* renamed g_diff/g_lint/g_qa/g_transfer sans underscore - Cliff Yapp
+* removed mged -n option, use mged -c for classic mode - Cliff Yapp
 * fixed mged -c crash running view-modifying commands - Sean Morrison
 * improved kill, killall, killtree documentation - Sean Morrison
 * added killtree -f force flag to kill unconditionally - Sean Morrison
@@ -143,6 +154,8 @@ geometry (e.g., primitives with CSG).
 * added menu option to restore mged command window - Cezar Elnazli
 * search command now recognizes hyp and metaball types - Cliff Yapp
 * added -depth option to mged 'search' command - Cliff Yapp
+* initial support for rigging joints and constrained articulation
+	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
 * added comb -S option to stop when object already exists - Cliff Yapp
