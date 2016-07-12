@@ -1,7 +1,7 @@
 #                        L I S T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -157,7 +157,7 @@ proc lbdcHack {w x y t id type path} {
 	    }
 	    m1 {
 		_mged_press oill
-		_mged_ill -i 1 $path
+		_mged_ill -e -i 1 $path
 		_mged_matpick $item
 	    }
 	    m2 {

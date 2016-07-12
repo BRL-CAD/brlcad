@@ -1,7 +1,7 @@
 #              G U I _ C O N V E R S I O N . T C L
 # BRL-CAD
 #
-# Copyright (c) 2014 United States Government as represented by
+# Copyright (c) 2014-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -77,7 +77,7 @@ after 7000
 
 #################################################################
 #
-#   Rhinoceros 3D (a.k.a Rhino) / OpenNURBS  3dm specific logic
+#   Rhinoceros 3D (a.k.a. Rhino) / OpenNURBS  3dm specific logic
 #
 #################################################################
 
@@ -408,11 +408,17 @@ set ::exe_ext ""
 if {$tcl_platform(platform) == "windows"} {
     set ::exe_ext ".exe"
 }
-set ::input_file  [lindex $argv 0]
-set ::log_file [lindex $argv 1]
+
+if {[info exists argv]} {
+    set ::input_file  [lindex $argv 0]
+    set ::log_file [lindex $argv 1]
+} else {
+    set ::input_file "unknown"
+    set ::log_file ""
+}
+
 set ::input_ext [file extension $::input_file]
 set ::input_root [file rootname [file tail $::input_file]]
-set ::input_dir [file dirname $::input_file]
 set ::output_file [file join [file dirname $::input_file] "$input_root.g"]
 if {[llength $::log_file] == 0} {
    set ::log_file [file join [file dirname $::input_file] "$input_root.log"]
@@ -543,7 +549,9 @@ proc ::conversion_config { } {
    }
 }
 
-::conversion_config
+if {[info exists argv0] && $argv0 == [info script]} {
+   ::conversion_config
+}
 
 # Local Variables:
 # tab-width: 8

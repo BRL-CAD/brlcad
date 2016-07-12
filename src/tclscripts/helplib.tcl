@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 	The "rm" subcommand deletes the specified attributes.
 	The "show" subcommand does a "get" and displays the results in a user readable format.}   }
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
-set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
+set helplib_data(wdb_bot_decimate)      {{-f feature_size -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}
@@ -134,7 +134,7 @@ set helplib_data(wdb_version)		{{} {returns the database version}}
 set helplib_data(wdb_whatid)		{{region} {return the specified region's id}}
 set helplib_data(wdb_whichair)		{{code(s)} {find regions with the specified air code(s)}}
 set helplib_data(wdb_whichid)		{{[-s] id(s)} {find regions with the specified id(s)}}
-set helplib_data(wdb_xpush)		{{object} {push object path transformations to solids, creating solids if necessary}}
+set helplib_data(wdb_xpush)		{{object} {push matrices onto primitives, creating copies as needed}}
 
 set helplib_data(vo_aet)		{{[-i] ["az el tw"]} {set/get the azimuth, elevation and twist}}
 set helplib_data(vo_ae2dir)		{{[-i] az el} {return the view direction}}
@@ -155,7 +155,6 @@ set helplib_data(vo_orient)		{{quat} {set the orientation from quaternion}}
 set helplib_data(vo_perspective)	{{[angle]} {set/get the perspective angle}}
 set helplib_data(vo_pmat)		{{[mat]} {set/get the perspective matrix}}
 set helplib_data(vo_pmodel2view)	{{} {get the pmodel2view matrix}}
-set helplib_data(vo_pov)		{{center quat scale eye_pos perspective} {set point of view}}
 set helplib_data(vo_rmat)		{{[mat]} {set/get the rotation matrix}}
 set helplib_data(vo_rot)		{{"x y z"} {rotate the view}}
 set helplib_data(vo_rotate_about)	{{[e|k|m|v]} {set/get the rotate about point}}
@@ -199,7 +198,7 @@ set helplib_data(dgo_set_outputHandler)	{{[script]}	{get/set output handler scri
 set helplib_data(dgo_set_plOutputMode)	{{[binary|text]}	{get/set the plot output mode}}
 set helplib_data(dgo_set_transparency)	{{obj transparency}	{set transparency of the specified object}}
 set helplib_data(dgo_shaded_mode)	{{[0|1|2]}	{get/set shaded mode}}
-set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{Experimental drawing (cnuzman)}}
+set helplib_data(dgo_vdraw)		{{write|insert|delete|read|send|params|open|vlist [args]}	{draw custom data into the wireframe view}}
 set helplib_data(dgo_vnirt)		{{[vnirt(1) options] viewX viewY}	{trace a single ray from current view}}
 set helplib_data(dgo_who)		{{[r(eal)|p(hony)|b(oth)]}	{list the top-level objects currently being displayed}}
 set helplib_data(dgo_zap)		{{} {erase all objects from the display}}

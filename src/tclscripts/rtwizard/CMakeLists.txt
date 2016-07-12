@@ -3,7 +3,6 @@ add_subdirectory(lib)
 set(rtwizard_TCLSCRIPTS
   RaytraceWizard.tcl
   rtwizard
-  rtwizard.bat
   )
 BRLCAD_ADDDATA(rtwizard_TCLSCRIPTS tclscripts/rtwizard)
 pkgIndex_BUILD(tclscripts/rtwizard)
@@ -64,23 +63,6 @@ set(PictureTypeF_DATA
   examples/PictureTypeF/preview.small.gif
   )
 BRLCAD_ADDDATA(PictureTypeF_DATA tclscripts/rtwizard/examples/PictureTypeF)
-
-if(BRLCAD_ENABLE_TK)
-  if(WIN32)
-    BRLCAD_MANAGE_FILES("rtwizard.bat" ${BIN_DIR} EXEC)
-  endif(WIN32)
-  BRLCAD_MANAGE_FILES("rtwizard" ${BIN_DIR} EXEC)
-
-  add_custom_target(rtwizard ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/rtwizard)
-  set_target_properties(rtwizard PROPERTIES FOLDER "BRL-CAD Executables")
-  add_dependencies(rtwizard bwish rt rtedge fbserv fb-png fb-pix fbclear fblabel fbfree fbline fb-fb pix-bw bwmod bw-pix pixmatte pix-fb)
-  if(TARGET tkpng)
-    add_dependencies(rtwizard tkpng)
-  endif(TARGET tkpng)
-  foreach(item ${tclindex_target_list})
-    add_dependencies(rtwizard ${item})
-  endforeach(item ${tclindex_target_list})
-endif(BRLCAD_ENABLE_TK)
 
 CMAKEFILES(examples)
 

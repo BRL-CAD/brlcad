@@ -1,7 +1,7 @@
 #                        H E L P . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -200,6 +200,7 @@ set mged_help_data(knob)	{{[-e -i -m -v] [-o v/m/e/k] [zap|zero|(x|y|z|X|Y|Z|S|a
 set mged_help_data(l)		$helplib_data(wdb_list)
 set mged_help_data(l_muves)	{{MUVES_component1 MUVES_component2 ...} {DEPRECATED: list the MGED components that make up the specified MUVES components/systems}}
 set mged_help_data(labelvert)	{{object[s]}	{label vertices of wireframes of objects}}
+set mged_help_data(labelface)	{{object[s]}	{label faces of wireframes of objects}}
 set mged_help_data(listeval)	$helplib_data(wdb_listeval)
 set mged_help_data(loadtk)	{{[DISPLAY]}	{initializes the Tk window library}}
 set mged_help_data(loadview)	{{file}	{load view from raytrace script file}}
@@ -235,10 +236,7 @@ set mged_help_data(pathlist)	$helplib_data(wdb_pathlist)
 set mged_help_data(paths)	$helplib_data(wdb_paths)
 set mged_help_data(permute)	{{tuple}	{permute vertices of an ARB}}
 set mged_help_data(plot)	{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{make UNIX-plot of view}}
-set mged_help_data(pl)		{{[-float] [-zclip] [-2d] [-grid] [out_file] [|filter]}	{Experimental - uses dm-plot:make UNIX-plot of view}}
 set mged_help_data(png)		{{[-c r/g/b] [-s size] file}	{save graphics window to PNG image file}}
-set mged_help_data(polybinout)	{{file}	{store vlist polygons into polygon file (experimental)}}
-set mged_help_data(pov)		$helplib_data(vo_pov)
 set mged_help_data(prcolor)	$helplib_data(wdb_prcolor)
 set mged_help_data(prefix)	{{new_prefix object(s)}	{prefix each occurrence of object name(s)}}
 set mged_help_data(press)	{{button_label}	{emulate button press}}
@@ -288,7 +286,7 @@ set mged_help_data(rtcheck)	$helplib_data(dgo_rtcheck)
 set mged_help_data(rtarea)	$helplib_data(dgo_rtarea)
 set mged_help_data(rtedge)	$helplib_data(dgo_rtedge)
 set mged_help_data(rtweight)	$helplib_data(dgo_rtweight)
-set mged_help_data(savekey)	{{file [time]}	{save keyframe in file (experimental)}}
+set mged_help_data(savekey)	{{file [time]}	{save keyframe in file}}
 set mged_help_data(saveview)	{{[-e command] [-l logfile] [-o outputfile] [-i inputfile] file [args]}	{
 Save the current view to specified 'file' as an rt render script
     Options:
@@ -329,7 +327,7 @@ set mged_help_data(t_muves)	{{}	{DEPRECATED: list all the known MUVES components
 set mged_help_data(unhide)	$helplib_data(wdb_unhide)
 set mged_help_data(units)	$helplib_data(wdb_units)
 set mged_help_data(vars)	{{[var=opt]}	{get/set mged variables}}
-set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{Experimental drawing (cnuzman)}}
+set mged_help_data(vdraw)	{{write|insert|delete|read|length|send [args]}	{draw custom data into the wireframe view}}
 set mged_help_data(view)	{{center|size|eye|ypr|quat|aet}	{get/set view parameters (local units).}}
 set mged_help_data(vnirt)	{{x y}  	{trace a single ray from x y}}
 set mged_help_data(voxelize)	{{[-s "dx dy dz"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]} {convert object to its constituent voxels, i.e.the RPPs which approximate it.

@@ -15,7 +15,8 @@ catch {namespace eval hv3 { set {version($Id$)} 1 }}
 # Todo: Puppy linux has this (combobox) packaged already. Should use
 # this fact to reduce installation footprint size on that platform.
 #
-source [file join [file dirname [info script]] combobox.tcl]
+#source [file join [file dirname [info script]] combobox.tcl]
+package ifneeded combobox 2.3 "source [file join [file dirname [info script]] combobox.tcl]"
 
 #----------------------------------------------------------------------
 #     The following HTML elements create document nodes that are replaced with
