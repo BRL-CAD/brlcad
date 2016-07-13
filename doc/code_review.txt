@@ -1,0 +1,48 @@
+BRL-CAD Code Review
+===================
+
+...what to look for during a review...
+
+Legal:
+ * proper copyright statement and compatible license?
+ * any indication contribution disagrees with copyright assignment?
+ * if incorporating 3rd party code, prefer bsd/mit-style options
+
+Architecture:
+ * proper location in hierarchy?
+ * proper file name(s)?
+ * is a dependency being introduced?
+ * is a cyclic dependency being introduced?
+ * are any global variables being introduced?
+
+Design:
+ * is public API minimized?
+ * is a platform symbol being used?
+ * does the change reduce or violate modularity?
+ * is the approach being taken reasonable?
+ * is the code easy to understand?
+
+Testing:
+ * compiles cleanly?
+ * are warnings handled cleanly?
+ * any blatant logic errors?
+ * are all data inputs checked properly, sanitized?
+ * if fixing a bug more than once, is there a test?
+ * is a unit test warranted?
+ * are there major robustness issues?
+
+Documentation:
+ * if publicly visible, is NEWS updated?
+ * if public API changed, is CHANGES updated?
+ * if public API introduced, does every symbol have a comment?
+ * if interface changed, are man page or other docs updated?
+ * are numeric constants documented?
+ * is suspicious, complex, risky code commented?
+
+Code:
+ * conforms with style and coding standards?
+ * proper indentation, formatting, whitespace?
+ * are symbol names consistent?
+ * is duplication being introduced, refactoring warranted?
+ * is there undocumented dead / commented-out code?
+ * can any code be replaced with library calls?
