@@ -71,7 +71,7 @@
 	of measure. Click on OK.
       </para>
 
-      <section><info><title>Drawing the Goblet in the Graphics Window</title></info>
+      <section xml:id="Drawing_Goblet_Graphics"><info><title>Drawing the Goblet in the Graphics Window</title></info>
 
 
 	<para>
@@ -131,7 +131,7 @@
 	selections applied.
       </para>
 
-      <section><info><title>Raytracing the Goblet</title></info>
+      <section xml:id="Raytracing"><info><title>Raytracing the Goblet</title></info>
 
 	<para>
 	  To raytrace the goblet, go to the File menu and select Raytrace. The

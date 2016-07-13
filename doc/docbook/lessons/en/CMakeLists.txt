@@ -1,4 +1,4 @@
-set(docbook_lessons_EN
+set(lessons_EN
   mged01_creating_primitive_shapes.xml
   mged02_learning_viewing_options.xml
   mged03_using_insert_command.xml
@@ -17,7 +17,7 @@ set(docbook_lessons_EN
   mged16_mod_tech_struct.xml
   )
 
-set(docbook_lessons_EN_IMAGES
+set(lessons_EN_IMAGES
   images/mged01_commandwindow.png
   images/mged01_graphicswindow.png
   images/mged01_terminal.png
@@ -130,10 +130,8 @@ set(docbook_lessons_EN_IMAGES
   images/mged16_radio_structure_3.png
   images/mged16_radio_cutaways.png
   )
-ADD_DOC(docbook_lessons_EN_IMAGES html/lessons/en/images)
-
-DOCBOOK_TO_HTML(lesson docbook_lessons_EN html/lessons/en docbook_lessons_EN_IMAGES_cp)
-DOCBOOK_TO_PDF(lesson docbook_lessons_EN pdf/lessons/en docbook_lessons_EN_IMAGES_cp)
+ADD_DOC(lessons_EN_IMAGES html/lessons/en/images)
+ADD_DOCBOOK("HTML;PHP;PDF" lessons_EN lessons/en lessons_EN_IMAGES_cp)
 
 # Local Variables:
 # tab-width: 8

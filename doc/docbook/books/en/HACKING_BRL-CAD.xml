@@ -1049,23 +1049,23 @@ some_function(char *j)
 
         <section><title>Compiling BRL-CAD</title>
           <para>
-            It will take anywhere from a few minutes to one hour to compile BRL-CAD, depending on your hardware. Run the following commands to compile the software:
+            It will take anywhere from a few minutes to one hour to compile BRL-CAD, depending on your hardware. Run the following command to compile the software:
           </para>
 
           <para>
-            <command>make; make test;</command>
+            <command>make</command>
           </para>
 
           <para>
-            If the build fails, run <command>make</command> again and capture the output to a log file by running the following command:
+            If the build fails, run <command>make</command> again and capture the output to a log file (so you can report it and/or get help) by running the following command:
           </para>
 
           <para>
-            <command>make &gt;build.log 2&gt;&amp;1</command>
+            <command>make &gt; build.log 2&gt;&amp;1</command>
           </para>
 
           <note><para>
-              If you have a quad-core CPU, you can run <command>make -j4</command> to request compilation in parallel.
+              If you have a multiple cores, you can request parallel compilation with the -j option, e.g., <command>make -j4</command> on a 4-core system.
             </para></note>
         </section>
 
