@@ -443,17 +443,26 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
     //start = bu_gettime();
 
     if (true) {
-	std::cerr << "prepping to " << cache_path.c_str() << "\n";
+	std::cerr << "prepping to " << cache_path << '\n';
 
-        if (bu_file_exists(cache_path.c_str(), NULL))
-            bu_bomb("cache file exists");
+	if (bu_file_exists(cache_path.c_str(), NULL))
+	    bu_bomb("cache file exists");
 
 	bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
+	ON_CompressedBuffer compressed;
+	{
+	    RT_MemoryArchive archive;
+
+	    for (std::size_t i = 0; i < faceCount; ++i)
+		bbbp.faces[i]->serialize(archive);
+
+	    uint8_t * const temp = archive.CreateCopy();
+	    compressed.Compress(archive.Size(), temp, 0);
+	    bu_free(temp, "temp");
+	}
+
 	RT_MemoryArchive archive;
-
-	for (std::size_t i = 0; i < faceCount; ++i)
-	    bbbp.faces[i]->serialize(archive);
-
+	compressed.Write(archive);
 	uint8_t * const temp = archive.CreateCopy();
 	std::ofstream stream(cache_path.c_str(), std::ofstream::out);
 	stream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
@@ -462,21 +471,40 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	stream.flush();
 	stream.close();
     } else {
-	std::cerr << "loading from " << cache_path << "\n";
+	std::cerr << "loading from " << cache_path << '\n';
 	std::ifstream stream(cache_path.c_str(), std::ifstream::in);
 	stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
 	stream.seekg(0, std::ios::end);
 	const std::size_t temp_size = stream.tellg();
 	stream.seekg(0, std::ios::beg);
-	uint8_t * const temp = new uint8_t[temp_size];
+	uint8_t *temp = new uint8_t[temp_size];
 	stream.read(reinterpret_cast<char *>(temp), temp_size);
 	stream.close();
-	RT_MemoryArchive archive(temp, temp_size);
-	delete[] temp;
+
+	RT_MemoryArchive *archive;
+	{
+	    RT_MemoryArchive compressed_archive(temp, temp_size);
+	    delete[] temp;
+
+	    ON_CompressedBuffer compressed;
+
+	    if (!compressed.Read(compressed_archive))
+		bu_bomb("ON_CompressedBuffer::Read() failed");
+
+	    temp = new uint8_t[compressed.m_sizeof_uncompressed];
+	    int failed_crc;
+	    if (!compressed.Uncompress(temp, &failed_crc) || failed_crc)
+		bu_bomb("ON_CompressedBuffer::Uncompress() failed");
+
+	    archive = new RT_MemoryArchive(static_cast<const void *>(temp), compressed.m_sizeof_uncompressed);
+	    delete[] temp;
+	}
 
 	for (std::size_t i = 0; i < faceCount; ++i)
-	    bbbp.faces[i] = new SurfaceTree(archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
+	    bbbp.faces[i] = new SurfaceTree(*archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
+
+	delete archive;
     }
 
     for (int i = 0; (size_t)i < faceCount; i++) {
@@ -556,7 +584,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     //start = bu_gettime();
 
     std::ostringstream cache_path;
-    cache_path << "cache/" << stp->st_dp->d_un.file_offset;
+    cache_path << "cache" << BU_DIR_SEPARATOR << stp->st_dp->d_un.file_offset;
 
     if (stp->st_matp)
 	for (int i = 0; i < 16; ++i)
