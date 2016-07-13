@@ -64,8 +64,6 @@ typedef enum
    BSON_JSON_LF_DATE,
    BSON_JSON_LF_TIMESTAMP_T,
    BSON_JSON_LF_TIMESTAMP_I,
-   BSON_JSON_LF_REF,
-   BSON_JSON_LF_ID,
    BSON_JSON_LF_UNDEFINED,
    BSON_JSON_LF_MINKEY,
    BSON_JSON_LF_MAXKEY,
@@ -114,11 +112,6 @@ typedef union
       uint32_t t;
       uint32_t i;
    } timestamp;
-   struct {
-      bool       has_ref;
-      bool       has_id;
-      bson_oid_t id;
-   } ref;
    struct {
       bool has_undefined;
    } undefined;
@@ -460,8 +453,6 @@ _bson_json_read_integer (void    *_ctx, /* IN */
       case BSON_JSON_LF_OID:
       case BSON_JSON_LF_BINARY:
       case BSON_JSON_LF_TYPE:
-      case BSON_JSON_LF_REF:
-      case BSON_JSON_LF_ID:
       case BSON_JSON_LF_UNDEFINED:
       case BSON_JSON_LF_INT64:
       default:
@@ -561,19 +552,6 @@ _bson_json_read_string (void                *_ctx, /* IN */
             bson->bson_type_buf[0].len = binary_len;
             break;
          }
-      case BSON_JSON_LF_REF:
-         bson->bson_type_data.ref.has_ref = true;
-         _bson_json_buf_set (&bson->bson_type_buf[0], val, vlen, true);
-         break;
-      case BSON_JSON_LF_ID:
-
-         if (vlen != 24) {
-            goto BAD_PARSE;
-         }
-
-         bson->bson_type_data.ref.has_id = true;
-         bson_oid_init_from_string (&bson->bson_type_data.ref.id, val_w_null);
-         break;
       case BSON_JSON_LF_INT64:
          {
             int64_t v64;
@@ -674,8 +652,6 @@ _is_known_key (const char *key, size_t len)
           IS_KEY ("$binary") ||
           IS_KEY ("$type") ||
           IS_KEY ("$date") ||
-          IS_KEY ("$ref") ||
-          IS_KEY ("$id") ||
           IS_KEY ("$undefined") ||
           IS_KEY ("$maxKey") ||
           IS_KEY ("$minKey") ||
@@ -717,8 +693,6 @@ _bson_json_read_map_key (void          *_ctx, /* IN */
       if HANDLE_OPTION ("$binary", BSON_TYPE_BINARY, BSON_JSON_LF_BINARY) else
       if HANDLE_OPTION ("$type", BSON_TYPE_BINARY, BSON_JSON_LF_TYPE) else
       if HANDLE_OPTION ("$date", BSON_TYPE_DATE_TIME, BSON_JSON_LF_DATE) else
-      if HANDLE_OPTION ("$ref", BSON_TYPE_DBPOINTER, BSON_JSON_LF_REF) else
-      if HANDLE_OPTION ("$id", BSON_TYPE_DBPOINTER, BSON_JSON_LF_ID) else
       if HANDLE_OPTION ("$undefined", BSON_TYPE_UNDEFINED,
                         BSON_JSON_LF_UNDEFINED) else
       if HANDLE_OPTION ("$minKey", BSON_TYPE_MINKEY, BSON_JSON_LF_MINKEY) else
@@ -845,31 +819,6 @@ _bson_json_read_append_timestamp (bson_json_reader_t      *reader, /* IN */
 
 
 static int
-_bson_json_read_append_dbpointer (bson_json_reader_t      *reader, /* IN */
-                                  bson_json_reader_bson_t *bson)   /* IN */
-{
-   char *ref;
-
-   if (!bson->bson_type_data.ref.has_ref) {
-      _bson_json_read_set_error (reader,
-                                 "Missing $ref after $id in BSON_TYPE_DBPOINTER");
-      return 0;
-   }
-
-   if (!bson->bson_type_data.ref.has_id) {
-      _bson_json_read_set_error (reader,
-                                 "Missing $id after $ref in BSON_TYPE_DBPOINTER");
-      return 0;
-   }
-
-   ref = (char *)bson->bson_type_buf[0].buf;
-
-   return bson_append_dbpointer (STACK_BSON_CHILD, bson->key, (int)bson->key_buf.len,
-                                 ref, &bson->bson_type_data.ref.id);
-}
-
-
-static int
 _bson_json_read_end_map (void *_ctx) /* IN */
 {
    bson_json_reader_t *reader = (bson_json_reader_t *)_ctx;
@@ -893,8 +842,6 @@ _bson_json_read_end_map (void *_ctx) /* IN */
          return _bson_json_read_append_binary (reader, bson);
       case BSON_TYPE_DATE_TIME:
          return _bson_json_read_append_date_time (reader, bson);
-      case BSON_TYPE_DBPOINTER:
-         return _bson_json_read_append_dbpointer (reader, bson);
       case BSON_TYPE_UNDEFINED:
          return bson_append_undefined (STACK_BSON_CHILD, bson->key,
                                        (int)bson->key_buf.len);
@@ -920,6 +867,7 @@ _bson_json_read_end_map (void *_ctx) /* IN */
       case BSON_TYPE_CODEWSCOPE:
       case BSON_TYPE_INT32:
       case BSON_TYPE_TIMESTAMP:
+      case BSON_TYPE_DBPOINTER:
       default:
          _bson_json_read_set_error (reader, "Unknown type %d", bson->bson_type);
          return 0;
@@ -1182,8 +1130,8 @@ bson_json_reader_new (void                 *data,           /* IN */
    p->data = data;
    p->cb = cb;
    p->dcb = dcb;
-   p->buf = bson_malloc (buf_size);
    p->buf_size = buf_size ? buf_size : BSON_JSON_DEFAULT_BUF_SIZE;
+   p->buf = bson_malloc (p->buf_size);
 
    r->yh = yajl_alloc (&read_cbs, &gYajlAllocFuncs, r);
 

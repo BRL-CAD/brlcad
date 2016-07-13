@@ -269,19 +269,27 @@ bson_t *
 bcon_new (void *unused,
           ...) BSON_GNUC_NULL_TERMINATED;
 
+/**
+ * The bcon_..() functions are all declared with __attribute__((sentinel)).
+ *
+ * From GCC manual for "sentinel": "A valid NULL in this context is defined as
+ * zero with any pointer type. If your system defines the NULL macro with an
+ * integer type then you need to add an explicit cast."
+ * Case in point: GCC on Solaris (at least)
+ */
 #define BCON_APPEND(_bson, ...) \
-   bcon_append ((_bson), __VA_ARGS__, NULL)
+   bcon_append ((_bson), __VA_ARGS__, (void *)NULL)
 #define BCON_APPEND_CTX(_bson, _ctx, ...) \
-   bcon_append_ctx ((_bson), (_ctx), __VA_ARGS__, NULL)
+   bcon_append_ctx ((_bson), (_ctx), __VA_ARGS__, (void *)NULL)
 
 #define BCON_EXTRACT(_bson, ...) \
-   bcon_extract ((_bson), __VA_ARGS__, NULL)
+   bcon_extract ((_bson), __VA_ARGS__, (void *)NULL)
 
 #define BCON_EXTRACT_CTX(_bson, _ctx, ...) \
-   bcon_extract ((_bson), (_ctx), __VA_ARGS__, NULL)
+   bcon_extract ((_bson), (_ctx), __VA_ARGS__, (void *)NULL)
 
 #define BCON_NEW(...) \
-   bcon_new (NULL, __VA_ARGS__, NULL)
+   bcon_new (NULL, __VA_ARGS__, (void *)NULL)
 
 const char *bson_bcon_magic  (void) BSON_GNUC_CONST;
 const char *bson_bcone_magic (void) BSON_GNUC_CONST;

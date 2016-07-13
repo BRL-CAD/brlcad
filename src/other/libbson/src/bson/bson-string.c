@@ -521,14 +521,14 @@ size_t
 bson_strnlen (const char *s,      /* IN */
               size_t      maxlen) /* IN */
 {
-#ifdef HAVE_STRNLEN
+#ifdef BSON_HAVE_STRNLEN
    return strnlen (s, maxlen);
 #else
    size_t i;
 
    for (i = 0; i < maxlen; i++) {
       if (s [i] == '\0') {
-         return i + 1;
+         return i;
       }
    }
 
