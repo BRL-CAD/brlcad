@@ -1,0 +1,223 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id="fbzoom1">
+<refmeta>
+    <refentrytitle>FBZOOM
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class="source">BRL-CAD</refmiscinfo>
+<refmiscinfo class="manual">BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>fbzoom</refname>
+<refpurpose>modify zoom and window parameters of a frame buffer</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id="synopsis">
+<cmdsynopsis sepchar=" ">
+  <command>fbzoom</command>
+    <arg choice="opt" rep="norepeat">-T</arg>
+    <arg choice="opt" rep="norepeat">-F <replaceable>frame_buffer</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-s|S <replaceable>image_sqrsize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-w|W <replaceable>image_width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-n|N <replaceable>image_height</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsection xml:id="description"><title>DESCRIPTION</title>
+<para>Using
+<citerefentry><refentrytitle>vi</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+and/or
+<citerefentry><refentrytitle>emacs</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+-like keystrokes,
+<command>fbzoom</command>
+allows interactive zooming and panning of a frame buffer.  Using the
+optional command line arguments,</para>
+
+<variablelist remap="TP">
+  <varlistentry>
+  <term><option>-T</option></term>
+  <listitem>
+<para>toggles the sense of the pan commands.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-F </option><replaceable>frame_buffer</replaceable></term>
+  <listitem>
+<para>explicitly specifies the frame buffer.  Otherwise, the environment variable
+<replaceable>FB_FILE</replaceable>
+specifies
+the current framebuffer; see
+<citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-s </option>(or <option>-S</option>)
+  <replaceable>image_sqrsize</replaceable></term>
+  <listitem>
+<para>displays the image file as a square,
+<replaceable>image_sqrsize</replaceable>
+pixels per side (default is 512x512).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-w </option>(or <option>-W</option>)
+  <replaceable>image_width</replaceable></term>
+  <listitem>
+<para>displays the image
+<replaceable>image_width</replaceable>
+pixels wide (default is 512).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-n </option>(or <option>-N</option>)
+  <replaceable>image_height</replaceable></term>
+  <listitem>
+<para>displays the image
+<replaceable>image_height</replaceable>
+pixels high (default is 512).</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para><command>fbzoom</command>
+will display the image currently in the frame buffer and then act on commands
+entered by the user.  Available commands are:</para>
+
+
+<variablelist remap="TP">
+  <varlistentry>
+  <term><emphasis remap="B">b ^V</emphasis></term>
+  <listitem>
+<para>zoom Bigger (*2)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">s</emphasis></term>
+  <listitem>
+<para>zoom Smaller (*0.5)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">+</emphasis></term>
+  <listitem>
+<para>zoom Bigger (+1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">-</emphasis></term>
+  <listitem>
+<para>zoom Smaller (-1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">h B</emphasis></term>
+  <listitem>
+<para>pan Left (1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">j N</emphasis></term>
+  <listitem>
+<para>pan Down (1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">k P</emphasis></term>
+  <listitem>
+<para>pan Up (1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">l F</emphasis></term>
+  <listitem>
+<para>pan Right (1)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">H ^B</emphasis></term>
+  <listitem>
+<para>pan Left (many)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">J ^N</emphasis></term>
+  <listitem>
+<para>pan Down (many)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">K ^P</emphasis></term>
+  <listitem>
+<para>pan Up (many)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">L ^F</emphasis></term>
+  <listitem>
+<para>pan Right (many)</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">T</emphasis></term>
+  <listitem>
+<para>toggle sense of pan commands</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">c</emphasis></term>
+  <listitem>
+<para>goto Center</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">z</emphasis></term>
+  <listitem>
+<para>zoom 1 1</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">r</emphasis></term>
+  <listitem>
+<para>Reset to normal</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">q</emphasis></term>
+  <listitem>
+<para>Exit</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><emphasis remap="B">RETURN</emphasis></term>
+  <listitem>
+<para>Exit</para>
+  </listitem>
+  </varlistentry>
+</variablelist>
+
+<para>Note that these commands change the way the frame buffer is viewed
+but not the image in the frame buffer.</para>
+</refsection>
+
+<refsection xml:id="see_also"><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+
+</refsection>
+
+<refsection xml:id="author"><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsection>
+
+<refsection xml:id="copyright"><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1986-2016 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsection>
+
+<refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsection>
+</refentry>
