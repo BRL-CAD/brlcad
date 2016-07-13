@@ -1,0 +1,186 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="STEP5" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <refmeta>
+    <refentrytitle>STEP</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD Format Documentation</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="format">
+    <refname>STEP</refname>
+    <refpurpose>ISO 10303 Standard for the Exchange of Product model data</refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+
+  <refsect1 xml:id='background'>
+    <title>BACKGROUND</title>
+    <para>
+      In 1984, the International Organization for Standardization (ISO) began working to create
+      a standard to allow for the electronic exchange of product data between computer-based
+      product life-cycle systems.  This scope was intentionally much broader than just
+      geometry information, and the resulting standard (ISO 10303: Industrial automation systems
+      and integration -- Product data representation and exchange) is extremely large.  Consequently,
+      the standard is subdivided into <emphasis remap="I">parts</emphasis>, which are referred to
+      individually as ISO 10303-xxx where xxx is the part number.  Because of the large scope,
+      there is a numbering convention used to represent more focused sub-scopes in order to make locating
+      specific types of information simpler:
+      <table>
+	<title>ISO 10303 Part Numbering Scopes</title>
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Series</entry>
+	      <entry>Scope Of Series</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>00x</entry>
+	      <entry>Overview, fundamental principles</entry>
+	    </row>
+	    <row>
+	      <entry>01x</entry>
+	      <entry>Definitional resources</entry>
+	    </row>
+	    <row>
+	      <entry>02x</entry>
+	      <entry>Implementation methods</entry>
+	    </row>
+	    <row>
+	      <entry>03x</entry>
+	      <entry>Validation of translators for standard conformance</entry>
+	    </row>
+	    <row>
+	      <entry>04x</entry>
+	      <entry>Integrated Generic Resources (basic building blocks)</entry>
+	    </row>
+	    <row>
+	      <entry>1xx</entry>
+	      <entry>Integrated Application Resources (higher level than 04x)</entry>
+	    </row>
+	    <row>
+	      <entry>2xx</entry>
+	      <entry>Application Protocols</entry>
+	    </row>
+	    <row>
+	      <entry>5xx</entry>
+	      <entry>Application Interpreted Constructs - reusable components of Application Protocols</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+      The lowest level parts that define STEP in a practical sense are <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=38047">ISO 10303-011</link>, <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=33713">ISO 10303-21</link>, and <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=25097"> ISO 10303-022</link>.  10303-011 defines
+      the EXPRESS language, which is in turn the language in which application protocol schemas are written.  10303-21
+      defines a clear text encoding of the STEP exchange structure - files using this schema are referred to as "STEP"
+      or "Part 21" files.
+      10303-022 defines a Standard Data Access Interface (SDAI) which is used to automatically generate practical
+      computer code from the EXPRESS schema protocol descriptions.  Collectively, these define the "container" aspects
+      of the STEP file format and a method to access the information from the file.  (This is similar to using XML with
+      a schema file to store information, and newer schemas are also available in an XML form in addition to EXPRESS.)
+    </para>
+    <para>
+      A number of <link xlink:href="http://www.steptools.com/support/stdev_docs/express/step_irs/">other</link> low level parts and higher level Application Interpreted Constructs (AICs) form the foundation
+      on which the more complete "high level" parts are defined.  This separation is performed mainly to allow
+      maximal sharing and compatibility between different high level parts that need the same lower level foundations.
+    </para>
+    <para>
+      Within that context, the primary components of interest for practical data import and
+      export are the Application Protocols (AP) that focus on shape models and assembly
+      structure (among other things.)  The first such protocol was AP203 - "Configuration-controlled design".
+      As experience using the standard in real world applications accumulated, new revisions and new application protocols
+      were developed.  Today, the following protocols exist:
+      <table>
+	<title>Application Protocols relating to Shape Modeling and Assembly Structure</title>
+	<tgroup cols="3">
+	  <thead>
+	    <row>
+	      <entry>Application Protocol</entry>
+	      <entry>Title</entry>
+	      <entry>Notes</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>AP203</entry>
+	      <entry><link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=20597">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
+	      <entry>Most recent version is 10303-203:1994 with additions and corrections as follows.  The original document was subsequently revised by one amendment<link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=34177">10303-203:1994/Amd 1:2000 </link> and three corrections: <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=26904">10303-203:1994/Cor 1:1996 </link>, <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=30943">10303-203:1994/Cor 2:1998 </link>, and <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=40190">10303-203:1994/Cor 3:2004 </link> </entry>
+	    </row>
+	    <row>
+	      <entry>AP203e2</entry>
+	      <entry> <link xlink:href="http://www.iso.org/iso/iso_catalogue/catalogue_tc/catalogue_detail.htm?csnumber=44305">Configuration controlled 3D designs of mechanical parts and assemblies</link></entry>
+	      <entry>Most recent version is 10303-203:2011.  Revises <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=39522">10303-203:2005</link>, which is listed as a modular version that is harmonized with ISO 10303-2014.</entry>
+	    </row>
+	    <row>
+	      <entry>AP214</entry>
+	      <entry> <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=43669">Core data for automotive mechanical design processes</link></entry>
+	      <entry>Most recent version is 10303-214:2010. Two earlier versions exist: <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=38727">10303-214:2003</link> and <link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=23643">10303-214:2001</link></entry>
+	    </row>
+	    <row>
+	      <entry>AP242</entry>
+	      <entry><link xlink:href="http://www.iso.org/iso/home/store/catalogue_ics/catalogue_detail_ics.htm?csnumber=57620">Managed model-based 3D engineering</link></entry>
+	      <entry>Most recent version is 242:2014.  This standard is intended to consolidate and replace AP203e2 and AP214.</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+    <para>
+      AP203e2 is sufficiently different from AP203 that practically speaking it merits
+      being called out as its own distinct protocol, but in the nomenclature of the ISO
+      standards it is still considered a revision to AP203.
+    </para>
+    <para>
+      These protocols are the portion of ISO 10303 that address the problem domain previously handled by the Initial Graphics Exchange Specification (<citerefentry><refentrytitle>IGES</refentrytitle><manvolnum>5</manvolnum></citerefentry>).  In a computer aided design context where transfer of "STEP files" is being discussed, those files will most likely correspond to one of the previous protocols.
+    </para>
+
+    <para>
+      TODO - Determine what MIM, AIM and AAM are and document them...
+    </para>
+
+  </refsect1>
+  <refsect1 xml:id='schema_resources'><title>SCHEMAS AND IMPLEMENTATION RESOURCES</title>
+    <para>
+      To obtain the latest schema files (which, unlike the ISO standards themselves, are freely available) check the <link xlink:href="http://stepmod.sourceforge.net/">STEP Module Repository Project</link> - in particular, the <link xlink:href="http://stepmod.cvs.sourceforge.net/viewvc/stepmod/stepmod/data/modules/">modules</link> directory.
+    </para>
+    <para>
+      The standards define the structure of the schemas, but in general when it comes to the nuts and bolts of implementing a practical importer and exporter more resources are needed.  Below are links to some implementation resources:
+    </para>
+    <para>
+      PDES, Inc. Industry consortium <link xlink:href="http://www.steptools.com/support/stdev_docs/express/ap203/recprac203v8.pdf">Recommended Practices for AP203</link>, April 1998
+    </para>
+    <para>
+      PDM Implementer Forum, <link xlink:href="http://www.steptools.com/support/stdev_docs/express/pdm/pdmug_release4_3.pdf">Usage Guide for the STEP PDM Schema V1.2 Release 4.3</link>, January 2002.
+    </para>
+    <para>
+      CAx Implementer Forum Recommended Practices: <link xlink:href="https://www.cax-if.org/joint_testing_info.html#recpracs"></link>
+    </para>
+
+  </refsect1>
+  <refsect1 xml:id='see_also'><title>SEE ALSO</title>
+
+    <para>
+      Pratt, Michael J.; <link xlink:href="http://www.mel.nist.gov/msidlibrary/doc/jcise1.pdf"> Introduction to ISO 10303 - the STEP Standard for Product Data Exchange</link>; NIST; 2001.
+    </para>
+
+  </refsect1>
+
+  <refsect1 xml:id='author'><title>AUTHOR</title>
+    <para>Clifford Yapp</para>
+  </refsect1>
+
+  <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+    <para>
+      Copyright (c) 2015-2016 by the United States Government as represented by U.S. Army Research Laboratory.
+    </para>
+  </refsect1>
+
+  <refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+    <para>
+      Reports of inaccuracies should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.
+    </para>
+  </refsect1>
+</refentry>
+
