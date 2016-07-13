@@ -1,13 +1,13 @@
 set(bu_headers
   avs.h
   bitv.h
-  bu_tcl.h
   cmd.h
   color.h
   cv.h
   debug.h
   defines.h
   endian.h
+  env.h
   file.h
   getopt.h
   hash.h
@@ -17,8 +17,11 @@ set(bu_headers
   magic.h
   malloc.h
   mapped_file.h
+  observer.h
+  opt.h
   parallel.h
   parse.h
+  path.h
   ptbl.h
   rb.h
   simd.h
@@ -26,6 +29,7 @@ set(bu_headers
   str.h
   time.h
   units.h
+  uuid.h
   version.h
   vfont.h
   vlb.h

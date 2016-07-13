@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,29 +18,24 @@
  * information.
  */
 
-/** @addtogroup cmd */
-/** @{ */
-/** @file cmdhist.c
- *
+/** @addtogroup bu_cmd
  * @brief
- * Routines for maintaining a command history
- *
+ * Routine(s) for processing subcommands
  */
+/** @{ */
+/** @file bu/cmd.h */
 
-#ifndef CMD_H
-#define CMD_H
+#ifndef BU_CMD_H
+#define BU_CMD_H
 
 #include "common.h"
 
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h> /* for timeal */
-#endif
 #include <time.h>
 
-#include "bin.h"
+#include "bsocket.h" /* for timeval */
 #include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
@@ -59,6 +54,7 @@ struct bu_cmdtab {
     int (*ct_func)(void *data, int argc, const char *argv[]);
 };
 
+/* deprecated 2016-01-14 */
 struct bu_cmdhist {
     struct bu_list l;
     struct bu_vls h_command;
@@ -68,6 +64,7 @@ struct bu_cmdhist {
 };
 #define BU_CMDHIST_NULL (struct bu_cmdhist *)NULL
 
+/* deprecated 2016-01-14 */
 struct bu_cmdhist_obj {
     struct bu_list l;
     struct bu_vls cho_name;
@@ -77,6 +74,8 @@ struct bu_cmdhist_obj {
 #define BU_CMDHIST_OBJ_NULL (struct bu_cmdhist_obj *)NULL
 
 __BEGIN_DECLS
+
+/** @brief Routine(s) for processing subcommands */
 
 /**
  * This function is intended to be used for parsing subcommands.  If
@@ -95,23 +94,23 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
+/** @brief Routines for maintaining a command history */
+
 /**
- * @brief
  * Prints out the command history.
  *
  * USAGE:
  * history [-delays] [-outfile filename]
  */
-BU_EXPORT extern int bu_cmdhist_history(void *data, int argc, const char **argv);
+DEPRECATED BU_EXPORT extern int bu_cmdhist_history(void *data, int argc, const char **argv);
 
 /**
- * @brief
  * Add a command to the history list.
  *
  * USAGE:
  * procname add cmd
  */
-BU_EXPORT extern int bu_cmdhist_add(void *data, int argc, const char **argv);
+DEPRECATED BU_EXPORT extern int bu_cmdhist_add(void *data, int argc, const char **argv);
 
 /**
  * Return the current command.
@@ -119,7 +118,7 @@ BU_EXPORT extern int bu_cmdhist_add(void *data, int argc, const char **argv);
  * USAGE:
  * procname curr
  */
-BU_EXPORT extern int bu_cmdhist_curr(void *data, int argc, const char **argv);
+DEPRECATED BU_EXPORT extern int bu_cmdhist_curr(void *data, int argc, const char **argv);
 
 /**
  * Set the current command to the next command.
@@ -127,7 +126,7 @@ BU_EXPORT extern int bu_cmdhist_curr(void *data, int argc, const char **argv);
  * USAGE:
  * procname next
  */
-BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
+DEPRECATED BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
 
 /**
  * Set the current command to the previous command.
@@ -135,11 +134,11 @@ BU_EXPORT extern int bu_cmdhist_next(void *data, int argc, const char **argv);
  * USAGE:
  * procname prev
  */
-BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
+DEPRECATED BU_EXPORT extern int bu_cmdhist_prev(void *data, int argc, const char **argv);
 
 __END_DECLS
 
-#endif  /* CMD_H */
+#endif  /* BU_CMD_H */
 
 /** @} */
 /*

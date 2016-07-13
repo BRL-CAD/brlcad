@@ -1,7 +1,7 @@
 /*                       A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,17 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file analyze.h
+/** @addtogroup libanalyze
  *
  * Functions provided by the LIBANALYZE geometry analysis library.
  *
  */
+/** @{ */
+/** @file include/analyze.h */
 
 #ifndef ANALYZE_H
 #define ANALYZE_H
 
 #include "common.h"
-
+#include "ged.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS
@@ -47,6 +49,10 @@ __BEGIN_DECLS
 /* Libanalyze return codes */
 #define ANALYZE_OK 0x0000
 #define ANALYZE_ERROR 0x0001 /**< something went wrong, function not completed */
+#define ANALYZE_SEM_WORKER GED_SEM_LAST
+#define ANALYZE_SEM_STATS ANALYZE_SEM_WORKER+1
+#define ANALYZE_SEM_LIST ANALYZE_SEM_STATS+1
+#define ANALYZE_SEM_LAST ANALYZE_SEM_LIST+1
 
 /*
  *     Density specific structures
@@ -126,115 +132,92 @@ ANALYZE_EXPORT extern void
 voxelize(struct rt_i *rtip, fastf_t voxelSize[3], int levelOfDetail, void (*create_boxes)(void *callBackData, int x, int y, int z, const char *regionName, fastf_t percentageFill), void *callBackData);
 
 
-/* diff.c */
+struct analyze_raydiff_results {
+    struct bu_ptbl *left;
+    struct bu_ptbl *right;
+    struct bu_ptbl *both;
+};
 
-/* One of the design goals of this API is to allow developers
- * to access the results of the diffing process in a structured
- * way that lets them create their own custom reports, scripts,
- * visualizations, etc.  The functions diff_dp and diff_dbip are
- * the workhorse functions that do the actual diffing, and the
- * remainder of the API is devoted to accessing the results.
- */
+struct diff_seg {
+    point_t in_pt;
+    point_t out_pt;
+    struct xray ray;
+    int valid;
+};
 
-/**
- * Analyze the difference between two directory objects
- *
- * Returns a pointer to the results structure.  If the first
- * parameter is NULL, diff_dp will create a results structure - else,
- * it uses the one provided.  This allows a calling function to
- * allocate a large number of result containers at once.
- */
-ANALYZE_EXPORT void *
-diff_dp(void *result_in, struct directory *dp1, struct directory *dp2, struct db_i *dbip1, struct db_i *dbip2);
+struct per_obj_data;
+struct per_region_data;
 
-/**
- * Analyze the difference between two database objects
- *
- * Returns a bu_ptbl of results, which can be interpreted
- * by diff_result and friends.  To free the elements call
- * diff_free_ptbl.
- */
-ANALYZE_EXPORT struct bu_ptbl *
-diff_dbip(struct db_i *dbip1, struct db_i *dbip2);
+struct raytracing_context {
+    int num_objects;
+    int num_views;
 
-/**
- * Free diff result
- */
-ANALYZE_EXPORT void
-diff_free(void *result);
+    unsigned long *shots;
 
-/**
- * Free diff results in a bu_ptbl
- */
-ANALYZE_EXPORT void
-diff_free_ptbl(struct bu_ptbl *results_table);
+    vect_t span;    /* How much space does the geometry span in each of X, Y, Z directions */
+    vect_t area;    /* area of the view for view with invariant at index */
 
-typedef enum {
-    DIFF_NONE = 0,   /* No difference between objects */
-    DIFF_REMOVED,    /* Items removed, none added or changed */
-    DIFF_ADDED,      /* Items added, none removed or changed */
-    DIFF_TYPECHANGE, /* Item underwent a change in type (e.g. sph -> arb8) */
-    DIFF_BINARY,     /* Only binary change testing available */
-    DIFF             /* Differences present (none of the above cases */
-} diff_t;
+    struct per_obj_data *objs;
 
-/**
- * Report on the status of the result object - 0 is OK, 1 means
- * something went wrong with the diff.
- */
+    struct density_entry *densities;
+    int num_densities;
+};
+
 ANALYZE_EXPORT int
-diff_status(void *result);
+analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
+	const char *left, const char *right, struct bn_tol *tol, int solidcheck);
 
-/**
- * Report on the type of diff result contained in the object
- */
-ANALYZE_EXPORT diff_t
-diff_type(void *result);
+ANALYZE_EXPORT void
+analyze_raydiff_results_free(struct analyze_raydiff_results *results);
 
-typedef enum {
-    DIFF_SHARED_PARAM = 0,
-    DIFF_ORIG_ONLY_PARAM,
-    DIFF_NEW_ONLY_PARAM,
-    DIFF_CHANGED_ORIG_PARAM,
-    DIFF_CHANGED_NEW_PARAM,
-    DIFF_SHARED_ATTR,
-    DIFF_ORIG_ONLY_ATTR,
-    DIFF_NEW_ONLY_ATTR,
-    DIFF_CHANGED_ORIG_ATTR,
-    DIFF_CHANGED_NEW_ATTR
-} diff_result_t;
+ANALYZE_EXPORT int
+analyze_obj_inside(struct db_i *dbip, const char *outside, const char *inside, fastf_t tol);
 
-/**
- * Return the attribute/value set corresponding to a particular
- * subgroup in the result, as enumerated by the diff_result_t
- * types.
- */
-ANALYZE_EXPORT struct bu_attribute_value_set *
-diff_result(void *result, diff_result_t result_type);
+typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
+typedef int (*missfunc_t)(struct application *);
+typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
 
-typedef enum {
-    DIFF_ORIG = 0,
-    DIFF_NEW
-} diff_obj_t;
+ANALYZE_EXPORT extern fastf_t
+analyze_volume(struct raytracing_context *context, const char *name);
 
-/**
- * Return the directory pointer corresponding to either
- * the original object or the object being compared to it.
- */
-ANALYZE_EXPORT struct directory *
-diff_info_dp(void *result, diff_obj_t obj_type);
+ANALYZE_EXPORT extern point_t *
+analyze_centroid(struct raytracing_context *context, const char *name);
 
-/**
- * Return the rt_db_internal information for either
- * the original object or the object being compared to it.
- */
-ANALYZE_EXPORT struct rt_db_internal *
-diff_info_intern(void *result, diff_obj_t obj_type);
+ANALYZE_EXPORT extern fastf_t
+analyze_surf_area(struct raytracing_context *context, const char *name);
+
+ANALYZE_EXPORT extern int
+analyze_raytracing_context_init(struct raytracing_context *context, struct db_i *dbip,
+    const char **names, int *flags);
+
+ANALYZE_EXPORT extern void
+analyze_raytracing_context_clear(struct raytracing_context *context);
+
+struct rt_gen_worker_vars {
+    struct rt_i *rtip;
+    struct resource *resp;
+    int rays_cnt;
+    const fastf_t *rays;
+    hitfunc_t fhit;
+    missfunc_t fmiss;
+    overlapfunc_t foverlap;
+    int step;       /* number of rays to be fired by this worker before calling back */
+    int *ind_src;   /* source of starting index */
+    int curr_ind;   /* current ray index */
+    void *ptr; /* application specific info */
+};
+
+ANALYZE_EXPORT int
+analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
+	const char *pbrep, struct rt_gen_worker_vars *pbrep_rtvars,
+	const char *curr_comb, struct bu_ptbl *candidates, void *curr_union_data, int ncpus);
 
 
 __END_DECLS
 
 #endif /* ANALYZE_H */
+
+/** @} */
 
 /*
  * Local Variables:

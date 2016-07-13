@@ -1,7 +1,7 @@
 /*                         S T R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file str.h
- *
- */
 #ifndef BU_STR_H
 #define BU_STR_H
 
@@ -29,15 +26,15 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup str */
-/** @{ */
-
-/** @file libbu/str.c
+/** @addtogroup bu_str
  *
+ * @brief
  * Compatibility routines to various string processing functions
  * including strlcat and strlcpy.
  *
  */
+/** @{ */
+/** @file bu/str.h */
 
 /**
  * concatenate one string onto the end of another, returning the
@@ -47,7 +44,7 @@ __BEGIN_DECLS
  * file name and line number of any erroneous callers.
  */
 BU_EXPORT extern size_t bu_strlcatm(char *dst, const char *src, size_t size, const char *label);
-#define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, BU_FLSTR)
+#define bu_strlcat(dst, src, size) bu_strlcatm(dst, src, size, CPP_FILELINE)
 
 /**
  * copies one string into another, returning the length of the dst
@@ -57,7 +54,7 @@ BU_EXPORT extern size_t bu_strlcatm(char *dst, const char *src, size_t size, con
  * file name and line number of any erroneous callers.
  */
 BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, const char *label);
-#define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, BU_FLSTR)
+#define bu_strlcpy(dst, src, size) bu_strlcpym(dst, src, size, CPP_FILELINE)
 
 /**
  * Given a string, allocate enough memory to hold it using
@@ -68,7 +65,7 @@ BU_EXPORT extern size_t bu_strlcpym(char *dst, const char *src, size_t size, con
  * number that can be used when bu debugging is enabled.
  */
 BU_EXPORT extern char *bu_strdupm(const char *cp, const char *label);
-#define bu_strdup(s) bu_strdupm(s, BU_FLSTR)
+#define bu_strdup(s) bu_strdupm(s, CPP_FILELINE)
 
 /**
  * Compares two strings for equality.  It performs the comparison more
@@ -135,8 +132,8 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
 #define BU_STR_EQUIV(s1, s2) (bu_strcasecmp((s1), (s2)) == 0)
 
 
-/** @file escape.c
- *
+/**
+ * @brief
  * These routines implement support for escaping and unescaping
  * generalized strings that may represent filesystem paths, URLs,
  * object lists, and more.
@@ -160,7 +157,7 @@ BU_EXPORT extern int bu_strncasecmp(const char *string1, const char *string2, si
  * except for the ones listed after the circumflex.  For example,
  * "^abc" matches any character except 'a', 'b', or 'c'.
  *
- * Backslash escape sequences are not allowed (e.g., \t or \x01) as
+ * Backslash escape sequences are not allowed (e.g., \\t or \\x01) as
  * '\' will be matched literally.
  *
  * A range expression consists of two characters separated by a hyphen
@@ -241,20 +238,105 @@ BU_EXPORT extern char *bu_str_escape(const char *input, const char *expression, 
 BU_EXPORT extern char *bu_str_unescape(const char *input, char *output, size_t size);
 
 
-/** @file libbu/ctype.c
- *
- * Routines for checking ctypes.
- *
- */
+/** @brief Routines for checking ctypes. */
+
 BU_EXPORT extern int bu_str_isprint(const char *cp);
 
+
+/** @brief routines for parsing boolean values from strings */
+
 /**
- * Get the current operating host's name.  This is usually also the
- * network name of the current host.  The name is written into the
- * provided hostname buffer of at least len size.  The hostname is
- * always null-terminated and should be sized accordingly.
+ * Returns truthfully if a given input string represents an
+ * "affirmative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as false.  Any other input value returns as
+ * true.  Strings that strongly indicate true return as 1, other
+ * values still return as true but may be a value greater than 1.
  */
-BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
+BU_EXPORT extern int bu_str_true(const char *str);
+
+/**
+ * Returns truthfully if a given input string represents a
+ * "negative string".
+ *
+ * Input values that are null, empty, begin with the letter 'n', or
+ * are 0-valued return as true.  Any other input value returns as
+ * false.
+ */
+BU_EXPORT extern int bu_str_false(const char *str);
+
+
+/** @brief Functions related to argv processing. */
+
+/**
+ * Build argv[] array from input buffer, by splitting whitespace
+ * separated "words" into null terminated strings.
+ *
+ * 'lim' indicates the maximum number of elements that can be stored
+ * in the argv[] array not including a terminating NULL.
+ *
+ * The 'lp' input buffer is altered by this process.  The argv[] array
+ * points into the input buffer.
+ *
+ * The argv[] array needs to have at least lim+1 pointers allocated
+ * for lim items plus a terminating pointer to NULL.  The input buffer
+ * should not be freed until argv has been freed or passes out of
+ * scope.
+ *
+ * Returns -
+ * 0    no words in input
+ * argc number of words of input, now in argv[]
+ */
+BU_EXPORT extern size_t bu_argv_from_string(char *argv[],
+                                            size_t lim,
+                                            char *lp);
+
+
+/**
+ * libbu replacement for Tcl's ascii list to argc/argv functionality
+ * (Note: function signature duplicates that of Tcl_SplitList)
+ */
+BU_EXPORT extern int bu_argv_from_tcl_list(const char *list_str,
+                                           int *argc,
+                                           const char ***argv);
+
+/**
+ * Deallocate all strings in a given argv array and the array itself
+ *
+ * This call presumes the array has been allocated with bu_argv_dup()
+ * or bu_argv_from_path().
+ */
+BU_EXPORT extern void bu_argv_free(size_t argc, char *argv[]);
+
+/**
+ * free up to argc elements of memory allocated to an array without
+ * free'ing the array itself.
+ */
+BU_EXPORT extern void bu_free_array(size_t argc, char *argv[], const char *str);
+
+/**
+ * Dynamically duplicate an argv array and all elements in the array
+ *
+ * Duplicate an argv array by duplicating all strings and the array
+ * itself.  It is the caller's responsibility to free the array
+ * returned including all elements in the array by calling bu_free()
+ * or bu_argv_free().
+ */
+BU_EXPORT extern char **bu_argv_dup(size_t argc, const char *argv[]);
+
+/**
+ * Combine two argv arrays into one new (duplicated) argv array.
+ *
+ * If insert is negative, the insertArgv array elements will be
+ * prepended into the new argv array.  If insert is greater than or
+ * equal to argc, the insertArgv array elements will be appended after
+ * all duplicated elements in the specified argv array.  Otherwise,
+ * the insert argument is the position where the insertArgv array
+ * elements will be merged with the specified argv array.
+ */
+BU_EXPORT extern char **bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[]);
+
 
 __END_DECLS
 

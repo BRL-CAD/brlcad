@@ -1,7 +1,7 @@
 /*                          D M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,12 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-
-#define USE_FBSERV 1
-
-#ifdef USE_FBSERV
-#  include "fbserv_obj.h"
-#endif
+#include "fb.h"
 
 #include "./dm/defines.h"
+
+/* Use fbserv */
+#define USE_FBSERV 1
 
 #define DM_NULL (dm *)NULL
 #define DM_MIN (-2048)
@@ -245,6 +243,7 @@ DM_EXPORT extern dm *dm_open(Tcl_Interp *interp,
 				    int type,
 				    int argc,
 				    const char *argv[]);
+DM_EXPORT extern void *dm_interp(dm *dmp);
 DM_EXPORT extern int dm_share_dlist(dm *dmp1,
 				    dm *dmp2);
 DM_EXPORT extern fastf_t dm_Xx2Normal(dm *dmp,
@@ -331,8 +330,11 @@ DM_EXPORT extern const char *dm_get_dm_name(dm *dmp);
 DM_EXPORT extern const char *dm_get_dm_lname(dm *dmp);
 DM_EXPORT extern int dm_get_width(dm *dmp);
 DM_EXPORT extern int dm_get_height(dm *dmp);
+DM_EXPORT extern void dm_set_width(dm *dmp, int width);
+DM_EXPORT extern void dm_set_height(dm *dmp, int height);
 DM_EXPORT extern fastf_t dm_get_aspect(dm *dmp);
 DM_EXPORT extern int dm_get_type(dm *dmp);
+DM_EXPORT void *dm_get_xvars(dm *dmp);
 DM_EXPORT extern struct bu_vls *dm_list_types(const char separator); /* free return list with bu_vls_free(list); BU_PUT(list, struct bu_vls); */
 DM_EXPORT extern unsigned long dm_get_id(dm *dmp);
 DM_EXPORT extern void dm_set_id(dm *dmp, unsigned long new_id);
@@ -426,10 +428,12 @@ DM_EXPORT extern int dm_draw_display_list(dm *dmp,
 	int mv_dlist
 	);
 
+DM_EXPORT extern int dm_default_type();
 
 /* For backwards compatibility, define macros and expose struct dm */
-
-#include "../src/libdm/dm_private.h"
+#ifdef EXPOSE_DM_HEADER
+#  include "../src/libdm/dm_private.h"
+#endif
 
 #define DM_OPEN(_interp, _type, _argc, _argv) dm_open(_interp, _type, _argc, _argv)
 #define DM_CLOSE(_dmp) _dmp->dm_close(_dmp)

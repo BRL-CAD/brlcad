@@ -1,7 +1,7 @@
 /*                        L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,9 +29,7 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup list */
-/** @{*/
-/** @file libbu/list.c
+/** @addtogroup bu_list
  *
  * @brief Support routines for doubly-linked lists.
  *
@@ -114,6 +112,8 @@ __BEGIN_DECLS
  * NEXT / PREV - from the point of view of a list member
  * forw / back - the actual pointer names
  */
+/** @{*/
+/** @file bu/list.h */
 
 struct bu_list {
     uint32_t magic;		/**< @brief Magic # for mem id/check */
@@ -146,6 +146,7 @@ typedef struct bu_list bu_list_t;
  * any memory.  call BU_LIST_MAGIC_SET() to change the list type.
  */
 #define BU_LIST_INIT(_hp) { \
+	BU_ASSERT((void *)(_hp) != (void *)NULL); \
 	(_hp)->forw = (_hp)->back = (_hp); \
 	(_hp)->magic = BU_LIST_HEAD_MAGIC;	/* used by circ. macros */ }
 
@@ -200,7 +201,7 @@ typedef struct bu_list bu_list_t;
 	(new)->forw = (old)->forw; \
 	(new)->back = (old); \
 	(old)->forw = (new); \
-	BU_ASSERT((void *)((old)->forw) != (void *)NULL); \
+	BU_ASSERT((void *)((new)->forw) != (void *)NULL); \
 	(new)->forw->back = (new);  }
 
 /**
@@ -535,71 +536,6 @@ BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
 				       const char *str,
 				       const uint32_t magic);
 
-
-/**
- * Creates and initializes a bu_list head structure
- */
-BU_EXPORT extern struct bu_list *bu_list_new(void);
-
-/**
- * Returns the results of BU_LIST_POP
- */
-BU_EXPORT extern struct bu_list *bu_list_pop(struct bu_list *hp);
-
-/**
- * Returns the number of elements on a bu_list brand linked list.
- */
-BU_EXPORT extern int bu_list_len(const struct bu_list *hd);
-
-/**
- * Reverses the order of elements in a bu_list linked list.
- */
-BU_EXPORT extern void bu_list_reverse(struct bu_list *hd);
-
-/**
- * Given a list of structures allocated with bu_malloc() or
- * bu_calloc() enrolled on a bu_list head, walk the list and free the
- * structures.  This routine can only be used when the structures have
- * no interior pointers.
- */
-BU_EXPORT extern void bu_list_free(struct bu_list *hd);
-
-/**
- * Simple parallel-safe routine for appending a data structure to the
- * end of a bu_list doubly-linked list.
- *
- * @par Issues:
- *  	Only one semaphore shared by all list heads.
- * @n	No portable way to notify waiting thread(s) that are sleeping
- */
-BU_EXPORT extern void bu_list_parallel_append(struct bu_list *headp,
-					      struct bu_list *itemp);
-
-/**
- * Simple parallel-safe routine for dequeueing one data structure from
- * the head of a bu_list doubly-linked list.
- * If the list is empty, wait until some other thread puts something on
- * the list.
- *
- * @par Issues:
- * No portable way to not spin and burn CPU time while waiting
- * @n	for something to show up on the list.
- */
-BU_EXPORT extern struct bu_list *bu_list_parallel_dequeue(struct bu_list *headp);
-
-/**
- * Generic bu_list doubly-linked list checker.
- */
-BU_EXPORT extern void bu_ck_list(const struct bu_list *hd,
-				 const char *str);
-
-/**
- * bu_list doubly-linked list checker which checks the magic number for
- * all elements in the linked list
- */
-BU_EXPORT extern void bu_ck_list_magic(const struct bu_list *hd,
-				       const char *str,
-				       const uint32_t magic);
 
 /** @} */
 

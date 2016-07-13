@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,23 +25,12 @@
 
 #include "bu/defines.h"
 
-
-/** @addtogroup magic */
-/** @{ */
-/** @file magic.h
+/** @addtogroup bu_magic
  *
+ * @brief
  * Global registry of recognized magic numbers.
  *
- * This file is part of LIBBU even though it provides magic numbers
- * for structures in other libraries.
- *
- * The defines should be considered PRIVATE (even though they are not)
- * and should NEVER be referenced by value.
- */
-/** @file magic.c
- *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.  Magic numbers provide a means
+ * Magic numbers provide a means
  * to perform run-time sanity checks for memory corruption and
  * uninitialized data.
  *
@@ -49,13 +38,15 @@
  * structure needs to have its magic number registered here and in
  * the header.
  *
- */
-/** @file badmagic.c
+ * This file is part of LIBBU even though it provides magic numbers
+ * for structures in other libraries.
  *
- * Routines involved with handling "magic numbers" used to identify
- * various in-memory data structures.
- *
+ * The defines should be considered PRIVATE (even though they are not)
+ * and should NEVER be referenced by value.
  */
+/** @{ */
+/** @brief Global registry of recognized magic numbers. */
+/** @file bu/magic.h */
 
 __BEGIN_DECLS
 
@@ -92,21 +83,22 @@ __BEGIN_DECLS
 #define BN_TOL_MAGIC			0x98c734bb /**< ??4? */
 #define BN_UNIF_MAGIC			0x00be7460 /**< ??t` => 12481632 */
 #define BN_VLBLOCK_MAGIC		0x981bd112 /**< ???? */
-#define BN_VLIST_MAGIC			0x98237474 /**< ?#tt */
+#define BN_VLIST_MAGIC			0x98237474 /**< ?\#tt */
 
 /* primitive internals */
 
-#define RT_ARBN_INTERNAL_MAGIC		0x18236461 /**< ?#da */
+#define RT_ARBN_INTERNAL_MAGIC		0x18236461 /**< ?\#da */
 #define RT_ARB_INTERNAL_MAGIC		0x9befd010 /**< ???? */
 #define RT_ARS_INTERNAL_MAGIC		0x77ddbbe3 /**< w??? */
 #define RT_BINUNIF_INTERNAL_MAGIC	0x42696e55 /**< BinU */
 #define RT_BOT_INTERNAL_MAGIC		0x626f7472 /**< botr */
 #define RT_BREP_INTERNAL_MAGIC		0x42524550 /**< BREP */
 #define RT_CLINE_INTERNAL_MAGIC		0x43767378 /**< CLIN */
+#define RT_DATUM_INTERNAL_MAGIC		0x6461746d /**< datm */
 #define RT_DSP_INTERNAL_MAGIC		0x00000de6 /**< ???? */
 #define RT_EBM_INTERNAL_MAGIC		0xf901b231 /**< ???1 */
 #define RT_EHY_INTERNAL_MAGIC		0xaaccee91 /**< ???? */
-#define RT_ELL_INTERNAL_MAGIC		0x93bb23ff /**< ??#? */
+#define RT_ELL_INTERNAL_MAGIC		0x93bb23ff /**< ??\#? */
 #define RT_EPA_INTERNAL_MAGIC		0xaaccee90 /**< ???? */
 #define RT_ETO_INTERNAL_MAGIC		0xaaccee92 /**< ???? */
 #define RT_EXTRUDE_INTERNAL_MAGIC	0x65787472 /**< extr */
@@ -132,6 +124,7 @@ __BEGIN_DECLS
 #define RT_PNTS_INTERNAL_MAGIC          0x706e7473 /**< pnts */
 #define RT_ANNOTATION_INTERNAL_MAGIC    0x616e6e6f /**< anno */
 #define RT_HRT_INTERNAL_MAGIC		0x6872743f /**< hrt? */
+
 /* n-manifold geometry */
 
 #define NMG_EDGEUSE2_MAGIC		0x91919191 /**< ???? => used in eu->l2.magic */
@@ -152,7 +145,7 @@ __BEGIN_DECLS
 #define NMG_RADIAL_MAGIC		0x52614421 /**< RaD! */
 #define NMG_RAY_DATA_MAGIC 		0x01651771 /**< ?e?q */
 #define NMG_REGION_A_MAGIC		0x696e6720 /**< ing  */
-#define NMG_REGION_MAGIC		0x23232323 /**< #### */
+#define NMG_REGION_MAGIC		0x23232323 /**< \#\#\#\# */
 #define NMG_RT_HIT_MAGIC 		0x48697400 /**< Hit? */
 #define NMG_RT_HIT_SUB_MAGIC		0x48696d00 /**< Him? */
 #define NMG_RT_MISS_MAGIC		0x4d697300 /**< Mis? */
@@ -162,7 +155,7 @@ __BEGIN_DECLS
 #define NMG_VERTEXUSE_A_PLANE_MAGIC	0x69676874 /**< ight */
 #define NMG_VERTEXUSE_MAGIC		0x12341234 /**< ?4?4 */
 #define NMG_VERTEX_G_MAGIC		0x72737707 /**< rsw? */
-#define NMG_VERTEX_MAGIC		0x00123123 /**< ??1# */
+#define NMG_VERTEX_MAGIC		0x00123123 /**< ??1\# */
 
 /* raytrace */
 
@@ -170,7 +163,7 @@ __BEGIN_DECLS
 #define RT_AP_MAGIC			0x4170706c /**< Appl */
 #define RT_COMB_MAGIC			0x436f6d49 /**< ComI */
 #define RT_CONSTRAINT_MAGIC		0x7063696d /**< pcim */
-#define RT_CTS_MAGIC			0x98989123 /**< ???# */
+#define RT_CTS_MAGIC			0x98989123 /**< ???\# */
 #define RT_DB_TRAVERSE_MAGIC		0x64627472 /**< dbtr */
 #define RT_DBTS_MAGIC			0x64627473 /**< dbts */
 #define RT_DB_INTERNAL_MAGIC		0x0dbbd867 /**< ???g */
@@ -229,24 +222,18 @@ __BEGIN_DECLS
 #define RTI_MAGIC			0x99101658 /**< ???X */
 #define VERT_TREE_MAGIC			0x56455254 /**< VERT */
 #define WDB_METABALLPT_MAGIC		0x6d627074 /**< mbpt */
-#define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?#?? */
+#define WDB_PIPESEG_MAGIC		0x9723ffef /**< ?\#?? */
 #define WMEMBER_MAGIC			0x43128912 /**< C??? */
 #define ICV_IMAGE_MAGIC		0x6269666d /**< bifm */
 
-
-
-/** @file libbu/badmagic.c
- *
- * Magic checking functions.
- *
- */
+/** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
 /**
  * Macros to check and validate a structure pointer, given that the
  * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) BU_IGNORE((_ptr))
+#  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
         const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
@@ -260,8 +247,10 @@ __BEGIN_DECLS
 /**
  *  Support routine for BU_CKMAG macro.
  */
-BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line) _BU_ATTR_NORETURN;
 
+
+/** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */
 
 /**
  * Given a number which has been found in the magic number field of a

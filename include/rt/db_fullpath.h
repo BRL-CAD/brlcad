@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,21 +17,29 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file db_fullpath.h
- *
- * librt functions related to fullpaths.
- */
 
 #ifndef RT_DB_FULLPATH_H
 #define RT_DB_FULLPATH_H
 
-/* struct resource requires db_fullpath as part of its definition -
- * so long as that is true, typedef to avoid circular definition
- * problem */
-typedef struct resource struct_resource;
+#include "common.h"
+#include "rt/defines.h"
+
+__BEGIN_DECLS
+
+struct resource;  /* forward declaration */
+struct db_i;      /* forward declaration */
+struct directory; /* forward declaration */
+
+/** @addtogroup db_fullpath
+ *
+ * @brief
+ * Structures and routines for collecting and manipulating paths through the database tree.
+ *
+ */
+/** @{ */
+/** @file rt/db_fullpath.h */
 
 /**
- * For collecting paths through the database tree.
  * The fp_bool array can optionally hold a boolean flag
  * associated with each corresponding dp in fp_names.  This
  * array must be manually maintained by the client code in
@@ -173,7 +181,6 @@ RT_EXPORT extern int db_full_path_subset(const struct db_full_path	*a,
 					 const struct db_full_path	*b,
 					 const int			skip_first);
 
-
 /**
  * Returns -
  * 1 if 'a' matches the top part of 'b'
@@ -203,12 +210,15 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  *
  * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
-RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
+RT_EXPORT extern int db_path_to_mat(struct db_i *dbip,
 				    struct db_full_path	*pathp,
-				    mat_t                mat,   /* result */
-				    const int            depth, /* number of arcs */
-				    struct_resource     *resp);
+				    mat_t mat, /* result */
+				    int depth, /* number of arcs */
+				    struct resource *resp);
 
+/** @} */
+
+__END_DECLS
 
 #endif /*RT_DB_FULLPATH_H*/
 

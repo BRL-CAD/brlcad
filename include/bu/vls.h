@@ -1,7 +1,7 @@
 /*                           V L S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,11 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup vls Variable-length Strings */
-
-/** @file vls.h
- */
 #ifndef BU_VLS_H
 #define BU_VLS_H
 
@@ -38,21 +33,23 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vls */
-/** @{ */
-/** @file libbu/vls.c
+/** @addtogroup bu_vls
  *
- @brief
- * Variable Length Strings
+ * @brief
+ * Variable length strings provide a way for programmers to easily handling
+ * dynamic strings - they serve a function similar to that of std::string in
+ * C++.
  *
- * This structure provides support for variable length strings,
- * freeing the programmer from concerns about having character arrays
- * large enough to hold strings.
+ * This frees the programmer from concerns about having character arrays large
+ * enough to hold strings.
  *
- * Assumption:  libc-provided sprintf() function is safe to use in parallel,
- * on parallel systems.
+ * Assumption:  libc-provided sprintf() function is safe to use in parallel, on
+ * parallel systems.
  */
+/** @{ */
+/** @file bu/vls.h */
 
+/** Primary bu_vls container */
 struct bu_vls {
     uint32_t vls_magic;
     char *vls_str;	/**< Dynamic memory for buffer */
@@ -317,21 +314,6 @@ BU_EXPORT extern void bu_vls_trimspace(struct bu_vls *vp);
 
 
 /**
- * Format a string into a vls using a varargs list.
- *
- * %s continues to be a regular null-terminated 'C' string (char *).
- * %V is a libbu variable-length string (struct bu_vls *).
- *
- * Other format specifiers should behave identical to printf().
- *
- * This routine appends to the given vls similar to how vprintf
- * appends to stdout (see bu_vls_sprintf for overwriting the vls).
- */
-BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
-				     const char *fmt,
-				     va_list ap);
-
-/**
  * Format a string into a vls using standard variable arguments.
  *
  * %s continues to be a regular null-terminated 'C' string (char *).
@@ -405,6 +387,26 @@ BU_EXPORT extern void bu_vls_prepend(struct bu_vls *vp,
  */
 BU_EXPORT extern void bu_vls_substr(struct bu_vls *dest, const struct bu_vls *src,
 				    size_t begin, size_t nchars);
+
+/** @brief bu_vls_vprintf implementation */
+
+/**
+ * Format a string into a vls using a varargs list.
+ *
+ * %s continues to be a regular null-terminated 'C' string (char *).
+ * %V is a libbu variable-length string (struct bu_vls *).
+ *
+ * Other format specifiers should behave identical to printf().
+ *
+ * This routine appends to the given vls similar to how vprintf
+ * appends to stdout (see bu_vls_sprintf for overwriting the vls).
+ */
+BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
+				     const char *fmt,
+				     va_list ap);
+
+
+/** @brief Routines to encode/decode strings into bu_vls structures. */
 
 /**
  * given an input string, wrap the string in double quotes if there is

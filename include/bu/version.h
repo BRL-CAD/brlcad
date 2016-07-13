@@ -1,7 +1,7 @@
 /*                         V E R S I O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,24 +18,20 @@
  * information.
  */
 
-/** @file version.h
- *
- */
 #ifndef BU_VERSION_H
 #define BU_VERSION_H
 
 #include "common.h"
+#include "bu/defines.h"
 
 __BEGIN_DECLS
 
-/** @addtogroup version */
-/** @{ */
-
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
+/** @addtogroup bu_version
+ * @brief
+ * Version reporting for LIBBU
  */
+/** @{ */
+/** @file bu/version.h */
 
 /**
  * returns the compile-time version of libbu

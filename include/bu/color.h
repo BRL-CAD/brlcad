@@ -1,7 +1,7 @@
 /*                        C O L O R . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,8 +18,6 @@
  * information.
  */
 
-/** @file color.h
-  */
 #ifndef BU_COLOR_H
 #define BU_COLOR_H
 
@@ -32,9 +30,12 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup color */
+/** @addtogroup bu_color
+ * @brief
+ * Support for storing and manipulating color data.
+ */
 /** @{ */
-/** @file libbu/color.c */
+/** @file bu/color.h */
 
 #define RED 0
 #define GRN 1
@@ -85,13 +86,13 @@ typedef struct bu_color bu_color_t;
  * or "constrained" random aka the BRLCADWrapper:getRandomColor
  * function.  Need a function that provides flexibility.  Possible
  * calling syntax:
- *
+ @code
  * bu_color_rand(cp, NULL, NULL,     NULL,     0);            #generate a totally random color value
  * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_SET_R);  #randomize the R value only, else use rgb_seed values
  * bu_color_rand(cp, NULL, rgb_seed, NULL,     COLOR_GOLDEN); #use the golden ratio constraining technique
  * bu_color_rand(cp, NULL, NULL,     hsv_seed, COLOR_GOLDEN); #use the golden ratio constraining technique with an hsv input
  * bu_color_rand(cp, seed, NULL,     NULL,     0);            #randomize, using bu_color seed
- *
+ @endcode
  * Passing multiple seeds would be an error - the multiple slots are for formatting convenience.  May be
  * better to use just one bu_color seed and make callers pre-package it - not sure yet.  If we go that
  * route, we'll have to implement the unimplemented utility functions below.
@@ -135,13 +136,13 @@ BU_EXPORT extern int bu_hsv_to_rgb(fastf_t *hsv, unsigned char *rgb);
 BU_EXPORT extern int bu_str_to_rgb(char *str, unsigned char *rgb);
 BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
+BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
 
 /* UNIMPLEMENTED
  *
- * BU_EXPORT export void bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
- * BU_EXPORT export int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
- * BU_EXPORT export int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
+ * BU_EXPORT extern int bu_color_from_hsv_floats(struct bu_color *cp, fastf_t *hsv);
+ * BU_EXPORT extern int bu_color_to_hsv_floats(struct bu_color *cp, fastf_t *hsv);
  */
 
 

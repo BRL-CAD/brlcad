@@ -1,7 +1,7 @@
 /*                     M A L L O C . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file malloc.h
- *
- */
 #ifndef BU_MALLOC_H
 #define BU_MALLOC_H
 
@@ -32,12 +29,9 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup malloc */
-/** @{ */
-/** @file libbu/malloc.c
+/** @addtogroup bu_malloc
  *
- * @brief
- * Parallel-protected debugging-enhanced wrapper around system malloc().
+ * @brief Parallel-protected debugging-enhanced wrapper around system malloc().
  *
  * Provides a parallel-safe interface to the system memory allocator
  * with standardized error checking, optional memory-use logging, and
@@ -48,9 +42,10 @@ __BEGIN_DECLS
  * to stderr, semaphore protected.
  *
  */
+/** @{ */
+/** @file bu/malloc.h */
 
 BU_EXPORT extern long bu_n_malloc;
-BU_EXPORT extern long bu_n_free;
 BU_EXPORT extern long bu_n_realloc;
 
 /**
@@ -176,6 +171,25 @@ typedef int (*bu_heap_func_t)(const char *, ...);
  */
 BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
 
+
+/**
+ * Memory pools. To be used when you need to dynamically allocate
+ * lots of small elements which will all be freed at the same time.
+ */
+struct bu_pool
+{
+    size_t block_size;
+    size_t block_pos, alloc_size;
+    uint8_t *block;
+};
+
+BU_EXPORT extern struct bu_pool *bu_pool_create(size_t block_size);
+
+BU_EXPORT extern void *bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize);
+
+BU_EXPORT extern void bu_pool_delete(struct bu_pool *pool);
+
+
 /**
  * Attempt to get shared memory - returns -1 if new memory was
  * created, 0 if successfully returning existing memory, and 1
@@ -183,6 +197,51 @@ BU_EXPORT extern bu_heap_func_t bu_heap_log(bu_heap_func_t log);
  * */
 BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t size);
 
+
+/**
+ * Fast dynamic memory allocation macro for small pointer allocations.
+ * Memory is automatically initialized to zero and, similar to
+ * bu_calloc(), is guaranteed to return non-NULL (or bu_bomb()).
+ *
+ * Memory acquired with BU_GET() should be returned with BU_PUT(), NOT
+ * with bu_free().
+ *
+ * Use BU_ALLOC() for dynamically allocating structures that are
+ * relatively large, infrequently allocated, or otherwise don't need
+ * to be fast.
+ */
+#if 0
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
+#else
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " CPP_FILELINE)
+#endif
+
+/**
+ * Handy dynamic memory deallocator macro.  Deallocated memory has the
+ * first byte zero'd for sanity (and potential early detection of
+ * double-free crashing code) and the pointer is set to NULL.
+ *
+ * Memory acquired with bu_malloc()/bu_calloc() should be returned
+ * with bu_free(), NOT with BU_PUT().
+ */
+#if 0
+#define BU_PUT(_ptr, _type) *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
+#else
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " CPP_FILELINE); _ptr = NULL; } while (0)
+#endif
+
+/**
+ * Convenience macro for allocating a single structure on the heap.
+ * Not intended for performance-critical code.  Release memory
+ * acquired with bu_free() or BU_FREE() to dealloc and set NULL.
+ */
+#define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " CPP_FILELINE)
+
+/**
+ * Convenience macro for deallocating a single structure allocated on
+ * the heap (with bu_malloc(), bu_calloc(), BU_ALLOC()).
+ */
+#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
 
 /** @} */

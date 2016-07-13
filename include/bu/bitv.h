@@ -1,7 +1,7 @@
 /*                        B I T V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,9 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup bitv */
-/** @{*/
-/** @file libbu/bitv.c
+/** @addtogroup bu_bitv
  *
+ * @brief
  * Routines for managing efficient high-performance bit vectors of
  * arbitrary length.
  *
@@ -46,6 +45,8 @@ __BEGIN_DECLS
  * side of the [0] word.
  *
  */
+/** @{*/
+/** @file bu/bitv.h */
 
 /**
  * bitv_t should be a fast integer type for implementing bit vectors.
@@ -202,7 +203,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 
 /* This is not done by default for performance reasons */
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_BITNUM_CHECK(_bv, _bit) BU_IGNORE((_bv))
+#  define BU_BITV_BITNUM_CHECK(_bv, _bit) (void)(_bv)
 #else
 #  define BU_BITV_BITNUM_CHECK(_bv, _bit)	/* Validate bit number */ \
     if (UNLIKELY(((unsigned)(_bit)) >= (_bv)->nbits)) {\
@@ -213,7 +214,7 @@ static __inline__ int BU_BITTEST(volatile void * addr, int nr)
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_BITV_NBITS_CHECK(_bv, _nbits) BU_IGNORE((_bv))
+#  define BU_BITV_NBITS_CHECK(_bv, _nbits) (void)(_bv)
 #else
 #  define BU_BITV_NBITS_CHECK(_bv, _nbits)	/* Validate number of bits */ \
     if (UNLIKELY(((unsigned)(_nbits)) > (_bv)->nbits)) {\
@@ -394,11 +395,7 @@ BU_EXPORT extern int bu_hexstr_to_binstr(const char *hexstr, struct bu_vls *b);
  */
 BU_EXPORT extern int bu_binstr_to_hexstr(const char *binstr, struct bu_vls *h);
 
-/** @file libbu/printb.c
- *
- * print bitfields
- *
- */
+/** @brief Bit field printing implementation. */
 
 /**
  * Format a value a la the %b format of the kernel's printf

@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,10 @@
  * information.
  */
 
-/**  @defgroup parallel  Parallel Processing */
-/**   @defgroup thread Multithreading */
-
-/** @file parallel.h
- *
- */
+/** @ingroup parallel */
+/** @{ */
+/** @file include/bu/parallel.h */
+/** @} */
 #ifndef BU_PARALLEL_H
 #define BU_PARALLEL_H
 
@@ -35,7 +33,10 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup thread */
+/** @addtogroup bu_thread
+ * @brief
+ * Thread based parallelism routines.
+ */
 /** @{ */
 
 /**
@@ -47,8 +48,8 @@ __BEGIN_DECLS
  */
 #define MAX_PSW 1024
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * subroutine to determine if we are multi-threaded
  *
  * This subroutine is separated off from parallel.c so that bu_bomb()
@@ -75,23 +76,21 @@ DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
  */
 BU_EXPORT extern int bu_parallel_id(void);
 
-/** @file libbu/kill.c
- *
+/**
+ * @brief
  * terminate a given process.
- *
  */
 
 /**
- * terminate a given process.
+ * terminate a given process and any children.
  *
  * returns truthfully whether the process could be killed.
  */
 BU_EXPORT extern int bu_terminate(int process);
 
-/** @file libbu/process.c
- *
+/**
+ * @brief
  * process management routines
- *
  */
 
 /**
@@ -99,8 +98,8 @@ BU_EXPORT extern int bu_terminate(int process);
  */
 BU_EXPORT extern int bu_process_id(void);
 
-/** @file libbu/parallel.c
- *
+/**
+ * @brief
  * routines for parallel processing
  *
  * Machine-specific routines for portable parallel processing.
@@ -153,12 +152,45 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
- */
-BU_EXPORT extern void bu_parallel(void (*func)(int func_ncpu, void *func_data), int ncpu, void *data);
-
-
-/** @file libbu/semaphore.c
  *
+ * In following is a working stand-alone example demonstrating how to
+ * call the bu_parallel() interface.
+
+@code
+void shoot_cells_in_series(int width, int height) {
+  int i, j;
+  for (i=0; i<height; i++)
+    for (j=0; j<width; j++)
+      printf("Shooting cell (%d, %d) on CPU %d\n", i, j, bu_parallel_id());
+}
+
+void shoot_row_per_thread(int cpu, void *mydata) {
+  int i, j, width;
+  width = *(int *)mydata;
+  for (i=0; i<width; i++)
+    printf("Shooting cell (%d, %d) on CPU %d\n", i, cpu, bu_parallel_id());
+}
+
+void shoot_cells_in_parallel(int width, int height) {
+  bu_parallel(shoot_row_per_thread, height, &width);
+  // we don't reach here until all threads complete
+}
+
+int main(int ac, char *av[]) {
+  int width = 4, height = 4;
+  printf("\nShooting cells one at a time, 4x4 grid:\n");
+  shoot_cells_in_series(width, height);
+  printf("\nShooting cells in parallel with 4 threads, one per row:\n");
+  shoot_cells_in_parallel(width, height);
+  return 0;
+}
+@endcode
+ */
+BU_EXPORT extern void bu_parallel(void (*func)(int func_cpu_id, void *func_data), size_t ncpu, void *data);
+
+
+/**
+ * @brief
  * semaphore implementation
  *
  * Machine-specific routines for parallel processing.  Primarily for
