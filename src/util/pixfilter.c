@@ -1,7 +1,7 @@
 /*                     P I X F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -109,7 +109,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		width = height = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

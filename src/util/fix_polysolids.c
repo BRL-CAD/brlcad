@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,9 +55,9 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "bu/getopt.h"
 #include "bn.h"
 
@@ -85,6 +85,9 @@ main(int argc, char *argv[])
     struct shell *s;
     struct bu_ptbl faces;
     int done=0;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;
@@ -179,7 +182,7 @@ main(int argc, char *argv[])
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
 		(void)nmg_vertex_fuse(&m->magic, &tol);
-		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
+		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &tol);
 		nmg_fix_normals(s, &tol);
 
 		break;

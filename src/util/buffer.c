@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -54,14 +54,15 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2) {
-	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
-	exit(1);
+	bu_exit(1, "Usage: %s (takes no arguments)\n", argv[0]);
     }
 
     if (argc > 1) {
-	bu_log("%s: unrecognized argument(s)\n", argv[0]);
-	bu_log("        Program continues running:\n", argv[0]);
+	bu_exit(1, "%s: unrecognized argument(s)\n", argv[0]);
     }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {

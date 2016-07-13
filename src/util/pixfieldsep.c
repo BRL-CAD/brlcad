@@ -1,7 +1,7 @@
 /*                   P I X F I E L D S E P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ds:w:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "ds:w:#:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		doubleit = 1;
@@ -69,20 +69,27 @@ get_args(int argc, char **argv)
 		file_width = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
 
-    if (bu_optind < argc) {
-	even_file = argv[bu_optind++];
-    }
-    if (bu_optind < argc) {
-	odd_file = argv[bu_optind++];
-    }
+    if (bu_optind == argc) {
+	(void)fputs("Writing out files even.pix and odd.pix:\n",stderr);
+    } else {
 
-    if (++bu_optind <= argc)
-	fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
+    	if (bu_optind < argc) {
+		even_file = argv[bu_optind++];
+    	}
+    	if (bu_optind < argc) {
+		odd_file = argv[bu_optind++];
+    	} else {
+		(void)fputs("Writing out file odd.pix:\n",stderr);
+    	}
+
+    	if (++bu_optind <= argc)
+		fprintf(stderr, "pixfieldsep: excess argument(s) ignored\n");
+    }
 
     return 1;		/* OK */
 }
@@ -92,6 +99,9 @@ int
 main(int argc, char **argv)
 {
     size_t ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

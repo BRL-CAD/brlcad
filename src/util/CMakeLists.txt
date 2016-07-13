@@ -13,8 +13,6 @@ set(UTIL_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${UTAHRLE_INCLUDE_DIR}
   ${PNG_INCLUDE_DIR}
-  ${CMAKE_CURRENT_BINARY_DIR}/../other/tclap/include  #TODO - need to get this into libbu
-  ${CMAKE_CURRENT_SOURCE_DIR}/../other/tclap/include  #TODO - need to get this into libbu
   )
 
 set(UTIL_ALL_INCLUDE_DIRS ${UTIL_INCLUDE_DIRS} ${UTIL_LOCAL_INCLUDE_DIRS})
@@ -27,13 +25,16 @@ if(MSVC)
     )
 endif(MSVC)
 
-
 if(BRLCAD_ENABLE_X11)
   BRLCAD_ADDEXEC(plot3-X plot3-X.c "libdm;libbu")
   if(BRLCAD_ENABLE_TK)
     BRLCAD_ADDEXEC(plot3-dm plot3-dm.c "libdm;libbu;${M_LIBRARY}")
     BRLCAD_ADDEXEC(bombardier bombardier.c "libtclcad;libbu")
+  else(BRLCAD_ENABLE_TK)
+    CMAKEFILES(bombardier.c)
   endif(BRLCAD_ENABLE_TK)
+else(BRLCAD_ENABLE_X11)
+  CMAKEFILES(plot3-X.c bombardier.c)
 endif(BRLCAD_ENABLE_X11)
 
 BRLCAD_ADDDATA(plot3-dm.c sample_applications)
@@ -55,8 +56,7 @@ BRLCAD_ADDEXEC(bw-imp bw-imp.c libbu)
 BRLCAD_ADDEXEC(bw-pix bw-pix.c "libbu;libicv")
 BRLCAD_ADDEXEC(bw-png bw-png.c "libfb;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(bw-ps bw-ps.c libbu)
-BRLCAD_ADDEXEC(bw-rle "bw-rle.c;rle_args.c" "libbu;libsysv;${UTAHRLE_LIBRARY}")
-BRLCAD_ADDEXEC(bw3-pix bw3-pix.c libbu)
+BRLCAD_ADDEXEC(bw-rle "bw-rle.c;rle_args.c" "libbu;${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(bwcrop bwcrop.c libbu)
 BRLCAD_ADDEXEC(bwdiff bwdiff.c libbu)
 BRLCAD_ADDEXEC(bwfilter bwfilter.c "libicv;libbu")
@@ -70,44 +70,20 @@ BRLCAD_ADDEXEC(bwshrink bwshrink.c libbu)
 BRLCAD_ADDEXEC(bwstat bwstat.c "libbu;${M_LIBRARY}")
 BRLCAD_ADDEXEC(bwthresh bwthresh.c libbu)
 BRLCAD_ADDEXEC(cv cv.c libbu)
-# FIXME dbcp is a "copy program for UNIX" - will need some porting
-# work for Windows
-if(NOT WIN32)
-  BRLCAD_ADDEXEC(dbcp dbcp.c libbu)
-endif(NOT WIN32)
 BRLCAD_ADDEXEC(decimate decimate.c libbu)
 BRLCAD_ADDEXEC(double-asc double-asc.c "libfb;libbu")
 BRLCAD_ADDEXEC(dpix-pix dpix-pix.c libbu)
-BRLCAD_ADDEXEC(dsp_add dsp_add.c libbu)
 
-#=====================================================
-# TCLAP testing
-#=====================================================
-# a test copy for tclap/auto-man-page proof of concept:
-BRLCAD_ADDEXEC(dsp_add_t dsp_add_t.cpp libbu NO_INSTALL)
-
-# tmp def for testing C wrapper for TCLAP
-BRLCAD_ADDEXEC(dsp_add4 "dsp_add4.c;bu_arg_parse.cpp" libbu NO_INSTALL)
-
-# a test file for the entire TCLAP wrapper interface
-#BRLCAD_ADDEXEC(test_bu_arg_parse "test_bu_arg_parse.c;bu_arg_parse.cpp" libbu NO_INSTALL)
-# ignore it for now
-CMAKEFILES(test_bu_arg_parse.c)
-
-# a new admin file
-BRLCAD_ADDEXEC(admin-db "admin-db.cpp;bu_arg_parse.cpp" "libbu;librt" NO_INSTALL)
-
-# tmp header to stand-in for bu.h (ignore it)
-CMAKEFILES(bu_arg_parse.h)
-# permanent private header for TCLAP customizations (ignore it)
-CMAKEFILES(bu_arg_parse_private.h)
-#=====================================================
-# end TCLAP testing
-#=====================================================
+# a new admin file (used also for option handling testing)
+BRLCAD_ADDEXEC(admin-db "admin-db.cpp" "libbu;librt" NO_INSTALL)
 
 BRLCAD_ADDEXEC(fix_polysolids fix_polysolids.c "librt;libbu")
 BRLCAD_ADDEXEC(gencolor gencolor.c libbu)
 BRLCAD_ADDEXEC(hex hex.c libbu)
+
+# This is intended to replace all of the img-img utils eventually
+BRLCAD_ADDEXEC(icv icv.cpp "libicv;libbu")
+
 BRLCAD_ADDEXEC(imgdims imgdims.c "libfb;libbu")
 BRLCAD_ADDEXEC(loop loop.c libbu)
 BRLCAD_ADDEXEC(lowp lowp.c libbu)
@@ -115,11 +91,10 @@ BRLCAD_ADDEXEC(mac-pix mac-pix.c libbu)
 BRLCAD_ADDEXEC(random random.c "libbn;libbu")
 BRLCAD_ADDEXEC(pix-alias pix-alias.c libbu)
 BRLCAD_ADDEXEC(pix-bw pix-bw.c "libbu;libicv")
-BRLCAD_ADDEXEC(pix-bw3 pix-bw3.c libbu)
 BRLCAD_ADDEXEC(pix-png pix-png.c "libfb;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(pix-ppm pix-ppm.c "libfb;libbu")
 BRLCAD_ADDEXEC(pix-ps pix-ps.c libbu)
-BRLCAD_ADDEXEC(pix-rle "pix-rle.c;rle_args.c" "libbu;libsysv;${UTAHRLE_LIBRARY}")
+BRLCAD_ADDEXEC(pix-rle "pix-rle.c;rle_args.c" "libbu;${UTAHRLE_LIBRARY}")
 BRLCAD_ADDEXEC(pix-spm pix-spm.c libbn)
 BRLCAD_ADDEXEC(pix-sun pix-sun.c libbu)
 BRLCAD_ADDEXEC(pix-yuv pix-yuv.c "libfb;libbn;libbu")
@@ -132,6 +107,7 @@ BRLCAD_ADDEXEC(pixbustup pixbustup.c libbu)
 BRLCAD_ADDEXEC(pixclump pixclump.c "libbn;libbu")
 BRLCAD_ADDEXEC(pixcolors pixcolors.c libbu)
 BRLCAD_ADDEXEC(pixcount pixcount.c libbu)
+BRLCAD_ADDEXEC(pixcrop pixcrop.c libbu)
 BRLCAD_ADDEXEC(pixcut pixcut.c "libfb;libbu")
 BRLCAD_ADDEXEC(pixdiff pixdiff.c libbu)
 BRLCAD_ADDEXEC(pixdsplit pixdsplit.c libbu)
@@ -174,7 +150,7 @@ BRLCAD_ADDEXEC(plot3stat plot3stat.c libbu)
 BRLCAD_ADDEXEC(png-bw png-bw.c "libbn;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(png-pix png-pix.c "libbn;libbu;${PNG_LIBRARY}")
 BRLCAD_ADDEXEC(png_info png_info.c "libbn;libbu;${PNG_LIBRARY}")
-BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu;libsysv;${UTAHRLE_LIBRARY}")
+BRLCAD_ADDEXEC(rle-pix rle-pix.c "libbu;${UTAHRLE_LIBRARY}")
 if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET rle-pix APPEND PROPERTY COMPILE_DEFINITIONS "RLE_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)

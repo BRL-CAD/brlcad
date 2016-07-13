@@ -85,7 +85,7 @@ init_buffer()
     else
 	buflines = scanlen;
 
-    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen * 3, "buffer");
 }
 
 
@@ -99,11 +99,10 @@ fill_buffer(int y)
     size_t ret;
 
     buf_start = y - buflines/2;
-    if (buf_start < 0)
-	buf_start = 0;
+    if (buf_start < 0) buf_start = 0;
 
-    bu_fseek(ifp, buf_start * scanlen, 0);
-    ret = fread(buffer, scanlen, buflines, ifp);
+    bu_fseek(ifp, 0, 0);
+    ret = fread(buffer, scanlen, 3*buflines, ifp);
     if (ret == 0)
 	perror("fread");
 }
@@ -117,6 +116,7 @@ main(int argc, char **argv)
     ssize_t yindex;
     char value;
     size_t ret;
+    long int subsc;
 
     int atoival;
 
@@ -270,7 +270,12 @@ main(int argc, char **argv)
 	    }
 	    yindex = yindex + buf_start;
 
-	    value = buffer[ yindex * scanlen + round(x) ];
+	    subsc = 3* (yindex * scanlen + round(x) );
+	    value = buffer[ subsc ];
+	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    value = buffer[ subsc+1 ];
+	    ret = fwrite(&value, sizeof(value), 1, ofp);
+	    value = buffer[ subsc+2 ];
 	    ret = fwrite(&value, sizeof(value), 1, ofp);
 	    if (ret == 0)
 		perror("fwrite");

@@ -1,7 +1,7 @@
 /*                      P I X S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -318,12 +318,12 @@ scale(FILE *ofp, int ix, int iy, int ox, int oy)
  * XXX - CHECK FILE SIZE
  */
 void
-init_buffer(int len)
+init_buffer()
 {
-    int max;
+    ssize_t max;
 
     /* See how many we could buffer */
-    max = MAXBUFBYTES / len;
+    max = MAXBUFBYTES / scanlen;
 
     /*
      * Do a max of 512.  We really should see how big
@@ -338,7 +338,7 @@ init_buffer(int len)
 	buflines = iny;
 
     buf_start = (-buflines);
-    buffer = (unsigned char *)bu_malloc(buflines * len, "buffer");
+    buffer = (unsigned char *)bu_malloc(buflines * scanlen, "buffer");
 }
 
 
@@ -428,7 +428,7 @@ main(int argc, char **argv)
 
     /* See how many lines we can buffer */
     scanlen = 3 * inx;
-    init_buffer(scanlen);
+    init_buffer();
     if (inx < outx) i = outx * 3;
     else i = inx * 3;
 

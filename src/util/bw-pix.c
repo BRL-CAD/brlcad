@@ -1,7 +1,7 @@
 /*                        B W - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,87 +27,211 @@
 #include "common.h"
 
 #include <stdlib.h>
+#include <ctype.h>
+#include <string.h>
 #include "bio.h"
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/str.h"
+#include "bu/opt.h"
+#include "bu/mime.h"
 #include "icv.h"
 
 
-char usage[] = "\
-Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
-[-o out_file.pix] [file.pix] > [out_file.pix]\n";
-
-char *out_file = NULL;
-char *in_file = NULL;
-int inx=0, iny=0;
-
-
-int
-get_args(int argc, char **argv)
+void
+open_file(FILE **fp, const char *name)
 {
-    int c;
-
-    while ((c = bu_getopt(argc, argv, "s:w:n:o:h?")) != -1) {
-	switch (c) {
-	    case 'o':
-		out_file = bu_optarg;
-		break;
-	    case 's' :
-               inx = iny = atoi(bu_optarg);
-               break;
-            case 'w' :
-               inx = atoi(bu_optarg);
-               break;
-            case 'n' :
-               iny = atoi(bu_optarg);
-               break;
-	    case 'h':
-	    default:		/* '?' */
-		return 0;
-	}
+    /* check for special names */
+    if (BU_STR_EQUAL(name, "-")) {
+	*fp = stdin;
+    } else if (BU_STR_EQUAL(name, ".")) {
+	*fp = fopen("/dev/null", "r");
+    } else if ((*fp = fopen(name, "r")) == NULL) {
+	bu_exit(2, "bw3-pix: Can't open \"%s\"\n", name);
     }
-
-    if (bu_optind >= argc) {
-	if (isatty(fileno(stdin))) {
-	    return 0;
-	}
-    } else {
-	in_file = argv[bu_optind];
-	bu_optind++;
-	return 1;
-    }
-
-
-    if (!isatty(fileno(stdout)) && out_file!=NULL) {
-	return 0;
-    }
-
-    if (argc > ++bu_optind) {
-	bu_log("bw-pix: excess argument(s) ignored\n");
-    }
-
-    return 1;		/* OK */
 }
 
 int
 main(int argc, char **argv)
 {
+    FILE *in_std = NULL;
+    FILE *out_std = NULL;
+    struct bu_vls in_fname = BU_VLS_INIT_ZERO;
+    struct bu_vls out_fname = BU_VLS_INIT_ZERO;
+    struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
+    int need_help = 0;
+    int uac = 0;
     icv_image_t *img;
-    if (!get_args(argc, argv)) {
-	bu_log("%s", usage);
-	return 1;
+    const char *rfile = NULL;
+    const char *gfile = NULL;
+    const char *bfile = NULL;
+    char usage[] = "Usage: bw-pix [-o out_file.pix] [file.bw] [file_green.bw file_blue.bw] [ > out_file.pix]\n";
+
+    struct bu_opt_desc d[3];
+    BU_OPT(d[0], "h", "help",         "",           NULL,        (void *)&need_help,    "Print help and exit");
+    BU_OPT(d[1], "o", "output-file",  "filename",   &bu_opt_vls, (void *)&out_fname,    "PIX output file name");
+    BU_OPT_NULL(d[2]);
+
+    /* Skip first arg */
+    argv++; argc--;
+    uac = bu_opt_parse(&optparse_msg, argc, (const char **)argv, d);
+
+    if (uac == -1) {
+	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
     }
+    bu_vls_free(&optparse_msg);
+
+    if (need_help) {
+	bu_vls_free(&out_fname);
+	bu_exit(EXIT_SUCCESS, usage);
+    }
+
+    switch (uac) {
+	case 0:
+	    in_std = stdin;
+	    if (!bu_vls_strlen(&out_fname)) {
+		out_std = stdout;
+	    }
+	    break;
+	case 1:
+	    bu_vls_sprintf(&in_fname, "%s", argv[0]);
+	    if (!bu_vls_strlen(&out_fname)) {
+		out_std = stdout;
+	    }
+	    break;
+	case 2:
+	    if (bu_vls_strlen(&out_fname)) {
+		bu_vls_free(&out_fname);
+		bu_exit(EXIT_FAILURE, usage);
+	    } else {
+		bu_vls_sprintf(&in_fname, "%s", argv[0]);
+		bu_vls_sprintf(&out_fname, "%s", argv[1]);
+	    }
+	    break;
+	case 3:
+	    rfile = argv[0];
+	    gfile = argv[1];
+	    bfile = argv[2];
+	    if (!bu_vls_strlen(&out_fname)) {
+		/* Assume stdio */
+		out_std = stdout;
+	    }
+	    break;
+	case 4:
+	    if (bu_vls_strlen(&out_fname)) {
+		bu_vls_free(&out_fname);
+		bu_exit(EXIT_FAILURE, usage);
+	    } else {
+		rfile = argv[0];
+		gfile = argv[1];
+		bfile = argv[2];
+		bu_vls_sprintf(&out_fname, "%s", argv[3]);
+	    }
+	    break;
+	default:
+	    break;
+    }
+
+    /* Don't do stdin/stdio if we've got the isatty condition */
+    if (in_std && isatty(fileno(in_std))) bu_exit(EXIT_FAILURE, usage);
+    if (out_std && isatty(fileno(out_std))) bu_exit(EXIT_FAILURE, usage);
 
     setmode(fileno(stdin), O_BINARY);
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    /* Handle streaming cases locally, without involving libicv */
+    if ((in_std || out_std) && !rfile) {
+	unsigned char ibuf[1024], obuf[3*1024];
+	size_t in, out, num;
+	if (bu_vls_strlen(&in_fname)) {
+	    if (in_std)	bu_exit(EXIT_FAILURE, "Tried to read input file and stdin at the same time");
+	    if ((in_std = fopen(bu_vls_addr(&in_fname), "rb")) == NULL) {
+		bu_exit(EXIT_FAILURE, "bw-pix: can't open \"%s\"\n", bu_vls_addr(&in_fname));
+	    }
+	}
+	if (bu_vls_strlen(&out_fname)) {
+	    if (out_std) bu_exit(EXIT_FAILURE, "Tried to write to file and stdout at the same time");
+	    if ((out_std = fopen(bu_vls_addr(&out_fname), "wb")) == NULL) {
+		bu_exit(EXIT_FAILURE, "bw-pix: can't open \"%s\"\n", bu_vls_addr(&out_fname));
+	    }
+	}
+	while ((num = fread(ibuf, sizeof(char), 1024, in_std)) > 0) {
+	    size_t ret;
+	    for (in = out = 0; in < num; in++, out += 3) {
+		obuf[out] = ibuf[in];
+		obuf[out+1] = ibuf[in];
+		obuf[out+2] = ibuf[in];
+	    }
+	    ret = fwrite(obuf, sizeof(char), 3*num, out_std);
+	    if (ret == 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
+	if (bu_vls_strlen(&in_fname)) fclose(in_std);
+	if (bu_vls_strlen(&out_fname)) fclose(out_std);
+	return 0;
+    }
+
+    /* If we need to merge the files, handle that here as well */
+    if (rfile && gfile && bfile) {
+	FILE *rfp, *bfp, *gfp;
+	if (bu_vls_strlen(&out_fname)) {
+	    if (out_std) bu_exit(EXIT_FAILURE, "Tried to write to file and stdout at the same time");
+	    if ((out_std = fopen(bu_vls_addr(&out_fname), "wb")) == NULL) {
+		bu_exit(EXIT_FAILURE, "bw-pix: can't open \"%s\"\n", bu_vls_addr(&out_fname));
+	    }
+	}
+	open_file(&rfp, rfile);
+	open_file(&gfp, gfile);
+	open_file(&bfp, bfile);
+
+	while (1) {
+	    unsigned char obuf[3*1024];
+	    unsigned char red[1024], green[1024], blue[1024];
+	    unsigned char *obufp;
+	    int nr, ng, nb, num, i;
+	    nr = fread(red, sizeof(char), 1024, rfp);
+	    ng = fread(green, sizeof(char), 1024, gfp);
+	    nb = fread(blue, sizeof(char), 1024, bfp);
+	    if (nr <= 0 && ng <= 0 && nb <= 0)
+		break;
+
+	    /* find max */
+	    num = (nr > ng) ? nr : ng;
+	    if (nb > num) num = nb;
+	    if (nr < num)
+		memset((char *)&red[nr], 0, num-nr);
+	    if (ng < num)
+		memset((char *)&green[ng], 0, num-ng);
+	    if (nb < num)
+		memset((char *)&blue[nb], 0, num-nb);
+
+	    obufp = &obuf[0];
+	    for (i = 0; i < num; i++) {
+		*obufp++ = red[i];
+		*obufp++ = green[i];
+		*obufp++ = blue[i];
+	    }
+	    num = fwrite(obuf, sizeof(char), num*3, out_std);
+	    if (num <= 0) {
+		perror("fwrite");
+		break;
+	    }
+	}
+
+	return 0;
+    }
+
+    /* If we've got the "normal" situation, use libicv */
+
+    img = icv_read(bu_vls_addr(&in_fname), BU_MIME_IMAGE_BW, 0, 0);
     if (img == NULL)
 	return 1;
     icv_gray2rgb(img);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, bu_vls_addr(&out_fname), BU_MIME_IMAGE_PIX);
     icv_destroy(img);
     return 0;
 }

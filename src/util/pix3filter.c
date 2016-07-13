@@ -1,7 +1,7 @@
 /*                    P I X 3 F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -85,7 +85,7 @@ FILE *oldfp, *curfp, *newfp;
 void select_filter(const char *str), dousage(void);
 
 char usage[] = "\
-Usage: pix3filter [-f<type>] [-v] [-d#] [-o#]\n\
+Usage: pix3filter [-f type] [-v] [-d #] [-o #]\n\
 	[-s squaresize] [-w width] [-n height]\n\
 	file.pix.n | file.pix1 file.pix2 file.pix3 > file.pix\n";
 
@@ -94,7 +94,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vf:d:o:w:n:s:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		verbose++;
@@ -119,7 +119,7 @@ get_args(int argc, char **argv)
 	    case 's':
 		width = height = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -128,8 +128,9 @@ get_args(int argc, char **argv)
 	(void) fprintf(stderr,
 		       "pix3filter: must supply a file name\n");
 	return 0;
-    } else if (bu_optind + 3 <= argc) {
+    }
 
+    if (bu_optind + 3 <= argc) {
 	if ((oldfp = fopen(argv[bu_optind], "r")) == NULL) {
 	    fprintf(stderr,
 		    "pix3filter: cannot open \"%s\" for reading\n",
@@ -429,6 +430,7 @@ dousage(void)
     int i;
 
     fputs(usage, stderr);
+    fprintf(stderr,"Possible arguments for -f (type):\n");
     i = 0;
     while (kernel[i].name != NULL) {
 	fprintf(stderr, "%-10s%s\n", kernel[i].uname, kernel[i].name);

@@ -1,7 +1,7 @@
 /*                       P I X - Y U V . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -60,23 +60,21 @@ void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
 static char usage[] = "\
-Usage: pix-yuv [-h] [-a]\n\
-	[-s squaresize] [-w file_width] [-n file_height] [file.pix] > file.yuv\n";
+Usage: pix-yuv [-a] [-s squaresize] [-w file_width] [-n file_height] [file.pix] > file.yuv\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:")) != -1) {
+    /* Notice that the default width & length are 720 & 485
+     * respectively (NOT 512 & 512).  For high-res, use 1024x1024
+     * (i.e. -s 1024).
+     */
+    while ((c = bu_getopt(argc, argv, "as:w:n:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -92,7 +90,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }

@@ -1,7 +1,7 @@
 /*                     P L O T 3 - T E K . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -131,7 +131,7 @@ int seenscale = 0;
 int expand_it = 0;		/* expand plot to 4k, beyond what will fit on real Tek screen */
 
 static const char usage[] = "\
-Usage: plot3-tek [-e] [-v] < file.plot3 > file.tek\n";
+Usage: plot3-tek [-e] [-v] < file.plot3 [> file.tek]\n";
 
 
 int
@@ -369,11 +369,16 @@ main(int argc, char **argv)
     int c;
     struct uplot *up;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-v")) {
 	    verbose++;
 	} else if (BU_STR_EQUAL(argv[1], "-e")) {
 	    expand_it = 1;
+	} else if (BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?")) {
+	    bu_exit(1, "%s", usage);
 	} else {
 	    fprintf(stderr, "plot3-tek: argument '%s' ignored\n", argv[1]);
 	    break;

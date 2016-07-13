@@ -1,7 +1,7 @@
 /*                      P I X P A S T E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -71,14 +71,14 @@ pixpaste: Usage: pixpaste [-v] [-a] [-A] [-# num_bytes]\n\
 		 [-s orig_square_size] [-w orig_width] [-n orig_height]\n\
 		 [-S paste_square_size] [-W paste_width] [-N paste_height]\n\
 		 [-x horizontal] [-y vertical] orig_file paste_file\n\
-	A '-' can be used to indicate stdin for orig_file or paste_file\n";
+	Can use '-' to indicate stdin for orig_file or paste_file .\n";
 
 int
 get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vas:w:n:S:W:N:x:y:#:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vaAs:w:n:S:W:N:x:y:#:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;

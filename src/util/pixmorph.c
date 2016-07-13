@@ -1,7 +1,7 @@
 /*                      P I X M O R P H . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -354,7 +354,7 @@ get_args(int argc, char **argv, char **picAnamep, char **picBnamep, char **lines
     *autosizep = 1;
     *widthp = *heightp = 0;
 
-    while ((c = bu_getopt(argc, argv, "w:n:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "w:n:h?")) != -1) {
 	switch (c) {
 	    case 'w':
 		*widthp = atol(bu_optarg);

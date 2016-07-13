@@ -1,7 +1,7 @@
 /*                        B W R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,6 +30,7 @@
 
 #include "bu/getopt.h"
 #include "bu/log.h"
+#include "bu/mime.h"
 
 #include "icv.h"
 
@@ -116,11 +117,11 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_write(img, out_file, ICV_IMAGE_BW);
+    icv_write(img, out_file, BU_MIME_IMAGE_BW);
 
     icv_destroy(img);
     return 0;

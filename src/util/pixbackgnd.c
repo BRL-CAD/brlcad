@@ -1,7 +1,7 @@
 /*                    P I X B A C K G N D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,14 +47,14 @@ int invert = 0;
 
 double deltav;
 int title_height = 80;
-int h_start = 240;
-int h_end = 50;
+int h_start = 240; /* top_inten, in the Usage and in the man page */
+int h_end = 50; /* bottom_inten, in the Usage and in the man page */
 
 char usage[] = "\
 Usage:  pixbackgnd [-H -i] [-s squaresize] [-w width] [-n height]\n\
 	[-t title_height] [-a top_inten] [-b bottom_inten]\n\
 	hue saturation\n\
-or	r g b\n\
+or	r g b <--(used in place of \"hue saturation\" just above)\n\
 	> file.pix\n";
 
 /* rgbhsv
@@ -195,10 +195,10 @@ get_args(int argc, char **argv)
 		title_height = atoi(bu_optarg);
 		break;
 	    case 'a':
-		h_start = atoi(bu_optarg);
+		h_start = atoi(bu_optarg); /* top_inten, in the Usage and in the man page */
 		break;
 	    case 'b':
-		h_end = atoi(bu_optarg);
+		h_end = atoi(bu_optarg); /* bottom_inten, in the Usage and in the man page */
 		break;
 
 	    default:		/* '?' 'h' */
@@ -320,7 +320,7 @@ main(int argc, char **argv)
 	for (line = file_height-1; line >= 0; line--)
 	    flood(horiz_buf, vert_buf, vp, line);
     } else {
-	/* Inverted:  top-to-bottom.  Good with cat-fb */
+	/* Inverted: top-to-bottom */
 	for (line=0; line < file_height; line++)
 	    flood(horiz_buf, vert_buf, vp, line);
     }
