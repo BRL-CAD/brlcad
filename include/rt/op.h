@@ -39,17 +39,16 @@ __BEGIN_DECLS
 #define OP_UNION        MKOP(2)         /**< @brief  Binary: L union R */
 #define OP_INTERSECT    MKOP(3)         /**< @brief  Binary: L intersect R */
 #define OP_SUBTRACT     MKOP(4)         /**< @brief  Binary: L subtract R */
-#define OP_XOR          MKOP(5)         /**< @brief  Binary: L xor R, not both*/
-#define OP_REGION       MKOP(6)         /**< @brief  Leaf: tr_stp -> combined_tree_state */
-#define OP_NOP          MKOP(7)         /**< @brief  Leaf with no effect */
+#define OP_REGION       MKOP(5)         /**< @brief  Leaf: tr_stp -> combined_tree_state */
+#define OP_NOP          MKOP(6)         /**< @brief  Leaf with no effect */
 /* Internal to library routines */
-#define OP_NOT          MKOP(8)         /**< @brief  Unary:  not L */
-#define OP_GUARD        MKOP(9)         /**< @brief  Unary:  not L, or else! */
-#define OP_XNOP         MKOP(10)        /**< @brief  Unary:  L, mark region */
-#define OP_NMG_TESS     MKOP(11)        /**< @brief  Leaf: tr_stp -> nmgregion */
+#define OP_NOT          MKOP(7)         /**< @brief  Unary:  not L */
+#define OP_GUARD        MKOP(8)         /**< @brief  Unary:  not L, or else! */
+#define OP_XNOP         MKOP(9)        /**< @brief  Unary:  L, mark region */
+#define OP_NMG_TESS     MKOP(10)        /**< @brief  Leaf: tr_stp -> nmgregion */
 /* LIBWDB import/export interface to combinations */
-#define OP_DB_LEAF      MKOP(12)        /**< @brief  Leaf of combination, db fmt */
-#define OP_FREE         MKOP(13)        /**< @brief  Unary:  L has free chain */
+#define OP_DB_LEAF      MKOP(11)        /**< @brief  Leaf of combination, db fmt */
+#define OP_FREE         MKOP(12)        /**< @brief  Unary:  L has free chain */
 
 
 typedef enum {
