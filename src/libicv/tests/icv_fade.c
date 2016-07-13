@@ -1,7 +1,7 @@
 /*                      I C V _ F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ int main(int argc, char* argv[])
     int c;
     int inx=0, iny=0;
     icv_image_t *bif;
-    mime_image_t format=MIME_IMAGE_AUTO;
+    bu_mime_image_t format = BU_MIME_IMAGE_AUTO;
     double multiplier=0.2;
     if (argc<2) {
 	usage();
@@ -87,16 +87,16 @@ int main(int argc, char* argv[])
 		    bu_exit(1,"tester_icv_fade : fraction is negative");
 		break;
 	    case 'b' :
-		format = MIME_IMAGE_BW;
+		format = BU_MIME_IMAGE_BW;
 		break;
 	    case 'p' :
-		format = MIME_IMAGE_PIX;
+		format = BU_MIME_IMAGE_PIX;
 		break;
 	    case 'd' :
-		format = MIME_IMAGE_DPIX;
+		format = BU_MIME_IMAGE_DPIX;
 		break;
 	    case 'm' :
-		format = MIME_IMAGE_PPM;
+		format = BU_MIME_IMAGE_PPM;
 		break;
 	    default:
 		usage();

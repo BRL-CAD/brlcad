@@ -1,7 +1,7 @@
 /*                          B A R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -152,10 +152,8 @@ main (int argc, char **argv)
     /* intentionally double for scan */
     double x, y, z;
 
-    if (isatty(fileno(stdin)) && isatty(fileno(stdout)) && argc == 1) {
-	bu_log("%s\n", usage);
-	bu_log("       Program continues running:\n");
-    }
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     BU_LIST_INIT(&site_list);
     while ((ch = bu_getopt(argc, argv, OPT_STRING)) != -1)

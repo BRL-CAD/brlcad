@@ -1,7 +1,7 @@
 /*                    R E A D - R T L O G . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -61,7 +61,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
     char *ret;			/* return code for fgets */
     char string[BUFF_LEN];	/* temporary buffer */
     char *arg_ptr;		/* place holder */
-    char forget_it[9];		/* "azimuth" catcher, then forget */
+    char forget_it[10];		/* "azimuth" catcher, then forget */
     int i;			/* reusable counter */
     int num;			/* return code for sscanf */
     int seen_view;		/* these are flags.  */

@@ -1,7 +1,7 @@
 /*                        G - A C A D . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,7 +109,7 @@ nmg_to_acad(struct nmgregion *r, const struct db_full_path *pathp, int region_id
 
     /* Get number of vertices */
 
-    numverts = BU_PTBL_END (&verts);
+    numverts = BU_PTBL_LEN (&verts);
 
 /* BEGIN CHECK SECTION */
 

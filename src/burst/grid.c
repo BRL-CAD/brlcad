@@ -1,7 +1,7 @@
 /*                          G R I D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -893,12 +893,7 @@ getRayOrigin(struct application *ap)
 	    /* 2-digit random number, 1's place gives X
 	       offset, 10's place gives Y offset.
 	    */
-#ifndef HAVE_LRAND48
-	    /* Use random() only if lrand48() is not available.  */
-	    ap->a_user = lrand48() % 100;
-#else
-	    ap->a_user = random() % 100;
-#endif
+	    ap->a_user = lrint(bn_randmt() * 100.0) % 100;
 	    xoffset = (ap->a_user%10)*0.1 - 0.5;
 	    yoffset = (ap->a_user/10)*0.1 - 0.5;
 	}

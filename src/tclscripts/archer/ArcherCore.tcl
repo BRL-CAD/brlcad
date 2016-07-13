@@ -1,7 +1,7 @@
 #                      A R C H E R C O R E . T C L
 # BRL-CAD
 #
-# Copyright (c) 2002-2014 United States Government as represented by
+# Copyright (c) 2002-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -498,6 +498,8 @@ namespace eval ArcherCore {
 	variable mDisplayListModePref ""
 	variable mWireframeMode 0
 	variable mWireframeModePref ""
+	variable mHideSubtractions 0
+	variable mHideSubtractionsPref ""
 
 	variable mDefaultDisplayMode $DISPLAY_MODE_WIREFRAME
 	variable mDefaultDisplayModePref ""
@@ -2260,7 +2262,9 @@ namespace eval ArcherCore {
     }
 
     set mTarget $target
-    file copy -force $mTargetCopy $mTarget
+    set t [::clock seconds]
+    ::file mtime $mTargetCopy $t
+    ::file copy -force $mTargetCopy $mTarget
 }
 
 ::itcl::body ArcherCore::exportDb {} {
@@ -3583,7 +3587,9 @@ namespace eval ArcherCore {
 	return
     }
 
-    set fractions [$itk_component(vpane) fraction]
+    if {[catch {$itk_component(vpane) fraction} fractions]} {
+	return
+    }
 
     switch -- [llength $fractions] {
 	2 {
@@ -3753,25 +3759,20 @@ namespace eval ArcherCore {
 	return ""
     }
 
-    set i 0
+    set tlist [$itk_component(ged) lt -c " " $_comb]
+    set tlen [llength $tlist]
 
-    set tlist {}
-    foreach item [regsub -all {/|/R} [lrange [split [$itk_component(ged) tree -d 1 $_comb] "\n"] 1 end-1] ""] {
-	lappend tlist [lindex $item 1]
-	incr i
+    if {$tlen >= $mMaxCombMembersShown} {
+	if {$_wflag} {
+	    set j [lsearch $mCombWarningList $_comb]
 
-	if {$i >= $mMaxCombMembersShown} {
-	    if {$_wflag} {
-		set j [lsearch $mCombWarningList $_comb]
-
-		if {$j == -1} {
-		    tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
-		    lappend mCombWarningList $_comb
-		}
+	    if {$j == -1} {
+		tk_messageBox -message "Warning: not all members of $_comb will be visible in the tree. See the \"Max Comb Members Shown\" preference."
+		lappend mCombWarningList $_comb
 	    }
-
-	    break
 	}
+
+	set tlist [lrange $tlist 0 $mMaxCombMembersShown-1]
     }
 
     return $tlist
@@ -5131,7 +5132,7 @@ namespace eval ArcherCore {
 
 	if {$mSelectedObj != ""} {
 	    if {$mEnableListView} {
-		selectTreePath $mSelectedObj
+		selectTreePath $mSelectedObj 
 	    } else {
 		if {![catch {set paths [gedCmd search -Q / -name $mSelectedObj]}]} {
 		    if {[llength $paths]} {
@@ -5342,6 +5343,8 @@ namespace eval ArcherCore {
 #                         GENERAL
 # ------------------------------------------------------------
 ::itcl::body ArcherCore::OpenTarget {target} {
+    global tcl_platform
+
     set mTarget $target
     set mDbType "BRL-CAD"
     set mCopyObj ""
@@ -5710,10 +5713,16 @@ namespace eval ArcherCore {
 }
 
 ::itcl::body ArcherCore::createTargetCopy {} {
+
+    package require fileutil
+
+    set tmpdir [::fileutil::tempdir]
+
     if {$mTarget == ""} {
-	set target "BBBBogusArcherTargetCopy"
+	set target "$tmpdir/BBBBogusArcherTargetCopy"
     } else {
-	set target $mTarget
+	set target_fname [file tail $mTarget]
+	set target "$tmpdir/$target_fname"
     }
 
     set mTargetOldCopy $mTargetCopy
@@ -5911,6 +5920,7 @@ namespace eval ArcherCore {
     updatePerspective 0
     doLighting
     gedCmd dlist_on $mDisplayListMode
+    gedCmd configure -hideSubtractions $mHideSubtractions
 
     if {$mWireframeMode} {
 	gedCmd lod on

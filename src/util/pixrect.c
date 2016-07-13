@@ -1,7 +1,7 @@
 /*                       P I X R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -51,7 +51,6 @@ get_args(int argc, char **argv)
 {
     int c;
 
-/* "#:" was removed from the following: */
     while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:x:y:o:h?")) != -1) {
 	switch (c) {
 	    case 's':
@@ -81,10 +80,6 @@ get_args(int argc, char **argv)
 	    case 'o':
 		out_file = bu_optarg;
 		break;
-/*	    case '#' :
- *		bu_log("pixrect: bytes per pixel is not supported.\n");
- *		return 0;
- */
 	    default : /* '?' , 'h' */
 		return 0;
 	}
@@ -122,11 +117,11 @@ main(int argc, char **argv)
 	return 1;
     }
 
-    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
 	return 1;
     icv_rect(img, xorig, yorig, outx, outy);
-    icv_write(img, out_file, MIME_IMAGE_PIX);
+    icv_write(img, out_file, BU_MIME_IMAGE_PIX);
 
     icv_destroy(img);
     return 0;

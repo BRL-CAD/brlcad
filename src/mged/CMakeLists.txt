@@ -48,7 +48,6 @@ set(MGED_SOURCES
   muves.c
   overlay.c
   plot.c
-  polyif.c
   predictor.c
   rect.c
   rtif.c
@@ -66,20 +65,15 @@ set(MGED_SOURCES
   wdb_obj.c
   )
 
-if(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;libtermio;${MGED_EXTRA_LIBS};${ITCL_LIBRARY};${ITK_LIBRARY}")
-else(NOT WIN32)
-  BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "libtclcad;libged;libwdb;libdm;${ITCL_LIBRARY};${ITK_LIBRARY};ws2_32.lib;opengl32.lib")
-endif(NOT WIN32)
-if(${ITCL_LIBRARY} MATCHES "itcl")
-  ADD_DEPENDENCIES(mged itcl)
-endif(${ITCL_LIBRARY} MATCHES "itcl")
-if(${ITK_LIBRARY} MATCHES "itk")
-  ADD_DEPENDENCIES(mged itk)
-endif(${ITK_LIBRARY} MATCHES "itk")
-if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-  SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
-endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
+set(mged_libs libtclcad libged libwdb libdm ${ITCL_LIBRARY} ${ITK_LIBRARY})
+if(TARGET libtermio)
+  set(mged_libs ${mged_libs} libtermio)
+endif(TARGET libtermio)
+if(CPP_DLL_DEFINES)
+  set(mged_libs ${mged_libs} ws2_32.lib;opengl32.lib)
+endif(CPP_DLL_DEFINES)
+
+BRLCAD_ADDEXEC(mged "${MGED_SOURCES}" "${mged_libs}")
 
 # mged depends on the creation/installation of all the
 # tclscripts.

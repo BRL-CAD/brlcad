@@ -1,7 +1,7 @@
 /*                      D B _ I O . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -896,7 +896,6 @@ RT_EXPORT extern int db5_type_codes_from_descrip(int	*major,
 RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
-
 
 __END_DECLS
 

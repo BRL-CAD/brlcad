@@ -1,7 +1,7 @@
 /*                         R O T _ P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ ged_rot_point(struct ged *gedp, int argc, const char *argv[])
     /* Rotate the incoming point */
     bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(rpoint, invRot, point);
-    bn_encode_vect(gedp->ged_result_str, rpoint);
+    bn_encode_vect(gedp->ged_result_str, rpoint, 1);
 
     return GED_OK;
 }

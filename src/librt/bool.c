@@ -1,7 +1,7 @@
 /*                          B O O L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -944,12 +944,12 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 	 * or vol/vol overlaps.  The list is terminated with a NULL
 	 * pointer, placed courtesy of bu_calloc().
 	 */
-	pp->pt_overlap_reg = (struct region **)bu_calloc(
-	    BU_PTBL_LEN(regiontable)+1, sizeof(struct region *),
-	    "pt_overlap_reg");
-	memcpy((char *)pp->pt_overlap_reg,
-	       (char *)BU_PTBL_BASEADDR(regiontable),
-	       BU_PTBL_LEN(regiontable) * sizeof(struct region *));
+	size_t rtlen = BU_PTBL_LEN(regiontable);
+	const void *rtp = (void *)BU_PTBL_BASEADDR(regiontable);
+	BU_ASSERT(rtlen > 0 && rtp);
+
+	pp->pt_overlap_reg = (struct region **)bu_calloc(rtlen+1, sizeof(struct region *), "pt_overlap_reg");
+	memcpy((char *)pp->pt_overlap_reg, rtp, rtlen * sizeof(struct region *));
     }
 
     /* Examine the overlapping regions, pairwise */
@@ -1033,7 +1033,7 @@ rt_default_multioverlap(struct application *ap, struct partition *pp, struct bu_
 		if (RT_G_DEBUG&DEBUG_PARTITION)
 		    bu_log("rt_default_multioverlap:  overlap policy=1, code=%d, p retained in region=%s\n",
 			    code, lastregion->reg_name);
-		BU_PTBL_CLEAR_I(regiontable, i);
+		BU_PTBL_SET(regiontable, i, (long*)0);
 		break;
 	    case 2:
 		/* Keep partition, claiming region = regp */
@@ -1867,7 +1867,8 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
     struct region *pp_reg;
     struct partition *pp_open;
     struct bu_ptbl open_parts;
-    int i, j;
+    size_t i;
+    int j;
 
     RT_CK_PT_HD(PartHdp);
     RT_CK_AP(ap);
@@ -1885,7 +1886,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 	    continue;
 	}
 
-	for (i=0; i<BU_PTBL_END(&open_parts); i++) {
+	for (i=0; i<BU_PTBL_LEN(&open_parts); i++) {
 	    int keep_open=0;
 
 	    if (!pp)
@@ -1938,7 +1939,7 @@ rt_rebuild_overlaps(struct partition *PartHdp, struct application *ap, int rebui
 	    }
 
 	    if (!keep_open) {
-		BU_PTBL_CLEAR_I(&open_parts, i);
+		BU_PTBL_SET(&open_parts, i, (long*)0);
 	    }
 	}
 

@@ -1,7 +1,7 @@
 /*                        D M - O G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2259,6 +2259,7 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	glPixelStorei(GL_PACK_ALIGNMENT, 1);
 	glReadPixels(0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, idata);
 	*image = idata;
+	flip_display_image_vertically(*image, width, height);
     } else {
 	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
 	return TCL_ERROR;

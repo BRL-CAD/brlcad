@@ -1,7 +1,7 @@
 /*                       B U _ B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,8 +25,45 @@
 #include <string.h>
 
 #include "bu.h"
-#include "../bu_internals.h"
-#include "./test_internals.h"
+#include "../bitv.h"
+
+
+typedef enum {
+    HEX         = 0x0001,
+    HEX_RAW     = 0x0011,
+    BINARY      = 0x0100,
+    BINARY_RAW  = 0x1100
+} hex_bin_enum_t;
+
+
+static void
+random_hex_or_binary_string(struct bu_vls *v, const hex_bin_enum_t typ, const int nbytes)
+{
+    const char hex_chars[] = "0123456789abcdef";
+    const char bin_chars[] = "01";
+    const int nstrchars = (typ & HEX) ? nbytes * HEXCHARS_PER_BYTE : nbytes * BITS_PER_BYTE;
+    const char *chars = (typ & HEX) ? hex_chars : bin_chars;
+    const int nchars = (typ & HEX) ? sizeof(hex_chars)/sizeof(char) : sizeof(bin_chars)/sizeof(char);
+    int i;
+
+    srand((unsigned)time(NULL));
+
+    bu_vls_trunc(v, 0);
+    bu_vls_extend(v, nchars);
+    for (i = 0; i < nstrchars; ++i) {
+	long int r = rand();
+	int n = r ? (int)(r % (nchars - 1)) : 0;
+	char c = chars[n];
+	bu_vls_putc(v, c);
+    }
+
+    if (typ == HEX) {
+	bu_vls_prepend(v, "0x");
+    } else if (typ == BINARY) {
+	bu_vls_prepend(v, "0b");
+    }
+
+}
 
 
 static int
@@ -48,7 +85,7 @@ test_bu_bitv_master()
     struct bu_vls bv2bin_str   = BU_VLS_INIT_ZERO;
     struct bu_bitv *bv_rhs;
     struct bu_bitv *bv_rbs;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     int thex, tbin;
 
     /* get the random strings */
@@ -62,12 +99,12 @@ test_bu_bitv_master()
     /* check for failures */
     if (bv_rhs == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
     if (bv_rbs == NULL) {
 	bu_log("\nERROR: NULL from bu_binary_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
@@ -98,9 +135,9 @@ test_bu_bitv_master()
 
     /* both tests must pass for success */
     if (thex && tbin)
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
     else
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 
 ERROR_RETURN:
 
@@ -125,7 +162,7 @@ test_bu_hex_to_bitv(int argc, char **argv)
      */
     struct bu_bitv *res_bitv ;
     struct bu_vls v = BU_VLS_INIT_ZERO;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input, *expected;
 
     if (argc < 4)
@@ -138,17 +175,17 @@ test_bu_hex_to_bitv(int argc, char **argv)
     if (res_bitv == NULL) {
 	printf("\nbu_hex_to_bitv FAILED Input: '%s' Output: 'NULL' Expected: '%s'",
 	       input, expected);
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
     bu_bitv_vls(&v, res_bitv);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&v), expected)) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_hex_to_bitv PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_hex_to_bitv FAILED");
     }
 
@@ -172,7 +209,7 @@ test_bu_bitv_vls(int argc, char **argv)
     /*         argv[1]    argv[2]             argv[3]
      * inputs: <func num> <input hex string> <expected bitv dump>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     struct bu_vls a = BU_VLS_INIT_ZERO;
     struct bu_bitv *res_bitv;
     const char *input, *expected;
@@ -186,17 +223,17 @@ test_bu_bitv_vls(int argc, char **argv)
     res_bitv = bu_hex_to_bitv(input);
     if (res_bitv == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
     bu_bitv_vls(&a, res_bitv);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&a), expected)) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_bitv_vls test PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_bitv_vls test FAILED");
     }
 
@@ -223,7 +260,7 @@ test_bu_bitv_to_hex(int argc, char **argv)
     struct bu_bitv *result_bitv;
     int length;
     const char *input, *expected;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
 
     if (argc < 5)
 	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
@@ -240,7 +277,7 @@ test_bu_bitv_to_hex(int argc, char **argv)
 
     if (result_bitv == NULL) {
 	bu_log("\nERROR: NULL from bu_bitv_new.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
@@ -253,11 +290,11 @@ test_bu_bitv_to_hex(int argc, char **argv)
     bu_bitv_to_hex(&result, result_bitv);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&result), expected)) {
-	test_results = CTEST_PASS;
-        printf("\nbu_bitv_to_hex PASSED");
+	test_results = BRLCAD_OK;
+	printf("\nbu_bitv_to_hex PASSED");
     } else {
-	test_results = CTEST_FAIL;
-        printf("\nbu_bitv_to_hex FAILED");
+	test_results = BRLCAD_ERROR;
+	printf("\nbu_bitv_to_hex FAILED");
     }
 
     printf("\n  Input: '%s'", input);
@@ -291,7 +328,7 @@ static int
 test_bu_bitv_shift()
 {
     size_t res;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
 
     printf("\nTesting bu_bitv_shift...");
 
@@ -300,11 +337,11 @@ test_bu_bitv_shift()
 
     if (power(2, res) <= (sizeof(bitv_t) * BITS_PER_BYTE)
 	&& power(2, res + 1) > (sizeof(bitv_t) * BITS_PER_BYTE)) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nPASSED: bu_bitv_shift working");
     } else {
 	printf("\nFAILED: bu_bitv_shift incorrect");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
     }
 
     return test_results;
@@ -320,7 +357,7 @@ test_bu_bitv_or(int argc , char **argv)
     struct bu_bitv *res_bitv , *res_bitv1 , *result;
     struct bu_vls a = BU_VLS_INIT_ZERO;
     struct bu_vls b = BU_VLS_INIT_ZERO;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input1, *input2, *expected;
 
     if (argc < 5)
@@ -334,19 +371,19 @@ test_bu_bitv_or(int argc , char **argv)
     res_bitv1 = bu_hex_to_bitv(input1);
     if (res_bitv1 == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
     res_bitv  = bu_hex_to_bitv(input2);
     if (res_bitv == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
     result    = bu_hex_to_bitv(expected);
     if (result == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
@@ -355,10 +392,10 @@ test_bu_bitv_or(int argc , char **argv)
     bu_bitv_vls(&b, result);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&a), bu_vls_cstr(&b))) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_bitv_or test PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_bitv_or test FAILED");
     }
 
@@ -381,6 +418,97 @@ ERROR_RETURN:
 }
 
 
+void
+dump_bitv(const struct bu_bitv *b)
+{
+    const size_t len = b->nbits;
+    size_t x;
+    int i, j, k;
+    int bit, ipad = 0, jpad = 0;
+    size_t word_count;
+    size_t chunksize = 0;
+    volatile size_t BVS = sizeof(bitv_t); /* should be 1 byte as defined in bu.h */
+    unsigned bytes;
+    struct bu_vls *v = bu_vls_vlsinit();
+
+    bytes = len / BITS_PER_BYTE; /* eight digits per byte */
+    word_count = bytes / BVS;
+    chunksize = bytes % BVS;
+
+    if (chunksize == 0) {
+	chunksize = BVS;
+    } else {
+	/* handle partial chunk before using chunksize == BVS */
+	word_count++;
+    }
+
+    while (word_count--) {
+	while (chunksize--) {
+	    /* get the appropriate bits in the bit vector */
+	    unsigned long lval = (unsigned long)((b->bits[word_count] & ((bitv_t)(0xff)<<(chunksize * BITS_PER_BYTE))) >> (chunksize * BITS_PER_BYTE)) & (bitv_t)0xff;
+
+	    /* get next eight binary digits from bitv */
+	    int ii;
+	    for (ii = 7; ii >= 0; --ii) {
+		unsigned long uval = lval >> ii & 0x1;
+		bu_vls_printf(v, "%1lx", uval);
+	    }
+	}
+	chunksize = BVS;
+    }
+
+
+    /* print out one set of data per X bits */
+    x = 16; /* X number of bits per line */
+    x = x > len ? len : x;
+    /* we want even output lines (lengths in multiples of BITS_PER_BYTE) */
+    if (len % x) {
+	ipad = jpad = x - (len % x);
+    };
+
+    if (ipad > 0)
+	i = j = -ipad;
+    else
+	i = j = 0;
+
+    bit = len - 1;
+
+    bu_log("\n=====================================================================");
+    bu_log("\nbitv dump:");
+    bu_log("\n nbits = %zu", len);
+
+  NEXT:
+
+    k = i + x;
+    bu_log("\n---------------------------------------------------------------------");
+    bu_log("\n bit ");
+    for (; i < k; ++i, --ipad) {
+	if (ipad > 0)
+	    bu_log(" %3s", " ");
+	else
+	    bu_log(" %3d", bit--);
+    }
+
+    bu_log("\n val ");
+    /* the actual values are a little tricky due to the actual structure and number of words */
+    for (; j < k; ++j, --jpad) {
+	if (jpad > 0)
+	    bu_log(" %3s", " ");
+	else
+	    bu_log("   %c", bu_vls_cstr(v)[j]);
+    }
+
+    if ((size_t)i < len - 1) {
+	goto NEXT;
+    }
+
+    bu_log("\n---------------------------------------------------------------------");
+    bu_log("\n=====================================================================");
+
+    bu_vls_free(v);
+}
+
+
 static int
 test_bu_bitv_and(int argc, char **argv)
 {
@@ -390,7 +518,7 @@ test_bu_bitv_and(int argc, char **argv)
     struct bu_bitv *res_bitv , *res_bitv1 , *result;
     struct bu_vls a = BU_VLS_INIT_ZERO;
     struct bu_vls b = BU_VLS_INIT_ZERO;
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input1, *input2, *expected;
 
     if (argc < 5) {
@@ -405,19 +533,19 @@ test_bu_bitv_and(int argc, char **argv)
     res_bitv1 = bu_hex_to_bitv(input1);
     if (res_bitv1 == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
     res_bitv  = bu_hex_to_bitv(input2);
     if (res_bitv == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
     result    = bu_hex_to_bitv(expected);
     if (result == NULL) {
 	bu_log("\nERROR: NULL from bu_hex_to_bitv.");
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	goto ERROR_RETURN;
     }
 
@@ -426,10 +554,10 @@ test_bu_bitv_and(int argc, char **argv)
     bu_bitv_vls(&b, result);
 
     if (BU_STR_EQUAL(bu_vls_cstr(&a), bu_vls_cstr(&b))) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_bitv_and test PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_bitv_and test FAILED");
     }
 
@@ -459,7 +587,7 @@ test_bu_bitv_compare_equal(int argc, char **argv)
     /*          argv[1]    argv[2]         argv[3]  argv[4]         argv[5]
      *  inputs: <func num> <binary string> <nbytes> <binary string> <nbytes>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     struct bu_vls v1 = BU_VLS_INIT_ZERO;
     struct bu_vls v2 = BU_VLS_INIT_ZERO;
     struct bu_bitv *b1, *b2;
@@ -504,7 +632,7 @@ test_bu_bitv_compare_equal(int argc, char **argv)
     bu_bitv_free(b2);
 
     /* a true return above is a pass, invert the value to
-     * CTEST_PASS/CTEST_FAIL */
+     * BRLCAD_OK/BRLCAD_ERROR */
     return !test_results;
 }
 
@@ -515,7 +643,7 @@ test_bu_bitv_compare_equal2(int argc, char **argv)
     /*          argv[1]    argv[2]         argv[3]  argv[4]         argv[5]
      *  inputs: <func num> <binary string> <nbytes> <binary string> <nbytes>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     struct bu_vls v1 = BU_VLS_INIT_ZERO;
     struct bu_vls v2 = BU_VLS_INIT_ZERO;
     struct bu_bitv *b1, *b2;
@@ -560,10 +688,9 @@ test_bu_bitv_compare_equal2(int argc, char **argv)
     bu_bitv_free(b2);
 
     /* a true return above is a pass, invert the value to
-     * CTEST_PASS/CTEST_FAIL */
+     * BRLCAD_OK/BRLCAD_ERROR */
     return !test_results;
 }
-
 
 
 static int
@@ -572,7 +699,7 @@ test_bu_bitv_to_binary(int argc, char **argv)
     /*         argv[1]    argv[2]         argv[3]
      * inputs: <func num> <input hex num> <expected binary string>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     unsigned long int input_num = strtoul(argv[2], (char **)NULL, 16);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b1, *b2;
@@ -617,7 +744,7 @@ test_bu_bitv_to_binary(int argc, char **argv)
     bu_bitv_free(b1);
     bu_bitv_free(b2);
 
-    /* a true return above is a pass, invert the value to CTEST_PASS/CTEST_FAIL */
+    /* a true return above is a pass, invert the value to BRLCAD_OK/BRLCAD_ERROR */
     return !test_results;
 }
 
@@ -628,7 +755,7 @@ test_bu_binary_to_bitv(int argc, char **argv)
     /*         argv[1]    argv[2]         argv[3]
      * inputs: <func num> <binary string> <expected hex num>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     unsigned long int expected_num = strtol(argv[3], (char **)NULL, 16);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b;
@@ -670,7 +797,7 @@ test_bu_binary_to_bitv(int argc, char **argv)
     printf("\nInput bitv dump:");
     dump_bitv(b);
 
-    test_results = err ? CTEST_FAIL : CTEST_PASS;
+    test_results = err ? BRLCAD_ERROR : BRLCAD_OK;
 
     bu_vls_free(&v);
     bu_bitv_free(b);
@@ -685,7 +812,7 @@ test_bu_binary_to_bitv2(int argc, char **argv)
     /*         argv[1]    argv[2]         argv[3]      argv[4]
      * inputs: <func num> <binary string> <min nbytes> <expected hex num>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     unsigned nbytes = (unsigned)strtol(argv[3], (char **)NULL, 10);
     unsigned long long int expected_num = strtol(argv[4], (char **)NULL, 16);
     unsigned ull_size = sizeof(unsigned long long);
@@ -728,7 +855,7 @@ test_bu_binary_to_bitv2(int argc, char **argv)
     printf("\nInput bitv dump:");
     dump_bitv(b);
 
-    test_results = err ? CTEST_FAIL : CTEST_PASS;
+    test_results = err ? BRLCAD_ERROR : BRLCAD_OK;
 
     bu_vls_free(&v);
     bu_bitv_free(b);
@@ -743,7 +870,7 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
     /*         argv[1]    argv[2]               argv[3]
      * inputs: <func num> <input binary string> <expected hex string>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input, *expected;
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
@@ -756,10 +883,10 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
     bu_binstr_to_hexstr(input, &v);
 
     if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_binstr_to_hexstr PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_binstr_to_hexstr FAILED");
     }
 
@@ -779,7 +906,7 @@ test_bu_binstr_to_hexstr_empty_input(int argc, char **argv)
     /*         argv[1]    ""                    argv[2]
      * inputs: <func num> <input binary string> <expected hex string>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input = "";
     const char *expected;
     struct bu_vls v = BU_VLS_INIT_ZERO;
@@ -792,10 +919,10 @@ test_bu_binstr_to_hexstr_empty_input(int argc, char **argv)
     bu_binstr_to_hexstr(input, &v);
 
     if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_binstr_to_hexstr PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_binstr_to_hexstr FAILED");
     }
 
@@ -815,7 +942,7 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
     /*         argv[1]    argv[2]            argv[3]
      * inputs: <func num> <input hex string> <expected binary string>
      */
-    int test_results = CTEST_FAIL;
+    int test_results = BRLCAD_ERROR;
     const char *input, *expected;
     struct bu_vls v = BU_VLS_INIT_ZERO;
 
@@ -828,10 +955,10 @@ test_bu_hexstr_to_binstr(int argc, char **argv)
     bu_hexstr_to_binstr(input, &v);
 
     if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
-	test_results = CTEST_PASS;
+	test_results = BRLCAD_OK;
 	printf("\nbu_hexstr_to_binstr PASSED");
     } else {
-	test_results = CTEST_FAIL;
+	test_results = BRLCAD_ERROR;
 	printf("\nbu_hexstr_to_binstr FAILED");
     }
 
@@ -857,13 +984,13 @@ main(int argc, char **argv)
     sscanf(argv[1], "%d", &function_num);
 
     switch (function_num) {
-        case 0:
+	case 0:
 	    return test_bu_bitv_master();
 	    break;
-        case 1:
+	case 1:
 	    return test_bu_binary_to_bitv(argc, argv);
 	    break;
-        case 2:
+	case 2:
 	    return test_bu_bitv_to_binary(argc, argv);
 	    break;
 	case 3:
@@ -872,31 +999,31 @@ main(int argc, char **argv)
 	case 4:
 	    return test_bu_bitv_compare_equal2(argc, argv);
 	    break;
-        case 5:
+	case 5:
 	    return test_bu_binary_to_bitv2(argc, argv);
 	    break;
-        case 6:
+	case 6:
 	    return test_bu_bitv_and(argc, argv);
 	    break;
-        case 7:
+	case 7:
 	    return test_bu_bitv_or(argc, argv);
 	    break;
-        case 8:
+	case 8:
 	    return test_bu_bitv_shift();
 	    break;
-        case 9:
+	case 9:
 	    return test_bu_bitv_vls(argc, argv);
 	    break;
-        case 10:
+	case 10:
 	    return test_bu_bitv_to_hex(argc, argv);
 	    break;
-        case 11:
+	case 11:
 	    return test_bu_hex_to_bitv(argc, argv);
 	    break;
-        case 12:
+	case 12:
 	    return test_bu_hexstr_to_binstr(argc, argv);
 	    break;
-        case 13:
+	case 13:
 	    return test_bu_binstr_to_hexstr(argc, argv);
 	case 14:
 	    return test_bu_binstr_to_hexstr_empty_input(argc, argv);

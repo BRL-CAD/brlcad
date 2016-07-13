@@ -1,7 +1,7 @@
 /*                 OpenNurbsInterfaces.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -1404,6 +1404,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
     ON_BrepFace *face = loop->Face();
     const ON_Surface *surface = face->SurfaceOf();
 
+#if 0
     if (surface) {
 	double surface_width, surface_height;
 	if (surface->GetSurfaceSize(&surface_width, &surface_height)) {
@@ -1414,6 +1415,7 @@ Path::LoadONTrimmingCurves(ON_Brep *brep)
 	    face->SetDomain(1, 0.0, surface_height);
 	}
     }
+#endif
 #ifdef _DEBUG_TESTING_
     if (_debug_print_) {
 	int curve_cnt = 0;

@@ -1,7 +1,7 @@
 /*                       F A S T 4 - G . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -69,19 +69,19 @@
 
 #define PUSH(ptr) bu_ptbl_ins(&stack, (long *)ptr)
 #define POP(structure, ptr) { \
-	if (BU_PTBL_END(&stack) == 0) \
+	if (BU_PTBL_LEN(&stack) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1); \
 	    bu_ptbl_rm(&stack, (long *)ptr); \
 	} \
     }
 #define PUSH2(ptr) bu_ptbl_ins(&stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
-	if (BU_PTBL_END(&stack2) == 0) \
+	if (BU_PTBL_LEN(&stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&stack2, BU_PTBL_END(&stack2)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&stack2, BU_PTBL_LEN(&stack2)-1); \
 	    bu_ptbl_rm(&stack2, (long *)ptr); \
 	} \
     }

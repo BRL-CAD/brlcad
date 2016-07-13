@@ -1,7 +1,7 @@
 /*                       F N M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,7 +111,7 @@ charclassmatch(const char *pattern, char test, size_t *s)
 
 	c = *pattern++; /* next */
     }
-
+    pattern++;
     bu_vls_strncpy(&classname, pattern-counter-2, counter);
 
     ctclass = findclass(bu_vls_addr(&classname));
@@ -120,7 +120,7 @@ charclassmatch(const char *pattern, char test, size_t *s)
 	resultholder = (size_t)-1;
     } else {
 	/*
-	 c = *pattern++;
+	 c = *pattern;
 	 bu_log("classname: %s, test char = %c, (class->checkfun)=%d\n", bu_vls_addr(&classname), test, (ctclass->checkfun)(test));
 	 */
 	if ((ctclass->checkfun)(test) != 0) {

@@ -1,7 +1,7 @@
 /*           T E S T _ B U _ P A T H _ C O M P O N E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 /* If expected_str is NULL, check that return code is zero */
 void
-compare(const char *input, const char *expected_str, path_component_t type)
+compare(const char *input, const char *expected_str, bu_path_component_t type)
 {
     struct bu_vls component = BU_VLS_INIT_ZERO;
     int found = bu_path_component(&component, input, type);
@@ -70,13 +70,13 @@ main(int argc, char *argv[])
 
     /* If we don't have any args at all, test NULL */
     if (argc == 1) {
-	compare(NULL, NULL, PATH_DIRNAME);
+	compare(NULL, NULL, BU_PATH_DIRNAME);
 	return 0;
     }
 
     if (argc == 2) {
 	printf("Testing empty path handling\n");
-	compare("", NULL, PATH_DIRNAME);
+	compare("", NULL, BU_PATH_DIRNAME);
 	return 0;
     }
 
@@ -94,19 +94,19 @@ main(int argc, char *argv[])
     printf("Testing path \"%s\", component %d\n", argv[1], intarg);
     switch (intarg) {
 	case 0:
-	    compare(argv[1], control, PATH_DIRNAME);
+	    compare(argv[1], control, BU_PATH_DIRNAME);
 	    break;
 	case 1:
-	    compare(argv[1], control, PATH_DIRNAME_CORE);
+	    compare(argv[1], control, BU_PATH_EXTLESS);
 	    break;
 	case 2:
-	    compare(argv[1], control, PATH_BASENAME);
+	    compare(argv[1], control, BU_PATH_BASENAME);
 	    break;
 	case 3:
-	    compare(argv[1], control, PATH_BASENAME_CORE);
+	    compare(argv[1], control, BU_PATH_BASENAME_EXTLESS);
 	    break;
 	case 4:
-	    compare(argv[1], control, PATH_EXTENSION);
+	    compare(argv[1], control, BU_PATH_EXT);
 	    break;
 	default:
 	    bu_log("Error - unknown component\n");

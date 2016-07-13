@@ -1,7 +1,7 @@
 /*                       D M - W G L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -189,7 +189,17 @@ wgl_setBGColor(dm *dmp,
     return TCL_OK;
 }
 
-
+HIDDEN void
+WGLEventProc(ClientData clientData, XEvent *UNUSED(eventPtr))
+{
+	dm *dmp = (dm *)clientData;
+	/* Need to make things visible after a Window minimization, but don't
+	want the out-of-date visual - for now, do two swaps.  If there's some
+	way to trigger a Window re-draw without doing buffer swaps, that would
+	be preferable... */
+	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+	SwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc);
+}
 /*
  * Fire up the display manager, and the display processor.
  *
@@ -472,6 +482,8 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 
     Tk_MapWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
+	Tk_CreateEventHandler(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
+
     return dmp;
 }
 
@@ -652,8 +664,10 @@ wgl_close(dm *dmp)
 	    XFreeColormap(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 			  ((struct dm_xvars *)dmp->dm_vars.pub_vars)->cmap);
 
-	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin)
-	    Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+	if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin) {
+		Tk_DeleteEventHandler(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin, VisibilityChangeMask, WGLEventProc, (ClientData)dmp);
+		Tk_DestroyWindow(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
+	}
     }
 
     bu_vls_free(&dmp->dm_pathName);

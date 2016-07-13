@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 struct views_visible
 {
     int de;
-    int no_of_views;
+    size_t no_of_views;
     int *view_de;
 };
 
@@ -394,7 +394,7 @@ Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf
     struct nmgregion *r;
     struct shell *s;
     int npts;
-    int entno;
+    size_t entno;
     size_t i;
     fastf_t sina, cosa;
 
@@ -506,7 +506,9 @@ Get_views_visible(int entno)
     int entity_type;
     int no_of_views;
     int no_of_entities;
-    int i, j, junk;
+    size_t i;
+    size_t j;
+    int junk;
     struct views_visible *vv;
 
     if (dir[entno]->form != 3 && dir[entno]->form != 4) {
@@ -526,8 +528,8 @@ Get_views_visible(int entno)
     BU_ALLOC(vv, struct views_visible);
     vv->de = entno * 2 + 1;
     vv->no_of_views = no_of_views;
-    vv->view_de = (int *)bu_calloc(no_of_views, sizeof(int), "Get_views_visible: vv->view_de");
-    for (i = 0; i < no_of_views; i++) {
+    vv->view_de = (int *)bu_calloc(vv->no_of_views, sizeof(int), "Get_views_visible: vv->view_de");
+    for (i = 0; i < vv->no_of_views; i++) {
 	Readint(&vv->view_de[i], "");
 	if (dir[entno]->form == 3)
 	    continue;
@@ -556,7 +558,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
     int clip_de[6];
     plane_t clip[6];
     mat_t *xform;
-    int i, j;
+    size_t i, j;
 
     view_de = entno * 2 + 1;
 
@@ -611,7 +613,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
 	}
     }
 
-    for (i = 0; i < BU_PTBL_END(view_vis_list); i++) {
+    for (i = 0; i < BU_PTBL_LEN(view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(view_vis_list, i);
 	for (j = 0; j < vv->no_of_views; j++) {
 	    if (vv->view_de[j] == view_de) {
@@ -625,7 +627,7 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
     de_list = (int *)bu_calloc(no_of_des, sizeof(int), "Do_view: de_list");
     de_list[0] = view_de;
     vv_count = 0;
-    for (i = 0; i < BU_PTBL_END(view_vis_list); i++) {
+    for (i = 0; i < BU_PTBL_LEN(view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(view_vis_list, i);
 	for (j = 0; j < vv->no_of_views; j++) {
 	    if (vv->view_de[j] == view_de) {
@@ -715,7 +717,7 @@ Get_drawing(int entno, struct bu_ptbl *view_vis_list)
 void
 Conv_drawings()
 {
-    int i;
+    size_t i;
     int tot_drawings = 0;
     int tot_views = 0;
     struct views_visible *vv;
@@ -754,7 +756,7 @@ Conv_drawings()
 	}
 
 	/* free views visible list */
-	for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
+	for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	    vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 	    bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 	    bu_free((char *)vv, "Conv_drawings: vv");
@@ -799,7 +801,7 @@ Conv_drawings()
 	(void)mk_lfcomb(fdout, default_drawing_name, &headp, 0)
 
 	    /* free views visible list */
-	    for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
+	    for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 		vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 		bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 		bu_free((char *)vv, "Conv_drawings: vv");
@@ -829,7 +831,7 @@ Conv_drawings()
     }
 
     /* free views visible list */
-    for (i = 0; i < BU_PTBL_END(&view_vis_list); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&view_vis_list); i++) {
 	vv = (struct views_visible *)BU_PTBL_GET(&view_vis_list, i);
 	bu_free((char *)vv->view_de, "Conv_drawings: vv->view_de");
 	bu_free((char *)vv, "Conv_drawings: vv");

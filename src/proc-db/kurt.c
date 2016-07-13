@@ -1,7 +1,7 @@
 /*                          K U R T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,10 +57,11 @@ main(int argc, char **argv)
     double base;
     int quant;
 
-    if (argc > 0) {
-	bu_log("Usage: %s\n", argv[0]);
-	bu_log("       Program continues running (will create file kurt.g):\n");
+    if (argc > 1) {
+	bu_exit(1, "Usage: %s\n", argv[0]);
     }
+
+    bu_log("Writing out geometry to file [kurt.g] ...");
 
     outfp = wdb_fopen("kurt.g");
     mk_id(outfp, "Kurt's multi-valued function");
@@ -76,6 +77,8 @@ main(int argc, char **argv)
 	    do_cell(&val[ix][iy], x, y);
 	}
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }

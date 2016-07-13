@@ -1,7 +1,7 @@
 /*                       F B C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -71,14 +71,13 @@ main(int argc, char **argv)
 {
     int i;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-	printusage();
-	fprintf(stderr, "       Program continues running:\n");
-    }
-
     if (! pars_Argv(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);
+    }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	fprintf(stderr, "Opening a window, waiting for user input:\n");
     }
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {

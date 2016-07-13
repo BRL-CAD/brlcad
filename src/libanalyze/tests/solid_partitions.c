@@ -1,7 +1,7 @@
 /*                    R A Y D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,6 @@
 #include "common.h"
 
 #include <string.h>
-
-#include "tcl.h"
 
 #include "raytrace.h"
 #include "../analyze_private.h"

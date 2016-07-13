@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -21,9 +21,11 @@
  *
  * Ray Tracing program, lighting model manager.
  *
- * Output is either interactive to a frame buffer, or written in a
- * file.  The output format is a .PIX file (a byte stream of R, G, B
- * as u_char's).
+ * Output is either interactively displayed in a frame buffer, written
+ * out to a file, or both.  The default output format is a .PIX file
+ * (a byte stream of R, G, B as u_char's), but will automatically
+ * write out other file formats based on the provided file extension
+ * (e.g., .PNG).
  *
  * The extern "lightmodel" selects which one is being used:
  * 0 Full lighting model (default)
@@ -86,7 +88,7 @@ usage(const char *argv0)
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
 #ifdef USE_OPENCL
-    bu_log(" -z 		Enable OpenCL ray-trace engine\n");
+    bu_log(" -z # 		Use OpenCL ray-trace engine: no/default (0), yes (1)\n");
 #endif
     bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
     bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
@@ -116,7 +118,6 @@ usage(const char *argv0)
     bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
     bu_log(" -G #		Set grid cell height, in millimeters\n");
     bu_log(" -H #		Set number of extra rays to fire\n");
-    bu_log(" -I		Turn on interactive mode\n");
     bu_log(" -J #		Set a bit vector for \"jitter\"\n");
     bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
     bu_log(" -O model.pix	Output .pix format file, double precision format\n");

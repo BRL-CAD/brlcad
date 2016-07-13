@@ -1,0 +1,654 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdiff1'>
+	<refmeta>
+		<refentrytitle>GDIFF
+		</refentrytitle>
+		<manvolnum>1</manvolnum>
+		<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+		<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+	</refmeta>
+
+	<refnamediv>
+		<refname>gdiff</refname>
+		<refpurpose>a BRL-CAD differential geometry comparator</refpurpose>
+	</refnamediv>
+	<!-- body begins here -->
+	<refsynopsisdiv xml:id='synopsis'>
+		<cmdsynopsis>
+			<command>gdiff</command>
+			<arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+			<arg choice='plain'><replaceable>left_model.g</replaceable></arg>
+			<arg choice='opt'><replaceable>ancestor_model.g</replaceable></arg>
+			<arg choice='plain'><replaceable>right_model.g</replaceable></arg>
+		</cmdsynopsis>
+	</refsynopsisdiv>
+
+
+	<refsect1 xml:id='description'><title>DESCRIPTION</title>
+		<para>
+			<command>gdiff</command> compares BRL-CAD models
+			specified on the command line, reporting differences according to the
+			specified options.  It supports a plain "diff" comparison between two
+			files, as well as a "3-way" comparison that accepts a third file with
+			"ancestral" information that provides a context for the left and right
+			files.
+		</para>
+		<para>The following options are recognized:</para>
+		<variablelist remap="TP">
+			<varlistentry>
+				<term><option>-a</option></term>
+				<listitem>
+                                    <para>(two-way diff) Report objects added in right_model.g</para>
+				    <para>(three-way diff) Report objects added in left_model.g and/or right_model.g</para>
+                                </listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-d</option></term>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects deleted in right_model.g</para>
+				    <para>(three-way diff) Report objects deleted in left_model.g and/or right_model.g</para>
+                                </listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-m</option></term>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects modified in right_model.g</para>
+				    <para>(three-way diff) Report objects that are different in left_model.g and/or right_model.g relative to ancestor.g</para>
+                                </listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-u</option></term>
+	                        <listitem>
+                                    <para>(two-way diff) Report objects that are identical in left_model.g and right_model.g</para>
+                                    <para>(three-way diff) Report objects that are identical in ancestor_model.g, left_model.g and right_model.g</para>
+                                </listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-v #</option></term>
+				<listitem><para>Control the verbosity of the output.  Zero will suppress all reporting and only the return value of the program will contain information, one will provide categorized lists of objects but no details on what changed, two will list each changed object preceded by a modifier, three will print more details for changed objects, and four will print all available information.  All settings for this option will respect other constraints applied to the reporting output.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-t #</option></term>
+				<listitem><para>Set the length tolerance used to compare numerical properties.  Units are millimeters.  Default value is RT_LEN_TOL.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-F "filter_string"</option></term>
+				<listitem><para>Apply filters to the diff output, using the same set of filters available in the <command>search</command> command's search.  See the <command>search</command> manual page for more details.</para></listitem>
+			</varlistentry>
+			<varlistentry>
+				<term><option>-M merged_file.g</option></term>
+				<listitem><para>Merge the files being diffed into one output file.</para></listitem>
+			</varlistentry>
+		</variablelist>
+
+		<para>
+			The program returns 0 if the files being compared have no differences that satisfy
+			the user-supplied options, otherwise it returns the total number of differing objects that do
+			satisfy the supplied options.  Default is to report all differences that rise above RT_LEN_TOL.
+		</para>
+	</refsect1>
+
+	<refsect1 xml:id='example'><title>EXAMPLES</title>
+
+  <example><title>Default Diffing Results</title>
+        <para>
+          Running the default options on two pre-prepared examples of Moss World gives us a summary of the status of various objects:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff moss.g moss2.g</userinput>
+M platform.r
+M ellipse.s
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+D LIGHT
+A tgc_new.s
+A eto.s
+		</computeroutput>
+          </literallayout>
+          'M' denotes an object that was modified, 'D' is an object that was deleted, and 'A' is an object that was added.
+        </para>
+   </example>
+
+   <example><title>Alternate Diffing Result Outputs</title>
+	   <para>
+		   The <option>v</option> provides various styles of output, as follows:
+	   </para>
+	   <para>
+		   <option>-v 0</option> (no output except the return code):
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 0 moss.g moss2.g</userinput>
+			   </computeroutput>
+		   </literallayout>
+	   </para>
+
+	   <para>
+		   <option>-v 1</option>:
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 1 moss.g moss2.g</userinput>
+Added:
+tgc_new.s, eto.s
+
+Removed:
+LIGHT
+
+Changed:
+platform.r, ellipse.s, light.r, _GLOBAL, cone.s, cone.r, box.s, tor.r
+			   </computeroutput>
+		   </literallayout>
+		   Objects are reported in lists, categorized by their status.
+	   </para>
+
+	   <para>
+		   <option>-v 2</option> (default):
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 2 moss.g moss2.g</userinput>
+M platform.r
+M ellipse.s
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+D LIGHT
+A tgc_new.s
+A eto.s
+			   </computeroutput>
+		   </literallayout>
+		   If verbosity is not specified, this is the default output.
+	   </para>
+
+	   <para>
+		   <option>-v 3</option>:
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 3 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" H(p): 0 0 26.44671630858999833435519
++ "cone.s" H(p): 0 0 37.49945872348094155768194
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "box.s" V4(p): 30.0283355712900004164112 -5.211529731749999783119165 10.41366577147999805674772
++ "box.s" V4(p): 29.46579237282375984818827 -5.211529731749999783119165 10.41366577147999805674772
+- "box.s" V3(p): 30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772
++ "box.s" V3(p): 29.46579237282375984818827 21.58122539520000060520033 10.41366577147999805674772
+- "box.s" V2(p): 30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494
++ "box.s" V2(p): 29.46579237282375984818827 21.58122539520000060520033 -16.37908935547000055521494
+- "box.s" V1(p): 30.0283355712900004164112 -5.211529731749999783119165 -16.37908935547000055521494
++ "box.s" V1(p): 29.46579237282375984818827 -5.211529731749999783119165 -16.37908935547000055521494
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D LIGHT
+A tgc_new.s
+A eto.s
+			   </computeroutput>
+		   </literallayout>
+		   Verbosity 3 is a more detailed version of the previous setting, with each parameter in the modified objects reported in detail.  '-' lines
+                   show what was removed for a given attribute or parameter, and '+' lines contain the data that replaced them.
+	   </para>
+
+
+	   <para>
+		   <option>-v 4</option>:
+		   <literallayout>
+			   <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 4 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" H(p): 0 0 26.44671630858999833435519
++ "cone.s" H(p): 0 0 37.49945872348094155768194
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "box.s" V4(p): 30.0283355712900004164112 -5.211529731749999783119165 10.41366577147999805674772
++ "box.s" V4(p): 29.46579237282375984818827 -5.211529731749999783119165 10.41366577147999805674772
+- "box.s" V3(p): 30.0283355712900004164112 21.58122539520000060520033 10.41366577147999805674772
++ "box.s" V3(p): 29.46579237282375984818827 21.58122539520000060520033 10.41366577147999805674772
+- "box.s" V2(p): 30.0283355712900004164112 21.58122539520000060520033 -16.37908935547000055521494
++ "box.s" V2(p): 29.46579237282375984818827 21.58122539520000060520033 -16.37908935547000055521494
+- "box.s" V1(p): 30.0283355712900004164112 -5.211529731749999783119165 -16.37908935547000055521494
++ "box.s" V1(p): 29.46579237282375984818827 -5.211529731749999783119165 -16.37908935547000055521494
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "tgc_new.s" D(p): 0 500 0
+A "tgc_new.s" C(p): 250 0 0
+A "tgc_new.s" B(p): 0 250 0
+A "tgc_new.s" A(p): 500 0 0
+A "tgc_new.s" H(p): 0 0 2000
+A "tgc_new.s" V(p): 0 0 -1000
+A "tgc_new.s" DB5_MINORTYPE(p): tgc
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+			   </computeroutput>
+		   </literallayout>
+		   Verbosity 4 is a fully detailed diff that contains all information added or removed.
+	   </para>
+
+   </example>
+
+
+  <example><title>Filtering Based on Difference Type</title>
+        <para>
+          The options <option>a</option>, <option>d</option>, <option>m</option>, and <option>u</option> control
+          which categories of diff results (added, deleted, modified, and unchanged) are reported. By default
+          added, deleted and modified items are reported, but once one of these four options is specified only
+          those specified are reported:
+        </para>
+        <para>
+          Report only objects added:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -a moss.g moss2.g</userinput>
+A tgc_new.s
+A eto.s
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Report only objects deleted:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -d moss.g moss2.g</userinput>
+D LIGHT
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Report both added and deleted objects, but not modified objects:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -a -d moss.g moss2.g</userinput>
+D LIGHT
+A tgc_new.s
+A eto.s
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Report unmodified objects:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -u moss.g moss2.g</userinput>
+  ellipse.r
+  box.r
+  all.g
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+
+  <example><title>Filtering Results With Tolerance</title>
+        <para>
+          To eliminate differences in modifications that are too small to be of interest, the <option>t</option> is used.  What
+          difference constitutes "too small" is up to the user - in this example, we will use 30 millimeters:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 3 -t 30.0 moss.g moss2.g</userinput>
+- "platform.r" tree(p): l platform.s
++ "platform.r" tree(p): - {l platform.s} {l cone.s}
+- "light.r" tree(p): l LIGHT
++ "light.r" tree(p): u {l eto.s} {l cone.s}
+- "_GLOBAL" title(a): Gary Moss's "World on a Platter"
++ "_GLOBAL" title(a): Gary Moss's "World on a Platter" - diff 01
+- "cone.s" V(p): 16.87542724608999833435519 -34.74353027344000111042988 -16.37908935547000055521494
++ "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+- "cone.r" tree(p): l cone.s
++ "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+- "tor.r" tree(p): l tor
++ "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+D LIGHT
+A tgc_new.s
+A eto.s
+		</computeroutput>
+	</literallayout>
+	Notice that ellipse.s, which was on earlier lists, is now filtered out.  cone.s has a difference in the x coordinates
+	of the parameter V that is large enough to satisfy the tolerance filter, so that parameter stays in.  Parameters that
+	are not strictly numerical comparisons, or those that are part of added or deleted objects, remain in the report.
+        </para>
+  </example>
+
+
+  <example><title>Filtering Results With Search Filters</title>
+        <para>
+          The <emphasis>search</emphasis> filtering technique can be used to select specific subsets of the database to see
+          in reports, using the <option>F</option> option.  For example, limiting the diff report to only objects of type elliptical torus:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -F "-type eto" moss.g moss2.g</userinput>
+A eto.s
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          Note that this option will work at all levels of verbosity:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto" moss.g moss2.g</userinput>
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+                </computeroutput>
+          </literallayout>
+        </para>
+  </example>
+
+  <example><title>Combining Multiple Filters</title>
+        <para>
+          The various diff filters can be used together.  For example, repeating the search
+          filter with ell types added to the accepted list produces the following:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+- "ellipse.s" C(p): 0 8.980256080627000869753829 8.980256080627000869753829
++ "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+- "ellipse.s" A(p): 14.87607192992999927128039 0 0
++ "ellipse.s" A(p): 5.559274328313033919357622 0 0
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+                </computeroutput>
+          </literallayout>
+        </para>
+        <para>
+          If we now add the tolerance filter, we see ellipse.s is filtered out:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 4 -t 30.0 -F "-type eto -or -type ell" moss.g moss2.g</userinput>
+D "LIGHT" C(p): 0 0 2.539999961852999810218989
+D "LIGHT" B(p): 0 2.539999961852999810218989 0
+D "LIGHT" A(p): 2.539999961852999810218989 0 0
+D "LIGHT" V(p): 20.15756225586000027760747 -13.52595329284999969843284 5.034742355347000319909512
+D "LIGHT" DB5_MINORTYPE(p): ell
+A "eto.s" r_d(p): 1.724149328000026404339451
+A "eto.s" r(p): 13.79319462400021123471561
+A "eto.s" C(p): 3.448298656000062134552309 0 3.448298656000062134552309
+A "eto.s" N(p): 0 0 0.01724149328000028000285049
+A "eto.s" V(p): 8.533195938359670051909234 -11.04524849332910996224655 -1.403988582132086548881489
+A "eto.s" DB5_MINORTYPE(p): eto
+                </computeroutput>
+          </literallayout>
+          ellipse.s satisfies the search filter, but is filtered by virtue of having no differences larger than 30 in its parameters.
+        </para>
+
+  </example>
+
+  <example><title>Three Way Differences</title>
+        <para>
+          A "3-way" diff uses an ancestor file as a basis for evaluating the differences between two
+	  other files.  This ancestor provides a "context" in which it is possible to tell whether a
+          difference between two files is a) the product of a change in one but not the other in
+          comparison to the original or b) whether both have (incompatibly) changed in comparison
+          to the original.  For example, if we compare moss2.g from the previous examples to a new
+          file moss3.g:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff moss2.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M eto.s
+M all.g
+M tor
+A ellipse2.r
+A LIGHT
+                </computeroutput>
+          </literallayout>
+          All we can tell is that these objects differ from each other.  If, however, we add moss.g
+          to the comparison as an ancestor file:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff moss2.g moss.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D(R) ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M all.g
+D(L) LIGHT
+M tor
+A(B) tgc_new.s
+C eto.s
+A(R) ellipse2.r
+                </computeroutput>
+          </literallayout>
+          We can now see that ellipse.r was deleted only from the right file (moss3.g) and was unchanged in moss2.g.
+          Similarly, we can tell that LIGHT wsa deleted from moss2.g, ellipse2.r was added in moss3.g, tgc_new.s was
+          added identically in both moss2.g and moss3.g, and eto.s is different in moss2.g and moss3.g in some fashion
+          that the ancestor file moss.g cannot help gdiff resolve (a conflict, denoted by 'C'.)
+        </para>
+        <para>
+          To delve deeper into the nature of the changes, we increase the verbosity with the <option>v</option> option:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v 3 moss2.g moss.g moss3.g</userinput>
+M(L) "platform.r" tree(p): - {l platform.s} {l cone.s}
+M(L) "ellipse.s" C(p): 0 1.561016355403846755933728 1.561016355403846755933728
+M(L) "ellipse.s" A(p): 5.559274328313033919357622 0 0
+D(R) ellipse.r
+M(L) "light.r" tree(p): u {l eto.s} {l cone.s}
+M(L) "_GLOBAL" title(p): Gary Moss's "World on a Platter" - diff 01
+M(L) "cone.s" H(p): 0 0 37.49945872348094155768194
+M(L) "cone.s" V(p): -23.07777996602787595747941 -46.52170066332633524552875 -19.26697361191882151842947
+M(L) "cone.r" tree(p): l cone.s {1 0 0 53.2994  0 1 0 10.1428  0 0 1 0  0 0 0 1}
+M(L) "box.s" V4(p): 29.46579237282375984818827 -5.211529731749999783119165 10.41366577147999805674772
+M(L) "box.s" V3(p): 29.46579237282375984818827 21.58122539520000060520033 10.41366577147999805674772
+M(L) "box.s" V2(p): 29.46579237282375984818827 21.58122539520000060520033 -16.37908935547000055521494
+M(L) "box.s" V1(p): 29.46579237282375984818827 -5.211529731749999783119165 -16.37908935547000055521494
+M(L) "tor.r" tree(p): l tor {1 0 0 8.44652  0 1 0 -56.3571  0 0 1 54.4836  0 0 0 2.71809}
+M(R) "all.g" tree(p): u {u {u {l platform.r} {l box.r {1 0 0 -23.6989  0 1 0 13.41  0 0 1 8.02399  0 0 0 1}}}
+{u {l cone.r {1 0 0 22.0492  0 1 0 12.2349  0 0 1 2.11125e-07  0 0 0 1}} {l ellipse2.r {1 0 0 14.6793  0 1 0
+-41.6077  0 0 1 38.7988  0 0 0 1}}}} {u {l tor.r} {l light.r}}
+D(R) "all.g" region_id(p): -1
+D(L) LIGHT
+M(R) "tor" r_h(p): 6.036279429344108216071163
+M(R) "tor" r_a(p): 30.18139425891995841766402
+A(B) tgc_new.s
+C(LA!=RA) eto.s
+A(R) ellipse2.r
+                </computeroutput>
+          </literallayout>
+          At this level of verbosity, we can now see that most of the modifications are from the left (moss2.g) file.  M(L) denotes
+          a change that is present only in the left file - the right (moss3.g) agrees with the ancestor.  Similarly, we can now see
+          that the deletion of ellipse.r, the addition of ellipse2.r and the change to all.g come from moss3.g.  The conflict
+          on eto.s is that two add operations (one in moss2.g, one in moss3.g) produced different eto.s primitives - there is no
+          ancestor for eto.s in moss.g, so there is no way to identify one of the eto.s primitives as "correct" - they have equal
+          standing, and manual intervention is needed to determine which eto.s is the "correct" version.
+        </para>
+  </example>
+
+
+  <example><title>Complex Three Way Differences</title>
+        <para>
+          Conflicts can arise from situations other than incompatible additions - an incompatible modification
+          is also enough to trigger a conflict.  Consider three ellipsoids, one of which is an ancestor, one of
+          which has had its A and B vectors modified, and the other of which has had its B and C vectors modified.
+          A three-way diff of these files reports a conflict:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff ell_1.g ell_0.g ell_2.g</userinput>
+C ell.s
+                </computeroutput>
+          </literallayout>
+
+          However, closer inspection reveals that this conflict is different than the one reported above for the eto.s object:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v3 ell_1.g ell_0.g ell_2.g</userinput>
+C(LM!=RM) ell.s
+                </computeroutput>
+          </literallayout>
+          This notation indicates that a modification in the left side (ell_1.g) does not match a modification made in ell_2.g.
+          Unlike the eto.s, which reported an add conflict, this is a modification conflict triggered by incompatible, different
+          parameters.  Indeed a full verbosity inspection:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -v4 ell_1.g ell_0.g ell_2.g</userinput>
+M(R) "ell.s" C(p): 0 0 300
+C(A) "ell.s" B(p): 0 500 0
+C(L) "ell.s" B(p): 0 510 0
+C(R) "ell.s" B(p): 0 300 0
+M(L) "ell.s" A(p): 1100 0 0
+                </computeroutput>
+          </literallayout>
+          reveals that the changes to the A and C parameters are <emphasis>not</emphasis> in conflict - it is the B parameter that
+          is causing the problem.
+        </para>
+  </example>
+
+  <example><title>Merging Files</title>
+        <para>
+          The last and most powerful feature of <command>gdiff</command> is to <emphasis>merge</emphasis> two or three different
+          geometry files into a single output file.  This is most useful when an ancestor is available and a three way merge can
+          be performed - in the two way case, the "ancestor" is an empty file and the results will tend to include many more
+          conflicts.  For example, the three way merge of the moss examples earlier:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -M moss_merged.g moss2.g moss0.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D(R) ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M all.g
+D(L) LIGHT
+M tor
+A(B) tgc_new.s
+C eto.s
+A(R) ellipse2.r
+Merging into moss_merged.g
+<prompt>~:</prompt><userinput> mged moss_merged.g ls</userinput>
+CONFLICT(eto.s).left     cone.r/R                 platform.r/R
+CONFLICT(eto.s).right    cone.s                   platform.s
+all.g/                   ellipse.s                tgc_new.s
+box.r/R                  ellipse2.r/R             tor
+box.s                    light.r/R                tor.r/R
+                </computeroutput>
+          </literallayout>
+          The resulting file has only two conflict objects present - the same eto.s issue that was discussed earlier.  Trying to
+          do the same merge <emphasis>without</emphasis> the ancestor file:
+          <literallayout>
+                <computeroutput>
+<prompt>~:</prompt><userinput> gdiff -M moss_2way_merge.g moss2.g moss3.g</userinput>
+M platform.r
+M ellipse.s
+D ellipse.r
+M light.r
+M _GLOBAL
+M cone.s
+M cone.r
+M box.s
+M tor.r
+M eto.s
+M all.g
+M tor
+A ellipse2.r
+A LIGHT
+Merging into moss_2way_merge.g
+<prompt>~:</prompt><userinput> mged moss_2way_merge.g ls</userinput>
+CONFLICT(all.g).left/         CONFLICT(light.r).right/R
+CONFLICT(all.g).right/        CONFLICT(platform.r).left/R
+CONFLICT(box.s).left          CONFLICT(platform.r).right/R
+CONFLICT(box.s).right         CONFLICT(tor).left
+CONFLICT(cone.r).left/R       CONFLICT(tor).right
+CONFLICT(cone.r).right/R      CONFLICT(tor.r).left/R
+CONFLICT(cone.s).left         CONFLICT(tor.r).right/R
+CONFLICT(cone.s).right        LIGHT
+CONFLICT(ellipse.s).left      box.r/R
+CONFLICT(ellipse.s).right     ellipse.r/R
+CONFLICT(eto.s).left          ellipse2.r/R
+CONFLICT(eto.s).right         platform.s
+CONFLICT(light.r).left/R      tgc_new.s
+                </computeroutput>
+          </literallayout>
+          The result is far less clean, although the merge was still performed - in this latter case, the end user will have to
+          resolve many more conflicting object states manually.
+        </para>
+  </example>
+
+
+
+	</refsect1>
+
+	<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+		<para><citerefentry><refentrytitle>search</refentrytitle><manvolnum>n</manvolnum></citerefentry></para>
+
+	</refsect1>
+
+	<refsect1 xml:id='author'><title>AUTHOR</title>
+		<para>BRL-CAD Team</para>
+
+	</refsect1>
+
+	<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+		<para>This software is Copyright (c) 2014-2016 by the United States
+			Government as represented by U.S. Army Research Laboratory.</para>
+
+	</refsect1>
+
+	<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+		<para>Reports of bugs or problems should be submitted via electronic
+			mail to &lt;devs@brlcad.org&gt;.</para>
+	</refsect1>
+</refentry>
+

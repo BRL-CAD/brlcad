@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -108,7 +108,18 @@ rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab 
     if (rtip)
 	RT_CK_RTI(rtip);
 
-    lp = bu_strdup(ilp);
+    if (ilp[0] == '{') {
+	int tcl_argc;
+	const char **tcl_argv;
+	if(bu_argv_from_tcl_list(ilp, &tcl_argc, &tcl_argv) || tcl_argc != 1) {
+	    bu_log("rt_do_cmd:  invalid input %s\n", ilp);
+	    return -1; /* Looked like a tcl list, but apparently not */
+	} else {
+	    lp = bu_strdup(tcl_argv[0]);
+	}
+    } else {
+	lp = bu_strdup(ilp);
+    }
 
     nwords = bu_argv_from_string(cmd_args, MAXWORDS, lp);
     if (nwords <= 0)

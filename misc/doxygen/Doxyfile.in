@@ -54,7 +54,7 @@ PROJECT_LOGO           =
 # If a relative path is entered, it will be relative to the location
 # where doxygen was started. If left blank the current directory will be used.
 
-OUTPUT_DIRECTORY       = @CMAKE_BINARY_DIR@/doc/doxygen_@doxlibname@
+OUTPUT_DIRECTORY       = "@CMAKE_BINARY_DIR@/doc/doxygen_@doxlibname@"
 
 # If the CREATE_SUBDIRS tag is set to YES, then doxygen will create
 # 4096 sub-directories (in 2 levels) under the output directory of each output
@@ -132,7 +132,7 @@ FULL_PATH_NAMES        = YES
 # relative paths, which will be relative from the directory where doxygen is
 # started.
 
-STRIP_FROM_PATH        = @CMAKE_SOURCE_DIR@
+STRIP_FROM_PATH        = "@CMAKE_SOURCE_DIR@"
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of
 # the path mentioned in the documentation of a class, which tells
@@ -654,7 +654,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories
 # with spaces.
 
-INPUT  = @CMAKE_SOURCE_DIR@/misc/doxygen/intro.dox
+INPUT  = "@CMAKE_SOURCE_DIR@/misc/doxygen/intro.dox"
 @INPUTS@
 
 # This tag can be used to specify the character encoding of the source files
@@ -751,7 +751,7 @@ IMAGE_PATH             =
 # code is scanned, but not when the output code is generated. If lines are added
 # or removed, the anchors will not be placed correctly.
 
-INPUT_FILTER           =
+INPUT_FILTER           = "sed -e 's#\(FIXME\|TODO\|todo\|fixme\)[:?]*#\n @todo#g'"
 
 # The FILTER_PATTERNS tag can be used to specify filters on a per file pattern
 # basis.
@@ -1192,7 +1192,7 @@ FORMULA_TRANSPARENT    = YES
 # output. When enabled you may also need to install MathJax separately and
 # configure the path to it using the MATHJAX_RELPATH option.
 
-USE_MATHJAX            = NO
+USE_MATHJAX            = YES
 
 # When MathJax is enabled you can set the default output format to be used for
 # the MathJax output. Supported types are HTML-CSS, NativeMML (i.e. MathML) and
@@ -1596,6 +1596,7 @@ INCLUDE_FILE_PATTERNS  =
 PREDEFINED             = "UNUSED(x)=x"
 PREDEFINED            += "__BEGIN_DECLS="
 PREDEFINED            += "__END_DECLS="
+PREDEFINED            += "__cplusplus"
 @PREDEFINES@
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then
@@ -1692,7 +1693,7 @@ HIDE_UNDOC_RELATIONS   = YES
 # toolkit from AT&T and Lucent Bell Labs. The other options in this section
 # have no effect if this option is set to NO (the default)
 
-HAVE_DOT               = YES
+HAVE_DOT               = @DOXYGEN_DOT_FOUND@
 
 # The DOT_NUM_THREADS specifies the number of dot invocations doxygen is
 # allowed to run in parallel. When set to 0 (the default) doxygen will

@@ -1,7 +1,7 @@
 #               F U L L C O L O R P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -75,6 +75,17 @@ namespace eval RtWizard {
 		eval itk_initialize $args
 
 		$itk_component(helpPanel) configure -state disabled
+
+		if {[llength $::RtWizard::wizard_state(color_objlist)] > 0 && [llength $selected] == 0 } {
+		    set selected $::RtWizard::wizard_state(color_objlist)
+		    foreach sitem $selected {
+			$itk_component(hier) selection add $sitem
+		    }
+		    draw $selected
+
+		    updateStatus
+		}
+
 	    }
 	}
 

@@ -1,7 +1,7 @@
 /*                       G C V _ A P I . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv_api.h
+/** @file gcv/api.h
  *
  * Main public API of the LIBGCV geometry conversion library.
  *
@@ -39,28 +39,18 @@ __BEGIN_DECLS
 /**
  * The big kahuna.
  */
-struct gcv_context;
-
-
-/**
- * Conversion options.
- */
-struct gcv_opts;
-
-
-/**
- * Input/Output/Translation filter.
- */
-struct gcv_filter;
+struct gcv_context
+{
+    struct db_i *dbip;
+    bu_avs_t messages;
+};
 
 
 /**
  * Initialize a conversion context.
- *
- * Returns 0 on success or non-zero on failure.
  */
-GCV_EXPORT int
-gcv_init(struct gcv_context *cxt);
+GCV_EXPORT void
+gcv_context_init(struct gcv_context *cxt);
 
 
 /**
@@ -68,68 +58,144 @@ gcv_init(struct gcv_context *cxt);
  * allocated by the library.  Caller is responsible for freeing the
  * context pointer itself, if necessary.
  */
-GCV_EXPORT int
-gcv_destroy(struct gcv_context *cxt);
+GCV_EXPORT void
+gcv_context_destroy(struct gcv_context *cxt);
+
+
+enum gcv_tessellation_algorithm {
+    GCV_TESS_DEFAULT = 0,
+    GCV_TESS_BOTTESS,
+    GCV_TESS_MARCHING_CUBES
+};
+
+
+enum gcv_filter_type {
+    GCV_FILTER_FILTER,
+    GCV_FILTER_READ,
+    GCV_FILTER_WRITE
+};
 
 
 /**
- * Append a filter for reading objects
+ * Conversion options.
+ */
+struct gcv_opts
+{
+    /* debug flags, applied via bitwise-OR
+     * original flags are restored after conversion */
+    int bu_debug_flag;
+    uint32_t rt_debug_flag;
+    uint32_t nmg_debug_flag;
+
+    /* print debugging info if debug_mode == 1 */
+    unsigned debug_mode;
+
+    /* 0 is quiet, printing only errors */
+    unsigned verbosity_level;
+
+    /* max cpus; 0 for automatic */
+    unsigned max_cpus;
+
+    struct bn_tol calculational_tolerance;
+    struct rt_tess_tol tessellation_tolerance;
+    enum gcv_tessellation_algorithm tessellation_algorithm;
+
+    /* conversion to units */
+    fastf_t scale_factor;
+
+    /* default name for nameless objects */
+    const char *default_name;
+
+    /* number of elements in object_names
+     * if 0, convert all top-level objects */
+    size_t num_objects;
+
+    /* objects to convert */
+    const char * const *object_names;
+};
+
+
+/**
+ * Assign default option values.
  */
 GCV_EXPORT void
-gcv_reader(struct gcv_filter *reader, const char *source, const struct gcv_opts *UNUSED(opts));
+gcv_opts_default(struct gcv_opts *gcv_options);
 
 
 /**
- * Append a filter for writing objects.
+ * Input/Output/Translation filter.
  */
-GCV_EXPORT void
-gcv_writer(struct gcv_filter *writer, const char *target, const struct gcv_opts *UNUSED(opts));
+struct gcv_filter {
+    /* name allowing unique identification by users */
+    const char * const name;
 
+    /* operation type */
+    const enum gcv_filter_type filter_type;
+
+    /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
+    const bu_mime_model_t mime_type;
+
+    /**
+     * PRIVATE
+     *
+     * Allocate and initialize a bu_opt_desc block and associated memory for
+     * storing the option data.
+     *
+     * Must set *options_desc and *options_data.
+     *
+     * May be NULL.
+     */
+    void (* const create_opts_fn)(struct bu_opt_desc **options_desc, void **options_data);
+
+    /**
+     * PRIVATE
+     *
+     * Free the filter-specific opaque pointer returned by create_opts_fn().
+     * NULL if and only if 'create_opts_fn' is NULL.
+     */
+    void (* const free_opts_fn)(void *options_data);
+
+    /*
+     * PRIVATE
+     *
+     * Perform the filter operation.
+     *
+     * For filters of type GCV_FILTER_WRITE, context->dbip is marked read-only
+     * (the pointer is to a non-const struct db_i due to in-memory data that
+     * may be modified). Filters of type GCV_FILTER_FILTER receive a NULL target.
+     * For other filters, 'target' is the input or output file path.
+     *
+     * 'gcv_options' will always be a pointer to a valid struct gcv_opts.
+     * 'options_data' is NULL if and only if 'create_opts_fn' is NULL.
+     */
+    int (* const filter_fn)(struct gcv_context *context, const struct gcv_opts *gcv_options, const void *options_data, const char *target);
+};
+
+
+struct gcv_plugin {
+    const struct gcv_filter * const * const filters;
+};
+
+
+/*
+ * Return a pointer to a bu_ptbl listing all registered filters as
+ * const struct gcv_filter pointers.
+ */
+GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
+
+GCV_EXPORT const struct gcv_plugin *gcv_plugin_info();
 
 /**
+ * Perform a filtering operation on a gcv_context.
  *
+ * If 'gcv_options' is NULL, defaults will be used as set by gcv_opts_default().
+ * The parameters 'argc' and 'argv' are used for option processing as specified by
+ * the filter.
+ *
+ * Returns 1 on success and 0 on failure.
  */
 GCV_EXPORT int
-gcv_execute(struct gcv_context *cxt, const struct gcv_filter *filter);
-
-
-/**
- * Convert objects from one file to another, based on the conversion
- * criteria specified (defaults to maximum data preservation).
- *
- * This provides a simplified conversion interface for applications
- * desiring maximum simplicity for reading and writing geometry data.
- * This is a shorthand for manually calling gcv_read() and gcv_write().
- *
- * Returns negative on fatal error or number of objects written
- */
-GCV_EXPORT int
-gcv_convert(const char *in_file, const struct gcv_opts *in_opts, const char *out_file, const struct gcv_opts *out_opts);
-
-
-enum gcv_conversion_type {GCV_CONVERSION_READ, GCV_CONVERSION_WRITE};
-struct gcv_converter;
-
-
-/* returns pointer table of `const struct gcv_converter *` */
-GCV_EXPORT const struct bu_ptbl *gcv_get_converters(void);
-
-
-/* returns pointer table of `const struct gcv_converter *` */
-GCV_EXPORT struct bu_ptbl gcv_find_converters(mime_model_t mime_type,
-	enum gcv_conversion_type conversion_type);
-
-
-GCV_EXPORT void gcv_converter_create_options(const struct gcv_converter *converter,
-	struct bu_opt_desc **options_desc, void **options_data);
-
-
-GCV_EXPORT void gcv_converter_free_options(const struct gcv_converter *converter, void *options_data);
-
-
-GCV_EXPORT int gcv_converter_convert(const struct gcv_converter *converter,
-	const char *path, struct db_i *dbip, const struct gcv_opts *gcv_options,
-	const void *options_data);
+gcv_execute(struct gcv_context *context, const struct gcv_filter *filter, const struct gcv_opts *gcv_options, size_t argc, const char * const *argv, const char *target);
 
 
 __END_DECLS

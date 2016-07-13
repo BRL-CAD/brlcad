@@ -1,7 +1,7 @@
 /*                      C O N V I N S T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@ void
 Convinst()
 {
 
-    int i, j, k;
+    size_t i;
+    int j, k;
     int type;
     int pointer;
     int conv = 0;
@@ -54,7 +55,7 @@ Convinst()
 
 	/* convert pointer to a "dir" index */
 	pointer = (pointer - 1)/2;
-	if (pointer < 0 || pointer >= totentities) {
+	if (pointer < 0 || (size_t)pointer >= totentities) {
 	    bu_log("Primitive instance D%07d (%s) does not point to a legal primitive\n",
 		   dir[i]->direct, dir[i]->name);
 	    continue;

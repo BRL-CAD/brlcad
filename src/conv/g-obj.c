@@ -1,7 +1,7 @@
 /*                         G - O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -310,7 +310,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END(&verts);
+    numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (do_normals)
@@ -497,7 +497,7 @@ nmg_to_obj(struct nmgregion *r, const struct db_full_path *pathp, int UNUSED(reg
     vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (do_normals) {
-	norm_offset += BU_PTBL_END(&norms);
+	norm_offset += BU_PTBL_LEN(&norms);
 	bu_ptbl_free(&norms);
     }
     bu_free(region_name, "region name");

@@ -1,7 +1,7 @@
 /*                 B U _ F I L E _ M I M E . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,7 @@
 #include "bu.h"
 
 int
-test_ext(const char *str, mime_context_t context, int expected)
+test_ext(const char *str, bu_mime_context_t context, int expected)
 {
     int status = 0;
     int type = bu_file_mime(str, context);
@@ -53,9 +53,9 @@ main(int ac, char *av[])
     sscanf(av[2], "%d", &context);
     sscanf(av[3], "%d", &expected);
 
-    if (context >= MIME_UNKNOWN) return -1;
+    if (context >= BU_MIME_UNKNOWN) return -1;
 
-    return test_ext(av[1], (mime_context_t)context, expected);
+    return test_ext(av[1], (bu_mime_context_t)context, expected);
 }
 
 

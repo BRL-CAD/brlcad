@@ -20,9 +20,6 @@ if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLC
   # Wordpress
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/wordpress.xsl.in
     ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/wordpress.xsl)
-  #ppt
-  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/resources/brlcad/presentation.xsl.in
-    ${CMAKE_CURRENT_BINARY_DIR}/resources/brlcad/presentation.xsl)
 endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 # Files for PDF products
@@ -52,43 +49,6 @@ add_subdirectory(lessons)
 add_subdirectory(presentations)
 add_subdirectory(specifications)
 add_subdirectory(system)
-
-# Now that we have all the individual targets listed by the DocBook.cmake
-# macros, define convenience targets
-if(BRLCAD_EXTRADOCS_HTML)
-  get_property(BRLCAD_EXTRADOCS_HTML_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_HTML_TARGETS)
-  add_custom_target(doc_html DEPENDS ${BRLCAD_EXTRADOCS_HTML_TARGETS})
-  set_target_properties(doc_html PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_HTML)
-if(BRLCAD_EXTRADOCS_PHP)
-  get_property(BRLCAD_EXTRADOCS_PHP_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PHP_TARGETS)
-  add_custom_target(doc_php DEPENDS ${BRLCAD_EXTRADOCS_PHP_TARGETS})
-  set_target_properties(doc_php PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_PHP)
-if(BRLCAD_EXTRADOCS_PPT)
-  get_property(BRLCAD_EXTRADOCS_PPT_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PPT_TARGETS)
-  add_custom_target(doc_ppt DEPENDS ${BRLCAD_EXTRADOCS_PPT_TARGETS})
-  set_target_properties(doc_ppt PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_PPT)
-if(BRLCAD_EXTRADOCS_MAN)
-  get_property(BRLCAD_EXTRADOCS_MAN_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_MAN_TARGETS)
-  add_custom_target(doc_man DEPENDS ${BRLCAD_EXTRADOCS_MAN_TARGETS})
-  set_target_properties(doc_man PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_MAN)
-if(BRLCAD_EXTRADOCS_PDF)
-  get_property(BRLCAD_EXTRADOCS_PDF_TARGETS GLOBAL PROPERTY BRLCAD_EXTRADOCS_PDF_TARGETS)
-  add_custom_target(doc_pdf DEPENDS ${BRLCAD_EXTRADOCS_PDF_TARGETS})
-  set_target_properties(doc_pdf PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_PDF)
-if(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT )
-  add_custom_target(doc_all DEPENDS
-	${BRLCAD_EXTRADOCS_HTML_TARGETS}
-	 ${BRLCAD_EXTRADOCS_PHP_TARGETS}
-         ${BRLCAD_EXTRADOCS_PPT_TARGETS}
-  ${BRLCAD_EXTRADOCS_MAN_TARGETS}
-	${BRLCAD_EXTRADOCS_PDF_TARGETS})
-  set_target_properties(doc_all PROPERTIES FOLDER "DocBook")
-endif(BRLCAD_EXTRADOCS_HTML OR BRLCAD_EXTRADOCS_MAN OR BRLCAD_EXTRADOCS_PDF OR BRLCAD_EXTRADOCS_PHP OR BRLCAD_EXTRADOCS_PPT)
 
 CMAKEFILES(README fop.xconf.in log4j.properties resources)
 CMAKEFILES(README.DB_authors_notes)

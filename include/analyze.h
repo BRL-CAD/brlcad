@@ -1,7 +1,7 @@
 /*                       A N A L Y Z E . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,17 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file analyze.h
+/** @addtogroup libanalyze
  *
  * Functions provided by the LIBANALYZE geometry analysis library.
  *
  */
+/** @{ */
+/** @file include/analyze.h */
 
 #ifndef ANALYZE_H
 #define ANALYZE_H
 
 #include "common.h"
-
+#include "ged.h"
 #include "raytrace.h"
 
 __BEGIN_DECLS
@@ -47,6 +49,10 @@ __BEGIN_DECLS
 /* Libanalyze return codes */
 #define ANALYZE_OK 0x0000
 #define ANALYZE_ERROR 0x0001 /**< something went wrong, function not completed */
+#define ANALYZE_SEM_WORKER GED_SEM_LAST
+#define ANALYZE_SEM_STATS ANALYZE_SEM_WORKER+1
+#define ANALYZE_SEM_LIST ANALYZE_SEM_STATS+1
+#define ANALYZE_SEM_LAST ANALYZE_SEM_LIST+1
 
 /*
  *     Density specific structures
@@ -139,6 +145,24 @@ struct diff_seg {
     int valid;
 };
 
+struct per_obj_data;
+struct per_region_data;
+
+struct raytracing_context {
+    int num_objects;
+    int num_views;
+
+    unsigned long *shots;
+
+    vect_t span;    /* How much space does the geometry span in each of X, Y, Z directions */
+    vect_t area;    /* area of the view for view with invariant at index */
+
+    struct per_obj_data *objs;
+
+    struct density_entry *densities;
+    int num_densities;
+};
+
 ANALYZE_EXPORT int
 analyze_raydiff(struct analyze_raydiff_results **results, struct db_i *dbip,
 	const char *left, const char *right, struct bn_tol *tol, int solidcheck);
@@ -152,6 +176,22 @@ analyze_obj_inside(struct db_i *dbip, const char *outside, const char *inside, f
 typedef int (*hitfunc_t)(struct application *, struct partition *, struct seg *);
 typedef int (*missfunc_t)(struct application *);
 typedef int (*overlapfunc_t)(struct application *, struct partition *, struct region *, struct region *, struct partition *);
+
+ANALYZE_EXPORT extern fastf_t
+analyze_volume(struct raytracing_context *context, const char *name);
+
+ANALYZE_EXPORT extern point_t *
+analyze_centroid(struct raytracing_context *context, const char *name);
+
+ANALYZE_EXPORT extern fastf_t
+analyze_surf_area(struct raytracing_context *context, const char *name);
+
+ANALYZE_EXPORT extern int
+analyze_raytracing_context_init(struct raytracing_context *context, struct db_i *dbip,
+    const char **names, int *flags);
+
+ANALYZE_EXPORT extern void
+analyze_raytracing_context_clear(struct raytracing_context *context);
 
 struct rt_gen_worker_vars {
     struct rt_i *rtip;
@@ -176,6 +216,8 @@ analyze_find_subtracted(struct bu_ptbl *results, struct rt_wdb *wdbp,
 __END_DECLS
 
 #endif /* ANALYZE_H */
+
+/** @} */
 
 /*
  * Local Variables:

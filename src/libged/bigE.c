@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -1126,7 +1126,7 @@ shoot_and_plot(point_t start_pt,
 {
     struct xray rp;
     struct ray_data rd;
-    int shoot_leaf;
+    size_t shoot_leaf;
     struct bu_list *final_segs;
 
     if (bu_debug&BU_DEBUG_MEM_CHECK && bu_mem_barriercheck())
@@ -1172,7 +1172,7 @@ shoot_and_plot(point_t start_pt,
     /* shoot this ray at every leaf solid except the one this edge
      * came from (or the two that this intersection line came from
      */
-    for (shoot_leaf=0; shoot_leaf < BU_PTBL_END(&dgcdp->leaf_list); shoot_leaf++) {
+    for (shoot_leaf=0; shoot_leaf < BU_PTBL_LEN(&dgcdp->leaf_list); shoot_leaf++) {
 	union E_tree *shoot;
 	int dont_shoot=0;
 
@@ -1186,7 +1186,7 @@ shoot_and_plot(point_t start_pt,
 	/* don't shoot rays at the leaves that were the source of this
 	 * possible edge.
 	 */
-	if (shoot_leaf == skip_leaf1 || shoot_leaf == skip_leaf2)
+	if ((long)shoot_leaf == skip_leaf1 || (long)shoot_leaf == skip_leaf2)
 	    dont_shoot = 1;
 	else {
 	    /* don't shoot at duplicate solids either */
@@ -1352,7 +1352,7 @@ Eplot(union E_tree *eptr,
       struct _ged_client_data *dgcdp)
 {
     point_t start_pt;
-    int leaf_no;
+    size_t leaf_no;
     union E_tree *leaf_ptr;
     int hit_count1=0, hit_count2=0;
     point_t *hits1=NULL, *hits2=NULL;
@@ -1366,7 +1366,7 @@ Eplot(union E_tree *eptr,
     CK_ETREE(eptr);
 
     /* create an edge list for each leaf solid */
-    for (leaf_no=0; leaf_no < BU_PTBL_END(&dgcdp->leaf_list); leaf_no++) {
+    for (leaf_no=0; leaf_no < BU_PTBL_LEN(&dgcdp->leaf_list); leaf_no++) {
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 	CK_ETREE(leaf_ptr);
 	if (leaf_ptr->l.op != OP_DB_LEAF && leaf_ptr->l.op != OP_SOLID) {
@@ -1383,8 +1383,8 @@ Eplot(union E_tree *eptr,
     /* now plot appropriate parts of each solid */
 
     /* loop through every leaf solid */
-    for (leaf_no=0; leaf_no < BU_PTBL_END(&dgcdp->leaf_list); leaf_no++) {
-	int edge_no;
+    for (leaf_no=0; leaf_no < BU_PTBL_LEN(&dgcdp->leaf_list); leaf_no++) {
+	size_t edge_no;
 
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 
@@ -1392,7 +1392,7 @@ Eplot(union E_tree *eptr,
 	    continue;
 
 	/* do each edge of the current leaf solid */
-	for (edge_no=0; edge_no < BU_PTBL_END(&leaf_ptr->l.edge_list); edge_no++) {
+	for (edge_no=0; edge_no < BU_PTBL_LEN(&leaf_ptr->l.edge_list); edge_no++) {
 	    struct edge *e;
 	    struct vertex_g *vg;
 	    struct vertex_g *vg2;
@@ -1426,14 +1426,14 @@ Eplot(union E_tree *eptr,
     hits_avail2 = HITS_BLOCK;
 
     /* Now draw solid intersection lines */
-    for (leaf_no=0; leaf_no < BU_PTBL_END(&dgcdp->leaf_list); leaf_no++) {
-	int leaf2;
+    for (leaf_no=0; leaf_no < BU_PTBL_LEN(&dgcdp->leaf_list); leaf_no++) {
+	size_t leaf2;
 
 	leaf_ptr = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, leaf_no);
 	if (!leaf_ptr->l.m)
 	    continue;
 
-	for (leaf2=leaf_no+1; leaf2 < BU_PTBL_END(&dgcdp->leaf_list); leaf2++) {
+	for (leaf2=leaf_no+1; leaf2 < BU_PTBL_LEN(&dgcdp->leaf_list); leaf2++) {
 	    union E_tree *leaf2_ptr;
 	    struct nmgregion *r1, *r2;
 	    struct shell *s1, *s2;
@@ -1751,7 +1751,8 @@ HIDDEN void
 fix_halfs(struct _ged_client_data *dgcdp)
 {
     point_t max, min;
-    int i, count=0;
+    size_t i;
+    size_t count=0;
     struct bn_tol *tol;
 
     tol = &dgcdp->gedp->ged_wdbp->wdb_tol;
@@ -1759,7 +1760,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
     VSETALL(max, -INFINITY);
     VSETALL(min, INFINITY);
 
-    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 
 	tp = (union E_tree *)BU_PTBL_GET(&dgcdp->leaf_list, i);
@@ -1777,7 +1778,7 @@ fix_halfs(struct _ged_client_data *dgcdp)
 	return;
     }
 
-    for (i = 0; i < BU_PTBL_END(&dgcdp->leaf_list); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&dgcdp->leaf_list); i++) {
 	union E_tree *tp;
 	struct vertex *v[8];
 	struct vertex **vp[4];

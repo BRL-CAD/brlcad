@@ -1,7 +1,7 @@
 /*                      F A C E T I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,12 +23,14 @@
  */
 
 
-#include "./facetize.h"
+#include "common.h"
+
+#include "gcv/util.h"
 
 
 HIDDEN union tree *
 _gcv_facetize_region_end(struct db_tree_state *tree_state,
-                         const struct db_full_path *path, union tree *current_tree, void *client_data)
+			 const struct db_full_path *path, union tree *current_tree, void *client_data)
 {
     union tree **facetize_tree;
 
@@ -134,10 +136,10 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     union tree *facetize_tree;
     struct model *nmg_model;
 
-    /* static to silence warnings over longjmp  */
-    static struct nmgregion *current_region = NULL;
-    static struct rt_bot_internal *result = NULL;
-    static struct shell *current_shell = NULL;
+    /* volatile to silence warnings over longjmp */
+    struct nmgregion * volatile current_region = NULL;
+    struct rt_bot_internal * volatile result = NULL;
+    struct shell * volatile current_shell = NULL;
 
     RT_CK_DBI(db);
     RT_CK_FULL_PATH(path);
@@ -145,7 +147,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
     RT_CK_TESS_TOL(tess_tol);
 
     {
-	char *str_path = db_path_to_string(path);
+	char * const str_path = db_path_to_string(path);
 	struct db_tree_state initial_tree_state = rt_initial_tree_state;
 	initial_tree_state.ts_tol = tol;
 	initial_tree_state.ts_ttol = tess_tol;
@@ -185,7 +187,6 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 
     /* New region remains part of this nmg "model" */
     NMG_CK_REGION(facetize_tree->tr_d.td_r);
-    result = NULL;
 
     _gcv_optimize_model(nmg_model);
 
@@ -213,7 +214,7 @@ gcv_facetize(struct db_i *db, const struct db_full_path *path,
 	    } else {
 		/* catch */
 		BU_UNSETJUMP;
-		bu_log("gcv_facetize(): conversion to BOT failed\n");
+		bu_log("gcv_facetize(): conversion to BoT failed\n");
 
 		if (result)
 		    _gcv_facetize_free_bot(result);

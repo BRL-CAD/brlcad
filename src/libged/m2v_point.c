@@ -1,7 +1,7 @@
 /*                         M 2 V _ P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,7 +84,7 @@ ged_m2v_point(struct ged *gedp, int argc, const char *argv[])
 
     /* Convert the incoming model point to a view point */
     MAT4X3PNT(view, gedp->ged_gvp->gv_model2view, model);
-    bn_encode_vect(gedp->ged_result_str, view);
+    bn_encode_vect(gedp->ged_result_str, view, 1);
 
     return GED_OK;
 }

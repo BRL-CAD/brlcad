@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -318,7 +318,6 @@ extern size_t height;
 
 /* variables shared with do.c */
 extern int matflag;
-extern int interactive;
 extern int benchmark;
 extern int rt_verbosity;
 extern char *outputfile;		/* output file name */
@@ -792,7 +791,6 @@ prep_frame(struct frame *fr)
 	    rt_dist_tol, rt_perp_tol
 	);
     bu_vls_strcat(&fr->fr_cmd, buf);
-    if (interactive) bu_vls_strcat(&fr->fr_cmd, " -I");
     if (benchmark) bu_vls_strcat(&fr->fr_cmd, " -B");
     if (!EQUAL(aspect, 1.0)) {
 	sprintf(buf, " -V%g", aspect);
@@ -1665,9 +1663,6 @@ task_server(struct servers *sp, struct frame *fr, struct timeval *nowp)
     /* Base new assignment on desired result rate & measured speed */
     lump = assignment_time() * sp->sr_w_elapsed;
 
-    /* If for an interactive demo, limit assignment to 1 scanline */
-    if (interactive && lump > fr->fr_width) lump = fr->fr_width;
-
     /* If each frame has a dedicated server, make lumps big */
     if (work_allocate_method == OPT_MOVIE) {
 	lump = fr->fr_width * 2;	/* 2 scanlines at a whack */
@@ -2380,7 +2375,6 @@ cd_stat(const int UNUSED(argc), const char **UNUSED(argv))
     s = stamp();
 
     /* Print work assignments */
-    if (interactive) bu_log("%s Interactive mode\n", s);
     bu_log("%s Worker assignment interval=%d seconds:\n",
 	   s, assignment_time());
     bu_log("   Server   Last  Last   Average  Cur   Machine\n");
@@ -3609,7 +3603,6 @@ main(int argc, char *argv[])
 	    fprintf(stderr, "remrt:  bad arg list\n");
 	    bu_exit(1, NULL);
 	}
-	if (interactive) work_allocate_method = OPT_FRAME;
 
 	/* take note of database name and treetops */
 	if (bu_optind+2 > argc) {

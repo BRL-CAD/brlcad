@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 #define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
- * windows when we cannot autogenerate it easily. do not include
+ * windows when we cannot auto-generate it easily. do not include
  * config.h if this file has been installed.  (public header files
  * should not use config defines)
  */
@@ -59,7 +59,7 @@
 
 /* make sure lrint() is provided */
 #  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
-#    define lrint(_x) (((_x) < 0.0) ? ceil((_x)-0.5) : floor((_x)+0.5))
+#    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
 #    define HAVE_LRINT 1
 #  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
 long int lrint(double x);
@@ -69,12 +69,14 @@ long int lrint(double x);
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */
-#ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
-#  define __END_DECLS     }              /**< if C++, set to } */
-#else
-#  define __BEGIN_DECLS /**< if C++, set to extern "C" { */
-#  define __END_DECLS   /**< if C++, set to } */
+#ifndef __BEGIN_DECLS
+#  ifdef __cplusplus
+#    define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#    define __END_DECLS     }              /**< if C++, set to } */
+#  else
+#    define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#    define __END_DECLS   /**< if C++, set to } */
+#  endif
 #endif
 
 /**
@@ -91,7 +93,7 @@ long int lrint(double x);
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+/* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *
  * TODO: test removal of __STRICT_ANSI__ on Windows.
@@ -311,7 +313,7 @@ typedef ptrdiff_t ssize_t;
  * have to add it for them
  */
 #if defined(_MSC_VER) && defined(__STDC__)
-   #include <tchar.h>
+#  include <tchar.h>
    /* MSVC++ misses this. */
    typedef _TCHAR TCHAR;
 #endif
@@ -357,7 +359,7 @@ typedef ptrdiff_t ssize_t;
  */
 #  pragma warning( disable : 4351 )
 
-/* dubious warnings that are not yet intentinoally disabled:
+/* dubious warnings that are not yet intentionally disabled:
  *
  * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
  *
@@ -366,7 +368,7 @@ typedef ptrdiff_t ssize_t;
  *
  * int i = 1; bool b = i;
  *
- * there is something to be said for making such assignments explict,
+ * there is something to be said for making such assignments explicit,
  * e.g., "b = (i != 0);", but this arguably decreases readability or
  * clarity and the fix has potential for introducing logic errors.
  */
@@ -391,6 +393,61 @@ typedef ptrdiff_t ssize_t;
 #else
   #define EXTERNVARINIT
 #endif
+
+/**
+ * Provide canonical preprocessor stringification.
+ *
+ * #define abc 123
+ * CPP_STR(abc) => "abc"
+ */
+#ifndef CPP_STR
+#  define CPP_STR(x) # x
+#endif
+
+/**
+ * Provide canonical preprocessor expanded stringification.
+ *
+ * #define abc 123
+ * CPP_XSTR(abc) => "123"
+ */
+#ifndef CPP_XSTR
+#  define CPP_XSTR(x) CPP_STR(x)
+#endif
+
+/**
+ * Provide canonical preprocessor concatenation.
+ *
+ * #define abc 123
+ * CPP_GLUE(abc, 123) => abc123
+ * CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
+ * CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
+ * #define abc123 "xyz"
+ * CPP_GLUE(abc, 123) => abc123 => "xyz"
+ */
+#ifndef CPP_GLUE
+#  define CPP_GLUE(a, b) a ## b
+#endif
+
+/**
+ * Provide canonical preprocessor expanded concatenation.
+ *
+ * #define abc 123
+ * CPP_XGLUE(abc, 123) => 123123
+ * CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
+ * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ */
+#ifndef CPP_XGLUE
+#  define CPP_XGLUE(a, b) CPP_GLUE
+#endif
+
+/**
+ * Provide the current filename and linenumber as a static
+ * preprocessor string in "file"":""line" format (e.g., "file:123").
+ */
+#ifndef CPP_FILELINE
+#  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
+#endif
+
 
 #endif  /* COMMON_H */
 

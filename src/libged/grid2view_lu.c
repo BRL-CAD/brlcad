@@ -1,7 +1,7 @@
 /*                         G R I D 2 V I E W _ L U . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,7 @@ ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[])
     f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VADD2(view_pt, mo_view_pt, scan);
-    bn_encode_vect(gedp->ged_result_str, view_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 
     return GED_OK;
 

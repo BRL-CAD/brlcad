@@ -1,7 +1,7 @@
 /*                     B R E S O U R C E . H
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,23 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bresource.h
+/** @addtogroup bu_resource
  *
- * BRL-CAD private system compatibility wrapper header that provides
+ * BRL-CAD system compatibility wrapper header that provides
  * declarations for standard system RESOURCE LIMIT routines.
  *
  * This header is commonly used in lieu of including the following:
  * sys/resource.h sys/time.h sys/wait.h
  *
  * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
+ * all of them.
  *
  * The following preprocessor variables control header inclusions:
  *   HAVE_SYS_TIME_H
  *   HAVE_SYS_RESOURCE_H
  *   HAVE_SYS_WAIT_H
  */
+/** @{ */
+/** @file bresource.h */
 
 #ifndef BRESOURCE_H
 #define BRESOURCE_H
@@ -70,6 +71,8 @@
 #endif
 
 #endif /* BRESOURCE_H */
+
+/** @} */
 
 /*
  * Local Variables:

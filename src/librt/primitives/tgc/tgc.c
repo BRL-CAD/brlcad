@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2192,8 +2192,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t rel, absolute, norm;	/* interpreted tolerances */
     fastf_t alpha_tol;	/* final tolerance for ellipse parameter */
     fastf_t abs_tol;	/* handle invalid ttol->abs */
-    int nells;		/* total number of ellipses */
-    int nsegs;		/* number of vertices/ellipse */
+    size_t nells;		/* total number of ellipses */
+    size_t nsegs;		/* number of vertices/ellipse */
     vect_t *A;		/* array of A vectors for ellipses */
     vect_t *B;		/* array of B vectors for ellipses */
     fastf_t *factors;	/* array of ellipse locations along height vector */
@@ -2205,7 +2205,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct bu_ptbl faces;		/* table of faceuses for nmg_gluefaces */
     struct vertex **v[3];		/* array for making triangular faces */
 
-    int i;
+    size_t i;
 
     VSETALL(unit_a, 0);
     VSETALL(unit_b, 0);
@@ -2355,7 +2355,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 	fastf_t ang;
 	fastf_t sin_ang, cos_ang, cos_m_1_sq, sin_sq;
 	fastf_t len_A, len_B, len_C, len_D;
-	int bot_ell=0, top_ell=1;
+	size_t bot_ell=0;
+	size_t top_ell=1;
 	int reversed=0;
 
 	nells = 2;
@@ -2528,7 +2529,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     /* calculate geometry for points */
     for (i=0; i<nells; i++) {
 	fastf_t h_factor;
-	int j;
+	size_t j;
 
 	h_factor = factors[i];
 	for (j=0; j<nsegs; j++) {
@@ -2561,7 +2562,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* make sure no edges will be created with length < tol->dist */
     for (i=0; i<nells; i++) {
-	int j;
+	size_t j;
 	point_t curr_pt;
 	vect_t edge_vect;
 
@@ -2593,14 +2594,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_ptbl_init(&faces, 64, " &faces ");
     /* Make bottom face */
     if (a > 0.0 && b > 0.0) {
-	for (i=nsegs-1; i>=0; i--) {
+	for (i=nsegs; i>0; i--) {
 	    /* reverse order to get outward normal */
-	    if (!pts[0][i].dont_use)
-		bu_ptbl_ins(&verts, (long *)&pts[0][i].v);
+	    if (!pts[0][i-1].dont_use)
+		bu_ptbl_ins(&verts, (long *)&pts[0][i-1].v);
 	}
 
-	if (BU_PTBL_END(&verts) > 2) {
-	    fu_base = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	if (BU_PTBL_LEN(&verts) > 2) {
+	    fu_base = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_LEN(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_base);
 	} else
 	    fu_base = (struct faceuse *)NULL;
@@ -2616,8 +2617,8 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 		bu_ptbl_ins(&verts, (long *)&pts[nells-1][i].v);
 	}
 
-	if (BU_PTBL_END(&verts) > 2) {
-	    fu_top = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_END(&verts));
+	if (BU_PTBL_LEN(&verts) > 2) {
+	    fu_top = nmg_cmface(s, (struct vertex ***)BU_PTBL_BASEADDR(&verts), BU_PTBL_LEN(&verts));
 	    bu_ptbl_ins(&faces, (long *)fu_top);
 	} else
 	    fu_top = (struct faceuse *)NULL;
@@ -2629,14 +2630,14 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Make triangular faces */
     for (i=0; i<nells-1; i++) {
-	int j;
+	size_t j;
 	struct vertex **curr_top;
 	struct vertex **curr_bot;
 
 	curr_bot = &pts[i][0].v;
 	curr_top = &pts[i+1][0].v;
 	for (j=0; j<nsegs; j++) {
-	    int k;
+	    size_t k;
 
 	    k = j+1;
 	    if (k == nsegs)
@@ -2673,7 +2674,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Assign geometry */
     for (i=0; i<nells; i++) {
-	int j;
+	size_t j;
 
 	for (j=0; j<nsegs; j++) {
 	    point_t pt_geom;
@@ -2708,7 +2709,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     }
 
     /* Associate face plane equations */
-    for (i=0; i<BU_PTBL_END(&faces); i++) {
+    for (i=0; i<BU_PTBL_LEN(&faces); i++) {
 	fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACEUSE(fu);
 
@@ -2722,7 +2723,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
 
     /* Calculate vertexuse normals */
     for (i=0; i<nells; i++) {
-	int j, k;
+	size_t j, k;
 
 	k = i + 1;
 	if (k == nells)
@@ -2829,7 +2830,7 @@ rt_tgc_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     nmg_region_a(*r, tol);
 
     /* glue faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
     bu_ptbl_free(&faces);
 
     return 0;

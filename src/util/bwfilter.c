@@ -1,7 +1,7 @@
 /*                      B W F I L T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -192,7 +192,7 @@ main(int argc, char **argv)
 	dousage();
 	bu_exit (1, NULL);
     }
-    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
 
@@ -226,7 +226,7 @@ main(int argc, char **argv)
     bu_free(min_d, "max value");
     bu_free(max_d, "min values");
 
-    icv_write(img, out_file, MIME_IMAGE_BW);
+    icv_write(img, out_file, BU_MIME_IMAGE_BW);
     return 0;
 }
 

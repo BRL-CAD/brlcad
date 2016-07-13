@@ -1,7 +1,7 @@
 /*                      E U C L I D - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -99,6 +99,9 @@ main(int argc, char **argv)
 
     bu_setprogname(argv[0]);
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     fpin = stdin;
     efile = NULL;
     bfile = "euclid.g";
@@ -111,12 +114,8 @@ main(int argc, char **argv)
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    if (argc == 1) {
-	bu_log("%s %s", argv[0], usage);
-	bu_log("       Program continues running (waiting for standard input):\n");
-    }
     /* Get command line arguments. */
-    else while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
+    while ((c = bu_getopt(argc, argv, "d:vi:o:npx:X:h?")) != -1) {
 	switch (c) {
 	    case 'd':
 		tol.dist = atof(bu_optarg);
@@ -264,7 +263,7 @@ add_nmg_to_db(struct rt_wdb *fpout, struct model *m, int reg_id)
 static void
 build_groups(struct rt_wdb *fpout)
 {
-    int i, j;
+    size_t i, j;
     struct wmember head;
     struct wmember head_all;
     char group_name[18];
@@ -274,10 +273,10 @@ build_groups(struct rt_wdb *fpout)
 
     for (i=0; i<11; i++) {
 
-	if (BU_PTBL_END(&groups[i]) < 1)
+	if (BU_PTBL_LEN(&groups[i]) < 1)
 	    continue;
 
-	for (j=0; j<BU_PTBL_END(&groups[i]); j++) {
+	for (j=0; j<BU_PTBL_LEN(&groups[i]); j++) {
 	    char *region_name;
 
 	    region_name = (char *)BU_PTBL_GET(&groups[i], j);
@@ -287,7 +286,7 @@ build_groups(struct rt_wdb *fpout)
 	}
 
 	if (i < 10)
-	    sprintf(group_name, "%dxxx_series", i);
+	    sprintf(group_name, "%luxxx_series", (unsigned long)i);
 	else
 	    sprintf(group_name, "ids_over_9999");
 
@@ -340,7 +339,7 @@ build_groups(struct rt_wdb *fpout)
 int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
-    char str[80] = {0};
+    char str[81] = {0};
     int reg_id = -1;
 
     /* skip first string in file (what is it??) */

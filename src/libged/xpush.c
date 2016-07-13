@@ -1,7 +1,7 @@
 /*                         X P U S H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -413,7 +413,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     struct rt_comb_internal *comb;
     struct bu_ptbl tops;
     mat_t xform;
-    int i;
+    size_t i;
     static const char *usage = "object";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -512,7 +512,7 @@ ged_xpush(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* accurately count references in entire model */
-    for (i = 0; i < BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);

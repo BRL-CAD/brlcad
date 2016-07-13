@@ -1,7 +1,7 @@
 /*                        M E N G E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -407,10 +407,6 @@ main(int ac, char *av[])
 		usage(av[0]);
 		bu_exit(0, NULL);
 	}
-    }
-    if (ac == 1) {
-	usage(av[0]);
-    	fprintf(stderr,"       Program continues running:\n");
     }
     av += bu_optind;
     ac -= bu_optind;

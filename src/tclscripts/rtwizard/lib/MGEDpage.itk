@@ -1,7 +1,7 @@
 #                    M G E D P A G E . I T K
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -110,21 +110,17 @@ namespace eval RtWizard {
 	    method onDeselect {}
 	    method getStepInfo {}
 	    method setHelpText {text}
+	    method draw {selected}
 	    method getObjects {}
-	    method getAzimuth {}
-	    method getElevation {}
-	    method getSize {}
-	    method getPerspective {}
-	    method getCenter {}
 	    method getOrientation
-	    method getEyepoint
 	    method getLineColor {} {return $lineColor}
 	    method getNonLineColor {} {return $nonLineColor}
 	    method getBackgroundColor {} {return $backgroundColor}
 	    method getIntensity {} {return [expr {$intensity + 1}]}
-	    method getEyeModel {}
 	    method getRegionColorFlag {} {return $useRegionColors}
 	    method getOcclusionMode {}
+
+	    variable selected ""
 	}
 
 	protected {
@@ -132,24 +128,11 @@ namespace eval RtWizard {
 	    method selectNode {tags isOn}
 	    method clearDisplay {}
 	    method refreshDisplay {}
-	    method setAzEl {ignored}
 
 	    method updateStatus {}
 
 	    method captureView {}
 	    method restoreView {}
-
-	    method createAzimuthDialog {parent}
-	    method azimuthDialogReveal {}
-	    method azimuthDialogOK {}
-	    method azimuthDialogApply {}
-	    method azimuthDialogCancel {}
-
-	    method createElevationDialog {parent}
-	    method elevationDialogReveal {}
-	    method elevationDialogOK {}
-	    method elevationDialogApply {}
-	    method elevationDialogCancel {}
 
 	    method createSizeDialog {parent}
 	    method sizeDialogReveal {}
@@ -168,6 +151,18 @@ namespace eval RtWizard {
 	    method centerDialogOK {}
 	    method centerDialogApply {}
 	    method centerDialogCancel {}
+
+	    method createAETDialog {parent}
+	    method aetDialogReveal {}
+	    method aetDialogOK {}
+	    method aetDialogApply {}
+	    method aetDialogCancel {}
+
+	    method createBotthresholdDialog {parent}
+	    method botthresholdDialogReveal {}
+	    method botthresholdDialogOK {}
+	    method botthresholdDialogApply {}
+	    method botthresholdDialogCancel {}
 
 	    method lineColorChooser {}
 	    method nonLineColorChooser {}
@@ -190,32 +185,10 @@ namespace eval RtWizard {
 	    #
 	    variable isSelected false
 
-	    # View storage and restoration
-
-	    variable selected ""
-	    variable currentEye {742.404 519.837 422.618}
-	    variable currentCenter {0 0 0}
-	    variable currentRmat \
-		{-0.573576  0.819152  0         0  \
-		     -0.346189 -0.242404  0.906308  0  \
-		     0.742404  0.519837  0.422618  0  \
-		     0         0         0         1}
-	    variable currentEyemodel ""
-
-	    # Azimuth Stuff
-	    variable currentAzimuth 35
-	    variable oldAzimuth
-
-	    # Elevation Stuff
-	    variable currentElevation 25
-	    variable oldElevation
-
 	    # Size Stuff
-	    variable currentSize 2000
 	    variable oldSize
 
 	    # Perspective Stuff
-	    variable currentPerspective 0
 	    variable oldPerspective
 
 	    # Line-color stuff
@@ -292,21 +265,34 @@ namespace eval RtWizard {
 	# mged window over its controls
 	#
 	itk_component add midFrame {
-	    frame $cs.midFrame \
+	    panedwindow $cs.midFrame \
 		-relief flat
 	} {
 	    usual
 	}
 
+
 	#
-	# Create a frame for the mged object and its controls
+	# Create a frame for the hierarchy widgets and controls
 	#
-	itk_component add mgedFrame {
-	    frame $itk_component(midFrame).mgedFrame \
+	itk_component add hierFrame {
+	    frame $cs.hierFrame \
 		-relief flat
 	} {
 	    usual
 	}
+	$cs.midFrame add $cs.hierFrame
+
+	#
+	# Create a frame for the mged object and its controls
+	#
+	itk_component add mgedFrame {
+	    frame $cs.mgedFrame \
+		-relief flat
+	} {
+	    usual
+	}
+	$cs.midFrame add $cs.mgedFrame
 
 	#
 	# Note that the MGED object is produced separately.
@@ -315,15 +301,6 @@ namespace eval RtWizard {
 	#
 
 
-	#
-	# Create a frame for the hierarchy widgets and controls
-	#
-	itk_component add hierFrame {
-	    frame $itk_component(midFrame).hierFrame \
-		-relief flat
-	} {
-	    usual
-	}
 
 	#
 	# Create a frame to manage the controls
@@ -332,17 +309,16 @@ namespace eval RtWizard {
 	    iwidgets::labeledframe $itk_component(hierFrame).conFrame \
 		-background #666699 \
 		-relief groove \
-		-labeltext {} \
-		-labelpos se
+		-labeltext "View Controls"
 	}
 	set conFrameCS [ $itk_component(conFrame) childsite ]
 
-	# Refresh
-	itk_component add refresh {
-	    button $conFrameCS.refresh \
-		-text Refresh \
+	# Reset view based on current view contents
+	itk_component add autoview {
+	    button $conFrameCS.autoview \
+		-text AutoView\
 		-width 8 \
-		-command "[itcl::code $this refreshDisplay]"
+	        -command "eval $::mgedObj gedCmd autoview"
 	} {
 	    usual
 	}
@@ -353,18 +329,6 @@ namespace eval RtWizard {
 		-text Clear \
 		-width 8 \
 		-command "[itcl::code $this clearDisplay]"
-	} {
-	    usual
-	}
-
-	#
-	# Create the selection radiobox
-	#
-	itk_component add useMe {
-	    radiobutton $conFrameCS.useMe \
-		-text "Use this view for image" \
-		-variable ::RtWizard::ExamplePage::viewPage \
-		-value $this
 	} {
 	    usual
 	}
@@ -410,11 +374,11 @@ namespace eval RtWizard {
 	#
 	# Create the dialogs
 	#
-	createElevationDialog   $itk_interior
-	createAzimuthDialog     $itk_interior
 	createSizeDialog        $itk_interior
 	createPerspectiveDialog $itk_interior
 	createCenterDialog $itk_interior
+	createAETDialog $itk_interior
+	createBotthresholdDialog $itk_interior
 	createIntensityDialog $itk_interior
 	createOccModeDialog   $itk_interior
 
@@ -424,34 +388,37 @@ namespace eval RtWizard {
 	grid $itk_component(clear) \
 	    -row 0 \
 	    -column 0 \
-	    -padx 10 \
-	    -pady 5
-	grid $itk_component(refresh) \
+	    -padx 3 \
+	    -pady 3
+	grid $itk_component(autoview) \
 	    -row 0 \
 	    -column 1 \
-	    -padx 10 \
-	    -pady 5
-	grid $itk_component(useMe) \
-	    -row 1 \
-	    -column 0 \
-	    -columnspan 2 \
-	    -padx 10 \
-	    -pady 5
-	#	grid $itk_component(prev) -row 2 -column 0
-	#	grid $itk_component(next) -row 2 -column 1
+	    -padx 3 \
+	    -pady 3
 
 	pack $itk_component(hier) -expand 1 -fill both -anchor w
-	pack $itk_component(conFrame) -anchor s
 
-	pack $itk_component(hierFrame) -side left -anchor w -fill both -expand 1
-	pack $itk_component(mgedFrame) -padx 10 -pady 23 \
-	    -expand 1 -fill both -anchor e -side right
-
-	pack $itk_component(helpPanel) -anchor s
 	pack $itk_component(midFrame) -expand 1 -fill both
+	pack $itk_component(conFrame) -anchor s
+	pack $itk_component(helpPanel) -anchor s -fill x
 
 	eval itk_initialize $args
 
+    }
+
+    #
+    # draw
+    #
+    # draws with autoview if this is the first draw, otherwise
+    # regular draw.
+    #
+    itcl::body MGEDpage::draw {selected} {
+	if {$::first_draw == 1} {
+	    eval $::mgedObj gedCmd draw -L $::bot_threshold $selected
+	    set ::first_draw 0
+	} else {
+	    eval $::mgedObj gedCmd draw -R -L $::bot_threshold $selected
+	}
     }
 
     #
@@ -512,13 +479,9 @@ namespace eval RtWizard {
 		options -tearoff true -selectcolor green
 	    }
 
-	$w menubar add command .$viewMenu.azimuth -label "Azimuth..." \
-	    -helpstr "Set azimuth value" \
-	    -command "[::itcl::code $this azimuthDialogReveal]"
-
-	$w menubar add command .$viewMenu.elevation -label "Elevation..." \
-	    -helpstr "Set elevation value" \
-	    -command "[::itcl::code $this elevationDialogReveal]"
+	$w menubar add command .$viewMenu.aet -label "Azimuth/Elevation/Twist..." \
+	    -helpstr "Set azimuth, elevation and twist" \
+	    -command "[::itcl::code $this aetDialogReveal]"
 
 	$w menubar add command .$viewMenu.size -label "Size..." \
 	    -helpstr "Set view size" \
@@ -531,6 +494,10 @@ namespace eval RtWizard {
 	$w menubar add command .$viewMenu.center -label "Center..." \
 	    -helpstr "Set view center" \
 	    -command "[::itcl::code $this centerDialogReveal]"
+
+	$w menubar add command .$viewMenu.botthreshold -label "BoT Drawing Threshold..." \
+	    -helpstr "Set limit at which BoTs are drawn as boxes" \
+	    -command "[::itcl::code $this botthresholdDialogReveal]"
 
 	#
 	# Do the options menu, callback to the child
@@ -604,36 +571,6 @@ namespace eval RtWizard {
     }
 
     #
-    # getAzimuth - returns the current view azimuth
-    #
-    ::itcl::body MGEDpage::getAzimuth { } {
-	if {$isSelected == "true"} {
-	    set currentAzimuth [lindex [$::mgedObj gedCmd aet] 0 ]
-	}
-	return $currentAzimuth
-    }
-
-    #
-    # getElevation - returns the current view elevation
-    #
-    ::itcl::body MGEDpage::getElevation { } {
-	if {$isSelected == "true"} {
-	    set currentElevation [lindex [$::mgedObj gedCmd aet] 1 ]
-	}
-	return $currentElevation
-    }
-
-    #
-    # getSize - returns the current size
-    #
-    itcl::body MGEDpage::getSize {} {
-	if {$isSelected == "true"} {
-	    set currentSize [$::mgedObj gedCmd size]
-	}
-	return $currentSize
-    }
-
-    #
     # getOrientation - returns the current orientation quaternion
     #
     itcl::body MGEDpage::getOrientation {} {
@@ -641,47 +578,6 @@ namespace eval RtWizard {
 	    set currentRmat [ $::mgedObj gedCmd rmat ]
 	}
 	return [ quat_mat2quat $currentRmat]
-    }
-
-    #
-    # getEyeModel - returns the full specification of the view.
-    #
-    itcl::body MGEDpage::getEyeModel {} {
-	if {$isSelected == "true"} {
-	    set currentEyemodel [$::mgedObj gedCmd get_eyemodel]
-	}
-	return $currentEyemodel
-
-    }
-
-    #
-    # getEyepoint - returns the current eyepoint
-    #
-    itcl::body MGEDpage::getEyepoint {} {
-	if {$isSelected == "true"} {
-	    set currentEye [$::mgedObj gedCmd eye]
-	}
-	return $currentEye
-    }
-
-    #
-    # getPerspective - returns the current view perspective
-    #
-    itcl::body MGEDpage::getPerspective {} {
-	if {$isSelected == "true"} {
-	    set currentPerspective [$::mgedObj gedCmd perspective]
-	}
-	return $currentPerspective
-    }
-
-    #
-    # getCenter - returns the current view center
-    #
-    itcl::body MGEDpage::getCenter {} {
-	if {$isSelected == "true"} {
-	    set currentCenter [$::mgedObj gedCmd center]
-	}
-	return $currentCenter
     }
 
     #--------------------#
@@ -733,7 +629,7 @@ namespace eval RtWizard {
 	    $::mgedObj gedCmd erase $tag
 	    $itk_component(hier) selection remove $tag
 	} else {
-	    $::mgedObj gedCmd draw $tag
+	    draw $tag
 	    $itk_component(hier) selection add $tag
 	}
 	updateStatus
@@ -760,23 +656,6 @@ namespace eval RtWizard {
     }
 
     #
-    # refreshDisplay - clears the mged display, and redraws the selected items.
-    #
-    ::itcl::body MGEDpage::refreshDisplay { } {
-
-	# get the list of currently selected items
-	set selected [$itk_component(hier) selection get]
-
-	# clear the display
-	$::mgedObj gedCmd zap
-
-	# redraw the selection list
-	eval $::mgedObj gedCmd draw $selected
-
-	updateStatus
-    }
-
-    #
     # captureView - executed by onDeselect, this method records the
     #               currently selected objects and the view info so
     #               that it may be restored by onSelect
@@ -787,20 +666,27 @@ namespace eval RtWizard {
 	# use them.
 	#
 	set selected  [$itk_component(hier) selection get]
-
-	getAzimuth
-	getElevation
-	getSize
-	getOrientation
-	getEyeModel
-	getPerspective
-	getCenter
-
-	set currentEye [$::mgedObj gedCmd eye]
-	set currentSize [$::mgedObj gedCmd size]
-	set currentRmat [$::mgedObj gedCmd rmat]
-	set currentCenter [$::mgedObj gedCmd center]
     }
+
+
+    # refreshDisplay - clears the mged display, and redraws the selected items.
+    #
+    ::itcl::body MGEDpage::refreshDisplay { } {
+
+    # get the list of currently selected items
+	set selected [$itk_component(hier) selection get]
+
+	# clear the display
+	$::mgedObj gedCmd zap
+
+	# redraw the selection list
+	if {[llength $selected] > 0} {
+	    draw $selected
+	}
+
+	updateStatus
+    }
+
 
     #
     # restoreView - restores the mgedObj to its previous state.
@@ -812,28 +698,8 @@ namespace eval RtWizard {
 	# Reselect the objects - XXX
 	#
 	if {[llength $selected] > 0} {
-	    eval $::mgedObj gedCmd draw $selected
+	    draw $selected
 	}
-
-	#
-	# Reset the view
-	#
-	$::mgedObj gedCmd eye $currentEye
-	$::mgedObj gedCmd center $currentCenter
-	$::mgedObj gedCmd size $currentSize
-	$::mgedObj gedCmd rmat $currentRmat
-    }
-
-    #
-    # setAzEl - changes the view to match the selected Azimuth and
-    #           Elevation
-    #
-    ::itcl::body MGEDpage::setAzEl { ignored } {
-	set az [ $itk_component(azimuth) get ]
-	set el [ $itk_component(elevation) get ]
-	$::mgedObj gedCmd aet $az $el 0
-	updateStatus
-
     }
 
     #
@@ -864,173 +730,6 @@ namespace eval RtWizard {
 	set status 1
 	$::wizardInstance updateRenderMenu
 	return
-    }
-
-
-    #--------------------#
-    #  Azimuth Control   #
-    #--------------------#
-    #
-    # createAzimuthDialog - creates a dialog window that allows the user
-    #                       to set the view azimuth
-    #
-    ::itcl::body MGEDpage::createAzimuthDialog {parent} {
-
-	itk_component add azimuthDialog {
-	    iwidgets::dialog $parent.#auto -title Azimuth
-	} {
-	    usual
-	}
-
-	set cs [ eval $itk_component(azimuthDialog) childsite ]
-
-	itk_component add azimuth {
-	    scale $cs.az \
-		-orient horizontal \
-		-from 0 \
-		-to 360 \
-		-length 360 \
-		-resolution 1\
-		-tickinterval 45 \
-		-font {Helvetica 8  bold} \
-		-repeatinterval 3000 \
-		-repeatdelay 3000 \
-		-command {}
-	    #		-command "[itcl::code $this setAzEl]"
-	} {
-	    usual
-	}
-
-	$itk_component(azimuth) set [ getAzimuth ]
-	$itk_component(azimuthDialog) hide Help
-	$itk_component(azimuthDialog) buttonconfigure OK \
-	    -command "[::itcl::code $this azimuthDialogOK]"
-	$itk_component(azimuthDialog) buttonconfigure Apply \
-	    -command "[::itcl::code $this azimuthDialogApply]"
-	$itk_component(azimuthDialog) buttonconfigure Cancel \
-	    -command "[::itcl::code $this azimuthDialogCancel]"
-	pack $itk_component(azimuth)
-	$itk_component(azimuthDialog) deactivate
-    }
-
-    #
-    # azimuthDialogReveal - executed when the azimuth dialog window
-    #                       is requested from the menu bar
-    #
-    ::itcl::body MGEDpage::azimuthDialogReveal {} {
-	set oldAzimuth [ getAzimuth ]
-	$itk_component(azimuth) set $oldAzimuth
-	$itk_component(azimuthDialog) activate
-    }
-
-    #
-    # azimuthDialogOK - executed when the OK button is pressed.
-    #
-    ::itcl::body MGEDpage::azimuthDialogOK {} {
-	setAzEl " "
-	$itk_component(azimuthDialog) deactivate
-	updateStatus
-    }
-
-    #
-    # azimuthDialogApply - executed when the apply button is pressed.
-    #
-    ::itcl::body MGEDpage::azimuthDialogApply {} {
-	setAzEl " "
-	updateStatus
-    }
-
-    #
-    # azimuthDialogCancel - executed when the close button is pressed.
-    #
-    ::itcl::body MGEDpage::azimuthDialogCancel {} {
-	$itk_component(azimuth) set $oldAzimuth
-	setAzEl " "
-	$itk_component(azimuthDialog) deactivate
-	updateStatus
-    }
-
-    #--------------------#
-    #  Elevation Control #
-    #--------------------#
-    #
-    # createElevationDialog - creates a dialog window that allows the user
-    #                         to set the view elevation
-    #
-    ::itcl::body MGEDpage::createElevationDialog {parent} {
-
-	itk_component add elevationDialog {
-	    iwidgets::dialog $parent.#auto -title Elevation
-	} {
-	    usual
-	}
-
-	set cs [ eval $itk_component(elevationDialog) childsite ]
-
-	itk_component add elevation {
-	    scale $cs.el \
-		-orient vertical \
-		-from 90 \
-		-to -90 \
-		-length 180 \
-		-resolution 1\
-		-tickinterval 30 \
-		-font {Helvetica 8  bold} \
-		-repeatinterval 3000 \
-		-repeatdelay 3000 \
-		-command {}
-	    #		-command "[itcl::code $this setAzEl]"
-	} {
-	    usual
-	}
-
-	$itk_component(elevation) set [ getElevation ]
-	$itk_component(elevationDialog) hide Help
-	$itk_component(elevationDialog) buttonconfigure OK \
-	    -command "[::itcl::code $this elevationDialogOK]"
-	$itk_component(elevationDialog) buttonconfigure Apply \
-	    -command "[::itcl::code $this elevationDialogApply]"
-	$itk_component(elevationDialog) buttonconfigure Cancel \
-	    -command "[::itcl::code $this elevationDialogCancel]"
-	pack $itk_component(elevation)
-	$itk_component(elevationDialog) deactivate
-    }
-
-    #
-    # elevationDialogReveal - executed when the elevation dialog window
-    #                       is requested from the menu bar
-    #
-    ::itcl::body MGEDpage::elevationDialogReveal {} {
-	set oldElevation [ getElevation ]
-	$itk_component(elevation) set $oldElevation
-	$itk_component(elevationDialog) activate
-    }
-
-    #
-    # elevationDialogOK - executed when the OK button is pressed.
-    #
-    ::itcl::body MGEDpage::elevationDialogOK {} {
-	setAzEl " "
-	$itk_component(elevationDialog) deactivate
-	updateStatus
-    }
-
-    #
-    # elevationDialogApply - executed when the apply button is pressed.
-    #
-    ::itcl::body MGEDpage::elevationDialogApply {} {
-	setAzEl " "
-	updateStatus
-    }
-
-    #
-    # elevationDialogCancel - executed when the close button is pressed.
-    #
-    ::itcl::body MGEDpage::elevationDialogCancel {} {
-	$itk_component(elevation) set $oldElevation
-	setAzEl " "
-	$itk_component(elevationDialog) deactivate
-	updateStatus
     }
 
     #--------------------#
@@ -1215,7 +914,7 @@ namespace eval RtWizard {
 	    usual
 	}
 
-	$itk_component(perspective) set [ getPerspective ]
+	$itk_component(perspective) set [$::mgedObj gedCmd perspective]
 	$itk_component(perspectiveDialog) hide Help
 	$itk_component(perspectiveDialog) buttonconfigure OK \
 	    -command "[::itcl::code $this perspectiveDialogOK]"
@@ -1232,7 +931,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::perspectiveDialogReveal {} {
-	set oldPerspective [ getPerspective ]
+	set oldPerspective [$::mgedObj gedCmd perspective]
 	$itk_component(perspective) set $oldPerspective
 	$itk_component(perspectiveDialog) activate
     }
@@ -1273,7 +972,7 @@ namespace eval RtWizard {
     ::itcl::body MGEDpage::createCenterDialog {parent} {
 
 	# Get current Center
-	set currCenter [ getCenter ]
+	set currCenter [$::mgedObj gedCmd center]
 
 	itk_component add centerDialog {
 	    iwidgets::dialog $parent.#auto -title Center
@@ -1297,7 +996,7 @@ namespace eval RtWizard {
 	# Build the entry field for the size.
 	#
 	itk_component add centerEntry {
-	    iwidgets::entryfield $cs.sze \
+	    iwidgets::entryfield $cs.cxyz \
 		-labeltext "Center (x y z):" \
 		-labelpos w \
 		-width 30\
@@ -1328,7 +1027,7 @@ namespace eval RtWizard {
     #                       is requested from the menu bar
     #
     ::itcl::body MGEDpage::centerDialogReveal {} {
-	set oldCenter [ getCenter ]
+	set oldCenter [$::mgedObj gedCmd center]
 	$itk_component(centerEntry) clear
 	$itk_component(centerEntry) insert 0 $oldCenter
 	$itk_component(centerDialog) activate
@@ -1357,12 +1056,244 @@ namespace eval RtWizard {
     # centerDialogCancel - executed when the close button is pressed.
     #
     ::itcl::body MGEDpage::centerDialogCancel {} {
-	set oldCenter [ getCenter ]
+	set oldCenter [$::mgedObj gedCmd center]
 	$::mgedObj gedCmd center $oldCenter
 	$itk_component(centerDialog) deactivate
 	updateStatus
     }
 
+
+
+    #------------------#
+    #    aet Control   #
+    #------------------#
+    #
+    # createAETDialog - creates a dialog window that allows the user
+    #                            to set the bot drawing threshold
+    #
+    ::itcl::body MGEDpage::createAETDialog {parent} {
+
+	itk_component add aetDialog {
+	    iwidgets::dialog $parent.#auto -title "Set the View Azimuth, Elevation and Twist"
+	} {
+	    usual
+	}
+
+	set cs [ eval $itk_component(aetDialog) childsite ]
+
+	#
+	# Build the entry field for the azimuth.
+	#
+	itk_component add azEntry {
+	    iwidgets::entryfield $cs.az \
+		-labeltext "Azimuth:" \
+		-labelpos "w" \
+		-width 40\
+		-command "[::itcl::code $this aetDialogApply]"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the azimuth.
+	#
+	itk_component add elEntry {
+	    iwidgets::entryfield $cs.el \
+		-labeltext "Elevation:" \
+		-labelpos "w" \
+		-width 40\
+		-command "[::itcl::code $this aetDialogApply]"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the azimuth.
+	#
+	itk_component add twEntry {
+	    iwidgets::entryfield $cs.tw \
+		-labeltext "Twist:" \
+		-labelpos "w" \
+		-width 40\
+		-command "[::itcl::code $this aetDialogApply]"
+	} {
+	    usual
+	}
+
+	$itk_component(aetDialog) hide Help
+	$itk_component(aetDialog) buttonconfigure OK \
+	    -command "[::itcl::code $this aetDialogOK]"
+	$itk_component(aetDialog) buttonconfigure Apply \
+	    -command "[::itcl::code $this aetDialogApply]"
+	$itk_component(aetDialog) buttonconfigure Cancel \
+	    -command "[::itcl::code $this aetDialogCancel]"
+	pack $itk_component(azEntry) -anchor c
+	pack $itk_component(elEntry) -anchor c
+	pack $itk_component(twEntry) -anchor c
+	eval iwidgets::Labeledwidget::alignlabels \
+	    $itk_component(azEntry) \
+	    $itk_component(elEntry) \
+	    $itk_component(twEntry)
+
+	$itk_component(azEntry) clear
+	$itk_component(azEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 0 ]
+
+	$itk_component(elEntry) clear
+	$itk_component(elEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 1 ]
+
+	$itk_component(twEntry) clear
+	$itk_component(twEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 2 ]
+
+	$itk_component(aetDialog) deactivate
+    }
+
+    #
+    # aetDialogReveal - executed when the aet dialog window
+    #                       is requested from the menu bar
+    #
+    ::itcl::body MGEDpage::aetDialogReveal {} {
+
+	$itk_component(azEntry) clear
+	$itk_component(azEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 0 ]
+
+	$itk_component(elEntry) clear
+	$itk_component(elEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 1 ]
+
+	$itk_component(twEntry) clear
+	$itk_component(twEntry) insert 0 [lindex [$::mgedObj gedCmd aet] 2 ]
+
+	$itk_component(aetDialog) activate
+    }
+
+    #
+    # aetDialogOK - executed when the OK button is pressed.
+    #
+    ::itcl::body MGEDpage::aetDialogOK {} {
+	set az [ $itk_component(azEntry) get]
+	set el [ $itk_component(elEntry) get ]
+	set tw [ $itk_component(twEntry) get ]
+	$::mgedObj gedCmd aet $az $el $tw
+	$itk_component(aetDialog) deactivate
+	updateStatus
+    }
+
+    #
+    # aetDialogApply - executed when the apply button is pressed.
+    #
+    ::itcl::body MGEDpage::aetDialogApply {} {
+	set az [ $itk_component(azEntry) get]
+	set el [ $itk_component(elEntry) get ]
+	set tw [ $itk_component(twEntry) get ]
+	$::mgedObj gedCmd aet $az $el $tw
+	updateStatus
+    }
+
+    #
+    # aetDialogCancel - executed when the close button is pressed.
+    #
+    ::itcl::body MGEDpage::aetDialogCancel {} {
+	$itk_component(aetDialog) deactivate
+    }
+
+
+
+    #----------------------------#
+    #    BoT Threshold Control   #
+    #----------------------------#
+    #
+    # createBotthresholdDialog - creates a dialog window that allows the user
+    #                            to set the bot drawing threshold
+    #
+    ::itcl::body MGEDpage::createBotthresholdDialog {parent} {
+
+	# Get current threshold
+	set currThreshold $::bot_threshold
+
+	itk_component add botthresholdDialog {
+	    iwidgets::dialog $parent.#auto -title "BoT Drawing Threshold (max # of faces)"
+	} {
+	    usual
+	}
+
+	set cs [ eval $itk_component(botthresholdDialog) childsite ]
+#
+	# Build the label
+	#
+	itk_component add botthresholdLabel {
+	    iwidgets::labeledwidget $cs.scl \
+		-labeltext "BoT triangle count above which bounding boxes are drawn\n(Note: a value of 0 disables bounding box drawing):" \
+		-labelpos "w"
+	} {
+	    usual
+	}
+
+	#
+	# Build the entry field for the threshold.
+	#
+	itk_component add botthresholdEntry {
+	    iwidgets::entryfield $cs.bte \
+		-width 50\
+		-command "[::itcl::code $this botthresholdDialogApply]"
+	} {
+	    usual
+	}
+
+	$itk_component(botthresholdDialog) hide Help
+	$itk_component(botthresholdDialog) buttonconfigure OK \
+	    -command "[::itcl::code $this botthresholdDialogOK]"
+	$itk_component(botthresholdDialog) buttonconfigure Apply \
+	    -command "[::itcl::code $this botthresholdDialogApply]"
+	$itk_component(botthresholdDialog) buttonconfigure Cancel \
+	    -command "[::itcl::code $this botthresholdDialogCancel]"
+	pack $itk_component(botthresholdLabel) -anchor c
+	pack $itk_component(botthresholdEntry) -anchor c
+	eval iwidgets::Labeledwidget::alignlabels \
+	    $itk_component(botthresholdLabel) \
+	    $itk_component(botthresholdEntry)
+
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $currThreshold
+	$itk_component(botthresholdDialog) deactivate
+    }
+
+    #
+    # botthresholdDialogReveal - executed when the botthreshold dialog window
+    #                       is requested from the menu bar
+    #
+    ::itcl::body MGEDpage::botthresholdDialogReveal {} {
+	set oldThreshold $::bot_threshold
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $oldThreshold
+	$itk_component(botthresholdDialog) activate
+    }
+
+    #
+    # botthresholdDialogOK - executed when the OK button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogOK {} {
+	set ::bot_threshold [ $itk_component(botthresholdEntry) get]
+	$itk_component(botthresholdDialog) deactivate
+	updateStatus
+	refreshDisplay
+    }
+
+    #
+    # botthresholdDialogApply - executed when the apply button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogApply {} {
+	set ::bot_threshold [ $itk_component(botthresholdEntry) get]
+	$itk_component(botthresholdEntry) clear
+	$itk_component(botthresholdEntry) insert 0 $::bot_threshold
+	updateStatus
+	refreshDisplay
+    }
+
+    #
+    # botthresholdDialogCancel - executed when the close button is pressed.
+    #
+    ::itcl::body MGEDpage::botthresholdDialogCancel {} {
+	$itk_component(botthresholdDialog) deactivate
+    }
 
 
     #--------------------#

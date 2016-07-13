@@ -1,7 +1,7 @@
 /*                         D A T U M . C
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -162,34 +162,37 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 
     while (datum_ip) {
 	if (!ZERO(datum_ip->w)) {
-	    vect_t up, down, left, right, udir;
-	    point_t tip, ul, ll, ur, lr, ortho;
-	    const vect_t zup = {0.0, 0.0, 1.0};
+	    vect_t up, left, right, nleft, nright;
+	    point_t tip, ul, ll, ur, lr;
 
-	    /* center */
+	    /* center and normal points */
+	    VMOVE(up, datum_ip->dir);
+	    VUNITIZE(up);
 	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);
+	    RT_ADD_VLIST(vhead, tip, BN_VLIST_POINT_DRAW);
+
+	    VSUB2(up, tip, datum_ip->pnt);
+	    VUNITIZE(up);
+	    bn_vec_ortho(left, up);
+	    VCROSS(right, left, up);
+	    VREVERSE(nright, right);
+	    VREVERSE(nleft, left);
+	    VSCALE(left, left, MAGNITUDE(datum_ip->dir));
+	    VSCALE(nleft, nleft, MAGNITUDE(datum_ip->dir));
+	    VSCALE(right, right, MAGNITUDE(datum_ip->dir));
+	    VSCALE(nright, nright, MAGNITUDE(datum_ip->dir));
+
+	    /* line to normal point */
+	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
 
-	    VCROSS(left, datum_ip->dir, zup);
-	    VREVERSE(right, left);
-	    VMOVE(udir, datum_ip->dir);
-	    VUNITIZE(udir);
-	    VCROSS(up, udir, left);
-	    VREVERSE(down, up);
-
-	    VADD2(ortho, datum_ip->pnt, up);
-	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_MOVE);
-
-	    VSUB2(ortho, datum_ip->pnt, up);
-	    RT_ADD_VLIST(vhead, ortho, BN_VLIST_LINE_DRAW);
-
-	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, up, datum_ip->w, left);
-	    VJOIN2(ll, datum_ip->pnt, datum_ip->w, down, datum_ip->w, left);
-	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, up, datum_ip->w, right);
-	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, down, datum_ip->w, right);
-
 	    /* draw the box */
+	    VJOIN2(ul, datum_ip->pnt, datum_ip->w, left, datum_ip->w, right);
+	    VJOIN2(ll, datum_ip->pnt, datum_ip->w, nleft, datum_ip->w, right);
+	    VJOIN2(ur, datum_ip->pnt, datum_ip->w, left, datum_ip->w, nright);
+	    VJOIN2(lr, datum_ip->pnt, datum_ip->w, nleft, datum_ip->w, nright);
+
 	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
 	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
@@ -197,43 +200,51 @@ rt_datum_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_
 	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
 
 	} else if (MAGNITUDE(datum_ip->dir) > 0.0 && ZERO(datum_ip->w)) {
-	    vect_t perp, cross1, cross2;
-	    point_t right, left, front, back, tip, endpt;
+	    vect_t left, right, nleft, nright, dir;
+	    point_t tip, endpt, line_seg, ul, ll, ur, lr;
 	    fastf_t arrowhead_percentage = 0.05;
 	    fastf_t arrowhead_ratio = 0.3;
 
+	    /* Find the tip of the line */
+	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
+
 	    /* draw main segment minus a smidgen for an arrowhead */
-	    VJOIN1(endpt, datum_ip->pnt, 1.0 - arrowhead_percentage, datum_ip->dir);
+	    VSCALE(line_seg, datum_ip->dir, 1.0 - arrowhead_percentage);
+	    VADD2(endpt, datum_ip->pnt, line_seg);
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
 
 	    /* calculate arrowhead points */
-	    VADD2(tip, datum_ip->pnt, datum_ip->dir);
-	    bn_vec_perp(perp, datum_ip->dir);
-	    VCROSS(cross1, perp, datum_ip->dir);
-	    VCROSS(cross2, datum_ip->dir, perp);
-	    VJOIN1(left, endpt, arrowhead_percentage * arrowhead_ratio, cross1);
-	    VJOIN1(right, endpt, arrowhead_percentage * arrowhead_ratio, cross2);
+	    VMOVE(dir, datum_ip->dir);
+	    VUNITIZE(dir);
+	    bn_vec_ortho(left, dir);
+	    VCROSS(right, left, dir);
+	    VREVERSE(nright, right);
+	    VREVERSE(nleft, left);
+	    VSCALE(left, left, MAGNITUDE(datum_ip->dir) * arrowhead_percentage * arrowhead_ratio);
+	    VSCALE(right, right, MAGNITUDE(datum_ip->dir) * arrowhead_percentage * arrowhead_ratio);
+	    VREVERSE(nright, right);
+	    VREVERSE(nleft, left);
+
+	    VJOIN2(ul, endpt, 1, left,  1, right);
+	    VJOIN2(ll, endpt, 1, nleft, 1, right);
+	    VJOIN2(ur, endpt, 1, left,  1, nright);
+	    VJOIN2(lr, endpt, 1, nleft, 1, nright);
 
 	    /* draw arrowhead */
-	    RT_ADD_VLIST(vhead, left, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, right, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
-
-	    /* calculate ortho arrowhead points */
-	    VJOIN1(front, endpt, arrowhead_percentage * arrowhead_ratio, perp);
-	    VJOIN1(back, endpt, -arrowhead_percentage * arrowhead_ratio, perp);
-
-	    /* draw circular base + ortho arrowhead */
-	    RT_ADD_VLIST(vhead, front, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, left, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, back, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, right, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, front, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_MOVE);
 	    RT_ADD_VLIST(vhead, tip, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, back, BN_VLIST_LINE_DRAW);
-	    RT_ADD_VLIST(vhead, endpt, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+
+
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_MOVE);
+	    RT_ADD_VLIST(vhead, ll, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, lr, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ur, BN_VLIST_LINE_DRAW);
+	    RT_ADD_VLIST(vhead, ul, BN_VLIST_LINE_DRAW);
 
 	} else {
 	    RT_ADD_VLIST(vhead, datum_ip->pnt, BN_VLIST_POINT_DRAW);

@@ -1,7 +1,7 @@
 /*                        R T W A L K . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,6 @@ double		viewsize = 42;
  */
 
 int		npsw = 1;		/* Run serially */
-int		interactive = 0;	/* human is watching results */
 
 point_t		start_point;
 point_t		goal_point;
@@ -133,6 +132,9 @@ main(int argc, char **argv)
     vect_t	first_dir;		/* First dir chosen on a step */
     int	curstep;
     int	i;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (!get_args(argc, (const char **)argv)) {
 	(void)fputs(usage, stderr);

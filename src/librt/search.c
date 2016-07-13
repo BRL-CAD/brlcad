@@ -1,7 +1,7 @@
 /*                        S E A R C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -2358,6 +2358,7 @@ db_search(struct bu_ptbl *search_results,
 		    curr_node.path = start_path;
 		    curr_node.flags = search_flags;
 		    curr_node.matched_filters = 1;
+		    curr_node.full_paths = NULL;
 		    find_execute_plans(dbip, search_results, &curr_node, dbplan);
 		    result_cnt += curr_node.matched_filters;
 		    DB_FULL_PATH_POP(start_path);

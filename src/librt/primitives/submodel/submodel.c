@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -210,9 +210,7 @@ rt_submodel_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rti
     rt_prep_parallel(sub_rtip, 1);
 
     /* Ensure bu_ptbl rti_resources is full size.  Ptrs will be null */
-    if (BU_PTBL_LEN(&sub_rtip->rti_resources) < sub_rtip->rti_resources.blen) {
-	BU_PTBL_END(&sub_rtip->rti_resources) = sub_rtip->rti_resources.blen;
-    }
+    bu_ptbl_trunc(&sub_rtip->rti_resources, sub_rtip->rti_resources.blen);
 
     if (RT_G_DEBUG) rt_pr_cut_info(sub_rtip, stp->st_name);
 
@@ -449,7 +447,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
     int code;
     struct bu_ptbl *restbl;
     struct resource *resp;
-    int cpu;
+    size_t cpu;
 
     RT_CK_SOLTAB(stp);
     RT_CK_RTI(ap->a_rt_i);
@@ -479,7 +477,7 @@ rt_submodel_shot(struct soltab *stp, struct xray *rp, struct application *ap, st
      */
     restbl = &submodel->rtip->rti_resources;	/* a ptbl */
     cpu = ap->a_resource->re_cpu;
-    BU_ASSERT_LONG(cpu, <, BU_PTBL_END(restbl));
+    BU_ASSERT_SIZE_T(cpu, <, BU_PTBL_LEN(restbl));
     if ((resp = (struct resource *)BU_PTBL_GET(restbl, cpu)) == NULL) {
 	/* First ray for this cpu for this submodel, alloc up */
 	BU_ALLOC(resp, struct resource);

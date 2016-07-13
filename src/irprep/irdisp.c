@@ -1,7 +1,7 @@
 /*                        I R D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,8 +25,8 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
-#include<stdio.h>
 #include<stdlib.h>
 #include<limits.h>
 #include<string.h>
@@ -50,6 +50,9 @@ main(void)
     int ngrp;			/* Number of groups.  */
     int i, j, k;		/* Loop counters.  */
     int ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");

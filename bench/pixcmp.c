@@ -1,7 +1,7 @@
 /*                        P I X C M P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,6 +31,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_STAT_H
+#  include <sys/stat.h>
+#endif
 #include "bio.h"
 
 #include "bu/getopt.h"
@@ -117,6 +120,7 @@ main(int argc, char *argv[])
 {
     FILE *f1 = NULL;
     FILE *f2 = NULL;
+    struct stat sf1, sf2;
 
     long matching = 0;
     long off1 = 0;
@@ -196,6 +200,13 @@ main(int argc, char *argv[])
     } else if ((f2 = fopen(argv[1], "rb")) == NULL) {
 	perror(argv[1]);
 	exit(FILE_ERROR);
+    }
+
+    stat(argv[0], &sf1);
+    stat(argv[1], &sf2);
+
+    if (sf1.st_size != sf2.st_size) {
+	bu_exit(FILE_ERROR, "Different file sizes found: %s(%d) and %s(%d).  Cannot perform pixcmp.\n", argv[0], sf1.st_size, argv[1], sf2.st_size);
     }
 
     if (!print_bytes) {

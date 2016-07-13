@@ -1,7 +1,7 @@
 /*                      M E T A B A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -228,17 +228,12 @@ make_spaghetti(const char *filename, const char *name, long count)
 int
 main(int argc, char *argv[])
 {
-    static const char usage[] = "Usage:\n%s [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
+    static const char usage[] = "Usage:\n%s [-h] [-o outfile] [-n count]\n\n  -o file \tFile to write out (default: metaball.g)\n  -n count\tTotal metaball point count (default %d)\n\n";
     static const int COUNTMAX = 555;
 
     char outfile[MAXPATHLEN] = "metaball.g";
     int optc;
     long count = COUNTMAX;
-
-    if (argc == 1) {
-	fprintf(stderr,usage, *argv, COUNTMAX);
-    	fprintf(stderr,"       Program continues running:\n");
-    }
 
     while ((optc = bu_getopt(argc, argv, "o:n:h?")) != -1) {
         if (bu_optopt == '?') optc='h';

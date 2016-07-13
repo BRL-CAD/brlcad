@@ -1,0 +1,23 @@
+<article xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <title>BRL-CAD Manual Pages</title>
+
+
+
+   <para>
+      This is BRL-CAD's tool for viewing manual pages for commands. To bring up
+      the manual page for a specific command select it from the list to the
+      left of this welcome message.
+  </para>
+  <para>
+      By default, the list will itemize GED commands if the man viewer is
+      launched from MGED or Archer, and command line commands if the brlman
+      program is run directly from the command line.  To specify a specific
+      section of manual pages to list with brlman, use the -S option on the
+      command line to specify 1, 3, 5 or n (with n being GED commands.)
+  </para>
+   <para>
+      These manual pages are written in Docbook format and displayed
+      as HTML.
+    </para>
+
+</article>

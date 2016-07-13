@@ -1,7 +1,7 @@
 /*                       W D B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,7 +54,6 @@
 #include "wdb.h"
 #include "raytrace.h"
 #include "tclcad.h"
-#include "obj.h"
 
 #define WDB_TCL_READ_ERR { \
 	Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "Database read error, aborting.\n", (char *)NULL); \
@@ -4494,11 +4493,11 @@ wdb_move_all_cmd(struct rt_wdb *wdbp,
 			changed = 1;
 		    }
 
-		    if (BU_PTBL_END(&stack) < 1) {
+		    if (BU_PTBL_LEN(&stack) < 1) {
 			done = 1;
 			break;
 		    }
-		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
+		    comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);
 		    if (comb_leaf->tr_op != OP_DB_LEAF) {
 			bu_ptbl_rm(&stack, (long *)comb_leaf);
 			comb_leaf = comb_leaf->tr_b.tb_right;
@@ -7902,7 +7901,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     struct rt_comb_internal *comb;
     struct bu_ptbl tops;
     mat_t xform;
-    int i;
+    size_t i;
 
     WDB_TCL_CHECK_READ_ONLY;
 
@@ -7992,7 +7991,7 @@ wdb_xpush_cmd(struct rt_wdb *wdbp,
     }
 
     /* accurately count references in entire model */
-    for (i = 0; i < BU_PTBL_END(&tops); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&tops); i++) {
 	struct directory *dp;
 
 	dp = (struct directory *)BU_PTBL_GET(&tops, i);

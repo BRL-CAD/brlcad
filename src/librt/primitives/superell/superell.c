@@ -1,7 +1,7 @@
 /*                      S U P E R E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,8 @@
  *
  * Intersect a ray with a Superquadratic Ellipsoid.
  *
- * NOTICE: this primitive is incomplete and should be considered
- * experimental.  This primitive will exhibit several
- * instabilities in the existing root solver method.
+ * NOTICE: This primitive will exhibit several instabilities in the
+ * existing root solver with certain <n,e> value pairings.
  *
  */
 /** @} */

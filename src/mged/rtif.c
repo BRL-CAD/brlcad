@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -375,10 +375,10 @@ f_nirt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *
 	insertArgv[0] = "-u";
 	insertArgv[1] = "1";
 	insertArgv[2] = (char *)0;
-	newArgv = bu_dupinsert_argv(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
+	newArgv = bu_argv_dupinsert(1, insertArgc, (const char **)insertArgv, argc, (const char **)argv);
 	newArgc = argc + insertArgc;
 	ret = ged_nirt(gedp, newArgc, (const char **)newArgv);
-	bu_free_argv(newArgc, newArgv);
+	bu_argv_free(newArgc, newArgv);
     } else {
 	ret = ged_nirt(gedp, argc, (const char **)argv);
     }

@@ -222,7 +222,7 @@ proc ::tkcon::Init {args} {
 	protocol	exit
 	showOnStartup	1
 	slaveprocs	{
-	    alias clear dir dump echo idebug lremove
+	    alias tkcon_clear dir dump echo idebug lremove
 	    tkcon_puts tkcon_gets observe observe_var unalias which what
 	}
 	RCS		{RCS: @(#) $Id$}
@@ -1543,7 +1543,7 @@ proc ::tkcon::InitMenus {w title} {
 	$m add command -label "Close Console" -underline 0 -accel $PRIV(ACC)w \
 		-command ::tkcon::Destroy
 	$m add command -label "Clear Console" -underline 1 -accel Ctrl-l \
-		-command { clear; ::tkcon::Prompt }
+		-command { tkcon_clear; ::tkcon::Prompt }
 	if {[tk windowingsystem] eq "x11"} {
 	    $m add separator
 	    $m add command -label "Make Xauth Secure" -und 5 \
@@ -3027,7 +3027,7 @@ proc ::tkcon::Highlight {w type} {
 		]
 
 	    # Remove all highlight classes from a widget
-	    ctext::clearHighlightClasses $w
+	    ctext::tkcon_clearHighlightClasses $w
 	    foreach class $classes {
 		foreach {cname ctype cptn ccol} $class break
 		ctext::addHighlight$ctype $w $cname $ccol $cptn
@@ -3149,7 +3149,7 @@ proc ::tkcon::ExpectInit {{termcap 1} {terminfo 1}} {
  cup=\E[%p1%d;%p2%dH,
  cuu1=\E[A,
  cuf1=\E[C,
- clear=\E[H\E[J,
+ tkcon_clear=\E[H\E[J,
  ind=\n,
  cr=\r,
  smso=\E[7m,
@@ -3203,7 +3203,7 @@ proc ::tkcon::term_update_cursor {w args} {
     term_cursor_changed $w
 }
 
-proc ::tkcon::term_clear {w args} {
+proc ::tkcon::term_tkcon_clear {w args} {
     $w delete 1.0 end
     term_init $w
 }
@@ -3403,8 +3403,8 @@ proc ::tkcon::Expect {cmd} {
 		set ::tkcon::EXP(col) $expect_out(2,string)
 		::tkcon::term_update_cursor $::tkcon::PRIV(console)
 	    } "^\x1b\\\[H\x1b\\\[J" {
-		# (clear,cl) Clear screen
-		::tkcon::term_clear $::tkcon::PRIV(console)
+		# (tkcon_clear,cl) Clear screen
+		::tkcon::term_tkcon_clear $::tkcon::PRIV(console)
 		::tkcon::term_update_cursor $::tkcon::PRIV(console)
 	    } "^\x1b\\\[7m" {
 		# (smso,so) Begin standout mode
@@ -4018,13 +4018,13 @@ interp alias {} ::less {} ::edit
 ##
 proc echo args { puts stdout [concat $args] }
 
-## clear - clears the buffer of the console (not the history though)
+## tkcon_clear - tkcon_clears the buffer of the console (not the history though)
 ## This is executed in the parent interpreter
 ##
-proc clear {{pcnt 100}} {
+proc tkcon_clear {{pcnt 100}} {
     if {![regexp {^[0-9]*$} $pcnt] || $pcnt < 1 || $pcnt > 100} {
 	return -code error \
-		"invalid percentage to clear: must be 1-100 (100 default)"
+		"invalid percentage to tkcon_clear: must be 1-100 (100 default)"
     } elseif {$pcnt == 100} {
 	tkcon console delete 1.0 end
     } else {
@@ -5228,7 +5228,7 @@ proc ::tkcon::Bindings {} {
 
     proc ::tkcon::Cut w {
 	if {[string match $w [selection own -displayof $w]]} {
-	    clipboard clear -displayof $w
+	    clipboard tkcon_clear -displayof $w
 	    catch {
 		set txt [selection get -displayof $w]
 		clipboard append -displayof $w $txt
@@ -5240,7 +5240,7 @@ proc ::tkcon::Bindings {} {
     }
     proc ::tkcon::Copy w {
 	if {[string match $w [selection own -displayof $w]]} {
-	    clipboard clear -displayof $w
+	    clipboard tkcon_clear -displayof $w
 	    catch {
 		set txt [selection get -displayof $w]
 		clipboard append -displayof $w $txt
@@ -5357,7 +5357,7 @@ proc ::tkcon::Bindings {} {
     bind TkConsole <<TkCon_Clear>> {
 	## Clear console buffer, without losing current command line input
 	set ::tkcon::PRIV(tmp) [::tkcon::CmdGet %W]
-	clear
+	tkcon_clear
 	::tkcon::Prompt {} $::tkcon::PRIV(tmp)
     }
     bind TkConsole <<TkCon_Previous>> {

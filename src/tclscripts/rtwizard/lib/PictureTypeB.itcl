@@ -1,7 +1,7 @@
 #               P I C T U R E T Y P E B . I T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -91,7 +91,6 @@ namespace eval RtWizard {
 	# type.
 	#
 	set lp [$::wizardInstance enable lines]
-	[$lp component useMe] select
     }
 
     #
@@ -122,15 +121,15 @@ namespace eval RtWizard {
 	if { [llength $fbarray] > 1 } {
 	   set fb [lindex $fbarray 0]
 	   set fbpid [lindex $fbarray 1]
-	   set filename [lindex $fbarray 2]
 	}
-puts $fb
+	if {[info exists  ::RtWizard::wizard_state(output_filename)]} {
+	    set filename $::RtWizard::wizard_state(output_filename)
+	}
 
 	#
 	# Get the view info
 	#
-	set viewPage [$::exp getViewPage]
-	set viewInfo [$viewPage getEyeModel]
+	set viewInfo [$::mgedObj gedCmd get_eyemodel]
 	set view_info [regsub -all ";" $viewInfo ""]
 	set vdata [split $view_info "\n"]
 	set viewsize [lindex [lindex $vdata 0] 1]
@@ -163,7 +162,7 @@ puts $fb
 
 	# Get the perspective angle
 	#
-	set perspective [$viewPage getPerspective]
+	set perspective [$::mgedObj gedCmd perspective]
 
 	if {$::tcl_platform(platform) == "windows"} {
 	    set pid_filename "NUL"
@@ -202,12 +201,21 @@ puts $fb
 	   if {[string length $filename] > 0 } {
 	       set output_generated 0
 	       if {[file extension $filename] == ".png"} {
-		  exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename
-		  set output_generated 1
+		   if { [catch {exec [file join [bu_brlcad_root bin] fb-png] -w $w -n $h -F $fb $filename}] } {
+		       set output_generated 0
+		   } else {
+		       set output_generated 1
+		  }
 	       }
 	       if {!$output_generated} {
-		  exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename
-		  set output_generated 1
+		   if { [catch {exec [file join [bu_brlcad_root bin] fb-pix] -w $w -n $h -F $fb $filename}] } {
+		       set output_generated 0
+		   } else {
+		       set output_generated 1
+		   }
+	       }
+	       if {!$output_generated} {
+		   tk_messageBox -message "Generation of image $filename failed!  If a file with the same name exists, it may be marked read-only." -type ok
 	       }
 	       if {$::tcl_platform(platform) == "windows"} {
 		   set kill_cmd "[auto_execok taskkill] /F /PID"

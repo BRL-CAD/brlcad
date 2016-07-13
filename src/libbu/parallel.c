@@ -1,7 +1,7 @@
 /*                      P A R A L L E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -377,7 +377,7 @@ parallel_wait_for_slot(int throttle, struct parallel_info *parent, size_t max_th
 
     while (1) {
 	if (parent->started < parent->finished) {
-	    bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);
+	    /*bu_log("Warning - parent->started (%d) is less than parent->finished (%d)\n", parent->started, parent->finished);*/
 	    return;
 	}
 	threads = parent->started - parent->finished;

@@ -37,17 +37,15 @@
 
 #include "common.h"
 
-#include "cpuconfig.h"
 
-
-#if (defined(CPUCONF_ARCH_IA32) || defined(CPUCONF_ARCH_AMD64)) && defined(__GNUC__)
+#if (defined(__i386__) || defined(__x86_64__)) && defined(__GNUC__)
 #define MM_ATOMIC_SUPPORT
 
 
 #define MM_ATOMIC_ACCESS_L(v) ((v)->value)
 #define mmAtomicCmpReplace32(v,old,vnew) (mmAtomicCmpXchg32(v,old,vnew)==(old))
 
-#ifdef CPUCONF_ARCH_AMD64
+#ifdef __x86_64__
 
 #define mmAtomicL mmAtomic64
 #define mmAtomicWriteL(v,i) mmAtomicWrite64(v,i)
@@ -60,7 +58,7 @@
 #define mmAtomicReadP(v) (void *)(uintptr_t)mmAtomicRead64(v)
 #define mmAtomicWriteP(v,i) mmAtomicWrite64(v,(int64_t)i)
 
-#elif defined(CPUCONF_ARCH_IA32)
+#elif defined(__i386__)
 
 #define mmAtomicL mmAtomic32
 #define mmAtomicWriteL(v,i) mmAtomicWrite32(v,i)
@@ -257,7 +255,7 @@ static inline void mmAtomicLockDoneWrite32(mmAtomicLock32 *v)
 }
 
 
-#ifdef CPUCONF_ARCH_AMD64
+#ifdef __x86_64__
 
 
 #define mmAtomicCmpReplace64(v,old,vnew) (mmAtomicCmpXchg64(v,old,vnew)==(old))
@@ -300,13 +298,13 @@ static inline void mmAtomicOr64(mmAtomic64 *v, int64_t i)
 }
 
 
-static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t old, int64_t vnew)
+static inline int64_t mmAtomicCmpXchg64(mmAtomic64 *v, int64_t vold, int64_t vnew)
 {
     int64_t prev;
     __asm__ __volatile__(
 	"lock; cmpxchgq %1,%2"
 	:"=a"(prev)
-	:"r"(vnew), "m"(v->value), "a"(old) :"memory");
+	:"r"(vnew), "m"(v->value), "a"(vold) :"memory");
     return prev;
 }
 

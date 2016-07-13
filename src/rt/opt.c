@@ -1,7 +1,7 @@
 /*                           O P T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -122,7 +122,6 @@ int		finalframe = -1;	/* frame to halt at */
 int		curframe = 0;		/* current frame number,
 					 * also shared with view.c */
 char		*outputfile = (char *)NULL;	/* name of base of output file */
-int		interactive = 0;	/* human is watching results */
 int		benchmark = 0;		/* No random numbers:  benchmark */
 
 int		sub_grid_mode = 0;	/* mode to raytrace a rectangular portion of view */
@@ -213,8 +212,10 @@ get_args(int argc, const char *argv[])
 		bn_randhalftabsize = i;
 		break;
 	    case 'm':
-		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg",
-			   &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		i = sscanf(bu_optarg, "%lg,%lg,%lg,%lg", &airdensity, &haze[X], &haze[Y], &haze[Z]);
+		if ( i != 4 ) {
+		    bu_exit( EXIT_FAILURE, "ERROR: bad air density + haze\n" );
+		}
 		break;
 	    case 't':
 		transpose_grid = 1;
@@ -341,9 +342,6 @@ get_args(int argc, const char *argv[])
 	    }
 	    case 'U':
 		use_air = atoi( bu_optarg );
-		break;
-	    case 'I':
-		interactive = 1;
 		break;
 	    case 'i':
 		incr_mode = 1;

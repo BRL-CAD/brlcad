@@ -1,7 +1,7 @@
 /*                          C O N F I G _ W I N . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -154,7 +154,6 @@
 #define pclose _pclose
 #define popen _popen
 #define putenv _putenv
-#define snprintf _snprintf
 #define sopen _sopen
 #define strcasecmp _stricmp
 #define strncasecmp _strnicmp

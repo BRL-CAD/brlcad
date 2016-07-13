@@ -1,7 +1,7 @@
 /*                         G - X 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -614,7 +614,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     struct vrml_mat mat;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
     char *tok;
-    int i;
+    size_t i;
     int first=1;
     int is_light=0;
     float r, g, b;
@@ -806,7 +806,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
 
     fprintf(fp, "\t\t\t<Coordinate point=\"");
 
-    for (i=0; i<BU_PTBL_END(&verts); i++)
+    for (i=0; i<BU_PTBL_LEN(&verts); i++)
     {
 	struct vertex *v;
 	struct vertex_g *vg;

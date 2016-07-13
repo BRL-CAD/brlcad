@@ -1,7 +1,7 @@
 /*                     S S A M P V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -569,6 +569,9 @@ main(int argc, char **argv)
     RTG.debug = 1;
 
     make_ntsc_xyz2rgb(xyz2rgb);
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);

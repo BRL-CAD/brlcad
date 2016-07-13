@@ -1,7 +1,7 @@
 /*                        T I M E R . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 /* Start the global timer */
-/** @addtogroup timer */
+/** @addtogroup rt_timer */
 /** @{ */
 /**
  * To provide timing information for RT.
@@ -73,6 +73,7 @@ RT_EXPORT extern double rt_get_timer(struct bu_vls *vp,
  */
 RT_EXPORT extern double rt_read_timer(char *str, int len);
 
+/** @} */
 
 __END_DECLS
 

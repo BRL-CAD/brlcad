@@ -1,7 +1,7 @@
 /*                        D M _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,6 +20,8 @@
 /** @file libdm/dm_util.c
  */
 
+#include "common.h"
+#include <string.h>
 #include "bn.h"
 #include "dm.h"
 
@@ -175,6 +177,23 @@ draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
     }
 
     return TCL_OK;
+}
+
+
+void
+flip_display_image_vertically(unsigned char *image, size_t width, size_t height)
+{
+    size_t i, j;
+    size_t row_bytes = width * 3 * sizeof(unsigned char);
+    size_t img_bytes = row_bytes * height;
+    unsigned char *inv_img = (unsigned char *)bu_malloc(img_bytes,
+	    "inverted image");
+
+    for (i = 0, j = height - 1; i < height; ++i, --j) {
+	memcpy(inv_img + i * row_bytes, image + j * row_bytes, row_bytes);
+    }
+    memcpy(image, inv_img, img_bytes);
+    bu_free(inv_img, "inverted image");
 }
 
 /*

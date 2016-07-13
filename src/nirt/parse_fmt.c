@@ -1,7 +1,7 @@
 /*                     P A R S E _ F M T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -537,6 +537,7 @@ fopenrc(void)
 	    rc_file_name = (char *)bu_malloc(len, "rc_file_name");
 	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "rb");
+	    bu_free(rc_file_name, "rc_file_name");
 	}
     }
     return fPtr;

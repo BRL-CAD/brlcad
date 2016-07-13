@@ -1,7 +1,7 @@
 /*                         K E Y P O I N T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -49,7 +49,7 @@ ged_keypoint(struct ged *gedp, int argc, const char *argv[])
     /* get keypoint */
     if (argc == 1) {
 	VSCALE(keypoint, gedp->ged_gvp->gv_keypoint, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, keypoint);
+	bn_encode_vect(gedp->ged_result_str, keypoint, 1);
 
 	return GED_OK;
     }

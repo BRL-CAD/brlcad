@@ -1,7 +1,7 @@
 /*                          S H A D E W O R K . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup optical */
+/** @addtogroup liboptical */
 /** @{ */
 /** @file shadework.h
  *
@@ -68,25 +68,6 @@ struct shadework {
     fastf_t		sw_frametime;	/**< @brief  frame time delta off 1st frame */
     fastf_t		sw_pixeltime;	/**< @brief  pixel time delta off 1st pixel of 1st frame */
     struct seg *	sw_segs;	/**< @brief  segs which made partition */
-/*
- * The following is experimental.  DO NOT USE
- */
-#define	SW_SET_TRANSMIT		0x01
-#define SW_SET_REFLECT		0x02
-#define SW_SET_REFRAC_INDEX	0x04
-#define SW_SET_EXTINCTION	0x10
-#define SW_SET_AMBIENT		0x20
-#define SW_SET_EMISSION		0x40
-    int			sw_phong_set_vector;
-    fastf_t		sw_phong_transmit;
-    fastf_t		sw_phong_reflect;
-    fastf_t		sw_phong_ri;
-    fastf_t		sw_phong_extinction;
-    fastf_t		sw_phong_ambient;
-    fastf_t		sw_phong_emission;
-/*
- * End of experimental
- */
 };
 
 __BEGIN_DECLS

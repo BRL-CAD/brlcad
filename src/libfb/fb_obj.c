@@ -1,7 +1,7 @@
 /*                        F B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -43,8 +43,6 @@
 #include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
-#include "fbserv_obj.h"
-
 
 /* defined in libfb/tcl.c */
 extern int fb_refresh(fb *ifp, int x, int y, int w, int h);

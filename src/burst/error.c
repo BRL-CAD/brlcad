@@ -1,7 +1,7 @@
 /*                         E R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,7 +48,9 @@ brst_log(const char *fmt, ...)
     va_list ap;
     va_start(ap, fmt);
     if (tty && (errfile[0] == '\0' || BU_STR_EQUAL(errfile, "/dev/tty"))) {
+#ifdef HAVE_TERMLIB
 	clr_Tabs(HmTtyFd);
+#endif
 	if (ScDL != NULL) {
 	    (void) ScMvCursor(1, SCROLL_TOP);
 	    (void) ScDeleteLn();

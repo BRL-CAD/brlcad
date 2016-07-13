@@ -1,7 +1,7 @@
 /*                   N M G _ R T _ S E G S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -51,17 +51,23 @@ struct ef_data {
     struct edgeuse *eu;
 };
 
+#define ERR_MSG "INTERNAL ERROR:  Probably bad geometry.  Trying to continue."
 
 #define CK_SEGP(_p) if (!(_p) || !(*(_p))) {\
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
-	nmg_rt_segs_exit("Goodbye"); }
-#define DO_LONGJMP
+	segs_error(ERR_MSG); }
+
 #ifdef DO_LONGJMP
 static jmp_buf nmg_longjump_env;
-#define nmg_rt_segs_exit(_s) {bu_log("%s\n", _s);longjmp(nmg_longjump_env, -1);}
-#else
-#define nmg_rt_segs_exit(_s) bu_bomb(_s)
 #endif
+
+HIDDEN void
+segs_error(const char *str) {
+    bu_log("%s\n", str);
+#ifdef DO_LONGJMP
+    longjmp(nmg_longjump_env, -1);}
+#endif
+}
 
 
 HIDDEN void
@@ -220,9 +226,9 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 
 {
     if (!seg_p) {
-	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
-	       __FILE__, __LINE__);
-	nmg_rt_segs_exit("Goodbye");
+	bu_log("%s[line:%d]: Null pointer to segment pointer\n", __FILE__, __LINE__);
+	bu_log(ERR_MSG);
+	return;
     }
 
     /* if we don't have a seg struct yet, get one */
@@ -256,14 +262,14 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 /* The input hit point */
 {
     if (!seg_p) {
-	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
-	       __FILE__, __LINE__);
-	nmg_rt_segs_exit("Goodbye");
+	bu_log("%s[line:%d]: Null pointer to segment pointer\n", __FILE__, __LINE__);
+	bu_log(ERR_MSG);
+	return;
     }
 
     /* if we don't have a seg struct yet, get one */
     if (*seg_p == (struct seg *)NULL)
-	nmg_rt_segs_exit("bad seg pointer\n");
+	segs_error("bad seg pointer\n");
 
     /* copy the "out" hit */
     memcpy(&(*seg_p)->seg_out, &a_hit->hit, sizeof(struct hit));
@@ -319,8 +325,7 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	case HMG_HIT_IN_OUT:
 	case HMG_HIT_ON_OUT:
 	    /* error */
-	    bu_log("%s[line:%d]: State transition error: exit without entry.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error: exit without entry.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_OUT_OUT:
@@ -336,9 +341,8 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -384,9 +388,8 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    ret_val = 1;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -427,8 +430,7 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	case HMG_HIT_ON_IN:
 	case HMG_HIT_IN_ON:
 	    /* Error */
-	    bu_log("%s[line:%d]: State transition error.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_ON_OUT:
@@ -480,9 +482,8 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -533,8 +534,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 		ret_val = 3;
 	    } else {
 		/* Error */
-		bu_log("%s[line:%d]: State transition error.\n",
-		       __FILE__, __LINE__);
+		bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 		ret_val = -2;
 	    }
 	    break;
@@ -583,9 +583,8 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    }
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -632,8 +631,7 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	case HMG_HIT_ON_OUT:
 	case HMG_HIT_IN_OUT:
 	    /* Error */
-	    bu_log("%s[line:%d]: State transition error.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_OUT_OUT:
@@ -671,9 +669,8 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -758,9 +755,8 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 	    }
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -830,8 +826,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	     */
 	    for (BU_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
 		if (hm == a_hit) {
-		    bu_log("======= State %d ======\n",
-			   ray_state);
+		    bu_log("======= State %d ======\n", ray_state);
 		    nmg_rt_print_hitmiss(hm);
 		    bu_log("================\n");
 		} else
@@ -845,7 +840,8 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 		   rd->ap->a_purpose);
 	    bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		   V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
-	    nmg_rt_segs_exit("Goodbye\n");
+	    segs_error(ERR_MSG);
+	    break;
 	}
 
 	ray_state = new_state;
@@ -855,8 +851,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
      * in the state table.
      */
     if (ray_state == 1) {
-	bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
-	       __FILE__, __LINE__);
+	bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n", __FILE__, __LINE__);
 
 	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	       V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
@@ -865,7 +860,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	       stp->st_dp->d_namep,
 	       ap->a_x, ap->a_y, ap->a_level,
 	       ap->a_purpose);
-	nmg_rt_segs_exit("Goodbye");
+	segs_error(ERR_MSG);
     }
 
     /* Insert the last segment if appropriate */
@@ -926,7 +921,7 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     if (!l_p) {
 	bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
-	nmg_rt_segs_exit("");
+	segs_error(ERR_MSG);
     }
 
     switch (*l_p) {
@@ -982,13 +977,13 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 		    default:
 			bu_log("Bogus vertexuse parent magic:%s.",
 			       bu_identify_magic(*vu->up.magic_p));
-			nmg_rt_segs_exit("goodbye");
+			segs_error(ERR_MSG);
 		}
 	    }
 	    break;
 	default:
 	    bu_log("Bogus magic number pointer:%s", bu_identify_magic(*l_p));
-	    nmg_rt_segs_exit("goodbye");
+	    segs_error(ERR_MSG);
     }
 }
 
@@ -1067,8 +1062,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 	NMG_CK_HITMISS(a_hit);
 
 	/* this better be a 2-manifold face */
-	bu_log("%s[%d]: This better be a 2-manifold face\n",
-	       __FILE__, __LINE__);
+	bu_log("%s[%d]: This better be a 2-manifold face\n", __FILE__, __LINE__);
 	bu_log("Primitive: %s, pixel=%d %d,  lvl=%d %s\n",
 	       rd->stp->st_dp->d_namep,
 	       rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,

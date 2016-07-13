@@ -1,7 +1,7 @@
 /*                      N M G _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -52,7 +52,7 @@ struct pt_list
 };
 
 
-extern void nmg_split_trim(const struct edge_g_cnurb *cnrb,
+HIDDEN void nmg_split_trim(const struct edge_g_cnurb *cnrb,
 			   const struct face_g_snurb *snrb,
 			   fastf_t t,
 			   struct pt_list *pt0, struct pt_list *pt1,
@@ -135,7 +135,7 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 
     nmg_vertex_tabulate(&t, &r1->l.magic);
 
-    for (i = BU_PTBL_END(&t)-1; i >= 0; i--) {
+    for (i = BU_PTBL_LEN(&t)-1; i >= 0; i--) {
 	register struct vertex *vi;
 	vi = (struct vertex *)BU_PTBL_GET(&t, i);
 	NMG_CK_VERTEX(vi);
@@ -160,7 +160,7 @@ nmg_region_v_unique(struct nmgregion *r1, const struct bn_tol *tol)
 
 
 /* compare function for bu_sort within function nmg_ptbl_vfuse */
-static int
+HIDDEN int
 x_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     fastf_t i, j;
@@ -186,7 +186,7 @@ int
 nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
 {
     int count, fuse;
-    register int i, j;
+    register size_t i, j;
     register fastf_t tmp = tol->dist_sq;
     register fastf_t ab, abx, aby, abz;
 
@@ -194,14 +194,14 @@ nmg_ptbl_vfuse(struct bu_ptbl *t, const struct bn_tol *tol)
     bu_sort(BU_PTBL_BASEADDR(t), BU_PTBL_LEN(t), sizeof(long *), x_comp, NULL);
 
     count = 0;
-    for (i = 0 ; i < BU_PTBL_END(t) ; i++) {
+    for (i = 0 ; i < BU_PTBL_LEN(t) ; i++) {
 	register struct vertex *vi;
 	vi = (struct vertex *)BU_PTBL_GET(t, i);
 	if (!vi) continue;
 	NMG_CK_VERTEX(vi);
 	if (!vi->vg_p) continue;
 
-	for (j = i+1 ; j < BU_PTBL_END(t) ; j++) {
+	for (j = i+1 ; j < BU_PTBL_LEN(t) ; j++) {
 	    register struct vertex *vj;
 	    vj = (struct vertex *)BU_PTBL_GET(t, j);
 	    if (!vj) continue;
@@ -265,19 +265,19 @@ nmg_region_both_vfuse(struct bu_ptbl *t1, struct bu_ptbl *t2, const struct bn_to
     int j;
 
     /* Verify t2 is good to start with */
-    for (j = BU_PTBL_END(t2)-1; j >= 0; j--) {
+    for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
 	register struct vertex *vj;
 	vj = (struct vertex *)BU_PTBL_GET(t2, j);
 	NMG_CK_VERTEX(vj);
     }
 
-    for (i = BU_PTBL_END(t1)-1; i >= 0; i--) {
+    for (i = BU_PTBL_LEN(t1)-1; i >= 0; i--) {
 	register struct vertex *vi;
 	vi = (struct vertex *)BU_PTBL_GET(t1, i);
 	NMG_CK_VERTEX(vi);
 	if (!vi->vg_p) continue;
 
-	for (j = BU_PTBL_END(t2)-1; j >= 0; j--) {
+	for (j = BU_PTBL_LEN(t2)-1; j >= 0; j--) {
 	    register struct vertex *vj;
 	    vj = (struct vertex *)BU_PTBL_GET(t2, j);
 	    if (!vj) continue;
@@ -628,7 +628,7 @@ nmg_eval_trim_curve(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *
 }
 
 
-void
+HIDDEN void
 nmg_split_trim(const struct edge_g_cnurb *cnrb, const struct face_g_snurb *snrb, fastf_t t, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
     struct pt_list *pt_new;
@@ -699,7 +699,7 @@ nmg_eval_trim_to_tol(const struct edge_g_cnurb *cnrb, const struct face_g_snurb 
 }
 
 
-void
+HIDDEN void
 nmg_split_linear_trim(const struct face_g_snurb *snrb, const fastf_t *uvw1, const fastf_t *uvw2, struct pt_list *pt0, struct pt_list *pt1, const struct bn_tol *tol)
 {
     struct pt_list *pt_new;
@@ -1033,7 +1033,7 @@ nmg_cnurb_is_on_crv(const struct edgeuse *eu, const struct edge_g_cnurb *cnrb, c
 }
 
 /* compare function for bu_sort within function nmg_edge_fuse */
-static int
+HIDDEN int
 v_ptr_comp(const void *p1, const void *p2, void *UNUSED(arg))
 {
     size_t i, j;
@@ -1105,14 +1105,14 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 	eu_list = &tmp;
     }
 
-    nelem = BU_PTBL_END(eu_list) * 2;
+    nelem = BU_PTBL_LEN(eu_list) * 2;
     if (nelem == 0)
 	return 0;
 
     edgeuse_vert_list = (edgeuse_vert_list_t)bu_calloc(nelem, 2 * sizeof(size_t), "edgeuse_vert_list");
 
     j = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(eu_list) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(eu_list) ; i++) {
 	eu = (struct edgeuse *)BU_PTBL_GET(eu_list, i);
 	edgeuse_vert_list[j][0] = (size_t)eu;
 	edgeuse_vert_list[j][1] = (size_t)eu->vu_p->v_p;
@@ -1176,7 +1176,7 @@ nmg_edge_fuse(const uint32_t *magic_p, const struct bn_tol *tol)
 
 
 /* compare function for bu_sort within function nmg_edge_g_fuse */
-static int
+HIDDEN int
 e_rr_xyp_comp(const void *p1, const void *p2, void *arg)
 {
     fastf_t i, j;
@@ -1683,7 +1683,7 @@ nmg_model_face_fuse(struct model *m, const struct bn_tol *tol)
     /* Make a list of all the face structs in the model */
     nmg_face_tabulate(&ftab, &m->magic);
 
-    for (i = BU_PTBL_END(&ftab)-1; i >= 0; i--) {
+    for (i = BU_PTBL_LEN(&ftab)-1; i >= 0; i--) {
 	register struct face *f1;
 	register struct face_g_plane *fg1;
 	f1 = (struct face *)BU_PTBL_GET(&ftab, i);
@@ -1720,8 +1720,8 @@ int
 nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *tol)
 {
     struct bu_ptbl eus;
-    int i;
-    int count=0;
+    size_t i;
+    size_t count=0;
     const char *magic_type;
 
     if (UNLIKELY(RTG.NMG_debug & DEBUG_BOOL)) {
@@ -1737,7 +1737,7 @@ nmg_break_all_es_on_v(uint32_t *magic_p, struct vertex *v, const struct bn_tol *
 
     nmg_edgeuse_tabulate(&eus, magic_p);
 
-    for (i = 0; i < BU_PTBL_END(&eus); i++) {
+    for (i = 0; i < BU_PTBL_LEN(&eus); i++) {
 	struct edgeuse *eu;
 	struct vertex *va;
 	struct vertex *vb;
