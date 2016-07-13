@@ -2,7 +2,7 @@
 #                          C M P . S H
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -298,7 +298,7 @@ fi
   ################
 echo -n "Volu: "
 rm -f $base.base.gqa.log
-g_qa "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
+gqa "$GQTOL" -Av $dbfile $base >$base.base.gqa.log 2>&1
 if ! test -f $base.base.gqa.log ; then
     echo "ERROR: $base.base.gqa.log failed to evaluate"
 fi
@@ -307,7 +307,7 @@ bvol2=`printf "%.1f" $bvol`
 bvol=`printf "%f" $bvol`
 if ! test "x$bvol2" = "x" && ! test "x$bvol2" = "x0.0" ; then
     rm -f "$i.gqa.log"
-    vol="`g_qa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
+    vol="`gqa "$GQTOL" -Av $dbfile $i 2>&1 | tee $i.gqa.log | tail -n 5 | grep total | awk '{print $4}'`"
     vol2=`printf "%.1f" $vol`
     vol=`printf "%f" $vol`
     if test "x$vol2" = "x" ; then

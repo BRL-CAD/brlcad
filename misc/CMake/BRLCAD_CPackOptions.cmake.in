@@ -1,7 +1,7 @@
 #    B R L C A D _ C P A C K O P T I O N S . C M A K E . I N
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -37,43 +37,17 @@
 # To pass variables to cpack from cmake, they must be configured
 # in this file.
 
-# Don't want to use the install prefix when we're making source
-# tarballs.  Also, target the source directory prepared by distcheck
-# when doing source archives
-if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
-  CMAKE_POLICY(SET CMP0007 OLD)
-  if(NOT EXISTS @CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done)
-    file(REMOVE_RECURSE "@CMAKE_BINARY_DIR@/source_archive_contents")
-    file(STRINGS @CMAKE_BINARY_DIR@/cmakefiles.cmake source_tree_files)
-    file(STRINGS @CMAKE_BINARY_DIR@/cmakedirs.cmake ignored_dirctories)
-    string(REPLACE "@BRLCAD_SOURCE_DIR@" "------BRLCAD_SOURCE_DIR----" ignored_dirctories "${ignored_dirctories}")
-    foreach(ITEM ${ignored_dirctories})
-      file(GLOB_RECURSE dir_files "${ITEM}/*")
-      list(APPEND source_tree_files ${dir_files})
-      while(dir_files)
-	set(dir_files "${dir_files};")
-	string(REGEX REPLACE "[^/]*;" ";" dir_files "${dir_files}")
-	string(REGEX REPLACE "/;" ";" dir_files "${dir_files}")
-	list(REMOVE_DUPLICATES dir_files)
-	list(APPEND source_tree_files ${dir_files})
-      endwhile(dir_files)
-    endforeach(ITEM ${ignored_dirctories})
-    string(REPLACE "------BRLCAD_SOURCE_DIR----" "@BRLCAD_SOURCE_DIR@" source_tree_files "${source_tree_files}")
-    foreach(source_file ${source_tree_files})
-      if(NOT IS_DIRECTORY ${source_file})
-	string(REPLACE "@CMAKE_SOURCE_DIR@/" "" relative_name "${source_file}")
-	if(NOT "${relative_name}" MATCHES ".svn/")
-	  string(REPLACE "@CMAKE_SOURCE_DIR@/" "@CMAKE_BINARY_DIR@/source_archive_contents/" outfile "${source_file}")
-	  execute_process(COMMAND "@CMAKE_COMMAND@" -E copy ${source_file} ${outfile})
-	endif(NOT "${relative_name}" MATCHES ".svn/")
-      endif(NOT IS_DIRECTORY ${source_file})
-    endforeach(source_file ${source_tree_files})
-  endif(NOT EXISTS @CMAKE_BINARY_DIR@/CMakeTmp/create_builddir_source_archive.done)
+# Target a source directory created in the build dir to avoid bundling
+# anything we don't want bundled.
+if(CPACK_INSTALLED_DIRECTORIES)
+  if(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
+    include("@CMAKE_BINARY_DIR@/CMakeTmp/source_archive_setup.cmake")
+    set(CPACK_INSTALLED_DIRECTORIES "@CMAKE_BINARY_DIR@/source_archive_contents;/")
+  endif(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
+endif(CPACK_INSTALLED_DIRECTORIES)
 
-  set(CPACK_PACKAGING_INSTALL_PREFIX "")
-  set(CPACK_INSTALLED_DIRECTORIES "@CMAKE_BINARY_DIR@/source_archive_contents;/")
-endif(CPACK_GENERATOR MATCHES "ZIP" OR CPACK_GENERATOR MATCHES "TGZ" OR CPACK_GENERATOR MATCHES "TBZ2" )
-
+# Null out the install prefix regardless
+set(CPACK_PACKAGING_INSTALL_PREFIX "")
 
 # Local Variables:
 # tab-width: 8

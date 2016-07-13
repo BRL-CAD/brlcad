@@ -1,7 +1,7 @@
 #      B R L C A D _ C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -90,15 +90,36 @@ if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
   CHECK_CXX_FLAG(qstackprotect)
 endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG)
 
+# enable memory error detector AddressSanitizer (see
+# https://code.google.com/p/address-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+  CHECK_C_FLAG(fsanitize=address)
+  CHECK_C_FLAG(fno-omit-frame-pointer)
+  CHECK_CXX_FLAG(fsanitize=address)
+  CHECK_CXX_FLAG(fno-omit-frame-pointer)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_ADDRESS_SANITIZER)
+
+# enable data race detector  ThreadSanitizer (see
+# https://code.google.com/p/thread-sanitizer/ for more info.)
+if(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+  CHECK_C_FLAG(fsanitize=thread)
+  CHECK_CXX_FLAG(fsanitize=thread)
+endif(${BRLCAD_OPTIMIZED_BUILD} MATCHES "OFF" AND BRLCAD_FLAGS_DEBUG AND BRLCAD_THREAD_SANITIZER)
+
+
 # verbose warning flags.  we intentionally try to turn on as many as
 # possible.  adding more is encouraged (as long as all issues are
 # fixed first).
 if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # also of interest:
   # -Wunreachable-code -Wmissing-declarations -Wmissing-prototypes -Wstrict-prototypes -ansi
-  # -Wformat=2 (after bu_fopen_uniq() is obsolete) -Wdocumentation (for Doxygen comments)
+  # -Wformat=2 (after bu_fopen_uniq() is obsolete)
   CHECK_C_FLAG(pedantic)
   CHECK_CXX_FLAG(pedantic)
+
+  #Added to make llvm happy on FreeBSD, but a good idea anyway
+  CHECK_C_FLAG(pedantic-errors)
+  #CHECK_CXX_FLAG(pedantic-errors)  #This line makes poissonrecon break, so disable for now
 
   # this catches a lot, it's good
   CHECK_C_FLAG(Wall)
@@ -159,6 +180,11 @@ if(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
   # this is for X11 headers, they use variadic macros
   CHECK_C_FLAG(Wno-variadic-macros)
   CHECK_CXX_FLAG(Wno-variadic-macros)
+
+  # this is used to check Doxygen comment syntax
+  CHECK_C_FLAG(Wdocumentation)
+  CHECK_CXX_FLAG(Wdocumentation)
+
 endif(BRLCAD_ENABLE_COMPILER_WARNINGS OR BRLCAD_ENABLE_STRICT)
 
 if(BRLCAD_ENABLE_COVERAGE)
@@ -175,6 +201,12 @@ if(BRLCAD_ENABLE_COVERAGE)
 endif(BRLCAD_ENABLE_COVERAGE)
 
 if(BRLCAD_ENABLE_STRICT)
+  # If we're going strict, suppress C11 warnings about isnan due to
+  # clang issue:  https://llvm.org/bugs/show_bug.cgi?id=17788
+  CHECK_C_FLAG(Wno-c11-extensions)
+  CHECK_CXX_FLAG(Wno-c11-extensions)
+
+  # Add the flag that actually turns warnings into errors
   CHECK_C_FLAG(Werror)
   CHECK_CXX_FLAG(Werror)
 endif(BRLCAD_ENABLE_STRICT)
@@ -186,12 +218,20 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS}" CACHE STRING "C Compiler flags used by all 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" CACHE STRING "C++ Compiler flags used by all targets" FORCE)
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "Linker flags used by all shared library targets" FORCE)
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Linker flags used by all exe targets" FORCE)
+mark_as_advanced(CMAKE_C_FLAGS)
+mark_as_advanced(CMAKE_CXX_FLAGS)
+mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS)
+mark_as_advanced(CMAKE_EXE_LINKER_FLAGS)
 if(CMAKE_BUILD_TYPE)
   string(TOUPPER "${CMAKE_BUILD_TYPE}" BUILD_TYPE_UPPER)
   set(CMAKE_C_FLAGS_${BUILD_TYPE_UPPER} "${CMAKE_C_FLAGS_${BUILD_TYPE_UPPER}}" CACHE STRING "C Compiler flags used for ${CMAKE_BUILD_TYPE} builds" FORCE)
   set(CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER}}" CACHE STRING "C++ Compiler flags used for ${CMAKE_BUILD_TYPE} builds" FORCE)
   set(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER}}" CACHE STRING "Linker flags used for ${CMAKE_BUILD_TYPE} builds" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CMAKE_BUILD_TYPE} builds" FORCE)
+  mark_as_advanced(CMAKE_C_FLAGS_${BUILD_TYPE_UPPER})
+  mark_as_advanced(CMAKE_CXX_FLAGS_${BUILD_TYPE_UPPER})
+  mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${BUILD_TYPE_UPPER})
+  mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BUILD_TYPE_UPPER})
 endif(CMAKE_BUILD_TYPE)
 
 foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
@@ -200,6 +240,10 @@ foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   set(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "C++ Compiler flags used for ${CFG_TYPE} builds" FORCE)
   set(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Linker flags used for ${CFG_TYPE} builds" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER} "${CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER}}" CACHE STRING "Exe linker flags used for ${CFG_TYPE} builds" FORCE)
+  mark_as_advanced(CMAKE_C_FLAGS_${CFG_TYPE_UPPER})
+  mark_as_advanced(CMAKE_CXX_FLAGS_${CFG_TYPE_UPPER})
+  mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${CFG_TYPE_UPPER})
+  mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${CFG_TYPE_UPPER})
 endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 
 # TODO - figure out if this should be integrated above

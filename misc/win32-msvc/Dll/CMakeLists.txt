@@ -34,6 +34,7 @@ set(BRLCADCORE_SOURCES
 add_library(BrlcadCore SHARED ${BRLCADCORE_SOURCES})
 
 target_link_libraries(BrlcadCore
+  libbg-static
   libbn-static
   libbrep-static
   libbu-static
@@ -43,10 +44,9 @@ target_link_libraries(BrlcadCore
   regex-static
   librt-static
   libbrep-static
-  libsysv-static
   libvds-static
   libwdb-static
-  p2t_static
+  p2t-static
   zlib-static
   openNURBS-static
   tcl85
@@ -94,9 +94,16 @@ include_directories(
   ${OPENNURBS_INCLUDE_DIR}
   )
 
-add_definitions(
-  "-DBRLCAD_COREINTERFACE_EXPORT=__declspec(dllexport)"
+if(MSVC)
+  add_definitions(
+    "-DBRLCAD_COREINTERFACE_EXPORT=__declspec(dllexport)"
   )
+
+  set(COREINTERFACE_MSVC_LIBRARIES
+    Ws2_32
+    Psapi
+  )
+endif(MSVC)
 
 add_library(brlcad SHARED
   ${BRLCAD_SOURCES}
@@ -104,6 +111,7 @@ add_library(brlcad SHARED
   )
 
 target_link_libraries(brlcad
+  libbg-static
   libbn-static
   libbrep-static
   libbu-static
@@ -112,14 +120,12 @@ target_link_libraries(brlcad
   regex-static
   librt-static
   libbrep-static
-  libsysv-static
   libvds-static
   libwdb-static
-  p2t_static
+  p2t-static
   zlib-static
   openNURBS-static
-  Ws2_32
-  Psapi
+  ${COREINTERFACE_MSVC_LIBRARIES}
   )
 
 set_property(TARGET brlcad PROPERTY LINK_INTERFACE_LIBRARIES "")

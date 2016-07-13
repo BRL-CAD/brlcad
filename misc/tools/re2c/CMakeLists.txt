@@ -27,17 +27,14 @@ include_directories(
 
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
 find_package(LEMON)
-if(NOT COMMAND LEMON_TARGET)
-  include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/LEMON_Util.cmake)
-endif(NOT COMMAND LEMON_TARGET)
 
-LEMON_TARGET(re2cParse parser.yy parser.cc parser_tokens.h)
+LEMON_TARGET(re2cParse parser.yy OUT_SRC_FILE parser.cc OUT_HDR_FILE parser_tokens.h)
 
 set(re2c_common_SRCS
   code.cc
   dfa.cc
   main.cc
-  ${LEMON_re2cParse_OUTPUT_SOURCE}
+  ${LEMON_re2cParse_SRC}
   actions.cc
   substr.cc
   translate.cc
@@ -92,9 +89,10 @@ set(re2c_bootstrap_SRCS
   ${re2c_common_SRCS}
   bootstrap/scanner.cc
   )
-set_source_files_properties(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_OUTPUT_HEADER})
+set_source_files_properties(bootstrap/scanner.cc PROPERTIES OBJECT_DEPENDS ${LEMON_re2cParse_HDR})
 
 add_executable(re2c_bootstrap ${re2c_bootstrap_SRCS})
+set_property(TARGET re2c_bootstrap APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_re2cParse_INCLUDE_DIR}")
 
 # Need to link against stl library with some compilers.
 target_link_libraries(re2c_bootstrap "${STDCXX_LIBRARIES}")
@@ -113,7 +111,7 @@ endif(${LEMON_EXECUTABLE_TARGET})
 add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc
   COMMAND re2c_bootstrap -bi -o ${CMAKE_CURRENT_BINARY_DIR}/scanner.cc	${CMAKE_CURRENT_SOURCE_DIR}/scanner.re
-  DEPENDS re2c_bootstrap 
+  DEPENDS re2c_bootstrap
   )
 
 set(re2c_SRCS
@@ -122,6 +120,7 @@ set(re2c_SRCS
   )
 
 add_executable(re2c ${re2c_SRCS})
+set_property(TARGET re2c APPEND PROPERTY INCLUDE_DIRECTORIES "${LEMON_re2cParse_INCLUDE_DIR}")
 
 # Need to link against stl library with some compilers.
 target_link_libraries(re2c "${STDCXX_LIBRARIES}")

@@ -1,7 +1,7 @@
 #                T H I R D P A R T Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -157,7 +157,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
     endif("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
   endif(OPT_STR_UPPER)
 
-
   # 5. If BRLCAD_BUNDLED_LIBS is exactly SYSTEM or exactly BUNDLED, and we haven't been overridden by
   # one of the other conditions above, go with that.
   if(NOT ${varname_root}_MET_CONDITION)
@@ -173,7 +172,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
       endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM")
     endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
   endif(NOT ${varname_root}_MET_CONDITION)
-
 
   # If we haven't been knocked out by any of the above conditions, do our testing and base the results on that.
 
@@ -195,8 +193,9 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
     # Find the package in question.  It is the toplevel CMakeLists.txt's responsibility to make
     # sure that the CMAKE_MODULE_PATH variable is set correctly if there are local versions of
-    # Find*.cmake scripts that should be used instead of the installed CMake version.
-
+    # Find*.cmake scripts that should be used.  Note that newer CMake versions will prefer a system
+    # version of the module, so if a custom override is needed the Find*.cmake name should not conflict
+    # with the system version.
     find_package(${${varname_root}_FIND_NAME} ${${varname_root}_FIND_VERSION} COMPONENTS ${${varname_root}_FIND_COMPONENTS})
 
     # going to use system or bundled versions of deps
@@ -252,13 +251,13 @@ macro(THIRD_PARTY dir varname_root build_target description)
   if(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
     add_subdirectory(${dir})
     set(${varname_root}_LIBRARY "${build_target}" CACHE STRING "${varname_root}_LIBRARY" FORCE)
-    set(${varname_root}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir};${CMAKE_CURRENT_BINARY_DIR}/${dir} CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-      include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+    set(${varname_root}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_BINARY_DIR}/${dir}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+      include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
       CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-    else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-      message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-    endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+    else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+      message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
   else(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
     CMAKEFILES(${dir})
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
@@ -516,23 +515,23 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	list(REMOVE_DUPLICATES SRC_OTHER_ADDED_DIRS)
 	set(SRC_OTHER_ADDED_DIRS ${SRC_OTHER_ADDED_DIRS} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
 	mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	  include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	  include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
 	  CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-	else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	  message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	  message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+	endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
       endif("${ADDED_RESULT}" STREQUAL "-1")
     else(SRC_OTHER_ADDED_DIRS)
       add_subdirectory(${dir})
       set(SRC_OTHER_ADDED_DIRS ${dir} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
       mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-      if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
 	CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-      else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-      endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+      else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
     endif(SRC_OTHER_ADDED_DIRS)
     if(CMAKE_CONFIGURATION_TYPES)
       set(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/${lower}" CACHE STRING "${upper}_EXECUTABLE" FORCE)

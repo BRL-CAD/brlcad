@@ -1,0 +1,167 @@
+/* Top level library group */
+/** @defgroup librt librt (Geometry I/O, Raytracing) */
+
+/* Second tier groups */
+
+/** @ingroup librt */
+/**  @defgroup rt_defines Definitions*/
+
+/** @ingroup librt */
+/**  @defgroup rt_debug Debugging */
+
+/** @ingroup librt */
+/**  @defgroup rt_geom Geometry Primitives */
+
+/** @ingroup librt */
+/**  @defgroup db Geometry Database*/
+/**  @addtogroup db
+     @brief Definitions and functions supporting the reading, writing and working with BRL-CAD geometry database format.
+ */
+
+/** @ingroup librt */
+/**  @defgroup raytrace Raytracing */
+/**  @addtogroup raytrace
+     @brief Definitions and functions supporting raytracing BRL-CAD geometry.
+ */
+
+/** @ingroup librt */
+/**  @defgroup rt_nmg N-Manifold Geometry */
+/**  @addtogroup rt_nmg
+     @brief Support for N-Manifold Geometry */
+ */
+
+/** @ingroup librt */
+/**  @defgroup rt_timer Timer*/
+
+/** @ingroup librt */
+/**  @defgroup rt_obj Object API*/
+
+/** @ingroup librt */
+/**  @defgroup rt_solid Solids Structure*/
+
+/** @ingroup librt */
+/**  @defgroup rt_tol librt Specific Tolerances */
+
+/* Third tier groups */
+
+/** @ingroup db */
+/**  @defgroup db_fullpath Full Paths */
+
+/** @ingroup db */
+/**  @defgroup db4 Database Version 4 */
+/**  @addtogroup db4
+     @brief Routines supporting reading and writing version 4 of the BRL-CAD geometry database.
+ */
+
+/** @ingroup db */
+/**  @defgroup db5 Database Version 5 */
+/**  @addtogroup db5
+     @brief Routines supporting reading and writing version 5 of the BRL-CAD geometry database.
+ */
+
+/** @ingroup db */
+/**  @defgroup db_search Database Searching */
+/**  @addtogroup db_search
+     @brief Routines that find and report on the objects within BRL-CAD geometry databases.
+ */
+
+
+/** @ingroup rt_geom */
+/**  @defgroup rt_annotation Annotation */
+/** @ingroup rt_geom */
+/**  @defgroup rt_arb Arbitrary Polyhedron (4 to 8 defining points)*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_arbn Arbitrary Polyhedron (Convex) */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ars Arbitrary Faceted Solid*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_bot Bag Of Triangles */
+/** @ingroup rt_geom */
+/**  @defgroup rt_brep Boundary Representation (NURBS) */
+/** @ingroup rt_geom */
+/**  @defgroup rt_cline CLINE */
+/** @ingroup rt_geom */
+/**  @defgroup rt_dsp Displacement Map */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ebm Extruded Bitmap */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ehy Elliptical Hyperboloid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_ell Ellipsoid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_epa Elliptical Paraboloid */
+/** @ingroup rt_geom */
+/**  @defgroup rt_eto Elliptical Torus */
+/** @ingroup rt_geom */
+/**  @defgroup rt_extrude Extruded Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_grip Grip */
+/** @ingroup rt_geom */
+/**  @defgroup rt_half Half Plane*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_hf HF */
+/** @ingroup rt_geom */
+/**  @defgroup rt_hrt Heart */
+/** @ingroup rt_geom */
+/**  @defgroup rt_hyp Elliptical Hyperboloid of One Sheet */
+/** @ingroup rt_geom */
+/**  @defgroup rt_joint Joint */
+/** @ingroup rt_geom */
+/**  @defgroup rt_metaball Metaball */
+/** @ingroup rt_geom */
+/**  @defgroup rt_nurb Non-Uniform Rational B-Spline */
+/** @ingroup rt_geom */
+/**  @defgroup rt_part Particle */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pg  POLY */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pipe Pipe */
+/** @ingroup rt_geom */
+/**  @defgroup rt_pnt Point Cloud */
+/** @ingroup rt_geom */
+/**  @defgroup rt_revolve Revolved Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_rhc Right Hyberbolic Cylinder */
+/** @ingroup rt_geom */
+/**  @defgroup rt_rpc Right Parabolic Cylinder */
+/** @ingroup rt_geom */
+/**  @defgroup rt_sketch Sketch */
+/** @ingroup rt_geom */
+/**  @defgroup rt_submodel Submodel */
+/** @ingroup rt_geom */
+/**  @defgroup rt_superell Super Ellipsoid*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_tgc Truncated General Cone*/
+/** @ingroup rt_geom */
+/**  @defgroup rt_tor Torus */
+/** @ingroup rt_geom */
+/**  @defgroup rt_vol Volume */
+
+/** @ingroup raytrace*/
+/**  @defgroup rt_soltab The Solids Table*/
+
+/** @ingroup raytrace*/
+/**  @defgroup rt_functab The Function Table*/
+
+/** @ingroup raytrace */
+/**  @defgroup rt_pattern Generate Rays via Pattern Templates */
+
+/** @ingroup raytrace */
+/**  @defgroup rt_shoot Shoot Rays */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_application The Application Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_instance The Raytracing Instance */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_resource The Resource Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_xray The Ray Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_hit The Hit Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_seg The Segment Structure */
+/**    @ingroup rt_shoot*/
+/**     @defgroup rt_partition The Partition Structure */
+
+/** @ingroup raytrace */
+/**  @defgroup rt_boolweave Booleweave */

@@ -126,6 +126,10 @@ do
                                   shift;;
      --disable-libz)                options="$options -DBRLCAD_ZLIB=SYSTEM";
                                   shift;;
+     --enable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=BUNDLED";
+                                  shift;;
+     --disable-tinycthread)                options="$options -DBRLCAD_TINYCTHREAD=SYSTEM";
+                                  shift;;
      --enable-freetype)                options="$options -DBRLCAD_FREETYPE=BUNDLED";
                                   shift;;
      --disable-freetype)                options="$options -DBRLCAD_FREETYPE=SYSTEM";
@@ -133,6 +137,10 @@ do
      --enable-termlib)                options="$options -DBRLCAD_TERMLIB=BUNDLED";
                                   shift;;
      --disable-termlib)                options="$options -DBRLCAD_TERMLIB=SYSTEM";
+                                  shift;;
+     --enable-netpbm)                options="$options -DBRLCAD_NETPBM=BUNDLED";
+                                  shift;;
+     --disable-netpbm)                options="$options -DBRLCAD_NETPBM=SYSTEM";
                                   shift;;
      --enable-png)                options="$options -DBRLCAD_PNG=BUNDLED";
                                   shift;;
@@ -177,6 +185,10 @@ do
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
+                                  shift;;
+     --enable-spr)                options="$options -DBRLCAD_SPR=BUNDLED";
+                                  shift;;
+     --disable-spr)                options="$options -DBRLCAD_SPR=SYSTEM";
                                   shift;;
      --enable-scl)                options="$options -DBRLCAD_SC=BUNDLED";
                                   shift;;

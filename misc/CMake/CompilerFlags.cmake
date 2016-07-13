@@ -1,7 +1,7 @@
 #             C O M P I L E R F L A G S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -63,13 +63,22 @@ macro(CACHE_BUILD_FLAGS suffix)
   set(CMAKE_CXX_FLAGS_CACHED${suffix} "${CMAKE_CXX_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
   set(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
   set(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS}" CACHE STRING "Cached build flag value" FORCE)
+  mark_as_advanced(CMAKE_C_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_CXX_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_CACHED${suffix})
+  mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_CACHED${suffix})
   foreach(BTYPE ${CMAKE_BUILD_TYPES})
     set(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_C_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
     set(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_CXX_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
     set(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_SHARED_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
     set(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix} "${CMAKE_EXE_LINKER_FLAGS_${BTYPE}}" CACHE STRING "Cached build flag value" FORCE)
+    mark_as_advanced(CMAKE_C_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_CXX_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_SHARED_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
+    mark_as_advanced(CMAKE_EXE_LINKER_FLAGS_${BTYPE}_CACHED${suffix})
   endforeach(BTYPE ${CMAKE_BUILD_TYPES})
   set(CMAKE_BUILD_FLAGS_CACHED${suffix} TRUE CACHE BOOL "Have cached build flag values" FORCE)
+  mark_as_advanced(CMAKE_BUILD_FLAGS_CACHED${suffix})
 endmacro(CACHE_BUILD_FLAGS)
 
 # Restore cached values of CMake build variables
@@ -264,6 +273,61 @@ endmacro(CHECK_C_FLAG)
 macro(CHECK_CXX_FLAG)
   CHECK_FLAG(CXX ${ARGN})
 endmacro(CHECK_CXX_FLAG)
+
+
+# Disable any compilation warning flags currently set
+macro(DISABLE_WARNINGS)
+
+  # borland-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w-" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w-" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # msvc-style (must test before gcc's -w test)
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("W0" VARS NOWARN_CFLAG)
+
+    if (NOWARN_CFLAG)
+      # replace msvc-style warning level C flags, disable with W0
+      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS "${CMAKE_C_FLAGS}")
+      foreach(BTYPE ${CMAKE_BUILD_TYPES})
+	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_C_FLAGS_${BTYPE} "${CMAKE_C_FLAGS_${BTYPE}}")
+      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+    endif (NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("W0" VARS NOWARN_CXXFLAG)
+
+    if (NOWARN_CXXFLAG)
+      # replace msvc-style warning level C++ flags, disable with W0
+      string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+      foreach(BTYPE ${CMAKE_BUILD_TYPES})
+	string(REGEX REPLACE "[/-][wW][1-4]" "/W0" CMAKE_CXX_FLAGS_${BTYPE} "${CMAKE_CXX_FLAGS_${BTYPE}}")
+      endforeach(BTYPE ${CMAKE_BUILD_TYPES})
+    endif (NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # gcc/llvm-style
+  if (NOT NOWARN_CFLAG)
+    CHECK_C_FLAG("w" VARS NOWARN_CFLAG)
+  endif (NOT NOWARN_CFLAG)
+  if (NOT NOWARN_CXXFLAG)
+    CHECK_CXX_FLAG("w" VARS NOWARN_CXXFLAG)
+  endif (NOT NOWARN_CXXFLAG)
+
+  # turn off warnings in the current scope
+  if (NOWARN_CFLAG)
+    set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${NOWARN_CFLAG}")
+  endif (NOWARN_CFLAG)
+  if (NOWARN_CXXFLAG)
+    set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${NOWARN_CXXFLAG}")
+  endif (NOWARN_CXXFLAG)
+
+endmacro(DISABLE_WARNINGS)
 
 
 # Local Variables:

@@ -1,0 +1,18 @@
+/** @defgroup libicv libicv (Image Conversion and Processing) */
+
+/* Second tier groups */
+ /** @ingroup libicv */
+ /**  @defgroup icv_defines Definitions*/
+ /** @ingroup libicv */
+ /**  @defgroup icv_colorspace Colorspace */
+ /** @ingroup libicv */
+ /**  @defgroup icv_crop Crop Image */
+ /** @ingroup libicv */
+ /**  @defgroup icv_filters Image Filters */
+ /** @ingroup libicv */
+ /**  @defgroup icv_io Image Read/Write */
+ /** @ingroup libicv */
+ /**  @defgroup icv_ops Image Operations */
+ /** @ingroup libicv */
+ /**  @defgroup icv_stat Image Statistics */
+

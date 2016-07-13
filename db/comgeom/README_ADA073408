@@ -1,0 +1,17 @@
+Model ADA073408.comgeom is a transcription of the model documented in
+the 1979 public release report:
+
+A Combinatorial Geometry Computer Description of the MEP-021A Generator Set
+http://www.dtic.mil/docs/citations/ADA073408
+
+A series of Google GCI tasks worked to transcribe the ASCII COMGEOM
+description from the original report to text, and post-processed it
+into a form that the comgeom-g importer can handle:
+
+http://www.google-melange.com/gci/task/view/google/gci2013/5597236545191936
+http://www.google-melange.com/gci/task/view/google/gci2014/5293529710460928
+http://www.google-melange.com/gci/task/view/google/gci2014/5792678377684992
+
+The file ADA073408_inputs.tar.gz contains the original transcribed
+files and the script used to create the comgeom file.
+

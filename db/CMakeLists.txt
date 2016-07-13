@@ -41,8 +41,8 @@ macro(ADD_G_TARGET g_model folder)
   set(output_file ${bin_root}/${DATA_DIR}/db/${g_model_root}.g)
   add_custom_command(
     OUTPUT ${output_file}
-    COMMAND asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model} ${output_file}
-    DEPENDS asc2g ${CMAKE_CURRENT_SOURCE_DIR}/${g_model}
+    COMMAND asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${g_model}" ${output_file}
+    DEPENDS asc2g "${CMAKE_CURRENT_SOURCE_DIR}/${g_model}"
   )
   add_custom_target(${g_model_root}.g ALL DEPENDS ${output_file})
   set_target_properties(${g_model_root}.g PROPERTIES FOLDER "${folder}")
@@ -66,11 +66,15 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # Make sure the db directories are there
 if(CMAKE_CONFIGURATION_TYPES)
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/db)
+     file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${CFG_TYPE}/${DATA_DIR}/db")
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 else(CMAKE_CONFIGURATION_TYPES)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/${DATA_DIR}/db)
+  file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/${DATA_DIR}/db")
 endif(CMAKE_CONFIGURATION_TYPES)
+
+add_subdirectory(comgeom)
+add_subdirectory(nist)
+add_subdirectory(faa)
 
 foreach(g_input ${G_BENCHMARK_MODELS})
   ADD_G_TARGET(${g_input} "BRL-CAD Geometry Models/Benchmark")

@@ -1,41 +1,35 @@
-# Minimum required version of CMake
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
+
+if (COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-ENDIF(COMMAND CMAKE_POLICY)
+endif (COMMAND CMAKE_POLICY)
 
-# Set CMake project name
+# set project name
 PROJECT(LEMON)
 
+# build the lemon binary
 add_executable(lemon lemon.c)
-# Install
-if(NOT BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT BIN_DIR)
-if(NOT LEMON_SKIP_INSTALL)
+
+# install the binary
+if (NOT BIN_DIR)
+  set (BIN_DIR bin)
+endif (NOT BIN_DIR)
+if (NOT LEMON_SKIP_INSTALL)
   install(TARGETS lemon DESTINATION ${BIN_DIR})
-endif(NOT LEMON_SKIP_INSTALL)
+endif (NOT LEMON_SKIP_INSTALL)
 
-# Handle lempar.c template file
-if(NOT CMAKE_CONFIGURATION_TYPES)
-  set(LEMPAR_DIR ${CMAKE_RUNTIME_OUTPUT_DIRECTORY})
-else(NOT CMAKE_CONFIGURATION_TYPES)
-  set(LEMPAR_DIR ${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR})
-endif(NOT CMAKE_CONFIGURATION_TYPES)
-add_custom_command(
-  OUTPUT ${LEMPAR_DIR}/lempar.c
-  COMMAND ${CMAKE_COMMAND} -E copy ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c ${LEMPAR_DIR}/lempar.c
-  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c
-  )
-add_custom_target(lempar_cp ALL DEPENDS ${LEMPAR_DIR}/lempar.c)
-add_dependencies(lemon lempar_cp)
+# install the template
+if (NOT DATA_DIR)
+   set (DATA_DIR share)
+endif (NOT DATA_DIR)
+if (NOT LEMON_SKIP_INSTALL)
+  install(FILES lempar.c DESTINATION ${DATA_DIR}/lemon)
+endif (NOT LEMON_SKIP_INSTALL)
 
-if(NOT LEMON_SKIP_INSTALL)
-  install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/lempar.c DESTINATION ${BIN_DIR})
-endif(NOT LEMON_SKIP_INSTALL)
+configure_file(lempar.c ${CMAKE_BINARY_DIR}/${DATA_DIR}/lemon COPYONLY)
 
 # Local Variables:
 # tab-width: 8

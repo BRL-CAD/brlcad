@@ -55,3 +55,6 @@ svnlog2csv python script in this directory:
 
 svn log --xml file:///home/user/brlcad-svn_repo/code > brlcad_full_log.xml
 svnlog2csv > brlcad_full_log.csv
+
+Sean found this article, which discusses the problem of two-way syncing with an svn repo:
+http://ben.lobaugh.net/blog/147853/creating-a-two-way-sync-between-a-github-repository-and-subversion

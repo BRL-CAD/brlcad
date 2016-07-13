@@ -1,7 +1,7 @@
 #            B R L C A D _ S U M M A R Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2012-2014 United States Government as represented by
+# Copyright (c) 2012-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -172,16 +172,20 @@ function(print_flags flag_type flags FLAGS_MAXLINE)
       set(LINE_STR "${LINE_STR}   ")
     endif(${LINE_LENGTH} STREQUAL "0")
     list(GET ${flag_type}_LIST 0 NEXT_FLAG)
-    string(LENGTH ${NEXT_FLAG} FLAG_LENGTH)
-    math(EXPR NEW_LINE_LENGTH "${LINE_LENGTH} + ${FLAG_LENGTH} + 1")
-    if(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
-      set(LINE_STR "${LINE_STR} ${NEXT_FLAG}")
+    if(NOT "${NEXT_FLAG}" STREQUAL "")
+      string(LENGTH ${NEXT_FLAG} FLAG_LENGTH)
+      math(EXPR NEW_LINE_LENGTH "${LINE_LENGTH} + ${FLAG_LENGTH} + 1")
+      if(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
+	set(LINE_STR "${LINE_STR} ${NEXT_FLAG}")
+	list(REMOVE_AT ${flag_type}_LIST 0)
+	list(LENGTH ${flag_type}_LIST FLAG_CNT)
+      else(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
+	message("${LINE_STR}")
+	set(LINE_STR "")
+      endif(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
+    else(NOT "${NEXT_FLAG}" STREQUAL "")
       list(REMOVE_AT ${flag_type}_LIST 0)
-      list(LENGTH ${flag_type}_LIST FLAG_CNT)
-    else(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
-      message("${LINE_STR}")
-      set(LINE_STR "")
-    endif(${NEW_LINE_LENGTH} LESS ${FLAGS_MAXLINE})
+    endif(NOT "${NEXT_FLAG}" STREQUAL "")
   endwhile(${FLAG_CNT} GREATER 0)
   if(NOT "${LINE_STR}" STREQUAL "")
     message("${LINE_STR}")
@@ -252,7 +256,6 @@ set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
 set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
 set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
-set(BRLCAD_ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
 set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
 set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
@@ -278,7 +281,6 @@ set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
     BRLCAD_ENABLE_X11
     BRLCAD_ENABLE_QT
-    BRLCAD_ENABLE_RTSERVER
     BRLCAD_ENABLE_RUNTIME_DEBUG
     )
 
@@ -423,6 +425,12 @@ if(BRLCAD_EXTRADOCS)
   if(BRLCAD_EXTRADOCS_HTML)
     set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} html)
   endif(BRLCAD_EXTRADOCS_HTML)
+  if(BRLCAD_EXTRADOCS_PHP)
+    set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} php)
+  endif(BRLCAD_EXTRADOCS_PHP)
+  if(BRLCAD_EXTRADOCS_PPT)
+    set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} html)
+  endif(BRLCAD_EXTRADOCS_PPT)
   if(BRLCAD_EXTRADOCS_MAN)
     set(DOCBOOK_FORMATS ${DOCBOOK_FORMATS} man)
   endif(BRLCAD_EXTRADOCS_MAN)

@@ -1,0 +1,26 @@
+/** @defgroup libbrep libbrep (NURBS B-Reps) */
+
+/* Second tier groups */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_defines Definitions */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_util BRep Utility Routines*/
+ /** @ingroup libbrep */
+ /**  @defgroup on_ray OpenNURBS Ray Routines */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_brnode Bounding Rectangle Hierarchy Node*/
+ /** @ingroup libbrep */
+ /**  @defgroup brep_curvetree Curve Tree - Hierarchy of Bounding Rectangle Nodes*/
+ /** @ingroup libbrep */
+ /**  @defgroup brep_bbnode Bounding Box Hierarchy Node*/
+ /** @ingroup libbrep */
+ /**  @defgroup brep_surfacetree Surface Tree - Hierarchy of Bounding Box Nodes*/
+ /** @ingroup libbrep */
+ /**  @defgroup brep_pullback Find Parametric Surface Coordinates of 3D Point */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_intersect Curve and Surface Intersection Routines */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_boolean Boolean Operations On B-Reps */
+ /** @ingroup libbrep */
+ /**  @defgroup brep_csg CSG Hierarchy Reconstruction from B-Reps */
+

@@ -1,7 +1,7 @@
 #            T H I R D P A R T Y _ T C L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -247,10 +247,10 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
     # interested in, and collect the results.
     if(NOT ${PKGNAME_UPPER}_TEST_FAIL)
       set(CURRENT_TCL_PACKAGE_NAME ${pkgname})
-      set(pkg_test_file ${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl)
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in ${pkg_test_file} @ONLY)
+      set(pkg_test_file "${CMAKE_BINARY_DIR}/CMakeTmp/${pkgname}_version.tcl")
+      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/tcltest.tcl.in" ${pkg_test_file} @ONLY)
       EXEC_PROGRAM(${wishcmd} ARGS ${pkg_test_file} OUTPUT_VARIABLE EXECOUTPUT)
-      file(READ ${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION pkgversion)
+      file(READ "${CMAKE_BINARY_DIR}/CMakeTmp/${PKGNAME_UPPER}_PKG_VERSION" pkgversion)
       string(REGEX REPLACE "\n" "" ${PKGNAME_UPPER}_PACKAGE_VERSION ${pkgversion})
       if(${PKGNAME_UPPER}_PACKAGE_VERSION)
 	set(${PKGNAME_UPPER}_TCL_PASSED 1)
@@ -332,7 +332,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	  add_dependencies(${pkgname} ${dep})
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
-      include(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
+      include("${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist")
       CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
     else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
       CMAKEFILES(${dir})
@@ -383,7 +383,7 @@ macro(THIRD_PARTY_TCL_PACKAGE pkgname dir wishcmd depends required_vars NEEDS_LI
 	  add_dependencies(${pkgname} ${dep})
 	endif(BRLCAD_BUILD_${DEP_UPPER})
       endforeach(dep ${depends})
-      include(${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist)
+      include("${CMAKE_CURRENT_SOURCE_DIR}/${PKGNAME_LOWER}.dist")
       CMAKEFILES_IN_DIR(${PKGNAME_LOWER}_ignore_files ${dir})
     else(${CMAKE_PROJECT_NAME}_${PKGNAME_UPPER}_BUILD)
       CMAKEFILES(${dir})

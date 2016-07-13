@@ -1,6 +1,10 @@
 ; CPack install script designed for a nmake build
 ; A customized version of the standard template included
 ; with CMake
+;
+; This file must be placed in the CPACK_MODULE_PATH directory
+; and named NSIS.template.in - CPack will then use this template
+; instead of the built-in default template.
 
 RequestExecutionLevel user
 
@@ -654,9 +658,9 @@ FunctionEnd
 ; Create desktop icons
 Function installdesktopicons
 SetOutPath $INSTDIR
-CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
+CreateShortCut "$DESKTOP\Archer.lnk" "$INSTDIR\bin\archer.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
 CreateShortCut "$DESKTOP\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
-CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
+CreateShortCut "$DESKTOP\RtWizard.lnk" "$INSTDIR\bin\rtwizard.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 FunctionEnd
 
 Section "-Core installation"
@@ -717,9 +721,9 @@ Section "-Core installation"
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER"
 @CPACK_NSIS_CREATE_ICONS@
 @CPACK_NSIS_CREATE_ICONS_EXTRA@
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Archer.lnk" "$INSTDIR\bin\archer.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\archer.ico" 0
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\MGED.lnk" "$INSTDIR\bin\mged.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
-  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.bat" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
+  CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\RtWizard.lnk" "$INSTDIR\bin\rtwizard.exe" "" "$INSTDIR\@CPACK_DATA_DIR@\icons\brlcad.ico" 0
 
   CreateDirectory "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals"
   CreateShortCut "$SMPROGRAMS\$STARTMENU_FOLDER\Manuals\BRL-CAD.lnk" "$INSTDIR\@CPACK_DATA_DIR@\html\manuals\index.html" "" "$INSTDIR\brlcad.ico" 0

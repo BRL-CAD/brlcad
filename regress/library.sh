@@ -2,7 +2,7 @@
 #                      L I B R A R Y . S H
 # BRL-CAD
 #
-# Copyright (c) 2010-2014 United States Government as represented by
+# Copyright (c) 2010-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -51,7 +51,7 @@ export LD_LIBRARY_PATH DYLD_LIBRARY_PATH
 
 ensearch ( ) {
     ensearch_file="$1"
-    ensearch_dirs="$ARG1/src \"$PATH_TO_THIS/../src\" ../src/$1 $ARG1/src/$1 \"$PATH_TO_THIS/../src/$1\" ../bin ../src ../src/util ../src/conv ../src/conv/iges ../src/conv/vdeck ../src/gtools ../src/rt ../bench"
+    ensearch_dirs="$ARG1/bin ../bin \"$PATH_TO_THIS/../bin\" ../bench \"$PATH_TO_THIS/../bench\" "
 
     if test "x$ensearch_file" = "x" ; then
 	# nothing to do
