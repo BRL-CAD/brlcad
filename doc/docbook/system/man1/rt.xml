@@ -366,6 +366,13 @@
       </varlistentry>
 
       <varlistentry>
+	<term><option>-z</option></term>
+	<listitem>
+	  <para>Enables OpenCL accelerated raytracing (OpenCL must be enabled at compilation time for this option to be present.)</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
 	<term><option>-A #</option></term>
 	<listitem>
 	  <para>sets the ambient light intensity,

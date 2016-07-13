@@ -85,6 +85,9 @@ main(int argc, char **argv)
 {
     struct directory *dp;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc != 3 && argc != 4) {
 	bu_exit(1, "Usage:\n\t%s [-v] input.g output.g\n", argv[0]);
     }

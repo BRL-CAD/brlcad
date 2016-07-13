@@ -88,7 +88,7 @@ ged_rot_point(struct ged *gedp, int argc, const char *argv[])
     /* Rotate the incoming point */
     bn_mat_inv(invRot, gedp->ged_gvp->gv_rotation);
     MAT4X3PNT(rpoint, invRot, point);
-    bn_encode_vect(gedp->ged_result_str, rpoint);
+    bn_encode_vect(gedp->ged_result_str, rpoint, 1);
 
     return GED_OK;
 }

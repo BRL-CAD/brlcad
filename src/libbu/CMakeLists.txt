@@ -127,7 +127,6 @@ add_subdirectory(tests)
 add_subdirectory(y2038)
 
 set(bu_ignore_files
-  glob.c
   bitv.h
   charclass.h
   mime.cmake

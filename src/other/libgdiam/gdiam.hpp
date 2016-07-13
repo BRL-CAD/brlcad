@@ -44,6 +44,8 @@
 #  endif
 #endif
 
+#define GDIAM_FLOAT_ZERO(val) (((val) > -1.0e-37) && ((val) < 1.0e-37))
+
 #define  GDIAM_DIM   3
 typedef  double  gdiam_real;
 typedef  gdiam_real    gdiam_point_t[ GDIAM_DIM ];
@@ -80,7 +82,7 @@ inline gdiam_real   pnt_length( const gdiam_point  pnt )
 inline void  pnt_normalize( gdiam_point  pnt )
 {
     gdiam_real  len = pnt_length( pnt );
-    if  ( len == 0.0 )
+    if  ( GDIAM_FLOAT_ZERO(len) )
         return;
 
     pnt[ 0 ] /= len;
@@ -183,9 +185,9 @@ inline bool  pnt_isEqual( const gdiam_point  p,
                           const gdiam_point  q ) 
 {
     // Assuming here the GDIAM_DIM == 3 !!!!
-    return  ( ( p[ 0 ] == q[ 0 ] )
-              &&  ( p[ 1 ] == q[ 1 ] )
-              &&  ( p[ 2 ] == q[ 2 ] ) );
+    return  ( ( GDIAM_FLOAT_ZERO(p[0] - q[0]) )
+              &&  ( GDIAM_FLOAT_ZERO(p[0] - q[0]) )
+              &&  ( GDIAM_FLOAT_ZERO(p[0] - q[0]) ) );
 }
 
 inline void  pnt_scale_and_add( gdiam_point  dest,

@@ -1134,11 +1134,11 @@ db_comb_mvall(struct directory *dp, struct db_i *dbip, const char *old_name, con
 		changed = 1;
 	    }
 
-	    if (BU_PTBL_END(stack) < 1) {
+	    if (BU_PTBL_LEN(stack) < 1) {
 		done = 1;
 		break;
 	    }
-	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_END(stack)-1);
+	    comb_leaf = (union tree *)BU_PTBL_GET(stack, BU_PTBL_LEN(stack)-1);
 	    if (comb_leaf->tr_op != OP_DB_LEAF) {
 		bu_ptbl_rm(stack, (long *)comb_leaf);
 		comb_leaf = comb_leaf->tr_b.tb_right;

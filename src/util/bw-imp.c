@@ -34,6 +34,7 @@
 #include "bio.h"
 
 #include "bu/getopt.h"
+#include "bu/log.h"
 
 #define true 1
 #define false 0
@@ -158,6 +159,9 @@ int
 main(int argc, char **argv)
 {
     size_t y;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     height = width = 512;		/* Defaults */
 

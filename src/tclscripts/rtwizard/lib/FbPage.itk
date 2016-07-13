@@ -440,9 +440,7 @@ namespace eval RtWizard {
 
 	    set ::RtWizard::wizard_state(fbserv_port) $port
 	    set ::RtWizard::wizard_state(pid) $pid
-	    puts "fbserv pid:"
-	    puts $pid
-	    return "$port $pid $::RtWizard::wizard_state(output_filename)"
+	    return "$port $pid"
 	}
 	set binpath [bu_brlcad_root "bin"]
 	#

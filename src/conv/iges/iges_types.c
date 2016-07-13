@@ -24,8 +24,8 @@
 char *
 iges_type(int type)
 {
-    int i;
-    int type_no = 0;
+    size_t i;
+    size_t type_no = 0;
 
     for (i = 1; i < ntypes; i++) {
 	if (typecount[i].type == type) {

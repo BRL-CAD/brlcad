@@ -24,7 +24,7 @@ encoding system utf-8
 
 proc man {{cmdname {}}} {
     if {![winfo exists .mgedMan]} {
-	ManBrowser .mgedMan -parentName MGED
+	ManBrowser .mgedMan -useToC 1 -listDir n -parentName MGED
     }
 
     if {$cmdname != {} && ![.mgedMan select $cmdname]} {

@@ -285,6 +285,11 @@ wdb_export(
     intern.idb_ptr = gp;
     intern.idb_meth = &OBJ[id];
 
+    if (id == ID_DATUM) {
+	/* Set a default color for datum objects */
+	bu_avs_add(&intern.idb_avs, "color", "255/255/0");
+    }
+
     return wdb_put_internal(wdbp, name, &intern, local2mm);
 }
 

@@ -1353,7 +1353,9 @@ void
 Convtrimsurfs()
 {
 
-    int i, convsurf = 0, totsurfs = 0;
+    size_t i;
+    size_t convsurf = 0;
+    size_t totsurfs = 0;
     struct model *m;
     struct nmgregion *r;
     struct shell *s;
@@ -1388,7 +1390,7 @@ Convtrimsurfs()
 
     nmg_rebound(m, &tol);
 
-    bu_log("\n\t%d surfaces converted, adjusting surface normals....\n", convsurf);
+    bu_log("\n\t%zu surfaces converted, adjusting surface normals....\n", convsurf);
 
     /* do some raytracing to get face orientations correct */
     for (BU_LIST_FOR(fu, faceuse, &s->fu_hd)) {
@@ -1433,7 +1435,7 @@ Convtrimsurfs()
 
     }
 
-    bu_log("Converted %d Trimmed Surfaces successfully out of %d total Trimmed Surfaces\n", convsurf, totsurfs);
+    bu_log("Converted %zu Trimmed Surfaces successfully out of %zu total Trimmed Surfaces\n", convsurf, totsurfs);
 
     if (RT_G_DEBUG & DEBUG_MEM_FULL)
 	bu_mem_barriercheck();

@@ -255,7 +255,7 @@ proc_sname(char shflg, char mrflg, int cnt, char ctflg)
  * leaving all the geometric calculations to the code in nmg_fuse.c ?
  */
 static void
-nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
+nmg_patch_coplanar_face_merge(struct shell *s, size_t *face_count, struct patch_faces *p_faces, struct bn_tol *tol, int simplify)
 {
     struct model *m;
     int len;
@@ -298,7 +298,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	face1_no = (-1);
 	while (p_faces[++face1_no].fu != fu1
 	       && p_faces[face1_no].fu != fu1->fumate_p
-	       && face1_no < *face_count);
+	       && (size_t)face1_no < *face_count);
 	if (p_faces[face1_no].fu != fu1 &&
 	    p_faces[face1_no].fu != fu1) {
 	    bu_log("nmg_patch_coplanar_face_merge: Can't find entry for faceuse %p in p_faces\n", (void *)fu1);
@@ -345,7 +345,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	    face2_no = (-1);
 	    while (p_faces[++face2_no].fu != fu2
 		   && p_faces[face2_no].fu != fu2->fumate_p
-		   && face2_no < *face_count);
+		   && (size_t)face2_no < *face_count);
 	    if (p_faces[face2_no].fu != fu2 &&
 		p_faces[face2_no].fu != fu2) {
 		bu_log("nmg_patch_coplanar_face_merge: Couldn't find entry for faceuse %p in p_faces\n", (void *)fu2);
@@ -362,7 +362,7 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 	     */
 	    {
 		struct faceuse *prev_fu;
-		int face_no;
+		size_t face_no;
 
 		prev_fu = BU_LIST_PREV(faceuse, &fu2->l);
 		/* The prev_fu can never be the head */
@@ -402,8 +402,8 @@ nmg_patch_coplanar_face_merge(struct shell *s, int *face_count, struct patch_fac
 }
 
 
-int
-Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
+static int
+Build_solid(size_t l, char *name, char *mirror_name, int plate_mode, fastf_t *centroid, fastf_t thickness, fastf_t *pl1, struct bn_tol *tol)
 {
     struct model *m;
     struct nmgregion *r;
@@ -416,10 +416,10 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     struct patch_faces *p_faces;
     struct patch_verts *verts;
     vect_t out;
-    int face_count;
-    int missed_faces;
-    int i, k;
-    int vert1, vert2;
+    size_t face_count;
+    size_t missed_faces;
+    size_t i, k;
+    size_t vert1, vert2;
     fastf_t outdot;
     fastf_t min_dot=MAX_FASTF;
     vect_t norm;
@@ -471,13 +471,13 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 		VJOIN1(&pts[2*3], &pts[1*3], thickness, norm);
 		VJOIN1(&pts[6*3], &pts[4*3], thickness, norm);
 		VMOVE(&pts[7*3], &pts[6*3]);
-		snprintf(tmp_name, NAMESIZE+1, "%s_%d", name, k);
+		snprintf(tmp_name, NAMESIZE+1, "%s_%lu", name, (unsigned long)k);
 		mk_arb8(outfp, tmp_name, pts);
 		mk_addmember(tmp_name, &tmp_head.l, NULL, WMOP_UNION);
 		if (mirror_name[0]) {
 		    for (i=0; i<8; i++)
 			pts[i*3 + 1] = -pts[i*3 + 1];
-		    snprintf(tmp_name, NAMESIZE+1, "%s_%dm", name, k);
+		    snprintf(tmp_name, NAMESIZE+1, "%s_%lum", name, (unsigned long)k);
 		    mk_arb8(outfp, tmp_name, pts);
 		    mk_addmember(tmp_name, &mir_head.l, NULL, WMOP_UNION);
 		}
@@ -524,8 +524,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    int found_verts=0;
 
 	    /* Check if this face was already made */
-	    for (i=0; i<BU_PTBL_END(&faces); i++) {
-		int j;
+	    for (i=0; i<BU_PTBL_LEN(&faces); i++) {
+		size_t j;
 
 		found_verts = 0;
 		fu = (struct faceuse *)BU_PTBL_GET(&faces, i);
@@ -646,7 +646,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	bu_log("nmg_break_edges broke %d edges\n", i);
 
     /* glue all the faces together */
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
 
     for (BU_LIST_FOR (s, shell, &r->s_hd))
 	nmg_make_faces_within_tol(s, tol);
@@ -866,7 +866,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	if (fu->orientation == OT_SAME)
 	    bu_ptbl_ins(&faces, (long *)fu);
     }
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
     bu_ptbl_reset(&faces);
 
     nmg_shell_coplanar_face_merge(is, tol, 0);
@@ -907,7 +907,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     }
 
     /* now start the actual moving of the vertex coordinates */
-    for (i=0; i<BU_PTBL_END(&verts_to_move); i++) {
+    for (i=0; i<BU_PTBL_LEN(&verts_to_move); i++) {
 	struct vertex *new_v;
 
 	/* get the vertexuse from the table */
@@ -982,7 +982,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
     }
     if (debug)
 	bu_log("Re-glue faces\n");
-    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), tol);
+    nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), tol);
     bu_ptbl_free(&faces);
 
     /* Calculate bounding boxes */
@@ -1094,8 +1094,8 @@ proc_region(char *name1)
 /*
  * Process Volume Mode triangular facetted solids
  */
-void
-proc_triangle(int cnt)
+static void
+proc_triangle(size_t cnt)
 {
     int idx;
     int cpts;
@@ -1109,7 +1109,7 @@ proc_triangle(int cnt)
     point_t centroid;
 
     /* static due to bu exception handling */
-    static int k, l;
+    static size_t k, l;
 
     k = l = 0;
 
@@ -1346,8 +1346,8 @@ Get_ave_plane(fastf_t *pl, int num_pts, fastf_t *x, fastf_t *y, fastf_t *z)
 /*
  * Process Plate Mode triangular surfaces
  */
-void
-proc_plate(int cnt)
+static void
+proc_plate(size_t cnt)
 {
     int idx;
     static int count=0;
@@ -1361,8 +1361,8 @@ proc_plate(int cnt)
     point_t centroid;
 
     /* static due to bu exception handling */
-    static int k, l;
-    static int thick_no;
+    static size_t k, l;
+    static size_t thick_no;
 
     k = l = 0;
 
@@ -1527,11 +1527,11 @@ proc_plate(int cnt)
  * Process FASTGEN wedge shape - also process hollow wedges.
  */
 void
-proc_wedge(int cnt)
+proc_wedge(size_t cnt)
 {
     point_t pt8[8];
     point_t inpt8[8];
-    int i, k;
+    size_t i, k;
     vect_t ab, ac, ad;
     plane_t planes[5];
     static int count=0;
@@ -1780,11 +1780,11 @@ proc_wedge(int cnt)
  * Process FASTGEN spheres - can handle hollowness
  */
 void
-proc_sphere(int cnt)
+proc_sphere(size_t cnt)
 {
     fastf_t rad;
     point_t center;
-    int i;
+    size_t i;
     char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
@@ -1904,10 +1904,10 @@ proc_sphere(int cnt)
  * Process FASTGEN box code
  */
 void
-proc_box(int cnt)
+proc_box(size_t cnt)
 {
     point_t pt8[8];
-    int k;
+    size_t k;
 
     vect_t ab = VINIT_ZERO;
     vect_t ac = VINIT_ZERO;
@@ -2114,9 +2114,9 @@ proc_box(int cnt)
  * option.
  */
 void
-proc_donut(int cnt)
+proc_donut(size_t cnt)
 {
-    int k;
+    size_t k;
     point_t base1, top1, base2, top2;
     point_t base1_in, top1_in, base2_in, top2_in;
     fastf_t rbase1, rtop1, rbase2, rtop2;
@@ -2724,6 +2724,129 @@ mk_cyladdmember(char *name1, struct wmember *headmem, struct subtract_list *slis
 
 
 /*
+ * Returns 1 if point a is inside the cylinder defined by base, top,
+ * rad1, rad2.  Returns 0 if not.
+ */
+static int
+pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
+{
+    vect_t bt, ba;	/* bt: base to top, ba: base to a */
+    fastf_t mag_bt,
+	dist,		/* distance to the normal between the axis and
+			 * the point.
+			 */
+	radius,		/* radius of cylinder at above distance */
+	pt_radsq;	/* square of radial distance from the axis to
+			 * point.
+			 */
+
+    VSUB2(bt, top, base);
+    VSUB2(ba, a, base);
+    mag_bt = MAGNITUDE(bt);
+    VUNITIZE(bt);
+
+    dist = VDOT(bt, ba);
+    if (dist < -TOL.dist  || dist - mag_bt > TOL.dist)
+	return 0;
+
+    radius = ((rad2 - rad1)*dist)/mag_bt + rad1;
+
+    pt_radsq = MAGSQ(ba) - (dist*dist);
+    if (debug>2 && pt_radsq - (radius*radius) < TOL.dist_sq) {
+	bu_log("pt_inside: point (%.4f, %.4f, %.4f) inside cylinder endpoints (%.4f, %.4f, %.4f) and (%.4f, %.4f, %.4f)\n",
+	       a[0]/mmtin, a[1]/mmtin, a[2]/mmtin,
+	       base[0]/mmtin, base[1]/mmtin, base[2]/mmtin,
+	       top[0]/mmtin, top[1]/mmtin, top[2]/mmtin);
+	bu_log("pt_inside: radius at that point is %f\n", radius/mmtin);
+	bu_log("pt_inside: radial distance to point is %f\n", sqrt(pt_radsq)/mmtin);
+	bu_log("pt_inside: square of radial distance is %f\n", pt_radsq/(mmtin*mmtin));
+	bu_log("pt_inside: dist to base to point is %f\n", MAGSQ(ba)/mmtin);
+	bu_log("pt_inside: dist to normal between axis and point is %f\n", dist/mmtin);
+    }
+    if (pt_radsq - (radius*radius) < TOL.dist_sq)
+	return 1;
+    else
+	return 0;
+}
+
+
+/*
+ * Returns 1 if the cylinder starting at in[j] is inside (for solid
+ * subtraction) the cylinder described at in[i], 0 otherwise.
+ *
+ * This is not a foolproof determination. We only check to see whether
+ * the endpoints of the supposed inside cylinder lie within the first
+ * cylinder and that the radii of the second cylinder are <= those of
+ * the first cylinder. We don't actually see whether the entire second
+ * cylinder lies within the first.
+ */
+static int
+inside_cyl(int i, int j)
+{
+    point_t outbase, outtop, inbase, intop;
+    fastf_t r1, r2;
+
+    r1 = in[i+2].x;
+    r2 = in[i+2].y;
+
+    if ((r1 < in[j+2].x) || (r2 < in[j+2].y))
+	return 0;
+
+    VSET(outbase, in[i].x, in[i].y, in[i].z);
+    VSET(outtop, in[i+1].x, in[i+1].y, in[i+1].z);
+
+    VSET(inbase, in[j].x, in[j].y, in[j].z);
+    VSET(intop, in[j+1].x, in[j+1].y, in[j+1].z);
+
+    if (!pt_inside(inbase, outbase, outtop, r1, r2))
+	return 0;
+    else if (!pt_inside(intop, outbase, outtop, r1, r2))
+	return 0;
+    else
+	return 1;
+}
+
+
+/**
+ * Make up the list of subtracted volume mode solids for this group of
+ * cylinders. Go through the cylinder list and, for each solid, see
+ * whether any of the other solid records following qualify as volume
+ * mode subtracted solids. Record the number of the outside cylinder
+ * and the number of the inside cylinder in the subtraction list,
+ * along with the mirror flag value of the inside solid (for naming
+ * convention reasons).
+ *
+ * Plate mode for a cylinder disqualifies it for any role as a volume
+ * mode subtracting cylinder.
+ */
+static struct subtract_list *
+get_subtract(size_t cnt)
+{
+    static struct subtract_list *slist = NULL;
+    struct subtract_list *next, *add_to_list(struct subtract_list *, int, int, int);
+    size_t i, j;
+
+    /* free up memory for slist, if any */
+    for (next=slist; next;) {
+	slist = next;
+	next = slist->next;
+	bu_free((char *)slist, "get_subtract: slist");
+    }
+
+    slist = (struct subtract_list *)NULL;
+    for (i = 0; i < cnt; i += 3) {
+	for (j = i + 3; j < cnt; j += 3) {
+	    if (in[j].surf_mode == '-')
+		continue;
+	    if (inside_cyl(i, j))
+		slist = add_to_list(slist, (i+3)/3, (j+3)/3, in[j].mirror);
+	}
+    }
+    return slist;
+}
+
+
+/*
  * Cylinder Fastgen Support: Cylinders have the added complexity of
  * being plate or volume mode, and closed vs. open ends. This makes
  * things a bit ugly.
@@ -2736,12 +2859,12 @@ mk_cyladdmember(char *name1, struct wmember *headmem, struct subtract_list *slis
  *
  */
 void
-proc_cylin(int cnt)
+proc_cylin(size_t cnt)
 {
     point_t base;
     point_t top;
-    int k, j;
-    struct subtract_list *slist, *get_subtract(int);
+    size_t k, j;
+    struct subtract_list *slist;
     char shflg='\0', mrflg, ctflg;
     static int count=0;
     static int mir_count=0;
@@ -2753,7 +2876,6 @@ proc_cylin(int cnt)
 	mir_count=0;
     }
 
-
     slist = get_subtract(cnt);
     if (debug>2) {
 	struct subtract_list *sp;
@@ -2762,7 +2884,6 @@ proc_cylin(int cnt)
 	    bu_log("%d %d %d\n",
 		   sp->outsolid, sp->insolid, sp->inmirror);
     }
-
 
     for (k=0; k < (cnt-1); k+=3) {
 	/* For all sub-cylinders in this cc */
@@ -2783,7 +2904,6 @@ proc_cylin(int cnt)
 	      && EQUAL(in[k].y, in[k+1].y)
 	      && EQUAL(in[k].z, in[k+1].z)))
 	{
-
 	    VSET(base, in[k].x, in[k].y, in[k].z);
 	    VSET(top, in[k+1].x, in[k+1].y, in[k+1].z);
 
@@ -2902,10 +3022,10 @@ proc_cylin(int cnt)
  * Process FASTGEN rod mode
  */
 void
-proc_rod(int cnt)
+proc_rod(size_t cnt)
 {
 
-    int k, l, idx;
+    size_t k, l, idx;
     point_t base;
     point_t top;
     fastf_t tmp;
@@ -3215,129 +3335,6 @@ proc_label(char *label_file)
 }
 
 
-/*
- * Returns 1 if point a is inside the cylinder defined by base, top,
- * rad1, rad2.  Returns 0 if not.
- */
-int
-pt_inside(point_t a, point_t base, point_t top, double rad1, double rad2)
-{
-    vect_t bt, ba;	/* bt: base to top, ba: base to a */
-    fastf_t mag_bt,
-	dist,		/* distance to the normal between the axis and
-			 * the point.
-			 */
-	radius,		/* radius of cylinder at above distance */
-	pt_radsq;	/* square of radial distance from the axis to
-			 * point.
-			 */
-
-    VSUB2(bt, top, base);
-    VSUB2(ba, a, base);
-    mag_bt = MAGNITUDE(bt);
-    VUNITIZE(bt);
-
-    dist = VDOT(bt, ba);
-    if (dist < -TOL.dist  || dist - mag_bt > TOL.dist)
-	return 0;
-
-    radius = ((rad2 - rad1)*dist)/mag_bt + rad1;
-
-    pt_radsq = MAGSQ(ba) - (dist*dist);
-    if (debug>2 && pt_radsq - (radius*radius) < TOL.dist_sq) {
-	bu_log("pt_inside: point (%.4f, %.4f, %.4f) inside cylinder endpoints (%.4f, %.4f, %.4f) and (%.4f, %.4f, %.4f)\n",
-	       a[0]/mmtin, a[1]/mmtin, a[2]/mmtin,
-	       base[0]/mmtin, base[1]/mmtin, base[2]/mmtin,
-	       top[0]/mmtin, top[1]/mmtin, top[2]/mmtin);
-	bu_log("pt_inside: radius at that point is %f\n", radius/mmtin);
-	bu_log("pt_inside: radial distance to point is %f\n", sqrt(pt_radsq)/mmtin);
-	bu_log("pt_inside: square of radial distance is %f\n", pt_radsq/(mmtin*mmtin));
-	bu_log("pt_inside: dist to base to point is %f\n", MAGSQ(ba)/mmtin);
-	bu_log("pt_inside: dist to normal between axis and point is %f\n", dist/mmtin);
-    }
-    if (pt_radsq - (radius*radius) < TOL.dist_sq)
-	return 1;
-    else
-	return 0;
-}
-
-
-/*
- * Returns 1 if the cylinder starting at in[j] is inside (for solid
- * subtraction) the cylinder described at in[i], 0 otherwise.
- *
- * This is not a foolproof determination. We only check to see whether
- * the endpoints of the supposed inside cylinder lie within the first
- * cylinder and that the radii of the second cylinder are <= those of
- * the first cylinder. We don't actually see whether the entire second
- * cylinder lies within the first.
- */
-int
-inside_cyl(int i, int j)
-{
-    point_t outbase, outtop, inbase, intop;
-    fastf_t r1, r2;
-
-    r1 = in[i+2].x;
-    r2 = in[i+2].y;
-
-    if ((r1 < in[j+2].x) || (r2 < in[j+2].y))
-	return 0;
-
-    VSET(outbase, in[i].x, in[i].y, in[i].z);
-    VSET(outtop, in[i+1].x, in[i+1].y, in[i+1].z);
-
-    VSET(inbase, in[j].x, in[j].y, in[j].z);
-    VSET(intop, in[j+1].x, in[j+1].y, in[j+1].z);
-
-    if (!pt_inside(inbase, outbase, outtop, r1, r2))
-	return 0;
-    else if (!pt_inside(intop, outbase, outtop, r1, r2))
-	return 0;
-    else
-	return 1;
-}
-
-
-/**
- * Make up the list of subtracted volume mode solids for this group of
- * cylinders. Go through the cylinder list and, for each solid, see
- * whether any of the other solid records following qualify as volume
- * mode subtracted solids. Record the number of the outside cylinder
- * and the number of the inside cylinder in the subtraction list,
- * along with the mirror flag value of the inside solid (for naming
- * convention reasons).
- *
- * Plate mode for a cylinder disqualifies it for any role as a volume
- * mode subtracting cylinder.
- */
-struct subtract_list *
-get_subtract(int cnt)
-{
-    static struct subtract_list *slist = NULL;
-    struct subtract_list *next, *add_to_list(struct subtract_list *, int, int, int);
-    int i, j;
-
-    /* free up memory for slist, if any */
-    for (next=slist; next;) {
-	slist = next;
-	next = slist->next;
-	bu_free((char *)slist, "get_subtract: slist");
-    }
-
-    slist = (struct subtract_list *)NULL;
-    for (i = 0; i < cnt; i += 3) {
-	for (j = i + 3; j < cnt; j += 3) {
-	    if (in[j].surf_mode == '-')
-		continue;
-	    if (inside_cyl(i, j))
-		slist = add_to_list(slist, (i+3)/3, (j+3)/3, in[j].mirror);
-	}
-    }
-    return slist;
-}
-
-
 /**
  * Add the inside, outside cylinder numbers to the subtraction list
  * slist.
@@ -3368,8 +3365,8 @@ main(int argc, char **argv)
     FILE *fp=NULL;
 
     int c;
-    int j = 1;
-    int i;
+    size_t j = 1;
+    size_t i;
     int done;
     int stop, num;
     char name[NAMESIZE+1];
@@ -3644,8 +3641,8 @@ main(int argc, char **argv)
 
 	while (bu_fgets(buf, sizeof(buf), mfp) != NULL) {
 
-	    if (sscanf(buf, "%6d%*66c%3d%5d",
-		       &i, &eqlos, &matcode) != 3) {
+	    if (bu_sscanf(buf, "%6zu%*66c%3d%5d",
+			  &i, &eqlos, &matcode) != 3) {
 
 		bu_exit(1, "Incomplete line in materials file for component '%.4d'\n", i);
 	    }

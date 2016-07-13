@@ -71,14 +71,13 @@ main(int argc, char **argv)
 {
     int i;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-	printusage();
-	fprintf(stderr, "       Program continues running:\n");
-    }
-
     if (! pars_Argv(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);
+    }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	fprintf(stderr, "Opening a window, waiting for user input:\n");
     }
 
     if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL) {

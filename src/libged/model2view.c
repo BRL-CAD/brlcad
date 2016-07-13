@@ -49,7 +49,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
 
     /* get the model2view matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_model2view, 1);
 	return GED_OK;
     }
 
@@ -63,7 +63,7 @@ ged_model2view(struct ged *gedp, int argc, const char *argv[])
     }
 
     MAT4X3PNT(view_pt, gedp->ged_gvp->gv_model2view, model_pt);
-    bn_encode_vect(gedp->ged_result_str, view_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 
     return GED_OK;
 }

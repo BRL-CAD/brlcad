@@ -647,7 +647,7 @@ tclcad_bn_isect_line3_line3(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     }
 
     VJOIN1(a, pt, t, dir);
-    bn_encode_vect(&result, a);
+    bn_encode_vect(&result, a, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -671,7 +671,7 @@ tclcad_bn_mat_mul(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 	goto error;
     }
     bn_mat_mul(o, a, b);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -695,7 +695,7 @@ tclcad_bn_mat_inv(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 	goto error;
     }
     bn_mat_inv(o, a);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -720,7 +720,7 @@ tclcad_bn_mat_trn(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 	goto error;
     }
     bn_mat_trn(o, a);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -746,7 +746,7 @@ tclcad_bn_matXvec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 	goto error;
     }
     bn_matXvec(o, m, i);
-    bn_encode_hvect(&result, o);
+    bn_encode_hvect(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -771,7 +771,7 @@ tclcad_bn_mat4x3vec(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 	goto error;
     }
     bn_mat4x3vec(o, m, i);
-    bn_encode_vect(&result, o);
+    bn_encode_vect(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -796,7 +796,7 @@ tclcad_bn_mat4x3pnt(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 	goto error;
     }
     bn_mat4x3pnt(o, m, i);
-    bn_encode_vect(&result, o);
+    bn_encode_vect(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -819,7 +819,7 @@ tclcad_bn_hdivide(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, c
 	goto error;
     }
     bn_hdivide(o, i);
-    bn_encode_vect(&result, o);
+    bn_encode_vect(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -848,7 +848,7 @@ tclcad_bn_vjoin1(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, ch
     if (bn_decode_vect(d, argv[3]) < 3) goto error;
 
     VJOIN1(o, b, c, d);	/* bn_vjoin1(o, b, c, d) */
-    bn_encode_vect(&result, o);
+    bn_encode_vect(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -878,7 +878,7 @@ tclcad_bn_vblend(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, ch
     if (bn_decode_vect(e, argv[4]) < 3) goto error;
 
     VBLEND2(a, b, c, d, e);
-    bn_encode_vect(&result, a);
+    bn_encode_vect(&result, a, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -905,7 +905,7 @@ tclcad_bn_mat_ae(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, ch
     if (Tcl_GetDouble(interp, argv[2], &el) != TCL_OK) goto error;
 
     bn_mat_ae(o, (fastf_t)az, (fastf_t)el);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -988,7 +988,7 @@ tclcad_bn_mat_angles(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     if (Tcl_GetDouble(interp, argv[3], &ggamma) != TCL_OK) goto error;
 
     bn_mat_angles(o, alpha, beta, ggamma);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1047,7 +1047,7 @@ tclcad_bn_mat_fromto(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
 	goto error;
     }
     bn_mat_fromto(o, from, to, &tol);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1075,7 +1075,7 @@ tclcad_bn_mat_xrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
 
     bn_mat_xrot(o, s, c);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1103,7 +1103,7 @@ tclcad_bn_mat_yrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
 
     bn_mat_yrot(o, s, c);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1131,7 +1131,7 @@ tclcad_bn_mat_zrot(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     if (Tcl_GetDouble(interp, argv[2], &c) != TCL_OK) goto error;
 
     bn_mat_zrot(o, s, c);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1158,7 +1158,7 @@ tclcad_bn_mat_lookat(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     if (Tcl_GetBoolean(interp, argv[2], &yflip) != TCL_OK) goto error;
 
     bn_mat_lookat(o, dir, yflip);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1183,7 +1183,7 @@ tclcad_bn_vec_ortho(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
     }
 
     bn_vec_ortho(ov, vec);
-    bn_encode_vect(&result, ov);
+    bn_encode_vect(&result, ov, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1208,7 +1208,7 @@ tclcad_bn_vec_perp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     }
 
     bn_vec_perp(ov, vec);
-    bn_encode_vect(&result, ov);
+    bn_encode_vect(&result, ov, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1241,7 +1241,7 @@ tclcad_bn_mat_scale_about_pt_wrapper(ClientData UNUSED(clientData), Tcl_Interp *
 	bu_vls_printf(&result, "error performing calculation");
 	goto error;
     }
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1268,7 +1268,7 @@ tclcad_bn_mat_xform_about_pt(ClientData UNUSED(clientData), Tcl_Interp *interp, 
     }
 
     bn_mat_xform_about_pt(o, xform, v);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1299,7 +1299,7 @@ tclcad_bn_mat_arb_rot(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
 	return TCL_ERROR;
 
     bn_mat_arb_rot(o, pt, dir, (fastf_t)angle);
-    bn_encode_mat(&result, o);
+    bn_encode_mat(&result, o, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1325,7 +1325,7 @@ tclcad_bn_quat_mat2quat(ClientData UNUSED(clientData), Tcl_Interp *interp, int a
     }
 
     quat_mat2quat(quat, mat);
-    bn_encode_quat(&result, quat);
+    bn_encode_quat(&result, quat, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1351,7 +1351,7 @@ tclcad_bn_quat_quat2mat(ClientData UNUSED(clientData), Tcl_Interp *interp, int a
     }
 
     quat_quat2mat(mat, quat);
-    bn_encode_mat(&result, mat);
+    bn_encode_mat(&result, mat, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1394,7 +1394,7 @@ tclcad_bn_quat_double(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     quat_t oqot, q1, q2;
-    
+
     if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
 	bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
@@ -1402,7 +1402,7 @@ tclcad_bn_quat_double(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
     }
 
     quat_double(oqot, q1, q2);
-    bn_encode_quat(&result, oqot);
+    bn_encode_quat(&result, oqot, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1421,7 +1421,7 @@ tclcad_bn_quat_bisect(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
 {
     struct bu_vls result = BU_VLS_INIT_ZERO;
     quat_t oqot, q1, q2;
-    
+
     if (argc < 3 || bn_decode_quat(q1, argv[1]) < 4 ||
 	    bn_decode_quat(q2, argv[2]) < 4) {
 	bu_vls_printf(&result, "usage: %s quatA quatB", argv[0]);
@@ -1429,7 +1429,7 @@ tclcad_bn_quat_bisect(ClientData UNUSED(clientData), Tcl_Interp *interp, int arg
     }
 
     quat_bisect(oqot, q1, q2);
-    bn_encode_quat(&result, oqot);
+    bn_encode_quat(&result, oqot, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1455,7 +1455,7 @@ tclcad_bn_quat_make_nearest(ClientData UNUSED(clientData), Tcl_Interp *interp, i
     }
 
     quat_make_nearest(q1, oqot);
-    bn_encode_quat(&result, q1);
+    bn_encode_quat(&result, q1, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1482,7 +1482,7 @@ tclcad_bn_quat_slerp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     if (Tcl_GetDouble(interp, argv[3], &d) != TCL_OK) goto error;
 
     quat_slerp(oq, q1, q2, d);
-    bn_encode_quat(&result, oq);
+    bn_encode_quat(&result, oq, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1513,7 +1513,7 @@ tclcad_bn_quat_sberp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc
     if (Tcl_GetDouble(interp, argv[5], &d) != TCL_OK) goto error;
 
     quat_sberp(oq, q1, qa, qb, q2, d);
-    bn_encode_quat(&result, oq);
+    bn_encode_quat(&result, oq, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1539,7 +1539,7 @@ tclcad_bn_quat_exp(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     }
 
     quat_exp(qout, qin);
-    bn_encode_quat(&result, qout);
+    bn_encode_quat(&result, qout, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -1564,7 +1564,7 @@ tclcad_bn_quat_log(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, 
     }
 
     quat_log(qout, qin);
-    bn_encode_quat(&result, qout);
+    bn_encode_quat(&result, qout, 1);
 
     Tcl_AppendResult(interp, bu_vls_addr(&result), (char *)NULL);
     bu_vls_free(&result);
@@ -2107,12 +2107,12 @@ tclcad_rt_pr_hit(Tcl_Interp *interp, struct hit *hitp, const struct seg *segp, i
     RT_CURVATURE(&crv, hitp, flipflag, stp);
 
     bu_vls_printf(&str, " {dist %g point {", hitp->hit_dist);
-    bn_encode_vect(&str, hitp->hit_point);
+    bn_encode_vect(&str, hitp->hit_point, 1);
     bu_vls_printf(&str, "} normal {");
-    bn_encode_vect(&str, norm);
+    bn_encode_vect(&str, norm, 1);
     bu_vls_printf(&str, "} c1 %g c2 %g pdir {",
 		  crv.crv_c1, crv.crv_c2);
-    bn_encode_vect(&str, crv.crv_pdir);
+    bn_encode_vect(&str, crv.crv_pdir, 1);
     bu_vls_printf(&str, "} surfno %d", hitp->hit_surfno);
     if (stp->st_path.magic == DB_FULL_PATH_MAGIC) {
 	/* Magic is left 0 if the path is not filled in. */

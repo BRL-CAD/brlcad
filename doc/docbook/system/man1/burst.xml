@@ -1,0 +1,1145 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="burst1" xmlns:xlink="http://www.w3.org/1999/xlink" >
+
+  <refmeta>
+    <refentrytitle>BURST</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="burst_name">
+    <refname>burst</refname>
+    <refpurpose>
+      Prepare shotline and burst point library inputs for PDAM.
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="burst_synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>burst</command>
+      <arg choice="opt" rep="norepeat">-b &lt; input_file</arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="burst_description"><title>DESCRIPTION</title>
+
+  <para>
+    <command>burst</command> uses LIBRT raytracing to prepare inputs to the
+    Point Burst Damage Assessment Model (PDAM) in the form of shotline files
+    and burst point library files.  For more information about PDAM, see
+    <link xlink:href="http://www.dtic.mil/docs/citations/ADA273171">ARL-CR-69:
+    A Guide to FASTGEN Target Geometric Modeling</link>.
+  </para>
+  <para>
+    The <command>burst</command> program is designed to allow many options to be
+    configured before any outputs are calculated. Unless otherwise stated in the
+    individual command descriptions, a given command will nullify any previous
+    occurrence of the same directive until an <command>execute</command> command
+    is given. For instance, the command <command>target-file</command>
+    <parameter class='command'>tank1</parameter> followed by
+    <command>target-file</command> <parameter class='command'>tank2</parameter> will
+    nullify the reference to tank1. It is also important to remember that the
+    <command>units</command> command impacts how subsequent physical quantities
+    are read by other commands, and the output from an <command>execute</command>
+    command will use whatever units are current. Once the input parameters are specified,
+    the <command>execute</command> command will start a run.  Output will be
+    reported using the current setting for <command>units</command> at the
+    time the <command>execute</command> is run.  Many runs may occur during an instance of
+    the <command>burst</command> program. One such instance is referred to as a session.
+  </para>
+  </refsection>
+
+  <refsection xml:id="coil_options"><title>OPTIONS:</title>
+
+  <variablelist remap="TP">
+    <varlistentry>
+      <term><option>-b</option> &lt; input_file</term>
+      <listitem>
+	<para>
+	  Runs <command>burst</command> in batch mode, reading commands from an input file.
+	</para>
+      </listitem>
+    </varlistentry>
+  </variablelist>
+  </refsection>
+
+  <refsection xml:id="burst_commands">
+    <title>COMMANDS</title>
+    <para>
+      Commands are defined either via an interactive menu or an input file supplied to batch mode.
+      All commands to burst are composed of one or more words connected by hyphens and each command
+      may require one or more arguments that must be separated by either spaces or tabs. A line that
+      begins with the ‘#’ symbol is considered a comment and will be ignored. The following table
+      provides a brief overview of the available commands, with subsequent sections covering key
+      areas in more detail.  In the table, flag arguments have yes or no values, an angle is expressed
+      in degrees as a floating-point quantity, distances and coordinates such as X, Y, Z, left,
+      right, etc. are also floating-point numbers, and count represents an integer. Square brackets
+      delimit optional arguments.
+
+      <table>
+	<title>Burst Commands</title>
+	<tgroup cols="3">
+	  <thead>
+	    <row>
+	      <entry>Command</entry>
+	      <entry>Arguments</entry>
+	      <entry>Description</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry><command>attack-direction</command></entry>
+	      <entry><parameter class='command'>azim_angle</parameter> <parameter class='command'>elev_angle</parameter></entry>
+	      <entry>specify azimuth and elevation of attack relative to target</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>burst-air-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>input burst air idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>burst-armor-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>input burst armor idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>burst-coordinates</command></entry>
+	      <entry><parameter class='command'>X</parameter> <parameter class='command'>Y</parameter> <parameter class='command'>Z</parameter></entry>
+	      <entry>input single burst point location in target coordinates</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>burst-distance</command></entry>
+	      <entry><parameter class='command'>distance</parameter></entry>
+	      <entry>offset burst point along shotline</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>burst-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>output burst point library to file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>cell-size</command></entry>
+	      <entry><parameter class='command'>distance</parameter></entry>
+	      <entry>specify shotline separation (equidistant horizontal and vertical)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>color-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>input ident to color mapping from file (for graphics)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>cone-half-angle</command></entry>
+	      <entry><parameter class='command'>angle</parameter></entry>
+	      <entry>specify limiting angle for spall ray generation</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>critical-comp-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>input critical component idents from file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>deflect-spall-cone</command></entry>
+	      <entry><parameter class='command'>flag</parameter></entry>
+	      <entry>deflect axis of spall cone half way towards exit normal</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>dither-cells</command></entry>
+	      <entry><parameter class='command'>flag</parameter></entry>
+	      <entry>if yes, randomly offset shotline within grid cell</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>enclose-target</command></entry>
+	      <entry></entry>
+	      <entry>generate rectangular grid of shotlines for full target envelope</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>enclose-portion</command></entry>
+	      <entry><parameter class='command'>left</parameter> <parameter class='command'>right</parameter> <parameter class='command'>bottom</parameter> <parameter class='command'>top</parameter></entry>
+	      <entry>generate partial envelope by specifying grid boundaries</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>error-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>divert all diagnostics to file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>execute</command></entry>
+	      <entry></entry>
+	      <entry>initiate a run (no output produced without this command)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>grid-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>save shotline locations (Y' Z') in file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>ground-plane</command></entry>
+	      <entry><parameter class='command'>flag [Z +X -X +Y -Y]</parameter></entry>
+	      <entry>if yes, burst on ground</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>histogram-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>write hit frequency histogram to file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>image-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>generate frame buffer image on a specified file or device</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>input-2d-shot</command></entry>
+	      <entry><parameter class='command'>Y'</parameter> <parameter class='command'>Z'</parameter></entry>
+	      <entry>input single shotline location as grid offsets</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>input-3d-shot</command></entry>
+	      <entry><parameter class='command'>X</parameter> <parameter class='command'>Y</parameter> <parameter class='command'>Z</parameter></entry>
+	      <entry>input single shotline location in target coordinates</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>max-barriers</command></entry>
+	      <entry><parameter class='command'>count</parameter></entry>
+	      <entry>specify the maximum number of components to report along spall ray</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>max-spall-rays</command></entry>
+	      <entry><parameter class='command'>count</parameter></entry>
+	      <entry>specify the desired number of spall rays generated per burst point</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>plot-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>generate plot data in file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>read-2d-shot-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>read shot locations from file as grid offsets (see <command>input-2d-shot</command>)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>read-3d-shot-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>read shot locations from file in target coordinates (see <command>input-3d-shot</command>)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>read-burst-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>read burst point locations from file (see <command>burst-coordinates</command>)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>read-input-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>read key word commands from file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>report-overlaps</command></entry>
+	      <entry><parameter class='command'>flag</parameter></entry>
+	      <entry>if yes, log overlap diagnostics</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>shotline-burst</command></entry>
+	      <entry><parameter class='command'>flag</parameter></entry>
+	      <entry>if yes, generate burst points along shotlines</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>shotline-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>output shot line data to file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>target-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>read BRL-CAD database from file</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>target-objects</command></entry>
+	      <entry><parameter class='command'>object0</parameter> <parameter class='command'>[object1 object2 ...]</parameter></entry>
+	      <entry>list objects from BRL-CAD database to interrogate</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>units</command></entry>
+	      <entry><parameter class='command'>name</parameter></entry>
+	      <entry>linear units (inches, feet, millimeters, centimeters,meters)</entry>
+	    </row>
+
+	    <row>
+	      <entry><command>write-input-file</command></entry>
+	      <entry><parameter class='command'>file</parameter></entry>
+	      <entry>save script of commands in file</entry>
+	    </row>
+
+	    <row>
+	      <entry>#</entry>
+	      <entry></entry>
+	      <entry>any line beginning with the '#' character is a comment</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+  </refsection>
+
+  <refsection xml:id="burst_user_preferences">
+    <title>User Preferences</title>
+
+    <refsection xml:id="burst_units">
+      <title>Units of Measure</title>
+      <para>
+	The <command>units</command> command will set the linear units for input and
+	output. This command should be used before any scalar quantities such as
+	coordinates, distances, or sizes are input. The units may be changed to	accommodate
+	input files of differing units, but the output from a particular run will reflect
+	whatever the units were set to when the <command>execute</command> command was
+	given. One argument is expected out of the following list snd must be spelled
+	correctly: millimeters, centimeters, meters, inches and feet. The default units are
+	millimeters.
+      </para>
+      <para>
+	Note that when specifying angles as options to commands angles are always expressed
+	in degrees, not radians.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_report_overlaps">
+      <title>Region Overlap Reporting</title>
+      <para>
+	It is considered an error if two regions in a BRL-CAD .g file occupy the same space; we
+	call this an overlap. The ray tracing library (librt) will report overlapping regions
+	that are intersected by shotlines or burst rays to the burst application and the program
+	will, by default, print out any that have a line of sight thickness of at
+	least 0.25 millimeters (see <link linkend="burst_of_7">Error Log</link>). Although a target
+	may only have a small number of overlapping regions, an error will be reported for each
+	ray that intersects one of them.  Generally this results in the messages being repetitious.
+	Although these diagnostics are important for fixing problems in the geometric description
+	of the target, the user may wish to proceed with a production run and the printing of
+	these errors can slow the execution time considerably. A yes or no argument to
+	the <command>report-overlaps</command> command will turn the diagnostics on or off.
+	Regardless of whether or not individual overlaps are reported, the total number detected
+	will be logged.
+      </para>
+      <para>
+	When overlap reporting is enabled, the full path name of both regions is printed as seen in the
+	following example:
+
+	<literallayout class="monospaced">
+OVERLAP:
+reg=/component/turret/tur.ext/tur.armor/tur.bot{{0}} isol=s2,
+reg=/component/hull/hull.ext/hull.armor/r1.top{{0}} osol=ss4,
+depth 544.21mm at (-471.784,812.8,0) x-2 y1 lvl0 purpose=shotline
+OVERLAP:
+reg=/component/turret/tur.ext/tur.ring{{0}} isol=ss2,
+reg=/component/turret/tur.ext/tur.armor/tur.bot{{0}} osol=s2,
+depth 25.39mm at (-418.907,812.8,0) x-2 y1 lvl1 purpose=normal thickness
+OVERLAP:
+reg=/component/turret/tur.ext/tur.ring{{0}} isol=ss2,
+reg=/component/turret/tur.ext/tur.armor/tur.bot{{0}} osol=s2,
+depth 52.88mm at (-418.907,-812.8,0) x-2 y1 lvl1 purpose=spall ray
+         </literallayout>
+
+	The zero enclosed in double curly brackets is intended to discriminate between instances.
+	Theoretically, isol and osol are the names of the starting and ending solids associated
+	with the boolean operations on the overlapping partition. In practice these solid names
+	are typically not helpful in diagnosing the problem, but the region names should be
+	sufficient. The depth is the line-of-sight thickness of the overlapping partition in
+	millimeters. In parentheses, are printed the target coordinates of the intersection of
+	the ray with the overlap. The x-2 and y1 reveal that the grid indices of the shotline
+	are -2, 1; this means that the shotline was 2 cells to the left, and one cell above the
+	grid origin. If lvl (meaning ray tracing recursion level) is zero, then the overlap
+	resulted from a shotline, but if it is one, it could represent either a burst ray
+	intersection or a probe to calculate the normal thickness of a component intersected by
+	the shotline. The real purpose of the ray is stated last.
+      </para>
+    </refsection>
+  </refsection>
+
+  <refsection xml:id="burst_shotlining_options">
+    <title>Shotlining Options</title>
+    <para>
+      Shotlining is a technique whereby lines are described in the target coordinate system
+      and information is requested about the geometry that intersects those lines in 3-space.
+      This technique is useful for analysis programs that must simulate threat/target
+      interactions, and therefore must sample the geometry along the threat path. Typically the
+      lines are specified discretely, by a point and a direction, or a grid of lines is
+      generated that is oriented perpendicular to the direction of attack. A grid is rectangular,
+      but is subdivided along its height and width uniformly resulting in square cells.
+      Gridding techniques include passing a line called a shotline through the center of each
+      cell, or alternatively, dithering each shotline’s position within its respective
+      cell’s boundaries (see <link linkend="burst_sh_4">Dithering Shotlines</link>).
+    </para>
+    <para>
+      The user is faced with several choices for generating shotlines; full-target envelope,
+      partial envelopes, or discrete shots. No matter what shotlining method is used, a grid
+      always exists as a frame of reference for specifying 2-dimensional coordinates in the
+      plane normal to the direction of attack. This 2-dimensional coordinate system is a
+      projection of the shotline coordinate system (also referred to as the primed coordinate
+      system). For the simple case of a zero azimuth, zero elevation attack, the X’, Y’, and Z’
+      axes in the shotline coordinate system coincide with the X, Y, and Z axes of the target
+      coordinate system and the shotline direction is parallel to the X’ axis and headed toward
+      decreasing coordinates. Other orientations are described by rotating the X’, Y’, and Z’
+      axes to keep the shotline direction always down the X’ axis. This transformation involves
+      two rotations; first a rotation of the primed coordinate system about the coincident Z and
+      Z’ axes by the specified azimuthal angle, followed by a rotation about the new Y’ axis by
+      the specified elevation angle. Since the grid is a 2-d projection of the shotline
+      coordinate system, it has no X coordinate; if the user’s viewpoint is from the direction
+      of attack, the Y’ axis can be thought of as horizontal with increasing coordinates to the
+      right, and the Z’ axis as vertical and increasing in the upward direction.
+    </para>
+
+    <refsection xml:id="burst_sh_1">
+      <title>Attack Direction</title>
+      <para>
+	The orientation of shotlines with respect to the coordinate system of the target are
+	described by azimuth and elevation angles. These angles must be specified in degrees
+	as floating-point numbers via the <command>attack-direction</command>.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_sh_2">
+      <title>Gridding</title>
+      <para>
+	An envelope refers to a grid that is dimensioned such that its rectangular area,
+	projected normal to the grid, will cover optionally all or part of the target.
+	The <command>enclose-target</command> option will generate a grid that is guaranteed
+	to cover the entire target. Since BRL-CAD uses combinatorial solid geometry as one of
+	its shape representation methods, the dimensions of the target are not known in advance.
+	Therefore, a worst case bounding rectangular parallel piped (RPP) is used to generate the
+	grid and the grid may be larger	than necessary. In addition, depending on the attack
+	aspect, the presented area of some targets may not fill	up a rectangular grid well. This
+	should not be a problem since ray tracing outside the target boundaries is cheap, but
+	if desired the grid can be trimmed down with the partial envelope option
+	<command>enclose-portion</command>. The	grid origin is always aligned with the target origin.
+      </para>
+      <para>
+	The <command>enclose-portion</command> option allows the user to generate a sub-grid by
+	specifying the distances from the grid origin to the sub-grid’s left, right, top, and
+	bottom boundaries.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_sh_3">
+      <title>Cell Size</title>
+      <para>
+	The dimensions of a grid cell are input as floating-point values that represent the
+	distances between the centers of adjacent cells. <command>cell-size</command> also
+	expresses the projected area of influence associated with a shotline or burst ray.
+	Therefore, <command>cell-size</command> must be specified even when a grid will not
+	be generated, such as with discrete shot or discrete burst point selection (see
+	<link linkend="burst_sh_5">Input Discrete Shots</link> and
+	<link linkend="bursting_1_1">Input Discrete Burst Points</link>).
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_sh_4">
+      <title>Dithering Shotlines</title>
+      <para>
+	When gridding, shotlines normally pass through the center of each cell, however, they
+	may be also be dithered via the <command>dither-cells</command> command. If the user
+	chooses the latter, 2 random numbers are selected for each cell that are used to offset
+	the shotline in both parametric directions of the grid plane, but within the respective
+	cell’s boundaries.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_sh_5">
+      <title>Input Discrete Shots</title>
+      <para>
+	If the user wants to fire at a known point on the target, he or she may wish to describe
+	the shotline location in target coordinates. When coupled with the attack direction, each
+	3-dimensional coordinate uniquely specifies a shotline.  The <command>input-3d-shot</command>
+	command allows the user to type in a single shot location as an X, Y, and Z coordinate that
+	is run when the <command>execute</command> command is given, but remember that no queueing
+	of shots occurs in this mode; the last set of coordinates entered will be used.  For inputing
+	multiple shots, <command>read-3d-shot-file</command> can be used to loop through every set
+	of target coordinates in the named file after the <command>execute</command> command is run.
+	The file should contain three floating-point numbers on each line separated by white space
+	(blanks or tabs).
+      </para>
+      <para>
+	Another way to describe a shot location is in the shotline coordinate system. Since the X’
+	location of the	shot is irrelevant (the shotline is parallel to the X’ axis) a shot may be
+	specified as a Y’ and Z’ coordinate. These coordinates can also be referred to as horizontal
+	and vertical grid offsets.  The	<command>input-2d-shot</command> option allows the user to
+	type in a single shot location as a Y’, and Z’ coordinate which will be run when the
+	<command>execute</command> command is given, but like the 3d case no queueing of shots occurs
+	in this mode and only the last set of grid offsets entered will be used.  To input multiple
+	shots, the <command>read-2d-shot-file</command> can be used; <command>execute</command> will
+	loop through every set of grid offsets in the named file. The file should contain three
+	floating-point numbers on each line separated by white space (blanks or tabs).
+      </para>
+    </refsection>
+
+  </refsection>
+
+  <refsection xml:id="burst_bursting_options">
+    <title>Bursting Options</title>
+    <para>
+      Bursting is a technique for sampling a target’s geometry with the use of ray tracing. As
+      opposed to shotlining involving parallel rays, bursting employs a distribution of rays
+      that emanate from a single point. The burst program generates rays that approximate a uniform
+      distribution over a user-specified solid angle (see
+      <link linkend="bursting_2_2">Sampling Cone Half Angle</link>) and having a density (see
+      <link linkend="busrting_2_4">Number of Sampling Rays</link>) that is also under control of
+      the user. The user also has a choice between several mechanisms for setting up burst point
+      locations depending on the particular threat he is attempting to emulate.
+    </para>
+
+    <refsection xml:id="bursting_1">
+      <title>Method of Locating Burst Point</title>
+      <para>
+	Depending on threat type, burst points may be located using two basic techniques. The
+	first technique is simply to input the burst point coordinates. This method can be used
+	to compare vulnerability analysis results with empirical results from the firing range
+	or combat field. The second technique available to the user is to burst along a shotline.
+	This option is used more for predicting the burst point location based on target geometry,
+	given certain parameters that describe the target/threat interactions.
+      </para>
+
+      <refsection xml:id="bursting_1_1">
+	<title>Input Discrete Burst Points</title>
+	<para>
+	  The input of explicit burst point coordinates can be accomplished either by typing them
+	  in one at a time or by reading a file of target X, Y, and Z coordinates.
+	</para>
+	<para>
+	  The <command>burst-coordinates</command> command allows the user to type in a single
+	  burst point location as an X, Y, and Z coordinate. When the <command>execute</command>
+	  command is given, that one burst point will be run. No queueing of burst points occurs
+	  in this mode, the last set of coordinates entered will be used.
+	</para>
+	<para>
+	  The <command>read-burst-file</command> command allows the user to specify a number of
+	  burst points from a file; this option will, after submission of an execute directive,
+	  loop through every set of target coordinates in the named file. The file should contain
+	  three numbers on each line separated by white space (blanks or tabs).
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_1_2">
+	<title>Burst on Contact</title>
+	<para>
+	  The <command>shotline-burst</command> command can be given a yes or no argument to either
+	  enable or disable this method of generating burst points. When a yes argument is given,
+	  a second yes or no argument is also required (see <link linkend="bursting_1_2_1">Burst on Armor</link>).
+	  Bursting along a shotline can be done different ways depending on the combination of
+	  several options. The location of the burst point is based on the triggering mechanism that
+	  is selected with the burst distance parameter.
+	</para>
+
+	<refsection xml:id="bursting_1_2_1">
+	  <title>Burst on Armor</title>
+	  <para>
+	    If the <command>burst-distance</command> paramter is set to a negative or zero value, then
+	    interior burst points will be generated (see <link linkend="bursting_2_1">Burst Distance</link>).
+	    This method of bursting requires the input of burst armor idents and, by default, burst
+	    air idents are also required. If the user does not want to require that certain air be
+	    present to trigger a burst point, the shotline-burst command has a second argument. When this
+	    second argument is set to no, bursting will occur as long as burst armor is followed by any
+	    air or void (empty space), and the burst air file is not required. For more information see
+	    <link linkend="bursting_io_1_2_1">Burst Armor and Burst Air Ident Files</link>.
+	  </para>
+	</refsection>
+
+	<refsection xml:id="bursting_1_2_2">
+	  <title>Ground Plane Bursting</title>
+	  <para>
+	    Ground plane bursting is a vehicle for evaluating the effect of fragmenting warheads
+	    on light-armored vehicles when they strike the ground in close proximity to the target.
+	    The <command>ground-plane</command> command is only relevant when bursting along a
+	    shotline is selected. The ground is modeled as a rectangle lying in a plane parallel to
+	    the target X-Y plane with edges parallel to the X and Y axes. The grid will be enlarged
+	    to include the ground plane; it is important for efficiency to limit the size of the
+	    ground plane to match the range of the fragments that may be generated by the particular
+	    threat being modeled. When enabling this option, the <command>ground-plane</command>
+	    command is given a yes argument followed by the height of the target above the ground,
+	    and the distances that the ground rectangle extends out positive X, negative X, positive
+	    Y, and negative Y axes.
+	  </para>
+	</refsection>
+
+      </refsection>
+
+    </refsection>
+
+    <refsection xml:id="bursting_2">
+      <title>Bursting Parameters</title>
+      <para>
+	The following parameters influence both the triggering mechanism for burst points, as well
+	as the characteristics of the cone of rays generated from each point.
+      </para>
+
+      <refsection xml:id="bursting_2_1">
+	<title>Burst Distance</title>
+	<para>
+	  The <command>burst-distance</command> parameter is modeled after the BDIST parameter
+	  used by the Air Force’s PGEN code. The role of this parameter is overloaded, however it
+	  was retained to aid PGEN users in transitioning to the <command>burst</command> program.
+	  If it is zero or negative, then interior bursting is enabled, otherwise, if it is greater
+	  than zero, exterior bursting will occur, subject to certain conditions (see below).
+	  The magnitude of this parameter is used to offset the burst point location along the
+	  shotline relative to the geometry that triggered the burst.
+	</para>
+
+	<refsection xml:id="bursting_2_1_1">
+	  <title>Interior Bursting</title>
+	  <para>
+	    Burst armor refers to a component whose ident code is found in the list input by
+	    the <command>burst-armor-file</command> command. Similarly, burst air refers to a
+	    component whose ident code is found in the list input by the
+	    <command>burst-air-file</command> directive. If interior bursting is enabled and
+	    a burst armor component is encountered along a shotline that is immediately followed
+	    by burst air, then a burst point will be located the absolute value of burst distance
+	    beyond the exit of the shotline from the component. This means that if burst distance
+	    is zero, the burst point will lie at the burst armor/air interface, and if it’s
+	    -5.5, the burst point will lie 5.5 units inside the air compartment from the back
+	    surface of the armor.
+	  </para>
+	</refsection>
+
+	<refsection xml:id="bursting_2_1_2">
+	  <title>Exterior Bursting</title>
+	  <para>
+	    If burst distance is greater than zero, the first component encountered along the
+	    shotline will trigger a burst point, regardless of its ident code, that will be
+	    located burst distance in front of the shotline entry point. This technique simulates
+	    the behavior of a fragmenting munition with a standoff fuzing such that detonation
+	    is triggered before the collision of the warhead with the target. The burst distance
+	    is set to imitate the built in standoff of the warhead. When employing exterior
+	    bursting methods, burst armor and burst air are not used.
+	  </para>
+	</refsection>
+
+      </refsection>
+
+      <refsection xml:id="bursting_2_2">
+	<title>Sampling Cone Half Angle</title>
+	<para>
+	  To limit the solid angle within which burst rays will be generated, the user may
+	  specify a cone half angle. This angle represents the degrees (in floating point) from
+	  the axis of the cone to its limiting surface. The default value for the cone half
+	  angle is 45 degrees.
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_2_3">
+	<title>Deflected Sampling Cone</title>
+	<para>
+	  The spall cone axis is, by default, aligned with the shotline. In reality, the center
+	  of mass of the spall cloud would be between the shotline direction and the exit
+	  normal of the shotline from the spalling component. By aligning the spall cone axis
+	  with a vector halfway between the shotline and the exit normal, a narrower cone half
+	  angle can be used and still sample within the solid angle of interest. This technique
+	  can therefore be used to cut down on the number of rays calculated without lowering
+	  the sampling density. The <command>deflect-spall-cone</command> command takes a yes
+	  or no argument about whether or not to divert the cone axis.
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_2_4">
+	<title>Number of Sampling Rays</title>
+	<para>
+	  The sampling ray density within the spall cone is controlled by specifying the maximum
+	  number of rays desired with the <command>max-spall-rays</command> command. Due to the
+	  uniform distribution algorithm employed, the number of rays calculated will be slightly
+	  less.
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_2_5">
+	<title>Maximum Barriers</title>
+	<para>
+	  For munitions known to have limited penetration capability, the user may set a limit
+	  on the number of burst ray intersections reported with the
+	  <command>max-barriers</command> command. The effect of setting this parameter is to
+	  reduce the size of the burst point library (see
+	  <link linkend="burst_of_1">Burst Point Library</link>) by limiting the number of
+	  components that will be reported per burst ray. By default, up to 100 components
+	  are reported, as it is not expected that this number will be reached under
+	  normal circumstances.
+	</para>
+      </refsection>
+
+    </refsection>
+
+  </refsection>
+
+  <refsection xml:id="burst_input_file_options">
+    <title>Input File Options</title>
+
+     <refsection xml:id="bursting_io_1">
+      <title>Target-Related Input Files</title>
+      <para>
+	This group of commands is for specification of target-specific input files.
+      </para>
+
+      <refsection xml:id="bursting_io_1_1">
+	<title>Target Data Base File</title>
+	<para>
+	  The input of the target’s BRL-CAD .g file is accomplished with the <command>target-file</command>
+	  command. Note that only one data base may be read in during a given session. If the user wishes
+	  to change the target once the execute command has been given, they must exit the burst program
+	  and start a new session.
+	</para>
+	<para>
+	  After specifying the BRL-CAD .g file, the user must list all of the objects in the .g
+	  hierarchy that they wish to include in the analysis with the <command>target-objects</command>
+	  command. The objects must be listed as arguments to one <command>target-objects</command>
+	  command with spaces or tabs as separators. Note that only one list of objects may be loaded
+	  per session, however, they do not get loaded until the <command>execute</command> command is
+	  given.
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_io_1_2">
+	<title>Ident List Input Files</title>
+	<para>
+	  Idents refer to the region ident code from the BRL-CAD .g file. Lists of idents may be specified
+	  singly or as ranges. Individual idents must appear as one per line, but ranges are specified
+	  by two numbers on a line that are separated by one or more of the following characters:
+	  comma, hyphen, colon, semicolon, space, or tab. For example:
+	  <literallayout class="monospaced">
+600-999
+1011
+4002-4050
+8000
+9001
+9004
+9005
+	  </literallayout>
+	</para>
+
+	<refsection xml:id="bursting_io_1_2_1">
+	  <title>Burst-Armor and Burst-Air Ident Files</title>
+	  <para>
+	    When interior burst points are to be generated along a shotline (see
+	    <link linkend="bursting_2_1_1">Interior Bursting</link>) a file of burst armor
+	    idents must be specified with the <command>burst-armor-file</command> command. Additionally
+	    a burst air idents file must be specified with the <command>burst-air-file</command> command.
+	    If a shotline intersects a component whose ident has been input as a burst armor and it is
+	    immediately followed by burst air a burst point will be triggered.
+	  </para>
+	</refsection>
+
+	<refsection xml:id="bursting_io_1_2_2">
+	  <title>Critical Component Idents</title>
+	  <para>
+	    Whether interior or exterior bursting is being employed, information about components
+	    hit by burst rays will only be output for rays that hit critical components. The file name
+	    containing a list of critical component idents must therefore be specified by the
+	    <command>critical-comp-file</command> command if burst points are to be generated.
+	  </para>
+	</refsection>
+
+      </refsection>
+
+      <refsection xml:id="bursting_1_3">
+	<title>Color Mapping Input Files</title>
+	<para>
+	  The <command>color-file</command> command allows users to assign colors to component
+	  idents for graphics options, in particular, the <command>image-file</command> and
+	  <command>plot-file</command> commands. The format of this file is 5 numbers per line
+	  separated by blanks or tabs. The first number is the low end of an ident range and the
+	  second number is the high end of the range (both numbers are inclusive). This range is
+	  mapped to the color specified by the last 3 numbers on the line that are red, green,
+	  and blue components of the color (values for these components must be between 0 and
+	  255 inclusive).  For example:
+	   <literallayout class="monospaced">
+4001 4003   255 255 0     # Fuel
+4050 4050   255 255 0     # Fuel
+8000 8001   255 100 255   # Ammo
+100 165     150 255 100   # Hull armor
+610 619     220 150 100   # Commander
+720 729     220 150 100   # Gunner
+830 839     220 150 100   # Loader
+940 949     220 150 100   # Driver
+	  </literallayout>
+	</para>
+      </refsection>
+
+    </refsection>
+
+    <refsection xml:id="bursting_io_2">
+      <title>Project-Related Input Files</title>
+
+      <refsection xml:id="bursting_io_2_1">
+	<title>Reading Session Files</title>
+	<para>
+	  The <command>read-input-file</command> command reads an input file of commands. These
+	  files can be generated manually by using a text editor or saved from a session file
+	  with the <command>write-input-file</command> command.  See
+	  <link linkend="burst_commands">Command Input</link> for the format of this file.
+	</para>
+      </refsection>
+
+      <refsection xml:id="bursting_io_2_2">
+	<title>Shotline and Burst Point Input Files</title>
+	<para>
+	  For an explanation of commands for reading in files of shotline or burst point coordinates,
+	  see <link linkend="burst_sh_5">Input Discrete Shots</link> and
+	  <link linkend="bursting_1_1">Input Discrete Burst Points</link>.
+	</para>
+      </refsection>
+
+    </refsection>
+
+  </refsection>
+
+  <refsection xml:id="burst_output_file_options">
+    <title>Output File Options</title>
+    <para>
+      The following commands will turn on optional output. By default, no output is produced
+      except error logging (see <link linkend="burst_of_7">Error Log</link>), unless an output
+      file is specified with the appropriate command. Any combination of output options may be
+      specified for a particular run. Note that specifying an output file will cause an existing
+      file with that name to be truncated to zero length. Therefore, only one such command should
+      be entered per session for a particular file name. Multiple runs during a session will append
+      to the same files if intervening commands to change the output file name are not given,
+      except for the graphics files as explained below. Note that there is no way to append to a
+      file created by a previous session of the burst program, but these files may be concatenated
+      after the fact.
+    </para>
+
+    <refsection xml:id="burst_of_1">
+      <title>Burst Point Library File</title>
+      <para>
+	The <command>burst-file</command> command will open the named file for creating a burst
+	point library. If the file exists, it will be truncated by this command.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_2">
+      <title>Shotline File</title>
+      <para>
+	The <command>shotline-file</command> command will open the named file for creating a
+	shotline file. If the file exists, it will be truncated by this command.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_3">
+      <title>Plot File</title>
+      <para>
+	The <command>plot-file</command> command generates a plot file, using BRL-CAD extensions
+	to the standard format. This option is useful for examining the shotline and burst ray
+	information graphically as a three-dimensional vector plot. Due to constraints inherent
+	in the plot format, these plots must be displayed as a post-process step by using a
+	BRL-CAD plotting utility such as <command>pl-fb</command>. Because some of these display
+	programs do not support multiple plots per file, the file name should be changed between
+	runs. The following table describes the color mapping associated with these plots:
+
+      <table>
+	<title>Color Key for Plots</title>
+	<tgroup cols="5">
+	  <thead>
+	    <row>
+	      <entry>Color</entry>
+	      <entry>R</entry>
+	      <entry>G</entry>
+	      <entry>B</entry>
+	      <entry>Representation</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>yellow</entry>
+	      <entry>255</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>grid cell centers</entry>
+	    </row>
+
+	    <row>
+	      <entry>red</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>burst cone</entry>
+	    </row>
+
+	    <row>
+	      <entry>blue</entry>
+	      <entry>0</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>default component intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry>lt blue</entry>
+	      <entry>100</entry>
+	      <entry>100</entry>
+	      <entry>255</entry>
+	      <entry>default outside air intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry>lt green</entry>
+	      <entry>100</entry>
+	      <entry>255</entry>
+	      <entry>100</entry>
+	      <entry>default inside air intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry>purple</entry>
+	      <entry>255</entry>
+	      <entry>0</entry>
+	      <entry>255</entry>
+	      <entry>default critical component intersection</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+
+      <para>
+	If the user has specified a color mapping file with the <command>color-file</command> command,
+	then those colors will be used rather than the above colors for all shotline/ray intersections.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_4">
+      <title>Frame Buffer Image</title>
+      <para>
+	The <command>image-file</command> command will generate a color image that provides the
+	user with immediate feedback about a run. The grid is displayed graphically and each cell
+	location is dynamically color coded to show its current status. The following table describes
+	the color mapping associated with the grid:
+
+	<table>
+	  <title>Color Key for Frame Buffer Image</title>
+	  <tgroup cols="5">
+	    <thead>
+	      <row>
+		<entry>Color</entry>
+		<entry>R</entry>
+		<entry>G</entry>
+		<entry>B</entry>
+		<entry>Representation</entry>
+	      </row>
+	    </thead>
+	    <tbody>
+	      <row>
+		<entry>red</entry>
+		<entry>255</entry>
+		<entry>0</entry>
+		<entry>0</entry>
+		<entry>axis of grid</entry>
+	      </row>
+
+	      <row>
+		<entry>black</entry>
+		<entry>0</entry>
+		<entry>0</entry>
+		<entry>0</entry>
+		<entry>grid cell boundaries</entry>
+	      </row>
+
+	      <row>
+		<entry>blue</entry>
+		<entry>0</entry>
+		<entry>0</entry>
+		<entry>255</entry>
+		<entry>outside of grid</entry>
+	      </row>
+
+	      <row>
+		<entry>lt grey</entry>
+		<entry>200</entry>
+		<entry>200</entry>
+		<entry>200</entry>
+		<entry>shot missed target</entry>
+	      </row>
+
+	      <row>
+		<entry>white</entry>
+		<entry>255</entry>
+		<entry>255</entry>
+		<entry>255</entry>
+		<entry>shot hit target</entry>
+	      </row>
+
+	      <row>
+		<entry>lt green</entry>
+		<entry>200</entry>
+		<entry>255</entry>
+		<entry>200</entry>
+		<entry>burst occurred but hit no critical components</entry>
+	      </row>
+
+	      <row>
+		<entry>pink</entry>
+		<entry>255</entry>
+		<entry>200</entry>
+		<entry>200</entry>
+		<entry>burst occurred and hit some critical components</entry>
+	      </row>
+
+	      <row>
+		<entry>purple</entry>
+		<entry>255</entry>
+		<entry>0</entry>
+		<entry>255</entry>
+		<entry>a ground burst occurred</entry>
+	      </row>
+
+	    </tbody>
+	  </tgroup>
+	</table>
+      </para>
+      <para>
+	In addition to the above cell colors, hits on critical components by burst rays are
+	depicted as a colored pixel projected into grid space from the intersection point
+	where the ray enters the component. Colors for the components are mapped from ident
+	numbers according to the table specified by the user with the <command>color-file</command>
+	command and shaded using a lighting model illuminated from the viewing direction.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_5">
+      <title>Grid File</title>
+      <para>
+	The <command>grid-file</command> command will store each shotline coordinate generated
+	during the run as grid offsets. These files can later be read in to replicate a previous
+	run’s grid or discrete shots by using the <command>read-2d-shot-file</command> command.
+	This capability is especially useful when dithered shotlines have been used and it is
+	desired that the same shotlines be used in another run. Note that the shotline intersection
+	information is not saved, just the grid offsets for each shotline.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_6">
+      <title>Script File</title>
+      <para>
+	During a session, all commands are saved in a temporary file. The
+	<command>write-input-file</command> command will create a snapshot of this session file,
+	that can later be used to recreate the current session up to the point when the file was
+	written. The session or input files can later be used in one of two ways: either read in
+	with the <command>read-input-file</command> command, or supplied on the standard input of
+	the <command>burst</command> program. Note that the <command>write-input-file</command>
+	and <command>read-input-file</command> commands will not be included in the input files,
+	but the commands read in by the latter will.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_7">
+      <title>Error Log</title>
+      <para>
+	The <command>error-file</command> command is useful to save errors in a log file and prevent
+	copious ray tracer diagnostics from scrolling by on the screen. This option is especially
+	useful if using the batch mode of execution so that the terminal is not tied up by program
+	output. If no error log is specified, diagnostic messages will appear in the scrolling window
+	or, if in batch mode, on the <command>burst</command> program’s standard error output.
+      </para>
+    </refsection>
+
+    <refsection xml:id="burst_of_8">
+      <title>Histogram File</title>
+      <para>
+	The <command>histogram-file</command> command generates a frequency histogram to the named
+	file. The file format is simply one number per line; each number is a count of critical
+	components hit by an individual burst ray. This file can easily be post-processed to display
+	a histogram, for instance, how many rays hit zero, one, two, three, etc. components.
+      </para>
+    </refsection>
+
+  </refsection>
+
+  <refsection xml:id="burst_menu_system">
+    <title>Interactive Command Input Mode</title>
+    <para>
+      When an input file is not specified in batch mode, <command>burst</command> will start a menu
+      based interactive interface on those systems that support it (it does not currently work on
+      Windows.)  This system is not the recommended way to use burst (it is likely to be removed
+      entirely at some point in the future) but for now it is available.
+    </para>
+    <para>
+      In interactive mode, the screen is divided into sections of one or more rows (lines) of text. The top line,
+      referred to as line 1, is reserved for CPU usage statistics. Starting on line 2, the hierarchical menu region
+      spans 12 lines of the screen. Below the menu region is a line used for user input related errors and help
+      messages that are generated by typing an ‘h’. Below that is a line used to prompt the user for
+      input and to inform him of ongoing processing. The next line contains the program name and version
+      number, and is intended as a divider between the scrolling window below it and the non-scrolling portion of
+      the screen. Once ray tracing has begun, grid index ranges will appear inside square brackets to the right of
+      the version number. The first number is the current horizontal index, and this is separated by a colon from
+      the right-most index for the grid. After the comma, is the current vertical index, followed by the top-most
+      index for the grid. As ray tracing commences, the current grid indices will reflect the current shotline being
+      calculated as the grid is traversed in a left-to-right, bottom-to-top fashion. The scrolling window region
+      takes up the remainder of the screen for the display of processed commands and processing-related errors
+      (i.e. from the ray tracer). Figure 1 shows what the various sections of the screen are used for, however in
+      practice, the status information, help message, and prompt would not be displayed concurrently. The
+      screen-oriented interface is terminal independent; it doesn’t use graphics per se but uses the terminal
+      capabilities information database to control the manipulation of text characters.
+    </para>
+    <para>
+      When using interactive mode, the current entry will be highlighted. The ‘v’ symbols at the bottom
+      corners of the menu show that there are more entries below. Attempting to move the cursor past
+      the bottom entry will cause the menu to scroll upwards. The ‘ˆ’ symbols at the top corners of the menu signify
+      that there are now hidden entries above that can be scrolled down by advancing the cursor upwards past the
+      top visible entry. If no scrolling is possible, that is, if no further entries exist, a ‘+’ symbol will mark the
+      corner of the menu. If a menu item is selected that has a sub-menu, the sub-menu will be drawn to the right
+      of its parent menu. The menu system remembers the last item selected in a given
+      menu; entering a menu that has been used before will cause the current item to be the same as it was when
+      that menu was last exited. If a menu has never been used, the top item will initially be current.
+    </para>
+    <para>
+      When running the burst program interactively, all diagnostic output is, by default, printed in a scrolling text
+      window at the bottom of the display. If there is enough output the user may find it difficult to read it all
+      before it scrolls out of sight. Also, the user may wish to save these diagnostics for later reference; overlap
+      diagnostics from the ray tracer are useful in fixing errors in the geometry of the target description. The
+      error-file command will divert this output to a file.
+    </para>
+  </refsection>
+
+  <refsection xml:id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>burst_point_library</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>burst_shotline_files</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports">
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+</refentry>

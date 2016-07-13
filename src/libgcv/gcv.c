@@ -52,7 +52,7 @@ _gcv_brlcad_read(struct gcv_context *context,
     }
 
     if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
-	bu_log("db_dump() failed (from '%s')\n", source_path);
+	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
 	db_close(in_dbip);
 	return 0;
     }
@@ -182,34 +182,45 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
     int ret_argc;
     struct bu_opt_desc *options_desc;
     struct bu_vls messages;
+    const char **temp;
+    int i;
+
+    if (argc)
+	temp = (const char **)bu_calloc(argc, sizeof(const char *), "temp");
+    else
+	temp = NULL;
+
+    for (i = 0; (size_t)i < argc; ++i)
+	temp[i] = argv[i];
 
     _gcv_filter_options_create(filter, &options_desc, options_data);
-
     BU_VLS_INIT(&messages);
-    ret_argc = argc ? bu_opt_parse(&messages, argc, (const char **)argv,
-				   options_desc) : 0;
+    ret_argc = argc ? bu_opt_parse(&messages, argc, temp, options_desc) : 0;
+    bu_free(options_desc, "options_desc");
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
-
-    bu_free(options_desc, "options_desc");
 
     if (ret_argc) {
 	if (ret_argc == -1)
 	    bu_log("fatal error in bu_opt_parse()\n");
 	else {
-	    int i;
-
 	    bu_log("unknown arguments: ");
 
 	    for (i = 0; i < ret_argc - 1; ++i)
-		bu_log("%s, ", argv[i]);
+		bu_log("%s, ", temp[i]);
 
-	    bu_log("%s\n", argv[i]);
+	    bu_log("%s\n", temp[i]);
 	}
+
+	if (temp)
+	    bu_free(temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
+
+    if (temp)
+	bu_free(temp, "temp");
 
     return 1;
 }
@@ -248,11 +259,12 @@ _gcv_context_check(const struct gcv_context *context)
     BU_CK_AVS(&context->messages);
 }
 
-
 HIDDEN void
 _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 {
-    const struct gcv_plugin *plugin_info;
+    void *info_val;
+    const struct gcv_plugin *(*plugin_info)();
+    const struct gcv_plugin *plugin;
     const struct gcv_filter * const *current;
     void *dl_handle;
 
@@ -266,7 +278,8 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("bu_dlopen() failed");
     }
 
-    plugin_info = (struct gcv_plugin *)bu_dlsym(dl_handle, "gcv_plugin_info");
+    info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
+    plugin_info = (const struct gcv_plugin *(*)())(intptr_t)info_val;
 
     if (!plugin_info) {
 	const char * const error_msg = bu_dlerror();
@@ -278,12 +291,14 @@ _gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
 	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
     }
 
-    if (!plugin_info->filters) {
+    plugin = plugin_info();
+
+    if (!plugin || !plugin->filters) {
 	bu_log("invalid gcv_plugin in '%s'\n", path);
 	bu_bomb("invalid gcv_plugin");
     }
 
-    for (current = plugin_info->filters; *current; ++current)
+    for (current = plugin->filters; *current; ++current)
 	_gcv_filter_register(filter_table, *current);
 }
 
@@ -295,12 +310,14 @@ _gcv_plugins_get_path(void)
     struct bu_vls buffer;
     const char *result;
 
-    brlcad_libs_path = bu_brlcad_dir("lib", 0);
+    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
+    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
 
     if (!brlcad_libs_path)
 	return NULL;
 
     bu_vls_init(&buffer);
+    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
     bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
 		   LIBGCV_PLUGINS_DIRECTORY);
     result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
@@ -324,7 +341,12 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	char **filenames;
 	size_t i;
 	struct bu_vls buffer = BU_VLS_INIT_ZERO;
-	const size_t num_filenames = bu_dir_list(plugins_path, NULL, &filenames);
+	size_t num_filenames = 0;
+	struct bu_vls pattern = BU_VLS_INIT_ZERO;
+
+	/* LIBGCV_PLUGINS_SUFFIX is filename extension on libraries, defined via cppflag */
+	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGIN_SUFFIX);
+	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
 
 	for (i = 0; i < num_filenames; ++i)
 	    if (!bu_file_directory(filenames[i])) {
@@ -333,7 +355,8 @@ _gcv_plugins_load_all(struct bu_ptbl *filter_table)
 	    }
 
 	bu_vls_free(&buffer);
-	bu_free_argv(num_filenames, filenames);
+	bu_vls_free(&pattern);
+	bu_argv_free(num_filenames, filenames);
     }
 }
 

@@ -2505,7 +2505,7 @@ db_tree_list(struct bu_vls *vls, const union tree *tp)
 	    tree_list_append(vls, tp->tr_l.tl_name);
 	    if (tp->tr_l.tl_mat) {
 		tree_list_sublist_begin(vls);
-		bn_encode_mat(vls, tp->tr_l.tl_mat);
+		bn_encode_mat(vls, tp->tr_l.tl_mat, 0);
 		tree_list_sublist_end(vls);
 	    }
 	    count++;

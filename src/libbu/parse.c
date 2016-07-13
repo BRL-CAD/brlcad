@@ -1995,7 +1995,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 		bu_vls_putc(vls, '{');
 
 		if (bu_shader_to_list(shade1, vls)) {
-		    bu_free(copy, BU_FLSTR);
+		    bu_free(copy, CPP_FILELINE);
 		    return 1;
 		}
 
@@ -2005,18 +2005,18 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 		    iptr++;
 	    }
 	    bu_vls_putc(vls, '}');
-	    bu_free(copy, BU_FLSTR);
+	    bu_free(copy, CPP_FILELINE);
 	    return 0;
 	}
 
 	if (shader_name_len == 6 && !bu_strncasecmp(shader, "envmap", 6)) {
 	    bu_vls_strcat(vls, "envmap {");
 	    if (bu_shader_to_list(iptr, vls)) {
-		bu_free(copy, BU_FLSTR);
+		bu_free(copy, CPP_FILELINE);
 		return 1;
 	    }
 	    bu_vls_putc(vls, '}');
-	    bu_free(copy, BU_FLSTR);
+	    bu_free(copy, CPP_FILELINE);
 	    return 0;
 	}
 
@@ -2045,7 +2045,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	    /* append next set of parameters (if any) to vls */
 	    len = bu_vls_strlen(vls);
 	    if (bu_key_eq_to_key_val(iptr, (const char **)&next, vls)) {
-		bu_free(copy, BU_FLSTR);
+		bu_free(copy, CPP_FILELINE);
 		return 1;
 	    }
 
@@ -2067,7 +2067,7 @@ bu_shader_to_list(const char *in, struct bu_vls *vls)
 	}
     }
 
-    bu_free(copy, BU_FLSTR);
+    bu_free(copy, CPP_FILELINE);
     return 0;
 }
 

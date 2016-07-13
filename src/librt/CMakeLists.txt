@@ -51,7 +51,6 @@ set(LIBRT_SOURCES
   db_anim.c
   db_corrupt.c
   db_diff.c
-  db_glob.c
   db_flags.c
   db_flip.c
   db_fullpath.c
@@ -265,6 +264,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
   reduce.c
+  reduce_db.cpp
   regionfix.c
   roots.c
   screened_poisson.cpp
@@ -310,9 +310,12 @@ set(librt_ignored_files
   primitives/dsp/dsp.h
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
+  primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
   primitives/rt.cl
@@ -345,7 +348,9 @@ set(CL_FILES
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
   primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
   primitives/sph/sph_shot.cl
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/tgc/tgc_shot.cl
   primitives/tor/tor_shot.cl

@@ -34,8 +34,8 @@
 void
 Makedir()
 {
-
-    int found, i, saverec, entcount = (-1), paramptr = 0, paramguess = 0;
+    size_t i;
+    int found, saverec, entcount = (-1), paramptr = 0, paramguess = 0;
     char str[9];
 
     str[8] = '\0';

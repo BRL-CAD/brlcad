@@ -162,7 +162,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 
 
 void
-bu_free_argv(size_t argc, char *argv[])
+bu_argv_free(size_t argc, char *argv[])
 {
     register size_t i;
 
@@ -172,12 +172,12 @@ bu_free_argv(size_t argc, char *argv[])
 
     for (i = 0; i < argc; ++i) {
 	if (argv[i]) {
-	    bu_free((void *)argv[i], "bu_free_argv");
+	    bu_free((void *)argv[i], "bu_argv_free");
 	    argv[i] = NULL; /* sanity */
 	}
     }
 
-    bu_free((void *)argv, "bu_free_argv");
+    bu_free((void *)argv, "bu_argv_free");
     argv = NULL;
 }
 
@@ -204,7 +204,7 @@ bu_free_array(size_t argc, char *argv[], const char *str)
 
 
 char **
-bu_dup_argv(size_t argc, const char *argv[])
+bu_argv_dup(size_t argc, const char *argv[])
 {
     register size_t i;
     char **av;
@@ -222,7 +222,7 @@ bu_dup_argv(size_t argc, const char *argv[])
 
 
 char **
-bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
+bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
 {
     register size_t i, j;
     size_t ac = argc + insertArgc + 1;
@@ -230,7 +230,7 @@ bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_
 
     /* Nothing to insert */
     if (insertArgc < 1)
-	return bu_dup_argv(argc, argv);
+	return bu_argv_dup(argc, argv);
 
     av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
 

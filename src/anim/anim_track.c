@@ -498,6 +498,9 @@ main(int argc, char *argv[])
     MAT_IDN(m_axes);
     MAT_IDN(m_rev_axes);
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage(argv0);
 	return 0;

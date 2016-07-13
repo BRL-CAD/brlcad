@@ -49,6 +49,9 @@
 #  define MAN_CMDLINE 1
 #endif
 
+/* Supported man sections */
+const char sections[] = {'1', '3', '5', 'n', '\0'};
+
 /*
  * Checks that a string matches the two lower case letter form of ISO 639-1
  * language codes.  List pulled from:
@@ -56,24 +59,24 @@
  * http://www.loc.gov/standards/iso639-2/php/English_list.php
  */
 const char *iso639_1[] = {"ab", "aa", "af", "ak", "sq", "am", "ar", "an",
-    "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bh",
-    "bi", "nb", "bs", "br", "bg", "my", "es", "ca", "km", "ch", "ce", "ny",
-    "ny", "zh", "za", "cu", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da",
-    "dv", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fi", "nl",
-    "fr", "ff", "gd", "gl", "lg", "ka", "de", "ki", "el", "kl", "gn", "gu",
-    "ht", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id",
-    "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks",
-    "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "kj", "ky", "lo",
-    "la", "lv", "lb", "li", "li", "li", "ln", "lt", "lu", "lb", "mk", "mg",
-    "ms", "ml", "dv", "mt", "gv", "mi", "mr", "mh", "ro", "ro", "mn", "na",
-    "nv", "nv", "nd", "nr", "ng", "ne", "nd", "se", "no", "nb", "nn", "ii",
-    "ny", "nn", "ie", "oc", "oj", "cu", "cu", "cu", "or", "om", "os", "os",
-    "pi", "pa", "ps", "fa", "pl", "pt", "pa", "ps", "qu", "ro", "rm", "rn",
-    "ru", "sm", "sg", "sa", "sc", "gd", "sr", "sn", "ii", "sd", "si", "si",
-    "sk", "sl", "so", "st", "nr", "es", "su", "sw", "ss", "sv", "tl", "ty",
-    "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk",
-    "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
-    "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
+			  "hy", "as", "av", "ae", "ay", "az", "bm", "ba", "eu", "be", "bn", "bh",
+			  "bi", "nb", "bs", "br", "bg", "my", "es", "ca", "km", "ch", "ce", "ny",
+			  "ny", "zh", "za", "cu", "cu", "cv", "kw", "co", "cr", "hr", "cs", "da",
+			  "dv", "dv", "nl", "dz", "en", "eo", "et", "ee", "fo", "fj", "fi", "nl",
+			  "fr", "ff", "gd", "gl", "lg", "ka", "de", "ki", "el", "kl", "gn", "gu",
+			  "ht", "ht", "ha", "he", "hz", "hi", "ho", "hu", "is", "io", "ig", "id",
+			  "ia", "ie", "iu", "ik", "ga", "it", "ja", "jv", "kl", "kn", "kr", "ks",
+			  "kk", "ki", "rw", "ky", "kv", "kg", "ko", "kj", "ku", "kj", "ky", "lo",
+			  "la", "lv", "lb", "li", "li", "li", "ln", "lt", "lu", "lb", "mk", "mg",
+			  "ms", "ml", "dv", "mt", "gv", "mi", "mr", "mh", "ro", "ro", "mn", "na",
+			  "nv", "nv", "nd", "nr", "ng", "ne", "nd", "se", "no", "nb", "nn", "ii",
+			  "ny", "nn", "ie", "oc", "oj", "cu", "cu", "cu", "or", "om", "os", "os",
+			  "pi", "pa", "ps", "fa", "pl", "pt", "pa", "ps", "qu", "ro", "rm", "rn",
+			  "ru", "sm", "sg", "sa", "sc", "gd", "sr", "sn", "ii", "sd", "si", "si",
+			  "sk", "sl", "so", "st", "nr", "es", "su", "sw", "ss", "sv", "tl", "ty",
+			  "tg", "ta", "tt", "te", "th", "bo", "ti", "to", "ts", "tn", "tr", "tk",
+			  "tw", "ug", "uk", "ur", "ug", "uz", "ca", "ve", "vi", "vo", "wa", "cy",
+			  "fy", "wo", "xh", "yi", "yo", "za", "zu", NULL};
 
 HIDDEN int
 opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
@@ -90,6 +93,30 @@ opt_lang(struct bu_vls *msg, int argc, const char **argv, void *l)
     }
     return -1;
 }
+
+
+HIDDEN int
+opt_section(struct bu_vls *msg, int argc, const char **argv, void *set_var)
+{
+    int i = 0;
+    char *s_set = (char *)set_var;
+
+    BU_OPT_CHECK_ARGV0(msg, argc, argv, "bu_opt_str");
+
+    /* One char only */
+    if (strlen(argv[0]) != 1) return -1;
+
+    while(sections[i]) {
+	if (sections[i] == argv[0][0]) {
+	    if (s_set) (*s_set) = argv[0][0];
+	    return 1;
+	}
+	i++;
+    }
+
+    return -1;
+}
+
 
 HIDDEN char *
 find_man_file(const char *man_name, const char *lang, char section, int gui)
@@ -124,42 +151,54 @@ find_man_file(const char *man_name, const char *lang, char section, int gui)
     return ret;
 }
 
-#ifdef HAVE_WINDOWS_H
-int APIENTRY
-WinMain(HINSTANCE hInstance,
-	HINSTANCE hPrevInstance,
-	LPSTR lpszCmdLine,
-	int nCmdShow)
-{
-    char **argv;
-    int argc;
+
+#ifndef HAVE_WINDOWS_H
+#  define APIENTRY
+#  define BRLMAN_MAIN main
 #else
-int
-main(int argc, const char **argv)
-{
+#  define BRLMAN_MAIN WinMain
 #endif
+
+/* main() */
+int APIENTRY
+BRLMAN_MAIN(
+#ifdef HAVE_WINDOWS_H
+    HINSTANCE hInstance,
+    HINSTANCE hPrevInstance,
+    LPSTR lpszCmdLine,
+    int nCmdShow
+#else
+    int argc,
+    const char **argv
+#endif
+    )
+{
+
 #if !defined(MAN_CMDLINE) && !defined(MAN_GUI)
     bu_exit(EXIT_FAILURE, "Error: man page display is not supported.");
 #else
     int i = 0;
-    int status;
+    int status = BRLCAD_ERROR;
     int uac = 0;
-#ifndef MAN_CMDLINE 
+#ifndef MAN_CMDLINE
     int enable_gui = 1;
 #else
     int enable_gui = 0;
 #endif
     int disable_gui = 0;
+    int print_help = 0;
     const char *man_cmd = NULL;
     const char *man_name = NULL;
     const char *man_file = NULL;
     char man_section = '\0';
     struct bu_vls lang = BU_VLS_INIT_ZERO;
     struct bu_vls optparse_msg = BU_VLS_INIT_ZERO;
-    struct bu_opt_desc d[4];
-    const char sections[] = {'1', '3', '5', 'n', '\0'};
+    struct bu_opt_desc d[6];
 
 #ifdef HAVE_WINDOWS_H
+    char **argv;
+    int argc;
+
     /* Get our args from the c-runtime. Ignore lpszCmdLine. */
     argc = __argc;
     argv = __argv;
@@ -169,10 +208,12 @@ main(int argc, const char **argv)
     bu_setprogname(argv[0]);
 
     /* Handle options in C */
-    BU_OPT(d[0], "g", "gui",         "",       NULL, (void *)&enable_gui,  "Enable GUI");
-    BU_OPT(d[1], "",  "no-gui",      "",       NULL, (void *)&disable_gui, "Disable GUI");
-    BU_OPT(d[2], "L", "language",  "lg",  &opt_lang, (void *)&lang,        "Set language");
-    BU_OPT_NULL(d[3]);
+    BU_OPT(d[0], "h", "help",        "",         NULL, (void *)&print_help,  "Print help and exit");
+    BU_OPT(d[1], "g", "gui",         "",         NULL, (void *)&enable_gui,  "Enable GUI");
+    BU_OPT(d[2], "",  "no-gui",      "",         NULL, (void *)&disable_gui, "Disable GUI");
+    BU_OPT(d[3], "L", "language",  "lg",    &opt_lang, (void *)&lang,        "Set language");
+    BU_OPT(d[4], "S", "section",    "#",  &opt_section, (void *)&man_section, "Set section");
+    BU_OPT_NULL(d[5]);
 
     /* Skip first arg */
     argv++; argc--;
@@ -181,6 +222,17 @@ main(int argc, const char **argv)
 	bu_exit(EXIT_FAILURE, bu_vls_addr(&optparse_msg));
     }
     bu_vls_free(&optparse_msg);
+
+    /* If we want help, print help */
+    if (print_help) {
+	const char *option_help = bu_opt_describe(d, NULL);
+	bu_log("Usage: brlman [options] [man_page]\n");
+	if (option_help) {
+	    bu_log("Options:\n%s\n", option_help);
+	    bu_free((char *)option_help, "help str");
+	}
+	bu_exit(EXIT_SUCCESS, NULL);
+    }
 
     /* If we only have one non-option arg, assume it's the man name */
     if (uac == 1) {
@@ -241,7 +293,7 @@ main(int argc, const char **argv)
 
     /* If we're not graphical, make sure we have a man command to use */
     if (!enable_gui) {
-#ifndef MAN_CMDLINE 
+#ifndef MAN_CMDLINE
 	bu_exit(EXIT_FAILURE, "Error: Non-graphical man display is not supported.");
 #else
 	man_cmd = bu_which("man");
@@ -288,7 +340,7 @@ main(int argc, const char **argv)
     }
 
     if (!enable_gui) {
-#ifdef MAN_CMDLINE 
+#ifdef MAN_CMDLINE
 	if (!man_file) {
 	    if (man_section != '\0') {
 		bu_exit(EXIT_FAILURE, "No man page found for %s in section %c\n", man_name, man_section);
@@ -339,6 +391,11 @@ main(int argc, const char **argv)
 	}
 
 	/* Pass the key variables into the interp */
+	if (man_section != '\0') {
+	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
+	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
+	}
+
 	if (man_file) {
 	    Tcl_Obj *pathP, *norm;
 
@@ -351,8 +408,6 @@ main(int argc, const char **argv)
 	    bu_vls_sprintf(&tcl_cmd, "set ::man_file %s", tcl_man_file);
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 
-	    bu_vls_sprintf(&tcl_cmd, "set ::section_number %c", man_section);
-	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
 	} else {
 	    bu_vls_sprintf(&tcl_cmd, "set ::data_dir %s/html", bu_brlcad_dir("doc", 1));
 	    (void)Tcl_Eval(interp, bu_vls_addr(&tcl_cmd));
