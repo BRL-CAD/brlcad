@@ -1,7 +1,7 @@
 /*                          N I R T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -118,7 +118,6 @@ extern void attrib_print(void);
 extern void az_el(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void backout(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern void bot_minpieces(char *buffer, com_table *ctp, struct rt_i *rtip);
-extern void bot_mintie(char *buffer, com_table *ctp, struct rt_i *rtip);
 extern int check_conv_spec(outitem *oip);
 extern void default_ospec(void);
 extern void dir2ae(void);

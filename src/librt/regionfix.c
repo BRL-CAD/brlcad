@@ -1,7 +1,7 @@
 /*                     R E G I O N F I X . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,13 @@
 #include <sys/types.h>
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __restrict
+#  undef __restrict
+#endif
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
+
 #include "bio.h"
 
 #include "vmath.h"

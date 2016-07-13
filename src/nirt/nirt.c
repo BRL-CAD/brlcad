@@ -1,7 +1,7 @@
 /*                          N I R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,9 +31,11 @@
 #include <string.h>
 #include "bio.h"
 
+#include "bu/env.h"
 #include "bu/getopt.h"
 #include "bu/list.h"
 #include "bu/units.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "raytrace.h"
 
@@ -64,7 +66,6 @@ const com_table ComTab[] = {
     { "load", load_state, "read new state for NIRT from the state file", NULL },
     { "print", print_item, "query an output item", "item" },
     { "bot_minpieces", bot_minpieces, "Get/Set value for rt_bot_minpieces (0 means do not use pieces, default is 32)", "min_pieces" },
-    { "bot_mintie", bot_mintie, "Get/Set value for rt_bot_mintie (0 means do not use pieces, default is 4294967295)", "min_tie" },
     { "libdebug", cm_libdebug, "set/query librt debug flags", "hex_flag_value" },
     { "debug", cm_debug, "set/query nirt debug flags", "hex_flag_value" },
     { "q", quit, "quit", NULL },
@@ -110,7 +111,7 @@ void printusage(void)
     bu_log(" -M         read matrix, cmds on stdin\n");
     bu_log(" -b         back out of geometry before first shot\n");
     bu_log(" -B n       set rt_bot_minpieces=n\n");
-    bu_log(" -T n       set rt_bot_mintie=n\n");
+    bu_log(" -T n       set rt_bot_mintie=n (deprecated, use LIBRT_BOT_MINTIE instead)\n");
     bu_log(" -e script  run script before interacting\n");
     bu_log(" -f sfile   run script sfile before interacting\n");
     bu_log(" -E         ignore any -e or -f options specified earlier on the command line\n");
@@ -128,8 +129,8 @@ void printusage(void)
 /**
  * List formats installed in global nirt data directory
  */
-void
-listformats(void)
+size_t
+listformats(char ***names)
 {
     size_t files, i;
     char **filearray = NULL;
@@ -143,15 +144,18 @@ listformats(void)
 
     /* get a nirt directory listing */
     bu_vls_printf(&nirtfilespath, "%s", bu_brlcad_data("nirt", 0));
-    files = bu_dir_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
+    files = bu_file_list(bu_vls_addr(&nirtfilespath), suffix, &filearray);
+    if (names)
+	*names = filearray;
 
-    /* open every nirt file we find and extract the description */
-    for (i = 0; i < files; i++) {
+    /* open every nirt file we find, extract, and print the description */
+    for (i = 0; i < files && !names; i++) {
 	bu_vls_trunc(&nirtpathtofile, 0);
-	bu_vls_trunc(&vlsfileline, 0);
 	bu_vls_printf(&nirtpathtofile, "%s/%s", bu_vls_addr(&nirtfilespath), filearray[i]);
 	cfPtr = fopen(bu_vls_addr(&nirtpathtofile), "rb");
+
 	fnddesc = 0;
+	bu_vls_trunc(&vlsfileline, 0);
 	while (bu_vls_gets(&vlsfileline, cfPtr) && fnddesc == 0) {
 	    if (bu_strncmp(bu_vls_addr(&vlsfileline), "# Description: ", 15) == 0) {
 		fnddesc = 1;
@@ -163,10 +167,13 @@ listformats(void)
     }
 
     /* release resources */
-    bu_free_argv(files, filearray);
+    if (!names)
+	bu_argv_free(files, filearray);
     bu_vls_free(&vlsfileline);
     bu_vls_free(&nirtfilespath);
     bu_vls_free(&nirtpathtofile);
+
+    return files;
 }
 
 void
@@ -366,7 +373,7 @@ main(int argc, char *argv[])
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
     int print_ident_flag = 1;
-    char ocastring[1024] = {0};
+    char ocastring[1025] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
     extern outval ValTab[];
@@ -399,7 +406,7 @@ main(int argc, char *argv[])
 		rt_bot_minpieces = atoi(bu_optarg);
 		break;
 	    case 'T':
-		rt_bot_mintie = atoi(bu_optarg);
+		bu_setenv("LIBRT_BOT_MINTIE", bu_optarg, 1);
 		break;
 	    case 'b':
 		do_backout = 1;
@@ -425,7 +432,7 @@ main(int argc, char *argv[])
 		    show_scripts(&script_list, "after enqueueing a file name");
 		break;
 	    case 'L':
-		listformats();
+		listformats(NULL);
 		bu_exit(EXIT_SUCCESS, NULL);
 	    case 'M':
 		mat_flag = 1;
@@ -525,6 +532,49 @@ main(int argc, char *argv[])
     }
 
     db_name = argv[bu_optind];
+
+    /* let users know that other output styles are available */
+    if (silent_flag != SILENT_YES) {
+	const char *default_name = "default";
+	char **names = NULL;
+	size_t fmtcnt, i;
+	printf("Output format:");
+	if (bu_list_len(&script_list) == 0) {
+	    printf(" %s", default_name);
+	} else {
+	    struct bu_vls name = BU_VLS_INIT_ZERO;
+
+	    /* last script listed wins */
+	    for (BU_LIST_FOR(srp, script_rec, &script_list)) {
+		if (srp->sr_type == READING_FILE) {
+		    bu_path_component(&name, bu_vls_addr(&(srp->sr_script)), BU_PATH_BASENAME_EXTLESS);
+		}
+	    }
+
+	    /* maybe no files, only execution scripts, so default output */
+	    if (bu_vls_strlen(&name) == 0)
+		bu_vls_printf(&name, default_name);
+
+	    printf(" %s", bu_vls_addr(&name));
+	    bu_vls_free(&name);
+	}
+	printf(" (specify -L option for descriptive listing)\n");
+
+	i = 0;
+	fmtcnt = listformats(&names);
+	if (fmtcnt > 0) {
+	    printf("Formats available:");
+	    do {
+		char *dot = strchr(names[i], '.');
+		if (dot) /* trim off any filename suffix */
+		    *dot = '\0';
+		printf(" %s", names[i]);
+	    } while (++i < fmtcnt);
+
+	    printf(" (specify via -f option)\n");
+	}
+	bu_argv_free(fmtcnt, names);
+    }
 
     /* build directory for target object */
     if (silent_flag != SILENT_YES) {
