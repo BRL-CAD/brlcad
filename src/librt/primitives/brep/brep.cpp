@@ -449,41 +449,45 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	    bu_bomb("cache file exists");
 
 	bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
-	ON_CompressedBuffer compressed;
+
+	bu_external external = BU_EXTERNAL_INIT_ZERO;
 	{
-	    RT_MemoryArchive archive;
+	    ON_CompressedBuffer compressed;
+	    RT_MemoryArchive uncompressed_archive;
 
 	    for (std::size_t i = 0; i < faceCount; ++i)
-		bbbp.faces[i]->serialize(archive);
+		bbbp.faces[i]->serialize(uncompressed_archive);
 
-	    uint8_t * const temp = archive.CreateCopy();
-	    compressed.Compress(archive.Size(), temp, 0);
+	    uint8_t * const temp = uncompressed_archive.CreateCopy();
+	    compressed.Compress(uncompressed_archive.Size(), temp, 0);
 	    bu_free(temp, "temp");
+	    RT_MemoryArchive archive;
+	    compressed.Write(archive);
+	    external.ext_nbytes = archive.Size();
+	    external.ext_buf = archive.CreateCopy();
 	}
 
-	RT_MemoryArchive archive;
-	compressed.Write(archive);
-	uint8_t * const temp = archive.CreateCopy();
 	std::ofstream stream(cache_path.c_str(), std::ofstream::out);
 	stream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-	stream.write(reinterpret_cast<const char *>(temp), archive.Size());
-	bu_free(temp, "temp");
+	stream.write(reinterpret_cast<const char *>(external.ext_buf), external.ext_nbytes);
+	bu_free_external(&external);
 	stream.flush();
 	stream.close();
     } else {
 	std::cerr << "loading from " << cache_path << '\n';
-	std::ifstream stream(cache_path.c_str(), std::ifstream::in);
-	stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
-	stream.seekg(0, std::ios::end);
-	const std::size_t temp_size = stream.tellg();
-	stream.seekg(0, std::ios::beg);
-	uint8_t *temp = new uint8_t[temp_size];
-	stream.read(reinterpret_cast<char *>(temp), temp_size);
-	stream.close();
-
 	RT_MemoryArchive *archive;
 	{
+	    std::ifstream stream(cache_path.c_str(), std::ifstream::in);
+	    stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
+	    stream.seekg(0, std::ios::end);
+	    const std::size_t temp_size = stream.tellg();
+	    stream.seekg(0, std::ios::beg);
+	    uint8_t *temp = new uint8_t[temp_size];
+	    stream.read(reinterpret_cast<char *>(temp), temp_size);
+	    stream.close();
+
+
 	    RT_MemoryArchive compressed_archive(temp, temp_size);
 	    delete[] temp;
 
