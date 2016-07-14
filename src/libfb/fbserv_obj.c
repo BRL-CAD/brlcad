@@ -46,8 +46,7 @@
 #include "raytrace.h"
 #include "dm.h"
 
-#include "fbmsg.h"
-#include "fbserv_obj.h"
+#include "fb.h"
 #include "fb_private.h"
 
 

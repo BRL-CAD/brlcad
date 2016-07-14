@@ -67,7 +67,10 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls     *str,
 /**
  * fills in rgb with the color for a given comb combination
  *
- * returns truthfully if a color could be got
+ * returns truthfully if a color could be got.  note that this routine
+ * will not (and cannot) handle the color inherit/override flag as
+ * that is set on some higher-level parent combination.
+ *
  */
 RT_EXPORT extern int rt_comb_get_color(unsigned char rgb[3], const struct rt_comb_internal *comb);
 

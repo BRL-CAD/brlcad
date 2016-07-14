@@ -1592,11 +1592,6 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
 /*  char *options="AbH:Llmn:N:O:o:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?"; */
     char *options="AbH:Llmn:N:p:s:tTvVw1:2:3:4:5:6:7:8:9:0:=:+:_:*:^:%:$:#:@:!:Q:~:Z:Y:W:h?";
 
-    if (argc == 1 ) {
-	show_help(*argv, options);
-	printf("\n       Program continues running:\n\n");
-    }
-
     /* don't report errors (this is before bu_opterr was changed to 1 immed. below) */
     bu_opterr = 1;
     bu_optind = 1;
@@ -1848,19 +1843,22 @@ read_args(int argc, const char **argv, char *topLevel, struct human_data_t *dude
     dude->height = (dude->legs.legLength + dude->torso.torsoLength + dude->head.headSize) / IN2MM;
 
     if ((argc - bu_optind) == 1) {
-	/* Yes, there is a top-level name at the end of this argument chain, let's dump it into the file*/
+	/* Yes, there is a top-level name at the end of this argument
+	 * chain, let's dump it into the file.
+	 */
 	have_name = 1;
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
 	bu_strlcpy(topLevel, argv[bu_optind], MAXLENGTH);
 	bu_strlcpy(humanName, topLevel, MAXLENGTH);
-	bu_log("TopLevel=%s\n", topLevel);
-	bu_log("TopLevel2=%s\n", humanName);
+	bu_log("First top-level object name: %s\n", topLevel);
+	bu_log("Second top-level object name: %s\n", humanName);
     }
     if (!have_name) {
-	/*If there is no top level name at the end, go with a default */
-	bu_log("Default top level object name\n");
-	bu_log("Setting generic name, %s\n", DEFAULT_HUMANNAME);
+	/* If there is no top level name at the end, go with the
+	 * default.
+	 */
+	bu_log("Setting default top-level object name: %s\n", DEFAULT_HUMANNAME);
 	memset(humanName, 0, MAXLENGTH);
 	memset(topLevel, 0, MAXLENGTH);
 	bu_strlcpy(humanName, DEFAULT_HUMANNAME, MAXLENGTH);

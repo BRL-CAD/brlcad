@@ -145,14 +145,7 @@ cp -Rf misc/debian/* $TMPDIR
 echo $BVERSION >$TMPDIR/version
 
 # compile and install in tmp dir
-cmake -DBRLCAD_BUNDLED_LIBS=ON \
-      -DBRLCAD_FLAGS_OPTIMIZATION=ON \
-      -DBRLCAD_ENABLE_STRICT=OFF \
-      -DBRLCAD_FLAGS_DEBUG=OFF \
-      -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_INSTALL_PREFIX=/usr/brlcad \
-      -DDATA_DIR=share \
-      -DMAN_DIR=share/man
+cmake -DCMAKE_INSTALL_PREFIX=/usr/brlcad
 make -j$NJOBS
 fakeroot make install DESTDIR=`pwd`"/$TMPDIR/tmp"
 
@@ -234,7 +227,7 @@ Homepage: http://brlcad.org
 
 file="/usr/share/applications/mimeapps.list"
 section="Added Associations"
-app="mged.desktop;archer.desktop;rtwizard.desktop;"
+app="archer.desktop;mged.desktop;rtwizard.desktop;"
 key_v4="application/brlcad-v4=$app"
 key_v5="application/brlcad-v5=$app"
 

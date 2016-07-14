@@ -373,6 +373,9 @@ segfilter_gen_worker(int cpu, void *ptr)
     int start_ind, end_ind, i;
     int state_jmp = 0;
 
+    /* If test is NULL in state or it's zero length, just return. */
+    if (!state->test || !BU_PTBL_LEN(state->test)) return;
+
     RT_APPLICATION_INIT(&ap);
     ap.a_rt_i = s->rtip;
     ap.a_hit = s->fhit;

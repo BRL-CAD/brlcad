@@ -68,7 +68,7 @@ int debug_file_count=0;
  * 0  No open edges, no plot file created.
  * !0 Has open edges, plot file created.
  */
-size_t
+HIDDEN size_t
 nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 {
     struct loopuse *lu;
@@ -90,7 +90,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
     nmg_face_tabulate(&faces, magic_p);
 
     cnt = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;
@@ -147,7 +147,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
 }
 
 
-static void
+HIDDEN void
 nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
 {
     register struct faceuse *fu = (struct faceuse *)longp;
@@ -173,7 +173,7 @@ nmg_dangling_handler(uint32_t *longp, void *state, int UNUSED(unused))
  * 0 No dangling faces
  * !0 Has dangling faces
  */
-int
+HIDDEN int
 nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
 {
     struct model *m;
@@ -205,7 +205,7 @@ nmg_has_dangling_faces(uint32_t *magic_p, const char *manifolds)
  * Note that in "non-fancy" mode, show_broken_eu() draws just the
  * edge.
  */
-void
+HIDDEN void
 nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, const char *str)
 
 
@@ -241,7 +241,7 @@ nmg_show_each_loop(struct shell *s, char **classlist, int redraw, int fancy, con
 }
 
 
-void
+HIDDEN void
 stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *tol)
 {
     struct model *m;
@@ -268,7 +268,7 @@ stash_shell(struct shell *s, char *file_name, char *title, const struct bn_tol *
 }
 
 
-void
+HIDDEN void
 nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
 {
     struct faceuse *fu;
@@ -427,12 +427,12 @@ nmg_kill_non_common_cracks(struct shell *sA, struct shell *sB)
  * edges and vertices marked as shared.
  */
 
-static void
+HIDDEN void
 nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **classlist)
 {
     struct bu_ptbl verts;
     struct bu_ptbl edges;
-    int i;
+    size_t i;
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY)
 	bu_log("nmg_classify_shared_edges_verts(sA=%p, sB=%p)\n", (void *)sA, (void *)sB);
@@ -441,7 +441,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     NMG_CK_SHELL(sB);
 
     nmg_vertex_tabulate(&verts, &sA->l.magic);
-    for (i=0; i<BU_PTBL_END(&verts); i++) {
+    for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 	struct vertexuse *vu;
 
@@ -466,7 +466,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     bu_ptbl_free(&verts);
 
     nmg_edge_tabulate(&edges, &sA->l.magic);
-    for (i=0; i<BU_PTBL_END(&edges); i++) {
+    for (i=0; i<BU_PTBL_LEN(&edges); i++) {
 	struct edge *e;
 	struct edgeuse *eu;
 	struct edgeuse *eu_start;
@@ -502,13 +502,13 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
  * Look for same loop in opposite direction in shell "s", Kill them.
  */
 
-void
+HIDDEN void
 nmg_kill_anti_loops(struct shell *s)
 {
     struct bu_ptbl loops;
     struct faceuse *fu;
     struct loopuse *lu;
-    register int i, j;
+    register size_t i, j;
 
     bu_ptbl_init(&loops, 64, " &loops");
 
@@ -526,7 +526,7 @@ nmg_kill_anti_loops(struct shell *s)
 	}
     }
 
-    for (i=0; i < BU_PTBL_END(&loops); i++) {
+    for (i=0; i < BU_PTBL_LEN(&loops); i++) {
 	struct loopuse *lu1;
 	struct edgeuse *eu1_start;
 	struct vertex *v1;
@@ -536,7 +536,7 @@ nmg_kill_anti_loops(struct shell *s)
 	eu1_start = BU_LIST_FIRST(edgeuse, &lu1->down_hd);
 	v1 = eu1_start->vu_p->v_p;
 
-	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
+	for (j=i+1; j<BU_PTBL_LEN(&loops); j++) {
 	    register struct loopuse *lu2;
 	    register struct edgeuse *eu1;
 	    register struct edgeuse *eu2;
@@ -598,7 +598,7 @@ out:
 }
 
 
-void
+HIDDEN void
 nmg_kill_wire_edges(struct shell *s)
 {
     struct loopuse *lu;
@@ -623,7 +623,7 @@ nmg_kill_wire_edges(struct shell *s)
  *
  * XXX this probably should operate on regions, not shells.
  */
-static struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
+HIDDEN struct shell * nmg_bool(struct shell *sA, struct shell *sB, const int oper, const struct bn_tol *tol)
 {
     int i;
     long nelem;

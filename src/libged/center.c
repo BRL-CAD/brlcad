@@ -49,7 +49,7 @@ ged_center(struct ged *gedp, int argc, const char *argv[])
     if (argc == 1) {
 	MAT_DELTAS_GET_NEG(center, gedp->ged_gvp->gv_center);
 	VSCALE(center, center, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, center);
+	bn_encode_vect(gedp->ged_result_str, center, 1);
 
 	return GED_OK;
     }

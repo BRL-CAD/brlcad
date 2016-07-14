@@ -135,6 +135,9 @@ main(int ac, char **av)
     char *eos;
     off_t newoffset;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command. It has been superseded by hexdump.\n\n");
+    sleep(1);
+
     progname = *av;
 
     /* Get # of options & turn all the option flags off */

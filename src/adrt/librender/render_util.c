@@ -202,7 +202,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
     sray.pos = shotline.in;
 
     /* allocate memory for 32 spall rays */
-    vec_list = (TIE_3 *)malloc(32 * sizeof(TIE_3));
+    vec_list = (TIE_3 *)bu_malloc(32 * sizeof(TIE_3), "vec_list");
     if (!vec_list) {
 	perror("vec_list");
 	exit(1);
@@ -229,7 +229,7 @@ render_util_spall_list(struct tie_s *UNUSED(tie), struct tie_ray_s *UNUSED(ray),
 	tie_work(tie, &sray, &id, shot_hit, &shotline);
     }
 
-    free(vec_list);
+    bu_free(vec_list, "vec_list");
 
     shotline.in = in;
     shotline.out = out;

@@ -45,7 +45,9 @@
 #define DEBUG_UI 0
 
 static char promptbuf[LNBUFSZ];
+#ifdef HAVE_TERMLIB
 static const char *bannerp = "BURST (2.2)";
+#endif
 
 #define AddCmd(nm, f) \
 	{ \
@@ -146,7 +148,9 @@ static HmMenu *addMenu();
 static int getInput();
 static int unitStrToInt();
 static void addItem();
+#ifdef HAVE_TERMLIB
 static void banner();
+#endif
 
 typedef struct ftable Ftable;
 struct ftable
@@ -417,7 +421,7 @@ addMenu(Ftable *tp)
     return menup;
 }
 
-
+#ifdef HAVE_TERMLIB
 /*
   void banner(void)
 
@@ -431,7 +435,7 @@ banner()
     HmBanner(scrbuf, BORDER_CHR);
     return;
 }
-
+#endif
 
 void
 closeUi()
@@ -509,6 +513,7 @@ initMenus(Ftable *tp)
 int
 initUi()
 {
+#ifdef HAVE_TERMLIB
     if (tty) {
 	if (! ScInit(stdout))
 	    return 0;
@@ -525,6 +530,7 @@ initUi()
 	HmInit(MENU_LFT, MENU_TOP, MENU_MAXVISITEMS);
 	banner();
     }
+#endif
     initMenus(mainmenu);
     initCmds(mainmenu);
     return 1;
@@ -913,21 +919,28 @@ MerrorFile(HmItem *itemp)
     };
     Input *ip = input;
     static int errfd = -1;
-    if (getInput(ip))
+
+    if (getInput(ip)) {
 	bu_strlcpy(errfile, ip->buffer, LNBUFSZ);
-    else
-	bu_strlcpy(errfile, "/dev/tty", LNBUFSZ);
-    /* insure that error log is truncated */
-    errfd = open(errfile, O_BINARY|O_TRUNC|O_CREAT|O_WRONLY, 0644);
+	/* ensure that error log is truncated */
+	errfd = open(errfile, O_BINARY|O_TRUNC|O_CREAT|O_WRONLY, 0644);
+    } else {
+	errfd = 2; /* write to stderr */
+    }
+
     if (errfd == -1) {
 	locPerror(errfile);
 	return;
     }
-    (void) close(2);
+
+/* TODO: we need a copy of stderr on non-termlib platforms or this doesn't work */
+#ifdef HAVE_TERMLIB
+    close(2);
     if (fcntl(errfd, F_DUPFD, 2) == -1) {
 	locPerror("fcntl");
 	return;
     }
+#endif
     (void) snprintf(scrbuf, LNBUFSZ, "%s\t\t%s",
 		    itemp != NULL ? itemp->text : cmdname,
 		    errfile);

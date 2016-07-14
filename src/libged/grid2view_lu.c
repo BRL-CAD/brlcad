@@ -62,7 +62,7 @@ ged_grid2view_lu(struct ged *gedp, int argc, const char *argv[])
     f = gedp->ged_gvp->gv_scale * gedp->ged_wdbp->dbip->dbi_base2local;
     VSCALE(mo_view_pt, mo_view_pt, f);
     VADD2(view_pt, mo_view_pt, scan);
-    bn_encode_vect(gedp->ged_result_str, view_pt);
+    bn_encode_vect(gedp->ged_result_str, view_pt, 1);
 
     return GED_OK;
 

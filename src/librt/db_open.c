@@ -373,7 +373,7 @@ db_close(register struct db_i *dbip)
     }
 
     if (dbip->dbi_filepath != NULL) {
-	bu_free_argv(2, dbip->dbi_filepath);
+	bu_argv_free(2, dbip->dbi_filepath);
 	dbip->dbi_filepath = NULL; /* sanity */
     }
 

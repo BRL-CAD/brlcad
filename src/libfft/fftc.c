@@ -33,9 +33,6 @@
 #include "./fft.h"
 
 
-extern int rfft_adds, rfft_mults;
-
-
 int
 main(int argc, char *argv[])
 {
@@ -54,7 +51,6 @@ main(int argc, char *argv[])
 
     m = log((double)n)/log(2.0) + 0.5;	/* careful truncation */
     splitdit( n, m );
-    fprintf( stderr, "adds = %d, mults = %d\n", rfft_adds, rfft_mults );
     return 0;
 }
 

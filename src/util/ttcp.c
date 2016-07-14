@@ -319,20 +319,20 @@ prusage(struct rusage *r0,
 		    break;
 
 		case 'X':
-		    sprintf(outp, "%ld", t == 0 ? 0 : (r1->ru_ixrss-r0->ru_ixrss)/t);
+		    sprintf(outp, "%ld", t == 0 ? 0 : (long int)((r1->ru_ixrss-r0->ru_ixrss)/t));
 		    END(outp);
 		    break;
 
 		case 'D':
 		    sprintf(outp, "%ld", t == 0 ? 0 :
-			    (r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t);
+			   (long int)((r1->ru_idrss+r1->ru_isrss-(r0->ru_idrss+r0->ru_isrss))/t));
 		    END(outp);
 		    break;
 
 		case 'K':
-		    sprintf(outp, "%ld", t == 0 ? 0 :
+		    sprintf(outp, "%ld", t == 0 ? 0 : (long int)(
 			    ((r1->ru_ixrss+r1->ru_isrss+r1->ru_idrss) -
-			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t);
+			     (r0->ru_ixrss+r0->ru_idrss+r0->ru_isrss))/t));
 		    END(outp);
 		    break;
 

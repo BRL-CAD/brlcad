@@ -17,24 +17,24 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bnetwork.h
+/** @addtogroup bu_bnetwork
  *
- * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard system NETWORKING routines.
+ * @brief
+ * BRL-CAD system compatibility wrapper header that provides declarations for
+ * native and standard system NETWORKING routines.
  *
- * This header is commonly used in lieu of including the following:
- * winsock2.h (not select, fd_set), netinet/in.h, netinet/tcp.h,
- * arpa/inet.h (htonl, ntohl, etc)
+ * This header is commonly used in lieu of including the following: winsock2.h
+ * (not select, fd_set), netinet/in.h, netinet/tcp.h, arpa/inet.h (htonl,
+ * ntohl, etc)
  *
- * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
- *
- * The below logic should not rely on common.h's HAVE_* defines and
- * should not be including the common.h header.  This is intended to
- * be a stand-alone portability header intended to be independent of
- * build system, reusable by external projects.
+ * The logic in this header should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to be a
+ * stand-alone portability header intended to be independent of build system,
+ * reusable by external projects.
  */
+
+/** @{ */
+/** @file bnetwork.h */
 
 #ifndef BNETWORK_H
 #define BNETWORK_H
@@ -56,6 +56,8 @@
 #endif
 
 #endif /* BNETWORK_H */
+
+/** @} */
 
 /*
  * Local Variables:

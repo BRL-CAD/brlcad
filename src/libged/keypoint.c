@@ -49,7 +49,7 @@ ged_keypoint(struct ged *gedp, int argc, const char *argv[])
     /* get keypoint */
     if (argc == 1) {
 	VSCALE(keypoint, gedp->ged_gvp->gv_keypoint, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, keypoint);
+	bn_encode_vect(gedp->ged_result_str, keypoint, 1);
 
 	return GED_OK;
     }

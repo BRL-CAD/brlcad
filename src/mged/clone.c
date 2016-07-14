@@ -58,7 +58,6 @@
 #include "vmath.h"
 #include "rt/db4.h"
 #include "raytrace.h"
-#include "obj.h"
 
 #include "./mged.h"
 #include "./cmd.h"

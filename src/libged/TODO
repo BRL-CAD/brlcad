@@ -3,7 +3,16 @@ Keep them sorted alphabetically.
 They are not all vetted.
 Be specific.
 
----
+--- REFACTORING ---
+
+* merge prcolor and color commands
+
+* merge bot_* commands into bot command subcommands
+
+* merge get_eyemodel's functionality as "view eyemodel" sub-command
+
+
+--- NEW COMMANDS ---
 
 * 'about' command: display version, contents of various doc files,
   customizable brlcad.msg file.  could also report summary information
@@ -17,6 +26,12 @@ Be specific.
 
 * 'align' command: taking a from 3d pt and a to 3d pt target.
   moves/rotates the source object into alignment.
+
+* 'analyze' command: add per-face analysis of primitives like tgc, arb
+  to their respective analyze commands in libged.  See end of file for
+  some thoughts on a more ambitious re-think about the analyze command,
+  but bear in mind that these are preliminary thoughts only and not a
+  finished design that is ready to be implemented.
 
 * 'audit' command: determine if the model is valid, provide option(s)
   to fix any errors encountered.  this could be a refactoring or
@@ -76,20 +91,24 @@ Be specific.
   calculate a distance between two nirt rays, or something that always
   prints mm, or a command that print radians instead of degrees).
 
-* 'memory' command: reports memory and disk usage statistics.  for
-  out-of-core memory (disk), report amount of available disk space,
-  cache object / scratch space, and geometry file size.  for in-core
-  memory, report virtual memory allocation size, % resident, total
-  memory available, swap size, page faults, swap writes, etc.
-  Obviously need a lot of libbu infrastructure for many of these
-  features.
-
 * 'compile' command: evaluate and cache results of geometry
   computations for improved performance.  this could be a variety of
   cache-worthy actions such as wireframes at given levels of detail,
   raytrace prep results, default tessellations, simple geometry
   validation (see 'audit' command), or shape analysis (surface area,
   volume, moments of inertia, etc).
+
+* 'edit' command: review and test so we can replace oed+tra/sca/rot
+  functionality consistently in libged as translate/scale/rotate with
+  a signature similar to (review this against what the edit command
+  ended up with):
+
+  {translate|rotate|scale} [--keypoint {bb_corner|bb_center}:\
+    {object_name} | {3d position}] [--relative xdist [ydist [zdist]] \
+    | --absolute xpos [ypos [zpos]]] object_name(s)
+
+  where 'oed' is basically converted into the --keypoint option and
+  object(s) to work on.
 
 * 'image' command: import/export an image.  similar to 'text' command,
   need option to crop, position, scale, and orient the image.  should
@@ -100,6 +119,14 @@ Be specific.
   on/off, lock/unlock, and set other properties (e.g., color, style).
   need subcommand(s) to move geometry to/from layers, perhaps
   implemented as combs with a special flag like regions.
+
+* 'memory' command: reports memory and disk usage statistics.  for
+  out-of-core memory (disk), report amount of available disk space,
+  cache object / scratch space, and geometry file size.  for in-core
+  memory, report virtual memory allocation size, % resident, total
+  memory available, swap size, page faults, swap writes, etc.
+  Obviously need a lot of libbu infrastructure for many of these
+  features.
 
 * 'menu' command: to load/unload menu descriptions from a file
   (e.g. file.mnu) where we bind text, icons, images, descriptions, and
@@ -124,6 +151,29 @@ Be specific.
   # hollow object, perform edit
   offset piston -1.0 piston.interior piston.old
   # piston is now "u piston.old - piston.interior"
+
+* 'pipe from' subcommand that generates a pipe given an input object
+  (e.g., a BoT mesh).  Candidate synopsis:
+
+  pipe from {input.object} [-s startpt] [-e endpt] [-n npts] [output.pipe]
+
+  So that would look something like this in mged/archer:
+
+  mged> pipe from shaft4.bot
+  or
+  mged> pipe from shaft4.bot my_new.pipe
+  or
+  mged> pipe from -file shaft4.stl -s 1.3 3.21 9123.2 -e 1.3 3.21 0 shaft4.s
+  etc
+
+  This would allow the command to be extended to other input sources
+  or primitive types, but a default implementation could simply
+  tessellate the input object and work generically with a mesh form
+  under the hood.  Using ray tracing instead of mesh for calculating a
+  centerline is also a possibility.
+
+  Note the motivating need consists of only linear pipes without any
+  turns/bends/curves, but with changing inner/outer diameters.
 
 * 'redo' command: redoes the previous undone command(s).  Basically
   move forward in an undo chain.  See undo below.
@@ -177,6 +227,24 @@ Be specific.
   # select two objects,  create/return a temporary reference name
   select foo bar
 
+* "simulate" command: for applying physics deformations to geometry.
+  Each timestep (default steps==1) would get recorded as new geometry
+  unless updating the existing is requested.  Usage might be something
+  like this:
+
+     simulate [-k] [-g|-G] [-f x y z N] <time> [steps]
+
+  Examples:
+     simulate 10.5  # simulate 10.5s of time (default gravity)
+     simulate 3 10  # simulate 30s of time, 10s per timestep
+     simulate -f 0 0 -1.0 9.807 3.0  # earth's gravity for 3s
+     simulate -k 1.0  # simulate 1s of gravity, overwriting original
+     simulate -G -f 1 2 3 .4 5  # no gravity, custom force, 5s
+
+* 'tables' command: do not call system() on the "sort" unix command!
+  It should perform all sorting on the data directly in memory, at
+  least without creating another process.  bad security practice.
+
 * 'text' command: imports a text file (as geometry).  have options to
   specify the spacing between lines, first line, #lines,
   underline/overline each line, convert to all upper/lower, position.
@@ -211,6 +279,8 @@ Be specific.
   # non-stateful transaction
   transact run -exec "make {sph} {sph}" -exec "facetize {sph}.bot {sph}" -exec "bot_dump {sph}.{dxf} {sph}.bot"
 
+* 'tree' command: accept a full path, not just a combination
+
 * 'undo' command: undo the previous command or previous N commands.
   Should be stored as a chain or tree of events so you can cycle
   forwards or backwards vim/emacs style.  See redo command above.
@@ -239,4 +309,74 @@ Be specific.
 
     SELECT * FROM products
     WHERE category = 'book' AND desc LIKE '%algorithms%' AND stock >= 1;
+
+-------------------------------------------------------------------------------
+
+ANALYZE command design thoughts:
+
+If we consider consolidating what are currently "special purpose" analysis
+commands (bounding box calculators, convex hull, gqa's functionality, etc.)
+all underneath a single unified analyze command, we would need a different
+command option structure.  The outline below captures some early stage thoughts
+on how such a command might be organized.
+
+analyze
+
+--visualize
+
+--tolerance #
+
+--component:
+           default when unspecified is whole shape (only option currently for combs)
+
+           F (default all faces, accept number lists and ranges)
+           S (default all surfaces, "")
+           E (default all 3D edges, "")
+           V (default all 3d verts, "")
+
+           (primitive specific components as appropriate - for example, voxel data might allow
+            specified value ranges)
+
+
+--property: (accept 1 or a comma separated list, can specify multiple --property options as well)
+           volume (default for volume component if no property specified)
+           surface_area (default for surface component (F, S) if no property specified)
+           projected surface area
+           length (default for edge component if no property specified)
+
+           bounding-box[=bbox.s] (alias for aabb)
+           bbox[=bbox.s]
+           aabb[=bbox.s]
+           obb[=bbox.s]
+           convex-hull=obj.s
+           concave-hull=obj.s
+
+           inside-outside=obj.s (relative to another object)
+           centroid
+           moment-of-inertia
+           weight
+           overlaps[=<name_template>] (optionally generate volumes bounding overlaps)
+           voids[=<name_template>] (optionally generate volumes bounding voids)
+           exposed-air[=<name_template>]
+           adjacent-air[=<name_template>]
+
+--report-format:
+           default when unspecified would be ascii text
+
+           ascii
+           csv
+           json
+           xml
+           ...
+
+[args] obj1 [obj2 ...]
+
+Sample invocations:
+
+analyze --visualize --property bounding-box,centroid obj1.s
+
+analyze --component F 1-10,23-30 --property surface_area mesh.s
+
+analyze --property overlaps=overlap.s obj1.c obj2.c
+
 

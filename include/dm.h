@@ -31,14 +31,12 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-
-#define USE_FBSERV 1
-
-#ifdef USE_FBSERV
-#  include "fbserv_obj.h"
-#endif
+#include "fb.h"
 
 #include "./dm/defines.h"
+
+/* Use fbserv */
+#define USE_FBSERV 1
 
 #define DM_NULL (dm *)NULL
 #define DM_MIN (-2048)
@@ -430,6 +428,7 @@ DM_EXPORT extern int dm_draw_display_list(dm *dmp,
 	int mv_dlist
 	);
 
+DM_EXPORT extern int dm_default_type();
 
 /* For backwards compatibility, define macros and expose struct dm */
 #ifdef EXPOSE_DM_HEADER

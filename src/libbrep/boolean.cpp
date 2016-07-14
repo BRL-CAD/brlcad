@@ -988,7 +988,7 @@ interval_2d_to_3d(
 		    }
 		}
 	    }
-	    if (int_params.size() == 0) {
+	    if (int_params.empty()) {
 		int_params.push_back(curve_t);
 	    }
 
@@ -2298,7 +2298,7 @@ combine_loops(
 	    }
 	}
 	merged_innerloops.push_back(candidate_innerloop);
-    } else if (orig_face->m_innerloop.size() > 0) {
+    } else if (!orig_face->m_innerloop.empty()) {
 	for (size_t i = 0; i < orig_face->m_innerloop.size(); ++i) {
 	    merged_innerloops.push_back(orig_face->m_innerloop[i]);
 	}
@@ -2704,7 +2704,7 @@ split_face_into_loops(
 	}
     }
 
-    if (out.size() > 0) {
+    if (!out.empty()) {
 	// The remaining part after splitting some parts out.
 	close_small_gaps(outerloop_segs);
 	if (is_loop_valid(outerloop_segs, ON_ZERO_TOLERANCE)) {
@@ -2836,7 +2836,7 @@ split_trimmed_face(
 			ssx_loops[j], BOOLEAN_INTERSECT);
 
 		if (ssx_curves[i].IsClosed()) {
-		    if (intersect_loops.outerloops.size() == 0) {
+		    if (intersect_loops.outerloops.empty()) {
 			// no intersection, just keep the face as-is
 			next_out.Append(out[k]->Duplicate());
 			continue;

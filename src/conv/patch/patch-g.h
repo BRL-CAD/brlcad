@@ -124,7 +124,7 @@ fastf_t *YVAL = NULL;
 fastf_t *ZVAL = NULL;
 
 fastf_t *thicks = NULL;			/* array of unique plate thicknesses */
-int nthicks;				/* number of unique plate thicknesses
+size_t nthicks;				/* number of unique plate thicknesses
 					   for a single plate mode solid */
 fastf_t *RADIUS = NULL;
 fastf_t *thk = NULL;

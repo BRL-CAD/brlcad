@@ -130,7 +130,7 @@ main(int argc, char **argv)
     int ret;
 
     bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
-    sleep(5);
+    sleep(1);
 
     printf("GIFT-PRETTY File painted on Generic Framebuffer\n");
 

@@ -40,16 +40,12 @@
 #endif
 #include "bresource.h"
 
-#include "tcl.h"
-
 #include "bn.h"
 #include "bu/cmd.h"
 #include "vmath.h"
 
-
 #include "./qray.h"
 #include "./ged_private.h"
-
 
 /**
  * Invoke nirt with the current view & stuff

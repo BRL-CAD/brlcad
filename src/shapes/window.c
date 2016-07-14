@@ -46,7 +46,7 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hgt = 0.0;		/* Height, width, & depth of handle. */
     double wid = 0.0;
     double dpt;
@@ -105,7 +105,6 @@ main(int argc, char **argv)
 	printf("window.\n\n");
 
 	/* Find name of mged file to be created. */
-        printf("       Program continues running (in interactive mode):\n");
 	printf("Enter the mged file to be created (25 char max).\n\t");
 	(void)fflush(stdout);
 	ret = scanf("%26s", filemged);

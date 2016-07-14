@@ -17,11 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv.h
+/** @addtogroup libgcv
  *
  * API of the LIBGCV geometry conversion library.
  *
  */
+/** @{ */
+/** @file gcv.h */
 
 #ifndef GCV_H
 #define GCV_H
@@ -37,6 +39,8 @@ __BEGIN_DECLS
 __END_DECLS
 
 #endif /* GCV_H */
+
+/** @} */
 
 /*
  * Local Variables:

@@ -84,11 +84,11 @@ endmacro(GET_TARGET_DLL_DEFINES)
 macro(SET_CXX_LANG SRC_FILES)
   if(ENABLE_ALL_CXX_COMPILE)
     foreach(srcfile ${SRC_FILES})
-      if(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
-	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
+      if(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
 	  set_source_files_properties(${srcfile} PROPERTIES LANGUAGE CXX)
-	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile})
-      endif(NOT ${CMAKE_CURRENT_SOURCE_DIR}/${srcfile} MATCHES "src/other")
+	endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
+      endif(NOT "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}" MATCHES "src/other")
     endforeach(srcfile ${SRC_FILES})
   endif(ENABLE_ALL_CXX_COMPILE)
 endmacro(SET_CXX_LANG SRC_FILES)
@@ -156,8 +156,8 @@ endmacro(CXX_NO_STRICT cxx_srcslist)
 # BRL-CAD style checking test
 macro(VALIDATE_STYLE srcslist targetname)
   if(BRLCAD_STYLE_VALIDATE)
-    include(${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake)
-    make_directory(${CMAKE_CURRENT_BINARY_DIR}/validation)
+    include("${BRLCAD_SOURCE_DIR}/misc/CMake/style/test_list.cmake")
+    make_directory("${CMAKE_CURRENT_BINARY_DIR}/validation")
 
     foreach(test_name ${BRLCAD_STYLE_TESTS})
 
@@ -180,7 +180,7 @@ macro(VALIDATE_STYLE srcslist targetname)
 	  set(outfiles_root "${CMAKE_CURRENT_BINARY_DIR}/validation/${root_name}_${path_md5}_${test_name}")
 	  set(srcfile_tmp "${CMAKE_CURRENT_SOURCE_DIR}/${srcfile}")
 	  set(stampfile_tmp "${stampfile}")
-	  configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in ${outfiles_root}.cmake @ONLY)
+	  configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/style/${test_name}.cmake.in" ${outfiles_root}.cmake @ONLY)
 	  add_custom_command(
 	    OUTPUT ${outfiles_root}.checked
 	    COMMAND ${CMAKE_COMMAND} -P ${outfiles_root}.cmake
@@ -197,9 +197,9 @@ macro(VALIDATE_STYLE srcslist targetname)
       endforeach(srcfile ${srcslist})
 
       # Set up build targets that can be used to independently trigger the testing
-      configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake @ONLY)
+      configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_checkstamp.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake" @ONLY)
       add_custom_target(regress-${test_name}-${targetname}
-	${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake
+	${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${test_name}_${targetname}_validate.cmake"
 	DEPENDS ${test_stamp_files}
 	)
       if(NOT TARGET regress-${test_name})
@@ -210,10 +210,10 @@ macro(VALIDATE_STYLE srcslist targetname)
     endforeach(test_name ${BRLCAD_STYLE_TESTS})
 
     # Set up build-integrated validation that is run automatically at compile time.
-    configure_file(${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake @ONLY)
+    configure_file("${BRLCAD_SOURCE_DIR}/misc/CMake/validate_style.cmake.in" "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake" @ONLY)
     add_custom_command(
       TARGET ${targetname} PRE_LINK
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${targetname}_validate.cmake"
       COMMENT "Checking validation status of ${targetname} srcs"
       )
 
@@ -227,14 +227,18 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
 
   string(TOUPPER "${execname}" EXECNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${EXECNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX;GUI" "FOLDER" "" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   # Go all C++ if the settings request it
   SET_CXX_LANG("${srcslist}")
 
   # Call standard CMake commands
-  add_executable(${execname} ${srcslist})
+  if(${EXECNAME_UPPER}_GUI)
+    add_executable(${execname} WIN32 ${srcslist})
+  else(${EXECNAME_UPPER}_GUI)
+    add_executable(${execname} ${srcslist})
+  endif(${EXECNAME_UPPER}_GUI)
   target_link_libraries(${execname} ${libslist})
 
   # Check at comple time the standard BRL-CAD style rules
@@ -260,11 +264,11 @@ macro(BRLCAD_ADDEXEC execname srcslist libslist)
     # Unfortunately, we currently need Windows binaries in the same directories as their DLL libraries
     if(NOT WIN32)
       if(NOT CMAKE_CONFIGURATION_TYPES)
-	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+	set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
       else(NOT CMAKE_CONFIGURATION_TYPES)
 	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} ${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE})
+	  set_target_properties(${execname} PROPERTIES RUNTIME_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER} "${CMAKE_CURRENT_BINARY_DIR}/${CFG_TYPE}")
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endif(NOT WIN32)
@@ -336,7 +340,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
   string(TOUPPER "${libname}" LIBNAME_UPPER)
   if(${ARGC} GREATER 3)
-    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${LIBNAME_UPPER} "SHARED;STATIC;NO_INSTALL;NO_STRICT;NO_STRICT_CXX" "FOLDER" "SO_SRCS;STATIC_SRCS" ${ARGN})
   endif(${ARGC} GREATER 3)
 
   set(all_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS} ${${LIBNAME_UPPER}_STATIC_SRCS})
@@ -367,7 +371,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
 
 
   # Handle "shared" libraries (with MSVC, these would be dynamic libraries)
-  if(BUILD_SHARED_LIBS)
+  if((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
 
     set(so_srcs ${srcslist} ${${LIBNAME_UPPER}_SO_SRCS})
 
@@ -452,11 +456,11 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
     endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
 
-  endif(BUILD_SHARED_LIBS)
+  endif((NOT ${LIBNAME_UPPER}_STATIC) AND (BUILD_SHARED_LIBS OR ${LIBNAME_UPPER}_SHARED))
 
   # Handle static libraries (renaming requirements to both allow unique targets and
   # respect standard naming conventions.)
-  if(BUILD_STATIC_LIBS)
+  if((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
 
     set(static_srcs ${srcslist} ${${LIBNAME_UPPER}_STATIC_SRCS})
 
@@ -512,8 +516,6 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
     endif(NOT ${lib_type} STREQUAL "MIXED")
 
     # If we can't build this library strict, add the -Wno-error flag
-
-    # If we can't build this library strict, add the -Wno-error flag
     if(${lib_type} STREQUAL "C" AND BRLCAD_ENABLE_STRICT AND ${LIBNAME_UPPER}_NO_STRICT)
       CHECK_C_COMPILER_FLAG(-Wno-error NOERROR_FLAG)
       if(NOERROR_FLAG)
@@ -530,7 +532,7 @@ macro(BRLCAD_ADDLIB libname srcslist libslist)
       endif(${LIBNAME_UPPER}_NO_STRICT_CXX OR ${LIBNAME_UPPER}_NO_STRICT)
     endif(${lib_type} STREQUAL "CXX" AND BRLCAD_ENABLE_STRICT)
 
-  endif(BUILD_STATIC_LIBS)
+  endif((NOT ${LIBNAME_UPPER}_SHARED) AND (BUILD_STATIC_LIBS OR ${LIBNAME_UPPER}_STATIC))
 
   # Mixed source STRICTNESS is handled separately (on a per-file basis) if we have mixed
   # sources via the NO_STRICT_CXX flag
@@ -581,7 +583,7 @@ endmacro(BRLCAD_ADDLIB libname srcslist libslist)
 # 4.  Any remaining paths are appended.
 macro(BRLCAD_SORT_INCLUDE_DIRS DIR_LIST)
   if(${DIR_LIST})
-    set(ORDERED_ELEMENTS ${CMAKE_CURRENT_BINARY_DIR} ${CMAKE_CURRENT_SOURCE_DIR} ${BRLCAD_BINARY_DIR}/include ${BRLCAD_SOURCE_DIR}/include)
+    set(ORDERED_ELEMENTS "${CMAKE_CURRENT_BINARY_DIR}" "${CMAKE_CURRENT_SOURCE_DIR}" "${BRLCAD_BINARY_DIR}/include" "${BRLCAD_SOURCE_DIR}/include")
     set(NEW_DIR_LIST "")
     foreach(element ${ORDERED_ELEMENTS})
       set(DEF_EXISTS "-1")
@@ -643,7 +645,9 @@ macro(BRLCAD_INCLUDE_DIRS DIR_LIST)
     if("${inc_dir}" MATCHES "other" OR NOT IS_LOCAL)
       # Unfortunately, a bug in the CMake SYSTEM option to
       # include_directories requires that these variables
-      # be explicitly set on OSX
+      # be explicitly set on OSX until we can require CMake
+      # version 3.6 - see
+      # https://public.kitware.com/Bug/view.php?id=15953
       if(APPLE)
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_C "-isystem ")
 	set(CMAKE_INCLUDE_SYSTEM_FLAG_CXX "-isystem ")
@@ -713,19 +717,19 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
   # results.
   if(NOT DEFINED HAVE_SYMLINK)
     message("--- Checking operating system support for file symlinking")
-    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src "testing for symlink ability")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-    if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "testing for symlink ability")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    if(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Supported")
       set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
-      file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-    else(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+      file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src" "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
+    else(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
       message("--- Checking operating system support for file symlinking - Unsupported")
       set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
       mark_as_advanced(HAVE_SYMLINK)
-      file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src)
-    endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
+      file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src")
+    endif(EXISTS "${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest")
   endif(NOT DEFINED HAVE_SYMLINK)
 
   # Now that the input data and target names are in order, define the custom
@@ -736,11 +740,11 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
 
     # Make sure the target directory exists (symlinks need the target directory already in place)
     if(NOT CMAKE_CONFIGURATION_TYPES)
-      execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR}/${targetdir})
+      execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR}/${targetdir}")
     else(NOT CMAKE_CONFIGURATION_TYPES)
       foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}")
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
 
@@ -751,11 +755,11 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
     foreach(filename ${fullpath_datalist})
       get_filename_component(ITEM_NAME ${filename} NAME)
       if(NOT CMAKE_CONFIGURATION_TYPES)
-	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME})
+	execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
       else(NOT CMAKE_CONFIGURATION_TYPES)
 	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	  string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME})
+	  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${filename} "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
 	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       endif(NOT CMAKE_CONFIGURATION_TYPES)
     endforeach(filename ${fullpath_datalist})
@@ -764,8 +768,8 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
     # this will be the trigger that tells other commands depending on this data that
     # they need to re-run one one of the source files is changed.
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
-      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
+      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
+      COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
       DEPENDS ${fullpath_datalist}
       )
 
@@ -783,19 +787,19 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
     set(${targetname}_cmake_contents "${${targetname}_cmake_contents}endforeach(filename \${CURRENT_FILE_LIST})\n")
-    file(WRITE ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake "${${targetname}_cmake_contents}")
+    file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake" "${${targetname}_cmake_contents}")
 
     # Define custom command for copying from src to bin.
     add_custom_command(
-      OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
-      COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake
-      COMMAND ${CMAKE_COMMAND} -E touch ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel
+      OUTPUT "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
+      COMMAND ${CMAKE_COMMAND} -P "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.cmake"
+      COMMAND ${CMAKE_COMMAND} -E touch "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel"
       DEPENDS ${fullpath_datalist}
       )
   endif(HAVE_SYMLINK)
 
   # Define the target and add it to this directories list of data targets
-  add_custom_target(${targetname}_cp ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel)
+  add_custom_target(${targetname}_cp ALL DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/${targetname}.sentinel")
   set_target_properties(${targetname}_cp PROPERTIES FOLDER "BRL-CAD File Copying")
   BRLCAD_ADD_DIR_LIST_ENTRY(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" ${targetname}_cp)
 
@@ -812,11 +816,11 @@ macro(BRLCAD_MANAGE_FILES inputdata targetdir)
   foreach(filename ${fullpath_datalist})
     get_filename_component(ITEM_NAME "${filename}" NAME)
     if(NOT CMAKE_CONFIGURATION_TYPES)
-      DISTCLEAN(${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME})
+      DISTCLEAN("${CMAKE_BINARY_DIR}/${targetdir}/${ITEM_NAME}")
     else(NOT CMAKE_CONFIGURATION_TYPES)
       foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 	string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-	DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME})
+	DISTCLEAN("${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${targetdir}/${ITEM_NAME}")
       endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     endif(NOT CMAKE_CONFIGURATION_TYPES)
   endforeach(filename ${fullpath_datalist})

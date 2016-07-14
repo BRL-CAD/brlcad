@@ -119,7 +119,6 @@ extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
-extern int interactive;			/* human is watching results */
 extern int matflag;			/* read matrix from stdin */
 extern int nobjs;			/* Number of cmd-line treetops */
 extern int pix_end;			/* pixel to end at */

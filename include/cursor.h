@@ -17,12 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file cursor.h
+/** @addtogroup libcursor
  *
  * These are declarations of functions provided by libcursor, a simple
  * wrapper library to terminal capabilities (termcap).
- *
  */
+/** @{ */
+/** @file cursor.h */
 
 #ifndef CURSOR_H
 #define CURSOR_H
@@ -127,6 +128,8 @@ CURSOR_EXPORT extern int ResetScrlReg(void);
 __END_DECLS
 
 #endif /* CURSOR_H */
+
+/** @} */
 
 /*
  * Local Variables:

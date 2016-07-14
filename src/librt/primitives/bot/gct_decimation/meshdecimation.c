@@ -98,8 +98,13 @@
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if !defined(__OpenBSD__)
 #define RF_ALIGN16 __attribute__((aligned(16)))
 #define RF_ALIGN64 __attribute__((aligned(64)))
+#else
+#define RF_ALIGN16
+#define RF_ALIGN64
+#endif
 #elif defined(_MSC_VER)
 #define RF_ALIGN16 __declspec(align(16))
 #define RF_ALIGN64 __declspec(align(64))

@@ -1149,6 +1149,9 @@ main(int argc, char *argv[])
     char *buf;
     int ret;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     get_args(argc, argv);
     /*
      * All the work happens in the functions called by rt_do_cmd().

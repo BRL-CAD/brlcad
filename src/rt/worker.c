@@ -456,8 +456,6 @@ do_pixel(int cpu, int pat_num, int pixelnum)
  * In order to reduce the traffic through the res_worker critical
  * section, a multiple pixel block may be removed from the work queue
  * at once.
- *
- * For a general-purpose version, see LIBRT rt_shoot_many_rays()
  */
 void
 worker(int cpu, void *UNUSED(arg))
@@ -692,8 +690,6 @@ grid_setup(void)
 
 /**
  * Compute a run of pixels, in parallel if the hardware permits it.
- *
- * For a general-purpose version, see LIBRT rt_shoot_many_rays().
  */
 void
 do_run(int a, int b)

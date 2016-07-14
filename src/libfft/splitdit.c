@@ -17,21 +17,11 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libfft/splitdit.c
- *
- *  Real valued, split-radix, decimation in time FFT.
- *
- *  Data comes out as:
- *
- *	[ Re(0), Re(1), ..., Re(N/2), Im(N/2-1), ..., Im(1) ]
- *
- */
+/** @file libfft/splitdit.c */
 
 #include "fft.h"
 
-
 int	rfft_adds, rfft_mults;
-
 
 void
 rfft(double *X, int N)

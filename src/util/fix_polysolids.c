@@ -86,6 +86,9 @@ main(int argc, char *argv[])
     struct bu_ptbl faces;
     int done=0;
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* XXX These need to be improved */
     tol.magic = BN_TOL_MAGIC;
     tol.dist = 0.0005;
@@ -179,7 +182,7 @@ main(int argc, char *argv[])
 		nmg_rebound(m, &tol);
 		(void)nmg_break_long_edges(s, &tol);
 		(void)nmg_vertex_fuse(&m->magic, &tol);
-		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_END(&faces), &tol);
+		nmg_gluefaces((struct faceuse **)BU_PTBL_BASEADDR(&faces), BU_PTBL_LEN(&faces), &tol);
 		nmg_fix_normals(s, &tol);
 
 		break;

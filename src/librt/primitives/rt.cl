@@ -89,7 +89,10 @@ rt_in_rpp(const double3 pt,
 #define ID_ARS          5       /**< @brief ARS */
 #define ID_REC          7       /**< @brief Right Elliptical Cylinder [TGC special] */
 #define ID_SPH          10      /**< @brief Sphere */
+#define ID_PARTICLE     16      /**< @brief Particle system solid */
+#define ID_EPA          19      /**< @brief Elliptical Paraboloid */
 #define ID_EHY          20      /**< @brief Elliptical Hyperboloid  */
+#define ID_ETO          21      /**< @brief Elliptical Torus  */
 #define ID_BOT          30      /**< @brief Bag o' triangles */
 
 
@@ -102,9 +105,12 @@ inline int shot(RESULT_TYPE *res, const double3 r_pt, const double3 r_dir, const
     case ID_ARB8:	return arb_shot(res, r_pt, r_dir, idx, args);
     case ID_REC:	return rec_shot(res, r_pt, r_dir, idx, args);
     case ID_SPH:	return sph_shot(res, r_pt, r_dir, idx, args);
+    case ID_PARTICLE:	return part_shot(res, r_pt, r_dir, idx, args);
     case ID_EHY:	return ehy_shot(res, r_pt, r_dir, idx, args);
     case ID_ARS:
     case ID_BOT:	return bot_shot(res, r_pt, r_dir, idx, args);
+    case ID_EPA:	return epa_shot(res, r_pt, r_dir, idx, args);
+    case ID_ETO:	return eto_shot(res, r_pt, r_dir, idx, args);
     default:		return 0;
     };
 }
@@ -119,8 +125,11 @@ inline void norm(struct hit *hitp, const double3 r_pt, const double3 r_dir, cons
     case ID_REC:	rec_norm(hitp, r_pt, r_dir, args);	break;
     case ID_EHY:	ehy_norm(hitp, r_pt, r_dir, args);	break;
     case ID_SPH:	sph_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_PARTICLE:	part_norm(hitp, r_pt, r_dir, args);	break;
     case ID_ARS:
     case ID_BOT:	bot_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_EPA:	epa_norm(hitp, r_pt, r_dir, args);	break;
+    case ID_ETO:	eto_norm(hitp, r_pt, r_dir, args);	break;
     default:							break;
     };
 }
@@ -313,7 +322,6 @@ shade(const double3 r_pt, const double3 r_dir, struct hit *hitp, const uint idx,
 	/* Eye inside solid, orthoview */
 	normal = -r_dir;
     } else {
-	norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
 	normal = hitp->hit_normal;
     }
 
@@ -349,9 +357,9 @@ void do_segp(RESULT_TYPE *res, const uint idx,
 
     if (acc->lightmodel == 4) {
 	if (seg_in->hit_dist >= 0.0) {
+	    norm(seg_in, acc->r_pt, acc->r_dir, acc->ids[idx], acc->prims + acc->indexes[idx]);
 	    const double3 color = shade(acc->r_pt, acc->r_dir, seg_in, idx,
-		    acc->lt_pos, acc->ids, acc->indexes,
-		    acc->prims, acc->regions);
+		    acc->lt_pos, acc->ids, acc->indexes, acc->prims, acc->regions);
 	    double f = exp(-seg_in->hit_dist*1e-10);
 	    acc->a_color += color * f;
 	    acc->a_total += f;
@@ -419,13 +427,15 @@ do_pixel(global uchar *pixels, const uchar3 o, const int cur_pixel,
         double3 normal;
 	const uint idx = segp->seg_sti;
 
-	if (hitp->hit_dist < 0.0) {
-	    /* Eye inside solid, orthoview */
-	    normal = -r_dir;
-        } else {
-	    norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
-	    normal = hitp->hit_normal;
-        }
+	if (lightmodel != 4) {
+	    if (hitp->hit_dist < 0.0) {
+		/* Eye inside solid, orthoview */
+		normal = -r_dir;
+	    } else {
+		norm(hitp, r_pt, r_dir, ids[idx], prims + indexes[idx]);
+		normal = hitp->hit_normal;
+	    }
+	}
 
         /*
          * Diffuse reflectance from each light source
@@ -696,6 +706,28 @@ shade_segs(global uchar *pixels, const uchar3 o, RESULT_TYPE segs, global uint *
     }
 }
 #endif
+
+
+/**
+ * Sort an array of hits into ascending order.
+ */
+void
+rt_hitsort(struct hit *h, int nh)
+{
+    int i, j;
+    struct hit temp;
+
+    for (i = 0; i < nh-1; i++) {
+	for (j = i + 1; j < nh; j++) {
+	    if (h[i].hit_dist <= h[j].hit_dist)
+		continue;
+	    temp = h[j];		/* struct copy */
+	    h[j] = h[i];		/* struct copy */
+	    h[i] = temp;		/* struct copy */
+	}
+    }
+}
+
 
 /*
  * Local Variables:

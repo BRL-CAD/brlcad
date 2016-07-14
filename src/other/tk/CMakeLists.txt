@@ -165,7 +165,9 @@ INCLUDE(${TK_SOURCE_DIR}/CMake/tcl.cmake)
 
 #-----------------------------------------------------------------------------
 # Our replacement for SC_CONFIG_MANPAGES
-ADD_SUBDIRECTORY(doc)
+if(NOT TK_DISABLE_MANPAGES)
+  ADD_SUBDIRECTORY(doc)
+endif(NOT TK_DISABLE_MANPAGES)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant

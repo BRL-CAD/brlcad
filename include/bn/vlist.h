@@ -25,6 +25,7 @@
 #include "vmath.h"
 #include "bu/magic.h"
 #include "bu/list.h"
+#include "bu/vls.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS

@@ -22,32 +22,35 @@
 /** @addtogroup libbu
  *
  * @brief
- * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
- * library provides several layers of low-level utility routines,
- * providing features that make cross-platform coding easier.
+ * The two letters "BU" stand for "BRL-CAD" and "Utility".  This library
+ * provides several layers of low-level utility routines, providing features
+ * that make cross-platform coding easier.
  *
  * Parallel processing support:  threads, semaphores, parallel-malloc.
  * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
  *
- * The intention is that these routines are general extensions to the
- * data types offered by the C language itself, and to the basic C
- * runtime support provided by the system LIBC.  All routines in LIBBU
- * are designed to be "parallel-safe" (sometimes called "mp-safe" or
- * "thread-safe" if parallelism is via threading) to greatly ease code
- * development for multiprocessor systems.
+ * The intention is that these routines are general extensions to the data
+ * types offered by the C language itself, and to the basic C runtime support
+ * provided by the system LIBC.  All routines in LIBBU are designed to be
+ * "parallel-safe" (sometimes called "mp-safe" or "thread-safe" if parallelism
+ * is via threading) to greatly ease code development for multiprocessor
+ * systems.
  *
- * All of the data types provided by this library are defined in bu.h
- * or appropriate included files from the ./bu subdirectory; none of
- * the routines in this library will depend on data types defined in
- * other BRL-CAD header files, such as vmath.h.  Look for those
+ * The LIBBU API is defined in bu.h or appropriate included files from the ./bu
+ * subdirectory; none of the routines in this library will depend on data types
+ * defined in other BRL-CAD header files, such as vmath.h.  Look for those
  * routines in LIBBN.
  *
- * All truly fatal errors detected by the library use bu_bomb() to
- * exit with a status of 12.  The LIBBU variants of system calls
- * (e.g., bu_malloc()) do not return to the caller (unless there's a
- * bomb hook defined) unless they succeed, thus sparing the programmer
- * from constantly having to check for NULL return codes.
+ * All truly fatal errors detected by the library use bu_bomb() to exit with a
+ * status of 12.  The LIBBU variants of system calls (e.g., bu_malloc()) do not
+ * return to the caller (unless there's a bomb hook defined) unless they
+ * succeed, thus sparing the programmer from constantly having to check for
+ * NULL return codes.
  *
+ * The two headers bio.h and bnetwork.h are not LIBBU API but rather are
+ * intended as convenience headers used to package up the somewhat finicky
+ * logic needed to correctly include operating system file I/O and networking
+ * headers.
  */
 /** @{ */
 /** @brief Main header file for the BRL-CAD Utility Library, LIBBU. */

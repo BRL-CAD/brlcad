@@ -570,6 +570,9 @@ main(int argc, char **argv)
 
     make_ntsc_xyz2rgb(xyz2rgb);
 
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     if (!get_args(argc, argv)) {
 	(void)fputs(usage, stderr);
 	bu_exit(1, NULL);

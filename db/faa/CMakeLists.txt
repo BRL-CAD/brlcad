@@ -22,6 +22,7 @@ macro(ADD_FAA_G_TARGET faa_model folder)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
   set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
   set(LOG_FILES "${LOG_FILES};${log_file}")
+  DISTCLEAN(${log_file})
 endmacro(ADD_FAA_G_TARGET faa_model folder)
 
 foreach(faa_input ${FAA_SAMPLE_MODELS})

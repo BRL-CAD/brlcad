@@ -30,7 +30,7 @@
 __BEGIN_DECLS
 
 /* Start the global timer */
-/** @addtogroup timer */
+/** @addtogroup rt_timer */
 /** @{ */
 /**
  * To provide timing information for RT.
@@ -73,6 +73,7 @@ RT_EXPORT extern double rt_get_timer(struct bu_vls *vp,
  */
 RT_EXPORT extern double rt_read_timer(char *str, int len);
 
+/** @} */
 
 __END_DECLS
 

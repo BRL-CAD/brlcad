@@ -25,6 +25,10 @@
 
 #include <stddef.h> /* for size_t */
 
+#if defined(USE_BINARY_ATTRIBUTES)
+#  include "bson.h"
+#endif
+
 #include "bu/defines.h"
 #include "bu/magic.h"
 #include "bu/vls.h"

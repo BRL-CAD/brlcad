@@ -160,7 +160,7 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
 
     if (img == NULL)
 	return 1;
@@ -187,10 +187,10 @@ main(int argc, char **argv)
 
     icv_rgb2gray(img, color, rweight, gweight, bweight);
 
-    icv_write(img, out_file, MIME_IMAGE_BW);
+    icv_write(img, out_file, BU_MIME_IMAGE_BW);
 
     if (!isatty(fileno(stdout)) && out_file != NULL) {
-	icv_write(img, NULL, MIME_IMAGE_BW);
+	icv_write(img, NULL, BU_MIME_IMAGE_BW);
     }
 
     return 0;

@@ -87,7 +87,7 @@ extern dm *qt_open();
 #endif /* DM_QT */
 
 HIDDEN dm *
-null_open(Tcl_Interp *interp, int argc, const char *argv[])
+null_dm_open(Tcl_Interp *interp, int argc, const char *argv[])
 {
     dm *dmp = DM_NULL;
 
@@ -108,7 +108,7 @@ dm_open(Tcl_Interp *interp, int type, int argc, const char *argv[])
 {
     switch (type) {
 	case DM_TYPE_NULL:
-	    return null_open(interp, argc, argv);
+	    return null_dm_open(interp, argc, argv);
 	case DM_TYPE_TXT:
 	    return txt_open(interp, argc, argv);
 	case DM_TYPE_PLOT:

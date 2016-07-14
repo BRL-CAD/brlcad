@@ -34,12 +34,13 @@ BRNode::~BRNode()
     for (size_t i = 0; i < m_children->size(); i++) {
 	delete (*m_children)[i];
     }
+
     delete m_children;
 }
 
 
 int
-BRNode::depth()
+BRNode::depth() const
 {
     int d = 0;
     for (size_t i = 0; i < m_children->size(); i++) {
@@ -49,9 +50,9 @@ BRNode::depth()
 }
 
 void
-BRNode::getLeaves(std::list<BRNode *> &out_leaves)
+BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
 {
-    if (m_children->size() > 0) {
+    if (!m_children->empty()) {
 	for (size_t i = 0; i < m_children->size(); i++) {
 	    (*m_children)[i]->getLeaves(out_leaves);
 	}
@@ -60,8 +61,8 @@ BRNode::getLeaves(std::list<BRNode *> &out_leaves)
     }
 }
 
-BRNode *
-BRNode::closer(const ON_3dPoint &pt, BRNode *left, BRNode *right)
+const BRNode *
+BRNode::closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const
 {
     double ldist = pt.DistanceTo(left->m_estimate);
     double rdist = pt.DistanceTo(right->m_estimate);
@@ -108,14 +109,14 @@ BRNode::isTrimmed(const ON_2dPoint &uv, double &trimdist) const
 }
 
 ON_2dPoint
-BRNode::getClosestPointEstimate(const ON_3dPoint &pt)
+BRNode::getClosestPointEstimate(const ON_3dPoint &pt) const
 {
     ON_Interval u, v;
     return getClosestPointEstimate(pt, u, v);
 }
 
 ON_2dPoint
-BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v)
+BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const
 {
     if (isLeaf()) {
 	double uvs[5][2] = {{m_u.Min(), m_v.Min()},  /* include the corners for an easy refinement */
@@ -157,8 +158,8 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (m_children->size() > 0) {
-	    BRNode *closestNode = (*m_children)[0];
+	if (!m_children->empty()) {
+	    const BRNode *closestNode = (*m_children)[0];
 	    for (size_t i = 1; i < m_children->size(); i++) {
 		closestNode = closer(pt, closestNode, (*m_children)[i]);
 	    }
@@ -170,7 +171,7 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 }
 
 fastf_t
-BRNode::getLinearEstimateOfV(fastf_t u)
+BRNode::getLinearEstimateOfV(fastf_t u) const
 {
     fastf_t v = m_start[Y] + m_slope * (u - m_start[X]);
     return v;

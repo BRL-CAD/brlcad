@@ -22,9 +22,9 @@
 #
 #   find_package(LEX)
 #
-#   LEX_TARGET(MyScanner lexer.l  ${CMAKE_CURRENT_BINARY_DIR}/lexer.cpp)
+#   LEX_TARGET(MyScanner lexer.l  lexer.cpp)
 #
-#   include_directories(${CMAKE_CURRENT_BINARY_DIR})
+#   include_directories("${CMAKE_CURRENT_BINARY_DIR}")
 #   add_executable(Foo
 #      Foo.cc
 #      ${LEX_MyScanner_OUTPUTS}
@@ -103,7 +103,7 @@ if(LEX_EXECUTABLE)
       ARGS ${LEX_EXECUTABLE_opts} -o${Output} ${Input}
       DEPENDS ${Input}
       COMMENT "[LEX][${Name}] Building scanner with ${LEX_EXECUTABLE}"
-      WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+      WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}")
 
     set(LEX_${Name}_DEFINED TRUE)
     set(LEX_${Name}_OUTPUTS ${Output})
@@ -114,11 +114,11 @@ if(LEX_EXECUTABLE)
 
   #Need to run a test lex file to determine if YYTEXT_POINTER needs
   #to be defined
-  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS ${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l -o ${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
+  EXEC_PROGRAM(${LEX_EXECUTABLE} ARGS "${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/lex_test.l" -o "${CMAKE_BINARY_DIR}/CMakeTmp/lex_test.c" RETURN_VALUE _retval OUTPUT_VARIABLE _lexOut)
   INCLUDE (CheckCSourceRuns)
   set(FILE_RUN_DEFINITIONS "-DYYTEXT_POINTER=1")
   if(NOT DEFINED YYTEXT_POINTER)
-    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c YYTEXT_POINTER)
+    CHECK_C_SOURCE_RUNS("${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c" YYTEXT_POINTER)
   endif(NOT DEFINED YYTEXT_POINTER)
   set(FILE_RUN_DEFINITIONS)
   if(CONFIG_H_FILE)

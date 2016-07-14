@@ -37,7 +37,7 @@ __BEGIN_DECLS
 /**
  * Default version of a_multioverlap().
  *
- * Resolve the overlap of multiple regions withing a single partition.
+ * Resolve the overlap of multiple regions within a single partition.
  * There are no null pointers in the table (they have been compressed
  * out by our caller).  Consider BU_PTBL_LEN(regiontable) overlapping
  * regions, and reduce to zero or one "claiming" regions, by setting

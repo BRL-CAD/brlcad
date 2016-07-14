@@ -75,8 +75,10 @@ BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 BRLCAD_ADDEXEC(g-dot g-dot.c "libged;libbu")
 
 BRLCAD_ADDEXEC(g-dxf dxf/g-dxf.c "librt;libgcv;libbu")
+add_dependencies(g-dxf libgcv_plugins)
 
 BRLCAD_ADDEXEC(g-egg g-egg.c "libwdb;libgcv")
+add_dependencies(g-egg libgcv_plugins)
 
 BRLCAD_ADDEXEC(g-euclid euclid/g-euclid.c librt)
 
@@ -99,6 +101,7 @@ BRLCAD_ADDEXEC(off-g off/off-g.c "libwdb;librt;libbu")
 BRLCAD_ADDEXEC(stl-g stl/stl-g.c "libwdb;librt;libbu;${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(g-stl stl/g-stl.c "librt;libgcv;libbu;${WINSOCK_LIB}")
+add_dependencies(g-stl libgcv_plugins)
 
 BRLCAD_ADDEXEC(g4-g5 g4-g5.c "librt;libbu" NO_INSTALL)
 
@@ -108,7 +111,12 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(obj-g obj-g.c "libbu;libbn;librt;libwdb;libwfobj")
+# TODO - Ugh; need to either merge this into libgcv or remove it in favor of
+# that implementation...
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj)
+include_directories(${BRLCAD_SOURCE_DIR}/src/libgcv/plugins/obj/wfobj)
+set(obj-g_SRCS obj-g.c ../libgcv/plugins/obj/tri_face.c)
+BRLCAD_ADDEXEC(obj-g "${obj-g_SRCS}" "libbu;libbn;librt;libwdb;libwfobj")
 
 BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 

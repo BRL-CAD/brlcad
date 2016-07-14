@@ -2358,6 +2358,7 @@ db_search(struct bu_ptbl *search_results,
 		    curr_node.path = start_path;
 		    curr_node.flags = search_flags;
 		    curr_node.matched_filters = 1;
+		    curr_node.full_paths = NULL;
 		    find_execute_plans(dbip, search_results, &curr_node, dbplan);
 		    result_cnt += curr_node.matched_filters;
 		    DB_FULL_PATH_POP(start_path);

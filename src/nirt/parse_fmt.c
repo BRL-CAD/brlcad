@@ -537,6 +537,7 @@ fopenrc(void)
 	    rc_file_name = (char *)bu_malloc(len, "rc_file_name");
 	    snprintf(rc_file_name, len, "%s/%s", home, DEF_RCF_NAME);
 	    fPtr = fopen(rc_file_name, "rb");
+	    bu_free(rc_file_name, "rc_file_name");
 	}
     }
     return fPtr;
