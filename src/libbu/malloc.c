@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -376,7 +376,6 @@ bu_free(void *ptr, const char *str)
 #if defined(MALLOC_NOT_MP_SAFE)
     bu_semaphore_release(BU_SEM_MALLOC);
 #endif
-    bu_n_free++;
 }
 
 
@@ -477,16 +476,26 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
 		    ptr, (int)siz, str);
 	} else {
-	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)siz, str, original_ptr);
+	    /* Not using %p to print original_ptr's pointer value here in order
+	     * to avoid clang static analyzer complaining about use of memory
+	     * after memory is freed.  If/when clang can recognize that this is
+	     * not an actual problem, switch it back to the %p form */
+	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
+		    ptr, (int)siz, str, (unsigned long)original_ptr);
 	}
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
 	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_MALLOC);
-	mp->mdb_addr = ptr;
-	mp->mdb_len = siz;
+
+	/* If memdebug_check returned MEMDEBUG_NULL, we can't do these
+	 * assignments.  In that situation the error condition was already
+	 * reported earlier, so just skip the assignments here and continue */
+	if (mp != MEMDEBUG_NULL) {
+	    mp->mdb_addr = ptr;
+	    mp->mdb_len = siz;
+	}
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'siz' being rounded up,
@@ -510,6 +519,36 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
     }
     bu_n_realloc++;
     return ptr;
+}
+
+/* bu_reallocarray is based off of OpenBSD's reallocarray.c, v 1.3 2015/09/13
+ *
+ * Copyright (c) 2008 Otto Moerbeek <otto@drijf.net>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+/*
+ * This is sqrt(SIZE_MAX+1), as s1*s2 <= SIZE_MAX
+ * if both s1 < MUL_NO_OVERFLOW and s2 < MUL_NO_OVERFLOW
+ */
+#define MUL_NO_OVERFLOW	((size_t)1 << (sizeof(size_t) * 4))
+void *
+bu_reallocarray(register void *optr, size_t nmemb, size_t size, const char *str)
+{
+    if ((nmemb >= MUL_NO_OVERFLOW || size >= MUL_NO_OVERFLOW) && nmemb > 0 && SIZE_MAX / nmemb < size) {
+	return NULL;
+    }
+    return bu_realloc(optr, size * nmemb, str);
 }
 
 
@@ -689,8 +728,13 @@ bu_mem_barriercheck(void)
     return 0;			/* OK */
 }
 
+
 int
+#ifdef HAVE_SYS_SHM_H
 bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+#else
+bu_shmget(int *UNUSED(shmid), char **UNUSED(shared_memory), int UNUSED(key), size_t UNUSED(size))
+#endif
 {
     int ret = 1;
 #ifdef HAVE_SYS_SHM_H
@@ -711,7 +755,7 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
     if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
 	/* No existing one, create a new one */
 	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
-	    bu_log("bu_shmget failed, errno=%d\n", errno);
+	    printf("bu_shmget failed, errno=%d\n", errno);
 	    return 1;
 	}
 	ret = -1;
@@ -721,12 +765,49 @@ bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
     /* Open the segment Read/Write */
     /* This gets mapped to a high address on some platforms, so no problem. */
     if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
-	bu_log("bu_shmget returned x%x, errno=%d\n", (*shared_memory), errno);
+	printf("errno=%d\n", errno);
 	return 1;
     }
 
 #endif
     return ret;
+}
+
+
+struct bu_pool *
+bu_pool_create(size_t block_size)
+{
+    struct bu_pool *pool;
+
+    pool = (struct bu_pool*)bu_malloc(sizeof(struct bu_pool), "bu_pool_create");
+    pool->block_size = block_size;
+    pool->block_pos = 0;
+    pool->alloc_size = 0;
+    pool->block = NULL;
+    return pool;
+}
+
+void *
+bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
+{
+    const size_t n_bytes = nelem * elsize;
+    void *ret;
+
+    if (pool->block_pos + n_bytes > pool->alloc_size) {
+    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
+    }
+
+    ret = pool->block + pool->block_pos;
+    pool->block_pos += n_bytes;
+    return ret;
+}
+
+void
+bu_pool_delete(struct bu_pool *pool)
+{
+    bu_free(pool->block, "bu_pool_delete");
+    bu_free(pool, "bu_pool_delete");
 }
 
 

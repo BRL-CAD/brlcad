@@ -90,7 +90,7 @@
 </refsect1>
 
 
-<refsect1 xml:id='author'><title>AUTHOR</title>
+<refsect1 xml:id='author'><title>AUTHORS</title>
 <para><emphasis remap='B'>Charles Michael Kennedy</emphasis></para>
 <para><emphasis remap='B'>Michael John Muuss</emphasis></para>
 
@@ -99,7 +99,7 @@
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
 <!-- <para><command>g2asc</command>, BRL-CAD and this man page are released under the <emphasis remap='B'>BSD Documentation License (BDL)</emphasis>, a content license similar to the FreeBSD Documentation License allowing flexible modification and redistribution of content.</para> -->
-<para>This software is Copyright (c) 1989-2014 by the United States Government as represented by U.S. Army Research Laboratory.</para>
+<para>This software is Copyright (c) 1989-2016 by the United States Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>
 

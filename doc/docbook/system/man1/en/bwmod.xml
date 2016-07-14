@@ -18,9 +18,15 @@
 <cmdsynopsis>
   <command>bwmod</command>
     <arg choice='opt'>-c </arg>
-    <arg choice='opt' rep='repeat'><arg choice='plain'>-a <replaceable>add</replaceable></arg><arg choice='plain'>-s <replaceable>sub</replaceable></arg><arg choice='plain'>-m <replaceable>mult</replaceable></arg><arg choice='plain'>-d <replaceable>div</replaceable></arg><arg choice='plain'>-A </arg><arg choice='plain'>-e <replaceable>exp</replaceable></arg><arg choice='plain'>-r <replaceable>root</replaceable></arg></arg>
+    <arg choice='opt'><arg choice='plain'>-a <replaceable>add</replaceable></arg><arg choice='plain'>-s <replaceable>sub</replaceable></arg>
+    <arg choice='plain'>-m <replaceable>mult</replaceable></arg><arg choice='plain'>-d <replaceable>div</replaceable></arg><arg choice='plain'>-A </arg>
+    <arg choice='plain'>-e <replaceable>exp</replaceable></arg><arg choice='plain'>-r <replaceable>root</replaceable></arg>
+    <arg choice='plain'>-S <replaceable>shift</replaceable></arg><arg choice='plain'>-M <replaceable>and</replaceable></arg>
+    <arg choice='plain'>-O <replaceable>or</replaceable></arg><arg choice='plain'>-X <replaceable>xor</replaceable></arg>
+    <arg choice='plain'>-R</arg><arg choice='plain'>-t</arg>
+    </arg>
     <arg choice='plain'><replaceable>file.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file2.bw</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -35,10 +41,10 @@ file format.
 The pixel values range from 0 to 255 and are internally operated on
 in floating point form (unless the
 <option>-c</option>
-option has been specified) so that dynamic range, truncation, and sign,
+option has been specified) so that dynamic range, truncation, and sign
 are not a problem.  On output they are converted back to 8-bit unsigned
-values clipping to 0 and 255 if necessary.  The number of pixels clipped
-high and low, if any, are reported to standard error on completion.</para>
+values, with clipping to 0 and 255 for values less than 0 and greater than 255.  If any pixels are clipped,
+the numbers of pixels clipped, low and high, are reported to standard error on completion.</para>
 
 <para>If the
 <option>-c</option>
@@ -64,16 +70,41 @@ to multiply by a value.
 to divide by a value.
 <!-- .br -->
 <option>-A</option>
-to take to absolute value of each pixel.
+to take absolute value.
 <!-- .br -->
 <option>-e </option><replaceable>val</replaceable>
-to exponentiate, i.e. raise each pixel to the power
+to exponentiate, i.e. raise to the power
 <emphasis remap='I'>val</emphasis>.
 <!-- .br -->
 <option>-r </option><replaceable>val</replaceable>
 to take the
-<emphasis remap='I'>val</emphasis>
-root of each pixel.</para>
+<emphasis remap='I'>val</emphasis>th
+root.
+<!-- .br -->
+<option>-S </option><replaceable>val</replaceable>
+to shift by <emphasis remap='I'>val</emphasis> bits. If
+<emphasis remap='I'>val</emphasis> is positive, this uses C-language "^&lt;&lt;" operator, doing left-shift; if
+<emphasis remap='I'>val</emphasis> is negative, this uses C-language "&gt;&gt;" operator, doing right-shift by
+-<emphasis remap='I'>val</emphasis> bits.  This is a bitwise operation,
+and if it is about to be used, both the pixel value and <replaceable>val</replaceable>
+are truncated to integer. Unless <option>-c</option> is in effect,
+the resulting new value will again be placed in floating-point.  (So it's "user beware" if this option is applied to a
+non-integer value.)
+<!-- .br -->
+<option>-M </option><replaceable>val</replaceable>
+to do "and" operation with <emphasis remap='I'>val</emphasis>.  See <option>-S</option> for "user beware" about bitwise operation.
+<!-- .br -->
+<option>-O </option><replaceable>val</replaceable>
+to do (inclusive) "or" operation with <emphasis remap='I'>val</emphasis>.  See <option>-S</option> for "user beware" about bitwise operation.
+<!-- .br -->
+<option>-X </option><replaceable>val</replaceable>
+to do "exclusive or" operation with <emphasis remap='I'>val</emphasis>.  See <option>-S</option> for "user beware" about bitwise operation.
+<!-- .br -->
+<option>-R </option> to do rounding to the nearest integer.
+<!-- .br -->
+<option>-t </option> to do truncation to integer; notice the automatic use of truncation for the bitwise options
+(<option>-S</option>, <option>-M</option>, <option>-O</option>, and <option>-X</option>).
+</para>
 
 <para>All arguments can be floating point values.  Note that this command
 can be applied to color
@@ -86,29 +117,43 @@ but no distinction can be made between color planes.</para>
 <para>The command
 <!-- .br -->
 <userinput>bwmod -m-1 -a255 &lt; file.bw &gt; file2.bw</userinput>
-<!-- .br -->
+</para>
+<para>
 will produce the negative of a file by first multiplying by minus
-one, and then adding 255 to shift the pixels back into the 0-&gt;255 range.</para>
+one, and then adding 255 to shift the pixels back into the 0-&gt;255 range.
+(I.e., replace each pixel value by 255 minus that value.)</para>
 
 <para>One can apply a gamma factor to a file as follows:
 <!-- .br -->
 <userinput>bwmod -d255 -r2.2 -m255 &lt; file.bw &gt; file2.bw</userinput>
-<!-- .br -->
-which will first normalize the pixel values, then take the 2.2 root
-of each pixel, and finally scale it back to 0-&gt;255.
+</para>
+<para>
+which will first normalize the pixel values (i.e., put them into 0-&gt;1,
+noting the internal use of floating point), then take the 2.2 root
+of each value, and finally scale the pixel values back to 0-&gt;255.
 [Note however that applying gammas this way is not recommended since
 a function call per pixel results!]</para>
 
-<para>Suppose you ran bwstat on a file and found min=80, max=210, mean=100.
+<para>Suppose you ran <command>bwstat</command> on a file and found min=80, max=210, mean=100.
 If you wish to expand the range of intensities, while still preserving
 the mean, this can be done by:
-<userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
 <!-- .br -->
-Where 1.409 results from (255-100)/(210-100) which is what one would use
-by boost the max value (210) to full scale (255) after subtracting the
-mean (100).  Subtracting and adding 100 make the multiply occur
-"about that point", i.e. value less than 100 will get smaller; those
-above, higher.</para>
+<userinput>bwmod -s100 -m1.409 -a100 &lt; file.bw &gt; file2.bw</userinput>
+</para>
+<para>
+where 1.409 results from (255.0-100.0)/(210.0-100.0), which is what one would use
+to boost the max value (210) to full scale (255) after subtracting the
+mean (100).  Subtracting and adding 100 makes the multiply occur
+"about that point"; i.e., values less than 100 get smaller, and those
+above get higher.  A <replaceable>file.bw</replaceable> for this example can be created with these three command lines:</para>
+<para>
+<!-- .br -->
+<userinput>gencolor -r 11 80 &gt;file.bw</userinput>
+<!-- .br -->
+<userinput>gencolor -r 262131 100 &gt;&gt;file.bw</userinput>
+<!-- .br -->
+<userinput>gencolor -r 2 210 &gt;&gt;file.bw</userinput>
+</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
@@ -120,7 +165,7 @@ above, higher.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

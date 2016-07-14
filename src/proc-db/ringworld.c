@@ -1,7 +1,7 @@
 /*                    R I N G W O R L D . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -47,7 +47,7 @@
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #define SUN_DIAMETER	1.36e9

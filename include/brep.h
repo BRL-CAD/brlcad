@@ -1,7 +1,7 @@
 /*                       B R E P . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,14 +17,13 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libbrep */
-/** @{ */
-/** @file brep.h
- *
+/** @addtogroup libbrep
+ * @brief
  * Define surface and curve structures for Non-Uniform Rational
  * B-Spline (NURBS) curves and surfaces. Uses openNURBS library.
- *
  */
+/** @{ */
+/** @file include/brep.h */
 #ifndef BREP_H
 #define BREP_H
 
@@ -38,10 +37,15 @@ extern "C++" {
 #include <queue>
 #include <assert.h>
 
-#include "dvec.h"
+#include "bu/ptbl.h"
+#include "bn/dvec.h"
 #include "opennurbs.h"
 #include <iostream>
 #include <fstream>
+
+#include "bio.h" /* needed to include windows.h with protections */
+#define ON_NO_WINDOWS 1 /* don't let opennurbs include windows.h */
+#include "opennurbs.h"
 
 namespace brlcad {
 class BBNode;
@@ -212,6 +216,7 @@ ON_Ray::IntersectRay(const ON_Ray &v, ON_2dPoint &isect) const
     return true;
 }
 
+BREP_EXPORT void set_key(struct bu_vls *key, int k, int *karray);
 BREP_EXPORT void brep_get_plane_ray(ON_Ray &r, plane_ray &pr);
 BREP_EXPORT void brep_r(const ON_Surface *surf, plane_ray &pr, pt2d_t uv, ON_3dPoint &pt, ON_3dVector &su, ON_3dVector &sv, pt2d_t R);
 BREP_EXPORT void brep_newton_iterate(plane_ray &pr, pt2d_t R, ON_3dVector &su, ON_3dVector &sv, pt2d_t uv, pt2d_t out_uv);
@@ -292,7 +297,7 @@ public:
     ~BRNode();
 
     /** List of all children of a given node */
-    std::vector<BRNode *> m_children;
+    std::vector<BRNode *> *m_children;
 
     /** Bounding Box */
     ON_BoundingBox m_node;
@@ -350,7 +355,7 @@ public:
     fastf_t getCurveEstimateOfV(fastf_t u, fastf_t tol) const;
     fastf_t getCurveEstimateOfU(fastf_t v, fastf_t tol) const;
 
-    int isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
+    bool isTrimmed(const ON_2dPoint &uv, double &trimdist) const;
     bool doTrimming() const;
 
 private:
@@ -367,6 +372,7 @@ BRNode::BRNode()
 {
     m_start = ON_3dPoint::UnsetPoint;
     m_end = ON_3dPoint::UnsetPoint;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -434,6 +440,7 @@ BRNode::BRNode(
 	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
     }
     m_bb_diag = DIST_PT_PT(m_start, m_end);
+    m_children = new std::vector<BRNode *>();
 }
 
 inline
@@ -464,19 +471,20 @@ BRNode::BRNode(const ON_BoundingBox &node)
     }
     m_start = m_node.m_min;
     m_end = m_node.m_max;
+    m_children = new std::vector<BRNode *>();
 }
 
 inline void
 BRNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BRNode(child));
+    m_children->push_back(new BRNode(child));
 }
 
 inline void
 BRNode::addChild(BRNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -484,10 +492,10 @@ inline void
 BRNode::removeChild(BRNode *child)
 {
     std::vector<BRNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -495,7 +503,7 @@ BRNode::removeChild(BRNode *child)
 inline bool
 BRNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
@@ -561,8 +569,7 @@ private:
 
     const ON_BrepFace *m_face;
     BRNode *m_root;
-    std::list<BRNode *> m_sortedX;
-    std::list<BRNode *> m_sortedY;
+    std::list<BRNode *> *m_sortedX;
 };
 
 /*--------------------------------------------------------------------------------
@@ -584,7 +591,7 @@ public:
     ~BBNode();
 
     /** List of all children of a given node */
-    std::vector<BBNode *> m_children;
+    std::vector<BBNode *> *m_children;
 
     /** Curve Tree associated with the parent Surface Tree */
     CurveTree *m_ctree;
@@ -657,7 +664,7 @@ public:
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
     ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
     int getLeavesBoundingPoint(const ON_3dPoint &pt, std::list<BBNode *> &out);
-    int isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
+    bool isTrimmed(const ON_2dPoint &uv, BRNode **closest, double &closesttrim, double within_distance_tol) const;
     bool doTrimming() const;
 
     void getTrimsAbove(const ON_2dPoint &uv, std::list<BRNode *> &out_leaves) const;
@@ -666,14 +673,15 @@ public:
 
 private:
     BBNode *closer(const ON_3dPoint &pt, BBNode *left, BBNode *right);
-    std::list<BRNode *> m_trims_above;
-    std::list<BRNode *> m_trims_vertical;
+    std::list<BRNode *> *m_trims_above;
 };
 
 inline
 BBNode::BBNode()
     : m_ctree(NULL), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -687,12 +695,16 @@ BBNode::BBNode(const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
 BBNode::BBNode(CurveTree *ct)
     : m_ctree(ct), m_face(NULL), m_checkTrim(true), m_trimmed(false)
 {
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -706,6 +718,8 @@ BBNode::BBNode(CurveTree *ct, const ON_BoundingBox &node)
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline
@@ -728,19 +742,21 @@ BBNode::BBNode(
 	    m_node.m_max[i] += 0.001;
 	}
     }
+    m_children = new std::vector<BBNode *>();
+    m_trims_above = new std::list<BRNode *>();
 }
 
 inline void
 BBNode::addChild(const ON_BoundingBox &child)
 {
-    m_children.push_back(new BBNode(child));
+    m_children->push_back(new BBNode(child));
 }
 
 inline void
 BBNode::addChild(BBNode *child)
 {
     if (LIKELY(child != NULL)) {
-	m_children.push_back(child);
+	m_children->push_back(child);
     }
 }
 
@@ -748,10 +764,10 @@ inline void
 BBNode::removeChild(BBNode *child)
 {
     std::vector<BBNode *>::iterator i;
-    for (i = m_children.begin(); i < m_children.end(); ++i) {
+    for (i = m_children->begin(); i < m_children->end(); ++i) {
 	if (*i == child) {
 	    delete *i;
-	    m_children.erase(i);
+	    m_children->erase(i);
 	}
     }
 }
@@ -759,7 +775,7 @@ BBNode::removeChild(BBNode *child)
 inline bool
 BBNode::isLeaf()
 {
-    if (m_children.size() == 0) {
+    if (m_children->size() == 0) {
 	return true;
     }
     return false;
@@ -806,12 +822,10 @@ BBNode::intersectedBy(ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_
 		t1 = t2;
 		t2 = tmp;
 	    }
-	    if (t1 > tnear) {
-		tnear = t1;
-	    }
-	    if (t2 < tfar) {
-		tfar = t2;
-	    }
+
+	    V_MAX(tnear, t1);
+	    V_MIN(tfar, t2);
+
 	    if (tnear > tfar) { /* box is missed */
 		untrimmedresult = false;
 	    }
@@ -883,7 +897,7 @@ private:
 
     const ON_BrepFace *m_face;
     BBNode *m_root;
-    std::queue<ON_Plane *> f_queue;
+    std::queue<ON_Plane *> *f_queue;
 };
 
 /**
@@ -945,7 +959,7 @@ typedef struct pbc_data {
     const ON_Curve *curve;
     const ON_Surface *surf;
     brlcad::SurfaceTree *surftree;
-    std::list<ON_2dPointArray *> segments;
+    std::list<ON_2dPointArray *> *segments;
     const ON_BrepEdge *edge;
     bool order_reversed;
 } PBCData;
@@ -1151,8 +1165,8 @@ ON_Intersect(const ON_3dPoint &pointA,
  * An overload of ON_Intersect for point-curve intersection.
  * Intersect pointA with curveB.
  *
- * @param pointA [in]
- * @param pointB [in]
+ * @param pointA [in] pointA
+ * @param curveB [in] curveB
  * @param x [out] Intersection events are appended to this array.
  * @param tolerance [in] If the input intersection_tolerance <= 0.0,
  *     then 0.001 is used.
@@ -1286,8 +1300,8 @@ ON_Intersect(const ON_Curve *curveA,
  * An overload of ON_Intersect for surface-surface intersection.
  * Intersect surfaceA with surfaceB.
  *
- * @param surfaceA [in]
- * @param surfaceB [in]
+ * @param surfA [in]
+ * @param surfB [in]
  * @param x [out] Intersection events are appended to this array.
  * @param intersection_tolerance [in] If the input
  *     intersection_tolerance <= 0.0, then 0.001 is used.
@@ -1350,7 +1364,8 @@ ON_Boolean(ON_Brep *brepO, const ON_Brep *brepA, const ON_Brep *brepB, op_type o
  * Get the curve segment between param a and param b
  *
  * @param in [in] the curve to split
- * @param a, b [in] either of them can be the larger one
+ * @param a  [in] either a or b can be the larger one
+ * @param b  [in] either a or b can be the larger one
  *
  * @return the result curve segment. NULL for error.
  */
@@ -1358,16 +1373,139 @@ extern BREP_EXPORT ON_Curve *
 sub_curve(const ON_Curve *in, double a, double b);
 
 /**
- * Get the sub-surface whose u \in [a,b] or v \in [a, b]
+ * Get the sub-surface whose u in [a,b] or v in [a, b]
  *
  * @param in [in] the surface to split
  * @param dir [in] 0: u-split, 1: v-split
- * @param a, b [in] either of them can be the larger one
+ * @param a [in] either a or b can be the larger one
+ * @param b [in] either a or b can be the larger one
  *
  * @return the result sub-surface. NULL for error.
  */
 extern BREP_EXPORT ON_Surface *
 sub_surface(const ON_Surface *in, int dir, double a, double b);
+
+extern BREP_EXPORT void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max);
+
+extern BREP_EXPORT int
+ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol);
+
+
+/* Experimental function to generate Tikz plotting information
+ * from B-Rep objects.  This may or may not be something we
+ * expose as a feature long term - probably should be a more
+ * generic API that supports multiple formats... */
+extern BREP_EXPORT int
+ON_BrepTikz(ON_String &s, const ON_Brep *brep, const char *color, const char *prefix);
+
+/* Shape recognition functions - HIGHLY EXPERIMENTAL,
+ * DO NOT RELY ON - the odds are quite good that this whole
+ * setup will be moving to libanalyze and it's public API
+ * there will likely be quite different */
+
+/* Structure for holding parameters corresponding
+ * to a csg primitive.  Not all parameters will be
+ * used for all primitives - the structure includes
+ * enough data slots to describe any primitive that may
+ * be matched by the shape recognition logic */
+struct csg_object_params {
+    struct subbrep_shoal_data *s;
+    int csg_type;
+    int negative;
+    /* Unique id number */
+    int csg_id;
+    char bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
+    point_t origin;
+    vect_t hv;
+    fastf_t radius;
+    fastf_t r2;
+    fastf_t height;
+    int arb_type;
+    point_t p[8];
+    size_t plane_cnt;
+    plane_t *planes;
+    /* An implicit plane, if present, may close a face on a parent solid */
+    int have_implicit_plane;
+    point_t implicit_plane_origin;
+    vect_t implicit_plane_normal;
+    /* bot */
+    int csg_face_cnt;
+    int csg_vert_cnt;
+    int *csg_faces;
+    point_t *csg_verts;
+    /* information flags */
+    int half_cyl;
+};
+
+/* Forward declarations */
+struct subbrep_island_data;
+
+/* Topological shoal */
+struct subbrep_shoal_data {
+    struct subbrep_island_data *i;
+    int shoal_type;
+    /* Unique id number */
+    int shoal_id;
+    struct csg_object_params *params;
+    /* struct csg_obj_params */
+    struct bu_ptbl *shoal_children;
+
+    /* Working information */
+    int *shoal_loops;
+    int shoal_loops_cnt;
+};
+
+/* Topological island */
+struct subbrep_island_data {
+
+    /* Overall type of island - typically comb or brep, but may
+     * be an actual type if the nucleus corresponds to a single
+     * implicit primitive */
+    int island_type;
+
+    /* Unique id number */
+    int island_id;
+
+    /* Context information */
+    const ON_Brep *brep;
+
+    /* Shape representation data */
+    ON_Brep *local_brep;
+    char local_brep_bool_op; /* Boolean operator - u = union (default), - = subtraction, + = intersection */
+
+    /* Nucleus */
+    struct subbrep_shoal_data *nucleus;
+    /* struct subbrep_shoal_data */
+    struct bu_ptbl *island_children;
+
+    /* For union objects, we list the subtractions it needs */
+    struct bu_ptbl *subtractions;
+
+    /* subbrep metadata */
+    struct bu_vls *key;
+    ON_BoundingBox *bbox;
+
+    /* Working information - should probably be in private struct */
+    void *face_surface_types;
+    int *obj_cnt;
+    int *island_faces;
+    int *island_loops;
+    int *fol; /* Faces with outer loops in object loop network */
+    int *fil; /* Faces with only inner loops in object loop network */
+    int island_faces_cnt;
+    int island_loops_cnt;
+    int fol_cnt;
+    int fil_cnt;
+    int null_vert_cnt;
+    int *null_verts;
+    int null_edge_cnt;
+    int *null_edges;
+};
+
+
+extern BREP_EXPORT struct bu_ptbl *brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep);
+
 } /* extern C++ */
 #endif
 

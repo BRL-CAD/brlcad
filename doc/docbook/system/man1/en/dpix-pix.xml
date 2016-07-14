@@ -18,7 +18,7 @@
 <cmdsynopsis>
   <command>dpix-pix</command>
     <arg choice='plain'><replaceable>file.dpix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -42,7 +42,7 @@ Standard input is read if a file name is not supplied.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2014 by the United States
+<para>This software is Copyright (c) 1991-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

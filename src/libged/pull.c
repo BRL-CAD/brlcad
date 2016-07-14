@@ -1,7 +1,7 @@
 /*                         P U L L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 
-#include "bn.h"
 #include "bu/cmd.h"
+#include "bu/getopt.h"
+#include "bn.h"
 
 #include "./ged_private.h"
 
@@ -124,7 +124,7 @@ pull_comb(struct db_i *dbip,
 
 
 /* routine takes the maximum and minimum points from the AABB and determines the translation matrix
- * which moves the centrepoint to the origin and moves the primitive by the its inverse
+ * which moves the centrepoint to the origin and moves the primitive by its inverse
  * before pulling the translation.
  */
 void

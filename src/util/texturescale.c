@@ -1,7 +1,7 @@
 /*                  T E X T U R E S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,10 +27,12 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -57,7 +59,7 @@ static fastf_t r1, r2;		/* radii */
     fflush(stderr)
 static char usage[] = "\
 Usage: texturescale [-T 'r1 r2' | -S]\n\
-		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
 		 [file.pix]\n";
 
 /*
@@ -96,13 +98,10 @@ get_args (int argc, char **argv)
     int c;
 
     while ((c = bu_getopt(argc, argv, OPT_STRING)) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 'n':
 		file_height = atol(bu_optarg);
@@ -127,7 +126,7 @@ get_args (int argc, char **argv)
 		}
 		solid_type = TORUS;
 		break;
-	    case '?':
+	    case 'h':
 		(void) fputs(usage, stderr);
 		bu_exit (0, NULL);
 	    default:

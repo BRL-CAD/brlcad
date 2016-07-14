@@ -60,6 +60,7 @@ set(docbook_books_EN
   BRL-CAD_Tutorial_Series-VolumeIV.xml
   )
 DOCBOOK_TO_HTML(book docbook_books_EN html/books/en docbook_books_EN_IMAGES_cp)
+DOCBOOK_TO_PHP(book docbook_books_EN html/books/en docbook_books_EN_IMAGES_cp)
 
 # The PDFs need some special logic to generate custom
 # covers.

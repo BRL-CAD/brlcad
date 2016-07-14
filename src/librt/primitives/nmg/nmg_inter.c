@@ -1,7 +1,7 @@
 /*                     N M G _ I N T E R . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -63,7 +62,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define ISECT_NONE 0
@@ -2390,8 +2389,6 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
     struct bu_ptbl vert_list1, vert_list2;
     fastf_t *mag1, *mag2;
     int i, j;
-    const fastf_t opsff = (1.0 + SMALL_FASTF);
-    const fastf_t omsff = (1.0 - SMALL_FASTF);
 
     NMG_CK_FACEUSE(fu1);
     NMG_CK_FACEUSE(fu2);
@@ -2477,26 +2474,26 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		 * distance from p0->q1.
 		 */
 		if ((dist[0] < -SMALL_FASTF && ((dist[1] > SMALL_FASTF) &&
-						(dist[1] < omsff))) ||
-		    ((dist[1] > SMALL_FASTF) && (dist[1] < omsff)
-		     && (dist[0] > opsff))) {
+						(dist[1] - 1.0 < -SMALL_FASTF))) ||
+		    ((dist[1] > SMALL_FASTF) && (dist[1] - 1.0 < -SMALL_FASTF)
+		     && (dist[0] - 1.0 > SMALL_FASTF))) {
 		    /* true when q1 is within p0->p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
-		} else if ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) &&
-			   (dist[1] > SMALL_FASTF) && (dist[1] < omsff)) {
+		} else if ((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) &&
+			   (dist[1] > SMALL_FASTF) && (dist[1] - 1.0 < -SMALL_FASTF)) {
 		    /* true when both q0 and q1 is within p0->p1 */
 		    hit_count = 2;
 		    /* dist[0] and dist[1] are already the correct values */
-		} else if (((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] < -SMALL_FASTF)) ||
-			   ((dist[0] > SMALL_FASTF) && (dist[0] < omsff) && (dist[1] > opsff))) {
+		} else if (((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) && (dist[1] < -SMALL_FASTF)) ||
+			   ((dist[0] > SMALL_FASTF) && (dist[0] - 1.0 < -SMALL_FASTF) && (dist[1] - 1.0  > SMALL_FASTF))) {
 		    /* true when q0 is within p0->p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
-		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] > opsff)) ||
-			   ((dist[0] > opsff) && (dist[1] < -SMALL_FASTF))) {
+		} else if (((dist[0] < -SMALL_FASTF) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   ((dist[0] - 1.0 > SMALL_FASTF) && (dist[1] < -SMALL_FASTF))) {
 		    /* true when both p0 and p1 is within q0->q1 */
 		    /* eu1 is not cut */
 		    hit_count = 0; /* sanity */
@@ -2512,8 +2509,8 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    continue;
 		} else if (((dist[0] < -SMALL_FASTF) && ZERO(dist[1])) ||
 			   (ZERO(dist[0]) && (dist[1] < -SMALL_FASTF)) ||
-			   (EQUAL(dist[0], 1.0) && (dist[1] > opsff)) ||
-			   (EQUAL(dist[1], 1.0) && (dist[0] > opsff))) {
+			   (EQUAL(dist[0], 1.0) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   (EQUAL(dist[1], 1.0) && (dist[0] - 1.0 > SMALL_FASTF))) {
 		    /* true when eu2 shares one of eu1 vertices and the
 		     * other eu2 vertex is outside p0->p1 (i.e. eu1)
 		     */
@@ -2522,25 +2519,25 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		    dist[0] = dist[1] = MAX_FASTF; /* sanity */
 		    continue;
 		} else if ((ZERO(dist[0]) && (dist[1] > SMALL_FASTF) &&
-			    (dist[1] < omsff)) ||
+			    (dist[1] - 1.0 < -SMALL_FASTF)) ||
 			   ((dist[1] > SMALL_FASTF) &&
-			    (dist[1] < omsff) &&
+			    (dist[1] - 1.0 < -SMALL_FASTF) &&
 			    EQUAL(dist[0], 1.0))) {
 		    /* true when q1 is within p0->p1 and q0 = p0 or q0 = p1 */
 		    hit_count = 1;
 		    dist[0] = dist[1];
 		    dist[1] = MAX_FASTF; /* sanity */
 		} else if ((ZERO(dist[1]) && (dist[0] > SMALL_FASTF) &&
-			    (dist[0] < omsff)) ||
+			    (dist[0] - 1.0 < -SMALL_FASTF)) ||
 			   ((dist[0] > SMALL_FASTF) &&
-			    (dist[0] < omsff) &&
+			    (dist[0] - 1.0 < -SMALL_FASTF) &&
 			    EQUAL(dist[1], 1.0))) {
 		    /* true when q0 is within p0->p1 and q1 = p0 or q1 = p1 */
 		    hit_count = 1;
 		    dist[1] = MAX_FASTF; /* sanity */
 		    /* dist[0] is already the correct value */
-		} else if ((ZERO(dist[0]) && (dist[1] > opsff)) ||
-			   (ZERO(dist[1]) && (dist[0] > opsff)) ||
+		} else if ((ZERO(dist[0]) && (dist[1] - 1.0 > SMALL_FASTF)) ||
+			   (ZERO(dist[1]) && (dist[0] - 1.0 > SMALL_FASTF)) ||
 			   (EQUAL(dist[0], 1.0) && (dist[1] < -SMALL_FASTF)) ||
 			   ((dist[0] < -SMALL_FASTF) && EQUAL(dist[1], 1.0))) {
 		    /* true when eu2 shares one of the vertices of eu1 and
@@ -2561,7 +2558,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		if (ZERO(dist[0]) || EQUAL(dist[0], 1.0)) {
 		    /* eu1 was hit on a vertex, nothing to cut */
 		    continue;
-		} else if (UNLIKELY((dist[0] < -SMALL_FASTF) || (dist[0] > opsff))) {
+		} else if (UNLIKELY((dist[0] < -SMALL_FASTF) || (dist[0] - 1.0 > SMALL_FASTF))) {
 		    bu_bomb("nmg_isect_two_face2p_jra(): dist[0] not within 0-1\n");
 		} else {
 		    hit_count = 1;
@@ -2573,7 +2570,7 @@ nmg_isect_two_face2p_jra(struct nmg_inter_struct *is, struct faceuse *fu1, struc
 		struct vertex *hitv;
 		struct vertexuse *hit_vu;
 
-		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] > opsff)
+		if (dist[hit_no] < -SMALL_FASTF || dist[hit_no] - 1.0 > SMALL_FASTF)
 		    continue;
 
 		hitv = (struct vertex *)NULL;

@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,10 +27,11 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "bu/str.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -176,7 +177,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	    char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
+	    char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	    char *tok = strtok(dupstr, "/");
 
 	    while (tok) {

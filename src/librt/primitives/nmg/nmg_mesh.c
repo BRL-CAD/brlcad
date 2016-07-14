@@ -1,7 +1,7 @@
 /*                      N M G _ M E S H . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
@@ -58,7 +57,7 @@ nmg_is_angle_in_wedge(double a, double b, double t)
     if (NEAR_EQUAL(a, t, 1.0e-8)) return -2;
     if (NEAR_EQUAL(b, t, 1.0e-8)) return -1;
 
-    /* If A==B, if T is not also equal, its outside the wedge */
+    /* If A==B, if T is not also equal, it's outside the wedge */
     if (NEAR_EQUAL(a, b, 1.0e-8)) return 0;
 
     if (b < a) {

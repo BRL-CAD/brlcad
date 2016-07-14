@@ -1,7 +1,7 @@
 /*                    D M - G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <ctype.h>
 #include <string.h>
@@ -35,17 +34,15 @@
 #  include <sys/types.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
-#include "dm/dm_xvars.h"
-#include "../libdm/dm_private.h"
 
-#include "bu.h"
+#include "dm/dm_xvars.h"
+
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "ged.h"
 
 #include "./mged.h"
@@ -180,7 +177,7 @@ common_dm(int argc, const char *argv[])
 
 	    MAT4X3PNT(model_pt, view_state->vs_gvp->gv_view2model, view_pt);
 	    VSCALE(model_pt, model_pt, base2local);
-	    if (dmp->dm_zclip)
+	    if (dm_get_zclip(dmp))
 		bu_vls_printf(&vls, "qray_nirt %lf %lf %lf",
 			      model_pt[X], model_pt[Y], model_pt[Z]);
 	    else
@@ -554,9 +551,8 @@ common_dm(int argc, const char *argv[])
 	    width = atoi(argv[1]);
 	    height = atoi(argv[2]);
 
-	    dmp->dm_width = width;
-	    dmp->dm_height = height;
-
+	    dm_set_width(dmp, width);
+	    dm_set_height(dmp, height);
 	    return TCL_OK;
 	}
 
@@ -570,13 +566,17 @@ common_dm(int argc, const char *argv[])
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
-				 (const char *)dmp->dm_vars.pub_vars);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    if(dm_get_xvars(dmp) != NULL) {
+		bu_vls_struct_print2(&tmp_vls, "dm internal X variables", dm_xvars_vparse,
+			(const char *)dm_get_xvars(dmp));
+		Tcl_AppendResult(INTERP, bu_vls_addr(&tmp_vls), (char *)NULL);
+	    }
 	    bu_vls_free(&tmp_vls);
 	} else if (argc == 2) {
-	    bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dmp->dm_vars.pub_vars, COMMA);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    if(dm_get_xvars(dmp) != NULL) {
+		bu_vls_struct_item_named(&vls, dm_xvars_vparse, argv[1], (const char *)dm_get_xvars(dmp), COMMA);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    }
 	    bu_vls_free(&vls);
 	}
 
@@ -597,11 +597,10 @@ common_dm(int argc, const char *argv[])
 
 	/* return background color of current display manager */
 	if (argc == 1) {
-	    bu_vls_printf(&vls, "%d %d %d",
-			  dmp->dm_bg[0],
-			  dmp->dm_bg[1],
-			  dmp->dm_bg[2]);
-	    Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    if (dm_get_bg(dmp)) {
+		bu_vls_printf(&vls, "%d %d %d", dm_get_bg(dmp)[0], dm_get_bg(dmp)[1], dm_get_bg(dmp)[2]);
+		Tcl_AppendResult(INTERP, bu_vls_addr(&vls), (char *)NULL);
+	    }
 	    bu_vls_free(&vls);
 
 	    return TCL_OK;
@@ -694,20 +693,17 @@ dm_commands(int argc,
 
 	if (argc < 2) {
 	    struct bu_vls report_str = BU_VLS_INIT_ZERO;
-	    bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(dmp));
-	    /* Bare set command, print out current settings */
-	    bu_vls_struct_print2(&vls,
-				 bu_vls_addr(&report_str),
-				 dm_get_vparse(dmp),
-				 (const char *)dm_get_mvars(dmp));
+	    if (dm_get_dm_name(dmp) && dm_get_vparse(dmp)) {
+		bu_vls_sprintf(&report_str, "Display Manager (type %s) internal variables", dm_get_dm_name(dmp));
+		/* Bare set command, print out current settings */
+		bu_vls_struct_print2(&vls, bu_vls_addr(&report_str), dm_get_vparse(dmp), (const char *)dm_get_mvars(dmp));
+	    }
 	    bu_vls_free(&report_str);
 	} else if (argc == 2) {
 	    /* TODO - need to add hook func support to this func, since the one in the libdm structparse isn't enough by itself */
-	    bu_vls_struct_item_named(&vls,
-				     dm_get_vparse(dmp),
-				     argv[1],
-				     (const char *)dm_get_mvars(dmp),
-				     COMMA);
+	    if (dm_get_mvars(dmp) && dm_get_vparse(dmp)) {
+		bu_vls_struct_item_named(&vls, dm_get_vparse(dmp), argv[1], (const char *)dm_get_mvars(dmp), COMMA);
+	    }
 	} else {
 	    struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 	    int ret;

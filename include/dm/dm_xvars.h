@@ -1,7 +1,7 @@
 /*                          D M _ X V A R S . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,20 +30,22 @@
 #ifdef HAVE_X11_XLIB_H
 #  include <X11/Xlib.h>
 #  include <X11/Xutil.h>
-#  define HAVE_X11_TYPES 1
 #endif
 
 #ifdef HAVE_TK
 #  include "tk.h"
+#  define HAVE_X11_TYPES 1
 #endif
-
+#ifdef IF_WGL
+#include "tkWinInt.h"
+#endif
 
 #if !defined(HAVE_TK) && !defined(TK_WINDOW_TYPEDEF)
 typedef void *Tk_Window;
 #  define TK_WINDOW_TYPEDEF 1
 #endif
 
-#ifndef HAVE_X11_TYPES
+#if !defined(HAVE_X11_TYPES) && !defined(HAVE_X11_XLIB_H)
 typedef long Display;
 typedef long Window;
 typedef long Colormap;

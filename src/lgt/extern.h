@@ -1,7 +1,7 @@
 /*                        E X T E R N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -64,7 +64,7 @@ extern void prnt_Menu();
 extern void prnt_Octree();
 extern void prnt_Pixel();
 extern void prnt_Prompt();
-extern void prnt_Scroll( const char *, ... );
+extern void prnt_Scroll(const char *, ...);
 extern void prnt_Status();
 extern void prnt_Timer();
 extern void prnt_Title();
@@ -169,11 +169,11 @@ extern unsigned char target1[];
 extern struct resource resource[MAX_PSW];
 extern struct rt_i *rt_ip;
 
-#define C_TAGPIXEL	0
-#define C_SWEEPREC	1
-#define C_I_WINDOW	2
-#define C_O_WINDOW	3
-#define C_QUERYREG	4
+#define C_TAGPIXEL 0
+#define C_SWEEPREC 1
+#define C_I_WINDOW 2
+#define C_O_WINDOW 3
+#define C_QUERYREG 4
 #define XSCR2MEM(_x)	(_x)
 #define YSCR2MEM(_y)	(_y)
 

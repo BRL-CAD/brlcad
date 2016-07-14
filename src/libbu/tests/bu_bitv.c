@@ -1,7 +1,7 @@
 /*                       B U _ B I T V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -275,9 +275,9 @@ ERROR_RETURN:
 
 
 static unsigned int
-power(const unsigned int base, const int exponent)
+power(const unsigned int base, const size_t exponent)
 {
-    int i ;
+    size_t i ;
     unsigned int product = 1;
 
     for (i = 0; i < exponent; i++)
@@ -290,7 +290,7 @@ power(const unsigned int base, const int exponent)
 static int
 test_bu_bitv_shift()
 {
-    int res;
+    size_t res;
     int test_results = CTEST_FAIL;
 
     printf("\nTesting bu_bitv_shift...");
@@ -632,7 +632,7 @@ test_bu_binary_to_bitv(int argc, char **argv)
     unsigned long int expected_num = strtol(argv[3], (char **)NULL, 16);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b;
-    unsigned i, len, err = 0;
+    size_t i, len, err = 0;
     unsigned ull_size = sizeof(unsigned long long);
 
     if (argc < 4)
@@ -691,7 +691,7 @@ test_bu_binary_to_bitv2(int argc, char **argv)
     unsigned ull_size = sizeof(unsigned long long);
     struct bu_vls v = BU_VLS_INIT_ZERO;
     struct bu_bitv *b;
-    unsigned i, len, err = 0;
+    size_t i, len, err = 0;
 
     if (argc < 5)
 	bu_exit(1, "ERROR: input format is function_num function_test_args [%s]\n", argv[0]);
@@ -771,6 +771,43 @@ test_bu_binstr_to_hexstr(int argc, char **argv)
 
     return test_results;
 }
+
+
+static int
+test_bu_binstr_to_hexstr_empty_input(int argc, char **argv)
+{
+    /*         argv[1]    ""                    argv[2]
+     * inputs: <func num> <input binary string> <expected hex string>
+     */
+    int test_results = CTEST_FAIL;
+    const char *input = "";
+    const char *expected;
+    struct bu_vls v = BU_VLS_INIT_ZERO;
+
+    if (argc < 3)
+	bu_exit(1, "ERROR: input format: function_num function_test_args [%s]\n", argv[0]);
+
+    expected = argv[2];
+
+    bu_binstr_to_hexstr(input, &v);
+
+    if (BU_STR_EQUAL(expected, bu_vls_cstr(&v))) {
+	test_results = CTEST_PASS;
+	printf("\nbu_binstr_to_hexstr PASSED");
+    } else {
+	test_results = CTEST_FAIL;
+	printf("\nbu_binstr_to_hexstr FAILED");
+    }
+
+    printf("\n  Input:    '%s'", input);
+    printf("\n  Output:   '%s'", bu_vls_cstr(&v));
+    printf("\n  Expected: '%s'", expected);
+
+    bu_vls_free(&v);
+
+    return test_results;
+}
+
 
 static int
 test_bu_hexstr_to_binstr(int argc, char **argv)
@@ -861,6 +898,8 @@ main(int argc, char **argv)
 	    break;
         case 13:
 	    return test_bu_binstr_to_hexstr(argc, argv);
+	case 14:
+	    return test_bu_binstr_to_hexstr_empty_input(argc, argv);
 	    break;
 
     }

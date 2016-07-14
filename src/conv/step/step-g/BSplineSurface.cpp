@@ -1,7 +1,7 @@
 /*                 BSplineSurface.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -120,9 +120,8 @@ BSplineSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	}
     }
     surface_form = (B_spline_surface_form)step->getEnumAttribute(sse, "surface_form");
-    if (surface_form > B_spline_surface_form_unset) {
-	surface_form = B_spline_surface_form_unset;
-    }
+    V_MIN(surface_form, B_spline_surface_form_unset);
+
     u_closed = step->getLogicalAttribute(sse, "u_closed");
     v_closed = step->getLogicalAttribute(sse, "v_closed");
     self_intersect = step->getLogicalAttribute(sse, "self_intersect");

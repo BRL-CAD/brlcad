@@ -1,7 +1,7 @@
 /*                      F B _ O S G L . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{*/
 /** @file fb_osgl.h
  *
@@ -49,9 +49,6 @@
 #  include <sys/ipc.h>
 #endif
 #include <errno.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>   /* for getpagesize and sysconf */
-#endif
 
 #ifdef HAVE_SYS_WAIT_H
 #  include <sys/wait.h>
@@ -63,6 +60,7 @@
 extern "C" {
 #endif
 #include "bu/color.h"
+#include "bu/file.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
@@ -79,12 +77,15 @@ extern "C" {
 #include <osgViewer/ViewerEventHandlers>
 #include <osgViewer/config/SingleWindow>
 
+#include <osgDB/Registry>
+
 #include <osgGA/StateSetManipulator>
 
 #include <osg/ImageUtils>
 #include <osg/TextureRectangle>
 #include <osg/Geode>
 #include <osg/Geometry>
+#include <osg/DrawPixels>
 #include <osg/StateSet>
 #include <osg/Timer>
 

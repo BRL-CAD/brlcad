@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -75,7 +75,6 @@ extern int cmd_nop(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_oed(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_output_hook(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_parse_points(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_pov(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
@@ -133,6 +132,7 @@ extern int f_keypoint(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_knob(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_l_muves(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_labelvert(ClientData, Tcl_Interp *, int, const char *[]);
+extern int f_labelface(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_list(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_make(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_matpick(ClientData, Tcl_Interp *, int, const char *[]);

@@ -1,7 +1,7 @@
 /*                           T G C . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,18 +32,17 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -81,8 +80,8 @@ void rt_pt_sort(register fastf_t *t, int npts);
 #define MAX_RATIO 10.0	/* maximum allowed height-to-width ration for triangles */
 #define RAT  M_SQRT1_2
 
-#define OUT 0
-#define IN 1
+#define T_OUT 0
+#define T_IN 1
 
 /* hit_surfno is set to one of these */
 #define TGC_NORM_BODY (1)	/* compute normal */
@@ -148,6 +147,43 @@ static const fastf_t nmg_uv_unitcircle[27] = {
     1.0,   .5,  1.0
 };
 
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_tgc_specific {
+    cl_double tgc_V[3];             /* Vector to center of base of TGC */
+    cl_double tgc_CdAm1;            /* (C/A - 1) */
+    cl_double tgc_DdBm1;            /* (D/B - 1) */
+    cl_double tgc_AAdCC;            /* (|A|**2)/(|C|**2) */
+    cl_double tgc_BBdDD;            /* (|B|**2)/(|D|**2) */
+    cl_double tgc_N[3];             /* normal at 'top' of cone */
+    cl_double tgc_ScShR[16];        /* Scale(Shear(Rot(vect))) */
+    cl_double tgc_invRtShSc[16];    /* invRot(trnShear(Scale(vect))) */
+    cl_char tgc_AD_CB;              /* boolean:  A*D == C*B */
+};
+
+size_t
+clt_tgc_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct tgc_specific *tgc =
+        (struct tgc_specific *)stp->st_specific;
+    struct clt_tgc_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tgc_specific*)bu_pool_alloc(pool, 1, size);
+
+    VMOVE(args->tgc_V, tgc->tgc_V);
+    args->tgc_CdAm1 = tgc->tgc_CdAm1;
+    args->tgc_DdBm1 = tgc->tgc_DdBm1;
+    args->tgc_AAdCC = tgc->tgc_AAdCC;
+    args->tgc_BBdDD = tgc->tgc_BBdDD;
+    VMOVE(args->tgc_N, tgc->tgc_N);
+    MAT_COPY(args->tgc_ScShR, tgc->tgc_ScShR);
+    MAT_COPY(args->tgc_invRtShSc, tgc->tgc_invRtShSc);
+    args->tgc_AD_CB = tgc->tgc_AD_CB;
+    return size;
+}
+
+#endif /* USE_OPENCL */
 
 /**
  * Compute the bounding RPP for a truncated general cone
@@ -1068,7 +1104,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	/* A vector is unitized (tgc->tgc_A == 1.0) */
 	R.cf[1] = (cor_pprime[Z] * tgc->tgc_CdAm1) + 1.0;
 
-	/* (void) bn_poly_mul(&Rsqr, &R, &R); inline expands to: */
+	/* (void) bn_poly_mul(&Rsqr, &R, &R); manual expansion: */
 	Rsqr.dgr = 2;
 	Rsqr.cf[0] = R.cf[0] * R.cf[0];
 	Rsqr.cf[1] = R.cf[0] * R.cf[1] * 2;
@@ -1081,7 +1117,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	 */
 	if (tgc->tgc_AD_CB) {
 	    /* (void) bn_poly_add(&sum, &Xsqr, &Ysqr); and */
-	    /* (void) bn_poly_sub(&C, &sum, &Rsqr); inline expand to */
+	    /* (void) bn_poly_sub(&C, &sum, &Rsqr); manual expansion: */
 	    C[ix].dgr = 2;
 	    C[ix].cf[0] = Xsqr.cf[0] + Ysqr.cf[0] - Rsqr.cf[0];
 	    C[ix].cf[1] = Xsqr.cf[1] + Ysqr.cf[1] - Rsqr.cf[1];
@@ -1094,13 +1130,13 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* B vector is unitized (tgc->tgc_B == 1.0) */
 	    Q.cf[1] = (cor_pprime[Z] * tgc->tgc_DdBm1) + 1.0;
 
-	    /* (void) bn_poly_mul(&Qsqr, &Q, &Q); inline expands to */
+	    /* (void) bn_poly_mul(&Qsqr, &Q, &Q); manual expansion: */
 	    Qsqr.dgr = 2;
 	    Qsqr.cf[0] = Q.cf[0] * Q.cf[0];
 	    Qsqr.cf[1] = Q.cf[0] * Q.cf[1] * 2;
 	    Qsqr.cf[2] = Q.cf[1] * Q.cf[1];
 
-	    /* (void) bn_poly_mul(&T1, &Qsqr, &Xsqr); inline expands to */
+	    /* (void) bn_poly_mul(&T1, &Qsqr, &Xsqr); manual expansion: */
 	    C[ix].dgr = 4;
 	    C[ix].cf[0] = Qsqr.cf[0] * Xsqr.cf[0];
 	    C[ix].cf[1] = Qsqr.cf[0] * Xsqr.cf[1] +
@@ -1113,7 +1149,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    C[ix].cf[4] = Qsqr.cf[2] * Xsqr.cf[2];
 
 	    /* (void) bn_poly_mul(&T2, &Rsqr, &Ysqr); and */
-	    /* (void) bn_poly_add(&sum, &T1, &T2); inline expand to */
+	    /* (void) bn_poly_add(&sum, &T1, &T2); manual expansion: */
 	    C[ix].cf[0] += Rsqr.cf[0] * Ysqr.cf[0];
 	    C[ix].cf[1] += Rsqr.cf[0] * Ysqr.cf[1] +
 		Rsqr.cf[1] * Ysqr.cf[0];
@@ -1125,7 +1161,7 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    C[ix].cf[4] += Rsqr.cf[2] * Ysqr.cf[2];
 
 	    /* (void) bn_poly_mul(&T3, &Rsqr, &Qsqr); and */
-	    /* (void) bn_poly_sub(&C, &sum, &T3); inline expand to */
+	    /* (void) bn_poly_sub(&C, &sum, &T3); manual expansion: */
 	    C[ix].cf[0] -= Rsqr.cf[0] * Qsqr.cf[0];
 	    C[ix].cf[1] -= Rsqr.cf[0] * Qsqr.cf[1] +
 		Rsqr.cf[1] * Qsqr.cf[0];
@@ -1228,15 +1264,15 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* Height vector is unitized (tgc->tgc_sH == 1.0) */
 	    if (zval < 1.0 && zval > 0.0) {
 		if (++intersect == 2) {
-		    pt[IN] = k[i];
+		    pt[T_IN] = k[i];
 		}  else
-		    pt[OUT] = k[i];
+		    pt[T_OUT] = k[i];
 	    }
 	}
 	/* Reuse C to hold values of intersect and k. */
 	C[ix].dgr = intersect;
-	C[ix].cf[OUT] = pt[OUT];
-	C[ix].cf[IN]  = pt[IN];
+	C[ix].cf[T_OUT] = pt[T_OUT];
+	C[ix].cf[T_IN]  = pt[T_IN];
     }
 
     /* for each ray/cone pair */
@@ -1245,8 +1281,8 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 
 	tgc = (struct tgc_specific *)stp[ix]->st_specific;
 	intersect = C[ix].dgr;
-	pt[OUT] = C[ix].cf[OUT];
-	pt[IN]  = C[ix].cf[IN];
+	pt[T_OUT] = C[ix].cf[T_OUT];
+	pt[T_IN]  = C[ix].cf[T_IN];
 	/* segp[ix].seg_out.hit_normal holds pprime */
 	VMOVE(pprime, segp[ix].seg_out.hit_normal);
 	/* segp[ix].seg_in.hit_normal holds dprime */
@@ -1256,19 +1292,19 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    /* If two between-plane intersections exist, they are
 	     * the hit points for the ray.
 	     */
-	    segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 	    segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[IN], dprime);
+	    VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_IN], dprime);
 
-	    segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+	    segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 	    segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
-	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+	    VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	} else if (intersect == 1) {
 	    int nflag;
 	    /*
-	     * If only one between-plane intersection exists (pt[OUT]),
+	     * If only one between-plane intersection exists (pt[T_OUT]),
 	     * then the other intersection must be on
-	     * one of the planar surfaces (pt[IN]).
+	     * one of the planar surfaces (pt[T_IN]).
 	     *
 	     * Find which surface it lies on by calculating the
 	     * X and Y values of the line as it intersects each
@@ -1293,10 +1329,10 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 	    alf2 = ALPHA(work[X], work[Y], tgc->tgc_AAdCC, tgc->tgc_BBdDD);
 
 	    if (alf1 <= 1.0) {
-		pt[IN] = b;
+		pt[T_IN] = b;
 		nflag = TGC_NORM_BOT; /* copy reverse normal */
 	    } else if (alf2 <= 1.0) {
-		pt[IN] = t;
+		pt[T_IN] = t;
 		nflag = TGC_NORM_TOP;	/* copy normal */
 	    } else {
 		/* intersection apparently invalid */
@@ -1304,22 +1340,22 @@ rt_tgc_vshot(struct soltab **stp, register struct xray **rp, struct seg *segp, i
 		continue;
 	    }
 
-	    /* pt[OUT] on skin, pt[IN] on end */
-	    if (pt[OUT] >= pt[IN]) {
-		segp[ix].seg_in.hit_dist = pt[IN] * t_scale;
+	    /* pt[T_OUT] on skin, pt[T_IN] on end */
+	    if (pt[T_OUT] >= pt[T_IN]) {
+		segp[ix].seg_in.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_in.hit_surfno = nflag;
 
-		segp[ix].seg_out.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_OUT] * t_scale;
 		segp[ix].seg_out.hit_surfno = TGC_NORM_BODY;	/* compute N */
 		/* transform-space vector needed for normal */
-		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_out.hit_vpriv, pprime, pt[T_OUT], dprime);
 	    } else {
-		segp[ix].seg_in.hit_dist = pt[OUT] * t_scale;
+		segp[ix].seg_in.hit_dist = pt[T_OUT] * t_scale;
 		/* transform-space vector needed for normal */
 		segp[ix].seg_in.hit_surfno = TGC_NORM_BODY;	/* compute N */
-		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[OUT], dprime);
+		VJOIN1(segp[ix].seg_in.hit_vpriv, pprime, pt[T_OUT], dprime);
 
-		segp[ix].seg_out.hit_dist = pt[IN] * t_scale;
+		segp[ix].seg_out.hit_dist = pt[T_IN] * t_scale;
 		segp[ix].seg_out.hit_surfno = nflag;
 	    }
 	} else {

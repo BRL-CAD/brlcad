@@ -1,7 +1,7 @@
 #                          G E D . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -283,6 +283,7 @@ package provide cadwidgets::Ged 1.0
 	method killtree {args}
 	method l {args}
 	method lastMouseRayPos {}
+	method lc {args}
 	method light {args}
 	method light_all {args}
 	method list_views {args}
@@ -741,7 +742,7 @@ package provide cadwidgets::Ged 1.0
 	method init_data_pick {{_button 1}}
 	method init_data_scale {{_button 1}}
 	method init_data_poly_circ {{_button 1}}
-	method init_data_poly_cont {{_button 1}}
+	method init_data_poly_cont {{_button1 1} {_button2 2}}
 	method init_data_poly_ell {{_button 1}}
 	method init_data_poly_rect {{_button 1} {_sflag 0}}
 	method init_find_arb_edge {_obj {_button 1} {_callback {}}}
@@ -971,11 +972,8 @@ package provide cadwidgets::Ged 1.0
     $itk_component(lpw) add llp
     $itk_component(lpw) add lrp
 
-    if {$tcl_platform(platform) == "windows"} {
-	set dmType wgl
-    } else {
-	set dmType ogl
-    }
+    set dm_list [split [dm_list] ',']
+    set dmType [lindex $dm_list 0]
 
     # create four views
     itk_component add ul {
@@ -1531,8 +1529,10 @@ package provide cadwidgets::Ged 1.0
 	$scmd == "poly_line_style" ||
 	$scmd == "polygons_overlap" ||
 	$scmd == "area" ||
+	$scmd == "fill" ||
 	$scmd == "export" ||
-	$scmd == "import"} {
+	$scmd == "import" ||
+	$scmd == "moveall"} {
 	return [eval $mGed data_polygons $itk_component($itk_option(-pane)) $args]
     }
 
@@ -2017,6 +2017,10 @@ package provide cadwidgets::Ged 1.0
 
 ::itcl::body cadwidgets::Ged::lastMouseRayPos {} {
     return $mLastMouseRayPos
+}
+
+::itcl::body cadwidgets::Ged::lc {args} {
+    eval $mGed lc $args
 }
 
 ::itcl::body cadwidgets::Ged::light {args} {
@@ -4373,6 +4377,17 @@ package provide cadwidgets::Ged 1.0
 	eval $mGed data_polygons $itk_component($_pane) replace_point $mLastDataIndex [list $point]
     }
 
+    if {[$mGed data_polygons $itk_component($_pane) moveall]} {
+	foreach callback $mEndDataPolygonCallbacks {
+	    catch {$callback $mLastDataIndex}
+	}
+
+	set mLastDataIndex ""
+	refresh_on
+	refresh_all
+	return
+    }
+
     set pindex [lindex $mLastDataIndex 0]
     set cindex [lindex $mLastDataIndex 1]
     set plist [$mGed data_polygons $itk_component($_pane) polygons]
@@ -4894,14 +4909,20 @@ package provide cadwidgets::Ged 1.0
 }
 
 
-::itcl::body cadwidgets::Ged::init_data_poly_cont {{_button 1}} {
+::itcl::body cadwidgets::Ged::init_data_poly_cont {{_button1 1} {_button2 2}} {
     measure_line_erase
 
     foreach dm {ur ul ll lr} {
-	bind $itk_component($dm) <$_button> "[::itcl::code $this begin_data_poly_cont]; $mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
-	bind $itk_component($dm) <Shift-$_button> "[::itcl::code $this end_data_poly_cont $dm]; break"
+	bind $itk_component($dm) <$_button1> "[::itcl::code $this begin_data_poly_cont]; $mGed poly_cont_build $itk_component($dm) %x %y; focus %W; break"
+	bind $itk_component($dm) <$_button2> "[::itcl::code $this end_data_poly_cont $dm]; break"
+
+	if {$_button1 == $_button2} {
+	    bind $itk_component($dm) <Shift-$_button1> "[::itcl::code $this end_data_poly_cont $dm]; break"
+	}
+
 	bind $itk_component($dm) <ButtonRelease> ""
-	bind $itk_component($dm) <ButtonRelease-$_button> ""
+	bind $itk_component($dm) <ButtonRelease-$_button1> ""
+	bind $itk_component($dm) <ButtonRelease-$_button2> ""
     }
 }
 

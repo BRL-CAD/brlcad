@@ -1,7 +1,7 @@
 /*                      N M G M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -67,7 +67,7 @@ usage(char *str, int stopprog)
 
     (void) fprintf(stderr, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
 		   progname,
-		   "       Create NMG to mged database ",mfilename,
+		   "       Create NMG-to-mged database ",mfilename,
 		   "       and plot3 file ",plotfilename);
     if (stopprog) bu_exit(1, NULL);
     fprintf(stderr,"       Program continues running:\n");
@@ -97,7 +97,7 @@ parse_args(int ac, char **av)
 	    case '2'	: manifold[2] = 0; break;
 	    case '1'	: manifold[1] = 0; break;
 	    case '0'	: manifold[0] = 0; break;
-	    default		: usage((char *)NULL,1); break;
+	    default	: usage((char *)NULL,1); break;
 	}
 
     return bu_optind;

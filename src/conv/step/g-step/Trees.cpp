@@ -1,7 +1,7 @@
 /*                   T R E E S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,8 @@
  */
 
 #include "AP203.h"
-#include "bu.h"
+#include "bu/ptbl.h"
+#include "bu/log.h"
 #include "ON_Brep.h"
 #include "Assembly_Product.h"
 #include "Comb.h"

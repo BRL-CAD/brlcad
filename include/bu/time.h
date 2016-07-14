@@ -1,7 +1,7 @@
 /*                         T I M E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file time.h
- *
- */
 #ifndef BU_TIME_H
 #define BU_TIME_H
 
@@ -36,10 +33,14 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup bu_time */
+/** @addtogroup bu_time
+ * @brief
+ * Cross platform wrapper for microsecond accuracy timing functionality.
+ */
 /** @{ */
+/** @file bu/time.h */
 
-/** @file libbu/timer.c
+/**
  * Return microsecond accuracy time information.
  */
 BU_EXPORT extern int64_t bu_gettime(void);

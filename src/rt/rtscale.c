@@ -1,7 +1,7 @@
 /*                       R T S C A L E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,12 +53,14 @@
 #include <string.h>
 #include <math.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #define BUFF_LEN 256
 #define FALSE 0
@@ -208,14 +210,14 @@ layout_n_plot(FILE *outfp, char *label, fastf_t *v2mod, fastf_t *m2view, int int
     double		v_char_width;	/* char. width in view space */
     double		m_char_width;	/* char. width in model space */
     mat_t		v2symbol;	/* view to symbol space matrix */
-    float		v_len;		/* scale length in view space */
-    float		v_tick_hgt;	/* total height of tick marks, view space */
-    float		m_tick_hgt;	/* total height of tick marks, model space */
-    float		m_free_space;	/* 80% of scale len, use for writing */
-    float		v_free_space;	/* m_free_space's analogue in view space */
-    float		v_x_offset;	/* distance the label is offset in x */
-    float		v_y_offset;	/* distance the label is offset in y */
-    float		v_y_des_offset;	/* descriptive string offset */
+    fastf_t		v_len;		/* scale length in view space */
+    fastf_t		v_tick_hgt;	/* total height of tick marks, view space */
+    fastf_t		m_tick_hgt;	/* total height of tick marks, model space */
+    fastf_t		m_free_space;	/* 80% of scale len, use for writing */
+    fastf_t		v_free_space;	/* m_free_space's analogue in view space */
+    fastf_t		v_x_offset;	/* distance the label is offset in x */
+    fastf_t		v_y_offset;	/* distance the label is offset in y */
+    fastf_t		v_y_des_offset;	/* descriptive string offset */
     point_t		v_offset;
     point_t		v_des_offset;
     vect_t		v_hgtv;		/* height vector for ticks, view space */

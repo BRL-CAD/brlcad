@@ -39,13 +39,13 @@
  *  very precise definitions for integer scalar types that is
  *  critically important for making portable several classes of
  *  applications including cryptography, hashing, variable length
- *  integer libraries and so on.  But for most developers its likely
+ *  integer libraries and so on.  But for most developers it's likely
  *  useful just for programming sanity.
  *
  *  The problem is that most compiler vendors have decided not to
  *  implement the C99 standard, and the next C++ language standard
  *  (which has a lot more mindshare these days) will be a long time in
- *  coming and its unknown whether or not it will include stdint.h or
+ *  coming and it's unknown whether or not it will include stdint.h or
  *  how much adoption it will have.  Either way, it will be a long time
  *  before all compilers come with a stdint.h and it also does nothing
  *  for the extremely large number of compilers available today which
@@ -59,7 +59,7 @@
  *    1) It is not guaranteed to be portable and/or present an identical
  *       interface on all platforms.  The extreme variability of the
  *       ANSI C standard makes this an impossibility right from the
- *       very get go. Its really only meant to be useful for the vast
+ *       very get go. It's really only meant to be useful for the vast
  *       majority of platforms that possess the capability of
  *       implementing usefully and precisely defined, standard sized
  *       integer scalars.  Systems which are not intrinsically 2s
@@ -89,7 +89,7 @@
  *       with the test: #ifdef PTRDIFF_MAX.  If this is not defined
  *       for your platform, then it is because this file has not yet
  *       been extended to cover all of your system's capabilities, not
- *       because its optional.
+ *       because it's optional.
  *
  *    8) The following might not been defined even if your platform is
  *       capable of defining it:
@@ -117,7 +117,7 @@
  *       commonly created that have very different performance
  *       characteristics from the systems they are compatible with,
  *       especially those whose vendors make both the compiler and the
- *       system.  Default definitions have been given, but its strongly
+ *       system.  Default definitions have been given, but it's strongly
  *       recommended that users never use these definitions for any
  *       reason (they do *NOT* deliver any serious guarantee of
  *       improved performance -- not in this file, nor any vendor's
@@ -573,7 +573,7 @@
 /*
  *  Because this file currently only supports platforms which have
  *  precise powers of 2 as bit sizes for the default integers, the
- *  least definitions are all trivial.  Its possible that a future
+ *  least definitions are all trivial.  It's possible that a future
  *  version of this file could have different definitions.
  */
 

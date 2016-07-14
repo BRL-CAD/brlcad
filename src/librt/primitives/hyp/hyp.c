@@ -1,7 +1,7 @@
 /*                           H Y P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,10 +40,10 @@
 /* interface headers */
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "../../librt_private.h"
 
@@ -702,8 +702,8 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     fastf_t theta_new;
     int *pts_dbl, face, i, j, nseg;
     int jj, nell;
-    mat_t invRoS;
-    mat_t SoR;
+    mat_t invRoS = MAT_INIT_IDN;
+    mat_t SoR = MAT_INIT_IDN;
     struct rt_hyp_internal *iip;
     struct hyp_specific *xip;
     struct rt_pt_node *pos_a, *pos_b, *pts_a, *pts_b;
@@ -716,9 +716,6 @@ rt_hyp_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     struct vertex ***vells = (struct vertex ***)NULL;
     vect_t A, Au, B, Bu, Hu, V;
     struct bu_ptbl vert_tab;
-
-    MAT_ZERO(invRoS);
-    MAT_ZERO(SoR);
 
     RT_CK_DB_INTERNAL(ip);
     iip = (struct rt_hyp_internal *)ip->idb_ptr;

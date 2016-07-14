@@ -1,7 +1,7 @@
 /*                            C V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,40 +32,94 @@ __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
 
-/** @addtogroup conv */
+/** @addtogroup bu_conv
+ *
+ * @brief
+ * Routines to translate data formats.
+ *
+ * The data formats are:
+ *
+ * \li Host/Network		is the data in host format or local format
+ * \li signed/unsigned		Is the data signed?
+ * \li char/short/int/long/double
+ *				Is the data 8bits, 16bits, 32bits, 64bits
+ *				or a double?
+ *
+ * The method of conversion is to convert up to double then back down the
+ * the expected output format.
+ *
+ * Also included are library routines for conversion between the local host 64-bit
+ * ("double precision") representation, and 64-bit IEEE double
+ * precision representation, in "network order", i.e., big-endian, the
+ * MSB in byte [0], on the left.
+ *
+ * As a quick review, the IEEE double precision format is as follows:
+ * sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
+ * with a hidden leading one (0.1 binary).
+ *
+ * When the exponent is 0, IEEE defines a "denormalized number", which
+ * is not supported here.
+ *
+ * When the exponent is 2047 (all bits set), and:
+ *	all mantissa bits are zero,
+ *	value is infinity*sign,
+ *	mantissa is non-zero, and:
+ *		msb of mantissa=0:  signaling NAN
+ *		msb of mantissa=1:  quiet NAN
+ *
+ * Note that neither the input or output buffers need be word aligned,
+ * for greatest flexibility in converting data, even though this
+ * imposes a speed penalty here.
+ *
+ * These subroutines operate on a sequential block of numbers, to save
+ * on subroutine linkage execution costs, and to allow some hope for
+ * vectorization.
+ *
+ * On brain-damaged machines like the SGI 3-D, where type "double"
+ * allocates only 4 bytes of space, these routines *still* return 8
+ * bytes in the IEEE buffer.
+ *
+ * The base64 encoding algorithm is an adaptation of the libb64 project - for
+ * details, see http://sourceforge.net/projects/libb64
+ */
 /** @{*/
+/** @file bu/cv.h */
+/** @}*/
 
-/**
+/** @ingroup bu_conv */
+/** @defgroup bu_conv_network_sizes Network Data Sizes */
+/** @addtogroup bu_conv_network_sizes
  * Sizes of "network" format data.  We use the same convention as the
  * TCP/IP specification, namely, big-Endian, IEEE format, twos
  * complement.  This is the BRL-CAD external data representation
  * (XDR).  See also the support routines in libbu/xdr.c
- *
  */
+/** @{*/
 #define SIZEOF_NETWORK_SHORT  2	/* htons(), bu_gshort(), bu_pshort() */
 #define SIZEOF_NETWORK_LONG   4	/* htonl(), bu_glong(), bu_plong() */
 #define SIZEOF_NETWORK_FLOAT  4	/* htonf() */
 #define SIZEOF_NETWORK_DOUBLE 8	/* htond() */
+/** @}*/
 
-/**
- * provide for 64-bit network/host conversions using ntohl()
+/** @ingroup bu_conv */
+/** @defgroup bu_cv_masks Conversion Bit Masks */
+/** @addtogroup bu_cv_masks
+ * Mask definitions for CV
  */
-#ifndef HAVE_NTOHLL
-#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
-			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
-			(_val)) /* sorry pdp-endian */
-#endif
-#ifndef HAVE_HTONLL
-#  define htonll(_val) ntohll(_val)
-#endif
-
-
+/** @{*/
 #define CV_CHANNEL_MASK 0x00ff
 #define CV_HOST_MASK    0x0100
 #define CV_SIGNED_MASK  0x0200
 #define CV_TYPE_MASK    0x1c00  /* 0001 1100 0000 0000 */
 #define CV_CONVERT_MASK 0x6000  /* 0110 0000 0000 0000 */
+/** @}*/
 
+/** @ingroup bu_conv */
+/** @defgroup bu_cv_defs Conversion Defines */
+/** @addtogroup bu_cv_defs
+ * Various convenience definitions for CV
+ */
+/** @{*/
 #define CV_TYPE_SHIFT    10
 #define CV_CONVERT_SHIFT 13
 
@@ -92,22 +146,23 @@ __BEGIN_DECLS
 #define IND_LITTLE 2
 #define IND_ILL    3
 #define IND_CRAY   4
+/** @}*/
 
+/** @addtogroup bu_conv */
+/** @{*/
 
-/** @file libbu/convert.c
- *
- * Routines to translate data formats.  The data formats are:
- *
- * \li Host/Network		is the data in host format or local format
- * \li signed/unsigned		Is the data signed?
- * \li char/short/int/long/double
- *				Is the data 8bits, 16bits, 32bits, 64bits
- *				or a double?
- *
- * The method of conversion is to convert up to double then back down the
- * the expected output format.
- *
+/**
+ * provide for 64-bit network/host conversions using ntohl()
  */
+#ifndef HAVE_NTOHLL
+#  define ntohll(_val) ((bu_byteorder() == BU_LITTLE_ENDIAN) ?				\
+			((((uint64_t)ntohl((_val))) << 32) + ntohl((_val) >> 32)) : \
+			(_val)) /* sorry pdp-endian */
+#endif
+#ifndef HAVE_HTONLL
+#  define htonll(_val) ntohll(_val)
+#endif
+
 
 /**
  * convert from one format to another.
@@ -246,15 +301,95 @@ BU_EXPORT extern size_t bu_cv_itemlen(int cookie);
  */
 BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, void *in, int incookie, size_t count);
 
+/** @} */
+
+
+
+/** @ingroup bu_conv */
+/** @defgroup bu_cv_b64 Base64 Encoding and Decoding */
+/** @addtogroup bu_cv_b64
+ * Functions for b64 encoding and decoding.
+ */
+/** @{*/
 /**
- * bu_cv_ntohss
+ * Encode null terminated input char array to b64.
  *
- * @brief
- * Network TO Host Signed Short
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
+
+/**
+ * Encode length_in blocks in char array input to b64.
  *
- * It is assumed that this routine will only be called if there is
- * real work to do.  Ntohs does no checking to see if it is reasonable
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+
+BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, size_t length_in);
+
+/**
+ * Decode null terminated b64 array to output_buffer.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+
+BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
+
+/**
+ * Decode length_in blocks in b64 array input to output_buffer.
+ *
+ * Caller is responsible for freeing memory allocated to
+ * hold output buffer.
+ */
+BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, size_t length_in);
+/** @}*/
+
+
+/** @ingroup bu_conv */
+/** @defgroup bu_hton Network Byte-order Conversion */
+/** @addtogroup bu_hton
+ * Network to host and host to network conversion routines.
+ *
+ * It is assumed that these routines will only be called if there is
+ * real work to do - there is no checking to see if it is reasonable
  * to do any conversions.
+  */
+/** @ingroup bu_hton */
+/** @defgroup bu_htond Network Conversion - Doubles */
+/** @ingroup bu_hton */
+/** @defgroup bu_htonf Network Conversion - Floats */
+/** @ingroup bu_hton */
+/** @defgroup bu_htons Network Conversion - Signed Short */
+
+/** @addtogroup bu_htond
+ * @brief Convert doubles to host/network format.
+ */
+/** @{*/
+BU_EXPORT extern void bu_cv_htond(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
+BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
+/** @}*/
+
+
+/** @addtogroup bu_htonf
+ * @brief convert floats to host/network format
+ */
+/** @{*/
+BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
+BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
+				  const unsigned char *in,
+				  size_t count);
+/** @}*/
+
+/** @addtogroup bu_htons
+ * @brief Network to Host Signed Short
  *
  * @param in	generic pointer for input.
  * @param count	number of shorts to be generated.
@@ -263,6 +398,7 @@ BU_EXPORT extern size_t bu_cv_w_cookie(void *out, int outcookie, size_t size, vo
  *
  * @return	number of conversions done.
  */
+/** @{*/
 BU_EXPORT extern size_t bu_cv_ntohss(signed short *in, /* FIXME: in/out right? */
 				     size_t count,
 				     void *out,
@@ -295,114 +431,12 @@ BU_EXPORT extern size_t bu_cv_htonul(void *,
 				     size_t,
 				     unsigned long *,
 				     size_t);
-
-/** @file libbu/htond.c
- *
- * Convert doubles to host/network format.
- *
- * Library routines for conversion between the local host 64-bit
- * ("double precision") representation, and 64-bit IEEE double
- * precision representation, in "network order", i.e., big-endian, the
- * MSB in byte [0], on the left.
- *
- * As a quick review, the IEEE double precision format is as follows:
- * sign bit, 11 bits of exponent (bias 1023), and 52 bits of mantissa,
- * with a hidden leading one (0.1 binary).
- *
- * When the exponent is 0, IEEE defines a "denormalized number", which
- * is not supported here.
- *
- * When the exponent is 2047 (all bits set), and:
- *	all mantissa bits are zero,
- *	value is infinity*sign,
- *	mantissa is non-zero, and:
- *		msb of mantissa=0:  signaling NAN
- *		msb of mantissa=1:  quiet NAN
- *
- * Note that neither the input or output buffers need be word aligned,
- * for greatest flexibility in converting data, even though this
- * imposes a speed penalty here.
- *
- * These subroutines operate on a sequential block of numbers, to save
- * on subroutine linkage execution costs, and to allow some hope for
- * vectorization.
- *
- * On brain-damaged machines like the SGI 3-D, where type "double"
- * allocates only 4 bytes of space, these routines *still* return 8
- * bytes in the IEEE buffer.
- *
- */
-
-/**
- * Host to Network Doubles
- */
-BU_EXPORT extern void bu_cv_htond(unsigned char *out,
-				  const unsigned char *in,
-				  size_t count);
-
-/**
- * Network to Host Doubles
- */
-BU_EXPORT extern void bu_cv_ntohd(unsigned char *out,
-				  const unsigned char *in,
-				  size_t count);
-
-/** @file libbu/htonf.c
- *
- * convert floats to host/network format
- *
- * Host to Network Floats  +  Network to Host Floats.
- *
- */
-
-/**
- * Host to Network Floats
- */
-BU_EXPORT extern void bu_cv_htonf(unsigned char *out,
-				  const unsigned char *in,
-				  size_t count);
-
-/**
- * Network to Host Floats
- */
-BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
-				  const unsigned char *in,
-				  size_t count);
+/** @}*/
 
 
-/** @file libbu/b64.c
- *
- * A base64 encoding algorithm
- * For details, see http://sourceforge.net/projects/libb64
- *
- * Caller is responsible for freeing memory allocated to
- * hold output buffer.
- */
-BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
 
-BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, int length_in);
 
-BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
-
-BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, int length_in);
-
-/** @} */
-
-/* TODO - make a "deprecated.h" file to stuff deprecated things in */
-/** @addtogroup hton */
-/** @{ */
-/** @file libbu/htester.c
- *
- * @brief
- * Test network float conversion.
- *
- * Expected to be used in pipes, or with TTCP links to other machines,
- * or with files RCP'ed between machines.
- *
- */
-
-/** @file libbu/xdr.c
- *
+/*
  * DEPRECATED.
  *
  * Routines to implement an external data representation (XDR)
@@ -416,7 +450,7 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
  *
  */
 
-/**
+/*
  * DEPRECATED: use ntohll()
  * Macro version of library routine bu_glonglong()
  * The argument is expected to be of type "unsigned char *"
@@ -430,7 +464,7 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
      (((uint64_t)((_cp)[5])) << 16) |	\
      (((uint64_t)((_cp)[6])) <<  8) |	\
      ((uint64_t)((_cp)[7])))
-/**
+/*
  * DEPRECATED: use ntohl()
  * Macro version of library routine bu_glong()
  * The argument is expected to be of type "unsigned char *"
@@ -440,7 +474,7 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
      (((uint32_t)((_cp)[1])) << 16) |	\
      (((uint32_t)((_cp)[2])) <<  8) |	\
      ((uint32_t)((_cp)[3])))
-/**
+/*
  * DEPRECATED: use ntohs()
  * Macro version of library routine bu_gshort()
  * The argument is expected to be of type "unsigned char *"
@@ -449,32 +483,31 @@ BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const sign
     ((((uint16_t)((_cp)[0])) << 8) | \
      (_cp)[1])
 
-/**
+/*
  * DEPRECATED: use ntohs()
  */
 DEPRECATED BU_EXPORT extern uint16_t bu_gshort(const unsigned char *msgp);
 
-/**
+/*
  * DEPRECATED: use ntohl()
  */
 DEPRECATED BU_EXPORT extern uint32_t bu_glong(const unsigned char *msgp);
 
-/**
+/*
  * DEPRECATED: use htons()
  */
 DEPRECATED BU_EXPORT extern unsigned char *bu_pshort(unsigned char *msgp, uint16_t s);
 
-/**
+/*
  * DEPRECATED: use htonl()
  */
 DEPRECATED BU_EXPORT extern unsigned char *bu_plong(unsigned char *msgp, uint32_t l);
 
-/**
+/*
  * DEPRECATED: use htonll()
  */
 DEPRECATED BU_EXPORT extern unsigned char *bu_plonglong(unsigned char *msgp, uint64_t l);
 
-/** @} */
 
 __END_DECLS
 

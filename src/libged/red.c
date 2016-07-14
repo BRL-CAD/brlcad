@@ -1,7 +1,7 @@
 /*                        R E D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,15 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+
+#ifdef __restrict
+#  undef __restrict
+#endif
+#define __restrict /* quell gcc 4.1.2 system regex.h -pedantic-errors */
 #include <regex.h>
-#include "bio.h"
 
 #include "bu/getopt.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"
@@ -404,6 +408,8 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	rt_tree_array = (struct rt_tree_array *)bu_calloc(node_count, sizeof(struct rt_tree_array), "tree list");
 	/* As long as we have operators ahead of us in the tree, we have comb entries to handle */
 	while (ret == 0) {
+	    db_op_t op;
+
 	    ret = regexec(&combtree_op_regex, currptr, combtree_op_regex.re_nsub , result_locations, 0);
 	    bu_vls_sprintf(&curr_op_vls, "%s", bu_vls_addr(&next_op_vls));
 	    if (ret == 0) {
@@ -460,21 +466,22 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 	    if (bu_vls_addr(&curr_op_vls)[0] != '-')
 		nonsubs++;
 
+	    op = db_str2op(bu_vls_addr(&curr_op_vls));
+
 	    /* Add it to the combination */
-	    switch (bu_vls_addr(&curr_op_vls)[0]) {
+	    switch (op) {
 		case DB_OP_INTERSECT:
 		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
 		    break;
 		case DB_OP_SUBTRACT:
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
+		default:
+		    bu_vls_printf(gedp->ged_result_str, "build_comb: unrecognized relation %c (assume UNION)\n", bu_vls_addr(&curr_op_vls)[0]);
+		    /* fall through */
 		case DB_OP_UNION:
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
-		default:
-		    bu_vls_printf(gedp->ged_result_str,
-			"build_comb: unrecognized relation (assume UNION)\n");
-		    rt_tree_array[tree_index].tl_op = OP_UNION;
 	    }
 	    BU_ALLOC(tp, union tree);
 	    RT_TREE_INIT(tp);
@@ -517,33 +524,6 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
     bu_free(result_locations, "free regex results array\n");
     bu_close_mapped_file(redtmpfile);
 
-/* Debugging print stuff */
-/*
-  bu_avs_print(&avs, "Regex based avs build\n");
-  printf("\n");
-  int i, m;
-  fastf_t tmp;
-  for (i = 0; i < tree_index; i++) {
-  char op;
-
-  switch (rt_tree_array[i].tl_op) {
-  case OP_UNION:
-  op = DB_OP_UNION;
-  break;
-  case OP_INTERSECT:
-  op = DB_OP_INTERSECT;
-  break;
-  case OP_SUBTRACT:
-  op = DB_OP_SUBTRACT;
-  break;
-  default:
-  printf("write_comb: Illegal op code in tree\n");
-  }
-  printf(" %c %s\n", op, rt_tree_array[i].tl_tree->tr_l.tl_name);
-  bn_mat_print("in rt_tree_array", rt_tree_array[i].tl_tree->tr_l.tl_mat);
-  printf("\n");
-  }
-*/
     if (nonsubs == 0 && node_count) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot create a combination with all subtraction operators\n");
 	bu_avs_free(&avs);

@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='gdot1'>
+<refmeta>
+    <refentrytitle>G-DOT
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='software'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>User Commands</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>g-dot</refname>
+<refpurpose>BRL-CAD to DOT language converter</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>g-dot</command>
+    <arg choice='opt'>-o <replaceable>output.dot</replaceable></arg>
+    <arg choice='plain'><replaceable>database.g</replaceable></arg>
+    <arg choice='plain'><replaceable>object(s)</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>g-dot</command>
+converts the specified
+<emphasis remap='I'>object(s)</emphasis>
+from a BRL-CAD
+<emphasis remap='I'>database.g</emphasis>
+file to the
+<emphasis remap='I'>DOT</emphasis>
+language format.
+The
+<option>-o</option>
+option specifies an output .dot file (writes to stdout by default).</para>
+<para>
+The DOT language format is a plain text format for describing graphs. Programs
+like Graphviz, Tulip, OmniGraffle, and others can render .dot files (such as
+those produced by
+<command>g-dot</command>)
+as images.
+</para>
+</refsect1>
+
+<refsect1 xml:id='example'><title>EXAMPLE</title>
+<synopsis>
+$ g-dot -o <emphasis remap='I'>sample.dot sample.g sample_object</emphasis>
+</synopsis>
+</refsect1>
+
+<refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
+<para>Error messages are intended to be self-explanatory.</para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1997-2016 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

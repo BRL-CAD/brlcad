@@ -1,7 +1,7 @@
 /*                       D B _ T R E E . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
@@ -36,6 +35,7 @@
 
 
 #include "bu/parallel.h"
+#include "bu/path.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
@@ -195,6 +195,7 @@ db_pr_combined_tree_state(const struct combined_tree_state *ctsp)
     bu_log(" path='%s'\n", str);
     bu_free(str, "path string");
 }
+
 
 int
 db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *comb)
@@ -602,6 +603,7 @@ db_tree_del_dbleaf(union tree **tp, const char *cp, struct resource *resp, int n
     return -3;
 }
 
+
 void
 db_tree_mul_dbleaf(union tree *tp, const mat_t mat)
 {
@@ -864,6 +866,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
     return ret;
 }
 
+
 /**
  * Helper routine for db_recurse()
  */
@@ -965,6 +968,7 @@ out:
     return;
 }
 
+
 union tree *
 db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
 {
@@ -991,7 +995,7 @@ db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combine
 	       (void *)*region_start_statepp, tsp->ts_sofar);
 	bu_free(sofar, "path string");
 	if (bn_mat_ck("db_recurse() tsp->ts_mat at start", tsp->ts_mat) < 0) {
-	   bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
+	    bu_log("db_recurse(%s):  matrix does not preserve axis perpendicularity.\n",  dp->d_namep);
 	}
     }
 
@@ -1288,6 +1292,7 @@ db_ck_tree(const union tree *tp)
     }
 }
 
+
 void
 db_free_tree(union tree *tp, struct resource *resp)
 {
@@ -1395,6 +1400,7 @@ db_free_tree(union tree *tp, struct resource *resp)
     RT_FREE_TREE(tp, resp);
 }
 
+
 void
 db_left_hvy_node(union tree *tp)
 {
@@ -1415,6 +1421,7 @@ db_left_hvy_node(union tree *tp)
 	rhs->tr_b.tb_left = lhs;
     }
 }
+
 
 void
 db_non_union_push(union tree *tp, struct resource *resp)
@@ -1623,6 +1630,7 @@ db_non_union_push(union tree *tp, struct resource *resp)
     db_left_hvy_node(tp);
 }
 
+
 int
 db_count_tree_nodes(const union tree *tp, int count)
 {
@@ -1657,6 +1665,7 @@ db_count_tree_nodes(const union tree *tp, int count)
     }
     return 0;
 }
+
 
 int
 db_is_tree_all_unions(const union tree *tp)
@@ -2034,6 +2043,10 @@ db_walk_tree(struct db_i *dbip,
     RT_CK_DBTS(init_state);
     RT_CHECK_DBI(dbip);
 
+    if (rt_uniresource.re_magic != RESOURCE_MAGIC) {
+	rt_init_resource(&rt_uniresource, 0, NULL);
+    }
+
     if (init_state->ts_rtip == NULL || ncpu == 1) {
 	resp = &rt_uniresource;
     } else {
@@ -2196,6 +2209,7 @@ db_walk_tree(struct db_i *dbip,
 	return 0;	/* OK */
     }
 }
+
 
 void
 db_apply_anims(struct db_full_path *pathp, struct directory *dp, mat_t stack, mat_t arc, struct mater_info *materp)
@@ -2553,6 +2567,7 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
     int argc;
     char **argv;
     union tree *tp = TREE_NULL;
+    db_op_t op;
 
     if (!resp) {
 	resp = &rt_uniresource;
@@ -2562,142 +2577,144 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
     /* Skip over leading spaces in input */
     while (*str && isspace((int)*str)) str++;
 
-    /*XXX Temporarily use brlcad_interp until a replacement for Tcl_SplitList is created */
-    if (Tcl_SplitList(brlcad_interp, str, &argc, (const char ***)&argv) != TCL_OK)
+    if (bu_argv_from_tcl_list(str, &argc, (const char ***)&argv) != 0)
 	return TREE_NULL;
 
     if (argc <= 0 || argc > 3) {
 	bu_vls_printf(vls,
 		      "db_tree_parse: tree node does not have 1, 2 or 3 elements: %s\n",
 		      str);
-	goto out;
+	bu_free((char *)argv, "argv");
+	return TREE_NULL;
     }
 
     if (argv[0][1] != '\0') {
 	bu_vls_printf(vls, "db_tree_parse() operator is not single character: %s", argv[0]);
-	goto out;
+	bu_free((char *)argv, "argv");
+	return TREE_NULL;
     }
 
-    switch (argv[0][0]) {
-	case 'l':
-	    /* Leaf node: {l name {mat}} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_op = OP_DB_LEAF;
-	    tp->tr_l.tl_name = bu_strdup(argv[1]);
-	    /* If matrix not specified, NULL pointer ==> identity matrix */
-	    tp->tr_l.tl_mat = NULL;
-	    if (argc == 3) {
-		mat_t m;
-		/* decode also recognizes "I" notation for identity */
-		if (bn_decode_mat(m, argv[2]) != 16) {
-		    bu_vls_printf(vls,
-				  "db_tree_parse: unable to parse matrix '%s' using identity",
-				  argv[2]);
-		    break;
+    op = db_str2op(argv[0]);
+
+    if (op == DB_OP_NULL) {
+
+	/* didn't find a csg operator, so see what other tree element it is */
+
+	switch (argv[0][0]) {
+	    case 'l':
+		/* Leaf node: {l name {mat}} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_op = OP_DB_LEAF;
+		tp->tr_l.tl_name = bu_strdup(argv[1]);
+		/* If matrix not specified, NULL pointer ==> identity matrix */
+		tp->tr_l.tl_mat = NULL;
+		if (argc == 3) {
+		    mat_t m;
+		    /* decode also recognizes "I" notation for identity */
+		    if (bn_decode_mat(m, argv[2]) != 16) {
+			bu_vls_printf(vls,
+				      "db_tree_parse: unable to parse matrix '%s' using identity",
+				      argv[2]);
+			break;
+		    }
+		    if (bn_mat_is_identity(m))
+			break;
+		    if (bn_mat_ck("db_tree_parse", m)) {
+			bu_vls_printf(vls,
+				      "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
+			break;
+		    }
+		    /* Finally, a good non-identity matrix, dup & save it */
+		    tp->tr_l.tl_mat = bn_mat_dup(m);
 		}
-		if (bn_mat_is_identity(m))
-		    break;
-		if (bn_mat_ck("db_tree_parse", m)) {
+		break;
+
+	    case '!':
+		/* Unary: not {! {lhs}} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_NOT;
+		goto unary;
+	    case 'G':
+		/* Unary: GUARD {G {lhs}} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_GUARD;
+		goto unary;
+	    case 'X':
+		/* Unary: XNOP {X {lhs}} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_XNOP;
+		goto unary;
+	    unary:
+		if (argv[1] == (char *)NULL) {
 		    bu_vls_printf(vls,
-				  "db_tree_parse: matrix '%s', does not preserve axis perpendicularity, using identity", argv[2]);
-		    break;
+				  "db_tree_parse: unary operator %s has insufficient operands in %s\n",
+				  argv[0], str);
+		    bu_free((char *)tp, "union tree");
+		    tp = TREE_NULL;
 		}
-		/* Finally, a good non-identity matrix, dup & save it */
-		tp->tr_l.tl_mat = bn_mat_dup(m);
-	    }
-	    break;
+		tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+		if (tp->tr_b.tb_left == TREE_NULL) {
+		    bu_free((char *)tp, "union tree");
+		    tp = TREE_NULL;
+		}
+		break;
 
-	case DB_OP_UNION:
-	    /* Binary: Union: {u {lhs} {rhs}} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_UNION;
-	    goto binary;
-	case 'n':
-	case DB_OP_INTERSECT:
-	    /* Binary: Intersection */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_INTERSECT;
-	    goto binary;
-	case DB_OP_SUBTRACT:
-	    /* Binary: Union */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_SUBTRACT;
-	    goto binary;
-	case '^':
-	    /* Binary: Xor */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_XOR;
-	    goto binary;
-	binary:
-	    if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
-		bu_vls_printf(vls,
-			      "db_tree_parse: binary operator %s has insufficient operands in %s",
-			      argv[0], str);
-		RT_FREE_TREE(tp, resp);
-		tp = TREE_NULL;
-		goto out;
-	    }
-	    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
-	    if (tp->tr_b.tb_left == TREE_NULL) {
-		RT_FREE_TREE(tp, resp);
-		tp = TREE_NULL;
-		goto out;
-	    }
-	    tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
-	    if (tp->tr_b.tb_right == TREE_NULL) {
-		/* free the left we just tree parsed */
-		db_free_tree(tp->tr_b.tb_left, resp);
-		RT_FREE_TREE(tp, resp);
-		tp = TREE_NULL;
-		goto out;
-	    }
-	    break;
+	    case 'N':
+		/* NOP: no args.  {N} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_XNOP;
+		break;
 
-	case '!':
-	    /* Unary: not {! {lhs}} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_NOT;
-	    goto unary;
-	case 'G':
-	    /* Unary: GUARD {G {lhs}} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_GUARD;
-	    goto unary;
-	case 'X':
-	    /* Unary: XNOP {X {lhs}} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_XNOP;
-	    goto unary;
-	unary:
-	    if (argv[1] == (char *)NULL) {
-		bu_vls_printf(vls,
-			      "db_tree_parse: unary operator %s has insufficient operands in %s\n",
-			      argv[0], str);
-		bu_free((char *)tp, "union tree");
-		tp = TREE_NULL;
-		goto out;
-	    }
-	    tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
-	    if (tp->tr_b.tb_left == TREE_NULL) {
-		bu_free((char *)tp, "union tree");
-		tp = TREE_NULL;
-		goto out;
-	    }
-	    break;
+	    default:
+		bu_vls_printf(vls, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
+		break;
+	}
 
-	case 'N':
-	    /* NOP: no args.  {N} */
-	    RT_GET_TREE(tp, resp);
-	    tp->tr_b.tb_op = OP_XNOP;
-	    break;
+    } else {
 
-	default:
-	    bu_vls_printf(vls, "db_tree_parse: unable to interpret operator '%s'\n", argv[1]);
+	/* found a csg operator */
+
+	switch (op) {
+	    default:
+	    case DB_OP_UNION:
+		/* Binary: Union: {u {lhs} {rhs}} */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_UNION;
+		break;
+	    case DB_OP_INTERSECT:
+		/* Binary: Intersection */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_INTERSECT;
+		break;
+	    case DB_OP_SUBTRACT:
+		/* Binary: Union */
+		RT_GET_TREE(tp, resp);
+		tp->tr_b.tb_op = OP_SUBTRACT;
+		break;
+	}
+
+	if (argv[1] == (char *)NULL || argv[2] == (char *)NULL) {
+	    bu_vls_printf(vls,
+			  "db_tree_parse: binary operator %s has insufficient operands in %s",
+			  argv[0], str);
+	    RT_FREE_TREE(tp, resp);
+	    tp = TREE_NULL;
+	}
+	tp->tr_b.tb_left = db_tree_parse(vls, argv[1], resp);
+	if (tp->tr_b.tb_left == TREE_NULL) {
+	    RT_FREE_TREE(tp, resp);
+	    tp = TREE_NULL;
+	}
+	tp->tr_b.tb_right = db_tree_parse(vls, argv[2], resp);
+	if (tp->tr_b.tb_right == TREE_NULL) {
+	    /* free the left we just tree parsed */
+	    db_free_tree(tp->tr_b.tb_left, resp);
+	    RT_FREE_TREE(tp, resp);
+	    tp = TREE_NULL;
+	}
     }
 
-out:
-    /*XXX Temporarily using tcl for its Tcl_SplitList */
-    Tcl_Free((char *)argv);		/* not bu_free(), not free() */
+    bu_free((char *)argv, "argv");
     return tp;
 }
 

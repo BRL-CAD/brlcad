@@ -58,7 +58,7 @@ elements.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>nastran-g -i nastran.file -o sample.g</emphasis>
+$ nastran-g -i <emphasis remap='I'>nastran.file</emphasis> -o <emphasis remap='I'>sample.g</emphasis>
 </synopsis>
 </refsect1>
 
@@ -73,7 +73,7 @@ $ <emphasis remap='I'>nastran-g -i nastran.file -o sample.g</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1998-2014 by the United States
+<para>This software is Copyright (c) 1998-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

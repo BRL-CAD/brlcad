@@ -1,7 +1,7 @@
 /*                 SurfaceCurve.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -134,7 +134,7 @@ SurfaceCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		{
 		    PCurveOrSurface *aPCOS = new PCurveOrSurface();
 
-		    if (!aPCOS->Load(step, p_or_s)) {
+		    if (!aPCOS->Load(step, (SDAI_Application_instance *)p_or_s)) {
 			std::cout << CLASSNAME << ":Error loading PCurveOrSurface select." << std::endl;
 			delete aPCOS;
 			goto step_error;

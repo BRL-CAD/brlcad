@@ -30,6 +30,7 @@ set(docbook_mann_EN
   bb.xml
   bev.xml
   bo.xml
+  bot.xml
   bolt.xml
   bot_condense.xml
   bot_decimate.xml
@@ -258,12 +259,11 @@ set(docbook_mann_INTRO
 set_source_files_properties(gr.xml PROPERTIES EXTRA_MAN_OUTPUTS "dg.nged")
 
 DOCBOOK_TO_HTML(mann docbook_mann_EN html/mann/en "")
+DOCBOOK_TO_PHP(mann docbook_mann_EN html/mann/en "")
 DOCBOOK_TO_HTML(mann docbook_mann_INTRO html/mann/en "")
+DOCBOOK_TO_PHP(mann docbook_mann_INTRO html/mann/en "")
 DOCBOOK_TO_MAN(mann docbook_mann_EN n nged mann "")
-
-if(BRLCAD_EXTRADOCS_PDF_MAN)
-  DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
-endif(BRLCAD_EXTRADOCS_PDF_MAN)
+DOCBOOK_TO_PDF(mann docbook_mann_EN pdf/mann/en "")
 
 # Local Variables:
 # tab-width: 8

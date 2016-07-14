@@ -1,7 +1,7 @@
 /*                          L O W P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,16 +25,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 
 
 #define MAX_LINE 10000		/* Max pixels/line */

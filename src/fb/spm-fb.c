@@ -1,7 +1,7 @@
 /*                        S P M - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,11 +26,11 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
-#include "spm.h"
+#include "bn/spm.h"
 
 
 static fb *fbp;
@@ -44,7 +44,7 @@ static int square = 0;
 static int vsize;
 
 static char usage[] = "\
-Usage: spm-fb [-h -s] [-F framebuffer]\n\
+Usage: spm-fb [-s] [-F framebuffer]\n\
 	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
 	vsize [filename]\n";
 
@@ -54,12 +54,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hF:sS:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "F:sS:W:N:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		scr_height = scr_width = 1024;
-		break;
 	    case 'F':
 		framebuffer = bu_optarg;
 		break;
@@ -76,7 +72,7 @@ get_args(int argc, char **argv)
 		scr_height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

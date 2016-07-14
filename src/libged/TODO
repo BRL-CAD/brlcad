@@ -214,3 +214,29 @@ Be specific.
 * 'undo' command: undo the previous command or previous N commands.
   Should be stored as a chain or tree of events so you can cycle
   forwards or backwards vim/emacs style.  See redo command above.
+
+* composable API, so you can pass results down similar to this
+  database transaction, but less verbose:
+
+  records = db::select(
+              "products",
+              db::intersection(
+                db::intersection(
+                  db::compare(
+                    db::field("category"),
+                    db::equal,
+                    db::string("book")),
+                  db::compare(
+                    db::field("desc"),
+                    db::like,
+                    db::string("%algorithms%"))),
+                db::compare(
+                  db::field("stock"),
+                  db::greater_than_or_equal,
+                  db::integer(1))));
+
+  which amounts to the following in SQL syntax:
+
+    SELECT * FROM products
+    WHERE category = 'book' AND desc LIKE '%algorithms%' AND stock >= 1;
+

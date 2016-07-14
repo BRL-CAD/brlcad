@@ -1,7 +1,7 @@
 /*                       G E D _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 
 #include "common.h"
 
-#include "bio.h"
 
 #include "ged.h"
 #include "./ged_private.h"

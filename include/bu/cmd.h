@@ -1,7 +1,7 @@
 /*                          C M D . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,14 +18,12 @@
  * information.
  */
 
-/** @addtogroup cmd */
-/** @{ */
-/** @file cmdhist.c
- *
+/** @addtogroup bu_cmd
  * @brief
- * Routines for maintaining a command history
- *
+ * Routine(s) for processing subcommands
  */
+/** @{ */
+/** @file bu/cmd.h */
 
 #ifndef CMD_H
 #define CMD_H
@@ -35,30 +33,17 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
-#ifdef HAVE_SYS_SELECT_H
-#  include <sys/select.h> /* for timeal */
-#endif
 #include <time.h>
 
-/* for timeval via windows.h */
-#if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  include <winsock.h>
-#  include <windows.h>
-#  include <io.h>
-
-#   undef rad1 /* Win32 radio button 1 */
-#   undef rad2 /* Win32 radio button 2 */
-#   undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#   undef IN
-#   undef OUT
-#endif
-
-#include "bu.h"
-
+#include "bsocket.h" /* for timeval */
+#include "bio.h"
 
 #define BU_CMD_NULL (int (*)(void *, int, const char **))NULL
 
+#include "bu/defines.h"
+#include "bu/list.h"
+#include "bu/log.h"
+#include "bu/vls.h"
 
 /**
  * Generic keyword-to-command callback interface intended for use with
@@ -88,6 +73,8 @@ struct bu_cmdhist_obj {
 
 __BEGIN_DECLS
 
+/** @brief Routine(s) for processing subcommands */
+
 /**
  * This function is intended to be used for parsing subcommands.  If
  * the command is found in the array of commands, the associated
@@ -105,8 +92,9 @@ __BEGIN_DECLS
  */
 BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *argv[], int cmd_index, void *data, int *result);
 
+/** @brief Routines for maintaining a command history */
+
 /**
- * @brief
  * Prints out the command history.
  *
  * USAGE:
@@ -115,7 +103,6 @@ BU_EXPORT extern int bu_cmd(const struct bu_cmdtab *cmds, int argc, const char *
 BU_EXPORT extern int bu_cmdhist_history(void *data, int argc, const char **argv);
 
 /**
- * @brief
  * Add a command to the history list.
  *
  * USAGE:

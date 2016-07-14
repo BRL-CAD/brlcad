@@ -103,7 +103,7 @@
 	</itemizedlist>
       </para>
 
-      <section><info><title>Union</title></info>
+      <section xml:id="Union"><info><title>Union</title></info>
 
 	<para>
 	  The union operator, u, joins shapes so that any point in at least one of
@@ -128,7 +128,7 @@
       </informalfigure>
       </section>
 
-      <section><info><title>Subtraction</title></info>
+      <section xml:id="Subtraction"><info><title>Subtraction</title></info>
 
 	<para>
 	  When a primitive shape has a second, overlapping shape subtracted from it,
@@ -164,7 +164,7 @@
 
       </section>
 
-      <section><info><title>Intersection</title></info>
+      <section xml:id="Intersection"><info><title>Intersection</title></info>
 
 
 	<para>

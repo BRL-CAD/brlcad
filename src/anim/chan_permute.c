@@ -1,7 +1,7 @@
 /*                  C H A N _ P E R M U T E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -44,7 +44,9 @@
 #include <string.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 
 #define MAXLEN 40

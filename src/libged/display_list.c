@@ -1,7 +1,7 @@
 /*                  D I S P L A Y _ L I S T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,17 +27,19 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "plot3.h"
+#include "bu/ptbl.h"
+#include "bu/str.h"
+#include "bn/plot3.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 #include "./ged_private.h"
 
 
 
 /* defined in draw_calc.cpp */
 extern fastf_t brep_est_avg_curve_len(struct rt_brep_internal *bi);
+extern void createDListSolid(struct solid *sp);
 
 struct display_list *
 dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip,
@@ -235,14 +237,16 @@ dl_erasePathFromDisplay(struct bu_list *hdlp,
 
 	    /* Free up the solids list associated with this display list */
 	    while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-		dp = FIRST_SOLID(sp);
-		RT_CK_DIR(dp);
-		if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-		    (void)db_dirdelete(dbip, dp);
-		}
+		if (sp) {
+		    dp = FIRST_SOLID(sp);
+		    RT_CK_DIR(dp);
+		    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+			(void)db_dirdelete(dbip, dp);
+		    }
 
-		BU_LIST_DEQUEUE(&sp->l);
-		FREE_SOLID(sp, &freesolid->l);
+		    BU_LIST_DEQUEUE(&sp->l);
+		    FREE_SOLID(sp, &freesolid->l);
+		}
 	    }
 
 	    BU_LIST_DEQUEUE(&gdlp->l);
@@ -345,7 +349,7 @@ _dl_eraseAllNamesFromDisplay(struct bu_list *hdlp, struct db_i *dbip,
 
 	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	dup_path = strdup(bu_vls_addr(&gdlp->dl_path));
+	dup_path = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	tok = strtok(dup_path, "/");
 	while (tok) {
 	    if (first) {
@@ -503,14 +507,16 @@ _dl_freeDisplayListItem (struct db_i *dbip,
 
     /* Free up the solids list associated with this display list */
     while (BU_LIST_WHILE(sp, solid, &gdlp->dl_headSolid)) {
-	dp = FIRST_SOLID(sp);
-	RT_CK_DIR(dp);
-	if (dp->d_addr == RT_DIR_PHONY_ADDR) {
-	    (void)db_dirdelete(dbip, dp);
-	}
+	if (sp) {
+	    dp = FIRST_SOLID(sp);
+	    RT_CK_DIR(dp);
+	    if (dp->d_addr == RT_DIR_PHONY_ADDR) {
+		(void)db_dirdelete(dbip, dp);
+	    }
 
-	BU_LIST_DEQUEUE(&sp->l);
-	FREE_SOLID(sp, &freesolid->l);
+	    BU_LIST_DEQUEUE(&sp->l);
+	    FREE_SOLID(sp, &freesolid->l);
+	}
     }
 
     /* Free up the display list */
@@ -668,7 +674,7 @@ solid_append_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 void
-dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct display_list *), struct solid *freesolid)
+dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode, int hiddenLine, struct bu_list *vhead, const struct db_full_path *pathp, struct db_tree_state *tsp, unsigned char *wireframe_color_override, void (*callback)(struct solid *sp), struct solid *freesolid)
 {
     struct solid *sp;
     GET_SOLID(sp, &freesolid->l);
@@ -700,8 +706,8 @@ dl_add_path(struct display_list *gdlp, int dashflag, int transparency, int dmode
     BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
     bu_semaphore_release(RT_SEM_MODEL);
 
-    if (callback != GED_CREATE_VLIST_CALLBACK_PTR_NULL) {
-	(*callback)(gdlp);
+    if (callback != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL) {
+	(*callback)(sp);
     }
 
 }
@@ -873,7 +879,6 @@ draw_solid_wireframe(struct solid *sp, struct db_i *dbip, struct db_tree_state *
     struct rt_db_internal *ip = &dbintern;
 
     BU_LIST_INIT(&vhead);
-    ret = -1;
 
     ret = rt_db_get_internal(ip, DB_FULL_PATH_CUR_DIR(&sp->s_fullpath),
 	    dbip, sp->s_mat, &rt_uniresource);
@@ -1065,7 +1070,11 @@ append_solid_to_display_list(
 
     } else {
         if (bview_data->wireframe_color_override) {
-            solid_set_color_info(sp, (unsigned char *)&(bview_data->wireframe_color), tsp);
+	    unsigned char wire_color[3];
+	    wire_color[RED] = (unsigned char)bview_data->wireframe_color[RED];
+	    wire_color[GRN] = (unsigned char)bview_data->wireframe_color[GRN];
+	    wire_color[BLU] = (unsigned char)bview_data->wireframe_color[BLU];
+            solid_set_color_info(sp, wire_color, tsp);
         } else {
             solid_set_color_info(sp, NULL, tsp);
         }
@@ -1098,8 +1107,9 @@ solid_copy_vlist(struct solid *sp, struct bn_vlist *vlist)
 }
 
 int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
-       	void (*callback_create)(struct display_list *), void (*callback_free)(unsigned int, int),
-       	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode, struct solid *freesolid)
+       	void (*callback_create)(struct solid *), void (*callback_free)(unsigned int, int),
+       	char *name, struct bu_list *vhead, long int rgb, int copy, fastf_t transparency, int dmode,
+       	struct solid *freesolid, int csoltab)
 {
     struct directory *dp;
     struct solid *sp;
@@ -1160,10 +1170,11 @@ int invent_solid(struct bu_list *hdlp, struct db_i *dbip,
     /* Solid successfully drawn, add to linked list of solid structs */
     BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
 
-    color_soltab(sp);
+    if (csoltab)
+	color_soltab(sp);
 
-    if (callback_create != GED_CREATE_VLIST_CALLBACK_PTR_NULL)
-	(*callback_create)(gdlp);
+    if (callback_create != GED_CREATE_VLIST_SOLID_CALLBACK_PTR_NULL)
+	(*callback_create)(sp);
 
     return 0;           /* OK */
 
@@ -1252,12 +1263,15 @@ dl_set_wflag(struct bu_list *hdlp, int wflag)
 void
 dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, int), struct solid *freesolid)
 {
-    struct solid *sp;
-    struct display_list *gdlp;
-    struct directory *dp;
+    struct solid *sp = SOLID_NULL;
+    struct display_list *gdlp = NULL;
+    struct bu_ptbl dls = BU_PTBL_INIT_ZERO;
+    struct directory *dp = RT_DIR_NULL;
+    size_t i = 0;
 
     while (BU_LIST_WHILE(gdlp, display_list, hdlp)) {
-	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL)
+
+	if (callback != GED_FREE_VLIST_CALLBACK_PTR_NULL && BU_LIST_NON_EMPTY(&gdlp->dl_headSolid))
 	    (*callback)(BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist,
 		    BU_LIST_LAST(solid, &gdlp->dl_headSolid)->s_dlist -
 		    BU_LIST_FIRST(solid, &gdlp->dl_headSolid)->s_dlist + 1);
@@ -1276,9 +1290,18 @@ dl_zap(struct bu_list *hdlp, struct db_i *dbip, void (*callback)(unsigned int, i
 	}
 
 	BU_LIST_DEQUEUE(&gdlp->l);
+	/* queue up for free */
+	bu_ptbl_ins_unique(&dls, (long *)gdlp);
+	gdlp = NULL;
+    }
+
+    /* Free all display lists */
+    for(i = 0; i < BU_PTBL_LEN(&dls); i++) {
+	gdlp = (struct display_list *)BU_PTBL_GET(&dls, i);
 	bu_vls_free(&gdlp->dl_path);
 	free((void *)gdlp);
     }
+    bu_ptbl_free(&dls);
 }
 
 int
@@ -2198,13 +2221,13 @@ dl_print_schain(struct bu_list *hdlp, struct db_i *dbip, int lvl, int vlcmds, st
 
 		    for (i = 0; i < nused; i++, cmd++, pt++) {
 			bu_vls_printf(vls, "  %s (%g, %g, %g)\n",
-				rt_vlist_cmd_descriptions[*cmd],
-				V3ARGS(*pt));
+				      bn_vlist_get_cmd_description(*cmd),
+				      V3ARGS(*pt));
 		    }
 		}
 
 		bu_vls_printf(vls, "  %d vlist structures, %d pts\n", nvlist, npts);
-		bu_vls_printf(vls, "  %d pts (via rt_ck_vlist)\n", rt_ck_vlist(&(sp->s_vlist)));
+		bu_vls_printf(vls, "  %d pts (via bn_ck_vlist)\n", bn_ck_vlist(&(sp->s_vlist)));
 	    }
 
 	    gdlp = next_gdlp;

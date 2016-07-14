@@ -1,7 +1,7 @@
 /*                    F B _ G E N E R I C . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,6 +38,7 @@
 # include <strings.h>
 #endif
 
+#include "bsocket.h"
 #include "bio.h"
 
 #include "bu/color.h"
@@ -53,6 +54,9 @@
  */
 static
 fb *_if_list[] = {
+#ifdef IF_OSGL
+    &osgl_interface,
+#endif
 #ifdef IF_WGL
     &wgl_interface,
 #endif
@@ -68,10 +72,6 @@ fb *_if_list[] = {
 #ifdef IF_QT
     &qt_interface,
 #endif
-#ifdef IF_OSGL
-    &osgl_interface,
-#endif
-
     &debug_interface,
 /* never get any of the following by default */
     &stk_interface,
@@ -94,13 +94,12 @@ void fb_put(fb *ifp)
 	BU_PUT(ifp, struct fb_internal);
 }
 
-void fb_set_interface(fb *ifp, const char *interface)
+void fb_set_interface(fb *ifp, const char *interface_type)
 {
     int i = 0;
     if (!ifp) return;
     while (_if_list[i] != FB_NULL) {
-	if (bu_strncmp(interface, _if_list[i]->if_name+5,
-		    strlen(_if_list[i]->if_name-5)) == 0) {
+	if (bu_strncmp(interface_type, _if_list[i]->if_name+5, strlen(interface_type)) == 0) {
 	    /* found it, copy its struct in */
 	    *ifp = *(_if_list[i]);
 	    return;
@@ -188,7 +187,6 @@ long fb_get_pagebuffer_pixel_size(fb *ifp)
     if (!ifp) return 0;
     return ifp->if_ppixels;
 }
-
 
 int fb_is_set_fd(fb *ifp, fd_set *infds)
 {

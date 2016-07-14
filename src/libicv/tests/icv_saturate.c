@@ -1,7 +1,7 @@
 /*                  I C V _ S A T U R A T E . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,16 +26,17 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "bu/getopt.h"
 #include "icv.h"
 
 void usage()
 {
     bu_log("\
-	    [-h] [-f fraction ]\n\
+	    [-f fraction ]\n\
 	    [-p -d -m] \n\
 	    [-o out_file] [file] > [out_file]\n");
 
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     icv_image_t *bif;
     double fraction = 0;
-    ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
+    mime_image_t format=MIME_IMAGE_AUTO;
 
     if (argc<2) {
 	usage();
@@ -70,18 +71,17 @@ int main(int argc, char* argv[])
 		fraction = atof(bu_optarg);
 		break;
 	    case 'b' :
-		format = ICV_IMAGE_BW;
+		format = MIME_IMAGE_BW;
 		break;
 	    case 'p' :
-		format = ICV_IMAGE_PIX;
+		format = MIME_IMAGE_PIX;
 		break;
 	    case 'd' :
-		format = ICV_IMAGE_DPIX;
+		format = MIME_IMAGE_DPIX;
 		break;
 	    case 'm' :
-		format = ICV_IMAGE_PPM;
+		format = MIME_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;

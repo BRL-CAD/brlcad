@@ -1,7 +1,7 @@
 /*                        F B F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -58,9 +58,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "vmath.h"
 #include "fb.h"			/* BRL-CAD package libfb.a interface */
 #include "pkg.h"
 
@@ -224,11 +224,8 @@ main(int argc, char **argv)
 
 	    /* Use smaller actual input size instead of request. */
 
-	    if (wt < src_width)
-		src_width = wt;
-
-	    if (ht < src_height)
-		src_height = ht;
+	    V_MIN(src_width, wt);
+	    V_MIN(src_height, ht);
 
 	    if ((pix = (RGBpixel *)malloc((size_t)src_width * (size_t)src_height * sizeof(RGBpixel))) == NULL)
 		Fatal(fbp, "Not enough memory for pixel array");
@@ -261,19 +258,13 @@ main(int argc, char **argv)
 
 	/* Use smaller actual frame buffer size for output. */
 
-	if (wt < dst_width)
-	    dst_width = wt;
-
-	if (ht < dst_height)
-	    dst_height = ht;
+	V_MIN(dst_width, wt);
+	V_MIN(dst_height, ht);
 
 	/* Avoid selecting pixels outside the input image. */
 
-	if (dst_width > src_width)
-	    dst_width = src_width;
-
-	if (dst_height > src_height)
-	    dst_height = src_height;
+	V_MIN(dst_width, src_width);
+	V_MIN(dst_height, src_height);
     }
 
     /* The following is probably an optimally fast shuffling

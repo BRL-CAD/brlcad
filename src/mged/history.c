@@ -1,7 +1,7 @@
 /*                       H I S T O R Y . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <string.h>
 #include <time.h>
@@ -35,8 +34,6 @@
 
 #include "tcl.h"
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "./mged.h"

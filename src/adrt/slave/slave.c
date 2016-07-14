@@ -1,7 +1,7 @@
 /*                         S L A V E . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,11 +39,11 @@
 #  include <getopt.h>
 #endif
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "camera.h"
 #include "adrt.h"
-#include "tie.h"
+#include "rt/tie.h"
 #include "render_util.h"
 
 #include "slave.h"
@@ -432,7 +432,7 @@ static struct option longopts[] =
     { "version",	no_argument,		NULL, 'v' },
 };
 #endif
-static char shortopts[] = "Xdhp:t:v";
+static char shortopts[] = "Xdhp:t:vh?";
 
 
 static void finish(int sig)
@@ -500,10 +500,7 @@ main(int argc, char **argv)
 	    case 't':
 		bu_strlcpy(temp, bu_optarg, 5);
 		threads = atoi(temp);
-		if (threads < 0)
-			threads = 0;
-		else if (threads > 32)
-			threads = 32;
+		CLAMP(threads, 0, 32);
 		break;
 
 	    case 'v':

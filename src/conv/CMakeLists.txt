@@ -10,10 +10,14 @@ add_definitions(
   )
 
 add_subdirectory(3dm)
+add_subdirectory(asc)
+add_subdirectory(gcv)
 add_subdirectory(step)
+add_subdirectory(csg)
 
 add_subdirectory(iges)
 add_subdirectory(intaval)
+add_subdirectory(ply)
 add_subdirectory(raw)
 add_subdirectory(vdeck)
 
@@ -27,20 +31,11 @@ set(CONV_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${TCLCAD_INCLUDE_DIRS}
   ${REGEX_INCLUDE_DIR}
+  ${WFOBJ_INCLUDE_DIRS}
   )
 BRLCAD_INCLUDE_DIRS(CONV_INCLUDE_DIRS)
 
-BRLCAD_ADDEXEC(asc2dsp asc/asc2dsp.c libbu)
-
-BRLCAD_ADDEXEC(asc2g asc/asc2g.c "libtclcad;libged;libwdb;librt;libbu;${WINSOCK_LIB};${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(asc2pix asc/asc2pix.c libbu)
-
-BRLCAD_ADDEXEC(pix2asc asc/pix2asc.c libbu)
-
 BRLCAD_ADDEXEC(asc-nmg nmg/asc-nmg.c "libwdb;${M_LIBRARY}")
-
-BRLCAD_ADDEXEC(g2asc asc/g2asc.c "librt;libbu;${WINSOCK_LIB}")
 
 BRLCAD_ADDEXEC(bot-bldxf dxf/bot-bldxf.c "librt;libbu;${M_LIBRARY}")
 
@@ -59,7 +54,7 @@ set(comgeom-g_SRCS
   )
 BRLCAD_ADDEXEC(comgeom-g "${comgeom-g_SRCS}" "libwdb;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu;libsysv")
+BRLCAD_ADDEXEC(conv-vg2g conv-vg2g.c "libbu")
 
 BRLCAD_ADDEXEC(cy-g cy-g.c "libwdb;${M_LIBRARY}")
 
@@ -69,11 +64,11 @@ BRLCAD_ADDEXEC(dem-g dem-g.c "libwdb;${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(dxf-g dxf/dxf-g.c "libwdb;librt;libbn;libbu;${M_LIBRARY}")
 
-BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${M_LIBRARY}")
+BRLCAD_ADDEXEC(enf-g enf-g.c "libwdb;${TCL_LIBRARY};${M_LIBRARY}")
 
 BRLCAD_ADDEXEC(euclid_format euclid/euclid_format.c librt)
 
-BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu;libsysv")
+BRLCAD_ADDEXEC(euclid_unformat euclid/euclid_unformat.c "libbn;libbu")
 
 BRLCAD_ADDEXEC(euclid-g euclid/euclid-g.c libwdb)
 
@@ -113,13 +108,9 @@ BRLCAD_ADDEXEC(g-acad g-acad.c "librt;libbu")
 
 BRLCAD_ADDEXEC(g-obj g-obj.c "librt;libbu")
 
-BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
+BRLCAD_ADDEXEC(obj-g obj-g.c "libbu;libbn;librt;libwdb;libwfobj")
 
-# TODO - Until wfobj functionality is available as a libgcv API,
-# obj-g build logic is living in src/libgcv/wfobj. Once an API
-# for libgcv is devised that exposes the wfobj functionality move
-# obj-g build logic back here
-#BRLCAD_ADDEXEC(obj-g ${OBJ_G_SRCS} "libbu;libbn;librt;libwdb;libgcv")
+BRLCAD_ADDEXEC(g-voxel g-voxel.c "librt;libbu;libwdb;libanalyze;")
 
 BRLCAD_ADDEXEC(patch-g patch/patch-g.c "libwdb;librt;libbu;${M_LIBRARY}")
 
@@ -142,8 +133,6 @@ BRLCAD_ADDEXEC(nmg-bot nmg/nmg-bot.c libwdb)
 BRLCAD_ADDEXEC(nmg-rib nmg/nmg-rib.c libwdb)
 
 BRLCAD_ADDEXEC(nmg-sgp nmg/nmg-sgp.c libwdb)
-
-BRLCAD_ADDEXEC(ply-g ply-g.c "librt;libbu")
 
 BRLCAD_ADDEXEC(poly-bot poly-bot.c "libwdb;${WINSOCK_LIB}")
 

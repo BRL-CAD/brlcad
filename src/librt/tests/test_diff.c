@@ -1,7 +1,7 @@
 /*                    T E S T _ D I F F . C
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,9 +22,6 @@
 
 #include <string.h>
 
-#include "tcl.h"
-
-#include "mater.h"
 #include "raytrace.h"
 #include "rt/db_diff.h"
 

@@ -1,7 +1,7 @@
 /*                     S T E P - G . C P P
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,7 +27,11 @@
 
 #include <iostream>
 
-#include "bu.h"
+#include "bu/time.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/opt.h"
+#include "bu/vls.h"
 
 //
 // step-g related headers
@@ -49,9 +53,26 @@ usage()
     std::cerr << "Usage: step-g [-v] -o outfile.g infile.stp \n" << std::endl;
 }
 
+struct OutputFile {
+    char *filename;
+    bool overwrite;
+};
+
+static int
+parse_opt_O(struct bu_vls *error_msg, int argc, const char **argv, void *set_var)
+{
+    int ret;
+    OutputFile *ofile = (OutputFile *)set_var;
+
+    BU_OPT_CHECK_ARGV0(error_msg, argc, argv, "-O");
+
+    ofile->overwrite = true;
+    ret = bu_opt_str(error_msg, argc, argv, &ofile->filename);
+    return ret;
+}
 
 int
-main(int argc, char *argv[])
+main(int argc, const char *argv[])
 {
     int ret = 0;
     int64_t elapsedtime;
@@ -72,53 +93,45 @@ main(int argc, char *argv[])
     // STEPfile sfile (registry, instance_list);
 
     // process command line arguments
-    int c;
-    char *output_file = (char *)NULL;
-    bool verbose = false;
-    int dry_run = 0;
-    char *summary_log_file = (char *)NULL;
-    while ((c = bu_getopt(argc, argv, "DS:vo:")) != -1) {
-	switch (c) {
-	    case 'D':
-		dry_run = 1;
-		break;
-	    case 'S':
-		summary_log_file = bu_optarg;
-		break;
-	    case 'o':
-		output_file = bu_optarg;
-		break;
-	    case 'v':
-		verbose = true;
-		break;
-	    default:
-		usage();
-		bu_exit(1, NULL);
-		break;
-	}
-    }
+    static OutputFile ofile = {NULL, false};
+    static bool verbose = false;
+    static int dry_run = 0;
+    static char *summary_log_file = (char *)NULL;
+    struct bu_vls parse_msgs = BU_VLS_INIT_ZERO;
+    struct bu_opt_desc options[] = {
+	{"D", "", "",         NULL,        &dry_run,          "dry run (output file not written)"},
+	{"v", "", "",         NULL,        &verbose,          "verbose"},
+	{"O", "", "filename", parse_opt_O, &ofile,            "output file (overwrite)"},
+	{"o", "", "filename", bu_opt_str,  &ofile.filename,   "output file"},
+	{"S", "", "filename", bu_opt_str,  &summary_log_file, "summary file"},
+	BU_OPT_DESC_NULL
+    };
 
-    if (bu_optind >= argc || output_file == (char *)NULL) {
+    ++argv; --argc;
+    argc = bu_opt_parse(&parse_msgs, argc, argv, options);
+
+    if (bu_vls_strlen(&parse_msgs) > 0) {
+	bu_log("%s\n", bu_vls_cstr(&parse_msgs));
+    }
+    if (argc != 1 || BU_STR_EMPTY(ofile.filename)) {
 	usage();
 	bu_exit(1, NULL);
     }
-
-    argc -= bu_optind;
-    argv += bu_optind;
-
-#ifndef OVERWRITE_WHILE_DEBUGGING
-    /* check our inputs/outputs */
-    if (bu_file_exists(output_file, NULL)) {
-	bu_exit(1, "ERROR: refusing to overwrite existing output file:\"%s\". Please remove file or change output file name and try again.", output_file);
+    if (!ofile.overwrite) {
+	/* check our inputs/outputs */
+	if (bu_file_exists(ofile.filename, NULL)) {
+	    bu_exit(1, "ERROR: refusing to overwrite existing output file:"
+		        "\"%s\". Please remove the existing file, change the "
+			"output file name, or use the '-O' option to force an"
+			" overwrite.", ofile.filename);
+	}
     }
-#endif
-
     if (!bu_file_exists(argv[0], NULL) && !BU_STR_EQUAL(argv[0], "-")) {
 	bu_exit(2, "ERROR: unable to read input \"%s\" STEP file", argv[0]);
     }
 
     std::string iflnm = argv[0];
-    std::string oflnm = output_file;
+    std::string oflnm = ofile.filename;
 
     STEPWrapper *step = new STEPWrapper();
 

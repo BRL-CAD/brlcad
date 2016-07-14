@@ -1,7 +1,7 @@
 /*                         T O R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -111,16 +111,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "../../librt_private.h"
@@ -154,6 +153,37 @@ struct tor_specific {
     mat_t tor_SoR;	/* Scale(Rot(vect)) */
     mat_t tor_invR;	/* invRot(vect') */
 };
+
+#ifdef USE_OPENCL
+/* largest data members first */
+struct clt_tor_specific {
+    cl_double tor_alpha;	/* 0 < (R2/R1) <= 1 */
+    cl_double tor_r1;		/* for inverse scaling of k values. */
+    cl_double tor_V[3];		/* Vector to center of torus */
+    cl_double tor_SoR[16];	/* Scale(Rot(vect)) */
+    cl_double tor_invR[16];	/* invRot(vect') */
+};
+
+size_t
+clt_tor_pack(struct bu_pool *pool, struct soltab *stp)
+{
+    struct tor_specific *tor =
+        (struct tor_specific *)stp->st_specific;
+    struct clt_tor_specific *args;
+
+    const size_t size = sizeof(*args);
+    args = (struct clt_tor_specific*)bu_pool_alloc(pool, 1, size);
+
+    args->tor_alpha = tor->tor_alpha;
+    args->tor_r1 = tor->tor_r1;
+    VMOVE(args->tor_V, tor->tor_V);
+    MAT_COPY(args->tor_SoR, tor->tor_SoR);
+    MAT_COPY(args->tor_invR, tor->tor_invR);
+    return size;
+}
+
+#endif /* USE_OPENCL */
+
 
 /**
  * Compute the bounding RPP for a circular torus.
@@ -654,7 +684,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
     }
 
     /* Unfortunately finding the 4th order roots are too ugly to
-     * inline.
+     * expand the root solving manually.
      */
     for (i = 0; i < n; i++) {
 	if (segp[i].seg_stp == 0) continue;	/* Skip */

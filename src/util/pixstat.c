@@ -1,7 +1,7 @@
 /*                       P I X S T A T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,12 +35,13 @@
 
 #include "common.h"
 
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 #define IBUFSIZE 3*1024		/* Max read size in rgb pixels */
@@ -79,7 +80,7 @@ main(int argc, char **argv)
 {
     int i, n, num;
     double d;
-    long num_pixels;
+    long num_pixels = 0L ;
     unsigned char *bp;
     FILE *fp;
 
@@ -106,9 +107,8 @@ main(int argc, char **argv)
     }
 
     /*
-     * Build the histogram.
+     * Build the histogram. (num_pixels initialized to 0)
      */
-    num_pixels = 0;
     while ((n = fread(&buf[0], sizeof(*buf), IBUFSIZE, fp)) > 0) {
 	num = n/3;
 	num_pixels += num;

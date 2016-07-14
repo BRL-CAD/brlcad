@@ -1,7 +1,7 @@
 /*                        F B S E R V . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,20 +70,21 @@
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bselect.h"
+
+#include "bresource.h"
+#include "bnetwork.h"
+#include "bsocket.h"
 #include "bio.h"
-#include "bin.h"
 
 #include "../libfb/fb_private.h" /* for _fb_disk_enable */
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 #include "pkg.h"
-#include "bu.h"
 #include "fbmsg.h"
 
 
@@ -259,7 +260,7 @@ new_client(struct pkg_conn *pcp)
 	/* Found an available slot */
 	clients[i] = pcp;
 	FD_SET(pcp->pkc_fd, &select_list);
-	if ( pcp->pkc_fd > max_fd )  max_fd = pcp->pkc_fd;
+	V_MAX(max_fd, pcp->pkc_fd);
 	setup_socket( pcp->pkc_fd );
 	return;
     }
@@ -464,8 +465,7 @@ main(int argc, char **argv)
 	if ( (netfd = pkg_permserver(portname, 0, 0, comm_error)) < 0 )
 	    bu_exit(-1, NULL);
 	FD_SET(netfd, &select_list);
-	if (netfd > max_fd)
-	    max_fd = netfd;
+	V_MAX(max_fd, netfd);
 
 	main_loop();
 	return 0;

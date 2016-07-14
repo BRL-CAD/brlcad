@@ -1,7 +1,7 @@
 /*                         M A T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,9 +26,9 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/path.h"
 
 #include "./ged_private.h"
 
@@ -51,7 +51,23 @@ ged_match(struct ged *gedp, int argc, const char *argv[])
     }
 
     for (++argv; *argv != NULL; ++argv) {
-	if (db_regexp_match_all(gedp->ged_result_str, gedp->ged_wdbp->dbip, *argv) > 0)
+	register int i, num;
+	register struct directory *dp;
+	for (i = num = 0; i < RT_DBNHASH; i++) {
+	    for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+		if (bu_fnmatch(*argv, dp->d_namep, 0) != 0)
+		    continue;
+		if (num == 0)
+		    bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+		else {
+		    bu_vls_strcat(gedp->ged_result_str, " ");
+		    bu_vls_strcat(gedp->ged_result_str, dp->d_namep);
+		}
+		++num;
+	    }
+	}
+
+	if (num > 0)
 	    bu_vls_strcat(gedp->ged_result_str, " ");
     }
     bu_vls_trimspace(gedp->ged_result_str);

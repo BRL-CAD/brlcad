@@ -1,59 +1,45 @@
 add_subdirectory(bu)
+add_subdirectory(bn)
+add_subdirectory(bg)
 add_subdirectory(dm)
+add_subdirectory(gcv)
+add_subdirectory(optical)
 add_subdirectory(rt)
 add_subdirectory(fb)
 
 set(public_hdrs
+  bio.h
+  bresource.h
+  bsocket.h
   RtServerImpl.h
   bn.h
   bu.h
+  bg.h
   common.h
   cursor.h
   ged.h
   pstdint.h
   raytrace.h
-  rtfunc.h
-  rtgeom.h
   rtserver.h
   tclcad.h
   analyze.h
-  anim.h
-  bot.h
   brep.h
   brlcad.h
   brlcad.i
-  db.h
-  db5.h
   dm.h
-  dvec.h
   fb.h
   fbserv_obj.h
   fft.h
   gcv.h
   icv.h
   libtermio.h
-  light.h
-  mater.h
   nmg.h
-  nurb.h
   obj.h
   optical.h
   photonmap.h
   pc.h
   pkg.h
-  plastic.h
-  plot3.h
-  redblack.h
-  shadefuncs.h
-  shadework.h
-  solid.h
   spectrum.h
-  spm.h
-  tie.h
-  tol.h
-  vectfont.h
-  vector_fpu.h
-  vector_x86.h
   vmath.h
   wdb.h
   )
@@ -69,14 +55,11 @@ endif(WIN32)
 # headers used by multiple packages but still considered private.
 # public headers should NOT include these headers.
 set(noinst_HEADERS
-  bin.h
-  bio.h
+  bnetwork.h
   brlcad_ident.h
   brlcad_version.h
-  bselect.h
   conf.h
   fbmsg.h
-  sysv.h
   )
 CMAKEFILES(${noinst_HEADERS})
 

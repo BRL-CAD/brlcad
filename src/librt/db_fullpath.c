@@ -1,7 +1,7 @@
 /*                   D B _ F U L L P A T H . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include "common.h"
 
 #include <limits.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
@@ -292,7 +291,6 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 	if ((fp_flags & DB_FP_PRINT_TYPE) && dbip) {
 	    struct rt_db_internal intern;
 	    if (!(rt_db_get_internal(&intern, full_path->fp_names[i], dbip, NULL, &rt_uniresource) < 0)) {
-		if (intern.idb_meth->ft_label) {
 		    bu_vls_putc(vls, '(');
 		    switch (intern.idb_minor_type) {
 			case DB5_MINORTYPE_BRLCAD_ARB8:
@@ -329,7 +327,6 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
 			    break;
 		    }
 
-		}
 		bu_vls_putc(vls, ')');
 		rt_db_free_internal(&intern);
 	    }

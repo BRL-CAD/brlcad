@@ -1,7 +1,7 @@
 /*                         L O G . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,6 @@
  * information.
  */
 
-/**  @defgroup io Input/Output */
-/**   @defgroup log Logging */
-
-/** @file log.h
- *
- */
 #ifndef BU_LOG_H
 #define BU_LOG_H
 
@@ -39,13 +33,48 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup log */
-/** @{ */
-/** @file libbu/backtrace.c
+/** @addtogroup bu_log
  *
- * Extract a backtrace of the current call stack.
+ * @brief
+ * BRL-CAD support library, error logging routines.
+ *
+ * Note that the user may provide his own logging routine, by replacing these
+ * functions.  That is why this is in file of its own.  For example, LGT and
+ * RTSRV take advantage of this.
+ *
+ * Here is an example of how to set up a custom logging callback.  While bu_log
+ * presently writes to STDERR by default, this behavior should not be relied
+ * upon and may be changed to STDOUT in the future without notice.
+ *
+ @code
+ --- BEGIN EXAMPLE ---
+
+ int log_output_to_file(void *data, void *str)
+ {
+   FILE *fp = (FILE *)data;
+   fprintf(fp, "LOG: %s", str);
+   return 0;
+ }
+
+ int main(int ac, char *av[])
+ {
+   FILE *fp = fopen("whatever.log", "w+");
+   bu_log_add_hook(log_output_to_file, (void *)fp);
+   bu_log("Logging to file.\n");
+   bu_log_delete_hook(log_output_to_file, (void *)fp);
+   bu_log("Logging to stderr.\n");
+   fclose(fp);
+   return 0;
+ }
+
+ --- END EXAMPLE ---
+ @endcode
  *
  */
+/** @{ */
+/** @file bu/log.h */
+
+/** @brief Extract a backtrace of the current call stack. */
 
 /**
  * this routine provides a trace of the call stack to the caller,
@@ -102,6 +131,8 @@ typedef struct bu_hook_list bu_hook_list_t;
  */
 #define BU_HOOK_LIST_IS_INITIALIZED(_p) (((struct bu_hook_list *)(_p) != BU_HOOK_LIST_NULL) && LIKELY((_p)->l.magic == BU_HOOK_LIST_MAGIC))
 
+/** @brief Main functions for exiting/bombing. */
+
 /**
  * Adds a hook to the list of bu_bomb hooks.  The top (newest) one of these
  * will be called with its associated client data and a string to be
@@ -146,7 +177,7 @@ BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
  * This routine should never return unless there is a BU_SETJUMP()
  * handler registered.
  */
-BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
+BU_EXPORT extern void bu_bomb(const char *str)_BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN;
 
 /**
  * Semi-graceful termination of the application that doesn't cause a
@@ -160,13 +191,12 @@ BU_EXPORT extern void bu_bomb(const char *str) _BU_ATTR_NORETURN;
  *
  * This routine should never return.
  */
-BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
+BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_ANALYZE_NORETURN _BU_ATTR_NORETURN _BU_ATTR_PRINTF23;
 
-/** @file libbu/crashreport.c
- *
+/**
+ * @brief
  * Generate a crash report file, including a call stack backtrace and
  * other system details.
- *
  */
 
 /**
@@ -181,10 +211,9 @@ BU_EXPORT extern void bu_exit(int status, const char *fmt, ...) _BU_ATTR_NORETUR
  */
 BU_EXPORT extern int bu_crashreport(const char *filename);
 
-/** @file libbu/fgets.c
- *
+/**
+ * @brief
  * fgets replacement function that also handles CR as an EOL marker
- *
  */
 
 /**
@@ -198,20 +227,11 @@ BU_EXPORT extern int bu_crashreport(const char *filename);
  */
 BU_EXPORT extern char *bu_fgets(char *s, int size, FILE *stream);
 
-/** @file libbu/linebuf.c
- *
- * A portable way of doing setlinebuf().
- *
- */
+/** @brief A portable way of doing setlinebuf(). */
 
 BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 
-/** @file libbu/hook.c
- *
- * @brief
- * BRL-CAD support library's hook utility.
- *
- */
+/** @brief BRL-CAD support library's hook utility. */
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
@@ -227,47 +247,7 @@ BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
 					  struct bu_hook_list *restore_hlp);
 
-/** @file libbu/log.c
- *
- * @brief
- * parallel safe version of fprintf for logging
- *
- * BRL-CAD support library, error logging routine.  Note that the user
- * may provide his own logging routine, by replacing these functions.
- * That is why this is in file of its own.  For example, LGT and
- * RTSRV take advantage of this.
- *
- * Here is an example of how to set up a custom logging callback.
- * While bu_log presently writes to STDERR by default, this behavior
- * should not be relied upon and may be changed to STDOUT in the
- * future without notice.
- *
- @code
- --- BEGIN EXAMPLE ---
-
- int log_output_to_file(void *data, void *str)
- {
-   FILE *fp = (FILE *)data;
-   fprintf(fp, "LOG: %s", str);
-   return 0;
- }
-
- int main(int ac, char *av[])
- {
-   FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (void *)fp);
-   bu_log("Logging to stderr.\n");
-   fclose(fp);
-   return 0;
- }
-
- --- END EXAMPLE ---
- @endcode
- *
- */
-
+/** @brief parallel safe version of fprintf for logging */
 
 /**
  * Change global indentation level by indicated number of characters.
@@ -327,6 +307,12 @@ BU_EXPORT extern void bu_log(const char *, ...) _BU_ATTR_PRINTF12;
 BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
 
 /**
+ * @brief
+ * libbu implementations of vsscanf/sscanf() with extra format
+ * specifiers.
+ */
+
+/**
  * Custom vsscanf which wraps the system sscanf, and is wrapped by bu_sscanf.
  *
  * bu_vsscanf differs notably from the underlying system sscanf in that:
@@ -336,17 +322,17 @@ BU_EXPORT extern void bu_flog(FILE *, const char *, ...) _BU_ATTR_PRINTF23;
  *    not include a maximum field width, the routine bombs in order to avoid
  *    an accidental buffer overrun.
  *
- *  - %V and %#V have been added as valid conversions. Both expect a pointer to
- *    a struct bu_vls as their argument.
+ *  - %V and %\#V have been added as valid conversions. Both expect a
+ *    pointer to a struct bu_vls as their argument.
  *
  *    %V is comparable to %[^]. It instructs bu_vsscanf to read arbitrary
  *    characters from the source and store them in the vls buffer. The default
  *    maximum field width is infinity.
  *
- *    %#V is comparable to %s. It instructs bu_vsscanf to skip leading
- *    whitespace, and then read characters from the source and store them in the
- *    vls buffer until the next whitespace character is encountered. The default
- *    maximum field width is infinity.
+ *    %\#V is comparable to %s. It instructs bu_vsscanf to skip
+ *    leading whitespace, and then read characters from the source and
+ *    store them in the vls buffer until the next whitespace character
+ *    is encountered. The default maximum field width is infinity.
  *
  *  - 0 is always a valid field width for unsuppressed %c, %s, and %[...]
  *    conversions and causes '\0' to be written to the supplied char*
@@ -370,85 +356,31 @@ BU_EXPORT extern int bu_vsscanf(const char *src, const char *fmt, va_list ap);
  */
 BU_EXPORT extern int bu_sscanf(const char *src, const char *fmt, ...) _BU_ATTR_SCANF23;
 
-/** @file libbu/dirname.c
- *
- * @brief
- * Routines to process file and path names.
- *
- */
+/** Routines for scanning certain kinds of data. */
 
 /**
- * Given a string containing a hierarchical path, return a dynamic
- * string to the parent path.
+ * Scans a sequence of fastf_t numbers from a string or stdin
  *
- * This function is similar if not identical to most dirname() BSD
- * system function implementations; but that system function cannot be
- * used due to significantly inconsistent behavior across platforms.
+ * Scanning fastf_t numbers with bu_sscanf() is difficult, because
+ * doing so requires scanning to some intermediate type like double
+ * and then assigning to the fastf_t variable to convert the value to
+ * whatever type fastf_t really is.  This function makes it possible
+ * to scan a series of fastf_t numbers separated by some character(s)
+ * easily, by doing the required conversion internally to the
+ * functions.  As series of delimiter characters will be skipped,
+ * empty scan fields are not supported (e.g., "0.0,,0.0,1.0" will scan
+ * as 3 fields, not 4 with the 2nd skipped).
  *
- * This function always recognizes paths separated by a '/' (i.e.,
- * geometry paths) as well as whatever the native platform directory
- * separator may be.  It is assumed that all file and directory names
- * in the path will not contain a path separator, even if escaped.
+ * @param[out] c Returns number of characters scanned by the function
+ * @param[in] src A source string to scan from, or NULL to read from stdin
+ * @param[in] delim Any delimiter character(s) to skip between scan values
+ * @param[in] n Number of fastf_t values to scan from the src input string
+ * @param[out] ... Pointers to fastf_t for storing scanned values (optional)
  *
- * It is the caller's responsibility to bu_free() the pointer returned
- * from this routine.
- *
- * Examples of strings returned:
- *
- *	/usr/dir/file	/usr/dir
- * @n	/usr/dir/	/usr
- * @n	/usr/file	/usr
- * @n	/usr/		/
- * @n	/usr		/
- * @n	/		/
- * @n	.		.
- * @n	..		.
- * @n	usr		.
- * @n	a/b		a
- * @n	a/		.
- * @n	../a/b		../a
- *
- * This routine will return "." if other valid results are not available
- * but should never return NULL.
  */
-BU_EXPORT extern char *bu_dirname(const char *path);
+BU_EXPORT extern int bu_scan_fastf_t(int *c, const char *src, const char *delim, size_t n, ...);
 
-/**
- * Given a string containing a hierarchical path, return a dynamic
- * string to the portion after the last path separator.
- *
- * This function is similar if not identical to most basename() BSD
- * system function implementations; but that system function cannot be
- * used due to significantly inconsistent behavior across platforms.
- *
- * This function always recognizes paths separated by a '/' (i.e.,
- * geometry paths) as well as whatever the native platform directory
- * separator may be.  It is assumed that all file and directory names
- * in the path will not contain a path separator, even if escaped.
- *
- * It is the caller's responsibility to allocate basename with
- * enough memory to hold a string with length strlen(path), since
- * that is the maximum possible size of bu_basename's output.
- *
- * Examples of strings returned:
- *
- *	/usr/dir/file	file
- * @n	/usr/dir/	dir
- * @n	/usr/		usr
- * @n	/usr		usr
- * @n	/		/
- * @n	.		.
- * @n	..		..
- * @n	usr		usr
- * @n	a/b		b
- * @n	a/		a
- * @n	///		/
- */
-BU_EXPORT extern void bu_basename(char *basename, const char *path);
 
-/** @file libbu/lex.c
- *
- */
 
 #define BU_LEX_ANY 0	/* pseudo type */
 struct bu_lex_t_int {
@@ -493,10 +425,9 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
 			    struct bu_lex_key *symbols);
 
 
-/** @file libbu/mread.c
- *
- * multiple-read to fill a buffer
- *
+/** @brief multiple-read to fill a buffer */
+
+/**
  * Provide a general means to a read some count of items from a file
  * descriptor reading multiple times until the quantity desired is
  * obtained.  This is useful for pipes and network connections that
@@ -505,10 +436,6 @@ BU_EXPORT extern int bu_lex(union bu_lex_token *token,
  *
  * If a read error occurs, a negative value will be returns and errno
  * should be set (by read()).
- *
- */
-
-/**
  * "Multiple try" read.  Read multiple times until quantity is
  * obtained or an error occurs.  This is useful for pipes.
  */

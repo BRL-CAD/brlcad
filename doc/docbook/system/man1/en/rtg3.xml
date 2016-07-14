@@ -20,15 +20,14 @@
     <arg choice='opt' rep='repeat'><replaceable>options</replaceable></arg>
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
-
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>model.cov</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rtg3</emphasis>
+<para><command>rtg3</command>
 operates on the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
@@ -51,7 +50,7 @@ and
 options, in which case the model will be autosized, and the grid
 will be centered on the centroid of the model, with ray spacing
 chosen to span the entire set of
-<emphasis remap='I'>objects.</emphasis>
+<emphasis remap='I'>objects</emphasis>.
 Alternatively,
 with the
 <option>-M</option>
@@ -179,7 +178,7 @@ solids.</para>
 to act like the
 <emphasis remap='I'>FASTGEN4</emphasis>
 raytracer. Specifically, overlap handling is changed to agree with that of
-<emphasis remap='I'>FASTGEN4.</emphasis></para>
+<emphasis remap='I'>FASTGEN4</emphasis>.</para>
   </listitem>
   </varlistentry>
 </variablelist>
@@ -198,7 +197,7 @@ and
 by specifying the
 <option>-X80000000</option>
 option.
-The resulting plot file can be displayed with <emphasis remap='I'>plot3-fb</emphasis>.</para>
+The resulting plot file can be displayed with <command>plot3-fb</command> .</para>
 </refsect1>
 
 <refsect1 xml:id='format'><title>FORMAT</title>
@@ -243,18 +242,18 @@ normals point inward.</para>
 zero-fills the fields of the component card
 if there are less than three components.  Neither
 COVART II nor COVART III require this zero-filling, so it is omitted by
-<emphasis remap='I'>rtg3.</emphasis></para>
+<command>rtg3</command> .</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para>This section will acquaint the user with the ordinary usage of <command>rtg3</command>.
+<para>This section will acquaint the user with the ordinary usage of <command>rtg3</command> .
 A GIFT-3 output file is produced by giving the command:</para>
 
 <literallayout remap='.nf'>
 rtg3 -s32 model.g all.g &gt; file
 </literallayout> <!-- .fi -->
 
-<para>This will a 32 by 32 ray file of the named model.  If a bounding-box
+<para>This will make a 32 by 32 ray file of the named model.  If a bounding-box
 plot file is to be made as part of producing visual output, use</para>
 
 <literallayout remap='.nf'>
@@ -266,7 +265,7 @@ automatically be put into a file called <emphasis remap='I'>rtrpp.plot3</emphasi
 to compute the color rays use</para>
 
 <literallayout remap='.nf'>
-Irtg3 -s32 -X80000000 model.g
+rtg3 -s32 -X80000000 model.g
 </literallayout> <!-- .fi -->
 
 <para>The results will be automatically stored in <emphasis remap='I'>rtg3.plot3</emphasis>.  The rays
@@ -283,7 +282,7 @@ cat rtrpp.plot3 rtg3.plot3 | plot3-fb
 </refsect1>
 
 <refsect1 xml:id='overlap_reporting'><title>OVERLAP REPORTING</title>
-<para><emphasis remap='I'>RTG3</emphasis> shares overlap handling and reporting with the rest of the
+<para><command>rtg3</command> shares overlap handling and reporting with the rest of the
 <emphasis remap='I'>RT</emphasis> family of applications.  A brief description of the overlap
 reporting follows.</para>
 
@@ -309,12 +308,12 @@ objects are present.</para>
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>covart</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>gift</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>;
 <!-- .br -->
 ``<emphasis remap='I'>COVART II - A Simulation Program for Computation of Vulnerable Areas
 and Repair Times - User Manual</emphasis>'', Joint Technical Coordinating
 Group for Munitions Effectiveness, Anti-Air Aerial Target
-Vulnerability Working Group, 61-JTCG/ME-84-3.</para>
+Vulnerability Working Group, 61-JTCG/ME-84-3</para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -346,7 +345,7 @@ Michael John Muuss</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

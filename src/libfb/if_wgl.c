@@ -1,7 +1,7 @@
 /*                       I F _ W G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_wgl.c
  *
@@ -37,13 +37,15 @@
 
 #ifdef IF_WGL
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <ctype.h>
 #include <errno.h>
+
+/* winsock (bsocket.h) first, ordering matters */
+#include "bsocket.h"
+#include "bio.h"
 #include <windowsx.h>
 
-#include "bio.h"
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
@@ -51,12 +53,13 @@
 
 #include "tk.h"
 #include "tkPlatDecls.h"
-#include "bu.h"
-#include "vmath.h"
-#include "bn.h"
-#include "rtgeom.h"
+#include "bu/color.h"
+#include "bu/str.h"
+#include "bu/parallel.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "fb.h"
+#include "fb_private.h"
 #include "fb/fb_wgl.h"
 
 #define CJDEBUG 0
@@ -68,7 +71,6 @@
 /* Internal callbacks etc.*/
 HIDDEN void wgl_do_event(fb *ifp);
 HIDDEN void expose_callback(fb *ifp, int eventPtr);
-void wgl_configureWindow(fb *ifp, int width, int height);
 
 /* Other Internal routines */
 HIDDEN void wgl_clipper(fb *ifp);
@@ -553,7 +555,7 @@ wgl_open(fb *ifp, const char *file, int width, int height)
     DWORD Dword;
     WNDCLASS wndclass;
 
-    FB_CK_fb(ifp);
+    FB_CK_FB(ifp);
 
     saveifp = ifp;
 
@@ -837,54 +839,14 @@ _wgl_open_existing(fb *ifp,
 
 
 int
-wgl_open_existing(fb *ifp, int argc, const char **argv)
+wgl_open_existing(fb *ifp, int width, int height, struct fb_platform_specific *fb_p)
 {
-    Display *dpy;
-    Window win;
-    Colormap cmap;
-    PIXELFORMATDESCRIPTOR *vip;
-    HDC hdc;
-    int width;
-    int height;
-    HGLRC glxc;
-    int double_buffer;
-    int soft_cmap;
-
-    if (argc != 11)
-	return -1;
-
-    if (sscanf(argv[1], "%p", (void *)&dpy) != 1)
-	return -1;
-
-    if (sscanf(argv[2], "%p", (void *)&win) != 1)
-	return -1;
-
-    if (sscanf(argv[3], "%p", (void *)&cmap) != 1)
-	return -1;
-
-    if (sscanf(argv[4], "%p", (void *)&vip) != 1)
-	return -1;
-
-    if (sscanf(argv[5], "%p", (void *)&hdc) != 1)
-	return -1;
-
-    if (sscanf(argv[8], "%p", (void *)&glxc) != 1)
-	return -1;
-
-    if (sscanf(argv[6], "%d", &width) != 1)
-	return -1;
-
-    if (sscanf(argv[7], "%d", &height) != 1)
-	return -1;
-
-    if (sscanf(argv[9], "%d", &double_buffer) != 1)
-	return -1;
-
-    if (sscanf(argv[10], "%d", &soft_cmap) != 1)
-	return -1;
-
-    return _wgl_open_existing(ifp, dpy, win, cmap, vip, hdc, width, height,
-			      glxc, double_buffer, soft_cmap);
+    struct wgl_fb_info *wgl_internal = (struct wgl_fb_info *)fb_p->data;
+    BU_CKMAG(fb_p, FB_WGL_MAGIC, "wgl framebuffer");
+    return _wgl_open_existing(ifp, wgl_internal->dpy, wgl_internal->win, wgl_internal->cmap,
+	    wgl_internal->vip, wgl_internal->hdc, width, height,
+	    wgl_internal->glxc, wgl_internal->double_buffer, wgl_internal->soft_cmap);
+    return 0;
 }
 
 
@@ -1898,12 +1860,12 @@ expose_callback(fb *ifp, int eventPtr)
 }
 
 
-void
+int
 wgl_configureWindow(fb *ifp, int width, int height)
 {
     if (width == WGL(ifp)->win_width &&
 	height == WGL(ifp)->win_height)
-	return;
+	return 1;
 
     ifp->if_width = ifp->if_max_width = width;
     ifp->if_height = ifp->if_max_height = height;
@@ -1919,6 +1881,8 @@ wgl_configureWindow(fb *ifp, int width, int height)
 
     wgl_getmem(ifp);
     wgl_clipper(ifp);
+
+    return 0;
 }
 
 

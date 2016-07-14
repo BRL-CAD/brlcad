@@ -1,7 +1,7 @@
 /*                       D M - P L O T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,24 +35,18 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* for struct timeval */
 #endif
-#ifdef HAVE_UNISTED_H
-#  include <unistd.h>
-#endif
-#include "bio.h"
 
 #include "tcl.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "dm.h"
 
 #include "dm-plot.h"
 #include "dm-Null.h"
 
-#include "solid.h"
-#include "plot3.h"
+#include "rt/solid.h"
+#include "bn/plot3.h"
 
 #include "./dm_private.h"
 

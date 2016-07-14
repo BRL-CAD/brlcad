@@ -1,7 +1,7 @@
 /*                     A R B _ E D I T . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup arb_edit */
+/** @addtogroup librt */
 /** @{ */
 /** @file arb_edit.h
  *
@@ -31,22 +31,11 @@
 
 #include "common.h"
 #include "bn.h"
-#include "db.h"
-#include "rtgeom.h"
+#include "rt/db4.h"
+#include "rt/geom.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
-
-#ifndef RT_EXPORT
-#  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
-#    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
-#  elif defined(RT_DLL_EXPORTS)
-#    define RT_EXPORT __declspec(dllexport)
-#  elif defined(RT_DLL_IMPORTS)
-#    define RT_EXPORT __declspec(dllimport)
-#  else
-#    define RT_EXPORT
-#  endif
-#endif
 
 /**
  * face definitions for each arb type

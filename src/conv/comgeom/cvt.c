@@ -1,7 +1,7 @@
 /*                           C V T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,16 +28,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "bu.h"
 
 
 /* defined in region.c */
@@ -61,7 +60,7 @@ int verbose = 0;	/* verbose = print a message on every item read */
 char name_it[16];	/* stores argv if it exists and appends it
 			   to each name generated.*/
 
-int cur_col = 0;
+size_t cur_col = 0;
 
 FILE *infp;
 struct rt_wdb *outfp;		/* Output file descriptor */
@@ -365,6 +364,7 @@ main(int argc, char **argv)
 void
 col_pr(char *str)
 {
+    if (!str) return;
     printf("%s", str);
     cur_col += strlen(str);
     while (cur_col < 78 && ((cur_col%10) > 0)) {

@@ -1,7 +1,7 @@
 /*                          G _ Q A . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,9 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 #include "ged.h"
 
 static char usage[] = "Usage: %s [-A A|a|b|e|g|o|v|w] [-a az] [-d] [-e el] [-f densityFile] [-g spacing|upper, lower|upper-lower] [-G] [-n nhits] [-N nviews] [-p] [-P ncpus] [-q] [-r] [-S nsamples] [-t overlap_tol] [-U useair] [-u len_units vol_units wt_units] [-v] [-V volume_tol] [-W weight_tol] model object [objects...]\n";
@@ -95,7 +95,7 @@ main(int argc, char *argv[])
     av[j] = (char *)0;
 
     if ((gedp = ged_open("db", argv[db_index], 1)) == GED_NULL) {
-	bu_free(av, "av");
+	bu_free((void *)av, "av");
 	bu_exit(1, usage, argv[0]);
     }
 
@@ -106,7 +106,7 @@ main(int argc, char *argv[])
     if (gedp)
 	BU_PUT(gedp, struct ged);
 
-    bu_free(av, "av");
+    bu_free((void *)av, "av");
 
     return 0;
 }

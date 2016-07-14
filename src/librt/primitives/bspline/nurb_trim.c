@@ -1,7 +1,7 @@
 /*                     N U R B _ T R I M . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 extern void rt_clip_cnurb(struct bu_list *plist, struct edge_g_cnurb *crv, fastf_t u, fastf_t v);
 
@@ -298,8 +297,8 @@ rt_process_casec(struct edge_g_cnurb *trim, fastf_t u, fastf_t v)
 /**
  * This routine will be called several times, once for each portion of
  * the trimming curve. It returns whether a line extended from the
- * <u, v> point will cross the trimming curve an even or odd number of
- * times. Or the <u, v> point could be on the curve in which case
+ * \<u, v\> point will cross the trimming curve an even or odd number of
+ * times. Or the \<u, v\> point could be on the curve in which case
  * TRIM_ON will be returned. The algorithm uses the approach taken Tom
  * Sederburge and uses bezier clipping to produce caseA and caseB
  * curves. If the original trimming curve is a CASE C curve then

@@ -1,7 +1,7 @@
 /*                           D I R E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2001-2014 United States Government as represented by
+ * Copyright (c) 2001-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,6 +26,7 @@
 #include <sys/types.h>
 
 #include "bu/file.h"
+#include "bu/path.h"
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "uce-dirent.h"

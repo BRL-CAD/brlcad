@@ -1,7 +1,7 @@
 /*                      D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,36 +18,15 @@
  * information.
  */
 
-/** @file defines.h
+/** @addtogroup bu_defines
  *
- * Commonly used definitions for the BRL-CAD Utility Library, LIBBU.
- *
- * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
- * library provides several layers of low-level utility routines,
- * providing features that make cross-platform coding easier.
- *
- * Parallel processing support:  threads, semaphores, parallel-malloc.
- * Consolidated logging support:  bu_log(), bu_exit(), and bu_bomb().
- *
- * The intention is that these routines are general extensions to the
- * data types offered by the C language itself, and to the basic C
- * runtime support provided by the system LIBC.  All routines in LIBBU
- * are designed to be "parallel-safe" (sometimes called "mp-safe" or
- * "thread-safe" if parallelism is via threading) to greatly ease code
- * development for multiprocessor systems.
- *
- * All of the data types provided by this library are defined in bu.h;
- * none of the routines in this library will depend on data types
- * defined in other BRL-CAD header files, such as vmath.h.  Look for
- * those routines in LIBBN.
- *
- * All truly fatal errors detected by the library use bu_bomb() to
- * exit with a status of 12.  The LIBBU variants of system calls
- * (e.g., bu_malloc()) do not return to the caller (unless there's a
- * bomb hook defined) unless they succeed, thus sparing the programmer
- * from constantly having to check for NULL return codes.
+ * @brief
+ * These are definitions specific to libbu, used throughout the library.
  *
  */
+/** @{ */
+/** @file bu/defines.h */
+
 #ifndef BU_DEFINES_H
 #define BU_DEFINES_H
 
@@ -70,16 +49,6 @@
 /* NOTE: do not rely on these values */
 #define BRLCAD_OK 0
 #define BRLCAD_ERROR 1
-
- /**
- * BU_IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- */
-#define BU_IGNORE(_parm) (void)(_parm)
 
 /**
  * @def BU_DIR_SEPARATOR
@@ -145,25 +114,44 @@
 /**
  * shorthand declaration of a printf-style functions
  */
-#if !defined(_BU_ATTR_PRINTF12)
-#define _BU_ATTR_PRINTF12 __attribute__ ((__format__ (__printf__, 1, 2)))
+#ifdef HAVE_PRINTF12_ATTRIBUTE
+#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
 #endif
-#if !defined(_BU_ATTR_PRINTF23)
-#define _BU_ATTR_PRINTF23 __attribute__ ((__format__ (__printf__, 2, 3)))
+#ifdef HAVE_PRINTF23_ATTRIBUTE
+#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
 #endif
-#if !defined(_BU_ATTR_SCANF23)
-#define _BU_ATTR_SCANF23 __attribute__ ((__format__ (__scanf__, 2, 3)))
+#ifdef HAVE_SCANF23_ATTRIBUTE
+#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
 #endif
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#define _BU_ATTR_NORETURN __attribute__ ((__noreturn__))
+#ifdef HAVE_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
+#else
+#  define _BU_ATTR_NORETURN
+#endif
+
+/* For the moment, we need to specially flag some functions
+ * for clang.  It's not clear if we will always need to do
+ * this, but for now this suppresses a lot of noise in the
+ * reports */
+#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
+#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
+#else
+#  define _BU_ATTR_ANALYZE_NORETURN
+#endif
 
 /**
  * shorthand declaration of a function that should always be inline
  */
-#define _BU_ATTR_ALWAYS_INLINE __attribute__ ((always_inline))
+
+#ifdef HAVE_ALWAYS_INLINE_ATTRIBUTE
+#  define _BU_ATTR_ALWAYS_INLINE __attribute__((always_inline))
+#else
+#  define _BU_ATTR_ALWAYS_INLINE
+#endif
 
 /**
  *  If we're compiling strict, turn off "format string vs arguments"
@@ -192,52 +180,6 @@
 
 
 /**
- * Fast dynamic memory allocation macro for small pointer allocations.
- * Memory is automatically initialized to zero and, similar to
- * bu_calloc(), is guaranteed to return non-NULL (or bu_bomb()).
- *
- * Memory acquired with BU_GET() should be returned with BU_PUT(), NOT
- * with bu_free().
- *
- * Use BU_ALLOC() for dynamically allocating structures that are
- * relatively large, infrequently allocated, or otherwise don't need
- * to be fast.
- */
-#if 0
-#define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
-#else
-#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
-#endif
-
-/**
- * Handy dynamic memory deallocator macro.  Deallocated memory has the
- * first byte zero'd for sanity (and potential early detection of
- * double-free crashing code) and the pointer is set to NULL.
- *
- * Memory acquired with bu_malloc()/bu_calloc() should be returned
- * with bu_free(), NOT with BU_PUT().
- */
-#if 0
-#define BU_PUT(_ptr, _type) *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
-#else
-#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
-#endif
-
-/**
- * Convenience macro for allocating a single structure on the heap.
- * Not intended for performance-critical code.  Release memory
- * acquired with bu_free() or BU_FREE() to dealloc and set NULL.
- */
-#define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " BU_FLSTR)
-
-/**
- * Convenience macro for deallocating a single structure allocated on
- * the heap (with bu_malloc(), bu_calloc(), BU_ALLOC()).
- */
-#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " BU_FLSTR); _ptr = (_type *)NULL; } while (0)
-
-
-/**
  * @def BU_ASSERT(eqn)
  * Quick and easy macros to generate an informative error message and
  * abort execution if the specified condition does not hold true.
@@ -257,7 +199,7 @@
  * Example: BU_ASSERT_LONG(j+7, <, 42);
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT(_equation) BU_IGNORE((_equation))
+#  define BU_ASSERT(_equation) (void)(_equation)
 #else
 #  define BU_ASSERT(_equation)	\
     if (UNLIKELY(!(_equation))) { \
@@ -268,7 +210,7 @@
 #endif
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_PTR(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_PTR(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -281,7 +223,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_LONG(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_LONG(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -294,7 +236,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -307,7 +249,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_SSIZE_T(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -320,7 +262,7 @@
 
 
 #ifdef NO_BOMBING_MACROS
-#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) BU_IGNORE((_lhs)); BU_IGNORE((_rhs))
+#  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs) (void)(_lhs); (void)(_rhs)
 #else
 #  define BU_ASSERT_DOUBLE(_lhs, _relation, _rhs)	\
     if (UNLIKELY(!((_lhs) _relation (_rhs)))) { \
@@ -396,35 +338,7 @@ typedef double fastf_t;
 /** DEPRECATED, do not use */
 #define SMALL SQRT_SMALL_FASTF
 
-
-/**
- * It is necessary to have a representation of 1.0/0.0 or log(0),
- * i.e., "infinity" that fits within the dynamic range of the machine
- * being used.  This constant places an upper bound on the size object
- * which can be represented in the model.  With IEEE 754 floating
- * point, this may print as 'inf' and is represented with all 1 bits
- * in the biased-exponent field and all 0 bits in the fraction with
- * the sign indicating positive (0) or negative (1) infinity.
- */
-#ifndef INFINITY
-#  if defined(HUGE_VAL)
-#    define INFINITY ((fastf_t)HUGE_VAL)
-#  elif defined(HUGE_VALF)
-#    define INFINITY ((fastf_t)HUGE_VALF)
-#  elif defined(HUGE)
-#    define INFINITY ((fastf_t)HUGE)
-#  elif defined(MAXDOUBLE)
-#    define INFINITY ((fastf_t)MAXDOUBLE)
-#  elif defined(MAXFLOAT)
-#    define INFINITY ((fastf_t)MAXFLOAT)
-#  else
-     /* all else fails, just pick something big slightly over 32-bit
-      * single-precision floating point that has worked well before.
-      */
-#    define INFINITY ((fastf_t)1.0e40)
-#  endif
-#endif
-
+/** @} */
 
 #endif  /* BU_DEFINES_H */
 

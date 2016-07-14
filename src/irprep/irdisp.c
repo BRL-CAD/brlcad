@@ -1,7 +1,7 @@
 /*                        I R D I S P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,13 +27,16 @@
 #include "common.h"
 
 #include<stdio.h>
-#include <stdlib.h>
+#include<stdlib.h>
+#include<limits.h>
 #include<string.h>
 #include<math.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "vmath.h"
 
 
 int
@@ -99,10 +102,7 @@ main(void)
 	    perror("scanf");
 	    bu_exit(1, "ERROR: failure to read number of groups\n");
 	}
-	if (ngrp < 0)
-	    ngrp = 0;
-	else if (ngrp > INT_MAX-1)
-	    ngrp = INT_MAX-1;
+	CLAMP(ngrp, 0, INT_MAX-1);
 
 	/* Read each group & put it in the variable showtherm.  */
 	j = 0;

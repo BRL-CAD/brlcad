@@ -1,7 +1,7 @@
 #                       M V I E W . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" } {
+    if { $dtype == "ogl" || $dtype == "osgl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -58,7 +58,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" } {
+    if { $dtype == "ogl" || $dtype == "osgl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -72,7 +72,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" } {
+    if { $dtype == "ogl" || $dtype == "osgl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }
@@ -86,7 +86,7 @@ proc openmv { id w wc dpy dtype } {
 	dm set zclip 1
 	dm set zbuffer 1
     }
-    if { $dtype == "ogl" } {
+    if { $dtype == "ogl" || $dtype == "osgl" } {
 	dm set zbuffer $mged_default(zbuffer)
 	dm set lighting $mged_default(lighting)
     }

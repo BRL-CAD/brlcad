@@ -23,8 +23,9 @@
     <arg choice='opt'>-n <replaceable>height</replaceable></arg>
    </arg>
     <arg choice='opt'>-o <replaceable>out.pix</replaceable></arg>
-    <arg choice='opt'><replaceable>in.bw</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+   <arg choice='opt'>
+     <arg choice='opt'>&lt;</arg><replaceable>in.bw</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='opt'><replaceable>out.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -57,7 +58,7 @@ is given.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

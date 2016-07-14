@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,12 +28,9 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
-#include "bio.h"
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "tclcad.h"
@@ -42,6 +39,9 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
+
+/* avoid including itcl.h due to their usage of internal headers */
+extern int Itcl_Init(Tcl_Interp *);
 
 
 /* catch auto-formatting errors in this file.  be careful as there are
@@ -196,6 +196,8 @@ static struct cmdtab mged_cmdtab[] = {
     {"l", cmd_ged_info_wrapper, ged_list},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
+    {"labelface", f_labelface, GED_FUNC_PTR_NULL},
+    {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},
@@ -230,6 +232,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"nmg_collapse", cmd_nmg_collapse, GED_FUNC_PTR_NULL},
     {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
+    {"nmg", cmd_ged_plain_wrapper, ged_nmg},
     {"o_rotate", f_be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale", f_be_o_scale, GED_FUNC_PTR_NULL},
     {"oed", cmd_oed, GED_FUNC_PTR_NULL},
@@ -249,7 +252,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"oyscale", f_be_o_yscale, GED_FUNC_PTR_NULL},
     {"ozscale", f_be_o_zscale, GED_FUNC_PTR_NULL},
     {"p", f_param, GED_FUNC_PTR_NULL},
-    {"parse_points", cmd_parse_points, GED_FUNC_PTR_NULL},
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
     {"paths", cmd_ged_plain_wrapper, ged_pathsum},
     {"permute", f_permute, GED_FUNC_PTR_NULL},
@@ -582,6 +584,7 @@ mged_setup(Tcl_Interp **interpreter)
     history_setup();
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
+    gedp->ged_interp = (void *)*interpreter;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

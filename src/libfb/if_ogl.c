@@ -1,7 +1,7 @@
 /*                        I F _ O G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_ogl.c
  *
@@ -73,17 +73,12 @@
 #ifdef HAVE_GL_GL_H
 #  include <GL/gl.h>
 #endif
+#include "bresource.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>	/* for getpagesize and sysconf */
-#endif
-
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
+#include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
 #include "fb/fb_ogl.h"

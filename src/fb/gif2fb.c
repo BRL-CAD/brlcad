@@ -1,7 +1,7 @@
 /*                        G I F 2 F B . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,9 +41,10 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -109,7 +110,8 @@ int getByte(FILE *inp);
 int
 main(int argc, char **argv)
 {
-    int i, idx, n;
+    int i, idx;
+    size_t n;
     int maxcolors;
     int code;
     int verbose=0;
@@ -164,10 +166,10 @@ main(int argc, char **argv)
 /*
  * read in the Header and then check for consistency.
  */
-    n= fread(&Header, 1, 13, fp);
+    n = fread(&Header, 1, 13, fp);
 
     if (n != 13) {
-	fprintf(stderr, "%s: only %d bytes in header.\n", argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in header.\n", argv[0], (long)n);
 	return 1;
     }
 
@@ -217,8 +219,8 @@ main(int argc, char **argv)
     n = fread(&Im, 1, sizeof(Im), fp);
 
     if (n != sizeof(Im)) {
-	fprintf(stderr, "%s: only %d bytes in image header.\n",
-		argv[0], n);
+	fprintf(stderr, "%s: only %ld bytes in image header.\n",
+		argv[0], (long)n);
 	return 1;
     }
     if (verbose) {
@@ -304,8 +306,7 @@ main(int argc, char **argv)
 	    lineNumber += lineInc;
 	    if (lineNumber >= ih_height) {
 		++lineIdx;
-		if (lineIdx > (int)(sizeof(lace)/sizeof(lace[0]))-1)
-		    lineIdx = (sizeof(lace)/sizeof(lace[0]))-1;
+		V_MIN(lineIdx, (int)(sizeof(lace)/sizeof(lace[0]))-1);
 		lineInc = lace[lineIdx];
 		lineNumber = offs[lineIdx];
 	    }

@@ -1,7 +1,7 @@
 /*                            B U . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,10 +18,10 @@
  * information.
  */
 
-/** @file bu.h
+
+/** @addtogroup libbu
  *
- * Main header file for the BRL-CAD Utility Library, LIBBU.
- *
+ * @brief
  * The two letters "BU" stand for "BRL-CAD" and "Utility".  This
  * library provides several layers of low-level utility routines,
  * providing features that make cross-platform coding easier.
@@ -49,36 +49,26 @@
  * from constantly having to check for NULL return codes.
  *
  */
+/** @{ */
+/** @brief Main header file for the BRL-CAD Utility Library, LIBBU. */
+/** @file bu.h */
+/** @} */
+
 #ifndef BU_H
 #define BU_H
 
-
 #include "./bu/defines.h"
-
-__BEGIN_DECLS
-
-/** @file libbu/vers.c
- *
- * version information about LIBBU
- *
- */
-
-/**
- * returns the compile-time version of libbu
- */
-BU_EXPORT extern const char *bu_version(void);
-
-__END_DECLS
-
+#include "./bu/version.h"
 #include "./bu/avs.h"
 #include "./bu/bitv.h"
-#include "./bu/bu_tcl.h"
 #include "./bu/cmd.h"
 #include "./bu/color.h"
 #include "./bu/cv.h"
 #include "./bu/debug.h"
 #include "./bu/endian.h"
+#include "./bu/env.h"
 #include "./bu/file.h"
+#include "./bu/path.h"
 #include "./bu/getopt.h"
 #include "./bu/hash.h"
 #include "./bu/hist.h"
@@ -87,6 +77,9 @@ __END_DECLS
 #include "./bu/magic.h"
 #include "./bu/malloc.h"
 #include "./bu/mapped_file.h"
+#include "./bu/mime.h"
+#include "./bu/observer.h"
+#include "./bu/opt.h"
 #include "./bu/parallel.h"
 #include "./bu/parse.h"
 #include "./bu/ptbl.h"
@@ -99,6 +92,7 @@ __END_DECLS
 #include "./bu/vfont.h"
 #include "./bu/vlb.h"
 #include "./bu/vls.h"
+
 
 #endif  /* BU_H */
 

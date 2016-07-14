@@ -1,7 +1,7 @@
 /*                      I C V _ R E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,15 +26,16 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "bu/getopt.h"
 #include "icv.h"
 
 void usage()
 {
-    bu_log("[-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
+    bu_log("[-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
 		    [-b -p -d -m] \n\
 			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file] [file] > [out_file]\n");
 
@@ -54,7 +55,7 @@ int main(int argc, char* argv[])
     int xorig=0, yorig=0;
     int outx=0, outy=0;
     icv_image_t *bif;
-    ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
+    mime_image_t format=MIME_IMAGE_AUTO;
 
     if (argc<2) {
 	usage();
@@ -91,18 +92,17 @@ int main(int argc, char* argv[])
 		out_file = bu_optarg;
 		break;
 	    case 'b' :
-		format = ICV_IMAGE_BW;
+		format = MIME_IMAGE_BW;
 		break;
 	    case 'p' :
-		format = ICV_IMAGE_PIX;
+		format = MIME_IMAGE_PIX;
 		break;
 	    case 'd' :
-		format = ICV_IMAGE_DPIX;
+		format = MIME_IMAGE_DPIX;
 		break;
 	    case 'm' :
-		format = ICV_IMAGE_PPM;
+		format = MIME_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;

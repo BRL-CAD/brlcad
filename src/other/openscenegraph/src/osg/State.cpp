@@ -484,12 +484,18 @@ void State::apply(const StateSet* dstate)
             else if (unit<_textureAttributeMapList.size()) applyAttributeMapOnTexUnit(unit,_textureAttributeMapList[unit]);
         }
 
+        const Program::PerContextProgram* previousLastAppliedProgramObject = _lastAppliedProgramObject;
+
         applyModeList(_modeMap,dstate->getModeList());
         applyAttributeList(_attributeMap,dstate->getAttributeList());
 
         if (_shaderCompositionEnabled)
         {
-            applyShaderComposition();
+            if (previousLastAppliedProgramObject == _lastAppliedProgramObject || _lastAppliedProgramObject==0)
+            {
+                // No program has been applied by the StateSet stack so assume shader composition is required
+                applyShaderComposition();
+            }
         }
 
         if (dstate->getUniformList().empty())
@@ -911,7 +917,10 @@ void State::initializeExtensionProcs()
     if ( osg::getGLVersionNumber() >= 2.0 || osg::isGLExtensionSupported(_contextID,"GL_ARB_vertex_shader") || OSG_GLES2_FEATURES)
     {
         glGetIntegerv(GL_MAX_COMBINED_TEXTURE_IMAGE_UNITS,&_glMaxTextureUnits);
-        glGetIntegerv(GL_MAX_TEXTURE_COORDS,&_glMaxTextureCoords);
+        if(OSG_GLES2_FEATURES)
+            _glMaxTextureCoords = _glMaxTextureUnits;
+        else
+            glGetIntegerv(GL_MAX_TEXTURE_COORDS,&_glMaxTextureCoords);
     }
     else if ( osg::getGLVersionNumber() >= 1.3 ||
                                  osg::isGLExtensionSupported(_contextID,"GL_ARB_multitexture") ||
@@ -1322,6 +1331,9 @@ namespace State_Utils
 {
     bool replace(std::string& str, const std::string& original_phrase, const std::string& new_phrase)
     {
+        // Prevent infinite loop : if original_phrase is empty, do nothing and return false
+        if (original_phrase.empty()) return false;
+
         bool replacedStr = false;
         std::string::size_type pos = 0;
         while((pos=str.find(original_phrase, pos))!=std::string::npos)
@@ -1360,9 +1372,6 @@ bool State::convertVertexShaderSourceToOsgBuiltIns(std::string& source) const
 
     OSG_INFO<<"++Before Converted source "<<std::endl<<source<<std::endl<<"++++++++"<<std::endl;
 
-    // replace ftransform as it only works with built-ins
-    State_Utils::replace(source, "ftransform()", "gl_ModelViewProjectionMatrix * gl_Vertex");
-
     // find the first legal insertion point for replacement declarations. GLSL requires that nothing
     // precede a "#verson" compiler directive, so we must insert new declarations after it.
     std::string::size_type declPos = source.rfind( "#version " );
@@ -1377,22 +1386,31 @@ bool State::convertVertexShaderSourceToOsgBuiltIns(std::string& source) const
         declPos = 0;
     }
 
-    State_Utils::replaceAndInsertDeclaration(source, declPos, _vertexAlias._glName,         _vertexAlias._osgName,         _vertexAlias._declaration);
-    State_Utils::replaceAndInsertDeclaration(source, declPos, _normalAlias._glName,         _normalAlias._osgName,         _normalAlias._declaration);
-    State_Utils::replaceAndInsertDeclaration(source, declPos, _colorAlias._glName,          _colorAlias._osgName,          _colorAlias._declaration);
-    State_Utils::replaceAndInsertDeclaration(source, declPos, _secondaryColorAlias._glName, _secondaryColorAlias._osgName, _secondaryColorAlias._declaration);
-    State_Utils::replaceAndInsertDeclaration(source, declPos, _fogCoordAlias._glName,       _fogCoordAlias._osgName,       _fogCoordAlias._declaration);
-    for (size_t i=0; i<_texCoordAliasList.size(); i++)
+    if (_useVertexAttributeAliasing)
     {
-        const VertexAttribAlias& texCoordAlias = _texCoordAliasList[i];
-        State_Utils::replaceAndInsertDeclaration(source, declPos, texCoordAlias._glName, texCoordAlias._osgName, texCoordAlias._declaration);
+        State_Utils::replaceAndInsertDeclaration(source, declPos, _vertexAlias._glName,         _vertexAlias._osgName,         _vertexAlias._declaration);
+        State_Utils::replaceAndInsertDeclaration(source, declPos, _normalAlias._glName,         _normalAlias._osgName,         _normalAlias._declaration);
+        State_Utils::replaceAndInsertDeclaration(source, declPos, _colorAlias._glName,          _colorAlias._osgName,          _colorAlias._declaration);
+        State_Utils::replaceAndInsertDeclaration(source, declPos, _secondaryColorAlias._glName, _secondaryColorAlias._osgName, _secondaryColorAlias._declaration);
+        State_Utils::replaceAndInsertDeclaration(source, declPos, _fogCoordAlias._glName,       _fogCoordAlias._osgName,       _fogCoordAlias._declaration);
+        for (size_t i=0; i<_texCoordAliasList.size(); i++)
+        {
+            const VertexAttribAlias& texCoordAlias = _texCoordAliasList[i];
+            State_Utils::replaceAndInsertDeclaration(source, declPos, texCoordAlias._glName, texCoordAlias._osgName, texCoordAlias._declaration);
+        }
     }
 
-    // replace built in uniform
-    State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ModelViewMatrix", "osg_ModelViewMatrix", "uniform mat4 ");
-    State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ModelViewProjectionMatrix", "osg_ModelViewProjectionMatrix", "uniform mat4 ");
-    State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ProjectionMatrix", "osg_ProjectionMatrix", "uniform mat4 ");
-    State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_NormalMatrix", "osg_NormalMatrix", "uniform mat3 ");
+    if (_useModelViewAndProjectionUniforms)
+    {
+        // replace ftransform as it only works with built-ins
+        State_Utils::replace(source, "ftransform()", "gl_ModelViewProjectionMatrix * gl_Vertex");
+
+        // replace built in uniform
+        State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ModelViewMatrix", "osg_ModelViewMatrix", "uniform mat4 ");
+        State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ModelViewProjectionMatrix", "osg_ModelViewProjectionMatrix", "uniform mat4 ");
+        State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_ProjectionMatrix", "osg_ProjectionMatrix", "uniform mat4 ");
+        State_Utils::replaceAndInsertDeclaration(source, declPos, "gl_NormalMatrix", "osg_NormalMatrix", "uniform mat3 ");
+    }
 
     OSG_INFO<<"-------- Converted source "<<std::endl<<source<<std::endl<<"----------------"<<std::endl;
 

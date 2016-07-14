@@ -21,7 +21,6 @@
       <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
       <arg choice="plain" rep="norepeat"><replaceable>model.g</replaceable></arg>
       <arg choice="plain" rep="repeat"><replaceable>objects</replaceable></arg>
-
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -42,8 +41,7 @@
       in the option list. The orientation of the rays to be fired may be specified by
       the <option>-a</option> and <option>-e</option> options, in which case the model
       will be autosized, and the grid will be centered on the centroid of the model, with
-
-,      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
+      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
       Alternatively, with the <option>-M</option> option, a transformation matrix may
       be provided on standard input which maps model-space to view-space. In this case,
       the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid
@@ -54,7 +52,26 @@
     </para>
 
     <para>The following options are recognized:</para>
+
     <variablelist remap="TP">
+      <varlistentry>
+	<term><option>-. #</option></term>
+	<listitem>
+	  <para>
+            selects the factor used in NUgrid algorithm. Default is 1.5 .
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-, #</option></term>
+	<listitem>
+	  <para>
+           selects which space partitioning algorithm to use
+	  </para>
+	</listitem>
+      </varlistentry>
+
       <varlistentry>
 	<term><option>-a #</option></term>
 	<listitem>
@@ -85,8 +102,7 @@
       <varlistentry>
 	<term><option>-c "script_command"</option></term>
 	<listitem>
-	  <para>is used to supply on the command line any command that can appear
-	  in a
+	  <para>supplies, on the command line, any command that can appear in a
 	  <option>-M</option>
 	  command script.
 	  For example,
@@ -98,17 +114,16 @@
       <varlistentry>
 	<term><option>-d #</option></term>
 	<listitem>
-	  <para>turns on the reporting of pixel distances, so that each pixel is
-	  represented by 3 bytes of color information followed by 8 bytes for a
-	  double (in IEEE format) giving the distance to the ray's first hit.
+	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
+          (Each pixel is represented by 3 bytes of color information followed by 8 bytes
+	  for a double, in IEEE format, which gives the distance to the ray's first hit.
 	  If the ray doesn't hit, a zero distance is reported by default
-	  which causes
-	  <emphasis remap="I">rt (1)</emphasis>
+	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  to write only the color information.
 	  See
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  and
-	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+	  <citerefentry><refentrytitle>pixd</refentrytitle><manvolnum>5</manvolnum></citerefentry>.)</para>
 	</listitem>
       </varlistentry>
 
@@ -125,8 +140,8 @@
       <varlistentry>
 	<term><option>-f #</option></term>
 	<listitem>
-	  <para>sets the expected playback rate in frames-per-second.
-	  The default is 30fps.
+	  <para>sets the expected playback rate in frames-per-second;
+	  the default is 30.
 	  Several time-evolving shaders
 	  such as
 	  <emphasis remap="I">fire</emphasis>
@@ -140,33 +155,33 @@
       <varlistentry>
 	<term><option>-g #</option></term>
 	<listitem>
-	  <para>is used to set the grid cell width, in millimeters.
+	  <para>sets the grid cell width, in millimeters.
 	  Ordinarily, the cell width is computed by dividing the view size by
 	  the number of pixels of width, so this option need not be used.
 	  To obtain exactly 1 inch ray spacing, specify
 	  <option>-g25.4 .</option>
-	  If the grid cell width is specified and
-	  the grid cell height is <emphasis remap="I">not</emphasis> specified,
+	  If the grid cell width is specified and the grid cell height (which
+	  would be set using <option>-G</option>) is <emphasis remap="I">not</emphasis> specified,
 	  the grid cell height defaults to be the same as the width.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-h density,r,g,b</option></term>
+	<term><option>-m density,r,g,b</option></term>
 	<listitem>
 	  <para>enables an exponential shading of the void between the eye and the
 	  first hit location.  This allows a cheap simulation of atmospheric haze
 	  with lower performance impact than explicit modeling of the air volume.
 	  The haze is computed using the form:</para>
 
-	  <para>f = e^(-dist * density)</para>
+	  <para>f = e^(-distance * density)</para>
 	  <para>g = 1.0 - f</para>
 	  <para>color = color * f + hazeRGB * g</para>
 
 	  <para>The color values are optional.  If not specified, they will have the passable
 	  values 0.8 .9 .99 .</para>
 
-	  <para>Example usage: -h '2.5e-8,.75,.95,.99'</para>
+	  <para>Example usage: -m '2.5e-8,.75,.95,.99'</para>
 	</listitem>
       </varlistentry>
 
@@ -174,23 +189,23 @@
 	<term><option>-i</option></term>
 	<listitem>
 	  <para>enables <emphasis remap="I">incremental mode</emphasis> processing.
-	  First, a single ray is fired.
+	  (First, a single ray is fired.
 	  Then, the screen is subdivided into four parts by evenly subdividing
 	  in the vertical and horizontal directions.
 	  The previously fired ray was the lower left corner;
 	  three more rays are fired.
 	  This process recurses until full resolution has been reached.
 	  Assumes square image.
-	  Also assumes fast path between CPU and display hardware.</para>
+	  Also assumes fast path between CPU and display hardware.)</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-j xmin,ymin,xmax,ymax</option></term>
 	<listitem>
-	  <para>enables <emphasis remap="I">just this sub-rectangle</emphasis> processing.
-	  Specifies the screen coordinates of the lower left and upper right
-	  corner of a rectangle within the rectangle (0,0) (width-1,height-1).
+	  <para>enables processing of <emphasis remap="I">just a sub-rectangle</emphasis>,
+	  located within the rectangle (0,0) (width-1,height-1), and whose screen coordinates
+	  (lower left and upper right corners) are provided in the argument.
 	  Ray-tracing will be limited to just those pixels within the sub-rectangle,
 	  and only those pixels will be transmitted to the framebuffer.
 	  The corner pixels (xmin,ymin) and (xmax,ymax) are included in
@@ -219,7 +234,7 @@
       <varlistentry>
 	<term><option>-l #</option></term>
 	<listitem>
-	  <para>Select lighting model.  Default is 0.
+	  <para>selects lighting model.  Default is 0.
 	  Model 0 is a full lighting model with the ability to implement
 	  Phong shading, transparent and reflective objects, shadow penumbras,
 	  texture maps, etc.
@@ -229,7 +244,7 @@
 	  string of "light" represent additional light sources
 	  (up to 16 are presently permitted),
 	  and shadow computations will be initiated automatically.
-	  (This mechanism is subject to further change).
+	  (This mechanism is subject to further change.)
 	  Model 1 is a diffuse-lighting model only, and is intended for
 	  debugging.
 	  Model 2 displays the surface normals as colors, and is useful
@@ -269,26 +284,28 @@
 	<term><option>-o output.pix</option></term>
 	<listitem>
 	  <para>
-	  Specify the name of a file to store the
+	  specifies the name of a file to store the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
 	  The
 	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  utility can be used later to display ".pix" files.</para>
+	  utility can be used later to display ".pix" files.
+	  Note that using -o disables parallel processing.
+	  </para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-p #</option></term>
 	<listitem>
-	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180 .</para>
+	  <para>sets the perspective, in degrees, with 0 &lt; = # &lt; 180</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
-	  <para>Requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
+	  <para>requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
 	</listitem>
       </varlistentry>
 
@@ -297,14 +314,30 @@
 	<listitem>
 	  <para>specifies the
 	  number of rays to fire in the X and Y directions on a square grid.
-	  The default size is 512 pixels.</para>
+	  The default size is 512 (i.e., 512 x 512).</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-t</option></term>
+	<listitem>
+	  <para>causes reversal of the order of grid traversal (default is not to do that)
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-u units</option></term>
+	<listitem>
+	  <para>specifies units, with "model" being used for the units of the local model
+	  </para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-v #</option></term>
 	<listitem>
-	  <para>sets the verbosity bit vector flags for rt.
+	  <para>sets the verbosity bit vector flags for <command>rt</command> .
 	  Use -v 0 for no output or -v fff for all available output.
 	  See include/brlcad/rtprivate.h for various bit definitions.</para>
 	</listitem>
@@ -324,11 +357,11 @@
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
 	  See raytrace.h for the bit definitions.
-	  <option>-!#</option>
+	  (Notice that <option>-! #</option>
 	  sets the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  debug flags to the given hexadecimal bit vector.
-	  See h/bu.h for the bit definitions.</para>
+	  See bu.h for the bit definitions.)</para>
 	</listitem>
       </varlistentry>
 
@@ -344,8 +377,8 @@
       <varlistentry>
 	<term><option>-B</option></term>
 	<listitem>
-	  <para>The "benchmark" flag.  When specified, all intentional random effects
-	  such as ray dither, color dither, etc., are turned off to allow
+	  <para>turns on the "benchmark" flag. This causes all intentional random effects
+	  such as ray dither, color dither, etc., to be turned off to allow
 	  benchmark timing comparison and benchmark result comparison.</para>
 	</listitem>
       </varlistentry>
@@ -362,115 +395,121 @@
       <varlistentry>
 	<term><option>-D #</option></term>
 	<listitem>
-	  <para>The "desired frame" flag, specifies frame number to start with.
-	  Specify the desired ending (kill-after) frame with
-	  <option>-K #</option></para>
+	  <para>This is the "desired frame" flag, specifying the frame number to start with.
+           Used with animation scripts; specify the desired ending (kill-after) frame with
+	  <option>-K #</option> .</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-E #</option></term>
 	<listitem>
-	  <para>sets the distance from the eye point to the center of the model RPP.
-	  Only useful with auto-sizing, conflicts with
-	  <option>-M</option></para>
+	  <para>sets the distance from the eye point to the center of the model RPP; default is
+          the square root of 2.
+	  Only useful with auto-sizing, and conflicts with
+	  <option>-M</option> .</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-F framebuffer</option></term>
 	<listitem>
-	  <para>indicates that the output should be sent to the indicated framebuffer.
-	  See
+	  <para>indicates that the output should be sent to the indicated framebuffer. See
 	  <citerefentry><refentrytitle>libfb</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  for more details on the specification of a framebuffer.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-G #</option></term>
 	<listitem>
-	  <para>sets the grid cell height, in millimeters.</para>
+	  <para>sets the grid cell height, in millimeters.
+	  If the grid cell height is specified and the grid cell width (which
+	  would be set using <option>-g</option>) is <emphasis remap="I">not</emphasis> specified,
+	  the grid cell width defaults to be the same as the height.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
-	  <para>The "hypersample" flag specifies number of extra rays to fire
-	  for each pixel to obtain more accurate results
-	  without needing to store the extra pixels.
-	  Causes
-	  <option>-J1</option>
-	  to be set.
-	  The final colors of all rays are averaged together.
-	  Better results can be obtained by simply increasing the resolution,
-	  and decimating the results with a filter such as
+          <para>This is the "hypersample" flag, specifying number of extra rays to fire for each pixel to
+          obtain more accurate results without needing to store the extra pixels. Automatically invokes
+	  <option>-J 1</option>. The final colors of all rays are averaged together. Better results can be
+         obtained by simply increasing the resolution, and decimating the results with a filter such as
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-I</option></term>
 	<listitem>
-	  <para>Turns on interactive mode.  If this flag is off and your image is
-	  "large" (&gt; = 256 x 256), it will lower the priority of the rt process.</para>
+	  <para>turns on interactive mode.  If this flag is off and your image is
+	  "large" (&gt; = 256 x 256), it will lower the priority of the <option>rt</option> process.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-J #</option></term>
 	<listitem>
-	  <para>The "jitter" flag is a bit vector.
-	  If one (-J1), it randomizes the point from which each ray
+	  <para>This is the "jitter" flag, which is a bit vector.
+	  If one (<option>-J 1</option>), it randomizes the point from which each ray
 	  is fired by +/- one half of the pixel size.  Useful if doing your own
 	  post-filtering for antialiasing, or to eliminate systematic
 	  errors.  This has been useful in obtaining more accurate results
 	  in a volume-calculating raytrace as well.
-	  If two (-J2), it shifts the origin of the output frame once for each frame.
+	  If two (<option>-J 2</option>), it shifts the origin of the output frame once for each frame.
 	  The shift is along a circular path in the plane of the frame,
 	  with a period of ten seconds, and a radius of +/- 1/4 pixel width.
-	  If three (-J3), it performs both operations.</para>
+	  If three (<option>-J 3</option>), it performs both operations.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-K #</option></term>
 	<listitem>
 	  <para>sets the final (kill-after) frame number.
 	  Used with animation scripts in conjunction with
-	  <option>-D #</option></para>
+	  <option>-D #</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-M</option></term>
 	<listitem>
-	  <para>Reads animation matrix or animation script from standard input.
+	  <para>causes reading of animation (model2view) matrix or animation script from standard input.
 	  Conflicts with
 	  <option>-a</option>
 	  and
-	  <option>-e</option></para>
+	  <option>-e</option> options.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-N #</option></term>
 	<listitem>
-	  <para>Sets the NMG_debug flags to the given hexadecimalbit vector.
+	  <para>sets the NMG_debug flags to the given hexadecimalbit vector.
 	  See h/nmg.h for the bit definitions.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
-	<term><option>-O</option></term>
+	<term><option>-O output.dpix</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="B">output.dpix</emphasis>
-	  Specify the name of a file to store the double-precision floating-point
+	  <para>specifies the name of a file to store the double-precision floating-point
 	  version of the image.
 	  <citerefentry><refentrytitle>dpix-pix</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  can be used to later convert the file to
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
-	  (Deferred implementation).</para>
+	  (Deferred implementation)</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-P #</option></term>
 	<listitem>
-	  <para>Specify the maximum number of processors (in a multi-processor system) to be
+	  <para>specifies the maximum number of processors (in a multi-processor system) to be
 	  used for this execution.  The default is system dependent.
 	  On "dedicated" multi-processors, such as workstations and super-minis,
 	  the default is usually set for the maximum number of processors,
@@ -478,10 +517,11 @@
 	  usually just one processor is used by default.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-Q x,y</option></term>
 	<listitem>
-	  <para>Query pixel ray with debugging.  The option is used to
+	  <para>selects pixel ray for query with debugging.  The option is used to
 	  specify a single pixel for which the debug flags should be turned on.
 	  The computation of all other pixels will be performed without debugging.
 	  This is similar to the -b option, except that it does not limit rendering
@@ -490,24 +530,27 @@
 	  the order of random numbers previously drawn).</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>Requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
+	  <para>requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-S</option></term>
 	<listitem>
-	  <para>Turns on stereo viewing.
+	  <para>turns on stereo viewing.
 	  The left-eye image is drawn in red,
 	  and the right-eye image is drawn in blue.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
-	  <para>Sets the calculation tolerances used by
+	  <para>sets the calculation tolerances used by
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 	  If only one number is given, it specifies the distance tolerance.
 	  Any two entities closer than this distance are considered to be the same.
@@ -523,17 +566,21 @@
 	  on the command line.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-U #</option></term>
 	<listitem>
-	  <para>Sets the "use_air" value.
+	  <para>
+	    sets the Boolean variable <emphasis remap="I">use_air</emphasis>
+	    to the given value.
 	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-V #</option></term>
 	<listitem>
-	  <para>Sets the view aspect.  This is the ratio of width over height and can
+	  <para>sets the view aspect.  This is the ratio of width over height and can
 	  be specified as either a fraction or a colon-separated ratio.
 	  For example, the NTSC aspect ratio can be specified by either
 	  <option>-V1.33</option>
@@ -541,24 +588,31 @@
 	  <option>-V4:3</option> .</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-W</option></term>
 	<listitem>
-	  <para>Sets the background image color to white.</para>
+	  <para>
+	    inverts the foreground and background colors, changing the default from
+	    white lines on a black background to black lines on a white
+	    background
+	  </para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
 	<term><option>-X #</option></term>
 	<listitem>
-	  <para>Turns on the
+	  <para>turns on the
 	  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  program debugging flags.  See raytrace.h for the meaning of these bits.</para>
 	</listitem>
       </varlistentry>
+
       <varlistentry>
-	<term><option>-!#</option></term>
+	<term><option>-! #</option></term>
 	<listitem>
-	  <para>Turns on the
+	  <para>turns on the
 	  <citerefentry><refentrytitle>libbu</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 	  library debugging flags.  See bu.h for the meaning of these bits.
 	  In particular, specifying
@@ -570,7 +624,21 @@
 	  <citerefentry><refentrytitle>dbx</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  or
 	  <citerefentry><refentrytitle>gdb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-	  for debugging.</para>
+	  for debugging.
+	  (Notice that <option>-x #</option>
+	  sets the
+	  <citerefentry><refentrytitle>libbt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
+	  debug flags to the given hexadecimal bit vector.
+	  See raytrace.h for the bit definitions.)</para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term><option>-+ #</option></term>
+	<listitem>
+	  <para>specifies (setting argument to "t") that output is NOT binary (default is that it is).
+          <option>-+</option> is otherwise not implemented.
+	  </para>
 	</listitem>
       </varlistentry>
     </variablelist>
@@ -644,8 +712,12 @@
   </refsection>
 
   <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
-  <para>Numerous error conditions are possible.
-  Descriptive messages are printed on stderr.</para>
+
+    <para>
+      Numerous error conditions are possible, usually due to errors in
+      the geometry database. Descriptive messages are printed on stderr
+      (file descriptor 2).
+    </para>
   </refsection>
 
   <refsection xml:id="author"><title>AUTHOR</title>
@@ -653,7 +725,7 @@
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 1984-2014 United States Government as
+  <para>This software is Copyright (c) 1984-2016 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

@@ -1,7 +1,7 @@
 /*                          R T I F . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include <signal.h>
@@ -37,16 +36,12 @@
 #  include <sys/types.h>
 #endif
 #include <sys/stat.h>
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
+#include "bresource.h"
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 
 #include "./sedit.h"
 #include "./mged.h"

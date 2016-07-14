@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,9 @@
 
 #include <stdlib.h>
 #include "bio.h"
-
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 
 #define SIZE (1024*1024)
@@ -60,7 +61,7 @@ main(int argc, char *argv[])
 
     if (argc > 1) {
 	bu_log("%s: unrecognized argument(s)\n", argv[0]);
-	bu_log("        Program continues running:\n", argv[0]);
+	bu_log("        Program continues running:\n");
     }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {

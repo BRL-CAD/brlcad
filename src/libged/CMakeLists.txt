@@ -5,9 +5,6 @@
 if(BULLET_LIBRARIES)
   set(LIBGED_CMD_LIBS_LIST ${LIBGED_CMD_LIBS_LIST} ${BULLET_LIBRARIES})
   set(LIBGED_CMD_INCLUDE_DIRS ${LIBGED_CMD_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/simulate ${BULLET_INCLUDE_DIR})
-  # The Bullet headers introduce a lot of shadow warnings - don't stop the
-  # build because of them
-  set(NO_STRICT_CXX_SETTING "NO_STRICT_CXX")
   add_definitions(-DHAVE_BULLET=1)
 endif(BULLET_LIBRARIES)
 
@@ -115,6 +112,7 @@ set(LIBGED_SOURCES
   get_solid_kp.c
   get_type.c
   glob.c
+  gdiff.c
   gqa.c
   grid.c
   grid2model_lu.c
@@ -138,6 +136,7 @@ set(LIBGED_SOURCES
   killrefs.c
   killtree.c
   label.c
+  lc.c
   list.c
   loadview.c
   lod.c
@@ -161,9 +160,16 @@ set(LIBGED_SOURCES
   move_arb_face.c
   mrot.c
   nirt.c
+  nmg.c
+  nmg_make_v.c
+  nmg_mm.c
+  nmg_cmface.c
   nmg_collapse.c
   nmg_fix_normals.c
   nmg_simplify.c
+  nmg_kill_v.c
+  nmg_kill_f.c
+  nmg_move_v.c
   ocenter.c
   open.c
   orient.c
@@ -204,7 +210,7 @@ set(LIBGED_SOURCES
   red.c
   regdef.c
   region.c
-  remove.c
+  remove.cpp
   report.c
   rfarb.c
   rmap.c
@@ -248,12 +254,14 @@ set(LIBGED_SOURCES
   shaded_mode.c
   shader.c
   shells.c
+  shape_recognition.cpp
   showmats.c
-  simulate/simphysics.cpp
-  simulate/simulate.c
-  simulate/simcollisionalgo.cpp
-  simulate/simutils.c
-  simulate/simrt.c
+  simulate/collision.cpp
+  simulate/physics_world.cpp
+  simulate/rt_instance.cpp
+  simulate/interface.cpp
+  simulate/simulation.cpp
+  simulate/world_object.cpp
   size.c
   slew.c
   solids_on_ray.c
@@ -327,7 +335,7 @@ if(CPP_DLL_DEFINES)
   add_definitions(-DCLIPPER_DLL_IMPORTS)
 endif(CPP_DLL_DEFINES)
 
-BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}" ${NO_STRICT_CXX_SETTING})
+BRLCAD_ADDLIB(libged "${LIBGED_SOURCES}" "libwdb;librt;libfb;libbg;libbn;libbu;libicv;libanalyze;${LIBGED_CMD_LIBS_LIST};${REGEX_LIBRARY};${WINSOCK_LIB};${CLIPPER_LIBRARY};${M_LIBRARY}")
 SET_TARGET_PROPERTIES(libged PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 set(ged_ignore_files
@@ -335,10 +343,11 @@ set(ged_ignore_files
   ged_private.h
   joint.h
   qray.h
-  simulate/simcollisionalgo.h
-  simulate/simrt.h
-  simulate/simulate.h
-  simulate/simutils.h
+  simulate/collision.hpp
+  simulate/physics_world.hpp
+  simulate/rt_instance.hpp
+  simulate/simulation.hpp
+  simulate/world_object.hpp
   osg.cpp
   )
 CMAKEFILES(${ged_ignore_files})

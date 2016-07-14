@@ -18,8 +18,8 @@
 #ifndef GLFONTSTASH_H
 #define GLFONTSTASH_H
 
-struct FONScontext* glfonsCreate(int width, int height, int flags);
-void glfonsDelete(struct FONScontext* ctx);
+FONScontext* glfonsCreate(int width, int height, int flags);
+void glfonsDelete(FONScontext* ctx);
 
 unsigned int glfonsRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a);
 
@@ -31,10 +31,11 @@ struct GLFONScontext {
 	GLuint tex;
 	int width, height;
 };
+typedef struct GLFONScontext GLFONScontext;
 
 static int glfons__renderCreate(void* userPtr, int width, int height)
 {
-	struct GLFONScontext* gl = (struct GLFONScontext*)userPtr;
+	GLFONScontext* gl = (GLFONScontext*)userPtr;
 	// Create may be called multiple times, delete existing texture.
 	if (gl->tex != 0) {
 		glDeleteTextures(1, &gl->tex);
@@ -58,7 +59,7 @@ static int glfons__renderResize(void* userPtr, int width, int height)
 
 static void glfons__renderUpdate(void* userPtr, int* rect, const unsigned char* data)
 {
-	struct GLFONScontext* gl = (struct GLFONScontext*)userPtr;
+	GLFONScontext* gl = (GLFONScontext*)userPtr;
 	int w = rect[2] - rect[0];
 	int h = rect[3] - rect[1];
 
@@ -75,7 +76,7 @@ static void glfons__renderUpdate(void* userPtr, int* rect, const unsigned char* 
 
 static void glfons__renderDraw(void* userPtr, const float* verts, const float* tcoords, const unsigned int* colors, int nverts)
 {
-	struct GLFONScontext* gl = (struct GLFONScontext*)userPtr;
+	GLFONScontext* gl = (GLFONScontext*)userPtr;
 	if (gl->tex == 0) return;
 	glBindTexture(GL_TEXTURE_2D, gl->tex);
 	glEnable(GL_TEXTURE_2D);
@@ -97,7 +98,7 @@ static void glfons__renderDraw(void* userPtr, const float* verts, const float* t
 
 static void glfons__renderDelete(void* userPtr)
 {
-	struct GLFONScontext* gl = (struct GLFONScontext*)userPtr;
+	GLFONScontext* gl = (GLFONScontext*)userPtr;
 	if (gl->tex != 0)
 		glDeleteTextures(1, &gl->tex);
 	gl->tex = 0;
@@ -105,14 +106,14 @@ static void glfons__renderDelete(void* userPtr)
 }
 
 
-struct FONScontext* glfonsCreate(int width, int height, int flags)
+FONScontext* glfonsCreate(int width, int height, int flags)
 {
-	struct FONSparams params;
-	struct GLFONScontext* gl;
+	FONSparams params;
+	GLFONScontext* gl;
 
-	gl = (struct GLFONScontext*)malloc(sizeof(struct GLFONScontext));
+	gl = (GLFONScontext*)malloc(sizeof(GLFONScontext));
 	if (gl == NULL) goto error;
-	memset(gl, 0, sizeof(struct GLFONScontext));
+	memset(gl, 0, sizeof(GLFONScontext));
 
 	memset(&params, 0, sizeof(params));
 	params.width = width;
@@ -121,7 +122,7 @@ struct FONScontext* glfonsCreate(int width, int height, int flags)
 	params.renderCreate = glfons__renderCreate;
 	params.renderResize = glfons__renderResize;
 	params.renderUpdate = glfons__renderUpdate;
-	params.renderDraw = glfons__renderDraw; 
+	params.renderDraw = glfons__renderDraw;
 	params.renderDelete = glfons__renderDelete;
 	params.userPtr = gl;
 
@@ -132,7 +133,7 @@ error:
 	return NULL;
 }
 
-void glfonsDelete(struct FONScontext* ctx)
+void glfonsDelete(FONScontext* ctx)
 {
 	fonsDeleteInternal(ctx);
 }

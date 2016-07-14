@@ -1,7 +1,7 @@
 /*              B U _ A R G _ P A R S E _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 /* local customizations of TCLAP MUST follow the above header */
 
 /* get common data from the C world */
-#include "bu_arg_parse.h" /* includes bu.h */
+#include "bu_arg_parse.h"
 
 // some customization of TCLAP classes
 class BRLCAD_StdOutput : public TCLAP::StdOutput

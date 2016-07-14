@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,13 +28,13 @@
 #include <string.h>
 #include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 #include "bn.h"
 
 #include "vmath.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* FIXME: temporary until all mirror functions are migrated and the
@@ -84,6 +84,7 @@ RT_DECLARE_MIRROR(nurb);
   RT_DECLARE_MIRROR(revolve);
   RT_DECLARE_MIRROR(sketch);
   RT_DECLARE_MIRROR(submodel);
+  RT_DECLARE_MIRROR(datum);
 */
 
 

@@ -1,7 +1,7 @@
 /*                         P L A N E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -36,7 +36,9 @@
 #include "bu/debug.h"
 #include "bu/log.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
+#include "bn/tol.h"
 
 #define UNIT_SQ_TOL 1.0e-13
 
@@ -466,10 +468,7 @@ bn_dist_line3_lseg3(fastf_t *dist, const fastf_t *p, const fastf_t *d, const fas
 	/* intersect or closest approach between a and b */
 	outside_segment = 0;
 	dist[1] = dist[1]/len_ab;
-	if (dist[1] < 0.0)
-	    dist[1] = 0.0;
-	if (dist[1] > 1.0)
-	    dist[1] = 1.0;
+	CLAMP(dist[1], 0.0, 1.0);
     } else {
 	outside_segment = 1;
 	dist[1] = dist[1]/len_ab;
@@ -1460,6 +1459,7 @@ bn_isect_line_lseg(fastf_t *t, const fastf_t *p, const fastf_t *d, const fastf_t
 
 	dist1 = fabs(dist1); /* sanity */
 	VSCALE(isect_pt, d_unit, dist1);
+	VADD2(isect_pt, isect_pt, p);
 	VSUB2(a_to_isect_pt, isect_pt, a);
 	VSUB2(b_to_isect_pt, isect_pt, b);
 
@@ -1687,6 +1687,7 @@ bn_isect_pt_lseg(fastf_t *dist,
  * @param a is line start point
  * @param b is line end point
  * @param p is line intersect point
+ * @param tol contains the tolerances used for calculations
  */
 int
 bn_isect_pt2_lseg2(fastf_t *dist, const fastf_t *a, const fastf_t *b, const fastf_t *p, const struct bn_tol *tol)
@@ -2481,19 +2482,23 @@ bn_isect_lseg_rpp(fastf_t *a,
 
     for (i=0; i < 3; i++, pt++, dir++, max++, min++) {
 	if (*dir < -SQRT_SMALL_FASTF) {
-	    if ((sv = (*min - *pt) / *dir) < 0.0)
+	    sv = (*min - *pt) / *dir;
+	    if (sv < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > sv)
-		maxdist = sv;
-	    if (mindist < (st = (*max - *pt) / *dir))
-		mindist = st;
+
+	    st = (*max - *pt) / *dir;
+	    V_MAX(mindist, st);
+	    V_MIN(maxdist, sv);
+
 	}  else if (*dir > SQRT_SMALL_FASTF) {
-	    if ((st = (*max - *pt) / *dir) < 0.0)
+	    st = (*max - *pt) / *dir;
+	    if (st < 0.0)
 		return 0;	/* MISS */
-	    if (maxdist > st)
-		maxdist = st;
-	    if (mindist < ((sv = (*min - *pt) / *dir)))
-		mindist = sv;
+
+	    sv = (*min - *pt) / *dir;
+	    V_MAX(mindist, sv);
+	    V_MIN(maxdist, st);
+
 	} else {
 	    /* If direction component along this axis is NEAR 0,
 	     * (i.e., this ray is aligned with this axis), merely
@@ -2513,10 +2518,8 @@ bn_isect_lseg_rpp(fastf_t *a,
 	return 1;	/* HIT within box, no clipping needed */
 
     /* Don't grow one end of a contained segment */
-    if (mindist < 0)
-	mindist = 0;
-    if (maxdist > 1)
-	maxdist = 1;
+    V_MAX(mindist, 0);
+    V_MIN(maxdist, 1);
 
     /* Compute actual intercept points */
     VJOIN1(b, a, maxdist, diff);		/* b must go first */

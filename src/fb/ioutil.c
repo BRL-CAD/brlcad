@@ -1,7 +1,7 @@
 /*                        I O U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,10 @@
 #include <stdarg.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/path.h"
 #include "fb.h"
 
 

@@ -23,9 +23,9 @@
     <arg choice='opt'>-f <replaceable>#</replaceable></arg>
     <arg choice='opt'>-m <replaceable>cmd</replaceable></arg>
     <arg choice='opt'><replaceable>objectname</replaceable></arg>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>in.table</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>out.script</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -403,7 +403,7 @@ option "-d 1 1 1" but not "-d1 1 1".</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2014 by the United States
+<para>This software is Copyright (c) 1994-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

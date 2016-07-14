@@ -1,7 +1,7 @@
 /*                       D M - Q T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,9 +25,6 @@
 
 #ifdef DM_QT
 
-#include "bio.h"
-
-#include <stdio.h>
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -36,7 +33,9 @@
 
 #include "tcl.h"
 #include "tk.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/vls.h"
+#include "bu/parse.h"
 #include "dm.h"
 #include "dm_private.h"
 #include "dm/dm_xvars.h"
@@ -406,6 +405,7 @@ qt_drawVList(dm *dmp, struct bn_vlist *vp)
 		    pnt[0] *= 2047;
 		    pnt[1] *= 2047 * dmp->dm_aspect;
 		    pnt[2] *= 2047;
+		    VMOVE(lpnt, pnt);
 
 		    if (dmp->dm_debugLevel > 2) {
 			bu_log("after clipping:\n");

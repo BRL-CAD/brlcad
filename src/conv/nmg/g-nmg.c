@@ -1,7 +1,7 @@
 /*                         G - N M G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,24 +29,22 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 /* interface headers */
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "mater.h"
 
 
 extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
-static char	usage[] = "Usage: %s [-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
+static const char *usage = "[-v] [-b] [-xX lvl] [-a abs_tol] [-r rel_tol] [-t dist_tol] [-n norm_tol] [-P #_of_CPUs] [-o out_file] brlcad_db.g object(s)\n";
 
 static char	*tok_sep = " \t";
 static int	NMG_debug;		/* saved arg of -X, for longjmp handling */
@@ -68,11 +66,16 @@ static int	regions_converted = 0;
 
 /* extern struct mater* rt_material_head; */
 
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = NULL;
+    static union tree *ret_tree = NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -278,9 +281,9 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct rt_tree_array *tree_list;
-    int node_count;
-    int actual_count;
-    int i;
+    size_t node_count;
+    size_t actual_count;
+    size_t i;
     struct wmember headp;
     struct wmember *wm;
     unsigned char *color;
@@ -347,7 +350,7 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
 						       sizeof(struct rt_tree_array), "tree list");
 	actual_count = (struct rt_tree_array *)db_flatten_tree(tree_list,
 								comb->tree, OP_UNION, 0, &rt_uniresource) - tree_list;
-	BU_ASSERT_LONG(actual_count, ==, node_count);
+	BU_ASSERT_SIZE_T(actual_count, ==, node_count);
     }
     else {
 	tree_list = (struct rt_tree_array *)NULL;
@@ -395,7 +398,8 @@ csg_comb_func(struct db_i *db, struct directory *dp, void *UNUSED(ptr))
     endp = strchr(bu_vls_addr(&comb->shader), ' ');
     if (endp) {
 	len = endp - bu_vls_addr(&comb->shader);
-	if (len > sizeof(matname)) len = sizeof(matname);
+	V_MIN(len, sizeof(matname));
+
 	bu_strlcpy(matname, bu_vls_addr(&comb->shader), len);
 	bu_strlcpy(matparm, endp+1, sizeof(matparm));
     }
@@ -482,12 +486,12 @@ main(int argc, char **argv)
 		bu_log("\n");
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     /* Open BRL-CAD database */
     if ((dbip = db_open(argv[bu_optind], DB_OPEN_READONLY)) == DBI_NULL) {

@@ -1,7 +1,7 @@
 /*                         R E M R T . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,11 +46,8 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* sometimes includes <time.h> */
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bselect.h"
-#include "bio.h"
+#include "bresource.h"
+#include "bsocket.h"
 
 /* FIXME: is this basically FD_COPY()? */
 #ifndef FD_MOVE
@@ -58,7 +55,8 @@
 					       if (FD_ISSET(_i, b)) FD_SET(_i, a); else FD_CLR(_i, a); }
 #endif
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -75,9 +73,12 @@
 
 
 #ifndef HAVE_VFORK
-#  define vfork fork
+#  ifdef HAVE_FORK
+#    define vfork fork
+#  else
+#    define vfork() -1
+#  endif
 #endif
-
 
 #define TARDY_SERVER_INTERVAL	(9*60)		/* max seconds of silence */
 #define N_SERVER_ASSIGNMENTS	3		/* desired # of assignments */

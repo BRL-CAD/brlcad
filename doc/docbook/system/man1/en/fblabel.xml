@@ -19,9 +19,9 @@
     <arg choice="opt" rep="norepeat">-dca </arg>
     <arg choice="opt" rep="norepeat">-F <replaceable>framebuffer</replaceable></arg>
     <arg choice="opt" rep="norepeat">-f <replaceable>fontname</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-{sS} <replaceable>squaresize/b</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-{wW} <replaceable>width/b</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-{nN} <replaceable>height/b</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-{sS} <replaceable>squaresize</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-{wW} <replaceable>width</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-{nN} <replaceable>height</replaceable></arg>
     <arg choice="opt" rep="norepeat">-C <replaceable>r/g/b</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>x_position</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>y_position</replaceable></arg>
@@ -50,7 +50,7 @@ by using the
 flag.</para>
 
 <para>By default, the
-requested framebuffer size is assumed to be 512x512 pixels..</para>
+requested framebuffer size is assumed to be 512x512 pixels.</para>
 
 <para>The
 <option>-d</option>
@@ -111,7 +111,7 @@ to avoid having to create a font converter.</para>
 </refsection>
 
 <refsection xml:id="copyright"><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsection>
 

@@ -1,7 +1,7 @@
 /*                 CharacterizedDefinition.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2012 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -129,7 +129,7 @@ CharacterizedDefinition::GetRelatedProductDefinition()
 }
 
 bool
-CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
+CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Application_instance *sse) {
     step=sw;
 
     if (definition == NULL) {
@@ -141,7 +141,7 @@ CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
 
 	    type = CharacterizedDefinition::CHARACTERIZED_PRODUCT_DEFINITION;
 	    definition = aCPD;
-	    if (!aCPD->Load(step, cpd_select)) {
+	    if (!aCPD->Load(step, (SDAI_Application_instance *)cpd_select)) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedProductDefinition from CharacterizedDefinition." << std::endl;
 		return false;
 	    }
@@ -151,7 +151,7 @@ CharacterizedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
 
 	    type = CharacterizedDefinition::SHAPE_DEFINITION;
 	    definition = aSD;
-	    if (!aSD->Load(step, sd_select)) {
+	    if (!aSD->Load(step, (SDAI_Application_instance *)sd_select)) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedProductDefinition from CharacterizedDefinition." << std::endl;
 		return false;
 	    }

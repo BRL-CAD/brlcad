@@ -33,6 +33,10 @@ set(OSGGA_SRCS
 add_library(osgGA ${OPENSCENEGRAPH_USER_DEFINED_DYNAMIC_OR_STATIC} ${OSGGA_SRCS})
 target_link_libraries(osgGA osgDB osgUtil osg OpenThreads ${CMAKE_THREAD_LIBS_INIT}
   ${MATH_LIBRARY} ${RT_LIBRARY} ${DL_LIBRARY})
+install(TARGETS osgGA
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 # Local Variables:
 # tab-width: 8

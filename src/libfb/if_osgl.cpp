@@ -1,7 +1,7 @@
 /*                     I F _ O S G L . C P P
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{ */
 /** @file if_osgl.cpp
  *
@@ -42,6 +42,8 @@ extern "C" {
 #include "fb_private.h"
 }
 #include "fb/fb_osgl.h"
+
+#include <osg/GLExtensions>
 
 #define CJDEBUG 0
 #define DIRECT_COLOR_VISUAL_ALLOWED 0
@@ -120,9 +122,11 @@ struct osglinfo {
     osg::Image *image;
     osg::TextureRectangle *texture;
     osg::Geometry *pictureQuad;
+    osg::Group *root;
     osg::Timer *timer;
     int last_update_time;
     int cursor_on;
+    int use_texture;
 
     osg::GraphicsContext *glc;
     osg::GraphicsContext::Traits *traits;
@@ -531,84 +535,6 @@ osgl_do_event(fb *ifp)
 
     if (OSGL(ifp)->viewer)
 	(*OSGL(ifp)->viewer).frame();
-
-#if 0
-    XEvent event;
-
-    while (XCheckWindowEvent(OSGL(ifp)->dispp, OSGL(ifp)->wind,
-			     OSGL(ifp)->event_mask, &event)) {
-	switch (event.type) {
-	    case Expose:
-		if (!OSGL(ifp)->use_ext_ctrl)
-		    expose_callback(ifp);
-		break;
-	    case ButtonPress:
-		{
-		    int button = (int) event.xbutton.button;
-		    if (button == Button1) {
-			/* Check for single button mouse remap.
-			 * ctrl-1 => 2
-			 * meta-1 => 3
-			 * cmdkey => 3
-			 */
-			if (event.xbutton.state & ControlMask) {
-			    button = Button2;
-			} else if (event.xbutton.state & Mod1Mask) {
-			    button = Button3;
-			} else if (event.xbutton.state & Mod2Mask) {
-			    button = Button3;
-			}
-		    }
-
-		    switch (button) {
-			case Button1:
-			    break;
-			case Button2:
-			    {
-				int x, y;
-				register struct osgl_pixel *osglp;
-
-				x = event.xbutton.x;
-				y = ifp->if_height - event.xbutton.y - 1;
-
-				if (x < 0 || y < 0) {
-				    fb_log("No RGB (outside image viewport)\n");
-				    break;
-				}
-
-				osglp = (struct osgl_pixel *)&ifp->if_mem[
-				    (y*SGI(ifp)->mi_memwidth)*
-				    sizeof(struct osgl_pixel) ];
-
-				fb_log("At image (%d, %d), real RGB=(%3d %3d %3d)\n",
-				       x, y, (int)osglp[x].red, (int)osglp[x].green, (int)osglp[x].blue);
-
-				break;
-			    }
-			case Button3:
-			    OSGL(ifp)->alive = 0;
-			    break;
-			default:
-			    fb_log("unhandled mouse event\n");
-			    break;
-		    }
-		    break;
-		}
-	    case ConfigureNotify:
-		{
-		    XConfigureEvent *conf = (XConfigureEvent *)&event;
-
-		    if (conf->width == OSGL(ifp)->win_width &&
-			conf->height == OSGL(ifp)->win_height)
-			return;
-
-		    osgl_configureWindow(ifp, conf->width, conf->height);
-		}
-	    default:
-		break;
-	}
-    }
-#endif
 }
 
 /**
@@ -669,13 +595,51 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     if (osgl_getmem(ifp) < 0)
 	return -1;
 
+    /* Make sure OpenSceneGraph knows to look in the root lib directory */
+    /* TODO - The OpenSceneGraph logic for handling plugins isn't multi-config
+     * aware - we're going to have to add that to make this mechanism work on Windows */
+    {
+	std::string rel_path = std::string(bu_brlcad_dir("lib", 0)) + std::string("/osgPlugins");
+	const char *root_path = bu_brlcad_root(rel_path.c_str(), 0);
+	osgDB::FilePathList paths = osgDB::Registry::instance()->getLibraryFilePathList();
+	if (root_path) {
+	    std::string libpathstring(root_path);
+	    /* The first entry is the final installed path - prefer that to the local
+	     * bu_brlcad_root lib directory.  This means our new path should be the
+	     * second entry in the list - insert it accordingly. */
+	    osgDB::FilePathList::iterator in_itr=++(paths.begin());
+	    paths.insert(in_itr, libpathstring);
+	    osgDB::Registry::instance()->setLibraryFilePathList(paths);
+	}
+	//for(osgDB::FilePathList::const_iterator libpath=osgDB::Registry::instance()->getLibraryFilePathList().begin(); libpath!=osgDB::Registry::instance()->getLibraryFilePathList().end(); ++libpath) std::cout << *libpath << "\n";
+    }
+
+
     OSGL(ifp)->timer = new osg::Timer;
     OSGL(ifp)->last_update_time = 0;
 
     OSGL(ifp)->viewer = new osgViewer::Viewer();
-    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0, 0, ifp->if_width, ifp->if_height);
-    std::cout << sw->getHeight() << "\n";
+    int woffset = 40;
+    osgViewer::SingleWindow *sw = new osgViewer::SingleWindow(0+woffset, 0+woffset, ifp->if_width, ifp->if_height);
     OSGL(ifp)->viewer->apply(sw);
+    osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
+    camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
+    camera->setViewMatrix(osg::Matrix::identity());
+
+    OSGL(ifp)->root = new osg::Group;
+    OSGL(ifp)->viewer->setSceneData(OSGL(ifp)->root);
+
+    /* Need to realize and render a frame before we inquire what GL extensions are supported,
+     * or Bad Things happen to the OpenGL state */
+    OSGL(ifp)->use_texture = 0;
+    OSGL(ifp)->viewer->realize();
+    OSGL(ifp)->viewer->frame();
+    OSGL(ifp)->glc = camera->getGraphicsContext();
+    unsigned int contextID = OSGL(ifp)->glc->getState()->getContextID();
+    bool have_pixbuff = osg::isGLExtensionSupported(contextID, "GL_ARB_pixel_buffer_object");
+    if (have_pixbuff) {
+	std::cout << "Have GL_ARB_pixel_buffer_object\n";
+    }
 
     OSGL(ifp)->image = new osg::Image;
     OSGL(ifp)->image->setImage(ifp->if_width, ifp->if_height, 1, GL_RGB, GL_RGB, GL_UNSIGNED_BYTE, (unsigned char *)ifp->if_mem, osg::Image::NO_DELETE);
@@ -683,41 +647,40 @@ fb_osgl_open(fb *ifp, const char *UNUSED(file), int width, int height)
     OSGL(ifp)->pictureQuad = osg::createTexturedQuadGeometry(osg::Vec3(0.0f,0.0f,0.0f),
 	    osg::Vec3(ifp->if_width,0.0f,0.0f), osg::Vec3(0.0f,0.0f, ifp->if_height), 0.0f, 0.0, OSGL(ifp)->image->s(), OSGL(ifp)->image->t());
     OSGL(ifp)->texture = new osg::TextureRectangle(OSGL(ifp)->image);
-    OSGL(ifp)->texture->setFilter(osg::Texture::MIN_FILTER,osg::Texture::LINEAR);
+    /*OSGL(ifp)->texture->setFilter(osg::Texture::MIN_FILTER,osg::Texture::LINEAR);
     OSGL(ifp)->texture->setFilter(osg::Texture::MAG_FILTER,osg::Texture::LINEAR);
-    OSGL(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);
+    OSGL(ifp)->texture->setWrap(osg::Texture::WRAP_R,osg::Texture::REPEAT);*/
     OSGL(ifp)->pictureQuad->getOrCreateStateSet()->setTextureAttributeAndModes(0, OSGL(ifp)->texture, osg::StateAttribute::ON);
 
-    osg::Geode *geode = new osg::Geode;
-    osg::StateSet* stateset = geode->getOrCreateStateSet();
-    stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
-    geode->addDrawable(OSGL(ifp)->pictureQuad);
-
-    osg::Camera *camera = OSGL(ifp)->viewer->getCamera();
-
-    camera->setViewMatrix(osg::Matrix::identity());
-    osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
-    osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
-    camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
-    camera->setClearColor(osg::Vec4(0.0f,0.0f,0.0f,1.0f));
-
-    OSGL(ifp)->viewer->setSceneData(geode);
+    if (have_pixbuff) {
+	OSGL(ifp)->use_texture = 1;
+	osg::Geode *geode = new osg::Geode;
+	osg::StateSet* stateset = geode->getOrCreateStateSet();
+	stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+	geode->addDrawable(OSGL(ifp)->pictureQuad);
+	OSGL(ifp)->root->addChild(geode);
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    } else {
+	/* Emulate xmit_scanlines drawing in OSG as a fallback... */
+	OSGL(ifp)->use_texture = 0;
+	osg::Vec3 topleft(0.0f, 0.0f, 0.0f);
+	osg::Vec3 bottomright(ifp->if_width, ifp->if_height, 0.0f);
+	camera->setProjectionMatrixAsOrtho2D(-ifp->if_width/2,ifp->if_width/2,-ifp->if_height/2, ifp->if_height/2);
+    }
 
     OSGL(ifp)->viewer->setCameraManipulator( new osgGA::FrameBufferManipulator() );
     OSGL(ifp)->viewer->addEventHandler(new osgGA::StateSetManipulator(OSGL(ifp)->viewer->getCamera()->getOrCreateStateSet()));
 
-    KeyHandler *kh = new KeyHandler(*geode);
+    KeyHandler *kh = new KeyHandler(*(OSGL(ifp)->root));
     kh->fbp = ifp;
     OSGL(ifp)->viewer->addEventHandler(kh);
 
     OSGL(ifp)->cursor_on = 1;
 
-    OSGL(ifp)->viewer->realize();
 
     OSGL(ifp)->timer->setStartTick();
-
-    OSGL(ifp)->glc = camera->getGraphicsContext();
-
     /* count windows */
     osgl_nwindows++;
 
@@ -1186,7 +1149,7 @@ osgl_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 /* write count pixels from pixelp starting at xstart, ystart */
-    HIDDEN ssize_t
+HIDDEN ssize_t
 osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t count)
 {
     register int x;
@@ -1226,10 +1189,24 @@ osgl_write(fb *ifp, int xstart, int ystart, const unsigned char *pixelp, size_t 
 	    else
 		scan_count = pix_count;
 
-	    scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
-
-	    memcpy(scanline, pixelp, scan_count*3);
-
+	    if (OSGL(ifp)->use_texture) {
+		scanline = (void *)(OSGL(ifp)->image->data(0,y,0));
+		memcpy(scanline, pixelp, scan_count*3);
+	    } else {
+		/* Emulate xmit_scanlines drawing in OSG as a fallback when textures don't work... */
+		osg::ref_ptr<osg::Image> scanline_image = new osg::Image;
+		scanline_image->allocateImage(ifp->if_width, 1, 1, GL_RGB, GL_UNSIGNED_BYTE);
+		scanline = (void *)scanline_image->data();
+		memcpy(scanline, pixelp, scan_count*3);
+		osg::ref_ptr<osg::DrawPixels> scanline_obj = new osg::DrawPixels;
+		scanline_obj->setPosition(osg::Vec3(-ifp->if_width/2, 0, -ifp->if_height/2 + y));
+		scanline_obj->setImage(scanline_image);
+		osg::ref_ptr<osg::Geode> new_geode = new osg::Geode;
+		osg::StateSet* stateset = new_geode->getOrCreateStateSet();
+		stateset->setMode(GL_LIGHTING,osg::StateAttribute::OFF);
+		new_geode->addDrawable(scanline_obj.get());
+		OSGL(ifp)->root->addChild(new_geode.get());
+	    }
 	    ret += scan_count;
 	    pix_count -= scan_count;
 	    x = 0;

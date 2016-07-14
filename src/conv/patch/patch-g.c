@@ -1,7 +1,7 @@
 /*                       P A T C H - G . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,10 +53,11 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -71,7 +72,6 @@ usage(int status, const char *argv0)
 {
     bu_log("Usage: %s [options] model.g\n", argv0);
     bu_log("	-f fastgen.rp	specify pre-processed FASTGEN file (default stdin)\n");
-    bu_log("	-a		process phantom armor?\n");
     bu_log("	-n		process volume mode as plate mode?\n");
     bu_log("	-u #		number of union operations per region (default %d)\n", num_unions);
     bu_log("	-c \"x y z\"	center of object in inches (for some surface normal calculations)\n");
@@ -86,7 +86,8 @@ usage(int status, const char *argv0)
     bu_log("	-x #		librt debug flag\n");
     bu_log("	-X #		librt NMG debug flags\n");
     bu_log("	-T #		distance tolerance (inches) (two points within this distance are the same point)\n");
-    bu_log("	-A #		parallel tolerance (if A dot B (unit vectors) is less than this value, they are perpendicular)\n");
+    bu_log("	-A #		perpendicular tolerance (given unit vectors V1 and V2, if V1 dot V2 is less than\n");
+    bu_log("			this value, V1 and V2 are considered perpendicular)\n");
     bu_log("Note: fastgen.rp is the pre-processed (through rpatch) FASTGEN file\n\n");
     if (status == 0)
 	exit(0);
@@ -611,10 +612,8 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    }
 
 	    /* phantom armor */
-	    if (aflg > 0) {
-		if (ZERO(in[0].rsurf_thick)) {
-		    in[0].rsurf_thick = 1;
-		}
+	    if (ZERO(in[0].rsurf_thick)) {
+	        in[0].rsurf_thick = 1;
 	    }
 	}
     }
@@ -725,8 +724,7 @@ Build_solid(int l, char *name, char *mirror_name, int plate_mode, fastf_t *centr
 	    dot = VDOT(norm, norm1);
 	    if (dot < 0.0)
 		dot = (-dot);
-	    if (dot < min_dot)
-		min_dot = dot;
+	    V_MIN(min_dot, dot);
 	}
     }
 
@@ -1036,7 +1034,7 @@ proc_region(char *name1)
 {
     char tmpname[NAMESIZE*2];
     int chkroot;
-    int i;
+    size_t i;
     int cc;
     static int reg_count=0;
     static int mir_count=0;
@@ -1366,8 +1364,7 @@ proc_plate(int cnt)
 	mir_count = 0;
     }
 
-    /* include the check for phantom armor */
-    if ((in[0].rsurf_thick > 0)||(aflg > 0)) {
+    if ( in[0].rsurf_thick > 0 ) {
 
 	for (k=0; k < (cnt); k++) {
 	    for (l=0; l<= 7; l++) {
@@ -2157,18 +2154,16 @@ proc_donut(int cnt)
 	 * on non-zero radii
 	 */
 	rbase1 = in[k+2].x;
-	if (rbase1 < TOL.dist)
-	    rbase1 = TOL.dist;
+	V_MAX(rbase1, TOL.dist);
+
 	rtop1 = in[k+2].y;
-	if (rtop1 < TOL.dist)
-	    rtop1 = TOL.dist;
+	V_MAX(rtop1, TOL.dist);
 
 	rbase2 = in[k+5].x;
-	if (rbase2 < TOL.dist)
-	    rbase2 = TOL.dist;
+	V_MAX(rbase2, TOL.dist);
+
 	rtop2 = in[k+5].y;
-	if (rtop2 < TOL.dist)
-	    rtop2 = TOL.dist;
+	V_MAX(rtop2, TOL.dist);
 
 	if (rbase2 > rbase1) {
 	    bu_log("Bad Donut: inner base radius bigger than outer for component #%d\n", in[k].cc);
@@ -3422,7 +3417,7 @@ main(int argc, char **argv)
      */
 
     /* Get command line arguments. */
-    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:anu:t:o:rc:d:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "6A:T:x:X:pf:i:m:nu:t:o:rc:d:h?")) != -1) {
 	switch (c) {
 	    case '6':  /* use arb6 solids for plate mode */
 		arb6 = 1;
@@ -3476,11 +3471,6 @@ main(int argc, char **argv)
 	    case 'm':  /* materials information file */
 
 		matfile = bu_optarg;
-		break;
-
-	    case 'a':  /* process phantom armor ? */
-
-		aflg++;
 		break;
 
 	    case 'n':  /* process volume mode as plate mode ? */

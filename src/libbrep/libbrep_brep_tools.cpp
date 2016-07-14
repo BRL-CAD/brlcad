@@ -1,7 +1,7 @@
 /*          L I B B R E P _ B R E P _ T O O L S . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,12 +24,16 @@
 
 #include "common.h"
 
+/* interface header */
+#include "libbrep_brep_tools.h"
+
+/* system implementation headers */
 #include <vector>
 #include <iostream>
 
-#include "opennurbs.h"
-#include "bu.h"
-#include "libbrep_brep_tools.h"
+/* library implementation headers */
+#include "bu/log.h"
+
 
 bool ON_NearZero(double val, double epsilon) {
     return (val > -epsilon) && (val < epsilon);
@@ -113,6 +117,79 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
 
     return 0;
 }
+
+HIDDEN double
+find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance, int stepcount)
+{
+    double inc = increment;
+    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
+    ON_Interval dom = crv->Domain();
+    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
+    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval + inc));
+    if (prev_pt.DistanceTo(next_pt) > tolerance) {
+        stepcount++;
+        inc = inc / 2;
+        return find_next_point(crv, startdomval, inc, tolerance, stepcount);
+    } else {
+        if (stepcount > 5) return 0.0;
+        return startdomval + inc;
+    }
+}
+
+int ON_Curve_PolyLine_Approx(ON_Polyline *polyline, const ON_Curve *curve, double tol)
+{
+    ON_3dPointArray pnts;
+    if (!curve || !polyline) return 0;
+    if (curve->IsLinear()) {
+	ON_Interval dom = curve->Domain();
+	ON_3dPoint p1 = curve->PointAt(dom.ParameterAt(0.0));
+	ON_3dPoint p2 = curve->PointAt(dom.ParameterAt(1.0));
+	pnts.Append(p1);
+	pnts.Append(p2);
+	(*polyline) = ON_Polyline(pnts);
+	return 2;
+    } else {
+	ON_Interval dom = curve->Domain();
+
+	double domainval = 0.0;
+	double olddomainval = 1.0;
+	int crudestep = 0;
+	// Insert first point.
+	ON_3dPoint p = curve->PointAt(dom.ParameterAt(domainval));
+	pnts.Append(p);
+
+	/* Dynamic sampling approach - start with an initial guess
+	 * for the next point of one tenth of the domain length
+	 * further down the domain from the previous value.  Set a
+	 * maximum physical distance between points of 100 times
+	 * the model tolerance.  Reduce the increment until the
+	 * tolerance is satisfied, then add the point and use it
+	 * as the starting point for the next calculation until
+	 * the whole domain is finished.  Perhaps it would be more
+	 * ideal to base the tolerance on some fraction of the
+	 * curve bounding box dimensions?
+	 */
+
+	while (domainval < 1.0 && crudestep <= 100) {
+	    olddomainval = domainval;
+	    if (crudestep == 0)
+		domainval = find_next_point(curve, domainval, 0.1, tol * 100, 0);
+	    if (crudestep >= 1 || ZERO(domainval)) {
+		crudestep++;
+		domainval = olddomainval + (1.0 - olddomainval) / 100 * crudestep;
+	    }
+	    p = curve->PointAt(dom.ParameterAt(domainval));
+	    pnts.Append(p);
+	}
+	(*polyline) = ON_Polyline(pnts);
+	return pnts.Count();
+    }
+    return 0;
+}
+
+
+
+
 
 bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol)
 {
@@ -247,7 +324,7 @@ bool ON_Surface_SubSurface(
     ON_Surface **result
     )
 {
-    bool split = true;
+    ON_BOOL32 split = true;
     ON_Surface **target;
     int last_split = 0;
     int t1_del, t2_del, t3_del;
@@ -275,29 +352,30 @@ bool ON_Surface_SubSurface(
     ON_Surface_Create_Scratch_Surfaces(t1, t2, t3, t4);
     if (fabs(u_val->Min() - srf->Domain(0).m_t[0]) > ON_ZERO_TOLERANCE) {
 	if (last_split == 1) {target = t4;} else {target = t2;}
-	split = ssplit->Split(0, u_val->Min(), *t1, *target);
+	split = ssplit->Split(false, u_val->Min(), *t1, *target);
 	ssplit = *target;
     }
     if ((fabs(u_val->Max() - srf->Domain(0).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 2) {target = t4;} else {target = t1;}
-	split = ssplit->Split(0, u_val->Max(), *target, *t3);
+	split = ssplit->Split(false, u_val->Max(), *target, *t3);
 	ssplit = *target;
     }
     if ((fabs(v_val->Min() - srf->Domain(1).m_t[0]) > ON_ZERO_TOLERANCE) && split) {
 	if (last_split == 3) {target = t4;} else {target = t3;}
-	split = ssplit->Split(1, v_val->Min(), *t2, *target);
+	split = ssplit->Split(true, v_val->Min(), *t2, *target);
 	ssplit = *target;
     }
     if ((fabs(v_val->Max() - srf->Domain(1).m_t[1]) > ON_ZERO_TOLERANCE) && split) {
-	split = ssplit->Split(1, v_val->Max(), *t4, *t2);
+	split = ssplit->Split(true, v_val->Max(), *t4, *t2);
     }
     (*result) = *t4;
     if (t1_del) delete *t1;
     if (t2_del) delete *t2;
     if (t3_del) delete *t3;
-    (*result)->SetDomain(0,u_val->Min(), u_val->Max());
-    (*result)->SetDomain(1,v_val->Min(), v_val->Max());
-    return split;
+    (*result)->SetDomain(0, u_val->Min(), u_val->Max());
+    (*result)->SetDomain(1, v_val->Min(), v_val->Max());
+
+    return split != 0;
 }
 
 bool ON_Surface_Quad_Split(
@@ -311,7 +389,7 @@ bool ON_Surface_Quad_Split(
     ON_Surface **q2,
     ON_Surface **q3)
 {
-    bool split_success = true;
+    ON_BOOL32 split_success = true;
     ON_Surface *north = NULL;
     ON_Surface *south = NULL;
 
@@ -326,7 +404,7 @@ bool ON_Surface_Quad_Split(
     }
 
     // First, get the north and south pieces
-    split_success = surf->Split(1, vpt, south, north);
+    split_success = surf->Split(true, vpt, south, north);
     if (!split_success || !south || !north) {
 	delete south;
 	delete north;
@@ -334,7 +412,7 @@ bool ON_Surface_Quad_Split(
     }
 
     // Split the south pieces to get q0 and q1
-    split_success = south->Split(0, upt, (*q0), (*q1));
+    split_success = south->Split(false, upt, (*q0), (*q1));
     if (!split_success || !(*q0) || !(*q1)) {
 	delete south;
 	delete north;

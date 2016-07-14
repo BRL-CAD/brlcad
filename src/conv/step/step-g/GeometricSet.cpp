@@ -1,7 +1,7 @@
 /*                 GeometricSet.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -78,7 +78,7 @@ bool GeometricSet::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 		if (aGSS) {
 		    elements.push_back(aGSS);
 
-		    if (!aGSS->Load(step, select)) {
+		    if (!aGSS->Load(step, (SDAI_Application_instance *)select)) {
 			std::cout << CLASSNAME << ":Error loading select attribute list 'elements' as GeometricSetSelect from GeometricSet." << std::endl;
 			return false;
 		    }

@@ -1,7 +1,7 @@
 /*                     P H O T O N M A P . H
  * BRL-CAD
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,12 +38,12 @@
 
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plastic.h"
-#include "light.h"
+#include "optical/plastic.h"
+#include "optical/light.h"
 
 
 #define	PM_MAPS		4

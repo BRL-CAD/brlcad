@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,7 +41,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -50,8 +50,6 @@
 extern char *outputfile;		/* output file name */
 
 extern point_t viewbase_model;
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 

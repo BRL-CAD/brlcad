@@ -1,7 +1,7 @@
 /*                 T I E N E T _ M A S T E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -47,14 +47,14 @@
 #  include <netdb.h>
 #endif
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
 #include "tienet_master.h"
 
 #include "bio.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 
 
 
@@ -435,8 +435,7 @@ void tienet_master_connect_slaves(fd_set *readfds)
 			    FD_SET(daemon_socket, readfds);
 
 			    /* Check to see if it's the new highest */
-			    if (daemon_socket > tienet_master_highest_fd)
-				tienet_master_highest_fd = daemon_socket;
+			    V_MAX(tienet_master_highest_fd, daemon_socket);
 			}
 		    }
 		} else {
@@ -550,8 +549,7 @@ void* tienet_master_listener(void *ptr)
 			    tienet_send(slave_socket, &op, sizeof(short));
 
 			    /* Append to select list */
-			    if (slave_socket > tienet_master_highest_fd)
-				tienet_master_highest_fd = slave_socket;
+			    V_MAX(tienet_master_highest_fd, slave_socket);
 			}
 
 			/* Send some work */
@@ -620,8 +618,7 @@ void* tienet_master_listener(void *ptr)
 	/* Rebuild select list for next select call */
 	tienet_master_highest_fd = 0;
 	for (sock = tienet_master_socket_list; sock; sock = sock->next) {
-	    if (sock->num > tienet_master_highest_fd)
-		tienet_master_highest_fd = sock->num;
+	    V_MAX(tienet_master_highest_fd, sock->num);
 	    FD_SET(sock->num, &readfds);
 	}
     }

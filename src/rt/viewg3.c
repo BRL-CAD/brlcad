@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -50,7 +50,7 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -64,8 +64,6 @@ void part_compact(register struct application *ap, register struct partition *Pa
 
 extern fastf_t gift_grid_rounding;
 extern point_t viewbase_model;
-
-extern int npsw;			/* number of worker PSWs to run */
 
 extern int rpt_overlap;
 

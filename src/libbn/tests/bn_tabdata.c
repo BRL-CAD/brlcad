@@ -1,7 +1,7 @@
 /*                      B N _ T A B D A T A . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "vmath.h"
 #include "bn.h"
 

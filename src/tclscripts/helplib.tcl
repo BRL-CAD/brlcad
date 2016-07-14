@@ -1,7 +1,7 @@
 #                     H E L P L I B . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ set helplib_data(wdb_attr)        {{ {set|get|show|rm|append} object [args]}
 	The "rm" subcommand deletes the specified attributes.
 	The "show" subcommand does a "get" and displays the results in a user readable format.}   }
 set helplib_data(wdb_bot_face_sort)     {{triangles_per_piece bot_solid1 [bot_solid2 bot_solid3 ...]} {sort the facelist of BOT solids to optimize ray trace performance for a particular number of triangles per raytrace piece }}
-set helplib_data(wdb_bot_decimate)      {{ -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
+set helplib_data(wdb_bot_decimate)      {{-f feature_size -c maximum_chord_error -n maximum_normal_error -e minimum_edge_length new_bot_name current_bot_name} {Uses edge decimation to reduce the number of triangles in the specified BOT while keeping within the specified constraints}}
 set helplib_data(wdb_cat)		{{<objects>} {list attributes (brief)}}
 set helplib_data(wdb_color)		{{[-e] [low high r g b]} {text edit color table or make new color entry}}
 set helplib_data(wdb_comb)		{{comb_name [-c|-r] [-w|-f|-l] [-S] <operation solid>}	{create or extend combination w/booleans}}

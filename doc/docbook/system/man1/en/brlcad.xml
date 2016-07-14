@@ -111,12 +111,6 @@ etc.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><emphasis remap='B'>libsysv</emphasis></term>
-  <listitem>
-<para>Some System-V compatibility routines</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><emphasis remap='B'>libtermio</emphasis></term>
   <listitem>
 <para>A library to handle terminal mode setting
@@ -144,12 +138,6 @@ providing functions
 originally from the University of Utah in a library package.
 Note that the current version of this library reads
 Edition-3 RLE files.
-[Edition-1 and Edition-2 RLE files can be read and written
-with the
-<emphasis remap='B'>liborle</emphasis>
-and
-<emphasis remap='B'>orle</emphasis>
-programs.]
 See
 <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>fb-rle</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -202,7 +190,7 @@ See
 <citerefentry><refentrytitle>pixdiff</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixfilter</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixhist</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>pixhist3d-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>pixhist3d-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixhist3d</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixinterp2x</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pixrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
@@ -254,7 +242,7 @@ is checked for the device to use.  The format of this
 variable is either
 <emphasis remap='I'>[hostname:]</emphasis><filename>/dev/</filename><emphasis remap='I'>device_name[num]</emphasis>
 or
-<emphasis remap='I'>UNIX_path ,</emphasis>
+<emphasis remap='I'>UNIX_path</emphasis> ,
 the pathname of a disk file to be used as a "virtual framebuffer".
 <emphasis remap='I'>Hostname</emphasis>
 is the name of a remote machine if the remote framebuffer interface
@@ -428,7 +416,7 @@ a convention for the number of frames/reel exists:</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

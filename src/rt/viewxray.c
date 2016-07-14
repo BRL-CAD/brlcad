@@ -1,7 +1,7 @@
 /*                      V I E W X R A Y . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,6 +37,7 @@
 #include <stdio.h>
 
 #include "bu/parallel.h"
+#include "bu/mime.h"
 #include "vmath.h"
 #include "icv.h"
 #include "raytrace.h"
@@ -118,7 +119,7 @@ view_init(struct application *UNUSED(ap), char *UNUSED(file), char *UNUSED(obj),
 	if (outputfile) {
 	    char buf[BUFSIZ];
 	    int format = icv_guess_file_format(outputfile, buf);
-	    if (format != ICV_IMAGE_UNKNOWN) {
+	    if (format != MIME_IMAGE_UNKNOWN) {
 		bu_strlcpy(buf, outputfile, BUFSIZ);
 		bu_strlcat(buf, floatfileext, BUFSIZ);
 		outputfile = floatfilename = bu_strdup(buf);

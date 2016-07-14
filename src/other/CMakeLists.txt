@@ -33,9 +33,7 @@ CLEAR_BUILD_FLAGS()
 RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
-if(BRLCAD_DISABLE_SRC_OTHER_WARN)
-  add_definitions(-w)
-endif(BRLCAD_DISABLE_SRC_OTHER_WARN)
+DISABLE_WARNINGS()
 
 # Ideally we wouldn't need this, but in a few cases we're using
 # BRL-CAD's include dirs.
@@ -105,7 +103,7 @@ provided with BRL-CAD's source distribution.  Default is AUTO,
 responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
 first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES})
+THIRD_PARTY(libz ZLIB zlib zlib_DESCRIPTION ALIASES ${zlib_ALIASES} FIND_NAME BRLCADZLIB)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/libz/CTestTestfile.cmake)
 SetTargetFolder(zlib "Third Party Libraries")
 SetTargetFolder(zlib-static "Third Party Libraries")
@@ -120,18 +118,29 @@ libraries provided with BRL-CAD's source code.  Default is AUTO, responsive to
 the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION "BRLCAD_ENABLE_OSG;BRLCAD_LEVEL3" ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
+THIRD_PARTY(freetype FREETYPE ft freetype_DESCRIPTION BRLCAD_ENABLE_OSG BRLCAD_LEVEL3 ALIASES ${freetype_ALIASES} FIND_NAME Freetype)
 if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARY freetype CACHE STRING "libfreetype" FORCE)
-  set(FREETYPE_INCLUDE_DIR
-    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+  set(FREETYPE_INCLUDE_DIR_freetype2
     ${BRLCAD_SOURCE_DIR}/src/other/freetype/include
-    CACHE STRING "FreeType include dirs" FORCE
+    CACHE STRING "FreeType freetype2 include dir" FORCE
     )
-  set(FREETYPE_INCLUDE_DIRS "${FREETYPE_INCLUDE_DIR}" CACHE STRING "Directory containing FreeType headers." FORCE)
+  set(FREETYPE_INCLUDE_DIR_ft2build
+    ${CMAKE_CURRENT_BINARY_DIR}/freetype/include
+    CACHE STRING "FreeType ft2build include dir" FORCE
+    )
+  set(FREETYPE_INCLUDE_DIRS
+    "${FREETYPE_INCLUDE_DIR_freetype2};${FREETYPE_INCLUDE_DIR_ft2build}"
+    CACHE STRING "Directories containing FreeType headers." FORCE)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
+  SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
 DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h)
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h)
+mark_as_advanced(FREETYPE_INCLUDE_DIRS)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
+mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
+mark_as_advanced(FREETYPE_LIBRARIES)
 
 # --------------------------------------------------------------------
 # The incrtTcl subdirectory isn't directly referenced, but its
@@ -187,6 +196,8 @@ set(SKIP_INSTALL_EXPORT ON CACHE BOOL "We dont't want export for this applicatio
 mark_as_advanced(SKIP_INSTALL_EXPORT)
 set(PNG_MAN_DIR ${MAN_DIR} CACHE STRING "Set PNG_MAN_DIR to the global MAN_DIR" FORCE)
 mark_as_advanced(PNG_MAN_DIR)
+set(PNG_TESTS 0 CACHE STRING "Disable building png test executables" FORCE)
+mark_as_advanced(PNG_TESTS)
 set(CMAKE_INSTALL_LIBDIR ${LIB_DIR})
 set(png_ALIASES ENABLE_PNG)
 set(png_DESCRIPTION "
@@ -215,9 +226,6 @@ if(BRLCAD_PNG_BUILD)
   endif("${M_LIBRARY}" MATCHES "NOTFOUND")
   SetTargetFolder(png16 "Third Party Libraries")
   SetTargetFolder(png16_static "Third Party Libraries")
-  SetTargetFolder(pngtest "Third Party Libraries")
-  SetTargetFolder(pngstest "Third Party Libraries")
-  SetTargetFolder(pngvalid "Third Party Libraries")
 ELSE(BRLCAD_PNG_BUILD)
   # The PNG CMake file seems to set PNG_PNG_INCLUDE_DIR rather than
   # PNG_INCLUDE_DIR, so a generic macro won't pick up the setting -
@@ -243,7 +251,6 @@ mark_as_advanced(PNGARG)
 mark_as_advanced(PNG_DEBUG)
 mark_as_advanced(PNG_SHARED)
 mark_as_advanced(PNG_STATIC)
-mark_as_advanced(PNG_TESTS)
 mark_as_advanced(uname_executable)
 
 
@@ -307,7 +314,7 @@ the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
 version if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
 
-THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES})
+THIRD_PARTY(tcl TCL tcl tcl_DESCRIPTION ALIASES ${tcl_ALIASES} FIND_NAME BRLCADTCL REQUIRED_VARS BRLCAD_LEVEL2)
 if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tclsh "Third Party Executables")
   SetTargetFolder(tcl "Third Party Libraries")
@@ -479,7 +486,9 @@ set(ITCL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl/generic)
 if(BRLCAD_TCL_BUILD)
   set(TCL_BIN_PREFIX ${CMAKE_BINARY_DIR}/${LIB_DIR})
 ELSE(BRLCAD_TCL_BUILD)
-  get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
+  if (NOT "${TCL_LIBRARY}" STREQUAL "")
+    get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
+  endif (NOT "${TCL_LIBRARY}" STREQUAL "")
 endif(BRLCAD_TCL_BUILD)
 if(BRLCAD_ENABLE_TK)
   if(BRLCAD_TK_BUILD)
@@ -596,6 +605,9 @@ endif(BRLCAD_IWIDGETS_BUILD)
 CONFIG_H_APPEND(BRLCAD "#define IWIDGETS_VERSION \"${IWIDGETS_VERSION}\"\n")
 mark_as_advanced(IWIDGETS_VERSION)
 
+mark_as_advanced(COMPAT_SRCS)
+
+
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
 Option for enabling and disabling compilation of the Tkhtml HTML
@@ -673,7 +685,24 @@ THIRD_PARTY(openNURBS OPENNURBS openNURBS opennurbs_DESCRIPTION ALIASES
 SetTargetFolder(openNURBS "Third Party Libraries")
 SetTargetFolder(openNURBS-static "Third Party Libraries")
 
-# STEPcode 
+# Screened Poisson Reconstruction Library
+set(poissonrecon_ALIASES ENABLE_SPR)
+set(poissonrecon_DESCRIPTION "
+Option for enabling and disabling compilation of the PoissonRecon library
+provided with BRL-CAD's source code.  Default is AUTO, responsive to
+the toplevel BRLCAD_BUNDLED_LIBS option and testing first for a system
+version if BRLCAD_BUNDLED_LIBS is also AUTO.
+")
+THIRD_PARTY(PoissonRecon SPR PoissonRecon poissonrecon_DESCRIPTION ALIASES
+  ${poissonrecon_ALIASES} REQUIRED_VARS "BRLCAD_ENABLE_SPR"  FLAGS NOSYS)
+if(BRLCAD_SPR_BUILD)
+  SetTargetFolder(PoissonRecon "Third Party Executables")
+  SetTargetFolder(SurfaceTrimmer "Third Party Executables")
+  SetTargetFolder(libSPR "Third Party Libraries")
+  SetTargetFolder(libSPR-static "Third Party Libraries")
+endif(BRLCAD_SPR_BUILD)
+
+# STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
 # Set some options for the SCL build
@@ -707,7 +736,7 @@ if(BRLCAD_SC_BUILD)
   mark_as_advanced(EXP2CXX_EXEC)
   mark_as_advanced(EXP2CXX_EXECUTABLE_TARGET)
   DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_cf.h.in)
-  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/sc_version_string.h.txt)
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/stepcode/include/sc_version_string.h)
 endif(BRLCAD_SC_BUILD)
 set(IS_SUBBUILD ${IS_SUBBUILD_STASH})
 mark_as_advanced(SC_BUILD_TYPE)
@@ -729,7 +758,7 @@ SetTargetFolder(exppp "Third Party Executables")
 SetTargetFolder(libexppp "Third Party Libraries")
 SetTargetFolder(check-express "Third Party Executables")
 SetTargetFolder(express "Third Party Libraries")
-SetTargetFolder(express_sync_generated_files "Third Party Executables")
+SetTargetFolder(express_md5gen "Third Party Executables")
 SetTargetFolder(express_verify "Third Party Libraries")
 SetTargetFolder(base "Third Party Libraries")
 SetTargetFolder(stepcore "Third Party Libraries")
@@ -769,6 +798,7 @@ AUTO.
 ")
 THIRD_PARTY(libvds VDS libvds libvds_DESCRIPTION ALIASES ${libvds_ALIASES} FLAGS NOSYS)
 set(LIBVDS_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libvds" CACHE STRING "Directory containing libvds headers." FORCE)
+mark_as_advanced(LIBVDS_INCLUDE_DIR)
 SetTargetFolder(libvds "Third Party Libraries")
 SetTargetFolder(libvds-static "Third Party Libraries")
 SetTargetFolder(stdvds "Third Party Libraries")
@@ -806,6 +836,14 @@ if(BRLCAD_OSG_BUILD)
     )
   set(OSG_INCLUDE_DIR "${OSG_INCLUDE_DIR}" CACHE STRING "Directory containing OpenSceneGraph headers." FORCE)
   set(OSG_LIBRARIES "${OSG_LIBRARY};${OSGUTIL_LIBRARY};${OSGDB_LIBRARY};${OSGGA_LIBRARY};${OSGTEXT_LIBRARY};${OSGVIEWER_LIBRARY};${OPENTHREADS_LIBRARY}" CACHE STRING "OpenSceneGraph Libraries")
+  SetTargetFolder(osg "Third Party Libraries")
+  SetTargetFolder(osgDB "Third Party Libraries")
+  SetTargetFolder(osgGA "Third Party Libraries")
+  SetTargetFolder(osgText "Third Party Libraries")
+  SetTargetFolder(osgViewer "Third Party Libraries")
+  SetTargetFolder(osgdb_freetype "Third Party Libraries")
+  SetTargetFolder(osgdb_osg "Third Party Libraries")
+  SetTargetFolder(osgdb_png "Third Party Libraries")
 else(BRLCAD_OSG_BUILD)
   if (BRLCAD_ENABLE_OSG)
     find_package(OpenThreads)
@@ -825,6 +863,7 @@ AUTO.
 THIRD_PARTY(libgdiam GDIAM libgdiam libgdiam_DESCRIPTION ALIASES ${libgdiam_ALIASES}
   FLAGS NOSYS)
 set(LIBGDIAM_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/libgdiam" CACHE STRING "Directory containing libgdiam headers." FORCE)
+mark_as_advanced(LIBGDIAM_INCLUDE_DIR)
 SetTargetFolder(libgdiam "Third Party Libraries")
 SetTargetFolder(libgdiam-static "Third Party Libraries")
 
@@ -838,7 +877,7 @@ distribution.  Default is AUTO, responsive to the toplevel
 BRLCAD_BUNDLED_LIBS option and testing first for a system version
 if BRLCAD_BUNDLED_LIBS is also AUTO.
 ")
-THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS "BRLCAD_ENABLE_BULLET;BRLCAD_LEVEL2" ALIASES ${Bullet_ALIASES})
+THIRD_PARTY(bullet BULLET bullet Bullet_DESCRIPTION FIND_NAME Bullet REQUIRED_VARS BRLCAD_ENABLE_BULLET BRLCAD_LEVEL2 ALIASES ${Bullet_ALIASES})
 if(BRLCAD_BULLET_BUILD)
   set(BULLET_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/bullet/src" CACHE STRING "Directory containing bullet headers." FORCE)
   set(BULLET_LIBRARIES "BulletSoftBody;BulletCollision;BulletDynamics;LinearMath" CACHE STRING "Directory containing bullet headers." FORCE)
@@ -875,6 +914,22 @@ mark_as_advanced(P2T_INCLUDE_DIR)
 mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
+
+# RPLY I/O library
+add_subdirectory(rply)
+include(${CMAKE_CURRENT_SOURCE_DIR}/rply.dist)
+CMAKEFILES_IN_DIR(rply_ignore_files rply)
+DISTCLEAN(${CMAKE_CURRENT_SOURCE_DIR}/rply/Makefile)
+set(RPLY_LIBRARIES "rply" CACHE STRING "RPLY library" FORCE)
+set(RPLY_INCLUDE_DIRS "${BRLCAD_SOURCE_DIR}/src/other/rply" CACHE STRING "Directory containing rply header" FORCE)
+SetTargetFolder(rply "Third Party Libraries")
+SetTargetFolder(rply_static "Third Party Libraries")
+mark_as_advanced(RPLY_LIBRARIES)
+mark_as_advanced(RPLY_INCLUDE_DIRS)
+
+# GCT is a collection of algorithms for geometry processing and conversion
+#add_subdirectory(gct)
+CMAKEFILES(gct)
 
 # TCLAP is used for option parsing - consists entirely of headers
 # and does not need to be installed, but does need to generate a

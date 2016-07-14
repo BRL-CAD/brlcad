@@ -1,7 +1,7 @@
 /*                          W I N M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,11 +34,15 @@
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
+#include "common.h"
+
 #include "tkInt.h"
+#include <locale.h>
+
+#include "bu.h"
 #define WIN32_LEAN_AND_MEAN
 #include "bio.h"
 #undef WIN32_LEAN_AND_MEAN
-#include <locale.h>
 
 
 /*

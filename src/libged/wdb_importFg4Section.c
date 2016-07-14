@@ -1,7 +1,7 @@
 /*              I M P O R T F G 4 S E C T I O N . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,16 +35,17 @@
 #include <string.h>
 #include <ctype.h>
 #include <errno.h>
-#include "bio.h"
 
 #include "bu/debug.h"
-#include "db.h"
+#include "bu/str.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
+#include "ged.h"
 #include "wdb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 static int grid_size;		/* Number of points that will fit in current grid_pts array */
@@ -508,7 +509,7 @@ wdb_importFg4Section_cmd(void *data,
     grid_pts = (point_t *)bu_malloc(grid_size * sizeof(point_t) ,
 				    "importFg4Section: grid_pts");
 
-    lines = strdup(argv[2]);
+    lines = bu_strdup(argv[2]);
     cp = line = lines;
 
     FIND_NEWLINE(cp, eosFlag);

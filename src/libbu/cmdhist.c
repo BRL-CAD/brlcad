@@ -1,7 +1,7 @@
 /*                       C M D H I S T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,9 +21,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 /**
  * Stores the given command with start and finish times in the

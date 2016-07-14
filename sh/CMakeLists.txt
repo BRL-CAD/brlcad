@@ -26,19 +26,13 @@ install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
 set(noinst_SCRIPTS
   copyright.sh
-  distcheck_screen.sh
   enumerate.sh
   footer.sh
   header.sh
   linkroot.sh
   make_deb.sh
   make_dmg.sh
-  make_pkg.sh
   make_rpm.sh
-  make_tar.sh
-  make_bz2.sh
-  make_tgz.sh
-  shtool
   template.sh
   ws.sh
   )

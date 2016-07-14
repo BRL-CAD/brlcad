@@ -1,7 +1,7 @@
 /*                     A N I M _ T I M E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,9 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
 
 
 #define OPT_STR "ds:e:i:f:qm:vh?"

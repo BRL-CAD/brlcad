@@ -1,7 +1,7 @@
 /*                       S H A R P E N . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -57,7 +57,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 
@@ -69,7 +69,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 {
     static unsigned char *last, *cur=0, *next;
     static int linelen;
-    int result;
+    size_t result;
     int newvalue;
     int i, value;
     int idx;
@@ -79,13 +79,11 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
  */
     if (ZERO(Beta)) {
 	result = fread(buf, size, num, file);
-	if (!result) return result;
+	if (!result)
+	    return result;
 	for (i=0; i<size*num; i++) {
 	    idx = buf[i];
-	    if (idx < 0)
-		idx = 0;
-	    if (idx > size*num)
-		idx = size*num;
+	    CLAMP(idx, 0, size*num);
 	    buf[i] = Map[idx];
 	}
 	return result;
@@ -112,13 +110,11 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	result = fread(cur, 1, linelen, file);
 	for (i=0; i<linelen;i++) {
 	    idx = cur[i];
-	    if (idx < 0)
-		idx = 0;
-	    if (idx > size*num)
-		idx = size*num;
+	    CLAMP(idx, 0, size*num);
 	    cur[i] = Map[idx];
 	}
-	if (!result) return result;	/* nothing there! */
+	if (!result)
+	    return result;	/* nothing there! */
 	result = fread(next, 1, linelen, file);
 	if (!result) {
 	    free(next);
@@ -126,10 +122,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
-		if (idx < 0)
-		    idx = 0;
-		if (idx > size*num)
-		    idx = size*num;
+		CLAMP(idx, 0, size*num);
 		cur[i] = Map[idx];
 	    }
 	}
@@ -158,10 +151,7 @@ sharpen(unsigned char *buf, int size, int num, FILE *file, unsigned char *Map)
 	} else {
 	    for (i=0; i<linelen;i++) {
 		idx = cur[i];
-		if (idx < 0)
-		    idx = 0;
-		if (idx > size*num)
-		    idx = size*num;
+		CLAMP(idx, 0, size*num);
 		cur[i] = Map[idx];
 	    }
 	}

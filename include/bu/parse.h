@@ -1,7 +1,7 @@
 /*                      P A R S E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file parse.h
- *
- */
 #ifndef BU_PARSE_H
 #define BU_PARSE_H
 
@@ -34,17 +31,22 @@
 
 __BEGIN_DECLS
 
-/*----------------------------------------------------------------------*/
-/* parse.c */
-/** @addtogroup parse */
-/** @{ */
-/*
- * Structure parse/print
+/** @addtogroup bu_parse
  *
+ * @brief
  * Definitions and data structures needed for routines that assign
  * values to elements of arbitrary data structures, the layout of
  * which is described by tables of "bu_structparse" structures.
+ *
+ * parse.c defines routines to assign values to elements of arbitrary structures.  The
+ * layout of a structure to be processed is described by a structure
+ * of type "bu_structparse", giving element names, element formats, an
+ * offset from the beginning of the structure, and a pointer to an
+ * optional "hooked" function that is called whenever that structure
+ * element is changed.
  */
+/** @{ */
+/** @file bu/parse.h */
 
 /**
  * The general problem of word-addressed hardware where (int *) and
@@ -226,18 +228,30 @@ typedef struct bu_external bu_external_t;
 /**
  * initializes a bu_external struct without allocating any memory.
  */
-#define BU_EXTERNAL_INIT(_p) { \
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT(_p) { \
+	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
+	(_p)->ext_nbytes = 0; \
+	(_p)->widcode = 0; \
+	(_p)->ext_buf = NULL; \
+    }
+#else
+  #define BU_EXTERNAL_INIT(_p) { \
 	(_p)->ext_magic = BU_EXTERNAL_MAGIC; \
 	(_p)->ext_nbytes = 0; \
 	(_p)->ext_buf = NULL; \
     }
+#endif
 
 /**
  * macro suitable for declaration statement initialization of a
  * bu_external struct. does not allocate memory.
  */
-#define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
-
+#if defined(USE_BINARY_ATTRIBUTES)
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, 0, NULL }
+#else
+  #define BU_EXTERNAL_INIT_ZERO { BU_EXTERNAL_MAGIC, 0, NULL }
+#endif
 /**
  * returns truthfully whether a bu_external struct has been
  * initialized.  is not reliable unless the struct has been
@@ -245,17 +259,7 @@ typedef struct bu_external bu_external_t;
  */
 #define BU_EXTERNAL_IS_INITIALIZED(_p) (((struct bu_external *)(_p) != BU_EXTERNAL_NULL) && (_p)->ext_magic == BU_EXTERNAL_MAGIC)
 
-/** @file libbu/parse.c
- *
- * routines for parsing arbitrary structures
- *
- * Routines to assign values to elements of arbitrary structures.  The
- * layout of a structure to be processed is described by a structure
- * of type "bu_structparse", giving element names, element formats, an
- * offset from the beginning of the structure, and a pointer to an
- * optional "hooked" function that is called whenever that structure
- * element is changed.
- */
+/** @brief routines for parsing arbitrary structures */
 
 /**
  * ASCII to struct elements.
@@ -437,6 +441,7 @@ BU_EXPORT extern void bu_structparse_get_terse_form(struct bu_vls *logstr,
  * @param argv - contains the keyword-value pairs
  * @param desc - structure description
  * @param base - base addr of users struct
+ * @param data - user data to be passed to the sp_hook function
  *
  * @retval BRLCAD_OK if successful,
  * @retval BRLCAD_ERROR on failure
@@ -457,33 +462,6 @@ BU_EXPORT extern int bu_structparse_argv(struct bu_vls *str,
 	while (*(_cp) && (*(_cp) == ' ' || *(_cp) == '\n' || \
 			  *(_cp) == '\t' || *(_cp) == '{'))  ++(_cp); \
     }
-
-
-/** @file libbu/booleanize.c
- *
- * routines for parsing boolean values from strings
- */
-
-/**
- * Returns truthfully if a given input string represents an
- * "affirmative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as false.  Any other input value returns as
- * true.  Strings that strongly indicate true return as 1, other
- * values still return as true but may be a value greater than 1.
- */
-BU_EXPORT extern int bu_str_true(const char *str);
-
-/**
- * Returns truthfully if a given input string represents a
- * "negative string".
- *
- * Input values that are null, empty, begin with the letter 'n', or
- * are 0-valued return as true.  Any other input value returns as
- * false.
- */
-BU_EXPORT extern int bu_str_false(const char *str);
 
 
 /** @} */

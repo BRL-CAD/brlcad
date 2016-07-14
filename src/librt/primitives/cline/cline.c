@@ -1,7 +1,7 @@
 /*                         C L I N E . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,18 +29,17 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
+#include "../../librt_private.h"
 
 
 /* ray tracing form of solid, including precomputed terms */
@@ -1057,14 +1056,14 @@ rt_cline_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, 
 
 	if (*argv[0] == 'V') {
 	    newval = cli->v;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    newval = cli->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: Incorrect number of coordinates for point\n");
 		return BRLCAD_ERROR;

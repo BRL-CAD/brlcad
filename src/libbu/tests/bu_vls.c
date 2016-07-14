@@ -1,7 +1,7 @@
 /*                       B U _ V L S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -640,6 +640,14 @@ test_bu_vls_substr(int argc, char **argv)
     struct bu_vls vsrc          = BU_VLS_INIT_ZERO;
     struct bu_vls vsubstr       = BU_VLS_INIT_ZERO;
     int test_results            = CTEST_FAIL;
+
+    /* CMake won't pass empty strings as test parameters properly;
+     * assume expected_result is supposed to be empty.
+     */
+    if (argc == 5) {
+	expected_result = "";
+	argc++;
+    }
 
     if (argc != 6)
 	bu_exit(1, "ERROR: input format is <func num> <source string> <begin index> <num chars> <expected result string> [%s]\n", argv[0]);

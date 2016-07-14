@@ -1,7 +1,7 @@
 /*                        T E R M I O . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -22,8 +22,6 @@
  */
 
 #include "common.h"
-
-#include <fcntl.h>
 
 #ifdef HAVE_SYS_FILE_H
 #  include <sys/file.h>

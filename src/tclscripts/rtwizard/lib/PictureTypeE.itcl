@@ -1,7 +1,7 @@
 #               P I C T U R E T Y P E E . I T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -160,6 +160,18 @@ namespace eval RtWizard {
 	#
 	set perspective [$viewPage getPerspective]
 
+	if {$::tcl_platform(platform) == "windows"} {
+	    set pid_filename "NUL"
+	} else {
+	    set pid_filename "/dev/null"
+	}
+
+	if {$::tcl_platform(platform) == "windows"} {
+	    set log_file "NUL"
+	} else {
+	    set log_file "/dev/null"
+	}
+
         set rtimage_dict [dict create \
 	    _dbfile $::RtWizard::wizard_state(dbFile) \
             _port $fb \
@@ -172,7 +184,9 @@ namespace eval RtWizard {
 	    _bgcolor $bg \
 	    _gamma $gamma \
 	    _color_objects $color_objects \
-	    _ghost_objects $ghost_objects ]
+	    _ghost_objects $ghost_objects \
+	     _pid_filename $pid_filename \
+             _log_file $log_file]
 
 	::cadwidgets::rtimage $rtimage_dict
 
@@ -190,13 +204,13 @@ namespace eval RtWizard {
 		  set output_generated 1
 	       }
 	       if {$::tcl_platform(platform) == "windows"} {
-		   set kill_cmd [auto_execok taskkill]
+		   set kill_cmd "[auto_execok taskkill] /F /PID"
 	       } else {
 		   set kill_cmd [auto_execok kill]
 	       }
 
 	       if {$kill_cmd != ""} {
-		   exec $kill_cmd $fbpid
+		   eval exec $kill_cmd $fbpid
 	       }
 	   }
 	}

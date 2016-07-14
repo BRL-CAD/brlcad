@@ -18,31 +18,31 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>pix2asc</command>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.asc</replaceable></arg>
 </cmdsynopsis>
 <cmdsynopsis>
   <command>asc2pix</command>
-    <arg choice='plain'><replaceable>&lt;</replaceable></arg>
+    <arg choice='plain'>&lt;</arg>
     <arg choice='plain'><replaceable>file.asc</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>file.pix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pix2asc</emphasis>
+<para><command>pix2asc</command>
 and
 <command>asc2pix</command>
 are simple filters which convert color
 <emphasis remap='I'>pix(5)</emphasis>
 files from their binary form to a portable ASCII form, and back.
-<emphasis remap='I'>Pix2asc</emphasis>
+<command>pix2asc</command>
 reads the binary file on standard in and writes ASCII on standard out.
-<emphasis remap='I'>Asc2pix</emphasis>
+<command>asc2pix</command>
 does the reverse.</para>
 
 <para>The binary file consists of a sequence
@@ -60,11 +60,11 @@ files between UNIX systems
 via tape (see
 <emphasis remap='I'>tar(1)</emphasis>
 and
-<emphasis remap='I'>cpio(1))</emphasis>
+<emphasis remap='I'>cpio(1)</emphasis>)
 or via network (see
 <emphasis remap='I'>rcp(1)</emphasis>
 and
-<emphasis remap='I'>ftp(1)),</emphasis>
+<emphasis remap='I'>ftp(1)</emphasis>),
 this conversion to ASCII is unnecessary,
 as all UNIX files are byte streams, regardless of the underlying hardware.
 However, when transporting images to non-UNIX machines,
@@ -85,7 +85,7 @@ flag, allowing it to be easily used on non-UNIX systems.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

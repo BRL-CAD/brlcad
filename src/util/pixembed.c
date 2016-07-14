@@ -1,7 +1,7 @@
 /*                      P I X E M B E D . C
  * BRL-CAD
  *
- * Copyright (c) 1992-2014 United States Government as represented by
+ * Copyright (c) 1992-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,9 @@
 #include <stdlib.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 
 
 unsigned char *obuf;
@@ -46,10 +48,12 @@ size_t yout = 512;
 
 size_t border_inset = 0;	/* Sometimes border pixels are bad */
 
+size_t inbase;
+
 void load_buffer(void), write_buffer(void);
 
 static char usage[] = "\
-Usage: pixembed [-h] [-b border_inset] \n\
+Usage: pixembed [-b border_inset] \n\
 	[-s squareinsize] [-w inwidth] [-n inheight]\n\
 	[-S squareoutsize] [-W outwidth] [-N outheight] [in.pix] > out.pix\n";
 
@@ -60,14 +64,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "b:hs:w:n:S:W:N:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "b:s:w:n:S:W:N:h?")) != -1) {
 	switch (c) {
 	    case 'b':
 		border_inset = atoi(bu_optarg);
-		break;
-	    case 'h':
-		/* high-res */
-		xin = yin = 1024;
 		break;
 	    case 'S':
 		/* square size */
@@ -90,7 +90,7 @@ get_args(int argc, char **argv)
 		yin = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -143,25 +143,26 @@ main(int argc, char **argv)
 	bu_exit (4, NULL);
     }
 
+    inbase = (xout - xin) / 2;
+
     /* Allocate storage for one output line */
     scanlen = 3*xout;
     obuf = (unsigned char *)bu_malloc(scanlen, "obuf");
 
     /* Pre-fetch the first line (after skipping) */
-    for (i= -1; i<border_inset; i++) load_buffer();
+    for (i= 0; i<border_inset; i++) load_buffer();
 
-    /* Write out duplicates at bottom, including real copy of 1st line */
-    ydup = (yout - yin) / 2 + border_inset + 1;
+    /* Write out duplicates of 1st line */
+    ydup = (yout - yin) / 2 - border_inset;
     for (y = 0; y < ydup; y++) write_buffer();
 
-    /* Read and write the remaining lines */
-    for (; i < yin-border_inset; i++, y++) {
+    for (y = 0; y < yin; y++) {
 	load_buffer();
 	write_buffer();
     }
 
-    /* Write out duplicates at the top, until all done */
-    for (; y < yout; y++) write_buffer();
+    /* For the remaining lines, Write out duplicates of last line read */
+    for (y = 0; y < ydup; y++) write_buffer();
 
     bu_free(obuf, "obuf");
 
@@ -180,9 +181,6 @@ load_buffer(void)
     unsigned char r, g, b;
     unsigned char *cp;
     size_t i;
-    size_t inbase;
-
-    inbase = (xout - xin) / 2;
 
     ret = fread(obuf + inbase*3, 3, xin, buffp);
     if (ret != xin) {

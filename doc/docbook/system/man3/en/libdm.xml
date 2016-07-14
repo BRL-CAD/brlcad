@@ -1,0 +1,930 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<book xmlns="http://docbook.org/ns/docbook" version="5.0">
+  <info>
+    <title>LIBDM </title>
+    <author>
+      <personname>
+       <firstname>Robert</firstname>
+  <surname> G. Parker</surname>
+</personname>
+
+          <affiliation>
+    <orgname>Mark L. Ulferts</orgname>
+  <address>
+    <email>mulferts@austin.dsccc.com</email>
+  </address>
+      </affiliation>
+    </author>
+</info>
+<chapter>
+  <title>
+    Preface
+  </title>
+  <section>
+    <para>
+  LIBDM provides the <link linkend="api"> API</link> for accessing BrlCad's display managers. Display managers can be thought of as configurable drawing machines that grind away on generic drawing commands called vlists resulting in display manager specific drawing actions. Vlists are capable of specifying points, lines and polygons in 3D. Display managers are also capable of drawing 2D points, lines, and strings.
+</para>
+<para>
+The following DM (display manager) types are supported:
+</para>
+<para>
+  <table frame='all'>
+  <title>Key Frame</title>
+ <tgroup cols='2' align='left' colsep='1' rowsep='1'>
+<thead>
+      <row>
+        <entry>DM Type</entry>
+        <entry>Canvas Type</entry>
+      </row>
+</thead>
+    <tbody>
+            <row>
+        <entry>X</entry>
+        <entry>X window</entry>
+      </row>
+            <row>
+        <entry>ogl</entry>
+        <entry>mixed X/OpenGL window</entry>
+      </row>
+            <row>
+        <entry>ps</entry>
+        <entry>postscript file</entry>
+      </row>
+            <row>
+        <entry>plot</entry>
+        <entry>unix plot file</entry>
+      </row>
+</tbody>
+</tgroup>
+</table>
+  </para>
+</section>
+  </chapter>
+  <chapter>
+    <title>
+      Application Programming Interface
+    </title>
+    <section xml:id="api">
+      <title>
+        LIBDM's Application Programming Interface
+      </title>
+      <para>
+        <emphasis>struct dm *</emphasis><emphasis role="bold"> DM_OPEN</emphasis><emphasis> ( int dtype, int argc, char *argv[] )</emphasis>
+      </para>
+      <para>
+       <emphasis> DM_OPEN</emphasis> creates a display manager of type <emphasis>dtype</emphasis> and returns a pointer to its <emphasis> dm </emphasis> structure. <emphasis> argc </emphasis> and <emphasis> argv </emphasis> are passed to <link linkend="dm_p">dm_processOptions</link> for interpretation.<emphasis> DM_NULL </emphasis> is returned if unable to acquire a display manager.
+      </para>
+      <para>
+ <programlisting>
+    int dtype;
+    int argc;
+    char *argv[];
+    struct dm *dmp;
+
+    /*
+     * Open a 512x512 X display manager window on the local
+     * display using my_default_bindings to set default key
+     * and mouse button bindings.
+     */
+    dtype = DM_TYPE_X;
+    argv[0] = "X_open";
+    argv[1] = "-i";
+    argv[2] = "my_default_bindings";
+    argv[3] = "-S";
+    argv[4] = "512";
+    argv[5] = "-d";
+    argv[6] = ":0";
+    argv[7] = (char *)NULL;
+    dmp = DM_OPEN(dtype, argc, argv);
+     </programlisting>
+      </para>
+      <para>
+      <emphasis>int</emphasis><emphasis role="bold"> DM_CLOSE</emphasis><emphasis> ( struct dm *dmp )</emphasis>
+      </para>
+      <para>
+      <emphasis>DM_CLOSE</emphasis> closes the display manager indicated by<emphasis>dmp</emphasis>.
+      </para>
+      <para>
+        <programlisting>
+            /* open a display manager */
+    dmp = DM_OPEN(dtype, argc, argv);
+
+              .  .  .
+
+    /* close the display manager */
+    DM_CLOSE(dmp);
+  </programlisting>
+      </para>
+      <para>
+     <emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_BEGIN</emphasis><emphasis>( struct dm *dmp )</emphasis>
+      </para>
+      <para>
+      <emphasis>  DM_DRAW_BEGIN </emphasis> prepares the display manager indicated by <emphasis> dmp </emphasis> for a round of drawing.
+
+      </para>
+      <para>
+        <programlisting>
+            /* begin another drawing sequence */
+    (void)DM_DRAW_BEGIN(dmp);
+  </programlisting>
+      </para>
+      <para>
+       <emphasis> int</emphasis><emphasis role="bold"> DM_DRAW_END</emphasis><emphasis> ( struct dm *dmp )</emphasis>
+      </para>
+      <para>
+<emphasis>DM_DRAW_END</emphasis> ends the drawing sequence for the display manager indicated by <emphasis>dmp</emphasis>. This should be called before the next call to <emphasis><link linkend="dm_draw_begin"> DM_DRAW_BEGIN</link> </emphasis> in order to see the results of the current drawing sequence.
+      </para>
+      <para>
+        <programlisting>
+          /* end the current drawing sequence */
+    (void)DM_DRAW_END(dmp);
+      </programlisting>
+      </para>
+      <para>
+       <emphasis> int</emphasis><emphasis role="bold"> DM_NORMAL</emphasis><emphasis> ( struct dm *dmp )</emphasis>
+      </para>
+      <para>
+       <emphasis> DM_NORMAL</emphasis> restores the display manager indicated by <emphasis> dmp </emphasis> to a normal mode of operation (i.e. not scaled, rotated, displaced, etc.).
+      </para>
+      <para>
+        <programlisting>
+            /* restore to normal mode */
+    (void)DM_NORMAL(dmp);
+        </programlisting>
+      </para>
+      <para>
+<emphasis>int </emphasis><emphasis role="bold"> DM_LOADMATRIX</emphasis><emphasis> ( struct dm *dmp, mat_t mat, int which_eye )</emphasis>
+      </para>
+      <para>
+<emphasis> DM_LOADMATRIX </emphasis> loads the display manager indicated by <emphasis> dmp </emphasis> with a new transformation matrix. <emphasis> mat</emphasis> indicates the matrix to be loaded.<emphasis> which_eye </emphasis> denotes the eye the matrix applies to and can have a value of 0 to indicate non-stereo, a value of 1 to indicate the right eye, or a value of 2 to indicate the left eye.
+      </para>
+      <para>
+        <programlisting>
+              /* load the display manager with mat --- not using stereo */
+    (void)DM_LOADMATRIX(dmp, mat, 0);
+</programlisting>
+
+      </para>
+<para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_STRING_2D</emphasis><emphasis> ( struct dm *dmp, char *str, int x, int y, int size, int use_aspect )</emphasis>
+</para>
+<para>
+<emphasis>  DM_DRAW_STRING_2D</emphasis> draws a string in the display manager window indicated by <emphasis>dmp</emphasis>. <emphasis>str</emphasis> is a pointer to the string to be drawn. x and y indicate where to begin drawing the string and are expected to be in the range [-2048,2047]. The <emphasis>size</emphasis> argument indicates the font size to use (currently used only by dm-ps). The expected values for <emphasis> size </emphasis> are 0 for small, 1 for medium, 2 for large, and 3 for huge.<emphasis> use_aspect </emphasis> indicates whether to use the aspect ratio to modify the starting point where the string will be drawn.
+
+  </para>
+  <para>
+    <programlisting>
+          /*
+     * - draw the string starting at the lower left corner
+     * - use the small font
+     * - don't use aspect ratio to modify string placement
+     */
+    (void)DM_DRAW_STRING_2D(dmp, "starting string at lower left", -2040, -2040, 0, 0)
+      </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_LINE_2D</emphasis><emphasis> ( struct dm *dmp, int x1, int y1, int x2, int y2 )</emphasis>
+  </para>
+  <para>
+   <emphasis> DM_DRAW_LINE_2D</emphasis> is used to draw two-dimensional lines in the display manager window indicated by <emphasis>dmp. x1, y1, x2,</emphasis> and <emphasis> y2 </emphasis> indicate the coordinates for the line to be drawn.
+  </para>
+  <para>
+    <programlisting>
+          /* draw a line from the lower left corner of the window to the upper right corner */
+    (void)DM_DRAW_LINE_2D(dmp, -2048, -2048, 2047, 2047);
+  </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_POINT_2D</emphasis><emphasis> ( struct dm *dmp, int x, int y )</emphasis>
+  </para>
+  <para>
+<emphasis>DM_DRAW_POINT_2D</emphasis> draws a point in the display manager window indicated by <emphasis> dmp</emphasis>.<emphasis> x </emphasis> and <emphasis> y </emphasis> indicate the coordinates for the point to be drawn.
+  </para>
+  <para>
+    <programlisting>
+          /* draw a yellow dot in the center of the window */
+    (void)DM_SET_FGCOLOR(dmp, 230, 230, 0, 1);
+    (void)DM_DRAW_POINT_2D(dmp, 0, 0);
+  </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_DRAW_VLIST</emphasis><emphasis> ( struct dm *dmp, struct rt_vlist *vp )</emphasis>
+  </para>
+  <para>
+ <emphasis>DM_DRAW_VLIST</emphasis> takes the vlist pointer <emphasis> vp </emphasis> and interprets it for drawing into the display manager window indicated by <emphasis> dmp </emphasis>.
+  </para>
+  <para>
+    <programlisting>
+          /* draw the vlists pointed to by view_list_ptr */
+    (void)DM_DRAW_VLIST(dmp, view_list_ptr);
+    </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold">DM_SET_FGCOLOR</emphasis><emphasis> ( struct dm *dmp, short r, short g, short b, int strict )</emphasis>
+  </para>
+  <para>
+<emphasis> DM_SET_FGCOLOR </emphasis> sets the color for drawing in the display manager indicated by <emphasis> dmp</emphasis>.<emphasis> r, g,</emphasis> and <emphasis> b</emphasis> denote the color and have values in the range [0,255].<emphasis> Strict </emphasis> specifies to really use this color (i.e. don't allow ogl to do fancy things with the color when depth cueing).
+  </para>
+  <para>
+    <programlisting>
+          /* set the drawing color to red */
+    (void)DM_SET_FGCOLOR(dmp, 220, 0, 0, 1);
+    </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold">DM_SET_BGCOLOR</emphasis><emphasis> ( struct dm *dmp, short r, short g, short b )</emphasis>
+  </para>
+  <para>
+   <emphasis> DM_SET_BGCOLOR</emphasis> sets the background color for the display manager indicated by <emphasis> dmp. r, g, </emphasis> and <emphasis> b </emphasis> denote the color and have values in the range [0,255].
+  </para>
+  <para>
+    <programlisting>
+          /* set the background color to red */
+    (void)DM_SET_BGCOLOR(dmp, 220, 0, 0);
+      </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_GET_BGCOLOR</emphasis><emphasis> ( struct dm *dmp, Tcl_Interp *interp )</emphasis>
+  </para>
+  <para>
+   <emphasis> DM_SET_BGCOLOR </emphasis> gets the background color for the display manager indicated by <emphasis> dmp </emphasis> and places the result in interp.
+  </para>
+  <para>
+    <programlisting>
+          /* get the background color */
+    return DM_GET_BGCOLOR(dmp, interp);
+  </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_SET_LINE_ATTR</emphasis><emphasis> ( struct dm *dmp, int width, int style )</emphasis>
+  </para>
+  <para>
+  <emphasis>DM_SET_LINE_ATTR</emphasis> sets the display managers (i.e. dmp) line width to width and sets its line style to<emphasis> style </emphasis>. Currently, there are only 2 valid values for <emphasis> style: 0 </emphasis> for solid lines and 1 for dashed lines.
+  </para>
+  <para>
+    <programlisting>
+          /* set the display manager up to draw fat dashed lines */
+    (void)DM_SET_LINE_ATTR(dmp, 10, 1);
+
+    </programlisting>
+  </para>
+  <para>
+   <emphasis>int</emphasis><emphasis role="bold"> DM_SET_WIN_BOUNDS</emphasis><emphasis> ( struct dm *dmp, int clip[6] )</emphasis>
+  </para>
+  <para>
+<emphasis>DM_SET_WIN_BOUNDS</emphasis> sets the view clipping planes for the display manager indicated by<emphasis> dmp. clip</emphasis> is interpreted as follows: {XMIN, XMAX, YMIN, YMAX, ZMIN, ZMAX}
+  </para>
+  <para>
+    <programlisting>
+          int clip[6] = { -2048, 2047, -2048, 2047, -2048, 2047 };
+
+    /* set the display managers clipping planes */
+    (void)DM_SET_WIN_BOUNDS(dmp, clip);
+  </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_ENDDLIST</emphasis><emphasis> ( struct dm *dmp )</emphasis>
+  </para>
+  <para>
+<emphasis>DM_ENDDLIST</emphasis> ends the definition of the display list currently being defined for the display manager indicated by <emphasis> dmp</emphasis>.
+  </para>
+  <para>
+    <programlisting>
+          /* define display list 1 to draw objects */
+    (void)DM_BEGINDLIST(dmp, 1);
+
+    /* Put code to draw objects here */
+
+    (void)DM_ENDDLIST(dmp);
+    </programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold">DM_DRAWDLIST</emphasis><emphasis> ( struct dm *dmp, unsigned int list )</emphasis>
+  </para>
+  <para>
+<emphasis>DM_DRAWDLIST</emphasis> draws the previously defined display list list in the display manager indicated by <emphasis> dmp</emphasis>.
+  </para>
+  <para>
+    <programlisting>
+          unsigned int i;
+
+    /* draw display lists 1 through 9 */
+    for (i = 1; i &#60; 10; ++i)
+       (void)DM_DRAWDLIST(dmp, i);
+</programlisting>
+  </para>
+  <para>
+<emphasis>int</emphasis><emphasis role="bold"> DM_FREEDLISTS</emphasis><emphasis> ( struct dm *dmp, unsigned int list, int range )</emphasis>
+  </para>
+  <para>
+<emphasis>DM_FREEDLISTS</emphasis> frees the display lists indicated by<emphasis> list and range. list</emphasis> indicates the display list to start with and range indicates the number of display lists to be freed.
+  </para>
+  <para>
+    <programlisting>
+       /* free display lists 10 through 29 */
+    (void)DM_FREEDLISTS(dmp, 10, 20);
+      </programlisting>
+  </para>
+    </section>
+    <section>
+      <title>
+        LIBDM's Other Support Routines
+      </title>
+      <para>
+        <emphasis>int</emphasis><emphasis role="bold"> dm_share_list</emphasis><emphasis> ( struct dm *dmp1, struct dm *dmp2 )</emphasis>
+      </para>
+      <para>
+       <emphasis>dm_share_dlist</emphasis> provides a way to (un)share display lists. If dmp1 and dmp2 are not NULL, dmp1 will share its display lists with dmp2. If dmp2 is NULL, dmp1 will no longer share its display lists.
+      </para>
+      <para>
+      <emphasis>  void</emphasis><emphasis role="bold"> dm_fogHint</emphasis><emphasis> ( struct dm *dmp, int fastfog )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_fogHint</emphasis> is used to give a hint to the display manager about whether to use an efficient fog calculation method or the most accurate. Note - this is currently only implemented by the ogl display manager.
+      </para>
+      <para>
+        <programlisting>
+              /* use the most efficient method for calculating fog */
+    dm_fogHint(dmp, 1);
+
+    /* use the most accurate method for calculating fog */
+    dm_fogHint(dmp, 0);
+
+        </programlisting>
+      </para>
+      <para>
+       <emphasis> int</emphasis><emphasis role="bold"> dm_limit</emphasis><emphasis> ( val )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_limit </emphasis> takes an integer argument and returns zero if (NOISE &#60;= val &#60; = NOISE)  where NOISE is the size of the dead spot around zero. If ( val &#60; -NOISE ), the return value is<emphasis> &#40; val + NOISE &#41;</emphasis>. If <emphasis>&#40; NOISE &#60; val &#41;,</emphasis> the return value is <emphasis> &#40; val - NOISE &#41;.</emphasis>
+      </para>
+      <para>
+        <programlisting>
+              /* The examples below assume that NOISE is 16 */
+
+    /* i = 0 */
+    i = dm_limit(16);
+
+    /* i = 1 */
+    i = dm_limit(17);
+
+    /* i = 0 */
+    i = dm_limit(-16);
+
+    /* i = -1 */
+    i = dm_limit(-17);
+  </programlisting>
+      </para>
+      <para>
+       <emphasis> int</emphasis><emphasis role="bold"> dm_unlimit</emphasis><emphasis> ( val )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_unlimit</emphasis> takes an integer value and returns zero if <emphasis> ( val == 0 ).</emphasis> If <emphasis> ( 0 &#60; val ),</emphasis> the return value is <emphasis> ( NOISE + val ). If ( val &#60; 0 ),</emphasis> the return value is<emphasis> ( -NOISE + val ).</emphasis> In short, dm_unlimit puts NOISE back into val.
+      </para>
+      <para>
+        <programlisting>
+            /* i = 0 */
+    i = dm_unlimit(0);
+
+    /* i = 17 */
+    i = dm_unlimit(1);
+
+    /* i = -17 */
+    i = dm_unlimit(-1);
+      </programlisting>
+      </para>
+      <para>
+     <emphasis> fastf_t</emphasis><emphasis role="bold"> dm_wrap</emphasis><emphasis> ( val )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_wrap</emphasis> wraps<emphasis> val </emphasis> into the range [-1.0, 1.0].
+      </para>
+      <para>
+        <programlisting>
+              /* f = 0.9 */
+    f = dm_wrap(0.9);
+
+    /* f = -0.5 */
+    f = dm_wrap(1.5);
+
+    /* f = 0.0 */
+    f = dm_wrap(6.0);
+
+    /* f = 1.0 */
+    f = dm_wrap(7.0);
+
+    /* f = 0.5 */
+    f = dm_wrap(-1.5);
+
+    /* f = -1.0 */
+    f = dm_wrap(-5.0);
+
+        </programlisting>
+      </para>
+      <para xml:id="dm_p">
+       <emphasis> int</emphasis><emphasis role="bold"> dm_processOptions</emphasis><emphasis>(struct dm *dmp, struct bu_vls *vls, int argc, char *argv[])</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_processOptions </emphasis> is used primarily by LIBDM's display manager open routines to process options. The table below lists the available options. Note - the application would not typically call processOptions. The application would instead build the desired options into the argv list that is supplied to the call to DM_OPEN.
+      </para>
+      <para>
+          <table frame='all'>
+  <title>Key Frame</title>
+ <tgroup cols='2' align='left' colsep='1' rowsep='1'>
+<thead>
+      <row>
+        <entry>Options</entry>
+        <entry>Description</entry>
+      </row>
+</thead>
+    <tbody>
+<row>
+  <entry>-d string</entry>
+  <entry>This option specifies where to draw the display manager. string is expected to be in the same form as the X DISPLAY environment variable.</entry>
+</row>
+<row>
+  <entry>-i init_script</entry>
+  <entry>This option specifies a Tcl script to use to initialize the display manager.</entry>
+</row>
+<row>
+  <entry>-N height</entry>
+  <entry>This option specifies the number of scanlines or height to make the display manager window.</entry>
+  </row>
+  <row>
+    <entry>-n name</entry>
+    <entry>This option specifies a name to use for the display manager.</entry>
+  </row>
+  <row>
+    <entry>-S size</entry>
+    <entry>This option specifies the display manager windows square size.</entry>
+  </row>
+  <row>
+    <entry>-s</entry>
+    <entry>This option turns on stereo mode and is currently only available with the ogl display manager.</entry>
+  </row>
+  <row>
+    <entry>-t 0|1</entry>
+    <entry>This option specifies whether the display manager window will be a top level window or an embedded window. A non-zero value indicates a top level window, while zero indicates an embedded window.</entry>
+  </row>
+  <row>
+    <entry>-W width </entry>
+    <entry>This option specifies the width in pixels of the display manager window.</entry>
+  </row>
+</tbody>
+</tgroup>
+</table>
+
+      </para>
+      <para>
+      <emphasis>  void</emphasis><emphasis role="bold"> dm_configureWindowShape</emphasis><emphasis> ( dmp )</emphasis>
+      </para>
+      <para>
+      <emphasis>  dm_configureWindowShape</emphasis> is used to update the internal state of a display manager after its window has been newly created or resized. This routine is typically called by an event handler.
+      </para>
+      <para>
+       <emphasis> void</emphasis><emphasis role="bold"> dm_zbuffer</emphasis><emphasis> ( struct dm *dmp, zbuffer_on )</emphasis>
+      </para>
+      <para>
+      <emphasis>  dm_zbuffer</emphasis> is used to turn Z-buffering on/off. Note - zbuffering is only supported by the<emphasis> ogl</emphasis> display manager.
+      </para>
+      <para>
+        <programlisting>
+              /* turn zbuffering on */
+    dm_zbuffer(dmp, 1);
+  </programlisting>
+      </para>
+      <para>
+      <emphasis>  void</emphasis><emphasis> dm_lighting</emphasis><emphasis> ( struct dm *dmp, int lighting_on )</emphasis>
+      </para>
+      <para>
+<emphasis>        dm_lighting</emphasis> is used to turn lighting on/off. Note - lighting is only supported by the ogl display manager.
+
+      </para>
+      <para>
+        <programlisting>
+              /* turn lighting on */
+    dm_lighting(dmp, 1);
+        </programlisting>
+      </para>
+      <para>
+        <emphasis> fastf_t</emphasis><emphasis role="bold"> dm_Xx2Normal</emphasis><emphasis> ( struct dm *dmp, int x )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_Xx2Normal</emphasis> takes x in X screen coordinates and returns a value in the range [-1.0, 1.0]. dmp indicates the display manager of interest.
+      </para>
+      <para>
+       <emphasis> fastf_t</emphasis><emphasis role="bold"> dm_Xy2Normal</emphasis><emphasis> ( struct dm *dmp, int y, int use_aspect )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_Xy2Normal</emphasis> takes y in X screen coordinates and returns a value in the range [-1.0, 1.0].<emphasis> dmp</emphasis> indicates the display manager of interest. <emphasis> use_aspect specifies</emphasis> whether to use the window's aspect ratio in the calculation.
+      </para>
+      <para>
+       <emphasis> int</emphasis><emphasis role="bold"> dm_Normal2Xx</emphasis><emphasis> ( struct dm *dmp, fastf_t x )</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_Normal2Xx</emphasis> takes x in normalized coordinates and returns a value in X screen coordinates.<emphasis> dmp</emphasis> indicates the display manager of interest
+      </para>
+      <para>
+      <emphasis>  int</emphasis><emphasis role="bold"> dm_Normal2Xy</emphasis><emphasis> ( struct dm *dmp, fastf_t y )</emphasis>
+      </para>
+      <para>
+      <emphasis>  dm_Normal2Xy</emphasis> takes y in normalized coordinates and returns a value in X screen coordinates.<emphasis> dmp</emphasis> indicates the display manager of interest.
+      </para>
+      <para>
+      <emphasis>  int</emphasis><emphasis role="bold"> Dm_Init</emphasis><emphasis> ( Tcl_Interp *interp )
+    </emphasis>
+      </para>
+      <para>
+      <emphasis>  Dm_Init initializes</emphasis> LIBDM's tcl commands.<emphasis> interp</emphasis> indicates the Tcl interpreter.
+      </para>
+    </section>
+    <section>
+      <title>
+        LIBDM's Tcl Interface
+      </title>
+      <para>
+      <emphasis role="bold">  dm_bestXType</emphasis><emphasis> display</emphasis>
+      </para>
+      <para>
+       <emphasis> dm_bestXType</emphasis> returns the best available display manager type that can be used on the X server indicated by <emphasis> display</emphasis>.<emphasis> Display</emphasis> is specified the same and has the same meaning as the X DISPLAY environment variable.
+      </para>
+      <para>
+      <emphasis role="bold">  dm_validXType</emphasis><emphasis> display dtype</emphasis>
+      </para>
+      <para>
+      <emphasis>  dm_validXType</emphasis> returns 1 if dtype is a valid display manager type for the X server indicated by<emphasis> display</emphasis>. Otherwise, 0 is returned.<emphasis> Display</emphasis> is specified the same and has the same meaning as the X DISPLAY environment variable.
+      </para>
+    </section>
+  </chapter>
+  <chapter>
+    <title>Display Manager Objects</title>
+     <section>
+      <title>
+        NAME
+      </title>
+      <para>
+        dm_open - create and manipulate a display manager object.
+      </para>
+ </section>
+ <section>
+  <title>
+    SYNOPSIS
+  </title>
+  <para>
+  <emphasis role="bold">  dm_open</emphasis> [<emphasis> pathName</emphasis> type [options]]
+  </para>
+ </section>
+ <section>
+  <title>
+    COMMAND LINE OPTIONS
+  </title>
+ <para>
+  Option:
+ </para>
+ <para>
+ <emphasis role="bold"> -N</emphasis><emphasis> height</emphasis>
+ </para>
+ <para>
+Specifies the window's height (i.e. number of raster lines).
+ </para>
+ <para>
+  Option:
+ </para>
+ <para>
+<emphasis role="bold">  -W</emphasis><emphasis>  width</emphasis>
+ </para>
+<para>
+ Specifies the window's width.
+</para>
+<para>
+Option:
+</para>
+<para>
+<emphasis role="bold">-S</emphasis><emphasis> size </emphasis>
+</para>
+ <para>
+Specifies the window's square size (i.e. width and height).
+</para>
+<para>
+Option:
+</para>
+<para>
+<emphasis role="bold">-i</emphasis><emphasis> initproc</emphasis>
+</para>
+<para>
+Specifies the initialization proc. This proc is called with the pathName as an argument.
+</para>
+<para>
+Option:
+</para>
+<para>
+<emphasis role="bold">-t</emphasis><emphasis> 0|1></emphasis>
+</para>
+<para>
+Specifies the toplevel flag. 0 indicates the display manager object is an internal window, while 1 indicates a toplevel window.
+</para>
+<para>
+Option:
+</para>
+<para>
+<emphasis role="bold">-d</emphasis> <emphasis> dpy</emphasis>
+</para>
+<para>
+Specifies the display string in a format understood by X windows.
+</para>
+</section>
+<section>
+  <title>
+DESCRIPTION
+</title>
+<para>
+The dm_open command creates a new window (given by the pathName argument) and makes it into a display manager object for displaying geometry. Additional options, described above, may be specified on the command line to configure aspects of the display manager object. The dm_open command returns its pathName argument. At the time this command is invoked, there must not exist a window named pathName, but pathName's parent must exist.
+</para>
+</section>
+<section>
+  <title>
+METHODS
+</title>
+<para>
+The <emphasis role="bold">  dm_open</emphasis> command creates a new Tcl command whose name is pathName. This command may be used to invoke various operations on the display manager object. It has the following general form:
+</para>
+<para>
+<emphasis> pathName option ?arg arg ...?</emphasis>
+</para>
+<para>
+Option and the args determine the exact behavior of the command. The following commands are possible for display manager objects:
+</para>
+<para>
+<emphasis>
+pathName</emphasis><emphasis role="bold" > bg ["r g b"]</emphasis>
+</para>
+<para>
+Set/get the background color. The rgb components are expected to be integers between 0 and 255.
+pathName bounds [xmin xmax ymin ymax zmin zmax]
+</para>
+<para>
+Set/get the window bounds. Some display managers use this to calculate clipping planes (i.e. X).
+</para>
+<para>
+  <emphasis>
+pathName </emphasis> <emphasis role="bold"> clear
+</emphasis>
+</para>
+<para>
+Clear the drawing area using the background color.
+</para>
+<para>
+  <emphasis>
+pathName </emphasis> <emphasis role="bold">close
+</emphasis>
+</para>
+<para>
+Close the display manager object.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> configure
+</emphasis>
+</para>
+<para>
+Called to handle Configure events.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> debug [0|1]
+</emphasis>
+</para>
+<para>
+Set/get debug mode. 0 indicates debugging is off while 1 indicates debugging is on.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> drawBegin
+</emphasis>
+</para>
+<para>
+Begin the drawing sequence.
+</para>
+<para>
+<emphasis>
+pathName</emphasis><emphasis role="bold"> drawEnd
+</emphasis>
+</para>
+<para>
+End the drawing sequence. This will cause the graphics pipe to be flushed.
+</para>
+<para>
+  <emphasis>
+pathName drawGeom</emphasis><emphasis role="bold"> geo_obj(s)
+</emphasis>
+</para>
+<para>
+Draw one or more drawable geometry objects.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis> <emphasis role="bold"> drawLine x1 y1 x2 y2
+</emphasis>
+</para>
+<para>
+Draw the 2D line indicated by endpoints (x1, y1) and (x2, y2). The given coordinates are expected to be in the range [-1, 1].
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> drawPoint x y
+</emphasis>
+</para>
+<para>
+Draw the 2D point at position (x, y).
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> drawSList slp
+</emphasis>
+</para>
+<para>
+Draw the solid list specified by the solid list pointer (i.e.slp).
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> drawString str x y size use_aspect</emphasis>
+</para>
+<para>
+Draw the 2D string starting at position (x, y). The x and y coordinates are expected to be in the range [-1, 1]. The size is currently ignored. The use_aspect flag indicates whether or not to use the aspect ratio to modify the starting position.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> drawVList vlp</emphasis>
+
+</para>
+<para>
+Draw the vector list specified by the vector list pointer (i.e.vlp).
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> fg ["r g b"]
+</emphasis>
+</para>
+<para>
+Set/get the foreground color. The rgb components are expected to be integers between 0 and 255.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> flush
+ </emphasis>
+ </para>
+ <para>
+Flushes the X server's request buffer.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> get_aspect
+</emphasis>
+</para>
+<para>
+Get the window's aspect ratio (i.e. width / height).
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> light [0|1]
+</emphasis>
+</para>
+<para>
+Set/get light mode. 0 indicates light is off while 1 indicates light is on.
+</para>
+<para>
+<emphasis>
+pathName</emphasis><emphasis role="bold"> linestyle [0|1]
+</emphasis>
+</para>
+<para>
+Set/get linestyle. 0 indicates solid lines while 1 indicates dashed lines.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> linewidth [width]
+</emphasis>
+</para>
+<para>
+Set/get linewidth. This setting determines how fat to draw the wireframe lines.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> listen [port]
+</emphasis>
+</para>
+<para>
+Set/get the port used to listen for framebuffer clients. Port values less than zero turn off listening.
+ </para>
+ <para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> loadmat mat
+</emphasis>
+</para>
+<para>
+Load the matrix, mat, into the display manager. This is typically a model2view matrix.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> normal
+</emphasis>
+</para>
+<para>
+Restore display manager to a normal mode of operation (i.e. not scaled, rotated, displaced, etc.).
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> observer [subcommand]
+</emphasis>
+</para>
+<para>
+This command is used to maintain a list of observers. Observers are objects who have registered an interest in when this display manager object receives pixels in its role as a framebuffer server. Whenever pixel data is received the observers on the list are notified.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> observer attach obs [command]</emphasis>
+
+</para>
+<para>
+Add the specified observer, obs, to the list of observers. If command is specified then it is executed each time pixel data is received. Otherwise, the observer is expected to have an update method which is called with the name of this display manager object as an argument.
+</para>
+<para>
+  <emphasis>
+pathName observer detach obs
+</emphasis>
+</para>
+<para>
+Remove the specified observer, obs, from the list of observers.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> observer show</emphasis>
+
+</para>
+<para>
+Return the list of observers for this display manager object.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> perspective [0|1]
+</emphasis>
+</para>
+<para>
+Set/get perspective mode. 0 indicates perspective is off, while 1 indicates perspective is on.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> refreshfb
+</emphasis>
+</para>
+<para>
+Draws/displays the pixels stored in the widget's framebuffer.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> size [width height]
+</emphasis>
+</para>
+<para>
+Set/get the window size.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> sync
+</emphasis>
+</para>
+<para>
+Flushes the X server's request buffer and waits until all events have been processed.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> zbuffer [0|1]
+</emphasis>
+</para>
+<para>
+Set/get zbuffer mode. 0 indicates that zbuffer is off, while 1 indicates zbuffer is on.
+</para>
+<para>
+  <emphasis>
+pathName</emphasis><emphasis role="bold"> zclip [0|1]
+</emphasis>
+</para>
+<para>
+Set/get zclipping mode. 0 indicates zclipping is off, while 1 indicates zclipping is on.
+</para>
+<para>
+<programlisting>
+The following sequence creates a display manager object and draws two yellow lines that connect the opposite corners of the window.
+cwish> dm_open .d X -t 0 -s 400
+.d
+cwish> pack .d -expand yes -fill both
+cwish> .d drawBegin
+cwish> .d fg "255 255 0"
+cwish> .d drawLine -1 1 1 -1
+cwish> .d drawLine -1 -1 1 1
+cwish> .d drawEnd
+</programlisting>
+</para>
+</section>
+</chapter>
+</book>

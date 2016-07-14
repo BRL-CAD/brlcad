@@ -1,7 +1,7 @@
 /*                        D O D R A W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,17 +20,14 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
-#include "rtgeom.h"		/* for ID_POLY special support */
+#include "rt/geom.h"		/* for ID_POLY special support */
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -64,7 +61,8 @@ cvt_vlblock_to_solids(struct bn_vlblock *vbp, const char *name, int copy)
 	if (BU_LIST_IS_EMPTY(&(vbp->head[i]))) continue;
 
 	snprintf(namebuf, 32, "%s%lx",	shortname, vbp->rgb[i]);
-	invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);
+	/*invent_solid(namebuf, &vbp->head[i], vbp->rgb[i], copy);*/
+	invent_solid(gedp->ged_gdp->gd_headDisplay, dbip, createDListSolid, gedp->ged_free_vlist_callback, namebuf, &vbp->head[i], vbp->rgb[i], copy, 0.0,0, gedp->freesolid, 0);
     }
 }
 
@@ -281,76 +279,6 @@ replot_modified_solid(
     view_state->vs_flag = 1;
     return 0;
 }
-
-
-/*
- * Invent a solid by adding a fake entry in the database table,
- * adding an entry to the solid table, and populating it with
- * the given vector list.
- *
- * This parallels much of the code in dodraw.c
- */
-int
-invent_solid(const char *name, struct bu_list *vhead, long rgb, int copy)
-{
-    struct display_list *gdlp;
-    struct solid *sp;
-    struct directory *dp;
-    int type = 0;
-
-    if (dbip == DBI_NULL)
-	return 0;
-
-    if ((dp = db_lookup(dbip,  name, LOOKUP_QUIET)) != RT_DIR_NULL) {
-	if (dp->d_addr != RT_DIR_PHONY_ADDR) {
-	    Tcl_AppendResult(INTERP, "invent_solid(", name,
-			     ") would clobber existing database entry, ignored\n", (char *)NULL);
-	    return -1;
-	}
-	/* Name exists from some other overlay,
-	 * zap any associated solids
-	 */
-	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, name, 0, gedp->freesolid);
-    }
-    /* Need to enter phony name in directory structure */
-    dp = db_diradd(dbip,  name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, &type);
-
-    /* Obtain a fresh solid structure, and fill it in */
-
-    GET_SOLID(sp, &gedp->freesolid->l);
-    BU_LIST_APPEND(&gedp->freesolid->l, &((sp)->l) );
-
-    if (copy) {
-	BU_LIST_INIT(&(sp->s_vlist));
-	rt_vlist_copy(&(sp->s_vlist), vhead);
-    } else {
-	BU_LIST_INIT(&(sp->s_vlist));
-	BU_LIST_APPEND_LIST(&(sp->s_vlist), vhead);
-    }
-    mged_bound_solid(sp);
-
-    /* set path information -- this is a top level node */
-    db_add_node_to_full_path(&sp->s_fullpath, dp);
-
-    gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, name);
-
-    sp->s_iflag = DOWN;
-    sp->s_soldash = 0;
-    sp->s_Eflag = 1;		/* Can't be solid edited! */
-    sp->s_color[0] = sp->s_basecolor[0] = (rgb>>16) & 0xFF;
-    sp->s_color[1] = sp->s_basecolor[1] = (rgb>> 8) & 0xFF;
-    sp->s_color[2] = sp->s_basecolor[2] = (rgb) & 0xFF;
-    sp->s_regionid = 0;
-
-    /* Solid successfully drawn, add to linked list of solid structs */
-    BU_LIST_APPEND(gdlp->dl_headSolid.back, &sp->l);
-
-    sp->s_dlist = 0;
-    createDListSolid(sp);
-
-    return 0;		/* OK */
-}
-
 
 void
 add_solid_path_to_result(

@@ -17,7 +17,8 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>tabinterp</command>
-    <arg choice='plain'><replaceable>&gt;table.final</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
+    <arg choice='plain'><replaceable>table.final</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
@@ -36,14 +37,14 @@ interpolation techniques to provide an output table
 which has one line for each time step.</para>
 
 <para>The overall notion is based on parameter
-<emphasis remap='I'>tables.</emphasis>
+<emphasis remap='I'>tables</emphasis>.
 Each table is arranged so that every row (line) represents the
 state of some set of parameters at a given
-<emphasis remap='I'>time.</emphasis>
+<emphasis remap='I'>time</emphasis>.
 Each column of the table represents a single parameter, or data
-<emphasis remap='I'>channel,</emphasis>
+<emphasis remap='I'>channel</emphasis>,
 with the left-most column always representing
-<emphasis remap='I'>time.</emphasis></para>
+<emphasis remap='I'>time</emphasis>.</para>
 
 <para>The first task in preparing to use
 <citerefentry><refentrytitle>tabinterp</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -119,9 +120,15 @@ to process data values from time 1 second to 7.3 seconds, producing
 command has been given, it is necessary to associate an interpolator
 procedure or a "value generator" command with each output channel.
 The available interpolator procedures are:
-<emphasis remap='B'>step, linear, spline, cspline,</emphasis> and <emphasis remap='B'>quat</emphasis>.
+<emphasis remap='B'>step</emphasis>,
+<emphasis remap='B'>linear</emphasis>,
+<emphasis remap='B'>spline</emphasis>,
+<emphasis remap='B'>cspline</emphasis>, and
+<emphasis remap='B'>quat</emphasis>.
 The available value generator commands are:
-<emphasis remap='B'>rate, accel,</emphasis> and <emphasis remap='B'>next</emphasis>.
+<emphasis remap='B'>rate</emphasis>,
+<emphasis remap='B'>accel</emphasis>, and
+<emphasis remap='B'>next</emphasis>.
 The interpolator procedures are selected by giving commands of this form:</para>
 
 <para>   interp type chan_num(s);</para>
@@ -243,7 +250,7 @@ command.</para>
 <emphasis remap='B'>fromto</emphasis>
 directive in
 <citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-which is used in conjunction with this).
+which is used in conjunction with this.)
 The command</para>
 
 <para>   next 4 5 +3;</para>
@@ -299,7 +306,7 @@ otherwise only the indicated channels are dumped.</para>
 <para>The
 <emphasis remap='B'>help</emphasis>
 command can be given to get a list of all available commands.
-(Don't forget the semi-colon).</para>
+(Don't forget the semi-colon.)</para>
 </refsect1>
 
 <refsect1 xml:id='options'><title>OPTIONS</title>
@@ -373,13 +380,12 @@ To visualize the exact position taken by the aim point
 in the example (output channels 3, 4, 5), a UNIX-plot file
 of that trajectory can be created with:</para>
 
-<para>   cut -f5,6,7 table.final | xyz-pl &gt; aim.plot3
-<!-- .br -->
-   cut -f1,5,6,7 table.final | txyz-pl &gt; aim.plot3</para>
+<para>   cut -f5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
+<para>   cut -f1,5,6,7 table.final | xyz-plot3 &gt; aim.plot3</para>
 
 <para>Similarly, the position of the main object can be viewed with</para>
 
-<para>   cut -f2,3,4 table.final | xyz-pl &gt; obj.plot3</para>
+<para>   cut -f2,3,4 table.final | xyz-plot3 &gt; obj.plot3</para>
 
 <para><command>tabinterp</command>
 uses 0-based column numbering, while
@@ -398,7 +404,7 @@ by giving the command</para>
 <para>   overlay aim.plot3</para>
 
 <para>to
-<emphasis remap='I'>mged.</emphasis>
+<command>mged</command>.
 If the model geometry is brought into view using the
 <emphasis remap='I'>mged</emphasis>
 <emphasis remap='B'>e</emphasis>
@@ -409,8 +415,8 @@ which is going to be animated.</para>
 
 <refsect1 xml:id='preparing_input_tables'><title>PREPARING INPUT TABLES</title>
 <para>The
-<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>
-<emphasis remap='B'>savekey</emphasis>
+<citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<emphasis remap='B'>savekey</emphasis>,
 and
 <emphasis remap='B'>saveview</emphasis>
 commands can be very useful for creating the input tables necessary
@@ -426,7 +432,7 @@ few gems of data buried in the heaps of "printout".</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>txyz-pl</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
+<para><citerefentry><refentrytitle>tabsub</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>xyz-plot3</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cut</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>paste</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>
@@ -442,7 +448,7 @@ dead trees.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1992-2014 by the United States
+<para>This software is Copyright (c) 1992-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

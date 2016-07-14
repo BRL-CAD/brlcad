@@ -1,0 +1,43 @@
+# This file maps CAD media types to file extension(s).
+#
+# Some of these extensions are not unique when integrated with the global mime
+# type paradigm - for example, obj is listed in the general mapping as
+# application/x-tgif but in the CAD context should be model/obj.  This will be
+# handled by the libbu calling function, which will accept a context
+# (application, image, text, model, etc.) within which it will interpret the
+# extension.  The fixed requirement is that a file extension be unique
+# within its context - for example, "stl" can not map to two different
+# model MIME types.
+#
+# This file is formatted in the style of the Apache mime.types file, but
+# defines types specific to the CAD domain rather than those defined per RFC
+# 4288.  If a mapping is added to the main mime.types file which makes one of
+# the entries here redundant, the entry in this file should be removed.
+#
+# This file is in the public domain.
+#
+# MIME type (lowercased)			Extensions
+# ============================================	==========
+image/alias					alias
+image/bw					bw
+image/ci					ci
+image/dpix					dpix
+image/pix					pix
+image/ppm					ppm
+image/ps					ps
+image/rle					rle
+image/spm					spm
+image/sun					sun
+image/yuv					yuv
+model/dxf					dxf
+model/obj					obj
+model/ply					ply
+model/shp					shp
+model/step					stp step
+model/stl					stl
+model/vnd.brlcad+binary				g
+model/vnd.brlcad+tcl				asc
+model/vnd.fastgen				bdf fas fg fg4
+model/vnd.gift					cg comgeom
+model/vnd.intaval				tgf
+model/vnd.rhino					3dm

@@ -82,7 +82,7 @@
 
     <variablelist>
       <varlistentry>
-	<term><emphasis>An integer index value.</emphasis></term>
+	<term><emphasis>An integer index value</emphasis>.</term>
 	<listitem>
 	  <para>
 	    This is the value to which the <emphasis remap="I">GIFTmater</emphasis> attribute
@@ -91,7 +91,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis>A floating point density value.</emphasis></term>
+	<term><emphasis>A floating point density value</emphasis>.</term>
 	<listitem>
 	  <para>
 	    This is the density for the material, and is specified in
@@ -100,7 +100,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><emphasis>A name string.</emphasis></term>
+	<term><emphasis>A name string</emphasis>.</term>
 	<listitem>
 	  <para>
 	  This is a name or description the material.
@@ -139,7 +139,7 @@
       For example, if a material index is left out of the table, it is easier to rectify
       the situation using the external file. Once the table has been verified as correct
       and complete, it is imported to the database as the binary object
-      <emphasis remap="B" role="bold">_DENSITIES</emphasis>.
+      <emphasis remap="B" role="bold">_DENSITIES</emphasis> .
       To import the text file into the database, the following command is used:
     </para>
 
@@ -210,6 +210,10 @@
 		<entry>Gaps/voids</entry>
 	      </row>
 	      <row>
+		<entry>m</entry>
+		<entry>Weight + Centroids + Moments of Inertia</entry>
+	      </row>
+	      <row>
 		<entry>o</entry>
 		<entry>Overlaps</entry>
 	      </row>
@@ -227,7 +231,7 @@
 	  </para>
 	  <para>
 	    Only those reports requested will be provided. The default is
-	    <option>-AA</option> to produce all reports.
+	    <option>-A A</option>, to produce all reports.
 	  </para>
 
 	  <para>
@@ -295,21 +299,29 @@
       <varlistentry>
 	<term><option>-a </option><emphasis remap="I">azimuth_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given amount about
-	    the Z axis. The default is 0.  See also: <option>-e</option>
+	    the Z axis. The default is 0.  See also <option>-e</option> .
 	  </para>
 	</listitem>
       </varlistentry>
       <varlistentry>
 	<term><option>-e </option><emphasis remap="I">elevation_deg</emphasis></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Sets a rotation (in degrees) of the coordinate system by a given elevation
 	    from the XY plane (rotation about X axis?). The default is 0.
-	    See also <option>-a</option>
+	    See also <option>-a</option> .
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-d</option></term>
+	<listitem>
+	  <para>
+            Enables debugging (off by default).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -325,12 +337,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-g </option><emphasis remap="I">[initial_grid_spacing-]grid_spacing_limit</emphasis></term>
+	<term><option>-g </option>[<emphasis remap="I">initial_grid_spacing</emphasis>-]<emphasis remap="I">grid_spacing_limit</emphasis> or
+	                          [<emphasis remap="I">initial_grid_spacing</emphasis>,]<emphasis remap="I">grid_spacing_limit</emphasis></term>
 	<listitem>
 	  <para>
 	    Specifies a limit on how far the grid can be refined and optionally the initial spacing
 	    between rays in the grids. The first value (if present) indicates the initial spacing
-	    between grid rays.  The mandatory argument, "<emphasis remap="I">grid_spacing_limit</emphasis>,"
+	    between grid rays.  The mandatory argument, <emphasis remap="I">grid_spacing_limit</emphasis>,
 	    indicates a lower bound on how fine the grid spacing may get before computation is
 	    terminated.  In general, the <emphasis remap="I">initial_grid_spacing</emphasis> value
 	    should be an integer power of the <emphasis remap="I">grid_spacing_limit</emphasis>.  So
@@ -339,14 +352,9 @@
 	    sequence 2, 4, 8, 16, 32... so that the grid will refine to precisely the lower limit.
 	    The grid spacing may be specified with units.  For example:
 	    <emphasis remap="B" role="bold">5 mm</emphasis> or
-	    <emphasis remap="B" role="bold">10 in.</emphasis>  If units are not provided, millimeters
+	    <emphasis remap="B" role="bold">10 in</emphasis> .  If units are not provided, millimeters
 	    are presumed to be the units.
 	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-
-
     <para>
       The default values are 50.0 mm and 0.5 mm, which is equivalent to specifying:
       <option>-g 50.0mm-0.5mm</option> or <option>-g 50.0mm,0.5mm</option>
@@ -360,12 +368,15 @@
       chosen for the initial values.  This would result in testing 16, 8, 4, 2, 1
       grid spacing values.
     </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
 
     <variablelist remap="TP">
       <varlistentry>
 	<term><option>-G</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="bold">Not Implemented.</emphasis></para>
+	  <para><emphasis remap="B" role="bold">Not Implemented</emphasis></para>
 	  <para>
 	    Specifies that the program should create new
 	    <emphasis remap="I">assembly combinations</emphasis> in the geometry database to
@@ -402,14 +413,13 @@
 	    rather per-analysis. So, for example, it is accepted that a thin object might not be hit
 	    at all from one view, but might be hit when it is shot from other views.
 	  </para>
-	</listitem>
-      </varlistentry>
-    </variablelist>
-
     <para>
       The default is 1.  Hence, each region must be intersected by a ray at least once during
       the analysis.
     </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
     <variablelist remap="TP">
       <varlistentry>
 	<term><option>-N </option><emphasis remap="I">num_views</emphasis></term>
@@ -501,12 +511,12 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-u </option><emphasis remap="I">distance,volume,weight</emphasis></term>
+	<term><option>-u </option><emphasis remap="I">distance_units,volume_units,weight_units</emphasis></term>
 	<listitem>
 	  <para>
 	    Specify the units used when reporting values.  Values must be comma delimited and provided
-	    in the order <emphasis remap="I">distance</emphasis>,<emphasis remap="I">volume</emphasis>,
-	    <emphasis remap="I">weight</emphasis>.  For example: <option>-u "cm,cu ft,kg"</option>
+	    in the order <emphasis remap="I">distance_units</emphasis>,<emphasis remap="I">volume_units</emphasis>,
+	    <emphasis remap="I">weight_units</emphasis>.  For example: <option>-u "cm,cu ft,kg"</option>
 	    or <option>-u ,,kg</option> (The latter example sets only the weight units.)
 	    Note that unit values with spaces in their names such as <emphasis remap="I">cu ft</emphasis>
 	    must be contained in quotes for the shell to keep the values together.
@@ -533,7 +543,7 @@
 	  <para>
 	    Specifies a volumetric tolerance value that the three view computations must be within for
 	    computation to complete.  If volume calculation is selected and this option is not set, then
-	    the tolerance is set to 1/10,000 of the volume of the model. For large, complex objects
+	    the tolerance is set to 1/1,000 of the volume of the model bounding box. For large, complex objects
 	    (such as entire vehicles), this value might need to be set larger to achieve reasonable
 	    runtimes (or even completion). Given the approximate sampling nature of the algorithm, the
 	    three separate view computations will not usually produce identical results.
@@ -544,7 +554,7 @@
 	<term><option>-W </option><emphasis remap="I">weight_tolerance[units]</emphasis></term>
 	<listitem>
 	  <para>
-	    This is like the volume tolerance, <option>-T</option>, but is applied to the weight
+	    This is like the volume tolerance, <option>-V</option>, but is applied to the weight
 	    computation results, not the volume computation results.
 	  </para>
 	  <para>
@@ -655,7 +665,7 @@ grid spacing 50mm  199 x 199 x 199
 Summary:
 Weight:
     closed_box.r  3.6375e+06 kg
-  Average total weight: 3.67541e+06 kg
+    Average total weight: 3.67541e+06 kg
 	  </literallayout>
 	</listitem>
       </varlistentry>

@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,6 +27,7 @@
 #define RT_EXT_H
 
 #include "optical.h"
+#include "fb.h"
 
 /***** Variables declared in opt.c *****/
 extern char *framebuffer;		/* desired framebuffer */
@@ -51,6 +52,7 @@ extern int sub_ymin;
 extern int transpose_grid;		/* reverse the order of grid traversal */
 extern int use_air;			/* Handling of air in librt */
 extern int random_mode;                 /* Mode to shoot rays at random directions */
+extern int opencl_mode;			/* enable/disable OpenCL */
 
 /***** variables from main.c *****/
 extern FILE *outfp;			/* optional output file */
@@ -77,7 +79,7 @@ extern int fullfloat_mode;
 extern int hypersample;			/* number of extra rays to fire */
 extern int incr_mode;			/* !0 for incremental resolution */
 extern int full_incr_mode;              /* !0 for fully incremental resolution */
-extern int npsw;			/* number of worker PSWs to run */
+extern size_t npsw;			/* number of worker PSWs to run */
 extern int reproj_cur;			/* number of pixels reprojected this frame */
 extern int reproj_max;			/* out of total number of pixels */
 extern int reproject_mode;
@@ -131,6 +133,20 @@ extern void do_run(int a, int b);
 extern void do_ae(double azim, double elev);
 extern int old_way(FILE *fp);
 extern int do_frame(int framenumber);
+
+#ifdef USE_OPENCL
+enum {
+    CLT_COLOR = (1<<0),
+    CLT_DEPTH = (1<<1),
+    CLT_ACCUM = (1<<2)      /* TODO */
+};
+
+extern void clt_connect_fb(fb *fbp);
+
+extern void clt_view_init(unsigned int mode);
+extern void clt_run(int cur_pixel, int last_pixel);
+#endif
+
 
 /* opt.c */
 extern int get_args(int argc, const char *argv[]);

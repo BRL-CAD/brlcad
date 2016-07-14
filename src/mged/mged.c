@@ -1,7 +1,7 @@
 /*                           M G E D . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file mged/mged.c
  *
- * Mainline portion of the Multiple-display Graphics EDitor (MGED)
+ * Main logic of the Multiple-display Graphics EDitor (MGED)
  *
  */
 
@@ -32,6 +32,7 @@
 #include <ctype.h>
 #include <signal.h>
 #include <time.h>
+#include <limits.h>
 #ifdef HAVE_SYS_TYPES_H
 /* for select */
 #  include <sys/types.h>
@@ -39,10 +40,6 @@
 #ifdef HAVE_SYS_TIME_H
 /* for select */
 #  include <sys/time.h>
-#endif
-#ifdef HAVE_UNISTD_H
-/* for select */
-#  include <unistd.h>
 #endif
 #ifdef HAVE_SYS_STAT_H
 #  include <sys/stat.h>
@@ -56,20 +53,22 @@
 #  include <poll.h>
 #endif
 
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/units.h"
+#include "bu/version.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "libtermio.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "ged.h"
 
 /* private */
@@ -473,6 +472,10 @@ do_rc(void)
     }
 
     bu_vls_free(&str);
+
+    /* No telling what the commands may have done to the result string -
+     * make sure we start with a clean slate */
+    bu_vls_trunc(gedp->ged_result_str, 0);
     return 0;
 }
 
@@ -850,10 +853,12 @@ mged_process_char(char ch)
 	    pr_prompt(interactive);
 	    bu_vls_trunc(&input_str, 0);
 	    bu_vls_vlscat(&input_str, vp);
-	    if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
-		bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
-	    bu_log("%s", bu_vls_addr(&input_str));
-	    input_str_index = bu_vls_strlen(&input_str);
+	    if (bu_vls_strlen(&input_str) > 0) {
+		if (bu_vls_addr(&input_str)[bu_vls_strlen(&input_str)-1] == '\n')
+		    bu_vls_trunc(&input_str, bu_vls_strlen(&input_str)-1); /* del \n */
+		bu_log("%s", bu_vls_addr(&input_str));
+		input_str_index = bu_vls_strlen(&input_str);
+	    }
 	    escaped = bracketed = 0;
 	    break;
 	case CTRL_W:                   /* backward-delete-word */
@@ -1074,6 +1079,7 @@ main(int argc, char *argv[])
 
     bu_optind = 1;
     while ((c = bu_getopt(argc, argv, "a:d:hbicorx:X:v?")) != -1) {
+	if (bu_optopt == '?') c='h';
 	switch (c) {
 	    case 'a':
 		attach = bu_optarg;
@@ -1115,9 +1121,8 @@ main(int argc, char *argv[])
 		old_mged_gui = 0;
 		break;
 	    default:
-		bu_log("Unrecognized option (%c)\n", c);
+		bu_log("Unrecognized option (%c)\n", bu_optopt);
 		/* Fall through to help */
-	    case '?':
 	    case 'h':
 		bu_exit(1, "Usage:  %s [-a attach] [-b] [-c] [-d display] [-h|?] [-r] [-x#] [-X#] [-v] [database [command]]\n", argv[0]);
 	}
@@ -1273,7 +1278,9 @@ main(int argc, char *argv[])
     dm_set_null(dmp);
     bu_vls_init(tkName);
     bu_vls_init(dName);
-    bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    if (dm_get_pathname(dmp)) {
+	bu_vls_strcpy(dm_get_pathname(dmp), "nu");
+    }
     bu_vls_strcpy(tkName, "nu");
 
     BU_ALLOC(rubber_band, struct _rubber_band);
@@ -2768,6 +2775,7 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     GED_INIT(gedp, ged_wdbp);
     gedp->ged_output_handler = mged_output_handler;
     gedp->ged_refresh_handler = mged_refresh_handler;
+    gedp->ged_create_vlist_solid_callback = createDListSolid;
     gedp->ged_create_vlist_callback = createDListAll;
     gedp->ged_free_vlist_callback = freeDListsAll;
 
@@ -2804,10 +2812,10 @@ f_opendb(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *a
     /* This creates a "db" command object */
 
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
+    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (Tcl_CmdProc *)wdb_cmd, (ClientData)wdbp, wdb_deleteProc);
 
     /* Return new function name as result */
-    Tcl_AppendResult(wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, MGED_DB_NAME, (char *)NULL);
 
     /* This creates the ".inmem" in-memory geometry container and sets
      * up the GUI.

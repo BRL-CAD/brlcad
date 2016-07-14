@@ -1,7 +1,7 @@
 /*                        F B C L E A R . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,6 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
 #include "fb.h"
 #include "ged.h"

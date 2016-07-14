@@ -10,7 +10,6 @@ set(LIBBN_SOURCES
   anim.c
   axis.c
   complex.c
-  chull.c
   clip.c
   font.c
   globals.c
@@ -20,23 +19,19 @@ set(LIBBN_SOURCES
   msr.c
   multipoly.c
   noise.c
-  obr.c
   plane.c
   plot3.c
   poly.c
-  polygon.c
   qmath.c
   rand.c
   randmt.c
   scale.c
   sphmap.c
+  str.c
   symbol.c
   tabdata.c
-  tcl.c
   tplot.c
-  tri_tri.c
   ulp.c
-  util.c
   vectfont.c
   vector.c
   vers.c
@@ -46,18 +41,13 @@ set(LIBBN_SOURCES
   )
 
 
-BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" libbu)
+BRLCAD_ADDLIB(libbn "${LIBBN_SOURCES}" "libbu")
 SET_TARGET_PROPERTIES(libbn PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
-BRLCAD_ADDEXEC(bntester bntester.c "libbu;libbn" NO_INSTALL)
 
 add_subdirectory(tests)
 
-CMAKEFILES(
-  README
-  bn_private.h
-  bntester.dat
-  )
+CMAKEFILES(README)
 
 # Local Variables:
 # tab-width: 8

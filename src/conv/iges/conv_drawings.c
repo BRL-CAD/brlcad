@@ -1,7 +1,7 @@
 /*                 C O N V _ D R A W I N G S . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -154,8 +154,7 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 
 
 	local_scale = width/str_len;
-	if (height < local_scale)
-	    local_scale = height;
+	V_MIN(local_scale, height);
 
 	if (local_scale < height)
 	    loc[Y] += (height - local_scale)/2.0;
@@ -387,7 +386,7 @@ Leader_to_vlist(int entno, struct bu_list *vhead)
 
 
 void
-Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
+Draw_entities(struct model *m, int de_list[], size_t no_of_des, fastf_t x, fastf_t y, fastf_t local_scale, fastf_t ang, mat_t *xform)
 {
     struct bu_list vhead;
     struct bn_vlist *vp;
@@ -396,7 +395,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
     struct shell *s;
     int npts;
     int entno;
-    int i;
+    size_t i;
     fastf_t sina, cosa;
 
     NMG_CK_MODEL(m);
@@ -461,7 +460,7 @@ Draw_entities(struct model *m, int de_list[], int no_of_des, fastf_t x, fastf_t 
 
 	/* rotate, scale, clip, etc., etc., etc... */
 	for (BU_LIST_FOR(vp, bn_vlist, &vhead)) {
-	    int nused = vp->nused;
+	    size_t nused = vp->nused;
 
 	    for (i = 0; i < nused; i++) {
 		point_t tmp_pt;
@@ -549,9 +548,9 @@ Do_view(struct model *m, struct bu_ptbl *view_vis_list, int entno,
     int view_de;
     int entity_type;
     struct views_visible *vv;
-    int vv_count = 0;
+    size_t vv_count = 0;
     int *de_list;			/* list of possible view field entries for this view */
-    int no_of_des;			/* length of above list */
+    size_t no_of_des;			/* length of above list */
     int view_number;
     fastf_t local_scale = 1.0;
     int clip_de[6];

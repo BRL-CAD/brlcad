@@ -1,7 +1,7 @@
 /*                     C S G B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -19,9 +19,10 @@
  */
 
 #include "common.h"
-#include "bu.h"
+#include "bu/parse.h"
+#include "bu/log.h"
 #include "opennurbs.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #define DEFAULT_FILENAME "csgbrep.g"

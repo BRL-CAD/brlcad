@@ -1,7 +1,7 @@
 /*                          P N T S . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,14 +26,14 @@
 #include "common.h"
 
 /* system headers */
-#include "bin.h"
+#include "bnetwork.h"
 
 /* common headers */
 #include "bu/cv.h"
 #include "bn.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "vmath.h"
 
 

@@ -1,7 +1,7 @@
 /*                           N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,15 +32,16 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
+#include "bg/polygon.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-
+#include "rt/nurb.h"
+#include "../../librt_private.h"
 
 /* rt_nmg_internal is just "model", from nmg.h */
 
@@ -212,7 +213,7 @@ rt_nmg_shot(struct soltab *stp, struct xray *rp, struct application *ap, struct 
     /* intersect the ray with the geometry (sets surfno) */
     nmg_isect_ray_model(&rd);
 
-    /* build the segment lists */
+    /* build the sebgent lists */
     status = nmg_ray_segs(&rd);
 
     /* free the hitmiss table */
@@ -2880,7 +2881,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     struct nmgregion *r=NULL;
     struct shell *s=NULL;
     struct faceuse *fu=NULL;
-    Tcl_Obj *obj, **obj_array;
+    const char **obj_array;
     int len;
     int num_verts = 0;
     int num_loops = 0;
@@ -2898,24 +2899,23 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
     verts = (struct tmp_v *)NULL;
     for (i=0; i<argc; i += 2) {
 	if (BU_STR_EQUAL(argv[i], "V")) {
-	    obj = Tcl_NewStringObj(argv[i+1], -1);
-	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_verts,
-				       &obj_array) != TCL_OK) {
-		bu_vls_printf(logstr,
-			      "ERROR: failed to parse vertex list\n");
-		Tcl_DecrRefCount(obj);
+	    if (bu_argv_from_tcl_list(argv[i+1], &num_verts, (const char ***)&obj_array) != 0) {
+		bu_vls_printf(logstr, "ERROR: failed to parse vertex list\n");
 		return BRLCAD_ERROR;
 	    }
+	    if (num_verts == 0) {
+		bu_vls_printf(logstr, "ERROR: no vertices found\n");
+		return BRLCAD_ERROR;
+	    }
+
 	    verts = (struct tmp_v *)bu_calloc(num_verts,
 					      sizeof(struct tmp_v),
 					      "verts");
-	    for (j=0; j<num_verts; j++) {
+	    for (j = 0; j < num_verts; j++) {
 		len = 3;
 		tmp = &verts[j].pt[0];
-		if (tcl_obj_to_fastf_array(brlcad_interp, obj_array[j],
-					   &tmp, &len) != 3) {
-		    bu_vls_printf(logstr,
-				  "ERROR: incorrect number of coordinates for vertex\n");
+		if (_rt_tcl_list_to_fastf_array(obj_array[j], &tmp, &len) != 3) {
+		    bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		    return BRLCAD_ERROR;
 		}
 	    }
@@ -2942,12 +2942,12 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		r = BU_LIST_FIRST(nmgregion, &m->r_hd);
 		s = BU_LIST_FIRST(shell, &r->s_hd);
 	    }
-	    obj = Tcl_NewStringObj(argv[1], -1);
-	    if (Tcl_ListObjGetElements(brlcad_interp, obj, &num_loops,
-				       &obj_array) != TCL_OK) {
-		bu_vls_printf(logstr,
-			      "ERROR: failed to parse face list\n");
-		Tcl_DecrRefCount(obj);
+	    if (bu_argv_from_tcl_list(argv[1], &num_loops, (const char ***)&obj_array) != 0) {
+		bu_vls_printf(logstr, "ERROR: failed to parse face list\n");
+		return BRLCAD_ERROR;
+	    }
+	    if (num_loops == 0) {
+		bu_vls_printf(logstr, "ERROR: no face loops found\n");
 		return BRLCAD_ERROR;
 	    }
 	    for (i=0, fu=NULL; i<num_loops; i++) {
@@ -2955,8 +2955,7 @@ rt_nmg_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 		/* struct faceuse fu is initialized in earlier scope */
 
 		loop_len = 0;
-		(void)tcl_obj_to_int_array(brlcad_interp, obj_array[i],
-					   &loop, &loop_len);
+		(void)_rt_tcl_list_to_int_array(obj_array[i], &loop, &loop_len);
 		if (!loop_len) {
 		    bu_vls_printf(logstr,
 				  "ERROR: unable to parse face list\n");
@@ -3083,11 +3082,11 @@ rt_nmg_faces_area(struct poly_face* faces, struct shell* s)
 	tmp_pts[i] = faces[i].pts;
 	HMOVE(eqs[i], faces[i].plane_eqn);
     }
-    bn_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
+    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, num_faces, (const plane_t *)eqs);
     for (i = 0; i < num_faces; i++) {
 	faces[i].npts = npts[i];
-	bn_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
-	bn_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
+	bg_3d_polygon_sort_ccw(faces[i].npts, faces[i].pts, faces[i].plane_eqn);
+	bg_3d_polygon_area(&faces[i].area, faces[i].npts, (const point_t *)faces[i].pts);
     }
     bu_free((char *)tmp_pts, "rt_nmg_faces_area: tmp_pts");
     bu_free((char *)npts, "rt_nmg_faces_area: npts");
@@ -3163,7 +3162,7 @@ rt_nmg_centroid(point_t *cent, const struct rt_db_internal *ip)
     }
     rt_nmg_faces_area(faces, s);
     for (i = 0; i < num_faces; i++) {
-	bn_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
+	bg_3d_polygon_centroid(&faces[i].cent, faces[i].npts, (const point_t *) faces[i].pts);
 	VADD2(arbit_point, arbit_point, faces[i].cent);
     }
     VSCALE(arbit_point, arbit_point, (1/num_faces));

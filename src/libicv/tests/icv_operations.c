@@ -1,7 +1,7 @@
 /*                I C V _ O P E R A T I O N S . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,16 +26,18 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 
 #include "bio.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/mime.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
 #include "icv.h"
 
 void usage()
 {
     bu_log("\
-	    [-h] [ -O +|-|/|* ]\n\
+	    [ -O +|-|/|* ]\n\
 	    [-b -p -d -m] \n\
 	    [-o out_file]  file_1 file_2 > [out_file]\n");
 
@@ -55,7 +57,7 @@ int main(int argc, char* argv[])
     int inx=0, iny=0;
     char *operation = NULL;
     icv_image_t *bif1, *bif2, *out_bif;
-    ICV_IMAGE_FORMAT format=ICV_IMAGE_AUTO;
+    mime_image_t format = MIME_IMAGE_AUTO;
 
 
     if (argc<2) {
@@ -72,40 +74,35 @@ int main(int argc, char* argv[])
 		operation = bu_optarg;
 		break;
 	    case 'b' :
-		format = ICV_IMAGE_BW;
+		format = MIME_IMAGE_BW;
 		break;
 	    case 'p' :
-		format = ICV_IMAGE_PIX;
+		format = MIME_IMAGE_PIX;
 		break;
 	    case 'd' :
-		format = ICV_IMAGE_DPIX;
+		format = MIME_IMAGE_DPIX;
 		break;
 	    case 'm' :
-		format = ICV_IMAGE_PPM;
+		format = MIME_IMAGE_PPM;
 		break;
-	    case 'h':
 	    default:
 		usage();
 		return 1;
 
 	}
     }
-    if (bu_optind <= argc) {
-	in_file1 = argv[bu_optind];
-	bu_optind++;
-    }
-    else {
+    if (bu_optind > argc) {
 	usage();
 	return 1;
     }
+    in_file1 = argv[bu_optind];
+    bu_optind++;
 
-    if (bu_optind <= argc) {
-	in_file2 = argv[bu_optind];
-    }
-    else {
+    if (bu_optind > argc) {
 	usage();
 	return 1;
     }
+    in_file2 = argv[bu_optind];
 
     bif1 = icv_read(in_file1, format, inx, iny);
     bif2 = icv_read(in_file2, format, inx, iny);

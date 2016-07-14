@@ -1,7 +1,7 @@
 /*                       D O E V E N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 
 #ifdef HAVE_GL_DEVICE_H
@@ -45,10 +44,8 @@
 #  include <X11/keysym.h>
 #endif
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "ged.h"
 #include "dm/dm_xvars.h"
 
@@ -172,7 +169,7 @@ doEvent(ClientData clientData, XEvent *eventPtr)
 	status = TCL_RETURN;
     }
 #ifdef IR_KNOBS
-    else if (eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devmotionnotify) {
+    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devmotionnotify) {
 	dials_event_handler((XDeviceMotionEvent *)eventPtr);
 
 	/* no further processing of this event */
@@ -180,12 +177,12 @@ doEvent(ClientData clientData, XEvent *eventPtr)
     }
 #endif
 #ifdef IR_BUTTONS
-    else if (eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonpress) {
+    else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonpress) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 1);
 
 	/* no further processing of this event */
 	status = TCL_RETURN;
-    } else if (eventPtr->type == ((struct dm_xvars *)dmp->dm_vars.pub_vars)->devbuttonrelease) {
+    } else if (dm_get_xvars(dmp) != NULL && eventPtr->type == ((struct dm_xvars *)dm_get_xvars(dmp))->devbuttonrelease) {
 	buttons_event_handler((XDeviceButtonEvent *)eventPtr, 0);
 
 	/* no further processing of this event */

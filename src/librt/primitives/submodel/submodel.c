@@ -1,7 +1,7 @@
 /*                      S U B M O D E L . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,16 +34,15 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #define RT_SUBMODEL_O(m) bu_offsetof(struct rt_submodel_internal, m)

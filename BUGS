@@ -15,27 +15,39 @@ on-going issues.
 Recent Bugs
 -----------
 
+* fblabel seems quite busted, at least talking to a /dev/X fbserv, in
+  that it only draws the first character and eventually displays
+  rem_read() failures when run in -d debug mode.
+
+* rtedge doesn't refresh a /dev/X fbserv (presumably double-buffered)
+  after doing an overlay render.  it does draw, though, as confirmed
+  by a forced fb-fb refresh.
+
+* pixborder doesn't account for an edge case where the right edge of
+  an image is expected to be colored (except for one pixel on the top
+  edge).  Example:
+
+  pixborder -b "255 0 0" -t "255 255 255" < pix/moss.pix | pix-fb
+
+* report that attempting to change units on a read-only file in MGED
+  will not change the units in the file but changes them in MGED,
+  resulting in problems with nirt missing geometry it shouldn't miss.
+
+* typing 'comb -f -r assembly_name' shuts down mged with the error:
+  ERROR: bad pointer 0000000000B4CA50: s/b bu_external(x768dbbd0), was bu_vls(x89333bbb), file ..\..\..\brlcad_src\src\libbu\parse.c, line 2443"
+  And on the mged command line:
+  rt_db_cvt_to_external5 expecting non-NULL name parameter
+  wdb_export((null)): solid export failure
+
+* report of mged command history not working with the down arrow key
+  in 7.25.0 (on Windows, unknown on other platforms).  Up arrow works
+  fine.
+
 * wgl framebuffer is not lingering on windows (regardless of using
   wgll or default) when it should
 
-* sh_text.c: texture mapping crashes (in txt_render() near line 318)
-  if you specify image dimensions larger than the texture file.  it
-  gets back a mapped file, but indexes directly based on the provided
-  sizes without bounds checking.
-
-* count_non_union_ops() in g-iges crashes with simple conversion case
-
-* gqa bypasses rt_dirbuild() so it never sets rt_bot_mintie nor uses
-  TIE when the environment variable is set.
-
 * nirt -e "xyz val val val" doesn't work due to the space after the -e
   and how the nirt/rt commands parse quoted args.
-
-* probably related, there is a big parsing difference between nirt
-  with "xyz 1.0 2.0 3.0; dir 0 -1 0;" and "xyz 1. 2. 3. ; dir 0 -1
-  0;".  note the intentional space.  problem observed is that center
-  point ended up being "0.0 2.0 0.0" with there clearly being a
-  parsing error depending on where the semicolon was positioned.
 
 * calling "attr set obj key value" should always result in key getting
   set to value, no matter what, as it is the lowest-level attribute
@@ -94,11 +106,6 @@ Recent Bugs
 * idents command is reporting a bogus region count in the region
   output table listing (first column).
 
-* yacc 1.9 will not output a header if a path is given to the -o
-  option.  yacc should be run from the binary directory instead of the
-  source directory so that the command may be simply yacc -d -o
-  points_parse.c ${CMAKE_SOURCE_DIRECTORY}/points_parse.y
-
 * src/librt/primitives/bot/g_bot_include.c:rt_bot_bbox() routine isn't
   calculating the bbox correctly
 
@@ -132,8 +139,8 @@ Recent Bugs
 * bu_log() with a width specifier does not align like printf().
   Example: bu_log("%24s", str);
 
-* report that keep sometimes results in a .g file with unknown units
-  dbconcat also is reported to set the units to unknown if concating
+* report that "keep" sometimes results in a .g file with unknown units;
+  dbconcat also is reported to set the units to unknown if concatting
   a file with unknown units.
 
 * infinite loop in rt_find_backing_dist() raytracing a BoT (without

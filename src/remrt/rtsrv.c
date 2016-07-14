@@ -1,7 +1,7 @@
 /*                         R T S R V . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,7 +34,6 @@
 #endif
 #ifdef HAVE_SYS_IOCTL_H
 #  include <sys/ioctl.h>
-#  include <sys/resource.h>
 #endif
 #ifdef HAVE_SYS_SOCKET_H
 #  include <sys/socket.h>
@@ -42,17 +41,14 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bselect.h"
-#include "bio.h"
+#include "bresource.h"
+#include "bsocket.h"
 
 #ifdef VMIN
 #  undef VMIN
 #endif
 
-#include "bu.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -92,7 +88,7 @@ vect_t		left_eye_delta;
 int		report_progress;	/* !0 = user wants progress report */
 /***** end variables shared with worker() *****/
 
-/* Variables shared within mainline pieces */
+/* Variables shared elsewhere */
 extern fastf_t	rt_dist_tol;		/* Value for rti_tol.dist */
 extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern int	rdebug;			/* RT program debugging (not library) */
@@ -571,10 +567,13 @@ ph_options(struct pkg_conn *UNUSED(pc), char *buf)
     process_cmd(buf);
 
     /* Just in case command processed was "opt -P" */
-    if (npsw < 0)  {
-	/* Negative number means "all but #" available */
-	npsw = avail_cpus - npsw;
-    }
+    /* need to decouple parsing of user args from the npsw processor
+     * thread count being used, which should be an unsigned/size_t
+     * type. -- CSM */
+/*     if (npsw < 0)  { */
+/* 	/\* Negative number means "all but #" available *\/ */
+/* 	npsw = avail_cpus - npsw; */
+/*     } */
 
     /* basic bounds sanity */
     if (npsw > MAX_PSW)

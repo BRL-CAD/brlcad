@@ -1,7 +1,7 @@
 /*                        F B _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fb */
+/** @addtogroup libfb */
 /** @{ */
 /** @file fb_obj.c
  *
@@ -35,9 +35,12 @@
 # include <strings.h>
 #endif
 
-#include "bio.h"
 #include "tcl.h"
 #include "bu/cmd.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "fb_private.h"
 #include "fb.h"
 #include "fbserv_obj.h"

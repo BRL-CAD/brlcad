@@ -1,7 +1,7 @@
 /*                        M I R R O R . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -62,7 +62,8 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     bu_optind = 1;
-    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ")) != -1) {
+    while ((k = bu_getopt(argc, (char * const *)argv, (const char *)"d:D:hHo:O:p:P:xXyYzZ?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'p':
 	    case 'P':

@@ -1,7 +1,7 @@
 /*                     T E X T U R E _ I N T E R N A L . H
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 #define ADRT_LIBRENDER_TEXTURE_INTERNAL_H
 
 
-#include "tie.h"
+#include "rt/tie.h"
 
 #define __TEXTURE_WORK_PROTOTYPE__ texture_t *texture, void *mesh, struct tie_ray_s *ray, struct tie_id_s *id, vect_t *pixel
 

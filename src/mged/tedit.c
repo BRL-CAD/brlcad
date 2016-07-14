@@ -1,7 +1,7 @@
 /*                         T E D I T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,16 +29,13 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
+#include "bresource.h"
 
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -182,6 +179,7 @@ writesolid(void)
 	struct rt_eto_internal *eto;
 	struct rt_part_internal *part;
 	struct rt_superell_internal *superell;
+	struct rt_datum_internal *datum;
 
 	default:
 	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
@@ -298,6 +296,18 @@ writesolid(void)
 	    fprintf(fp, "C: %.9f %.9f %.9f%s", V3BASE2LOCAL(superell->c), eol);
 	    fprintf(fp, "<n, e>: <%.9f, %.9f>%s", superell->n, superell->e, eol);
 	    break;
+	case ID_DATUM:
+	    datum = (struct rt_datum_internal *)es_int.idb_ptr;
+	    do {
+		if (!ZERO(datum->w))
+		    fprintf(fp, "Plane: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir) %.9f (scale)%s", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), datum->w, eol);
+		else if (!ZERO(MAGNITUDE(datum->dir)))
+		    fprintf(fp, "Line: %.9f %.9f %.9f (pnt) %.9f %.9f %.9f (dir)%s", V3BASE2LOCAL(datum->pnt), V3BASE2LOCAL(datum->dir), eol);
+		else
+		    fprintf(fp, "Point: %.9f %.9f %.9f%s", V3BASE2LOCAL(datum->pnt), eol);
+	    } while ((datum = datum->next));
+
+	    break;
     }
 
     (void)fclose(fp);
@@ -358,8 +368,10 @@ readsolid(void)
 	struct rt_eto_internal *eto;
 	struct rt_part_internal *part;
 	struct rt_superell_internal *superell;
+	struct rt_datum_internal *datum;
+
 	char *str;
-	double a, b, c, d;
+	double a, b, c, d, e, f, g;
 
 	default:
 	    Tcl_AppendResult(INTERP, "Cannot text edit this solid type\n", (char *)NULL);
@@ -862,6 +874,34 @@ readsolid(void)
 		break;
 	    }
 	    (void) sscanf(str, "%lf %lf", &superell->n, &superell->e);
+	    break;
+	case ID_DATUM:
+	    datum = (struct rt_datum_internal *)es_int.idb_ptr;
+	    do {
+		if ((str=Get_next_line(fp)) == NULL) {
+		    ret_val = 1;
+		    break;
+		}
+		if (bu_strncasecmp(str, "point", strlen("point")) == 0) {
+		    sscanf(str, "%lf %lf %lf", &a, &b, &c);
+		    VSET(datum->pnt, a, b, c);
+		    VSCALE(datum->pnt, datum->pnt, local2base);
+		} else if (bu_strncasecmp(str, "line", strlen("line")) == 0) {
+		    sscanf(str, "%lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f);
+		    VSET(datum->pnt, a, b, c);
+		    VSET(datum->dir, d, e, f);
+		    VSCALE(datum->pnt, datum->pnt, local2base);
+		    VSCALE(datum->dir, datum->dir, local2base);
+		} else if (bu_strncasecmp(str, "plane", strlen("plane")) == 0) {
+		    sscanf(str, "%lf %lf %lf %lf %lf %lf %lf", &a, &b, &c, &d, &e, &f, &g);
+		    VSET(datum->pnt, a, b, c);
+		    VSET(datum->dir, d, e, f);
+		    VSCALE(datum->pnt, datum->pnt, local2base);
+		    VSCALE(datum->dir, datum->dir, local2base);
+		    datum->w = g;
+		}
+	    } while ((datum = datum->next));
+
 	    break;
     }
 

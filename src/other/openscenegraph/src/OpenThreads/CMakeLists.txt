@@ -18,20 +18,16 @@ set(OPENTHREADS_CMAKE_DIR "${OPENTHREADS_SOURCE_DIR}/CMake")
 # what to do with it.
 add_definitions(-DOPENTHREADS_EXPORTS)
 
-set(OPENTHREADS_MAJOR_VERSION 3)
-set(OPENTHREADS_MINOR_VERSION 2)
-set(OPENTHREADS_PATCH_VERSION 0)
-set(OPENTHREADS_SOVERSION 13)
+SET(OPENTHREADS_MAJOR_VERSION 3)
+SET(OPENTHREADS_MINOR_VERSION 2)
+SET(OPENTHREADS_PATCH_VERSION 1)
+SET(OPENTHREADS_SOVERSION 20)
 
 set(OPENTHREADS_VERSION ${OPENTHREADS_MAJOR_VERSION}.${OPENTHREADS_MINOR_VERSION}.${OPENTHREADS_PATCH_VERSION})
 
 if(NOT ANDROID)
   include(${OPENTHREADS_CMAKE_DIR}/CheckAtomicOps.cmake)
 endif()
-
-if(MSVC)
-  include(${OPENTHREADS_CMAKE_DIR}/Handle_MSVC_DLL.cmake)
-endif(MSVC)
 
 # User Options
 option(DYNAMIC_OPENTHREADS "Set to ON to build OpenThreads for dynamic linking.  Use OFF for static." ON)
@@ -47,11 +43,11 @@ endif()
 
 set(OPENTHREADS_CONFIG_HEADER "${OPENTHREADS_BINARY_DIR}/include/OpenThreads/Config")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/common/Config.in"
-  "${OPENTHREADS_CONFIG_HEADER}")
+               "${OPENTHREADS_CONFIG_HEADER}")
 
 set(OPENTHREADS_VERSION_HEADER "${OPENTHREADS_SOURCE_DIR}/include/OpenThreads/Version")
 configure_file("${CMAKE_CURRENT_SOURCE_DIR}/common/Version.in"
-  "${OPENTHREADS_VERSION_HEADER}")
+               "${OPENTHREADS_VERSION_HEADER}")
 
 
 ################################################################################
@@ -60,7 +56,7 @@ configure_file("${CMAKE_CURRENT_SOURCE_DIR}/common/Version.in"
 if(MSVC)
   set(OPENTHREADS_VERSIONINFO_RC "${OPENTHREADS_BINARY_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc")
   configure_file("${OPENTHREADS_SOURCE_DIR}/PlatformSpecifics/Windows/OpenThreadsVersionInfo.rc.in"
-    "${OPENTHREADS_VERSIONINFO_RC}")
+                   "${OPENTHREADS_VERSIONINFO_RC}")
 endif()
 
 ################################################################################
@@ -70,41 +66,41 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}/include
   )
 
-set(HEADER_PATH include/OpenThreads)
+set(HEADER_PATH "${OPENTHREADS_SOURCE_DIR}/include/OpenThreads")
 set(OpenThreads_PUBLIC_HEADERS
-  ${HEADER_PATH}/Atomic
-  ${HEADER_PATH}/Barrier
-  ${HEADER_PATH}/Block
-  ${HEADER_PATH}/Condition
-  ${HEADER_PATH}/Exports
-  ${HEADER_PATH}/Mutex
-  ${HEADER_PATH}/ReadWriteMutex
-  ${HEADER_PATH}/ReentrantMutex
-  ${HEADER_PATH}/ScopedLock
-  ${HEADER_PATH}/Thread
-  ${HEADER_PATH}/Version
-  ${OPENTHREADS_CONFIG_HEADER}
-  )
+    ${HEADER_PATH}/Atomic
+    ${HEADER_PATH}/Barrier
+    ${HEADER_PATH}/Block
+    ${HEADER_PATH}/Condition
+    ${HEADER_PATH}/Exports
+    ${HEADER_PATH}/Mutex
+    ${HEADER_PATH}/ReadWriteMutex
+    ${HEADER_PATH}/ReentrantMutex
+    ${HEADER_PATH}/ScopedLock
+    ${HEADER_PATH}/Thread
+    ${HEADER_PATH}/Version
+    ${OPENTHREADS_CONFIG_HEADER}
+)
 
 if(NOT ANDROID)
-  # Use our modified version of FindThreads.cmake which has Sproc hacks.
+# Use our modified version of FindThreads.cmake which has Sproc hacks.
   find_package(Threads)
 endif()
 # Do we have sproc?
 if(CMAKE_SYSTEM MATCHES IRIX)
   if(CMAKE_USE_SPROC_INIT)
-    # In this case, only Sproc exists, so no option.
+        # In this case, only Sproc exists, so no option.
     set(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS 1)
   else()
     if(CMAKE_HAVE_SPROC_H)
-      OPTION(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS "Set to ON to build OpenThreads against sproc instead of pthreads" OFF)
+            OPTION(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS "Set to ON to build OpenThreads against sproc instead of pthreads" OFF)
     endif()
   endif()
 endif(CMAKE_SYSTEM MATCHES IRIX)
 
 # Add support for using Qt threads
 if(QT4_FOUND OR Qt5Widgets_FOUND)
-  OPTION(BUILD_OPENTHREADS_WITH_QT "Build OpenThreads with Qt threading support." OFF)
+    OPTION(BUILD_OPENTHREADS_WITH_QT "Build OpenThreads with Qt threading support." OFF)
 endif()
 
 # Maybe we should be using the FindThreads.cmake module?
@@ -113,13 +109,13 @@ if(ANDROID)
 elseif((QT4_FOUND OR Qt5Widgets_FOUND) AND BUILD_OPENTHREADS_WITH_QT)
   add_subdirectory(qt)
 elseif(WIN32)
-  # So I think Cygwin wants to use pthreads
+    # So I think Cygwin wants to use pthreads
   if(CYGWIN)
     add_subdirectory(pthreads)
   else()
-    # Everybody else including Msys should probably go here
+        # Everybody else including Msys should probably go here
     add_subdirectory(win32)
-    # examples)
+        # examples)
   endif()
 elseif(UNIX)
   if(OPENTHREADS_USE_SPROC_INSTEAD_OF_PTHREADS)

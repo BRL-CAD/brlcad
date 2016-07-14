@@ -19,7 +19,7 @@
   <command>rtregis</command>
     <arg choice='plain'><replaceable>plot.log</replaceable></arg>
     <arg choice='plain'><replaceable>pix.log</replaceable></arg>
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>registration.matrix</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
@@ -28,7 +28,7 @@
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para><command>rtregis</command>
 makes it easy and fast to overlay a UNIX-Plot file produced with <emphasis remap='B'>rthide</emphasis>
-or <emphasis remap='B'>rtrange</emphasis> onto its equivalent color shaded image produced with <emphasis remap='B'>rt</emphasis> or <emphasis remap='B'>cell-fb</emphasis>.</para>
+or <emphasis remap='B'>rtrange</emphasis> onto its equivalent color shaded image produced with <emphasis remap='B'>rt</emphasis> or <emphasis remap='B'>cell-fb</emphasis> .</para>
 
 <para><command>rtregis</command>
 produces a script containing a call to <emphasis remap='B'>plot3rot</emphasis> with the <option>-m</option> and <option>-S</option> parameters to
@@ -46,7 +46,7 @@ They may not be used together with
 <option>-a, -e, -s, -g</option>
 options to
 <emphasis remap='B'>plot3rot.</emphasis>
-Output is written to standard out unless it is redirected.
+Output is written to standard output unless it is redirected.
 The output can often be included directly in a shell script using
 grave accents.</para>
 </refsect1>
@@ -55,7 +55,7 @@ grave accents.</para>
 <para>This section shows the ordinary usage of <command>rtregis</command>.  For example,</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>rtregis plot.log pix.log  &gt; registration.matrix.file</emphasis>
+	rtregis <emphasis remap='I'>plot.log pix.log</emphasis> &gt; <emphasis remap='I'>registration.matrix.file</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>results in a file containing the registration matrix and alternate
@@ -63,7 +63,7 @@ space command for <emphasis remap='B'>plot3rot</emphasis>.  It also contains a c
 can be edited to send the <emphasis remap='B'>plot3rot</emphasis> output a file.</para>
 
 <literallayout remap='.nf'>
-	 <emphasis remap='I'>sh registration.matrix.file &gt; file.plot3</emphasis>
+	sh <emphasis remap='I'>registration.matrix.file</emphasis> &gt; <emphasis remap='I'>file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>This results in a registered plot file.</para>
@@ -71,8 +71,8 @@ can be edited to send the <emphasis remap='B'>plot3rot</emphasis> output a file.
 <para>Now the registered plot file can be overlaid onto the rendered shaded image:</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>pix-fb file.pix</emphasis>
-	<emphasis remap='I'>plot3-fb -o file.plot3</emphasis>
+	pix-fb <emphasis remap='I'>file.pix</emphasis>
+	plot3-fb -o <emphasis remap='I'>file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>This command pair results in the plot file being overlaid on top of
@@ -81,7 +81,7 @@ The result can then be converted to Impress or PostScript and sent
 to a printer:</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>fb-pix | pix-bw | bw-impress (or bw-ps) | qpr</emphasis>
+	fb-pix | pix-bw | bw-impress (<emphasis remap='I'>or</emphasis> bw-ps) | qpr
 </literallayout> <!-- .fi -->
 
 </refsect1>
@@ -92,7 +92,7 @@ to a printer:</para>
 <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rthide</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pix-bw</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -104,7 +104,7 @@ to a printer:</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2014 United States Government as
+<para>This software is Copyright (c) 1991-2016 United States Government as
 represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 

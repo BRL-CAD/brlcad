@@ -1,7 +1,7 @@
 /*                         F I L E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,6 +40,7 @@
 #include "bu/debug.h"
 #include "bu/file.h"
 #include "bu/log.h"
+#include "bu/malloc.h"
 #include "bu/str.h"
 
 #ifndef R_OK

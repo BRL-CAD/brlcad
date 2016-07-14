@@ -1,7 +1,7 @@
 /*                      R T S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,15 +30,22 @@
 #include <stdlib.h>
 #include <string.h>
 #include <pthread.h>
-#include "bin.h"
+
+#include "tcl.h"
+
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "rtserver.h"
+
+#ifdef UNUSED
+#  undef UNUSED /* we conflict with jni_md.h */
+#endif
 
 #ifdef HAVE_JAVAVM_JNI_H
 #  include <JavaVM/jni.h>
@@ -48,6 +55,11 @@
 #  include "ERROR: jni.h could not be found"
 #endif
 #include "RtServerImpl.h"
+
+/* just in case older versions of jni_md.h don't provide */
+#ifndef UNUSED
+#  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#endif
 
 /* private structures not used outside this file */
 struct rtserver_rti {
@@ -127,7 +139,7 @@ static int use_air=1;
 static int verbose=0;
 
 /* total number of MUVES component names */
-static CLIENTDATA_INT comp_count=0;
+static long comp_count=0;
 
 /* array of MUVES component names */
 static char **names;
@@ -235,10 +247,10 @@ get_muves_components()
     name_entry = Tcl_FirstHashEntry( &name_tbl, &search );
     while ( name_entry ) {
 	char *name;
-	CLIENTDATA_INT idx;
+	long idx;
 
 	name = Tcl_GetHashKey( &name_tbl, name_entry );
-	idx = (CLIENTDATA_INT)Tcl_GetHashValue( name_entry );
+	idx = (long)Tcl_GetHashValue( name_entry );
 	names[idx] = bu_strdup( name );
 
 	name_entry = Tcl_NextHashEntry( &search );
@@ -617,7 +629,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 	Tcl_HashEntry *entry;
 	double inObl, outObl;
 	double dot;
-	int regionIndex;
+	long regionIndex;
 	int matrixSize;
 	int i;
 	matp_t inv_mat;
@@ -680,7 +692,7 @@ rts_hit( struct application *ap, struct partition *partHeadp, struct seg *UNUSED
 
 	/* get the region index from the hash table */
 	entry = Tcl_FindHashEntry( rts_geometry[sessionid]->rts_rtis[0]->rtrti_region_names, (const char *)rp->reg_name );
-	regionIndex = (CLIENTDATA_INT)Tcl_GetHashValue( entry );
+	regionIndex = (long)Tcl_GetHashValue( entry );
 
 	/* write region index to buffer */
 	*(uint32_t *)buffer = htonl(regionIndex);
@@ -1932,7 +1944,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     int region_count;
     jobject jNameArray;
     jstring region_name;
-    CLIENTDATA_INT region_number;
+    long region_number;
 
     hashTbl = rts_geometry[sessionId]->rts_rtis[0]->rtrti_region_names;
     region_count = rts_geometry[sessionId]->rts_rtis[0]->region_count;
@@ -1941,7 +1953,7 @@ JNIEXPORT jobjectArray JNICALL Java_mil_army_muves_brlcadservice_impl_BrlcadJNIW
     entry = Tcl_FirstHashEntry(hashTbl, &searchTbl);
 
     while ( entry != NULL ) {
-	region_number = (CLIENTDATA_INT)Tcl_GetHashValue(entry);
+	region_number = (long)Tcl_GetHashValue(entry);
 	region_name = (*env)->NewStringUTF(env, Tcl_GetHashKey(hashTbl, entry));
 	(*env)->SetObjectArrayElement(env, jNameArray, region_number, region_name);
 	entry = Tcl_NextHashEntry(&searchTbl);

@@ -1,7 +1,7 @@
 /*                    D M _ P R I V A T E . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,6 +35,29 @@ struct dm_vars {
     void *pub_vars;
     void *priv_vars;
 };
+
+#if defined(DM_OGL) || defined(DM_WGL)
+#define Ogl_MV_O(_m) offsetof(struct modifiable_ogl_vars, _m)
+
+struct modifiable_ogl_vars {
+    dm *this_dm;
+    int cueing_on;
+    int zclipping_on;
+    int zbuffer_on;
+    int lighting_on;
+    int transparency_on;
+    int fastfog;
+    double fogdensity;
+    int zbuf;
+    int rgb;
+    int doublebuffer;
+    int depth;
+    int debug;
+    struct bu_vls log;
+    double bound;
+    int boundFlag;
+};
+#endif
 
 /**
  * Interface to a specific Display Manager

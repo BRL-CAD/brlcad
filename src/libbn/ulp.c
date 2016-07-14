@@ -1,7 +1,7 @@
 /*                           U L P . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,9 +42,7 @@
 
 #include <math.h>
 #include <limits.h>
-#ifdef HAVE_FLOAT_H
-#  include <float.h>
-#endif
+#include <float.h>
 
 /* #define HAVE_IEEE754 1 */
 

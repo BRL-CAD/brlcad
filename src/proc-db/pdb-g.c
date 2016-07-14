@@ -1,7 +1,7 @@
 /*                         P D B - G . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -20,8 +20,8 @@
 
 #include "common.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
+#include "bu/file.h"
 
 void
 read_pdb(char *fileName)

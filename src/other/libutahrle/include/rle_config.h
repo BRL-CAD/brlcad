@@ -110,6 +110,10 @@ extern char *getenv();
 #endif /* __STDC__ */
 #endif /* USE_STRING_H */
 
+#if defined(__MINGW32__)
+#  define NEED_BSTRING
+#endif
+
 #ifdef NEED_BSTRING
     /* From bstring.c. */
     /*****************************************************************

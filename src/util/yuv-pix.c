@@ -1,7 +1,7 @@
 /*                       Y U V - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -37,10 +37,12 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -58,11 +60,10 @@ void ab_rgb_to_yuv(unsigned char *yuv_buf, unsigned char *rgb_buf, long int len)
 void ab_yuv_to_rgb(unsigned char *rgb_buf, unsigned char *yuv_buf, long int len);
 
 static const char usage[] =
-  "Usage: yuv-pix [-h] [-a]\n"
-  "	[-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n"
+  "Usage: yuv-pix [-a] [-s squaresize] [-w file_width] [-n file_height] [file.yuv] > file.pix\n"
   ;
 
-static const char optstring[] = "ahs:w:n:";
+static const char optstring[] = "as:w:n:h?";
 
 int
 get_args(int argc, char **argv)
@@ -73,11 +74,6 @@ get_args(int argc, char **argv)
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_height = file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -93,7 +89,7 @@ get_args(int argc, char **argv)
 		autosize = 0;
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

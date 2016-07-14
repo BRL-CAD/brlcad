@@ -1,7 +1,7 @@
 /*                           C M D . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,20 +36,18 @@
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-#include "bio.h"
+#include "bresource.h"
 
 #include "tcl.h"
 #ifdef HAVE_TK
 #  include "tk.h"
 #endif
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/path.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "tclcad.h"
 
 #include "./mged.h"
@@ -946,142 +944,6 @@ cmd_set_more_default(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int
 }
 
 
-/**
- * debackslash, backslash_specials, mged_compat: routines for original
- * mged emulation mode
- */
-void
-debackslash(struct bu_vls *dest, struct bu_vls *src)
-{
-    char *ptr;
-
-    ptr = bu_vls_addr(src);
-    while (*ptr) {
-	if (*ptr == '\\')
-	    ++ptr;
-	if (*ptr == '\0')
-	    break;
-	bu_vls_putc(dest, *ptr++);
-    }
-}
-
-
-void
-backslash_specials(struct bu_vls *dest, struct bu_vls *src)
-{
-    int backslashed;
-    char *ptr, buf[2];
-
-    buf[1] = '\0';
-    backslashed = 0;
-    for (ptr = bu_vls_addr(src); *ptr; ptr++) {
-	if (*ptr == '[' && !backslashed)
-	    bu_vls_strcat(dest, "\\[");
-	else if (*ptr == ']' && !backslashed)
-	    bu_vls_strcat(dest, "\\]");
-	else if (backslashed) {
-	    bu_vls_strcat(dest, "\\");
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	    backslashed = 0;
-	} else if (*ptr == '\\')
-	    backslashed = 1;
-	else {
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	}
-    }
-}
-
-
-/**
- * This routine is called to perform wildcard expansion and character
- * quoting on the given vls (typically input from the keyboard.)
- */
-void
-mged_compat(struct bu_vls *dest, struct bu_vls *src, int use_first)
-{
-    char *start, *end;          /* Start and ends of words */
-    int regexp;                 /* Set to TRUE when word is a regexp */
-    int backslashed;
-    int firstword;
-    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
-
-    if (dbip == DBI_NULL) {
-	bu_vls_vlscat(dest, src);
-	return;
-    }
-
-    start = end = bu_vls_addr(src);
-    firstword = 1;
-    while (*end != '\0') {
-	/* Run through entire string */
-
-	/* First, pass along leading whitespace. */
-
-	start = end;                   /* Begin where last word ended */
-	while (*start != '\0') {
-	    if (*start == ' '  ||
-		*start == '\t' ||
-		*start == '\n')
-		bu_vls_putc(dest, *start++);
-	    else
-		break;
-	}
-	if (*start == '\0')
-	    break;
-
-	/* Next, advance "end" pointer to the end of the word, while
-	 * adding each character to the "word" vls.  Also make a note
-	 * of any unbackslashed wildcard characters.
-	 */
-
-	end = start;
-	bu_vls_trunc(&word, 0);
-	regexp = 0;
-	backslashed = 0;
-	while (*end != '\0') {
-	    if (*end == ' '  ||
-		*end == '\t' ||
-		*end == '\n')
-		break;
-	    if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
-		regexp = 1;
-	    if (*end == '\\' && !backslashed)
-		backslashed = 1;
-	    else
-		backslashed = 0;
-	    bu_vls_putc(&word, *end++);
-	}
-
-	if (firstword && !use_first)
-	    regexp = 0;
-
-	/* Now, if the word was suspected of being a wildcard, try to
-	 * match it to the database.
-	 */
-
-	if (regexp) {
-	    bu_vls_trunc(&temp, 0);
-	    if (db_regexp_match_all(&temp, dbip,
-				    bu_vls_addr(&word)) == 0) {
-		debackslash(&temp, &word);
-		backslash_specials(dest, &temp);
-	    } else
-		bu_vls_vlscat(dest, &temp);
-	} else {
-	    debackslash(dest, &word);
-	}
-
-	firstword = 0;
-    }
-
-    bu_vls_free(&temp);
-    bu_vls_free(&word);
-}
-
-
 #ifdef _WIN32
 /* limited to seconds only */
 void gettimeofday(struct timeval *tp, struct timezone *tzp)
@@ -1137,7 +999,11 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	mged_compat(&globbed, vp, 0);
+	int flags = 0;
+	flags |= DB_GLOB_HIDDEN;
+	flags |= DB_GLOB_NON_GEOM;
+	flags |= DB_GLOB_SKIP_FIRST;
+	(void)db_expand_str_glob(&globbed, bu_vls_addr(vp), dbip, flags);
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }
@@ -1494,9 +1360,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	for (BU_LIST_FOR (clp, cmd_list, &head_cmd_list.l)) {
 	    bu_vls_trunc(&vls, 0);
 	    if (clp->cl_tie) {
-		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			      bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		if (dm_get_pathname(dmp)) {
+		    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			    bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+		    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+		}
 	    } else {
 		bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
@@ -1505,9 +1373,11 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
 	bu_vls_trunc(&vls, 0);
 	if (clp->cl_tie) {
-	    bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
-			  bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    if (dm_get_pathname(dmp)) {
+		bu_vls_printf(&vls, "%s %s", bu_vls_addr(&clp->cl_name),
+			bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+		Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
+	    }
 	} else {
 	    bu_vls_printf(&vls, "%s {}", bu_vls_addr(&clp->cl_name));
 	    Tcl_AppendElement(interpreter, bu_vls_addr(&vls));
@@ -1554,11 +1424,13 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 
     /* print out the display manager that we're tied to */
     if (argc == 2) {
-	if (clp->cl_tie)
-	    Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
-	else
+	if (clp->cl_tie) {
+	    if (dm_get_pathname(dmp)) {
+		Tcl_AppendElement(interpreter, bu_vls_addr(dm_get_pathname(clp->cl_tie->dml_dmp)));
+	    }
+	} else {
 	    Tcl_AppendElement(interpreter, "");
-
+	}
 	bu_vls_free(&vls);
 	return TCL_OK;
     }
@@ -1569,7 +1441,7 @@ f_tie(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const ch
 	bu_vls_strcpy(&vls, argv[2]);
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l)
-	if (!bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
+	if (dm_get_pathname(dlp->dml_dmp) && !bu_vls_strcmp(&vls, dm_get_pathname(dlp->dml_dmp)))
 	    break;
 
     if (dlp == &head_dm_list) {
@@ -1718,13 +1590,15 @@ f_winset(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const
 
     /* print pathname of drawing window with primary focus */
     if (argc == 1) {
-	Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(dmp)), (char *)NULL);
+	if (dm_get_pathname(dmp)) {
+	    Tcl_AppendResult(interpreter, bu_vls_addr(dm_get_pathname(dmp)), (char *)NULL);
+	}
 	return TCL_OK;
     }
 
     /* change primary focus to window argv[1] */
     FOR_ALL_DISPLAYS(p, &head_dm_list.l) {
-	if (BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
+	if (dm_get_pathname(p->dml_dmp) && BU_STR_EQUAL(argv[1], bu_vls_addr(dm_get_pathname(p->dml_dmp)))) {
 	    curr_dm_list = p;
 
 	    if (curr_dm_list->dml_tie)
@@ -1832,7 +1706,7 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
 
         bu_vls_init(&vls);
         bu_vls_printf(&vls, "helplib_alias wdb_rt_gettrees %s", argv[0]);
-        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
         bu_vls_free(&vls);
         return TCL_ERROR;
     }
@@ -1841,7 +1715,7 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
     newprocname = argv[1];
 
     /* Delete previous proc (if any) to release all that memory, first */
-    (void)Tcl_DeleteCommand(wdbp->wdb_interp, newprocname);
+    (void)Tcl_DeleteCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname);
 
     while (argc > 2 && argv[2][0] == '-') {
         if (BU_STR_EQUAL(argv[2], "-i")) {
@@ -1860,13 +1734,13 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
     }
 
     if (argc-2 < 1) {
-        Tcl_AppendResult(wdbp->wdb_interp,
+        Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
                          "rt_gettrees(): no geometry has been specified ", (char *)NULL);
         return TCL_ERROR;
     }
 
     if (rt_gettrees(rtip, argc-2, (const char **)&argv[2], 1) < 0) {
-        Tcl_AppendResult(wdbp->wdb_interp,
+        Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp,
                          "rt_gettrees() returned error", (char *)NULL);
         rt_free_rti(rtip);
         return TCL_ERROR;
@@ -1899,11 +1773,11 @@ cmd_rt_gettrees(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), 
 
     /* Instantiate the proc, with clientData of wdb */
     /* Beware, returns a "token", not TCL_OK. */
-    (void)Tcl_CreateCommand(wdbp->wdb_interp, newprocname, rt_tcl_rt,
+    (void)Tcl_CreateCommand((Tcl_Interp *)wdbp->wdb_interp, newprocname, tclcad_rt,
                             (ClientData)ap, wdb_deleteProc_rt);
 
     /* Return new function name as result */
-    Tcl_AppendResult(wdbp->wdb_interp, newprocname, (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, newprocname, (char *)NULL);
 
     return TCL_OK;
 
@@ -2232,36 +2106,6 @@ cmd_shaded_mode(ClientData UNUSED(clientData),
 }
 
 
-/* XXX needs to be provided from points header */
-extern int parse_point_file(ClientData clientData, Tcl_Interp *interpreter, int argc, const char *argv[]);
-#ifndef BC_WITH_PARSERS
-int
-cmd_parse_points(ClientData UNUSED(clientData),
-		 Tcl_Interp *UNUSED(interpreter),
-		 int UNUSED(argc),
-		 const char *UNUSED(argv[]))
-{
-
-    bu_log("parse_points was disabled in this compilation of mged due to system limitations\n");
-    return TCL_ERROR;
-}
-#else
-int
-cmd_parse_points(ClientData clientData,
-		 Tcl_Interp *interpreter,
-		 int argc,
-		 const char *argv[])
-{
-   if (argc != 2) {
-	bu_log("parse_points only supports a single file name right now\n");
-	bu_log("doing nothing\n");
-	return TCL_ERROR;
-    }
-    return parse_point_file(clientData, interpreter, argc-1, &(argv[1]));
-}
-#endif
-
-
 int
 cmd_has_embedded_fb(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int UNUSED(argc), const char **UNUSED(argv))
 {
@@ -2284,12 +2128,12 @@ cmd_stub(ClientData UNUSED(clientData), Tcl_Interp *UNUSED(interpreter), int arg
         struct bu_vls vls;
         bu_vls_init(&vls);
         bu_vls_printf(&vls, "helplib_alias wdb_%s %s", argv[0], argv[0]);
-        Tcl_Eval(wdbp->wdb_interp, bu_vls_addr(&vls));
+        Tcl_Eval((Tcl_Interp *)wdbp->wdb_interp, bu_vls_addr(&vls));
         bu_vls_free(&vls);
         return TCL_ERROR;
     }
 
-    Tcl_AppendResult(wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
+    Tcl_AppendResult((Tcl_Interp *)wdbp->wdb_interp, "%s: no database is currently opened!", argv[0], (char *)NULL);
     return TCL_ERROR;
 }
 

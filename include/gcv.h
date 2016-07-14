@@ -1,7 +1,7 @@
 /*                           G C V . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,7 +19,7 @@
  */
 /** @file gcv.h
  *
- * Functions provided by the LIBGCV geometry conversion library.
+ * API of the LIBGCV geometry conversion library.
  *
  */
 
@@ -28,48 +28,11 @@
 
 #include "common.h"
 
-#include "raytrace.h"
-
 __BEGIN_DECLS
 
-#ifndef GCV_EXPORT
-#  if defined(GCV_DLL_EXPORTS) && defined(GCV_DLL_IMPORTS)
-#    error "Only GCV_DLL_EXPORTS or GCV_DLL_IMPORTS can be defined, not both."
-#  elif defined(GCV_DLL_EXPORTS)
-#    define GCV_EXPORT __declspec(dllexport)
-#  elif defined(GCV_DLL_IMPORTS)
-#    define GCV_EXPORT __declspec(dllimport)
-#  else
-#    define GCV_EXPORT
-#  endif
-#endif
-
-/**
- * Usually specified as the db_walk_tree() region_end callback,
- * calling this routine for each positive region encountered.
- *
- * The client_data parameter is expected to be a function pointer for
- * a routine that will write out the region in a given file format:
- *
-@code
-void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int region_id, int material_id, float color[3]);
-@endcode
- *
- * This routine must be prepared to run in parallel.
- */
-GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-/**
- * Exact same as gcv_region_end, except using the marching cubes algorithm.
- */
-GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-
-GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
-
-
-GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);
-
+#include "./gcv/defines.h"
+#include "./gcv/util.h"
+#include "./gcv/api.h"
 
 __END_DECLS
 

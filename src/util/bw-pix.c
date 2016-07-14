@@ -1,7 +1,7 @@
 /*                        B W - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,13 +29,15 @@
 #include <stdlib.h>
 #include "bio.h"
 
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/mime.h"
 #include "icv.h"
-#include "bu.h"
 
 
 char usage[] = "\
-Usage: bw-pix [-h] [[-s squaresize] [-w width] [-n height]]\n\
-[-o out_file.pix] [file.pix] > [out_file.pix]\n";
+Usage: bw-pix [[-s squaresize] [-w width] [-n height]]\n\
+[-o out_file.pix] [file.bw] > [out_file.pix]\n";
 
 char *out_file = NULL;
 char *in_file = NULL;
@@ -61,8 +63,7 @@ get_args(int argc, char **argv)
             case 'n' :
                iny = atoi(bu_optarg);
                break;
-	    case 'h':
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -102,11 +103,11 @@ main(int argc, char **argv)
     setmode(fileno(stdout), O_BINARY);
     setmode(fileno(stderr), O_BINARY);
 
-    img = icv_read(in_file, ICV_IMAGE_BW, inx, iny);
+    img = icv_read(in_file, MIME_IMAGE_BW, inx, iny);
     if (img == NULL)
 	return 1;
     icv_gray2rgb(img);
-    icv_write(img, out_file, ICV_IMAGE_PIX);
+    icv_write(img, out_file, MIME_IMAGE_PIX);
     icv_destroy(img);
     return 0;
 }

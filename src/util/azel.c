@@ -1,7 +1,7 @@
 /*                          A Z E L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,7 +55,8 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 
 #define OPT_STRING "a:c:e:iprh?"	/* For bu_getopt(3) */

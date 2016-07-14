@@ -1,7 +1,7 @@
 /*                         P T B L . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,12 +18,6 @@
  * information.
  */
 
-/** @defgroup container Data Containers */
-/**   @defgroup ptbl Pointer Tables */
-
-/** @file ptbl.h
- *
- */
 #ifndef BU_PTBL_H
 #define BU_PTBL_H
 
@@ -38,13 +32,9 @@
 
 __BEGIN_DECLS
 
-/* ptbl.c */
-/** @addtogroup ptbl */
-/** @{ */
-/** @file libbu/ptbl.c
+/** @addtogroup bu_ptbl
  *
- * Support for generalized "pointer tables"
- *
+ * @brief
  * Support for generalized "pointer tables", kept compactly in a
  * dynamic array.
  *
@@ -54,6 +44,8 @@ __BEGIN_DECLS
  * for) are passed as a "pointer to long".
  *
  */
+/** @{ */
+/** @file bu/ptbl.h*/
 
 
 /**

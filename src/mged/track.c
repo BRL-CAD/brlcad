@@ -1,7 +1,7 @@
 /*                         T R A C K . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,17 +26,15 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <signal.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
-#include "db.h"
+#include "rt/db4.h"
 
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -252,7 +250,7 @@ f_amtrack(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[
 	edit_result = TCL_ERROR;
 	goto end;
     }
-    if (tr[0] > tr[1] - SMALL_FASTF) {
+    if (tr[1] - tr[0] < SMALL_FASTF) {
 	Tcl_AppendResult(interp, "MIN > MAX .... will switch\n", (char *)NULL);
 	tr[1] = tr[0];
 	tr[0] = tr[2];

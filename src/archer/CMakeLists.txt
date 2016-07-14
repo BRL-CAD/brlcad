@@ -62,9 +62,16 @@ set(archer_ignore_files
   archer.bat
   plugins/Commands
   plugins/Core
+  plugins/Utility/README
   plugins/Utility/attrGroupsDisplayUtilityP
+  plugins/Utility/attrGroupsDisplayUtilityP.tcl
   plugins/Utility/botUtilityP
+  plugins/Utility/botUtilityP.tcl
   plugins/Utility/lodUtilityP
+  plugins/Utility/lodUtilityP.tcl
+  plugins/Wizards/humanwizard.tcl
+  plugins/Wizards/tankwizard.tcl
+  plugins/Wizards/tirewizard.tcl
   plugins/Wizards/humanwizard
   plugins/Wizards/tankwizard
   plugins/Wizards/tirewizard

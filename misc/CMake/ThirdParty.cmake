@@ -1,7 +1,7 @@
 #                T H I R D P A R T Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -157,7 +157,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
     endif("${OPT_STR_UPPER}" STREQUAL "BUNDLED")
   endif(OPT_STR_UPPER)
 
-
   # 5. If BRLCAD_BUNDLED_LIBS is exactly SYSTEM or exactly BUNDLED, and we haven't been overridden by
   # one of the other conditions above, go with that.
   if(NOT ${varname_root}_MET_CONDITION)
@@ -173,7 +172,6 @@ macro(THIRD_PARTY dir varname_root build_target description)
       endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM")
     endif("${BRLCAD_BUNDLED_LIBS}" STREQUAL "SYSTEM" OR "${BRLCAD_BUNDLED_LIBS}" STREQUAL "BUNDLED")
   endif(NOT ${varname_root}_MET_CONDITION)
-
 
   # If we haven't been knocked out by any of the above conditions, do our testing and base the results on that.
 
@@ -195,8 +193,9 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
     # Find the package in question.  It is the toplevel CMakeLists.txt's responsibility to make
     # sure that the CMAKE_MODULE_PATH variable is set correctly if there are local versions of
-    # Find*.cmake scripts that should be used instead of the installed CMake version.
-
+    # Find*.cmake scripts that should be used.  Note that newer CMake versions will prefer a system
+    # version of the module, so if a custom override is needed the Find*.cmake name should not conflict
+    # with the system version.
     find_package(${${varname_root}_FIND_NAME} ${${varname_root}_FIND_VERSION} COMPONENTS ${${varname_root}_FIND_COMPONENTS})
 
     # going to use system or bundled versions of deps

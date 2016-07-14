@@ -1,7 +1,7 @@
 /*                           T I M E R . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  * Copyright (c) Tim Riker
  *
@@ -24,9 +24,6 @@
 #include <time.h>
 #include "bio.h"
 
-#ifdef HAVE_WINDOWS_H
-#  include <windows.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif

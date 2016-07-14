@@ -1,7 +1,7 @@
 /*                            O P . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,12 +23,34 @@
  *
  */
 
-#ifndef RT_DB_H
-#define RT_DB_H
+#ifndef RT_OP_H
+#define RT_OP_H
 
-#include "./defines.h"
+#include "rt/defines.h"
 
 __BEGIN_DECLS
+
+/**
+ * Boolean operations between solids.
+ */
+#define MKOP(x)         (x)
+
+#define OP_SOLID        MKOP(1)         /**< @brief  Leaf:  tr_stp -> solid */
+#define OP_UNION        MKOP(2)         /**< @brief  Binary: L union R */
+#define OP_INTERSECT    MKOP(3)         /**< @brief  Binary: L intersect R */
+#define OP_SUBTRACT     MKOP(4)         /**< @brief  Binary: L subtract R */
+#define OP_XOR          MKOP(5)         /**< @brief  Binary: L xor R, not both*/
+#define OP_REGION       MKOP(6)         /**< @brief  Leaf: tr_stp -> combined_tree_state */
+#define OP_NOP          MKOP(7)         /**< @brief  Leaf with no effect */
+/* Internal to library routines */
+#define OP_NOT          MKOP(8)         /**< @brief  Unary:  not L */
+#define OP_GUARD        MKOP(9)         /**< @brief  Unary:  not L, or else! */
+#define OP_XNOP         MKOP(10)        /**< @brief  Unary:  L, mark region */
+#define OP_NMG_TESS     MKOP(11)        /**< @brief  Leaf: tr_stp -> nmgregion */
+/* LIBWDB import/export interface to combinations */
+#define OP_DB_LEAF      MKOP(12)        /**< @brief  Leaf of combination, db fmt */
+#define OP_FREE         MKOP(13)        /**< @brief  Unary:  L has free chain */
+
 
 typedef enum {
     DB_OP_NULL = 0,
@@ -51,7 +73,7 @@ db_str2op(const char *str);
 
 __END_DECLS
 
-#endif /* RT_DB_H */
+#endif /* RT_OP_H */
 
 /*
  * Local Variables:

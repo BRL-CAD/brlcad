@@ -1,7 +1,7 @@
 /*                         M U L T I P O L Y . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,7 +18,7 @@
  * information.
  */
 
-/** @addtogroup multipoly */
+/** @addtogroup poly */
 /** @{ */
 /** @file libbn/multipoly.c
  *
@@ -34,7 +34,7 @@
 
 #include "bu/malloc.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/multipoly.h"
 
 
 #define FAILSTR "failure in multipoly.c"

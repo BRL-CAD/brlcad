@@ -1,7 +1,7 @@
 /*                         D X F - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,19 +29,20 @@
 
 /* system headers */
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 
 /* interface headers */
-#include "bu.h"
+#include "bu/debug.h"
+#include "bu/getopt.h"
+#include "bu/list.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 /* private headers */
 #include "./dxf.h"
@@ -198,16 +199,16 @@ static int polyline_vert_indices_max = 0;
 
 static point_t pts[4];
 
-#define UNKNOWN_ENTITY	0
-#define POLYLINE_VERTEX		1
+#define UNKNOWN_ENTITY 0
+#define POLYLINE_VERTEX 1
 
 static int invisible = 0;
 
 #define ERROR_FLAG	-999
 #define EOF_FLAG	-998
 
-#define TOL_SQ	0.00001
-#define MAX_LINE_SIZE	2050
+#define TOL_SQ 0.00001
+#define MAX_LINE_SIZE 2050
 char line[MAX_LINE_SIZE];
 
 static char *usage="Usage: dxf-g [-c] [-d] [-v] [-t tolerance] [-s scale_factor] input_file.dxf output_file.g\n";
@@ -646,9 +647,7 @@ process_blocks_code(int code)
 	case 5:		/* block handle */
 	    if (curr_block && BU_STR_EMPTY(curr_block->handle)) {
 		len = strlen(line);
-		if (len > 16) {
-		    len = 16;
-		}
+		V_MIN(len, 16);
 		bu_strlcpy(curr_block->handle, line, len);
 	    }
 	    break;
@@ -1275,7 +1274,8 @@ process_solid_entities_code(int code)
 	case 23:
 	case 33:
 	    vert_no = code % 10;
-	    if (vert_no > last_vert_no) last_vert_no = vert_no;
+	    V_MAX(last_vert_no, vert_no);
+
 	    coord = code / 10 - 1;
 	    solid_pt[vert_no][coord] = atof(line) * units_conv[units] * scale_factor;
 	    if (verbose) {
@@ -1800,10 +1800,10 @@ process_circle_entities_code(int code)
  * \~ - blank space
  * \f - TrueType font
  * \F - .SHX font
- * 	    ex:
- *		Hello \fArial;World
- *	    or:
- *		Hello {\fArial;World}
+ * ex:
+ * Hello \fArial;World
+ * or:
+ * Hello {\fArial;World}
  */
 
 int
@@ -1857,9 +1857,8 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 		    *cp++ = '\n';
 		    c += 2;
 		    lineCount++;
-		    if (lineLen > *maxLineLen) {
-			*maxLineLen = lineLen;
-		    }
+		    V_MAX(*maxLineLen, lineLen);
+
 		    lineLen = 0;
 		    break;
 		case 'A':
@@ -1885,9 +1884,7 @@ convertSecretCodes(char *c, char *cp, int *maxLineLen)
 	lineCount++;
     }
 
-    if (lineLen > *maxLineLen) {
-	*maxLineLen = lineLen;
-    }
+    V_MAX(*maxLineLen, lineLen);
 
     return lineCount;
 }
@@ -2522,9 +2519,7 @@ process_dimension_entities_code(int code)
 		    }
 		    layers[curr_layer]->dimension_count++;
 		}
-	    }
-	    else
-	    {
+	    } else {
 		curr_state->sub_state = UNKNOWN_ENTITY_STATE;
 		process_entities_code[curr_state->sub_state](code);
 	    }
@@ -2611,9 +2606,8 @@ process_arc_entities_code(int code)
 		bu_log("arc has %d segs\n", num_segs);
 	    }
 
-	    if (num_segs < 1) {
-		num_segs = 1;
-	    }
+	    V_MAX(num_segs, 1);
+
 	    VSET(circle_pts[0], radius * cos(start_angle), radius * sin(start_angle), 0.0);
 	    for (i=1; i<num_segs; i++) {
 		circle_pts[i][X] = circle_pts[i-1][X]*cos_delta - circle_pts[i-1][Y]*sin_delta;
@@ -3159,10 +3153,8 @@ main(int argc, char *argv[])
 
     /* get command line arguments */
     scale_factor = 1.0;
-    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1)
-    {
-	switch (c)
-	{
+    while ((c = bu_getopt(argc, argv, "cdvt:s:h?")) != -1) {
+	switch (c) {
 	    case 's':	/* scale factor */
 		scale_factor = atof(bu_optarg);
 		if (scale_factor < SQRT_SMALL_FASTF) {
@@ -3300,7 +3292,9 @@ main(int argc, char *argv[])
 
 	BU_LIST_INIT(&head);
 
-	if (layers[i]->color_number < 0) layers[i]->color_number = 7;
+	if (layers[i]->color_number < 0)
+	    layers[i]->color_number = 7;
+
 	if (layers[i]->curr_tri || BU_PTBL_END(&layers[i]->solids) || layers[i]->m) {
 	    bu_log("LAYER: %s, color = %d (%d %d %d)\n", layers[i]->name, layers[i]->color_number, V3ARGS(&rgb[layers[i]->color_number*3]));
 	}
@@ -3317,8 +3311,7 @@ main(int argc, char *argv[])
 	}
 
 	for (j = 0; j < BU_PTBL_END(&layers[i]->solids); j++) {
-	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head,
-			       NULL, WMOP_UNION);
+	    (void)mk_addmember((char *)BU_PTBL_GET(&layers[i]->solids, j), &head, NULL, WMOP_UNION);
 	    bu_free((char *)BU_PTBL_GET(&layers[i]->solids, j), "solid_name");
 	}
 

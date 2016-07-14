@@ -54,6 +54,7 @@ class TextureGLModeSet
             _textureModeSet.insert(GL_TEXTURE_CUBE_MAP);
             _textureModeSet.insert(GL_TEXTURE_RECTANGLE_NV);
             _textureModeSet.insert(GL_TEXTURE_2D_ARRAY_EXT);
+            _textureModeSet.insert(GL_TEXTURE_2D_MULTISAMPLE);
 
             _textureModeSet.insert(GL_TEXTURE_GEN_Q);
             _textureModeSet.insert(GL_TEXTURE_GEN_R);
@@ -274,6 +275,32 @@ int StateSet::compare(const StateSet& rhs,bool compareAttributeContents) const
     if (_textureAttributeList.size()<rhs._textureAttributeList.size()) return -1;
     if (_textureAttributeList.size()>rhs._textureAttributeList.size()) return 1;
 
+    if (_textureModeList.size()<rhs._textureModeList.size()) return -1;
+    if (_textureModeList.size()>rhs._textureModeList.size()) return 1;
+
+    if (_attributeList.size()<rhs._attributeList.size()) return -1;
+    if (_attributeList.size()>rhs._attributeList.size()) return 1;
+
+    if (_modeList.size()<rhs._modeList.size()) return -1;
+    if (_modeList.size()>rhs._modeList.size()) return 1;
+
+    if (_uniformList.size()<rhs._uniformList.size()) return -1;
+    if (_uniformList.size()>rhs._uniformList.size()) return 1;
+
+     // check render bin details
+
+    if ( _binMode < rhs._binMode ) return -1;
+    else if ( _binMode > rhs._binMode ) return 1;
+
+    if ( _binMode != INHERIT_RENDERBIN_DETAILS )
+    {
+        if ( _binNum < rhs._binNum ) return -1;
+        else if ( _binNum > rhs._binNum ) return 1;
+
+        if ( _binName < rhs._binName ) return -1;
+        else if ( _binName > rhs._binName ) return 1;
+    }
+
     for(unsigned int ai=0;ai<_textureAttributeList.size();++ai)
     {
         const AttributeList& rhs_attributeList = _textureAttributeList[ai];
@@ -373,10 +400,6 @@ int StateSet::compare(const StateSet& rhs,bool compareAttributeContents) const
 
     // we've got here so attributes must be equal...
 
-
-    if (_textureModeList.size()<rhs._textureModeList.size()) return -1;
-    if (_textureModeList.size()>rhs._textureModeList.size()) return 1;
-
     // check to see how the modes compare.
     // first check the rest of the texture modes
     for(unsigned int ti=0;ti<_textureModeList.size();++ti)
@@ -440,20 +463,6 @@ int StateSet::compare(const StateSet& rhs,bool compareAttributeContents) const
         if (rhs_uniform_itr!=rhs._uniformList.end()) return -1;
     }
     else if (rhs_uniform_itr == rhs._uniformList.end()) return 1;
-
-    // check render bin details
-
-    if ( _binMode < rhs._binMode ) return -1;
-    else if ( _binMode > rhs._binMode ) return 1;
-
-    if ( _binMode != INHERIT_RENDERBIN_DETAILS )
-    {
-        if ( _binNum < rhs._binNum ) return -1;
-        else if ( _binNum > rhs._binNum ) return 1;
-
-        if ( _binName < rhs._binName ) return -1;
-        else if ( _binName > rhs._binName ) return 1;
-    }
 
     return 0;
 }

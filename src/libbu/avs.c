@@ -1,7 +1,7 @@
 /*                           A V S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -130,11 +130,16 @@ bu_avs_add(struct bu_attribute_value_set *avsp, const char *name, const char *va
 
     /* add the new attribute */
     app = &avsp->avp[avsp->count++];
-    app->name = bu_strdup(name);
-    if (value) {
-	app->value = bu_strdup(value);
-    } else {
-	app->value = (char *)NULL;
+    /* FIXME: returning 0 when app is null causes crashing problems
+     * (observed in comgeom-g, probably in others - need to understand
+     * why. */
+    if (app) {
+	app->name = bu_strdup(name);
+	if (value) {
+	    app->value = bu_strdup(value);
+	} else {
+	    app->value = (char *)NULL;
+	}
     }
     return 2;
 }

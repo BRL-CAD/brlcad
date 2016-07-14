@@ -1,7 +1,7 @@
 /*                         Q R A Y . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,8 +27,8 @@
 #define SEEN_QRAY_H
 
 #include "common.h"
-
-#include "bu.h"
+#include "bu/list.h"
+#include "bu/vls.h"
 
 #define QRAY_BASENAME "query_ray"
 #define QRAY_TEXT (qray_effects == 't' || qray_effects == 'b')

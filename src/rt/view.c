@@ -1,7 +1,7 @@
 /*                          V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -49,11 +49,11 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "mater.h"
 #include "icv.h"
 #include "raytrace.h"
+#include "bu/cv.h"
 #include "fb.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 #include "photonmap.h"
 #include "scanline.h"
 
@@ -76,15 +76,56 @@ usage(const char *argv0)
     bu_log(" -w # -n #	Grid size width (w) and height (n) in pixels\n");
     bu_log(" -a # -e #	Azimuth (a) and elevation (e) in degrees\n");
     bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
-    bu_log(" -p #		Perspective angle, degrees side to side\n");
+    bu_log(" -p #		Perspective angle, degrees side to side (0 <= # < 180)\n");
     bu_log(" -P #		Set number of processors\n");
     bu_log(" -T # or -T #,# or -T #/#\n");
     bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
-    bu_log(" -l #		Set lighting model rendering style\n");
+    bu_log(" -l #		Set lighting model rendering style (default is 0)\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");
     bu_log(" -N #		NMG debug flags\n");
     bu_log(" -X #		rt debug flags\n");
+#ifdef USE_OPENCL
+    bu_log(" -z 		Enable OpenCL ray-trace engine\n");
+#endif
+    bu_log(" -. #		Select factor in NUgrid algorithm (default is 1.5)\n");
+    bu_log(" -, #		Selection of which space partitioning algorithm to use\n");
+    bu_log(" -@ #		Set limit to each dimension of the nugrid\n");
+    bu_log(" -b \"# #\"	Specify X and Y pixel coordinates (need quotes) for single ray to be fired, for debugging\n");
+    bu_log(" -c script_command\n");
+    bu_log("		Supply, on command line, command which can appear in -M command script\n");
+    bu_log(" -d #		Set flag for reporting of pixel distances\n");
+    bu_log(" -f #		Set expected playback rate in frames-per-second (default is 30)\n");
+    bu_log(" -g #		Set grid cell width, in millimeters\n");
+    bu_log(" -m density,r,g,b\n");
+    bu_log("		Provide parameters for an exponential shading (default r,g,b is 0.8,0.9,0.99)\n");
+    bu_log(" -i		Enable incremental mode processing\n");
+    bu_log(" -j xmin,xmax,ymin,ymax\n");
+    bu_log("		Enable processing of sub-rectangle\n");
+    bu_log(" -k xdir,ydir,zdir,dist\n");
+    bu_log("		Enable use of a cutting plane\n");
+    bu_log(" -l #		Select lighting model (default is 0)\n");
+    bu_log(" -t		Reverse the order of grid traversal (default is not to do that)\n");
+    bu_log(" -u units	Specify the units (or use \"model\" for the local model's units)\n");
+    bu_log(" -v #		Set the verbosity bit vector flags\n");
+    bu_log(" -A #		Set the ambient light intensity\n");
+    bu_log(" -B		Turn on the \"benchmark\" flag (default is off)\n");
+    bu_log(" -C #/#/#	Set the background color to the RGB value #/#/#\n");
+    bu_log(" -D #		Specify the starting frame number (ending frame number is specified via -K #)\n");
+    bu_log(" -E #           Set the distance from eye point to center of the model RPP (default is sqrt(2))\n");
+    bu_log(" -F framebuffer	Cause output to be sent to the indicated framebuffer\n");
+    bu_log(" -G #		Set grid cell height, in millimeters\n");
+    bu_log(" -H #		Set number of extra rays to fire\n");
+    bu_log(" -I		Turn on interactive mode\n");
+    bu_log(" -J #		Set a bit vector for \"jitter\"\n");
+    bu_log(" -K #		Specify the ending frame number (starting frame number is specified via -D #)\n");
+    bu_log(" -O model.pix	Output .pix format file, double precision format\n");
+    bu_log(" -Q x,y		Select pixel ray for query with debugging; compute other pixels without debugging\n");
+    bu_log(" -S		Enable stereo viewing (off by default)\n");
+    bu_log(" -W		Set background image color to white (default is black)\n");
+    bu_log(" -! #		Turn on the libbu(3) library debugging flags\n");
+    bu_log(" -+ t		Specify that output is NOT binary (default is that it is); -+ is otherwise not\n");
+    bu_log("		implemented\n");
 }
 
 
@@ -1669,7 +1710,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     switch (buf_mode) {
 	case BUFMODE_UNBUF:
-	    bu_log("Single pixel I/O, unbuffered\n");
+	    bu_log("Mode: Single pixel I/O, unbuffered\n");
 	    break;
 	case BUFMODE_FULLFLOAT:
 	    if (!curr_float_frame) {
@@ -1739,11 +1780,11 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	    break;
 
 	case BUFMODE_SCANLINE:
-	    bu_log("Low overhead scanline-per-CPU buffering\n");
+	    bu_log("Mode: scanline-per-CPU buffering\n");
 	    /* Fall through... */
 	case BUFMODE_DYNAMIC:
 	    if ((buf_mode == BUFMODE_DYNAMIC) && (rt_verbosity & VERBOSE_OUTPUTFILE)) {
-		bu_log("Dynamic scanline buffering\n");
+		bu_log("Mode: dynamic scanline buffering\n");
 	    }
 
 	    if (sub_grid_mode) {
@@ -1758,10 +1799,10 @@ view_2init(struct application *ap, char *UNUSED(framename))
 	case BUFMODE_ACC:
 	    for (i=0; i<height; i++)
 		scanline[i].sl_left = width;
-	    bu_log("Multiple-sample, average buffering\n");
+	    bu_log("Mode: Multiple-sample, average buffering\n");
 	    break;
 	default:
-	    bu_exit(EXIT_FAILURE, "bad buf_mode: %d", buf_mode);
+	    bu_exit(EXIT_FAILURE, "ERROR: bad buffering mode (%d), try -i", buf_mode);
     }
 
     /* This is where we do Preparations for each Lighting Model if it

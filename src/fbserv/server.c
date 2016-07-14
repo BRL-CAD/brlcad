@@ -1,7 +1,7 @@
 /*                        S E R V E R . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #if defined(HAVE_SYS_TYPES_H)
 #  include <sys/types.h>
@@ -34,12 +33,13 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/color.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "fbmsg.h"
+#include "vmath.h"
 #include "pkg.h"
 
 
@@ -223,8 +223,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num*sizeof(RGBpixel);
-	if (buflen < 1024*sizeof(RGBpixel))
-	    buflen = 1024*sizeof(RGBpixel);
+	V_MAX(buflen, 1024*sizeof(RGBpixel));
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -234,7 +234,8 @@ fb_server_fb_read(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_read(fb_server_fbp, x, y, scanbuf, num);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
     if (buf) (void)free(buf);
@@ -293,8 +294,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num*sizeof(RGBpixel);
-	if (buflen < 1024*sizeof(RGBpixel))
-	    buflen = 1024*sizeof(RGBpixel);
+	V_MAX(buflen, 1024*sizeof(RGBpixel));
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_read: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -304,7 +305,8 @@ fb_server_fb_readrect(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_readrect(fb_server_fbp, xmin, ymin, width, height, scanbuf);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret*sizeof(RGBpixel), pcp);
     if (buf) (void)free(buf);
@@ -366,8 +368,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
 	if (scanbuf != NULL)
 	    free((char *)scanbuf);
 	buflen = num;
-	if (buflen < 1024)
-	    buflen = 1024;
+	V_MAX(buflen, 1024);
+
 	if ((scanbuf = (unsigned char *)malloc(buflen)) == NULL) {
 	    fb_log("fb_bwreadrect: malloc failed!");
 	    if (buf) (void)free(buf);
@@ -377,7 +379,8 @@ fb_server_fb_bwreadrect(struct pkg_conn *pcp, char *buf)
     }
 
     ret = fb_bwreadrect(fb_server_fbp, xmin, ymin, width, height, scanbuf);
-    if (ret < 0) ret = 0;		/* map error indications */
+    V_MAX(ret, 0);		/* map error indications */
+
     /* sending a 0-length package indicates error */
     pkg_send(MSG_RETURN, (char *)scanbuf, ret, pcp);
     if (buf) (void)free(buf);

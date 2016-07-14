@@ -21,14 +21,14 @@
     <arg choice='plain'><replaceable>model.g</replaceable></arg>
     <arg choice='plain' rep='repeat'><replaceable>objects</replaceable></arg>
 
-    <arg choice='plain'><replaceable>&gt;</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
     <arg choice='plain'><replaceable>model.plot3</replaceable></arg>
 </cmdsynopsis>
 </refsynopsisdiv>
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rtrange</emphasis>
+<para><command>rtrange</command>
 operates on the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
@@ -118,32 +118,31 @@ By default, the plot is written to standard out.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para>This section shows the ordinary usage of <command>rtrange</command>.  For example,</para>
+<para>This section shows the ordinary usage of <command>rtrange</command> .  For example,</para>
 
 <literallayout remap='.nf'>
-	<userinput>rtrange -s32 model.g all.g &gt; file.plot3</userinput>
+	rtrange -s32 model.g all.g &gt; <emphasis remap='I'>file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
 <para>results in a 32 by 32 range data UNIX-plot file of the named model.</para>
 
-<para>The plotfile resulting from an <command>rtrange</command> can be viewed directly
-via <emphasis remap='I'>plot3-fb</emphasis>:</para>
+<para>The plotfile resulting from <command>rtrange</command> can be viewed directly
+via <command>plot3-fb</command> :</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>plot3-fb file.plot3</emphasis>
+	plot3-fb <emphasis remap='I'>file.plot3</emphasis>
 </literallayout> <!-- .fi -->
 
-<para>It can also be rotated by <emphasis remap='B'>plot3rot</emphasis> and sent to a framebuffer:</para>
+<para>It can also be rotated by <command>plot3rot</command> and sent to a framebuffer:</para>
 
 <literallayout remap='.nf'>
-	<userinput>plot3rot -a# -e# -g file.plot3 | plot3-fb</userinput>
+	plot3rot -a# -e# -g <emphasis remap='I'>file.plot3</emphasis> | plot3-fb
 </literallayout> <!-- .fi -->
 
-<para>Likewise, it can be overlaid onto a solid model in <emphasis remap='I'>mged</emphasis>:</para>
+<para>Likewise, it can be overlaid onto a solid model in <command>mged</command> :</para>
 
 <literallayout remap='.nf'>
-	<emphasis remap='I'>mged&gt;</emphasis>
-	<emphasis remap='I'>overlay hide.plot3</emphasis>
+	mged&gt; overlay hide.plot3
 </literallayout> <!-- .fi -->
 
 </refsect1>
@@ -151,7 +150,7 @@ via <emphasis remap='I'>plot3-fb</emphasis>:</para>
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
 <para><citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3rot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rtray</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>libplot3</refentrytitle><manvolnum>3</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>
@@ -173,7 +172,7 @@ package instead.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1991-2014 United States Government as
+<para>This software is Copyright (c) 1991-2016 United States Government as
 represented by the U.S. Army Research Laboratory.</para>
 </refsect1>
 

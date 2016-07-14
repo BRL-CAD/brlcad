@@ -1,7 +1,7 @@
 /*                       B U _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -56,9 +56,9 @@ comp_3(const void *str1, const void *str2, void *UNUSED(arg))
 int
 comp_4(const void *num1, const void *num2, void *cmp)
 {
-    if (abs(*(fastf_t *)num1 - *(fastf_t *)cmp) > abs((*(fastf_t *)num2)- *(fastf_t *)cmp))
+    if (fabs(*(fastf_t *)num1 - *(fastf_t *)cmp) > fabs((*(fastf_t *)num2)- *(fastf_t *)cmp))
 	return 1;
-    else if (abs(*(fastf_t *)num1 - *(fastf_t *)cmp) < abs((*(fastf_t *)num2)- *(fastf_t *)cmp))
+    else if (fabs(*(fastf_t *)num1 - *(fastf_t *)cmp) < fabs((*(fastf_t *)num2)- *(fastf_t *)cmp))
 	return -1;
     return 0;
 }

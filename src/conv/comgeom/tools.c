@@ -1,7 +1,7 @@
 /*                         T O O L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,6 +25,9 @@
 #include "common.h"
 
 #include <stdlib.h>
+
+#include "vmath.h"
+
 
 #define PADCHR		~(1<<15)		/* non data value.*/
 
@@ -57,8 +60,8 @@ maxmin(int *l, int n, int *max, int *min)	/*  === */
     *max = -PADCHR;
     *min =  PADCHR;
     while (--n>0) {
-	if (*l > *max)	*max = *l;
-	if (*l < *min)	*min = *l;
+	V_MAX(*max, *l);
+	V_MIN(*min, *l);
 	++l;
     }
 }

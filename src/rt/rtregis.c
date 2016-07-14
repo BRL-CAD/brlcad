@@ -1,7 +1,7 @@
 /*                       R T R E G I S . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2014 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -56,7 +56,6 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "bu.h"
 #include "raytrace.h"
 
 
@@ -148,7 +147,7 @@ int
 main(int argc, char *argv[])
 {
 
-    mat_t mod2view1;		/* first log matrix its view */
+    mat_t mod2view1;		/* first log matrix to its view */
     mat_t mod2view2;		/* second log matrix to its view*/
     mat_t regismat;		/* registration matrix */
     mat_t view2model;		/* matrix for converting from view to model space */

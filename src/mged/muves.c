@@ -1,7 +1,7 @@
 /*                         M U V E S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,18 +28,15 @@
 
 #include <stdlib.h>
 #include <signal.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "./mged.h"
 #include "./sedit.h"
 

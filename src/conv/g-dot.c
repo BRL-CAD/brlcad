@@ -1,7 +1,7 @@
 /*                         G - D O T . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,16 +33,16 @@
 
 /* system headers */
 #include <string.h>
-#include "bio.h"
 
 /* interface headers */
 #include "bu/getopt.h"
+#include "bu/path.h"
 #include "bu/str.h"
 #include "brlcad_version.h"
 #include "raytrace.h"
 #include "ged.h"
 
-const char *usage_fmt = "Usage: %s [-o output.dot] input.g [object1 ...]\n";
+const char *usage = "[-o output.dot] input.g [object1 ...]\n";
 
 struct output {
     FILE *outfp;
@@ -192,9 +192,9 @@ dot_footer(FILE *outfp)
 
 
 static void
-help(const char *argv0)
+help(const char *progname)
 {
-    bu_log(usage_fmt, argv0);
+    bu_log("Usage: %s %s", progname, usage);
     bu_log("\n\t-o output.dot   (optional) name of output Graphviz .dot file");
     bu_log("\n\tinput.g         name of input BRL-CAD .g database");
     bu_log("\n\tobject1 ...     (optional) name of object(s) to export from .g file\n");
@@ -344,7 +344,7 @@ main(int ac, char *av[])
 	ged_tops(gp, 2, tops);
 
 	topobjs = (char **)bu_calloc(1, bu_vls_strlen(gp->ged_result_str), "alloc topobjs");
-	c = bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
+	c = (int)bu_argv_from_string(topobjs, bu_vls_strlen(gp->ged_result_str), bu_vls_addr(gp->ged_result_str));
 	objs = bu_dup_argv(c, (const char **)topobjs);
 	bu_free(topobjs, "free topobjs");
     }

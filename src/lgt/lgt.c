@@ -1,7 +1,7 @@
 /*                           L G T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <math.h>
 #include <signal.h>
 #include <assert.h>
-#include "bio.h"
 
 #include "bu/parallel.h"
 #include "vmath.h"
@@ -71,8 +70,8 @@ main(int argc, char **argv)
     bu_log("\nPress \"Enter\" to continue\n\n");
     (void)getchar();
     npsw = bu_avail_cpus();
-    if (npsw > MAX_PSW)
-	npsw = MAX_PSW;
+    CLAMP(npsw, 1, MAX_PSW);
+
     if (npsw > 1)
 	RTG.rtg_parallel = 1;
     else
@@ -237,7 +236,7 @@ intr_sig(int UNUSED(sig))
 
 
 /*
-   Set certain default lighting info.
+  Set certain default lighting info.
 */
 static void
 init_Lgts(void)

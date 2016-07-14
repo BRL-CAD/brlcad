@@ -1,7 +1,7 @@
 /*                    D E N S I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "analyze.h"
-#include "bu.h"
 
 int
 parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)

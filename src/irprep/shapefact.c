@@ -1,7 +1,7 @@
 /*                     S H A P E F A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -186,8 +186,7 @@ int main(int argc, char **argv)
 	    bu_exit(-1, "scanf failure - number of rays to be fired");
 
 	/* clamp loops */
-	if (loops > UINT32_MAX)
-	    loops = UINT32_MAX;
+	V_MIN(loops, UINT32_MAX);
 
 	/* Set seed for random number generator.  */
 	seed = 1;

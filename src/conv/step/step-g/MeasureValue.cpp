@@ -1,7 +1,7 @@
 /*                 MeasureValue.cpp
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -111,13 +111,23 @@ MeasureValue::GetSolidAngleMeasure()
     return rvalue;
 }
 
+
+bool
+MeasureValue::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
+{
+    step = sw;
+    id = sse->STEPfile_id;
+
+    SDAI_Select *select = step->getSelectAttribute(sse, "value_component");
+    return Load(sw, select);
+}
+
+
 bool
 MeasureValue::Load(STEPWrapper *sw, SDAI_Select *sse)
 {
     step = sw;
-//	id = sse->STEPfile_id;
 
-    //std::cout << sse->UnderlyingTypeName() << std::endl;
     SdaiMeasure_value *v = (SdaiMeasure_value *)sse;
 
     if (v->IsLength_measure()) {

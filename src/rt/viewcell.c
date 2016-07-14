@@ -1,7 +1,7 @@
 /*                      V I E W C E L L . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,8 +42,6 @@
 
 extern fastf_t	gift_grid_rounding;
 extern point_t	viewbase_model;
-
-extern int	npsw;			/* number of worker PSWs to run */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {

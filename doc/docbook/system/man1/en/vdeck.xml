@@ -52,7 +52,7 @@ to the program.</para>
 tool is intended for v5 BRL-CAD geometry databases only.  Files
 produced by older (v4 and earlier) versions of BRL-CAD may be
 incompatible with
-<emphasis remap='I'>vdeck.</emphasis></para>
+<command>vdeck</command> .</para>
 
 </refsect1>
 
@@ -139,18 +139,17 @@ table output</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gedplot</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1B</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>cat</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gedplot</refentrytitle><manvolnum>1V</manvolnum></citerefentry>, <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1B</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='authors'><title>AUTHORS</title>
-<para>Gary S. Moss, BRL/VLD-VMB
-<!-- .br -->
-Keith Applin, BRL/VLD-TAB</para>
+<para>Gary S. Moss, BRL/VLD-VMB</para>
+<para>Keith Applin, BRL/VLD-TAB</para>
 
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1986-2014 by the United States
+<para>This software is Copyright (c) 1986-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

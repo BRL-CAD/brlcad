@@ -1,7 +1,7 @@
 /*                     S H _ S C L O U D . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,7 @@
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
+#include "optical/light.h"
 
 
 #define FLOOR(x)	((int)(x) - ((x) < 0 && (x) != (int)(x)))

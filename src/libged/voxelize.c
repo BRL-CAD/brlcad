@@ -1,7 +1,7 @@
 /*                         V O X E L I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,10 +26,10 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 #include "bu/cmd.h"
-#include "rtgeom.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 #include "./ged_private.h"

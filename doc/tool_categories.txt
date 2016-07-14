@@ -137,11 +137,9 @@ i-a
 i-d
 i-f
 mac-pix
-orle-pix
 pix-alias
 pix-bw
 pix-bw3
-pix-orle
 pix-png
 pix-ppm
 pix-ps
@@ -163,14 +161,12 @@ yuv-pix
 Framebuffer Tools
 =================
 bw-fb
-cat-fb
 cell-fb
 cmap-fb
 ddisp
 fb-bw
 fb-cmap
 fb-fb
-fb-orle
 fb-pix
 fb-png
 fb-rle
@@ -198,10 +194,9 @@ fbthreadtest
 fbzoom
 gif-fb
 gif2fb
-orle-fb
 pix-fb
 pixflip-fb
-pl-fb
+plot3-fb
 polar-fb
 pp-fb
 rle-fb
@@ -274,7 +269,7 @@ pixfilter
 pixhalve
 pixhist
 pixhist3d
-pixhist3d-pl
+pixhist3d-plot3
 pixinfo.sh
 pixinterp2x
 pixmatte
@@ -337,22 +332,21 @@ showtherm
 
 Plotter Tools
 =============
-asc-pl
-pl-X
-pl-asc
-pl-dm
-pl-hpgl
-pl-pl
-pl-ps
-pl-tek
-plcolor
-pldebug
-plgetframe
-plline2
-plrot
-plstat
-txyz-pl
-xyz-pl
+asc-plot3
+plot3-X
+plot3-asc
+plot3-dm
+plot3-hpgl
+plot3-plot3
+plot3-ps
+plot3-tek
+plot3color
+plot3debug
+plot3getframe
+plot3line2
+plot3rot
+plot3stat
+xyz-plot3
 
 Procedural Tools
 ================

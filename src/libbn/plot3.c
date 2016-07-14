@@ -1,7 +1,7 @@
 /*                         P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,7 +69,7 @@ ABDEGHIJKRTUYZ
 
 #include "bu/cv.h"
 #include "vmath.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 static int pl_outputMode = PL_OUTPUT_MODE_BINARY;

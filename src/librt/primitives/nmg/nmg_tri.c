@@ -1,7 +1,7 @@
 /*                       N M G _ T R I . C
  * BRL-CAD
  *
- * Copyright (c) 1994-2014 United States Government as represented by
+ * Copyright (c) 1994-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
@@ -37,7 +36,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 /* macros for comparing 2D points in scanline order */
@@ -473,7 +472,7 @@ is_convex(struct pt2d *a, struct pt2d *b, struct pt2d *c, const struct bn_tol *t
      * this, we need to allow the definition of convex to include 0
      * and 180 degree angles.
      */
-    return (angle >= -SMALL_FASTF) && (angle <= (M_PI + SMALL_FASTF));
+    return (angle >= -SMALL_FASTF) && (angle - M_PI <= SMALL_FASTF);
 }
 
 
@@ -1632,7 +1631,7 @@ nmg_isect_pt_facet(struct vertex *v, struct vertex *v0, struct vertex *v1, struc
 	v00 = v_numerator / denom;
     }
 
-    if ((u > SMALL_FASTF) && (v00 > SMALL_FASTF) && ((u + v00) < (1.0 - SMALL_FASTF))) {
+    if ((u > SMALL_FASTF) && (v00 > SMALL_FASTF) && ((u + v00 - 1.0) < -SMALL_FASTF)) {
 	return 4; /* inside (on) */
     }
 
@@ -2498,7 +2497,7 @@ cut_unimonotone(struct bu_list *tbl2d, struct loopuse *lu, const struct bn_tol *
 		    u = (dot11 * dot02 - dot01 * dot12) * invDenom;
 		    v = (dot00 * dot12 - dot01 * dot02) * invDenom;
 
-		    if ((u > SMALL_FASTF) && (v > SMALL_FASTF) && ((u + v) < (1.0 - SMALL_FASTF))) {
+		    if ((u > SMALL_FASTF) && (v > SMALL_FASTF) && ((u + v - 1.0) < -SMALL_FASTF)) {
 			/* true if point inside triangle */
 			if (RTG.NMG_debug & DEBUG_TRI) {
 			    bu_log("cut_unimonotone(): point inside triangle, lu_p = %p, point = %g %g %g\n",

@@ -1,7 +1,7 @@
 /*                       E N C O D E . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -34,7 +34,7 @@ const char *
 bu_vls_encode(struct bu_vls *vp, const char *str)
 {
     static const char *empty = "";
-    int skip = 0;
+    size_t skip = 0;
     const char *escape_chars = "\" {}\\$[]\0";
     const char *ec = NULL;
     int needs_escaping = 0;
@@ -67,6 +67,8 @@ bu_vls_encode(struct bu_vls *vp, const char *str)
 	    bu_vls_putc(vp, *str);
 	}
 	bu_vls_putc(vp, DQUOTE);
+    } else {
+	bu_vls_strcat(vp, str);
     }
 
     return bu_vls_addr(vp) + skip;
@@ -78,7 +80,7 @@ bu_vls_decode(struct bu_vls *vp, const char *str)
 {
     static const char *empty = "";
 
-    int skip = 0;
+    size_t skip = 0;
     int dquote = 0;
     int escape = 0;
 

@@ -1,7 +1,7 @@
 /*                         A S I Z E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,8 +33,6 @@
 #include <sys/stat.h>
 #include <string.h>
 
-#include "vmath.h"
-#include "bu.h"
 #include "fb.h"
 
 

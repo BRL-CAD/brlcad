@@ -1,7 +1,7 @@
 /*                        P I X - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,9 +36,12 @@
 #ifdef HAVE_WINSOCK_H
 #  include <winsock.h>
 #endif
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 #include "pkg.h"
@@ -291,7 +294,8 @@ main(int argc, char **argv)
 	/* Zoom in, and center the display.  Use square zoom. */
 	int zoomit;
 	zoomit = scr_width/xout;
-	if (scr_height/yout < zoomit) zoomit = scr_height/yout;
+	V_MIN(zoomit, scr_height/yout);
+
 	if (inverse) {
 	    fb_view(fbp,
 		    scr_xoff+xout/2, scr_height-1-(scr_yoff+yout/2),

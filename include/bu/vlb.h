@@ -1,7 +1,7 @@
 /*                         V L B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,12 +31,13 @@
 __BEGIN_DECLS
 
 /*----------------------------------------------------------------------*/
-/** @addtogroup vlb */
-/** @{ */
-/** @file libbu/vlb.c
- *
+/** @addtogroup bu_vlb
+ * @brief
  * The variable length buffer package.
  */
+/** @{ */
+/** @file bu/vlb.h */
+
 
 /**
  * Variable Length Buffer: bu_vlb support

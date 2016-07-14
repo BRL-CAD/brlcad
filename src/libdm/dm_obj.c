@@ -1,7 +1,7 @@
 /*                        D M _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,7 +29,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 #include <zlib.h>
 #include <png.h>
@@ -37,15 +36,15 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bu/endian.h"
 #include "vmath.h"
 #include "bn.h"
-#include "db.h"
-#include "mater.h"
+#include "rt/db4.h"
+#include "raytrace.h"
 #include "nmg.h"
-#include "rtgeom.h"
-/*#include "dg.h"*/
-#include "nurb.h"
-#include "solid.h"
+#include "rt/geom.h"
+#include "rt/nurb.h"
+#include "rt/solid.h"
 #include "dm.h"
 #include "dm_private.h"
 
@@ -2673,6 +2672,11 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
     return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
 }
 
+HIDDEN void
+_dm_obj_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 #ifdef USE_FBSERV
 HIDDEN void
@@ -2683,7 +2687,7 @@ dmo_fbs_callback(void *clientData)
     if (!dmop)
 	return;
 
-    bu_observer_notify(dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name));
+    bu_observer_notify((void *)dmop->interp, &dmop->dmo_observers, bu_vls_addr(&dmop->dmo_name), &(_dm_obj_eval));
 }
 #endif
 

@@ -1,7 +1,7 @@
 /*                          B I G E . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,14 +31,14 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "bio.h"
 
 #include "bu/debug.h"
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
-#include "rtfunc.h"
+#include "rt/geom.h"
+#include "raytrace.h"
+#include "rt/func.h"
 
 #include "./ged_private.h"
 
@@ -2056,6 +2056,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
     dgcdp->wireframe_color_override = 0;
     dgcdp->transparency = 0;
     dgcdp->dmode = _GED_BOOL_EVAL;
+    dgcdp->freesolid = gedp->freesolid;
 
     /* Parse options. */
     bu_optind = 1;          /* re-init bu_getopt() */

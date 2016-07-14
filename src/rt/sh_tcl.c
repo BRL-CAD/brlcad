@@ -1,7 +1,7 @@
 /*                        S H _ T C L . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,11 +36,13 @@
 
 #include "tcl.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/vls.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "shadefuncs.h"
+#include "optical/shadefuncs.h"
 
 
 extern struct mfuncs	*mfHead;	/* view.c */
@@ -49,7 +51,7 @@ extern int get_args(int argc, const char *argv[]); /* opt.c */
 
 /*
  *  Go poke the rgb values of a region, on the fly.
- *  This does not update the inmemory database,
+ *  This does not update the in-memory database,
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */
@@ -113,7 +115,7 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 
 /*
  *  Go poke the rgb values of a region, on the fly.
- *  This does not update the inmemory database,
+ *  This does not update the in-memory database,
  *  so any changes will vanish on next re-prep unless other measures
  *  are taken.
  */

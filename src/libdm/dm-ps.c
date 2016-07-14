@@ -1,7 +1,7 @@
 /*                         D M - P S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,9 +28,7 @@
  */
 
 #include "common.h"
-#include "bio.h"
 
-#include <stdio.h>
 #include <string.h>
 
 #ifdef HAVE_SYS_TIME_H
@@ -39,17 +37,15 @@
 
 #include "tcl.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "mater.h"
 #include "raytrace.h"
 
 #include "dm.h"
 #include "dm-ps.h"
 #include "dm-Null.h"
 
-#include "solid.h"
+#include "rt/solid.h"
 
 #include "./dm_private.h"
 

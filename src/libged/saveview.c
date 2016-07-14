@@ -1,7 +1,7 @@
 /*                         S A V E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,6 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
 #include "bu/getopt.h"
 
@@ -81,6 +80,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     char outlog[255] = {0};
     char outpix[255] = {0};
     char inputg[255] = {0};
+    const char *cmdname = argv[0];
     static const char *usage = "[-e] [-i] [-l] [-o] filename [args]";
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
@@ -92,7 +92,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
 
     /* must be wanting help */
     if (argc == 1) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
 	return GED_HELP;
     }
 
@@ -122,7 +122,7 @@ ged_saveview(struct ged *gedp, int argc, const char *argv[])
     argv += bu_optind-1;
 
     if (argc < 2) {
-	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", cmdname, usage);
 	return GED_ERROR;
     }
 

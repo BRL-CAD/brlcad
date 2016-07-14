@@ -1,7 +1,7 @@
 /*                     P I X B O R D E R . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,6 +20,7 @@
 /** @file util/pixborder.c
  *
  * Add a 1-pixel-wide border to regions of a specified color.
+ * (Do not confuse this with drawing border around the image.)
  *
  */
 
@@ -27,10 +28,12 @@
 
 #include <stdlib.h>
 #include <math.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -71,14 +74,14 @@ fastf_t exterior_hsv[3];
 fastf_t interior_hsv[3];
 fastf_t hsv_tol[3];
 
-#define OPT_STRING "ab:e:hi:n:s:t:w:x:y:B:E:I:T:X:Y:?"
+#define OPT_STRING "ab:e:i:n:s:t:w:x:y:B:E:I:T:X:Y:h?"
 
 static char usage[] = "\
 Usage: pixborder [-b 'R G B'] [-e 'R G B'] [-i 'R G B'] [-t 'R G B']\n\
 		 [-B 'H S V'] [-E 'H S V'] [-I 'H S V'] [-T 'H S V']\n\
 		 [-x left_edge]  [-y bottom_edge]\n\
 		 [-X right_edge] [-Y top_edge]\n\
-		 [-ah] [-s squaresize] [-w file_width] [-n file_height]\n\
+		 [-a] [-s squaresize] [-w file_width] [-n file_height]\n\
 		 [file.pix]\n";
 
 /*
@@ -360,10 +363,6 @@ get_args (int argc, char **argv)
 		rgb_to_hsv(exterior_rgb, exterior_hsv);
 		colors_specified |= COLORS_EXTERIOR;
 		break;
-	    case 'h':
-		file_height = file_width = 1024L;
-		autosize = 0;
-		break;
 	    case 'i':
 		if (! bu_str_to_rgb(bu_optarg, interior_rgb)) {
 		    (void) fprintf(stderr, "Illegal color: '%s'\n", bu_optarg);
@@ -433,10 +432,7 @@ get_args (int argc, char **argv)
 	    case 'Y':
 		top_edge = atoi(bu_optarg);
 		break;
-	    case '?':
-		(void) fputs(usage, stderr);
-		bu_exit (0, NULL);
-	    default:
+	    default:  /* 'h' '?' */
 		return 0;
 	}
     }

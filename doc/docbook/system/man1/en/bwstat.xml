@@ -33,8 +33,8 @@ related to the pixel intensities is produced.
 <!-- .br -->
 These include:
 <!-- .br -->
-The number of pixels (and the square root of this which is the
-file dimensions if square);
+The number of pixels (and the square root of this, yielding the
+file dimension if it's square);
 <!-- .br -->
 the max and min values;
 <!-- .br -->
@@ -72,7 +72,7 @@ file sufficient.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

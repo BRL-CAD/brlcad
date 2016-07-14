@@ -1,7 +1,7 @@
 /*                            H M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,17 +28,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <fcntl.h>
 #include <signal.h>
 
-#include "bio.h"
-#include "bu.h"
+#include "bu/file.h"
 
 #include "./Sc.h"
 #include "./Hm.h"
 #include "./Mm.h"
 #include "./extern.h"
-
 
 #define ErLog brst_log
 

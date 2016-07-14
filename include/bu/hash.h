@@ -1,7 +1,7 @@
 /*                         H A S H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -18,9 +18,6 @@
  * information.
  */
 
-/** @file hash.h
- *
- */
 #ifndef BU_HASH_H
 #define BU_HASH_H
 
@@ -30,13 +27,12 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup hash */
-/** @{ */
-/** @file libbu/hash.c
- *
+/** @addtogroup bu_hash
  * @brief
  * An implementation of hash tables.
  */
+/** @{ */
+/** @file bu/hash.h */
 
 /**
  * A hash entry
@@ -159,8 +155,7 @@ typedef struct bu_hash_record bu_hash_record_t;
 /**
  * the hashing function
  */
-BU_EXPORT extern unsigned long bu_hash(const unsigned char *str,
-				       int len);
+BU_EXPORT extern unsigned long bu_hash(const unsigned char *str, size_t len);
 
 /**
  * Create an empty hash table

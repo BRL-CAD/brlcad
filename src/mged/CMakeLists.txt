@@ -6,36 +6,14 @@ set(MGED_INCLUDE_DIRS
   ${WDB_INCLUDE_DIRS}
   ${DM_INCLUDE_DIRS}
   ${BU_INCLUDE_DIRS}
+  ${SYSV_INCLUDE_DIRS}
+  ${TK_INCLUDE_PATH}
+  ${TCL_INCLUDE_PATH}
   ${TERMIO_INCLUDE_DIRS}
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-# Until we figure out how to properly use package require,
-# we need the internal Tcl headers
-set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/tcl/unix
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itcl/generic
-  ${CMAKE_SOURCE_DIR}/src/other/incrTcl/itk/generic
-  )
-
-# process.h in points dir makes Windows unhappy,
-# and the TERMLIB_INCLUDE_DIR isn't set there
-if(NOT WIN32)
-  set(MGED_INCLUDE_DIRS ${MGED_INCLUDE_DIRS}
-    ${CMAKE_CURRENT_SOURCE_DIR}/points
-    ${TERMLIB_INCLUDE_DIR}
-    )
-endif(NOT WIN32)
-
 BRLCAD_INCLUDE_DIRS(MGED_INCLUDE_DIRS)
-
-if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-  add_subdirectory(points)
-  set(MGED_EXTRA_LIBS libpoints)
-else(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-  CMAKEFILES(points)
-endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 set(MGED_SOURCES
   adc.c
@@ -78,7 +56,6 @@ set(MGED_SOURCES
   set.c
   setup.c
   share.c
-  solids_on_ray.c
   tedit.c
   titles.c
   track.c
@@ -100,9 +77,6 @@ endif(${ITCL_LIBRARY} MATCHES "itcl")
 if(${ITK_LIBRARY} MATCHES "itk")
   ADD_DEPENDENCIES(mged itk)
 endif(${ITK_LIBRARY} MATCHES "itk")
-if(LEX_EXECUTABLE AND YACC_EXECUTABLE)
-  SET_TARGET_PROPERTIES(mged PROPERTIES COMPILE_FLAGS "-DBC_WITH_PARSER")
-endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
 # mged depends on the creation/installation of all the
 # tclscripts.

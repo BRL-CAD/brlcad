@@ -133,6 +133,7 @@ class OSGReaderWriter : public ReaderWriter
 
             OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_mutex);
             if (_wrappersLoaded) return true;
+
             std::string filename = osgDB::Registry::instance()->createLibraryNameForExtension("deprecated_osg");
             if (osgDB::Registry::instance()->loadLibrary(filename)==osgDB::Registry::LOADED)
             {

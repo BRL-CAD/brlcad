@@ -1,7 +1,7 @@
 /*                         G - N F F . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -38,9 +38,12 @@
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
+static const char *usage =
+    "[-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n"
+    "[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
 
 static int NMG_debug;			/* saved arg of -X, for longjmp handling */
 static int verbose;
@@ -65,6 +68,12 @@ static point_t model_max;
 static point_t model_min;
 
 #define COPY_BUF_SIZE 512
+
+static void
+print_usage(const char *progname)
+{
+    bu_exit(1, "Usage: %s %s", progname, usage);
+}
 
 
 static void
@@ -167,7 +176,7 @@ process_triangulation(struct nmgregion *r, const struct db_full_path *pathp, str
 static union tree *
 process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_full_path *pathp)
 {
-    union tree *ret_tree = TREE_NULL;
+    static union tree *ret_tree = TREE_NULL;
 
     /* Begin bomb protection */
     if (!BU_SETJUMP) {
@@ -353,10 +362,6 @@ main(int argc, char *argv[])
     double percent;
     int i;
 
-    const char usage[] = "\
-Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_tol]\n\
-[-e error_file ] [-D dist_calc_tol] [-o output.nff] database.g object(s)\n";
-
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
 
@@ -376,7 +381,7 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 
     /* FIXME: These need to be improved */
     tol.magic = BN_TOL_MAGIC;
-    tol.dist = 0.0005;
+    tol.dist = BN_TOL_DIST;
     tol.dist_sq = tol.dist * tol.dist;
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
@@ -423,13 +428,13 @@ Usage: %s [-v] [-i] [-xX lvl] [-a abs_tess_tol] [-r rel_tess_tol] [-n norm_tess_
 		inches = 1;
 		break;
 	    default:
-		bu_exit(1, usage, argv[0]);
+		print_usage(argv[0]);
 		break;
 	}
     }
 
     if (bu_optind+1 >= argc)
-	bu_exit(1, usage, argv[0]);
+	print_usage(argv[0]);
 
     if (!output_file)
 	bu_exit(1, "No output file specified!\n");

@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,30 +29,41 @@
  * all of them.  Consider this header PRIVATE and subject to change,
  * NOT TO BE USED BY THIRD PARTIES.
  *
+ * The below logic should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to
+ * be a stand-alone portability header intended to be independent of
+ * build system, reusable by external projects.
  */
 
 #ifndef BIO_H
 #define BIO_H
 
-/* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.  This is a stand-alone portability header intended
- * to be independent of BRL-CAD and the BRL-CAD build system, reusable
- * by external projects.
- */
-
 #include <stdio.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
+
+#  ifdef WIN32_LEAN_AND_MEAN
+#    undef WIN32_LEAN_AND_MEAN
+#  endif
+#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
+
+#  ifdef NOMINMAX
+#    undef NOMINMAX
+#  endif
+#  define NOMINMAX 434144 /* don't break std::min and std::max */
+
 #  include <windows.h>
+
+#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
+#  undef NOMINMAX
 #  include <io.h>
 
 #  undef rad1 /* Win32 radio button 1 */
 #  undef rad2 /* Win32 radio button 2 */
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#  undef IN
-#  undef OUT
+
 #else
+
 #  include <unistd.h>
 
 /* provide a stub so we don't need to wrap all setmode() calls */

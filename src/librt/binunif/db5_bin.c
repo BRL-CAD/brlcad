@@ -1,7 +1,7 @@
 /*                       D B 5 _ B I N . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,23 +29,20 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
-#ifdef HAVE_ARPA_INET_H
-# include <arpa/inet.h> /* for ntohl/htonl */
-#endif
 #include "bio.h"
+#include "bnetwork.h"
 
 
 #include "bu/cv.h"
 #include "bu/parse.h"
 #include "vmath.h"
-#include "db5.h"
-#include "rtgeom.h"
+#include "rt/db5.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /* size of each element (in bytes) for the different BINUNIF types */
@@ -669,52 +666,54 @@ rt_binunif_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 		intern->idb_type = new_type;
 	    }
 	} else if (BU_STR_EQUAL(argv[0], "D")) {
-	    Tcl_Obj *obj, *list, **obj_array;
 	    int list_len;
+	    const char **obj_array;
 	    unsigned char *buf, *d;
-	    char *s;
+	    const char *s;
 	    int hexlen;
 	    unsigned int h;
 
-	    obj = Tcl_NewStringObj(argv[1], -1);
-	    list = Tcl_NewListObj(0, NULL);
-	    Tcl_ListObjAppendList(brlcad_interp, list, obj);
-	    (void)Tcl_ListObjGetElements(brlcad_interp, list, &list_len, &obj_array);
+	    /* split initial list */
+	    if (bu_argv_from_tcl_list(argv[1], &list_len, (const char ***)&obj_array) != 0) {
+		return -1;
+	    }
 
 	    hexlen = 0;
 	    for (i = 0; i < (size_t)list_len; i++) {
-		hexlen += Tcl_GetCharLength(obj_array[i]);
+		hexlen += strlen(obj_array[i]);
 	    }
 
 	    if (hexlen % 2) {
 		bu_vls_printf(logstr, "Hex form of binary data must have an even number of hex digits");
+		bu_free((char *)obj_array, "obj array");
 		return BRLCAD_ERROR;
 	    }
 
 	    buf = (unsigned char *)bu_malloc(hexlen / 2, "tcladjust binary data");
 	    d = buf;
 	    for (i = 0; i < (size_t)list_len; i++) {
-		s = Tcl_GetString(obj_array[i]);
+		s = obj_array[i];
 		while (*s) {
 		    sscanf(s, "%2x", &h);
 		    *d++ = h;
 		    s += 2;
 		}
 	    }
-	    Tcl_DecrRefCount(list);
 
 	    if (bip->u.uint8) {
 		bu_free(bip->u.uint8, "binary data");
 	    }
 	    bip->u.uint8 = buf;
 	    bip->count = hexlen / 2 / binu_sizes[bip->type];
+
+	    bu_free((char *)obj_array, "obj array");
 	}
 
 	argc -= 2;
 	argv += 2;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 /*

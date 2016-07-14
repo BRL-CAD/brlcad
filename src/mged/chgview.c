@@ -1,7 +1,7 @@
 /*                       C H G V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,17 +24,16 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <signal.h>
 #include <math.h>
 
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
 #include "bn.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "nmg.h"
+#include "tclcad.h"
 #include "./sedit.h"
 #include "./mged.h"
 #include "./mged_dm.h"
@@ -770,14 +769,14 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
 	Tcl_AppendResult(interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
-	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
-	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
-	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 
 	if (STATE != ST_VIEW) {
-	    bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
-	    bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	    tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	    tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	}
 
 	return TCL_OK;
@@ -810,32 +809,32 @@ f_status(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char
     }
 
     if (BU_STR_EQUAL(argv[1], "toViewcenter")) {
-	bn_tcl_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
+	tclcad_bn_mat_print(interp, "toViewcenter", view_state->vs_gvp->gv_center);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "Viewrot")) {
-	bn_tcl_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
+	tclcad_bn_mat_print(interp, "Viewrot", view_state->vs_gvp->gv_rotation);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2view")) {
-	bn_tcl_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
+	tclcad_bn_mat_print(interp, "model2view", view_state->vs_gvp->gv_model2view);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "view2model")) {
-	bn_tcl_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
+	tclcad_bn_mat_print(interp, "view2model", view_state->vs_gvp->gv_view2model);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "model2objview")) {
-	bn_tcl_mat_print(interp, "model2objview", view_state->vs_model2objview);
+	tclcad_bn_mat_print(interp, "model2objview", view_state->vs_model2objview);
 	return TCL_OK;
     }
 
     if (BU_STR_EQUAL(argv[1], "objview2model")) {
-	bn_tcl_mat_print(interp, "objview2model", view_state->vs_objview2model);
+	tclcad_bn_mat_print(interp, "objview2model", view_state->vs_objview2model);
 	return TCL_OK;
     }
 
@@ -884,8 +883,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
     int nmatch;
     int c;
     int ri = 0;
-    int nm_pieces;
+    size_t nm_pieces;
     int illum_only = 0;
+    int exact = 0;
     char **path_piece = 0;
     char *mged_basename;
     char *sname;
@@ -899,7 +899,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     CHECK_DBI_NULL;
 
-    if (argc < 2 || 5 < argc) {
+    if (argc < 2 || 6 < argc) {
 	bu_vls_printf(&vls, "help ill");
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
@@ -922,8 +922,11 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     bu_optind = 1;
 
-    while ((c = bu_getopt(argc, nargv, "i:n")) != -1) {
+    while ((c = bu_getopt(argc, nargv, "ei:nh?")) != -1) {
 	switch (c) {
+	    case 'e':
+		exact = 1;
+		break;
 	    case 'n':
 		illum_only = 1;
 		break;
@@ -940,7 +943,7 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 		}
 		break;
 	    default:
-	    case 'h': {
+	    {
 		bu_vls_printf(&vls, "help ill");
 		Tcl_Eval(interp, bu_vls_addr(&vls));
 		bu_vls_free(&vls);
@@ -1010,6 +1013,9 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
 	FOR_ALL_SOLIDS(sp, &gdlp->dl_headSolid) {
 	    int a_new_match;
+
+	    if (exact && nm_pieces != sp->s_fullpath.fp_len)
+		continue;
 
 	    /* XXX Could this make use of db_full_path_subset()? */
 	    if (nmatch == 0 || nmatch != ri) {

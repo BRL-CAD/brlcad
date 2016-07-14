@@ -1,7 +1,7 @@
 /*                      N M G _ C O P Y . C
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,8 +31,8 @@
 
 #include <string.h>
 
-#include "nurb.h"
 #include "raytrace.h"
+#include "rt/nurb.h"
 
 
 static struct nmgregion_a *

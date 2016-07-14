@@ -1,7 +1,7 @@
 /*               O P E N N U R B S _ E X T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,11 +30,13 @@
 #include <vector>
 
 #include "vmath.h"
-#include "bu.h"
 
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/parallel.h"
 #include "brep.h"
 #include "libbrep_brep_tools.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #define RANGE_HI 0.55
 #define RANGE_LO 0.45
@@ -239,10 +241,11 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 	}
     }
-    getLeaves(m_sortedX);
-    m_sortedX.sort(sortX);
-    getLeaves(m_sortedY);
-    m_sortedY.sort(sortY);
+
+    m_sortedX = new std::list<BRNode *>();
+
+    getLeaves(*m_sortedX);
+    m_sortedX->sort(sortX);
 
     return;
 }
@@ -251,6 +254,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
+    delete m_sortedX;
 }
 
 
@@ -294,7 +298,7 @@ CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -314,7 +318,7 @@ void
 CurveTree::getLeavesAbove(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -334,7 +338,7 @@ CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_Interval& u, 
 {
     point_t bmin, bmax;
     double dist;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -354,7 +358,7 @@ void
 CurveTree::getLeavesRight(std::list<BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol)
 {
     point_t bmin, bmax;
-    for (std::list<BRNode*>::iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::list<BRNode*>::iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	BRNode* br = dynamic_cast<BRNode*>(*i);
 	br->GetBBox(bmin, bmax);
 
@@ -410,7 +414,7 @@ BRNode*
 CurveTree::curveBBox(const ON_Curve* curve, int adj_face_index, ON_Interval& t, bool isLeaf, bool innerTrim, const ON_BoundingBox& bb)
 {
     BRNode* node;
-    int vdot = 1;
+    bool vdot = true;
 
     if (isLeaf) {
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() << ") v(" << v.Min() << ", " << v.Max() << ")");
@@ -555,6 +559,7 @@ SurfaceTree::SurfaceTree()
       m_face(NULL),
       m_root(NULL)
 {
+    f_queue = new std::queue<ON_Plane *>();
 }
 
 
@@ -629,6 +634,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     surf->FrameAt(u.Mid() + uq, v.Mid() - vq, frames[7]);
     surf->FrameAt(u.Mid() + uq, v.Mid() + vq, frames[8]);
 
+    f_queue = new std::queue<ON_Plane *>();
     m_root = subdivideSurface(surf, u, v, frames, 0, depthLimit, 1, within_distance_tol);
 
     if (m_root) {
@@ -637,9 +643,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!f_queue.empty()) {
-	bu_free(f_queue.front(), "free subsurface frames array");
-	f_queue.pop();
+    while (!f_queue->empty()) {
+	bu_free(f_queue->front(), "free subsurface frames array");
+	f_queue->pop();
     }
 }
 
@@ -648,6 +654,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete ctree;
     delete m_root;
+    delete f_queue;
 }
 
 
@@ -732,19 +739,12 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 
 	//Check for closed surface wrap around
 	if (surf->IsClosed(0)) {
-	    if (new_uv[0] < umin) {
-		new_uv[0] = umin;
-	    } else if (new_uv[0] > umax) {
-		new_uv[0] = umax;
-	    }
+	    CLAMP(new_uv[0], umin, umax);
 	}
 	if (surf->IsClosed(1)) {
-	    if (new_uv[1] < vmin) {
-		new_uv[1] = vmin;
-	    } else if (new_uv[1] > vmax) {
-		new_uv[1] = vmax;
-	    }
+	    CLAMP(new_uv[1], vmin, vmax);
 	}
+
 #ifdef HOOD
 	//push answer back to within node bounds
 	double ufluff = (node->m_u[1] - node->m_u[0])*0.01;
@@ -754,6 +754,7 @@ brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv , BBNode* node) {
 	double ufluff = 0.0;
 	double vfluff = 0.0;
 #endif
+
 	if (new_uv[0] < node->m_u[0] - ufluff)
 	    new_uv[0] = node->m_u[0];
 	else if (new_uv[0] > node->m_u[1] + ufluff)
@@ -950,7 +951,7 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
 	for(int i=0; i<2; i++) {
 	    span_cnt[p][i] = 0;
 	    if (span[p][i])
-		delete [] span[p][i];
+		bu_free(span[p][i], "surface span vector");
 	    span[p][i] = NULL;
 	    dom[p][i] = ON_Interval::EmptyInterval;
 	}
@@ -960,11 +961,11 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
     if (prev_surf[p] != surf ) {
 	// load new surf info
 	for(int i=0; i<2; i++) {
-	    if (span[p][i])
-		delete [] span[p][i];
 	    dom[p][i] = surf->Domain(i);
 	    span_cnt[p][i] = surf->SpanCount(i);
-	    span[p][i] = new double[span_cnt[p][i]+1];
+	    if (span[p][i])
+		bu_free(span[p][i], "surface span vector");
+	    span[p][i] = (double *)bu_malloc((unsigned)(span_cnt[p][i]+1) * sizeof(double), "surface span vector");
 	    surf->GetSpanVector(i, span[p][i]);
 	}
 
@@ -989,15 +990,15 @@ hasSplit(const ON_Surface *surf, const int dir,const ON_Interval& interval,doubl
     if (span_cnt[p][dir] > 1) {
 	int sum = 0;
 	int cnt = 0;
-	for(int i=0; i<span_cnt[p][i]+1; i++) {
+	for(int i=0; i<span_cnt[p][dir]+1; i++) {
 	    bool testOpen = true;
-	    if (interval.Includes(span[p][dir][i], testOpen)) { //crosses lower boundary
+	    if (interval.Includes((span[p][dir])[i], testOpen)) { //crosses lower boundary
 		sum = sum + i;
 		cnt++;
 	    }
 	}
 	if (cnt > 0) {
-	    split = span[p][dir][sum/cnt];
+	    split = (span[p][dir])[sum/cnt];
 	    return true;
 	}
     }
@@ -1219,7 +1220,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = frames[4];
@@ -1257,7 +1262,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete q3surf;
 #endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1292,7 +1297,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
     }
     //////////////////////////////////////
     if (do_u_split) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstu(u.Min(), usplit);
 	ON_Interval secondu(usplit, u.Max());
 #ifdef _OLD_SUBDIVISION_
@@ -1318,7 +1325,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #else
 	const ON_Surface *east = localsurf;
 	const ON_Surface *west = localsurf;
-	split = true;
 #endif
 
 	//////////////////////////////////
@@ -1403,7 +1409,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = sharedframes[0];
 	newframes[2] = sharedframes[1];
@@ -1439,7 +1449,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1473,7 +1483,9 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	return parent;
     }
     if (do_v_split || !prev_knot) {
+#ifdef _OLD_SUBDIVISION_
 	bool split;
+#endif
 	ON_Interval firstv(v.Min(), vsplit);
 	ON_Interval secondv(vsplit, v.Max());
 
@@ -1501,7 +1513,6 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #else
 	const ON_Surface *north = localsurf;
 	const ON_Surface *south = localsurf;
-	split = true;
 #endif
 	//////////////////////////////////
 	/*********************************************************************
@@ -1568,7 +1579,11 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!f_queue.empty()) {newframes = f_queue.front(); f_queue.pop();} else {newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");}
+	if (!f_queue->empty()) {
+	    newframes = f_queue->front(); f_queue->pop();
+	} else {
+	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
+	}
 	newframes[0] = frames[0];
 	newframes[1] = frames[1];
 	newframes[2] = sharedframes[1];
@@ -1603,7 +1618,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	f_queue.push(newframes);
+	f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1697,14 +1712,14 @@ typedef struct _gcp_data {
 bool
 gcp_gradient(pt2d_t out_grad, GCPData& data, pt2d_t uv)
 {
-    bool evaluated = data.surf->Ev2Der(uv[0],
-				       uv[1],
-				       data.S,
-				       data.du,
-				       data.dv,
-				       data.duu,
-				       data.duv,
-				       data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
+    ON_BOOL32 evaluated = data.surf->Ev2Der(uv[0],
+					    uv[1],
+					    data.S,
+					    data.du,
+					    data.dv,
+					    data.duu,
+					    data.duv,
+					    data.dvv); // calc S(u, v) dS/du dS/dv d2S/du2 d2S/dv2 d2S/dudv
     if (!evaluated) return false;
     out_grad[0] = 2 * (data.du * (data.S - data.pt));
     out_grad[1] = 2 * (data.dv * (data.S - data.pt));
@@ -1797,11 +1812,10 @@ try_again:
 	// check to see if we've left the surface domain
 	double l, h;
 	data.surf->GetDomain(0, &l, &h);
-	if (uv[0] < l) uv[0] = l; // clamp if out of range!
-	if (uv[0] > h) uv[0] = h;
+	CLAMP(uv[0], l, h); // make sure in range
+
 	data.surf->GetDomain(1, &l, &h);
-	if (uv[1] < l) uv[1] = l;
-	if (uv[1] > h) uv[1] = h;
+	CLAMP(uv[1], l, h);
 
 	outpt[0] = uv[0];
 	outpt[1] = uv[1];

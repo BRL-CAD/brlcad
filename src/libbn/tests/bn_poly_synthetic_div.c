@@ -1,7 +1,7 @@
 /*         B N _ P O L Y _ S Y N T H E T I C _ D I V . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,14 +69,14 @@ poly_init(void)
 
 
 /* compares the values of the array and returns 0 if they all match */
-int
-check_results(fastf_t a[], fastf_t b[], int n)
+size_t
+check_results(fastf_t a[], fastf_t b[], size_t n)
 {
-    int i;
+    size_t i;
 
     for (i = 0; i < n; i++) {
 	if (!EQUAL(a[i], b[i]))
-	    return -1;
+	    return 1;
     }
 
     return 0;
@@ -88,7 +88,7 @@ int
 test_bn_poly_syn_div(void)
 {
     /* variables to store results for comparison */
-    int val1[2];
+    size_t val1[2];
     bn_poly_t q2 = BN_POLY_INIT_ZERO;
     bn_poly_t r2 = BN_POLY_INIT_ZERO;
 
@@ -99,9 +99,9 @@ test_bn_poly_syn_div(void)
     val1[1] = check_results(r2.cf, rem[0].cf, rem[0].dgr + 1);
 
     if (val1[0] == 0 && val1[1] == 0)
-	return val1[0];
+	return 0;
 
-    return -1;
+    return 1;
 }
 
 

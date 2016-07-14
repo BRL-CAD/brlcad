@@ -1,7 +1,7 @@
 /*                F I X _ P O L Y S O L I D S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -55,11 +55,11 @@
 
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "db.h"
+#include "rt/db4.h"
+#include "bu/getopt.h"
 #include "bn.h"
-#include "bu.h"
 
 int
 main(int argc, char *argv[])

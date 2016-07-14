@@ -1,7 +1,7 @@
 #                          R T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -510,6 +510,10 @@ proc do_Raytrace { id } {
 	append rt_cmd " $rt_control($id,other)"
     }
 
+    if {$rt_control($id,opencl) != ""} {
+	append rt_cmd " -z$rt_control($id,opencl)"
+    }
+
     if {!$fb_all} {
 	set pos [rset rb pos]
 	set xmin [lindex $pos 0]
@@ -768,12 +772,22 @@ showing the principal direction vector." } }
 	    -command "catch { destroy $top }"
     hoc_register_data $top.dismissB "Dismiss"\
 	    { { summary "Dismiss/close the advanced raytrace panel." } }
+    # use the same font as the size label on the checkbutton
+    set tmp_font [$top.hsampleL cget -font]
+    checkbutton $top.opencltoggle \
+		-text "Enable OpenCL" \
+		-variable rt_control($id,opencl) \
+		-font $tmp_font \
+		-padx 0.5m -pady 0.5m
+    hoc_register_data $top.opencltoggle "Enable OpenCL"\
+		{ { summary "Enable/Disable the OpenCL ray-trace engine." } }
 
     grid $top.nprocL $top.nprocE -sticky nsew -pady 1 -in $top.gridF1
     grid $top.hsampleL $top.hsampleE -sticky nsew -pady 1 -in $top.gridF1
     grid $top.jitterL $top.jitterMB -sticky nsew -pady 1 -in $top.gridF1
     grid $top.lmodelL $top.lmodelMB -sticky nsew -pady 1 -in $top.gridF1
     grid $top.otherL $top.otherE -sticky nsew -pady 1 -in $top.gridF1
+    grid $top.opencltoggle - - - - -pady 1 -sticky nsew -in $top.gridF1
     grid columnconfigure $top.gridF1 1 -weight 1
     grid rowconfigure $top.gridF1 0 -weight 1
     grid rowconfigure $top.gridF1 1 -weight 1
@@ -1351,6 +1365,7 @@ proc rt_init_vars { id win } {
 	set rt_control($id,lmodel) 0
 	set rt_control($id,lmodelTitle) "Full"
 	set rt_control($id,other) {}
+	set rt_control($id,opencl) 0
 
 	## Photon Mapping Init Stuff
 	set rt_control($id,pmGlobalPhotonsEntry) 16384
@@ -1391,8 +1406,10 @@ proc rt_check_dest {id win} {
 	    # Assume the user knows what he/she is doing
 	    rt_force_cook_dest $id $env(FB_FILE)
 	} else {
-	    # This should be everywhere by now
-	    rt_force_cook_dest $id "/dev/ogll"
+	    set dm_list [split [dm_list] ',']
+	    set devtype "/dev/"
+	    append devtype [lindex $dm_list 0]
+	    rt_force_cook_dest %id $devtype
 	}
     }
 }

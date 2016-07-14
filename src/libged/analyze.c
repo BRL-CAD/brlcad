@@ -1,7 +1,7 @@
 /*                          A N A L Y Z E . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,14 +29,14 @@
 #include <string.h>
 #include <assert.h>
 
-#include "bio.h"
 
 
 #include "vmath.h"
 #include "bn.h"
+#include "bg/polygon.h"
 #include "rt/arb_edit.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
@@ -45,7 +45,6 @@
  * ehy
  * metaball
  * nmg
- * rhc
  */
 
 /* Conversion factor for Gallons to cubic millimeters */
@@ -621,6 +620,7 @@ void print_faces_table(struct ged *gedp, table_t *table)
  * - eto
  * - epa
  * - part
+ * - rhc
  */
 HIDDEN void
 analyze_general(struct ged *gedp, const struct rt_db_internal *ip)
@@ -729,8 +729,8 @@ analyze_poly_face(struct ged *gedp, struct poly_face *face, row_t *row)
     findang(angles, face->plane_eqn);
 
     /* sort points */
-    bn_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
-    bn_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
+    bg_3d_polygon_sort_ccw(face->npts, face->pts, face->plane_eqn);
+    bg_3d_polygon_area(&face->area, face->npts, (const point_t *)face->pts);
 
     /* store face information for pretty printing */
     row->nfields = 8;
@@ -922,7 +922,7 @@ analyze_arbn(struct ged *gedp, const struct rt_db_internal *ip)
     table.rows = (row_t *)bu_calloc(aip->neqn, sizeof(row_t), "analyze_arbn: rows");
     table.nrows = aip->neqn;
 
-    bn_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
+    bg_3d_polygon_mk_pts_planes(npts, tmp_pts, aip->neqn, (const plane_t *)eqs);
 
     for (i = 0; i < aip->neqn; i++) {
 	vect_t tmp;
@@ -994,7 +994,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 
 	    if (double_ended && i != 0 && (j == 0 || j == k || j == arip->pts_per_curve - 1)) continue;
 
-	    /* first triangular face, make sure its not a duplicate */
+	    /* first triangular face, make sure it's not a duplicate */
 	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(0, 0), ARS_PT(1, 1), ARS_PT(0, 1), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
@@ -1017,7 +1017,7 @@ analyze_ars(struct ged *gedp, const struct rt_db_internal *ip)
 		nfaces++;
 	    }
 
-	    /* second triangular face, make sure its not a duplicate */
+	    /* second triangular face, make sure it's not a duplicate */
 	    if (bn_mk_plane_3pts(face.plane_eqn, ARS_PT(1, 0), ARS_PT(1, 1), ARS_PT(0, 0), &gedp->ged_wdbp->wdb_tol) == 0
 		&& !HEQUAL(old_plane, face.plane_eqn)) {
 		HMOVE(old_plane, face.plane_eqn);
@@ -1160,6 +1160,7 @@ HIDDEN void
 analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 {
     fastf_t area = -1;
+    point_t centroid;
 
     if (OBJ[ID_SKETCH].ft_surf_area)
 	OBJ[ID_SKETCH].ft_surf_area(&area, ip);
@@ -1170,6 +1171,14 @@ analyze_sketch(struct ged *gedp, const struct rt_db_internal *ip)
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 		      * gedp->ged_wdbp->dbip->dbi_local2base
 	    );
+    }
+
+    if (OBJ[ID_SKETCH].ft_centroid) {
+	OBJ[ID_SKETCH].ft_centroid(&centroid, ip);
+	bu_vls_printf(gedp->ged_result_str, "\n    Centroid: (%g, %g, %g)\n",
+		      centroid[X] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Y] * gedp->ged_wdbp->dbip->dbi_base2local,
+		      centroid[Z] * gedp->ged_wdbp->dbip->dbi_base2local);
     }
 }
 
@@ -1249,6 +1258,14 @@ analyze_do(struct ged *gedp, const struct rt_db_internal *ip)
 	    break;
 
 	case ID_VOL:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_EXTRUDE:
+	    analyze_general(gedp, ip);
+	    break;
+
+	 case ID_RHC:
 	    analyze_general(gedp, ip);
 	    break;
 

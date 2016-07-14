@@ -1,7 +1,7 @@
 /*                  R T S E R V E R T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,12 +30,18 @@
 #include <string.h>
 #include <pthread.h>
 
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
+#include "bu/ptbl.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/vlb.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "rtserver.h"
 
 #ifdef HAVE_SYS_TIME_H

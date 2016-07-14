@@ -1,7 +1,7 @@
 /*                        R T S H O T . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "bu/debug.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 
@@ -47,15 +47,17 @@
 void
 usage(const char *argv0)
 {
-    bu_log("Usage:  %s [options] model.g objects...\n", argv0);
+    bu_log("Usage:  %s {-p|-d|-a} # # # {-p|-d|-a} # # # [options] model.g objects...\n\n", argv0);
+    bu_log(" Shot options, must set two:\n");
+    bu_log(" -p # # #		Set starting point\n");
+    bu_log(" -d # # #		Set direction vector\n");
+    bu_log(" -a # # #		Set shoot-at point\n\n");
+    bu_log(" Other options:\n");
     bu_log(" -U #		Set reporting of air regions (default=1)\n");
     bu_log(" -u #		Set libbu debug flag\n");
     bu_log(" -x #		Set librt debug flags\n");
     bu_log(" -X #		Set rt program debug flags\n");
     bu_log(" -N #		Set NMG debug flags\n");
-    bu_log(" -d # # #	Set direction vector\n");
-    bu_log(" -p # # #	Set starting point\n");
-    bu_log(" -a # # #	Set shoot-at point\n");
     bu_log(" -t #		Set number of triangles per piece for BOT's (default is 4)\n");
     bu_log(" -b #		Set threshold number of triangles to use pieces (default is 32)\n");
     bu_log(" -O #		Set overlap-claimant handling\n");
@@ -102,6 +104,7 @@ main(int argc, char **argv)
     char **attrs = (char **)NULL;
     const char *argv0 = argv[0];
     int atoival;
+    struct resource res = RT_RESOURCE_INIT_ZERO;
 
     if (argc < 3) {
 	usage(argv0);
@@ -302,17 +305,24 @@ main(int argc, char **argv)
 	bu_exit(1, "%s: BRL-CAD geometry database not specified\n", argv0);
     }
 
-    if (set_dir + set_pt + set_at != 2) goto err;
-
-    /* explicit input sanitization */
-    if (num_rings <= 0 || rays_per_ring <= 0 || bundle_radius <= 0.0) {
-	fprintf(stderr, "Must have all of \"-R\", \"-n\", and \"-c\" set\n");
+    if (set_dir + set_pt + set_at != 2) {
+	fprintf(stderr, "ERROR: Must set exactly two: starting point, direction vector, or shoot-at point.\n\n");
 	goto err;
     }
-    if (num_rings > INT_MAX)
+
+    /* explicit input sanitization */
+    if (num_rings < 0)
+	num_rings = 0;
+    else if (num_rings > INT_MAX)
 	num_rings = INT_MAX;
-    if (rays_per_ring > INT_MAX)
+    if (rays_per_ring < 0)
+	rays_per_ring = 0;
+    else if (rays_per_ring > INT_MAX)
 	rays_per_ring = INT_MAX;
+    if (bundle_radius < 0.0)
+	bundle_radius = 0.0;
+    else if (bundle_radius > INFINITY-1.0)
+	bundle_radius = INFINITY-1.0;
 
     /* Load database */
     title_file = argv[0];
@@ -344,6 +354,10 @@ main(int argc, char **argv)
 	}
 	pdv_3space(plotfp, rtip->rti_pmin, rtip->rti_pmax);
     }
+
+    /* set up our resources */
+    rt_init_resource(&res, 0, rtip);
+    ap.a_resource = &res;
 
     /* Compute r_dir and r_pt from the inputs */
     if (set_at) {
@@ -473,7 +487,11 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
     for (; pp != PartHeadp; pp = pp->pt_forw) {
 	matp_t inv_mat;
-	Tcl_HashEntry *entry;
+	struct bu_vls key = BU_VLS_INIT_ZERO;
+	struct bu_hash_entry *entry;
+	struct bu_hash_entry *prev = NULL;
+	unsigned long idx;
+	bu_vls_sprintf(&key, "%ld", pp->pt_regionp->reg_bit);
 
 	bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 	       pp->pt_regionp->reg_name,
@@ -481,12 +499,13 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_outseg->seg_stp->st_name,
 	       pp->pt_regionp->reg_bit);
 
-	entry = Tcl_FindHashEntry((Tcl_HashTable *)ap->a_rt_i->Orca_hash_tbl,
-				  (const char *)(size_t)pp->pt_regionp->reg_bit);
+	entry = bu_hash_tbl_find((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl,
+				  (unsigned char *)bu_vls_addr(&key), bu_vls_strlen(&key) + 1, &prev, &idx);
+	bu_vls_free(&key);
 	if (!entry) {
 	    inv_mat = (matp_t)NULL;
 	} else {
-	    inv_mat = (matp_t)Tcl_GetHashValue(entry);
+	    inv_mat = (matp_t)bu_get_hash_value(entry);
 	    bn_mat_print("inv_mat", inv_mat);
 	}
 
@@ -628,19 +647,20 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
 	    fastf_t out;
 	    matp_t inv_mat;
-	    Tcl_HashEntry *entry;
+	    const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
+	    struct bu_hash_entry *entry;
 
 	    bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
-	    entry = Tcl_FindHashEntry(
-		(Tcl_HashTable *) pl->ap->a_rt_i->Orca_hash_tbl,
-		(const char *) (size_t) pp->pt_regionp->reg_bit);
+	    entry = bu_hash_tbl_find((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl,
+		    (unsigned char *)key, strlen(key) + 1, NULL, NULL);
+
 	    if (!entry) {
 		inv_mat = (matp_t) NULL;
 	    } else {
-		inv_mat = (matp_t) Tcl_GetHashValue(entry);
+		inv_mat = (matp_t)bu_get_hash_value(entry);
 		bn_mat_print("inv_mat", inv_mat);
 	    }
 

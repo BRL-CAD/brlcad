@@ -22,8 +22,8 @@
 
 
 <refsect1 xml:id='descriptions'><title>DESCRIPTIONS</title>
-<para>irdisp is an interactive program that
-combines the two programs showtherm and ir-sgi or ir-X.  Ultimately it can
+<para><command>irdisp</command> is an interactive program that
+combines the two programs <command>showtherm</command> and <command>ir-sgi</command> or <command>ir-X</command> .  Ultimately it can
 read a temperature output file and display the image on the screen
 without having the user call two different programs.</para>
 </refsect1>
@@ -129,7 +129,9 @@ without having the user call two different programs.</para>
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>firpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>secpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>shapefact</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>all_sf</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>showtherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>, ir-X(1), <citerefentry><refentrytitle>ir-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<para><citerefentry><refentrytitle>firpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>secpass</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>shapefact</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>all_sf</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>showtherm</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ir-X</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ir-sgi</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>pictx</refentrytitle><manvolnum>1</manvolnum></citerefentry>, User's Manual for IRPREP (BRL-SP-96), Computer Programs
 for Generating an Input File for PRISM and Displaying PRISM Results
 (BRL report in progress)</para>
@@ -141,7 +143,7 @@ for Generating an Input File for PRISM and Displaying PRISM Results
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1994-2014 by the United States
+<para>This software is Copyright (c) 1994-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

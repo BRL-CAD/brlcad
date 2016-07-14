@@ -1,7 +1,7 @@
 /*                     A N I M _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,10 @@
 #include <string.h>
 #include <stdlib.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/file.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
 #define OPT_STR "cih?"
@@ -166,7 +169,7 @@ main(int argc, char *argv[])
 		    if (!bu_strncmp(line, "start", 5))
 			break;
 		    else {
-			reserve -= strlen(line);
+			reserve -= (int)strlen(line);
 			reserve -= 1;
 			if (reserve > 0) {
 			    bu_strlcat(pbuffer, line, reserve + strlen(line) + 1);

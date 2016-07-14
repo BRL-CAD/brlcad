@@ -1,7 +1,7 @@
 /*                      P I X B L E N D . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -42,8 +42,9 @@
 #include <time.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 static char *f1_name;
 static char *f2_name;
@@ -56,12 +57,12 @@ static char *b1;			/* fg input buffer */
 static char *b2;			/* bg input buffer */
 static char *b3;			/* output buffer */
 
-double value, gvalue;
-int iflg, rflg, gflg;
-int seed;
+double value = 0.0 , gvalue = 0.0;
+int iflg = 0 , rflg = 0 , gflg = 0;
+int seed = 0;
 
 static char usage[] = "\
-Usage: pixblend [-{r|i} value] [-s [seed]] file1.pix file2.pix > out.pix\n";
+Usage: pixblend [-{r|i} value] [-s seed] [-S] [-g gvalue] file1.pix file2.pix > out.pix\n";
 
 int
 timeseed(void)
@@ -75,27 +76,23 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "r:i:Ss:g:h?")) != -1) {
 	switch (c) {
 	    case 'r':
 		if (iflg)
 		    return 0;
-		else {
-		    value = atof(bu_optarg);
-		    ++rflg;
-		}
+		value = atof(bu_optarg);
+		++rflg;
 		break;
 	    case 'i':
 		if (rflg)
 		    return 0;
-		else {
-		    if (gflg) {
+    		if (gflg) {
 			fprintf(stderr, "The -g and -i options do not make sense together.\n");
 			return 0;
-		    }
-		    value = atof(bu_optarg);
-		    ++iflg;
 		}
+		value = atof(bu_optarg);
+		++iflg;
 		break;
 	    case 'S':
 		seed = timeseed();
@@ -111,7 +108,7 @@ get_args(int argc, char **argv)
 		++gflg;
 		gvalue = atof(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* 'h' '?' */
 		return 0;
 	}
     }
@@ -166,18 +163,17 @@ main(int argc, char **argv)
 	bu_exit (1, NULL);
     }
 
-    gvalue = 0.0;
     if (!iflg && !rflg) {
 	/* Default action: interpolate by 50% */
 	iflg = 1;
 	value = 0.5;
     }
-
-    if (value < 0.0 || value > 1.0) {
+    else if (value < 0.0 || value > 1.0) {
 	fprintf(stderr, "pixblend: Blend value must be between 0.0 and 1.0\n");
 	bu_exit (0, NULL);
-
     }
+
+    gvalue = 0.0;
 
     if (rflg) {
 #ifdef HAVE_DRAND48

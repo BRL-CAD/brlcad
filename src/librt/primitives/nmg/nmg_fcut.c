@@ -1,7 +1,7 @@
 /*                      N M G _ F C U T . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,7 +42,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -262,7 +261,7 @@ ptbl_vsort(struct bu_ptbl *b, fastf_t *pt, fastf_t *dir, fastf_t *mag, fastf_t d
 	vect_t vect;
 	NMG_CK_VERTEXUSE(vu[i]);
 
-	if (mag[i] > MAX_FASTF - SMALL_FASTF) {
+	if (mag[i] - MAX_FASTF > -SMALL_FASTF) {
 	    VSUB2(vect, vu[i]->v_p->vg_p->coord, pt);
 	    mag[i] = VDOT(vect, dir);
 	}
@@ -1543,7 +1542,7 @@ nmg_special_wedge_processing(struct nmg_vu_stuff *vs, int start, int end, double
 	fclose(fp);
 	bu_log("wrote %s\n", buf);
 	bu_free((char *)b, "nmg_special_wedge_processing flag[]");
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 
     if (end-start >= 128) bu_bomb("nmg_special_wedge_processing: array overflow\n");

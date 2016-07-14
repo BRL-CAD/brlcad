@@ -1,7 +1,7 @@
 /*                         S H A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,13 +32,12 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
 #include "bn.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "light.h"
-#include "plot3.h"
+#include "optical/light.h"
+#include "bn/plot3.h"
 
 
 #ifdef RT_MULTISPECTRAL
@@ -158,18 +157,23 @@ shade_inputs(struct application *ap, const struct partition *pp, struct shadewor
 	    if (f > 0.0 &&
 		!BN_VECT_ARE_PERP(f, &(ap->a_rt_i->rti_tol))) {
 		static int counter = 0;
-		if (counter++ < 100 || (R_DEBUG&RDEBUG_SHADE)) {
+
+		if (counter < 100 || (R_DEBUG&RDEBUG_SHADE)) {
 		    bu_log("shade_inputs(%s) flip N xy=%d, %d %s surf=%d dot=%g\n",
 			   pp->pt_inseg->seg_stp->st_name,
 			   ap->a_x, ap->a_y,
 			   OBJ[pp->pt_inseg->seg_stp->st_id].ft_name,
 			   swp->sw_hit.hit_surfno, f);
-		} else {
-		    if (counter++ == 101) {
-			bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
-			       pp->pt_inseg->seg_stp->st_name);
-		    }
+		} else if (counter == 101) {
+		    bu_log("shade_inputs(%s) flipped normals detected, additional reporting suppressed\n",
+			   pp->pt_inseg->seg_stp->st_name);
 		}
+		if (counter < 101) {
+			bu_semaphore_acquire(BU_SEM_THREAD);
+			counter++;
+			bu_semaphore_release(BU_SEM_THREAD);
+		}
+
 		if (R_DEBUG&RDEBUG_SHADE) {
 		    VPRINT("Dir ", ap->a_ray.r_dir);
 		    VPRINT("Norm", swp->sw_hit.hit_normal);

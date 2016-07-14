@@ -139,16 +139,15 @@ ELSE()
 
     INSTALL(
         TARGETS OpenThreads
-        ARCHIVE DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads-dev
-        LIBRARY DESTINATION lib${LIB_POSTFIX} COMPONENT libopenthreads
-        RUNTIME DESTINATION bin COMPONENT libopenthreads
+		  ARCHIVE DESTINATION ${LIB_DIR}
+		  LIBRARY DESTINATION ${LIB_DIR}
+		  RUNTIME DESTINATION ${BIN_DIR}
     )
 
     IF(NOT OSG_COMPILE_FRAMEWORKS)
            INSTALL(
                FILES ${OpenThreads_PUBLIC_HEADERS}
                DESTINATION include/OpenThreads
-               COMPONENT libopenthreads-dev
         )
 
     ELSE()

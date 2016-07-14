@@ -1,7 +1,7 @@
 /*                     B R E P . C P P
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup g_ */
+/** @addtogroup librt */
 /** @{ */
 /** @file brep.cpp
  *
@@ -46,10 +46,10 @@
 #include "bu/cv.h"
 #include "bu/time.h"
 #include "brep.h"
-#include "dvec.h"
+#include "bn/dvec.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 #include "./brep_local.h"
 #include "./brep_debug.h"
@@ -92,19 +92,14 @@ int rt_brep_export5(struct bu_external *ep, const struct rt_db_internal *ip, dou
 int rt_brep_import5(struct rt_db_internal *ip, const struct bu_external *ep, register const fastf_t *mat, const struct db_i *dbip);
 void rt_brep_ifree(struct rt_db_internal *ip);
 int rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbose, double mm2local);
-int rt_brep_tclget(Tcl_Interp *interp, const struct rt_db_internal *intern, const char *attr);
-int rt_brep_tcladjust(Tcl_Interp *interp, struct rt_db_internal *intern, int argc, const char **argv);
 int rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *ip);
-RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation);
+RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation);
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
+int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 #ifdef __cplusplus
 }
 #endif
-
-
-/* FIXME: fugly */
-static int hit_count = 0;
 
 
 /********************************************************************************
@@ -336,14 +331,14 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 	for (size_t i = 0; i < faceCount; i++) {
 	    if (bbbp->faces[i] == NULL) {
 		index = i;
-		bbbp->faces[i] = (SurfaceTree*)cpu+1; /* claim this one */
+		bbbp->faces[i] = (SurfaceTree*)(intptr_t)(cpu+1); /* claim this one */
 		break;
 	    }
 	}
 	bu_semaphore_release(BU_SEM_LISTS);
 
 	if (index != -1) {
-	    bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount);
+	    /* bu_log("thread %d: preparing face %d of %d\n", cpu, index+1, faceCount); */
 	    SurfaceTree* st = new SurfaceTree(&faces[index], true, 8);
 	    bbbp->faces[index] = st;
 	}
@@ -359,15 +354,17 @@ brep_build_bvh(struct brep_specific* bs)
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
     ON_Brep* brep = bs->brep;
-    int64_t start;
+    //int64_t start;
 
     if (brep == NULL) {
 	bu_log("NULL Brep");
 	return -1;
     } else {
+#if 0
 	start = bu_gettime();
 	if (!brep->IsValid(&tl)) bu_log("brep is NOT valid\n");
 	bu_log("!!! BREP ISVALID: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+#endif
     }
 
     /* Initialize the top level Bounding Box node for the entire
@@ -379,6 +376,10 @@ brep_build_bvh(struct brep_specific* bs)
 
     ON_BrepFaceArray& faces = brep->m_F;
     size_t faceCount = faces.Count();
+    if (faceCount == 0) {
+	bu_log("Empty Brep");
+	return -1;
+    }
 
     struct brep_build_bvh_parallel bbbp;
     bbbp.bs = bs;
@@ -399,7 +400,7 @@ brep_build_bvh(struct brep_specific* bs)
      * raytracing.
      */
 
-    start = bu_gettime();
+    //start = bu_gettime();
     bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
     for (int i = 0; (size_t)i < faceCount; i++) {
@@ -407,7 +408,7 @@ brep_build_bvh(struct brep_specific* bs)
 	face.m_face_user.p = bbbp.faces[i];
 	bs->bvh->addChild(bbbp.faces[i]->getRootNode());
     }
-    bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+    //bu_log("!!! PREP FACES: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     bu_free(bbbp.faces, "free face array");
 
@@ -452,7 +453,7 @@ rt_brep_bbox(struct rt_db_internal *ip, point_t *min, point_t *max)
 int
 rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 {
-    int64_t start;
+    //int64_t start;
 
     TRACE1("rt_brep_prep");
     /* This prepares the NURBS specific data structures to be used
@@ -476,11 +477,11 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
-    start = bu_gettime();
+    //start = bu_gettime();
     if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
-    bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
+    //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
 
     /* Once a proper SurfaceTree is built, finalize the bounding
      * volumes.  This takes no time. */
@@ -1076,7 +1077,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1112,7 +1112,6 @@ utah_brep_intersect(const BBNode* sbv, const ON_BrepFace* face, const ON_Surface
 		    _norm.Reverse();
 		}
 		VMOVE(vnorm, _norm);
-		hit_count += 1;
 		uv[0] = ouv[i].x;
 		uv[1] = ouv[i].y;
 		brep_hit bh(*face, t[i], ray, vpt, vnorm, uv);
@@ -1208,7 +1207,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     HitList all_hits; // record all hits
     MissList misses;
     int s = 0;
-    hit_count = 0;
+
     for (std::list<BBNode*>::iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
 	const ON_BrepFace* f = sbv->m_face;
@@ -1761,31 +1760,13 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children.size(); i++) {
-	if (i < 1)
-	    plot_bbnode(node->m_children[i], vhead, depth + 1, start, limit);
+    for (size_t i = 0; i < node->m_children->size(); i++) {
+	if (i < 1) {
+	    std::vector<brlcad::BBNode*> *nodes = node->m_children;
+	    plot_bbnode((*nodes)[i], vhead, depth + 1, start, limit);
+	}
     }
 }
-
-
-double
-find_next_point(const ON_Curve* crv, double startdomval, double increment, double tolerance, int stepcount)
-{
-    double inc = increment;
-    if (startdomval + increment > 1.0) inc = 1.0 - startdomval;
-    ON_Interval dom = crv->Domain();
-    ON_3dPoint prev_pt = crv->PointAt(dom.ParameterAt(startdomval));
-    ON_3dPoint next_pt = crv->PointAt(dom.ParameterAt(startdomval + inc));
-    if (prev_pt.DistanceTo(next_pt) > tolerance) {
-	stepcount++;
-	inc = inc / 2;
-	return find_next_point(crv, startdomval, inc, tolerance, stepcount);
-    } else {
-	if (stepcount > 5) return 0.0;
-	return startdomval + inc;
-    }
-}
-
 
 double
 find_next_trimming_point(const ON_Curve* crv, const ON_Surface* s, double startdomval, double increment, double tolerance, int stepcount)
@@ -2141,10 +2122,10 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, BBNode * node, int isocurver
 	    return;
 	}
     } else {
-	if (node->m_children.size() > 0) {
+	if (node->m_children->size() > 0) {
 	    for (std::vector<BBNode*>::iterator childnode =
-		     node->m_children.begin(); childnode
-		 != node->m_children.end(); childnode++) {
+		     node->m_children->begin(); childnode
+		 != node->m_children->end(); childnode++) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
 	}
@@ -3086,7 +3067,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 
 	int seam = 0;
 	int i;
-	ON_2dPoint *prev_pt = NULL;
 	BrepTrimPoint btp;
 	BrepTrimPoint end_btp;
 	ON_SimpleArray<BrepTrimPoint> part1;
@@ -3114,7 +3094,6 @@ shift_loop_straddled_over_seam(const ON_Surface *surf,  ON_SimpleArray<BrepTrimP
 		    part2.Append(btp);
 		}
 	    }
-	    prev_pt = &brep_loop_points[i].p2d;
 	}
 
 	brep_loop_points.Empty();
@@ -4288,58 +4267,21 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
     }
 
     {
-
-	point_t pt1 = VINIT_ZERO;
-	point_t pt2 = VINIT_ZERO;
-
 	for (i = 0; i < bi->brep->m_E.Count(); i++) {
+	    int j, pnt_cnt;
+	    ON_3dPoint p;
+	    point_t pt1 = VINIT_ZERO;
+	    ON_Polyline poly;
 	    ON_BrepEdge& e = brep->m_E[i];
 	    const ON_Curve* crv = e.EdgeCurveOf();
-
-	    if (crv->IsLinear()) {
-		ON_BrepVertex& v1 = brep->m_V[e.m_vi[0]];
-		ON_BrepVertex& v2 = brep->m_V[e.m_vi[1]];
-		VMOVE(pt1, v1.Point());
-		VMOVE(pt2, v2.Point());
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-		RT_ADD_VLIST(vhead, pt2, BN_VLIST_LINE_DRAW);
-	    } else {
-		ON_Interval dom = crv->Domain();
-
-		double domainval = 0.0;
-		double olddomainval = 1.0;
-		int crudestep = 0;
-		// Insert first point.
-		ON_3dPoint p = crv->PointAt(dom.ParameterAt(domainval));
+	    pnt_cnt = ON_Curve_PolyLine_Approx(&poly, crv, tol->dist);
+	    p = poly[0];
+	    VMOVE(pt1, p);
+	    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
+	    for (j = 1; j < pnt_cnt; j++) {
+		p = poly[j];
 		VMOVE(pt1, p);
-		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_MOVE);
-
-		/* Dynamic sampling approach - start with an initial guess
-		 * for the next point of one tenth of the domain length
-		 * further down the domain from the previous value.  Set a
-		 * maximum physical distance between points of 100 times
-		 * the model tolerance.  Reduce the increment until the
-		 * tolerance is satisfied, then add the point and use it
-		 * as the starting point for the next calculation until
-		 * the whole domain is finished.  Perhaps it would be more
-		 * ideal to base the tolerance on some fraction of the
-		 * curve bounding box dimensions?
-		 */
-
-		while (domainval < 1.0 && crudestep <= 100) {
-		    olddomainval = domainval;
-		    if (crudestep == 0)
-			domainval = find_next_point(crv, domainval, 0.1,
-						    tol->dist * 100, 0);
-		    if (crudestep >= 1 || ZERO(domainval)) {
-			crudestep++;
-			domainval = olddomainval + (1.0 - olddomainval)
-				    / 100 * crudestep;
-		    }
-		    p = crv->PointAt(dom.ParameterAt(domainval));
-		    VMOVE(pt1, p);
-		    RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
-		}
+		RT_ADD_VLIST(vhead, pt1, BN_VLIST_LINE_DRAW);
 	    }
 	}
     }
@@ -4833,21 +4775,6 @@ rt_brep_describe(struct bu_vls *str, const struct rt_db_internal *ip, int verbos
     return 0;
 }
 
-
-int
-rt_brep_tclget(Tcl_Interp *, const struct rt_db_internal *, const char *)
-{
-    return 0;
-}
-
-
-int
-rt_brep_tcladjust(Tcl_Interp *, struct rt_db_internal *, int, const char **)
-{
-    return 0;
-}
-
-
 int
 rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 {
@@ -4856,7 +4783,7 @@ rt_brep_params(struct pc_pc_set *, const struct rt_db_internal *)
 
 
 int
-rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, const char* operation)
+rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, const struct rt_db_internal *ip2, db_op_t operation)
 {
     RT_CK_DB_INTERNAL(ip1);
     RT_CK_DB_INTERNAL(ip2);
@@ -4871,19 +4798,22 @@ rt_brep_boolean(struct rt_db_internal *out, const struct rt_db_internal *ip1, co
     brep2 = bip2->brep;
     brep_out = ON_Brep::New();
 
-    int ret;
     op_type operation_type;
-    if (BU_STR_EQUAL(operation, "u"))
-	operation_type = BOOLEAN_UNION;
-    else if (BU_STR_EQUAL(operation, "i"))
-	operation_type = BOOLEAN_INTERSECT;
-    else if (BU_STR_EQUAL(operation, "-"))
-	operation_type = BOOLEAN_DIFF;
-    else if (BU_STR_EQUAL(operation, "x"))
-	operation_type = BOOLEAN_XOR;
-    else
-	return -1;
+    switch (operation) {
+	case DB_OP_UNION:
+	    operation_type = BOOLEAN_UNION;
+	    break;
+	case DB_OP_SUBTRACT:
+	    operation_type = BOOLEAN_DIFF;
+	    break;
+	case DB_OP_INTERSECT:
+	    operation_type = BOOLEAN_INTERSECT;
+	    break;
+	default:
+	    return -1;
+    }
 
+    int ret;
     if ((ret = ON_Boolean(brep_out, brep1, brep2, operation_type)) < 0)
 	return ret;
 
@@ -5093,6 +5023,31 @@ rt_brep_process_selection(
 	}
     }
 
+    return 0;
+}
+
+int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
+{
+    RT_CK_DB_INTERNAL(ip);
+    if (ip->idb_type != ID_BREP) {
+	if (log) bu_vls_printf(log, "Object is not a brep.\n");
+	return 0;
+    }
+    struct rt_brep_internal *bi = (struct rt_brep_internal *)ip->idb_ptr;
+    ON_wString s;
+    ON_TextLog dump(s);
+    if (bi == NULL || bi->brep == NULL) {
+	if (log) bu_vls_printf(log, "Error: No ON_Brep object present.\n");
+	return 0;
+    }
+    if (!bi->brep->IsValid(&dump)) {
+	ON_String ss = s;
+	if (log) bu_vls_printf(log, "%s\nbrep NOT valid\n", ss.Array());
+	return 0;
+    } else {
+	if (log) bu_vls_printf(log, "\nbrep is valid\n");
+	return 1;
+    }
     return 0;
 }
 

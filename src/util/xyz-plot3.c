@@ -1,7 +1,7 @@
 /*                     X Y Z - P L O T 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,10 +29,9 @@
 
 #include <stdio.h>
 
-#include "bu.h"
 #include "vmath.h"
-#include "plot3.h"
-
+#include "bn/plot3.h"
+#include "bu/log.h"
 
 int
 main(int argc, char *argv[])

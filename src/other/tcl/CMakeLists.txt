@@ -44,6 +44,10 @@ IF(COMMAND CMAKE_POLICY)
 	  CMAKE_POLICY(SET CMP0026 OLD)
 	  CMAKE_POLICY(SET CMP0048 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+	  CMAKE_POLICY(SET CMP0053 OLD)
+	  CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -153,11 +157,19 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 # Windows specific flags
-IF(WIN32)
+IF(MSVC)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline -DBUILD_tcl)
-ENDIF(WIN32)
+ENDIF(MSVC)
+
+IF(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
+  add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
+  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+ENDIF(MINGW)
 
 IF(APPLE)
   ADD_TCL_CFLAG(MAC_OSX_TCL)
@@ -282,13 +294,13 @@ add_definitions(-DYYENABLE_NLS=0)
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
 # Test endianness 
-IF(NOT MSVC)
+IF(NOT WIN32)
   INCLUDE(TestBigEndian)
   TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
   IF(WORDS_BIGENDIAN)
     ADD_TCL_CFLAG(WORDS_BIGENDIAN)
   ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT MSVC)
+ENDIF(NOT WIN32)
 
 #--------------------------------------------------------------------
 #       Supply substitutes for missing POSIX library procedures, or
@@ -504,7 +516,9 @@ WIFEXITED(x);           /* Generates compiler error if WIFEXITED
 return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+if(NOT DEFINED HAVE_UNION_WAIT)
+   CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+endif(NOT DEFINED HAVE_UNION_WAIT)
 IF(NOT HAVE_UNION_WAIT)
   ADD_TCL_CFLAG(NO_UNION_WAIT)
 ENDIF(NOT HAVE_UNION_WAIT)
@@ -551,7 +565,9 @@ main ()
    return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+if(NOT DEFINED CHAR_IS_UNSIGNED)
+   CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+endif(NOT DEFINED CHAR_IS_UNSIGNED)
 IF(CHAR_IS_UNSIGNED)
   ADD_TCL_CFLAG(__CHAR_UNSIGNED__)
 ENDIF(CHAR_IS_UNSIGNED)
@@ -591,7 +607,9 @@ int main () {
 	return 0;
 }
 ")
-CHECK_C_SOURCE_RUNS("${isnan_srcs}" USABLE_ISNAN)
+if(NOT DEFINED USABLE_ISNAN)
+  CHECK_C_SOURCE_RUNS("${isnan_srcs}" USABLE_ISNAN)
+endif(NOT DEFINED USABLE_ISNAN)
 IF(NOT USABLE_ISNAN)
   ADD_TCL_CFLAG(NO_ISNAN)
 ENDIF(NOT USABLE_ISNAN)
@@ -715,7 +733,9 @@ int foo;
 return StackGrowsUp(&foo);
 }
 ")
-CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
+if(NOT DEFINED STACK_GROWS_UP)
+  CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
+endif(NOT DEFINED STACK_GROWS_UP)
 IF(STACK_GROWS_UP)
   ADD_TCL_CFLAG(TCL_STACK_GROWS_UP)
 ENDIF(STACK_GROWS_UP)
@@ -1015,8 +1035,12 @@ ELSE(WIN32)
   SET(TCLSH_SRCS unix/tclAppInit.c)
 ENDIF(WIN32)
 
+IF(MINGW)
+  set(TCL_MINGW_LIBS ws2_32)
+ENDIF(MINGW)
+
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}

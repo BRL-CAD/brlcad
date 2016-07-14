@@ -1,7 +1,7 @@
 /*                          H A S H . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,11 @@
 #include "bu/hash.h"
 
 unsigned long
-bu_hash(const unsigned char *str, int len)
+bu_hash(const unsigned char *str, size_t len)
 {
     unsigned long hash = 5381;
-    int i, c;
+    size_t i;
+    unsigned char c;
 
     for (i=0; i<len; i++) {
 	c = *str;

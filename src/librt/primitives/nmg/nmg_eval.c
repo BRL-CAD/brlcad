@@ -1,7 +1,7 @@
 /*                      N M G _ E V A L . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,7 +30,6 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
@@ -641,7 +640,7 @@ nmg_eval_plot(struct nmg_bool_state *bs, int num)
 	} else {
 	    bu_log("null nmg_vlblock_anim_upcall, no animation\n");
 	}
-	rt_vlblock_free(vbp);
+	bn_vlblock_free(vbp);
     }
 }
 

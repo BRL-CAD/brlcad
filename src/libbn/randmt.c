@@ -33,7 +33,7 @@
 
 #include "bu/log.h"
 #include "bu/malloc.h"
-#include "bn.h"
+#include "bn/randmt.h"
 
 /* Period parameters */
 #define N 624

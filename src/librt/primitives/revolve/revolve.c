@@ -1,7 +1,7 @@
 /*                           R E V O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,9 +33,11 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "db.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 
 /* local interface header */
@@ -1211,7 +1213,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     vect_t ell[16], cir[16], ucir[16], height, xdir, ydir, ux, uy, uz, rEnd, xEnd, yEnd;
     fastf_t cos22_5 = 0.9238795325112867385;
     fastf_t cos67_5 = 0.3826834323650898373;
-    int *endcount = NULL;
+    int *endcount = NULL, ang_sign;
     point_t add, add2, add3;
 
     BU_CK_LIST_HEAD(vhead);
@@ -1224,7 +1226,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     crv = &rip->skt->curve;
 
     if (rip->ang < M_2PI) {
-	narc = ceil(rip->ang * 8 * M_1_PI);
+	narc = ceil(fabs(rip->ang * 8 * M_1_PI));
     } else {
 	narc = 16;
     }
@@ -1242,11 +1244,12 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VUNITIZE(uz);
 
     /* setup unit circle to be scaled */
+    ang_sign = rip->ang < 0 ? -1 : 1;
     VMOVE(ucir[ 0], ux);
     VREVERSE(ucir[ 8], ucir[0]);
 
     VSCALE(xdir, ux, cos22_5);
-    VSCALE(ydir, uy, cos67_5);
+    VSCALE(ydir, uy, ang_sign * cos67_5);
     VADD2(ucir[ 1], xdir, ydir);
     VREVERSE(ucir[ 9], ucir[1]);
     VREVERSE(xdir, xdir);
@@ -1254,7 +1257,7 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     VREVERSE(ucir[15], ucir[7]);
 
     VSCALE(xdir, ux, M_SQRT1_2);
-    VSCALE(ydir, uy, M_SQRT1_2);
+    VSCALE(ydir, uy, ang_sign * M_SQRT1_2);
     VADD2(ucir[ 2], xdir, ydir);
     VREVERSE(ucir[10], ucir[2]);
     VREVERSE(xdir, xdir);
@@ -1263,14 +1266,15 @@ rt_revolve_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
 
 
     VSCALE(xdir, ux, cos67_5);
-    VSCALE(ydir, uy, cos22_5);
+    VSCALE(ydir, uy, ang_sign * cos22_5);
     VADD2(ucir[ 3], xdir, ydir);
     VREVERSE(ucir[11], ucir[3]);
     VREVERSE(xdir, xdir);
     VADD2(ucir[ 5], xdir, ydir);
     VREVERSE(ucir[13], ucir[5]);
 
-    VMOVE(ucir[ 4], uy);
+    VSCALE(ydir, uy, ang_sign);
+    VMOVE(ucir[ 4], ydir);
     VREVERSE(ucir[12], ucir[4]);
 
     /* find open endpoints, and determine which points are used */

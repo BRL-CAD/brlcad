@@ -1,7 +1,7 @@
 /*                      S S A M P - B W . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,7 +30,8 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/debug.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"

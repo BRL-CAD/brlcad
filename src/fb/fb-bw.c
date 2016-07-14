@@ -1,7 +1,7 @@
 /*                         F B - B W . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,13 +28,11 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
-
-#include "bu.h"
+#include "bu/color.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "vmath.h"
 #include "fb.h"
 
 
@@ -137,11 +135,9 @@ main(int argc, char **argv)
 
     /* determine "reasonable" behavior */
     xin = fb_getwidth(fbp) - scr_xoff;
-    if (xin < 0) xin = 0;
-    if (xin > width) xin = width;
+    CLAMP(xin, 0, width);
     yin = fb_getheight(fbp) - scr_yoff;
-    if (yin < 0) yin = 0;
-    if (yin > height) yin = height;
+    CLAMP(yin, 0, height);
 
     for (y = scr_yoff; y < scr_yoff + yin; y++) {
 	size_t ret;

@@ -1,7 +1,7 @@
 /*                            F B . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -54,9 +54,11 @@
 #if defined(HAVE_SYS_TIME_H)
 #  include <sys/time.h>
 #endif
-#include "bio.h" /* for fd_set on Windows */
 
-#include "bu/bu_tcl.h"
+#include "bsocket.h"
+#include "bio.h"
+
+#include "tcl.h"
 #include "bu/magic.h"
 #include "bu/vls.h"
 
@@ -76,7 +78,6 @@ typedef unsigned char RGBpixel[3];
  * left-justified in a short.  Think of this as fixed-point values
  * from 0 to 1.
  */
-/* FIXME: ColorMap is same as RLEColorMap defined in 'orle.h' */
 typedef struct {
     unsigned short cm_red[256];
     unsigned short cm_green[256];
@@ -209,7 +210,9 @@ FB_EXPORT extern const char *fb_version(void);
 
 /* To avoid breaking things too badly, temporarily expose
  * what is now internal API */
-#include "../src/libfb/fb_private.h"
+#ifdef EXPOSE_FB_HEADER
+#  include "../src/libfb/fb_private.h"
+#endif
 
 typedef struct fb_internal FBIO;
 

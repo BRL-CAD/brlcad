@@ -25,12 +25,12 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">Asc2dsp</emphasis> converts ASCII (decimal
+      <command>asc2dsp</command> converts ASCII (decimal
       integer) cell (point) files to the binary form of a file in
       BRL-CAD's dsp format.  Pixels are defined by
       whitespace-delimited, unsigned decimal integers in the range 0
       to 2^16-1 (65535).  The output file is in dsp binary format (one
-      network unsigned short int per cell (point).
+      network unsigned short int per cell (point)).
     </para>
 
     <para>The grid is oriented in the X-Y plane where width is in the
@@ -63,7 +63,7 @@
     <para>
       <citerefentry><refentrytitle>tac</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>mged</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>.
+      <citerefentry><refentrytitle>dsp</refentrytitle><manvolnum>5</manvolnum></citerefentry>
     </para>
   </refsection>
 
@@ -79,7 +79,7 @@
   </refsection>
 
   <refsection xml:id="copyright"><title>COPYRIGHT</title>
-  <para>This software is Copyright (c) 2012-2014 United States Government as
+  <para>This software is Copyright (c) 2012-2016 United States Government as
   represented by the U.S. Army Research Laboratory.</para>
   </refsection>
 

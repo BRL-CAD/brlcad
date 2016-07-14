@@ -1,7 +1,7 @@
 /*                       T E A _ N M G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,8 +33,8 @@
 #include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "nmg.h"
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
+#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 #include "./tea.h"		/* Teapot Data */

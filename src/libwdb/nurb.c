@@ -1,7 +1,7 @@
 /*                          N U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,18 +27,16 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "bn.h"
-#include "nurb.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 

@@ -1,7 +1,7 @@
 /*                         C O L O R . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -211,6 +211,45 @@ bu_str_to_rgb(char *str, unsigned char *rgb)
     }
 
     VSET(rgb, (fastf_t)r, (fastf_t)g, (fastf_t)b);
+
+    return 1;
+}
+
+int
+bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+{
+    unsigned int r, g, b;
+    if (UNLIKELY(!cp || !rgb)) {
+	return 0;
+    }
+    r = (unsigned int)cp->buc_rgb[RED];
+    g = (unsigned int)cp->buc_rgb[GRN];
+    b = (unsigned int)cp->buc_rgb[BLU];
+
+    rgb[0] = (unsigned char)r;
+    rgb[1] = (unsigned char)g;
+    rgb[2] = (unsigned char)b;
+
+    return 1;
+}
+
+
+int
+bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb)
+{
+    unsigned int r, g, b;
+    if (UNLIKELY(!cp || !rgb)) {
+	return 0;
+    }
+
+    r = (unsigned int)rgb[RED];
+    g = (unsigned int)rgb[GRN];
+    b = (unsigned int)rgb[BLU];
+
+
+    cp->buc_rgb[RED] = (fastf_t)r;
+    cp->buc_rgb[GRN] = (fastf_t)g;
+    cp->buc_rgb[BLU] = (fastf_t)b;
 
     return 1;
 }

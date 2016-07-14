@@ -1,7 +1,7 @@
 /*                 B U _ O P T _ P A R S E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,11 +25,13 @@
 #include <cstring> // for strdup
 #include "bio.h"
 
-/* #include "bu.h" */
 #include "vmath.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 #include "bn.h"
 
-#include "bu_arg_parse_private.h" /* includes bu_arg_parse.h which includes bu.h */
+#include "bu_arg_parse_private.h"
 
 #include <vector>
 #include <string>
@@ -90,33 +92,33 @@ _handle_UnlabeledValueArg(bu_arg_unlabeled_value_t *a, CmdLine &cmd)
   Arg *A = 0;
   switch (val_type) {
       case BU_ARG_BOOL: {
-        bool val = bu_str_true(a->def_val);
+        bool val = bu_str_true(a->def_val) != 0;
         type_desc = "bool";
-        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<bool>(a->name, a->desc, a->req == BU_ARG_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_DOUBLE: {
         double val = strtod(a->def_val, NULL);
         type_desc = "double";
-        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<double>(a->name, a->desc, a->req == BU_ARG_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_LONG: {
         long val = strtol(a->def_val, NULL, 10);
         type_desc = "long";
-        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<long>(a->name, a->desc, a->req == BU_ARG_REQUIRED, val, type_desc);
       }
         break;
       case BU_ARG_STRING: {
         string val = a->def_val;
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req == BU_ARG_REQUIRED, val, type_desc);
       }
         break;
       default: {
         string val = a->def_val;
         type_desc = "string";
-        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req, val, type_desc);
+        A = new UnlabeledValueArg<string>(a->name, a->desc, a->req == BU_ARG_REQUIRED, val, type_desc);
       }
         break;
   }

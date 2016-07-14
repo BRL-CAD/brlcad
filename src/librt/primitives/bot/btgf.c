@@ -1,7 +1,7 @@
 /*                    B T G F . C
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
 #define TIE_PRECISION 0
 
 #include "raytrace.h"
-#include "rtgeom.h"
-#include "tie.h"
+#include "rt/geom.h"
+#include "rt/tie.h"
 #include "btg.h"
 
 #include "tie.c"

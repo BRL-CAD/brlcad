@@ -1,7 +1,7 @@
 /*                        P O L Y B I N O U T . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,10 +23,9 @@
 #include <string.h>
 #include <math.h>
 #include <signal.h>
-#include "bio.h"
 
 #include "vmath.h"
-#include "mater.h"
+#include "raytrace.h"
 
 
 #include "ged.h"

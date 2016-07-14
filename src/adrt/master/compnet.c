@@ -1,7 +1,7 @@
 /*                       C O M P N E T . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -24,7 +24,6 @@
 /* interface header */
 #include "compnet.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SYS_SOCKET_H
@@ -41,7 +40,7 @@
 #endif
 #include "bio.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "tienet.h"
 

@@ -1,7 +1,7 @@
 /*                           E B M . C
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,21 +30,20 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <ctype.h>
 #include <math.h>
 #include <string.h>
 #include <ctype.h>
 #include "bio.h"
 
-#include "tcl.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "../fixpt.h"
+#include "../../librt_private.h"
 
 
 struct rt_ebm_specific {
@@ -1637,11 +1636,8 @@ rt_ebm_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc, co
 	    int len = 16;
 	    fastf_t array[16];
 	    fastf_t *ar_ptr;
-
-	    /*XXX needs list_to_fastf_array function */
 	    ar_ptr = array;
-
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &ar_ptr, &len) != len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &ar_ptr, &len) != len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coefficients for matrix\n");
 		return BRLCAD_ERROR;
 	    }
@@ -1664,7 +1660,7 @@ rt_ebm_form(struct bu_vls *logstr, const struct rt_functab *ftp)
 
     bu_vls_printf(logstr, "F %%s W %%d N %%d H %%f M { %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f %%f }");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 
 }
 

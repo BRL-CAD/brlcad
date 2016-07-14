@@ -1,7 +1,7 @@
 /*                       P I X - P P M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,10 +28,12 @@
 #include "common.h"
 
 #include <stdlib.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 #include "bn.h"
 #include "fb.h"
 
@@ -80,9 +82,7 @@ get_args(int argc, char *argv[], long *width, long *height)
 		break;
 	    }
 
-	    case '?':
-	    case 'h':
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -159,8 +159,8 @@ main(int argc, char *argv[])
     long int file_width = 512L; /* default input width */
     long int file_height = 512L; /* default input height */
 
-    char usage[] = "Usage: pix-ppm [-a] [-#bytes] [-w file_width] [-n file_height]\n\
-	[-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
+    char usage[] = "Usage: pix-ppm [-a] [-# bytes_per_pixel] [-w file_width] [-n file_height]\n\
+               [-s square_file_size] [-o file.ppm] [file.pix] [> file.ppm]";
 
     long size;
 

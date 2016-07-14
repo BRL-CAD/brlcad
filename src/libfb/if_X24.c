@@ -20,7 +20,7 @@
  * IS ON AN "AS IS" BASIS, AND SUN MICROSYSTEMS INC. HAS NO OBLIGATION TO
  * PROVIDE MAINTENANCE, SUPPORT, UPDATES, ENHANCEMENTS, OR MODIFICATIONS.
  */
-/** @addtogroup if */
+/** @addtogroup libfb */
 /** @{*/
 /** @file if_X24.c
  *
@@ -39,9 +39,6 @@
 #include <time.h>
 #include <sys/types.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>
 #endif
@@ -72,7 +69,6 @@
 #include <X11/Xatom.h>
 
 #include <ctype.h>
-#include "bio.h"
 
 #include "bu/color.h"
 #include "bu/file.h"

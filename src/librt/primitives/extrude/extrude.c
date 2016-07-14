@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,17 +31,16 @@
 #include <stdio.h>
 #include <math.h>
 #include <string.h>
-#include "bin.h"
+#include "bnetwork.h"
 
-#include "tcl.h"
 #include "bu/cv.h"
 #include "bu/debug.h"
 #include "vmath.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 #include "../../librt_private.h"
 
@@ -50,6 +49,7 @@ extern int seg_to_vlist(struct bu_list *vhead, const struct rt_tess_tol *ttol, p
 			vect_t u_vec, vect_t v_vec, struct rt_sketch_internal *sketch_ip, void *seg);
 
 extern void rt_sketch_surf_area(fastf_t *area, const struct rt_db_internal *ip);
+extern void rt_sketch_centroid(point_t *cent, const struct rt_db_internal *ip);
 
 struct extrude_specific {
     mat_t rot, irot;	/* rotation and translation to get extrusion vector in +z direction with V at origin */
@@ -1362,6 +1362,17 @@ rt_extrude_curve(struct curvature *cvp, struct hit *hitp, struct soltab *stp)
     }
 }
 
+void
+rt_extrude_uv(struct application *ap, struct soltab *stp, register struct hit *hitp, register struct uvcoord *uvp)
+{
+    if (ap) RT_CK_APPLICATION(ap);
+    if (stp) RT_CK_SOLTAB(stp);
+
+    uvp->uv_u = hitp->hit_vpriv[X];
+    uvp->uv_v = hitp->hit_vpriv[Y];
+    uvp->uv_du = 0;
+    uvp->uv_dv = 0;
+}
 
 void
 rt_extrude_free(struct soltab *stp)
@@ -1460,6 +1471,28 @@ rt_extrude_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct r
     }
 
     return 0;
+}
+
+void
+rt_extrude_centroid(point_t *cent, const struct rt_db_internal *ip)
+{
+    struct rt_extrude_internal *eip;
+    struct rt_sketch_internal *skt;
+    struct rt_db_internal db_skt;
+    point_t skt_cent;
+    point_t middle_h;
+    eip = (struct rt_extrude_internal *)ip->idb_ptr;
+    RT_EXTRUDE_CK_MAGIC(eip);
+    skt = eip->skt;
+    RT_SKETCH_CK_MAGIC(skt);
+
+    RT_DB_INTERNAL_INIT(&db_skt);
+    db_skt.idb_ptr = (void *)skt;
+
+    rt_sketch_centroid(&skt_cent, &db_skt);
+
+    VSCALE(middle_h, eip->h, 0.5);
+    VADD2(*cent, skt_cent, middle_h);
 }
 
 
@@ -2745,20 +2778,20 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 
 	if (*argv[0] == 'V') {
 	    newval = extr->V;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vertex\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'H') {
 	    newval = extr->h;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }
 	} else if (*argv[0] == 'A') {
 	    newval = extr->u_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) !=
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) !=
 		array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
@@ -2770,7 +2803,7 @@ rt_extrude_adjust(struct bu_vls *logstr, struct rt_db_internal *intern, int argc
 	    VSCALE(extr->v_vec, extr->v_vec, len);
 	} else if (*argv[0] == 'B') {
 	    newval = extr->v_vec;
-	    if (tcl_list_to_fastf_array(brlcad_interp, argv[1], &newval, &array_len) != array_len) {
+	    if (_rt_tcl_list_to_fastf_array(argv[1], &newval, &array_len) != array_len) {
 		bu_vls_printf(logstr, "ERROR: incorrect number of coordinates for vector\n");
 		return BRLCAD_ERROR;
 	    }

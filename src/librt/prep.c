@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,7 @@
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern void rt_ck(struct rt_i *rtip);
@@ -444,6 +444,86 @@ rt_prep(register struct rt_i *rtip)
 }
 
 
+#ifdef USE_OPENCL
+void
+clt_prep(struct rt_i *rtip)
+{
+    struct soltab *stp;
+    long i;
+
+    struct soltab **primitives;
+    long n_primitives;
+
+    RT_CK_RTI(rtip);
+
+    n_primitives = rtip->nsolids+1;
+    primitives = (struct soltab **)bu_calloc(n_primitives,
+        sizeof(struct soltab *), "primitives");
+
+    i = 0;
+    RT_VISIT_ALL_SOLTABS_START(stp, rtip) {
+        /* Ignore "dead" solids in the list.  (They failed prep) */
+        if (stp->st_aradius <= 0) continue;
+        /* Infinite solids make the BVH construction explode. */
+        if (stp->st_aradius >= INFINITY) continue;
+
+        primitives[i++] = stp;
+    } RT_VISIT_ALL_SOLTABS_END;
+
+    n_primitives = i;
+
+    if (n_primitives != 0) {
+        /* Build BVH tree for primitives */
+        cl_int total_nodes = 0;
+	struct clt_linear_bvh_node *nodes;
+	long *ordered_prims;
+	fastf_t *centroids;
+	fastf_t *bounds;
+
+	centroids = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*3, "centroids");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&centroids[i*3], primitive->st_center);
+	}
+	bounds = (fastf_t*)bu_calloc(n_primitives, sizeof(fastf_t)*6, "bounds");
+	for (i=0; i<n_primitives; i++) {
+	    const struct soltab *primitive = primitives[i];
+	    VMOVE(&bounds[i*6+0], primitive->st_min);
+	    VMOVE(&bounds[i*6+3], primitive->st_max);
+	}
+
+	ordered_prims = NULL;
+	nodes = NULL;
+	clt_linear_bvh_create(n_primitives, &nodes, &ordered_prims, centroids, bounds,
+			      &total_nodes);
+
+	bu_free(bounds, "bounds");
+	bu_free(centroids, "centroids");
+
+        clt_db_store_bvh(total_nodes, nodes);
+	bu_free(nodes, "nodes");
+
+	if (ordered_prims) {
+	    struct soltab **ordered_primitives;
+
+	    ordered_primitives = (struct soltab **)bu_calloc(n_primitives,
+							     sizeof(struct soltab *),
+							     "ordered primitives");
+	    for (i=0; i<n_primitives; i++) {
+		ordered_primitives[i] = primitives[ordered_prims[i]];
+	    }
+	    bu_free(ordered_prims, "ordered prims");
+	    bu_free(primitives, "primitives");
+	    primitives = ordered_primitives;
+	}
+
+	clt_db_store(n_primitives, primitives);
+	bu_free(primitives, "ordered primitives");
+    }
+}
+#endif
+
+
 /**
  * Plot the bounding boxes of all the active solids.  Color may be set
  * in advance by the caller.
@@ -642,14 +722,13 @@ rt_init_resource(struct resource *resp,
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
-    {
+    if (resp != &rt_uniresource) {
 	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
 		   (void *)ores,
 		   (void *)resp);
-	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
     }
@@ -1072,7 +1151,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
     RT_CK_RESOURCE(resp);
 
     while ((sp = resp->re_boolstack) == (union tree **)0)
-	rt_grow_boolstack(resp);
+	rt_bool_growstack(resp);
     stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 
     *sp++ = TREE_NULL;
@@ -1096,7 +1175,7 @@ rt_solid_bitfinder(register union tree *treep, struct region *regp, struct resou
 		*sp++ = treep->tr_b.tb_left;
 		if (sp >= stackend) {
 		    register int off = sp - resp->re_boolstack;
-		    rt_grow_boolstack(resp);
+		    rt_bool_growstack(resp);
 		    sp = &(resp->re_boolstack[off]);
 		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
 		}

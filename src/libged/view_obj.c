@@ -1,7 +1,7 @@
 /*                      V I E W _ O B J . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,13 +31,13 @@
 
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
 #include "tcl.h"
 
 
 #include "bn.h"
 #include "bu/cmd.h"
+#include "bu/units.h"
 #include "vmath.h"
 #include "ged.h"
 #include "obj.h"
@@ -62,6 +62,11 @@ vo_deleteProc(void *clientData)
     BU_PUT(vop, struct view_obj);
 }
 
+HIDDEN void
+_vo_eval(void *context, const char *cmd) {
+    Tcl_Interp *interp = (Tcl_Interp *)context;
+    Tcl_Eval(interp, cmd);
+}
 
 void
 vo_update(struct view_obj *vop,
@@ -107,7 +112,7 @@ vo_update(struct view_obj *vop,
     if (vop->vo_callback)
 	(*vop->vo_callback)(vop->vo_clientData, vop);
     else if (oflag)
-	bu_observer_notify(vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name));
+	bu_observer_notify((void *)vop->interp, &vop->vo_observers, bu_vls_addr(&vop->vo_name), &(_vo_eval));
 }
 
 

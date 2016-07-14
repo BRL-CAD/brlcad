@@ -1,7 +1,7 @@
 /*                       D S P _ A D D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,11 +31,15 @@
 #include <sys/stat.h>
 #include "bio.h"
 
-/* #include "bu.h" */
 #include "vmath.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 #include "bn.h"
 
-#include "bu_arg_parse.h" /* includes bu.h */
+#include "bu_arg_parse.h"
 
 /* declarations to support use of TCLAP arg parsing */
 static const char usage[] = "Example: dsp_add  dsp1.dsp  dsp2.dsp  dsp12added.dsp\n";

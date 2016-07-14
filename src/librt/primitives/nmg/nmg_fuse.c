@@ -1,7 +1,7 @@
 /*                      N M G _ F U S E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,6 @@
 #include "common.h"
 
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
@@ -40,7 +39,7 @@
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 extern int debug_file_count;
@@ -1855,7 +1854,6 @@ nmg_break_e_on_v(const uint32_t *magic_p, const struct bn_tol *tol)
 		    continue;
 		}
 
-		/* A good candidate for inline expansion */
 		code = bn_isect_pt_lseg(&dist,
 					va->vg_p->coord,
 					vb->vg_p->coord,
@@ -2226,7 +2224,7 @@ nmg_radial_build_list(struct bu_list *hd, struct bu_ptbl *shell_tbl, int existin
 	    if (rad->ang < -SMALL_FASTF) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be negative\n");
 	    }
-	    if (rad->ang > (M_2PI + SMALL_FASTF)) {
+	    if (rad->ang - M_2PI > SMALL_FASTF) {
 		bu_bomb("nmg_radial_build_list(): fu_angle should not be > 2pi\n");
 	    }
 

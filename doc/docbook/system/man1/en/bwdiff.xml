@@ -30,7 +30,7 @@
 compares two black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format files in one of several ways,
-and writes the results on standard out
+and writes the results on standard out.
 The default method of comparison is to record the differences
 as offsets from neutral, half-intensity grey (128).
 The value written will be brighter than this neutral grey
@@ -109,7 +109,7 @@ gencolor 107 93 70 | bwdiff -e <emphasis remap='I'>file.pix</emphasis> - | pix-f
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1989-2014 by the United States
+<para>This software is Copyright (c) 1989-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 </refsect1>
 

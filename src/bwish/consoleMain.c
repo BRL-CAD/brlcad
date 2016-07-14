@@ -8,8 +8,9 @@
  */
 
 #include "tcl.h"
-#include "bio.h"
 #include <locale.h>
+
+#include "bu.h"
 
 /*
  * The following #if block allows you to change the AppInit function by

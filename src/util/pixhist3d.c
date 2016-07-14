@@ -1,7 +1,7 @@
 /*                     P I X H I S T 3 D . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,14 +33,14 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
+#include "bu/color.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "fb.h"
-#include "bu.h"
-
 
 /*
- * Smallest non-zero value we will plot.
+ * THRESH (defined below): smallest non-zero value we will plot.
  * i.e. all non-zero points less than this will be drawn at this
  * intensity so that they will be visible.
  */
@@ -65,6 +65,8 @@ main(int argc, char **argv)
     int n;
 
     if (argc > 1) {
+	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
+	    bu_exit(2, "%s", Usage);
 	if ((fp = fopen(argv[1], "r")) == NULL) {
 	    fprintf(stderr, "%s", Usage);
 	    bu_exit(1, "pixhist3d: can't open \"%s\"\n", argv[1]);

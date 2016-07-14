@@ -1,7 +1,7 @@
 /*                      A N I M _ F L Y . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,9 +35,11 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
 #include <stdlib.h>
-#include "anim.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bn/anim.h"
 #include "vmath.h"
 
 
@@ -107,8 +109,8 @@ bank(fastf_t *acc, fastf_t *vel)
 
     cross *= magic_factor;
 
-    if (cross > 90) cross = 90;
-    if (cross < -90) cross = -90;
+    CLAMP(cross, -90, 90);
+
     return cross;
 }
 
@@ -255,8 +257,7 @@ main(int argc, char *argv[])
      * current point. 2n points are stored, minimum enn=2
      */
     enn = (int) (desired_step/stepsize);
-    if (enn>MAXN) enn=MAXN;
-    if (enn<1) enn=1;
+    CLAMP(enn, 1, MAXN);
 
     /* allocate storage */
     points = (fastf_t *) bu_calloc((3*enn+1)*4, sizeof(fastf_t), "points");

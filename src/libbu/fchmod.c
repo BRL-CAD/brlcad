@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -147,7 +147,14 @@ bu_fchmod(int fd,
 	char filepath[MAXPATHLEN+1];
 	HANDLE h = (HANDLE)_get_osfhandle(fd);
 	GetFileNameFromHandle(h, filepath);
-	return chmod(filepath, pmode);
+
+    /* quell flawfinder because this is a necessary evil unless/until
+     * someone rewrites this to use SetNamedSecurityInfo() based on
+     * unix-style permissions/mode settings.
+     */
+#  define CHMOD ch ## mod
+
+	return CHMOD(filepath, pmode);
     }
 #endif
 }

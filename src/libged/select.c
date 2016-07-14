@@ -1,7 +1,7 @@
 /*                         S E L E C T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 #include "common.h"
 
 #include <string.h>
-#include "bio.h"
 
 
 #include "bu/getopt.h"
@@ -261,18 +260,17 @@ ged_rselect(struct ged *gedp, int argc, const char *argv[])
 	return ret;
     } else {
 	if (pflag)
-
 	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-		    gedp->ged_gvp->gv_rect.y,
-		    gedp->ged_gvp->gv_rect.width,
-		    gedp->ged_gvp->gv_rect.height,
-		    0);
+				     gedp->ged_gvp->gv_rect.y,
+				     gedp->ged_gvp->gv_rect.width,
+				     gedp->ged_gvp->gv_rect.height,
+				     0);
 	else
-	    return dl_select_partial(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
-			       gedp->ged_gvp->gv_rect.y,
-			       gedp->ged_gvp->gv_rect.width,
-			       gedp->ged_gvp->gv_rect.height,
-			       0);
+	    return dl_select(gedp->ged_gdp->gd_headDisplay, gedp->ged_gvp->gv_model2view, gedp->ged_result_str, 				       gedp->ged_gvp->gv_rect.x,
+			     gedp->ged_gvp->gv_rect.y,
+			     gedp->ged_gvp->gv_rect.width,
+			     gedp->ged_gvp->gv_rect.height,
+			     0);
     }
 }
 

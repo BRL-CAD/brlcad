@@ -1,7 +1,7 @@
 /*                         A S C 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,18 +31,20 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
-#include "bio.h"
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/cv.h"
+#include "bu/debug.h"
+#include "bu/vls.h"
+#include "bu/units.h"
 #include "bn.h"
-#include "db.h"
+#include "rt/db4.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "ged.h"
 #include "wdb.h"
-#include "mater.h"
+#include "raytrace.h"
 #include "tclcad.h"
 
 
@@ -100,17 +102,6 @@ nxt_spc(char *cp)
 	cp++;
     }
     return cp;
-}
-
-
-int
-ngran(int nfloat)
-{
-    int gran;
-    /* Round up */
-    gran = nfloat + ((sizeof(union record)-1) / sizeof(float));
-    gran = (gran * sizeof(float)) / sizeof(union record);
-    return gran;
 }
 
 
@@ -184,11 +175,6 @@ strsolbld(void)
     type = strtok_r(NULL, delim, &saveptr);
     name = strtok_r(NULL, delim, &saveptr);
     args = strtok_r(NULL, end_delim, &saveptr);
-#elif defined(HAVE_STRSEP)
-    (void)strsep(&buf2, delim);		/* skip stringsolid_id */
-    type = strsep(&buf2, delim);
-    name = strsep(&buf2, delim);
-    args = strsep(&buf2, end_delim);
 #else
     (void)strtok(buf2, delim);		/* skip stringsolid_id */
     type = strtok(NULL, delim);
@@ -314,7 +300,6 @@ sktbld(void)
 	bu_exit(-1, "Unexpected EOF while reading sketch (%s) data\n", name);
 
     verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "verts");
-    cp = buf;
     ptr = strtok(buf, " ");
     if (!ptr)
 	bu_exit(1, "ERROR: no vertices for sketch (%s)\n", name);
@@ -581,7 +566,7 @@ solbld(void)
 	    VUNITIZE(n);
 
 	    /* Prevent illegal torii from floating point fuzz */
-	    if (rad2 > rad1) rad2 = rad1;
+	    V_MIN(rad2, rad1);
 
 	    mk_tor(ofp, NAME, center, n, rad1, rad2);
 	    break;
@@ -754,11 +739,13 @@ int
 combbld(void)
 {
     struct bu_list head;
-    char *cp;
-    char *np;
-    int temp_nflag, temp_pflag;
+    char *cp = NULL;
+    char *np = NULL;
+    /* indicators for optional fields */
+    int temp_nflag = 0;
+    int temp_pflag = 0;
 
-    char override;
+    char override = 0;
     char reg_flags;	/* region flag */
     int is_reg;
     short regionid;
@@ -772,9 +759,6 @@ combbld(void)
 
     /* Set all flags initially. */
     BU_LIST_INIT(&head);
-
-    override = 0;
-    temp_nflag = temp_pflag = 0;	/* indicators for optional fields */
 
     cp = buf;
     cp++;			/* ID_COMB */
@@ -1099,7 +1083,7 @@ polyhbld(void)
 	cp = nxt_spc(cp);		/* skip the space */
 
 	fp->npts = (char)atoi(cp);
-	if (fp->npts > pg->max_npts) pg->max_npts = fp->npts;
+	CLAMP(pg->max_npts, fp->npts, pg->npoly * 3);
 
 	for (i = 0; i < 5*3; i++) {
 	    cp = nxt_spc(cp);
@@ -1518,7 +1502,7 @@ gettclblock(struct bu_vls *line, FILE *fp)
 		escapedcr = 0;
 	    }
 	}
-	ret = bu_vls_strlen(line);
+	ret = (int)bu_vls_strlen(line);
     }
     bu_vls_free(&tmp);
 
@@ -1559,8 +1543,8 @@ main(int argc, char *argv[])
 
     while (isComment) {
 	char *str;
-	int charIndex;
-	int len;
+	size_t charIndex;
+	size_t len;
 	bu_vls_trunc(&line, 0);
 	if (bu_vls_gets(&line, ifp) < 0) {
 	    fclose(ifp); ifp = NULL;

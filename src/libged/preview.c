@@ -1,7 +1,7 @@
 /*                         P R E V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,10 +29,10 @@
 #include <ctype.h>
 #include <string.h>
 #include <time.h>
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
 #include "bu/cmd.h"
+#include "bu/getopt.h"
 
 #include "./ged_private.h"
 
@@ -433,7 +433,7 @@ ged_preview(struct ged *gedp, int argc, const char *argv[])
 	_ged_cvt_vlblock_to_solids(gedp, preview_vbp, "EYE_PATH", 0);
 
     if (preview_vbp) {
-	rt_vlblock_free(preview_vbp);
+	bn_vlblock_free(preview_vbp);
 	preview_vbp = (struct bn_vlblock *)NULL;
     }
     db_free_anim(gedp->ged_wdbp->dbip);	/* Forget any anim commands */

@@ -1,7 +1,7 @@
 /*                          I R - X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,12 +36,16 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <math.h>
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "vmath.h"
 
 
 #define MAXFIL 26		/* Maximum number of char in file name.  */
@@ -399,8 +403,8 @@ main (int argc, char **argv)
 		min = pixval[j][i];
 		max = pixval[j][i];
 	    }
-	    if (min > pixval[j][i]) min = pixval[j][i];
-	    if (max < pixval[j][i]) max = pixval[j][i];
+	    V_MIN(min, pixval[j][i]);
+	    V_MAX(max, pixval[j][i]);
 	}
     }
 

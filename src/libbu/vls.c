@@ -1,7 +1,7 @@
 /*                           V L S . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -201,7 +201,7 @@ bu_vls_trunc(struct bu_vls *vp, int len)
 
     if (len < 0) {
 	/* now an absolute length */
-	len = vp->vls_len + len;
+	len = (int)vp->vls_len + len;
     }
     if (vp->vls_len <= (size_t)len)
 	return;
@@ -572,7 +572,7 @@ bu_vls_write(int fd, const struct bu_vls *vp)
 	return;
 
     bu_semaphore_acquire(BU_SEM_SYSCALL);
-    status = write(fd, vp->vls_str + vp->vls_offset, vp->vls_len);
+    status = write(fd, vp->vls_str + vp->vls_offset, (size_t)vp->vls_len);
     bu_semaphore_release(BU_SEM_SYSCALL);
 
     if (UNLIKELY(status < 0 || (size_t)status != vp->vls_len)) {
@@ -620,8 +620,8 @@ bu_vls_read(struct bu_vls *vp, int fd)
 int
 bu_vls_gets(struct bu_vls *vp, FILE *fp)
 {
-    int startlen;
-    int endlen;
+    size_t startlen;
+    size_t endlen;
     int done;
     char *bufp;
     char buffer[BUFSIZ+1] = {0};
@@ -631,25 +631,33 @@ bu_vls_gets(struct bu_vls *vp, FILE *fp)
     startlen = bu_vls_strlen(vp);
 
     do {
+	size_t buflen;
+
 	bufp = bu_fgets(buffer, BUFSIZ+1, fp);
 
 	if (!bufp)
 	    return -1;
 
+	/* an empty parse means we're done */
+	buflen = strlen(bufp);
+	if (buflen == 0) {
+	    break;
+	}
+
 	/* keep reading if we just filled the buffer */
-	if ((strlen(bufp) == BUFSIZ) && (bufp[BUFSIZ-1] != '\n') && (bufp[BUFSIZ-1] != '\r')) {
+	if ((buflen == BUFSIZ) && (bufp[BUFSIZ-1] != '\n') && (bufp[BUFSIZ-1] != '\r')) {
 	    done = 0;
 	} else {
 	    done = 1;
 	}
 
 	/* strip the trailing EOL (or at least part of it) */
-	if ((bufp[strlen(bufp)-1] == '\n') || (bufp[strlen(bufp)-1] == '\r'))
-	    bufp[strlen(bufp)-1] = '\0';
+	if ((bufp[buflen-1] == '\n') || (bufp[buflen-1] == '\r'))
+	    bufp[buflen-1] = '\0';
 
 	/* handle \r\n lines */
-	if (bufp[strlen(bufp)-1] == '\r')
-	    bufp[strlen(bufp)-1] = '\0';
+	if (bufp[buflen-1] == '\r')
+	    bufp[buflen-1] = '\0';
 
 	bu_vls_printf(vp, "%s", bufp);
     } while (!done);

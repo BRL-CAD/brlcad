@@ -1,7 +1,7 @@
 /*                    N U R B _ S O L V E . C
  * BRL-CAD
  *
- * Copyright (c) 1983-2014 United States Government as represented by
+ * Copyright (c) 1983-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -35,13 +35,12 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "nurb.h"
+#include "rt/nurb.h"
 
 
 /**
@@ -157,15 +156,14 @@ rt_nurb_doolittle(fastf_t *mat_1, fastf_t *mat_2, int row, int coords)
 	max_pivot = k;
 
 	for (i = k; i < row; i ++) {
-	    /* check to see if rows need */
-	    /* to be swapped */
+	    /* check to see if rows need to be swapped */
 	    ds[i] = d[i] * s[ i * row + k];
 	    if (ds[max_pivot] < ds[i])
 		max_pivot = i;
 	}
 
 	if (max_pivot != k) {
-	    /* yes swap row k with row max_pivot */
+	    /* yes; swap row k with row max_pivot */
 	    for (m = 0; m < row; m++) {
 		tmp = mat_1[k * row + m];
 		mat_1[k * row + m] = mat_1[max_pivot * row + m];

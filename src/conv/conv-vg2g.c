@@ -1,7 +1,7 @@
 /*                     C O N V - V G 2 G . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,7 +26,6 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_SYS_TYPES_H
@@ -36,11 +35,13 @@
 #  include <sys/stat.h>
 #endif
 #include "bio.h"
-#include <fcntl.h>
 
-#include "db.h"
-#include "bu.h"
+#include "rt/db4.h"
 
+#include "bu/file.h"
+#include "bu/malloc.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 int
 main(int argc, char **argv)

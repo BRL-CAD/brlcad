@@ -1,7 +1,7 @@
 /*                        W O R K E R . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
-#include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
@@ -191,8 +190,8 @@ do_pixel(int cpu, int pat_num, int pixelnum)
 	a.a_x <<= (incr_nlevel-incr_level);
 	a.a_y <<= (incr_nlevel-incr_level);
     } else {
-	a.a_y = pixelnum/width;
-	a.a_x = pixelnum - (a.a_y * width);
+	a.a_y = (int)(pixelnum/width);
+	a.a_x = (int)(pixelnum - (a.a_y * width));
 	/* a.a_x = pixelnum%width; */
     }
 
@@ -699,7 +698,7 @@ grid_setup(void)
 void
 do_run(int a, int b)
 {
-    int cpu;
+    size_t cpu;
 
 #ifdef USE_FORKED_THREADS
     int pid, wpid;

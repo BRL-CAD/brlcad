@@ -1,7 +1,7 @@
 /*                          C A D A P P I N I T . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,20 +26,19 @@
 
 #include "common.h"
 
-#include "bin.h"
-#include "bio.h"
+#include "bnetwork.h"
 
 #include "itcl.h"
-
 #ifdef BWISH
 #  include "itk.h"
+#endif
+
+#include "vmath.h"
+#include "bn.h"
+#ifdef BWISH
 #  include "dm.h"
 #  include "fb.h"
 #endif
-
-#include "bu.h"
-#include "vmath.h"
-#include "bn.h"
 #include "ged.h"
 #include "tclcad.h"
 

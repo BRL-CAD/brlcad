@@ -1,10 +1,35 @@
 macro(Regression_Test testname depends_list)
-  add_custom_target(regress-${testname}
-    ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR}
-    DEPENDS ${depends_list}
-    )
+  CMAKE_PARSE_ARGUMENTS(${testname} "EXCLUDE_FROM_REGRESS" "" "" ${ARGN})
+  add_test(NAME regress-${testname} COMMAND ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/${testname}.sh ${CMAKE_SOURCE_DIR})
+  add_custom_target(regress-${testname} COMMAND ${CMAKE_CTEST_COMMAND} -R ^regress-${testname} --output-on-failure)
   set_target_properties(regress-${testname} PROPERTIES FOLDER "BRL-CAD Regression Tests")
+  if(NOT ${testname}_EXCLUDE_FROM_REGRESS)
+    set_tests_properties(regress-${testname} PROPERTIES LABELS "Regression")
+  else(NOT ${testname}_EXCLUDE_FROM_REGRESS)
+    set_tests_properties(regress-${testname} PROPERTIES LABELS "NOT_WORKING")
+  endif(NOT ${testname}_EXCLUDE_FROM_REGRESS)
+  if(NOT "${depends_list}" STREQUAL "")
+    add_dependencies(regress ${depends_list})
+    if(TARGET check)
+      add_dependencies(check ${depends_list})
+    endif(TARGET check)
+  endif(NOT "${depends_list}" STREQUAL "")
 endmacro(Regression_Test)
+
+# Define the toplevel regression target - unless specifically excluded
+# via a macro argument, this should collect all regression targets.
+# TODO - need to generalize it to accommodate regressions not using sh
+include(ProcessorCount)
+ProcessorCount(N)
+if(NOT N EQUAL 0)
+  set(JFLAG "-j${N}")
+else(NOT N EQUAL 0)
+  # Huh?  No j flag if we can't get a processor count
+  set(JFLAG)
+endif(NOT N EQUAL 0)
+add_custom_target(regress COMMAND ${CMAKE_CTEST_COMMAND} -L Regression --output-on-failure --output-log ${CMAKE_BINARY_DIR}/regress_output.log ${JFLAG})
+set_target_properties(regress PROPERTIES EXCLUDE_FROM_DEFAULT_BUILD 1)
+set_target_properties(regress PROPERTIES FOLDER "BRL-CAD Regression Tests")
 
 # Geometry Conversion Regression Tests (experimental)
 add_subdirectory(gcv)
@@ -27,33 +52,19 @@ if(SH_EXEC)
   Regression_Test(gqa "gqa;mged")
   Regression_Test(fastgen "fast4-g;gdiff")
   Regression_Test(bots "mged;pixdiff;rt")
-  Regression_Test(flawfinder "")
+  Regression_Test(flawfinder "" EXCLUDE_FROM_REGRESS)
   Regression_Test(repository "")
   Regression_Test(red mged)
   Regression_Test(nirt "mged;nirt")
   Regression_Test(comgeom "mged;asc2g;vdeck;comgeom-g")
-  #add_custom_target(regress-quote
-  #  ${SH_EXEC} ${CMAKE_SOURCE_DIR}/regress/quote.sh ${CMAKE_SOURCE_DIR}
-  #  DEPENDS test_quote
-  #  )
+  Regression_Test(quote "" EXCLUDE_FROM_REGRESS)
 
   set(rtwizard_deps btclsh rt rtedge fbclear fbserv pix-fb fb-pix pix-bw bw-pix
-    pixmatte asc2g asc2pix pixdiff util_tclIndex util_pkgIndex.tcl
-    rtwizard_lib_tclIndex rtwizard_lib_pkgIndex.tcl rtwizard_tclIndex
-    rtwizard_pkgIndex.tcl rtwizard_TCLSCRIPTS_cp lib_tclIndex
-    lib_pkgIndex.tcl)
-  Regression_Test(rtwizard "${rtwizard_deps}")
+    pixmatte asc2g asc2pix pixdiff rtwizard_TCLSCRIPTS_cp)
+  Regression_Test(rtwizard "${rtwizard_deps}" EXCLUDE_FROM_REGRESS)
 
   Regression_Test(dsp "mged;cv;asc2pix;rt;pix-bw")
   Regression_Test(asc2dsp "cv;asc2pix;pix-bw;asc2dsp")
-
-  add_custom_target(regress
-    DEPENDS regress-mged regress-moss regress-lights
-    regress-solids regress-shaders regress-spdi regress-iges
-    regress-weight regress-gqa regress-fastgen regress-bots
-    regress-repository regress-red regress-nirt
-    regress-comgeom regress-dsp regress-asc2dsp
-    )
 
 endif(SH_EXEC)
 
@@ -439,6 +450,7 @@ set(regress_outfiles
 foreach(outfile ${regress_outfiles})
   set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_CURRENT_BINARY_DIR}/${outfile})
 endforeach(outfile ${regress_outfiles})
+set(regress_outfiles_fullpaths ${regress_outfiles_fullpaths} ${CMAKE_BINARY_DIR}/regress_output.log)
 
 set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${regress_outfiles_fullpaths}")
 

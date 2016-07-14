@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,7 +25,9 @@
 #include <assert.h>
 #include <stdarg.h>
 
-#include "bu.h"
+#include "bu/str.h"
+#include "bu/log.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "fb.h"
@@ -44,7 +46,7 @@ static const char *usage[] =
     "",
     "The options may appear in any order; however, their parameters must",
     "be present, are positional, and if there is more than one parameter",
-    "for an option, they must be supplied as a single argument (e.g.,",
+    "for an option, they must be supplied as a single argument (e.g., ",
     "inside double-quotes as shown).",
     "",
     0
@@ -107,7 +109,7 @@ static const char *lgt_menu[] =
     "y start finish       set bottom and top border of current rectangle",
     "z ulen vlen width    size of texture map (plus width of padded lines)",
     "?                    print this menu",
-    "! arg(s)             feed arg(s) to /bin/sh or $SHELL if set",
+    "! arg(s) feed arg(s) to /bin/sh or $SHELL if set",
     ". flag               set buffered pixel I/O flag",
     "# anything           comment or NOP (useful in preparing input files)",
     NULL
@@ -130,10 +132,11 @@ static const char *ir_menu[] =
     NULL
 };
 
+
 char screen[TOP_SCROLL_WIN+1][TEMPLATE_COLS+1];
 
-/*	pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
-	destination buffer, but pads it with blanks.
+/* pad_Strcpy -- WARNING: this routine does NOT nul-terminate the
+   destination buffer, but pads it with blanks.
 */
 static void
 pad_Strcpy(char *des, char *src, int len)
@@ -147,20 +150,22 @@ pad_Strcpy(char *des, char *src, int len)
     return;
 }
 
+
 void
 init_Status(void)
 {
-    int	row, col;
+    int row, col;
     for (row = 0; row <= TOP_SCROLL_WIN; row++)
 	for (col = 0; col <= TEMPLATE_COLS; col++)
 	    screen[row][col] = '\0';
     return;
 }
 
+
 void
 prnt_Status(void)
 {
-    static char	scratchbuf[TEMPLATE_COLS+1];
+    static char scratchbuf[TEMPLATE_COLS+1];
     pad_Strcpy(TITLE_PTR, title, TITLE_LEN - 1);
     pad_Strcpy(TIMER_PTR, timer, TIMER_LEN - 1);
     pad_Strcpy(F_SCRIPT_PTR, script_file, 32);
@@ -179,12 +184,12 @@ prnt_Status(void)
     sprintf(scratchbuf, "%11.4f", modl_radius);
     bu_strlcpy(MODEL_RA_PTR, scratchbuf, strlen(scratchbuf));
     sprintf(scratchbuf, "%3d %3d %3d",
-	     background[0], background[1], background[2]);
+	    background[0], background[1], background[2]);
     bu_strlcpy(BACKGROU_PTR, scratchbuf, strlen(scratchbuf));
     snprintf(scratchbuf, TEMPLATE_COLS+1,
-	      "%4s",	pix_buffered == B_PAGE ? "PAGE" :
-	      pix_buffered == B_PIO ? "PIO" :
-	      pix_buffered == B_LINE ? "LINE" : "?"
+	     "%4s",	pix_buffered == B_PAGE ? "PAGE" :
+	     pix_buffered == B_PIO ? "PIO" :
+	     pix_buffered == B_LINE ? "LINE" : "?"
 	);
     bu_strlcpy(BUFFERED_PTR, scratchbuf, strlen(scratchbuf));
     sprintf(scratchbuf, "0x%06x", RT_G_DEBUG);
@@ -194,11 +199,11 @@ prnt_Status(void)
     snprintf(scratchbuf, TEMPLATE_COLS+1, " LGT");
     bu_strlcpy(PROGRAM_NM_PTR, scratchbuf, strlen(scratchbuf));
     snprintf(scratchbuf, TEMPLATE_COLS+1, " %s ",
-	      ged_file == NULL ? "(null)" : ged_file);
+	     ged_file == NULL ? "(null)" : ged_file);
     bu_strlcpy(F_GED_DB_PTR, scratchbuf, FMIN(strlen(scratchbuf), 26));
     sprintf(scratchbuf, " [%04d-", grid_x_org);
     bu_strlcpy(GRID_PIX_PTR, scratchbuf, strlen(scratchbuf));
-    sprintf(scratchbuf, "%04d,", grid_x_fin);
+    sprintf(scratchbuf, "%04d, ", grid_x_fin);
     bu_strlcpy(GRID_SIZ_PTR, scratchbuf, strlen(scratchbuf));
     sprintf(scratchbuf, "%04d-", grid_y_org);
     bu_strlcpy(GRID_SCN_PTR, scratchbuf, strlen(scratchbuf));
@@ -210,13 +215,14 @@ prnt_Status(void)
     return;
 }
 
+
 void
 update_Screen(void)
 {
-    int	tem_co, row, col;
+    int tem_co, row, col;
     tem_co = FMIN(co, TEMPLATE_COLS);
     for (row = 0; !BU_STR_EMPTY(screen_template[row]); row++) {
-	int	lastcol = -2;
+	int lastcol = -2;
 
 	if (BU_STR_EMPTY(screen_template[row + 1])) {
 	    SetStandout();
@@ -237,11 +243,12 @@ update_Screen(void)
     return;
 }
 
+
 void
 prnt_Paged_Menu(char **menu)
 {
-    int	done = FALSE;
-    int		lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
+    int done = FALSE;
+    int lines =	(PROMPT_LINE-TOP_SCROLL_WIN);
     if (! tty) {
 	for (; *menu != NULL; menu++)
 	    bu_log("%s\n", *menu);
@@ -258,12 +265,13 @@ prnt_Paged_Menu(char **menu)
     return;
 }
 
+
 int
 do_More(int *linesp)
 {
-    int	ret = TRUE;
+    int ret = TRUE;
     if (! tty)
-	return	TRUE;
+	return TRUE;
     save_Tty(0);
     set_Raw(0);
     clr_Echo(0);
@@ -287,7 +295,7 @@ do_More(int *linesp)
 	    break;
     }
     reset_Tty(0);
-    return	ret;
+    return ret;
 }
 
 
@@ -300,6 +308,7 @@ prnt_Menu(void)
     hmredraw();
     return;
 }
+
 
 void
 prnt_Prompt(const char* prprompt)
@@ -315,6 +324,7 @@ prnt_Prompt(const char* prprompt)
     return;
 }
 
+
 void
 prnt_Timer(const char* eventstr)
 {
@@ -327,11 +337,12 @@ prnt_Timer(const char* eventstr)
     return;
 }
 
+
 void
 prnt_Event(const char* s)
 {
-    static int	lastlen = 0;
-    int	i;
+    static int lastlen = 0;
+    int i;
     if (! tty)
 	return;
     EVENT_MOVE();
@@ -353,6 +364,7 @@ prnt_Event(const char* s)
     return;
 }
 
+
 void
 prnt_Title(const char* titleptr)
 {
@@ -360,6 +372,7 @@ prnt_Title(const char* titleptr)
 	bu_log("%s\n", titleptr == NULL ? "(null)" : titleptr);
     return;
 }
+
 
 void
 prnt_Usage(void)
@@ -370,10 +383,11 @@ prnt_Usage(void)
     return;
 }
 
+
 void
 prnt_Scroll(const char *fmt, ...)
 {
-    va_list		ap;
+    va_list ap;
     /* We use the same lock as malloc.  Sys-call or mem lock, really */
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     va_start(ap, fmt);
@@ -408,6 +422,7 @@ prnt_Scroll(const char *fmt, ...)
     bu_semaphore_release(BU_SEM_SYSCALL);		/* unlock */
     return;
 }
+
 
 /*
  * Local Variables:

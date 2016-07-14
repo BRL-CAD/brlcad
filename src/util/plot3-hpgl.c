@@ -1,7 +1,7 @@
 /*                    P L O T 3 - H P G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,17 +29,23 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 
 
 #define ASPECT (9.8/7.1)
 #define geti(x) { (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
 
+void printusage (const char *name)
+{
+	bu_exit(1, "Usage: %s < infile > outfile\n", name);
+}
 
 int
 main(int argc, char **argv)
@@ -49,7 +55,11 @@ main(int argc, char **argv)
     int c, i, x, y, x1, x2, y1, y2, r, g, b;
 
     if (argc != 1) {
-	bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
+	printusage(argv[0]);
+    }
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	printusage(argv[0]);
     }
 
     getb(c);

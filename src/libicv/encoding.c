@@ -1,7 +1,7 @@
 /*                      E N C O D I N G . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,9 +23,11 @@
  *
  */
 
-#include "bu.h"
 #include "icv.h"
 #include "vmath.h"
+#include "bu/magic.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
 #include "bn.h"
 
 /**
@@ -76,7 +78,7 @@ uchar2double(unsigned char *data, size_t size)
 unsigned char *
 data2uchar(const icv_image_t *bif)
 {
-    long int size;
+    size_t size;
     unsigned char *uchar_data, *char_p;
     double *double_p;
 

@@ -240,18 +240,18 @@ accuracy-oriented ray intersection, geometric analysis, and geometry
 representation library that supports a wide variety of geometric
 forms.  Geometry can be grouped into combinations and regions using
 CSG boolean operations.
-	Depends on: libbn libbu libtcl libregex libm (openNURBS)
+	Depends on: libbn libbu libregex libm (openNURBS)
 
 libbu: The BRL-CAD Utility library contains a wide variety of routines
 for memory allocation, threading, string handling, argument support,
 linked lists, and more.
-	Depends on: libtcl (threading) (malloc)
+	Depends on: (threading) (malloc)
 
 libbn: The BRL-CAD Numerics library provides many floating-point math
 manipulation routines for vector and matrix math, a polynomial
 equation solver, noise functions, random number generators, complex
 number support, and more as well.
-	Depends on: libbu libtcl libm
+	Depends on: libbu libm
 
 libcursor: The cursor library is a lightweight cursor manipulation
 library similar to curses but with less overhead.
@@ -288,11 +288,6 @@ models, as well as various visual effects such as texturing, marble,
 wood graining, air, gravel, grass, clouds, fire, and more.
 	Depends on: librt libbn libbu libtcl
 
-liborle: The "old" run-length encoding library that will decode and
-encode University of Utah Raster Toolkit format Run-Length Encoded
-data.
-	Depends on nothing
-
 libpkg: The "Package" library is a network communications library that
 supports multiplexing and demultiplexing synchronous and asynchronous
 messages across stream connections.  The library supports a
@@ -306,11 +301,6 @@ supports communication with a BRL-CAD geometry repository and
 multithreaded ray dispatch.
 	Depends on: librt libbn libbu libtcl
 	Includes dependent libraries as part of this library
-
-libsysv: The System 5 compatibility library exists to support legacy
-systems that lack functionality required by BRL-CAD.  This library is
-deprecated and should generally not be used for new development.
-	Depends on nothing
 
 libtclcad: The Tcl-CAD library is a thin interface that assists in the
 binding of an image to a Tk graphics context.
@@ -587,6 +577,7 @@ variables should be utilized instead of the standard C facility:
   bu_optind instead of optind
   bu_optopt instead of optopt
   bu_optarg instead of optarg
+  bu_strdup() instead of strdup()
   bu_strlcat() instead of strcat(), strncat(), and strlcat()
   bu_strlcpy() instead of strcpy(), strncpy(), and strlcpy()
   bu_strcmp() and BU_STR_EQUAL() instead of strcmp()
@@ -981,11 +972,11 @@ granted after a contributor demonstrates strong competency with our
 developer guidelines and an existing developer with commit access
 vouches for the new developer.
 
-If you would like to have commit access, there is no need to ask.
-Getting involved with the other contributors and making patches will
-result in automatic consideration for commit access.  That said, the
-following steps represent a minimum that needs to occur in order for
-commit access to be granted:
+If you would like to have commit access, do not ask for it.  Getting
+involved with the other contributors and making patches will result in
+automatic consideration for commit access.  That said, the following
+steps represent a minimum that needs to occur in order for commit
+access to be granted:
 
 1) Read this file completely.
 
@@ -995,7 +986,7 @@ commit access to be granted:
 
 4) Create a SourceForge account, submit at least two patches that
 demonstrate competency with our coding style, apply flawlessly, and
-provide some signficant improvement.
+provide some significant improvement.
 
 5) Get to know the other developers.  One of them will need to vouch
 for your commit access.

@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>poly-bot</emphasis>
+<para><command>poly-bot</command>
 converts all the polysolids in the specified
 <emphasis remap='I'>input_file.g</emphasis>
 (or standard input, if no files are specified)
@@ -41,7 +41,7 @@ This command will only work with database version "v4" (BRL-CAD releases 5.3 and
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>poly-bot polys.g bots.g</emphasis>
+$ poly-bot <emphasis remap='I'>polys.g bots.g</emphasis>
 </synopsis>
 </refsect1>
 
@@ -56,7 +56,7 @@ $ <emphasis remap='I'>poly-bot polys.g bots.g</emphasis>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 2000-2014 by the United States
+<para>This software is Copyright (c) 2000-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

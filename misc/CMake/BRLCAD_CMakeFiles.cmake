@@ -1,7 +1,7 @@
 #          B R L C A D _ C M A K E F I L E S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -65,7 +65,7 @@ macro(CMAKEFILES)
       # make sure the file is there.  Normally attempting to ignore
       # a non-existent file is a fatal error, but these keywords
       # don't necessarily refer to files.
-      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE)
+      set(TARGET_FLAGS SHARED STATIC OBJECT WIN32 UNKNOWN IMPORTED MODULE INTERFACE)
       foreach(TARGET_FLAG ${TARGET_FLAGS})
 	if("${TARGET_FLAG}" STREQUAL "${ITEM}")
 	  if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${ITEM})

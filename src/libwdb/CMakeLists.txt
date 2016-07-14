@@ -16,6 +16,7 @@ set(LIBWDB_SOURCES
   brep.cpp
   cline.c
   constraint.c
+  datum.c
   dsp.c
   dynamic_geometry.c
   ebm.c
@@ -46,7 +47,7 @@ if(CPP_DLL_DEFINES)
 endif(CPP_DLL_DEFINES)
 set_property(GLOBAL PROPERTY libwdb_DEFINES "${libwdb_DEFINES}")
 
-BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libbn;libbu;libsysv;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY}")
+BRLCAD_ADDLIB(libwdb "${LIBWDB_SOURCES}" "librt;libbn;libbu;${OPENNURBS_LIBRARY};${REGEX_LIBRARY};${ZLIB_LIBRARY}")
 set_target_properties(libwdb PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 

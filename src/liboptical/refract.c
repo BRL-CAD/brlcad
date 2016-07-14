@@ -1,7 +1,7 @@
 /*                       R E F R A C T . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,10 +30,9 @@
 #include "bu/sort.h"
 #include "bu/parallel.h"
 #include "vmath.h"
-#include "mater.h"
 #include "raytrace.h"
 #include "optical.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 extern int viewshade(struct application *ap,
@@ -158,7 +157,6 @@ rr_hit(struct application *ap, struct partition *PartHeadp, struct seg *UNUSED(s
      */
 
     if (pp->pt_inhit->hit_dist > 10) {
-	stp = pp->pt_inseg->seg_stp;
 	if (R_DEBUG&RDEBUG_REFRACT)
 	    bu_log("rr_hit: %d, %d %s inhit %g > 10.0! (treating as escaping ray)\n",
 		   ap->a_x, ap->a_y,

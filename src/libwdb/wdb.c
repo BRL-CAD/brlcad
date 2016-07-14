@@ -1,7 +1,7 @@
 /*                           W D B . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -38,15 +38,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -111,7 +109,7 @@ mk_wedge(struct rt_wdb *wdbp, const char *name, const fastf_t *vert, const fastf
     vect_t xvec;	/* x_axis vector */
     vect_t txvec;	/* top x_axis vector */
     vect_t yvec;	/* y-axis vector */
-    vect_t zvec;	/* z-axix vector */
+    vect_t zvec;	/* z-axis vector */
     vect_t x_unitv;	/* x-axis unit vector*/
     vect_t z_unitv;	/* z-axis unit vector */
     vect_t y_unitv;
@@ -388,7 +386,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
 
 
 int
-mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t rad1, fastf_t rad2)
+mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t *dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius)
 {
     vect_t a, avec;	/* one base radius vector */
     vect_t b, bvec;	/* another base radius vector */
@@ -409,10 +407,10 @@ mk_cone(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_
     bn_vec_ortho(a, h_unitv);
     VUNITIZE(a);
     VCROSS(b, h_unitv, a);
-    VSCALE(avec, a, rad1);
-    VSCALE(bvec, b, rad1);
-    VSCALE(cvec, a, rad2);
-    VSCALE(dvec, b, rad2);
+    VSCALE(avec, a, base_radius);
+    VSCALE(bvec, b, base_radius);
+    VSCALE(cvec, a, nose_radius);
+    VSCALE(dvec, b, nose_radius);
 
     return mk_tgc(wdbp, name, base, hgtv, avec, bvec, cvec, dvec);
 }

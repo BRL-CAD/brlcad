@@ -1,7 +1,7 @@
 /*                      D P I X - P I X . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,9 @@
 #include "bio.h"
 
 #include "vmath.h"
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/malloc.h"
 
 
 #define NUM (1024 * 16)	/* Note the powers of 2 -- v. efficient */

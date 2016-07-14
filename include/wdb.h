@@ -1,7 +1,7 @@
 /*                           W D B . H
  * BRL-CAD
  *
- * Copyright (c) 1988-2014 United States Government as represented by
+ * Copyright (c) 1988-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -40,7 +40,7 @@
 #include "bu/list.h"
 #include "bn.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 
 
 __BEGIN_DECLS
@@ -256,9 +256,7 @@ WDB_EXPORT extern int mk_tgc(struct rt_wdb *fp, const char *name, const point_t 
  * end of the cone.
  *
  */
-WDB_EXPORT extern int mk_cone(struct rt_wdb *fp, const char *name, const point_t base,
-			      const vect_t dirv, fastf_t height, fastf_t rad1,
-			      fastf_t rad2);
+WDB_EXPORT extern int mk_cone(struct rt_wdb *fp, const char *name, const point_t base, const vect_t dirv, fastf_t height, fastf_t base_radius, fastf_t nose_radius);
 
 /**
  *
@@ -808,6 +806,8 @@ WDB_EXPORT int mk_write_color_table( struct rt_wdb *ofp );
  * list.  In typical use, a one-line call is sufficient.  To change
  * the defaults, catch the pointer that is returned, and adjust the
  * structure to taste.
+ *
+ * The name must be a non-zero length string.
  *
  * The caller is responsible for initializing the header structures
  * forward and backward links.

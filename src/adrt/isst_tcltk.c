@@ -1,7 +1,7 @@
 /*                    I S S T _ T C L T K . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -26,30 +26,23 @@
 
 #include "common.h"
 
-#include <stdio.h>
-
-#include "bio.h"
+#include "bnetwork.h"
 
 #include <GL/gl.h>
 
 #include "tcl.h"
 #include "tk.h"
 
-
 #include "bu/parallel.h"
 #include "bu/time.h"
 #include "dm.h"
 
-#include "tie.h"
+#include "rt/tie.h"
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "camera.h"
 #include "isst.h"
 #include "raytrace.h"
-
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
 
 #ifdef HAVE_STRING_H
 #include <string.h>
@@ -271,13 +264,12 @@ set_resolution(ClientData UNUSED(clientData), Tcl_Interp *interp, int objc, Tcl_
 	return TCL_ERROR;
     }
 
-    if (resolution < 1) resolution = 1;
-    if (resolution > 20) {
-	resolution = 20;
+    CLAMP(resolution, 1, 20);
+    if (resolution == 20)
 	isst->gs = 0;
-    } else {
+    else
 	isst->gs = lrint(floor(isst->w * .05 * resolution));
-    }
+
     resize_isst(isst);
 
     return TCL_OK;

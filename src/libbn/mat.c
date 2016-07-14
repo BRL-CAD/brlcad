@@ -1,7 +1,7 @@
 /*                           M A T . C
  * BRL-CAD
  *
- * Copyright (c) 1996-2014 United States Government as represented by
+ * Copyright (c) 1996-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -39,7 +39,8 @@
 #include "bu/malloc.h"
 #include "bu/str.h"
 #include "vmath.h"
-#include "bn.h"
+#include "bn/mat.h"
+#include "bn/plane.h"
 
 
 const mat_t bn_mat_identity = MAT_INIT_IDN;
@@ -431,10 +432,11 @@ bn_aet_vec(
 void
 bn_vec_ae(vect_t vect, fastf_t az, fastf_t el)
 {
-    fastf_t vx, vy, vz;
+    fastf_t vx, vy, vz, rtemp;
     vz = sin(el);
-    vy = fabs(vz) * sin(az);
-    vx = fabs(vz) * cos(az);
+    rtemp = cos(el);
+    vy = rtemp * sin(az);
+    vx = rtemp * cos(az);
     VSET(vect, vx, vy , vz);
     VUNITIZE(vect);
 }
@@ -613,8 +615,19 @@ bn_eigen2x2(
 void
 bn_vec_perp(vect_t new_vec, const vect_t old_vec)
 {
-    register int i;
-    vect_t another_vec;	/* Another vector, different */
+    int i;
+    vect_t another_vec;
+
+    /* degenerate case goes up */
+    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
+	VSET(new_vec, 0.0, 0.0, 1.0);
+	return;
+    }
+
+    /* FIXME: switching to completely different axes when a component
+     * exceeds another causes twitchy jumping when using these vectors
+     * to draw.  a better method would support smooth transitions.
+     */
 
     i = X;
     if (fabs(old_vec[Y]) < fabs(old_vec[i])) {
@@ -625,11 +638,7 @@ bn_vec_perp(vect_t new_vec, const vect_t old_vec)
     }
     VSETALL(another_vec, 0);
     another_vec[i] = 1.0;
-    if (ZERO(old_vec[X]) && ZERO(old_vec[Y]) && ZERO(old_vec[Z])) {
-	VMOVE(new_vec, another_vec);
-    } else {
-	VCROSS(new_vec, another_vec, old_vec);
-    }
+    VCROSS(new_vec, another_vec, old_vec);
 }
 
 
@@ -1267,7 +1276,7 @@ mike_persp_mat(fastf_t *pmat, const fastf_t *eye)
     /* XXX should I use MAT_DELTAS_VEC_NEG()?  X and Y should be 0 now */
     MAT_DELTAS(xlate, 0, 0, 1-sheared_eye[Z]);
 
-    /* Build perspective matrix inline, substituting fov=2*atan(1, Z) */
+    /* Build perspective matrix in place, substituting fov=2*atan(1, Z) */
     MAT_IDN(persp);
     /* From page 492 of Graphics Gems */
     persp[0] = sheared_eye[Z];  /* scaling: fov aspect term */

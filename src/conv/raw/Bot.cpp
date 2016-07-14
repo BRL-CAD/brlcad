@@ -1,7 +1,7 @@
 /*                         B O T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -69,9 +69,9 @@ size_t Bot::addPoint(point_t& point)
 }
 
 
-void Bot::addTriangle(int a,
-		      int b,
-		      int c)
+void Bot::addTriangle(size_t a,
+		      size_t b,
+		      size_t c)
 {
     // add a new triangle
     m_faces.push_back(a);

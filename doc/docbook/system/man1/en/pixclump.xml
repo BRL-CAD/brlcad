@@ -27,7 +27,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixclump</emphasis>
+<para><command>pixclump</command>
 reads an input stream of
 <emphasis remap='I'>pix</emphasis>
 data,
@@ -47,7 +47,7 @@ option.</para>
 <para>Each pixel in the input stream
 is compared to all of the specified colors
 and replaced on the output by the specified color most resembling it.
-<emphasis remap='I'>Pixclump</emphasis>
+<command>pixclump</command>
 computes the difference between an input pixel and a specified color
 as the sum of the squares of the differences in their respective
 red, green, and blue channels.</para>
@@ -65,7 +65,7 @@ various diagnostic print statements.</para>
 is in renormalizing an image.
 For example,
 if a tool such as
-<emphasis remap='I'>pixscale</emphasis>
+<command>pixscale</command>
 has been used to transform
 an image containing a relatively small number of colors,
 <command>pixclump</command>
@@ -80,7 +80,7 @@ back to one of the original colors.</para>
 </refsect1>
 
 <refsect1 xml:id='copyright'><title>COPYRIGHT</title>
-<para>This software is Copyright (c) 1997-2014 by the United States
+<para>This software is Copyright (c) 1997-2016 by the United States
 Government as represented by U.S. Army Research Laboratory.</para>
 
 </refsect1>

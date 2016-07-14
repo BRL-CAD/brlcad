@@ -1,7 +1,7 @@
 /*                     N M G _ C L A S S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,14 +42,13 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
 #include "bio.h"
 
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 #define MAX_DIR_TRYS 10
@@ -698,7 +697,7 @@ nmg_class_pt_s(const fastf_t *pt, const struct shell *s, const int in_or_out_onl
 		    nmg_class = NMG_CLASS_AonBanti;
 		    goto out;
 		}
-		/* Point is OUTside face, its undecided. */
+		/* Point is OUTside face, it's undecided. */
 	    }
 
 	    /* Mark this face as having been processed */

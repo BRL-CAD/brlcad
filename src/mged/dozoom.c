@@ -1,7 +1,7 @@
 /*                        D O Z O O M . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -23,10 +23,7 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <math.h>
-#include "bio.h"
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 
@@ -181,7 +178,7 @@ dozoom(int which_eye)
 
 	/* Second, draw transparent stuff */
 
-	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, 1.0 - SMALL_FASTF, inv_viewsize,
+	ndrawn = dm_draw_display_list(dmp, gedp->ged_gdp->gd_headDisplay, nextafter(1.0, 0.0), inv_viewsize,
 	       	r, g, b, mged_variables->mv_linewidth, mged_variables->mv_dlist, 0,
 	       	geometry_default_color, 0, mged_variables->mv_dlist);
 
@@ -278,7 +275,8 @@ createDListSolid(struct solid *sp)
     save_dlp = curr_dm_list;
 
     FOR_ALL_DISPLAYS(dlp, &head_dm_list.l) {
-	if (dm_get_displaylist(dlp->dml_dmp) &&
+	if (dlp->dml_mapped &&
+		dm_get_displaylist(dlp->dml_dmp) &&
 		dlp->dml_mged_variables->mv_dlist) {
 	    if (sp->s_dlist == 0)
 		sp->s_dlist = dm_gen_dlists(dmp, 1);

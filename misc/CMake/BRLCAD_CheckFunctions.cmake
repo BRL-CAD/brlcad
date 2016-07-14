@@ -1,7 +1,7 @@
 #     B R L C A D _ C H E C K F U N C T I O N S . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -52,7 +52,7 @@ include(CheckCInline)
 # HAVE_* define to config header.
 ###
 macro(BRLCAD_FUNCTION_EXISTS function var)
-  if("${var}" MATCHES "^${var}$")
+  if(NOT DEFINED ${var})
     set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
     set(CMAKE_C_FLAGS "")
     if(${ARGC} GREATER 2)
@@ -139,7 +139,7 @@ macro(BRLCAD_FUNCTION_EXISTS function var)
     # Put C_FLAGS back where we found it
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS_TMP}")
 
-  endif("${var}" MATCHES "^${var}$")
+  endif(NOT DEFINED ${var})
 
   if(CONFIG_H_FILE AND ${var})
     CONFIG_H_APPEND(BRLCAD "#cmakedefine ${var} 1\n")
@@ -287,7 +287,9 @@ int main(int argc, char *argv[]) {
 (void)basename(argv[0]);
 return 0;
 }")
-  CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+  if(NOT DEFINED HAVE_BASENAME)
+     CHECK_C_SOURCE_RUNS("${BASENAME_SRC}" HAVE_BASENAME)
+  endif(NOT DEFINED HAVE_BASENAME)
   if(HAVE_BASENAME)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_BASENAME 1\n")
   endif(HAVE_BASENAME)
@@ -306,7 +308,9 @@ int main(int argc, char *argv[]) {
 (void)dirname(argv[0]);
 return 0;
 }")
-  CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+  if(NOT DEFINED HAVE_DIRNAME)
+     CHECK_C_SOURCE_RUNS("${DIRNAME_SRC}" HAVE_DIRNAME)
+  endif(NOT DEFINED HAVE_DIRNAME)
   if(HAVE_DIRNAME)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_DIRNAME 1\n")
   endif(HAVE_DIRNAME)
@@ -320,7 +324,9 @@ endmacro(BRLCAD_CHECK_DIRNAME var)
 macro(BRLCAD_HEADER_SYS_WAIT)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
-  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
+  if(NOT DEFINED WORKING_SYS_WAIT)
+    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/sys_wait_test.c WORKING_SYS_WAIT)
+  endif(NOT DEFINED WORKING_SYS_WAIT)
   if(WORKING_SYS_WAIT)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_SYS_WAIT_H 1\n")
   endif(WORKING_SYS_WAIT)
@@ -334,12 +340,17 @@ endmacro(BRLCAD_HEADER_SYS_WAIT)
 macro(BRLCAD_ALLOCA)
   set(CMAKE_C_FLAGS_TMP "${CMAKE_C_FLAGS}")
   set(CMAKE_C_FLAGS "")
-  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
+  if(WORKING_ALLOC_H STREQUAL "")
+    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_header_test.c WORKING_ALLOCA_H)
+    set(WORKING_ALLOCA_H ${WORKING_ALLOCA_H} CACHE INTERNAL "alloca_h test")
+  endif(WORKING_ALLOC_H STREQUAL "")
   if(WORKING_ALLOCA_H)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ALLOCA_H 1\n")
     set(FILE_RUN_DEFINITIONS "-DHAVE_ALLOCA_H")
   endif(WORKING_ALLOCA_H)
-  CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c WORKING_ALLOCA)
+  if(NOT DEFINED WORKING_ALLOCA)
+    CHECK_C_SOURCE_RUNS(${CMAKE_SOURCE_DIR}/misc/CMake/test_srcs/alloca_test.c WORKING_ALLOCA)
+  endif(NOT DEFINED WORKING_ALLOCA)
   if(WORKING_ALLOCA)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_ALLOCA 1\n")
   endif(WORKING_ALLOCA)
@@ -375,7 +386,9 @@ int main(int ac, char *av[])
   return 0;
 }
 ")
-  CHECK_C_SOURCE_RUNS("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
+  if(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
+    CHECK_C_SOURCE_RUNS("${CHECK_C99_FORMAT_SPECIFIERS_SRC}" HAVE_C99_FORMAT_SPECIFIERS)
+  endif(NOT DEFINED HAVE_C99_FORMAT_SPECIFIERS)
   if(HAVE_C99_FORMAT_SPECIFIERS)
     CONFIG_H_APPEND(BRLCAD "#define HAVE_C99_FORMAT_SPECIFIERS 1\n")
   endif(HAVE_C99_FORMAT_SPECIFIERS)

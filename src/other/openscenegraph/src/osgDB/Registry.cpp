@@ -414,7 +414,7 @@ Registry::Registry()
     addFileExtensionAlias("cid",    "freetype");  // Postscript CID-Fonts
     addFileExtensionAlias("cff",    "freetype");  // OpenType
     addFileExtensionAlias("cef",    "freetype");  // OpenType
-    addFileExtensionAlias("fon",    "freetype");  // Windows bitmap fonts
+    addFileExtensionAlias("fon",    "freetype");  // Windows bitmap fonts
     addFileExtensionAlias("fnt",    "freetype");  // Windows bitmap fonts
     addFileExtensionAlias("text3d", "freetype"); // use 3D Font instead of 2D Font
 
@@ -1040,7 +1040,7 @@ std::string Registry::findDataFileImplementation(const std::string& filename, co
 
         if(fileExists(simpleFileName))
         {
-            OSG_DEBUG << "FindFileInPath(" << filename << "): returning " << filename << std::endl;
+            OSG_DEBUG << "FindFileInPath(" << filename << "): returning " << simpleFileName << std::endl;
             return simpleFileName;
         }
 
@@ -1249,9 +1249,21 @@ ReaderWriter::ReadResult Registry::readImplementation(const ReadFunctor& readFun
         ReaderWriter::ReadResult rr = read(readFunctor);
         if (rr.validObject())
         {
-            // update cache with new entry.
-            OSG_INFO<<"Adding to object cache "<<file<<std::endl;
-            addEntryToObjectCache(file,rr.getObject());
+            // search AGAIN for entry in the object cache.
+            {
+                OpenThreads::ScopedLock<OpenThreads::Mutex> lock(_objectCacheMutex);
+                ObjectCache::iterator oitr = _objectCache.find(file);
+                if (oitr != _objectCache.end())
+                {
+                    OSG_INFO << "returning cached instanced of " << file << std::endl;
+                    if (readFunctor.isValid(oitr->second.first.get())) return ReaderWriter::ReadResult(oitr->second.first.get(), ReaderWriter::ReadResult::FILE_LOADED_FROM_CACHE);
+                    else return ReaderWriter::ReadResult("Error file does not contain an osg::Object");
+                }
+                // update cache with new entry.
+                OSG_INFO<<"Adding to object cache "<<file<<std::endl;
+                //addEntryToObjectCache(file,rr.getObject()); //copy implementation: we already have the _objectCacheMutex lock
+                _objectCache[file] = ObjectTimeStampPair(rr.getObject(), 0.0);
+            }
         }
         else
         {

@@ -1,7 +1,7 @@
 /*                          S T R . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -21,8 +21,8 @@
 #include "common.h"
 
 #include <string.h>
-#if defined(HAVE_WORKING_STRCASECMP_FUNCTION) ||  defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
-#include <strings.h>
+#ifdef HAVE_STRINGS_H
+#  include <strings.h>
 #endif
 #ifdef HAVE_SYS_TYPES_H
 #  include <sys/types.h>
@@ -141,7 +141,7 @@ bu_strlcpym(char *dst, const char *src, size_t size, const char *label)
 char *
 bu_strdupm(register const char *cp, const char *label)
 {
-    char *base;
+    char *base = NULL;
     size_t len;
 
     if (UNLIKELY(!cp && label)) {
@@ -153,16 +153,18 @@ bu_strdupm(register const char *cp, const char *label)
 	label = "bu_strdup";
     }
 
-    len = strlen(cp)+1;
-    base = (char *)bu_malloc(len, label);
+    if (cp) {
+	len = strlen(cp)+1;
+	base = (char *)bu_malloc(len, label);
 
-    if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
-	fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
-	bu_semaphore_release(BU_SEM_SYSCALL);
+	if (UNLIKELY(bu_debug&BU_DEBUG_MEM_LOG)) {
+	    bu_semaphore_acquire(BU_SEM_SYSCALL);
+	    fprintf(stderr, "%p strdup%llu \"%s\"\n", (void *)base, (unsigned long long)len, cp);
+	    bu_semaphore_release(BU_SEM_SYSCALL);
+	}
+
+	memcpy(base, cp, len);
     }
-
-    memcpy(base, cp, len);
     return base;
 }
 
@@ -221,7 +223,7 @@ bu_strcasecmp(const char *string1, const char *string2)
     if (string2)
 	s2 = string2;
 
-#if defined(HAVE_WORKING_STRCASECMP_FUNCTION)
+#if defined(strcasecmp) || defined(HAVE_STRCASECMP)
     return strcasecmp(s1, s2);
 #else
     while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {
@@ -252,7 +254,7 @@ bu_strncasecmp(const char *string1, const char *string2, size_t n)
     if (n == 0)
 	return 0;
 
-#if defined(HAVE_WORKING_STRNCASECMP_FUNCTION)
+#if defined(strcasecmp) || defined(HAVE_STRCASECMP)
     return strncasecmp(s1, s2, n);
 #else
     while (tolower((unsigned char)*s1) == tolower((unsigned char)*s2)) {

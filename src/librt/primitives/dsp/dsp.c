@@ -1,7 +1,7 @@
 /*                           D S P . C
  * BRL-CAD
  *
- * Copyright (c) 1999-2014 United States Government as represented by
+ * Copyright (c) 1999-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -53,15 +53,15 @@
 #include <string.h>
 #include <math.h>
 #include <setjmp.h>
-#include "bin.h"
+#include "bnetwork.h"
 
 #include "bu/cv.h"
 #include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "rtgeom.h"
-#include "db.h"
-#include "plot3.h"
+#include "rt/geom.h"
+#include "rt/db4.h"
+#include "bn/plot3.h"
 
 /* private header */
 #include "./dsp.h"
@@ -3480,11 +3480,11 @@ get_cut_dir(struct rt_dsp_internal *dsp_ip, int x, int y, int xlim, int ylim)
     height[7] = DSP(dsp_ip, xx, yy);
 
     /* compute curvature along the 0<->2 direction */
-    c02 = fabs(height[2] + height[4] - 2*height[0]) + fabs(height[6] + height[0] - 2*height[2]);
+    c02 = abs(height[2] + height[4] - 2*height[0]) + abs(height[6] + height[0] - 2*height[2]);
 
 
     /* compute curvature along the 1<->3 direction */
-    c13 = fabs(height[3] + height[5] - 2*height[1]) + fabs(height[7] + height[1] - 2*height[3]);
+    c13 = abs(height[3] + height[5] - 2*height[1]) + abs(height[7] + height[1] - 2*height[3]);
 
     if (c02 < c13) {
 	/* choose the 0<->2 direction */
@@ -4960,7 +4960,7 @@ project_pt(point_t out,
 	bu_log("x:%g y:%g dx:%d dy:%d alpha:%g beta:%g\n",
 	       x, y, dx, dy, alpha, beta);
     }
-    if ((alpha+beta) > (1.0+SMALL_FASTF)) {
+    if (alpha + beta - 1.0 > SMALL_FASTF) {
 	if (RT_G_DEBUG & DEBUG_HF) bu_log("Not this triangle\n");
 	return 1;
     }

@@ -1,7 +1,7 @@
 /*                        U S E P E N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,9 +26,7 @@
 #include <stdlib.h>
 #include <math.h>
 #include <string.h>
-#include "bio.h"
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 

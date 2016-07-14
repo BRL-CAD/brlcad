@@ -2,7 +2,7 @@
  *
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -227,7 +227,6 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     point_t origin, outorig;
     vect_t x_axis, y_axis, z_axis;
     vect_t outx, outy, outz;
-    fastf_t xm, ym, zm;
     VSET(origin, 0, 0, 0);
     VSET(x_axis, 1, 0, 0);
     VSET(y_axis, 0, 1, 0);
@@ -236,9 +235,6 @@ Mat_to_Rep(matp_t curr_matrix, Registry *registry, InstMgr *instance_list)
     MAT4X3VEC(outx, curr_matrix, x_axis);
     MAT4X3VEC(outy, curr_matrix, y_axis);
     MAT4X3VEC(outz, curr_matrix, z_axis);
-    xm = MAGNITUDE(outx);
-    ym = MAGNITUDE(outy);
-    zm = MAGNITUDE(outz);
     VUNITIZE(outx);
     VUNITIZE(outy);
     VUNITIZE(outz);
