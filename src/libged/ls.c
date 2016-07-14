@@ -91,7 +91,7 @@ _ged_vls_col_pr4v(struct bu_vls *vls,
     size_t cwidth;	/* column width */
     size_t numcol;	/* number of columns */
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -182,7 +182,7 @@ vls_long_dpp(struct ged *gedp,
     size_t max_type_len = 0;
     struct directory *dp;
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -302,7 +302,7 @@ vls_line_dpp(struct ged *gedp,
     int isComb, isRegion;
     int isSolid;
 
-    bu_sort((genptr_t)list_of_names,
+    bu_sort((void *)list_of_names,
 	  (unsigned)num_in_list, (unsigned)sizeof(struct directory *),
 	  cmpdirname, NULL);
 
@@ -494,7 +494,7 @@ ged_ls(struct ged *gedp, int argc, const char *argv[])
         _ged_results_add(gedp->ged_results, bu_vls_addr(gedp->ged_result_str));
     }
 
-    bu_free((genptr_t)dirp0, "_ged_getspace dp[]");
+    bu_free((void *)dirp0, "_ged_getspace dp[]");
 
     return GED_OK;
 }

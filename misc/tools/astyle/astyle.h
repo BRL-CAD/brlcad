@@ -143,7 +143,7 @@ enum ObjCColonPad
 	COLON_PAD_NONE,
 	COLON_PAD_ALL,
 	COLON_PAD_AFTER,
-	COLON_PAD_BEFORE,
+	COLON_PAD_BEFORE
 };
 
 enum PointerAlign

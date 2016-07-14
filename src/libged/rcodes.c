@@ -37,8 +37,8 @@ int
 ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 {
     int item, air, mat, los;
-    int g_changed = 0;
-    int invalid_file = 1;
+    size_t g_changed = 0;
+    int found_a_match = 0;
     char name[RT_MAXLINE];
     char line[RT_MAXLINE];
     char *cp;
@@ -102,7 +102,7 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 	}
 
 	/* By the time we make it here, we've got something */
-	invalid_file = 0;
+	found_a_match = 1;
 
 	comb = (struct rt_comb_internal *)intern.idb_ptr;
 
@@ -137,18 +137,16 @@ ged_rcodes(struct ged *gedp, int argc, const char *argv[])
 		return GED_ERROR;
 	    }
 	}
-	g_changed += changed;
+	g_changed += (size_t)changed;
 
     }
     fclose(fp);
 
-    if (invalid_file){
-	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" contained no valid lines.\n", argv[1]);
-	return GED_ERROR;
+    if (!found_a_match) {
+	bu_vls_printf(gedp->ged_result_str, "WARNING: rcodes file \"%s\" contained no matching lines.  Geometry unchanged.\n", argv[1]);
     }
-
     if (g_changed) {
-	bu_vls_printf(gedp->ged_result_str, "rcodes file \"%s\" applied - %d regions updated.\n", argv[1], g_changed);
+	bu_vls_printf(gedp->ged_result_str, "NOTE: rcodes file \"%s\" applied.  %d region%supdated.\n", argv[1], g_changed, (g_changed==1)?" ":"s ");
     }
 
     return GED_OK;

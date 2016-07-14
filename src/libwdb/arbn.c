@@ -57,7 +57,7 @@ mk_arbn(struct rt_wdb *filep, const char *name, size_t neqn, const plane_t *eqn)
     arbn->neqn = neqn;
     arbn->eqn = equations;
 
-    return wdb_export(filep, name, (genptr_t)arbn, ID_ARBN, mk_conv2mm);
+    return wdb_export(filep, name, (void *)arbn, ID_ARBN, mk_conv2mm);
 }
 
 

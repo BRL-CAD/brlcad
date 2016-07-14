@@ -225,7 +225,7 @@ char *
 bu_b64_encode_block(const char *input, int len)
 {
     /* Calculate size of output needed and calloc the memory */
-    char *output = (char *)bu_malloc((((int)(4*len/3)) + 4) * 8, "Malloc b64 buffer");
+    char *output = (char *)bu_calloc((((int)(4*len/3)) + 4), 8, "Calloc b64 buffer");
     char *c = output;
     int cnt = 0;
     bu_b64_encodestate s;
@@ -256,14 +256,16 @@ bu_b64_encode(const char *input)
 }
 
 
-char *
-bu_b64_decode_block(const char *input, int len)
+int
+bu_b64_decode_block(char **output, const char *input, int len)
 {
     /* Calculate size of output needed and calloc the memory */
-    char *output = (char *)bu_malloc(((int)(3*len/4) + 4) * 8, "Malloc b64 decoding buffer");
-    char* c = output;
     int cnt = 0;
+    char* c;
     bu_b64_decodestate s;
+    if (!output) return -1;
+    *output = (char *)bu_calloc(((int)(3*len/4) + 4), 8, "Calloc b64 decoding buffer");
+    c = *output;
 
     /*---------- START DECODING ----------*/
     /* initialise the decoder state */
@@ -277,14 +279,14 @@ bu_b64_decode_block(const char *input, int len)
     /* we want to print the decoded data, so null-terminate it: */
     *c = '\0';
 
-    return output;
+    return cnt;
 }
 
 
-char *
-bu_b64_decode(const char *input)
+int
+bu_b64_decode(char **output, const char *input)
 {
-    return bu_b64_decode_block(input, strlen(input));
+    return bu_b64_decode_block(output, input, strlen(input));
 }
 
 

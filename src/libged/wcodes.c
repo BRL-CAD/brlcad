@@ -50,7 +50,7 @@ HIDDEN int wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, s
 
 
 HIDDEN void
-wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t user_ptr3, genptr_t UNUSED(user_ptr4))
+wcodes_printnode(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *user_ptr3, void *UNUSED(user_ptr4))
 {
     FILE *fp;
     size_t *pathpos;
@@ -117,7 +117,7 @@ wcodes_printcodes(struct ged *gedp, FILE *fp, struct directory *dp, size_t pathp
 	}
 	path[pathpos] = dp;
 	db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, wcodes_printnode,
-			 (genptr_t)fp, (genptr_t)&pathpos, (genptr_t)gedp, (genptr_t)gedp);
+			 (void *)fp, (void *)&pathpos, (void *)gedp, (void *)gedp);
     }
 
     intern.idb_meth->ft_ifree(&intern);

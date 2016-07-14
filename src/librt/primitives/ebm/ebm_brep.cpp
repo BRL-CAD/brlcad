@@ -53,9 +53,9 @@ rt_ebm_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *t
     struct model *ebmm = nmg_mm();
     struct nmgregion *ebmr;
 
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_ebm_tess(&ebmr, ebmm, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)ebmm;
+    tmp_internal->idb_ptr = (void *)ebmm;
     rt_nmg_brep(b, tmp_internal, tol);
 
     FREE_MODEL(ebmm);

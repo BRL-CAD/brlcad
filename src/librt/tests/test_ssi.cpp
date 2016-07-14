@@ -173,7 +173,7 @@ main(int argc, char** argv)
 		// in rt_db_free_internal()
 		sketch->verts = (point2d_t *)bu_calloc(vert_count, sizeof(point2d_t), "sketch->verts");
 		sketch->curve.reverse = (int *)bu_calloc(vert_count - 1, sizeof(int), "sketch->crv->reverse");
-		sketch->curve.segment = (genptr_t *)bu_calloc(vert_count - 1, sizeof(genptr_t), "sketch->crv->segments");
+		sketch->curve.segment = (void **)bu_calloc(vert_count - 1, sizeof(void *), "sketch->crv->segments");
 
 		for (int j = 0; j < vert_count; j++) {
 		    ON_3dPoint CV3d;
@@ -186,7 +186,7 @@ main(int argc, char** argv)
 			lsg->magic = CURVE_LSEG_MAGIC;
 			lsg->start = j - 1;
 			lsg->end = j;
-			sketch->curve.segment[j - 1] = (genptr_t)lsg;
+			sketch->curve.segment[j - 1] = (void *)lsg;
 			sketch->curve.reverse[j - 1] = 0;
 		    }
 		}
@@ -220,7 +220,7 @@ main(int argc, char** argv)
 	    i < events.Count() ? 'A' : 'B', i % events.Count());
 
 	struct directory *dp;
-	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
 	if (ret)
 	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);
@@ -295,7 +295,7 @@ main(int argc, char** argv)
 	bu_vls_sprintf(&name, "%s3d_%d", bu_vls_addr(&intersect_name), i);
 
 	struct directory *dp;
-	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+	dp = db_diradd(dbip, bu_vls_addr(&name), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
 	ret = rt_db_put_internal(dp, dbip, &intern, &rt_uniresource);
 	if (ret)
 	    bu_log("ERROR: failure writing [%s] to disk\n", dp->d_namep);

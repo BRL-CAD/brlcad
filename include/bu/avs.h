@@ -84,8 +84,8 @@ struct bu_attribute_value_set {
     uint32_t magic;
     size_t count;                        /**< # valid entries in avp */
     size_t max;                          /**< # allocated slots in avp */
-    genptr_t readonly_min;
-    genptr_t readonly_max;
+    void *readonly_min;
+    void *readonly_max;
     struct bu_attribute_value_pair *avp; /**< array[max] */
 };
 typedef struct bu_attribute_value_set bu_avs_t;
@@ -149,8 +149,8 @@ typedef struct bu_attribute_value_set bu_avs_t;
  */
 #define AVS_IS_FREEABLE(_avsp, _p)	\
     ((_avsp)->readonly_max == NULL \
-     || (const_genptr_t)(_p) < (_avsp)->readonly_min \
-     || (const_genptr_t)(_p) > (_avsp)->readonly_max)
+     || (const void *)(_p) < (_avsp)->readonly_min \
+     || (const void *)(_p) > (_avsp)->readonly_max)
 
 /** @} */
 

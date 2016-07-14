@@ -34,7 +34,7 @@
 #include "fb.h"
 
 /* FIXME */
-#include "../vfont/vfont.h"
+#include "../libbu/vfont.h"
 
 #include "./std.h"
 #include "./ascii.h"
@@ -65,7 +65,7 @@ struct pointstack {
     PtStack *next;
 };
 
-struct vfont font;
+struct vfont_file font;
 
 int
 AproxEqColor(unsigned int a, unsigned int b, long t)

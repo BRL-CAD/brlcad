@@ -479,7 +479,7 @@ rt_comb_import5(struct rt_db_internal *ip, const struct bu_external *ep,
     BU_ALLOC(comb, struct rt_comb_internal);
     RT_COMB_INTERNAL_INIT(comb);
 
-    ip->idb_ptr = (genptr_t)comb;
+    ip->idb_ptr = (void *)comb;
 
     cp = ep->ext_buf;
     wid = *cp++;

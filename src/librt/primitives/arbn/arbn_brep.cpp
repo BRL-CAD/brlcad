@@ -55,9 +55,9 @@ rt_arbn_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_tol *
     struct model *arbn_nmg = nmg_mm();
     struct nmgregion *arbnmgr;
 
-    tmp_internal->idb_ptr = (genptr_t)ip->idb_ptr;
+    tmp_internal->idb_ptr = (void *)ip->idb_ptr;
     rt_arbn_tess(&arbnmgr, arbn_nmg, tmp_internal, ttol, tol);
-    tmp_internal->idb_ptr = (genptr_t)arbn_nmg;
+    tmp_internal->idb_ptr = (void *)arbn_nmg;
     rt_nmg_brep(b, tmp_internal, tol);
 
     FREE_MODEL(arbn_nmg);

@@ -161,7 +161,7 @@ rt_mk_bot_w_normals(
 	botip->face_normals = (int *)NULL;
     }
 
-    return wdb_export(fp, name, (genptr_t)botip, ID_BOT, 1.0);
+    return wdb_export(fp, name, (void *)botip, ID_BOT, 1.0);
 }
 
 

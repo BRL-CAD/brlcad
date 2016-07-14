@@ -159,7 +159,7 @@ extern int user_interrupt;
 extern int x_fb_origin, y_fb_origin;
 extern int zoom;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern unsigned char arrowcursor[];
 extern unsigned char menucursor[];

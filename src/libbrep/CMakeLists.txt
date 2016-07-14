@@ -12,7 +12,6 @@ set(BREP_INCLUDE_DIRS
 set(BREP_LOCAL_INCLUDE_DIRS
   ${CMAKE_CURRENT_SOURCE_DIR}
   ${REGEX_INCLUDE_DIR}
-  ${TNT_INCLUDE_DIR}
   ${BRLCAD_SOURCE_DIR}/src/other/Eigen
   )
 
@@ -25,7 +24,7 @@ set(LIBBREP_SOURCES
   intersect.cpp
   libbrep_brep_tools.cpp
   opennurbs_ext.cpp
-  #opennurbs_fit.cpp
+  opennurbs_fit.cpp
   px_event.cpp
   PullbackCurve.cpp
   ssx_event.cpp

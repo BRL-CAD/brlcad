@@ -41,8 +41,8 @@ struct bot_specific {
     size_t bot_ntri;
     fastf_t *bot_thickness;
     struct bu_bitv *bot_facemode;
-    genptr_t bot_facelist;	/* head of linked list */
-    genptr_t *bot_facearray;	/* head of face array */
+    void *bot_facelist;	/* head of linked list */
+    void **bot_facearray;	/* head of face array */
     size_t bot_tri_per_piece;	/* log # tri per piece. 1 << bot_ltpp is tri per piece */
     void *tie; /* FIXME: horrible blind cast, points to one in rt_bot_internal */
 };

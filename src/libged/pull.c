@@ -41,15 +41,15 @@
 void
 pull_comb(struct db_i *dbip,
 	  struct directory *dp,
-	  genptr_t mp);
+	  void *mp);
 
 
 /* This restores the matrix transformation at a combination by taking leaf matrix transformations, inverting
  * and storing the changes at the combinations.
  */
 static void
-pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t mp, genptr_t UNUSED(usr_ptr2),
-	      genptr_t UNUSED(usr_ptr3), genptr_t UNUSED(usr_ptr4))
+pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *mp, void *UNUSED(usr_ptr2),
+	      void *UNUSED(usr_ptr3), void *UNUSED(usr_ptr4))
 {
     struct directory *dp;
     mat_t inv_mat;
@@ -85,7 +85,7 @@ pull_comb_mat(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tr
 void
 pull_comb(struct db_i *dbip,
 	  struct directory *dp,
-	  genptr_t mp)
+	  void *mp)
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -114,7 +114,7 @@ pull_comb(struct db_i *dbip,
 
     if (comb->tree) {
 	db_tree_funcleaf(dbip, comb, comb->tree, pull_comb_mat,
-			 &m, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+			 &m, (void *)NULL, (void *)NULL, (void *)NULL);
 
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    bu_log("Cannot write modified combination (%s) to database\n", dp->d_namep);
@@ -162,7 +162,7 @@ translate(matp_t matrix, mat_t tm, point_t min, point_t max)
  *        would be needed for further purposes.
  */
 static void
-pull_leaf(struct db_i *dbip, struct directory *dp, genptr_t mp)
+pull_leaf(struct db_i *dbip, struct directory *dp, void *mp)
 {
     struct rt_db_internal intern;
     struct bn_tol tol;

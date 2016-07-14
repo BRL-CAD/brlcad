@@ -26,7 +26,7 @@ set(bu_headers
   str.h
   time.h
   units.h
-  vfont-if.h
+  vfont.h
   vlb.h
   vls.h
   )

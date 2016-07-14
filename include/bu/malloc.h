@@ -58,7 +58,7 @@ BU_EXPORT extern long bu_n_realloc;
  * never to return a NULL pointer; caller doesn't have to check.
  * Allocation failure results in bu_bomb() being called.
  */
-BU_EXPORT extern genptr_t bu_malloc(size_t siz,
+BU_EXPORT extern void *bu_malloc(size_t siz,
 				    const char *str);
 
 /**
@@ -66,11 +66,11 @@ BU_EXPORT extern genptr_t bu_malloc(size_t siz,
  * We promise never to return a NULL pointer; caller doesn't have to check.
  * Failure results in bu_bomb() being called.
  */
-BU_EXPORT extern genptr_t bu_calloc(size_t nelem,
+BU_EXPORT extern void *bu_calloc(size_t nelem,
 				    size_t elsize,
 				    const char *str);
 
-BU_EXPORT extern void bu_free(genptr_t ptr,
+BU_EXPORT extern void bu_free(void *ptr,
 			      const char *str);
 
 /**
@@ -85,7 +85,7 @@ BU_EXPORT extern void bu_free(genptr_t ptr,
  * disturb the str value, so that this storage allocation can be
  * tracked back to its original creator.
  */
-BU_EXPORT extern genptr_t bu_realloc(genptr_t ptr,
+BU_EXPORT extern void *bu_realloc(void *ptr,
 				     size_t siz,
 				     const char *str);
 
@@ -121,7 +121,7 @@ BU_EXPORT extern int bu_malloc_len_roundup(int nbytes);
  * returns if pointer good or BU_DEBUG_MEM_CHECK not set, bombs if
  * memory is corrupted.
  */
-BU_EXPORT extern void bu_ck_malloc_ptr(genptr_t ptr, const char *str);
+BU_EXPORT extern void bu_ck_malloc_ptr(void *ptr, const char *str);
 
 /**
  * Check *all* entries in the memory debug table for barrier word

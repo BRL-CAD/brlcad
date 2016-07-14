@@ -78,7 +78,7 @@ rt_grp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_GRIP_CK_MAGIC(gip);
 
     BU_GET(gripp, struct grip_specific);
-    stp->st_specific = (genptr_t)gripp;
+    stp->st_specific = (void *)gripp;
 
     VMOVE(gripp->grip_normal, gip->normal);
     VMOVE(gripp->grip_center, gip->center);
@@ -456,7 +456,7 @@ rt_grp_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "grip ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

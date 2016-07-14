@@ -21,6 +21,9 @@
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
     <arg choice='plain'><replaceable>file_name</replaceable></arg>
 </cmdsynopsis>
+<para>
+    or
+</para>
 <cmdsynopsis>
   <command>imgdims</command>
     <arg choice='opt'>-# <replaceable>bytes_per_pixel</replaceable></arg>
@@ -31,13 +34,13 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Imgdims</emphasis>
+<para><command>imgdims</command>
 uses the autosizing capability of
 <citerefentry><refentrytitle>libbn</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 to guess the dimensions (in pixels)
 of an image.
 The image size may be expressed either implicitly,
-by specifying the name of the file,
+by specifying the name of the file;
 or explicitly,
 by specifying a number of bytes.</para>
 

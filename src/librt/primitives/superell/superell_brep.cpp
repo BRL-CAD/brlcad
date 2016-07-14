@@ -54,7 +54,7 @@ rt_superell_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_t
     struct rt_db_internal tmp_internal;
     RT_DB_INTERNAL_INIT(&tmp_internal);
     tmp_internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
-    tmp_internal.idb_ptr = (genptr_t)eip;
+    tmp_internal.idb_ptr = (void *)eip;
     tmp_internal.idb_minor_type = ID_ELL;
     tmp_internal.idb_meth = &OBJ[ID_ELL];
 

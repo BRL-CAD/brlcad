@@ -55,7 +55,7 @@ rt_extrude_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
     VMOVE(sketch.V, eip->V);
     VMOVE(sketch.u_vec, eip->u_vec);
     VMOVE(sketch.v_vec, eip->v_vec);
-    tmp_internal->idb_ptr = (genptr_t)(&sketch);
+    tmp_internal->idb_ptr = (void *)(&sketch);
     rt_sketch_brep(b, tmp_internal, tol);
 
     // Create the extrude path and make the extrude primitive.

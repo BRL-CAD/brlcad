@@ -709,7 +709,7 @@ ph_lines(struct pkg_conn *UNUSED(pc), char *buf)
     info.li_cpusec = rt_read_timer((char *)0, 0);
     info.li_percent = 42.0;	/* for now */
 
-    if (!bu_struct_export(&ext, (genptr_t)&info, desc_line_info))
+    if (!bu_struct_export(&ext, (void *)&info, desc_line_info))
 	bu_exit(98, "ph_lines: bu_struct_export failure\n");
 
     if (debug)  {

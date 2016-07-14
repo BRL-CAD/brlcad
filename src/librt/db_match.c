@@ -70,7 +70,7 @@ db_regexp_match_all(struct bu_vls *dest, struct db_i *dbip, const char *pattern)
 
 
 HIDDEN void
-db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, genptr_t UNUSED(dummy1), genptr_t UNUSED(dummy2), genptr_t UNUSED(dummy3), genptr_t UNUSED(dummy4))
+db_count_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *comb_leaf, void *UNUSED(dummy1), void *UNUSED(dummy2), void *UNUSED(dummy3), void *UNUSED(dummy4))
 {
     struct directory *dp;
 
@@ -165,8 +165,8 @@ db_update_nref(struct db_i *dbip, struct resource *resp)
 	    }
 	    comb = (struct rt_comb_internal *)intern.idb_ptr;
 	    db_tree_funcleaf(dbip, comb, comb->tree,
-			     db_count_refs, (genptr_t)NULL,
-			     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+			     db_count_refs, (void *)NULL,
+			     (void *)NULL, (void *)NULL, (void *)NULL);
 	    rt_db_free_internal(&intern);
 	}
     }

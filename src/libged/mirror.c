@@ -187,7 +187,7 @@ ged_mirror(struct ged *gedp, int argc, const char *argv[])
     }
 
     /* add the mirrored object to the directory */
-    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&ip->idb_type);
+    dp = db_diradd(gedp->ged_wdbp->dbip, argv[bu_optind+1], RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&ip->idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Unable to add [%s] to the database directory", argv[bu_optind+1]);
 	return GED_ERROR;

@@ -57,15 +57,15 @@ void (*write_region)(struct nmgregion *r, const struct db_full_path *pathp, int 
  *
  * This routine must be prepared to run in parallel.
  */
-GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+GCV_EXPORT extern union tree *gcv_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 /**
  * Exact same as gcv_region_end, except using the marching cubes algorithm.
  */
-GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+GCV_EXPORT extern union tree *gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
-GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+GCV_EXPORT extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 
 GCV_EXPORT extern union tree *gcv_bottess(int argc, const char **argv, struct db_i *dbip, struct rt_tess_tol *ttol);

@@ -1,19 +1,13 @@
 set(sh_SCRIPTS
   elapsed.sh
-  any-png.sh
-  cadbug.sh
   cmp.sh
   conversion.sh
-  cray.sh
   facetall.sh
   indent.sh
   ios-icons.sh
   news2tracker.sh
   orbit.sh
   pixinfo.sh
-  pixread.sh
-  pixwrite.sh
-  sgisnap.sh
   show.sh
   tracker.sh
   )

@@ -102,7 +102,7 @@ HIDDEN int
 find_solid(struct db_i *dbip,
 		   struct rt_comb_internal *comb,
 		   union tree *comb_leaf,
-		   genptr_t object);
+		   void *object);
 
 
 /**
@@ -118,7 +118,7 @@ check_tree_funcleaf(
     struct rt_comb_internal *comb,
     union tree *comb_tree,
     int (*leaf_func)(),
-    genptr_t user_ptr1);
+    void *user_ptr1);
 
 
 /**

@@ -42,7 +42,7 @@ mk_sketch(struct rt_wdb *fp, const char *name, const struct rt_sketch_internal *
     /* copy the caller's struct */
     sketch = rt_copy_sketch(skt);
 
-    return wdb_export(fp, name, (genptr_t)sketch, ID_SKETCH, mk_conv2mm);
+    return wdb_export(fp, name, (void *)sketch, ID_SKETCH, mk_conv2mm);
 }
 
 

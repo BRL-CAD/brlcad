@@ -324,7 +324,7 @@ rt_tgc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* solid is OK, compute constant terms, etc. */
     BU_GET(tgc, struct tgc_specific);
-    stp->st_specific = (genptr_t)tgc;
+    stp->st_specific = (void *)tgc;
 
     VMOVE(tgc->tgc_V, tip->v);
     tgc->tgc_A = mag_a;
@@ -1816,7 +1816,7 @@ rt_tgc_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
 
     bu_free(ip->idb_ptr, "tgc ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 struct ellipse {

@@ -740,43 +740,43 @@ struct nmg_struct_counts {
  * be written, if desired.
  */
 struct nmg_visit_handlers {
-    void (*bef_model)(uint32_t *, genptr_t, int);
-    void (*aft_model)(uint32_t *, genptr_t, int);
+    void (*bef_model)(uint32_t *, void *, int);
+    void (*aft_model)(uint32_t *, void *, int);
 
-    void (*bef_region)(uint32_t *, genptr_t, int);
-    void (*aft_region)(uint32_t *, genptr_t, int);
+    void (*bef_region)(uint32_t *, void *, int);
+    void (*aft_region)(uint32_t *, void *, int);
 
-    void (*vis_region_a)(uint32_t *, genptr_t, int);
+    void (*vis_region_a)(uint32_t *, void *, int);
 
-    void (*bef_shell)(uint32_t *, genptr_t, int);
-    void (*aft_shell)(uint32_t *, genptr_t, int);
+    void (*bef_shell)(uint32_t *, void *, int);
+    void (*aft_shell)(uint32_t *, void *, int);
 
-    void (*vis_shell_a)(uint32_t *, genptr_t, int);
+    void (*vis_shell_a)(uint32_t *, void *, int);
 
-    void (*bef_faceuse)(uint32_t *, genptr_t, int);
-    void (*aft_faceuse)(uint32_t *, genptr_t, int);
+    void (*bef_faceuse)(uint32_t *, void *, int);
+    void (*aft_faceuse)(uint32_t *, void *, int);
 
-    void (*vis_face)(uint32_t *, genptr_t, int);
-    void (*vis_face_g)(uint32_t *, genptr_t, int);
+    void (*vis_face)(uint32_t *, void *, int);
+    void (*vis_face_g)(uint32_t *, void *, int);
 
-    void (*bef_loopuse)(uint32_t *, genptr_t, int);
-    void (*aft_loopuse)(uint32_t *, genptr_t, int);
+    void (*bef_loopuse)(uint32_t *, void *, int);
+    void (*aft_loopuse)(uint32_t *, void *, int);
 
-    void (*vis_loop)(uint32_t *, genptr_t, int);
-    void (*vis_loop_g)(uint32_t *, genptr_t, int);
+    void (*vis_loop)(uint32_t *, void *, int);
+    void (*vis_loop_g)(uint32_t *, void *, int);
 
-    void (*bef_edgeuse)(uint32_t *, genptr_t, int);
-    void (*aft_edgeuse)(uint32_t *, genptr_t, int);
+    void (*bef_edgeuse)(uint32_t *, void *, int);
+    void (*aft_edgeuse)(uint32_t *, void *, int);
 
-    void (*vis_edge)(uint32_t *, genptr_t, int);
-    void (*vis_edge_g)(uint32_t *, genptr_t, int);
+    void (*vis_edge)(uint32_t *, void *, int);
+    void (*vis_edge_g)(uint32_t *, void *, int);
 
-    void (*bef_vertexuse)(uint32_t *, genptr_t, int);
-    void (*aft_vertexuse)(uint32_t *, genptr_t, int);
+    void (*bef_vertexuse)(uint32_t *, void *, int);
+    void (*aft_vertexuse)(uint32_t *, void *, int);
 
-    void (*vis_vertexuse_a)(uint32_t *, genptr_t, int);
-    void (*vis_vertex)(uint32_t *, genptr_t, int);
-    void (*vis_vertex_g)(uint32_t *, genptr_t, int);
+    void (*vis_vertexuse_a)(uint32_t *, void *, int);
+    void (*vis_vertex)(uint32_t *, void *, int);
+    void (*vis_vertex_g)(uint32_t *, void *, int);
 };
 
 #endif /* NMG_H */

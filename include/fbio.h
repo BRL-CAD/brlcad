@@ -164,6 +164,9 @@ FB_EXPORT extern FBIO X_interface;
 FB_EXPORT extern FBIO tk_interface;
 #endif
 
+#ifdef IF_QT
+FB_EXPORT extern FBIO qt_interface;
+#endif
 
 /* Always included */
 FB_EXPORT extern FBIO debug_interface, disk_interface, stk_interface;

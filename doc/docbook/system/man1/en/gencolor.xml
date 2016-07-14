@@ -34,7 +34,7 @@ pattern, the default being infinity.
 This program is useful for producing a given grey value or
 color. Note that
 <command>gencolor</command>
-will refuse to write its output to a window, you must redirect the output to a file.</para>
+will refuse to write its output to a window; you must redirect the output to a file.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>

@@ -138,7 +138,7 @@ BU_EXPORT extern size_t bu_avail_cpus(void);
  * This function will not return control until all invocations of the
  * subroutine are finished.
  */
-BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, genptr_t arg), int ncpu, genptr_t arg);
+BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, void *arg), int ncpu, void *arg);
 
 /** @file libbu/semaphore.c
  *

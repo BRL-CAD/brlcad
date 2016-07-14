@@ -85,7 +85,7 @@ extern int tty_fd;
 extern int zoom_factor;
 extern int LI, CO;
 
-extern struct vfont font;
+extern struct vfont_file font;
 
 extern Func_Tab	*get_Func_Name(char* inbuf, size_t bufsz, const char* msg);
 extern RGBpixel *get_Fb_Panel(Rect2D *rectp);

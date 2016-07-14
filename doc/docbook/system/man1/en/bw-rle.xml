@@ -31,19 +31,40 @@
 reads a
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file, converts it into a Utah Raster Toolkit
-Run-Length Encoded (RLE) format file format, and writes it to standard out.
+Run-Length Encoded (RLE) format file format, and writes it to standard output.
 If
 <emphasis remap='I'>file.bw</emphasis>
 is not specified, standard input is read.</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-C</option><replaceable>bg_val</replaceable></term>
+  <term><option>-C </option><replaceable>bg_val</replaceable></term>
   <listitem>
 <para>This option permits
 the user to specify a background color
 as a decimal number in the range of 0 to 255.</para>
   </listitem>
   </varlistentry>
+      <varlistentry>
+        <term><option>-w</option> <replaceable>file_width</replaceable></term>
+        <listitem>
+          <para>specifies the desired width of the saved image, in
+          pixels.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-n</option> <replaceable>file_height</replaceable></term>
+        <listitem>
+          <para>specifies the desired height of the saved image, in
+          scanlines.</para>
+        </listitem>
+      </varlistentry>
+      <varlistentry>
+        <term><option>-s</option> <replaceable>squarefilesize</replaceable></term>
+        <listitem>
+          <para>sets the saved image width and height to the indicated
+          value.</para>
+        </listitem>
+      </varlistentry>
   <varlistentry>
   <term><emphasis remap='I'>file.bw</emphasis></term>
   <listitem>

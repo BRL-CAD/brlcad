@@ -583,7 +583,7 @@ int
 rt_shootrays(struct application_bundle *bundle)
 {
     struct partition_bundle *pb = NULL;
-    genptr_t a_uptr_backup = NULL;
+    void *a_uptr_backup = NULL;
     struct xray a_ray;
     int (*a_hit)(struct application *, struct partition *, struct seg *);
     int (*a_miss)(struct application *);
@@ -625,7 +625,7 @@ rt_shootrays(struct application_bundle *bundle)
     pb->ap = &bundle->b_ap;
     pb->hits = pb->misses = 0;
 
-    bundle->b_uptr = (genptr_t)pb;
+    bundle->b_uptr = (void *)pb;
 
     for (BU_LIST_FOR (r, xrays, &bundle->b_rays.l)) {
 	BU_ALLOC(ray_ap, struct application);
@@ -633,7 +633,7 @@ rt_shootrays(struct application_bundle *bundle)
 
 	ray_ap->a_ray = r->ray;
 	ray_ap->a_ray.magic = RT_RAY_MAGIC;
-	ray_ap->a_uptr = (genptr_t)pb;
+	ray_ap->a_uptr = (void *)pb;
 	ray_ap->a_rt_i = rt_i;
 	ray_ap->a_resource = resource;
 
@@ -643,7 +643,7 @@ rt_shootrays(struct application_bundle *bundle)
 	resource = ray_ap->a_resource;
 
 	if (hit == 0)
-	    bu_free((genptr_t)(ray_ap), "ray application structure");
+	    bu_free((void *)(ray_ap), "ray application structure");
     }
 
     if ((bundle->b_hit) && (pb->hits > 0)) {

@@ -398,9 +398,9 @@ X_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "X_close: x_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
-    bu_free((genptr_t)dmp, "X_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "X_close: x_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "X_close: dm_xvars");
+    bu_free((void *)dmp, "X_close: dmp");
 
     return TCL_OK;
 }
@@ -1124,7 +1124,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

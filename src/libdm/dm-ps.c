@@ -84,8 +84,8 @@ ps_close(struct dm *dmp)
     bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->font);
     bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->title);
     bu_vls_free(&((struct ps_vars *)dmp->dm_vars.priv_vars)->creator);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "ps_close: ps_vars");
-    bu_free((genptr_t)dmp, "ps_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "ps_close: ps_vars");
+    bu_free((void *)dmp, "ps_close: dmp");
 
     return TCL_OK;
 }
@@ -294,7 +294,7 @@ ps_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 /* ARGSUSED */
 HIDDEN int
-ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+ps_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

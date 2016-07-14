@@ -499,9 +499,9 @@ rt_pr_tree_str(const union tree *tree)
 	    snprintf(return_str, return_length, "%s %c %s", left, op, right);
 
 	if (tree->tr_b.tb_left->tr_op != OP_DB_LEAF)
-	    bu_free((genptr_t)left, "rt_pr_tree_str: left string");
+	    bu_free((void *)left, "rt_pr_tree_str: left string");
 	if (tree->tr_b.tb_right->tr_op != OP_DB_LEAF)
-	    bu_free((genptr_t)right, "rt_pr_tree_str: right string");
+	    bu_free((void *)right, "rt_pr_tree_str: right string");
 	return return_str;
     } else if (tree->tr_op == OP_DB_LEAF)
 	return bu_strdup(tree->tr_l.tl_name);

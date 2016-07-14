@@ -65,12 +65,12 @@ __BEGIN_DECLS
 BU_EXPORT extern int bu_backtrace(FILE *fp);
 
 /** log indentation hook */
-typedef int (*bu_hook_t)(genptr_t, genptr_t);
+typedef int (*bu_hook_t)(void *, void *);
 
 struct bu_hook_list {
     struct bu_list l; /**< linked list */
     bu_hook_t hookfunc; /**< function to call */
-    genptr_t clientdata; /**< data for caller */
+    void *clientdata; /**< data for caller */
 };
 typedef struct bu_hook_list bu_hook_list_t;
 #define BU_HOOK_LIST_NULL ((struct bu_hook_list *) 0)
@@ -110,7 +110,7 @@ typedef struct bu_hook_list bu_hook_list_t;
  *
  * NOTE: The hook functions are all non-PARALLEL.
  */
-BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, genptr_t clientdata);
+BU_EXPORT extern void bu_bomb_add_hook(bu_hook_t func, void *clientdata);
 
 /**
  * Abort the running process.
@@ -215,12 +215,12 @@ BU_EXPORT extern void bu_setlinebuf(FILE *fp);
 BU_EXPORT extern void bu_hook_list_init(struct bu_hook_list *hlp);
 BU_EXPORT extern void bu_hook_add(struct bu_hook_list *hlp,
 				  bu_hook_t func,
-				  genptr_t clientdata);
+				  void *clientdata);
 BU_EXPORT extern void bu_hook_delete(struct bu_hook_list *hlp,
 				     bu_hook_t func,
-				     genptr_t clientdata);
+				     void *clientdata);
 BU_EXPORT extern void bu_hook_call(struct bu_hook_list *hlp,
-				   genptr_t buf);
+				   void *buf);
 BU_EXPORT extern void bu_hook_save_all(struct bu_hook_list *hlp,
 				       struct bu_hook_list *save_hlp);
 BU_EXPORT extern void bu_hook_delete_all(struct bu_hook_list *hlp);
@@ -245,7 +245,7 @@ BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
  @code
  --- BEGIN EXAMPLE ---
 
- int log_output_to_file(genptr_t data, genptr_t str)
+ int log_output_to_file(void *data, void *str)
  {
    FILE *fp = (FILE *)data;
    fprintf(fp, "LOG: %s", str);
@@ -255,9 +255,9 @@ BU_EXPORT extern void bu_hook_restore_all(struct bu_hook_list *hlp,
  int main(int ac, char *av[])
  {
    FILE *fp = fopen("whatever.log", "w+");
-   bu_log_add_hook(log_output_to_file, (genptr_t)fp);
+   bu_log_add_hook(log_output_to_file, (void *)fp);
    bu_log("Logging to file.\n");
-   bu_log_delete_hook(log_output_to_file, (genptr_t)fp);
+   bu_log_delete_hook(log_output_to_file, (void *)fp);
    bu_log("Logging to stderr.\n");
    fclose(fp);
    return 0;
@@ -290,13 +290,13 @@ BU_EXPORT extern void bu_log_indent_vls(struct bu_vls *v);
  *
  * NOTE: The hook functions are all non-PARALLEL.
  */
-BU_EXPORT extern void bu_log_add_hook(bu_hook_t func, genptr_t clientdata);
+BU_EXPORT extern void bu_log_add_hook(bu_hook_t func, void *clientdata);
 
 /**
  * Removes the hook matching the function and clientdata parameters from
  * the hook list.  Note that it is not necessarily the active (top) hook.
  */
-BU_EXPORT extern void bu_log_delete_hook(bu_hook_t func, genptr_t clientdata);
+BU_EXPORT extern void bu_log_delete_hook(bu_hook_t func, void *clientdata);
 
 BU_EXPORT extern void bu_log_hook_save_all(struct bu_hook_list *save_hlp);
 BU_EXPORT extern void bu_log_hook_delete_all(void);

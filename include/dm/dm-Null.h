@@ -95,7 +95,7 @@ null_drawVListHiddenLine(struct dm *dmp, struct bn_vlist *vp);
 
 
 DM_EXPORT extern int
-null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);
+null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
 
 
 DM_EXPORT extern int
@@ -163,7 +163,7 @@ null_getDisplayImage(struct dm *dmp, unsigned char **image);
 
 
 DM_EXPORT extern int
-null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);
+null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
 
 
 DM_EXPORT extern int

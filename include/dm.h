@@ -204,8 +204,8 @@
 #define LIGHT_RESET	2		/* all lights out */
 
 struct dm_vars {
-    genptr_t pub_vars;
-    genptr_t priv_vars;
+    void *pub_vars;
+    void *priv_vars;
 };
 
 
@@ -228,7 +228,7 @@ struct dm {
     int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
     int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
     int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
-    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);	/**< @brief formerly dmr_object */
+    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
     int (*dm_setFGColor)(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
     int (*dm_setBGColor)(struct dm *, unsigned char, unsigned char, unsigned char);
     int (*dm_setLineAttr)(struct dm *dmp, int width, int style);	/**< @brief currently - linewidth, (not-)dashed */
@@ -363,7 +363,7 @@ struct dm_draw_functions {
     int (*dm_drawPoints3D)(struct dm *dmp, int npoints, point_t *points);
     int (*dm_drawVList)(struct dm *dmp, struct bn_vlist *vp);
     int (*dm_drawVListHiddenLine)(struct dm *dmp, register struct bn_vlist *vp);
-    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);	/**< @brief formerly dmr_object */
+    int (*dm_draw)(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);	/**< @brief formerly dmr_object */
     int (*dm_beginDList)(struct dm *dmp, unsigned int list);
     int (*dm_endDList)(struct dm *dmp);
     void (*dm_drawDList)(unsigned int list);
@@ -539,7 +539,7 @@ __END_DECLS
     HIDDEN int _dmtype##_drawPoint3D(struct dm *dmp, point_t point); \
     HIDDEN int _dmtype##_drawPoints3D(struct dm *dmp, int npoints, point_t *points); \
     HIDDEN int _dmtype##_drawVList(struct dm *dmp, struct bn_vlist *vp); \
-    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data); \
+    HIDDEN int _dmtype##_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data); \
     HIDDEN int _dmtype##_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency); \
     HIDDEN int _dmtype##_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b); \
     HIDDEN int _dmtype##_setLineAttr(struct dm *dmp, int width, int style); \

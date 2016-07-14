@@ -80,7 +80,7 @@
 	bu_free((char *)dsp_ip, "rt_dsp_import4: dsp_ip"); \
     } \
     ip->idb_type = ID_NULL; \
-    ip->idb_ptr = (genptr_t)NULL; \
+    ip->idb_ptr = (void *)NULL; \
     return -2
 
 
@@ -1025,7 +1025,7 @@ rt_dsp_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
 
     BU_GET(dsp, struct dsp_specific);
-    stp->st_specific = (genptr_t) dsp;
+    stp->st_specific = (void *) dsp;
 
     /* this works ok, because the mapped file keeps track of the
      * number of uses.  However, the binunif interface does not.
@@ -1132,10 +1132,6 @@ plot_seg(struct isect_stuff *isect,
 }
 
 
-#define ADD_SEG(isect, in, out, min, max, r, g, b) \
-	add_seg(isect, in, out, min, max, r, g, b, __LINE__)
-
-
 /**
  * Add a segment to the list of intersections in DSP space
  *
@@ -1149,8 +1145,8 @@ add_seg(struct isect_stuff *isect,
 	struct hit *out_hit,
 	const point_t bbmin, /* The bounding box of what you are adding ... */
 	const point_t bbmax, /* ... */
-	int r, int g, int b, /* ... this is strictly for debug plot purposes */
-	int line)
+	int r, int g, int b  /* ... this is strictly for debug plot purposes */
+    )
 
 {
     struct seg *seg;
@@ -1159,13 +1155,6 @@ add_seg(struct isect_stuff *isect,
 #ifndef ORDERED_ISECT
     struct bu_list *spot;
 #endif
-
-    /*  FIXME: gcc 4.8.1 reports error here (rel build):
-/disk3/extsrc/brlcad-svn-trunk/src/librt/primitives/dsp/dsp.c:1184:9: error: 'seg_in.hit_vpriv[0]' may be used uninitialized in this function [-Werror=maybe-uninitialized]
-     dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
-         ^
-    */
-    dlog("add_seg %g %g line %d vpriv:%g %g\n", in_hit->hit_dist, out_hit->hit_dist, line, in_hit->hit_vpriv[X], in_hit->hit_vpriv[Y]);
 
     tt *= tt;
 
@@ -2000,7 +1989,7 @@ isect_ray_cell_top(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 		VMOVE(bbmax, dsp_bb->dspb_rpp.dsp_max);
 
 		/* create seg with hits[i].hit_point as out point */
-		if (ADD_SEG(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
+		if (add_seg(isect, hitp, &hits[i], bbmin, bbmax, 255, 255, 255))
 		    return 1;
 
 		hitp = 0;
@@ -2468,7 +2457,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	}
 
 	/* outta here */
-	return ADD_SEG(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
+	return add_seg(isect, &seg_in, &seg_out, bbmin, bbmax, 0, 255, 255);
     }
 
 
@@ -2546,7 +2535,7 @@ isect_ray_dsp_bb(struct isect_stuff *isect, struct dsp_bb *dsp_bb)
 	VMOVE(out_hit.hit_normal, dsp_pl[isect->dmax]);
 
 	/* add a segment to the list */
-	return ADD_SEG(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
+	return add_seg(isect, &in_hit, &out_hit, bbmin, bbmax, 255, 255, 0);
     }
 
     return 0;
@@ -4612,7 +4601,7 @@ rt_dsp_ifree(struct rt_db_internal *ip)
 
 
     bu_free((char *)dsp_ip, "dsp ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -4789,7 +4778,7 @@ rt_dsp_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
 
     BU_ALLOC(dsp, struct rt_dsp_internal);
 
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, "/dev/null");

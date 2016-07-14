@@ -106,7 +106,7 @@ _rt_tree_region_assign(union tree *tp, const struct region *regionp)
  * This routine must be prepared to run in parallel.
  */
 HIDDEN int
-_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t UNUSED(client_data))
+_rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *UNUSED(client_data))
 {
   if (tsp) {
     RT_CK_RTI(tsp->ts_rtip);
@@ -136,7 +136,7 @@ _rt_gettree_region_start(struct db_tree_state *tsp, const struct db_full_path *p
  * into the serial section.  (_rt_tree_region_assign, rt_bound_tree)
  */
 HIDDEN union tree *
-_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+_rt_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct region *rp;
     struct directory *dp = NULL;
@@ -438,7 +438,7 @@ _rt_find_identical_solid(const matp_t mat, struct directory *dp, struct rt_i *rt
  * This routine must be prepared to run in parallel.
  */
 HIDDEN union tree *
-_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+_rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     struct soltab *stp;
     struct directory *dp;
@@ -723,7 +723,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 
     BU_ALLOC(tbl, Tcl_HashTable);
     Tcl_InitHashTable(tbl, TCL_ONE_WORD_KEYS);
-    rtip->Orca_hash_tbl = (genptr_t)tbl;
+    rtip->Orca_hash_tbl = (void *)tbl;
 
     prev_sol_count = rtip->nsolids;
 
@@ -767,7 +767,7 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 &tree_state,
 			 _rt_gettree_region_start,
 			 _rt_gettree_region_end,
-			 _rt_gettree_leaf, (genptr_t)tbl);
+			 _rt_gettree_leaf, (void *)tbl);
 	bu_avs_free(&tree_state.ts_attrs);
     }
 

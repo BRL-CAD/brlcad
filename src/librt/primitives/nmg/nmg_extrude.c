@@ -178,9 +178,9 @@ nmg_translate_face(struct faceuse *fu, const fastf_t *Vec)
  */
 int
 nmg_extrude_face(struct faceuse *fu, const fastf_t *Vec, const struct bn_tol *tol)
-    /* Face to extrude. */
-    /* Magnitude and direction of extrusion. */
-    /* NMG tolerances. */
+/* Face to extrude. */
+/* Magnitude and direction of extrusion. */
+/* NMG tolerances. */
 {
     fastf_t cosang;
     int nfaces;
@@ -1328,7 +1328,7 @@ nmg_extrude_shell(struct shell *s, const fastf_t dist, const int normal_ward, co
 	(void)nmg_extrude_cleanup(s_tmp, is_void, tol);
     }
 
- out:
+out:
     bu_ptbl_free(&shells);
 
     /* put it all back together */

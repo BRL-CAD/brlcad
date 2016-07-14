@@ -53,7 +53,7 @@ mk_ebm(struct rt_wdb *fp, const char *name, const char *file, size_t xdim, size_
     ebm->tallness = tallness;
     MAT_COPY(ebm->mat, mat);
 
-    return wdb_export(fp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm);
+    return wdb_export(fp, name, (void *)ebm, ID_EBM, mk_conv2mm);
 }
 
 

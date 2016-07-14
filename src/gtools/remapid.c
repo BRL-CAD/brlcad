@@ -130,7 +130,7 @@ remapid_fclose(REMAPID_FILE *bfp)
 	bfp->file_name = (char *) 0;
 	bfp->file_bp = (char *) 0;
 	bu_vls_free(&(bfp->file_buf));
-	bu_free((genptr_t) bfp, "remapid_file struct");
+	bu_free((void *) bfp, "remapid_file struct");
     }
     return close_status;
 }
@@ -405,7 +405,7 @@ void
 free_curr_id(struct curr_id *cip)
 {
     BU_CKMAG(cip, CURR_ID_MAGIC, "curr_id");
-    bu_free((genptr_t) cip, "curr_id");
+    bu_free((void *) cip, "curr_id");
 }
 
 
@@ -471,9 +471,9 @@ void
 free_remap_reg(struct remap_reg *rp)
 {
     BU_CKMAG(rp, REMAP_REG_MAGIC, "remap_reg");
-    bu_free((genptr_t) rp->rr_name, "region name");
-    bu_free((genptr_t) rp->rr_ip, "rt_db_internal");
-    bu_free((genptr_t) rp, "remap_reg");
+    bu_free((void *) rp->rr_name, "region name");
+    bu_free((void *) rp->rr_ip, "rt_db_internal");
+    bu_free((void *) rp, "remap_reg");
 }
 
 

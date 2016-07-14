@@ -142,7 +142,7 @@ rt_sph_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     /* Solid is OK, compute constant terms now */
     BU_GET(sph, struct sph_specific);
-    stp->st_specific = (genptr_t)sph;
+    stp->st_specific = (void *)sph;
 
     VMOVE(sph->sph_V, eip->v);
 

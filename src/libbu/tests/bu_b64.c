@@ -37,13 +37,14 @@ int
 test_encode(const char *str)
 {
     int status = 0;
+    int decoded_size = 0;
     char *encoded = NULL;
     char *decoded = NULL;
 
     encoded = bu_b64_encode(str);
-    decoded = bu_b64_decode(encoded);
+    decoded_size = bu_b64_decode(&decoded, encoded);
 
-    if (BU_STR_EQUAL(str, decoded)) {
+    if (BU_STR_EQUAL(str, decoded) && decoded_size == (int)strlen(str)) {
 	printf("%s -> %s -> %s [PASS]\n", str, encoded, decoded);
     } else {
 	printf("%s -> %s -> %s [FAIL]\n", str, encoded, decoded);

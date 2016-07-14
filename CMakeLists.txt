@@ -569,9 +569,9 @@ BOX_PRINT("*** Configuring BRL-CAD Release ${BRLCAD_VERSION}, Build ${CONFIG_DAT
 #---------------------------------------------------------------------
 # CMake by default provides four different configurations for multi-
 # configuration build tools.  We want only two - Debug and Release.
-if(CMAKE_CONFIGURATION_TYPES)
-  set(CMAKE_CONFIGURATION_TYPES Debug Release)
-endif(CMAKE_CONFIGURATION_TYPES)
+if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
+  set(CMAKE_CONFIGURATION_TYPES "Debug;Release" CACHE STRING "Allowed BRL-CAD configuration types" FORCE)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
 
 #---------------------------------------------------------------------
 # We want to check /usr/local by default, so add it
@@ -1210,10 +1210,6 @@ endif(BRLCAD_ENABLE_DTRACE)
 
 # Take advantage of parallel processors if available - highly recommended
 option(BRLCAD_ENABLE_SMP "Enable SMP architecture parallel computation support" ON)
-if(WIN32 AND BRLCAD_ENABLE_SMP)
-  message("SMP Support is not ready on Windows - disabling")
-  set(BRLCAD_ENABLE_SMP OFF)
-endif(WIN32 AND BRLCAD_ENABLE_SMP)
 mark_as_advanced(BRLCAD_ENABLE_SMP)
 if(BRLCAD_ENABLE_SMP)
   CONFIG_H_APPEND(BRLCAD "#define PARALLEL 1\n")
@@ -1382,16 +1378,15 @@ endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
 include(${BRLCAD_CMAKE_DIR}/CompilerFlags.cmake)
 
 # Cache the original CMake sets of build flags for later use
-if(NOT CMAKE_BUILD_FLAGS_CACHED)
-  CACHE_BUILD_FLAGS()
-endif(NOT CMAKE_BUILD_FLAGS_CACHED)
+if(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
+  CACHE_BUILD_FLAGS(_CMAKE_DEFAULT)
+endif(NOT CMAKE_BUILD_FLAGS_CACHED_CMAKE_DEFAULT)
 
 # Clear out most CMake-assigned defaults - We're managing
 # our own compile flags, and don't (for example) want NDEBUG
 # if we have debugging flags enabled for a Release build.
 # At the same time, pull in any flags that have been set
 # in the environment.
-
 CLEAR_BUILD_FLAGS()
 
 # try to use -pipe to speed up the compiles
@@ -2116,6 +2111,12 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
+# Before we head into src/other and misc/tools, store all the build
+# flags that have been built up.  It's hard to be sure what will and
+# won't be set in those directories, so make sure we can restore the
+# BRL-CAD flags for the actual BRL-CAD subdirectories.
+CACHE_BUILD_FLAGS(_BRLCAD)
+
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
 # before the main BRL-CAD directories to provide the necessary build
@@ -2129,12 +2130,29 @@ add_subdirectory(src/other)
 # intent, etc.)
 add_subdirectory(misc/tools)
 
+# Now put back the BRL-CAD flags
+RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)
+
 # *******************************************************************
 if(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
   message("***********************************************************")
   message("*        Stage 9 of 9 - Define BRL-CAD Build Targets      *")
   message("***********************************************************")
 endif(NOT EXISTS ${CMAKE_BINARY_DIR}/CMakeCache.txt.prev)
+
+# Make sure the flags that were cleared earlier are at least set
+# to empty - CMake considers them "required internal variables".
+set(CMAKE_REQUIRED_FLAG_VARS
+  CMAKE_C_FLAGS
+  CMAKE_CXX_FLAGS
+  CMAKE_SHARED_LINKER_FLAGS
+  CMAKE_EXE_LINKER_FLAGS
+  )
+foreach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
+  if(NOT DEFINED ${req_var})
+    set(${req_var} "")
+  endif(NOT DEFINED ${req_var})
+endforeach(req_var ${CMAKE_REQUIRED_FLAG_VARS})
 
 # Enable CTest Testing support - this is done after src/other is
 # added to avoid incorporating src/other CTests into BRL-CAD's own
@@ -2248,62 +2266,21 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${BRLCAD_BINARY_DIR}/include/conf/USER.tmp)
 DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/USER)
 
-# PATH
-if(CMAKE_CONFIGURATION_TYPES)
-
-  # if we have stale cmake_install.cmake.orig files around, clear them now.
-  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
-  if(ALL_CMAKE_INSTALL_FILES_ORIG)
-    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
-  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
-  # need a build target for this one - install directory may be dependent on configuration, but that won't
-  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
-  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
-  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
-  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
-  add_custom_command(
-    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
-    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/PATH.tmp" "${CMAKE_BINARY_DIR}/include/conf/PATH"
-    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
-    )
-  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
-  # To make sure this command runs in time for the source code builds it might impact, we will need to add the output file as a dependency
-  # to the first target to run - the timestamp printing.
-  add_dependencies(timestamp multiconfig_path)
-
-else(CMAKE_CONFIGURATION_TYPES)
-
-  file(WRITE ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp "\"${CMAKE_INSTALL_PREFIX}\"\n")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp ${BRLCAD_BINARY_DIR}/include/conf/PATH)
-  execute_process(COMMAND ${CMAKE_COMMAND} -E remove	${BRLCAD_BINARY_DIR}/include/conf/PATH.tmp)
-
-endif(CMAKE_CONFIGURATION_TYPES)
-DISTCLEAN(${BRLCAD_BINARY_DIR}/include/conf/PATH)
 
 # Write out version and compilation information
 
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/DATE BRLCAD_COMPILE_DATE)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/HOST BRLCAD_COMPILE_HOST)
-file(READ ${BRLCAD_BINARY_DIR}/include/conf/PATH BRLCAD_COMPILE_PATH)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/USER BRLCAD_COMPILE_USER)
 file(READ ${BRLCAD_BINARY_DIR}/include/conf/COUNT BRLCAD_COMPILE_COUNT)
 
 string(STRIP ${BRLCAD_COMPILE_DATE} BRLCAD_COMPILE_DATE)
 string(STRIP ${BRLCAD_COMPILE_HOST} BRLCAD_COMPILE_HOST)
-string(STRIP ${BRLCAD_COMPILE_PATH} BRLCAD_COMPILE_PATH)
 string(STRIP ${BRLCAD_COMPILE_USER} BRLCAD_COMPILE_USER)
 string(STRIP ${BRLCAD_COMPILE_COUNT} BRLCAD_COMPILE_COUNT)
 
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_DATE ${BRLCAD_COMPILE_DATE}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_HOST ${BRLCAD_COMPILE_HOST}\n")
-CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_PATH ${BRLCAD_COMPILE_PATH}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_USER ${BRLCAD_COMPILE_USER}\n")
 CONFIG_H_APPEND(BRLCAD "#define BRLCAD_COMPILE_COUNT ${BRLCAD_COMPILE_COUNT}\n")
 
@@ -2480,7 +2457,47 @@ if(NOT BRLCAD_IS_SUBBUILD)
       add_dependencies(buildtimedelta ${externaltarget})
     endif(target_confcmd)
   endforeach(externaltarget ${CMAKE_EXTERNAL_TARGET_LIST})
+
 endif(NOT BRLCAD_IS_SUBBUILD)
+
+
+# To set correct install paths for CMake at build time, rather than CMake
+# time, some rather special logic is necessary - a build target that needs
+# to be run when the current build type changes, and introspective scripting
+# that updates the CMake files themselves to have the correct path.
+# Unfortunately, there does not appear to be a way to control this well enough
+# from the CMake level - a build-type aware path is technically possible, but
+# it does not conform to BRL-CAD's conventions for installation directory
+# naming.
+if(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
+  # if we have stale cmake_install.cmake.orig files around, clear them now.
+  file(GLOB_RECURSE ALL_CMAKE_INSTALL_FILES_ORIG "*cmake_install.cmake.orig")
+  if(ALL_CMAKE_INSTALL_FILES_ORIG)
+    file(REMOVE ${ALL_CMAKE_INSTALL_FILES_ORIG})
+  endif(ALL_CMAKE_INSTALL_FILES_ORIG)
+  # need a build target for this one - install directory may be dependent on configuration, but that won't
+  # do for BRL-CAD reporting purposes - must get the fully qualified path at build time.
+  string(REPLACE "\${BUILD_TYPE}" "----BUILD_TYPE----" CMAKE_INSTALL_PREFIX_CFG "${CMAKE_INSTALL_PREFIX}")
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_clean.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake @ONLY)
+  configure_file(${BRLCAD_CMAKE_DIR}/multiconfig_path_read.cmake.in ${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake @ONLY)
+  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+    file(REMOVE_RECURSE ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH)
+  add_custom_command(
+    OUTPUT "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_clean.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}"
+    COMMAND "${CMAKE_COMMAND}" -P "${CMAKE_BINARY_DIR}/CMakeTmp/multiconfig_path_read.cmake"
+    COMMAND "${CMAKE_COMMAND}" -E touch "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done"
+    )
+  # To make sure multiconfig_path runs in time for the source code builds it might impact, we will need to add the output file as a dependency
+  # to the first target to run - the timestamp printing.
+  add_custom_target(multiconfig_path DEPENDS "${CMAKE_BINARY_DIR}/CMakeTmp/CURRENT_PATH/${CMAKE_CFG_INTDIR}.done")
+  set_target_properties(multiconfig_path PROPERTIES FOLDER "Compilation Utilities")
+  add_dependencies(timestamp multiconfig_path)
+endif(CMAKE_CONFIGURATION_TYPES AND NOT BRLCAD_IS_SUBBUILD)
+
 
 # CPack is used to produce tgz files, RPMS, etc.  If SUBBUILD is enabled this
 # becomes the responsibility of the parent project.

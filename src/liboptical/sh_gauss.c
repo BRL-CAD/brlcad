@@ -126,10 +126,10 @@ struct bu_structparse gauss_parse_tab[] = {
 };
 
 
-HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void gauss_print(register struct region *rp, genptr_t dp);
-HIDDEN void gauss_free(genptr_t cp);
+HIDDEN int gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void gauss_print(register struct region *rp, void *dp);
+HIDDEN void gauss_free(void *cp);
 
 /* The "mfuncs" structure defines the external interface to the shader.
  * Note that more than one shader "name" can be associated with a given
@@ -292,7 +292,7 @@ tree_solids(union tree *tp, struct tree_bark *tb, int op, struct resource *resp)
  * Any shader-specific initialization should be done here.
  */
 HIDDEN int
-gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
+gauss_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *rtip)
 
 
 /* pointer to reg_udata in *rp */
@@ -358,14 +358,14 @@ gauss_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, c
 
 
 HIDDEN void
-gauss_print(register struct region *rp, genptr_t dp)
+gauss_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, gauss_print_tab, (char *)dp);
 }
 
 
 HIDDEN void
-gauss_free(genptr_t cp)
+gauss_free(void *cp)
 {
     register struct gauss_specific *gauss_sp =
 	(struct gauss_specific *)cp;
@@ -374,7 +374,7 @@ gauss_free(genptr_t cp)
     while (BU_LIST_WHILE(p, reg_db_internals, &gauss_sp->dbil)) {
 	BU_LIST_DEQUEUE(&(p->l));
 	bu_free(p->ip.idb_ptr, "internal ptr");
-	bu_free((genptr_t)p, "gauss reg_db_internals");
+	bu_free((void *)p, "gauss reg_db_internals");
     }
 
     BU_PUT(cp, struct gauss_specific);
@@ -470,7 +470,7 @@ eval_seg(struct application *ap, struct reg_db_internals *dbint, struct seg *seg
  * structure.
  */
 int
-gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+gauss_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 
 
 /* defined in material.h */

@@ -95,6 +95,10 @@ bw_read(const char *filename, int width, int height)
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "bw_read : unsigned char data");
 
+	/* FIXME: this is a simple but VERY slow way to read data.
+	 * Better to read in big chunks, but then one has to handle
+	 * partial-reads better.  Below seems to ignore a read error.
+	 */
 	while ((status = fread(&data[size], 1, 1, fp))==1) {
 	    size++;
 	    if (size==buffsize) {

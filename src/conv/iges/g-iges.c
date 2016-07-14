@@ -57,7 +57,7 @@
 #define CP_BUF_SIZE 4096	/* size of buffer for file copy */
 #define SUFFIX_LEN 10 /* max size of suffix for 'part' files (-m option) */
 
-extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 void w_start_global(
     FILE *fp_dir,
     FILE *fp_param,
@@ -72,10 +72,10 @@ extern void write_vertex_list(struct nmgregion *r, struct bu_ptbl *vtab, FILE *f
 extern void nmg_region_edge_list(struct bu_ptbl *tab, struct nmgregion *r);
 extern int nmgregion_to_iges(char *name, struct nmgregion *r, int dependent, FILE *fp_dir, FILE *fp_param);
 extern int write_shell_face_loop(struct nmgregion *r, int edge_de, struct bu_ptbl *etab, int vert_de, struct bu_ptbl *vtab, FILE *fp_dir, FILE *fp_param);
-extern void csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
-extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void csg_comb_func(struct db_i *dbip, struct directory *dp, void *ptr);
+extern void csg_leaf_func(struct db_i *dbip, struct directory *dp, void *ptr);
 extern void set_iges_tolerances(struct bn_tol *set_tol, struct rt_tess_tol *set_ttol);
-extern void count_refs(struct db_i *dbip, struct directory *dp, genptr_t ptr);
+extern void count_refs(struct db_i *dbip, struct directory *dp, void *ptr);
 extern int nmgregion_to_tsurf(char *name, struct nmgregion *r, FILE *fp_dir, FILE *fp_param);
 extern int write_solid_instance(int orig_de, mat_t mat, FILE *fp_dir, FILE *fp_param);
 extern void get_props(struct iges_properties *props, struct rt_comb_internal *comb);
@@ -347,7 +347,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -394,7 +394,7 @@ main(int argc, char *argv[])
 			   0,			/* take all regions */
 			   do_nmg_region_end,
 			   nmg_booltree_leaf_tess,
-			   (genptr_t)NULL);	/* in librt/nmg_bool.c */
+			   (void *)NULL);	/* in librt/nmg_bool.c */
 
 	if (ret)
 	    bu_exit(1, "g-iges: Could not facetize anything!");
@@ -492,7 +492,7 @@ process_boolean(struct db_tree_state *tsp, union tree *curtree, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *result;
     struct nmgregion *r;
@@ -709,7 +709,7 @@ get_de_pointers(union tree *tp, struct directory *dp, int de_len,
 
 
 void
-csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+csg_comb_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -794,7 +794,7 @@ csg_comb_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+csg_leaf_func(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal ip;
 
@@ -826,7 +826,7 @@ csg_leaf_func(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
 
 
 void
-incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genptr_t UNUSED(user_ptr1), genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, void *UNUSED(user_ptr1), void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct directory *dp;
 
@@ -842,7 +842,7 @@ incr_refs(struct db_i *dbip, struct rt_comb_internal *comb, union tree *tp, genp
 
 
 void
-count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+count_refs(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
@@ -869,7 +869,7 @@ count_refs(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
     comb_form = 0;
 
     db_tree_funcleaf(dbip, comb, comb->tree, incr_refs,
-		     (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+		     (void *)NULL, (void *)NULL, (void *)NULL, (void *)NULL);
 
 }
 

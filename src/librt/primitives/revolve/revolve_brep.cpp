@@ -289,7 +289,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	VMOVE(sketch.V, plane_origin);
 	VMOVE(sketch.u_vec, plane_x_dir);
 	VMOVE(sketch.v_vec, plane_y_dir);
-	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	tmp_internal->idb_ptr = (void *)(&sketch);
 	rt_sketch_brep(&b1, tmp_internal, tol);
 	(*b)->Append(*b1->Duplicate());
 
@@ -297,7 +297,7 @@ rt_revolve_brep(ON_Brep **b, const struct rt_db_internal *ip, const struct bn_to
 	VMOVE(sketch.V, end_plane_origin);
 	VMOVE(sketch.u_vec, end_plane_x_dir);
 	VMOVE(sketch.v_vec, end_plane_y_dir);
-	tmp_internal->idb_ptr = (genptr_t)(&sketch);
+	tmp_internal->idb_ptr = (void *)(&sketch);
 	rt_sketch_brep(&b2, tmp_internal, tol);
 	(*b)->Append(*b2->Duplicate());
 	(*b)->FlipFace((*b)->m_F[(*b)->m_F.Count()-1]);

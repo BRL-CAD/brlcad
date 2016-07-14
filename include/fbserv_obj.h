@@ -63,8 +63,8 @@ struct fbserv_obj {
     Tcl_Interp *fbs_interp;		/**< @brief tcl interpreter */
     struct fbserv_listener fbs_listener;		/**< @brief data for listening */
     struct fbserv_client fbs_clients[MAX_CLIENTS];	/**< @brief connected clients */
-    void (*fbs_callback)(genptr_t clientData);		/**< @brief callback function */
-    genptr_t fbs_clientData;
+    void (*fbs_callback)(void *clientData);		/**< @brief callback function */
+    void *fbs_clientData;
     int fbs_mode;			/**< @brief 0-off, 1-underlay, 2-interlay, 3-overlay */
 };
 

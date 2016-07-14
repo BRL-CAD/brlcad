@@ -60,7 +60,7 @@ mk_particle(struct rt_wdb *fp, const char *name, fastf_t *vertex, fastf_t *heigh
     part->part_hrad = hradius;
     part->part_type = 0;		/* sanity, unused */
 
-    return wdb_export(fp, name, (genptr_t)part, ID_PARTICLE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)part, ID_PARTICLE, mk_conv2mm);
 }
 
 
@@ -80,7 +80,7 @@ mk_pipe(struct rt_wdb *fp, const char *name, struct bu_list *headp)
     /* linked list from caller */
     BU_LIST_APPEND_LIST(&pipep->pipe_segs_head, headp);
 
-    return wdb_export(fp, name, (genptr_t)pipep, ID_PIPE, mk_conv2mm);
+    return wdb_export(fp, name, (void *)pipep, ID_PIPE, mk_conv2mm);
 }
 
 

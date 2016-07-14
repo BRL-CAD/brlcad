@@ -123,7 +123,7 @@ existing_client_handler(ClientData clientData, int UNUSED(mask))
 	    bu_log("pkg_process error encountered (2)\n");
     }
 
-    if (fbsp->fbs_callback != (void (*)(genptr_t))FBS_CALLBACK_NULL) {
+    if (fbsp->fbs_callback != (void (*)(void *))FBS_CALLBACK_NULL) {
 	/* need to cast func pointer explicitly to get the function call */
 	void (*cfp)(void *);
 	cfp = (void (*)(void *))fbsp->fbs_callback;

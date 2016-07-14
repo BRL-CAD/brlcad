@@ -81,9 +81,9 @@ qt_close(struct dm *dmp)
     bu_vls_free(&dmp->dm_pathName);
     bu_vls_free(&dmp->dm_tkName);
     bu_vls_free(&dmp->dm_dName);
-    bu_free((genptr_t)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
-    bu_free((genptr_t)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
-    bu_free((genptr_t)dmp, "qt_close: dmp");
+    bu_free((void *)dmp->dm_vars.priv_vars, "qt_close: qt_vars");
+    bu_free((void *)dmp->dm_vars.pub_vars, "qt_close: dm_xvars");
+    bu_free((void *)dmp, "qt_close: dmp");
 
     return TCL_OK;
 }
@@ -437,7 +437,7 @@ qt_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+qt_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
 

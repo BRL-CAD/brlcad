@@ -706,13 +706,13 @@ mged_freemem(void)
 
     FOR_ALL_SOLIDS(sp, &MGED_FreeSolid.l) {
 	GET_SOLID(sp, &MGED_FreeSolid.l);
-	bu_free((genptr_t)sp, "mged_freemem: struct solid");
+	bu_free((void *)sp, "mged_freemem: struct solid");
     }
 
     while (BU_LIST_NON_EMPTY(&RTG.rtg_vlfree)) {
 	vp = BU_LIST_FIRST(bn_vlist, &RTG.rtg_vlfree);
 	BU_LIST_DEQUEUE(&(vp->l));
-	bu_free((genptr_t)vp, "mged_freemem: struct bn_vlist");
+	bu_free((void *)vp, "mged_freemem: struct bn_vlist");
     }
 }
 
@@ -1091,10 +1091,10 @@ f_ill(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *a
 
     if (path_piece) {
 	for (i = 0; path_piece[i] != 0; ++i) {
-	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	    bu_free((void *)path_piece[i], "f_ill: char *");
 	}
 
-	bu_free((genptr_t) path_piece, "f_ill: char **");
+	bu_free((void *) path_piece, "f_ill: char **");
     }
 
     bu_free(orig_nargv, "free f_ill nargv");
@@ -1115,10 +1115,10 @@ bail_out:
 
     if (path_piece) {
 	for (i = 0; path_piece[i] != 0; ++i) {
-	    bu_free((genptr_t)path_piece[i], "f_ill: char *");
+	    bu_free((void *)path_piece[i], "f_ill: char *");
 	}
 
-	bu_free((genptr_t) path_piece, "f_ill: char **");
+	bu_free((void *) path_piece, "f_ill: char **");
     }
 
     bu_free(orig_nargv, "free f_ill nargv");
@@ -3054,7 +3054,7 @@ view_ring_destroy(struct dm_list *dlp)
     while (BU_LIST_NON_EMPTY(&dlp->dml_view_state->vs_headView.l)) {
 	vrp = BU_LIST_FIRST(view_ring, &dlp->dml_view_state->vs_headView.l);
 	BU_LIST_DEQUEUE(&vrp->l);
-	bu_free((genptr_t)vrp, "view_ring_destroy: vrp");
+	bu_free((void *)vrp, "view_ring_destroy: vrp");
     }
 }
 
@@ -3278,7 +3278,7 @@ f_view_ring(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	}
 
 	BU_LIST_DEQUEUE(&vrp->l);
-	bu_free((genptr_t)vrp, "view_ring delete");
+	bu_free((void *)vrp, "view_ring delete");
 
 	return TCL_OK;
     }

@@ -228,7 +228,7 @@ bu_ptbl_free(struct bu_ptbl *b)
     BU_CK_PTBL(b);
 
     if (b->buffer) {
-	bu_free((genptr_t)b->buffer, "bu_ptbl.buffer[]");
+	bu_free((void *)b->buffer, "bu_ptbl.buffer[]");
     }
     memset((char *)b, 0, sizeof(struct bu_ptbl));	/* sanity */
 

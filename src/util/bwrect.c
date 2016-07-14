@@ -40,7 +40,7 @@ char *in_file = NULL;
 
 
 char usage[] = "\
-Usage:  bwrect [-h] [squaresize] [-w width] [-n height] [-W out_width ] [-N out_height] \n\
+Usage:  bwrect [-h] [-s squaresize] [-w width] [-n height] [-W out_width ] [-N out_height]\n\
 			[-x xorig] [-y yorig] [-S out_squaresize] [-o out_file.bw] [file.bw] > [out_file.bw]\n";
 
 

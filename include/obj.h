@@ -61,7 +61,7 @@ struct view_obj {
     mat_t		vo_pmat;		/**< @brief  perspective matrix */
     struct bu_observer	vo_observers;
     void 		(*vo_callback)();	/**< @brief  called in vo_update with vo_clientData and vop */
-    genptr_t		vo_clientData;		/**< @brief  passed to vo_callback */
+    void *		vo_clientData;		/**< @brief  passed to vo_callback */
     int			vo_zclip;
     Tcl_Interp		*interp;
 };

@@ -267,7 +267,7 @@ mk_comb(
 
 	intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	intern.idb_type = ID_COMBINATION;
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
 	fresh_combination = 1;

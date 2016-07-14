@@ -74,7 +74,7 @@ static uint32_t total_vertex_count = 0;
 static uint32_t total_face_count = 0;
 
 
-void mesh_tracker(struct db_i *dbip, struct directory *dp, genptr_t UNUSED(ptr))
+void mesh_tracker(struct db_i *dbip, struct directory *dp, void *UNUSED(ptr))
 {
     struct rt_db_internal internal;
 

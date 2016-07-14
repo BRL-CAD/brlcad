@@ -122,7 +122,7 @@ Add_face(int face[3])
 
     if (num_faces >= max_faces) {
 	max_faces += FACES_BLOCK;
-	faces = (long *)bu_realloc((genptr_t)faces, max_faces*3*sizeof(long), "faces array");
+	faces = (long *)bu_realloc((void *)faces, max_faces*3*sizeof(long), "faces array");
     }
 
     VMOVE(&faces[num_faces*3], face);

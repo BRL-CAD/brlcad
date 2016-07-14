@@ -220,7 +220,7 @@ extern struct directory **dir_getspace();
 extern void ellipse();
 
 /* mged.c */
-extern void mged_view_callback(struct ged_view *gvp, genptr_t clientData);
+extern void mged_view_callback(struct ged_view *gvp, void *clientData);
 
 /* buttons.c */
 extern void button(int bnum);
@@ -446,7 +446,7 @@ int mged_attach(struct w_dm *wp, int argc, const char *argv[]);
 void mged_link_vars(struct dm_list *p);
 void mged_slider_free_vls(struct dm_list *p);
 int gui_setup(const char *dstr);
-int gui_output(genptr_t clientData, genptr_t str);
+int gui_output(void *clientData, void *str);
 
 
 /* buttons.c */

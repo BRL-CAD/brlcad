@@ -226,7 +226,7 @@ typedef struct bu_list bu_list_t;
 	(type *)(cur))
 
 /**
- * This version of BU_LIST_DEQUEUE uses the comma operator inorder to
+ * This version of BU_LIST_DEQUEUE uses the comma operator in order to
  * return a typecast version of the dequeued pointer
  */
 #define BU_LIST_DEQUEUE_T(cur, type) (\

@@ -815,10 +815,16 @@ link_curves(const ON_SimpleArray<SSICurve> &in)
 // (say, for a subtraction) which face is cutting deeper.  It's not clear to me yet if such an approach would
 // work or would scale to complex cases, but it may be worth thinking about.
 HIDDEN ON_SimpleArray<TrimmedFace *>
-split_at_innerloops_and_unclosed_curves(
+split_trimmed_face(
     const TrimmedFace *orig_face,
     ON_ClassArray<LinkedCurve> &ssx_curves)
 {
+    ON_SimpleArray<TrimmedFace *> out;
+    if (ssx_curves.Count() == 0) {
+	// No curve, no splitting
+	out.Append(orig_face->Duplicate());
+	return out;
+    }
     /* We followed the algorithms described in:
      * S. Krishnan, A. Narkhede, and D. Manocha. BOOLE: A System to Compute
      * Boolean Combinations of Sculptured Solids. Technical Report TR95-008,
@@ -826,12 +832,6 @@ split_at_innerloops_and_unclosed_curves(
      * Appendix B: Partitioning a Simple Polygon using Non-Intersecting
      * Chains.
      */
-    ON_SimpleArray<TrimmedFace *> out;
-    if (ssx_curves.Count() == 0) {
-	// No curve, no splitting
-	out.Append(orig_face->Duplicate());
-	return out;
-    }
 
     // Get the intersection points between the SSI curves and the outerloop.
     ON_SimpleArray<IntersectPoint> clx_points;
@@ -1212,23 +1212,6 @@ split_at_innerloops_and_unclosed_curves(
     }
 
     return out;
-}
-
-HIDDEN ON_SimpleArray<TrimmedFace *>
-split_trimmed_face(
-    const TrimmedFace *orig_face,
-    ON_ClassArray<LinkedCurve> &ssx_curves)
-{
-    ON_SimpleArray<TrimmedFace *> out;
-    if (ssx_curves.Count() == 0) {
-	// No curve, no splitting
-	out.Append(orig_face->Duplicate());
-	return out;
-    }
-    ON_SimpleArray<TrimmedFace *> out2 =
-	split_at_innerloops_and_unclosed_curves(orig_face, ssx_curves);
-    out.Append(out2.Count(), out2.Array());
-    out2.Empty();
 
     return out;
 }
@@ -1623,36 +1606,51 @@ is_point_inside_brep(const ON_3dPoint &pt, const ON_Brep *brep, ON_SimpleArray<S
     return pt_no_dup.Count() % 2 != 0;
 }
 
-ON_2dPoint
+HIDDEN bool
+is_point_inside_trimmed_face(const ON_2dPoint &pt, const TrimmedFace *tface)
+{
+    bool inside = false;
+    if (is_point_inside_loop(pt, tface->m_outerloop)) {
+	inside = true;
+	for (size_t i = 0; i < tface->m_innerloop.size(); ++i) {
+	    if (!is_point_outside_loop(pt, tface->m_innerloop[i])) {
+		inside = false;
+		break;
+	    }
+	}
+    }
+    return inside;
+}
+
+// TODO: For faces that have most of their area trimmed away, this is
+// a very inefficient algorithm. If the grid approach doesn't work
+// after a small number of samples, we should switch to an alternative
+// algorithm, such as sampling around points on the inner loops.
+HIDDEN ON_2dPoint
 get_point_inside_trimmed_face(const TrimmedFace *tface)
 {
-    const int try_count = 10;
+    const int GP_MAX_STEPS = 8; // must be a power of two
 
     ON_PolyCurve polycurve;
     if (!is_loop_valid(tface->m_outerloop, ON_ZERO_TOLERANCE, &polycurve)) {
 	throw InvalidGeometry("face_brep_location(): invalid outerloop.\n");
     }
     ON_BoundingBox bbox =  polycurve.BoundingBox();
+    double u_len = bbox.m_max.x - bbox.m_min.x;
+    double v_len = bbox.m_max.y - bbox.m_min.y;
+
     ON_2dPoint test_pt2d;
-    ON_RandomNumberGenerator rng;
     bool found = false;
-    for (int i = 0; i < try_count; i++) {
-	// Get a random point inside the outerloop's bounding box.
-	double x = rng.RandomDouble(bbox.m_min.x, bbox.m_max.x);
-	double y = rng.RandomDouble(bbox.m_min.y, bbox.m_max.y);
-	test_pt2d = ON_2dPoint(x, y);
-	if (is_point_inside_loop(test_pt2d, tface->m_outerloop)) {
-	    // The test point should not be inside an innerloop
-	    size_t j = 0;
-	    for (; j < tface->m_innerloop.size(); ++j) {
-		if (!is_point_outside_loop(test_pt2d, tface->m_innerloop[j])) {
-		    break;
-		}
-	    }
-	    if (j == tface->m_innerloop.size()) {
-		// We find a valid test point
-		found = true;
-		break;
+    for (int steps = 1; steps <= GP_MAX_STEPS && !found; steps *= 2) {
+	double u_halfstep = u_len / (steps * 2.0);
+	double v_halfstep = v_len / (steps * 2.0);
+
+	for (int i = 0; i < steps && !found; ++i) {
+	    test_pt2d.x = bbox.m_min.x + u_halfstep * (1 + 2 * i);
+
+	    for (int j = 0; j < steps && !found; ++j) {
+		test_pt2d.y = bbox.m_min.y + v_halfstep * (1 + 2 * j);
+		found = is_point_inside_trimmed_face(test_pt2d, tface);
 	    }
 	}
     }

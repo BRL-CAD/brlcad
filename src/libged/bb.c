@@ -186,9 +186,9 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    new_intern.idb_type = ID_ARB8;
 	    new_intern.idb_meth = &OBJ[ID_ARB8];
-	    new_intern.idb_ptr = (genptr_t)arb;
+	    new_intern.idb_ptr = (void *)arb;
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }
@@ -238,7 +238,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	new_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	new_intern.idb_type = ID_ARB8;
 	new_intern.idb_meth = &OBJ[ID_ARB8];
-	new_intern.idb_ptr = (genptr_t)arb;
+	new_intern.idb_ptr = (void *)arb;
 
 	if (intern.idb_meth->ft_oriented_bbox) {
 	    if (intern.idb_meth->ft_oriented_bbox(arb, &intern, oriented_bbox_tol) < 0) {
@@ -286,7 +286,7 @@ ged_bb(struct ged *gedp, int argc, const char *argv[])
 	    rt_db_free_internal(&new_intern);
 	} else {
 
-	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&new_intern.idb_type)) == RT_DIR_NULL) {
+	    if ((dp=db_diradd(gedp->ged_wdbp->dbip, bbname, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&new_intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", bbname);
 		return GED_ERROR;
 	    }

@@ -27,7 +27,7 @@
 
 #include "common.h"
 
-/* for genptr_t */
+/* for void **/
 #include "bu.h"
 #include "vmath.h"
 

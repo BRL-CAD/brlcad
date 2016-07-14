@@ -339,7 +339,7 @@ rt_rec_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_REC];
 
     BU_GET(rec, struct rec_specific);
-    stp->st_specific = (genptr_t)rec;
+    stp->st_specific = (void *)rec;
 
     VMOVE(rec->rec_Hunit, tip->h);
     VUNITIZE(rec->rec_Hunit);

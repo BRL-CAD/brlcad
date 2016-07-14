@@ -285,7 +285,7 @@ pop_find_nodes(	union tree *tp)
 
 
 void
-pop_mutate(int type, genptr_t ptr)
+pop_mutate(int type, void *ptr)
 {
     int i;
     switch (type) {
@@ -367,7 +367,7 @@ pop_functree(struct db_i *dbi_p, struct db_i *dbi_c,
 
 
 	    /* write child to new database */
-	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
+	    if ((dp=db_diradd(dbi_c, shape, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new object to the database");
 	    if (rt_db_put_internal(dp, dbi_c, &in, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Failed to write new individual to database");
@@ -495,7 +495,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 	    pop_functree(dbi_p, dbi_c, parent2->tree, resp, child2_id);
 
 
-	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL)
+	    if ((dp = db_diradd(dbi_c, child2_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL)
 		bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
 	    if (rt_db_put_internal(dp, dbi_c, &in2, resp) < 0)
 		bu_exit(EXIT_FAILURE, "Database write failure");
@@ -526,7 +526,7 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
     }
 
 
-    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (genptr_t)&dp->d_minor_type)) == RT_DIR_NULL) {
+    if ((dp=db_diradd(dbi_c, child1_id, -1, 0, dp->d_flags, (void *)&dp->d_minor_type)) == RT_DIR_NULL) {
 	bu_exit(EXIT_FAILURE, "Failed to add new individual to child database");
     }
     if (rt_db_put_internal(dp, dbi_c,  &in1, resp) < 0)

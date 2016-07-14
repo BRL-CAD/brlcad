@@ -80,7 +80,7 @@ HIDDEN int osg_drawPoint3D(struct dm *dmp, point_t point);
 HIDDEN int osg_drawPoints3D(struct dm *dmp, int npoints, point_t *points);
 HIDDEN int osg_drawVList(struct dm *dmp, register struct bn_vlist *vp);
 HIDDEN int osg_drawVListHiddenLine(struct dm *dmp, register struct bn_vlist *vp);
-HIDDEN int osg_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data);
+HIDDEN int osg_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data);
 HIDDEN int osg_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
 HIDDEN int osg_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 HIDDEN int osg_setLineAttr(struct dm *dmp, int width, int style);
@@ -549,14 +549,14 @@ osg_open(Tcl_Interp *interp, int argc, char **argv)
     bu_vls_init(&(dmp->dm_log));
 
     BU_ALLOC(dmp->dm_vars.pub_vars, struct dm_xvars);
-    if (dmp->dm_vars.pub_vars == (genptr_t)NULL) {
+    if (dmp->dm_vars.pub_vars == (void *)NULL) {
 	bu_free(dmp, "osg_open: dmp");
 	return DM_NULL;
     }
     pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
 
     BU_ALLOC(dmp->dm_vars.priv_vars, struct osg_vars);
-    if (dmp->dm_vars.priv_vars == (genptr_t)NULL) {
+    if (dmp->dm_vars.priv_vars == (void *)NULL) {
 	bu_free(dmp->dm_vars.pub_vars, "osg_open: dmp->dm_vars.pub_vars");
 	bu_free(dmp, "osg_open: dmp");
 	return DM_NULL;
@@ -1611,7 +1611,7 @@ osg_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-osg_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+osg_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {

@@ -562,7 +562,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -575,7 +575,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
 
@@ -591,7 +591,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
     eip->mp = mp;
@@ -615,7 +615,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (genptr_t)bu_calloc(
+	mp->apbuf = (void *)bu_calloc(
 	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
@@ -704,7 +704,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -717,7 +717,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 			(char *)eip);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
 
@@ -733,7 +733,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	bu_free((char *)eip, "rt_ebm_import4: eip");
     fail:
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -1;
     }
     eip->mp = mp;
@@ -757,7 +757,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
 	    bu_semaphore_release(RT_SEM_MODEL);
 	    return 0;
 	}
-	mp->apbuf = (genptr_t)bu_calloc(
+	mp->apbuf = (void *)bu_calloc(
 	    1, nbytes, "rt_ebm_import4 bitmap");
 	mp->apbuflen = nbytes;
 
@@ -870,7 +870,7 @@ rt_ebm_ifree(struct rt_db_internal *ip)
     eip->magic = 0;			/* sanity */
     eip->mp = (struct bu_mapped_file *)0;
     bu_free((char *)eip, "ebm ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
     ip->idb_type = ID_NULL;		/* sanity */
 }
 
@@ -936,7 +936,7 @@ rt_ebm_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSET(norm, 0, 0, 1);
     MAT3X3VEC(ebmp->ebm_znorm, eip->mat, norm);
 
-    stp->st_specific = (genptr_t)ebmp;
+    stp->st_specific = (void *)ebmp;
 
     /* Find bounding RPP of rotated local RPP */
     rt_ebm_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol);
@@ -1685,7 +1685,7 @@ rt_ebm_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_meth = ftp;
     BU_ALLOC(ebm, struct rt_ebm_internal);
 
-    intern->idb_ptr = (genptr_t)ebm;
+    intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
     MAT_IDN(ebm->mat);
     ebm->tallness = 1.0;

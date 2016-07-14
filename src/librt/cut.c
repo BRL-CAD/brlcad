@@ -131,7 +131,7 @@ rt_cut_one_axis(struct bu_ptbl *boxes, struct rt_i *rtip, int axis, int min, int
  * until none remain.  This routine is run in parallel.
  */
 void
-rt_cut_optimize_parallel(int cpu, genptr_t arg)
+rt_cut_optimize_parallel(int cpu, void *arg)
 {
     struct rt_i *rtip = (struct rt_i *)arg;
     union cutter *cp;
@@ -435,9 +435,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	memcpy(list_min, fromp->bn_list, len*sizeof(struct soltab *));
 	memcpy(list_max, fromp->bn_list, len*sizeof(struct soltab *));
 	for (i=0; i<3; i++) {
-	    bu_sort((genptr_t)list_min, len,
+	    bu_sort((void *)list_min, len,
 		  sizeof(struct soltab *), pairs[i].cmp_min, NULL);
-	    bu_sort((genptr_t)list_max, len,
+	    bu_sort((void *)list_max, len,
 		  sizeof(struct soltab *), pairs[i].cmp_max, NULL);
 	    nstart = nend = axi = 0;
 	    l1 = list_min;
@@ -495,8 +495,8 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 		pos - nugnp->nu_axis[i][axi].nu_spos;
 	    nugnp->nu_cells_per_axis[i] = axi+1;
 	}
-	bu_free((genptr_t)list_min, "solid list min sort");
-	bu_free((genptr_t)list_max, "solid list max sort");
+	bu_free((void *)list_min, "solid list min sort");
+	bu_free((void *)list_max, "solid list max sort");
     }
 
 #endif
@@ -636,9 +636,9 @@ rt_nugrid_cut(register struct nugridnode *nugnp, register struct boxnode *fromp,
 	}
     }
 
-    bu_free((genptr_t)nu_zbox.bn_list, "nu_zbox bn_list[]");
-    bu_free((genptr_t)nu_ybox.bn_list, "nu_ybox bn_list[]");
-    bu_free((genptr_t)nu_xbox.bn_list, "nu_xbox bn_list[]");
+    bu_free((void *)nu_zbox.bn_list, "nu_zbox bn_list[]");
+    bu_free((void *)nu_ybox.bn_list, "nu_ybox bn_list[]");
+    bu_free((void *)nu_xbox.bn_list, "nu_xbox bn_list[]");
 }
 
 
@@ -966,7 +966,7 @@ rt_cut_extend(register union cutter *cutp, struct soltab *stp, const struct rt_i
 	} else {
 	    cutp->bn.bn_maxlen *= 8;
 	    cutp->bn.bn_list = (struct soltab **) bu_realloc(
-		(genptr_t)cutp->bn.bn_list,
+		(void *)cutp->bn.bn_list,
 		sizeof(struct soltab *) * cutp->bn.bn_maxlen,
 		"rt_cut_extend: list extend");
 	}
@@ -1665,11 +1665,11 @@ rt_ct_release_storage(register union cutter *cutp)
 	    break;
 
 	case CUT_NUGRIDNODE:
-	    bu_free((genptr_t)cutp->nugn.nu_grid, "NUGrid children");
+	    bu_free((void *)cutp->nugn.nu_grid, "NUGrid children");
 	    cutp->nugn.nu_grid = NULL; /* sanity */
 
 	    for (i=0; i<3; i++) {
-		bu_free((genptr_t)cutp->nugn.nu_axis[i],
+		bu_free((void *)cutp->nugn.nu_axis[i],
 			"NUGrid axis");
 		cutp->nugn.nu_axis[i] = NULL; /* sanity */
 	    }
@@ -2036,7 +2036,7 @@ rt_ct_measure(register struct rt_i *rtip, register union cutter *cutp, int depth
 void
 rt_cut_clean(struct rt_i *rtip)
 {
-    genptr_t *p;
+    void **p;
 
     RT_CK_RTI(rtip);
 
@@ -2050,7 +2050,7 @@ rt_cut_clean(struct rt_i *rtip)
 	return;
 
     /* Release the blocks we got from bu_calloc() */
-    for (BU_PTBL_FOR(p, (genptr_t *), &rtip->rti_busy_cutter_nodes)) {
+    for (BU_PTBL_FOR(p, (void **), &rtip->rti_busy_cutter_nodes)) {
 	bu_free(*p, "rt_ct_get");
     }
     bu_ptbl_free(&rtip->rti_busy_cutter_nodes);
@@ -2215,7 +2215,7 @@ insert_in_bsp(struct soltab *stp, union cutter *cutp)
 		    } else {
 			cutp->bn.bn_maxlen += 5;
 			cutp->bn.bn_list = (struct soltab **) bu_realloc(
-			    (genptr_t)cutp->bn.bn_list,
+			    (void *)cutp->bn.bn_list,
 			    sizeof(struct soltab *) * cutp->bn.bn_maxlen,
 			    "insert_in_bsp: list extend");
 		    }

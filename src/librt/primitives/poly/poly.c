@@ -123,7 +123,7 @@ rt_pg_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 	    VMOVE(work[1], work[2]);
 	}
     }
-    if (stp->st_specific == (genptr_t)0) {
+    if (stp->st_specific == (void *)0) {
 	bu_log("pg(%s):  no faces\n", stp->st_name);
 	return -1;		/* BAD */
     }
@@ -193,7 +193,7 @@ rt_pgface(struct soltab *stp, fastf_t *ap, fastf_t *bp, fastf_t *cp, const struc
 
     /* Add this face onto the linked list for this solid */
     trip->tri_forw = (struct tri_specific *)stp->st_specific;
-    stp->st_specific = (genptr_t)trip;
+    stp->st_specific = (void *)trip;
     return 3;				/* OK */
 }
 
@@ -886,7 +886,7 @@ rt_pg_ifree(struct rt_db_internal *ip)
     pgp->magic = 0;			/* sanity */
     pgp->npoly = 0;
     bu_free((char *)pgp, "pg ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 int
 rt_pg_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

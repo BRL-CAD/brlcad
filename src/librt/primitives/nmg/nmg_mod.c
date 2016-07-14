@@ -739,8 +739,8 @@ nmg_s_join_touchingloops(struct shell *s, const struct bn_tol *tol)
  */
 void
 nmg_js(register struct shell *s1, register struct shell *s2, const struct bn_tol *tol)
-    /* destination */
-    /* source */
+/* destination */
+/* source */
 
 {
     struct faceuse *fu2;
@@ -2412,7 +2412,7 @@ nmg_cut_loop(struct vertexuse *vu1, struct vertexuse *vu2)
 	(void)fclose(fd);
 	bu_free((char *)tab, "nmg_cut_loop flag[] 2");
     }
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_cut_loop(vu1=%p, vu2=%p) old_lu=%p, new_lu=%p\n",
 	       (void *)vu1, (void *)vu2, (void *)oldlu, (void *)lu);
@@ -2511,7 +2511,7 @@ nmg_split_lu_at_vu(struct loopuse *lu, struct vertexuse *split_vu)
 	if (vu->v_p == split_v) break;
     }
     if (iteration >= 10000) bu_bomb("nmg_split_lu_at_vu:  infinite loop\n");
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_split_lu_at_vu(lu=%p, split_vu=%p) newlu=%p\n",
 	       (void *)lu, (void *)split_vu, (void *)newlu);
@@ -2595,7 +2595,7 @@ nmg_split_touchingloops(struct loopuse *lu, const struct bn_tol *tol)
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_split_touchingloops(lu=%p)\n", (void *)lu);
     }
- top:
+top:
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return;
 
@@ -2691,7 +2691,7 @@ nmg_join_touchingloops(struct loopuse *lu)
     fu = lu->up.fu_p;
     NMG_CK_FACEUSE(fu);
 
- top:
+top:
     if (BU_LIST_FIRST_MAGIC(&lu->down_hd) != NMG_EDGEUSE_MAGIC)
 	return count;
 
@@ -3023,7 +3023,7 @@ nmg_loop_split_at_touching_jaunt(struct loopuse *lu, const struct bn_tol *tol)
     visit_count = (int *)NULL;
     jaunt_status = (int *)NULL;
 
- top:
+top:
     jaunt_count = nmg_get_touching_jaunts(lu, &jaunt_tbl, &need_init);
     if (RTG.NMG_debug & DEBUG_CUTLOOP) {
 	bu_log("nmg_loop_split_at_touching_jaunt: found %d touching jaunts in lu %p\n",
@@ -3459,7 +3459,7 @@ void nmg_moveltof(struct faceuse *fu, struct shell *s)
 struct loopuse *
 nmg_dup_loop(struct loopuse *lu, uint32_t *parent, long int **trans_tbl)
 
-    /* fu or shell ptr */
+/* fu or shell ptr */
 
 {
     struct loopuse *new_lu = (struct loopuse *)NULL;
@@ -3961,7 +3961,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
     }
     if (oldeu->g.magic_p != oldeu->eumate_p->g.magic_p) bu_bomb("nmg_eusplit() unshared geom\n");
 
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_eusplit(v=%p, eu=%p, share=%d) new_eu=%p, mate=%p\n",
 	       (void *)v, (void *)oldeu, share_geom,
@@ -4026,7 +4026,7 @@ nmg_eusplit(struct vertex *v, struct edgeuse *oldeu, int share_geom)
  */
 struct edgeuse *
 nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
-    /* New vertex, to go in middle */
+/* New vertex, to go in middle */
 
 
 {
@@ -4142,7 +4142,7 @@ nmg_esplit(struct vertex *v, struct edgeuse *eu, int share_geom)
  */
 struct edgeuse *
 nmg_ebreak(struct vertex *v, struct edgeuse *eu)
-    /* May be NULL */
+/* May be NULL */
 
 {
     struct edgeuse *new_eu;
@@ -4178,7 +4178,7 @@ nmg_ebreak(struct vertex *v, struct edgeuse *eu)
  */
 struct edgeuse *
 nmg_ebreaker(struct vertex *v, struct edgeuse *eu, const struct bn_tol *tol)
-    /* May be NULL */
+/* May be NULL */
 
 
 {
@@ -4463,7 +4463,7 @@ nmg_unbreak_edge(struct edgeuse *eu1_first)
 	eu1 = eu1->eumate_p->radial_p;
 	if (eu1 == eu1_first) break;
     }
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_unbreak_edge(eu=%p, vb=%p) ret = %d\n",
 	       (void *)eu1_first, (void *)vb, ret);
@@ -4676,7 +4676,7 @@ nmg_unbreak_shell_edge_unsafe(struct edgeuse *eu1_first)
 	eu1 = eu1->eumate_p->radial_p;
 	if (eu1 == eu1_first) break;
     }
- out:
+out:
     if (RTG.NMG_debug & DEBUG_BASIC) {
 	bu_log("nmg_unbreak_edge(eu=%p, vb=%p) ret = %d\n",
 	       (void *)eu1_first, (void *)vb, ret);

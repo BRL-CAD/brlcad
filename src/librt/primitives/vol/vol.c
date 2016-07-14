@@ -729,7 +729,7 @@ rt_vol_ifree(struct rt_db_internal *ip)
     vip->magic = 0;			/* sanity */
     vip->map = (unsigned char *)0;
     bu_free((char *)vip, "vol ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -794,7 +794,7 @@ rt_vol_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VSET(norm, 0, 0, 1);
     MAT3X3VEC(volp->vol_znorm, vip->mat, norm);
 
-    stp->st_specific = (genptr_t)volp;
+    stp->st_specific = (void *)volp;
 
     /* Find bounding RPP of rotated local RPP */
     if (rt_vol_bbox(ip, &(stp->st_min), &(stp->st_max), &rtip->rti_tol)) return 1;

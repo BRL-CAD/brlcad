@@ -47,7 +47,7 @@
 #include "rtgeom.h"
 #include "raytrace.h"
 
-extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *gcv_bottess_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 struct gcv_data {
     void (*func)(struct nmgregion *, const struct db_full_path *, int, int, float [3]);
@@ -328,7 +328,7 @@ main(int argc, char *argv[])
 			    NULL,		/* start func */
 			    use_mc?gcv_region_end_mc:use_bottess?gcv_bottess_region_end:gcv_region_end,	/* end func */
 			    use_mc?NULL:nmg_booltree_leaf_tess, /* leaf func */
-			    (genptr_t)&gcvwriter);  /* client_data */
+			    (void *)&gcvwriter);  /* client_data */
 	fprintf(gcvwriter.fp, "}\n");
     }
 

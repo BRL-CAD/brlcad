@@ -695,7 +695,7 @@ rt_pipe_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 
     pipe_elements_calculate(head, ip, &(stp->st_min), &(stp->st_max));
 
-    stp->st_specific = (genptr_t)head;
+    stp->st_specific = (void *)head;
 
     VSET(stp->st_center,
 	 (stp->st_max[X] + stp->st_min[X]) / 2,
@@ -4119,7 +4119,7 @@ rt_pipe_import5(
 	BU_LIST_INSERT(&pip->pipe_segs_head, &ptp->l);
     }
 
-    bu_free((genptr_t)vec, "rt_pipe_import5: vec");
+    bu_free((void *)vec, "rt_pipe_import5: vec");
     return 0;			/* OK */
 }
 
@@ -4185,7 +4185,7 @@ rt_pipe_export5(struct bu_external *ep, const struct rt_db_internal *ip, double 
     /* Convert from internal (host) to database (network) format */
     bu_cv_htond((unsigned char *)ep->ext_buf + 4, (unsigned char *)vec, double_count);
 
-    bu_free((genptr_t)vec, "rt_pipe_export5: vec");
+    bu_free((void *)vec, "rt_pipe_export5: vec");
     return 0;
 }
 
@@ -4263,7 +4263,7 @@ rt_pipe_ifree(struct rt_db_internal *ip)
 	}
     }
     bu_free(ip->idb_ptr, "pipe ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 

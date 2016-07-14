@@ -453,7 +453,7 @@ hit_nothing(struct application *app)
 
 	bn_tabdata_copy(app->a_spectrum, u.sw.msw_color);
 	app->a_user = 1;		/* Signal view_pixel:  HIT */
-	app->a_uptr = (genptr_t)&env_region;
+	app->a_uptr = (void *)&env_region;
 	return 1;
     }
 
@@ -485,7 +485,7 @@ colorview(struct application *app, struct partition *PartHeadp, struct seg *UNUS
 	return 0;
     }
     hitp = pp->pt_inhit;
-    app->a_uptr = (genptr_t)pp->pt_regionp;	/* note which region was shaded */
+    app->a_uptr = (void *)pp->pt_regionp;	/* note which region was shaded */
 
     if (rdebug&RDEBUG_HITS) {
 	bu_log("colorview: lvl=%d coloring %s\n",

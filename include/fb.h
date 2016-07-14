@@ -186,11 +186,6 @@ FB_EXPORT extern int _wgl_open_existing(FBIO *ifp, Display *dpy, Window win, Col
 			   (to)[GRN]=(from)[GRN];\
 			   (to)[BLU]=(from)[BLU]; }
 
-/**
- * DEPRECATED: use fb_wpixel() instead.
- */
-#define FB_WPIXEL(ifp, pp) fb_wpixel(ifp, pp)
-
 /* Debug Bitvector Definition */
 #define FB_DEBUG_BIO 1	/* Buffered io calls (less r/wpixel) */
 #define FB_DEBUG_CMAP 2	/* Contents of colormaps */

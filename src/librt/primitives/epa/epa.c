@@ -284,7 +284,7 @@ rt_epa_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_EPA];
 
     BU_GET(epa, struct epa_specific);
-    stp->st_specific = (genptr_t)epa;
+    stp->st_specific = (void *)epa;
 
     epa->epa_h = mag_h;
     epa->epa_inv_r1sq = 1 / (r1 * r1);
@@ -1876,7 +1876,7 @@ rt_epa_ifree(struct rt_db_internal *ip)
     xip->epa_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "epa ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

@@ -84,6 +84,11 @@ pix_read(const char* filename, int width, int height)
 	int status = 0;
 	size = 0;
 	data = (unsigned char *)bu_malloc(buffsize, "pix_read : unsigned char data");
+
+	/* FIXME: this is a simple but VERY slow way to read data.
+	 * Better to read in big chunks, but then one has to handle
+	 * partial-reads better.  Below seems to ignore a read error.
+	 */
 	while ((status = fread(&data[size], 1, 3, fp))==3) {
 	    size+=3;
 	    if (size==buffsize) {

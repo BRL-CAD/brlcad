@@ -102,8 +102,8 @@ struct bu_structparse vrml_mat_parse[]={
     {"",    0, (char *)0,	0,			BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
-extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
+extern union tree *nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static const char usage[] = "Usage: %s [-v] [-xX lvl] [-d tolerance_distance] [-a abs_tol] [-r rel_tol] [-n norm_tol] [-P #_of_cpus] [-o out_file] [-u units] brlcad_db.g object(s)\n\
 (units default to mm)\n";
@@ -160,7 +160,7 @@ clean_pmp( struct plate_mode *pmp )
 	if ( pmp->bots[i] ) {
 	    struct rt_db_internal intern;
 
-	    intern.idb_ptr = (genptr_t) pmp->bots[i];
+	    intern.idb_ptr = (void *) pmp->bots[i];
 	    intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	    intern.idb_type = ID_BOT;
 	    intern.idb_meth = &OBJ[ID_BOT];
@@ -206,7 +206,7 @@ dup_bot( struct rt_bot_internal *bot_in )
 }
 
 static int
-select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), genptr_t UNUSED(client_data))
+select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *pathp, const struct rt_comb_internal *UNUSED(combp), void *UNUSED(client_data))
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -249,7 +249,7 @@ select_lights(struct db_tree_state *UNUSED(tsp), const struct db_full_path *path
 }
 
 static int
-select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, genptr_t client_data)
+select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, const struct rt_comb_internal *combp, void *client_data)
 {
     int ret;
 
@@ -261,7 +261,7 @@ select_non_lights(struct db_tree_state *tsp, const struct db_full_path *pathp, c
 }
 
 union tree *
-leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t client_data)
+leaf_tess(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *client_data)
 {
     struct rt_bot_internal *bot;
     struct plate_mode *pmp = (struct plate_mode *)client_data;
@@ -490,7 +490,7 @@ main(int argc, char **argv)
 			   select_lights,
 			   do_region_end,
 			   leaf_tess,
-			   (genptr_t)&pm);	/* in librt/nmg_bool.c */
+			   (void *)&pm);	/* in librt/nmg_bool.c */
 
 
     }
@@ -503,7 +503,7 @@ main(int argc, char **argv)
 		       select_non_lights,
 		       do_region_end,
 		       leaf_tess,
-		       (genptr_t)&pm);	/* in librt/nmg_bool.c */
+		       (void *)&pm);	/* in librt/nmg_bool.c */
 
     BARRIER_CHECK;
     /* Release dynamic storage */
@@ -931,7 +931,7 @@ bot2vrml( struct plate_mode *pmp, const struct db_full_path *pathp, int region_i
  *  This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     struct plate_mode *pmp = (struct plate_mode *)client_data;
     char *name;
@@ -1013,7 +1013,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
 
 
 union tree *
-nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+nmg_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     struct nmgregion	*r;
     struct bu_list		vhead;

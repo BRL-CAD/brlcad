@@ -211,7 +211,7 @@ strsolbld(void)
 	    goto out;
 	}
 	dsp->magic = RT_DSP_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)dsp, ID_DSP, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)dsp, ID_DSP, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -234,7 +234,7 @@ strsolbld(void)
 	    return;
 	}
 	ebm->magic = RT_EBM_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)ebm, ID_EBM, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)ebm, ID_EBM, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -256,7 +256,7 @@ strsolbld(void)
 	    return;
 	}
 	vol->magic = RT_VOL_INTERNAL_MAGIC;
-	if (wdb_export(ofp, name, (genptr_t)vol, ID_VOL, mk_conv2mm) < 0) {
+	if (wdb_export(ofp, name, (void *)vol, ID_VOL, mk_conv2mm) < 0) {
 	    bu_log("strsolbld(%s): Unable to export %s solid, args='%s'\n",
 		   name, type, args);
 	    goto out;
@@ -339,7 +339,7 @@ sktbld(void)
     crv = &skt->curve;
     crv->count = seg_count;
 
-    crv->segment = (genptr_t *)bu_calloc(crv->count, sizeof(genptr_t), "segments");
+    crv->segment = (void **)bu_calloc(crv->count, sizeof(void *), "segments");
     crv->reverse = (int *)bu_calloc(crv->count, sizeof(int), "reverse");
     for (j=0; j<crv->count; j++) {
 	double radius;

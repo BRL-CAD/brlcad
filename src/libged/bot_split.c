@@ -117,12 +117,12 @@ ged_bot_split(struct ged *gedp, int argc, const char *argv[])
 		bot_intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 		bot_intern.idb_type = ID_BOT;
 		bot_intern.idb_meth = &OBJ[ID_BOT];
-		bot_intern.idb_ptr = (genptr_t)rblp->bot;
+		bot_intern.idb_ptr = (void *)rblp->bot;
 
 		/* Save new bot name for later use */
 		bu_vls_printf(&new_bots, "%s ", bu_vls_addr(gedp->ged_result_str));
 
-		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&bot_intern.idb_type);
+		dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(gedp->ged_result_str), RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&bot_intern.idb_type);
 		if (dp == RT_DIR_NULL) {
 		    bu_vls_printf(&error_str, " failed to be added to the database.\n");
 		    rt_bot_list_free(headRblp, 0);

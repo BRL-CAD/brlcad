@@ -142,7 +142,7 @@ wdb_export_external(
 	    /* If name already exists, that object will be updated. */
 	    dp = db_lookup(wdbp->dbip, name, LOOKUP_QUIET);
 	    if (dp == RT_DIR_NULL) {
-		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
+		if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&type)) == RT_DIR_NULL) {
 		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    return -3;
 		}
@@ -165,7 +165,7 @@ wdb_export_external(
 		return -5;
 	    }
 	    /* If name already exists, new non-conflicting name will be generated */
-	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type)) == RT_DIR_NULL) {
+	    if ((dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&type)) == RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		return -3;
 	    }
@@ -182,7 +182,7 @@ wdb_export_external(
 		bu_log("wdb_export_external(%s): ERROR, that name is already in use, and APPEND_ONLY mode has been specified.\n", name);
 		return -3;
 	    }
-	    dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type);
+	    dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&type);
 	    if (dp == RT_DIR_NULL) {
 		bu_log("wdb_export_external(%s): db_diradd error\n",
 		       name);
@@ -196,7 +196,7 @@ wdb_export_external(
 	case RT_WDB_TYPE_DB_INMEM:
 	    dp = db_lookup(wdbp->dbip, name, 0);
 	    if (dp == RT_DIR_NULL) {
-		dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (genptr_t)&type);
+		dp = db_diradd(wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, flags, (void *)&type);
 		if (dp == RT_DIR_NULL) {
 		    bu_log("wdb_export_external(%s): db_diradd error\n", name);
 		    bu_free_external(ep);
@@ -266,7 +266,7 @@ int
 wdb_export(
     struct rt_wdb *wdbp,
     const char *name,
-    genptr_t gp,
+    void *gp,
     int id,
     double local2mm)
 {
@@ -356,7 +356,7 @@ wdb_close(struct rt_wdb *wdbp)
     wdbp->wdb_interp = NULL;
 
     /* release memory */
-    bu_free((genptr_t)wdbp, "struct rt_wdb");
+    bu_free((void *)wdbp, "struct rt_wdb");
     wdbp = NULL;
 }
 

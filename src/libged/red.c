@@ -873,7 +873,7 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 		goto cleanup;
 	    }
 
-	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	    if ((tmp_dp = db_diradd(gedp->ged_wdbp->dbip, bu_vls_addr(&temp_name), RT_DIR_PHONY_ADDR, 0, dp->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 		bu_vls_printf(gedp->ged_result_str, "Cannot save copy of %s, no changed made\n", bu_vls_addr(&temp_name));
 		goto cleanup;
 	    }
@@ -888,12 +888,12 @@ ged_red(struct ged *gedp, int argc, const char **argv)
 	    intern.idb_type = ID_COMBINATION;
 	    intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (genptr_t)&intern.idb_type, 0);
+	    GED_DB_DIRADD(gedp, tmp_dp, bu_vls_addr(&temp_name), -1, 0, RT_DIR_COMB, (void *)&intern.idb_type, 0);
 
 	    BU_ALLOC(comb, struct rt_comb_internal);
 	    RT_COMB_INTERNAL_INIT(comb);
 
-	    intern.idb_ptr = (genptr_t)comb;
+	    intern.idb_ptr = (void *)comb;
 
 	    GED_DB_PUT_INTERNAL(gedp, tmp_dp, &intern, &rt_uniresource, 0);
 	}

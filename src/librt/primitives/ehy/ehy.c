@@ -288,7 +288,7 @@ rt_ehy_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_EHY];
 
     BU_GET(ehy, struct ehy_specific);
-    stp->st_specific = (genptr_t)ehy;
+    stp->st_specific = (void *)ehy;
 
     /* make unit vectors in A, H, and BxH directions */
     VMOVE(ehy->ehy_Hunit, xip->ehy_H);
@@ -1903,7 +1903,7 @@ rt_ehy_ifree(struct rt_db_internal *ip)
     xip->ehy_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "ehy ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

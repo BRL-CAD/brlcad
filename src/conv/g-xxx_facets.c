@@ -47,7 +47,7 @@
 	(a)[Z] = (b)[Z]/25.4; \
     }
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 extern double nmg_eue_dist;		/* from nmg_plot.c */
 
@@ -181,7 +181,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     percent = 0;
     if (regions_tried>0) {
@@ -378,7 +378,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  *
  *  This routine must be prepared to run in parallel.
  */
-union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree		*ret_tree;
     struct bu_list		vhead;

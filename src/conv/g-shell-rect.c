@@ -994,7 +994,7 @@ shrink_wrap(struct shell *s)
     sd.hitmiss = (struct hitmiss **)bu_calloc(2 * m->maxindex, sizeof(struct hitmiss *), "nmg geom hit list");
 
     memset(&ap, 0, sizeof(struct application));
-    ap.a_uptr = (genptr_t)&sd;
+    ap.a_uptr = (void *)&sd;
     ap.a_rt_i = rtip;
     ap.a_miss = miss;
     ap.a_overlap = a_overlap;
@@ -1377,7 +1377,7 @@ refine_edges(struct shell *s)
 	    ref_data.eu1 = eu1;
 	    ref_data.eu2 = eu2;
 	    ref_data.mid_pt = mid_pt;
-	    ap.a_uptr = (genptr_t)&ref_data;
+	    ap.a_uptr = (void *)&ref_data;
 
 	    if (debug) {
 		bu_log("norm1=(%g %g %g), norm2=(%g %g %g), alpha=%g, ave_norm=(%g %g %g)\n",

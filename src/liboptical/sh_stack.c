@@ -34,11 +34,11 @@
 #include "optical.h"
 
 
-HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
-HIDDEN int sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void sh_stk_print(register struct region *rp, genptr_t dp);
-HIDDEN void sh_stk_free(genptr_t cp);
-HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
+HIDDEN int sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
+HIDDEN int sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void sh_stk_print(register struct region *rp, void *dp);
+HIDDEN void sh_stk_free(void *cp);
+HIDDEN int ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip);
 
 struct mfuncs stk_mfuncs[] = {
     {MF_MAGIC,	"stack",	0,		0,	0,     sh_stk_setup,	sh_stk_render,	sh_stk_print,	sh_stk_free},
@@ -49,7 +49,7 @@ struct mfuncs stk_mfuncs[] = {
 
 struct stk_specific {
     struct mfuncs *mfuncs[16];
-    genptr_t udata[16];
+    void *udata[16];
 };
 #define STK_NULL ((struct stk_specific *)0)
 #define STK_O(m) bu_offsetof(struct stk_specific, m)
@@ -63,7 +63,7 @@ struct bu_structparse stk_parse[] = {
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mf_p, struct rt_i *rtip)
+ext_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mf_p, struct rt_i *rtip)
 
 /* parameter string */
 /* pointer to user data pointer */
@@ -105,7 +105,7 @@ ext_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, con
 
 
 HIDDEN int
-sh_stk_dosetup(char *cp, struct region *rp, genptr_t *dpp, struct mfuncs **mpp, struct rt_i *rtip)
+sh_stk_dosetup(char *cp, struct region *rp, void **dpp, struct mfuncs **mpp, struct rt_i *rtip)
 
 
 /* udata pointer address */
@@ -195,7 +195,7 @@ out:
  * Returns 0 on failure, 1 on success.
  */
 HIDDEN int
-sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mf_p), struct rt_i *rtip)
+sh_stk_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mf_p), struct rt_i *rtip)
 
 /* parameter string */
 /* pointer to user data pointer */
@@ -259,7 +259,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
     BU_ALLOC(mfp, struct mfuncs);
     memcpy((char *)mfp, (char *)rp->reg_mfuncs, sizeof(*mfp));
     mfp->mf_inputs = inputs;
-    rp->reg_mfuncs = (genptr_t)mfp;
+    rp->reg_mfuncs = (void *)mfp;
     return 1;
 }
 
@@ -272,7 +272,7 @@ sh_stk_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, 
  * 1 stack processed to completion
  */
 HIDDEN int
-sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+sh_stk_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)dp;
@@ -307,7 +307,7 @@ sh_stk_render(struct application *ap, const struct partition *pp, struct shadewo
 
 
 HIDDEN void
-sh_stk_print(register struct region *rp, genptr_t dp)
+sh_stk_print(register struct region *rp, void *dp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)dp;
@@ -334,7 +334,7 @@ sh_stk_print(register struct region *rp, genptr_t dp)
 
 
 HIDDEN void
-sh_stk_free(genptr_t cp)
+sh_stk_free(void *cp)
 {
     register struct stk_specific *sp =
 	(struct stk_specific *)cp;

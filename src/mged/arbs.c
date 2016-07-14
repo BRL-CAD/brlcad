@@ -280,7 +280,7 @@ f_rfarb(ClientData clientData, Tcl_Interp *interp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type)) == RT_DIR_NULL) {
+    if ((dp = db_diradd(dbip, argv[1], -1L, 0, RT_DIR_SOLID, (void *)&internal.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot add ", argv[1], " to the directory\n", (char *)NULL);
 	return TCL_ERROR;
     }

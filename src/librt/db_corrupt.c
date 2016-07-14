@@ -41,7 +41,7 @@ struct counter {
 
 
 static int
-db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), genptr_t data)
+db_corrupt_handler(struct db_i *dbip, const char *name, off_t offset, size_t size, int UNUSED(type), void *data)
 {
     struct counter *cnt = (struct counter *)data;
     struct bu_external ext;

@@ -40,7 +40,7 @@ struct gcv_data {
 union tree * _gcv_cleanup(int state, union tree *tp);
 
 union tree *
-gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data)
+gcv_region_end_mc(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data)
 {
     union tree *tp = NULL;
     struct model *m = NULL;

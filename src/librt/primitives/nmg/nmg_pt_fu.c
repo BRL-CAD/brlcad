@@ -82,9 +82,9 @@ struct fpi {
 };
 #define NMG_FPI_MAGIC 12345678 /* fpi\0 */
 #define NMG_CK_FPI(_fpi) \
-	NMG_CKMAG(_fpi, NMG_FPI_MAGIC, "fu_pt_info"); \
-	BN_CK_TOL(_fpi->tol); \
-	BU_CK_LIST_HEAD(&_fpi->ve_dh)
+    NMG_CKMAG(_fpi, NMG_FPI_MAGIC, "fu_pt_info"); \
+    BN_CK_TOL(_fpi->tol); \
+    BU_CK_LIST_HEAD(&_fpi->ve_dh)
 
 #define NMG_FPI_TOUCHED 27
 #define NMG_FPI_MISSED  32768
@@ -241,7 +241,7 @@ nmg_class_pt_vu(struct fpi *fpi, struct vertexuse *vu)
 
     BU_LIST_MAGIC_SET(&ved->l, NMG_VE_DIST_MAGIC);
     BU_LIST_APPEND(&fpi->ve_dh, &ved->l);
- found:
+found:
 
     if (fpi->vu_func  &&
 	ved->status == NMG_FPI_TOUCHED &&
@@ -1142,7 +1142,7 @@ nmg_class_pt_lu(struct loopuse *lu, struct fpi *fpi, const int in_or_out_only)
     }
 
 
- out:
+out:
     if (RTG.NMG_debug & DEBUG_PT_FU)
 	bu_log("nmg_class_pt_lu() pt classed %s vs loop\n", nmg_class_name(lu_class));
 
@@ -1231,9 +1231,9 @@ nmg_class_pt_fu_except(const fastf_t *pt, const struct faceuse *fu, const struct
 		       void (*eu_func) (struct edgeuse *, point_t, const char *), void (*vu_func) (struct vertexuse *, point_t, const char *), const char *priv,
 		       const int call_on_hits, const int in_or_out_only, const struct bn_tol *tol)
 
-    /* func to call when pt on edgeuse */
-    /* func to call when pt on vertexuse*/
-    /* private data for [ev]u_func */
+/* func to call when pt on edgeuse */
+/* func to call when pt on vertexuse*/
+/* private data for [ev]u_func */
 
 
 {

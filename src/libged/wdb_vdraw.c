@@ -702,7 +702,7 @@ vdraw_vlist_tcl(void *clientData, int argc, const char *argv[])
 		}
 	    }
 	    RT_FREE_VLIST(&(rcp2->vdc_vhd));
-	    bu_free((genptr_t) rcp2, "vd_curve");
+	    bu_free((void *) rcp2, "vd_curve");
 	    return TCL_OK;
 	default:
 	    Tcl_AppendResult(dgop->interp, "vdraw: unknown option to vdraw vlist", (char *)NULL);

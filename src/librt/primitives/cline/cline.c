@@ -131,7 +131,7 @@ rt_cline_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     VMOVE(cline->height, cline_ip->h);
     VMOVE(cline->h, cline_ip->h);
     VUNITIZE(cline->h);
-    stp->st_specific = (genptr_t)cline;
+    stp->st_specific = (void *)cline;
 
     if (rt_cline_radius > 0.0)
 	max_tr = rt_cline_radius;
@@ -1008,7 +1008,7 @@ rt_cline_ifree(struct rt_db_internal *ip)
     cline_ip->magic = 0;			/* sanity */
 
     bu_free((char *)cline_ip, "cline ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

@@ -190,8 +190,8 @@ rt_arbn_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     }
     bu_free((char *)used, "arbn used[]");
 
-    stp->st_specific = (genptr_t)aip;
-    ip->idb_ptr = GENPTR_NULL;	/* indicate we stole it */
+    stp->st_specific = (void *)aip;
+    ip->idb_ptr = ((void *)0);	/* indicate we stole it */
 
     VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
     VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
@@ -1096,7 +1096,7 @@ rt_arbn_ifree(struct rt_db_internal *ip)
 	bu_free((char *)aip->eqn, "rt_arbn_internal eqn[]");
     bu_free((char *)aip, "rt_arbn_internal");
 
-    ip->idb_ptr = (genptr_t)0;	/* sanity */
+    ip->idb_ptr = (void *)0;	/* sanity */
 }
 
 

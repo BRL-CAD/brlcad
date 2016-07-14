@@ -42,7 +42,7 @@ struct showmats_data {
 
 
 static void
-Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t user_ptr2, genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+Do_showmats(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *user_ptr2, void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct showmats_data *smdp;
     int aflag;
@@ -115,7 +115,7 @@ Run_showmats(struct ged *gedp, const char *path, int aflag)
 
 	if (comb->tree)
 	    db_tree_funcleaf(gedp->ged_wdbp->dbip, comb, comb->tree, Do_showmats,
-			     (genptr_t)&sm_data, (genptr_t)&aflag, (genptr_t)NULL, (genptr_t)NULL);
+			     (void *)&sm_data, (void *)&aflag, (void *)NULL, (void *)NULL);
 	rt_db_free_internal(&intern);
 
 	if (!sm_data.smd_count) {

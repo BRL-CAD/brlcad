@@ -122,8 +122,8 @@ ged_bot_edge_split(struct ged *gedp, int argc, const char *argv[])
     /* First, create some space */
     botip->num_vertices++;
     botip->num_faces += 2;
-    botip->vertices = (fastf_t *)bu_realloc((genptr_t)botip->vertices, botip->num_vertices*3*sizeof(fastf_t), "realloc bot vertices");
-    botip->faces = (int *)bu_realloc((genptr_t)botip->faces, botip->num_faces*3*sizeof(int), "realloc bot faces");
+    botip->vertices = (fastf_t *)bu_realloc((void *)botip->vertices, botip->num_vertices*3*sizeof(fastf_t), "realloc bot vertices");
+    botip->faces = (int *)bu_realloc((void *)botip->faces, botip->num_faces*3*sizeof(int), "realloc bot faces");
 
     /* Create the new point. We're using the average of the edge's points */
     VADD2(new_pt, &botip->vertices[v1_i*3], &botip->vertices[v2_i*3]);
@@ -259,8 +259,8 @@ ged_bot_face_split(struct ged *gedp, int argc, const char *argv[])
     /* First, create some space */
     botip->num_vertices++;
     botip->num_faces += 2;
-    botip->vertices = (fastf_t *)bu_realloc((genptr_t)botip->vertices, botip->num_vertices*3*sizeof(fastf_t), "realloc bot vertices");
-    botip->faces = (int *)bu_realloc((genptr_t)botip->faces, botip->num_faces*3*sizeof(int), "realloc bot faces");
+    botip->vertices = (fastf_t *)bu_realloc((void *)botip->vertices, botip->num_vertices*3*sizeof(fastf_t), "realloc bot vertices");
+    botip->faces = (int *)bu_realloc((void *)botip->faces, botip->num_faces*3*sizeof(int), "realloc bot faces");
 
     /* Create the new point. For the moment, we're using the average of the face_i's points */
     VADD3(new_pt,

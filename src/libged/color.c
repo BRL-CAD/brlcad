@@ -183,7 +183,7 @@ edcolor(struct ged *gedp, int argc, const char *argv[])
 	    zot = rt_material_head();
 	    rt_new_material_head(zot->mt_forw);
 	    color_zaprec(gedp, zot);
-	    bu_free((genptr_t)zot, "mater rec");
+	    bu_free((void *)zot, "mater rec");
 	}
 
 	while (bu_fgets(line, sizeof (line), fp) != NULL) {

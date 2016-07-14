@@ -57,7 +57,7 @@ extern mat_t model2view;
 /***** end of sharing with viewing model *****/
 
 extern void grid_setup(void);
-extern void worker(int cpu, genptr_t arg);
+extern void worker(int cpu, void *arg);
 
 /***** variables shared with opt.c *****/
 extern int	orientflag;		/* 1 means orientation has been set */
@@ -397,7 +397,7 @@ int cm_closedb(const int UNUSED(argc), const char **UNUSED(argv))
     db_close(APP.a_rt_i->rti_dbip);
     APP.a_rt_i->rti_dbip = DBI_NULL;
 
-    bu_free((genptr_t)APP.a_rt_i, "struct rt_i");
+    bu_free((void *)APP.a_rt_i, "struct rt_i");
     APP.a_rt_i = RTI_NULL;
 
     bu_prmem("After _closedb");

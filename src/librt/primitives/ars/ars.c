@@ -473,7 +473,7 @@ rt_ars_ifree(struct rt_db_internal *ip)
     arip->magic = 0;		/* sanity */
     arip->ncurves = 0;
     bu_free((char *)arip, "ars ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 
@@ -733,7 +733,7 @@ rt_ars_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_minor_type = ID_BOT;
     intern.idb_meth = &OBJ[ID_BOT];
-    intern.idb_ptr = (genptr_t)bot;
+    intern.idb_ptr = (void *)bot;
     bu_avs_init(&intern.idb_avs, 0, "ARS to a BOT for prep");
 
     ret = rt_bot_prep(stp, &intern, rtip);

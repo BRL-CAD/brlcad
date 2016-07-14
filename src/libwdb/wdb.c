@@ -61,7 +61,7 @@ mk_half(struct rt_wdb *wdbp, const char *name, const fastf_t *norm, fastf_t d)
     VMOVE(half->eqn, norm);
     half->eqn[3] = d;
 
-    return wdb_export(wdbp, name, (genptr_t)half, ID_HALF, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)half, ID_HALF, mk_conv2mm);
 }
 
 
@@ -81,7 +81,7 @@ mk_grip(
     VMOVE(grip->normal, normal);
     grip->mag = magnitude;
 
-    return wdb_export(wdbp, name, (genptr_t)grip, ID_GRIP, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)grip, ID_GRIP, mk_conv2mm);
 }
 
 
@@ -246,7 +246,7 @@ mk_arb8(struct rt_wdb *wdbp, const char *name, const fastf_t *pts)
 	VMOVE(arb->pt[i], &pts[i*3]);
     }
 
-    return wdb_export(wdbp, name, (genptr_t)arb, ID_ARB8, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)arb, ID_ARB8, mk_conv2mm);
 }
 
 
@@ -262,7 +262,7 @@ mk_sph(struct rt_wdb *wdbp, const char *name, const fastf_t *center, fastf_t rad
     VSET(ell->b, 0, radius, 0);
     VSET(ell->c, 0, 0, radius);
 
-    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ell, ID_ELL, mk_conv2mm);
 }
 
 
@@ -278,7 +278,7 @@ mk_ell(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
     VMOVE(ell->b, b);
     VMOVE(ell->c, c);
 
-    return wdb_export(wdbp, name, (genptr_t)ell, ID_ELL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ell, ID_ELL, mk_conv2mm);
 }
 
 
@@ -328,7 +328,7 @@ mk_hyp(struct rt_wdb *wdbp, const char *name, const point_t vertex, const vect_t
 	hyp->hyp_b = minorLen;
     }
 
-    return wdb_export(wdbp, name, (genptr_t)hyp, ID_HYP, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)hyp, ID_HYP, mk_conv2mm);
 }
 
 
@@ -344,7 +344,7 @@ mk_tor(struct rt_wdb *wdbp, const char *name, const fastf_t *center, const fastf
     tor->r_a = r1;
     tor->r_h = r2;
 
-    return wdb_export(wdbp, name, (genptr_t)tor, ID_TOR, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)tor, ID_TOR, mk_conv2mm);
 }
 
 
@@ -383,7 +383,7 @@ mk_tgc(struct rt_wdb *wdbp, const char *name, const fastf_t *base, const fastf_t
     VMOVE(tgc->c, c);
     VMOVE(tgc->d, d);
 
-    return wdb_export(wdbp, name, (genptr_t)tgc, ID_TGC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)tgc, ID_TGC, mk_conv2mm);
 }
 
 
@@ -471,7 +471,7 @@ mk_rpc(
     VMOVE(rpc->rpc_B, breadth);
     rpc->rpc_r = half_w;
 
-    return wdb_export(wdbp, name, (genptr_t)rpc, ID_RPC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)rpc, ID_RPC, mk_conv2mm);
 }
 
 
@@ -496,7 +496,7 @@ mk_rhc(
     rhc->rhc_r = half_w;
     rhc->rhc_c = asymp;
 
-    return wdb_export(wdbp, name, (genptr_t)rhc, ID_RHC, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)rhc, ID_RHC, mk_conv2mm);
 }
 
 
@@ -521,7 +521,7 @@ mk_epa(
     epa->epa_r1 = r1;
     epa->epa_r2 = r2;
 
-    return wdb_export(wdbp, name, (genptr_t)epa, ID_EPA, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)epa, ID_EPA, mk_conv2mm);
 }
 
 
@@ -548,7 +548,7 @@ mk_ehy(
     ehy->ehy_r2 = r2;
     ehy->ehy_c = c;
 
-    return wdb_export(wdbp, name, (genptr_t)ehy, ID_EHY, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)ehy, ID_EHY, mk_conv2mm);
 }
 
 
@@ -565,7 +565,7 @@ int mk_hrt(struct rt_wdb *wdbp, const char *name, const point_t center, const ve
     VMOVE(hrt->zdir, z);
     hrt->d = dist;
 
-    return wdb_export(wdbp, name, (genptr_t)hrt, ID_HRT, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)hrt, ID_HRT, mk_conv2mm);
 }
 
 
@@ -590,7 +590,7 @@ mk_eto(
     eto->eto_r = rrot;
     eto->eto_rd = sminor;
 
-    return wdb_export(wdbp, name, (genptr_t)eto, ID_ETO, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)eto, ID_ETO, mk_conv2mm);
 }
 
 
@@ -619,7 +619,7 @@ mk_metaball(
 	}
     }
 
-    return wdb_export(wdbp, name, (genptr_t)mb, ID_METABALL, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)mb, ID_METABALL, mk_conv2mm);
 }
 
 
@@ -627,7 +627,7 @@ int
 mk_binunif (
     struct rt_wdb *wdbp,
     const char *name,
-    const genptr_t data,
+    const void *data,
     wdb_binunif data_type,
     long count)
 {
@@ -822,7 +822,7 @@ mk_binunif (
     binunif->type = minor_type;
     binunif->count = count;
     memcpy(binunif->u.int8, data, count * bytes);
-    return wdb_export(wdbp, name, (genptr_t)binunif, ID_BINUNIF, mk_conv2mm);
+    return wdb_export(wdbp, name, (void *)binunif, ID_BINUNIF, mk_conv2mm);
 }
 
 

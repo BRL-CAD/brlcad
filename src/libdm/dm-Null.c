@@ -142,7 +142,7 @@ null_drawVListHiddenLine(struct dm *UNUSED(dmp), struct bn_vlist *UNUSED(vp))
 
 
 int
-null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), genptr_t *data)
+null_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     return dmp == NULL && callback_function == NULL && data == NULL;
 }

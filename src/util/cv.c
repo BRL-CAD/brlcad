@@ -52,8 +52,8 @@ int outbytes;
 FILE *infp;
 FILE *outfp;
 
-genptr_t ibuf;
-genptr_t obuf;
+void *ibuf;
+void *obuf;
 
 const char huc[] = "huc";
 const char nuc[] = "nuc";
@@ -118,8 +118,8 @@ main(int argc, char **argv)
     inbytes = NITEMS*iitem;
     outbytes = NITEMS*oitem;
 
-    ibuf = (genptr_t)bu_malloc(inbytes, "cv input buffer");
-    obuf = (genptr_t)bu_malloc(outbytes, "cv output buffer");
+    ibuf = (void *)bu_malloc(inbytes, "cv input buffer");
+    obuf = (void *)bu_malloc(outbytes, "cv output buffer");
 
     while (!feof(infp)) {
 	if ((n = fread(ibuf, iitem, NITEMS, infp)) <= 0)

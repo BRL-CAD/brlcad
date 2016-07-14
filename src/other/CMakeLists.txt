@@ -30,7 +30,7 @@
 CLEAR_BUILD_FLAGS()
 
 # Restore CMake's original flags
-RESTORE_CACHED_BUILD_FLAGS()
+RESTORE_CACHED_BUILD_FLAGS(_CMAKE_DEFAULT)
 
 # Quiet all warnings in this directory
 if(BRLCAD_DISABLE_SRC_OTHER_WARN)
@@ -1015,18 +1015,8 @@ mark_as_advanced(P2T_SHARED)
 mark_as_advanced(P2T_STATIC)
 mark_as_advanced(P2T_TESTS)
 
-# The jama/tnt headers are installed by default - BRL-CAD requires the
-# altered headers to build (I think?)
-add_subdirectory(tnt)
-set(TNT_INCLUDE_DIR "${BRLCAD_SOURCE_DIR}/src/other/tnt" CACHE STRING "Directory containing tnt headers" FORCE)
-CMAKEFILES(tnt)
-mark_as_advanced(TNT_INCLUDE_DIR)
-
 # Eigen is used for advanced linear algebra functionality It consists
 # entirely of headers and does not need to be installed.
-#
-# TODO - replace jama/tnt with Eigen
-#
 CMAKEFILES(Eigen)
 
 # TCLAP is used for option parsing - consists entirely of headers

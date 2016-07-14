@@ -48,7 +48,7 @@ struct voxelizeData
 };
 
 HIDDEN void
-create_boxes(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill)
+create_boxes(void *callBackData, int x, int y, int z, const char *a, fastf_t fill)
 {
     if (a != NULL) {
 	fastf_t min[3], max[3];
@@ -96,7 +96,7 @@ ged_voxelize(struct ged *gedp, int argc, const char *argv[])
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] new_obj old_obj [old_obj2 old_obj3 ...]";
     fastf_t sizeVoxel[3];
     int levelOfDetail;
-    genptr_t callBackData;
+    void *callBackData;
     struct voxelizeData voxDat;
     int c;
 

@@ -188,7 +188,7 @@ db_lookup(const struct db_i *dbip, const char *name, int noisy)
 
 
 struct directory *
-db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, genptr_t ptr)
+db_diradd(struct db_i *dbip, const char *name, off_t laddr, size_t len, int flags, void *ptr)
 {
     struct directory **headp;
     struct directory *dp;

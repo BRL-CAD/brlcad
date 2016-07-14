@@ -178,7 +178,7 @@ rt_binunif_import5_minor_type(struct rt_db_internal *ip,
 	    out_cookie = bu_cv_cookie("hus");
 	    if (bu_cv_optimize(in_cookie) != bu_cv_optimize(out_cookie)) {
 		gotten =
-		    bu_cv_w_cookie((genptr_t)bip->u.uint8, out_cookie,
+		    bu_cv_w_cookie((void *)bip->u.uint8, out_cookie,
 				   ep->ext_nbytes,
 				   ep->ext_buf, in_cookie, bip->count);
 		if (gotten != bip->count) {
@@ -282,7 +282,7 @@ rt_binunif_export5(struct bu_external		*ep,
 		gotten =
 		    bu_cv_w_cookie(ep->ext_buf, out_cookie,
 				   ep->ext_nbytes,
-				   (genptr_t) bip->u.uint8, in_cookie,
+				   (void *) bip->u.uint8, in_cookie,
 				   bip->count);
 
 		if (gotten != bip->count) {
@@ -378,7 +378,7 @@ rt_binunif_describe(struct bu_vls *str,
 void
 rt_binunif_free(struct rt_binunif_internal *bip) {
     RT_CK_BINUNIF(bip);
-    bu_free((genptr_t) bip->u.uint8, "binunif free uint8");
+    bu_free((void *) bip->u.uint8, "binunif free uint8");
     bu_free(bip, "binunif free");
     bip = NULL; /* sanity */
 }
@@ -396,9 +396,9 @@ rt_binunif_ifree(struct rt_db_internal *ip)
     RT_CK_DB_INTERNAL(ip);
     bip = (struct rt_binunif_internal *)ip->idb_ptr;
     RT_CK_BINUNIF(bip);
-    bu_free((genptr_t) bip->u.uint8, "binunif ifree");
+    bu_free((void *) bip->u.uint8, "binunif ifree");
     bu_free(ip->idb_ptr, "binunif ifree");
-    ip->idb_ptr = GENPTR_NULL;
+    ip->idb_ptr = ((void *)0);
 }
 
 
@@ -506,7 +506,7 @@ rt_binunif_make(const struct rt_functab *ftp, struct rt_db_internal *intern)
     intern->idb_meth = ftp;
     BU_ALLOC(bip, struct rt_binunif_internal);
 
-    intern->idb_ptr = (genptr_t) bip;
+    intern->idb_ptr = (void *) bip;
     bip->magic = RT_BINUNIF_INTERNAL_MAGIC;
     bip->type = DB5_MINORTYPE_BINU_8BITINT;
     bip->count = 0;

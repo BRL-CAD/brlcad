@@ -33,7 +33,7 @@ struct voxelizeData
  * Function to print values to File
  */
 HIDDEN void
-printToFile(genptr_t callBackData, int x, int y, int z, const char *a, fastf_t fill) {
+printToFile(void *callBackData, int x, int y, int z, const char *a, fastf_t fill) {
     struct voxelizeData *dataValues = (struct voxelizeData *)callBackData;
     FILE *fp;
 
@@ -62,7 +62,7 @@ main(int argc, char **argv)
     static const char *usage = "[-s \"dx dy dz\"] [-d n] [-t f] model.g objects...\n";
     struct voxelizeData dataValues;
     int levelOfDetail;
-    genptr_t callBackData;
+    void *callBackData;
     int c;
     int gottree = 0;
 

@@ -96,14 +96,6 @@ rt_read_cmd(register FILE *fp)
 
 
 int
-rt_split_cmd(char **argv, int lim, char *lp)
-{
-    /* bu_argv_from_string doesn't count the NULL */
-    return bu_argv_from_string(argv, lim-1, lp);
-}
-
-
-int
 rt_do_cmd(struct rt_i *rtip, const char *ilp, register const struct command_tab *tp)
 /* FUTURE:  for globbing */
 

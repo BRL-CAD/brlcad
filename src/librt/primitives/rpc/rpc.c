@@ -290,7 +290,7 @@ rt_rpc_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     stp->st_meth = &OBJ[ID_RPC];
 
     BU_GET(rpc, struct rpc_specific);
-    stp->st_specific = (genptr_t)rpc;
+    stp->st_specific = (void *)rpc;
     rpc->rpc_b = mag_b;
     rpc->rpc_inv_rsq = 1 / magsq_r;
 
@@ -1565,7 +1565,7 @@ rt_rpc_ifree(struct rt_db_internal *ip)
     xip->rpc_magic = 0;		/* sanity */
 
     bu_free((char *)xip, "rpc ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 
 

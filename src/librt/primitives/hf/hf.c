@@ -182,7 +182,7 @@ rt_hf_to_dsp(struct rt_db_internal *db_intern)
 
     rt_db_free_internal(db_intern);
 
-    db_intern->idb_ptr = (genptr_t)dsp;
+    db_intern->idb_ptr = (void *)dsp;
     db_intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     db_intern->idb_type = ID_DSP;
     db_intern->idb_meth = &OBJ[ID_DSP];
@@ -299,7 +299,7 @@ rt_hf_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
     RT_HF_CK_MAGIC(hip);
 
     BU_GET(hf, struct hf_specific);
-    stp->st_specific = (genptr_t) hf;
+    stp->st_specific = (void *) hf;
     /*
      * The stuff that is given to us.
      */
@@ -1967,7 +1967,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
     err1:
 	bu_free((char *)xip, "rt_hf_import4: xip");
 	ip->idb_type = ID_NULL;
-	ip->idb_ptr = (genptr_t)NULL;
+	ip->idb_ptr = (void *)NULL;
 	return -2;
     }
     bu_vls_free(&str);
@@ -2063,7 +2063,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	return 0;		/* OK */
     }
 
-    mp->apbuf = (genptr_t)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
+    mp->apbuf = (void *)bu_malloc(mp->apbuflen, "rt_hf_import4 apbuf[]");
     got = bu_cv_w_cookie(mp->apbuf, out_cookie, mp->apbuflen,
 			 mp->buf, in_cookie, count);
     if (got != count) {
@@ -2203,7 +2203,7 @@ rt_hf_ifree(struct rt_db_internal *ip)
     }
 
     bu_free((char *)xip, "hf ifree");
-    ip->idb_ptr = GENPTR_NULL;	/* sanity */
+    ip->idb_ptr = ((void *)0);	/* sanity */
 }
 int
 rt_hf_params(struct pc_pc_set *UNUSED(ps), const struct rt_db_internal *ip)

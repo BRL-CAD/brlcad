@@ -58,11 +58,12 @@ endif(BRLCAD_ENABLE_TK AND NOT WIN32)
 if(BRLCAD_ENABLE_QT)
   CHECK_CXX_FLAG(Wno-float-equal)
 
-  list(APPEND libdm_DEFINES DM_QT)
+  list(APPEND libdm_DEFINES DM_QT IF_QT)
   set(dmqt_srcs dm-qt.cpp)
   set(CMAKE_AUTOMOC ON)
   set(CMAKE_INCLUDE_CURRENT_DIR ON)
   add_definitions(${Qt5Widgets_DEFINITIONS})
+  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${Qt5Widgets_LIBRARIES})
 endif(BRLCAD_ENABLE_QT)
 
 if(BRLCAD_ENABLE_OSG)
@@ -73,6 +74,7 @@ if(BRLCAD_ENABLE_OSG)
     ${OSGTEXT_LIBRARY}
     ${OSGVIEWER_LIBRARY}
     )
+  set(DM_EXTRA_LIBS ${DM_EXTRA_LIBS} ${OSG_LIBRARIES})
 endif(BRLCAD_ENABLE_OSG)
 
 
@@ -108,7 +110,7 @@ set(LIBDM_SRCS
   vers.c
   )
 
-BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${Qt5Widgets_LIBRARIES};${OSG_LIBRARIES}")
+BRLCAD_ADDLIB(libdm "${LIBDM_SRCS}" "libged;librt;libfb;${DM_X_LIBS};${DM_TKLIB};${DM_EXTRA_LIBS}")
 set_target_properties(libdm PROPERTIES VERSION 20.0.1 SOVERSION 20)
 
 if(BRLCAD_BUILD_LOCAL_TK AND BRLCAD_ENABLE_TK)

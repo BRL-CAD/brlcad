@@ -258,7 +258,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 
 	    /* DB_INH_LOWER -- lower nodes in tree override */
 	    if (tsp->ts_mater.ma_shader)
-		bu_free((genptr_t)tsp->ts_mater.ma_shader, "ma_shader");
+		bu_free((void *)tsp->ts_mater.ma_shader, "ma_shader");
 
 	    if (bu_shader_to_key_eq(bu_vls_addr(&comb->shader), &tmp_vls)) {
 		char *sofar = db_path_to_string(pathp);
@@ -642,10 +642,10 @@ db_tree_funcleaf(
     union tree *comb_tree,
     void (*leaf_func)(struct db_i *, struct rt_comb_internal *, union tree *,
                       void *, void *, void *, void *),
-    genptr_t user_ptr1,
-    genptr_t user_ptr2,
-    genptr_t user_ptr3,
-    genptr_t user_ptr4)
+    void *user_ptr1,
+    void *user_ptr2,
+    void *user_ptr3,
+    void *user_ptr4)
 {
     void (*lfunc)(struct db_i *, struct rt_comb_internal *, union tree *,
 		  void *, void *, void *, void *);
@@ -868,7 +868,7 @@ db_follow_path_for_state(struct db_tree_state *tsp, struct db_full_path *total_p
  * Helper routine for db_recurse()
  */
 HIDDEN void
-_db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, genptr_t client_data)
+_db_recurse_subtree(union tree *tp, struct db_tree_state *msp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
 {
     struct db_tree_state memb_state;
     union tree *subtree;
@@ -966,7 +966,7 @@ out:
 }
 
 union tree *
-db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, genptr_t client_data)
+db_recurse(struct db_tree_state *tsp, struct db_full_path *pathp, struct combined_tree_state **region_start_statepp, void *client_data)
 {
     struct directory *dp;
     struct rt_db_internal intern;
@@ -1789,7 +1789,7 @@ db_tally_subtree_regions(
 /* ============================== */
 
 HIDDEN union tree *
-_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+_db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
 
     RT_CK_DBTS(tsp);
@@ -1806,7 +1806,7 @@ _db_gettree_region_end(struct db_tree_state *tsp, const struct db_full_path *pat
 
 
 HIDDEN union tree *
-_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, genptr_t UNUSED(client_data))
+_db_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, struct rt_db_internal *ip, void *UNUSED(client_data))
 {
     union tree *curtree;
 
@@ -1829,10 +1829,10 @@ struct db_walk_parallel_state {
     union tree **reg_trees;
     int reg_count;
     int reg_current;		/* semaphored when parallel */
-    union tree * (*reg_end_func)(struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t);
+    union tree * (*reg_end_func)(struct db_tree_state *, const struct db_full_path *, union tree *, void *);
     union tree * (*reg_leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *);
     struct rt_i *rtip;
-    genptr_t client_data;
+    void *client_data;
 };
 #define DB_WALK_PARALLEL_STATE_MAGIC 0x64777073	/* dwps */
 #define DB_CK_WPS(_p) BU_CKMAG(_p, DB_WALK_PARALLEL_STATE_MAGIC, "db_walk_parallel_state")
@@ -1843,7 +1843,7 @@ _db_walk_subtree(
     union tree *tp,
     struct combined_tree_state **region_start_statepp,
     union tree *(*leaf_func)(struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
-    genptr_t client_data,
+    void *client_data,
     struct resource *resp)
 {
     struct combined_tree_state *ctsp;
@@ -1939,7 +1939,7 @@ _db_walk_subtree(
  * and walk it.
  */
 HIDDEN void
-_db_walk_dispatcher(int cpu, genptr_t arg)
+_db_walk_dispatcher(int cpu, void *arg)
 {
     struct combined_tree_state *region_start_statep;
     int mine;
@@ -2018,10 +2018,10 @@ db_walk_tree(struct db_i *dbip,
 	     const char **argv,
 	     int ncpu,
 	     const struct db_tree_state *init_state,
-	     int (*reg_start_func) (struct db_tree_state *, const struct db_full_path *, const struct rt_comb_internal *, genptr_t),
-	     union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, genptr_t),
-	     union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, genptr_t),
-	     genptr_t client_data)
+	     int (*reg_start_func) (struct db_tree_state *, const struct db_full_path *, const struct rt_comb_internal *, void *),
+	     union tree *(*reg_end_func) (struct db_tree_state *, const struct db_full_path *, union tree *, void *),
+	     union tree *(*leaf_func) (struct db_tree_state *, const struct db_full_path *, struct rt_db_internal *, void *),
+	     void *client_data)
 {
     union tree *whole_tree = TREE_NULL;
     int new_reg_count;
@@ -2189,9 +2189,9 @@ db_walk_tree(struct db_i *dbip,
     wps.rtip = init_state->ts_rtip;
 
     if (ncpu <= 1) {
-	_db_walk_dispatcher(0, (genptr_t)&wps);
+	_db_walk_dispatcher(0, (void *)&wps);
     } else {
-	bu_parallel(_db_walk_dispatcher, ncpu, (genptr_t)&wps);
+	bu_parallel(_db_walk_dispatcher, ncpu, (void *)&wps);
     }
 
     /* Clean up any remaining sub-trees still in reg_trees[] */

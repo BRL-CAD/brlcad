@@ -44,7 +44,7 @@
 
 #define V3ARGSIN(a)       (a)[X]/25.4, (a)[Y]/25.4, (a)[Z]/25.4
 
-extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t client_data);
+extern union tree *do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *client_data);
 
 static char usage[] = "\
 Usage: %s [-m][-v][-i][-u][-xX lvl][-a abs_tess_tol][-r rel_tess_tol][-n norm_tess_tol][-P #_of_CPUs]\n\
@@ -218,7 +218,7 @@ main(int argc, char **argv)
 			0,			/* take all regions */
 			do_region_end,
 			nmg_booltree_leaf_tess,
-			(genptr_t)NULL);	/* in librt/nmg_bool.c */
+			(void *)NULL);	/* in librt/nmg_bool.c */
 
     if (regions_tried>0) {
 	percent = ((double)regions_converted * 100.0) / regions_tried;
@@ -558,7 +558,7 @@ process_boolean(union tree *curtree, struct db_tree_state *tsp, const struct db_
  * This routine must be prepared to run in parallel.
  */
 union tree *
-do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, genptr_t UNUSED(client_data))
+do_region_end(struct db_tree_state *tsp, const struct db_full_path *pathp, union tree *curtree, void *UNUSED(client_data))
 {
     union tree *ret_tree;
     struct bu_list vhead;

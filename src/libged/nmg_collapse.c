@@ -133,7 +133,7 @@ ged_nmg_collapse(struct ged *gedp, int argc, const char *argv[])
 
     count = (size_t)nmg_edge_collapse(m, &gedp->ged_wdbp->wdb_tol, tol_coll, min_angle);
 
-    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&intern.idb_type);
+    dp=db_diradd(gedp->ged_wdbp->dbip, new_name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&intern.idb_type);
     if (dp == RT_DIR_NULL) {
 	bu_vls_printf(gedp->ged_result_str, "Cannot add %s to directory\n", new_name);
 	rt_db_free_internal(&intern);

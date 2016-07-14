@@ -1113,7 +1113,6 @@ static struct to_cmdtab to_cmds[] = {
     {"lt",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_lt},
     {"m2v_point",	"x y z", 5, to_view_func, ged_m2v_point},
     {"make",	(char *)0, TO_UNLIMITED, to_make, GED_FUNC_PTR_NULL},
-    {"make_bb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_bb},
     {"make_name",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_make_name},
     {"make_pnts",	(char *)0, TO_UNLIMITED, to_more_args_func, ged_make_pnts},
     {"match",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_match},
@@ -1480,14 +1479,14 @@ to_deleteProc(ClientData clientData)
 	bu_vls_free(&gdvp->gdv_callback);
 	bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
 	(void)DM_CLOSE(gdvp->gdv_dmp);
-	bu_free((genptr_t)gdvp->gdv_view, "ged_view");
+	bu_free((void *)gdvp->gdv_view, "ged_view");
 
 	to_close_fbs(gdvp);
 
-	bu_free((genptr_t)gdvp, "ged_dm_view");
+	bu_free((void *)gdvp, "ged_dm_view");
     }
 
-    bu_free((genptr_t)top, "struct ged_obj");
+    bu_free((void *)top, "struct ged_obj");
 }
 
 /**
@@ -2719,7 +2718,7 @@ to_data_arrows(struct ged *gedp,
 	    }
 
 	    if (gdasp->gdas_num_points) {
-		bu_free((genptr_t)gdasp->gdas_points, "data points");
+		bu_free((void *)gdasp->gdas_points, "data points");
 		gdasp->gdas_points = (point_t *)0;
 		gdasp->gdas_num_points = 0;
 	    }
@@ -2740,7 +2739,7 @@ to_data_arrows(struct ged *gedp,
 
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
-		    bu_free((genptr_t)gdasp->gdas_points, "data points");
+		    bu_free((void *)gdasp->gdas_points, "data points");
 		    gdasp->gdas_points = (point_t *)0;
 		    gdasp->gdas_num_points = 0;
 
@@ -2963,7 +2962,7 @@ to_data_axes(struct ged *gedp,
 	    }
 
 	    if (gdasp->gdas_num_points) {
-		bu_free((genptr_t)gdasp->gdas_points, "data points");
+		bu_free((void *)gdasp->gdas_points, "data points");
 		gdasp->gdas_points = (point_t *)0;
 		gdasp->gdas_num_points = 0;
 	    }
@@ -2983,7 +2982,7 @@ to_data_axes(struct ged *gedp,
 		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
-		    bu_free((genptr_t)gdasp->gdas_points, "data points");
+		    bu_free((void *)gdasp->gdas_points, "data points");
 		    gdasp->gdas_points = (point_t *)0;
 		    gdasp->gdas_num_points = 0;
 
@@ -3126,10 +3125,10 @@ to_data_labels(struct ged *gedp,
 
 	    if (gdlsp->gdls_num_labels) {
 		for (i = 0; i < gdlsp->gdls_num_labels; ++i)
-		    bu_free((genptr_t)gdlsp->gdls_labels[i], "data label");
+		    bu_free((void *)gdlsp->gdls_labels[i], "data label");
 
-		bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
-		bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		bu_free((void *)gdlsp->gdls_labels, "data labels");
+		bu_free((void *)gdlsp->gdls_points, "data points");
 		gdlsp->gdls_labels = (char **)0;
 		gdlsp->gdls_points = (point_t *)0;
 		gdlsp->gdls_num_labels = 0;
@@ -3152,8 +3151,8 @@ to_data_labels(struct ged *gedp,
 
 		if (Tcl_SplitList(current_top->to_interp, av[i], &sub_ac, &sub_av) != TCL_OK) {
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
-		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
-		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    bu_free((void *)gdlsp->gdls_labels, "data labels");
+		    bu_free((void *)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
@@ -3166,8 +3165,8 @@ to_data_labels(struct ged *gedp,
 
 		if (sub_ac != 2) {
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
-		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
-		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    bu_free((void *)gdlsp->gdls_labels, "data labels");
+		    bu_free((void *)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
@@ -3183,8 +3182,8 @@ to_data_labels(struct ged *gedp,
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", sub_av[1]);
 
 		    /*XXX Need a macro for the following lines. Do something similar for the rest. */
-		    bu_free((genptr_t)gdlsp->gdls_labels, "data labels");
-		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    bu_free((void *)gdlsp->gdls_labels, "data labels");
+		    bu_free((void *)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_labels = (char **)0;
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_labels = 0;
@@ -3376,7 +3375,7 @@ to_data_lines(struct ged *gedp,
 	    }
 
 	    if (gdlsp->gdls_num_points) {
-		bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		bu_free((void *)gdlsp->gdls_points, "data points");
 		gdlsp->gdls_points = (point_t *)0;
 		gdlsp->gdls_num_points = 0;
 	    }
@@ -3396,7 +3395,7 @@ to_data_lines(struct ged *gedp,
 		if (bu_sscanf(av[i], "%lf %lf %lf", &scan[X], &scan[Y], &scan[Z]) != 3) {
 		    bu_vls_printf(gedp->ged_result_str, "bad data point - %s\n", av[i]);
 
-		    bu_free((genptr_t)gdlsp->gdls_points, "data points");
+		    bu_free((void *)gdlsp->gdls_points, "data points");
 		    gdlsp->gdls_points = (point_t *)0;
 		    gdlsp->gdls_num_points = 0;
 
@@ -3430,10 +3429,10 @@ to_polygon_free(ged_polygon *gpp)
 	return;
 
     for (j = 0; j < gpp->gp_num_contours; ++j)
-	bu_free((genptr_t)gpp->gp_contour[j].gpc_point, "gp_contour points");
+	bu_free((void *)gpp->gp_contour[j].gpc_point, "gp_contour points");
 
-    bu_free((genptr_t)gpp->gp_contour, "gp_contour");
-    bu_free((genptr_t)gpp->gp_hole, "gp_hole");
+    bu_free((void *)gpp->gp_contour, "gp_contour");
+    bu_free((void *)gpp->gp_hole, "gp_hole");
     gpp->gp_num_contours = 0;
 }
 
@@ -3449,7 +3448,7 @@ to_polygons_free(ged_polygons *gpp)
 	to_polygon_free(&gpp->gp_polygon[i]);
     }
 
-    bu_free((genptr_t)gpp->gp_polygon, "data polygons");
+    bu_free((void *)gpp->gp_polygon, "data polygons");
     gpp->gp_polygon = (ged_polygon *)0;
     gpp->gp_num_polygons = 0;
 }
@@ -3598,6 +3597,7 @@ to_data_polygons(struct ged *gedp,
 	gdpsp = &gdvp->gdv_view->gv_data_polygons;
 
     gdpsp->gdps_scale = gdvp->gdv_view->gv_scale;
+    gdpsp->gdps_data_vZ = gdvp->gdv_view->gv_data_vZ;
     VMOVE(gdpsp->gdps_origin, gdvp->gdv_view->gv_center);
     MAT_COPY(gdpsp->gdps_rotation, gdvp->gdv_view->gv_rotation);
     MAT_COPY(gdpsp->gdps_model2view, gdvp->gdv_view->gv_model2view);
@@ -4020,7 +4020,7 @@ to_data_polygons(struct ged *gedp,
 	gdpsp->gdps_polygons.gp_polygon[i].gp_contour = gpp->gp_contour;
 
 	/* Free the clipped polygon container */
-	bu_free((genptr_t)gpp, "clip gpp");
+	bu_free((void *)gpp, "clip gpp");
 
 	to_refresh_view(gdvp);
 	return GED_OK;
@@ -5318,8 +5318,8 @@ to_deleteViewProc(ClientData clientData)
     bu_vls_free(&gdvp->gdv_callback);
     bu_vls_free(&gdvp->gdv_edit_motion_delta_callback);
     (void)DM_CLOSE(gdvp->gdv_dmp);
-    bu_free((genptr_t)gdvp->gdv_view, "ged_view");
-    bu_free((genptr_t)gdvp, "ged_dm_view");
+    bu_free((void *)gdvp->gdv_view, "ged_view");
+    bu_free((void *)gdvp, "ged_dm_view");
 }
 
 
@@ -7826,7 +7826,7 @@ to_mouse_move_botpts(struct ged *gedp,
 	    to_edit_redraw(gedp, 2, (const char **)av);
 	}
 
-	bu_free((genptr_t)av, "to_mouse_move_botpts: av[]");
+	bu_free((void *)av, "to_mouse_move_botpts: av[]");
     }
 
     return GED_OK;
@@ -10048,15 +10048,15 @@ to_new_view(struct ged *gedp,
 
 	new_gdvp->gdv_dmp = dm_open(current_top->to_interp, type, ac, av);
 	if (new_gdvp->gdv_dmp == DM_NULL) {
-	    bu_free((genptr_t)new_gdvp->gdv_view, "ged_view");
-	    bu_free((genptr_t)new_gdvp, "ged_dm_view");
-	    bu_free((genptr_t)av, "to_new_view: av");
+	    bu_free((void *)new_gdvp->gdv_view, "ged_view");
+	    bu_free((void *)new_gdvp, "ged_dm_view");
+	    bu_free((void *)av, "to_new_view: av");
 
 	    bu_vls_printf(gedp->ged_result_str, "Failed to create %s\n", argv[1]);
 	    return GED_ERROR;
 	}
 
-	bu_free((genptr_t)av, "to_new_view: av");
+	bu_free((void *)av, "to_new_view: av");
 
     }
 
@@ -10075,7 +10075,7 @@ to_new_view(struct ged *gedp,
     new_gdvp->gdv_fbs.fbs_listener.fbsl_fd = -1;
     new_gdvp->gdv_fbs.fbs_listener.fbsl_port = -1;
     new_gdvp->gdv_fbs.fbs_fbp = FBIO_NULL;
-    new_gdvp->gdv_fbs.fbs_callback = (void (*)(genptr_t clientData))to_fbs_callback;
+    new_gdvp->gdv_fbs.fbs_callback = (void (*)(void *clientData))to_fbs_callback;
     new_gdvp->gdv_fbs.fbs_clientData = new_gdvp;
     new_gdvp->gdv_fbs.fbs_interp = current_top->to_interp;
 
@@ -11406,7 +11406,7 @@ to_deleteProc_rt(ClientData clientData)
     rt_free_rti(rtip);
     ap->a_rt_i = (struct rt_i *)NULL;
 
-    bu_free((genptr_t)ap, "struct application");
+    bu_free((void *)ap, "struct application");
 }
 
 HIDDEN int
@@ -13170,7 +13170,7 @@ to_dm_func(struct ged *gedp,
 /*************************** Local Utility Functions ***************************/
 
 HIDDEN void
-to_fbs_callback(genptr_t clientData)
+to_fbs_callback(void *clientData)
 {
     struct ged_dm_view *gdvp = (struct ged_dm_view *)clientData;
 

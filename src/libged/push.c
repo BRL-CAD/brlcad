@@ -56,7 +56,7 @@ struct push_data {
 
 
 static void
-do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4));
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4));
 
 
 /**
@@ -79,7 +79,7 @@ identitize(struct directory *dp,
     comb = (struct rt_comb_internal *)intern.idb_ptr;
     if (comb->tree) {
 	db_tree_funcleaf(dbip, comb, comb->tree, do_identitize,
-			 (genptr_t)msg, (genptr_t)NULL, (genptr_t)NULL, (genptr_t)NULL);
+			 (void *)msg, (void *)NULL, (void *)NULL, (void *)NULL);
 	if (rt_db_put_internal(dp, dbip, &intern, &rt_uniresource) < 0) {
 	    bu_vls_printf(msg, "Cannot write modified combination (%s) to database\n", dp->d_namep);
 	    return;
@@ -101,7 +101,7 @@ static union tree *
 push_leaf(struct db_tree_state *tsp,
 	  const struct db_full_path *pathp,
 	  struct rt_db_internal *ip,
-	  genptr_t client_data)
+	  void *client_data)
 {
     union tree *curtree;
     struct directory *dp;
@@ -118,7 +118,7 @@ push_leaf(struct db_tree_state *tsp,
 	char *sofar = db_path_to_string(pathp);
 
 	bu_vls_printf(gpdp->gedp->ged_result_str, "push_leaf(%s) path='%s'\n", ip->idb_meth->ft_name, sofar);
-	bu_free((genptr_t)sofar, "path string");
+	bu_free((void *)sofar, "path string");
     }
 /*
  * XXX - This will work but is not the best method.  dp->d_uses tells us
@@ -138,7 +138,7 @@ push_leaf(struct db_tree_state *tsp,
 		char *sofar = db_path_to_string(pathp);
 
 		bu_vls_printf(gpdp->gedp->ged_result_str, "push_leaf: matrix mismatch between '%s' and prior reference.\n", sofar);
-		bu_free((genptr_t)sofar, "path string");
+		bu_free((void *)sofar, "path string");
 		gpdp->push_error = 1;
 	    }
 
@@ -171,7 +171,7 @@ push_leaf(struct db_tree_state *tsp,
  * A null routine that does nothing.
  */
 static union tree *
-push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, genptr_t UNUSED(client_data))
+push_region_end(struct db_tree_state *UNUSED(tsp), const struct db_full_path *UNUSED(pathp), union tree *curtree, void *UNUSED(client_data))
 {
     return curtree;
 }
@@ -247,7 +247,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 		     &gedp->ged_wdbp->wdb_initial_tree_state,
 		     0,				/* take all regions */
 		     push_region_end,
-		     push_leaf, (genptr_t)gpdp);
+		     push_leaf, (void *)gpdp);
 
     /*
      * If there was any error, then just free up the solid
@@ -258,7 +258,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	    gpip = gpdp->pi_head.forw;
 	    gpip->forw->back = gpip->back;
 	    gpip->back->forw = gpip->forw;
-	    bu_free((genptr_t)gpip, "Push ident");
+	    bu_free((void *)gpip, "Push ident");
 	}
 	RTG.debug = old_debug;
 	BU_PUT(gpdp, struct push_data);
@@ -308,7 +308,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 	gpip = gpdp->pi_head.forw;
 	gpip->forw->back = gpip->back;
 	gpip->back->forw = gpip->forw;
-	bu_free((genptr_t)gpip, "Push ident");
+	bu_free((void *)gpip, "Push ident");
     }
 
     RTG.debug = old_debug;
@@ -320,7 +320,7 @@ ged_push(struct ged *gedp, int argc, const char *argv[])
 
 
 static void
-do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, genptr_t user_ptr1, genptr_t UNUSED(user_ptr2), genptr_t UNUSED(user_ptr3), genptr_t UNUSED(user_ptr4))
+do_identitize(struct db_i *dbip, struct rt_comb_internal *UNUSED(comb), union tree *comb_leaf, void *user_ptr1, void *UNUSED(user_ptr2), void *UNUSED(user_ptr3), void *UNUSED(user_ptr4))
 {
     struct directory *dp;
     struct bu_vls *msg = (struct bu_vls *)user_ptr1;

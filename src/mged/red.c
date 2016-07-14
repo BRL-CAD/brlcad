@@ -164,7 +164,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
     intern.idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern.idb_type = ID_COMBINATION;
     intern.idb_meth = &OBJ[ID_COMBINATION];
-    intern.idb_ptr = (genptr_t)comb;
+    intern.idb_ptr = (void *)comb;
     comb->tree = final_tree;
 
     if (!BU_STR_EQUAL(new_name, old_name)) {
@@ -184,7 +184,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
 	    }
 	}
 
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
@@ -198,7 +198,7 @@ make_tree(struct rt_comb_internal *comb, struct directory *dp, size_t node_count
 	else
 	    flags = RT_DIR_COMB;
 
-	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+	if ((dp=db_diradd(dbip, new_name, -1L, 0, flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	    Tcl_AppendResult(interp, "Cannot add ", new_name,
 			     " to directory, no changes made\n", (char *)NULL);
 	    intern.idb_ptr->idb_meth->ft_ifree(&intern, &rt_uniresource);
@@ -272,7 +272,7 @@ int save_comb(struct directory *dpold)
     if (rt_db_get_internal(&intern, dpold, dbip, (fastf_t *)NULL, &rt_uniresource) < 0)
 	TCL_READ_ERR_return;
 
-    if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (genptr_t)&intern.idb_type)) == RT_DIR_NULL) {
+    if ((dp=db_diradd(dbip, red_tmpcomb, -1L, 0, dpold->d_flags, (void *)&intern.idb_type)) == RT_DIR_NULL) {
 	Tcl_AppendResult(interp, "Cannot save copy of ", dpold->d_namep,
 			 ", no changes made\n", (char *)NULL);
 	return 1;

@@ -756,12 +756,12 @@ _ged_combadd2(struct ged *gedp,
 	intern.idb_type = ID_COMBINATION;
 	intern.idb_meth = &OBJ[ID_COMBINATION];
 
-	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (genptr_t)&intern.idb_type, 0);
+	GED_DB_DIRADD(gedp, dp, combname, -1, 0, flags, (void *)&intern.idb_type, 0);
 
 	BU_ALLOC(comb, struct rt_comb_internal);
 	RT_COMB_INTERNAL_INIT(comb);
 
-	intern.idb_ptr = (genptr_t)comb;
+	intern.idb_ptr = (void *)comb;
 
 	if (region_flag) {
 	    comb->region_flag = 1;
@@ -769,9 +769,10 @@ _ged_combadd2(struct ged *gedp,
 	    comb->aircode = air;
 	    comb->los = gedp->ged_wdbp->wdb_los_default;
 	    comb->GIFTmater = gedp->ged_wdbp->wdb_mat_default;
-	    bu_vls_printf(gedp->ged_result_str,
-			  "Creating region with attrs: region_id=%d, air=%d, los=%d, material_id=%d\n",
-			  ident, air,
+	    bu_vls_printf(gedp->ged_result_str, "Creating region with attrs: region_id=%d, ", ident);
+	    if (air)
+		bu_vls_printf(gedp->ged_result_str, "air=%d, ", air);
+	    bu_vls_printf(gedp->ged_result_str, "los=%d, material_id=%d\n",
 			  gedp->ged_wdbp->wdb_los_default,
 			  gedp->ged_wdbp->wdb_mat_default);
 	} else {

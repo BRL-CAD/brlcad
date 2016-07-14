@@ -14,15 +14,11 @@ changes made.  See document footer for additional details.
 --- 2014-XX-XX  Release 7.26.XX                                    ---
 ----------------------------------------------------------------------
 
+* fix submodel primitive crash - Cliff Yapp, Sean Morrison
+* support non-.g file import in Archer's file open dialog - Cliff Yapp
+* added brep support to g2asc and asc2g - Cliff Yapp
 * fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
-* made the rcodes cmd messages a little more informative - Cliff Yapp
-* fixed inside command for ellipsoid primitives - Cliff Yapp
-* fixed loss of MGED bu_log output after running wdb_cmd - Cliff Yapp
 * fixed mged -c crash running view-modifying commands - Sean Morrison
-* added -s size option for rtwizard image output - Cliff Yapp
-* documented image size options in rtwizard man page - Cliff Yapp
-* added view center specification dialog to rtwizard - Cliff Yapp
-* increased rtwizard window size for button visibility - Cliff Yapp
 * improved kill, killall, killtree documentation - Sean Morrison
 * added killtree -f force flag to kill unconditionally - Sean Morrison
 * killtree now defaults to skipping referenced objects - Sean Morrison
@@ -53,6 +49,27 @@ changes made.  See document footer for additional details.
 --- 2014-02-05  Release 7.24.2                                     ---
 ----------------------------------------------------------------------
 
+This patch release includes a plethora of significant bug fixes and
+improvements to BRL-CAD including fixing ADRT/TIE fast triangle ray
+tracing on 32-bit platforms, fixing an issue in our FASTGEN converter
+that affected the import of very complex geometry models, upgrading
+one of our third-party dependencies (libpng) in response to a
+vulnerability report, and improving the 'comb' and 'search' commands
+with new options for restructuring and searching geometry.
+Enhancements continue to be made to our boundary representation (BREP)
+NURBS infrastructure in support of hybrid representation modeling and
+improved geometry interchange with other CAD systems.
+
+* improved rcodes output to inform user what changed - Cliff Yapp
+* fixed inside command for ellipsoid primitives - Cliff Yapp
+* restored suppressed mged output after some commands - Cliff Yapp
+* added rtwizard -s square image size option - Cliff Yapp
+* documented image size options in rtwizard man page - Cliff Yapp
+* added view center specification dialog to rtwizard - Cliff Yapp
+* increased rtwizard window size for button visibility - Cliff Yapp
+* image conversion -R/-G/-B options now require weight - Mohit Daga
+* improved option consistency for image processing tools - Mohit Daga
+* improved pipe ray tracing grazing hit behavior - Keith Bowman
 * upgraded libpng, now at version 1.6.10 - Erik Greenwald, Cliff Yapp
 * improved solid NURBS geometry ray tracing behavior - Keith Bowman
 * fix z-clipping bug in MGED's X display manager - Cliff Yapp
@@ -61,6 +78,7 @@ changes made.  See document footer for additional details.
 * gattributes section 5 man page renamed to attributes - Tom Browder
 * changed 'benchmark' defaults: 2% deviation, 5 frames - Sean Morrison
 * improved bwrect to handle redirected input and output - Mohit Daga
+* upgraded boost to version 1.55.0 - Tom Browder
 * fixed TIE mesh raytrace crashes on 32-bit platforms - Sean Morrison
 * fixed pixscale and bwscale to not output ioctl error - Mohit Daga
 * improved fast4-g import of numerous region groups - Richard Weiss

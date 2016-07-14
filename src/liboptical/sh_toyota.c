@@ -86,12 +86,12 @@ struct bu_structparse toyota_parse[] = {
 };
 
 
-HIDDEN int toyota_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tmirror_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int tglass_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int toyota_render(register struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void toyota_print(register struct region *rp, genptr_t dp);
-HIDDEN void toyota_free(genptr_t cp);
+HIDDEN int toyota_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tmirror_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int tglass_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int toyota_render(register struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void toyota_print(register struct region *rp, void *dp);
+HIDDEN void toyota_free(void *cp);
 
 void lambda_to_rgb(fastf_t lambda, fastf_t irrad, fastf_t *rgb);
 void spectral_dist_table(fastf_t lambda, fastf_t *e_mean, fastf_t *v1, fastf_t *v2);
@@ -133,7 +133,7 @@ struct mfuncs toyota_mfuncs[] = {
  * Ltd.), Luminance meter (MINOLTA CS-100)
  */
 HIDDEN int
-toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -220,7 +220,7 @@ toyota_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 
 
 HIDDEN int
-tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -239,7 +239,7 @@ tmirror_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr
 
 
 HIDDEN int
-tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
+tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, void **dpp, const struct mfuncs *UNUSED(mfp), struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -258,14 +258,14 @@ tglass_setup(register struct region *UNUSED(rp), struct bu_vls *matparm, genptr_
 
 
 HIDDEN void
-toyota_print(register struct region *rp, genptr_t dp)
+toyota_print(register struct region *rp, void *dp)
 {
     bu_struct_print(rp->reg_name, toyota_parse, (char *)dp);
 }
 
 
 HIDDEN void
-toyota_free(genptr_t cp)
+toyota_free(void *cp)
 {
     /* need to free cp->refl */
     BU_PUT(cp, struct toyota_specific);
@@ -2236,7 +2236,7 @@ background_light(fastf_t lambda, struct toyota_specific *ts, fastf_t *Refl, fast
  * any weather conditions."
  */
 HIDDEN int
-toyota_render(register struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, genptr_t dp)
+toyota_render(register struct application *ap, const struct partition *UNUSED(pp), struct shadework *swp, void *dp)
 {
     fastf_t direct_sunlight,
 	dist,			/* Distance light travels (m). */

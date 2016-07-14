@@ -38,10 +38,10 @@
 
 extern struct region env_region;		/* import from view.c */
 
-HIDDEN int temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dp, const struct mfuncs *mfp, struct rt_i *rtip);
-HIDDEN int temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp);
-HIDDEN void temp_print(register struct region *rp, genptr_t dp);
-HIDDEN void temp_free(genptr_t cp);
+HIDDEN int temp_setup(register struct region *rp, struct bu_vls *matparm, void **dp, const struct mfuncs *mfp, struct rt_i *rtip);
+HIDDEN int temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp);
+HIDDEN void temp_print(register struct region *rp, void *dp);
+HIDDEN void temp_free(void *cp);
 
 extern int mlib_zero();
 extern int mlib_one();
@@ -80,7 +80,7 @@ struct bu_structparse temp_parse[] = {
  * which works out very naturally for the indexing scheme.
  */
 HIDDEN int
-temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, genptr_t dp)
+temp_render(struct application *ap, const struct partition *pp, struct shadework *swp, void *dp)
 {
     register struct temp_specific *tp =
 	(struct temp_specific *)dp;
@@ -222,7 +222,7 @@ temp_render(struct application *ap, const struct partition *pp, struct shadework
 
 
 HIDDEN int
-temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
+temp_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const struct mfuncs *mfp, struct rt_i *UNUSED(rtip))
 
 
 /* New since 4.4 release */
@@ -263,14 +263,14 @@ temp_setup(register struct region *rp, struct bu_vls *matparm, genptr_t *dpp, co
 
 
 HIDDEN void
-temp_print(register struct region *rp, genptr_t UNUSED(dp))
+temp_print(register struct region *rp, void *UNUSED(dp))
 {
     bu_struct_print(rp->reg_name, temp_parse, (char *)rp->reg_udata);
 }
 
 
 HIDDEN void
-temp_free(genptr_t cp)
+temp_free(void *cp)
 {
     struct temp_specific *tp =
 	(struct temp_specific *)cp;

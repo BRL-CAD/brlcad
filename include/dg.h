@@ -74,7 +74,7 @@ struct run_rt {
 #  ifdef TCL_OK
     Tcl_Channel chan;
 #  else
-    genptr_t chan;
+    void *chan;
 #  endif
 #else
     int fd;

@@ -18,11 +18,15 @@
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
   <command>g-shell-rect</command>
+    <arg choice='opt'>-a <replaceable>rpp_args</replaceable></arg>
+    <arg choice='opt'>-R <replaceable>edge_tol</replaceable></arg>
+    <arg choice='opt'>-p <replaceable>plotfile</replaceable></arg>
+    <arg choice='opt'>-X <replaceable>lvl</replaceable></arg>
     <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
+    <arg choice='opt'>-b </arg>
     <arg choice='opt'>-n </arg>
-    <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
     <arg choice='opt'>-i <replaceable>initial_ray_dir</replaceable></arg>
-    <arg choice='opt'>-d <replaceable>debug_level</replaceable></arg>
+    <arg choice='opt'>-g <replaceable>cell_size</replaceable></arg>
     <arg choice='plain'>-o <replaceable>brlcad_output_file</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
@@ -75,7 +79,6 @@ and will be written to the specified
 <para>Specify the initial ray direction.  Valid values are X, Y, or Z.
 The best results are usually obtained by raytracing in the direction that produces the
 most hits first.</para>
-
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -88,6 +91,36 @@ most hits first.</para>
   <term><option>-n</option></term>
   <listitem>
 <para>Suppresses the refinement stage (firing rays from the secondary and tertiary axis directions).</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-b</option></term>
+  <listitem>
+<para>Output a BOT rather than an NMG.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-a </option><emphasis remap='I'>rpp_args</emphasis></term>
+  <listitem>
+<para>Add an RPP for refining.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-R </option><emphasis remap='I'>edge_tol</emphasis></term>
+  <listitem>
+<para>Supply edge tolerance.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-p </option><emphasis remap='I'>plotfile</emphasis></term>
+  <listitem>
+<para>Supply plotfile for plot edge breaking.</para>
+  </listitem>
+  </varlistentry>
+  <varlistentry>
+  <term><option>-X </option><emphasis remap='I'>lvl</emphasis></term>
+  <listitem>
+<para>Supply NMG debug flags.</para>
   </listitem>
   </varlistentry>
   <varlistentry>

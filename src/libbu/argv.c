@@ -284,7 +284,7 @@ bu_argv_from_path(const char *path, int *ac)
 	++i;
 
     if (UNLIKELY(newstr[i] == '\0')) {
-	bu_free((genptr_t)newstr, "bu_argv_from_path");
+	bu_free((void *)newstr, "bu_argv_from_path");
 	return (char **)0;
     }
 

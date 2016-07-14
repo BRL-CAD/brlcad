@@ -37,30 +37,10 @@
 
   <variablelist remap="TP">
     <varlistentry>
-      <term><option>-n number_of_turns</option></term>
-      <listitem>
-	<para>
-	  Sets the number of turns desired in the coil.  Must be an integer
-	  value greater than zero - fractional turns are not supported.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
-      <term><option>-L</option></term>
-      <listitem>
-	<para>
-	  Instructs the coil tool to create a "left handed" coil (default
-	  is "right handed").  I.e. - from the starting point of the coil,
-	  the coil winding will proceed in the -x direction for a left
-	  handed coil, and in the +x direction for a right handed coil.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-d outer_diameter</option></term>
       <listitem>
 	<para>
-	  Sets the outer diameter of the coil in terms of millimeters.
+	  Sets the outer diameter (millimeters) of the coil.
 	</para>
       </listitem>
     </varlistentry>
@@ -68,8 +48,7 @@
       <term><option>-w wire_diameter</option></term>
       <listitem>
 	<para>
-	  Specify the diameter of the wire to be wound into a coil in terms
-	  of millimeters.
+	  Specify the diameter (millimeters) of the wire to be wound into a coil.
 	</para>
       </listitem>
     </varlistentry>
@@ -77,7 +56,7 @@
       <term><option>-H helix_angle</option></term>
       <listitem>
 	<para>
-	  Specify the helix angle of the coil in degrees.
+	  Specify the helix angle (degrees) of the coil.
 	</para>
       </listitem>
     </varlistentry>
@@ -88,6 +67,15 @@
 	  Specify the pitch - distance between center of wire at beginning
 	  and end of a single turn in mm.  Minimum value is equal to the
 	  wire diameter.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-n number_of_turns</option></term>
+      <listitem>
+	<para>
+	  Sets the number of turns desired in the coil.  Must be an integer
+	  value greater than zero - fractional turns are not supported.
 	</para>
       </listitem>
     </varlistentry>
@@ -114,17 +102,6 @@
       </listitem>
     </varlistentry>
     <varlistentry>
-      <term><option>-l length</option></term>
-      <listitem>
-	<para>
-		Clamp the length of a coil to the specified value.  This option is currently limited - it will
-		work only for uncapped coils and the helix angle must be zero.  To fit length, pitch will be
-		adjusted first.  If pitch adjustments aren't enough, turns will be removed.  If both of those
-		variables can't be adjusted to satisfy the length, wire diameter will be adjusted.
-	</para>
-      </listitem>
-    </varlistentry>
-    <varlistentry>
       <term><option>-S number_of_turns,outer_diameter,wire_diameter,helix_angle,pitch,winding_direction</option></term>
       <listitem>
 	<para>
@@ -136,6 +113,28 @@
 	  supplied parameters other than capping styles to be ignored.  There is very little sanity
 	  checking here - many inputs will result in invalid pipe primitives and generate only an
 	  empty database file.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-l length</option></term>
+      <listitem>
+	<para>
+		Clamp the length of a coil to the specified value.  This option is currently limited - it will
+		work only for uncapped coils and the helix angle must be zero.  To fit length, pitch will be
+		adjusted first.  If pitch adjustments aren't enough, turns will be removed.  If both of those
+		variables can't be adjusted to satisfy the length, wire diameter will be adjusted.
+	</para>
+      </listitem>
+    </varlistentry>
+    <varlistentry>
+      <term><option>-L</option></term>
+      <listitem>
+	<para>
+	  Instructs the coil tool to create a "left handed" coil (default
+	  is "right handed").  I.e. - from the starting point of the coil,
+	  the coil winding will proceed in the -x direction for a left
+	  handed coil, and in the +x direction for a right handed coil.
 	</para>
       </listitem>
     </varlistentry>

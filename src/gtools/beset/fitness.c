@@ -297,7 +297,7 @@ get_next_row(struct fitness_state *fstate)
  * raytraces an object in parallel and stores or compares it to source
  */
 void
-rt_worker(int UNUSED(cpu), genptr_t g)
+rt_worker(int UNUSED(cpu), void *g)
 {
     struct application ap;
     struct fitness_state *fstate = (struct fitness_state *)g;
@@ -445,8 +445,8 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     }
 
 
-    rt_worker(0, (genptr_t)fstate);
-    /*bu_parallel(rt_worker, fstate->ncpu, (genptr_t)fstate);*/
+    rt_worker(0, (void *)fstate);
+    /*bu_parallel(rt_worker, fstate->ncpu, (void *)fstate);*/
 
     /* normalize fitness if we aren't just saving the source */
     if (!fstate->capture) {
