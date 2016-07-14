@@ -61,7 +61,7 @@ int yylex(perplex_t scanner)
 void perplexSetExtra(perplex_t scanner, void *extra)
     Set scanner's application data.
 
-void perplexGetExtra(perplex_t scanner)
+void *perplexGetExtra(perplex_t scanner)
     Get scanner's application data.
 
 void perplexUnput(peprlex_t scanner, char c)

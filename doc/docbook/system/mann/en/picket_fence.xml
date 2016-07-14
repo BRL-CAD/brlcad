@@ -38,7 +38,7 @@
   <para>
     <command>picket_fence</command> creates a geometry file in
     <emphasis>filename</emphasis> of a picket fence.  All  parameters
-    for the fence are in mm.  If more than two points are specified
+    for the fence are in mm.  If more than two points are specified,
     it will generate a fence with multiple sections connecting the
     points.  Parts of the fence are created starting at the origin.  The
     two backing boards are created in the negative x halfspace.  The pickets are
@@ -52,24 +52,25 @@
     </literallayout>
     The <emphasis>&lt;prefix&gt;</emphasis> above is the second argument to the
     program.  The <emphasis>spacing</emphasis> parameter specifies the amount of
-    space (in mm) between pickets.  The <emphasis>-r</emphasis> option specifies round
+    space (in mm) between pickets.  The <command>-r</command> option specifies round
     fronts for the pickets.
  </para>
 </refsection>
 
 <refsection xml:id="examples"><title>EXAMPLES</title>
 
-  <para>
-  Creates an example fence two meters high and six meters long with
-  fifteen millimeter spaces between the pickets.  It will start the
-  fence at the origin and extend it to (100,6000,0).
-  </para>
   <example><title><command>picket_fence</command> Example</title>
 
     <para>
-      <userinput>picket_fence fence.g Imy2000 15 0 0 0 100 6000 0</userinput>
+      <userinput>picket_fence fence.g Imy 2000 15 0 0 0 100 6000 0</userinput>
     </para>
   </example>
+  <para>
+  Creates an example fence two meters high and six meters long with
+  fifteen millimeter spaces between the pickets.  "Imy" will be used as
+  a name prefix for the <command>mged</command> objects. The fence will
+  be started at the origin and be stretched out to (100,6000,0).
+  </para>
 
 </refsection>
 

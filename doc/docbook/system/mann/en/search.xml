@@ -721,19 +721,18 @@
   <example><title>Finding all Assemblies</title>
 
 	<para>
-	  <userinput>search / -above -type region ! -type region</userinput>
+	  <userinput>search / -type comb ! -below -type region ! -type region</userinput>
 	</para>
 	<para>
-	  Find all instances of objects of type combination that
-	  contain regions but are not themselves regions.  These are
-	  regarded as "assemblies" in BRL-CAD.
+	  Find all instances of objects of type combination that are not below regions
+	  and are not themselves regions.  These are regarded as "assemblies" in BRL-CAD.
 	</para>
   </example>
 
   <example><title>Finding all Combinations below Regions</title>
 
 	<para>
-	  <userinput>search / ! ( -above -type region ) ! -type region -type comb</userinput>
+	  <userinput>search / -type comb -below -type region ! -type region</userinput>
 	</para>
 	<para>
 	  Find all instances of combinations that are not regions and
