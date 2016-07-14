@@ -84,6 +84,7 @@ RepresentedDefinition::Load(STEPWrapper *sw,SDAI_Select *sse) {
 	*/
     }
 
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

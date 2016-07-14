@@ -28,7 +28,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Rthide</emphasis>
+<para><command>rthide</command>
 operates on the indicated
 <emphasis remap='I'>objects</emphasis>
 in the input
@@ -48,7 +48,7 @@ and
 options, in which case the model will be autosized, and the grid
 will be centered on the centroid of the model, with ray spacing
 chosen to span the entire set of
-<emphasis remap='I'>objects.</emphasis>
+<emphasis remap='I'>objects</emphasis>.
 Alternatively,
 with the
 <option>-M</option>

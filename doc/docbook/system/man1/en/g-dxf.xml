@@ -33,7 +33,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-dxf</emphasis>
+<para><command>g-dxf</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -50,7 +50,7 @@ option specifies an NMG debug flag. The
 option may be used to specify an absolute tessellation tolerance (in millimeters). This
 requires that the maximum absolute error from the tessellated surface to the actual
 surface must not be greater than
-<emphasis remap='I'>abs_tol.</emphasis>
+<emphasis remap='I'>abs_tol</emphasis>.
 The
 <option>-n</option>
 option specifies a surface normal error tolerance (in degrees) for the tessellation.
@@ -59,7 +59,7 @@ The
 option may be used to set a relative error tolerance. This effectively
 sets an absolute tolerance for each primitive solid by multiplying the
 overall size of the solid by
-<emphasis remap='I'>rel_tol.</emphasis>
+<emphasis remap='I'>rel_tol</emphasis>.
 The
 <option>-D</option>
 option specifies a calculational distance tolerance (mm). Any two vertices
@@ -84,7 +84,7 @@ option specifies the name of the file to receive the output
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-dxf -o sample.dxf sample.g sample_object</emphasis>
+$ g-dxf -o <emphasis remap='I'>sample.dxf sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 

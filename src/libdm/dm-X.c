@@ -60,12 +60,15 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-X.h"
-#include "dm/dm-Null.h"
+#include "dm-X.h"
+#include "dm-Null.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_X.h"
+
 #include "solid.h"
 
-#include "./dm_util.h"
+#include "dm_private.h"
 
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
@@ -140,7 +143,7 @@ get_color(Display *dpy, Colormap cmap, XColor *color)
 
 
 HIDDEN void
-X_reshape(struct dm *dmp, int width, int height)
+X_reshape(struct dm_internal *dmp, int width, int height)
 {
     dmp->dm_height = height;
     dmp->dm_width = width;
@@ -149,7 +152,7 @@ X_reshape(struct dm *dmp, int width, int height)
 
 
 HIDDEN int
-X_configureWin_guts(struct dm *dmp, int force)
+X_configureWin_guts(struct dm_internal *dmp, int force)
 {
     XWindowAttributes xwa;
     XFontStruct *newfontstruct;
@@ -271,7 +274,7 @@ X_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN XVisualInfo *
-X_choose_visual(struct dm *dmp)
+X_choose_visual(struct dm_internal *dmp)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
     int num, i, j;
@@ -367,7 +370,7 @@ X_choose_visual(struct dm *dmp)
  * Gracefully release the display.
  */
 HIDDEN int
-X_close(struct dm *dmp)
+X_close(struct dm_internal *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -410,7 +413,7 @@ X_close(struct dm *dmp)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+struct dm_internal *
 X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -428,7 +431,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
 #endif
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
-    struct dm *dmp = (struct dm *)NULL;
+    struct dm_internal *dmp = (struct dm_internal *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     Screen *screen = (Screen *)NULL;
 
@@ -441,7 +444,7 @@ X_open_dm(Tcl_Interp *interp, int argc, char **argv)
     }
 #endif
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_X; /* struct copy */
     dmp->dm_interp = interp;
@@ -747,7 +750,7 @@ Skip_dials:
 
 
 HIDDEN int
-X_drawBegin(struct dm *dmp)
+X_drawBegin(struct dm_internal *dmp)
 {
     XGCValues gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -778,7 +781,7 @@ X_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-X_drawEnd(struct dm *dmp)
+X_drawEnd(struct dm_internal *dmp)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -805,7 +808,7 @@ X_drawEnd(struct dm *dmp)
  * calls to X_draw().
  */
 HIDDEN int
-X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+X_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 {
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
 
@@ -828,7 +831,7 @@ X_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
 
 
 HIDDEN int
-X_drawVList(struct dm *dmp, struct bn_vlist *vp)
+X_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 {
     extern int vectorThreshold;	/* defined in libdm/tcl.c */
 
@@ -1124,7 +1127,7 @@ X_drawVList(struct dm *dmp, struct bn_vlist *vp)
 
 
 HIDDEN int
-X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+X_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1148,7 +1151,7 @@ X_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **dat
  * not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-X_normal(struct dm *dmp)
+X_normal(struct dm_internal *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_normal()\n");
@@ -1162,7 +1165,7 @@ X_normal(struct dm *dmp)
  * beam is as specified.
  */
 HIDDEN int
-X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
+X_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, int size, int use_aspect)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1193,7 +1196,7 @@ X_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int size, 
 
 
 HIDDEN int
-X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
+X_drawLine2D(struct dm_internal *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 {
     int sx1, sy1, sx2, sy2;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1222,14 +1225,14 @@ X_drawLine2D(struct dm *dmp, fastf_t x_1, fastf_t y_1, fastf_t x_2, fastf_t y_2)
 
 
 HIDDEN int
-X_drawLine3D(struct dm *dmp, point_t pt1, point_t pt2)
+X_drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     return draw_Line3D(dmp, pt1, pt2);
 }
 
 
 HIDDEN int
-X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+X_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -1239,7 +1242,7 @@ X_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 
 
 HIDDEN int
-X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+X_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 {
     int sx, sy;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1263,7 +1266,7 @@ X_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+X_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     XGCValues gcv;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1305,7 +1308,7 @@ X_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, 
 
 
 HIDDEN int
-X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+X_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
     struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
@@ -1340,7 +1343,7 @@ X_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 
 
 HIDDEN int
-X_setLineAttr(struct dm *dmp, int width, int style)
+X_setLineAttr(struct dm_internal *dmp, int width, int style)
 {
     int linestyle;
     struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
@@ -1369,7 +1372,7 @@ X_setLineAttr(struct dm *dmp, int width, int style)
 
 
 HIDDEN int
-X_debug(struct dm *dmp, int lvl)
+X_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -1378,7 +1381,7 @@ X_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-X_logfile(struct dm *dmp, const char *filename)
+X_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
@@ -1387,7 +1390,7 @@ X_logfile(struct dm *dmp, const char *filename)
 
 
 HIDDEN int
-X_setWinBounds(struct dm *dmp, fastf_t *w)
+X_setWinBounds(struct dm_internal *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setWinBounds()\n");
@@ -1404,7 +1407,7 @@ X_setWinBounds(struct dm *dmp, fastf_t *w)
 
 
 HIDDEN int
-X_configureWin(struct dm *dmp, int force)
+X_configureWin(struct dm_internal *dmp, int force)
 {
     /* don't force */
     return X_configureWin_guts(dmp, force);
@@ -1412,7 +1415,7 @@ X_configureWin(struct dm *dmp, int force)
 
 
 HIDDEN int
-X_setLight(struct dm *dmp, int light_on)
+X_setLight(struct dm_internal *dmp, int light_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setLight:\n");
@@ -1424,7 +1427,7 @@ X_setLight(struct dm *dmp, int light_on)
 
 
 HIDDEN int
-X_setZBuffer(struct dm *dmp, int zbuffer_on)
+X_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("X_setZBuffer:\n");
@@ -1436,7 +1439,7 @@ X_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 HIDDEN int
-X_getDisplayImage(struct dm *dmp, unsigned char **image)
+X_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 {
     XImage *ximage_p;
     unsigned char **rows;
@@ -1649,9 +1652,38 @@ X_getDisplayImage(struct dm *dmp, unsigned char **image)
     return TCL_OK;
 }
 
+int
+X_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct X24_fb_info *xfb_ps;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct x_vars *privars = (struct x_vars *)dmp->dm_vars.priv_vars;
+
+    fb_ps = fb_get_platform_specific(FB_X24_MAGIC);
+    xfb_ps = (struct X24_fb_info *)fb_ps->data;
+    xfb_ps->dpy = pubvars->dpy;
+    xfb_ps->win = privars->pix;
+    xfb_ps->cwinp = pubvars->win;
+    xfb_ps->cmap = pubvars->cmap;
+    xfb_ps->vip = pubvars->vip;
+    xfb_ps->gc = privars->gc;
+
+    dmp->fbp = fb_open_existing("X", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
+
+struct bu_structparse X_vparse[] = {
+    {"%g",  1, "bound",         DM_O(dm_bound),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "useBound",      DM_O(dm_boundFlag),     dm_generic_hook, NULL, NULL},
+    {"%d",  1, "zclip",         DM_O(dm_zclip),         dm_generic_hook, NULL, NULL},
+    {"%d",  1, "debug",         DM_O(dm_debugLevel),    dm_generic_hook, NULL, NULL},
+    {"",    0, (char *)0,       0,                      BU_STRUCTPARSE_FUNC_NULL, NULL, NULL}
+};
 
 /* Display Manager package interface */
-struct dm dm_X = {
+struct dm_internal dm_X = {
     X_close,
     X_drawBegin,
     X_drawEnd,
@@ -1684,10 +1716,13 @@ struct dm dm_X = {
     null_drawDList,
     null_freeDLists,
     null_genDLists,
+    NULL,
     X_getDisplayImage, /* display to image function */
     X_reshape,
     null_makeCurrent,
-    null_openFb,
+    X_openFb,
+    NULL,
+    NULL,
     0,
     0,				/* no displaylist */
     0,                            /* no stereo */
@@ -1706,6 +1741,8 @@ struct dm dm_X = {
     1.0, /* aspect ratio */
     0,
     {0, 0},
+    NULL,
+    NULL,
     BU_VLS_INIT_ZERO,		/* bu_vls path name*/
     BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
     BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
@@ -1723,6 +1760,8 @@ struct dm dm_X = {
     0,				/* no zclipping */
     1,                          /* clear back buffer after drawing and swap */
     0,                          /* not overriding the auto font size */
+    X_vparse,
+    FB_NULL,
     0				/* Tcl interpreter */
 };
 

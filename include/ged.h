@@ -36,6 +36,8 @@
 #  include <windows.h>
 #endif
 
+#include "solid.h"
+#include "dm/bview.h"
 #include "raytrace.h"
 #include "fbserv_obj.h"
 
@@ -73,9 +75,9 @@ __BEGIN_DECLS
 #define INV_4096_V 0.000244140625
 
 #define GED_NULL ((struct ged *)0)
-#define GED_DISPLAY_LIST_NULL ((struct ged_display_list *)0)
+#define GED_DISPLAY_LIST_NULL ((struct display_list *)0)
 #define GED_DRAWABLE_NULL ((struct ged_drawable *)0)
-#define GED_VIEW_NULL ((struct ged_view *)0)
+#define GED_VIEW_NULL ((struct bview *)0)
 #define GED_DM_VIEW_NULL ((struct ged_dm_view *)0)
 
 #define GED_RESULT_NULL ((void *)0)
@@ -161,7 +163,7 @@ __BEGIN_DECLS
     }
 
 #define GED_CHECK_FBSERV_FBP(_gedp, _flags) \
-    if (_gedp->ged_fbsp->fbs_fbp == FBIO_NULL) { \
+    if (_gedp->ged_fbsp->fbs_fbp == FB_NULL) { \
 	int ged_check_view_quiet = (_flags) & GED_QUIET; \
 	if (!ged_check_view_quiet) { \
 	    bu_vls_trunc((_gedp)->ged_result_str, 0); \
@@ -259,162 +261,6 @@ __BEGIN_DECLS
 #define INV_GED 0.00048828125
 #define INV_4096 0.000244140625
 
-struct ged_adc_state {
-    int		gas_draw;
-    int		gas_dv_x;
-    int		gas_dv_y;
-    int		gas_dv_a1;
-    int		gas_dv_a2;
-    int		gas_dv_dist;
-    fastf_t	gas_pos_model[3];
-    fastf_t	gas_pos_view[3];
-    fastf_t	gas_pos_grid[3];
-    fastf_t	gas_a1;
-    fastf_t	gas_a2;
-    fastf_t	gas_dst;
-    int		gas_anchor_pos;
-    int		gas_anchor_a1;
-    int		gas_anchor_a2;
-    int		gas_anchor_dst;
-    fastf_t	gas_anchor_pt_a1[3];
-    fastf_t	gas_anchor_pt_a2[3];
-    fastf_t	gas_anchor_pt_dst[3];
-    int		gas_line_color[3];
-    int		gas_tick_color[3];
-    int		gas_line_width;
-};
-
-struct ged_axes_state {
-    int       gas_draw;
-    point_t   gas_axes_pos;		/* in model coordinates */
-    fastf_t   gas_axes_size; 		/* in view coordinates */
-    int	      gas_line_width;    	/* in pixels */
-    int	      gas_pos_only;
-    int	      gas_axes_color[3];
-    int	      gas_label_color[3];
-    int	      gas_triple_color;
-    int	      gas_tick_enabled;
-    int	      gas_tick_length;		/* in pixels */
-    int	      gas_tick_major_length; 	/* in pixels */
-    fastf_t   gas_tick_interval; 	/* in mm */
-    int	      gas_ticks_per_major;
-    int	      gas_tick_threshold;
-    int	      gas_tick_color[3];
-    int	      gas_tick_major_color[3];
-};
-
-struct ged_data_arrow_state {
-    int       gdas_draw;
-    int	      gdas_color[3];
-    int	      gdas_line_width;    	/* in pixels */
-    int       gdas_tip_length;
-    int       gdas_tip_width;
-    int       gdas_num_points;
-    point_t   *gdas_points;		/* in model coordinates */
-};
-
-struct ged_data_axes_state {
-    int       gdas_draw;
-    int	      gdas_color[3];
-    int	      gdas_line_width;    	/* in pixels */
-    fastf_t   gdas_size; 		/* in view coordinates */
-    int       gdas_num_points;
-    point_t   *gdas_points;		/* in model coordinates */
-};
-
-struct ged_data_label_state {
-    int		gdls_draw;
-    int		gdls_color[3];
-    int		gdls_num_labels;
-    int		gdls_size;
-    char	**gdls_labels;
-    point_t	*gdls_points;
-};
-
-struct ged_data_line_state {
-    int       gdls_draw;
-    int	      gdls_color[3];
-    int	      gdls_line_width;    	/* in pixels */
-    int       gdls_num_points;
-    point_t   *gdls_points;		/* in model coordinates */
-};
-
-typedef enum { gctUnion, gctDifference, gctIntersection, gctXor } GedClipType;
-
-typedef struct {
-    size_t    gpc_num_points;
-    point_t   *gpc_point;		/* in model coordinates */
-} ged_poly_contour;
-
-typedef struct {
-    size_t		gp_num_contours;
-    int			gp_color[3];
-    int			gp_line_width;    	/* in pixels */
-    int			gp_line_style;
-    int			*gp_hole;
-    ged_poly_contour	*gp_contour;
-} ged_polygon;
-
-typedef struct {
-    size_t	gp_num_polygons;
-    ged_polygon	*gp_polygon;
-} ged_polygons;
-
-typedef struct {
-    int			gdps_draw;
-    int			gdps_color[3];
-    int			gdps_line_width;    	/* in pixels */
-    int			gdps_line_style;
-    int			gdps_cflag;             /* contour flag */
-    size_t		gdps_target_polygon_i;
-    size_t		gdps_curr_polygon_i;
-    size_t		gdps_curr_point_i;
-    point_t		gdps_prev_point;
-    GedClipType		gdps_clip_type;
-    fastf_t		gdps_scale;
-    point_t		gdps_origin;
-    mat_t		gdps_rotation;
-    mat_t		gdps_view2model;
-    mat_t		gdps_model2view;
-    ged_polygons	gdps_polygons;
-    fastf_t		gdps_data_vZ;
-} ged_data_polygon_state;
-
-struct ged_grid_state {
-    int		ggs_draw;		/* draw grid */
-    int		ggs_snap;		/* snap to grid */
-    fastf_t	ggs_anchor[3];
-    fastf_t	ggs_res_h;		/* grid resolution in h */
-    fastf_t	ggs_res_v;		/* grid resolution in v */
-    int		ggs_res_major_h;	/* major grid resolution in h */
-    int		ggs_res_major_v;	/* major grid resolution in v */
-    int		ggs_color[3];
-};
-
-struct ged_other_state {
-    int gos_draw;
-    int	gos_line_color[3];
-    int	gos_text_color[3];
-};
-
-struct ged_rect_state {
-    int		grs_active;	/* 1 - actively drawing a rectangle */
-    int		grs_draw;	/* draw rubber band rectangle */
-    int		grs_line_width;
-    int		grs_line_style;  /* 0 - solid, 1 - dashed */
-    int		grs_pos[2];	/* Position in image coordinates */
-    int		grs_dim[2];	/* Rectangle dimension in image coordinates */
-    fastf_t	grs_x;		/* Corner of rectangle in normalized     */
-    fastf_t	grs_y;		/* ------ view coordinates (i.e. +-1.0). */
-    fastf_t	grs_width;	/* Width and height of rectangle in      */
-    fastf_t	grs_height;	/* ------ normalized view coordinates.   */
-    int		grs_bg[3];	/* Background color */
-    int		grs_color[3];	/* Rectangle color */
-    int		grs_cdim[2];	/* Canvas dimension in pixels */
-    fastf_t	grs_aspect;	/* Canvas aspect ratio */
-};
-
-
 struct ged_run_rt {
     struct bu_list l;
 #if defined(_WIN32) && !defined(__CYGWIN__)
@@ -447,13 +293,18 @@ struct ged_qray_fmt {
     struct bu_vls fmt;
 };
 
-struct ged_display_list {
-    struct bu_list	l;
-    struct directory	*gdl_dp;
-    struct bu_vls	gdl_path;
-    struct bu_list	gdl_headSolid;		/**< @brief  head of solid list for this object */
-    int			gdl_wflag;
+/* FIXME: leftovers from dg.h */
+#define RT_VDRW_PREFIX          "_VDRW"
+#define RT_VDRW_PREFIX_LEN      6
+#define RT_VDRW_MAXNAME         31
+#define RT_VDRW_DEF_COLOR       0xffff00
+struct vd_curve {
+    struct bu_list      l;
+    char                vdc_name[RT_VDRW_MAXNAME+1];    /**< @brief name array */
+    long                vdc_rgb;        /**< @brief color */
+    struct bu_list      vdc_vhd;        /**< @brief head of list of vertices */
 };
+#define VD_CURVE_NULL   ((struct vd_curve *)NULL)
 
 /* FIXME: should be private */
 struct ged_drawable {
@@ -461,7 +312,7 @@ struct ged_drawable {
     struct bu_list		*gd_headDisplay;		/**< @brief  head of display list */
     struct bu_list		*gd_headVDraw;		/**< @brief  head of vdraw list */
     struct vd_curve		*gd_currVHead;		/**< @brief  current vdraw head */
-    struct solid		*gd_freeSolids;		/**< @brief  ptr to head of free solid list */
+    struct solid                *gd_freeSolids;         /**< @brief  ptr to head of free solid list */
 
     char			**gd_rt_cmd;
     int				gd_rt_cmd_len;
@@ -484,62 +335,6 @@ struct ged_drawable {
     int				gd_shaded_mode;		/**< @brief  1 - draw bots shaded by default */
 };
 
-struct ged_view {
-    struct bu_list		l;
-    fastf_t			gv_scale;
-    fastf_t			gv_size;		/**< @brief  2.0 * scale */
-    fastf_t			gv_isize;		/**< @brief  1.0 / size */
-    fastf_t			gv_perspective;		/**< @brief  perspective angle */
-    vect_t			gv_aet;
-    vect_t			gv_eye_pos;		/**< @brief  eye position */
-    vect_t			gv_keypoint;
-    char			gv_coord;		/**< @brief  coordinate system */
-    char			gv_rotate_about;	/**< @brief  indicates what point rotations are about */
-    mat_t			gv_rotation;
-    mat_t			gv_center;
-    mat_t			gv_model2view;
-    mat_t			gv_pmodel2view;
-    mat_t			gv_view2model;
-    mat_t			gv_pmat;		/**< @brief  perspective matrix */
-    void 			(*gv_callback)();	/**< @brief  called in ged_view_update with gvp and gv_clientData */
-    void *			gv_clientData;		/**< @brief  passed to gv_callback */
-    fastf_t			gv_prevMouseX;
-    fastf_t			gv_prevMouseY;
-    fastf_t			gv_minMouseDelta;
-    fastf_t			gv_maxMouseDelta;
-    fastf_t			gv_rscale;
-    fastf_t			gv_sscale;
-    int				gv_mode;
-    int				gv_zclip;
-    struct ged_adc_state 	gv_adc;
-    struct ged_axes_state 	gv_model_axes;
-    struct ged_axes_state 	gv_view_axes;
-    struct ged_data_arrow_state gv_data_arrows;
-    struct ged_data_axes_state 	gv_data_axes;
-    struct ged_data_label_state gv_data_labels;
-    struct ged_data_line_state  gv_data_lines;
-    ged_data_polygon_state 	gv_data_polygons;
-    struct ged_data_arrow_state	gv_sdata_arrows;
-    struct ged_data_axes_state 	gv_sdata_axes;
-    struct ged_data_label_state gv_sdata_labels;
-    struct ged_data_line_state 	gv_sdata_lines;
-    ged_data_polygon_state 	gv_sdata_polygons;
-    struct ged_grid_state 	gv_grid;
-    struct ged_other_state 	gv_center_dot;
-    struct ged_other_state 	gv_prim_labels;
-    struct ged_other_state 	gv_view_params;
-    struct ged_other_state 	gv_view_scale;
-    struct ged_rect_state 	gv_rect;
-    int				gv_adaptive_plot;
-    int				gv_redraw_on_zoom;
-    int				gv_x_samples;
-    int				gv_y_samples;
-    fastf_t			gv_point_scale;
-    fastf_t			gv_curve_scale;
-    fastf_t			gv_data_vZ;
-};
-
-
 struct ged_cmd;
 
 /* struct details are private - use accessor functions to manipulate */
@@ -551,6 +346,8 @@ struct ged {
 
     /** for catching log messages */
     struct bu_vls		*ged_log;
+
+    struct solid                *freesolid;  /* For now this is a struct solid, but longer term that may not always be true */
 
     /* TODO: add support for returning an array of objects, not just a
      * simple string.
@@ -566,7 +363,7 @@ struct ged {
     struct ged_results          *ged_results;
 
     struct ged_drawable		*ged_gdp;
-    struct ged_view		*ged_gvp;
+    struct bview		*ged_gvp;
     struct fbserv_obj		*ged_fbsp; /* FIXME: this shouldn't be here */
     struct bu_hash_tbl		*ged_selections; /**< @brief object name -> struct rt_object_selections */
 
@@ -575,7 +372,7 @@ struct ged {
     void			(*ged_refresh_handler)(void *);	/**< @brief  function for handling refresh requests */
     void			(*ged_output_handler)(struct ged *, char *);	/**< @brief  function for handling output */
     char			*ged_output_script;		/**< @brief  script for use by the outputHandler */
-    void			(*ged_create_vlist_callback)(struct solid *);	/**< @brief  function to call after creating a vlist */
+    void			(*ged_create_vlist_callback)(struct display_list *);	/**< @brief  function to call after creating a vlist */
     void			(*ged_free_vlist_callback)();	/**< @brief  function to call after freeing a vlist */
 
     /* FIXME -- this ugly hack needs to die.  the result string should be stored before the call. */
@@ -597,7 +394,7 @@ struct ged {
 
 typedef int (*ged_func_ptr)(struct ged *, int, const char *[]);
 typedef void (*ged_refresh_callback_ptr)(void *);
-typedef void (*ged_create_vlist_callback_ptr)(struct solid *);
+typedef void (*ged_create_vlist_callback_ptr)(struct display_list *);
 typedef void (*ged_free_vlist_callback_ptr)(unsigned int, int);
 
 
@@ -628,10 +425,10 @@ GED_EXPORT extern void ged_results_free(struct ged_results *results);
 
 
 /* defined in adc.c */
-GED_EXPORT extern void ged_calc_adc_pos(struct ged_view *gvp);
-GED_EXPORT extern void ged_calc_adc_a1(struct ged_view *gvp);
-GED_EXPORT extern void ged_calc_adc_a2(struct ged_view *gvp);
-GED_EXPORT extern void ged_calc_adc_dst(struct ged_view *gvp);
+GED_EXPORT extern void ged_calc_adc_pos(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_a1(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_a2(struct bview *gvp);
+GED_EXPORT extern void ged_calc_adc_dst(struct bview *gvp);
 
 /* defined in clip.c */
 GED_EXPORT extern int ged_clip(fastf_t *xp1,
@@ -650,15 +447,29 @@ GED_EXPORT extern int ged_dbcopy(struct ged *from_gedp,
 				 const char *to,
 				 int fflag);
 
-/* defined in draw.c */
-GED_EXPORT extern void ged_color_soltab(struct bu_list *hdlp);
-GED_EXPORT extern struct ged_display_list *ged_addToDisplay(struct ged *gedp,
-							    const char *name);
+/* defined in display_list.c */
+GED_EXPORT void dl_set_iflag(struct bu_list *hdlp, int iflag);
+GED_EXPORT extern void dl_color_soltab(struct bu_list *hdlp);
+GED_EXPORT extern void dl_erasePathFromDisplay(struct bu_list *hdlp,
+	                                       struct db_i *dbip,
+					       void (*callback)(unsigned int, int),
+					       const char *path,
+					       int allow_split,
+					       struct solid *freesolid);
+GED_EXPORT extern struct display_list *dl_addToDisplay(struct bu_list *hdlp, struct db_i *dbip, const char *name);
+/* When finalized, this stuff belongs in a header file of its own */
+struct polygon_header {
+    uint32_t magic;             /* magic number */
+    int ident;                  /* identification number */
+    int interior;               /* >0 => interior loop, gives ident # of exterior loop */
+    vect_t normal;                      /* surface normal */
+    unsigned char color[3];     /* Color from containing region */
+    int npts;                   /* number of points */
+};
+#define POLYGON_HEADER_MAGIC 0x8623bad2
+extern void dl_polybinout(struct bu_list *hdlp, struct polygon_header *ph, FILE *fp);
 
-/* defined in erase.c */
-GED_EXPORT extern void ged_erasePathFromDisplay(struct ged *gedp,
-						const char *path,
-						int allow_split);
+
 
 /* defined in ged.c */
 GED_EXPORT extern void ged_close(struct ged *gedp);
@@ -668,7 +479,7 @@ GED_EXPORT extern void ged_init(struct ged *gedp);
 GED_EXPORT extern struct ged *ged_open(const char *dbtype,
 				       const char *filename,
 				       int existing_only);
-GED_EXPORT extern void ged_view_init(struct ged_view *gvp);
+GED_EXPORT extern void ged_view_init(struct bview *gvp);
 
 /* defined in grid.c */
 GED_EXPORT extern void ged_snap_to_grid(struct ged *gedp, fastf_t *vx, fastf_t *vy);
@@ -701,7 +512,7 @@ GED_EXPORT extern void ged_deering_persp_mat(fastf_t *m,
 					     const fastf_t *l,
 					     const fastf_t *h,
 					     const fastf_t *eye);
-GED_EXPORT extern void ged_view_update(struct ged_view *gvp);
+GED_EXPORT extern void ged_view_update(struct bview *gvp);
 
 
 /**
@@ -1326,6 +1137,11 @@ GED_EXPORT extern int ged_item(struct ged *gedp, int argc, const char *argv[]);
   * Joint command ported to the libged library.
   */
 GED_EXPORT extern int ged_joint(struct ged *gedp, int argc, const char *argv[]);
+
+/**
+  * New joint command.
+  */
+GED_EXPORT extern int ged_joint2(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Save/keep the specified objects in the specified file
@@ -2081,12 +1897,49 @@ GED_EXPORT extern int ged_zoom(struct ged *gedp, int argc, const char *argv[]);
  */
 GED_EXPORT extern int ged_voxelize(struct ged *gedp, int argc, const char *argv[]);
 
-GED_EXPORT extern ged_polygon *ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
-GED_EXPORT extern ged_polygon *ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
-GED_EXPORT extern int ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
-GED_EXPORT extern ged_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
-GED_EXPORT extern fastf_t ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
-GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB);
+GED_EXPORT extern bview_polygon *ged_clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern bview_polygon *ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model);
+GED_EXPORT extern int ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname);
+GED_EXPORT extern bview_polygon *ged_import_polygon(struct ged *gedp, const char *sname);
+GED_EXPORT extern fastf_t ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size);
+GED_EXPORT extern int ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB);
+
+
+
+/* defined in trace.c */
+
+#define _GED_MAX_LEVELS 12
+struct _ged_trace_data {
+    struct ged *gtd_gedp;
+    struct directory *gtd_path[_GED_MAX_LEVELS];
+    struct directory *gtd_obj[_GED_MAX_LEVELS];
+    mat_t gtd_xform;
+    int gtd_objpos;
+    int gtd_prflag;
+    int gtd_flag;
+};
+
+
+GED_EXPORT extern void ged_trace(struct directory *dp,
+		       int pathpos,
+		       const mat_t old_xlate,
+		       struct _ged_trace_data *gtdp,
+		       int verbose);
+
+
+/* defined in get_obj_bounds.c */
+GED_EXPORT extern int ged_get_obj_bounds(struct ged *gedp,
+			       int argc,
+			       const char *argv[],
+			       int use_air,
+			       point_t rpp_min,
+			       point_t rpp_max);
+
+
+/* defined in track.c */
+GED_EXPORT extern int ged_track2(struct bu_vls *log_str, struct rt_wdb *wdbp, const char *argv[]);
+
+
 
 
 /***************************************

@@ -69,8 +69,6 @@ render_camera_init(render_camera_t *camera, int threads)
     /* The camera will use a thread for every cpu the machine has. */
     camera->thread_num = threads ? threads : (uint8_t)bu_avail_cpus();
 
-    bu_semaphore_init(TIE_SEM_LAST);
-
     /* Initialize camera to rendering surface normals */
     render_normal_init(&camera->render, NULL);
     camera->rm = RENDER_METHOD_PHONG;

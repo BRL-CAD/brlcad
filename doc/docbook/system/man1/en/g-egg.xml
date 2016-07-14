@@ -16,14 +16,14 @@
 <!-- body begins here -->
 <refsynopsisdiv xml:id='synopsis'>
 <cmdsynopsis>
-  <command>g-egg</command><arg choice='opt'>-8 </arg>
+  <command>g-egg</command><arg choice='opt'>-v89</arg>
     <arg choice='opt'>-xX <replaceable>lvl</replaceable></arg>
-    <arg choice='opt'>-D <replaceable>calculation_tolerance</replaceable></arg>
     <arg choice='opt'>-a <replaceable>abs_tol</replaceable></arg>
     <arg choice='opt'>-r <replaceable>rel_tol</replaceable></arg>
-    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
     <arg choice='opt'>-n <replaceable>norm_tol</replaceable></arg>
+    <arg choice='opt'>-D <replaceable>calculation_tolerance</replaceable></arg>
     <arg choice='opt'>-o <replaceable>EGG_file</replaceable></arg>
+    <arg choice='opt'>-P <replaceable>number_of_CPUs</replaceable></arg>
     <arg choice='plain'><replaceable>database.g</replaceable></arg>
     <arg choice='plain'><replaceable>object(s)</replaceable></arg>
 </cmdsynopsis>
@@ -31,7 +31,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-egg</emphasis>
+<para><command>g-egg</command>
 converts the specified
 <emphasis remap='I'>object(s)</emphasis>
 from a BRL-CAD
@@ -44,10 +44,8 @@ The
 option specifies an RT debug flag and the
 <option>-X</option>
 option specifies an NMG debug flag. The
-<option>-a</option>
-,
-<option>-r</option>
-, and
+<option>-a</option>,
+<option>-r</option>, and
 <option>-n</option>
 options specify tessellation tolerances.
 The
@@ -56,10 +54,7 @@ option specifies a calculational distance tolerance (mm). Any two vertices
 that are less than this distance apart will be treated as the same vertex.
 The
 <option>-v</option>
-option requests verbose output.
-The
-<option>-i</option>
-option requests the output file units to be inches (the default is mm).
+option requests verbose output, which goes to standard error.
 The
 <option>-o</option>
 option specifies the name of the file to receive the output
@@ -75,7 +70,7 @@ option specifies the number of CPU's to be used.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-egg -o sample.egg sample.g sample_object</emphasis>
+$ g-egg -o <emphasis remap='I'>sample.egg sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 

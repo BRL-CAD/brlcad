@@ -35,7 +35,6 @@
 #include "bio.h"
 #include "bu.h"
 #include "bn.h"
-#include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
 #include "ged.h"
@@ -185,6 +184,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"inside", cmd_ged_inside, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
     {"joint", cmd_ged_plain_wrapper, ged_joint},
+    {"joint2", cmd_ged_plain_wrapper, ged_joint2},
     {"journal", f_journal, GED_FUNC_PTR_NULL},
     {"keep", cmd_ged_plain_wrapper, ged_keep},
     {"keypoint", f_keypoint, GED_FUNC_PTR_NULL},
@@ -561,7 +561,7 @@ mged_setup(Tcl_Interp **interpreter)
 	Tcl_ResetResult(*interpreter);
     }
 
-    BU_ALLOC(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct bview);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;

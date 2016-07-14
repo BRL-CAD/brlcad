@@ -368,6 +368,8 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 {
     size_t i;
     mat_t matrix;
+    struct directory *proto2;
+    struct bu_external external;
 
     MAT_IDN(matrix);
 
@@ -399,9 +401,7 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 
     /* make n copies */
     for (i = 0; i < state->n_copies; i++) {
-	char *argv[6] = {"wdb_copy", (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL, (char *)NULL};
 	struct bu_vls *name;
-	int ret;
 	struct directory *dp = (struct directory *)NULL;
 	struct rt_db_internal intern;
 
@@ -418,11 +418,47 @@ copy_v5_solid(struct db_i *_dbip, struct directory *proto, struct clone_state *s
 	bu_vls_strcpy(&obj_list.names[idx].dest[i], bu_vls_addr(name));
 
 	/* actually copy the primitive to the new name */
-	argv[1] = proto->d_namep;
-	argv[2] = bu_vls_addr(name);
-	ret = wdb_copy_cmd(_dbip->dbi_wdbp, 3, (const char **)argv);
-	if (ret != TCL_OK)
-	    bu_log("WARNING: failure cloning \"%s\" to \"%s\"\n", proto->d_namep, bu_vls_addr(name));
+	if ((proto2 = db_lookup(wdbp->dbip,  proto->d_namep, LOOKUP_NOISY)) == RT_DIR_NULL)
+	    return;
+
+	if (db_lookup(wdbp->dbip, bu_vls_addr(name), LOOKUP_QUIET) != RT_DIR_NULL) {
+	    if (wdbp->wdb_interp) {
+		Tcl_AppendResult(wdbp->wdb_interp, bu_vls_addr(name), ":  already exists", (char *)NULL);
+	    } else {
+		bu_log("%s: already exists\n", bu_vls_addr(name));
+	    }
+	    return;
+	}
+
+	if (db_get_external(&external, proto2, wdbp->dbip)) {
+	    if (wdbp->wdb_interp) {
+		Tcl_AppendResult(wdbp->wdb_interp, "Database read error, aborting", (char *)NULL);
+	    } else {
+		bu_log("Database read error, aborting\n");
+	    }
+	    return;
+	}
+
+	dp = db_diradd(wdbp->dbip, bu_vls_addr(name), RT_DIR_PHONY_ADDR, 0, proto2->d_flags, (void *)&proto2->d_minor_type);
+	if (dp == RT_DIR_NULL) {
+	    if (wdbp->wdb_interp) {
+		Tcl_AppendResult(wdbp->wdb_interp, "An error has occurred while adding a new object to the database.", (char *)NULL);
+	    } else {
+		bu_log("An error has occurred while adding a new object to the database.");
+	    }
+	    return;
+	}
+
+	if (db_put_external(&external, dp, wdbp->dbip) < 0) {
+	    bu_free_external(&external);
+	    if (wdbp->wdb_interp) {
+		Tcl_AppendResult(wdbp->wdb_interp, "Database write error, aborting", (char *)NULL);
+	    } else {
+		bu_log("Database write error, aborting\n");
+	    }
+	    return;
+	}
+	bu_free_external(&external);
 
 	/* get the original objects matrix */
 	if (rt_db_get_internal(&intern, dp, _dbip, matrix, &rt_uniresource) < 0) {
@@ -1097,7 +1133,7 @@ f_tracker(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const cha
 		    redraw_visible_objects();
 		    size_reset();
 		    new_mats();
-		    color_soltab();
+		    mged_color_soltab();
 		    refresh();
 		}
 		fprintf(stdout, ".");

@@ -93,7 +93,7 @@ extern size_t full_incr_nsamples;       /* number of fully incremental samples *
 extern size_t width;			/* # of pixels in X */
 extern struct floatpixel *curr_float_frame;	/* buffer of full frame */
 extern struct floatpixel *prev_float_frame;
-extern struct resource resource[];	/* memory resources */
+extern struct resource resource[MAX_PSW];	/* memory resources */
 extern unsigned int jitter;		/* jitter (bit vector) */
 extern vect_t dx_model;			/* view delta-X as model-space vect (width of pixel as vector) */
 extern vect_t dx_unit;			/* unit-len dir vector of pixel side-to-side */

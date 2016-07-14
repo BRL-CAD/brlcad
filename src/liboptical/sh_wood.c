@@ -90,8 +90,8 @@ HIDDEN void wood_print(register struct region *rp, void *dp);
 HIDDEN void wood_free(void *cp);
 
 /* local sp_hook functions */
-HIDDEN void wood_V_set(const struct bu_structparse *, const char *, void *, const char *);
-HIDDEN void wood_D_set(const struct bu_structparse *, const char *, void *, const char *);
+HIDDEN void wood_V_set(const struct bu_structparse *, const char *, void *, const char *, void *);
+HIDDEN void wood_D_set(const struct bu_structparse *, const char *, void *, const char *, void *);
 
 /*
  * functions block for the shader
@@ -215,7 +215,8 @@ HIDDEN void
 wood_V_set(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *UNUSED(value))
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -228,7 +229,8 @@ HIDDEN void
 wood_D_set(const struct bu_structparse *UNUSED(sdp),
 	   const char *UNUSED(name),
 	   void *base,
-	   const char *UNUSED(value))
+	   const char *UNUSED(value),
+	   void *UNUSED(data))
 {
     register struct wood_specific *wd =
 	(struct wood_specific *)base;
@@ -299,7 +301,7 @@ wood_setup(register struct region *rp, struct bu_vls *matparm, void **dpp, const
      * Parse the MATPARM field
      */
 
-    if (bu_struct_parse(matparm, wood_parse, (char *)wd) < 0) {
+    if (bu_struct_parse(matparm, wood_parse, (char *)wd, NULL) < 0) {
 	BU_PUT(wd, struct wood_specific);
 	return -1;
     }

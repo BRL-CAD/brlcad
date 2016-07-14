@@ -161,7 +161,7 @@ selection_command(
 	    operation.parameters.tran.dy = atof(argv[6]);
 	    operation.parameters.tran.dz = atof(argv[7]);
 
-	    ret = ip->idb_meth->ft_process_selection(ip,
+	    ret = ip->idb_meth->ft_process_selection(ip, gedp->ged_wdbp->dbip,
 		    (struct rt_selection *)BU_PTBL_GET(selections, i), &operation);
 
 	    if (ret != 0) {
@@ -399,15 +399,15 @@ ged_brep(struct ged *gedp, int argc, const char *argv[])
 	    brep = ((struct rt_brep_internal *)brep_db_internal.idb_ptr)->brep;
 	    if (ret == -1) {
 		bu_vls_printf(gedp->ged_result_str, "%s doesn't have a brep-conversion function yet. Type: %s", solid_name, intern.idb_meth->ft_label);
-	    } else if (brep == NULL) {
+	    } else if ((ret == -2) || (brep == NULL)) {
 		bu_vls_printf(gedp->ged_result_str, "%s cannot be converted to brep correctly.", solid_name);
 	    } else {
 		ret = mk_brep(gedp->ged_wdbp, bu_vls_addr(&bname), brep);
 		if (ret == 0) {
 		    bu_vls_printf(gedp->ged_result_str, "%s is made.", bu_vls_addr(&bname));
 		}
+		rt_db_free_internal(&brep_db_internal);
 	    }
-	    rt_db_free_internal(&brep_db_internal);
 	}
 	bu_vls_free(&bname);
 	bu_vls_free(&suffix);

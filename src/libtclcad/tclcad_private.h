@@ -26,6 +26,10 @@
 #ifndef LIBTCLCAD_TCLCAD_PRIVATE_H
 #define LIBTCLCAD_TCLCAD_PRIVATE_H
 
+#include "common.h"
+
+#include <tcl.h>
+
 __BEGIN_DECLS
 
 /**
@@ -35,6 +39,14 @@ __BEGIN_DECLS
  * or reset initialization.
  */
 extern int library_initialized(int setit);
+
+
+/**
+ * Evaluates a TCL command, escaping the list of arguments and optionally
+ * preserving the TCL result object.
+ */
+extern int tclcad_eval(Tcl_Interp *interp, int preserve_result, const char *command, size_t num_args, const char * const *args);
+
 
 __END_DECLS
 

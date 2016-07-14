@@ -98,7 +98,7 @@ respectively.</para>
 <para><option>-s </option><replaceable>squarefilesize</replaceable>
 and
 <option>-S </option><replaceable>squarescrsize</replaceable>
-set both the height and width to the size given.</para>
+set both the height and width to the size given (for input file and display device respectively).</para>
 
 <para><option>-x </option><replaceable>file_xoff</replaceable> <option>-y </option><replaceable>file_yoff</replaceable>
 and

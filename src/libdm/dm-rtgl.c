@@ -55,11 +55,13 @@
 #include "bn.h"
 #include "raytrace.h"
 #include "dm.h"
-#include "dm/dm-rtgl.h"
+#include "dm-rtgl.h"
 #include "dm/dm_xvars.h"
+#include "fb.h"
+#include "fb/fb_ogl.h"
 #include "solid.h"
 
-#include "./dm_util.h"
+#include "./dm_private.h"
 
 #define VIEWFACTOR (1.0/(*dmp->dm_vp))
 #define VIEWSIZE (2.0*(*dmp->dm_vp))
@@ -76,90 +78,17 @@ extern int vectorThreshold;	/* defined in libdm/tcl.c */
 #endif
 
 static int rtgl_actively_drawing;
-HIDDEN XVisualInfo *rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin);
+HIDDEN XVisualInfo *rtgl_choose_visual(dm *dmp, Tk_Window tkwin);
 
 /* Display Manager package interface */
 #define IRBOUND 4095.9	/* Max magnification in Rot matrix */
 #define PLOTBOUND 1000.0	/* Max magnification in Rot matrix */
 
 
-struct dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
+dm *rtgl_open(Tcl_Interp *interp, int argc, char **argv);
 
 HIDDEN_DM_FUNCTION_PROTOTYPES(rtgl)
 
-struct dm dm_rtgl = {
-    rtgl_close,
-    rtgl_drawBegin,
-    rtgl_drawEnd,
-    rtgl_normal,
-    rtgl_loadMatrix,
-    null_loadPMatrix,
-    rtgl_drawString2D,
-    rtgl_drawLine2D,
-    rtgl_drawLine3D,
-    rtgl_drawLines3D,
-    rtgl_drawPoint2D,
-    rtgl_drawPoint3D,
-    rtgl_drawPoints3D,
-    rtgl_drawVList,
-    rtgl_drawVList,
-    rtgl_draw,
-    rtgl_setFGColor,
-    rtgl_setBGColor,
-    rtgl_setLineAttr,
-    rtgl_configureWin,
-    rtgl_setWinBounds,
-    rtgl_setLight,
-    rtgl_setTransparency,
-    rtgl_setDepthMask,
-    rtgl_setZBuffer,
-    rtgl_debug,
-    rtgl_beginDList,
-    rtgl_endDList,
-    rtgl_drawDList,
-    rtgl_freeDLists,
-    rtgl_genDLists,
-    null_getDisplayImage,	/* display to image function */
-    null_reshape,
-    null_makeCurrent,
-    null_openFb,
-    0,
-    1,				/* has displaylist */
-    0,                          /* no stereo by default */
-    1.0,			/* zoom-in limit, */
-    1,				/* bound flag */
-    "rtgl",
-    "X Windows with OpenGL graphics",
-    DM_TYPE_RTGL,
-    1,
-    0,
-    0,
-    0, /* bytes per pixel */
-    0, /* bits per channel */
-    0,
-    0,
-    1.0, /* aspect ratio */
-    0,
-    {0, 0},
-    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
-    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
-    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
-    {0, 0, 0},			/* bg color */
-    {0, 0, 0},			/* fg color */
-    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
-    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
-    0,				/* no debugging */
-    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
-    0,				/* no perspective */
-    0,				/* no lighting */
-    0,				/* no transparency */
-    1,				/* depth buffer is writable */
-    1,				/* zbuffer */
-    0,				/* no zclipping */
-    0,                          /* clear back buffer after drawing and swap */
-    0,                          /* not overriding the auto font size */
-    0				/* Tcl interpreter */
-};
 
 
 static fastf_t default_viewscale = 1000.0;
@@ -214,7 +143,7 @@ freeJobList(struct jobList *jobs)
 
 
 void
-rtgl_fogHint(struct dm *dmp, int fastfog)
+rtgl_fogHint(dm *dmp, int fastfog)
 {
     ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.fastfog = fastfog;
     glHint(GL_FOG_HINT, fastfog ? GL_FASTEST : GL_NICEST);
@@ -225,7 +154,7 @@ rtgl_fogHint(struct dm *dmp, int fastfog)
  * Fire up the display manager, and the display processor.
  *
  */
-struct dm *
+dm *
 rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 {
     static int count = 0;
@@ -242,7 +171,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
     struct bu_vls str = BU_VLS_INIT_ZERO;
     struct bu_vls init_proc_vls = BU_VLS_INIT_ZERO;
     Display *tmp_dpy = (Display *)NULL;
-    struct dm *dmp = (struct dm *)NULL;
+    dm *dmp = (dm *)NULL;
     Tk_Window tkwin = (Tk_Window)NULL;
     int screen_number = -1;
 
@@ -250,7 +179,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 	return DM_NULL;
     }
 
-    BU_ALLOC(dmp, struct dm);
+    BU_ALLOC(dmp, struct dm_internal);
 
     *dmp = dm_rtgl; /* struct copy */
     dmp->dm_interp = interp;
@@ -572,16 +501,16 @@ Done:
 
 
 int
-rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
+rtgl_share_dlist(dm *dmp1, dm *dmp2)
 {
     GLfloat backgnd[4];
     GLfloat vf;
     GLXContext old_glxContext;
 
-    if (dmp1 == (struct dm *)NULL)
+    if (dmp1 == (dm *)NULL)
 	return TCL_ERROR;
 
-    if (dmp2 == (struct dm *)NULL) {
+    if (dmp2 == (dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
 
 	old_glxContext = ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc;
@@ -741,7 +670,7 @@ rtgl_share_dlist(struct dm *dmp1, struct dm *dmp2)
  * Gracefully release the display.
  */
 HIDDEN int
-rtgl_close(struct dm *dmp)
+rtgl_close(dm *dmp)
 {
     if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy) {
 	if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc) {
@@ -817,7 +746,7 @@ rtgl_stashTree(struct rtglJobs *job, char *tree)
  * There are global variables which are parameters to this routine.
  */
 HIDDEN int
-rtgl_drawBegin(struct dm *dmp)
+rtgl_drawBegin(dm *dmp)
 {
     GLfloat fogdepth;
 
@@ -873,7 +802,7 @@ rtgl_drawBegin(struct dm *dmp)
 
 
 HIDDEN int
-rtgl_drawEnd(struct dm *dmp)
+rtgl_drawEnd(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawEnd\n");
@@ -925,7 +854,7 @@ double startScale = 1;
  * many calls to rtgl_draw().
  */
 HIDDEN int
-rtgl_loadMatrix(struct dm *dmp, fastf_t *mat, int which_eye)
+rtgl_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 {
     mat_t newm;
 
@@ -1559,7 +1488,7 @@ double maxSpan;
 time_t start = 0;
 
 HIDDEN int
-rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
+rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 {
     size_t i, j, new, numNew, maxPixels, viewSize;
     vect_t span;
@@ -1907,7 +1836,7 @@ rtgl_drawVList(struct dm *dmp, struct bn_vlist *UNUSED(vp))
 
 
 HIDDEN int
-rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
+rtgl_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 {
     struct bn_vlist *vp;
     if (!callback_function) {
@@ -1931,7 +1860,7 @@ rtgl_draw(struct dm *dmp, struct bn_vlist *(*callback_function)(void *), void **
  * (i.e., not scaled, rotated, displaced, etc.).
  */
 HIDDEN int
-rtgl_normal(struct dm *dmp)
+rtgl_normal(dm *dmp)
 {
 
     if (dmp->dm_debugLevel)
@@ -1960,7 +1889,7 @@ rtgl_normal(struct dm *dmp)
  * The starting position of the beam is as specified.
  */
 HIDDEN int
-rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
+rtgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -1981,7 +1910,7 @@ rtgl_drawString2D(struct dm *dmp, const char *str, fastf_t x, fastf_t y, int UNU
 
 
 HIDDEN int
-rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
+rtgl_drawLine2D(dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 {
 
     return drawLine2D(dmp, x1, y1, x2, y2, "rtgl_drawLine2D()\n");
@@ -1989,7 +1918,7 @@ rtgl_drawLine2D(struct dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
 
 
 HIDDEN int
-rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
+rtgl_drawLine3D(dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
 	return TCL_ERROR;
@@ -1998,7 +1927,7 @@ rtgl_drawLine3D(struct dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 
 
 HIDDEN int
-rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
+rtgl_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
 	return TCL_ERROR;
@@ -2007,7 +1936,7 @@ rtgl_drawLines3D(struct dm *dmp, int npoints, point_t *points, int UNUSED(sflag)
 
 
 HIDDEN int
-rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
+rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
 {
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint2D():\n");
@@ -2023,7 +1952,7 @@ rtgl_drawPoint2D(struct dm *dmp, fastf_t x, fastf_t y)
 
 
 HIDDEN int
-rtgl_drawPoint3D(struct dm *dmp, point_t point)
+rtgl_drawPoint3D(dm *dmp, point_t point)
 {
     if (!dmp || !point)
 	return TCL_ERROR;
@@ -2042,7 +1971,7 @@ rtgl_drawPoint3D(struct dm *dmp, point_t point)
 
 
 HIDDEN int
-rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
+rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 {
     register int i;
 
@@ -2063,7 +1992,7 @@ rtgl_drawPoints3D(struct dm *dmp, int npoints, point_t *points)
 
 
 HIDDEN int
-rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
+rtgl_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setFGColor()\n");
@@ -2114,7 +2043,7 @@ rtgl_setFGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 HIDDEN int
-rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char b)
+rtgl_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setBGColor()\n");
@@ -2149,7 +2078,7 @@ rtgl_setBGColor(struct dm *dmp, unsigned char r, unsigned char g, unsigned char 
 
 
 HIDDEN int
-rtgl_setLineAttr(struct dm *dmp, int width, int style)
+rtgl_setLineAttr(dm *dmp, int width, int style)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLineAttr()\n");
@@ -2170,7 +2099,7 @@ rtgl_setLineAttr(struct dm *dmp, int width, int style)
 
 /* ARGSUSED */
 HIDDEN int
-rtgl_debug(struct dm *dmp, int lvl)
+rtgl_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
@@ -2179,7 +2108,7 @@ rtgl_debug(struct dm *dmp, int lvl)
 
 
 HIDDEN int
-rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
+rtgl_setWinBounds(dm *dmp, fastf_t *w)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setWinBounds()\n");
@@ -2205,7 +2134,7 @@ rtgl_setWinBounds(struct dm *dmp, fastf_t *w)
  * OpenGL
  */
 HIDDEN XVisualInfo *
-rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
+rtgl_choose_visual(dm *dmp, Tk_Window tkwin)
 {
     XVisualInfo *vip, vitemp, *vibase, *maxvip;
 #define NGOOD 256
@@ -2356,7 +2285,7 @@ rtgl_choose_visual(struct dm *dmp, Tk_Window tkwin)
  * also change font size if necessary
  */
 HIDDEN int
-rtgl_configureWin_guts(struct dm *dmp, int force)
+rtgl_configureWin_guts(dm *dmp, int force)
 {
     GLint mm;
     XWindowAttributes xwa;
@@ -2493,14 +2422,14 @@ rtgl_configureWin_guts(struct dm *dmp, int force)
 
 
 HIDDEN int
-rtgl_configureWin(struct dm *dmp, int force)
+rtgl_configureWin(dm *dmp, int force)
 {
     return rtgl_configureWin_guts(dmp, force);
 }
 
 
 HIDDEN int
-rtgl_setLight(struct dm *dmp, int lighting_on)
+rtgl_setLight(dm *dmp, int lighting_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setLight()\n");
@@ -2537,7 +2466,7 @@ rtgl_setLight(struct dm *dmp, int lighting_on)
 
 
 HIDDEN int
-rtgl_setTransparency(struct dm *dmp,
+rtgl_setTransparency(dm *dmp,
 		     int transparency_on)
 {
     if (dmp->dm_debugLevel)
@@ -2567,7 +2496,7 @@ rtgl_setTransparency(struct dm *dmp,
 
 
 HIDDEN int
-rtgl_setDepthMask(struct dm *dmp,
+rtgl_setDepthMask(dm *dmp,
 		  int enable) {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setDepthMask()\n");
@@ -2591,7 +2520,7 @@ rtgl_setDepthMask(struct dm *dmp,
 
 
 HIDDEN int
-rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
+rtgl_setZBuffer(dm *dmp, int zbuffer_on)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_setZBuffer:\n");
@@ -2623,7 +2552,7 @@ rtgl_setZBuffer(struct dm *dmp, int zbuffer_on)
 
 
 int
-rtgl_beginDList(struct dm *dmp, unsigned int list)
+rtgl_beginDList(dm *dmp, unsigned int list)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_beginDList()\n");
@@ -2641,7 +2570,7 @@ rtgl_beginDList(struct dm *dmp, unsigned int list)
 
 
 int
-rtgl_endDList(struct dm *dmp)
+rtgl_endDList(dm *dmp)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_endDList()\n");
@@ -2652,14 +2581,14 @@ rtgl_endDList(struct dm *dmp)
 
 
 void
-rtgl_drawDList(struct dm *dmp, unsigned int list)
+rtgl_drawDList(dm *dmp, unsigned int list)
 {
     glCallList((GLuint)list);
 }
 
 
 int
-rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
+rtgl_freeDLists(dm *dmp, unsigned int list, int range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
@@ -2677,7 +2606,7 @@ rtgl_freeDLists(struct dm *dmp, unsigned int list, int range)
 
 
 int
-rtgl_genDLists(struct dm *dmp, size_t range)
+rtgl_genDLists(dm *dmp, size_t range)
 {
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_freeDLists()\n");
@@ -2691,6 +2620,111 @@ rtgl_genDLists(struct dm *dmp, size_t range)
 
     return glGenLists((GLsizei)range);
 }
+
+int
+rtgl_openFb(struct dm_internal *dmp)
+{
+    struct fb_platform_specific *fb_ps;
+    struct ogl_fb_info *ofb_ps;
+    struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp->m_vars;
+    struct dm_xvars *pubvars = (struct dm_xvars *)dmp->dm_vars.pub_vars;
+    struct ogl_vars *privars = (struct ogl_vars *)dmp->dm_vars.priv_vars;
+
+    fb_ps = fb_get_platform_specific(FB_OGL_MAGIC);
+    ofb_ps = (struct ogl_fb_info *)fb_ps->data;
+    ofb_ps->dpy = pubvars->dpy;
+    ofb_ps->win = pubvars->win;
+    ofb_ps->cmap = pubvars->cmap;
+    ofb_ps->vip = pubvars->vip;
+    ofb_ps->glxc = privars->glxc;
+    ofb_ps->double_buffer = mvars->doublebuffer;
+
+    ofb_ps->soft_cmap = 0;
+    dmp->fbp = fb_open_existing("ogl", dm_get_width(dmp), dm_get_height(dmp), fb_ps);
+    fb_put_platform_specific(fb_ps);
+    return 0;
+}
+
+dm dm_rtgl = {
+    rtgl_close,
+    rtgl_drawBegin,
+    rtgl_drawEnd,
+    rtgl_normal,
+    rtgl_loadMatrix,
+    null_loadPMatrix,
+    rtgl_drawString2D,
+    rtgl_drawLine2D,
+    rtgl_drawLine3D,
+    rtgl_drawLines3D,
+    rtgl_drawPoint2D,
+    rtgl_drawPoint3D,
+    rtgl_drawPoints3D,
+    rtgl_drawVList,
+    rtgl_drawVList,
+    rtgl_draw,
+    rtgl_setFGColor,
+    rtgl_setBGColor,
+    rtgl_setLineAttr,
+    rtgl_configureWin,
+    rtgl_setWinBounds,
+    rtgl_setLight,
+    rtgl_setTransparency,
+    rtgl_setDepthMask,
+    rtgl_setZBuffer,
+    rtgl_debug,
+    rtgl_beginDList,
+    rtgl_endDList,
+    rtgl_drawDList,
+    rtgl_freeDLists,
+    rtgl_genDLists,
+    NULL,
+    null_getDisplayImage,	/* display to image function */
+    null_reshape,
+    null_makeCurrent,
+    rtgl_openFb,
+    NULL,
+    NULL,
+    0,
+    1,				/* has displaylist */
+    0,                          /* no stereo by default */
+    1.0,			/* zoom-in limit, */
+    1,				/* bound flag */
+    "rtgl",
+    "X Windows with OpenGL graphics",
+    DM_TYPE_RTGL,
+    1,
+    0,
+    0,
+    0, /* bytes per pixel */
+    0, /* bits per channel */
+    0,
+    0,
+    1.0, /* aspect ratio */
+    0,
+    {0, 0},
+    NULL,
+    NULL,
+    BU_VLS_INIT_ZERO,		/* bu_vls path name*/
+    BU_VLS_INIT_ZERO,		/* bu_vls full name drawing window */
+    BU_VLS_INIT_ZERO,		/* bu_vls short name drawing window */
+    {0, 0, 0},			/* bg color */
+    {0, 0, 0},			/* fg color */
+    {GED_MIN, GED_MIN, GED_MIN}, /* clipmin */
+    {GED_MAX, GED_MAX, GED_MAX}, /* clipmax */
+    0,				/* no debugging */
+    BU_VLS_INIT_ZERO,		/* bu_vls logfile */
+    0,				/* no perspective */
+    0,				/* no lighting */
+    0,				/* no transparency */
+    1,				/* depth buffer is writable */
+    1,				/* zbuffer */
+    0,				/* no zclipping */
+    0,                          /* clear back buffer after drawing and swap */
+    0,                          /* not overriding the auto font size */
+    BU_STRUCTPARSE_NULL,
+    FB_NULL,
+    0				/* Tcl interpreter */
+};
 
 
 #endif /* DM_RTGL */

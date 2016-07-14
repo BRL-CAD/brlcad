@@ -131,13 +131,13 @@ ged_get_comb(struct ged *gedp, int argc, const char *argv[])
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    bu_vls_printf(gedp->ged_result_str, "\nIllegal op code in tree\n");

@@ -274,8 +274,6 @@ load_g (struct tie_s *tie, const char *db, int argc, const char **argv, struct a
     tol.para = 1 - tol.perp;
 
     tie_check_degenerate = 0;
-    /* init resources we might need */
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* make empty NMG model */
     the_model = nmg_mm();

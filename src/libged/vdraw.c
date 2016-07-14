@@ -105,10 +105,10 @@
 #include "tcl.h"
 
 #include "bu/cmd.h"
+#include "bn.h"
 #include "vmath.h"
 #include "mater.h"
 #include "nmg.h"
-#include "dg.h"
 
 #include "./ged_private.h"
 
@@ -545,11 +545,7 @@ vdraw_send(void *data, int argc, const char *argv[])
     }
 
     /* 0 means OK, -1 means conflict with real solid name */
-    idx = _ged_invent_solid(gedp,
-			    solid_name,
-			    &(gedp->ged_gdp->gd_currVHead->vdc_vhd),
-			    gedp->ged_gdp->gd_currVHead->vdc_rgb,
-			    1, 0.0, 0);
+    idx = invent_solid(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_create_vlist_callback, gedp->ged_free_vlist_callback, solid_name, &(gedp->ged_gdp->gd_currVHead->vdc_vhd), gedp->ged_gdp->gd_currVHead->vdc_rgb, 1, 0.0, 0, gedp->freesolid);
 
     bu_vls_printf(gedp->ged_result_str, "%d", idx);
 

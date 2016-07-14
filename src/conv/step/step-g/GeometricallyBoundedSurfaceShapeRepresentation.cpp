@@ -68,8 +68,11 @@ GeometricallyBoundedSurfaceShapeRepresentation::Load(STEPWrapper *sw, SDAI_Appli
 
     if (!ShapeRepresentation::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading baseclass Representation." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

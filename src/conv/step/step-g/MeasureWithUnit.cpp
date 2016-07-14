@@ -116,9 +116,11 @@ MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     if (select) {
 	if (!value_component.Load(step, select)) {
 	    std::cout << CLASSNAME << ":Error loading MeasureValue." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     } else {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -137,12 +139,15 @@ MeasureWithUnit::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 #endif
 	    } else {
 		std::cerr << CLASSNAME << ": Unknown 'Unit' type from select." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	} else {
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

@@ -29,7 +29,7 @@
   <refsection xml:id="description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">Rt</emphasis> operates on the indicated
+      <command>rt</command> operates on the indicated
       <emphasis remap="I">objects</emphasis> in the input
       <emphasis remap="I">model.g</emphasis> and produces a color-shaded image
       as the output. By default, the output is placed on the current framebuffer
@@ -42,7 +42,8 @@
       in the option list. The orientation of the rays to be fired may be specified by
       the <option>-a</option> and <option>-e</option> options, in which case the model
       will be autosized, and the grid will be centered on the centroid of the model, with
-      ray spacing chosen to span the entire set of <emphasis remap="I">objects.</emphasis>
+
+,      ray spacing chosen to span the entire set of <emphasis remap="I">objects</emphasis>.
       Alternatively, with the <option>-M</option> option, a transformation matrix may
       be provided on standard input which maps model-space to view-space. In this case,
       the grid ranges from -1.0 = X,Y = +1.0 in view space, with the size of the grid
@@ -55,19 +56,19 @@
     <para>The following options are recognized:</para>
     <variablelist remap="TP">
       <varlistentry>
-	<term><option>-a#</option></term>
+	<term><option>-a #</option></term>
 	<listitem>
 	  <para>
 	    selects auto-sizing, and gives the view azimuth in degrees.  Used with
 	    <option>-e</option>
 	    and conflicts with
-	    <option>-M</option>
+	    <option>-M </option>.
 	  </para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-b # #</option></term>
+	<term><option>-b "# #"</option></term>
 	<listitem>
 	  <para>
 	    is sometimes useful for debugging.  A single ray is fired at the pixel
@@ -95,7 +96,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-d#</option></term>
+	<term><option>-d #</option></term>
 	<listitem>
 	  <para>turns on the reporting of pixel distances, so that each pixel is
 	  represented by 3 bytes of color information followed by 8 bytes for a
@@ -112,17 +113,17 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-e#</option></term>
+	<term><option>-e #</option></term>
 	<listitem>
 	  <para>selects auto-sizing, and gives the view elevation in degrees.  Used with
 	  <option>-a</option>
 	  and conflicts with
-	  <option>-M</option></para>
+	  <option>-M </option>.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-f#</option></term>
+	<term><option>-f #</option></term>
 	<listitem>
 	  <para>sets the expected playback rate in frames-per-second.
 	  The default is 30fps.
@@ -137,13 +138,13 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-g#</option></term>
+	<term><option>-g #</option></term>
 	<listitem>
 	  <para>is used to set the grid cell width, in millimeters.
 	  Ordinarily, the cell width is computed by dividing the view size by
 	  the number of pixels of width, so this option need not be used.
 	  To obtain exactly 1 inch ray spacing, specify
-	  <option>-g25.4.</option>
+	  <option>-g25.4 .</option>
 	  If the grid cell width is specified and
 	  the grid cell height is <emphasis remap="I">not</emphasis> specified,
 	  the grid cell height defaults to be the same as the width.</para>
@@ -163,7 +164,7 @@
 	  <para>color = color * f + hazeRGB * g</para>
 
 	  <para>The color values are optional.  If not specified, they will have the passable
-	  values 0.8 .9 .99.</para>
+	  values 0.8 .9 .99 .</para>
 
 	  <para>Example usage: -h '2.5e-8,.75,.95,.99'</para>
 	</listitem>
@@ -185,10 +186,9 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-j</option></term>
+	<term><option>-j xmin,ymin,xmax,ymax</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="B">xmin,ymin,xmax,ymax</emphasis>
-	  enables <emphasis remap="I">just this sub-rectangle</emphasis> processing.
+	  <para>enables <emphasis remap="I">just this sub-rectangle</emphasis> processing.
 	  Specifies the screen coordinates of the lower left and upper right
 	  corner of a rectangle within the rectangle (0,0) (width-1,height-1).
 	  Ray-tracing will be limited to just those pixels within the sub-rectangle,
@@ -217,7 +217,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-l#</option></term>
+	<term><option>-l #</option></term>
 	<listitem>
 	  <para>Select lighting model.  Default is 0.
 	  Model 0 is a full lighting model with the ability to implement
@@ -250,7 +250,7 @@
 	  <para>-l7,Num_Photons,Caustics_Percent,Irradiance_Rays,Angular_Tolerance,
 	  Random_Seed,Importance_Mapping_Toggle,Irradiance_Hypersampling_Toggle,
 	  Visual_Irradiance_Toggle,Scale_Lumens,Load_Save_File</para>
-	  <para>Example: -l7,16384,0,10,60.0,0,0,0,0,1.0,scene.pm.</para>
+	  <para>Example: -l7,16384,0,10,60.0,0,0,0,0,1.0,scene.pm</para>
 	  <para>
 	  Note: If just -l7 is used, then the default values above will be applied.  Light sources
 	  must also be explicitly defined with lumens defined for each source, i.e., default light
@@ -259,16 +259,16 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-n#</option></term>
+	<term><option>-n #</option></term>
 	<listitem>
 	  <para>defines the height of the image as a number of scanlines.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-o</option></term>
+	<term><option>-o output.pix</option></term>
 	<listitem>
-	  <para><emphasis remap="B" role="B">output.pix</emphasis>
+	  <para>
 	  Specify the name of a file to store the
 	  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 	  format output.
@@ -279,21 +279,21 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-p#</option></term>
+	<term><option>-p #</option></term>
 	<listitem>
-	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180.</para>
+	  <para>Sets the perspective, in degrees, ranging  0 &lt; = # &lt; 180 .</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
 	<term><option>-r</option></term>
 	<listitem>
-	  <para>requests that overlapping regions be reported. (conflicts with -R)</para>
+	  <para>Requests that overlapping regions be reported (on by default); opposite of <option>-R</option> .</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-s#</option></term>
+	<term><option>-s #</option></term>
 	<listitem>
 	  <para>specifies the
 	  number of rays to fire in the X and Y directions on a square grid.
@@ -302,7 +302,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-v#</option></term>
+	<term><option>-v #</option></term>
 	<listitem>
 	  <para>sets the verbosity bit vector flags for rt.
 	  Use -v 0 for no output or -v fff for all available output.
@@ -311,14 +311,14 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-w#</option></term>
+	<term><option>-w #</option></term>
 	<listitem>
 	  <para>defines the width of each scanline in pixels.</para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-x#</option></term>
+	<term><option>-x #</option></term>
 	<listitem>
 	  <para>sets the
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
@@ -333,11 +333,11 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-A#</option></term>
+	<term><option>-A #</option></term>
 	<listitem>
 	  <para>sets the ambient light intensity,
 	  as a fraction of the total light in the scene
-	  in the range of 0.0 to 1.0.</para>
+	  in the range of 0.0 to 1.0 .</para>
 	</listitem>
       </varlistentry>
 
@@ -351,7 +351,7 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-C#/#/#</option></term>
+	<term><option>-C #/#/#</option></term>
 	<listitem>
 	  <para>sets the background color to the RGB value #/#/#, where each #
 	  is in the range of 0 to 255.
@@ -360,16 +360,16 @@
       </varlistentry>
 
       <varlistentry>
-	<term><option>-D#</option></term>
+	<term><option>-D #</option></term>
 	<listitem>
 	  <para>The "desired frame" flag, specifies frame number to start with.
 	  Specify the desired ending (kill-after) frame with
-	  <option>-K#</option></para>
+	  <option>-K #</option></para>
 	</listitem>
       </varlistentry>
 
       <varlistentry>
-	<term><option>-E#</option></term>
+	<term><option>-E #</option></term>
 	<listitem>
 	  <para>sets the distance from the eye point to the center of the model RPP.
 	  Only useful with auto-sizing, conflicts with
@@ -387,13 +387,13 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-G#</option></term>
+	<term><option>-G #</option></term>
 	<listitem>
 	  <para>sets the grid cell height, in millimeters.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-H#</option></term>
+	<term><option>-H #</option></term>
 	<listitem>
 	  <para>The "hypersample" flag specifies number of extra rays to fire
 	  for each pixel to obtain more accurate results
@@ -415,7 +415,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-J#</option></term>
+	<term><option>-J #</option></term>
 	<listitem>
 	  <para>The "jitter" flag is a bit vector.
 	  If one (-J1), it randomizes the point from which each ray
@@ -430,11 +430,11 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-K#</option></term>
+	<term><option>-K #</option></term>
 	<listitem>
 	  <para>sets the final (kill-after) frame number.
 	  Used with animation scripts in conjunction with
-	  <option>-D#</option></para>
+	  <option>-D #</option></para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -448,7 +448,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-N#</option></term>
+	<term><option>-N #</option></term>
 	<listitem>
 	  <para>Sets the NMG_debug flags to the given hexadecimalbit vector.
 	  See h/nmg.h for the bit definitions.</para>
@@ -468,7 +468,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-P#</option></term>
+	<term><option>-P #</option></term>
 	<listitem>
 	  <para>Specify the maximum number of processors (in a multi-processor system) to be
 	  used for this execution.  The default is system dependent.
@@ -493,7 +493,7 @@
       <varlistentry>
 	<term><option>-R</option></term>
 	<listitem>
-	  <para>requests that overlapping regions not be reported. (conflicts with -r)</para>
+	  <para>Requests that overlapping regions not be reported; opposite of <option>-r</option> .</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -505,13 +505,9 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-T#</option></term>
+	<term><option>-T #</option> or <option>-T #,#</option> or <option>-T #/#</option></term>
 	<listitem>
-	  <para>or
-	  <option>-T#,#</option>
-	  or
-	  <option>-T#/#</option>
-	  Sets the calculation tolerances used by
+	  <para>Sets the calculation tolerances used by
 	  <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>.
 	  If only one number is given, it specifies the distance tolerance.
 	  Any two entities closer than this distance are considered to be the same.
@@ -528,21 +524,21 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-U#</option></term>
+	<term><option>-U #</option></term>
 	<listitem>
 	  <para>Sets the "use_air" value.
 	  The default is 0, which ignores regions that have non-zero aircode values.</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-V#</option></term>
+	<term><option>-V #</option></term>
 	<listitem>
 	  <para>Sets the view aspect.  This is the ratio of width over height and can
 	  be specified as either a fraction or a colon-separated ratio.
 	  For example, the NTSC aspect ratio can be specified by either
 	  <option>-V1.33</option>
 	  or
-	  <option>-V4:3</option></para>
+	  <option>-V4:3</option> .</para>
 	</listitem>
       </varlistentry>
       <varlistentry>
@@ -552,7 +548,7 @@
 	</listitem>
       </varlistentry>
       <varlistentry>
-	<term><option>-X#</option></term>
+	<term><option>-X #</option></term>
 	<listitem>
 	  <para>Turns on the
 	  <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -590,7 +586,7 @@
   </refsection>
 
   <refsection xml:id="signals"><title>SIGNALS</title>
-  <para>You can obtain progress information from a running rt process by
+  <para>You can obtain progress information from a running <command>rt</command> process by
   sending it a SIGUSR1 or SIGINFO signal.  The raytracer will report
   progress via details about the ray sample being processed at the time
   of the signal.  The progress is reported to stderr in a form similar
@@ -644,7 +640,7 @@
   <citerefentry><refentrytitle>rtpp</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>,
   <citerefentry><refentrytitle>ray</refentrytitle><manvolnum>5V</manvolnum></citerefentry>,
-  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+  <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
   </refsection>
 
   <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>

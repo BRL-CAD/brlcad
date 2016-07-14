@@ -1,4 +1,11 @@
-﻿Since there are no Input validation of the data given for triangulation you need
+﻿poly2tri is a C++ library for creating a constrained Delaunay triangulation
+(CDT) of a polygon using a sweep-line algorithm. This specific version of
+poly2tri  is a fork off of the github project git://github.com/jhasse/poly2tri.git
+which in turn is a cleaned up version of the google 'poly2tri' project based
+on the paper "Sweep-line algorithm for constrained Delaunay triangulation" by
+V. Domiter and and B. Zalik.
+
+Since there are no Input validation of the data given for triangulation you need
 to think about this. Poly2Tri does not support repeat points within epsilon.
 
 * If you have a cyclic function that generates random points make sure you don't
@@ -70,4 +77,4 @@ Examples:
 
 ./p2t random 10 100 5.0
 ./p2t random 1000 20000 0.025
-```
+

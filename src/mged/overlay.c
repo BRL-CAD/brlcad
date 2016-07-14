@@ -30,7 +30,6 @@
 
 #include "vmath.h"
 #include "mater.h"
-#include "dg.h"
 
 #include "./mged.h"
 #include "./sedit.h"
@@ -87,8 +86,8 @@ cmd_overlay(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 int
 f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int i;
     struct bn_vlblock*vbp;
     struct directory *dp;
@@ -116,11 +115,11 @@ f_labelvert(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, const c
 	if ((dp = db_lookup(dbip, argv[i], LOOKUP_NOISY)) == RT_DIR_NULL)
 	    continue;
 	/* Find uses of this solid in the solid table */
-	gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+	gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
 	while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	    next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	    next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	    FOR_ALL_SOLIDS(s, &gdlp->gdl_headSolid) {
+	    FOR_ALL_SOLIDS(s, &gdlp->dl_headSolid) {
 		if (db_full_path_search(&s->s_fullpath, dp)) {
 		    rt_label_vlist_verts(vbp, &s->s_vlist, mat, scale, base2local);
 		}

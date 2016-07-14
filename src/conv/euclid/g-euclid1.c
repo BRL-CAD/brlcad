@@ -572,8 +572,6 @@ main(int argc, char **argv)
 
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* Get command line arguments. */
     while ((c = bu_getopt(argc, argv, "a:n:r:s:vx:P:X:h?")) != -1) {
 	switch (c) {

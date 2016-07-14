@@ -40,7 +40,7 @@
 
 
 static char *framebuffer = NULL;
-static FBIO *fbp;
+static fb *fbp;
 static int scr_width = 0;		/* use default size */
 static int scr_height = 0;
 static int clear_and_reset = 0;
@@ -77,7 +77,7 @@ get_args(int argc, char **argv)
 		scr_height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

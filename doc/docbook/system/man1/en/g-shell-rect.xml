@@ -35,7 +35,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>g-shell-rect</emphasis>
+<para><command>g-shell-rect</command>
 converts the specified
 <emphasis remap='I'>objects(s)</emphasis>
 from a BRL-CAD model
@@ -50,19 +50,19 @@ by specifying a desired initial ray direction using the
 option (see below).
 The initial shell is constructed using only the first and last
 intersections with the
-<emphasis remap='I'>object(s).</emphasis>
+<emphasis remap='I'>object(s)</emphasis>.
 This will typically result in some rather large faces with normals at right angles
 to the ray direction. Unless the
 <option>-n</option>
 option is specified, these faces are then subdivided (according to the
-<emphasis remap='I'>cell_size</emphasis>
-) and additional rays fired from the other two directions are used to refine their
+<emphasis remap='I'>cell_size</emphasis>)
+and additional rays fired from the other two directions are used to refine their
 shape.
 The resulting NMG solid
 will be named
 <emphasis remap='I'>shell</emphasis>
 and will be written to the specified
-<emphasis remap='I'>brlcad_output_file.</emphasis></para>
+<emphasis remap='I'>brlcad_output_file</emphasis>.</para>
 
 
 <para>The following command line options are recognized:</para>
@@ -134,7 +134,7 @@ most hits first.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>g-shell-rect -o shell.g sample.g sample_object</emphasis>
+$ g-shell-rect -o <emphasis remap='I'>shell.g sample.g sample_object</emphasis>
 </synopsis>
 </refsect1>
 

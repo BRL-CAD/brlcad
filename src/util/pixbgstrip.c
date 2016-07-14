@@ -45,11 +45,11 @@ static int autosize = 0;		/* !0 to autosize input */
 
 static size_t file_width = 512L;	/* default input width */
 
-static int thresh = 1;
+static int thresh = 0;
 static int bg_x_offset = 0;
 
 static char usage[] = "\
-Usage: pixbgstrip [-a -h] [-t thresh] [-x x_off for bg pixel]\n\
+Usage: pixbgstrip [-a] [-t thresh] [-x x_off_for_bg_pixel]\n\
 	[-s squarefilesize] [-w file_width] [-n file_height]\n\
 	[file.pix]\n";
 
@@ -58,15 +58,10 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "ahs:w:n:t:x:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "as:w:n:t:x:h?")) != -1) {
 	switch (c) {
 	    case 'a':
 		autosize = 1;
-		break;
-	    case 'h':
-		/* high-res */
-		file_width = 1024L;
-		autosize = 0;
 		break;
 	    case 's':
 		/* square file size */
@@ -87,7 +82,7 @@ get_args(int argc, char **argv)
 		bg_x_offset = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' , 'h' */
 		return 0;
 	}
     }

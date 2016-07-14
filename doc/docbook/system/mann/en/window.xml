@@ -124,7 +124,7 @@ number of windows:  3
   <example><title>Single-Line <command>window</command> Command</title>
 
     <para>
-      <userinput>window -fwindow.g -n3 -h200 -w300 -d20 -r30</userinput>
+      <userinput>window -fwindow.g -n3 -H200 -w300 -d20 -r30</userinput>
     </para>
   </example>
 

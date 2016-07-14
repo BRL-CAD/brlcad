@@ -51,7 +51,7 @@
 #define	LGT_FLOAT	1
 
 
-extern	FBIO	*fbp;
+extern	fb	*fbp;
 extern	FILE	*outfp;
 extern	fastf_t	viewsize;
 extern	int	lightmodel;
@@ -173,16 +173,8 @@ view_eol(struct application *ap)
     if ( lightmodel == LGT_BW ) {
 
 	if (bif != NULL) {
-	    if (RTG.rtg_parallel) {
-		bu_semaphore_acquire( BU_SEM_SYSCALL );
-	    }
-	    bu_semaphore_acquire(BU_SEM_SYSCALL);
 	    /* TODO : Add double type data to maintain resolution */
 	    icv_writeline(bif, ap->a_y, scanbuf, ICV_DATA_UCHAR);
-	    bu_semaphore_release(BU_SEM_SYSCALL);
-	    if (RTG.rtg_parallel) {
-		bu_semaphore_release( BU_SEM_SYSCALL );
-	    }
 	} else if ( outfp != NULL ) {
 	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
@@ -195,7 +187,7 @@ view_eol(struct application *ap)
 		bu_semaphore_release( BU_SEM_SYSCALL );
 	    }
 	}
-	if ( fbp != FBIO_NULL ) {
+	if ( fbp != FB_NULL ) {
 	    if (RTG.rtg_parallel) {
 		bu_semaphore_acquire( BU_SEM_SYSCALL );
 	    }
@@ -205,7 +197,7 @@ view_eol(struct application *ap)
 	    }
 	}
 
-	if (bif == NULL && fbp == FBIO_NULL && outfp == NULL)
+	if (bif == NULL && fbp == FB_NULL && outfp == NULL)
 	    bu_log("rtxray: strange, no end of line actions taken.\n");
     }
 }

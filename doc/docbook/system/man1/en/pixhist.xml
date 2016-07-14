@@ -24,7 +24,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Pixhist</emphasis>
+<para><command>pixhist</command>
 displays a histogram of the pixel values of the given
 <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file, or, if no file is specified, will read from standard in.

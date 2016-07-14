@@ -366,13 +366,6 @@ fit_rt(char *obj, struct db_i *db, struct fitness_state *fstate)
     if (rt_gettree(fstate->rtip, obj) < 0)
 	bu_exit(EXIT_FAILURE, "rt_gettree failed");
 
-    /*
-      for (i = 0; i < fstate->max_cpus; i++) {
-      rt_init_resource(&fstate->resource[i], i, fstate->rtip);
-      bn_rand_init(fstate->resource[i].re_randptr, i);
-      }
-    */
-
     /* stash bounding box and if comparing to source
      * calculate the difference between the bounding boxes */
     if (fstate->capture) {
@@ -487,10 +480,6 @@ fit_prep(struct fitness_state *fstate, int rows, int cols)
     fstate->res[X] = rows;
     fstate->res[Y] = cols;
     fstate->ray = NULL;
-
-    bu_semaphore_init(TOTAL_SEMAPHORES);
-    rt_init_resource(&rt_uniresource, fstate->max_cpus, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
 }
 
 
@@ -501,7 +490,6 @@ void
 fit_clean(struct fitness_state *fstate)
 {
     free_rays(fstate);
-    /* bu_semaphore_free(); */
 }
 
 

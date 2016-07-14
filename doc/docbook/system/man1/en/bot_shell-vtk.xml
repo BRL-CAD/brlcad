@@ -66,7 +66,7 @@ only be useful for developers.</para>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
 <synopsis>
-$ <emphasis remap='I'>bot_shell-vtk  -o output.vtk  sample.g  the_exterior</emphasis>
+$ bot_shell-vtk  -o <emphasis remap='I'>output.vtk  sample.g  the_exterior</emphasis>
 </synopsis>
 </refsect1>
 

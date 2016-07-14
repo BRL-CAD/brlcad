@@ -57,9 +57,10 @@ BoundaryCurve::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!CompositeCurveOnSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::CompositeCurve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

@@ -108,10 +108,13 @@ bool PropertyDefinition::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    definition = aCD;
 	    if (!aCD->Load(step, select)) {
 		std::cout << CLASSNAME << ":Error loading select attribute 'definition' as CharacterizedDefinition from PropertyDefinition." << std::endl;
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		return false;
 	    }
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

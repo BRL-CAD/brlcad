@@ -292,7 +292,7 @@ bu_struct_export(struct bu_external *ext, const void *base, const struct bu_stru
 
 
 int
-bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_external *ext)
+bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_external *ext, void *data)
 {
     register const unsigned char *cp;	/* current position in buffer */
     const struct bu_structparse *ip;	/* current imexport structure */
@@ -443,7 +443,7 @@ bu_struct_import(void *base, const struct bu_structparse *imp, const struct bu_e
 		return -1;
 	}
 	if (ip->sp_hook) {
-	    ip->sp_hook(ip, ip->sp_name, base, NULL);
+	    ip->sp_hook(ip, ip->sp_name, base, NULL, data);
 	}
     }
 
@@ -664,7 +664,7 @@ parse_floating(const char *str, size_t count, fastf_t *floc, double *dloc)
  * @return  0 entry found and processed
  */
 HIDDEN int
-parse_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value)
+parse_struct_lookup(register const struct bu_structparse *sdp, register const char *name, const char *base, const char *const value, void *data)
 /* structure description */
 /* struct member name */
 /* beginning of structure */
@@ -705,7 +705,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		warned++;
 	    }
 	    /* Indirect to another structure */
-	    if (parse_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value) == 0)
+	    if (parse_struct_lookup((struct bu_structparse *)sdp->sp_count, name, base, value, data) == 0)
 		return 0;	/* found */
 	    else
 		continue;
@@ -854,7 +854,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 
 		BU_ASSERT(sdp->sp_count == 1);
 
-		retval = parse_struct_lookup(tbl, name, base, value);
+		retval = parse_struct_lookup(tbl, name, base, value, data);
 		if (retval == 0) {
 		    return 0; /* found */
 		}
@@ -866,7 +866,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 		return -1;
 	}
 	if (sdp->sp_hook) {
-	    sdp->sp_hook(sdp, name, (void *)base, value);
+	    sdp->sp_hook(sdp, name, (void *)base, value, data);
 	}
 	return retval;		/* OK or parse error */
     }
@@ -875,7 +875,7 @@ parse_struct_lookup(register const struct bu_structparse *sdp, register const ch
 
 
 int
-bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base)
+bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, const char *base, void *data)
 /* string to parse through */
 /* structure description */
 /* base addr of users struct */
@@ -948,7 +948,7 @@ bu_struct_parse(const struct bu_vls *in_vls, const struct bu_structparse *desc, 
 	    *cp++ = '\0';
 
 	/* Lookup name in desc table and modify */
-	retval = parse_struct_lookup(desc, name, base, value);
+	retval = parse_struct_lookup(desc, name, base, value, data);
 	if (retval == -1) {
 	    bu_log("WARNING: Keyword '%s=%s' not recognized.\n",
 		   name, value);
@@ -2523,7 +2523,8 @@ bu_structparse_argv(struct bu_vls *logstr,
 		    int argc,
 		    const char **argv,
 		    const struct bu_structparse *desc,
-		    char *base)
+		    char *base,
+		    void *data)
 {
     register const struct bu_structparse *sdp = NULL;
     register size_t j;
@@ -2601,7 +2602,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 
 			if (argc < 1) {
 			    bu_vls_printf(logstr,
-					  "not enough values for \"%V\" argument: should be %zu",
+					  "not enough values for \"%s\" argument: should be %zu",
 					  sdp->sp_name,
 					  sdp->sp_count);
 			    return BRLCAD_ERROR;
@@ -2854,7 +2855,7 @@ bu_structparse_argv(struct bu_vls *logstr,
 	    }
 
 	    if (sdp->sp_hook) {
-		sdp->sp_hook(sdp, sdp->sp_name, base, *argv);
+		sdp->sp_hook(sdp, sdp->sp_name, base, *argv, data);
 	    }
 	    --argc;
 	    ++argv;

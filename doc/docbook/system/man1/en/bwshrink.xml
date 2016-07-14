@@ -30,7 +30,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Bwshrink</emphasis>
+<para><command>bwshrink</command>
 will take a black and white
 <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
 format file of given dimensions and produce a smaller
@@ -52,15 +52,15 @@ and then scales the image down
 to 1/factor the original size in both dimensions.</para>
 
 
-<para>By default, bwshrink uses boxcar averaging to produce the output pixels from
+<para>By default, <command>bwshrink</command> uses boxcar averaging to produce the output pixels from
 the input.  The
 <option>-u</option>
-option causes bwshrink to use image undersampling instead.</para>
+option causes <command>bwshrink</command> to use image undersampling instead.</para>
 
 </refsect1>
 
 <refsect1 xml:id='see_also'><title>SEE ALSO</title>
-<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>.</para>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwcrop</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwrect</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bwscale</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='bugs'><title>BUGS</title>

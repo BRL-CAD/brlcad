@@ -86,8 +86,11 @@ bool ProductDefinitionShape::Load(STEPWrapper *sw, SDAI_Application_instance *ss
 
     if (!PropertyDefinition::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::PropertyDefinition." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

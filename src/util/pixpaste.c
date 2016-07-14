@@ -65,7 +65,7 @@ static long int num_bytes = 3L;
 static char usage[] = "\
 pixpaste: Copyright (C) 1992 Paladin Software\n\
 pixpaste: All rights reserved\n\
-pixpaste: Usage: pixpaste [-v] [-h] [-H] [-a] [-A] [-# num_bytes]\n\
+pixpaste: Usage: pixpaste [-v] [-a] [-A] [-# num_bytes]\n\
 		 [-s orig_square_size] [-w orig_width] [-n orig_height]\n\
 		 [-S paste_square_size] [-W paste_width] [-N paste_height]\n\
 		 [-x horizontal] [-y vertical] orig_file paste_file\n\
@@ -76,7 +76,7 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "vahHs:w:n:S:W:N:x:y:#:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "vas:w:n:S:W:N:x:y:#:h?")) != -1) {
 	switch (c) {
 	    case 'v':
 		Verbose = 1;
@@ -86,14 +86,6 @@ get_args(int argc, char **argv)
 		break;
 	    case 'A':
 		paste_autosize = 1;
-		break;
-	    case 'h':
-		org_width = org_height = 1024L;
-		orig_autosize = 0;
-		break;
-	    case 'H':
-		paste_width = paste_height = 1024L;
-		paste_autosize = 0;
 		break;
 	    case 's':
 		org_width = org_height = atol(bu_optarg);
@@ -128,7 +120,7 @@ get_args(int argc, char **argv)
 	    case '#':
 		num_bytes = atol(bu_optarg);
 		break;
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }

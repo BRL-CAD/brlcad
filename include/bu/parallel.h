@@ -59,17 +59,16 @@ __BEGIN_DECLS
  */
 
 /**
- * A clean way for bu_bomb() to tell if this is a parallel
- * application.  If bu_parallel() is active, this routine will return
- * non-zero.
+ * This routine is DEPRECATED, do not use it.  If you need a means to
+ * determine when an application is running bu_parallel(), please
+ * report this to our developers.
+ *
+ * Previously, this was a library-stateful way for bu_bomb() to tell
+ * if a parallel application is running.  This routine now simply
+ * returns zero all the time, which permits BU_SETJUMP() error
+ * handling during bu_bomb().
  */
-BU_EXPORT extern int bu_is_parallel(void);
-
-/**
- * Used by bu_bomb() to help terminate parallel threads,
- * without dragging in the whole parallel library if it isn't being used.
- */
-BU_EXPORT extern void bu_kill_parallel(void);
+DEPRECATED BU_EXPORT extern int bu_is_parallel(void);
 
 /**
  * returns the CPU number of the current bu_parallel() invoked thread.
@@ -121,24 +120,42 @@ BU_EXPORT extern void bu_nice_set(int newnice);
  */
 BU_EXPORT extern size_t bu_avail_cpus(void);
 
+
 /**
- * Create 'ncpu' copies of function 'func' all running in parallel,
- * with private stack areas.  Locking and work dispatching are handled
- * by 'func' using a "self-dispatching" paradigm.
+ * Create parallel threads of execution.
  *
- * 'func' is called with one parameter, its thread number.  Threads
- * are given increasing numbers, starting with zero.  Processes may
- * also call bu_parallel_id() to obtain their thread number.
+ * This function creates (at most) 'ncpu' copies of function 'func'
+ * all running in parallel, passing 'data' to each invocation.
+ * Specifying ncpu=0 will specify automatic parallelization, invoking
+ * parallel threads as cores become available.  This is particularly
+ * useful during recursive invocations where the ncpu core count is
+ * limited by the parent context.
  *
- * Threads created with bu_parallel() automatically set CPU affinity
- * where available for improved performance.  This behavior can be
- * disabled at runtime by setting the LIBBU_AFFINITY environment
- * variable to 0.
+ * Locking and work dispatching are handled by 'func' using a
+ * "self-dispatching" paradigm.  This means you must manually protect
+ * shared data structures, e.g., via BU_SEMAPHORE_ACQUIRE().
+ * Lock-free execution is often possible by creating data containers
+ * with MAX_PSW elements as bu_parallel will never execute more than
+ * that many threads of execution.
+ *
+ * All invocations of the specified 'func' callback function are
+ * passed two parameters: 1) it's assigned thread number and 2) a
+ * shared 'data' pointer for application use.  Threads are assigned
+ * increasing numbers, starting with zero.  Processes may also call
+ * bu_parallel_id() to obtain their thread number.
+ *
+ * Threads created with bu_parallel() may specify utilization of
+ * affinity locking to keep threads on a given physical CPU core.
+ * This behavior can be enabled at runtime by setting the environment
+ * variable LIBBU_AFFINITY=1.  Note that this option may increase or
+ * even decrease performance, particularly on platforms with advanced
+ * scheduling, so testing is recommended.
  *
  * This function will not return control until all invocations of the
  * subroutine are finished.
  */
-BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, void *arg), int ncpu, void *arg);
+BU_EXPORT extern void bu_parallel(void (*func)(int func_ncpu, void *func_data), int ncpu, void *data);
+
 
 /** @file libbu/semaphore.c
  *
@@ -172,11 +189,12 @@ BU_EXPORT extern void bu_parallel(void (*func)(int ncpu, void *arg), int ncpu, v
  * pass through, and non-zero when re-entered via a longjmp() from
  * bu_bomb().  This is only safe to use in non-parallel applications.
  */
-#define BU_SETJUMP setjmp((bu_setjmp_valid=1, bu_jmpbuf))
-#define BU_UNSETJUMP (bu_setjmp_valid=0)
+#define BU_SETJUMP setjmp((bu_setjmp_valid[bu_parallel_id()]=1, bu_jmpbuf[bu_parallel_id()]))
+#define BU_UNSETJUMP (bu_setjmp_valid[bu_parallel_id()]=0)
+
 /* These are global because BU_SETJUMP must be macro.  Please don't touch. */
-BU_EXPORT extern int bu_setjmp_valid;           /* !0 = bu_jmpbuf is valid */
-BU_EXPORT extern jmp_buf bu_jmpbuf;                     /* for BU_SETJUMP() */
+BU_EXPORT extern int bu_setjmp_valid[MAX_PSW]; /* !0 = bu_jmpbuf is valid */
+BU_EXPORT extern jmp_buf bu_jmpbuf[MAX_PSW];   /* for BU_SETJUMP() */
 
 
 /**
@@ -194,12 +212,6 @@ BU_EXPORT extern void bu_semaphore_init(unsigned int nsemaphores);
  * Release all initialized semaphores and any associated memory.
  */
 BU_EXPORT extern void bu_semaphore_free(void);
-
-/**
- * Prepare 'nsemaphores' independent critical section semaphores.  Die
- * on error.
- */
-BU_EXPORT extern void bu_semaphore_reinit(unsigned int nsemaphores);
 
 BU_EXPORT extern void bu_semaphore_acquire(unsigned int i);
 

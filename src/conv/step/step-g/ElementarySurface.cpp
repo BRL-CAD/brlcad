@@ -59,6 +59,7 @@ ElementarySurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Surface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -72,9 +73,12 @@ ElementarySurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    position = dynamic_cast<Axis2Placement3D *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'position' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

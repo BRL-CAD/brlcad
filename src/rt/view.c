@@ -78,7 +78,8 @@ usage(const char *argv0)
     bu_log(" -V #		View (pixel) aspect ratio (width/height)\n");
     bu_log(" -p #		Perspective angle, degrees side to side\n");
     bu_log(" -P #		Set number of processors\n");
-    bu_log(" -T #/#		Tolerance: distance/angular\n");
+    bu_log(" -T # or -T #,# or -T #/#\n");
+    bu_log("		Tolerance: distance or distance,angular or distance/angular\n");
     bu_log(" -l #		Set lighting model rendering style\n");
     bu_log(" -U #		Use air if # is greater than 0\n");
     bu_log(" -x #		librt debug flags\n");
@@ -87,7 +88,7 @@ usage(const char *argv0)
 }
 
 
-extern FBIO *fbp;			/* Framebuffer handle */
+extern fb *fbp;			/* Framebuffer handle */
 
 extern int curframe;		/* from main.c */
 extern fastf_t frame_delta_t;		/* from main.c */
@@ -118,7 +119,7 @@ extern int srv_scanlen;		/* BUFMODE_RTSRV buffer length */
 void free_scanlines(int, struct scanline *);
 struct scanline* alloc_scanlines(int);
 extern fastf_t** timeTable_init(int x, int y);
-extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), FBIO *efbp);
+extern void timeTable_process(fastf_t **timeTable, struct application *UNUSED(app), fb *efbp);
 
 static int buf_mode=0;
 #define BUFMODE_UNBUF     1	/* No output buffering */
@@ -319,9 +320,7 @@ view_pixel(struct application *ap)
 		p[2] = b;
 
 		if (bif != NULL) {
-		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    icv_writepixel(bif, ap->a_x, ap->a_y, ap->a_color);
-		    bu_semaphore_release(BU_SEM_SYSCALL);
 		} else if (outfp != NULL) {
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    if (bu_fseek(outfp, (ap->a_y*width*pwidth) + (ap->a_x*pwidth), 0) != 0)
@@ -334,11 +333,11 @@ view_pixel(struct application *ap)
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		}
 
-		if (fbp != FBIO_NULL) {
+		if (fbp != FB_NULL) {
 		    /* Framebuffer output */
 		    bu_semaphore_acquire(BU_SEM_SYSCALL);
 		    npix = fb_write(fbp, ap->a_x, ap->a_y,
-				    (unsigned char *)p, 1);
+				    (const unsigned char *)p, 1);
 		    bu_semaphore_release(BU_SEM_SYSCALL);
 		    if (npix < 1)
 			bu_exit(EXIT_FAILURE, "pixel fb_write error");
@@ -521,7 +520,7 @@ view_pixel(struct application *ap)
 		long spread;
 		size_t npix = 0;
 
-		if (fbp == FBIO_NULL)
+		if (fbp == FB_NULL)
 		    bu_exit(EXIT_FAILURE, "Incremental rendering with no framebuffer?");
 
 		spread = (1<<(incr_nlevel-incr_level))-1;
@@ -550,7 +549,7 @@ view_pixel(struct application *ap)
 	case BUFMODE_ACC:
 	case BUFMODE_SCANLINE:
 	case BUFMODE_DYNAMIC:
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		size_t npix;
 		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		if (sub_grid_mode) {
@@ -572,9 +571,7 @@ view_pixel(struct application *ap)
 	    }
 	    if (bif != NULL) {
 		/* TODO : Add double type data to maintain resolution */
-		bu_semaphore_acquire(BU_SEM_SYSCALL);
 		icv_writeline(bif, ap->a_y, (unsigned char *)scanline[ap->a_y].sl_buf, ICV_DATA_UCHAR);
-		bu_semaphore_release(BU_SEM_SYSCALL);
 	    } else if (outfp != NULL) {
 		size_t count;
 

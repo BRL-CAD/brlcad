@@ -109,7 +109,7 @@
 #endif
 
 
-extern FBIO *fbp;	/* Framebuffer handle */
+extern fb *fbp;	/* Framebuffer handle */
 extern fastf_t viewsize;
 extern int lightmodel;
 extern size_t width, height;
@@ -461,9 +461,9 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 
 	occlusion_rtip = rt_new_rti(dbip); /* clones dbip */
 
+	memset(occlusion_resources, 0, sizeof(occlusion_resources));
 	for (i=0; i < MAX_PSW; i++) {
 	    rt_init_resource(&occlusion_resources[i], i, occlusion_rtip);
-	    bn_rand_init(occlusion_resources[i].re_randptr, i);
 	}
 
 	db_close(dbip);			 /* releases original dbip */
@@ -671,7 +671,6 @@ view_eol(struct application *ap)
 		bu_semaphore_release(BU_SEM_SYSCALL);
 	    }
 	}
-	return;
     } else if (blend) {
 	/*
 	 * Blend mode.
@@ -795,10 +794,9 @@ view_eol(struct application *ap)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fb_write(fbp, 0, ap->a_y, blendline[cpu], per_processor_chunk);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	return;
     } /* end blend */
 
-    if (fbp != FBIO_NULL) {
+    else if (fbp != FB_NULL) {
 	/*
 	 * Simple whole scanline write to a framebuffer.
 	 */
@@ -806,16 +804,16 @@ view_eol(struct application *ap)
 	fb_write(fbp, 0, ap->a_y, scanline[cpu], per_processor_chunk);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (outputfile != NULL) {
+
+    else if (bif != NULL) {
 	/*
-	 * Write to a file.
+	 * Write to an icv_image_t.
 	 */
-	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	/* TODO : Add double type data to maintain resolution */
 	icv_writeline(bif, ap->a_y, scanline[cpu],  ICV_DATA_UCHAR);
-	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if (fbp == FBIO_NULL && outputfile == NULL)
+
+    else
 	bu_log("rtedge: strange, no end of line actions taken.\n");
 
     return;

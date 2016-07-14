@@ -2169,15 +2169,6 @@ db_walk_tree(struct db_i *dbip,
 	bu_log("end of waiting regions\n");
     }
 
-    /* Fourth, in parallel, for each region, walk the tree to the
-     * leaves.
-     */
-    if (bu_is_parallel() && ncpu != 1) {
-	bu_log("db_walk_tree() recursively invoked while inside parallel section with additional parallelism of ncpu=%d requested.  Running only in one thread.\n",
-	       ncpu);
-	ncpu = 1;
-    }
-
     /* Make state available to the threads */
     wps.magic = DB_WALK_PARALLEL_STATE_MAGIC;
     wps.reg_trees = reg_trees;
@@ -2188,11 +2179,7 @@ db_walk_tree(struct db_i *dbip,
     wps.client_data = client_data;
     wps.rtip = init_state->ts_rtip;
 
-    if (ncpu <= 1) {
-	_db_walk_dispatcher(0, (void *)&wps);
-    } else {
-	bu_parallel(_db_walk_dispatcher, ncpu, (void *)&wps);
-    }
+    bu_parallel(_db_walk_dispatcher, ncpu, (void *)&wps);
 
     /* Clean up any remaining sub-trees still in reg_trees[] */
     for (i = 0; i < new_reg_count; i++) {
@@ -2620,18 +2607,18 @@ db_tree_parse(struct bu_vls *vls, const char *str, struct resource *resp)
 	    }
 	    break;
 
-	case 'u':
+	case DB_OP_UNION:
 	    /* Binary: Union: {u {lhs} {rhs}} */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_UNION;
 	    goto binary;
 	case 'n':
-	case '+':
+	case DB_OP_INTERSECT:
 	    /* Binary: Intersection */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_INTERSECT;
 	    goto binary;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    /* Binary: Union */
 	    RT_GET_TREE(tp, resp);
 	    tp->tr_b.tb_op = OP_SUBTRACT;

@@ -59,12 +59,16 @@ ElectricCurrentContextDependentUnit::Load(STEPWrapper *sw, SDAI_Application_inst
     // load base class attributes
     if (!ElectricCurrentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
     if (!ContextDependentUnit::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Unit." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

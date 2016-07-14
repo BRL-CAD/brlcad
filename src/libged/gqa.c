@@ -128,8 +128,6 @@ static int debug;
 #define A_STATE a_uptr
 
 
-static struct resource resource[MAX_PSW];	/* memory resources for multi-cpu processing */
-
 struct cstate {
     int curr_view; /* the "view" number we are shooting */
     int u_axis;    /* these 3 are in the range 0..2 inclusive and indicate which axis (X, Y, or Z) */
@@ -157,6 +155,8 @@ struct cstate {
     fastf_t *m_lenTorque; /* torque vector for each view */
     fastf_t *m_moi;       /* one vector per view for collecting the partial moments of inertia calculation */
     fastf_t *m_poi;       /* one vector per view for collecting the partial products of inertia calculation */
+
+    struct resource *resp;
 };
 
 
@@ -1313,7 +1313,7 @@ get_next_row(struct cstate *state)
  * This routine must be prepared to run in parallel
  */
 void
-plane_worker (int cpu, void *ptr)
+plane_worker(int cpu, void *ptr)
 {
     struct application ap;
     int u, v;
@@ -1330,7 +1330,7 @@ plane_worker (int cpu, void *ptr)
     ap.a_miss = miss;  /* where to go on a miss */
     ap.a_logoverlap = logoverlap;
     ap.a_overlap = overlap;
-    ap.a_resource = &resource[cpu];
+    ap.a_resource = &state->resp[cpu];
     ap.A_LENDEN = 0.0; /* really the cumulative length*density for weight computation*/
     ap.A_LEN = 0.0;    /* really the cumulative length for volume computation */
 
@@ -2333,6 +2333,7 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     struct region_pair *rp;
     struct region *regp;
     static const char *usage = "object [object ...]";
+    struct resource resp[MAX_PSW];	/* memory resources for multi-cpu processing */
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_ARGC_GT_0(gedp, argc, GED_ERROR);
@@ -2398,8 +2399,6 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_semaphore_reinit(GED_SEM_LAST);
-
     if (analysis_flags & ANALYSIS_PLOT_OVERLAPS) {
 	ged_gqa_plot.vbp = rt_vlblock_init();
 	ged_gqa_plot.vhead = rt_vlblock_find(ged_gqa_plot.vbp, 0xFF, 0xFF, 0x00);
@@ -2411,6 +2410,15 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
     start_objs = arg_count;
     num_objects = argc - arg_count;
 
+    /* Initialize all the per-CPU memory resources.  The number of
+     * processors can change at runtime, init them all.
+     */
+    memset(resp, 0, sizeof(resp));
+    for (i = 0; i < MAX_PSW; i++) {
+	rt_init_resource(&resp[i], i, rtip);
+    }
+    state.resp = resp;
+
     /* Walk trees.  Here we identify any object trees in the database
      * that the user wants included in the ray trace.
      */
@@ -2419,14 +2427,6 @@ ged_gqa(struct ged *gedp, int argc, const char *argv[])
 	    fprintf(stderr, "rt_gettree(%s) FAILED\n", argv[arg_count]);
 	    return GED_ERROR;
 	}
-    }
-
-    /* Initialize all the per-CPU memory resources.  The number of
-     * processors can change at runtime, init them all.
-     */
-    for (i = 0; i < max_cpus; i++) {
-	rt_init_resource(&resource[i], i, rtip);
-	bn_rand_init(resource[i].re_randptr, i);
     }
 
     /* This gets the database ready for ray tracing.  (it precomputes

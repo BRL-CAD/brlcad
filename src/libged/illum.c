@@ -27,7 +27,7 @@
 #include <string.h>
 
 #include "ged.h"
-#include "solid.h"
+#include "./ged_private.h"
 
 
 /*
@@ -40,9 +40,8 @@
 int
 ged_illum(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp;
-    struct ged_display_list *next_gdlp;
-    struct solid *sp;
+    struct display_list *gdlp;
+    struct display_list *next_gdlp;
     int found = 0;
     int illum = 1;
     static const char *usage = "[-n] obj";
@@ -73,24 +72,11 @@ ged_illum(struct ged *gedp, int argc, const char *argv[])
     if (argc != 2)
 	goto bad;
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
+    gdlp = BU_LIST_NEXT(display_list, gedp->ged_gdp->gd_headDisplay);
     while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
+	next_gdlp = BU_LIST_PNEXT(display_list, gdlp);
 
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid) {
-	    size_t i;
-
-	    for (i = 0; i < sp->s_fullpath.fp_len; ++i) {
-		if (*argv[1] == *DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep &&
-		    BU_STR_EQUAL(argv[1], DB_FULL_PATH_GET(&sp->s_fullpath, i)->d_namep)) {
-		    found = 1;
-		    if (illum)
-			sp->s_iflag = UP;
-		    else
-			sp->s_iflag = DOWN;
-		}
-	    }
-	}
+	found += dl_set_illum(gdlp, argv[1], illum);
 
 	gdlp = next_gdlp;
     }

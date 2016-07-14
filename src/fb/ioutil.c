@@ -61,7 +61,7 @@ Message(const char *format, ...)
 
 
 void
-Fatal(FBIO *fbp, const char *format, ...)
+Fatal(fb *fbp, const char *format, ...)
 {
     va_list ap;
 
@@ -69,9 +69,9 @@ Fatal(FBIO *fbp, const char *format, ...)
     VMessage(format, ap);
     va_end(ap);
 
-    if (fbp != FBIO_NULL && fb_close(fbp) == -1) {
+    if (fbp != FB_NULL && fb_close(fbp) == -1) {
 	Message("Error closing frame buffer");
-	fbp = FBIO_NULL;
+	fbp = FB_NULL;
     }
 
     bu_exit(EXIT_FAILURE, NULL);

@@ -43,7 +43,7 @@ int framenumber = 0;	/* starting frame number (default is 0) */
 int islist = 0;
 
 char usage[] = "\
-Usage: pixuntile [-h] [-s squareinsize] [-w in_width] [-n in_height]\n\
+Usage: pixuntile [-s squareinsize] [-w in_width] [-n in_height]\n\
 	[-S squareoutsize] [-W out_width] [-N out_height]\n\
 	[-o startframe] basename [file2 ... fileN] <file.pix\n";
 
@@ -52,12 +52,8 @@ get_args(int argc, char **argv)
 {
     int c;
 
-    while ((c = bu_getopt(argc, argv, "hs:w:n:S:W:N:o:")) != -1) {
+    while ((c = bu_getopt(argc, argv, "s:w:n:S:W:N:o:h?")) != -1) {
 	switch (c) {
-	    case 'h':
-		/* high-res */
-		in_height = in_width = 1024;
-		break;
 	    case 's':
 		/* square input file size */
 		in_height = in_width = atoi(bu_optarg);
@@ -80,8 +76,8 @@ get_args(int argc, char **argv)
 	    case 'o':
 		framenumber = atoi(bu_optarg);
 		break;
-	    default:		/* '?' */
-		return 0;	/* Bad */
+	    default:		/* '?''h' */
+		return 0;	/* Bad, other than option '?' or 'h' */
 	}
     }
 

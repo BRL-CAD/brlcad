@@ -53,7 +53,7 @@ bool Transformation::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 {
     step = sw;
     id = sse->STEPfile_id;
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

@@ -80,7 +80,6 @@ char *ExplainOpts[] = {
     " -c        clears FB to background color\n",
     " -e        plots no function interior (useful with -p)\n",
     " -g        plots no polar grid\n",
-    " -h        specifies high-resolution mode (same as -S 1024)\n",
     " -i r g b  plots function with constant interior color (0 .. 255)\n",
     " -l r g b  plots function with a linear ramp (0 .. 255)\n",
     " -m        merges plot with current contents of FB\n",
@@ -383,7 +382,7 @@ main (int argc, char **argv)
     int unit_r = -1;	/* Radius of unit circle (in pixels) */
     int x, y;		/* Cartesian coordinates of current pixel */
     int Xprime, Yprime;		/* Translated pixel */
-    FBIO *fbPtr;		/* Pointer to the frame-buffer file */
+    fb *fbPtr;		/* Pointer to the frame-buffer file */
     unsigned char *fbb;		/* Buffer for current line of frame buffer */
     unsigned char *fbbPtr;	/* Pointer to within fbb */
 
@@ -684,9 +683,6 @@ main (int argc, char **argv)
 		case 'g':		/* Do not plot axes */
 		    draw_grid = 0;
 		    break;
-		case 'h':		/* High-res mode */
-		    fb_width = fb_height = High_Size;
-		    break;
 		case 'r':		/* Input in radians, not degrees */
 		    angle_cvt = 1.0;
 		    break;
@@ -697,11 +693,12 @@ main (int argc, char **argv)
 		    ArgCompat(Interior);
 		    Interior = BI_WEDGES;
 		    break;
-		case '?':
-		error:
 		default:
+	    	    if (*Opt != '?' && *Opt != 'h')
+	    		(void) fprintf(stderr,"Illegal option -- %c\n",*Opt);
+		error:
 		    PrintUsage(1);
-		    (void) bu_exit (*Opt != '?', NULL);
+		    (void) bu_exit (*Opt != '?' && *Opt != 'h', NULL);
 	    }
     } /* while */
 
@@ -726,7 +723,7 @@ main (int argc, char **argv)
     arc_max *= Deg2Rad;
 
     /* Prep the frame buffer */
-    if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FBIO_NULL)
+    if ((fbPtr = fb_open(FB_Name, fb_width, fb_height)) == FB_NULL)
 	(void) bu_exit (1, NULL);
     fb_width = fb_getwidth(fbPtr);
     fb_height = fb_getheight(fbPtr);

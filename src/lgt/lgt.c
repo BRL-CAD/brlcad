@@ -77,7 +77,6 @@ main(int argc, char **argv)
 	RTG.rtg_parallel = 1;
     else
 	RTG.rtg_parallel = 0;
-    bu_semaphore_init(RT_SEM_LAST);
 
     init_Lgts();
 
@@ -223,7 +222,7 @@ close_Output_Device(int frame)
     if ((movie.m_noframes > 1 && movie.m_fullscreen) ||
 	(frame == movie.m_endframe)) {
 	(void) fb_close(fbiop);
-	fbiop = FBIO_NULL;
+	fbiop = FB_NULL;
     }
     return;
 }

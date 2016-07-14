@@ -243,9 +243,6 @@ main(int argc, char *argv[])
     tol.perp = 1e-6;
     tol.para = 1 - tol.perp;
 
-    /* init resources we might need */
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* make empty NMG model */
     the_model = nmg_mm();
     BU_LIST_INIT(&RTG.rtg_vlfree);	/* for vlist macros */

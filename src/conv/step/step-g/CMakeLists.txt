@@ -90,6 +90,8 @@ set(stepg_SOURCES
   GeometricallyBoundedSurfaceShapeRepresentation.cpp
   GeometricRepresentationContext.cpp
   GeometricRepresentationItem.cpp
+  GeometricSet.cpp
+  GeometricSetSelect.cpp
   GlobalUncertaintyAssignedContext.cpp
   GlobalUnitAssignedContext.cpp
   Hyperbola.cpp
@@ -304,6 +306,8 @@ set(stepg_HDRS
   GeometricallyBoundedSurfaceShapeRepresentation.h
   GeometricRepresentationContext.h
   GeometricRepresentationItem.h
+  GeometricSet.h
+  GeometricSetSelect.h
   GlobalUncertaintyAssignedContext.h
   GlobalUnitAssignedContext.h
   Hyperbola.h

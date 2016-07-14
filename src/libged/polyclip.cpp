@@ -52,7 +52,7 @@ struct contour_node {
 
 
 static fastf_t
-load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygon *gpoly, fastf_t sf, matp_t mat)
+load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygon *gpoly, fastf_t sf, matp_t mat)
 {
     register size_t j, k, n;
     ClipperLib::Polygon curr_poly;
@@ -83,7 +83,7 @@ load_polygon(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polyg
 }
 
 static fastf_t
-load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_polygons *subj, fastf_t sf, matp_t mat)
+load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, bview_polygons *subj, fastf_t sf, matp_t mat)
 {
     register size_t i;
     fastf_t vZ = 1.0;
@@ -96,28 +96,28 @@ load_polygons(ClipperLib::Clipper &clipper, ClipperLib::PolyType ptype, ged_poly
 
 
 /*
- * Process/extract the clipper_polys into a ged_polygon.
+ * Process/extract the clipper_polys into a bview_polygon.
  */
-static ged_polygon *
+static bview_polygon *
 extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t vZ)
 {
     register size_t i, j, k, n;
     size_t num_contours = 0;
-    ged_polygon *result_poly;
+    bview_polygon *result_poly;
 
     /* Count up the number of contours. */
     for (i = 0; i < clipper_polys.size(); ++i)
 	/* Add the outer and the holes */
 	num_contours += clipper_polys[i].holes.size() + 1;
 
-    BU_ALLOC(result_poly, ged_polygon);
+    BU_ALLOC(result_poly, bview_polygon);
     result_poly->gp_num_contours = num_contours;
 
     if (num_contours < 1)
 	return result_poly;
 
     result_poly->gp_hole = (int *)bu_calloc(num_contours, sizeof(int), "gp_hole");
-    result_poly->gp_contour = (ged_poly_contour *)bu_calloc(num_contours, sizeof(ged_poly_contour), "gp_contour");
+    result_poly->gp_contour = (bview_poly_contour *)bu_calloc(num_contours, sizeof(bview_poly_contour), "gp_contour");
 
     n = 0;
     for (i = 0; i < clipper_polys.size(); ++i) {
@@ -159,8 +159,8 @@ extract(ClipperLib::ExPolygons &clipper_polys, fastf_t sf, matp_t mat, fastf_t v
 }
 
 
-ged_polygon *
-ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bview_polygon *
+ged_clip_polygon(ClipType op, bview_polygon *subj, bview_polygon *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
     fastf_t vZ;
@@ -202,8 +202,8 @@ ged_clip_polygon(GedClipType op, ged_polygon *subj, ged_polygon *clip, fastf_t s
 }
 
 
-ged_polygon *
-ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
+bview_polygon *
+ged_clip_polygons(ClipType op, bview_polygons *subj, bview_polygons *clip, fastf_t sf, matp_t model2view, matp_t view2model)
 {
     fastf_t inv_sf;
     fastf_t vZ;
@@ -246,7 +246,7 @@ ged_clip_polygons(GedClipType op, ged_polygons *subj, ged_polygons *clip, fastf_
 
 
 int
-ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
+ged_export_polygon(struct ged *gedp, bview_data_polygon_state *gdpsp, size_t polygon_i, const char *sname)
 {
     register size_t j, k, n;
     register size_t num_verts = 0;
@@ -343,7 +343,7 @@ ged_export_polygon(struct ged *gedp, ged_data_polygon_state *gdpsp, size_t polyg
 }
 
 
-ged_polygon *
+bview_polygon *
 ged_import_polygon(struct ged *gedp, const char *sname)
 {
     register size_t j, n;
@@ -355,15 +355,15 @@ ged_import_polygon(struct ged *gedp, const char *sname)
     struct segment_node *all_segment_nodes;
     struct segment_node *curr_snode;
     struct contour_node *curr_cnode;
-    ged_polygon *gpp;
+    bview_polygon *gpp;
 
     if (wdb_import_from_path(gedp->ged_result_str, &intern, sname, gedp->ged_wdbp) == GED_ERROR)
-	return (ged_polygon *)0;
+	return (bview_polygon *)0;
 
     sketch_ip = (rt_sketch_internal *)intern.idb_ptr;
     if (sketch_ip->vert_count < 3 || sketch_ip->curve.count < 1) {
 	rt_db_free_internal(&intern);
-	return (ged_polygon *)0;
+	return (bview_polygon *)0;
     }
 
     all_segment_nodes = (struct segment_node *)bu_calloc(sketch_ip->curve.count, sizeof(struct segment_node), "all_segment_nodes");
@@ -425,10 +425,10 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 	}
     }
 
-    BU_ALLOC(gpp, ged_polygon);
+    BU_ALLOC(gpp, bview_polygon);
     gpp->gp_num_contours = ncontours;
     gpp->gp_hole = (int *)bu_calloc(ncontours, sizeof(int), "gp_hole");
-    gpp->gp_contour = (ged_poly_contour *)bu_calloc(ncontours, sizeof(ged_poly_contour), "gp_contour");
+    gpp->gp_contour = (bview_poly_contour *)bu_calloc(ncontours, sizeof(bview_poly_contour), "gp_contour");
 
     j = 0;
     while (BU_LIST_NON_EMPTY(&HeadContourNodes)) {
@@ -474,7 +474,7 @@ ged_import_polygon(struct ged *gedp, const char *sname)
 
 
 fastf_t
-ged_find_polygon_area(ged_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
+ged_find_polygon_area(bview_polygon *gpoly, fastf_t sf, matp_t model2view, fastf_t size)
 {
     register size_t j, k, n;
     ClipperLib::Polygon poly;
@@ -518,7 +518,7 @@ typedef struct {
 
 
 int
-ged_polygons_overlap(struct ged *gedp, ged_polygon *polyA, ged_polygon *polyB)
+ged_polygons_overlap(struct ged *gedp, bview_polygon *polyA, bview_polygon *polyB)
 {
     register size_t i, j;
     register size_t beginA, endA, beginB, endB;

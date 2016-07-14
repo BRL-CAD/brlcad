@@ -402,7 +402,7 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 	    /* BINARY type */
 	    bu_vls_strcat(vls, " (");
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_left);
-	    bu_vls_strcat(vls, ") u (");
+	    bu_vls_printf(vls, ") %c (", DB_OP_UNION);
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_right);
 	    bu_vls_strcat(vls, ") ");
 	    break;
@@ -410,7 +410,7 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 	    /* BINARY type */
 	    bu_vls_strcat(vls, " (");
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_left);
-	    bu_vls_strcat(vls, ") + (");
+	    bu_vls_printf(vls, ") %c (", DB_OP_INTERSECT);
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_right);
 	    bu_vls_strcat(vls, ") ");
 	    break;
@@ -418,7 +418,7 @@ rt_pr_tree_vls(struct bu_vls *vls, register const union tree *tp)
 	    /* BINARY type */
 	    bu_vls_strcat(vls, " (");
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_left);
-	    bu_vls_strcat(vls, ") - (");
+	    bu_vls_printf(vls, ") %c (", DB_OP_SUBTRACT);
 	    rt_pr_tree_vls(vls, tp->tr_b.tb_right);
 	    bu_vls_strcat(vls, ") ");
 	    break;
@@ -475,13 +475,13 @@ rt_pr_tree_str(const union tree *tree)
 	right = rt_pr_tree_str(tree->tr_b.tb_right);
 	switch (tree->tr_op) {
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	}
 	return_length = strlen(left) + strlen(right) + 8;
@@ -585,21 +585,21 @@ rt_pr_tree_val(register const union tree *tp, const struct partition *partp, int
 	case OP_UNION:
 	    bu_log("(");
 	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
-	    bu_log(" u ");
+	    bu_log(" %c ", DB_OP_UNION);
 	    rt_pr_tree_val(tp->tr_b.tb_right, partp, pr_name, lvl+1);
 	    bu_log(")");
 	    break;
 	case OP_INTERSECT:
 	    bu_log("(");
 	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
-	    bu_log(" + ");
+	    bu_log(" %c ", DB_OP_INTERSECT);
 	    rt_pr_tree_val(tp->tr_b.tb_right, partp, pr_name, lvl+1);
 	    bu_log(")");
 	    break;
 	case OP_SUBTRACT:
 	    bu_log("(");
 	    rt_pr_tree_val(tp->tr_b.tb_left,  partp, pr_name, lvl+1);
-	    bu_log(" - ");
+	    bu_log(" %c ", DB_OP_SUBTRACT);
 	    rt_pr_tree_val(tp->tr_b.tb_right, partp, pr_name, lvl+1);
 	    bu_log(")");
 	    break;

@@ -55,9 +55,12 @@ BoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     id = sse->STEPfile_id;
 
     if (!Surface::Load(sw, sse)) {
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	std::cout << CLASSNAME << ":Error loading base class ::Surface." << std::endl;
 	return false;
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

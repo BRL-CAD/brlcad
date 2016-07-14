@@ -228,7 +228,6 @@ name_compare(const void *d1, const void *d2, void *UNUSED(arg))
 HIDDEN int
 comb_flatten(struct ged *gedp, struct directory *dp)
 {
-    int j;
     int result_cnt = 0;
     int obj_cnt = 0;
     struct directory **all_paths;
@@ -268,9 +267,6 @@ comb_flatten(struct ged *gedp, struct directory *dp)
     bu_vls_free(&plan_string);
 
     /* Done searching - now we can free the path list and clear the original tree */
-    for (j = 0; j < obj_cnt; j++) {
-	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
-    }
     bu_free(all_paths, "free db_tops output");
     if (comb_tree_clear(gedp, dp) == GED_ERROR) {
 	bu_vls_printf(gedp->ged_result_str, "ERROR: %s tree clearing failed", dp->d_namep);
@@ -356,10 +352,7 @@ comb_lift_region(struct ged *gedp, struct directory *dp)
     (void)db_search(&combs_outside_of_tree, DB_SEARCH_RETURN_UNIQ_DP, bu_vls_addr(&plan_string), obj_cnt, all_paths, gedp->ged_wdbp->dbip);
     bu_vls_free(&plan_string);
 
-    /* release our db_ls paths */
-    for (j = 0; j < obj_cnt; j++) {
-	db_dirdelete(gedp->ged_wdbp->dbip, all_paths[j]);
-    }
+    /* release our db_ls path */
     bu_free(all_paths, "free db_tops output");
 
     /* check for entry last node in combs_outside of tree
@@ -826,14 +819,14 @@ addmembers:
 
 	/* insert new member at end */
 	switch (relation) {
-	case '+':
+	case DB_OP_INTERSECT:
 	    tree_list[curr_count].tl_op = OP_INTERSECT;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    tree_list[curr_count].tl_op = OP_SUBTRACT;
 	    break;
 	default:
-	    if (relation != 'u') {
+	    if (relation != DB_OP_UNION) {
 		bu_vls_printf(gedp->ged_result_str, "unrecognized relation (assume UNION)\n");
 	    }
 	    tree_list[curr_count].tl_op = OP_UNION;

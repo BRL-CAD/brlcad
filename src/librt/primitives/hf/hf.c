@@ -1962,7 +1962,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 
     /* Process parameters found in .g file */
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip) < 0) {
+    if (bu_struct_parse(&str, rt_hf_parse, (char *)xip, NULL) < 0) {
 	bu_vls_free(&str);
     err1:
 	bu_free((char *)xip, "rt_hf_import4: xip");
@@ -1989,7 +1989,7 @@ rt_hf_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fas
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fclose(fp);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip) < 0) {
+	if (bu_struct_parse(&str, rt_hf_cparse, (char *)xip, NULL) < 0) {
 	    bu_log("rt_hf_import4() parse error in cfile input '%s'\n",
 		   bu_vls_addr(&str));
 	    bu_vls_free(&str);

@@ -80,10 +80,11 @@ bool ApplicationContextElement::Load(STEPWrapper *sw, SDAI_Application_instance 
 	    frame_of_reference = dynamic_cast<ApplicationContext *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading attribute 'Application_Context_Element'." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
-
+    sw->entity_status[id] = STEP_LOADED;
     return true;
 }
 

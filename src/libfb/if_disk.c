@@ -32,6 +32,7 @@
 #include "bu/file.h"
 #include "bu/log.h"
 #include "bu/str.h"
+#include "fb_private.h"
 #include "fb.h"
 
 
@@ -46,11 +47,11 @@
 
 
 HIDDEN int
-dsk_open(FBIO *ifp, const char *file, int width, int height)
+dsk_open(fb *ifp, const char *file, int width, int height)
 {
     static char zero = 0;
 
-    FB_CK_FBIO(ifp);
+    FB_CK_FB(ifp);
 
     /* check for default size */
     if (width == 0)
@@ -99,16 +100,52 @@ dsk_open(FBIO *ifp, const char *file, int width, int height)
     return 0;
 }
 
+HIDDEN struct fb_platform_specific *
+dsk_get_fbps(uint32_t UNUSED(magic))
+{
+        return NULL;
+}
+
+
+HIDDEN void
+dsk_put_fbps(struct fb_platform_specific *UNUSED(fbps))
+{
+        return;
+}
 
 HIDDEN int
-dsk_close(FBIO *ifp)
+dsk_open_existing(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height), struct fb_platform_specific *UNUSED(fb_p))
+{
+        return 0;
+}
+
+HIDDEN int
+dsk_close_existing(fb *UNUSED(ifp))
+{
+        return 0;
+}
+
+HIDDEN int
+dsk_configure_window(fb *UNUSED(ifp), int UNUSED(width), int UNUSED(height))
+{
+        return 0;
+}
+
+HIDDEN int
+dsk_refresh(fb *UNUSED(ifp), int UNUSED(x), int UNUSED(y), int UNUSED(w), int UNUSED(h))
+{
+        return 0;
+}
+
+HIDDEN int
+dsk_close(fb *ifp)
 {
     return close(ifp->if_fd);
 }
 
 
 HIDDEN int
-dsk_free(FBIO *ifp)
+dsk_free(fb *ifp)
 {
     close(ifp->if_fd);
     if (bu_file_delete(ifp->if_name)) {
@@ -123,7 +160,7 @@ dsk_free(FBIO *ifp)
  * Clear the disk file to the given color.
  */
 HIDDEN int
-disk_color_clear(FBIO *ifp, register unsigned char *bpp)
+disk_color_clear(fb *ifp, register unsigned char *bpp)
 {
     static unsigned char pix_buf[DISK_DMA_BYTES] = {0};
     register unsigned char *pix_to;
@@ -159,7 +196,7 @@ disk_color_clear(FBIO *ifp, register unsigned char *bpp)
 
 
 HIDDEN int
-dsk_clear(FBIO *ifp, unsigned char *bgpp)
+dsk_clear(fb *ifp, unsigned char *bgpp)
 {
     static RGBpixel black = { 0, 0, 0 };
 
@@ -171,7 +208,7 @@ dsk_clear(FBIO *ifp, unsigned char *bgpp)
 
 
 HIDDEN ssize_t
-dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
+dsk_read(fb *ifp, int x, int y, unsigned char *pixelp, size_t count)
 {
     size_t bytes = count * sizeof(RGBpixel);
     size_t todo;
@@ -219,7 +256,7 @@ dsk_read(FBIO *ifp, int x, int y, unsigned char *pixelp, size_t count)
 
 
 HIDDEN ssize_t
-dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
+dsk_write(fb *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 {
     register ssize_t bytes = count * sizeof(RGBpixel);
     ssize_t todo;
@@ -250,7 +287,7 @@ dsk_write(FBIO *ifp, int x, int y, const unsigned char *pixelp, size_t count)
 
 
 HIDDEN int
-dsk_rmap(FBIO *ifp, ColorMap *cmap)
+dsk_rmap(fb *ifp, ColorMap *cmap)
 {
     int fd = ifp->if_fd;
 
@@ -275,7 +312,7 @@ dsk_rmap(FBIO *ifp, ColorMap *cmap)
 
 
 HIDDEN int
-dsk_wmap(FBIO *ifp, const ColorMap *cmap)
+dsk_wmap(fb *ifp, const ColorMap *cmap)
 {
     if (cmap == (ColorMap *) NULL)
 	/* Do not write default map to file. */
@@ -297,7 +334,7 @@ dsk_wmap(FBIO *ifp, const ColorMap *cmap)
 
 
 HIDDEN int
-dsk_help(FBIO *ifp)
+dsk_help(fb *ifp)
 {
     fb_log("Description: %s\n", disk_interface.if_type);
     fb_log("Device: %s\n", ifp->if_name);
@@ -318,9 +355,14 @@ dsk_help(FBIO *ifp)
 }
 
 
-FBIO disk_interface = {
+fb disk_interface = {
     0,
+    FB_DISK_MAGIC,
     dsk_open,
+    dsk_open_existing,
+    dsk_close_existing,
+    dsk_get_fbps,
+    dsk_put_fbps,
     dsk_close,
     dsk_clear,
     dsk_read,
@@ -336,6 +378,8 @@ FBIO disk_interface = {
     fb_sim_writerect,
     fb_sim_bwreadrect,
     fb_sim_bwwriterect,
+    dsk_configure_window,
+    dsk_refresh,
     fb_null,		/* poll */
     fb_null,		/* flush */
     dsk_free,
@@ -359,6 +403,7 @@ FBIO disk_interface = {
     0L,
     0L,
     0,			/* debug */
+    0,			/* refresh rate */
     {0}, /* u1 */
     {0}, /* u2 */
     {0}, /* u3 */

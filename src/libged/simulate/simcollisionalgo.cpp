@@ -40,13 +40,12 @@
 #  pragma clang diagnostic ignored "-Wfloat-equal"
 #endif
 
-#include <BulletCollision/CollisionDispatch/btCollisionDispatcher.h>
-#include <BulletCollision/CollisionShapes/btBoxShape.h>
-#include <BulletCollision/CollisionDispatch/btCollisionObject.h>
-#include <BulletCollision/CollisionDispatch/btBoxBoxDetector.h>
-
-/* private headers */
 #include "./simcollisionalgo.h"
+#include "BulletCollision/CollisionDispatch/btCollisionDispatcher.h"
+#include "BulletCollision/CollisionShapes/btBoxShape.h"
+#include "BulletCollision/CollisionDispatch/btCollisionObject.h"
+#include "BulletCollision/CollisionDispatch/btBoxBoxDetector.h"
+#include "BulletCollision/CollisionDispatch/btCollisionObjectWrapper.h"
 
 #if HAVE_GCC_DIAG_PRAGMAS
 #  pragma GCC diagnostic pop /* end ignoring warnings */
@@ -56,46 +55,33 @@
 
 #define USE_PERSISTENT_CONTACTS 1
 
-#define DEBUG_MF 1
-
-
-btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf,
-					       const btCollisionAlgorithmConstructionInfo& ci,
-					       btCollisionObject* col0,
-					       btCollisionObject* col1)
-    : btActivatingCollisionAlgorithm(ci, col0, col1),
-m_ownManifold(false),
-m_manifoldPtr(mf)
+btRTCollisionAlgorithm::btRTCollisionAlgorithm(btPersistentManifold* mf, const btCollisionAlgorithmConstructionInfo& ci, const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap)
+    : btActivatingCollisionAlgorithm(ci, col0Wrap, col1Wrap),
+      m_ownManifold(false),
+      m_manifoldPtr(mf)
 {
-if (!m_manifoldPtr)
-{
-	m_manifoldPtr = m_dispatcher->getNewManifold(col0,col1);
+    if (!m_manifoldPtr && m_dispatcher->needsCollision(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject())) {
+	m_manifoldPtr = m_dispatcher->getNewManifold(col0Wrap->getCollisionObject(), col1Wrap->getCollisionObject());
 	m_ownManifold = true;
-}
+    }
 }
 
 btRTCollisionAlgorithm::~btRTCollisionAlgorithm()
 {
-if (m_ownManifold)
-{
+    if (m_ownManifold) {
 	if (m_manifoldPtr)
-		m_dispatcher->releaseManifold(m_manifoldPtr);
-}
+	    m_dispatcher->releaseManifold(m_manifoldPtr);
+    }
 }
 
-
-void
-btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
-					 btCollisionObject* col1,
-					 const btDispatcherInfo& dispatchInfo,
-					 btManifoldResult* resultOut)
+void btRTCollisionAlgorithm::processCollision(const btCollisionObjectWrapper* col0Wrap, const btCollisionObjectWrapper* col1Wrap, const btDispatcherInfo& dispatchInfo, btManifoldResult* resultOut)
 {
     if (!m_manifoldPtr)
 	return;
 
     //quellage
     // unquell: otherwise get unused param dispatchInfo warning
-    bu_log("%d", dispatchInfo.m_stepCount);
+    bu_log("%d\n", dispatchInfo.m_stepCount);
 
     /// report a contact. internally this will be kept persistent, and contact reduction is done
     resultOut->setPersistentManifold(m_manifoldPtr);
@@ -109,33 +95,33 @@ btRTCollisionAlgorithm::processCollision(btCollisionObject* col0,
     int i;
 
     //Get the user pointers to struct rigid_body, for printing the body name
-    struct rigid_body *rbA = (struct rigid_body *)col0->getUserPointer();
-    struct rigid_body *rbB = (struct rigid_body *)col1->getUserPointer();
+    struct rigid_body *rbA = (struct rigid_body *)col0Wrap->getCollisionObject()->getUserPointer();
+    struct rigid_body *rbB = (struct rigid_body *)col1Wrap->getCollisionObject()->getUserPointer();
 
     if (rbA != NULL && rbB != NULL) {
 
-	   struct sim_manifold *rt_mf = &(rbB->rt_manifold);
+	struct sim_manifold *rt_mf = &(rbB->rt_manifold);
 
-	   // Now add the RT contact pairs
-	   for (i = 0; i < rt_mf->num_contacts; i++) {
+	// Now add the RT contact pairs
+	for (i = 0; i < rt_mf->num_contacts; i++) {
 
-		   btVector3 ptA, ptB, normalWorldOnB;
+	    btVector3 ptA, ptB, normalWorldOnB;
 
-		   VMOVE(ptA, rt_mf->contacts[i].ptA);
-		   VMOVE(ptB, rt_mf->contacts[i].ptB);
-		   VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
+	    VMOVE(ptA, rt_mf->contacts[i].ptA);
+	    VMOVE(ptB, rt_mf->contacts[i].ptB);
+	    VMOVE(normalWorldOnB, rt_mf->contacts[i].normalWorldOnB);
 
-		   //Negative depth for penetration
-		   resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
+	    //Negative depth for penetration
+	    resultOut->addContactPoint(normalWorldOnB, ptB, rt_mf->contacts[i].depth);
 
-		   bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
+	    bu_log("processCollision: Added RT contact %d, A(ignore): %s(%f, %f, %f) , \
 				   B: %s(%f, %f, %f), n(%f, %f, %f), depth=%f\n",
-					   i+1,
-					rt_mf->rbA->rb_namep, V3ARGS(ptA),
-					rt_mf->rbB->rb_namep, V3ARGS(ptB),
-					V3ARGS(normalWorldOnB),
-					rt_mf->contacts[i].depth);
-	   }
+		   i+1,
+		   rt_mf->rbA->rb_namep, V3ARGS(ptA),
+		   rt_mf->rbB->rb_namep, V3ARGS(ptB),
+		   V3ARGS(normalWorldOnB),
+		   rt_mf->contacts[i].depth);
+	}
 
     } //end- if (rbA != NULL && rbB...
 

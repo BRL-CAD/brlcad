@@ -1,6 +1,7 @@
 add_subdirectory(bu)
 add_subdirectory(dm)
 add_subdirectory(rt)
+add_subdirectory(fb)
 
 set(public_hdrs
   RtServerImpl.h
@@ -23,11 +24,9 @@ set(public_hdrs
   brlcad.i
   db.h
   db5.h
-  dg.h
   dm.h
   dvec.h
   fb.h
-  fbio.h
   fbserv_obj.h
   fft.h
   gcv.h
@@ -39,7 +38,6 @@ set(public_hdrs
   nurb.h
   obj.h
   optical.h
-  orle.h
   photonmap.h
   pc.h
   pkg.h

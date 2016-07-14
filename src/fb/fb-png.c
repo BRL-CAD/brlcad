@@ -91,7 +91,7 @@ get_args(int argc, char **argv)
 		    bu_exit(EXIT_FAILURE, "fb-png: Only able to handle 1 and 3 byte pixels\n");
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -125,7 +125,7 @@ main(int argc, char **argv)
     static int scanpix;			/* # of pixels of scanline */
     static ColorMap cmap;		/* libfb color map */
 
-    FBIO *fbp;
+    fb *fbp;
     int y;
     int got;
     png_structp png_p;

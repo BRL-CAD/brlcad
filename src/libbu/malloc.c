@@ -22,6 +22,13 @@
 
 #include <stdlib.h>
 #include <string.h>
+#ifdef HAVE_SYS_IPC_H
+#  include <sys/ipc.h>
+#endif
+#ifdef HAVE_SYS_SHM_H
+#  include <sys/shm.h>
+#endif
+#include "errno.h"
 #include "bio.h"
 
 #include "bu/debug.h"
@@ -680,6 +687,46 @@ bu_mem_barriercheck(void)
     }
     bu_semaphore_release(BU_SEM_MALLOC);
     return 0;			/* OK */
+}
+
+int
+bu_shmget(int *shmid, char **shared_memory, int key, size_t size)
+{
+    int ret = 1;
+#ifdef HAVE_SYS_SHM_H
+    int shmsize;
+    long psize = sysconf(_SC_PAGESIZE);
+    int flags = IPC_CREAT|0666;
+
+    ret = 0;
+    errno = 0;
+
+    /*
+       make more portable
+       shmsize = (size + getpagesize()-1) & ~(getpagesize()-1);
+       */
+    shmsize = (size + psize - 1) & ~(psize - 1);
+
+    /* First try to attach to an existing one */
+    if (((*shmid) = shmget(key, shmsize, 0)) < 0) {
+	/* No existing one, create a new one */
+	if (((*shmid) = shmget(key, shmsize, flags)) < 0) {
+	    bu_log("bu_shmget failed, errno=%d\n", errno);
+	    return 1;
+	}
+	ret = -1;
+    }
+
+    /* WWW this is unnecessary in this version? */
+    /* Open the segment Read/Write */
+    /* This gets mapped to a high address on some platforms, so no problem. */
+    if (((*shared_memory) = (char *)shmat((*shmid), 0, 0)) == (char *)(-1L)) {
+	bu_log("bu_shmget returned x%x, errno=%d\n", (*shared_memory), errno);
+	return 1;
+    }
+
+#endif
+    return ret;
 }
 
 

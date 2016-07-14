@@ -67,6 +67,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!BoundedSurface::Load(step, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::BoundedSurface." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -80,6 +81,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    basis_surface = dynamic_cast<Surface *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cerr << CLASSNAME << ": error loading 'basis_surface' attribute." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -96,6 +98,7 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    } else {
 		std::cerr << CLASSNAME  << ": Unhandled entity in attribute 'cfs_faces'." << std::endl;
 		l->clear();
+		sw->entity_status[id] = STEP_LOAD_ERROR;
 		delete l;
 		return false;
 	    }
@@ -105,6 +108,8 @@ CurveBoundedSurface::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
     }
 
     implicit_outer = step->getBooleanAttribute(sse, "implicit_outer");
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

@@ -404,7 +404,6 @@ int main(int argc, char *argv[])
     /* setup BRL-CAD environment */
     bu_setprogname(argv[0]);
     bu_setlinebuf(stderr);
-    rt_init_resource(&rt_uniresource, 0, NULL);
 
     /* process command line arguments */
     while ((c = bu_getopt(argc, argv, "vo:ys:fh?")) != -1) {

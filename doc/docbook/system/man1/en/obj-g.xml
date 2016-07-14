@@ -21,18 +21,19 @@
     <command>obj-g</command>
     <arg choice="opt" rep="norepeat">-c</arg>
     <arg choice="opt" rep="norepeat">-d</arg>
-    <arg choice="opt" rep="norepeat">-g<replaceable>grouping</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-h<replaceable>plate_thickness</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-f</arg>
+    <arg choice="opt" rep="norepeat">-g <replaceable>grouping_option</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-H <replaceable>plate_thickness</replaceable></arg>
     <arg choice="opt" rep="norepeat">-i</arg>
-    <arg choice="opt" rep="norepeat">-m<replaceable>mode</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-o<replaceable>open_bot_type</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-m <replaceable>mode</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-o <replaceable>open_bot_type</replaceable></arg>
     <arg choice="opt" rep="norepeat">-p</arg>
-    <arg choice="opt" rep="norepeat">-r<replaceable>bot_orientation</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-t<replaceable>distance_tolerance</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-u<replaceable>units_str</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-r <replaceable>bot_orientation</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-t <replaceable>distance_tolerance</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-u <replaceable>units_str</replaceable></arg>
     <arg choice="opt" rep="repeat">-v</arg>
-    <arg choice="opt" rep="norepeat">-x<replaceable>rt_debug_flag</replaceable></arg>
-    <arg choice="opt" rep="norepeat">-X<replaceable>NMG_debug_flag</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-x <replaceable>rt_debug_flag</replaceable></arg>
+    <arg choice="opt" rep="norepeat">-X <replaceable>NMG_debug_flag</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>input.obj</replaceable></arg>
     <arg choice="plain" rep="norepeat"><replaceable>output.g</replaceable></arg>
   </cmdsynopsis>
@@ -93,6 +94,17 @@
     </varlistentry>
 
     <varlistentry>
+      <term><option>-f</option></term>
+      <listitem>
+        <para>
+	 Fuse vertices that are within <replaceable>distance_tolerance</replaceable>
+	 of each other. This can make the solidity detection more reliable,
+	 but may significantly increase processing time during conversion.
+	</para>
+      </listitem>
+    </varlistentry>
+
+    <varlistentry>
       <term><option>-g <replaceable>grouping_option</replaceable></option></term>
       <listitem>
 	<para>
@@ -118,7 +130,7 @@
     </varlistentry>
 
     <varlistentry>
-      <term><option>-h <replaceable>plate_thickness</replaceable></option></term>
+      <term><option>-H <replaceable>plate_thickness</replaceable></option></term>
       <listitem>
 	<para>
 	 Plate thickness in mm units of plate or plate-nocos bots
@@ -167,7 +179,7 @@
 	 irrelevant or the purpose of the resulting model is strictly
 	 visualization. Use 'plate bot' or 'plate-nocos bot' when open
 	 surfaces must have a defined thickness. Note: An incorrect
-	 plate thickness can create geometry overlaps. Use the '-h'
+	 plate thickness can create geometry overlaps. Use the '-H'
 	 option to define plate thickness.
 	</para>
       </listitem>
@@ -203,7 +215,7 @@
       <listitem>
 	<para>
 	 Maximum distance, in mm units, where two vertices are
-	 considered the same. The default is 0.0005mm which matches
+	 considered the same. The default is 0.0005mm, which matches
 	 the default raytracer distance tolerance. Do not change this
 	 value unless you also change the raytracer distance
 	 tolerance.
@@ -243,7 +255,7 @@
       <term><option>-x <replaceable>rt_debug_flag</replaceable></option></term>
       <listitem>
 	<para>
-	 Specifies debug bits (see raytrace.h)
+	 Specifies debug bits (see raytrace.h).
 	</para>
       </listitem>
     </varlistentry>
@@ -252,7 +264,7 @@
       <term><option>-X <replaceable>NMG_debug_flag</replaceable></option></term>
       <listitem>
 	<para>
-	 Specifies debug bits for NMG's (see nmg.h)
+	 Specifies debug bits for NMG's (see nmg.h).
 	</para>
       </listitem>
     </varlistentry>
@@ -279,7 +291,7 @@
   </variablelist>
 </refsection>
 
-<refsection xml:id="objg_examples"><title>EXAMPLE</title>
+<refsection xml:id="objg_examples"><title>EXAMPLES</title>
 
   <para>
     The following will convert the obj file <emphasis remap="I">input.obj</emphasis>
@@ -304,7 +316,7 @@
   <example><title>BOT via NMG Conversion</title>
 
     <para>
-      <userinput>obj-g -m v -o p -h 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
+      <userinput>obj-g -m v -o p -H 5 -g o -v -v input.obj output.g 2&gt; output.log</userinput>
     </para>
     <para>
      Convert obj file 'input.obj' to BRL-CAD database file 'output.g' using

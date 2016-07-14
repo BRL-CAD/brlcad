@@ -416,14 +416,14 @@ put_tree_into_comb(struct ged *gedp, struct rt_comb_internal *comb, struct direc
 
 	    /* Add it to the combination */
 	    switch (relation) {
-		case '+':
+		case DB_OP_INTERSECT:
 		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
 		    break;
-		case '-':
+		case DB_OP_SUBTRACT:
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
 		default:
-		    if (relation != 'u') {
+		    if (relation != DB_OP_UNION) {
 			bu_log("unrecognized relation (assume UNION)\n");
 		    }
 		    rt_tree_array[tree_index].tl_op = OP_UNION;

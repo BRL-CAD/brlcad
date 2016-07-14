@@ -17,7 +17,6 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-
 /** @addtogroup db4 */
 /** @{ */
 /** @file db.h
@@ -136,6 +135,7 @@ struct solidrec {
 #define GRP	31	/* Grip pseudo solid */
 #define SUPERELL 32     /* Superquadratic Ellipsoid */
 #define HYP	33	/* Hyperboloid of one sheet */
+#define JOINT	33	/* Joint primitive */
     char	s_name[NAMESIZE];	/* unique name */
     short	s_cgtype;		/* COMGEOM solid type */
 #define RPP	1	/* axis-aligned rectangular parallelepiped */
@@ -219,10 +219,7 @@ struct combination {
 
 struct member {
     char	m_id;			/* ID_MEMB */
-    char	m_relation;		/* boolean operation */
-#define INTERSECT	'+'
-#define SUBTRACT	'-'
-#define UNION		'u'
+    char	m_relation;		/* boolean operation as u,-,+ char */
     char	m_brname[NAMESIZE];	/* DEPRECATED: name of this branch */
     char	m_instname[NAMESIZE];	/* name of referred-to obj. */
     short	m_pad1;

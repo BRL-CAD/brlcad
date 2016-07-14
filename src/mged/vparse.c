@@ -53,7 +53,7 @@ mged_vls_struct_parse(struct bu_vls *vls,
 	bu_vls_printf(&tmp_vls, "%s=\"", argv[1]);
 	bu_vls_from_argv(&tmp_vls, argc-2, (const char **)argv+2);
 	bu_vls_putc(&tmp_vls, '\"');
-	if (bu_struct_parse(&tmp_vls, how_to_parse, structp) < 0) bu_log("Warning - bu_struct_parse failure, mged_vls_struct_parse.\n");
+	if (bu_struct_parse(&tmp_vls, how_to_parse, structp, NULL) < 0) bu_log("Warning - bu_struct_parse failure, mged_vls_struct_parse.\n");
 	bu_vls_free(&tmp_vls);
     }
 }
@@ -75,7 +75,7 @@ mged_vls_struct_parse_old(
 	struct bu_vls tmp_vls = BU_VLS_INIT_ZERO;
 
 	bu_vls_strcpy(&tmp_vls, argv[1]);
-	if (bu_struct_parse(&tmp_vls, how_to_parse, structp) < 0) bu_log("Warning - bu_struct_parse failure, mged_vls_struct_parse_old.\n");
+	if (bu_struct_parse(&tmp_vls, how_to_parse, structp, NULL) < 0) bu_log("Warning - bu_struct_parse failure, mged_vls_struct_parse_old.\n");
 	bu_vls_free(&tmp_vls);
     }
 }

@@ -1588,11 +1588,12 @@ void  convex_hull( vec_point_2d  & in, vec_point_2d  & out )
 
     // we pushed in[ in.size() -1 ] twice in the output
     out.pop_back();
+#ifdef _THIS_LOCKS_MGED_
     std::vector<point2d_ptr>::iterator it;
     for(it = out.begin(); it != out.end(); it++){
 	    std::cout << "point: " << (*it)->x << "," << (*it)->y << "\n";
     }
-
+#endif
     //verify_convex_hull( in, out );
 #endif
 

@@ -247,7 +247,7 @@ plottrimleafs(SurfaceTree* st, struct bn_vlblock *vbp, bool dim3d)
 
 
 void
-plotleaf3d(BBNode* bb)
+plotleaf3d(BBNode* bb,double within_distance_tol)
 {
     vect_t min;
     vect_t max;
@@ -288,11 +288,11 @@ plotleaf3d(BBNode* bb)
 	    uv[0].y = v;
 	    uv[1].x = u+uinc;
 	    uv[1].y = v+vinc;
-	    trim1_status = bb->isTrimmed(uv[0], &trimBR, closesttrim1);
-	    trim2_status = bb->isTrimmed(uv[1], &trimBR, closesttrim2);
+	    trim1_status = bb->isTrimmed(uv[0], &trimBR, closesttrim1,within_distance_tol);
+	    trim2_status = bb->isTrimmed(uv[1], &trimBR, closesttrim2,within_distance_tol);
 
-	    if (((trim1_status != 1) || (fabs(closesttrim1) < BREP_EDGE_MISS_TOLERANCE)) &&
-		((trim2_status != 1) || (fabs(closesttrim2) < BREP_EDGE_MISS_TOLERANCE))) {
+	    if (((trim1_status != 1) || (fabs(closesttrim1) < within_distance_tol)) &&
+		((trim2_status != 1) || (fabs(closesttrim2) < within_distance_tol))) {
 		p = surf->PointAt(uv[0].x, uv[0].y);
 		VMOVE(a, p);
 		p = surf->PointAt(uv[1].x, uv[1].y);

@@ -23,11 +23,11 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Png_info</emphasis>
+<para><command>png_info</command>
 will print most of the information available from a PNG file other than the image itself.</para>
 </refsect1>
 
-<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<refsect1 xml:id='examples'><title>EXAMPLE</title>
 <para><command>png_info</command>
 file.png</para>
 </refsect1>

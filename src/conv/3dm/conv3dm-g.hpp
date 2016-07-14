@@ -66,16 +66,24 @@ private:
     public:
 	ObjectManager();
 
-	void add(const ON_UUID &uuid, const std::string &name);
+	void add(bool use_uuid, const ON_UUID &uuid, const std::string &prefix,
+		 const char *suffix);
 	void register_member(const ON_UUID &parent_uuid, const ON_UUID &member_uuid);
 	void mark_idef_member(const ON_UUID &uuid);
 
+	bool exists(const ON_UUID &uuid) const;
 	const std::string &get_name(const ON_UUID &uuid) const;
 	const std::set<ON_UUID, UuidCompare> &get_members(const ON_UUID &uuid) const;
 	bool is_idef_member(const ON_UUID &uuid) const;
+
+
     private:
 	struct ModelObject;
+
+	std::string unique_name(std::string prefix, const char *suffix);
+
 	std::map<ON_UUID, ModelObject, UuidCompare> m_obj_map;
+	std::map<std::string, int> m_name_count_map;
     };
 
 
@@ -83,19 +91,19 @@ private:
     RhinoConverter &operator=(const RhinoConverter &source);
 
     void clean_model();
-    void map_uuid_names();
+    void map_uuid_names(bool use_uuidnames);
     void create_all_bitmaps();
-    void nest_all_layers();
     void create_all_layers();
     void create_all_idefs();
-    void create_all_geometry();
-
-    void create_geometry(const ON_Geometry *geom,
-			 const ON_3dmObjectAttributes &geom_attrs);
+    void create_all_objects();
 
     void create_bitmap(const ON_Bitmap *bitmap);
     void create_layer(const ON_Layer &layer);
     void create_idef(const ON_InstanceDefinition &idef);
+
+    void create_object(const ON_Object &object,
+		       const ON_3dmObjectAttributes &object_attrs);
+    void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
     void create_iref(const ON_InstanceRef &iref,
 		     const ON_3dmObjectAttributes &iref_attrs);
@@ -104,23 +112,22 @@ private:
 		     const ON_3dmObjectAttributes &brep_attrs);
 
     void create_mesh(ON_Mesh mesh, const ON_3dmObjectAttributes &mesh_attrs);
-    void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
     Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
+    Color get_color(const ON_Layer &layer) const;
 
     std::pair<std::string, std::string>
     get_shader(int index) const;
 
 
     const bool m_verbose_mode;
-    bool m_use_uuidnames;
-    bool m_random_colors;
-    std::string m_output_dirname;
-    std::map<std::string, int> m_name_count_map;
-    ObjectManager m_objects;
+    const std::string m_output_dirname;
+    rt_wdb * const m_db;
     ON_TextLog m_log;
+    ObjectManager m_objects;
+
+    bool m_random_colors;
     ONX_Model m_model;
-    rt_wdb *m_db;
 };
 
 
@@ -128,6 +135,7 @@ private:
 
 
 #endif
+
 
 // Local Variables:
 // tab-width: 8

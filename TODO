@@ -18,25 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* windows smp support
-
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
-
-* fix the bu_semaphore unit test
-
 * fix the bn_poly_sub unit test
 
 * fix the bu_heap_test_1 unit test (seen on ia32 fbsd)
-
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* re-do the sh/enumerate.sh script for CMake
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
@@ -45,6 +29,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them.
 
 * bundle primary rays in rt front end into postage stamps, shoot via
   rt_shootrays(), modify to pass all rays down through the spatial
@@ -66,6 +54,28 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* need ability to report the smallest feature in a given hierarchy
+  (smallest edge?) and/or largest error in a given boundary model
+  (largest edge gap or distance between two points that should be
+  coincident).
+
+* geometry compiler
+
+* BU_SETJUMP/BU_UNSETJUMP into macros
+
+* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
+  logic layout using if/else.
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
+
+* re-do the sh/enumerate.sh script for CMake
+
+* get bu_extern out of bu/parse.h into its own header file.
 
 * geometry symbolic links (hard and soft links)
 
@@ -578,9 +588,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * make nreed's new bot cleanup interface update interactively without
   resorting to calls to Tcl_DoOneEvent() down in librt.
 
-* convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
-  logic layout using if/else.
-
 * bu_cv_optimize() should be using bu_byteorder().
 
 * render annotated images to the OpenDocument format.  this is
@@ -1022,6 +1029,7 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   in BRL-CAD (libraries are BSD licensed: http://ngplant.sourceforge.net)
 
 
+
 DATABASE MAINTENANCE/ADMINISTRATION
 -----------------------------------
 
@@ -1051,6 +1059,31 @@ comp.r4 ID 5678 material code 5 LOS 75
   objects, allow deletion/undeletion/hiding/unhiding, provide some
   general means to manipulate the packed and unpacked .g file data for
   performing low-level modifications
+
+* evaluate performance of using an SQL/XML store for BRL-CAD geometry,
+  particularly as it pertains to rt_dirbuild() run times on large
+  models and db_lookup() times.
+
+* multiple-representation geometry.  support storing different
+  "versions" of a given combination node, as selectable subtrees where
+  one selectable subtree is always marked active/selected.  the
+  selectable subtrees could generally be entirely different
+  configurations (e.g., different poses) or different geometry
+  structure (e.g., a blast, signature, or lethality version of a given
+  model).  These could be implemented as a modification to the union
+  tree and exposed to the user as a parametric selection on a comb.
+  Something perhaps like this:
+
+  union tree {
+    ...
+    struct tree_representation {
+      uint32_t magic;
+      int tr_op;
+      const char *tr_name;
+      union tree *tr_subtree;
+    } tr_r;
+    ...
+  };
 
 * evaluate performance of using an SQL/XML store for BRL-CAD geometry,
   particularly as it pertains to rt_dirbuild() run times on large

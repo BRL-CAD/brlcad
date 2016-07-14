@@ -644,7 +644,7 @@ rt_tor_vshot(struct soltab **stp, struct xray **rp, struct seg *segp, int n, str
 	X2_Y2.cf[2] *= 4.0;
 
 	/* Inline expansion of (void) bn_poly_sub(&C, &Asqr, &X2_Y2) */
-	/* offset is know to be 2 */
+	/* offset is known to be 2 */
 	C[i].dgr	= 4;
 	C[i].cf[0] = Asqr.cf[0];
 	C[i].cf[1] = Asqr.cf[1];

@@ -384,8 +384,6 @@ main(int argc, char **argv)
 	nmg_eue_dist = 2.0;
     }
 
-    rt_init_resource( &rt_uniresource, 0, NULL );
-
     BU_LIST_INIT( &RTG.rtg_vlfree );	/* for vlist macros */
 
     BARRIER_CHECK;
@@ -691,7 +689,7 @@ nmg_2_vrml(FILE *fp, const struct db_full_path *pathp, struct model *m, struct m
     mat.tx_n = -1;
 
     bu_vls_strcpy( &vls, &mater->ma_shader[strlen(mat.shader)] );
-    (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat );
+    (void)bu_struct_parse( &vls, vrml_mat_parse, (char *)&mat, NULL);
 
     if ( bu_strncmp( "light", mat.shader, 5 ) == 0 )
     {

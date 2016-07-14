@@ -454,8 +454,10 @@ pop_gop(int gop, char *parent1_id, char *parent2_id, char *child1_id, char *chil
 
 
 		crossover_op = crossover_point->tr_op;
-#define MASK (OP_UNION | OP_XOR | OP_SUBTRACT|OP_INTERSECT)
-		if (crossover_op & MASK)crossover_op = MASK;
+
+		if (crossover_op & (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT))
+		    crossover_op = (OP_UNION | OP_XOR | OP_SUBTRACT| OP_INTERSECT);
+
 		crossover_node = db_count_tree_nodes(crossover_point, 0);
 		if (pop_find_nodes(parent2->tree) == crossover_node) {
 		    BU_ALLOC(add, struct node);

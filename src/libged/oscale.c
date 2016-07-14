@@ -81,7 +81,7 @@ ged_oscale(struct ged *gedp, int argc, const char *argv[])
 
 	dp = gtd.gtd_obj[gtd.gtd_objpos-1];
 	if (!(dp->d_flags & RT_DIR_SOLID)) {
-	    if (_ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
+	    if (ged_get_obj_bounds(gedp, 1, argv+1, 1, rpp_min, rpp_max) == TCL_ERROR)
 		return TCL_ERROR;
 	}
 

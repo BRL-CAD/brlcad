@@ -39,8 +39,6 @@
 #include "nmg.h"
 #include "rtgeom.h"
 #include "rtfunc.h"
-#include "solid.h"
-#include "dg.h"
 
 #include "./ged_private.h"
 
@@ -2101,8 +2099,8 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 
     av[1] = (char *)0;
     for (i = 0; i < argc; ++i) {
-	ged_erasePathFromDisplay(gedp, argv[i], 0);
-	dgcdp->gdlp = ged_addToDisplay(dgcdp->gedp, argv[i]);
+	dl_erasePathFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[i], 0, gedp->freesolid);
+	dgcdp->gdlp = dl_addToDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, argv[i]);
 
 	BU_ALLOC(dgcdp->ap, struct application);
 	RT_APPLICATION_INIT(dgcdp->ap);
@@ -2155,7 +2153,7 @@ ged_E(struct ged *gedp, int argc, const char *argv[])
 		bu_ptbl_reset(&dgcdp->leaf_list);
 		ts.ts_mater = rp->reg_mater;
 		db_string_to_path(&path, gedp->ged_wdbp->dbip, rp->reg_name);
-		_ged_drawH_part2(0, &vhead, &path, &ts, SOLID_NULL, dgcdp);
+		_ged_drawH_part2(0, &vhead, &path, &ts, dgcdp);
 		db_free_full_path(&path);
 	    }
 	    /* do not do an rt_free_rti() (closes the database!!!!) */

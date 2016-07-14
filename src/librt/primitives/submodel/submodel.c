@@ -645,10 +645,8 @@ rt_submodel_wireframe_leaf(struct db_tree_state *tsp, const struct db_full_path 
     RT_CK_RESOURCE(tsp->ts_resp);
 
     gp = (struct goodies *)tsp->ts_m;	/* hack */
-    if (gp) RT_CK_DBI(gp->dbip);
-
-    /* NON-PARALLEL access to vlist pointed to by vheadp is not semaphored */
-    if (bu_is_parallel()) bu_bomb("rt_submodel_wireframe_leaf() non-parallel code\n");
+    if (gp)
+	RT_CK_DBI(gp->dbip);
 
     if (RT_G_DEBUG&DEBUG_TREEWALK) {
 	char *sofar = db_path_to_string(pathp);
@@ -805,7 +803,7 @@ rt_submodel_import4(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");
@@ -890,7 +888,7 @@ rt_submodel_import5(struct rt_db_internal *ip, const struct bu_external *ep, con
 
     bu_vls_strncpy(&str, (const char *)ep->ext_buf, ep->ext_nbytes);
 
-    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip) < 0) {
+    if (bu_struct_parse(&str, rt_submodel_parse, (char *)sip, NULL) < 0) {
 	bu_vls_free(&str);
     fail:
 	bu_free((char *)sip, "rt_submodel_import4: sip");

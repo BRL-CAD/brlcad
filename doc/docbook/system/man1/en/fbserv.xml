@@ -33,12 +33,12 @@
 <para><command>fbserv</command>
 opens a framebuffer that may be used by any BRL-CAD routine accessing a framebuffer.
 The
-<option>-s or -S</option>
+<option>-s</option> (or <option>-S</option>)
 option specifies that a square framebuffer of the specified size (in pixels) is desired. The
-<option>-n or -N</option>
+<option>-n</option> (or <option>-N</option>)
 option indicates the framebuffer height.
 The
-<option>-w or -W</option>
+<option>-w</option> (or <option>-W</option>)
 option indicates the framebuffer width.
 The
 <option>-v</option>
@@ -53,9 +53,9 @@ The framebuffer device may be included on the command line without the
 option if it is the last token on the command line. The port number may
 also be specified without the
 <option>-p</option>
-option. If both the
-<option>-F and -p</option>
-options are not used, the port number must be followed by the framebuffer
+option. If options
+<option>-F</option> and <option>-p</option>
+are both omitted, the port number must be followed by the framebuffer
 device on the command line. While
 <command>fbserv</command>
 is running, its port number may then be used in other commands
@@ -67,7 +67,7 @@ command may be executed by users at a shell prompt, or it may be used as
 an inetd remote framebuffer server by specifying
 <command>fbserv</command>
 as a server program in
-<emphasis remap='B'>inetd.conf.</emphasis></para>
+<emphasis remap='B'>inetd.conf</emphasis> .</para>
 </refsect1>
 
 <refsect1 xml:id='examples'><title>EXAMPLES</title>
@@ -90,7 +90,7 @@ with it. Any access of a framebuffer specifying port 0 will use the already open
 <para><citerefentry><refentrytitle>bw-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cat-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cell-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>cmap-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gif-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>plot3-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>polar-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>rle-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>fbcmap</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcmrot</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbclear</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcbars</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbanin</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbcolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbfade</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbframe</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>fbfree</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgamma</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbgrid</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbhelp</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fblabel</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbline</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbpoint</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbscanplot</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
-<citerefentry><refentrytitle>fbstretch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbzoom</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
+<citerefentry><refentrytitle>fbstretch</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>fbzoom</refentrytitle><manvolnum>1</manvolnum></citerefentry></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

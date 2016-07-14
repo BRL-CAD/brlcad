@@ -462,13 +462,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
 	    /* Add it to the combination */
 	    switch (bu_vls_addr(&curr_op_vls)[0]) {
-		case '+':
+		case DB_OP_INTERSECT:
 		    rt_tree_array[tree_index].tl_op = OP_INTERSECT;
 		    break;
-		case '-':
+		case DB_OP_SUBTRACT:
 		    rt_tree_array[tree_index].tl_op = OP_SUBTRACT;
 		    break;
-		case 'u':
+		case DB_OP_UNION:
 		    rt_tree_array[tree_index].tl_op = OP_UNION;
 		    break;
 		default:
@@ -528,13 +528,13 @@ build_comb(struct ged *gedp, struct directory *dp, struct bu_vls *target_name)
 
   switch (rt_tree_array[i].tl_op) {
   case OP_UNION:
-  op = 'u';
+  op = DB_OP_UNION;
   break;
   case OP_INTERSECT:
-  op = '+';
+  op = DB_OP_INTERSECT;
   break;
   case OP_SUBTRACT:
-  op = '-';
+  op = DB_OP_SUBTRACT;
   break;
   default:
   printf("write_comb: Illegal op code in tree\n");
@@ -704,13 +704,13 @@ write_comb(struct ged *gedp, struct rt_comb_internal *comb, const char *name)
 
 	switch (rt_tree_array[i].tl_op) {
 	    case OP_UNION:
-		op = 'u';
+		op = DB_OP_UNION;
 		break;
 	    case OP_INTERSECT:
-		op = '+';
+		op = DB_OP_INTERSECT;
 		break;
 	    case OP_SUBTRACT:
-		op = '-';
+		op = DB_OP_SUBTRACT;
 		break;
 	    default:
 		bu_vls_printf(gedp->ged_result_str, "ERROR: Encountered illegal op code in tree\n");

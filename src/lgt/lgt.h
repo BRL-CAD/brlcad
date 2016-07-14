@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file lgt/lgt.h
-    Author:		Gary S. Moss
-*/
+
 #ifndef LGT_LGT_H
 #define LGT_LGT_H
 

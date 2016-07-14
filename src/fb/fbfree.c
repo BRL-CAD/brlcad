@@ -43,7 +43,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    FBIO *fbp;
+    fb *fbp;
 
     while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {
@@ -59,7 +59,7 @@ main(int argc, char **argv)
 	fprintf(stderr, "fbfree: excess argument(s) ignored\n");
     }
 
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	fprintf(stderr, "fbfree: Can't open frame buffer\n");
 	return 1;
     }

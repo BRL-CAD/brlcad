@@ -62,7 +62,6 @@ set(docbook_man1_EN
   fb-bw.xml
   fb-cmap.xml
   fb-fb.xml
-  fb-orle.xml
   fb-pix.xml
   fb-png.xml
   fb-rle.xml
@@ -127,15 +126,12 @@ set(docbook_man1_EN
   nmg-bot.xml
   nmg-rib.xml
   obj-g.xml
-  orle-fb.xml
-  orle-pix.xml
   patch-g.xml
   pictx.xml
   pix-alias.xml
   pix-bw.xml
   pix-bw3.xml
   pix-fb.xml
-  pix-orle.xml
   pix-png.xml
   pix-ppm.xml
   pix-ps.xml

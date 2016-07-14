@@ -197,11 +197,16 @@ add_test(bu_gettime_test tester_bu_timer)
 #  ************ bu_semaphore.c tests *************
 #
 BRLCAD_ADDEXEC(tester_bu_semaphore bu_semaphore.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
+add_test(bu_semaphore_test tester_bu_semaphore)
+add_test(bu_semaphore_test_P1 tester_bu_semaphore -P1)
+add_test(bu_semaphore_test_P2 tester_bu_semaphore -P2)
+add_test(bu_semaphore_test_P3 tester_bu_semaphore -P3)
 
-# failure encountered, output:
-# parallel-increment bu_semaphore test invalid: threads did not run in parallel
-# disabled prior to release 7.22.2
-# add_test(bu_semaphore_test tester_bu_semaphore)
+#
+#  ************ bu_parallel.c tests *************
+#
+BRLCAD_ADDEXEC(tester_bu_parallel bu_parallel.c "libbu;${WINMM_LIBRARY}" NO_INSTALL)
+add_test(bu_parallel_test tester_bu_parallel)
 
 #
 #  ************ vls_vprintf.c tests *************

@@ -38,8 +38,8 @@ track is linear between the wheels. The exception is that between the
 first and last wheels, any extra track length is taken up in a hanging
 catenary arc.</para>
 
-<para>anim_track requires two input files. The first, referred to above as
-<emphasis remap='B'>wheelfile</emphasis>,
+<para><command>anim_track</command> requires two input files. The first, referred to above as
+<emphasis remap='I'>wheelfile</emphasis>,
 is a table which
 defines the initial track geometry by describing the wheels around which
 the track is to be wrapped. The first three columns of the table give
@@ -58,7 +58,7 @@ The track is always confined to a plane which has no left to right
 variation; that is, the wheels can be in front of, behind, above, and
 below each other, but may not be to the left or right of each other. If
 the wheel positions specified in
-<emphasis remap='B'>wheelfile</emphasis>
+<emphasis remap='I'>wheelfile</emphasis>
 do not lie in such a plane, then the first wheel defines the plane into
 which all of the other wheels are projected.</para>
 
@@ -67,9 +67,9 @@ The track segments between wheels are always linear, except for the
 segment between the first and last wheels. If there is any extra track
 length, it is taken up in a catenary arc which hangs down between the
 first and last wheels. Thus if the first wheel in
-<emphasis remap='B'>wheelfile</emphasis>
+<emphasis remap='I'>wheelfile</emphasis>
 should be the top front wheel of the vehicle, and the last wheel in
-<emphasis remap='B'>wheelfile</emphasis>
+<emphasis remap='I'>wheelfile</emphasis>
 should be the top back wheel of the vehicle. Depending on the track
 length mode specified with the
 <option>-l</option>
@@ -78,7 +78,7 @@ option, the catenary segment may or may not appear.</para>
 <para>The second input file required by
 <command>anim_track</command>,
 referred to above as
-<emphasis remap='B'>in.table</emphasis>,
+<emphasis remap='I'>in.table</emphasis>,
 describes the state of the track in every frame of the animation. The
 format of this second file can vary greatly according to the command-line
 options. The first column of the file is ignored, but is expected to
@@ -158,7 +158,7 @@ command for each of the track pads.</para>
 <para>Animate the track wheels. This option takes one argument: a
 slash-separated path to the wheel basename. The number of wheels is
 obtained from the number of lines in the
-<emphasis remap='B'>wheelfile</emphasis>.
+<emphasis remap='I'>wheelfile</emphasis>.
 If there is, for example, a combination named "rwheels" containing 4
 wheels named wheel_0, wheel_1, wheel_2, and wheel_3, then the correct
 argument is:</para>
@@ -205,14 +205,14 @@ roll. The second column through the seventh columns of the
 should contain the position and orientation of the vehicle in every
 frame. The distance that the track should be rolled around the wheels is
 automatically calculated in every frame. If
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 is being used with the same table to create the animation script for the
 vehicle itself, the
 <option>-b</option>
 and
 <option>-d</option>
 options to
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 and
 <command>anim_track</command>
 should be the same.</para>
@@ -229,14 +229,14 @@ that the track should be rolled around the wheels is automatically
 calculated in every frame, based on the assumption that the vehicle is
 always steered to face the direction of motion.
 If
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 is being used with the same table to create the animation script for the
 vehicle itself, the
 <option>-b</option>
 and
 <option>-d</option>
 options to
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 and
 <command>anim_track</command>
 should be the same.</para>
@@ -348,7 +348,7 @@ animation script. The default is zero.</para>
   <listitem>
 <para>Specify the common radius of all the wheels. In this case, the fourth column
 should be omitted from the
-<emphasis remap='B'>wheelfile</emphasis>.</para>
+<emphasis remap='I'>wheelfile</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -369,7 +369,7 @@ frame of an animation, the specified frame number would be zero.</para>
 <para>Specify the animation matrix command to apply to the pads. The default
 value is "rarc", meaning that the matrix between the pad and its parent
 is replaced by a new matrix. See the
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 man page for more information.</para>
   </listitem>
   </varlistentry>
@@ -379,7 +379,7 @@ man page for more information.</para>
 <para>Specify the animation matrix command to apply to the wheels. The default
 value is "lmul", meaning that the new matrix is multiplied onto the left
 of the old matrix between the pad and its parent combination. See the
-<emphasis remap='I'>anim_script</emphasis>
+<command>anim_script</command>
 man page for more information.</para>
 
   </listitem>
@@ -396,7 +396,7 @@ you obtain the position of the center of
 the tank and its orientation at each time. You also need to obtain the
 position of the each wheel relative to the vehicle center at each time.
 All of this information is placed in
-<emphasis remap='B'>in.table</emphasis>
+<emphasis remap='I'>in.table</emphasis>
 . The model of the tank is stored in
 model.g as a combination named "tank". Its centroid is at the
 point (0,0,1005) and it faces the y-axis. An animation script for the
@@ -422,7 +422,7 @@ long and 5mm thick. Ninety-six instances of the pad are created, with names "rpa
 through "rpad.95", and grouped together in a combination called "rtrack".</para>
 
 <para>Now, a file called
-<emphasis remap='B'>rwheelfile</emphasis>
+<emphasis remap='I'>rwheelfile</emphasis>
 is created, describing the positions and radii of the four wheels in the
 right track:</para>
 

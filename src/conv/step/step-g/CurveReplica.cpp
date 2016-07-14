@@ -64,6 +64,7 @@ CurveReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 
     if (!Curve::Load(sw, sse)) {
 	std::cout << CLASSNAME << ":Error loading base class ::Curve." << std::endl;
+	sw->entity_status[id] = STEP_LOAD_ERROR;
 	return false;
     }
 
@@ -77,6 +78,7 @@ CurveReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    parent_curve = dynamic_cast<Curve *>(Factory::CreateObject(sw, entity)); //CreateCurveObject(sw,entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"parent_curve\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
@@ -87,9 +89,12 @@ CurveReplica::Load(STEPWrapper *sw, SDAI_Application_instance *sse)
 	    transformation = dynamic_cast<CartesianTransformationOperator *>(Factory::CreateObject(sw, entity));
 	} else {
 	    std::cout << CLASSNAME << ":Error loading member field \"transformation\"." << std::endl;
+	    sw->entity_status[id] = STEP_LOAD_ERROR;
 	    return false;
 	}
     }
+
+    sw->entity_status[id] = STEP_LOADED;
 
     return true;
 }

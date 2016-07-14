@@ -70,7 +70,7 @@ ged_killrefs(struct ged *gedp, int argc, const char *argv[])
 
     if (!nflag && !gedp->ged_internal_call) {
 	for (k = 1; k < argc; k++)
-	    _ged_eraseAllNamesFromDisplay(gedp, argv[k], 1);
+	    _dl_eraseAllNamesFromDisplay(gedp->ged_gdp->gd_headDisplay, gedp->ged_wdbp->dbip, gedp->ged_free_vlist_callback, argv[k], 1, gedp->freesolid);
     }
 
     ret = GED_OK;

@@ -43,7 +43,7 @@ int
 main(int argc, char **argv)
 {
     int c;
-    FBIO *fbp;
+    fb *fbp;
 
     while ((c = bu_getopt(argc, argv, "F:h?")) != -1) {
 	switch (c) {
@@ -71,7 +71,7 @@ Type \"man brlcad\" for more information.\n");
     fb_genhelp();
 
     printf("=============== Current Selection ================\n");
-    if ((fbp = fb_open(framebuffer, 0, 0)) == FBIO_NULL) {
+    if ((fbp = fb_open(framebuffer, 0, 0)) == FB_NULL) {
 	fprintf(stderr, "fbhelp: Can't open frame buffer\n");
 	return 1;
     }

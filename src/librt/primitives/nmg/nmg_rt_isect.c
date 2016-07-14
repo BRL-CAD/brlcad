@@ -1849,6 +1849,12 @@ isect_ray_snurb_face(struct ray_data *rd, struct faceuse *fu, struct face_g_snur
 	    if (coords < 1)
 		continue; /* "pointless" */
 
+	    if (coords > ELEMENTS_PER_POINT) {
+		bu_log("isect_ray_snurb_face: invalid coordinates value %d\n",
+			coords);
+		continue;
+	    }
+
 	    pt = srf->ctl_points;
 	    for (i = 0; i < 4; i++) {
 		for (j = 0; j < coords; j++) {

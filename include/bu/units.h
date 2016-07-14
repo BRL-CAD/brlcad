@@ -92,7 +92,8 @@ BU_EXPORT extern double bu_mm_value(const char *s);
 BU_EXPORT extern void bu_mm_cvt(const struct bu_structparse *sdp,
 				const char *name,
 				void *base,
-				const char *value);
+				const char *value,
+				void *data);
 
 __END_DECLS
 

@@ -58,7 +58,7 @@ static int r_debug = 0;
 
 static char usage[] = "\
 Usage: rle-fb [-c -d -O] [-F framebuffer]  [-C r/g/b]\n\
-	[-S squarescrsize] [-W scr_width] [-N scr_height]\n\
+	[-s|S squarescrsize] [-w|W scr_width] [-n|N scr_height]\n\
 	[-X scr_xoff] [-Y scr_yoff] [file.rle]\n\
 ";
 
@@ -139,7 +139,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     int i;
     int file_width;		/* unclipped width of rectangle */
     int file_skiplen;		/* # of pixels to skip on l.h.s. */
@@ -218,7 +218,7 @@ main(int argc, char **argv)
     rle_dflt_hdr.xmax -= screen_xbase;
     rle_dflt_hdr.xmin = 0;
 
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FBIO_NULL)
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FB_NULL)
 	bu_exit(12, NULL);
 
     /* Honor original screen size desires, if set, unless they shrank */

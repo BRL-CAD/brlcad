@@ -150,8 +150,6 @@ main(int argc, char **argv)
 
     Tcl_FindExecutable(argv[0]);
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /* First, determine what version database this is */
     if (fread((char *)&record, sizeof record, 1, ifp) != 1) {
 	bu_exit(2, "g2asc(%s) ERROR, file too short to be BRL-CAD database\n",

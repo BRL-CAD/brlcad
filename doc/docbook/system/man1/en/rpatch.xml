@@ -29,7 +29,7 @@
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
 <para>This program reformats FASTGEN files to a form usable by
-<emphasis remap='I'>patch-g.</emphasis>
+<command>patch-g</command> .
 The
 <option>-D</option>
 option handles type 3 components as donuts rather than triangles. The
@@ -38,7 +38,7 @@ option reads FASTGEN3 format files (coordinates are each 10 columns wide).</para
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><emphasis remap='I'>rpatch &lt; fastgen_file &gt; file.rpatch</emphasis></para>
+<para>rpatch &lt; <emphasis remap='I'>fastgen_file</emphasis> &gt; <emphasis remap='I'>file.rpatch</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

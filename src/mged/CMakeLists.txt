@@ -37,34 +37,6 @@ else(LEX_EXECUTABLE AND YACC_EXECUTABLE)
   CMAKEFILES(points)
 endif(LEX_EXECUTABLE AND YACC_EXECUTABLE)
 
-if(WIN32 AND BRLCAD_ENABLE_OPENGL)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-wgl.c")
-endif(WIN32 AND BRLCAD_ENABLE_OPENGL)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-ogl.c")
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_OPENGL AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_OSG)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-osg.c")
-endif(BRLCAD_ENABLE_OSG)
-
-if(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-X.c")
-endif(BRLCAD_ENABLE_X11 AND BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_TK)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-qt.c")
-endif(BRLCAD_ENABLE_QT AND BRLCAD_ENABLE_TK)
-
-#if(BRLCAD_ENABLE_TK)
-#  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-tk.c")
-#endif(BRLCAD_ENABLE_TK)
-
-if(BRLCAD_ENABLE_RTGL)
-  set(MGED_DM_SOURCES "${MGED_DM_SOURCES};dm-rtgl.c")
-endif(BRLCAD_ENABLE_RTGL)
-
 set(MGED_SOURCES
   adc.c
   arbs.c
@@ -79,11 +51,7 @@ set(MGED_SOURCES
   color_scheme.c
   columns.c
   dir.c
-  ${MGED_DM_SOURCES}
   dm-generic.c
-  dm-plot.c
-  dm-ps.c
-  dm-txt.c
   dodraw.c
   doevent.c
   dozoom.c
@@ -118,6 +86,7 @@ set(MGED_SOURCES
   usepen.c
   utility1.c
   vparse.c
+  wdb_obj.c
   )
 
 if(NOT WIN32)
@@ -161,16 +130,9 @@ set(mged_ignore_files
   comb_bool.h
   comb_bool_parse.y
   comb_bool_scan.l
-  dm-ogl.c
-  dm-osg.c
-  dm-qt.c
-  dm-rtgl.c
-  dm-tk.c
-  dm-wgl.c
   fbserv.h
   htmlLibraryUi.h
   menu.h
-  mgdev.h
   mged.bat
   mged.h
   mged_dm.h

@@ -25,7 +25,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>G_lint</emphasis>
+<para><command>g_lint</command>
 uses
 <citerefentry><refentrytitle>librt</refentrytitle><manvolnum>3</manvolnum></citerefentry>
 to fire an array of parallel rays
@@ -185,7 +185,7 @@ to produce its reports as
 <emphasis remap='I'>plot3(5)</emphasis>
 drawing commands instead of ASCII text.
 This is useful in conjunction with the "overlay" command of
-<emphasis remap='I'>mged.</emphasis></para>
+<emphasis remap='I'>mged</emphasis>.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -283,7 +283,7 @@ ignores air regions.</para>
 <para>Sets the
 <command>g_lint</command>
 debug flags to
-<emphasis remap='I'>bits.</emphasis>
+<emphasis remap='I'>bits</emphasis>.
 See the
 <option>-r</option>
 option
@@ -299,7 +299,7 @@ Note that some of the report types have no corresponding diagnostics.</para>
 <para>The command</para>
 
 <!-- .in +5 -->
-<para><emphasis remap='I'>g_lint -a 35 -e 25 -c -g 1 -r 31 -t 0.01 kitchen.g appliances</emphasis></para>
+<para>g_lint -a 35 -e 25 -c -g 1 -r 31 -t 0.01 <emphasis remap='I'>kitchen.g appliances</emphasis></para>
 <!-- .in &bsol;-5 -->
 
 <para>fires a ray every millimeter and produces overlap reports

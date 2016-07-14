@@ -83,7 +83,7 @@ get_args(int argc, char **argv)
 		height = atoi(bu_optarg);
 		break;
 
-	    default:		/* '?' */
+	    default:		/* '?' 'h' */
 		return 0;
 	}
     }
@@ -113,7 +113,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
 
     int x, y;
     int xin, yin;		/* number of sceen output lines */

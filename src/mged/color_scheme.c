@@ -243,7 +243,8 @@ void
 cs_set_dirty_flag(const struct bu_structparse *UNUSED(sdp),
 		  const char *UNUSED(name),
 		  void *UNUSED(base),
-		  const char *UNUSED(value))
+		  const char *UNUSED(value),
+		  void *UNUSED(data))
 {
     struct dm_list *dmlp;
 
@@ -257,7 +258,8 @@ void
 cs_update(const struct bu_structparse *sdp,
 	  const char *name,
 	  void *base,
-	  const char *value)
+	  const char *value,
+	  void *data)
 {
     struct bu_structparse *sp;
     struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -274,7 +276,7 @@ cs_update(const struct bu_structparse *sdp,
 	Tcl_Eval(INTERP, bu_vls_addr(&vls));
     }
 
-    cs_set_bg(sdp, name, base, value);
+    cs_set_bg(sdp, name, base, value, data);
 
     bu_vls_free(&vls);
 }
@@ -284,7 +286,8 @@ void
 cs_set_bg(const struct bu_structparse *UNUSED(sdp),
 	  const char *UNUSED(name),
 	  void *UNUSED(base),
-	  const char *UNUSED(value))
+	  const char *UNUSED(value),
+	  void *UNUSED(data))
 {
     struct dm_list *dmlp;
     struct dm_list *save_curr_dmlp = curr_dm_list;

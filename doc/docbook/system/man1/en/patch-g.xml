@@ -39,9 +39,9 @@ option for most uses.</para>
 
 <para><command>patch-g</command>
 requires that the FASTGEN file be run through the pre-processor
-<emphasis remap='I'>rpatch.</emphasis>
+<command>rpatch</command> .
 This is achieved by executing
-<emphasis remap='I'>rpatch</emphasis>&lt;<emphasis remap='I'>fastgen_file</emphasis>&gt;<emphasis remap='I'>file.rpatch</emphasis>.
+rpatch&lt;<emphasis remap='I'>fastgen_file</emphasis>&gt;<emphasis remap='I'>file.rpatch</emphasis>.
 Once this step is executed,
 <command>patch-g</command>
 can be used to convert the intermediate file into a binary
@@ -67,7 +67,7 @@ from each other will be considered the same vertex.</para>
   <varlistentry>
   <term><option>-A perp_tolerance</option></term>
   <listitem>
-<para>the
+<para>The
 <emphasis remap='I'>perp_tolerance</emphasis>
 is specified as the cosine of an angle (0.0 through 1.0). If the
 cosine of the angle between two vectors is less than the specified
@@ -151,7 +151,7 @@ package.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-c “X Y Z”</option></term>
+  <term><option>-c X Y Z</option></term>
   <listitem>
 <para>Specifies centroid for some plate mode surface normal calculations.</para>
   </listitem>
@@ -166,9 +166,8 @@ package.</para>
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><emphasis remap='I'>rpatch &lt; fastgen_file &gt; file.rpatch</emphasis>
-<!-- .br -->
-<emphasis remap='I'>patch-g -p -f file.rpatch  file.g</emphasis></para>
+<para>rpatch &lt; <emphasis remap='I'>fastgen_file</emphasis> &gt; <emphasis remap='I'>file.rpatch</emphasis></para>
+<para>patch-g -p -f <emphasis remap='I'>file.rpatch  file.g</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

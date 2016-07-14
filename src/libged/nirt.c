@@ -51,8 +51,7 @@
 #include "bn.h"
 #include "bu/cmd.h"
 #include "vmath.h"
-#include "solid.h"
-#include "dg.h"
+
 
 #include "./qray.h"
 #include "./ged_private.h"
@@ -64,8 +63,6 @@
 int
 ged_nirt(struct ged *gedp, int argc, const char *argv[])
 {
-    struct ged_display_list *gdlp = NULL;
-    struct ged_display_list *next_gdlp = NULL;
     char **vp = NULL;
     FILE *fp_in = NULL;
     FILE *fp_out = NULL;
@@ -93,7 +90,6 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     vect_t cml;
     double scan[4]; /* holds sscanf values */
     int i = 9;
-    struct solid *sp = NULL;
     char line[RT_MAXLINE] = {0};
     char *val = NULL;
     struct bu_vls o_vls = BU_VLS_INIT_ZERO;
@@ -540,15 +536,7 @@ ged_nirt(struct ged *gedp, int argc, const char *argv[])
     bu_vls_free(&line1);
 #endif
 
-    gdlp = BU_LIST_NEXT(ged_display_list, gedp->ged_gdp->gd_headDisplay);
-    while (BU_LIST_NOT_HEAD(gdlp, gedp->ged_gdp->gd_headDisplay)) {
-	next_gdlp = BU_LIST_PNEXT(ged_display_list, gdlp);
-
-	FOR_ALL_SOLIDS(sp, &gdlp->gdl_headSolid)
-	    sp->s_wflag = DOWN;
-
-	gdlp = next_gdlp;
-    }
+    dl_set_wflag(gedp->ged_gdp->gd_headDisplay, DOWN);
 
     bu_free(gedp->ged_gdp->gd_rt_cmd, "free gd_rt_cmd");
     gedp->ged_gdp->gd_rt_cmd = NULL;

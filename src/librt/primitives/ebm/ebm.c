@@ -558,7 +558,7 @@ rt_ebm_import4(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(eip->mat);
 
     bu_vls_strcpy(&str, rp->ss.ss_args);
-    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
+    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;
@@ -700,7 +700,7 @@ rt_ebm_import5(struct rt_db_internal *ip, const struct bu_external *ep, const fa
     MAT_IDN(eip->mat);
 
     bu_vls_strcpy(&str, (const char *)ep->ext_buf);
-    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip) < 0) {
+    if (bu_struct_parse(&str, rt_ebm_parse, (char *)eip, NULL) < 0) {
 	bu_vls_free(&str);
 	bu_free((char *)eip, "rt_ebm_import4: eip");
 	ip->idb_type = ID_NULL;

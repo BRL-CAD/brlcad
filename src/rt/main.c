@@ -57,7 +57,7 @@ extern const char title[];
 
 
 /***** Variables shared with viewing model *** */
-FBIO		*fbp = FBIO_NULL;	/* Framebuffer handle */
+fb		*fbp = FB_NULL;	/* Framebuffer handle */
 FILE		*outfp = NULL;		/* optional pixel output file */
 struct icv_image *bif = NULL;
 mat_t		view2model;
@@ -96,8 +96,6 @@ extern fastf_t	rt_perp_tol;		/* Value for rti_tol.perp */
 extern char	*framebuffer;		/* desired framebuffer */
 
 extern struct command_tab	rt_cmdtab[];
-
-extern struct resource	resource[];	/* from opt.c */
 
 int	save_overlaps=0;	/* flag for setting rti_save_overlaps */
 
@@ -267,9 +265,6 @@ int main(int argc, const char **argv)
 	RTG.rtg_parallel = 0;
     }
 
-    /* Initialize parallel processor support */
-    bu_semaphore_init( RT_SEM_LAST );
-
     /*
      *  Do not use bu_log() or bu_malloc() before this point!
      */
@@ -287,10 +282,6 @@ int main(int argc, const char **argv)
 	bu_printb("rt rdebug", rdebug, RDEBUG_FORMAT);
 	bu_log("\n");
     }
-
-    /* We need this to run rt_dirbuild */
-    rt_init_resource(&rt_uniresource, MAX_PSW, NULL);
-    bn_rand_init(rt_uniresource.re_randptr, 0);
 
     title_file = argv[bu_optind];
     title_obj = argv[bu_optind+1];
@@ -377,7 +368,7 @@ int main(int argc, const char **argv)
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 	fbp = fb_open(framebuffer, xx, yy);
 	bu_semaphore_release(BU_SEM_SYSCALL);
-	if (fbp == FBIO_NULL) {
+	if (fbp == FB_NULL) {
 	    fprintf(stderr, "rt:  can't open frame buffer\n");
 	    return 12;
 	}
@@ -399,7 +390,7 @@ int main(int argc, const char **argv)
 		      zoom, zoom);
 	bu_semaphore_release(BU_SEM_SYSCALL);
     }
-    if ((outputfile == (char *)0) && (fbp == FBIO_NULL)) {
+    if ((outputfile == (char *)0) && (fbp == FB_NULL)) {
 	/* If not going to framebuffer, or to a file, then use stdout */
 	if (outfp == NULL) outfp = stdout;
 	/* output_is_binary is changed by view_init, as appropriate */
@@ -413,9 +404,9 @@ int main(int argc, const char **argv)
      *  Initialize all the per-CPU memory resources.
      *  The number of processors can change at runtime, init them all.
      */
+    memset(resource, 0, sizeof(resource));
     for (i = 0; i < MAX_PSW; i++) {
 	rt_init_resource(&resource[i], i, rtip);
-	bn_rand_init(resource[i].re_randptr, i);
     }
     memory_summary();
 
@@ -436,7 +427,7 @@ int main(int argc, const char **argv)
 	frame_retval = do_frame(curframe);
 	if (frame_retval != 0) {
 	    /* Release the framebuffer, if any */
-	    if (fbp != FBIO_NULL) {
+	    if (fbp != FB_NULL) {
 		fb_close(fbp);
 	    }
 
@@ -469,7 +460,7 @@ int main(int argc, const char **argv)
     }
 
     /* Release the framebuffer, if any */
-    if (fbp != FBIO_NULL) {
+    if (fbp != FB_NULL) {
 	fb_close(fbp);
     }
 

@@ -80,6 +80,8 @@ bool ProductDefinitionContextRole::Load(STEPWrapper *sw, SDAI_Application_instan
     name = step->getStringAttribute(sse, "name");
     description = step->getStringAttribute(sse, "description");
 
+    sw->entity_status[id] = STEP_LOADED;
+
     return true;
 }
 

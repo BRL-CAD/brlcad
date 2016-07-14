@@ -23,7 +23,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Azel</emphasis>
+<para><command>azel</command>
 converts between right-handed Cartesian coordinate systems,
 an application-geometry system
 <emphasis remap='I'>x</emphasis>, <emphasis remap='I'>y</emphasis>, <emphasis remap='I'>z</emphasis>
@@ -76,9 +76,9 @@ Default is 0.</para>
   <term><option>-c</option><replaceable> celsiz</replaceable></term>
   <listitem>
 <para>Specifies a cell size of
-<emphasis remap='I'>celsiz.</emphasis>
+<emphasis remap='I'>celsiz</emphasis>.
 Output vectors are scalar multiplied by
-1/<emphasis remap='I'>celsiz.</emphasis>
+1/<emphasis remap='I'>celsiz</emphasis>.
 Default is 1.
 Useful with the
 <option>-r</option>

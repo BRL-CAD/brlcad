@@ -48,6 +48,7 @@
 #include "raytrace.h"
 #include "plot3.h"
 #include "mater.h"
+
 #include "solid.h"
 
 #include "./ged_private.h"
@@ -131,6 +132,8 @@ free_object_selections(struct bu_hash_entry *entry, void *UNUSED(arg))
 void
 ged_free(struct ged *gedp)
 {
+    struct solid *sp;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -160,6 +163,12 @@ ged_free(struct ged *gedp)
 	BU_PUT(gedp->ged_result_str, struct bu_vls);
     }
 
+    FOR_ALL_SOLIDS(sp, &gedp->freesolid->l) {
+	BU_LIST_DEQUEUE(&((sp)->l));
+	FREE_SOLID(sp, &gedp->freesolid->l);
+    }
+    BU_PUT(gedp->freesolid, struct solid);
+
     bu_hash_tbl_traverse(gedp->ged_selections, free_object_selections, NULL);
     bu_hash_tbl_free(gedp->ged_selections);
 }
@@ -168,6 +177,8 @@ ged_free(struct ged *gedp)
 void
 ged_init(struct ged *gedp)
 {
+    struct solid *freesolid;
+
     if (gedp == GED_NULL)
 	return;
 
@@ -191,16 +202,16 @@ ged_init(struct ged *gedp)
     BU_LIST_INIT(gedp->ged_gdp->gd_headVDraw);
     BU_LIST_INIT(&gedp->ged_gdp->gd_headRunRt.l);
 
-    /* yuck */
-    if (!BU_LIST_IS_INITIALIZED(&_FreeSolid.l)) {
-	BU_LIST_INIT(&_FreeSolid.l);
-    }
-
-    gedp->ged_gdp->gd_freeSolids = &_FreeSolid;
     gedp->ged_gdp->gd_uplotOutputMode = PL_OUTPUT_MODE_BINARY;
     qray_init(gedp->ged_gdp);
 
     gedp->ged_selections = bu_hash_tbl_create(0);
+
+    /* init the solid list */
+    BU_GET(freesolid, struct solid);
+    BU_LIST_INIT(&freesolid->l);
+    gedp->freesolid = freesolid;
+    gedp->ged_gdp->gd_freeSolids = freesolid;
 
     /* (in)sanity */
     gedp->ged_gvp = NULL;
@@ -216,7 +227,7 @@ ged_init(struct ged *gedp)
 
 
 void
-ged_view_init(struct ged_view *gvp)
+ged_view_init(struct bview *gvp)
 {
     if (gvp == GED_VIEW_NULL)
 	return;
@@ -236,50 +247,50 @@ ged_view_init(struct ged_view *gvp)
     gvp->gv_rscale = 0.4;
     gvp->gv_sscale = 2.0;
 
-    gvp->gv_adc.gas_a1 = 45.0;
-    gvp->gv_adc.gas_a2 = 45.0;
-    VSET(gvp->gv_adc.gas_line_color, 255, 255, 0);
-    VSET(gvp->gv_adc.gas_tick_color, 255, 255, 255);
+    gvp->gv_adc.a1 = 45.0;
+    gvp->gv_adc.a2 = 45.0;
+    VSET(gvp->gv_adc.line_color, 255, 255, 0);
+    VSET(gvp->gv_adc.tick_color, 255, 255, 255);
 
-    VSET(gvp->gv_grid.ggs_anchor, 0.0, 0.0, 0.0);
-    gvp->gv_grid.ggs_res_h = 1.0;
-    gvp->gv_grid.ggs_res_v = 1.0;
-    gvp->gv_grid.ggs_res_major_h = 5;
-    gvp->gv_grid.ggs_res_major_v = 5;
-    VSET(gvp->gv_grid.ggs_color, 255, 255, 255);
+    VSET(gvp->gv_grid.anchor, 0.0, 0.0, 0.0);
+    gvp->gv_grid.res_h = 1.0;
+    gvp->gv_grid.res_v = 1.0;
+    gvp->gv_grid.res_major_h = 5;
+    gvp->gv_grid.res_major_v = 5;
+    VSET(gvp->gv_grid.color, 255, 255, 255);
 
-    gvp->gv_rect.grs_draw = 0;
-    gvp->gv_rect.grs_pos[0] = 128;
-    gvp->gv_rect.grs_pos[1] = 128;
-    gvp->gv_rect.grs_dim[0] = 256;
-    gvp->gv_rect.grs_dim[1] = 256;
-    VSET(gvp->gv_rect.grs_color, 255, 255, 255);
+    gvp->gv_rect.draw = 0;
+    gvp->gv_rect.pos[0] = 128;
+    gvp->gv_rect.pos[1] = 128;
+    gvp->gv_rect.dim[0] = 256;
+    gvp->gv_rect.dim[1] = 256;
+    VSET(gvp->gv_rect.color, 255, 255, 255);
 
-    gvp->gv_view_axes.gas_draw = 0;
-    VSET(gvp->gv_view_axes.gas_axes_pos, 0.85, -0.85, 0.0);
-    gvp->gv_view_axes.gas_axes_size = 0.2;
-    gvp->gv_view_axes.gas_line_width = 0;
-    gvp->gv_view_axes.gas_pos_only = 1;
-    VSET(gvp->gv_view_axes.gas_axes_color, 255, 255, 255);
-    VSET(gvp->gv_view_axes.gas_label_color, 255, 255, 0);
-    gvp->gv_view_axes.gas_triple_color = 1;
+    gvp->gv_view_axes.draw = 0;
+    VSET(gvp->gv_view_axes.axes_pos, 0.85, -0.85, 0.0);
+    gvp->gv_view_axes.axes_size = 0.2;
+    gvp->gv_view_axes.line_width = 0;
+    gvp->gv_view_axes.pos_only = 1;
+    VSET(gvp->gv_view_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_view_axes.label_color, 255, 255, 0);
+    gvp->gv_view_axes.triple_color = 1;
 
-    gvp->gv_model_axes.gas_draw = 0;
-    VSET(gvp->gv_model_axes.gas_axes_pos, 0.0, 0.0, 0.0);
-    gvp->gv_model_axes.gas_axes_size = 2.0;
-    gvp->gv_model_axes.gas_line_width = 0;
-    gvp->gv_model_axes.gas_pos_only = 0;
-    VSET(gvp->gv_model_axes.gas_axes_color, 255, 255, 255);
-    VSET(gvp->gv_model_axes.gas_label_color, 255, 255, 0);
-    gvp->gv_model_axes.gas_triple_color = 0;
-    gvp->gv_model_axes.gas_tick_enabled = 1;
-    gvp->gv_model_axes.gas_tick_length = 4;
-    gvp->gv_model_axes.gas_tick_major_length = 8;
-    gvp->gv_model_axes.gas_tick_interval = 100;
-    gvp->gv_model_axes.gas_ticks_per_major = 10;
-    gvp->gv_model_axes.gas_tick_threshold = 8;
-    VSET(gvp->gv_model_axes.gas_tick_color, 255, 255, 0);
-    VSET(gvp->gv_model_axes.gas_tick_major_color, 255, 0, 0);
+    gvp->gv_model_axes.draw = 0;
+    VSET(gvp->gv_model_axes.axes_pos, 0.0, 0.0, 0.0);
+    gvp->gv_model_axes.axes_size = 2.0;
+    gvp->gv_model_axes.line_width = 0;
+    gvp->gv_model_axes.pos_only = 0;
+    VSET(gvp->gv_model_axes.axes_color, 255, 255, 255);
+    VSET(gvp->gv_model_axes.label_color, 255, 255, 0);
+    gvp->gv_model_axes.triple_color = 0;
+    gvp->gv_model_axes.tick_enabled = 1;
+    gvp->gv_model_axes.tick_length = 4;
+    gvp->gv_model_axes.tick_major_length = 8;
+    gvp->gv_model_axes.tick_interval = 100;
+    gvp->gv_model_axes.ticks_per_major = 10;
+    gvp->gv_model_axes.tick_threshold = 8;
+    VSET(gvp->gv_model_axes.tick_color, 255, 255, 0);
+    VSET(gvp->gv_model_axes.tick_major_color, 255, 0, 0);
 
     gvp->gv_center_dot.gos_draw = 0;
     VSET(gvp->gv_center_dot.gos_line_color, 255, 255, 0);
@@ -586,13 +597,13 @@ _ged_print_node(struct ged *gedp,
 
 	    switch (rt_tree_array[i].tl_op) {
 		case OP_UNION:
-		    op = 'u';
+		    op = DB_OP_UNION;
 		    break;
 		case OP_INTERSECT:
-		    op = '+';
+		    op = DB_OP_INTERSECT;
 		    break;
 		case OP_SUBTRACT:
-		    op = '-';
+		    op = DB_OP_SUBTRACT;
 		    break;
 		default:
 		    op = '?';

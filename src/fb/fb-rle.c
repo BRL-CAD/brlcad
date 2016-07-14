@@ -159,7 +159,7 @@ get_args(int argc, char **argv)
 int
 main(int argc, char **argv)
 {
-    FBIO *fbp;
+    fb *fbp;
     unsigned char *scan_buf;
     int y;
     int cm_save_needed;
@@ -176,7 +176,7 @@ main(int argc, char **argv)
     if (screen_height == 0 && file_height > 0)
 	screen_height = file_height;
 
-    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FBIO_NULL)
+    if ((fbp = fb_open(framebuffer, screen_width, screen_height)) == FB_NULL)
 	bu_exit(12, NULL);
 
     /* Honor original screen size desires, if set, unless they shrank */
@@ -256,7 +256,7 @@ main(int argc, char **argv)
 
     /* Add comments to the header file, since we have one */
     if (framebuffer == (char *)0)
-	framebuffer = fbp->if_name;
+	framebuffer = fb_get_name(fbp);
     snprintf(comment, COMMENT_SIZE, "encoded_from=%s", framebuffer);
     rle_putcom(bu_strdup(comment), &outrle);
     now = time(0);

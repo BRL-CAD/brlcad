@@ -60,9 +60,10 @@
 #include "pc.h"
 #include "rtgeom.h"
 
-__BEGIN_DECLS
 
 #include "./rt/defines.h"
+
+__BEGIN_DECLS
 
 /**
  * Each type of debugging support is independently controlled, by a
@@ -187,7 +188,7 @@ struct rt_tess_tol {
 struct rt_db_internal {
     uint32_t		idb_magic;
     int			idb_major_type;
-    int			idb_minor_type;		/**< @brief ID_xxx */
+    int			idb_minor_type;	/**< @brief ID_xxx */
     const struct rt_functab *idb_meth;	/**< @brief for ft_ifree(), etc. */
     void *		idb_ptr;
     struct bu_attribute_value_set idb_avs;
@@ -207,6 +208,7 @@ struct rt_db_internal {
 
 /**
  * All necessary information about a ray.
+ *
  * Not called just "ray" to prevent conflicts with VLD stuff.
  */
 struct xray {
@@ -224,7 +226,6 @@ struct xray {
  * This plural xrays structure is a bu_list based container designed
  * to hold a list or bundle of xray(s). This bundle is utilized by
  * rt_shootrays() through its application bundle input.
- *
  */
 struct xrays
 {
@@ -234,7 +235,7 @@ struct xrays
 
 
 /**
- * Information about where a ray hits the surface
+ * Information about where a ray hits the surface.
  *
  * Important Note:  Surface Normals always point OUT of a solid.
  *
@@ -258,9 +259,11 @@ struct hit {
 #define RT_HIT_INIT_ZERO { RT_HIT_MAGIC, 0.0, VINIT_ZERO, VINIT_ZERO, VINIT_ZERO, NULL, 0, NULL }
 
 /**
- * Compute normal into (_hitp)->hit_normal.  Set flip-flag accordingly
- * depending on boolean logic, as one hit may be shared between
- * multiple partitions with different flip status.
+ * Compute normal into (_hitp)->hit_normal.
+ *
+ * Set flip-flag accordingly depending on boolean logic, as one hit
+ * may be shared between multiple partitions with different flip
+ * status.
  *
  * Example: box.r = box.s - sph.s; sph.r = sph.s
  *
@@ -358,8 +361,8 @@ struct uvcoord {
  *
  * Includes information about both endpoints of intersection.
  * Contains forward link to additional intersection segments if the
- * intersection spans multiple segments (e.g., shooting a ray through a
- * torus).
+ * intersection spans multiple segments (e.g., shooting a ray through
+ * a torus).
  */
 struct seg {
     struct bu_list	l;
@@ -586,7 +589,7 @@ struct partition {
 #define RT_CK_PARTITION(_p) BU_CKMAG(_p, PT_MAGIC, "struct partition")
 #define RT_CK_PT_HD(_p) BU_CKMAG(_p, PT_HD_MAGIC, "struct partition list head")
 
-/* Macros for copying only the essential "middle" part of a partition struct */
+/* Macros for copying only the essential "middle" part of a partition struct. */
 #define RT_PT_MIDDLE_START	pt_inseg		/**< @brief 1st elem to copy */
 #define RT_PT_MIDDLE_END	pt_seglist.l.magic	/**< @brief copy up to this elem (non-inclusive) */
 #define RT_PT_MIDDLE_LEN(p) \
@@ -644,9 +647,8 @@ struct partition {
 #define DEQUEUE_PT(_cur) BU_LIST_DEQUEUE((struct bu_list *)_cur)
 
 /**
- * The partition_list structure - bu_list based structure for
- * holding ray bundles.
- *
+ * The partition_list structure - bu_list based structure for holding
+ * ray bundles.
  */
 struct partition_list {
     struct bu_list l;
@@ -658,9 +660,8 @@ struct partition_list {
 
 
 /**
- * Partition bundle.  Passed from rt_shootrays() into user's bundle_hit()
- * function.
- *
+ * Partition bundle.  Passed from rt_shootrays() into user's
+ * bundle_hit() function.
  */
 struct partition_bundle {
     int hits;
@@ -826,8 +827,8 @@ struct db_i {
  * One of these structures is allocated in memory to represent each
  * named object in the database.
  *
- * Note that a d_addr of RT_DIR_PHONY_ADDR ((off_t)-1) means that database
- * storage has not been allocated yet.
+ * Note that a d_addr of RT_DIR_PHONY_ADDR ((off_t)-1) means that
+ * database storage has not been allocated yet.
  *
  * Note that there is special handling for RT_DIR_INMEM "in memory"
  * overrides.
@@ -985,8 +986,8 @@ struct rt_comb_internal {
 
 
 /**
- * In-memory format for database uniform-array binary object.
- * Perhaps move to wdb.h or rtgeom.h?
+ * In-memory format for database uniform-array binary object.  Perhaps
+ * move to wdb.h or rtgeom.h?
  */
 struct rt_binunif_internal {
     uint32_t		magic;
@@ -1348,8 +1349,8 @@ struct animate {
 #define RT_CK_ANIMATE(_p) BU_CKMAG((_p), ANIMATE_MAGIC, "animate")
 
 /**
- * Support for variable length arrays of "struct hit".
- * Patterned after the libbu/ptbl.c idea.
+ * Support for variable length arrays of "struct hit".  Patterned
+ * after the libbu/ptbl.c idea.
  */
 struct rt_htbl {
     struct bu_list	l;	/**< @brief  linked list for caller's use */
@@ -1360,12 +1361,12 @@ struct rt_htbl {
 #define RT_CK_HTBL(_p) BU_CKMAG(_p, RT_HTBL_MAGIC, "rt_htbl")
 
 /**
- * Holds onto memory re-used by rt_shootray() from shot to shot.
- * One of these for each solid which uses pieces.
- * There is a separate array of these for each cpu.
- * Storage for the bit vectors is pre-allocated at prep time.
- * The array is subscripted by st_piecestate_num.
- * The bit vector is subscripted by values found in rt_piecelist pieces[].
+ * Holds onto memory re-used by rt_shootray() from shot to shot.  One
+ * of these for each solid which uses pieces.  There is a separate
+ * array of these for each cpu.  Storage for the bit vectors is
+ * pre-allocated at prep time.  The array is subscripted by
+ * st_piecestate_num.  The bit vector is subscripted by values found
+ * in rt_piecelist pieces[].
  */
 struct rt_piecestate {
     uint32_t		magic;
@@ -1410,21 +1411,22 @@ struct rt_piecelist {
 /**
  * Per-CPU statistics and resources.
  *
- * One of these structures is allocated per processor.  To prevent
- * excessive competition for free structures, memory is now allocated
- * on a per-processor basis.  The application structure a_resource
- * element specifies the resource structure to be used; if
- * uniprocessing, a null a_resource pointer results in using the
- * internal global structure (&rt_uniresource), making initial
+ * One of these structures is needed per thread of execution, usually
+ * with calling applications creating an array with at least MAX_PSW
+ * elements.  To prevent excessive competition for free structures,
+ * memory is now allocated on a per-processor basis.  The application
+ * structure a_resource element specifies the resource structure to be
+ * used; if uniprocessing, a null a_resource pointer results in using
+ * the internal global structure (&rt_uniresource), making initial
  * application development simpler.
- *
- * Applications are responsible for calling rt_init_resource() for
- * each resource structure before letting LIBRT use them.
  *
  * Note that if multiple models are being used, the partition and bitv
  * structures (which are variable length) will require there to be
  * ncpus * nmodels resource structures, the selection of which will be
  * the responsibility of the application.
+ *
+ * Applications are responsible for calling rt_init_resource() on each
+ * resource structure before letting LIBRT use them.
  *
  * Per-processor statistics are initially collected in here, and then
  * posted to rt_i by rt_add_res_stats().
@@ -1480,6 +1482,7 @@ struct resource {
 RT_EXPORT extern struct resource rt_uniresource;	/**< @brief  default.  Defined in librt/globals.c */
 #define RESOURCE_NULL	((struct resource *)0)
 #define RT_CK_RESOURCE(_p) BU_CKMAG(_p, RESOURCE_MAGIC, "struct resource")
+#define RT_RESOURCE_INIT_ZERO { RESOURCE_MAGIC, 0, BU_LIST_INIT_ZERO, BU_PTBL_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, 0, 0, 0, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, BU_LIST_INIT_ZERO, NULL, 0, NULL, 0, 0, 0, 0, 0, 0, 0, 0, NULL, 0, 0, 0, 0, BU_PTBL_INIT_ZERO, NULL, 0, 0, 0, NULL, BU_PTBL_INIT_ZERO }
 
 
 /**
@@ -1626,24 +1629,25 @@ struct application {
  *
  * When calling rt_shootrays(), these fields are mandatory:
  *
- *	- b_ap		Members in this single ray application structure should be set
- *	 		in a similar fashion as when used with rt_shootray() with the
- *	 		exception of a_hit() and a_miss(). Default implementations of
- *	 		these routines are provided that simple update hit/miss counters
- *	 		and attach the hit partitions and segments to the
- *	 		partition_bundle structure. Users can still override this default
- *	 		functionality but have to make sure to move the partition and
- *	 		segment list to the new partition_bundle structure.
+ *	- b_ap	Members in this single ray application structure should
+ *	 	be set in a similar fashion as when used with
+ *	 	rt_shootray() with the exception of a_hit() and
+ *	 	a_miss(). Default implementations of these routines
+ *	 	are provided that simple update hit/miss counters and
+ *	 	attach the hit partitions and segments to the
+ *	 	partition_bundle structure. Users can still override
+ *	 	this default functionality but have to make sure to
+ *	 	move the partition and segment list to the new
+ *	 	partition_bundle structure.
  *	- b_hit() Routine to call when something is hit by the ray bundle.
  *	- b_miss() Routine to call when ray bundle misses everything.
  *
- *  Note that rt_shootrays() returns the (int) return of the
- *  b_hit()/b_miss() function called, as well as placing it in
- *  b_return.
+ * Note that rt_shootrays() returns the (int) return of the
+ * b_hit()/b_miss() function called, as well as placing it in
+ * b_return.
  *
- *  An integer field b_user and a void *field b_uptr are
- *  provided in the structure for custom user data.
- *
+ * An integer field b_user and a void *field b_uptr are provided in
+ * the structure for custom user data.
  */
 struct application_bundle
 {
@@ -1722,11 +1726,10 @@ RT_EXPORT extern struct rt_g RTG;
 #define RT_SEM_RESULTS	(RT_SEM_STATS+1)
 #define RT_SEM_MODEL	(RT_SEM_RESULTS+1)
 
-#define RT_SEM_LAST	(RT_SEM_MODEL+1)	/**< @brief  Call bu_semaphore_init(RT_SEM_LAST); */
+#define RT_SEM_LAST	(RT_SEM_MODEL+1)
 
 
 /**
- * @brief
  * This structure keeps track of almost everything for ray-tracing
  * support: Regions, primitives, model bounding box, statistics.
  *
@@ -1894,8 +1897,8 @@ struct rt_point_labels {
 
 
 /**
- * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c
- * to contain forward-linked lists of points.
+ * Used by rpc.c, ehy.c, epa.c, eto.c and rhc.c to contain
+ * forward-linked lists of points.
  */
 struct rt_pt_node {
     point_t p;			/**< @brief  a point */
@@ -1903,22 +1906,23 @@ struct rt_pt_node {
 };
 
 /**
- * Normally, librt doesn't have a concept of a "display"
- * of the geometry.  However for at least the plotting routines,
- * view information is sometimes needed to produce more intelligent
- * output.  In those situations, the application should
- * populate and pass an rt_view_info struct.
+ * Normally, librt doesn't have a concept of a "display" of the
+ * geometry.  However for at least the plotting routines, view
+ * information is sometimes needed to produce more intelligent output.
+ * In those situations, the application should populate and pass an
+ * rt_view_info struct.
  *
- * **TODO** this structure is NOT in final form and should not
- * be relied upon.
+ * **TODO** this structure is NOT in final form and should not be
+ * relied upon.
  */
 struct rt_view_info {
     struct bu_list *vhead;
     const struct bn_tol *tol;
 
-    /** The average distance between the segment points of plotted curves.
-     * Smaller spacing means more points per curve, and thus smoother (more
-     * accurate) plot curves.
+    /**
+     * The average distance between the segment points of plotted
+     * curves.  Smaller spacing means more points per curve, and thus
+     * smoother (more accurate) plot curves.
      */
     fastf_t point_spacing;
 
@@ -1930,8 +1934,8 @@ struct rt_view_info {
 };
 
 /**
- * Specifies a subset of a primitive's geometry as the target for
- * an operation.
+ * Specifies a subset of a primitive's geometry as the target for an
+ * operation.
  *
  * TODO: This structure is tentative and subject to change or removal
  *       without notice.
@@ -1968,8 +1972,8 @@ struct rt_object_selections {
 };
 
 /**
- * Analogous to a database query. Specifies how to filter and sort
- * the selectable components of a primitive in order to find the most
+ * Analogous to a database query. Specifies how to filter and sort the
+ * selectable components of a primitive in order to find the most
  * relevant selections for a particular application.
  *
  * TODO: This structure is tentative and subject to change or removal
@@ -2218,9 +2222,10 @@ struct rt_functab {
 
     /** apply an operation to a selected subset of a primitive */
     int (*ft_process_selection)(struct rt_db_internal *,
+				struct db_i *,
 				const struct rt_selection *,
 				const struct rt_selection_operation *);
-#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, const struct rt_selection *, const struct rt_selection_operation *))_func)
+#define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
 };
 
@@ -2637,7 +2642,7 @@ RT_EXPORT extern int rt_gen_circular_grid(struct xrays *ray_bundle,
  *
  * Formal Return: whatever the application function returns (an int).
  *
- * NOTE:  The application functions may call rt_shootray() recursively.
+ * NOTE: The application functions may call rt_shootray() recursively.
  * Thus, none of the local variables may be static.
  *
  * To prevent having to lock the statistics variables in a PARALLEL
@@ -2686,10 +2691,11 @@ RT_EXPORT extern int rt_raybundle_maker(struct xray *rp, double radius, const fa
 
 /* Shoot a ray, returning the partition list */
 /**
- * Shoot a single ray and return the partition list. Handles callback issues.
+ * Shoot a single ray and return the partition list. Handles callback
+ * issues.
  *
- * Note that it calls malloc(), therefore should NOT be used if performance
- * matters.
+ * Note that it calls malloc(), therefore should NOT be used if
+ * performance matters.
  */
 RT_EXPORT extern struct partition *rt_shootray_simple(struct application *ap,
 						      point_t origin,
@@ -2800,8 +2806,8 @@ RT_EXPORT extern void rt_pr_partitions(const struct rt_i *rtip,
 				       const char *title);
 /* Find solid by leaf name */
 /**
- * Given the (leaf) name of a solid, find the first occurrence of it in
- * the solid list.  Used mostly to find the light source.  Returns
+ * Given the (leaf) name of a solid, find the first occurrence of it
+ * in the solid list.  Used mostly to find the light source.  Returns
  * soltab pointer, or RT_SOLTAB_NULL.
  */
 RT_EXPORT extern struct soltab *rt_find_solid(const struct rt_i *rtip,
@@ -3127,8 +3133,9 @@ RT_EXPORT extern int rt_rpp_region(struct rt_i *rtip,
 				   fastf_t *max_rpp);
 
 /**
- * Compute the intersections of a ray with a rectangular parallelepiped
- * (RPP) that has faces parallel to the coordinate planes
+ * Compute the intersections of a ray with a rectangular
+ * parallelepiped (RPP) that has faces parallel to the coordinate
+ * planes
  *
  * The algorithm here was developed by Gary Kuehl for GIFT.  A good
  * description of the approach used can be found in "??" by XYZZY and
@@ -3174,14 +3181,17 @@ RT_EXPORT extern void rt_cut_clean(struct rt_i *rtip);
 /**
  *
  * Calculate the bounding RPP of the internal format passed in 'ip'.
- * The bounding RPP is returned in rpp_min and rpp_max in mm
- * FIXME: This function needs to be modified to eliminate the rt_gettree() call and the related
- * parameters. In that case calling code needs to call another function before calling this function
- * That function must create a union tree with tr_a.tu_op=OP_SOLID. It can look as follows :
- * union tree * rt_comb_tree(const struct db_i *dbip, const struct rt_db_internal *ip). The tree is set
- * in the struct rt_db_internal * ip argument.
- * Once a suitable tree is set in the ip, then this function can be called with the struct rt_db_internal *
- * to return the BB properly without getting stuck during tree traversal in rt_bound_tree()
+ * The bounding RPP is returned in rpp_min and rpp_max in mm FIXME:
+ * This function needs to be modified to eliminate the rt_gettree()
+ * call and the related parameters. In that case calling code needs to
+ * call another function before calling this function That function
+ * must create a union tree with tr_a.tu_op=OP_SOLID. It can look as
+ * follows : union tree * rt_comb_tree(const struct db_i *dbip, const
+ * struct rt_db_internal *ip). The tree is set in the struct
+ * rt_db_internal * ip argument.  Once a suitable tree is set in the
+ * ip, then this function can be called with the struct rt_db_internal
+ * * to return the BB properly without getting stuck during tree
+ * traversal in rt_bound_tree()
  *
  * Returns -
  *  0 success
@@ -3919,23 +3929,20 @@ RT_EXPORT extern int db5_get_attributes(const struct db_i *dbip,
 RT_EXPORT extern size_t db_tree_nleaves(const union tree *tp);
 
 /**
- * Take a binary tree in "V4-ready" layout (non-unions pushed below unions,
- * left-heavy), and flatten it into an array layout, ready for conversion
- * back to the GIFT-inspired V4 database format.
+ * Take a binary tree in "V4-ready" layout (non-unions pushed below
+ * unions, left-heavy), and flatten it into an array layout, ready for
+ * conversion back to the GIFT-inspired V4 database format.
  *
  * This is done using the db_non_union_push() routine.
  *
- * If argument 'free' is non-zero, then
- * the non-leaf nodes are freed along the way, to prevent memory leaks.
- * In this case, the caller's copy of 'tp' will be invalid upon return.
+ * If argument 'free' is non-zero, then the non-leaf nodes are freed
+ * along the way, to prevent memory leaks.  In this case, the caller's
+ * copy of 'tp' will be invalid upon return.
  *
- * When invoked at the very top of the tree, the op argument must be OP_UNION.
+ * When invoked at the very top of the tree, the op argument must be
+ * OP_UNION.
  */
-RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array	*rt_tree_array,
-						       union tree			*tp,
-						       int			op,
-						       int			avail,
-						       struct resource		*resp);
+RT_EXPORT extern struct rt_tree_array *db_flatten_tree(struct rt_tree_array *rt_tree_array, union tree *tp, int op, int avail, struct resource *resp);
 
 /**
  * Import a combination record from a V4 database into internal form.
@@ -3989,8 +3996,8 @@ RT_EXPORT extern int rt_comb_describe(struct bu_vls	*str,
 
 /**
  * As the v4 database does not really have the notion of "wrapping",
- * this function writes the object name into the
- * proper place (a standard location in all granules).
+ * this function writes the object name into the proper place (a
+ * standard location in all granules).
  */
 RT_EXPORT extern void db_wrap_v4_external(struct bu_external *op,
 					  const char *name);
@@ -4011,8 +4018,10 @@ RT_EXPORT extern int db_ck_left_heavy_tree(const union tree	*tp,
 
 /**
  * Look a gift-tree in the mouth.
+ *
  * Ensure that this boolean tree conforms to the GIFT convention that
  * union operations must bind the loosest.
+ *
  * There are two stages to this check:
  * 1) Ensure that if unions are present they are all at the root of tree,
  * 2) Ensure non-union children of union nodes are all left-heavy
@@ -4027,9 +4036,9 @@ RT_EXPORT extern int db_ck_v4gift_tree(const union tree *tp);
 /**
  * Given a rt_tree_array array, build a tree of "union tree" nodes
  * appropriately connected together.  Every element of the
- * rt_tree_array array used is replaced with a TREE_NULL.
- * Elements which are already TREE_NULL are ignored.
- * Returns a pointer to the top of the tree.
+ * rt_tree_array array used is replaced with a TREE_NULL.  Elements
+ * which are already TREE_NULL are ignored.  Returns a pointer to the
+ * top of the tree.
  */
 RT_EXPORT extern union tree *db_mkbool_tree(struct rt_tree_array *rt_tree_array,
 					    size_t		howfar,
@@ -4058,9 +4067,11 @@ RT_EXPORT extern void rt_ell_16pts(fastf_t *ov,
 
 
 /**
- * change all matching object names in the comb tree from old_name to new_name
+ * change all matching object names in the comb tree from old_name to
+ * new_name
  *
- * calling function must supply an initialized bu_ptbl, and free it once done.
+ * calling function must supply an initialized bu_ptbl, and free it
+ * once done.
  */
 RT_EXPORT extern int db_comb_mvall(struct directory *dp,
 				   struct db_i *dbip,
@@ -4127,8 +4138,8 @@ RT_EXPORT extern int db_fwrite_external(FILE			*fp,
  * place them in malloc()'ed storage, which the caller is responsible
  * for free()'ing.
  *
- * This loads the combination into a local record buffer.
- * This is in external v4 format.
+ * This loads the combination into a local record buffer.  This is in
+ * external v4 format.
  *
  * Returns -
  * union record * - OK
@@ -4167,8 +4178,8 @@ RT_EXPORT extern int db_put(struct db_i *,
 			    off_t offset, size_t len);
 
 /**
- * Obtains a object from the database, leaving it in external (on-disk)
- * format.
+ * Obtains a object from the database, leaving it in external
+ * (on-disk) format.
  *
  * The bu_external structure represented by 'ep' is initialized here,
  * the caller need not pre-initialize it.  On error, 'ep' is left
@@ -4417,12 +4428,10 @@ RT_EXPORT extern int db_is_directory_non_empty(const struct db_i	*dbip);
 RT_EXPORT extern int db_dirhash(const char *str);
 
 /**
- * Name -
- * Description -
  * This routine ensures that ret_name is not already in the
- * directory. If it is, it tries a fixed number of times to
- * modify ret_name before giving up. Note - most of the time,
- * the hash for ret_name is computed once.
+ * directory. If it is, it tries a fixed number of times to modify
+ * ret_name before giving up. Note - most of the time, the hash for
+ * ret_name is computed once.
  *
  * Inputs -
  * dbip database instance pointer
@@ -4559,8 +4568,8 @@ RT_EXPORT extern int db_rename(struct db_i *,
 
 
 /**
- * Updates the d_nref fields (which count the number of times a given entry
- * is referenced by a COMBination in the database).
+ * Updates the d_nref fields (which count the number of times a given
+ * entry is referenced by a COMBination in the database).
  *
  */
 RT_EXPORT extern void db_update_nref(struct db_i *dbip,
@@ -4585,9 +4594,9 @@ DEPRECATED RT_EXPORT extern int db_regexp_match(const char *pattern,
 
 
 /**
- * Appends a list of all database matches to the given vls, or the pattern
- * itself if no matches are found.
- * Returns the number of matches.
+ * Appends a list of all database matches to the given vls, or the
+ * pattern itself if no matches are found.  Returns the number of
+ * matches.
  */
 RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 					 struct db_i *dbip,
@@ -4595,9 +4604,9 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
 
 /* db_ls.c */
 /**
- * db_ls takes a database instance pointer and assembles a
- * directory pointer array of objects in the database according
- * to a set of flags.
+ * db_ls takes a database instance pointer and assembles a directory
+ * pointer array of objects in the database according to a set of
+ * flags.
  *
  * The caller is responsible for freeing the array.
  *
@@ -4605,7 +4614,7 @@ RT_EXPORT extern int db_regexp_match_all(struct bu_vls *dest,
  * integer count of objects in dpv
  * struct directory ** array of objects in dpv via argument
  *
- * WARNING:  THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
+ * WARNING: THIS FUNCTION IS STILL IN DEVELOPMENT - IT IS NOT YET
  * ASSUMED THAT THIS IS ITS FINAL FORM - DO NOT DEPEND ON IT REMAINING
  * THE SAME UNTIL THIS WARNING IS REMOVED
  */
@@ -4794,8 +4803,8 @@ RT_EXPORT extern void db_tree_del_rhs(union tree *tp,
  *
  * The two nodes deleted will have their memory freed.
  *
- * If the tree is a single OP_DB_LEAF node, the leaf is freed and
- * *tp is set to NULL.
+ * If the tree is a single OP_DB_LEAF node, the leaf is freed and *tp
+ * is set to NULL.
  *
  * Returns -
  * -3 Internal error
@@ -4945,8 +4954,8 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  *			For example:  rt_initial_tree_state,
  *			and mged_initial_tree_state.
  *
- * These parameters are pointers to callback routines.
- * If NULL, they won't be called.
+ * These parameters are pointers to callback routines.  If NULL, they
+ * won't be called.
  *
  *	reg_start_func	Called at beginning of each region, before
  *			visiting any nodes within the region.  Return
@@ -4977,8 +4986,7 @@ RT_EXPORT extern int db_tally_subtree_regions(union tree	*tp,
  * must be 1.
  *
  * If ncpu > 1, the caller is responsible for making sure that
- * RTG.rtg_parallel is non-zero, and that the bu_semaphore_init()
- * functions has been performed, first.
+ * RTG.rtg_parallel is non-zero.
  *
  * Plucks per-cpu resources out of rtip->rti_resources[].  They need
  * to have been initialized first.
@@ -5139,7 +5147,8 @@ RT_EXPORT extern int rt_db_put_internal(struct directory	*dp,
  * Put an object in internal format out onto a file in external
  * format.  Used by LIBWDB.
  *
- * Can't really require a dbip parameter, as many callers won't have one.
+ * Can't really require a dbip parameter, as many callers won't have
+ * one.
  *
  * THIS ROUTINE ONLY SUPPORTS WRITING V4 GEOMETRY.
  *
@@ -5467,9 +5476,29 @@ RT_EXPORT extern void rt_plot_all_bboxes(FILE *fp,
 RT_EXPORT extern void rt_plot_all_solids(FILE		*fp,
 					 struct rt_i	*rtip,
 					 struct resource	*resp);
-RT_EXPORT extern void rt_init_resource(struct resource *resp,
-				       int		cpu_num,
-				       struct rt_i	*rtip);
+
+RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
+				   struct directory *start,
+				   struct directory *end,
+				   struct bu_ptbl *paths,
+				   struct resource *resp);
+
+/**
+ * initialize a memory resource structure for use during ray tracing.
+ *
+ * a given resource structure is prepared for use and marked as the
+ * resource for a given thread of execution (indicated by 'cpu_num').
+ * if an 'rtip' ray tracing instance pointer is provided, the resource
+ * structure will be stored within so that it's available to threads
+ * of execution during parallel ray tracing.
+ *
+ * This routine should initialize all the same resources that
+ * rt_clean_resource() releases.  It shouldn't (but currently does for
+ * ptbl) allocate any dynamic memory, just init pointers & lists.
+ */
+RT_EXPORT extern void rt_init_resource(struct resource *resp, int cpu_num, struct rt_i *rtip);
+
+
 RT_EXPORT extern void rt_clean_resource(struct rt_i *rtip,
 					struct resource *resp);
 RT_EXPORT extern void rt_clean_resource_complete(struct rt_i *rtip,
@@ -5484,11 +5513,6 @@ RT_EXPORT extern int re_prep_solids(struct rt_i *rtip,
 				    int num_solids,
 				    char **solid_names,
 				    struct resource *resp);
-RT_EXPORT extern int rt_find_paths(struct db_i *dbip,
-				   struct directory *start,
-				   struct directory *end,
-				   struct bu_ptbl *paths,
-				   struct resource *resp);
 
 RT_EXPORT extern struct bu_bitv *rt_get_solidbitv(size_t nbits,
 						  struct resource *resp);
@@ -5664,13 +5688,6 @@ RT_EXPORT extern void bn_vlist_cleanup(struct bu_list *hd);
  */
 RT_EXPORT extern void rt_vlist_cleanup(void);
 
-
-/**
- * Given an RPP, draw the outline of it into the vlist.
- */
-RT_EXPORT extern void bn_vlist_rpp(struct bu_list *hd,
-				   const point_t minn,
-				   const point_t maxx);
 
 
 /************************************************************************
@@ -7319,8 +7336,8 @@ RT_EXPORT extern double rt_dspline4(mat_t m,
  * a, b, c, d	knot values
  * alpha:	0..1 interpolation point
  *
- * Evaluate a spline at a point "alpha" between knot pts b & c
- * The knots and result are all vectors with "depth" values (length).
+ * Evaluate a spline at a point "alpha" between knot pts b & c. The
+ * knots and result are all vectors with "depth" values (length).
  *
  */
 RT_EXPORT extern void rt_dspline4v(double *pt,
@@ -7725,8 +7742,8 @@ RT_EXPORT extern const char *db5_standard_attribute_def(int idx);
 
 /**
  * Function for recognizing various versions of the DB5 standard
- * attribute names that have been used - returns the attribute type
- * of the supplied attribute name, or -1 if it is not a recognized
+ * attribute names that have been used - returns the attribute type of
+ * the supplied attribute name, or -1 if it is not a recognized
  * variation of the standard attributes.
  *
  * PRIVATE: this is new API and should be considered private for the

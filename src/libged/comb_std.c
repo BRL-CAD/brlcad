@@ -148,15 +148,15 @@ add_operator(struct ged *gedp, struct bu_list *hp, char ch, short int *last_tok)
     BU_CK_LIST_HEAD(hp);
 
     switch (ch) {
-	case 'u':
+	case DB_OP_UNION:
 	    append_union(hp);
 	    *last_tok = TOK_UNION;
 	    break;
-	case '+':
+	case DB_OP_INTERSECT:
 	    append_inter(hp);
 	    *last_tok = TOK_INTER;
 	    break;
-	case '-':
+	case DB_OP_SUBTRACT:
 	    append_subtr(hp);
 	    *last_tok = TOK_SUBTR;
 	    break;

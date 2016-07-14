@@ -127,8 +127,6 @@ main(int argc, char *argv[])
 
     bu_setlinebuf( stderr );
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     rt_i *rtip;
     db_tree_state init_state;
 
@@ -266,19 +264,19 @@ main(int argc, char *argv[])
 		    csgOp = csgTokens[j].at(0);
 		    cout << "*DEBUG*  csgOp = " << csgOp << endl;
 		    switch (csgOp) {
-			case '+':
+			case DB_OP_INTERSECT:
 			    cout << "*** DEBUG INTERSECT ***" << endl;
 			    tool_body = region_bodies.pop();
 			    from_bodies.append(region_bodies.pop());
 			    gmt->intersect(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
 			    break;
-			case '-':
+			case DB_OP_SUBTRACT:
 			    cout << "*** DEBUG SUBTRACT ***" << endl;
 			    tool_body = region_bodies.pop();
 			    from_bodies.append(region_bodies.pop());
 			    gmt->subtract(tool_body, from_bodies, region_bodies, CUBIT_TRUE);
 			    break;
-			case 'u':
+			case DB_OP_UNION:
 			    cout << "*** DEBUG UNION ***" << endl;
 			    if (region_bodies.size() >= 2) {
 				from_bodies.append(region_bodies.pop());
@@ -485,11 +483,8 @@ describe_tree(  tree *tree,
 {
     bu_vls left = BU_VLS_INIT_ZERO;
     bu_vls right = BU_VLS_INIT_ZERO;
-    char *union_op = " u ";
-    char *subtract_op = " - ";
-    char *intersect_op = " + ";
-    char *xor_op = " ^ ";
-    char *op = NULL;
+    const char op_xor='^';
+    char op='\0';
 
     BU_CK_VLS(str);
 
@@ -516,13 +511,13 @@ describe_tree(  tree *tree,
 	    bu_vls_strcat( str,  tree->tr_l.tl_name );
 	    break;
 	case OP_UNION:		/*  operator node */
-	    op = union_op;
+	    op = DB_OP_UNION;
 	    goto binary;
 	case OP_INTERSECT:	/* intersection operator node */
-	    op = intersect_op;
+	    op = DB_OP_INTERSECT;
 	    goto binary;
 	case OP_SUBTRACT:	/* subtraction operator node */
-	    op = subtract_op;
+	    op = DB_OP_SUBTRACT;
 	    goto binary;
 	case OP_XOR:		/* exclusive "or" operator node */
 	    op = xor_op;
@@ -531,7 +526,7 @@ describe_tree(  tree *tree,
 	    describe_tree( tree->tr_b.tb_right, &right );
 	    bu_vls_putc( str, '(' );
 	    bu_vls_vlscatzap( str, &left );
-	    bu_vls_strcat( str, op );
+	    bu_vls_printf(str, " %c ", op);
 	    bu_vls_vlscatzap( str, &right );
 	    bu_vls_putc( str, ')' );
 	    break;
@@ -1278,12 +1273,9 @@ booltree_evaluate( tree *tp, resource *resp )
 {
     union tree              *tl;
     union tree              *tr;
-    int                     op;
-    const char              *op_str;
+    char                     op;
     char                    *name;
     int			     namelen;
-
-    enum BOOL_ENUM_TYPE { ADD, ISECT, SUBTR };
 
     RT_CK_TREE(tp);
 
@@ -1294,16 +1286,13 @@ booltree_evaluate( tree *tp, resource *resp )
 	    /* Hit a tree leaf */
 	    return tp;
 	case OP_UNION:
-	    op = ADD;
-	    op_str = " u ";
+	    op = DB_OP_UNION;
 	    break;
 	case OP_INTERSECT:
-	    op = ISECT;
-	    op_str = " + ";
+	    op = DB_OP_INTERSECT;
 	    break;
 	case OP_SUBTRACT:
-	    op = SUBTR;
-	    op_str = " - ";
+	    op = DB_OP_SUBTRACT;
 	    break;
 	default:
 	    bu_log("booltree_evaluate: bad op %d\n", tp->tr_op);
@@ -1316,7 +1305,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tl == 0 || !tl->tr_d.td_r) {
 	if (tr == 0 || !tr->tr_d.td_r)
 	    return 0;
-	if ( op == ADD )
+	if ( op == DB_OP_UNION )
 	    return tr;
 	/* For sub and intersect, if lhs is 0, result is null */
 	//db_free_tree(tr);
@@ -1327,7 +1316,7 @@ booltree_evaluate( tree *tp, resource *resp )
     if (tr == 0 || !tr->tr_d.td_r) {
 	if (tl == 0 || !tl->tr_d.td_r)
 	    return 0;
-	if ( op == ISECT )  {
+	if ( op == DB_OP_INTERSECT )  {
 	    db_free_tree(tl, resp);
 	    tp->tr_b.tb_left = TREE_NULL;
 	    tp->tr_op = OP_NOP;
@@ -1339,14 +1328,14 @@ booltree_evaluate( tree *tp, resource *resp )
     if ( tl->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad left tree\n");
     if ( tr->tr_op != OP_DB_LEAF )  bu_exit(2, "booltree_evaluate() bad right tree\n");
 
-    bu_log(" {%s}%s{%s}\n", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
-    cout << "******" << tl->tr_d.td_name << op_str << tr->tr_d.td_name << "***********" << endl;
+    bu_log(" {%s} %c {%s}\n", tl->tr_d.td_name, opr, tr->tr_d.td_name );
+    cout << "******" << tl->tr_d.td_name << " " << op << " " << tr->tr_d.td_name << "***********" << endl;
 
     /* Build string of result name */
-    namelen = strlen(tl->tr_d.td_name)+strlen(op_str)+strlen(tr->tr_d.td_name)+3;
+    namelen = strlen(tl->tr_d.td_name)+strlen(op)+2+strlen(tr->tr_d.td_name)+3;
     name = (char *)bu_malloc( namelen, "booltree_evaluate name");
 
-    snprintf(name, namelen, "(%s%s%s)", tl->tr_d.td_name, op_str, tr->tr_d.td_name );
+    snprintf(name, namelen, "(%s %c %s)", tl->tr_d.td_name, op, tr->tr_d.td_name );
 
     /* Clean up child tree nodes (and their names) */
     db_free_tree(tl, resp);

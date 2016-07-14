@@ -206,7 +206,7 @@ int
 main(int argc, char **argv)
 {
     int y;
-    FBIO *fbp;
+    fb *fbp;
     int xout, yout, n, m, xstart, xskip;
 
     if (!get_args(argc, argv)) {

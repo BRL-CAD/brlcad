@@ -33,7 +33,7 @@
 #include "spm.h"
 
 
-static FBIO *fbp;
+static fb *fbp;
 
 static char *framebuffer = NULL;
 static int scr_width = 0;
@@ -155,13 +155,13 @@ main(int argc, char **argv)
 	bu_exit(1, NULL);
     }
 
-    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FBIO_NULL)
+    if ((fbp = fb_open(framebuffer, scr_width, scr_height)) == FB_NULL)
 	bu_exit(12, NULL);
     scr_width = fb_getwidth(fbp);
     scr_height = fb_getheight(fbp);
 
     mp = bn_spm_init(vsize, sizeof(RGBpixel));
-    if (mp == BN_SPM_MAP_NULL || fbp == FBIO_NULL)
+    if (mp == BN_SPM_MAP_NULL || fbp == FB_NULL)
 	bu_exit(1, NULL);
 
     bn_spm_load(mp, file_name);

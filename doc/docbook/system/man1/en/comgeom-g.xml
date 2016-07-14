@@ -32,11 +32,11 @@ a GIFT-style input file, convert the geometry into
 the internal form used by the BRL-CAD package,
 and write an MGED-style binary database.</para>
 
-<para>Each solid is given the name “s###”, retaining the COMGEOM solid number.
-Each region is given the name “r###”, retaining the COMGEOM region number.
-Regions are grouped together into various groups “g###” based
-on the region-id numbers.  Group “g00” gets all regions with region-id
-of zero, “g0” gets ids one through 99, “g1” gets ids 100 through 199, etc.</para>
+<para>Each solid is given the name s###, retaining the COMGEOM solid number.
+Each region is given the name r###, retaining the COMGEOM region number.
+Regions are grouped together into various groups g### based
+on the region-id numbers.  Group g00 gets all regions with region-id
+of zero, g0 gets ids one through 99, g1 gets ids 100 through 199, etc.</para>
 
 <para>The default input is COMGEOM version 5.
 Version 4 can be converted by specifying the
@@ -70,7 +70,7 @@ feature of
 </refsect1>
 
 <refsect1 xml:id='example'><title>EXAMPLE</title>
-<para><emphasis remap='I'>comgeom-g -d1 -v4 file.cg file.g</emphasis></para>
+<para>comgeom-g -d1 -v4 <emphasis remap='I'>file.cg file.g</emphasis></para>
 </refsect1>
 
 <refsect1 xml:id='diagnostics'><title>DIAGNOSTICS</title>

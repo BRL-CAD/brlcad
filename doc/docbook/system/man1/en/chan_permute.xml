@@ -37,25 +37,25 @@ channels or columns. Each word, separated by whitespaces, should be less
 than 40 characters long. The channels in each input file are specified
 and then mapped to the desired channels in the output file(s). These are
 the sort of things that can be done using
-<emphasis remap='I'>cut</emphasis>
+<command>cut</command>
 and
-<emphasis remap='I'>paste,</emphasis>
+<command>paste</command>,
 but when
 working on animation tables it's often nice to be able to do it in one
 step.</para>
 
-<para><emphasis remap='B'>Infile</emphasis>s
+<para><emphasis remap='I'>Infile</emphasis>s
 are files to be read from,
-<emphasis remap='B'>outfile</emphasis>s
+<emphasis remap='I'>outfile</emphasis>s
 are files to be written
 to, and each
-<emphasis remap='B'>id</emphasis>
+<emphasis remap='I'>id</emphasis>
 is a small positive integer identifying a channel. All of the
 input
-<emphasis remap='B'>id</emphasis>'s
+<emphasis remap='I'>id</emphasis>'s
 should be distinct integers, or the results are not guaranteed.</para>
 
-<para><emphasis remap='I'>Chan_permute</emphasis>
+<para><command>chan_permute</command>
 interprets
 <option>-i stdin</option>
 as standard input and
@@ -85,7 +85,7 @@ followed by both columns of file1.</para>
 more than once for input, but may not be referenced for input and output
 together or output and output together. In the latter case, the second
 output reference overrides the other. 	The
-<emphasis remap='B'>id</emphasis>'s
+<emphasis remap='I'>id</emphasis>'s
 must be integers
 somewhere between 0 and the number of arguments, inclusive.</para>
 </refsect1>

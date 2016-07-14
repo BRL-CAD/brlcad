@@ -44,6 +44,8 @@ set(density_DATAFILES
   )
 BRLCAD_ADDDATA(density_DATAFILES data)
 
+BRLCAD_ADDDATA(profont/ProFont.ttf fonts)
+
 BRLCAD_ADDDATA(nsis/brlcad.ico icons)
 BRLCAD_ADDDATA(nsis/archer.ico icons)
 
@@ -69,6 +71,7 @@ if(DOXYGEN_FOUND)
 endif(DOXYGEN_FOUND)
 
 set(misc_ignore_files
+  Bullet_Box_Chain_Demo.cpp
   CMake
   Description.txt
   doxygen/Doxyfile.in
@@ -79,6 +82,10 @@ set(misc_ignore_files
   doxygen/DoxyfileLibs.in
   doxygen/DoxyfileLibs-defaults.in
   doxygen/doxygen_structure_libs.txt
+  profont/LICENSE
+  profont/profont-IIx-charmap.png
+  profont/profont_IIx_readme.pdf
+  profont/readme.txt
   Makefile.defs
   archlinux
   astyle.opt

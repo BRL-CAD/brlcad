@@ -378,13 +378,13 @@ BU_EXPORT extern void bu_cv_ntohf(unsigned char *out,
  * Caller is responsible for freeing memory allocated to
  * hold output buffer.
  */
-BU_EXPORT extern char *bu_b64_encode(const char *input);
+BU_EXPORT extern signed char *bu_b64_encode(const signed char *input);
 
-BU_EXPORT extern char *bu_b64_encode_block(const char* input, int length_in);
+BU_EXPORT extern signed char *bu_b64_encode_block(const signed char* input, int length_in);
 
-BU_EXPORT extern int bu_b64_decode(char **output_buffer, const char *input);
+BU_EXPORT extern int bu_b64_decode(signed char **output_buffer, const signed char *input);
 
-BU_EXPORT extern int bu_b64_decode_block(char **output_buffer, const char* input, int length_in);
+BU_EXPORT extern int bu_b64_decode_block(signed char **output_buffer, const signed char* input, int length_in);
 
 /** @} */
 
@@ -407,7 +407,7 @@ BU_EXPORT extern int bu_b64_decode_block(char **output_buffer, const char* input
  *
  * Routines to implement an external data representation (XDR)
  * compatible with the usual InterNet standards, e.g.:
- * big-endian, twos-compliment fixed point, and IEEE floating point.
+ * big-endian, twos-complement fixed point, and IEEE floating point.
  *
  * Routines to insert/extract short/long's into char arrays,
  * independent of machine byte order and word-alignment.

@@ -23,7 +23,7 @@
   <refsection xml:id="rtwizard_description"><title>DESCRIPTION</title>
 
     <para>
-      <emphasis remap="I">rtwizard</emphasis> is a tool that automates the use of several
+      <command>rtwizard</command> is a tool that automates the use of several
       BRL-CAD graphical programs to produce complex images.  There are two primary modes of operation -
       a graphical client to guide users through the process of creating images, and
       a command line mode to allow users who already know what options they wish to
@@ -46,7 +46,7 @@
 
     <para>
 	    When specifying options on the command line, it is usually better to fully qualify what a particular item is - for example,
-	    using <option>-i</option> to specifically identify the input file instead of relying on the .g suffix.  There is a limited ability to recoginze
+	    using <option>-i</option> to specifically identify the input file instead of relying on the .g suffix.  There is a limited ability to recognize
 	    common usage patterns (for example, "<command>rtwizard</command> file.g output_image.png geometry_object" will
 	    generate an image of geometry_object in the file output_image.png) but the potentially general nature of some of the option arguments can
 	    easily result in ambiguous cases.  For example, "<command>rtwizard</command> -c car.g old_car.g car.png" could be interpreted as
@@ -488,7 +488,7 @@
 
     <para>Most deficiencies observed while using the <command>rtwizard</command>
     program are a consequence of problems in commands used by rtwizard to generate
-    images, such as rtedge</para>
+    images, such as rtedge.</para>
   </refsection>
 
   <refsection xml:id="bug_reports"><title>BUG REPORTS</title>

@@ -42,12 +42,12 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>Mult_chan</emphasis>
+<para><command>chan_mult</command>
 will multiply all numbers in the specified columns by the given
-factor. The infile is
+factor. The <emphasis remap='I'>infile</emphasis> is
 an ASCII file, with columns separated by white space. The columns are
 numbered from 0 to (n-1).
-<emphasis remap='I'>Add_chan</emphasis>
+<command>chan_add</command>
 behaves analogously, but with
 addition rather than multiplication.</para>
 </refsect1>

@@ -821,8 +821,6 @@ main(int argc, char **argv)
 	    print_usage();
     }
 
-    rt_init_resource(&rt_uniresource, 0, NULL);
-
     /*
      * Open database and specification file, as necessary
      */
