@@ -85,15 +85,6 @@ BU_EXPORT extern void *bu_realloc(void *ptr,
 				     const char *str);
 
 /**
- * overflow checking version of realloc for arrays, based on OpenBSD's
- * reallocarray.
- */
-BU_EXPORT extern void *bu_reallocarray(void *optr,
-                                       size_t nmemb,
-				       size_t size,
-				       const char *str);
-
-/**
  * Print map of memory currently in use.
  */
 BU_EXPORT extern void bu_prmem(const char *str);
@@ -222,7 +213,7 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
 #if 0
 #define BU_GET(_ptr, _type) _ptr = (_type *)bu_heap_get(sizeof(_type))
 #else
-#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " BU_FLSTR)
+#define BU_GET(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_GET) " CPP_FILELINE)
 #endif
 
 /**
@@ -236,7 +227,7 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
 #if 0
 #define BU_PUT(_ptr, _type) *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_heap_put(_ptr, sizeof(_type)); _ptr = NULL
 #else
-#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " BU_FLSTR); _ptr = NULL; } while (0)
+#define BU_PUT(_ptr, _type) do { *(uint8_t *)(_type *)(_ptr) = /*zap*/ 0; bu_free(_ptr, #_type " (BU_PUT) " CPP_FILELINE); _ptr = NULL; } while (0)
 #endif
 
 /**
@@ -244,13 +235,13 @@ BU_EXPORT extern int bu_shmget(int *shmid, char **shared_memory, int key, size_t
  * Not intended for performance-critical code.  Release memory
  * acquired with bu_free() or BU_FREE() to dealloc and set NULL.
  */
-#define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " BU_FLSTR)
+#define BU_ALLOC(_ptr, _type) _ptr = (_type *)bu_calloc(1, sizeof(_type), #_type " (BU_ALLOC) " CPP_FILELINE)
 
 /**
  * Convenience macro for deallocating a single structure allocated on
  * the heap (with bu_malloc(), bu_calloc(), BU_ALLOC()).
  */
-#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " BU_FLSTR); _ptr = (_type *)NULL; } while (0)
+#define BU_FREE(_ptr, _type) do { bu_free(_ptr, #_type " (BU_FREE) " CPP_FILELINE); _ptr = (_type *)NULL; } while (0)
 
 
 /** @} */

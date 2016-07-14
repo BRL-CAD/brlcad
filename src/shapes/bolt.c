@@ -49,7 +49,7 @@ int
 main(int argc, char **argv)
 {
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+    char filemged[27] = {0};	/* Mged file create. */
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */
@@ -118,8 +118,6 @@ main(int argc, char **argv)
 
     /* If there are no arguments ask questions. */
     if (argc == 1) {
-	printusage();
-	fprintf(stderr,"\n       Program continues running:\n\n");
 	/* START # 1 */
 
 	/* Find type of bolt to build. */

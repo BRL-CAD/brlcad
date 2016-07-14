@@ -1,6 +1,5 @@
-
 /* Top level library group */
-/** @defgroup libbu libbu (utility functions) */
+/** @defgroup libbu libbu (Utility Functions) */
 
 /* Second tier groups */
 /** @ingroup libbu */
@@ -37,8 +36,14 @@
      @brief Cross platform API for interacting with the operating system environment.
  */
 /** @ingroup libbu */
-/**  @defgroup bu_version Version */
+/**  @defgroup bu_wrangle System Header Management*/
+/**  @addtogroup bu_wrangle
+     @brief Convenience headers that manage the correct inclusion of various types of system functionality.
 
+     These headers are not part of the LIBBU API, but serve to handle commonly encountered cross platform patterns when including system dependent headers for tasks such as networking and resource limits.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_version Version */
 
 /* Data Containers */
 /** @ingroup bu_container */
@@ -114,6 +119,17 @@
 /**   @defgroup bu_thread Multithreading */
 /** @ingroup bu_parallel */
 /**   @defgroup bu_simd Single Instruction Multiple Data*/
+
+/* System Header Management */
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bio System I/O Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bnetwork System Network Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_resource System Resource Limit Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bsocket System Socket Header Wrangler*/
+
 
 /*
  * Local Variables:

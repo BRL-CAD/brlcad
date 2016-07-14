@@ -17,11 +17,14 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file rt/defines.h
+/** @addtogroup rt_defines
  *
  * Common definitions for LIBRT
  *
  */
+
+/** @{ */
+/** @file rt/defines.h */
 
 #ifndef RT_DEFINES_H
 #define RT_DEFINES_H
@@ -42,7 +45,14 @@
 
 #ifdef USE_OPENCL
 #include <limits.h>
+#define CL_USE_DEPRECATED_OPENCL_1_2_APIS
+#define CL_USE_DEPRECATED_OPENCL_2_0_APIS
+
+#ifdef __APPLE__
+#include <OpenCL/cl.h>
+#else
 #include <CL/cl.h>
+#endif
 
 #ifndef CL_VERSION_1_2
 #  error "OpenCL 1.2 required."
@@ -212,6 +222,8 @@
 #define HPRINT(a, b) bu_log("%s (%g, %g, %g, %g)\n", a, (b)[0], (b)[1], (b)[2], (b)[3])
 
 #endif /* RT_DEFINES_H */
+
+/** @} */
 
 /*
  * Local Variables:

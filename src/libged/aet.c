@@ -48,7 +48,7 @@ ged_aet(struct ged *gedp, int argc, const char *argv[])
 
     /* get aet */
     if (argc == 1) {
-	bn_encode_vect(gedp->ged_result_str, gedp->ged_gvp->gv_aet);
+	bn_encode_vect(gedp->ged_result_str, gedp->ged_gvp->gv_aet, 1);
 	return GED_OK;
     }
 

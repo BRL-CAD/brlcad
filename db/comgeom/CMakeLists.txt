@@ -22,6 +22,7 @@ macro(ADD_COMGEOM_V5_G_TARGET comgeom_model folder)
   endif(BRLCAD_INSTALL_EXAMPLE_GEOMETRY)
   set(BUILT_MODELS "${BUILT_MODELS};${output_file}")
   set(LOG_FILES "${LOG_FILES};${log_file}")
+  DISTCLEAN(${log_file})
 endmacro(ADD_COMGEOM_V5_G_TARGET comgeom_model folder)
 
 foreach(comgeom_input ${COMGEOM_V5_MODELS})

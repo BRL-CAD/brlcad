@@ -154,8 +154,8 @@ checkReturnsEqual(int ret, int bu_ret)
     int_type _bu_val = *(int_type*)(bu_valp); \
     if (_val != _bu_val) { \
 	bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		"\t(sscanf) %" bu_cpp_str(pfmt) " != " \
-		"%" bu_cpp_str(pfmt) " (bu_sscanf).\n", \
+		"\t(sscanf) %" CPP_STR(pfmt) " != " \
+		"%" CPP_STR(pfmt) " (bu_sscanf).\n", \
 		_val, _bu_val); \
     } \
 }
@@ -166,8 +166,8 @@ checkReturnsEqual(int ret, int bu_ret)
     float_type _bu_val = *(float_type*)(bu_valp); \
     if (!NEAR_EQUAL(_val, _bu_val, TS_FLOAT_TOL)) { \
 	bu_exit(1, "\t[FAIL] conversion value mismatch.\n" \
-		"\t(sscanf) %" bu_cpp_str(pfmt) " != " \
-		"%" bu_cpp_str(pfmt) " (bu_sscanf).\n", \
+		"\t(sscanf) %" CPP_STR(pfmt) " != " \
+		"%" CPP_STR(pfmt) " (bu_sscanf).\n", \
 		_val, _bu_val); \
     } \
 }
@@ -307,11 +307,11 @@ static void
 doNumericTests(void)
 {
 #define TEST_SIGNED_CONSTANT(str, fmt) \
-    test_sscanf(SCAN_SHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SIZE, str, "%z" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORT, str, "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_INT, str, "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LONG, str, "%l" bu_cpp_str(fmt));
+    test_sscanf(SCAN_SHORTSHORT, str, "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SIZE, str, "%z" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORT, str, "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_INT, str, "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LONG, str, "%l" CPP_STR(fmt));
 
     TEST_SIGNED_CONSTANT("0", d);
     TEST_SIGNED_CONSTANT("0", i);
@@ -320,11 +320,11 @@ doNumericTests(void)
     TEST_SIGNED_CONSTANT("0X0", i);
 
 #define TEST_UNSIGNED_CONSTANT(str, fmt) \
-    test_sscanf(SCAN_USHORTSHORT, str, "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SIZE, str, "%z" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_USHORT, str, "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_UINT, str, "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, str, "%l" bu_cpp_str(fmt));
+    test_sscanf(SCAN_USHORTSHORT, str, "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SIZE, str, "%z" CPP_STR(fmt)); \
+    test_sscanf(SCAN_USHORT, str, "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_UINT, str, "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_ULONG, str, "%l" CPP_STR(fmt));
 
     TEST_UNSIGNED_CONSTANT("0", u);
     TEST_UNSIGNED_CONSTANT("0", o);
@@ -335,19 +335,19 @@ doNumericTests(void)
     TEST_UNSIGNED_CONSTANT("0X0", X);
 
 #define TEST_SIGNED_CONSTANTS(small, med, large, fmt) \
-    test_sscanf(SCAN_SHORTSHORT, "+" bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORTSHORT, bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORTSHORT, "-" bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SIZE, bu_cpp_str(small), "%z" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORT, "+" bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORT, bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SHORT, "-" bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_INT, "+" bu_cpp_str(med), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_INT, bu_cpp_str(med), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_INT, "-" bu_cpp_str(med), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LONG, "+" bu_cpp_str(large), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LONG, bu_cpp_str(large), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LONG, "-" bu_cpp_str(large), "%l" bu_cpp_str(fmt));
+    test_sscanf(SCAN_SHORTSHORT, "+" CPP_STR(small), "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORTSHORT, CPP_STR(small), "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORTSHORT, "-" CPP_STR(small), "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SIZE, CPP_STR(small), "%z" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORT, "+" CPP_STR(med), "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORT, CPP_STR(med), "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SHORT, "-" CPP_STR(med), "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_INT, "+" CPP_STR(med), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_INT, CPP_STR(med), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_INT, "-" CPP_STR(med), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LONG, "+" CPP_STR(large), "%l" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LONG, CPP_STR(large), "%l" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LONG, "-" CPP_STR(large), "%l" CPP_STR(fmt));
 
     TEST_SIGNED_CONSTANTS(SIGNED_HH_DEC, SIGNED_DEC, SIGNED_L_DEC, d);
     TEST_SIGNED_CONSTANTS(SIGNED_HH_DEC, SIGNED_DEC, SIGNED_L_DEC, i);
@@ -355,11 +355,11 @@ doNumericTests(void)
     TEST_SIGNED_CONSTANTS(SIGNED_HH_HEX, SIGNED_HEX, SIGNED_L_HEX, i);
 
 #define TEST_UNSIGNED_CONSTANTS(small, med, large, fmt) \
-    test_sscanf(SCAN_USHORTSHORT, bu_cpp_str(small), "%hh" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_SIZE, bu_cpp_str(small), "%z" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_USHORT, bu_cpp_str(med), "%h" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_UINT, bu_cpp_str(med), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_ULONG, bu_cpp_str(large), "%l" bu_cpp_str(fmt));
+    test_sscanf(SCAN_USHORTSHORT, CPP_STR(small), "%hh" CPP_STR(fmt)); \
+    test_sscanf(SCAN_SIZE, CPP_STR(small), "%z" CPP_STR(fmt)); \
+    test_sscanf(SCAN_USHORT, CPP_STR(med), "%h" CPP_STR(fmt)); \
+    test_sscanf(SCAN_UINT, CPP_STR(med), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_ULONG, CPP_STR(large), "%l" CPP_STR(fmt));
 
     TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_DEC, UNSIGNED_DEC, UNSIGNED_L_DEC, u);
     TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_OCT, UNSIGNED_OCT, UNSIGNED_L_OCT, o);
@@ -367,20 +367,20 @@ doNumericTests(void)
     TEST_UNSIGNED_CONSTANTS(UNSIGNED_HH_HEX, UNSIGNED_HEX, UNSIGNED_L_HEX, X);
 
 #define TEST_FLOAT_CONSTANT(c, fmt) \
-    test_sscanf(SCAN_FLOAT, c, "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_DOUBLE, c, "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, c, "%L" bu_cpp_str(fmt));
+    test_sscanf(SCAN_FLOAT, c, "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_DOUBLE, c, "%l" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LDOUBLE, c, "%L" CPP_STR(fmt));
 
 #define TEST_FLOAT_VARIANT(fmt) \
     TEST_FLOAT_CONSTANT("0.0", fmt); \
     TEST_FLOAT_CONSTANT("0.0e0", fmt); \
     TEST_FLOAT_CONSTANT("0.0e1", fmt); \
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(SMALL_FLT), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_FLOAT, bu_cpp_xstr(LARGE_FLT), "%" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(SMALL_FLT), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_DOUBLE, bu_cpp_xstr(LARGE_FLT), "%l" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(SMALL_FLT), "%L" bu_cpp_str(fmt)); \
-    test_sscanf(SCAN_LDOUBLE, bu_cpp_xstr(LARGE_FLT), "%L" bu_cpp_str(fmt));
+    test_sscanf(SCAN_FLOAT, CPP_XSTR(SMALL_FLT), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_FLOAT, CPP_XSTR(LARGE_FLT), "%" CPP_STR(fmt)); \
+    test_sscanf(SCAN_DOUBLE, CPP_XSTR(SMALL_FLT), "%l" CPP_STR(fmt)); \
+    test_sscanf(SCAN_DOUBLE, CPP_XSTR(LARGE_FLT), "%l" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LDOUBLE, CPP_XSTR(SMALL_FLT), "%L" CPP_STR(fmt)); \
+    test_sscanf(SCAN_LDOUBLE, CPP_XSTR(LARGE_FLT), "%L" CPP_STR(fmt));
 
     TEST_FLOAT_VARIANT(a);
     TEST_FLOAT_VARIANT(e);
@@ -491,24 +491,24 @@ static void
 doPointerTests(void)
 {
     test_sscanf(SCAN_POINTER, "0", "%p");
-    test_sscanf(SCAN_POINTER, bu_cpp_xstr(UNSIGNED_L_HEX), "%p");
+    test_sscanf(SCAN_POINTER, CPP_XSTR(UNSIGNED_L_HEX), "%p");
 
     test_sscanf(SCAN_PTRDIFF, "0", "%ti");
     test_sscanf(SCAN_PTRDIFF, "0", "%td");
     test_sscanf(SCAN_PTRDIFF, "0", "%tu");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_DEC), "%ti");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_DEC), "%td");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_DEC), "%tu");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_DEC), "%ti");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_DEC), "%td");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_DEC), "%tu");
 
     test_sscanf(SCAN_PTRDIFF, "000", "%ti");
     test_sscanf(SCAN_PTRDIFF, "000", "%to");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_OCT), "%ti");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_OCT), "%to");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_OCT), "%ti");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_OCT), "%to");
 
     test_sscanf(SCAN_PTRDIFF, "0x0", "%ti");
     test_sscanf(SCAN_PTRDIFF, "0x0", "%tx");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(SIGNED_L_HEX), "%ti");
-    test_sscanf(SCAN_PTRDIFF, bu_cpp_xstr(UNSIGNED_L_HEX), "%tx");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(SIGNED_L_HEX), "%ti");
+    test_sscanf(SCAN_PTRDIFF, CPP_XSTR(UNSIGNED_L_HEX), "%tx");
 }
 
 static void
@@ -543,9 +543,9 @@ doNonConversionTests(void)
     test_sscanf_noconv("%%n    %", "%%%%n %%%n");
 
     /* suppressed assignments */
-    test_sscanf_noconv(bu_cpp_xstr(SIGNED_DEC), "%*d%n");
-    test_sscanf_noconv(bu_cpp_xstr(UNSIGNED_DEC), "%*u%n");
-    test_sscanf_noconv(bu_cpp_xstr(LARGE_FLT), "%*f%n");
+    test_sscanf_noconv(CPP_XSTR(SIGNED_DEC), "%*d%n");
+    test_sscanf_noconv(CPP_XSTR(UNSIGNED_DEC), "%*u%n");
+    test_sscanf_noconv(CPP_XSTR(LARGE_FLT), "%*f%n");
     test_sscanf_noconv("42 42  4.2e1", "%*d %*u %*f%n");
 }
 
@@ -654,10 +654,10 @@ doErrorTests(void)
     int i, ret, bu_ret;
 
 #define FMT_ASSIGN3(fmt) \
-    "%" bu_cpp_str(fmt) " %" bu_cpp_str(fmt) " %" bu_cpp_str(fmt)
+    "%" CPP_STR(fmt) " %" CPP_STR(fmt) " %" CPP_STR(fmt)
 
 #define FMT_READ2_ASSIGN1(fmt) \
-    "%*" bu_cpp_str(fmt) " %*" bu_cpp_str(fmt) " %" bu_cpp_str(fmt)
+    "%*" CPP_STR(fmt) " %*" CPP_STR(fmt) " %" CPP_STR(fmt)
 
     /* Attempt to assign 3 values from src.
      * If src begins with an invalid input value, should return 0 to indicate
@@ -675,7 +675,7 @@ doErrorTests(void)
     for (i = 0; i < 3; ++i) { \
 	if (vals[i] != type_init) { \
 	    bu_exit(1, "\t[FAIL] No assignment expected, but vals[%d] " \
-		    "changed from %" bu_cpp_str(type_fmt) " to %" bu_cpp_str(type_fmt) ".\n", \
+		    "changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
 		    i, type_init, vals[i]); \
 	} \
     } \
@@ -697,7 +697,7 @@ doErrorTests(void)
     checkReturnsEqual(ret, bu_ret); \
     if (val != type_init) { \
 	bu_exit(1, "\t[FAIL] No assignment expected, but val " \
-		"changed from %" bu_cpp_str(type_fmt) " to %" bu_cpp_str(type_fmt) ".\n", \
+		"changed from %" CPP_STR(type_fmt) " to %" CPP_STR(type_fmt) ".\n", \
 		type_init, val); \
     } \
 }

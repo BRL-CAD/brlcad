@@ -90,7 +90,7 @@ nmg_plot_open_edges(const uint32_t *magic_p, const char *prefix)
     nmg_face_tabulate(&faces, magic_p);
 
     cnt = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;
@@ -432,7 +432,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
 {
     struct bu_ptbl verts;
     struct bu_ptbl edges;
-    int i;
+    size_t i;
 
     if (RTG.NMG_debug & DEBUG_CLASSIFY)
 	bu_log("nmg_classify_shared_edges_verts(sA=%p, sB=%p)\n", (void *)sA, (void *)sB);
@@ -441,7 +441,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     NMG_CK_SHELL(sB);
 
     nmg_vertex_tabulate(&verts, &sA->l.magic);
-    for (i=0; i<BU_PTBL_END(&verts); i++) {
+    for (i=0; i<BU_PTBL_LEN(&verts); i++) {
 	struct vertex *v;
 	struct vertexuse *vu;
 
@@ -466,7 +466,7 @@ nmg_classify_shared_edges_verts(struct shell *sA, struct shell *sB, char **class
     bu_ptbl_free(&verts);
 
     nmg_edge_tabulate(&edges, &sA->l.magic);
-    for (i=0; i<BU_PTBL_END(&edges); i++) {
+    for (i=0; i<BU_PTBL_LEN(&edges); i++) {
 	struct edge *e;
 	struct edgeuse *eu;
 	struct edgeuse *eu_start;
@@ -508,7 +508,7 @@ nmg_kill_anti_loops(struct shell *s)
     struct bu_ptbl loops;
     struct faceuse *fu;
     struct loopuse *lu;
-    register int i, j;
+    register size_t i, j;
 
     bu_ptbl_init(&loops, 64, " &loops");
 
@@ -526,7 +526,7 @@ nmg_kill_anti_loops(struct shell *s)
 	}
     }
 
-    for (i=0; i < BU_PTBL_END(&loops); i++) {
+    for (i=0; i < BU_PTBL_LEN(&loops); i++) {
 	struct loopuse *lu1;
 	struct edgeuse *eu1_start;
 	struct vertex *v1;
@@ -536,7 +536,7 @@ nmg_kill_anti_loops(struct shell *s)
 	eu1_start = BU_LIST_FIRST(edgeuse, &lu1->down_hd);
 	v1 = eu1_start->vu_p->v_p;
 
-	for (j=i+1; j<BU_PTBL_END(&loops); j++) {
+	for (j=i+1; j<BU_PTBL_LEN(&loops); j++) {
 	    register struct loopuse *lu2;
 	    register struct edgeuse *eu1;
 	    register struct edgeuse *eu2;

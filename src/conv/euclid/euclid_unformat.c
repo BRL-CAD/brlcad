@@ -49,6 +49,9 @@ main(int argc, char *argv[])
     float a, b, c, d;
     int old_id=(-1), e;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     printf("$03");
 
     if (argc != 1) {

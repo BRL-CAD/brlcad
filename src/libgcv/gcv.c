@@ -35,10 +35,9 @@
 
 HIDDEN int
 _gcv_brlcad_read(struct gcv_context *context,
-		const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		const char *source_path)
+		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		 const char *source_path)
 {
-    int ret;
     struct db_i * const in_dbip = db_open(source_path, DB_OPEN_READONLY);
 
     if (!in_dbip) {
@@ -52,19 +51,22 @@ _gcv_brlcad_read(struct gcv_context *context,
 	return 0;
     }
 
-    ret = db_dump(context->dbip->dbi_wdbp, in_dbip);
-    db_close(in_dbip);
+    if (db_dump(context->dbip->dbi_wdbp, in_dbip)) {
+	bu_log("db_dump() failed (from '%s' to context->dbip)\n", source_path);
+	db_close(in_dbip);
+	return 0;
+    }
 
-    return ret == 0;
+    db_close(in_dbip);
+    return 1;
 }
 
 
 HIDDEN int
 _gcv_brlcad_write(struct gcv_context *context,
-		 const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
-		 const char *dest_path)
+		  const struct gcv_opts *UNUSED(gcv_options), const void *UNUSED(options_data),
+		  const char *dest_path)
 {
-    int ret;
     struct rt_wdb * const out_wdbp = wdb_fopen(dest_path);
 
     if (!out_wdbp) {
@@ -72,25 +74,30 @@ _gcv_brlcad_write(struct gcv_context *context,
 	return 0;
     }
 
-    ret = db_dump(out_wdbp, context->dbip);
-    wdb_close(out_wdbp);
+    if (db_dump(out_wdbp, context->dbip)) {
+	bu_log("db_dump() failed (from context->dbip to '%s')\n", dest_path);
+	wdb_close(out_wdbp);
+	return 0;
+    }
 
-    return ret == 0;
+    wdb_close(out_wdbp);
+    return 1;
 }
 
 
 static const struct gcv_filter _gcv_filter_brlcad_read =
-{"BRL-CAD Reader", GCV_FILTER_READ, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
+{"BRL-CAD Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_read};
 
 
 static const struct gcv_filter _gcv_filter_brlcad_write =
-{"BRL-CAD Writer", GCV_FILTER_WRITE, MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
+{"BRL-CAD Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_VND_BRLCAD_PLUS_BINARY, NULL, NULL, _gcv_brlcad_write};
 
 
 HIDDEN void
-_gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
+_gcv_filter_register(struct bu_ptbl *filter_table,
+		     const struct gcv_filter *filter)
 {
-    if (!table || !filter)
+    if (!filter_table || !filter)
 	bu_bomb("missing argument");
 
     if (!filter->name)
@@ -98,15 +105,15 @@ _gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
 
     switch (filter->filter_type) {
 	case GCV_FILTER_FILTER:
-	    if (filter->mime_type != MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type != BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;
 
 	case GCV_FILTER_READ:
 	case GCV_FILTER_WRITE:
-	    if (filter->mime_type == MIME_MODEL_AUTO
-		|| filter->mime_type == MIME_MODEL_UNKNOWN)
+	    if (filter->mime_type == BU_MIME_MODEL_AUTO
+		|| filter->mime_type == BU_MIME_MODEL_UNKNOWN)
 		bu_bomb("invalid mime_type");
 
 	    break;
@@ -121,8 +128,15 @@ _gcv_filter_register(struct bu_ptbl *table, const struct gcv_filter *filter)
     if (!filter->filter_fn)
 	bu_bomb("null filter_fn");
 
-    if (bu_ptbl_ins_unique(table, (long *)filter) != -1)
-	bu_bomb("filter already registered");
+    {
+	const struct gcv_filter * const *entry;
+
+	for (BU_PTBL_FOR(entry, (const struct gcv_filter * const *), filter_table))
+	    if (!bu_strcmp((*entry)->name, filter->name))
+		bu_bomb("duplicate filter name");
+    }
+
+    bu_ptbl_ins(filter_table, (long *)filter);
 }
 
 
@@ -168,34 +182,45 @@ _gcv_filter_options_process(const struct gcv_filter *filter, size_t argc,
     int ret_argc;
     struct bu_opt_desc *options_desc;
     struct bu_vls messages;
+    const char **temp;
+    int i;
+
+    if (argc)
+	temp = (const char **)bu_calloc(argc, sizeof(const char *), "temp");
+    else
+	temp = NULL;
+
+    for (i = 0; (size_t)i < argc; ++i)
+	temp[i] = argv[i];
 
     _gcv_filter_options_create(filter, &options_desc, options_data);
-
     BU_VLS_INIT(&messages);
-    ret_argc = argc ? bu_opt_parse(&messages, argc, (const char **)argv,
-				   options_desc) : 0;
+    ret_argc = argc ? bu_opt_parse(&messages, argc, temp, options_desc) : 0;
+    bu_free(options_desc, "options_desc");
     bu_log("%s", bu_vls_addr(&messages));
     bu_vls_free(&messages);
-
-    bu_free(options_desc, "options_desc");
 
     if (ret_argc) {
 	if (ret_argc == -1)
 	    bu_log("fatal error in bu_opt_parse()\n");
 	else {
-	    int i;
-
 	    bu_log("unknown arguments: ");
 
 	    for (i = 0; i < ret_argc - 1; ++i)
-		bu_log("%s, ", argv[i]);
+		bu_log("%s, ", temp[i]);
 
-	    bu_log("%s\n", argv[i]);
+	    bu_log("%s\n", temp[i]);
 	}
+
+	if (temp)
+	    bu_free(temp, "temp");
 
 	_gcv_filter_options_free(filter, *options_data);
 	return 0;
     }
+
+    if (temp)
+	bu_free(temp, "temp");
 
     return 1;
 }
@@ -234,6 +259,107 @@ _gcv_context_check(const struct gcv_context *context)
     BU_CK_AVS(&context->messages);
 }
 
+HIDDEN void
+_gcv_plugins_load(struct bu_ptbl *filter_table, const char *path)
+{
+    void *info_val;
+    const struct gcv_plugin *(*plugin_info)();
+    const struct gcv_plugin *plugin;
+    const struct gcv_filter * const *current;
+    void *dl_handle;
+
+    if (!(dl_handle = bu_dlopen(path, BU_RTLD_NOW))) {
+	const char * const error_msg = bu_dlerror();
+
+	if (error_msg)
+	    bu_log("%s\n", error_msg);
+
+	bu_log("bu_dlopen() failed for '%s'\n", path);
+	bu_bomb("bu_dlopen() failed");
+    }
+
+    info_val = bu_dlsym(dl_handle, "gcv_plugin_info");
+    plugin_info = (const struct gcv_plugin *(*)())(intptr_t)info_val;
+
+    if (!plugin_info) {
+	const char * const error_msg = bu_dlerror();
+
+	if (error_msg)
+	    bu_log("%s\n", error_msg);
+
+	bu_log("bu_dlsym() failed for '%s'\n", path);
+	bu_bomb("could not find 'gcv_plugin_info' symbol in plugin");
+    }
+
+    plugin = plugin_info();
+
+    if (!plugin || !plugin->filters) {
+	bu_log("invalid gcv_plugin in '%s'\n", path);
+	bu_bomb("invalid gcv_plugin");
+    }
+
+    for (current = plugin->filters; *current; ++current)
+	_gcv_filter_register(filter_table, *current);
+}
+
+
+HIDDEN const char *
+_gcv_plugins_get_path(void)
+{
+    const char *brlcad_libs_path;
+    struct bu_vls buffer;
+    const char *result;
+
+    /* LIBGCV_PLUGINS_PATH is where the plugin dir resides, defined via cppflag */
+    brlcad_libs_path = bu_brlcad_dir(LIBGCV_PLUGINS_PATH, 0);
+
+    if (!brlcad_libs_path)
+	return NULL;
+
+    bu_vls_init(&buffer);
+    /* LIBGCV_PLUGINS_DIRECTORY is the name of the plugin dir, defined via cppflag */
+    bu_vls_sprintf(&buffer, "%s%c%s", brlcad_libs_path, BU_DIR_SEPARATOR,
+		   LIBGCV_PLUGINS_DIRECTORY);
+    result = bu_brlcad_root(bu_vls_addr(&buffer), 0);
+    bu_vls_free(&buffer);
+
+    return result;
+}
+
+
+HIDDEN void
+_gcv_plugins_load_all(struct bu_ptbl *filter_table)
+{
+    const char * const plugins_path = _gcv_plugins_get_path();
+
+    if (!plugins_path) {
+	bu_log("could not find LibGCV plugins directory\n");
+	return;
+    }
+
+    {
+	char **filenames;
+	size_t i;
+	struct bu_vls buffer = BU_VLS_INIT_ZERO;
+	size_t num_filenames = 0;
+	struct bu_vls pattern = BU_VLS_INIT_ZERO;
+
+	/* LIBGCV_PLUGINS_SUFFIX is filename extension on libraries, defined via cppflag */
+	bu_vls_sprintf(&pattern, "*%s", LIBGCV_PLUGIN_SUFFIX);
+	num_filenames = bu_file_list(plugins_path, bu_vls_addr(&pattern) , &filenames);
+
+	for (i = 0; i < num_filenames; ++i)
+	    if (!bu_file_directory(filenames[i])) {
+		bu_vls_sprintf(&buffer, "%s%c%s", plugins_path, BU_DIR_SEPARATOR, filenames[i]);
+		_gcv_plugins_load(filter_table, bu_vls_addr(&buffer));
+	    }
+
+	bu_vls_free(&buffer);
+	bu_vls_free(&pattern);
+	bu_argv_free(num_filenames, filenames);
+    }
+}
+
 
 void
 gcv_context_init(struct gcv_context *context)
@@ -259,27 +385,12 @@ gcv_list_filters(void)
     static struct bu_ptbl filter_table = BU_PTBL_INIT_ZERO;
 
     if (!BU_PTBL_LEN(&filter_table)) {
+	bu_ptbl_init(&filter_table, 64, "filter_table");
+
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_read);
 	_gcv_filter_register(&filter_table, &_gcv_filter_brlcad_write);
 
-#define REGISTER_FILTER(name) \
-	do { \
-	    extern const struct gcv_filter (name); \
-	    _gcv_filter_register(&filter_table, &(name)); \
-	} while (0)
-
-	REGISTER_FILTER(gcv_conv_fastgen4_read);
-	REGISTER_FILTER(gcv_conv_fastgen4_write);
-	REGISTER_FILTER(gcv_conv_obj_read);
-	REGISTER_FILTER(gcv_conv_obj_write);
-	REGISTER_FILTER(gcv_conv_stl_read);
-	REGISTER_FILTER(gcv_conv_stl_write);
-	REGISTER_FILTER(gcv_conv_vrml_read);
-	REGISTER_FILTER(gcv_conv_vrml_write);
-
-	REGISTER_FILTER(gcv_filter_tessellate);
-
-#undef REGISTER_FILTER
+	_gcv_plugins_load_all(&filter_table);
     }
 
     return &filter_table;
@@ -380,10 +491,10 @@ gcv_execute(struct gcv_context *context, const struct gcv_filter *filter,
     } else
 	result = filter->filter_fn(context, gcv_options, options_data, target);
 
-    context->dbip->dbi_read_only = dbi_read_only_orig;
     bu_debug = bu_debug_orig;
     RTG.debug = rt_debug_orig;
     RTG.NMG_debug = nmg_debug_orig;
+    context->dbip->dbi_read_only = dbi_read_only_orig;
 
     _gcv_filter_options_free(filter, options_data);
 

@@ -17,9 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
-/** @{ */
-/** @file solid.h
+/** @addtogroup rt_solid
  *
  * Solids structure definition
  *
@@ -34,13 +32,16 @@
 #include "rt/defines.h"
 #include "rt/db_fullpath.h"
 
+/** @{ */
+/** @file solid.h */
+
 struct solid  {
     struct bu_list l;
     fastf_t s_size;		/**< @brief  Distance across solid, in model space */
     fastf_t s_csize;		/**< @brief  Dist across clipped solid (model space) */
     vect_t s_center;		/**< @brief  Center point of solid, in model space */
     struct bu_list s_vlist;	/**< @brief  Pointer to unclipped vector list */
-    int s_vlen;			/**< @brief  #  of actual cmd[] entries in vlist */
+    int s_vlen;			/**< @brief  Number of actual cmd[] entries in vlist */
     struct db_full_path s_fullpath;
     char s_flag;		/**< @brief  UP = object visible, DOWN = obj invis */
     char s_iflag;	        /**< @brief  UP = illuminated, DOWN = regular */

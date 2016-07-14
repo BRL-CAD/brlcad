@@ -75,7 +75,6 @@ option add *QuadDisplay.height 400 widgetDefault
     public method orientation {args}
     public method pmat {args}
     public method pmodel2view {args}
-    public method pov {args}
     public method rmat {args}
     public method rot {args}
     public method rotate_about {args}
@@ -522,10 +521,6 @@ option add *QuadDisplay.height 400 widgetDefault
 
 ::itcl::body QuadDisplay::pmodel2view {args} {
     eval $itk_component($itk_option(-pane)) pmodel2view $args
-}
-
-::itcl::body QuadDisplay::pov {args} {
-    eval $itk_component($itk_option(-pane)) pov $args
 }
 
 ::itcl::body QuadDisplay::rmat {args} {

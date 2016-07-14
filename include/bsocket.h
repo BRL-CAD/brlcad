@@ -17,19 +17,18 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bsocket.h
+/** @addtogroup bu_bsocket
  *
- * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard system select() routines.
+ * @brief
+ * BRL-CAD system compatibility wrapper header that provides declarations for
+ * native and standard system select() routines.
  *
  * This header is commonly used in lieu of including the following:
  * sys/select.h, winsock2.h (select, fd_set)
- *
- * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
- *
  */
+
+/** @{ */
+/** @file bsocket.h */
 
 #ifndef BSOCKET_H
 #define BSOCKET_H
@@ -75,6 +74,8 @@
 #endif /* GCC_PREREQ */
 
 #endif /* BSOCKET_H */
+
+/** @} */
 
 /*
  * Local Variables:

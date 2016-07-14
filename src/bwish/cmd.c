@@ -28,6 +28,8 @@
 
 #include "common.h"
 
+#ifndef HAVE_WINDOWS_H
+
 #include <stdlib.h>
 #include <string.h>
 
@@ -385,6 +387,7 @@ cmdInit(Tcl_Interp *interp)
     return TCL_OK;
 }
 
+#endif /* HAVE_WINDOWS_H */
 
 /*
  * Local Variables:

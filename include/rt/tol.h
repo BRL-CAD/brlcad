@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup librt
+/** @addtogroup rt_tol
  *
  * @brief
  * librt specific tolerance information.
@@ -41,7 +41,7 @@ __BEGIN_DECLS
 
  */
 /** @{ */
-/** @file tol.h */
+/** @file rt/tol.h */
 
 /*
  * Unfortunately, to prevent divide-by-zero, some tolerancing needs to

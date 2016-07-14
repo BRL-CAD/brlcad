@@ -77,7 +77,7 @@ ged_ae2dir(struct ged *gedp, int argc, const char *argv[])
     if (iflag)
 	VSCALE(dir, dir, -1);
 
-    bn_encode_vect(gedp->ged_result_str, dir);
+    bn_encode_vect(gedp->ged_result_str, dir, 1);
 
     return GED_OK;
 }

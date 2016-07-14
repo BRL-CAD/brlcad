@@ -5,6 +5,10 @@ set(BU_INCLUDE_DIRS
   ${TCL_INCLUDE_DIRS}
   )
 
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  set(BU_INCLUDE_DIRS ${BU_INCLUDE_DIRS} ${BSON_INCLUDE_DIR})
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 # locally used but not needed by users of the library
 set(BU_LOCAL_INCLUDE_DIRS ${CMAKE_CURRENT_SOURCE_DIR})
 
@@ -18,12 +22,11 @@ configure_file(${BRLCAD_SOURCE_DIR}/misc/mime.types ${CMAKE_CURRENT_BINARY_DIR}/
 configure_file(${BRLCAD_SOURCE_DIR}/misc/mime_cad.types ${CMAKE_CURRENT_BINARY_DIR}/tmp COPYONLY)
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tmp)
 
-# Set locations for final mime C and header files
-set(MIME_C_FILE ${CMAKE_CURRENT_BINARY_DIR}/mime.c)
-set(MIME_H_FILE ${BRLCAD_SOURCE_DIR}/include/bu/mime.h)
-
 # Run the generation process
 include(${CMAKE_CURRENT_SOURCE_DIR}/mime.cmake)
+
+# We do want to install the mime header
+install(FILES ${BU_MIME_H_FILE} DESTINATION ${INCLUDE_DIR}/brlcad/bu)
 
 set(LIBBU_SOURCES
   affinity.c
@@ -43,7 +46,7 @@ set(LIBBU_SOURCES
   crashreport.c
   ctype.c
   dirent.c
-  date-time.c
+  datetime.c
   dlfcn.c
   encode.c
   endian.c
@@ -72,7 +75,7 @@ set(LIBBU_SOURCES
   magic.c
   malloc.c
   mappedfile.c
-  ${MIME_C_FILE}
+  ${BU_MIME_C_FILE}
   mread.c
   observer.c
   opt.c
@@ -95,6 +98,7 @@ set(LIBBU_SOURCES
   rb_walk.c
   realpath.c
   semaphore.c
+  sha1.c
   simd.c
   sort.c
   sscanf.c
@@ -102,8 +106,8 @@ set(LIBBU_SOURCES
   str.c
   temp.c
   thread.cpp
-  timer.c
   units.c
+  uuid.c
   vers.c
   vfont.c
   vlb.c
@@ -114,7 +118,7 @@ set(LIBBU_SOURCES
   xdr.c
   )
 
-BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${M_LIBRARY};y2038")
+BRLCAD_ADDLIB(libbu "${LIBBU_SOURCES}" "${CMAKE_THREAD_LIBS_INIT};${DL_LIBRARY};${WINSOCK_LIB};${PSAPI_LIB};${UUID_LIBRARY};${BSON_LIBRARIES};${M_LIBRARY};y2038")
 set_target_properties(libbu PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
   set_property(TARGET libbu APPEND PROPERTY COMPILE_DEFINITIONS "Y2038_DLL_IMPORTS")
@@ -127,15 +131,16 @@ add_subdirectory(tests)
 add_subdirectory(y2038)
 
 set(bu_ignore_files
-  glob.c
-  bu_internals.h
+  bitv.h
   charclass.h
   mime.cmake
   parallel.h
-  rb_internals.h
+  rb.h
+  sha1.h
   uce-dirent.h
   vfont.h
-  vls_internals.h
+  vls_vprintf.h
+  TODO.binary_attributes
   )
 CMAKEFILES(${bu_ignore_files})
 

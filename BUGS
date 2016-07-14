@@ -15,6 +15,13 @@ on-going issues.
 Recent Bugs
 -----------
 
+* rtedge's overlay mode appears to be generating different results on
+  Windows and Linux for the m35 steering wheel (rtwizard rendering
+  mode D.)
+
+* pixdiff on Windows is reporting no differences with a pair of files
+  that pixcmp can see differences in.
+
 * fblabel seems quite busted, at least talking to a /dev/X fbserv, in
   that it only draws the first character and eventually displays
   rem_read() failures when run in -d debug mode.

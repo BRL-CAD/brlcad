@@ -72,7 +72,8 @@ Readname(char **ptr, char *id)
     }
     num[++i] = '\0';
     length = atoi(num);
-    *ptr = (char *)bu_malloc((length + 1)*sizeof(char), "Readname: name");
+    /* we may tack on a letter to the name */
+    *ptr = (char *)bu_malloc((length + 2)*sizeof(char), "Readname: name");
     ch = *ptr;
     for (i = 0; i < length; i++) {
 	if (counter > lencard)

@@ -95,7 +95,7 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     nmg_vertex_tabulate(&verts, &r->l.magic);
 
     /* Get number of vertices */
-    numverts = BU_PTBL_END(&verts);
+    numverts = BU_PTBL_LEN(&verts);
 
     /* get list of vertexuse normals */
     if (pstate->obj_write_options->do_normals)
@@ -277,7 +277,7 @@ nmg_to_obj(struct conversion_state *pstate, struct nmgregion *r, const struct db
     pstate->vert_offset += numverts;
     bu_ptbl_free(&verts);
     if (pstate->obj_write_options->do_normals) {
-	pstate->norm_offset += BU_PTBL_END(&norms);
+	pstate->norm_offset += BU_PTBL_LEN(&norms);
 	bu_ptbl_free(&norms);
     }
     bu_free(region_name, "region name");
@@ -568,7 +568,7 @@ obj_write(struct gcv_context *context, const struct gcv_opts *gcv_options, const
 
 
 const struct gcv_filter gcv_conv_obj_write = {
-    "OBJ Writer", GCV_FILTER_WRITE, MIME_MODEL_OBJ,
+    "OBJ Writer", GCV_FILTER_WRITE, BU_MIME_MODEL_OBJ,
     obj_write_create_opts, obj_write_free_opts, obj_write
 };
 

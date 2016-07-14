@@ -61,7 +61,7 @@ read_rt_file(FILE *infp, char *name, fastf_t *model2view)
     char *ret;			/* return code for fgets */
     char string[BUFF_LEN];	/* temporary buffer */
     char *arg_ptr;		/* place holder */
-    char forget_it[9];		/* "azimuth" catcher, then forget */
+    char forget_it[10];		/* "azimuth" catcher, then forget */
     int i;			/* reusable counter */
     int num;			/* return code for sscanf */
     int seen_view;		/* these are flags.  */

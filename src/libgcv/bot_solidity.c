@@ -26,7 +26,7 @@
 
 
 #include "common.h"
-
+#include "bu/sort.h"
 #include "gcv/util.h"
 
 #include <stdlib.h>
@@ -57,7 +57,7 @@ set_edge(struct halfedge *edge, int va, int vb)
 
 
 HIDDEN int
-halfedge_compare(const void *pleft, const void *pright)
+halfedge_compare(const void *pleft, const void *pright, void *UNUSED(context))
 {
     const struct halfedge * const left = (struct halfedge *)pleft;
     const struct halfedge * const right = (struct halfedge *)pright;
@@ -93,7 +93,7 @@ generate_edge_list(const struct rt_bot_internal *bot)
 	set_edge(&edge_list[face_index * 3 + 2], face[2], face[0]);
     }
 
-    qsort(edge_list, num_edges, sizeof(struct halfedge), halfedge_compare);
+    bu_sort(edge_list, num_edges, sizeof(struct halfedge), halfedge_compare, NULL);
 
     return edge_list;
 }

@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv_api.h
+/** @file gcv/api.h
  *
  * Main public API of the LIBGCV geometry conversion library.
  *
@@ -118,7 +118,8 @@ struct gcv_opts
 /**
  * Assign default option values.
  */
-void gcv_opts_default(struct gcv_opts *gcv_options);
+GCV_EXPORT void
+gcv_opts_default(struct gcv_opts *gcv_options);
 
 
 /**
@@ -132,7 +133,7 @@ struct gcv_filter {
     const enum gcv_filter_type filter_type;
 
     /* MIME_MODEL_UNKNOWN if 'filter_type' is GCV_FILTER_FILTER */
-    const mime_model_t mime_type;
+    const bu_mime_model_t mime_type;
 
     /**
      * PRIVATE
@@ -171,12 +172,18 @@ struct gcv_filter {
 };
 
 
+struct gcv_plugin {
+    const struct gcv_filter * const * const filters;
+};
+
+
 /*
  * Return a pointer to a bu_ptbl listing all registered filters as
  * const struct gcv_filter pointers.
  */
 GCV_EXPORT const struct bu_ptbl *gcv_list_filters(void);
 
+GCV_EXPORT const struct gcv_plugin *gcv_plugin_info();
 
 /**
  * Perform a filtering operation on a gcv_context.

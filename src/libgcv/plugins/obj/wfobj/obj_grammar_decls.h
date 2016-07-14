@@ -26,7 +26,7 @@
 #ifndef LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
 #define LIBGCV_WFOBJ_OBJ_GRAMMAR_DECLS_H
 
-#include "common.h"
+#include "obj_util.h"
 #include "obj_grammar.hpp"
 #include "obj_rules.h"
 #include "obj_token_type.h"

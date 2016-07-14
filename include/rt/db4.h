@@ -1,4 +1,4 @@
-/*                            D B . H
+/*                            D B 4 . H
  * BRL-CAD
  *
  * Copyright (c) 1985-2016 United States Government as represented by
@@ -19,7 +19,7 @@
  */
 /** @addtogroup db4 */
 /** @{ */
-/** @file db.h
+/** @file rt/db4.h
  * @brief
  *		GED Database Format v4
  *

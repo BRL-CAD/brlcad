@@ -897,7 +897,6 @@ RT_EXPORT extern size_t db5_type_sizeof_h_binu(const int minor);
 
 RT_EXPORT extern size_t db5_type_sizeof_n_binu(const int minor);
 
-
 __END_DECLS
 
 #endif /* RT_DB_IO_H */

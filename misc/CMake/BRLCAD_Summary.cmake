@@ -256,7 +256,6 @@ set(BRLCAD_SC_BUILD_LABEL "Compile STEPcode")
 set(BRLCAD_ENABLE_X11_LABEL "X11 support (optional) ")
 set(BRLCAD_ENABLE_OPENGL_LABEL "OpenGL support (optional) ")
 set(BRLCAD_ENABLE_QT_LABEL "Qt support (optional) ")
-set(BRLCAD_ENABLE_RTSERVER_LABEL "librtserver JDK support (optional) ")
 set(BRLCAD_ENABLE_RUNTIME_DEBUG_LABEL "Enable run-time debugging (optional) ")
 set(BRLCAD_ARCH_BITSETTING_LABEL "Build 32/64-bit release ")
 set(BRLCAD_OPTIMIZED_BUILD_LABEL "Build optimized release ")
@@ -282,7 +281,6 @@ set(FEATURE_REPORT_ITEMS
     BRLCAD_ENABLE_OPENGL
     BRLCAD_ENABLE_X11
     BRLCAD_ENABLE_QT
-    BRLCAD_ENABLE_RTSERVER
     BRLCAD_ENABLE_RUNTIME_DEBUG
     )
 

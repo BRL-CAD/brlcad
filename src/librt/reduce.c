@@ -26,8 +26,9 @@
 
 #include "common.h"
 
-#include "rt/func.h"
+#include "rt/functab.h"
 #include "rt/primitives/bot.h"
+#include "rt/misc.h"
 #include "rt/db5.h"
 
 
@@ -36,7 +37,7 @@ _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 			       fastf_t reduction_level)
 {
     size_t i;
-    fastf_t min_len_sq = 0.0, max_len_sq = 0.0;
+    fastf_t min_len_sq = INFINITY, max_len_sq = -INFINITY;
 
     RT_BOT_CK_MAGIC(bot);
 
@@ -66,8 +67,8 @@ _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 
 
 HIDDEN void
-_rt_obj_reduce_bot(struct rt_db_internal *dest,
-		   const struct rt_bot_internal *bot, fastf_t reduction_level, unsigned flags)
+_rt_reduce_bot(struct rt_db_internal *dest,
+	       const struct rt_bot_internal *bot, fastf_t reduction_level, unsigned flags)
 {
     struct rt_bot_internal *result;
     fastf_t max_chord_error, max_normal_error, min_edge_length;
@@ -77,7 +78,7 @@ _rt_obj_reduce_bot(struct rt_db_internal *dest,
 
     min_edge_length = _determine_bot_min_edge_length(bot, reduction_level);
 
-    if (flags & RT_OBJ_REDUCE_PRESERVE_VOLUME)
+    if (flags & RT_REDUCE_OBJ_PRESERVE_VOLUME)
 	max_chord_error = max_normal_error = 0.0;
     else {
 	/* arbitrary */
@@ -113,21 +114,21 @@ _rt_obj_reduce_bot(struct rt_db_internal *dest,
 
 
 void
-rt_obj_reduce(struct rt_db_internal *dest,
+rt_reduce_obj(struct rt_db_internal *dest,
 	      const struct rt_db_internal *internal, fastf_t reduction_level, unsigned flags)
 {
     RT_CK_DB_INTERNAL(dest);
     RT_CK_DB_INTERNAL(internal);
 
     if (reduction_level < 0.0 || reduction_level > 1.0)
-	bu_bomb("rt_obj_reduce(): invalid reduction_level");
+	bu_bomb("rt_reduce_obj(): invalid reduction_level");
 
     if (internal->idb_major_type == DB5_MAJORTYPE_BRLCAD)
 	switch (internal->idb_minor_type) {
 	    case ID_BOT: {
 		const struct rt_bot_internal *bot = (struct rt_bot_internal *)internal->idb_ptr;
 		RT_BOT_CK_MAGIC(bot);
-		_rt_obj_reduce_bot(dest, bot, reduction_level, flags);
+		_rt_reduce_bot(dest, bot, reduction_level, flags);
 		return;
 	    }
 
@@ -135,7 +136,7 @@ rt_obj_reduce(struct rt_db_internal *dest,
 		break;
 	};
 
-    bu_log("rt_obj_reduce(): no reduction function for the given object\n");
+    bu_log("rt_reduce_obj(): no reduction function for the given object\n");
 }
 
 

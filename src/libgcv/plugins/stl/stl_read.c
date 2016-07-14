@@ -615,11 +615,19 @@ stl_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 }
 
 
-const struct gcv_filter gcv_conv_stl_read = {
-    "STL Reader", GCV_FILTER_READ, MIME_MODEL_STL,
+static const struct gcv_filter gcv_conv_stl_read = {
+    "STL Reader", GCV_FILTER_READ, BU_MIME_MODEL_STL,
     stl_read_create_opts, stl_read_free_opts, stl_read
 };
 
+
+extern const struct gcv_filter gcv_conv_stl_write;
+static const struct gcv_filter * const filters[] = {&gcv_conv_stl_read, &gcv_conv_stl_write, NULL};
+
+const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+GCV_EXPORT const struct gcv_plugin *
+gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

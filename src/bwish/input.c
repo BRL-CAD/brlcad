@@ -27,6 +27,8 @@
 
 #include "common.h"
 
+#ifndef HAVE_WINDOWS_H
+
 /* system headers */
 #include <string.h>
 #include <ctype.h>
@@ -561,6 +563,7 @@ insert_beep(void)
     bu_log("%c", 7);
 }
 
+#endif /* HAVE_WINDOWS_H */
 
 /*
  * Local Variables:

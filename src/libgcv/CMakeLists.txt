@@ -1,25 +1,3 @@
-function(GET_GCV_PLUGIN_LIBRARIES result)
-  set(plugin_libraries "")
-
-  file(GLOB cmakelist_files RELATIVE ${CMAKE_CURRENT_SOURCE_DIR} plugins/*/CMakeLists.txt)
-
-  foreach(file ${cmakelist_files})
-    get_filename_component(plugin_directory "${file}" DIRECTORY)
-    get_filename_component(plugin_name "${plugin_directory}" NAME)
-    add_subdirectory(${plugin_directory})
-    list(APPEND plugin_libraries gcv_${plugin_name}-static)
-  endforeach(file ${cmakelist_files})
-
-  set (${result} ${plugin_libraries} PARENT_SCOPE)
-endfunction(GET_GCV_PLUGIN_LIBRARIES result)
-
-
-GET_GCV_PLUGIN_LIBRARIES(LIBGCV_PLUGIN_LIBRARIES)
-
-
-#################################################################################
-
-
 # Include directories needed by libgcv users
 set(GCV_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
@@ -29,6 +7,13 @@ set(GCV_INCLUDE_DIRS
   )
 BRLCAD_LIB_INCLUDE_DIRS(gcv GCV_INCLUDE_DIRS "")
 
+if(CPP_DLL_DEFINES)
+  set(LIBGCV_PLUGINS_PATH "${BIN_DIR}")
+else(CPP_DLL_DEFINES)
+  set(LIBGCV_PLUGINS_PATH "${LIB_DIR}")
+endif(CPP_DLL_DEFINES)
+set(LIBGCV_PLUGINS_DIRECTORY "libgcv_plugins")
+add_subdirectory(plugins)
 
 set(LIBGCV_SOURCES
   bot_solidity.c
@@ -41,9 +26,11 @@ set(LIBGCV_SOURCES
   )
 
 
-BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu;${LIBGCV_PLUGIN_LIBRARIES}" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
+BRLCAD_ADDLIB(libgcv "${LIBGCV_SOURCES}" "librt;libwdb;libbu" SO_SRCS "${GCV_SO_SRCS}" STATIC_SRCS "${GCV_STATIC_SRCS}")
 set_target_properties(libgcv PROPERTIES VERSION 20.0.1 SOVERSION 20)
-
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_DIRECTORY=\"${LIBGCV_PLUGINS_DIRECTORY}\"")
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGINS_PATH=\"${LIBGCV_PLUGINS_PATH}\"")
+set_property(SOURCE gcv.c APPEND PROPERTY COMPILE_DEFINITIONS "LIBGCV_PLUGIN_SUFFIX=\"${CMAKE_SHARED_LIBRARY_SUFFIX}\"")
 
 enable_testing()
 BRLCAD_ADDEXEC(test_bottess test_bottess.c libgcv NO_INSTALL)

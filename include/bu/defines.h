@@ -99,48 +99,34 @@
 
 
 /**
- * @def BU_FLSTR
- *
- * Macro for getting a concatenated string of the current file and
- * line number.  Produces something of the form: "filename.c"":""1234"
- */
-#define bu_cpp_str(s) # s
-#define bu_cpp_xstr(s) bu_cpp_str(s)
-#define bu_cpp_glue(a, b) a ## b
-#define bu_cpp_xglue(a, b) bu_cpp_glue(a, b)
-#define BU_FLSTR __FILE__ ":" bu_cpp_xstr(__LINE__)
-
-
-/**
  * shorthand declaration of a printf-style functions
  */
 #ifdef HAVE_PRINTF12_ATTRIBUTE
-#define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#  define _BU_ATTR_PRINTF12 __attribute__((__format__ (__printf__, 1, 2)))
+#elif !defined(_BU_ATTR_PRINTF12)
+#  define _BU_ATTR_PRINTF12
 #endif
 #ifdef HAVE_PRINTF23_ATTRIBUTE
-#define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#  define _BU_ATTR_PRINTF23 __attribute__((__format__ (__printf__, 2, 3)))
+#elif !defined(_BU_ATTR_PRINTF23)
+#  define _BU_ATTR_PRINTF23
 #endif
 #ifdef HAVE_SCANF23_ATTRIBUTE
-#define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#  define _BU_ATTR_SCANF23 __attribute__((__format__ (__scanf__, 2, 3)))
+#elif !defined(_BU_ATTR_SCANF23)
+#  define _BU_ATTR_SCANF23
 #endif
 
 /**
  * shorthand declaration of a function that doesn't return
  */
-#ifdef HAVE_NORETURN_ATTRIBUTE
+#if defined(HAVE_NORETURN_ATTRIBUTE) && defined(HAVE_ANALYZER_NORETURN_ATTRIBUTE)
+   /* clang static analyzer is needing an additional flag set */
+#  define _BU_ATTR_NORETURN __attribute__((__noreturn__)) __attribute__((analyzer_noreturn))
+#elif defined(HAVE_NORETURN_ATTRIBUTE)
 #  define _BU_ATTR_NORETURN __attribute__((__noreturn__))
 #else
 #  define _BU_ATTR_NORETURN
-#endif
-
-/* For the moment, we need to specially flag some functions
- * for clang.  It's not clear if we will always need to do
- * this, but for now this suppresses a lot of noise in the
- * reports */
-#ifdef HAVE_ANALYZER_NORETURN_ATTRIBUTE
-#  define _BU_ATTR_ANALYZE_NORETURN __attribute__((analyzer_noreturn))
-#else
-#  define _BU_ATTR_ANALYZE_NORETURN
 #endif
 
 /**

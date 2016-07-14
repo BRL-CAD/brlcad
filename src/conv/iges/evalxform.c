@@ -37,7 +37,8 @@ void
 Evalxform()
 {
 
-    int i, j, xform;
+    size_t i;
+    int j, xform;
     struct list *ptr, *ptr1, *ptr_root;
     mat_t rot;
 

@@ -39,6 +39,8 @@ __BEGIN_DECLS
 
 BU_EXPORT extern int bu_setenv(const char *name, const char *value, int overwrite);
 
+/** @} */
+
 __END_DECLS
 
 #endif /* BU_ENV_H */

@@ -65,7 +65,7 @@ bu_dlclose(void *handle)
 #ifdef HAVE_DLOPEN
     return dlclose(handle);
 #elif defined(WIN32)
-    return 0;
+    return !FreeLibrary(handle);
 #else
     bu_log("dlclose not supported\n");
     return 0;

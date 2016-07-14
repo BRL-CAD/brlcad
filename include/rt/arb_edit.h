@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt */
+/** @addtogroup rt_arb */
 /** @{ */
-/** @file arb_edit.h
+/** @file rt/arb_edit.h
  *
  * @brief
  * Editing operations for arb primitives.
@@ -31,9 +31,9 @@
 
 #include "common.h"
 #include "bn.h"
+#include "rt/defines.h"
 #include "rt/db4.h"
 #include "rt/geom.h"
-#include "rt/defines.h"
 
 __BEGIN_DECLS
 

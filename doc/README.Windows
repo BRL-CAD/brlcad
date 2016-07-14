@@ -3,13 +3,16 @@ BRL-CAD on Windows README
 
 The usual way to build BRL-CAD for Windows is to use the CMake build
 system generator and the Microsoft Visual Studio C++ (MSVC) compiler.
-Recent versions of both (as of this writing, MSVC 2010 and CMake
-2.8.6+) are recommended.  If generating an installer, the Nullsoft
+Recent versions of both (as of this writing, MSVC 2013 and CMake
+2.8.12+) are recommended.  If generating an installer, the Nullsoft
 Scriptable Install System (NSIS) tool is also required.
 
 In principle, BRL-CAD can be built using CMake and environments like
 Cygwin and/or Mingw/Msys, but the is largely untested and infrequently
 supported.  Enhancements or bug reports are welcome.
+
+Visual Studio
+-------------
 
 To build with CMake and Visual Studio, the first step is to obtain the
 BRL-CAD sources and create a build directory.  In principle, it is not
@@ -44,5 +47,21 @@ Once compilation is successfully complete, you may want to produce an
 NSIS installer.  If so, locate a target named PACKAGE and run it.  The
 end result should be an .exe file capable of installing BRL-CAD.
 
-Needed to run this in an msys shell:  /c/Progra~1/CMake/bin/cmake -H/e/brlcad.win98 -B/e/brlcad.win98/build.mingw --check-build-system CMakeFiles\Makefile.cmake 0
+MINGW (WORK IN PROGRESS - THIS DOES NOT YET WORK!!!)
+-----
+
+After installing the MINGW system, set up as follows:
+
+set path=%path%;"C:\Program Files (x86)\CMake\bin"
+set path=%path%;C:\MinGW\bin
+
+now make a build directory, and run CMake:
+
+cmake ..\brlcad -G "MinGW Makefiles" -DBRLCAD_BUNDLED_LIBS=BUNDLED
+
+mingw32-make
+
+Note that you don't want to do this from an msys prompt that has
+sh in the path.  (ConEmu can make using the standard Windows command
+prompt a bit more tolerable:  http://conemu.github.io)
 

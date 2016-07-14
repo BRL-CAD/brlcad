@@ -10,9 +10,12 @@ include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
+find_package(LEMON)
 PERPLEX_TARGET(csg_scanner csg_scanner.perplex)
 LEMON_TARGET(csg_parser csg_parser.lemon)
 ADD_PERPLEX_LEMON_DEPENDENCY(csg_scanner csg_parser)
+
+DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/csg_parser_csg_parser/csg_parser.lemon)
 
 set(CSG_SRCS
   csg.c

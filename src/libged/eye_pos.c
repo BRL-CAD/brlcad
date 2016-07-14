@@ -49,7 +49,7 @@ ged_eye_pos(struct ged *gedp, int argc, const char *argv[])
     /* get eye position */
     if (argc == 1) {
 	VSCALE(eye_pos, gedp->ged_gvp->gv_eye_pos, gedp->ged_wdbp->dbip->dbi_base2local);
-	bn_encode_vect(gedp->ged_result_str, eye_pos);
+	bn_encode_vect(gedp->ged_result_str, eye_pos, 1);
 	return GED_OK;
     }
 

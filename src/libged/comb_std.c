@@ -28,8 +28,6 @@
 
 #include <string.h>
 
-#include "tcl.h"
-
 #include "bu/getopt.h"
 #include "vmath.h"
 #include "rt/geom.h"

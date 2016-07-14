@@ -71,7 +71,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
     nmg_face_tabulate(&faces, magic_p);
 
     cnt = 0;
-    for (i = 0; i < (size_t)BU_PTBL_END(&faces) ; i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&faces) ; i++) {
 	fp = (struct face *)BU_PTBL_GET(&faces, i);
 	NMG_CK_FACE(fp);
 	fu = fu1 = fp->fu_p;

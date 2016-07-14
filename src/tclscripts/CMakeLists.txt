@@ -33,14 +33,18 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
     set(tclindex_outdir "${CMAKE_BINARY_DIR}/${DATA_DIR}/${targetdir}")
   endif(CMAKE_CONFIGURATION_TYPES)
 
-  # get file list so we can make tclindex.tcl depend on them
+  # get file copy target(s) so we can make tclindex.tcl depend on them
   BRLCAD_GET_DIR_LIST_CONTENTS(DATA_TARGETS "${CMAKE_CURRENT_BINARY_DIR}" data_target_list)
+
+  # We want to be out of date if any of the tcl files in the current directory
+  # change, since both pkgIndex and tclIndex are going to scan the directory
+  file(GLOB tcl_files "*.tcl")
 
   # command that builds the index when the dependency is resolved
   add_custom_command(
     OUTPUT ${tclindex_outdir}/${outfile}
     COMMAND btclsh ${CMAKE_BINARY_DIR}/CMakeTmp/${cmd}.tcl ${tclindex_outdir} >> ${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log 2>&1
-    DEPENDS btclsh ${data_target_list}
+    DEPENDS btclsh ${data_target_list} ${tcl_files}
     )
 
   # put tclindex.tcl where it goes
@@ -56,6 +60,9 @@ macro(general_tcl_index_BUILD cmd outfile targetdir)
   set(tclindex_target_list "${tclindex_target_list}" CACHE STRING "tclindex target list" FORCE)
 
   set(LOG_FILES "${LOG_FILES};${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log")
+
+  DISTCLEAN(${CMAKE_CURRENT_BINARY_DIR}/${cmd}_index_gen.log)
+
 endmacro(general_tcl_index_BUILD name targetdir)
 mark_as_advanced(tclindex_target_list)
 
@@ -79,6 +86,7 @@ add_subdirectory(mged)
 add_subdirectory(pl-dm)
 add_subdirectory(sdialogs)
 add_subdirectory(swidgets)
+add_subdirectory(tcllib)
 add_subdirectory(util)
 
 set(tclscripts_TCLSCRIPTS
@@ -106,8 +114,6 @@ tclIndex_BUILD(tclscripts)
 add_subdirectory(rtwizard)
 
 CMAKEFILES(README hv3_man_browser_test.tcl)
-
-set_property(DIRECTORY APPEND PROPERTY ADDITIONAL_MAKE_CLEAN_FILES "${LOG_FILES}")
 
 # Local Variables:
 # tab-width: 8

@@ -26,8 +26,8 @@
 #ifndef LIBGCV_WFOBJ_OBJ_RULES_H
 #define LIBGCV_WFOBJ_OBJ_RULES_H
 
-#include "common.h"
 #include "obj_token_type.h"
+#include "obj_util.h"
 
 enum YYCONDTYPE {
     INITIAL,

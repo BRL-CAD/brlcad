@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file gcv_util.h
+/** @file gcv/util.h
  *
  * Utility functions provided by the LIBGCV geometry conversion
  * library.

@@ -39,8 +39,6 @@
 #include "nmg.h"
 #include "rt/geom.h"
 
-#include "dm/bview.h"
-
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -48,7 +46,7 @@
 
 #include "raytrace.h"
 
-#include "obj.h"
+#include "dm/bview.h"
 
 #include "./ged_private.h"
 

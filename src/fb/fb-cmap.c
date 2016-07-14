@@ -45,6 +45,9 @@ main(int argc, char **argv)
     int fbsize = 512;
     int i;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
@@ -65,8 +68,7 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdout;
-	if (isatty(fileno(fp)))
-	    fprintf(stderr, "%s       Program continues running:\n", usage);
+	fprintf(stderr, "WARNING: writing a binary colormap to stdout\n");
     }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)

@@ -49,19 +49,19 @@
 
 #define PUSH(ptr) bu_ptbl_ins(&pstate->stack, (long *)ptr)
 #define POP(structure, ptr) { \
-	if (BU_PTBL_END(&pstate->stack) == 0) \
+	if (BU_PTBL_LEN(&pstate->stack) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack, BU_PTBL_END(&pstate->stack)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack, BU_PTBL_LEN(&pstate->stack)-1); \
 	    bu_ptbl_rm(&pstate->stack, (long *)ptr); \
 	} \
     }
 #define PUSH2(ptr) bu_ptbl_ins(&pstate->stack2, (long *)ptr)
 #define POP2(structure, ptr) { \
-	if (BU_PTBL_END(&pstate->stack2) == 0) \
+	if (BU_PTBL_LEN(&pstate->stack2) == 0) \
 	    ptr = (struct structure *)NULL; \
 	else { \
-	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack2, BU_PTBL_END(&pstate->stack2)-1); \
+	    ptr = (struct structure *)BU_PTBL_GET(&pstate->stack2, BU_PTBL_LEN(&pstate->stack2)-1); \
 	    bu_ptbl_rm(&pstate->stack2, (long *)ptr); \
 	} \
     }
@@ -3035,11 +3035,19 @@ fastgen4_read(struct gcv_context *context, const struct gcv_opts *gcv_options, c
 }
 
 
-const struct gcv_filter gcv_conv_fastgen4_read = {
-    "FASTGEN4 Reader", GCV_FILTER_READ, MIME_MODEL_VND_FASTGEN,
+static const struct gcv_filter gcv_conv_fastgen4_read = {
+    "FASTGEN4 Reader", GCV_FILTER_READ, BU_MIME_MODEL_VND_FASTGEN,
     fastgen4_create_opts, fastgen4_free_opts, fastgen4_read
 };
 
+
+extern const struct gcv_filter gcv_conv_fastgen4_write;
+static const struct gcv_filter * const filters[] = {&gcv_conv_fastgen4_read, &gcv_conv_fastgen4_write, NULL};
+
+const struct gcv_plugin gcv_plugin_info_s = { filters };
+
+GCV_EXPORT const struct gcv_plugin *
+gcv_plugin_info(){ return &gcv_plugin_info_s; }
 
 /*
  * Local Variables:

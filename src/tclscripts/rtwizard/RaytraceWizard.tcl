@@ -90,6 +90,13 @@ namespace eval RaytraceWizard {
     #
     proc main { args } {
 
+	# As of now we haven't drawn anything
+	set ::first_draw 1
+
+	# Initial BoT drawing LoD limit arbitrarily set to this
+	# display threshold (# of faces in BoT)
+	set ::bot_threshold 1000
+
 	#
 	# Create the Feedback
 	#

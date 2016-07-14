@@ -61,16 +61,14 @@ int manifold[4] = { 1, 1, 1, 1 };
 
 
 void
-usage(char *str, int stopprog)
+usage(char *str)
 {
     if (str) (void)fputs(str, stderr);
 
-    (void) fprintf(stderr, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
-		   progname,
-		   "       Create NMG-to-mged database ",mfilename,
-		   "       and plot3 file ",plotfilename);
-    if (stopprog) bu_exit(1, NULL);
-    fprintf(stderr,"       Program continues running:\n");
+    bu_exit(1, "Usage: %s [ -0123 ] \n%s\"%s\"\n%s\"%s\"\n",
+	    progname,
+	    "       Create NMG-to-mged database ", mfilename,
+	    "       and plot3 file ", plotfilename);
 }
 
 
@@ -97,7 +95,7 @@ parse_args(int ac, char **av)
 	    case '2'	: manifold[2] = 0; break;
 	    case '1'	: manifold[1] = 0; break;
 	    case '0'	: manifold[0] = 0; break;
-	    default	: usage((char *)NULL,1); break;
+	    default	: usage((char *)NULL); break;
 	}
 
     return bu_optind;
@@ -522,10 +520,8 @@ main(int ac, char *av[])
     struct rt_wdb *fdmodel;
 
     parse_args(ac, av);
-    if (ac==1) usage((char *)NULL,0);
     if (!manifold[0] && !manifold[1] && !manifold[2] && !manifold[3])
-	usage("No manifolds selected\n",1);
-
+	usage("No manifolds selected\n");
 
     m = nmg_mm();
     r = nmg_mrsv(m);
@@ -544,6 +540,8 @@ main(int ac, char *av[])
 
     NMG_CK_MODEL(m);
 
+    bu_log("Writing out plot data to file [%s] ...", plotfilename);
+
     /* write a plot file */
     if ((fdplot = fopen(plotfilename, "w")) == (FILE *)NULL)
 	perror(plotfilename);
@@ -551,6 +549,10 @@ main(int ac, char *av[])
 	nmg_pl_m(fdplot, m);
 	fclose(fdplot);
     }
+
+    bu_log(" done.\n");
+
+    bu_log("Writing out geometry to file [%s] ...", mfilename);
 
     /* write the database */
     if ((fdmodel = wdb_fopen(mfilename)) == NULL)
@@ -565,6 +567,7 @@ main(int ac, char *av[])
 	wdb_close(fdmodel);
     }
 
+    bu_log(" done.\n");
 
     return 0;
 }

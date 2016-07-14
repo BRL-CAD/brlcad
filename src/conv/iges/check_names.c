@@ -471,7 +471,7 @@ Get_brep_name(int entityno)
 
 
 void
-Get_subfig_name(int entityno)
+Get_subfig_name(size_t entityno)
 {
     int i;
     int entity_type;
@@ -509,7 +509,7 @@ Get_subfig_name(int entityno)
 void
 Check_names()
 {
-    int i;
+    size_t i;
 
     bu_log("Looking for Name Entities...\n");
     for (i = 0; i < totentities; i++) {
@@ -570,63 +570,63 @@ Check_names()
 	if (dir[i]->name == (char *)NULL) {
 	    switch (dir[i]->type) {
 		case 150:
-		    sprintf(tmp_name, "block.%d", i);
+		    sprintf(tmp_name, "block.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 152:
-		    sprintf(tmp_name, "wedge.%d", i);
+		    sprintf(tmp_name, "wedge.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 154:
-		    sprintf(tmp_name, "cyl.%d", i);
+		    sprintf(tmp_name, "cyl.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 156:
-		    sprintf(tmp_name, "cone.%d", i);
+		    sprintf(tmp_name, "cone.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 158:
-		    sprintf(tmp_name, "sphere.%d", i);
+		    sprintf(tmp_name, "sphere.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 160:
-		    sprintf(tmp_name, "torus.%d", i);
+		    sprintf(tmp_name, "torus.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 162:
-		    sprintf(tmp_name, "revolution.%d", i);
+		    sprintf(tmp_name, "revolution.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 164:
-		    sprintf(tmp_name, "extrusion.%d", i);
+		    sprintf(tmp_name, "extrusion.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 168:
-		    sprintf(tmp_name, "ell.%d", i);
+		    sprintf(tmp_name, "ell.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 180:
-		    sprintf(tmp_name, "region.%d", i);
+		    sprintf(tmp_name, "region.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 184:
-		    sprintf(tmp_name, "group.%d", i);
+		    sprintf(tmp_name, "group.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 186:
-		    sprintf(tmp_name, "brep.%d", i);
+		    sprintf(tmp_name, "brep.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 404:
-		    sprintf(tmp_name, "drawing.%d", i);
+		    sprintf(tmp_name, "drawing.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 410:
-		    sprintf(tmp_name, "view.%d", i);
+		    sprintf(tmp_name, "view.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 		case 430:
-		    sprintf(tmp_name, "inst.%d", i);
+		    sprintf(tmp_name, "inst.%d", (int)i);
 		    dir[i]->name = Make_unique_brl_name(tmp_name);
 		    break;
 	    }

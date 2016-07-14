@@ -192,8 +192,11 @@ CLT_DECLARE_INTERFACE(arb);
 CLT_DECLARE_INTERFACE(ars);
 CLT_DECLARE_INTERFACE(rec);
 CLT_DECLARE_INTERFACE(sph);
+CLT_DECLARE_INTERFACE(part);
+CLT_DECLARE_INTERFACE(epa);
 CLT_DECLARE_INTERFACE(ehy);
 CLT_DECLARE_INTERFACE(bot);
+CLT_DECLARE_INTERFACE(eto);
 
 extern size_t clt_bot_pack(struct bu_pool *pool, struct soltab *stp);
 #endif

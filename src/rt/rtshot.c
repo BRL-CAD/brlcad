@@ -487,11 +487,7 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
     }
     for (; pp != PartHeadp; pp = pp->pt_forw) {
 	matp_t inv_mat;
-	struct bu_vls key = BU_VLS_INIT_ZERO;
-	struct bu_hash_entry *entry;
-	struct bu_hash_entry *prev = NULL;
-	unsigned long idx;
-	bu_vls_sprintf(&key, "%ld", pp->pt_regionp->reg_bit);
+	const uint8_t *key = (uint8_t *)&(pp->pt_regionp->reg_bit);
 
 	bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 	       pp->pt_regionp->reg_name,
@@ -499,13 +495,8 @@ int hit(register struct application *ap, struct partition *PartHeadp, struct seg
 	       pp->pt_outseg->seg_stp->st_name,
 	       pp->pt_regionp->reg_bit);
 
-	entry = bu_hash_tbl_find((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl,
-				  (unsigned char *)bu_vls_addr(&key), bu_vls_strlen(&key) + 1, &prev, &idx);
-	bu_vls_free(&key);
-	if (!entry) {
-	    inv_mat = (matp_t)NULL;
-	} else {
-	    inv_mat = (matp_t)bu_get_hash_value(entry);
+	inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
+	if (inv_mat) {
 	    bn_mat_print("inv_mat", inv_mat);
 	}
 
@@ -647,20 +638,15 @@ int bundle_hit(register struct application_bundle *bundle, struct partition_bund
 	for (; pp != &pl->PartHeadp; pp = pp->pt_forw) {
 	    fastf_t out;
 	    matp_t inv_mat;
-	    const char *key = (const char *)(size_t)pp->pt_regionp->reg_bit;
-	    struct bu_hash_entry *entry;
+	    const uint8_t *key = (uint8_t *)&(pp->pt_regionp->reg_bit);
 
 	    bu_log("\n--- Hit region %s (in %s, out %s) reg_bit = %d\n",
 		   pp->pt_regionp->reg_name, pp->pt_inseg->seg_stp->st_name,
 		   pp->pt_outseg->seg_stp->st_name, pp->pt_regionp->reg_bit);
 
-	    entry = bu_hash_tbl_find((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl,
-		    (unsigned char *)key, strlen(key) + 1, NULL, NULL);
+	    inv_mat = (matp_t)bu_hash_get((struct bu_hash_tbl *)pl->ap->a_rt_i->Orca_hash_tbl, key, sizeof(pp->pt_regionp->reg_bit));
 
-	    if (!entry) {
-		inv_mat = (matp_t) NULL;
-	    } else {
-		inv_mat = (matp_t)bu_get_hash_value(entry);
+	    if (inv_mat) {
 		bn_mat_print("inv_mat", inv_mat);
 	    }
 

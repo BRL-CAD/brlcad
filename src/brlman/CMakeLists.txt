@@ -1,63 +1,33 @@
-if(CMAKE_CONFIGURATION_TYPES)
-  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    set(BTCLSH_BIN_DIR "${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}")
-    configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
-    file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman
-      DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
-      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-      GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman)
-    configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
-    file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl
-      DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
-      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-      GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl)
-    file(COPY brlman.bat
-      DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}
-      FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-      GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlman)
-    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlman.tcl)
-    DISTCLEAN(${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${BIN_DIR}/brlman.bat)
-  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-else(CMAKE_CONFIGURATION_TYPES)
-  set(BTCLSH_BIN_DIR "${CMAKE_BINARY_DIR}/${BIN_DIR}")
-  configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
-  file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman
-    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-  file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman)
-  configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
-  file(COPY ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl
-    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-  file(REMOVE ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl)
-  file(COPY brlman.bat
-    DESTINATION ${CMAKE_BINARY_DIR}/${BIN_DIR}
-    FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-    GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlman)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlman.tcl)
-  DISTCLEAN(${CMAKE_BINARY_DIR}/${BIN_DIR}/brlman.bat)
-endif(CMAKE_CONFIGURATION_TYPES)
+set(BRLMAN_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${TCL_INCLUDE_DIRS}
+  ${TK_INCLUDE_DIRS}
+  )
+list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
+include_directories(${BRLMAN_INCLUDE_DIRS})
 
-set(BTCLSH_BIN_DIR "${CMAKE_INSTALL_PREFIX}/${BIN_DIR}")
-configure_file(brlman.sh.in ${CMAKE_BINARY_DIR}/src/brlman/brlman @ONLY)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman DESTINATION ${BIN_DIR})
-configure_file(brlman.tcl.in ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl @ONLY)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/src/brlman/brlman.tcl DESTINATION ${BIN_DIR})
-file(COPY brlman.bat
-  DESTINATION ${CMAKE_BINARY_DIR}/CMakeTmp
-  FILE_PERMISSIONS OWNER_READ OWNER_WRITE OWNER_EXECUTE GROUP_READ
-  GROUP_EXECUTE WORLD_READ WORLD_EXECUTE)
-DISTCLEAN(${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/CMakeTmp/brlman.bat DESTINATION ${BIN_DIR})
+BRLCAD_ADDDATA(brlman.tcl tclscripts/brlman)
 
-CMAKEFILES(brlman.tcl.in brlman.sh.in brlman.bat)
+set(brlman_libs libtclcad libbu ${TCL_LIBRARIES})
+
+if(TARGET Tkhtml)
+  set(brlman_libs ${brlman_libs} Tkhtml)
+endif(TARGET Tkhtml)
+
+if(CPP_DLL_DEFINES)
+  set(brlman_libs ${brlman_libs} imm32.lib comctl32.lib)
+endif(CPP_DLL_DEFINES)
+
+# Building "GUI" doesn't matter except on Windows, but
+# on Windows brlman works only in graphical mode - might
+# as well behave "nicely" there.
+BRLCAD_ADDEXEC(brlman brlman.c "${brlman_libs}" GUI)
+add_dependencies(brlman brlman_tcl_cp)
+
+foreach(item ${tclindex_target_list})
+  add_dependencies(brlman ${item})
+endforeach(item ${tclindex_target_list})
 
 # Local Variables:
 # tab-width: 8

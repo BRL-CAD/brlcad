@@ -89,12 +89,6 @@ sh_directchange_rgb(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc,
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-/*	if ( dp->d_flags & RT_DIR_REGION )  {	*/
-	    /* name will occur at end of region string w/leading slash */
-/*	} else {	*/
-	    /* name will occur anywhere, bracketed by slashes */
-/*	}	*/
-
 	/* XXX quick hack */
 	if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 
@@ -152,12 +146,6 @@ sh_directchange_shader(ClientData UNUSED(clientData), Tcl_Interp *interp, int ar
 
     /* Find all region names which match /comb/ pattern */
     for ( BU_LIST_FOR( regp, region, &rtip->HeadRegion ) )  {
-/*	if ( dp->d_flags & RT_DIR_REGION )  {	*/
-	    /* name will occur at end of region string w/leading slash */
-/*	} else {	*/
-	    /* name will occur anywhere, bracketed by slashes */
-/*	}	*/
-
 	/* XXX quick hack */
 	if ( strstr( regp->reg_name, argv[2] ) == NULL )  continue;
 

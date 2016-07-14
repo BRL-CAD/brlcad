@@ -25,9 +25,9 @@
 #ifndef LIBGCV_WFOBJ_OBJ_PARSER_H
 #define LIBGCV_WFOBJ_OBJ_PARSER_H
 
-#include "common.h"
 #include <sys/types.h>
 #include <stdio.h>
+#include "obj_util.h"
 
 __BEGIN_DECLS
 
@@ -128,12 +128,12 @@ typedef struct {
  * 0 - success
  * ENOMEM - out of memory
  */
-int obj_parser_create(obj_parser_t *parser);
+WFOBJ_EXPORT extern int obj_parser_create(obj_parser_t *parser);
 
 /**
  * Destroy the obj_parser_t object.
  */
-void obj_parser_destroy(obj_parser_t parser);
+WFOBJ_EXPORT extern void obj_parser_destroy(obj_parser_t parser);
 
 /**
  * Parse the obj file 'filename' with 'parser', create and place results into
@@ -161,7 +161,7 @@ void obj_parser_destroy(obj_parser_t parser);
  * Any error code returned by fopen
  * <0 - failure, see obj_parse_error
  */
-int obj_parse(const char *filename, obj_parser_t parser,
+WFOBJ_EXPORT extern int obj_parse(const char *filename, obj_parser_t parser,
 	      obj_contents_t *contents);
 
 /**
@@ -196,7 +196,7 @@ int obj_parse(const char *filename, obj_parser_t parser,
  * Any error code returned by fopen
  * <0 - failure, see obj_parse_error
  */
-int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
+WFOBJ_EXPORT extern int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
 
 /**
  * Return the reason the last attempt to parse a file failed or warnings
@@ -206,7 +206,7 @@ int obj_fparse(FILE *stream, obj_parser_t parser, obj_contents_t *contents);
  * 0 - The previous parse attempt succeeded and no warnings generated.
  * !0 - A null terminated string containing information about the last parse
  */
-const char * obj_parse_error(obj_parser_t parser);
+WFOBJ_EXPORT extern const char * obj_parse_error(obj_parser_t parser);
 
 /**
  * Destroy the obj_contents_t object.
@@ -214,7 +214,7 @@ const char * obj_parse_error(obj_parser_t parser);
  * Return values:
  * 0 - success
  */
-int obj_contents_destroy(obj_contents_t contents);
+WFOBJ_EXPORT extern int obj_contents_destroy(obj_contents_t contents);
 
 /**
  * Obtain a list of all vertices contained in 'contents'.
@@ -229,7 +229,7 @@ int obj_contents_destroy(obj_contents_t contents);
  * Return value:
  * The length of the vertex list
  */
-size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4]);
+WFOBJ_EXPORT extern int obj_vertices(obj_contents_t contents, const float (*val_arr[])[4]);
 
 /**
  * Obtain a list of all texture vertices contained in 'contents'.
@@ -244,7 +244,7 @@ size_t obj_vertices(obj_contents_t contents, const float (*val_arr[])[4]);
  * Return value:
  * The length of the texture vertex list
  */
-size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3]);
+WFOBJ_EXPORT extern int obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3]);
 
 /**
  * Obtain a list of all normals contained in 'contents'.
@@ -259,7 +259,7 @@ size_t obj_texture_coord(obj_contents_t contents, const float (*val_arr[])[3]);
  * Return value:
  * The length of the normal list
  */
-size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3]);
+WFOBJ_EXPORT extern int obj_normals(obj_contents_t contents, const float (*val_arr[])[3]);
 
 /**
  * Obtain a unique set of all group names contained in 'contents'
@@ -277,7 +277,7 @@ size_t obj_normals(obj_contents_t contents, const float (*val_arr[])[3]);
  * Return value:
  * The length of the group name list.
  */
-size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]));
+WFOBJ_EXPORT extern int obj_groups(obj_contents_t contents, const char * const (*val_arr[]));
 
 /**
  * Return the number of group sets contained in 'contents'
@@ -285,7 +285,7 @@ size_t obj_groups(obj_contents_t contents, const char * const (*val_arr[]));
  * Return value:
  * The number of group sets
  */
-size_t obj_num_groupsets(obj_contents_t contents);
+WFOBJ_EXPORT extern int obj_num_groupsets(obj_contents_t contents);
 
 /**
  * Obtain the 'n'th group set contained in 'contents'
@@ -303,7 +303,7 @@ size_t obj_num_groupsets(obj_contents_t contents);
  * Return value:
  * The length of the group set.
  */
-size_t obj_groupset(obj_contents_t contents, size_t n,
+WFOBJ_EXPORT extern int obj_groupset(obj_contents_t contents, size_t n,
 		    const size_t (*index_arr[]));
 
 /**
@@ -328,7 +328,7 @@ size_t obj_groupset(obj_contents_t contents, size_t n,
  * Return value:
  * The length of the object name list.
  */
-size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]));
+WFOBJ_EXPORT extern int obj_objects(obj_contents_t contents, const char * const (*val_arr[]));
 
 /**
  * Obtain a unique set of all material names contained in 'contents'
@@ -351,7 +351,7 @@ size_t obj_objects(obj_contents_t contents, const char * const (*val_arr[]));
  * Return value:
  * The length of the material name list.
  */
-size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]));
+WFOBJ_EXPORT extern int obj_materials(obj_contents_t contents, const char * const (*val_arr[]));
 
 /**
  * Obtain a unique set of all material library names contained in 'contents'
@@ -375,7 +375,7 @@ size_t obj_materials(obj_contents_t contents, const char * const (*val_arr[]));
  * Return value:
  * The length of the material library name list.
  */
-size_t obj_materiallibs(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_materiallibs(obj_contents_t contents,
 			const char * const (*val_arr[]));
 
 /**
@@ -384,7 +384,7 @@ size_t obj_materiallibs(obj_contents_t contents,
  * Return value:
  * The number of material library sets
  */
-size_t obj_num_materiallibsets(obj_contents_t contents);
+WFOBJ_EXPORT extern int obj_num_materiallibsets(obj_contents_t contents);
 
 /**
  * Obtain the 'n'th material library set contained in 'contents'
@@ -402,7 +402,7 @@ size_t obj_num_materiallibsets(obj_contents_t contents);
  * Return value:
  * The length of the material library set.
  */
-size_t obj_materiallibset(obj_contents_t contents, size_t n,
+WFOBJ_EXPORT extern int obj_materiallibset(obj_contents_t contents, size_t n,
 			  const size_t (*index_arr[]));
 
 /**
@@ -426,7 +426,7 @@ size_t obj_materiallibset(obj_contents_t contents, size_t n,
  * Return value:
  * The length of the texture map list.
  */
-size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]));
+WFOBJ_EXPORT extern int obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]));
 
 /**
  * Obtain a unique set of all texture map library names contained in
@@ -451,7 +451,7 @@ size_t obj_texmaps(obj_contents_t contents, const char * const (*val_arr[]));
  * Return value:
  * The length of the texture map library name list.
  */
-size_t obj_texmaplibs(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_texmaplibs(obj_contents_t contents,
 		      const char * const (*val_arr[]));
 
 /**
@@ -460,7 +460,7 @@ size_t obj_texmaplibs(obj_contents_t contents,
  * Return value:
  * The number of texture map library sets
  */
-size_t obj_num_texmaplibsets(obj_contents_t contents);
+WFOBJ_EXPORT extern int obj_num_texmaplibsets(obj_contents_t contents);
 
 /**
  * Obtain the 'n'th texture map library set contained in 'contents'
@@ -478,7 +478,7 @@ size_t obj_num_texmaplibsets(obj_contents_t contents);
  * Return value:
  * The length of the texture map library set.
  */
-size_t obj_texmaplibset(obj_contents_t contents, size_t set,
+WFOBJ_EXPORT extern int obj_texmaplibset(obj_contents_t contents, size_t set,
 			const size_t (*index_arr[]));
 
 /**
@@ -502,7 +502,7 @@ size_t obj_texmaplibset(obj_contents_t contents, size_t set,
  * Return value:
  * The length of the shadow object name list.
  */
-size_t obj_shadow_objs(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_shadow_objs(obj_contents_t contents,
 		       const char * const (*val_arr[]));
 
 /**
@@ -526,7 +526,7 @@ size_t obj_shadow_objs(obj_contents_t contents,
  * Return value:
  * The length of the trace object name list.
  */
-size_t obj_trace_objs(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_trace_objs(obj_contents_t contents,
 		      const char * const (*val_arr[]));
 
 /**
@@ -546,7 +546,7 @@ size_t obj_trace_objs(obj_contents_t contents,
  * Return value
  * The length of the polygonal attributes list
  */
-size_t obj_polygonal_attributes(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_attributes(obj_contents_t contents,
 				const obj_polygonal_attributes_t (*attr_list[]));
 
 /**
@@ -563,7 +563,7 @@ size_t obj_polygonal_attributes(obj_contents_t contents,
  * Return value
  * The total number of polygonal points
  */
-size_t obj_polygonal_v_points(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_v_points(obj_contents_t contents,
 			      const size_t (*attindex_arr[]));
 
 /**
@@ -577,7 +577,7 @@ size_t obj_polygonal_v_points(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal point
  */
-size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
+WFOBJ_EXPORT extern int obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
 				      const size_t (*index_arr[]));
 
 /**
@@ -594,7 +594,7 @@ size_t obj_polygonal_v_point_vertices(obj_contents_t contents, size_t n,
  * Return value
  * The total number of polygonal lines only identified by vertices
  */
-size_t obj_polygonal_v_lines(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_v_lines(obj_contents_t contents,
 			     const size_t (*attindex_arr[]));
 
 /**
@@ -608,7 +608,7 @@ size_t obj_polygonal_v_lines(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal line
  */
-size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
+WFOBJ_EXPORT extern int obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
 				     const size_t (*index_arr[]));
 
 /**
@@ -625,7 +625,7 @@ size_t obj_polygonal_v_line_vertices(obj_contents_t contents, size_t n,
  * Return value
  * The total number of textured polygonal line
  */
-size_t obj_polygonal_tv_lines(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_tv_lines(obj_contents_t contents,
 			      const size_t (*attindex_arr[]));
 
 /**
@@ -642,7 +642,7 @@ size_t obj_polygonal_tv_lines(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal line
  */
-size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
+WFOBJ_EXPORT extern int obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2]);
 
 /**
@@ -659,7 +659,7 @@ size_t obj_polygonal_tv_line_vertices(obj_contents_t contents, size_t face,
  * Return value
  * The total number of polygonal faces only identified by vertices
  */
-size_t obj_polygonal_v_faces(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_v_faces(obj_contents_t contents,
 			     const size_t (*attindex_arr[]));
 
 /**
@@ -673,7 +673,7 @@ size_t obj_polygonal_v_faces(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal face
  */
-size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
+WFOBJ_EXPORT extern int obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
 				     const size_t (*index_arr[]));
 
 /**
@@ -690,7 +690,7 @@ size_t obj_polygonal_v_face_vertices(obj_contents_t contents, size_t n,
  * Return value
  * The total number of textured polygonal faces
  */
-size_t obj_polygonal_tv_faces(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_tv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]));
 
 /**
@@ -707,7 +707,7 @@ size_t obj_polygonal_tv_faces(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal face
  */
-size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
+WFOBJ_EXPORT extern int obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2]);
 
 /**
@@ -724,7 +724,7 @@ size_t obj_polygonal_tv_face_vertices(obj_contents_t contents, size_t face,
  * Return value
  * The total number of oriented polygonal faces
  */
-size_t obj_polygonal_nv_faces(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_nv_faces(obj_contents_t contents,
 			      const size_t (*attindex_arr[]));
 
 /**
@@ -741,7 +741,7 @@ size_t obj_polygonal_nv_faces(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal face
  */
-size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
+WFOBJ_EXPORT extern int obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
 				      const size_t (*index_arr[])[2]);
 
 /**
@@ -758,7 +758,7 @@ size_t obj_polygonal_nv_face_vertices(obj_contents_t contents, size_t face,
  * Return value
  * The total number of textured oriented polygonal faces
  */
-size_t obj_polygonal_tnv_faces(obj_contents_t contents,
+WFOBJ_EXPORT extern int obj_polygonal_tnv_faces(obj_contents_t contents,
 			       const size_t (*attindex_arr[]));
 
 /**
@@ -775,7 +775,7 @@ size_t obj_polygonal_tnv_faces(obj_contents_t contents,
  * Return value
  * The number of vertices that make up the 'n'th polygonal face
  */
-size_t obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
+WFOBJ_EXPORT extern int obj_polygonal_tnv_face_vertices(obj_contents_t contents, size_t face,
 				       const size_t (*index_arr[])[3]);
 
 __END_DECLS

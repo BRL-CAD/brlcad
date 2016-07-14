@@ -162,7 +162,7 @@ bu_argv_from_string(char *argv[], size_t lim, char *lp)
 
 
 void
-bu_free_argv(size_t argc, char *argv[])
+bu_argv_free(size_t argc, char *argv[])
 {
     register size_t i;
 
@@ -172,12 +172,12 @@ bu_free_argv(size_t argc, char *argv[])
 
     for (i = 0; i < argc; ++i) {
 	if (argv[i]) {
-	    bu_free((void *)argv[i], "bu_free_argv");
+	    bu_free((void *)argv[i], "bu_argv_free");
 	    argv[i] = NULL; /* sanity */
 	}
     }
 
-    bu_free((void *)argv, "bu_free_argv");
+    bu_free((void *)argv, "bu_argv_free");
     argv = NULL;
 }
 
@@ -204,7 +204,7 @@ bu_free_array(size_t argc, char *argv[], const char *str)
 
 
 char **
-bu_dup_argv(size_t argc, const char *argv[])
+bu_argv_dup(size_t argc, const char *argv[])
 {
     register size_t i;
     char **av;
@@ -222,7 +222,7 @@ bu_dup_argv(size_t argc, const char *argv[])
 
 
 char **
-bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
+bu_argv_dupinsert(int insert, size_t insertArgc, const char *insertArgv[], size_t argc, const char *argv[])
 {
     register size_t i, j;
     size_t ac = argc + insertArgc + 1;
@@ -230,7 +230,7 @@ bu_dupinsert_argv(int insert, size_t insertArgc, const char *insertArgv[], size_
 
     /* Nothing to insert */
     if (insertArgc < 1)
-	return bu_dup_argv(argc, argv);
+	return bu_argv_dup(argc, argv);
 
     av = (char **)bu_calloc(ac, sizeof(char *), "bu_insert_argv");
 
@@ -315,7 +315,7 @@ HIDDEN int
 _bu_tcl_utf_to_ushort(
     register const char *src,   /* The UTF-8 string. */
     register unsigned short *chPtr)/* Filled with the unsigned short represented by
-                                 * the UTF-8 string. */
+				 * the UTF-8 string. */
 {
     register int byte;
 
@@ -325,49 +325,49 @@ _bu_tcl_utf_to_ushort(
 
     byte = *((unsigned char *) src);
     if (byte < 0xC0) {
-        /*
-         * Handles properly formed UTF-8 characters between 0x01 and 0x7F.
-         * Also treats \0 and naked trail bytes 0x80 to 0xBF as valid
-         * characters representing themselves.
-         */
+	/*
+	 * Handles properly formed UTF-8 characters between 0x01 and 0x7F.
+	 * Also treats \0 and naked trail bytes 0x80 to 0xBF as valid
+	 * characters representing themselves.
+	 */
 
-        *chPtr = (unsigned short) byte;
-        return 1;
+	*chPtr = (unsigned short) byte;
+	return 1;
     } else if (byte < 0xE0) {
-        if ((src[1] & 0xC0) == 0x80) {
-            /*
-             * Two-byte-character lead-byte followed by a trail-byte.
-             */
+	if ((src[1] & 0xC0) == 0x80) {
+	    /*
+	     * Two-byte-character lead-byte followed by a trail-byte.
+	     */
 
-            *chPtr = (unsigned short) (((byte & 0x1F) << 6) | (src[1] & 0x3F));
-            return 2;
-        }
+	    *chPtr = (unsigned short) (((byte & 0x1F) << 6) | (src[1] & 0x3F));
+	    return 2;
+	}
 
-        /*
-         * A two-byte-character lead-byte not followed by trail-byte
-         * represents itself.
-         */
+	/*
+	 * A two-byte-character lead-byte not followed by trail-byte
+	 * represents itself.
+	 */
 
-        *chPtr = (unsigned short) byte;
-        return 1;
+	*chPtr = (unsigned short) byte;
+	return 1;
     } else if (byte < 0xF0) {
-        if (((src[1] & 0xC0) == 0x80) && ((src[2] & 0xC0) == 0x80)) {
-            /*
-             * Three-byte-character lead byte followed by two trail bytes.
-             */
+	if (((src[1] & 0xC0) == 0x80) && ((src[2] & 0xC0) == 0x80)) {
+	    /*
+	     * Three-byte-character lead byte followed by two trail bytes.
+	     */
 
-            *chPtr = (unsigned short) (((byte & 0x0F) << 12)
-                    | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F));
-            return 3;
-        }
+	    *chPtr = (unsigned short) (((byte & 0x0F) << 12)
+		    | ((src[1] & 0x3F) << 6) | (src[2] & 0x3F));
+	    return 3;
+	}
 
-        /*
-         * A three-byte-character lead-byte not followed by two trail-bytes
-         * represents itself.
-         */
+	/*
+	 * A three-byte-character lead-byte not followed by two trail-bytes
+	 * represents itself.
+	 */
 
-        *chPtr = (unsigned short) byte;
-        return 1;
+	*chPtr = (unsigned short) byte;
+	return 1;
     }
 
     *chPtr = (unsigned short) byte;
@@ -377,29 +377,29 @@ _bu_tcl_utf_to_ushort(
 HIDDEN int
 _bu_tcl_ushort_to_utf(
     int ch,                     /* The unsigned short to be stored in the
-                                 * buffer. */
+				 * buffer. */
     char *buf)                  /* Buffer in which the UTF-8 representation of
-                                 * the unsigned short is stored. Buffer must be
-                                 * large enough to hold the UTF-8 character
-                                 * (at most 3 bytes). */
+				 * the unsigned short is stored. Buffer must be
+				 * large enough to hold the UTF-8 character
+				 * (at most 3 bytes). */
 {
     if ((ch > 0) && (ch < 0x80)) {
-        buf[0] = (char) ch;
-        return 1;
+	buf[0] = (char) ch;
+	return 1;
     }
     if (ch >= 0) {
-        if (ch <= 0x7FF) {
-            buf[1] = (char) ((ch | 0x80) & 0xBF);
-            buf[0] = (char) ((ch >> 6) | 0xC0);
-            return 2;
-        }
-        if (ch <= 0xFFFF) {
-        three:
-            buf[2] = (char) ((ch | 0x80) & 0xBF);
-            buf[1] = (char) (((ch >> 6) | 0x80) & 0xBF);
-            buf[0] = (char) ((ch >> 12) | 0xE0);
-            return 3;
-        }
+	if (ch <= 0x7FF) {
+	    buf[1] = (char) ((ch | 0x80) & 0xBF);
+	    buf[0] = (char) ((ch >> 6) | 0xC0);
+	    return 2;
+	}
+	if (ch <= 0xFFFF) {
+	three:
+	    buf[2] = (char) ((ch | 0x80) & 0xBF);
+	    buf[1] = (char) (((ch >> 6) | 0x80) & 0xBF);
+	    buf[0] = (char) ((ch >> 12) | 0xE0);
+	    return 3;
+	}
 
     }
 
@@ -412,29 +412,29 @@ _bu_tcl_parse_hex(
     const char *src,            /* First character to parse. */
     int numBytes,               /* Max number of byes to scan */
     unsigned short *resultPtr)     /* Points to storage provided by caller where
-                                 * the unsigned short resulting from the
-                                 * conversion is to be written. */
+				 * the unsigned short resulting from the
+				 * conversion is to be written. */
 {
     unsigned short result = 0;
     register const char *p = src;
 
     while (numBytes--) {
-        unsigned char digit = (unsigned char)(*p);
+	unsigned char digit = (unsigned char)(*p);
 
-        if (!isxdigit(digit)) {
-            break;
-        }
+	if (!isxdigit(digit)) {
+	    break;
+	}
 
-        ++p;
-        result <<= 4;
+	++p;
+	result <<= 4;
 
-        if (digit >= 'a') {
-            result |= (10 + digit - 'a');
-        } else if (digit >= 'A') {
-            result |= (10 + digit - 'A');
-        } else {
-            result |= (digit - '0');
-        }
+	if (digit >= 'a') {
+	    result |= (10 + digit - 'a');
+	} else if (digit >= 'A') {
+	    result |= (10 + digit - 'A');
+	} else {
+	    result |= (digit - '0');
+	}
     }
 
     *resultPtr = result;
@@ -444,14 +444,14 @@ _bu_tcl_parse_hex(
 HIDDEN int
 _bu_tcl_parse_backslash(
     const char *src,            /* Points to the backslash character of a a
-                                 * backslash sequence. */
+				 * backslash sequence. */
     int numBytes,               /* Max number of bytes to scan. */
     int *readPtr,               /* NULL, or points to storage where the number
-                                 * of bytes scanned should be written. */
+				 * of bytes scanned should be written. */
     char *dst)                  /* NULL, or points to buffer where the UTF-8
-                                 * encoding of the backslash sequence is to be
-                                 * written. At most 3 bytes will be
-                                 * written there. */
+				 * encoding of the backslash sequence is to be
+				 * written. At most 3 bytes will be
+				 * written there. */
 {
     register const char *p = src+1;
     unsigned short result;
@@ -469,140 +469,140 @@ _bu_tcl_parse_backslash(
 	3,3,3,3,3,3,3,3,3,3,3,3,3,3,3,3};
 
     if (numBytes == 0) {
-        if (readPtr != NULL) {
-            *readPtr = 0;
-        }
-        return 0;
+	if (readPtr != NULL) {
+	    *readPtr = 0;
+	}
+	return 0;
     }
 
     if (dst == NULL) {
-        dst = buf;
+	dst = buf;
     }
 
     if (numBytes == 1) {
-        /*
-         * Can only scan the backslash, so return it.
-         */
+	/*
+	 * Can only scan the backslash, so return it.
+	 */
 
-        result = '\\';
-        count = 1;
-        goto done;
+	result = '\\';
+	count = 1;
+	goto done;
     }
 
     count = 2;
     switch (*p) {
-        /*
-         * Note: in the conversions below, use absolute values (e.g., 0xa)
-         * rather than symbolic values (e.g. \n) that get converted by the
-         * compiler. It's possible that compilers on some platforms will do
-         * the symbolic conversions differently, which could result in
-         * non-portable Tcl scripts.
-         */
+	/*
+	 * Note: in the conversions below, use absolute values (e.g., 0xa)
+	 * rather than symbolic values (e.g. \n) that get converted by the
+	 * compiler. It's possible that compilers on some platforms will do
+	 * the symbolic conversions differently, which could result in
+	 * non-portable Tcl scripts.
+	 */
 
     case 'a':
-        result = 0x7;
-        break;
+	result = 0x7;
+	break;
     case 'b':
-        result = 0x8;
-        break;
+	result = 0x8;
+	break;
     case 'f':
-        result = 0xc;
-        break;
+	result = 0xc;
+	break;
     case 'n':
-        result = 0xa;
-        break;
+	result = 0xa;
+	break;
     case 'r':
-        result = 0xd;
-        break;
+	result = 0xd;
+	break;
     case 't':
-        result = 0x9;
-        break;
+	result = 0x9;
+	break;
     case 'v':
-        result = 0xb;
-        break;
+	result = 0xb;
+	break;
     case 'x':
-        count += _bu_tcl_parse_hex(p+1, numBytes-1, &result);
-        if (count == 2) {
-            /*
-             * No hexadigits -> This is just "x".
-             */
+	count += _bu_tcl_parse_hex(p+1, numBytes-1, &result);
+	if (count == 2) {
+	    /*
+	     * No hexadigits -> This is just "x".
+	     */
 
-            result = 'x';
-        } else {
-            /*
-             * Keep only the last byte (2 hex digits).
-             */
-            result = (unsigned char) result;
-        }
-        break;
+	    result = 'x';
+	} else {
+	    /*
+	     * Keep only the last byte (2 hex digits).
+	     */
+	    result = (unsigned char) result;
+	}
+	break;
     case 'u':
-        count += _bu_tcl_parse_hex(p+1, (numBytes > 5) ? 4 : numBytes-1, &result);
-        if (count == 2) {
-            /*
-             * No hexadigits -> This is just "u".
-             */
-            result = 'u';
-        }
-        break;
+	count += _bu_tcl_parse_hex(p+1, (numBytes > 5) ? 4 : numBytes-1, &result);
+	if (count == 2) {
+	    /*
+	     * No hexadigits -> This is just "u".
+	     */
+	    result = 'u';
+	}
+	break;
     case '\n':
-        count--;
-        do {
-            p++;
-            count++;
-        } while ((count < numBytes) && ((*p == ' ') || (*p == '\t')));
-        result = ' ';
-        break;
+	count--;
+	do {
+	    p++;
+	    count++;
+	} while ((count < numBytes) && ((*p == ' ') || (*p == '\t')));
+	result = ' ';
+	break;
     case 0:
-        result = '\\';
-        count = 1;
-        break;
+	result = '\\';
+	count = 1;
+	break;
     default:
-        /*
-         * Check for an octal number \oo?o?
-         */
+	/*
+	 * Check for an octal number \oo?o?
+	 */
 
-        if (isdigit((unsigned char)(*p)) && ((unsigned char)(*p) < '8')) {  /* INTL: digit */
-            result = (unsigned char)(*p - '0');
-            p++;
-            if ((numBytes == 2) || !isdigit((unsigned char)(*p))  /* INTL: digit */
-                    || ((unsigned char)(*p) >= '8')) {
-                break;
-            }
-            count = 3;
-            result = (unsigned char)((result << 3) + (*p - '0'));
-            p++;
-            if ((numBytes == 3) || !isdigit((unsigned char)(*p))  /* INTL: digit */
-                    || ((unsigned char)(*p) >= '8')) {
-                break;
-            }
-            count = 4;
-            result = (unsigned char)((result << 3) + (*p - '0'));
-            break;
-        }
+	if (isdigit((unsigned char)(*p)) && ((unsigned char)(*p) < '8')) {  /* INTL: digit */
+	    result = (unsigned char)(*p - '0');
+	    p++;
+	    if ((numBytes == 2) || !isdigit((unsigned char)(*p))  /* INTL: digit */
+		    || ((unsigned char)(*p) >= '8')) {
+		break;
+	    }
+	    count = 3;
+	    result = (unsigned char)((result << 3) + (*p - '0'));
+	    p++;
+	    if ((numBytes == 3) || !isdigit((unsigned char)(*p))  /* INTL: digit */
+		    || ((unsigned char)(*p) >= '8')) {
+		break;
+	    }
+	    count = 4;
+	    result = (unsigned char)((result << 3) + (*p - '0'));
+	    break;
+	}
 
-        /*
-         * We have to convert here in case the user has put a backslash in
-         * front of a multi-byte utf-8 character. While this means nothing
-         * special, we shouldn't break up a correct utf-8 character. [Bug
-         * #217987] test subst-3.2
-         */
+	/*
+	 * We have to convert here in case the user has put a backslash in
+	 * front of a multi-byte utf-8 character. While this means nothing
+	 * special, we shouldn't break up a correct utf-8 character. [Bug
+	 * #217987] test subst-3.2
+	 */
 
 	ch = *((unsigned char *) p);
-        if (numBytes - 1 >= utf_byte_cnts[ch]) {
-            count = _bu_tcl_utf_to_ushort(p, &result) + 1;   /* +1 for '\' */
-        } else {
-            char utfBytes[3];
+	if (numBytes - 1 >= utf_byte_cnts[ch]) {
+	    count = _bu_tcl_utf_to_ushort(p, &result) + 1;   /* +1 for '\' */
+	} else {
+	    char utfBytes[3];
 
-            memcpy(utfBytes, p, (size_t) (numBytes - 1));
-            utfBytes[numBytes - 1] = '\0';
-            count = _bu_tcl_utf_to_ushort(utfBytes, &result) + 1;
-        }
-        break;
+	    memcpy(utfBytes, p, (size_t) (numBytes - 1));
+	    utfBytes[numBytes - 1] = '\0';
+	    count = _bu_tcl_utf_to_ushort(utfBytes, &result) + 1;
+	}
+	break;
     }
 
   done:
     if (readPtr != NULL) {
-        *readPtr = count;
+	*readPtr = count;
     }
     return _bu_tcl_ushort_to_utf((int) result, dst);
 }
@@ -611,18 +611,18 @@ _bu_tcl_parse_backslash(
 HIDDEN int
 _bu_tcl_find_element(
     const char *list,           /* Points to the first byte of a string
-                                 * containing a Tcl list with zero or more
-                                 * elements (possibly in braces). */
+				 * containing a Tcl list with zero or more
+				 * elements (possibly in braces). */
     int listLength,             /* Number of bytes in the list's string. */
     const char **elementPtr,    /* Where to put address of first significant
-                                 * character in first element of list. */
+				 * character in first element of list. */
     const char **nextPtr,       /* Fill in with location of character just
-                                 * after all white space following end of
-                                 * argument (next arg or end of list). */
+				 * after all white space following end of
+				 * argument (next arg or end of list). */
     int *sizePtr,               /* If non-zero, fill in with size of
-                                 * element. */
+				 * element. */
     int *bracePtr)              /* If non-zero, fill in with non-zero/zero to
-                                 * indicate that arg was/wasn't in braces. */
+				 * indicate that arg was/wasn't in braces. */
 {
     const char *p = list;
     const char *elemStart;      /* Points to first byte of first element. */
@@ -639,28 +639,28 @@ _bu_tcl_find_element(
      */
 
     if (bracePtr != NULL) {
-        *bracePtr = 0;
+	*bracePtr = 0;
     }
 
     limit = (list + listLength);
     while ((p < limit) && (isspace((unsigned char)(*p)))) { /* INTL: ISO space. */
-        p++;
+	p++;
     }
     if (p == limit) {           /* no element found */
-        elemStart = limit;
-        goto done;
+	elemStart = limit;
+	goto done;
     }
 
     if (*p == '{') {
-        openBraces = 1;
-        p++;
+	openBraces = 1;
+	p++;
     } else if (*p == '"') {
-        inQuotes = 1;
-        p++;
+	inQuotes = 1;
+	p++;
     }
     elemStart = p;
     if (bracePtr != NULL) {
-        *bracePtr = openBraces;
+	*bracePtr = openBraces;
     }
 
     /*
@@ -668,111 +668,111 @@ _bu_tcl_find_element(
      */
 
     while (p < limit) {
-        switch (*p) {
-            /*
-             * Open brace: don't treat specially unless the element is in
-             * braces. In this case, keep a nesting count.
-             */
+	switch (*p) {
+	    /*
+	     * Open brace: don't treat specially unless the element is in
+	     * braces. In this case, keep a nesting count.
+	     */
 
-        case '{':
-            if (openBraces != 0) {
-                openBraces++;
-            }
-            break;
+	case '{':
+	    if (openBraces != 0) {
+		openBraces++;
+	    }
+	    break;
 
-            /*
-             * Close brace: if element is in braces, keep nesting count and
-             * quit when the last close brace is seen.
-             */
+	    /*
+	     * Close brace: if element is in braces, keep nesting count and
+	     * quit when the last close brace is seen.
+	     */
 
-        case '}':
-            if (openBraces > 1) {
-                openBraces--;
-            } else if (openBraces == 1) {
-                size = (p - elemStart);
-                p++;
-                if ((p >= limit)
-                        || isspace((unsigned char)(*p))) {        /* INTL: ISO space. */
-                    goto done;
-                }
+	case '}':
+	    if (openBraces > 1) {
+		openBraces--;
+	    } else if (openBraces == 1) {
+		size = (p - elemStart);
+		p++;
+		if ((p >= limit)
+			|| isspace((unsigned char)(*p))) {        /* INTL: ISO space. */
+		    goto done;
+		}
 
-                /*
-                 * Garbage after the closing brace; return an error.
-                 */
+		/*
+		 * Garbage after the closing brace; return an error.
+		 */
 		return 1;
 	    }
-            break;
+	    break;
 
-            /*
-             * Backslash: skip over everything up to the end of the backslash
-             * sequence.
-             */
+	    /*
+	     * Backslash: skip over everything up to the end of the backslash
+	     * sequence.
+	     */
 
-        case '\\':
-            (void)_bu_tcl_parse_backslash(p, (int)strlen(p), &numChars, NULL);
-            p += (numChars - 1);
-            break;
+	case '\\':
+	    (void)_bu_tcl_parse_backslash(p, (int)strlen(p), &numChars, NULL);
+	    p += (numChars - 1);
+	    break;
 
-            /*
-             * Space: ignore if element is in braces or quotes; otherwise
-             * terminate element.
-             */
+	    /*
+	     * Space: ignore if element is in braces or quotes; otherwise
+	     * terminate element.
+	     */
 
-        case ' ':
-        case '\f':
-        case '\n':
-        case '\r':
-        case '\t':
-        case '\v':
-            if ((openBraces == 0) && !inQuotes) {
-                size = (p - elemStart);
-                goto done;
-            }
-            break;
+	case ' ':
+	case '\f':
+	case '\n':
+	case '\r':
+	case '\t':
+	case '\v':
+	    if ((openBraces == 0) && !inQuotes) {
+		size = (p - elemStart);
+		goto done;
+	    }
+	    break;
 
-            /*
-             * Double-quote: if element is in quotes then terminate it.
-             */
+	    /*
+	     * Double-quote: if element is in quotes then terminate it.
+	     */
 
-        case '"':
-            if (inQuotes) {
-                size = (p - elemStart);
-                p++;
-                if ((p >= limit)
-                        || isspace((unsigned char)(*p))) {        /* INTL: ISO space */
-                    goto done;
-                }
+	case '"':
+	    if (inQuotes) {
+		size = (p - elemStart);
+		p++;
+		if ((p >= limit)
+			|| isspace((unsigned char)(*p))) {        /* INTL: ISO space */
+		    goto done;
+		}
 
-                /*
-                 * Garbage after the closing quote; return an error.
-                 */
-                return 1;
-            }
-            break;
-        }
-        p++;
+		/*
+		 * Garbage after the closing quote; return an error.
+		 */
+		return 1;
+	    }
+	    break;
+	}
+	p++;
     }
 
     /*
      * End of list: terminate element.
      */
     if (p == limit) {
-        if (openBraces != 0) {
-            return 1;
-        } else if (inQuotes) {
-            return 1;
-        }
-        size = (p - elemStart);
+	if (openBraces != 0) {
+	    return 1;
+	} else if (inQuotes) {
+	    return 1;
+	}
+	size = (p - elemStart);
     }
 
   done:
     while ((p < limit) && (isspace((unsigned char)(*p)))) { /* INTL: ISO space. */
-        p++;
+	p++;
     }
     *elementPtr = elemStart;
     *nextPtr = p;
     if (sizePtr != 0) {
-        *sizePtr = size;
+	*sizePtr = size;
     }
     return 0;
 }
@@ -790,17 +790,17 @@ _bu_tcl_copy_collapse(
     int backslashCount;
 
     for (c = *src;  count > 0;  src++, c = *src, count--) {
-        if (c == '\\') {
-            backslashCount = _bu_tcl_parse_backslash(src, (int)strlen(src), &numRead, dst);
-            dst += backslashCount;
-            newCount += backslashCount;
-            src += numRead-1;
-            count -= numRead-1;
-        } else {
-            *dst = c;
-            dst++;
-            newCount++;
-        }
+	if (c == '\\') {
+	    backslashCount = _bu_tcl_parse_backslash(src, (int)strlen(src), &numRead, dst);
+	    dst += backslashCount;
+	    newCount += backslashCount;
+	    src += numRead-1;
+	    count -= numRead-1;
+	} else {
+	    *dst = c;
+	    dst++;
+	    newCount++;
+	}
     }
     *dst = 0;
     return newCount;
