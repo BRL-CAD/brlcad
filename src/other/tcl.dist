@@ -1,5 +1,4 @@
 SET(tcl_ignore_files
-Makefile.am
 CMake
 ChangeLog
 ChangeLog.1999
@@ -22,7 +21,6 @@ generic/regc_nfa.c
 generic/regcustom.h
 generic/rege_dfa.c
 generic/regerrs.h
-generic/regextcl.h
 generic/regfronts.c
 generic/regguts.h
 generic/tcl.decls
@@ -56,21 +54,6 @@ libtommath/tommath_class.h
 libtommath/tommath_superclass.h
 license.terms
 macosx
-macosx/GNUmakefile
-macosx/Tcl-Common.xcconfig
-macosx/Tcl-Debug.xcconfig
-macosx/Tcl-Info.plist.in
-macosx/Tcl-Release.xcconfig
-macosx/Tcl.pbproj
-macosx/Tcl.xcode
-macosx/Tcl.xcodeproj
-macosx/Tclsh-Info.plist.in
-macosx/configure
-macosx/configure.ac
-macosx/license.terms
-macosx/tclMacOSXFCmd.c;
-macosx/tclMacOSXNotify.c;
-macosx/tclMacOSXBundle.c
 tests
 tools
 unix

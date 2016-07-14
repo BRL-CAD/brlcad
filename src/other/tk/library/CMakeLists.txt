@@ -51,8 +51,6 @@ TK_SCRIPTS_BUILD(TK_LIBRARY_FILES lib/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 
 SET(TK_LIBRARY_IMAGE_FILES
 	images/README
-	images/lamp.png
-	images/lamp.svg
 	images/logo.eps
 	images/logo100.gif
 	images/logo64.gif
