@@ -813,6 +813,7 @@ SET(TCL_GENERIC_SRCS
   generic/tclConfig.c
   generic/tclDate.c
   generic/tclDictObj.c
+  generic/tclDisassemble.c
   generic/tclEncoding.c
   generic/tclEnsemble.c
   generic/tclEnv.c

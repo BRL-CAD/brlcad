@@ -30,7 +30,7 @@
  * Headers if any.
  */
 
-#include "regex.h"
+#include "regextcl.h"
 
 /*
  * Overrides for regguts.h definitions, if any.
