@@ -1,13 +1,8 @@
 SET(tk_ignore_files
 CMake
-ChangeLog
-ChangeLog.2002
-ChangeLog.2004
 README
 bitmaps
-changes
 compat
-doc
 generic/README
 generic/default.h
 generic/ks_names.h
@@ -52,7 +47,6 @@ generic/ttk/ttkWidget.h
 library
 license.terms
 macosx
-tests
 unix
 unix/Makefile.in
 unix/README

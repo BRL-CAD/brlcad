@@ -1,17 +1,7 @@
 SET(tcl_ignore_files
 CMake
-ChangeLog
-ChangeLog.1999
-ChangeLog.2000
-ChangeLog.2001
-ChangeLog.2002
-ChangeLog.2003
-ChangeLog.2004
-ChangeLog.2005
 README
-changes
 compat
-doc
 generic/README
 generic/regc_color.c
 generic/regc_cvec.c
@@ -54,8 +44,6 @@ libtommath/tommath_class.h
 libtommath/tommath_superclass.h
 license.terms
 macosx
-tests
-tools
 unix
 unix/Makefile.in
 unix/README
