@@ -46,7 +46,7 @@ TCL_SCRIPTS_BUILD(tcl_library_opt04 lib/tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MI
 INSTALL(FILES http/http.tcl DESTINATION lib/tcl8/8.4 RENAME http-2.7.5.tm)
 INSTALL(FILES platform/platform.tcl DESTINATION lib/tcl8/8.4 RENAME platform-1.0.9.tm)
 INSTALL(FILES platform/shell.tcl DESTINATION lib/tcl8/8.4/platform RENAME shell-1.1.4.tm)
-INSTALL(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-1.4.3.tm)
+INSTALL(FILES msgcat/msgcat.tcl DESTINATION lib/tcl8/8.5 RENAME msgcat-1.6.tm)
 INSTALL(FILES tcltest/tcltest.tcl DESTINATION lib/tcl8/8.5 RENAME tcltest-2.3.2.tm)
 
 if(CMAKE_CONFIGURATION_TYPES)
