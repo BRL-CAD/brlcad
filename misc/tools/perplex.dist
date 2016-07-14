@@ -4,6 +4,7 @@ SET(perplex_ignore_files
     parser.y
     perplex.h
     README.txt
+    CHANGELOG.txt
     scanner.re
     perplex_template.c
     token_type.h

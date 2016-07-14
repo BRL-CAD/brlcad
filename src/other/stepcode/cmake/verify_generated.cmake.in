@@ -1,15 +1,15 @@
 # Inherit the parent CMake setting
 set(DEBUGGING_GENERATED_SOURCES @DEBUGGING_GENERATED_SOURCES@)
-set(CURRENT_SOURCE_DIR @CMAKE_CURRENT_SOURCE_DIR@)
+set(CURRENT_SOURCE_DIR "@CMAKE_CURRENT_SOURCE_DIR@")
 
 # Include the file the provides the baseline against which
 # current files will be compared
 if(NOT DEBUGGING_GENERATED_SOURCES)
 
-  include(@BASELINE_INFORMATION_FILE@)
+  include("@BASELINE_INFORMATION_FILE@")
 
   # Define a variety of convenience routines
-  include(@PROJECT_CMAKE_DIR@/Generated_Source_Utils.cmake)
+  include("@PROJECT_CMAKE_DIR@/Generated_Source_Utils.cmake")
 
   # Individually verify all of the files in question.
   set(filelist "@CACHED_FILELIST@")

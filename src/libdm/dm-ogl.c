@@ -76,6 +76,7 @@
 #include "raytrace.h"
 #include "dm.h"
 #include "dm/dm-ogl.h"
+#include "dm/dm-Null.h"
 #include "dm/dm_xvars.h"
 #include "solid.h"
 
@@ -171,6 +172,7 @@ struct dm dm_ogl = {
     ogl_getDisplayImage, /* display to image function */
     ogl_reshape,
     ogl_makeCurrent,
+    null_openFb,
     0,
     1,				/* has displaylist */
     0,                          /* no stereo by default */

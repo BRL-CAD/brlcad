@@ -7,6 +7,12 @@
 # and license in png.h
 
 cmake_minimum_required(VERSION 2.4.4)
+if(COMMAND CMAKE_POLICY)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+     CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+endif(COMMAND CMAKE_POLICY)
+
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS true)
 
 set(CMAKE_CONFIGURATION_TYPES "Release;Debug;MinSizeRel;RelWithDebInfo")

@@ -277,6 +277,13 @@ null_makeCurrent(struct dm *UNUSED(dmp))
 }
 
 
+int
+null_openFb(struct dm *UNUSED(dmp), FBIO *UNUSED(ifp))
+{
+    return 0;
+}
+
+
 struct dm dm_null = {
     null_close,
     null_drawBegin,
@@ -313,6 +320,7 @@ struct dm dm_null = {
     null_getDisplayImage,
     null_reshape,
     null_makeCurrent,
+    null_openFb,
     0,
     0,				/* no displaylist */
     0,				/* no stereo */

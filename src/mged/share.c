@@ -122,7 +122,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 	    break;
 
     if (dlp1 == &head_dm_list) {
-	Tcl_AppendResult(interpreter, "share: unrecognized pathName - ",
+	Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
 			 argv[2], "\n", (char *)NULL);
 
 	bu_vls_free(&vls);
@@ -135,7 +135,7 @@ f_share(ClientData UNUSED(clientData), Tcl_Interp *interpreter, int argc, const 
 		break;
 
 	if (dlp2 == &head_dm_list) {
-	    Tcl_AppendResult(interpreter, "share: unrecognized pathName - ",
+	    Tcl_AppendResult(interpreter, "share: unrecognized path name - ",
 			     argv[3], "\n", (char *)NULL);
 
 	    bu_vls_free(&vls);

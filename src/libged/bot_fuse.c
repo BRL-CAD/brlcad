@@ -127,7 +127,7 @@ show_dangling_edges(struct ged *gedp, const uint32_t *magic_p, const char *name,
 
     if (out_type == 1) {
 	/* Add overlay */
-	_ged_cvt_vlblock_to_solids(gedp, vbp, (char *)name, 0);
+	_ged_cvt_vlblock_to_solids(gedp, vbp, name, 0);
 	rt_vlblock_free(vbp);
 	bu_log("Showing open edges...\n");
     } else if (out_type == 2) {

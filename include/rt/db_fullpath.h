@@ -25,6 +25,11 @@
 #ifndef RT_DB_FULLPATH_H
 #define RT_DB_FULLPATH_H
 
+/* struct resource requires db_fullpath as part of its definition -
+ * so long as that is true, typedef to avoid circular definition
+ * problem */
+typedef struct resource struct_resource;
+
 /**
  * For collecting paths through the database tree.
  * The fp_bool array can optionally hold a boolean flag
@@ -40,31 +45,16 @@ struct db_full_path {
     size_t		fp_maxlen;
     struct directory **	fp_names;	/**< @brief array of dir pointers */
     int	              * fp_bool;	/**< @brief array of boolean flags */
-    matp_t            * fp_mat;         /**< @brief array of matrix pointers */
 };
 #define DB_FULL_PATH_POP(_pp) ((_pp)->fp_len > 0) ? (_pp)->fp_len-- : (_pp)->fp_len
 
 #define DB_FULL_PATH_CUR_DIR(_pp) ((_pp)->fp_names[(_pp)->fp_len-1])
 #define DB_FULL_PATH_CUR_BOOL(_pp) ((_pp)->fp_bool[(_pp)->fp_len-1])
-#define DB_FULL_PATH_CUR_MATRIX(_pp) ((_pp)->fp_mat[(_pp)->fp_len-1])
 #define DB_FULL_PATH_SET_CUR_BOOL(_pp, _i) ((_pp)->fp_bool[(_pp)->fp_len-1] = _i)
-#define DB_FULL_PATH_SET_CUR_MATRIX(_pp, _m) { \
-    if (!(_pp)->fp_mat[(_pp)->fp_len-1]) \
-    (_pp)->fp_mat[(_pp)->fp_len-1] = (matp_t)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
-    (void)memcpy((void *)((_pp)->fp_mat[(_pp)->fp_len-1]), (const void *)(_m), sizeof(mat_t)); \
-}
 #define DB_FULL_PATH_ROOT_DIR(_pp) ((_pp)->fp_names[0])
 #define DB_FULL_PATH_GET(_pp, _i) ((_pp)->fp_names[(_i)])
 #define DB_FULL_PATH_GET_BOOL(_pp, _i) ((_pp)->fp_bool[(_i)])
 #define DB_FULL_PATH_SET_BOOL(_pp, _i, _j) ((_pp)->fp_bool[(_i)] = _j)
-#define DB_FULL_PATH_GET_MATRIX(_pp, _i) ((_pp)->fp_mat[(_i)])
-#define DB_FULL_PATH_SET_MATRIX(_pp, _i, _m) { \
-    if (!(_pp)->fp_mat[(_i)]) \
-    (_pp)->fp_mat[(_i)] = (matp_t)bu_calloc(1, sizeof(mat_t), "new db_full_path mat array"); \
-    (void)memcpy((void *)((_pp)->fp_mat[(_i)]), (const void *)(_m), sizeof(mat_t)); \
-}
-
-
 
 #define RT_CK_FULL_PATH(_p) BU_CKMAG(_p, DB_FULL_PATH_MAGIC, "db_full_path")
 
@@ -208,13 +198,16 @@ RT_EXPORT extern int db_full_path_search(const struct db_full_path *a,
  * to the specified depth.
  *
  * Returns -
- * -1 Failure
- * 0 OK
+ * 1 OK, path matrix written into 'mat'.
+ * 0 FAIL
+ *
+ * Called in librt/db_tree.c, mged/dodraw.c, and mged/animedit.c
  */
-RT_EXPORT extern int db_full_path_transformation_matrix(matp_t matp,
-				struct db_i *dbip,
-				const struct db_full_path *path,
-				const int depth);
+RT_EXPORT extern int db_path_to_mat(struct db_i		*dbip,
+				    struct db_full_path	*pathp,
+				    mat_t                mat,   /* result */
+				    const int            depth, /* number of arcs */
+				    struct_resource     *resp);
 
 
 #endif /*RT_DB_FULLPATH_H*/

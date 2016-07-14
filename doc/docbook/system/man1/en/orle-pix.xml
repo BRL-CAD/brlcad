@@ -25,7 +25,7 @@
 
 
 <refsect1 xml:id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>orle-fb</emphasis>
+<para><emphasis remap='I'>orle-pix</emphasis>
 decodes an old University of Utah standard (Edition-2)
 Run-Length Encoded (RLE) format file
 (saved with
@@ -47,8 +47,8 @@ is is applied to the pixels as they are output.</para>
   <varlistentry>
   <term><option>-d</option></term>
   <listitem>
-<para>Debug option, provides verbose description of file structure and
-processes called, written on standard error.</para>
+<para>Debug option; provides verbose description of file structure and
+processes called; written on standard error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
@@ -59,7 +59,7 @@ on standard error.</para>
   </listitem>
   </varlistentry>
   <varlistentry>
-  <term><option>-b</option><replaceable>x</replaceable></term>
+  <term><option>-b </option><replaceable>x</replaceable></term>
   <listitem>
 <para>The background of the image is
 normally set to the value recorded in the RLE file.

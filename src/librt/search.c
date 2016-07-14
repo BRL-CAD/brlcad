@@ -202,20 +202,12 @@ db_fullpath_list_subtree(struct db_full_path *path, int curr_bool, union tree *t
 		    struct db_full_path *newpath;
 		    db_add_node_to_full_path(path, dp);
 		    DB_FULL_PATH_SET_CUR_BOOL(path, bool_val);
+		    BU_ALLOC(newpath, struct db_full_path);
+		    db_full_path_init(newpath);
+		    db_dup_full_path(newpath, path);
+		    /* Insert the path in the bu_ptbl collecting paths */
+		    bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 		    if (!cyclic_path(path, NULL)) {
-			if (tp->tr_l.tl_mat) {
-			    DB_FULL_PATH_SET_CUR_MATRIX(path, tp->tr_l.tl_mat);
-			} else {
-			    if (path->fp_mat[path->fp_len - 1]) {
-				bu_free(path->fp_mat[path->fp_len - 1], "free matrix");
-			    }
-			    path->fp_mat[path->fp_len - 1] = NULL;
-			}
-			BU_ALLOC(newpath, struct db_full_path);
-			db_full_path_init(newpath);
-			db_dup_full_path(newpath, path);
-			/* Insert the path in the bu_ptbl collecting paths */
-			bu_ptbl_ins(lcd->full_paths, (long *)newpath);
 			/* Keep going */
 			traverse_func(path, client_data);
 		    } else {

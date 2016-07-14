@@ -67,6 +67,8 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
 
+* geometry symbolic links (hard and soft links)
+
 * investigate INFINITY spatial partitioning issue.
 
 * implement a region anointment feature where the user can turn an

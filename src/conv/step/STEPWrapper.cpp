@@ -89,32 +89,15 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 	    } else {
 		int sdr_id = sdr->GetId();
 		std::string pname  = sdr->GetProductName();
+		pname = dotg->CleanBRLCADName(pname);
 		int product_id = sdr->GetProductId();
 
 		id2productid_map[sdr_id] = product_id;
 
-		if (pname.empty()) {
-		    std::string str = "ShapeDefinitionRepresentation@";
-		    str = dotg->GetBRLCADName(str);
-		    id2name_map[sdr_id] = pname;
-		} else {
-		    std::string temp = pname;
-		    int index = 2;
-		    while ((niter=name2id_map.find(temp)) != name2id_map.end()) {
-			temp = pname + "_" + static_cast<ostringstream*>( &(ostringstream() << (index++)) )->str();
-		    }
-		    pname = temp;
-		    if ((niter=name2id_map.find(pname)) == name2id_map.end()) {
-			id2name_map[sdr_id] = pname;
-			name2id_map[pname] = product_id;
-			id2name_map[product_id] = pname;
-		    }
-		}
-
 		AdvancedBrepShapeRepresentation *aBrep = sdr->GetAdvancedBrepShapeRepresentation();
 		if (aBrep) {
-		    if (pname.empty()) {
-			std::string str = "product@";
+		    if (pname.empty() || (pname.compare("''") == 0)) {
+			std::string str = "Product@";
 			pname = dotg->GetBRLCADName(str);
 			id2name_map[aBrep->GetId()] = pname;
 			id2name_map[product_id] = pname;
@@ -125,8 +108,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 		    id2productid_map[aBrep->GetId()] = product_id;
 
 		    if (Verbose()) {
-			if (!pname.empty()) {
-			    std::cerr << std::endl << "     Generating Product -" << pname ;
+			if (!pname.empty() && (pname.compare("''") != 0)) {
+			    std::cerr << std::endl << "     Generating Product - " << pname ;
 			} else {
 			    std::cerr << std::endl << "     Generating Product";
 			}
@@ -177,8 +160,8 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 			delete onBrep;
 		    }
 		} else { // must be an assembly
-		    if (pname.empty()) {
-			std::string str = "assembly@";
+		    if (pname.empty() || (pname.compare("''") == 0)) {
+			std::string str = "Assembly@";
 			pname = dotg->GetBRLCADName(str);
 		    }
 		    ShapeRepresentation *aSR = sdr->GetShapeRepresentation();
@@ -240,12 +223,19 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 
 			it = id2productid_map.find(brep_id);
 			if (it == id2productid_map.end()) { // brep not loaded yet so lets do that here.
-			    string pname = id2name_map[product_id];
+			    string pname = id2name_map[brep_id];
+			    if (pname.empty() || (pname.compare("''") == 0)) {
+				std::string str = "Brep_@";
+				pname = dotg->GetBRLCADName(str);
+				id2name_map[aBrep->GetId()] = pname;
+			    } else {
+				id2name_map[aBrep->GetId()] = pname;
+			    }
 			    id2productid_map[brep_id] = product_id;
 
 			    if (Verbose()) {
-				if (!pname.empty()) {
-				    std::cerr << std::endl << "     Generating Product -" << pname ;
+				if (!pname.empty() && (pname.compare("''") != 0)) {
+				    std::cerr << std::endl << "     Generating Product - " << pname ;
 				} else {
 				    std::cerr << std::endl << "     Generating Product";
 				}
@@ -293,6 +283,13 @@ bool STEPWrapper::convert(BRLCADWrapper *dot_g)
 				dotg->WriteBrep(pname, onBrep,mat);
 
 				delete onBrep;
+			    }
+			    if (product_id != brep_id) {
+				mat_t mat;
+
+				MAT_IDN(mat);
+				string comb = id2name_map[product_id];
+				dotg->AddMember(comb,pname,mat);
 			    }
 			}
 		    }

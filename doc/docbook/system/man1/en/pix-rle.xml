@@ -34,14 +34,17 @@ format file, converts it into a Utah Raster Toolkit
 Run-Length Encoded (RLE) format file format, and writes it to standard out.
 If
 <emphasis remap='I'>file.pix</emphasis>
-is not specified, standard input is read.</para>
+is not specified, standard input is read.
+<option>-w</option> and <option>-n</option> options specify the output width and height respectively; these can be set to the same value by
+use of the <option>-s</option> option.
+</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-C</option><replaceable>r/g/b</replaceable></term>
+  <term><option>-C </option><replaceable>r/g/b</replaceable></term>
   <listitem>
 <para>This option permits
 the user to specify a background color
-as slash separated decimal numbers in the range of 0 to 255,
+as slash-separated decimal numbers in the range of 0 to 255,
 one each for the red, green, and blue channels.</para>
   </listitem>
   </varlistentry>

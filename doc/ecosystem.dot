@@ -58,7 +58,6 @@ digraph BRLCADDeps{
 	incrTcl [color = "blue", style = bold, shape = box, label = "IncrTcl"];
 
 
-	boost [color = "blue", style = bold, shape = box, label = "Boost"];
 	libpng [color = "blue", style = bold, shape = box, label = "libpng"];
 	libregex [color = "blue", style = bold, shape = box, label = "libregex"];
 	libtermlib [color = "blue", style = bold, shape = box, label = "libtermlib"];
@@ -73,8 +72,8 @@ digraph BRLCADDeps{
 	//re2clemon [color = "orange", style = bold, shape = box, label = "re2c + lemon"];
 	re2c [color = "orange", style = bold, shape = box, label = "re2c"];
 	lemon [color = "orange", style = bold, shape = box, label = "lemon"];
-	//{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2clemon; }
-	{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2c; lemon; }
+	//{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2clemon; }
+	{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2c; lemon; }
 	// GSoC
 	osl [color = "purple", style = bold, shape = box, label = "Open Shader Language (GSoC)"];
 	oiio [color = "purple", style = bold, shape = box, label = "OpenImageIO (GSoC)"];
@@ -135,7 +134,6 @@ digraph BRLCADDeps{
 	libbu -> libpng;
 	libbu -> zlib;
 
-	libpc -> boost;
 	libpc -> opennurbs;
 
 	librt -> libregex;
@@ -183,7 +181,6 @@ digraph BRLCADDeps{
 	geomconv -> libtclcad;
 	geomconv -> libged;
 	geomconv -> scl;
-	geomconv -> boost;
 	geomconv -> lemon;
 	geomconv -> re2c;
 

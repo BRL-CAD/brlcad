@@ -292,8 +292,6 @@ mat_inv(matp_t output, matp_t input)
 }
 
 
-
-
 /*
  * Takes a pointer to [x, y, z, w], and converts it to
  * an ordinary vector [x/w, y/w, z/w].
