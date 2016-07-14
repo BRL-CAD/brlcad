@@ -1144,6 +1144,11 @@ GED_EXPORT extern int ged_facetize(struct ged *gedp, int argc, const char *argv[
 GED_EXPORT extern int ged_fb2pix(struct ged *gedp, int argc, const char *argv[]);
 
 /**
+ * Fclear clears a framebuffer.
+ */
+GED_EXPORT extern int ged_fbclear(struct ged *gedp, int argc, const char *argv[]);
+
+/**
  * Find combinations that reference object
  */
 GED_EXPORT extern int ged_find(struct ged *gedp, int argc, const char *argv[]);

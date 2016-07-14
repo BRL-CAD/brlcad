@@ -1987,21 +1987,21 @@ if("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$"
 endif("${HAVE_PROGRAM_INVOCATION_NAME}" MATCHES "^${HAVE_PROGRAM_INVOCATION_NAME}$")
 
 # test for lrint
+set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
+set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
 BRLCAD_FUNCTION_EXISTS(lrint HAVE_LRINT)
 if("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
-  set(CMAKE_REQUIRED_LIBRARIES_BAK ${CMAKE_REQUIRED_LIBRARIES})
-  set(CMAKE_REQUIRED_LIBRARIES ${M_LIBRARY})
-  check_c_source_compiles("#include <math.h>\nint main() {return lrint(3.14);}" HAVE_LRINT)
-  if(HAVE_LRINT)
+  check_c_source_compiles("#include <math.h>\nint main() {return lrint(3.14);}" HAVE_LRINT_COMPILE)
+  if(HAVE_LRINT_COMPILE)
     CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_LRINT 1\n")
-  else(HAVE_LRINT)
+  else(HAVE_LRINT_COMPILE)
     check_c_source_compiles("#include \"${CMAKE_CURRENT_SOURCE_DIR}/misc/CMake/test_srcs/lrint_macro.h\"\n#include <math.h>\nint main() {return lrint(3.14);}" HAVE_WORKING_LRINT_MACRO)
     if(HAVE_WORKING_LRINT_MACRO)
       CONFIG_H_APPEND(BRLCAD "#cmakedefine HAVE_WORKING_LRINT_MACRO 1\n")
     endif(HAVE_WORKING_LRINT_MACRO)
-  endif(HAVE_LRINT)
-  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
+  endif(HAVE_LRINT_COMPILE)
 endif("${HAVE_LRINT}" MATCHES "^${HAVE_LRINT}$")
+set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_REQUIRED_LIBRARIES_BAK})
 
 # test for tgamma
 BRLCAD_FUNCTION_EXISTS(tgamma HAVE_TGAMMA)
@@ -2111,11 +2111,48 @@ if(MSVC)
   set(CMAKE_MODULE_LINKER_FLAGS_INIT ${CMAKE_EXE_LINKER_FLAGS_INIT} /NOLOGO)
 endif(MSVC)
 
+#-----------------------------------------------------------------------------
 # Before we head into src/other and misc/tools, store all the build
 # flags that have been built up.  It's hard to be sure what will and
 # won't be set in those directories, so make sure we can restore the
 # BRL-CAD flags for the actual BRL-CAD subdirectories.
 CACHE_BUILD_FLAGS(_BRLCAD)
+
+# For lower build levels, some of the third party components are not
+# needed.  define some variables we can use for testing.
+set(BRLCAD_LEVEL2 0)
+set(BRLCAD_LEVEL3 0)
+if(NOT BRLCAD_ENABLE_TARGETS)
+  set(BRLCAD_LEVEL2 1)
+  set(BRLCAD_LEVEL3 1)
+else(NOT BRLCAD_ENABLE_TARGETS)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+    set(BRLCAD_LEVEL2 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 1)
+  if(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+    set(BRLCAD_LEVEL3 1)
+  endif(${BRLCAD_ENABLE_TARGETS} GREATER 2)
+endif(NOT BRLCAD_ENABLE_TARGETS)
+
+# At the start, clear the src/other subdirs list so repeated
+# configures will correctly add the required directories
+set(SRC_OTHER_ADDED_DIRS "" CACHE STRING "initialize 3rd party sub-directories list" FORCE)
+mark_as_advanced(SRC_OTHER_ADDED_DIRS)
+
+macro(SetTargetFolder targetname folder)
+  if(TARGET ${targetname})
+    set_target_properties(${targetname} PROPERTIES FOLDER "${folder}")
+  endif(TARGET ${targetname})
+endmacro(SetTargetFolder)
+
+# Load some CMake macros to handle the special case of third party libraries.
+include(${BRLCAD_CMAKE_DIR}/ThirdParty.cmake)
+
+# Add misc/tools for tools that are used in BRL-CAD's build process
+# but are not otherwise usable in BRL-CAD (due to licensing, design
+# intent, etc.)  misc/tools must be handled before src/other because
+# some of src/other's projects need tools from misc/tools.
+add_subdirectory(misc/tools)
 
 # Now that we've done the system tests with BRL-CAD's compile flags,
 # add src/other to pick up any tests it needs.  We must add src/other
@@ -2124,11 +2161,6 @@ CACHE_BUILD_FLAGS(_BRLCAD)
 # by BRL-CAD for its own subdirectories - it is added after the BRL-CAD
 # tests so the CACHE reflects BRL-CAD's test results.
 add_subdirectory(src/other)
-
-# Add misc/tools for tools that are used in BRL-CAD's build process
-# but are not otherwise usable in BRL-CAD (due to licensing, design
-# intent, etc.)
-add_subdirectory(misc/tools)
 
 # Now put back the BRL-CAD flags
 RESTORE_CACHED_BUILD_FLAGS(_BRLCAD)

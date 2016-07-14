@@ -1056,6 +1056,7 @@ static struct to_cmdtab to_cmds[] = {
     {"facetize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_facetize},
     {"voxelize",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_voxelize},
     {"fb2pix",  	"[-h -i -c] [-s squaresize] [-w width] [-n height] [file.pix]", TO_UNLIMITED, to_view_func, ged_fb2pix},
+    {"fbclear",  	"[r g b]", TO_UNLIMITED, to_view_func, ged_fbclear},
     {"find_arb_edge",	"arb vx vy ptol", 5, to_view_func, ged_find_arb_edge_nearest_pt},
     {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pt},
     {"find_botpt",	"bot vx vy", 5, to_view_func, ged_find_botpt_nearest_pt},

@@ -39,8 +39,10 @@
 #include <stdexcept>
 
 #include "bu/getopt.h"
+#include "icv.h"
 #include "vmath.h"
 #include "wdb.h"
+
 
 
 
@@ -50,11 +52,7 @@ namespace
 
 
 
-static const bool verbose_mode = false;
-
-
 static const std::string ROOT_UUID = "00000000-0000-0000-0000-000000000000";
-static const std::string DEFAULT_LAYER_NAME = "Default";
 static const std::string DEFAULT_NAME = "noname";
 static const std::pair<std::string, std::string> DEFAULT_SHADER("plastic", "");
 
@@ -98,10 +96,13 @@ w2string(const ON_wString &source)
 
 
 
-static inline bool
+static bool
 is_toplevel(const ON_Layer &layer)
 {
-    return UUIDstr(layer.m_parent_layer_id) == ROOT_UUID;
+    const std::string layer_uuid = UUIDstr(layer.m_layer_id);
+    const std::string parent_uuid = UUIDstr(layer.m_parent_layer_id);
+
+    return (parent_uuid == ROOT_UUID) && (layer_uuid != ROOT_UUID);
 }
 
 
@@ -132,6 +133,25 @@ basename(const std::string &path)
 
 
 
+static std::string
+unique_name(std::map<std::string, int> &count_map,
+	    const std::string &prefix,
+	    const std::string &suffix)
+{
+    std::string name = prefix + suffix;
+    int count = count_map[name]++;
+
+    if (count) {
+	std::ostringstream ss;
+	ss << prefix << count << suffix;
+	return ss.str();
+    } else
+	return name;
+}
+
+
+
+
 static void
 xform2mat_t(const ON_Xform &source, mat_t dest)
 {
@@ -139,6 +159,47 @@ xform2mat_t(const ON_Xform &source, mat_t dest)
     for (int row = 0; row < dmax; ++row)
 	for (int col = 0; col < dmax; ++col)
 	    dest[row*dmax + col] = source[row][col];
+}
+
+
+
+
+static std::string
+extract_bitmap(const std::string &dir_path, const std::string &filename,
+	       const ON_EmbeddedBitmap &bitmap)
+{
+    std::string path = dir_path + BU_DIR_SEPARATOR + "extracted_" + filename;
+    int counter = 0;
+    while (bu_file_exists(path.c_str(), NULL)) {
+	std::ostringstream ss;
+	ss << dir_path << BU_DIR_SEPARATOR << "extracted_" <<
+	   ++counter << "_" << filename;
+
+	path = ss.str();
+    }
+
+    std::ofstream file(path.c_str(), std::ofstream::binary);
+    file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
+    file.write(static_cast<const char *>(bitmap.m_buffer),
+	       bitmap.m_sizeof_buffer);
+    file.close();
+
+    return path;
+}
+
+
+
+
+void
+load_pix(const std::string &path, int width, int height)
+{
+    char buf[BUFSIZ]; // libicv currently requires BUFSIZ
+    ICV_IMAGE_FORMAT format = icv_guess_file_format(path.c_str(), buf);
+
+    if (icv_image_t *image = icv_read(path.c_str(), format, width, height)) {
+	icv_destroy(image);
+    } else
+	throw std::runtime_error("icv_read() failed");
 }
 
 
@@ -325,7 +386,9 @@ RhinoConverter::Color::set_rgb(int red, int green, int blue)
 
 
 
-RhinoConverter::RhinoConverter(const std::string &output_path) :
+RhinoConverter::RhinoConverter(const std::string &output_path,
+			       bool verbose_mode) :
+    m_verbose_mode(verbose_mode),
     m_use_uuidnames(false),
     m_random_colors(false),
     m_output_dirname(),
@@ -339,10 +402,10 @@ RhinoConverter::RhinoConverter(const std::string &output_path) :
     bu_free(buf, "bu_dirname buffer");
 
     m_db = wdb_fopen(output_path.c_str());
-    if (!m_db || mk_id(m_db, "3dm -> g conversion")) {
-	wdb_close(m_db);
+    if (!m_db)
 	throw std::runtime_error("failed to open database");
-    }
+
+    mk_id(m_db, "3dm -> g conversion");
 }
 
 
@@ -367,8 +430,12 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
 	throw std::runtime_error("failed to read 3dm file");
 
     m_log->Print("Loaded 3dm model '%s'\n", path.c_str());
+
     clean_model();
-    m_log->Print("Number of NURBS objects read: %d\n\n", m_model->m_object_table.Count());
+
+    if (m_verbose_mode)
+	m_log->Print("Number of NURBS objects read: %d\n\n",
+		     m_model->m_object_table.Count());
 
     m_obj_map[ROOT_UUID].m_name = basename(path);
 
@@ -378,6 +445,9 @@ RhinoConverter::write_model(const std::string &path, bool use_uuidnames,
     create_all_geometry();
     nest_all_layers();
     create_all_layers();
+
+    // create root layer
+    create_layer(ON_Layer());
 
     m_model->Destroy();
 
@@ -391,7 +461,7 @@ void
 RhinoConverter::clean_model()
 {
     if (!m_model->IsValid(m_log.get())) {
-	m_log->Print("Model is NOT valid. Attempting repairs.\n");
+	m_log->Print("WARNING: Model is NOT valid. Attempting repairs.\n");
 
 	m_model->Polish(); // fill in defaults
 
@@ -399,14 +469,14 @@ RhinoConverter::clean_model()
 	ON_SimpleArray<int> warnings;
 	m_model->Audit(true, &repair_count, m_log.get(), &warnings); // repair
 
-	m_log->Print("%d objects were repaired.\n", repair_count);
+	m_log->Print("Repaired %d objects.\n", repair_count);
 	for (int warn_i = 0; warn_i < warnings.Count(); ++warn_i)
 	    m_log->Print("%s\n", warnings[warn_i]);
 
 	if (m_model->IsValid(m_log.get()))
 	    m_log->Print("Repair successful, model is now valid.\n");
 	else
-	    m_log->Print("Repair unsuccessful, model is still NOT valid.\n");
+	    m_log->Print("WARNING: Repair unsuccessful, model is still NOT valid.\n");
     }
 }
 
@@ -416,9 +486,12 @@ RhinoConverter::clean_model()
 void
 RhinoConverter::map_uuid_names()
 {
+    std::map<std::string, int> count_map;
+
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
 	const ON_Object *object = m_model->m_object_table[i].m_object;
-	const ON_3dmObjectAttributes &myAttributes = m_model->m_object_table[i].m_attributes;
+	const ON_3dmObjectAttributes &myAttributes =
+	    m_model->m_object_table[i].m_attributes;
 	const std::string obj_uuid = UUIDstr(myAttributes.m_uuid);
 
 	std::string suffix = ".s";
@@ -426,10 +499,10 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".c";
 
 	if (m_use_uuidnames)
-	    m_obj_map[obj_uuid].m_name = unique_name(obj_uuid, suffix);
+	    m_obj_map[obj_uuid].m_name = unique_name(count_map, obj_uuid, suffix);
 	else
 	    m_obj_map[obj_uuid].m_name =
-		unique_name(CleanName(myAttributes.m_name), suffix);
+		unique_name(count_map, CleanName(myAttributes.m_name), suffix);
 
     }
 
@@ -439,10 +512,10 @@ RhinoConverter::map_uuid_names()
 	const std::string idef_uuid = UUIDstr(idef.m_uuid);
 
 	if (m_use_uuidnames)
-	    m_obj_map[idef_uuid].m_name = unique_name(idef_uuid, ".c");
+	    m_obj_map[idef_uuid].m_name = unique_name(count_map, idef_uuid, ".c");
 	else
 	    m_obj_map[idef_uuid].m_name =
-		unique_name(CleanName(idef.Name()), ".c");
+		unique_name(count_map, CleanName(idef.Name()), ".c");
     }
 
 
@@ -455,10 +528,10 @@ RhinoConverter::map_uuid_names()
 	    suffix = ".r";
 
 	if (m_use_uuidnames)
-	    m_obj_map[layer_uuid].m_name = unique_name(layer_uuid, suffix);
+	    m_obj_map[layer_uuid].m_name = unique_name(count_map, layer_uuid, suffix);
 	else
 	    m_obj_map[layer_uuid].m_name =
-		unique_name(CleanName(layer.m_name), suffix);
+		unique_name(count_map, CleanName(layer.m_name), suffix);
     }
 
 
@@ -467,13 +540,13 @@ RhinoConverter::map_uuid_names()
 	const std::string bitmap_uuid = gen_bitmap_id(i);
 
 	if (m_use_uuidnames)
-	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_uuid, ".pix");
+	    m_obj_map[bitmap_uuid].m_name = unique_name(count_map, bitmap_uuid, ".pix");
 	else {
 	    std::string bitmap_name = CleanName(bitmap->m_bitmap_name);
 	    if (bitmap_name == DEFAULT_NAME)
 		bitmap_name = CleanName(bitmap->m_bitmap_filename);
 
-	    m_obj_map[bitmap_uuid].m_name = unique_name(bitmap_name, ".pix");
+	    m_obj_map[bitmap_uuid].m_name = unique_name(count_map, bitmap_name, ".pix");
 	}
     }
 }
@@ -503,25 +576,30 @@ void
 RhinoConverter::create_bitmap(const ON_Bitmap *bmap)
 {
     if (const ON_EmbeddedBitmap *bitmap = ON_EmbeddedBitmap::Cast(bmap)) {
-	const std::string path = w2string(bitmap->m_bitmap_filename);
-	const std::string base = basename(path);
+	const std::string filename = basename(w2string(bitmap->m_bitmap_filename));
+	const std::string path = extract_bitmap(m_output_dirname, filename, *bitmap);
 
-	std::string dest_path = m_output_dirname + BU_DIR_SEPARATOR + base;
-	int counter = 0;
-	while (bu_file_exists(dest_path.c_str(), NULL)) {
-	    std::ostringstream ss;
-	    ss << m_output_dirname << BU_DIR_SEPARATOR << "3dm-g-" <<
-	       ++counter << '_' << base;
-	    dest_path = ss.str();
+	try {
+	    load_pix(path, bitmap->Width(), bitmap->Height());
+	} catch (const std::runtime_error &) {
+	    m_log->Print("Couldn't convert bitmap to pix\n");
+	    m_log->Print("-- Extracted embedded bitmap to '%s'\n", path.c_str());
+	    return;
 	}
 
-	m_log->Print("Extracting bitmap to '%s'\n", dest_path.c_str());
-	std::ofstream file(dest_path.c_str(), std::ofstream::binary);
-	file.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-	file.write(static_cast<const char *>(bitmap->m_buffer), bitmap->m_sizeof_buffer);
-	file.close();
-    } else
-	m_log->Print("Skipping non-embedded bitmap\n"); // FIXME
+	std::remove(path.c_str());
+    } else {
+	try {
+	    load_pix(w2string(bmap->m_bitmap_filename),
+		     bitmap->Width(), bitmap->Height());
+	} catch (const std::runtime_error &) {
+	    m_log->Print("Couldn't convert bitmap to pix");
+	    return;
+	}
+    }
+
+    if (m_verbose_mode)
+	m_log->Print("Successfully read bitmap\n");
 }
 
 
@@ -549,7 +627,9 @@ RhinoConverter::create_all_layers()
 
     for (int i = 0; i < m_model->m_layer_table.Count(); ++i) {
 	const ON_Layer &layer = m_model->m_layer_table[i];
-	const std::string &layer_name = m_obj_map.at(UUIDstr(layer.m_layer_id)).m_name;
+	const std::string &layer_name =
+	    m_obj_map.at(UUIDstr(layer.m_layer_id)).m_name;
+
 	m_log->Print("Creating layer '%s'\n", layer_name.c_str());
 	create_layer(layer);
     }
@@ -562,16 +642,13 @@ void
 RhinoConverter::create_layer(const ON_Layer &layer)
 {
     const std::string layer_uuid = UUIDstr(layer.m_layer_id);
+    const std::string &layer_name = m_obj_map.at(layer_uuid).m_name;
     const std::vector<std::string> &child_vec = m_obj_map.at(layer_uuid).m_children;
     const bool is_region = !m_random_colors && is_toplevel(layer);
     const bool do_inherit = false;
     const std::pair<std::string, std::string> shader =
 	get_shader(layer.m_material_index);
 
-
-    std::string layer_name = m_obj_map.at(layer_uuid).m_name;
-    if (layer_name == DEFAULT_LAYER_NAME + ".c" || layer_name == DEFAULT_LAYER_NAME + ".r")
-	layer_name = m_obj_map.at(ROOT_UUID).m_name;
 
     wmember members;
     BU_LIST_INIT(&members.l);
@@ -606,14 +683,15 @@ RhinoConverter::create_layer(const ON_Layer &layer)
 void
 RhinoConverter::create_all_idefs()
 {
-    m_log->Print("Creating Instance Definitions...\n");
+    m_log->Print("Creating instance definitions...\n");
 
     for (int i = 0; i < m_model->m_idef_table.Count(); ++i) {
 	const ON_InstanceDefinition &idef = m_model->m_idef_table[i];
 	const std::string &idef_name =
 	    m_obj_map.at(UUIDstr(idef.m_uuid)).m_name;
 
-	m_log->Print("Creating idef '%s'\n", idef_name.c_str());
+	m_log->Print("Creating instance definition '%s'\n",
+		     idef_name.c_str());
 	create_idef(idef);
     }
 }
@@ -629,14 +707,8 @@ RhinoConverter::create_idef(const ON_InstanceDefinition &idef)
 
     for (int i = 0; i < idef.m_object_uuid.Count(); ++i) {
 	const std::string member_uuid = UUIDstr(idef.m_object_uuid[i]);
+	const std::string &member_name = m_obj_map.at(member_uuid).m_name;
 
-	const int geom_index = m_model->ObjectIndex(idef.m_object_uuid[i]);
-	if (geom_index == -1) {
-	    m_log->Print("referenced uuid=%s does not exist\n", member_uuid.c_str());
-	    continue;
-	}
-
-	std::string &member_name = m_obj_map.at(member_uuid).m_name;
 	mk_addmember(member_name.c_str(), &members.l, NULL, WMOP_UNION);
 	m_obj_map.at(member_uuid).is_in_idef = true;
     }
@@ -677,39 +749,6 @@ RhinoConverter::create_iref(const ON_InstanceRef &iref,
     const std::string parent_uuid =
 	UUIDstr(m_model->m_layer_table[iref_attrs.m_layer_index].m_layer_id);
     m_obj_map.at(parent_uuid).m_children.push_back(iref_uuid);
-}
-
-
-
-
-bool
-RhinoConverter::is_name_taken(const std::string &name) const
-{
-    for (std::map<std::string, ModelObject>::const_iterator it = m_obj_map.begin();
-	 it != m_obj_map.end(); ++it)
-	if (name == it->second.m_name)
-	    return true;
-
-
-    return false;
-}
-
-
-
-
-std::string
-RhinoConverter::unique_name(const std::string &name,
-			    const std::string &suffix) const
-{
-    std::string new_name = name + suffix;
-    int counter = 0;
-    while (is_name_taken(new_name)) {
-	std::ostringstream s;
-	s << ++counter;
-	new_name = name + s.str() + suffix;
-    }
-
-    return new_name;
 }
 
 
@@ -779,12 +818,14 @@ RhinoConverter::get_shader(int index) const
 
 
 void
-RhinoConverter::create_brep(const ON_Brep &brep, const ON_3dmObjectAttributes &brep_attrs)
+RhinoConverter::create_brep(const ON_Brep &brep,
+			    const ON_3dmObjectAttributes &brep_attrs)
 {
     const std::string brep_uuid = UUIDstr(brep_attrs.m_uuid);
     const std::string &brep_name = m_obj_map.at(brep_uuid).m_name;
 
-    m_log->Print("Creating BREP '%s'\n", brep_name.c_str());
+    if (m_verbose_mode)
+	m_log->Print("Creating BREP '%s'\n", brep_name.c_str());
 
     mk_brep(m_db, brep_name.c_str(), const_cast<ON_Brep *>(&brep));
     const std::string parent_uuid =
@@ -799,18 +840,22 @@ RhinoConverter::create_brep(const ON_Brep &brep, const ON_3dmObjectAttributes &b
 void
 RhinoConverter::create_all_geometry()
 {
+    m_log->Print("Creating geometry...\n");
+
     for (int i = 0; i < m_model->m_object_table.Count(); ++i) {
-	const ON_3dmObjectAttributes &obj_attrs = m_model->m_object_table[i].m_attributes;
+	const ON_3dmObjectAttributes &obj_attrs =
+	    m_model->m_object_table[i].m_attributes;
 	const std::string obj_uuid = UUIDstr(obj_attrs.m_uuid);
 	const std::string &obj_name = m_obj_map.at(obj_uuid).m_name;
 
-	m_log->Print("Object %d of %d...", i + 1, m_model->m_object_table.Count());
+	if (m_verbose_mode)
+	    m_log->Print("Object %d of %d...\n", i + 1, m_model->m_object_table.Count());
 
 	const ON_Geometry *pGeometry = ON_Geometry::Cast(m_model->m_object_table[i].m_object);
 	if (pGeometry)
 	    create_geometry(pGeometry, obj_attrs);
 	else
-	    m_log->Print("WARNING: Skipping non-Geometry entity: %s\n", obj_name.c_str());
+	    m_log->Print("WARNING: Skipping non-Geometry entity '%s'\n", obj_name.c_str());
     }
 }
 
@@ -828,53 +873,54 @@ RhinoConverter::create_geometry(const ON_Geometry *pGeometry,
 	create_brep(*new_brep, obj_attrs);
 	delete new_brep;
     } else if (const ON_Curve *curve = ON_Curve::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Curve\n");
-	if (verbose_mode) curve->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_Curve\n");
+	if (m_verbose_mode) curve->Dump(*m_log);
     } else if (const ON_Surface *surface = ON_Surface::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Surface\n");
-	if (verbose_mode) surface->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_Surface\n");
+	if (m_verbose_mode) surface->Dump(*m_log);
     } else if (const ON_Mesh *mesh = ON_Mesh::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Mesh\n");
-	if (verbose_mode) mesh->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_Mesh\n");
+	if (m_verbose_mode) mesh->Dump(*m_log);
     } else if (const ON_RevSurface *revsurf = ON_RevSurface::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_RevSurface\n");
-	if (verbose_mode) revsurf->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_RevSurface\n");
+	if (m_verbose_mode) revsurf->Dump(*m_log);
     } else if (const ON_PlaneSurface *planesurf = ON_PlaneSurface::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_PlaneSurface\n");
-	if (verbose_mode) planesurf->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_PlaneSurface\n");
+	if (m_verbose_mode) planesurf->Dump(*m_log);
     } else if (const ON_InstanceDefinition *instdef = ON_InstanceDefinition::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_InstanceDefinition\n");
-	if (verbose_mode) instdef->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_InstanceDefinition\n");
+	if (m_verbose_mode) instdef->Dump(*m_log);
     } else if (const ON_InstanceRef *instref = ON_InstanceRef::Cast(pGeometry)) {
 
-	const std::string &iref_name =
-	    m_obj_map.at(UUIDstr(obj_attrs.m_uuid)).m_name;
+	if (m_verbose_mode) {
+	    const std::string &iref_name =
+		m_obj_map.at(UUIDstr(obj_attrs.m_uuid)).m_name;
 
-	m_log->Print("Creating iref '%s'\n", iref_name.c_str());
-	if (verbose_mode) instref->Dump(*m_log);
+	    m_log->Print("Creating instance reference '%s'\n", iref_name.c_str());
+	}
 
 	create_iref(*instref, obj_attrs);
 
     } else if (const ON_Layer *layer = ON_Layer::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Layer\n");
-	if (verbose_mode) layer->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_Layer\n");
+	if (m_verbose_mode) layer->Dump(*m_log);
     } else if (const ON_Light *light = ON_Light::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Light\n");
-	if (verbose_mode) light->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_Light\n");
+	if (m_verbose_mode) light->Dump(*m_log);
     } else if (const ON_NurbsCage *nurbscage = ON_NurbsCage::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_NurbsCage\n");
-	if (verbose_mode) nurbscage->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_NurbsCage\n");
+	if (m_verbose_mode) nurbscage->Dump(*m_log);
     } else if (const ON_MorphControl *morphctrl = ON_MorphControl::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_MorphControl\n");
-	if (verbose_mode) morphctrl->Dump(*m_log);
+	m_log->Print("-- Skipping: Type: ON_MorphControl\n");
+	if (m_verbose_mode) morphctrl->Dump(*m_log);
     } else if (const ON_Group *group = ON_Group::Cast(pGeometry)) {
-	m_log->Print("Skipping: Type: ON_Group\n");
-	if (verbose_mode) group->Dump(*m_log);
-    } else m_log->Print("Skipping unknown object type\n");
+	m_log->Print("-- Skipping: Type: ON_Group\n");
+	if (m_verbose_mode) group->Dump(*m_log);
+    } else m_log->Print("-- Skipping unknown object type\n");
 
-    if (verbose_mode) {
+    if (m_verbose_mode) {
 	m_log->PopIndent();
-	m_log->Print("\n\n");
+	m_log->Print("\n");
     }
 }
 

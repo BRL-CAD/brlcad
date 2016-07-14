@@ -48,9 +48,9 @@ if test ! -f "$MGED" ; then
     exit 1
 fi
 
-GQABIN="`ensearch g_qa`"
+GQABIN="`ensearch gqa`"
 if test ! -f "$GQABIN" ; then
-    echo "Unable to find g_qa, aborting"
+    echo "Unable to find gqa, aborting"
     exit 1
 fi
 

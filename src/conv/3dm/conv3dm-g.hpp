@@ -55,7 +55,9 @@ namespace conv3dm
 class RhinoConverter
 {
 public:
-    RhinoConverter(const std::string &output_path);
+    RhinoConverter(const std::string &output_path,
+		   bool verbose_mode = false);
+
     ~RhinoConverter();
 
 
@@ -96,13 +98,8 @@ private:
     std::pair<std::string, std::string>
     get_shader(int index) const;
 
-    bool is_name_taken(const std::string &name) const;
 
-    std::string unique_name(const std::string &name,
-			    const std::string &suffix) const;
-
-
-
+    const bool m_verbose_mode;
     bool m_use_uuidnames;
     bool m_random_colors;
     std::string m_output_dirname;
