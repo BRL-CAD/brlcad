@@ -1134,6 +1134,13 @@ endif(BRLCAD_ENABLE_OPENCL)
 option(BRLCAD_ENABLE_SPR "Enable features requiring Screened Poisson Surface Reconstruction" OFF)
 mark_as_advanced(BRLCAD_ENABLE_SPR)
 
+# Enable experimental support for binary attributes
+option(BRLCAD_ENABLE_BINARY_ATTRIBUTES "Enable support for binary attributes" OFF)
+mark_as_advanced(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CONFIG_H_APPEND(BRLCAD "#define USE_BINARY_ATTRIBUTES 1\n")
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 #----------------------------------------------------------------------
 # The following are fine-grained options for enabling/disabling compiler
 # and source code definition settings.  Typically these are set to

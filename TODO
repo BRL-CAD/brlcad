@@ -41,9 +41,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
 
-* check these commits for bugs:
-  65699 - partial or full revert needed.  fseek from 0 makes y param ignored (wrong).
-
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -96,6 +93,16 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
+  (http://www.openflipper.org) for smoothing, decimation, and
+  additional GCV conversion formats.
+
+* GCT decimation assumes no edge is shared by two triangles except
+  once in the reversed order (AB, BA).  Needs basic check to avoid
+  failures/crashing.
+
+* V&V bwcrop, pixembed are behaving correctly, as documented
 
 * need routine that returns a color given a path, similar to
   rt_comb_get_color() but full path so that inheritance is taken into
@@ -1486,6 +1493,9 @@ ARCHER
 
 ATTRIBUTES
 ----------
+
+* See src/libbu/TODO.binary_attributes for more info about
+  bson based binary attribute work.
 
 * attr command option to output to a file
 

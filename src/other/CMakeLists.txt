@@ -741,6 +741,26 @@ if(BRLCAD_SPR_BUILD)
   SetTargetFolder(libSPR-static "Third Party Libraries")
 endif(BRLCAD_SPR_BUILD)
 
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+#=== LIBBSON ==================================================
+# Libbson needed for binary attributes, always use this local version
+set(libbson_ALIASES ENABLE_BSON)
+set(libbson_DESCRIPTION "
+Option for enabling and disabling compilation of the Libbson library
+provided with BRL-CAD's source code.  Default is BUNDLED, using
+the included other/src version.
+")
+THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
+  ${libbson_ALIASES} FLAGS NOSYS UNDOCUMENTED)
+if(BRLCAD_BSON_BUILD)
+  SetTargetFolder(libBSON "Third Party Libraries")
+  SetTargetFolder(libBSON-static "Third Party Libraries")
+endif(BRLCAD_BSON_BUILD)
+#=== END LIBBSON ==================================================
+else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CMAKEFILES(libbson)
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
@@ -807,6 +827,25 @@ SetTargetFolder(stepdai "Third Party Libraries")
 SetTargetFolder(stepeditor "Third Party Libraries")
 SetTargetFolder(steputils "Third Party Libraries")
 SetTargetFolder(version_string "Compilation Utilities")
+
+if(BRLCAD_ENABLE_GECODE)
+  set(gecode_ALIASES ENABLE_GECODE)
+  set(gecode_DESCRIPTION "
+  Option for enabling and disabling compilation of the Gecode Constraint
+  Solving Libraries provided with BRL-CAD's source code.  Default is AUTO,
+  responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+  first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+  ")
+  set(GECODE_USE_QT OFF)
+  mark_as_advanced(GECODE_USE_QT)
+  THIRD_PARTY(gecode GECODE gecode gecode_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ${gecode_ALIASES})
+  if(BRLCAD_GECODE_BUILD)
+    set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint
+      gecodeset gecodefloat gecodeminimodel gecodedriver gecodeflatzinc)
+    set(GECODE_LIBRARIES "${GECODE_LIBRARIES}"  CACHE STRING "Gecode libraries in BRL-CAD" FORCE)
+    set(GECODE_INCLUDE_DIR "${BRLCAD_BINARY_DIR}/src/other/gecode;${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
+  endif(BRLCAD_GECODE_BUILD)
+endif(BRLCAD_ENABLE_GECODE)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)

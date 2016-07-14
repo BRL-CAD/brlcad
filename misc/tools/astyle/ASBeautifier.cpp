@@ -1,6 +1,6 @@
 // ASBeautifier.cpp
 // Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
-// Licensed under the MIT license.
+// This code is licensed under the MIT License.
 // License.txt describes the conditions under which this software may be distributed.
 
 //-----------------------------------------------------------------------------
@@ -966,7 +966,7 @@ string ASBeautifier::beautify(const string& originalLine)
 		{
 			if (isInIndentablePreprocBlock)
 				return preLineWS(preprocBlockIndent, 0);
-			else if (!headerStack->empty() || isInEnum)
+			if (!headerStack->empty() || isInEnum)
 				return preLineWS(prevFinalLineIndentCount, prevFinalLineSpaceIndentCount);
 			// must fall thru here
 		}
@@ -1378,7 +1378,7 @@ int ASBeautifier::getNextProgramCharDistance(const string& line, int i) const
 		{
 			if (line.compare(i + charDistance, 2, "//") == 0)
 				return remainingCharNum;
-			else if (line.compare(i + charDistance, 2, "/*") == 0)
+			if (line.compare(i + charDistance, 2, "/*") == 0)
 			{
 				charDistance++;
 				inComment = true;
@@ -1463,8 +1463,7 @@ int ASBeautifier::indexOf(vector<const string*>& container, const string* elemen
 	where = find(container.begin(), container.end(), element);
 	if (where == container.end())
 		return -1;
-	else
-		return (int) (where - container.begin());
+	return (int) (where - container.begin());
 }
 
 /**
@@ -2145,7 +2144,7 @@ void ASBeautifier::computePreliminaryIndentation()
 	        && (*headerStack)[headerStack->size() - 2] == &AS_CLASS
 	        && (*headerStack)[headerStack->size() - 1] == &AS_OPEN_BRACKET
 	        && lineBeginsWithCloseBracket
-	        && bracketBlockStateStack->back() == true)
+	        && bracketBlockStateStack->back())
 		--indentCount;
 
 	// unindent an indented switch closing bracket...

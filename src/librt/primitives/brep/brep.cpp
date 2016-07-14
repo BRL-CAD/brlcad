@@ -111,7 +111,7 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
 
 using namespace brlcad;
 
-ON_Ray toXRay(struct xray* rp)
+ON_Ray toXRay(const struct xray* rp)
 {
     ON_3dPoint pt(rp->r_pt);
     ON_3dVector dir(rp->r_dir);
@@ -1366,7 +1366,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 	  }
 	*/
 	HitList::iterator prev;
-	HitList::iterator next;
+	HitList::const_iterator next;
 	HitList::iterator curr = hits.begin();
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
@@ -1443,7 +1443,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 			// if "entering" remove first hit if "existing" remove second hit
 			// until we get good solids with known normal directions assume
 			// first hit direction is "entering" todo check solid status and normals
-			HitList::iterator first = hits.begin();
+			HitList::const_iterator first = hits.begin();
 			const brep_hit &first_hit = *first;
 			if (first_hit.direction == curr_hit.direction) { // assume "entering"
 			    curr = hits.erase(prev);
@@ -1498,7 +1498,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
     ///////////// handle near hit
     if ((hits.size() > 1) && containsNearHit(&hits)) { //&& ((hits.size() % 2) != 0)) {
 	HitList::iterator prev;
-	HitList::iterator next;
+	HitList::const_iterator next;
 	HitList::iterator curr = hits.begin();
 	while (curr != hits.end()) {
 	    const brep_hit &curr_hit = *curr;
