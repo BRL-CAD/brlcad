@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_CoordsToWindow 3 "" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_CoordsToWindow \- Find window containing a point
@@ -27,7 +25,6 @@ Y-coordinate (in root window coordinates).
 .AP Tk_Window tkwin in
 Token for window that identifies application.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_CoordsToWindow\fR locates the window that contains a given point.
@@ -46,6 +43,5 @@ which window contains the mouse cursor:  if a parent and a child both
 contain the point then the child gets preference, and if two siblings
 both contain the point then the highest one in the stacking order
 (i.e. the one that's visible on the screen) gets preference.
-
 .SH KEYWORDS
 containing, coordinates, root window

@@ -2,10 +2,8 @@
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_GetUserInactiveTime 3 8.5 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_GetUserInactiveTime, Tk_ResetUserInactiveTime \- discover user inactivity time
@@ -23,7 +21,6 @@ long
 The display on which the user inactivity timer is to be queried or
 reset.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_GetUserInactiveTime\fR returns the number of milliseconds that
@@ -33,6 +30,5 @@ support querying the user inactiviy time, \fB\-1\fR is returned.
 \fBTk_GetUserInactiveTime\fR resets the user inactivity timer of the
 given display to zero.  On windowing systems that do not support
 multiple displays \fIdisplay\fR can be passed as \fBNULL\fR.
-
 .SH KEYWORDS
 idle, inactive

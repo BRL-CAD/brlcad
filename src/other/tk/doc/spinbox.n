@@ -5,14 +5,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH spinbox n 8.4 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-spinbox \- Create and manipulate spinbox widgets
+spinbox \- Create and manipulate 'spinbox' value spinner widgets
 .SH SYNOPSIS
 \fBspinbox\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -57,11 +55,11 @@ A floating-point value corresponding to the lowest value for a spinbox, to
 be used in conjunction with \fB\-to\fR and \fB\-increment\fR.  When all
 are specified correctly, the spinbox will use these values to control its
 contents.  This value must be less than the \fB\-to\fR option.
-If \fB\-values\fR is specified, it supercedes this option.
+If \fB\-values\fR is specified, it supersedes this option.
 .OP "\-invalidcommand or \-invcmd" invalidCommand InvalidCommand
-Specifies a script to eval when \fBvalidateCommand\fR returns 0.  Setting
+Specifies a script to eval when \fB\-validatecommand\fR returns 0.  Setting
 it to an empty string disables this feature (the default).  The best use of
-this option is to set it to \fIbell\fR.  See \fBValidation\fR below for
+this option is to set it to \fIbell\fR.  See \fBVALIDATION\fR below for
 more information.
 .OP \-increment increment Increment
 A floating-point value specifying the increment.  When used with
@@ -86,21 +84,21 @@ A floating-point value corresponding to the highest value for the spinbox,
 to be used in conjunction with \fB\-from\fR and \fB\-increment\fR.  When
 all are specified correctly, the spinbox will use these values to control
 its contents.  This value must be greater than the \fB\-from\fR option.
-If \fB\-values\fR is specified, it supercedes this option.
+If \fB\-values\fR is specified, it supersedes this option.
 .OP \-validate validate Validate
 Specifies the mode in which validation should operate: \fBnone\fR,
 \fBfocus\fR, \fBfocusin\fR, \fBfocusout\fR, \fBkey\fR, or \fBall\fR.
 It defaults to \fBnone\fR.  When you want validation, you must explicitly
-state which mode you wish to use.  See \fBValidation\fR below for more.
+state which mode you wish to use.  See \fBVALIDATION\fR below for more.
 .OP "\-validatecommand or \-vcmd" validateCommand ValidateCommand
 Specifies a script to evaluate when you want to validate the input in the
 widget.  Setting it to an empty string disables this feature (the default).
 Validation occurs according to the value of \fB\-validate\fR.
 This command must return a valid Tcl boolean value.  If it returns 0 (or
 the valid Tcl boolean equivalent) then the value of the widget will not
-change and the \fBinvalidCommand\fR will be evaluated if it is set.  If it
+change and the \fB\-invalidcommand\fR will be evaluated if it is set.  If it
 returns 1, then value will be changed.
-See \fBValidation\fR below for more information.
+See \fBVALIDATION\fR below for more information.
 .OP \-values values Values
 Must be a proper list value.  If specified, the spinbox will use these
 values as to control its contents, starting with the first value.  This
@@ -131,7 +129,7 @@ to move, or spin, through a fixed set of ascending or descending values
 such as times or dates in addition to editing the value as in an
 \fBentry\fR.  When first created, a spinbox's string is empty.
 A portion of the spinbox may be selected as described below.
-If a spinbox is exporting its selection (see the \fBexportSelection\fR
+If a spinbox is exporting its selection (see the \fB\-exportselection\fR
 option), then it will observe the standard protocols for handling the
 selection;  spinbox selections are available as type \fBSTRING\fR.
 Spinboxes also observe the standard Tk rules for dealing with the
@@ -143,31 +141,31 @@ Spinboxes are capable of displaying strings that are too long to
 fit entirely within the widget's window.  In this case, only a
 portion of the string will be displayed; commands described below
 may be used to change the view in the window.  Spinboxes use
-the standard \fBxScrollCommand\fR mechanism for interacting with
-scrollbars (see the description of the \fBxScrollCommand\fR option
+the standard \fB\-xscrollcommand\fR mechanism for interacting with
+scrollbars (see the description of the \fB\-xscrollcommand\fR option
 for details).  They also support scanning, as described below.
 .SH VALIDATION
 .PP
-Validation works by setting the \fBvalidateCommand\fR
-option to a script which will be evaluated according to the \fBvalidate\fR
+Validation works by setting the \fB\-validatecommand\fR
+option to a script which will be evaluated according to the \fB\-validate\fR
 option as follows:
 .PP
 .IP \fBnone\fR 10
 Default.  This means no validation will occur.
 .IP \fBfocus\fR 10
-\fBvalidateCommand\fR will be called when the spinbox receives or
+The \fB\-validatecommand\fR will be called when the spinbox receives or
 loses focus.
 .IP \fBfocusin\fR 10
-\fBvalidateCommand\fR will be called when the spinbox receives focus.
+The \fB\-validatecommand\fR will be called when the spinbox receives focus.
 .IP \fBfocusout\fR 10
-\fBvalidateCommand\fR will be called when the spinbox loses focus.
+The \fB\-validatecommand\fR will be called when the spinbox loses focus.
 .IP \fBkey\fR 10
-\fBvalidateCommand\fR will be called when the spinbox is edited.
+The \fB\-validatecommand\fR will be called when the spinbox is edited.
 .IP \fBall\fR 10
-\fBvalidateCommand\fR will be called for all above conditions.
+The \fB\-validatecommand\fR will be called for all above conditions.
 .PP
-It is possible to perform percent substitutions on the \fBvalidateCommand\fR
-and \fBinvalidCommand\fR, just as you would in a \fBbind\fR script.  The
+It is possible to perform percent substitutions on the \fB\-validatecommand\fR
+and \fB\-invalidcommand\fR scripts, just as you would in a \fBbind\fR script.  The
 following substitutions are recognized:
 .PP
 .IP \fB%d\fR 5
@@ -192,32 +190,42 @@ The type of validation that triggered the callback
 .IP \fB%W\fR 5
 The name of the spinbox widget.
 .PP
-In general, the \fBtextVariable\fR and \fBvalidateCommand\fR can be
+In general, the \fB\-textvariable\fR and \fB\-validatecommand\fR can be
 dangerous to mix.  Any problems have been overcome so that using the
-\fBvalidateCommand\fR will not interfere with the traditional behavior of
-the spinbox widget.  Using the \fBtextVariable\fR for read-only purposes will
+\fB\-validatecommand\fR will not interfere with the traditional behavior of
+the spinbox widget.  Using the \fB\-textvariable\fR for read-only purposes will
 never cause problems.  The danger comes when you try set the
-\fBtextVariable\fR to something that the \fBvalidateCommand\fR would not
-accept, which causes \fBvalidate\fR to become \fInone\fR (the
-\fBinvalidCommand\fR will not be triggered).  The same happens
-when an error occurs evaluating the \fBvalidateCommand\fR.
+\fB\-textvariable\fR to something that the \fB\-validatecommand\fR would not
+accept, which causes \fB\-validate\fR to become \fBnone\fR (the
+\fB\-invalidcommand\fR will not be triggered).  The same happens
+when an error occurs evaluating the \fB\-validatecommand\fR.
 .PP
-Primarily, an error will occur when the \fBvalidateCommand\fR or
-\fBinvalidCommand\fR encounters an error in its script while evaluating or
-\fBvalidateCommand\fR does not return a valid Tcl boolean value.  The
-\fBvalidate\fR option will also set itself to \fBnone\fR when you edit the
-spinbox widget from within either the \fBvalidateCommand\fR or the
-\fBinvalidCommand\fR.  Such editions will override the one that was being
+Primarily, an error will occur when the \fB\-validatecommand\fR or
+\fB\-invalidcommand\fR encounters an error in its script while evaluating or
+\fB\-validatecommand\fR does not return a valid Tcl boolean value.  The
+\fB\-validate\fR option will also set itself to \fBnone\fR when you edit the
+spinbox widget from within either the \fB\-validatecommand\fR or the
+\fB\-invalidcommand\fR.  Such editions will override the one that was being
 validated.  If you wish to edit the value of the widget
-during validation and still have the \fBvalidate\fR option set, you should
+during validation and still have the \fB\-validate\fR option set, you should
 include the command
 .CS
      \fI%W config \-validate %v\fR
 .CE
-in the \fBvalidateCommand\fR or \fBinvalidCommand\fR (whichever one you
+in the \fB\-validatecommand\fR or \fB\-invalidcommand\fR (whichever one you
 were editing the spinbox widget from).  It is also recommended to not set an
-associated \fBtextVariable\fR during validation, as that can cause the
-spinbox widget to become out of sync with the \fBtextVariable\fR.
+associated \fB\-textvariable\fR during validation, as that can cause the
+spinbox widget to become out of sync with the \fB\-textvariable\fR.
+.PP
+Also, the \fBvalidate\fR option will set itself to \fBnone\fR when the
+spinbox value gets changed because of adjustment of \fBfrom\fR or \fBto\fR
+and the \fBvalidateCommand\fR returns false. For instance
+.CS
+     \fIspinbox pathName \-from 1 \-to 10 \-validate all \-vcmd {return 0}\fR
+.CE
+will in fact set the \fBvalidate\fR option to \fBnone\fR because the default
+value for the spinbox gets changed (due to the \fBfrom\fR and \fBto\fR
+options) to a value not accepted by the validation script.
 .SH "WIDGET COMMAND"
 .PP
 The \fBspinbox\fR command creates a new Tcl command whose
@@ -394,7 +402,7 @@ Returns an empty string.
 Returns 1 if there is are characters selected in the spinbox,
 0 if nothing is selected.
 .TP
-\fIpathName \fBselection range \fIstart\fR \fIend\fR
+\fIpathName \fBselection range \fIstart end\fR
 Sets the selection to include the characters starting with
 the one indexed by \fIstart\fR and ending with the one just
 before \fIend\fR.
@@ -422,9 +430,9 @@ value, otherwise it just returns the spinbox's string.
 If validation is on, it will occur when setting the string.
 .TP
 \fIpathName \fBvalidate\fR
-This command is used to force an evaluation of the \fBvalidateCommand\fR
-independent of the conditions specified by the \fBvalidate\fR option.
-This is done by temporarily setting the \fBvalidate\fR option to \fBall\fR.
+This command is used to force an evaluation of the \fB\-validatecommand\fR
+independent of the conditions specified by the \fB\-validate\fR option.
+This is done by temporarily setting the \fB\-validate\fR option to \fBall\fR.
 It returns 0 or 1.
 .TP
 \fIpathName \fBxview \fIargs\fR
@@ -443,7 +451,7 @@ in the window, and 40% of the text is off-screen to the right.
 These are the same values passed to scrollbars via the \fB\-xscrollcommand\fR
 option.
 .TP
-\fIpathName \fBxview\fR \fIindex\fR
+\fIpathName \fBxview \fIindex\fR
 Adjusts the view in the window so that the character given by \fIindex\fR
 is displayed at the left edge of the window.
 .TP
@@ -465,7 +473,6 @@ If \fInumber\fR is negative then characters farther to the left
 become visible;  if it is positive then characters farther to the right
 become visible.
 .RE
-
 .SH "DEFAULT BINDINGS"
 .PP
 Tk automatically creates class bindings for spinboxes that give them
@@ -582,6 +589,10 @@ take place.
 .PP
 The behavior of spinboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
+.SH "SEE ALSO"
+ttk::spinbox(n)
 .SH KEYWORDS
 spinbox, entry, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

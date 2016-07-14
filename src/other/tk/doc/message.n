@@ -5,14 +5,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH message n 4.0 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-message \- Create and manipulate message widgets
+message \- Create and manipulate 'message' non-interactive text widgets
 .SH SYNOPSIS
 \fBmessage\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -30,37 +28,37 @@ aspect ratio for the text.  The aspect ratio is specified as
 be as wide as it is tall, 200 means the text should
 be twice as wide as it is tall, 50 means the text should
 be twice as tall as it is wide, and so on.
-Used to choose line length for text if \fBwidth\fR option
+Used to choose line length for text if \fB\-width\fR option
 is not specified.
 Defaults to 150.
 .OP \-justify justify Justify
 Specifies how to justify lines of text.
 Must be one of \fBleft\fR, \fBcenter\fR, or \fBright\fR.  Defaults
 to \fBleft\fR.
-This option works together with the \fBanchor\fR, \fBaspect\fR,
-\fBpadX\fR, \fBpadY\fR, and \fBwidth\fR options to provide a variety
+This option works together with the \fB\-anchor\fR, \fB\-aspect\fR,
+\fB\-padx\fR, \fB\-pady\fR, and \fB\-width\fR options to provide a variety
 of arrangements of the text within the window.
-The \fBaspect\fR and \fBwidth\fR options determine the amount of
+The \fB\-aspect\fR and \fB\-width\fR options determine the amount of
 screen space needed to display the text.
-The \fBanchor\fR, \fBpadX\fR, and \fBpadY\fR options determine where this
+The \fB\-anchor\fR, \fB\-padx\fR, and \fB\-pady\fR options determine where this
 rectangular area is displayed within the widget's window, and the
-\fBjustify\fR option determines how each line is displayed within that
+\fB\-justify\fR option determines how each line is displayed within that
 rectangular region.
-For example, suppose \fBanchor\fR is \fBe\fR and \fBjustify\fR is
+For example, suppose \fB\-anchor\fR is \fBe\fR and \fB\-justify\fR is
 \fBleft\fR, and that the message window is much larger than needed
 for the text.
 The text will be displayed so that the left edges of all the lines
-line up and the right edge of the longest line is \fBpadX\fR from
+line up and the right edge of the longest line is \fB\-padx\fR from
 the right side of the window;  the entire text block will be centered
 in the vertical span of the window.
 .OP \-width width Width
 Specifies the length of lines in the window.
 The value may have any of the forms acceptable to \fBTk_GetPixels\fR.
-If this option has a value greater than zero then the \fBaspect\fR
-option is ignored and the \fBwidth\fR option determines the line
+If this option has a value greater than zero then the \fB\-aspect\fR
+option is ignored and the \fB\-width\fR option determines the line
 length.
 If this option has a value less than or equal to zero, then
-the \fBaspect\fR option determines the line length.
+the \fB\-aspect\fR option determines the line length.
 .BE
 .SH DESCRIPTION
 .PP
@@ -76,7 +74,8 @@ there must not exist a window named \fIpathName\fR, but
 \fIpathName\fR's parent must exist.
 .PP
 A message is a widget that displays a textual string.  A message
-widget has three special features.  First, it breaks up
+widget has three special features that differentiate it from a
+\fBlabel\fR widget.  First, it breaks up
 its string into lines in order to produce a given aspect ratio
 for the window.  The line breaks are chosen at word boundaries
 wherever possible (if not even a single word would fit on a
@@ -113,13 +112,15 @@ operations on the widget.  It has the following general form:
 determine the exact behavior of the command.  The following
 commands are possible for message widgets:
 .TP
-\fIpathName \fBcget\fR \fIoption\fR
+\fIpathName \fBcget \fIoption\fR
+.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the \fBmessage\fR
 command.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+.
 Query or modify the configuration options of the widget.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
@@ -144,3 +145,6 @@ The most common result is that the line is justified wrong.
 label(n)
 .SH KEYWORDS
 message, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

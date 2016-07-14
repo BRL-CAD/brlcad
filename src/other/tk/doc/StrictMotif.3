@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_StrictMotif 3 4.0 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_StrictMotif \- Return value of tk_strictMotif variable
@@ -22,7 +20,6 @@ int
 .AP Tk_Window tkwin in
 Token for window.
 .BE
-
 .SH DESCRIPTION
 .PP
 This procedure returns the current value of the \fBtk_strictMotif\fR
@@ -37,6 +34,5 @@ is good enough, and extra features are welcome.
 This procedure uses a link to the Tcl variable to provide much
 faster access to the variable's value than could be had by calling
 \fBTcl_GetVar\fR.
-
 .SH KEYWORDS
 Motif compliance, tk_strictMotif variable

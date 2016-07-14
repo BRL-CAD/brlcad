@@ -1,11 +1,7 @@
 README:  Tk
-    This is the Tk 8.5.9 source distribution.
-    Tcl/Tk is also available through NetCVS:
-	http://tcl.sourceforge.net/
-    You can get any source release of Tcl from the file distributions
-    link at the above URL.
-
-RCS: @(#) $Id$
+    This is the Tk 8.6.5 source distribution.
+	http://sourceforge.net/projects/tcl/files/Tcl/
+    You can get any source release of Tk from the URL above.
 
 1. Introduction
 ---------------
@@ -14,18 +10,18 @@ This directory contains the sources and documentation for Tk, an X11
 toolkit implemented with the Tcl scripting language.
 
 For details on features, incompatibilities, and potential problems with
-this release, see the Tcl/Tk 8.5 Web page at
+this release, see the Tcl/Tk 8.6 Web page at
 
-	http://www.tcl.tk/software/tcltk/8.5.html
+	http://www.tcl.tk/software/tcltk/8.6.html
 
 or refer to the "changes" file in this directory, which contains a
 historical record of all changes to Tk.
 
-Tk is maintained, enhanced, and distributed freely by members of the
-Tcl community.  The home for Tcl/Tk sources and bug database is on
-SourceForge at:
+Tk is maintained, enhanced, and distributed freely by the Tcl community.
+Source code development and tracking of bug reports and feature requests
+takes place at:
 
-	http://tcl.sourceforge.net/
+	http://core.tcl.tk/tk/
 
 with the Tcl Developer Xchange at:
 

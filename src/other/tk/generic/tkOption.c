@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -223,9 +221,9 @@ static int		GetDefaultOptions(Tcl_Interp *interp,
 static ElArray *	NewArray(int numEls);
 static void		OptionThreadExitProc(ClientData clientData);
 static void		OptionInit(TkMainInfo *mainPtr);
-static int		ParsePriority(Tcl_Interp *interp, char *string);
+static int		ParsePriority(Tcl_Interp *interp, const char *string);
 static int		ReadOptionFile(Tcl_Interp *interp, Tk_Window tkwin,
-			    char *fileName, int priority);
+			    const char *fileName, int priority);
 static void		SetupStacks(TkWindow *winPtr, int leaf);
 
 /*
@@ -248,8 +246,8 @@ void
 Tk_AddOption(
     Tk_Window tkwin,		/* Window token; option will be associated
 				 * with main window for this window. */
-    CONST char *name,		/* Multi-element name of option. */
-    CONST char *value,		/* String value for option. */
+    const char *name,		/* Multi-element name of option. */
+    const char *value,		/* String value for option. */
     int priority)		/* Overall priority level to use for this
 				 * option, such as TK_USER_DEFAULT_PRIO or
 				 * TK_INTERACTIVE_PRIO. Must be between 0 and
@@ -259,13 +257,13 @@ Tk_AddOption(
     register ElArray **arrayPtrPtr;
     register Element *elPtr;
     Element newEl;
-    register CONST char *p;
-    CONST char *field;
+    register const char *p;
+    const char *field;
     int count, firstField;
     ptrdiff_t length;
 #define TMP_SIZE 100
     char tmp[TMP_SIZE+1];
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->mainPtr->optionRootPtr == NULL) {
@@ -402,8 +400,8 @@ Tk_Uid
 Tk_GetOption(
     Tk_Window tkwin,		/* Token for window that option is associated
 				 * with. */
-    CONST char *name,		/* Name of option. */
-    CONST char *className)	/* Class of option. NULL means there is no
+    const char *name,		/* Name of option. */
+    const char *className)	/* Class of option. NULL means there is no
 				 * class for this option: just check for
 				 * name. */
 {
@@ -413,7 +411,7 @@ Tk_GetOption(
     register int count;
     StackLevel *levelPtr;
     int stackDepth[NUM_STACKS];
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -477,16 +475,16 @@ Tk_GetOption(
      */
 
     for (elPtr = tsdPtr->stacks[EXACT_LEAF_NAME]->els,
-	     count = stackDepth[EXACT_LEAF_NAME]; count > 0;
-	 elPtr++, count--) {
+	    count = stackDepth[EXACT_LEAF_NAME]; count > 0;
+	    elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
 	    bestPtr = elPtr;
 	}
     }
     for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_NAME]->els,
-	     count = stackDepth[WILDCARD_LEAF_NAME]; count > 0;
-	 elPtr++, count--) {
+	    count = stackDepth[WILDCARD_LEAF_NAME]; count > 0;
+	    elPtr++, count--) {
 	if ((elPtr->nameUid == nameId)
 		&& (elPtr->priority > bestPtr->priority)) {
 	    bestPtr = elPtr;
@@ -496,16 +494,16 @@ Tk_GetOption(
     if (className != NULL) {
 	classId = Tk_GetUid(className);
 	for (elPtr = tsdPtr->stacks[EXACT_LEAF_CLASS]->els,
-		 count = stackDepth[EXACT_LEAF_CLASS]; count > 0;
-	     elPtr++, count--) {
+		count = stackDepth[EXACT_LEAF_CLASS]; count > 0;
+		elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
 	    }
 	}
 	for (elPtr = tsdPtr->stacks[WILDCARD_LEAF_CLASS]->els,
-		 count = stackDepth[WILDCARD_LEAF_CLASS]; count > 0;
-	     elPtr++, count--) {
+		count = stackDepth[WILDCARD_LEAF_CLASS]; count > 0;
+		elPtr++, count--) {
 	    if ((elPtr->nameUid == classId)
 		    && (elPtr->priority > bestPtr->priority)) {
 		bestPtr = elPtr;
@@ -525,24 +523,25 @@ Tk_GetOption(
 	Tk_Uid nodeId, winClassId, winNameId;
 	unsigned int classNameLength;
 	register Element *nodePtr, *leafPtr;
-	static int searchOrder[] = {
+	static const int searchOrder[] = {
 	    EXACT_NODE_NAME, WILDCARD_NODE_NAME, EXACT_NODE_CLASS,
 	    WILDCARD_NODE_CLASS, -1
 	};
-	int *currentPtr, currentStack, leafCount;
+	const int *currentPtr;
+	int currentStack, leafCount;
 
 	/*
 	 * Extract the masquerade class name from the name field.
 	 */
 
-	classNameLength	= (unsigned int)(masqName - name);
-	masqClass = (char *) ckalloc(classNameLength + 1);
+	classNameLength	= (unsigned) (masqName - name);
+	masqClass = ckalloc(classNameLength + 1);
 	strncpy(masqClass, name, classNameLength);
 	masqClass[classNameLength] = '\0';
 
 	winClassId = Tk_GetUid(masqClass);
 	ckfree(masqClass);
-	winNameId = ((TkWindow *)tkwin)->nameUid;
+	winNameId = ((TkWindow *) tkwin)->nameUid;
 
 	levelPtr = &tsdPtr->levels[tsdPtr->curLevel];
 
@@ -561,7 +560,7 @@ Tk_GetOption(
 		count	-= levelPtr[-1].bases[currentStack];
 	    }
 
-	    if (currentStack && CLASS) {
+	    if (currentStack & CLASS) {
 		nodeId = winClassId;
 	    } else {
 		nodeId = winNameId;
@@ -614,17 +613,15 @@ Tk_OptionObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of Tcl_Obj arguments. */
-    Tcl_Obj *CONST objv[])	/* Tcl_Obj arguments. */
+    Tcl_Obj *const objv[])	/* Tcl_Obj arguments. */
 {
-    Tk_Window tkwin = (Tk_Window) clientData;
+    Tk_Window tkwin = clientData;
     int index, result;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-
-    static CONST char *optionCmds[] = {
+    static const char *const optionCmds[] = {
 	"add", "clear", "get", "readfile", NULL
     };
-
     enum optionVals {
 	OPTION_ADD, OPTION_CLEAR, OPTION_GET, OPTION_READFILE
     };
@@ -634,8 +631,8 @@ Tk_OptionObjCmd(
 	return TCL_ERROR;
     }
 
-    result = Tcl_GetIndexFromObj(interp, objv[1], optionCmds, "option", 0,
-	    &index);
+    result = Tcl_GetIndexFromObjStruct(interp, objv[1], optionCmds,
+	    sizeof(char *), "option", 0, &index);
     if (result != TCL_OK) {
 	return result;
     }
@@ -644,6 +641,7 @@ Tk_OptionObjCmd(
     switch ((enum optionVals) index) {
     case OPTION_ADD: {
 	int priority;
+
 	if ((objc != 4) && (objc != 5)) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "pattern value ?priority?");
 	    return TCL_ERROR;
@@ -663,13 +661,12 @@ Tk_OptionObjCmd(
     }
 
     case OPTION_CLEAR: {
-	TkMainInfo *mainPtr;
+	TkMainInfo *mainPtr = ((TkWindow *) tkwin)->mainPtr;
 
 	if (objc != 2) {
 	    Tcl_WrongNumArgs(interp, 2, objv, "");
 	    return TCL_ERROR;
 	}
-	mainPtr = ((TkWindow *) tkwin)->mainPtr;
 	if (mainPtr->optionRootPtr != NULL) {
 	    ClearOptionTree(mainPtr->optionRootPtr);
 	    mainPtr->optionRootPtr = NULL;
@@ -693,7 +690,7 @@ Tk_OptionObjCmd(
 	value = Tk_GetOption(window, Tcl_GetString(objv[3]),
 		Tcl_GetString(objv[4]));
 	if (value != NULL) {
-	    Tcl_SetResult(interp, (char *)value, TCL_STATIC);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(value, -1));
 	}
 	break;
     }
@@ -743,7 +740,7 @@ void
 TkOptionDeadWindow(
     register TkWindow *winPtr)	/* Window to be cleaned up. */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -799,7 +796,7 @@ TkOptionClassChanged(
 {
     int i, j, *basePtr;
     ElArray *arrayPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (winPtr->optionLevel == -1) {
@@ -854,7 +851,7 @@ TkOptionClassChanged(
 static int
 ParsePriority(
     Tcl_Interp *interp,		/* Interpreter to use for error reporting. */
-    char *string)		/* Describes a priority level, either
+    const char *string)		/* Describes a priority level, either
 				 * symbolically or numerically. */
 {
     int priority, c;
@@ -880,9 +877,11 @@ ParsePriority(
 	priority = strtoul(string, &end, 0);
 	if ((end == string) || (*end != 0) || (priority < 0)
 		|| (priority > 100)) {
-	    Tcl_AppendResult(interp, "bad priority level \"", string,
-		    "\": must be widgetDefault, startupFile, userDefault, ",
-		    "interactive, or a number between 0 and 100", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "bad priority level \"%s\": must be "
+		    "widgetDefault, startupFile, userDefault, "
+		    "interactive, or a number between 0 and 100", string));
+	    Tcl_SetErrorCode(interp, "TK", "VALUE", "PRIORITY", NULL);
 	    return -1;
 	}
     }
@@ -930,7 +929,6 @@ AddFromString(
     src = string;
     lineNum = 1;
     while (1) {
-
 	/*
 	 * Skip leading white space and empty lines and comment lines, and
 	 * check for the end of the spec.
@@ -965,10 +963,9 @@ AddFromString(
 	dst = name = src;
 	while (*src != ':') {
 	    if ((*src == '\0') || (*src == '\n')) {
-		char buf[32 + TCL_INTEGER_SPACE];
-
-		sprintf(buf, "missing colon on line %d", lineNum);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"missing colon on line %d", lineNum));
+		Tcl_SetErrorCode(interp, "TK", "OPTIONDB", "COLON", NULL);
 		return TCL_ERROR;
 	    }
 	    if ((src[0] == '\\') && (src[1] == '\n')) {
@@ -1000,10 +997,9 @@ AddFromString(
 	    src++;
 	}
 	if (*src == '\0') {
-	    char buf[32 + TCL_INTEGER_SPACE];
-
-	    sprintf(buf, "missing value on line %d", lineNum);
-	    Tcl_SetResult(interp, buf, TCL_VOLATILE);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "missing value on line %d", lineNum));
+	    Tcl_SetErrorCode(interp, "TK", "OPTIONDB", "VALUE", NULL);
 	    return TCL_ERROR;
 	}
 
@@ -1015,20 +1011,30 @@ AddFromString(
 	dst = value = src;
 	while (*src != '\n') {
 	    if (*src == '\0') {
-		char buf[32 + TCL_INTEGER_SPACE];
-
-		sprintf(buf, "missing newline on line %d", lineNum);
-		Tcl_SetResult(interp, buf, TCL_VOLATILE);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"missing newline on line %d", lineNum));
+		Tcl_SetErrorCode(interp, "TK", "OPTIONDB", "NEWLINE", NULL);
 		return TCL_ERROR;
 	    }
-	    if ((src[0] == '\\') && (src[1] == '\n')) {
-		src += 2;
-		lineNum++;
-	    } else {
-		*dst = *src;
-		dst++;
-		src++;
+	    if (*src == '\\'){
+		if (src[1] == '\n') {
+		    src += 2;
+		    lineNum++;
+		    continue;
+		} else if (src[1] == 'n') {
+		    src += 2;
+		    *dst++ = '\n';
+		    continue;
+		} else if (src[1] == '\t' || src[1] == ' ' || src[1] == '\\') {
+		    ++src;
+		} else if (src[1] >= '0' && src[1] <= '3' && src[2] >= '0' &&
+			src[2] <= '9' && src[3] >= '0' && src[3] <= '9') {
+		    *dst++ = ((src[1]&7)<<6) | ((src[2]&7)<<3) | (src[3]&7);
+		    src += 4;
+		    continue;
+		}
 	    }
+	    *dst++ = *src++;
 	}
 	*dst = 0;
 
@@ -1067,14 +1073,14 @@ ReadOptionFile(
     Tcl_Interp *interp,		/* Interpreter to use for reporting results. */
     Tk_Window tkwin,		/* Token for window: options are entered for
 				 * this window's main window. */
-    char *fileName,		/* Name of file containing options. */
+    const char *fileName,	/* Name of file containing options. */
     int priority)		/* Priority level to use for options in this
 				 * file, such as TK_USER_DEFAULT_PRIO or
 				 * TK_INTERACTIVE_PRIO. Must be between 0 and
 				 * TK_MAX_PRIO. */
 {
-    CONST char *realName;
-    char *buffer;
+    const char *realName;
+    Tcl_Obj *buffer;
     int result, bufferSize;
     Tcl_Channel chan;
     Tcl_DString newName;
@@ -1084,8 +1090,9 @@ ReadOptionFile(
      */
 
     if (Tcl_IsSafe(interp)) {
-	Tcl_AppendResult(interp, "can't read options from a file in a",
-		" safe interpreter", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"can't read options from a file in a safe interpreter", -1));
+	Tcl_SetErrorCode(interp, "TK", "SAFE", "OPTION_FILE", NULL);
 	return TCL_ERROR;
     }
 
@@ -1096,39 +1103,25 @@ ReadOptionFile(
     chan = Tcl_OpenFileChannel(interp, realName, "r", 0);
     Tcl_DStringFree(&newName);
     if (chan == NULL) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "couldn't open \"", fileName,
-		"\": ", Tcl_PosixError(interp), NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf("couldn't open \"%s\": %s",
+		fileName, Tcl_PosixError(interp)));
 	return TCL_ERROR;
     }
 
-    /*
-     * Compute size of file by seeking to the end of the file. This will
-     * overallocate if we are performing CRLF translation.
-     */
-
-    bufferSize = (int) Tcl_Seek(chan, (Tcl_WideInt) 0, SEEK_END);
-    (void) Tcl_Seek(chan, (Tcl_WideInt) 0, SEEK_SET);
-
+    buffer = Tcl_NewObj();
+    Tcl_IncrRefCount(buffer);
+    Tcl_SetChannelOption(NULL, chan, "-encoding", "utf-8");
+    bufferSize = Tcl_ReadChars(chan, buffer, -1, 0);
     if (bufferSize < 0) {
-	Tcl_AppendResult(interp, "error seeking to end of file \"",
-		fileName, "\":", Tcl_PosixError(interp), NULL);
-	Tcl_Close(NULL, chan);
-	return TCL_ERROR;
-
-    }
-    buffer = (char *) ckalloc((unsigned) bufferSize+1);
-    bufferSize = Tcl_Read(chan, buffer, bufferSize);
-    if (bufferSize < 0) {
-	Tcl_AppendResult(interp, "error reading file \"", fileName, "\":",
-		Tcl_PosixError(interp), NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"error reading file \"%s\": %s",
+		fileName, Tcl_PosixError(interp)));
 	Tcl_Close(NULL, chan);
 	return TCL_ERROR;
     }
     Tcl_Close(NULL, chan);
-    buffer[bufferSize] = 0;
-    result = AddFromString(interp, tkwin, buffer, priority);
-    ckfree(buffer);
+    result = AddFromString(interp, tkwin, Tcl_GetString(buffer), priority);
+    Tcl_DecrRefCount(buffer);
     return result;
 }
 
@@ -1153,9 +1146,8 @@ static ElArray *
 NewArray(
     int numEls)			/* How many elements of space to allocate. */
 {
-    register ElArray *arrayPtr;
+    register ElArray *arrayPtr = ckalloc(EL_ARRAY_SIZE(numEls));
 
-    arrayPtr = (ElArray *) ckalloc(EL_ARRAY_SIZE(numEls));
     arrayPtr->arraySize = numEls;
     arrayPtr->numUsed = 0;
     arrayPtr->nextToUse = arrayPtr->els;
@@ -1189,16 +1181,11 @@ ExtendArray(
      */
 
     if (arrayPtr->numUsed >= arrayPtr->arraySize) {
-	register ElArray *newPtr;
+	register int newSize = 2*arrayPtr->arraySize;
 
-	newPtr = (ElArray *) ckalloc(EL_ARRAY_SIZE(2*arrayPtr->arraySize));
-	newPtr->arraySize = 2*arrayPtr->arraySize;
-	newPtr->numUsed = arrayPtr->numUsed;
-	newPtr->nextToUse = &newPtr->els[newPtr->numUsed];
-	memcpy(newPtr->els, arrayPtr->els,
-		arrayPtr->arraySize * sizeof(Element));
-	ckfree((char *) arrayPtr);
-	arrayPtr = newPtr;
+	arrayPtr = ckrealloc(arrayPtr, EL_ARRAY_SIZE(newSize));
+	arrayPtr->arraySize = newSize;
+	arrayPtr->nextToUse = &arrayPtr->els[arrayPtr->numUsed];
     }
 
     *arrayPtr->nextToUse = *elPtr;
@@ -1233,10 +1220,11 @@ SetupStacks(
 				 * being probed. Zero means this is an
 				 * ancestor of the desired leaf. */
 {
-    int level, i, *iPtr;
+    int level, i;
+    const int *iPtr;
     register StackLevel *levelPtr;
     register ElArray *arrayPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -1248,7 +1236,7 @@ SetupStacks(
      * differently.
      */
 
-    static int searchOrder[] = {WILDCARD_NODE_CLASS, WILDCARD_NODE_NAME,
+    static const int searchOrder[] = {WILDCARD_NODE_CLASS, WILDCARD_NODE_NAME,
 	    EXACT_NODE_CLASS, EXACT_NODE_NAME, -1};
 
     if (winPtr->mainPtr->optionRootPtr == NULL) {
@@ -1313,13 +1301,12 @@ SetupStacks(
      */
 
     if (tsdPtr->curLevel >= tsdPtr->numLevels) {
-	StackLevel *newLevels;
+	StackLevel *newLevels =
+		ckalloc(tsdPtr->numLevels * 2 * sizeof(StackLevel));
 
-	newLevels = (StackLevel *) ckalloc((unsigned)
-		(tsdPtr->numLevels * 2 * sizeof(StackLevel)));
 	memcpy(newLevels, tsdPtr->levels,
 		tsdPtr->numLevels * sizeof(StackLevel));
-	ckfree((char *) tsdPtr->levels);
+	ckfree(tsdPtr->levels);
 	tsdPtr->numLevels *= 2;
 	tsdPtr->levels = newLevels;
     }
@@ -1398,7 +1385,7 @@ ExtendStacks(
 {
     register int count;
     register Element *elPtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     for (elPtr = arrayPtr->els, count = arrayPtr->numUsed;
@@ -1431,16 +1418,16 @@ static void
 OptionThreadExitProc(
     ClientData clientData)	/* not used */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (tsdPtr->initialized) {
 	int i;
 
 	for (i = 0; i < NUM_STACKS; i++) {
-	    ckfree((char *) tsdPtr->stacks[i]);
+	    ckfree(tsdPtr->stacks[i]);
 	}
-	ckfree((char *) tsdPtr->levels);
+	ckfree(tsdPtr->levels);
 	tsdPtr->initialized = 0;
     }
 }
@@ -1469,7 +1456,7 @@ OptionInit(
 {
     int i;
     Tcl_Interp *interp;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
     Element *defaultMatchPtr = &tsdPtr->defaultMatch;
 
@@ -1484,8 +1471,7 @@ OptionInit(
 	tsdPtr->curLevel = -1;
 	tsdPtr->serial = 0;
 
-	tsdPtr->levels = (StackLevel *)
-		ckalloc((unsigned) (5*sizeof(StackLevel)));
+	tsdPtr->levels = ckalloc(5 * sizeof(StackLevel));
 	for (i = 0; i < NUM_STACKS; i++) {
 	    tsdPtr->stacks[i] = NewArray(10);
 	    tsdPtr->levels[0].bases[i] = 0;
@@ -1505,7 +1491,7 @@ OptionInit(
 
     mainPtr->optionRootPtr = NewArray(20);
     interp = Tcl_CreateInterp();
-    (void) GetDefaultOptions(interp, mainPtr->winPtr);
+    GetDefaultOptions(interp, mainPtr->winPtr);
     Tcl_DeleteInterp(interp);
 }
 
@@ -1541,7 +1527,7 @@ ClearOptionTree(
 	    ClearOptionTree(elPtr->child.arrayPtr);
 	}
     }
-    ckfree((char *) arrayPtr);
+    ckfree(arrayPtr);
 }
 
 /*

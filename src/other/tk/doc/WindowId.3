@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_WindowId 3 "8.4" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_WindowId, Tk_Parent, Tk_Display, Tk_DisplayName, Tk_ScreenNumber, Tk_Screen, Tk_X, Tk_Y, Tk_Width, Tk_Height, Tk_Changes, Tk_Attributes, Tk_IsContainer, Tk_IsEmbedded, Tk_IsMapped, Tk_IsTopLevel, Tk_ReqWidth, Tk_ReqHeight, Tk_MinReqWidth, Tk_MinReqHeight, Tk_InternalBorderLeft, Tk_InternalBorderRight, Tk_InternalBorderTop, Tk_InternalBorderBottom, Tk_Visual, Tk_Depth, Tk_Colormap, Tk_Interp  \- retrieve information from Tk's local data structure
@@ -104,7 +102,6 @@ Tcl_Interp *
 .AP Tk_Window tkwin in
 Token for window.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_WindowId\fR and the other names listed above are
@@ -185,7 +182,6 @@ and \fBTk_Colormap\fR returns the current
 colormap for the window.  The visual characteristics are
 normally set from the defaults for the window's screen, but
 they may be overridden by calling \fBTk_SetWindowVisual\fR.
-
 .SH KEYWORDS
 attributes, colormap, depth, display, height, geometry manager,
 identifier, mapped, requested size, screen, top-level,

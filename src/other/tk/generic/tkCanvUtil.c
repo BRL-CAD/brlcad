@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -27,13 +25,13 @@ typedef struct SmoothAssocData {
 				 * option. */
 } SmoothAssocData;
 
-Tk_SmoothMethod tkBezierSmoothMethod = {
+const Tk_SmoothMethod tkBezierSmoothMethod = {
     "true",
     TkMakeBezierCurve,
     (void (*) (Tcl_Interp *interp, Tk_Canvas canvas, double *coordPtr,
 	    int numPoints, int numSteps)) TkMakeBezierPostscript,
 };
-static Tk_SmoothMethod tkRawSmoothMethod = {
+static const Tk_SmoothMethod tkRawSmoothMethod = {
     "raw",
     TkMakeRawCurve,
     (void (*) (Tcl_Interp *interp, Tk_Canvas canvas, double *coordPtr,
@@ -47,12 +45,26 @@ static Tk_SmoothMethod tkRawSmoothMethod = {
 static void		SmoothMethodCleanupProc(ClientData clientData,
 			    Tcl_Interp *interp);
 static SmoothAssocData *InitSmoothMethods(Tcl_Interp *interp);
-static int		DashConvert(char *l, CONST char *p, int n,
+static int		DashConvert(char *l, const char *p, int n,
 			    double width);
 static void		TranslateAndAppendCoords(TkCanvas *canvPtr,
 			    double x, double y, XPoint *outArr, int numOut);
+static inline Tcl_Obj *	GetPostscriptBuffer(Tcl_Interp *interp);
 
 #define ABS(a) ((a>=0)?(a):(-(a)))
+
+static inline Tcl_Obj *
+GetPostscriptBuffer(
+    Tcl_Interp *interp)
+{
+    Tcl_Obj *psObj = Tcl_GetObjResult(interp);
+
+    if (Tcl_IsShared(psObj)) {
+	psObj = Tcl_DuplicateObj(psObj);
+	Tcl_SetObjResult(interp, psObj);
+    }
+    return psObj;
+}
 
 /*
  *----------------------------------------------------------------------
@@ -75,8 +87,7 @@ Tk_Window
 Tk_CanvasTkwin(
     Tk_Canvas canvas)		/* Token for the canvas. */
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
-    return canvasPtr->tkwin;
+    return Canvas(canvas)->tkwin;
 }
 
 /*
@@ -108,10 +119,9 @@ Tk_CanvasDrawableCoords(
     short *drawableXPtr,	/* Screen coordinates are stored here. */
     short *drawableYPtr)
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
     double tmp;
 
-    tmp = x - canvasPtr->drawableXOrigin;
+    tmp = x - Canvas(canvas)->drawableXOrigin;
     if (tmp > 0) {
 	tmp += 0.5;
     } else {
@@ -125,7 +135,7 @@ Tk_CanvasDrawableCoords(
 	*drawableXPtr = (short) tmp;
     }
 
-    tmp = y - canvasPtr->drawableYOrigin;
+    tmp = y - Canvas(canvas)->drawableYOrigin;
     if (tmp > 0) {
 	tmp += 0.5;
     } else {
@@ -168,10 +178,9 @@ Tk_CanvasWindowCoords(
     short *screenXPtr,		/* Screen coordinates are stored here. */
     short *screenYPtr)
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
     double tmp;
 
-    tmp = x - canvasPtr->xOrigin;
+    tmp = x - Canvas(canvas)->xOrigin;
     if (tmp > 0) {
 	tmp += 0.5;
     } else {
@@ -185,7 +194,7 @@ Tk_CanvasWindowCoords(
 	*screenXPtr = (short) tmp;
     }
 
-    tmp = y - canvasPtr->yOrigin;
+    tmp = y - Canvas(canvas)->yOrigin;
     if (tmp > 0) {
 	tmp += 0.5;
     } else {
@@ -224,17 +233,15 @@ int
 Tk_CanvasGetCoord(
     Tcl_Interp *interp,		/* Interpreter for error reporting. */
     Tk_Canvas canvas,		/* Canvas to which coordinate applies. */
-    CONST char *string,		/* Describes coordinate (any screen coordinate
+    const char *string,		/* Describes coordinate (any screen coordinate
 				 * form may be used here). */
     double *doublePtr)		/* Place to store converted coordinate. */
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
-
-    if (Tk_GetScreenMM(canvasPtr->interp, canvasPtr->tkwin, string,
+    if (Tk_GetScreenMM(Canvas(canvas)->interp, Canvas(canvas)->tkwin, string,
 	    doublePtr) != TCL_OK) {
 	return TCL_ERROR;
     }
-    *doublePtr *= canvasPtr->pixelsPerMM;
+    *doublePtr *= Canvas(canvas)->pixelsPerMM;
     return TCL_OK;
 }
 
@@ -266,9 +273,7 @@ Tk_CanvasGetCoordFromObj(
 				 * form may be used here). */
     double *doublePtr)		/* Place to store converted coordinate. */
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
-
-    return Tk_GetDoublePixelsFromObj(canvasPtr->interp, canvasPtr->tkwin, obj, doublePtr);
+    return Tk_GetDoublePixelsFromObj(Canvas(canvas)->interp, Canvas(canvas)->tkwin, obj, doublePtr);
 }
 
 /*
@@ -296,10 +301,9 @@ Tk_CanvasSetStippleOrigin(
 				 * to draw a stippled pattern as part of
 				 * redisplaying the canvas. */
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
-
-    XSetTSOrigin(canvasPtr->display, gc, -canvasPtr->drawableXOrigin,
-	    -canvasPtr->drawableYOrigin);
+    XSetTSOrigin(Canvas(canvas)->display, gc,
+	    -Canvas(canvas)->drawableXOrigin,
+	    -Canvas(canvas)->drawableYOrigin);
 }
 
 /*
@@ -328,7 +332,7 @@ Tk_CanvasSetOffset(
 				 * redisplaying the canvas. */
     Tk_TSOffset *offset)	/* Offset (may be NULL pointer)*/
 {
-    TkCanvas *canvasPtr = (TkCanvas *) canvas;
+    register TkCanvas *canvasPtr = Canvas(canvas);
     int flags = 0;
     int x = - canvasPtr->drawableXOrigin;
     int y = - canvasPtr->drawableYOrigin;
@@ -372,7 +376,7 @@ Tk_CanvasTextInfo *
 Tk_CanvasGetTextInfo(
     Tk_Canvas canvas)		/* Token for the canvas widget. */
 {
-    return &((TkCanvas *) canvas)->textInfo;
+    return &Canvas(canvas)->textInfo;
 }
 
 /*
@@ -398,13 +402,13 @@ Tk_CanvasTagsParseProc(
     ClientData clientData,	/* Not used.*/
     Tcl_Interp *interp,		/* Used for reporting errors. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
-    CONST char *value,		/* Value of option (list of tag names). */
+    const char *value,		/* Value of option (list of tag names). */
     char *widgRec,		/* Pointer to record for item. */
     int offset)			/* Offset into item (ignored). */
 {
     register Tk_Item *itemPtr = (Tk_Item *) widgRec;
     int argc, i;
-    CONST char **argv;
+    const char **argv;
     Tk_Uid *newPtr;
 
     /*
@@ -420,12 +424,12 @@ Tk_CanvasTagsParseProc(
      */
 
     if (itemPtr->tagSpace < argc) {
-	newPtr = (Tk_Uid *) ckalloc((unsigned) (argc * sizeof(Tk_Uid)));
+	newPtr = ckalloc(argc * sizeof(Tk_Uid));
 	for (i = itemPtr->numTags-1; i >= 0; i--) {
 	    newPtr[i] = itemPtr->tagPtr[i];
 	}
 	if (itemPtr->tagPtr != itemPtr->staticTagSpace) {
-	    ckfree((char *) itemPtr->tagPtr);
+	    ckfree(itemPtr->tagPtr);
 	}
 	itemPtr->tagPtr = newPtr;
 	itemPtr->tagSpace = argc;
@@ -434,7 +438,7 @@ Tk_CanvasTagsParseProc(
     for (i = 0; i < argc; i++) {
 	itemPtr->tagPtr[i] = Tk_GetUid(argv[i]);
     }
-    ckfree((char *) argv);
+    ckfree(argv);
     return TCL_OK;
 }
 
@@ -460,7 +464,7 @@ Tk_CanvasTagsParseProc(
  *--------------------------------------------------------------
  */
 
-char *
+const char *
 Tk_CanvasTagsPrintProc(
     ClientData clientData,	/* Ignored. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
@@ -478,10 +482,10 @@ Tk_CanvasTagsPrintProc(
     }
     if (itemPtr->numTags == 1) {
 	*freeProcPtr = NULL;
-	return (char *) itemPtr->tagPtr[0];
+	return (const char *) itemPtr->tagPtr[0];
     }
     *freeProcPtr = TCL_DYNAMIC;
-    return Tcl_Merge(itemPtr->numTags, (CONST char **) itemPtr->tagPtr);
+    return Tcl_Merge(itemPtr->numTags, (const char **) itemPtr->tagPtr);
 }
 
 /*
@@ -507,11 +511,11 @@ TkCanvasDashParseProc(
     ClientData clientData,	/* Not used.*/
     Tcl_Interp *interp,		/* Used for reporting errors. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
-    CONST char *value,		/* Value of option. */
+    const char *value,		/* Value of option. */
     char *widgRec,		/* Pointer to record for item. */
     int offset)			/* Offset into item. */
 {
-    return Tk_GetDash(interp, value, (Tk_Dash *)(widgRec+offset));
+    return Tk_GetDash(interp, value, (Tk_Dash *) (widgRec+offset));
 }
 
 /*
@@ -536,7 +540,7 @@ TkCanvasDashParseProc(
  *--------------------------------------------------------------
  */
 
-char *
+const char *
 TkCanvasDashPrintProc(
     ClientData clientData,	/* Ignored. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
@@ -547,14 +551,13 @@ TkCanvasDashPrintProc(
 				 * for return string. */
 {
     Tk_Dash *dash = (Tk_Dash *) (widgRec+offset);
-    char *buffer;
-    char *p;
+    char *buffer, *p;
     int i = dash->number;
 
     if (i < 0) {
 	i = -i;
 	*freeProcPtr = TCL_DYNAMIC;
-	buffer = (char *) ckalloc((unsigned int) (i+1));
+	buffer = ckalloc(i + 1);
 	p = (i > (int)sizeof(char *)) ? dash->pattern.pt : dash->pattern.array;
 	memcpy(buffer, p, (unsigned int) i);
 	buffer[i] = 0;
@@ -563,12 +566,12 @@ TkCanvasDashPrintProc(
 	*freeProcPtr = NULL;
 	return "";
     }
-    buffer = (char *)ckalloc((unsigned int) (4*i));
+    buffer = ckalloc(4 * i);
     *freeProcPtr = TCL_DYNAMIC;
 
     p = (i > (int)sizeof(char *)) ? dash->pattern.pt : dash->pattern.array;
     sprintf(buffer, "%d", *p++ & 0xff);
-    while(--i) {
+    while (--i) {
 	sprintf(buffer+strlen(buffer), " %d", *p++ & 0xff);
     }
     return buffer;
@@ -599,21 +602,18 @@ InitSmoothMethods(
 {
     SmoothAssocData *methods, *ptr;
 
-    methods = (SmoothAssocData *) ckalloc(sizeof(SmoothAssocData));
+    methods = ckalloc(sizeof(SmoothAssocData));
     methods->smooth.name = tkRawSmoothMethod.name;
     methods->smooth.coordProc = tkRawSmoothMethod.coordProc;
     methods->smooth.postscriptProc = tkRawSmoothMethod.postscriptProc;
 
-    methods->nextPtr = (SmoothAssocData *) ckalloc(sizeof(SmoothAssocData));
-
-    ptr = methods->nextPtr;
+    ptr = methods->nextPtr = ckalloc(sizeof(SmoothAssocData));
     ptr->smooth.name = tkBezierSmoothMethod.name;
     ptr->smooth.coordProc = tkBezierSmoothMethod.coordProc;
     ptr->smooth.postscriptProc = tkBezierSmoothMethod.postscriptProc;
     ptr->nextPtr = NULL;
 
-    Tcl_SetAssocData(interp, "smoothMethod", SmoothMethodCleanupProc,
-	    (ClientData) methods);
+    Tcl_SetAssocData(interp, "smoothMethod", SmoothMethodCleanupProc,methods);
     return methods;
 }
 
@@ -638,11 +638,10 @@ InitSmoothMethods(
 void
 Tk_CreateSmoothMethod(
     Tcl_Interp *interp,
-    Tk_SmoothMethod *smooth)
+    const Tk_SmoothMethod *smooth)
 {
     SmoothAssocData *methods, *typePtr2, *prevPtr, *ptr;
-    methods = (SmoothAssocData *) Tcl_GetAssocData(interp, "smoothMethod",
-	    NULL);
+    methods = Tcl_GetAssocData(interp, "smoothMethod", NULL);
 
     /*
      * Initialize if we were not previously initialized.
@@ -664,17 +663,16 @@ Tk_CreateSmoothMethod(
 	    } else {
 		prevPtr->nextPtr = typePtr2->nextPtr;
 	    }
-	    ckfree((char *) typePtr2);
+	    ckfree(typePtr2);
 	    break;
 	}
     }
-    ptr = (SmoothAssocData *) ckalloc(sizeof(SmoothAssocData));
+    ptr = ckalloc(sizeof(SmoothAssocData));
     ptr->smooth.name = smooth->name;
     ptr->smooth.coordProc = smooth->coordProc;
     ptr->smooth.postscriptProc = smooth->postscriptProc;
     ptr->nextPtr = methods;
-    Tcl_SetAssocData(interp, "smoothMethod", SmoothMethodCleanupProc,
-	    (ClientData) ptr);
+    Tcl_SetAssocData(interp, "smoothMethod", SmoothMethodCleanupProc, ptr);
 }
 
 /*
@@ -700,11 +698,12 @@ SmoothMethodCleanupProc(
 				 * interpreter. */
     Tcl_Interp *interp)		/* Interpreter that is being deleted. */
 {
-    SmoothAssocData *ptr, *methods = (SmoothAssocData *) clientData;
+    SmoothAssocData *ptr, *methods = clientData;
 
     while (methods != NULL) {
-	methods = (ptr = methods)->nextPtr;
-	ckfree((char *) ptr);
+	ptr = methods;
+	methods = methods->nextPtr;
+	ckfree(ptr);
     }
 }
 /*
@@ -727,16 +726,16 @@ SmoothMethodCleanupProc(
 
 int
 TkSmoothParseProc(
-    ClientData clientData,	/* some flags.*/
+    ClientData clientData,	/* Ignored. */
     Tcl_Interp *interp,		/* Used for reporting errors. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
-    CONST char *value,		/* Value of option. */
+    const char *value,		/* Value of option. */
     char *widgRec,		/* Pointer to record for item. */
     int offset)			/* Offset into item. */
 {
-    register Tk_SmoothMethod **smoothPtr =
-	    (Tk_SmoothMethod **) (widgRec + offset);
-    Tk_SmoothMethod *smooth = NULL;
+    register const Tk_SmoothMethod **smoothPtr =
+	    (const Tk_SmoothMethod **) (widgRec + offset);
+    const Tk_SmoothMethod *smooth = NULL;
     int b;
     size_t length;
     SmoothAssocData *methods;
@@ -746,8 +745,7 @@ TkSmoothParseProc(
 	return TCL_OK;
     }
     length = strlen(value);
-    methods = (SmoothAssocData *) Tcl_GetAssocData(interp, "smoothMethod",
-	    NULL);
+    methods = Tcl_GetAssocData(interp, "smoothMethod", NULL);
 
     /*
      * Not initialized yet; fix that now.
@@ -772,8 +770,10 @@ TkSmoothParseProc(
     while (methods != NULL) {
 	if (strncmp(value, methods->smooth.name, length) == 0) {
 	    if (smooth != NULL) {
-		Tcl_AppendResult(interp, "ambiguous smooth method \"", value,
-			"\"", NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"ambiguous smooth method \"%s\"", value));
+		Tcl_SetErrorCode(interp, "TK", "LOOKUP", "SMOOTH", value,
+			NULL);
 		return TCL_ERROR;
 	    }
 	    smooth = &methods->smooth;
@@ -816,7 +816,7 @@ TkSmoothParseProc(
  *--------------------------------------------------------------
  */
 
-char *
+const char *
 TkSmoothPrintProc(
     ClientData clientData,	/* Ignored. */
     Tk_Window tkwin,		/* Window containing canvas widget. */
@@ -826,10 +826,10 @@ TkSmoothPrintProc(
 				 * information about how to reclaim storage
 				 * for return string. */
 {
-    register Tk_SmoothMethod **smoothPtr =
-	    (Tk_SmoothMethod **) (widgRec + offset);
+    register const Tk_SmoothMethod *smoothPtr =
+	    * (Tk_SmoothMethod **) (widgRec + offset);
 
-    return (*smoothPtr) ? (*smoothPtr)->name : "0";
+    return smoothPtr ? smoothPtr->name : "0";
 }
 /*
  *--------------------------------------------------------------
@@ -852,15 +852,15 @@ TkSmoothPrintProc(
 int
 Tk_GetDash(
     Tcl_Interp *interp,		/* Used for error reporting. */
-    CONST char *value,		/* Textual specification of dash list. */
+    const char *value,		/* Textual specification of dash list. */
     Tk_Dash *dash)		/* Pointer to record in which to store dash
 				 * information. */
 {
     int argc, i;
-    CONST char **largv, **argv = NULL;
+    const char **largv, **argv = NULL;
     char *pt;
 
-    if ((value==NULL) || (*value==0) ) {
+    if ((value == NULL) || (*value == '\0')) {
 	dash->number = 0;
 	return TCL_OK;
     }
@@ -872,17 +872,16 @@ Tk_GetDash(
     switch (*value) {
     case '.': case ',': case '-': case '_':
 	i = DashConvert(NULL, value, -1, 0.0);
-	if (i>0) {
-	    i = strlen(value);
-	} else {
+	if (i <= 0) {
 	    goto badDashList;
 	}
-	if (i > (int)sizeof(char *)) {
-	    dash->pattern.pt = pt = (char *) ckalloc(strlen(value));
+	i = strlen(value);
+	if (i > (int) sizeof(char *)) {
+	    dash->pattern.pt = pt = ckalloc(strlen(value));
 	} else {
 	    pt = dash->pattern.array;
 	}
-	memcpy(pt,value, (unsigned int) i);
+	memcpy(pt, value, (unsigned) i);
 	dash->number = -i;
 	return TCL_OK;
     }
@@ -892,23 +891,23 @@ Tk_GetDash(
 	goto badDashList;
     }
 
-    if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
-	ckfree((char *) dash->pattern.pt);
+    if ((unsigned) ABS(dash->number) > sizeof(char *)) {
+	ckfree(dash->pattern.pt);
     }
-    if (argc > (int)sizeof(char *)) {
-	dash->pattern.pt = pt = (char *) ckalloc((unsigned int) argc);
+    if (argc > (int) sizeof(char *)) {
+	dash->pattern.pt = pt = ckalloc(argc);
     } else {
 	pt = dash->pattern.array;
     }
     dash->number = argc;
 
     largv = argv;
-    while (argc>0) {
+    while (argc > 0) {
 	if (Tcl_GetInt(interp, *largv, &i) != TCL_OK || i < 1 || i>255) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp,
-		    "expected integer in the range 1..255 but got \"",
-		    *largv, "\"", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "expected integer in the range 1..255 but got \"%s\"",
+		    *largv));
+	    Tcl_SetErrorCode(interp, "TK", "VALUE", "DASH", NULL);
 	    goto syntaxError;
 	}
 	*pt++ = i;
@@ -917,7 +916,7 @@ Tk_GetDash(
     }
 
     if (argv != NULL) {
-	ckfree((char *) argv);
+	ckfree(argv);
     }
     return TCL_OK;
 
@@ -926,15 +925,16 @@ Tk_GetDash(
      */
 
   badDashList:
-    Tcl_AppendResult(interp, "bad dash list \"", value,
-	    "\": must be a list of integers or a format like \"-..\"",
-	    NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+	    "bad dash list \"%s\": must be a list of integers or a format like \"-..\"",
+	    value));
+    Tcl_SetErrorCode(interp, "TK", "VALUE", "DASH", NULL);
   syntaxError:
     if (argv != NULL) {
-	ckfree((char *) argv);
+	ckfree(argv);
     }
-    if ((unsigned int)ABS(dash->number) > sizeof(char *)) {
-	ckfree((char *) dash->pattern.pt);
+    if ((unsigned) ABS(dash->number) > sizeof(char *)) {
+	ckfree(dash->pattern.pt);
     }
     dash->number = 0;
     return TCL_ERROR;
@@ -1005,14 +1005,14 @@ Tk_DeleteOutline(
     if (outline->gc != None) {
 	Tk_FreeGC(display, outline->gc);
     }
-    if ((unsigned int)ABS(outline->dash.number) > sizeof(char *)) {
-	ckfree((char *) outline->dash.pattern.pt);
+    if ((unsigned) ABS(outline->dash.number) > sizeof(char *)) {
+	ckfree(outline->dash.pattern.pt);
     }
-    if ((unsigned int)ABS(outline->activeDash.number) > sizeof(char *)) {
-	ckfree((char *) outline->activeDash.pattern.pt);
+    if ((unsigned) ABS(outline->activeDash.number) > sizeof(char *)) {
+	ckfree(outline->activeDash.pattern.pt);
     }
-    if ((unsigned int)ABS(outline->disabledDash.number) > sizeof(char *)) {
-	ckfree((char *) outline->disabledDash.pattern.pt);
+    if ((unsigned) ABS(outline->disabledDash.number) > sizeof(char *)) {
+	ckfree(outline->disabledDash.pattern.pt);
     }
     if (outline->color != NULL) {
 	Tk_FreeColor(outline->color);
@@ -1089,9 +1089,9 @@ Tk_ConfigOutlineGC(
     color = outline->color;
     stipple = outline->stipple;
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
-    if (((TkCanvas *)canvas)->currentItemPtr == item) {
+    if (Canvas(canvas)->currentItemPtr == item) {
 	if (outline->activeWidth>width) {
 	    width = outline->activeWidth;
 	}
@@ -1170,7 +1170,7 @@ Tk_ChangeOutlineGC(
     Tk_Item *item,
     Tk_Outline *outline)
 {
-    CONST char *p;
+    const char *p;
     double width;
     Tk_Dash *dash;
     XColor *color;
@@ -1185,9 +1185,9 @@ Tk_ChangeOutlineGC(
     color = outline->color;
     stipple = outline->stipple;
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
-    if (((TkCanvas *)canvas)->currentItemPtr == item) {
+    if (Canvas(canvas)->currentItemPtr == item) {
 	if (outline->activeWidth > width) {
 	    width = outline->activeWidth;
 	}
@@ -1224,25 +1224,25 @@ Tk_ChangeOutlineGC(
 	int i = -dash->number;
 
 	p = (i > (int)sizeof(char *)) ? dash->pattern.pt : dash->pattern.array;
-	q = (char *) ckalloc(2*(unsigned int)i);
+	q = ckalloc(2 * i);
 	i = DashConvert(q, p, i, width);
-	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
-		outline->offset, q, i);
+	XSetDashes(Canvas(canvas)->display, outline->gc, outline->offset, q,i);
 	ckfree(q);
     } else if (dash->number>2 || (dash->number==2 &&
 	    (dash->pattern.array[0]!=dash->pattern.array[1]))) {
-	p = (dash->number > (int)sizeof(char *))
+	p = (dash->number > (int) sizeof(char *))
 		? dash->pattern.pt : dash->pattern.array;
-	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
-		outline->offset, p, dash->number);
+	XSetDashes(Canvas(canvas)->display, outline->gc, outline->offset, p,
+		dash->number);
     }
     if (stipple!=None) {
-	int w=0; int h=0;
+	int w = 0; int h = 0;
 	Tk_TSOffset *tsoffset = &outline->tsoffset;
 	int flags = tsoffset->flags;
+
 	if (!(flags & TK_OFFSET_INDEX) &&
 		(flags & (TK_OFFSET_CENTER|TK_OFFSET_MIDDLE))) {
-	    Tk_SizeOfBitmap(((TkCanvas *)canvas)->display, stipple, &w, &h);
+	    Tk_SizeOfBitmap(Canvas(canvas)->display, stipple, &w, &h);
 	    if (flags & TK_OFFSET_CENTER) {
 		w /= 2;
 	    } else {
@@ -1270,9 +1270,9 @@ Tk_ChangeOutlineGC(
  *
  * Tk_ResetOutlineGC
  *
- *	Restores the GC to the situation before Tk_ChangeDashGC() was called.
- *	This function should be called just after the dashed item is drawn,
- *	because the GC is supposed to be read-only.
+ *	Restores the GC to the situation before Tk_ChangeOutlineGC() was
+ *	called. This function should be called just after the dashed item is
+ *	drawn, because the GC is supposed to be read-only.
  *
  * Results:
  *	1 if there is a stipple pattern, and 0 otherwise.
@@ -1304,9 +1304,9 @@ Tk_ResetOutlineGC(
     color = outline->color;
     stipple = outline->stipple;
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
-    if (((TkCanvas *)canvas)->currentItemPtr == item) {
+    if (Canvas(canvas)->currentItemPtr == item) {
 	if (outline->activeWidth>width) {
 	    width = outline->activeWidth;
 	}
@@ -1340,16 +1340,16 @@ Tk_ResetOutlineGC(
     if ((dash->number > 2) || (dash->number < -1) || (dash->number==2 &&
 	    (dash->pattern.array[0] != dash->pattern.array[1])) ||
 	    ((dash->number == -1) && (dash->pattern.array[0] != ','))) {
-	if (dash->number > 0) {
+    if (dash->number > 0) {
 	    dashList = dash->pattern.array[0];
 	} else {
 	    dashList = (char) (4 * width + 0.5);
 	}
-	XSetDashes(((TkCanvas *)canvas)->display, outline->gc,
-		outline->offset, &dashList , 1);
+	XSetDashes(Canvas(canvas)->display, outline->gc, outline->offset,
+		&dashList , 1);
     }
     if (stipple != None) {
-	XSetTSOrigin(((TkCanvas *)canvas)->display, outline->gc, 0, 0);
+	XSetTSOrigin(Canvas(canvas)->display, outline->gc, 0, 0);
 	return 1;
     }
     return 0;
@@ -1379,33 +1379,27 @@ Tk_CanvasPsOutline(
     Tk_Item *item,
     Tk_Outline *outline)
 {
-    char string[41];
     char pattern[11];
     int i;
-    char *ptr;
-    char *str = string;
-    char *lptr = pattern;
-    Tcl_Interp *interp = ((TkCanvas *)canvas)->interp;
-    double width;
-    Tk_Dash *dash;
-    XColor *color;
-    Pixmap stipple;
+    char *ptr, *lptr = pattern;
+    Tcl_Interp *interp = Canvas(canvas)->interp;
+    double width = outline->width;
+    Tk_Dash *dash = &outline->dash;
+    XColor *color = outline->color;
+    Pixmap stipple = outline->stipple;
     Tk_State state = item->state;
+    Tcl_Obj *psObj = GetPostscriptBuffer(interp);
 
-    width = outline->width;
-    dash = &(outline->dash);
-    color = outline->color;
-    stipple = outline->stipple;
     if (state == TK_STATE_NULL) {
-	state = ((TkCanvas *)canvas)->canvas_state;
+	state = Canvas(canvas)->canvas_state;
     }
 
-    if (((TkCanvas *)canvas)->currentItemPtr == item) {
+    if (Canvas(canvas)->currentItemPtr == item) {
 	if (outline->activeWidth > width) {
 	    width = outline->activeWidth;
 	}
 	if (outline->activeDash.number > 0) {
-	    dash = &(outline->activeDash);
+	    dash = &outline->activeDash;
 	}
 	if (outline->activeColor != NULL) {
 	    color = outline->activeColor;
@@ -1418,7 +1412,7 @@ Tk_CanvasPsOutline(
 	    width = outline->disabledWidth;
 	}
 	if (outline->disabledDash.number > 0) {
-	    dash = &(outline->disabledDash);
+	    dash = &outline->disabledDash;
 	}
 	if (outline->disabledColor != NULL) {
 	    color = outline->disabledColor;
@@ -1427,66 +1421,65 @@ Tk_CanvasPsOutline(
 	    stipple = outline->disabledStipple;
 	}
     }
-    sprintf(string, "%.15g setlinewidth\n", width);
-    Tcl_AppendResult(interp, string, NULL);
 
-    if (dash->number > 10) {
-	str = (char *)ckalloc((unsigned int) (1 + 4*dash->number));
-    } else if (dash->number < -5) {
-	str = (char *)ckalloc((unsigned int) (1 - 8*dash->number));
-	lptr = (char *)ckalloc((unsigned int) (1 - 2*dash->number));
-    }
-    ptr = ((unsigned int)ABS(dash->number) > sizeof(char *)) ?
+    Tcl_AppendPrintfToObj(psObj, "%.15g setlinewidth\n", width);
+
+    ptr = ((unsigned) ABS(dash->number) > sizeof(char *)) ?
 	    dash->pattern.pt : dash->pattern.array;
+    Tcl_AppendToObj(psObj, "[", -1);
     if (dash->number > 0) {
-	char *ptr0 = ptr;
+	Tcl_Obj *converted;
+	char *p = ptr;
 
-	sprintf(str, "[%d", *ptr++ & 0xff);
-	i = dash->number-1;
-	while (i--) {
-	    sprintf(str+strlen(str), " %d", *ptr++ & 0xff);
+	converted = Tcl_ObjPrintf("%d", *p++ & 0xff);
+	for (i = dash->number-1 ; i>0 ; i--) {
+	    Tcl_AppendPrintfToObj(converted, " %d", *p++ & 0xff);
 	}
-	Tcl_AppendResult(interp, str, NULL);
-	if (dash->number&1) {
-	    Tcl_AppendResult(interp, " ", str+1, NULL);
+	Tcl_AppendObjToObj(psObj, converted);
+	if (dash->number & 1) {
+	    Tcl_AppendToObj(psObj, " ", -1);
+	    Tcl_AppendObjToObj(psObj, converted);
 	}
-	sprintf(str, "] %d setdash\n", outline->offset);
-	Tcl_AppendResult(interp, str, NULL);
-	ptr = ptr0;
+	Tcl_DecrRefCount(converted);
+	Tcl_AppendPrintfToObj(psObj, "] %d setdash\n", outline->offset);
     } else if (dash->number < 0) {
-	if ((i = DashConvert(lptr, ptr, -dash->number, width)) != 0) {
-	    char *lptr0 = lptr;
+	if (dash->number < -5) {
+	    lptr = ckalloc(1 - 2*dash->number);
+	}
+	i = DashConvert(lptr, ptr, -dash->number, width);
+	if (i > 0) {
+	    char *p = lptr;
 
-	    sprintf(str, "[%d", *lptr++ & 0xff);
-	    while (--i) {
-		sprintf(str+strlen(str), " %d", *lptr++ & 0xff);
+	    Tcl_AppendPrintfToObj(psObj, "%d", *p++ & 0xff);
+	    for (; --i>0 ;) {
+		Tcl_AppendPrintfToObj(psObj, " %d", *p++ & 0xff);
 	    }
-	    Tcl_AppendResult(interp, str, NULL);
-	    sprintf(str, "] %d setdash\n", outline->offset);
-	    Tcl_AppendResult(interp, str, NULL);
-	    lptr = lptr0;
+	    Tcl_AppendPrintfToObj(psObj, "] %d setdash\n", outline->offset);
 	} else {
-	    Tcl_AppendResult(interp, "[] 0 setdash\n", NULL);
+	    Tcl_AppendToObj(psObj, "] 0 setdash\n", -1);
+	}
+	if (lptr != pattern) {
+	    ckfree(lptr);
 	}
     } else {
-	Tcl_AppendResult(interp, "[] 0 setdash\n", NULL);
+	Tcl_AppendToObj(psObj, "] 0 setdash\n", -1);
     }
-    if (str != string) {
-	ckfree(str);
-    }
-    if (lptr != pattern) {
-	ckfree(lptr);
-    }
+
     if (Tk_CanvasPsColor(interp, canvas, color) != TCL_OK) {
 	return TCL_ERROR;
     }
+
+    /*
+     * Note that psObj might hold an invalid reference now.
+     */
+
     if (stipple != None) {
-	Tcl_AppendResult(interp, "StrokeClip ", NULL);
+	Tcl_AppendToObj(GetPostscriptBuffer(interp), "StrokeClip ", -1);
 	if (Tk_CanvasPsStipple(interp, canvas, stipple) != TCL_OK) {
 	    return TCL_ERROR;
 	}
     } else {
-	Tcl_AppendResult(interp, "stroke\n", NULL);
+	Tcl_AppendToObj(GetPostscriptBuffer(interp), "stroke\n", -1);
     }
 
     return TCL_OK;
@@ -1514,7 +1507,7 @@ static int
 DashConvert(
     char *l,			/* Must be at least 2*n chars long, or NULL to
 				 * indicate "just check syntax". */
-    CONST char *p,		/* String to parse. */
+    const char *p,		/* String to parse. */
     int n,			/* Length of string to parse, or -1 to
 				 * indicate that strlen() should be used. */
     double width)		/* Width of line. */
@@ -1522,7 +1515,7 @@ DashConvert(
     int result = 0;
     int size, intWidth;
 
-    if (n<0) {
+    if (n < 0) {
 	n = strlen(p);
     }
     intWidth = (int) (width + 0.5);
@@ -1662,8 +1655,6 @@ TkCanvTranslatePath(
     double *a, *b, *t;		/* Pointers to parts of the temporary
 				 * storage */
     int i, j;			/* Loop counters */
-    int maxOutput;		/* Maximum number of outputs that we will
-				 * allow */
     double limit[4];		/* Boundries at which clipping occurs */
     double staticSpace[480];	/* Temp space from the stack */
 
@@ -1704,7 +1695,7 @@ TkCanvTranslatePath(
 	double x, y;
 
 	x = coordArr[i*2];
-	y = coordArr[i*2+1];
+	y = coordArr[i*2 + 1];
 	if (x<lft || x>rgh || y<top || y>btm) {
 	    break;
 	}
@@ -1722,10 +1713,10 @@ TkCanvTranslatePath(
      * b[]. Initialize a[] to be equal to coordArr[].
      */
 
-    if (numVertex*12 <= (int)(sizeof(staticSpace)/sizeof(staticSpace[0]))) {
+    if (numVertex*12 <= (int) (sizeof(staticSpace) / sizeof(double))) {
 	tempArr = staticSpace;
     } else {
-	tempArr = (double *)ckalloc(numVertex*12*sizeof(tempArr[0]));
+	tempArr = ckalloc(numVertex * 12 * sizeof(double));
     }
     for (i=0; i<numVertex*2; i++){
 	tempArr[i] = coordArr[i];
@@ -1758,10 +1749,9 @@ TkCanvTranslatePath(
      * This is the loop that makes the four passes through the data.
      */
 
-    maxOutput = numVertex*3;
-    for (j=0; j<4; j++){
+    for (j=0; j<4; j++) {
 	double xClip = limit[j];
-	int inside = a[0]<xClip;
+	int inside = a[0] < xClip;
 	double priorY = a[1];
 	numOutput = 0;
 
@@ -1770,9 +1760,9 @@ TkCanvTranslatePath(
 	 * rotated by 90 degrees clockwise.
 	 */
 
-	for (i=0; i<numVertex; i++){
+	for (i=0; i<numVertex; i++) {
 	    double x = a[i*2];
-	    double y = a[i*2+1];
+	    double y = a[i*2 + 1];
 
 	    if (x >= xClip) {
 		/*
@@ -1790,13 +1780,13 @@ TkCanvTranslatePath(
 		    double x0, y0, yN;
 
 		    assert(i > 0);
-		    x0 = a[i*2-2];
-		    y0 = a[i*2-1];
+		    x0 = a[i*2 - 2];
+		    y0 = a[i*2 - 1];
 		    yN = y0 + (y - y0)*(xClip-x0)/(x-x0);
 		    b[numOutput*2] = -yN;
-		    b[numOutput*2+1] = xClip;
+		    b[numOutput*2 + 1] = xClip;
 		    numOutput++;
-		    assert(numOutput <= maxOutput);
+		    assert(numOutput <= numVertex*3);
 		    priorY = yN;
 		    inside = 0;
 		} else if (i == 0) {
@@ -1815,8 +1805,10 @@ TkCanvTranslatePath(
 		/*
 		 * The current vertex is to the left of xClip
 		 */
+
 		if (!inside) {
-		    /* If the current vertex is on the left of xClip and one
+		    /*
+		     * If the current vertex is on the left of xClip and one
 		     * or more prior vertices where to the right, then we have
 		     * to draw a line segment along xClip that extends from
 		     * the spot where we first crossed from left to right to
@@ -1826,21 +1818,21 @@ TkCanvTranslatePath(
 		    double x0, y0, yN;
 
 		    assert(i > 0);
-		    x0 = a[i*2-2];
-		    y0 = a[i*2-1];
+		    x0 = a[i*2 - 2];
+		    y0 = a[i*2 - 1];
 		    yN = y0 + (y - y0)*(xClip-x0)/(x-x0);
 		    if (yN != priorY) {
 			b[numOutput*2] = -yN;
-			b[numOutput*2+1] = xClip;
+			b[numOutput*2 + 1] = xClip;
 			numOutput++;
-			assert(numOutput <= maxOutput);
+			assert(numOutput <= numVertex*3);
 		    }
 		    inside = 1;
 		}
 		b[numOutput*2] = -y;
-		b[numOutput*2+1] = x;
+		b[numOutput*2 + 1] = x;
 		numOutput++;
-		assert(numOutput <= maxOutput);
+		assert(numOutput <= numVertex*3);
 	    }
 	}
 
@@ -1859,11 +1851,11 @@ TkCanvTranslatePath(
      * XPoints and translate the origin for the drawable.
      */
 
-    for (i=0; i<numVertex; i++){
+    for (i=0; i<numVertex; i++) {
 	TranslateAndAppendCoords(canvPtr, a[i*2], a[i*2+1], outArr, i);
     }
     if (tempArr != staticSpace) {
-	ckfree((char *) tempArr);
+	ckfree(tempArr);
     }
     return numOutput;
 }

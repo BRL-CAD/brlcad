@@ -9,24 +9,18 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
-#define WINVER        0x0500   /* Requires Windows 2K definitions */
-#define _WIN32_WINNT  0x0500
 #define OEMRESOURCE
 #include "tkWinInt.h"
 #include "tkMenu.h"
-
-#include <string.h>
 
 /*
  * The class of the window for popup menus.
  */
 
-#define MENU_CLASS_NAME			"MenuWindowClass"
-#define EMBEDDED_MENU_CLASS_NAME	"EmbeddedMenuWindowClass"
+#define MENU_CLASS_NAME			TEXT("MenuWindowClass")
+#define EMBEDDED_MENU_CLASS_NAME	TEXT("EmbeddedMenuWindowClass")
 
 /*
  * Used to align a windows bitmap inside a rectangle
@@ -161,7 +155,7 @@ static void		DrawWindowsSystemBitmap(Display *display,
 			    Drawable drawable, GC gc, const RECT *rectPtr,
 			    int bitmapID, int alignFlags);
 static void		FreeID(WORD commandID);
-static TCHAR *		GetEntryText(TkMenuEntry *mePtr);
+static char *		GetEntryText(TkMenuEntry *mePtr);
 static void		GetMenuAccelGeometry(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr, Tk_Font tkfont,
 			    const Tk_FontMetrics *fmPtr, int *widthPtr,
@@ -194,6 +188,26 @@ static LRESULT CALLBACK	TkWinMenuProc(HWND hwnd, UINT message, WPARAM wParam,
 static LRESULT CALLBACK	TkWinEmbeddedMenuProc(HWND hwnd, UINT message,
 			    WPARAM wParam, LPARAM lParam);
 
+static inline void
+ScheduleMenuReconfigure(
+    TkMenu *menuPtr)
+{
+    if (!(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
+	menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
+	Tcl_DoWhenIdle(ReconfigureWindowsMenu, menuPtr);
+    }
+}
+
+static inline void
+CallPendingReconfigureImmediately(
+    TkMenu *menuPtr)
+{
+    if (menuPtr->menuFlags & MENU_RECONFIGURE_PENDING) {
+	Tcl_CancelIdleCall(ReconfigureWindowsMenu, menuPtr);
+	ReconfigureWindowsMenu(menuPtr);
+    }
+}
+
 /*
  *----------------------------------------------------------------------
  *
@@ -219,30 +233,36 @@ GetNewID(
     TkMenuEntry *mePtr,		/* The menu we are working with. */
     WORD *menuIDPtr)		/* The resulting id. */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-    WORD curID = tsdPtr->lastCommandID + 1;
+    WORD curID = tsdPtr->lastCommandID;
 
-    /*
-     * The following code relies on WORD wrapping when the highest value is
-     * incremented.
-     */
-
-    while (curID != tsdPtr->lastCommandID) {
+    while (1) {
 	Tcl_HashEntry *commandEntryPtr;
-	int newEntry;
+	int new;
 
-    	commandEntryPtr = Tcl_CreateHashEntry(&tsdPtr->commandTable,
-		((char *) NULL) + curID, &newEntry);
-    	if (newEntry == 1) {
-	    Tcl_SetHashValue(commandEntryPtr, (char *) mePtr);
+	/*
+	 * Try the next ID number, taking care to wrap rather than stray
+	 * into the system menu IDs.  [Bug 3235256]
+	 */
+	if (++curID >= 0xF000) {
+	    curID = 1;
+	}
+
+	/* Return error when we've checked all IDs without success. */
+	if (curID == tsdPtr->lastCommandID) {
+	    return TCL_ERROR;
+	}
+
+	commandEntryPtr = Tcl_CreateHashEntry(&tsdPtr->commandTable,
+		INT2PTR(curID), &new);
+	if (new) {
+	    Tcl_SetHashValue(commandEntryPtr, mePtr);
 	    *menuIDPtr = curID;
 	    tsdPtr->lastCommandID = curID;
 	    return TCL_OK;
-    	}
-    	curID++;
+	}
     }
-    return TCL_ERROR;
 }
 
 /*
@@ -265,7 +285,7 @@ static void
 FreeID(
     WORD commandID)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     /*
@@ -274,7 +294,8 @@ FreeID(
 
     if (tsdPtr->menuHWND != NULL) {
 	Tcl_HashEntry *entryPtr = Tcl_FindHashEntry(&tsdPtr->commandTable,
-		((char *) NULL) + commandID);
+		INT2PTR(commandID));
+
 	if (entryPtr != NULL) {
 	    Tcl_DeleteHashEntry(entryPtr);
 	}
@@ -307,14 +328,14 @@ TkpNewMenu(
     HMENU winMenuHdl;
     Tcl_HashEntry *hashEntryPtr;
     int newEntry;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     winMenuHdl = CreatePopupMenu();
-
     if (winMenuHdl == NULL) {
-    	Tcl_AppendResult(menuPtr->interp, "No more menus can be allocated.",
-    		(char *) NULL);
+    	Tcl_SetObjResult(menuPtr->interp, Tcl_NewStringObj(
+		"No more menus can be allocated.", -1));
+	Tcl_SetErrorCode(menuPtr->interp, "TK", "MENU", "SYSTEM_RESOURCES", NULL);
     	return TCL_ERROR;
     }
 
@@ -325,7 +346,7 @@ TkpNewMenu(
 
     hashEntryPtr = Tcl_CreateHashEntry(&tsdPtr->winMenuTable,
 	    (char *) winMenuHdl, &newEntry);
-    Tcl_SetHashValue(hashEntryPtr, (char *) menuPtr);
+    Tcl_SetHashValue(hashEntryPtr, menuPtr);
 
     menuPtr->platformData = (TkMenuPlatformData) winMenuHdl;
     return TCL_OK;
@@ -352,12 +373,12 @@ TkpDestroyMenu(
     TkMenu *menuPtr)		/* The common menu structure */
 {
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
-    char *searchName;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    const char *searchName;
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (menuPtr->menuFlags & MENU_RECONFIGURE_PENDING) {
-	Tcl_CancelIdleCall(ReconfigureWindowsMenu, (ClientData) menuPtr);
+	Tcl_CancelIdleCall(ReconfigureWindowsMenu, menuPtr);
     }
 
     if (winMenuHdl == NULL) {
@@ -400,6 +421,7 @@ TkpDestroyMenu(
 	if (tsdPtr->menuHWND != NULL) {
 	    Tcl_HashEntry *hashEntryPtr =
 		Tcl_FindHashEntry(&tsdPtr->winMenuTable, (char *) winMenuHdl);
+
 	    if (hashEntryPtr != NULL) {
 		Tcl_DeleteHashEntry(hashEntryPtr);
 	    }
@@ -437,12 +459,9 @@ TkpDestroyMenuEntry(
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
 
     if (NULL != winMenuHdl) {
-	if (!(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
-	    menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
-	    Tcl_DoWhenIdle(ReconfigureWindowsMenu, (ClientData) menuPtr);
-	}
+	ScheduleMenuReconfigure(menuPtr);
     }
-    FreeID((WORD) (UINT) mePtr->platformEntryData);
+    FreeID((WORD) PTR2INT(mePtr->platformEntryData));
     mePtr->platformEntryData = NULL;
 }
 
@@ -485,9 +504,9 @@ GetEntryText(
 	strcpy(itemText, "( )");
     } else {
 	int i;
-	char *label = (mePtr->labelPtr == NULL) ? ""
+	const char *label = (mePtr->labelPtr == NULL) ? ""
 		: Tcl_GetString(mePtr->labelPtr);
-	char *accel = (mePtr->accelPtr == NULL) ? ""
+	const char *accel = (mePtr->accelPtr == NULL) ? ""
 		: Tcl_GetString(mePtr->accelPtr);
 	const char *p, *next;
 	Tcl_DString itemString;
@@ -521,7 +540,7 @@ GetEntryText(
 	    }
 	}
 
-	itemText = ckalloc((unsigned)Tcl_DStringLength(&itemString) + 1);
+	itemText = ckalloc(Tcl_DStringLength(&itemString) + 1);
 	strcpy(itemText, Tcl_DStringValue(&itemString));
 	Tcl_DStringFree(&itemString);
     }
@@ -549,10 +568,10 @@ static void
 ReconfigureWindowsMenu(
     ClientData clientData)	/* The menu we are rebuilding */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
     TkMenuEntry *mePtr;
     HMENU winMenuHdl = (HMENU) menuPtr->platformData;
-    TCHAR *itemText = NULL;
+    char *itemText = NULL;
     const TCHAR *lpNewItem;
     UINT flags;
     UINT itemID;
@@ -590,7 +609,7 @@ ReconfigureWindowsMenu(
 	if ((menuPtr->menuType == MENUBAR)
 		|| (menuPtr->menuFlags & MENU_SYSTEM_MENU)) {
 	    Tcl_WinUtfToTChar(itemText, -1, &translatedText);
-	    lpNewItem = Tcl_DStringValue(&translatedText);
+	    lpNewItem = (const TCHAR *) Tcl_DStringValue(&translatedText);
 	    flags |= MF_STRING;
 	} else {
 	    lpNewItem = (LPCTSTR) mePtr;
@@ -631,7 +650,7 @@ ReconfigureWindowsMenu(
 	    flags |= MF_MENUBREAK;
 	}
 
-	itemID = (UINT) mePtr->platformEntryData;
+	itemID = PTR2INT(mePtr->platformEntryData);
 	if ((mePtr->type == CASCADE_ENTRY)
 		&& (mePtr->childMenuRefPtr != NULL)
 		&& (mePtr->childMenuRefPtr->menuPtr != NULL)) {
@@ -651,7 +670,7 @@ ReconfigureWindowsMenu(
 		     * If the MF_POPUP flag is set, then the id is interpreted
 		     * as the handle of a submenu.
 		     */
-		    itemID = (UINT) childMenuHdl;
+		    itemID = PTR2INT(childMenuHdl);
 		}
 	    }
 	    if ((menuPtr->menuType == MENUBAR)
@@ -676,23 +695,17 @@ ReconfigureWindowsMenu(
 			&& (menuPtr->parentTopLevelPtr != NULL)
 			&& (systemMenuPtr->masterMenuPtr
 				== menuRefPtr->menuPtr)) {
-		    HMENU systemMenuHdl =
-			(HMENU) systemMenuPtr->platformData;
+		    HMENU systemMenuHdl = (HMENU) systemMenuPtr->platformData;
 		    HWND wrapper = TkWinGetWrapperWindow(menuPtr
 			    ->parentTopLevelPtr);
+
 		    if (wrapper != NULL) {
 			DestroyMenu(systemMenuHdl);
 			systemMenuHdl = GetSystemMenu(wrapper, FALSE);
 			systemMenuPtr->menuFlags |= MENU_SYSTEM_MENU;
 			systemMenuPtr->platformData =
 				(TkMenuPlatformData) systemMenuHdl;
-			if (!(systemMenuPtr->menuFlags
-				& MENU_RECONFIGURE_PENDING)) {
-			    systemMenuPtr->menuFlags
-				    |= MENU_RECONFIGURE_PENDING;
-			    Tcl_DoWhenIdle(ReconfigureWindowsMenu,
-				    (ClientData) systemMenuPtr);
-			}
+			ScheduleMenuReconfigure(systemMenuPtr);
 		    }
 		}
 	    }
@@ -702,8 +715,7 @@ ReconfigureWindowsMenu(
 	    }
 	}
 	if (!systemMenu) {
-	    (*tkWinProcs->insertMenu)(winMenuHdl, 0xFFFFFFFF, flags,
-		    itemID, lpNewItem);
+	    InsertMenu(winMenuHdl, 0xFFFFFFFF, flags, itemID, lpNewItem);
 	}
 	Tcl_DStringFree(&translatedText);
 	if (itemText != NULL) {
@@ -715,8 +727,8 @@ ReconfigureWindowsMenu(
 
     if ((menuPtr->menuType == MENUBAR)
 	    && (menuPtr->parentTopLevelPtr != NULL)) {
-	HANDLE bar;
-	bar = TkWinGetWrapperWindow(menuPtr->parentTopLevelPtr);
+	HANDLE bar = TkWinGetWrapperWindow(menuPtr->parentTopLevelPtr);
+
 	if (bar) {
 	    DrawMenuBar(bar);
 	}
@@ -753,15 +765,12 @@ TkpPostMenu(
     POINT point;
     Tk_Window parentWindow = Tk_Parent(menuPtr->tkwin);
     int oldServiceMode = Tcl_GetServiceMode();
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     tsdPtr->inPostMenu++;
 
-    if (menuPtr->menuFlags & MENU_RECONFIGURE_PENDING) {
-	Tcl_CancelIdleCall(ReconfigureWindowsMenu, (ClientData) menuPtr);
-	ReconfigureWindowsMenu((ClientData) menuPtr);
-    }
+    CallPendingReconfigureImmediately(menuPtr);
 
     result = TkPreprocessMenu(menuPtr);
     if (result != TCL_OK) {
@@ -856,13 +865,8 @@ TkpMenuNewEntry(
     if (GetNewID(mePtr, &commandID) != TCL_OK) {
     	return TCL_ERROR;
     }
-
-    if (!(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
-    	menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
-    	Tcl_DoWhenIdle(ReconfigureWindowsMenu, (ClientData) menuPtr);
-    }
-
-    mePtr->platformEntryData = (TkMenuPlatformEntryData) (UINT) commandID;
+    ScheduleMenuReconfigure(menuPtr);
+    mePtr->platformEntryData = (TkMenuPlatformEntryData) INT2PTR(commandID);
 
     return TCL_OK;
 }
@@ -895,7 +899,7 @@ TkWinMenuProc(
     LRESULT lResult;
 
     if (!TkWinHandleMenuEvent(&hwnd, &message, &wParam, &lParam, &lResult)) {
-	lResult = DefWindowProc(hwnd, message, wParam, lParam);
+	lResult = DefWindowProcA(hwnd, message, wParam, lParam);
     }
     return lResult;
 }
@@ -924,11 +928,12 @@ UpdateEmbeddedMenu(
 {
     RECT rc;
     HWND hMenuWnd = (HWND)clientData;
+
     GetClientRect(hMenuWnd, &rc);
     InvalidateRect(hMenuWnd, &rc, FALSE);
     UpdateWindow(hMenuWnd);
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -955,7 +960,7 @@ TkWinEmbeddedMenuProc(
 {
     static int nIdles = 0;
     LRESULT lResult = 1;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     switch(message) {
@@ -973,7 +978,7 @@ TkWinEmbeddedMenuProc(
 	break;
 
     case WM_SETTINGCHANGE:
-	if (wParam == SPI_SETNONCLIENTMETRICS 
+	if (wParam == SPI_SETNONCLIENTMETRICS
 		|| wParam == SPI_SETKEYBOARDCUES) {
 	    SetDefaults(0);
 	}
@@ -993,12 +998,12 @@ TkWinEmbeddedMenuProc(
 	}
 
     default:
-	lResult = DefWindowProc(hwnd, message, wParam, lParam);
+	lResult = DefWindowProcA(hwnd, message, wParam, lParam);
 	break;
     }
     return lResult;
 }
-
+
 /*
  *----------------------------------------------------------------------
  *
@@ -1031,7 +1036,7 @@ TkWinHandleMenuEvent(
     int returnResult = 0;
     TkMenu *menuPtr;
     TkMenuEntry *mePtr;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     switch (*pMessage) {
@@ -1039,7 +1044,7 @@ TkWinHandleMenuEvent(
 	hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->winMenuTable,
 		(char *) *pwParam);
 	if (hashEntryPtr != NULL) {
-	    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+	    menuPtr = Tcl_GetHashValue(hashEntryPtr);
 	    if ((menuPtr->menuRefPtr != NULL)
 		    && (menuPtr->menuRefPtr->parentEntryPtr != NULL)) {
 		TkPostSubmenu(menuPtr->interp,
@@ -1054,27 +1059,22 @@ TkWinHandleMenuEvent(
 		(char *) *pwParam);
 	if (hashEntryPtr != NULL) {
 	    tsdPtr->oldServiceMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
-	    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+	    menuPtr = Tcl_GetHashValue(hashEntryPtr);
 	    tsdPtr->modalMenuPtr = menuPtr;
-	    if (menuPtr->menuFlags & MENU_RECONFIGURE_PENDING) {
-		Tcl_CancelIdleCall(ReconfigureWindowsMenu,
-			(ClientData) menuPtr);
-		ReconfigureWindowsMenu((ClientData) menuPtr);
-	    }
+	    CallPendingReconfigureImmediately(menuPtr);
 	    RecursivelyClearActiveMenu(menuPtr);
 	    if (!tsdPtr->inPostMenu) {
-		Tcl_Interp *interp;
+		Tcl_Interp *interp = menuPtr->interp;
 		int code;
 
-		interp = menuPtr->interp;
-		Tcl_Preserve((ClientData)interp);
+		Tcl_Preserve(interp);
 		code = TkPreprocessMenu(menuPtr);
 		if ((code != TCL_OK) && (code != TCL_CONTINUE)
 			&& (code != TCL_BREAK)) {
 		    Tcl_AddErrorInfo(interp, "\n    (menu preprocess)");
-		    Tcl_BackgroundError(interp);
+		    Tcl_BackgroundException(interp, code);
 		}
-		Tcl_Release((ClientData)interp);
+		Tcl_Release(interp);
 	    }
 	    TkActivateMenuEntry(menuPtr, -1);
 	    *plResult = 0;
@@ -1091,11 +1091,11 @@ TkWinHandleMenuEvent(
 	    break;
 	}
 	hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->commandTable,
-		((char *) NULL) + LOWORD(*pwParam));
+		INT2PTR(LOWORD(*pwParam)));
 	if (hashEntryPtr == NULL) {
 	    break;
 	}
-	mePtr = (TkMenuEntry *) Tcl_GetHashValue(hashEntryPtr);
+	mePtr = Tcl_GetHashValue(hashEntryPtr);
 	if (mePtr != NULL) {
 	    TkMenuReferences *menuRefPtr;
 	    TkMenuEntry *parentEntryPtr;
@@ -1113,7 +1113,7 @@ TkWinHandleMenuEvent(
 	    if ((menuRefPtr != NULL) && (menuRefPtr->parentEntryPtr != NULL)) {
 		for (parentEntryPtr = menuRefPtr->parentEntryPtr ; ;
 			parentEntryPtr = parentEntryPtr->nextCascadePtr) {
-		    char *name = Tcl_GetString(parentEntryPtr->namePtr);
+		    const char *name = Tcl_GetString(parentEntryPtr->namePtr);
 
 		    if (strcmp(name, Tk_PathName(menuPtr->tkwin)) == 0) {
 			break;
@@ -1127,13 +1127,13 @@ TkWinHandleMenuEvent(
 	    }
 
 	    interp = menuPtr->interp;
-	    Tcl_Preserve((ClientData)interp);
+	    Tcl_Preserve(interp);
 	    code = TkInvokeMenu(interp, menuPtr, mePtr->index);
 	    if (code != TCL_OK && code != TCL_CONTINUE && code != TCL_BREAK) {
 		Tcl_AddErrorInfo(interp, "\n    (menu invoke)");
-		Tcl_BackgroundError(interp);
+		Tcl_BackgroundException(interp, code);
 	    }
-	    Tcl_Release((ClientData)interp);
+	    Tcl_Release(interp);
 	    *plResult = 0;
 	    returnResult = 1;
 	}
@@ -1148,7 +1148,7 @@ TkWinHandleMenuEvent(
 	    Tcl_UniChar *wlabel, menuChar;
 
 	    *plResult = 0;
-	    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+	    menuPtr = Tcl_GetHashValue(hashEntryPtr);
 	    /*
 	     * Assume we have something directly convertable to Tcl_UniChar.
 	     * True at least for wide systems.
@@ -1214,7 +1214,7 @@ TkWinHandleMenuEvent(
 	    }
 	    mePtr = (TkMenuEntry *) itemPtr->itemData;
 	    menuPtr = mePtr->menuPtr;
-	    twdPtr = (TkWinDrawable *) ckalloc(sizeof(TkWinDrawable));
+	    twdPtr = ckalloc(sizeof(TkWinDrawable));
 	    twdPtr->type = TWD_WINDC;
 	    twdPtr->winDC.hdc = itemPtr->hDC;
 
@@ -1257,7 +1257,7 @@ TkWinHandleMenuEvent(
 		    itemPtr->rcItem.bottom - itemPtr->rcItem.top,
 		    0, drawingParameters);
 
-	    ckfree((char *) twdPtr);
+	    ckfree(twdPtr);
 	}
 	*plResult = 1;
 	returnResult = 1;
@@ -1280,7 +1280,7 @@ TkWinHandleMenuEvent(
 		hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->winMenuTable,
 			(char *) *plParam);
 		if (hashEntryPtr != NULL) {
-		    menuPtr = (TkMenu *) Tcl_GetHashValue(hashEntryPtr);
+		    menuPtr = Tcl_GetHashValue(hashEntryPtr);
 		}
 	    }
 
@@ -1293,10 +1293,9 @@ TkWinHandleMenuEvent(
 			mePtr = menuPtr->entries[entryIndex];
 		    } else {
 			hashEntryPtr = Tcl_FindHashEntry(&tsdPtr->commandTable,
-				((char *) NULL) + entryIndex);
+				INT2PTR(entryIndex));
 			if (hashEntryPtr != NULL) {
-			    mePtr = (TkMenuEntry *)
-				    Tcl_GetHashValue(hashEntryPtr);
+			    mePtr = Tcl_GetHashValue(hashEntryPtr);
 			}
 		    }
 		}
@@ -1305,7 +1304,7 @@ TkWinHandleMenuEvent(
 		    TkActivateMenuEntry(menuPtr, -1);
 		} else {
 		    if (mePtr->index >= menuPtr->numEntries) {
-			Tcl_Panic("Trying to activate an entry which doesn't exist.");
+			Tcl_Panic("Trying to activate an entry which doesn't exist");
 		    }
 		    TkActivateMenuEntry(menuPtr, mePtr->index);
 		}
@@ -1385,7 +1384,7 @@ TkpSetWindowMenuBar(
     TkMenu *menuPtr)		/* The menu we are inserting */
 {
     HMENU winMenuHdl;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     if (menuPtr != NULL) {
@@ -1400,13 +1399,10 @@ TkpSetWindowMenuBar(
 	winMenuHdl = CreateMenu();
 	hashEntryPtr = Tcl_CreateHashEntry(&tsdPtr->winMenuTable,
 		(char *) winMenuHdl, &newEntry);
-	Tcl_SetHashValue(hashEntryPtr, (char *) menuPtr);
+	Tcl_SetHashValue(hashEntryPtr, menuPtr);
 	menuPtr->platformData = (TkMenuPlatformData) winMenuHdl;
 	TkWinSetMenu(tkwin, winMenuHdl);
-	if (!(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
-	    menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
-	    Tcl_DoWhenIdle(ReconfigureWindowsMenu, (ClientData) menuPtr);
-	}
+	ScheduleMenuReconfigure(menuPtr);
     } else {
 	TkWinSetMenu(tkwin, NULL);
     }
@@ -1433,7 +1429,7 @@ void
 TkpSetMainMenubar(
     Tcl_Interp *interp,		/* The interpreter of the application */
     Tk_Window tkwin,		/* The frame we are setting up */
-    char *menuName)		/* The name of the menu to put in front. If
+    const char *menuName)	/* The name of the menu to put in front. If
     				 * NULL, use the default menu bar. */
 {
     /*
@@ -1509,7 +1505,7 @@ GetMenuAccelGeometry(
     } else if (mePtr->accelPtr == NULL) {
 	*widthPtr = 0;
     } else {
-	char *accel = Tcl_GetString(mePtr->accelPtr);
+	const char *accel = Tcl_GetString(mePtr->accelPtr);
 
 	*widthPtr = Tk_TextWidth(tkfont, accel, mePtr->accelLength);
     }
@@ -1624,7 +1620,7 @@ DrawWindowsSystemBitmap(
 
     SelectObject(scratchDC, bitmap);
     SetMapMode(scratchDC, GetMapMode(hdc));
-    GetObject(bitmap, sizeof(BITMAP), &bm);
+    GetObjectA(bitmap, sizeof(BITMAP), &bm);
     ptSize.x = bm.bmWidth;
     ptSize.y = bm.bmHeight;
     DPtoLP(scratchDC, &ptSize, 1);
@@ -1765,7 +1761,7 @@ DrawMenuEntryAccelerator(
 {
     int baseline;
     int leftEdge = x + mePtr->indicatorSpace + mePtr->labelWidth;
-    char *accel;
+    const char *accel;
 
     if (mePtr->accelPtr != NULL) {
 	accel = Tcl_GetString(mePtr->accelPtr);
@@ -1785,7 +1781,7 @@ DrawMenuEntryAccelerator(
 	    COLORREF oldFgColor = gc->foreground;
 
 	    gc->foreground = GetSysColor(COLOR_3DHILIGHT);
-	    if ((mePtr->entryFlags & ENTRY_PLATFORM_FLAG1) == 0) {
+	    if (!(mePtr->entryFlags & ENTRY_PLATFORM_FLAG1)) {
 		Tk_DrawChars(menuPtr->display, d, gc, tkfont, accel,
 			mePtr->accelLength, leftEdge + 1, baseline + 1);
 	    }
@@ -1852,6 +1848,7 @@ DrawMenuEntryArrow(
 		mePtr->menuPtr->tkwin, (mePtr->activeBorderPtr == NULL)
 		? mePtr->menuPtr->activeBorderPtr
 		: mePtr->activeBorderPtr));
+
 	gc->background = activeBgColor->pixel;
     }
 
@@ -1951,7 +1948,7 @@ DrawMenuUnderline(
 	if (mePtr->underline < len) {
 	    const char *label, *start, *end;
 
-	    label = Tcl_GetStringFromObj(mePtr->labelPtr, NULL);
+	    label = Tcl_GetString(mePtr->labelPtr);
 	    start = Tcl_UtfAtIndex(label, mePtr->underline);
 	    end = Tcl_UtfNext(start);
 	    Tk_UnderlineChars(menuPtr->display, d,
@@ -2024,33 +2021,33 @@ TkWinMenuKeyObjCmd(
     if (eventPtr->type == KeyPress) {
 	switch (keySym) {
 	case XK_Alt_L:
-	    scanCode = MapVirtualKey(VK_LMENU, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_LMENU, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_MENU,
 		    (int) (scanCode << 16) | (1 << 29));
 	    break;
 	case XK_Alt_R:
-	    scanCode = MapVirtualKey(VK_RMENU, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_RMENU, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_MENU,
 		    (int) (scanCode << 16) | (1 << 29) | (1 << 24));
 	    break;
 	case XK_F10:
-	    scanCode = MapVirtualKey(VK_F10, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_F10, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYDOWN, VK_F10, (int) (scanCode << 16));
 	    break;
 	default:
 	    virtualKey = XKeysymToKeycode(winPtr->display, keySym);
-	    scanCode = MapVirtualKey(virtualKey, 0);
+	    scanCode = MapVirtualKeyA(virtualKey, 0);
 	    if (0 != scanCode) {
 		XKeyEvent xkey = eventPtr->xkey;
-		CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+		CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 			WM_SYSKEYDOWN, virtualKey,
 			(int) ((scanCode << 16) | (1 << 29)));
 		if (xkey.nbytes > 0) {
 		    for (i = 0; i < xkey.nbytes; i++) {
-			CallWindowProc(DefWindowProc,
+			CallWindowProcA(DefWindowProcA,
 				Tk_GetHWND(Tk_WindowId(tkwin)), WM_SYSCHAR,
 				xkey.trans_chars[i],
 				(int) ((scanCode << 16) | (1 << 29)));
@@ -2061,28 +2058,28 @@ TkWinMenuKeyObjCmd(
     } else if (eventPtr->type == KeyRelease) {
 	switch (keySym) {
 	case XK_Alt_L:
-	    scanCode = MapVirtualKey(VK_LMENU, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_LMENU, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_MENU, (int) (scanCode << 16)
 		    | (1 << 29) | (1 << 30) | (1 << 31));
 	    break;
 	case XK_Alt_R:
-	    scanCode = MapVirtualKey(VK_RMENU, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_RMENU, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_MENU, (int) (scanCode << 16) | (1 << 24)
 		    | (0x111 << 29) | (1 << 30) | (1 << 31));
 	    break;
 	case XK_F10:
-	    scanCode = MapVirtualKey(VK_F10, 0);
-	    CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+	    scanCode = MapVirtualKeyA(VK_F10, 0);
+	    CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 		    WM_SYSKEYUP, VK_F10,
 		    (int) (scanCode << 16) | (1 << 30) | (1 << 31));
 	    break;
 	default:
 	    virtualKey = XKeysymToKeycode(winPtr->display, keySym);
-	    scanCode = MapVirtualKey(virtualKey, 0);
+	    scanCode = MapVirtualKeyA(virtualKey, 0);
 	    if (0 != scanCode) {
-		CallWindowProc(DefWindowProc, Tk_GetHWND(Tk_WindowId(tkwin)),
+		CallWindowProcA(DefWindowProcA, Tk_GetHWND(Tk_WindowId(tkwin)),
 			WM_SYSKEYUP, virtualKey, (int) ((scanCode << 16)
 			| (1 << 29) | (1 << 30) | (1 << 31)));
 	    }
@@ -2208,12 +2205,13 @@ DrawMenuEntryLabel(
 	haveImage = 1;
     } else if (mePtr->bitmapPtr != NULL) {
 	Pixmap bitmap = Tk_GetBitmapFromObj(menuPtr->tkwin, mePtr->bitmapPtr);
+
 	Tk_SizeOfBitmap(menuPtr->display, bitmap, &imageWidth, &imageHeight);
 	haveImage = 1;
     }
     if (!haveImage || (mePtr->compound != COMPOUND_NONE)) {
 	if (mePtr->labelLength > 0) {
-	    char *label = Tcl_GetString(mePtr->labelPtr);
+	    const char *label = Tcl_GetString(mePtr->labelPtr);
 
 	    textWidth = Tk_TextWidth(tkfont, label, mePtr->labelLength);
 	    textHeight = fmPtr->linespace;
@@ -2308,7 +2306,7 @@ DrawMenuEntryLabel(
     if ((mePtr->compound != COMPOUND_NONE) || !haveImage) {
     	if (mePtr->labelLength > 0) {
 	    int baseline = y + (height + fmPtr->ascent - fmPtr->descent) / 2;
-	    char *label = Tcl_GetString(mePtr->labelPtr);
+	    const char *label = Tcl_GetString(mePtr->labelPtr);
 
 	    if (TkWinGetPlatformTheme() == TK_THEME_WIN_CLASSIC) {
 		/*
@@ -2317,8 +2315,9 @@ DrawMenuEntryLabel(
 		 */
 
 		if ((mePtr->state == ENTRY_DISABLED) &&
-			((mePtr->entryFlags & ENTRY_PLATFORM_FLAG1) == 0)) {
+			!(mePtr->entryFlags & ENTRY_PLATFORM_FLAG1)) {
 		    COLORREF oldFgColor = gc->foreground;
+
 		    gc->foreground = GetSysColor(COLOR_3DHILIGHT);
 		    Tk_DrawChars(menuPtr->display, d, gc, tkfont, label,
 			    mePtr->labelLength, leftEdge + textXOffset + 1,
@@ -2451,12 +2450,7 @@ TkpConfigureMenuEntry(
     register TkMenuEntry *mePtr)/* Information about menu entry; may or may
 				 * not already have values for some fields. */
 {
-    TkMenu *menuPtr = mePtr->menuPtr;
-
-    if (!(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
-	menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
-	Tcl_DoWhenIdle(ReconfigureWindowsMenu, (ClientData) menuPtr);
-    }
+    ScheduleMenuReconfigure(mePtr->menuPtr);
     return TCL_OK;
 }
 
@@ -2544,7 +2538,7 @@ TkpDrawMenuEntry(
     } else {
     	TkMenuEntry *cascadeEntryPtr;
     	int parentDisabled = 0;
-	char *name;
+    	const char *name;
 
     	for (cascadeEntryPtr = menuPtr->menuRefPtr->parentEntryPtr;
     		cascadeEntryPtr != NULL;
@@ -2624,7 +2618,7 @@ TkpDrawMenuEntry(
 		    fmPtr, adjustedX, adjustedY, width, adjustedHeight);
 	}
     }
-    
+
     /*
      * Copy the entry contents from the temporary bitmap to the menu.
      */
@@ -2672,6 +2666,7 @@ GetMenuLabelGeometry(
 	haveImage = 1;
     } else if (mePtr->bitmapPtr != NULL) {
 	Pixmap bitmap = Tk_GetBitmapFromObj(menuPtr->tkwin, mePtr->bitmapPtr);
+
     	Tk_SizeOfBitmap(menuPtr->display, bitmap, widthPtr, heightPtr);
 	haveImage = 1;
     } else {
@@ -2690,7 +2685,7 @@ GetMenuLabelGeometry(
 
     	if (mePtr->labelPtr != NULL) {
 	    int textWidth;
-	    char *label = Tcl_GetString(mePtr->labelPtr);
+	    const char *label = Tcl_GetString(mePtr->labelPtr);
 
 	    textWidth = Tk_TextWidth(tkfont, label, mePtr->labelLength);
 
@@ -3020,7 +3015,7 @@ MenuSelectEvent(
 void
 TkpMenuNotifyToplevelCreate(
     Tcl_Interp *interp,		/* The interp the menu lives in. */
-    char *menuName)		/* The name of the menu to reconfigure. */
+    const char *menuName)	/* The name of the menu to reconfigure. */
 {
     TkMenuReferences *menuRefPtr;
     TkMenu *menuPtr;
@@ -3030,11 +3025,8 @@ TkpMenuNotifyToplevelCreate(
 	if ((menuRefPtr != NULL) && (menuRefPtr->menuPtr != NULL)) {
 	    for (menuPtr = menuRefPtr->menuPtr->masterMenuPtr; menuPtr != NULL;
 		    menuPtr = menuPtr->nextInstancePtr) {
-		if ((menuPtr->menuType == MENUBAR)
-			&& !(menuPtr->menuFlags & MENU_RECONFIGURE_PENDING)) {
-		    menuPtr->menuFlags |= MENU_RECONFIGURE_PENDING;
-		    Tcl_DoWhenIdle(ReconfigureWindowsMenu,
-			    (ClientData) menuPtr);
+		if (menuPtr->menuType == MENUBAR) {
+		    ScheduleMenuReconfigure(menuPtr);
 		}
 	    }
 	}
@@ -3064,8 +3056,9 @@ HWND
 Tk_GetMenuHWND(
     Tk_Window tkwin)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
+
     TkMenuInit();
     return tsdPtr->embeddedMenuHWND;
 }
@@ -3115,7 +3108,7 @@ static void
 MenuThreadExitHandler(
     ClientData clientData)	    /* Not used */
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
     DestroyWindow(tsdPtr->menuHWND);
@@ -3191,10 +3184,17 @@ SetDefaults(
     HDC scratchDC;
     int bold = 0;
     int italic = 0;
-    TEXTMETRIC tm;
+    TEXTMETRICA tm;
     int pointSize;
     HFONT menuFont;
-    NONCLIENTMETRICS ncMetrics;
+    /* See: [Bug #3239768] tk8.4.19 (and later) WIN32 menu font support */
+    struct {
+        NONCLIENTMETRICS metrics;
+#if (WINVER < 0x0600)
+        int padding;
+#endif
+    } nc;
+    OSVERSIONINFOW os;
 
     /*
      * Set all of the default options. The loop will terminate when we run out
@@ -3206,19 +3206,26 @@ SetDefaults(
 	defaultBorderWidth = GetSystemMetrics(SM_CYBORDER);
     }
 
-    scratchDC = CreateDC("DISPLAY", NULL, NULL, NULL);
+    scratchDC = CreateDCA("DISPLAY", NULL, NULL, NULL);
     if (!firstTime) {
 	Tcl_DStringFree(&menuFontDString);
     }
     Tcl_DStringInit(&menuFontDString);
 
-    ncMetrics.cbSize = sizeof(ncMetrics);
-    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, sizeof(ncMetrics),
-	    &ncMetrics, 0);
-    menuFont = CreateFontIndirect(&ncMetrics.lfMenuFont);
+    nc.metrics.cbSize = sizeof(nc);
+
+    os.dwOSVersionInfoSize = sizeof(OSVERSIONINFOW);
+    GetVersionExW(&os);
+    if (os.dwMajorVersion < 6) {
+	nc.metrics.cbSize -= sizeof(int);
+    }
+
+    SystemParametersInfo(SPI_GETNONCLIENTMETRICS, nc.metrics.cbSize,
+	    &nc.metrics, 0);
+    menuFont = CreateFontIndirect(&nc.metrics.lfMenuFont);
     SelectObject(scratchDC, menuFont);
-    GetTextMetrics(scratchDC, &tm);
-    GetTextFace(scratchDC, LF_FACESIZE, faceName);
+    GetTextMetricsA(scratchDC, &tm);
+    GetTextFaceA(scratchDC, LF_FACESIZE, faceName);
     pointSize = MulDiv(tm.tmHeight - tm.tmInternalLeading,
 	    72, GetDeviceCaps(scratchDC, LOGPIXELSY));
     if (tm.tmWeight >= 700) {
@@ -3261,17 +3268,11 @@ SetDefaults(
      * only way to ensure menu items line up, and is not documented.
      */
 
-    if (TkWinGetPlatformId() >= VER_PLATFORM_WIN32_WINDOWS) {
-	indicatorDimensions[0] = GetSystemMetrics(SM_CYMENUCHECK);
-	indicatorDimensions[1] = ((GetSystemMetrics(SM_CXFIXEDFRAME) +
-		GetSystemMetrics(SM_CXBORDER)
-		+ GetSystemMetrics(SM_CXMENUCHECK) + 7) & 0xFFF8)
-		- GetSystemMetrics(SM_CXFIXEDFRAME);
-    } else {
-	DWORD dimensions = GetMenuCheckMarkDimensions();
-	indicatorDimensions[0] = HIWORD(dimensions);
-	indicatorDimensions[1] = LOWORD(dimensions);
-    }
+    indicatorDimensions[0] = GetSystemMetrics(SM_CYMENUCHECK);
+    indicatorDimensions[1] = ((GetSystemMetrics(SM_CXFIXEDFRAME) +
+	    GetSystemMetrics(SM_CXBORDER)
+	    + GetSystemMetrics(SM_CXMENUCHECK) + 7) & 0xFFF8)
+	    - GetSystemMetrics(SM_CXFIXEDFRAME);
 
     /*
      * Accelerators used to be always underlines until Win2K when a system
@@ -3280,7 +3281,7 @@ SetDefaults(
 
     showMenuAccelerators = TRUE;
     if (TkWinGetPlatformId() == VER_PLATFORM_WIN32_NT) {
-	SystemParametersInfo(SPI_GETKEYBOARDCUES, 0, &showMenuAccelerators, 0);
+	SystemParametersInfoA(SPI_GETKEYBOARDCUES, 0, &showMenuAccelerators, 0);
     }
 }
 
@@ -3316,16 +3317,16 @@ TkpMenuInit(void)
     wndClass.lpszMenuName = NULL;
     wndClass.lpszClassName = MENU_CLASS_NAME;
     if (!RegisterClass(&wndClass)) {
-	Tcl_Panic("Failed to register menu window class.");
+	Tcl_Panic("Failed to register menu window class");
     }
 
     wndClass.lpfnWndProc = TkWinEmbeddedMenuProc;
     wndClass.lpszClassName = EMBEDDED_MENU_CLASS_NAME;
     if (!RegisterClass(&wndClass)) {
-	Tcl_Panic("Failed to register embedded menu window class.");
+	Tcl_Panic("Failed to register embedded menu window class");
     }
 
-    TkCreateExitHandler(MenuExitHandler, (ClientData) NULL);
+    TkCreateExitHandler(MenuExitHandler, NULL);
     SetDefaults(1);
 }
 
@@ -3349,28 +3350,28 @@ TkpMenuInit(void)
 void
 TkpMenuThreadInit(void)
 {
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
+    ThreadSpecificData *tsdPtr =
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    tsdPtr->menuHWND = CreateWindow(MENU_CLASS_NAME, "MenuWindow", WS_POPUP,
+    tsdPtr->menuHWND = CreateWindow(MENU_CLASS_NAME, TEXT("MenuWindow"), WS_POPUP,
 	    0, 0, 10, 10, NULL, NULL, Tk_GetHINSTANCE(), NULL);
 
     if (!tsdPtr->menuHWND) {
-	Tcl_Panic("Failed to create the menu window.");
+	Tcl_Panic("Failed to create the menu window");
     }
 
     tsdPtr->embeddedMenuHWND =
-	    CreateWindow(EMBEDDED_MENU_CLASS_NAME, "EmbeddedMenuWindow",
+	    CreateWindow(EMBEDDED_MENU_CLASS_NAME, TEXT("EmbeddedMenuWindow"),
 	    WS_POPUP, 0, 0, 10, 10, NULL, NULL, Tk_GetHINSTANCE(), NULL);
 
     if (!tsdPtr->embeddedMenuHWND) {
-	Tcl_Panic("Failed to create the embedded menu window.");
+	Tcl_Panic("Failed to create the embedded menu window");
     }
 
     Tcl_InitHashTable(&tsdPtr->winMenuTable, TCL_ONE_WORD_KEYS);
     Tcl_InitHashTable(&tsdPtr->commandTable, TCL_ONE_WORD_KEYS);
 
-    TkCreateThreadExitHandler(MenuThreadExitHandler, (ClientData) NULL);
+    TkCreateThreadExitHandler(MenuThreadExitHandler, NULL);
 }
 
 /*

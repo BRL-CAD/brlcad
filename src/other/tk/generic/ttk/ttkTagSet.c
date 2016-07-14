@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Tag tables.  3/4-baked, work in progress.
  *
  * Copyright (C) 2005, Joe English.  Freely redistributable.
@@ -35,7 +34,7 @@ struct TtkTagTable {
  */
 static Ttk_Tag NewTag(Ttk_TagTable tagTable, const char *tagName)
 {
-    Ttk_Tag tag = (Ttk_Tag)ckalloc(sizeof(*tag));
+    Ttk_Tag tag = ckalloc(sizeof(*tag));
     tag->tagRecord = ckalloc(tagTable->recordSize);
     memset(tag->tagRecord, 0, tagTable->recordSize);
     /* Don't need Tk_InitOptions() here, all defaults should be NULL. */
@@ -48,7 +47,7 @@ static void DeleteTag(Ttk_TagTable tagTable, Ttk_Tag tag)
 {
     Tk_FreeConfigOptions(tag->tagRecord,tagTable->optionTable,tagTable->tkwin);
     ckfree(tag->tagRecord);
-    ckfree((void*)tag);
+    ckfree(tag);
 }
 
 /*------------------------------------------------------------------------
@@ -59,7 +58,7 @@ Ttk_TagTable Ttk_CreateTagTable(
     Tcl_Interp *interp, Tk_Window tkwin,
     Tk_OptionSpec optionSpecs[], int recordSize)
 {
-    Ttk_TagTable tagTable = (Ttk_TagTable)ckalloc(sizeof(*tagTable));
+    Ttk_TagTable tagTable = ckalloc(sizeof(*tagTable));
     tagTable->tkwin = tkwin;
     tagTable->optionSpecs = optionSpecs;
     tagTable->optionTable = Tk_CreateOptionTable(interp, optionSpecs);
@@ -81,7 +80,7 @@ void Ttk_DeleteTagTable(Ttk_TagTable tagTable)
     }
 
     Tcl_DeleteHashTable(&tagTable->tags);
-    ckfree((void*)tagTable);
+    ckfree(tagTable);
 }
 
 Ttk_Tag Ttk_GetTag(Ttk_TagTable tagTable, const char *tagName)
@@ -117,7 +116,7 @@ Ttk_Tag Ttk_GetTagFromObj(Ttk_TagTable tagTable, Tcl_Obj *objPtr)
 Ttk_TagSet Ttk_GetTagSetFromObj(
     Tcl_Interp *interp, Ttk_TagTable tagTable, Tcl_Obj *objPtr)
 {
-    Ttk_TagSet tagset = (Ttk_TagSet)(ckalloc(sizeof *tagset));
+    Ttk_TagSet tagset = ckalloc(sizeof(*tagset));
     Tcl_Obj **objv;
     int i, objc;
 
@@ -128,11 +127,11 @@ Ttk_TagSet Ttk_GetTagSetFromObj(
     }
 
     if (Tcl_ListObjGetElements(interp, objPtr, &objc, &objv) != TCL_OK) {
-	ckfree((ClientData)tagset);
+	ckfree(tagset);
     	return NULL;
     }
 
-    tagset->tags = (Ttk_Tag*)ckalloc((objc+1) * sizeof(Ttk_Tag));
+    tagset->tags = ckalloc((objc+1) * sizeof(Ttk_Tag));
     for (i=0; i<objc; ++i) {
 	tagset->tags[i] = Ttk_GetTagFromObj(tagTable, objv[i]);
     }
@@ -159,8 +158,8 @@ Tcl_Obj *Ttk_NewTagSetObj(Ttk_TagSet tagset)
 
 void Ttk_FreeTagSet(Ttk_TagSet tagset)
 {
-    ckfree((ClientData)tagset->tags);
-    ckfree((ClientData)tagset);
+    ckfree(tagset->tags);
+    ckfree(tagset);
 }
 
 /* Ttk_TagSetContains -- test if tag set contains a tag.
@@ -189,7 +188,7 @@ int Ttk_TagSetAdd(Ttk_TagSet tagset, Ttk_Tag tag)
 	    return 0;
 	}
     }
-    tagset->tags = (void*)ckrealloc((void*)tagset->tags, 
+    tagset->tags = ckrealloc(tagset->tags, 
 	    (tagset->nTags+1)*sizeof(tagset->tags[0]));
     tagset->tags[tagset->nTags++] = tag;
     return 1;

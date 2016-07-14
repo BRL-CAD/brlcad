@@ -1,4 +1,4 @@
-/* $Id$
+/*
  * Copyright (c) 2003, Joe English
  *
  * Core widget utilities.
@@ -198,7 +198,7 @@ WidgetInstanceObjCmdDeleted(ClientData clientData)
  *	 Final cleanup for widget; called via Tcl_EventuallyFree().
  */
 static void
-FreeWidget(char *memPtr)
+FreeWidget(void *memPtr)
 {
     ckfree(memPtr);
 }
@@ -231,7 +231,7 @@ DestroyWidget(WidgetCore *corePtr)
 	/* NB: this can reenter the interpreter via a command traces */
 	Tcl_DeleteCommandFromToken(corePtr->interp, cmd);
     }
-    Tcl_EventuallyFree(corePtr, FreeWidget);
+    Tcl_EventuallyFree(corePtr, (Tcl_FreeProc *) FreeWidget);
 }
 
 /*
@@ -440,7 +440,8 @@ int TtkWidgetConstructorObjCmd(
 
 error:
     if (WidgetDestroyed(corePtr)) {
-	Tcl_SetResult(interp, "Widget has been destroyed", TCL_STATIC);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"widget has been destroyed", -1));
     } else {
 	Tk_DestroyWindow(tkwin);
     }
@@ -634,8 +635,8 @@ int TtkWidgetConfigureCommand(
 	    return status;
 
 	if (mask & READONLY_OPTION) {
-	    Tcl_SetResult(interp,
-		    "Attempt to change read-only option", TCL_STATIC);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "attempt to change read-only option", -1));
 	    Tk_RestoreSavedOptions(&savedOptions);
 	    return TCL_ERROR;
 	}
@@ -649,7 +650,8 @@ int TtkWidgetConfigureCommand(
 
 	status = corePtr->widgetSpec->postConfigureProc(interp,recordPtr,mask);
 	if (WidgetDestroyed(corePtr)) {
-	    Tcl_SetResult(interp, "Widget has been destroyed", TCL_STATIC);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "widget has been destroyed", -1));
 	    status = TCL_ERROR;
 	}
 	if (status != TCL_OK) {
@@ -764,8 +766,8 @@ int TtkWidgetIdentifyCommand(
     }
     if (objc == 5) {
 	/* $w identify element $x $y */
-	if (Tcl_GetIndexFromObj(interp,objv[2],whatTable,"option",0,&what)
-		!= TCL_OK)
+	if (Tcl_GetIndexFromObjStruct(interp, objv[2], whatTable,
+		sizeof(char *), "option", 0, &what) != TCL_OK)
 	{
 	    return TCL_ERROR;
 	}

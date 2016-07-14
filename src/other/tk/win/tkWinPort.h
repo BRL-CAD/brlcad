@@ -9,28 +9,28 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _WINPORT
 #define _WINPORT
 
-#include <X11/Xlib.h>
-#include <X11/cursorfont.h>
-#include <X11/keysym.h>
-#include <X11/Xatom.h>
-#include <X11/Xutil.h>
+/*
+ *---------------------------------------------------------------------------
+ * The following sets of #includes and #ifdefs are required to get Tcl to
+ * compile under the windows compilers.
+ *---------------------------------------------------------------------------
+ */
 
-#include <malloc.h>
+#include <wchar.h>
+#include <io.h>
+#include <stdlib.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <malloc.h>
 #include <ctype.h>
 #include <math.h>
-#include <stdlib.h>
 #include <string.h>
 #include <limits.h>
-#include <fcntl.h>
-#include <io.h>
 
 /*
  * Need to block out this include for building extensions with MetroWerks
@@ -52,29 +52,26 @@
 /*
  *  Pull in the typedef of TCHAR for windows.
  */
-#if !defined(_TCHAR_DEFINED)
-#   include <tchar.h>
-#   ifndef _TCHAR_DEFINED
-	/* Borland seems to forget to set this. */
-	typedef _TCHAR TCHAR;
-#	define _TCHAR_DEFINED
-#   endif
+#include <tchar.h>
+#ifndef _TCHAR_DEFINED
+    /* Borland seems to forget to set this. */
+    typedef _TCHAR TCHAR;
+#   define _TCHAR_DEFINED
+#endif
+#if defined(_MSC_VER) && defined(__STDC__)
+    /* VS2005 SP1 misses this. See [Bug #3110161] */
+    typedef _TCHAR TCHAR;
 #endif
 
-#ifdef __CYGWIN__
-#   ifndef _vsnprintf
-#	define _vsnprintf vsnprintf
-#   endif
-#   ifndef _wcsicmp
-#	define _wcsicmp wcscasecmp
-#   endif
-#else
-#   ifndef strncasecmp
-#	define strncasecmp strnicmp
-#   endif
-#   ifndef strcasecmp
-#	define strcasecmp stricmp
-#   endif
+#include <X11/Xlib.h>
+#include <X11/cursorfont.h>
+#include <X11/keysym.h>
+#include <X11/Xatom.h>
+#include <X11/Xutil.h>
+
+#ifndef __GNUC__
+#    define strncasecmp _strnicmp
+#    define strcasecmp _stricmp
 #endif
 
 #define NBBY 8
@@ -90,6 +87,13 @@
 #define REDO_KEYSYM_LOOKUP
 
 /*
+ * See ticket [916c1095438eae56]: GetVersionExW triggers warnings
+ */
+#if defined(_MSC_VER)
+#   pragma warning(disable:4996)
+#endif
+
+/*
  * The following macro checks to see whether there is buffered
  * input data available for a stdio FILE.
  */
@@ -101,29 +105,6 @@
 #endif /* _MSC_VER */
 
 /*
- * The following stubs implement various calls that don't do anything
- * under Windows.
- */
-
-#define TkFreeWindowId(dispPtr,w)
-#define TkInitXId(dispPtr)
-#define TkpCmapStressed(tkwin,colormap) (0)
-#define XFlush(display)
-#define XGrabServer(display)
-#define XUngrabServer(display)
-#define TkpSync(display)
-
-/*
- * The following functions are implemented as macros under Windows.
- */
-
-#define XFree(data) {if ((data) != NULL) ckfree((char *) (data));}
-#define XNoOp(display) {display->request++;}
-#define XSynchronize(display, bool) {display->request++;}
-#define XSync(display, bool) {display->request++;}
-#define XVisualIDFromVisual(visual) (visual->visualid)
-
-/*
  * The following Tk functions are implemented as macros under Windows.
  */
 
@@ -131,7 +112,7 @@
 	| ((p)->green & 0xff00) | (((p)->blue << 8) & 0xff0000)) | 0x20000000)
 
 /*
- * These calls implement native bitmaps which are not currently 
+ * These calls implement native bitmaps which are not currently
  * supported under Windows.  The macros eliminate the calls.
  */
 

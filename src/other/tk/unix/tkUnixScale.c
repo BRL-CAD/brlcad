@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -48,7 +46,7 @@ TkScale *
 TkpCreateScale(
     Tk_Window tkwin)
 {
-    return (TkScale *) ckalloc(sizeof(TkScale));
+    return ckalloc(sizeof(TkScale));
 }
 
 /*
@@ -73,7 +71,7 @@ void
 TkpDestroyScale(
     TkScale *scalePtr)
 {
-    Tcl_EventuallyFree((ClientData) scalePtr, TCL_DYNAMIC);
+    Tcl_EventuallyFree(scalePtr, TCL_DYNAMIC);
 }
 
 /*
@@ -264,7 +262,7 @@ DisplayVerticalValue(
 {
     register Tk_Window tkwin = scalePtr->tkwin;
     int y, width, length;
-    char valueString[PRINT_CHARS];
+    char valueString[TCL_DOUBLE_SPACE];
     Tk_FontMetrics fm;
 
     Tk_GetFontMetrics(scalePtr->tkfont, &fm);
@@ -343,7 +341,7 @@ DisplayHorizontalScale(
 	 */
 
 	if (tickInterval != 0) {
-	    char valueString[PRINT_CHARS];
+	    char valueString[TCL_DOUBLE_SPACE];
 	    double ticks, maxTicks;
 
 	    /*
@@ -480,7 +478,7 @@ DisplayHorizontalValue(
 {
     register Tk_Window tkwin = scalePtr->tkwin;
     int x, y, length, width;
-    char valueString[PRINT_CHARS];
+    char valueString[TCL_DOUBLE_SPACE];
     Tk_FontMetrics fm;
 
     x = TkScaleValueToPixel(scalePtr, value);
@@ -537,8 +535,9 @@ TkpDisplayScale(
     Tcl_Interp *interp = scalePtr->interp;
     Pixmap pixmap;
     int result;
-    char string[PRINT_CHARS];
+    char string[TCL_DOUBLE_SPACE];
     XRectangle drawnArea;
+    Tcl_DString buf;
 
     scalePtr->flags &= ~REDRAW_PENDING;
     if ((scalePtr->tkwin == NULL) || !Tk_IsMapped(scalePtr->tkwin)) {
@@ -549,24 +548,28 @@ TkpDisplayScale(
      * Invoke the scale's command if needed.
      */
 
-    Tcl_Preserve((ClientData) scalePtr);
+    Tcl_Preserve(scalePtr);
     if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->command != NULL)) {
-	Tcl_Preserve((ClientData) interp);
+	Tcl_Preserve(interp);
 	sprintf(string, scalePtr->format, scalePtr->value);
-	result = Tcl_VarEval(interp, scalePtr->command, " ", string,
-		(char *) NULL);
+	Tcl_DStringInit(&buf);
+	Tcl_DStringAppend(&buf, scalePtr->command, -1);
+	Tcl_DStringAppend(&buf, " ", -1);
+	Tcl_DStringAppend(&buf, string, -1);
+	result = Tcl_EvalEx(interp, Tcl_DStringValue(&buf), -1, 0);
+	Tcl_DStringFree(&buf);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, result);
 	}
-	Tcl_Release((ClientData) interp);
+	Tcl_Release(interp);
     }
     scalePtr->flags &= ~INVOKE_COMMAND;
     if (scalePtr->flags & SCALE_DELETED) {
-	Tcl_Release((ClientData) scalePtr);
+	Tcl_Release(scalePtr);
 	return;
     }
-    Tcl_Release((ClientData) scalePtr);
+    Tcl_Release(scalePtr);
 
 #ifndef TK_NO_DOUBLE_BUFFERING
     /*

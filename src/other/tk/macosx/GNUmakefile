@@ -9,8 +9,6 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-# RCS: @(#) $Id$
-#
 ########################################################################################################
 
 #-------------------------------------------------------------------------------------------------------
@@ -37,7 +35,7 @@ MANDIR			?= ${PREFIX}/man
 TCL_BUILD_DIR		?= ${BUILD_DIR}/tcl/${BUILD_STYLE}
 # location of installed tcl, only used if tcl in TCL_BUILD_DIR can't be found
 TCL_FRAMEWORK_DIR	?= /Library/Frameworks
-TCLSH_DIR		?= ${PREFIX}
+TCLSH_DIR		?= ${PREFIX}/bin
 
 # set to non-empty value to install manpages in addition to html help:
 INSTALL_MANPAGES	?=
@@ -136,7 +134,7 @@ endif
 
 INSTALL_TARGETS		= install-binaries install-libraries
 ifeq (${EMBEDDED_BUILD},)
-INSTALL_TARGETS		+= install-private-headers install-demos
+INSTALL_TARGETS		+= install-private-headers install-headers install-demos
 endif
 ifeq (${INSTALL_BUILD}_${EMBEDDED_BUILD}_${BUILD_STYLE},1__Deployment)
 INSTALL_TARGETS		+= html-tk

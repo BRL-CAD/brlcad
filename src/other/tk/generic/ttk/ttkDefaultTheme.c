@@ -1,5 +1,4 @@
-/* $Id$
- *
+/*
  * Copyright (c) 2003, Joe English
  *
  * Tk alternate theme, intended to match the MSUE and Gtk's (old) default theme
@@ -13,7 +12,7 @@
 #include <X11/Xutil.h>
 #include "ttkTheme.h"
 
-#if defined(WIN32)
+#if defined(_WIN32)
 static const int WIN32_XDRAWLINE_HACK = 1;
 #else
 static const int WIN32_XDRAWLINE_HACK = 0;
@@ -499,7 +498,7 @@ static void IndicatorElementDraw(
     IndicatorElement *indicator = elementRecord;
     Display *display = Tk_Display(tkwin);
     Ttk_Padding padding;
-    XColor *fgColor, *frameColor, *lightColor, *shadeColor, *indicatorColor, *borderColor;
+    XColor *fgColor, *frameColor, *shadeColor, *indicatorColor, *borderColor;
 
     int index, ix, iy;
     XGCValues gcValues;
@@ -529,7 +528,6 @@ static void IndicatorElementDraw(
      */
     fgColor = Tk_GetColorFromObj(tkwin, indicator->foregroundObj);
     frameColor = Tk_GetColorFromObj(tkwin, indicator->backgroundObj);
-    lightColor = Tk_GetColorFromObj(tkwin, indicator->lightColorObj);
     shadeColor = Tk_GetColorFromObj(tkwin, indicator->shadeColorObj);
     indicatorColor = Tk_GetColorFromObj(tkwin, indicator->colorObj);
     borderColor = Tk_GetColorFromObj(tkwin, indicator->borderColorObj);
@@ -724,8 +722,8 @@ static void MenubuttonArrowElementDraw(
     int width = 0, height = 0;
 
     Tk_GetPixelsFromObj(NULL, tkwin, arrow->sizeObj, &size);
-    Tcl_GetIndexFromObj(NULL, arrow->directionObj, directionStrings,
-	   ""/*message*/, 0/*flags*/, &postDirection);
+    Tcl_GetIndexFromObjStruct(NULL, arrow->directionObj, directionStrings,
+	   sizeof(char *), ""/*message*/, 0/*flags*/, &postDirection);
 
     /* ... this might not be such a great idea ... */
     switch (postDirection) {

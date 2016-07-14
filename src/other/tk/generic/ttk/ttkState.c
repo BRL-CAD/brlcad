@@ -1,6 +1,4 @@
 /*
- * $Id$
- *
  * Tk widget state utilities.
  *
  * Copyright (c) 2003 Joe English.  Freely redistributable.
@@ -100,8 +98,9 @@ static int StateSpecSetFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr)
 
     	if (stateNames[j] == 0) {
 	    if (interp) {
-		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "Invalid state name ", stateName,NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"Invalid state name %s", stateName));
+		Tcl_SetErrorCode(interp, "TTK", "VALUE", "STATE", NULL);
 	    }
 	    return TCL_ERROR;
 	}
@@ -218,8 +217,8 @@ Tcl_Obj *Ttk_StateMapLookup(
 	    return specs[j+1];
     }
     if (interp) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "No match in state map", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj("No match in state map", -1));
+	Tcl_SetErrorCode(interp, "TTK", "STATE", "UNMATCHED", NULL);
     }
     return NULL;
 }
@@ -242,10 +241,11 @@ Ttk_StateMap Ttk_GetStateMapFromObj(
 	return NULL;
 
     if (nSpecs % 2 != 0) {
-	if (interp)
-	    Tcl_SetResult(interp,
-		    "State map must have an even number of elements",
-		    TCL_STATIC);
+	if (interp) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "State map must have an even number of elements", -1));
+	    Tcl_SetErrorCode(interp, "TTK", "VALUE", "STATEMAP", NULL);
+	}
 	return 0;
     }
 

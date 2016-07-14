@@ -5,8 +5,6 @@
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -216,9 +214,31 @@ set weirdTag "funny . +- 22.1\n\t{"
 set weirdMark "asdf \n{-+ 66.2\t"
 .t mark set $weirdMark 4.0
 .t tag config y -relief raised
+set weirdImage "foo-1"
+.t image create 2.1 -image [image create photo $weirdImage]
+set weirdEmbWin ".t.bar-1"
+entry $weirdEmbWin
+.t window create 3.1 -window $weirdEmbWin
 test textIndex-3.1 {TkTextGetIndex, weird mark names} {
     list [catch {.t index $weirdMark} msg] $msg
 } {0 4.0}
+test textIndex-3.2 {TkTextGetIndex, weird mark names} knownBug {
+    list [catch {.t index "$weirdMark -1char"} msg] $msg
+} {0 4.0}
+test textIndex-3.3 {TkTextGetIndex, weird embedded window names} {
+    list [catch {.t index $weirdEmbWin} msg] $msg
+} {0 3.1}
+test textIndex-3.4 {TkTextGetIndex, weird embedded window names} knownBug {
+    list [catch {.t index "$weirdEmbWin -1char"} msg] $msg
+} {0 3.0}
+test textIndex-3.5 {TkTextGetIndex, weird image names} {
+    list [catch {.t index $weirdImage} msg] $msg
+} {0 2.1}
+test textIndex-3.6 {TkTextGetIndex, weird image names} knownBug {
+    list [catch {.t index "$weirdImage -1char"} msg] $msg
+} {0 2.0}
+.t delete 3.1  ; # remove the weirdEmbWin
+.t delete 2.1  ; # remove the weirdImage
 
 test textIndex-4.1 {TkTextGetIndex, tags} {
     list [catch {.t index x.first} msg] $msg
@@ -784,7 +804,7 @@ test textIndex-19.12 {Display lines} {
 } {2.20}
 
 test textIndex-19.13 {Display lines} {
-    destroy .t
+    destroy {*}[pack slaves .]
     text .txt -height 1 -wrap word -yscroll ".sbar set" -width 400
     scrollbar .sbar -command ".txt yview"
     grid .txt .sbar -sticky news
@@ -885,6 +905,21 @@ test textIndex-22.12 {text index wordstart, unicode} {
 test textIndex-22.13 {text index wordstart, unicode} {
     text_test_word wordstart "\uc700\uc700 abc" 8
 } 3
+test textIndex-22.14 {text index wordstart, unicode, start index at internal segment start} {
+    catch {destroy .t}
+    text .t
+    .t insert end "C'est du texte en fran\u00e7ais\n"
+    .t insert end "\u042D\u0442\u043E\u0020\u0442\u0435\u043A\u0441\u0442\u0020\u043D\u0430\u0020\u0440\u0443\u0441\u0441\u043A\u043E\u043C"
+    .t mark set insert 1.23
+    set res [.t index "1.23 wordstart"]
+    .t mark set insert 2.16
+    lappend res [.t index "2.16 wordstart"] [.t index "2.15 wordstart"]
+} {1.18 2.13 2.13}
+test textIndex-22.15 {text index display wordstart} {
+    catch {destroy .t}
+    text .t
+    .t index "1.0 display wordstart"  ; # used to crash
+} 1.0
 
 test textIndex-23.1 {text paragraph start} {
     pack [text .t2]
@@ -907,6 +942,19 @@ test textIndex-24.1 {text mark prev} {
     destroy .t2
     set res
 } {1.0}
+
+test textIndex-25.1 {IndexCountBytesOrdered, bug [3f1f79abcf]} {
+    pack [text .t2]
+    .t2 tag configure elided -elide 1
+    .t2 insert end "01\n02\n03\n04\n05\n06\n07\n08\n09\n10\n"
+    .t2 insert end "11\n12\n13\n14\n15\n16\n17\n18\n19\n20\n"
+    .t2 insert end "21\n22\n23\n25\n26\n27\n28\n29\n30\n31"
+    .t2 insert end "32\n33\n34\n36\n37\n38\n39" elided
+    # then this used to crash Tk:
+    .t2 see end
+    focus -force .t2   ; # to see the cursor blink
+    destroy .t2
+} {}
 
 # cleanup
 rename textimage {}

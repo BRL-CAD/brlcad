@@ -1,10 +1,8 @@
 '\"
 '\" Copyright (c) 2004 Joe English
 '\"
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Geometry 3 8.5 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 Ttk_MakeBox, Ttk_PadBox, Ttk_ExpandBox, Ttk_PackBox, Ttk_StickBox, Ttk_PlaceBox, Ttk_BoxContains, Ttk_MakePadding, Ttk_UniformPadding, Ttk_AddPadding, Ttk_RelievePadding, Ttk_GetPaddingFromObj, Ttk_GetBorderFromObj, Ttk_GetStickyFromObj \- Tk themed geometry utilities
@@ -90,7 +88,7 @@ One of the standard Tk relief options
 (TK_RELIEF_RAISED, TK_RELIEF_SUNKEN, etc.).  
 See \fBTk_GetReliefFromObj\fR.
 .AP short right in
-Extra padding (in pixles) to add to the right side of a region.
+Extra padding (in pixels) to add to the right side of a region.
 .AP Ttk_Side side in
 One of \fBTTK_SIDE_LEFT\fR, \fBTTK_SIDE_TOP\fR, 
 \fBTTK_SIDE_RIGHT\fR, or \fBTTK_SIDE_BOTTOM\fR.
@@ -130,7 +128,7 @@ typedef struct {
 .CE
 All coordinates are relative to the window.
 .PP
-\fBTtk_MakeBox\fR is a convenience routine that contsructs
+\fBTtk_MakeBox\fR is a convenience routine that constructs
 a \fBTtk_Box\fR structure representing a region \fIwidth\fR pixels
 wide, \fIheight\fR pixels tall, at the specified \fIx, y\fR coordinates.
 .PP
@@ -175,7 +173,7 @@ typedef struct {
 } \fBTtk_Padding\fR;
 .CE
 .PP
-\fBTtk_MakePadding\fR is a convenience routine that contsructs
+\fBTtk_MakePadding\fR is a convenience routine that constructs
 a \fBTtk_Padding\fR structure with the specified left, top, right, and bottom
 components.
 .PP

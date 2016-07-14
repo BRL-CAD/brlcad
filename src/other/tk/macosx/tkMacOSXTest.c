@@ -5,24 +5,21 @@
  *	the Macintosh platform.
  *
  * Copyright (c) 1996 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2005-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2005-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
 
 /*
  * Forward declarations of procedures defined later in this file:
  */
 
-static int		DebuggerCmd (ClientData dummy, Tcl_Interp *interp,
-			    int argc, const char **argv);
-MODULE_SCOPE int	TkplatformtestInit(Tcl_Interp *interp);
+static int		DebuggerObjCmd (ClientData dummy, Tcl_Interp *interp,
+			    int objc, Tcl_Obj *const objv[]);
 
 /*
  *----------------------------------------------------------------------
@@ -49,7 +46,7 @@ TkplatformtestInit(
      * Add commands for platform specific tests on MacOS here.
      */
 
-    Tcl_CreateCommand(interp, "debugger", DebuggerCmd,
+    Tcl_CreateObjCommand(interp, "debugger", DebuggerObjCmd,
 	    (ClientData) 0, (Tcl_CmdDeleteProc *) NULL);
 
     return TCL_OK;
@@ -58,7 +55,7 @@ TkplatformtestInit(
 /*
  *----------------------------------------------------------------------
  *
- * DebuggerCmd --
+ * DebuggerObjCmd --
  *
  *	This procedure simply calls the low level debugger.
  *
@@ -72,12 +69,21 @@ TkplatformtestInit(
  */
 
 static int
-DebuggerCmd(
+DebuggerObjCmd(
     ClientData clientData,		/* Not used. */
     Tcl_Interp *interp,			/* Not used. */
-    int argc,				/* Not used. */
-    const char **argv)			/* Not used. */
+    int objc,				/* Not used. */
+    Tcl_Obj *const objv[])			/* Not used. */
 {
     Debugger();
     return TCL_OK;
 }
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

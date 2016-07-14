@@ -9,13 +9,18 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
 #ifdef HAVE_XSS
-#include <X11/extensions/scrnsaver.h>
+#   include <X11/extensions/scrnsaver.h>
+#   ifdef __APPLE__
+/* Support for weak-linked libXss. */
+#	define HaveXSSLibrary()	(XScreenSaverQueryInfo != NULL)
+#   else
+/* Other platforms always link libXss. */
+#	define HaveXSSLibrary()	(1)
+#   endif
 #endif
 
 /*
@@ -28,7 +33,7 @@
  *	server" command.
  *
  * Results:
- *	None.
+ *	Sets the interpreter result.
  *
  * Side effects:
  *	None.
@@ -43,14 +48,11 @@ TkGetServerInfo(
     Tk_Window tkwin)		/* Token for window; this selects a particular
 				 * display and server. */
 {
-    char buffer[8 + TCL_INTEGER_SPACE * 2];
-    char buffer2[TCL_INTEGER_SPACE];
-
-    sprintf(buffer, "X%dR%d ", ProtocolVersion(Tk_Display(tkwin)),
-	    ProtocolRevision(Tk_Display(tkwin)));
-    sprintf(buffer2, " %d", VendorRelease(Tk_Display(tkwin)));
-    Tcl_AppendResult(interp, buffer, ServerVendor(Tk_Display(tkwin)),
-	    buffer2, (char *) NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("X%dR%d %s %d",
+	    ProtocolVersion(Tk_Display(tkwin)),
+	    ProtocolRevision(Tk_Display(tkwin)),
+	    ServerVendor(Tk_Display(tkwin)),
+	    VendorRelease(Tk_Display(tkwin))));
 }
 
 /*
@@ -71,11 +73,11 @@ TkGetServerInfo(
  *----------------------------------------------------------------------
  */
 
-CONST char *
+const char *
 TkGetDefaultScreenName(
     Tcl_Interp *interp,		/* Interp used to find environment
 				 * variables. */
-    CONST char *screenName)	/* Screen name from command line, or NULL. */
+    const char *screenName)	/* Screen name from command line, or NULL. */
 {
     if ((screenName == NULL) || (screenName[0] == '\0')) {
 	screenName = Tcl_GetVar2(interp, "env", "DISPLAY", TCL_GLOBAL_ONLY);
@@ -209,13 +211,9 @@ Tk_GetUserInactiveTime(
      * on some buggy versions of XFree86.
      */
 
-    if (
-#ifdef __APPLE__
- 	XScreenSaverQueryInfo != NULL && /* Support for weak-linked libXss. */
-#endif
-	XScreenSaverQueryExtension(dpy, &eventBase, &errorBase) &&
-	XScreenSaverQueryVersion(dpy, &major, &minor)) {
-
+    if (HaveXSSLibrary()
+	    && XScreenSaverQueryExtension(dpy, &eventBase, &errorBase)
+	    && XScreenSaverQueryVersion(dpy, &major, &minor)) {
 	XScreenSaverInfo *info = XScreenSaverAllocInfo();
 
 	if (info == NULL) {

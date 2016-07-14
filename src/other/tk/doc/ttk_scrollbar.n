@@ -5,11 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SOURCE: tk/doc/scrollbar.n, r1.4
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH ttk::scrollbar n 8.5 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 ttk::scrollbar \- Control the viewport of a scrollable widget 
@@ -51,7 +48,7 @@ Specifies the orientation of the scrollbar.
 .SH "WIDGET COMMAND"
 .PP
 .TP
-\fIpathName \fBcget\fR \fIoption\fR
+\fIpathName \fBcget \fIoption\fR
 Returns the current value of the specified \fIoption\fR; see \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
@@ -61,14 +58,14 @@ Modify or query widget options; see \fIttk::widget(n)\fR.
 Returns the scrollbar settings in the form of a list whose
 elements are the arguments to the most recent \fBset\fR widget command.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
+\fIpathName \fBidentify \fIx y\fR
 Returns the name of the element at position \fIx\fR, \fIy\fR.
 See \fIttk::widget(n)\fR.
 .TP
 \fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
 Test the widget state; see \fIttk::widget(n)\fR.
 .TP
-\fIpathName \fBset\fR \fIfirst last\fR
+\fIpathName \fBset \fIfirst last\fR
 This command is normally invoked by the scrollbar's associated widget 
 from an \fB\-xscrollcommand\fR or \fB\-yscrollcommand\fR callback.
 Specifies the visible range to be displayed.

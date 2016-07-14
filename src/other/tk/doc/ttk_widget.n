@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-'\"
+.TH ttk::widget n 8.5 Tk "Tk Themed Widget"
 .so man.macros
-.TH ttk::widget n 8.5.9 Tk "Tk Themed Widget"
 .BS
 .SH NAME
 ttk::widget \- Standard options and commands supported by Tk themed widgets
@@ -56,7 +54,7 @@ The first fraction indicates the first information in the widget
 that is visible in the window, and the second fraction indicates
 the information just after the last portion that is visible.
 .PP
-Typically the \fBxScrollCommand\fR option consists of the path name
+Typically the \fB\-xscrollcommand\fR option consists of the path name
 of a \fBscrollbar\fR widget followed by
 .QW set ,
 e.g.
@@ -77,7 +75,7 @@ and other button-like widgets:
 Specifies a text string to be displayed inside the widget
 (unless overridden by \fB\-textvariable\fR).
 .OP \-textvariable textVariable Variable
-Specifies the name of variable whose value will be used
+Specifies the name of a global variable whose value will be used
 in place of the \fB\-text\fR resource.
 .OP \-underline underline Underline
 If set, specifies the integer index (0-based) of a character to underline
@@ -125,11 +123,13 @@ but the \fBstate\fR widget command
 does not affect the \fB\-state\fR option.
 .SH COMMANDS
 .TP
-\fIpathName \fBcget\fR \fIoption\fR
+\fIpathName \fBcget \fIoption\fR
+.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+.
 Query or modify the configuration options of the widget.
 If one or more \fIoption\-value\fR pairs are specified,
 then the command modifies the given widget option(s)
@@ -144,14 +144,16 @@ and current value.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR.
 .TP
-\fIpathName \fBidentify\fR \fBelement\fR \fIx y\fR
+\fIpathName \fBidentify element \fIx y\fR
+.
 Returns the name of the element under the point given
 by \fIx\fR and \fIy\fR, or an empty string if the point does
 not lie within any element.
 \fIx\fR and \fIy\fR are pixel coordinates relative to the widget.
 Some widgets accept other \fBidentify\fR subcommands.
 .TP
-\fIpathName \fBinstate\fR \fIstatespec\fR ?\fIscript\fR?
+\fIpathName \fBinstate \fIstatespec\fR ?\fIscript\fR?
+.
 Test the widget's state.
 If \fIscript\fR is not specified, returns 1 if
 the widget state matches \fIstatespec\fR and 0 otherwise.
@@ -161,6 +163,7 @@ if {[\fIpathName\fR instate \fIstateSpec\fR]} \fIscript\fR
 .CE
 .TP
 \fIpathName \fBstate\fR ?\fIstateSpec\fR?
+.
 Modify or inquire widget state.
 If \fIstateSpec\fR is present, sets the widget state:
 for each flag in \fIstateSpec\fR, sets the corresponding flag
@@ -180,6 +183,7 @@ The widget state is a bitmap of independent state flags.
 Widget state flags include:
 .TP
 \fBactive\fR
+.
 The mouse cursor is over the widget
 and pressing a mouse button will cause some action to occur. (aka
 .QW prelight
@@ -189,19 +193,23 @@ and pressing a mouse button will cause some action to occur. (aka
 .QW hover ).
 .TP
 \fBdisabled\fR
+.
 Widget is disabled under program control (aka
 .QW unavailable ,
-.QW inactive )
+.QW inactive ).
 .TP
 \fBfocus\fR
-Widget has keyboard focus
+.
+Widget has keyboard focus.
 .TP
 \fBpressed\fR
+.
 Widget is being pressed (aka
 .QW armed
 in Motif).
 .TP
 \fBselected\fR
+.
 .QW On ,
 .QW true ,
 or
@@ -209,6 +217,7 @@ or
 for things like checkbuttons and radiobuttons.
 .TP
 \fBbackground\fR
+.
 Windows and the Mac have a notion of an
 .QW active
 or foreground window.
@@ -216,9 +225,11 @@ The \fBbackground\fR state is set for widgets in a background window,
 and cleared for those in the foreground window.
 .TP
 \fBreadonly\fR
+.
 Widget should not allow user modification.
 .TP
 \fBalternate\fR
+.
 A widget-specific alternate display format.
 For example, used for checkbuttons and radiobuttons in the
 .QW tristate
@@ -227,11 +238,13 @@ or
 state, and for buttons with \fB\-default active\fR.
 .TP
 \fBinvalid\fR
+.
 The widget's value is invalid.
 (Potential uses: scale widget value out of bounds,
 entry widget value failed validation.)
 .TP
 \fBhover\fR
+.
 The mouse cursor is within the widget.
 This is similar to the \fBactive\fP state;
 it is used in some themes for widgets that
@@ -247,13 +260,13 @@ indicating that the bit is off.
 set b [ttk::button .b]
 
 # Disable the widget:
-$b state disabled
+$b \fBstate\fR disabled
 
 # Invoke the widget only if it is currently pressed and enabled:
-$b instate {pressed !disabled} { .b invoke }
+$b \fBinstate\fR {pressed !disabled} { .b invoke }
 
 # Reenable widget:
-$b state !disabled
+$b \fBstate\fR !disabled
 .CE
 .SH "SEE ALSO"
 ttk::intro(n), ttk::style(n)

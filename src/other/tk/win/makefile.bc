@@ -3,7 +3,7 @@
 #   for Visual C++ that came with tk 8.3.3
 #
 # Some "not so obvious" details in this makefile are preceded by a comment
-# "maintenance hint", which tries to explain what's going on. Better to 
+# "maintenance hint", which tries to explain what's going on. Better to
 # leave those in place.
 # Helmut Giese, July 2002
 #
@@ -12,8 +12,6 @@
 #
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
-#
-# RCS: @(#) $Id$
 
 # Does not depend on the presence of any environment variables in
 # order to compile tcl; all needed information is derived from
@@ -163,6 +161,7 @@ TKOBJS = \
 	$(TMPDIR)\tkAtom.obj \
 	$(TMPDIR)\tkBind.obj \
 	$(TMPDIR)\tkBitmap.obj \
+	$(TMPDIR)\tkBusy.obj \
 	$(TMPDIR)\tkButton.obj \
 	$(TMPDIR)\tkCanvArc.obj \
 	$(TMPDIR)\tkCanvBmap.obj \
@@ -196,6 +195,7 @@ TKOBJS = \
 	$(TMPDIR)\tkImgGIF.obj \
 	$(TMPDIR)\tkImgPPM.obj \
 	$(TMPDIR)\tkImgPhoto.obj \
+	$(TMPDIR)\tkImgPhInstance.obj \
 	$(TMPDIR)\tkImgUtil.obj \
 	$(TMPDIR)\tkListbox.obj \
 	$(TMPDIR)\tkMacWinMenu.obj \
@@ -227,7 +227,6 @@ TKOBJS = \
 	$(TMPDIR)\tkUtil.obj \
 	$(TMPDIR)\tkVisual.obj \
 	$(TMPDIR)\tkStubInit.obj \
-	$(TMPDIR)\tkStubLib.obj \
 	$(TMPDIR)\tkWindow.obj
 
 # Maintenance hint: Please have multiple members of TKSTUBOBJS be separated
@@ -244,7 +243,7 @@ RCDIR       = $(WINDIR)\rc
 TK_INCLUDES = -I$(WINDIR) -I$(GENERICDIR) -I$(BITMAPDIR) -I$(XLIBDIR) \
       -I$(TCLDIR)\generic -I$(TCLDIR)\win
 
-TK_DEFINES  = -D__WIN32__ $(DEBUGDEFINES) $(THREADDEFINES) SUPPORT_CONFIG_EMBEDDED
+TK_DEFINES  = -D_WIN32 $(DEBUGDEFINES) $(THREADDEFINES) SUPPORT_CONFIG_EMBEDDED
 
 ######################################################################
 # Compile flags
@@ -304,10 +303,10 @@ plugin:   setup $(TKPLUGINDLL) $(WISHP)
 tktest:   setup $(TKTEST) $(CAT32)
 
 # Maintenance hint: We want to set environment variables before calling tktest.
-#  If we do this in the form of normal commands, they will not persist up to 
+#  If we do this in the form of normal commands, they will not persist up to
 #  the call of tktest. Therfore we put all commands wanted into a batch file.
 #  The normal way of using 'echo >x.bat' and 'echo >>x.bat' does not work here
-#  because we cannot write '... > tktest.txt' this way. Hence this advanced 
+#  because we cannot write '... > tktest.txt' this way. Hence this advanced
 #  form of loop hopping:
 #    - Have MAKE produce a temporary file with the content we want.
 #    - Use it as input to the COPY command to produce a batch file.
@@ -315,7 +314,7 @@ tktest:   setup $(TKTEST) $(CAT32)
 #
 test:     setup $(TKTEST) $(TKLIB) $(CAT32)
   copy &&!
-  set TCL_LIBRARY=$(TCLDIR)/library 
+  set TCL_LIBRARY=$(TCLDIR)/library
   set PATH=$(TCLDIR)\win\$(TMPDIRNAME);$(PATH)
   $(TKTEST) $(ROOT)/tests/all.tcl > tktest.txt
 ! _test.bat
@@ -368,7 +367,7 @@ install-libraries:
 
 $(TKLIB): $(TKDLL) $(TKSTUBLIB)
 
-# Maintenance hint: The macro puts a '+-' before the first member of 
+# Maintenance hint: The macro puts a '+-' before the first member of
 #   TKSTUBOBJS, than replaces any ' ' with ' +-' - together putting '+-' in
 #   front of any member of TKSTUBOBJS (provided, they are separated in their
 #   defintion by just one space).
@@ -534,6 +533,5 @@ $(GENERICDIR)/tkMacWinMenu.c: $(GENERICDIR)/tkMenu.h
 $(GENERICDIR)/tkMenu.c: $(GENERICDIR)/tkMenu.h
 $(GENERICDIR)/tkMenuDraw.c: $(GENERICDIR)/tkMenu.h
 $(WINDIR)/tkWinMenu.c: $(GENERICDIR)/tkMenu.h
-
 
 

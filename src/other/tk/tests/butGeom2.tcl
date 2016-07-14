@@ -1,7 +1,5 @@
 # This file creates a visual test for button layout.  It is part of
 # the Tk visual test suite, which is invoked via the "visual" script.
-#
-# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t
@@ -37,7 +35,7 @@ pack .t.anchorLabel .t.control.left.f -in .t.control.left -side top -anchor w
 foreach opt {activebackground activeforeground background disabledforeground foreground highlightbackground highlightcolor } {
     #button .t.color-$opt -text $opt -command "config -$opt \[tk_chooseColor]"
     menubutton .t.color-$opt -text $opt -menu .t.color-$opt.m -indicatoron 1 \
-        -relief raised -bd 2 
+        -relief raised -bd 2
     menu .t.color-$opt.m -tearoff 0
     .t.color-$opt.m add command -label Red -command "config -$opt red"
     .t.color-$opt.m add command -label Green -command "config -$opt green"

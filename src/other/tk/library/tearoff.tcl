@@ -2,8 +2,6 @@
 #
 # This file contains procedures that implement tear-off menus.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 #
@@ -81,6 +79,11 @@ proc ::tk::TearOffMenu {w {x 0} {y 0}} {
     }
 
     if {[tk windowingsystem] eq "win32"} {
+        # [Bug 3181181]: Find the toplevel window for the menu
+        set parent [winfo toplevel $parent]
+        while {[winfo class $parent] eq "Menu"} {
+            set parent [winfo toplevel [winfo parent $parent]]
+        }
 	wm transient $menu [winfo toplevel $parent]
 	wm attributes $menu -toolwindow 1
     }
@@ -147,7 +150,7 @@ proc ::tk::MenuDup {src dst type} {
 
     set tags [bindtags $src]
     set srcLen [string length $src]
- 
+
     # Copy tags to x, replacing each substring of src with dst.
 
     while {[set index [string first $src $tags]] != -1} {

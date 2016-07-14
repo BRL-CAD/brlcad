@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_GetAnchorFromObj 3 8.1 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_GetAnchorFromObj, Tk_GetAnchor, Tk_NameOfAnchor \- translate between strings and anchor positions
@@ -30,17 +28,20 @@ const char *
 Interpreter to use for error reporting, or NULL.
 .AP Tcl_Obj *objPtr in/out
 String value contains name of anchor point:
-.QW n  ,
-.QW ne ,
-.QW e  ,
-.QW se ,
-.QW s  ,
-.QW sw ,
-.QW w  ,
-.QW nw ,
+.QW \fBn\fR  ,
+.QW \fBne\fR ,
+.QW \fBe\fR  ,
+.QW \fBse\fR ,
+.QW \fBs\fR  ,
+.QW \fBsw\fR ,
+.QW \fBw\fR  ,
+.QW \fBnw\fR ,
 or
-.QW center ;
-internal rep will be modified to cache corresponding Tk_Anchor.
+.QW \fBcenter\fR ;
+internal rep will be modified to cache corresponding Tk_Anchor. In the
+case of
+.QW \fBcenter\fR
+on input, a non-empty abbreviation of it may also be used on input.
 .AP "const char" *string in
 Same as \fIobjPtr\fR except description of anchor point is passed as
 a string.

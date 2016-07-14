@@ -1,38 +1,19 @@
 /*
  * tkStubLib.c --
  *
- *	Stub object that will be statically linked into extensions that wish
+ *	Stub object that will be statically linked into extensions that want
  *	to access Tk.
  *
- * Copyright (c) 1998 Paul Duffin.
  * Copyright (c) 1998-1999 by Scriptics Corporation.
+ * Copyright (c) 1998 Paul Duffin.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
-
-/*
- * We need to ensure that we use the stub macros so that this file contains no
- * references to any of the stub functions. This will make it possible to
- * build an extension that references Tk_InitStubs but doesn't end up
- * including the rest of the stub functions.
- */
-
-#ifndef USE_TCL_STUBS
-#define USE_TCL_STUBS
-#endif
-#undef USE_TCL_STUB_PROCS
-
-#ifndef USE_TK_STUBS
-#define USE_TK_STUBS
-#endif
-#undef USE_TK_STUB_PROCS
 
 #include "tkInt.h"
 
-#ifdef __WIN32__
+#ifdef _WIN32
 #include "tkWinInt.h"
 #endif
 
@@ -40,7 +21,7 @@
 #include "tkMacOSXInt.h"
 #endif
 
-#if !(defined(__WIN32__) || defined(MAC_OSX_TK))
+#if !(defined(_WIN32) || defined(MAC_OSX_TK))
 #include "tkUnixInt.h"
 #endif
 
@@ -48,17 +29,24 @@
 #include "tkPlatDecls.h"
 #include "tkIntXlibDecls.h"
 
-TkStubs *tkStubsPtr = NULL;
-TkPlatStubs *tkPlatStubsPtr = NULL;
-TkIntStubs *tkIntStubsPtr = NULL;
-TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
-TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
+MODULE_SCOPE const TkStubs *tkStubsPtr;
+MODULE_SCOPE const TkPlatStubs *tkPlatStubsPtr;
+MODULE_SCOPE const TkIntStubs *tkIntStubsPtr;
+MODULE_SCOPE const TkIntPlatStubs *tkIntPlatStubsPtr;
+MODULE_SCOPE const TkIntXlibStubs *tkIntXlibStubsPtr;
+
+const TkStubs *tkStubsPtr = NULL;
+const TkPlatStubs *tkPlatStubsPtr = NULL;
+const TkIntStubs *tkIntStubsPtr = NULL;
+const TkIntPlatStubs *tkIntPlatStubsPtr = NULL;
+const TkIntXlibStubs *tkIntXlibStubsPtr = NULL;
 
 /*
  * Use our own isdigit to avoid linking to libc on windows
  */
 
-static int isDigit(const int c)
+static int
+isDigit(const int c)
 {
     return (c >= '0' && c <= '9');
 }
@@ -80,66 +68,73 @@ static int isDigit(const int c)
  *
  *----------------------------------------------------------------------
  */
-
-#ifdef Tk_InitStubs
 #undef Tk_InitStubs
-#endif
-
-CONST char *
+MODULE_SCOPE const char *
 Tk_InitStubs(
     Tcl_Interp *interp,
-    CONST char *version,
+    const char *version,
     int exact)
 {
-    CONST char *actualVersion;
-    TkStubs **stubsPtrPtr = &tkStubsPtr;	/* squelch warning */
+    const char *packageName = "Tk";
+    const char *errMsg = NULL;
+    ClientData clientData = NULL;
+    const char *actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp,
+	    packageName, version, 0, &clientData);
+    const TkStubs *stubsPtr = clientData;
 
-    actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 0,
-	    (ClientData *) stubsPtrPtr);
-    if (!actualVersion) {
+    if (actualVersion == NULL) {
 	return NULL;
     }
-    if (exact) {
-        CONST char *p = version;
-        int count = 0;
 
-        while (*p) {
-            count += !isDigit(*p++);
-        }
-        if (count == 1) {
-	    CONST char *q = actualVersion;
+    if (exact) {
+	const char *p = version;
+	int count = 0;
+
+	while (*p) {
+	    count += !isDigit(*p++);
+	}
+	if (count == 1) {
+	    const char *q = actualVersion;
 
 	    p = version;
 	    while (*p && (*p == *q)) {
 		p++; q++;
 	    }
-            if (*p) {
+	    if (*p || isDigit(*q)) {
 		/* Construct error message */
-		Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
-                return NULL;
-
-            }
-        } else {
-            actualVersion = Tcl_PkgRequireEx(interp, "Tk", version, 1, NULL);
-            if (actualVersion == NULL) {
-                return NULL;
-            }
-        }
+		tclStubsPtr->tcl_PkgRequireEx(interp, packageName, version, 1, NULL);
+		return NULL;
+	    }
+	} else {
+	    actualVersion = tclStubsPtr->tcl_PkgRequireEx(interp, packageName,
+		    version, 1, NULL);
+	    if (actualVersion == NULL) {
+		return NULL;
+	    }
+	}
     }
-
-    if (!tkStubsPtr) {
-	Tcl_SetResult(interp,
-		"This implementation of Tk does not support stubs",
-		TCL_STATIC);
-	return NULL;
+    if (stubsPtr == NULL) {
+	errMsg = "missing stub table pointer";
+    } else {
+	tkStubsPtr = stubsPtr;
+	if (stubsPtr->hooks) {
+	    tkPlatStubsPtr = stubsPtr->hooks->tkPlatStubs;
+	    tkIntStubsPtr = stubsPtr->hooks->tkIntStubs;
+	    tkIntPlatStubsPtr = stubsPtr->hooks->tkIntPlatStubs;
+	    tkIntXlibStubsPtr = stubsPtr->hooks->tkIntXlibStubs;
+	} else {
+	    tkPlatStubsPtr = NULL;
+	    tkIntStubsPtr = NULL;
+	    tkIntPlatStubsPtr = NULL;
+	    tkIntXlibStubsPtr = NULL;
+	}
+	return actualVersion;
     }
-
-    tkPlatStubsPtr = tkStubsPtr->hooks->tkPlatStubs;
-    tkIntStubsPtr = tkStubsPtr->hooks->tkIntStubs;
-    tkIntPlatStubsPtr = tkStubsPtr->hooks->tkIntPlatStubs;
-    tkIntXlibStubsPtr = tkStubsPtr->hooks->tkIntXlibStubs;
-
-    return actualVersion;
+    tclStubsPtr->tcl_ResetResult(interp);
+    tclStubsPtr->tcl_AppendResult(interp, "Error loading ", packageName,
+	    " (requested version ", version, ", actual version ",
+	    actualVersion, "): ", errMsg, NULL);
+    return NULL;
 }
 
 /*

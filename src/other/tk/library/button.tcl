@@ -4,8 +4,6 @@
 # checkbutton, and radiobutton widgets and provides procedures
 # that help in implementing those bindings.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 2002 ActiveState Corporation.
@@ -19,6 +17,7 @@
 #-------------------------------------------------------------------------
 
 if {[tk windowingsystem] eq "aqua"} {
+
     bind Radiobutton <Enter> {
 	tk::ButtonEnter %W
     }
@@ -41,7 +40,7 @@ if {[tk windowingsystem] eq "aqua"} {
 	tk::ButtonLeave %W
     }
 }
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
     bind Checkbutton <equal> {
 	tk::CheckRadioInvoke %W select
     }
@@ -111,6 +110,15 @@ bind Checkbutton <space> {
 bind Radiobutton <space> {
     tk::CheckRadioInvoke %W
 }
+bind Button <<Invoke>> {
+    tk::ButtonInvoke %W
+}
+bind Checkbutton <<Invoke>> {
+    tk::CheckRadioInvoke %W
+}
+bind Radiobutton <<Invoke>> {
+    tk::CheckRadioInvoke %W
+}
 
 bind Button <FocusIn> {}
 bind Button <Enter> {
@@ -133,10 +141,10 @@ bind Radiobutton <Leave> {
     tk::ButtonLeave %W
 }
 
-if {"windows" eq $tcl_platform(platform)} {
+if {"win32" eq [tk windowingsystem]} {
 
 #########################
-# Windows implementation 
+# Windows implementation
 #########################
 
 # ::tk::ButtonEnter --
@@ -748,3 +756,10 @@ proc ::tk::CheckLeave {w} {
 
     set Priv(window) ""
 }
+
+return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

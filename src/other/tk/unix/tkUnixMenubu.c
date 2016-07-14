@@ -8,22 +8,11 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
 #include "tkMenubutton.h"
 
-/*
- * The structure below defines menubutton class behavior by means of functions
- * that can be invoked from generic window code.
- */
-
-Tk_ClassProcs tkpMenubuttonClass = {
-    sizeof(Tk_ClassProcs),	/* size */
-    TkMenuButtonWorldChanged,	/* worldChangedProc */
-};
 
 /*
  *----------------------------------------------------------------------
@@ -45,7 +34,7 @@ TkMenuButton *
 TkpCreateMenuButton(
     Tk_Window tkwin)
 {
-    return (TkMenuButton *)ckalloc(sizeof(TkMenuButton));
+    return ckalloc(sizeof(TkMenuButton));
 }
 
 /*

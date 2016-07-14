@@ -3,8 +3,6 @@
 # This demonstration script creates several entry widgets whose
 # permitted input is constrained in some way.  It also shows off a
 # password entry.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -171,8 +169,8 @@ bind $w.l3.e <FocusIn> {
 	after idle {%W selection clear}
     }
 }
-bind $w.l3.e <Left>  {phoneSkipLeft  %W}
-bind $w.l3.e <Right> {phoneSkipRight %W}
+bind $w.l3.e <<PrevChar>> {phoneSkipLeft  %W}
+bind $w.l3.e <<NextChar>> {phoneSkipRight %W}
 pack $w.l3.e -fill x -expand 1 -padx 1m -pady 1m
 
 labelframe $w.l4 -text "Password Entry"

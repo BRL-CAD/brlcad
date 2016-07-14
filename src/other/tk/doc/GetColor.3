@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_AllocColorFromObj 3 8.1 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_AllocColorFromObj, Tk_GetColor, Tk_GetColorFromObj, Tk_GetColorByValue, Tk_NameOfColor, Tk_FreeColorFromObj, Tk_FreeColor \- maintain database of colors
@@ -60,7 +58,6 @@ call to \fBTk_AllocColorFromObj\fR, \fBTk_GetColor\fR or
 Drawable in which the result graphics context will be used.  Must have
 same screen and depth as the window for which the color was allocated.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures manage the colors being used by a Tk application.
@@ -70,8 +67,8 @@ colormap space is exhausted.
 .PP
 Given a textual description of a color, \fBTk_AllocColorFromObj\fR
 locates a pixel value that may be used to render the color
-in a particular window.  The desired color is specified with an
-object whose string value must have one of the following forms:
+in a particular window.  The desired color is specified with a
+value whose string value must have one of the following forms:
 .TP 20
 \fIcolorname\fR
 Any of the valid textual names for a color defined in the
@@ -89,8 +86,9 @@ to use to display the color.  Each \fIR\fR, \fIG\fR, or \fIB\fR
 represents a single hexadecimal digit.  The four forms permit
 colors to be specified with 4-bit, 8-bit, 12-bit or 16-bit values.
 When fewer than 16 bits are provided for each color, they represent
-the most significant bits of the color.  For example, #3a7 is the
-same as #3000a0007000.
+the most significant bits of the color, while the lower unfilled
+bits will be repeatedly replicated from the available higher bits.
+For example, #3a7 is the same as #3333aaaa7777.
 .PP
 \fBTk_AllocColorFromObj\fR returns a pointer to
 an XColor structure;  the structure indicates the exact intensities of
@@ -108,7 +106,7 @@ such as \fBTk_AllocColorFromObj\fR and \fBTk_GetColorFromObj\fR.
 .PP
 \fBTk_GetColor\fR is identical to \fBTk_AllocColorFromObj\fR except
 that the description of the color is specified with a string instead
-of an object.  This prevents \fBTk_GetColor\fR from caching the
+of a value.  This prevents \fBTk_GetColor\fR from caching the
 return value, so \fBTk_GetColor\fR is less efficient than
 \fBTk_AllocColorFromObj\fR.
 .PP
@@ -175,4 +173,4 @@ There should be exactly one call to \fBTk_FreeColorFromObj\fR
 or \fBTk_FreeColor\fR for each call to \fBTk_AllocColorFromObj\fR,
 \fBTk_GetColor\fR, or \fBTk_GetColorByValue\fR.
 .SH KEYWORDS
-color, intensity, object, pixel value
+color, intensity, value, pixel value

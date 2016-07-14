@@ -4,8 +4,6 @@
 # procedures that help in implementing those bindings.  The spinbox builds
 # off the entry widget, so it can reuse Entry bindings and procedures.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1999-2000 Jeffrey Hobbs
@@ -54,7 +52,6 @@ bind Spinbox <<Copy>> {
     }
 }
 bind Spinbox <<Paste>> {
-    global tcl_platform
     catch {
 	if {[tk windowingsystem] ne "x11"} {
 	    catch {
@@ -76,8 +73,8 @@ bind Spinbox <<PasteSelection>> {
 }
 
 bind Spinbox <<TraverseIn>> {
-    %W selection range 0 end 
-    %W icursor end 
+    %W selection range 0 end
+    %W icursor end
 }
 
 # Standard Motif bindings:
@@ -122,52 +119,52 @@ bind Spinbox <Control-1> {
     %W icursor @%x
 }
 
-bind Spinbox <Up> {
+bind Spinbox <<PrevLine>> {
     %W invoke buttonup
 }
-bind Spinbox <Down> {
+bind Spinbox <<NextLine>> {
     %W invoke buttondown
 }
 
-bind Spinbox <Left> {
+bind Spinbox <<PrevChar>> {
     ::tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
 }
-bind Spinbox <Right> {
+bind Spinbox <<NextChar>> {
     ::tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
 }
-bind Spinbox <Shift-Left> {
+bind Spinbox <<SelectPrevChar>> {
     ::tk::EntryKeySelect %W [expr {[%W index insert] - 1}]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Shift-Right> {
+bind Spinbox <<SelectNextChar>> {
     ::tk::EntryKeySelect %W [expr {[%W index insert] + 1}]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Control-Left> {
+bind Spinbox <<PrevWord>> {
     ::tk::EntrySetCursor %W [::tk::EntryPreviousWord %W insert]
 }
-bind Spinbox <Control-Right> {
+bind Spinbox <<NextWord>> {
     ::tk::EntrySetCursor %W [::tk::EntryNextWord %W insert]
 }
-bind Spinbox <Shift-Control-Left> {
+bind Spinbox <<SelectPrevWord>> {
     ::tk::EntryKeySelect %W [::tk::EntryPreviousWord %W insert]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Shift-Control-Right> {
+bind Spinbox <<SelectNextWord>> {
     ::tk::EntryKeySelect %W [::tk::EntryNextWord %W insert]
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <Home> {
+bind Spinbox <<LineStart>> {
     ::tk::EntrySetCursor %W 0
 }
-bind Spinbox <Shift-Home> {
+bind Spinbox <<SelectLineStart>> {
     ::tk::EntryKeySelect %W 0
     ::tk::EntrySeeInsert %W
 }
-bind Spinbox <End> {
+bind Spinbox <<LineEnd>> {
     ::tk::EntrySetCursor %W end
 }
-bind Spinbox <Shift-End> {
+bind Spinbox <<SelectLineEnd>> {
     ::tk::EntryKeySelect %W end
     ::tk::EntrySeeInsert %W
 }
@@ -195,10 +192,10 @@ bind Spinbox <Control-Shift-space> {
 bind Spinbox <Shift-Select> {
     %W selection adjust insert
 }
-bind Spinbox <Control-slash> {
+bind Spinbox <<SelectAll>> {
     %W selection range 0 end
 }
-bind Spinbox <Control-backslash> {
+bind Spinbox <<SelectNone>> {
     %W selection clear
 }
 bind Spinbox <KeyPress> {
@@ -217,13 +214,15 @@ bind Spinbox <Escape> {# nothing}
 bind Spinbox <Return> {# nothing}
 bind Spinbox <KP_Enter> {# nothing}
 bind Spinbox <Tab> {# nothing}
+bind Spinbox <Prior> {# nothing}
+bind Spinbox <Next> {# nothing}
 if {[tk windowingsystem] eq "aqua"} {
     bind Spinbox <Command-KeyPress> {# nothing}
 }
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
-if {$tcl_platform(platform) ne "windows"} {
+if {[tk windowingsystem] ne "win32"} {
     bind Spinbox <Insert> {
 	catch {::tk::EntryInsert %W [::tk::GetSelection %W PRIMARY]}
     }
@@ -231,29 +230,9 @@ if {$tcl_platform(platform) ne "windows"} {
 
 # Additional emacs-like bindings:
 
-bind Spinbox <Control-a> {
-    if {!$tk_strictMotif} {
-	::tk::EntrySetCursor %W 0
-    }
-}
-bind Spinbox <Control-b> {
-    if {!$tk_strictMotif} {
-	::tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
-    }
-}
 bind Spinbox <Control-d> {
     if {!$tk_strictMotif} {
 	%W delete insert
-    }
-}
-bind Spinbox <Control-e> {
-    if {!$tk_strictMotif} {
-	::tk::EntrySetCursor %W end
-    }
-}
-bind Spinbox <Control-f> {
-    if {!$tk_strictMotif} {
-	::tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
     }
 }
 bind Spinbox <Control-h> {
@@ -357,6 +336,7 @@ proc ::tk::spinbox::ClosestGap {w x} {
 # Arguments:
 # w -		The spinbox window in which the button was pressed.
 # x -		The x-coordinate of the button press.
+# y -		The y-coordinate of the button press.
 
 proc ::tk::spinbox::ButtonDown {w x y} {
     variable ::tk::Priv
@@ -396,7 +376,8 @@ proc ::tk::spinbox::ButtonDown {w x y} {
 	    $w selection clear
 	}
 	default {
-	    return -code error "unknown spinbox element \"$Priv(element)\""
+	    return -code error -errorcode {TK SPINBOX UNKNOWN_ELEMENT} \
+		"unknown spinbox element \"$Priv(element)\""
 	}
     }
 }
@@ -408,6 +389,7 @@ proc ::tk::spinbox::ButtonDown {w x y} {
 # Arguments:
 # w -		The spinbox window in which the button was pressed.
 # x -		The x-coordinate of the button press.
+# y -		The y-coordinate of the button press.
 
 proc ::tk::spinbox::ButtonUp {w x y} {
     variable ::tk::Priv
@@ -511,6 +493,8 @@ proc ::tk::spinbox::Paste {w x} {
 #
 # Arguments:
 # w -		The spinbox window.
+# x -		The x-coordinate of the mouse.
+# y -		The y-coordinate of the mouse.
 
 proc ::tk::spinbox::Motion {w x y} {
     variable ::tk::Priv

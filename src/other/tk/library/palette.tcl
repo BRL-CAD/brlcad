@@ -3,8 +3,6 @@
 # This file contains procedures that change the color palette used
 # by Tk.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1995-1997 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
@@ -38,7 +36,8 @@ proc ::tk_setPalette {args} {
 	array set new $args
     }
     if {![info exists new(background)]} {
-	error "must specify a background color"
+	return -code error -errorcode {TK SET_PALETTE BACKGROUND} \
+	    "must specify a background color"
     }
     set bg [winfo rgb . $new(background)]
     if {![info exists new(foreground)]} {
@@ -101,7 +100,7 @@ proc ::tk_setPalette {args} {
 	set new(troughColor) $darkerBg
     }
 
-    # let's make one of each of the widgets so we know what the 
+    # let's make one of each of the widgets so we know what the
     # defaults are currently for this platform.
     toplevel .___tk_set_palette
     wm withdraw .___tk_set_palette
@@ -114,12 +113,12 @@ proc ::tk_setPalette {args} {
     }
 
     # Walk the widget hierarchy, recoloring all existing windows.
-    # The option database must be set according to what we do here, 
-    # but it breaks things if we set things in the database while 
+    # The option database must be set according to what we do here,
+    # but it breaks things if we set things in the database while
     # we are changing colors...so, ::tk::RecolorTree now returns the
     # option database changes that need to be made, and they
     # need to be evalled here to take effect.
-    # We have to walk the whole widget tree instead of just 
+    # We have to walk the whole widget tree instead of just
     # relying on the widgets we've created above to do the work
     # because different extensions may provide other kinds
     # of widgets that we don't currently know about, so we'll
@@ -145,7 +144,7 @@ proc ::tk_setPalette {args} {
 # ::tk::RecolorTree --
 # This procedure changes the colors in a window and all of its
 # descendants, according to information provided by the colors
-# argument. This looks at the defaults provided by the option 
+# argument. This looks at the defaults provided by the option
 # database, if it exists, and if not, then it looks at the default
 # value of the widget itself.
 #

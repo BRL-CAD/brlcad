@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include <stdlib.h>
@@ -70,7 +68,8 @@ XGetVisualInfo(
     XVisualInfo *vinfo_template,
     int *nitems_return)
 {
-    XVisualInfo *info = (XVisualInfo *) ckalloc(sizeof(XVisualInfo));
+    XVisualInfo *info = ckalloc(sizeof(XVisualInfo));
+
     info->visual = DefaultVisual(display, 0);
     info->visualid = info->visual->visualid;
     info->screen = 0;
@@ -101,7 +100,7 @@ XGetVisualInfo(
 	    || ((vinfo_mask & VisualBlueMaskMask)
 		    && (vinfo_template->blue_mask != info->blue_mask))
 	) {
-	ckfree((char *) info);
+	ckfree(info);
 	return NULL;
     }
 

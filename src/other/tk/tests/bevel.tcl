@@ -1,8 +1,6 @@
 # This file creates a visual test for bevels drawn around text in text
 # widgets.  It is part of the Tk visual test suite, which is invoked
 # via the "visual" script.
-#
-# RCS: @(#) $Id$
 
 catch {destroy .t}
 toplevel .t
@@ -44,6 +42,7 @@ significance:
 r - should appear raised
 u - should appear raised and also slightly offset vertically
 s - should appear sunken
+S - should appear solid
 n - preceding relief should extend right to end of line.
 * - should appear "normal"
 x - extra long lines to allow horizontal scrolling.
@@ -127,15 +126,33 @@ foreach i {1 2 3} {
 .t.t insert end *****
 .t.t insert end rrr r1
 
+font configure TkFixedFont -size 20
+.t.t tag configure sol100 -relief solid -borderwidth 100 \
+                          -foreground red -font TkFixedFont
+.t.t tag configure sol12 -relief solid -borderwidth 12 \
+                          -foreground red -font TkFixedFont
+.t.t tag configure big -font TkFixedFont
+set ind [.t.t index end]
 
+.t.t insert end "\n\nBorders do not leak on the neighbour chars"
+.t.t insert end "\nOnly \"S\" is on dark background"
+.t.t insert end {
+ xxx
+ x} {} S sol100 {x
+ xxx}
 
+.t.t insert end "\n\nA very thick border grows toward the inside of the tagged area only"
+.t.t insert end "\nOnly \"S\" is on dark background"
+.t.t insert end {
+ xxxx} {} SSSSS sol100 {xxxx
+ x} {} SSSSSSSSSSSSSSSSSS sol100 {x
+ xxx} {} SSSSSSSSS sol100 xxxx {}
 
+.t.t insert end "\n\nA thinner border is continuous"
+.t.t insert end {
+ xxxx} {} SSSSS sol12 {xxxx
+ x} {} SSSSSSSSSSSSSSSSSS sol12 {x
+ xxx} {} SSSSSSSSS sol12 xxxx {}
 
-
-
-
-
-
-
-
+.t.t tag add big $ind end
 

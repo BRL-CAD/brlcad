@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKSCALE
@@ -18,11 +16,6 @@
 
 #ifndef _TKINT
 #include "tkInt.h"
-#endif
-
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
@@ -222,12 +215,6 @@ typedef struct TkScale {
 #define SPACING 2
 
 /*
- * How many characters of space to provide when formatting the scale's value:
- */
-
-#define PRINT_CHARS 150
-
-/*
  * Declaration of procedures used in the implementation of the scale widget.
  */
 
@@ -241,8 +228,5 @@ MODULE_SCOPE void	TkScaleSetValue(TkScale *scalePtr, double value,
 			    int setVar, int invokeCommand);
 MODULE_SCOPE double	TkScalePixelToValue(TkScale *scalePtr, int x, int y);
 MODULE_SCOPE int	TkScaleValueToPixel(TkScale *scalePtr, double value);
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKSCALE */

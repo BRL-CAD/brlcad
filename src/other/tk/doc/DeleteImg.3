@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_DeleteImage 3 4.0 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_DeleteImage \- Destroy an image.
@@ -23,13 +21,11 @@ Interpreter for which the image was created.
 .AP "const char" *name in
 Name of the image.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTk_DeleteImage\fR deletes the image given by \fIinterp\fR
 and \fIname\fR, if there is one.  All instances of that image
 will redisplay as empty regions.  If the given image does not
 exist then the procedure has no effect.
-
 .SH KEYWORDS
 delete image, image manager

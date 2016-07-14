@@ -47,12 +47,13 @@ namespace eval ::tk {
     ::msgcat::mcset el "Log Files"          "\u0391\u03c1\u03c7\u03b5\u03af\u03b1 \u039a\u03b1\u03c4\u03b1\u03b3\u03c1\u03b1\u03c6\u03ae\u03c2"
     ::msgcat::mcset el "&No"                 "\u038c\u03c7\u03b9"
     ::msgcat::mcset el "&OK"                 "\u0395\u03bd\u03c4\u03ac\u03be\u03b5\u03b9"
-    ::msgcat::mcset el "&Ok"                 "\u0395\u03bd\u03c4\u03ac\u03be\u03b5\u03b9"
+    ::msgcat::mcset el "OK"                 "\u0395\u03bd\u03c4\u03ac\u03be\u03b5\u03b9"
+    ::msgcat::mcset el "Ok"                 "\u0395\u03bd\u03c4\u03ac\u03be\u03b5\u03b9"
     ::msgcat::mcset el "Open"               "\u0386\u03bd\u03bf\u03b9\u03b3\u03bc\u03b1"
     ::msgcat::mcset el "&Open"               "\u0386\u03bd\u03bf\u03b9\u03b3\u03bc\u03b1"
     ::msgcat::mcset el "Open Multiple Files" \
                                         "\u0386\u03bd\u03bf\u03b9\u03b3\u03bc\u03b1 \u03c0\u03bf\u03bb\u03bb\u03b1\u03c0\u03bb\u03ce\u03bd \u03b1\u03c1\u03c7\u03b5\u03af\u03c9\u03bd"
-    ::msgcat::mcset el "Paste"              "\u0395\u03c0\u03b9\u03ba\u03cc\u03bb\u03bb\u03b7\u03c3\u03b7"
+    ::msgcat::mcset el "P&aste"              "\u0395\u03c0\u03b9\u03ba\u03cc\u03bb\u03bb\u03b7\u03c3\u03b7"
     ::msgcat::mcset el "Quit"               "\u0388\u03be\u03bf\u03b4\u03bf\u03c2"
     ::msgcat::mcset el "&Red"                "\u039a\u03cc\u03ba\u03ba\u03b9\u03bd\u03bf"
     ::msgcat::mcset el "Replace existing file?" \
@@ -66,7 +67,7 @@ namespace eval ::tk {
                                         "\u0395\u03c0\u03b9\u03bb\u03ad\u03be\u03c4\u03b5 \u03b1\u03c1\u03c7\u03b5\u03af\u03bf \u03b3\u03b9\u03b1 \u03b5\u03ba\u03c4\u03ad\u03bb\u03b5\u03c3\u03b7"
     ::msgcat::mcset el "&Selection:"         "\u0395\u03c0\u03b9\u03bb\u03bf\u03b3\u03ae:"
     ::msgcat::mcset el "Skip Messages"      "\u0391\u03c0\u03bf\u03c6\u03c5\u03b3\u03ae\u03bc\u03b7\u03bd\u03c5\u03bc\u03ac\u03c4\u03c9\u03bd"
-    ::msgcat::mcset el "Source..."          "\u0395\u03ba\u03c4\u03ad\u03bb\u03b5\u03c3\u03b7..."
+    ::msgcat::mcset el "&Source..."          "\u0395\u03ba\u03c4\u03ad\u03bb\u03b5\u03c3\u03b7..."
     ::msgcat::mcset el "Tcl Scripts"        "Tcl Scripts"
     ::msgcat::mcset el "Tcl for Windows"    "Tcl \u03b3\u03b9\u03b1 Windows"
     ::msgcat::mcset el "Text Files"         "\u0391\u03c1\u03c7\u03b5\u03af\u03b1 \u039a\u03b5\u03b9\u03bc\u03ad\u03bd\u03bf\u03c5"
@@ -83,4 +84,3 @@ namespace eval ::tk {
     ::msgcat::mcset el "retry"              "\u03c0\u03c1\u03bf\u03c3\u03c0\u03ac\u03b8\u03b7\u03c3\u03b5 \u03be\u03b1\u03bd\u03ac"
     ::msgcat::mcset el "yes"                "\u03bd\u03b1\u03b9"
 }
-

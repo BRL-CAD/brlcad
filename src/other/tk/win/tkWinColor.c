@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -33,11 +31,11 @@ typedef struct WinColor {
  */
 
 typedef struct {
-    char *name;
+    const char *name;
     int index;
 } SystemColorEntry;
 
-static SystemColorEntry sysColors[] = {
+static const SystemColorEntry sysColors[] = {
     {"3dDarkShadow",		COLOR_3DDKSHADOW},
     {"3dLight",			COLOR_3DLIGHT},
     {"ActiveBorder",		COLOR_ACTIVEBORDER},
@@ -63,14 +61,8 @@ static SystemColorEntry sysColors[] = {
     {"Scrollbar",		COLOR_SCROLLBAR},
     {"Window",			COLOR_WINDOW},
     {"WindowFrame",		COLOR_WINDOWFRAME},
-    {"WindowText",		COLOR_WINDOWTEXT},
-    {NULL,			0}
+    {"WindowText",		COLOR_WINDOWTEXT}
 };
-
-typedef struct ThreadSpecificData {
-    int ncolors;
-} ThreadSpecificData;
-static Tcl_ThreadDataKey dataKey;
 
 /*
  * Forward declarations for functions defined later in this file.
@@ -104,37 +96,14 @@ FindSystemColor(
     int *indexPtr)		/* Out parameter to store color index. */
 {
     int l, u, r, i;
-    ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
-	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
-
-    /*
-     * Count the number of elements in the color array if we haven't done so
-     * yet.
-     */
-
-    if (tsdPtr->ncolors == 0) {
-	SystemColorEntry *ePtr;
-	int version;
-
-	version = LOBYTE(LOWORD(GetVersion()));
-	for (ePtr = sysColors; ePtr->name != NULL; ePtr++) {
-	    if (version < 4) {
-		if (ePtr->index == COLOR_3DDKSHADOW) {
-		    ePtr->index = COLOR_BTNSHADOW;
-		} else if (ePtr->index == COLOR_3DLIGHT) {
-		    ePtr->index = COLOR_BTNHIGHLIGHT;
-		}
-	    }
-	    tsdPtr->ncolors++;
-	}
-    }
+    int index;
 
     /*
      * Perform a binary search on the sorted array of colors.
      */
 
     l = 0;
-    u = tsdPtr->ncolors - 1;
+    u = (sizeof(sysColors) / sizeof(sysColors[0])) - 1;
     while (l <= u) {
 	i = (l + u) / 2;
 	r = strcasecmp(name, sysColors[i].name);
@@ -150,8 +119,8 @@ FindSystemColor(
 	return 0;
     }
 
-    *indexPtr = sysColors[i].index;
-    colorPtr->pixel = GetSysColor(sysColors[i].index);
+    *indexPtr = index = sysColors[i].index;
+    colorPtr->pixel = GetSysColor(index);
 
     /*
      * x257 is (value<<8 + value) to get the properly bit shifted and padded
@@ -202,9 +171,9 @@ TkpGetColor(
 
     if (((strncasecmp(name, "system", 6) == 0)
 	    && FindSystemColor(name+6, &color, &index))
-	    || XParseColor(Tk_Display(tkwin), Tk_Colormap(tkwin), name,
+	    || TkParseColor(Tk_Display(tkwin), Tk_Colormap(tkwin), name,
 		    &color)) {
-	winColPtr = (WinColor *) ckalloc(sizeof(WinColor));
+	winColPtr = ckalloc(sizeof(WinColor));
 	winColPtr->info.color = color;
 	winColPtr->index = index;
 
@@ -242,7 +211,7 @@ TkpGetColorByValue(
     XColor *colorPtr)		/* Red, green, and blue fields indicate
 				 * desired color. */
 {
-    WinColor *tkColPtr = (WinColor *) ckalloc(sizeof(WinColor));
+    WinColor *tkColPtr = ckalloc(sizeof(WinColor));
 
     tkColPtr->info.color.red = colorPtr->red;
     tkColPtr->info.color.green = colorPtr->green;
@@ -347,7 +316,8 @@ XAllocColor(
     if (GetDeviceCaps(dc, RASTERCAPS) & RC_PALETTE) {
 	unsigned long sizePalette = GetDeviceCaps(dc, SIZEPALETTE);
 	UINT newPixel, closePixel;
-	int new, refCount;
+	int new;
+	size_t refCount;
 	Tcl_HashEntry *entryPtr;
 	UINT index;
 
@@ -377,7 +347,7 @@ XAllocColor(
 		color->blue  = closeEntry.peBlue * 257;
 		entry = closeEntry;
 		if (index >= cmap->size) {
-		    OutputDebugString("XAllocColor: Colormap is bigger than we thought");
+		    OutputDebugStringA("XAllocColor: Colormap is bigger than we thought");
 		}
 	    } else {
 		cmap->size++;
@@ -388,13 +358,13 @@ XAllocColor(
 
 	color->pixel = PALETTERGB(entry.peRed, entry.peGreen, entry.peBlue);
 	entryPtr = Tcl_CreateHashEntry(&cmap->refCounts,
-		(char *) color->pixel, &new);
+		INT2PTR(color->pixel), &new);
 	if (new) {
 	    refCount = 1;
 	} else {
-	    refCount = ((int) Tcl_GetHashValue(entryPtr)) + 1;
+	    refCount = (size_t)Tcl_GetHashValue(entryPtr) + 1;
 	}
-	Tcl_SetHashValue(entryPtr, (ClientData)refCount);
+	Tcl_SetHashValue(entryPtr, (void *)refCount);
     } else {
 	/*
 	 * Determine what color will actually be used on non-colormap systems.
@@ -428,7 +398,7 @@ XAllocColor(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XFreeColors(
     Display *display,
     Colormap colormap,
@@ -438,7 +408,8 @@ XFreeColors(
 {
     TkWinColormap *cmap = (TkWinColormap *) colormap;
     COLORREF cref;
-    UINT count, index, refCount;
+    UINT count, index;
+    size_t refCount;
     int i;
     PALETTEENTRY entry, *entries;
     Tcl_HashEntry *entryPtr;
@@ -454,33 +425,33 @@ XFreeColors(
 	 */
 
 	for (i = 0; i < npixels; i++) {
-	    entryPtr = Tcl_FindHashEntry(&cmap->refCounts, (char *) pixels[i]);
+	    entryPtr = Tcl_FindHashEntry(&cmap->refCounts, INT2PTR(pixels[i]));
 	    if (!entryPtr) {
-		Tcl_Panic("Tried to free a color that isn't allocated.");
+		Tcl_Panic("Tried to free a color that isn't allocated");
 	    }
-	    refCount = (int) Tcl_GetHashValue(entryPtr) - 1;
+	    refCount = (size_t)Tcl_GetHashValue(entryPtr) - 1;
 	    if (refCount == 0) {
 		cref = pixels[i] & 0x00ffffff;
 		index = GetNearestPaletteIndex(cmap->palette, cref);
 		GetPaletteEntries(cmap->palette, index, 1, &entry);
 		if (cref == RGB(entry.peRed, entry.peGreen, entry.peBlue)) {
 		    count = cmap->size - index;
-		    entries = (PALETTEENTRY *)
-			    ckalloc(sizeof(PALETTEENTRY) * count);
+		    entries = ckalloc(sizeof(PALETTEENTRY) * count);
 		    GetPaletteEntries(cmap->palette, index+1, count, entries);
 		    SetPaletteEntries(cmap->palette, index, count, entries);
-		    ckfree((char *) entries);
+		    ckfree(entries);
 		    cmap->size--;
 		} else {
-		    Tcl_Panic("Tried to free a color that isn't allocated.");
+		    Tcl_Panic("Tried to free a color that isn't allocated");
 		}
 		Tcl_DeleteHashEntry(entryPtr);
 	    } else {
-		Tcl_SetHashValue(entryPtr, (ClientData)refCount);
+		Tcl_SetHashValue(entryPtr, (size_t)refCount);
 	    }
 	}
     }
     ReleaseDC(NULL, dc);
+    return Success;
 }
 
 /*
@@ -525,7 +496,7 @@ XCreateColormap(
     logPalettePtr->palNumEntries = GetPaletteEntries(sysPal, 0, 256,
 	    logPalettePtr->palPalEntry);
 
-    cmap = (TkWinColormap *) ckalloc(sizeof(TkWinColormap));
+    cmap = ckalloc(sizeof(TkWinColormap));
     cmap->size = logPalettePtr->palNumEntries;
     cmap->stale = 0;
     cmap->palette = CreatePalette(logPalettePtr);
@@ -537,9 +508,9 @@ XCreateColormap(
     Tcl_InitHashTable(&cmap->refCounts, TCL_ONE_WORD_KEYS);
     for (i = 0; i < logPalettePtr->palNumEntries; i++) {
 	entryPtr = logPalettePtr->palPalEntry + i;
-	hashPtr = Tcl_CreateHashEntry(&cmap->refCounts, (char*) PALETTERGB(
-		entryPtr->peRed, entryPtr->peGreen, entryPtr->peBlue), &new);
-	Tcl_SetHashValue(hashPtr, (ClientData)1);
+	hashPtr = Tcl_CreateHashEntry(&cmap->refCounts, INT2PTR(PALETTERGB(
+		entryPtr->peRed, entryPtr->peGreen, entryPtr->peBlue)), &new);
+	Tcl_SetHashValue(hashPtr, INT2PTR(1));
     }
 
     return (Colormap)cmap;
@@ -562,7 +533,7 @@ XCreateColormap(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XFreeColormap(
     Display *display,
     Colormap colormap)
@@ -570,10 +541,11 @@ XFreeColormap(
     TkWinColormap *cmap = (TkWinColormap *) colormap;
 
     if (!DeleteObject(cmap->palette)) {
-	Tcl_Panic("Unable to free colormap, palette is still selected.");
+	Tcl_Panic("Unable to free colormap, palette is still selected");
     }
     Tcl_DeleteHashTable(&cmap->refCounts);
-    ckfree((char *) cmap);
+    ckfree(cmap);
+    return Success;
 }
 
 /*

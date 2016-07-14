@@ -17,8 +17,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -102,7 +100,6 @@ TkWinSendCom_CreateInstance(
 	ISupportErrorInfo_Release,
 	ISupportErrorInfo_InterfaceSupportsErrorInfo,
     };
-    HRESULT hr = S_OK;
     TkWinSendCom *obj = NULL;
 
     /*
@@ -113,21 +110,19 @@ TkWinSendCom_CreateInstance(
     obj = (TkWinSendCom *) CoTaskMemAlloc(sizeof(TkWinSendCom));
     if (obj == NULL) {
 	*ppv = NULL;
-	hr = E_OUTOFMEMORY;
-    } else {
-	obj->lpVtbl = &vtbl;
-	obj->lpVtbl2 = &vtbl2;
-	obj->refcount = 0;
-	obj->interp = interp;
-
-	/*
-	 * lock the interp? Tcl_AddRef/Retain?
-	 */
-
-	hr = obj->lpVtbl->QueryInterface((IDispatch*)obj, riid, ppv);
+	return E_OUTOFMEMORY;
     }
 
-    return hr;
+    obj->lpVtbl = &vtbl;
+    obj->lpVtbl2 = &vtbl2;
+    obj->refcount = 0;
+    obj->interp = interp;
+
+    /*
+     * lock the interp? Tcl_AddRef/Retain?
+     */
+
+    return obj->lpVtbl->QueryInterface((IDispatch *) obj, riid, ppv);
 }
 
 /*
@@ -149,7 +144,7 @@ static void
 TkWinSendCom_Destroy(
     LPDISPATCH pdisp)
 {
-    CoTaskMemFree((void*)pdisp);
+    CoTaskMemFree((void *) pdisp);
 }
 
 /*
@@ -171,17 +166,17 @@ WinSendCom_QueryInterface(
     void **ppvObject)
 {
     HRESULT hr = E_NOINTERFACE;
-    TkWinSendCom *this = (TkWinSendCom*)This;
+    TkWinSendCom *this = (TkWinSendCom *) This;
     *ppvObject = NULL;
 
     if (memcmp(riid, &IID_IUnknown, sizeof(IID)) == 0
 	    || memcmp(riid, &IID_IDispatch, sizeof(IID)) == 0) {
-	*ppvObject = (void**)this;
+	*ppvObject = (void **) this;
 	this->lpVtbl->AddRef(This);
 	hr = S_OK;
     } else if (memcmp(riid, &IID_ISupportErrorInfo, sizeof(IID)) == 0) {
-	*ppvObject = (void**)(this + 1);
-	this->lpVtbl2->AddRef((ISupportErrorInfo*)(this + 1));
+	*ppvObject = (void **) (this + 1);
+	this->lpVtbl2->AddRef((ISupportErrorInfo *) (this + 1));
 	hr = S_OK;
     }
     return hr;
@@ -318,16 +313,16 @@ ISupportErrorInfo_QueryInterface(
     REFIID riid,
     void **ppvObject)
 {
-    TkWinSendCom *this = (TkWinSendCom*)(This - 1);
+    TkWinSendCom *this = (TkWinSendCom *)(This - 1);
 
-    return this->lpVtbl->QueryInterface((IDispatch*)this, riid, ppvObject);
+    return this->lpVtbl->QueryInterface((IDispatch *) this, riid, ppvObject);
 }
 
 static STDMETHODIMP_(ULONG)
 ISupportErrorInfo_AddRef(
     ISupportErrorInfo *This)
 {
-    TkWinSendCom *this = (TkWinSendCom*)(This - 1);
+    TkWinSendCom *this = (TkWinSendCom *)(This - 1);
 
     return InterlockedIncrement(&this->refcount);
 }
@@ -336,9 +331,9 @@ static STDMETHODIMP_(ULONG)
 ISupportErrorInfo_Release(
     ISupportErrorInfo *This)
 {
-    TkWinSendCom *this = (TkWinSendCom*)(This - 1);
+    TkWinSendCom *this = (TkWinSendCom *)(This - 1);
 
-    return this->lpVtbl->Release((IDispatch*)this);
+    return this->lpVtbl->Release((IDispatch *) this);
 }
 
 static STDMETHODIMP
@@ -374,29 +369,26 @@ Async(
     UINT *puArgErr)
 {
     HRESULT hr = S_OK;
-    int result = TCL_OK;
     VARIANT vCmd;
 
     VariantInit(&vCmd);
 
     hr = VariantChangeType(&vCmd, &Cmd, 0, VT_BSTR);
     if (FAILED(hr)) {
-	Tcl_SetStringObj(Tcl_GetObjResult(obj->interp),
-		"invalid args: Async(command)", -1);
-	SetExcepInfo(obj->interp, pExcepInfo);
+	Tcl_SetObjResult(obj->interp, Tcl_NewStringObj(
+		"invalid args: Async(command)", -1));
+	TkWinSend_SetExcepInfo(obj->interp, pExcepInfo);
 	hr = DISP_E_EXCEPTION;
     }
 
-    if (SUCCEEDED(hr)) {
-	if (obj->interp) {
-	    Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(vCmd.bstrVal,
-		    (int)SysStringLen(vCmd.bstrVal));
-	    result = TkWinSend_QueueCommand(obj->interp, scriptPtr);
-	}
+    if (SUCCEEDED(hr) && obj->interp) {
+	Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(vCmd.bstrVal,
+		(int) SysStringLen(vCmd.bstrVal));
+
+	TkWinSend_QueueCommand(obj->interp, scriptPtr);
     }
 
     VariantClear(&vCmd);
-
     return hr;
 }
 
@@ -430,29 +422,36 @@ Send(
     HRESULT hr = S_OK;
     int result = TCL_OK;
     VARIANT v;
+    register Tcl_Interp *interp = obj->interp;
+    Tcl_Obj *scriptPtr;
 
+    if (interp == NULL) {
+	return S_OK;
+    }
     VariantInit(&v);
     hr = VariantChangeType(&v, &vCmd, 0, VT_BSTR);
-    if (SUCCEEDED(hr)) {
-	if (obj->interp) {
-	    Tcl_Obj *scriptPtr = Tcl_NewUnicodeObj(v.bstrVal,
-		    (int)SysStringLen(v.bstrVal));
-
-	    result = Tcl_EvalObjEx(obj->interp, scriptPtr,
-		    TCL_EVAL_DIRECT | TCL_EVAL_GLOBAL);
-	    if (pvResult) {
-		VariantInit(pvResult);
-		pvResult->vt = VT_BSTR;
-		pvResult->bstrVal = SysAllocString(
-			Tcl_GetUnicode(Tcl_GetObjResult(obj->interp)));
-	    }
-	    if (result == TCL_ERROR) {
-		hr = DISP_E_EXCEPTION;
-		SetExcepInfo(obj->interp, pExcepInfo);
-	    }
-	}
-	VariantClear(&v);
+    if (!SUCCEEDED(hr)) {
+	return hr;
     }
+
+    scriptPtr = Tcl_NewUnicodeObj(v.bstrVal, (int) SysStringLen(v.bstrVal));
+    Tcl_Preserve(interp);
+    Tcl_IncrRefCount(scriptPtr);
+    result = Tcl_EvalObjEx(interp, scriptPtr,
+	    TCL_EVAL_DIRECT | TCL_EVAL_GLOBAL);
+    Tcl_DecrRefCount(scriptPtr);
+    if (pvResult != NULL) {
+	VariantInit(pvResult);
+	pvResult->vt = VT_BSTR;
+	pvResult->bstrVal = SysAllocString(Tcl_GetUnicode(
+		Tcl_GetObjResult(interp)));
+    }
+    if (result == TCL_ERROR) {
+	hr = DISP_E_EXCEPTION;
+	TkWinSend_SetExcepInfo(interp, pExcepInfo);
+    }
+    Tcl_Release(interp);
+    VariantClear(&v);
     return hr;
 }
 

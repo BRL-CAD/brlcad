@@ -4,8 +4,6 @@
  * Generic layout processing.
  *
  * Copyright (c) 2003 Joe English.  Freely redistributable.
- *
- * $Id$
  */
 
 #include <string.h>
@@ -328,8 +326,9 @@ int Ttk_GetPaddingFromObj(
 
     if (padc > 4) {
 	if (interp) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "Wrong #elements in padding spec", NULL);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "Wrong #elements in padding spec", -1));
+	    Tcl_SetErrorCode(interp, "TTK", "VALUE", "PADDING", NULL);
 	}
 	goto error;
     }
@@ -365,8 +364,9 @@ int Ttk_GetBorderFromObj(Tcl_Interp *interp, Tcl_Obj *objPtr, Ttk_Padding *pad)
 
     if (padc > 4) {
 	if (interp) {
-	    Tcl_ResetResult(interp);
-	    Tcl_AppendResult(interp, "Wrong #elements in border spec", NULL);
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "Wrong #elements in padding spec", -1));
+	    Tcl_SetErrorCode(interp, "TTK", "VALUE", "BORDER", NULL);
 	}
 	goto error;
     }
@@ -478,11 +478,10 @@ int Ttk_GetStickyFromObj(
 	    case 's': case 'S': sticky |= TTK_STICK_S; break;
 	    default:
 	    	if (interp) {
-		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp,
-			"Bad -sticky specification ",
-			Tcl_GetString(objPtr),
-			NULL);
+		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"Bad -sticky specification %s",
+			Tcl_GetString(objPtr)));
+		    Tcl_SetErrorCode(interp, "TTK", "VALUE", "STICKY", NULL);
 		}
 		return TCL_ERROR;
 	}
@@ -526,7 +525,7 @@ struct Ttk_LayoutNode_
 static Ttk_LayoutNode *Ttk_NewLayoutNode(
     unsigned flags, Ttk_ElementClass *elementClass)
 {
-    Ttk_LayoutNode *node = (Ttk_LayoutNode*)ckalloc(sizeof(*node));
+    Ttk_LayoutNode *node = ckalloc(sizeof(*node));
 
     node->flags = flags;
     node->eclass = elementClass;
@@ -542,7 +541,7 @@ static void Ttk_FreeLayoutNode(Ttk_LayoutNode *node)
     while (node) {
 	Ttk_LayoutNode *next = node->next;
 	Ttk_FreeLayoutNode(node->child);
-	ckfree((ClientData)node);
+	ckfree(node);
 	node = next;
     }
 }
@@ -559,7 +558,7 @@ struct Ttk_TemplateNode_ {
 
 static Ttk_TemplateNode *Ttk_NewTemplateNode(const char *name, unsigned flags)
 {
-    Ttk_TemplateNode *op = (Ttk_TemplateNode*)ckalloc(sizeof(*op));
+    Ttk_TemplateNode *op = ckalloc(sizeof(*op));
     op->name = ckalloc(strlen(name) + 1); strcpy(op->name, name);
     op->flags = flags;
     op->next = op->child = 0;
@@ -572,7 +571,7 @@ void Ttk_FreeLayoutTemplate(Ttk_LayoutTemplate op)
 	Ttk_LayoutTemplate next = op->next;
 	Ttk_FreeLayoutTemplate(op->child);
 	ckfree(op->name);
-	ckfree((ClientData)op);
+	ckfree(op);
 	op = next;
     }
 }
@@ -637,25 +636,25 @@ Ttk_LayoutTemplate Ttk_ParseLayoutTemplate(Tcl_Interp *interp, Tcl_Obj *objPtr)
 	    if (optName[0] != '-')
 		break;
 
-	    if (Tcl_GetIndexFromObj(
-		    interp, objv[i], optStrings, "option", 0, &option)
+	    if (Tcl_GetIndexFromObjStruct(interp, objv[i], optStrings,
+		    sizeof(char *), "option", 0, &option)
 		!= TCL_OK)
 	    {
 		goto error;
 	    }
 
 	    if (++i >= objc) {
-		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp,
-			"Missing value for option ",Tcl_GetString(objv[i-1]),
-			NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"Missing value for option %s",
+			Tcl_GetString(objv[i-1])));
+		Tcl_SetErrorCode(interp, "TTK", "VALUE", "LAYOUT", NULL);
 		goto error;
 	    }
 
 	    switch (option) {
 		case OP_SIDE:	/* <<NOTE-PACKSIDE>> */
-		    if (Tcl_GetIndexFromObj(interp, objv[i], packSideStrings,
-				"side", 0, &value) != TCL_OK)
+		    if (Tcl_GetIndexFromObjStruct(interp, objv[i], packSideStrings,
+				sizeof(char *), "side", 0, &value) != TCL_OK)
 		    {
 			goto error;
 		    }
@@ -792,7 +791,7 @@ Tcl_Obj *Ttk_UnparseLayoutTemplate(Ttk_TemplateNode *node)
 		int side = 0;
 		unsigned sideFlags = flags & _TTK_MASK_PACK;
 
-		while ((sideFlags & TTK_PACK_LEFT) == 0) {
+		while (!(sideFlags & TTK_PACK_LEFT)) {
 		    ++side;
 		    sideFlags >>= 1;
 		}
@@ -801,9 +800,11 @@ Tcl_Obj *Ttk_UnparseLayoutTemplate(Ttk_TemplateNode *node)
 	    }
 	}
 
-	/* In Ttk_ParseLayoutTemplate, default -sticky is "nsew",
-	 * so always include this even if no sticky bits are set.
+	/*
+	 * In Ttk_ParseLayoutTemplate, default -sticky is "nsew", so always
+	 * include this even if no sticky bits are set.
 	 */
+
 	APPENDSTR("-sticky");
 	APPENDOBJ(Ttk_NewStickyObj(flags & _TTK_MASK_STICK));
 
@@ -841,7 +842,7 @@ static Ttk_Layout TTKNewLayout(
     void *recordPtr,Tk_OptionTable optionTable, Tk_Window tkwin,
     Ttk_LayoutNode *root)
 {
-    Ttk_Layout layout = (Ttk_Layout)ckalloc(sizeof(*layout));
+    Ttk_Layout layout = ckalloc(sizeof(*layout));
     layout->style = style;
     layout->recordPtr = recordPtr;
     layout->optionTable = optionTable;
@@ -853,7 +854,7 @@ static Ttk_Layout TTKNewLayout(
 void Ttk_FreeLayout(Ttk_Layout layout)
 {
     Ttk_FreeLayoutNode(layout->root);
-    ckfree((ClientData)layout);
+    ckfree(layout);
 }
 
 /*
@@ -877,8 +878,9 @@ Ttk_Layout Ttk_CreateLayout(
     Ttk_LayoutNode *bgnode;
 
     if (!layoutTemplate) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "Layout ", styleName, " not found", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"Layout %s not found", styleName));
+	Tcl_SetErrorCode(interp, "TTK", "LOOKUP", "LAYOUT", styleName, NULL);
 	return 0;
     }
 
@@ -917,8 +919,9 @@ Ttk_CreateSublayout(
     layoutTemplate = Ttk_FindLayoutTemplate(themePtr, styleName);
 
     if (!layoutTemplate) {
-	Tcl_ResetResult(interp);
-	Tcl_AppendResult(interp, "Layout ", styleName, " not found", NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"Layout %s not found", styleName));
+	Tcl_SetErrorCode(interp, "TTK", "LOOKUP", "LAYOUT", styleName, NULL);
 	return 0;
     }
 

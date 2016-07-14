@@ -1,4 +1,4 @@
-/* $Id$
+/*
  *	Image specifications and image element factory.
  *
  * Copyright (C) 2004 Pat Thoyts <patthoyts@users.sf.net>
@@ -36,7 +36,7 @@ static void NullImageChanged(ClientData clientData,
 
 /* TtkGetImageSpec --
  * 	Constructs a Ttk_ImageSpec * from a Tcl_Obj *.
- * 	Result must be released using TtkFreeImageSpec.  
+ * 	Result must be released using TtkFreeImageSpec.
  *
  * TODO: Need a variant of this that takes a user-specified ImageChanged proc
  */
@@ -47,7 +47,7 @@ TtkGetImageSpec(Tcl_Interp *interp, Tk_Window tkwin, Tcl_Obj *objPtr)
     int i = 0, n = 0, objc;
     Tcl_Obj **objv;
 
-    imageSpec = (Ttk_ImageSpec *)ckalloc(sizeof(*imageSpec));
+    imageSpec = ckalloc(sizeof(*imageSpec));
     imageSpec->baseImage = 0;
     imageSpec->mapCount = 0;
     imageSpec->states = 0;
@@ -59,16 +59,17 @@ TtkGetImageSpec(Tcl_Interp *interp, Tk_Window tkwin, Tcl_Obj *objPtr)
 
     if ((objc % 2) != 1) {
 	if (interp) {
-	    Tcl_SetResult(interp,
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
 		"image specification must contain an odd number of elements",
-		TCL_STATIC);
+		-1));
+	    Tcl_SetErrorCode(interp, "TTK", "IMAGE", "SPEC", NULL);
 	}
 	goto error;
     }
 
     n = (objc - 1) / 2;
-    imageSpec->states = (Ttk_StateSpec*)ckalloc(n * sizeof(Ttk_StateSpec));
-    imageSpec->images = (Tk_Image*)ckalloc(n * sizeof(Tk_Image *));
+    imageSpec->states = ckalloc(n * sizeof(Ttk_StateSpec));
+    imageSpec->images = ckalloc(n * sizeof(Tk_Image *));
 
     /* Get base image:
     */
@@ -117,10 +118,10 @@ void TtkFreeImageSpec(Ttk_ImageSpec *imageSpec)
     }
 
     if (imageSpec->baseImage) { Tk_FreeImage(imageSpec->baseImage); }
-    if (imageSpec->states) { ckfree((ClientData)imageSpec->states); }
-    if (imageSpec->images) { ckfree((ClientData)imageSpec->images); }
+    if (imageSpec->states) { ckfree(imageSpec->states); }
+    if (imageSpec->images) { ckfree(imageSpec->images); }
 
-    ckfree((ClientData)imageSpec);
+    ckfree(imageSpec);
 }
 
 /* TtkSelectImage --
@@ -314,7 +315,7 @@ Ttk_CreateImageElement(
     const char *elementName,
     int objc, Tcl_Obj *const objv[])
 {
-    const char *optionStrings[] =
+    static const char *optionStrings[] =
 	 { "-border","-height","-padding","-sticky","-width",NULL };
     enum { O_BORDER, O_HEIGHT, O_PADDING, O_STICKY, O_WIDTH };
 
@@ -324,7 +325,9 @@ Ttk_CreateImageElement(
     int i;
 
     if (objc <= 0) {
-	Tcl_AppendResult(interp, "Must supply a base image", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"Must supply a base image", -1));
+	Tcl_SetErrorCode(interp, "TTK", "IMAGE", "BASE", NULL);
 	return TCL_ERROR;
     }
 
@@ -333,7 +336,7 @@ Ttk_CreateImageElement(
 	return TCL_ERROR;
     }
 
-    imageData = (ImageData*)ckalloc(sizeof(*imageData));
+    imageData = ckalloc(sizeof(*imageData));
     imageData->imageSpec = imageSpec;
     imageData->minWidth = imageData->minHeight = -1;
     imageData->sticky = TTK_FILL_BOTH;
@@ -347,9 +350,9 @@ Ttk_CreateImageElement(
 	int option;
 
 	if (i == objc - 1) {
-	    Tcl_AppendResult(interp,
-		"Value for ", Tcl_GetString(objv[i]), " missing",
-		NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "Value for %s missing", Tcl_GetString(objv[i])));
+	    Tcl_SetErrorCode(interp, "TTK", "IMAGE", "VALUE", NULL);
 	    goto error;
 	}
 
@@ -361,13 +364,17 @@ Ttk_CreateImageElement(
 	}
 #endif
 
-	if (Tcl_GetIndexFromObj(interp, objv[i], optionStrings,
-		    "option", 0, &option) != TCL_OK) { goto error; }
+	if (Tcl_GetIndexFromObjStruct(interp, objv[i], optionStrings,
+		sizeof(char *), "option", 0, &option) != TCL_OK) {
+	    goto error;
+	}
 
 	switch (option) {
 	    case O_BORDER:
 		if (Ttk_GetBorderFromObj(interp, objv[i+1], &imageData->border)
-			!= TCL_OK) { goto error; }
+			!= TCL_OK) {
+		    goto error;
+		}
 		if (!padding_specified) {
 		    imageData->padding = imageData->border;
 		}

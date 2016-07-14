@@ -2,8 +2,6 @@
 # This file is an input file used by the GNU "autoconf" program to
 # generate the file "configure", which is run during Tk installation
 # to configure the system for the local environment.
-#
-# RCS: @(#) $Id$
 
 AC_INIT(../generic/tk.h)
 AC_PREREQ(2.59)
@@ -13,10 +11,10 @@ AC_PREREQ(2.59)
 # /bin/sh. The bash shell seems to suffer from some strange failures.
 SHELL=/bin/sh
 
-TK_VERSION=8.5
+TK_VERSION=8.6
 TK_MAJOR_VERSION=8
-TK_MINOR_VERSION=5
-TK_PATCH_LEVEL=".9"
+TK_MINOR_VERSION=6
+TK_PATCH_LEVEL=".5"
 VER=$TK_MAJOR_VERSION$TK_MINOR_VERSION
 
 #------------------------------------------------------------------------
@@ -29,7 +27,7 @@ fi
 if test "${exec_prefix}" = "NONE"; then
     exec_prefix=$prefix
 fi
-# libdir must be a fully qualified path and (not ${exec_prefix}/lib)
+# libdir must be a fully qualified path (not ${exec_prefix}/lib)
 eval libdir="$libdir"
 
 #------------------------------------------------------------------------
@@ -46,63 +44,15 @@ AC_PROG_CC
 AC_C_INLINE
 AC_HEADER_STDC
 
-# To properly support cross-compilation, one would
-# need to use these tool checks instead of
-# the ones below and reconfigure with
-# autoconf 2.50. You can also just set
-# the CC, AR, RANLIB, and RC environment
-# variables if you want to cross compile.
-dnl AC_CHECK_TOOL(AR, ar)
-dnl AC_CHECK_TOOL(RANLIB, ranlib)
-dnl AC_CHECK_TOOL(RC, windres)
-
-if test "${GCC}" = "yes" ; then
-    AC_CHECK_PROG(AR, ar, ar)
-    AC_CHECK_PROG(RANLIB, ranlib, ranlib)
-    AC_CHECK_PROG(RC, windres, windres)
-
-    if test "${AR}" = "" ; then
-	AC_MSG_ERROR([Required archive tool 'ar' not found on PATH.])
-    fi
-    if test "${RANLIB}" = "" ; then
-	AC_MSG_ERROR([Required archive index tool 'ranlib' not found on PATH.])
-    fi
-    if test "${RC}" = "" ; then
-	AC_MSG_ERROR([Required resource tool 'windres' not found on PATH.])
-    fi
-fi
+AC_CHECK_TOOL(AR, ar)
+AC_CHECK_TOOL(RANLIB, ranlib)
+AC_CHECK_TOOL(RC, windres)
 
 #--------------------------------------------------------------------
-# Checks to see if the make progeam sets the $MAKE variable.
+# Checks to see if the make program sets the $MAKE variable.
 #--------------------------------------------------------------------
 
 AC_PROG_MAKE_SET
-
-#--------------------------------------------------------------------
-# Perform additinal compiler tests.
-#--------------------------------------------------------------------
-
-dnl Currently AC_CYGWIN is disabled since it invokes AC_CANONICAL_HOST
-dnl under autoconf 2.5X.
-dnl
-dnl AC_CYGWIN
-
-AC_CACHE_CHECK(for Cygwin version of gcc,
-    ac_cv_cygwin,
-AC_TRY_COMPILE([
-#ifdef __CYGWIN__
-#error cygwin
-#endif
-],
-[],
-        ac_cv_cygwin=no,
-        ac_cv_cygwin=yes)
-)
-if test "$ac_cv_cygwin" = "yes" ; then
-    AC_MSG_ERROR([Compiling under Cygwin is not currently supported.
-A maintainer for the Cygwin port of Tcl/Tk is needed. See the README
-file for information about building with Mingw.])
-fi
 
 #--------------------------------------------------------------------
 # Determines the correct binary file extension (.o, .obj, .exe etc.)
@@ -125,7 +75,25 @@ SC_ENABLE_THREADS
 SC_ENABLE_SHARED
 
 #--------------------------------------------------------------------
-# The statements below define a collection of compile flags.  This 
+# Locate and source the tclConfig.sh file.
+#--------------------------------------------------------------------
+
+SC_PATH_TCLCONFIG($TK_PATCH_LEVEL)
+SC_LOAD_TCLCONFIG
+
+if test "${TCL_MAJOR_VERSION}" != "${TK_MAJOR_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
+if test "${TCL_MINOR_VERSION}" -lt "${TK_MINOR_VERSION}"; then
+    AC_MSG_ERROR([${TCL_BIN_DIR}/tclConfig.sh is for Tcl ${TCL_VERSION}.
+Tk ${TK_VERSION}${TK_PATCH_LEVEL} needs Tcl ${TK_VERSION}.
+Use --with-tcl= option to indicate location of tclConfig.sh file for Tcl ${TK_VERSION}.])
+fi
+
+#--------------------------------------------------------------------
+# The statements below define a collection of compile flags.  This
 # macro depends on the value of SHARED_BUILD, and should be called
 # after SC_ENABLE_SHARED checks the configure switches.
 #--------------------------------------------------------------------
@@ -139,6 +107,18 @@ SC_CONFIG_CFLAGS
 AC_CHECK_HEADER(errno.h, , MAN2TCLFLAGS="-DNO_ERRNO_H")
 AC_SUBST(MAN2TCLFLAGS)
 
+#-------------------------------------------
+#     Check for _strtoi64
+#-------------------------------------------
+
+AC_CACHE_CHECK([availability of _strtoi64], tcl_cv_strtoi64, [
+    AC_TRY_LINK([#include <stdlib.h>],
+	    [_strtoi64(0,0,0)],
+	    tcl_cv_strtoi64=yes, tcl_cv_strtoi64=no)])
+if test $tcl_cv_strtoi64 = no; then
+    AC_DEFINE(NO_STRTOI64, 1, [Is _strtoi64 function available?])
+fi
+
 #--------------------------------------------------------------------
 # Windows XP theme engine header for Ttk
 #--------------------------------------------------------------------
@@ -146,9 +126,12 @@ AC_SUBST(MAN2TCLFLAGS)
 AC_CHECK_HEADER([uxtheme.h], [AC_DEFINE(HAVE_UXTHEME_H)],
 	[AC_MSG_NOTICE([xpnative theme will be unavailable])],
 	[#include <windows.h>])
+AC_CHECK_HEADER([vssym32.h], [AC_DEFINE(HAVE_VSSYM32_H)], [],
+	[#include <windows.h>
+#include <uxtheme.h>])
 
 #--------------------------------------------------------------------
-# Set the default compiler switches based on the --enable-symbols 
+# Set the default compiler switches based on the --enable-symbols
 # option.  This macro depends on C flags, and should be called
 # after SC_CONFIG_CFLAGS macro is called.
 #--------------------------------------------------------------------
@@ -162,13 +145,6 @@ TK_DBGX=${DBGX}
 #--------------------------------------------------------------------
 
 SC_EMBED_MANIFEST(wish.exe.manifest)
-
-#--------------------------------------------------------------------
-# Locate and source the tclConfig.sh file.
-#--------------------------------------------------------------------
-
-SC_PATH_TCLCONFIG($TK_PATCH_LEVEL)
-SC_LOAD_TCLCONFIG
 
 SC_BUILD_TCLSH
 SC_PROG_TCLSH
@@ -221,7 +197,7 @@ CFG_TK_EXPORT_FILE_SUFFIX=${TK_EXPORT_FILE_SUFFIX}
 # on symbols and static vs. shared.
 #--------------------------------------------------------------------
 
-if test "$SHARED_BUILD" = 0 -o "$TCL_NEEDS_EXP_FILE" = 0; then
+if test ${SHARED_BUILD} = 0 -o "$TCL_NEEDS_EXP_FILE" = 0; then
     if test "${DBGX}" = "d"; then
         RC_DEFINES="${RC_DEFINE} STATIC_BUILD ${RC_DEFINE} DEBUG"
     else
@@ -267,25 +243,22 @@ AC_SUBST(TCL_VERSION)
 AC_SUBST(TCL_MAJOR_VERSION)
 AC_SUBST(TCL_MINOR_VERSION)
 AC_SUBST(TCL_PATCH_LEVEL)
+
 AC_SUBST(TCL_SRC_DIR)
 AC_SUBST(TCL_BIN_DIR)
 AC_SUBST(TCL_DBGX)
 AC_SUBST(CFG_TK_SHARED_LIB_SUFFIX)
 AC_SUBST(CFG_TK_UNSHARED_LIB_SUFFIX)
 AC_SUBST(CFG_TK_EXPORT_FILE_SUFFIX)
-AC_SUBST(TK_SHARED_BUILD)
 
-AC_SUBST(CYGPATH)
-AC_SUBST(DEPARG)
 AC_SUBST(CFLAGS_DEFAULT)
 AC_SUBST(EXTRA_CFLAGS)
-AC_SUBST(STLIB_LD)
-AC_SUBST(SHLIB_LD)
-AC_SUBST(SHLIB_LD_LIBS)
-AC_SUBST(SHLIB_CFLAGS)
-AC_SUBST(SHLIB_SUFFIX)
+AC_SUBST(CYGPATH)
+AC_SUBST(DEPARG)
 AC_SUBST(CC_OBJNAME)
 AC_SUBST(CC_EXENAME)
+
+# win/tcl.m4 doesn't set (LDFLAGS)
 AC_SUBST(LDFLAGS_DEFAULT)
 AC_SUBST(LDFLAGS_DEBUG)
 AC_SUBST(LDFLAGS_OPTIMIZE)
@@ -293,14 +266,15 @@ AC_SUBST(LDFLAGS_CONSOLE)
 AC_SUBST(LDFLAGS_WINDOW)
 AC_SUBST(AR)
 AC_SUBST(RANLIB)
-AC_SUBST(RC)
-AC_SUBST(RC_OUT)
-AC_SUBST(RC_TYPE)
-AC_SUBST(RC_INCLUDE)
-AC_SUBST(RC_DEFINE)
-AC_SUBST(RC_DEFINES)
 AC_SUBST(TK_RES)
-AC_SUBST(RES)
+
+AC_SUBST(STLIB_LD)
+AC_SUBST(SHLIB_LD)
+AC_SUBST(SHLIB_LD_LIBS)
+AC_SUBST(SHLIB_CFLAGS)
+AC_SUBST(SHLIB_SUFFIX)
+AC_SUBST(TK_SHARED_BUILD)
+
 AC_SUBST(LIBS)
 AC_SUBST(LIBS_GUI)
 AC_SUBST(DLLSUFFIX)
@@ -309,6 +283,7 @@ AC_SUBST(LIBSUFFIX)
 AC_SUBST(EXESUFFIX)
 AC_SUBST(LIBRARIES)
 AC_SUBST(MAKE_LIB)
+AC_SUBST(MAKE_STUB_LIB)
 AC_SUBST(POST_MAKE_LIB)
 AC_SUBST(MAKE_DLL)
 AC_SUBST(MAKE_EXE)
@@ -324,4 +299,16 @@ AC_SUBST(TK_BUILD_STUB_LIB_PATH)
 AC_SUBST(TK_CC_SEARCH_FLAGS)
 AC_SUBST(TK_LD_SEARCH_FLAGS)
 
-AC_OUTPUT([Makefile tkConfig.sh wish.exe.manifest])
+AC_SUBST(RC)
+AC_SUBST(RC_OUT)
+AC_SUBST(RC_TYPE)
+AC_SUBST(RC_INCLUDE)
+AC_SUBST(RC_DEFINE)
+AC_SUBST(RC_DEFINES)
+AC_SUBST(RES)
+
+AC_OUTPUT(Makefile tkConfig.sh wish.exe.manifest)
+
+dnl Local Variables:
+dnl mode: autoconf;
+dnl End:

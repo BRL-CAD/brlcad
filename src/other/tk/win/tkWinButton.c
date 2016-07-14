@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #define OEMRESOURCE
@@ -88,10 +86,11 @@ static void		InitBoxes(void);
  * The class procedure table for the button widgets.
  */
 
-Tk_ClassProcs tkpButtonProcs = {
+const Tk_ClassProcs tkpButtonProcs = {
     sizeof(Tk_ClassProcs),	/* size */
     TkButtonWorldChanged,	/* worldChangedProc */
     CreateProc,			/* createProc */
+    NULL					/* modalProc */
 };
 
 
@@ -132,7 +131,7 @@ InitBoxes(void)
     ThreadSpecificData *tsdPtr = (ThreadSpecificData *)
 	    Tcl_GetThreadData(&dataKey, sizeof(ThreadSpecificData));
 
-    hrsrc = FindResource(module, "buttons", RT_BITMAP);
+    hrsrc = FindResource(module, TEXT("buttons"), RT_BITMAP);
     if (hrsrc == NULL) {
 	Tcl_Panic("FindResource() failed for buttons bitmap resource, "
             "resources in tk_base.rc must be linked into Tk dll or static executable");
@@ -149,7 +148,7 @@ InitBoxes(void)
 	    && !(tsdPtr->boxesPtr->biHeight % 2)) {
 	size = tsdPtr->boxesPtr->biSize + (1 << tsdPtr->boxesPtr->biBitCount)
 		* sizeof(RGBQUAD) + tsdPtr->boxesPtr->biSizeImage;
-	newBitmap = (LPBITMAPINFOHEADER) ckalloc(size);
+	newBitmap = ckalloc(size);
 	memcpy(newBitmap, tsdPtr->boxesPtr, size);
 	tsdPtr->boxesPtr = newBitmap;
 	tsdPtr->boxWidth = tsdPtr->boxesPtr->biWidth / 4;
@@ -182,15 +181,12 @@ InitBoxes(void)
  */
 
 void
-TkpButtonSetDefaults(
-    Tk_OptionSpec *specPtr)	/* Points to an array of option specs,
-				 * terminated by one with type
-				 * TK_OPTION_END. */
+TkpButtonSetDefaults()
 {
     int width = GetSystemMetrics(SM_CXEDGE);
-    if (width > 0) {
-	sprintf(tkDefButtonBorderWidth, "%d", width);
-    }
+	if (width > 0) {
+	    sprintf(tkDefButtonBorderWidth, "%d", width);
+	}
 }
 
 /*
@@ -215,7 +211,7 @@ TkpCreateButton(
 {
     WinButton *butPtr;
 
-    butPtr = (WinButton *)ckalloc(sizeof(WinButton));
+    butPtr = ckalloc(sizeof(WinButton));
     butPtr->hwnd = NULL;
     return (TkButton *) butPtr;
 }
@@ -245,15 +241,15 @@ CreateProc(
 {
     Window window;
     HWND parent;
-    char *class;
+    const TCHAR *class;
     WinButton *butPtr = (WinButton *)instanceData;
 
     parent = Tk_GetHWND(parentWin);
     if (butPtr->info.type == TYPE_LABEL) {
-	class = "STATIC";
+	class = TEXT("STATIC");
 	butPtr->style = SS_OWNERDRAW | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
     } else {
-	class = "BUTTON";
+	class = TEXT("BUTTON");
 	butPtr->style = BS_OWNERDRAW | WS_CHILD | WS_VISIBLE | WS_CLIPSIBLINGS;
     }
     butPtr->hwnd = CreateWindow(class, NULL, butPtr->style,
@@ -262,7 +258,7 @@ CreateProc(
     SetWindowPos(butPtr->hwnd, HWND_TOP, 0, 0, 0, 0,
 		    SWP_NOACTIVATE | SWP_NOMOVE | SWP_NOSIZE);
     butPtr->oldProc = (WNDPROC)SetWindowLongPtr(butPtr->hwnd, GWLP_WNDPROC,
-	    (INT_PTR) ButtonProc);
+	    (LONG_PTR) ButtonProc);
 
     window = Tk_AttachHWND(tkwin, butPtr->hwnd);
     return window;
@@ -292,7 +288,7 @@ TkpDestroyButton(
     HWND hwnd = winButPtr->hwnd;
 
     if (hwnd) {
-	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (INT_PTR) winButPtr->oldProc);
+	SetWindowLongPtr(hwnd, GWLP_WNDPROC, (LONG_PTR) winButPtr->oldProc);
     }
 }
 
@@ -1269,21 +1265,29 @@ ButtonProc(
 	return 0;
     }
     case BN_CLICKED: {
-	int code;
-	Tcl_Interp *interp = butPtr->info.interp;
+	/*
+	 * OOPS: chromium fires WM_NULL regularly to ping if plugin is still
+	 * alive. When using an external window (i.e. via the tcl plugin), this
+	 * causes all buttons to fire once a second, so we need to make sure
+	 * that we are not dealing with the chromium life check.
+	*/
+        if (wParam != 0 || lParam != 0) {
+	    int code;
+	    Tcl_Interp *interp = butPtr->info.interp;
 
-	if (butPtr->info.state != STATE_DISABLED) {
-	    Tcl_Preserve((ClientData)interp);
-	    code = TkInvokeButton((TkButton*)butPtr);
-	    if (code != TCL_OK && code != TCL_CONTINUE
-		    && code != TCL_BREAK) {
-		Tcl_AddErrorInfo(interp, "\n    (button invoke)");
-		Tcl_BackgroundError(interp);
+	    if (butPtr->info.state != STATE_DISABLED) {
+		Tcl_Preserve((ClientData)interp);
+		code = TkInvokeButton((TkButton*)butPtr);
+		if (code != TCL_OK && code != TCL_CONTINUE
+			&& code != TCL_BREAK) {
+		    Tcl_AddErrorInfo(interp, "\n    (button invoke)");
+		    Tcl_BackgroundException(interp, code);
+		}
+		Tcl_Release((ClientData)interp);
 	    }
-	    Tcl_Release((ClientData)interp);
+	    Tcl_ServiceAll();
+	    return 0;
 	}
-	Tcl_ServiceAll();
-	return 0;
     }
 
     default:

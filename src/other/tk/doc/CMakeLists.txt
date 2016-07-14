@@ -127,6 +127,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TKMAN_GENERATED)
 		bind.n
 		bindtags.n
 		bitmap.n
+		busy.n
 		button.n
 		canvas.n
 		checkbutton.n
@@ -143,6 +144,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TKMAN_GENERATED)
 		focus.n
 		focusNext.n
 		font.n
+		fontchooser.n
 		frame.n
 		getOpenFile.n
 		grab.n
@@ -178,6 +180,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TKMAN_GENERATED)
 		spinbox.n
 		text.n
 		tk.n
+		tk_mac.n
 		tkerror.n
 		tkvars.n
 		tkwait.n
@@ -200,6 +203,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TKMAN_GENERATED)
 		ttk_scrollbar.n
 		ttk_separator.n
 		ttk_sizegrip.n
+		ttk_spinbox.n
 		ttk_style.n
 		ttk_treeview.n
 		ttk_vsapi.n

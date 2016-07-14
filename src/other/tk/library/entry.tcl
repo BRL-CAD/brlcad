@@ -3,8 +3,6 @@
 # This file defines the default bindings for Tk entry widgets and provides
 # procedures that help in implementing those bindings.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 #
@@ -48,7 +46,6 @@ bind Entry <<Copy>> {
     }
 }
 bind Entry <<Paste>> {
-    global tcl_platform
     catch {
 	if {[tk windowingsystem] ne "x11"} {
 	    catch {
@@ -71,8 +68,8 @@ bind Entry <<PasteSelection>> {
 }
 
 bind Entry <<TraverseIn>> {
-    %W selection range 0 end 
-    %W icursor end 
+    %W selection range 0 end
+    %W icursor end
 }
 
 # Standard Motif bindings:
@@ -121,45 +118,45 @@ bind Entry <Control-1> {
     %W icursor @%x
 }
 
-bind Entry <Left> {
+bind Entry <<PrevChar>> {
     tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
 }
-bind Entry <Right> {
+bind Entry <<NextChar>> {
     tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
 }
-bind Entry <Shift-Left> {
+bind Entry <<SelectPrevChar>> {
     tk::EntryKeySelect %W [expr {[%W index insert] - 1}]
     tk::EntrySeeInsert %W
 }
-bind Entry <Shift-Right> {
+bind Entry <<SelectNextChar>> {
     tk::EntryKeySelect %W [expr {[%W index insert] + 1}]
     tk::EntrySeeInsert %W
 }
-bind Entry <Control-Left> {
+bind Entry <<PrevWord>> {
     tk::EntrySetCursor %W [tk::EntryPreviousWord %W insert]
 }
-bind Entry <Control-Right> {
+bind Entry <<NextWord>> {
     tk::EntrySetCursor %W [tk::EntryNextWord %W insert]
 }
-bind Entry <Shift-Control-Left> {
+bind Entry <<SelectPrevWord>> {
     tk::EntryKeySelect %W [tk::EntryPreviousWord %W insert]
     tk::EntrySeeInsert %W
 }
-bind Entry <Shift-Control-Right> {
+bind Entry <<SelectNextWord>> {
     tk::EntryKeySelect %W [tk::EntryNextWord %W insert]
     tk::EntrySeeInsert %W
 }
-bind Entry <Home> {
+bind Entry <<LineStart>> {
     tk::EntrySetCursor %W 0
 }
-bind Entry <Shift-Home> {
+bind Entry <<SelectLineStart>> {
     tk::EntryKeySelect %W 0
     tk::EntrySeeInsert %W
 }
-bind Entry <End> {
+bind Entry <<LineEnd>> {
     tk::EntrySetCursor %W end
 }
-bind Entry <Shift-End> {
+bind Entry <<SelectLineEnd>> {
     tk::EntryKeySelect %W end
     tk::EntrySeeInsert %W
 }
@@ -187,10 +184,10 @@ bind Entry <Control-Shift-space> {
 bind Entry <Shift-Select> {
     %W selection adjust insert
 }
-bind Entry <Control-slash> {
+bind Entry <<SelectAll>> {
     %W selection range 0 end
 }
-bind Entry <Control-backslash> {
+bind Entry <<SelectNone>> {
     %W selection clear
 }
 bind Entry <KeyPress> {
@@ -210,13 +207,18 @@ bind Entry <Escape> {# nothing}
 bind Entry <Return> {# nothing}
 bind Entry <KP_Enter> {# nothing}
 bind Entry <Tab> {# nothing}
+bind Entry <Prior> {# nothing}
+bind Entry <Next> {# nothing}
 if {[tk windowingsystem] eq "aqua"} {
     bind Entry <Command-KeyPress> {# nothing}
 }
+# Tk-on-Cocoa generates characters for these two keys. [Bug 2971663]
+bind Entry <<NextLine>> {# nothing}
+bind Entry <<PrevLine>> {# nothing}
 
 # On Windows, paste is done using Shift-Insert.  Shift-Insert already
 # generates the <<Paste>> event, so we don't need to do anything here.
-if {$tcl_platform(platform) ne "windows"} {
+if {[tk windowingsystem] ne "win32"} {
     bind Entry <Insert> {
 	catch {tk::EntryInsert %W [::tk::GetSelection %W PRIMARY]}
     }
@@ -224,29 +226,9 @@ if {$tcl_platform(platform) ne "windows"} {
 
 # Additional emacs-like bindings:
 
-bind Entry <Control-a> {
-    if {!$tk_strictMotif} {
-	tk::EntrySetCursor %W 0
-    }
-}
-bind Entry <Control-b> {
-    if {!$tk_strictMotif} {
-	tk::EntrySetCursor %W [expr {[%W index insert] - 1}]
-    }
-}
 bind Entry <Control-d> {
     if {!$tk_strictMotif} {
 	%W delete insert
-    }
-}
-bind Entry <Control-e> {
-    if {!$tk_strictMotif} {
-	tk::EntrySetCursor %W end
-    }
-}
-bind Entry <Control-f> {
-    if {!$tk_strictMotif} {
-	tk::EntrySetCursor %W [expr {[%W index insert] + 1}]
     }
 }
 bind Entry <Control-h> {
@@ -375,12 +357,18 @@ proc ::tk::EntryMouseSelect {w x} {
 	    }
 	}
 	word {
-	    if {$cur < [$w index anchor]} {
+	    if {$cur < $anchor} {
 		set before [tcl_wordBreakBefore [$w get] $cur]
 		set after [tcl_wordBreakAfter [$w get] [expr {$anchor-1}]]
-	    } else {
+	    } elseif {$cur > $anchor} {
 		set before [tcl_wordBreakBefore [$w get] $anchor]
 		set after [tcl_wordBreakAfter [$w get] [expr {$cur - 1}]]
+	    } else {
+		if {[$w index @$Priv(pressX)] < $anchor} {
+		      incr anchor -1
+		}
+		set before [tcl_wordBreakBefore [$w get] $anchor]
+		set after [tcl_wordBreakAfter [$w get] $anchor]
 	    }
 	    if {$before < 0} {
 		set before 0
@@ -576,7 +564,7 @@ proc ::tk::EntryTranspose w {
 # w -		The entry window in which the cursor is to move.
 # start -	Position at which to start search.
 
-if {$tcl_platform(platform) eq "windows"}  {
+if {[tk windowingsystem] eq "win32"}  {
     proc ::tk::EntryNextWord {w start} {
 	set pos [tcl_endOfWord [$w get] [$w index $start]]
 	if {$pos >= 0} {

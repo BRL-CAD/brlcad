@@ -18,7 +18,7 @@
 ::msgcat::mcset nl "Demo code: %s" "Code van Demo %s"
 ::msgcat::mcset nl "About Widget Demo" "Over deze demonstratie"
 ::msgcat::mcset nl "Tk widget demonstration" "Demonstratie van Tk widgets"
-::msgcat::mcset nl "Copyright (c) %s" "Copyright (c) %s"
+::msgcat::mcset nl "Copyright \u00a9 %s"
 
 ::msgcat::mcset nl "Tk Widget Demonstrations" "Demostratie van Tk widgets"
 ::msgcat::mcset nl "This application provides a front end for several short scripts" \

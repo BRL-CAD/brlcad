@@ -5,14 +5,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH scale n 4.1 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-scale \- Create and manipulate scale widgets
+scale \- Create and manipulate 'scale' value-controlled slider widgets
 .SH SYNOPSIS
 \fBscale\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -76,7 +74,7 @@ Specifies one of three states for the scale:  \fBnormal\fR,
 If the scale is disabled then the value may not be changed and the scale
 will not activate.
 If the scale is active, the slider is displayed using the color
-specified by the \fBactiveBackground\fR option.
+specified by the \fB\-activebackground\fR option.
 .OP \-tickinterval tickInterval TickInterval
 Must be a real value.
 Determines the spacing between numerical
@@ -85,7 +83,7 @@ If 0, no tick marks will be displayed.
 .OP \-to to To
 Specifies a real value corresponding
 to the right or bottom end of the scale.
-This value may be either less than or greater than the \fBfrom\fR option.
+This value may be either less than or greater than the \fB\-from\fR option.
 .OP \-variable variable Variable
 Specifies the name of a global variable to link to the scale.  Whenever the
 value of the variable changes, the scale will update to reflect this
@@ -98,7 +96,6 @@ Specifies the desired narrow dimension of the trough in screen units
 For vertical scales this is the trough's width;  for horizontal scales
 this is the trough's height.
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBscale\fR command creates a new window (given by the
@@ -114,16 +111,16 @@ there must not exist a window named \fIpathName\fR, but
 .PP
 A scale is a widget that displays a rectangular \fItrough\fR and a
 small \fIslider\fR.  The trough corresponds to a range
-of real values (determined by the \fBfrom\fR, \fBto\fR, and
-\fBresolution\fR options),
+of real values (determined by the \fB\-from\fR, \fB\-to\fR, and
+\fB\-resolution\fR options),
 and the position of the slider selects a particular real value.
 The slider's position (and hence the scale's value) may be adjusted
 with the mouse or keyboard as described in the \fBBINDINGS\fR
 section below.  Whenever the scale's value is changed, a Tcl
-command is invoked (using the \fBcommand\fR option) to notify
+command is invoked (using the \fB\-command\fR option) to notify
 other interested widgets of the change.
 In addition, the value
-of the scale can be linked to a Tcl variable (using the \fBvariable\fR
+of the scale can be linked to a Tcl variable (using the \fB\-variable\fR
 option), so that changes in either are reflected in the other.
 .PP
 Three annotations may be displayed in a scale widget:  a label
@@ -148,12 +145,14 @@ determine the exact behavior of the command.  The following
 commands are possible for scale widgets:
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
+.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the \fBscale\fR
 command.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+.
 Query or modify the configuration options of the widget.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
@@ -168,12 +167,14 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBcoords \fR?\fIvalue\fR?
+.
 Returns a list whose elements are the x and y coordinates of
 the point along the centerline of the trough that corresponds
 to \fIvalue\fR.
 If \fIvalue\fR is omitted then the scale's current value is used.
 .TP
 \fIpathName \fBget\fR ?\fIx y\fR?
+.
 If \fIx\fR and \fIy\fR are omitted, returns the current value
 of the scale.  If \fIx\fR and \fIy\fR are specified, they give
 pixel coordinates within the widget;  the command returns
@@ -181,7 +182,8 @@ the scale value corresponding to the given pixel.
 Only one of \fIx\fR or \fIy\fR is used:  for horizontal scales
 \fIy\fR is ignored, and for vertical scales \fIx\fR is ignored.
 .TP
-\fIpathName \fBidentify\fR \fIx y\fR
+\fIpathName \fBidentify \fIx y\fR
+.
 Returns a string indicating what part of the scale lies under
 the coordinates given by \fIx\fR and \fIy\fR.
 A return value of \fBslider\fR means that the point is over
@@ -192,7 +194,8 @@ of the slider below or to the right of the slider.
 If the point is not over one of these elements, an empty string
 is returned.
 .TP
-\fIpathName \fBset\fR \fIvalue\fR
+\fIpathName \fBset \fIvalue\fR
+.
 This command is invoked to change the current value of the scale,
 and hence the position at which the slider is displayed.  \fIValue\fR
 gives the new value for the scale.
@@ -205,7 +208,7 @@ Where the behavior is different for vertical and horizontal scales,
 the horizontal behavior is described in parentheses.
 .IP [1]
 If button 1 is pressed in the trough, the scale's value will
-be incremented or decremented by the value of the \fBresolution\fR
+be incremented or decremented by the value of the \fB\-resolution\fR
 option so that the slider moves in the direction of the cursor. 
 If the button is held down, the action auto-repeats.
 .IP [2]
@@ -221,26 +224,30 @@ position.  If the mouse is dragged with button 2 down, the scale's
 value changes with the drag.
 .IP [5]
 The Up and Left keys move the slider up (left) by the value
-of the \fBresolution\fR option.
+of the \fB\-resolution\fR option.
 .IP [6]
 The Down and Right keys move the slider down (right) by the value
-of the \fBresolution\fR option.
+of the \fB\-resolution\fR option.
 .IP [7]
 Control-Up and Control-Left move the slider up (left) by the
-value of the \fBbigIncrement\fR option.
+value of the \fB\-bigincrement\fR option.
 .IP [8]
 Control-Down and Control-Right move the slider down (right) by the
-value of the \fBbigIncrement\fR option.
+value of the \fB\-bigincrement\fR option.
 .IP [9]
 Home moves the slider to the top (left) end of its range.
 .IP [10]
 End moves the slider to the bottom (right) end of its range.
 .PP
-If the scale is disabled using the \fBstate\fR option then
+If the scale is disabled using the \fB\-state\fR option then
 none of the above bindings have any effect.
 .PP
 The behavior of scales can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
-
+.SH "SEE ALSO"
+ttk::scale(n)
 .SH KEYWORDS
 scale, slider, trough, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

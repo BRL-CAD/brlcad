@@ -8,16 +8,15 @@
  *	Tk application is allowed on the Macintosh.
  *
  * Copyright (c) 1996-1997 Sun Microsystems, Inc.
- * Copyright 2001, Apple Computer, Inc.
- * Copyright (c) 2006-2008 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2001-2009, Apple Inc.
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
  *
- * See the file "license.terms" for information on usage and redistribution of
- * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- *  RCS: @(#) $Id$
+ * See the file "license.terms" for information on usage and redistribution
+ * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 
-#include "tkMacOSXInt.h"
+#include "tkMacOSXPrivate.h"
+#include "tkBusy.h"
 
 /*
  * One of the following structures exists for each container in this
@@ -91,8 +90,7 @@ Tk_MacOSXSetEmbedHandler(
     Tk_MacOSXEmbedGetOffsetInParentProc *getOffsetProc)
 {
     if (tkMacOSXEmbedHandler == NULL) {
-	tkMacOSXEmbedHandler = (TkMacOSXEmbedHandler *)
-		ckalloc(sizeof(TkMacOSXEmbedHandler));
+	tkMacOSXEmbedHandler = ckalloc(sizeof(TkMacOSXEmbedHandler));
     }
     tkMacOSXEmbedHandler->registerWinProc = registerWinProc;
     tkMacOSXEmbedHandler->getPortProc = getPortProc;
@@ -136,7 +134,7 @@ TkpMakeWindow(
 	 * Allocate sub window
 	 */
 
-	macWin = (MacDrawable *) ckalloc(sizeof(MacDrawable));
+	macWin = ckalloc(sizeof(MacDrawable));
 	if (macWin == NULL) {
 	    winPtr->privatePtr = NULL;
 	    return None;
@@ -145,10 +143,10 @@ TkpMakeWindow(
 	winPtr->privatePtr = macWin;
 	macWin->visRgn = NULL;
 	macWin->aboveVisRgn = NULL;
-	macWin->drawRect = CGRectNull;
+	macWin->drawRgn = NULL;
 	macWin->referenceCount = 0;
 	macWin->flags = TK_CLIP_INVALID;
-	macWin->grafPtr = NULL;
+	macWin->view = nil;
 	macWin->context = NULL;
 	macWin->size = CGSizeZero;
 	if (Tk_IsTopLevel(macWin->winPtr)) {
@@ -159,7 +157,7 @@ TkpMakeWindow(
 	    macWin->xOff = 0;
 	    macWin->yOff = 0;
 	    macWin->toplevel = macWin;
-	} else {
+	} else if (winPtr->parentPtr) {
 	    macWin->xOff = winPtr->parentPtr->privatePtr->xOff +
 		    winPtr->parentPtr->changes.border_width +
 		    winPtr->changes.x;
@@ -171,6 +169,50 @@ TkpMakeWindow(
 	macWin->toplevel->referenceCount++;
     }
     return (Window) macWin;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpScanWindowId --
+ *
+ *	Given a string, produce the corresponding Window Id.
+ *
+ * Results:
+ *      The return value is normally TCL_OK; in this case *idPtr will be set
+ *      to the Window value equivalent to string. If string is improperly
+ *      formed then TCL_ERROR is returned and an error message will be left in
+ *      the interp's result.
+ *
+ * Side effects:
+ *      None.
+ *
+ *----------------------------------------------------------------------
+ */
+
+int
+TkpScanWindowId(
+    Tcl_Interp *interp,
+    CONST char * string,
+    Window *idPtr)
+{
+    int code;
+    Tcl_Obj obj;
+
+    obj.refCount = 1;
+    obj.bytes = (char *) string;	/* DANGER?! */
+    obj.length = strlen(string);
+    obj.typePtr = NULL;
+
+    code = Tcl_GetLongFromObj(interp, &obj, (long *)idPtr);
+
+    if (obj.refCount > 1) {
+	Tcl_Panic("invalid sharing of Tcl_Obj on C stack");
+    }
+    if (obj.typePtr && obj.typePtr->freeIntRepProc) {
+	obj.typePtr->freeIntRepProc(&obj);
+    }
+    return code;
 }
 
 /*
@@ -201,7 +243,7 @@ TkpUseWindow(
 				 * string is bogus. */
     Tk_Window tkwin,		/* Tk window that does not yet have an
 				 * associated X window. */
-    CONST char *string)		/* String identifying an X window to use for
+    const char *string)		/* String identifying an X window to use for
 				 * tkwin; must be an integer value. */
 {
     TkWindow *winPtr = (TkWindow *) tkwin;
@@ -210,13 +252,14 @@ TkpUseWindow(
     Container *containerPtr;
 
     if (winPtr->window != None) {
-	Tcl_AppendResult(interp, "can't modify container after widget is "
-		"created", NULL);
+	Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		"can't modify container after widget is created", -1));
+	Tcl_SetErrorCode(interp, "TK", "EMBED", "POST_CREATE", NULL);
 	return TCL_ERROR;
     }
 
     /*
-     * Decode the container pointer, and look for it among the list of
+     * Decode the container window ID, and look for it among the list of
      * available containers.
      *
      * N.B. For now, we are limiting the containers to be in the same Tk
@@ -224,17 +267,17 @@ TkpUseWindow(
      * containers.
      */
 
-    if (Tcl_GetInt(interp, string, (int*) &parent) != TCL_OK) {
+    if (TkpScanWindowId(interp, string, (Window *)&parent) != TCL_OK) {
 	return TCL_ERROR;
     }
 
     usePtr = (TkWindow *) Tk_IdToWindow(winPtr->display, (Window) parent);
-    if (usePtr != NULL) {
-	if (!(usePtr->flags & TK_CONTAINER)) {
-	    Tcl_AppendResult(interp, "window \"", usePtr->pathName,
-		    "\" doesn't have -container option set", NULL);
-	    return TCL_ERROR;
-	}
+    if (usePtr != NULL && !(usePtr->flags & TK_CONTAINER)) {
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"window \"%s\" doesn't have -container option set",
+		usePtr->pathName));
+	Tcl_SetErrorCode(interp, "TK", "EMBED", "CONTAINER", NULL);
+	return TCL_ERROR;
     }
 
     /*
@@ -262,7 +305,7 @@ TkpUseWindow(
      * Make the embedded window.
      */
 
-    macWin = (MacDrawable *) ckalloc(sizeof(MacDrawable));
+    macWin = ckalloc(sizeof(MacDrawable));
     if (macWin == NULL) {
 	winPtr->privatePtr = NULL;
 	return TCL_ERROR;
@@ -279,12 +322,12 @@ TkpUseWindow(
      * correctly find the container's port.
      */
 
-    macWin->grafPtr = NULL;
+    macWin->view = nil;
     macWin->context = NULL;
     macWin->size = CGSizeZero;
     macWin->visRgn = NULL;
     macWin->aboveVisRgn = NULL;
-    macWin->drawRect = CGRectNull;
+    macWin->drawRgn = NULL;
     macWin->referenceCount = 0;
     macWin->flags = TK_CLIP_INVALID;
     macWin->toplevel = macWin;
@@ -307,25 +350,27 @@ TkpUseWindow(
 
     if (containerPtr == NULL) {
 	/*
-	 * If someone has registered an in process embedding handler, then
+	 * If someone has registered an in-process embedding handler, then
 	 * see if it can handle this window...
 	 */
 
 	if (tkMacOSXEmbedHandler == NULL ||
-		tkMacOSXEmbedHandler->registerWinProc((int) parent,
+		tkMacOSXEmbedHandler->registerWinProc((long) parent,
 		(Tk_Window) winPtr) != TCL_OK) {
-	    Tcl_AppendResult(interp, "The window ID ", string,
-		    " does not correspond to a valid Tk Window.", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "The window ID %s does not correspond to a valid Tk Window",
+		    string));
+	    Tcl_SetErrorCode(interp, "TK", "EMBED", "HANDLE", NULL);
 	    return TCL_ERROR;
-	} else {
-	    containerPtr = (Container *) ckalloc(sizeof(Container));
-
-	    containerPtr->parentPtr = NULL;
-	    containerPtr->embedded = (Window) macWin;
-	    containerPtr->embeddedPtr = macWin->winPtr;
-	    containerPtr->nextPtr = firstContainerPtr;
-	    firstContainerPtr = containerPtr;
 	}
+
+	containerPtr = ckalloc(sizeof(Container));
+
+	containerPtr->parentPtr = NULL;
+	containerPtr->embedded = (Window) macWin;
+	containerPtr->embeddedPtr = macWin->winPtr;
+	containerPtr->nextPtr = firstContainerPtr;
+	firstContainerPtr = containerPtr;
     } else {
 	/*
 	 * The window is embedded in another Tk window.
@@ -391,7 +436,7 @@ TkpMakeContainer(
      */
 
     Tk_MakeWindowExist(tkwin);
-    containerPtr = (Container *) ckalloc(sizeof(Container));
+    containerPtr = ckalloc(sizeof(Container));
     containerPtr->parent = Tk_WindowId(tkwin);
     containerPtr->parentPtr = winPtr;
     containerPtr->embedded = None;
@@ -562,15 +607,15 @@ int
 TkpTestembedCmd(
     ClientData clientData,	/* Main window for application. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[])		/* Argument strings. */
 {
     int all;
     Container *containerPtr;
     Tcl_DString dString;
     char buffer[50];
 
-    if ((argc > 1) && (strcmp(argv[1], "all") == 0)) {
+    if ((objc > 1) && (strcmp(Tcl_GetString(objv[1]), "all") == 0)) {
 	all = 1;
     } else {
 	all = 0;
@@ -642,6 +687,7 @@ TkpRedirectKeyEvent(
     XEvent *eventPtr)		/* X event to redirect (should be KeyPress or
 				 * KeyRelease). */
 {
+    /* TODO: Implement this or decide it definitely needs no implementation */
 }
 
 /*
@@ -1087,7 +1133,7 @@ EmbedWindowDeleted(
 		XEvent event;
 
 		event.xany.serial =
-			Tk_Display(containerPtr->parentPtr)->request;
+			LastKnownRequestProcessed(Tk_Display(containerPtr->parentPtr));
 		event.xany.send_event = False;
 		event.xany.display = Tk_Display(containerPtr->parentPtr);
 
@@ -1115,6 +1161,69 @@ EmbedWindowDeleted(
 	} else {
 	    prevPtr->nextPtr = containerPtr->nextPtr;
 	}
-	ckfree((char *) containerPtr);
+	ckfree(containerPtr);
     }
 }
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TkpShowBusyWindow, TkpHideBusyWindow, TkpMakeTransparentWindowExist,
+ * TkpCreateBusy --
+ *
+ *	Portability layer for busy windows. Holds platform-specific gunk for
+ *	the [tk busy] command, which is currently a dummy implementation for
+ *	OSX/Aqua. The individual functions are supposed to do the following:
+ *
+ * TkpShowBusyWindow --
+ *	Make the busy window appear.
+ *
+ * TkpHideBusyWindow --
+ *	Make the busy window go away.
+ *
+ * TkpMakeTransparentWindowExist --
+ *	Actually make a transparent window.
+ *
+ * TkpCreateBusy --
+ *	Creates the platform-specific part of a busy window structure.
+ *
+ *----------------------------------------------------------------------
+ */
+
+void
+TkpShowBusyWindow(
+    TkBusy busy)
+{
+}
+
+void
+TkpHideBusyWindow(
+    TkBusy busy)
+{
+}
+
+void
+TkpMakeTransparentWindowExist(
+    Tk_Window tkwin,		/* Token for window. */
+    Window parent)		/* Parent window. */
+{
+}
+
+void
+TkpCreateBusy(
+    Tk_FakeWin *winPtr,
+    Tk_Window tkRef,
+    Window* parentPtr,
+    Tk_Window tkParent,
+    TkBusy busy)
+{
+}
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

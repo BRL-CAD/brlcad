@@ -6,17 +6,17 @@
  *
  * Copyright (c) 1996 by Sun Microsystems, Inc.
  * Copyright (c) 1998-2000 by Scriptics Corporation.
- * Copyright (c) 2006-2007 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright (c) 2006-2009 Daniel A. Steffen <das@users.sourceforge.net>
+ * Copyright 2008-2009, Apple Inc.
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkMacOSXPrivate.h"
 #include "tkScale.h"
 
+#ifdef MAC_OSX_TK_TODO
 /*
 #ifdef TK_MAC_DEBUG
 #define TK_MAC_DEBUG_SCALE
@@ -76,7 +76,7 @@ TkScale *
 TkpCreateScale(
     Tk_Window tkwin)
 {
-    MacScale *macScalePtr = (MacScale *) ckalloc(sizeof(MacScale));
+    MacScale *macScalePtr = ckalloc(sizeof(MacScale));
 
     macScalePtr->scaleHandle = NULL;
     if (scaleActionProc == NULL) {
@@ -145,7 +145,7 @@ TkpDisplayScale(
     Tk_Window tkwin = scalePtr->tkwin;
     Tcl_Interp *interp = scalePtr->interp;
     int result;
-    char string[PRINT_CHARS];
+    char string[TCL_DOUBLE_SPACE];
     MacScale *macScalePtr = (MacScale *) clientData;
     Rect r;
     WindowRef windowRef;
@@ -154,6 +154,7 @@ TkpDisplayScale(
     MacDrawable *macDraw;
     SInt32 initialValue, minValue, maxValue;
     UInt16 numTicks;
+    Tcl_DString buf;
 
 #ifdef TK_MAC_DEBUG_SCALE
     TkMacOSXDbgMsg("TkpDisplayScale");
@@ -171,10 +172,15 @@ TkpDisplayScale(
     if ((scalePtr->flags & INVOKE_COMMAND) && (scalePtr->command != NULL)) {
 	Tcl_Preserve((ClientData) interp);
 	sprintf(string, scalePtr->format, scalePtr->value);
-	result = Tcl_VarEval(interp, scalePtr->command, " ", string, NULL);
+	Tcl_DStringInit(&buf);
+	Tcl_DStringAppend(&buf, scalePtr->command, -1);
+	Tcl_DStringAppend(&buf, " ", -1);
+	Tcl_DStringAppend(&buf, string, -1);
+	result = Tcl_EvalEx(interp, Tcl_DStringValue(&buf), -1, 0);
+	Tcl_DStringFree(&buf);
 	if (result != TCL_OK) {
 	    Tcl_AddErrorInfo(interp, "\n    (command executed by scale)");
-	    Tcl_BackgroundError(interp);
+	    Tcl_BackgroundException(interp, result);
 	}
 	Tcl_Release((ClientData) interp);
     }
@@ -481,4 +487,13 @@ ScaleActionProc(
     TkMacOSXRunTclEventLoop();
     Tcl_Release((ClientData) scalePtr);
 }
-
+#endif
+
+/*
+ * Local Variables:
+ * mode: objc
+ * c-basic-offset: 4
+ * fill-column: 79
+ * coding: utf-8
+ * End:
+ */

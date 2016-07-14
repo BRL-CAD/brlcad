@@ -6,8 +6,6 @@
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -59,7 +57,7 @@ foreach test {
     {-activebackground #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
     {-activerelief sunken sunken non-existent
-	    {bad relief type "non-existent": must be flat, groove, raised, ridge, solid, or sunken}}
+	    {bad relief "non-existent": must be flat, groove, raised, ridge, solid, or sunken}}
     {-background #ff0000 #ff0000 non-existent
 	    {unknown color name "non-existent"}}
     {-bd 4 4 badValue {bad screen distance "badValue"}}
@@ -77,7 +75,7 @@ foreach test {
     {-orient horizontal horizontal badValue
 	    {bad orientation "badValue": must be vertical or horizontal}}
     {-orient horizontal horizontal bogus {bad orientation "bogus": must be vertical or horizontal}}
-    {-relief ridge ridge badValue {bad relief type "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
+    {-relief ridge ridge badValue {bad relief "badValue": must be flat, groove, raised, ridge, solid, or sunken}}
     {-repeatdelay 140 140 129.3 {expected integer but got "129.3"}}
     {-repeatinterval 140 140 129.3 {expected integer but got "129.3"}}
     {-takefocus "any string" "any string" {} {}}
@@ -101,7 +99,7 @@ foreach test {
 destroy .s
 test scrollbar-2.1 {Tk_ScrollbarCmd procedure} -returnCodes error -body {
     scrollbar
-} -result {wrong # args: should be "scrollbar pathName ?options?"}
+} -result {wrong # args: should be "scrollbar pathName ?-option value ...?"}
 test scrollbar-2.2 {Tk_ScrollbarCmd procedure} -body {
     scrollbar gorp
 } -returnCodes error -result {bad window path name "gorp"}
@@ -129,7 +127,7 @@ pack .s -side right -fill y
 update
 test scrollbar-3.1 {ScrollbarWidgetCmd procedure} {
     list [catch {.s} msg] $msg
-} {1 {wrong # args: should be ".s option ?arg arg ...?"}}
+} {1 {wrong # args: should be ".s option ?arg ...?"}}
 test scrollbar-3.2 {ScrollbarWidgetCmd procedure, "cget" option} {
     list [catch {.s cget} msg] $msg
 } {1 {wrong # args: should be ".s cget option"}}
@@ -407,7 +405,7 @@ test scrollbar-3.73 {ScrollbarWidgetCmd procedure} {
 } {1 {bad option "bogus": must be activate, cget, configure, delta, fraction, get, identify, or set}}
 test scrollbar-3.74 {ScrollbarWidgetCmd procedure} {
     list [catch {.s c} msg] $msg
-} {1 {bad option "c": must be activate, cget, configure, delta, fraction, get, identify, or set}}
+} {1 {ambiguous option "c": must be activate, cget, configure, delta, fraction, get, identify, or set}}
 
 test scrollbar-4.1 {ScrollbarEventProc procedure} {
     catch {destroy .s1}
@@ -633,6 +631,36 @@ test scrollbar-9.1 {scrollbar widget vs hidden commands} {
     destroy .s
     list [winfo children .] [interp hidden]
 } [list {} $l]
+
+test scrollbar-10.1 {<MouseWheel> event on scrollbar} -constraints {win|unix} -setup {
+    destroy .t .s
+} -body {
+    pack [text .t -yscrollcommand {.s set}] -side left
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Line $i\n"}
+    pack [scrollbar .s -command {.t yview}] -fill y -expand 1 -side left
+    update
+    focus -force .s
+    event generate .s <MouseWheel> -delta -120
+    after 200 {set eventprocessed 1} ; vwait eventprocessed
+    .t index @0,0
+} -cleanup {
+    destroy .t .s
+} -result {5.0}
+
+test scrollbar-10.2 {<MouseWheel> event on scrollbar} -constraints {win|unix} -setup {
+    destroy .t .s
+} -body {
+    pack [text .t -xscrollcommand {.s set} -wrap none] -side top
+    for {set i 1} {$i < 100} {incr i} {.t insert end "Char $i "}
+    pack [scrollbar .s -command {.t xview} -orient horizontal] -fill x -expand 1 -side top
+    update
+    focus -force .s
+    event generate .s <Shift-MouseWheel> -delta -120
+    after 200 {set eventprocessed 1} ; vwait eventprocessed
+    .t index @0,0
+} -cleanup {
+    destroy .t .s
+} -result {1.4}
 
 catch {destroy .s}
 catch {destroy .t}

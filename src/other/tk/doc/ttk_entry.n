@@ -6,11 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" SOURCE: entry.n, r1.12
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH ttk::entry n 8.5 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 ttk::entry \- Editable text field widget
@@ -42,7 +39,7 @@ requests when it has a selection.
 .\" MAYBE: .OP \-insertbackground insertBackground Foreground
 .\" MAYBE: .OP \-insertwidth insertWidth InsertWidth
 .OP \-invalidcommand invalidCommand InvalidCommand
-A script template to evaluate whenever the \fBvalidateCommand\fR returns 0.
+A script template to evaluate whenever the \fB\-validatecommand\fR returns 0.
 See \fBVALIDATION\fR below for more information.
 .OP \-justify justify Justify
 Specifies how the text is aligned within the entry widget.
@@ -68,7 +65,7 @@ Specifies one of three states for the entry,
 \fBnormal\fR, \fBdisabled\fR, or \fBreadonly\fR.
 See \fBWIDGET STATES\fR, below.
 .OP \-textvariable textVariable Variable
-Specifies the name of a variable whose value is linked 
+Specifies the name of a global variable whose value is linked 
 to the entry widget's contents.
 Whenever the variable changes value, the widget's contents are updated,
 and vice versa.
@@ -90,7 +87,7 @@ in average-size characters of the widget's font.
 .SH NOTES
 .PP
 A portion of the entry may be selected as described below.
-If an entry is exporting its selection (see the \fBexportSelection\fR
+If an entry is exporting its selection (see the \fB\-exportselection\fR
 option), then it will observe the standard X11 protocols for handling the
 selection;  entry selections are available as type \fBSTRING\fR.
 Entries also observe the standard Tk rules for dealing with the
@@ -102,8 +99,8 @@ Entries are capable of displaying strings that are too long to
 fit entirely within the widget's window.  In this case, only a
 portion of the string will be displayed;  commands described below
 may be used to change the view in the window.  Entries use
-the standard \fBxScrollCommand\fR mechanism for interacting with
-scrollbars (see the description of the \fBxScrollCommand\fR option
+the standard \fB\-xscrollcommand\fR mechanism for interacting with
+scrollbars (see the description of the \fB\-xscrollcommand\fR option
 for details).
 .SH "INDICES"
 .PP

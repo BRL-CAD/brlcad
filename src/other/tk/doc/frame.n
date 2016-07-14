@@ -5,14 +5,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH frame n 8.4 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-frame \- Create and manipulate frame widgets
+frame \- Create and manipulate 'frame' simple container widgets
 .SH SYNOPSIS
 \fBframe\fR \fIpathName\fR ?\fIoptions\fR?
 .SO
@@ -22,7 +20,7 @@ frame \- Create and manipulate frame widgets
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-background background Background
-This option is the same as the standard \fBbackground\fR option
+This option is the same as the standard \fB\-background\fR option
 except that its value may also be specified as an empty string.
 In this case, the widget will display no background or border, and
 no colors will be consumed from its colormap for its background
@@ -32,7 +30,7 @@ Specifies a class for the window.
 This class will be used when querying the option database for
 the window's other options, and it will also be used later for
 other purposes such as bindings.
-The \fBclass\fR option may not be changed with the \fBconfigure\fR
+The \fB\-class\fR option may not be changed with the \fBconfigure\fR
 widget command.
 .OP \-colormap colormap Colormap
 Specifies a colormap to use for the window.
@@ -41,7 +39,7 @@ created for the window and its children, or the name of another
 window (which must be on the same screen and have the same visual
 as \fIpathName\fR), in which case the new window will use the colormap
 from the specified window.
-If the \fBcolormap\fR option is not specified, the new window
+If the \fB\-colormap\fR option is not specified, the new window
 uses the same colormap as its parent.
 This option may not be changed with the \fBconfigure\fR
 widget command.
@@ -54,6 +52,8 @@ things like geometry requests.  The window should not have any
 children of its own in this application.
 This option may not be changed with the \fBconfigure\fR
 widget command.
+Note that \fB\-borderwidth\fR, \fB\-padx\fR and \fB\-pady\fR are ignored when
+configured as a container since a container has no border.
 .OP \-height height Height
 Specifies the desired height for the window in any of the forms
 acceptable to \fBTk_GetPixels\fR.  If this option is less than or equal
@@ -67,7 +67,7 @@ Specifies visual information for the new window in any of the
 forms accepted by \fBTk_GetVisual\fR.
 If this option is not specified, the new window will use the same
 visual as its parent.
-The \fBvisual\fR option may not be modified with the \fBconfigure\fR
+The \fB\-visual\fR option may not be modified with the \fBconfigure\fR
 widget command.
 .OP \-width width Width
 Specifies the desired width for the window in any of the forms
@@ -134,3 +134,6 @@ frames are not intended to be interactive.
 labelframe(n), toplevel(n), ttk::frame(n)
 .SH KEYWORDS
 frame, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

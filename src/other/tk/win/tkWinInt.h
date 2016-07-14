@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKWININT
@@ -26,10 +24,6 @@
 
 #ifndef _TKWIN
 #include "tkWin.h"
-#endif
-
-#ifndef _TKPORT
-#include "tkPort.h"
 #endif
 
 /*
@@ -123,16 +117,16 @@ typedef struct {
  * The following macros define the class names for Tk Window types.
  */
 
-#define TK_WIN_TOPLEVEL_CLASS_NAME "TkTopLevel"
-#define TK_WIN_CHILD_CLASS_NAME "TkChild"
+#define TK_WIN_TOPLEVEL_CLASS_NAME TEXT("TkTopLevel")
+#define TK_WIN_CHILD_CLASS_NAME TEXT("TkChild")
 
 /*
  * The following variable is a translation table between X gc functions and
  * Win32 raster and BitBlt op modes.
  */
 
-MODULE_SCOPE int tkpWinRopModes[];
-MODULE_SCOPE int tkpWinBltModes[];
+MODULE_SCOPE const int tkpWinRopModes[];
+MODULE_SCOPE const int tkpWinBltModes[];
 
 /*
  * The following defines are used with TkWinGetBorderPixels to get the extra 2
@@ -148,70 +142,33 @@ MODULE_SCOPE int tkpWinBltModes[];
 
 #include "tkIntPlatDecls.h"
 
-#ifdef BUILD_tk
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLEXPORT
-#endif
-
 /*
  * Special proc needed as tsd accessor function between
  * tkWinX.c:GenerateXEvent and tkWinClipboard.c:UpdateClipboard
  */
 
-EXTERN void		TkWinUpdatingClipboard(int mode);
+MODULE_SCOPE void TkWinUpdatingClipboard(int mode);
 
 /*
  * Used by tkWinDialog.c to associate the right icon with tk_messageBox
  */
 
-EXTERN HICON		TkWinGetIcon(Tk_Window tkw, DWORD iconsize);
+MODULE_SCOPE HICON TkWinGetIcon(Tk_Window tkw, DWORD iconsize);
 
 /*
  * Used by tkWinX.c on for certain system display change messages and cleanup
  * up containers
  */
 
-EXTERN void		TkWinDisplayChanged(Display *display);
+MODULE_SCOPE void TkWinDisplayChanged(Display *display);
 MODULE_SCOPE void TkWinCleanupContainerList(void);
 
 /*
  * Used by tkWinWm.c for embedded menu handling. May become public.
  */
 
-EXTERN HWND		Tk_GetMenuHWND(Tk_Window tkwin);
-EXTERN HWND		Tk_GetEmbeddedMenuHWND(Tk_Window tkwin);
-
-/*
- * The following structure keeps track of whether we are using the multi-byte
- * or the wide-character interfaces to the operating system. System calls
- * should be made through the following function table.
- *
- * While some system calls need to use this A/W jump-table, it is not
- * necessary for all calls to do it, which is why you won't see this used
- * throughout the Tk code, but only in key areas. -- hobbs
- */
-
-typedef struct TkWinProcs {
-    int useWide;
-    LRESULT (WINAPI *callWindowProc)(WNDPROC lpPrevWndFunc, HWND hWnd,
-	    UINT Msg, WPARAM wParam, LPARAM lParam);
-    LRESULT (WINAPI *defWindowProc)(HWND hWnd, UINT Msg, WPARAM wParam,
-	    LPARAM lParam);
-    ATOM (WINAPI *registerClass)(const WNDCLASS *lpWndClass);
-    BOOL (WINAPI *setWindowText)(HWND hWnd, LPCTSTR lpString);
-    HWND (WINAPI *createWindowEx)(DWORD dwExStyle, LPCTSTR lpClassName,
-	    LPCTSTR lpWindowName, DWORD dwStyle, int x, int y,
-	    int nWidth, int nHeight, HWND hWndParent, HMENU hMenu,
-	    HINSTANCE hInstance, LPVOID lpParam);
-    BOOL (WINAPI *insertMenu)(HMENU hMenu, UINT uPosition, UINT uFlags,
-	    UINT uIDNewItem, LPCTSTR lpNewItem);
-    int (WINAPI *getWindowText)(HWND hWnd, LPCTSTR lpString, int nMaxCount);
-} TkWinProcs;
-
-EXTERN TkWinProcs *tkWinProcs;
-
-#undef TCL_STORAGE_CLASS
-#define TCL_STORAGE_CLASS DLLIMPORT
+MODULE_SCOPE HWND Tk_GetMenuHWND(Tk_Window tkwin);
+MODULE_SCOPE HWND Tk_GetEmbeddedMenuHWND(Tk_Window tkwin);
 
 /*
  * The following allows us to cache these encoding for multiple functions.
@@ -233,20 +190,26 @@ MODULE_SCOPE void		TkWinSetupSystemFonts(TkMainInfo *mainPtr);
  * The following is implemented in tkWinWm and used by tkWinEmbed.c
  */
 
-void			TkpWinToplevelWithDraw(TkWindow *winPtr);
-void			TkpWinToplevelIconify(TkWindow *winPtr);
-void			TkpWinToplevelDeiconify(TkWindow *winPtr);
-long			TkpWinToplevelIsControlledByWm(TkWindow *winPtr);
-long			TkpWinToplevelMove(TkWindow *winPtr, int x, int y);
-long			TkpWinToplevelOverrideRedirect(TkWindow *winPtr,
+MODULE_SCOPE void		TkpWinToplevelWithDraw(TkWindow *winPtr);
+MODULE_SCOPE void		TkpWinToplevelIconify(TkWindow *winPtr);
+MODULE_SCOPE void		TkpWinToplevelDeiconify(TkWindow *winPtr);
+MODULE_SCOPE long		TkpWinToplevelIsControlledByWm(TkWindow *winPtr);
+MODULE_SCOPE long		TkpWinToplevelMove(TkWindow *winPtr, int x, int y);
+MODULE_SCOPE long		TkpWinToplevelOverrideRedirect(TkWindow *winPtr,
 			    int reqValue);
-void			TkpWinToplevelDetachWindow(TkWindow *winPtr);
-int			TkpWmGetState(TkWindow *winPtr);
+MODULE_SCOPE void		TkpWinToplevelDetachWindow(TkWindow *winPtr);
+MODULE_SCOPE int		TkpWmGetState(TkWindow *winPtr);
+
+/*
+ * Common routines used in Windows implementation
+ */
+MODULE_SCOPE Tcl_Obj *	        TkWin32ErrorObj(HRESULT hrError);
+
 
 /*
  * The following functions are not present in old versions of Windows
- * API headers but are used in the Tk source to ensure 64bit 
- * compatability.
+ * API headers but are used in the Tk source to ensure 64bit
+ * compatibility.
  */
 
 #ifndef GetClassLongPtr

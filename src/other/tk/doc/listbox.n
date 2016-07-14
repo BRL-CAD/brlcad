@@ -5,23 +5,22 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH listbox n 8.4 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-listbox \- Create and manipulate listbox widgets
+listbox \- Create and manipulate 'listbox' item list widgets
 .SH SYNOPSIS
 \fBlistbox\fR \fIpathName \fR?\fIoptions\fR?
 .SO
 \-background	\-borderwidth	\-cursor
 \-disabledforeground	\-exportselection	\-font
 \-foreground	\-highlightbackground	\-highlightcolor
-\-highlightthickness	\-relief	\-selectbackground
-\-selectborderwidth	\-selectforeground	\-setgrid
-\-takefocus	\-xscrollcommand	\-yscrollcommand
+\-highlightthickness	\-justify	\-relief
+\-selectbackground	\-selectborderwidth	\-selectforeground
+\-setgrid	\-takefocus	\-xscrollcommand
+\-yscrollcommand
 .SE
 .SH "WIDGET-SPECIFIC OPTIONS"
 .OP \-activestyle activeStyle ActiveStyle
@@ -35,7 +34,7 @@ Specifies the desired height for the window, in lines.
 If zero or less, then the desired height for the window is made just
 large enough to hold all the elements in the listbox.
 .OP \-listvariable listVariable Variable
-Specifies the name of a variable.  The value of the variable is a list to
+Specifies the name of a global variable.  The value of the variable is a list to
 be displayed inside the widget; if the variable value changes then the
 widget will automatically update itself to reflect the new value.  Attempts
 to assign a variable with an invalid list value to \fB\-listvariable\fR
@@ -77,7 +76,7 @@ When first created, a new listbox has no elements.
 Elements may be added or deleted using widget commands described
 below.  In addition, one or more elements may be selected as described
 below.
-If a listbox is exporting its selection (see \fBexportSelection\fR
+If a listbox is exporting its selection (see \fB\-exportselection\fR
 option), then it will observe the standard X11 protocols
 for handling the selection.
 Listbox selections are available as type \fBSTRING\fR;
@@ -87,8 +86,8 @@ newlines separating the elements.
 It is not necessary for all the elements to be
 displayed in the listbox window at once;  commands described below
 may be used to change the view in the window.  Listboxes allow
-scrolling in both directions using the standard \fBxScrollCommand\fR
-and \fByScrollCommand\fR options.
+scrolling in both directions using the standard \fB\-xscrollcommand\fR
+and \fB\-yscrollcommand\fR options.
 They also support scanning, as described below.
 .SH "INDICES"
 .PP
@@ -98,20 +97,24 @@ An index specifies a particular element of the listbox, in any of
 the following ways:
 .TP 12
 \fInumber\fR
+.
 Specifies the element as a numerical index, where 0 corresponds
 to the first element in the listbox.
 .TP 12
 \fBactive\fR
+.
 Indicates the element that has the location cursor.  This element
 will be displayed as specified by \fB\-activestyle\fR when the listbox
 has the keyboard focus, and it is specified with the \fBactivate\fR
 widget command.
 .TP 12
 \fBanchor\fR
+.
 Indicates the anchor point for the selection, which is set with the
 \fBselection anchor\fR widget command.
 .TP 12
 \fBend\fR
+.
 Indicates the end of the listbox.
 For most commands this refers to the last element in the listbox,
 but for a few commands such as \fBindex\fR and \fBinsert\fR
@@ -140,6 +143,7 @@ determine the exact behavior of the command.  The following
 commands are possible for listbox widgets:
 .TP
 \fIpathName \fBactivate\fR \fIindex\fR
+.
 Sets the active element to the one indicated by \fIindex\fR.
 If \fIindex\fR is outside the range of elements in the listbox
 then the closest element is activated.
@@ -148,6 +152,7 @@ widget has the input focus, and its index may be retrieved with the
 index \fBactive\fR.
 .TP
 \fIpathName \fBbbox\fR \fIindex\fR
+.
 Returns a list of four numbers describing the bounding box of
 the text in the element given by \fIindex\fR.
 The first two elements of the list give the x and y coordinates
@@ -162,12 +167,14 @@ partially visible, the result gives the full area of the element,
 including any parts that are not visible.
 .TP
 \fIpathName \fBcget\fR \fIoption\fR
+.
 Returns the current value of the configuration option given
 by \fIoption\fR.
 \fIOption\fR may have any of the values accepted by the \fBlistbox\fR
 command.
 .TP
 \fIpathName \fBconfigure\fR ?\fIoption\fR? ?\fIvalue option value ...\fR?
+.
 Query or modify the configuration options of the widget.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for \fIpathName\fR (see \fBTk_ConfigureInfo\fR for
@@ -182,18 +189,21 @@ this case the command returns an empty string.
 command.
 .TP
 \fIpathName \fBcurselection\fR
+.
 Returns a list containing the numerical indices of
 all of the elements in the listbox that are currently selected.
 If there are no elements selected in the listbox then an empty
 string is returned.
 .TP
 \fIpathName \fBdelete \fIfirst \fR?\fIlast\fR?
+.
 Deletes one or more elements of the listbox.  \fIFirst\fR and \fIlast\fR
 are indices specifying the first and last elements in the range
 to delete.  If \fIlast\fR is not specified it defaults to
 \fIfirst\fR, i.e. a single element is deleted.
 .TP
 \fIpathName \fBget \fIfirst\fR ?\fIlast\fR?
+.
 If \fIlast\fR is omitted, returns the contents of the listbox
 element indicated by \fIfirst\fR,
 or an empty string if \fIfirst\fR refers to a non-existent element.
@@ -204,22 +214,26 @@ Both \fIfirst\fR and \fIlast\fR may have any of the standard
 forms for indices.
 .TP
 \fIpathName \fBindex \fIindex\fR
+.
 Returns the integer index value that corresponds to \fIindex\fR.
 If \fIindex\fR is \fBend\fR the return value is a count of the number
 of elements in the listbox (not the index of the last element).
 .TP
 \fIpathName \fBinsert \fIindex \fR?\fIelement element ...\fR?
+.
 Inserts zero or more new elements in the list just before the
 element given by \fIindex\fR.  If \fIindex\fR is specified as
 \fBend\fR then the new elements are added to the end of the
 list.  Returns an empty string.
 .TP
 \fIpathName \fBitemcget \fIindex option\fR
+.
 Returns the current value of the item configuration option given
 by \fIoption\fR. \fIOption\fR may have any of the values accepted 
-by the \fBlistbox itemconfigure\fR command.
+by the \fBitemconfigure\fR command.
 .TP
 \fIpathName \fBitemconfigure \fIindex\fR ?\fIoption\fR? ?\fIvalue\fR? ?\fIoption value ...\fR?
+.
 Query or modify the configuration options of an item in the listbox.
 If no \fIoption\fR is specified, returns a list describing all of
 the available options for the item (see \fBTk_ConfigureInfo\fR for
@@ -234,40 +248,48 @@ are currently supported for items:
 .RS
 .TP
 \fB\-background \fIcolor\fR
+.
 \fIColor\fR specifies the background color to use when displaying the 
 item. It may have any of the forms accepted by \fBTk_GetColor\fR.
 .TP
 \fB\-foreground \fIcolor\fR
+.
 \fIColor\fR specifies the foreground color to use when displaying the
 item. It may have any of the forms accepted by \fBTk_GetColor\fR.
 .TP
 \fB\-selectbackground \fIcolor\fR
+.
 \fIcolor\fR specifies the background color to use when displaying the
 item while it is selected. It may have any of the forms accepted by
 \fBTk_GetColor\fR.
 .TP
 \fB\-selectforeground \fIcolor\fR
+.
 \fIcolor\fR specifies the foreground color to use when displaying the
 item while it is selected. It may have any of the forms accepted by
 \fBTk_GetColor\fR.
 .RE
 .TP
 \fIpathName \fBnearest \fIy\fR
+.
 Given a y-coordinate within the listbox window, this command returns
 the index of the (visible) listbox element nearest to that y-coordinate.
 .TP
 \fIpathName \fBscan\fR \fIoption args\fR
+.
 This command is used to implement scanning on listboxes.  It has
 two forms, depending on \fIoption\fR:
 .RS
 .TP
 \fIpathName \fBscan mark \fIx y\fR
+.
 Records \fIx\fR and \fIy\fR and the current view in the listbox
 window;  used in conjunction with later \fBscan dragto\fR commands.
 Typically this command is associated with a mouse button press in
 the widget.  It returns an empty string.
 .TP
 \fIpathName \fBscan dragto \fIx y\fR.
+.
 This command computes the difference between its \fIx\fR and \fIy\fR
 arguments and the \fIx\fR and \fIy\fR arguments to the last
 \fBscan mark\fR command for the widget.
@@ -279,6 +301,7 @@ value is an empty string.
 .RE
 .TP
 \fIpathName \fBsee \fIindex\fR
+.
 Adjust the view in the listbox so that the element given by \fIindex\fR
 is visible.
 If the element is already visible then the command has no effect;
@@ -287,11 +310,13 @@ scrolls to bring the element into view at the edge;  otherwise
 the listbox scrolls to center the element.
 .TP
 \fIpathName \fBselection \fIoption arg\fR
+.
 This command is used to adjust the selection within a listbox.  It
 has several forms, depending on \fIoption\fR:
 .RS
 .TP
 \fIpathName \fBselection anchor \fIindex\fR
+.
 Sets the selection anchor to the element given by \fIindex\fR.
 If \fIindex\fR refers to a non-existent element, then the closest
 element is used.
@@ -301,32 +326,38 @@ The index \fBanchor\fR may be used to refer to the anchor
 element.
 .TP
 \fIpathName \fBselection clear \fIfirst \fR?\fIlast\fR?
+.
 If any of the elements between \fIfirst\fR and \fIlast\fR
 (inclusive) are selected, they are deselected.
 The selection state is not changed for elements outside
 this range.
 .TP
 \fIpathName \fBselection includes \fIindex\fR
+.
 Returns 1 if the element indicated by \fIindex\fR is currently
 selected, 0 if it is not.
 .TP
 \fIpathName \fBselection set \fIfirst \fR?\fIlast\fR?
+.
 Selects all of the elements in the range between
 \fIfirst\fR and \fIlast\fR, inclusive, without affecting
 the selection state of elements outside that range.
 .RE
 .TP
 \fIpathName \fBsize\fR
+.
 Returns a decimal string indicating the total number of elements
 in the listbox.
 .TP
-\fIpathName \fBxview \fIargs\fR
+\fIpathName \fBxview \fR?\fIargs\fR
+.
 This command is used to query and change the horizontal position of the
 information in the widget's window.  It can take any of the following
 forms:
 .RS
 .TP
 \fIpathName \fBxview\fR
+.
 Returns a list containing two elements.
 Each element is a real fraction between 0 and 1;  together they describe
 the horizontal span that is visible in the window.
@@ -336,17 +367,20 @@ in the window, and 40% of the text is off-screen to the right.
 These are the same values passed to scrollbars via the \fB\-xscrollcommand\fR
 option.
 .TP
-\fIpathName \fBxview\fR \fIindex\fR
+\fIpathName \fBxview \fIindex\fR
+.
 Adjusts the view in the window so that the character position given by
 \fIindex\fR is displayed at the left edge of the window.
 Character positions are defined by the width of the character \fB0\fR.
 .TP
 \fIpathName \fBxview moveto\fI fraction\fR
+.
 Adjusts the view in the window so that \fIfraction\fR of the
 total width of the listbox text is off-screen to the left.
 \fIfraction\fR must be a fraction between 0 and 1.
 .TP
 \fIpathName \fBxview scroll \fInumber what\fR
+.
 This command shifts the view in the window left or right according to
 \fInumber\fR and \fIwhat\fR.
 \fINumber\fR must be an integer.
@@ -361,7 +395,8 @@ become visible;  if it is positive then characters farther to the right
 become visible.
 .RE
 .TP
-\fIpathName \fByview \fI?args\fR?
+\fIpathName \fByview \fR?\fIargs\fR?
+.
 This command is used to query and change the vertical position of the
 text in the widget's window.
 It can take any of the following forms:
@@ -378,11 +413,13 @@ the last one in the window, relative to the listbox as a whole.
 These are the same values passed to scrollbars via the \fB\-yscrollcommand\fR
 option.
 .TP
-\fIpathName \fByview\fR \fIindex\fR
+\fIpathName \fByview \fIindex\fR
+.
 Adjusts the view in the window so that the element given by
 \fIindex\fR is displayed at the top of the window.
 .TP
 \fIpathName \fByview moveto\fI fraction\fR
+.
 Adjusts the view in the window so that the element given by \fIfraction\fR
 appears at the top of the window.
 \fIFraction\fR is a fraction between 0 and 1;  0 indicates the first
@@ -390,6 +427,7 @@ element in the listbox, 0.33 indicates the element one-third the
 way through the listbox, and so on.
 .TP
 \fIpathName \fByview scroll \fInumber what\fR
+.
 This command adjusts the view in the window up or down according to
 \fInumber\fR and \fIwhat\fR.
 \fINumber\fR must be an integer.
@@ -405,7 +443,7 @@ become visible.
 .PP
 Tk automatically creates class bindings for listboxes that give them
 Motif-like behavior.  Much of the behavior of a listbox is determined
-by its \fBselectMode\fR option, which selects one of four ways
+by its \fB\-selectmode\fR option, which selects one of four ways
 of dealing with the selection.
 .PP
 If the selection mode is \fBsingle\fR or \fBbrowse\fR, at most one
@@ -414,10 +452,8 @@ In both modes, clicking button 1 on an element selects
 it and deselects any other selected item.
 In \fBbrowse\fR mode it is also possible to drag the selection
 with button 1.
-.VS 8.5
 On button 1, the listbox will also take focus if it has a \fBnormal\fR
-state and \fB\-takefocus\fR is true.
-.VE 8.5
+state.
 .PP
 If the selection mode is \fBmultiple\fR or \fBextended\fR,
 any number of elements may be selected at once, including discontiguous
@@ -433,9 +469,12 @@ Most people will probably want to use \fBbrowse\fR mode for
 single selections and \fBextended\fR mode for multiple selections;
 the other modes appear to be useful only in special situations.
 .PP
-Any time the selection changes in the listbox, the virtual event
-\fB<<ListboxSelect>>\fR will be generated.  It is easiest to bind
-to this event to be made aware of any changes to listbox selection.
+Any time the set of selected item(s) in the listbox is updated by the
+user through the keyboard or mouse, the virtual event
+\fB<<ListboxSelect>>\fR will be generated. This virtual event will not
+be generated when adjusting the selection with the \fIpathName
+\fBselection\fR  command. It is easiest to bind to this event to be
+made aware of any user changes to listbox selection.
 .PP
 In addition to the above behavior, the following additional behavior
 is defined by the default bindings:
@@ -535,6 +574,9 @@ a selection.
 The behavior of listboxes can be changed by defining new bindings for
 individual widgets or by redefining the class bindings.
 .SH "SEE ALSO"
-ttk_treeview(n)
+ttk::treeview(n)
 .SH KEYWORDS
 listbox, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

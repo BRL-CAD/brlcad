@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _UNIXPORT
@@ -19,29 +17,10 @@
 
 #define __UNIX__ 1
 
-/*
- * Macro to use instead of "void" for arguments that must have
- * type "void *" in ANSI C;  maps them to type "char *" in
- * non-ANSI systems.  This macro may be used in some of the include
- * files below, which is why it is defined here.
- */
-
-#ifndef VOID
-#   ifdef __STDC__
-#       define VOID void
-#   else
-#       define VOID char
-#   endif
-#endif
-
 #include <stdio.h>
 #include <ctype.h>
 #include <fcntl.h>
-#ifndef NO_LIMITS_H
-#   include <limits.h>
-#else
-#   include "../compat/limits.h"
-#endif
+#include <limits.h>
 #include <math.h>
 #include <pwd.h>
 #ifdef NO_STDLIB_H
@@ -130,30 +109,32 @@
 #   define NBBY 8
 #endif
 
-/*
- * These macros are just wrappers for the equivalent X Region calls.
- */
+#ifdef __CYGWIN__
+#   include "tkIntXlibDecls.h"
+#   define UINT unsigned int
+#   define HWND void *
+#   define HDC void *
+#   define HINSTANCE void *
+#   define COLORREF void *
+#   define HMENU void *
+#   define TkWinDCState void
+#   define HPALETTE void *
+#   define WNDPROC void *
+#   define WPARAM void *
+#   define LPARAM void *
+#   define LRESULT void *
 
-#define TkClipBox(rgn, rect) XClipBox((Region) rgn, rect)
-#define TkCreateRegion() (TkRegion) XCreateRegion()
-#define TkDestroyRegion(rgn) XDestroyRegion((Region) rgn)
-#define TkIntersectRegion(a, b, r) XIntersectRegion((Region) a, \
-	(Region) b, (Region) r)
-#define TkRectInRegion(r, x, y, w, h) XRectInRegion((Region) r, x, y, w, h)
-#define TkSetRegion(d, gc, rgn) XSetRegion(d, gc, (Region) rgn)
-#define TkSubtractRegion(a, b, r) XSubtractRegion((Region) a, \
-	(Region) b, (Region) r)
-#define TkUnionRectWithRegion(rect, src, ret) XUnionRectWithRegion(rect, \
-	(Region) src, (Region) ret)
+#else /* !__CYGWIN__ */
+    /*
+     * The TkPutImage macro strips off the color table information, which isn't
+     * needed for X.
+     */
 
-/*
- * The TkPutImage macro strips off the color table information, which isn't
- * needed for X.
- */
+#   define TkPutImage(colors, ncolors, display, pixels, gc, image, srcx, srcy, destx, desty, width, height) \
+		XPutImage(display, pixels, gc, image, srcx, srcy, destx, \
+		desty, width, height);
 
-#define TkPutImage(colors, ncolors, display, pixels, gc, image, srcx, srcy, destx, desty, width, height) \
-	XPutImage(display, pixels, gc, image, srcx, srcy, destx, \
-	desty, width, height);
+#endif /* !__CYGWIN__ */
 
 /*
  * Supply macros for seek offsets, if they're not already provided by
@@ -182,10 +163,12 @@
  * These functions do nothing under Unix, so we just eliminate calls to them.
  */
 
-#define TkpButtonSetDefaults(specPtr) {}
+#define TkpButtonSetDefaults() {}
 #define TkpDestroyButton(butPtr) {}
 #define TkSelUpdateClipboard(a,b) {}
+#ifndef __CYGWIN__
 #define TkSetPixmapColormap(p,c) {}
+#endif
 
 /*
  * These calls implement native bitmaps which are not supported under
@@ -201,18 +184,9 @@
  * This should perhaps use the real size of an XID.
  */
 
+#ifndef __CYGWIN__
 #define TkpPrintWindowId(buf,w) \
 	sprintf((buf), "%#08lx", (unsigned long) (w))
-
-/*
- * The following declaration is used to get access to a private Tcl interface
- * that is needed for portability reasons.
- *
- * Disabled for now to determined whether we really still need this.
-
-#ifndef _TCLINT
-#include <tclInt.h>
 #endif
- */
 
 #endif /* _UNIXPORT */

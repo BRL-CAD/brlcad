@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH winfo n 4.3 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -16,7 +14,6 @@ winfo \- Return window-related information
 .SH SYNOPSIS
 \fBwinfo\fR \fIoption \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fBwinfo\fR command is used to retrieve information about windows
@@ -107,7 +104,7 @@ in pixels.
 \fBwinfo height \fIwindow\fR
 Returns a decimal string giving \fIwindow\fR's height in pixels.
 When a window is first created its height will be 1 pixel;  the
-height will eventually be changed by a geometry manager to fulfill
+height will eventually be changed by a geometry manager to fulfil
 the window's needs.
 If you need the true height immediately after creating a widget,
 invoke \fBupdate\fR to force the geometry manager to arrange it,
@@ -318,7 +315,7 @@ Returns 0 if there is no virtual root window for \fIwindow\fR.
 \fBwinfo width \fIwindow\fR
 Returns a decimal string giving \fIwindow\fR's width in pixels.
 When a window is first created its width will be 1 pixel;  the
-width will eventually be changed by a geometry manager to fulfill
+width will eventually be changed by a geometry manager to fulfil
 the window's needs.
 If you need the true width immediately after creating a widget,
 invoke \fBupdate\fR to force the geometry manager to arrange it,
@@ -337,6 +334,7 @@ parent, of the
 upper-left corner of \fIwindow\fR's border (or \fIwindow\fR if it
 has no border).
 .SH EXAMPLE
+.PP
 Print where the mouse pointer is and what window it is currently over:
 .CS
 lassign [\fBwinfo pointerxy\fR .] x y
@@ -348,7 +346,9 @@ if {$win eq ""} {
     puts "over $win"
 }
 .CE
-
 .SH KEYWORDS
 atom, children, class, geometry, height, identifier, information, interpreters,
 mapped, parent, path name, screen, virtual root, width, window
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

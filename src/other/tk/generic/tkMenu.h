@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #ifndef _TKMENU
@@ -25,11 +23,6 @@
 
 #ifndef _DEFAULT
 #include "default.h"
-#endif
-
-#ifdef BUILD_tk
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLEXPORT
 #endif
 
 /*
@@ -254,8 +247,6 @@ typedef struct TkMenuEntry {
  * Menu states
  */
 
-MODULE_SCOPE char *tkMenuStateStrings[];
-
 #define ENTRY_ACTIVE 0
 #define ENTRY_NORMAL 1
 #define ENTRY_DISABLED 2
@@ -368,10 +359,7 @@ typedef struct TkMenu {
     				/* A pointer to the original menu for this
     				 * clone chain. Points back to this structure
     				 * if this menu is a master menu. */
-    struct TkMenuOptionTables *optionTablesPtr;
-				/* A pointer to the collection of option
-				 * tables that work with menus and menu
-				 * entries. */
+    void *reserved1; /* not used any more. */
     Tk_Window parentTopLevelPtr;/* If this menu is a menubar, this is the
     				 * toplevel that owns the menu. Only
     				 * applicable for menubar clones. */
@@ -440,17 +428,6 @@ typedef struct TkMenuReferences {
 } TkMenuReferences;
 
 /*
- * This structure contains all of the option tables that are needed by menus.
- */
-
-typedef struct TkMenuOptionTables {
-    Tk_OptionTable menuOptionTable;
-				/* The option table for menus. */
-    Tk_OptionTable entryOptionTables[6];
-				/* The tables for menu entries. */
-} TkMenuOptionTables;
-
-/*
  * Flag bits for menus:
  *
  * REDRAW_PENDING:		Non-zero means a DoWhenIdle handler has
@@ -507,12 +484,12 @@ typedef struct TkMenuOptionTables {
 MODULE_SCOPE int	TkActivateMenuEntry(TkMenu *menuPtr, int index);
 MODULE_SCOPE void	TkBindMenu(Tk_Window tkwin, TkMenu *menuPtr);
 MODULE_SCOPE TkMenuReferences*TkCreateMenuReferences(Tcl_Interp *interp,
-			    char *name);
+			    const char *name);
 MODULE_SCOPE void	TkDestroyMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRecomputeMenu(TkMenu *menuPtr);
 MODULE_SCOPE void	TkEventuallyRedrawMenu(TkMenu *menuPtr,
 			    TkMenuEntry *mePtr);
-MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, char *name);
+MODULE_SCOPE TkMenuReferences*TkFindMenuReferences(Tcl_Interp *interp, const char *name);
 MODULE_SCOPE TkMenuReferences*TkFindMenuReferencesObj(Tcl_Interp *interp,
 			    Tcl_Obj *namePtr);
 MODULE_SCOPE int	TkFreeMenuReferences(TkMenuReferences *menuRefPtr);
@@ -568,8 +545,5 @@ MODULE_SCOPE int	TkpNewMenu(TkMenu *menuPtr);
 MODULE_SCOPE int	TkpPostMenu(Tcl_Interp *interp, TkMenu *menuPtr,
 			    int x, int y);
 MODULE_SCOPE void	TkpSetWindowMenuBar(Tk_Window tkwin, TkMenu *menuPtr);
-
-# undef TCL_STORAGE_CLASS
-# define TCL_STORAGE_CLASS DLLIMPORT
 
 #endif /* _TKMENU */

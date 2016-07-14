@@ -3,15 +3,11 @@
 #	Implements messageboxes for platforms that do not have native
 #	messagebox support.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1994-1997 Sun Microsystems, Inc.
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 #
-
-package require Ttk
 
 # Ensure existence of ::tk::dialog namespace
 #
@@ -115,7 +111,7 @@ static unsigned char w3_bits[] = {
    0x00, 0xc0, 0x03, 0x00, 0x00, 0x80, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00,
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
    0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00};"
-
+
 # ::tk::MessageBox --
 #
 #	Pops up a messagebox with an application-supplied message with
@@ -133,7 +129,7 @@ static unsigned char w3_bits[] = {
 #	See the user documentation for details on what tk_messageBox does.
 #
 proc ::tk::MessageBox {args} {
-    global tcl_platform tk_strictMotif
+    global tk_strictMotif
     variable ::tk::Priv
 
     set w ::tk::PrivMsgBox
@@ -141,7 +137,7 @@ proc ::tk::MessageBox {args} {
 
     #
     # The default value of the title is space (" ") not the empty string
-    # because for some window managers, a 
+    # because for some window managers, a
     #		wm title .foo ""
     # causes the window title to be "foo" instead of the empty string.
     #
@@ -157,8 +153,9 @@ proc ::tk::MessageBox {args} {
 
     tclParseConfigSpec $w $specs "" $args
 
-    if {[lsearch -exact {info warning error question} $data(-icon)] == -1} {
-	error "bad -icon value \"$data(-icon)\": must be error, info, question, or warning"
+    if {$data(-icon) ni {info warning error question}} {
+	return -code error -errorcode [list TK LOOKUP ICON $data(-icon)] \
+	    "bad -icon value \"$data(-icon)\": must be error, info, question, or warning"
     }
     set windowingsystem [tk windowingsystem]
     if {$windowingsystem eq "aqua"} {
@@ -173,11 +170,12 @@ proc ::tk::MessageBox {args} {
     }
 
     if {![winfo exists $data(-parent)]} {
-	error "bad window path name \"$data(-parent)\""
+	return -code error -errorcode [list TK LOOKUP WINDOW $data(-parent)] \
+	    "bad window path name \"$data(-parent)\""
     }
 
     switch -- $data(-type) {
-	abortretryignore { 
+	abortretryignore {
 	    set names [list abort retry ignore]
 	    set labels [list &Abort &Retry &Ignore]
 	    set cancel abort
@@ -208,9 +206,10 @@ proc ::tk::MessageBox {args} {
 	    set cancel cancel
 	}
 	default {
-	    error "bad -type value \"$data(-type)\": must be\
-		    abortretryignore, ok, okcancel, retrycancel,\
-		    yesno, or yesnocancel"
+	    return -code error -errorcode [list TK LOOKUP DLG_TYPE $data(-type)] \
+		"bad -type value \"$data(-type)\": must be\
+		abortretryignore, ok, okcancel, retrycancel,\
+		yesno, or yesnocancel"
 	}
     }
 
@@ -219,7 +218,7 @@ proc ::tk::MessageBox {args} {
 	lappend buttons [list $name -text [mc $lab]]
     }
 
-    # If no default button was specified, the default default is the 
+    # If no default button was specified, the default default is the
     # first button (Bug: 2218).
 
     if {$data(-default) eq ""} {
@@ -234,7 +233,8 @@ proc ::tk::MessageBox {args} {
 	}
     }
     if {!$valid} {
-	error "invalid default button \"$data(-default)\""
+	return -code error -errorcode {TK MSGBOX DEFAULT} \
+	    "invalid default button \"$data(-default)\""
     }
 
     # 2. Set the dialog to be a child window of $parent
@@ -256,7 +256,7 @@ proc ::tk::MessageBox {args} {
     toplevel $w -class Dialog -bg $bg
     wm title $w $data(-title)
     wm iconname $w Dialog
-    wm protocol $w WM_DELETE_WINDOW { }
+    wm protocol $w WM_DELETE_WINDOW [list $w.$cancel invoke]
 
     # Message boxes should be transient with respect to their parent so that
     # they always stay on top of the parent window.  But some window managers
@@ -275,15 +275,11 @@ proc ::tk::MessageBox {args} {
         wm attributes $w -type dialog
     }
 
-    ttk::frame $w.bot;# -background $bg
+    ttk::frame $w.bot
     grid anchor $w.bot center
     pack $w.bot -side bottom -fill both
-    ttk::frame $w.top;# -background $bg
+    ttk::frame $w.top
     pack $w.top -side top -fill both -expand 1
-    if {$windowingsystem ne "aqua"} {
-	#$w.bot configure -relief raised -bd 1
-	#$w.top configure -relief raised -bd 1
-    }
 
     # 4. Fill the top part with bitmap, message and detail (use the
     # option database for -wraplength and -font so that they can be
@@ -295,53 +291,32 @@ proc ::tk::MessageBox {args} {
     option add *Dialog.dtl.font TkDefaultFont widgetDefault
 
     ttk::label $w.msg -anchor nw -justify left -text $data(-message)
-    #-background $bg
     if {$data(-detail) ne ""} {
 	ttk::label $w.dtl -anchor nw -justify left -text $data(-detail)
-	#-background $bg
     }
     if {$data(-icon) ne ""} {
-	if {$windowingsystem eq "aqua"
-		|| ([winfo depth $w] < 4) || $tk_strictMotif} {
+	if {([winfo depth $w] < 4) || $tk_strictMotif} {
 	    # ttk::label has no -bitmap option
-	    label $w.bitmap -bitmap $data(-icon);# -background $bg
+	    label $w.bitmap -bitmap $data(-icon) -background $bg
 	} else {
-	    canvas $w.bitmap -width 32 -height 32 -highlightthickness 0 \
-		    -background $bg
 	    switch $data(-icon) {
-		error {
-		    $w.bitmap create oval 0 0 31 31 -fill red -outline black
-		    $w.bitmap create line 9 9 23 23 -fill white -width 4
-		    $w.bitmap create line 9 23 23 9 -fill white -width 4
-		}
-		info {
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::b1
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::b2
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::i
-		}
-		question {
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::b1
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::b2
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::q
-		}
-		default {
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::w1
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::w2
-		    $w.bitmap create image 0 0 -anchor nw \
-			    -image ::tk::dialog::w3
-		}
+                error {
+                    ttk::label $w.bitmap -image ::tk::icons::error
+                }
+                info {
+                    ttk::label $w.bitmap -image ::tk::icons::information
+                }
+                question {
+                    ttk::label $w.bitmap -image ::tk::icons::question
+                }
+                default {
+                    ttk::label $w.bitmap -image ::tk::icons::warning
+                }
 	    }
 	}
     }
     grid $w.bitmap $w.msg -in $w.top -sticky news -padx 2m -pady 2m
+    grid configure $w.bitmap -sticky nw
     grid columnconfigure $w.top 1 -weight 1
     if {$data(-detail) ne ""} {
 	grid ^ $w.dtl -in $w.top -sticky news -padx 2m -pady {0 2m}
@@ -364,7 +339,6 @@ proc ::tk::MessageBox {args} {
 
 	eval [list tk::AmpWidget ttk::button $w.$name] $opts \
 		[list -command [list set tk::Priv(button) $name]]
-	# -padx 3m
 
 	if {$name eq $data(-default)} {
 	    $w.$name configure -default active
@@ -425,7 +399,7 @@ proc ::tk::MessageBox {args} {
 
     # 7. Withdraw the window, then update all the geometry information
     # so we know how big it wants to be, then center the window in the
-    # display and de-iconify it.
+    # display (Motif style) and de-iconify it.
 
     ::tk::PlaceWindow $w widget $data(-parent)
 

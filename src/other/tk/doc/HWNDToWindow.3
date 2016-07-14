@@ -2,10 +2,8 @@
 '\" Copyright (c) 1998-2000 by Scriptics Corporation.
 '\" All rights reserved.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_HWNDToWindow 3 "" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_HWNDToWindow \- Find Tk's window information for a Windows window
@@ -19,12 +17,10 @@ Tk_Window
 .AP HWND hwnd in
 Windows handle for the window.
 .BE
-
 .SH DESCRIPTION
 .PP
 Given a Windows HWND window identifier, this procedure returns the
 corresponding Tk_Window handle. If there is no Tk_Window corresponding
 to \fIhwnd\fR then NULL is returned.
-
 .SH KEYWORDS
 Windows window id

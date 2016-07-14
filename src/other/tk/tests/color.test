@@ -4,8 +4,6 @@
 # Copyright (c) 1995-1998 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require tcltest 2.1
 eval tcltest::configure $argv
@@ -72,8 +70,8 @@ proc closest {w r g b} {
 # vals -	List of intensities.
 
 proc c255 {vals} {
-    list [expr [lindex $vals 0]/256] [expr [lindex $vals 1]/256] \
-	    [expr [lindex $vals 2]/256]
+    list [expr {[lindex $vals 0]/256}] [expr {[lindex $vals 1]/256}] \
+	    [expr {[lindex $vals 2]/256}]
 }
 
 # colorsFree --
@@ -151,6 +149,19 @@ test color-1.4 {Tk_AllocColorFromObj - try other colors in list} colorsFree {
     pack .b2 -side top
     lappend result [testcolor purple]
 } {{{1 1}} {{1 1} {1 0}} {{1 0} {2 1}}}
+test color-1.5 {Color table} nonPortable {
+    set fd [open ../xlib/rgb.txt]
+    set result {}
+    while {[gets $fd line] != -1} {
+    	if {[string index $line 0] == "!"} continue
+	set rgb [c255 [winfo rgb . [lrange $line 3 end]]]
+	if {$rgb != [lrange $line 0 2] } {
+		append result $line\n
+	}
+	
+    }
+    return $result
+} {}
 
 test color-2.1 {Tk_GetColor procedure} colorsFree {
     c255 [winfo rgb .t #FF0000]

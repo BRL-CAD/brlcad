@@ -11,11 +11,10 @@
 			F9FD31F50CC1AD070073837D /* tktest-X11 */,
 		);
 		perUserDictionary = {
-			com.apple.ide.smrt.PBXUserSmartGroupsKey.Rev10 = <040b747970656473747265616d8103e88401408484840e4e534d757461626c654172726179008484074e534172726179008484084e534f626a65637400858401690192848484134e534d757461626c6544696374696f6e6172790084840c4e5344696374696f6e6172790095960792848484084e53537472696e67019584012b146162736f6c75746550617468546f42756e646c658692849a9a008692849a9a046e616d658692849a9a14496d706c656d656e746174696f6e2046696c65738692849a9a03636c7a8692849a9a1550425846696c656e616d65536d61727447726f75708692849a9a0b6465736372697074696f6e8692849a9a103c6e6f206465736372697074696f6e3e8692849a9a08676c6f62616c49448692849a9a183143433045413430303433353045463930303434343130428692849a9a195042585472616e7369656e744c6f636174696f6e4174546f708692849a9a06626f74746f6d8692849a9a0b707265666572656e63657386928497960892849a9a1250425850726f6a65637453636f70654b65798692849a9a035945538692849a9a05696d6167658692849a9a0b536d617274466f6c6465728692849a9a0763616e536176658692848484084e534e756d626572008484074e5356616c7565009584012a849696018692849a9a0572656765788692849a9a065c2e286329248692849a9a04726f6f748692849a9a093c50524f4a4543543e8692849a9a097265637572736976658692ad92849a9a0669734c656166869284ae9db096008692849a9a07666e6d617463688692849a9a0086868686>;
+			com.apple.ide.smrt.PBXUserSmartGroupsKey.Rev10 = <040b73747265616d747970656481e8038401408484840e4e534d757461626c654172726179008484074e534172726179008484084e534f626a65637400858401690192848484134e534d757461626c6544696374696f6e6172790084840c4e5344696374696f6e6172790095960792848484084e53537472696e67019584012b046e616d658692849a9a14496d706c656d656e746174696f6e2046696c65738692849a9a195042585472616e7369656e744c6f636174696f6e4174546f708692849a9a06626f74746f6d8692849a9a0b707265666572656e63657386928497960892849a9a0669734c6561668692848484084e534e756d626572008484074e5356616c7565009584012a849696008692849a9a04726f6f748692849a9a093c50524f4a4543543e8692849a9a09726563757273697665869284a29da496018692849a9a05696d6167658692849a9a0b536d617274466f6c6465728692849a9a0763616e536176658692a892849a9a1250425850726f6a65637453636f70654b65798692849a9a035945538692849a9a0572656765788692849a9a065c2e286329248692849a9a07666e6d617463688692849a9a00868692849a9a146162736f6c75746550617468546f42756e646c658692849a9a008692849a9a0b6465736372697074696f6e8692849a9a103c6e6f206465736372697074696f6e3e8692849a9a08676c6f62616c49448692849a9a183143433045413430303433353045463930303434343130428692849a9a03636c7a8692849a9a1550425846696c656e616d65536d61727447726f7570868686>;
 		};
 		sourceControlManager = F944EB9C08F798180049FDD4 /* Source Control */;
 		userBuildSettings = {
-			GCC = "${DEVELOPER_DIR}/usr/bin/gcc";
 			SYMROOT = "${SRCROOT}/../../build/tk";
 			TCL_SRCROOT = "${SRCROOT}/../../tcl";
 			TK_SRCROOT = "${SRCROOT}/../../tk";
@@ -29,7 +28,6 @@
 	};
 	F944EB8F08F798100049FDD4 /* tktest */ = {
 		isa = PBXExecutable;
-		activeArgIndex = 0;
 		activeArgIndices = (
 			YES,
 			NO,
@@ -49,6 +47,7 @@
 			"-skip window-2.9",
 		);
 		autoAttachOnCrash = 1;
+		breakpointsEnabled = 1;
 		configStateDict = {
 			"PBXLSLaunchAction-0" = {
 				PBXLSLaunchAction = 0;
@@ -74,6 +73,9 @@
 			};
 		};
 		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
 		dylibVariantSuffix = "";
@@ -95,13 +97,23 @@
 				value = /Library/Tcl;
 			},
 			{
+				active = YES;
+				name = TK_SRCROOT;
+				value = "${TK_SRCROOT}";
+			},
+			{
+				active = NO;
+				name = TK_CONSOLE;
+				value = 1;
+			},
+			{
 				active = NO;
 				name = DYLD_PRINT_LIBRARIES;
 			},
 			{
 				active = NO;
-				name = EventDebug;
-				value = 1;
+				name = NSTraceEvents;
+				value = YES;
 			},
 			{
 				active = NO;
@@ -133,11 +145,47 @@
 				name = MallocScribble;
 				value = 1;
 			},
+			{
+				active = NO;
+				name = NSZombieEnabled;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSDeallocateZombies;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSAutoreleaseFreedObjectCheckEnabled;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSEnableAutoreleasePool;
+				value = NO;
+			},
+			{
+				active = NO;
+				name = AUTO_LOG_ALL;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = AUTO_LOG_NOISY;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = AUTO_REFERENCE_COUNT_LOGGING;
+				value = YES;
+			},
 		);
 		executableSystemSymbolLevel = 0;
 		executableUserSymbolLevel = 0;
 		libgmallocEnabled = 0;
 		name = tktest;
+		showTypeColumn = 0;
 		sourceDirectories = (
 		);
 	};
@@ -145,16 +193,28 @@
 		isa = PBXSourceControlManager;
 		fallbackIsa = XCSourceControlManager;
 		isSCMEnabled = 0;
+		repositoryNamesForRoots = {
+			.. = "";
+		};
 		scmConfiguration = {
 			CVSToolPath = /usr/bin/cvs;
 			CVSUseSSH = NO;
-			SubversionToolPath = /usr/local/bin/svn;
+			SubversionToolPath = /usr/bin/svn;
+			repositoryNamesForRoots = {
+				.. = "";
+			};
 		};
 		scmType = scm.cvs;
 	};
 	F944EB9D08F798180049FDD4 /* Code sense */ = {
 		isa = PBXCodeSenseManager;
 		indexTemplatePath = "";
+	};
+	F97258A50A86873C00096C78 /* tktest-X11 */ = {
+		activeExec = 0;
+		executables = (
+			F9FD31F50CC1AD070073837D /* tktest-X11 */,
+		);
 	};
 	F9E61D16090A3E94002B3151 /* Tk */ = {
 		activeExec = 0;
@@ -164,7 +224,6 @@
 	};
 	F9E61D1C090A4282002B3151 /* Wish */ = {
 		isa = PBXExecutable;
-		activeArgIndex = 0;
 		activeArgIndices = (
 			YES,
 		);
@@ -172,6 +231,7 @@
 			"${TK_SRCROOT}/library/demos/widget",
 		);
 		autoAttachOnCrash = 1;
+		breakpointsEnabled = 1;
 		configStateDict = {
 			"PBXLSLaunchAction-0" = {
 				PBXLSLaunchAction = 0;
@@ -197,6 +257,9 @@
 			};
 		};
 		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
 		dylibVariantSuffix = "";
@@ -211,18 +274,12 @@
 		executableUserSymbolLevel = 0;
 		libgmallocEnabled = 0;
 		name = Wish;
+		showTypeColumn = 0;
 		sourceDirectories = (
-		);
-	};
-	F97258A50A86873C00096C78 /* tktest-X11 */ = {
-		activeExec = 0;
-		executables = (
-			F9FD31F50CC1AD070073837D /* tktest-X11 */,
 		);
 	};
 	F9FD31F50CC1AD070073837D /* tktest-X11 */ = {
 		isa = PBXExecutable;
-		activeArgIndex = 0;
 		activeArgIndices = (
 			YES,
 			NO,
@@ -242,6 +299,7 @@
 			"-skip window-2.9",
 		);
 		autoAttachOnCrash = 1;
+		breakpointsEnabled = 1;
 		configStateDict = {
 			"PBXLSLaunchAction-0" = {
 				PBXLSLaunchAction = 0;
@@ -267,6 +325,9 @@
 			};
 		};
 		customDataFormattersEnabled = 1;
+		dataTipCustomDataFormattersEnabled = 1;
+		dataTipShowTypeColumn = 1;
+		dataTipSortType = 0;
 		debuggerPlugin = GDBDebugging;
 		disassemblyDisplayState = 0;
 		dylibVariantSuffix = "";
@@ -331,6 +392,7 @@
 		executableUserSymbolLevel = 0;
 		libgmallocEnabled = 0;
 		name = "tktest-X11";
+		showTypeColumn = 0;
 		sourceDirectories = (
 		);
 	};

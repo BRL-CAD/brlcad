@@ -8,12 +8,15 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkUnixInt.h"
 #include <signal.h>
+#ifdef HAVE_XKBKEYCODETOKEYSYM
+#  include <X11/XKBlib.h>
+#else
+#  define XkbOpenDisplay(D,V,E,M,m,R) ((V),(E),(M),(m),(R),(NULL))
+#endif
 
 /*
  * The following static indicates whether this module has been initialized in
@@ -115,22 +118,70 @@ DisplayExitHandler(
 
 TkDisplay *
 TkpOpenDisplay(
-    CONST char *displayNameStr)
+    const char *displayNameStr)
 {
     TkDisplay *dispPtr;
-    Display *display = XOpenDisplay(displayNameStr);
+    Display *display;
+    int event = 0;
+    int error = 0;
+    int major = 1;
+    int minor = 0;
+    int reason = 0;
+    unsigned int use_xkb = 0;
+    /* Disabled, until we have a better test. See [Bug 3613668] */
+#if 0 && defined(XKEYCODETOKEYSYM_IS_DEPRECATED) && defined(TCL_THREADS)
+    static int xinited = 0;
+    static Tcl_Mutex xinitMutex = NULL;
+
+    if (!xinited) {
+	Tcl_MutexLock(&xinitMutex);
+	if (!xinited) {
+	    /* Necessary for threaded apps, of no consequence otherwise  */
+	    /* need only be called once, but must be called before *any* */
+	    /* Xlib call is made. If xinitMutex is still NULL after the  */
+	    /* Tcl_MutexLock call, Tcl was compiled without threads so   */
+	    /* we cannot use XInitThreads() either.                      */
+	    if (xinitMutex != NULL){
+		XInitThreads();
+	    }
+	    xinited = 1;
+	}
+	Tcl_MutexUnlock(&xinitMutex);
+    }
+#endif
+
+    /*
+    ** Bug [3607830]: Before using Xkb, it must be initialized and confirmed
+    **                that the serve supports it.  The XkbOpenDisplay call
+    **                will perform this check and return NULL if the extension
+    **                is not supported.
+    **
+    ** Work around un-const-ified Xkb headers using (char *) cast.
+    */
+    display = XkbOpenDisplay((char *)displayNameStr, &event, &error, &major,
+	    &minor, &reason);
+
+    if (display == NULL) {
+	/*fprintf(stderr,"event=%d error=%d major=%d minor=%d reason=%d\nDisabling xkb\n",
+	event, error, major, minor, reason);*/
+	display  = XOpenDisplay(displayNameStr);
+    } else {
+	use_xkb = TK_DISPLAY_USE_XKB;
+	/*fprintf(stderr, "Using xkb %d.%d\n", major, minor);*/
+    }
 
     if (display == NULL) {
 	return NULL;
     }
-    dispPtr = (TkDisplay *) ckalloc(sizeof(TkDisplay));
+    dispPtr = ckalloc(sizeof(TkDisplay));
     memset(dispPtr, 0, sizeof(TkDisplay));
     dispPtr->display = display;
+    dispPtr->flags |= use_xkb;
 #ifdef TK_USE_INPUT_METHODS
     OpenIM(dispPtr);
 #endif
     Tcl_CreateFileHandler(ConnectionNumber(display), TCL_READABLE,
-	    DisplayFileProc, (ClientData) dispPtr);
+	    DisplayFileProc, dispPtr);
     return dispPtr;
 }
 
@@ -155,8 +206,6 @@ TkpCloseDisplay(
     TkDisplay *dispPtr)
 {
     TkSendCleanup(dispPtr);
-
-    TkFreeXId(dispPtr);
 
     TkWmCleanup(dispPtr);
 
@@ -206,7 +255,7 @@ TkClipCleanup(
 		dispPtr->windowAtom);
 
 	Tk_DestroyWindow(dispPtr->clipWindow);
-	Tcl_Release((ClientData) dispPtr->clipWindow);
+	Tcl_Release(dispPtr->clipWindow);
 	dispPtr->clipWindow = NULL;
     }
 }
@@ -282,6 +331,9 @@ TransferXEventsToTcl(
 	int type;
 	XEvent x;
 	TkKeyEvent k;
+#ifdef GenericEvent
+	xGenericEvent xge;
+#endif
     } event;
     Window w;
     TkDisplay *dispPtr = NULL;
@@ -299,6 +351,12 @@ TransferXEventsToTcl(
 
     while (QLength(display) > 0) {
 	XNextEvent(display, &event.x);
+#ifdef GenericEvent
+	if (event.type == GenericEvent) {
+	    Tcl_Panic("Wild GenericEvent; panic! (extension=%d,evtype=%d)",
+		    event.xge.extension, event.xge.evtype);
+	}
+#endif
 	w = None;
 	if (event.type == KeyPress || event.type == KeyRelease) {
 	    for (dispPtr = TkGetDisplayList(); ; dispPtr = dispPtr->nextPtr) {
@@ -318,6 +376,7 @@ TransferXEventsToTcl(
 	if (event.type == KeyPress || event.type == KeyRelease) {
 	    event.k.charValuePtr = NULL;
 	    event.k.charValueLen = 0;
+	    event.k.keysym = NoSymbol;
 
 	    /*
 	     * Force the calling of the input method engine now. The results
@@ -546,7 +605,7 @@ TkUnixDoOneXEvent(
 	index = fd/(NBBY*sizeof(fd_mask));
 	bit = ((fd_mask)1) << (fd%(NBBY*sizeof(fd_mask)));
 	if ((readMask[index] & bit) || (QLength(dispPtr->display) > 0)) {
-	    DisplayFileProc((ClientData)dispPtr, TCL_READABLE);
+	    DisplayFileProc(dispPtr, TCL_READABLE);
 	}
     }
     if (Tcl_ServiceEvent(TCL_WINDOW_EVENTS)) {
@@ -688,6 +747,22 @@ error:
     }
 }
 #endif /* TK_USE_INPUT_METHODS */
+
+void
+TkpWarpPointer(
+    TkDisplay *dispPtr)
+{
+    Window w;			/* Which window to warp relative to. */
+
+    if (dispPtr->warpWindow != NULL) {
+	w = Tk_WindowId(dispPtr->warpWindow);
+    } else {
+	w = RootWindow(dispPtr->display,
+		Tk_ScreenNumber(dispPtr->warpMainwin));
+    }
+    XWarpPointer(dispPtr->display, None, w, 0, 0, 0, 0,
+	    (int) dispPtr->warpX, (int) dispPtr->warpY);
+}
 
 /*
  * Local Variables:

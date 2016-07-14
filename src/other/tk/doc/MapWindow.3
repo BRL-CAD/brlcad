@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_MapWindow 3 "" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_MapWindow, Tk_UnmapWindow \- map or unmap a window
@@ -25,7 +23,6 @@ Tk_Window
 .AP Tk_Window tkwin in
 Token for window.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures may be used to map and unmap windows
@@ -48,6 +45,5 @@ These procedures should be used in place of the X procedures
 Tk's local data structure for \fItkwin\fR.  Applications
 using Tk should not invoke \fBXMapWindow\fR and \fBXUnmapWindow\fR
 directly.
-
 .SH KEYWORDS
 map, unmap, window

@@ -1,4 +1,3 @@
-# $Id$
 #
 # ttk::treeview widget bindings and utilities.
 #
@@ -44,7 +43,7 @@ bind Treeview	<KeyPress-space>	{ ttk::treeview::ToggleFocus %W }
 
 bind Treeview	<Shift-ButtonPress-1> \
 		{ ttk::treeview::Select %W %x %y extend }
-bind Treeview	<Control-ButtonPress-1> \
+bind Treeview	<<ToggleSelection>> \
 		{ ttk::treeview::Select %W %x %y toggle }
 
 ttk::copyBindings TtkScrollable Treeview 

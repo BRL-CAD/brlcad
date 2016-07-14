@@ -7,8 +7,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -19,17 +17,17 @@
 /*
  * Unlike Borland and Microsoft, we don't register exception handlers by
  * pushing registration records onto the runtime stack. Instead, we register
- * them by creating an EXCEPTION_REGISTRATION within the activation record.
+ * them by creating an TCLEXCEPTION_REGISTRATION within the activation record.
  */
 
-typedef struct EXCEPTION_REGISTRATION {
-    struct EXCEPTION_REGISTRATION *link;
+typedef struct TCLEXCEPTION_REGISTRATION {
+    struct TCLEXCEPTION_REGISTRATION *link;
     EXCEPTION_DISPOSITION (*handler)(
 	    struct _EXCEPTION_RECORD*, void*, struct _CONTEXT*, void*);
     void *ebp;
     void *esp;
     int status;
-} EXCEPTION_REGISTRATION;
+} TCLEXCEPTION_REGISTRATION;
 
 /*
  * Need to add noinline flag to DllMain declaration so that gcc -O3 does not
@@ -90,7 +88,7 @@ DllEntryPoint(
  *	Always TRUE.
  *
  * Side effects:
- *	This might call some sycronization functions, but MSDN documentation
+ *	This might call some synchronization functions, but MSDN documentation
  *	states: "Waiting on synchronization objects in DllMain can cause a
  *	deadlock."
  *
@@ -104,7 +102,7 @@ DllMain(
     LPVOID reserved)
 {
 #ifdef HAVE_NO_SEH
-    EXCEPTION_REGISTRATION registration;
+    TCLEXCEPTION_REGISTRATION registration;
 #endif
 
     /*
@@ -125,10 +123,81 @@ DllMain(
 	 */
 
 #ifdef HAVE_NO_SEH
+#   ifdef __WIN64
 	__asm__ __volatile__ (
 
 	    /*
-	     * Construct an EXCEPTION_REGISTRATION to protect the call to
+	     * Construct an TCLEXCEPTION_REGISTRATION to protect the call to
+	     * TkFinalize
+	     */
+
+	    "leaq	%[registration], %%rdx"		"\n\t"
+	    "movq	%%gs:0,		%%rax"		"\n\t"
+	    "movq	%%rax,		0x0(%%rdx)"	"\n\t" /* link */
+	    "leaq	1f,		%%rax"		"\n\t"
+	    "movq	%%rax,		0x8(%%rdx)"	"\n\t" /* handler */
+	    "movq	%%rbp,		0x10(%%rdx)"	"\n\t" /* rbp */
+	    "movq	%%rsp,		0x18(%%rdx)"	"\n\t" /* rsp */
+	    "movl	%[error],	0x20(%%rdx)"	"\n\t" /* status */
+
+	    /*
+	     * Link the TCLEXCEPTION_REGISTRATION on the chain
+	     */
+
+	    "movq	%%rdx,		%%gs:0"		"\n\t"
+
+	    /*
+	     * Call TkFinalize
+	     */
+
+	    "movq	$0x0,		0x0(%%esp)"		"\n\t"
+	    "call	TkFinalize"			"\n\t"
+
+	    /*
+	     * Come here on a normal exit. Recover the TCLEXCEPTION_REGISTRATION
+	     * and store a TCL_OK status
+	     */
+
+	    "movq	%%gs:0,		%%rdx"		"\n\t"
+	    "movl	%[ok],		%%eax"		"\n\t"
+	    "movl	%%eax,		0x20(%%rdx)"	"\n\t"
+	    "jmp	2f"				"\n"
+
+	    /*
+	     * Come here on an exception. Get the TCLEXCEPTION_REGISTRATION that
+	     * we previously put on the chain.
+	     */
+
+	    "1:"					"\t"
+	    "movq	%%gs:0,		%%rdx"		"\n\t"
+	    "movq	0x10(%%rdx),	%%rdx"		"\n\t"
+
+	    /*
+	     * Come here however we exited. Restore context from the
+	     * TCLEXCEPTION_REGISTRATION in case the stack is unbalanced.
+	     */
+
+	    "2:"					"\t"
+	    "movq	0x18(%%rdx),	%%rsp"		"\n\t"
+	    "movq	0x10(%%rdx),	%%rbp"		"\n\t"
+	    "movq	0x0(%%rdx),	%%rax"		"\n\t"
+	    "movq	%%rax,		%%gs:0"		"\n\t"
+
+	    :
+	    /* No outputs */
+	    :
+	    [registration]	"m"	(registration),
+	    [ok]		"i"	(TCL_OK),
+	    [error]		"i"	(TCL_ERROR)
+	    :
+	    "%rax", "%rbx", "%rcx", "%rdx", "%rsi", "%rdi", "memory"
+	);
+
+#   else
+	__asm__ __volatile__ (
+
+	    /*
+	     * Construct an TCLEXCEPTION_REGISTRATION to protect the call to
 	     * TkFinalize
 	     */
 
@@ -142,7 +211,7 @@ DllMain(
 	    "movl	%[error],	0x10(%%edx)"	"\n\t" /* status */
 
 	    /*
-	     * Link the EXCEPTION_REGISTRATION on the chain
+	     * Link the TCLEXCEPTION_REGISTRATION on the chain
 	     */
 
 	    "movl	%%edx,		%%fs:0"		"\n\t"
@@ -155,7 +224,7 @@ DllMain(
 	    "call	_TkFinalize"			"\n\t"
 
 	    /*
-	     * Come here on a normal exit. Recover the EXCEPTION_REGISTRATION
+	     * Come here on a normal exit. Recover the TCLEXCEPTION_REGISTRATION
 	     * and store a TCL_OK status
 	     */
 
@@ -165,7 +234,7 @@ DllMain(
 	    "jmp	2f"				"\n"
 
 	    /*
-	     * Come here on an exception. Get the EXCEPTION_REGISTRATION that
+	     * Come here on an exception. Get the TCLEXCEPTION_REGISTRATION that
 	     * we previously put on the chain.
 	     */
 
@@ -176,7 +245,7 @@ DllMain(
 
 	    /*
 	     * Come here however we exited. Restore context from the
-	     * EXCEPTION_REGISTRATION in case the stack is unbalanced.
+	     * TCLEXCEPTION_REGISTRATION in case the stack is unbalanced.
 	     */
 
 	    "2:"					"\t"
@@ -193,8 +262,9 @@ DllMain(
 	    [error]		"i"	(TCL_ERROR)
 	    :
 	    "%eax", "%ebx", "%ecx", "%edx", "%esi", "%edi", "memory"
-	    );
+	);
 
+#   endif
 #else /* HAVE_NO_SEH */
 	__try {
 	    /*

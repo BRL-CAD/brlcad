@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_MoveToplevelWindow 3 "" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_MoveToplevelWindow \- Adjust the position of a top-level window
@@ -30,7 +28,6 @@ New y-coordinate for the top-left pixel of \fItkwin\fR's border, or the
 top-left pixel of the decorative border supplied for \fItkwin\fR by the
 window manager, if there is one.
 .BE
-
 .SH DESCRIPTION
 .PP
 In general, a window should never set its own position;  this should be
@@ -50,6 +47,5 @@ When \fBTk_MoveToplevelWindow\fR is called it does not immediately
 pass on the new desired location to the window manager;  it defers
 this action until all other outstanding work has been completed,
 using the \fBTk_DoWhenIdle\fR mechanism.
-
 .SH KEYWORDS
 position, top-level window, window manager

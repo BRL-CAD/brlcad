@@ -6,14 +6,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH entry n 8.3 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-entry \- Create and manipulate entry widgets
+entry \- Create and manipulate 'entry' one-line text entry widgets
 .SH SYNOPSIS
 \fBentry\fR \fIpathName \fR?\fIoptions\fR?
 .SO
@@ -34,9 +32,9 @@ this option is the empty string, the normal background color is used.
 Specifies the foreground color to use when the entry is disabled.  If
 this option is the empty string, the normal foreground color is used.
 .OP "\-invalidcommand or \-invcmd" invalidCommand InvalidCommand
-Specifies a script to eval when \fBvalidateCommand\fR returns 0.
+Specifies a script to eval when \fB\-validatecommand\fR returns 0.
 Setting it to {} disables this feature (the default).  The best use
-of this option is to set it to \fIbell\fR.  See \fBValidation\fR
+of this option is to set it to \fIbell\fR.  See \fBVALIDATION\fR
 below for more information.
 .OP \-readonlybackground readonlyBackground ReadonlyBackground
 Specifies the background color to use when the entry is readonly.  If
@@ -66,15 +64,15 @@ be displayed in a different color, depending on the values of the
 Specifies the mode in which validation should operate: \fBnone\fR,
 \fBfocus\fR, \fBfocusin\fR, \fBfocusout\fR, \fBkey\fR, or \fBall\fR.
 It defaults to \fBnone\fR.  When you want validation, you must explicitly
-state which mode you wish to use.  See \fBValidation\fR below for more.
+state which mode you wish to use.  See \fBVALIDATION\fR below for more.
 .OP "\-validatecommand or \-vcmd" validateCommand ValidateCommand
 Specifies a script to eval when you want to validate the input into
 the entry widget.  Setting it to {} disables this feature (the default).
 This command must return a valid Tcl boolean value.  If it returns 0 (or
 the valid Tcl boolean equivalent) then it means you reject the new edition
-and it will not occur and the \fBinvalidCommand\fR will be evaluated if it
+and it will not occur and the \fB\-invalidcommand\fR will be evaluated if it
 is set. If it returns 1, then the new edition occurs.
-See \fBValidation\fR below for more information.
+See \fBVALIDATION\fR below for more information.
 .OP \-width width Width
 Specifies an integer value indicating the desired width of the entry window,
 in average-size characters of the widget's font.
@@ -98,7 +96,7 @@ allows that string to be edited using widget commands described below, which
 are typically bound to keystrokes and mouse actions.
 When first created, an entry's string is empty.
 A portion of the entry may be selected as described below.
-If an entry is exporting its selection (see the \fBexportSelection\fR
+If an entry is exporting its selection (see the \fB\-exportselection\fR
 option), then it will observe the standard X11 protocols for handling the
 selection;  entry selections are available as type \fBSTRING\fR.
 Entries also observe the standard Tk rules for dealing with the
@@ -110,31 +108,31 @@ Entries are capable of displaying strings that are too long to
 fit entirely within the widget's window.  In this case, only a
 portion of the string will be displayed;  commands described below
 may be used to change the view in the window.  Entries use
-the standard \fBxScrollCommand\fR mechanism for interacting with
-scrollbars (see the description of the \fBxScrollCommand\fR option
+the standard \fB\-xscrollcommand\fR mechanism for interacting with
+scrollbars (see the description of the \fB\-xscrollcommand\fR option
 for details).  They also support scanning, as described below.
 .SH VALIDATION
 .PP
-Validation works by setting the \fBvalidateCommand\fR
-option to a script which will be evaluated according to the \fBvalidate\fR
-option as follows:
+Validation works by setting the \fB\-validatecommand\fR option to a
+script (\fIvalidateCommand\fR) which will be evaluated according to
+the \fB\-validate\fR option as follows:
 .PP
 .IP \fBnone\fR 10
 Default.  This means no validation will occur.
 .IP \fBfocus\fR 10
-\fBvalidateCommand\fR will be called when the entry receives or
+\fIvalidateCommand\fR will be called when the entry receives or
 loses focus.
 .IP \fBfocusin\fR 10
-\fBvalidateCommand\fR will be called when the entry receives focus.
+\fIvalidateCommand\fR will be called when the entry receives focus.
 .IP \fBfocusout\fR 10
-\fBvalidateCommand\fR will be called when the entry loses focus.
+\fIvalidateCommand\fR will be called when the entry loses focus.
 .IP \fBkey\fR 10
-\fBvalidateCommand\fR will be called when the entry is edited.
+\fIvalidateCommand\fR will be called when the entry is edited.
 .IP \fBall\fR 10
-\fBvalidateCommand\fR will be called for all above conditions.
+\fIvalidateCommand\fR will be called for all above conditions.
 .PP
-It is possible to perform percent substitutions on the \fBvalidateCommand\fR
-and \fBinvalidCommand\fR,
+It is possible to perform percent substitutions on the value of the
+\fB\-validatecommand\fR and \fB\-invalidcommand\fR options,
 just as you would in a \fBbind\fR script.  The following substitutions
 are recognized:
 .PP
@@ -159,32 +157,32 @@ The type of validation that triggered the callback
 .IP \fB%W\fR 5
 The name of the entry widget.
 .PP
-In general, the \fBtextVariable\fR and \fBvalidateCommand\fR can be
+In general, the \fB\-textvariable\fR and \fB\-validatecommand\fR options can be
 dangerous to mix.  Any problems have been overcome so that using the
-\fBvalidateCommand\fR will not interfere with the traditional behavior of
-the entry widget.  Using the \fBtextVariable\fR for read-only purposes will
+\fB\-validatecommand\fR will not interfere with the traditional behavior of
+the entry widget.  Using the \fB\-textvariable\fR for read-only purposes will
 never cause problems.  The danger comes when you try set the
-\fBtextVariable\fR to something that the \fBvalidateCommand\fR would not
-accept, which causes \fBvalidate\fR to become \fInone\fR (the
-\fBinvalidCommand\fR will not be triggered).  The same happens
-when an error occurs evaluating the \fBvalidateCommand\fR.
+\fB\-textvariable\fR to something that the \fB\-validatecommand\fR would not
+accept, which causes \fB\-validate\fR to become \fInone\fR (the
+\fB\-invalidcommand\fR will not be triggered).  The same happens
+when an error occurs evaluating the \fB\-validatecommand\fR.
 .PP
-Primarily, an error will occur when the \fBvalidateCommand\fR or
-\fBinvalidCommand\fR encounters an error in its script while evaluating or
-\fBvalidateCommand\fR does not return a valid Tcl boolean value.  The
-\fBvalidate\fR option will also set itself to \fBnone\fR when you edit the
-entry widget from within either the \fBvalidateCommand\fR or the
-\fBinvalidCommand\fR.  Such editions will override the one that was being
+Primarily, an error will occur when the \fB\-validatecommand\fR or
+\fB\-invalidcommand\fR encounters an error in its script while evaluating or
+\fB\-validatecommand\fR does not return a valid Tcl boolean value.  The
+\fB\-validate\fR option will also set itself to \fBnone\fR when you edit the
+entry widget from within either the \fB\-validatecommand\fR or the
+\fB\-invalidcommand\fR.  Such editions will override the one that was being
 validated.  If you wish to edit the entry widget (for example set it to {})
-during validation and still have the \fBvalidate\fR option set, you should
+during validation and still have the \fB\-validate\fR option set, you should
 include the command
 .CS
 after idle {%W config \-validate %v}
 .CE
-in the \fBvalidateCommand\fR or \fBinvalidCommand\fR (whichever one you
+in the \fB\-validatecommand\fR or \fB\-invalidcommand\fR (whichever one you
 were editing the entry widget from).  It is also recommended to not set an
-associated \fBtextVariable\fR during validation, as that can cause the
-entry widget to become out of sync with the \fBtextVariable\fR.
+associated \fB\-textvariable\fR during validation, as that can cause the
+entry widget to become out of sync with the \fB\-textvariable\fR.
 .SH "WIDGET COMMAND"
 .PP
 The \fBentry\fR command creates a new Tcl command whose
@@ -371,9 +369,9 @@ Returns an empty string.
 .RE
 .TP
 \fIpathName \fBvalidate\fR
-This command is used to force an evaluation of the \fBvalidateCommand\fR
-independent of the conditions specified by the \fBvalidate\fR option.
-This is done by temporarily setting the \fBvalidate\fR option to \fBall\fR.
+This command is used to force an evaluation of the \fB\-validatecommand\fR
+independent of the conditions specified by the \fB\-validate\fR option.
+This is done by temporarily setting the \fB\-validate\fR option to \fBall\fR.
 It returns 0 or 1.
 .TP
 \fIpathName \fBxview \fIargs\fR
@@ -536,3 +534,6 @@ individual widgets or by redefining the class bindings.
 ttk::entry(n)
 .SH KEYWORDS
 entry, widget
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

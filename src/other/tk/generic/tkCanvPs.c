@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -43,7 +41,6 @@ typedef struct TkColormapData {	/* Hold color information for a window */
  */
 
 typedef struct TkPostscriptInfo {
-    Tk_Window tkwin;		/* The canvas being printed. */
     int x, y, width, height;	/* Area to print, in canvas pixel
 				 * coordinates. */
     int x2, y2;			/* x+width and y+height. */
@@ -74,7 +71,7 @@ typedef struct TkPostscriptInfo {
 				 * NULL means return Postscript info as
 				 * result. Malloc'ed. */
     char *channelName;		/* If -channel is specified, the name of the
-                                 * channel to use. */
+				 * channel to use. */
     Tcl_Channel chan;		/* Open channel corresponding to fileName. */
     Tcl_HashTable fontTable;	/* Hash table containing names of all font
 				 * families used in output. The hash table
@@ -83,7 +80,11 @@ typedef struct TkPostscriptInfo {
 				 * pre-pass that collects font information, so
 				 * the Postscript generated isn't relevant. */
     int prolog;			/* Non-zero means output should contain the
-				 * prolog definitions in the header. */
+				 * standard prolog in the header. Generated in
+				 * library/mkpsenc.tcl, stored in the variable
+				 * ::tk::ps_preamable [sic]. */
+    Tk_Window tkwin;		/* Window to get font pixel/point transform
+				 * from. */
 } TkPostscriptInfo;
 
 /*
@@ -91,40 +92,40 @@ typedef struct TkPostscriptInfo {
  * canvas "postscript" command and fill in TkPostscriptInfo structures.
  */
 
-static Tk_ConfigSpec configSpecs[] = {
+static const Tk_ConfigSpec configSpecs[] = {
     {TK_CONFIG_STRING, "-colormap", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, colorVar), 0},
+	"", Tk_Offset(TkPostscriptInfo, colorVar), 0, NULL},
     {TK_CONFIG_STRING, "-colormode", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, colorMode), 0},
+	"", Tk_Offset(TkPostscriptInfo, colorMode), 0, NULL},
     {TK_CONFIG_STRING, "-file", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, fileName), 0},
+	"", Tk_Offset(TkPostscriptInfo, fileName), 0, NULL},
     {TK_CONFIG_STRING, "-channel", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, channelName), 0},
+	"", Tk_Offset(TkPostscriptInfo, channelName), 0, NULL},
     {TK_CONFIG_STRING, "-fontmap", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, fontVar), 0},
+	"", Tk_Offset(TkPostscriptInfo, fontVar), 0, NULL},
     {TK_CONFIG_PIXELS, "-height", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, height), 0},
+	"", Tk_Offset(TkPostscriptInfo, height), 0, NULL},
     {TK_CONFIG_ANCHOR, "-pageanchor", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, pageAnchor), 0},
+	"", Tk_Offset(TkPostscriptInfo, pageAnchor), 0, NULL},
     {TK_CONFIG_STRING, "-pageheight", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, pageHeightString), 0},
+	"", Tk_Offset(TkPostscriptInfo, pageHeightString), 0, NULL},
     {TK_CONFIG_STRING, "-pagewidth", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, pageWidthString), 0},
+	"", Tk_Offset(TkPostscriptInfo, pageWidthString), 0, NULL},
     {TK_CONFIG_STRING, "-pagex", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, pageXString), 0},
+	"", Tk_Offset(TkPostscriptInfo, pageXString), 0, NULL},
     {TK_CONFIG_STRING, "-pagey", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, pageYString), 0},
+	"", Tk_Offset(TkPostscriptInfo, pageYString), 0, NULL},
     {TK_CONFIG_BOOLEAN, "-prolog", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, prolog), 0},
+	"", Tk_Offset(TkPostscriptInfo, prolog), 0, NULL},
     {TK_CONFIG_BOOLEAN, "-rotate", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, rotate), 0},
+	"", Tk_Offset(TkPostscriptInfo, rotate), 0, NULL},
     {TK_CONFIG_PIXELS, "-width", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, width), 0},
+	"", Tk_Offset(TkPostscriptInfo, width), 0, NULL},
     {TK_CONFIG_PIXELS, "-x", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, x), 0},
+	"", Tk_Offset(TkPostscriptInfo, x), 0, NULL},
     {TK_CONFIG_PIXELS, "-y", NULL, NULL,
-	"", Tk_Offset(TkPostscriptInfo, y), 0},
-    {TK_CONFIG_END, NULL, NULL, NULL, NULL, 0, 0}
+	"", Tk_Offset(TkPostscriptInfo, y), 0, NULL},
+    {TK_CONFIG_END, NULL, NULL, NULL, NULL, 0, 0, NULL}
 };
 
 /*
@@ -133,6 +134,10 @@ static Tk_ConfigSpec configSpecs[] = {
 
 static int		GetPostscriptPoints(Tcl_Interp *interp,
 			    char *string, double *doublePtr);
+static void		PostscriptBitmap(Tk_Window tkwin, Pixmap bitmap,
+			    int startX, int startY, int width, int height,
+			    Tcl_Obj *psObj);
+static inline Tcl_Obj *	GetPostscriptBuffer(Tcl_Interp *interp);
 
 /*
  *--------------------------------------------------------------
@@ -158,7 +163,7 @@ TkCanvPostscriptCmd(
     TkCanvas *canvasPtr,	/* Information about canvas widget. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int argc,			/* Number of arguments. */
-    CONST char **argv)		/* Argument strings. Caller has already parsed
+    const char **argv)		/* Argument strings. Caller has already parsed
 				 * this command enough to know that argv[1] is
 				 * "postscript". */
 {
@@ -167,15 +172,15 @@ TkCanvPostscriptCmd(
     int result;
     Tk_Item *itemPtr;
 #define STRING_LENGTH 400
-    char string[STRING_LENGTH+1];
-    CONST char *p;
+    const char *p;
     time_t now;
     size_t length;
     Tk_Window tkwin = canvasPtr->tkwin;
     Tcl_HashSearch search;
     Tcl_HashEntry *hPtr;
     Tcl_DString buffer;
-    char psenccmd[] = "::tk::ensure_psenc_is_loaded";
+    Tcl_Obj *preambleObj;
+    Tcl_Obj *psObj;
     int deltaX = 0, deltaY = 0;	/* Offset of lower-left corner of area to be
 				 * marked up, measured in canvas units from
 				 * the positioning point on the page (reflects
@@ -183,17 +188,31 @@ TkCanvPostscriptCmd(
 				 * only to stop compiler warnings. */
 
     /*
+     * Get the generic preamble. We only ever bother with the ASCII encoding;
+     * the others just make life too complicated and never actually worked as
+     * such.
+     */
+
+    result = Tcl_EvalEx(interp, "::tk::ensure_psenc_is_loaded", -1, 0);
+    if (result != TCL_OK) {
+	return result;
+    }
+    preambleObj = Tcl_GetVar2Ex(interp, "::tk::ps_preamble", NULL,
+	    TCL_LEAVE_ERR_MSG);
+    if (preambleObj == NULL) {
+	return TCL_ERROR;
+    }
+    Tcl_IncrRefCount(preambleObj);
+    Tcl_ResetResult(interp);
+    psObj = Tcl_NewObj();
+
+    /*
      * Initialize the data structure describing Postscript generation, then
      * process all the arguments to fill the data structure in.
      */
 
-    result = Tcl_EvalEx(interp,psenccmd,-1,TCL_EVAL_GLOBAL);
-    if (result != TCL_OK) {
-        return result;
-    }
     oldInfoPtr = canvasPtr->psInfo;
     canvasPtr->psInfo = (Tk_PostscriptInfo) psInfoPtr;
-    psInfo.tkwin = canvasPtr->tkwin;
     psInfo.x = canvasPtr->xOrigin;
     psInfo.y = canvasPtr->yOrigin;
     psInfo.width = -1;
@@ -216,6 +235,7 @@ TkCanvPostscriptCmd(
     psInfo.chan = NULL;
     psInfo.prepass = 0;
     psInfo.prolog = 1;
+    psInfo.tkwin = tkwin;
     Tcl_InitHashTable(&psInfo.fontTable, TCL_STRING_KEYS);
     result = Tk_ConfigureWidget(interp, tkwin, configSpecs, argc-2, argv+2,
 	    (char *) &psInfo, TK_CONFIG_ARGV_ONLY);
@@ -306,35 +326,40 @@ TkCanvPostscriptCmd(
 	} else if (strncmp(psInfo.colorMode, "color", length) == 0) {
 	    psInfo.colorLevel = 2;
 	} else {
-	    Tcl_AppendResult(interp, "bad color mode \"", psInfo.colorMode,
-		    "\": must be monochrome, gray, or color", NULL);
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "bad color mode \"%s\": must be monochrome, gray, or color",
+		    psInfo.colorMode));
+	    Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "COLORMODE", NULL);
+	    result = TCL_ERROR;
 	    goto cleanup;
 	}
     }
 
     if (psInfo.fileName != NULL) {
-        /*
-         * Check that -file and -channel are not both specified.
-         */
+	/*
+	 * Check that -file and -channel are not both specified.
+	 */
 
-        if (psInfo.channelName != NULL) {
-            Tcl_AppendResult(interp, "can't specify both -file",
-                    " and -channel", NULL);
-            result = TCL_ERROR;
-            goto cleanup;
-        }
+	if (psInfo.channelName != NULL) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "can't specify both -file and -channel", -1));
+	    Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "USAGE", NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
 
-        /*
-         * Check that we are not in a safe interpreter. If we are, disallow
-         * the -file specification.
-         */
+	/*
+	 * Check that we are not in a safe interpreter. If we are, disallow
+	 * the -file specification.
+	 */
 
-        if (Tcl_IsSafe(interp)) {
-            Tcl_AppendResult(interp, "can't specify -file in a",
-                    " safe interpreter", NULL);
-            result = TCL_ERROR;
-            goto cleanup;
-        }
+	if (Tcl_IsSafe(interp)) {
+	    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+		    "can't specify -file in a safe interpreter", -1));
+	    Tcl_SetErrorCode(interp, "TK", "SAFE", "PS_FILE", NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
 
 	p = Tcl_TranslateFileName(interp, psInfo.fileName, &buffer);
 	if (p == NULL) {
@@ -348,24 +373,26 @@ TkCanvPostscriptCmd(
     }
 
     if (psInfo.channelName != NULL) {
-        int mode;
+	int mode;
 
-        /*
-         * Check that the channel is found in this interpreter and that it is
-         * open for writing.
-         */
+	/*
+	 * Check that the channel is found in this interpreter and that it is
+	 * open for writing.
+	 */
 
-        psInfo.chan = Tcl_GetChannel(interp, psInfo.channelName, &mode);
-        if (psInfo.chan == (Tcl_Channel) NULL) {
-            result = TCL_ERROR;
-            goto cleanup;
-        }
-        if ((mode & TCL_WRITABLE) == 0) {
-            Tcl_AppendResult(interp, "channel \"", psInfo.channelName,
-		    "\" wasn't opened for writing", NULL);
-            result = TCL_ERROR;
-            goto cleanup;
-        }
+	psInfo.chan = Tcl_GetChannel(interp, psInfo.channelName, &mode);
+	if (psInfo.chan == (Tcl_Channel) NULL) {
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
+	if (!(mode & TCL_WRITABLE)) {
+	    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		    "channel \"%s\" wasn't opened for writing",
+		    psInfo.channelName));
+	    Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "UNWRITABLE",NULL);
+	    result = TCL_ERROR;
+	    goto cleanup;
+	}
     }
 
     /*
@@ -386,7 +413,7 @@ TkCanvPostscriptCmd(
 	if (itemPtr->typePtr->postscriptProc == NULL) {
 	    continue;
 	}
-	result = (*itemPtr->typePtr->postscriptProc)(interp,
+	result = itemPtr->typePtr->postscriptProc(interp,
 		(Tk_Canvas) canvasPtr, itemPtr, 1);
 	Tcl_ResetResult(interp);
 	if (result != TCL_OK) {
@@ -396,6 +423,7 @@ TkCanvPostscriptCmd(
 	     * can happen later that don't happen now, so we still have to
 	     * check for errors later anyway).
 	     */
+
 	    break;
 	}
     }
@@ -406,24 +434,27 @@ TkCanvPostscriptCmd(
      */
 
     if (psInfo.prolog) {
-	Tcl_AppendResult(interp, "%!PS-Adobe-3.0 EPSF-3.0\n",
-		"%%Creator: Tk Canvas Widget\n", NULL);
+	Tcl_AppendToObj(psObj,
+		"%!PS-Adobe-3.0 EPSF-3.0\n"
+		"%%Creator: Tk Canvas Widget\n", -1);
+
 #ifdef HAVE_PW_GECOS
 	if (!Tcl_IsSafe(interp)) {
 	    struct passwd *pwPtr = getpwuid(getuid());	/* INTL: Native. */
 
-	    Tcl_AppendResult(interp, "%%For: ",
-		    (pwPtr != NULL) ? pwPtr->pw_gecos : "Unknown", "\n", NULL);
+	    Tcl_AppendPrintfToObj(psObj,
+		    "%%%%For: %s\n", (pwPtr ? pwPtr->pw_gecos : "Unknown"));
 	    endpwent();
 	}
 #endif /* HAVE_PW_GECOS */
-	Tcl_AppendResult(interp, "%%Title: Window ", Tk_PathName(tkwin), "\n",
-		NULL);
+	Tcl_AppendPrintfToObj(psObj,
+		"%%%%Title: Window %s\n", Tk_PathName(tkwin));
 	time(&now);
-	Tcl_AppendResult(interp, "%%CreationDate: ",
-		ctime(&now), NULL);		/* INTL: Native. */
+	Tcl_AppendPrintfToObj(psObj,
+		"%%%%CreationDate: %s", ctime(&now));	/* INTL: Native. */
 	if (!psInfo.rotate) {
-	    sprintf(string, "%d %d %d %d",
+	    Tcl_AppendPrintfToObj(psObj,
+		    "%%%%BoundingBox: %d %d %d %d\n",
 		    (int) (psInfo.pageX + psInfo.scale*deltaX),
 		    (int) (psInfo.pageY + psInfo.scale*deltaY),
 		    (int) (psInfo.pageX + psInfo.scale*(deltaX + psInfo.width)
@@ -431,51 +462,60 @@ TkCanvPostscriptCmd(
 		    (int) (psInfo.pageY + psInfo.scale*(deltaY + psInfo.height)
 			    + 1.0));
 	} else {
-	    sprintf(string, "%d %d %d %d",
+	    Tcl_AppendPrintfToObj(psObj,
+		    "%%%%BoundingBox: %d %d %d %d\n",
 		    (int) (psInfo.pageX - psInfo.scale*(deltaY+psInfo.height)),
 		    (int) (psInfo.pageY + psInfo.scale*deltaX),
 		    (int) (psInfo.pageX - psInfo.scale*deltaY + 1.0),
 		    (int) (psInfo.pageY + psInfo.scale*(deltaX + psInfo.width)
 			    + 1.0));
 	}
-	Tcl_AppendResult(interp, "%%BoundingBox: ", string, "\n", NULL);
-	Tcl_AppendResult(interp, "%%Pages: 1\n",
-		"%%DocumentData: Clean7Bit\n", NULL);
-	Tcl_AppendResult(interp, "%%Orientation: ",
-		psInfo.rotate ? "Landscape\n" : "Portrait\n", NULL);
-	p = "%%DocumentNeededResources: font ";
+	Tcl_AppendPrintfToObj(psObj,
+		"%%%%Pages: 1\n"
+		"%%%%DocumentData: Clean7Bit\n"
+		"%%%%Orientation: %s\n",
+		psInfo.rotate ? "Landscape" : "Portrait");
+	p = "%%%%DocumentNeededResources: font %s\n";
 	for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
 		hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_AppendResult(interp, p,
-		    Tcl_GetHashKey(&psInfo.fontTable, hPtr), "\n", NULL);
-	    p = "%%+ font ";
+	    Tcl_AppendPrintfToObj(psObj, p,
+		    Tcl_GetHashKey(&psInfo.fontTable, hPtr));
+	    p = "%%%%+ font %s\n";
 	}
-	Tcl_AppendResult(interp, "%%EndComments\n\n", NULL);
+	Tcl_AppendToObj(psObj, "%%EndComments\n\n", -1);
 
 	/*
 	 * Insert the prolog
 	 */
 
-	Tcl_AppendResult(interp, Tcl_GetVar(interp,"::tk::ps_preamable",
-		TCL_GLOBAL_ONLY), NULL);
+	Tcl_AppendObjToObj(psObj, preambleObj);
 
 	if (psInfo.chan != NULL) {
-	    Tcl_Write(psInfo.chan, Tcl_GetStringResult(interp), -1);
-	    Tcl_ResetResult(canvasPtr->interp);
+	    if (Tcl_WriteObj(psInfo.chan, psObj) == -1) {
+	    channelWriteFailed:
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"problem writing postscript data to channel: %s",
+			Tcl_PosixError(interp)));
+		result = TCL_ERROR;
+		goto cleanup;
+	    }
+	    Tcl_DecrRefCount(psObj);
+	    psObj = Tcl_NewObj();
 	}
 
 	/*
 	 * Document setup:  set the color level and include fonts.
 	 */
 
-	sprintf(string, "/CL %d def\n", psInfo.colorLevel);
-	Tcl_AppendResult(interp, "%%BeginSetup\n", string, NULL);
+	Tcl_AppendPrintfToObj(psObj,
+		"%%%%BeginSetup\n/CL %d def\n", psInfo.colorLevel);
 	for (hPtr = Tcl_FirstHashEntry(&psInfo.fontTable, &search);
 		hPtr != NULL; hPtr = Tcl_NextHashEntry(&search)) {
-	    Tcl_AppendResult(interp, "%%IncludeResource: font ",
-		    Tcl_GetHashKey(&psInfo.fontTable, hPtr), "\n", NULL);
+	    Tcl_AppendPrintfToObj(psObj,
+		    "%%%%IncludeResource: font %s\n",
+		    (char *) Tcl_GetHashKey(&psInfo.fontTable, hPtr));
 	}
-	Tcl_AppendResult(interp, "%%EndSetup\n\n", NULL);
+	Tcl_AppendToObj(psObj, "%%EndSetup\n\n", -1);
 
 	/*
 	 * Page setup: move to page positioning point, rotate if needed, set
@@ -483,18 +523,19 @@ TkCanvPostscriptCmd(
 	 * region.
 	 */
 
-	Tcl_AppendResult(interp, "%%Page: 1 1\n", "save\n", NULL);
-	sprintf(string, "%.1f %.1f translate\n", psInfo.pageX, psInfo.pageY);
-	Tcl_AppendResult(interp, string, NULL);
+	Tcl_AppendToObj(psObj, "%%Page: 1 1\nsave\n", -1);
+	Tcl_AppendPrintfToObj(psObj,
+		"%.1f %.1f translate\n", psInfo.pageX, psInfo.pageY);
 	if (psInfo.rotate) {
-	    Tcl_AppendResult(interp, "90 rotate\n", NULL);
+	    Tcl_AppendToObj(psObj, "90 rotate\n", -1);
 	}
-	sprintf(string, "%.4g %.4g scale\n", psInfo.scale, psInfo.scale);
-	Tcl_AppendResult(interp, string, NULL);
-	sprintf(string, "%d %d translate\n", deltaX - psInfo.x, deltaY);
-	Tcl_AppendResult(interp, string, NULL);
-	sprintf(string,
-		"%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g",
+	Tcl_AppendPrintfToObj(psObj,
+		"%.4g %.4g scale\n", psInfo.scale, psInfo.scale);
+	Tcl_AppendPrintfToObj(psObj,
+		"%d %d translate\n", deltaX - psInfo.x, deltaY);
+	Tcl_AppendPrintfToObj(psObj,
+		"%d %.15g moveto %d %.15g lineto %d %.15g lineto %d %.15g "
+		"lineto closepath clip newpath\n",
 		psInfo.x, Tk_PostscriptY((double)psInfo.y,
 			(Tk_PostscriptInfo)psInfoPtr),
 		psInfo.x2, Tk_PostscriptY((double)psInfo.y,
@@ -503,12 +544,13 @@ TkCanvPostscriptCmd(
 			(Tk_PostscriptInfo)psInfoPtr),
 		psInfo.x, Tk_PostscriptY((double)psInfo.y2,
 			(Tk_PostscriptInfo)psInfoPtr));
-	Tcl_AppendResult(interp, string,
-		" lineto closepath clip newpath\n", NULL);
-    }
-    if (psInfo.chan != NULL) {
-	Tcl_Write(psInfo.chan, Tcl_GetStringResult(interp), -1);
-	Tcl_ResetResult(canvasPtr->interp);
+	if (psInfo.chan != NULL) {
+	    if (Tcl_WriteObj(psInfo.chan, psObj) == -1) {
+		goto channelWriteFailed;
+	    }
+	    Tcl_DecrRefCount(psObj);
+	    psObj = Tcl_NewObj();
+	}
     }
 
     /*
@@ -529,21 +571,27 @@ TkCanvPostscriptCmd(
 	if (itemPtr->state == TK_STATE_HIDDEN) {
 	    continue;
 	}
-	Tcl_AppendResult(interp, "gsave\n", NULL);
-	result = (*itemPtr->typePtr->postscriptProc)(interp,
+
+	Tcl_ResetResult(interp);
+	result = itemPtr->typePtr->postscriptProc(interp,
 		(Tk_Canvas) canvasPtr, itemPtr, 0);
 	if (result != TCL_OK) {
-	    char msg[64 + TCL_INTEGER_SPACE];
-
-	    sprintf(msg, "\n    (generating Postscript for item %d)",
-		    itemPtr->id);
-	    Tcl_AddErrorInfo(interp, msg);
+	    Tcl_AppendObjToErrorInfo(interp, Tcl_ObjPrintf(
+		    "\n    (generating Postscript for item %d)",
+		    itemPtr->id));
 	    goto cleanup;
 	}
-	Tcl_AppendResult(interp, "grestore\n", NULL);
+
+	Tcl_AppendToObj(psObj, "gsave\n", -1);
+	Tcl_AppendObjToObj(psObj, Tcl_GetObjResult(interp));
+	Tcl_AppendToObj(psObj, "grestore\n", -1);
+
 	if (psInfo.chan != NULL) {
-	    Tcl_Write(psInfo.chan, Tcl_GetStringResult(interp), -1);
-	    Tcl_ResetResult(interp);
+	    if (Tcl_WriteObj(psInfo.chan, psObj) == -1) {
+		goto channelWriteFailed;
+	    }
+	    Tcl_DecrRefCount(psObj);
+	    psObj = Tcl_NewObj();
 	}
     }
 
@@ -553,12 +601,22 @@ TkCanvPostscriptCmd(
      */
 
     if (psInfo.prolog) {
-	Tcl_AppendResult(interp, "restore showpage\n\n",
-		"%%Trailer\nend\n%%EOF\n", NULL);
+	Tcl_AppendToObj(psObj,
+		"restore showpage\n\n"
+		"%%Trailer\n"
+		"end\n"
+		"%%EOF\n", -1);
+
+	if (psInfo.chan != NULL) {
+	    if (Tcl_WriteObj(psInfo.chan, psObj) == -1) {
+		goto channelWriteFailed;
+	    }
+	}
     }
-    if (psInfo.chan != NULL) {
-	Tcl_Write(psInfo.chan, Tcl_GetStringResult(interp), -1);
-	Tcl_ResetResult(canvasPtr->interp);
+
+    if (psInfo.chan == NULL) {
+	Tcl_SetObjResult(interp, psObj);
+	psObj = Tcl_NewObj();
     }
 
     /*
@@ -594,11 +652,26 @@ TkCanvPostscriptCmd(
 	Tcl_Close(interp, psInfo.chan);
     }
     if (psInfo.channelName != NULL) {
-        ckfree(psInfo.channelName);
+	ckfree(psInfo.channelName);
     }
     Tcl_DeleteHashTable(&psInfo.fontTable);
     canvasPtr->psInfo = (Tk_PostscriptInfo) oldInfoPtr;
+    Tcl_DecrRefCount(preambleObj);
+    Tcl_DecrRefCount(psObj);
     return result;
+}
+
+static inline Tcl_Obj *
+GetPostscriptBuffer(
+    Tcl_Interp *interp)
+{
+    Tcl_Obj *psObj = Tcl_GetObjResult(interp);
+
+    if (Tcl_IsShared(psObj)) {
+	psObj = Tcl_DuplicateObj(psObj);
+	Tcl_SetObjResult(interp, psObj);
+    }
+    return psObj;
 }
 
 /*
@@ -629,9 +702,7 @@ Tk_PostscriptColor(
     XColor *colorPtr)		/* Information about color. */
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
-    int tmp;
     double red, green, blue;
-    char string[200];
 
     if (psInfoPtr->prepass) {
 	return TCL_OK;
@@ -643,12 +714,12 @@ Tk_PostscriptColor(
      */
 
     if (psInfoPtr->colorVar != NULL) {
-	CONST char *cmdString;
-
-	cmdString = Tcl_GetVar2(interp, psInfoPtr->colorVar,
+	const char *cmdString = Tcl_GetVar2(interp, psInfoPtr->colorVar,
 		Tk_NameOfColor(colorPtr), 0);
+
 	if (cmdString != NULL) {
-	    Tcl_AppendResult(interp, cmdString, "\n", NULL);
+	    Tcl_AppendPrintfToObj(GetPostscriptBuffer(interp),
+		    "%s\n", cmdString);
 	    return TCL_OK;
 	}
     }
@@ -665,15 +736,12 @@ Tk_PostscriptColor(
      * per color, but most diplays use at least 8 bits.
      */
 
-    tmp = colorPtr->red;
-    red = ((double) (tmp >> 8))/255.0;
-    tmp = colorPtr->green;
-    green = ((double) (tmp >> 8))/255.0;
-    tmp = colorPtr->blue;
-    blue = ((double) (tmp >> 8))/255.0;
-    sprintf(string, "%.3f %.3f %.3f setrgbcolor AdjustColor\n",
+    red = ((double) (((int) colorPtr->red) >> 8))/255.0;
+    green = ((double) (((int) colorPtr->green) >> 8))/255.0;
+    blue = ((double) (((int) colorPtr->blue) >> 8))/255.0;
+    Tcl_AppendPrintfToObj(GetPostscriptBuffer(interp),
+	    "%.3f %.3f %.3f setrgbcolor AdjustColor\n",
 	    red, green, blue);
-    Tcl_AppendResult(interp, string, NULL);
     return TCL_OK;
 }
 
@@ -707,9 +775,9 @@ Tk_PostscriptFont(
 				 * be printed. */
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
-    char pointString[TCL_INTEGER_SPACE];
     Tcl_DString ds;
     int i, points;
+    const char *fontname;
 
     /*
      * First, look up the font's name in the font map, if there is one. If
@@ -718,35 +786,31 @@ Tk_PostscriptFont(
      */
 
     if (psInfoPtr->fontVar != NULL) {
-	CONST char *name = Tk_NameOfFont(tkfont);
+	const char *name = Tk_NameOfFont(tkfont);
 	Tcl_Obj **objv;
 	int objc;
 	double size;
 	Tcl_Obj *list = Tcl_GetVar2Ex(interp, psInfoPtr->fontVar, name, 0);
 
 	if (list != NULL) {
-	    CONST char *fontname;
-
 	    if (Tcl_ListObjGetElements(interp, list, &objc, &objv) != TCL_OK
 		    || objc != 2
-		    || Tcl_GetString(objv[0])[0]=='\0'
+		    || (fontname = Tcl_GetString(objv[0]))[0] == '\0'
+		    || strchr(fontname, ' ') != NULL
 		    || Tcl_GetDoubleFromObj(interp, objv[1], &size) != TCL_OK
 		    || size <= 0) {
-		Tcl_ResetResult(interp);
-		Tcl_AppendResult(interp, "bad font map entry for \"", name,
-			"\": \"", Tcl_GetString(list), "\"", NULL);
+		Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			"bad font map entry for \"%s\": \"%s\"",
+			name, Tcl_GetString(list)));
+		Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "FONTMAP",
+			NULL);
 		return TCL_ERROR;
 	    }
 
-	    fontname = Tcl_GetString(objv[0]);
-	    sprintf(pointString, "%d", (int)size);
-
-	    Tcl_AppendResult(interp, "/", fontname, " findfont ",
-		    pointString, " scalefont ", NULL);
-	    if (strncasecmp(fontname, "Symbol", 7) != 0) {
-		Tcl_AppendResult(interp, "ISOEncode ", NULL);
-	    }
-	    Tcl_AppendResult(interp, "setfont\n", NULL);
+	    Tcl_AppendPrintfToObj(GetPostscriptBuffer(interp),
+		    "/%s findfont %d scalefont%s setfont\n",
+		    fontname, (int) size,
+		    strncasecmp(fontname, "Symbol", 7) ? " ISOEncode" : "");
 	    Tcl_CreateHashEntry(&psInfoPtr->fontTable, fontname, &i);
 	    return TCL_OK;
 	}
@@ -758,13 +822,11 @@ Tk_PostscriptFont(
 
     Tcl_DStringInit(&ds);
     points = Tk_PostscriptFontName(tkfont, &ds);
-    sprintf(pointString, "%d", TkFontGetPoints(psInfoPtr->tkwin, points));
-    Tcl_AppendResult(interp, "/", Tcl_DStringValue(&ds), " findfont ",
-	    pointString, " scalefont ", NULL);
-    if (strncasecmp(Tcl_DStringValue(&ds), "Symbol", 7) != 0) {
-	Tcl_AppendResult(interp, "ISOEncode ", NULL);
-    }
-    Tcl_AppendResult(interp, "setfont\n", NULL);
+    fontname = Tcl_DStringValue(&ds);
+    Tcl_AppendPrintfToObj(GetPostscriptBuffer(interp),
+	    "/%s findfont %d scalefont%s setfont\n",
+	    fontname, TkFontGetPoints(psInfoPtr->tkwin, points),
+	    strncasecmp(fontname, "Symbol", 7) ? " ISOEncode" : "");
     Tcl_CreateHashEntry(&psInfoPtr->fontTable, Tcl_DStringValue(&ds), &i);
     Tcl_DStringFree(&ds);
 
@@ -802,17 +864,31 @@ Tk_PostscriptBitmap(
     int width, int height)	/* Height of rectangular region. */
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
-    XImage *imagePtr;
-    int charsInLine, x, y, lastX, lastY, value, mask;
-    unsigned int totalWidth, totalHeight;
-    char string[100];
-    Window dummyRoot;
-    int dummyX, dummyY;
-    unsigned dummyBorderwidth, dummyDepth;
 
     if (psInfoPtr->prepass) {
 	return TCL_OK;
     }
+
+    PostscriptBitmap(tkwin, bitmap, startX, startY, width, height,
+	    GetPostscriptBuffer(interp));
+    return TCL_OK;
+}
+
+static void
+PostscriptBitmap(
+    Tk_Window tkwin,
+    Pixmap bitmap,		/* Bitmap for which to generate Postscript. */
+    int startX, int startY,	/* Coordinates of upper-left corner of
+				 * rectangular region to output. */
+    int width, int height,	/* Height of rectangular region. */
+    Tcl_Obj *psObj)		/* Where to append the postscript. */
+{
+    XImage *imagePtr;
+    int charsInLine, x, y, lastX, lastY, value, mask;
+    unsigned int totalWidth, totalHeight;
+    Window dummyRoot;
+    int dummyX, dummyY;
+    unsigned dummyBorderwidth, dummyDepth;
 
     /*
      * The following call should probably be a call to Tk_SizeOfBitmap
@@ -827,7 +903,8 @@ Tk_PostscriptBitmap(
 	    (unsigned int *) &totalHeight, &dummyBorderwidth, &dummyDepth);
     imagePtr = XGetImage(Tk_Display(tkwin), bitmap, 0, 0,
 	    totalWidth, totalHeight, 1, XYPixmap);
-    Tcl_AppendResult(interp, "<", NULL);
+
+    Tcl_AppendToObj(psObj, "<", -1);
     mask = 0x80;
     value = 0;
     charsInLine = 0;
@@ -840,28 +917,26 @@ Tk_PostscriptBitmap(
 	    }
 	    mask >>= 1;
 	    if (mask == 0) {
-		sprintf(string, "%02x", value);
-		Tcl_AppendResult(interp, string, NULL);
+		Tcl_AppendPrintfToObj(psObj, "%02x", value);
 		mask = 0x80;
 		value = 0;
 		charsInLine += 2;
 		if (charsInLine >= 60) {
-		    Tcl_AppendResult(interp, "\n", NULL);
+		    Tcl_AppendToObj(psObj, "\n", -1);
 		    charsInLine = 0;
 		}
 	    }
 	}
 	if (mask != 0x80) {
-	    sprintf(string, "%02x", value);
-	    Tcl_AppendResult(interp, string, NULL);
+	    Tcl_AppendPrintfToObj(psObj, "%02x", value);
 	    mask = 0x80;
 	    value = 0;
 	    charsInLine += 2;
 	}
     }
-    Tcl_AppendResult(interp, ">", NULL);
+    Tcl_AppendToObj(psObj, ">", -1);
+
     XDestroyImage(imagePtr);
-    return TCL_OK;
 }
 
 /*
@@ -896,10 +971,10 @@ Tk_PostscriptStipple(
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
     int width, height;
-    char string[TCL_INTEGER_SPACE * 2];
     Window dummyRoot;
     int dummyX, dummyY;
     unsigned dummyBorderwidth, dummyDepth;
+    Tcl_Obj *psObj;
 
     if (psInfoPtr->prepass) {
 	return TCL_OK;
@@ -916,13 +991,11 @@ Tk_PostscriptStipple(
     XGetGeometry(Tk_Display(tkwin), bitmap, &dummyRoot,
 	    (int *) &dummyX, (int *) &dummyY, (unsigned *) &width,
 	    (unsigned *) &height, &dummyBorderwidth, &dummyDepth);
-    sprintf(string, "%d %d ", width, height);
-    Tcl_AppendResult(interp, string, NULL);
-    if (Tk_PostscriptBitmap(interp, tkwin, psInfo, bitmap, 0, 0,
-	    width, height) != TCL_OK) {
-	return TCL_ERROR;
-    }
-    Tcl_AppendResult(interp, " StippleFill\n", NULL);
+
+    psObj = GetPostscriptBuffer(interp);
+    Tcl_AppendPrintfToObj(psObj, "%d %d ", width, height);
+    PostscriptBitmap(tkwin, bitmap, 0, 0, width, height, psObj);
+    Tcl_AppendToObj(psObj, " StippleFill\n", -1);
     return TCL_OK;
 }
 
@@ -982,19 +1055,19 @@ Tk_PostscriptPath(
     int numPoints)		/* Number of points at *coordPtr. */
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
-    char buffer[200];
+    Tcl_Obj *psObj;
 
     if (psInfoPtr->prepass) {
 	return;
     }
-    sprintf(buffer, "%.15g %.15g moveto\n", coordPtr[0],
-	    Tk_PostscriptY(coordPtr[1], psInfo));
-    Tcl_AppendResult(interp, buffer, NULL);
+
+    psObj = GetPostscriptBuffer(interp);
+    Tcl_AppendPrintfToObj(psObj, "%.15g %.15g moveto\n",
+	    coordPtr[0], Tk_PostscriptY(coordPtr[1], psInfo));
     for (numPoints--, coordPtr += 2; numPoints > 0;
 	    numPoints--, coordPtr += 2) {
-	sprintf(buffer, "%.15g %.15g lineto\n", coordPtr[0],
-		Tk_PostscriptY(coordPtr[1], psInfo));
-	Tcl_AppendResult(interp, buffer, NULL);
+	Tcl_AppendPrintfToObj(psObj, "%.15g %.15g lineto\n",
+		coordPtr[0], Tk_PostscriptY(coordPtr[1], psInfo));
     }
 }
 
@@ -1065,7 +1138,8 @@ GetPostscriptPoints(
     return TCL_OK;
 
   error:
-    Tcl_AppendResult(interp, "bad distance \"", string, "\"", NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("bad distance \"%s\"", string));
+    Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "POINTS", NULL);
     return TCL_ERROR;
 }
 
@@ -1094,7 +1168,7 @@ GetPostscriptPoints(
  *--------------------------------------------------------------
  */
 
-#ifdef WIN32
+#ifdef _WIN32
 #include <windows.h>
 
 /*
@@ -1104,15 +1178,15 @@ GetPostscriptPoints(
  #define GetBValue(rgb)	((BYTE)((rgb)>>16))
  */
 
-#else /* !WIN32 */
+#else /* !_WIN32 */
 
 #define GetRValue(rgb)	((rgb & cdata->red_mask) >> cdata->red_shift)
 #define GetGValue(rgb)	((rgb & cdata->green_mask) >> cdata->green_shift)
 #define GetBValue(rgb)	((rgb & cdata->blue_mask) >> cdata->blue_shift)
 
-#endif /* WIN32 */
+#endif /* _WIN32 */
 
-#if defined(WIN32) || defined(MAC_OSX_TK)
+#if defined(_WIN32) || defined(MAC_OSX_TK)
 static void
 TkImageGetColor(
     TkColormapData *cdata,	/* Colormap data */
@@ -1124,7 +1198,7 @@ TkImageGetColor(
     *green = (double) GetGValue(pixel) / 255.0;
     *blue  = (double) GetBValue(pixel) / 255.0;
 }
-#else /* ! (WIN32 || MAC_OSX_TK) */
+#else /* ! (_WIN32 || MAC_OSX_TK) */
 static void
 TkImageGetColor(
     TkColormapData *cdata,	/* Colormap data */
@@ -1146,7 +1220,7 @@ TkImageGetColor(
 	*blue  = cdata->colors[pixel].blue / 65535.0;
     }
 }
-#endif /* WIN32 || MAC_OSX_TK */
+#endif /* _WIN32 || MAC_OSX_TK */
 
 /*
  *--------------------------------------------------------------
@@ -1179,15 +1253,15 @@ TkPostscriptImage(
     int width, int height)	/* Width and height of area */
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
-    char buffer[256];
     int xx, yy, band, maxRows;
     double red, green, blue;
-    int bytesPerLine=0, maxWidth=0;
+    int bytesPerLine = 0, maxWidth = 0;
     int level = psInfoPtr->colorLevel;
     Colormap cmap;
     int i, ncolors;
     Visual *visual;
     TkColormapData cdata;
+    Tcl_Obj *psObj;
 
     if (psInfoPtr->prepass) {
 	return TCL_OK;
@@ -1202,7 +1276,7 @@ TkPostscriptImage(
      */
 
     ncolors = visual->map_entries;
-    cdata.colors = (XColor *) ckalloc(sizeof(XColor) * ncolors);
+    cdata.colors = ckalloc(sizeof(XColor) * ncolors);
     cdata.ncolors = ncolors;
 
     if (visual->class == DirectColor || visual->class == TrueColor) {
@@ -1251,7 +1325,7 @@ TkPostscriptImage(
      * monochrome screen, use gray or monochrome mode instead.
      */
 
-    if (!cdata.color && level == 2) {
+    if (!cdata.color && level >= 2) {
 	level = 1;
     }
 
@@ -1268,20 +1342,21 @@ TkPostscriptImage(
     switch (level) {
     case 0: bytesPerLine = (width + 7) / 8;  maxWidth = 240000; break;
     case 1: bytesPerLine = width;	     maxWidth = 60000;  break;
-    case 2: bytesPerLine = 3 * width;	     maxWidth = 20000;  break;
+    default: bytesPerLine = 3 * width;	     maxWidth = 20000;  break;
     }
 
     if (bytesPerLine > 60000) {
 	Tcl_ResetResult(interp);
-	sprintf(buffer,
-		"Can't generate Postscript for images more than %d pixels wide",
-		maxWidth);
-	Tcl_AppendResult(interp, buffer, NULL);
-	ckfree((char *) cdata.colors);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"can't generate Postscript for images more than %d pixels wide",
+		maxWidth));
+	Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "MEMLIMIT", NULL);
+	ckfree(cdata.colors);
 	return TCL_ERROR;
     }
 
     maxRows = 60000 / bytesPerLine;
+    psObj = GetPostscriptBuffer(interp);
 
     for (band = height-1; band >= 0; band -= maxRows) {
 	int rows = (band >= maxRows) ? maxRows : band + 1;
@@ -1289,16 +1364,13 @@ TkPostscriptImage(
 
 	switch (level) {
 	case 0:
-	    sprintf(buffer, "%d %d 1 matrix {\n<", width, rows);
-	    Tcl_AppendResult(interp, buffer, NULL);
+	    Tcl_AppendPrintfToObj(psObj, "%d %d 1 matrix {\n<", width, rows);
 	    break;
 	case 1:
-	    sprintf(buffer, "%d %d 8 matrix {\n<", width, rows);
-	    Tcl_AppendResult(interp, buffer, NULL);
+	    Tcl_AppendPrintfToObj(psObj, "%d %d 8 matrix {\n<", width, rows);
 	    break;
-	case 2:
-	    sprintf(buffer, "%d %d 8 matrix {\n<", width, rows);
-	    Tcl_AppendResult(interp, buffer, NULL);
+	default:
+	    Tcl_AppendPrintfToObj(psObj, "%d %d 8 matrix {\n<", width, rows);
 	    break;
 	}
 	for (yy = band; yy > band - rows; yy--) {
@@ -1320,22 +1392,20 @@ TkPostscriptImage(
 		    }
 		    mask >>= 1;
 		    if (mask == 0) {
-			sprintf(buffer, "%02X", data);
-			Tcl_AppendResult(interp, buffer, NULL);
+			Tcl_AppendPrintfToObj(psObj, "%02X", data);
 			lineLen += 2;
 			if (lineLen > 60) {
 			    lineLen = 0;
-			    Tcl_AppendResult(interp, "\n", NULL);
+			    Tcl_AppendToObj(psObj, "\n", -1);
 			}
-			mask=0x80;
-			data=0x00;
+			mask = 0x80;
+			data = 0x00;
 		    }
 		}
 		if ((width % 8) != 0) {
-		    sprintf(buffer, "%02X", data);
-		    Tcl_AppendResult(interp, buffer, NULL);
-		    mask=0x80;
-		    data=0x00;
+		    Tcl_AppendPrintfToObj(psObj, "%02X", data);
+		    mask = 0x80;
+		    data = 0x00;
 		}
 		break;
 	    }
@@ -1348,17 +1418,17 @@ TkPostscriptImage(
 		for (xx = x; xx < x+width; xx ++) {
 		    TkImageGetColor(&cdata, XGetPixel(ximage, xx, yy),
 			    &red, &green, &blue);
-		    sprintf(buffer, "%02X", (int) floor(0.5 + 255.0 *
+		    Tcl_AppendPrintfToObj(psObj, "%02X",
+			    (int) floor(0.5 + 255.0 *
 			    (0.30 * red + 0.59 * green + 0.11 * blue)));
-		    Tcl_AppendResult(interp, buffer, NULL);
 		    lineLen += 2;
 		    if (lineLen > 60) {
 			lineLen = 0;
-			Tcl_AppendResult(interp, "\n", NULL);
+			Tcl_AppendToObj(psObj, "\n", -1);
 		    }
 		}
 		break;
-	    case 2:
+	    default:
 		/*
 		 * Finally, color mode. Here, just output the red, green, and
 		 * blue values directly.
@@ -1367,15 +1437,14 @@ TkPostscriptImage(
 		for (xx = x; xx < x+width; xx++) {
 		    TkImageGetColor(&cdata, XGetPixel(ximage, xx, yy),
 			    &red, &green, &blue);
-		    sprintf(buffer, "%02X%02X%02X",
+		    Tcl_AppendPrintfToObj(psObj, "%02X%02X%02X",
 			    (int) floor(0.5 + 255.0 * red),
 			    (int) floor(0.5 + 255.0 * green),
 			    (int) floor(0.5 + 255.0 * blue));
-		    Tcl_AppendResult(interp, buffer, NULL);
 		    lineLen += 6;
 		    if (lineLen > 60) {
 			lineLen = 0;
-			Tcl_AppendResult(interp, "\n", NULL);
+			Tcl_AppendToObj(psObj, "\n", -1);
 		    }
 		}
 		break;
@@ -1383,15 +1452,13 @@ TkPostscriptImage(
 	}
 	switch (level) {
 	case 0: case 1:
-	    sprintf(buffer, ">\n} image\n"); break;
-	case 2:
-	    sprintf(buffer, ">\n} false 3 colorimage\n"); break;
+	    Tcl_AppendToObj(psObj, ">\n} image\n", -1); break;
+	default:
+	    Tcl_AppendToObj(psObj, ">\n} false 3 colorimage\n", -1); break;
 	}
-	Tcl_AppendResult(interp, buffer, NULL);
-	sprintf(buffer, "0 %d translate\n", rows);
-	Tcl_AppendResult(interp, buffer, NULL);
+	Tcl_AppendPrintfToObj(psObj, "0 %d translate\n", rows);
     }
-    ckfree((char *) cdata.colors);
+    ckfree(cdata.colors);
     return TCL_OK;
 }
 
@@ -1425,153 +1492,32 @@ Tk_PostscriptPhoto(
 {
     TkPostscriptInfo *psInfoPtr = (TkPostscriptInfo *) psInfo;
     int colorLevel = psInfoPtr->colorLevel;
-    static int codeIncluded = 0;
-
+    const char *displayOperation, *decode;
     unsigned char *pixelPtr;
-    char buffer[256], cspace[40], decode[40];
-    int bpc;
-    int xx, yy, lineLen;
+    int bpc, xx, yy, lineLen, alpha;
     float red, green, blue;
-    int alpha;
-    int bytesPerLine=0, maxWidth=0;
-
+    int bytesPerLine = 0, maxWidth = 0;
     unsigned char opaque = 255;
     unsigned char *alphaPtr;
     int alphaOffset, alphaPitch, alphaIncr;
+    Tcl_Obj *psObj;
 
     if (psInfoPtr->prepass) {
-	codeIncluded = 0;
 	return TCL_OK;
     }
 
-    /*
-     * Define the "TkPhoto" function, which is a modified version of the
-     * original "transparentimage" function posted by ian@five-d.com (Ian
-     * Kemmish) to comp.lang.postscript. For a monochrome colorLevel this is a
-     * slightly different version that uses the imagemask command instead of
-     * image.
-     */
-
-    if (!codeIncluded && (colorLevel != 0)) {
+    if (colorLevel != 0) {
 	/*
 	 * Color and gray-scale code.
 	 */
 
-	codeIncluded = !0;
-	Tcl_AppendResult(interp,
-		"/TkPhoto { \n",
-		"  gsave \n",
-		"  32 dict begin \n",
-		"  /tinteger exch def \n",
-		"  /transparent 1 string def \n",
-		"  transparent 0 tinteger put \n",
-		"  /olddict exch def \n",
-		"  olddict /DataSource get dup type /filetype ne { \n",
-		"    olddict /DataSource 3 -1 roll \n",
-		"    0 () /SubFileDecode filter put \n",
-		"  } { \n",
-		"    pop \n",
-		"  } ifelse \n",
-		"  /newdict olddict maxlength dict def \n",
-		"  olddict newdict copy pop \n",
-		"  /w newdict /Width get def \n",
-		"  /crpp newdict /Decode get length 2 idiv def \n",
-		"  /str w string def \n",
-		"  /pix w crpp mul string def \n",
-		"  /substrlen 2 w log 2 log div floor exp cvi def \n",
-		"  /substrs [ \n",
-		"  { \n",
-		"     substrlen string \n",
-		"     0 1 substrlen 1 sub { \n",
-		"       1 index exch tinteger put \n",
-		"     } for \n",
-		"     /substrlen substrlen 2 idiv def \n",
-		"     substrlen 0 eq {exit} if \n",
-		"  } loop \n",
-		"  ] def \n",
-		"  /h newdict /Height get def \n",
-		"  1 w div 1 h div matrix scale \n",
-		"  olddict /ImageMatrix get exch matrix concatmatrix \n",
-		"  matrix invertmatrix concat \n",
-		"  newdict /Height 1 put \n",
-		"  newdict /DataSource pix put \n",
-		"  /mat [w 0 0 h 0 0] def \n",
-		"  newdict /ImageMatrix mat put \n",
-		"  0 1 h 1 sub { \n",
-		"    mat 5 3 -1 roll neg put \n",
-		"    olddict /DataSource get str readstring pop pop \n",
-		"    /tail str def \n",
-		"    /x 0 def \n",
-		"    olddict /DataSource get pix readstring pop pop \n",
-		"    { \n",
-		"      tail transparent search dup /done exch not def \n",
-		"      {exch pop exch pop} if \n",
-		"      /w1 exch length def \n",
-		"      w1 0 ne { \n",
-		"        newdict /DataSource ",
-		          " pix x crpp mul w1 crpp mul getinterval put \n",
-		"        newdict /Width w1 put \n",
-		"        mat 4 x neg put \n",
-		"        /x x w1 add def \n",
-		"        newdict image \n",
-		"        /tail tail w1 tail length w1 sub getinterval def \n",
-		"      } if \n",
-		"      done {exit} if \n",
-		"      tail substrs { \n",
-		"        anchorsearch {pop} if \n",
-		"      } forall \n",
-		"      /tail exch def \n",
-		"      tail length 0 eq {exit} if \n",
-		"      /x w tail length sub def \n",
-		"    } loop \n",
-		"  } for \n",
-		"  end \n",
-		"  grestore \n",
-		"} bind def \n\n\n", NULL);
-    } else if (!codeIncluded && (colorLevel == 0)) {
+	displayOperation = "TkPhotoColor";
+    } else {
 	/*
 	 * Monochrome-only code
 	 */
 
-	codeIncluded = !0;
-	Tcl_AppendResult(interp,
-		"/TkPhoto { \n",
-		"  gsave \n",
-		"  32 dict begin \n",
-		"  /dummyInteger exch def \n",
-		"  /olddict exch def \n",
-		"  olddict /DataSource get dup type /filetype ne { \n",
-		"    olddict /DataSource 3 -1 roll \n",
-		"    0 () /SubFileDecode filter put \n",
-		"  } { \n",
-		"    pop \n",
-		"  } ifelse \n",
-		"  /newdict olddict maxlength dict def \n",
-		"  olddict newdict copy pop \n",
-		"  /w newdict /Width get def \n",
-		"  /pix w 7 add 8 idiv string def \n",
-		"  /h newdict /Height get def \n",
-		"  1 w div 1 h div matrix scale \n",
-		"  olddict /ImageMatrix get exch matrix concatmatrix \n",
-		"  matrix invertmatrix concat \n",
-		"  newdict /Height 1 put \n",
-		"  newdict /DataSource pix put \n",
-		"  /mat [w 0 0 h 0 0] def \n",
-		"  newdict /ImageMatrix mat put \n",
-		"  0 1 h 1 sub { \n",
-		"    mat 5 3 -1 roll neg put \n",
-		"    0.000 0.000 0.000 setrgbcolor \n",
-		"    olddict /DataSource get pix readstring pop pop \n",
-		"    newdict /DataSource pix put \n",
-		"    newdict imagemask \n",
-		"    1.000 1.000 1.000 setrgbcolor \n",
-		"    olddict /DataSource get pix readstring pop pop \n",
-		"    newdict /DataSource pix put \n",
-		"    newdict imagemask \n",
-		"  } for \n",
-		"  end \n",
-		"  grestore \n",
-		"} bind def \n\n\n", NULL);
+	displayOperation = "TkPhotoMono";
     }
 
     /*
@@ -1583,14 +1529,14 @@ Tk_PostscriptPhoto(
     switch (colorLevel) {
     case 0: bytesPerLine = (width + 7) / 8; maxWidth = 240000; break;
     case 1: bytesPerLine = width;	    maxWidth = 60000;  break;
-    case 2: bytesPerLine = 3 * width;	    maxWidth = 20000;  break;
+    default: bytesPerLine = 3 * width;	    maxWidth = 20000;  break;
     }
     if (bytesPerLine > 60000) {
 	Tcl_ResetResult(interp);
-	sprintf(buffer,
-		"Can't generate Postscript for images more than %d pixels wide",
-		maxWidth);
-	Tcl_AppendResult(interp, buffer, NULL);
+	Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+		"can't generate Postscript for images more than %d pixels wide",
+		maxWidth));
+	Tcl_SetErrorCode(interp, "TK", "CANVAS", "PS", "MEMLIMIT", NULL);
 	return TCL_ERROR;
     }
 
@@ -1598,35 +1544,32 @@ Tk_PostscriptPhoto(
      * Set up the postscript code except for the image-data stream.
      */
 
+    psObj = GetPostscriptBuffer(interp);
     switch (colorLevel) {
     case 0:
-	strcpy(cspace, "/DeviceGray");
-	strcpy(decode, "[1 0]");
+	Tcl_AppendToObj(psObj, "/DeviceGray setcolorspace\n\n", -1);
+	decode = "1 0";
 	bpc = 1;
 	break;
     case 1:
-	strcpy(cspace, "/DeviceGray");
-	strcpy(decode, "[0 1]");
+	Tcl_AppendToObj(psObj, "/DeviceGray setcolorspace\n\n", -1);
+	decode = "0 1";
 	bpc = 8;
 	break;
     default:
-	strcpy(cspace, "/DeviceRGB");
-	strcpy(decode, "[0 1 0 1 0 1]");
+	Tcl_AppendToObj(psObj, "/DeviceRGB setcolorspace\n\n", -1);
+	decode = "0 1 0 1 0 1";
 	bpc = 8;
 	break;
     }
 
-
-    Tcl_AppendResult(interp, cspace, " setcolorspace\n\n", NULL);
-
-    sprintf(buffer, "  /Width %d\n  /Height %d\n  /BitsPerComponent %d\n",
-	    width, height,  bpc);
-    Tcl_AppendResult(interp, "<<\n  /ImageType 1\n", buffer,
-	    "  /DataSource currentfile  /ASCIIHexDecode filter\n", NULL);
-
-    sprintf(buffer, "  /ImageMatrix [1 0 0 -1 0 %d]\n", height);
-    Tcl_AppendResult(interp, buffer, "  /Decode ", decode,
-	    "\n>>\n1 TkPhoto\n", NULL);
+    Tcl_AppendPrintfToObj(psObj,
+	    "<<\n  /ImageType 1\n"
+	    "  /Width %d\n  /Height %d\n  /BitsPerComponent %d\n"
+	    "  /DataSource currentfile\n  /ASCIIHexDecode filter\n"
+	    "  /ImageMatrix [1 0 0 -1 0 %d]\n  /Decode [%s]\n>>\n"
+	    "1 %s\n",
+	    width, height, bpc, height, decode, displayOperation);
 
     /*
      * Check the PhotoImageBlock information. We assume that:
@@ -1686,20 +1629,18 @@ Tk_PostscriptPhoto(
 		}
 		mask >>= 1;
 		if (mask == 0) {
-		    sprintf(buffer, "%02X", data);
-		    Tcl_AppendResult(interp, buffer, NULL);
+		    Tcl_AppendPrintfToObj(psObj, "%02X", data);
 		    lineLen += 2;
 		    if (lineLen >= 60) {
 			lineLen = 0;
-			Tcl_AppendResult(interp, "\n", NULL);
+			Tcl_AppendToObj(psObj, "\n", -1);
 		    }
 		    mask = 0x80;
 		    data = 0x00;
 		}
 	    }
 	    if ((width % 8) != 0) {
-		sprintf(buffer, "%02X", data);
-		Tcl_AppendResult(interp, buffer, NULL);
+		Tcl_AppendPrintfToObj(psObj, "%02X", data);
 		mask = 0x80;
 		data = 0x00;
 	    }
@@ -1727,20 +1668,18 @@ Tk_PostscriptPhoto(
 		}
 		mask >>= 1;
 		if (mask == 0) {
-		    sprintf(buffer, "%02X", data);
-		    Tcl_AppendResult(interp, buffer, NULL);
+		    Tcl_AppendPrintfToObj(psObj, "%02X", data);
 		    lineLen += 2;
 		    if (lineLen >= 60) {
 			lineLen = 0;
-			Tcl_AppendResult(interp, "\n", NULL);
+			Tcl_AppendToObj(psObj, "\n", -1);
 		    }
 		    mask = 0x80;
 		    data = 0x00;
 		}
 	    }
 	    if ((width % 8) != 0) {
-		sprintf(buffer, "%02X", data);
-		Tcl_AppendResult(interp, buffer, NULL);
+		Tcl_AppendPrintfToObj(psObj, "%02X", data);
 		mask = 0x80;
 		data = 0x00;
 	    }
@@ -1755,12 +1694,11 @@ Tk_PostscriptPhoto(
 	    for (xx = 0; xx < width; xx ++) {
 		alpha = *(alphaPtr + (yy * alphaPitch)
 			+ (xx * alphaIncr) + alphaOffset);
-		sprintf(buffer, "%02X", alpha | 0x01);
-		Tcl_AppendResult(interp, buffer, NULL);
+		Tcl_AppendPrintfToObj(psObj, "%02X", alpha | 0x01);
 		lineLen += 2;
 		if (lineLen >= 60) {
 		    lineLen = 0;
-		    Tcl_AppendResult(interp, "\n", NULL);
+		    Tcl_AppendToObj(psObj, "\n", -1);
 		}
 	    }
 
@@ -1777,13 +1715,12 @@ Tk_PostscriptPhoto(
 		green = pixelPtr[blockPtr->offset[1]];
 		blue = pixelPtr[blockPtr->offset[2]];
 
-		sprintf(buffer, "%02X", (int) floor(0.5 +
+		Tcl_AppendPrintfToObj(psObj, "%02X", (int) floor(0.5 +
 			( 0.3086 * red + 0.6094 * green + 0.0820 * blue)));
-		Tcl_AppendResult(interp, buffer, NULL);
 		lineLen += 2;
 		if (lineLen >= 60) {
 		    lineLen = 0;
-		    Tcl_AppendResult(interp, "\n", NULL);
+		    Tcl_AppendToObj(psObj, "\n", -1);
 		}
 	    }
 	    break;
@@ -1797,12 +1734,11 @@ Tk_PostscriptPhoto(
 	    for (xx = 0; xx < width; xx ++) {
 		alpha = *(alphaPtr + (yy * alphaPitch)
 			+ (xx * alphaIncr) + alphaOffset);
-		sprintf(buffer, "%02X", alpha | 0x01);
-		Tcl_AppendResult(interp, buffer, NULL);
+		Tcl_AppendPrintfToObj(psObj, "%02X", alpha | 0x01);
 		lineLen += 2;
 		if (lineLen >= 60) {
 		    lineLen = 0;
-		    Tcl_AppendResult(interp, "\n", NULL);
+		    Tcl_AppendToObj(psObj, "\n", -1);
 		}
 	    }
 
@@ -1815,22 +1751,25 @@ Tk_PostscriptPhoto(
 		pixelPtr = blockPtr->pixelPtr + (yy * blockPtr->pitch)
 			+ (xx * blockPtr->pixelSize);
 
-		sprintf(buffer, "%02X%02X%02X",
+		Tcl_AppendPrintfToObj(psObj, "%02X%02X%02X",
 			pixelPtr[blockPtr->offset[0]],
 			pixelPtr[blockPtr->offset[1]],
 			pixelPtr[blockPtr->offset[2]]);
-		Tcl_AppendResult(interp, buffer, NULL);
 		lineLen += 6;
 		if (lineLen >= 60) {
 		    lineLen = 0;
-		    Tcl_AppendResult(interp, "\n", NULL);
+		    Tcl_AppendToObj(psObj, "\n", -1);
 		}
 	    }
 	    break;
 	}
     }
 
-    Tcl_AppendResult(interp, ">\n", NULL);
+    /*
+     * The end-of-data marker.
+     */
+
+    Tcl_AppendToObj(psObj, ">\n", -1);
     return TCL_OK;
 }
 

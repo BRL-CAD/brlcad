@@ -3,8 +3,6 @@
 # Initialization script normally executed in the interpreter for each Tk-based
 # application.  Arranges class bindings for widgets.
 #
-# RCS: @(#) $Id$
-#
 # Copyright (c) 1992-1994 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-2000 Ajuba Solutions.
@@ -12,21 +10,19 @@
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-package require Tcl 8.5	;# Guard against [source] in an 8.4- interp before
-			;# using 8.5 [package] features.
 # Insist on running with compatible version of Tcl
-package require Tcl 8.5.0
+package require Tcl 8.6
 # Verify that we have Tk binary and script components from the same release
-package require -exact Tk  8.5.9
-
+package require -exact Tk  8.6.5
+
 # Create a ::tk namespace
 namespace eval ::tk {
     # Set up the msgcat commands
     namespace eval msgcat {
 	namespace export mc mcmax
         if {[interp issafe] || [catch {package require msgcat}]} {
-            # The msgcat package is not available.  Supply our own minimal
-            # replacement.
+            # The msgcat package is not available.  Supply our own
+            # minimal replacement.
             proc mc {src args} {
                 return [format $src {*}$args]
             }
@@ -61,7 +57,8 @@ namespace eval ::ttk {
 # isn't already on the path:
 
 if {[info exists ::auto_path] && ($::tk_library ne "")
-    && ($::tk_library ni $::auto_path)} {
+    && ($::tk_library ni $::auto_path)
+} then {
     lappend ::auto_path $::tk_library $::ttk::library
 }
 
@@ -69,13 +66,13 @@ if {[info exists ::auto_path] && ($::tk_library ne "")
 
 set ::tk_strictMotif 0
 
-# Turn on useinputmethods (X Input Methods) by default. We catch this because
-# safe interpreters may not allow the call.
+# Turn on useinputmethods (X Input Methods) by default.
+# We catch this because safe interpreters may not allow the call.
 
 catch {tk useinputmethods 1}
 
 # ::tk::PlaceWindow --
-#   Place a toplevel at a particular position
+#   place a toplevel at a particular position
 # Arguments:
 #   toplevel	name of toplevel window
 #   ?placement?	pointer ?center? ; places $w centered on the pointer
@@ -114,32 +111,31 @@ proc ::tk::PlaceWindow {w {place ""} {anchor ""}} {
 	set y [expr {([winfo screenheight $w]-[winfo reqheight $w])/2}]
 	set checkBounds 0
     }
-    if {[tk windowingsystem] eq "win32"} {
-        # Bug 533519: win32 multiple desktops may produce negative geometry.
-        set checkBounds 0
-    }
     if {$checkBounds} {
-	if {$x < 0} {
-	    set x 0
-	} elseif {$x > ([winfo screenwidth $w]-[winfo reqwidth $w])} {
-	    set x [expr {[winfo screenwidth $w]-[winfo reqwidth $w]}]
+	if {$x < [winfo vrootx $w]} {
+	    set x [winfo vrootx $w]
+	} elseif {$x > ([winfo vrootx $w]+[winfo vrootwidth $w]-[winfo reqwidth $w])} {
+	    set x [expr {[winfo vrootx $w]+[winfo vrootwidth $w]-[winfo reqwidth $w]}]
 	}
-	if {$y < 0} {
-	    set y 0
-	} elseif {$y > ([winfo screenheight $w]-[winfo reqheight $w])} {
-	    set y [expr {[winfo screenheight $w]-[winfo reqheight $w]}]
+	if {$y < [winfo vrooty $w]} {
+	    set y [winfo vrooty $w]
+	} elseif {$y > ([winfo vrooty $w]+[winfo vrootheight $w]-[winfo reqheight $w])} {
+	    set y [expr {[winfo vrooty $w]+[winfo vrootheight $w]-[winfo reqheight $w]}]
 	}
 	if {[tk windowingsystem] eq "aqua"} {
 	    # Avoid the native menu bar which sits on top of everything.
-	    if {$y < 22} { set y 22 }
+	    if {$y < 22} {
+		set y 22
+	    }
 	}
     }
+    wm maxsize $w [winfo vrootwidth $w] [winfo vrootheight $w]
     wm geometry $w +$x+$y
     wm deiconify $w
 }
 
 # ::tk::SetFocusGrab --
-#   Swap out current focus and grab temporarily (for dialogs)
+#   swap out current focus and grab temporarily (for dialogs)
 # Arguments:
 #   grab	new window to grab
 #   focus	window to give focus to
@@ -156,8 +152,8 @@ proc ::tk::SetFocusGrab {grab {focus {}}} {
     if {[winfo exists $oldGrab]} {
 	lappend data [grab status $oldGrab]
     }
-    # The "grab" command will fail if another application already holds the
-    # grab.  So catch it.
+    # The "grab" command will fail if another application
+    # already holds the grab.  So catch it.
     catch {grab $grab}
     if {[winfo exists $focus]} {
 	focus $focus
@@ -165,7 +161,7 @@ proc ::tk::SetFocusGrab {grab {focus {}}} {
 }
 
 # ::tk::RestoreFocusGrab --
-#   Restore old focus and grab (for dialogs)
+#   restore old focus and grab (for dialogs)
 # Arguments:
 #   grab	window that had taken grab
 #   focus	window that had taken focus
@@ -199,10 +195,10 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 }
 
 # ::tk::GetSelection --
-#   This tries to obtain the default selection.  On Unix, we first try and get
-#   a UTF8_STRING, a type supported by modern Unix apps for passing Unicode
-#   data safely.  We fall back on the default STRING type otherwise.  On
-#   Windows, only the STRING type is necessary.
+#   This tries to obtain the default selection.  On Unix, we first try
+#   and get a UTF8_STRING, a type supported by modern Unix apps for
+#   passing Unicode data safely.  We fall back on the default STRING
+#   type otherwise.  On Windows, only the STRING type is necessary.
 # Arguments:
 #   w	The widget for which the selection will be retrieved.
 #	Important for the -displayof property.
@@ -210,20 +206,26 @@ proc ::tk::RestoreFocusGrab {grab focus {destroy destroy}} {
 # Results:
 #   Returns the selection, or an error if none could be found
 #
-if {$tcl_platform(platform) eq "unix"} {
+if {[tk windowingsystem] ne "win32"} {
     proc ::tk::GetSelection {w {sel PRIMARY}} {
-	if {[catch {selection get -displayof $w -selection $sel \
-		-type UTF8_STRING} txt] \
-		&& [catch {selection get -displayof $w -selection $sel} txt]} {
-	    return -code error "could not find default selection"
+	if {[catch {
+	    selection get -displayof $w -selection $sel -type UTF8_STRING
+	} txt] && [catch {
+	    selection get -displayof $w -selection $sel
+	} txt]} then {
+	    return -code error -errorcode {TK SELECTION NONE} \
+		"could not find default selection"
 	} else {
 	    return $txt
 	}
     }
 } else {
     proc ::tk::GetSelection {w {sel PRIMARY}} {
-	if {[catch {selection get -displayof $w -selection $sel} txt]} {
-	    return -code error "could not find default selection"
+	if {[catch {
+	    selection get -displayof $w -selection $sel
+	} txt]} then {
+	    return -code error -errorcode {TK SELECTION NONE} \
+		"could not find default selection"
 	} else {
 	    return $txt
 	}
@@ -231,22 +233,18 @@ if {$tcl_platform(platform) eq "unix"} {
 }
 
 # ::tk::ScreenChanged --
-# This procedure is invoked by the binding mechanism whenever the "current"
-# screen is changing.  The procedure does two things.  First, it uses "upvar"
-# to make variable "::tk::Priv" point at an array variable that holds state
-# for the current display.  Second, it initializes the array if it didn't
-# already exist.
+# This procedure is invoked by the binding mechanism whenever the
+# "current" screen is changing.  The procedure does two things.
+# First, it uses "upvar" to make variable "::tk::Priv" point at an
+# array variable that holds state for the current display.  Second,
+# it initializes the array if it didn't already exist.
 #
 # Arguments:
 # screen -		The name of the new screen.
 
-proc ::tk::ScreenChanged {screen} {
-    set x [string last . $screen]
-    if {$x > 0} {
-	set disp [string range $screen 0 [expr {$x - 1}]]
-    } else {
-	set disp $screen
-    }
+proc ::tk::ScreenChanged screen {
+    # Extract the display name.
+    set disp [string range $screen 0 [string last . $screen]-1]
 
     # Ensure that namespace separators never occur in the display name (as
     # they cause problems in variable names). Double-colons exist in some VNC
@@ -255,7 +253,6 @@ proc ::tk::ScreenChanged {screen} {
 
     uplevel #0 [list upvar #0 ::tk::Priv.$disp ::tk::Priv]
     variable ::tk::Priv
-    global tcl_platform
 
     if {[info exists Priv]} {
 	set Priv(screen) $screen
@@ -295,41 +292,53 @@ proc ::tk::ScreenChanged {screen} {
 tk::ScreenChanged [winfo screen .]
 
 # ::tk::EventMotifBindings --
-# This procedure is invoked as a trace whenever ::tk_strictMotif is changed.
-# It is used to turn on or turn off the motif virtual bindings.
+# This procedure is invoked as a trace whenever ::tk_strictMotif is
+# changed.  It is used to turn on or turn off the motif virtual
+# bindings.
 #
 # Arguments:
 # n1 - the name of the variable being changed ("::tk_strictMotif").
 
 proc ::tk::EventMotifBindings {n1 dummy dummy} {
     upvar $n1 name
-    
+
     if {$name} {
 	set op delete
     } else {
 	set op add
     }
 
-    event $op <<Cut>> <Control-Key-w>
-    event $op <<Copy>> <Meta-Key-w> 
-    event $op <<Paste>> <Control-Key-y>
-    event $op <<Undo>> <Control-underscore>
+    event $op <<Cut>> <Control-Key-w> <Control-Lock-Key-W> <Shift-Key-Delete>
+    event $op <<Copy>> <Meta-Key-w> <Meta-Lock-Key-W> <Control-Key-Insert>
+    event $op <<Paste>> <Control-Key-y> <Control-Lock-Key-Y> <Shift-Key-Insert>
+    event $op <<PrevChar>> <Control-Key-b> <Control-Lock-Key-B>
+    event $op <<NextChar>> <Control-Key-f> <Control-Lock-Key-F>
+    event $op <<PrevLine>> <Control-Key-p> <Control-Lock-Key-P>
+    event $op <<NextLine>> <Control-Key-n> <Control-Lock-Key-N>
+    event $op <<LineStart>> <Control-Key-a> <Control-Lock-Key-A>
+    event $op <<LineEnd>> <Control-Key-e> <Control-Lock-Key-E>
+    event $op <<SelectPrevChar>> <Control-Key-B> <Control-Lock-Key-b>
+    event $op <<SelectNextChar>> <Control-Key-F> <Control-Lock-Key-f>
+    event $op <<SelectPrevLine>> <Control-Key-P> <Control-Lock-Key-p>
+    event $op <<SelectNextLine>> <Control-Key-N> <Control-Lock-Key-n>
+    event $op <<SelectLineStart>> <Control-Key-A> <Control-Lock-Key-a>
+    event $op <<SelectLineEnd>> <Control-Key-E> <Control-Lock-Key-e>
 }
 
 #----------------------------------------------------------------------
-# Define common dialogs on platforms where they are not implemented using
-# compiled code.
+# Define common dialogs on platforms where they are not implemented
+# using compiled code.
 #----------------------------------------------------------------------
 
 if {![llength [info commands tk_chooseColor]]} {
     proc ::tk_chooseColor {args} {
-	return [tk::dialog::color:: {*}$args]
+	return [::tk::dialog::color:: {*}$args]
     }
 }
 if {![llength [info commands tk_getOpenFile]]} {
     proc ::tk_getOpenFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog open {*}$args]
+	    return [::tk::MotifFDialog open {*}$args]
 	} else {
 	    return [::tk::dialog::file:: open {*}$args]
 	}
@@ -338,7 +347,7 @@ if {![llength [info commands tk_getOpenFile]]} {
 if {![llength [info commands tk_getSaveFile]]} {
     proc ::tk_getSaveFile {args} {
 	if {$::tk_strictMotif} {
-	    return [tk::MotifFDialog save {*}$args]
+	    return [::tk::MotifFDialog save {*}$args]
 	} else {
 	    return [::tk::dialog::file:: save {*}$args]
 	}
@@ -346,7 +355,7 @@ if {![llength [info commands tk_getSaveFile]]} {
 }
 if {![llength [info commands tk_messageBox]]} {
     proc ::tk_messageBox {args} {
-	return [tk::MessageBox {*}$args]
+	return [::tk::MessageBox {*}$args]
     }
 }
 if {![llength [info command tk_chooseDirectory]]} {
@@ -361,49 +370,129 @@ if {![llength [info command tk_chooseDirectory]]} {
 
 switch -exact -- [tk windowingsystem] {
     "x11" {
-	event add <<Cut>> <Control-Key-x> <Key-F20> <Control-Lock-Key-X>
-	event add <<Copy>> <Control-Key-c> <Key-F16> <Control-Lock-Key-C>
-	event add <<Paste>> <Control-Key-v> <Key-F18> <Control-Lock-Key-V>
-	event add <<PasteSelection>> <ButtonRelease-2>
-	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
-	event add <<Redo>> <Control-Key-Z> <Control-Lock-Key-z>
+	event add <<Cut>>		<Control-Key-x> <Key-F20> <Control-Lock-Key-X>
+	event add <<Copy>>		<Control-Key-c> <Key-F16> <Control-Lock-Key-C>
+	event add <<Paste>>		<Control-Key-v> <Key-F18> <Control-Lock-Key-V>
+	event add <<PasteSelection>>	<ButtonRelease-2>
+	event add <<Undo>>		<Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>>		<Control-Key-Z> <Control-Lock-Key-z>
+	event add <<ContextMenu>>	<Button-3>
+	# On Darwin/Aqua, buttons from left to right are 1,3,2.  On Darwin/X11 with recent
+	# XQuartz as the X server, they are 1,2,3; other X servers may differ.
+
+	event add <<SelectAll>>		<Control-Key-slash>
+	event add <<SelectNone>>	<Control-Key-backslash>
+	event add <<NextChar>>		<Right>
+	event add <<SelectNextChar>>	<Shift-Right>
+	event add <<PrevChar>>		<Left>
+	event add <<SelectPrevChar>>	<Shift-Left>
+	event add <<NextWord>>		<Control-Right>
+	event add <<SelectNextWord>>	<Control-Shift-Right>
+	event add <<PrevWord>>		<Control-Left>
+	event add <<SelectPrevWord>>	<Control-Shift-Left>
+	event add <<LineStart>>		<Home>
+	event add <<SelectLineStart>>	<Shift-Home>
+	event add <<LineEnd>>		<End>
+	event add <<SelectLineEnd>>	<Shift-End>
+	event add <<PrevLine>>		<Up>
+	event add <<NextLine>>		<Down>
+	event add <<SelectPrevLine>>	<Shift-Up>
+	event add <<SelectNextLine>>	<Shift-Down>
+	event add <<PrevPara>>		<Control-Up>
+	event add <<NextPara>>		<Control-Down>
+	event add <<SelectPrevPara>>	<Control-Shift-Up>
+	event add <<SelectNextPara>>	<Control-Shift-Down>
+	event add <<ToggleSelection>>	<Control-ButtonPress-1>
+
 	# Some OS's define a goofy (as in, not <Shift-Tab>) keysym that is
 	# returned when the user presses <Shift-Tab>. In order for tab
 	# traversal to work, we have to add these keysyms to the PrevWindow
-	# event. We use catch just in case the keysym isn't recognized. This
-	# is needed for XFree86 systems
+	# event. We use catch just in case the keysym isn't recognized.
+
+	# This is needed for XFree86 systems
 	catch { event add <<PrevWindow>> <ISO_Left_Tab> }
 	# This seems to be correct on *some* HP systems.
 	catch { event add <<PrevWindow>> <hpBackTab> }
 
 	trace add variable ::tk_strictMotif write ::tk::EventMotifBindings
 	set ::tk_strictMotif $::tk_strictMotif
-	# On unix, we want to always display entry/text selection, regardless
-	# of which window has focus
+	# On unix, we want to always display entry/text selection,
+	# regardless of which window has focus
 	set ::tk::AlwaysShowSelection 1
     }
     "win32" {
-	event add <<Cut>> <Control-Key-x> <Shift-Key-Delete> \
-	    <Control-Lock-Key-X>
-	event add <<Copy>> <Control-Key-c> <Control-Key-Insert> \
-	    <Control-Lock-Key-C>
-	event add <<Paste>> <Control-Key-v> <Shift-Key-Insert> \
-	    <Control-Lock-Key-V>
-	event add <<PasteSelection>> <ButtonRelease-2>
-  	event add <<Undo>> <Control-Key-z> <Control-Lock-Key-Z>
-	event add <<Redo>> <Control-Key-y> <Control-Lock-Key-Y>
+	event add <<Cut>>		<Control-Key-x> <Shift-Key-Delete> <Control-Lock-Key-X>
+	event add <<Copy>>		<Control-Key-c> <Control-Key-Insert> <Control-Lock-Key-C>
+	event add <<Paste>>		<Control-Key-v> <Shift-Key-Insert> <Control-Lock-Key-V>
+	event add <<PasteSelection>>	<ButtonRelease-2>
+  	event add <<Undo>>		<Control-Key-z> <Control-Lock-Key-Z>
+	event add <<Redo>>		<Control-Key-y> <Control-Lock-Key-Y>
+	event add <<ContextMenu>>	<Button-3>
+
+	event add <<SelectAll>>		<Control-Key-slash> <Control-Key-a> <Control-Lock-Key-A>
+	event add <<SelectNone>>	<Control-Key-backslash>
+	event add <<NextChar>>		<Right>
+	event add <<SelectNextChar>>	<Shift-Right>
+	event add <<PrevChar>>		<Left>
+	event add <<SelectPrevChar>>	<Shift-Left>
+	event add <<NextWord>>		<Control-Right>
+	event add <<SelectNextWord>>	<Control-Shift-Right>
+	event add <<PrevWord>>		<Control-Left>
+	event add <<SelectPrevWord>>	<Control-Shift-Left>
+	event add <<LineStart>>		<Home>
+	event add <<SelectLineStart>>	<Shift-Home>
+	event add <<LineEnd>>		<End>
+	event add <<SelectLineEnd>>	<Shift-End>
+	event add <<PrevLine>>		<Up>
+	event add <<NextLine>>		<Down>
+	event add <<SelectPrevLine>>	<Shift-Up>
+	event add <<SelectNextLine>>	<Shift-Down>
+	event add <<PrevPara>>		<Control-Up>
+	event add <<NextPara>>		<Control-Down>
+	event add <<SelectPrevPara>>	<Control-Shift-Up>
+	event add <<SelectNextPara>>	<Control-Shift-Down>
+	event add <<ToggleSelection>>	<Control-ButtonPress-1>
     }
     "aqua" {
-	event add <<Cut>> <Command-Key-x> <Key-F2> <Control-Lock-Key-X>
-	event add <<Copy>> <Command-Key-c> <Key-F3> <Control-Lock-Key-C>
-	event add <<Paste>> <Command-Key-v> <Key-F4> <Control-Lock-Key-V>
-	event add <<PasteSelection>> <ButtonRelease-2>
-	event add <<Clear>> <Clear>
-  	event add <<Undo>> <Command-Key-z> <Control-Lock-Key-Z>
-	event add <<Redo>> <Command-Key-y> <Control-Lock-Key-Y>
+	event add <<Cut>>		<Command-Key-x> <Key-F2> <Command-Lock-Key-X>
+	event add <<Copy>>		<Command-Key-c> <Key-F3> <Command-Lock-Key-C>
+	event add <<Paste>>		<Command-Key-v> <Key-F4> <Command-Lock-Key-V>
+	event add <<PasteSelection>>	<ButtonRelease-3>
+	event add <<Clear>>		<Clear>
+	event add <<ContextMenu>>	<Button-2>
+
+	# Official bindings
+	# See http://support.apple.com/kb/HT1343
+	event add <<SelectAll>>		<Command-Key-a>
+	event add <<SelectNone>>	<Option-Command-Key-a>
+	event add <<Undo>>		<Command-Key-z> <Command-Lock-Key-Z>
+	event add <<Redo>>		<Shift-Command-Key-z> <Shift-Command-Lock-Key-z>
+	event add <<NextChar>>		<Right> <Control-Key-f> <Control-Lock-Key-F>
+	event add <<SelectNextChar>>	<Shift-Right> <Shift-Control-Key-F> <Shift-Control-Lock-Key-F>
+	event add <<PrevChar>>		<Left> <Control-Key-b> <Control-Lock-Key-B>
+	event add <<SelectPrevChar>>	<Shift-Left> <Shift-Control-Key-B> <Shift-Control-Lock-Key-B>
+	event add <<NextWord>>		<Option-Right>
+	event add <<SelectNextWord>>	<Shift-Option-Right>
+	event add <<PrevWord>>		<Option-Left>
+	event add <<SelectPrevWord>>	<Shift-Option-Left>
+	event add <<LineStart>>		<Home> <Command-Left> <Control-Key-a> <Control-Lock-Key-A>
+	event add <<SelectLineStart>>	<Shift-Home> <Shift-Command-Left> <Shift-Control-Key-A> <Shift-Control-Lock-Key-A>
+	event add <<LineEnd>>		<End> <Command-Right> <Control-Key-e> <Control-Lock-Key-E>
+	event add <<SelectLineEnd>>	<Shift-End> <Shift-Command-Right> <Shift-Control-Key-E> <Shift-Control-Lock-Key-E>
+	event add <<PrevLine>>		<Up> <Control-Key-p> <Control-Lock-Key-P>
+	event add <<SelectPrevLine>>	<Shift-Up> <Shift-Control-Key-P> <Shift-Control-Lock-Key-P>
+	event add <<NextLine>>		<Down> <Control-Key-n> <Control-Lock-Key-N>
+	event add <<SelectNextLine>>	<Shift-Down> <Shift-Control-Key-N> <Shift-Control-Lock-Key-N>
+	# Not official, but logical extensions of above. Also derived from
+	# bindings present in MS Word on OSX.
+	event add <<PrevPara>>		<Option-Up>
+	event add <<NextPara>>		<Option-Down>
+	event add <<SelectPrevPara>>	<Shift-Option-Up>
+	event add <<SelectNextPara>>	<Shift-Option-Down>
+	event add <<ToggleSelection>>	<Command-ButtonPress-1>
     }
 }
-
+
 # ----------------------------------------------------------------------
 # Read in files that define all of the class bindings.
 # ----------------------------------------------------------------------
@@ -413,6 +502,7 @@ if {$::tk_library ne ""} {
         namespace eval :: [list source [file join $::tk_library $file.tcl]]
     }
     namespace eval ::tk {
+	SourceLibFile icons
 	SourceLibFile button
 	SourceLibFile entry
 	SourceLibFile listbox
@@ -430,13 +520,15 @@ if {$::tk_library ne ""} {
 # ----------------------------------------------------------------------
 
 event add <<PrevWindow>> <Shift-Tab>
-bind all <Tab> {tk::TabToWindow [tk_focusNext %W]}
+event add <<NextWindow>> <Tab>
+bind all <<NextWindow>> {tk::TabToWindow [tk_focusNext %W]}
 bind all <<PrevWindow>> {tk::TabToWindow [tk_focusPrev %W]}
 
 # ::tk::CancelRepeat --
-# This procedure is invoked to cancel an auto-repeat action described by
-# ::tk::Priv(afterId).  It's used by several widgets to auto-scroll the widget
-# when the mouse is dragged out of the widget with a button pressed.
+# This procedure is invoked to cancel an auto-repeat action described
+# by ::tk::Priv(afterId).  It's used by several widgets to auto-scroll
+# the widget when the mouse is dragged out of the widget with a
+# button pressed.
 #
 # Arguments:
 # None.
@@ -449,9 +541,9 @@ proc ::tk::CancelRepeat {} {
 
 # ::tk::TabToWindow --
 # This procedure moves the focus to the given widget.
-# It sends a <<TraverseOut>> virtual event to the previous focus window, if
-# any, before changing the focus, and a <<TraverseIn>> event to the new focus
-# window afterwards.
+# It sends a <<TraverseOut>> virtual event to the previous focus window,
+# if any, before changing the focus, and a <<TraverseIn>> event
+# to the new focus window afterwards.
 #
 # Arguments:
 # w - Window to which focus should be set.
@@ -466,9 +558,10 @@ proc ::tk::TabToWindow {w} {
 }
 
 # ::tk::UnderlineAmpersand --
-# This procedure takes some text with ampersand and returns text w/o ampersand
-# and position of the ampersand.  Double ampersands are converted to single
-# ones.  Position returned is -1 when there is no ampersand.
+#	This procedure takes some text with ampersand and returns text w/o
+#	ampersand and position of the ampersand.  Double ampersands are
+#	converted to single ones.  Position returned is -1 when there is no
+#	ampersand.
 #
 proc ::tk::UnderlineAmpersand {text} {
     set s [string map {&& & & \ufeff} $text]
@@ -476,9 +569,9 @@ proc ::tk::UnderlineAmpersand {text} {
     return [list [string map {\ufeff {}} $s] $idx]
 }
 
-# ::tk::SetAmpText -- 
-# Given widget path and text with "magic ampersands", sets -text and
-# -underline options for the widget
+# ::tk::SetAmpText --
+#	Given widget path and text with "magic ampersands", sets -text and
+#	-underline options for the widget
 #
 proc ::tk::SetAmpText {widget text} {
     lassign [UnderlineAmpersand $text] newtext under
@@ -486,8 +579,8 @@ proc ::tk::SetAmpText {widget text} {
 }
 
 # ::tk::AmpWidget --
-# Creates new widget, turning -text option into -text and -underline options,
-# returned by ::tk::UnderlineAmpersand.
+#	Creates new widget, turning -text option into -text and -underline
+#	options, returned by ::tk::UnderlineAmpersand.
 #
 proc ::tk::AmpWidget {class path args} {
     set options {}
@@ -507,8 +600,8 @@ proc ::tk::AmpWidget {class path args} {
 }
 
 # ::tk::AmpMenuArgs --
-# Processes arguments for a menu entry, turning -label option into -label and
-# -underline options, returned by ::tk::UnderlineAmpersand.
+#	Processes arguments for a menu entry, turning -label option into
+#	-label and -underline options, returned by ::tk::UnderlineAmpersand.
 #
 proc ::tk::AmpMenuArgs {widget add type args} {
     set options {}
@@ -522,47 +615,53 @@ proc ::tk::AmpMenuArgs {widget add type args} {
     }
     $widget add $type {*}$options
 }
-
+
 # ::tk::FindAltKeyTarget --
-# Search recursively through the hierarchy of visible widgets to find button
-# or label which has $char as underlined character
+#	Search recursively through the hierarchy of visible widgets to find
+#	button or label which has $char as underlined character.
 #
 proc ::tk::FindAltKeyTarget {path char} {
-    switch -- [winfo class $path] {
-	Button - Label - 
-        TButton - TLabel - TCheckbutton {
-	    if {[string equal -nocase $char \
-		  [string index [$path cget -text] [$path cget -underline]]]} {
-		return $path
-	    } else {
-		return {}
+    set class [winfo class $path]
+    if {$class in {
+	Button Checkbutton Label Radiobutton
+	TButton TCheckbutton TLabel TRadiobutton
+    } && [string equal -nocase $char \
+	    [string index [$path cget -text] [$path cget -underline]]]} {
+	return $path
+    }
+    set subwins [concat [grid slaves $path] [pack slaves $path] \
+	    [place slaves $path]]
+    if {$class eq "Canvas"} {
+	foreach item [$path find all] {
+	    if {[$path type $item] eq "window"} {
+		set w [$path itemcget $item -window]
+		if {$w ne ""} {lappend subwins $w}
 	    }
 	}
-	default {
-	    foreach child [concat [grid slaves $path] \
-		    [pack slaves $path] [place slaves $path]] {
-		set target [FindAltKeyTarget $child $char]
-		if {$target ne ""} {
-		    return $target
-		}
-	    }
+    } elseif {$class eq "Text"} {
+	lappend subwins {*}[$path window names]
+    }
+    foreach child $subwins {
+	set target [FindAltKeyTarget $child $char]
+	if {$target ne ""} {
+	    return $target
 	}
     }
-    return {}
 }
 
 # ::tk::AltKeyInDialog --
-# <Alt-Key> event handler for standard dialogs. Sends <<AltUnderlined>> to
-# button or label which has appropriate underlined character
+#	<Alt-Key> event handler for standard dialogs. Sends <<AltUnderlined>>
+#	to button or label which has appropriate underlined character.
 #
 proc ::tk::AltKeyInDialog {path key} {
     set target [FindAltKeyTarget $path $key]
-    if { $target eq ""} return
-    event generate $target <<AltUnderlined>>
+    if {$target ne ""} {
+	event generate $target <<AltUnderlined>>
+    }
 }
-
+
 # ::tk::mcmaxamp --
-# Replacement for mcmax, used for texts with "magic ampersand" in it.
+#	Replacement for mcmax, used for texts with "magic ampersand" in it.
 #
 
 proc ::tk::mcmaxamp {args} {
@@ -582,13 +681,13 @@ proc ::tk::mcmaxamp {args} {
 
 if {[tk windowingsystem] eq "aqua"} {
     namespace eval ::tk::mac {
-	variable useCustomMDEF 0
+	set useCustomMDEF 0
     }
 }
 
 # Run the Ttk themed widget set initialization
 if {$::ttk::library ne ""} {
-    uplevel \#0 [list source [file join $::ttk::library ttk.tcl]]
+    uplevel \#0 [list source $::ttk::library/ttk.tcl]
 }
 
 # Local Variables:

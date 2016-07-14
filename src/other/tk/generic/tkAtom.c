@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -22,7 +20,7 @@
  * those found in xatom.h
  */
 
-static char * atomNameArray[] = {
+static const char *const atomNameArray[] = {
     "PRIMARY",		"SECONDARY",		"ARC",
     "ATOM",		"BITMAP",		"CARDINAL",
     "COLORMAP",		"CURSOR",		"CUT_BUFFER0",
@@ -78,10 +76,10 @@ Atom
 Tk_InternAtom(
     Tk_Window tkwin,		/* Window token; map name to atom for this
 				 * window's display. */
-    CONST char *name)		/* Name to turn into atom. */
+    const char *name)		/* Name to turn into atom. */
 {
-    register TkDisplay *dispPtr;
-    register Tcl_HashEntry *hPtr;
+    TkDisplay *dispPtr;
+    Tcl_HashEntry *hPtr;
     int isNew;
 
     dispPtr = ((TkWindow *) tkwin)->dispPtr;
@@ -95,11 +93,11 @@ Tk_InternAtom(
 	Atom atom;
 
 	atom = XInternAtom(dispPtr->display, name, False);
-	Tcl_SetHashValue(hPtr, atom);
-	hPtr2 = Tcl_CreateHashEntry(&dispPtr->atomTable, (char*) atom, &isNew);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
+	hPtr2 = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr2, Tcl_GetHashKey(&dispPtr->nameTable, hPtr));
     }
-    return (Atom) Tcl_GetHashValue(hPtr);
+    return (Atom)PTR2INT(Tcl_GetHashValue(hPtr));
 }
 
 /*
@@ -123,42 +121,41 @@ Tk_InternAtom(
  *--------------------------------------------------------------
  */
 
-CONST char *
+const char *
 Tk_GetAtomName(
     Tk_Window tkwin,		/* Window token; map atom to name relative to
 				 * this window's display. */
     Atom atom)			/* Atom whose name is wanted. */
 {
-    register TkDisplay *dispPtr;
-    register Tcl_HashEntry *hPtr;
+    TkDisplay *dispPtr;
+    Tcl_HashEntry *hPtr;
 
     dispPtr = ((TkWindow *) tkwin)->dispPtr;
     if (!dispPtr->atomInit) {
 	AtomInit(dispPtr);
     }
 
-    hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);
+    hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, INT2PTR(atom));
     if (hPtr == NULL) {
-	char *name;
+	const char *name;
 	Tk_ErrorHandler handler;
-	int isNew, mustFree;
+	int isNew;
+	char *mustFree = NULL;
 
 	handler = Tk_CreateErrorHandler(dispPtr->display, BadAtom, -1, -1,
-		NULL, (ClientData) NULL);
-	name = XGetAtomName(dispPtr->display, atom);
-	mustFree = 1;
+		NULL, NULL);
+	name = mustFree = XGetAtomName(dispPtr->display, atom);
 	if (name == NULL) {
 	    name = "?bad atom?";
-	    mustFree = 0;
 	}
 	Tk_DeleteErrorHandler(handler);
 	hPtr = Tcl_CreateHashEntry(&dispPtr->nameTable, name, &isNew);
-	Tcl_SetHashValue(hPtr, atom);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
 	if (mustFree) {
-	    XFree(name);
+	    XFree(mustFree);
 	}
 	name = Tcl_GetHashKey(&dispPtr->nameTable, hPtr);
-	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, (char *) atom, &isNew);
+	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr, name);
     }
     return Tcl_GetHashValue(hPtr);
@@ -182,7 +179,7 @@ Tk_GetAtomName(
 
 static void
 AtomInit(
-    register TkDisplay *dispPtr)/* Display to initialize. */
+    TkDisplay *dispPtr)/* Display to initialize. */
 {
     Tcl_HashEntry *hPtr;
     Atom atom;
@@ -192,19 +189,19 @@ AtomInit(
     Tcl_InitHashTable(&dispPtr->atomTable, TCL_ONE_WORD_KEYS);
 
     for (atom = 1; atom <= XA_LAST_PREDEFINED; atom++) {
-	char *name;
+	const char *name;
 	int isNew;
 
-	hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, (char *) atom);
+	hPtr = Tcl_FindHashEntry(&dispPtr->atomTable, INT2PTR(atom));
 	if (hPtr != NULL) {
 	    continue;
 	}
 
 	name = atomNameArray[atom - 1];
 	hPtr = Tcl_CreateHashEntry(&dispPtr->nameTable, name, &isNew);
-	Tcl_SetHashValue(hPtr, atom);
+	Tcl_SetHashValue(hPtr, INT2PTR(atom));
 	name = Tcl_GetHashKey(&dispPtr->nameTable, hPtr);
-	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, (char *) atom, &isNew);
+	hPtr = Tcl_CreateHashEntry(&dispPtr->atomTable, INT2PTR(atom), &isNew);
 	Tcl_SetHashValue(hPtr, name);
     }
 }

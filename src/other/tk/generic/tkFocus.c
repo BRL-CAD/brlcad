@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -70,14 +68,6 @@ typedef struct TkDisplayFocusInfo {
 } DisplayFocusInfo;
 
 /*
- * The following magic value is stored in the "send_event" field of FocusIn
- * and FocusOut events that are generated in this file. This allows us to
- * separate "real" events coming from the server from those that we generated.
- */
-
-#define GENERATED_EVENT_MAGIC	((Bool) 0x547321ac)
-
-/*
  * Debugging support...
  */
 
@@ -118,16 +108,16 @@ Tk_FocusObjCmd(
     ClientData clientData,	/* Main window associated with interpreter. */
     Tcl_Interp *interp,		/* Current interpreter. */
     int objc,			/* Number of arguments. */
-    Tcl_Obj *CONST objv[])	/* Argument objects. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
-    static CONST char *focusOptions[] = {
+    static const char *const focusOptions[] = {
 	"-displayof", "-force", "-lastfor", NULL
     };
-    Tk_Window tkwin = (Tk_Window) clientData;
-    TkWindow *winPtr = (TkWindow *) clientData;
-    TkWindow *newPtr, *focusWinPtr, *topLevelPtr;
+    Tk_Window tkwin = clientData;
+    TkWindow *winPtr = clientData;
+    TkWindow *newPtr, *topLevelPtr;
     ToplevelFocusInfo *tlFocusPtr;
-    char *windowName;
+    const char *windowName;
     int index;
 
     /*
@@ -135,9 +125,10 @@ Tk_FocusObjCmd(
      */
 
     if (objc == 1) {
-	focusWinPtr = TkGetFocusWin(winPtr);
-	if (focusWinPtr != NULL) {
-	    Tcl_SetResult(interp, focusWinPtr->pathName, TCL_STATIC);
+	Tk_Window focusWin = (Tk_Window) TkGetFocusWin(winPtr);
+
+	if (focusWin != NULL) {
+	    Tcl_SetObjResult(interp, TkNewWindowObj(focusWin));
 	}
 	return TCL_OK;
     }
@@ -162,9 +153,7 @@ Tk_FocusObjCmd(
 	    if (newPtr == NULL) {
 		return TCL_ERROR;
 	    }
-	    if (!(newPtr->flags & TK_ALREADY_DEAD)) {
-		TkSetFocusWin(newPtr, 0);
-	    }
+	    TkSetFocusWin(newPtr, 0);
 	    return TCL_OK;
 	}
     }
@@ -173,8 +162,8 @@ Tk_FocusObjCmd(
      * We have a subcommand to parse and act upon.
      */
 
-    if (Tcl_GetIndexFromObj(interp, objv[1], focusOptions, "option", 0,
-	    &index) != TCL_OK) {
+    if (Tcl_GetIndexFromObjStruct(interp, objv[1], focusOptions,
+	    sizeof(char *), "option", 0, &index) != TCL_OK) {
     	return TCL_ERROR;
     }
     if (objc != 3) {
@@ -190,7 +179,7 @@ Tk_FocusObjCmd(
 	}
 	newPtr = TkGetFocusWin(newPtr);
 	if (newPtr != NULL) {
-	    Tcl_SetResult(interp, newPtr->pathName, TCL_STATIC);
+	    Tcl_SetObjResult(interp, TkNewWindowObj((Tk_Window) newPtr));
 	}
 	break;
     case 1:			/* -force */
@@ -216,19 +205,19 @@ Tk_FocusObjCmd(
 	    return TCL_ERROR;
 	}
 	for (topLevelPtr = newPtr; topLevelPtr != NULL;
-		topLevelPtr = topLevelPtr->parentPtr)  {
+		topLevelPtr = topLevelPtr->parentPtr) {
 	    if (!(topLevelPtr->flags & TK_TOP_HIERARCHY)) {
 		continue;
 	    }
 	    for (tlFocusPtr = newPtr->mainPtr->tlFocusPtr; tlFocusPtr != NULL;
 		    tlFocusPtr = tlFocusPtr->nextPtr) {
 		if (tlFocusPtr->topLevelPtr == topLevelPtr) {
-		    Tcl_SetResult(interp,
-			    tlFocusPtr->focusWinPtr->pathName, TCL_STATIC);
+		    Tcl_SetObjResult(interp, TkNewWindowObj((Tk_Window)
+			    tlFocusPtr->focusWinPtr));
 		    return TCL_OK;
 		}
 	    }
-	    Tcl_SetResult(interp, topLevelPtr->pathName, TCL_STATIC);
+	    Tcl_SetObjResult(interp, TkNewWindowObj((Tk_Window) topLevelPtr));
 	    return TCL_OK;
 	}
 	break;
@@ -290,7 +279,7 @@ TkFocusFilterEvent(
      * pass the event through to Tk bindings.
      */
 
-    if (eventPtr->xfocus.send_event == GENERATED_EVENT_MAGIC) {
+    if (eventPtr->xfocus.send_event == GENERATED_FOCUS_EVENT_MAGIC) {
 	eventPtr->xfocus.send_event = 0;
 	return 1;
     }
@@ -393,7 +382,7 @@ TkFocusFilterEvent(
      * tree, then ignore the event.
      */
 
-    if (TkGrabState(winPtr) == TK_GRAB_EXCLUDED)  {
+    if (TkGrabState(winPtr) == TK_GRAB_EXCLUDED) {
 	return retValue;
     }
 
@@ -426,7 +415,7 @@ TkFocusFilterEvent(
 	}
     }
     if (tlFocusPtr == NULL) {
-	tlFocusPtr = (ToplevelFocusInfo *) ckalloc(sizeof(ToplevelFocusInfo));
+	tlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
 	tlFocusPtr->topLevelPtr = tlFocusPtr->focusWinPtr = winPtr;
 	tlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = tlFocusPtr;
@@ -500,14 +489,14 @@ TkFocusFilterEvent(
     } else if (eventPtr->type == LeaveNotify) {
 	/*
 	 * If the pointer just left a window for which we automatically
-	 * claimed the focus on enter, move the focus back to the root
-	 * window, where it was before we claimed it above. Note:
+	 * claimed the focus on enter, move the focus back to the root window,
+	 * where it was before we claimed it above. Note:
 	 * dispPtr->implicitWinPtr may not be the same as
-	 * displayFocusPtr->focusWinPtr (e.g. because the "focus" command
-	 * was used to redirect the focus after it arrived at
-	 * dispPtr->implicitWinPtr)!! In addition, we generate events
-	 * because the window manager won't give us a FocusOut event when
-	 * we focus on the root.
+	 * displayFocusPtr->focusWinPtr (e.g. because the "focus" command was
+	 * used to redirect the focus after it arrived at
+	 * dispPtr->implicitWinPtr)!! In addition, we generate events because
+	 * the window manager won't give us a FocusOut event when we focus on
+	 * the root.
 	 */
 
 	if ((dispPtr->implicitWinPtr != NULL)
@@ -554,6 +543,14 @@ TkSetFocusWin(
     TkWindow *topLevelPtr;
     int allMapped, serial;
 
+    /*
+     * Don't set focus if window is already dead. [Bug 3574708]
+     */
+
+    if (winPtr->flags & TK_ALREADY_DEAD) {
+	return;
+    }
+
     displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
 
     /*
@@ -573,7 +570,7 @@ TkSetFocusWin(
      */
 
     allMapped = 1;
-    for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr)  {
+    for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr) {
 	if (topLevelPtr == NULL) {
 	    /*
 	     * The window is being deleted. No point in worrying about giving
@@ -599,16 +596,14 @@ TkSetFocusWin(
      */
 
     if (displayFocusPtr->focusOnMapPtr != NULL) {
-	Tk_DeleteEventHandler(
-		(Tk_Window) displayFocusPtr->focusOnMapPtr,
+	Tk_DeleteEventHandler((Tk_Window) displayFocusPtr->focusOnMapPtr,
 		StructureNotifyMask, FocusMapProc,
-		(ClientData) displayFocusPtr->focusOnMapPtr);
+		displayFocusPtr->focusOnMapPtr);
 	displayFocusPtr->focusOnMapPtr = NULL;
     }
     if (!allMapped) {
-	Tk_CreateEventHandler((Tk_Window) winPtr,
-		VisibilityChangeMask, FocusMapProc,
-		(ClientData) winPtr);
+	Tk_CreateEventHandler((Tk_Window) winPtr, VisibilityChangeMask,
+		FocusMapProc, winPtr);
 	displayFocusPtr->focusOnMapPtr = winPtr;
 	displayFocusPtr->forceFocus = force;
 	return;
@@ -621,7 +616,7 @@ TkSetFocusWin(
 	}
     }
     if (tlFocusPtr == NULL) {
-	tlFocusPtr = (ToplevelFocusInfo *) ckalloc(sizeof(ToplevelFocusInfo));
+	tlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
 	tlFocusPtr->topLevelPtr = topLevelPtr;
 	tlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = tlFocusPtr;
@@ -727,7 +722,7 @@ TkFocusKeyEvent(
 {
     DisplayFocusInfo *displayFocusPtr;
     TkWindow *focusWinPtr;
-    int focusX, focusY, vRootX, vRootY, vRootWidth, vRootHeight;
+    int focusX, focusY;
 
     displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
     focusWinPtr = displayFocusPtr->focusWinPtr;
@@ -760,11 +755,9 @@ TkFocusKeyEvent(
 	    eventPtr->xkey.x = -1;
 	    eventPtr->xkey.y = -1;
 	} else {
-	    Tk_GetVRootGeometry((Tk_Window) focusWinPtr, &vRootX, &vRootY,
-		    &vRootWidth, &vRootHeight);
 	    Tk_GetRootCoords((Tk_Window) focusWinPtr, &focusX, &focusY);
-	    eventPtr->xkey.x = eventPtr->xkey.x_root - vRootX - focusX;
-	    eventPtr->xkey.y = eventPtr->xkey.y_root - vRootY - focusY;
+	    eventPtr->xkey.x = eventPtr->xkey.x_root - focusX;
+	    eventPtr->xkey.y = eventPtr->xkey.y_root - focusY;
 	}
 	eventPtr->xkey.window = focusWinPtr->window;
 	return focusWinPtr;
@@ -847,7 +840,7 @@ TkFocusDeadWindow(
 	    } else {
 		prevPtr->nextPtr = tlFocusPtr->nextPtr;
 	    }
-	    ckfree((char *) tlFocusPtr);
+	    ckfree(tlFocusPtr);
 	    break;
 	} else if (winPtr == tlFocusPtr->focusWinPtr) {
 	    /*
@@ -920,7 +913,7 @@ GenerateFocusEvents(
     }
 
     event.xfocus.serial = LastKnownRequestProcessed(winPtr->display);
-    event.xfocus.send_event = GENERATED_EVENT_MAGIC;
+    event.xfocus.send_event = GENERATED_FOCUS_EVENT_MAGIC;
     event.xfocus.display = winPtr->display;
     event.xfocus.mode = NotifyNormal;
     TkInOutEvents(&event, sourcePtr, destPtr, FocusOut, FocusIn,
@@ -953,7 +946,7 @@ FocusMapProc(
     ClientData clientData,	/* Toplevel window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkWindow *winPtr = (TkWindow *) clientData;
+    TkWindow *winPtr = clientData;
     DisplayFocusInfo *displayFocusPtr;
 
     if (eventPtr->type == VisibilityNotify) {
@@ -1007,7 +1000,7 @@ FindDisplayFocusInfo(
      * The record doesn't exist yet. Make a new one.
      */
 
-    displayFocusPtr = (DisplayFocusInfo *) ckalloc(sizeof(DisplayFocusInfo));
+    displayFocusPtr = ckalloc(sizeof(DisplayFocusInfo));
     displayFocusPtr->dispPtr = dispPtr;
     displayFocusPtr->focusWinPtr = NULL;
     displayFocusPtr->focusOnMapPtr = NULL;
@@ -1043,13 +1036,13 @@ TkFocusFree(
 	DisplayFocusInfo *displayFocusPtr = mainPtr->displayFocusPtr;
 
 	mainPtr->displayFocusPtr = mainPtr->displayFocusPtr->nextPtr;
-	ckfree((char *) displayFocusPtr);
+	ckfree(displayFocusPtr);
     }
     while (mainPtr->tlFocusPtr != NULL) {
 	ToplevelFocusInfo *tlFocusPtr = mainPtr->tlFocusPtr;
 
 	mainPtr->tlFocusPtr = mainPtr->tlFocusPtr->nextPtr;
-	ckfree((char *) tlFocusPtr);
+	ckfree(tlFocusPtr);
     }
 }
 
@@ -1058,8 +1051,8 @@ TkFocusFree(
  *
  * TkFocusSplit --
  *
- *	Adjust focus window for a newly managed toplevel, thus splitting
- *      the toplevel into two toplevels.
+ *	Adjust focus window for a newly managed toplevel, thus splitting the
+ *	toplevel into two toplevels.
  *
  * Results:
  *	None.
@@ -1071,30 +1064,29 @@ TkFocusFree(
  */
 
 void
-TkFocusSplit(winPtr)
-    TkWindow *winPtr;          /* Window is the new toplevel
-                                * Any focus point at or below window
-				* must be moved to this new toplevel */
+TkFocusSplit(
+    TkWindow *winPtr)		/* Window is the new toplevel. Any focus point
+				 * at or below window must be moved to this
+				 * new toplevel. */
 {
     ToplevelFocusInfo *tlFocusPtr;
-    DisplayFocusInfo *displayFocusPtr;
-    TkWindow *topLevelPtr;
-    TkWindow *subWinPtr;
+    TkWindow *topLevelPtr, *subWinPtr;
 
-    displayFocusPtr = FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
+    FindDisplayFocusInfo(winPtr->mainPtr, winPtr->dispPtr);
 
     /*
-     * Find the top-level window for winPtr, then find (or create)
-     * a record for the top-level.  Also see whether winPtr and all its
-     * ancestors are mapped.
+     * Find the top-level window for winPtr, then find (or create) a record
+     * for the top-level. Also see whether winPtr and all its ancestors are
+     * mapped.
      */
 
-    for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr)  {
+    for (topLevelPtr = winPtr; ; topLevelPtr = topLevelPtr->parentPtr) {
 	if (topLevelPtr == NULL) {
 	    /*
-	     * The window is being deleted.  No point in worrying about
-	     * giving it the focus.
+	     * The window is being deleted. No point in worrying about giving
+	     * it the focus.
 	     */
+
 	    return;
 	}
 	if (topLevelPtr->flags & TK_TOP_HIERARCHY) {
@@ -1102,37 +1094,57 @@ TkFocusSplit(winPtr)
 	}
     }
 
-    /* Search all focus records to find child windows of winPtr */
+    /*
+     * Search all focus records to find child windows of winPtr.
+     */
+
     for (tlFocusPtr = winPtr->mainPtr->tlFocusPtr; tlFocusPtr != NULL;
-	 tlFocusPtr = tlFocusPtr->nextPtr) {
+	    tlFocusPtr = tlFocusPtr->nextPtr) {
 	if (tlFocusPtr->topLevelPtr == topLevelPtr) {
 	    break;
 	}
     }
 
     if (tlFocusPtr == NULL) {
-	/* No focus record for this toplevel, nothing to do. */
+	/*
+	 * No focus record for this toplevel, nothing to do.
+	 */
+
 	return;
     }
 
-    /* See if current focusWin is child of the new toplevel */
-    for (subWinPtr = tlFocusPtr->focusWinPtr; 
-	 subWinPtr && subWinPtr != winPtr && subWinPtr != topLevelPtr;
-	 subWinPtr = subWinPtr->parentPtr) {}
+    /*
+     * See if current focusWin is child of the new toplevel.
+     */
+
+    for (subWinPtr = tlFocusPtr->focusWinPtr;
+	    subWinPtr && subWinPtr != winPtr && subWinPtr != topLevelPtr;
+	    subWinPtr = subWinPtr->parentPtr) {
+	/* EMPTY */
+    }
 
     if (subWinPtr == winPtr) {
-	/* Move focus to new toplevel */
-	ToplevelFocusInfo *newTlFocusPtr;
+	/*
+	 * Move focus to new toplevel.
+	 */
 
-	newTlFocusPtr = (ToplevelFocusInfo *) ckalloc(sizeof(ToplevelFocusInfo));
+	ToplevelFocusInfo *newTlFocusPtr = ckalloc(sizeof(ToplevelFocusInfo));
+
 	newTlFocusPtr->topLevelPtr = winPtr;
 	newTlFocusPtr->focusWinPtr = tlFocusPtr->focusWinPtr;
 	newTlFocusPtr->nextPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = newTlFocusPtr;
-	/* Move old toplevel's focus to the toplevel itself */
+
+	/*
+	 * Move old toplevel's focus to the toplevel itself.
+	 */
+
 	tlFocusPtr->focusWinPtr = topLevelPtr;
     }
-    /* If it's not, then let focus progress naturally */
+
+    /*
+     * If it's not, then let focus progress naturally.
+     */
 }
 
 /*
@@ -1152,28 +1164,28 @@ TkFocusSplit(winPtr)
  */
 
 void
-TkFocusJoin(winPtr)
-    TkWindow *winPtr;          /* Window is no longer a toplevel */
+TkFocusJoin(
+    TkWindow *winPtr)		/* Window is no longer a toplevel. */
 {
-    ToplevelFocusInfo *tlFocusPtr;
-    ToplevelFocusInfo *tmpPtr;
+    ToplevelFocusInfo *tlFocusPtr, *tmpPtr;
 
     /*
      * Remove old toplevel record
      */
+
     if (winPtr && winPtr->mainPtr && winPtr->mainPtr->tlFocusPtr
-	&& winPtr->mainPtr->tlFocusPtr->topLevelPtr == winPtr) {
+	    && winPtr->mainPtr->tlFocusPtr->topLevelPtr == winPtr) {
 	tmpPtr = winPtr->mainPtr->tlFocusPtr;
 	winPtr->mainPtr->tlFocusPtr = tmpPtr->nextPtr;
-	ckfree((char *)tmpPtr);
-    } else {
+	ckfree(tmpPtr);
+    } else if (winPtr && winPtr->mainPtr) {
 	for (tlFocusPtr = winPtr->mainPtr->tlFocusPtr; tlFocusPtr != NULL;
-	     tlFocusPtr = tlFocusPtr->nextPtr) {
+		tlFocusPtr = tlFocusPtr->nextPtr) {
 	    if (tlFocusPtr->nextPtr &&
-		tlFocusPtr->nextPtr->topLevelPtr == winPtr) {
+		    tlFocusPtr->nextPtr->topLevelPtr == winPtr) {
 		tmpPtr = tlFocusPtr->nextPtr;
 		tlFocusPtr->nextPtr = tmpPtr->nextPtr;
-		ckfree((char *)tmpPtr);
+		ckfree(tmpPtr);
 		break;
 	    }
 	}

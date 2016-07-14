@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_CreateErrorHandler 3 "" Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_CreateErrorHandler, Tk_DeleteErrorHandler \- handle X protocol errors
@@ -74,9 +72,9 @@ made when the handler was active (see below for more information).
 \fIProc\fR should have arguments and result that match the
 following type:
 .CS
-typedef int Tk_ErrorProc(
-    ClientData \fIclientData\fR,
-    XErrorEvent *\fIerrEventPtr\fR);
+typedef int \fBTk_ErrorProc\fR(
+        ClientData \fIclientData\fR,
+        XErrorEvent *\fIerrEventPtr\fR);
 .CE
 The \fIclientData\fR parameter to \fIproc\fR is a copy of the \fIclientData\fR
 argument given to \fBTcl_CreateErrorHandler\fR when the callback
@@ -138,6 +136,5 @@ handlers deleted before the \fBXSync\fR call.
 For the Tk error handling mechanism to work properly, it is essential
 that application code never calls \fBXSetErrorHandler\fR directly;
 applications should use only \fBTk_CreateErrorHandler\fR.
-
 .SH KEYWORDS
 callback, error, event, handler

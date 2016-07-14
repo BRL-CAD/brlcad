@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_CanvasTkwin 3 4.1 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_CanvasTkwin, Tk_CanvasGetCoord, Tk_CanvasDrawableCoords, Tk_CanvasSetStippleOrigin, Tk_CanvasWindowCoords, Tk_CanvasEventuallyRedraw, Tk_CanvasTagsOption \- utility procedures for canvas type managers
@@ -73,7 +71,6 @@ the left of this coordinate need to be redisplayed.
 Bottom edge of the region that needs redisplay.  Only pixels above
 this coordinate need to be redisplayed.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures are called by canvas type managers to perform various
@@ -88,7 +85,7 @@ canvas coordinate.
 If \fIstring\fR is a valid coordinate description then \fBTk_CanvasGetCoord\fR
 stores the corresponding canvas coordinate at *\fIdoublePtr\fR
 and returns \fBTCL_OK\fR.
-Otherwise it stores an error message in \fIinterp->result\fR and
+Otherwise it stores an error message in the interpreter result and
 returns \fBTCL_ERROR\fR.
 .PP
 \fBTk_CanvasDrawableCoords\fR is called by type managers during
@@ -144,18 +141,18 @@ The code of a canvas type manager will not call these procedures
 directly, but will use their addresses to create a \fBTk_CustomOption\fR
 structure for the \fB\-tags\fR option.   The code typically looks
 like this:
+.PP
 .CS
-static Tk_CustomOption tagsOption = {Tk_CanvasTagsParseProc,
+static const Tk_CustomOption tagsOption = {Tk_CanvasTagsParseProc,
     Tk_CanvasTagsPrintProc, (ClientData) NULL
 };
 
-static Tk_ConfigSpec configSpecs[] = {
+static const Tk_ConfigSpec configSpecs[] = {
     ...
-    {TK_CONFIG_CUSTOM, "\-tags", (char *) NULL, (char *) NULL,
-        (char *) NULL, 0, TK_CONFIG_NULL_OK, &tagsOption},
+    {TK_CONFIG_CUSTOM, "\-tags", NULL, NULL,
+        NULL, 0, TK_CONFIG_NULL_OK, &tagsOption},
     ...
 };
 .CE
-
 .SH KEYWORDS
 canvas, focus, item type, redisplay, selection, type manager

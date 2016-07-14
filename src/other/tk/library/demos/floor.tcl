@@ -2,8 +2,6 @@
 #
 # This demonstration script creates a canvas widet that displays the
 # floorplan for DEC's Western Research Laboratory.
-#
-# RCS: @(#) $Id$
 
 if {![info exists widgetDemo]} {
     error "This script should be run from the \"widget\" demo."
@@ -1309,8 +1307,8 @@ pack $btns -side bottom -fill x
 
 set f [frame $w.frame]
 pack $f -side top -fill both -expand yes
-set h [scrollbar $f.hscroll -orient horizontal]
-set v [scrollbar $f.vscroll -orient vertical]
+set h [ttk::scrollbar $f.hscroll -orient horizontal]
+set v [ttk::scrollbar $f.vscroll -orient vertical]
 set f1 [frame $f.f1 -borderwidth 2 -relief sunken]
 set c [canvas $f1.c -width 900 -height 500 -highlightthickness 0 \
 	   -xscrollcommand [list $h set] \

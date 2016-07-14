@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH send n 4.0 Tk "Tk Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -16,7 +14,6 @@ send \- Execute a command in a different application
 .SH SYNOPSIS
 \fBsend ?\fIoptions\fR? \fIapp cmd \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command arranges for \fIcmd\fR (and \fIarg\fRs) to be executed in the
@@ -52,23 +49,20 @@ Serves no purpose except to terminate the list of options.  This
 option is needed only if \fIapp\fR could contain a leading
 .QW \-
 character.
-
 .SH "APPLICATION NAMES"
 .PP
 The name of an application is set initially from the name of the
 program or script that created the application.
 You can query and change the name of an application with the
 \fBtk appname\fR command.
-
 .SH "DISABLING SENDS"
 .PP
 If the \fBsend\fR command is removed from an application (e.g.
-with the command \fBrename send {}\fR) then the application
+with the command \fBrename\fR \fBsend {}\fR) then the application
 will not respond to incoming send requests anymore,  nor will it
 be able to issue outgoing requests.
 Communication can be reenabled by invoking the \fBtk appname\fR
 command.
-
 .SH SECURITY
 .PP
 The \fBsend\fR command is potentially a serious security loophole. On Unix,
@@ -91,6 +85,7 @@ such as that provide by \fBxauth\fR.
 Under Windows, \fBsend\fR is currently disabled.  Most of the
 functionality is provided by the \fBdde\fR command instead.
 .SH EXAMPLE
+.PP
 This script fragment can be used to make an application that only runs
 once on a particular display.
 .CS
@@ -109,3 +104,6 @@ proc RemoteStart args {
 .CE
 .SH KEYWORDS
 application, dde, name, remote execution, security, send
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

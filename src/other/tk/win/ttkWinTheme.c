@@ -1,6 +1,4 @@
 /* winTheme.c - Copyright (C) 2004 Pat Thoyts <patthoyts@users.sf.net>
- *
- * $Id$
  */
 
 #ifdef _MSC_VER
@@ -492,7 +490,7 @@ static void TroughClientDataDeleteProc(void *clientData)
 
 static TroughClientData *TroughClientDataInit(Tcl_Interp *interp)
 {
-    TroughClientData *cd = (TroughClientData*)ckalloc(sizeof(*cd));
+    TroughClientData *cd = ckalloc(sizeof(*cd));
     cd->PatternBitmap = CreateBitmap(8, 8, 1, 1, Pattern);
     cd->PatternBrush  = CreatePatternBrush(cd->PatternBitmap);
     Ttk_RegisterCleanup(interp, cd, TroughClientDataDeleteProc);

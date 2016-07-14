@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -434,7 +432,7 @@ TkEventuallyRecomputeMenu(
 {
     if (!(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -460,8 +458,8 @@ TkRecomputeMenu(
     TkMenu *menuPtr)
 {
     if (menuPtr->menuFlags & RESIZE_PENDING) {
-	Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
-	ComputeMenuGeometry((ClientData) menuPtr);
+	Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
+	ComputeMenuGeometry(menuPtr);
     }
 }
 
@@ -505,7 +503,7 @@ TkEventuallyRedrawMenu(
 	    || (menuPtr->menuFlags & REDRAW_PENDING)) {
 	return;
     }
-    Tcl_DoWhenIdle(DisplayMenu, (ClientData) menuPtr);
+    Tcl_DoWhenIdle(DisplayMenu, menuPtr);
     menuPtr->menuFlags |= REDRAW_PENDING;
 }
 
@@ -532,7 +530,7 @@ static void
 ComputeMenuGeometry(
     ClientData clientData)	/* Structure describing menu. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if (menuPtr->tkwin == NULL) {
 	return;
@@ -588,12 +586,12 @@ TkMenuSelectImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenuEntry *mePtr = (TkMenuEntry *) clientData;
+    register TkMenuEntry *mePtr = clientData;
 
     if ((mePtr->entryFlags & ENTRY_SELECTED)
 	    && !(mePtr->menuPtr->menuFlags & REDRAW_PENDING)) {
 	mePtr->menuPtr->menuFlags |= REDRAW_PENDING;
-	Tcl_DoWhenIdle(DisplayMenu, (ClientData) mePtr->menuPtr);
+	Tcl_DoWhenIdle(DisplayMenu, mePtr->menuPtr);
     }
 }
 
@@ -617,7 +615,7 @@ static void
 DisplayMenu(
     ClientData clientData)	/* Information about widget. */
 {
-    register TkMenu *menuPtr = (TkMenu *) clientData;
+    register TkMenu *menuPtr = clientData;
     register TkMenuEntry *mePtr;
     register Tk_Window tkwin = menuPtr->tkwin;
     int index, strictMotif;
@@ -747,7 +745,7 @@ TkMenuEventProc(
     ClientData clientData,	/* Information about window. */
     XEvent *eventPtr)		/* Information about event. */
 {
-    TkMenu *menuPtr = (TkMenu *) clientData;
+    TkMenu *menuPtr = clientData;
 
     if ((eventPtr->type == Expose) && (eventPtr->xexpose.count == 0)) {
 	TkEventuallyRedrawMenu(menuPtr, NULL);
@@ -774,14 +772,14 @@ TkMenuEventProc(
 	    menuPtr->widgetCmd = NULL;
 	}
 	if (menuPtr->menuFlags & REDRAW_PENDING) {
-	    Tcl_CancelIdleCall(DisplayMenu, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(DisplayMenu, menuPtr);
 	    menuPtr->menuFlags &= ~REDRAW_PENDING;
 	}
 	if (menuPtr->menuFlags & RESIZE_PENDING) {
-	    Tcl_CancelIdleCall(ComputeMenuGeometry, (ClientData) menuPtr);
+	    Tcl_CancelIdleCall(ComputeMenuGeometry, menuPtr);
 	    menuPtr->menuFlags &= ~RESIZE_PENDING;
 	}
-	Tcl_EventuallyFree((ClientData) menuPtr, TCL_DYNAMIC);
+	Tcl_EventuallyFree(menuPtr, TCL_DYNAMIC);
     }
 }
 
@@ -812,11 +810,11 @@ TkMenuImageProc(
 				 * <=0). */
     int imgWidth, int imgHeight)/* New dimensions of image. */
 {
-    register TkMenu *menuPtr = ((TkMenuEntry *)clientData)->menuPtr;
+    register TkMenu *menuPtr = ((TkMenuEntry *) clientData)->menuPtr;
 
     if ((menuPtr->tkwin != NULL) && !(menuPtr->menuFlags & RESIZE_PENDING)) {
 	menuPtr->menuFlags |= RESIZE_PENDING;
-	Tcl_DoWhenIdle(ComputeMenuGeometry, (ClientData) menuPtr);
+	Tcl_DoWhenIdle(ComputeMenuGeometry, menuPtr);
     }
 }
 
@@ -846,7 +844,7 @@ TkPostTearoffMenu(
 				 * posting */
 {
     int vRootX, vRootY, vRootWidth, vRootHeight;
-    int tmp, result;
+    int result;
 
     TkActivateMenuEntry(menuPtr, -1);
     TkRecomputeMenu(menuPtr);
@@ -879,31 +877,23 @@ TkPostTearoffMenu(
      * 2. The menu may not have been mapped yet, so its current size might be
      *    the default 1x1. To compute how much space it needs, use its
      *    requested size, not its actual size.
-     *
-     * Note that this code assumes square screen regions and all positive
-     * coordinates. This does not work on a Mac with multiple monitors. But
-     * then again, Tk has other problems with this.
      */
 
     Tk_GetVRootGeometry(Tk_Parent(menuPtr->tkwin), &vRootX, &vRootY,
 	&vRootWidth, &vRootHeight);
-    x += vRootX;
-    y += vRootY;
-    tmp = WidthOfScreen(Tk_Screen(menuPtr->tkwin))
-	- Tk_ReqWidth(menuPtr->tkwin);
-    if (x > tmp) {
-	x = tmp;
+    vRootWidth -= Tk_ReqWidth(menuPtr->tkwin);
+    if (x > vRootX + vRootWidth) {
+	x = vRootX + vRootWidth;
     }
-    if (x < 0) {
-	x = 0;
+    if (x < vRootX) {
+	x = vRootX;
     }
-    tmp = HeightOfScreen(Tk_Screen(menuPtr->tkwin))
-	- Tk_ReqHeight(menuPtr->tkwin);
-    if (y > tmp) {
-	y = tmp;
+    vRootHeight -= Tk_ReqHeight(menuPtr->tkwin);
+    if (y > vRootY + vRootHeight) {
+	y = vRootY + vRootHeight;
     }
-    if (y < 0) {
-	y = 0;
+    if (y < vRootY) {
+	y = vRootY;
     }
     Tk_MoveToplevelWindow(menuPtr->tkwin, x, y);
     if (!Tk_IsMapped(menuPtr->tkwin)) {

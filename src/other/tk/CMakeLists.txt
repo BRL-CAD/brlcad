@@ -85,10 +85,10 @@ set(BUILD_STATIC_LIBS ON)
 
 # version numbers
 SET(TK_VERSION_MAJOR 8)
-SET(TK_VERSION_MINOR 5)
-SET(TK_PATCH_LEVEL 8.5.9)
+SET(TK_VERSION_MINOR 6)
+SET(TK_PATCH_LEVEL 5)
 
-SET(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}")
+SET(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_PATCH_LEVEL}")
 
 # For Windows, we need the Resource Compiler language
 IF(WIN32)
@@ -174,7 +174,7 @@ endif(NOT TK_DISABLE_MANPAGES)
 # between various platforms or pertain to specific OS definitions
 add_definitions(-DPACKAGE_NAME="tk")
 add_definitions(-DPACKAGE_TARNAME="tk")
-add_definitions(-DPACKAGE_VERSION="${TK_PATCH_LEVEL}")
+add_definitions(-DPACKAGE_VERSION="${TK_VERSION}")
 add_definitions(-DPACKAGE_BUGREPORT="")
 add_definitions(-DSTDC_HEADERS=1)
 
@@ -191,7 +191,7 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 # Define some platform specific flags
 
 IF(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+	add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
 ENDIF(MSVC)
 
 IF(MINGW)
@@ -459,57 +459,64 @@ SET(TK_GENERIC_SRCS
   generic/tkAtom.c
   generic/tkBind.c
   generic/tkBitmap.c
-  generic/tkButton.c
-  generic/tkCanvArc.c
-  generic/tkCanvBmap.c
-  generic/tkCanvImg.c
-  generic/tkCanvLine.c
-  generic/tkCanvPoly.c
-  generic/tkCanvPs.c
-  generic/tkCanvText.c
-  generic/tkCanvUtil.c
-  generic/tkCanvWind.c
-  generic/tkCanvas.c
+	generic/tkBusy.c
   generic/tkClipboard.c
   generic/tkCmds.c
   generic/tkColor.c
   generic/tkConfig.c
-  generic/tkConsole.c
   generic/tkCursor.c
-  generic/tkEntry.c
   generic/tkError.c
   generic/tkEvent.c
   generic/tkFocus.c
   generic/tkFont.c
-  generic/tkFrame.c
+	generic/tkGet.c
   generic/tkGC.c
   generic/tkGeometry.c
-  generic/tkGet.c
   generic/tkGrab.c
   generic/tkGrid.c
-  generic/tkImage.c
-  generic/tkImgBmap.c
-  generic/tkImgGIF.c
-  generic/tkImgPPM.c
-  generic/tkImgPhoto.c
-  generic/tkListbox.c
+	generic/tkConsole.c
   generic/tkMain.c
+	generic/tkOption.c
+	generic/tkPack.c
+	generic/tkPlace.c
+	generic/tkSelect.c
+	generic/tkStyle.c
+	generic/tkUndo.c
+	generic/tkUtil.c
+	generic/tkVisual.c
+	generic/tkWindow.c
+	generic/tkButton.c
+	generic/tkObj.c
+	generic/tkEntry.c
+	generic/tkFrame.c
+	generic/tkListbox.c
   generic/tkMenu.c
-  generic/tkMenuDraw.c
   generic/tkMenubutton.c
+	generic/tkMenuDraw.c
   generic/tkMessage.c
-  generic/tkObj.c
-  generic/tkOldConfig.c
-  generic/tkOption.c
-  generic/tkPack.c
   generic/tkPanedWindow.c
-  generic/tkPlace.c
-  generic/tkRectOval.c
   generic/tkScale.c
   generic/tkScrollbar.c
-  generic/tkSelect.c
   generic/tkStubInit.c
-  generic/tkStyle.c
+	generic/tkCanvas.c
+	generic/tkCanvArc.c
+	generic/tkCanvBmap.c
+	generic/tkCanvImg.c
+	generic/tkCanvLine.c
+	generic/tkCanvPoly.c
+	generic/tkCanvPs.c
+	generic/tkCanvText.c
+	generic/tkCanvUtil.c
+	generic/tkCanvWind.c
+	generic/tkRectOval.c
+	generic/tkTrig.c
+	generic/tkImage.c
+	generic/tkImgBmap.c
+	generic/tkImgGIF.c
+	generic/tkImgPNG.c
+	generic/tkImgPPM.c
+	generic/tkImgPhoto.c
+	generic/tkImgPhInstance.c
   generic/tkText.c
   generic/tkTextBTree.c
   generic/tkTextDisp.c
@@ -518,11 +525,7 @@ SET(TK_GENERIC_SRCS
   generic/tkTextMark.c
   generic/tkTextTag.c
   generic/tkTextWind.c
-  generic/tkTrig.c
-  generic/tkUndo.c
-  generic/tkUtil.c
-  generic/tkVisual.c
-  generic/tkWindow.c
+	generic/tkOldConfig.c
   )
 
 SET(TK_HDRS
@@ -605,12 +608,8 @@ ELSE(TK_ENABLE_XFT)
 ENDIF(TK_ENABLE_XFT)
 
 SET(TK_AQUA_SRCS
-  generic/tkFileFilter.c
-  generic/tkMacWinMenu.c
-  generic/tkPointer.c
   macosx/tkMacOSXBitmap.c
   macosx/tkMacOSXButton.c
-  macosx/tkMacOSXCarbonEvents.c
   macosx/tkMacOSXClipboard.c
   macosx/tkMacOSXColor.c
   macosx/tkMacOSXConfig.c
@@ -624,15 +623,14 @@ SET(TK_AQUA_SRCS
   macosx/tkMacOSXFont.c
   macosx/tkMacOSXHLEvents.c
   macosx/tkMacOSXInit.c
-  macosx/tkMacOSXKeyEvent.c
   macosx/tkMacOSXKeyboard.c
+  macosx/tkMacOSXKeyEvent.c
   macosx/tkMacOSXMenu.c
   macosx/tkMacOSXMenubutton.c
   macosx/tkMacOSXMenus.c
   macosx/tkMacOSXMouseEvent.c
   macosx/tkMacOSXNotify.c
   macosx/tkMacOSXRegion.c
-  macosx/tkMacOSXScale.c
   macosx/tkMacOSXScrlbr.c
   macosx/tkMacOSXSend.c
   macosx/tkMacOSXSubwindows.c
@@ -640,7 +638,9 @@ SET(TK_AQUA_SRCS
   macosx/tkMacOSXWindowEvent.c
   macosx/tkMacOSXWm.c
   macosx/tkMacOSXXStubs.c
-  macosx/ttkMacOSXTheme.c
+  generic/tkFileFilter.c
+  generic/tkMacWinMenu.c
+  generic/tkPointer.c
   unix/tkUnix3d.c
   unix/tkUnixScale.c
   xlib/xcolors.c
@@ -648,8 +648,8 @@ SET(TK_AQUA_SRCS
   xlib/xgc.c
   xlib/ximage.c
   xlib/xutil.c
+	macosx/ttkMacOSXTheme.c
   )
-
 
 SET(TK_WIN_SRCS
   xlib/xcolors.c
@@ -693,7 +693,10 @@ SET(TK_WIN_SRCS
   win/ttkWinMonitor.c
   win/ttkWinTheme.c
   win/ttkWinXPTheme.c
+	win/tkMainASCII.c
   )
+
+SET_PROPERTY(SOURCE win/tkMainASCII.c APPEND PROPERTY COMPILE_DEFINITIONS TK_ASCII_MAIN)
 
 SET(TK_SRCS ${TK_GENERIC_SRCS} ${TTK_SRCS})
 
@@ -739,6 +742,10 @@ IF(X11_Xscreensaver_INCLUDE_PATH)
   SET(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS} ${X11_Xscreensaver_INCLUDE_PATH})
 ENDIF(X11_Xscreensaver_INCLUDE_PATH)
 
+#TODO - figure out how to properly test this
+add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
+add_definitions(-DXKEYCODETOKEYSYM_IS_DEPRECATED=1)
+
 include_directories(
   ${TCL_INCLUDE_DIRS}	
   ${TK_INCLUDE_PATH}
@@ -746,24 +753,20 @@ include_directories(
   ${TK_X11_INCLUDE_DIRS}
   )
 
-SET(X11_TK_LIBS "")
-IF(X11_X11_LIB)
-  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_X11_LIB})
-ENDIF(X11_X11_LIB)
-IF(X11_Xext_LIB)
-  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xext_LIB})
-ENDIF(X11_Xext_LIB)
-IF(X11_Xft_LIB)
-  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
-ENDIF(X11_Xft_LIB)
-IF(X11_Xrender_LIB)
-  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
-ENDIF(X11_Xrender_LIB)
+SET(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB})
 IF(TK_ENABLE_XSS)
   IF(X11_Xscreensaver_LIB)
     SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
   ENDIF(X11_Xscreensaver_LIB)
 ENDIF(TK_ENABLE_XSS)
+IF(X11_Xft_LIB)
+  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
+  add_definitions(-DHAVE_LIBXFT=1)
+  add_definitions(-DHAVE_XFT=1)
+ENDIF(X11_Xft_LIB)
+IF(X11_Xrender_LIB)
+  SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xrender_LIB})
+ENDIF(X11_Xrender_LIB)
 
 IF(NOT LIB_DIR)
   SET(LIB_DIR lib)
@@ -804,10 +807,10 @@ install(TARGETS tk
 SET_TARGET_PROPERTIES(tk PROPERTIES VERSION ${TK_VERSION} SOVERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 IF(TK_ENABLE_AQUA)
-  SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c")
+  SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
 ENDIF(TK_ENABLE_AQUA)
 
-TCL_PKGINDEX(tk Tk ${TK_PATCH_LEVEL})
+TCL_PKGINDEX(tk Tk ${TK_VERSION})
 
 install(FILES ${TK_HDRS} DESTINATION include)
 
@@ -820,7 +823,7 @@ ELSE(WIN32)
 	  ${CARBON_FRAMEWORK} ${COCOA_FRAMEWORK} ${IOKit_LIBRARIES}
 	  ${TCL_THREADS_LIB} ${M_LIBRARY} ${FREETYPE_LIBRARIES} ${PNG_LIBRARY} ${FONTCONFIG_LIBRARIES})
   IF(TK_ENABLE_AQUA)
-    SET_PROPERTY(TARGET wish APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c")
+    SET_PROPERTY(TARGET wish APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
   ENDIF(TK_ENABLE_AQUA)
 ENDIF(WIN32)
 SET_TARGET_PROPERTIES(wish PROPERTIES VERSION ${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
@@ -838,10 +841,10 @@ endif(CMAKE_CONFIGURATION_TYPES)
 INSTALL(FILES generic/prolog.ps DESTINATION lib/tk${TK_VERSION_MAJOR}.${TK_VERSION_MINOR})
 
 IF(NOT WIN32)
-  FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_PATCH_LEVEL})
+	FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY}/tk${TK_VERSION})
   foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
     string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-    FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/tk${TK_PATCH_LEVEL})
+	 FILE(COPY unix/tkAppInit.c DESTINATION ${CMAKE_LIBRARY_OUTPUT_DIRECTORY_${CFG_TYPE_UPPER}}/tk${TK_VERSION})
   endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-  INSTALL(FILES unix/tkAppInit.c DESTINATION lib/tk${TK_PATCH_LEVEL})
+  INSTALL(FILES unix/tkAppInit.c DESTINATION lib/tk${TK_VERSION})
 ENDIF(NOT WIN32)

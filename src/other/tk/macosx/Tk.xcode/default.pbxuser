@@ -15,9 +15,6 @@
 		};
 		sourceControlManager = F944EB9C08F798180049FDD4 /* Source Control */;
 		userBuildSettings = {
-			AUTOCONF = "/usr/local/bin/autoconf-2.59";
-			AUTOHEADER = "/usr/local/bin/autoheader-2.59";
-			CODE_SIGN_IDENTITY = "";
 			SYMROOT = "${SRCROOT}/../../build/tk";
 			TCL_SRCROOT = "${SRCROOT}/../../tcl";
 			TK_SRCROOT = "${SRCROOT}/../../tk";
@@ -97,13 +94,23 @@
 				value = /Library/Tcl;
 			},
 			{
+				active = YES;
+				name = TK_SRCROOT;
+				value = "${TK_SRCROOT}";
+			},
+			{
+				active = NO;
+				name = TK_CONSOLE;
+				value = 1;
+			},
+			{
 				active = NO;
 				name = DYLD_PRINT_LIBRARIES;
 			},
 			{
 				active = NO;
-				name = EventDebug;
-				value = 1;
+				name = NSTraceEvents;
+				value = YES;
 			},
 			{
 				active = NO;
@@ -135,6 +142,41 @@
 				name = MallocScribble;
 				value = 1;
 			},
+			{
+				active = NO;
+				name = NSZombieEnabled;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSDeallocateZombies;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSAutoreleaseFreedObjectCheckEnabled;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = NSEnableAutoreleasePool;
+				value = NO;
+			},
+			{
+				active = NO;
+				name = AUTO_LOG_ALL;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = AUTO_LOG_NOISY;
+				value = YES;
+			},
+			{
+				active = NO;
+				name = AUTO_REFERENCE_COUNT_LOGGING;
+				value = YES;
+			},
 		);
 		executableSystemSymbolLevel = 0;
 		executableUserSymbolLevel = 0;
@@ -151,12 +193,21 @@
 			CVSToolPath = /usr/bin/cvs;
 			CVSUseSSH = NO;
 			SubversionToolPath = /usr/bin/svn;
+			repositoryNamesForRoots = {
+				.. = "";
+			};
 		};
 		scmType = scm.cvs;
 	};
 	F944EB9D08F798180049FDD4 /* Code sense */ = {
 		isa = PBXCodeSenseManager;
 		indexTemplatePath = "";
+	};
+	F97258A50A86873C00096C78 /* tktest-X11 */ = {
+		activeExec = 0;
+		executables = (
+			F9FD31F50CC1AD070073837D /* tktest-X11 */,
+		);
 	};
 	F9E61D16090A3E94002B3151 /* Tk */ = {
 		activeExec = 0;
@@ -214,12 +265,6 @@
 		libgmallocEnabled = 0;
 		name = Wish;
 		sourceDirectories = (
-		);
-	};
-	F97258A50A86873C00096C78 /* tktest-X11 */ = {
-		activeExec = 0;
-		executables = (
-			F9FD31F50CC1AD070073837D /* tktest-X11 */,
 		);
 	};
 	F9FD31F50CC1AD070073837D /* tktest-X11 */ = {

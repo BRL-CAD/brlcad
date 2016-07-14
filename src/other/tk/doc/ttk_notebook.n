@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH ttk::notebook n 8.5 Tk "Tk Themed Widget"
+.so man.macros
 .BS
 .SH NAME
 ttk::notebook \- Multi-paned container widget
@@ -102,7 +100,7 @@ which returns the number of tabs
 .QW "\fIpathname \fBindex\fR" ).
 .SH "WIDGET COMMAND"
 .TP
-\fIpathname \fBadd\fR \fIwindow\fR ?\fIoptions...\fR?
+\fIpathname \fBadd \fIwindow\fR ?\fIoptions...\fR?
 Adds a new tab to the notebook.
 See \fBTAB OPTIONS\fR for the list of available \fIoptions\fR.
 If \fIwindow\fR is currently managed by the notebook but hidden,
@@ -111,38 +109,38 @@ it is restored to its previous position.
 \fIpathname \fBconfigure\fR ?\fIoptions\fR?
 See \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBcget\fR \fIoption\fR
+\fIpathname \fBcget \fIoption\fR
 See \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBforget\fR \fItabid\fR
+\fIpathname \fBforget \fItabid\fR
 Removes the tab specified by \fItabid\fR,
 unmaps and unmanages the associated window.
 .TP
-\fIpathname \fBhide\fR \fItabid\fR
+\fIpathname \fBhide \fItabid\fR
 Hides the tab specified by \fItabid\fR.
 The tab will not be displayed, but the associated window
 remains managed by the notebook and its configuration remembered.
 Hidden tabs may be restored with the \fBadd\fR command.
 .TP
-\fIpathname \fBidentify\fR \fIcomponent\fR \fIx\fR \fIy\fR
+\fIpathname \fBidentify\fI component x y\fR
 Returns the name of the element under the point given by \fIx\fR and \fIy\fR,
 or the empty string if no component is present at that location.
 The following subcommands are supported:
 .RS
 .TP
-\fIpathname \fBidentify\fR \fBelement\fR \fIx\fR \fIy\fR
+\fIpathname \fBidentify element\fR \fIx y\fR
 Returns the name of the element at the specified location.
 .TP
-\fIpathname \fBidentify\fR \fBtab\fR \fIx\fR \fIy\fR
+\fIpathname \fBidentify tab\fR \fIx y\fR
 Returns the index of the tab at the specified location.
 .RE
 .TP
-\fIpathname \fBindex\fR \fItabid\fR
+\fIpathname \fBindex \fItabid\fR
 Returns the numeric index of the tab specified by \fItabid\fR,
 or the total number of tabs if \fItabid\fR is the string
 .QW \fBend\fR .
 .TP
-\fIpathname \fBinsert\fR \fIpos\fR \fIsubwindow\fR \fIoptions...\fR
+\fIpathname \fBinsert \fIpos subwindow options...\fR
 Inserts a pane at the specified position.
 \fIpos\fR is either the string \fBend\fR, an integer index, 
 or the name of a managed subwindow.
@@ -150,7 +148,7 @@ If \fIsubwindow\fR is already managed by the notebook,
 moves it to the specified position.
 See \fBTAB OPTIONS\fR for the list of available options.
 .TP
-\fIpathname \fBinstate\fR \fIstatespec \fR?\fIscript...\fR?
+\fIpathname \fBinstate \fIstatespec \fR?\fIscript...\fR?
 See \fIttk::widget(n)\fR.
 .TP
 \fIpathname \fBselect\fR ?\fItabid\fR?
@@ -163,7 +161,7 @@ currently selected pane.
 \fIpathname \fBstate\fR ?\fIstatespec\fR?
 See \fIttk::widget(n)\fR.
 .TP
-\fIpathname \fBtab\fR \fItabid\fR ?\fI\-option \fR?\fIvalue ...\fR
+\fIpathname \fBtab \fItabid\fR ?\fI\-option \fR?\fIvalue ...\fR
 Query or modify the options of the specific tab.
 If no \fI\-option\fR is specified,
 returns a dictionary of the tab option values.
@@ -186,9 +184,9 @@ containing the notebook as follows:
 .IP \(bu
 \fBControl-Tab\fR selects the tab following the currently selected one.
 .IP \(bu
-\fBShift-Control-Tab\fR selects the tab preceding the currently selected one.
+\fBControl-Shift-Tab\fR selects the tab preceding the currently selected one.
 .IP \(bu
-\fBAlt-K\fR, where \fBK\fR is the mnemonic (underlined) character
+\fBAlt-\fIK\fR, where \fIK\fR is the mnemonic (underlined) character
 of any tab, will select that tab.
 .PP
 Multiple notebooks in a single toplevel may be enabled for traversal,
@@ -201,9 +199,9 @@ virtual event after a new tab is selected.
 .SH "EXAMPLE"
 .CS
 pack [\fBttk::notebook\fR .nb]
-\.nb add [frame .nb.f1] \-text "First tab"
-\.nb add [frame .nb.f2] \-text "Second tab"
-\.nb select .nb.f2
+\&.nb add [frame .nb.f1] \-text "First tab"
+\&.nb add [frame .nb.f2] \-text "Second tab"
+\&.nb select .nb.f2
 ttk::notebook::enableTraversal .nb
 .CE
 .SH "SEE ALSO"

@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkWinInt.h"
@@ -25,7 +23,7 @@
 
 #define MAX_KEYCODE 145 /* VK_SCROLL is the last entry in our table below */
 
-static KeySym keymap[] = {
+static const KeySym keymap[] = {
     NoSymbol, NoSymbol, NoSymbol, XK_Cancel, NoSymbol,
     NoSymbol, NoSymbol, NoSymbol, XK_BackSpace, XK_Tab,
     NoSymbol, NoSymbol, XK_Clear, XK_Return, NoSymbol,
@@ -81,7 +79,7 @@ static KeySym		KeycodeToKeysym(unsigned int keycode,
  *----------------------------------------------------------------------
  */
 
-char *
+const char *
 TkpGetString(
     TkWindow *winPtr,		/* Window where event occurred: needed to get
 				 * input context. */
@@ -330,7 +328,7 @@ KeycodeToKeysym(
      */
 
   skipToAscii:
-    if (keycode < 0 || keycode > MAX_KEYCODE) {
+    if (keycode > MAX_KEYCODE) {
 	return NoSymbol;
     }
     switch (keycode) {
@@ -504,12 +502,11 @@ TkpInitKeymapInfo(
      */
 
     if (dispPtr->modKeyCodes != NULL) {
-	ckfree((char *) dispPtr->modKeyCodes);
+	ckfree(dispPtr->modKeyCodes);
     }
     dispPtr->numModKeyCodes = 0;
     arraySize = KEYCODE_ARRAY_SIZE;
-    dispPtr->modKeyCodes = (KeyCode *) ckalloc((unsigned)
-	    (KEYCODE_ARRAY_SIZE * sizeof(KeyCode)));
+    dispPtr->modKeyCodes = ckalloc(KEYCODE_ARRAY_SIZE * sizeof(KeyCode));
     for (i = 0, codePtr = modMapPtr->modifiermap; i < max; i++, codePtr++) {
 	if (*codePtr == 0) {
 	    continue;
@@ -532,11 +529,10 @@ TkpInitKeymapInfo(
 	     */
 
 	    arraySize *= 2;
-	    new = (KeyCode *) ckalloc((unsigned)
-		    (arraySize * sizeof(KeyCode)));
-	    memcpy((void *) new, (void *) dispPtr->modKeyCodes,
-		    (dispPtr->numModKeyCodes * sizeof(KeyCode)));
-	    ckfree((char *) dispPtr->modKeyCodes);
+	    new = ckalloc(arraySize * sizeof(KeyCode));
+	    memcpy(new, dispPtr->modKeyCodes,
+		    dispPtr->numModKeyCodes * sizeof(KeyCode));
+	    ckfree(dispPtr->modKeyCodes);
 	    dispPtr->modKeyCodes = new;
 	}
 	dispPtr->modKeyCodes[dispPtr->numModKeyCodes] = *codePtr;
@@ -662,11 +658,10 @@ XModifierKeymap	*
 XGetModifierMapping(
     Display *display)
 {
-    XModifierKeymap *map = (XModifierKeymap *)
-	    ckalloc(sizeof(XModifierKeymap));
+    XModifierKeymap *map = ckalloc(sizeof(XModifierKeymap));
 
     map->max_keypermod = 1;
-    map->modifiermap = (KeyCode *) ckalloc(sizeof(KeyCode)*8);
+    map->modifiermap = ckalloc(sizeof(KeyCode) * 8);
     map->modifiermap[ShiftMapIndex] = VK_SHIFT;
     map->modifiermap[LockMapIndex] = VK_CAPITAL;
     map->modifiermap[ControlMapIndex] = VK_CONTROL;
@@ -694,12 +689,13 @@ XGetModifierMapping(
  *----------------------------------------------------------------------
  */
 
-void
+int
 XFreeModifiermap(
     XModifierKeymap *modmap)
 {
-    ckfree((char *) modmap->modifiermap);
-    ckfree((char *) modmap);
+    ckfree(modmap->modifiermap);
+    ckfree(modmap);
+    return Success;
 }
 
 /*

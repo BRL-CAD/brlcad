@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tk_SetOptions 3 8.1 Tk "Tk Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tk_CreateOptionTable, Tk_DeleteOptionTable, Tk_InitOptions, Tk_SetOptions, Tk_FreeSavedOptions, Tk_RestoreSavedOptions, Tk_GetOptionValue,  Tk_GetOptionInfo, Tk_FreeConfigOptions, Tk_Offset \- process configuration options
@@ -131,19 +129,21 @@ option table is no longer needed \fBTk_DeleteOptionTable\fR should be
 called to free all of its resources.  All of the option tables
 for a Tcl interpreter are freed automatically if the interpreter is deleted.
 .PP
-\fBTk_InitOptions\fR is invoked when a new widget is created to set
-the default values for all of the widget's configuration options.
-\fBTk_InitOptions\fR is passed a token for an option table (\fIoptionTable\fR)
-and a pointer to a widget record (\fIrecordPtr\fR), which is the C
-structure that holds information about this widget. \fBTk_InitOptions\fR
-uses the information in the option table to
-choose an appropriate default for each option, then it stores the default
-value directly into the widget record, overwriting any information that
-was already present in the widget record.  \fBTk_InitOptions\fR normally
-returns \fBTCL_OK\fR.  If an error occurred while setting the default values
-(e.g., because a default value was erroneous) then \fBTCL_ERROR\fR is returned
-and an error message is left in \fIinterp\fR's result if \fIinterp\fR
-is not NULL.
+\fBTk_InitOptions\fR is invoked when a new widget is created to set the
+default values for all of the widget's configuration options that do not
+have \fBTK_OPTION_DONT_SET_DEFAULT\fR set in their \fIflags\fR field.
+\fBTk_InitOptions\fR is passed a token for an option table
+(\fIoptionTable\fR) and a pointer to a widget record (\fIrecordPtr\fR),
+which is the C structure that holds information about this widget.
+\fBTk_InitOptions\fR uses the information in the option table to choose an
+appropriate default for each option, except those having
+\fBTK_OPTION_DONT_SET_DEFAULT\fR set, then it stores the default value
+directly into the widget record, overwriting any information that was
+already present in the widget record.  \fBTk_InitOptions\fR normally
+returns \fBTCL_OK\fR.  If an error occurred while setting the default
+values (e.g., because a default value was erroneous) then \fBTCL_ERROR\fR
+is returned and an error message is left in \fIinterp\fR's result if
+\fIinterp\fR is not NULL.
 .PP
 \fBTk_SetOptions\fR is invoked to modify configuration options based
 on information specified in a Tcl command.  The command might be one that
@@ -245,7 +245,6 @@ The \fBTk_Offset\fR macro is provided as a safe way of generating the
 Tk_OptionSpec structures.  It takes two arguments: the name of a type
 of record, and the name of a field in that record. It returns the byte
 offset of the named field in records of the given type.
-
 .SH "TEMPLATES"
 .PP
 The array of Tk_OptionSpec structures passed to \fBTk_CreateOptionTable\fR
@@ -262,9 +261,9 @@ typedef struct {
     int \fIobjOffset\fR;
     int \fIinternalOffset\fR;
     int \fIflags\fR;
-    ClientData \fIclientData\fR;
+    const void *\fIclientData\fR;
     int \fItypeMask\fR;
-} Tk_OptionSpec;
+} \fBTk_OptionSpec\fR;
 .CE
 The \fItype\fR field indicates what kind of configuration option this is
 (e.g. \fBTK_OPTION_COLOR\fR for a color value, or \fBTK_OPTION_INT\fR for
@@ -309,19 +308,27 @@ given by \fIinternalOffset\fR.  For example, if the option's type is
 value is not stored in that form.  At least one of the offsets must be
 greater than or equal to zero.
 .PP
-The \fIflags\fR field consists of one or more bits ORed together.  At
-present only a single flag is supported: \fBTK_OPTION_NULL_OK\fR.  If
-this bit is set for an option then an empty string will be accepted as
-the value for the option and the resulting internal form will be a
-NULL pointer, a zero value, or \fBNone\fR, depending on the type of
-the option.  If the flag is not set then empty strings will result
-in errors.
+The \fIflags\fR field consists of one or more bits ORed together. The
+following flags are supported:
+.TP
+\fBTK_OPTION_NULL_OK\fR
+If this bit is set for an option then an empty string will be accepted as
+the value for the option and the resulting internal form will be a NULL
+pointer, a zero value, or \fBNone\fR, depending on the type of the option.
+If the flag is not set then empty strings will result in errors.
 \fBTK_OPTION_NULL_OK\fR is typically used to allow a
 feature to be turned off entirely, e.g. set a cursor value to
 \fBNone\fR so that a window simply inherits its parent's cursor.
 Not all option types support the \fBTK_OPTION_NULL_OK\fR
 flag; for those that do, there is an explicit indication of that fact
 in the descriptions below.
+.TP
+\fBTK_OPTION_DONT_SET_DEFAULT\fR
+If this bit is set for an option then no default value will be set in
+\fBTk_InitOptions\fR for this option. Neither the option database, nor any
+system default value, nor \fIoptionTable\fR are used to give a default
+value to this option. Instead it is assumed that the caller has already
+supplied a default value in the widget code.
 .PP
 The \fItype\fR field of each Tk_OptionSpec structure determines
 how to parse the value of that configuration option. The
@@ -436,15 +443,14 @@ suitable for passing to \fBTcl_GetIndexFromObj\fR.  The value must
 be one of the strings in the table, or a unique abbreviation of
 one of the strings.  The internal form is an integer giving the index
 into the table of the matching string, like the return value
-from \fBTcl_GetStringFromObj\fR. 
+from \fBTcl_GetStringFromObj\fR.
 .TP
 \fBTK_OPTION_SYNONYM\fR
 This type is used to provide alternative names for an option (for
 example, \fB\-bg\fR is often used as a synonym for \fB\-background\fR).
-The \fBclientData\fR field is a (char *) pointer that gives
-the name of another option in the same table.  Whenever the
-synonym option is used, the information from the other option
-will be used instead.
+The \fBclientData\fR field is a string that gives the name of another
+option in the same table.  Whenever the synonym option is used, the
+information from the other option will be used instead.
 .TP
 \fBTK_OPTION_WINDOW\fR
 The value must be a window path name.  The internal form is a
@@ -452,7 +458,6 @@ The value must be a window path name.  The internal form is a
 This option type requires \fItkwin\fR to be supplied to procedures
 such as \fBTk_SetOptions\fR (in order to identify the application),
 and it supports the \fBTK_OPTION_NULL_OK\fR flag.
-
 .SH "STORAGE MANAGEMENT ISSUES"
 .PP
 If a field of a widget record has its offset stored in the \fIobjOffset\fR
@@ -476,7 +481,6 @@ However, the widget code is responsible for storing NULL or \fBNone\fR in
 all pointer and token fields before invoking \fBTk_InitOptions\fR.
 This is needed to allow proper cleanup in the rare case where
 an error occurs in \fBTk_InitOptions\fR.
-
 .SH "OBJOFFSET VS. INTERNALOFFSET"
 .PP
 In most cases it is simplest to use the \fIinternalOffset\fR field of
@@ -507,7 +511,6 @@ To implement a new type of option, you can use \fBTK_OPTION_STRING\fR as
 the type in the Tk_OptionSpec structure and set the \fIobjOffset\fR field
 but not the \fIinternalOffset\fR field.  Then, after calling
 \fBTk_SetOptions\fR, convert the object to internal form yourself.
-
 .SH "CUSTOM OPTION TYPES"
 .PP
 Applications can extend the built-in configuration types with
@@ -522,33 +525,33 @@ typedef struct Tk_ObjCustomOption {
     Tk_CustomOptionRestoreProc *\fIrestoreProc\fR;
     Tk_CustomOptionFreeProc *\fIfreeProc\fR;
     ClientData \fIclientData\fR;
-} Tk_ObjCustomOption;
+} \fBTk_ObjCustomOption\fR;
 
-typedef int Tk_CustomOptionSetProc(
+typedef int \fBTk_CustomOptionSetProc\fR(
     ClientData \fIclientData\fR,
-    Tcl_Interp *\fIinterp\fR, 
-    Tk_Window \fItkwin\fR, 
+    Tcl_Interp *\fIinterp\fR,
+    Tk_Window \fItkwin\fR,
     Tcl_Obj **\fIvaluePtr\fR,
     char *\fIrecordPtr\fR,
     int \fIinternalOffset\fR,
-    char *\fIsaveInternalPtr\fR, 
+    char *\fIsaveInternalPtr\fR,
     int \fIflags\fR);
 
-typedef Tcl_Obj *Tk_CustomOptionGetProc(
+typedef Tcl_Obj *\fBTk_CustomOptionGetProc\fR(
     ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
+    Tk_Window \fItkwin\fR,
     char *\fIrecordPtr\fR,
     int \fIinternalOffset\fR);
 
-typedef void Tk_CustomOptionRestoreProc(
+typedef void \fBTk_CustomOptionRestoreProc\fR(
     ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
-    char *\fIinternalPtr\fR, 
+    Tk_Window \fItkwin\fR,
+    char *\fIinternalPtr\fR,
     char *\fIsaveInternalPtr\fR);
 
-typedef void Tk_CustomOptionFreeProc(
+typedef void \fBTk_CustomOptionFreeProc\fR(
     ClientData \fIclientData\fR,
-    Tk_Window \fItkwin\fR, 
+    Tk_Window \fItkwin\fR,
     char *\fIinternalPtr\fR);
 .CE
 .PP
@@ -647,8 +650,6 @@ structure.  \fITkwin\fR is a copy of the \fItkwin\fR argument to
 is a pointer to the location where the internal representation of the
 option value is stored.  The \fIfreeProc\fR must free any storage
 associated with the option.  \fIFreeProc\fR has no return value.
-
-
 .SH KEYWORDS
 anchor, bitmap, boolean, border, color, configuration option,
 cursor, double, font, integer, justify,

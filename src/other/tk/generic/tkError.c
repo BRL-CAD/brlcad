@@ -11,8 +11,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tkInt.h"
@@ -109,7 +107,7 @@ Tk_CreateErrorHandler(
      * Create the handler record.
      */
 
-    errorPtr = (TkErrorHandler *) ckalloc(sizeof(TkErrorHandler));
+    errorPtr = ckalloc(sizeof(TkErrorHandler));
     errorPtr->dispPtr = dispPtr;
     errorPtr->firstRequest = NextRequest(display);
     errorPtr->lastRequest = (unsigned) -1;
@@ -184,7 +182,7 @@ Tk_DeleteErrorHandler(
 		} else {
 		    prevPtr->nextPtr = nextPtr;
 		}
-		ckfree((char *) errorPtr);
+		ckfree(errorPtr);
 		continue;
 	    }
 	    prevPtr = errorPtr;
@@ -248,8 +246,8 @@ ErrorProc(
 		    && (errorPtr->lastRequest < errEventPtr->serial))) {
 	    continue;
 	}
-	if (errorPtr->errorProc == NULL || (*errorPtr->errorProc)(
-		errorPtr->clientData, errEventPtr) == 0) {
+	if (errorPtr->errorProc == NULL ||
+		errorPtr->errorProc(errorPtr->clientData, errEventPtr) == 0) {
 	    return 0;
 	}
     }
@@ -271,8 +269,7 @@ ErrorProc(
     if (errEventPtr->error_code == BadWindow) {
 	Window w = (Window) errEventPtr->resourceid;
 
-	if (Tk_IdToWindow(display, w) != NULL
-		|| TkpWindowWasRecentlyDeleted(w, dispPtr)) {
+	if (Tk_IdToWindow(display, w) != NULL) {
 	    return 0;
 	}
     }
@@ -282,7 +279,7 @@ ErrorProc(
      */
 
   couldntHandle:
-    return (*defaultHandler)(display, errEventPtr);
+    return defaultHandler(display, errEventPtr);
 }
 
 /*
