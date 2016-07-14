@@ -18,9 +18,8 @@
 <cmdsynopsis>
   <command>pix-ps</command>
     <arg choice='opt'>-e </arg>
-    <arg choice='opt'>-c </arg>
+    <arg choice='opt'>-c|-l </arg>
     <arg choice='opt'>-L </arg>
-    <arg choice='opt'>-h </arg>
     <arg choice='opt'>-s <replaceable>input_squaresize</replaceable></arg>
     <arg choice='opt'>-w <replaceable>input_width</replaceable></arg>
     <arg choice='opt'>-n <replaceable>input_height</replaceable></arg>
@@ -47,18 +46,17 @@ and
 flags specify the input file width and number of scan lines in pixels.
 They can both be set to the same value via
 <option>-s.</option>
-The
-<option>-h</option>
-flag is a shorthand for an input image size of 1024 square.
 If no input size is given, defaults of 512 are assumed.</para>
 
 <para>By default the output PostScript image size is 6.75 inches.
 The
-<option>-c</option>
-option will center it on a 8.5 x 11 inch page.
+<option>-c</option> (on by default)
+option will center it on a 8.5 x 11 inch page; otherwise, the
+<option>-l</option>
+option uses the lower left corner.
 If a different output size is desired,
-<option>-S</option>
-<option>-W</option>
+<option>-S</option>,
+<option>-W</option>,
 and
 <option>-N</option>
 can be used to set the size in inches analogous to the input

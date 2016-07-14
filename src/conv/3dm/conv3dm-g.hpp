@@ -45,6 +45,7 @@ class ON_InstanceRef;
 class ON_Layer;
 class ON_Material;
 class ON_Bitmap;
+class ON_Mesh;
 struct rt_wdb;
 
 
@@ -80,8 +81,8 @@ private:
     void create_all_idefs();
     void create_all_geometry();
 
-    void create_geometry(const ON_Geometry *pGeometry,
-			 const ON_3dmObjectAttributes &obj_attrs);
+    void create_geometry(const ON_Geometry *geom,
+			 const ON_3dmObjectAttributes &geom_attrs);
 
     void create_bitmap(const ON_Bitmap *bitmap);
     void create_layer(const ON_Layer &layer);
@@ -92,6 +93,9 @@ private:
 
     void create_brep(const ON_Brep &brep,
 		     const ON_3dmObjectAttributes &brep_attrs);
+
+    void create_mesh(ON_Mesh mesh, const ON_3dmObjectAttributes &mesh_attrs);
+    void create_geom_comb(const ON_3dmObjectAttributes &geom_attrs);
 
     Color get_color(const ON_3dmObjectAttributes &obj_attrs) const;
 
@@ -104,6 +108,7 @@ private:
     bool m_random_colors;
     std::string m_output_dirname;
     std::map<std::string, ModelObject> m_obj_map;
+    std::map<std::string, int> m_name_count_map;
     std::auto_ptr<ON_TextLog> m_log;
     std::auto_ptr<ONX_Model> m_model;
     rt_wdb *m_db;
