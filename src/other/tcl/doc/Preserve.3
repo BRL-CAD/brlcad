@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_Preserve 3 7.5 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_Preserve, Tcl_Release, Tcl_EventuallyFree \- avoid freeing storage while it is being used
@@ -29,7 +27,6 @@ to memory for structure.
 .AP Tcl_FreeProc *freeProc in
 Procedure to invoke to free \fIclientData\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 These three procedures help implement a simple reference count mechanism
@@ -80,9 +77,12 @@ calls to \fBTcl_Release\fR then \fIfreeProc\fR will be called by
 All the work of freeing the object is carried out by \fIfreeProc\fR.
 \fIFreeProc\fR must have arguments and result that match the
 type \fBTcl_FreeProc\fR:
+.PP
 .CS
-typedef void Tcl_FreeProc(char *\fIblockPtr\fR);
+typedef void \fBTcl_FreeProc\fR(
+        char *\fIblockPtr\fR);
 .CE
+.PP
 The \fIblockPtr\fR argument to \fIfreeProc\fR will be the
 same as the \fIclientData\fR argument to \fBTcl_EventuallyFree\fR.
 The type of \fIblockPtr\fR (\fBchar *\fR) is different than the type of the
@@ -104,9 +104,7 @@ mechanism for long-term reference counts.
 The implementation does not depend in any way on the internal
 structure of the objects being freed;  it keeps the reference
 counts in a separate structure.
-
 .SH "SEE ALSO"
 Tcl_Interp, Tcl_Alloc
-
 .SH KEYWORDS
 free, reference count, storage

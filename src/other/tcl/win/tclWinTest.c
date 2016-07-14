@@ -7,16 +7,17 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
+#ifndef USE_TCL_STUBS
+#   define USE_TCL_STUBS
+#endif
 #include "tclInt.h"
 
 /*
  * For TestplatformChmod on Windows
  */
-#ifdef __WIN32__
+#ifdef _WIN32
 #include <aclapi.h>
 #endif
 
@@ -31,9 +32,8 @@
  * Forward declarations of functions defined later in this file:
  */
 
-int			TclplatformtestInit(Tcl_Interp *interp);
-static int		TesteventloopCmd(ClientData dummy, Tcl_Interp *interp,
-			    int argc, const char **argv);
+static int		TesteventloopCmd(ClientData dummy, Tcl_Interp* interp,
+			    int objc, Tcl_Obj *const objv[]);
 static int		TestvolumetypeCmd(ClientData dummy,
 			    Tcl_Interp *interp, int objc,
 			    Tcl_Obj *const objv[]);
@@ -42,11 +42,9 @@ static int		TestwinclockCmd(ClientData dummy, Tcl_Interp* interp,
 static int		TestwinsleepCmd(ClientData dummy, Tcl_Interp* interp,
 			    int objc, Tcl_Obj *const objv[]);
 static Tcl_ObjCmdProc	TestExceptionCmd;
-static int		TestwincpuidCmd(ClientData dummy, Tcl_Interp* interp,
-			    int objc, Tcl_Obj *const objv[]);
 static int		TestplatformChmod(const char *nativePath, int pmode);
-static int		TestchmodCmd(ClientData dummy,
-			    Tcl_Interp *interp, int argc, const char **argv);
+static int		TestchmodCmd(ClientData dummy, Tcl_Interp* interp,
+			    int objc, Tcl_Obj *const objv[]);
 
 /*
  *----------------------------------------------------------------------
@@ -73,12 +71,11 @@ TclplatformtestInit(
      * Add commands for platform specific tests for Windows here.
      */
 
-    Tcl_CreateCommand(interp, "testchmod", TestchmodCmd, NULL, NULL);
-    Tcl_CreateCommand(interp, "testeventloop", TesteventloopCmd, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "testchmod", TestchmodCmd, NULL, NULL);
+    Tcl_CreateObjCommand(interp, "testeventloop", TesteventloopCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "testvolumetype", TestvolumetypeCmd,
 	    NULL, NULL);
     Tcl_CreateObjCommand(interp, "testwinclock", TestwinclockCmd, NULL, NULL);
-    Tcl_CreateObjCommand(interp, "testwincpuid", TestwincpuidCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "testwinsleep", TestwinsleepCmd, NULL, NULL);
     Tcl_CreateObjCommand(interp, "testexcept", TestExceptionCmd, NULL, NULL);
     return TCL_OK;
@@ -106,21 +103,20 @@ static int
 TesteventloopCmd(
     ClientData clientData,	/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    int objc,			/* Number of arguments. */
+    Tcl_Obj *const objv[])	/* Argument objects. */
 {
     static int *framePtr = NULL;/* Pointer to integer on stack frame of
 				 * innermost invocation of the "wait"
 				 * subcommand. */
 
-    if (argc < 2) {
-	Tcl_AppendResult(interp, "wrong # arguments: should be \"", argv[0],
-		" option ... \"", NULL);
+    if (objc < 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "option ...");
 	return TCL_ERROR;
     }
-    if (strcmp(argv[1], "done") == 0) {
+    if (strcmp(Tcl_GetString(objv[1]), "done") == 0) {
 	*framePtr = 1;
-    } else if (strcmp(argv[1], "wait") == 0) {
+    } else if (strcmp(Tcl_GetString(objv[1]), "wait") == 0) {
 	int *oldFramePtr, done;
 	int oldMode = Tcl_SetServiceMode(TCL_SERVICE_ALL);
 
@@ -155,7 +151,7 @@ TesteventloopCmd(
 	(void) Tcl_SetServiceMode(oldMode);
 	framePtr = oldFramePtr;
     } else {
-	Tcl_AppendResult(interp, "bad option \"", argv[1],
+	Tcl_AppendResult(interp, "bad option \"", Tcl_GetString(objv[1]),
 		"\": must be done or wait", NULL);
 	return TCL_ERROR;
     }
@@ -189,7 +185,7 @@ TestvolumetypeCmd(
 #define VOL_BUF_SIZE 32
     int found;
     char volType[VOL_BUF_SIZE];
-    char *path;
+    const char *path;
 
     if (objc > 2) {
 	Tcl_WrongNumArgs(interp, 1, objv, "?name?");
@@ -214,7 +210,7 @@ TestvolumetypeCmd(
 	TclWinConvertError(GetLastError());
 	return TCL_ERROR;
     }
-    Tcl_SetResult(interp, volType, TCL_VOLATILE);
+    Tcl_AppendResult(interp, volType, NULL);
     return TCL_OK;
 #undef VOL_BUF_SIZE
 }
@@ -294,83 +290,6 @@ TestwinclockCmd(
     return TCL_OK;
 }
 
-/*
- *----------------------------------------------------------------------
- *
- * TestwincpuidCmd --
- *
- *	Retrieves CPU ID information.
- *
- * Usage:
- *	testwincpuid <eax>
- *
- * Parameters:
- *	eax - The value to pass in the EAX register to a CPUID instruction.
- *
- * Results:
- *	Returns a four-element list containing the values from the EAX, EBX,
- *	ECX and EDX registers returned from the CPUID instruction.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-static int
-TestwincpuidCmd(
-    ClientData dummy,
-    Tcl_Interp* interp,		/* Tcl interpreter */
-    int objc,			/* Parameter count */
-    Tcl_Obj *const * objv)	/* Parameter vector */
-{
-    int status, index, i;
-    unsigned int regs[4];
-    Tcl_Obj *regsObjs[4];
-
-    if (objc != 2) {
-	Tcl_WrongNumArgs(interp, 1, objv, "eax");
-	return TCL_ERROR;
-    }
-    if (Tcl_GetIntFromObj(interp, objv[1], &index) != TCL_OK) {
-	return TCL_ERROR;
-    }
-    status = TclWinCPUID((unsigned) index, regs);
-    if (status != TCL_OK) {
-	Tcl_SetObjResult(interp,
-		Tcl_NewStringObj("operation not available", -1));
-	return status;
-    }
-    for (i=0 ; i<4 ; ++i) {
-	regsObjs[i] = Tcl_NewIntObj((int) regs[i]);
-    }
-    Tcl_SetObjResult(interp, Tcl_NewListObj(4, regsObjs));
-    return TCL_OK;
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TestwinsleepCmd --
- *
- *	Causes this process to wait for the given number of milliseconds by
- *	means of a direct call to Sleep.
- *
- * Usage:
- *	testwinsleep <n>
- *
- * Parameters:
- *	n - the number of milliseconds to sleep
- *
- * Results:
- *	None.
- *
- * Side effects:
- *	Sleeps for the requisite number of milliseconds.
- *
- *----------------------------------------------------------------------
- */
-
 static int
 TestwinsleepCmd(
     ClientData clientData,	/* Unused */
@@ -421,7 +340,7 @@ TestExceptionCmd(
     int objc,				/* Argument count */
     Tcl_Obj *const objv[])		/* Argument vector */
 {
-    static const char *cmds[] = {
+    static const char *const cmds[] = {
 	"access_violation", "datatype_misalignment", "array_bounds",
 	"float_denormal", "float_divbyzero", "float_inexact",
 	"float_invalidop", "float_overflow", "float_stack", "float_underflow",
@@ -430,7 +349,7 @@ TestExceptionCmd(
 	"invalid_disp", "guard_page", "invalid_handle", "ctrl+c",
 	NULL
     };
-    static DWORD exceptions[] = {
+    static const DWORD exceptions[] = {
 	EXCEPTION_ACCESS_VIOLATION, EXCEPTION_DATATYPE_MISALIGNMENT,
 	EXCEPTION_ARRAY_BOUNDS_EXCEEDED, EXCEPTION_FLT_DENORMAL_OPERAND,
 	EXCEPTION_FLT_DIVIDE_BY_ZERO, EXCEPTION_FLT_INEXACT_RESULT,
@@ -478,28 +397,6 @@ TestplatformChmod(
     const char *nativePath,
     int pmode)
 {
-    typedef DWORD (WINAPI *getSidLengthRequiredDef)(UCHAR);
-    typedef BOOL (WINAPI *initializeSidDef)(PSID, PSID_IDENTIFIER_AUTHORITY,
-	    BYTE);
-    typedef PDWORD (WINAPI *getSidSubAuthorityDef)(PSID, DWORD);
-    typedef DWORD (WINAPI *setNamedSecurityInfoADef)(IN LPSTR,
-	    IN SE_OBJECT_TYPE, IN SECURITY_INFORMATION, IN PSID, IN PSID,
-	    IN PACL, IN PACL);
-    typedef BOOL (WINAPI *getAceDef)(PACL, DWORD, LPVOID *);
-    typedef BOOL (WINAPI *addAceDef)(PACL, DWORD, DWORD, LPVOID, DWORD);
-    typedef BOOL (WINAPI *equalSidDef)(PSID, PSID);
-    typedef BOOL (WINAPI *addAccessDeniedAceDef)(PACL, DWORD, DWORD, PSID);
-    typedef BOOL (WINAPI *initializeAclDef)(PACL, DWORD, DWORD);
-    typedef DWORD (WINAPI *getLengthSidDef)(PSID);
-    typedef BOOL (WINAPI *getAclInformationDef)(PACL, LPVOID, DWORD,
-	    ACL_INFORMATION_CLASS);
-    typedef BOOL (WINAPI *getSecurityDescriptorDaclDef)(PSECURITY_DESCRIPTOR,
-	    LPBOOL, PACL *, LPBOOL);
-    typedef BOOL (WINAPI *lookupAccountNameADef)(LPCSTR, LPCSTR, PSID,
-	    PDWORD, LPSTR, LPDWORD, PSID_NAME_USE);
-    typedef BOOL (WINAPI *getFileSecurityADef)(LPCSTR, SECURITY_INFORMATION,
-	    PSECURITY_DESCRIPTOR, DWORD, LPDWORD);
-
     static const SECURITY_INFORMATION infoBits = OWNER_SECURITY_INFORMATION
 	    | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION;
     static const DWORD readOnlyMask = FILE_DELETE_CHILD | FILE_ADD_FILE
@@ -509,22 +406,6 @@ TestplatformChmod(
     /*
      * References to security functions (only available on NT and later).
      */
-
-    static getSidLengthRequiredDef getSidLengthRequiredProc;
-    static initializeSidDef initializeSidProc;
-    static getSidSubAuthorityDef getSidSubAuthorityProc;
-    static setNamedSecurityInfoADef setNamedSecurityInfoProc;
-    static getAceDef getAceProc;
-    static addAceDef addAceProc;
-    static equalSidDef equalSidProc;
-    static addAccessDeniedAceDef addAccessDeniedAceProc;
-    static initializeAclDef initializeAclProc;
-    static getLengthSidDef getLengthSidProc;
-    static getAclInformationDef getAclInformationProc;
-    static getSecurityDescriptorDaclDef getSecurityDescriptorDaclProc;
-    static lookupAccountNameADef lookupAccountNameProc;
-    static getFileSecurityADef getFileSecurityProc;
-    static int initialized = 0;
 
     const BOOL set_readOnly = !(pmode & 0222);
     BOOL acl_readOnly_found = FALSE, curAclPresent, curAclDefaulted;
@@ -537,72 +418,14 @@ TestplatformChmod(
     PACL curAcl, newAcl = 0;
     WORD j;
     SID *userSid = 0;
-    TCHAR *userDomain = 0;
+    char *userDomain = 0;
     int res = 0;
-
-    /*
-     * One time initialization, dynamically load Windows NT features
-     */
-
-    if (!initialized) {
-	TCL_DECLARE_MUTEX(initializeMutex)
-	Tcl_MutexLock(&initializeMutex);
-	if (!initialized) {
-	    HINSTANCE hInstance = LoadLibrary("Advapi32");
-
-	    if (hInstance != NULL) {
-		setNamedSecurityInfoProc = (setNamedSecurityInfoADef)
-			GetProcAddress(hInstance, "SetNamedSecurityInfoA");
-		getFileSecurityProc = (getFileSecurityADef)
-			GetProcAddress(hInstance, "GetFileSecurityA");
-		getAceProc = (getAceDef)
-			GetProcAddress(hInstance, "GetAce");
-		addAceProc = (addAceDef)
-			GetProcAddress(hInstance, "AddAce");
-		equalSidProc = (equalSidDef)
-			GetProcAddress(hInstance, "EqualSid");
-		addAccessDeniedAceProc = (addAccessDeniedAceDef)
-			GetProcAddress(hInstance, "AddAccessDeniedAce");
-		initializeAclProc = (initializeAclDef)
-			GetProcAddress(hInstance, "InitializeAcl");
-		getLengthSidProc = (getLengthSidDef)
-			GetProcAddress(hInstance, "GetLengthSid");
-		getAclInformationProc = (getAclInformationDef)
-			GetProcAddress(hInstance, "GetAclInformation");
-		getSecurityDescriptorDaclProc = (getSecurityDescriptorDaclDef)
-			GetProcAddress(hInstance, "GetSecurityDescriptorDacl");
-		lookupAccountNameProc = (lookupAccountNameADef)
-			GetProcAddress(hInstance, "LookupAccountNameA");
-		getSidLengthRequiredProc = (getSidLengthRequiredDef)
-			GetProcAddress(hInstance, "GetSidLengthRequired");
-		initializeSidProc = (initializeSidDef)
-			GetProcAddress(hInstance, "InitializeSid");
-		getSidSubAuthorityProc = (getSidSubAuthorityDef)
-			GetProcAddress(hInstance, "GetSidSubAuthority");
-
-		if (setNamedSecurityInfoProc && getAceProc && addAceProc
-			&& equalSidProc && addAccessDeniedAceProc
-			&& initializeAclProc && getLengthSidProc
-			&& getAclInformationProc
-			&& getSecurityDescriptorDaclProc
-			&& lookupAccountNameProc && getFileSecurityProc
-			&& getSidLengthRequiredProc && initializeSidProc
-			&& getSidSubAuthorityProc) {
-		    initialized = 1;
-		}
-	    }
-	    if (!initialized) {
-		initialized = -1;
-	    }
-	}
-	Tcl_MutexUnlock(&initializeMutex);
-    }
 
     /*
      * Process the chmod request.
      */
 
-    attr = GetFileAttributes(nativePath);
+    attr = GetFileAttributesA(nativePath);
 
     /*
      * nativePath not found
@@ -614,11 +437,10 @@ TestplatformChmod(
     }
 
     /*
-     * If no ACL API is present or nativePath is not a directory, there is no
-     * special handling.
+     * If nativePath is not a directory, there is no special handling.
      */
 
-    if (initialized < 0 || !(attr & FILE_ATTRIBUTE_DIRECTORY)) {
+    if (!(attr & FILE_ATTRIBUTE_DIRECTORY)) {
 	goto done;
     }
 
@@ -634,15 +456,15 @@ TestplatformChmod(
      * obtains the size of the security descriptor.
      */
 
-    if (!getFileSecurityProc(nativePath, infoBits, NULL, 0, &secDescLen)) {
+    if (!GetFileSecurityA(nativePath, infoBits, NULL, 0, &secDescLen)) {
 	DWORD secDescLen2 = 0;
 
 	if (GetLastError() != ERROR_INSUFFICIENT_BUFFER) {
 	    goto done;
 	}
 
-	secDesc = (BYTE *) ckalloc(secDescLen);
-	if (!getFileSecurityProc(nativePath, infoBits,
+	secDesc = ckalloc(secDescLen);
+	if (!GetFileSecurityA(nativePath, infoBits,
 		(PSECURITY_DESCRIPTOR) secDesc, secDescLen, &secDescLen2)
 		|| (secDescLen < secDescLen2)) {
 	    goto done;
@@ -653,22 +475,22 @@ TestplatformChmod(
      * Get the World SID.
      */
 
-    userSid = (SID *) ckalloc(getSidLengthRequiredProc((UCHAR) 1));
-    initializeSidProc(userSid, &userSidAuthority, (BYTE) 1);
-    *(getSidSubAuthorityProc(userSid, 0)) = SECURITY_WORLD_RID;
+    userSid = ckalloc(GetSidLengthRequired((UCHAR) 1));
+    InitializeSid(userSid, &userSidAuthority, (BYTE) 1);
+    *(GetSidSubAuthority(userSid, 0)) = SECURITY_WORLD_RID;
 
     /*
      * If curAclPresent == false then curAcl and curAclDefaulted not valid.
      */
 
-    if (!getSecurityDescriptorDaclProc((PSECURITY_DESCRIPTOR) secDesc,
+    if (!GetSecurityDescriptorDacl((PSECURITY_DESCRIPTOR) secDesc,
 	    &curAclPresent, &curAcl, &curAclDefaulted)) {
 	goto done;
     }
     if (!curAclPresent || !curAcl) {
 	ACLSize.AclBytesInUse = 0;
 	ACLSize.AceCount = 0;
-    } else if (!getAclInformationProc(curAcl, &ACLSize, sizeof(ACLSize),
+    } else if (!GetAclInformation(curAcl, &ACLSize, sizeof(ACLSize),
 	    AclSizeInformation)) {
 	goto done;
     }
@@ -678,14 +500,14 @@ TestplatformChmod(
      */
 
     newAclSize = ACLSize.AclBytesInUse + sizeof(ACCESS_DENIED_ACE)
-	    + getLengthSidProc(userSid) - sizeof(DWORD);
-    newAcl = (ACL *) ckalloc(newAclSize);
+	    + GetLengthSid(userSid) - sizeof(DWORD);
+    newAcl = ckalloc(newAclSize);
 
     /*
      * Initialize the new ACL.
      */
 
-    if (!initializeAclProc(newAcl, newAclSize, ACL_REVISION)) {
+    if (!InitializeAcl(newAcl, newAclSize, ACL_REVISION)) {
 	goto done;
     }
 
@@ -693,7 +515,7 @@ TestplatformChmod(
      * Add denied to make readonly, this will be known as a "read-only tag".
      */
 
-    if (set_readOnly && !addAccessDeniedAceProc(newAcl, ACL_REVISION,
+    if (set_readOnly && !AddAccessDeniedAce(newAcl, ACL_REVISION,
 	    readOnlyMask, userSid)) {
 	goto done;
     }
@@ -703,7 +525,7 @@ TestplatformChmod(
 	LPVOID pACE2;
 	ACE_HEADER *phACE2;
 
-	if (!getAceProc(curAcl, j, &pACE2)) {
+	if (!GetAce(curAcl, j, &pACE2)) {
 	    goto done;
 	}
 
@@ -726,7 +548,7 @@ TestplatformChmod(
 	    ACCESS_DENIED_ACE *pACEd = (ACCESS_DENIED_ACE *) phACE2;
 
 	    if (pACEd->Mask == readOnlyMask
-		    && equalSidProc(userSid, (PSID) &pACEd->SidStart)) {
+		    && EqualSid(userSid, (PSID) &pACEd->SidStart)) {
 		acl_readOnly_found = TRUE;
 		continue;
 	    }
@@ -736,7 +558,7 @@ TestplatformChmod(
 	 * Copy the current ACE from the old to the new ACL.
 	 */
 
-	if (!addAceProc(newAcl, ACL_REVISION, MAXDWORD, (PACL *)pACE2,
+	if (!AddAce(newAcl, ACL_REVISION, MAXDWORD, (PACL *) pACE2,
 		((PACE_HEADER) pACE2)->AceSize)) {
 	    goto done;
 	}
@@ -746,7 +568,7 @@ TestplatformChmod(
      * Apply the new ACL.
      */
 
-    if (set_readOnly == acl_readOnly_found || setNamedSecurityInfoProc(
+    if (set_readOnly == acl_readOnly_found || SetNamedSecurityInfoA(
 	    (LPSTR) nativePath, SE_FILE_OBJECT, DACL_SECURITY_INFORMATION,
 	    NULL, NULL, newAcl, NULL) == ERROR_SUCCESS) {
 	res = 0;
@@ -754,13 +576,13 @@ TestplatformChmod(
 
   done:
     if (secDesc) {
-	ckfree((char *) secDesc);
+	ckfree(secDesc);
     }
     if (newAcl) {
-	ckfree((char *) newAcl);
+	ckfree(newAcl);
     }
     if (userSid) {
-	ckfree((char *) userSid);
+	ckfree(userSid);
     }
     if (userDomain) {
 	ckfree(userDomain);
@@ -800,29 +622,25 @@ static int
 TestchmodCmd(
     ClientData dummy,		/* Not used. */
     Tcl_Interp *interp,		/* Current interpreter. */
-    int argc,			/* Number of arguments. */
-    const char **argv)		/* Argument strings. */
+    int objc,			/* Parameter count */
+    Tcl_Obj *const * objv)	/* Parameter vector */
 {
     int i, mode;
-    char *rest;
 
-    if (argc < 2) {
-    usage:
-	Tcl_AppendResult(interp, "wrong # args: should be \"", argv[0],
-		" mode file ?file ...?", NULL);
+    if (objc < 2) {
+	Tcl_WrongNumArgs(interp, 1, objv, "mode file ?file ...?");
 	return TCL_ERROR;
     }
 
-    mode = (int) strtol(argv[1], &rest, 8);
-    if ((rest == argv[1]) || (*rest != '\0')) {
-	goto usage;
+    if (Tcl_GetIntFromObj(interp, objv[1], &mode) != TCL_OK) {
+	return TCL_ERROR;
     }
 
-    for (i = 2; i < argc; i++) {
+    for (i = 2; i < objc; i++) {
 	Tcl_DString buffer;
 	const char *translated;
 
-	translated = Tcl_TranslateFileName(interp, argv[i], &buffer);
+	translated = Tcl_TranslateFileName(interp, Tcl_GetString(objv[i]), &buffer);
 	if (translated == NULL) {
 	    return TCL_ERROR;
 	}

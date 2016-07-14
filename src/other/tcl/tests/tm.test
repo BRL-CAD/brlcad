@@ -5,8 +5,6 @@
 #
 # Copyright (c) 2004 by Donal K. Fellows.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 package require Tcl 8.5
 if {"::tcltest" ni [namespace children]} {
@@ -21,12 +19,12 @@ test tm-1.1 {tm: path command exists} {
 test tm-1.2 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path foo
 } -result {unknown or ambiguous subcommand "foo": must be add, list, or remove}
-test tm-1.3 {tm: path command syntax} -returnCodes error -body {
+test tm-1.3 {tm: path command syntax} {
     ::tcl::tm::path add
-} -result "wrong # args: should be \"::tcl::tm::path add path ...\""
-test tm-1.4 {tm: path command syntax} -returnCodes error -body {
+} {}
+test tm-1.4 {tm: path command syntax} {
     ::tcl::tm::path remove
-} -result "wrong # args: should be \"::tcl::tm::path remove path ...\""
+} {}
 test tm-1.5 {tm: path command syntax} -returnCodes error -body {
     ::tcl::tm::path list foobar
 } -result "wrong # args: should be \"::tcl::tm::path list\""
@@ -202,7 +200,7 @@ test tm-3.11 {tm: module path management, remove ignores unknown path} -setup {
 proc genpaths {base} {
     # Normalizing picks up drive letters on windows [Bug 1053568]
     set base [file normalize $base]
-    foreach {major minor} [split [info tclversion] .] break
+    lassign [split [package present Tcl] .] major minor 
     set results {}
     set base [file join $base tcl$major]
     lappend results [file join $base site-tcl]

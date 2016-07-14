@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH tm n 8.5 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -21,6 +19,7 @@ tm \- Facilities for locating and loading of Tcl Modules
 .fi
 .BE
 .SH DESCRIPTION
+.PP
 This document describes the facilities for locating and loading Tcl
 Modules (see \fBMODULE DEFINITION\fR for the definition of a Tcl Module).
 The following commands are supported:
@@ -77,9 +76,11 @@ The command has been exposed to allow a build system to define
 additional root paths beyond those described by this document.
 .RE
 .SH "MODULE DEFINITION"
+.PP
 A Tcl Module is a Tcl Package contained in a single file, and no other
 files required by it. This file has to be \fBsource\fRable. In other
 words, a Tcl Module is always imported via:
+.PP
 .CS
 source module_file
 .CE
@@ -93,6 +94,7 @@ attached data in any it chooses to fully import and activate the
 package.
 .PP
 The name of a module file has to match the regular expression:
+.PP
 .CS
 ([_[:alpha:]][:_[:alnum:]]*)-([[:digit:]].*)\e.tm
 .CE
@@ -101,11 +103,12 @@ The first capturing parentheses provides the name of the package, the
 second clause its version. In addition to matching the pattern, the
 extracted version number must not raise an error when used in the
 command:
+.PP
 .CS
 package vcompare $version 0
 .CE
-.PP
 .SH "FINDING MODULES"
+.PP
 The directory tree for storing Tcl modules is separate from other
 parts of the filesystem and independent of \fBauto_path\fR.
 .PP
@@ -166,10 +169,13 @@ Note that packages in module form have \fIno\fR control over the
 \fIindex\fR and \fIprovide script\fRs entered into the package
 database for them.
 For a module file \fBMF\fR the \fIindex script\fR is always:
+.PP
 .CS
 package ifneeded \fBPNAME PVERSION\fR [list source \fBMF\fR]
 .CE
+.PP
 and the \fIprovide script\fR embedded in the above is:
+.PP
 .CS
 source \fBMF\fR
 .CE
@@ -177,6 +183,7 @@ source \fBMF\fR
 Both package name \fBPNAME\fR and package version \fBPVERSION\fR are
 extracted from the filename \fBMF\fR according to the definition
 below:
+.PP
 .CS
 \fBMF\fR = /module_path/\fBPNAME\(fm\fR-\fBPVERSION\fR.tm
 .CE
@@ -201,6 +208,7 @@ package \fBFoo\fR is deployed in the form of a Tcl Module,
 packages like \fBfoo\fR, \fBfOo\fR, etc. are not allowed
 anymore.
 .SH "DEFAULT PATHS"
+.PP
 The default list of paths on the module path is computed by a
 \fBtclsh\fR as follows, where \fIX\fR is the major version of the Tcl
 interpreter and \fIy\fR is less than or equal to the minor version of
@@ -225,6 +233,7 @@ to the minor version of the interpreter.
 .RS
 .PP
 For example for Tcl 8.4 the paths searched are:
+.PP
 .CS
 \fB[info library]/../tcl8/8.4\fR
 \fB[info library]/../tcl8/8.3\fR
@@ -276,8 +285,9 @@ These paths are seen and therefore shared by all Tcl shells in the
 \fB$::env(PATH)\fR of the user.
 .PP
 Note that \fIX\fR and \fIy\fR follow the general rules set out
-above. In other words, Tcl 8.4, for example, will look at these 5
+above. In other words, Tcl 8.4, for example, will look at these 10
 environment variables:
+.PP
 .CS
 \fB$::env(TCL8.4_TM_PATH)\fR  \fB$::env(TCL8_4_TM_PATH)\fR
 \fB$::env(TCL8.3_TM_PATH)\fR  \fB$::env(TCL8_3_TM_PATH)\fR
@@ -293,3 +303,6 @@ package(n), Tcl Improvement Proposal #189
 (online at http://tip.tcl.tk/190.html)
 .SH "KEYWORDS"
 modules, package
+.\" Local Variables:
+.\" mode: nroff
+.\" End:

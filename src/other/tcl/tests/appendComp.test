@@ -1,29 +1,28 @@
 # Commands covered:  append lappend
 #
-# This file contains a collection of tests for one or more of the Tcl
-# built-in commands.  Sourcing this file into Tcl runs the tests and
-# generates output for errors.  No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands. Sourcing this file into Tcl runs the tests and generates output
+# for errors. No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994-1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
 catch {unset x}
-
-test appendComp-1.1 {append command} {
-    catch {unset x}
+
+test appendComp-1.1 {append command} -setup {
+    unset -nocomplain x
+} -body {
     proc foo {} {append ::x 1 2 abc "long string"}
     list [foo] $x
-} {{12abclong string} {12abclong string}}
+} -result {{12abclong string} {12abclong string}}
 test appendComp-1.2 {append command} {
     proc foo {} {
 	set x ""
@@ -54,29 +53,29 @@ test appendComp-2.1 {long appends} {
     foo
 } 1
 
-test appendComp-3.1 {append errors} {
+test appendComp-3.1 {append errors} -returnCodes error -body {
     proc foo {} {append}
-    list [catch {foo} msg] $msg
-} {1 {wrong # args: should be "append varName ?value value ...?"}}
-test appendComp-3.2 {append errors} {
+    foo
+} -result {wrong # args: should be "append varName ?value ...?"}
+test appendComp-3.2 {append errors} -returnCodes error -body {
     proc foo {} {
 	set x ""
 	append x(0) 44
     }
-    list [catch {foo} msg] $msg
-} {1 {can't set "x(0)": variable isn't array}}
-test appendComp-3.3 {append errors} {
+    foo
+} -result {can't set "x(0)": variable isn't array}
+test appendComp-3.3 {append errors} -returnCodes error -body {
     proc foo {} {
-	catch {unset x}
+	unset -nocomplain x
 	append x
     }
-    list [catch {foo} msg] $msg
-} {1 {can't read "x": no such variable}}
+    foo
+} -result {can't read "x": no such variable}
 
 test appendComp-4.1 {lappend command} {
     proc foo {} {
 	global x
-	catch {unset x}
+	unset -nocomplain x
 	lappend x 1 2 abc "long string"
     }
     list [foo] $x
@@ -134,34 +133,34 @@ test appendComp-4.8 {lappend command} {
     }
     foo
 } "\\{ abc"
-test appendComp-4.9 {lappend command} {
+test appendComp-4.9 {lappend command} -returnCodes error -body {
     proc foo {} {
 	set x " \{"
-	list [catch {lappend x abc} msg] $msg
+	lappend x abc
     }
     foo
-} {1 {unmatched open brace in list}}
-test appendComp-4.10 {lappend command} {
+} -result {unmatched open brace in list}
+test appendComp-4.10 {lappend command} -returnCodes error -body {
     proc foo {} {
 	set x "	\{"
-	list [catch {lappend x abc} msg] $msg
+	lappend x abc
     }
     foo
-} {1 {unmatched open brace in list}}
-test appendComp-4.11 {lappend command} {
+} -result {unmatched open brace in list}
+test appendComp-4.11 {lappend command} -returnCodes error -body {
     proc foo {} {
 	set x "\{\{\{"
-	list [catch {lappend x abc} msg] $msg
+	lappend x abc
     }
     foo
-} {1 {unmatched open brace in list}}
-test appendComp-4.12 {lappend command} {
+} -result {unmatched open brace in list}
+test appendComp-4.12 {lappend command} -returnCodes error -body {
     proc foo {} {
 	set x "x \{\{\{"
-	list [catch {lappend x abc} msg] $msg
+	lappend x abc
     }
     foo
-} {1 {unmatched open brace in list}}
+} -result {unmatched open brace in list}
 test appendComp-4.13 {lappend command} {
     proc foo {} {
 	set x "x\{\{\{"
@@ -207,45 +206,50 @@ test appendComp-4.20 {lappend command} {
     foo
 } {abc}
 
-proc check {var size} {
-    set l [llength $var]
-    if {$l != $size} {
-	return "length mismatch: should have been $size, was $l"
-    }
-    for {set i 0} {$i < $size} {set i [expr $i+1]} {
-	set j [lindex $var $i]
-	if {$j != "item $i"} {
-	    return "element $i should have been \"item $i\", was \"$j\""
+test appendComp-5.1 {long lappends} -setup {
+    unset -nocomplain x
+    proc check {var size} {
+	set l [llength $var]
+	if {$l != $size} {
+	    return "length mismatch: should have been $size, was $l"
 	}
+	for {set i 0} {$i < $size} {incr i} {
+	    set j [lindex $var $i]
+	    if {$j ne "item $i"} {
+		return "element $i should have been \"item $i\", was \"$j\""
+	    }
+	}
+	return ok
     }
-    return ok
-}
-test appendComp-5.1 {long lappends} {
-    catch {unset x}
+} -body {
     set x ""
     for {set i 0} {$i < 300} {set i [expr $i+1]} {
 	lappend x "item $i"
     }
     check $x 300
-} ok
+} -cleanup {
+    unset -nocomplain x
+    catch {rename check ""}
+} -result ok
 
-test appendComp-6.1 {lappend errors} {
+test appendComp-6.1 {lappend errors} -returnCodes error -body {
     proc foo {} {lappend}
-    list [catch {foo} msg] $msg
-} {1 {wrong # args: should be "lappend varName ?value value ...?"}}
-test appendComp-6.2 {lappend errors} {
+    foo
+} -result {wrong # args: should be "lappend varName ?value ...?"}
+test appendComp-6.2 {lappend errors} -returnCodes error -body {
     proc foo {} {
 	set x ""
 	lappend x(0) 44
     }
-    list [catch {foo} msg] $msg
-} {1 {can't set "x(0)": variable isn't array}}
+    foo
+} -result {can't set "x(0)": variable isn't array}
 
-test appendComp-7.1 {lappendComp-created var and error in trace on that var} {
+test appendComp-7.1 {lappendComp-created var and error in trace on that var} -setup {
+    catch {rename foo ""}
+    unset -nocomplain x
+} -body {
     proc bar {} {
 	global x
-	catch {rename foo ""}
-	catch {unset x}
 	trace variable x w foo
 	proc foo {} {global x; unset x}
 	catch {lappend x 1}
@@ -256,100 +260,103 @@ test appendComp-7.1 {lappendComp-created var and error in trace on that var} {
 	list [info exists x] [catch {set x} msg] $msg
     }
     bar
-} {0 1 {can't read "x": no such variable}}
-test appendComp-7.2 {lappend var triggers read trace, index var} {bug-3057639} {
+} -result {0 1 {can't read "x": no such variable}}
+test appendComp-7.2 {lappend var triggers read trace, index var} -setup {
+    unset -nocomplain ::result
+} -body {
     proc bar {} {
-	catch {unset myvar}
-	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar a
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {myvar {} r}}
-test appendComp-7.3 {lappend var triggers read trace, stack var} {bug-3057639} {
+} -result {myvar {} r} -constraints {bug-3057639}
+test appendComp-7.3 {lappend var triggers read trace, stack var} -setup {
+    unset -nocomplain ::result
+    unset -nocomplain ::myvar
+} -body {
     proc bar {} {
-	catch {unset ::myvar}
-	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar a
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {::myvar {} r}}
-test appendComp-7.4 {lappend var triggers read trace, array var} {bug-3057639} {
-    # The behavior of read triggers on lappend changed in 8.0 to
-    # not trigger them.  Maybe not correct, but been there a while.
+} -result {::myvar {} r} -constraints {bug-3057639}
+test appendComp-7.4 {lappend var triggers read trace, array var} -setup {
+    unset -nocomplain ::result
+} -body {
+    # The behavior of read triggers on lappend changed in 8.0 to not trigger
+    # them. Maybe not correct, but been there a while.
     proc bar {} {
-	catch {unset myvar}
-	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {myvar b r}}
-test appendComp-7.5 {lappend var triggers read trace, array var} {
-    # The behavior of read triggers on lappend changed in 8.0 to
-    # not trigger them.  Maybe not correct, but been there a while.
+} -result {myvar b r} -constraints {bug-3057639}
+test appendComp-7.5 {lappend var triggers read trace, array var} -setup {
+    unset -nocomplain ::result
+} -body {
+    # The behavior of read triggers on lappend changed in 8.0 to not trigger
+    # them. Maybe not correct, but been there a while.
     proc bar {} {
-	catch {unset myvar}
-	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a b
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {myvar b r}}
-test appendComp-7.6 {lappend var triggers read trace, array var exists} {bug-3057639} {
+} -result {myvar b r}
+test appendComp-7.6 {lappend var triggers read trace, array var exists} -setup {
+    unset -nocomplain ::result
+} -body {
     proc bar {} {
-	catch {unset myvar}
-	catch {unset ::result}
 	set myvar(0) 1
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend myvar(b) a
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {myvar b r}}
-test appendComp-7.7 {lappend var triggers read trace, array stack var} {bug-3057639} {
+} -result {myvar b r} -constraints {bug-3057639}
+test appendComp-7.7 {lappend var triggers read trace, array stack var} -setup {
+    unset -nocomplain ::myvar
+    unset -nocomplain ::result
+} -body {
     proc bar {} {
-	catch {unset ::myvar}
-	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar(b) a
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {::myvar b r}}
-test appendComp-7.8 {lappend var triggers read trace, array stack var} {
+} -result {::myvar b r} -constraints {bug-3057639}
+test appendComp-7.8 {lappend var triggers read trace, array stack var} -setup {
+    unset -nocomplain ::myvar
+    unset -nocomplain ::result
+} -body {
     proc bar {} {
-	catch {unset ::myvar}
-	catch {unset ::result}
 	trace variable ::myvar r foo
 	proc foo {args} {append ::result $args}
 	lappend ::myvar(b) a b
-	list [catch {set ::result} msg] $msg
+	return $::result
     }
     bar
-} {0 {::myvar b r}}
-test appendComp-7.9 {append var does not trigger read trace} {
+} -result {::myvar b r}
+test appendComp-7.9 {append var does not trigger read trace} -setup {
+    unset -nocomplain ::result
+} -body {
     proc bar {} {
-	catch {unset myvar}
-	catch {unset ::result}
 	trace variable myvar r foo
 	proc foo {args} {append ::result $args}
 	append myvar a
 	info exists ::result
     }
     bar
-} {0}
+} -result {0}
 
 test appendComp-8.1 {defer error to runtime} -setup {
     interp create slave
@@ -365,25 +372,24 @@ test appendComp-8.1 {defer error to runtime} -setup {
     interp delete slave
 } -result {}
 
+# New tests for bug 3057639 to show off the more consistent behaviour of
+# lappend in both direct-eval and bytecompiled code paths (see append.test for
+# the direct-eval variants). lappend now behaves like append. 9.0/1 lappend -
+# 9.2/3 append.
 
-# New tests for bug 3057639 to show off the more consistent behaviour
-# of lappend in both direct-eval and bytecompiled code paths (see
-# append.test for the direct-eval variants). lappend now behaves like
-# append. 9.0/1 lappend - 9.2/3 append.
+# Note also the tests above now constrained by bug-3057639, these changed
+# behaviour with the triggering of read traces in bc mode gone.
 
-# Note also the tests above now constrained by bug-3057639, these
-# changed behaviour with the triggering of read traces in bc mode
-# gone.
+# Going back to the tests below. The direct-eval tests are ok before and after
+# patch (no read traces run for lappend, append). The compiled tests are
+# failing for lappend (9.0/1) before the patch, showing how it invokes read
+# traces in the compiled path. The append tests are good (9.2/3). After the
+# patch the failues are gone.
 
-# Going back to the tests below. The direct-eval tests are ok before
-# and after patch (no read traces run for lappend, append). The
-# compiled tests are failing for lappend (9.0/1) before the patch,
-# showing how it invokes read traces in the compiled path. The append
-# tests are good (9.2/3). After the patch the failues are gone.
-
-test appendComp-9.0 {bug 3057639, lappend compiled, read trace on non-existing array variable element} {
-    catch {unset myvar}
+test appendComp-9.0 {bug 3057639, lappend compiled, read trace on non-existing array variable element} -setup {
+    unset -nocomplain myvar
     array set myvar {}
+} -body {
     proc nonull {var key val} {
 	upvar 1 $var lvar
 	if {![info exists lvar($key)]} {
@@ -395,22 +401,21 @@ test appendComp-9.0 {bug 3057639, lappend compiled, read trace on non-existing a
 	lappend ::myvar(key) "new value"
     }
     list [catch { foo } msg] $msg
-} {0 {{new value}}}
-
-
-test appendComp-9.1 {bug 3057639, lappend direct eval, read trace on non-existing env element} {
-    catch {unset ::env(__DUMMY__)}
+} -result {0 {{new value}}}
+test appendComp-9.1 {bug 3057639, lappend direct eval, read trace on non-existing env element} -setup {
+    unset -nocomplain ::env(__DUMMY__)
+} -body {
     proc foo {} {
 	lappend ::env(__DUMMY__) "new value"
     }
     list [catch { foo } msg] $msg
-} {0 {{new value}}}
-
-
-
-test appendComp-9.2 {bug 3057639, append compiled, read trace on non-existing array variable element} {
-    catch {unset myvar}
+} -cleanup {
+    unset -nocomplain ::env(__DUMMY__)
+} -result {0 {{new value}}}
+test appendComp-9.2 {bug 3057639, append compiled, read trace on non-existing array variable element} -setup {
+    unset -nocomplain myvar
     array set myvar {}
+} -body {
     proc nonull {var key val} {
 	upvar 1 $var lvar
 	if {![info exists lvar($key)]} {
@@ -422,21 +427,39 @@ test appendComp-9.2 {bug 3057639, append compiled, read trace on non-existing ar
 	append ::myvar(key) "new value"
     }
     list [catch { foo } msg] $msg
-} {0 {new value}}
-
-
-test appendComp-9.3 {bug 3057639, append direct eval, read trace on non-existing env element} {
-    catch {unset ::env(__DUMMY__)}
+} -result {0 {new value}}
+test appendComp-9.3 {bug 3057639, append direct eval, read trace on non-existing env element} -setup {
+    unset -nocomplain ::env(__DUMMY__)
+} -body {
     proc foo {} {
 	append ::env(__DUMMY__) "new value"
     }
     list [catch { foo } msg] $msg
-} {0 {new value}}
+} -cleanup {
+    unset -nocomplain ::env(__DUMMY__)
+} -result {0 {new value}}
 
-
-
-
-
+test appendComp-10.1 {Bug 214cc0eb22: lappend with no values} {
+    apply {lst {
+	lappend lst
+    }} "# 1 2 3"
+} "# 1 2 3"
+test appendComp-10.2 {Bug 214cc0eb22: lappend with no values} -body {
+    apply {lst {
+	lappend lst
+    }} "1 \{ 2"
+} -returnCodes error -result {unmatched open brace in list}
+test appendComp-10.3 {Bug 214cc0eb22: expanded lappend with no values} {
+    apply {lst {
+	lappend lst {*}[list]
+    }} "# 1 2 3"
+} "# 1 2 3"
+test appendComp-10.4 {Bug 214cc0eb22: expanded lappend with no values} -body {
+    apply {lst {
+	lappend lst {*}[list]
+    }} "1 \{ 2"
+} -returnCodes error -result {unmatched open brace in list}
+
 catch {unset i x result y}
 catch {rename foo ""}
 catch {rename bar ""}
@@ -446,3 +469,8 @@ catch {rename bar {}}
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

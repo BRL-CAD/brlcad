@@ -22,7 +22,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 			${CMAKE_CURRENT_SOURCE_DIR}/${manfile}
 			${CMAKE_CURRENT_BINARY_DIR}/man1 OUTPUT_VARIABLE MAN1_SH)
 	ENDFOREACH(manfile ${tcl_MAN1})
-
+	
 	SET(tcl_MAN3
 		Access.3
 		AddErrInfo.3
@@ -35,8 +35,10 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		Backslash.3
 		BoolObj.3
 		ByteArrObj.3
+		Cancel.3
 		CallDel.3
 		ChnlStack.3
+		Class.3
 		CmdCmplt.3
 		Concat.3
 		CrtChannel.3
@@ -82,13 +84,17 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		Limit.3
 		LinkVar.3
 		ListObj.3
+		Load.3
+		Method.3
 		Namespace.3
 		Notifier.3
+		NRE.3
 		Object.3
 		ObjectType.3
 		OpenFileChnl.3
 		OpenTcp.3
 		Panic.3
+		ParseArgs.3
 		ParseCmd.3
 		PkgRequire.3
 		Preserve.3
@@ -113,6 +119,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		StrMatch.3
 		StringObj.3
 		SubstObj.3
+		TclZlib.3
 		TCL_MEM_DEBUG.3
 		Tcl_Main.3
 		Thread.3
@@ -148,6 +155,8 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		close.n
 		concat.n
 		continue.n
+		class.n
+		coroutine.n
 		dde.n
 		dict.n
 		encoding.n
@@ -196,7 +205,9 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		mathop.n
 		memory.n
 		msgcat.n
+		my.n
 		namespace.n
+		next.n
 		open.n
 		package.n
 		packagens.n
@@ -218,6 +229,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		safe.n
 		scan.n
 		seek.n
+		self.n
 		set.n
 		socket.n
 		source.n
@@ -225,12 +237,16 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		string.n
 		subst.n
 		switch.n
+		tailcall.n
 		tcltest.n
 		tclvars.n
 		tell.n
+		throw.n
 		time.n
 		tm.n
 		trace.n
+		transchan.n
+		try.n
 		unknown.n
 		unload.n
 		unset.n
@@ -240,6 +256,7 @@ IF(SED_EXEC AND SH_EXEC AND NOT TCLMAN_GENERATED)
 		variable.n
 		vwait.n
 		while.n
+		zlib.n
 		)
 	FOREACH(manfile ${tcl_MANN})
 		EXEC_PROGRAM(${SH_EXEC} ARGS ${CMAKE_CURRENT_SOURCE_DIR}/../unix/installManPage

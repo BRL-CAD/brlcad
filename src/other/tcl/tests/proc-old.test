@@ -13,8 +13,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -233,7 +231,7 @@ test proc-old-30.12 {arguments and defaults} {
 	return [list $x $y $args]
     }
     list [catch {tproc} msg] $msg
-} {1 {wrong # args: should be "tproc x ?y? ..."}}
+} {1 {wrong # args: should be "tproc x ?y? ?arg ...?"}}
 
 test proc-old-4.1 {variable numbers of arguments} {
     proc tproc args {return $args}
@@ -258,7 +256,7 @@ test proc-old-4.5 {variable numbers of arguments} {
 test proc-old-4.6 {variable numbers of arguments} {
     proc tproc {x missing args} {return $args}
     list [catch {tproc 1} msg] $msg
-} {1 {wrong # args: should be "tproc x missing ..."}}
+} {1 {wrong # args: should be "tproc x missing ?arg ...?"}}
 
 test proc-old-5.1 {error conditions} {
     list [catch {proc} msg] $msg
@@ -284,9 +282,6 @@ test proc-old-5.7 {error conditions} {
 test proc-old-5.8 {error conditions} {
     catch {return}
 } 2
-test proc-old-5.9 {error conditions} {
-    list [catch {global} msg] $msg
-} {1 {wrong # args: should be "global varName ?varName ...?"}}
 proc tproc {} {
     set a 22
     global a
@@ -411,12 +406,12 @@ test proc-old-7.5 {return with special completion code} {
 test proc-old-7.6 {return with special completion code} {
     list [catch {tproc -14} msg] $msg
 } {-14 abc}
-test proc-old-7.7 {return with special completion code} {
-    list [catch {tproc gorp} msg] $msg
-} {1 {bad completion code "gorp": must be ok, error, return, break, continue, or an integer}}
-test proc-old-7.8 {return with special completion code} {
-    list [catch {tproc 10b} msg] $msg
-} {1 {bad completion code "10b": must be ok, error, return, break, continue, or an integer}}
+test proc-old-7.7 {return with special completion code} -body {
+    tproc err
+} -returnCodes error -match glob -result {bad completion code "err": must be ok, error, return, break, continue*, or an integer}
+test proc-old-7.8 {return with special completion code} -body {
+    tproc 10b
+} -returnCodes error -match glob -result {bad completion code "10b": must be ok, error, return, break, continue*, or an integer}
 test proc-old-7.9 {return with special completion code} {
     proc tproc2 {} {
 	tproc return

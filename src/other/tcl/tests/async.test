@@ -10,18 +10,17 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testasync [llength [info commands testasync]]
-testConstraint threaded [expr {
-    [info exists ::tcl_platform(threaded)] && $::tcl_platform(threaded)
-}]
+testConstraint threaded [::tcl::pkgconfig get threaded]
 
 proc async1 {result code} {
     global aresult acode
@@ -149,44 +148,25 @@ test async-3.1 {deleting handlers} testasync {
     list [catch {testasync mark $hm2 "foobar" 5} msg] $msg $x
 } {3 del2 {0 0 0 del1 del2}}
 
-proc nothing {} {
-    # empty proc
-}
-proc hang1 {handle} {
-    global aresult
-    set aresult {Async event not delivered}
-    testasync marklater $handle
-    for {set i 0} {
-	$i < 2500000  &&  $aresult eq "Async event not delivered"
-    } {incr i} {
-	nothing
-    }
-    return $aresult
-}
-proc hang2 {handle} {
-    global aresult
-    set aresult {Async event not delivered}
-    testasync marklater $handle
-    for {set i 0} {
-	$i < 2500000  &&  $aresult eq "Async event not delivered"
-    } {incr i} {}
-    return $aresult
-}
-proc hang3 {handle} [concat {
-    global aresult
-    set aresult {Async event not delivered}
-    testasync marklater $handle
-    set i 0
-} [string repeat {;incr i;} 1500000] {
-    return $aresult
-}]
-
 test async-4.1 {async interrupting bytecode sequence} -constraints {
     testasync threaded
 } -setup {
     set hm [testasync create async3]
+    proc nothing {} {
+	# empty proc
+    }
 } -body {
-    hang1 $hm
+    apply {{handle} {
+	global aresult
+	set aresult {Async event not delivered}
+	testasync marklater $handle
+	for {set i 0} {
+	    $i < 2500000  &&  $aresult eq "Async event not delivered"
+	} {incr i} {
+	    nothing
+	}
+	return $aresult
+    }} $hm
 } -result {test pattern} -cleanup {
     testasync delete $hm
 }
@@ -195,7 +175,15 @@ test async-4.2 {async interrupting straight bytecode sequence} -constraints {
 } -setup {
     set hm [testasync create async3]
 } -body {
-    hang2 $hm
+    apply {{handle} {
+	global aresult
+	set aresult {Async event not delivered}
+	testasync marklater $handle
+	for {set i 0} {
+	    $i < 2500000  &&  $aresult eq "Async event not delivered"
+	} {incr i} {}
+	return $aresult
+    }} $hm
 } -result {test pattern} -cleanup {
     testasync delete $hm
 }
@@ -204,7 +192,14 @@ test async-4.3 {async interrupting loop-less bytecode sequence} -constraints {
 } -setup {
     set hm [testasync create async3]
 } -body {
-    hang3 $hm
+    apply [list {handle} [concat {
+	global aresult
+	set aresult {Async event not delivered}
+	testasync marklater $handle
+	set i 0
+    } "[string repeat {;incr i;} 1500000]after 10;" {
+	return $aresult
+    }]] $hm
 } -result {test pattern} -cleanup {
     testasync delete $hm
 }

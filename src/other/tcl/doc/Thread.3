@@ -4,11 +4,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
+'\"
 .TH Threads 3 "8.1" Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_ConditionNotify, Tcl_ConditionWait, Tcl_ConditionFinalize, Tcl_GetThreadData, Tcl_MutexLock, Tcl_MutexUnlock, Tcl_MutexFinalize, Tcl_CreateThread, Tcl_JoinThread \- Tcl thread support
@@ -38,17 +36,17 @@ void
 \fBTcl_MutexFinalize\fR(\fImutexPtr\fR)
 .sp
 int
-\fBTcl_CreateThread\fR(\fIidPtr, threadProc, clientData, stackSize, flags\fR)
+\fBTcl_CreateThread\fR(\fIidPtr, proc, clientData, stackSize, flags\fR)
 .sp
 int
 \fBTcl_JoinThread\fR(\fIid, result\fR)
 .SH ARGUMENTS
-.AS Tcl_CreateThreadProc threadProc out
+.AS Tcl_CreateThreadProc proc out
 .AP Tcl_Condition *condPtr in
 A condition variable, which must be associated with a mutex lock.
 .AP Tcl_Mutex *mutexPtr in
 A mutex lock.
-.AP Tcl_Time *timePtr in
+.AP "const Tcl_Time" *timePtr in
 A time limit on the condition wait.  NULL to wait forever.
 Note that a polling value of 0 seconds does not make much sense.
 .AP Tcl_ThreadDataKey *keyPtr in
@@ -64,15 +62,15 @@ The referred storage will contain the id of the newly created thread as
 returned by the operating system.
 .AP Tcl_ThreadId id in
 Id of the thread waited upon.
-.AP Tcl_ThreadCreateProc threadProc in
+.AP Tcl_ThreadCreateProc *proc in
 This procedure will act as the \fBmain()\fR of the newly created
 thread. The specified \fIclientData\fR will be its sole argument.
 .AP ClientData clientData in
-Arbitrary information. Passed as sole argument to the \fIthreadProc\fR.
+Arbitrary information. Passed as sole argument to the \fIproc\fR.
 .AP int stackSize in
 The size of the stack given to the new thread.
 .AP int flags in
-Bitmask containing flags allowing the caller to modify behaviour of
+Bitmask containing flags allowing the caller to modify behavior of
 the new thread.
 .AP int *result out
 The referred storage is used to place the exit code of the thread
@@ -81,9 +79,10 @@ waited upon into it.
 .SH INTRODUCTION
 Beginning with the 8.1 release, the Tcl core is thread safe, which
 allows you to incorporate Tcl into multithreaded applications without
-customizing the Tcl core.  To enable Tcl multithreading support,
-you must include the \fB\-\|\-enable-threads\fR option to \fBconfigure\fR
-when you configure and compile your Tcl core.
+customizing the Tcl core.  Starting with the 8.6 release, Tcl
+multithreading support is on by default. To disable Tcl multithreading
+support, you must include the \fB\-\|\-disable-threads\fR option to
+\fBconfigure\fR when you configure and compile your Tcl core.
 .PP
 An important constraint of the Tcl threads implementation is that
 \fIonly the thread that created a Tcl interpreter can use that
@@ -93,15 +92,15 @@ and use multiple interpreters.)
 .SH DESCRIPTION
 Tcl provides \fBTcl_CreateThread\fR for creating threads. The
 caller can determine the size of the stack given to the new thread and
-modify the behaviour through the supplied \fIflags\fR. The value
+modify the behavior through the supplied \fIflags\fR. The value
 \fBTCL_THREAD_STACK_DEFAULT\fR for the \fIstackSize\fR indicates that
 the default size as specified by the operating system is to be used
 for the new thread. As for the flags, currently only the values
 \fBTCL_THREAD_NOFLAGS\fR and \fBTCL_THREAD_JOINABLE\fR are defined. The
-first of them invokes the default behaviour with no
-specialties. Using the second value marks the new thread as
-\fIjoinable\fR. This means that another thread can wait for the such
-marked thread to exit and join it.
+first of them invokes the default behavior with no special settings.
+Using the second value marks the new thread as \fIjoinable\fR. This
+means that another thread can wait for the such marked thread to exit
+and join it.
 .PP
 Restrictions: On some UNIX systems the pthread-library does not
 contain the functionality to specify the stack size of a thread. The
@@ -128,7 +127,7 @@ will cause a memory leak.
 .PP
 The \fBTcl_GetThreadData\fR call returns a pointer to a block of
 thread-private data.  Its argument is a key that is shared by all threads
-and a size for the block of storage.  The storage is automatically 
+and a size for the block of storage.  The storage is automatically
 allocated and initialized to all zeros the first time each thread asks for it.
 The storage is automatically deallocated by \fBTcl_FinalizeThread\fR.
 .SS "SYNCHRONIZATION AND COMMUNICATION"
@@ -182,13 +181,59 @@ explicitly by calls to \fBTcl_MutexFinalize\fR or
 \fBTcl_ConditionFinalize\fR.
 Thread local storage is reclaimed during \fBTcl_FinalizeThread\fR.
 .SH "SCRIPT-LEVEL ACCESS TO THREADS"
-.VS 8.5
+.PP
 Tcl provides no built-in commands for scripts to use to create,
 manage, or join threads, nor any script-level access to mutex or
 condition variables.  It provides such facilities only via C
 interfaces, and leaves it up to packages to expose these matters to
 the script level.  One such package is the \fBThread\fR package.
-.VE 8.5
+.SH EXAMPLE
+.PP
+To create a thread with portable code, its implementation function should be
+declared as follows:
+.PP
+.CS
+static \fBTcl_ThreadCreateProc\fR MyThreadImplFunc;
+.CE
+.PP
+It should then be defined like this example, which just counts up to a given
+value and then finishes.
+.PP
+.CS
+static \fBTcl_ThreadCreateType\fR
+MyThreadImplFunc(
+    ClientData clientData)
+{
+    int i, limit = (int) clientData;
+    for (i=0 ; i<limit ; i++) {
+        /* doing nothing at all here */
+    }
+    \fBTCL_THREAD_CREATE_RETURN\fR;
+}
+.CE
+.PP
+To create the above thread, make it execute, and wait for it to finish, we
+would do this:
+.PP
+.CS
+int limit = 1000000000;
+ClientData limitData = (void*)((intptr_t) limit);
+Tcl_ThreadId id;    \fI/* holds identity of thread created */\fR
+int result;
+
+if (\fBTcl_CreateThread\fR(&id, MyThreadImplFunc, limitData,
+        \fBTCL_THREAD_STACK_DEFAULT\fR,
+        \fBTCL_THREAD_JOINABLE\fR) != TCL_OK) {
+    \fI/* Thread did not create correctly */\fR
+    return;
+}
+\fI/* Do something else for a while here */\fR
+if (\fBTcl_JoinThread\fR(id, &result) != TCL_OK) {
+    \fI/* Thread did not finish properly */\fR
+    return;
+}
+\fI/* All cleaned up nicely */\fR
+.CE
 .SH "SEE ALSO"
 Tcl_GetCurrentThread(3), Tcl_ThreadQueueEvent(3), Tcl_ThreadAlert(3),
 Tcl_ExitThread(3), Tcl_FinalizeThread(3), Tcl_CreateThreadExitHandler(3),

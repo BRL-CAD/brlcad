@@ -10,9 +10,6 @@ package require Tcl 8.4
 # man2tcl program to generate a HTML files from Tcl manual entries.
 #
 # Copyright (c) 1996 by Sun Microsystems, Inc.
-#
-# SCCS: @(#) man2html.tcl 1.5 96/04/11 20:21:43
-#
 
 
 # sarray -
@@ -30,8 +27,8 @@ proc sarray {file args} {
 	if {![array exists array]} {
 	    puts "sarray: \"$a\" isn't an array"
 	    break
-	}	
-    
+	}
+
 	foreach name [lsort [array names array]] {
 	    regsub -all " " $name "\\ " name1
 	    puts $file "set ${a}($name1) \{$array($name)\}"
@@ -144,12 +141,12 @@ proc main {argv} {
 
     foreach package $packages {
 	file mkdir $html_dir/$package
-    
+
 	# build hyperlink database arrays: NAME_file and KEY_file
 	#
 	puts "\nScanning man pages in $tcl_dir/$package/doc..."
 	uplevel \#0 [list source $homeDir/man2html1.tcl]
-    
+
 	doDir $tcl_dir/$package/doc
 
 	# clean up the NAME_file and KEY_file database arrays

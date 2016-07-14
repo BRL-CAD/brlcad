@@ -5,16 +5,23 @@
  *
  * Copyright (c) 1998 by Sun Microsystems, Inc.
  * Copyright (c) 1999 by Scriptics Corporation
+ * Copyright (c) 2008 by George Peter Staplin
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
 
-#include <sys/stat.h>
+#include <float.h>
+
+/* Workaround for mingw versions which don't provide this in float.h */
+#ifndef _MCW_EM
+#   define	_MCW_EM		0x0008001F	/* Error masks */
+#   define	_MCW_RC		0x00000300	/* Rounding */
+#   define	_MCW_PC		0x00030000	/* Precision */
+_CRTIMP unsigned int __cdecl _controlfp (unsigned int unNew, unsigned int unMask);
+#endif
 
 /*
  * This is the master lock used to serialize access to other serialization
@@ -125,6 +132,66 @@ typedef struct allocMutex {
 #endif /* USE_THREAD_ALLOC */
 
 /*
+ * The per thread data passed from TclpThreadCreate
+ * to TclWinThreadStart.
+ */
+
+typedef struct WinThread {
+  LPTHREAD_START_ROUTINE lpStartAddress; /* Original startup routine */
+  LPVOID lpParameter;		/* Original startup data */
+  unsigned int fpControl;	/* Floating point control word from the
+				 * main thread */
+} WinThread;
+
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * TclWinThreadStart --
+ *
+ *	This procedure is the entry point for all new threads created
+ *	by Tcl on Windows.
+ *
+ * Results:
+ *	Various, depending on the result of the wrapped thread start
+ *	routine.
+ *
+ * Side effects:
+ *	Arbitrary, since user code is executed.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static DWORD WINAPI
+TclWinThreadStart(
+    LPVOID lpParameter)		/* The WinThread structure pointer passed
+				 * from TclpThreadCreate */
+{
+    WinThread *winThreadPtr = (WinThread *) lpParameter;
+    unsigned int fpmask;
+    LPTHREAD_START_ROUTINE lpOrigStartAddress;
+    LPVOID lpOrigParameter;
+
+    if (!winThreadPtr) {
+	return TCL_ERROR;
+    }
+
+    fpmask = _MCW_EM | _MCW_RC | _MCW_PC;
+
+#if defined(_MSC_VER) && _MSC_VER >= 1200
+    fpmask |= _MCW_DN;
+#endif
+
+    _controlfp(winThreadPtr->fpControl, fpmask);
+
+    lpOrigStartAddress = winThreadPtr->lpStartAddress;
+    lpOrigParameter = winThreadPtr->lpParameter;
+
+    ckfree((char *)winThreadPtr);
+    return lpOrigStartAddress(lpOrigParameter);
+}
+
+/*
  *----------------------------------------------------------------------
  *
  * TclpThreadCreate --
@@ -144,13 +211,19 @@ typedef struct allocMutex {
 int
 TclpThreadCreate(
     Tcl_ThreadId *idPtr,	/* Return, the ID of the thread. */
-    Tcl_ThreadCreateProc proc,	/* Main() function of the thread. */
+    Tcl_ThreadCreateProc *proc,	/* Main() function of the thread. */
     ClientData clientData,	/* The one argument to Main(). */
     int stackSize,		/* Size of stack for the new thread. */
     int flags)			/* Flags controlling behaviour of the new
 				 * thread. */
 {
+    WinThread *winThreadPtr;		/* Per-thread startup info */
     HANDLE tHandle;
+
+    winThreadPtr = (WinThread *)ckalloc(sizeof(WinThread));
+    winThreadPtr->lpStartAddress = (LPTHREAD_START_ROUTINE) proc;
+    winThreadPtr->lpParameter = clientData;
+    winThreadPtr->fpControl = _controlfp(0, 0);
 
     EnterCriticalSection(&joinLock);
 
@@ -159,12 +232,12 @@ TclpThreadCreate(
 		 */
 
 #if defined(_MSC_VER) || defined(__MSVCRT__) || defined(__BORLANDC__)
-    tHandle = (HANDLE) _beginthreadex(NULL, (unsigned) stackSize, proc,
-	    clientData, 0, (unsigned *)idPtr);
+    tHandle = (HANDLE) _beginthreadex(NULL, (unsigned) stackSize,
+	    (Tcl_ThreadCreateProc*) TclWinThreadStart, winThreadPtr,
+	    0, (unsigned *)idPtr);
 #else
     tHandle = CreateThread(NULL, (DWORD) stackSize,
-	    (LPTHREAD_START_ROUTINE) proc, (LPVOID) clientData,
-	    (DWORD) 0, (LPDWORD)idPtr);
+	    TclWinThreadStart, winThreadPtr, 0, (LPDWORD)idPtr);
 #endif
 
     if (tHandle == NULL) {
@@ -262,7 +335,7 @@ TclpThreadExit(
 Tcl_ThreadId
 Tcl_GetCurrentThread(void)
 {
-    return (Tcl_ThreadId) GetCurrentThreadId();
+    return (Tcl_ThreadId)(size_t)GetCurrentThreadId();
 }
 
 /*
@@ -504,7 +577,7 @@ Tcl_MutexLock(
 	 */
 
 	if (*mutexPtr == NULL) {
-	    csPtr = (CRITICAL_SECTION *) ckalloc(sizeof(CRITICAL_SECTION));
+	    csPtr = ckalloc(sizeof(CRITICAL_SECTION));
 	    InitializeCriticalSection(csPtr);
 	    *mutexPtr = (Tcl_Mutex)csPtr;
 	    TclRememberMutex(mutexPtr);
@@ -565,7 +638,7 @@ TclpFinalizeMutex(
 
     if (csPtr != NULL) {
 	DeleteCriticalSection(csPtr);
-	ckfree((char *) csPtr);
+	ckfree(csPtr);
 	*mutexPtr = NULL;
     }
 }
@@ -596,7 +669,7 @@ void
 Tcl_ConditionWait(
     Tcl_Condition *condPtr,	/* Really (WinCondition **) */
     Tcl_Mutex *mutexPtr,	/* Really (CRITICAL_SECTION **) */
-    Tcl_Time *timePtr)		/* Timeout on waiting period */
+    const Tcl_Time *timePtr) /* Timeout on waiting period */
 {
     WinCondition *winCondPtr;	/* Per-condition queue head */
     CRITICAL_SECTION *csPtr;	/* Caller's Mutex, after casting */
@@ -635,8 +708,7 @@ Tcl_ConditionWait(
 	     * and initializing that may drop back into the Master Lock.
 	     */
 
-	    Tcl_CreateThreadExitHandler(FinalizeConditionEvent,
-		    (ClientData) tsdPtr);
+	    Tcl_CreateThreadExitHandler(FinalizeConditionEvent, tsdPtr);
 	}
     }
 
@@ -648,7 +720,7 @@ Tcl_ConditionWait(
 	 */
 
 	if (*condPtr == NULL) {
-	    winCondPtr = (WinCondition *) ckalloc(sizeof(WinCondition));
+	    winCondPtr = ckalloc(sizeof(WinCondition));
 	    InitializeCriticalSection(&winCondPtr->condLock);
 	    winCondPtr->firstPtr = NULL;
 	    winCondPtr->lastPtr = NULL;
@@ -697,7 +769,8 @@ Tcl_ConditionWait(
     while (!timeout && (tsdPtr->flags & WIN_THREAD_BLOCKED)) {
 	ResetEvent(tsdPtr->condEvent);
 	LeaveCriticalSection(&winCondPtr->condLock);
-	if (WaitForSingleObject(tsdPtr->condEvent, wtime) == WAIT_TIMEOUT) {
+	if (WaitForSingleObjectEx(tsdPtr->condEvent, wtime,
+		TRUE) == WAIT_TIMEOUT) {
 	    timeout = 1;
 	}
 	EnterCriticalSection(&winCondPtr->condLock);
@@ -858,7 +931,7 @@ TclpFinalizeCondition(
 
     if (winCondPtr != NULL) {
 	DeleteCriticalSection(&winCondPtr->condLock);
-	ckfree((char *) winCondPtr);
+	ckfree(winCondPtr);
 	*condPtr = NULL;
     }
 }
@@ -901,7 +974,7 @@ TclpFreeAllocMutex(
 void *
 TclpGetAllocCache(void)
 {
-    VOID *result;
+    void *result;
 
     if (!once) {
 	/*
@@ -966,6 +1039,61 @@ TclpFreeAllocCache(
 
 }
 #endif /* USE_THREAD_ALLOC */
+
+
+void *
+TclpThreadCreateKey(void)
+{
+    DWORD *key;
+
+    key = TclpSysAlloc(sizeof *key, 0);
+    if (key == NULL) {
+	Tcl_Panic("unable to allocate thread key!");
+    }
+
+    *key = TlsAlloc();
+
+    if (*key == TLS_OUT_OF_INDEXES) {
+	Tcl_Panic("unable to allocate thread-local storage");
+    }
+
+    return key;
+}
+
+void
+TclpThreadDeleteKey(
+    void *keyPtr)
+{
+    DWORD *key = keyPtr;
+
+    if (!TlsFree(*key)) {
+	Tcl_Panic("unable to delete key");
+    }
+
+    TclpSysFree(keyPtr);
+}
+
+void
+TclpThreadSetMasterTSD(
+    void *tsdKeyPtr,
+    void *ptr)
+{
+    DWORD *key = tsdKeyPtr;
+
+    if (!TlsSetValue(*key, ptr)) {
+	Tcl_Panic("unable to set master TSD value");
+    }
+}
+
+void *
+TclpThreadGetMasterTSD(
+    void *tsdKeyPtr)
+{
+    DWORD *key = tsdKeyPtr;
+
+    return TlsGetValue(*key);
+}
+
 #endif /* TCL_THREADS */
 
 /*

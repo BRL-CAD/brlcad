@@ -5,13 +5,18 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_CreateMathFunc 3 8.4 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_CreateMathFunc, Tcl_GetMathFuncInfo, Tcl_ListMathFuncs \- Define, query and enumerate math functions for expressions
+.SH "NOTICE OF EVENTUAL DEPRECATION"
+.PP
+The \fBTcl_CreateMathFunc\fR and \fBTcl_GetMathFuncInfo\fR functions
+are rendered somewhat obsolete by the ability to create functions for
+expressions by placing commands in the \fBtcl::mathfunc\fR namespace,
+as described in the \fBmathfunc\fR manual page; the API described on
+this page is not expected to be maintained indefinitely.
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -59,7 +64,6 @@ created if the function is not implemented directly in bytecode.
 Pattern to match against function names so as to filter them (by
 passing to \fITcl_StringMatch\fR), or NULL to not apply any filter.
 .BE
-
 .SH DESCRIPTION
 .PP
 Tcl allows a number of mathematical functions to be used in
@@ -87,8 +91,9 @@ or any, respectively.
 Whenever the function is invoked in an expression Tcl will invoke
 \fIproc\fR.  \fIProc\fR should have arguments and result that match
 the type \fBTcl_MathProc\fR:
+.PP
 .CS
-typedef int Tcl_MathProc(
+typedef int \fBTcl_MathProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         Tcl_Value *\fIargs\fR,
@@ -99,13 +104,14 @@ When \fIproc\fR is invoked the \fIclientData\fR and \fIinterp\fR
 arguments will be the same as those passed to \fBTcl_CreateMathFunc\fR.
 \fIArgs\fR will point to an array of \fInumArgs\fR Tcl_Value structures,
 which describe the actual arguments to the function:
+.PP
 .CS
 typedef struct Tcl_Value {
-        Tcl_ValueType \fItype\fR;
-        long \fIintValue\fR;
-        double \fIdoubleValue\fR;
-        Tcl_WideInt \fIwideValue\fR;
-} Tcl_Value;
+    Tcl_ValueType \fItype\fR;
+    long \fIintValue\fR;
+    double \fIdoubleValue\fR;
+    Tcl_WideInt \fIwideValue\fR;
+} \fBTcl_Value\fR;
 .CE
 .PP
 The \fItype\fR field indicates the type of the argument and is
@@ -147,12 +153,10 @@ will not be modified.  The variable pointed to by \fInumArgsPointer\fR
 will contain -1, and no argument types will be stored in the variable
 pointed to by \fIargTypesPointer\fR.
 .PP
-\fBTcl_ListMathFuncs\fR returns a Tcl object containing a list of all
+\fBTcl_ListMathFuncs\fR returns a Tcl value containing a list of all
 the math functions defined in the interpreter whose name matches
-\fIpattern\fR.  The returned object has a reference count of zero.
-
+\fIpattern\fR.  The returned value has a reference count of zero.
 .SH "SEE ALSO"
 expr(n), info(n), Tcl_CreateObjCommand(3), Tcl_Free(3), Tcl_NewListObj(3)
-
 .SH KEYWORDS
 expression, mathematical function

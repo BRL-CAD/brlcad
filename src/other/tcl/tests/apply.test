@@ -11,8 +11,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2.2
@@ -24,54 +22,47 @@ if {[info commands ::apply] eq {}} {
 }
 
 testConstraint memory [llength [info commands memory]]
-
+
 # Tests for wrong number of arguments
 
-test apply-1.1 {too few arguments} {
-    set res [catch apply msg]
-    list $res $msg
-} {1 {wrong # args: should be "apply lambdaExpr ?arg1 arg2 ...?"}}
+test apply-1.1 {too few arguments} -returnCodes error -body {
+    apply
+} -result {wrong # args: should be "apply lambdaExpr ?arg ...?"}
 
 # Tests for malformed lambda
 
-test apply-2.0 {malformed lambda} {
+test apply-2.0 {malformed lambda} -returnCodes error -body {
     set lambda a
-    set res [catch {apply $lambda} msg]
-    list $res $msg
-} {1 {can't interpret "a" as a lambda expression}}
-test apply-2.1 {malformed lambda} {
+    apply $lambda
+} -result {can't interpret "a" as a lambda expression}
+test apply-2.1 {malformed lambda} -returnCodes error -body {
     set lambda [list a b c d]
-    set res [catch {apply $lambda} msg]
-    list $res $msg
-} {1 {can't interpret "a b c d" as a lambda expression}}
+    apply $lambda
+} -result {can't interpret "a b c d" as a lambda expression}
 test apply-2.2 {malformed lambda} {
     set lambda [list {{}} boo]
-    set res [catch {apply $lambda} msg]
-    list $res $msg $::errorInfo
+    list [catch {apply $lambda} msg] $msg $::errorInfo
 } {1 {argument with no name} {argument with no name
     (parsing lambda expression "{{}} boo")
     invoked from within
 "apply $lambda"}}
 test apply-2.3 {malformed lambda} {
     set lambda [list {{a b c}} boo]
-    set res [catch {apply $lambda} msg]
-    list $res $msg $::errorInfo
+    list [catch {apply $lambda} msg] $msg $::errorInfo
 } {1 {too many fields in argument specifier "a b c"} {too many fields in argument specifier "a b c"
     (parsing lambda expression "{{a b c}} boo")
     invoked from within
 "apply $lambda"}}
 test apply-2.4 {malformed lambda} {
     set lambda [list a(1) boo]
-    set res [catch {apply $lambda} msg]
-    list $res $msg $::errorInfo
+    list [catch {apply $lambda} msg] $msg $::errorInfo
 } {1 {formal parameter "a(1)" is an array element} {formal parameter "a(1)" is an array element
     (parsing lambda expression "a(1) boo")
     invoked from within
 "apply $lambda"}}
 test apply-2.5 {malformed lambda} {
     set lambda [list a::b boo]
-    set res [catch {apply $lambda} msg]
-    list $res $msg $::errorInfo
+    list [catch {apply $lambda} msg] $msg $::errorInfo
 } {1 {formal parameter "a::b" is not a simple name} {formal parameter "a::b" is not a simple name
     (parsing lambda expression "a::b boo")
     invoked from within
@@ -100,29 +91,27 @@ test apply-3.4 {non-existing namespace} -body {
     apply $lambda x
 } -returnCodes error -result {namespace "::NONEXIST::FOR::SURE" not found}
 
-test apply-4.1 {error in arguments to lambda expression} {
+test apply-4.1 {error in arguments to lambda expression} -body {
     set lambda [list x {set x 1}]
-    set res [catch {apply $lambda} msg]
-    list $res $msg
-} {1 {wrong # args: should be "apply lambdaExpr x"}}
-test apply-4.2 {error in arguments to lambda expression} {
+    apply $lambda
+} -returnCodes error -result {wrong # args: should be "apply lambdaExpr x"}
+test apply-4.2 {error in arguments to lambda expression} -body {
     set lambda [list x {set x 1}]
-    set res [catch {apply $lambda a b} msg]
-    list $res $msg
-} {1 {wrong # args: should be "apply lambdaExpr x"}}
-test apply-4.3 {error in arguments to lambda expression} {
-    set lambda [list x {set x 1}]
-    interp alias {} foo {} ::apply $lambda
-    set res [catch {foo a b} msg]
-    list $res $msg [rename foo {}]
-} {1 {wrong # args: should be "foo x"} {}}
-test apply-4.4 {error in arguments to lambda expression} {
-    set lambda [list x {set x 1}]
-    interp alias {} foo {} ::apply $lambda a
-    set res [catch {foo b} msg]
-    list $res $msg [rename foo {}]
-} {1 {wrong # args: should be "foo"} {}}
-test apply-4.5 {error in arguments to lambda expression} {
+    apply $lambda a b
+} -returnCodes error -result {wrong # args: should be "apply lambdaExpr x"}
+test apply-4.3 {error in arguments to lambda expression} -body {
+    interp alias {} foo {} ::apply [list x {set x 1}]
+    foo a b
+} -cleanup {
+    rename foo {}
+} -returnCodes error -result {wrong # args: should be "foo x"}
+test apply-4.4 {error in arguments to lambda expression} -body {
+    interp alias {} foo {} ::apply [list x {set x 1}] a
+    foo b
+} -cleanup {
+    rename foo {}
+} -returnCodes error -result {wrong # args: should be "foo"}
+test apply-4.5 {error in arguments to lambda expression} -body {
     set lambda [list x {set x 1}]
     namespace eval a {
 	namespace ensemble create -command ::bar -map {id {::a::const foo}}
@@ -138,9 +127,10 @@ test apply-4.5 {error in arguments to lambda expression} {
 	}
 	method ::bar boo x {return "[expr {$x*$x}] - $self"}
     }
-    set res [catch {bar boo} msg]
-    list $res $msg [namespace delete ::a]
-} {1 {wrong # args: should be "bar boo x"} {}}
+    bar boo
+} -cleanup {
+    namespace delete ::a
+} -returnCodes error -result {wrong # args: should be "bar boo x"}
 
 test apply-5.1 {runtime error in lambda expression} {
     set lambda [list {} {error foo}]
@@ -317,10 +307,15 @@ test apply-9.3 {leaking internal rep} -setup {
 } -result 0
 
 # Tests for the avoidance of recompilation
-
+
 # cleanup
 
 namespace delete testApply
 
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

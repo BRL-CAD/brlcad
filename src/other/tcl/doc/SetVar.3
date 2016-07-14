@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_SetVar 3 8.1 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_SetVar2Ex, Tcl_SetVar, Tcl_SetVar2, Tcl_ObjSetVar2, Tcl_GetVar2Ex, Tcl_GetVar, Tcl_GetVar2, Tcl_ObjGetVar2, Tcl_UnsetVar, Tcl_UnsetVar2 \- manipulate Tcl variables
@@ -59,7 +57,7 @@ to specify a variable in a particular namespace.
 If non-NULL, gives name of element within array; in this
 case \fIname1\fR must refer to an array variable.
 .AP Tcl_Obj *newValuePtr in
-Points to a Tcl object containing the new value for the variable.
+Points to a Tcl value containing the new value for the variable.
 .AP int flags in
 OR-ed combination of bits providing additional information. See below
 for valid values.
@@ -73,12 +71,12 @@ an array.
 New value for variable, specified as a null-terminated string.
 A copy of this value is stored in the variable.
 .AP Tcl_Obj *part1Ptr in
-Points to a Tcl object containing the variable's name.
+Points to a Tcl value containing the variable's name.
 The name may include a series of \fB::\fR namespace qualifiers
 to specify a variable in a particular namespace.
 May refer to a scalar variable or an element of an array variable.
 .AP Tcl_Obj *part2Ptr in
-If non-NULL, points to an object containing the name of an element
+If non-NULL, points to a value containing the name of an element
 within an array and \fIpart1Ptr\fR must refer to an array variable.
 .BE
 
@@ -248,4 +246,4 @@ array is removed.
 Tcl_GetObjResult, Tcl_GetStringResult, Tcl_TraceVar
 
 .SH KEYWORDS
-array, get variable, interpreter, object, scalar, set, unset, variable
+array, get variable, interpreter, scalar, set, unset, value, variable

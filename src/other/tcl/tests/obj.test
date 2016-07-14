@@ -10,13 +10,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testobj [llength [info commands testobj]]
 testConstraint longIs32bit	[expr {int(0x80000000) < 0}]
@@ -604,7 +605,7 @@ test obj-33.2 {integer overflow on input} {longIs32bit wideBiggerThanInt} {
     set x 0xffff; append x ffff
     list [string is integer $x] [expr { wide($x) }]
 } {1 4294967295}
-test obj-33.3 {integer overflow on input} {longIs32bit wideBiggerThanInt} {
+test obj-33.3 {integer overflow on input} {
     set x 0x10000; append x 0000
     list [string is integer $x] [expr { wide($x) }]
 } {0 4294967296}
@@ -620,7 +621,7 @@ test obj-33.6 {integer overflow on input} {longIs32bit wideBiggerThanInt} {
     set x -0xffff; append x ffff
     list [string is integer $x] [expr { wide($x) }]
 } {1 -4294967295}
-test obj-33.7 {integer overflow on input} {longIs32bit wideBiggerThanInt} {
+test obj-33.7 {integer overflow on input} {
     set x -0x10000; append x 0000
     list [string is integer $x] [expr { wide($x) }]
 } {0 -4294967296}

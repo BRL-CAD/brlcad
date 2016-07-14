@@ -1,6 +1,5 @@
 # created by tools/tclZIC.tcl - do not edit
-
-set TZData(:Africa/Kinshasa) {
-    {-9223372036854775808 3672 0 LMT}
-    {-2276643672 3600 0 WAT}
+if {![info exists TZData(Africa/Lagos)]} {
+    LoadTimeZoneFile Africa/Lagos
 }
+set TZData(:Africa/Kinshasa) $TZData(:Africa/Lagos)

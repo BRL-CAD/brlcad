@@ -129,7 +129,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
  */
 #include "tclInt.h"
 
@@ -2292,15 +2291,11 @@ yyreturn:
 
 
 
-MODULE_SCOPE int yychar;
-MODULE_SCOPE YYSTYPE yylval;
-MODULE_SCOPE int yynerrs;
-
 /*
  * Month and day table.
  */
 
-static TABLE MonthDayTable[] = {
+static const TABLE MonthDayTable[] = {
     { "january",	tMONTH,	 1 },
     { "february",	tMONTH,	 2 },
     { "march",		tMONTH,	 3 },
@@ -2325,14 +2320,14 @@ static TABLE MonthDayTable[] = {
     { "thurs",		tDAY, 4 },
     { "friday",		tDAY, 5 },
     { "saturday",	tDAY, 6 },
-    { NULL }
+    { NULL, 0, 0 }
 };
 
 /*
  * Time units table.
  */
 
-static TABLE UnitsTable[] = {
+static const TABLE UnitsTable[] = {
     { "year",		tMONTH_UNIT,	12 },
     { "month",		tMONTH_UNIT,	 1 },
     { "fortnight",	tDAY_UNIT,	14 },
@@ -2343,14 +2338,14 @@ static TABLE UnitsTable[] = {
     { "min",		tSEC_UNIT,	60 },
     { "second",		tSEC_UNIT,	 1 },
     { "sec",		tSEC_UNIT,	 1 },
-    { NULL }
+    { NULL, 0, 0 }
 };
 
 /*
  * Assorted relative-time words.
  */
 
-static TABLE OtherTable[] = {
+static const TABLE OtherTable[] = {
     { "tomorrow",	tDAY_UNIT,	1 },
     { "yesterday",	tDAY_UNIT,	-1 },
     { "today",		tDAY_UNIT,	0 },
@@ -2375,7 +2370,7 @@ static TABLE OtherTable[] = {
     { "ago",		tAGO,		1 },
     { "epoch",		tEPOCH,		0 },
     { "stardate",	tSTARDATE,	0 },
-    { NULL }
+    { NULL, 0, 0 }
 };
 
 /*
@@ -2383,7 +2378,7 @@ static TABLE OtherTable[] = {
  * point constants to work around an SGI compiler bug).
  */
 
-static TABLE TimezoneTable[] = {
+static const TABLE TimezoneTable[] = {
     { "gmt",	tZONE,	   HOUR( 0) },	    /* Greenwich Mean */
     { "ut",	tZONE,	   HOUR( 0) },	    /* Universal (Coordinated) */
     { "utc",	tZONE,	   HOUR( 0) },
@@ -2461,14 +2456,14 @@ static TABLE TimezoneTable[] = {
     /* ADDED BY Marco Nijdam */
     { "dst",	tDST,	  HOUR( 0) },	    /* DST on (hour is ignored) */
     /* End ADDED */
-    {  NULL  }
+    { NULL, 0, 0 }
 };
 
 /*
  * Military timezone table.
  */
 
-static TABLE	MilitaryTable[] = {
+static const TABLE MilitaryTable[] = {
     { "a",	tZONE,	-HOUR( 1) },
     { "b",	tZONE,	-HOUR( 2) },
     { "c",	tZONE,	-HOUR( 3) },
@@ -2494,7 +2489,7 @@ static TABLE	MilitaryTable[] = {
     { "x",	tZONE,	HOUR( 11) },
     { "y",	tZONE,	HOUR( 12) },
     { "z",	tZONE,	HOUR( 0) },
-    { NULL }
+    { NULL, 0, 0 }
 };
 
 /*
@@ -2561,7 +2556,7 @@ LookupWord(
 {
     register char *p;
     register char *q;
-    register TABLE *tp;
+    register const TABLE *tp;
     int i, abbrev;
 
     /*
@@ -2691,7 +2686,7 @@ TclDatelex(
 
     location->first_column = yyInput - info->dateStart;
     for ( ; ; ) {
-	while (isspace(UCHAR(*yyInput))) {
+	while (TclIsSpaceProc(*yyInput)) {
 	    yyInput++;
 	}
 
@@ -2757,7 +2752,7 @@ TclClockOldscanObjCmd(
     ClientData clientData,	/* Unused */
     Tcl_Interp *interp,		/* Tcl interpreter */
     int objc,			/* Count of paraneters */
-    Tcl_Obj *CONST *objv)	/* Parameters */
+    Tcl_Obj *const *objv)	/* Parameters */
 {
     Tcl_Obj *result, *resultElement;
     int yr, mo, da;
@@ -2805,10 +2800,12 @@ TclClockOldscanObjCmd(
     if (status == 1) {
 	Tcl_SetObjResult(interp, dateInfo.messages);
 	Tcl_DecrRefCount(dateInfo.messages);
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "PARSE", NULL);
 	return TCL_ERROR;
     } else if (status == 2) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("memory exhausted", -1));
 	Tcl_DecrRefCount(dateInfo.messages);
+	Tcl_SetErrorCode(interp, "TCL", "MEMORY", NULL);
 	return TCL_ERROR;
     } else if (status != 0) {
 	Tcl_SetObjResult(interp, Tcl_NewStringObj("Unknown status returned "
@@ -2816,6 +2813,7 @@ TclClockOldscanObjCmd(
 						  "report this error as a "
 						  "bug in Tcl.", -1));
 	Tcl_DecrRefCount(dateInfo.messages);
+	Tcl_SetErrorCode(interp, "TCL", "BUG", NULL);
 	return TCL_ERROR;
     }
     Tcl_DecrRefCount(dateInfo.messages);
@@ -2823,26 +2821,31 @@ TclClockOldscanObjCmd(
     if (yyHaveDate > 1) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("more than one date in string", -1));
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
     if (yyHaveTime > 1) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("more than one time of day in string", -1));
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
     if (yyHaveZone > 1) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("more than one time zone in string", -1));
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
     if (yyHaveDay > 1) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("more than one weekday in string", -1));
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
     if (yyHaveOrdinalMonth > 1) {
 	Tcl_SetObjResult(interp,
 		Tcl_NewStringObj("more than one ordinal month in string", -1));
+	Tcl_SetErrorCode(interp, "TCL", "VALUE", "DATE", "MULTIPLE", NULL);
 	return TCL_ERROR;
     }
 

@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -19,7 +17,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 }
 
 # the package we are going to test
-package require opt 0.4.1
+package require opt 0.4.6
 
 # we are using implementation specifics to test the package
 
@@ -58,7 +56,7 @@ test opt-3.2 {OptParse / temp key is removed even on errors} {
 
 test opt-4.1 {OptProc} {
     ::tcl::OptProc optTest {} {}
-    optTest ;
+    optTest
     ::tcl::OptKeyDelete optTest
 } {}
 
@@ -74,12 +72,12 @@ test opt-5.1 {OptProcArgGiven} {
 } {0 1 1 1}
 
 test opt-6.1 {OptKeyParse} {
-    ::tcl::OptKeyRegister {} test;
+    ::tcl::OptKeyRegister {} test
     list [catch {::tcl::OptKeyParse test {-help}} msg] $msg
 } {1 {Usage information:
     Var/FlagName Type Value Help
     ------------ ---- ----- ----
-    ( -help                 gives this help )}}
+    (-help                  gives this help)}}
 
 test opt-7.1 {OptCheckType} {
     list \
@@ -161,9 +159,9 @@ test opt-10.1 {ambigous flags} {
     catch {optTest -fL} msg
     set msg
 } {ambigous option "-fL", choose from:
-    -fla      boolflag (false) 
-    -flag2xyz boolflag (false) 
-    -flag3xyz boolflag (false) }
+    -fla      boolflag (false)
+    -flag2xyz boolflag (false)
+    -flag3xyz boolflag (false)}
 test opt-10.2 {non ambigous flags} {
     ::tcl::OptProc optTest {{-flag1xyz} {-other} {-flag2xyz} {-flag3xyz}} {
 	return $flag2xyz
@@ -183,8 +181,8 @@ test opt-10.4 {ambigous flags, not exact match} {
     catch {optTest -fLag1X} msg
     set msg
 } {ambigous option "-fLag1X", choose from:
-    -flag1xy  boolflag (false) 
-    -flag1xyz boolflag (false) }
+    -flag1xy  boolflag (false)
+    -flag1xyz boolflag (false)}
 
 # medium size overall test example: (defined once)
 ::tcl::OptProc optTest {
@@ -206,12 +204,12 @@ test opt-10.6 {medium size overall test} {
 } {1 {Usage information:
     Var/FlagName Type     Value   Help
     ------------ ----     -----   ----
-    ( -help                       gives this help )
+    (-help                        gives this help)
     cmd          choice   (print save delete) sub command to choose
-    -allowBoing  boolean  (true)  
+    -allowBoing  boolean  (true)
     arg2         string   ()      this is help
     ?arg3?       int      (7)     optional number
-    -moreflags   boolflag (false) }}
+    -moreflags   boolflag (false)}}
 test opt-10.7 {medium size overall test} {
     optTest save tst
 } {save 1 tst 7 0}
@@ -232,8 +230,8 @@ test opt-11.1 {too many args test 2} {
 } {1 {too many arguments (unexpected argument(s): blah), usage:
     Var/FlagName Type     Value   Help
     ------------ ----     -----   ----
-    ( -help                       gives this help )
-    -foo         boolflag (false) } {}}
+    (-help                        gives this help)
+    -foo         boolflag (false)} {}}
 test opt-11.2 {default value for args} {
     set args {}
     set key [::tcl::OptKeyRegister {{args -list {a b c} "args..."}}]

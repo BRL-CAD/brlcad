@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -29,11 +27,11 @@
  * month, where index 1 is January.
  */
 
-static int normalDays[] = {
+static const int normalDays[] = {
     -1, 30, 58, 89, 119, 150, 180, 211, 242, 272, 303, 333, 364
 };
 
-static int leapDays[] = {
+static const int leapDays[] = {
     -1, 30, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334, 365
 };
 
@@ -89,7 +87,7 @@ typedef struct TimeInfo {
 } TimeInfo;
 
 static TimeInfo timeInfo = {
-    { NULL },
+    { NULL, 0, 0, NULL, NULL, 0 },
     0,
     0,
     (HANDLE) NULL,
@@ -158,7 +156,7 @@ TclpGetSeconds(void)
 {
     Tcl_Time t;
 
-    (*tclGetTimeProcPtr) (&t, tclTimeClientData);    /* Tcl_GetTime inlined. */
+    tclGetTimeProcPtr(&t, tclTimeClientData);	/* Tcl_GetTime inlined. */
     return t.sec;
 }
 
@@ -192,45 +190,11 @@ TclpGetClicks(void)
     Tcl_Time now;		/* Current Tcl time */
     unsigned long retval;	/* Value to return */
 
-    (*tclGetTimeProcPtr) (&now, tclTimeClientData);   /* Tcl_GetTime inlined */
+    tclGetTimeProcPtr(&now, tclTimeClientData);	/* Tcl_GetTime inlined */
 
     retval = (now.sec * 1000000) + now.usec;
     return retval;
 
-}
-
-/*
- *----------------------------------------------------------------------
- *
- * TclpGetTimeZone --
- *
- *	Determines the current timezone. The method varies wildly between
- *	different Platform implementations, so its hidden in this function.
- *
- * Results:
- *	Minutes west of GMT.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-/* TODO - make this part of the CMake testing */
-#if (_MSC_VER > 1800)
-  #define timezone _timezone
-#endif
-
-int
-TclpGetTimeZone(
-    unsigned long currentTime)
-{
-    int timeZone;
-
-    tzset();
-    timeZone = timezone / 60;
-
-    return timeZone;
 }
 
 /*
@@ -259,7 +223,7 @@ void
 Tcl_GetTime(
     Tcl_Time *timePtr)		/* Location to store time information. */
 {
-    (*tclGetTimeProcPtr) (timePtr, tclTimeClientData);
+    tclGetTimeProcPtr(timePtr, tclTimeClientData);
 }
 
 /*
@@ -316,7 +280,7 @@ NativeGetTime(
     Tcl_Time *timePtr,
     ClientData clientData)
 {
-    struct timeb t;
+    struct _timeb t;
     int useFtime = 1;		/* Flag == TRUE if we need to fall back on
 				 * ftime rather than using the perf counter. */
 
@@ -421,7 +385,7 @@ NativeGetTime(
 
 		WaitForSingleObject(timeInfo.readyEvent, INFINITE);
 		CloseHandle(timeInfo.readyEvent);
-		Tcl_CreateExitHandler(StopCalibration, (ClientData) NULL);
+		Tcl_CreateExitHandler(StopCalibration, NULL);
 	    }
 	    timeInfo.initialized = TRUE;
 	}
@@ -482,7 +446,7 @@ NativeGetTime(
 	 * High resolution timer is not available. Just use ftime.
 	 */
 
-	ftime(&t);
+	_ftime(&t);
 	timePtr->sec = (long)t.time;
 	timePtr->usec = t.millitm * 1000;
     }
@@ -525,93 +489,6 @@ StopCalibration(
 /*
  *----------------------------------------------------------------------
  *
- * TclpGetTZName --
- *
- *	Gets the current timezone string.
- *
- * Results:
- *	Returns a pointer to a static string, or NULL on failure.
- *
- * Side effects:
- *	None.
- *
- *----------------------------------------------------------------------
- */
-
-char *
-TclpGetTZName(
-    int dst)
-{
-    int len;
-    char *zone, *p;
-    TIME_ZONE_INFORMATION tz;
-    Tcl_Encoding encoding;
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    char *name = tsdPtr->tzName;
-
-    /*
-     * tzset() under Borland doesn't seem to set up tzname[] at all.
-     * tzset() under MSVC has the following weird observed behavior:
-     *	 First time we call "clock format [clock seconds] -format %Z -gmt 1"
-     *	 we get "GMT", but on all subsequent calls we get the current time
-     *	 ezone string, even though env(TZ) is GMT and the variable _timezone
-     *	 is 0.
-     */
-
-    name[0] = '\0';
-
-    zone = getenv("TZ");
-    if (zone != NULL) {
-	/*
-	 * TZ is of form "NST-4:30NDT", where "NST" would be the name of the
-	 * standard time zone for this area, "-4:30" is the offset from GMT in
-	 * hours, and "NDT is the name of the daylight savings time zone in
-	 * this area. The offset and DST strings are optional.
-	 */
-
-	len = strlen(zone);
-	if (len > 3) {
-	    len = 3;
-	}
-	if (dst != 0) {
-	    /*
-	     * Skip the offset string and get the DST string.
-	     */
-
-	    p = zone + len;
-	    p += strspn(p, "+-:0123456789");
-	    if (*p != '\0') {
-		zone = p;
-		len = strlen(zone);
-		if (len > 3) {
-		    len = 3;
-		}
-	    }
-	}
-	Tcl_ExternalToUtf(NULL, NULL, zone, len, 0, NULL, name,
-		sizeof(tsdPtr->tzName), NULL, NULL, NULL);
-    }
-    if (name[0] == '\0') {
-	if (GetTimeZoneInformation(&tz) == TIME_ZONE_ID_UNKNOWN) {
-	    /*
-	     * MSDN: On NT this is returned if DST is not used in the current
-	     * TZ
-	     */
-
-	    dst = 0;
-	}
-	encoding = Tcl_GetEncoding(NULL, "unicode");
-	Tcl_ExternalToUtf(NULL, encoding,
-		(char *) ((dst) ? tz.DaylightName : tz.StandardName), -1,
-		0, NULL, name, sizeof(tsdPtr->tzName), NULL, NULL, NULL);
-	Tcl_FreeEncoding(encoding);
-    }
-    return name;
-}
-
-/*
- *----------------------------------------------------------------------
- *
  * TclpGetDate --
  *
  *	This function converts between seconds and struct tm. If useGMT is
@@ -629,7 +506,7 @@ TclpGetTZName(
 
 struct tm *
 TclpGetDate(
-    CONST time_t *t,
+    const time_t *t,
     int useGMT)
 {
     struct tm *tmPtr;
@@ -741,7 +618,7 @@ ComputeGMT(
     struct tm *tmPtr;
     long tmp, rem;
     int isLeap;
-    int *days;
+    const int *days;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
     tmPtr = &tsdPtr->tm;
@@ -1175,7 +1052,7 @@ AccumulateSample(
 
 struct tm *
 TclpGmtime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
 {
     /*
@@ -1206,9 +1083,8 @@ TclpGmtime(
 
 struct tm *
 TclpLocaltime(
-    CONST time_t *timePtr)	/* Pointer to the number of seconds since the
+    const time_t *timePtr)	/* Pointer to the number of seconds since the
 				 * local system's epoch */
-
 {
     /*
      * The MS implementation of localtime is thread safe because it returns

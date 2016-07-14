@@ -7,20 +7,21 @@
  *
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
-#include <stdio.h>
-#ifdef __CYGWIN__
-#   include <unistd.h>
-#else
-#   include <io.h>
+#ifdef TCL_BROKEN_MAINARGS
+/* On mingw32 and cygwin this doesn't work */
+#   undef UNICODE
+#   undef _UNICODE
 #endif
+
+#include <stdio.h>
+#include <io.h>
 #include <string.h>
+#include <tchar.h>
 
 int
-main(void)
+_tmain(void)
 {
     char buf[1024];
     int n;

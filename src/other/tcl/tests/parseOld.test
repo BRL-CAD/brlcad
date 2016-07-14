@@ -12,15 +12,15 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
-    namespace import -force ::tcltest::*
-}
+package require tcltest
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testwordend [llength [info commands testwordend]]
+testConstraint testbytestring [llength [info commands testbytestring]]
 
 # Save the argv value for restoration later
 set savedArgv $argv
@@ -165,25 +165,25 @@ test parseOld-5.6 {variable substitution} {
     set msg
 } {can't read "_non_existent_": no such variable}
 test parseOld-5.7 {array variable substitution} {
-    catch {unset a}
+    unset -nocomplain a
     set a(xyz) 123
     set b $a(xyz)foo
     set b
 } 123foo
 test parseOld-5.8 {array variable substitution} {
-    catch {unset a}
+    unset -nocomplain a
     set "a(x y z)" 123
     set b $a(x y z)foo
     set b
 } 123foo
 test parseOld-5.9 {array variable substitution} {
-    catch {unset a}; catch {unset qqq}
+    unset -nocomplain a qqq
     set "a(x y z)" qqq
     set $a([format x]\ y [format z]) foo
     set qqq
 } foo
 test parseOld-5.10 {array variable substitution} {
-    catch {unset a}
+    unset -nocomplain a
     list [catch {set b $a(22)} msg] $msg
 } {1 {can't read "a(22)": no such variable}}
 test parseOld-5.11 {array variable substitution} {
@@ -193,9 +193,9 @@ test parseOld-5.11 {array variable substitution} {
 test parseOld-5.12 {empty array name support} {
     list [catch {set b a$()} msg] $msg
 } {1 {can't read "()": no such variable}}
-catch {unset a}
+unset -nocomplain a
 test parseOld-5.13 {array variable substitution} {
-    catch {unset a}
+    unset -nocomplain a
     set long {This is a very long variable, long enough to cause storage \
 	allocation to occur in Tcl_ParseVar.  If that storage isn't getting \
 	freed up correctly, then a core leak will occur when this test is \
@@ -210,13 +210,13 @@ test parseOld-5.13 {array variable substitution} {
 	run.  This text is probably beginning to sound like drivel, but I've \
 	run out of things to say and I need more characters still.}}}
 test parseOld-5.14 {array variable substitution} {
-    catch {unset a}; catch {unset b}; catch {unset a1}
+    unset -nocomplain a b a1
     set a1(22) foo
     set a(foo) bar
     set b $a($a1(22))
     set b
 } bar
-catch {unset a}; catch {unset a1}
+unset -nocomplain a a1
 
 test parseOld-7.1 {backslash substitution} {
     set a "\a\c\n\]\}"
@@ -262,15 +262,15 @@ test parseOld-7.10 {backslash substitution} {
 test parseOld-7.11 {backslash substitution} {
     eval "list a \"b c\"\\\nd e"
 } {a {b c} d e}
-test parseOld-7.12 {backslash substitution} {
-    list \ua2
-} [bytestring "\xc2\xa2"]
-test parseOld-7.13 {backslash substitution} {
-    list \u4e21
-} [bytestring "\xe4\xb8\xa1"]
-test parseOld-7.14 {backslash substitution} {
-    list \u4e2k
-} [bytestring "\xd3\xa2k"]
+test parseOld-7.12 {backslash substitution} testbytestring {
+    expr {[list \ua2] eq [testbytestring "\xc2\xa2"]}
+} 1
+test parseOld-7.13 {backslash substitution} testbytestring {
+    expr {[list \u4e21] eq [testbytestring "\xe4\xb8\xa1"]}
+} 1
+test parseOld-7.14 {backslash substitution} testbytestring {
+    expr {[list \u4e2k] eq [testbytestring "\xd3\xa2k"]}
+} 1
 
 # Semi-colon.
 

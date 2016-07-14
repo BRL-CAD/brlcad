@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH pwd n "" Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -16,17 +14,18 @@ pwd \- Return the absolute path of the current working directory
 .SH SYNOPSIS
 \fBpwd\fR
 .BE
-
 .SH DESCRIPTION
 .PP
 Returns the absolute path name of the current working directory.
 .SH EXAMPLE
+.PP
 Sometimes it is useful to change to a known directory when running
 some external command using \fBexec\fR, but it is important to keep
 the application usually running in the directory that it was started
 in (unless the user specifies otherwise) since that minimizes user
 confusion. The way to do this is to save the current directory while
 the external command is being run:
+.PP
 .CS
 set tarFile [file normalize somefile.tar]
 set savedDir [\fBpwd\fR]
@@ -36,6 +35,5 @@ cd $savedDir
 .CE
 .SH "SEE ALSO"
 file(n), cd(n), glob(n), filename(n)
-
 .SH KEYWORDS
 working directory

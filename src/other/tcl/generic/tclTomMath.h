@@ -15,23 +15,19 @@
 #ifndef BN_H_
 #define BN_H_
 
-#include <tclTomMathDecls.h>
+#include "tclTomMathDecls.h"
 #ifndef MODULE_SCOPE
 #define MODULE_SCOPE extern
 #endif
 
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <ctype.h>
-#include <limits.h>
+
 
 #ifndef MIN
-   #define MIN(x,y) ((x)<(y)?(x):(y))
+#   define MIN(x,y) ((x)<(y)?(x):(y))
 #endif
 
 #ifndef MAX
-   #define MAX(x,y) ((x)>(y)?(x):(y))
+#   define MAX(x,y) ((x)>(y)?(x):(y))
 #endif
 
 #ifdef __cplusplus
@@ -50,9 +46,9 @@ extern "C" {
 
 /* detect 64-bit mode if possible */
 #if defined(NEVER)  /* 128-bit ints fail in too many places */
-   #if !(defined(MP_64BIT) && defined(MP_16BIT) && defined(MP_8BIT))
-      #define MP_64BIT
-   #endif
+#   if !(defined(MP_64BIT) && defined(MP_16BIT) && defined(MP_8BIT))
+#	define MP_64BIT
+#   endif
 #endif
 
 /* some default configurations.
@@ -88,19 +84,19 @@ extern "C" {
 #endif
    typedef unsigned long      mp_word __attribute__ ((mode(TI)));
 
-   #define DIGIT_BIT          60
+#  define DIGIT_BIT          60
 #else
    /* this is the default case, 28-bit digits */
    
    /* this is to make porting into LibTomCrypt easier :-) */
 #ifndef CRYPT
-   #if defined(_MSC_VER) || defined(__BORLANDC__) 
+#  if defined(_MSC_VER) || defined(__BORLANDC__)
       typedef unsigned __int64   ulong64;
       typedef signed __int64     long64;
-   #else
+#  else
       typedef unsigned long long ulong64;
       typedef signed long long   long64;
-   #endif
+#  endif
 #endif
 
 #ifndef MP_DIGIT_DECLARED
@@ -111,11 +107,11 @@ extern "C" {
 
 #ifdef MP_31BIT   
    /* this is an extension that uses 31-bit digits */
-   #define DIGIT_BIT          31
+#  define DIGIT_BIT          31
 #else
    /* default case is 28-bit digits, defines MP_28BIT as a handy macro to test */
-   #define DIGIT_BIT          28
-   #define MP_28BIT
+#  define DIGIT_BIT          28
+#  define MP_28BIT
 #endif   
 #endif
 
@@ -123,25 +119,25 @@ extern "C" {
 #if 0 /* these are macros in tclTomMathDecls.h */
 #ifndef CRYPT
    /* default to libc stuff */
-   #ifndef XMALLOC 
-       #define XMALLOC  malloc
-       #define XFREE    free
-       #define XREALLOC realloc
-       #define XCALLOC  calloc
-   #else
+#  ifndef XMALLOC
+#     define XMALLOC  malloc
+#     define XFREE    free
+#     define XREALLOC realloc
+#     define XCALLOC  calloc
+#  else
       /* prototypes for our heap functions */
       extern void *XMALLOC(size_t n);
       extern void *XREALLOC(void *p, size_t n);
       extern void *XCALLOC(size_t n, size_t s);
       extern void XFREE(void *p);
-   #endif
+#  endif
 #endif
 #endif
 
 
 /* otherwise the bits per digit is calculated automatically from the size of a mp_digit */
 #ifndef DIGIT_BIT
-   #define DIGIT_BIT     ((int)((CHAR_BIT * sizeof(mp_digit) - 1)))  /* bits per digit */
+#   define DIGIT_BIT     ((int)((CHAR_BIT * sizeof(mp_digit) - 1)))  /* bits per digit */
 #endif
 
 #define MP_DIGIT_BIT     DIGIT_BIT
@@ -184,11 +180,11 @@ MODULE_SCOPE int KARATSUBA_MUL_CUTOFF,
 
 /* default precision */
 #ifndef MP_PREC
-   #ifndef MP_LOW_MEM
-      #define MP_PREC                 32     /* default digits of precision */
-   #else
-      #define MP_PREC                 8      /* default digits of precision */
-   #endif   
+#  ifndef MP_LOW_MEM
+#     define MP_PREC                 32     /* default digits of precision */
+#  else
+#     define MP_PREC                 8      /* default digits of precision */
+#  endif
 #endif
 
 /* size of comba arrays, should be at least 2 * 2**(BITS_PER_WORD - BITS_PER_DIGIT*2) */
@@ -293,7 +289,7 @@ int mp_init_set_int (mp_int * a, unsigned long b);
 
 /* copy, b = a */
 /*
-int mp_copy(mp_int *a, mp_int *b);
+int mp_copy(const mp_int *a, mp_int *b);
 */
 
 /* inits and copies, a = b */
@@ -320,7 +316,7 @@ int mp_lshd(mp_int *a, int b);
 
 /* c = a / 2**b */
 /*
-int mp_div_2d(mp_int *a, int b, mp_int *c, mp_int *d);
+int mp_div_2d(const mp_int *a, int b, mp_int *c, mp_int *d);
 */
 
 /* b = a/2 */
@@ -330,7 +326,7 @@ int mp_div_2(mp_int *a, mp_int *b);
 
 /* c = a * 2**b */
 /*
-int mp_mul_2d(mp_int *a, int b, mp_int *c);
+int mp_mul_2d(const mp_int *a, int b, mp_int *c);
 */
 
 /* b = a*2 */
@@ -340,7 +336,7 @@ int mp_mul_2(mp_int *a, mp_int *b);
 
 /* c = a mod 2**d */
 /*
-int mp_mod_2d(mp_int *a, int b, mp_int *c);
+int mp_mod_2d(const mp_int *a, int b, mp_int *c);
 */
 
 /* computes a = 2**b */
@@ -380,7 +376,7 @@ int mp_and(mp_int *a, mp_int *b, mp_int *c);
 
 /* b = -a */
 /*
-int mp_neg(mp_int *a, mp_int *b);
+int mp_neg(const mp_int *a, mp_int *b);
 */
 
 /* b = |a| */
@@ -390,12 +386,12 @@ int mp_abs(mp_int *a, mp_int *b);
 
 /* compare a to b */
 /*
-int mp_cmp(mp_int *a, mp_int *b);
+int mp_cmp(const mp_int *a, const mp_int *b);
 */
 
 /* compare |a| to |b| */
 /*
-int mp_cmp_mag(mp_int *a, mp_int *b);
+int mp_cmp_mag(const mp_int *a, const mp_int *b);
 */
 
 /* c = a + b */
@@ -432,7 +428,7 @@ int mp_mod(mp_int *a, mp_int *b, mp_int *c);
 
 /* compare against a single digit */
 /*
-int mp_cmp_d(mp_int *a, mp_digit b);
+int mp_cmp_d(const mp_int *a, mp_digit b);
 */
 
 /* c = a + b */
@@ -620,9 +616,9 @@ int mp_exptmod(mp_int *a, mp_int *b, mp_int *c, mp_int *d);
 
 /* number of primes */
 #ifdef MP_8BIT
-   #define PRIME_SIZE      31
+#  define PRIME_SIZE      31
 #else
-   #define PRIME_SIZE      256
+#  define PRIME_SIZE      256
 #endif
 
 /* table of first PRIME_SIZE primes */
@@ -707,7 +703,7 @@ int mp_prime_random_ex(mp_int *a, int t, int size, int flags, ltm_prime_callback
 
 /* ---> radix conversion <--- */
 /*
-int mp_count_bits(mp_int *a);
+int mp_count_bits(const mp_int *a);
 */
 
 /*
@@ -830,14 +826,7 @@ MODULE_SCOPE const char *mp_s_rmap;
 #endif
 
 #ifdef __cplusplus
-   }
+}
 #endif
 
 #endif
-
-
-/* $Source$ */
-/* Based on Tom's version 1.8 */
-/* $Revision$ */
-/* $Date$ */
-

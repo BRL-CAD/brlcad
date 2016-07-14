@@ -8,9 +8,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
-#
 ########################################################################################################
 
 #-------------------------------------------------------------------------------------------------------
@@ -103,12 +100,12 @@ INSTALL_TARGET		:= install
 
 export CPPROG		:= cp -p
 
-INSTALL_TARGETS		= install-binaries install-libraries
+INSTALL_TARGETS		= install-binaries install-headers install-libraries
 ifeq (${EMBEDDED_BUILD},)
 INSTALL_TARGETS		+= install-private-headers
 endif
 ifeq (${INSTALL_BUILD}_${EMBEDDED_BUILD}_${BUILD_STYLE},1__Deployment)
-INSTALL_TARGETS		+= html-tcl
+INSTALL_TARGETS		+= install-packages html-tcl
 ifneq (${INSTALL_MANPAGES},)
 INSTALL_TARGETS		+= install-doc
 endif

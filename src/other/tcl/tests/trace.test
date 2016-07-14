@@ -10,13 +10,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
-    namespace import -force ::tcltest::*
-}
+package require tcltest
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testcmdtrace [llength [info commands testcmdtrace]]
 testConstraint testevalobjv [llength [info commands testevalobjv]]
@@ -31,15 +30,15 @@ proc getbytes {} {
 
 proc traceScalar {name1 name2 op} {
     global info
-    set info [list $name1 $name2 $op [catch {uplevel set $name1} msg] $msg]
+    set info [list $name1 $name2 $op [catch {uplevel 1 set $name1} msg] $msg]
 }
 proc traceScalarAppend {name1 name2 op} {
     global info
-    lappend info $name1 $name2 $op [catch {uplevel set $name1} msg] $msg
+    lappend info $name1 $name2 $op [catch {uplevel 1 set $name1} msg] $msg
 }
 proc traceArray {name1 name2 op} {
     global info
-    set info [list $name1 $name2 $op [catch {uplevel set [set name1]($name2)} msg] $msg]
+    set info [list $name1 $name2 $op [catch {uplevel 1 set [set name1]($name2)} msg] $msg]
 }
 proc traceArray2 {name1 name2 op} {
     global info
@@ -61,7 +60,7 @@ proc traceCheck {cmd args} {
     set info [list [catch $cmd msg] $msg]
 }
 proc traceCrtElement {value name1 name2 op} {
-    uplevel set ${name1}($name2) $value
+    uplevel 1 set ${name1}($name2) $value
 }
 proc traceCommand {oldName newName op} {
     global info
@@ -71,10 +70,10 @@ proc traceCommand {oldName newName op} {
 test trace-0.0 {memory corruption in trace (Tcl Bug 484339)} {
     # You may need Purify or Electric Fence to reliably
     # see this one fail.
-    catch {unset z}
+    unset -nocomplain z
     trace add variable z array {set z(foo) 1 ;#}
     set res "names: [array names z]"
-    catch {unset ::z}
+    unset -nocomplain ::z
     trace variable ::z w {unset ::z; error "memory corruption";#}
     list [catch {set ::z 1} msg] $msg
 } {1 {can't set "::z": memory corruption}}
@@ -82,40 +81,40 @@ test trace-0.0 {memory corruption in trace (Tcl Bug 484339)} {
 # Read-tracing on variables
 
 test trace-1.1 {trace variable reads} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read traceScalar
     list [catch {set x} msg] $msg $info
 } {1 {can't read "x": no such variable} {x {} read 1 {can't read "x": no such variable}}}
 test trace-1.2 {trace variable reads} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     set info {}
     trace add variable x read traceScalar
     list [catch {set x} msg] $msg $info
 } {0 123 {x {} read 0 123}}
 test trace-1.3 {trace variable reads} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read traceScalar
     set x 123
     set info
 } {}
 test trace-1.4 {trace array element reads} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(2) read traceArray
     list [catch {set x(2)} msg] $msg $info
 } {1 {can't read "x(2)": no such element in array} {x 2 read 1 {can't read "x(2)": no such element in array}}}
 test trace-1.5 {trace array element reads} {
-    catch {unset x}
+    unset -nocomplain x
     set x(2) zzz
     set info {}
     trace add variable x(2) read traceArray
     list [catch {set x(2)} msg] $msg $info
 } {0 zzz {x 2 read 0 zzz}}
 test trace-1.6 {trace array element reads} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read traceArray2
     proc p {} {
@@ -126,7 +125,7 @@ test trace-1.6 {trace array element reads} {
     list [catch {p} msg] $msg $info
 } {0 willi {x 2 read}}
 test trace-1.7 {trace array element reads, create element undefined if nonexistant} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read q
     proc q {name1 name2 op} {
@@ -143,20 +142,20 @@ test trace-1.7 {trace array element reads, create element undefined if nonexista
     list [catch {p} msg] $msg $info
 } {0 wolf {x Y read}}
 test trace-1.8 {trace reads on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read traceArray
     list [catch {set x(2)} msg] $msg $info
 } {1 {can't read "x(2)": no such variable} {}}
 test trace-1.9 {trace reads on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set x(2) zzz
     set info {}
     trace add variable x read traceArray
     list [catch {set x(2)} msg] $msg $info
 } {0 zzz {x 2 read 0 zzz}}
 test trace-1.10 {trace variable reads} {
-    catch {unset x}
+    unset -nocomplain x
     set x 444
     set info {}
     trace add variable x read traceScalar
@@ -164,28 +163,28 @@ test trace-1.10 {trace variable reads} {
     set info
 } {}
 test trace-1.11 {read traces that modify the array structure} {
-    catch {unset x}
+    unset -nocomplain x
     set x(bar) 0 
     trace variable x r {set x(foo) 1 ;#} 
     trace variable x r {unset -nocomplain x(bar) ;#} 
     array get x
 } {}
 test trace-1.12 {read traces that modify the array structure} {
-    catch {unset x}
+    unset -nocomplain x
     set x(bar) 0 
     trace variable x r {unset -nocomplain x(bar) ;#} 
     trace variable x r {set x(foo) 1 ;#} 
     array get x
 } {}
 test trace-1.13 {read traces that modify the array structure} {
-    catch {unset x}
+    unset -nocomplain x
     set x(bar) 0 
     trace variable x r {set x(foo) 1 ;#} 
     trace variable x r {unset -nocomplain x;#} 
     list [catch {array get x} res] $res
 } {1 {can't read "x(bar)": no such variable}}
 test trace-1.14 {read traces that modify the array structure} {
-    catch {unset x}
+    unset -nocomplain x
     set x(bar) 0 
     trace variable x r {unset -nocomplain x;#} 
     trace variable x r {set x(foo) 1 ;#} 
@@ -195,28 +194,28 @@ test trace-1.14 {read traces that modify the array structure} {
 # Basic write-tracing on variables
 
 test trace-2.1 {trace variable writes} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceScalar
     set x 123
     set info
 } {x {} write 0 123}
 test trace-2.2 {trace writes to array elements} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(33) write traceArray
     set x(33) 444
     set info
 } {x 33 write 0 444}
 test trace-2.3 {trace writes on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceArray
     set x(abc) qq
     set info
 } {x abc write 0 qq}
 test trace-2.4 {trace variable writes} {
-    catch {unset x}
+    unset -nocomplain x
     set x 1234
     set info {}
     trace add variable x write traceScalar
@@ -224,7 +223,7 @@ test trace-2.4 {trace variable writes} {
     set info
 } {}
 test trace-2.5 {trace variable writes} {
-    catch {unset x}
+    unset -nocomplain x
     set x 1234
     set info {}
     trace add variable x write traceScalar
@@ -237,7 +236,7 @@ test trace-2.6 {trace variable writes on compiled local} {
     # arrays [Bug 1770591]. The corresponding function for read traces is
     # already indirectly tested in trace-1.7
     #
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     proc p {} {
 	trace add variable x write traceArray
@@ -266,7 +265,7 @@ test trace-2.7 {trace variable writes on errorInfo} -body {
 # trace: after appending all arguments to the list.
 
 test trace-3.1 {trace variable read-modify-writes} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read traceScalarAppend
     append x 123
@@ -275,7 +274,7 @@ test trace-3.1 {trace variable read-modify-writes} {
     set info
 } {x {} read 0 123456}
 test trace-3.2 {trace variable read-modify-writes} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x {read write} traceScalarAppend
     append x 123
@@ -286,14 +285,14 @@ test trace-3.2 {trace variable read-modify-writes} {
 # Basic unset-tracing on variables
 
 test trace-4.1 {trace variable unsets} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x unset traceScalar
-    catch {unset x}
+    unset -nocomplain x
     set info
 } {x {} unset 1 {can't read "x": no such variable}}
 test trace-4.2 {variable mustn't exist during unset trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x 1234
     set info {}
     trace add variable x unset traceScalar
@@ -301,7 +300,7 @@ test trace-4.2 {variable mustn't exist during unset trace} {
     set info
 } {x {} unset 1 {can't read "x": no such variable}}
 test trace-4.3 {unset traces mustn't be called during reads and writes} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x unset traceScalar
     set x 44
@@ -309,15 +308,15 @@ test trace-4.3 {unset traces mustn't be called during reads and writes} {
     set info
 } {}
 test trace-4.4 {trace unsets on array elements} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 18
     set info {}
     trace add variable x(1) unset traceArray
-    catch {unset x(1)}
+    unset -nocomplain x(1)
     set info
 } {x 1 unset 1 {can't read "x(1)": no such element in array}}
 test trace-4.5 {trace unsets on array elements} {
-    catch {unset x}
+    unset -nocomplain x
     set x(1) 18
     set info {}
     trace add variable x(1) unset traceArray
@@ -325,7 +324,7 @@ test trace-4.5 {trace unsets on array elements} {
     set info
 } {x 1 unset 1 {can't read "x(1)": no such element in array}}
 test trace-4.6 {trace unsets on array elements} {
-    catch {unset x}
+    unset -nocomplain x
     set x(1) 18
     set info {}
     trace add variable x(1) unset traceArray
@@ -333,15 +332,15 @@ test trace-4.6 {trace unsets on array elements} {
     set info
 } {x 1 unset 1 {can't read "x(1)": no such variable}}
 test trace-4.7 {trace unsets on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set x(1) 18
     set info {}
     trace add variable x unset traceProc
-    catch {unset x(0)}
+    unset -nocomplain x(0)
     set info
 } {}
 test trace-4.8 {trace unsets on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set x(1) 18
     set x(2) 144
     set x(3) 14
@@ -351,7 +350,7 @@ test trace-4.8 {trace unsets on whole arrays} {
     set info
 } {x 1 unset}
 test trace-4.9 {trace unsets on whole arrays} {
-    catch {unset x}
+    unset -nocomplain x
     set x(1) 18
     set x(2) 144
     set x(3) 14
@@ -363,7 +362,7 @@ test trace-4.9 {trace unsets on whole arrays} {
 
 # Array tracing on variables
 test trace-5.1 {array traces fire on accesses via [array]} {
-    catch {unset x}
+    unset -nocomplain x
     set x(b) 2
     trace add variable x array traceArray2
     set ::info {}
@@ -371,7 +370,7 @@ test trace-5.1 {array traces fire on accesses via [array]} {
     set ::info
 } {x {} array}
 test trace-5.2 {array traces do not fire on normal accesses} {
-    catch {unset x}
+    unset -nocomplain x
     set x(b) 2
     trace add variable x array traceArray2
     set ::info {}
@@ -380,7 +379,7 @@ test trace-5.2 {array traces do not fire on normal accesses} {
     set ::info
 } {}
 test trace-5.3 {array traces do not outlive variable} {
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x array traceArray2
     set ::info {}
     set x(a) 1
@@ -389,19 +388,19 @@ test trace-5.3 {array traces do not outlive variable} {
     set ::info
 } {}
 test trace-5.4 {array traces properly listed in trace information} {
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x array traceArray2
     set result [trace info variable x]
     set result
 } [list [list array traceArray2]]
 test trace-5.5 {array traces properly listed in trace information} {
-    catch {unset x}
+    unset -nocomplain x
     trace variable x a traceArray2
     set result [trace vinfo x]
     set result
 } [list [list a traceArray2]]
 test trace-5.6 {array traces don't fire on scalar variables} {
-    catch {unset x}
+    unset -nocomplain x
     set x foo
     trace add variable x array traceArray2
     set ::info {}
@@ -409,14 +408,14 @@ test trace-5.6 {array traces don't fire on scalar variables} {
     set ::info
 } {}
 test trace-5.7 {array traces fire for undefined variables} {
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x array traceArray2
     set ::info {}
     array set x {a 1}
     set ::info
 } {x {} array}
 test trace-5.8 {array traces fire for undefined variables} {
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x array {set x(foo) 1 ;#}
     set res "names: [array names x]"
 } {names: foo}
@@ -424,7 +423,7 @@ test trace-5.8 {array traces fire for undefined variables} {
 # Trace multiple trace types at once.
 
 test trace-6.1 {multiple ops traced at once} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x {read write unset} traceProc
     catch {set x}
@@ -435,7 +434,7 @@ test trace-6.1 {multiple ops traced at once} {
     set info
 } {x {} read x {} write x {} read x {} write x {} unset}
 test trace-6.2 {multiple ops traced on array element} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(0) {read write unset} traceProc
     catch {set x(0)}
@@ -447,7 +446,7 @@ test trace-6.2 {multiple ops traced on array element} {
     set info
 } {x 0 read x 0 write x 0 read x 0 write x 0 unset}
 test trace-6.3 {multiple ops traced on whole array} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x {read write unset} traceProc
     catch {set x(0)}
@@ -462,7 +461,7 @@ test trace-6.3 {multiple ops traced on whole array} {
 # Check order of invocation of traces
 
 test trace-7.1 {order of invocation of traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x read "traceTag 1"
     trace add variable x read "traceTag 2"
@@ -473,7 +472,7 @@ test trace-7.1 {order of invocation of traces} {
     set info
 } {3 2 1 3 2 1}
 test trace-7.2 {order of invocation of traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 44
     set info {}
     trace add variable x(0) read "traceTag 1"
@@ -483,7 +482,7 @@ test trace-7.2 {order of invocation of traces} {
     set info
 } {3 2 1}
 test trace-7.3 {order of invocation of traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 44
     set info {}
     trace add variable x(0) read "traceTag 1"
@@ -499,7 +498,7 @@ test trace-7.3 {order of invocation of traces} {
 # Check effects of errors in trace procedures
 
 test trace-8.1 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     set info {}
     trace add variable x read "traceTag 1"
@@ -507,7 +506,7 @@ test trace-8.1 {error returns from traces} {
     list [catch {set x} msg] $msg $info
 } {1 {can't read "x": trace returned error} {}}
 test trace-8.2 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     set info {}
     trace add variable x write "traceTag 1"
@@ -515,14 +514,14 @@ test trace-8.2 {error returns from traces} {
     list [catch {set x 44} msg] $msg $info
 } {1 {can't set "x": trace returned error} {}}
 test trace-8.3 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     set info {}
     trace add variable x write traceError
     list [catch {append x 44} msg] $msg $info
 } {1 {can't set "x": trace returned error} {}}
 test trace-8.4 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     set info {}
     trace add variable x unset "traceTag 1"
@@ -530,7 +529,7 @@ test trace-8.4 {error returns from traces} {
     list [catch {unset x} msg] $msg $info
 } {0 {} 1}
 test trace-8.5 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 123
     set info {}
     trace add variable x(0) read "traceTag 1"
@@ -540,7 +539,7 @@ test trace-8.5 {error returns from traces} {
     list [catch {set x(0)} msg] $msg $info
 } {1 {can't read "x(0)": trace returned error} 3}
 test trace-8.6 {error returns from traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     trace add variable x unset traceError
     list [catch {unset x} msg] $msg
@@ -549,7 +548,7 @@ test trace-8.7 {error returns from traces} {
     # This test just makes sure that the memory for the error message
     # gets deallocated correctly when the trace is invoked again or
     # when the trace is deleted.
-    catch {unset x}
+    unset -nocomplain x
     set x 123
     trace add variable x read traceError
     catch {set x}
@@ -570,7 +569,7 @@ test trace-8.8 {error returns from traces} {
 	trace add    variable ::x write [list foo $::x]
 	error "foo"
     }
-    catch {unset ::x ::y}
+    unset -nocomplain ::x ::y
     set x junk
     trace add variable ::x write [list foo $x]
     for {set y 0} {$y<100} {incr y} {
@@ -584,31 +583,31 @@ test trace-8.8 {error returns from traces} {
 # a new copy of the variables.
 
 test trace-9.1 {be sure variable is unset before trace is called} {
-    catch {unset x}
+    unset -nocomplain x
     set x 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel set x}}
+    trace add variable x unset {traceCheck {uplevel 1 set x}}
     unset x
     set info
 } {1 {can't read "x": no such variable}}
 test trace-9.2 {be sure variable is unset before trace is called} {
-    catch {unset x}
+    unset -nocomplain x
     set x 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel set x 22}}
+    trace add variable x unset {traceCheck {uplevel 1 set x 22}}
     unset x
     concat $info [list [catch {set x} msg] $msg]
 } {0 22 0 22}
 test trace-9.3 {be sure traces are cleared before unset trace called} {
-    catch {unset x}
+    unset -nocomplain x
     set x 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel trace info variable x}}
+    trace add variable x unset {traceCheck {uplevel 1 trace info variable x}}
     unset x
     set info
 } {0 {}}
 test trace-9.4 {set new trace during unset trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x 33
     set info {}
     trace add variable x unset {traceCheck {global x; trace add variable x unset traceProc}}
@@ -617,23 +616,23 @@ test trace-9.4 {set new trace during unset trace} {
 } {0 {} {unset traceProc}}
 
 test trace-10.1 {make sure array elements are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 33
     set info {}
-    trace add variable x(0) unset {traceCheck {uplevel set x(0)}}
+    trace add variable x(0) unset {traceCheck {uplevel 1 set x(0)}}
     unset x(0)
     set info
 } {1 {can't read "x(0)": no such element in array}}
 test trace-10.2 {make sure array elements are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 33
     set info {}
-    trace add variable x(0) unset {traceCheck {uplevel set x(0) zzz}}
+    trace add variable x(0) unset {traceCheck {uplevel 1 set x(0) zzz}}
     unset x(0)
     concat $info [list [catch {set x(0)} msg] $msg]
 } {0 zzz 0 zzz}
 test trace-10.3 {array elements are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 33
     set info {}
     trace add variable x(0) unset {traceCheck {global x; trace info variable x(0)}}
@@ -641,49 +640,49 @@ test trace-10.3 {array elements are unset before traces are called} {
     set info
 } {0 {}}
 test trace-10.4 {set new array element trace during unset trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 33
     set info {}
-    trace add variable x(0) unset {traceCheck {uplevel {trace add variable x(0) read {}}}}
-    catch {unset x(0)}
+    trace add variable x(0) unset {traceCheck {uplevel 1 {trace add variable x(0) read {}}}}
+    unset -nocomplain x(0)
     concat $info [trace info variable x(0)]
 } {0 {} {read {}}}
 
 test trace-11.1 {make sure arrays are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(0) 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel set x(0)}}
+    trace add variable x unset {traceCheck {uplevel 1 set x(0)}}
     unset x
     set info
 } {1 {can't read "x(0)": no such variable}}
 test trace-11.2 {make sure arrays are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(y) 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel set x(y) 22}}
+    trace add variable x unset {traceCheck {uplevel 1 set x(y) 22}}
     unset x
     concat $info [list [catch {set x(y)} msg] $msg]
 } {0 22 0 22}
 test trace-11.3 {make sure arrays are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(y) 33
     set info {}
-    trace add variable x unset {traceCheck {uplevel array exists x}}
+    trace add variable x unset {traceCheck {uplevel 1 array exists x}}
     unset x
     set info
 } {0 0}
 test trace-11.4 {make sure arrays are unset before traces are called} {
-    catch {unset x}
+    unset -nocomplain x
     set x(y) 33
     set info {}
-    set cmd {traceCheck {uplevel {trace info variable x}}}
+    set cmd {traceCheck {uplevel 1 {trace info variable x}}}
     trace add variable x unset $cmd
     unset x
     set info
 } {0 {}}
 test trace-11.5 {set new array trace during unset trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x(y) 33
     set info {}
     trace add variable x unset {traceCheck {global x; trace add variable x read {}}}
@@ -691,7 +690,7 @@ test trace-11.5 {set new array trace during unset trace} {
     concat $info [trace info variable x]
 } {0 {} {read {}}}
 test trace-11.6 {create scalar during array unset trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x(y) 33
     set info {}
     trace add variable x unset {traceCheck {global x; set x 44}}
@@ -702,52 +701,52 @@ test trace-11.6 {create scalar during array unset trace} {
 # Check special conditions (e.g. errors) in Tcl_TraceVar2.
 
 test trace-12.1 {creating array when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(0) write traceProc
     list [catch {set x 22} msg] $msg
 } {1 {can't set "x": variable is array}}
 test trace-12.2 {creating array when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(0) write traceProc
     list [catch {set x(0)} msg] $msg
 } {1 {can't read "x(0)": no such element in array}}
 test trace-12.3 {creating array when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x(0) write traceProc
     set x(0) 22
     set info
 } {x 0 write}
 test trace-12.4 {creating variable when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceProc
     list [catch {set x} msg] $msg
 } {1 {can't read "x": no such variable}}
 test trace-12.5 {creating variable when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceProc
     set x 22
     set info
 } {x {} write}
 test trace-12.6 {creating variable when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceProc
     set x(0) 22
     set info
 } {x 0 write}
 test trace-12.7 {create array element during read trace} {
-    catch {unset x}
+    unset -nocomplain x
     set x(2) zzz
     trace add variable x read {traceCrtElement xyzzy}
     list [catch {set x(3)} msg] $msg
 } {0 xyzzy}
 test trace-12.8 {errors when setting variable traces} {
-    catch {unset x}
+    unset -nocomplain x
     set x 44
     list [catch {trace add variable x(0) write traceProc} msg] $msg
 } {1 {can't trace "x(0)": variable isn't array}}
@@ -761,7 +760,7 @@ test trace-13.1 {delete one trace from another} {
 	trace remove variable x read {traceTag 3}
 	trace remove variable x read {traceTag 4}
     }
-    catch {unset x}
+    unset -nocomplain x
     set x 44
     set info {}
     trace add variable x read {traceTag 1}
@@ -857,13 +856,13 @@ foreach type {variable command} {
 
 test trace-14.1 "trace command, wrong # args errors" {
     list [catch {trace} msg] $msg
-} [list 1 "wrong # args: should be \"trace option ?arg arg ...?\""]
+} [list 1 "wrong # args: should be \"trace option ?arg ...?\""]
 test trace-14.2 "trace command, wrong # args errors" {
     list [catch {trace add} msg] $msg
-} [list 1 "wrong # args: should be \"trace add type ?arg arg ...?\""]
+} [list 1 "wrong # args: should be \"trace add type ?arg ...?\""]
 test trace-14.3 "trace command, wrong # args errors" {
     list [catch {trace remove} msg] $msg
-} [list 1 "wrong # args: should be \"trace remove type ?arg arg ...?\""]
+} [list 1 "wrong # args: should be \"trace remove type ?arg ...?\""]
 test trace-14.4 "trace command, wrong # args errors" {
     list [catch {trace info} msg] $msg
 } [list 1 "wrong # args: should be \"trace info type name\""]
@@ -915,13 +914,13 @@ test trace-14.11 {trace command, "trace variable" errors} {
 
 
 test trace-14.12 {trace command ("remove variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceProc
     trace remove variable x write traceProc
 } {}
 test trace-14.13 {trace command ("remove variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write traceProc
     trace remove variable x write traceProc
@@ -929,7 +928,7 @@ test trace-14.13 {trace command ("remove variable" option)} {
     set info
 } {}
 test trace-14.14 {trace command ("remove variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write {traceTag 1}
     trace add variable x write traceProc
@@ -944,7 +943,7 @@ test trace-14.14 {trace command ("remove variable" option)} {
     set info
 } {2 x {} write 1 2 1 2}
 test trace-14.15 {trace command ("remove variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write {traceTag 1}
     trace remove variable x write non_existent
@@ -952,27 +951,27 @@ test trace-14.15 {trace command ("remove variable" option)} {
     set info
 } {1}
 test trace-14.16 {trace command ("info variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x write {traceTag 1}
     trace add variable x write traceProc
     trace add variable x write {traceTag 2}
     trace info variable x
 } {{write {traceTag 2}} {write traceProc} {write {traceTag 1}}}
 test trace-14.17 {trace command ("info variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     trace info variable x
 } {}
 test trace-14.18 {trace command ("info variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     trace info variable x(0)
 } {}
 test trace-14.19 {trace command ("info variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set x 44
     trace info variable x(0)
 } {}
 test trace-14.20 {trace command ("info variable" option)} {
-    catch {unset x}
+    unset -nocomplain x
     set x 44
     trace add variable x write {traceTag 1}
     proc check {} {global x; trace info variable x}
@@ -982,7 +981,7 @@ test trace-14.20 {trace command ("info variable" option)} {
 # Check fancy trace commands (long ones, weird arguments, etc.)
 
 test trace-15.1 {long trace command} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x write {traceTag {This is a very very long argument.  It's \
 	designed to test out the facilities of TraceVarProc for dealing \
@@ -1000,14 +999,14 @@ test trace-15.2 {long trace command result to ignore} {
     proc longResult {args} {return "quite a bit of text, designed to
 	generate a core leak if this command file is invoked over and over again
 	and memory isn't being recycled correctly"}
-    catch {unset x}
+    unset -nocomplain x
     trace add variable x write longResult
     set x 44
     set x 5
     set x abcde
 } abcde
 test trace-15.3 {special list-handling in trace commands} {
-    catch {unset "x y z"}
+    unset -nocomplain "x y z"
     set "x y z(a\n\{)" 44
     set info {}
     trace add variable "x y z(a\n\{)" write traceProc
@@ -1019,18 +1018,18 @@ test trace-15.3 {special list-handling in trace commands} {
 
 proc traceUnset {unsetName args} {
     global info
-    upvar $unsetName x
+    upvar 1 $unsetName x
     lappend info [catch {unset x} msg] $msg [catch {set x} msg] $msg
 }
 proc traceReset {unsetName resetName args} {
     global info
-    upvar $unsetName x $resetName y
+    upvar 1 $unsetName x $resetName y
     lappend info [catch {unset x} msg] $msg [catch {set y xyzzy} msg] $msg
 }
 proc traceReset2 {unsetName resetName args} {
     global info
-    lappend info [catch {uplevel unset $unsetName} msg] $msg \
-	    [catch {uplevel set $resetName xyzzy} msg] $msg
+    lappend info [catch {uplevel 1 unset $unsetName} msg] $msg \
+	    [catch {uplevel 1 set $resetName xyzzy} msg] $msg
 }
 proc traceAppend {string name1 name2 op} {
     global info
@@ -1038,7 +1037,7 @@ proc traceAppend {string name1 name2 op} {
 }
 
 test trace-16.1 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y read {traceUnset y}
@@ -1046,49 +1045,49 @@ test trace-16.1 {unsets during read traces} {
     lappend info [catch {set y} msg] $msg
 } {unset 0 {} 1 {can't read "x": no such variable} 1 {can't read "y": no such variable}}
 test trace-16.2 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceUnset y(0)}
     lappend info [catch {set y(0)} msg] $msg
 } {0 {} 1 {can't read "x": no such variable} 1 {can't read "y(0)": no such element in array}}
 test trace-16.3 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceUnset y}
     lappend info [catch {set y(0)} msg] $msg
 } {0 {} 1 {can't read "x": no such variable} 1 {can't read "y(0)": no such variable}}
 test trace-16.4 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y read {traceReset y y}
     lappend info [catch {set y} msg] $msg
 } {0 {} 0 xyzzy 0 xyzzy}
 test trace-16.5 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceReset y(0) y(0)}
     lappend info [catch {set y(0)} msg] $msg
 } {0 {} 0 xyzzy 0 xyzzy}
 test trace-16.6 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceReset y y(0)}
     lappend info [catch {set y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 1 {can't set "y": upvar refers to element in deleted array} 1 {can't read "y(0)": no such variable} 1 {can't read "y(0)": no such variable}}
 test trace-16.7 {unsets during read traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceReset2 y y(0)}
     lappend info [catch {set y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 0 xyzzy 1 {can't read "y(0)": no such element in array} 0 xyzzy}
 test trace-16.8 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y write {traceUnset y}
@@ -1096,91 +1095,91 @@ test trace-16.8 {unsets during write traces} {
     lappend info [catch {set y xxx} msg] $msg
 } {unset 0 {} 1 {can't read "x": no such variable} 0 {}}
 test trace-16.9 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) write {traceUnset y(0)}
     lappend info [catch {set y(0) xxx} msg] $msg
 } {0 {} 1 {can't read "x": no such variable} 0 {}}
 test trace-16.10 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) write {traceUnset y}
     lappend info [catch {set y(0) xxx} msg] $msg
 } {0 {} 1 {can't read "x": no such variable} 0 {}}
 test trace-16.11 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y write {traceReset y y}
     lappend info [catch {set y xxx} msg] $msg
 } {0 {} 0 xyzzy 0 xyzzy}
 test trace-16.12 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) write {traceReset y(0) y(0)}
     lappend info [catch {set y(0) xxx} msg] $msg
 } {0 {} 0 xyzzy 0 xyzzy}
 test trace-16.13 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) write {traceReset y y(0)}
     lappend info [catch {set y(0) xxx} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 1 {can't set "y": upvar refers to element in deleted array} 0 {} 1 {can't read "y(0)": no such variable}}
 test trace-16.14 {unsets during write traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) write {traceReset2 y y(0)}
     lappend info [catch {set y(0) xxx} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 0 xyzzy 0 {} 0 xyzzy}
 test trace-16.15 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y unset {traceUnset y}
     lappend info [catch {unset y} msg] $msg [catch {set y} msg] $msg
 } {1 {can't unset "x": no such variable} 1 {can't read "x": no such variable} 0 {} 1 {can't read "y": no such variable}}
 test trace-16.16 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) unset {traceUnset y(0)}
     lappend info [catch {unset y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {1 {can't unset "x": no such variable} 1 {can't read "x": no such variable} 0 {} 1 {can't read "y(0)": no such element in array}}
 test trace-16.17 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) unset {traceUnset y}
     lappend info [catch {unset y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 1 {can't read "x": no such variable} 0 {} 1 {can't read "y(0)": no such variable}}
 test trace-16.18 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y unset {traceReset2 y y}
     lappend info [catch {unset y} msg] $msg [catch {set y} msg] $msg
 } {1 {can't unset "y": no such variable} 0 xyzzy 0 {} 0 xyzzy}
 test trace-16.19 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) unset {traceReset2 y(0) y(0)}
     lappend info [catch {unset y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {1 {can't unset "y(0)": no such element in array} 0 xyzzy 0 {} 0 xyzzy}
 test trace-16.20 {unsets during unset traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) unset {traceReset2 y y(0)}
     lappend info [catch {unset y(0)} msg] $msg [catch {set y(0)} msg] $msg
 } {0 {} 0 xyzzy 0 {} 0 xyzzy}
 test trace-16.21 {unsets cancelling traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y 1234
     set info {}
     trace add variable y read {traceAppend first}
@@ -1190,7 +1189,7 @@ test trace-16.21 {unsets cancelling traces} {
     lappend info [catch {set y} msg] $msg
 } {third unset 0 {} 1 {can't read "x": no such variable} 1 {can't read "y": no such variable}}
 test trace-16.22 {unsets cancelling traces} {
-    catch {unset y}
+    unset -nocomplain y
     set y(0) 1234
     set info {}
     trace add variable y(0) read {traceAppend first}
@@ -1203,19 +1202,19 @@ test trace-16.22 {unsets cancelling traces} {
 # Check various non-interference between traces and other things.
 
 test trace-17.1 {trace doesn't prevent unset errors} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     trace add variable x unset {traceProc}
     list [catch {unset x} msg] $msg $info
 } {1 {can't unset "x": no such variable} {x {} unset}}
 test trace-17.2 {traced variables must survive procedure exits} {
-    catch {unset x}
+    unset -nocomplain x
     proc p1 {} {global x; trace add variable x write traceProc}
     p1
     trace info variable x
 } {{write traceProc}}
 test trace-17.3 {traced variables must survive procedure exits} {
-    catch {unset x}
+    unset -nocomplain x
     set info {}
     proc p1 {} {global x; trace add variable x write traceProc}
     p1
@@ -1228,7 +1227,7 @@ test trace-17.3 {traced variables must survive procedure exits} {
 
 test trace-18.1 {unset traces on procedure returns} {
     proc p1 {x y} {set a 44; p2 14}
-    proc p2 {z} {trace add variable z unset {traceCheck {lsort [uplevel {info vars}]}}}
+    proc p2 {z} {trace add variable z unset {traceCheck {lsort [uplevel 1 {info vars}]}}}
     set info {}
     p1 foo bar
     set info
@@ -1268,8 +1267,7 @@ test trace-18.4 {namespace delete / trace vdelete combo, Bug \#1338280} {
 # Delete arrays when done, so they can be re-used as scalars
 # elsewhere.
 
-catch {unset x}
-catch {unset y}
+unset -nocomplain x y
 
 test trace-19.0.1 {trace add command (command existence)} {
     # Just in case!
@@ -1311,6 +1309,7 @@ test trace-19.3 {command rename traces don't fire on command deletion} {
 test trace-19.4 {trace add command rename doesn't trace recreated commands} {
     proc foo {} {}
     catch {rename bar {}}
+    set info {}
     trace add command foo rename traceCommand
     proc foo {} {}
     rename foo bar
@@ -1323,25 +1322,49 @@ test trace-19.5 {trace add command deleted removes traces} {
     trace info command foo
 } {}
 
-namespace eval tc {}
-proc tc::tcfoo {} {}
-test trace-19.6 {trace add command rename in namespace} {
+test trace-19.6 {trace add command rename in namespace} -setup {
+    namespace eval tc {}
+    proc tc::tcfoo {} {}
+} -body {
     trace add command tc::tcfoo rename traceCommand
     rename tc::tcfoo tc::tcbar
     set info
-} {::tc::tcfoo ::tc::tcbar rename}
-test trace-19.7 {trace add command rename in namespace back again} {
+} -cleanup {
+    namespace delete tc
+} -result {::tc::tcfoo ::tc::tcbar rename}
+test trace-19.7 {trace add command rename in namespace back again} -setup {
+    namespace eval tc {}
+    proc tc::tcfoo {} {}
+} -body {
+    trace add command tc::tcfoo rename traceCommand
+    rename tc::tcfoo tc::tcbar
     rename tc::tcbar tc::tcfoo
     set info
-} {::tc::tcbar ::tc::tcfoo rename}
-test trace-19.8 {trace add command rename in namespace to out of namespace} {
+} -cleanup {
+    namespace delete tc
+} -result {::tc::tcbar ::tc::tcfoo rename}
+test trace-19.8 {trace add command rename in namespace to out of namespace} -setup {
+    namespace eval tc {}
+    proc tc::tcfoo {} {}
+} -body {
+    trace add command tc::tcfoo rename traceCommand
     rename tc::tcfoo tcbar
     set info
-} {::tc::tcfoo ::tcbar rename}
-test trace-19.9 {trace add command rename back into namespace} {
+} -cleanup {
+    catch {rename tcbar {}}
+    namespace delete tc
+} -result {::tc::tcfoo ::tcbar rename}
+test trace-19.9 {trace add command rename back into namespace} -setup {
+    namespace eval tc {}
+    proc tc::tcfoo {} {}
+} -body {
+    trace add command tc::tcfoo rename traceCommand
+    rename tc::tcfoo tcbar
     rename tcbar tc::tcfoo
     set info
-} {::tcbar ::tc::tcfoo rename}
+} -cleanup {
+    namespace delete tc
+} -result {::tcbar ::tc::tcfoo rename}
 test trace-19.10 {trace add command failed rename doesn't trigger trace} {
     set info {}
     proc foo {} {}
@@ -1352,11 +1375,18 @@ test trace-19.10 {trace add command failed rename doesn't trigger trace} {
 } {}
 catch {rename foo {}}
 catch {rename bar {}}
-test trace-19.11 {trace add command qualifies when renamed in namespace} {
+
+test trace-19.11 {trace add command qualifies when renamed in namespace} -setup {
+    namespace eval tc {}
+    proc tc::tcfoo {} {}
+} -body {
     set info {}
+    trace add command tc::tcfoo {rename delete} traceCommand
     namespace eval tc {rename tcfoo tcbar}
     set info
-} {::tc::tcfoo ::tc::tcbar rename}
+} -cleanup {
+    namespace delete tc
+} -result {::tc::tcfoo ::tc::tcbar rename}
 
 # Make sure it exists again
 proc foo {} {}
@@ -1541,8 +1571,7 @@ proc foo {b} { set a $b }
 # Delete arrays when done, so they can be re-used as scalars
 # elsewhere.
 
-catch {unset x}
-catch {unset y}
+unset -nocomplain x y
 
 # Delete procedures when done, so we don't clash with other tests
 # (e.g. foobar will clash with 'unknown' tests).
@@ -1672,6 +1701,16 @@ test trace-21.11 {trace execution and alias} -setup {
     namespace delete a
     rename ::x {}
 } -result {:: ::}
+
+proc set2 args {
+    set {*}$args
+}
+
+test trace-21.12 {bug 2438181} -setup {
+    trace add execution set2 leave {puts one two three #;}
+} -body {
+    set2 a hello
+} -returnCodes 1 -result {wrong # args: should be "puts ?-nonewline? ?channelId? string"}
 
 proc factorial {n} {
     if {$n != 1} { return [expr {$n * [factorial [expr {$n -1 }]]}] }
@@ -2049,7 +2088,7 @@ test trace-28.1 {enterstep and leavestep traces with update idletasks (615043)} 
     trace remove execution foo {enter enterstep leavestep leave} \
         [list traceExecute foo]
     rename foo {}
-    catch {unset a}
+    unset -nocomplain a
     join $info "\n"
 } {foo foo enter
 foo {set a 1} enterstep
@@ -2560,8 +2599,76 @@ set base {
 }
 runbase {{- *} {-* *} {- *} {- *}} $base
 
+test trace-39 {bug #3484621: tracing Bc'ed commands} -setup {
+    set ::traceLog 0
+    set ::traceCalls 0
+    set ::bar [list 0 1 2 3]
+    set res {}
+    proc dotrace args {
+	incr ::traceLog
+    }
+    proc foo {} {
+	incr ::traceCalls
+	# choose a BC'ed command that is 'unlikely' to interfere with tcltest's
+	# internals 
+	lset ::bar 1 2
+    }
+} -body {
+    foo
+    lappend res $::traceLog
 
+    trace add execution lset enter dotrace
+    foo
+    lappend res $::traceLog
 
+    trace remove execution lset enter dotrace
+    foo
+    lappend res $::traceLog
+
+    list $::traceCalls | {*}$res
+} -cleanup {
+    unset ::traceLog ::traceCalls ::bar res
+    rename dotrace {}
+    rename foo {}
+} -result {3 | 0 1 1}
+    
+test trace-39.1 {bug #3485022: tracing Bc'ed commands} -setup {
+    set ::traceLog 0
+    set ::traceCalls 0
+    set res {}
+    proc dotrace args {
+	incr ::traceLog
+    }
+    proc foo {} {
+	incr ::traceCalls
+	string equal zip zap
+    }
+} -body {
+    foo
+    lappend res $::traceLog
+
+    trace add execution ::tcl::string::equal enter dotrace
+    foo
+    lappend res $::traceLog
+
+    trace remove execution tcl::string::equal enter dotrace
+    foo
+    lappend res $::traceLog
+
+    list $::traceCalls | {*}$res
+} -cleanup {
+    unset ::traceLog ::traceCalls res
+    rename dotrace {}
+    rename foo {}
+} -result {3 | 0 1 1}
+
+test trace-40.1 {execution trace errors become command errors} {
+    proc foo args {}
+    trace add execution foo enter {rename foo {}; error bar;#}
+    catch foo m
+    return -level 0 $m[unset m]
+} bar
+    
 # Delete procedures when done, so we don't clash with other tests
 # (e.g. foobar will clash with 'unknown' tests).
 catch {rename foobar {}}
@@ -2572,9 +2679,8 @@ catch {rename traceproc {}}
 catch {rename runbase {}}
 
 # Unset the variable when done
-catch {unset info}
-catch {unset base}
+unset -nocomplain info base
 
 # cleanup
-::tcltest::cleanupTests
+cleanupTests
 return

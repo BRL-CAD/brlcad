@@ -9,32 +9,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclPort.h"
 
 #ifdef HAVE_COREFOUNDATION
-/* Ew.  Incompatibility between newer gcc versions
- * in Macports and assumptions made by Apple headers.
- * http://gcc.gnu.org/bugzilla/show_bug.cgi?id=44981
- * Fake it by pretending to be gcc 4.0 when __APPLE_CC__
- * is less than or equal to 5600 - we'll see what that 
- * breaks, but it at least builds.
- */
-# if defined(__APPLE_CC__)
-#   if !(__APPLE_CC__ > 5600)
-#     define GNUC_MINOR_TMP __GNUC_MINOR__
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ 0
-#     include <CoreFoundation/CoreFoundation.h>
-#     undef __GNUC_MINOR__
-#     define __GNUC_MINOR__ GNUC_MINOR_TMP
-#   else
-#     include <CoreFoundation/CoreFoundation.h>
-#   endif
-# endif
+#include <CoreFoundation/CoreFoundation.h>
 
 #ifndef TCL_DYLD_USE_DLFCN
 /*
@@ -45,7 +25,7 @@
 #   else
 #	define TCL_DYLD_USE_DLFCN 0
 #   endif
-#endif
+#endif /* TCL_DYLD_USE_DLFCN */
 
 #ifndef TCL_DYLD_USE_NSMODULE
 /*
@@ -56,7 +36,7 @@
 #   else
 #	define TCL_DYLD_USE_NSMODULE 0
 #   endif
-#endif
+#endif /* TCL_DYLD_USE_NSMODULE */
 
 #if TCL_DYLD_USE_DLFCN
 #include <dlfcn.h>
@@ -64,10 +44,11 @@
 /*
  * Support for weakly importing dlfcn API.
  */
-extern void *dlsym(void *handle, const char *symbol) WEAK_IMPORT_ATTRIBUTE;
-extern char *dlerror(void) WEAK_IMPORT_ATTRIBUTE;
+extern void *		dlsym(void *handle, const char *symbol)
+			    WEAK_IMPORT_ATTRIBUTE;
+extern char *		dlerror(void) WEAK_IMPORT_ATTRIBUTE;
 #endif
-#endif
+#endif /* TCL_DYLD_USE_DLFCN */
 
 #if TCL_DYLD_USE_NSMODULE
 #include <mach-o/dyld.h>
@@ -75,20 +56,92 @@ extern char *dlerror(void) WEAK_IMPORT_ATTRIBUTE;
 
 #if (TCL_DYLD_USE_DLFCN && MAC_OS_X_VERSION_MIN_REQUIRED < 1040) || \
 	(MAC_OS_X_VERSION_MIN_REQUIRED < 1050)
-MODULE_SCOPE long tclMacOSXDarwinRelease;
+MODULE_SCOPE long	tclMacOSXDarwinRelease;
 #endif
 
 #ifdef TCL_DEBUG_LOAD
-#define TclLoadDbgMsg(m, ...) do { \
-	    fprintf(stderr, "%s:%d: %s(): " m ".\n", \
-	    strrchr(__FILE__, '/')+1, __LINE__, __func__, ##__VA_ARGS__); \
-	} while (0)
+#define TclLoadDbgMsg(m, ...) \
+    do {								\
+	fprintf(stderr, "%s:%d: %s(): " m ".\n",			\
+		strrchr(__FILE__, '/')+1, __LINE__, __func__,		\
+		##__VA_ARGS__);						\
+    } while (0)
 #else
 #define TclLoadDbgMsg(m, ...)
-#endif
+#endif /* TCL_DEBUG_LOAD */
+
+/*
+ * Forward declaration of functions defined in this file:
+ */
+
+static short		OpenResourceMap(CFBundleRef bundleRef);
 
 #endif /* HAVE_COREFOUNDATION */
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * OpenResourceMap --
+ *
+ *	Wrapper that dynamically acquires the address for the function
+ *	CFBundleOpenBundleResourceMap before calling it, since it is only
+ *	present in full CoreFoundation on Mac OS X and not in CFLite on pure
+ *	Darwin. Factored out because it is moderately ugly code.
+ *
+ *----------------------------------------------------------------------
+ */
 
+#ifdef HAVE_COREFOUNDATION
+
+static short
+OpenResourceMap(
+    CFBundleRef bundleRef)
+{
+    static int initialized = FALSE;
+    static short (*openresourcemap)(CFBundleRef) = NULL;
+
+    if (!initialized) {
+#if TCL_DYLD_USE_DLFCN
+#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
+	if (tclMacOSXDarwinRelease >= 8)
+#endif
+	{
+	    openresourcemap = dlsym(RTLD_NEXT,
+		    "CFBundleOpenBundleResourceMap");
+#ifdef TCL_DEBUG_LOAD
+	    if (!openresourcemap) {
+		const char *errMsg = dlerror();
+
+		TclLoadDbgMsg("dlsym() failed: %s", errMsg);
+	    }
+#endif /* TCL_DEBUG_LOAD */
+	}
+	if (!openresourcemap)
+#endif /* TCL_DYLD_USE_DLFCN */
+	{
+#if TCL_DYLD_USE_NSMODULE
+	    if (NSIsSymbolNameDefinedWithHint(
+		    "_CFBundleOpenBundleResourceMap", "CoreFoundation")) {
+		NSSymbol nsSymbol = NSLookupAndBindSymbolWithHint(
+			"_CFBundleOpenBundleResourceMap", "CoreFoundation");
+
+		if (nsSymbol) {
+		    openresourcemap = NSAddressOfSymbol(nsSymbol);
+		}
+	    }
+#endif /* TCL_DYLD_USE_NSMODULE */
+	}
+	initialized = TRUE;
+    }
+
+    if (openresourcemap) {
+	return openresourcemap(bundleRef);
+    }
+    return -1;
+}
+
+#endif /* HAVE_COREFOUNDATION */
+
 /*
  *----------------------------------------------------------------------
  *
@@ -112,13 +165,13 @@ MODULE_SCOPE long tclMacOSXDarwinRelease;
 int
 Tcl_MacOSXOpenBundleResources(
     Tcl_Interp *interp,
-    CONST char *bundleName,
+    const char *bundleName,
     int hasResourceFile,
     int maxPathLen,
     char *libraryPath)
 {
-    return Tcl_MacOSXOpenVersionedBundleResources(interp, bundleName,
-	    NULL, hasResourceFile, maxPathLen, libraryPath);
+    return Tcl_MacOSXOpenVersionedBundleResources(interp, bundleName, NULL,
+	    hasResourceFile, maxPathLen, libraryPath);
 }
 
 /*
@@ -145,8 +198,8 @@ Tcl_MacOSXOpenBundleResources(
 int
 Tcl_MacOSXOpenVersionedBundleResources(
     Tcl_Interp *interp,
-    CONST char *bundleName,
-    CONST char *bundleVersion,
+    const char *bundleName,
+    const char *bundleVersion,
     int hasResourceFile,
     int maxPathLen,
     char *libraryPath)
@@ -213,54 +266,7 @@ Tcl_MacOSXOpenVersionedBundleResources(
 
     if (bundleRef) {
 	if (hasResourceFile) {
-	    /*
-	     * Dynamically acquire address for CFBundleOpenBundleResourceMap
-	     * symbol, since it is only present in full CoreFoundation on Mac
-	     * OS X and not in CFLite on pure Darwin.
-	     */
-
-	    static int initialized = FALSE;
-	    static short (*openresourcemap)(CFBundleRef) = NULL;
-
-	    if (!initialized) {
-#if TCL_DYLD_USE_DLFCN
-#if MAC_OS_X_VERSION_MIN_REQUIRED < 1040
-		if (tclMacOSXDarwinRelease >= 8)
-#endif
-		{
-		    const char *errMsg = nil;
-		    openresourcemap = dlsym(RTLD_NEXT,
-			    "CFBundleOpenBundleResourceMap");
-		    if (!openresourcemap) {
-			errMsg = dlerror();
-			TclLoadDbgMsg("dlsym() failed: %s", errMsg);
-		    }
-		}
-		if (!openresourcemap)
-#endif
-		{
-#if TCL_DYLD_USE_NSMODULE
-		    NSSymbol nsSymbol = NULL;
-		    if (NSIsSymbolNameDefinedWithHint(
-			    "_CFBundleOpenBundleResourceMap",
-			    "CoreFoundation")) {
-			nsSymbol = NSLookupAndBindSymbolWithHint(
-				"_CFBundleOpenBundleResourceMap",
-				"CoreFoundation");
-			if (nsSymbol) {
-			    openresourcemap = NSAddressOfSymbol(nsSymbol);
-			}
-		    }
-#endif
-		}
-		initialized = TRUE;
-	    }
-
-	    if (openresourcemap) {
-		short refNum;
-
-		refNum = openresourcemap(bundleRef);
-	    }
+	    (void) OpenResourceMap(bundleRef);
 	}
 
 	libURL = CFBundleCopyResourceURL(bundleRef, CFSTR("Scripts"),
@@ -273,12 +279,15 @@ Tcl_MacOSXOpenVersionedBundleResources(
 	     */
 
 	    CFURLGetFileSystemRepresentation(libURL, TRUE,
-		    (unsigned char*) libraryPath, maxPathLen);
+		    (unsigned char *) libraryPath, maxPathLen);
 	    CFRelease(libURL);
 	}
 	if (versionedBundleRef) {
 #if MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-	    /* Workaround CFBundle bug in Tiger and earlier. [Bug 2569449] */
+	    /*
+	     * Workaround CFBundle bug in Tiger and earlier. [Bug 2569449]
+	     */
+
 	    if (tclMacOSXDarwinRelease >= 9)
 #endif
 	    {
@@ -289,12 +298,9 @@ Tcl_MacOSXOpenVersionedBundleResources(
 
     if (libraryPath[0]) {
 	return TCL_OK;
-    } else {
-	return TCL_ERROR;
     }
-#else  /* HAVE_COREFOUNDATION */
-    return TCL_ERROR;
 #endif /* HAVE_COREFOUNDATION */
+    return TCL_ERROR;
 }
 
 /*

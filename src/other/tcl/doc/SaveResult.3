@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_SaveResult 3 8.1 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_SaveInterpState, Tcl_RestoreInterpState, Tcl_DiscardInterpState, Tcl_SaveResult, Tcl_RestoreResult, Tcl_DiscardResult \- save and restore an interpreter's state
@@ -40,10 +38,8 @@ Saved state token to be restored or discarded.
 .AP Tcl_SavedResult *savedPtr in
 Pointer to location where interpreter result should be saved or restored.
 .BE
-
 .SH DESCRIPTION
 .PP
-.VS 8.5
 These routines allows a C procedure to take a snapshot of the current
 state of an interpreter so that it can be restored after a call
 to \fBTcl_Eval\fR or some other routine that modifies the interpreter
@@ -99,14 +95,13 @@ must eventually be passed to either \fBTcl_RestoreInterpState\fR
 or \fBTcl_DiscardInterpState\fR to avoid a memory leak.  Once
 the \fBTcl_InterpState\fR token is passed to one of them, the
 token is no longer valid and should not be used anymore.
-.VE 8.5
 .PP
-\fBTcl_SaveResult\fR moves the string and object results
+\fBTcl_SaveResult\fR moves the string and value results
 of \fIinterp\fR into the location specified by \fIstatePtr\fR.
 \fBTcl_SaveResult\fR clears the result for \fIinterp\fR and
 leaves the result in its normal empty initialized state.
 .PP
-\fBTcl_RestoreResult\fR moves the string and object results from
+\fBTcl_RestoreResult\fR moves the string and value results from
 \fIstatePtr\fR back into \fIinterp\fR.  Any result or error that was
 already in the interpreter will be cleared.  The \fIstatePtr\fR is left
 in an uninitialized state and cannot be used until another call to
@@ -121,6 +116,5 @@ Once \fBTcl_SaveResult\fR is called to save the interpreter
 result, either \fBTcl_RestoreResult\fR or
 \fBTcl_DiscardResult\fR must be called to properly clean up the
 memory associated with the saved state.  
-
 .SH KEYWORDS
 result, state, interp

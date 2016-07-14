@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -46,6 +44,26 @@ test list-1.23 {basic tests} {list \{} "\\{"
 test list-1.24 {basic tests} {list} {}
 test list-1.25 {basic tests} {list # #} {{#} #}
 test list-1.26 {basic tests} {list #\{ #\{} {\#\{ #\{}
+test list-1.27 {basic null treatment} {
+    set l [list "" "\0" "\0\0"]
+    set e "{} \0 \0\0"
+    string equal $l $e
+} 1
+test list-1.28 {basic null treatment} {
+    set result "\0a\0b"
+    list $result [string length $result]
+} "\0a\0b 4"
+test list-1.29 {basic null treatment} {
+    set result "\0a\0b"
+    set srep "$result 4"
+    set lrep [list $result [string length $result]]
+    string equal $srep $lrep
+} 1
+test list-1.30 {basic null treatment} {
+    set l [list "\0abc" "xyz"]
+    set e "\0abc xyz"
+    string equal $l $e
+} 1
 
 # For the next round of tests create a list and then pick it apart
 # with "index" to make sure that we get back exactly what went in.
@@ -106,6 +124,10 @@ proc slowsort list {
 test list-3.1 {SetListFromAny and lrange/concat results} {
     slowsort {fred julie alex carol bill annie}
 } {alex annie bill carol fred julie}
+
+test list-4.1 {Bug 3173086} {
+    string is list "{[list \\\\\}]}"
+} 1
 
 # cleanup
 ::tcltest::cleanupTests

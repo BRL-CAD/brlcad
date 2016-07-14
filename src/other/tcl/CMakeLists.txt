@@ -41,12 +41,12 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 IF(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-	  CMAKE_POLICY(SET CMP0048 OLD)
+    CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0048 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
   if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0053 OLD)
-	  CMAKE_POLICY(SET CMP0054 NEW)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 ENDIF(COMMAND CMAKE_POLICY)
 
@@ -61,8 +61,8 @@ set(BUILD_STATIC_LIBS ON)
 
 # version numbers
 SET(TCL_VERSION_MAJOR 8)
-SET(TCL_VERSION_MINOR 5)
-SET(TCL_VERSION_PATCH 9)
+SET(TCL_VERSION_MINOR 6)
+SET(TCL_VERSION_PATCH 5)
 
 SET(TCL_VERSION "${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}.${TCL_VERSION_PATCH}")
 
@@ -160,7 +160,7 @@ add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
 # Windows specific flags
 IF(MSVC)
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
+  add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
   add_definitions(-Dinline=__inline -DBUILD_tcl)
 ENDIF(MSVC)
@@ -214,6 +214,14 @@ SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${TCL_THREADS_LIB})
 
 # Same for the math library
 SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
+
+#--------------------------------------------------------------------
+# Handle zlib
+#--------------------------------------------------------------------
+find_package(ZLIB)
+# We're going to have zlib one way or the other,
+# either with the found lib or with compat srcs.
+add_definitions(-DHAVE_ZLIB=1)
 
 # TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
 # need to decide how much of that logic is needed.  Clearly we need SOME
@@ -463,24 +471,24 @@ ENDIF(NOT HAVE_MEMCMP)
 #------------------------------------------------------------------------------
 SC_TCL_CHECK_BROKEN_FUNC(
   strstr "
-	extern int strstr();
-	exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
+  extern int strstr();
+  exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
   )
 
 
 SC_TCL_CHECK_BROKEN_FUNC(
   strtoul "
-	extern int strtoul();
-	char *term, *string = \"0\";
-	exit(strtoul(string,&term,0) != 0 || term != string+1);"
+  extern int strtoul();
+  char *term, *string = \"0\";
+  exit(strtoul(string,&term,0) != 0 || term != string+1);"
   )
 
 
 SC_TCL_CHECK_BROKEN_FUNC(
   strtod "
-	extern double strtod();
-	char *term, *string = \" +69\";
-	exit(strtod(string,&term) != 69 || term != string+4);"
+  extern double strtod();
+  char *term, *string = \" +69\";
+  exit(strtod(string,&term) != 69 || term != string+4);"
   )
 
 
@@ -514,12 +522,12 @@ main ()
 
 union wait x;
 WIFEXITED(x);           /* Generates compiler error if WIFEXITED
-                         * uses an int. */
+* uses an int. */
 return 0;
 }
 ")
 if(NOT DEFINED HAVE_UNION_WAIT)
-   CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
+  CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
 endif(NOT DEFINED HAVE_UNION_WAIT)
 IF(NOT HAVE_UNION_WAIT)
   ADD_TCL_CFLAG(NO_UNION_WAIT)
@@ -562,13 +570,13 @@ SET(unsigned_char_srcs "
 int
 main ()
 {
-   static int test_array [1 - 2 * !(((char) -1) < 0)];
-   test_array [0] = 0;
-   return 0;
+static int test_array [1 - 2 * !(((char) -1) < 0)];
+test_array [0] = 0;
+return 0;
 }
 ")
 if(NOT DEFINED CHAR_IS_UNSIGNED)
-   CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
+  CHECK_C_SOURCE_RUNS("${unsigned_char_srcs}" CHAR_IS_UNSIGNED)
 endif(NOT DEFINED CHAR_IS_UNSIGNED)
 IF(CHAR_IS_UNSIGNED)
   ADD_TCL_CFLAG(__CHAR_UNSIGNED__)
@@ -577,9 +585,9 @@ SET(signed_char_srcs "
 int
 main ()
 {
-   signed char *p;
-	p = 0;
-	return 0;
+signed char *p;
+p = 0;
+return 0;
 }
 ")
 CHECK_C_SOURCE_COMPILES("${signed_char_srcs}" HAVE_SIGNED_CHAR)
@@ -605,8 +613,8 @@ TCL_CHECK_FUNCTION_EXISTS(mkstemps HAVE_MKSTEMPS)
 SET(isnan_srcs "
 #include <math.h>
 int main () {
-   isnan(0.0); /* Generates an error if isnan is missing */
-	return 0;
+isnan(0.0); /* Generates an error if isnan is missing */
+return 0;
 }
 ")
 if(NOT DEFINED USABLE_ISNAN)
@@ -635,36 +643,36 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   TCL_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
   IF(HAVE_AVAILABILITYMACROS_H)
     SET(WEAK_IMPORT_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
-#endif
-int rand(void) __attribute__((weak_import));
-int main() {
-rand();
-return 0;
-}
-		")
+    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1020
+    #endif
+    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1020
+    #endif
+    int rand(void) __attribute__((weak_import));
+    int main() {
+    rand();
+    return 0;
+    }
+    ")
     CHECK_C_SOURCE_COMPILES("${WEAK_IMPORT_SRCS}" WEAK_IMPORT_WORKING)
     IF(WEAK_IMPORT_WORKING)
       ADD_TCL_CFLAG(HAVE_WEAK_IMPORT)
     ENDIF(WEAK_IMPORT_WORKING)
     SET(SUSV3_SRCS "
-#ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
-#if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
-#endif
-#elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
-#endif
-#define _DARWIN_C_SOURCE 1
-#include <sys/cdefs.h>
+    #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
+    #if __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+    #error __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__ < 1050
+    #endif
+    #elif MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+    #error MAC_OS_X_VERSION_MIN_REQUIRED < 1050
+    #endif
+    #define _DARWIN_C_SOURCE 1
+    #include <sys/cdefs.h>
 
-int main ()	{return 0;}
-		")
+    int main ()	{return 0;}
+    ")
     CHECK_C_SOURCE_COMPILES("${SUSV3_SRCS}" SUSV3_WORKING)
     IF(SUSV3_WORKING)
       ADD_TCL_CFLAG(_DARWIN_C_SOURCE)
@@ -775,6 +783,11 @@ IF(COMPAT_SRCS)
   ADD_TCL_CFLAG(USE_COMPAT)
 ENDIF(COMPAT_SRCS)
 
+IF(APPLE)
+  # Now that all the tests are done, configure the tclConfig.h file:
+  configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unix/tclConfig.h.in ${TCL_BINARY_DIR}/include/tclConfig.h)
+ENDIF(APPLE)
+
 ADD_SUBDIRECTORY(library)
 
 SET(TCL_GENERIC_SRCS
@@ -783,6 +796,7 @@ SET(TCL_GENERIC_SRCS
   generic/regfree.c
   generic/regerror.c
   generic/tclAlloc.c
+  generic/tclAssembly.c
   generic/tclAsync.c
   generic/tclBasic.c
   generic/tclBinary.c
@@ -792,12 +806,15 @@ SET(TCL_GENERIC_SRCS
   generic/tclCmdIL.c
   generic/tclCmdMZ.c
   generic/tclCompCmds.c
+  generic/tclCompCmdsGR.c
+  generic/tclCompCmdsSZ.c
   generic/tclCompExpr.c
   generic/tclCompile.c
   generic/tclConfig.c
   generic/tclDate.c
   generic/tclDictObj.c
   generic/tclEncoding.c
+  generic/tclEnsemble.c
   generic/tclEnv.c
   generic/tclEvent.c
   generic/tclExecute.c
@@ -814,6 +831,7 @@ SET(TCL_GENERIC_SRCS
   generic/tclIOSock.c
   generic/tclIOUtil.c
   generic/tclIORChan.c
+  generic/tclIORTrans.c
   generic/tclLink.c
   generic/tclListObj.c
   generic/tclLiteral.c
@@ -822,6 +840,7 @@ SET(TCL_GENERIC_SRCS
   generic/tclNamesp.c
   generic/tclNotify.c
   generic/tclObj.c
+  generic/tclOptimize.c
   generic/tclPanic.c
   generic/tclParse.c
   generic/tclPathObj.c
@@ -838,20 +857,27 @@ SET(TCL_GENERIC_SRCS
   generic/tclStubInit.c
   generic/tclStringObj.c
   generic/tclStrToD.c
-  generic/tclTest.c
   generic/tclTestObj.c
   generic/tclTestProcBodyObj.c
   generic/tclThread.c
   generic/tclThreadAlloc.c
   generic/tclThreadJoin.c
   generic/tclThreadStorage.c
-  generic/tclThreadTest.c
   generic/tclTimer.c
   generic/tclTrace.c
   generic/tclUtf.c
   generic/tclUtil.c
   generic/tclVar.c
+  generic/tclZlib.c
   generic/tclUniData.c
+  )
+
+SET(TCL_TEST_SRCS
+  generic/tclTest.c
+  generic/tclThreadTest.c
+  unix/tclUnixTest.c
+  unix/tclXtTest.c
+  win/tclWinTest.c
   )
 
 IF(TCL_TOMMATH)
@@ -870,8 +896,21 @@ SET_PROPERTY(SOURCE generic/tclPkgConfig.c APPEND PROPERTY COMPILE_DEFINITIONS C
 SET_PROPERTY(SOURCE generic/tclPkgConfig.c APPEND PROPERTY COMPILE_DEFINITIONS CFG_RUNTIME_DOCDIR="${CMAKE_INSTALL_PREFIX}/share/man")
 
 
+SET(TCL_OO_SRCS
+  generic/tclOO.c
+  generic/tclOOBasic.c
+  generic/tclOOCall.c
+  generic/tclOODefineCmds.c
+  generic/tclOOInfo.c
+  generic/tclOOMethod.c
+  generic/tclOOStubInit.c
+  )
+
+
 SET(TCL_STUB_SRCS
   generic/tclStubLib.c
+  generic/tclTomMathStubLib.c
+  generic/tclOOStubLib.c
   )
 
 SET(TCL_TOMMATH_SRCS
@@ -889,6 +928,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_cmp_d.c
   libtommath/bn_mp_cmp_mag.c
   libtommath/bn_mp_copy.c
+  libtommath/bn_mp_cnt_lsb.c
   libtommath/bn_mp_count_bits.c
   libtommath/bn_mp_div.c
   libtommath/bn_mp_div_d.c
@@ -902,6 +942,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_init_copy.c
   libtommath/bn_mp_init_multi.c
   libtommath/bn_mp_init_set.c
+  libtommath/bn_mp_init_set_int.c
   libtommath/bn_mp_init_size.c
   libtommath/bn_mp_karatsuba_mul.c
   libtommath/bn_mp_karatsuba_sqr.c
@@ -919,6 +960,7 @@ SET(TCL_TOMMATH_SRCS
   libtommath/bn_mp_read_radix.c
   libtommath/bn_mp_rshd.c
   libtommath/bn_mp_set.c
+  libtommath/bn_mp_set_int.c
   libtommath/bn_mp_shrink.c
   libtommath/bn_mp_sqr.c
   libtommath/bn_mp_sqrt.c
@@ -946,6 +988,7 @@ SET(TCL_OSX_SRCS
 
 SET(TCL_WIN_SRCS
   win/tcl.rc
+  win/tclAppInit.c
   win/tclWin32Dll.c
   win/tclWinChan.c
   win/tclWinConsole.c
@@ -978,6 +1021,7 @@ SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIB
 SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
 
 SET(TCL_UNIX_SRCS
+  unix/tclAppInit.c
   unix/tclUnixChan.c
   unix/tclUnixEvent.c
   unix/tclUnixFCmd.c
@@ -1007,7 +1051,25 @@ SET(TCL_DL_SRCS
   unix/tclLoadShl.c
   )
 
-SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS}) 
+IF(NOT ZLIB_FOUND)
+  SET(TCL_ZLIB_SRCS
+    compat/zlib/adler32.c 
+    compat/zlib/compress.c 
+    compat/zlib/crc32.c 
+    compat/zlib/deflate.c 
+    compat/zlib/infback.c 
+    compat/zlib/inffast.c 
+    compat/zlib/inflate.c 
+    compat/zlib/inftrees.c 
+    compat/zlib/trees.c 
+    compat/zlib/uncompr.c 
+    compat/zlib/zutil.c
+    )
+  SET(ZLIB_LIBRARY "")
+  SET(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/compat/zlib)
+ENDIF(NOT ZLIB_FOUND)
+
+SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_OO_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS} ${TCL_ZLIB_SRCS}) 
 IF(WIN32)
   SET(TCL_SRCS ${TCL_SRCS} ${TCL_WIN_SRCS})
 ELSE(WIN32)
@@ -1029,6 +1091,7 @@ ENDIF(WIN32)
 
 include_directories(
   ${TCL_INCLUDE_DIRS}
+  ${ZLIB_INCLUDE_DIR}
   )
 
 IF(WIN32)
@@ -1042,11 +1105,11 @@ IF(MINGW)
 ENDIF(MINGW)
 
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl 
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 GET_TARGET_PROPERTY(TCL_INSTALL_LIBNAME tcl LOCATION)
 SET_TARGET_PROPERTIES(tcl PROPERTIES VERSION ${TCL_VERSION} SOVERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
@@ -1058,18 +1121,18 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
-target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY})
+target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${ZLIB_LIBRARY})
 CHECK_C_COMPILER_FLAG(-fPIC FPIC_COMPILER_FLAG)
 if(FPIC_COMPILER_FLAG)
   set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(FPIC_COMPILER_FLAG)
 install(TARGETS tclstub
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 add_executable(tclsh ${TCLSH_SRCS})
-target_link_libraries(tclsh tcl ${M_LIBRARY} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})
+target_link_libraries(tclsh tcl ${M_LIBRARY} ${ZLIB_LIBRARY} ${TCL_THREADS_LIB} ${EXTRA_TCLSH_LIBS})
 install(TARGETS tclsh DESTINATION bin)
 SET_TARGET_PROPERTIES(tclsh PROPERTIES VERSION ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR})
 
@@ -1079,6 +1142,8 @@ SET(TCL_HDRS
   generic/tclPlatDecls.h
   generic/tclTomMath.h
   generic/tclTomMathDecls.h
+  generic/tclOO.h
+  generic/tclOODecls.h
   )
 install(FILES ${TCL_HDRS} DESTINATION include)
 
@@ -1086,4 +1151,11 @@ MARK_AS_ADVANCED(TCL_LIBRARIES TCL_CONF_PREFIX TCL_INCLUDE_DIRS TCL_INCLUDE_PATH
 MARK_AS_ADVANCED(TCL_STUB_LIBRARIES TCL_TCLSH TCL_TCLSH_EXECUTABLE)
 MARK_AS_ADVANCED(TCL_TK_CONF_PREFIX TCL_TOMMATH)
 MARK_AS_ADVANCED(TCL_VERSION_MAJOR TCL_VERSION_MINOR TCL_WISH_EXECUTABLE)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
 

@@ -6,16 +6,14 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH unset n 8.4 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 unset \- Delete variables
 .SH SYNOPSIS
-\fBunset \fR?\fI\-nocomplain\fR? ?\fI\-\-\fR? ?\fIname name name ...\fR?
+\fBunset \fR?\fB\-nocomplain\fR? ?\fB\-\-\fR? ?\fIname name name ...\fR?
 .BE
 .SH DESCRIPTION
 .PP
@@ -27,19 +25,21 @@ element is removed without affecting the rest of the array.
 If a \fIname\fR consists of an array name with no parenthesized
 index, then the entire array is deleted.
 The \fBunset\fR command returns an empty string as result.
-If \fI\-nocomplain\fR is specified as the first argument, any possible
+If \fB\-nocomplain\fR is specified as the first argument, any possible
 errors are suppressed.  The option may not be abbreviated, in order to
-disambiguate it from possible variable names.  The option \fI\-\-\fR
+disambiguate it from possible variable names.  The option \fB\-\-\fR
 indicates the end of the options, and should be used if you wish to
 remove a variable with the same name as any of the options.
-If an error occurs, any variables after the named one causing the error
-are not
+If an error occurs during variable deletion, any variables after the named one
+causing the error are not
 deleted.  An error can occur when the named variable does not exist, or the
 name refers to an array element but the variable is a scalar, or the name
 refers to a variable in a non-existent namespace.
 .SH EXAMPLE
+.PP
 Create an array containing a mapping from some numbers to their
 squares and remove the array elements for non-prime numbers:
+.PP
 .CS
 array set squares {
     1 1    6 36
@@ -62,3 +62,7 @@ parray squares
 set(n), trace(n), upvar(n)
 .SH KEYWORDS
 remove, variable
+'\" Local Variables:
+'\" mode: nroff
+'\" fill-column: 78
+'\" End:

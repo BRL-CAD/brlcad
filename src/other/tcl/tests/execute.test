@@ -1,25 +1,26 @@
-# This file contains tests for the tclExecute.c source file. Tests appear
-# in the same order as the C code that they test. The set of tests is
-# currently incomplete since it currently includes only new tests for
-# code changed for the addition of Tcl namespaces. Other execution-
-# related tests appear in several other test files including
-# namespace.test, basic.test, eval.test, for.test, etc.
+# This file contains tests for the tclExecute.c source file. Tests appear in
+# the same order as the C code that they test. The set of tests is currently
+# incomplete since it currently includes only new tests for code changed for
+# the addition of Tcl namespaces. Other execution-related tests appear in
+# several other test files including namespace.test, basic.test, eval.test,
+# for.test, etc.
 #
-# Sourcing this file into Tcl runs the tests and generates output for
-# errors. No output means no errors were found.
+# Sourcing this file into Tcl runs the tests and generates output for errors.
+# No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 catch {namespace delete {*}[namespace children :: test_ns_*]}
 catch {rename foo ""}
@@ -35,7 +36,7 @@ testConstraint testobj [expr {
 
 testConstraint longIs32bit [expr {int(0x80000000) < 0}]
 testConstraint testexprlongobj [llength [info commands testexprlongobj]]
-
+
 # Tests for the omnibus TclExecuteByteCode function:
 
 # INST_DONE not tested
@@ -43,14 +44,12 @@ testConstraint testexprlongobj [llength [info commands testexprlongobj]]
 # INST_PUSH4 not tested
 # INST_POP not tested
 # INST_DUP not tested
-# INST_CONCAT1 not tested
 # INST_INVOKE_STK4 not tested
 # INST_INVOKE_STK1 not tested
 # INST_EVAL_STK not tested
 # INST_EXPR_STK not tested
 
 # INST_LOAD_SCALAR1
-
 test execute-1.1 {TclExecuteByteCode, INST_LOAD_SCALAR1, small opnd} {
     proc foo {} {
 	set x 1
@@ -68,7 +67,6 @@ test execute-1.2 {TclExecuteByteCode, INST_LOAD_SCALAR1, large opnd} {
 	set y 1
 	return $y
     }
-
     proc foo {} $body
     foo
 } 1
@@ -81,9 +79,7 @@ test execute-1.3 {TclExecuteByteCode, INST_LOAD_SCALAR1, error} {
     list [catch {foo} msg] $msg
 } {1 {can't read "x": no such variable}}
 
-
 # INST_LOAD_SCALAR4
-
 test execute-2.1 {TclExecuteByteCode, INST_LOAD_SCALAR4, simple case} {
     set body {}
     for {set i 0} {$i < 256} {incr i} {
@@ -93,7 +89,6 @@ test execute-2.1 {TclExecuteByteCode, INST_LOAD_SCALAR4, simple case} {
 	set y 1
 	return $y
     }
-
     proc foo {} $body
     foo
 } 1
@@ -107,11 +102,9 @@ test execute-2.2 {TclExecuteByteCode, INST_LOAD_SCALAR4, error} {
 	unset y
 	return $y
     }
-
     proc foo {} $body
     list [catch {foo} msg] $msg
 } {1 {can't read "y": no such variable}}
-
 
 # INST_LOAD_SCALAR_STK not tested
 # INST_LOAD_ARRAY4 not tested
@@ -506,10 +499,11 @@ test execute-3.77 {TclExecuteByteCode, INST_TRY_CVT_TO_NUMERIC, op is non-numeri
 # INST_PUSH_RESULT not tested
 # INST_PUSH_RETURN_CODE not tested
 
-test execute-4.1 {Tcl_GetCommandFromObj, convert to tclCmdNameType} {
+test execute-4.1 {Tcl_GetCommandFromObj, convert to tclCmdNameType} -setup {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
-    catch {unset x}
-    catch {unset y}
+    unset -nocomplain x
+    unset -nocomplain y
+} -body {
     namespace eval test_ns_1 {
         namespace export cmd1
         proc cmd1 {args} {return "cmd1: $args"}
@@ -523,11 +517,12 @@ test execute-4.1 {Tcl_GetCommandFromObj, convert to tclCmdNameType} {
     list [namespace which -command ${x}${y}cmd1] \
          [catch {namespace which -command ${x}${y}cmd2} msg] $msg \
          [catch {namespace which -command ${x}${y}:cmd2} msg] $msg
-} {::test_ns_1::test_ns_2::cmd1 0 {} 0 {}}
-test execute-4.2 {Tcl_GetCommandFromObj, check if cached tclCmdNameType is invalid} {
+} -result {::test_ns_1::test_ns_2::cmd1 0 {} 0 {}}
+test execute-4.2 {Tcl_GetCommandFromObj, check if cached tclCmdNameType is invalid} -setup {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename foo ""}
-    catch {unset l}
+    unset -nocomplain l
+} -body {
     proc foo {} {
         return "global foo"
     }
@@ -544,11 +539,11 @@ test execute-4.2 {Tcl_GetCommandFromObj, check if cached tclCmdNameType is inval
         }
     }
     lappend l [test_ns_1::whichFoo]
-    set l
-} {::foo ::test_ns_1::foo}
-test execute-4.3 {Tcl_GetCommandFromObj, command never found} {
+} -result {::foo ::test_ns_1::foo}
+test execute-4.3 {Tcl_GetCommandFromObj, command never found} -setup {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename foo ""}
+} -body {
     namespace eval test_ns_1 {
         proc foo {} {
             return "namespace foo"
@@ -562,17 +557,18 @@ test execute-4.3 {Tcl_GetCommandFromObj, command never found} {
     list [namespace eval test_ns_1 {namespace which -command foo}] \
          [rename test_ns_1::foo ""] \
          [catch {namespace eval test_ns_1 {namespace which -command foo}} msg] $msg
-} {::test_ns_1::foo {} 0 {}}
+} -result {::test_ns_1::foo {} 0 {}}
 
-test execute-5.1 {SetCmdNameFromAny, set cmd name to empty heap string if NULL} {
+test execute-5.1 {SetCmdNameFromAny, set cmd name to empty heap string if NULL} -setup {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
-    catch {unset l}
+    unset -nocomplain l
+} -body {
     proc {} {} {return {}}
     {}
     set l {}
     lindex {} 0
     {}
-} {}
+} -result {}
 
 test execute-6.1 {UpdateStringOfCmdName: called for duplicate of empty cmdName object} {
     proc {} {} {}
@@ -608,7 +604,7 @@ test execute-6.4 {TclCompEvalObj: don't use cached expr bytecode [Bug 1899164]} 
 } -cleanup {
     rename 0+0 {}
 } -result SCRIPT
-test execute-6.5 {TclCompEvalObj: bytecode epoch validation} {
+test execute-6.5 {TclCompEvalObj: bytecode epoch validation} -body {
     set script { llength {} }
     set result {}
     lappend result [if 1 $script]
@@ -616,20 +612,22 @@ test execute-6.5 {TclCompEvalObj: bytecode epoch validation} {
     rename $origName llength.orig
     proc $origName {args} {return AHA!}
     lappend result [if 1 $script]
+} -cleanup {
     rename $origName {}
     rename llength.orig $origName
-    set result
-} {0 AHA!}
-test execute-6.6 {TclCompEvalObj: proc-body bytecode invalid for script} {
+} -result {0 AHA!}
+test execute-6.6 {TclCompEvalObj: proc-body bytecode invalid for script} -body {
     proc foo {} {set a 1}
     set a untouched
     set result {}
     lappend result [foo] $a
     lappend result [if 1 [info body foo]] $a
+} -cleanup {
     rename foo {}
-    set result
-} {1 untouched 1 1}
-test execute-6.7 {TclCompEvalObj: bytecode context validation} {
+} -result {1 untouched 1 1}
+test execute-6.7 {TclCompEvalObj: bytecode context validation} -setup {
+    namespace eval foo {}
+} -body {
     set script { llength {} }
     namespace eval foo {
 	proc llength {args} {return AHA!}
@@ -637,10 +635,12 @@ test execute-6.7 {TclCompEvalObj: bytecode context validation} {
     set result {}
     lappend result [if 1 $script]
     lappend result [namespace eval foo $script]
+} -cleanup {
     namespace delete foo
-    set result
-} {0 AHA!}
-test execute-6.8 {TclCompEvalObj: bytecode name resolution epoch validation} {
+} -result {0 AHA!}
+test execute-6.8 {TclCompEvalObj: bytecode name resolution epoch validation} -setup {
+    namespace eval foo {}
+} -body {
     set script { llength {} }
     set result {}
     lappend result [namespace eval foo $script]
@@ -648,20 +648,21 @@ test execute-6.8 {TclCompEvalObj: bytecode name resolution epoch validation} {
 	proc llength {args} {return AHA!}
     }
     lappend result [namespace eval foo $script]
+} -cleanup {
     namespace delete foo
-    set result
-} {0 AHA!}
-test execute-6.9 {TclCompEvalObj: bytecode interp validation} {
-    set script { llength {} }
+} -result {0 AHA!}
+test execute-6.9 {TclCompEvalObj: bytecode interp validation} -setup {
     interp create slave
+} -body {
+    set script { llength {} }
     slave eval {proc llength args {return AHA!}}
     set result {}
     lappend result [if 1 $script]
     lappend result [slave eval $script]
+} -cleanup {
     interp delete slave
-    set result
-} {0 AHA!}
-test execute-6.10 {TclCompEvalObj: bytecode interp validation} {
+} -result {0 AHA!}
+test execute-6.10 {TclCompEvalObj: bytecode interp validation} -body {
     set script { llength {} }
     interp create slave
     set result {}
@@ -669,13 +670,14 @@ test execute-6.10 {TclCompEvalObj: bytecode interp validation} {
     interp delete slave
     interp create slave
     lappend result [slave eval $script]
-    interp delete slave
-    set result
-} {0 0}
-test execute-6.11 {Tcl_ExprObj: exprcode interp validation} testexprlongobj {
+} -cleanup {
+    catch {interp delete slave}
+} -result {0 0}
+test execute-6.11 {Tcl_ExprObj: exprcode interp validation} -setup {
+    interp create slave
+} -constraints testexprlongobj -body {
     set e { [llength {}]+1 }
     set result {}
-    interp create slave
     load {} Tcltest slave
     interp alias {} e slave testexprlongobj
     lappend result [e $e]
@@ -684,23 +686,24 @@ test execute-6.11 {Tcl_ExprObj: exprcode interp validation} testexprlongobj {
     load {} Tcltest slave
     interp alias {} e slave testexprlongobj
     lappend result [e $e]
+} -cleanup {
     interp delete slave
-    set result
-} {{This is a result: 1} {This is a result: 1}}
-test execute-6.12 {Tcl_ExprObj: exprcode interp validation} {
+} -result {{This is a result: 1} {This is a result: 1}}
+test execute-6.12 {Tcl_ExprObj: exprcode interp validation} -setup {
+    interp create slave
+} -body {
     set e { [llength {}]+1 }
     set result {}
-    interp create slave
     interp alias {} e slave expr
     lappend result [e $e]
     interp delete slave
     interp create slave
     interp alias {} e slave expr 
     lappend result [e $e]
+} -cleanup {
     interp delete slave
-    set result
-} {1 1}
-test execute-6.13 {Tcl_ExprObj: exprcode epoch validation} {
+} -result {1 1}
+test execute-6.13 {Tcl_ExprObj: exprcode epoch validation} -body {
     set e { [llength {}]+1 }
     set result {}
     lappend result [expr $e]
@@ -708,11 +711,13 @@ test execute-6.13 {Tcl_ExprObj: exprcode epoch validation} {
     rename $origName llength.orig
     proc $origName {args} {return 1}
     lappend result [expr $e]
+} -cleanup {
     rename $origName {}
     rename llength.orig $origName
-    set result
-} {1 2}
-test execute-6.14 {Tcl_ExprObj: exprcode context validation} {
+} -result {1 2}
+test execute-6.14 {Tcl_ExprObj: exprcode context validation} -setup {
+    namespace eval foo {}
+} -body {
     set e { [llength {}]+1 }
     namespace eval foo {
 	proc llength {args} {return 1}
@@ -720,10 +725,12 @@ test execute-6.14 {Tcl_ExprObj: exprcode context validation} {
     set result {}
     lappend result [expr $e]
     lappend result [namespace eval foo {expr $e}]
+} -cleanup {
     namespace delete foo
-    set result
-} {1 2}
-test execute-6.15 {Tcl_ExprObj: exprcode name resolution epoch validation} {
+} -result {1 2}
+test execute-6.15 {Tcl_ExprObj: exprcode name resolution epoch validation} -setup {
+    namespace eval foo {}
+} -body {
     set e { [llength {}]+1 }
     set result {}
     lappend result [namespace eval foo {expr $e}]
@@ -731,42 +738,43 @@ test execute-6.15 {Tcl_ExprObj: exprcode name resolution epoch validation} {
 	proc llength {args} {return 1}
     }
     lappend result [namespace eval foo {expr $e}]
+} -cleanup {
     namespace delete foo
-    set result
-} {1 2}
-test execute-6.16 {Tcl_ExprObj: exprcode interp validation} {
-    set e { [llength {}]+1 }
+} -result {1 2}
+test execute-6.16 {Tcl_ExprObj: exprcode interp validation} -setup {
     interp create slave
+} -body {
+    set e { [llength {}]+1 }
     interp alias {} e slave expr
     slave eval {proc llength args {return 1}}
     set result {}
     lappend result [expr $e]
     lappend result [e $e]
+} -cleanup {
     interp delete slave
-    set result
-} {1 2}
-test execute-6.17 {Tcl_ExprObj: exprcode context validation} {
-    set e { $v }
+} -result {1 2}
+test execute-6.17 {Tcl_ExprObj: exprcode context validation} -body {
     proc foo e {set v 0; expr $e}
     proc bar e {set v 1; expr $e}
+    set e { $v }
     set result {}
     lappend result [foo $e]
     lappend result [bar $e]
+} -cleanup {
     rename foo {}
     rename bar {}
-    set result
-} {0 1}
-test execute-6.18 {Tcl_ExprObj: exprcode context validation} {
-    set e { [llength $v] }
+} -result {0 1}
+test execute-6.18 {Tcl_ExprObj: exprcode context validation} -body {
     proc foo e {set v {}; expr $e}
     proc bar e {set v v; expr $e}
+    set e { [llength $v] }
     set result {}
     lappend result [foo $e]
     lappend result [bar $e]
+} -cleanup {
     rename foo {}
     rename bar {}
-    set result
-} {0 1}
+} -result {0 1}
 
 test execute-7.0 {Wide int handling in INST_JUMP_FALSE/LAND} {
     set x 0x100000000
@@ -890,8 +898,8 @@ test execute-7.34 {Wide int handling} {
 } 1099511627776
 
 test execute-8.1 {Stack protection} -setup {
-    # If [Bug #804681] has not been properly
-    # taken care of, this should segfault
+    # If [Bug #804681] has not been properly taken care of, this should
+    # segfault
     proc whatever args {llength $args}
     trace add variable ::errorInfo {write unset} whatever
 } -body {
@@ -900,43 +908,40 @@ test execute-8.1 {Stack protection} -setup {
     trace remove variable ::errorInfo {write unset} whatever
     rename whatever {}
 } -returnCodes error -match glob -result *
-
-test execute-8.2 {Stack restoration} -body {
-    # Test for [Bug #816641], correct restoration
-    # of the stack top after the stack is grown
-     proc f {args} { f bee bop }
-     catch f msg
-     set msg
- } -setup {
+test execute-8.2 {Stack restoration} -setup {
     # Avoid crashes when system stack size is limited (thread-enabled!)
-     set limit [interp recursionlimit {}]
-     interp recursionlimit {} 100
- } -cleanup {
-     interp recursionlimit {} $limit
- } -result {too many nested evaluations (infinite loop?)}
-
-test execute-8.3 {Stack restoration} -body {
-    # Test for [Bug #1055676], correct restoration
-    # of the stack top after the epoch is bumped and 
-    # the stack is grown in a call from a nested evaluation
-     set arglst [string repeat "a " 1000]
-     proc f {args} "f $arglst"
-     proc run {} {
-	 # bump the interp's epoch
-	 rename ::set ::dummy
-	 rename ::dummy ::set
-	 catch f msg
-	 set msg
-     }
-     run
- } -setup {
+    set limit [interp recursionlimit {}]
+    interp recursionlimit {} 100
+} -body {
+    # Test for [Bug #816641], correct restoration of the stack top after the
+    # stack is grown
+    proc f {args} { f bee bop }
+    catch f msg
+    set msg
+} -cleanup {
+    interp recursionlimit {} $limit
+} -result {too many nested evaluations (infinite loop?)}
+test execute-8.3 {Stack restoration} -setup {
     # Avoid crashes when system stack size is limited (thread-enabled!)
-     set limit [interp recursionlimit {}]
-     interp recursionlimit {} 100
- } -cleanup {
-     interp recursionlimit {} $limit
- } -result {too many nested evaluations (infinite loop?)}
-
+    set limit [interp recursionlimit {}]
+    interp recursionlimit {} 100
+} -body {
+    # Test for [Bug #1055676], correct restoration of the stack top after the
+    # epoch is bumped and the stack is grown in a call from a nested
+    # evaluation
+    set arglst [string repeat "a " 1000]
+    proc f {args} "f $arglst"
+    proc run {} {
+	# bump the interp's epoch
+	rename ::set ::dummy
+	rename ::dummy ::set
+	catch f msg
+	set msg
+    }
+    run
+} -cleanup {
+    interp recursionlimit {} $limit
+} -result {too many nested evaluations (infinite loop?)}
 test execute-8.4 {Compile epoch bump effect on stack trace} -setup {
     proc foo {} {
 	error bar
@@ -956,7 +961,22 @@ test execute-8.4 {Compile epoch bump effect on stack trace} -setup {
 } -cleanup {
     rename foo {}
     rename FOO {}
+    unset -nocomplain m o stack1 stack2
 } -result {}
+test execute-8.5 {Bug 2038069} -setup {
+    proc demo {} {
+	catch [list error FOO] m o
+	return $o
+    }
+} -body {
+    demo
+} -cleanup {
+    rename demo {}
+} -match glob -result {-code 1 -level 0 -errorstack * -errorcode NONE -errorinfo {FOO
+    while executing
+"error FOO"
+    invoked from within
+"catch \[list error FOO\] m o"} -errorline 2}
 
 test execute-9.1 {Interp result resetting [Bug 1522803]} {
     set c 0
@@ -972,6 +992,9 @@ test execute-9.1 {Interp result resetting [Bug 1522803]} {
     set result
 } SUCCESS
 
+test execute-10.1 {TclExecuteByteCode, INST_CONCAT1, bytearrays} {
+    apply {s {binary scan $s c x; list $x [scan $s$s %c%c]}} \u0130
+} {48 {304 304}}
 test execute-10.2 {Bug 2802881} -setup {
     interp create slave
 } -body {
@@ -984,7 +1007,66 @@ test execute-10.2 {Bug 2802881} -setup {
 } -cleanup {
     interp delete slave
 } -returnCodes error -match glob -result *
+test execute-10.3 {Bug 3072640} -setup {
+    proc generate {n} {
+	for {set i 0} {$i < $n} {incr i} {
+	    yield $i
+	}
+    }
+    proc t {args} { 
+	incr ::foo 
+    }
+    trace add execution ::generate enterstep ::t
+} -body {
+    coroutine coro generate 5
+    trace remove execution ::generate enterstep ::t
+    set ::foo
+} -cleanup {
+    unset ::foo
+    rename generate {}
+    rename t {}
+    rename coro {}
+} -result 4
 
+test execute-11.1 {Bug 3142026: GrowEvaluationStack off-by-one} -setup {
+    interp create slave
+} -body {
+    slave eval {
+	set x [lrepeat 1320 199]
+	for {set i 0} {$i < 20} {incr i} {
+	    lappend x $i
+	    lsort -integer $x
+	}
+	# Crashes on failure
+	return ok
+    }
+} -cleanup {
+    interp delete slave
+} -result ok
+
+test execute-11.2 {Bug 268b23df11} -setup {
+    proc zero {} {return 0}
+    proc crash {} {expr {abs([zero])}}
+    proc noop args {}
+    trace add execution crash enterstep noop
+} -body {
+    crash
+} -cleanup {
+    trace remove execution crash enterstep noop
+    rename noop {}
+    rename crash {}
+    rename zero {}
+} -result 0
+test execute-11.3 {Bug a0ece9d6d4} -setup {
+    proc crash {} {expr {rand()}}
+    trace add execution crash enterstep {apply {args {info frame -2}}}
+} -body {
+    string is double [crash]
+} -cleanup {
+    trace remove execution crash enterstep {apply {args {info frame -2}}}
+    rename crash {}
+} -result 1
+
 # cleanup
 if {[info commands testobj] != {}} {
    testobj freeallvars
@@ -1002,4 +1084,5 @@ return
 
 # Local Variables:
 # mode: tcl
+# fill-column: 78
 # End:

@@ -1,22 +1,24 @@
 # This file is a Tcl script to test out the the procedures in file
-# tkIndexObj.c, which implement indexed table lookups.  The tests here
-# are organized in the standard fashion for Tcl tests.
+# tkIndexObj.c, which implement indexed table lookups.  The tests here are
+# organized in the standard fashion for Tcl tests.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
+    package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
-testConstraint testindexobj [llength [info commands testindexobj]]
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
+testConstraint testindexobj [llength [info commands testindexobj]]
+testConstraint testparseargs [llength [info commands testparseargs]]
+
 test indexObj-1.1 {exact match} testindexobj {
     testindexobj 1 1 xyz abc def xyz alm
 } {2}
@@ -88,8 +90,8 @@ test indexObj-4.1 {free old internal representation} testindexobj {
 } {2}
 
 test indexObj-5.1 {Tcl_WrongNumArgs} testindexobj {
-    testwrongnumargs 1 "?option?" mycmd
-} "wrong # args: should be \"mycmd ?option?\""
+    testwrongnumargs 1 "?-switch?" mycmd
+} "wrong # args: should be \"mycmd ?-switch?\""
 test indexObj-5.2 {Tcl_WrongNumArgs} testindexobj {
     testwrongnumargs 2 "bar" mycmd foo
 } "wrong # args: should be \"mycmd foo bar\""
@@ -130,6 +132,31 @@ test indexObj-6.4 {Tcl_GetIndexFromObjStruct} testindexobj {
     testgetindexfromobjstruct $x 1
 } "wrong # args: should be \"testgetindexfromobjstruct c 1\""
 
+test indexObj-7.1 {Tcl_ParseArgsObjv} testparseargs {
+    testparseargs
+} {0 1 testparseargs}
+test indexObj-7.2 {Tcl_ParseArgsObjv} testparseargs {
+    testparseargs -bool
+} {1 1 testparseargs}
+test indexObj-7.3 {Tcl_ParseArgsObjv} testparseargs {
+    testparseargs -bool bar
+} {1 2 {testparseargs bar}}
+test indexObj-7.4 {Tcl_ParseArgsObjv} testparseargs {
+    testparseargs bar
+} {0 2 {testparseargs bar}}
+test indexObj-7.5 {Tcl_ParseArgsObjv} -constraints testparseargs -body {
+    testparseargs -help
+} -returnCodes error -result {Command-specific options:
+ -bool: booltest
+ --:    Marks the end of the options
+ -help: Print summary of command-line options and abort}
+test indexObj-7.6 {Tcl_ParseArgsObjv} testparseargs {
+    testparseargs -- -bool -help
+} {0 3 {testparseargs -bool -help}}
+test indexObj-7.7 {Tcl_ParseArgsObjv memory management} testparseargs {
+    testparseargs 1 2 3 4 5 6 7 8 9 0 -bool 1 2 3 4 5 6 7 8 9 0
+} {1 21 {testparseargs 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0}}
+
 # cleanup
 ::tcltest::cleanupTests
 return

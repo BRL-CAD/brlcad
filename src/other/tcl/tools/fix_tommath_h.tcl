@@ -7,9 +7,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
-#
 #----------------------------------------------------------------------
 
 set f [open [lindex $argv 0] r]
@@ -20,12 +17,13 @@ set eat_endif 0
 set eat_semi 0
 set def_count 0
 foreach line [split $data \n] {
-    if { !$eat_semi && !$eat_endif } {
+    if {!$eat_semi && !$eat_endif} {
 	switch -regexp -- $line {
 	    {#define BN_H_} {
 		puts $line
 		puts {}
-		puts "\#include <tclTomMathDecls.h>"
+		puts "\#include \"tclInt.h\""
+		puts "\#include \"tclTomMathDecls.h\""
 		puts "\#ifndef MODULE_SCOPE"
 		puts "\#define MODULE_SCOPE extern"
 		puts "\#endif"
@@ -78,6 +76,9 @@ foreach line [split $data \n] {
 	    {__x86_64__} {
 		puts "[string map {__x86_64__ NEVER} $line]\
                       /* 128-bit ints fail in too many places */"
+	    }
+	    {#include} {
+		# remove all includes
 	    }
 	    default {
 		puts $line

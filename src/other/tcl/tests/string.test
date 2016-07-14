@@ -11,25 +11,29 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 # Some tests require the testobj command
 
 testConstraint testobj [expr {[info commands testobj] != {}}]
 testConstraint testindexobj [expr {[info commands testindexobj] != {}}]
 
+# Used for constraining memory leak tests
+testConstraint memory [llength [info commands memory]]
+
 test string-1.1 {error conditions} {
     list [catch {string gorp a b} msg] $msg
-} {1 {unknown or ambiguous subcommand "gorp": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {unknown or ambiguous subcommand "gorp": must be bytelength, cat, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
 test string-1.2 {error conditions} {
     list [catch {string} msg] $msg
-} {1 {wrong # args: should be "string subcommand ?argument ...?"}}
+} {1 {wrong # args: should be "string subcommand ?arg ...?"}}
 
 test string-2.1 {string compare, too few args} {
     list [catch {string compare a} msg] $msg
@@ -50,7 +54,7 @@ test string-2.6 {string compare} {
     string compare abcde abdef
 } -1
 test string-2.7 {string compare, shortest method name} {
-    string c abcde ABCDE
+    string co abcde ABCDE
 } 1
 test string-2.8 {string compare} {
     string compare abcde abcde
@@ -77,7 +81,7 @@ test string-2.13 {string compare -nocase} {
     string compare -nocase abcde abdef
 } -1
 test string-2.14 {string compare -nocase} {
-    string c -nocase abcde ABCDE
+    string compare -nocase abcde ABCDE
 } 0
 test string-2.15 {string compare -nocase} {
     string compare -nocase abcde abcde
@@ -311,10 +315,10 @@ test string-6.4 {string is, too many args} {
 } {1 {wrong # args: should be "string is class ?-strict? ?-failindex var? str"}}
 test string-6.5 {string is, class check} {
     list [catch {string is bogus str} msg] $msg
-} {1 {bad class "bogus": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
+} {1 {bad class "bogus": must be alnum, alpha, ascii, control, boolean, digit, double, entier, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
 test string-6.6 {string is, ambiguous class} {
     list [catch {string is al str} msg] $msg
-} {1 {ambiguous class "al": must be alnum, alpha, ascii, control, boolean, digit, double, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
+} {1 {ambiguous class "al": must be alnum, alpha, ascii, control, boolean, digit, double, entier, false, graph, integer, list, lower, print, punct, space, true, upper, wideinteger, wordchar, or xdigit}}
 test string-6.7 {string is alpha, all ok} {
     string is alpha -strict -failindex var abc
 } 1
@@ -337,9 +341,7 @@ test string-6.12 {string is alnum, true} {
 test string-6.13 {string is alnum, false} {
     list [string is alnum -failindex var abc1.23] $var
 } {0 4}
-test string-6.14 {string is alnum, unicode} {
-    string is alnum abc\u00fc
-} 1
+test string-6.14 {string is alnum, unicode} "string is alnum abc\xfc" 1
 test string-6.15 {string is alpha, true} {
     string is alpha abc
 } 1
@@ -406,13 +408,15 @@ test string-6.35 {string is double, false} {
 test string-6.36 {string is double, false} {
     list [string is double -fail var "\n"] $var
 } {0 0}
-test string-6.37 {string is double, false on int overflow} {
+test string-6.37 {string is double, false on int overflow} -setup {
+    set var priorValue
+} -body {
     # Make it the largest int recognizable, with one more digit for overflow
     # Since bignums arrived in Tcl 8.5, the sense of this test changed.
     # Now integer values that exceed native limits become bignums, and
     # bignums can convert to doubles without error.
     list [string is double -fail var [largest_int]0] $var
-} {1 0}
+} -result {1 priorValue}
 # string-6.38 removed, underflow on input is no longer an error.
 test string-6.39 {string is double, false} {
     # This test is non-portable because IRIX thinks 
@@ -593,7 +597,7 @@ test string-6.90 {string is integer, bad integers} {
     foreach num $numbers {
 	lappend result [string is int -strict $num]
     }
-    set result
+    return $result
 } {1 1 0 0 0 1 0 0}
 test string-6.91 {string is double, bad doubles} {
     set result ""
@@ -601,20 +605,20 @@ test string-6.91 {string is double, bad doubles} {
     foreach num $numbers {
 	lappend result [string is double -strict $num]
     }
-    set result
+    return $result
 } {1 1 0 0 0 1 0 0}
-test string-6.92 {string is double, 32-bit overflow} {
+test string-6.92 {string is integer, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     list [string is integer -failindex var $x] $var
 } {0 -1}
-test string-6.93 {string is double, 32-bit overflow} {
+test string-6.93 {string is integer, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     append x ""
     list [string is integer -failindex var $x] $var
 } {0 -1}
-test string-6.94 {string is double, 32-bit overflow} {
+test string-6.94 {string is integer, 32-bit overflow} {
     # Bug 718878
     set x 0x100000000
     list [string is integer -failindex var [expr {$x}]] $var
@@ -665,7 +669,7 @@ test string-6.107 {string is integer, bad integers} {
     foreach num $numbers {
 	lappend result [string is wideinteger -strict $num]
     }
-    set result
+    return $result
 } {1 1 0 0 0 1 0 0}
 test string-6.108 {string is double, Bug 1382287} {
     set x 2turtledoves
@@ -675,6 +679,78 @@ test string-6.108 {string is double, Bug 1382287} {
 test string-6.109 {string is double, Bug 1360532} {
     string is double 1\u00a0
 } 0
+test string-6.110 {string is entier, true} {
+    string is entier +1234567890
+} 1
+test string-6.111 {string is entier, true on type} {
+    string is entier [expr wide(50.0)]
+} 1
+test string-6.112 {string is entier, true} {
+    string is entier [list -10]
+} 1
+test string-6.113 {string is entier, true as hex} {
+    string is entier 0xabcdef
+} 1
+test string-6.114 {string is entier, true as octal} {
+    string is entier 0123456
+} 1
+test string-6.115 {string is entier, true with whitespace} {
+    string is entier "  \n1234\v"
+} 1
+test string-6.116 {string is entier, false} {
+    list [string is entier -fail var 123abc] $var
+} {0 3}
+test string-6.117 {string is entier, false} {
+    list [string is entier -fail var 123123123123123123123123123123123123123123123123123123123123123123123123123123123123abc] $var
+} {0 84}
+test string-6.118 {string is entier, false} {
+    list [string is entier -fail var [expr double(1)]] $var
+} {0 1}
+test string-6.119 {string is entier, false} {
+    list [string is entier -fail var "    "] $var
+} {0 0}
+test string-6.120 {string is entier, false on bad octal} {
+    list [string is entier -fail var 0o36963] $var
+} {0 4}
+test string-6.121.1 {string is entier, false on bad octal} {
+    list [string is entier -fail var 0o36963] $var
+} {0 4}
+test string-6.122 {string is entier, false on bad hex} {
+    list [string is entier -fail var 0X345XYZ] $var
+} {0 5}
+test string-6.123 {string is entier, bad integers} {
+    # SF bug #634856
+    set result ""
+    set numbers [list 1 +1 ++1 +-1 -+1 -1 --1 "- +1"]
+    foreach num $numbers {
+	lappend result [string is entier -strict $num]
+    }
+    return $result
+} {1 1 0 0 0 1 0 0}
+test string-6.124 {string is entier, true} {
+    string is entier +1234567890123456789012345678901234567890
+} 1
+test string-6.125 {string is entier, true} {
+    string is entier [list -10000000000000000000000000000000000000000000000000000000000000000000000000000000000000]
+} 1
+test string-6.126 {string is entier, true as hex} {
+    string is entier 0xabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdefabcdef
+} 1
+test string-6.127 {string is entier, true as octal} {
+    string is entier 0123456112341234561234565623456123456123456123456123456123456123456123456123456123456
+} 1
+test string-6.128 {string is entier, true with whitespace} {
+    string is entier "  \n12340000000000000000000000000000000000000000000000000000000000000000000000000000000000000\v"
+} 1
+test string-6.129 {string is entier, false on bad octal} {
+    list [string is entier -fail var 0o1234561123412345612345656234561234561234561234561234561234561234561234561234561234536963] $var
+} {0 87}
+test string-6.130.1 {string is entier, false on bad octal} {
+    list [string is entier -fail var 0o1234561123412345612345656234561234561234561234561234561234561234561234561234561234536963] $var
+} {0 87}
+test string-6.131 {string is entier, false on bad hex} {
+    list [string is entier -fail var 0X12345611234123456123456562345612345612345612345612345612345612345612345612345612345345XYZ] $var
+} {0 88}
 
 catch {rename largest_int {}}
 
@@ -1322,6 +1398,9 @@ test string-15.9 {string tolower} {
 test string-15.10 {string tolower, unicode} {
      string tolower ABCabc\xc7\xe7
 } "abcabc\xe7\xe7"
+test string-15.11 {string tolower, compiled} {
+    lindex [string tolower [list A B [list C]]] 1
+} b
 
 test string-16.1 {string toupper} {
     list [catch {string toupper} msg] $msg
@@ -1353,6 +1432,9 @@ test string-16.9 {string toupper} {
 test string-16.10 {string toupper, unicode} {
     string toupper ABCabc\xc7\xe7
 } "ABCABC\xc7\xc7"
+test string-16.11 {string toupper, compiled} {
+    lindex [string toupper [list a b [list c]]] 1
+} B
 
 test string-17.1 {string totitle} {
     list [catch {string totitle} msg] $msg
@@ -1375,6 +1457,9 @@ test string-17.6 {string totitle, unicode} {
 test string-17.7 {string totitle, unicode} {
     string totitle \u01f3BCabc\xc7\xe7
 } "\u01f2bcabc\xe7\xe7"
+test string-17.8 {string totitle, compiled} {
+    lindex [string totitle [list aa bb [list cc]]] 0
+} Aa
 
 test string-18.1 {string trim} {
     list [catch {string trim} msg] $msg
@@ -1409,6 +1494,9 @@ test string-18.10 {string trim} {
 test string-18.11 {string trim, unicode} {
     string trim "\xe7\xe8 AB\xe7C \xe8\xe7" \xe7\xe8
 } " AB\xe7C "
+test string-18.12 {string trim, unicode default} {
+    string trim \ufeff\x00\u0085\u00a0\u1680\u180eABC\u1361\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u202f\u205f\u3000
+} ABC\u1361
 
 test string-19.1 {string trimleft} {
     list [catch {string trimleft} msg] $msg
@@ -1416,13 +1504,16 @@ test string-19.1 {string trimleft} {
 test string-19.2 {string trimleft} {
     string trimleft "    XYZ      "
 } {XYZ      }
+test string-19.3 {string trimleft, unicode default} {
+    string trimleft \ufeff\u0085\u00a0\x00\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u202f\u205f\u3000\u1361ABC
+} \u1361ABC
 
 test string-20.1 {string trimright errors} {
     list [catch {string trimright} msg] $msg
 } {1 {wrong # args: should be "string trimright string ?chars?"}}
 test string-20.2 {string trimright errors} {
     list [catch {string trimg a} msg] $msg
-} {1 {unknown or ambiguous subcommand "trimg": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {unknown or ambiguous subcommand "trimg": must be bytelength, cat, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
 test string-20.3 {string trimright} {
     string trimright "    XYZ      "
 } {    XYZ}
@@ -1432,6 +1523,9 @@ test string-20.4 {string trimright} {
 test string-20.5 {string trimright} {
     string trimright ""
 } {}
+test string-20.6 {string trimright, unicode default} {
+    string trimright ABC\u1361\u0085\x00\u00a0\u1680\u180e\u2000\u2001\u2002\u2003\u2004\u2005\u2006\u2007\u2008\u2009\u200a\u200b\u2028\u2029\u202f\u205f\u3000
+} ABC\u1361
 
 test string-21.1 {string wordend} {
     list [catch {string wordend a} msg] $msg
@@ -1478,7 +1572,7 @@ test string-21.14 {string wordend, unicode} {
 
 test string-22.1 {string wordstart} {
     list [catch {string word a} msg] $msg
-} {1 {unknown or ambiguous subcommand "word": must be bytelength, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
+} {1 {unknown or ambiguous subcommand "word": must be bytelength, cat, compare, equal, first, index, is, last, length, map, match, range, repeat, replace, reverse, tolower, totitle, toupper, trim, trimleft, trimright, wordend, or wordstart}}
 test string-22.2 {string wordstart} {
     list [catch {string wordstart a} msg] $msg
 } {1 {wrong # args: should be "string wordstart string index"}}
@@ -1610,6 +1704,22 @@ test string-24.11 {string reverse command - corner case} {
     set y \udead
     string reverse $x$y
 } \udead\ubeef
+test string-24.12 {string reverse command - corner case} {
+    set x \ubeef
+    set y \udead
+    string is ascii [string reverse $x$y]
+} 0
+test string-24.13 {string reverse command - pure Unicode string} {
+    string reverse [string range \ubeef\udead\ubeef\udead\ubeef\udead 1 5]
+} \udead\ubeef\udead\ubeef\udead
+test string-24.14 {string reverse command - pure bytearray} {
+    binary scan [string reverse [binary format H* 010203]] H* x
+    set x
+} 030201
+test string-24.15 {string reverse command - pure bytearray} {
+    binary scan [tcl::string::reverse [binary format H* 010203]] H* x
+    set x
+} 030201
 
 test string-25.1 {string is list} {
     string is list {a b c}
@@ -1660,7 +1770,232 @@ test string-25.14 {string is list} {
     list [string is list -failindex x "\uabcd {b c}d e"] $x
 } {0 2}
 
+test string-26.1 {tcl::prefix, too few args} -body {
+    tcl::prefix match a
+} -returnCodes 1 -result {wrong # args: should be "tcl::prefix match ?options? table string"}
+test string-26.2 {tcl::prefix, bad args} -body {
+    tcl::prefix match a b c
+} -returnCodes 1 -result {bad option "a": must be -error, -exact, or -message}
+test string-26.2.1 {tcl::prefix, empty table} -body {
+    tcl::prefix match {} foo
+} -returnCodes 1 -result {bad option "foo": no valid options}
+test string-26.3 {tcl::prefix, bad args} -body {
+    tcl::prefix match -error "{}x" -exact str1 str2
+} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
+test string-26.3.1 {tcl::prefix, bad args} -body {
+    tcl::prefix match -error "x" -exact str1 str2
+} -returnCodes 1 -result {error options must have an even number of elements}
+test string-26.3.2 {tcl::prefix, bad args} -body {
+    tcl::prefix match -error str1 str2
+} -returnCodes 1 -result {missing value for -error}
+test string-26.4 {tcl::prefix, bad args} -body {
+    tcl::prefix match -message str1 str2
+} -returnCodes 1 -result {missing value for -message}
+test string-26.5 {tcl::prefix} {
+    tcl::prefix match {apa bepa cepa depa} cepa
+} cepa
+test string-26.6 {tcl::prefix} {
+    tcl::prefix match {apa bepa cepa depa} be
+} bepa
+test string-26.7 {tcl::prefix} -body {
+    tcl::prefix match -exact {apa bepa cepa depa} be
+} -returnCodes 1 -result {bad option "be": must be apa, bepa, cepa, or depa}
+test string-26.8 {tcl::prefix} -body {
+    tcl::prefix match -message wombat {apa bepa bear depa} be
+} -returnCodes 1 -result {ambiguous wombat "be": must be apa, bepa, bear, or depa}
+test string-26.9 {tcl::prefix} -body {
+    tcl::prefix match -error {} {apa bepa bear depa} be
+} -returnCodes 0 -result {}
+test string-26.10 {tcl::prefix} -body {
+    tcl::prefix match -error {-level 1} {apa bepa bear depa} be
+} -returnCodes 2 -result {ambiguous option "be": must be apa, bepa, bear, or depa}
+test string-26.10.1 {tcl::prefix} -setup {
+    proc _testprefix {args} {
+        array set opts {-a x -b y -c y}
+        foreach {opt val} $args {
+            set opt [tcl::prefix match -error {-level 1} {-a -b -c} $opt]
+            set opts($opt) $val
+        }
+        array get opts
+    }
+} -body {
+    set a [catch {_testprefix -x u} result options]
+    dict get $options -errorinfo
+} -cleanup {
+    rename _testprefix {}
+} -result {bad option "-x": must be -a, -b, or -c
+    while executing
+"_testprefix -x u"}
+
+# Helper for memory stress tests
+# Repeat each body in a local space checking that memory does not increase
+proc MemStress {args} {
+    set res {}
+    foreach body $args {
+        set end 0
+        for {set i 0} {$i < 5} {incr i} { 
+            proc MemStress_Body {} $body
+            uplevel 1 MemStress_Body
+            rename MemStress_Body {}
+            set tmp $end
+            set end [lindex [lindex [split [memory info] "\n"] 3] 3]
+        }
+        lappend res [expr {$end - $tmp}]
+    }
+    return $res
+}
+
+test string-26.11 {tcl::prefix: testing for leaks} -body {
+    # This test is made to stress object reference management
+    MemStress {
+        set table {hejj miff gurk}
+        set item [lindex $table 1]
+        # If not careful, this can cause a circular reference
+        # that will cause a leak.
+        tcl::prefix match $table $item
+    } {
+        # A similar case with nested lists
+        set table2 {hejj {miff maff} gurk}
+        set item [lindex [lindex $table2 1] 0]
+        tcl::prefix match $table2 $item
+    } {
+        # A similar case with dict
+        set table3 {hejj {miff maff} gurk2}
+        set item [lindex [dict keys [lindex $table3 1]] 0]
+        tcl::prefix match $table3 $item
+    }
+} -constraints memory -result {0 0 0}
+
+test string-26.12 {tcl::prefix: testing for leaks} -body {
+    # This is a memory leak test in a form that might actually happen
+    # in real code.  The shared literal "miff" causes a connection
+    # between the item and the table.
+    MemStress {
+        proc stress1 {item} {
+            set table [list hejj miff gurk]
+            tcl::prefix match $table $item
+        }
+        proc stress2 {} {
+            stress1 miff
+        }
+        stress2
+        rename stress1 {}
+        rename stress2 {}
+    }
+} -constraints memory -result 0
+
+test string-26.13 {tcl::prefix: testing for leaks} -body {
+    # This test is made to stress object reference management
+    MemStress {
+        set table [list hejj miff]
+        set item $table
+        set error $table
+        # Use the same objects in all places
+        catch {
+            tcl::prefix match -error $error $table $item
+        }
+    }
+} -constraints memory -result {0}
+
+test string-27.1 {tcl::prefix all, too few args} -body {
+    tcl::prefix all a
+} -returnCodes 1 -result {wrong # args: should be "tcl::prefix all table string"}
+test string-27.2 {tcl::prefix all, bad args} -body {
+    tcl::prefix all a b c
+} -returnCodes 1 -result {wrong # args: should be "tcl::prefix all table string"}
+test string-27.3 {tcl::prefix all, bad args} -body {
+    tcl::prefix all "{}x" str2
+} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
+test string-27.4 {tcl::prefix all} {
+    tcl::prefix all {apa bepa cepa depa} c
+} cepa
+test string-27.5 {tcl::prefix all} {
+    tcl::prefix all {apa bepa cepa depa} cepa
+} cepa
+test string-27.6 {tcl::prefix all} {
+    tcl::prefix all {apa bepa cepa depa} cepax
+} {}
+test string-27.7 {tcl::prefix all} {
+    tcl::prefix all {apa aska appa} a
+} {apa aska appa}
+test string-27.8 {tcl::prefix all} {
+    tcl::prefix all {apa aska appa} ap
+} {apa appa}
+test string-27.9 {tcl::prefix all} {
+    tcl::prefix all {apa aska appa} p
+} {}
+test string-27.10 {tcl::prefix all} {
+    tcl::prefix all {apa aska appa} {}
+} {apa aska appa}
+
+test string-28.1 {tcl::prefix longest, too few args} -body {
+    tcl::prefix longest a
+} -returnCodes 1 -result {wrong # args: should be "tcl::prefix longest table string"}
+test string-28.2 {tcl::prefix longest, bad args} -body {
+    tcl::prefix longest a b c
+} -returnCodes 1 -result {wrong # args: should be "tcl::prefix longest table string"}
+test string-28.3 {tcl::prefix longest, bad args} -body {
+    tcl::prefix longest "{}x" str2
+} -returnCodes 1 -result {list element in braces followed by "x" instead of space}
+test string-28.4 {tcl::prefix longest} {
+    tcl::prefix longest {apa bepa cepa depa} c
+} cepa
+test string-28.5 {tcl::prefix longest} {
+    tcl::prefix longest {apa bepa cepa depa} cepa
+} cepa
+test string-28.6 {tcl::prefix longest} {
+    tcl::prefix longest {apa bepa cepa depa} cepax
+} {}
+test string-28.7 {tcl::prefix longest} {
+    tcl::prefix longest {apa aska appa} a
+} a
+test string-28.8 {tcl::prefix longest} {
+    tcl::prefix longest {apa aska appa} ap
+} ap
+test string-28.9 {tcl::prefix longest} {
+    tcl::prefix longest {apa bska appa} a
+} ap
+test string-28.10 {tcl::prefix longest} {
+    tcl::prefix longest {apa bska appa} {}
+} {}
+test string-28.11 {tcl::prefix longest} {
+    tcl::prefix longest {{} bska appa} {}
+} {}
+test string-28.12 {tcl::prefix longest} {
+    tcl::prefix longest {apa {} appa} {}
+} {}
+test string-28.13 {tcl::prefix longest} {
+    # Test UTF8 handling
+    tcl::prefix longest {ax\x90 bep ax\x91} a
+} ax
+
+test string-29.1 {string cat, no arg} {
+    string cat
+} ""
+test string-29.2 {string cat, single arg} {
+    set x FOO
+    string compare $x [string cat $x]
+} 0
+test string-29.3 {string cat, two args} {
+    set x FOO
+    string compare $x$x [string cat $x $x]
+} 0
+test string-29.4 {string cat, many args} {
+    set x FOO
+    set n 260
+    set xx [string repeat $x $n]
+    set vv [string repeat {$x} $n]
+    set vvs [string repeat {$x } $n]
+    set r1 [string compare $xx [subst $vv]]
+    set r2 [string compare $xx [eval "string cat $vvs"]]
+    list $r1 $r2
+} {0 0}
+
+
+
 # cleanup
+rename MemStress {}
+catch {rename foo {}}
 ::tcltest::cleanupTests
 return
 

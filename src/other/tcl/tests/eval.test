@@ -1,23 +1,21 @@
 # Commands covered:  eval
 #
-# This file contains a collection of tests for one or more of the Tcl
-# built-in commands.  Sourcing this file into Tcl runs the tests and
-# generates output for errors.  No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands.  Sourcing this file into Tcl runs the tests and generates output
+# for errors.  No output means no errors were found.
 #
 # Copyright (c) 1991-1993 The Regents of the University of California.
 # Copyright (c) 1994 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
-
+
 test eval-1.1 {single argument} {
     eval {format 22}
 } 22
@@ -80,7 +78,12 @@ test eval-3.4 {concatenating eval and canonical lists} {
     unset dummy
     eval $cmd $cmd2
 } {1 2 3 4 5}
-
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

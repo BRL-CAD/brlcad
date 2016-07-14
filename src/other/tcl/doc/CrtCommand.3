@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_CreateCommand 3 "" Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_CreateCommand \- implement new commands in C
@@ -34,7 +32,6 @@ Procedure to call before \fIcmdName\fR is deleted from the interpreter;
 allows for command-specific cleanup.  If NULL, then no procedure is
 called before the command is deleted.
 .BE
-
 .SH DESCRIPTION
 .PP
 \fBTcl_CreateCommand\fR defines a new command in \fIinterp\fR and associates
@@ -44,20 +41,18 @@ will call \fIproc\fR to process the command.
 It differs from \fBTcl_CreateObjCommand\fR in that a new string-based
 command is defined;
 that is, a command procedure is defined that takes an array of
-argument strings instead of objects.
-The object-based command procedures registered by \fBTcl_CreateObjCommand\fR
+argument strings instead of values.
+The value-based command procedures registered by \fBTcl_CreateObjCommand\fR
 can execute significantly faster than the string-based command procedures
 defined by \fBTcl_CreateCommand\fR.
-This is because they take Tcl objects as arguments
-and those objects can retain an internal representation that
+This is because they take Tcl values as arguments
+and those values can retain an internal representation that
 can be manipulated more efficiently.
-Also, Tcl's interpreter now uses objects internally.
+Also, Tcl's interpreter now uses values internally.
 In order to invoke a string-based command procedure
 registered by \fBTcl_CreateCommand\fR,
 it must generate and fetch a string representation
-from each argument object before the call
-and create a new Tcl object to hold the string result returned by the
-string-based command procedure.
+from each argument value before the call.
 New commands should be defined using \fBTcl_CreateObjCommand\fR.
 We support \fBTcl_CreateCommand\fR for backwards compatibility.
 .PP
@@ -77,13 +72,15 @@ the process of being deleted, then it does not create a new command
 and it returns NULL.
 \fIProc\fR should have arguments and result that match the type
 \fBTcl_CmdProc\fR:
+.PP
 .CS
-typedef int Tcl_CmdProc(
+typedef int \fBTcl_CmdProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         int \fIargc\fR,
         const char *\fIargv\fR[]);
 .CE
+.PP
 When \fIproc\fR is invoked the \fIclientData\fR and \fIinterp\fR
 parameters will be copies of the \fIclientData\fR and \fIinterp\fR
 arguments given to \fBTcl_CreateCommand\fR.
@@ -107,7 +104,7 @@ version 8.1 of Tcl.
 \fBTCL_CONTINUE\fR.  See the Tcl overview man page
 for details on what these codes mean.  Most normal commands will only
 return \fBTCL_OK\fR or \fBTCL_ERROR\fR.  In addition, \fIproc\fR must set
-the interpreter result to point to a string value;
+the interpreter result;
 in the case of a \fBTCL_OK\fR return code this gives the result
 of the command, and in the case of \fBTCL_ERROR\fR it gives an error message.
 The \fBTcl_SetResult\fR procedure provides an easy interface for setting
@@ -124,22 +121,23 @@ anywhere within the \fIargv\fR values.
 Call \fBTcl_SetResult\fR with status \fBTCL_VOLATILE\fR if you want
 to return something from the \fIargv\fR array.
 .PP
-\fIDeleteProc\fR will be invoked when (if) \fIcmdName\fR is deleted.
-This can occur through a call to \fBTcl_DeleteCommand\fR or \fBTcl_DeleteInterp\fR,
+\fIDeleteProc\fR will be invoked when (if) \fIcmdName\fR is deleted. This can
+occur through a call to \fBTcl_DeleteCommand\fR or \fBTcl_DeleteInterp\fR,
 or by replacing \fIcmdName\fR in another call to \fBTcl_CreateCommand\fR.
 \fIDeleteProc\fR is invoked before the command is deleted, and gives the
 application an opportunity to release any structures associated
 with the command.  \fIDeleteProc\fR should have arguments and
 result that match the type \fBTcl_CmdDeleteProc\fR:
+.PP
 .CS
-typedef void Tcl_CmdDeleteProc(
+typedef void \fBTcl_CmdDeleteProc\fR(
         ClientData \fIclientData\fR);
 .CE
+.PP
 The \fIclientData\fR argument will be the same as the \fIclientData\fR
 argument passed to \fBTcl_CreateCommand\fR.
-
 .SH "SEE ALSO"
-Tcl_CreateObjCommand, Tcl_DeleteCommand, Tcl_GetCommandInfo, Tcl_SetCommandInfo, Tcl_GetCommandName, Tcl_SetObjResult
-
+Tcl_CreateObjCommand, Tcl_DeleteCommand, Tcl_GetCommandInfo,
+Tcl_SetCommandInfo, Tcl_GetCommandName, Tcl_SetObjResult
 .SH KEYWORDS
 bind, command, create, delete, interpreter, namespace

@@ -8,15 +8,9 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclWinInt.h"
-
-#include <fcntl.h>
-#include <io.h>
-#include <sys/stat.h>
 
 /*
  * The following variable is used to tell whether this module has been
@@ -51,6 +45,23 @@ TCL_DECLARE_MUTEX(consoleMutex)
 #define CONSOLE_BUFFER_SIZE (8*1024)
 
 /*
+ * Structure containing handles associated with one of the special console
+ * threads.
+ */
+
+typedef struct ConsoleThreadInfo {
+    HANDLE thread;		/* Handle to reader or writer thread. */
+    HANDLE readyEvent;		/* Manual-reset event to signal _to_ the main
+				 * thread when the worker thread has finished
+				 * waiting for its normal work to happen. */
+    HANDLE startEvent;		/* Auto-reset event used by the main thread to
+				 * signal when the thread should attempt to do
+				 * its normal work. */
+    HANDLE stopEvent;		/* Auto-reset event used by the main thread to
+				 * signal when the thread should exit. */
+} ConsoleThreadInfo;
+
+/*
  * This structure describes per-instance data for a console based channel.
  */
 
@@ -69,24 +80,18 @@ typedef struct ConsoleInfo {
     Tcl_ThreadId threadId;	/* Thread to which events should be reported.
 				 * This value is used by the reader/writer
 				 * threads. */
-    HANDLE writeThread;		/* Handle to writer thread. */
-    HANDLE readThread;		/* Handle to reader thread. */
-    HANDLE writable;		/* Manual-reset event to signal when the
-				 * writer thread has finished waiting for the
-				 * current buffer to be written. */
-    HANDLE readable;		/* Manual-reset event to signal when the
-				 * reader thread has finished waiting for
-				 * input. */
-    HANDLE startWriter;		/* Auto-reset event used by the main thread to
-				 * signal when the writer thread should
-				 * attempt to write to the console. */
-    HANDLE stopWriter;		/* Auto-reset event used by the main thread to
-				 * signal when the writer thread should exit */
-    HANDLE startReader;		/* Auto-reset event used by the main thread to
-				 * signal when the reader thread should
-				 * attempt to read from the console. */
-    HANDLE stopReader;		/* Auto-reset event used by the main thread to
-				 * signal when the reader thread should exit */
+    ConsoleThreadInfo writer;	/* A specialized thread for handling
+				 * asynchronous writes to the console; the
+				 * waiting starts when a start event is sent,
+				 * and a reset event is sent back to the main
+				 * thread when the write is done. A stop event
+				 * is used to terminate the thread. */
+    ConsoleThreadInfo reader;	/* A specialized thread for handling
+				 * asynchronous reads from the console; the
+				 * waiting starts when a start event is sent,
+				 * and a reset event is sent back to the main
+				 * thread when input is available. A stop
+				 * event is used to terminate the thread. */
     DWORD writeError;		/* An error caused by the last background
 				 * write. Set to 0 if no error has been
 				 * detected. This word is shared with the
@@ -101,8 +106,8 @@ typedef struct ConsoleInfo {
     int readFlags;		/* Flags that are shared with the reader
 				 * thread. Access is synchronized with the
 				 * readable object. */
-    int bytesRead;		/* number of bytes in the buffer */
-    int offset;			/* number of bytes read out of the buffer */
+    int bytesRead;		/* Number of bytes in the buffer. */
+    int offset;			/* Number of bytes read out of the buffer. */
     char buffer[CONSOLE_BUFFER_SIZE];
 				/* Data consumed by reader thread. */
 } ConsoleInfo;
@@ -136,7 +141,8 @@ typedef struct ConsoleEvent {
  * Declarations for functions used only in this file.
  */
 
-static int		ConsoleBlockModeProc(ClientData instanceData,int mode);
+static int		ConsoleBlockModeProc(ClientData instanceData,
+			    int mode);
 static void		ConsoleCheckProc(ClientData clientData, int flags);
 static int		ConsoleCloseProc(ClientData instanceData,
 			    Tcl_Interp *interp);
@@ -148,7 +154,7 @@ static void		ConsoleInit(void);
 static int		ConsoleInputProc(ClientData instanceData, char *buf,
 			    int toRead, int *errorCode);
 static int		ConsoleOutputProc(ClientData instanceData,
-			    CONST char *buf, int toWrite, int *errorCode);
+			    const char *buf, int toWrite, int *errorCode);
 static DWORD WINAPI	ConsoleReaderThread(LPVOID arg);
 static void		ConsoleSetupProc(ClientData clientData, int flags);
 static void		ConsoleWatchProc(ClientData instanceData, int mask);
@@ -157,13 +163,22 @@ static void		ProcExitHandler(ClientData clientData);
 static int		WaitForRead(ConsoleInfo *infoPtr, int blocking);
 static void		ConsoleThreadActionProc(ClientData instanceData,
 			    int action);
+static BOOL		ReadConsoleBytes(HANDLE hConsole, LPVOID lpBuffer,
+			    DWORD nbytes, LPDWORD nbytesread);
+static BOOL		WriteConsoleBytes(HANDLE hConsole,
+			    const void *lpBuffer, DWORD nbytes,
+			    LPDWORD nbyteswritten);
+static void		StartChannelThread(ConsoleInfo *infoPtr,
+			    ConsoleThreadInfo *threadInfoPtr,
+			    LPTHREAD_START_ROUTINE threadProc);
+static void		StopChannelThread(ConsoleThreadInfo *threadInfoPtr);
 
 /*
  * This structure describes the channel type structure for command console
  * based IO.
  */
 
-static Tcl_ChannelType consoleChannelType = {
+static const Tcl_ChannelType consoleChannelType = {
     "console",			/* Type name. */
     TCL_CHANNEL_VERSION_5,	/* v5 channel */
     ConsoleCloseProc,		/* Close proc. */
@@ -175,23 +190,27 @@ static Tcl_ChannelType consoleChannelType = {
     ConsoleWatchProc,		/* Set up notifier to watch the channel. */
     ConsoleGetHandleProc,	/* Get an OS handle from channel. */
     NULL,			/* close2proc. */
-    ConsoleBlockModeProc,	/* Set blocking or non-blocking mode.*/
-    NULL,			/* flush proc. */
-    NULL,			/* handler proc. */
-    NULL,			/* wide seek proc */
-    ConsoleThreadActionProc,    /* thread action proc */
-    NULL,                       /* truncation */
+    ConsoleBlockModeProc,	/* Set blocking or non-blocking mode. */
+    NULL,			/* Flush proc. */
+    NULL,			/* Handler proc. */
+    NULL,			/* Wide seek proc. */
+    ConsoleThreadActionProc,	/* Thread action proc. */
+    NULL			/* Truncation proc. */
 };
 
 /*
  *----------------------------------------------------------------------
  *
- * readConsoleBytes, writeConsoleBytes --
- * Wrapper for ReadConsole{A,W}, that takes and returns number of bytes
- * instead of number of TCHARS
+ * ReadConsoleBytes, WriteConsoleBytes --
+ *
+ *	Wrapper for ReadConsole{A,W}, that takes and returns number of bytes
+ *	instead of number of TCHARS.
+ *
+ *----------------------------------------------------------------------
  */
+
 static BOOL
-readConsoleBytes(
+ReadConsoleBytes(
     HANDLE hConsole,
     LPVOID lpBuffer,
     DWORD nbytes,
@@ -199,30 +218,44 @@ readConsoleBytes(
 {
     DWORD ntchars;
     BOOL result;
-    int tcharsize;
-    tcharsize = tclWinProcs->useWide? 2 : 1;
-    result = tclWinProcs->readConsoleProc(
-	    hConsole, lpBuffer, nbytes / tcharsize, &ntchars, NULL);
-    if (nbytesread)
-	*nbytesread = (ntchars*tcharsize);
+    int tcharsize = sizeof(TCHAR);
+
+    /*
+     * If user types a Ctrl-Break or Ctrl-C, ReadConsole will return
+     * success with ntchars == 0 and GetLastError() will be
+     * ERROR_OPERATION_ABORTED. We do not want to treat this case
+     * as EOF so we will loop around again. If no Ctrl signal handlers
+     * have been established, the default signal OS handler in a separate
+     * thread will terminate the program. If a Ctrl signal handler
+     * has been established (through an extension for example), it
+     * will run and take whatever action it deems appropriate.
+     */
+    do {
+        result = ReadConsole(hConsole, lpBuffer, nbytes / tcharsize, &ntchars,
+                             NULL);
+    } while (result && ntchars == 0 && GetLastError() == ERROR_OPERATION_ABORTED);
+    if (nbytesread != NULL) {
+	*nbytesread = ntchars * tcharsize;
+    }
     return result;
 }
 
 static BOOL
-writeConsoleBytes(
+WriteConsoleBytes(
     HANDLE hConsole,
-    const VOID *lpBuffer,
+    const void *lpBuffer,
     DWORD nbytes,
     LPDWORD nbyteswritten)
 {
     DWORD ntchars;
     BOOL result;
-    int tcharsize;
-    tcharsize = tclWinProcs->useWide? 2 : 1;
-    result = tclWinProcs->writeConsoleProc(
-	    hConsole, lpBuffer, nbytes / tcharsize, &ntchars, NULL);
-    if (nbyteswritten)
-	*nbyteswritten = (ntchars*tcharsize);
+    int tcharsize = sizeof(TCHAR);
+
+    result = WriteConsole(hConsole, lpBuffer, nbytes / tcharsize, &ntchars,
+	    NULL);
+    if (nbyteswritten != NULL) {
+	*nbyteswritten = ntchars * tcharsize;
+    }
     return result;
 }
 
@@ -245,8 +278,6 @@ writeConsoleBytes(
 static void
 ConsoleInit(void)
 {
-    ThreadSpecificData *tsdPtr;
-
     /*
      * Check the initialized flag first, then check again in the mutex. This
      * is a speed enhancement.
@@ -261,9 +292,9 @@ ConsoleInit(void)
 	Tcl_MutexUnlock(&consoleMutex);
     }
 
-    tsdPtr = (ThreadSpecificData *)TclThreadDataKeyGet(&dataKey);
-    if (tsdPtr == NULL) {
-	tsdPtr = TCL_TSD_INIT(&dataKey);
+    if (TclThreadDataKeyGet(&dataKey) == NULL) {
+	ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
+
 	tsdPtr->firstConsolePtr = NULL;
 	Tcl_CreateEventSource(ConsoleSetupProc, ConsoleCheckProc, NULL);
 	Tcl_CreateThreadExitHandler(ConsoleExitHandler, NULL);
@@ -289,7 +320,7 @@ ConsoleInit(void)
 
 static void
 ConsoleExitHandler(
-    ClientData clientData)	/* Old window proc */
+    ClientData clientData)	/* Old window proc. */
 {
     Tcl_DeleteEventSource(ConsoleSetupProc, ConsoleCheckProc, NULL);
 }
@@ -313,7 +344,7 @@ ConsoleExitHandler(
 
 static void
 ProcExitHandler(
-    ClientData clientData)	/* Old window proc */
+    ClientData clientData)	/* Old window proc. */
 {
     Tcl_MutexLock(&consoleMutex);
     initialized = 0;
@@ -358,7 +389,8 @@ ConsoleSetupProc(
     for (infoPtr = tsdPtr->firstConsolePtr; infoPtr != NULL;
 	    infoPtr = infoPtr->nextPtr) {
 	if (infoPtr->watchMask & TCL_WRITABLE) {
-	    if (WaitForSingleObject(infoPtr->writable, 0) != WAIT_TIMEOUT) {
+	    if (WaitForSingleObject(infoPtr->writer.readyEvent,
+		    0) != WAIT_TIMEOUT) {
 		block = 0;
 	    }
 	}
@@ -396,7 +428,6 @@ ConsoleCheckProc(
     int flags)			/* Event flags as passed to Tcl_DoOneEvent. */
 {
     ConsoleInfo *infoPtr;
-    ConsoleEvent *evPtr;
     int needEvent;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
@@ -421,7 +452,8 @@ ConsoleCheckProc(
 
 	needEvent = 0;
 	if (infoPtr->watchMask & TCL_WRITABLE) {
-	    if (WaitForSingleObject(infoPtr->writable, 0) != WAIT_TIMEOUT) {
+	    if (WaitForSingleObject(infoPtr->writer.readyEvent,
+		    0) != WAIT_TIMEOUT) {
 		needEvent = 1;
 	    }
 	}
@@ -433,15 +465,15 @@ ConsoleCheckProc(
 	}
 
 	if (needEvent) {
+	    ConsoleEvent *evPtr = ckalloc(sizeof(ConsoleEvent));
+
 	    infoPtr->flags |= CONSOLE_PENDING;
-	    evPtr = (ConsoleEvent *) ckalloc(sizeof(ConsoleEvent));
 	    evPtr->header.proc = ConsoleEventProc;
 	    evPtr->infoPtr = infoPtr;
 	    Tcl_QueueEvent((Tcl_Event *) evPtr, TCL_QUEUE_TAIL);
 	}
     }
 }
-
 
 /*
  *----------------------------------------------------------------------
@@ -465,7 +497,7 @@ ConsoleBlockModeProc(
     int mode)			/* TCL_MODE_BLOCKING or
 				 * TCL_MODE_NONBLOCKING. */
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
 
     /*
      * Consoles on Windows can not be switched between blocking and
@@ -478,9 +510,87 @@ ConsoleBlockModeProc(
     if (mode == TCL_MODE_NONBLOCKING) {
 	infoPtr->flags |= CONSOLE_ASYNC;
     } else {
-	infoPtr->flags &= ~(CONSOLE_ASYNC);
+	infoPtr->flags &= ~CONSOLE_ASYNC;
     }
     return 0;
+}
+
+/*
+ *----------------------------------------------------------------------
+ *
+ * StartChannelThread, StopChannelThread --
+ *
+ *	Helpers that codify how to ask one of the console service threads to
+ *	start and stop.
+ *
+ *----------------------------------------------------------------------
+ */
+
+static void
+StartChannelThread(
+    ConsoleInfo *infoPtr,
+    ConsoleThreadInfo *threadInfoPtr,
+    LPTHREAD_START_ROUTINE threadProc)
+{
+    DWORD id;
+
+    threadInfoPtr->readyEvent = CreateEvent(NULL, TRUE, TRUE, NULL);
+    threadInfoPtr->startEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    threadInfoPtr->stopEvent = CreateEvent(NULL, FALSE, FALSE, NULL);
+    threadInfoPtr->thread = CreateThread(NULL, 256, threadProc, infoPtr, 0,
+	    &id);
+    SetThreadPriority(threadInfoPtr->thread, THREAD_PRIORITY_HIGHEST);
+}
+
+static void
+StopChannelThread(
+    ConsoleThreadInfo *threadInfoPtr)
+{
+    DWORD exitCode = 0;
+
+    /*
+     * The thread may already have closed on it's own. Check it's exit
+     * code.
+     */
+
+    GetExitCodeThread(threadInfoPtr->thread, &exitCode);
+    if (exitCode == STILL_ACTIVE) {
+	/*
+	 * Set the stop event so that if the reader thread is blocked in
+	 * ConsoleReaderThread on WaitForMultipleEvents, it will exit cleanly.
+	 */
+
+	SetEvent(threadInfoPtr->stopEvent);
+
+	/*
+	 * Wait at most 20 milliseconds for the reader thread to close.
+	 */
+
+	if (WaitForSingleObject(threadInfoPtr->thread, 20) == WAIT_TIMEOUT) {
+	    /*
+	     * Forcibly terminate the background thread as a last resort.
+	     * Note that we need to guard against terminating the thread while
+	     * it is in the middle of Tcl_ThreadAlert because it won't be able
+	     * to release the notifier lock.
+	     */
+
+	    Tcl_MutexLock(&consoleMutex);
+	    /* BUG: this leaks memory. */
+	    TerminateThread(threadInfoPtr->thread, 0);
+	    Tcl_MutexUnlock(&consoleMutex);
+	}
+    }
+
+    /*
+     * Close all the handles associated with the thread, and set the thread
+     * handle field to NULL to mark that the thread has been cleaned up.
+     */
+
+    CloseHandle(threadInfoPtr->thread);
+    CloseHandle(threadInfoPtr->readyEvent);
+    CloseHandle(threadInfoPtr->startEvent);
+    CloseHandle(threadInfoPtr->stopEvent);
+    threadInfoPtr->thread = NULL;
 }
 
 /*
@@ -504,13 +614,10 @@ ConsoleCloseProc(
     ClientData instanceData,	/* Pointer to ConsoleInfo structure. */
     Tcl_Interp *interp)		/* For error reporting. */
 {
-    ConsoleInfo *consolePtr = (ConsoleInfo *) instanceData;
-    int errorCode;
+    ConsoleInfo *consolePtr = instanceData;
+    int errorCode = 0;
     ConsoleInfo *infoPtr, **nextPtrPtr;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
-    DWORD exitCode;
-
-    errorCode = 0;
 
     /*
      * Clean up the background thread if necessary. Note that this must be
@@ -518,49 +625,8 @@ ConsoleCloseProc(
      * trying to read from the console.
      */
 
-    if (consolePtr->readThread) {
-	/*
-	 * The thread may already have closed on it's own. Check it's exit
-	 * code.
-	 */
-
-	GetExitCodeThread(consolePtr->readThread, &exitCode);
-
-	if (exitCode == STILL_ACTIVE) {
-	    /*
-	     * Set the stop event so that if the reader thread is blocked in
-	     * ConsoleReaderThread on WaitForMultipleEvents, it will exit
-	     * cleanly.
-	     */
-
-	    SetEvent(consolePtr->stopReader);
-
-	    /*
-	     * Wait at most 20 milliseconds for the reader thread to close.
-	     */
-
-	    if (WaitForSingleObject(consolePtr->readThread, 20)
-		    == WAIT_TIMEOUT) {
-		/*
-		 * Forcibly terminate the background thread as a last resort.
-		 * Note that we need to guard against terminating the thread
-		 * while it is in the middle of Tcl_ThreadAlert because it
-		 * won't be able to release the notifier lock.
-		 */
-
-		Tcl_MutexLock(&consoleMutex);
-
-		/* BUG: this leaks memory. */
-		TerminateThread(consolePtr->readThread, 0);
-		Tcl_MutexUnlock(&consoleMutex);
-	    }
-	}
-
-	CloseHandle(consolePtr->readThread);
-	CloseHandle(consolePtr->readable);
-	CloseHandle(consolePtr->startReader);
-	CloseHandle(consolePtr->stopReader);
-	consolePtr->readThread = NULL;
+    if (consolePtr->reader.thread) {
+	StopChannelThread(&consolePtr->reader);
     }
     consolePtr->validMask &= ~TCL_READABLE;
 
@@ -570,61 +636,19 @@ ConsoleCloseProc(
      * should be no pending write operations.
      */
 
-    if (consolePtr->writeThread) {
+    if (consolePtr->writer.thread) {
 	if (consolePtr->toWrite) {
 	    /*
 	     * We only need to wait if there is something to write. This may
-	     * prevent infinite wait on exit. [python bug 216289]
+	     * prevent infinite wait on exit. [Python Bug 216289]
 	     */
 
-	    WaitForSingleObject(consolePtr->writable, INFINITE);
+	    WaitForSingleObject(consolePtr->writer.readyEvent, INFINITE);
 	}
 
-	/*
-	 * The thread may already have closed on it's own. Check it's exit
-	 * code.
-	 */
-
-	GetExitCodeThread(consolePtr->writeThread, &exitCode);
-
-	if (exitCode == STILL_ACTIVE) {
-	    /*
-	     * Set the stop event so that if the reader thread is blocked in
-	     * ConsoleWriterThread on WaitForMultipleEvents, it will exit
-	     * cleanly.
-	     */
-
-	    SetEvent(consolePtr->stopWriter);
-
-	    /*
-	     * Wait at most 20 milliseconds for the writer thread to close.
-	     */
-
-	    if (WaitForSingleObject(consolePtr->writeThread, 20)
-		    == WAIT_TIMEOUT) {
-		/*
-		 * Forcibly terminate the background thread as a last resort.
-		 * Note that we need to guard against terminating the thread
-		 * while it is in the middle of Tcl_ThreadAlert because it
-		 * won't be able to release the notifier lock.
-		 */
-
-		Tcl_MutexLock(&consoleMutex);
-
-		/* BUG: this leaks memory. */
-		TerminateThread(consolePtr->writeThread, 0);
-		Tcl_MutexUnlock(&consoleMutex);
-	    }
-	}
-
-	CloseHandle(consolePtr->writeThread);
-	CloseHandle(consolePtr->writable);
-	CloseHandle(consolePtr->startWriter);
-	CloseHandle(consolePtr->stopWriter);
-	consolePtr->writeThread = NULL;
+	StopChannelThread(&consolePtr->writer);
     }
     consolePtr->validMask &= ~TCL_WRITABLE;
-
 
     /*
      * Don't close the Win32 handle if the handle is a standard channel during
@@ -651,7 +675,7 @@ ConsoleCloseProc(
     for (nextPtrPtr = &(tsdPtr->firstConsolePtr), infoPtr = *nextPtrPtr;
 	    infoPtr != NULL;
 	    nextPtrPtr = &infoPtr->nextPtr, infoPtr = *nextPtrPtr) {
-	if (infoPtr == (ConsoleInfo *)consolePtr) {
+	if (infoPtr == (ConsoleInfo *) consolePtr) {
 	    *nextPtrPtr = infoPtr->nextPtr;
 	    break;
 	}
@@ -660,7 +684,7 @@ ConsoleCloseProc(
 	ckfree(consolePtr->writeBuf);
 	consolePtr->writeBuf = 0;
     }
-    ckfree((char*) consolePtr);
+    ckfree(consolePtr);
 
     return errorCode;
 }
@@ -691,7 +715,7 @@ ConsoleInputProc(
 				 * buffer? */
     int *errorCode)		/* Where to store error code. */
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
     DWORD count, bytesRead = 0;
     int result;
 
@@ -726,7 +750,7 @@ ConsoleInputProc(
 	    bytesRead = infoPtr->bytesRead - infoPtr->offset;
 
 	    /*
-	     * Reset the buffer
+	     * Reset the buffer.
 	     */
 
 	    infoPtr->readFlags &= ~CONSOLE_BUFFERED;
@@ -742,8 +766,15 @@ ConsoleInputProc(
      * byte is available or an EOF occurs.
      */
 
-    if (readConsoleBytes(infoPtr->handle, (LPVOID) buf, (DWORD) bufSize, &count)
-	    == TRUE) {
+    if (ReadConsoleBytes(infoPtr->handle, (LPVOID) buf, (DWORD) bufSize,
+	    &count) == TRUE) {
+	/*
+	 * TODO: This potentially writes beyond the limits specified
+	 * by the caller.  In practice this is harmless, since all writes
+	 * are into ChannelBuffers, and those have padding, but still
+	 * ought to remove this, unless some Windows wizard can give
+	 * a reason not to.
+	 */
 	buf[count] = '\0';
 	return count;
     }
@@ -772,22 +803,23 @@ ConsoleInputProc(
 static int
 ConsoleOutputProc(
     ClientData instanceData,	/* Console state. */
-    CONST char *buf,		/* The data buffer. */
+    const char *buf,		/* The data buffer. */
     int toWrite,		/* How many bytes to write? */
     int *errorCode)		/* Where to store error code. */
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
+    ConsoleThreadInfo *threadInfo = &infoPtr->reader;
     DWORD bytesWritten, timeout;
 
     *errorCode = 0;
     timeout = (infoPtr->flags & CONSOLE_ASYNC) ? 0 : INFINITE;
-    if (WaitForSingleObject(infoPtr->writable, timeout) == WAIT_TIMEOUT) {
+    if (WaitForSingleObject(threadInfo->readyEvent,timeout) == WAIT_TIMEOUT) {
 	/*
 	 * The writer thread is blocked waiting for a write to complete and
 	 * the channel is in non-blocking mode.
 	 */
 
-	errno = EAGAIN;
+	errno = EWOULDBLOCK;
 	goto error;
     }
 
@@ -816,12 +848,12 @@ ConsoleOutputProc(
 		ckfree(infoPtr->writeBuf);
 	    }
 	    infoPtr->writeBufLen = toWrite;
-	    infoPtr->writeBuf = ckalloc((size_t)toWrite);
+	    infoPtr->writeBuf = ckalloc(toWrite);
 	}
-	memcpy(infoPtr->writeBuf, buf, (size_t)toWrite);
+	memcpy(infoPtr->writeBuf, buf, (size_t) toWrite);
 	infoPtr->toWrite = toWrite;
-	ResetEvent(infoPtr->writable);
-	SetEvent(infoPtr->startWriter);
+	ResetEvent(threadInfo->readyEvent);
+	SetEvent(threadInfo->startEvent);
 	bytesWritten = toWrite;
     } else {
 	/*
@@ -829,9 +861,8 @@ ConsoleOutputProc(
 	 * avoids an unnecessary copy.
 	 */
 
-	if (writeConsoleBytes(infoPtr->handle, buf, (DWORD)toWrite,
-			      &bytesWritten)
-		== FALSE) {
+	if (WriteConsoleBytes(infoPtr->handle, buf, (DWORD) toWrite,
+		&bytesWritten) == FALSE) {
 	    TclWinConvertError(GetLastError());
 	    goto error;
 	}
@@ -870,7 +901,7 @@ ConsoleEventProc(
     int flags)			/* Flags that indicate what events to handle,
 				 * such as TCL_FILE_EVENTS. */
 {
-    ConsoleEvent *consoleEvPtr = (ConsoleEvent *)evPtr;
+    ConsoleEvent *consoleEvPtr = (ConsoleEvent *) evPtr;
     ConsoleInfo *infoPtr;
     int mask;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
@@ -889,7 +920,7 @@ ConsoleEventProc(
     for (infoPtr = tsdPtr->firstConsolePtr; infoPtr != NULL;
 	    infoPtr = infoPtr->nextPtr) {
 	if (consoleEvPtr->infoPtr == infoPtr) {
-	    infoPtr->flags &= ~(CONSOLE_PENDING);
+	    infoPtr->flags &= ~CONSOLE_PENDING;
 	    break;
 	}
     }
@@ -910,7 +941,8 @@ ConsoleEventProc(
 
     mask = 0;
     if (infoPtr->watchMask & TCL_WRITABLE) {
-	if (WaitForSingleObject(infoPtr->writable, 0) != WAIT_TIMEOUT) {
+	if (WaitForSingleObject(infoPtr->writer.readyEvent,
+		0) != WAIT_TIMEOUT) {
 	    mask = TCL_WRITABLE;
 	}
     }
@@ -957,7 +989,7 @@ ConsoleWatchProc(
 				 * TCL_EXCEPTION. */
 {
     ConsoleInfo **nextPtrPtr, *ptr;
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
     int oldMask = infoPtr->watchMask;
     ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&dataKey);
 
@@ -969,6 +1001,7 @@ ConsoleWatchProc(
     infoPtr->watchMask = mask & infoPtr->validMask;
     if (infoPtr->watchMask) {
 	Tcl_Time blockTime = { 0, 0 };
+
 	if (!oldMask) {
 	    infoPtr->nextPtr = tsdPtr->firstConsolePtr;
 	    tsdPtr->firstConsolePtr = infoPtr;
@@ -1011,12 +1044,12 @@ ConsoleWatchProc(
 static int
 ConsoleGetHandleProc(
     ClientData instanceData,	/* The console state. */
-    int direction,		/* TCL_READABLE or TCL_WRITABLE */
+    int direction,		/* TCL_READABLE or TCL_WRITABLE. */
     ClientData *handlePtr)	/* Where to store the handle. */
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
 
-    *handlePtr = (ClientData) infoPtr->handle;
+    *handlePtr = infoPtr->handle;
     return TCL_OK;
 }
 
@@ -1049,6 +1082,7 @@ WaitForRead(
 {
     DWORD timeout, count;
     HANDLE *handle = infoPtr->handle;
+    ConsoleThreadInfo *threadInfo = &infoPtr->reader;
     INPUT_RECORD input;
 
     while (1) {
@@ -1057,13 +1091,14 @@ WaitForRead(
 	 */
 
 	timeout = blocking ? INFINITE : 0;
-	if (WaitForSingleObject(infoPtr->readable, timeout) == WAIT_TIMEOUT) {
+	if (WaitForSingleObject(threadInfo->readyEvent,
+		timeout) == WAIT_TIMEOUT) {
 	    /*
 	     * The reader thread is blocked waiting for data and the channel
 	     * is in non-blocking mode.
 	     */
 
-	    errno = EAGAIN;
+	    errno = EWOULDBLOCK;
 	    return -1;
 	}
 
@@ -1116,8 +1151,8 @@ WaitForRead(
 	 * There wasn't any data available, so reset the thread and try again.
 	 */
 
-	ResetEvent(infoPtr->readable);
-	SetEvent(infoPtr->startReader);
+	ResetEvent(threadInfo->readyEvent);
+	SetEvent(threadInfo->startEvent);
     }
 }
 
@@ -1144,14 +1179,18 @@ static DWORD WINAPI
 ConsoleReaderThread(
     LPVOID arg)
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *)arg;
+    ConsoleInfo *infoPtr = arg;
     HANDLE *handle = infoPtr->handle;
-    DWORD count, waitResult;
+    ConsoleThreadInfo *threadInfo = &infoPtr->reader;
+    DWORD waitResult;
     HANDLE wEvents[2];
 
-    /* The first event takes precedence. */
-    wEvents[0] = infoPtr->stopReader;
-    wEvents[1] = infoPtr->startReader;
+    /*
+     * The first event takes precedence.
+     */
+
+    wEvents[0] = threadInfo->stopEvent;
+    wEvents[1] = threadInfo->startEvent;
 
     for (;;) {
 	/*
@@ -1169,14 +1208,12 @@ ConsoleReaderThread(
 	    break;
 	}
 
-	count = 0;
-
 	/*
 	 * Look for data on the console, but first ignore any events that are
 	 * not KEY_EVENTs.
 	 */
 
-	if (readConsoleBytes(handle, infoPtr->buffer, CONSOLE_BUFFER_SIZE,
+	if (ReadConsoleBytes(handle, infoPtr->buffer, CONSOLE_BUFFER_SIZE,
 		(LPDWORD) &infoPtr->bytesRead) != FALSE) {
 	    /*
 	     * Data was stored in the buffer.
@@ -1184,10 +1221,9 @@ ConsoleReaderThread(
 
 	    infoPtr->readFlags |= CONSOLE_BUFFERED;
 	} else {
-	    DWORD err;
-	    err = GetLastError();
+	    DWORD err = GetLastError();
 
-	    if (err == (DWORD)EOF) {
+	    if (err == (DWORD) EOF) {
 		infoPtr->readFlags = CONSOLE_EOF;
 	    }
 	}
@@ -1197,7 +1233,7 @@ ConsoleReaderThread(
 	 * waking up the notifier thread.
 	 */
 
-	SetEvent(infoPtr->readable);
+	SetEvent(threadInfo->readyEvent);
 
 	/*
 	 * Alert the foreground thread. Note that we need to treat this like a
@@ -1211,6 +1247,7 @@ ConsoleReaderThread(
 	     * TIP #218. When in flight ignore the event, no one will receive
 	     * it anyway.
 	     */
+
 	    Tcl_ThreadAlert(infoPtr->threadId);
 	}
 	Tcl_MutexUnlock(&consoleMutex);
@@ -1242,16 +1279,19 @@ static DWORD WINAPI
 ConsoleWriterThread(
     LPVOID arg)
 {
-
-    ConsoleInfo *infoPtr = (ConsoleInfo *)arg;
+    ConsoleInfo *infoPtr = arg;
     HANDLE *handle = infoPtr->handle;
+    ConsoleThreadInfo *threadInfo = &infoPtr->writer;
     DWORD count, toWrite, waitResult;
     char *buf;
     HANDLE wEvents[2];
 
-    /* The first event takes precedence. */
-    wEvents[0] = infoPtr->stopWriter;
-    wEvents[1] = infoPtr->startWriter;
+    /*
+     * The first event takes precedence.
+     */
+
+    wEvents[0] = threadInfo->stopEvent;
+    wEvents[1] = threadInfo->startEvent;
 
     for (;;) {
 	/*
@@ -1277,14 +1317,13 @@ ConsoleWriterThread(
 	 */
 
 	while (toWrite > 0) {
-	    if (writeConsoleBytes(handle, buf, (DWORD)toWrite,
-				  &count) == FALSE) {
+	    if (WriteConsoleBytes(handle, buf, (DWORD) toWrite,
+		    &count) == FALSE) {
 		infoPtr->writeError = GetLastError();
 		break;
-	    } else {
-		toWrite -= count;
-		buf += count;
 	    }
+	    toWrite -= count;
+	    buf += count;
 	}
 
 	/*
@@ -1292,7 +1331,7 @@ ConsoleWriterThread(
 	 * waking up the notifier thread.
 	 */
 
-	SetEvent(infoPtr->writable);
+	SetEvent(threadInfo->readyEvent);
 
 	/*
 	 * Alert the foreground thread. Note that we need to treat this like a
@@ -1328,7 +1367,7 @@ ConsoleWriterThread(
  *	Returns the new channel, or NULL.
  *
  * Side effects:
- *	May open the channel
+ *	May open the channel.
  *
  *----------------------------------------------------------------------
  */
@@ -1341,7 +1380,7 @@ TclWinOpenConsoleChannel(
 {
     char encoding[4 + TCL_INTEGER_SPACE];
     ConsoleInfo *infoPtr;
-    DWORD id, modes;
+    DWORD modes;
 
     ConsoleInit();
 
@@ -1349,7 +1388,7 @@ TclWinOpenConsoleChannel(
      * See if a channel with this handle already exists.
      */
 
-    infoPtr = (ConsoleInfo *) ckalloc((unsigned) sizeof(ConsoleInfo));
+    infoPtr = ckalloc(sizeof(ConsoleInfo));
     memset(infoPtr, 0, sizeof(ConsoleInfo));
 
     infoPtr->validMask = permissions;
@@ -1366,10 +1405,10 @@ TclWinOpenConsoleChannel(
      * for instance).
      */
 
-    wsprintfA(channelName, "file%lx", (int) infoPtr);
+    sprintf(channelName, "file%" TCL_I_MODIFIER "x", (size_t) infoPtr);
 
     infoPtr->channel = Tcl_CreateChannel(&consoleChannelType, channelName,
-	    (ClientData) infoPtr, permissions);
+	    infoPtr, permissions);
 
     if (permissions & TCL_READABLE) {
 	/*
@@ -1382,22 +1421,11 @@ TclWinOpenConsoleChannel(
 	modes &= ~(ENABLE_WINDOW_INPUT | ENABLE_MOUSE_INPUT);
 	modes |= ENABLE_LINE_INPUT;
 	SetConsoleMode(infoPtr->handle, modes);
-
-	infoPtr->readable = CreateEvent(NULL, TRUE, TRUE, NULL);
-	infoPtr->startReader = CreateEvent(NULL, FALSE, FALSE, NULL);
-	infoPtr->stopReader = CreateEvent(NULL, FALSE, FALSE, NULL);
-	infoPtr->readThread = CreateThread(NULL, 256, ConsoleReaderThread,
-		infoPtr, 0, &id);
-	SetThreadPriority(infoPtr->readThread, THREAD_PRIORITY_HIGHEST);
+	StartChannelThread(infoPtr, &infoPtr->reader, ConsoleReaderThread);
     }
 
     if (permissions & TCL_WRITABLE) {
-	infoPtr->writable = CreateEvent(NULL, TRUE, TRUE, NULL);
-	infoPtr->startWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
-	infoPtr->stopWriter = CreateEvent(NULL, FALSE, FALSE, NULL);
-	infoPtr->writeThread = CreateThread(NULL, 256, ConsoleWriterThread,
-		infoPtr, 0, &id);
-	SetThreadPriority(infoPtr->writeThread, THREAD_PRIORITY_HIGHEST);
+	StartChannelThread(infoPtr, &infoPtr->writer, ConsoleWriterThread);
     }
 
     /*
@@ -1407,11 +1435,11 @@ TclWinOpenConsoleChannel(
 
     Tcl_SetChannelOption(NULL, infoPtr->channel, "-translation", "auto");
     Tcl_SetChannelOption(NULL, infoPtr->channel, "-eofchar", "\032 {}");
-    if (tclWinProcs->useWide)
-	Tcl_SetChannelOption(NULL, infoPtr->channel, "-encoding", "unicode");
-    else
-	Tcl_SetChannelOption(NULL, infoPtr->channel, "-encoding", encoding);
-
+#ifdef UNICODE
+    Tcl_SetChannelOption(NULL, infoPtr->channel, "-encoding", "unicode");
+#else
+    Tcl_SetChannelOption(NULL, infoPtr->channel, "-encoding", encoding);
+#endif
     return infoPtr->channel;
 }
 
@@ -1436,9 +1464,10 @@ ConsoleThreadActionProc(
     ClientData instanceData,
     int action)
 {
-    ConsoleInfo *infoPtr = (ConsoleInfo *) instanceData;
+    ConsoleInfo *infoPtr = instanceData;
 
-    /* We do not access firstConsolePtr in the thread structures. This is not
+    /*
+     * We do not access firstConsolePtr in the thread structures. This is not
      * for all serials managed by the thread, but only those we are watching.
      * Removal of the filevent handlers before transfer thus takes care of
      * this structure.

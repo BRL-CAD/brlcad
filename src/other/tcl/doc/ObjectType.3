@@ -4,20 +4,18 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_ObjType 3 8.0 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
-Tcl_RegisterObjType, Tcl_GetObjType, Tcl_AppendAllObjTypes, Tcl_ConvertToType  \- manipulate Tcl object types
+Tcl_RegisterObjType, Tcl_GetObjType, Tcl_AppendAllObjTypes, Tcl_ConvertToType  \- manipulate Tcl value types
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
 .sp
 \fBTcl_RegisterObjType\fR(\fItypePtr\fR)
 .sp
-Tcl_ObjType *
+const Tcl_ObjType *
 \fBTcl_GetObjType\fR(\fItypeName\fR)
 .sp
 int
@@ -27,32 +25,33 @@ int
 \fBTcl_ConvertToType\fR(\fIinterp, objPtr, typePtr\fR)
 .SH ARGUMENTS
 .AS "const char" *typeName
-.AP Tcl_ObjType *typePtr in
-Points to the structure containing information about the Tcl object type.
+.AP "const Tcl_ObjType" *typePtr in
+Points to the structure containing information about the Tcl value type.
 This storage must live forever,
 typically by being statically allocated.
 .AP "const char" *typeName in
-The name of a Tcl object type that \fBTcl_GetObjType\fR should look up.
+The name of a Tcl value type that \fBTcl_GetObjType\fR should look up.
 .AP Tcl_Interp *interp in
 Interpreter to use for error reporting.
 .AP Tcl_Obj *objPtr in
-For \fBTcl_AppendAllObjTypes\fR, this points to the object onto which
-it appends the name of each object type as a list element.
-For \fBTcl_ConvertToType\fR, this points to an object that
+For \fBTcl_AppendAllObjTypes\fR, this points to the value onto which
+it appends the name of each value type as a list element.
+For \fBTcl_ConvertToType\fR, this points to a value that
 must have been the result of a previous call to \fBTcl_NewObj\fR.
 .BE
 
 .SH DESCRIPTION
 .PP
-The procedures in this man page manage Tcl object types.
-They are used to register new object types, look up types,
+The procedures in this man page manage Tcl value types (sometimes
+referred to as object types or \fBTcl_ObjType\fRs for historical reasons).
+They are used to register new value types, look up types,
 and force conversions from one type to another.
 .PP
-\fBTcl_RegisterObjType\fR registers a new Tcl object type
-in the table of all object types that \fBTcl_GetObjType\fR
-can look up by name.  There are other object types supported by Tcl
+\fBTcl_RegisterObjType\fR registers a new Tcl value type
+in the table of all value types that \fBTcl_GetObjType\fR
+can look up by name.  There are other value types supported by Tcl
 as well, which Tcl chooses not to register.  Extensions can likewise
-choose to register the object types they create or not.
+choose to register the value types they create or not.
 The argument \fItypePtr\fR points to a Tcl_ObjType structure that
 describes the new type by giving its name
 and by supplying pointers to four procedures
@@ -67,13 +66,13 @@ in the section \fBTHE TCL_OBJTYPE STRUCTURE\fR below.
 with name \fItypeName\fR.
 It returns NULL if no type with that name is registered.
 .PP
-\fBTcl_AppendAllObjTypes\fR appends the name of each registered object type
-as a list element onto the Tcl object referenced by \fIobjPtr\fR.
+\fBTcl_AppendAllObjTypes\fR appends the name of each registered value type
+as a list element onto the Tcl value referenced by \fIobjPtr\fR.
 The return value is \fBTCL_OK\fR unless there was an error
-converting \fIobjPtr\fR to a list object;
+converting \fIobjPtr\fR to a list value;
 in that case \fBTCL_ERROR\fR is returned.
 .PP
-\fBTcl_ConvertToType\fR converts an object from one type to another
+\fBTcl_ConvertToType\fR converts a value from one type to another
 if possible.
 It creates a new internal representation for \fIobjPtr\fR
 appropriate for the target type \fItypePtr\fR
@@ -81,7 +80,7 @@ and sets its \fItypePtr\fR member as determined by calling the
 \fItypePtr->setFromAnyProc\fR routine.  
 Any internal representation for \fIobjPtr\fR's old type is freed.
 If an error occurs during conversion, it returns \fBTCL_ERROR\fR
-and leaves an error message in the result object for \fIinterp\fR
+and leaves an error message in the result value for \fIinterp\fR
 unless \fIinterp\fR is NULL.
 Otherwise, it returns \fBTCL_OK\fR.
 Passing a NULL \fIinterp\fR allows this procedure to be used
@@ -96,7 +95,7 @@ use of another related Tcl_ObjType, if it sees fit.
 .VE 8.5
 .SH "THE TCL_OBJTYPE STRUCTURE"
 .PP
-Extension writers can define new object types by defining four
+Extension writers can define new value types by defining four
 procedures and
 initializing a Tcl_ObjType structure to describe the type.
 Extension writers may also pass a pointer to their Tcl_ObjType
@@ -107,12 +106,12 @@ The \fBTcl_ObjType\fR structure is defined as follows:
 .PP
 .CS
 typedef struct Tcl_ObjType {
-    char *\fIname\fR;
+    const char *\fIname\fR;
     Tcl_FreeInternalRepProc *\fIfreeIntRepProc\fR;
     Tcl_DupInternalRepProc *\fIdupIntRepProc\fR;
     Tcl_UpdateStringProc *\fIupdateStringProc\fR;
     Tcl_SetFromAnyProc *\fIsetFromAnyProc\fR;
-} Tcl_ObjType;
+} \fBTcl_ObjType\fR;
 .CE
 .SS "THE NAME FIELD"
 .PP
@@ -121,21 +120,22 @@ When a type is registered, this is the name used by callers
 of \fBTcl_GetObjType\fR to lookup the type.  For unregistered
 types, the \fIname\fR field is primarily of value for debugging.
 The remaining four members are pointers to procedures
-called by the generic Tcl object code:
+called by the generic Tcl value code:
 .SS "THE SETFROMANYPROC FIELD"
 .PP
 The \fIsetFromAnyProc\fR member contains the address of a function
 called to create a valid internal representation
-from an object's string representation.
+from a value's string representation.
 .PP
 .CS
-typedef int (Tcl_SetFromAnyProc) (Tcl_Interp *\fIinterp\fR,
+typedef int \fBTcl_SetFromAnyProc\fR(
+        Tcl_Interp *\fIinterp\fR,
         Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
 If an internal representation cannot be created from the string,
 it returns \fBTCL_ERROR\fR and puts a message
-describing the error in the result object for \fIinterp\fR
+describing the error in the result value for \fIinterp\fR
 unless \fIinterp\fR is NULL.
 If \fIsetFromAnyProc\fR is successful,
 it stores the new internal representation,
@@ -163,17 +163,18 @@ replace it with a new one or reset the \fItypePtr\fR member to NULL.
 The \fIsetFromAnyProc\fR member may be set to NULL, if the routines
 making use of the internal representation have no need to derive that
 internal representation from an arbitrary string value.  However, in
-this case, passing a pointer to the type to Tcl_ConvertToType() will
+this case, passing a pointer to the type to \fBTcl_ConvertToType\fR will
 lead to a panic, so to avoid this possibility, the type
 should \fInot\fR be registered.
 .SS "THE UPDATESTRINGPROC FIELD"
 .PP
 The \fIupdateStringProc\fR member contains the address of a function
 called to create a valid string representation
-from an object's internal representation.
+from a value's internal representation.
 .PP
 .CS
-typedef void (Tcl_UpdateStringProc) (Tcl_Obj *\fIobjPtr\fR);
+typedef void \fBTcl_UpdateStringProc\fR(
+        Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
 \fIobjPtr\fR's \fIbytes\fR member is always NULL when it is called.
@@ -203,10 +204,11 @@ or other similar routines ask for the string representation.
 .SS "THE DUPINTREPPROC FIELD"
 .PP
 The \fIdupIntRepProc\fR member contains the address of a function
-called to copy an internal representation from one object to another.
+called to copy an internal representation from one value to another.
 .PP
 .CS
-typedef void (Tcl_DupInternalRepProc) (Tcl_Obj *\fIsrcPtr\fR,
+typedef void \fBTcl_DupInternalRepProc\fR(
+        Tcl_Obj *\fIsrcPtr\fR,
         Tcl_Obj *\fIdupPtr\fR);
 .CE
 .PP
@@ -214,7 +216,7 @@ typedef void (Tcl_DupInternalRepProc) (Tcl_Obj *\fIsrcPtr\fR,
 internal representation.
 Before the call,
 \fIsrcPtr\fR's internal representation is valid and \fIdupPtr\fR's is not.
-\fIsrcPtr\fR's object type determines what
+\fIsrcPtr\fR's value type determines what
 copying its internal representation means.
 .PP
 For example, the \fIdupIntRepProc\fR for the Tcl integer type
@@ -225,29 +227,30 @@ reasonably can.
 .SS "THE FREEINTREPPROC FIELD"
 .PP
 The \fIfreeIntRepProc\fR member contains the address of a function
-that is called when an object is freed.
+that is called when a value is freed.
 .PP
 .CS
-typedef void (Tcl_FreeInternalRepProc) (Tcl_Obj *\fIobjPtr\fR);
+typedef void \fBTcl_FreeInternalRepProc\fR(
+        Tcl_Obj *\fIobjPtr\fR);
 .CE
 .PP
 The \fIfreeIntRepProc\fR function can deallocate the storage
-for the object's internal representation
-and do other type-specific processing necessary when an object is freed.
+for the value's internal representation
+and do other type-specific processing necessary when a value is freed.
 .PP
 For example, the list type's \fIfreeIntRepProc\fR respects
 the storage sharing scheme established by the \fIdupIntRepProc\fR
-so that it only frees storage when the last object sharing it
+so that it only frees storage when the last value sharing it
 is being freed.
 .PP
 The \fIfreeIntRepProc\fR member can be set to NULL
 to indicate that the internal representation does not require freeing.
 The \fIfreeIntRepProc\fR implementation must not access the
-\fIbytes\fR member of the object, since Tcl makes its own internal
-uses of that field during object deletion.  The defined tasks for
+\fIbytes\fR member of the value, since Tcl makes its own internal
+uses of that field during value deletion.  The defined tasks for
 the \fIfreeIntRepProc\fR have no need to consult the \fIbytes\fR
 member.
 .SH "SEE ALSO"
-Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount
+Tcl_NewObj(3), Tcl_DecrRefCount(3), Tcl_IncrRefCount(3)
 .SH KEYWORDS
-internal representation, object, object type, string representation, type conversion
+internal representation, value, value type, string representation, type conversion

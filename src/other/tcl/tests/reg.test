@@ -8,12 +8,13 @@
 # to read this file, ignoring the Tcl-isms.)
 #
 # Copyright (c) 1998, 1999 Henry Spencer.  All rights reserved.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 # All tests require the testregexp command, return if this
 # command doesn't exist
@@ -176,14 +177,32 @@ namespace eval RETest {
 	return $ret
     }
 
+    # Share the generation of the list of test constraints so it is
+    # done the same on all routes.
+    proc TestConstraints {flags} {
+	set constraints [list testregexp]
+
+	variable regBug
+	if {$regBug} {
+	    # This will trigger registration as a skipped test
+	    lappend constraints knownBug
+	}
+
+	# Tcl locale stuff doesn't do the ch/xy test fakery yet
+	if {[string match *+* $flags]} {
+	    # This will trigger registration as a skipped test
+	    lappend constraints localeRegexp
+	}
+
+	return $constraints
+    }
+
     # match expected, internal routine that does the work
     # parameters like the "real" routines except they don't have "opts",
     #  which is a possibly-empty list of switches for the regexp match attempt
     # The ! flag is used to indicate expected match failure (for REG_EXPECT,
     #  which wants argument testing even in the event of failure).
     proc MatchExpected {opts testid flags re target args} {
-	variable regBug
-
 	# if &, test as both BRE and ARE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
@@ -192,18 +211,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	if {$regBug} {
-	    # This will register as a skipped test
-	    lappend constraints knownBug
-	}
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
@@ -254,13 +262,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set cmd [list testregexp -about {*}[TestFlags $flags] $re]
 	::tcltest::test [TestNum $testid error] [TestDesc $testid error] \
@@ -270,6 +272,7 @@ namespace eval RETest {
 
     # match failure expected
     proc expectNomatch {testid flags re target args} {
+	variable regBug
 	# if &, test as both ARE and BRE
 	if {[string match *&* $flags]} {
 	    set f [string map {& {}} $flags]
@@ -278,13 +281,7 @@ namespace eval RETest {
 	    return
 	}
 
-	set constraints [list testregexp]
-
-	# Tcl locale stuff doesn't do the ch/xy test fakery yet
-	if {[string match *+* $flags]} {
-	    # This will register as a skipped test
-	    lappend constraints localeRegexp
-	}
+	set constraints [TestConstraints $flags]
 
 	set f [TestFlags $flags]
 	set infoflags [TestInfoFlags $flags]
@@ -333,7 +330,7 @@ namespace eval RETest {
     }
 }
 namespace import RETest::*
-
+
 ######## the tests themselves ########
 
 # support functions and preliminary misc.
@@ -628,16 +625,24 @@ expectMatch	13.13 P		"a\\nb"		"a\nb"	"a\nb"
 expectMatch	13.14 P		"a\\rb"		"a\rb"	"a\rb"
 expectMatch	13.15 P		"a\\tb"		"a\tb"	"a\tb"
 expectMatch	13.16 P		"a\\u0008x"	"a\bx"	"a\bx"
-expectError	13.17 -		{a\u008x}	EESCAPE
+expectMatch	13.17 P		{a\u008x}	"a\bx"	"a\bx"
 expectMatch	13.18 P		"a\\u00088x"	"a\b8x"	"a\b8x"
 expectMatch	13.19 P		"a\\U00000008x"	"a\bx"	"a\bx"
-expectError	13.20 -		{a\U0000008x}	EESCAPE
+expectMatch	13.20 P		{a\U0000008x}	"a\bx"	"a\bx"
 expectMatch	13.21 P		"a\\vb"		"a\vb"	"a\vb"
 expectMatch	13.22 MP	"a\\x08x"	"a\bx"	"a\bx"
 expectError	13.23 -		{a\xq}		EESCAPE
-expectMatch	13.24 MP	"a\\x0008x"	"a\bx"	"a\bx"
+expectMatch	13.24 MP	"a\\x08x"	"a\bx"	"a\bx"
 expectError	13.25 -		{a\z}		EESCAPE
 expectMatch	13.26 MP	"a\\010b"	"a\bb"	"a\bb"
+expectMatch	13.27 P		"a\\U00001234x"	"a\u1234x"	"a\u1234x"
+expectMatch	13.28 P		{a\U00001234x}	"a\u1234x"	"a\u1234x"
+expectMatch	13.29 P		"a\\U0001234x"	"a\u1234x"	"a\u1234x"
+expectMatch	13.30 P		{a\U0001234x}	"a\u1234x"	"a\u1234x"
+expectMatch	13.31 P		"a\\U000012345x"	"a\u12345x"	"a\u12345x"
+expectMatch	13.32 P		{a\U000012345x}	"a\u12345x"	"a\u12345x"
+expectMatch	13.33 P		"a\\U1000000x"	"a\ufffd0x"	"a\ufffd0x"
+expectMatch	13.34 P		{a\U1000000x}	"a\ufffd0x"	"a\ufffd0x"
 
 
 doing 14 "back references"
@@ -662,6 +667,15 @@ expectMatch	14.17 RP	{a([bc])(\1*)}	ab	ab	b	""
 expectError	14.18 -		{a((b)\1)}	ESUBREG
 expectError	14.19 -		{a(b)c\2}	ESUBREG
 expectMatch	14.20 bR	{a\(b*\)c\1}	abbcbb	abbcbb	bb
+expectMatch	14.21 RP	{^([bc])\1*$}	bbb	bbb	b
+expectMatch	14.22 RP	{^([bc])\1*$}	ccc	ccc	c
+expectNomatch	14.23 RP	{^([bc])\1*$}	bcb
+expectMatch	14.24 LRP	{^(\w+)( \1)+$}	{abc abc abc} {abc abc abc} abc { abc}
+expectNomatch	14.25 LRP	{^(\w+)( \1)+$}	{abc abd abc}
+expectNomatch	14.26 LRP	{^(\w+)( \1)+$}	{abc abc abd}
+expectMatch	14.27 RP	{^(.+)( \1)+$}	{abc abc abc} {abc abc abc} abc { abc}
+expectNomatch	14.28 RP	{^(.+)( \1)+$}	{abc abd abc}
+expectNomatch	14.29 RP	{^(.+)( \1)+$}	{abc abc abd}
 
 
 doing 15 "octal escapes vs back references"
@@ -684,6 +698,7 @@ expectError	15.9  -	{a((((((((((b\10))))))))))c}	ESUBREG
 expectMatch	15.10 MP	"a\\12b"	"a\nb"	"a\nb"
 expectError	15.11 b		{a\12b}		ESUBREG
 expectMatch	15.12 eAS	{a\12b}		a12b	a12b
+expectMatch	15.13 MP	{a\701b}	a\u00381b	a\u00381b
 
 
 doing 16 "expanded syntax"
@@ -787,6 +802,7 @@ expectMatch	21.31 LP	"\\y(\\w+)\\y"	"-- abc-"	"abc"	"abc"
 expectMatch	21.32 -		a((b|c)d+)+	abacdbd	acdbd	bd	b
 expectMatch	21.33 N		(.*).*		abc	abc	abc
 expectMatch	21.34 N		(a*)*		bc	""	""
+expectMatch	21.35 M		{ TO (([a-z0-9._]+|"([^"]+|"")+")+)}	{asd TO foo}	{ TO foo} foo o {}
 
 
 doing 22 "multicharacter collating elements"
@@ -839,6 +855,7 @@ expectMatch	24.9  -		3z*		123zzzz456	3zzzz
 expectMatch	24.10 PT	3z*?		123zzzz456	3
 expectMatch	24.11 -		z*4		123zzzz456	zzzz4
 expectMatch	24.12 PT	z*?4		123zzzz456	zzzz4
+expectMatch	24.13 PT	{^([^/]+?)(?:/([^/]+?))(?:/([^/]+?))?$}	{foo/bar/baz}	{foo/bar/baz} {foo} {bar} {baz}
 
 
 doing 25 "mixed quantifiers"
@@ -1072,6 +1089,141 @@ test reg-33.14 {Bug 1810264 - super-expensive expression} nonPortable {
     regexp {(x{200}){200}$y} {x}
 } 0
 
+test reg-33.15.1 {Bug 3603557 - an "in the wild" RE} {
+    lindex [regexp -expanded -about {
+	^TETRA_MODE_CMD				# Message Type
+	([[:blank:]]+)				# Pad
+	(ETS_1_1|ETS_1_2|ETS_2_2)		# SystemCode
+	([[:blank:]]+)				# Pad
+	(CONTINUOUS|CARRIER|MCCH|TRAFFIC)	# SharingMode
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,2})			# ColourCode
+	([[:blank:]]+)				# Pad
+	(1|2|3|4|6|9|12|18)			# TSReservedFrames
+	([[:blank:]]+)				# Pad
+	(PASS|TRUE|FAIL|FALSE)			# UPlaneDTX
+	([[:blank:]]+)				# Pad
+	(PASS|TRUE|FAIL|FALSE)			# Frame18Extension
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,4})			# MCC
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,5})			# MNC
+	([[:blank:]]+)				# Pad
+	(BOTH|BCAST|ENQRY|NONE)			# NbrCellBcast
+	([[:blank:]]+)				# Pad
+	(UNKNOWN|LOW|MEDIUM|HIGH)		# CellServiceLevel
+	([[:blank:]]+)				# Pad
+	(PASS|TRUE|FAIL|FALSE)			# LateEntryInfo
+	([[:blank:]]+)				# Pad
+	(300|400)				# FrequencyBand
+	([[:blank:]]+)				# Pad
+	(NORMAL|REVERSE)			# ReverseOperation
+	([[:blank:]]+)				# Pad
+	(NONE|\+6\.25|\-6\.25|\+12\.5)		# Offset
+	([[:blank:]]+)				# Pad
+	(10)					# DuplexSpacing
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,4})			# MainCarrierNr
+	([[:blank:]]+)				# Pad
+	(0|1|2|3)				# NrCSCCH
+	([[:blank:]]+)				# Pad
+	(15|20|25|30|35|40|45)			# MSTxPwrMax
+	([[:blank:]]+)				# Pad
+	(\-125|\-120|\-115|\-110|\-105|\-100|\-95|\-90|\-85|\-80|\-75|\-70|\-65|\-60|\-55|\-50)
+						# RxLevAccessMin
+	([[:blank:]]+)				# Pad
+	(\-53|\-51|\-49|\-47|\-45|\-43|\-41|\-39|\-37|\-35|\-33|\-31|\-29|\-27|\-25|\-23)
+						# AccessParameter
+	([[:blank:]]+)				# Pad
+	(DISABLE|[[:digit:]]{3,4})		# RadioDLTimeout
+	([[:blank:]]+)				# Pad
+	(\-[[:digit:]]{2,3})			# RSSIThreshold
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,5})			# CCKIdSCKVerNr
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,5})			# LocationArea
+	([[:blank:]]+)				# Pad
+	([(1|0)]{16})				# SubscriberClass
+	([[:blank:]]+)				# Pad
+	([(1|0)]{12})				# BSServiceDetails
+	([[:blank:]]+)				# Pad
+	(RANDOMIZE|IMMEDIATE|[[:digit:]]{1,2})	# IMM
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,2})			# WT
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,2})			# Nu
+	([[:blank:]]+)				# Pad
+	([0-1])					# FrameLngFctr
+	([[:blank:]]+)				# Pad
+	([[:digit:]]{1,2})			# TSPtr
+	([[:blank:]]+)				# Pad
+	([0-7])					# MinPriority
+	([[:blank:]]+)				# Pad
+	(PASS|TRUE|FAIL|FALSE)			# ExtdSrvcsEnabled
+	([[:blank:]]+)				# Pad
+	(.*)					# ConditionalFields
+    }] 0
+} 68
+test reg-33.16.1 {Bug [8d2c0da36d]- another "in the wild" RE} {
+    lindex [regexp -about "^MRK:client1: =1339 14HKelly Talisman 10011000 (\[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]*) \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 8 0 8 0 0 0 77 77 1 1 2 0 11 { 1 3 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 13HC6 My Creator 2 3 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 31HC7 Slightly offensive name, huh 3 8 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 23HE-mail:kelly@hotbox.com 4 9 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 17Hcompface must die 5 10 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 0 3HAir 6 12 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 14HPGP public key 7 13 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 16Hkelly@hotbox.com 8 30 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 0 12H2 text/plain 9 30 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 0 13H2 x-kom/basic 10 33 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 1H0 11 14 8 \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* \[0-9\]* 00000000 1 1H3 }\r?"] 0
+} 1
+
+test reg-33.15 {constraint fixes} {
+    regexp {(^)+^} x
+} 1
+test reg-33.16 {constraint fixes} {
+    regexp {($^)+} x
+} 0
+test reg-33.17 {constraint fixes} {
+    regexp {(^$)*} x
+} 1
+test reg-33.18 {constraint fixes} {
+    regexp {(^(?!aa))+} {aa bb cc}
+} 0
+test reg-33.19 {constraint fixes} {
+    regexp {(^(?!aa)(?!bb)(?!cc))+} {aa x}
+} 0
+test reg-33.20 {constraint fixes} {
+    regexp {(^(?!aa)(?!bb)(?!cc))+} {bb x}
+} 0
+test reg-33.21 {constraint fixes} {
+    regexp {(^(?!aa)(?!bb)(?!cc))+} {cc x}
+} 0
+test reg-33.22 {constraint fixes} {
+    regexp {(^(?!aa)(?!bb)(?!cc))+} {dd x}
+} 1
+
+test reg-33.23 {} {
+    regexp {abcd(\m)+xyz} x
+} 0
+test reg-33.24 {} {
+    regexp {abcd(\m)+xyz} a
+} 0
+test reg-33.25 {} {
+    regexp {^abcd*(((((^(a c(e?d)a+|)+|)+|)+|)+|a)+|)} x
+} 0
+test reg-33.26 {} {
+    regexp {a^(^)bcd*xy(((((($a+|)+|)+|)+$|)+|)+|)^$} x
+} 0
+test reg-33.27 {} {
+    regexp {xyz(\Y\Y)+} x
+} 0
+test reg-33.28 {} {
+    regexp {x|(?:\M)+} x
+} 1
+test reg-33.29 {} {
+    # This is near the limits of the RE engine
+    regexp [string repeat x*y*z* 480] x
+} 1
+
+test reg-33.30 {Bug 1080042} {
+    regexp {(\Y)+} foo
+} 1
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

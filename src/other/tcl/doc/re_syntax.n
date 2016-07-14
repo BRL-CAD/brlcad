@@ -4,10 +4,10 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-'\" RCS: @(#) $Id$
 '\"
 .so man.macros
+.ie '\w'o''\w'\C'^o''' .ds qo \C'^o'
+.el .ds qo u
 .TH re_syntax n "8.1" Tcl "Tcl Built-In Commands"
 .BS
 .SH NAME
@@ -178,7 +178,7 @@ endpoint, so e.g.
 .QW \fBa\-c\-e\fR
 is illegal. Ranges in Tcl always use the
 Unicode collating sequence, but other programs may use other collating
-sequences and this can be a source of incompatability between programs.
+sequences and this can be a source of incompatibility between programs.
 .PP
 To include a literal \fB]\fR or \fB\-\fR in the list, the simplest
 method is to enclose it in \fB[.\fR and \fB.]\fR to make it a
@@ -223,7 +223,8 @@ A character producing white space in displayed text.
 .IP \fBpunct\fR 8
 A punctuation character.
 .IP \fBgraph\fR 8
-A character with a visible representation (includes both alnum and punct).
+A character with a visible representation (includes both \fBalnum\fR
+and \fBpunct\fR).
 .IP \fBcntrl\fR 8
 A control character.
 .PP
@@ -292,12 +293,12 @@ treatment is as if the enclosing delimiters were
 .QW \fB[.\fR \&
 and
 .QW \fB.]\fR .)
-For example, if \fBo\fR and \fB\N'244'\fR are the members of an
+For example, if \fBo\fR and \fB\*(qo\fR are the members of an
 equivalence class, then
 .QW \fB[[=o=]]\fR ,
-.QW \fB[[=\N'244'=]]\fR ,
+.QW \fB[[=\*(qo=]]\fR ,
 and
-.QW \fB[o\N'244']\fR \&
+.QW \fB[o\*(qo]\fR \&
 are all synonymous. An equivalence class may not be an endpoint of a range.
 .RS
 .PP
@@ -361,39 +362,42 @@ horizontal tab, as in C
 .TP
 \fB\eu\fIwxyz\fR
 .
-(where \fIwxyz\fR is exactly four hexadecimal digits) the Unicode
+(where \fIwxyz\fR is one up to four hexadecimal digits) the Unicode
 character \fBU+\fIwxyz\fR in the local byte ordering
 .TP
 \fB\eU\fIstuvwxyz\fR
 .
-(where \fIstuvwxyz\fR is exactly eight hexadecimal digits) reserved
-for a somewhat-hypothetical Unicode extension to 32 bits
+(where \fIstuvwxyz\fR is one up to eight hexadecimal digits) reserved
+for a Unicode extension up to 21 bits. The digits are parsed until the
+first non-hexadecimal character is encountered, the maximun of eight
+hexadecimal digits are reached, or an overflow would occur in the maximum
+value of \fBU+\fI10ffff\fR.
 .TP
 \fB\ev\fR
 .
 vertical tab, as in C are all available.
 .TP
-\fB\ex\fIhhh\fR
+\fB\ex\fIhh\fR
 .
-(where \fIhhh\fR is any sequence of hexadecimal digits) the character
-whose hexadecimal value is \fB0x\fIhhh\fR (a single character no
-matter how many hexadecimal digits are used).
+(where \fIhh\fR is one or two hexadecimal digits) the character
+whose hexadecimal value is \fB0x\fIhh\fR.
 .TP
 \fB\e0\fR
 .
 the character whose value is \fB0\fR
+.TP
+\fB\e\fIxyz\fR
+.
+(where \fIxyz\fR is exactly three octal digits, and is not a \fIback
+reference\fR (see below)) the character whose octal value is
+\fB0\fIxyz\fR. The first digit must be in the range 0-3, otherwise
+the two-digit form is assumed.
 .TP
 \fB\e\fIxy\fR
 .
 (where \fIxy\fR is exactly two octal digits, and is not a \fIback
 reference\fR (see below)) the character whose octal value is
 \fB0\fIxy\fR
-.TP
-\fB\e\fIxyz\fR
-.
-(where \fIxyz\fR is exactly three octal digits, and is not a back
-reference (see below)) the character whose octal value is
-\fB0\fIxyz\fR
 .RE
 .PP
 Hexadecimal digits are
@@ -679,9 +683,33 @@ earlier in the RE taking priority over ones starting later. Note that
 outer subexpressions thus take priority over their component
 subexpressions.
 .PP
-Note that the quantifiers \fB{1,1}\fR and \fB{1,1}?\fR can be used to
+The quantifiers \fB{1,1}\fR and \fB{1,1}?\fR can be used to
 force longest and shortest preference, respectively, on a
 subexpression or a whole RE.
+.RS
+.PP
+\fBNOTE:\fR This means that you can usually make a RE be non-greedy overall by
+putting \fB{1,1}?\fR after one of the first non-constraint atoms or
+parenthesized sub-expressions in it. \fIIt pays to experiment\fR with the
+placing of this non-greediness override on a suitable range of input texts
+when you are writing a RE if you are using this level of complexity.
+.PP
+For example, this regular expression is non-greedy, and will match the
+shortest substring possible given that
+.QW \fBabc\fR
+will be matched as early as possible (the quantifier does not change that):
+.PP
+.CS
+ab{1,1}?c.*x.*cba
+.CE
+.PP
+The atom
+.QW \fBa\fR
+has no greediness preference, we explicitly give one for
+.QW \fBb\fR ,
+and the remaining quantifiers are overridden to be non-greedy by the preceding
+non-greedy quantifier.
+.RE
 .PP
 Match lengths are measured in characters, not collating elements. An
 empty string is considered longer than no match at all. For example,

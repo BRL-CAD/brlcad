@@ -17,7 +17,7 @@
 
 /* calc a value mod 2**b */
 int
-mp_mod_2d (mp_int * a, int b, mp_int * c)
+mp_mod_2d (const mp_int * a, int b, mp_int * c)
 {
   int     x, res;
 
@@ -49,7 +49,3 @@ mp_mod_2d (mp_int * a, int b, mp_int * c)
   return MP_OKAY;
 }
 #endif
-
-/* $Source$ */
-/* $Revision$ */
-/* $Date$ */

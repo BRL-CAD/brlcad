@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -55,8 +53,8 @@
  *
  * *** NOTE: this code has been altered slightly for use in Tcl: ***
  * *** 1. Names have been changed, e.g. from re_comp to		 ***
- * ***    TclRegComp, to avoid clashes with other 		 ***
- * ***    regexp implementations used by applications. 		 ***
+ * ***    TclRegComp, to avoid clashes with other		 ***
+ * ***    regexp implementations used by applications.		 ***
  */
 
 /*
@@ -102,7 +100,7 @@ static int		SetRegexpFromAny(Tcl_Interp *interp, Tcl_Obj *objPtr);
  * compiled form of the regular expression.
  */
 
-Tcl_ObjType tclRegexpType = {
+const Tcl_ObjType tclRegexpType = {
     "regexp",				/* name */
     FreeRegexpInternalRep,		/* freeIntRepProc */
     DupRegexpInternalRep,		/* dupIntRepProc */
@@ -175,7 +173,7 @@ Tcl_RegExpExec(
 				 * that "^" won't match. */
 {
     int flags, result, numChars;
-    TclRegexp *regexp = (TclRegexp *)re;
+    TclRegexp *regexp = (TclRegexp *) re;
     Tcl_DString ds;
     const Tcl_UniChar *ustr;
 
@@ -393,9 +391,8 @@ Tcl_RegExpMatch(
     const char *text,		/* Text to search for pattern matches. */
     const char *pattern)	/* Regular expression to match against text. */
 {
-    Tcl_RegExp re;
+    Tcl_RegExp re = Tcl_RegExpCompile(interp, pattern);
 
-    re = Tcl_RegExpCompile(interp, pattern);
     if (re == NULL) {
 	return -1;
     }
@@ -438,7 +435,8 @@ Tcl_RegExpExecObj(
     Tcl_UniChar *udata;
     int length;
     int reflags = regexpPtr->flags;
-#define TCL_REG_GLOBOK_FLAGS (TCL_REG_ADVANCED | TCL_REG_NOSUB | TCL_REG_NOCASE)
+#define TCL_REG_GLOBOK_FLAGS \
+	(TCL_REG_ADVANCED | TCL_REG_NOSUB | TCL_REG_NOCASE)
 
     /*
      * Take advantage of the equivalent glob pattern, if one exists.
@@ -573,14 +571,14 @@ Tcl_GetRegExpFromObj(
 {
     int length;
     TclRegexp *regexpPtr;
-    char *pattern;
+    const char *pattern;
 
     /*
      * This is OK because we only actually interpret this value properly as a
      * TclRegexp* when the type is tclRegexpType.
      */
 
-    regexpPtr = (TclRegexp *) objPtr->internalRep.otherValuePtr;
+    regexpPtr = objPtr->internalRep.twoPtrValue.ptr1;
 
     if ((objPtr->typePtr != &tclRegexpType) || (regexpPtr->flags != flags)) {
 	pattern = TclGetStringFromObj(objPtr, &length);
@@ -603,7 +601,7 @@ Tcl_GetRegExpFromObj(
 	 */
 
 	TclFreeIntRep(objPtr);
-	objPtr->internalRep.otherValuePtr = (void *) regexpPtr;
+	objPtr->internalRep.twoPtrValue.ptr1 = regexpPtr;
 	objPtr->typePtr = &tclRegexpType;
     }
     return (Tcl_RegExp) regexpPtr;
@@ -656,7 +654,7 @@ TclRegAbout(
 	{0,			NULL}
     };
     const struct infoname *inf;
-    Tcl_Obj *infoObj;
+    Tcl_Obj *infoObj, *resultObj;
 
     /*
      * The reset here guarantees that the interpreter result is empty and
@@ -672,7 +670,8 @@ TclRegAbout(
      * well and Tcl has other limits that constrain things as well...
      */
 
-    Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp),
+    resultObj = Tcl_NewObj();
+    Tcl_ListObjAppendElement(NULL, resultObj,
 	    Tcl_NewIntObj((int) regexpPtr->re.re_nsub));
 
     /*
@@ -686,7 +685,8 @@ TclRegAbout(
 		    Tcl_NewStringObj(inf->text, -1));
 	}
     }
-    Tcl_ListObjAppendElement(NULL, Tcl_GetObjResult(interp), infoObj);
+    Tcl_ListObjAppendElement(NULL, resultObj, infoObj);
+    Tcl_SetObjResult(interp, resultObj);
 
     return 0;
 }
@@ -714,14 +714,14 @@ TclRegError(
     int status)			/* Status code to report. */
 {
     char buf[100];		/* ample in practice */
-    char cbuf[100];		/* lots in practice */
+    char cbuf[TCL_INTEGER_SPACE];
     size_t n;
     const char *p;
 
     Tcl_ResetResult(interp);
     n = TclReError(status, NULL, buf, sizeof(buf));
     p = (n > sizeof(buf)) ? "..." : "";
-    Tcl_AppendResult(interp, msg, buf, p, NULL);
+    Tcl_SetObjResult(interp, Tcl_ObjPrintf("%s%s%s", msg, buf, p));
 
     sprintf(cbuf, "%d", status);
     (void) TclReError(REG_ITOA, NULL, cbuf, sizeof(cbuf));
@@ -749,15 +749,16 @@ static void
 FreeRegexpInternalRep(
     Tcl_Obj *objPtr)		/* Regexp object with internal rep to free. */
 {
-    TclRegexp *regexpRepPtr = (TclRegexp *) objPtr->internalRep.otherValuePtr;
+    TclRegexp *regexpRepPtr = objPtr->internalRep.twoPtrValue.ptr1;
 
     /*
      * If this is the last reference to the regexp, free it.
      */
 
-    if (--(regexpRepPtr->refCount) <= 0) {
+    if (regexpRepPtr->refCount-- <= 1) {
 	FreeRegexp(regexpRepPtr);
     }
+    objPtr->typePtr = NULL;
 }
 
 /*
@@ -782,10 +783,10 @@ DupRegexpInternalRep(
     Tcl_Obj *srcPtr,		/* Object with internal rep to copy. */
     Tcl_Obj *copyPtr)		/* Object with internal rep to set. */
 {
-    TclRegexp *regexpPtr = (TclRegexp *) srcPtr->internalRep.otherValuePtr;
+    TclRegexp *regexpPtr = srcPtr->internalRep.twoPtrValue.ptr1;
 
     regexpPtr->refCount++;
-    copyPtr->internalRep.otherValuePtr = srcPtr->internalRep.otherValuePtr;
+    copyPtr->internalRep.twoPtrValue.ptr1 = srcPtr->internalRep.twoPtrValue.ptr1;
     copyPtr->typePtr = &tclRegexpType;
 }
 
@@ -904,7 +905,7 @@ CompileRegexp(
      * This is a new expression, so compile it and add it to the cache.
      */
 
-    regexpPtr = (TclRegexp *) ckalloc(sizeof(TclRegexp));
+    regexpPtr = ckalloc(sizeof(TclRegexp));
     regexpPtr->objPtr = NULL;
     regexpPtr->string = NULL;
     regexpPtr->details.rm_extend.rm_so = -1;
@@ -931,7 +932,7 @@ CompileRegexp(
 	 * Clean up and report errors in the interpreter, if possible.
 	 */
 
-	ckfree((char *)regexpPtr);
+	ckfree(regexpPtr);
 	if (interp) {
 	    TclRegError(interp,
 		    "couldn't compile regular expression pattern: ", status);
@@ -945,11 +946,10 @@ CompileRegexp(
      * Tcl_RegExpExecObj to optionally do a fast match (avoids RE engine).
      */
 
-    if (TclReToGlob(NULL, string, length, &stringBuf, &exact) == TCL_OK) {
-	regexpPtr->globObjPtr = Tcl_NewStringObj(Tcl_DStringValue(&stringBuf),
-		Tcl_DStringLength(&stringBuf));
+    if (TclReToGlob(NULL, string, length, &stringBuf, &exact,
+	    NULL) == TCL_OK) {
+	regexpPtr->globObjPtr = TclDStringToObj(&stringBuf);
 	Tcl_IncrRefCount(regexpPtr->globObjPtr);
-	Tcl_DStringFree(&stringBuf);
     } else {
 	regexpPtr->globObjPtr = NULL;
     }
@@ -959,8 +959,8 @@ CompileRegexp(
      * the entire pattern.
      */
 
-    regexpPtr->matches = (regmatch_t *) ckalloc(
-	    sizeof(regmatch_t) * (regexpPtr->re.re_nsub + 1));
+    regexpPtr->matches =
+	    ckalloc(sizeof(regmatch_t) * (regexpPtr->re.re_nsub + 1));
 
     /*
      * Initialize the refcount to one initially, since it is in the cache.
@@ -975,7 +975,8 @@ CompileRegexp(
 
     if (tsdPtr->patterns[NUM_REGEXPS-1] != NULL) {
 	TclRegexp *oldRegexpPtr = tsdPtr->regexps[NUM_REGEXPS-1];
-	if (--(oldRegexpPtr->refCount) <= 0) {
+
+	if (oldRegexpPtr->refCount-- <= 1) {
 	    FreeRegexp(oldRegexpPtr);
 	}
 	ckfree(tsdPtr->patterns[NUM_REGEXPS-1]);
@@ -985,8 +986,8 @@ CompileRegexp(
 	tsdPtr->patLengths[i+1] = tsdPtr->patLengths[i];
 	tsdPtr->regexps[i+1] = tsdPtr->regexps[i];
     }
-    tsdPtr->patterns[0] = (char *) ckalloc((unsigned) (length+1));
-    strcpy(tsdPtr->patterns[0], string);
+    tsdPtr->patterns[0] = ckalloc(length + 1);
+    memcpy(tsdPtr->patterns[0], string, (unsigned) length + 1);
     tsdPtr->patLengths[0] = length;
     tsdPtr->regexps[0] = regexpPtr;
 
@@ -1018,9 +1019,9 @@ FreeRegexp(
 	TclDecrRefCount(regexpPtr->globObjPtr);
     }
     if (regexpPtr->matches) {
-	ckfree((char *) regexpPtr->matches);
+	ckfree(regexpPtr->matches);
     }
-    ckfree((char *) regexpPtr);
+    ckfree(regexpPtr);
 }
 
 /*
@@ -1049,16 +1050,18 @@ FinalizeRegexp(
 
     for (i = 0; (i < NUM_REGEXPS) && (tsdPtr->patterns[i] != NULL); i++) {
 	regexpPtr = tsdPtr->regexps[i];
-	if (--(regexpPtr->refCount) <= 0) {
+	if (regexpPtr->refCount-- <= 1) {
 	    FreeRegexp(regexpPtr);
 	}
 	ckfree(tsdPtr->patterns[i]);
 	tsdPtr->patterns[i] = NULL;
     }
+
     /*
      * We may find ourselves reinitialized if another finalization routine
      * invokes regexps.
      */
+
     tsdPtr->initialized = 0;
 }
 

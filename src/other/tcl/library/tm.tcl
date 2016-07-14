@@ -1,48 +1,44 @@
 # -*- tcl -*-
 #
-# Searching for Tcl Modules. Defines a procedure, declares it as the
-# primary command for finding packages, however also uses the former
-# 'package unknown' command as a fallback.
+# Searching for Tcl Modules. Defines a procedure, declares it as the primary
+# command for finding packages, however also uses the former 'package unknown'
+# command as a fallback.
 #
-# Locates all possible packages in a directory via a less restricted
-# glob. The targeted directory is derived from the name of the
-# requested package. I.e. the TM scan will look only at directories
-# which can contain the requested package. It will register all
-# packages it found in the directory so that future requests have a
-# higher chance of being fulfilled by the ifneeded database without
-# having to come to us again.
+# Locates all possible packages in a directory via a less restricted glob. The
+# targeted directory is derived from the name of the requested package, i.e.
+# the TM scan will look only at directories which can contain the requested
+# package. It will register all packages it found in the directory so that
+# future requests have a higher chance of being fulfilled by the ifneeded
+# database without having to come to us again.
 #
-# We do not remember where we have been and simply rescan targeted
-# directories when invoked again. The reasoning is this:
+# We do not remember where we have been and simply rescan targeted directories
+# when invoked again. The reasoning is this:
 #
-# - The only way we get back to the same directory is if someone is
-#   trying to [package require] something that wasn't there on the
-#   first scan.
+# - The only way we get back to the same directory is if someone is trying to
+#   [package require] something that wasn't there on the first scan.
 #
 #   Either
 #   1) It is there now:  If we rescan, you get it; if not you don't.
 #
-#      This covers the possibility that the application asked for a
-#      package late, and the package was actually added to the
-#      installation after the application was started. It shoukld
-#      still be able to find it.
+#      This covers the possibility that the application asked for a package
+#      late, and the package was actually added to the installation after the
+#      application was started. It shoukld still be able to find it.
 #
-#   2) It still is not there: Either way, you don't get it, but the
-#      rescan takes time. This is however an error case and we dont't
-#      care that much about it
+#   2) It still is not there: Either way, you don't get it, but the rescan
+#      takes time. This is however an error case and we dont't care that much
+#      about it
 #
-#   3) It was there the first time; but for some reason a "package
-#      forget" has been run, and "package" doesn't know about it
-#      anymore.
+#   3) It was there the first time; but for some reason a "package forget" has
+#      been run, and "package" doesn't know about it anymore.
 #
-#      This can be an indication that the application wishes to reload
-#      some functionality. And should work as well.
+#      This can be an indication that the application wishes to reload some
+#      functionality. And should work as well.
 #
-# Note that this also strikes a balance between doing a glob targeting
-# a single package, and thus most likely requiring multiple globs of
-# the same directory when the application is asking for many packages,
-# and trying to glob for _everything_ in all subdirectories when
-# looking for a package, which comes with a heavy startup cost.
+# Note that this also strikes a balance between doing a glob targeting a
+# single package, and thus most likely requiring multiple globs of the same
+# directory when the application is asking for many packages, and trying to
+# glob for _everything_ in all subdirectories when looking for a package,
+# which comes with a heavy startup cost.
 #
 # We scan for regular packages only if no satisfying module was found.
 
@@ -58,7 +54,7 @@ namespace eval ::tcl::tm {
     # Export the public API
 
     namespace export path
-    namespace ensemble create -command path -subcommand {add remove list}
+    namespace ensemble create -command path -subcommands {add remove list}
 }
 
 # ::tcl::tm::path implementations --
@@ -71,46 +67,43 @@ namespace eval ::tcl::tm {
 #		path with 'list'.
 #
 # Results
-#	No result for subcommands 'add' and 'remove'. A list of paths
-#	for 'list'.
+#	No result for subcommands 'add' and 'remove'. A list of paths for
+#	'list'.
 #
 # Sideeffects
-#	The subcommands 'add' and 'remove' manipulate the list of
-#	paths to search for Tcl Modules. The subcommand 'list' has no
-#	sideeffects.
+#	The subcommands 'add' and 'remove' manipulate the list of paths to
+#	search for Tcl Modules. The subcommand 'list' has no sideeffects.
 
-proc ::tcl::tm::add {path args} {
+proc ::tcl::tm::add {args} {
     # PART OF THE ::tcl::tm::path ENSEMBLE
     #
     # The path is added at the head to the list of module paths.
     #
-    # The command enforces the restriction that no path may be an
-    # ancestor directory of any other path on the list. If the new
-    # path violates this restriction an error wil be raised.
+    # The command enforces the restriction that no path may be an ancestor
+    # directory of any other path on the list. If the new path violates this
+    # restriction an error wil be raised.
     #
-    # If the path is already present as is no error will be raised and
-    # no action will be taken.
+    # If the path is already present as is no error will be raised and no
+    # action will be taken.
 
     variable paths
 
-    # We use a copy of the path as source during validation, and
-    # extend it as well. Because we not only have to detect if the new
-    # paths are bogus with respect to the existing paths, but also
-    # between themselves. Otherwise we can still add bogus paths, by
-    # specifying them in a single call. This makes the use of the new
-    # paths simpler as well, a trivial assignment of the collected
-    # paths to the official state var.
+    # We use a copy of the path as source during validation, and extend it as
+    # well. Because we not only have to detect if the new paths are bogus with
+    # respect to the existing paths, but also between themselves. Otherwise we
+    # can still add bogus paths, by specifying them in a single call. This
+    # makes the use of the new paths simpler as well, a trivial assignment of
+    # the collected paths to the official state var.
 
     set newpaths $paths
-    foreach p [linsert $args 0 $path] {
+    foreach p $args {
 	if {$p in $newpaths} {
 	    # Ignore a path already on the list.
 	    continue
 	}
 
-	# Search for paths which are subdirectories of the new one. If
-	# there are any then the new path violates the restriction
-	# about ancestors.
+	# Search for paths which are subdirectories of the new one. If there
+	# are any then the new path violates the restriction about ancestors.
 
 	set pos [lsearch -glob $newpaths ${p}/*]
 	# Cannot use "in", we need the position for the message.
@@ -119,10 +112,9 @@ proc ::tcl::tm::add {path args} {
 		"$p is ancestor of existing module path [lindex $newpaths $pos]."
 	}
 
-	# Now look for existing paths which are ancestors of the new
-	# one. This reverse question forces us to loop over the
-	# existing paths, as each element is the pattern, not the new
-	# path :(
+	# Now look for existing paths which are ancestors of the new one. This
+	# reverse question forces us to loop over the existing paths, as each
+	# element is the pattern, not the new path :(
 
 	foreach ep $newpaths {
 	    if {[string match ${ep}/* $p]} {
@@ -134,24 +126,23 @@ proc ::tcl::tm::add {path args} {
 	set newpaths [linsert $newpaths 0 $p]
     }
 
-    # The validation of the input is complete and successful, and
-    # everything in newpaths is either an old path, or added. We can
-    # now extend the official list of paths, a simple assignment is
-    # sufficient.
+    # The validation of the input is complete and successful, and everything
+    # in newpaths is either an old path, or added. We can now extend the
+    # official list of paths, a simple assignment is sufficient.
 
     set paths $newpaths
     return
 }
 
-proc ::tcl::tm::remove {path args} {
+proc ::tcl::tm::remove {args} {
     # PART OF THE ::tcl::tm::path ENSEMBLE
     #
-    # Removes the path from the list of module paths. The command is
-    # silently ignored if the path is not on the list.
+    # Removes the path from the list of module paths. The command is silently
+    # ignored if the path is not on the list.
 
     variable paths
 
-    foreach p [linsert $args 0 $path] {
+    foreach p $args {
 	set pos [lsearch -exact $paths $p]
 	if {$pos >= 0} {
 	    set paths [lreplace $paths $pos $pos]
@@ -177,27 +168,26 @@ proc ::tcl::tm::list {} {
 #			  empty string.
 #	exact		- Either -exact or ommitted.
 #
-#	Name, version, and exact are used to determine
-#	satisfaction. The original is called iff no satisfaction was
-#	achieved. The name is also used to compute the directory to
-#	target in the search.
+#	Name, version, and exact are used to determine satisfaction. The
+#	original is called iff no satisfaction was achieved. The name is also
+#	used to compute the directory to target in the search.
 #
 # Results
 #	None.
 #
 # Sideeffects
-#	May populate the package ifneeded database with additional
-#	provide scripts.
+#	May populate the package ifneeded database with additional provide
+#	scripts.
 
 proc ::tcl::tm::UnknownHandler {original name args} {
     # Import the list of paths to search for packages in module form.
-    # Import the pattern used to check package names in detail.  
+    # Import the pattern used to check package names in detail.
 
     variable paths
     variable pkgpattern
 
-    # Without paths to search we can do nothing. (Except falling back
-    # to the regular search).
+    # Without paths to search we can do nothing. (Except falling back to the
+    # regular search).
 
     if {[llength $paths]} {
 	set pkgpath [string map {:: /} $name]
@@ -206,11 +196,10 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 	    set pkgroot ""
 	}
 
-	# We don't remember a copy of the paths while looping. Tcl
-	# Modules are unable to change the list while we are searching
-	# for them. This also simplifies the loop, as we cannot get
-	# additional directories while iterating over the list. A
-	# simple foreach is sufficient.
+	# We don't remember a copy of the paths while looping. Tcl Modules are
+	# unable to change the list while we are searching for them. This also
+	# simplifies the loop, as we cannot get additional directories while
+	# iterating over the list. A simple foreach is sufficient.
 
 	set satisfied 0
 	foreach path $paths {
@@ -223,12 +212,11 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 	    }
 	    set strip [llength [file split $path]]
 
-	    # We can't use glob in safe interps, so enclose the following
-	    # in a catch statement, where we get the module files out
-	    # of the subdirectories. In other words, Tcl Modules are
-	    # not-functional in such an interpreter. This is the same
-	    # as for the command "tclPkgUnknown", i.e. the search for
-	    # regular packages.
+	    # We can't use glob in safe interps, so enclose the following in a
+	    # catch statement, where we get the module files out of the
+	    # subdirectories. In other words, Tcl Modules are not-functional
+	    # in such an interpreter. This is the same as for the command
+	    # "tclPkgUnknown", i.e. the search for regular packages.
 
 	    catch {
 		# We always look for _all_ possible modules in the current
@@ -238,50 +226,57 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 		    set pkgfilename [join [lrange [file split $file] $strip end] ::]
 
 		    if {![regexp -- $pkgpattern $pkgfilename --> pkgname pkgversion]} {
-			# Ignore everything not matching our pattern
-			# for package names.
+			# Ignore everything not matching our pattern for
+			# package names.
 			continue
 		    }
-		    if {[catch {package vcompare $pkgversion 0}]} {
-			# Ignore everything where the version part is
-			# not acceptable to "package vcompare".
+		    try {
+			package vcompare $pkgversion 0
+		    } on error {} {
+			# Ignore everything where the version part is not
+			# acceptable to "package vcompare".
 			continue
 		    }
 
-		    # We have found a candidate, generate a "provide
-		    # script" for it, and remember it.  Note that we
-		    # are using ::list to do this; locally [list]
-		    # means something else without the namespace
-		    # specifier.
+		    if {[package ifneeded $pkgname $pkgversion] ne {}} {
+			# There's already a provide script registered for
+			# this version of this package.  Since all units of
+			# code claiming to be the same version of the same
+			# package ought to be identical, just stick with
+			# the one we already have.
+			continue
+		    }
 
-		    # NOTE. When making changes to the format of the
-		    # provide command generated below CHECK that the
-		    # 'LOCATE' procedure in core file
-		    # 'platform/shell.tcl' still understands it, or,
-		    # if not, update its implementation appropriately.
+		    # We have found a candidate, generate a "provide script"
+		    # for it, and remember it.  Note that we are using ::list
+		    # to do this; locally [list] means something else without
+		    # the namespace specifier.
+
+		    # NOTE. When making changes to the format of the provide
+		    # command generated below CHECK that the 'LOCATE'
+		    # procedure in core file 'platform/shell.tcl' still
+		    # understands it, or, if not, update its implementation
+		    # appropriately.
 		    #
-		    # Right now LOCATE's implementation assumes that
-		    # the path of the package file is the last element
-		    # in the list.
+		    # Right now LOCATE's implementation assumes that the path
+		    # of the package file is the last element in the list.
 
 		    package ifneeded $pkgname $pkgversion \
 			"[::list package provide $pkgname $pkgversion];[::list source -encoding utf-8 $file]"
 
-		    # We abort in this unknown handler only if we got
-		    # a satisfying candidate for the requested
-		    # package. Otherwise we still have to fallback to
-		    # the regular package search to complete the
-		    # processing.
+		    # We abort in this unknown handler only if we got a
+		    # satisfying candidate for the requested package.
+		    # Otherwise we still have to fallback to the regular
+		    # package search to complete the processing.
 
-		    if {
-			($pkgname eq $name) &&
-			[package vsatisfies $pkgversion {*}$args]
-		    } then {
+		    if {($pkgname eq $name)
+			    && [package vsatisfies $pkgversion {*}$args]} {
 			set satisfied 1
-			# We do not abort the loop, and keep adding
-			# provide scripts for every candidate in the
-			# directory, just remember to not fall back to
-			# the regular search anymore.
+
+			# We do not abort the loop, and keep adding provide
+			# scripts for every candidate in the directory, just
+			# remember to not fall back to the regular search
+			# anymore.
 		    }
 		}
 	    }
@@ -292,8 +287,8 @@ proc ::tcl::tm::UnknownHandler {original name args} {
 	}
     }
 
-    # Fallback to previous command, if existing.  See comment above
-    # about ::list...
+    # Fallback to previous command, if existing.  See comment above about
+    # ::list...
 
     if {[llength $original]} {
 	uplevel 1 $original [::linsert $args 0 $name]
@@ -359,22 +354,22 @@ proc ::tcl::tm::Defaults {} {
 #	Calls 'path add' to paths to the list of module search paths.
 
 proc ::tcl::tm::roots {paths} {
-    foreach {major minor} [split [info tclversion] .] break
+    regexp {^(\d+)\.(\d+)} [package present Tcl] - major minor
     foreach pa $paths {
 	set p [file join $pa tcl$major]
 	for {set n $minor} {$n >= 0} {incr n -1} {
 	    set px [file join $p ${major}.${n}]
-	    if {![interp issafe]} { set px [file normalize $px] }
+	    if {![interp issafe]} {set px [file normalize $px]}
 	    path add $px
 	}
 	set px [file join $p site-tcl]
-	if {![interp issafe]} { set px [file normalize $px] }
+	if {![interp issafe]} {set px [file normalize $px]}
 	path add $px
     }
     return
 }
 
-# Initialization. Set up the default paths, then insert the new
-# handler into the chain.
+# Initialization. Set up the default paths, then insert the new handler into
+# the chain.
 
-if {![interp issafe]} { ::tcl::tm::Defaults }
+if {![interp issafe]} {::tcl::tm::Defaults}

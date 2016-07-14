@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" CVS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_TraceCommand 3 7.4 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_CommandTraceInfo, Tcl_TraceCommand, Tcl_UntraceCommand \- monitor renames and deletes of a command
@@ -64,21 +62,23 @@ Invoke \fIproc\fR when the command is deleted.
 Whenever one of the specified operations occurs to the command,
 \fIproc\fR will be invoked.  It should have arguments and result that
 match the type \fBTcl_CommandTraceProc\fR:
+.PP
 .CS
-typedef void Tcl_CommandTraceProc(
+typedef void \fBTcl_CommandTraceProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         const char *\fIoldName\fR,
         const char *\fInewName\fR,
         int \fIflags\fR);
 .CE
+.PP
 The \fIclientData\fR and \fIinterp\fR parameters will have the same
 values as those passed to \fBTcl_TraceCommand\fR when the trace was
 created.  \fIClientData\fR typically points to an application-specific
 data structure that describes what to do when \fIproc\fR is invoked.
 \fIOldName\fR gives the name of the command being renamed, and
 \fInewName\fR gives the name that the command is being renamed to (or
-an empty string or NULL when the command is being deleted.)
+NULL when the command is being deleted.)
 \fIFlags\fR is an OR'ed combination of bits potentially providing
 several pieces of information.  One of the bits \fBTCL_TRACE_RENAME\fR and
 \fBTCL_TRACE_DELETE\fR will be set in \fIflags\fR to indicate which
@@ -86,11 +86,14 @@ operation is being performed on the command.  The bit
 \fBTCL_TRACE_DESTROYED\fR will be set in \fIflags\fR if the trace is about
 to be destroyed; this information may be useful to \fIproc\fR so that
 it can clean up its own internal data structures (see the section
-\fBTCL_TRACE_DESTROYED\fR below for more details).  Lastly, the bit
-\fBTCL_INTERP_DESTROYED\fR will be set if the entire interpreter is being
-destroyed.  When this bit is set, \fIproc\fR must be especially
-careful in the things it does (see the section \fBTCL_INTERP_DESTROYED\fR
-below).
+\fBTCL_TRACE_DESTROYED\fR below for more details).  Because the
+deletion of commands can take place as part of the deletion of the interp
+that contains them, \fIproc\fR must be careful about checking what
+the passed in \fIinterp\fR value can be called upon to do.
+The routine \fBTcl_InterpDeleted\fR is an important tool for this.
+When \fBTcl_InterpDeleted\fR returns 1, \fIproc\fR will not be able
+to invoke any scripts in \fIinterp\fR.  The function of \fIproc\fR
+in that circumstance is limited to the cleanup of its own data structures.
 .PP
 \fBTcl_UntraceCommand\fR may be used to remove a trace.  If the
 command specified by \fIinterp\fR, \fIcmdName\fR, and \fIflags\fR has
@@ -123,7 +126,8 @@ traces for a given command that have the same \fIproc\fR.
 .PP
 During rename traces, the command being renamed is visible with both
 names simultaneously, and the command still exists during delete
-traces (if \fBTCL_INTERP_DESTROYED\fR is not set).  However, there is no
+traces, unless the interp that contains it is being deleted.
+However, there is no
 mechanism for signaling that an error occurred in a trace procedure,
 so great care should be taken that errors do not get silently lost.
 .SH "MULTIPLE TRACES"
@@ -142,22 +146,5 @@ rename the command, the last renaming takes precedence.
 In a delete callback to \fIproc\fR, the \fBTCL_TRACE_DESTROYED\fR bit
 is set in \fIflags\fR.
 .\" Perhaps need some more comments here? - DKF
-.SH "TCL_INTERP_DESTROYED"
-.PP
-When an interpreter is destroyed, unset traces are called for
-all of its commands.
-The \fBTCL_INTERP_DESTROYED\fR bit will be set in the \fIflags\fR
-argument passed to the trace procedures.
-Trace procedures must be extremely careful in what they do if
-the \fBTCL_INTERP_DESTROYED\fR bit is set.
-It is not safe for the procedures to invoke any Tcl procedures
-on the interpreter, since its state is partially deleted.
-All that trace procedures should do under these circumstances is
-to clean up and free their own internal data structures.
-.SH BUGS
-.PP
-Tcl does not do any error checking to prevent trace procedures
-from misusing the interpreter during traces with \fBTCL_INTERP_DESTROYED\fR
-set.
 .SH KEYWORDS
 clientData, trace, command

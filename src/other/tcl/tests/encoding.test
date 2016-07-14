@@ -1,14 +1,12 @@
 # This file contains a collection of tests for tclEncoding.c
-# Sourcing this file into Tcl runs the tests and generates output for
-# errors.  No output means no errors were found.
+# Sourcing this file into Tcl runs the tests and generates output for errors.
+# No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
 package require tcltest 2
 
@@ -16,6 +14,11 @@ namespace eval ::tcl::test::encoding {
     variable x
 
 namespace import -force ::tcltest::*
+
+catch {
+    ::tcltest::loadTestedCommands
+    package require -exact Tcltest [info patchlevel]
+}
 
 proc toutf {args} {
     variable x
@@ -27,32 +30,34 @@ proc fromutf {args} {
 }
 
 proc runtests {} {
-
     variable x
 
 # Some tests require the testencoding command
 testConstraint testencoding [llength [info commands testencoding]]
 testConstraint exec [llength [info commands exec]]
-
+testConstraint testgetdefenc [llength [info commands testgetdefenc]]
+
 # TclInitEncodingSubsystem is tested by the rest of this file
 # TclFinalizeEncodingSubsystem is not currently tested
 
-test encoding-1.1 {Tcl_GetEncoding: system encoding} {testencoding} {
-    testencoding create foo [namespace origin toutf] [namespace origin fromutf]
+test encoding-1.1 {Tcl_GetEncoding: system encoding} -setup {
     set old [encoding system]
+} -constraints {testencoding} -body {
+    testencoding create foo [namespace origin toutf] [namespace origin fromutf]
     encoding system foo
     set x {}
     encoding convertto abcd
+    return $x
+} -cleanup {
     encoding system $old
     testencoding delete foo
-    set x
-} {{fromutf }}
+} -result {{fromutf }}
 test encoding-1.2 {Tcl_GetEncoding: existing encoding} {testencoding} {
     testencoding create foo [namespace origin toutf] [namespace origin fromutf]
     set x {}
     encoding convertto foo abcd
     testencoding delete foo
-    set x
+    return $x
 } {{fromutf }}
 test encoding-1.3 {Tcl_GetEncoding: load encoding} {
     list [encoding convertto jis0208 \u4e4e] \
@@ -62,71 +67,77 @@ test encoding-1.3 {Tcl_GetEncoding: load encoding} {
 test encoding-2.1 {Tcl_FreeEncoding: refcount == 0} {
     encoding convertto jis0208 \u4e4e
 } {8C}
-test encoding-2.2 {Tcl_FreeEncoding: refcount != 0} {testencoding} {
+test encoding-2.2 {Tcl_FreeEncoding: refcount != 0} -setup {
     set system [encoding system]
     set path [encoding dirs]
+} -constraints {testencoding} -body {
     encoding system shiftjis		;# incr ref count
     encoding dirs [list [pwd]]
     set x [encoding convertto shiftjis \u4e4e]	;# old one found   
     encoding system identity
-    llength shiftjis
+    llength shiftjis		;# Shimmer away any cache of Tcl_Encoding
     lappend x [catch {encoding convertto shiftjis \u4e4e} msg] $msg
+} -cleanup {
     encoding system identity
     encoding dirs $path
     encoding system $system
-    set x
-} "\u008c\u00c1 1 {unknown encoding \"shiftjis\"}"
+} -result "\u008c\u00c1 1 {unknown encoding \"shiftjis\"}"
 
-test encoding-3.1 {Tcl_GetEncodingName, NULL} {
+test encoding-3.1 {Tcl_GetEncodingName, NULL} -setup {
     set old [encoding system]
+} -body {
     encoding system shiftjis
-    set x [encoding system]
+    encoding system
+} -cleanup {
     encoding system $old
-    set x
-} {shiftjis}
-test encoding-3.2 {Tcl_GetEncodingName, non-null} {
+} -result {shiftjis}
+test encoding-3.2 {Tcl_GetEncodingName, non-null} -setup {
     set old [fconfigure stdout -encoding]
+} -body {
     fconfigure stdout -encoding jis0208
-    set x [fconfigure stdout -encoding]
+    fconfigure stdout -encoding
+} -cleanup {
     fconfigure stdout -encoding $old
-    set x
-} {jis0208}
+} -result {jis0208}
 
-test encoding-4.1 {Tcl_GetEncodingNames} {testencoding} {
+test encoding-4.1 {Tcl_GetEncodingNames} -constraints {testencoding} -setup {
     cd [makeDirectory tmp]
     makeDirectory [file join tmp encoding]
-    makeFile {} [file join tmp encoding junk.enc]
-    makeFile {} [file join tmp encoding junk2.enc]
     set path [encoding dirs]
     encoding dirs {}
     catch {unset encodings}
     catch {unset x}
+} -body {
     foreach encoding [encoding names] {
 	set encodings($encoding) 1
     }
+    makeFile {} [file join tmp encoding junk.enc]
+    makeFile {} [file join tmp encoding junk2.enc]
     encoding dirs [list [file join [pwd] encoding]]
     foreach encoding [encoding names] {
 	if {![info exists encodings($encoding)]} {
 	    lappend x $encoding
 	}
     }
+    lsort $x
+} -cleanup {
     encoding dirs $path
     cd [workingDirectory]
     removeFile [file join tmp encoding junk2.enc]
     removeFile [file join tmp encoding junk.enc]
     removeDirectory [file join tmp encoding]
     removeDirectory tmp
-    lsort $x
-} {junk junk2}
+} -result {junk junk2}
 
-test encoding-5.1 {Tcl_SetSystemEncoding} {
+test encoding-5.1 {Tcl_SetSystemEncoding} -setup {
     set old [encoding system]
+} -body {
     encoding system jis0208
-    set x [encoding convertto \u4e4e]
+    encoding convertto \u4e4e
+} -cleanup {
     encoding system identity
     encoding system $old
-    set x
-} {8C}
+} -result {8C}
 test encoding-5.2 {Tcl_SetSystemEncoding: test ref count} {
     set old [encoding system]
     encoding system $old
@@ -140,7 +151,7 @@ test encoding-6.1 {Tcl_CreateEncoding: new} {testencoding} {
     encoding convertfrom foo abcd
     encoding convertto foo abcd
     testencoding delete foo
-    set x
+    return $x
 } {{toutf 1} {fromutf 2}}
 test encoding-6.2 {Tcl_CreateEncoding: replace encoding} {testencoding} {
     testencoding create foo [namespace code {toutf a}] \
@@ -149,7 +160,7 @@ test encoding-6.2 {Tcl_CreateEncoding: replace encoding} {testencoding} {
     encoding convertfrom foo abcd
     encoding convertto foo abcd
     testencoding delete foo
-    set x
+    return $x
 } {{toutf a} {fromutf b}}
 
 test encoding-7.1 {Tcl_ExternalToUtfDString: small buffer} {
@@ -175,7 +186,7 @@ test encoding-8.1 {Tcl_ExternalToUtf} {
     set x [read $f]
     close $f
     file delete [file join [temporaryDirectory] dummy]
-    set x
+    return $x
 } "ab\u4e4eg"
 
 test encoding-9.1 {Tcl_UtfToExternalDString: small buffer} {
@@ -203,7 +214,7 @@ test encoding-10.1 {Tcl_UtfToExternal} {
     set x [read $f]
     close $f
     file delete [file join [temporaryDirectory] dummy]
-    set x
+    return $x
 } "ab\x8c\xc1g"
 
 proc viewable {str} {
@@ -223,7 +234,7 @@ test encoding-11.1 {LoadEncodingFile: unknown encoding} {testencoding} {
     set path [encoding dirs]
     encoding system iso8859-1
     encoding dirs {}
-    llength jis0208
+    llength jis0208	;# Shimmer any cached Tcl_Encoding in shared literal
     set x [list [catch {encoding convertto jis0208 \u4e4e} msg] $msg]
     encoding dirs $path
     encoding system $system
@@ -244,10 +255,11 @@ test encoding-11.5 {LoadEncodingFile: escape file} {
 test encoding-11.5.1 {LoadEncodingFile: escape file} {
     viewable [encoding convertto iso2022-jp \u4e4e]
 } [viewable "\x1b\$B8C\x1b(B"]
-test encoding-11.6 {LoadEncodingFile: invalid file} {testencoding} {
+test encoding-11.6 {LoadEncodingFile: invalid file} -constraints {testencoding} -setup {
     set system [encoding system]
     set path [encoding dirs]
     encoding system identity
+} -body {
     cd [temporaryDirectory]
     encoding dirs [file join tmp encoding]
     makeDirectory tmp
@@ -256,15 +268,15 @@ test encoding-11.6 {LoadEncodingFile: invalid file} {testencoding} {
     fconfigure $f -translation binary 
     puts $f "abcdefghijklmnop"
     close $f
-    set x [list [catch {encoding convertto splat \u4e4e} msg] $msg]
+    encoding convertto splat \u4e4e
+} -returnCodes error -cleanup {
     file delete [file join [temporaryDirectory] tmp encoding splat.enc]
     removeDirectory [file join tmp encoding]
     removeDirectory tmp
     cd [workingDirectory]
     encoding dirs $path
     encoding system $system
-    set x
-} {1 {invalid encoding file "splat"}}
+} -result {invalid encoding file "splat"}
 
 # OpenEncodingFile is fully tested by the rest of the tests in this file.
 
@@ -302,7 +314,6 @@ test encoding-14.1 {BinaryProc} {
 test encoding-15.1 {UtfToUtfProc} {
     encoding convertto utf-8 \xa3
 } "\xc2\xa3"
-
 test encoding-15.2 {UtfToUtfProc null character output} {
     set x \u0000
     set y [encoding convertto utf-8 \u0000]
@@ -310,7 +321,6 @@ test encoding-15.2 {UtfToUtfProc null character output} {
     binary scan $y H* z
     list [string bytelength $x] [string bytelength $y] $z
 } {2 1 00}
-
 test encoding-15.3 {UtfToUtfProc null character input} {
     set x [encoding convertfrom identity \x00]
     set y [encoding convertfrom utf-8 $x]
@@ -390,44 +400,41 @@ test encoding-23.3 {iso2022-jp escape encoding test} {
     fconfigure $fid -encoding iso2022-jp
     set data [read $fid 50]
     close $fid
-    set data
+    return $data
 } [string range $iso2022uniData 0 49] ; # 0 .. 49 inclusive == 50
 cd [workingDirectory]
 
-test encoding-24.1 {EscapeFreeProc on open channels} -constraints {
-	exec
-} -setup {
-    # Bug #524674 input
-    set file [makeFile {
+# Code to make the next few tests more intelligible; the code being tested
+# should be in the body of the test!
+proc runInSubprocess {contents {filename iso2022.tcl}} {
+    set theFile [makeFile $contents $filename]
+    try {
+	exec [interpreter] $theFile
+    } finally {
+	removeFile $theFile
+    }
+}
+
+test encoding-24.1 {EscapeFreeProc on open channels} exec {
+    runInSubprocess {
 	set f [open [file join [file dirname [info script]] iso2022.txt]]
 	fconfigure $f -encoding iso2022-jp
 	gets $f
-    } iso2022.tcl]
-} -body {
-    exec [interpreter] $file
-} -cleanup {
-    removeFile iso2022.tcl
-} -result {}
-
-test encoding-24.2 {EscapeFreeProc on open channels} -constraints {
-	exec
-} -setup {
+    }
+} {}
+test encoding-24.2 {EscapeFreeProc on open channels} {exec} {
     # Bug #524674 output
-    set file [makeFile {
+    viewable [runInSubprocess {
 	encoding system cp1252;	# Bug #2891556 crash revelator
 	fconfigure stdout -encoding iso2022-jp
 	puts ab\u4e4e\u68d9g
+	set env(TCL_FINALIZE_ON_EXIT) 1
 	exit
-    } iso2022.tcl]
-} -body {
-    viewable [exec [interpreter] $file]
-} -cleanup {
-    removeFile iso2022.tcl
-} -result "ab\x1b\$B8C\x1b\$(DD%\x1b(Bg (ab\\u001b\$B8C\\u001b\$(DD%\\u001b(Bg)"
-
+    }]
+} "ab\x1b\$B8C\x1b\$(DD%\x1b(Bg (ab\\u001b\$B8C\\u001b\$(DD%\\u001b(Bg)"
 test encoding-24.3 {EscapeFreeProc on open channels} {stdio} {
-    # Bug #219314 - if we don't free escape encodings correctly on
-    # channel closure, we go boom
+    # Bug #219314 - if we don't free escape encodings correctly on channel
+    # closure, we go boom
     set file [makeFile {
 	encoding system iso2022-jp
 	set a "\u4e4e\u4e5e\u4e5f"; # 3 Japanese Kanji letters
@@ -471,18 +478,14 @@ proc foreach-jisx0208 {varName command} {
     } {
 	if {[llength $range] == 2} {
 	    # for adhoc range. simple {first last}. inclusive.
-	    set first [scan [lindex $range 0] %x]
-	    set last [scan [lindex $range 1] %x]
+	    scan $range %x%x first last
 	    for {set i $first} {$i <= $last} {incr i} {
 		set code $i
 		uplevel 1 $command
 	    }
 	} elseif {[llength $range] == 4} {
 	    # for uniform range.
-	    set h0 [scan [lindex $range 0] %x]
-	    set l0 [scan [lindex $range 1] %x]
-	    set hend [scan [lindex $range 2] %x]
-	    set lend [scan [lindex $range 3] %x]
+	    scan $range %x%x%x%x h0 l0 hend lend
 	    for {set hi $h0} {$hi <= $hend} {incr hi} {
 		for {set lo $l0} {$lo <= $lend} {incr lo} {
 		    set code [expr {$hi << 8 | ($lo & 0xff)}]
@@ -526,7 +529,7 @@ proc channel-diff {fa fb} {
 	binary scan [lindex $lb 1] H* got
 	lappend diff [list $code $expected $got]
     }
-    set diff
+    return $diff
 }
 
 # Create char tables.
@@ -545,8 +548,9 @@ file copy -force cp932.chars shiftjis.chars
 set NUM 0
 foreach from {cp932 shiftjis euc-jp iso2022-jp} {
     foreach to {cp932 shiftjis euc-jp iso2022-jp} {
-	test encoding-25.[incr NUM] "jisx0208 $from => $to" {
+	test encoding-25.[incr NUM] "jisx0208 $from => $to" -setup {
 	    cd [temporaryDirectory]
+	} -body {
 	    set f [open $from.chars]
 	    fconfigure $f -encoding $from
 	    set out [open $from.$to.tcltestout w]
@@ -554,40 +558,43 @@ foreach from {cp932 shiftjis euc-jp iso2022-jp} {
 	    puts -nonewline $out [read $f]
 	    close $out
 	    close $f
-	    
 	    # then compare $to.chars <=> $from.to.tcltestout as binary.
-	    set fa [open $to.chars]
-	    fconfigure $fa -encoding binary
-	    set fb [open $from.$to.tcltestout]
-	    fconfigure $fb -encoding binary
-	    set diff [channel-diff $fa $fb]
+	    set fa [open $to.chars rb]
+	    set fb [open $from.$to.tcltestout rb]
+	    channel-diff $fa $fb
+	    # Difference should be empty.
+	} -cleanup {
 	    close $fa
 	    close $fb
-	    
-	    # Difference should be empty.
-	    set diff
-	} {}
+	} -result {}
     }
 }
 
-testConstraint testgetdefenc [llength [info commands testgetdefenc]]
-
 test encoding-26.0 {Tcl_GetDefaultEncodingDir} -constraints {
-    testgetdefenc 
+    testgetdefenc
 } -setup {
-     set origDir [testgetdefenc]
-     testsetdefenc slappy
+    set origDir [testgetdefenc]
+    testsetdefenc slappy
 } -body {
-     testgetdefenc
+    testgetdefenc
 } -cleanup {
-     testsetdefenc $origDir
+    testsetdefenc $origDir
 } -result slappy
 
 file delete {*}[glob -directory [temporaryDirectory] *.chars *.tcltestout]
 # ===> Cut here <===
 
-# EscapeFreeProc, GetTableEncoding, unilen
-# are fully tested by the rest of this file
+# EscapeFreeProc, GetTableEncoding, unilen are fully tested by the rest of
+# this file.
+
+
+test encoding-27.1 {encoding dirs basic behavior} -returnCodes error -body {
+    encoding dirs ? ?
+} -result {wrong # args: should be "encoding dirs ?dirList?"}
+test encoding-27.2 {encoding dirs basic behavior} -returnCodes error -body {
+    encoding dirs "\{not a list"
+} -result "expected directory list but got \"\{not a list\""
+
 }
 runtests
 
@@ -597,3 +604,7 @@ runtests
 namespace delete ::tcl::test::encoding
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

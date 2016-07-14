@@ -12,13 +12,17 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[catch {package require tcltest 2}]} {
-    puts stderr "Skipping tests in [info script].  tcltest 2 required."
-    return
+if {[lsearch [namespace children] ::tcltest] == -1} {
+    package require tcltest 2
+    namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
+testConstraint testbytestring [llength [info commands testbytestring]]
+
 namespace eval ::tcl::test::io {
     namespace import ::tcltest::*
 
@@ -39,11 +43,11 @@ testConstraint fcopy            [llength [info commands fcopy]]
 testConstraint testfevent       [llength [info commands testfevent]]
 testConstraint testchannelevent [llength [info commands testchannelevent]]
 testConstraint testmainthread   [llength [info commands testmainthread]]
-testConstraint testthread       [llength [info commands testthread]]
+testConstraint thread [expr {0 == [catch {package require Thread 2.7-}]}]
 
 # You need a *very* special environment to do some tests.  In
 # particular, many file systems do not support large-files...
-testConstraint largefileSupport 0
+testConstraint largefileSupport [expr {$::tcl_platform(os) ne "Darwin"}]
 
 # some tests can only be run is umask is 2
 # if "umask" cannot be run, the tests will be skipped.
@@ -1447,6 +1451,105 @@ test io-12.5 {ReadChars: fileevents on partial characters} {stdio openpipe filee
     lappend x [catch {close $f} msg] $msg
     set x
 } "{} timeout {} timeout \u7266 {} eof 0 {}"
+test io-12.6 {ReadChars: too many chars read} {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [encoding convertto utf-8 \
+                        [string repeat \uBEEF 20][string repeat . 20]]
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+    set c [chan create read [namespace which driver]]
+    chan configure $c -encoding utf-8
+    while {![eof $c]} {
+        read $c 15
+    }
+    close $c
+} {}
+test io-12.7 {ReadChars: too many chars read [bc5b790099]} {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [encoding convertto utf-8 \
+                        [string repeat \uBEEF 10]....\uBEEF]
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+    set c [chan create read [namespace which driver]]
+    chan configure $c -encoding utf-8
+    while {![eof $c]} {
+        read $c 7
+    }
+    close $c
+} {}
+test io-12.8 {ReadChars: multibyte chars split} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation binary
+    puts -nonewline $f [string repeat a 9]\xc2\xa0
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -encoding utf-8 -buffersize 10
+    set in [read $f]
+    close $f
+    scan [string index $in end] %c
+} 160
+test io-12.9 {ReadChars: multibyte chars split} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation binary
+    puts -nonewline $f [string repeat a 9]\xc2
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -encoding utf-8 -buffersize 10
+    set in [read $f]
+    close $f
+    scan [string index $in end] %c
+} 194
+test io-12.10 {ReadChars: multibyte chars split} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation binary
+    puts -nonewline $f [string repeat a 9]\xc2
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -encoding utf-8 -buffersize 11
+    set in [read $f]
+    close $f
+    scan [string index $in end] %c
+} 194
 
 test io-13.1 {TranslateInputEOL: cr mode} {} {
     set f [open $path(test1) w]
@@ -1561,6 +1664,45 @@ test io-13.8 {TranslateInputEOL: auto mode: \r\n} {
     close $f
     set x
 } "abcd\ndef"
+test io-13.8.1 {TranslateInputEOL: auto mode: \r\n} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation lf
+    puts -nonewline $f "abcd\r\ndef"
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -translation auto
+    set x {}
+    lappend x [read $f 5]
+    lappend x [read $f]
+    close $f
+    set x
+} [list "abcd\n" "def"]
+test io-13.8.2 {TranslateInputEOL: auto mode: \r\n} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation lf
+    puts -nonewline $f "abcd\r\ndef"
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -translation auto -buffersize 6
+    set x {}
+    lappend x [read $f 5]
+    lappend x [read $f]
+    close $f
+    set x
+} [list "abcd\n" "def"]
+test io-13.8.3 {TranslateInputEOL: auto mode: \r\n} {
+    set f [open $path(test1) w]
+    fconfigure $f -translation lf
+    puts -nonewline $f "abcd\r\n\r\ndef"
+    close $f
+    set f [open $path(test1)]
+    fconfigure $f -translation auto -buffersize 7
+    set x {}
+    lappend x [read $f 5]
+    lappend x [read $f]
+    close $f
+    set x
+} [list "abcd\n" "\ndef"]
 test io-13.9 {TranslateInputEOL: auto mode: \r followed by not \n} {
     set f [open $path(test1) w]
     fconfigure $f -translation lf
@@ -1670,8 +1812,8 @@ test io-14.3 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec openpipe} {
 out
 } {err
 }}
-# This test relies on the fact that the smallest available fd is used first.
-test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec unix} {
+# This test relies on the fact that stdout is used before stderr
+test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec} {
     set f [open $path(test1) w]
     puts -nonewline $f { close stdin
 	close stdout
@@ -1696,8 +1838,8 @@ test io-14.4 {Tcl_SetStdChannel & Tcl_GetStdChannel} {exec unix} {
     close $f2
     set result
 } {{ close stdin
-file1
-} {file2
+stdout
+} {stderr
 }}
 catch {interp delete z}
 test io-14.5 {Tcl_GetChannel: stdio name translation} {
@@ -2088,6 +2230,8 @@ set path(pipe)   [makeFile {} pipe]
 set path(output) [makeFile {} output]
 test io-27.6 {FlushChannel, async flushing, async close} \
 	{stdio asyncPipeClose openpipe} {
+    # This test may fail on old Unix systems (seen on IRIX64 6.5) with
+    # obsolete gettimeofday() calls.  See Tcl Bugs 3530533, 1942197.
     file delete $path(pipe)
     file delete $path(output)
     set f [open $path(pipe) w]
@@ -2222,7 +2366,7 @@ test io-28.5 {Tcl_Close vs standard handles} {stdio unix testchannel openpipe} {
     set f [open "|[list [interpreter] $path(script)]" r]
     set l [gets $f]
     close $f
-    set l
+    lsort $l
 } {file1 file2}
 
 test io-29.1 {Tcl_WriteChars, channel not writable} {
@@ -2647,6 +2791,8 @@ test io-29.30 {Tcl_WriteChars, crlf mode} {
     file size $path(test1)
 } 25
 test io-29.31 {Tcl_WriteChars, background flush} {stdio openpipe} {
+    # This test may fail on old Unix systems (seen on IRIX64 6.5) with
+    # obsolete gettimeofday() calls.  See Tcl Bugs 3530533, 1942197.
     file delete $path(pipe)
     file delete $path(output)
     set f [open $path(pipe) w]
@@ -2688,6 +2834,8 @@ test io-29.31 {Tcl_WriteChars, background flush} {stdio openpipe} {
 } ok
 test io-29.32 {Tcl_WriteChars, background flush to slow reader} \
 	{stdio asyncPipeClose openpipe} {
+    # This test may fail on old Unix systems (seen on IRIX64 6.5) with
+    # obsolete gettimeofday() calls.  See Tcl Bugs 3530533, 1942197.
     file delete $path(pipe)
     file delete $path(output)
     set f [open $path(pipe) w]
@@ -2738,12 +2886,32 @@ test io-29.33 {Tcl_Flush, implicit flush on exit} {exec} {
     close $f
     set r
 } "hello\nbye\nstrange\n"
+set path(script2) [makeFile {} script2]
+test io-29.33b {TIP#398, no implicit flush of nonblocking on exit} {exec} {
+    set f [open $path(script) w]
+    puts $f {
+		fconfigure stdout -blocking 0
+		puts -nonewline stdout [string repeat A 655360]
+		flush stdout
+	}
+    close $f
+    set f [open $path(script2) w]
+    puts $f {after 2000}
+    close $f
+	set t1 [clock milliseconds]
+	set ff [open "|[list [interpreter] $path(script2)]" w]
+	catch {unset ::env(TCL_FLUSH_NONBLOCKING_ON_EXIT)}
+	exec [interpreter] $path(script) >@ $ff
+	set t2 [clock milliseconds]
+	close $ff
+	expr {($t2-$t1)/2000 ? $t2-$t1 : 0}
+} 0
 test io-29.34 {Tcl_Close, async flush on close, using sockets} {socket tempNotMac fileevent} {
     variable c 0
     variable x running
     set l abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyz
     proc writelots {s l} {
-	for {set i 0} {$i < 2000} {incr i} {
+	for {set i 0} {$i < 9000} {incr i} {
 	    puts $s $l
 	}
     }
@@ -2774,7 +2942,7 @@ test io-29.34 {Tcl_Close, async flush on close, using sockets} {socket tempNotMa
     close $ss
     vwait [namespace which -variable x]
     set c
-} 2000
+} 9000
 test io-29.35 {Tcl_Close vs fileevent vs multiple interpreters} {socket tempNotMac fileevent} {
     # On Mac, this test screws up sockets such that subsequent tests using port 2828
     # either cause errors or panic().
@@ -3858,7 +4026,7 @@ test io-32.3 {Tcl_Read, negative byte count} {
     set l [list [catch {read $f -1} msg] $msg]
     close $f
     set l
-} {1 {bad argument "-1": should be "nonewline"}}
+} {1 {expected non-negative integer but got "-1"}}
 test io-32.4 {Tcl_Read, positive byte count} {
     set f [open $path(longfile) r]
     set x [read $f 1024]
@@ -3940,6 +4108,46 @@ test io-32.10 {Tcl_Read from a pipe} {stdio openpipe} {
 test io-32.11 {Tcl_Read from a pipe} {stdio openpipe} {
     file delete $path(pipe)
     set f1 [open $path(pipe) w]
+    puts $f1 {puts [gets stdin]}
+    puts $f1 {puts [gets stdin]}
+    close $f1
+    set f1 [open "|[list [interpreter] $path(pipe)]" r+]
+    puts $f1 hello
+    flush $f1
+    set x ""
+    lappend x [read $f1 6]
+    puts $f1 hello
+    flush $f1
+    lappend x [read $f1]
+    close $f1
+    set x
+} {{hello
+} {hello
+}}
+test io-32.11.1 {Tcl_Read from a pipe} {stdio openpipe} {
+    file delete $path(pipe)
+    set f1 [open $path(pipe) w]
+    puts $f1 {chan configure stdout -translation crlf}
+    puts $f1 {puts [gets stdin]}
+    puts $f1 {puts [gets stdin]}
+    close $f1
+    set f1 [open "|[list [interpreter] $path(pipe)]" r+]
+    puts $f1 hello
+    flush $f1
+    set x ""
+    lappend x [read $f1 6]
+    puts $f1 hello
+    flush $f1
+    lappend x [read $f1]
+    close $f1
+    set x
+} {{hello
+} {hello
+}}
+test io-32.11.2 {Tcl_Read from a pipe} {stdio openpipe} {
+    file delete $path(pipe)
+    set f1 [open $path(pipe) w]
+    puts $f1 {chan configure stdout -translation crlf}
     puts $f1 {puts [gets stdin]}
     puts $f1 {puts [gets stdin]}
     close $f1
@@ -4150,6 +4358,110 @@ test io-33.10 {Tcl_Gets, exercising double buffering} {
     close $f
     set y
 } 300
+test io-33.11 {TclGetsObjBinary, [10dc6daa37]} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) .......
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+		if {$n > 3} {set n 3}
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+} -body {
+    set c [chan create read [namespace which driver]]
+    chan configure $c -translation binary -blocking 0
+    list [gets $c] [gets $c] [gets $c] [gets $c]
+} -cleanup {
+    close $c
+    rename driver {}
+} -result {{} {} {} .......}
+test io-33.12 {Tcl_GetsObj, [10dc6daa37]} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) .......
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+		if {$n > 3} {set n 3}
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+} -body {
+    set c [chan create read [namespace which driver]]
+    chan configure $c -blocking 0
+    list [gets $c] [gets $c] [gets $c] [gets $c]
+} -cleanup {
+    close $c
+    rename driver {}
+} -result {{} {} {} .......}
+test io-33.13 {Tcl_GetsObj, [10dc6daa37]} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [string repeat \
+                        [string repeat . 64]\n[string repeat . 25] 2]
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+                if {$n > 65} {set n 65}
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+} -body {
+    set c [chan create read [namespace which driver]]
+    chan configure $c -blocking 0
+    list [gets $c] [gets $c] [gets $c] [gets $c] [gets $c]
+} -cleanup {
+    close $c
+    rename driver {}
+} -result [list [string repeat . 64] {} [string repeat . 89] \
+	[string repeat . 25] {}]
 
 # Test Tcl_Seek and Tcl_Tell.
 
@@ -4429,10 +4741,10 @@ test io-34.21 {Tcl_Seek and Tcl_Tell on large files} {largefileSupport} {
     puts -nonewline $f abcdef
     lappend l [tell $f]
     close $f
-    lappend l [file size $f]
+    lappend l [file size $path(test3)]
     # truncate...
     close [open $path(test3) w]
-    lappend l [file size $f]
+    lappend l [file size $path(test3)]
     set l
 } {0 6 6 4294967296 4294967302 4294967302 0}
 
@@ -4697,12 +5009,121 @@ test io-35.17 {Tcl_Eof, eof char in middle, crlf write, crlf read} {
     close $f
     list $c $l $e
 } {21 8 1}
+test io-35.18 {Tcl_Eof, eof char, cr write, crlf read} -body {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr
+    puts $f abc\ndef
+    close $f
+    set s [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $s $l $e [scan [string index $in end] %c]
+} -result {8 8 1 13}
+test io-35.18a {Tcl_Eof, eof char, cr write, crlf read} -body {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr -eofchar \x1a
+    puts $f abc\ndef
+    close $f
+    set s [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf -eofchar \x1a
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $s $l $e [scan [string index $in end] %c]
+} -result {9 8 1 13}
+test io-35.18b {Tcl_Eof, eof char, cr write, crlf read} -body {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr -eofchar \x1a
+    puts $f {}
+    close $f
+    set s [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf -eofchar \x1a
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $s $l $e [scan [string index $in end] %c]
+} -result {2 1 1 13}
+test io-35.18c {Tcl_Eof, eof char, cr write, crlf read} -body {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr
+    puts $f {}
+    close $f
+    set s [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $s $l $e [scan [string index $in end] %c]
+} -result {1 1 1 13}
+test io-35.19 {Tcl_Eof, eof char in middle, cr write, crlf read} -body {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr -eofchar {}
+    set i [format abc\ndef\n%cqrs\nuvw 26]
+    puts $f $i
+    close $f
+    set c [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf -eofchar \x1a
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $c $l $e [scan [string index $in end] %c]
+} -result {17 8 1 13}
+test io-35.20 {Tcl_Eof, eof char in middle, cr write, crlf read} {
+    file delete $path(test1)
+    set f [open $path(test1) w]
+    fconfigure $f -translation cr -eofchar {}
+    set i [format \n%cqrsuvw 26]
+    puts $f $i
+    close $f
+    set c [file size $path(test1)]
+    set f [open $path(test1) r]
+    fconfigure $f -translation crlf -eofchar \x1a
+    set l [string length [set in [read $f]]]
+    set e [eof $f]
+    close $f
+    list $c $l $e [scan [string index $in end] %c]
+} {9 1 1 13}
 
 # Test Tcl_InputBlocked
 
 test io-36.1 {Tcl_InputBlocked on nonblocking pipe} {stdio openpipe} {
     set f1 [open "|[list [interpreter]]" r+]
     puts $f1 {puts hello_from_pipe}
+    flush $f1
+    gets $f1
+    fconfigure $f1 -blocking off -buffering full
+    puts $f1 {puts hello}
+    set x ""
+    lappend x [gets $f1]
+    lappend x [fblocked $f1]
+    flush $f1
+    after 200
+    lappend x [gets $f1]
+    lappend x [fblocked $f1]
+    lappend x [gets $f1]
+    lappend x [fblocked $f1]
+    close $f1
+    set x
+} {{} 1 hello 0 {} 1}
+test io-36.1.1 {Tcl_InputBlocked on nonblocking binary pipe} {stdio openpipe} {
+    set f1 [open "|[list [interpreter]]" r+]
+    chan configure $f1 -encoding binary -translation lf -eofchar {}
+    puts $f1 {
+	chan configure stdout -encoding binary -translation lf -eofchar {}
+	puts hello_from_pipe
+    }
     flush $f1
     gets $f1
     fconfigure $f1 -blocking off -buffering full
@@ -5207,16 +5628,16 @@ test io-40.1 {POSIX open access modes: RDWR} {
 } {zzy abzzy}
 test io-40.2 {POSIX open access modes: CREAT} {unix} {
     file delete $path(test3)
-    set f [open $path(test3) {WRONLY CREAT} 0600]
+    set f [open $path(test3) {WRONLY CREAT} 0o600]
     file stat $path(test3) stats
-    set x [format "0%o" [expr $stats(mode)&0o777]]
+    set x [format "0o%o" [expr $stats(mode)&0o777]]
     puts $f "line 1"
     close $f
     set f [open $path(test3) r]
     lappend x [gets $f]
     close $f
     set x
-} {0600 {line 1}}
+} {0o600 {line 1}}
 test io-40.3 {POSIX open access modes: CREAT} {unix umask} {
     # This test only works if your umask is 2, like ouster's.
     file delete $path(test3)
@@ -6536,11 +6957,23 @@ test io-52.4 {TclCopyChannel} {fcopy} {
     fconfigure $f1 -translation lf -blocking 0
     fconfigure $f2 -translation cr -blocking 0
     fcopy $f1 $f2 -size 40
-    set result [list [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
+    set result [list [fblocked $f1] [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
     close $f1
     close $f2
     lappend result [file size $path(test1)]
-} {0 0 40}
+} {0 0 0 40}
+test io-52.4.1 {TclCopyChannel} {fcopy} {
+    file delete $path(test1)
+    set f1 [open $thisScript]
+    set f2 [open $path(test1) w]
+    fconfigure $f1 -translation lf -blocking 0 -buffersize 10000000
+    fconfigure $f2 -translation cr -blocking 0
+    fcopy $f1 $f2 -size 40
+    set result [list [fblocked $f1] [fconfigure $f1 -blocking] [fconfigure $f2 -blocking]]
+    close $f1
+    close $f2
+    lappend result [file size $path(test1)]
+} {0 0 0 40}
 test io-52.5 {TclCopyChannel, all} {fcopy} {
     file delete $path(test1)
     set f1 [open $thisScript]
@@ -6575,7 +7008,7 @@ test io-52.5a {TclCopyChannel, all, other negative value} {fcopy} {
     }
     set result
 } {0 0 ok}
-test io-52.5b {TclCopyChannel, all, wrapped to negative value} {fcopy} {
+test io-52.5b {TclCopyChannel, all, wrap to negative value} {fcopy} {
     file delete $path(test1)
     set f1 [open $thisScript]
     set f2 [open $path(test1) w]
@@ -6726,6 +7159,150 @@ test io-52.11 {TclCopyChannel & encodings} {fcopy} {
     file size $path(kyrillic.txt)
 } 3
 
+test io-52.12 {coverage of -translation auto} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8
+    set out [open $path(test2) w]
+    chan configure $out -translation lf
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 29
+test io-52.13 {coverage of -translation cr} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation cr
+    set out [open $path(test2) w]
+    chan configure $out -translation lf
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 30
+test io-52.14 {coverage of -translation crlf} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation crlf
+    set out [open $path(test2) w]
+    chan configure $out -translation lf
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 29
+test io-52.14.1 {coverage of -translation crlf} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation crlf
+    set out [open $path(test2) w]
+    fcopy $in $out -size 2
+    close $in
+    close $out
+    file size $path(test2)
+} 2
+test io-52.14.2 {coverage of -translation crlf} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -translation crlf
+    set out [open $path(test2) w]
+    fcopy $in $out -size 9
+    close $in
+    close $out
+    file size $path(test2)
+} 9
+test io-52.15 {coverage of -translation crlf} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\r
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation crlf
+    set out [open $path(test2) w]
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 8
+test io-52.16 {coverage of eofChar handling} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation lf -eofchar a
+    set out [open $path(test2) w]
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 0
+test io-52.17 {coverage of eofChar handling} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation lf -eofchar d
+    set out [open $path(test2) w]
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 3
+test io-52.18 {coverage of eofChar handling} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 8 -translation crlf -eofchar h
+    set out [open $path(test2) w]
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 8
+test io-52.19 {coverage of eofChar handling} {
+    file delete $path(test1) $path(test2)
+    set out [open $path(test1) wb]
+    chan configure $out -translation lf
+    puts -nonewline $out abcdefg\rhijklmn\nopqrstu\r\nvwxyz
+    close $out
+    set in [open $path(test1)]
+    chan configure $in -buffersize 10 -translation crlf -eofchar h
+    set out [open $path(test2) w]
+    fcopy $in $out
+    close $in
+    close $out
+    file size $path(test2)
+} 8
+
 test io-53.1 {CopyData} {fcopy} {
     file delete $path(test1)
     set f1 [open $thisScript]
@@ -6795,17 +7372,12 @@ test io-53.4 {CopyData: background write overflow} {stdio unix openpipe fileeven
     for {set x 0} {$x < 12} {incr x} {
 	append big $big
     }
-    file delete $path(test1)
     file delete $path(pipe)
     set f1 [open $path(pipe) w]
     puts $f1 {
 	puts ready
 	fcopy stdin stdout -command { set x }
 	vwait x
-	set f [open $path(test1) w]
-	fconfigure $f -translation lf
-	puts $f "done"
-	close $f
     }
     close $f1
     set f1 [open "|[list [interpreter] $path(pipe)]" r+]
@@ -6813,11 +7385,10 @@ test io-53.4 {CopyData: background write overflow} {stdio unix openpipe fileeven
     fconfigure $f1 -blocking 0
     puts $f1 $big
     flush $f1
-    after 500
     set result ""
     fileevent $f1 read [namespace code {
 	append result [read $f1 1024]
-	if {[string length $result] >= [string length $big]} {
+	if {[string length $result] >= [string length $big]+1} {
 	    set x done
 	}
     }]
@@ -6826,6 +7397,38 @@ test io-53.4 {CopyData: background write overflow} {stdio unix openpipe fileeven
     set big {}
     set x
 } done
+test io-53.4.1 {Bug 894da183c8} {stdio fcopy} {
+    set big bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\n
+    variable x
+    for {set x 0} {$x < 12} {incr x} {
+	append big $big
+    }
+    file delete $path(pipe)
+    set f1 [open $path(pipe) w]
+    puts $f1 [list file delete $path(test1)]
+    puts $f1 {
+	puts ready
+	set f [open io-53.4.1 w]
+	chan configure $f -translation lf
+	fcopy stdin $f -command { set x }
+	vwait x
+	close $f
+    }
+    puts $f1 "close \[[list open $path(test1) w]]"
+    close $f1
+    set f1 [open "|[list [interpreter] $path(pipe)]" r+]
+    set result [gets $f1]
+    fconfigure $f1 -blocking 0 -buffersize 125000 -translation lf
+    puts $f1 $big
+    fconfigure $f1 -blocking 1
+    close $f1
+    set big {}
+    while {[catch {glob $path(test1)}]} {after 50}
+    file delete $path(test1)
+    set check [file size io-53.4.1]
+    file delete io-53.4.1
+    set check
+} 266241
 set result {}
 proc FcopyTestAccept {sock args} {
     after 1000 "close $sock"
@@ -7007,6 +7610,44 @@ test io-53.8a {CopyData: async callback and error handling, Bug 1932639, at eof}
     removeFile foo
     removeFile bar
 } -result {1 sync/OK {CMD 0}}
+test io-53.8b {CopyData: async callback and -size 0} -setup {
+    # copy progress callback. errors out intentionally
+    proc ::cmd args {
+	lappend ::RES "CMD $args"
+	set ::forever has-been-reached
+	return
+    }
+    # Files we use for our channels
+    set foo [makeFile ashgdfashdgfasdhgfasdhgf foo]
+    set bar [makeFile {} bar]
+    # Channels to copy between
+    set f [open $foo r] ; fconfigure $f -translation binary
+    set g [open $bar w] ; fconfigure $g -translation binary -buffering none
+} -constraints {stdio openpipe fcopy} -body {
+	set ::RES {}
+    # Run the copy. Should not invoke -command now.
+    fcopy $f $g -size 0 -command ::cmd
+    # Check that -command was not called synchronously
+    lappend ::RES [expr {([llength $::RES] > 1) ? "sync/FAIL" : "sync/OK"}]
+    # Now let the async part happen. Should capture the eof in cmd
+    # If not break the event loop via timer.
+    set token [after 1000 {
+	lappend ::RES {cmd/FAIL timeout}
+	set ::forever has-been-reached
+    }]
+    vwait ::forever
+    catch {after cancel $token}
+    # Report
+    set ::RES
+} -cleanup {
+    close $f
+    close $g
+    catch {unset ::RES}
+    catch {unset ::forever}
+    rename ::cmd {}
+    removeFile foo
+    removeFile bar
+} -result {sync/OK {CMD 0}}
 test io-53.9 {CopyData: -size and event interaction, Bug 780533} -setup {
     set out [makeFile {} out]
     set err [makeFile {} err]
@@ -7157,6 +7798,211 @@ test io-53.11 {Bug 2895565} -setup {
     removeFile out
     removeFile in
 } -result {40 bytes copied}
+test io-53.12 {CopyData: foreground short reads, aka bug 3096275} {stdio unix openpipe fcopy} {
+    file delete $path(pipe)
+    set f1 [open $path(pipe) w]
+    puts -nonewline $f1 {
+	fconfigure stdin -translation binary -blocking 0
+	fconfigure stdout -buffering none -translation binary
+	fcopy stdin stdout
+    }
+    close $f1
+    set f1 [open "|[list [interpreter] $path(pipe)]" r+]
+    fconfigure $f1 -translation binary -buffering none
+    puts -nonewline $f1 A
+    after 2000 {set ::done timeout}
+    fileevent $f1 readable {set ::done ok}
+    vwait ::done
+    set ch [read $f1 1]
+    close $f1
+    list $::done $ch
+} {ok A}
+test io-53.13 {TclCopyChannel: read error reporting} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                return {initialize finalize watch read}
+            }
+            finalize {
+                return
+            }
+            watch {}
+            read {
+		error FAIL
+            }
+        }
+    }
+    set outFile [makeFile {} out]
+} -body {
+    set in [chan create read [namespace which driver]]
+    chan configure $in -translation binary
+    set out [open $outFile wb]
+    chan copy $in $out
+} -cleanup {
+    catch {close $in}
+    catch {close $out}
+    removeFile out
+    rename driver {}
+} -result {error reading "*": *} -returnCodes error -match glob
+test io-53.14 {TclCopyChannel: write error reporting} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                return {initialize finalize watch write}
+            }
+            finalize {
+                return
+            }
+            watch {}
+            write {
+                error FAIL
+            }
+        }
+    }
+    set inFile [makeFile {aaa} in]
+} -body {
+    set in [open $inFile rb]
+    set out [chan create write [namespace which driver]]
+    chan configure $out -translation binary
+    chan copy $in $out
+} -cleanup {
+    catch {close $in}
+    catch {close $out}
+    removeFile in
+    rename driver {}
+} -result {error writing "*": *} -returnCodes error -match glob
+test io-53.15 {[ed29c4da21] DoRead: fblocked seen as error} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        variable blocked
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [encoding convertto utf-8 \
+                        [string repeat a 100]]
+                set blocked($chan) 1
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan) blocked($chan)
+                return
+            }
+            watch {}
+            read {
+                if {$blocked($chan)} {
+                    set blocked($chan) [expr {!$blocked($chan)}]
+                    return -code error EAGAIN
+                }
+                set n [lindex $args 1]
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+    set c [chan create read [namespace which driver]]
+    chan configure $c -encoding utf-8
+    set out [makeFile {} out]
+    set outChan [open $out w]
+    chan configure $outChan -encoding utf-8
+} -body {
+    chan copy $c $outChan
+} -cleanup {
+    close $outChan
+    close $c
+    removeFile out
+} -result 100
+test io-53.16 {[ed29c4da21] MBRead: fblocked seen as error} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        variable blocked
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [encoding convertto utf-8 \
+                        [string repeat a 100]]
+                set blocked($chan) 1
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan) blocked($chan)
+                return
+            }
+            watch {}
+            read {
+                if {$blocked($chan)} {
+                    set blocked($chan) [expr {!$blocked($chan)}]
+                    return -code error EAGAIN
+                }
+                set n [lindex $args 1]
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+    set c [chan create read [namespace which driver]]
+    chan configure $c -encoding utf-8 -translation lf
+    set out [makeFile {} out]
+    set outChan [open $out w]
+    chan configure $outChan -encoding utf-8 -translation lf
+} -body {
+    chan copy $c $outChan
+} -cleanup {
+    close $outChan
+    close $c
+    removeFile out
+} -result 100
+test io-53.17 {[7c187a3773] MBWrite: proper inQueueTail handling} -setup {
+    proc driver {cmd args} {
+        variable buffer
+        variable index
+        set chan [lindex $args 0]
+        switch -- $cmd {
+            initialize {
+                set index($chan) 0
+                set buffer($chan) [encoding convertto utf-8 \
+                        line\n[string repeat a 100]line\n]
+                return {initialize finalize watch read}
+            }
+            finalize {
+                unset index($chan) buffer($chan)
+                return
+            }
+            watch {}
+            read {
+                set n [lindex $args 1]
+                set new [expr {$index($chan) + $n}]
+                set result [string range $buffer($chan) $index($chan) $new-1]
+                set index($chan) $new
+                return $result
+            }
+        }
+    }
+    set c [chan create read [namespace which driver]]
+    chan configure $c -encoding utf-8 -translation lf -buffersize 107
+    set out [makeFile {} out]
+    set outChan [open $out w]
+    chan configure $outChan -encoding utf-8 -translation lf
+} -body {
+    list [gets $c] [chan copy $c $outChan -size 100] [gets $c]
+} -cleanup {
+    close $outChan
+    close $c
+    removeFile out
+} -result {line 100 line}
 
 test io-54.1 {Recursive channel events} {socket fileevent} {
     # This test checks to see if file events are delivered during recursive
@@ -7399,7 +8245,7 @@ test io-59.1 {Thread reference of channels} {testmainthread testchannel} {
     # More complicated tests (like that the reference changes as a
     # channel is moved from thread to thread) can be done only in the
     # extension which fully implements the moving of channels between
-    # threads, i.e. 'Threads'. Or we have to extend [testthread] as well.
+    # threads, i.e. 'Threads'.
 
     set f [open $path(longfile) r]
     set result [testchannel mthread $f]
@@ -7407,12 +8253,12 @@ test io-59.1 {Thread reference of channels} {testmainthread testchannel} {
     string equal $result [testmainthread]
 } {1}
 
-test io-60.1 {writing illegal utf sequences} {openpipe fileevent} {
+test io-60.1 {writing illegal utf sequences} {openpipe fileevent testbytestring} {
     # This test will hang in older revisions of the core.
 
     set out [open $path(script) w]
     puts $out {
-	puts [encoding convertfrom identity \xe2]
+	puts [testbytestring \xe2]
 	exit 1
     }
     proc readit {pipe} {
@@ -7491,25 +8337,7 @@ test io-70.0 {Cutting & Splicing channels} {testchannel} {
 } {0 1 0}
 
 
-# Duplicate of code in "thread.test". Find a better way of doing this
-# without duplication. Maybe placement into a proc which transforms to
-# nop after the first call, and placement of its defintion in a
-# central location.
-
-if {[testConstraint testthread]} {
-    testthread errorproc ThreadError
-
-    proc ThreadError {id info} {
-	global threadError
-	set threadError $info
-    }
-
-    proc ThreadNullError {id info} {
-	# ignore
-    }
-}
-
-test io-70.1 {Transfer channel} {testchannel testthread} {
+test io-70.1 {Transfer channel} {testchannel thread} {
     set f [makeFile {... dummy ...} cutsplice]
     set c [open $f r]
 
@@ -7518,16 +8346,17 @@ test io-70.1 {Transfer channel} {testchannel testthread} {
     testchannel cut $c
     lappend res [catch {seek $c 0 start}]
 
-    set tid [testthread create]
-    testthread send $tid [list set c $c]
-    lappend res [testthread send $tid {
+    set tid [thread::create -preserved]
+    thread::send $tid [list set c $c]
+    thread::send $tid {load {} Tcltest}
+    lappend res [thread::send $tid {
 	testchannel splice $c
 	set res [catch {seek $c 0 start}]
 	close $c
 	set res
     }]
 
-    tcltest::threadReap
+    thread::release $tid
     removeFile cutsplice
 
     set res
@@ -7726,20 +8555,81 @@ test io-73.1 {channel Tcl_Obj SetChannelFromAny} {} {
     catch {close [lreplace [list a] 0 end]}
 } {1}
 
-test io-73.2 {channel Tcl_Obj SetChannelFromAny, bug 2407783} {} {
+test io-73.2 {channel Tcl_Obj SetChannelFromAny, bug 2407783} -setup {
     # Invalidate intrep of 'channel' Tcl_Obj when transiting between interpreters.
-    interp create foo
     set f [open [info script] r]
+} -body {
+    interp create foo
     seek $f 0
     set code [catch {interp eval foo [list seek $f 0]} msg]
     # The string map converts the changing channel handle to a fixed string
     list $code [string map [list $f @@] $msg]
-} {1 {can not find channel named "@@"}}
+} -cleanup {
+    close $f
+} -result {1 {can not find channel named "@@"}}
+
+test io-73.3 {[5adc350683] [gets] after EOF} -setup {
+    set fn [makeFile {} io-73.3]
+    set rfd [open $fn r]
+    set wfd [open $fn a]
+    chan configure $wfd -buffering line
+    read $rfd
+} -body {
+    set result [eof $rfd]
+    puts $wfd "more data"
+    lappend result [eof $rfd]
+    lappend result [gets $rfd]
+    lappend result [eof $rfd]
+    lappend result [gets $rfd]
+    lappend result [eof $rfd]
+} -cleanup {
+    close $wfd
+    close $rfd
+    removeFile io-73.3
+} -result {1 1 {more data} 0 {} 1}
+
+test io-73.4 {[5adc350683] [read] after EOF} -setup {
+    set fn [makeFile {} io-73.4]
+    set rfd [open $fn r]
+    set wfd [open $fn a]
+    chan configure $wfd -buffering line
+    read $rfd
+} -body {
+    set result [eof $rfd]
+    puts $wfd "more data"
+    lappend result [eof $rfd]
+    lappend result [read $rfd]
+    lappend result [eof $rfd]
+} -cleanup {
+    close $wfd
+    close $rfd
+    removeFile io-73.4
+} -result {1 1 {more data
+} 1}
+
+test io-73.5 {effect of eof on encoding end flags} -setup {
+    set fn [makeFile {} io-73.5]
+    set rfd [open $fn r]
+    set wfd [open $fn a]
+    chan configure $wfd -buffering none -translation binary
+    chan configure $rfd -buffersize 5 -encoding utf-8
+    read $rfd
+} -body {
+    set result [eof $rfd]
+    puts -nonewline $wfd "more\u00c2\u00a0data"
+    lappend result [eof $rfd]
+    lappend result [read $rfd]
+    lappend result [eof $rfd]
+} -cleanup {
+    close $wfd
+    close $rfd
+    removeFile io-73.5
+} -result [list 1 1 more\u00a0data 1]
 
 # ### ### ### ######### ######### #########
 
 # cleanup
-foreach file [list fooBar longfile script output test1 pipe my_script \
+foreach file [list fooBar longfile script script2 output test1 pipe my_script \
 	test2 test3 cat stdout kyrillic.txt utf8-fcopy.txt utf8-rp.txt] {
     removeFile $file
 }

@@ -1,53 +1,56 @@
 # Commands covered:  incr
 #
-# This file contains a collection of tests for one or more of the Tcl
-# built-in commands.  Sourcing this file into Tcl runs the tests and
-# generates output for errors.  No output means no errors were found.
+# This file contains a collection of tests for one or more of the Tcl built-in
+# commands. Sourcing this file into Tcl runs the tests and generates output
+# for errors. No output means no errors were found.
 #
 # Copyright (c) 1996 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
+unset -nocomplain x i
+proc readonly varName {
+    upvar 1 $varName var
+    trace add variable var write \
+	{apply {{args} {error "variable is read-only"}}}
+}
+
 # Basic "incr" operation.
 
-catch {unset x}
-catch {unset i}
-
-test incr-1.1 {TclCompileIncrCmd: missing variable name} {
-    list [catch {incr} msg] $msg
-} {1 {wrong # args: should be "incr varName ?increment?"}}
+test incr-1.1 {TclCompileIncrCmd: missing variable name} -returnCodes error -body {
+    incr
+} -result {wrong # args: should be "incr varName ?increment?"}
 test incr-1.2 {TclCompileIncrCmd: simple variable name} {
     set i 10
     list [incr i] $i
 } {11 11}
-test incr-1.3 {TclCompileIncrCmd: error compiling variable name} {
+test incr-1.3 {TclCompileIncrCmd: error compiling variable name} -body {
     set i 10
-    catch {incr "i"xxx} msg
-    set msg
-} {extra characters after close-quote}
+    incr "i"xxx
+} -returnCodes error -result {extra characters after close-quote}
 test incr-1.4 {TclCompileIncrCmd: simple variable name in quotes} {
     set i 17
     list [incr "i"] $i
 } {18 18}
-test incr-1.5 {TclCompileIncrCmd: simple variable name in braces} {
-    catch {unset {a simple var}}
+test incr-1.5 {TclCompileIncrCmd: simple variable name in braces} -setup {
+    unset -nocomplain {a simple var}
+} -body {
     set {a simple var} 27
     list [incr {a simple var}] ${a simple var}
-} {28 28}
-test incr-1.6 {TclCompileIncrCmd: simple array variable name} {
-    catch {unset a}
+} -result {28 28}
+test incr-1.6 {TclCompileIncrCmd: simple array variable name} -setup {
+    unset -nocomplain a
+} -body {
     set a(foo) 37
     list [incr a(foo)] $a(foo)
-} {38 38}
+} -result {38 38}
 test incr-1.7 {TclCompileIncrCmd: non-simple (computed) variable name} {
     set x "i"
     set i 77
@@ -58,7 +61,6 @@ test incr-1.8 {TclCompileIncrCmd: non-simple (computed) variable name} {
     set i 77
     list [incr [set x] +2] $i
 } {79 79}
-
 test incr-1.9 {TclCompileIncrCmd: increment given} {
     set i 10
     list [incr i +07] $i
@@ -67,7 +69,6 @@ test incr-1.10 {TclCompileIncrCmd: no increment given} {
     set i 10
     list [incr i] $i
 } {11 11}
-
 test incr-1.11 {TclCompileIncrCmd: simple global name} {
     proc p {} {
         global i
@@ -149,22 +150,23 @@ test incr-1.14 {TclCompileIncrCmd: simple local name, >255 locals} {
     }
     260locals
 } {1}
-test incr-1.15 {TclCompileIncrCmd: variable is array} {
-    catch {unset a}
+test incr-1.15 {TclCompileIncrCmd: variable is array} -setup {
+    unset -nocomplain a
+} -body {
     set a(foo) 27
-    set x [incr a(foo) 11]
-    catch {unset a}
-    set x
-} 38
-test incr-1.16 {TclCompileIncrCmd: variable is array, elem substitutions} {
-    catch {unset a}
+    incr a(foo) 11
+} -cleanup {
+    unset -nocomplain a
+} -result 38
+test incr-1.16 {TclCompileIncrCmd: variable is array, elem substitutions} -setup {
+    unset -nocomplain a
+} -body {
     set i 5
     set a(foo5) 27
-    set x [incr a(foo$i) 11]
-    catch {unset a}
-    set x
-} 38
-
+    incr a(foo$i) 11
+} -cleanup {
+    unset -nocomplain a
+} -result 38
 test incr-1.17 {TclCompileIncrCmd: increment given, simple int} {
     set i 5
     incr i 123
@@ -175,8 +177,8 @@ test incr-1.18 {TclCompileIncrCmd: increment given, simple int} {
 } -95
 test incr-1.19 {TclCompileIncrCmd: increment given, but erroneous} -body {
     set i 5
-    catch {incr i [set]} msg
-    set ::errorInfo
+    catch {incr i [set]} -> opts
+    dict get $opts -errorinfo
 } -match glob -result {wrong # args: should be "set varName ?newValue?"
     while *ing
 "set"*}
@@ -196,19 +198,14 @@ test incr-1.23 {TclCompileIncrCmd: increment given, formatted int != int} {
     set i 25
     incr i 0o00012345     ;# an octal literal
 } 5374
-test incr-1.24 {TclCompileIncrCmd: increment given, formatted int != int} {
+test incr-1.24 {TclCompileIncrCmd: increment given, formatted int != int} -body {
     set i 25
-    catch {incr i 1a} msg
-    set msg
-} {expected integer but got "1a"}
-
-test incr-1.25 {TclCompileIncrCmd: too many arguments} {
+    incr i 1a
+} -returnCodes error -result {expected integer but got "1a"}
+test incr-1.25 {TclCompileIncrCmd: too many arguments} -body {
     set i 10
-    catch {incr i 10 20} msg
-    set msg
-} {wrong # args: should be "incr varName ?increment?"}
-
-
+    incr i 10 20
+} -returnCodes error -result {wrong # args: should be "incr varName ?increment?"}
 test incr-1.26 {TclCompileIncrCmd: runtime error, bad variable name} {
     unset -nocomplain {"foo}
     incr {"foo}
@@ -219,69 +216,68 @@ test incr-1.27 {TclCompileIncrCmd: runtime error, bad variable name} -body {
     while *ing
 "set"*}}
 test incr-1.28 {TclCompileIncrCmd: runtime error, readonly variable} -body {
-    proc readonly args {error "variable is read-only"}
     set x 123
-    trace var x w readonly
+    readonly x
     list [catch {incr x 1} msg] $msg $::errorInfo
-} -match glob -result {1 {can't set "x": variable is read-only} {*variable is read-only
+} -match glob -cleanup {
+    unset -nocomplain x
+} -result {1 {can't set "x": variable is read-only} {*variable is read-only
     while executing
 *
 "incr x 1"}}
-catch {unset x}
-test incr-1.29 {TclCompileIncrCmd: runtime error, bad variable value} {
+test incr-1.29 {TclCompileIncrCmd: runtime error, bad variable value} -body {
     set x "  -  "
-    list [catch {incr x 1} msg] $msg
-} {1 {expected integer but got "  -  "}}
-
-test incr-1.30 {TclCompileIncrCmd: array var, braced (no subs)} {
+    incr x 1
+} -returnCodes error -result {expected integer but got "  -  "}
+test incr-1.30 {TclCompileIncrCmd: array var, braced (no subs)} -setup {
     catch {unset array}
+} -body {
     set array(\$foo) 4
     incr {array($foo)}
-} 5
-    
+} -result 5
+
 # Check "incr" and computed command names.
 
+unset -nocomplain x i
 test incr-2.0 {incr and computed command names} {
     set i 5
     set z incr
     $z i -1
-    set i
+    return $i
 } 4
-catch {unset x}
-catch {unset i}
-
-test incr-2.1 {incr command (not compiled): missing variable name} {
+test incr-2.1 {incr command (not compiled): missing variable name} -body {
     set z incr
-    list [catch {$z} msg] $msg
-} {1 {wrong # args: should be "incr varName ?increment?"}}
+    $z
+} -returnCodes error -result {wrong # args: should be "incr varName ?increment?"}
 test incr-2.2 {incr command (not compiled): simple variable name} {
     set z incr
     set i 10
     list [$z i] $i
 } {11 11}
-test incr-2.3 {incr command (not compiled): error compiling variable name} {
+test incr-2.3 {incr command (not compiled): error compiling variable name} -body {
     set z incr
     set i 10
-    catch {$z "i"xxx} msg
-    set msg
-} {extra characters after close-quote}
+    $z "i"xxx
+} -returnCodes error -result {extra characters after close-quote}
 test incr-2.4 {incr command (not compiled): simple variable name in quotes} {
     set z incr
     set i 17
     list [$z "i"] $i
 } {18 18}
-test incr-2.5 {incr command (not compiled): simple variable name in braces} {
+test incr-2.5 {incr command (not compiled): simple variable name in braces} -setup {
+    unset -nocomplain {a simple var}
+} -body {
     set z incr
-    catch {unset {a simple var}}
     set {a simple var} 27
     list [$z {a simple var}] ${a simple var}
-} {28 28}
-test incr-2.6 {incr command (not compiled): simple array variable name} {
+} -result {28 28}
+test incr-2.6 {incr command (not compiled): simple array variable name} -setup {
+    unset -nocomplain a
+} -body {
     set z incr
-    catch {unset a}
     set a(foo) 37
     list [$z a(foo)] $a(foo)
-} {38 38}
+} -result {38 38}
 test incr-2.7 {incr command (not compiled): non-simple (computed) variable name} {
     set z incr
     set x "i"
@@ -294,7 +290,6 @@ test incr-2.8 {incr command (not compiled): non-simple (computed) variable name}
     set i 77
     list [$z [set x] +2] $i
 } {79 79}
-
 test incr-2.9 {incr command (not compiled): increment given} {
     set z incr
     set i 10
@@ -305,7 +300,6 @@ test incr-2.10 {incr command (not compiled): no increment given} {
     set i 10
     list [$z i] $i
 } {11 11}
-
 test incr-2.11 {incr command (not compiled): simple global name} {
     proc p {} {
 	set z incr
@@ -391,24 +385,25 @@ test incr-2.14 {incr command (not compiled): simple local name, >255 locals} {
     }
     260locals
 } {1}
-test incr-2.15 {incr command (not compiled): variable is array} {
+test incr-2.15 {incr command (not compiled): variable is array} -setup {
+    unset -nocomplain a
+} -body {
     set z incr
-    catch {unset a}
     set a(foo) 27
-    set x [$z a(foo) 11]
-    catch {unset a}
-    set x
-} 38
-test incr-2.16 {incr command (not compiled): variable is array, elem substitutions} {
+    $z a(foo) 11
+} -cleanup {
+    unset -nocomplain a
+} -result 38
+test incr-2.16 {incr command (not compiled): variable is array, elem substitutions} -setup {
+    unset -nocomplain a
+} -body {
     set z incr
-    catch {unset a}
     set i 5
     set a(foo5) 27
-    set x [$z a(foo$i) 11]
-    catch {unset a}
-    set x
-} 38
-
+    $z a(foo$i) 11
+} -cleanup {
+    unset -nocomplain a
+} -result 38
 test incr-2.17 {incr command (not compiled): increment given, simple int} {
     set z incr
     set i 5
@@ -422,8 +417,8 @@ test incr-2.18 {incr command (not compiled): increment given, simple int} {
 test incr-2.19 {incr command (not compiled): increment given, but erroneous} -body {
     set z incr
     set i 5
-    catch {$z i [set]} msg
-    set ::errorInfo
+    catch {$z i [set]} -> opts
+    dict get $opts -errorinfo
 } -match glob -result {wrong # args: should be "set varName ?newValue?"
     while *ing
 "set"*}
@@ -447,26 +442,22 @@ test incr-2.23 {incr command (not compiled): increment given, formatted int != i
     set i 25
     $z i 0o00012345     ;# an octal literal
 } 5374
-test incr-2.24 {incr command (not compiled): increment given, formatted int != int} {
+test incr-2.24 {incr command (not compiled): increment given, formatted int != int} -body {
     set z incr
     set i 25
-    catch {$z i 1a} msg
-    set msg
-} {expected integer but got "1a"}
-
-test incr-2.25 {incr command (not compiled): too many arguments} {
+    $z i 1a
+} -returnCodes error -result {expected integer but got "1a"}
+test incr-2.25 {incr command (not compiled): too many arguments} -body {
     set z incr
     set i 10
-    catch {$z i 10 20} msg
-    set msg
-} {wrong # args: should be "incr varName ?increment?"}
-
-
-test incr-2.26 {incr command (not compiled): runtime error, bad variable name} {
+    $z i 10 20
+} -returnCodes error -result {wrong # args: should be "incr varName ?increment?"}
+test incr-2.26 {incr command (not compiled): runtime error, bad variable name} -setup {
     unset -nocomplain {"foo}
+} -body {
     set z incr
     $z {"foo}
-} 1
+} -result 1
 test incr-2.27 {incr command (not compiled): runtime error, bad variable name} -body {
     set z incr
     list [catch {$z [set]} msg] $msg $::errorInfo
@@ -475,20 +466,20 @@ test incr-2.27 {incr command (not compiled): runtime error, bad variable name} -
 "set"*}}
 test incr-2.28 {incr command (not compiled): runtime error, readonly variable} -body {
     set z incr
-    proc readonly args {error "variable is read-only"}
     set x 123
-    trace var x w readonly
+    readonly x
     list [catch {$z x 1} msg] $msg $::errorInfo
-} -match glob -result {1 {can't set "x": variable is read-only} {*variable is read-only
+} -match glob -cleanup {
+    unset -nocomplain x
+} -result {1 {can't set "x": variable is read-only} {*variable is read-only
     while executing
 *
 "$z x 1"}}
-catch {unset x}
-test incr-2.29 {incr command (not compiled): runtime error, bad variable value} {
+test incr-2.29 {incr command (not compiled): runtime error, bad variable value} -body {
     set z incr
     set x "  -  "
-    list [catch {$z x 1} msg] $msg
-} {1 {expected integer but got "  -  "}}
+    $z x 1
+} -returnCodes error -result {expected integer but got "  -  "}
 test incr-2.30 {incr command (not compiled): bad increment} {
     set z incr
     set x 0
@@ -520,7 +511,12 @@ test incr-4.1 {increment non-existing array element [Bug 1445454]} -body {
 } -cleanup {
     rename x {}
 } -result 1
-
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

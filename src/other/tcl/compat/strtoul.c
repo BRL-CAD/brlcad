@@ -1,4 +1,4 @@
-/* 
+/*
  * strtoul.c --
  *
  *	Source code for the "strtoul" library procedure.
@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -20,7 +18,7 @@
  * characters).
  */
 
-static char cvtIn[] = {
+static const char cvtIn[] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9,		/* '0' - '9' */
     100, 100, 100, 100, 100, 100, 100,		/* punctuation */
     10, 11, 12, 13, 14, 15, 16, 17, 18, 19,	/* 'A' - 'Z' */
@@ -52,7 +50,7 @@ static char cvtIn[] = {
 
 unsigned long int
 strtoul(
-    CONST char *string,		/* String of ASCII digits, possibly preceded
+    const char *string,		/* String of ASCII digits, possibly preceded
 				 * by white space. For bases greater than 10,
 				 * either lower- or upper-case digits may be
 				 * used. */
@@ -64,7 +62,7 @@ strtoul(
 				 * hex, "0" means octal, anything else means
 				 * decimal. */
 {
-    register CONST char *p;
+    register const char *p;
     register unsigned long int result = 0;
     register unsigned digit;
     int anyDigits = 0;
@@ -92,7 +90,7 @@ strtoul(
      * If no base was provided, pick one from the leading characters of the
      * string.
      */
-    
+
     if (base == 0) {
 	if (*p == '0') {
 	    p += 1;
@@ -208,7 +206,7 @@ strtoul(
     if (overflow) {
 	errno = ERANGE;
 	return ULONG_MAX;
-    } 
+    }
     if (negative) {
 	return -result;
     }

@@ -10,13 +10,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 # Figure out what extension is used for shared libraries on this
 # platform.
@@ -40,28 +41,32 @@ set alreadyTotalLoaded [info loaded]
 # Certain tests require the 'teststaticpkg' command from tcltest
 testConstraint teststaticpkg [llength [info commands teststaticpkg]]
 
+# Certain tests need the 'testsimplefilsystem' in tcltest
+testConstraint testsimplefilesystem \
+	[llength [info commands testsimplefilesystem]]
+
 # Basic tests: parameter testing...
-test unload-1.1 {basic errors} {} {
-    list [catch {unload} msg] $msg
-} "1 {wrong \# args: should be \"unload ?switches? fileName ?packageName? ?interp?\"}"
-test unload-1.2 {basic errors} {} {
-    list [catch {unload a b c d} msg] $msg
-} "1 {wrong \# args: should be \"unload ?switches? fileName ?packageName? ?interp?\"}"
-test unload-1.3 {basic errors} {} {
-    list [catch {unload a b foobar} msg] $msg
-} {1 {could not find interpreter "foobar"}}
-test unload-1.4 {basic errors} {} {
-    list [catch {unload {}} msg] $msg
-} {1 {must specify either file name or package name}}
-test unload-1.5 {basic errors} {} {
-    list [catch {unload {} {}} msg] $msg
-} {1 {must specify either file name or package name}}
-test unload-1.6 {basic errors} {} {
-    list [catch {unload {} Unknown} msg] $msg
-} {1 {package "Unknown" is loaded statically and cannot be unloaded}}
-test unload-1.7 {-nocomplain switch} {} {
-    list [unload -nocomplain {} Unknown]
-} {{}}
+test unload-1.1 {basic errors} -returnCodes error -body {
+    unload
+} -result {wrong # args: should be "unload ?-switch ...? fileName ?packageName? ?interp?"}
+test unload-1.2 {basic errors} -returnCodes error -body {
+    unload a b c d
+} -result {wrong # args: should be "unload ?-switch ...? fileName ?packageName? ?interp?"}
+test unload-1.3 {basic errors} -returnCodes error -body {
+    unload a b foobar
+} -result {could not find interpreter "foobar"}
+test unload-1.4 {basic errors} -returnCodes error -body {
+    unload {}
+} -result {must specify either file name or package name}
+test unload-1.5 {basic errors} -returnCodes error -body {
+    unload {} {}
+} -result {must specify either file name or package name}
+test unload-1.6 {basic errors} -returnCodes error -body {
+    unload {} Unknown
+} -result {package "Unknown" is loaded statically and cannot be unloaded}
+test unload-1.7 {-nocomplain switch} {
+    unload -nocomplain {} Unknown
+} {}
 
 set pkgua_loaded {}
 set pkgua_detached {}
@@ -213,9 +218,28 @@ test unload-4.6 {basic unloading of unloadable package from a safe interpreter, 
 	    [child-trusted eval {list $pkgua_loaded $pkgua_detached $pkgua_unloaded}]
 } {{. {} {}} {} {} {. . .}}
 
+test unload-5.1 {unload a module loaded from vfs} \
+     -constraints [list $dll $loaded testsimplefilesystem] \
+     -setup {
+	 set dir [pwd]
+	 cd $testDir
+	 testsimplefilesystem 1
+	 load simplefs:/pkgua$ext pkgua
+     } \
+    -body {
+	list [catch {unload simplefs:/pkgua$ext} msg] $msg
+    } \
+    -result {0 {}}
+
+
+
 # cleanup
 interp delete child
 interp delete child-trusted
 unset ext
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

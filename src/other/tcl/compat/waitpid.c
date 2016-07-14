@@ -1,4 +1,4 @@
-/* 
+/*
  * waitpid.c --
  *
  *	This procedure emulates the POSIX waitpid kernel call on BSD systems
@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclPort.h"

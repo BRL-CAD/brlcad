@@ -14,12 +14,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
-#
 
 package require tcltest 2
-namespace import -force ::tcltest::*
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testevalex [llength [info commands testevalex]]
 testConstraint testcmdtoken [llength [info commands testcmdtoken]]
@@ -31,7 +31,7 @@ catch {interp delete test_interp}
 catch {rename p ""}
 catch {rename q ""}
 catch {rename cmd ""}
-catch {unset x}
+unset -nocomplain x
 
 test basic-1.1 {Tcl_CreateInterp, creates interp's global namespace} {
     catch {interp delete test_interp}
@@ -267,14 +267,24 @@ test basic-18.4 {TclRenameCommand, bad new name} {
     }
     rename test_ns_basic::p :::george::martha
 } {}
-test basic-18.5 {TclRenameCommand, new name must not already exist} {
+test basic-18.5 {TclRenameCommand, new name must not already exist} -setup {
+    if {![llength [info commands :::george::martha]]} {
+        catch {namespace delete {*}[namespace children :: test_ns_*]}
+        namespace eval test_ns_basic {
+            proc p {} {
+                return "p in [namespace current]"
+            }
+        }
+        rename test_ns_basic::p :::george::martha
+    }
+} -body {
     namespace eval test_ns_basic {
         proc q {} {
             return 42
         }
     }
     list [catch {rename test_ns_basic::q :::george::martha} msg] $msg
-} {1 {can't rename to ":::george::martha": command already exists}}
+} -result {1 {can't rename to ":::george::martha": command already exists}}
 test basic-18.6 {TclRenameCommand, check for command shadowing by newly renamed cmd} {
     catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename p ""}
@@ -302,7 +312,7 @@ test basic-20.1 {Tcl_GetCommandInfo, names for commands created inside namespace
     catch {namespace delete {*}[namespace children :: test_ns_*]}
     catch {rename p ""}
     catch {rename q ""}
-    catch {unset x}
+    unset -nocomplain x
     set x [namespace eval test_ns_basic::test_ns_basic2 {
         # the following creates a cmd in the global namespace
         testcmdtoken create p
@@ -355,7 +365,7 @@ test basic-23.1 {Tcl_DeleteCommand} {emptyTest} {
 
 test basic-24.1 {Tcl_DeleteCommandFromToken, invalidate all compiled code if cmd has compile proc} {
     catch {interp delete test_interp}
-    catch {unset x}
+    unset -nocomplain x
     interp create test_interp
     interp eval test_interp {
         proc useSet {} {
@@ -427,7 +437,7 @@ test basic-26.1 {Tcl_EvalObj: preserve object while evaling it} -setup {
     # string would have been freed, leaving garbage bytes for the error
     # message.
     set f [open $fName w]
-    fileevent $f writable "fileevent $f writable {}; error foo"
+    chan event $f writable "chan event $f writable {}; error foo"
     set x {}
     vwait x
     close $f
@@ -547,8 +557,8 @@ test basic-46.1 {Tcl_AllowExceptions: exception return not allowed} {stdio} {
     catch {close $f}
     set res [catch {
 	set f [open |[list [interpreter]] w+]
-	fconfigure $f -buffering line
-	puts $f {fconfigure stdout -buffering line}
+	chan configure $f -buffering line
+	puts $f {chan configure stdout -buffering line}
 	puts $f continue
 	puts $f {puts $::errorInfo}
 	puts $f {puts DONE}
@@ -631,8 +641,10 @@ test basic-46.5 {Tcl_AllowExceptions: exception return not allowed} -setup {
 "return -code return"
     (file "*BREAKtest" line 2)}
 
-test basic-47.1 {Tcl_EvalEx: check for missing close-bracket} -body {
-    subst {a[set b [format cd]}
+test basic-47.1 {Tcl_EvalEx: check for missing close-bracket} -constraints {
+    testevalex
+} -body {
+    testevalex {a[set b [format cd]}
 } -returnCodes error -result {missing close-bracket}
 
 # Some lists for expansion tests to work with
@@ -970,6 +982,6 @@ catch {rename p ""}
 catch {rename q ""}
 catch {rename cmd ""}
 catch {rename value:at: ""}
-catch {unset x}
-::tcltest::cleanupTests
+unset -nocomplain x
+cleanupTests
 return

@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH concat n 8.3 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -16,11 +14,10 @@ concat \- Join lists together
 .SH SYNOPSIS
 \fBconcat\fI \fR?\fIarg arg ...\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 This command joins each of its arguments together with spaces after
-trimming leading and trailing white-space from each of them.  If all the
+trimming leading and trailing white-space from each of them.  If all of the
 arguments are lists, this has the same effect as concatenating them
 into a single list.
 It permits any number of arguments;
@@ -55,4 +52,7 @@ values, as can be seen here:
 .SH "SEE ALSO"
 append(n), eval(n), join(n)
 .SH KEYWORDS
-concatenate, join, lists
+concatenate, join, list
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

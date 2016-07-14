@@ -6,10 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_Eval 3 8.1 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_EvalObjEx, Tcl_EvalFile, Tcl_EvalObjv, Tcl_Eval, Tcl_EvalEx, Tcl_GlobalEval, Tcl_GlobalEvalObj, Tcl_VarEval, Tcl_VarEvalVA \- execute Tcl scripts
@@ -49,17 +47,17 @@ int
 Interpreter in which to execute the script.  The interpreter's result is
 modified to hold the result or error message from the script.
 .AP Tcl_Obj *objPtr in
-A Tcl object containing the script to execute.
+A Tcl value containing the script to execute.
 .AP int flags in
 ORed combination of flag bits that specify additional options.
 \fBTCL_EVAL_GLOBAL\fR and \fBTCL_EVAL_DIRECT\fR are currently supported.
 .AP "const char" *fileName in
 Name of a file containing a Tcl script.
 .AP int objc in
-The number of objects in the array pointed to by \fIobjPtr\fR;
+The number of values in the array pointed to by \fIobjPtr\fR;
 this is also the number of words in the command.
 .AP Tcl_Obj **objv in
-Points to an array of pointers to objects; each object holds the
+Points to an array of pointers to values; each value holds the
 value of a single word in the command to execute.
 .AP int numBytes in
 The number of bytes in \fIscript\fR, not including any
@@ -85,7 +83,7 @@ If this is the first time \fIobjPtr\fR has been executed,
 its commands are compiled into bytecode instructions
 which are then executed.  The
 bytecodes are saved in \fIobjPtr\fR so that the compilation step
-can be skipped if the object is evaluated again in the future.
+can be skipped if the value is evaluated again in the future.
 .PP
 The return value from \fBTcl_EvalObjEx\fR (and all the other procedures
 described here) is a Tcl completion code with
@@ -113,15 +111,15 @@ which will be safely substituted by the Tcl interpreter into
 .PP
 \fBTcl_EvalObjv\fR executes a single pre-parsed command instead of a
 script.  The \fIobjc\fR and \fIobjv\fR arguments contain the values
-of the words for the Tcl command, one word in each object in
+of the words for the Tcl command, one word in each value in
 \fIobjv\fR.  \fBTcl_EvalObjv\fR evaluates the command and returns
 a completion code and result just like \fBTcl_EvalObjEx\fR.
 The caller of \fBTcl_EvalObjv\fR has to manage the reference count of the
-elements of \fIobjv\fR, insuring that the objects are valid until
+elements of \fIobjv\fR, insuring that the values are valid until
 \fBTcl_EvalObjv\fR returns.  
 .PP
 \fBTcl_Eval\fR is similar to \fBTcl_EvalObjEx\fR except that the script to
-be executed is supplied as a string instead of an object and no compilation
+be executed is supplied as a string instead of a value and no compilation
 occurs.  The string should be a proper UTF-8 string as converted by
 \fBTcl_ExternalToUtfDString\fR or \fBTcl_ExternalToUtf\fR when it is known
 to possibly contain upper ASCII characters whose possible combinations
@@ -131,7 +129,7 @@ bytecodes.  In situations where it is known that the script will never be
 executed again, \fBTcl_Eval\fR may be faster than \fBTcl_EvalObjEx\fR.
  \fBTcl_Eval\fR returns a completion code and result just like 
 \fBTcl_EvalObjEx\fR.  Note: for backward compatibility with versions before
-Tcl 8.0, \fBTcl_Eval\fR copies the object result in \fIinterp\fR to
+Tcl 8.0, \fBTcl_Eval\fR copies the value result in \fIinterp\fR to
 \fIinterp->result\fR (use is deprecated) where it can be accessed directly.
  This makes \fBTcl_Eval\fR somewhat slower than \fBTcl_EvalEx\fR, which
 does not do the copy.
@@ -161,24 +159,27 @@ instead of taking a variable number of arguments it takes an argument
 list. Like \fBTcl_VarEval\fR, \fBTcl_VarEvalVA\fR is deprecated.
 
 .SH "FLAG BITS"
+.PP
 Any ORed combination of the following values may be used for the
 \fIflags\fR argument to procedures such as \fBTcl_EvalObjEx\fR:
 .TP 23
 \fBTCL_EVAL_DIRECT\fR
+.
 This flag is only used by \fBTcl_EvalObjEx\fR; it is ignored by
 other procedures.  If this flag bit is set, the script is not
 compiled to bytecodes; instead it is executed directly
 as is done by \fBTcl_EvalEx\fR.  The
 \fBTCL_EVAL_DIRECT\fR flag is useful in situations where the
-contents of an object are going to change immediately, so the
+contents of a value are going to change immediately, so the
 bytecodes will not be reused in a future execution.  In this case,
 it is faster to execute the script directly.
 .TP 23
 \fBTCL_EVAL_GLOBAL\fR
+.
 If this flag is set, the script is processed at global level.  This
 means that it is evaluated in the global namespace and its variable
 context consists of global variables only (it ignores any Tcl
-procedures at are active).
+procedures that are active).
 
 .SH "MISCELLANEOUS DETAILS"
 .PP
@@ -207,4 +208,4 @@ This means that top-level applications should never see a return code
 from \fBTcl_EvalObjEx\fR other then \fBTCL_OK\fR or \fBTCL_ERROR\fR.
 
 .SH KEYWORDS
-execute, file, global, object, result, script
+execute, file, global, result, script, value

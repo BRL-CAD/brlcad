@@ -5,23 +5,23 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
+.TH dde n 1.4 dde "Tcl Bundled Packages"
 .so man.macros
-.TH dde n 1.3 dde "Tcl Bundled Packages"
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 dde \- Execute a Dynamic Data Exchange command
 .SH SYNOPSIS
 .sp
-\fBpackage require dde 1.3\fR
+\fBpackage require dde 1.4\fR
 .sp
 \fBdde servername\fR ?\fB\-force\fR? ?\fB\-handler \fIproc\fR? ?\fB\-\|\-\fR? ?\fItopic\fR?
 .sp
-\fBdde execute\fR ?\fB\-async\fR? \fIservice topic data\fR
+.VS 8.6
+\fBdde execute\fR ?\fB\-async\fR? ?\fB\-binary\fR? \fIservice topic data\fR
 .sp
-\fBdde poke\fR \fIservice topic item data\fR
+\fBdde poke\fR ?\fB\-binary\fR? \fIservice topic item data\fR
+.VE 8.6
 .sp
 \fBdde request\fR ?\fB\-binary\fR? \fIservice topic item\fR
 .sp
@@ -71,7 +71,7 @@ procedure is called with all the arguments provided by the remote
 call.
 .RE
 .TP
-\fBdde execute\fR ?\fB\-async\fR? \fIservice topic data\fR
+\fBdde execute\fR ?\fB\-async\fR? ?\fB\-binary\fR? \fIservice topic data\fR
 .
 \fBdde execute\fR takes the \fIdata\fR and sends it to the server indicated
 by \fIservice\fR with the topic indicated by \fItopic\fR. Typically,
@@ -82,8 +82,15 @@ script is run in the application.  The \fB\-async\fR option requests
 asynchronous invocation.  The command returns an error message if the
 script did not run, unless the \fB\-async\fR flag was used, in which case
 the command returns immediately with no error.
+.VS 8.6
+Without the \fB\-binary\fR option all data will be sent in unicode. For
+dde clients which don't implement the CF_UNICODE clipboard format, this
+will automatically be translated to the system encoding. You can use 
+the \fB\-binary\fR option in combination with the result of
+\fBencoding convertto\fR to send data in any other encoding.
+.VE 8.6
 .TP
-\fBdde poke \fIservice topic item data\fR
+\fBdde poke\fR ?\fB\-binary\fR? \fIservice topic item data\fR
 .
 \fBdde poke\fR passes the \fIdata\fR to the server indicated by
 \fIservice\fR using the \fItopic\fR and \fIitem\fR specified.  Typically,
@@ -92,6 +99,13 @@ specific but can be a command to the server or the name of a file to work
 on.  The \fIitem\fR is also application specific and is often not used, but
 it must always be non-null.  The \fIdata\fR field is given to the remote
 application.
+.VS 8.6
+Without the \fB\-binary\fR option all data will be sent in unicode. For
+dde clients which don't implement the CF_UNICODE clipboard format, this
+will automatically be translated to the system encoding. You can use 
+the \fB\-binary\fR option in combination with the result of
+\fBencoding convertto\fR to send data in any other encoding.
+.VE 8.6
 .TP
 \fBdde request\fR ?\fB\-binary\fR? \fIservice topic item\fR
 .
@@ -125,6 +139,7 @@ command returns an error message if the script did not run, unless the
 \fB\-async\fR flag was used, in which case the command returns immediately
 with no error.  This command can be used to replace send on Windows.
 .SH "DDE AND TCL"
+.PP
 A Tcl interpreter always has a service name of \fBTclEval\fR.  Each
 different interpreter of all running Tcl applications must be
 given a unique
@@ -146,7 +161,7 @@ unpredictable results.
 .PP
 An external application which wishes to run a script in Tcl should have
 that script store its result in a variable, run the \fBdde execute\fR
-command, and the run \fBdde request\fR to get the value of the
+command, and then run \fBdde request\fR to get the value of the
 variable.
 .PP
 When using DDE, be careful to ensure that the event queue is flushed
@@ -157,13 +172,18 @@ If for any reason the event queue is not flushed, DDE commands may
 hang until the event queue is flushed.  This can create a deadlock
 situation.
 .SH EXAMPLE
+.PP
 This asks Internet Explorer (which must already be running) to go to a
 particularly important website:
+.PP
 .CS
 package require dde
-\fBdde execute\fR iexplore WWW_OpenURL http://www.tcl.tk/
+\fBdde execute\fR -async iexplore WWW_OpenURL http://www.tcl.tk/
 .CE
 .SH "SEE ALSO"
 tk(n), winfo(n), send(n)
 .SH KEYWORDS
 application, dde, name, remote execution
+'\"Local Variables:
+'\"mode: nroff
+'\"End:

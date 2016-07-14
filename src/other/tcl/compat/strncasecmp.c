@@ -1,4 +1,4 @@
-/* 
+/*
  * strncasecmp.c --
  *
  *	Source code for the "strncasecmp" library routine.
@@ -8,8 +8,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclPort.h"
@@ -20,7 +18,7 @@
  * sequences.
  */
 
-static unsigned char charmap[] = {
+static const unsigned char charmap[] = {
     0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
     0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
@@ -59,8 +57,8 @@ static unsigned char charmap[] = {
  * Here are the prototypes just in case they are not included in tclPort.h.
  */
 
-int		strncasecmp(CONST char *s1, CONST char *s2, size_t n);
-int		strcasecmp(CONST char *s1, CONST char *s2);
+int		strncasecmp(const char *s1, const char *s2, size_t n);
+int		strcasecmp(const char *s1, const char *s2);
 
 /*
  *----------------------------------------------------------------------
@@ -81,8 +79,8 @@ int		strcasecmp(CONST char *s1, CONST char *s2);
 
 int
 strcasecmp(
-    CONST char *s1,		/* First string. */
-    CONST char *s2)		/* Second string. */
+    const char *s1,		/* First string. */
+    const char *s2)		/* Second string. */
 {
     unsigned char u1, u2;
 
@@ -116,8 +114,8 @@ strcasecmp(
 
 int
 strncasecmp(
-    CONST char *s1,		/* First string. */
-    CONST char *s2,		/* Second string. */
+    const char *s1,		/* First string. */
+    const char *s2,		/* Second string. */
     size_t length)		/* Maximum number of characters to compare
 				 * (stop earlier if the end of either string
 				 * is reached). */

@@ -10,13 +10,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest
-    namespace import -force ::tcltest::*
-}
+package require tcltest 2
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testgetassocdata [llength [info commands testgetassocdata]]
 testConstraint testsetassocdata [llength [info commands testsetassocdata]]
@@ -35,15 +34,21 @@ test assocd-1.4 {testing setting assoc data} testsetassocdata {
    testsetassocdata abc "abc d e f"
 } ""
 
-test assocd-2.1 {testing getting assoc data} testgetassocdata {
-   testgetassocdata a
-} 2
-test assocd-2.2 {testing getting assoc data} testgetassocdata {
-   testgetassocdata 123
-} 456
-test assocd-2.3 {testing getting assoc data} testgetassocdata {
+test assocd-2.1 {testing getting assoc data} -setup {
+    testsetassocdata a 2
+} -constraints {testgetassocdata} -body {
+    testgetassocdata a
+} -result 2
+test assocd-2.2 {testing getting assoc data} -setup {
+    testsetassocdata 123 456
+} -constraints {testgetassocdata} -body {
+    testgetassocdata 123
+} -result 456
+test assocd-2.3 {testing getting assoc data} -setup {
+   testsetassocdata abc "abc d e f"
+} -constraints {testgetassocdata} -body {
    testgetassocdata abc
-} {abc d e f}
+} -result "abc d e f"
 test assocd-2.4 {testing getting assoc data} testgetassocdata {
    testgetassocdata xxx
 } ""
@@ -59,5 +64,5 @@ test assocd-3.3 {testing deleting assoc data} testdelassocdata {
 } {0 {}}
 
 # cleanup
-::tcltest::cleanupTests
+cleanupTests
 return

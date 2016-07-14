@@ -6,10 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_CreateTrace 3 "" Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_CreateTrace, Tcl_CreateObjTrace, Tcl_DeleteTrace \- arrange for command execution to be traced
@@ -65,6 +63,7 @@ interpreter.
 .PP
 \fIobjProc\fR should have arguments and result that match the type,
 \fBTcl_CmdObjTraceProc\fR:
+.PP
 .CS
 typedef int \fBTcl_CmdObjTraceProc\fR( 
         \fBClientData\fR \fIclientData\fR,
@@ -73,8 +72,9 @@ typedef int \fBTcl_CmdObjTraceProc\fR(
         const char *\fIcommand\fR,
         \fBTcl_Command\fR \fIcommandToken\fR,
         int \fIobjc\fR,
-        \fBTcl_Obj\fR *const \fIobjv\fR[] );
+        \fBTcl_Obj\fR *const \fIobjv\fR[]);
 .CE
+.PP
 The \fIclientData\fR and \fIinterp\fR parameters are copies of the
 corresponding arguments given to \fBTcl_CreateTrace\fR.
 \fIClientData\fR typically points to an application-specific data
@@ -141,10 +141,12 @@ When \fBTcl_DeleteTrace\fR is called, the interpreter invokes the
 \fIdeleteProc\fR that was passed as a parameter to
 \fBTcl_CreateObjTrace\fR.  The \fIdeleteProc\fR must match the type,
 \fBTcl_CmdObjTraceDeleteProc\fR:
+.PP
 .CS
 typedef void \fBTcl_CmdObjTraceDeleteProc\fR( 
         \fBClientData\fR \fIclientData\fR);
 .CE
+.PP
 The \fIclientData\fR parameter will be the same as the
 \fIclientData\fR parameter that was originally passed to
 \fBTcl_CreateObjTrace\fR.
@@ -155,8 +157,9 @@ compatibility with code that was developed for older versions of the
 Tcl interpreter.  It is similar to \fBTcl_CreateObjTrace\fR, except
 that its \fIproc\fR parameter should have arguments and result that
 match the type \fBTcl_CmdTraceProc\fR:
+.PP
 .CS
-typedef void Tcl_CmdTraceProc(
+typedef void \fBTcl_CmdTraceProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         int \fIlevel\fR,
@@ -166,6 +169,7 @@ typedef void Tcl_CmdTraceProc(
         int \fIargc\fR,
         const char *\fIargv\fR[]);
 .CE
+.PP
 The parameters to the \fIproc\fR callback are similar to those of the
 \fIobjProc\fR callback above. The \fIcommandToken\fR is
 replaced with \fIcmdProc\fR, a pointer to the (string-based) command

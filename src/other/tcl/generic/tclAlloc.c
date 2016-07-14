@@ -14,8 +14,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 /*
@@ -28,18 +26,12 @@
 
 #if USE_TCLALLOC
 
-#ifdef TCL_DEBUG
-#   define DEBUG
-/* #define MSTATS */
-#   define RCHECK
-#endif
-
 /*
  * We should really make use of AC_CHECK_TYPE(caddr_t) here, but it can wait
  * until Tcl uses config.h properly.
  */
 
-#if defined(_MSC_VER) || defined(__MINGW32__) || defined(__BORLANDC__)
+#if defined(_MSC_VER) || defined(__MSVCRT__) || defined(__BORLANDC__)
 typedef unsigned long caddr_t;
 #endif
 
@@ -62,7 +54,7 @@ union overhead {
 	unsigned char index;		/* bucket # */
 	unsigned char unused;		/* unused */
 	unsigned char magic1;		/* other magic number */
-#ifdef RCHECK
+#ifndef NDEBUG
 	unsigned short rmagic;		/* range magic number */
 	unsigned long size;		/* actual block size */
 	unsigned short unused2;		/* padding to 8-byte align */
@@ -79,8 +71,8 @@ union overhead {
 #define MAGIC		0xef	/* magic # on accounting info */
 #define RMAGIC		0x5555	/* magic # on range info */
 
-#ifdef RCHECK
-#define	RSLOP		sizeof (unsigned short)
+#ifndef NDEBUG
+#define	RSLOP		sizeof(unsigned short)
 #else
 #define	RSLOP		0
 #endif
@@ -142,10 +134,9 @@ static int allocInit = 0;
  */
 
 static	unsigned int numMallocs[NBUCKETS+1];
-#include <stdio.h>
 #endif
 
-#if defined(DEBUG) || defined(RCHECK)
+#if !defined(NDEBUG)
 #define	ASSERT(p)	if (!(p)) Tcl_Panic(# p)
 #define RANGE_ASSERT(p) if (!(p)) Tcl_Panic(# p)
 #else
@@ -157,7 +148,7 @@ static	unsigned int numMallocs[NBUCKETS+1];
  * Prototypes for functions used only in this file.
  */
 
-static void 		MoreCore(int bucket);
+static void		MoreCore(int bucket);
 
 /*
  *-------------------------------------------------------------------------
@@ -302,7 +293,7 @@ TclpAlloc(
 	numMallocs[NBUCKETS]++;
 #endif
 
-#ifdef RCHECK
+#ifndef NDEBUG
 	/*
 	 * Record allocated size of block and bound space with magic numbers.
 	 */
@@ -360,7 +351,7 @@ TclpAlloc(
     numMallocs[bucket]++;
 #endif
 
-#ifdef RCHECK
+#ifndef NDEBUG
     /*
      * Record allocated size of block and bound space with magic numbers.
      */
@@ -466,7 +457,7 @@ TclpFree(
     }
 
     Tcl_MutexLock(allocMutexPtr);
-    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof (union overhead));
+    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof(union overhead));
 
     ASSERT(overPtr->overMagic0 == MAGIC);	/* make sure it was in use */
     ASSERT(overPtr->overMagic1 == MAGIC);
@@ -535,7 +526,7 @@ TclpRealloc(
 
     Tcl_MutexLock(allocMutexPtr);
 
-    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof (union overhead));
+    overPtr = (union overhead *)((caddr_t)oldPtr - sizeof(union overhead));
 
     ASSERT(overPtr->overMagic0 == MAGIC);	/* make sure it was in use */
     ASSERT(overPtr->overMagic1 == MAGIC);
@@ -580,7 +571,7 @@ TclpRealloc(
 	numMallocs[NBUCKETS]++;
 #endif
 
-#ifdef RCHECK
+#ifndef NDEBUG
 	/*
 	 * Record allocated size of block and update magic number bounds.
 	 */
@@ -622,7 +613,7 @@ TclpRealloc(
      * Ok, we don't have to copy, it fits as-is
      */
 
-#ifdef RCHECK
+#ifndef NDEBUG
     overPtr->realBlockSize = (numBytes + RSLOP - 1) & ~(RSLOP - 1);
     BLOCK_END(overPtr) = RMAGIC;
 #endif
@@ -705,7 +696,7 @@ char *
 TclpAlloc(
     unsigned int numBytes)	/* Number of bytes to allocate. */
 {
-    return (char*) malloc(numBytes);
+    return (char *) malloc(numBytes);
 }
 
 /*
@@ -753,7 +744,7 @@ TclpRealloc(
     char *oldPtr,		/* Pointer to alloced block. */
     unsigned int numBytes)	/* New size of memory. */
 {
-    return (char*) realloc(oldPtr, numBytes);
+    return (char *) realloc(oldPtr, numBytes);
 }
 
 #endif /* !USE_TCLALLOC */

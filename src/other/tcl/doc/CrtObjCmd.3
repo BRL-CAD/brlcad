@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_CreateObjCommand 3 8.0 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_CreateObjCommand, Tcl_DeleteCommand, Tcl_DeleteCommandFromToken, Tcl_GetCommandInfo, Tcl_GetCommandInfoFromToken, Tcl_SetCommandInfo, Tcl_SetCommandInfoFromToken, Tcl_GetCommandName, Tcl_GetCommandFullName, Tcl_GetCommandFromObj \- implement new commands in C
@@ -66,7 +64,7 @@ The command must not have been deleted.
 Pointer to structure containing various information about a
 Tcl command.
 .AP Tcl_Obj *objPtr in
-Object containing the name of a Tcl command.
+Value containing the name of a Tcl command.
 .BE
 .SH DESCRIPTION
 .PP
@@ -90,22 +88,24 @@ the process of being deleted, then it does not create a new command
 and it returns NULL.
 \fIproc\fR should have arguments and result that match the type
 \fBTcl_ObjCmdProc\fR:
+.PP
 .CS
-typedef int Tcl_ObjCmdProc(
+typedef int \fBTcl_ObjCmdProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Interp *\fIinterp\fR,
         int \fIobjc\fR,
         Tcl_Obj *const \fIobjv\fR[]);
 .CE
+.PP
 When \fIproc\fR is invoked, the \fIclientData\fR and \fIinterp\fR parameters
 will be copies of the \fIclientData\fR and \fIinterp\fR arguments given to
 \fBTcl_CreateObjCommand\fR.  Typically, \fIclientData\fR points to an
 application-specific data structure that describes what to do when the
 command procedure is invoked. \fIObjc\fR and \fIobjv\fR describe the
-arguments to the command, \fIobjc\fR giving the number of argument objects
+arguments to the command, \fIobjc\fR giving the number of argument values
 (including the command name) and \fIobjv\fR giving the values of the
 arguments.  The \fIobjv\fR array will contain \fIobjc\fR values, pointing to
-the argument objects.  Unlike \fIargv\fR[\fIargv\fR] used in a
+the argument values.  Unlike \fIargv\fR[\fIargv\fR] used in a
 string-based command procedure, \fIobjv\fR[\fIobjc\fR] will not contain NULL.
 .PP
 Additionally, when \fIproc\fR is invoked, it must not modify the contents
@@ -115,9 +115,9 @@ cause memory to be lost and the runtime stack to be corrupted.  The
 \fBconst\fR in the declaration of \fIobjv\fR will cause ANSI-compliant
 compilers to report any such attempted assignment as an error.  However,
 it is acceptable to modify the internal representation of any individual
-object argument.  For instance, the user may call
+value argument.  For instance, the user may call
 \fBTcl_GetIntFromObj\fR on \fIobjv\fR[\fB2\fR] to obtain the integer
-representation of that object; that call may change the type of the object
+representation of that value; that call may change the type of the value
 that \fIobjv\fR[\fB2\fR] points at, but will not change where
 \fIobjv\fR[\fB2\fR] points.
 .PP
@@ -133,7 +133,7 @@ of the command,
 and in the case of \fBTCL_ERROR\fR this gives an error message.
 Before invoking a command procedure,
 \fBTcl_EvalObjEx\fR sets interpreter's result to
-point to an object representing an empty string, so simple
+point to a value representing an empty string, so simple
 commands can return an empty result by doing nothing at all.
 .PP
 The contents of the \fIobjv\fR array belong to Tcl and are not
@@ -161,10 +161,12 @@ or by replacing \fIname\fR in another call to \fBTcl_CreateObjCommand\fR.
 application an opportunity to release any structures associated
 with the command.  \fIDeleteProc\fR should have arguments and
 result that match the type \fBTcl_CmdDeleteProc\fR:
+.PP
 .CS
-typedef void Tcl_CmdDeleteProc(
+typedef void \fBTcl_CmdDeleteProc\fR(
         ClientData \fIclientData\fR);
 .CE
+.PP
 The \fIclientData\fR argument will be the same as the \fIclientData\fR
 argument passed to \fBTcl_CreateObjCommand\fR.
 .PP
@@ -199,6 +201,7 @@ Otherwise it places information about the command
 in the \fBTcl_CmdInfo\fR structure
 pointed to by \fIinfoPtr\fR and returns 1.
 A \fBTcl_CmdInfo\fR structure has the following fields:
+.PP
 .CS
 typedef struct Tcl_CmdInfo {
     int \fIisNativeObjectProc\fR;
@@ -209,8 +212,9 @@ typedef struct Tcl_CmdInfo {
     Tcl_CmdDeleteProc *\fIdeleteProc\fR;
     ClientData \fIdeleteData\fR;
     Tcl_Namespace *\fInamespacePtr\fR;
-} Tcl_CmdInfo;
+} \fBTcl_CmdInfo\fR;
 .CE
+.PP
 The \fIisNativeObjectProc\fR field has the value 1
 if \fBTcl_CreateObjCommand\fR was called to register the command;
 it is 0 if only \fBTcl_CreateCommand\fR was called.
@@ -221,7 +225,7 @@ if \fIisNativeObjectProc\fR has the value 1.
 The fields \fIobjProc\fR and \fIobjClientData\fR
 have the same meaning as the \fIproc\fR and \fIclientData\fR
 arguments to \fBTcl_CreateObjCommand\fR;
-they hold information about the object-based command procedure
+they hold information about the value-based command procedure
 that the Tcl interpreter calls to implement the command.
 The fields \fIproc\fR and \fIclientData\fR
 hold information about the string-based command procedure
@@ -231,7 +235,7 @@ this is the procedure passed to it;
 otherwise, this is a compatibility procedure
 registered by \fBTcl_CreateObjCommand\fR
 that simply calls the command's
-object-based procedure after converting its string arguments to Tcl objects.
+value-based procedure after converting its string arguments to Tcl values.
 The field \fIdeleteData\fR is the ClientData value
 to pass to \fIdeleteProc\fR;  it is normally the same as
 \fIclientData\fR but may be set independently using the
@@ -286,14 +290,13 @@ they need to keep it for a long time.
 \fBTcl_GetCommandFullName\fR produces the fully qualified name
 of a command from a command token.  
 The name, including all namespace prefixes,
-is appended to the object specified by \fIobjPtr\fR.
+is appended to the value specified by \fIobjPtr\fR.
 .PP
 \fBTcl_GetCommandFromObj\fR returns a token for the command
 specified by the name in a \fBTcl_Obj\fR.
 The command name is resolved relative to the current namespace.
 Returns NULL if the command is not found.
 .SH "SEE ALSO"
-Tcl_CreateCommand, Tcl_ResetResult, Tcl_SetObjResult
-
+Tcl_CreateCommand(3), Tcl_ResetResult(3), Tcl_SetObjResult(3)
 .SH KEYWORDS
-bind, command, create, delete, namespace, object
+bind, command, create, delete, namespace, value

@@ -35,13 +35,13 @@
  * Unknown-error explanation.
  */
 
-static char unk[] = "*** unknown regex error code 0x%x ***";
+static const char unk[] = "*** unknown regex error code 0x%x ***";
 
 /*
  * Struct to map among codes, code names, and explanations.
  */
 
-static struct rerr {
+static const struct rerr {
     int code;
     const char *name;
     const char *explain;
@@ -62,7 +62,7 @@ regerror(
     char *errbuf,		/* Result buffer (unless errbuf_size==0) */
     size_t errbuf_size)		/* Available space in errbuf, can be 0 */
 {
-    struct rerr *r;
+    const struct rerr *r;
     const char *msg;
     char convbuf[sizeof(unk)+50]; /* 50 = plenty for int */
     size_t len;

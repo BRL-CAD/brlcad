@@ -12,13 +12,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::*
-}
+package require tcltest 2.1
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testexprlong   [llength [info commands testexprlong]]
 testConstraint testexprdouble [llength [info commands testexprdouble]]
@@ -144,7 +143,7 @@ test expr-old-1.50 {integer operators} {expr +36} 36
 test expr-old-1.51 {integer operators} {expr +--++36} 36
 test expr-old-1.52 {integer operators} {expr +36%+5} 1
 test expr-old-1.53 {integer operators} {
-    catch {unset x}
+    unset -nocomplain x
     set x yes
     list [expr {1 && $x}] [expr {$x && 1}] \
          [expr {0 || $x}] [expr {$x || 0}]
@@ -452,7 +451,7 @@ test expr-old-23.3 {double quotes} {
 test expr-old-23.4 {double quotes} {expr {"11\}\}22"}} 11}}22
 test expr-old-23.5 {double quotes} {expr {"\*bc"}} {*bc}
 test expr-old-23.6 {double quotes} {
-    catch {unset bogus__}
+    unset -nocomplain bogus__
     list [catch {expr {"$bogus__"}} msg] $msg
 } {1 {can't read "bogus__": no such variable}}
 test expr-old-23.7 {double quotes} {
@@ -501,7 +500,7 @@ test expr-old-26.2 {error conditions} -body {
 test expr-old-26.3 {error conditions} -body {
     expr 2+4*(
 } -returnCodes error -match glob -result *
-catch {unset _non_existent_}
+unset -nocomplain _non_existent_
 test expr-old-26.4 {error conditions} {
     list [catch {expr 2+$_non_existent_} msg] $msg
 } {1 {can't read "_non_existent_": no such variable}}
@@ -580,7 +579,7 @@ test expr-old-27.4 {cancelled evaluation} {
     expr {1?2:[set a 2]}
     set a
 } 1
-catch {unset x}
+unset -nocomplain x
 test expr-old-27.5 {cancelled evaluation} {
     list [catch {expr {[info exists x] && $x}} msg] $msg
 } {0 0}

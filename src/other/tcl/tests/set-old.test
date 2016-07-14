@@ -12,8 +12,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
@@ -21,7 +19,7 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 }
 
 proc ignore args {}
-
+
 # Simple variable operations.
 
 catch {unset a}
@@ -206,7 +204,7 @@ test set-old-7.2 {unset command} {
     list [catch {unset} msg] $msg
 } {0 {}}
 # Used to return:
-#{1 {wrong # args: should be "unset ?-nocomplain? ?--? ?varName varName ...?"}}
+#{1 {wrong # args: should be "unset ?-nocomplain? ?--? ?varName ...?"}}
 test set-old-7.3 {unset command} {
     catch {unset a}
     list [catch {unset a} msg] $msg
@@ -307,15 +305,20 @@ test set-old-7.18 {unset command, -nocomplain (no abbreviation)} {
     catch {unset -nocomp}
     list [info exists -nocomp] [catch {unset -nocomp}]
 } {0 1}
+test set-old-7.19 {unset command, both switches} {
+    set -- val
+    list [info exists --] [catch {unset -nocomplain --}] [info exists --]\
+	[catch {unset -nocomplain -- --}] [info exists --]
+} {1 0 1 0 0}
 
 # Array command.
 
 test set-old-8.1 {array command} {
     list [catch {array} msg] $msg
-} {1 {wrong # args: should be "array option arrayName ?arg ...?"}}
+} {1 {wrong # args: should be "array subcommand ?arg ...?"}}
 test set-old-8.2 {array command} {
     list [catch {array a} msg] $msg
-} {1 {wrong # args: should be "array option arrayName ?arg ...?"}}
+} {1 {wrong # args: should be "array anymore arrayName searchId"}}
 test set-old-8.3 {array command} {
     catch {unset a}
     list [catch {array anymore a b} msg] $msg
@@ -337,7 +340,7 @@ test set-old-8.6 {array command} {
     catch {unset a}
     set a(22) 3
     list [catch {array gorp a} msg] $msg
-} {1 {bad option "gorp": must be anymore, donesearch, exists, get, names, nextelement, set, size, startsearch, statistics, or unset}}
+} {1 {unknown or ambiguous subcommand "gorp": must be anymore, donesearch, exists, get, names, nextelement, set, size, startsearch, statistics, or unset}}
 test set-old-8.7 {array command, anymore option} {
     catch {unset a}
     list [catch {array anymore a x} msg] $msg
@@ -387,7 +390,7 @@ test set-old-8.14 {array command, exists option, array doesn't exist yet but has
 } {0 0}
 test set-old-8.15 {array command, get option} {
     list [catch {array get} msg] $msg
-} {1 {wrong # args: should be "array option arrayName ?arg ...?"}}
+} {1 {wrong # args: should be "array get arrayName ?pattern?"}}
 test set-old-8.16 {array command, get option} {
     list [catch {array get a b c} msg] $msg
 } {1 {wrong # args: should be "array get arrayName ?pattern?"}}
@@ -671,9 +674,20 @@ test set-old-8.55 {array command, array names -glob} {
     list [catch {array names a -glob} msg] $msg
 } {0 -glob}
 test set-old-8.56 {array command, array statistics on a non-array} {
-	catch {unset a}
-	list [catch {array statistics a} msg] $msg
+    catch {unset a}
+    list [catch {array statistics a} msg] $msg
 } [list 1 "\"a\" isn't an array"]
+test set-old-8.57 {array command, array get with trivial pattern} {
+    catch {unset a}
+    set a(x) 1
+    set a(y) 2
+    array get a x
+} {x 1}
+test set-old-8.58 {array command, array set with LVT and odd length literal} {
+    list [catch {apply {{} {
+	array set a {b c d}
+    }}} msg] $msg
+} {1 {list must have an even number of elements}}
 
 test set-old-9.1 {ids for array enumeration} {
     catch {unset a}
@@ -788,7 +802,7 @@ test set-old-9.12 {array enumeration with traced undefined elements} {
 
 test set-old-10.1 {array enumeration errors} {
     list [catch {array start} msg] $msg
-} {1 {wrong # args: should be "array option arrayName ?arg ...?"}}
+} {1 {wrong # args: should be "array startsearch arrayName"}}
 test set-old-10.2 {array enumeration errors} {
     list [catch {array start a b} msg] $msg
 } {1 {wrong # args: should be "array startsearch arrayName"}}
@@ -906,14 +920,19 @@ test set-old-12.2 {cleanup on procedure return} {
     }
     foo
 } 23456
-
+
 # Must delete variables when done, since these arrays get used as
 # scalars by other tests.
 catch {unset a}
 catch {unset b}
 catch {unset c}
 catch {unset aVaRnAmE}
+catch {rename foo {}}
 
 # cleanup
 ::tcltest::cleanupTests
 return 
+
+# Local Variables:
+# mode: tcl
+# End:

@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_InitStubs 3 8.1 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_InitStubs \- initialize the Tcl stubs mechanism
@@ -65,9 +63,9 @@ Define the \fBUSE_TCL_STUBS\fR symbol.  Typically, you would include the
 \fB\-DUSE_TCL_STUBS\fR flag when compiling the extension.
 .IP 3) 5
 Link the extension with the Tcl stubs library instead of the standard
-Tcl library.  On Unix platforms, the library name is
-\fIlibtclstub8.1.a\fR; on Windows platforms, the library name is
-\fItclstub81.lib\fR.
+Tcl library.  For example, to use the Tcl 8.6 ABI on Unix platforms,
+the library name is \fIlibtclstub8.6.a\fR; on Windows platforms, the
+library name is \fItclstub86.lib\fR.
 .PP
 If the extension also requires the Tk API, it must also call
 \fBTk_InitStubs\fR to initialize the Tk stubs interface and link

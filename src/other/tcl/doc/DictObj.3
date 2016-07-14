@@ -4,14 +4,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_DictObj 3 8.5 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-Tcl_NewDictObj, Tcl_DictObjPut, Tcl_DictObjGet, Tcl_DictObjRemove, Tcl_DictObjSize, Tcl_DictObjFirst, Tcl_DictObjNext, Tcl_DictObjDone, Tcl_DictObjPutKeyList, Tcl_DictObjRemoveKeyList \- manipulate Tcl objects as dictionaries
+Tcl_NewDictObj, Tcl_DictObjPut, Tcl_DictObjGet, Tcl_DictObjRemove, Tcl_DictObjSize, Tcl_DictObjFirst, Tcl_DictObjNext, Tcl_DictObjDone, Tcl_DictObjPutKeyList, Tcl_DictObjRemoveKeyList \- manipulate Tcl values as dictionaries
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -49,23 +47,23 @@ int
 .SH ARGUMENTS
 .AS Tcl_DictSearch "**valuePtrPtr" in/out
 .AP Tcl_Interp *interp in
-If an error occurs while converting an object to be a dictionary object,
-an error message is left in the interpreter's result object
+If an error occurs while converting a value to be a dictionary value,
+an error message is left in the interpreter's result value
 unless \fIinterp\fR is NULL.
 .AP Tcl_Obj *dictPtr in/out
-Points to the dictionary object to be manipulated.
-If \fIdictPtr\fR does not already point to a dictionary object,
+Points to the dictionary value to be manipulated.
+If \fIdictPtr\fR does not already point to a dictionary value,
 an attempt will be made to convert it to one.
 .AP Tcl_Obj *keyPtr in
 Points to the key for the key/value pair being manipulated within the
-dictionary object.
+dictionary value.
 .AP Tcl_Obj **keyPtrPtr out
 Points to a variable that will have the key from a key/value pair
 placed within it.  May be NULL to indicate that the caller is not
 interested in the key.
 .AP Tcl_Obj *valuePtr in
-Points to the value for the key/value pair being manipulate within the
-dictionary object (or sub-object, in the case of
+Points to the value for the key/value pair being manipulated within the
+dictionary value (or sub-value, in the case of
 \fBTcl_DictObjPutKeyList\fR.)
 .AP Tcl_Obj **valuePtrPtr out
 Points to a variable that will have the value from a key/value pair
@@ -90,15 +88,15 @@ completed, and a zero otherwise.
 Indicates the number of keys that will be supplied in the \fIkeyv\fR
 array.
 .AP "Tcl_Obj *const" *keyv in
-Array of \fIkeyc\fR pointers to objects that
+Array of \fIkeyc\fR pointers to values that
 \fBTcl_DictObjPutKeyList\fR and \fBTcl_DictObjRemoveKeyList\fR will
 use to locate the key/value pair to manipulate within the
-sub-dictionaries of the main dictionary object passed to them.
+sub-dictionaries of the main dictionary value passed to them.
 .BE
 
 .SH DESCRIPTION
 .PP
-Tcl dictionary objects have an internal representation that supports
+Tcl dictionary values have an internal representation that supports
 efficient mapping from keys to values and which guarantees that the
 particular ordering of keys within the dictionary remains the same
 modulo any keys being deleted (which removes them from the order) or
@@ -108,11 +106,11 @@ keys of the dictionary, and each will be followed (in the odd-valued
 index) by the value associated with that key.
 .PP
 The procedures described in this man page are used to
-create, modify, index, and iterate over dictionary objects from C code.
+create, modify, index, and iterate over dictionary values from C code.
 .PP
-\fBTcl_NewDictObj\fR creates a new, empty dictionary object.  The
-string representation of the object will be invalid, and the reference
-count of the object will be zero.
+\fBTcl_NewDictObj\fR creates a new, empty dictionary value.  The
+string representation of the value will be invalid, and the reference
+count of the value will be zero.
 .PP
 \fBTcl_DictObjGet\fR looks up the given key within the given
 dictionary and writes a pointer to the value associated with that key
@@ -219,7 +217,7 @@ if (\fBTcl_DictObjFirst\fR(interp, objPtr, &search,
 for (; !done ; \fBTcl_DictObjNext\fR(&search, &key, &value, &done)) {
     /*
      * Note that strcmp() is not a good way of comparing
-     * objects and is just used here for demonstration
+     * values and is just used here for demonstration
      * purposes.
      */
     if (!strcmp(Tcl_GetString(key), Tcl_GetString(value))) {
@@ -233,4 +231,4 @@ return TCL_OK;
 .SH "SEE ALSO"
 Tcl_NewObj, Tcl_DecrRefCount, Tcl_IncrRefCount, Tcl_InitObjHashTable
 .SH KEYWORDS
-dict, dict object, dictionary, dictionary object, hash table, iteration, object
+dict, dict value, dictionary, dictionary value, hash table, iteration, value

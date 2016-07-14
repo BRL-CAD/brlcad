@@ -5,8 +5,6 @@
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # Copyright (c) 2000 by Ajuba Solutions
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
 # Note that there are several places where the value of
 # tcltest::currentFailure is stored/reset in the -setup/-cleanup
@@ -82,10 +80,7 @@ proc slave {msgVar args} {
 
     # Need to capture output in msg
 
-    set code [catch {i eval {source $argv0}} foo]
-if $code {
-#puts "$code: $foo\n$::errorInfo"
-}
+    set code [catch {i eval {source $argv0}}]
     i eval {close $tcltest::outputChannel}
     interp delete [namespace current]::i
     set f [open $of]
@@ -101,8 +96,6 @@ if $code {
 	append msg \n$err
     }
     return $code
-
-#    return [catch {uplevel 1 [linsert $args 0  exec [interpreter]]} msg]
 }
 test tcltest-2.0 {tcltest (verbose default - 'b')} {unixOrPc} {
     set result [slave msg test.tcl]
@@ -149,7 +142,7 @@ test tcltest-2.5a {tcltest -verbose 'pass skip body'} {unixOrPc} {
 } {0 1 1 1 1}
 
 test tcltest-2.6 {tcltest -verbose 't'}  {
-    -constraints {unixOrPc} 
+    -constraints {unixOrPc}
     -body {
 	set result [slave msg test.tcl -verbose 't']
 	list $result $msg
@@ -159,7 +152,7 @@ test tcltest-2.6 {tcltest -verbose 't'}  {
 }
 
 test tcltest-2.6a {tcltest -verbose 'start'}  {
-    -constraints {unixOrPc} 
+    -constraints {unixOrPc}
     -body {
 	set result [slave msg test.tcl -verbose start]
 	list $result $msg
@@ -176,7 +169,7 @@ test tcltest-2.7 {tcltest::verbose}  {
 	verbose foo
 	set newVerbosity [verbose]
 	verbose $oldVerbosity
-	list $currentVerbosity $newVerbosity 
+	list $currentVerbosity $newVerbosity
     }
     -result {body {}}
 }
@@ -224,7 +217,7 @@ test tcltest-3.5 {tcltest::match}  {
     }
     -result {foo bar}
 }
-	
+
 # -skip, [skip]
 test tcltest-4.1 {tcltest -skip 'a*'} {unixOrPc} {
     set result [slave msg test.tcl -skip a* -verbose 'ps']
@@ -306,8 +299,8 @@ test tcltest-5.3 {testConstraint - constraint empty (tcltest::safeFetch)}  {
 #    -result {{} tcltestFakeConstraint1 {tcltestFakeConstraint1 tcltestFakeConstraint2}}
 #    -cleanup {
 #	set ::tcltest::constraintsSpecified $constraintlist
-#	unset ::tcltest::testConstraints(tcltestFakeConstraint1) 
-#	unset ::tcltest::testConstraints(tcltestFakeConstraint2) 
+#	unset ::tcltest::testConstraints(tcltestFakeConstraint1)
+#	unset ::tcltest::testConstraints(tcltestFakeConstraint2)
 #    }
 #}
 
@@ -355,7 +348,7 @@ set printerror [makeFile {
     ::tcltest::PrintError "a really really long string containing a \
 	    \"Path/that/is/really/long/and/contains/no/spaces\""
     ::tcltest::PrintError "a really really long string containing a \
-	    \"Really/Long/Path/that/contains/no/spaces/and/is/longer/than/eighty/characters/to/see/what/happens\"" 
+	    \"Really/Long/Path/that/contains/no/spaces/and/is/longer/than/eighty/characters/to/see/what/happens\""
     ::tcltest::PrintError "Problem renaming file: error renaming \"Z:/ws/tcl8.2/win32-ix86/tests/core\" to \"Z:/ws/tcl8.2/win32-ix86/tests/movecore-core\""
     exit
 } printerror.tcl]
@@ -374,7 +367,7 @@ test tcltest-6.2 {tcltest -outfile a.tmp} {unixOrPc unixExecs} {
     set result1 [catch {exec grep "a test" a.tmp}]
     set result2 [catch {exec grep "a really" a.tmp}]
     list [regexp "a test" $msg] [regexp "a really" $msg] \
-	    $result1 $result2 [file exists a.tmp] [file delete a.tmp] 
+	    $result1 $result2 [file exists a.tmp] [file delete a.tmp]
 } {0 1 0 1 1 {}}
 test tcltest-6.3 {tcltest -errfile a.tmp} {unixOrPc unixExecs} {
     slave msg $printerror -errfile a.tmp
@@ -420,7 +413,7 @@ test tcltest-6.6 {tcltest::errorFile (implicit errorChannel)} {
 	set f2 [errorFile $ef]
 	set f3 [errorChannel]
 	set f4 [errorFile]
-	subst {$f0;$f1;$f2;$f3;$f4} 
+	subst {$f0;$f1;$f2;$f3;$f4}
     }
     -result {stderr;stderr;.*efile;file[0-9a-f]+;.*efile}
     -match regexp
@@ -456,7 +449,7 @@ test tcltest-6.8 {tcltest::outputFile (implicit outputFile)} {
 	set f2 [outputFile $ef]
 	set f3 [outputChannel]
 	set f4 [outputFile]
-	subst {$f0;$f1;$f2;$f3;$f4} 
+	subst {$f0;$f1;$f2;$f3;$f4}
     }
     -result {stdout;stdout;.*efile;file[0-9a-f]+;.*efile}
     -match regexp
@@ -551,13 +544,13 @@ set notWriteableDir [file join [temporaryDirectory] notwriteable]
 makeDirectory notreadable
 makeDirectory notwriteable
 switch -- $::tcl_platform(platform) {
-    "unix" {
+    unix {
 	file attributes $notReadableDir -permissions 00333
 	file attributes $notWriteableDir -permissions 00555
     }
     default {
 	catch {file attributes $notWriteableDir -readonly 1}
-	catch {testchmod 000 $notWriteableDir}
+	catch {testchmod 0 $notWriteableDir}
     }
 }
 test tcltest-8.3 {tcltest a.tcl -tmpdir notReadableDir} {
@@ -718,18 +711,18 @@ test tcltest-8.60 {::workingDirectory}  {
 
 # clean up from directory testing
 
-switch $::tcl_platform(platform) {
-    "unix" {
+switch -- $::tcl_platform(platform) {
+    unix {
 	file attributes $notReadableDir -permissions 777
 	file attributes $notWriteableDir -permissions 777
     }
     default {
-	catch {testchmod 777 $notWriteableDir}
+	catch {testchmod 0o777 $notWriteableDir}
 	catch {file attributes $notWriteableDir -readonly 0}
     }
 }
 
-file delete -force $notReadableDir $notWriteableDir
+file delete -force -- $notReadableDir $notWriteableDir
 removeFile a.tcl
 removeFile thisdirectoryisafile
 removeDirectory normaldirectory
@@ -765,7 +758,7 @@ test tcltest-9.3 {matchFiles}  {
 	set new [matchFiles]
 	matchFiles $old
 	list $current $new
-    } 
+    }
     -result {foo bar}
 }
 
@@ -778,7 +771,7 @@ test tcltest-9.4 {skipFiles} {
 	set new [skipFiles]
 	skipFiles $old
 	list $current $new
-    } 
+    }
     -result {foo bar}
 }
 
@@ -1152,8 +1145,8 @@ test tcltest-19.1 {TCLTEST_OPTIONS default} -setup {
     } -cleanup {
 	interp delete slave2
 	interp delete slave1
-	if {$oldoptions == "none"} {
-	    unset ::env(TCLTEST_OPTIONS) 
+	if {$oldoptions eq "none"} {
+	    unset ::env(TCLTEST_OPTIONS)
 	} else {
 	    set ::env(TCLTEST_OPTIONS) $oldoptions
 	}
@@ -1267,7 +1260,7 @@ test tcltest-21.6 {test command - setup occurs before cleanup & before script} {
 		}
 		set foo 1
 		set expected 2
-	    } 
+	    }
 	    -body {
 		incr foo
 		set foo
@@ -1431,7 +1424,7 @@ test tcltest-23.1 {makeFile} {
     }
     -cleanup {
 	file delete -force $mfdir \
-		[file join [temporaryDirectory] t1.tmp] 
+		[file join [temporaryDirectory] t1.tmp]
     }
     -result {1 1}
 }
@@ -1454,7 +1447,7 @@ test tcltest-23.2 {removeFile} {
     }
     -cleanup {
 	file delete -force $mfdir \
-		[file join [temporaryDirectory] t1.tmp] 
+		[file join [temporaryDirectory] t1.tmp]
     }
     -result {0 0}
 }

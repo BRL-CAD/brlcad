@@ -5,19 +5,17 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH registry n 1.1 registry "Tcl Bundled Packages"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
 registry \- Manipulate the Windows registry
 .SH SYNOPSIS
 .sp
-\fBpackage require registry 1.1\fR
+\fBpackage require registry 1.3\fR
 .sp
-\fBregistry \fIoption\fR \fIkeyName\fR ?\fIarg arg ...\fR?
+\fBregistry \fR?\fI\-mode\fR? \fIoption\fR \fIkeyName\fR ?\fIarg arg ...\fR?
 .BE
 .SH DESCRIPTION
 .PP
@@ -45,6 +43,14 @@ one of \fBHKEY_LOCAL_MACHINE\fR, \fBHKEY_USERS\fR,
 \fBHKEY_CURRENT_CONFIG\fR, \fBHKEY_PERFORMANCE_DATA\fR, or
 \fBHKEY_DYN_DATA\fR.  The \fIkeypath\fR can be one or more
 registry key names separated by backslash (\fB\e\fR) characters.
+.PP
+.VS 8.6
+The optional \fI\-mode\fR argument indicates which registry to work
+with; when it is \fB\-32bit\fR the 32-bit registry will be used, and
+when it is \fB\-64bit\fR the 64-bit registry will be used. If this
+argument is omitted, the system's default registry will be the subject
+of the requested operation.
+.VE 8.6
 .PP
 \fIOption\fR indicates what to do with the registry key name.  Any
 unique abbreviation for \fIoption\fR is acceptable.  The valid options
@@ -97,7 +103,7 @@ data, see \fBSUPPORTED TYPES\fR, below.
 If \fIpattern\fR is not specified, returns a list of names of all the
 subkeys of \fIkeyName\fR.  If \fIpattern\fR is specified, only those
 names matching \fIpattern\fR are returned.  Matching is determined
-using the same rules as for \fBstring\fR \fBmatch\fR.  If the
+using the same rules as for \fBstring match\fR.  If the
 specified \fIkeyName\fR does not exist, then an error is generated.
 .TP
 \fBregistry set \fIkeyName\fR ?\fIvalueName data \fR?\fItype\fR??
@@ -121,7 +127,7 @@ Returns the type of the value \fIvalueName\fR in the key
 If \fIpattern\fR is not specified, returns a list of names of all the
 values of \fIkeyName\fR.  If \fIpattern\fR is specified, only those
 names matching \fIpattern\fR are returned.  Matching is determined
-using the same rules as for \fBstring\fR \fBmatch\fR.
+using the same rules as for \fBstring match\fR.
 .SH "SUPPORTED TYPES"
 Each value under a key in the registry contains some data of a
 particular type in a type-specific representation.  The \fBregistry\fR
@@ -207,3 +213,6 @@ puts "$ext opens with $command"
 .CE
 .SH KEYWORDS
 registry
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

@@ -6,10 +6,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-'\"
-.so man.macros
 .TH lreplace n 7.4 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -21,7 +19,6 @@ lreplace \- Replace elements in a list with new elements
 .PP
 \fBlreplace\fR returns a new list formed by replacing one or more elements of
 \fIlist\fR with the \fIelement\fR arguments.
-.VS 8.5
 \fIfirst\fR and \fIlast\fR are index values specifying the first and
 last elements of the range to replace.
 The index values \fIfirst\fR and \fIlast\fR are interpreted
@@ -31,7 +28,6 @@ end of the list.
 0 refers to the first element of the
 list, and \fBend\fR refers to the last element of the list.
 If \fIlist\fR is empty, then \fIfirst\fR and \fIlast\fR are ignored.
-.VE
 .PP
 If \fIfirst\fR is less than zero, it is considered to refer to before the
 first element of the list.  For non-empty lists, the element indicated
@@ -39,7 +35,7 @@ by \fIfirst\fR must exist or \fIfirst\fR must indicate before the
 start of the list.
 .PP
 If \fIlast\fR is less than \fIfirst\fR, then any specified elements
-will be inserted into the list at the point specified by \fIfirst\fR
+will be inserted into the list before the point specified by \fIfirst\fR
 with no elements being deleted.
 .PP
 The \fIelement\fR arguments specify zero or more new arguments to
@@ -49,19 +45,23 @@ the list.  If no \fIelement\fR arguments are specified, then the elements
 between \fIfirst\fR and \fIlast\fR are simply deleted.  If \fIlist\fR
 is empty, any \fIelement\fR arguments are added to the end of the list.
 .SH EXAMPLES
+.PP
 Replacing an element of a list with another:
+.PP
 .CS
 % \fBlreplace\fR {a b c d e} 1 1 foo
 a foo c d e
 .CE
 .PP
 Replacing two elements of a list with three:
+.PP
 .CS
 % \fBlreplace\fR {a b c d e} 1 2 three more elements
 a three more elements d e
 .CE
 .PP
 Deleting the last element from a list in a variable:
+.PP
 .CS
 % set var {a b c d e}
 a b c d e
@@ -70,6 +70,7 @@ a b c d
 .CE
 .PP
 A procedure to delete a given element from a list:
+.PP
 .CS
 proc lremove {listVariable value} {
     upvar 1 $listVariable var
@@ -80,8 +81,6 @@ proc lremove {listVariable value} {
 .SH "SEE ALSO"
 list(n), lappend(n), lindex(n), linsert(n), llength(n), lsearch(n),
 lset(n), lrange(n), lsort(n),
-.VS 8.5
 string(n)
-.VE
 .SH KEYWORDS
 element, list, replace

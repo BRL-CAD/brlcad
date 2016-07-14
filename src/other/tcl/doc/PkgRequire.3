@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_PkgRequire 3 7.5 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_PkgRequire, Tcl_PkgRequireEx, Tcl_PkgRequireProc, Tcl_PkgPresent, Tcl_PkgPresentEx, Tcl_PkgProvide, Tcl_PkgProvideEx \- package version control
@@ -36,7 +34,7 @@ int
 int
 \fBTcl_PkgProvideEx\fR(\fIinterp, name, version, clientData\fR)
 .SH ARGUMENTS
-.AS ClientData clientDataPtr out
+.AS void *clientDataPtr out
 .AP Tcl_Interp *interp in
 Interpreter where package is needed or available.
 .AP "const char" *name in
@@ -50,18 +48,18 @@ Non-zero means that only the particular version specified by
 Zero means that newer versions than \fIversion\fR are also
 acceptable as long as they have the same major version number
 as \fIversion\fR.
-.AP ClientData clientData in
+.AP "const void" *clientData in
 Arbitrary value to be associated with the package.
-.AP ClientData *clientDataPtr out
+.AP void *clientDataPtr out
 Pointer to place to store the value associated with the matching
 package. It is only changed if the pointer is not NULL and the
-function completed successfully.
+function completed successfully. The storage can be any pointer
+type with the same size as a void pointer.
 .AP int objc in
 Number of requirements.
 .AP Tcl_Obj* objv[] in
 Array of requirements.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures provide C-level interfaces to Tcl's package and
@@ -93,6 +91,7 @@ functions.
 \fBTcl_PkgRequireProc\fR is the form of \fBpackage require\fR handling
 multiple requirements. The other forms are present for backward
 compatibility and translate their invocations to this form.
-
 .SH KEYWORDS
 package, present, provide, require, version
+.SH "SEE ALSO"
+package(n), Tcl_StaticPackage(3)

@@ -2,21 +2,16 @@
 # Note that the tests are limited to Tcl scripts only, there are no shared
 # libraries against which to test.
 #
-# Sourcing this file into Tcl runs the tests and generates output for
-# errors.  No output means no errors were found.
+# Sourcing this file into Tcl runs the tests and generates output for errors.
+# No output means no errors were found.
 #
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 # All rights reserved.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
-    namespace import -force ::tcltest::*
-}
+package require tcltest 2
+namespace import ::tcltest::*
 
 set fullPkgPath [makeDirectory pkg]
-
 
 namespace eval pkgtest {
     # Namespace for procs we can discard
@@ -27,8 +22,8 @@ namespace eval pkgtest {
 #  Parse an argument list.
 #
 # Arguments:
-#  <flags>	(optional) arguments starting with a dash are collected
-#		as options to pkg_mkIndex and passed to pkg_mkIndex.
+#  <flags>	(optional) arguments starting with a dash are collected as
+#		options to pkg_mkIndex and passed to pkg_mkIndex.
 #  dirPath	the directory to index
 #  pattern0	pattern to index
 #  ...		pattern to index
@@ -48,7 +43,7 @@ proc pkgtest::parseArgs { args } {
 	set a [lindex $args $iarg]
 	if {[regexp {^-} $a]} {
 	    lappend options $a
-	    if {[string compare -load $a] == 0} {
+	    if {$a eq "-load"} {
 		incr iarg
 		lappend options [lindex $args $iarg]
 	    }
@@ -84,7 +79,7 @@ proc pkgtest::parseIndex { filePath } {
 	$slave eval {
 	    rename package package_original
 	    proc package { args } {
-		if {[string compare [lindex $args 0] ifneeded] == 0} {
+		if {[lindex $args 0] eq "ifneeded"} {
 		    set pkg [lindex $args 1]
 		    set ver [lindex $args 2]
 		    set ::PKGS($pkg:$ver) [lindex $args 3]
@@ -114,9 +109,9 @@ proc pkgtest::parseIndex { filePath } {
 	foreach k [lsort [array names P]] {
 	    lappend PKGS $k $P($k)
 	}
-    } err]} {
-	set ei $::errorInfo
-	set ec $::errorCode
+    } err opts]} {
+	set ei [dict get $opts -errorinfo]
+	set ec [dict get $opts -errorcode]
 
 	catch {interp delete $slave}
 
@@ -130,13 +125,13 @@ proc pkgtest::parseIndex { filePath } {
 
 # pkgtest::createIndex --
 #
-#  Runs pkg_mkIndex for the given directory and set of patterns.
-#  This procedure deletes any pkgIndex.tcl file in the target directory,
-#  then runs pkg_mkIndex.
+#  Runs pkg_mkIndex for the given directory and set of patterns.  This
+#  procedure deletes any pkgIndex.tcl file in the target directory, then runs
+#  pkg_mkIndex.
 #
 # Arguments:
-#  <flags>	(optional) arguments starting with a dash are collected
-#		as options to pkg_mkIndex and passed to pkg_mkIndex.
+#  <flags>	(optional) arguments starting with a dash are collected as
+#		options to pkg_mkIndex and passed to pkg_mkIndex.
 #  dirPath	the directory to index
 #  pattern0	pattern to index
 #  ...		pattern to index
@@ -194,11 +189,9 @@ proc makePkgList { inList } {
 		    lappend l $s
 		}
 	    }
-
 	    source {
 		set l $v
 	    }
-
 	    default {
 		error "can't handle $k $v"
 	    }
@@ -215,8 +208,8 @@ proc makePkgList { inList } {
 #  Runs pkg_mkIndex, parses the generated index file.
 #
 # Arguments:
-#  <flags>	(optional) arguments starting with a dash are collected
-#		as options to pkg_mkIndex and passed to pkg_mkIndex.
+#  <flags>	(optional) arguments starting with a dash are collected as
+#		options to pkg_mkIndex and passed to pkg_mkIndex.
 #  dirPath	the directory to index
 #  pattern0	pattern to index
 #  ...		pattern to index
@@ -226,8 +219,7 @@ proc makePkgList { inList } {
 #  Returns a two element list:
 #    0: 1 if the procedure encountered an error, 0 otherwise.
 #    1: if no error, this is the parsed generated index file, in the format
-#	returned by pkgtest::parseIndex.
-#	If error, this is the error result.
+#	returned by pkgtest::parseIndex.  If error, this is the error result.
 
 proc pkgtest::runCreatedIndex {rv args} {
     if {[lindex $rv 0] == 0} {
@@ -251,9 +243,9 @@ proc pkgtest::runIndex { args } {
     set rv [createIndex {*}$args]
     return [runCreatedIndex $rv {*}$args]
 }
-
-# If there is no match to the patterns, make sure the directory hasn't
-# changed on us
+
+# If there is no match to the patterns, make sure the directory hasn't changed
+# on us
 
 test pkgMkIndex-1.1 {nothing matches pattern - current dir is the same} {
     list [pkgtest::runIndex -lazy $fullPkgPath nomatch.tcl] [pwd]
@@ -314,8 +306,8 @@ removeFile [file join pkg global.tcl]
 
 makeFile {
 #  This package is required by pkg1.
-#  This package is split into two files, to test packages that are split
-#  over multiple files.
+#  This package is split into two files, to test packages that are split over
+#  multiple files.
 package provide pkg2 1.0
 namespace eval pkg2 {
     namespace export p2-1
@@ -327,8 +319,8 @@ proc pkg2::p2-1 { num } {
 
 makeFile {
 #  This package is required by pkg1.
-#  This package is split into two files, to test packages that are split
-#  over multiple files.
+#  This package is split into two files, to test packages that are split over
+#  multiple files.
 package provide pkg2 1.0
 namespace eval pkg2 {
     namespace export p2-2
@@ -347,8 +339,8 @@ test pkgMkIndex-4.2 {split package - direct loading} {
 } "0 {{pkg2:1.0 {[list source [file join $fullPkgPath pkg2_a.tcl]]
 [list source [file join $fullPkgPath pkg2_b.tcl]]}}}"
 
-# Add the direct1 directory to auto_path, so that the direct1 package 
-# can be found.
+# Add the direct1 directory to auto_path, so that the direct1 package can be
+# found.
 set direct1 [makeDirectory direct1]
 lappend auto_path $direct1
 makeFile {
@@ -367,9 +359,9 @@ proc direct1::pd2 { stg } {
 pkg_mkIndex -direct $direct1 direct1.tcl
 
 makeFile {
-#  Does a package require of direct1, whose pkgIndex.tcl entry
-#  is created above with option -direct.  This tests that pkg_mkIndex
-#  can handle code that is sourced in pkgIndex.tcl files.
+#  Does a package require of direct1, whose pkgIndex.tcl entry is created
+#  above with option -direct.  This tests that pkg_mkIndex can handle code
+#  that is sourced in pkgIndex.tcl files.
 package require direct1
 package provide std 1.0
 namespace eval std {
@@ -393,9 +385,9 @@ removeDirectory direct1
 removeFile [file join pkg std.tcl]
 
 makeFile {
-#  This package requires pkg3, but it does
-#  not use any of pkg3's procs in the code that is executed by the file
-#  (i.e. references to pkg3's procs are in the proc bodies only).
+#  This package requires pkg3, but it does not use any of pkg3's procs in the
+#  code that is executed by the file (i.e. references to pkg3's procs are in
+#  the proc bodies only).
 package require pkg3 1.0
 package provide pkg1 1.0
 namespace eval pkg1 {
@@ -433,8 +425,8 @@ test pkgMkIndex-6.2 {pkg1 requires pkg3 - use -direct} {
 removeFile [file join pkg pkg1.tcl]
 
 makeFile {
-#  This package requires pkg3, and it calls
-#  a pkg3 proc in the code that is executed by the file
+#  This package requires pkg3, and it calls a pkg3 proc in the code that is
+#  executed by the file
 package require pkg3 1.0
 package provide pkg4 1.0
 namespace eval pkg4 {
@@ -462,9 +454,8 @@ removeFile [file join pkg pkg4.tcl]
 removeFile [file join pkg pkg3.tcl]
 
 makeFile {
-#  This package requires pkg2, and it calls
-#  a pkg2 proc in the code that is executed by the file.
-#  Pkg2 is a split package.
+#  This package requires pkg2, and it calls a pkg2 proc in the code that is
+#  executed by the file.  Pkg2 is a split package.
 package require pkg2 1.0
 package provide pkg5 1.0
 namespace eval pkg5 {
@@ -496,9 +487,9 @@ removeFile [file join pkg pkg2_a.tcl]
 removeFile [file join pkg pkg2_b.tcl]
 
 makeFile {
-#  This package requires circ2, and circ2
-#  requires circ3, which in turn requires circ1.
-#  In case of cirularities, pkg_mkIndex should give up when it gets stuck.
+#  This package requires circ2, and circ2 requires circ3, which in turn
+#  requires circ1.  In case of cirularities, pkg_mkIndex should give up when
+#  it gets stuck.
 package require circ2 1.0
 package provide circ1 1.0
 namespace eval circ1 {
@@ -519,8 +510,8 @@ proc circ1::c1-4 {} {
 } [file join pkg circ1.tcl]
 
 makeFile {
-#  This package is required by circ1, and
-#  requires circ3. Circ3, in turn, requires circ1 to give us a circularity.
+#  This package is required by circ1, and requires circ3. Circ3, in turn,
+#  requires circ1 to give us a circularity.
 package require circ3 1.0
 package provide circ2 1.0
 namespace eval circ2 {
@@ -535,8 +526,8 @@ proc circ2::c2-2 { num } {
 } [file join pkg circ2.tcl]
 
 makeFile {
-#  This package is required by circ2, and in
-#  turn requires circ1. This closes the circularity.
+#  This package is required by circ2, and in turn requires circ1. This closes
+#  the circularity.
 package require circ1 1.0
 package provide circ3 1.0
 namespace eval circ3 {
@@ -577,22 +568,23 @@ proc pkga_neq { x } {
 testConstraint exec [llength [info commands ::exec]]
 
 test pkgMkIndex-10.1 {package in DLL and script} [list exec $dll] {
-    # Do all [load]ing of shared libraries in another process, so 
-    # we can delete the file and not get stuck because we're holding
-    # a reference to it.
+    # Do all [load]ing of shared libraries in another process, so we can
+    # delete the file and not get stuck because we're holding a reference to
+    # it.
     set cmd [list pkg_mkIndex -lazy $fullPkgPath [file tail $x] pkga.tcl]
     exec [interpreter] << $cmd
     pkgtest::runCreatedIndex {0 {}} -lazy $fullPkgPath pkga[info sharedlibextension] pkga.tcl
 } "0 {{Pkga:1.0 {tclPkgSetup {pkga[info sharedlibextension] load {pkga_eq pkga_quote}} {pkga.tcl source pkga_neq}}}}"
 test pkgMkIndex-10.2 {package in DLL hidden by -load} [list exec $dll] {
-    # Do all [load]ing of shared libraries in another process, so 
-    # we can delete the file and not get stuck because we're holding
-    # a reference to it.
+    # Do all [load]ing of shared libraries in another process, so we can
+    # delete the file and not get stuck because we're holding a reference to
+    # it.
     #
     # This test depends on context from prior test, so repeat it.
-    set script "[list pkg_mkIndex -lazy $fullPkgPath [file tail $x] pkga.tcl]\n"
-    append script \
-	    "[list pkg_mkIndex -lazy -load Pkg* $fullPkgPath [file tail $x]]"
+    set script \
+	"[list pkg_mkIndex -lazy $fullPkgPath [file tail $x] pkga.tcl]"
+    append script \n \
+	"[list pkg_mkIndex -lazy -load Pkg* $fullPkgPath [file tail $x]]"
     exec [interpreter] << $script
     pkgtest::runCreatedIndex {0 {}} -lazy -load Pkg* -- $fullPkgPath pkga[info sharedlibextension]
 } {0 {}}
@@ -625,9 +617,8 @@ test pkgMkIndex-11.1 {conflicting namespace imports} {
 
 removeFile [file join pkg import.tcl]
 
-# Verify that the auto load list generated is correct even when there
-# is a proc name conflict between two namespaces (ie, ::foo::baz and
-# ::bar::baz)
+# Verify that the auto load list generated is correct even when there is a
+# proc name conflict between two namespaces (ie, ::foo::baz and ::bar::baz)
 
 makeFile {
 package provide football 1.0
@@ -692,7 +683,7 @@ test pkgMkIndex-14.5 {tcl::Pkg::CompareExtension} {unix} {
 test pkgMkIndex-14.6 {tcl::Pkg::CompareExtension} {unix} {
     tcl::Pkg::CompareExtension foo.so.1.2.bar .so
 } 0
-
+
 # cleanup
 
 removeDirectory pkg
@@ -701,3 +692,7 @@ namespace delete pkgtest
 ::tcltest::cleanupTests
 return
 
+# Local Variables:
+# mode: tcl
+# fill-column: 78
+# End:

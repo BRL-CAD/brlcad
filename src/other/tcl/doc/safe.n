@@ -4,14 +4,12 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH "Safe Tcl" n 8.0 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
-Safe\ Base \- A mechanism for creating and manipulating safe interpreters
+safe \- Creating and manipulating safe interpreters
 .SH SYNOPSIS
 \fB::safe::interpCreate\fR ?\fIslave\fR? ?\fIoptions...\fR?
 .sp
@@ -38,15 +36,15 @@ Safe Tcl is a mechanism for executing untrusted Tcl scripts
 safely and for providing mediated access by such scripts to
 potentially dangerous functionality.
 .PP
-The Safe Base ensures that untrusted Tcl scripts cannot harm the
+Safe Tcl ensures that untrusted Tcl scripts cannot harm the
 hosting application.
-The Safe Base prevents integrity and privacy attacks. Untrusted Tcl
+It prevents integrity and privacy attacks. Untrusted Tcl
 scripts are prevented from corrupting the state of the hosting
 application or computer. Untrusted scripts are also prevented from
 disclosing information stored on the hosting computer or in the
 hosting application to any party.
 .PP
-The Safe Base allows a master interpreter to create safe, restricted
+Safe Tcl allows a master interpreter to create safe, restricted
 interpreters that contain a set of predefined aliases for the \fBsource\fR,
 \fBload\fR, \fBfile\fR, \fBencoding\fR, and \fBexit\fR commands and
 are able to use the auto-loading and package mechanisms.
@@ -61,7 +59,7 @@ requested operation (see the section \fBSECURITY\fR below for details).
 Different levels of security can be selected by using the optional flags
 of the commands described below.
 .PP
-All commands provided in the master interpreter by the Safe Base reside in
+All commands provided in the master interpreter by Safe Tcl reside in
 the \fBsafe\fR namespace.
 .SH COMMANDS
 The following commands are provided in the master interpreter:
@@ -69,7 +67,7 @@ The following commands are provided in the master interpreter:
 \fB::safe::interpCreate\fR ?\fIslave\fR? ?\fIoptions...\fR?
 Creates a safe interpreter, installs the aliases described in the section
 \fBALIASES\fR and initializes the auto-loading and package mechanism as
-specified by the supplied \fBoptions\fR.
+specified by the supplied \fIoptions\fR.
 See the \fBOPTIONS\fR section below for a description of the
 optional arguments.
 If the \fIslave\fR argument is omitted, a name will be generated.
@@ -78,7 +76,7 @@ If the \fIslave\fR argument is omitted, a name will be generated.
 \fB::safe::interpInit\fR \fIslave\fR ?\fIoptions...\fR?
 This command is similar to \fBinterpCreate\fR except it that does not
 create the safe interpreter. \fIslave\fR must have been created by some
-other means, like \fBinterp create \-safe\fR.
+other means, like \fBinterp create\fR \fB\-safe\fR.
 .TP
 \fB::safe::interpConfigure\fR \fIslave\fR ?\fIoptions...\fR?
 If no \fIoptions\fR are given, returns the settings for all options for the
@@ -263,13 +261,13 @@ the system encoding, but allows all other subcommands including
 The calling interpreter is deleted and its computation is stopped, but the
 Tcl process in which this interpreter exists is not terminated.
 .SH SECURITY
-The Safe Base does not attempt to completely prevent annoyance and
+Safe Tcl does not attempt to completely prevent annoyance and
 denial of service attacks. These forms of attack prevent the
 application or user from temporarily using the computer to perform
 useful work, for example by consuming all available CPU time or
 all available screen real estate.
 These attacks, while aggravating, are deemed to be of lesser importance
-in general than integrity and privacy attacks that the Safe Base
+in general than integrity and privacy attacks that Safe Tcl
 is to prevent.
 .PP
 The commands available in a safe interpreter, in addition to
@@ -295,9 +293,9 @@ executing.
 The only valid file names arguments
 for the \fBsource\fR and \fBload\fR aliases provided to the slave
 are path in the form of 
-\fB[file join \fR\fItoken filename\fR\fB]\fR (i.e. when using the
-native file path formats: \fItoken\fR\fB/\fR\fIfilename\fR
-on Unix and \fItoken\fR\fB\e\fIfilename\fR on Windows),
+\fB[file join \fItoken filename\fB]\fR (i.e. when using the
+native file path formats: \fItoken\fB/\fIfilename\fR
+on Unix and \fItoken\fB\e\fIfilename\fR on Windows),
 where \fItoken\fR is representing one of the directories 
 of the \fIaccessPath\fR list and \fIfilename\fR is
 one file in that directory (no sub directories access are allowed).
@@ -356,3 +354,6 @@ interp(n), library(n), load(n), package(n), source(n), unknown(n)
 .SH KEYWORDS
 alias, auto\-loading, auto_mkindex, load, master interpreter, safe
 interpreter, slave interpreter, source
+'\" Local Variables:
+'\" mode: nroff
+'\" End:

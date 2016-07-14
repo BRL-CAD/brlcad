@@ -1,5 +1,5 @@
 # findBadExternals.tcl --
-# 
+#
 #	This script scans the Tcl load library for exported symbols
 #	that do not begin with 'Tcl' or 'tcl'.  It reports them on the
 #	standard output.  It is used to make sure that the library does
@@ -14,9 +14,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
-#
 #----------------------------------------------------------------------
 
 proc main {argc argv} {
@@ -32,7 +29,7 @@ proc main {argc argv} {
 	macosx {
 	    set status [catch {
 		exec nm --extern-only --defined-only [lindex $argv 0]
-	    } result] 
+	    } result]
 	}
 	windows {
 	    set status [catch {

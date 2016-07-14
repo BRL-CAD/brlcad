@@ -9,13 +9,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testset2 [llength [info commands testset2]]
 
@@ -522,6 +523,11 @@ test set-5.1 {error on malformed array name} testset2 {
     catch {testset2 z(b) a} msg1
     list $msg $msg1
 } {{can't read "z(a)(b)": variable isn't array} {can't read "z(b)(a)": variable isn't array}}
+
+# In a mem-debug build, this test will crash unless Bug 3602706 is fixed.
+test set-5.2 {Bug 3602706} -body {
+    testset2 ::tcl_platform not-in-there
+} -returnCodes error -result * -match glob
 
 # cleanup
 catch {unset a}

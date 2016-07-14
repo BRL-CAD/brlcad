@@ -9,8 +9,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -29,13 +27,15 @@ static int		SetFsPathFromAny(Tcl_Interp *interp, Tcl_Obj *pathPtr);
 static int		FindSplitPos(const char *path, int separator);
 static int		IsSeparatorOrNull(int ch);
 static Tcl_Obj *	GetExtension(Tcl_Obj *pathPtr);
+static int		MakePathFromNormalized(Tcl_Interp *interp,
+			    Tcl_Obj *pathPtr);
 
 /*
  * Define the 'path' object type, which Tcl uses to represent file paths
  * internally.
  */
 
-static Tcl_ObjType tclFsPathType = {
+static const Tcl_ObjType tclFsPathType = {
     "path",				/* name */
     FreeFsPathInternalRep,		/* freeIntRepProc */
     DupFsPathInternalRep,		/* dupIntRepProc */
@@ -94,9 +94,7 @@ typedef struct FsPath {
 				 * generated during the correct filesystem
 				 * epoch. The epoch changes when
 				 * filesystem-mounts are changed. */
-    struct FilesystemRecord *fsRecPtr;
-				/* Pointer to the filesystem record entry to
-				 * use for this path. */
+    const Tcl_Filesystem *fsPtr;/* The Tcl_Filesystem that claims this path */
 } FsPath;
 
 /*
@@ -111,9 +109,9 @@ typedef struct FsPath {
  * fields.
  */
 
-#define PATHOBJ(pathPtr) ((FsPath *) (pathPtr)->internalRep.otherValuePtr)
+#define PATHOBJ(pathPtr) ((FsPath *) (pathPtr)->internalRep.twoPtrValue.ptr1)
 #define SETPATHOBJ(pathPtr,fsPathPtr) \
-	((pathPtr)->internalRep.otherValuePtr = (void *) (fsPathPtr))
+	((pathPtr)->internalRep.twoPtrValue.ptr1 = (void *) (fsPathPtr))
 #define PATHFLAGS(pathPtr) (PATHOBJ(pathPtr)->flags)
 
 /*
@@ -154,14 +152,8 @@ typedef struct FsPath {
 Tcl_Obj *
 TclFSNormalizeAbsolutePath(
     Tcl_Interp *interp,		/* Interpreter to use */
-    Tcl_Obj *pathPtr,		/* Absolute path to normalize */
-    ClientData *clientDataPtr)	/* If non-NULL, then may be set to the
-				 * fs-specific clientData for this path. This
-				 * will happen when that extra information can
-				 * be calculated efficiently as a side-effect
-				 * of normalization. */
+    Tcl_Obj *pathPtr)		/* Absolute path to normalize */
 {
-    ClientData clientData = NULL;
     const char *dirSep, *oldDirSep;
     int first = 1;		/* Set to zero once we've passed the first
 				 * directory separator - we can't use '..' to
@@ -239,7 +231,7 @@ TclFSNormalizeAbsolutePath(
 		    retVal = Tcl_NewStringObj(path, dirSep - path);
 		    Tcl_IncrRefCount(retVal);
 		}
-		(void) Tcl_GetStringFromObj(retVal, &curLen);
+		Tcl_GetStringFromObj(retVal, &curLen);
 		if (curLen == 0) {
 		    Tcl_AppendToObj(retVal, dirSep, 1);
 		}
@@ -251,7 +243,7 @@ TclFSNormalizeAbsolutePath(
 		continue;
 	    }
 	    if (dirSep[2] == '.' && IsSeparatorOrNull(dirSep[3])) {
-		Tcl_Obj *link;
+		Tcl_Obj *linkObj;
 		int curLen;
 		char *linkStr;
 
@@ -265,21 +257,30 @@ TclFSNormalizeAbsolutePath(
 		    retVal = Tcl_NewStringObj(path, dirSep - path);
 		    Tcl_IncrRefCount(retVal);
 		}
-		(void) Tcl_GetStringFromObj(retVal, &curLen);
+		Tcl_GetStringFromObj(retVal, &curLen);
 		if (curLen == 0) {
 		    Tcl_AppendToObj(retVal, dirSep, 1);
 		}
 		if (!first || (tclPlatform == TCL_PLATFORM_UNIX)) {
-		    link = Tcl_FSLink(retVal, NULL, 0);
-		    if (link != NULL) {
+		    linkObj = Tcl_FSLink(retVal, NULL, 0);
+
+		    /* Safety check in case driver caused sharing */
+		    if (Tcl_IsShared(retVal)) {
+			TclDecrRefCount(retVal);
+			retVal = Tcl_DuplicateObj(retVal);
+			Tcl_IncrRefCount(retVal);
+		    }
+
+		    if (linkObj != NULL) {
 			/*
 			 * Got a link. Need to check if the link is relative
 			 * or absolute, for those platforms where relative
 			 * links exist.
 			 */
 
-			if (tclPlatform != TCL_PLATFORM_WINDOWS &&
-				Tcl_FSGetPathType(link) == TCL_PATH_RELATIVE) {
+			if (tclPlatform != TCL_PLATFORM_WINDOWS
+				&& Tcl_FSGetPathType(linkObj)
+					== TCL_PATH_RELATIVE) {
 			    /*
 			     * We need to follow this link which is relative
 			     * to retVal's directory. This means concatenating
@@ -294,19 +295,14 @@ TclFSNormalizeAbsolutePath(
 				    break;
 				}
 			    }
-			    if (Tcl_IsShared(retVal)) {
-				TclDecrRefCount(retVal);
-				retVal = Tcl_DuplicateObj(retVal);
-				Tcl_IncrRefCount(retVal);
-			    }
 
 			    /*
 			     * We want the trailing slash.
 			     */
 
 			    Tcl_SetObjLength(retVal, curLen+1);
-			    Tcl_AppendObjToObj(retVal, link);
-			    TclDecrRefCount(link);
+			    Tcl_AppendObjToObj(retVal, linkObj);
+			    TclDecrRefCount(linkObj);
 			    linkStr = Tcl_GetStringFromObj(retVal, &curLen);
 			} else {
 			    /*
@@ -314,7 +310,12 @@ TclFSNormalizeAbsolutePath(
 			     */
 
 			    TclDecrRefCount(retVal);
-			    retVal = link;
+			    if (Tcl_IsShared(linkObj)) {
+				retVal = Tcl_DuplicateObj(linkObj);
+				TclDecrRefCount(linkObj);
+			    } else {
+				retVal = linkObj;
+			    }
 			    linkStr = Tcl_GetStringFromObj(retVal, &curLen);
 
 			    /*
@@ -336,8 +337,8 @@ TclFSNormalizeAbsolutePath(
 		    }
 
 		    /*
-		     * Either way, we now remove the last path element.
-		     * (but not the first character of the path)
+		     * Either way, we now remove the last path element (but
+		     * not the first character of the path).
 		     */
 
 		    while (--curLen >= 0) {
@@ -398,7 +399,7 @@ TclFSNormalizeAbsolutePath(
     }
 
     /*
-     * Ensure a windows drive like C:/ has a trailing separator
+     * Ensure a windows drive like C:/ has a trailing separator.
      */
 
     if (tclPlatform == TCL_PLATFORM_WINDOWS) {
@@ -426,17 +427,14 @@ TclFSNormalizeAbsolutePath(
      * for normalizing a path.
      */
 
-    TclFSNormalizeToUniquePath(interp, retVal, 0, &clientData);
+    TclFSNormalizeToUniquePath(interp, retVal, 0);
 
     /*
      * Since we know it is a normalized path, we can actually convert this
      * object into an FsPath for greater efficiency
      */
 
-    TclFSMakePathFromNormalized(interp, retVal, clientData);
-    if (clientDataPtr != NULL) {
-	*clientDataPtr = clientData;
-    }
+    MakePathFromNormalized(interp, retVal);
 
     /*
      * This has a refCount of 1 for the caller, unlike many Tcl_Obj APIs.
@@ -496,7 +494,7 @@ Tcl_FSGetPathType(
 Tcl_PathType
 TclFSGetPathType(
     Tcl_Obj *pathPtr,
-    Tcl_Filesystem **filesystemPtrPtr,
+    const Tcl_Filesystem **filesystemPtrPtr,
     int *driveNameLengthPtr)
 {
     FsPath *fsPathPtr;
@@ -514,7 +512,7 @@ TclFSGetPathType(
 
     if (PATHFLAGS(pathPtr) == 0) {
 	/* The path is not absolute... */
-#ifdef __WIN32__
+#ifdef _WIN32
 	/* ... on Windows we must make another call to determine whether
 	 * it's relative or volumerelative [Bug 2571597]. */
 	return TclGetPathType(pathPtr, filesystemPtrPtr, driveNameLengthPtr,
@@ -568,8 +566,7 @@ TclPathPart(
     if (pathPtr->typePtr == &tclFsPathType) {
 	FsPath *fsPathPtr = PATHOBJ(pathPtr);
 
-	if (TclFSEpochOk(fsPathPtr->filesystemEpoch)
-		&& (PATHFLAGS(pathPtr) != 0)) {
+	if (PATHFLAGS(pathPtr) != 0) {
 	    switch (portion) {
 	    case TCL_PATH_DIRNAME: {
 		/*
@@ -831,44 +828,39 @@ Tcl_FSJoinPath(
 				 * reference count. */
     int elements)		/* Number of elements to use (-1 = all) */
 {
+    Tcl_Obj *copy, *res;
+    int objc;
+    Tcl_Obj **objv;
+
+    if (Tcl_ListObjLength(NULL, listObj, &objc) != TCL_OK) {
+	return NULL;
+    }
+
+    elements = ((elements >= 0) && (elements <= objc)) ? elements : objc;
+    copy = TclListObjCopy(NULL, listObj);
+    Tcl_ListObjGetElements(NULL, listObj, &objc, &objv);
+    res = TclJoinPath(elements, objv);
+    Tcl_DecrRefCount(copy);
+    return res;
+}
+
+Tcl_Obj *
+TclJoinPath(
+    int elements,
+    Tcl_Obj * const objv[])
+{
     Tcl_Obj *res;
     int i;
-    Tcl_Filesystem *fsPtr = NULL;
-
-    if (elements < 0) {
-	if (Tcl_ListObjLength(NULL, listObj, &elements) != TCL_OK) {
-	    return NULL;
-	}
-    } else {
-	/*
-	 * Just make sure it is a valid list.
-	 */
-
-	int listTest;
-
-	if (Tcl_ListObjLength(NULL, listObj, &listTest) != TCL_OK) {
-	    return NULL;
-	}
-
-	/*
-	 * Correct this if it is too large, otherwise we will waste our time
-	 * joining null elements to the path.
-	 */
-
-	if (elements > listTest) {
-	    elements = listTest;
-	}
-    }
+    const Tcl_Filesystem *fsPtr = NULL;
 
     res = NULL;
 
     for (i = 0; i < elements; i++) {
-	Tcl_Obj *elt, *driveName = NULL;
 	int driveNameLength, strEltLen, length;
 	Tcl_PathType type;
 	char *strElt, *ptr;
-
-	Tcl_ListObjIndex(NULL, listObj, i, &elt);
+	Tcl_Obj *driveName = NULL;
+	Tcl_Obj *elt = objv[i];
 
 	/*
 	 * This is a special case where we can be much more efficient, where
@@ -879,17 +871,17 @@ Tcl_FSJoinPath(
 	 * could expand that in the future.
 	 */
 
-	if ((i == (elements-2)) && (i == 0) && (elt->typePtr == &tclFsPathType)
-		&& !(elt->bytes != NULL && (elt->bytes[0] == '\0'))) {
-	    Tcl_Obj *tail;
+	if ((i == (elements-2)) && (i == 0)
+		&& (elt->typePtr == &tclFsPathType)
+		&& !((elt->bytes != NULL) && (elt->bytes[0] == '\0'))) {
+	    Tcl_Obj *tailObj = objv[i+1];
 
-	    Tcl_ListObjIndex(NULL, listObj, i+1, &tail);
-	    type = TclGetPathType(tail, NULL, NULL, NULL);
+	    type = TclGetPathType(tailObj, NULL, NULL, NULL);
 	    if (type == TCL_PATH_RELATIVE) {
 		const char *str;
 		int len;
 
-		str = Tcl_GetStringFromObj(tail, &len);
+		str = Tcl_GetStringFromObj(tailObj, &len);
 		if (len == 0) {
 		    /*
 		     * This happens if we try to handle the root volume '/'.
@@ -937,16 +929,16 @@ Tcl_FSJoinPath(
 		if (res != NULL) {
 		    TclDecrRefCount(res);
 		}
-		return tail;
+		return tailObj;
 	    } else {
-		const char *str = TclGetString(tail);
+		const char *str = TclGetString(tailObj);
 
 		if (tclPlatform == TCL_PLATFORM_WINDOWS) {
 		    if (strchr(str, '\\') == NULL) {
 			if (res != NULL) {
 			    TclDecrRefCount(res);
 			}
-			return tail;
+			return tailObj;
 		    }
 		}
 	    }
@@ -1023,8 +1015,8 @@ Tcl_FSJoinPath(
 	    }
 
 	    /*
-	     * This element is just what we want to return already - no
-	     * further manipulation is requred.
+	     * This element is just what we want to return already; no further
+	     * manipulation is requred.
 	     */
 
 	    return elt;
@@ -1070,16 +1062,22 @@ Tcl_FSJoinPath(
 	    int needsSep = 0;
 
 	    if (fsPtr->filesystemSeparatorProc != NULL) {
-		Tcl_Obj *sep = (*fsPtr->filesystemSeparatorProc)(res);
+		Tcl_Obj *sep = fsPtr->filesystemSeparatorProc(res);
 
 		if (sep != NULL) {
 		    separator = TclGetString(sep)[0];
+		}
+		/* Safety check in case the VFS driver caused sharing */
+		if (Tcl_IsShared(res)) {
+		    TclDecrRefCount(res);
+		    res = Tcl_DuplicateObj(res);
+		    Tcl_IncrRefCount(res);
 		}
 	    }
 
 	    if (length > 0 && ptr[length -1] != '/') {
 		Tcl_AppendToObj(res, &separator, 1);
-		length++;
+		Tcl_GetStringFromObj(res, &length);
 	    }
 	    Tcl_SetObjLength(res, length + (int) strlen(strElt));
 
@@ -1156,10 +1154,9 @@ Tcl_FSConvertToPathType(
 	    UpdateStringOfFsPath(pathPtr);
 	}
 	FreeFsPathInternalRep(pathPtr);
-	pathPtr->typePtr = NULL;
     }
 
-    return Tcl_ConvertToType(interp, pathPtr, &tclFsPathType);
+    return SetFsPathFromAny(interp, pathPtr);
 
     /*
      * We used to have more complex code here:
@@ -1175,7 +1172,6 @@ Tcl_FSConvertToPathType(
      *             UpdateStringOfFsPath(pathPtr);
      *         }
      *         FreeFsPathInternalRep(pathPtr);
-     *         pathPtr->typePtr = NULL;
      *         return Tcl_ConvertToType(interp, pathPtr, &tclFsPathType);
      *     }
      * }
@@ -1268,7 +1264,6 @@ TclNewFSPathObj(
 {
     FsPath *fsPathPtr;
     Tcl_Obj *pathPtr;
-    ThreadSpecificData *tsdPtr;
     const char *p;
     int state = 0, count = 0;
 
@@ -1296,10 +1291,8 @@ TclNewFSPathObj(
 	return pathPtr;
     }
 
-    tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
-
     pathPtr = Tcl_NewObj();
-    fsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
+    fsPathPtr = ckalloc(sizeof(FsPath));
 
     /*
      * Set up the path.
@@ -1311,8 +1304,8 @@ TclNewFSPathObj(
     fsPathPtr->cwdPtr = dirPtr;
     Tcl_IncrRefCount(dirPtr);
     fsPathPtr->nativePathPtr = NULL;
-    fsPathPtr->fsRecPtr = NULL;
-    fsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
+    fsPathPtr->fsPtr = NULL;
+    fsPathPtr->filesystemEpoch = 0;
 
     SETPATHOBJ(pathPtr, fsPathPtr);
     PATHFLAGS(pathPtr) = TCLPATH_APPENDED;
@@ -1322,41 +1315,41 @@ TclNewFSPathObj(
 
     /*
      * Look for path components made up of only "."
-     * This is overly conservative analysis to keep simple.  It may
-     * mark some things as needing more aggressive normalization
-     * that don't actually need it.  No harm done.
+     * This is overly conservative analysis to keep simple. It may mark some
+     * things as needing more aggressive normalization that don't actually
+     * need it. No harm done.
      */
     for (p = addStrRep; len > 0; p++, len--) {
-       switch (state) {
-       case 0: /* So far only "." since last dirsep or start */
-           switch (*p) {
-           case '.':
-               count++;
-               break;
-           case '/':
-           case '\\':
-           case ':':
-               if (count) {
-                   PATHFLAGS(pathPtr) |= TCLPATH_NEEDNORM;
-                   len = 0;
-               }
-               break;
-           default:
-               count = 0;
-               state = 1;
-           }
-       case 1: /* Scanning for next dirsep */
-           switch (*p) {
-           case '/':
-           case '\\':
-           case ':':
-               state = 0;
-               break;
-           }
-       }
+	switch (state) {
+	case 0:		/* So far only "." since last dirsep or start */
+	    switch (*p) {
+	    case '.':
+		count++;
+		break;
+	    case '/':
+	    case '\\':
+	    case ':':
+		if (count) {
+		    PATHFLAGS(pathPtr) |= TCLPATH_NEEDNORM;
+		    len = 0;
+		}
+		break;
+	    default:
+		count = 0;
+		state = 1;
+	    }
+	case 1:		/* Scanning for next dirsep */
+	    switch (*p) {
+	    case '/':
+	    case '\\':
+	    case ':':
+		state = 0;
+		break;
+	    }
+	}
     }
     if (len == 0 && count) {
-       PATHFLAGS(pathPtr) |= TCLPATH_NEEDNORM;
+	PATHFLAGS(pathPtr) |= TCLPATH_NEEDNORM;
     }
 
     return pathPtr;
@@ -1371,37 +1364,20 @@ AppendPath(
     const char *bytes;
     Tcl_Obj *copy = Tcl_DuplicateObj(head);
 
-    bytes = Tcl_GetStringFromObj(copy, &numBytes);
-
     /*
-     * Should we perhaps use 'Tcl_FSPathSeparator'? But then what about the
-     * Windows special case? Perhaps we should just check if cwd is a root
-     * volume. We should never get numBytes == 0 in this code path.
+     * This is likely buggy when dealing with virtual filesystem drivers
+     * that use some character other than "/" as a path separator.  I know
+     * of no evidence that such a foolish thing exists.  This solution was
+     * chosen so that "JoinPath" operations that pass through either path
+     * intrep produce the same results; that is, bugward compatibility.  If
+     * we need to fix that bug here, it needs fixing in TclJoinPath() too.
      */
-
-    switch (tclPlatform) {
-    case TCL_PLATFORM_UNIX:
-	if (bytes[numBytes-1] != '/') {
-	    Tcl_AppendToObj(copy, "/", 1);
-	}
-	break;
-
-    case TCL_PLATFORM_WINDOWS:
-	/*
-	 * We need the extra 'numBytes != 2', and ':' checks because a volume
-	 * relative path doesn't get a '/'. For example 'glob C:*cat*.exe'
-	 * will return 'C:cat32.exe'
-	 */
-
-	if (bytes[numBytes-1] != '/' && bytes[numBytes-1] != '\\') {
-	    if (numBytes!= 2 || bytes[1] != ':') {
-		Tcl_AppendToObj(copy, "/", 1);
-	    }
-	}
-	break;
+    bytes = Tcl_GetStringFromObj(tail, &numBytes);
+    if (numBytes == 0) {
+	Tcl_AppendToObj(copy, "/", 1);
+    } else {
+	TclpNativeJoinPath(copy, bytes);
     }
-
-    Tcl_AppendObjToObj(copy, tail);
     return copy;
 }
 
@@ -1435,77 +1411,12 @@ TclFSMakePathRelative(
 {
     int cwdLen, len;
     const char *tempStr;
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
 
     if (pathPtr->typePtr == &tclFsPathType) {
 	FsPath *fsPathPtr = PATHOBJ(pathPtr);
 
-	if (PATHFLAGS(pathPtr) != 0
-		&& fsPathPtr->cwdPtr == cwdPtr) {
-	    pathPtr = fsPathPtr->normPathPtr;
-
-	    /* TODO: Determine how much, if any, of this forcing
-	     * the relative path tail into the "path" Tcl_ObjType
-	     * with a recorded cwdPtr context has any actual value.
-	     *
-	     * Nothing is getting cached.  Not normPathPtr, not nativePathPtr,
-	     * nor fsRecPtr, so storing the cwdPtr context against which such
-	     * cached values might later be validated appears to be of no
-	     * value.  Take that away, and all this code is just a mildly
-	     * optimized equivalent of a call to SetFsPathFromAny().  That
-	     * optimization may have some value, *if* these value in fact
-	     * get used as "path" values before used as something else.
-	     * If not, though, whatever cost we pay below to convert to
-	     * one of the "path" intreps is just a waste, it seems.  The
-	     * usual convention in the core is to delay ObjType conversion
-	     * until it is needed and demanded, and I don't see why this
-	     * section of code should be an exception to that.  Leaving it
-	     * in place for the rest of the 8.5.* releases just for sake
-	     * of stability.
-	     */
-
-	    /*
-	     * Free old representation.
-	     */
-
-	    if (pathPtr->typePtr != NULL) {
-		if (pathPtr->bytes == NULL) {
-		    if (pathPtr->typePtr->updateStringProc == NULL) {
-			if (interp != NULL) {
-			    Tcl_ResetResult(interp);
-			    Tcl_AppendResult(interp, "can't find object"
-				    "string representation", NULL);
-			}
-			return NULL;
-		    }
-		    pathPtr->typePtr->updateStringProc(pathPtr);
-		}
-		TclFreeIntRep(pathPtr);
-	    }
-
-	    /*
-	     * Now pathPtr is a string object.
-	     */
-
-	    fsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
-
-	    /*
-	     * Circular reference, by design.
-	     */
-
-	    fsPathPtr->translatedPathPtr = pathPtr;
-	    fsPathPtr->normPathPtr = NULL;
-	    fsPathPtr->cwdPtr = cwdPtr;
-	    Tcl_IncrRefCount(cwdPtr);
-	    fsPathPtr->nativePathPtr = NULL;
-	    fsPathPtr->fsRecPtr = NULL;
-	    fsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
-
-	    SETPATHOBJ(pathPtr, fsPathPtr);
-	    PATHFLAGS(pathPtr) = 0;
-	    pathPtr->typePtr = &tclFsPathType;
-
-	    return pathPtr;
+	if (PATHFLAGS(pathPtr) != 0 && fsPathPtr->cwdPtr == cwdPtr) {
+	    return fsPathPtr->normPathPtr;
 	}
     }
 
@@ -1548,7 +1459,7 @@ TclFSMakePathRelative(
 /*
  *---------------------------------------------------------------------------
  *
- * TclFSMakePathFromNormalized --
+ * MakePathFromNormalized --
  *
  *	Like SetFsPathFromAny, but assumes the given object is an absolute
  *	normalized path. Only for internal use.
@@ -1562,15 +1473,12 @@ TclFSMakePathRelative(
  *---------------------------------------------------------------------------
  */
 
-int
-TclFSMakePathFromNormalized(
+static int
+MakePathFromNormalized(
     Tcl_Interp *interp,		/* Used for error reporting if not NULL. */
-    Tcl_Obj *pathPtr,		/* The object to convert. */
-    ClientData nativeRep)	/* The native rep for the object, if known
-				 * else NULL. */
+    Tcl_Obj *pathPtr)		/* The object to convert. */
 {
     FsPath *fsPathPtr;
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
 
     if (pathPtr->typePtr == &tclFsPathType) {
 	return TCL_OK;
@@ -1584,9 +1492,10 @@ TclFSMakePathFromNormalized(
 	if (pathPtr->bytes == NULL) {
 	    if (pathPtr->typePtr->updateStringProc == NULL) {
 		if (interp != NULL) {
-		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp, "can't find object"
-			    "string representation", NULL);
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			    "can't find object string representation", -1));
+		    Tcl_SetErrorCode(interp, "TCL", "VALUE", "PATH", "WTF",
+			    NULL);
 		}
 		return TCL_ERROR;
 	    }
@@ -1595,7 +1504,7 @@ TclFSMakePathFromNormalized(
 	TclFreeIntRep(pathPtr);
     }
 
-    fsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
+    fsPathPtr = ckalloc(sizeof(FsPath));
 
     /*
      * It's a pure normalized absolute path.
@@ -1609,9 +1518,10 @@ TclFSMakePathFromNormalized(
 
     fsPathPtr->normPathPtr = pathPtr;
     fsPathPtr->cwdPtr = NULL;
-    fsPathPtr->nativePathPtr = nativeRep;
-    fsPathPtr->fsRecPtr = NULL;
-    fsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
+    fsPathPtr->nativePathPtr = NULL;
+    fsPathPtr->fsPtr = NULL;
+    /* Remember the epoch under which we decided pathPtr was normalized */
+    fsPathPtr->filesystemEpoch = TclFSEpoch();
 
     SETPATHOBJ(pathPtr, fsPathPtr);
     PATHFLAGS(pathPtr) = 0;
@@ -1647,17 +1557,16 @@ TclFSMakePathFromNormalized(
 
 Tcl_Obj *
 Tcl_FSNewNativePath(
-    Tcl_Filesystem *fromFilesystem,
+    const Tcl_Filesystem *fromFilesystem,
     ClientData clientData)
 {
-    Tcl_Obj *pathPtr;
+    Tcl_Obj *pathPtr = NULL;
     FsPath *fsPathPtr;
 
-    FilesystemRecord *fsFromPtr;
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
 
-    pathPtr = TclFSInternalToNormalized(fromFilesystem, clientData,
-	    &fsFromPtr);
+    if (fromFilesystem->internalToNormalizedProc != NULL) {
+	pathPtr = (*fromFilesystem->internalToNormalizedProc)(clientData);
+    }
     if (pathPtr == NULL) {
 	return NULL;
     }
@@ -1677,7 +1586,7 @@ Tcl_FSNewNativePath(
 	TclFreeIntRep(pathPtr);
     }
 
-    fsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
+    fsPathPtr = ckalloc(sizeof(FsPath));
 
     fsPathPtr->translatedPathPtr = NULL;
 
@@ -1688,9 +1597,8 @@ Tcl_FSNewNativePath(
     fsPathPtr->normPathPtr = pathPtr;
     fsPathPtr->cwdPtr = NULL;
     fsPathPtr->nativePathPtr = clientData;
-    fsPathPtr->fsRecPtr = fsFromPtr;
-    fsPathPtr->fsRecPtr->fileRefCount++;
-    fsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
+    fsPathPtr->fsPtr = fromFilesystem;
+    fsPathPtr->filesystemEpoch = TclFSEpoch();
 
     SETPATHOBJ(pathPtr, fsPathPtr);
     PATHFLAGS(pathPtr) = 0;
@@ -1746,8 +1654,14 @@ Tcl_FSGetTranslatedPath(
 	    }
 
 	    retObj = Tcl_FSJoinToPath(translatedCwdPtr, 1,
-		    &(srcFsPathPtr->normPathPtr));
+		    &srcFsPathPtr->normPathPtr);
 	    srcFsPathPtr->translatedPathPtr = retObj;
+	    if (translatedCwdPtr->typePtr == &tclFsPathType) {
+		srcFsPathPtr->filesystemEpoch
+			= PATHOBJ(translatedCwdPtr)->filesystemEpoch;
+	    } else {
+		srcFsPathPtr->filesystemEpoch = 0;
+	    }
 	    Tcl_IncrRefCount(retObj);
 	    Tcl_DecrRefCount(translatedCwdPtr);
 	} else {
@@ -1802,7 +1716,7 @@ Tcl_FSGetTranslatedStringPath(
     if (transPtr != NULL) {
 	int len;
 	const char *orig = Tcl_GetStringFromObj(transPtr, &len);
-	char *result = (char *) ckalloc((unsigned) len+1);
+	char *result = ckalloc(len+1);
 
 	memcpy(result, orig, (size_t) len+1);
 	TclDecrRefCount(transPtr);
@@ -1850,8 +1764,7 @@ Tcl_FSGetNormalizedPath(
 	 */
 
 	Tcl_Obj *dir, *copy;
-	int cwdLen, pathType;
-	ClientData clientData = NULL;
+	int tailLen, cwdLen, pathType;
 
 	pathType = Tcl_FSGetPathType(fsPathPtr->cwdPtr);
 	dir = Tcl_FSGetNormalizedPath(interp, fsPathPtr->cwdPtr);
@@ -1863,7 +1776,12 @@ Tcl_FSGetNormalizedPath(
 	    UpdateStringOfFsPath(pathPtr);
 	}
 
-	copy = AppendPath(dir, fsPathPtr->normPathPtr);
+	Tcl_GetStringFromObj(fsPathPtr->normPathPtr, &tailLen);
+	if (tailLen) {
+	    copy = AppendPath(dir, fsPathPtr->normPathPtr);
+	} else {
+	    copy = Tcl_DuplicateObj(dir);
+	}
 	Tcl_IncrRefCount(dir);
 	Tcl_IncrRefCount(copy);
 
@@ -1878,29 +1796,28 @@ Tcl_FSGetNormalizedPath(
 
 	if (PATHFLAGS(pathPtr) & TCLPATH_NEEDNORM) {
 	    /*
-	     * If the "tail" part has components (like /../) that cause
-	     * the combined path to need more complete normalizing,
-	     * call on the more powerful routine to accomplish that so
-	     * we avoid [Bug 2385549] ...
+	     * If the "tail" part has components (like /../) that cause the
+	     * combined path to need more complete normalizing, call on the
+	     * more powerful routine to accomplish that so we avoid [Bug
+	     * 2385549] ...
 	     */
 
-	    Tcl_Obj *newCopy = TclFSNormalizeAbsolutePath(interp, copy, NULL);
+	    Tcl_Obj *newCopy = TclFSNormalizeAbsolutePath(interp, copy);
+
 	    Tcl_DecrRefCount(copy);
 	    copy = newCopy;
 	} else {
 	    /*
-	     * ... but in most cases where we join a trouble free tail
-	     * to a normalized head, we can more efficiently normalize the
-	     * combined path by passing over only the unnormalized tail
-	     * portion.  When this is sufficient, prior developers claim
-	     * this should be much faster.  We use 'cwdLen-1' so that we are
-	     * already pointing at the dir-separator that we know about.
-	     * The normalization code will actually start off directly
-	     * after that separator.
+	     * ... but in most cases where we join a trouble free tail to a
+	     * normalized head, we can more efficiently normalize the combined
+	     * path by passing over only the unnormalized tail portion. When
+	     * this is sufficient, prior developers claim this should be much
+	     * faster. We use 'cwdLen-1' so that we are already pointing at
+	     * the dir-separator that we know about. The normalization code
+	     * will actually start off directly after that separator.
 	     */
 
-	    TclFSNormalizeToUniquePath(interp, copy, cwdLen-1,
-		    (fsPathPtr->nativePathPtr == NULL ? &clientData : NULL));
+	    TclFSNormalizeToUniquePath(interp, copy, cwdLen-1);
 	}
 
 	/* Now we need to construct the new path object. */
@@ -1910,11 +1827,11 @@ Tcl_FSGetNormalizedPath(
 
 	    /*
 	     * NOTE: here we are (dangerously?) assuming that origDir points
-	     * to a Tcl_Obj with Tcl_ObjType == &tclFsPathType .  The
+	     * to a Tcl_Obj with Tcl_ObjType == &tclFsPathType. The
 	     *     pathType = Tcl_FSGetPathType(fsPathPtr->cwdPtr);
-	     * above that set the pathType value should have established
-	     * that, but it's far less clear on what basis we know there's
-	     * been no shimmering since then.
+	     * above that set the pathType value should have established that,
+	     * but it's far less clear on what basis we know there's been no
+	     * shimmering since then.
 	     */
 
 	    FsPath *origDirFsPathPtr = PATHOBJ(origDir);
@@ -1943,15 +1860,6 @@ Tcl_FSGetNormalizedPath(
 
 	    TclDecrRefCount(dir);
 	}
-	if (clientData != NULL) {
-	    /*
-	     * This may be unnecessary. It appears that the
-	     * TclFSNormalizeToUniquePath call above should have already
-	     * set this up.  Not changing out of fear of the unknown.
-	     */
-
-	    fsPathPtr->nativePathPtr = clientData;
-	}
 	PATHFLAGS(pathPtr) = 0;
     }
 
@@ -1965,15 +1873,13 @@ Tcl_FSGetNormalizedPath(
 		UpdateStringOfFsPath(pathPtr);
 	    }
 	    FreeFsPathInternalRep(pathPtr);
-	    pathPtr->typePtr = NULL;
-	    if (Tcl_ConvertToType(interp, pathPtr, &tclFsPathType) != TCL_OK) {
+	    if (SetFsPathFromAny(interp, pathPtr) != TCL_OK) {
 		return NULL;
 	    }
 	    fsPathPtr = PATHOBJ(pathPtr);
 	} else if (fsPathPtr->normPathPtr == NULL) {
 	    int cwdLen;
 	    Tcl_Obj *copy;
-	    ClientData clientData = NULL;
 
 	    copy = AppendPath(fsPathPtr->cwdPtr, pathPtr);
 
@@ -1985,17 +1891,12 @@ Tcl_FSGetNormalizedPath(
 	     * of the previously normalized 'dir'. This should be much faster!
 	     */
 
-	    TclFSNormalizeToUniquePath(interp, copy, cwdLen-1,
-		    (fsPathPtr->nativePathPtr == NULL ? &clientData : NULL));
+	    TclFSNormalizeToUniquePath(interp, copy, cwdLen-1);
 	    fsPathPtr->normPathPtr = copy;
 	    Tcl_IncrRefCount(fsPathPtr->normPathPtr);
-	    if (clientData != NULL) {
-		fsPathPtr->nativePathPtr = clientData;
-	    }
 	}
     }
     if (fsPathPtr->normPathPtr == NULL) {
-	ClientData clientData = NULL;
 	Tcl_Obj *useThisCwd = NULL;
 	int pureNormalized = 1;
 
@@ -2018,11 +1919,11 @@ Tcl_FSGetNormalizedPath(
 
 	if (path[0] == '\0') {
 	    /*
-	     * Special handling for the empty string value.  This one is
-	     * very weird with [file normalize {}] => {}.  (The reasoning
-	     * supporting this is unknown to DGP, but he fears changing it.)
-	     * Attempt here to keep the expectations of other parts of
-	     * Tcl_Filesystem code about state of the FsPath fields satisfied.
+	     * Special handling for the empty string value. This one is very
+	     * weird with [file normalize {}] => {}. (The reasoning supporting
+	     * this is unknown to DGP, but he fears changing it.) Attempt here
+	     * to keep the expectations of other parts of Tcl_Filesystem code
+	     * about state of the FsPath fields satisfied.
 	     *
 	     * In particular, capture the cwd value and save so it can be
 	     * stored in the cwdPtr field below.
@@ -2055,7 +1956,7 @@ Tcl_FSGetNormalizedPath(
 		/*
 		 * We have a refCount on the cwd.
 		 */
-#ifdef __WIN32__
+#ifdef _WIN32
 	    } else if (type == TCL_PATH_VOLUME_RELATIVE) {
 		/*
 		 * Only Windows has volume-relative paths.
@@ -2068,7 +1969,7 @@ Tcl_FSGetNormalizedPath(
 		    return NULL;
 		}
 		pureNormalized = 0;
-#endif /* __WIN32__ */
+#endif /* _WIN32 */
 	    }
 	}
 
@@ -2077,12 +1978,7 @@ Tcl_FSGetNormalizedPath(
 	 */
 
 	fsPathPtr->normPathPtr = TclFSNormalizeAbsolutePath(interp,
-		absolutePath,
-		(fsPathPtr->nativePathPtr == NULL ? &clientData : NULL));
-	if (0 && (clientData != NULL)) {
-	    fsPathPtr->nativePathPtr =
-		(*fsPathPtr->fsRecPtr->fsPtr->dupInternalRepProc)(clientData);
-	}
+		absolutePath);
 
 	/*
 	 * Check if path is pure normalized (this can only be the case if it
@@ -2090,8 +1986,12 @@ Tcl_FSGetNormalizedPath(
 	 */
 
 	if (pureNormalized) {
-	    if (!strcmp(TclGetString(fsPathPtr->normPathPtr),
-		    TclGetString(pathPtr))) {
+	    int normPathLen, pathLen;
+	    const char *normPath;
+
+	    path = TclGetStringFromObj(pathPtr, &pathLen);
+	    normPath = TclGetStringFromObj(fsPathPtr->normPathPtr, &normPathLen);
+	    if ((pathLen == normPathLen) && !memcmp(path, normPath, pathLen)) {
 		/*
 		 * The path was already normalized. Get rid of the duplicate.
 		 */
@@ -2146,7 +2046,7 @@ Tcl_FSGetNormalizedPath(
 ClientData
 Tcl_FSGetInternalRep(
     Tcl_Obj *pathPtr,
-    Tcl_Filesystem *fsPtr)
+    const Tcl_Filesystem *fsPtr)
 {
     FsPath *srcFsPathPtr;
 
@@ -2169,7 +2069,7 @@ Tcl_FSGetInternalRep(
      * not easily achievable with the current implementation.
      */
 
-    if (srcFsPathPtr->fsRecPtr == NULL) {
+    if (srcFsPathPtr->fsPtr == NULL) {
 	/*
 	 * This only usually happens in wrappers like TclpStat which create a
 	 * string object and pass it to TclpObjStat. Code which calls the
@@ -2189,7 +2089,7 @@ Tcl_FSGetInternalRep(
 	 */
 
 	srcFsPathPtr = PATHOBJ(pathPtr);
-	if (srcFsPathPtr->fsRecPtr == NULL) {
+	if (srcFsPathPtr->fsPtr == NULL) {
 	    return NULL;
 	}
     }
@@ -2201,7 +2101,7 @@ Tcl_FSGetInternalRep(
      * for this is we ask what filesystem this path belongs to.
      */
 
-    if (fsPtr != srcFsPathPtr->fsRecPtr->fsPtr) {
+    if (fsPtr != srcFsPathPtr->fsPtr) {
 	const Tcl_Filesystem *actualFs = Tcl_FSGetFileSystemForPath(pathPtr);
 
 	if (actualFs == fsPtr) {
@@ -2214,12 +2114,12 @@ Tcl_FSGetInternalRep(
 	Tcl_FSCreateInternalRepProc *proc;
 	char *nativePathPtr;
 
-	proc = srcFsPathPtr->fsRecPtr->fsPtr->createInternalRepProc;
+	proc = srcFsPathPtr->fsPtr->createInternalRepProc;
 	if (proc == NULL) {
 	    return NULL;
 	}
 
-	nativePathPtr = (*proc)(pathPtr);
+	nativePathPtr = proc(pathPtr);
 	srcFsPathPtr = PATHOBJ(pathPtr);
 	srcFsPathPtr->nativePathPtr = nativePathPtr;
     }
@@ -2248,7 +2148,7 @@ Tcl_FSGetInternalRep(
 int
 TclFSEnsureEpochOk(
     Tcl_Obj *pathPtr,
-    Tcl_Filesystem **fsPtrPtr)
+    const Tcl_Filesystem **fsPtrPtr)
 {
     FsPath *srcFsPathPtr;
 
@@ -2272,7 +2172,6 @@ TclFSEnsureEpochOk(
 	    UpdateStringOfFsPath(pathPtr);
 	}
 	FreeFsPathInternalRep(pathPtr);
-	pathPtr->typePtr = NULL;
 	if (SetFsPathFromAny(NULL, pathPtr) != TCL_OK) {
 	    return TCL_ERROR;
 	}
@@ -2283,8 +2182,8 @@ TclFSEnsureEpochOk(
      * Check whether the object is already assigned to a fs.
      */
 
-    if (srcFsPathPtr->fsRecPtr != NULL) {
-	*fsPtrPtr = srcFsPathPtr->fsRecPtr->fsPtr;
+    if (srcFsPathPtr->fsPtr != NULL) {
+	*fsPtrPtr = srcFsPathPtr->fsPtr;
     }
     return TCL_OK;
 }
@@ -2308,10 +2207,9 @@ TclFSEnsureEpochOk(
 void
 TclFSSetPathDetails(
     Tcl_Obj *pathPtr,
-    FilesystemRecord *fsRecPtr,
+    const Tcl_Filesystem *fsPtr,
     ClientData clientData)
 {
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
     FsPath *srcFsPathPtr;
 
     /*
@@ -2325,10 +2223,9 @@ TclFSSetPathDetails(
     }
 
     srcFsPathPtr = PATHOBJ(pathPtr);
-    srcFsPathPtr->fsRecPtr = fsRecPtr;
+    srcFsPathPtr->fsPtr = fsPtr;
     srcFsPathPtr->nativePathPtr = clientData;
-    srcFsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
-    fsRecPtr->fileRefCount++;
+    srcFsPathPtr->filesystemEpoch = TclFSEpoch();
 }
 
 /*
@@ -2353,7 +2250,7 @@ Tcl_FSEqualPaths(
     Tcl_Obj *firstPtr,
     Tcl_Obj *secondPtr)
 {
-    char *firstStr, *secondStr;
+    const char *firstStr, *secondStr;
     int firstLen, secondLen, tempErrno;
 
     if (firstPtr == secondPtr) {
@@ -2363,9 +2260,9 @@ Tcl_FSEqualPaths(
     if (firstPtr == NULL || secondPtr == NULL) {
 	return 0;
     }
-    firstStr = Tcl_GetStringFromObj(firstPtr, &firstLen);
-    secondStr = Tcl_GetStringFromObj(secondPtr, &secondLen);
-    if ((firstLen == secondLen) && (strcmp(firstStr, secondStr) == 0)) {
+    firstStr = TclGetStringFromObj(firstPtr, &firstLen);
+    secondStr = TclGetStringFromObj(secondPtr, &secondLen);
+    if ((firstLen == secondLen) && !memcmp(firstStr, secondStr, firstLen)) {
 	return 1;
     }
 
@@ -2383,9 +2280,9 @@ Tcl_FSEqualPaths(
 	return 0;
     }
 
-    firstStr = Tcl_GetStringFromObj(firstPtr, &firstLen);
-    secondStr = Tcl_GetStringFromObj(secondPtr, &secondLen);
-    return (firstLen == secondLen) && (strcmp(firstStr, secondStr) == 0);
+    firstStr = TclGetStringFromObj(firstPtr, &firstLen);
+    secondStr = TclGetStringFromObj(secondPtr, &secondLen);
+    return ((firstLen == secondLen) && !memcmp(firstStr, secondStr, firstLen));
 }
 
 /*
@@ -2417,10 +2314,6 @@ SetFsPathFromAny(
     FsPath *fsPathPtr;
     Tcl_Obj *transPtr;
     char *name;
-#if defined(__CYGWIN__) && defined(__WIN32__)
-    int copied = 0;
-#endif
-    ThreadSpecificData *tsdPtr = TCL_TSD_INIT(&tclFsDataKey);
 
     if (pathPtr->typePtr == &tclFsPathType) {
 	return TCL_OK;
@@ -2447,7 +2340,6 @@ SetFsPathFromAny(
      */
 
     if (name[0] == '~') {
-	char *expandedUser;
 	Tcl_DString temp;
 	int split;
 	char separator = '/';
@@ -2480,9 +2372,11 @@ SetFsPathFromAny(
 	    dir = TclGetEnv("HOME", &dirString);
 	    if (dir == NULL) {
 		if (interp) {
-		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp, "couldn't find HOME environment "
-			    "variable to expand path", NULL);
+		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
+			    "couldn't find HOME environment variable to"
+			    " expand path", -1));
+		    Tcl_SetErrorCode(interp, "TCL", "VALUE", "PATH",
+			    "HOMELESS", NULL);
 		}
 		return TCL_ERROR;
 	    }
@@ -2497,9 +2391,10 @@ SetFsPathFromAny(
 	    Tcl_DStringInit(&temp);
 	    if (TclpGetUserHome(name+1, &temp) == NULL) {
 		if (interp != NULL) {
-		    Tcl_ResetResult(interp);
-		    Tcl_AppendResult(interp, "user \"", name+1,
-			    "\" doesn't exist", NULL);
+		    Tcl_SetObjResult(interp, Tcl_ObjPrintf(
+			    "user \"%s\" doesn't exist", name+1));
+		    Tcl_SetErrorCode(interp, "TCL", "VALUE", "PATH", "NOUSER",
+			    NULL);
 		}
 		Tcl_DStringFree(&temp);
 		if (split != len) {
@@ -2512,8 +2407,7 @@ SetFsPathFromAny(
 	    }
 	}
 
-	expandedUser = Tcl_DStringValue(&temp);
-	transPtr = Tcl_NewStringObj(expandedUser, Tcl_DStringLength(&temp));
+	transPtr = TclDStringToObj(&temp);
 
 	if (split != len) {
 	    /*
@@ -2543,66 +2437,38 @@ SetFsPathFromAny(
 		}
 		TclDecrRefCount(parts);
 	    } else {
-		/*
-		 * Simple case. "rest" is relative path. Just join it. The
-		 * "rest" object will be freed when Tcl_FSJoinToPath returns
-		 * (unless something else claims a refCount on it).
-		 */
+		Tcl_Obj *pair[2];
 
-		Tcl_Obj *joined;
-		Tcl_Obj *rest = Tcl_NewStringObj(name+split+1, -1);
-
-		Tcl_IncrRefCount(transPtr);
-		joined = Tcl_FSJoinToPath(transPtr, 1, &rest);
-		TclDecrRefCount(transPtr);
-		transPtr = joined;
+		pair[0] = transPtr;
+		pair[1] = Tcl_NewStringObj(name+split+1, -1);
+		transPtr = TclJoinPath(2, pair);
+		Tcl_DecrRefCount(pair[0]);
+		Tcl_DecrRefCount(pair[1]);
 	    }
 	}
-	Tcl_DStringFree(&temp);
     } else {
-	transPtr = Tcl_FSJoinToPath(pathPtr, 0, NULL);
+	transPtr = TclJoinPath(1, &pathPtr);
     }
-
-#if defined(__CYGWIN__) && defined(__WIN32__)
-    {
-	char winbuf[MAX_PATH+1];
-
-	/*
-	 * In the Cygwin world, call conv_to_win32_path in order to use the
-	 * mount table to translate the file name into something Windows will
-	 * understand. Take care when converting empty strings!
-	 */
-
-	name = Tcl_GetStringFromObj(transPtr, &len);
-	if (len > 0) {
-	    cygwin_conv_to_win32_path(name, winbuf);
-	    TclWinNoBackslash(winbuf);
-	    if (Tcl_IsShared(transPtr)) {
-		copied = 1;
-		transPtr = Tcl_DuplicateObj(transPtr);
-		Tcl_IncrRefCount(transPtr);
-	    }
-	    Tcl_SetStringObj(transPtr, winbuf, -1);
-	}
-    }
-#endif /* __CYGWIN__ && __WIN32__ */
 
     /*
      * Now we have a translated filename in 'transPtr'. This will have forward
      * slashes on Windows, and will not contain any ~user sequences.
      */
 
-    fsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
+    fsPathPtr = ckalloc(sizeof(FsPath));
 
     fsPathPtr->translatedPathPtr = transPtr;
     if (transPtr != pathPtr) {
 	Tcl_IncrRefCount(fsPathPtr->translatedPathPtr);
+	/* Redo translation when $env(HOME) changes */
+	fsPathPtr->filesystemEpoch = TclFSEpoch();
+    } else {
+	fsPathPtr->filesystemEpoch = 0;
     }
     fsPathPtr->normPathPtr = NULL;
     fsPathPtr->cwdPtr = NULL;
     fsPathPtr->nativePathPtr = NULL;
-    fsPathPtr->fsRecPtr = NULL;
-    fsPathPtr->filesystemEpoch = tsdPtr->filesystemEpoch;
+    fsPathPtr->fsPtr = NULL;
 
     /*
      * Free old representation before installing our new one.
@@ -2612,12 +2478,6 @@ SetFsPathFromAny(
     SETPATHOBJ(pathPtr, fsPathPtr);
     PATHFLAGS(pathPtr) = 0;
     pathPtr->typePtr = &tclFsPathType;
-#if defined(__CYGWIN__) && defined(__WIN32__)
-    if (copied) {
-	Tcl_DecrRefCount(transPtr);
-    }
-#endif
-
     return TCL_OK;
 }
 
@@ -2641,27 +2501,18 @@ FreeFsPathInternalRep(
     if (fsPathPtr->cwdPtr != NULL) {
 	TclDecrRefCount(fsPathPtr->cwdPtr);
     }
-    if (fsPathPtr->nativePathPtr != NULL && fsPathPtr->fsRecPtr != NULL) {
+    if (fsPathPtr->nativePathPtr != NULL && fsPathPtr->fsPtr != NULL) {
 	Tcl_FSFreeInternalRepProc *freeProc =
-		fsPathPtr->fsRecPtr->fsPtr->freeInternalRepProc;
+		fsPathPtr->fsPtr->freeInternalRepProc;
 
 	if (freeProc != NULL) {
-	    (*freeProc)(fsPathPtr->nativePathPtr);
+	    freeProc(fsPathPtr->nativePathPtr);
 	    fsPathPtr->nativePathPtr = NULL;
 	}
     }
-    if (fsPathPtr->fsRecPtr != NULL) {
-	fsPathPtr->fsRecPtr->fileRefCount--;
-	if (fsPathPtr->fsRecPtr->fileRefCount <= 0) {
-	    /*
-	     * It has been unregistered already.
-	     */
 
-	    ckfree((char *) fsPathPtr->fsRecPtr);
-	}
-    }
-
-    ckfree((char *) fsPathPtr);
+    ckfree(fsPathPtr);
+    pathPtr->typePtr = NULL;
 }
 
 static void
@@ -2670,56 +2521,53 @@ DupFsPathInternalRep(
     Tcl_Obj *copyPtr)		/* Path obj with internal rep to set. */
 {
     FsPath *srcFsPathPtr = PATHOBJ(srcPtr);
-    FsPath *copyFsPathPtr = (FsPath *) ckalloc(sizeof(FsPath));
+    FsPath *copyFsPathPtr = ckalloc(sizeof(FsPath));
 
     SETPATHOBJ(copyPtr, copyFsPathPtr);
 
-    if (srcFsPathPtr->translatedPathPtr != NULL) {
+    if (srcFsPathPtr->translatedPathPtr == srcPtr) {
+	/* Cycle in src -> make cycle in copy. */
+	copyFsPathPtr->translatedPathPtr = copyPtr;
+    } else {
 	copyFsPathPtr->translatedPathPtr = srcFsPathPtr->translatedPathPtr;
-	if (copyFsPathPtr->translatedPathPtr != copyPtr) {
+	if (copyFsPathPtr->translatedPathPtr != NULL) {
 	    Tcl_IncrRefCount(copyFsPathPtr->translatedPathPtr);
 	}
-    } else {
-	copyFsPathPtr->translatedPathPtr = NULL;
     }
 
-    if (srcFsPathPtr->normPathPtr != NULL) {
+    if (srcFsPathPtr->normPathPtr == srcPtr) {
+	/* Cycle in src -> make cycle in copy. */
+	copyFsPathPtr->normPathPtr = copyPtr;
+    } else {
 	copyFsPathPtr->normPathPtr = srcFsPathPtr->normPathPtr;
-	if (copyFsPathPtr->normPathPtr != copyPtr) {
+	if (copyFsPathPtr->normPathPtr != NULL) {
 	    Tcl_IncrRefCount(copyFsPathPtr->normPathPtr);
 	}
-    } else {
-	copyFsPathPtr->normPathPtr = NULL;
     }
 
-    if (srcFsPathPtr->cwdPtr != NULL) {
-	copyFsPathPtr->cwdPtr = srcFsPathPtr->cwdPtr;
+    copyFsPathPtr->cwdPtr = srcFsPathPtr->cwdPtr;
+    if (copyFsPathPtr->cwdPtr != NULL) {
 	Tcl_IncrRefCount(copyFsPathPtr->cwdPtr);
-    } else {
-	copyFsPathPtr->cwdPtr = NULL;
     }
 
     copyFsPathPtr->flags = srcFsPathPtr->flags;
 
-    if (srcFsPathPtr->fsRecPtr != NULL
+    if (srcFsPathPtr->fsPtr != NULL
 	    && srcFsPathPtr->nativePathPtr != NULL) {
 	Tcl_FSDupInternalRepProc *dupProc =
-		srcFsPathPtr->fsRecPtr->fsPtr->dupInternalRepProc;
+		srcFsPathPtr->fsPtr->dupInternalRepProc;
 
 	if (dupProc != NULL) {
 	    copyFsPathPtr->nativePathPtr =
-		    (*dupProc)(srcFsPathPtr->nativePathPtr);
+		    dupProc(srcFsPathPtr->nativePathPtr);
 	} else {
 	    copyFsPathPtr->nativePathPtr = NULL;
 	}
     } else {
 	copyFsPathPtr->nativePathPtr = NULL;
     }
-    copyFsPathPtr->fsRecPtr = srcFsPathPtr->fsRecPtr;
+    copyFsPathPtr->fsPtr = srcFsPathPtr->fsPtr;
     copyFsPathPtr->filesystemEpoch = srcFsPathPtr->filesystemEpoch;
-    if (copyFsPathPtr->fsRecPtr != NULL) {
-	copyFsPathPtr->fsRecPtr->fileRefCount++;
-    }
 
     copyPtr->typePtr = &tclFsPathType;
 }

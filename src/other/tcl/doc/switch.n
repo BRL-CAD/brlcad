@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH switch n 8.5 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -33,32 +31,33 @@ command returns an empty string.
 .PP
 If the initial arguments to \fBswitch\fR start with \fB\-\fR then
 they are treated as options
-.VS 8.5
 unless there are exactly two arguments to \fBswitch\fR (in which case the
 first must the \fIstring\fR and the second must be the
 \fIpattern\fR/\fIbody\fR list).
-.VE 8.5
 The following options are currently supported:
 .TP 10
 \fB\-exact\fR
+.
 Use exact matching when comparing \fIstring\fR to a pattern.  This
 is the default.
 .TP 10
 \fB\-glob\fR
+.
 When matching \fIstring\fR to the patterns, use glob-style matching
 (i.e. the same as implemented by the \fBstring match\fR command).
 .TP 10
 \fB\-regexp\fR
+.
 When matching \fIstring\fR to the patterns, use regular
 expression matching
 (as described in the \fBre_syntax\fR reference page).
-'\" Options defined by TIP#75
-.VS 8.5
 .TP 10
 \fB\-nocase\fR
+.
 Causes comparisons to be handled in a case-insensitive manner.
 .TP 10
 \fB\-matchvar\fR \fIvarName\fR
+.
 This option (only legal when \fB\-regexp\fR is also specified)
 specifies the name of a variable into which the list of matches
 found by the regular expression engine will be written.  The first
@@ -71,6 +70,7 @@ empty list written to it.  This option may be specified at the same
 time as the \fB\-indexvar\fR option.
 .TP 10
 \fB\-indexvar\fR \fIvarName\fR
+.
 This option (only legal when \fB\-regexp\fR is also specified)
 specifies the name of a variable into which the list of indices
 referring to matching substrings
@@ -85,15 +85,13 @@ capturing parenthesis in the regular expression that matched, and so
 on.  When a \fBdefault\fR branch is taken, the variable will have the
 empty list written to it.  This option may be specified at the same
 time as the \fB\-matchvar\fR option.
-.VE 8.5
 .TP 10
 \fB\-\|\-\fR
+.
 Marks the end of options.  The argument following this one will
 be treated as \fIstring\fR even if it starts with a \fB\-\fR.
-.VS 8.5
 This is not required when the matching patterns and bodies are grouped
 together in a single argument.
-.VE 8.5
 .PP
 Two syntaxes are provided for the \fIpattern\fR and \fIbody\fR arguments.
 The first uses a separate argument for each of the patterns and commands;
@@ -124,8 +122,10 @@ Beware of how you place comments in \fBswitch\fR commands.  Comments
 should only be placed \fBinside\fR the execution body of one of the
 patterns, and not intermingled with the patterns.
 .SH "EXAMPLES"
+.PP
 The \fBswitch\fR command can match against variables and not just
 literals, as shown here (the result is \fI2\fR):
+.PP
 .CS
 set foo "abc"
 \fBswitch\fR abc a \- b {expr {1}} $foo {expr {2}} default {expr {3}}
@@ -134,48 +134,49 @@ set foo "abc"
 Using glob matching and the fall-through body is an alternative to
 writing regular expressions with alternations, as can be seen here
 (this returns \fI1\fR):
+.PP
 .CS
 \fBswitch\fR \-glob aaab {
-   a*b     \-
-   b       {expr {1}}
-   a*      {expr {2}}
-   default {expr {3}}
+    a*b     \-
+    b       {expr {1}}
+    a*      {expr {2}}
+    default {expr {3}}
 }
 .CE
 .PP
 Whenever nothing matches, the \fBdefault\fR clause (which must be
 last) is taken.  This example has a result of \fI3\fR:
+.PP
 .CS
 \fBswitch\fR xyz {
-   a \-
-   b {
-      # Correct Comment Placement
-      expr {1}
-   }
-   c {
-      expr {2}
-   }
-   default {
-      expr {3}
-   }
+    a \-
+    b {
+        # Correct Comment Placement
+        expr {1}
+    }
+    c {
+        expr {2}
+    }
+    default {
+        expr {3}
+    }
 }
 .CE
 .PP
-.VS 8.5
 When matching against regular expressions, information about what
 exactly matched is easily obtained using the \fB\-matchvar\fR option:
+.PP
 .CS
 \fBswitch\fR \-regexp \-matchvar foo \-\- $bar {
-   a(b*)c {
-      puts "Found [string length [lindex $foo 1]] 'b's"
-   }
-   d(e*)f(g*)h {
-      puts "Found [string length [lindex $foo 1]] 'e's and\e
-            [string length [lindex $foo 2]] 'g's"
-   }
+    a(b*)c {
+        puts "Found [string length [lindex $foo 1]] 'b's"
+    }
+    d(e*)f(g*)h {
+        puts "Found [string length [lindex $foo 1]] 'e's and\e
+                [string length [lindex $foo 2]] 'g's"
+    }
 }
 .CE
-.VE 8.5
 .SH "SEE ALSO"
 for(n), if(n), regexp(n)
 .SH KEYWORDS

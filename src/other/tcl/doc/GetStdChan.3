@@ -4,10 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_GetStdChannel 3 7.5 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -55,9 +53,11 @@ set to NULL.
 .PP
 If a non-NULL value for \fIchannel\fR is passed to \fBTcl_SetStdChannel\fR,
 then that same value should be passed to \fBTcl_RegisterChannel\fR, like so:
+.PP
 .CS
 Tcl_RegisterChannel(NULL, channel);
 .CE
+.PP
 This is a workaround for a misfeature in \fBTcl_SetStdChannel\fR that it
 fails to do some reference counting housekeeping.  This misfeature cannot
 be corrected without contradicting the assumptions of some existing
@@ -77,7 +77,7 @@ assigned starting with standard input, followed by standard output, with
 standard error being last.
 .PP
 See \fBTcl_StandardChannels\fR for a general treatise about standard
-channels and the behaviour of the Tcl library with regard to them.
+channels and the behavior of the Tcl library with regard to them.
 
 .SH "SEE ALSO"
 Tcl_Close(3), Tcl_CreateChannel(3), Tcl_Main(3), tclsh(1)

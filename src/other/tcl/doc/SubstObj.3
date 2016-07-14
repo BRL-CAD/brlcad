@@ -4,13 +4,11 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_SubstObj 3 8.4 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
-Tcl_SubstObj \- perform substitutions on Tcl objects
+Tcl_SubstObj \- perform substitutions on Tcl values
 .SH SYNOPSIS
 .nf
 \fB#include <tcl.h>\fR
@@ -24,7 +22,7 @@ Interpreter in which to execute Tcl scripts and lookup variables.  If
 an error occurs, the interpreter's result is modified to hold an error
 message.
 .AP Tcl_Obj *objPtr in
-A Tcl object containing the string to perform substitutions on.
+A Tcl value containing the string to perform substitutions on.
 .AP int flags in
 ORed combination of flag bits that specify which substitutions to
 perform.  The flags \fBTCL_SUBST_COMMANDS\fR,
@@ -38,7 +36,7 @@ The \fBTcl_SubstObj\fR function is used to perform substitutions on
 strings in the fashion of the \fBsubst\fR command.  It gets the value
 of the string contained in \fIobjPtr\fR and scans it, copying
 characters and performing the chosen substitutions as it goes to an
-output object which is returned as the result of the function.  In the
+output value which is returned as the result of the function.  In the
 event of an error occurring during the execution of a command or
 variable substitution, the function returns NULL and an error message
 is left in \fIinterp\fR's result.

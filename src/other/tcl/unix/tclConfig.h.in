@@ -4,12 +4,6 @@
     #ifndef _TCLCONFIG
     #define _TCLCONFIG
 
-/* Is pthread_attr_get_np() declared in <pthread.h>? */
-#undef ATTRGETNP_NOT_DECLARED
-
-/* Is pthread_getattr_np declared in <pthread.h>? */
-#undef GETATTRNP_NOT_DECLARED
-
 /* Is gettimeofday() actually declared in <sys/time.h>? */
 #undef GETTOD_NOT_DECLARED
 
@@ -19,8 +13,8 @@
 /* Define to 1 if the system has the type `blkcnt_t'. */
 #undef HAVE_BLKCNT_T
 
-/* Do we have BSDgettimeofday()? */
-#undef HAVE_BSDGETTIMEOFDAY
+/* Defined when compiler supports casting to union type. */
+#undef HAVE_CAST_TO_UNION
 
 /* Define to 1 if you have the `chflags' function. */
 #undef HAVE_CHFLAGS
@@ -34,10 +28,19 @@
 /* Do we have access to Darwin CoreFoundation.framework? */
 #undef HAVE_COREFOUNDATION
 
+/* Is the cpuid instruction usable? */
+#undef HAVE_CPUID
+
+/* Define to 1 if you have the `freeaddrinfo' function. */
+#undef HAVE_FREEADDRINFO
+
 /* Do we have fts functions? */
 #undef HAVE_FTS
 
-/* Define to 1 if getaddrinfo is available. */
+/* Define to 1 if you have the `gai_strerror' function. */
+#undef HAVE_GAI_STRERROR
+
+/* Define to 1 if you have the `getaddrinfo' function. */
 #undef HAVE_GETADDRINFO
 
 /* Define to 1 if you have the `getattrlist' function. */
@@ -85,6 +88,9 @@
 /* Define to 1 if gethostbyname_r takes 6 args. */
 #undef HAVE_GETHOSTBYNAME_R_6
 
+/* Define to 1 if you have the `getnameinfo' function. */
+#undef HAVE_GETNAMEINFO
+
 /* Define to 1 if getpwnam_r is available. */
 #undef HAVE_GETPWNAM_R
 
@@ -106,6 +112,9 @@
 /* Define to 1 if you have the `gmtime_r' function. */
 #undef HAVE_GMTIME_R
 
+/* Compiler support for module scope symbols */
+#undef HAVE_HIDDEN
+
 /* Do we have the intptr_t type? */
 #undef HAVE_INTPTR_T
 
@@ -118,9 +127,6 @@
 /* Define to 1 if you have the <libkern/OSAtomic.h> header file. */
 #undef HAVE_LIBKERN_OSATOMIC_H
 
-/* Do we have <limits.h>? */
-#undef HAVE_LIMITS_H
-
 /* Define to 1 if you have the `localtime_r' function. */
 #undef HAVE_LOCALTIME_R
 
@@ -129,6 +135,12 @@
 
 /* Define to 1 if you have the <memory.h> header file. */
 #undef HAVE_MEMORY_H
+
+/* Define to 1 if you have the `mkstemp' function. */
+#undef HAVE_MKSTEMP
+
+/* Define to 1 if you have the `mkstemps' function. */
+#undef HAVE_MKSTEMPS
 
 /* Define to 1 if you have the `mktime' function. */
 #undef HAVE_MKTIME
@@ -154,17 +166,8 @@
 /* Define to 1 if you have the `pthread_atfork' function. */
 #undef HAVE_PTHREAD_ATFORK
 
-/* Do we want a BSD-like thread-attribute interface? */
-#undef HAVE_PTHREAD_ATTR_GET_NP
-
 /* Define to 1 if you have the `pthread_attr_setstacksize' function. */
 #undef HAVE_PTHREAD_ATTR_SETSTACKSIZE
-
-/* Do we want a Linux-like thread-attribute interface? */
-#undef HAVE_PTHREAD_GETATTR_NP
-
-/* Define to 1 if you have the `pthread_get_stacksize_np' function. */
-#undef HAVE_PTHREAD_GET_STACKSIZE_NP
 
 /* Does putenv() copy strings or incorporate them by reference? */
 #undef HAVE_PUTENV_THAT_COPIES
@@ -187,8 +190,20 @@
 /* Define to 1 if you have the `strtol' function. */
 #undef HAVE_STRTOL
 
+/* Define to 1 if the system has the type `struct addrinfo'. */
+#undef HAVE_STRUCT_ADDRINFO
+
 /* Is 'struct dirent64' in <sys/types.h>? */
 #undef HAVE_STRUCT_DIRENT64
+
+/* Define to 1 if the system has the type `struct in6_addr'. */
+#undef HAVE_STRUCT_IN6_ADDR
+
+/* Define to 1 if the system has the type `struct sockaddr_in6'. */
+#undef HAVE_STRUCT_SOCKADDR_IN6
+
+/* Define to 1 if the system has the type `struct sockaddr_storage'. */
+#undef HAVE_STRUCT_SOCKADDR_STORAGE
 
 /* Is 'struct stat64' in <sys/stat.h>? */
 #undef HAVE_STRUCT_STAT64
@@ -223,6 +238,9 @@
 /* Define to 1 if you have the <sys/types.h> header file. */
 #undef HAVE_SYS_TYPES_H
 
+/* Define to 1 if you have the <termios.h> header file. */
+#undef HAVE_TERMIOS_H
+
 /* Should we use the global timezone variable? */
 #undef HAVE_TIMEZONE_VAR
 
@@ -247,14 +265,23 @@
 /* Is weak import available? */
 #undef HAVE_WEAK_IMPORT
 
+/* Is there an installed zlib? */
+#undef HAVE_ZLIB
+
 /* Is this a Mac I see before me? */
 #undef MAC_OSX_TCL
 
-/* Compiler support for module scope symbols */
+/* No Compiler support for module scope symbols */
 #undef MODULE_SCOPE
 
 /* Default libtommath precision. */
 #undef MP_PREC
+
+/* Is no debugging enabled? */
+#undef NDEBUG
+
+/* Use compat implementation of getaddrinfo() and friends */
+#undef NEED_FAKE_RFC2553
 
 /* Is Darwin CoreFoundation unavailable for 64-bit? */
 #undef NO_COREFOUNDATION_64
@@ -282,9 +309,6 @@
 
 /* Do we have a usable 'isnan'? */
 #undef NO_ISNAN
-
-/* Do we have <limits.h>? */
-#undef NO_LIMITS_H
 
 /* Do we have memmove()? */
 #undef NO_MEMMOVE
@@ -340,9 +364,6 @@
 /* What encoding should be used for embedded configuration info? */
 #undef TCL_CFGVAL_ENCODING
 
-/* Is debugging enabled? */
-#undef TCL_CFG_DEBUG
-
 /* Is this a 64-bit build? */
 #undef TCL_CFG_DO64BIT
 
@@ -354,9 +375,6 @@
 
 /* Are bytecode statistics enabled? */
 #undef TCL_COMPILE_STATS
-
-/* Are we cross-compiling? */
-#undef TCL_CROSS_COMPILE
 
 /* Are we to override what our default encoding is? */
 #undef TCL_DEFAULT_ENCODING
@@ -372,9 +390,6 @@
 
 /* What is the default extension for shared libraries? */
 #undef TCL_SHLIB_EXT
-
-/* The C stack grows upwards in memory. */
-#undef TCL_STACK_GROWS_UP
 
 /* Are we building with threads enabled? */
 #undef TCL_THREADS
@@ -408,15 +423,6 @@
 
 /* Should we use FIONBIO? */
 #undef USE_FIONBIO
-
-/* Use the sgtty API for serial lines */
-#undef USE_SGTTY
-
-/* Use the termio API for serial lines */
-#undef USE_TERMIO
-
-/* Use the termios API for serial lines */
-#undef USE_TERMIOS
 
 /* Do we want to use the threaded memory allocator? */
 #undef USE_THREAD_ALLOC

@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -23,7 +21,7 @@ testConstraint longIs64bit [expr {int(0x8000000000000000) < 0}]
 testConstraint wideIs64bit \
 	[expr {(wide(0x80000000) > 0) && (wide(0x8000000000000000) < 0)}]
 testConstraint wideBiggerThanInt [expr {wide(0x80000000) != int(0x80000000)}]
-
+
 test format-1.1 {integer formatting} {
     format "%*d %d %d %d" 6 34 16923 -12 -1
 } {    34 16923 -12 -1}
@@ -77,6 +75,9 @@ test format-1.11 {integer formatting} longIs32bit {
 test format-1.11.1 {integer formatting} longIs64bit {
     format "%-#20o %#-20o %#-20o %#-20o" 6 34 16923 -12 -1
 } {06                   042                  041033               01777777777777777777764}
+test format-1.12 {integer formatting} {
+    format "%b %#b %llb" 5 5 [expr {2**100}]
+} {101 0b101 10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000}
 
 test format-2.1 {string formatting} {
     format "%s %s %c %s" abcd {This is a very long test string.} 120 x
@@ -288,7 +289,7 @@ test format-8.1 {error conditions} {
 test format-8.2 {error conditions} {
     catch format msg
     set msg
-} {wrong # args: should be "format formatString ?arg arg ...?"}
+} {wrong # args: should be "format formatString ?arg ...?"}
 test format-8.3 {error conditions} {
     catch {format %*d}
 } 1
@@ -533,14 +534,11 @@ test format-18.1 {do not demote existing numeric values} {
     # Ensure $a and $b are separate objects
     set b 0xaaaa
     append b aaaa
-
     set result [expr {$a == $b}]
     format %08lx $b
     lappend result [expr {$a == $b}]
-
     set b 0xaaaa
     append b aaaa
-
     lappend result [expr {$a == $b}]
     format %08x $b
     lappend result [expr {$a == $b}]
@@ -551,22 +549,25 @@ test format-18.2 {do not demote existing numeric values} {wideBiggerThanInt} {
     list [format %08x $a] [expr {$a == $b}]
 } {aaaaaaab 1}
 
-test format-19.1 {
-    regression test - tcl-core message by Brian Griffin on
-    26 0ctober 2004
-} -body {
+test format-19.1 {regression test - tcl-core message by Brian Griffin on 26 0ctober 2004} -body {
     set x 0x8fedc654
     list [expr { ~ $x }] [format %08x [expr { ~$x }]]
 } -match regexp -result {-2414724693 f*701239ab}
-
 test format-19.2 {Bug 1867855} {
     format %llx 0
 } 0
-
 test format-19.3 {Bug 2830354} {
     string length [format %340f 0]
 } 340
 
+# Note that this test may fail in future versions
+test format-20.1 {Bug 2932421: plain %s caused intrep change of args} -body {
+    set x [dict create a b c d]
+    format %s $x
+    # After this, obj in $x should be a dict with a non-NULL bytes field
+    tcl::unsupported::representation $x
+} -match glob -result {value is a dict with *, string representation "*"}
+
 # cleanup
 catch {unset a}
 catch {unset b}

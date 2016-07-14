@@ -10,8 +10,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -31,7 +29,8 @@ proc evalInProc { script } {
     #return [list $status $result]
 }
 
-catch {unset foo}
+unset -nocomplain foo
+
 test regexpComp-1.1 {basic regexp operation} {
     evalInProc {
 	regexp ab*c abbbc
@@ -260,7 +259,7 @@ test regexpComp-4.4 {case conversion in regexp} {
 	list [regexp -nocase $::x $::x foo] $foo
     }
 } "1 $x"
-catch {unset ::x}
+unset -nocomplain ::x
 
 test regexpComp-5.1 {exercise cache of compiled expressions} {
     evalInProc {
@@ -317,17 +316,17 @@ test regexpComp-6.1 {regexp errors} {
     evalInProc {
 	list [catch {regexp a} msg] $msg
     }
-} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?-option ...? exp string ?matchVar? ?subMatchVar ...?"}}
 test regexpComp-6.2 {regexp errors} {
     evalInProc {
 	list [catch {regexp -nocase a} msg] $msg
     }
-} {1 {wrong # args: should be "regexp ?switches? exp string ?matchVar? ?subMatchVar subMatchVar ...?"}}
+} {1 {wrong # args: should be "regexp ?-option ...? exp string ?matchVar? ?subMatchVar ...?"}}
 test regexpComp-6.3 {regexp errors} {
     evalInProc {
 	list [catch {regexp -gorp a} msg] $msg
     }
-} {1 {bad switch "-gorp": must be -all, -about, -indices, -inline, -expanded, -line, -linestop, -lineanchor, -nocase, -start, or --}}
+} {1 {bad option "-gorp": must be -all, -about, -indices, -inline, -expanded, -line, -linestop, -lineanchor, -nocase, -start, or --}}
 test regexpComp-6.4 {regexp errors} {
     evalInProc {
 	list [catch {regexp a( b} msg] $msg
@@ -350,11 +349,11 @@ test regexpComp-6.7 {regexp errors} {
 } {0 0}
 test regexpComp-6.8 {regexp errors} {
     evalInProc {
-	catch {unset f1}
+	unset -nocomplain f1
 	set f1 44
 	list [catch {regexp abc abc f1(f2)} msg] $msg
     }
-} {1 {couldn't set variable "f1(f2)"}}
+} {1 {can't set "f1(f2)": variable isn't array}}
 test regexpComp-6.9 {regexp errors, -start bad int check} {
     evalInProc {
 	list [catch {regexp -start bogus {^$} {}} msg] $msg
@@ -527,6 +526,11 @@ test regexpComp-9.6 {-all option to regsub} {
 	list [regsub -all ^ xxx 123 foo] $foo
     }
 } {1 123xxx}
+test regexpComp-9.7 {Bug 84af1192f5: -all option to regsub} {
+    evalInProc {
+	regsub -all {\(.*} 123(qwe) ""
+    }
+} 123
 
 test regexpComp-10.1 {expanded syntax in regsub} {
     evalInProc {
@@ -563,27 +567,27 @@ test regexpComp-11.1 {regsub errors} {
     evalInProc {
 	list [catch {regsub a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?-option ...? exp string subSpec ?varName?"}}
 test regexpComp-11.2 {regsub errors} {
     evalInProc {
 	list [catch {regsub -nocase a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?-option ...? exp string subSpec ?varName?"}}
 test regexpComp-11.3 {regsub errors} {
     evalInProc {
 	list [catch {regsub -nocase -all a b} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?-option ...? exp string subSpec ?varName?"}}
 test regexpComp-11.4 {regsub errors} {
     evalInProc {
 	list [catch {regsub a b c d e f} msg] $msg
     }
-} {1 {wrong # args: should be "regsub ?switches? exp string subSpec ?varName?"}}
+} {1 {wrong # args: should be "regsub ?-option ...? exp string subSpec ?varName?"}}
 test regexpComp-11.5 {regsub errors} {
     evalInProc {
 	list [catch {regsub -gorp a b c} msg] $msg
     }
-} {1 {bad switch "-gorp": must be -all, -nocase, -expanded, -line, -linestop, -lineanchor, -start, or --}}
+} {1 {bad option "-gorp": must be -all, -nocase, -expanded, -line, -linestop, -lineanchor, -start, or --}}
 test regexpComp-11.6 {regsub errors} {
     evalInProc {
 	list [catch {regsub -nocase a( b c d} msg] $msg
@@ -591,11 +595,11 @@ test regexpComp-11.6 {regsub errors} {
 } {1 {couldn't compile regular expression pattern: parentheses () not balanced}}
 test regexpComp-11.7 {regsub errors} {
     evalInProc {
-	catch {unset f1}
+	unset -nocomplain f1
 	set f1 44
 	list [catch {regsub -nocase aaa aaa xxx f1(f2)} msg] $msg
     }
-} {1 {couldn't set variable "f1(f2)"}}
+} {1 {can't set "f1(f2)": variable isn't array}}
 test regexpComp-11.8 {regsub errors, -start bad int check} {
     evalInProc {
 	list [catch {regsub -start bogus pattern string rep var} msg] $msg
@@ -662,23 +666,23 @@ test regexpComp-14.3 {CompileRegexp: regexp cache, empty regexp and empty cache}
 } -result 1
 
 test regexpComp-15.1 {regexp -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regexp -start -10 {\d} 1abc2de3 x] $x
 } {1 1}
 test regexpComp-15.2 {regexp -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regexp -start 2 {\d} 1abc2de3 x] $x
 } {1 2}
 test regexpComp-15.3 {regexp -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regexp -start 4 {\d} 1abc2de3 x] $x
 } {1 2}
 test regexpComp-15.4 {regexp -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regexp -start 5 {\d} 1abc2de3 x] $x
 } {1 3}
 test regexpComp-15.5 {regexp -start, over end of string} {
-    catch {unset x}
+    unset -nocomplain x
     list [regexp -start [string length 1abc2de3] {\d} 1abc2de3 x] [info exists x]
 } {0 0}
 test regexpComp-15.6 {regexp -start, loss of ^$ behavior} {
@@ -686,15 +690,15 @@ test regexpComp-15.6 {regexp -start, loss of ^$ behavior} {
 } {0}
 
 test regexpComp-16.1 {regsub -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regsub -all -start 2 {\d} a1b2c3d4e5 {/&} x] $x
 } {4 a1b/2c/3d/4e/5}
 test regexpComp-16.2 {regsub -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regsub -all -start -25 {z} hello {/&} x] $x
 } {0 hello}
 test regexpComp-16.3 {regsub -start} {
-    catch {unset x}
+    unset -nocomplain x
     list [regsub -all -start 3 {z} hello {/&} x] $x
 } {0 hello}
 test regexpComp-16.4 {regsub -start, \A behavior} {
@@ -983,7 +987,11 @@ test regexpComp-24.11 {regexp command compiling tests} {
 	regexp -- $re $text
     }
 } 1
-
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

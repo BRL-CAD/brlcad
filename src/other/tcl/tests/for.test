@@ -8,14 +8,18 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
     namespace import -force ::tcltest::*
 }
 
+# Used for constraining memory leak tests
+testConstraint memory [llength [info commands memory]]
+if {[testConstraint memory]} {
+    proc meminfo {} {lindex [split [memory info] "\n"] 3 3}
+}
+
 # Basic "for" operation.
 
 test for-1.1 {TclCompileForCmd: missing initial command} {
@@ -199,6 +203,19 @@ test for-2.6 {continue tests, long command body} {
     }
     set a
 } {1 3}
+test for-2.7 {continue tests, uncompiled [for]} -body {
+    set file [makeFile {
+    	set guard 0
+	for {set i 20} {$i > 0} {incr i -1} {
+	    if {[incr guard]>30} {return BAD}
+	    continue
+	}
+	return GOOD
+    } source.file]
+    source $file
+} -cleanup {
+    removeFile source.file
+} -result GOOD
 
 # Check "for" and "break".
 
@@ -334,7 +351,6 @@ proc formatMail {} {
         64 {        UNIX (Solaris 2.* and SunOS, other systems soon to follow). Easy to install} \
         65 {     binary packages are now for sale at the Sun Labs Tcl/Tk Shop. Check it out!} \
     }
-
     set result ""
     set NL "
 "
@@ -354,7 +370,6 @@ proc formatMail {} {
     } else {
 	set break 1
     }
-
     set xmailer 0
     set inheaders 1
     set last [array size lines]
@@ -375,9 +390,7 @@ proc formatMail {} {
 	    set limit 55
 	} else {
 	    set limit 55
-
 	    # Decide whether or not to break the body line
-
 	    if {$plen > 0} {
 		if {[string first {> } $line] == 0} {
 		    # This is quoted text from previous message, don't reformat
@@ -420,7 +433,7 @@ proc formatMail {} {
 	set climit [expr $limit-1]
 	set cutoff 50
 	set continuation 0
-	
+
 	while {[string length $line] > $limit} {
 	    for {set c [expr $limit-1]} {$c >= $cutoff} {incr c -1} {
 		set char [string index $line $c]
@@ -813,7 +826,535 @@ test for-6.18 {Tcl_ForObjCmd: for command result} {
     1 {invoked "continue" outside of a loop} \
     ]
 
+test for-7.1 {Bug 3614226: ensure that break cleans up the stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [break] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.2 {Bug 3614226: ensure that continue cleans up the stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [continue] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.3 {Bug 3614226: ensure that break cleans up the expansion stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[break] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.4 {Bug 3614226: ensure that continue cleans up the expansion stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[continue] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.5 {Bug 3614226: ensure that break cleans up the combination of main and expansion stack} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[break] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.6 {Bug 3614226: ensure that continue cleans up the combination of main and expansion stack} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[continue] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.7 {Bug 3614226: ensure that break only cleans up the right amount} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[break] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.8 {Bug 3614226: ensure that continue only cleans up the right amount} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[continue] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.9 {Bug 3614226: ensure that break from invoked command cleans up the stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [apply {{} {return -code break}}] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.10 {Bug 3614226: ensure that continue from invoked command cleans up the stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [apply {{} {return -code continue}}] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.11 {Bug 3614226: ensure that break from invoked command cleans up the expansion stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[apply {{} {return -code break}}] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.12 {Bug 3614226: ensure that continue from invoked command cleans up the expansion stack} memory {
+    apply {{} {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[apply {{} {
+		    return -code continue
+		}}] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.13 {Bug 3614226: ensure that break from invoked command cleans up the combination of main and expansion stack} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[apply {{} {
+		    return -code break
+		}}] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.14 {Bug 3614226: ensure that continue from invoked command cleans up the combination of main and expansion stack} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[apply {{} {
+		    return -code continue
+		}}] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.15 {Bug 3614226: ensure that break from invoked command only cleans up the right amount} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[apply {{} {
+		    return -code break
+		}}] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.16 {Bug 3614226: ensure that continue from invoked command only cleans up the right amount} memory {
+    apply {{} {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[apply {{} {
+		    return -code continue
+		}}] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }}
+} 0
+test for-7.17 {Bug 3614226: ensure that break from expanded command cleans up the stack} memory {
+    apply {op {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [{*}$op] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code break}
+} 0
+test for-7.18 {Bug 3614226: ensure that continue from expanded command cleans up the stack} memory {
+    apply {op {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {$x < 5} {incr x} {
+		list a b c [{*}$op] d e f
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code continue}
+} 0
+test for-7.19 {Bug 3614226: ensure that break from expanded command cleans up the expansion stack} memory {
+    apply {op {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[{*}$op] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code break}
+} 0
+test for-7.20 {Bug 3614226: ensure that continue from expanded command cleans up the expansion stack} memory {
+    apply {op {
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts {*}[puts a b c {*}[{*}$op] d e f]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code continue}
+} 0
+test for-7.21 {Bug 3614226: ensure that break from expanded command cleans up the combination of main and expansion stack} memory {
+    apply {op {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[{*}$op] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code break}
+} 0
+test for-7.22 {Bug 3614226: ensure that continue from expanded command cleans up the combination of main and expansion stack} memory {
+    apply {op {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[{*}$op] d e f]]
+	    }
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code continue}
+} 0
+test for-7.23 {Bug 3614226: ensure that break from expanded command only cleans up the right amount} memory {
+    apply {op {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[{*}$op] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code break}
+} 0
+test for-7.24 {Bug 3614226: ensure that continue from expanded command only cleans up the right amount} memory {
+    apply {op {
+	set l [lrepeat 50 p q r]
+	# Can't use [memtest]; must be careful when we change stack frames
+	set end [meminfo]
+	for {set i 0} {$i < 5} {incr i} {
+	    unset -nocomplain {*}[for {set x 0} {[incr x]<50} {} {
+		puts [puts {*}$l {*}[puts a b c {*}$l {*}[{*}$op] d e f]]
+	    }]
+	    set tmp $end
+	    set end [meminfo]
+	}
+	expr {$end - $tmp}
+    }} {return -level 0 -code continue}
+} 0
 
+test for-8.0 {Coverity CID 1251203: break vs continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [eval {}]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {6 5 3}
+test for-8.1 {Coverity CID 1251203: break vs continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;list a [eval break]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.2 {Coverity CID 1251203: break vs continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;list a [eval continue]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.3 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; break} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.4 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; continue} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.5 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [break]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.6 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i; list a [continue]} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.7 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;eval break} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.8 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    list a [\
+	    for {set i 0} {$i < 5} {incr i;eval continue} {
+		incr j
+	    }]
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.9 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;eval break} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.10 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;eval continue} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+test for-8.11 {break in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;break} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {2 1 3}
+test for-8.12 {continue in for-step clause} {
+    apply {{} {
+	for {set k 0} {$k < 3} {incr k} {
+	    set j 0
+	    for {set i 0} {$i < 5} {incr i;continue} {
+		incr j
+	    }
+	    incr i
+	}
+	list $i $j $k
+    }}
+} {1 1 3}
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

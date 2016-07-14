@@ -3,11 +3,9 @@
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-'\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
+'\"
 .TH Tcl_ParseCommand 3 8.3 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_ParseCommand, Tcl_ParseExpr, Tcl_ParseBraces, Tcl_ParseQuotedString, Tcl_ParseVarName, Tcl_ParseVar, Tcl_FreeParse, Tcl_EvalTokens, Tcl_EvalTokensStandard \- parse Tcl scripts and expressions
@@ -58,7 +56,7 @@ following \fIstart\fR up to the first null character.
 .AP int nested in
 Non-zero means that the script is part of a command substitution so an
 unquoted close bracket should be treated as a command terminator.  If zero,
-close brackets have no special meaning. 
+close brackets have no special meaning.
 .AP int append in
 Non-zero means that \fI*parsePtr\fR already contains valid tokens; the new
 tokens should be appended to those already present.  Zero means that
@@ -82,7 +80,6 @@ if the parse was successful.
 Points to structure that was filled in by a previous call to
 \fBTcl_ParseCommand\fR, \fBTcl_ParseExpr\fR, \fBTcl_ParseVarName\fR, etc.
 .BE
-
 .SH DESCRIPTION
 .PP
 These procedures parse Tcl commands or portions of Tcl commands such as
@@ -121,7 +118,7 @@ result, and no information is left at \fI*parsePtr\fR.
 enclosed in braces such as
 \fB{hello}\fR or \fB{string \et with \et tabs}\fR
 from the beginning of its argument \fIstart\fR.
-The first character of \fIstart\fR must be \fB{\fR. 
+The first character of \fIstart\fR must be \fB{\fR.
 If the braced string was parsed successfully,
 \fBTcl_ParseBraces\fR returns \fBTCL_OK\fR,
 fills in the structure pointed to by \fIparsePtr\fR
@@ -137,7 +134,7 @@ and no information is left at \fI*parsePtr\fR or \fI*termPtr\fR.
 \fBTcl_ParseQuotedString\fR parses a double-quoted string such as
 \fB"sum is [expr {$a+$b}]"\fR
 from the beginning of the argument \fIstart\fR.
-The first character of \fIstart\fR must be \fB\N'34'\fR. 
+The first character of \fIstart\fR must be \fB\N'34'\fR.
 If the double-quoted string was parsed successfully,
 \fBTcl_ParseQuotedString\fR returns \fBTCL_OK\fR,
 fills in the structure pointed to by \fIparsePtr\fR
@@ -153,7 +150,7 @@ and no information is left at \fI*parsePtr\fR or \fI*termPtr\fR.
 \fBTcl_ParseVarName\fR parses a Tcl variable reference such as
 \fB$abc\fR or \fB$x([expr {$index + 1}])\fR from the beginning of its
 \fIstart\fR argument.
-The first character of \fIstart\fR must be \fB$\fR. 
+The first character of \fIstart\fR must be \fB$\fR.
 If a variable name was parsed successfully, \fBTcl_ParseVarName\fR
 returns \fBTCL_OK\fR and fills in the structure pointed to by
 \fIparsePtr\fR with information about the structure of the variable name
@@ -187,7 +184,7 @@ a Tcl_Parse structure.  The tokens typically consist
 of all the tokens in a word or all the tokens that make up the index for
 a reference to an array variable.  \fBTcl_EvalTokensStandard\fR performs the
 substitutions requested by the tokens and concatenates the
-resulting values. 
+resulting values.
 The return value from \fBTcl_EvalTokensStandard\fR is a Tcl completion
 code with one of the values \fBTCL_OK\fR, \fBTCL_ERROR\fR,
 \fBTCL_RETURN\fR, \fBTCL_BREAK\fR, or \fBTCL_CONTINUE\fR, or possibly
@@ -197,37 +194,37 @@ result; it can be retrieved using \fBTcl_GetObjResult\fR.
 .PP
 \fBTcl_EvalTokens\fR differs from \fBTcl_EvalTokensStandard\fR only in
 the return convention used: it returns the result in a new Tcl_Obj.
-The reference count of the object returned as result has been
+The reference count of the value returned as result has been
 incremented, so the caller must
-invoke \fBTcl_DecrRefCount\fR when it is finished with the object.
+invoke \fBTcl_DecrRefCount\fR when it is finished with the value.
 If an error or other exception occurs while evaluating the tokens
 (such as a reference to a non-existent variable) then the return value
 is NULL and an error message is left in \fIinterp\fR's result. The use
 of \fBTcl_EvalTokens\fR is deprecated.
-
 .SH "TCL_PARSE STRUCTURE"
 .PP
 \fBTcl_ParseCommand\fR, \fBTcl_ParseExpr\fR, \fBTcl_ParseBraces\fR,
 \fBTcl_ParseQuotedString\fR, and \fBTcl_ParseVarName\fR
 return parse information in two data structures, Tcl_Parse and Tcl_Token:
+.PP
 .CS
 typedef struct Tcl_Parse {
-        const char *\fIcommentStart\fR;
-        int \fIcommentSize\fR;
-        const char *\fIcommandStart\fR;
-        int \fIcommandSize\fR;
-        int \fInumWords\fR;
-        Tcl_Token *\fItokenPtr\fR;
-        int \fInumTokens\fR;
-        ...
-} Tcl_Parse;
+    const char *\fIcommentStart\fR;
+    int \fIcommentSize\fR;
+    const char *\fIcommandStart\fR;
+    int \fIcommandSize\fR;
+    int \fInumWords\fR;
+    Tcl_Token *\fItokenPtr\fR;
+    int \fInumTokens\fR;
+    ...
+} \fBTcl_Parse\fR;
 
 typedef struct Tcl_Token {
-        int \fItype\fR;
-        const char *\fIstart\fR;
-        int \fIsize\fR;
-        int \fInumComponents\fR;
-} Tcl_Token;
+    int \fItype\fR;
+    const char *\fIstart\fR;
+    int \fIsize\fR;
+    int \fInumComponents\fR;
+} \fBTcl_Token\fR;
 .CE
 .PP
 The first five fields of a Tcl_Parse structure
@@ -245,7 +242,7 @@ character that terminates the last comment.
 If the command is not preceded by any comments, \fIcommentSize\fR is 0.
 \fBTcl_ParseCommand\fR also sets the \fIcommandStart\fR field
 to point to the first character of the first
-word in the command (skipping any comments and leading space) and 
+word in the command (skipping any comments and leading space) and
 \fIcommandSize\fR gives the total number of bytes in the command,
 including the character pointed to by \fIcommandStart\fR up to and
 including the newline, close bracket, or semicolon character that
@@ -269,6 +266,7 @@ the \fInumComponents\fR field describes how many of these there are.
 The \fItype\fR field has one of the following values:
 .TP 20
 \fBTCL_TOKEN_WORD\fR
+.
 This token ordinarily describes one word of a command
 but it may also describe a quoted or braced string in an expression.
 The token describes a component of the script that is
@@ -283,29 +281,32 @@ number of sub-tokens that make up the word, including sub-tokens
 of \fBTCL_TOKEN_VARIABLE\fR and \fBTCL_TOKEN_BS\fR tokens.
 .TP
 \fBTCL_TOKEN_SIMPLE_WORD\fR
+.
 This token has the same meaning as \fBTCL_TOKEN_WORD\fR, except that
 the word is guaranteed to consist of a single \fBTCL_TOKEN_TEXT\fR
 sub-token.  The \fInumComponents\fR field is always 1.
 .TP
 \fBTCL_TOKEN_EXPAND_WORD\fR
-.VS 8.5
+.
 This token has the same meaning as \fBTCL_TOKEN_WORD\fR, except that
 the command parser notes this word began with the expansion
 prefix \fB{*}\fR, indicating that after substitution,
 the list value of this word should be expanded to form multiple
 arguments in command evaluation.  This
 token type can only be created by Tcl_ParseCommand.
-.VE 8.5
 .TP
 \fBTCL_TOKEN_TEXT\fR
+.
 The token describes a range of literal text that is part of a word.
 The \fInumComponents\fR field is always 0.
 .TP
 \fBTCL_TOKEN_BS\fR
+.
 The token describes a backslash sequence such as \fB\en\fR or \fB\e0xa3\fR.
 The \fInumComponents\fR field is always 0.
 .TP
 \fBTCL_TOKEN_COMMAND\fR
+.
 The token describes a command whose result must be substituted into
 the word.  The token includes the square brackets that surround the
 command.  The \fInumComponents\fR field is always 0 (the nested command
@@ -313,6 +314,7 @@ is not parsed; call \fBTcl_ParseCommand\fR recursively if you want to
 see its tokens).
 .TP
 \fBTCL_TOKEN_VARIABLE\fR
+.
 The token describes a variable substitution, including the
 \fB$\fR, variable name, and array index (if there is one) up through the
 close parenthesis that terminates the index.  This token is followed
@@ -328,6 +330,7 @@ array index. The \fInumComponents\fR field includes nested sub-tokens
 that are part of \fBTCL_TOKEN_VARIABLE\fR tokens in the array index.
 .TP
 \fBTCL_TOKEN_SUB_EXPR\fR
+.
 The token describes one subexpression of an expression
 (or an entire expression).
 A subexpression may consist of a value
@@ -347,13 +350,14 @@ just the \fBTCL_TOKEN_OPERATOR\fR token.
 Each operand is described by a \fBTCL_TOKEN_SUB_EXPR\fR token.
 Otherwise, the subexpression is a value described by
 one of the token types \fBTCL_TOKEN_WORD\fR, \fBTCL_TOKEN_TEXT\fR,
-\fBTCL_TOKEN_BS\fR, \fBTCL_TOKEN_COMMAND\fR, 
+\fBTCL_TOKEN_BS\fR, \fBTCL_TOKEN_COMMAND\fR,
 \fBTCL_TOKEN_VARIABLE\fR, and \fBTCL_TOKEN_SUB_EXPR\fR.
 The \fInumComponents\fR field
 counts the total number of sub-tokens that make up the subexpression;
 this includes the sub-tokens for any nested \fBTCL_TOKEN_SUB_EXPR\fR tokens.
 .TP
 \fBTCL_TOKEN_OPERATOR\fR
+.
 The token describes one operator of an expression
 such as \fB&&\fR or \fBhypot\fR.
 A \fBTCL_TOKEN_OPERATOR\fR token is always preceded by a
@@ -385,8 +389,7 @@ is always 0.
 After \fBTcl_ParseCommand\fR returns, the first token pointed to by
 the \fItokenPtr\fR field of the
 Tcl_Parse structure always has type \fBTCL_TOKEN_WORD\fR or
-.VS 8.5
-\fBTCL_TOKEN_SIMPLE_WORD\fR or \fBTCL_TOKEN_EXPAND_WORD\fR.  
+\fBTCL_TOKEN_SIMPLE_WORD\fR or \fBTCL_TOKEN_EXPAND_WORD\fR.
 It is followed by the sub-tokens
 that must be concatenated to produce the value of that word.
 The next token is the \fBTCL_TOKEN_WORD\fR or \fBTCL_TOKEN_SIMPLE_WORD\fR
@@ -394,7 +397,6 @@ of \fBTCL_TOKEN_EXPAND_WORD\fR token for the second word,
 followed by sub-tokens for that
 word, and so on until all \fInumWords\fR have been accounted
 for.
-.VE 8.5
 .PP
 After \fBTcl_ParseExpr\fR returns, the first token pointed to by
 the \fItokenPtr\fR field of the
@@ -461,6 +463,5 @@ There are additional fields in the Tcl_Parse structure after the
 \fBTcl_ParseCommand\fR, \fBTcl_ParseExpr\fR, \fBTcl_ParseBraces\fR,
 \fBTcl_ParseQuotedString\fR, and \fBTcl_ParseVarName\fR; they should not be
 referenced by code outside of these procedures.
-
 .SH KEYWORDS
 backslash substitution, braces, command, expression, parse, token, variable substitution

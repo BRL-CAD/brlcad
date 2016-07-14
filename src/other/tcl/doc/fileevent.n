@@ -1,14 +1,13 @@
 '\"
 '\" Copyright (c) 1994 The Regents of the University of California.
 '\" Copyright (c) 1994-1996 Sun Microsystems, Inc.
+'\" Copyright (c) 2008 Pat Thoyts
 '\"
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH fileevent n 7.5 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -81,16 +80,24 @@ A channel is considered to be writable if at least one byte of data
 can be written to the underlying file or device without blocking,
 or if an error condition is present on the underlying file or device.
 .PP
-Event-driven I/O works best for channels that have been
-placed into nonblocking mode with the \fBfconfigure\fR command.
-In blocking mode, a \fBputs\fR command may block if you give it
-more data than the underlying file or device can accept, and a
-\fBgets\fR or \fBread\fR command will block if you attempt to read
-more data than is ready;  no events will be processed while the
-commands block.
+Event-driven I/O works best for channels that have been placed into
+nonblocking mode with the \fBfconfigure\fR command.  In blocking mode,
+a \fBputs\fR command may block if you give it more data than the
+underlying file or device can accept, and a \fBgets\fR or \fBread\fR
+command will block if you attempt to read more data than is ready; a
+readable underlying file or device may not even guarantee that a
+blocking [read 1] will succeed (counter-examples being multi-byte
+encodings, compression or encryption transforms ). In all such cases,
+no events will be processed while the commands block.
+.PP
 In nonblocking mode \fBputs\fR, \fBread\fR, and \fBgets\fR never block.
 See the documentation for the individual commands for information
 on how they handle blocking and nonblocking channels.
+.PP
+Testing for the end of file condition should be done after any attempts
+read the channel data. The eof flag is set once an attempt to read the
+end of data has occurred and testing before this read will require an
+additional event to be fired.
 .PP
 The script for a file event is executed at global level (outside the
 context of any Tcl procedure) in the interpreter in which the
@@ -101,26 +108,49 @@ In addition, the file event handler is deleted if it ever returns
 an error;  this is done in order to prevent infinite loops due to
 buggy handlers.
 .SH EXAMPLE
+.PP
 In this setup \fBGetData\fR will be called with the channel as an
-argument whenever $chan becomes readable.
+argument whenever $chan becomes readable. The \fBread\fR call will
+read whatever binary data is currently available without blocking.
+Here the channel has the fileevent removed when an end of file 
+occurs to avoid being continually called (see above). Alternatively
+the channel may be closed on this condition.
+.PP
 .CS
 proc GetData {chan} {
-    if {![eof $chan]} {
-        puts [gets $chan]
+    set data [read $chan]
+    puts "[string length $data] $data"
+    if {[eof $chan]} {
+        fileevent $chan readable {}
     }
 }
 
+fconfigure $chan -blocking 0 -encoding binary
 \fBfileevent\fR $chan readable [list GetData $chan]
 .CE
+.PP
+The next example demonstrates use of \fBgets\fR to read line-oriented
+data.
+.PP
+.CS
+proc GetData {chan} {
+    if {[gets $chan line] >= 0} {
+        puts $line
+    }
+    if {[eof $chan]} {
+        close $chan
+    }
+}
 
+fconfigure $chan -blocking 0 -buffering line -translation crlf
+\fBfileevent\fR $chan readable [list GetData $chan]
+.CE
 .SH CREDITS
 .PP
 \fBfileevent\fR is based on the \fBaddinput\fR command created
 by Mark Diekhans.
-
 .SH "SEE ALSO"
 fconfigure(n), gets(n), interp(n), puts(n), read(n), Tcl_StandardChannels(3)
-
 .SH KEYWORDS
 asynchronous I/O, blocking, channel, event handler, nonblocking, readable,
 script, writable.

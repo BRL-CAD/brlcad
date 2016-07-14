@@ -9,8 +9,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution of
 # this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2.1
@@ -731,7 +729,7 @@ test mathop-20.2 { zero args, not allowed } {
     set exp {}
     foreach op {~ ! << >> % != ne in ni - /} {
         set res [TestOp $op]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -762,7 +760,7 @@ test mathop-20.5 { one arg, not allowed } {
     set exp {}
     foreach op {% != ne in ni << >>} {
         set res [TestOp $op 1]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -777,12 +775,14 @@ test mathop-20.6 { one arg, error } {
         # skipping - for now, knownbug...
         foreach op {+ * / & | ^ **} {
             lappend res [TestOp $op {*}$vals]
-            lappend exp "can't use non-numeric string as operand of \"$op\" ARITH DOMAIN {non-numeric string}"
+            lappend exp "can't use non-numeric string as operand of \"$op\"\
+		ARITH DOMAIN {non-numeric string}"
         }
     }
     foreach op {+ * / & | ^ **} {
 	lappend res [TestOp $op NaN 1]
-	lappend exp "can't use non-numeric floating-point value as operand of \"$op\" ARITH DOMAIN {non-numeric floating-point value}"
+	lappend exp "can't use non-numeric floating-point value as operand of \"$op\"\
+	    ARITH DOMAIN {non-numeric floating-point value}"
     }
     expr {$res eq $exp ? 0 : $res}
 } 0
@@ -865,7 +865,7 @@ test mathop-21.6 { unary ops, too many } {
     set exp {}
     foreach op {~ !} {
         set res [TestOp $op 7 8]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res
@@ -1092,7 +1092,7 @@ test mathop-24.3 { binary ops, bad values } {
     }
     foreach op {in ni} {
         lappend res [TestOp $op 5 "a b \{ c"]
-        lappend exp "unmatched open brace in list NONE"
+        lappend exp "unmatched open brace in list TCL VALUE LIST BRACE"
     }
     lappend res [TestOp % 5 0]
     lappend exp "divide by zero ARITH DIVZERO {divide by zero}"
@@ -1189,7 +1189,7 @@ test mathop-24.8 { binary ops, too many } {
     set exp {}
     foreach op {<< >> % != ne in ni ~ !} {
         set res [TestOp $op 7 8 9]
-        if {[string match "wrong # args* NONE" $res]} {
+        if {[string match "wrong # args: should be * TCL WRONGARGS" $res]} {
             lappend exp 0
         } else {
             lappend exp $res

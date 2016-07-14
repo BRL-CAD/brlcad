@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH join n "" Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -16,7 +14,6 @@ join \- Create a string by joining together list elements
 .SH SYNOPSIS
 \fBjoin \fIlist \fR?\fIjoinString\fR?
 .BE
-
 .SH DESCRIPTION
 .PP
 The \fIlist\fR argument must be a valid Tcl list.
@@ -25,7 +22,9 @@ formed by joining all of the elements of \fIlist\fR together with
 \fIjoinString\fR separating each adjacent pair of elements.
 The \fIjoinString\fR argument defaults to a space character.
 .SH EXAMPLES
+.PP
 Making a comma-separated list:
+.PP
 .CS
 set data {1 2 3 4 5}
 \fBjoin\fR $data ", "
@@ -33,14 +32,13 @@ set data {1 2 3 4 5}
 .CE
 .PP
 Using \fBjoin\fR to flatten a list by a single level:
+.PP
 .CS
 set data {1 {2 3} 4 {5 {6 7} 8}}
 \fBjoin\fR $data
      \fB\(-> 1 2 3 4 5 {6 7} 8\fR
 .CE
-
 .SH "SEE ALSO"
 list(n), lappend(n), split(n)
-
 .SH KEYWORDS
 element, join, list, separator

@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH Tcl_BooleanObj 3 8.5 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 Tcl_NewBooleanObj, Tcl_SetBooleanObj, Tcl_GetBooleanFromObj \- store/retrieve boolean value in a Tcl_Obj
@@ -32,7 +30,7 @@ Points to the Tcl_Obj in which to store, or from which to
 retrieve a boolean value.
 .AP Tcl_Interp *interp in/out
 If a boolean value cannot be retrieved,
-an error message is left in the interpreter's result object
+an error message is left in the interpreter's result value
 unless \fIinterp\fR is NULL.
 .AP int *boolPtr out
 Points to place where \fBTcl_GetBooleanFromObj\fR
@@ -94,4 +92,4 @@ a \fBTCL_ERROR\fR return.
 Tcl_NewObj, Tcl_IsShared, Tcl_GetBoolean
 
 .SH KEYWORDS
-boolean, object
+boolean, value

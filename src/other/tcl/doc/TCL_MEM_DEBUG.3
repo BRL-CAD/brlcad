@@ -3,10 +3,8 @@
 '\" Copyright (c) 2000 by Scriptics Corporation.
 '\" All rights reserved.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH TCL_MEM_DEBUG 3 8.1 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 .SH NAME
 TCL_MEM_DEBUG \- Compile-time flag to enable Tcl memory debugging
@@ -28,7 +26,7 @@ version of \fBTcl_InitMemory\fR to add the \fBmemory\fR command to Tcl.
 \fBTCL_MEM_DEBUG\fR must be either left defined for all modules or undefined
 for all modules that are going to be linked together.  If they are not, link
 errors will occur, with either \fBTcl_DbCkfree\fR and \fBTcl_DbCkalloc\fR or
-\fBTcl_Ckalloc\fR and \fBTcl_Ckfree\fR being undefined.
+\fBTcl_Alloc\fR and \fBTcl_Free\fR being undefined.
 .PP
 Once memory debugging support has been compiled into Tcl, the C
 functions \fBTcl_ValidateAllMemory\fR, and \fBTcl_DumpActiveMemory\fR,

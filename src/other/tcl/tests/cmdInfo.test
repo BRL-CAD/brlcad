@@ -12,13 +12,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2
-    namespace import -force ::tcltest::*
-}
+package require tcltest 2
+namespace import ::tcltest::*
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testcmdinfo  [llength [info commands testcmdinfo]]
 testConstraint testcmdtoken [llength [info commands testcmdtoken]]
@@ -100,7 +99,7 @@ test cmdinfo-6.1 {Names for commands created when outside namespaces} \
 # cleanup
 catch {namespace delete cmdInfoNs1::cmdInfoNs2 cmdInfoNs1}
 catch {rename x1 ""}
-::tcltest::cleanupTests
+cleanupTests
 return
 
 # Local Variables:

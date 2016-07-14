@@ -10,14 +10,12 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
-
+
 test lrange-1.1 {range of list elements} {
     lrange {a b c d} 1 2
 } {b c}
@@ -63,6 +61,7 @@ test lrange-1.14 {range of list elements} {
 test lrange-1.15 {range of list elements} {
     concat \"[lrange {a b \{\   	} 0 2]"
 } {"a b \{\ "}
+# emacs highlighting bug workaround --> "
 test lrange-1.16 {list element quoting} {
     lrange {[append a .b]} 0 end    
 } {{[append} a .b\]}
@@ -86,6 +85,16 @@ test lrange-2.6 {error conditions} {
     list [catch {lrange "a b c \{ d e" 1 4} msg] $msg
 } {1 {unmatched open brace in list}}
 
+test lrange-3.1 {Bug 3588366: end-offsets before start} {
+    apply {l {
+	lrange $l 0 end-5
+    }} {1 2 3 4 5}
+} {}
+
 # cleanup
 ::tcltest::cleanupTests
 return
+
+# Local Variables:
+# mode: tcl
+# End:

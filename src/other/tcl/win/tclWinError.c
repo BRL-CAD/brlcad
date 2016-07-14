@@ -8,17 +8,14 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
-
 /*
  * The following table contains the mapping from Win32 errors to errno errors.
  */
 
-static char errorTable[] = {
+static const unsigned char errorTable[] = {
     0,
     EINVAL,	/* ERROR_INVALID_FUNCTION	1 */
     ENOENT,	/* ERROR_FILE_NOT_FOUND		2 */
@@ -286,17 +283,15 @@ static char errorTable[] = {
     EINVAL,	/* 264 */
     EINVAL,	/* 265 */
     EINVAL,	/* 266 */
-    ENOTDIR,	/* ERROR_DIRECTORY		267 */
+    ENOTDIR	/* ERROR_DIRECTORY		267 */
 };
-
-static const unsigned int tableLen = sizeof(errorTable);
 
 /*
  * The following table contains the mapping from WinSock errors to
  * errno errors.
  */
 
-static int wsaErrorTable[] = {
+static const unsigned char wsaErrorTable[] = {
     EWOULDBLOCK,	/* WSAEWOULDBLOCK */
     EINPROGRESS,	/* WSAEINPROGRESS */
     EALREADY,		/* WSAEALREADY */
@@ -333,7 +328,7 @@ static int wsaErrorTable[] = {
     EUSERS,		/* WSAEUSERS */
     EDQUOT,		/* WSAEDQUOT */
     ESTALE,		/* WSAESTALE */
-    EREMOTE,		/* WSAEREMOTE */
+    EREMOTE		/* WSAEREMOTE */
 };
 
 /*
@@ -354,38 +349,80 @@ static int wsaErrorTable[] = {
 
 void
 TclWinConvertError(
-    unsigned long errCode)		/* Win32 error code. */
+    DWORD errCode)		/* Win32 error code. */
 {
-    if (errCode >= tableLen) {
-	Tcl_SetErrno(EINVAL);
+    if (errCode >= sizeof(errorTable)/sizeof(errorTable[0])) {
+	errCode -= WSAEWOULDBLOCK;
+	if (errCode >= sizeof(wsaErrorTable)/sizeof(wsaErrorTable[0])) {
+	    Tcl_SetErrno(errorTable[1]);
+	} else {
+	    Tcl_SetErrno(wsaErrorTable[errCode]);
+	}
     } else {
 	Tcl_SetErrno(errorTable[errCode]);
     }
 }
-
+
+#ifdef __CYGWIN__
 /*
  *----------------------------------------------------------------------
  *
- * TclWinConvertWSAError --
+ * tclWinDebugPanic --
  *
- *	This routine converts a WinSock error into an errno value.
+ *	Display a message. If a debugger is present, present it directly to
+ *	the debugger, otherwise send it to stderr.
  *
  * Results:
  *	None.
  *
  * Side effects:
- *	Sets the errno global variable.
+ *	None.
  *
  *----------------------------------------------------------------------
  */
 
-void
-TclWinConvertWSAError(
-    unsigned long errCode)		/* Win32 error code. */
+TCL_NORETURN void
+tclWinDebugPanic(
+    const char *format, ...)
 {
-    if ((errCode >= WSAEWOULDBLOCK) && (errCode <= WSAEREMOTE)) {
-	Tcl_SetErrno(wsaErrorTable[errCode - WSAEWOULDBLOCK]);
+#define TCL_MAX_WARN_LEN 1024
+    va_list argList;
+    va_start(argList, format);
+
+    if (IsDebuggerPresent()) {
+	WCHAR msgString[TCL_MAX_WARN_LEN];
+	char buf[TCL_MAX_WARN_LEN * TCL_UTF_MAX];
+
+	vsnprintf(buf, sizeof(buf), format, argList);
+	msgString[TCL_MAX_WARN_LEN-1] = L'\0';
+	MultiByteToWideChar(CP_UTF8, 0, buf, -1, msgString, TCL_MAX_WARN_LEN);
+
+	/*
+	 * Truncate MessageBox string if it is too long to not overflow the buffer.
+	 */
+
+	if (msgString[TCL_MAX_WARN_LEN-1] != L'\0') {
+	    memcpy(msgString + (TCL_MAX_WARN_LEN - 5), L" ...", 5 * sizeof(WCHAR));
+	}
+	OutputDebugStringW(msgString);
     } else {
-	Tcl_SetErrno(EINVAL);
+	vfprintf(stderr, format, argList);
+	fprintf(stderr, "\n");
+	fflush(stderr);
     }
+#   if defined(__GNUC__)
+    __builtin_trap();
+#   else
+    DebugBreak();
+#   endif
+    abort();
 }
+#endif
+/*
+ * Local Variables:
+ * mode: c
+ * c-basic-offset: 4
+ * fill-column: 78
+ * tab-width: 8
+ * End:
+ */

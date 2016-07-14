@@ -5,10 +5,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\" 
-'\" RCS: @(#) $Id$
-'\" 
-.so man.macros
 .TH file n 8.3 Tcl "Tcl Built-In Commands"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -25,7 +23,7 @@ substitution is done before executing the command (see the manual entry for
 file name.  Any unique abbreviation for \fIoption\fR is acceptable.  The
 valid options are:
 .TP
-\fBfile atime \fIname\fR ?\fBtime\fR?
+\fBfile atime \fIname\fR ?\fItime\fR?
 .
 Returns a decimal string giving the time at which file \fIname\fR was last
 accessed.  If \fItime\fR is specified, it is an access time to set
@@ -36,9 +34,9 @@ generated.  On Windows, FAT file systems do not support access time.
 .TP
 \fBfile attributes \fIname\fR
 .TP
-\fBfile attributes \fIname\fR ?\fBoption\fR?
+\fBfile attributes \fIname\fR ?\fIoption\fR?
 .TP
-\fBfile attributes \fIname\fR ?\fBoption value option value...\fR?
+\fBfile attributes \fIname\fR ?\fIoption value option value...\fR?
 .
 This subcommand returns or sets platform specific values associated
 with a file. The first form returns a list of the platform specific
@@ -82,7 +80,7 @@ set to the value 0, which results in the resource fork being stripped
 off the file.
 .RE
 .TP
-\fBfile channels ?\fIpattern\fR?
+\fBfile channels\fR ?\fIpattern\fR?
 .
 If \fIpattern\fR is not specified, returns a list of names of all
 registered open channels in this interpreter.  If \fIpattern\fR is
@@ -106,12 +104,12 @@ within a single filesystem, \fIfile copy\fR will copy soft links (i.e.
 the links themselves are copied, not the things they point to).  Trying
 to overwrite a non-empty directory, overwrite a directory with a file,
 or overwrite a file with a directory will all result in errors even if
-\fI\-force\fR was specified.  Arguments are processed in the order
+\fB\-force\fR was specified.  Arguments are processed in the order
 specified, halting at the first error, if any.  A \fB\-\|\-\fR marks
 the end of switches; the argument following the \fB\-\|\-\fR will be
 treated as a \fIsource\fR even if it starts with a \fB\-\fR.
 .TP
-\fBfile delete \fR?\fB\-force\fR? ?\fB\-\|\-\fR? \fIpathname\fR ?\fIpathname\fR ... ?
+\fBfile delete \fR?\fB\-force\fR? ?\fB\-\|\-\fR? ?\fIpathname\fR ... ?
 .
 Removes the file or directory specified by each \fIpathname\fR
 argument.  Non-empty directories will be removed only if the
@@ -138,20 +136,26 @@ only contains one path element, then returns
 If \fIname\fR refers to a root directory, then the root directory is
 returned.  For example,
 .RS
+.PP
 .CS
-\fBfile dirname c:/\fR
+\fBfile dirname\fR c:/
 .CE
+.PP
 returns \fBc:/\fR. 
 .PP
 Note that tilde substitution will only be
 performed if it is necessary to complete the command. For example,
+.PP
 .CS
-\fBfile dirname ~/src/foo.c\fR
+\fBfile dirname\fR ~/src/foo.c
 .CE
+.PP
 returns \fB~/src\fR, whereas
+.PP
 .CS
-\fBfile dirname ~\fR
+\fBfile dirname\fR ~
 .CE
+.PP
 returns \fB/home\fR (or something similar).
 .RE
 .TP
@@ -187,9 +191,11 @@ relative, then it will be joined to the previous file name argument.
 Otherwise, any earlier arguments will be discarded, and joining will
 proceed from the current argument.  For example,
 .RS
+.PP
 .CS
-\fBfile join a b /foo bar\fR
+\fBfile join\fR a b /foo bar
 .CE
+.PP
 returns \fB/foo/bar\fR.
 .PP
 Note that any of the names can contain separators, and that the result
@@ -197,7 +203,7 @@ is always canonical for the current platform: \fB/\fR for Unix and
 Windows.
 .RE
 .TP
-\fBfile link ?\fI\-linktype\fR? \fIlinkName\fR ?\fItarget\fR?
+\fBfile link\fR ?\fI\-linktype\fR? \fIlinkName\fR ?\fItarget\fR?
 .
 If only one argument is given, that argument is assumed to be
 \fIlinkName\fR, and this command returns the value of the link given by
@@ -221,9 +227,9 @@ If the user wishes to make a link of a specific type only, (and signal an
 error if for some reason that is not possible), then the optional
 \fI\-linktype\fR argument should be given.  Accepted values for
 \fI\-linktype\fR are
-.QW \-symbolic
+.QW \fB\-symbolic\fR
 and
-.QW \-hard .
+.QW \fB\-hard\fR .
 .PP
 On Unix, symbolic links can be made to relative paths, and those paths
 must be relative to the actual \fIlinkName\fR's location (not to the
@@ -235,11 +241,9 @@ as relative to the cwd).  Furthermore,
 paths are always expanded
 to absolute form.  When creating links on filesystems that either do not
 support any links, or do not support the specific type requested, an
-error message will be returned.  In particular Windows 95, 98 and ME do
-not support any links at present, but most Unix platforms support both
-symbolic and hard links (the latter for files only) and Windows
-NT/2000/XP (on NTFS drives) support symbolic
-directory links and hard file links.
+error message will be returned.  Most Unix platforms support both
+symbolic and hard links (the latter for files only). Windows
+supports symbolic directory links and hard file links on NTFS drives.
 .RE
 .TP
 \fBfile lstat \fIname varName\fR
@@ -251,7 +255,7 @@ is for the link rather than the file it refers to.  On systems that
 do not support symbolic links this option behaves exactly the same
 as the \fBstat\fR option.
 .TP
-\fBfile mkdir \fIdir\fR ?\fIdir\fR ...?
+\fBfile mkdir\fR ?\fIdir\fR ...?
 .
 Creates each directory specified.  For each pathname \fIdir\fR specified,
 this command will create all non-existing parent directories as
@@ -319,7 +323,7 @@ Returns \fB1\fR if file \fIname\fR is readable by the current user,
 \fBfile readlink \fIname\fR
 .
 Returns the value of the symbolic link given by \fIname\fR (i.e. the name
-of the file it points to).  If \fIname\fR is npt a symbolic link or its
+of the file it points to).  If \fIname\fR is not a symbolic link or its
 value cannot be read, then an error is returned.  On systems that do not
 support symbolic links this option is undefined.
 .TP
@@ -369,13 +373,17 @@ generated.
 Returns a list whose elements are the path components in \fIname\fR.  The
 first element of the list will have the same path type as \fIname\fR.
 All other elements will be relative.  Path separators will be discarded
-unless they are needed ensure that an element is unambiguously relative.
+unless they are needed to ensure that an element is unambiguously relative.
 For example, under Unix
 .RS
+.PP
 .CS
-file split /foo/~bar/baz
+\fBfile split\fR /foo/~bar/baz
 .CE
-returns \fB/\0\0foo\0\0./~bar\0\0baz\fR to ensure that later commands
+.PP
+returns
+.QW \fB/\0\0foo\0\0./~bar\0\0baz\fR
+to ensure that later commands
 that use the third component do not attempt to perform tilde
 substitution.
 .RE
@@ -423,6 +431,25 @@ If \fIname\fR contains no separators then returns \fIname\fR.  So,
 \fBfile tail a/b\fR, \fBfile tail a/b/\fR and \fBfile tail b\fR all
 return \fBb\fR.
 .TP
+\fBfile tempfile\fR ?\fInameVar\fR? ?\fItemplate\fR?
+'\" TIP #210
+.VS 8.6
+Creates a temporary file and returns a read-write channel opened on that file.
+If the \fInameVar\fR is given, it specifies a variable that the name of the
+temporary file will be written into; if absent, Tcl will attempt to arrange
+for the temporary file to be deleted once it is no longer required. If the
+\fItemplate\fR is present, it specifies parts of the template of the filename
+to use when creating it (such as the directory, base-name or extension) though
+some platforms may ignore some or all of these parts and use a built-in
+default instead.
+.RS
+.PP
+Note that temporary files are \fIonly\fR ever created on the native
+filesystem. As such, they can be relied upon to be used with operating-system
+native APIs and external programs that require a filename.
+.RE
+.VE 8.6
+.TP
 \fBfile type \fIname\fR
 .
 Returns a string giving the type of file \fIname\fR, which will be one of
@@ -452,39 +479,49 @@ Returns \fB1\fR if file \fIname\fR is writable by the current user,
 .
 These commands always operate using the real user and group identifiers,
 not the effective ones. 
+.TP
+\fBWindows\fR\0\0\0\0
+.
+The \fBfile owned\fR subcommand currently always reports that the current user
+is the owner of the file, without regard for what the operating system
+believes to be true, making an ownership test useless. This issue (#3613671)
+may be fixed in a future release of Tcl.
 .SH EXAMPLES
+.PP
 This procedure shows how to search for C files in a given directory
 that have a correspondingly-named object file in the current
 directory:
+.PP
 .CS
 proc findMatchingCFiles {dir} {
-   set files {}
-   switch $::tcl_platform(platform) {
-      windows {
-         set ext .obj
-      }
-      unix {
-         set ext .o
-      }
-   }
-   foreach file [glob \-nocomplain \-directory $dir *.c] {
-      set objectFile [\fBfile tail\fR [\fBfile rootname\fR $file]]$ext
-      if {[\fBfile exists\fR $objectFile]} {
-         lappend files $file
-      }
-   }
-   return $files
+    set files {}
+    switch $::tcl_platform(platform) {
+        windows {
+            set ext .obj
+        }
+        unix {
+           set ext .o
+        }
+    }
+    foreach file [glob \-nocomplain \-directory $dir *.c] {
+        set objectFile [\fBfile tail\fR [\fBfile rootname\fR $file]]$ext
+        if {[\fBfile exists\fR $objectFile]} {
+            lappend files $file
+        }
+    }
+    return $files
 }
 .CE
 .PP
 Rename a file and leave a symbolic link pointing from the old location
 to the new place:
+.PP
 .CS
 set oldName foobar.txt
 set newName foo/bar.txt
 # Make sure that where we're going to move to exists...
 if {![\fBfile isdirectory\fR [\fBfile dirname\fR $newName]]} {
-   \fBfile mkdir\fR [\fBfile dirname\fR $newName]
+    \fBfile mkdir\fR [\fBfile dirname\fR $newName]
 }
 \fBfile rename\fR $oldName $newName
 \fBfile link\fR \-symbolic $oldName $newName
@@ -495,6 +532,7 @@ On Windows, a file can be
 easily enough (equivalent to double-clicking on it in the Explorer
 interface) but the name passed to the operating system must be in
 native format:
+.PP
 .CS
 exec {*}[auto_execok start] {} [\fBfile nativename\fR ~/example.txt]
 .CE
@@ -502,4 +540,9 @@ exec {*}[auto_execok start] {} [\fBfile nativename\fR ~/example.txt]
 filename(n), open(n), close(n), eof(n), gets(n), tell(n), seek(n),
 fblocked(n), flush(n)
 .SH KEYWORDS
-attributes, copy files, delete files, directory, file, move files, name, rename files, stat
+attributes, copy files, delete files, directory, file, move files, name,
+rename files, stat, user
+'\" Local Variables:
+'\" mode: nroff
+'\" fill-column: 78
+'\" End:

@@ -10,8 +10,6 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
@@ -57,7 +55,7 @@ void
 Tcl_AddInterpResolvers(
     Tcl_Interp *interp,		/* Interpreter whose name resolution rules are
 				 * being modified. */
-    CONST char *name,		/* Name of this resolution scheme. */
+    const char *name,		/* Name of this resolution scheme. */
     Tcl_ResolveCmdProc *cmdProc,/* New function for command resolution. */
     Tcl_ResolveVarProc *varProc,/* Function for variable resolution at
 				 * runtime. */
@@ -67,6 +65,7 @@ Tcl_AddInterpResolvers(
 {
     Interp *iPtr = (Interp *) interp;
     ResolverScheme *resPtr;
+    unsigned len;
 
     /*
      * Since we're adding a new name resolution scheme, we must force all code
@@ -102,9 +101,10 @@ Tcl_AddInterpResolvers(
      * list, so that it overrides existing schemes.
      */
 
-    resPtr = (ResolverScheme *) ckalloc(sizeof(ResolverScheme));
-    resPtr->name = (char *) ckalloc((unsigned)(strlen(name) + 1));
-    strcpy(resPtr->name, name);
+    resPtr = ckalloc(sizeof(ResolverScheme));
+    len = strlen(name) + 1;
+    resPtr->name = ckalloc(len);
+    memcpy(resPtr->name, name, len);
     resPtr->cmdResProc = cmdProc;
     resPtr->varResProc = varProc;
     resPtr->compiledVarResProc = compiledVarProc;
@@ -136,7 +136,7 @@ int
 Tcl_GetInterpResolvers(
     Tcl_Interp *interp,		/* Interpreter whose name resolution rules are
 				 * being queried. */
-    CONST char *name,		/* Look for a scheme with this name. */
+    const char *name,		/* Look for a scheme with this name. */
     Tcl_ResolverInfo *resInfoPtr)
 				/* Returns pointers to the functions, if
 				 * found */
@@ -188,7 +188,7 @@ int
 Tcl_RemoveInterpResolvers(
     Tcl_Interp *interp,		/* Interpreter whose name resolution rules are
 				 * being modified. */
-    CONST char *name)		/* Name of the scheme to be removed. */
+    const char *name)		/* Name of the scheme to be removed. */
 {
     Interp *iPtr = (Interp *) interp;
     ResolverScheme **prevPtrPtr, *resPtr;
@@ -226,7 +226,7 @@ Tcl_RemoveInterpResolvers(
 
 	*prevPtrPtr = resPtr->nextPtr;
 	ckfree(resPtr->name);
-	ckfree((char *) resPtr);
+	ckfree(resPtr);
 
 	return 1;
     }
@@ -262,11 +262,23 @@ BumpCmdRefEpochs(
 
     nsPtr->cmdRefEpoch++;
 
+#ifndef BREAK_NAMESPACE_COMPAT
     for (entry = Tcl_FirstHashEntry(&nsPtr->childTable, &search);
 	    entry != NULL; entry = Tcl_NextHashEntry(&search)) {
-	Namespace *childNsPtr = (Namespace *) Tcl_GetHashValue(entry);
+	Namespace *childNsPtr = Tcl_GetHashValue(entry);
+
 	BumpCmdRefEpochs(childNsPtr);
     }
+#else
+    if (nsPtr->childTablePtr != NULL) {
+	for (entry = Tcl_FirstHashEntry(nsPtr->childTablePtr, &search);
+		entry != NULL; entry = Tcl_NextHashEntry(&search)) {
+	    Namespace *childNsPtr = Tcl_GetHashValue(entry);
+
+	    BumpCmdRefEpochs(childNsPtr);
+	}
+    }
+#endif
     TclInvalidateNsPath(nsPtr);
 }
 
@@ -282,8 +294,8 @@ BumpCmdRefEpochs(
  *
  *	Command resolution is handled by a function of the following type:
  *
- *	  typedef int (*Tcl_ResolveCmdProc)(Tcl_Interp *interp,
- *		  CONST char *name, Tcl_Namespace *context,
+ *	  typedef int (Tcl_ResolveCmdProc)(Tcl_Interp *interp,
+ *		  const char *name, Tcl_Namespace *context,
  *		  int flags, Tcl_Command *rPtr);
  *
  *	Whenever a command is executed or Tcl_FindCommand is invoked within
@@ -297,8 +309,8 @@ BumpCmdRefEpochs(
  *	Variable resolution is handled by two functions. The first is called
  *	whenever a variable needs to be resolved at compile time:
  *
- *	  typedef int (*Tcl_ResolveCompiledVarProc)(Tcl_Interp *interp,
- *		  CONST char *name, Tcl_Namespace *context,
+ *	  typedef int (Tcl_ResolveCompiledVarProc)(Tcl_Interp *interp,
+ *		  const char *name, Tcl_Namespace *context,
  *		  Tcl_ResolvedVarInfo *rPtr);
  *
  *	If this function is able to resolve the name, it should return the
@@ -313,8 +325,8 @@ BumpCmdRefEpochs(
  *	the variable may be requested via Tcl_FindNamespaceVar.) This function
  *	has the following type:
  *
- *	  typedef int (*Tcl_ResolveVarProc)(Tcl_Interp *interp,
- *		  CONST char *name, Tcl_Namespace *context,
+ *	  typedef int (Tcl_ResolveVarProc)(Tcl_Interp *interp,
+ *		  const char *name, Tcl_Namespace *context,
  *		  int flags, Tcl_Var *rPtr);
  *
  *	This function is quite similar to the compile-time version. It returns

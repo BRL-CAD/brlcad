@@ -10,15 +10,12 @@
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tclInt.h"
 #include "tommath.h"
-#include <limits.h>
 
-extern TclTomMathStubs tclTomMathStubs;
+MODULE_SCOPE const TclTomMathStubs tclTomMathStubs;
 
 /*
  *----------------------------------------------------------------------
@@ -40,12 +37,12 @@ extern TclTomMathStubs tclTomMathStubs;
 
 int
 TclTommath_Init(
-    Tcl_Interp* interp		/* Tcl interpreter */
-) {
+    Tcl_Interp *interp)		/* Tcl interpreter */
+{
     /* TIP #268: Full patchlevel instead of just major.minor */
 
     if (Tcl_PkgProvideEx(interp, "tcl::tommath", TCL_PATCH_LEVEL,
-			 (ClientData)&tclTomMathStubs) != TCL_OK) {
+	    &tclTomMathStubs) != TCL_OK) {
 	return TCL_ERROR;
     }
     return TCL_OK;
@@ -114,7 +111,7 @@ extern void *
 TclBNAlloc(
     size_t x)
 {
-    return (void *) Tcl_Alloc((unsigned int) x);
+    return (void *) ckalloc((unsigned int) x);
 }
 
 /*
@@ -138,7 +135,7 @@ TclBNRealloc(
     void *p,
     size_t s)
 {
-    return (void *) Tcl_Realloc((char *) p, (unsigned int) s);
+    return (void *) ckrealloc((char *) p, (unsigned int) s);
 }
 
 /*
@@ -164,7 +161,7 @@ extern void
 TclBNFree(
     void *p)
 {
-    Tcl_Free((char *) p);
+    ckree((char *) p);
 }
 #endif
 
@@ -191,7 +188,7 @@ TclBNInitBignumFromLong(
 {
     int status;
     unsigned long v;
-    mp_digit* p;
+    mp_digit *p;
 
     /*
      * Allocate enough memory to hold the largest possible long

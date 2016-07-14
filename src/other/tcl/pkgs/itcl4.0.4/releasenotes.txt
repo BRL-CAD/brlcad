@@ -1,0 +1,21 @@
+This is the release 4.0.4 of Itcl.
+
+The difference to 4.0.*: in this release there are only bug fixes from SF and the fossil bug tracker for itcl.
+
+This is the first stable release of Itcl 4.0.
+It is a new major release of Itcl.
+
+The difference to 4.0b7: Tighter control on the set of exported functions.
+
+The difference to 4.0b6: Updated TEA system and related build system changes.
+
+The difference to 4.0b5: in this release there are only bug fixes from SF
+tracker and updates for using Tcl 8.6 version from fossil repo trunk
+
+The difference to 4.0b4: in this release there are only bug fixes from SF
+tracker and updates to TEA 3.9.
+
+The difference to 4.0b3: in this release there are only bug fixes from SF
+tracker and some fixes to run on OSX and Windows platform.
+
+There is no known incompatibility.

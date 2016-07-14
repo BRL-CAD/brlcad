@@ -4,9 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-.so man.macros
 .TH Tcl_RegisterConfig 3 8.4 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -27,7 +26,7 @@ registered for. Must not be NULL.
 Contains the name of the package registering the embedded
 configuration as ASCII string. This means that this information is in
 UTF-8 too. Must not be NULL.
-.AP Tcl_Config *configuration in
+.AP "const Tcl_Config" *configuration in
 Refers to an array of Tcl_Config entries containing the information
 embedded in the binary library. Must not be NULL. The end of the array
 is signaled by either a key identical to NULL, or a key referring to
@@ -37,7 +36,6 @@ Contains the name of the encoding used to store the configuration
 values as ASCII string. This means that this information is in UTF-8
 too. Must not be NULL.
 .BE
-
 .SH DESCRIPTION
 .PP
 The function described here has its base in TIP 59 and provides
@@ -82,7 +80,7 @@ create a namespace having the provided \fIpkgName\fR, if not yet
 existing.
 .IP (2)
 create the command \fBpkgconfig\fR in that namespace and link it to
-the provided information so that the keys from _configuration_ and
+the provided information so that the keys from \fIconfiguration\fR and
 their associated values can be retrieved through calls to
 \fBpkgconfig\fR.
 .PP
@@ -103,9 +101,9 @@ The \fBTcl_Config\fR structure contains the following fields:
 .PP
 .CS
 typedef struct Tcl_Config {
-    const char* key;
-    const char* value;
-} Tcl_Config;
+    const char *\fIkey\fR;
+    const char *\fIvalue\fR;
+} \fBTcl_Config\fR;
 .CE
 .\" No cross references yet.
 .\" .SH "SEE ALSO"

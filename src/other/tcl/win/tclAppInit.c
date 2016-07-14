@@ -2,32 +2,67 @@
  * tclAppInit.c --
  *
  *	Provides a default version of the main program and Tcl_AppInit
- *	function for Tcl applications (without Tk). Note that this program
- *	must be built in Win32 console mode to work properly.
+ *	procedure for tclsh and other Tcl-based applications (without Tk).
+ *	Note that this program must be built in Win32 console mode to work
+ *	properly.
  *
- * Copyright (c) 1996-1997 by Sun Microsystems, Inc.
- * Copyright (c) 1998-1999 by Scriptics Corporation.
+ * Copyright (c) 1993 The Regents of the University of California.
+ * Copyright (c) 1994-1997 Sun Microsystems, Inc.
+ * Copyright (c) 1998-1999 Scriptics Corporation.
  *
  * See the file "license.terms" for information on usage and redistribution of
  * this file, and for a DISCLAIMER OF ALL WARRANTIES.
- *
- * RCS: @(#) $Id$
  */
 
 #include "tcl.h"
+#define WIN32_LEAN_AND_MEAN
+#define STRICT			/* See MSDN Article Q83456 */
 #include <windows.h>
+#undef STRICT
+#undef WIN32_LEAN_AND_MEAN
 #include <locale.h>
+#include <stdlib.h>
+#include <tchar.h>
 
 #ifdef TCL_TEST
-extern Tcl_PackageInitProc	Procbodytest_Init;
-extern Tcl_PackageInitProc	Procbodytest_SafeInit;
-extern Tcl_PackageInitProc	Tcltest_Init;
-extern Tcl_PackageInitProc	TclObjTest_Init;
+extern Tcl_PackageInitProc Tcltest_Init;
+extern Tcl_PackageInitProc Tcltest_SafeInit;
 #endif /* TCL_TEST */
 
-#if defined(__GNUC__)
-static void		setargv(int *argcPtr, char ***argvPtr);
-#endif /* __GNUC__ */
+#if defined(STATIC_BUILD) && TCL_USE_STATIC_PACKAGES
+extern Tcl_PackageInitProc Registry_Init;
+extern Tcl_PackageInitProc Dde_Init;
+extern Tcl_PackageInitProc Dde_SafeInit;
+#endif
+
+#ifdef TCL_BROKEN_MAINARGS
+int _CRT_glob = 0;
+static void setargv(int *argcPtr, TCHAR ***argvPtr);
+#endif /* TCL_BROKEN_MAINARGS */
+
+/*
+ * The following #if block allows you to change the AppInit function by using
+ * a #define of TCL_LOCAL_APPINIT instead of rewriting this entire file. The
+ * #if checks for that #define and uses Tcl_AppInit if it does not exist.
+ */
+
+#ifndef TCL_LOCAL_APPINIT
+#define TCL_LOCAL_APPINIT Tcl_AppInit
+#endif
+#ifndef MODULE_SCOPE
+#   define MODULE_SCOPE extern
+#endif
+MODULE_SCOPE int TCL_LOCAL_APPINIT(Tcl_Interp *);
+
+/*
+ * The following #if block allows you to change how Tcl finds the startup
+ * script, prime the library or encoding paths, fiddle with the argv, etc.,
+ * without needing to rewrite Tcl_Main()
+ */
+
+#ifdef TCL_LOCAL_MAIN_HOOK
+MODULE_SCOPE int TCL_LOCAL_MAIN_HOOK(int *argc, TCHAR ***argv);
+#endif
 
 /*
  *----------------------------------------------------------------------
@@ -37,53 +72,45 @@ static void		setargv(int *argcPtr, char ***argvPtr);
  *	This is the main program for the application.
  *
  * Results:
- *	None: Tcl_Main never returns here, so this function never returns
+ *	None: Tcl_Main never returns here, so this procedure never returns
  *	either.
  *
  * Side effects:
- *	Whatever the application does.
+ *	Just about anything, since from here we call arbitrary Tcl code.
  *
  *----------------------------------------------------------------------
  */
 
+#ifdef TCL_BROKEN_MAINARGS
 int
 main(
-    int argc,
-    char *argv[])
+    int argc,			/* Number of command-line arguments. */
+    char *dummy[])		/* Not used. */
 {
-    /*
-     * The following #if block allows you to change the AppInit function by
-     * using a #define of TCL_LOCAL_APPINIT instead of rewriting this entire
-     * file. The #if checks for that #define and uses Tcl_AppInit if it
-     * doesn't exist.
-     */
-
-#ifndef TCL_LOCAL_APPINIT
-#define TCL_LOCAL_APPINIT Tcl_AppInit
+    TCHAR **argv;
+#else
+int
+_tmain(
+    int argc,			/* Number of command-line arguments. */
+    TCHAR *argv[])		/* Values of command-line arguments. */
+{
 #endif
-    extern int TCL_LOCAL_APPINIT _ANSI_ARGS_((Tcl_Interp *interp));
-
-    /*
-     * The following #if block allows you to change how Tcl finds the startup
-     * script, prime the library or encoding paths, fiddle with the argv,
-     * etc., without needing to rewrite Tcl_Main()
-     */
-
-#ifdef TCL_LOCAL_MAIN_HOOK
-    extern int TCL_LOCAL_MAIN_HOOK _ANSI_ARGS_((int *argc, char ***argv));
-#endif
-
-    char *p;
+    TCHAR *p;
 
     /*
      * Set up the default locale to be standard "C" locale so parsing is
      * performed correctly.
      */
 
-#if defined(__GNUC__)
-    setargv( &argc, &argv );
-#endif
     setlocale(LC_ALL, "C");
+
+#ifdef TCL_BROKEN_MAINARGS
+    /*
+     * Get our args from the c-runtime. Ignore command line.
+     */
+
+    setargv(&argc, &argv);
+#endif
 
     /*
      * Forward slashes substituted for backslashes.
@@ -100,7 +127,6 @@ main(
 #endif
 
     Tcl_Main(argc, argv, TCL_LOCAL_APPINIT);
-
     return 0;			/* Needed only to prevent compiler warning. */
 }
 
@@ -109,9 +135,9 @@ main(
  *
  * Tcl_AppInit --
  *
- *	This function performs application-specific initialization. Most
+ *	This procedure performs application-specific initialization. Most
  *	applications, especially those that incorporate additional packages,
- *	will have their own version of this function.
+ *	will have their own version of this procedure.
  *
  * Results:
  *	Returns a standard Tcl completion code, and leaves an error message in
@@ -127,57 +153,44 @@ int
 Tcl_AppInit(
     Tcl_Interp *interp)		/* Interpreter for application. */
 {
-    if (Tcl_Init(interp) == TCL_ERROR) {
+    if ((Tcl_Init)(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
+
+#if defined(STATIC_BUILD) && TCL_USE_STATIC_PACKAGES
+    if (Registry_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "registry", Registry_Init, NULL);
+
+    if (Dde_Init(interp) == TCL_ERROR) {
+	return TCL_ERROR;
+    }
+    Tcl_StaticPackage(interp, "dde", Dde_Init, Dde_SafeInit);
+#endif
 
 #ifdef TCL_TEST
     if (Tcltest_Init(interp) == TCL_ERROR) {
 	return TCL_ERROR;
     }
-    Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init, NULL);
-    if (TclObjTest_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-    if (Procbodytest_Init(interp) == TCL_ERROR) {
-	return TCL_ERROR;
-    }
-    Tcl_StaticPackage(interp, "procbodytest", Procbodytest_Init,
-	    Procbodytest_SafeInit);
+    Tcl_StaticPackage(interp, "Tcltest", Tcltest_Init, Tcltest_SafeInit);
 #endif /* TCL_TEST */
 
-#if defined(STATIC_BUILD) && TCL_USE_STATIC_PACKAGES
-    {
-	extern Tcl_PackageInitProc Registry_Init;
-	extern Tcl_PackageInitProc Dde_Init;
-	extern Tcl_PackageInitProc Dde_SafeInit;
-
-	if (Registry_Init(interp) == TCL_ERROR) {
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "registry", Registry_Init, NULL);
-
-	if (Dde_Init(interp) == TCL_ERROR) {
-	    return TCL_ERROR;
-	}
-	Tcl_StaticPackage(interp, "dde", Dde_Init, Dde_SafeInit);
-   }
-#endif
-
     /*
-     * Call the init functions for included packages. Each call should look
+     * Call the init procedures for included packages. Each call should look
      * like this:
      *
      * if (Mod_Init(interp) == TCL_ERROR) {
      *     return TCL_ERROR;
      * }
      *
-     * where "Mod" is the name of the module.
+     * where "Mod" is the name of the module. (Dynamically-loadable packages
+     * should have the same entry-point name.)
      */
 
     /*
      * Call Tcl_CreateCommand for application-specific commands, if they
-     * weren't already created by the init functions called above.
+     * weren't already created by the init procedures called above.
      */
 
     /*
@@ -187,7 +200,8 @@ Tcl_AppInit(
      * user-specific startup file will be run under any conditions.
      */
 
-    Tcl_SetVar(interp, "tcl_rcFileName", "~/tclshrc.tcl", TCL_GLOBAL_ONLY);
+    (Tcl_ObjSetVar2)(interp, Tcl_NewStringObj("tcl_rcFileName", -1), NULL,
+	    Tcl_NewStringObj("~/tclshrc.tcl", -1), TCL_GLOBAL_ONLY);
     return TCL_OK;
 }
 
@@ -218,17 +232,17 @@ Tcl_AppInit(
  *--------------------------------------------------------------------------
  */
 
-#if defined(__GNUC__)
+#ifdef TCL_BROKEN_MAINARGS
 static void
 setargv(
     int *argcPtr,		/* Filled with number of argument strings. */
-    char ***argvPtr)		/* Filled with argument strings (malloc'd). */
+    TCHAR ***argvPtr)		/* Filled with argument strings (malloc'd). */
 {
-    char *cmdLine, *p, *arg, *argSpace;
-    char **argv;
+    TCHAR *cmdLine, *p, *arg, *argSpace;
+    TCHAR **argv;
     int argc, size, inquote, copy, slashes;
 
-    cmdLine = GetCommandLine();	/* INTL: BUG */
+    cmdLine = GetCommandLine();
 
     /*
      * Precompute an overly pessimistic guess at the number of arguments in
@@ -247,10 +261,15 @@ setargv(
 	    }
 	}
     }
-    argSpace = (char *) ckalloc(
-	    (unsigned) (size * sizeof(char *) + strlen(cmdLine) + 1));
-    argv = (char **) argSpace;
-    argSpace += size * sizeof(char *);
+
+    /* Make sure we don't call ckalloc through the (not yet initialized) stub table */
+    #undef Tcl_Alloc
+    #undef Tcl_DbCkalloc
+
+    argSpace = ckalloc(size * sizeof(char *)
+	    + (_tcslen(cmdLine) * sizeof(TCHAR)) + sizeof(TCHAR));
+    argv = (TCHAR **) argSpace;
+    argSpace += size * (sizeof(char *)/sizeof(TCHAR));
     size--;
 
     p = cmdLine;
@@ -308,7 +327,7 @@ setargv(
     *argcPtr = argc;
     *argvPtr = argv;
 }
-#endif /* __GNUC__ */
+#endif /* TCL_BROKEN_MAINARGS */
 
 /*
  * Local Variables:

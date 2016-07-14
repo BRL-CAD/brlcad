@@ -1,0 +1,447 @@
+#------------------------------------------------------------------------------
+# Visual C++ 5.0+ makefile for [Incr Tcl]
+#
+# See the file "license.terms" for information on usage and redistribution
+# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
+# 
+# Copyright (c) 1993-1998 Lucent Technologies, Inc.
+#------------------------------------------------------------------------------
+#  There is no requirement to modify this file to generate a build.
+#------------------------------------------------------------------------------
+
+# Check to see we are configured to build with MSVC (MSDEVDIR, MSVCDIR or
+# VCINSTALLDIR) or with the MS Platform SDK (MSSDK or WindowsSDKDir)
+!if !defined(MSDEVDIR) && !defined(MSVCDIR) && !defined(VCINSTALLDIR) && !defined(MSSDK) && !defined(WINDOWSSDKDIR)
+MSG = ^
+You need to run vcvars32.bat from Developer Studio or setenv.bat from the^
+Platform SDK first to setup the environment.  Jump to this line to read^
+the build instructions.
+!error $(MSG)
+!endif
+
+!if !exist("makefile.vc")
+MSG = ^
+You must run this makefile only from the directory it is in.^
+Please `cd` to its location first.
+!error $(MSG) 
+!endif
+
+PROJECT	= itcl
+!include "rules.vc"
+
+!if $(TCLINSTALL)
+!message *** Warning: [Incr Tcl] requires the source distribution of Tcl to build from,
+!message ***    at this time, sorry.  Please set the TCLDIR macro to point to the
+!message ***    sources.
+!endif
+
+!if [echo REM = This file is generated from rules.vc > versions.vc]
+!endif
+!if [echo ITCL_VERSION = \>> versions.vc] \
+   && [nmakehlp -V ..\generic\itcl.h ITCL_VERSION >> versions.vc]
+!endif
+!if [echo ITCL_MAJOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V ..\generic\itcl.h ITCL_MAJOR_VERSION >> versions.vc]
+!endif
+!if [echo ITCL_MINOR_VERSION = \>> versions.vc] \
+   && [nmakehlp -V ..\generic\itcl.h ITCL_MINOR_VERSION >> versions.vc]
+!endif
+!if [echo ITCL_PATCH_LEVEL = \>> versions.vc] \
+   && [nmakehlp -V ..\generic\itcl.h ITCL_PATCH_LEVEL >> versions.vc]
+!endif
+!include "versions.vc"
+
+
+BINROOT		= .
+ROOT		= ..
+STUBPREFIX	= $(PROJECT)stub
+DOTVERSION      = $(ITCL_PATCH_LEVEL)
+VERSION         = $(ITCL_MAJOR_VERSION)$(ITCL_MINOR_VERSION)
+
+PKGINDEX	= "$(TMP_DIR)\pkgIndex.tcl"
+ITCLLIBNAME	= $(PROJECT)$(VERSION)$(SUFX).$(EXT)
+ITCLLIB		= "$(OUT_DIR)\$(ITCLLIBNAME)"
+ITCLIMPLIB	= "$(OUT_DIR)\$(PROJECT)$(VERSION)$(SUFX).lib"
+ITCLSTUBLIBNAME	= $(STUBPREFIX)$(VERSION).lib
+ITCLSTUBLIB	= "$(OUT_DIR)\$(ITCLSTUBLIBNAME)"
+
+BIN_INSTALL_DIR		= $(_INSTALLDIR)\..\bin
+DOC_INSTALL_DIR		= $(_INSTALLDIR)\..\doc
+LIB_INSTALL_DIR		= $(_INSTALLDIR)
+SCRIPT_INSTALL_DIR	= $(_INSTALLDIR)\$(PROJECT)$(DOTVERSION)
+INCLUDE_INSTALL_DIR	= $(_INSTALLDIR)\..\include
+
+ITCLOBJS = \
+        $(TMP_DIR)\itcl2TclOO.obj \
+        $(TMP_DIR)\itclBase.obj \
+        $(TMP_DIR)\itclBuiltin.obj \
+        $(TMP_DIR)\itclClass.obj \
+        $(TMP_DIR)\itclCmd.obj \
+        $(TMP_DIR)\itclEnsemble.obj \
+        $(TMP_DIR)\itclHelpers.obj \
+        $(TMP_DIR)\itclInfo.obj \
+        $(TMP_DIR)\itclLinkage.obj \
+        $(TMP_DIR)\itclMethod.obj \
+        $(TMP_DIR)\itclMigrate2TclCore.obj \
+        $(TMP_DIR)\itclObject.obj \
+        $(TMP_DIR)\itclParse.obj \
+        $(TMP_DIR)\itclResolve.obj \
+        $(TMP_DIR)\itclStubs.obj \
+        $(TMP_DIR)\itclStubInit.obj \
+        $(TMP_DIR)\itclTclIntStubsFcn.obj \
+        $(TMP_DIR)\itclUtil.obj \
+!if !$(STATIC_BUILD)
+	$(TMP_DIR)\dllEntryPoint.obj \
+	$(TMP_DIR)\itcl.res
+!endif
+
+ITCLSTUBOBJS = \
+	$(TMP_DIR)\itclStubLib.obj
+
+GENERICDIR	= $(ROOT)\generic
+DOCDIR		= $(ROOT)\doc
+WINDIR		= $(ROOT)\win
+TOOLSDIR	= ..\..\tools
+
+#---------------------------------------------------------------------
+# Compile flags
+#---------------------------------------------------------------------
+
+!if !$(DEBUG)
+!if $(OPTIMIZING)
+### This cranks the optimization level to maximize speed
+cdebug	= -O2 $(OPTIMIZATIONS)
+!else
+cdebug	= 
+!endif
+!if $(SYMBOLS)
+cdebug	= $(cdebug) -Zi
+!endif
+!else if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
+### Warnings are too many, can't support warnings into errors.
+cdebug	= -Zi -Od $(DEBUGFLAGS)
+!else
+cdebug	= -Zi -WX $(DEBUGFLAGS)
+!endif
+
+### Declarations common to all compiler options
+cwarn = $(WARNINGS) -D _CRT_SECURE_NO_DEPRECATE -D _CRT_NONSTDC_NO_DEPRECATE
+cflags = -nologo -c $(COMPILERFLAGS) $(cwarn) -Fp$(TMP_DIR)^\
+
+!if $(MSVCRT)
+!if $(DEBUG) && !$(UNCHECKED)
+crt = -MDd
+!else
+crt = -MD
+!endif
+!else
+!if $(DEBUG) && !$(UNCHECKED)
+crt = -MTd
+!else
+crt = -MT
+!endif
+!endif
+
+!if $(TCLINSTALL)
+TCL_INCLUDES	= -I"$(TCLDIR)\include"
+!else
+TCL_INCLUDES	= -I"$(TCLDIR)\generic" -I"$(TCLDIR)\win"
+!endif
+
+ITCL_INCLUDES	= -I$(WINDIR) -I$(GENERICDIR)
+ITCL_DEFINES	= -DBUILD_itcl -DTCL_THREADS=1 -DUSE_TCL_STUBS -DUSE_TCLOO_STUBS
+!if $(DEBUG)
+ITCL_DEFINES	= $(ITCL_DEFINES) -DITCL_DEBUG
+!endif
+ITCL_DLL_CFLAGS	= $(cflags) $(cdebug) $(crt) $(ITCL_INCLUDES) $(ITCL_DEFINES) $(TCL_INCLUDES) $(OPTDEFINES)
+ITCL_STUB_CFLAGS= $(cflags) $(cdebug:-GL=) $(ITCL_INCLUDES) $(TCL_INCLUDES) $(OPTDEFINES)
+
+!if $(STATIC_BUILD)
+ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS) -DSTATIC_BUILD
+!else
+ITCL_CFLAGS	= $(ITCL_DLL_CFLAGS)
+!endif
+
+#---------------------------------------------------------------------
+# Link flags
+#---------------------------------------------------------------------
+
+!if $(DEBUG)
+ldebug	= -debug:full -debugtype:cv
+!else
+ldebug	= -release -opt:ref -opt:icf,3
+!endif
+
+# declarations common to all linker options
+lflags	= -nologo -machine:$(MACHINE) $(LINKERFLAGS) $(ldebug)
+
+!if $(PROFILE)
+lflags	= $(lflags) -profile
+!endif
+
+!if $(ALIGN98_HACK) && !$(STATIC_BUILD)
+# align sections for PE size savings.
+lflags	= $(lflags) -opt:nowin98
+!else if !$(ALIGN98_HACK) && $(STATIC_BUILD)
+# align sections for speed in loading by choosing the virtual page size.
+lflags	= $(lflags) -align:4096
+!endif
+
+!if $(LOIMPACT)
+lflags	= $(lflags) -ws:aggressive
+!endif
+
+ITCL_LFLAGS = $(lflags) -subsystem:windows -dll
+
+!if exist("$(TCLDIR)\win\coffbase.txt")
+ITCL_DLLBASE	= -base:@$(TCLDIR)\win\coffbase.txt,itcl
+!else
+ITCL_DLLBASE	=
+!endif
+
+baselibs   = 
+# Avoid 'unresolved external symbol __security_cookie' errors.
+# c.f. http://support.microsoft.com/?id=894573
+!if "$(MACHINE)" == "IA64" || "$(MACHINE)" == "AMD64"
+!if $(VCVERSION) > 1399 && $(VCVERSION) < 1500
+baselibs   = $(baselibs) bufferoverflowU.lib
+!endif
+!endif
+
+#---------------------------------------------------------------------
+# TclTest flags
+#---------------------------------------------------------------------
+
+!if "$(TESTPAT)" != ""
+TESTFLAGS = -file $(TESTPAT)
+!endif
+
+#---------------------------------------------------------------------
+# Project specific targets
+#---------------------------------------------------------------------
+
+all :     setup $(ITCLLIB) $(ITCLSTUBLIB)
+release : setup $(ITCLLIB) $(ITCLSTUBLIB)
+install : install-binaries install-docs
+
+setup :
+	@if not exist $(TMP_DIR)\nul mkdir $(TMP_DIR)
+	@if not exist $(OUT_DIR)\nul mkdir $(OUT_DIR)
+
+$(ITCLLIB): $(ITCLOBJS)
+!if $(STATIC_BUILD)
+	$(lib32) -nologo -machine:$(MACHINE) -out:$@ @<<
+$**
+<<
+!else
+	$(link32) $(ITCL_LFLAGS) $(ITCL_DLLBASE) -out:$@ $(TCLSTUBLIB) \
+		$(baselibs) @<<
+$**
+<<
+	$(_VC_MANIFEST_EMBED_DLL)
+	-@del $*.exp
+!endif
+
+$(ITCLSTUBLIB) : $(ITCLSTUBOBJS)
+	$(lib32) -nologo -nodefaultlib -out:$@ $(ITCLSTUBOBJS)
+
+install-binaries :
+	if not exist "$(_INSTALLDIR)" mkdir "$(_INSTALLDIR)"
+	if not exist "$(BIN_INSTALL_DIR)" mkdir "$(BIN_INSTALL_DIR)"
+	if not exist "$(LIB_INSTALL_DIR)" mkdir "$(LIB_INSTALL_DIR)"
+	if not exist "$(SCRIPT_INSTALL_DIR)" mkdir "$(SCRIPT_INSTALL_DIR)"
+	if not exist "$(INCLUDE_INSTALL_DIR)" mkdir "$(INCLUDE_INSTALL_DIR)"
+	copy $(ITCLLIB) "$(SCRIPT_INSTALL_DIR)"
+!if ""$(ITCLSTUBLIB)"" != """"
+	copy $(ITCLSTUBLIB) "$(LIB_INSTALL_DIR)"
+!endif
+	copy $(ROOT)\generic\itcl.h "$(INCLUDE_INSTALL_DIR)"
+	copy $(ROOT)\generic\itclDecls.h "$(INCLUDE_INSTALL_DIR)"
+	copy $(ROOT)\library\*.* "$(SCRIPT_INSTALL_DIR)"
+	echo if {[package vsatisfies 8.0 [package provide Tcl]]} {\
+		> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo ^ ^ ^ ^ set add 80>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo } else {>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo ^ ^ ^ ^ set add {$(SUFX:g=)}>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo }>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo if {[info exists ::tcl_platform(debug)] ^&^&\
+		$$::tcl_platform(debug)	^&^& \>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo ^ ^ ^ ^ ^ ^ ^ ^ [file exists [file join $$dir\
+		$(PROJECT)$(VERSION)$${add}g.dll]]}\
+		{>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo ^ ^ ^ ^ package ifneeded Itcl $(DOTVERSION) [list load\
+		[file join $$dir $(PROJECT)$(VERSION)$${add}g.dll]\
+		Itcl]>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo } else {>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo ^ ^ ^ ^ package ifneeded Itcl $(DOTVERSION) [list load\
+		[file join $$dir $(PROJECT)$(VERSION)$${add}.dll]\
+		Itcl]>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo }>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+	echo unset add>> "$(SCRIPT_INSTALL_DIR)\pkgIndex.tcl"
+
+!if $(STATIC_BUILD)
+test :
+	@echo test target not supported for a static library.
+!else
+test : setup $(ITCLLIB) $(ITCLSTUBLIB)
+	$(TCLSH) ..\tests\all.tcl $(TESTFLAGS) -loadfile <<
+	set env(ITCL_LIBRARY) [file normalize [file join $(MAKEDIR:\=/) .. library]]
+	package ifneeded $(PROJECT) $(ITCL_PATCH_LEVEL) [list load [file normalize [file join $(MAKEDIR:\=/) $(ITCLLIB:\=/)]]]
+<<
+!endif
+
+#---------------------------------------------------------------------
+# Regenerate the stubs files.
+#---------------------------------------------------------------------
+
+genstubs:
+!if $(TCLINSTALL)
+	@echo Need the source distribution to regenerate the Stubs table.
+!else
+	$(TCLSH) $(TOOLSDIR)\genStubs.tcl $(GENERICDIR) \
+        	$(GENERICDIR)\$(PROJECT).decls $(GENERICDIR)\$(PROJECT)Int.decls
+!endif
+
+#---------------------------------------------------------------------
+# Special case object file targets
+#---------------------------------------------------------------------
+
+# The following object is part of the stub library and should not
+# be built as DLL objects but none of the symbols should be exported
+# and without reference to any specific C-runtime.
+
+$(TMP_DIR)\itclStubLib.obj : $(GENERICDIR)\itclStubLib.c
+	$(cc32) -DSTATIC_BUILD $(ITCL_STUB_CFLAGS) -Zl -Fo$@ $?
+
+#---------------------------------------------------------------------
+# Inference rules.  Use batch-mode when supported.
+#---------------------------------------------------------------------
+
+{$(WINDIR)}.c{$(TMP_DIR)}.obj::
+	$(cc32) $(ITCL_CFLAGS) -Fo$(TMP_DIR)\ @<<
+$<
+<<
+
+{$(GENERICDIR)}.c{$(TMP_DIR)}.obj::
+	$(cc32) $(ITCL_CFLAGS) -Fo$(TMP_DIR)\ @<<
+$<
+<<
+
+{$(WINDIR)}.rc{$(TMP_DIR)}.res:
+	$(rc32) -fo $@ -d DEBUG=$(DEBUG) -d UNCHECKED=$(UNCHECKED) \
+		$(ITCL_INCLUDES) $(TCL_INCLUDES) $(ITCL_DEFINES) $<
+
+.SUFFIXES:
+.SUFFIXES:.c .rc
+
+#---------------------------------------------------------------------
+# Generate the windows help files.
+#---------------------------------------------------------------------
+
+HLPBASE		= $(PROJECT)$(VERSION)
+HELPFILE	= $(OUT_DIR)\$(HLPBASE).hlp
+HELPCNT		= $(OUT_DIR)\$(HLPBASE).cnt
+DOCTMP_DIR	= $(OUT_DIR)\$(PROJECT)_docs
+HELPRTF		= $(DOCTMP_DIR)\$(PROJECT).rtf
+MAN2HELP	= $(DOCTMP_DIR)\man2help.tcl
+MAN2HELP2	= $(DOCTMP_DIR)\man2help2.tcl
+INDEX		= $(DOCTMP_DIR)\index.tcl
+BMP		= $(DOCTMP_DIR)\toaster.bmp
+BMP_NOPATH	= toaster.bmp
+MAN2TCL		= $(DOCTMP_DIR)\man2tcl.exe
+
+winhelp: docsetup $(HELPFILE)
+
+docsetup:
+	@if not exist $(DOCTMP_DIR)\nul mkdir $(DOCTMP_DIR)
+
+$(MAN2HELP) $(MAN2HELP2) $(INDEX): $(TCLTOOLSDIR)\$$(@F)
+	copy $(TCLTOOLSDIR)\$(@F) $(@D)
+
+$(BMP):
+	copy $(WINDIR)\$(@F) $(@D)
+
+$(HELPFILE): $(HELPRTF) $(BMP)
+	cd $(DOCTMP_DIR)
+	start /wait hcrtf.exe -x <<$(PROJECT).hpj
+[OPTIONS]
+COMPRESS=12 Hall Zeck
+LCID=0x409 0x0 0x0 ; English (United States)
+TITLE=[Incr Tcl] Reference Manual
+BMROOT=.
+CNT=$(@B).cnt
+HLP=$(@B).hlp
+
+[FILES]
+$(PROJECT).rtf
+
+[WINDOWS]
+main="[Incr Tcl] Reference Manual",,27648,(r15263976),(r65280)
+
+[CONFIG]
+BrowseButtons()
+CreateButton(1, "Web", ExecFile("http://www.tcl.tk"))
+CreateButton(2, "SF", ExecFile("http://sf.net/projects/incrtcl"))
+CreateButton(3, "Wiki", ExecFile("http://wiki.tcl.tk"))
+CreateButton(4, "FAQ", ExecFile("http://www.purl.org/NET/Tcl-FAQ/"))
+<<
+	cd $(MAKEDIR)
+	copy "$(DOCTMP_DIR)\$(@B).hlp" "$(OUT_DIR)"
+	copy "$(DOCTMP_DIR)\$(@B).cnt" "$(OUT_DIR)"
+
+$(MAN2TCL): $(TCLTOOLSDIR)\$$(@B).c
+	$(cc32) -nologo -G4 -ML -O2 -Fo$(@D)\ $(TCLTOOLSDIR)\$(@B).c -link -out:$@
+
+$(HELPRTF): $(MAN2TCL) $(MAN2HELP) $(MAN2HELP2) $(INDEX)
+	$(TCLSH) $(MAN2HELP) -bitmap $(BMP_NOPATH) $(PROJECT) $(VERSION) $(DOCDIR:\=/)
+
+install-docs:
+!if exist($(HELPFILE))
+	@xcopy /i /y "$(HELPFILE)" "$(DOC_INSTALL_DIR)\"
+	@xcopy /i /y "$(HELPCNT)" "$(DOC_INSTALL_DIR)\"
+	$(TCLSH) <<
+puts "Installing $(PROJECT)'s helpfile contents into Tcl's ..."
+set f [open {$(DOC_INSTALL_DIR:\=/)/tcl$(TCL_VERSION).cnt} r]
+while {![eof $$f]} {
+    if {[regexp {:Include $(PROJECT)([0-9]{2}).cnt} [gets $$f] dummy ver]} {
+	if {$$ver == $(ITCL_VERSION)} {
+	    puts "Already installed."
+	    exit
+	} else {
+	    # do something here logical to remove (or replace) it.
+	    puts "$$ver != $(VERSION), unfinished code path, die, die!"
+	    exit 1
+	}
+    }
+}
+close $$f
+set f [open {$(DOC_INSTALL_DIR:\=/)/tcl$(TCL_VERSION).cnt} a]
+puts $$f {:Include $(HLPBASE).cnt}
+close $$f
+<<
+	start /wait winhlp32 -g $(DOC_INSTALL_DIR)\tcl$(TCL_VERSION).hlp
+!endif
+
+
+#---------------------------------------------------------------------
+# Clean up
+#---------------------------------------------------------------------
+
+tidy :
+	-del $(TMP_DIR)\*.pch
+	-del $(TMP_DIR)\*.obj
+	-del $(TMP_DIR)\*.res
+
+clean : tidy
+	@if exist $(TMP_DIR)\nul $(RMDIR) $(TMP_DIR)
+	@if exist $(WINDIR)\version.vc del $(WINDIR)\version.vc
+	@if exist $(WINDIR)\vercl.i del $(WINDIR)\vercl.i
+	@if exist $(WINDIR)\vercl.x del $(WINDIR)\vercl.x
+	@if exist $(WINDIR)\_junk.pch del $(WINDIR)\_junk.pch
+	-del $(OUT_DIR)\*.exp
+	-del $(OUT_DIR)\*.lib
+	-del $(OUT_DIR)\*.dll
+
+hose : clean
+	-rmdir $(OUT_DIR)
+	-rmdir $(TMP_DIR)

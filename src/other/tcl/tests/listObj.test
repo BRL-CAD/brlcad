@@ -10,13 +10,14 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest
     namespace import -force ::tcltest::*
 }
+
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
 
 testConstraint testobj [llength [info commands testobj]]
 
@@ -194,6 +195,10 @@ test listobj-10.1 {Bug [2971669]} {*}{
     }
     -result {{a b c d e} {} {a b c d e f}}
 }
+
+test listobj-11.1 {Bug 3598580: Tcl_ListObjReplace refcount management} testobj {
+    testobj bug3598580
+} 123
 
 # cleanup
 ::tcltest::cleanupTests

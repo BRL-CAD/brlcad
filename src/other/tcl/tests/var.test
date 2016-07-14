@@ -1,30 +1,31 @@
-# This file contains tests for the tclVar.c source file. Tests appear in
-# the same order as the C code that they test. The set of tests is
-# currently incomplete since it currently includes only new tests for
-# code changed for the addition of Tcl namespaces. Other variable-
-# related tests appear in several other test files including
-# namespace.test, set.test, trace.test, and upvar.test.
+# This file contains tests for the tclVar.c source file. Tests appear in the
+# same order as the C code that they test. The set of tests is currently
+# incomplete since it currently includes only new tests for code changed for
+# the addition of Tcl namespaces. Other variable-related tests appear in
+# several other test files including namespace.test, set.test, trace.test, and
+# upvar.test.
 #
-# Sourcing this file into Tcl runs the tests and generates output for
-# errors. No output means no errors were found.
+# Sourcing this file into Tcl runs the tests and generates output for errors.
+# No output means no errors were found.
 #
 # Copyright (c) 1997 Sun Microsystems, Inc.
 # Copyright (c) 1998-1999 by Scriptics Corporation.
 #
-# See the file "license.terms" for information on usage and redistribution
-# of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
-#
+# See the file "license.terms" for information on usage and redistribution of
+# this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
+if {"::tcltest" ni [namespace children]} {
     package require tcltest 2.2
     namespace import -force ::tcltest::*
 }
 
+::tcltest::loadTestedCommands
+catch [list package require -exact Tcltest [info patchlevel]]
+
 testConstraint testupvar [llength [info commands testupvar]]
 testConstraint testgetvarfullname [llength [info commands testgetvarfullname]]
 testConstraint testsetnoerr [llength [info commands testsetnoerr]]
+testConstraint memory [llength [info commands memory]]
 
 catch {rename p ""}
 catch {namespace delete test_ns_var}
@@ -35,13 +36,14 @@ catch {unset i}
 catch {unset a}
 catch {unset arr}
 
-test var-1.1 {TclLookupVar, Array handling} {
+test var-1.1 {TclLookupVar, Array handling} -setup {
     catch {unset a}
+} -body {
     set x "incr"  ;# force no compilation and runtime call to Tcl_IncrCmd 
     set i 10
     set arr(foo) 37
     list [$x i] $i [$x arr(foo)] $arr(foo)
-} {11 11 38 38}
+} -result {11 11 38 38}
 test var-1.2 {TclLookupVar, TCL_GLOBAL_ONLY implies global namespace var} {
     set x "global value"
     namespace eval test_ns_var {
@@ -71,34 +73,35 @@ test var-1.5 {TclLookupVar, active call frame pushed for namespace eval implies 
 test var-1.6 {TclLookupVar, name starts with :: implies some namespace var} {
     namespace eval test_ns_var {set ::x}
 } {global value}
-test var-1.7 {TclLookupVar, error finding namespace var} {
-    list [catch {set a:::b} msg] $msg
-} {1 {can't read "a:::b": no such variable}}
-test var-1.8 {TclLookupVar, error finding namespace var} {
-    list [catch {set ::foobarfoo} msg] $msg
-} {1 {can't read "::foobarfoo": no such variable}}
+test var-1.7 {TclLookupVar, error finding namespace var} -body {
+    set a:::b
+} -returnCodes error -result {can't read "a:::b": no such variable}
+test var-1.8 {TclLookupVar, error finding namespace var} -body {
+    set ::foobarfoo
+} -returnCodes error -result {can't read "::foobarfoo": no such variable}
 test var-1.9 {TclLookupVar, create new namespace var} {
     namespace eval test_ns_var {
         set v hello
     }
 } {hello}
-test var-1.10 {TclLookupVar, create new namespace var} {
+test var-1.10 {TclLookupVar, create new namespace var} -setup {
     catch {unset y}
+} -body {
     namespace eval test_ns_var {
         set ::y 789
     }
     set y
-} {789}
-test var-1.11 {TclLookupVar, error creating new namespace var} {
+} -result {789}
+test var-1.11 {TclLookupVar, error creating new namespace var} -body {
     namespace eval test_ns_var {
-        list [catch {set ::test_ns_var::foo::bar 314159} msg] $msg
+        set ::test_ns_var::foo::bar 314159
     }
-} {1 {can't set "::test_ns_var::foo::bar": parent namespace doesn't exist}}
-test var-1.12 {TclLookupVar, error creating new namespace var} {
+} -returnCodes error -result {can't set "::test_ns_var::foo::bar": parent namespace doesn't exist}
+test var-1.12 {TclLookupVar, error creating new namespace var} -body {
     namespace eval test_ns_var {
-        list [catch {set ::test_ns_var::foo:: 1997} msg] $msg
+        set ::test_ns_var::foo:: 1997
     }
-} {1 {can't set "::test_ns_var::foo::": parent namespace doesn't exist}}
+} -returnCodes error -result {can't set "::test_ns_var::foo::": parent namespace doesn't exist}
 test var-1.13 {TclLookupVar, new namespace var is created in a particular namespace} {
     catch {unset aNeWnAmEiNnS}
     namespace eval test_ns_var {
@@ -116,9 +119,9 @@ test var-1.14 {TclLookupVar, namespace code ignores ":"s in middle and end of va
         set x:y: 789
         list [set :] [set v:] [set x:y:] \
              ${:} ${v:} ${x:y:} \
-             [expr {[lsearch [info vars] :] != -1}] \
-             [expr {[lsearch [info vars] v:] != -1}] \
-             [expr {[lsearch [info vars] x:y:] != -1}]
+             [expr {":" in [info vars]}] \
+             [expr {"v:" in [info vars]}] \
+             [expr {"x:y:" in [info vars]}]
     }
 } {123 456 789 123 456 789 1 1 1}
 test var-1.15 {TclLookupVar, resurrect variable via upvar to deleted namespace: compiled code path} {
@@ -177,24 +180,25 @@ test var-1.18 {TclLookupVar, resurrect array element via upvar to deleted array:
 	set result
     }
 } {0 2 1 {can't set "foo": upvar refers to element in deleted array}}
-test var-1.19 {TclLookupVar, right error message when parsing variable name} {
-    list [catch {[format set] thisvar(doesntexist)} msg] $msg
-} {1 {can't read "thisvar(doesntexist)": no such variable}}
+test var-1.19 {TclLookupVar, right error message when parsing variable name} -body {
+    [format set] thisvar(doesntexist)
+} -returnCodes error -result {can't read "thisvar(doesntexist)": no such variable}
 
 test var-2.1 {Tcl_LappendObjCmd, create var if new} {
     catch {unset x}
     lappend x 1 2
 } {1 2}
 
-test var-3.1 {MakeUpvar, TCL_NAMESPACE_ONLY not specified for other var} {
+test var-3.1 {MakeUpvar, TCL_NAMESPACE_ONLY not specified for other var} -setup {
     catch {unset x}
+} -body {
     set x 1997
     proc p {} {
         global x  ;# calls MakeUpvar with TCL_NAMESPACE_ONLY for other var x
         return $x
     }
     p
-} {1997}
+} -result {1997}
 test var-3.2 {MakeUpvar, other var has TCL_NAMESPACE_ONLY specified} {
     namespace eval test_ns_var {
         catch {unset v}
@@ -206,17 +210,19 @@ test var-3.2 {MakeUpvar, other var has TCL_NAMESPACE_ONLY specified} {
         p
     }
 } {1998}
-test var-3.3 {MakeUpvar, my var has TCL_GLOBAL_ONLY specified} testupvar {
+test var-3.3 {MakeUpvar, my var has TCL_GLOBAL_ONLY specified} -setup {
     catch {unset a}
+} -constraints testupvar -body {
     set a 123321
     proc p {} {
 	# create global xx linked to global a
 	testupvar 1 a {} xx global 
     }
     list [p] $xx [set xx 789] $a
-} {{} 123321 789 789}
-test var-3.4 {MakeUpvar, my var has TCL_NAMESPACE_ONLY specified} testupvar {
+} -result {{} 123321 789 789}
+test var-3.4 {MakeUpvar, my var has TCL_NAMESPACE_ONLY specified} -setup {
     catch {unset a}
+} -constraints testupvar -body {
     set a 456
     namespace eval test_ns_var {
 	catch {unset ::test_ns_var::vv}
@@ -227,58 +233,64 @@ test var-3.4 {MakeUpvar, my var has TCL_NAMESPACE_ONLY specified} testupvar {
 	p
     }
     list $test_ns_var::vv [set test_ns_var::vv 123] $a
-} {456 123 123}
-test var-3.5 {MakeUpvar, no call frame so my var will be in global :: ns} {
+} -result {456 123 123}
+test var-3.5 {MakeUpvar, no call frame so my var will be in global :: ns} -setup {
     catch {unset aaaaa}
     catch {unset xxxxx}
+} -body {
     set aaaaa 77777
     upvar #0 aaaaa xxxxx
     list [set xxxxx] [set aaaaa]
-} {77777 77777}
-test var-3.6 {MakeUpvar, active call frame pushed for namespace eval} {
+} -result {77777 77777}
+test var-3.6 {MakeUpvar, active call frame pushed for namespace eval} -setup {
     catch {unset a}
+} -body {
     set a 121212
     namespace eval test_ns_var {
         upvar ::a vvv
         set vvv
     }
-} {121212}
-test var-3.7 {MakeUpvar, my var has ::s} {
+} -result {121212}
+test var-3.7 {MakeUpvar, my var has ::s} -setup {
     catch {unset a}
+} -body {
     set a 789789
     upvar #0 a test_ns_var::lnk
     namespace eval test_ns_var {
         set lnk
     }
-} {789789}
-test var-3.8 {MakeUpvar, my var already exists in global ns} {
+} -result {789789}
+test var-3.8 {MakeUpvar, my var already exists in global ns} -setup {
     catch {unset aaaaa}
     catch {unset xxxxx}
+} -body {
     set aaaaa 456654
     set xxxxx hello
     upvar #0 aaaaa xxxxx
     set xxxxx
-} {hello}
-test var-3.9 {MakeUpvar, my var has invalid ns name} {
+} -result {hello}
+test var-3.9 {MakeUpvar, my var has invalid ns name} -setup {
     catch {unset aaaaa}
+} -returnCodes error -body {
     set aaaaa 789789
-    list [catch {upvar #0 aaaaa test_ns_fred::lnk} msg] $msg
-} {1 {can't create "test_ns_fred::lnk": parent namespace doesn't exist}}
-test var-3.10 {MakeUpvar, } {
+    upvar #0 aaaaa test_ns_fred::lnk
+} -result {can't create "test_ns_fred::lnk": parent namespace doesn't exist}
+test var-3.10 {MakeUpvar, between namespaces} -body {
     namespace eval {} {
-	set bar 0
+	variable bar 0
 	namespace eval foo upvar bar bar
 	set foo::bar 1
-	catch {list $bar $foo::bar} msg
-	unset ::aaaaa
-	set msg
+	list $bar $foo::bar
     }
-} {1 1}
-test var-3.11 {MakeUpvar, my var looks like array elem} -body {
+} -cleanup {
+    unset ::aaaaa
+} -result {1 1}
+test var-3.11 {MakeUpvar, my var looks like array elem} -setup {
     catch {unset aaaaa}
+} -returnCodes error -body {
     set aaaaa 789789
     upvar #0 aaaaa foo(bar)
-} -returnCodes 1 -result {bad variable name "foo(bar)": upvar won't create a scalar variable that looks like an array element}
+} -result {bad variable name "foo(bar)": can't create a scalar variable that looks like an array element}
 
 test var-4.1 {Tcl_GetVariableName, global variable} testgetvarfullname {
     catch {unset a}
@@ -291,17 +303,19 @@ test var-4.2 {Tcl_GetVariableName, namespace variable} testgetvarfullname {
 	testgetvarfullname george namespace
     }
 } ::test_ns_var::george
-test var-4.3 {Tcl_GetVariableName, variable can't be array element} testgetvarfullname {
+test var-4.3 {Tcl_GetVariableName, variable can't be array element} -setup {
     catch {unset a}
+} -constraints testgetvarfullname -body {
     set a(1) foo
-    list [catch {testgetvarfullname a(1) global} msg] $msg
-} {1 {unknown variable "a(1)"}}
+    testgetvarfullname a(1) global
+} -returnCodes error -result {unknown variable "a(1)"}
 
-test var-5.1 {Tcl_GetVariableFullName, global variable} {
+test var-5.1 {Tcl_GetVariableFullName, global variable} -setup {
     catch {unset a}
+} -body {
     set a bar
     namespace which -variable a
-} {::a}
+} -result {::a}
 test var-5.2 {Tcl_GetVariableFullName, namespace variable} {
     namespace eval test_ns_var {
         variable martha
@@ -316,11 +330,10 @@ test var-6.1 {Tcl_GlobalObjCmd, variable is qualified by a namespace name} {
     namespace eval test_ns_var {
         variable boeing 777
     }
-    proc p {} {
+    apply {{} {
         global ::test_ns_var::boeing
         set boeing
-    }
-    p
+    }}
 } {777}
 test var-6.2 {Tcl_GlobalObjCmd, variable is qualified by a namespace name} {
     namespace eval test_ns_var {
@@ -336,11 +349,10 @@ test var-6.2 {Tcl_GlobalObjCmd, variable is qualified by a namespace name} {
 } {java}
 test var-6.3 {Tcl_GlobalObjCmd, variable named {} qualified by a namespace name} {
     set ::test_ns_var::test_ns_nested:: 24
-    proc p {} {
+    apply {{} {
         global ::test_ns_var::test_ns_nested::
         set {}
-    }
-    p
+    }}
 } {24}
 test var-6.4 {Tcl_GlobalObjCmd, variable name matching :*} {
     # Test for Tcl Bug 480176
@@ -352,14 +364,24 @@ test var-6.4 {Tcl_GlobalObjCmd, variable name matching :*} {
     p
     set :v
 } {fixed}
+test var-6.5 {Tcl_GlobalObjCmd, no-op case (TIP 323)} {
+    global
+} {}
+test var-6.6 {Tcl_GlobalObjCmd, no-op case (TIP 323)} {
+    proc p {} {
+	global
+    }
+    p
+} {}
 
-test var-7.1 {Tcl_VariableObjCmd, create and initialize one new ns variable} {
+test var-7.1 {Tcl_VariableObjCmd, create and initialize one new ns variable} -setup {
     catch {namespace delete test_ns_var}
+} -body {
     namespace eval test_ns_var {
         variable one 1
     }
     list [info vars test_ns_var::*] [set test_ns_var::one]
-} {::test_ns_var::one 1}
+} -result {::test_ns_var::one 1}
 test var-7.2 {Tcl_VariableObjCmd, if new and no value, leave undefined} {
     set two 2222222
     namespace eval test_ns_var {
@@ -381,10 +403,11 @@ test var-7.4 {Tcl_VariableObjCmd, list of vars} {
     list [lsort [info vars test_ns_var::*]] \
          [namespace eval test_ns_var {expr $three+$four}]
 } [list [lsort {::test_ns_var::four ::test_ns_var::three ::test_ns_var::two ::test_ns_var::one}] 7]
-test var-7.5 {Tcl_VariableObjCmd, value for last var is optional} {
+test var-7.5 {Tcl_VariableObjCmd, value for last var is optional} -setup {
     catch {unset a}
     catch {unset five}
     catch {unset six}
+} -body {
     set a ""
     set five 555
     set six  666
@@ -394,23 +417,25 @@ test var-7.5 {Tcl_VariableObjCmd, value for last var is optional} {
     }
     lappend a $test_ns_var::five \
         [set test_ns_var::six 6] [set test_ns_var::six] $six
+} -cleanup {
     catch {unset five}
     catch {unset six}
-    set a
-} {5 5 6 6 666}
-catch {unset newvar}
-test var-7.6 {Tcl_VariableObjCmd, variable name can be qualified} {
+} -result {5 5 6 6 666}
+test var-7.6 {Tcl_VariableObjCmd, variable name can be qualified} -setup {
+    catch {unset newvar}
+} -body {
     namespace eval test_ns_var {
         variable ::newvar cheers!
     }
-    set newvar
-} {cheers!}
-catch {unset newvar}
-test var-7.7 {Tcl_VariableObjCmd, bad var name} {
+    return $newvar
+} -cleanup {
+    catch {unset newvar}
+} -result {cheers!}
+test var-7.7 {Tcl_VariableObjCmd, bad var name} -returnCodes error -body {
     namespace eval test_ns_var {
-        list [catch {variable sev:::en 7} msg] $msg
+        variable sev:::en 7
     }
-} {1 {can't define "sev:::en": parent namespace doesn't exist}}
+} -result {can't define "sev:::en": parent namespace doesn't exist}
 test var-7.8 {Tcl_VariableObjCmd, if var already exists and no value is given, leave value unchanged} {
     set a ""
     namespace eval test_ns_var {
@@ -421,8 +446,9 @@ test var-7.8 {Tcl_VariableObjCmd, if var already exists and no value is given, l
     }
     set a
 } {8 8}
-test var-7.9 {Tcl_VariableObjCmd, mark as namespace var so var persists until namespace is destroyed or var is unset} {
+test var-7.9 {Tcl_VariableObjCmd, mark as namespace var so var persists until namespace is destroyed or var is unset} -setup {
     catch {namespace delete test_ns_var2}
+} -body {
     set a ""
     namespace eval test_ns_var2 {
         variable x 123
@@ -442,8 +468,7 @@ test var-7.9 {Tcl_VariableObjCmd, mark as namespace var so var persists until na
     lappend a [info exists test_ns_var2::y] [info exists test_ns_var2::z]
     lappend a [list [catch {unset test_ns_var2::z} msg] $msg]
     lappend a [namespace delete test_ns_var2]
-    set a
-} [list [lsort {::test_ns_var2::x ::test_ns_var2::y ::test_ns_var2::z}] 1 0 0\
+} -result [list [lsort {::test_ns_var2::x ::test_ns_var2::y ::test_ns_var2::z}] 1 0 0\
 	{1 {can't read "test_ns_var2::y": no such variable}}\
 	[lsort {::test_ns_var2::x ::test_ns_var2::y ::test_ns_var2::z}] 0 0\
 	hello 1 0\
@@ -487,181 +512,192 @@ test var-7.13 {Tcl_VariableObjCmd, variable named ":"} {
 	p
     }
 } {{My name is ":"} :}
-test var-7.14 {Tcl_VariableObjCmd, array element parameter} {
-    catch {namespace eval test_ns_var { variable arrayvar(1) }} res
-    set res
-} "can't define \"arrayvar(1)\": name refers to an element in an array"
-test var-7.15 {Tcl_VariableObjCmd, array element parameter} {
-    catch {
-	namespace eval test_ns_var { 
-	    variable arrayvar
-	    set arrayvar(1) x
-	    variable arrayvar(1) y
-	}   
-    } res
-    set res
-} "can't define \"arrayvar(1)\": name refers to an element in an array"
-test var-7.16 {Tcl_VariableObjCmd, no args} {
-    list [catch {variable} msg] $msg
-} {1 {wrong # args: should be "variable ?name value...? name ?value?"}}
-test var-7.17 {Tcl_VariableObjCmd, no args} {
+test var-7.14 {Tcl_VariableObjCmd, array element parameter} -body {
+    namespace eval test_ns_var { variable arrayvar(1) }
+} -returnCodes error -result "can't define \"arrayvar(1)\": name refers to an element in an array"
+test var-7.15 {Tcl_VariableObjCmd, array element parameter} -body {
+    namespace eval test_ns_var { 
+	variable arrayvar
+	set arrayvar(1) x
+	variable arrayvar(1) y
+    }   
+} -returnCodes error -result "can't define \"arrayvar(1)\": name refers to an element in an array"
+test var-7.16 {Tcl_VariableObjCmd, no args (TIP 323)} {
+    variable
+} {}
+test var-7.17 {Tcl_VariableObjCmd, no args (TIP 323)} {
     namespace eval test_ns_var {
-	list [catch {variable} msg] $msg
+	variable
     }
-} {1 {wrong # args: should be "variable ?name value...? name ?value?"}}
+} {}
 
-test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var names} {
+test var-8.1 {TclDeleteVars, "unset" traces are called with fully-qualified var names} -setup {
     catch {namespace delete test_ns_var}
     catch {unset a}
+} -body {
     namespace eval test_ns_var {
         variable v 123
         variable info ""
-
         proc traceUnset {name1 name2 op} {
             variable info
             set info [concat $info [list $name1 $name2 $op]]
         }
-
         trace var v u [namespace code traceUnset]
     }
     list [unset test_ns_var::v] $test_ns_var::info
-} {{} {test_ns_var::v {} u}}
-
-test var-8.2 {TclDeleteNamespaceVars, "unset" traces on ns delete are called with fully-qualified var names} {
+} -result {{} {test_ns_var::v {} u}}
+test var-8.2 {TclDeleteNamespaceVars, "unset" traces on ns delete are called with fully-qualified var names} -setup {
     catch {namespace delete test_ns_var}
     catch {unset a}
+} -body {
     set info ""
     namespace eval test_ns_var {
         variable v 123 1
         trace var v u ::traceUnset
     }
-
     proc traceUnset {name1 name2 op} {
 	set ::info [concat $::info [list $name1 $name2 $op]]
     }
-
     list [namespace delete test_ns_var] $::info
-} {{} {::test_ns_var::v {} u}}
+} -result {{} {::test_ns_var::v {} u}}
 
-test var-9.1 {behaviour of TclGet/SetVar simple get/set} testsetnoerr {
-    catch {unset u}; catch {unset v}
+test var-9.1 {behaviour of TclGet/SetVar simple get/set} -setup {
+    catch {unset u}
+    catch {unset v}
+} -constraints testsetnoerr -body {
     list \
-       [set u a; testsetnoerr u] \
-       [testsetnoerr v b] \
-       [testseterr u] \
-       [unset v; testseterr v b]
-} [list {before get a} {before set b} {before get a} {before set b}]
-test var-9.2 {behaviour of TclGet/SetVar namespace get/set} testsetnoerr {
+	[set u a; testsetnoerr u] \
+	[testsetnoerr v b] \
+	[testseterr u] \
+	[unset v; testseterr v b]
+} -result [list {before get a} {before set b} {before get a} {before set b}]
+test var-9.2 {behaviour of TclGet/SetVar namespace get/set} -setup {
     catch {namespace delete ns}
+} -constraints testsetnoerr -body {
     namespace eval ns {variable u a; variable v}
     list \
-       [testsetnoerr ns::u] \
-       [testsetnoerr ns::v b] \
-       [testseterr ns::u] \
-       [unset ns::v; testseterr ns::v b]
-} [list {before get a} {before set b} {before get a} {before set b}]
-test var-9.3 {behaviour of TclGetVar no variable} testsetnoerr {
+	[testsetnoerr ns::u] \
+	[testsetnoerr ns::v b] \
+	[testseterr ns::u] \
+	[unset ns::v; testseterr ns::v b]
+} -result [list {before get a} {before set b} {before get a} {before set b}]
+test var-9.3 {behaviour of TclGetVar no variable} -setup {
     catch {unset u}
+} -constraints testsetnoerr -body {
     list \
-       [catch {testsetnoerr u} res] $res \
-       [catch {testseterr u} res] $res
-} {1 {before get} 1 {can't read "u": no such variable}}
-test var-9.4 {behaviour of TclGetVar no namespace variable} testsetnoerr {
+	[catch {testsetnoerr u} res] $res \
+	[catch {testseterr u} res] $res
+} -result {1 {before get} 1 {can't read "u": no such variable}}
+test var-9.4 {behaviour of TclGetVar no namespace variable} -setup {
     catch {namespace delete ns}
+} -constraints testsetnoerr -body {
     namespace eval ns {}
     list \
-       [catch {testsetnoerr ns::w} res] $res \
-       [catch {testseterr ns::w} res] $res
-} {1 {before get} 1 {can't read "ns::w": no such variable}}
-test var-9.5 {behaviour of TclGetVar no namespace} testsetnoerr {
+	[catch {testsetnoerr ns::w} res] $res \
+	[catch {testseterr ns::w} res] $res
+} -result {1 {before get} 1 {can't read "ns::w": no such variable}}
+test var-9.5 {behaviour of TclGetVar no namespace} -setup {
     catch {namespace delete ns}
+} -constraints testsetnoerr -body {
     list \
-       [catch {testsetnoerr ns::u} res] $res \
-       [catch {testseterr ns::v} res] $res
-} {1 {before get} 1 {can't read "ns::v": no such variable}}
-test var-9.6 {behaviour of TclSetVar no namespace} testsetnoerr {
+	[catch {testsetnoerr ns::u} res] $res \
+	[catch {testseterr ns::v} res] $res
+} -result {1 {before get} 1 {can't read "ns::v": no such variable}}
+test var-9.6 {behaviour of TclSetVar no namespace} -setup {
     catch {namespace delete ns}
+} -constraints testsetnoerr -body {
     list \
-       [catch {testsetnoerr ns::v 1} res] $res \
-       [catch {testseterr ns::v 1} res] $res
-} {1 {before set} 1 {can't set "ns::v": parent namespace doesn't exist}}
-test var-9.7 {behaviour of TclGetVar array variable} testsetnoerr {
+	[catch {testsetnoerr ns::v 1} res] $res \
+	[catch {testseterr ns::v 1} res] $res
+} -result {1 {before set} 1 {can't set "ns::v": parent namespace doesn't exist}}
+test var-9.7 {behaviour of TclGetVar array variable} -setup {
     catch {unset arr}
-    set arr(1) 1;
-    list \
-       [catch {testsetnoerr arr} res] $res \
-       [catch {testseterr arr} res] $res
-} {1 {before get} 1 {can't read "arr": variable is array}}
-test var-9.8 {behaviour of TclSetVar array variable} testsetnoerr {
-    catch {unset arr}
+} -constraints testsetnoerr -body {
     set arr(1) 1
     list \
-       [catch {testsetnoerr arr 2} res] $res \
-       [catch {testseterr arr 2} res] $res
-} {1 {before set} 1 {can't set "arr": variable is array}}
-test var-9.9 {behaviour of TclGetVar read trace success} testsetnoerr {
+	[catch {testsetnoerr arr} res] $res \
+	[catch {testseterr arr} res] $res
+} -result {1 {before get} 1 {can't read "arr": variable is array}}
+test var-9.8 {behaviour of TclSetVar array variable} -setup {
+    catch {unset arr}
+} -constraints testsetnoerr -body {
+    set arr(1) 1
+    list \
+	[catch {testsetnoerr arr 2} res] $res \
+	[catch {testseterr arr 2} res] $res
+} -result {1 {before set} 1 {can't set "arr": variable is array}}
+test var-9.9 {behaviour of TclGetVar read trace success} -setup {
+    catch {unset u}
+    catch {unset v}
+} -constraints testsetnoerr -body {
     proc resetvar {val name elem op} {upvar 1 $name v; set v $val}
-    catch {unset u}; catch {unset v}
     set u 10
     trace var u r [list resetvar 1]
     trace var v r [list resetvar 2]
     list \
-       [testsetnoerr u] \
-       [testseterr v]
-} {{before get 1} {before get 2}}
+	[testsetnoerr u] \
+	[testseterr v]
+} -result {{before get 1} {before get 2}}
 test var-9.10 {behaviour of TclGetVar read trace error} testsetnoerr {
     proc writeonly args {error "write-only"}
     set v 456
     trace var v r writeonly
     list \
-       [catch {testsetnoerr v} msg] $msg \
-       [catch {testseterr v} msg] $msg
+	[catch {testsetnoerr v} msg] $msg \
+	[catch {testseterr v} msg] $msg
 } {1 {before get} 1 {can't read "v": write-only}}
-test var-9.11 {behaviour of TclSetVar write trace success} testsetnoerr {
+test var-9.11 {behaviour of TclSetVar write trace success} -setup {
+    catch {unset u}
+    catch {unset v}
+} -constraints testsetnoerr -body {
     proc doubleval {name elem op} {upvar 1 $name v; set v [expr {2 * $v}]}
-    catch {unset u}; catch {unset v}
     set v 1
     trace var v w doubleval
     trace var u w doubleval
     list \
-       [testsetnoerr u 2] \
-       [testseterr v 3]
-} {{before set 4} {before set 6}}
+	[testsetnoerr u 2] \
+	[testseterr v 3]
+} -result {{before set 4} {before set 6}}
 test var-9.12 {behaviour of TclSetVar write trace error} testsetnoerr {
     proc readonly args {error "read-only"}
     set v 456
     trace var v w readonly
     list \
-       [catch {testsetnoerr v 2} msg] $msg $v \
-       [catch {testseterr v 3} msg] $msg $v
+	[catch {testsetnoerr v 2} msg] $msg $v \
+	[catch {testseterr v 3} msg] $msg $v
 } {1 {before set} 2 1 {can't set "v": read-only} 3}
 
-test var-10.1 {can't nest arrays with array set} {
+test var-10.1 {can't nest arrays with array set} -setup {
    catch {unset arr}
-   list [catch {array set arr(x) {a 1 b 2}} res] $res
-} {1 {can't set "arr(x)": variable isn't array}}
-test var-10.2 {can't nest arrays with array set} {
+} -returnCodes error -body {
+   array set arr(x) {a 1 b 2}
+} -result {can't set "arr(x)": variable isn't array}
+test var-10.2 {can't nest arrays with array set} -setup {
    catch {unset arr}
-   list [catch {array set arr(x) {}} res] $res
-} {1 {can't set "arr(x)": variable isn't array}}
+} -returnCodes error -body {
+   array set arr(x) {}
+} -result {can't set "arr(x)": variable isn't array}
 
-test var-11.1 {array unset} {
+test var-11.1 {array unset} -setup {
     catch {unset a}
+} -body {
     array set a { 1,1 a 1,2 b 2,1 c 2,3 d }
     array unset a 1,*
     lsort -dict [array names a]
-} {2,1 2,3}
-test var-11.2 {array unset} {
+} -result {2,1 2,3}
+test var-11.2 {array unset} -setup {
     catch {unset a}
+} -body {
     array set a { 1,1 a 1,2 b }
     array unset a
     array exists a
-} 0
-test var-11.3 {array unset errors} {
+} -result 0
+test var-11.3 {array unset errors} -setup {
     catch {unset a}
+} -returnCodes error -body {
     array set a { 1,1 a 1,2 b }
-    list [catch {array unset a pattern too} msg] $msg
-} {1 {wrong # args: should be "array unset arrayName ?pattern?"}}
+    array unset a pattern too
+} -result {wrong # args: should be "array unset arrayName ?pattern?"}
 
 test var-12.1 {TclFindCompiledLocals, {} array name} {
     namespace eval n {
@@ -678,8 +714,9 @@ test var-12.1 {TclFindCompiledLocals, {} array name} {
     }
 } {0 1 2 2,foo}
 
-test var-13.1 {Tcl_UnsetVar2, unset array with trace set on element} {
+test var-13.1 {Tcl_UnsetVar2, unset array with trace set on element} -setup {
     catch {unset t}
+} -body {
     proc foo {var ind op} {
 	global t
 	set foo bar
@@ -690,15 +727,14 @@ test var-13.1 {Tcl_UnsetVar2, unset array with trace set on element} {
 	unset t
     }
     set x "If you see this, it worked"
-} "If you see this, it worked"
+} -result "If you see this, it worked"
 
 test var-14.1 {array names syntax} -body {
     array names foo bar baz snafu
 } -returnCodes 1 -match glob -result *
-
 test var-14.2 {array names -glob} -body {
     array names tcl_platform -glob os
-} -returnCodes 0 -match exact -result os
+} -result os
 
 test var-15.1 {segfault in [unset], [Bug 735335]} {
     proc A { name } {
@@ -713,7 +749,9 @@ test var-15.1 {segfault in [unset], [Bug 735335]} {
     namespace eval test A useSomeUnlikelyNameHere
     namespace eval test unset useSomeUnlikelyNameHere
 } {}
-
+test var-15.2 {compiled unset evaluation order, Bug 3970f54c4e} {
+    apply {{} {unset foo [return ok]}}
+} ok
 
 test var-16.1 {CallVarTraces: save/restore interp error state} {
     trace add variable ::errorCode write " ;#"
@@ -754,12 +792,136 @@ test var-18.1 {array unset and unset traces: Bug 2939073} -setup {
     unset x already
 } -result 0
 
-
 test var-19.1 {crash when freeing locals hashtable: Bug 3037525} {
     proc foo {} { catch {upvar 0 dummy \$index} }
     foo ; # This crashes without the fix for the bug
     rename foo {}
 } {}
+
+test var-20.1 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	global x
+	array set x {a 1}
+    }}
+    array size x
+} -result 1
+test var-20.2 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	global x
+	array set x {}
+    }}
+    array size x
+} -result 0
+test var-20.3 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	array set ::x {a 1}
+    }}
+    array size x
+} -result 1
+test var-20.4 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	array set ::x {}
+    }}
+    array size x
+} -result 0
+test var-20.5 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	global x
+	eval {array set x {a 1}}
+    }}
+    array size x
+} -result 1
+test var-20.6 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	global x
+	eval {array set x {}}
+    }}
+    array size x
+} -result 0
+test var-20.7 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	eval {array set ::x {a 1}}
+    }}
+    array size x
+} -result 1
+test var-20.8 {array set compilation correctness: Bug 3603163} -setup {
+    unset -nocomplain x
+} -body {
+    apply {{} {
+	eval {array set ::x {}}
+    }}
+    array size x
+} -result 0
+test var-20.9 {[bc1a96407a] array set compiled w/ trace} -setup {
+    variable foo
+    variable lambda
+    unset -nocomplain lambda foo
+    array set foo {}
+    lappend lambda {}
+    lappend lambda [list array set [namespace which -variable foo] {a 1}]
+} -body {
+    after 0 [list apply $lambda]
+    vwait [namespace which -variable foo]
+} -cleanup {
+    unset -nocomplain lambda foo
+} -result {}
+test var-20.10 {[bc1a96407a] array set don't compile bad varname} -body {
+    apply {{} {set name foo(bar); array set $name {a 1}}}
+} -returnCodes error -match glob -result *
+
+test var-21.0 {PushVarNameWord OBOE in compiled unset} -setup {
+    proc linenumber {} {dict get [info frame -1] line}
+} -body {
+    apply {n {
+	set foo bar
+        unset foo {*}{
+        } [return [incr n -[linenumber]]]
+    }} [linenumber]
+} -cleanup {
+    rename linenumber {}
+} -result 1
+
+test var-22.0 {leak in array element unset: Bug a3309d01db} -setup {
+    proc getbytes {} {
+	lindex [split [memory info] \n] 3 3
+    }
+    proc doit k {
+	variable A
+	set A($k) {}
+	foreach n [array names A] {
+	    if {$n <= $k-1} {
+		unset A($n)
+	    }
+	}
+    }
+} -constraints memory -body {
+    set end [getbytes]
+    for {set i 0} {$i < 5} {incr i} {
+	doit $i
+        set tmp $end
+        set end [getbytes]
+    }
+    set leakedBytes [expr {$end - $tmp}]
+} -cleanup {
+    array unset A
+    rename getbytes {}
+    rename doit {}
+} -result 0
+
 
 catch {namespace delete ns}
 catch {unset arr}

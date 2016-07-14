@@ -6,8 +6,6 @@
 #
 # See the file "license.terms" for information on usage and redistribution
 # of this file, and for a DISCLAIMER OF ALL WARRANTIES.
-#
-# RCS: @(#) $Id$
 
 if {[lsearch [namespace children] ::tcltest] == -1} {
     package require tcltest 2
@@ -21,22 +19,34 @@ if {[lsearch [namespace children] ::tcltest] == -1} {
 
 test chan-1.1 {chan command general syntax} -body {
     chan
-} -returnCodes error -result "wrong # args: should be \"chan subcommand ?argument ...?\""
+} -returnCodes error -result "wrong # args: should be \"chan subcommand ?arg ...?\""
 test chan-1.2 {chan command general syntax} -body {
     chan FOOBAR
-} -returnCodes error -result "unknown or ambiguous subcommand \"FOOBAR\": must be blocked, close, configure, copy, create, eof, event, flush, gets, names, pending, postevent, puts, read, seek, tell, or truncate"
+} -returnCodes error -match glob -result "unknown or ambiguous subcommand \"FOOBAR\": must be *"
 
 test chan-2.1 {chan command: blocked subcommand} -body {
     chan blocked foo bar
 } -returnCodes error -result "wrong # args: should be \"chan blocked channelId\""
-
 test chan-3.1 {chan command: close subcommand} -body {
-    chan close foo bar
-} -returnCodes error -result "wrong # args: should be \"chan close channelId\""
-
+    chan close foo bar zet
+} -returnCodes error -result "wrong # args: should be \"chan close channelId ?direction?\""
+test chan-3.2 {chan command: close subcommand} -setup {
+    set chan [open [info script] r]
+} -body {
+    chan close $chan bar
+} -cleanup {
+    close $chan
+} -returnCodes error -result "bad direction \"bar\": must be read or write"
+test chan-3.3 {chan command: close subcommand} -setup {
+    set chan [open [info script] r]
+} -body {
+    chan close $chan write
+} -cleanup {
+    close $chan
+} -returnCodes error -result "Half-close of write-side not possible, side not opened or already closed"
 test chan-4.1 {chan command: configure subcommand} -body {
     chan configure
-} -returnCodes error -result "wrong # args: should be \"chan configure channelId ?optionName? ?value? ?optionName value?...\""
+} -returnCodes error -result "wrong # args: should be \"chan configure channelId ?-option value ...?\""
 test chan-4.2 {chan command: [Bug 800753]} -body {
     chan configure stdout -eofchar \u0100
 } -returnCodes error -match glob -result {bad value*}
@@ -51,7 +61,7 @@ test chan-4.5 {chan command: check valid inValue, invalid outValue} -body {
 } -returnCodes error -match glob -result {bad value for -eofchar:*}
 test chan-4.6 {chan command: check no inValue, valid outValue} -body {
     chan configure stdout -eofchar [list {} \x27]
-} -returnCodes ok -result {}
+} -returnCodes ok -result {} -cleanup {chan configure stdout -eofchar [list {} {}]}
 
 test chan-5.1 {chan command: copy subcommand} -body {
     chan copy foo
@@ -221,6 +231,40 @@ test chan-16.13 {chan command: pending output subcommand} -setup {
     unset -nocomplain result
     catch {chan close $f}
     catch {removeFile $file}
+}
+
+# TIP 304: chan pipe
+
+test chan-17.1 {chan command: pipe subcommand} -body {
+    chan pipe foo
+} -returnCodes error -result "wrong # args: should be \"chan pipe \""
+
+test chan-17.2 {chan command: pipe subcommand} -body {
+    chan pipe foo bar
+} -returnCodes error -result "wrong # args: should be \"chan pipe \""
+
+test chan-17.3 {chan command: pipe subcommand} -body {
+	set l [chan pipe]
+    foreach {pr pw} $l break
+    list [llength $l] [fconfigure $pr -blocking] [fconfigure $pw -blocking]
+} -result [list 2 1 1] -cleanup {
+    close $pw
+    close $pr
+}
+
+test chan-17.4 {chan command: pipe subcommand} -body {
+    set ::done 0
+    foreach {::pr ::pw} [chan pipe] break
+    after 100 {puts $::pw foo;flush $::pw}
+    fileevent $::pr readable {set ::done 1}
+    after 500 {set ::done -1}
+    vwait ::done
+    set out nope
+    if {$::done==1} {gets $::pr out}
+    list $::done $out
+} -result [list 1 foo] -cleanup {
+    close $::pw
+    close $::pr
 }
 
 cleanupTests

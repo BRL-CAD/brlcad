@@ -4,9 +4,8 @@
 '\" See the file "license.terms" for information on usage and redistribution
 '\" of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 '\"
-'\" RCS: @(#) $Id$
-.so man.macros
 .TH Tcl_OpenTcpClient 3 8.0 Tcl "Tcl Library Procedures"
+.so man.macros
 .BS
 '\" Note:  do not modify the .SH NAME line immediately below!
 .SH NAME
@@ -50,15 +49,13 @@ accepted via the socket.
 .AP ClientData clientData in
 Arbitrary one-word value to pass to \fIproc\fR.
 .BE
-
 .SH DESCRIPTION
 .PP
 These functions are convenience procedures for creating
 channels that communicate over TCP sockets.
 The operations on a channel
 are described in the manual entry for \fBTcl_OpenFileChannel\fR.
-
-.SH TCL_OPENTCPCLIENT
+.SS TCL_OPENTCPCLIENT
 .PP
 \fBTcl_OpenTcpClient\fR opens a client TCP socket connected to a \fIport\fR
 on a specific \fIhost\fR, and returns a channel that can be used to
@@ -95,22 +92,20 @@ is left in the interpreter's result.
 .PP
 The newly created channel is not registered in the supplied interpreter; to
 register it, use \fBTcl_RegisterChannel\fR.
-If one of the standard channels, \fBstdin, stdout\fR or \fBstderr\fR was
+If one of the standard channels, \fBstdin\fR, \fBstdout\fR or \fBstderr\fR was
 previously closed, the act of creating the new channel also assigns it as a
 replacement for the standard channel.
-
-.SH TCL_MAKETCPCLIENTCHANNEL
+.SS TCL_MAKETCPCLIENTCHANNEL
 .PP
 \fBTcl_MakeTcpClientChannel\fR creates a \fBTcl_Channel\fR around an
 existing, platform specific, handle for a client TCP socket.
 .PP
 The newly created channel is not registered in the supplied interpreter; to
 register it, use \fBTcl_RegisterChannel\fR.
-If one of the standard channels, \fBstdin, stdout\fR or \fBstderr\fR was
+If one of the standard channels, \fBstdin\fR, \fBstdout\fR or \fBstderr\fR was
 previously closed, the act of creating the new channel also assigns it as a
 replacement for the standard channel.
-
-.SH TCL_OPENTCPSERVER
+.SS TCL_OPENTCPSERVER
 .PP
 \fBTcl_OpenTcpServer\fR opens a TCP socket on the local host on a specified
 \fIport\fR and uses the Tcl event mechanism to accept requests from clients
@@ -120,8 +115,9 @@ allow connections from any network interface.
 Each time a client connects to this socket, Tcl creates a channel
 for the new connection and invokes \fIproc\fR with information about
 the channel. \fIProc\fR must match the following prototype:
+.PP
 .CS
-typedef void Tcl_TcpAcceptProc(
+typedef void \fBTcl_TcpAcceptProc\fR(
         ClientData \fIclientData\fR,
         Tcl_Channel \fIchannel\fR,
         char *\fIhostName\fR,
@@ -159,18 +155,15 @@ a remote client is pending.
 .PP
 The newly created channel is not registered in the supplied interpreter; to
 register it, use \fBTcl_RegisterChannel\fR.
-If one of the standard channels, \fBstdin, stdout\fR or \fBstderr\fR was
+If one of the standard channels, \fBstdin\fR, \fBstdout\fR or \fBstderr\fR was
 previously closed, the act of creating the new channel also assigns it as a
 replacement for the standard channel.
-
 .SH "PLATFORM ISSUES"
 .PP
 On Unix platforms, the socket handle is a Unix file descriptor as
 returned by the \fBsocket\fR system call.  On the Windows platform, the
 socket handle is a \fBSOCKET\fR as defined in the WinSock API.
-
 .SH "SEE ALSO"
 Tcl_OpenFileChannel(3), Tcl_RegisterChannel(3), vwait(n)
-
 .SH KEYWORDS
-client, server, TCP
+channel, client, server, socket, TCP
