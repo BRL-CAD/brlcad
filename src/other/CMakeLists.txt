@@ -741,6 +741,26 @@ if(BRLCAD_SPR_BUILD)
   SetTargetFolder(libSPR-static "Third Party Libraries")
 endif(BRLCAD_SPR_BUILD)
 
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+#=== LIBBSON ==================================================
+# Libbson needed for binary attributes, always use this local version
+set(libbson_ALIASES ENABLE_BSON)
+set(libbson_DESCRIPTION "
+Option for enabling and disabling compilation of the Libbson library
+provided with BRL-CAD's source code.  Default is BUNDLED, using
+the included other/src version.
+")
+THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
+  ${libbson_ALIASES} FLAGS NOSYS UNDOCUMENTED)
+if(BRLCAD_BSON_BUILD)
+  SetTargetFolder(libBSON "Third Party Libraries")
+  SetTargetFolder(libBSON-static "Third Party Libraries")
+endif(BRLCAD_BSON_BUILD)
+#=== END LIBBSON ==================================================
+else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CMAKEFILES(libbson)
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
