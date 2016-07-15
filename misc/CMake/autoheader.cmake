@@ -60,10 +60,13 @@ endfunction(autoheader_ignore_defines)
 # Windows related tests)
 set(OS_FLAGS
   WIN32
+  WIN32_LEAN_AND_MEAN
   _WIN32
   _WIN64
-  WIN32_LEAN_AND_MEAN
+  _WINDOWS
   __WIN32__
+  __WIN64
+  __WINDOWS__
   __APPLE__
   BSD
   CRAY1
@@ -72,32 +75,82 @@ set(OS_FLAGS
   MSDOS
   SUNOS
   SYSV
+  _AIX
+  _BEOS
+  _BEOS_
+  _IBMR2
+  _SCO_SV
+  _SGI
+  _ULTRIX
   _WINSOCKAPI_
+  _XENIX
+  __AIX
+  __AIX__
+  __ANDROID__
+  __BEOS__
+  __BeOS
+  __CRAYXC
+  __CRAYXE
   __CYGWIN__
+  __DARWIN__
   __DOS__
   __FreeBSD__
+  __GNU__
+  __HAIKU__
+  __LINUX__
   __MSDOS__
   __NT__
+  __NetBSD
+  __NetBSD__
+  __OPENBSD
   __OS2__
+  __OS400__
   __OpenBSD__
+  __QNX__
+  __SCO_VERSION__
+  __TRU64__
+  __aix
+  __aix__
   __alpha
   __alpha__
   __apollo
+  __bsdos__
   __convex__NATIVE
+  __hppa
+  __hpua
   __hpux
+  __i386
   __i386__
   __ia64__
+  __linux
   __linux__
+  __minux
+  __osf
+  __osf__
+  __ppc64__
+  __ppc__
+  __riscos
+  __riscos__
   __sgi
+  __sinix
+  __sinix__
   __sp3__ # what is this? context indicates it is a platform...
   __sparc64__
+  __sun
+  __tru64
+  __ultrix
+  __ultrix__
   __x86_64__
+  _sgi
   _sun
+  _tru64
   convex_NATIVE
   eta10
+  hpux
   ibm
   linux
   mips
+  sco_sv
   sgi
   sun
   vax
