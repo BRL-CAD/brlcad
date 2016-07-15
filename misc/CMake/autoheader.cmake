@@ -60,6 +60,10 @@ function(autoheader_ignore_defines deflist)
   endforeach(def ${${deflist}})
 endfunction(autoheader_ignore_defines)
 
+function(autoheader_skip_files def)
+  set_property(GLOBAL APPEND PROPERTY FILE_SKIPPATTERNS "${def}")
+endfunction(autoheader_skip_files)
+
 # OS flags.  For performance, put most common
 # comparisons first (that'll typicall be
 # Windows related tests)
@@ -225,6 +229,7 @@ function(autoheader_scan_internal seed_dir recurse)
   set(extensions c h cxx cpp hxx hpp)
   get_property(C_DEFINE_SKIPVARS GLOBAL PROPERTY C_DEFINE_SKIPVARS)
   get_property(C_DEFINE_SKIPPATTERNS GLOBAL PROPERTY C_DEFINE_SKIPPATTERNS)
+  get_property(FILE_SKIPPATTERNS GLOBAL PROPERTY FILE_SKIPPATTERNS)
 
   foreach(exten ${extensions})
     set(sfiles)
@@ -237,6 +242,12 @@ function(autoheader_scan_internal seed_dir recurse)
   endforeach(exten ${extensions})
 
   #message("found files: ${scan_files}")
+
+  foreach(ptn ${FILE_SKIPPATTERNS})
+    list(FILTER scan_files EXCLUDE REGEX "${ptn}")
+  endforeach(ptn ${FILE_SKIPPATTERNS})
+
+  #message("processing files: ${scan_files}")
 
   set(unique_keys)
   foreach(sf ${scan_files})
@@ -308,8 +319,11 @@ set(LOCAL_SKIP DIRENT_ BRLCADBUILD ^BRLCAD_* ^DM_* ^FB_* NO_BOMBING_MACROS USE_B
   IF_WGL IF_X IF_QT IF_OGL NO_DEBUG_CHECKING USE_OPENCL)
 autoheader_ignore_defines(LOCAL_SKIP)
 
+autoheader_skip_files(".*src/other/.*")
+
 autoheader_recursive_scan(${CMAKE_CURRENT_SOURCE_DIR}/include)
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/src/libbu)
+autoheader_recursive_scan(${CMAKE_CURRENT_SOURCE_DIR}/src)
+autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/misc/tools/perplex)
 
 get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
 message("keys:")
