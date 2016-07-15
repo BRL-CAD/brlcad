@@ -1725,9 +1725,9 @@ Tcl_GetOpenFile(
 	    NULL);
     return TCL_ERROR;
 }
-
-#ifndef HAVE_COREFOUNDATION	/* Darwin/Mac OS X CoreFoundation notifier is
-				 * in tclMacOSXNotify.c */
+
+/* Darwin/Mac OS X CoreFoundation notifier is in tclMacOSXNotify.c */
+#ifndef HAVE_COREFOUNDATION
 /*
  *----------------------------------------------------------------------
  *

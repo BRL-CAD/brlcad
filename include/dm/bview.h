@@ -29,8 +29,8 @@
  * example).
  *
  */
-#ifndef BVIEW_H
-#define BVIEW_H
+#ifndef DM_BVIEW_H
+#define DM_BVIEW_H
 
 #include "common.h"
 #include "bu/list.h"
@@ -312,7 +312,7 @@ struct view_obj {
 };
 #define VIEW_OBJ_NULL ((struct view_obj *)0)
 
-#endif /* BVIEW_H */
+#endif /* DM_BVIEW_H */
 
 /** @} */
 /*

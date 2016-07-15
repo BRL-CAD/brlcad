@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef TIE_H
-#define TIE_H
+#ifndef RT_TIE_H
+#define RT_TIE_H
 
 #include "common.h"
 
@@ -154,7 +154,7 @@ RT_EXPORT extern void TIE_VAL(tie_push)(struct tie_s *tie, TIE_3 **tlist, unsign
 
 __END_DECLS
 
-#endif /* TIE_H */
+#endif /* RT_TIE_H */
 
 /*
  * Local Variables:

@@ -14,8 +14,8 @@
  */
 
 #include "tclInt.h"
-#ifndef HAVE_COREFOUNDATION	/* Darwin/Mac OS X CoreFoundation notifier is
-				 * in tclMacOSXNotify.c */
+/* Darwin/Mac OS X CoreFoundation notifier is in tclMacOSXNotify.c */
+#ifndef HAVE_COREFOUNDATION
 #include <signal.h>
 
 /*

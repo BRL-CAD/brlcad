@@ -14,8 +14,9 @@
  */
 
 #include "tclInt.h"
-#ifdef HAVE_COREFOUNDATION	/* Traditional unix select-based notifier is
-				 * in tclUnixNotfy.c */
+
+/* Traditional unix select-based notifier is in tclUnixNotfy.c */
+#ifdef HAVE_COREFOUNDATION
 #include <CoreFoundation/CoreFoundation.h>
 #include <pthread.h>
 

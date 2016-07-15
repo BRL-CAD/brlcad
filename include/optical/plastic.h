@@ -22,8 +22,8 @@
 /** @file plastic.h
  *
  */
-#ifndef PLASTIC_H
-#define PLASTIC_H
+#ifndef OPTICAL_PLASTIC_H
+#define OPTICAL_PLASTIC_H
 
 #define PL_NULL ((struct phong_specific *)0)
 #define PL_O(m) offsetof(struct phong_specific, m)
@@ -43,7 +43,7 @@ struct phong_specific {
 };
 
 extern struct bu_structparse phong_parse[];
-#endif
+#endif /* OPTICAL_PLASTIC_H */
 /** @} */
 /*
  * Local Variables:

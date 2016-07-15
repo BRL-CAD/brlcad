@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef ARB_EDIT_H
-#define ARB_EDIT_H
+#ifndef RT_ARB_EDIT_H
+#define RT_ARB_EDIT_H
 
 #include "common.h"
 #include "bn.h"
@@ -441,7 +441,7 @@ arb_edit(struct rt_arb_internal *arb, fastf_t peqn[7][4], int edge, int newedge,
 
 __END_DECLS
 
-#endif  /* ARB_EDIT_H */
+#endif  /* RT_ARB_EDIT_H */
 
 /** @} */
 /*
