@@ -233,7 +233,7 @@ function(autoheader_scan seed_dir)
   set(unique_keys)
   foreach(sf ${scan_files})
     header_guard("${seed_dir}" "${sf}" hg)
-    set(SKIP_LIST ".*[ \t]+${hg}[ \t]*" ${C_DEFINE_SKIPVARS})
+    set(SKIP_LIST "${hg}" ${C_DEFINE_SKIPVARS})
 
     # Use unifdef to get the list of conditional symbols
     # See http://dotat.at/prog/unifdef/ and https://github.com/fanf2/unifdef
