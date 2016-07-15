@@ -38,15 +38,20 @@ cmake_policy(SET CMP0064 OLD)
 # found.
 
 # A user can suppress consideration of definitions that match one or a set of
-# patterns by appending those patterns to the C_DEFINE_SKIPVARS global
-# property.  There are some "standard" patterns that are automatically skipped
+# patterns.  There are some "standard" patterns that are automatically skipped
 # - tests matching the "header guard" pattern are skipped, as are defines
 # matching the "EXPORT" and "IMPORT" substrings, operating system and compiler
 # identifiers, and various other flags that do not typically need user-defined
 # configure stage testing.
+set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS ".*EXPORT.*")
+set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS ".*IMPORT.*")
 
 function(autoheader_ignore_define def)
-  set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS "${def}")
+  if("${def}" MATCHES ".*[*].*")
+    set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS "${def}")
+  else("${def}" MATCHES ".*[*].*")
+    set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS "${def}")
+  endif("${def}" MATCHES ".*[*].*")
 endfunction(autoheader_ignore_define)
 
 function(autoheader_ignore_defines deflist)
@@ -219,6 +224,7 @@ function(autoheader_scan_internal seed_dir recurse)
   set(scan_files)
   set(extensions c h cxx cpp hxx hpp)
   get_property(C_DEFINE_SKIPVARS GLOBAL PROPERTY C_DEFINE_SKIPVARS)
+  get_property(C_DEFINE_SKIPPATTERNS GLOBAL PROPERTY C_DEFINE_SKIPPATTERNS)
 
   foreach(exten ${extensions})
     set(sfiles)
@@ -243,12 +249,8 @@ function(autoheader_scan_internal seed_dir recurse)
     string(REPLACE "\n" ";" def_list "${def_list}")
 
     if(def_list)
-      #message("file ${sf} dflags:")
       foreach(dflag ${def_list})
 	set(skip_flag 0)
-	if("${dflag}" MATCHES ".*EXPORT.*" OR "${dflag}" MATCHES ".*IMPORT.*")
-	  set(skip_flag 1)
-	endif("${dflag}" MATCHES ".*EXPORT.*" OR "${dflag}" MATCHES ".*IMPORT.*")
 	foreach(sk ${SKIP_LIST})
 	  if(NOT skip_flag)
 	    if("${dflag}" STREQUAL "${sk}")
@@ -256,6 +258,13 @@ function(autoheader_scan_internal seed_dir recurse)
 	    endif("${dflag}" STREQUAL "${sk}")
 	  endif(NOT skip_flag)
 	endforeach(sk ${SKIP_LIST})
+	foreach(sp ${C_DEFINE_SKIPPATTERNS})
+	  if(NOT skip_flag)
+	    if("${dflag}" MATCHES ${sp})
+	      set(skip_flag 1)
+	    endif("${dflag}" MATCHES ${sp})
+	  endif(NOT skip_flag)
+	endforeach(sp ${C_DEFINE_SKIPPATTERNS})
 	if(NOT skip_flag)
 	  #message("   ${dflag}")
 	  set(unique_keys ${unique_keys} ${dflag})
@@ -283,11 +292,11 @@ function(autoheader_scan_internal seed_dir recurse)
 endfunction(autoheader_scan_internal)
 
 function(autoheader_scan seed_dir)
-  autoheader_scan_internal(${seed_dir} 0)
+  autoheader_scan_internal("${seed_dir}" 0)
 endfunction(autoheader_scan)
 
 function(autoheader_recursive_scan seed_dir)
-  autoheader_scan_internal(${seed_dir} 1)
+  autoheader_scan_internal("${seed_dir}" 1)
 endfunction(autoheader_recursive_scan)
 
 
@@ -295,12 +304,12 @@ endfunction(autoheader_recursive_scan)
 # logic in cmake -P script mode.  Should be removed if/when
 # this goes "live" in the real build.
 
-set(LOCAL_SKIP DIRENT_ BRLCADBUILD BRLCAD_ DM_ FB_ NO_BOMBING_MACROS USE_BINARY_ATTRIBUTES
+set(LOCAL_SKIP DIRENT_ BRLCADBUILD ^BRLCAD_* ^DM_* ^FB_* NO_BOMBING_MACROS USE_BINARY_ATTRIBUTES
   IF_WGL IF_X IF_QT IF_OGL NO_DEBUG_CHECKING USE_OPENCL)
 autoheader_ignore_defines(LOCAL_SKIP)
 
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*IMPORT.*")
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR})
+autoheader_recursive_scan(${CMAKE_CURRENT_SOURCE_DIR}/include)
+autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/src/libbu)
 
 get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
 message("keys:")
