@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef LIGHT_H
-#define LIGHT_H
+#ifndef OPTICAL_LIGHT_H
+#define OPTICAL_LIGHT_H
 
 #include "common.h"
 
@@ -90,7 +90,7 @@ OPTICAL_EXPORT extern void light_obs(struct application *ap, struct shadework *s
 
 __END_DECLS
 
-#endif /* LIGHT_H */
+#endif /* OPTICAL_LIGHT_H */
 
 /** @} */
 /*
