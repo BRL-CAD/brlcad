@@ -29,6 +29,8 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+cmake_policy(SET CMP0064 OLD)
+
 # The purpose of this logic is to scan a set of C/C++ source files to identify
 # all of the variables the CMake configure process may need to set.
 
@@ -215,18 +217,6 @@ macro(header_guard rdir fname ovar)
   set(${ovar} ${stage4})
 endmacro(header_guard)
 
-# Given an atom from a line (i.e. one conditional if the original line had
-# and/or branches, or the original line if there were no and/or branches),
-# extract the compile flag
-macro(compile_def_flag atom ovar)
-  string(REGEX REPLACE "^[ \t]*#*.*[!]*(ifdef|defined|elseif defined)[ \t]*[(]*" "" stage1 "${atom}")
-  string(REGEX REPLACE "[/][*].*[*][/]" "" stage2 "${stage1}")
-  string(REGEX REPLACE "[)][ \t]*" "" stage3 "${stage2}")
-  string(REGEX REPLACE "[ \t]+$" "" stage4 "${stage3}")
-  string(REGEX REPLACE "^[ \t]+" "" stage5 "${stage4}")
-  set(${ovar} ${stage5})
-endmacro(compile_def_flag)
-
 function(autoheader_scan seed_dir)
   set(scan_files)
   set(extensions c h cxx cpp hxx hpp)
@@ -244,45 +234,37 @@ function(autoheader_scan seed_dir)
   foreach(sf ${scan_files})
     header_guard("${seed_dir}" "${sf}" hg)
     set(SKIP_LIST ".*[ \t]+${hg}[ \t]*" ${C_DEFINE_SKIPVARS})
-    file(STRINGS ${sf} SRC_LINES REGEX "^[ \t]*#.*(ifdef|defined[(]).+")
-    set(def_list)
-    foreach(line ${SRC_LINES})
-      #message("line: ${line}")
-      set(lset ${line})
-      string(REPLACE "&&" ";" lset "${lset}")
-      string(REPLACE "||" ";" lset "${lset}")
-      foreach(l ${lset})
-	#message("   atom: ${l}")
-	set(skip_line 0)
-	foreach(sk ${SKIP_LIST})
-	  if(NOT skip_line)
-	    #message("testing ${l} vs ${sk}")
-	    if("${l}" MATCHES "${sk}")
-	      #message("matched ${l} vs ${sk} - skipping")
-	      set(skip_line 1)
-	    endif("${l}" MATCHES "${sk}")
-	  endif(NOT skip_line)
-	endforeach(sk ${SKIP_LIST})
-	if(NOT skip_line)
-	  set(def_list ${def_list} ${l})
-	endif(NOT skip_line)
-      endforeach(l ${lset})
-    endforeach(line ${SRC_LINES})
+
+    # Use unifdef to get the list of conditional symbols
+    # See http://dotat.at/prog/unifdef/ and https://github.com/fanf2/unifdef
+    execute_process(COMMAND unifdef -s ${sf} OUTPUT_VARIABLE def_list)
+    string(REPLACE "\n" ";" def_list "${def_list}")
+
     if(def_list)
-      #message("file ${sf} def lines:")
-      foreach(l ${def_list})
-	set(dflag)
-	compile_def_flag(${l} dflag)
-	#message("   line: ${l}")
-	#message("   extracted: ${dflag}")
-	set(unique_keys ${unique_keys} ${dflag})
-      endforeach(l ${def_list})
+      #message("file ${sf} dflags:")
+      foreach(dflag ${def_list})
+	set(skip_flag 0)
+	foreach(sk ${SKIP_LIST})
+	  if(NOT skip_flag)
+	    if("${dflag}" MATCHES "${sk}")
+	      set(skip_flag 1)
+	    endif("${dflag}" MATCHES "${sk}")
+	  endif(NOT skip_flag)
+	endforeach(sk ${SKIP_LIST})
+	if(NOT skip_flag)
+	  #message("   ${dflag}")
+	  set(unique_keys ${unique_keys} ${dflag})
+	endif(NOT skip_flag)
+      endforeach(dflag ${def_list})
     endif(def_list)
   endforeach(sf ${scan_files})
   list(REMOVE_DUPLICATES unique_keys)
   foreach(k ${unique_keys})
     set_property(GLOBAL APPEND PROPERTY C_DEFINE_VARS "${k}")
   endforeach(k ${unique_keys})
+
+  # If we've run autoheader_scan mulitple times, we need to
+  # ensure uniqueness globally...
   get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
   list(REMOVE_DUPLICATES C_DEFINE_VARS)
   list(SORT C_DEFINE_VARS)
@@ -298,8 +280,7 @@ set(LOCAL_SKIP DIRENT_ BRLCADBUILD BRLCAD_ DM_ FB_ NO_BOMBING_MACROS USE_BINARY_
 autoheader_ignore_defines(LOCAL_SKIP)
 
 set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*IMPORT.*")
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/include)
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/src/libbu)
+autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR})
 
 get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
 message("keys:")
