@@ -44,11 +44,9 @@ cmake_policy(SET CMP0064 OLD)
 # matching the "EXPORT" and "IMPORT" substrings, operating system and compiler
 # identifiers, and various other flags that do not typically need user-defined
 # configure stage testing.
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*EXPORT.*")
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*IMPORT.*")
 
 function(autoheader_ignore_define def)
-  set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*[ (\t]+${def}[ )\t$]*.*")
+  set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS "${def}")
 endfunction(autoheader_ignore_define)
 
 function(autoheader_ignore_defines deflist)
@@ -217,14 +215,18 @@ macro(header_guard rdir fname ovar)
   set(${ovar} ${stage4})
 endmacro(header_guard)
 
-function(autoheader_scan seed_dir)
+function(autoheader_scan_internal seed_dir recurse)
   set(scan_files)
   set(extensions c h cxx cpp hxx hpp)
   get_property(C_DEFINE_SKIPVARS GLOBAL PROPERTY C_DEFINE_SKIPVARS)
 
   foreach(exten ${extensions})
     set(sfiles)
-    file(GLOB_RECURSE sfiles "${seed_dir}/*.${exten}")
+    if(recurse)
+      file(GLOB_RECURSE sfiles "${seed_dir}/*.${exten}")
+    else(recurse)
+      file(GLOB sfiles "${seed_dir}/*.${exten}")
+    endif(recurse)
     set(scan_files ${scan_files} ${sfiles})
   endforeach(exten ${extensions})
 
@@ -244,11 +246,14 @@ function(autoheader_scan seed_dir)
       #message("file ${sf} dflags:")
       foreach(dflag ${def_list})
 	set(skip_flag 0)
+	if("${dflag}" MATCHES ".*EXPORT.*" OR "${dflag}" MATCHES ".*IMPORT.*")
+	  set(skip_flag 1)
+	endif("${dflag}" MATCHES ".*EXPORT.*" OR "${dflag}" MATCHES ".*IMPORT.*")
 	foreach(sk ${SKIP_LIST})
 	  if(NOT skip_flag)
-	    if("${dflag}" MATCHES "${sk}")
+	    if("${dflag}" STREQUAL "${sk}")
 	      set(skip_flag 1)
-	    endif("${dflag}" MATCHES "${sk}")
+	    endif("${dflag}" STREQUAL "${sk}")
 	  endif(NOT skip_flag)
 	endforeach(sk ${SKIP_LIST})
 	if(NOT skip_flag)
@@ -275,7 +280,16 @@ function(autoheader_scan seed_dir)
     list(SORT C_DEFINE_VARS)
   endif(DLEN)
   set_property(GLOBAL PROPERTY C_DEFINE_VARS "${C_DEFINE_VARS}")
+endfunction(autoheader_scan_internal)
+
+function(autoheader_scan seed_dir)
+  autoheader_scan_internal(${seed_dir} 0)
 endfunction(autoheader_scan)
+
+function(autoheader_recursive_scan seed_dir)
+  autoheader_scan_internal(${seed_dir} 1)
+endfunction(autoheader_recursive_scan)
+
 
 # For testing convenience, the following will exercise the
 # logic in cmake -P script mode.  Should be removed if/when
