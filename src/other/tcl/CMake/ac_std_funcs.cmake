@@ -19,7 +19,6 @@ FOREACH($candidate_dir ${CMAKE_MODULE_PATH})
 	ENDIF(NOT CMAKE_TEST_SRCS_DIR)
 ENDFOREACH($candidate_dir ${CMAKE_MODULE_PATH})
 
-INCLUDE(CheckPrototypeExists)
 INCLUDE(CheckCSourceRuns)
 INCLUDE(CheckCSourceRuns)
 
