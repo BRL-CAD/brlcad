@@ -51,32 +51,6 @@ ENDIF(COMMAND CMAKE_POLICY)
 # set CMake project name
 PROJECT(TK)
 
-# Without Tcl libraries AND sources, we can't build Tk.  Use TCL_SRC_PREFIX
-# and TCL_BIN_PREFIX to identify the location of the Tcl we are to use.
-IF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX)
-  SET(TCL_INCLUDE_DIRS ${TCL_SRC_PREFIX}/generic ${TCL_SRC_PREFIX}/libtommath)
-  IF(WIN32)
-    SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/win)
-  ELSE(WIN32)
-    SET(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} ${TCL_SRC_PREFIX}/unix)
-  ENDIF(WIN32)
-  # Locate the TCL libraries.  We allow these to be overridden so that a parent
-  # build can use a CMake target instead of an actual library path.
-  IF(NOT TCL_LIBRARY)
-    find_library(TCL_LIBRARY tcl PATHS ${TCL_BIN_PREFIX}/lib)
-  ENDIF(NOT TCL_LIBRARY)
-  IF(NOT TCL_STUB_LIBRARY)
-    find_library(TCL_STUB_LIBRARY tclstub PATHS ${TCL_BIN_PREFIX}/lib)
-  ENDIF(NOT TCL_STUB_LIBRARY)
-  IF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY)
-    MESSAGE(FATAL_ERROR "Could not find Tcl libraries in ${TCL_BIN_PREFIX} - please specify the parent directory for the libraries in the TCL_BIN_PREFIX variable (e.g. \${TCL_BIN_PREFIX}/lib)")
-  ENDIF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY)
-ELSE(TCL_SRC_PREFIX and TCL_BIN_PREFIX)
-  MESSAGE(FATAL_ERROR "Please specify the source and library locations of Tcl using the TCL_SRC_PREFIX and TCL_BIN_PREFIX variables.")
-ENDIF(TCL_SRC_PREFIX AND TCL_BIN_PREFIX)
-MARK_AS_ADVANCED(TCL_LIBRARY)
-MARK_AS_ADVANCED(TCL_STUB_LIBRARY)
-
 # build shared libs by default
 set(BUILD_SHARED_LIBS ON)
 
@@ -741,18 +715,16 @@ add_definitions(-DHAVE_XKBKEYCODETOKEYSYM=1)
 add_definitions(-DXKEYCODETOKEYSYM_IS_DEPRECATED=1)
 
 include_directories(
-  ${TCL_INCLUDE_DIRS}	
-  ${TK_INCLUDE_PATH}
-  ${FREETYPE_INCLUDE_DIRS}
-  ${TK_X11_INCLUDE_DIRS}
-  )
+	${TCL_INCLUDE_PATH}
+	${TK_INCLUDE_PATH}
+	${FREETYPE_INCLUDE_DIRS}
+	${TK_X11_INCLUDE_DIRS}
+	)
 
 SET(X11_TK_LIBS ${X11_X11_LIB} ${X11_Xext_LIB})
-IF(TK_ENABLE_XSS)
-  IF(X11_Xscreensaver_LIB)
-    SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
-  ENDIF(X11_Xscreensaver_LIB)
-ENDIF(TK_ENABLE_XSS)
+IF(TK_ENABLE_XSS AND X11_Xscreensaver_LIB)
+	SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xscreensaver_LIB})
+ENDIF(TK_ENABLE_XSS AND X11_Xscreensaver_LIB)
 IF(X11_Xft_LIB)
   SET(X11_TK_LIBS ${X11_TK_LIBS} ${X11_Xft_LIB})
   add_definitions(-DHAVE_LIBXFT=1)
@@ -804,6 +776,7 @@ IF(TK_ENABLE_AQUA)
   SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
 ENDIF(TK_ENABLE_AQUA)
 
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/TCL_PKGINDEX.cmake)
 TCL_PKGINDEX(tk Tk ${TK_VERSION})
 
 install(FILES ${TK_HDRS} DESTINATION include)
