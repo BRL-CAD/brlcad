@@ -200,7 +200,6 @@ SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
 #--------------------------------------------------------------------
 find_package(ZLIB)
 # We're going to have zlib one way or the other,
-# either with the found lib or with compat srcs.
 add_definitions(-DHAVE_ZLIB=1)
 
 # TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
