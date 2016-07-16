@@ -1,5 +1,0 @@
-#
-# Tcl package index file
-#
-package ifneeded tdbc::sqlite3 @PACKAGE_VERSION@ \
-    [list source [file join $dir .. library tdbcsqlite3.tcl]]
