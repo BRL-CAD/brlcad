@@ -172,20 +172,20 @@ include(CheckIncludeFiles)
 include(CheckCSourceCompiles)
 
 function(Tcl_Check_Include_File filename)
-  cmake_parse_arguments(OPT "USABILITY" "TESTSRC;COMPATSRC;DEFVAR" "" ${ARGN})
+  cmake_parse_arguments(OPT "USE" "TEST_SRC;COMPAT_SRC;DEFVAR" "" ${ARGN})
   string(REPLACE "." "_" var "${filename}")
   string(REPLACE "/" "_" var "${var}")
   string(TOUPPER "${var}" var)
   message("var: ${var}")
   CHECK_INCLUDE_FILES(${filename} HAVE_${var})
   if(HAVE_${var})
-    if(OPT_USABILITY)
+    if(OPT_USE)
       # Usability test requested - we're not done yet.
-      if(OPT_TESTSRC)
-	CHECK_C_SOURCE_COMPILES("${${OPT_TESTSRC}}" ${var}_USABLE)
-      else(OPT_TESTSRC)
+      if(OPT_TEST_SRC)
+	CHECK_C_SOURCE_COMPILES("${${OPT_TEST_SRC}}" ${var}_USABLE)
+      else(OPT_TEST_SRC)
 	CHECK_C_SOURCE_COMPILES("#include <${filename}>\nint main() {return 0;}" ${var}_USABLE)
-      endif(OPT_TESTSRC)
+      endif(OPT_TEST_SRC)
       if(${var}_USABLE)
 	if(OPT_DEFVAR)
 	  set(${OPT_DEFVAR} 1 PARENT_SCOPE)
@@ -200,7 +200,7 @@ function(Tcl_Check_Include_File filename)
 	  set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
 	endif(OPT_COMPAT_SRC)
       endif(${var}_USABLE)
-    else(OPT_USABILITY)
+    else(OPT_USE)
       if(OPT_DEFVAR)
 	set(${OPT_DEFVAR} 1 PARENT_SCOPE)
 	add_definitions(-D${OPT_DEFVAR}=1)
@@ -208,15 +208,13 @@ function(Tcl_Check_Include_File filename)
 	set(HAVE_${var} 1 PARENT_SCOPE)
 	add_definitions(-DHAVE_${var}=1)
       endif(OPT_DEFVAR)
-    endif(OPT_USABILITY)
+    endif(OPT_USE)
   else(HAVE_${var})
-    if(OPT_COMPATSRC)
-      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPATSRC} PARENT_SCOPE)
-    endif(OPT_COMPATSRC)
+    if(OPT_COMPAT_SRC)
+      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
+    endif(OPT_COMPAT_SRC)
   endif(HAVE_${var})
 endfunction(Tcl_Check_Include_File)
-
-
 
 set(DIRENT_TEST_SRCS "
 #include <sys/types.h>
@@ -249,48 +247,25 @@ nl_langinfo(CODESET);
 return 0;
 }
 ")
-# Check for strtol, strtoul and strtod in stdlib.h
-# before accepting it.
-set(STDLIB_TEST_SRCS "
-#include <stdlib.h>
-int main () {
-long l = strtol(\"123\", NULL, 10);
-unsigned long ul = strtoul(\"123\", NULL, 10);
-double d = strtod(\"123.456\", NULL);
-return 0;
-}
-")
-# Check for strstr and strerror in string.h
-# before accepting it.
-set(STRING_TEST_SRCS "
-asdfas
-#include <string.h>
-int main () {
-char *str = \"test0 test1 test2\";
-char *ss = strstr(str,\"test1\");
-char *es = strerror(1);
-return 0;
-}
-")
 Tcl_Check_Include_File(AvailabilityMacros.h)
 Tcl_Check_Include_File(copyfile.h)
-Tcl_Check_Include_File(dirent.h USABILITY TESTSRC DIRENT_TEST_SRCS)
-Tcl_Check_Include_File(dlfcn.h USABILITY)
-Tcl_Check_Include_File(float.h USABILITY)
-Tcl_Check_Include_File(langinfo.h USABILITY TESTSRC LANG_TEST_SRCS DEFVAR HAVE_LANGINFO)
-Tcl_Check_Include_File(limits.h USABILITY)
+Tcl_Check_Include_File(dirent.h USE TEST_SRC DIRENT_TEST_SRCS)
+Tcl_Check_Include_File(dlfcn.h USE)
+Tcl_Check_Include_File(float.h USE)
+Tcl_Check_Include_File(langinfo.h USE TEST_SRC LANG_TEST_SRCS DEFVAR HAVE_LANGINFO)
+Tcl_Check_Include_File(limits.h USE)
 Tcl_Check_Include_File(net/errno.h)
-Tcl_Check_Include_File(stdlib.h USABILITY TESTSRC STDLIB_TEST_SRCS)
-Tcl_Check_Include_File(string.h USABILITY TESTSRC STRING_TEST_SRCS)
+Tcl_Check_Include_File(stdlib.h)
+Tcl_Check_Include_File(string.h)
 Tcl_Check_Include_File(sys/filio.h)
 Tcl_Check_Include_File(sys/ioctl.h)
 Tcl_Check_Include_File(sys/modem.h)
-Tcl_Check_Include_File(sys/param.h USABILITY)
+Tcl_Check_Include_File(sys/param.h USE)
 Tcl_Check_Include_File(sys/sdt.h)
 Tcl_Check_Include_File(sys/time.h)
-Tcl_Check_Include_File(sys/wait.h USABILITY)
+Tcl_Check_Include_File(sys/wait.h USE)
 Tcl_Check_Include_File(termios.h)
-Tcl_Check_Include_File(values.h USABILITY)
+Tcl_Check_Include_File(values.h USE)
 
 
 #--------------------------------------------------------------------
@@ -339,7 +314,6 @@ if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
   add_definitions(-DUSE_THREAD_ALLOC=1)
   add_definitions(-D_REENTRANT=1)
   add_definitions(-D_THREAD_SAFE=1)
-
 endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #------------------------------------------------------------------------
@@ -608,35 +582,6 @@ ENDIF(NOT HAVE_MEMCMP)
 #	ENDIF(NOT HAVE_STRING_H)
 #ENDIF(NOT HAVE_MEMMOVE)
 
-#------------------------------------------------------------------------------
-# Test for broken functions.  Not clear how many of these are still needed.
-#------------------------------------------------------------------------------
-SC_TCL_CHECK_BROKEN_FUNC(
-  strstr "
-  extern int strstr();
-  exit(strstr(\"\\\0test\", \"test\") ? 1 : 0);"
-  )
-
-
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtoul "
-  extern int strtoul();
-  char *term, *string = \"0\";
-  exit(strtoul(string,&term,0) != 0 || term != string+1);"
-  )
-
-
-SC_TCL_CHECK_BROKEN_FUNC(
-  strtod "
-  extern double strtod();
-  char *term, *string = \" +69\";
-  exit(strtod(string,&term) != 69 || term != string+4);"
-  )
-
-
-
-#TODO SC_BUGGY_STRTOD - Solaris 2.4 only?  Do we still care?
-
 #--------------------------------------------------------------------
 #       Check for various typedefs and provide substitutes if
 #       they don't exist.
@@ -782,7 +727,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
   add_definitions(-DTCL_LOAD_FROM_MEMORY=1)
   add_definitions(-DTCL_WIDE_CLICKS=1)
-  TCL_CHECK_INCLUDE_FILE_USABILITY(AvailabilityMacros.h HAVE_AVAILABILITYMACROS_H)
   IF(HAVE_AVAILABILITYMACROS_H)
     SET(WEAK_IMPORT_SRCS "
     #ifdef __ENVIRONMENT_MAC_OS_X_VERSION_MIN_REQUIRED__
@@ -910,7 +854,6 @@ ENDIF(HAVE_AVAILABILITYMACROS_H)
 
 CHECK_COMPILER_SUPPORTS_HIDDEN_D()
 
-TCL_CHECK_INCLUDE_FILE_USABILITY(sys/modem.h SYS_MODEM_H)
 
 
 CHECK_FD_SET_IN_TYPES_D()
