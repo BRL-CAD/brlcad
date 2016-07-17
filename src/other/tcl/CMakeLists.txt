@@ -541,13 +541,6 @@ IF(TCL_THREADS)
 ENDIF(TCL_THREADS)
 
 #---------------------------------------------------------------------------
-#       Determine which interface to use to talk to the serial port.
-#       Note that #include lines must begin in leftmost column for
-#       some compilers to recognize them as preprocessor directives.
-#---------------------------------------------------------------------------
-SC_SERIAL_PORT()
-
-#---------------------------------------------------------------------------
 # TODO - Do we need the sys/select.h check these days?
 #---------------------------------------------------------------------------
 
