@@ -81,152 +81,6 @@ MACRO(TCL_CHECK_STRUCT_HAS_MEMBER structname member header var)
 ENDMACRO(TCL_CHECK_STRUCT_HAS_MEMBER)
 
 
-
-# Note - for these path and load functions, should move the FindTCL.cmake
-# logic that applies to here
-
-#------------------------------------------------------------------------
-# SC_PATH_TCLCONFIG
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_PATH_TKCONFIG
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_LOAD_TCLCONFIG
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_LOAD_TKCONFIG
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_PROG_TCLSH
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_BUILD_TCLSH
-#------------------------------------------------------------------------
-
-# TODO
-
-#------------------------------------------------------------------------
-# SC_ENABLE_SHARED
-#------------------------------------------------------------------------
-
-# This will probably be handled by CMake variables rather than a
-# specific SC command
-
-#------------------------------------------------------------------------
-# SC_ENABLE_FRAMEWORK
-#------------------------------------------------------------------------
-
-# Not immediately clear how this will work in CMake
-
-
-#------------------------------------------------------------------------
-# SC_ENABLE_THREADS
-#------------------------------------------------------------------------
-MACRO(SC_ENABLE_THREADS)
-   FIND_PACKAGE(Threads)
-   IF(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-		SET(TCL_FOUND_THREADS ON)
-   ELSE(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-		SET(TCL_FOUND_THREADS OFF)
-   ENDIF(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-	OPTION(TCL_THREADS "Enable Tcl Thread support" ${TCL_FOUND_THREADS})
-   IF(TCL_THREADS)
-		add_definitions(-DTCL_THREADS=1)
-		add_definitions(-DUSE_THREAD_ALLOC=1)
-		add_definitions(-D_REENTRANT=1)
-		add_definitions(-D_THREAD_SAFE=1)
-	   SET(TCL_THREADS_LIB ${CMAKE_THREAD_LIBS_INIT})
-		IF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-			add_definitions(-D_POSIX_PTHREAD_SEMANTICS=1)
-		ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-		CHECK_FUNCTION_EXISTS(pthread_attr_setstacksize HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-		IF(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-			add_definitions(-DHAVE_PTHREAD_ATTR_SETSTACKSIZE=1)
-		ENDIF(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
-		CHECK_FUNCTION_EXISTS(pthread_attr_get_np HAVE_PTHREAD_ATTR_GET_NP)
-		CHECK_FUNCTION_EXISTS(pthread_getattr_np HAVE_PTHREAD_GETATTR_NP)
-		IF(HAVE_PTHREAD_ATTR_GET_NP)
-			add_definitions(-DHAVE_PTHREAD_ATTR_GET_NP=1)
-		ELSEIF(HAVE_PTHREAD_GETATTR_NP)
-			add_definitions(-DHAVE_PTHREAD_GETATTR_NP=1)
-		ENDIF(HAVE_PTHREAD_ATTR_GET_NP)
-		IF(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
-			CHECK_FUNCTION_EXISTS(pthread_get_stacksize_np HAVE_PTHREAD_GET_STACKSIZE_NP)
-			IF(HAVE_PTHREAD_GET_STACKSIZE_NP)
-				add_definitions(-DHAVE_PTHREAD_GET_STACKSIZE_NP=1)
-			ENDIF(HAVE_PTHREAD_GET_STACKSIZE_NP)
-		ENDIF(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
-	ENDIF(TCL_THREADS)
-ENDMACRO(SC_ENABLE_THREADS)
-
-#------------------------------------------------------------------------
-# SC_ENABLE_SYMBOLS
-#------------------------------------------------------------------------
-
-# TODO - this may be replaced by other CMake mechanisms
-
-#------------------------------------------------------------------------
-# SC_ENABLE_LANGINFO
-#------------------------------------------------------------------------
-MACRO(SC_ENABLE_LANGINFO)
-	set(TCL_ENABLE_LANGINFO ON CACHE STRING "Trigger use of nl_langinfo if available.")
-	IF(TCL_ENABLE_LANGINFO)
-		CHECK_INCLUDE_FILE(langinfo.h HAVE_LANGINFO)
-		IF(HAVE_LANGINFO)
-			SET(LANGINFO_SRC "
-			#include <langinfo.h>
-			int main() {
-			nl_langinfo(CODESET);
-			}
-			")
-			CHECK_C_SOURCE_COMPILES("${LANGINFO_SRC}" LANGINFO_COMPILES)
-			IF(LANGINFO_COMPILES)
-				add_definitions(-DHAVE_LANGINFO=1)
-			ELSE(LANGINFO_COMPILES)
-				SET(TCL_ENABLE_LANGINFO OFF CACHE STRING "Langinfo not available" FORCE)
-			ENDIF(LANGINFO_COMPILES)
-		ELSE(HAVE_LANGINFO)
-			SET(TCL_ENABLE_LANGINFO OFF CACHE STRING "Langinfo not available" FORCE)
-		ENDIF(HAVE_LANGINFO)
-	ENDIF(TCL_ENABLE_LANGINFO)
-ENDMACRO(SC_ENABLE_LANGINFO)
-
-#--------------------------------------------------------------------
-# SC_CONFIG_MANPAGES
-#--------------------------------------------------------------------
-
-# TODO
-
-#--------------------------------------------------------------------
-# SC_CONFIG_SYSTEM
-#--------------------------------------------------------------------
-
-# Replaced by CMake functionality
-
-
-#--------------------------------------------------------------------
-# SC_CONFIG_CFLAGS
-#--------------------------------------------------------------------
-
-# TODO - many of these are either automatically handled or handled
-# elsewhere, but should still handle what we need to
-
 #--------------------------------------------------------------------
 # SC_SERIAL_PORT
 #--------------------------------------------------------------------
@@ -342,50 +196,6 @@ if (ioctl(0, TIOCGETP, &t) == 0
 	ENDIF(HAVE_TERMIOS)
 ENDMACRO(SC_SERIAL_PORT)
 
-
-#--------------------------------------------------------------------
-# SC_MISSING_POSIX_HEADERS
-#--------------------------------------------------------------------
-MACRO(SC_MISSING_POSIX_HEADERS)
-	TCL_CHECK_INCLUDE_FILE(dirent.h HAVE_DIRENT_H)
-	IF(NOT HAVE_DIRENT_H)
-		add_definitions(-DNO_DIRENT_H=1)
-	ENDIF(NOT HAVE_DIRENT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(float.h FLOAT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(values.h VALUES_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(limits.h LIMITS_H)
-	TCL_CHECK_INCLUDE_FILE(stdlib.h HAVE_STDLIB_H)
-	TCL_CHECK_INCLUDE_FILE(string.h HAVE_STRING_H)
-	IF(NOT HAVE_STRING_H)
-		add_definitions(-DNO_STRING_H=1)
-	ENDIF(NOT HAVE_STRING_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/wait.h SYS_WAIT_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(dlfcn.h DLFCN_H)
-	TCL_CHECK_INCLUDE_FILE_USABILITY(sys/param.h SYS_PARAM_H)
-ENDMACRO(SC_MISSING_POSIX_HEADERS)
-
-
-#--------------------------------------------------------------------
-# SC_PATH_X
-#--------------------------------------------------------------------
-
-# Replaced by CMake's FindX11
-
-#--------------------------------------------------------------------
-# SC_BLOCKING_STYLE
-#--------------------------------------------------------------------
-TCL_CHECK_INCLUDE_FILE(sys/ioctl.h HAVE_SYS_IOCTL_H) 
-TCL_CHECK_INCLUDE_FILE(sys/filio.h HAVE_SYS_FILIO_H)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^OSF.*")
-	add_definitions(-DUSE_FIONBIO=1)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^OSF.*")
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-	STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-	IF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 5)
-		add_definitions(-DUSE_FIONBIO=1)
-	ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 5)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^SunOS$")
-
 #--------------------------------------------------------------------
 # SC_TIME_HANLDER
 #
@@ -465,13 +275,6 @@ return 0;
 ENDMACRO(SC_TIME_HANDLER)
 
 #--------------------------------------------------------------------
-# SC_BUGGY_STRTOD
-#--------------------------------------------------------------------
-
-# TODO
-
-
-#--------------------------------------------------------------------
 # SC_TCL_LINK_LIBS
 #--------------------------------------------------------------------
 MACRO(SC_TCL_LINK_LIBS)
@@ -544,12 +347,6 @@ MACRO(SC_TCL_LINK_LIBS)
 ENDMACRO(SC_TCL_LINK_LIBS)
 
 #--------------------------------------------------------------------
-# SC_TCL_EARLY_FLAGS
-#--------------------------------------------------------------------
-
-# TODO - needed at all for CMake?
-
-#--------------------------------------------------------------------
 # SC_TCL_64BIT_FLAGS
 #
 # Detect and set up 64-bit compiling here.  LOTS of TODO here
@@ -600,42 +397,6 @@ MACRO(SC_TCL_64BIT_FLAGS)
 		add_definitions(-D_stati64=_stat64)
 	ENDIF(CMAKE_CL_64)
 ENDMACRO(SC_TCL_64BIT_FLAGS)
-
-#--------------------------------------------------------------------
-# SC_TCL_CFG_ENCODING   TIP #59
-#--------------------------------------------------------------------
-MACRO(SC_TCL_CFG_ENCODING)
-	IF(NOT TCL_CFGVAL_ENCODING)
-		IF(WIN32)
-			SET(TCL_CFGVAL_ENCODING "cp1252")
-		ELSE(WIN32)
-			SET(TCL_CFGVAL_ENCODING "iso8859-1")
-		ENDIF(WIN32)
-	ENDIF(NOT TCL_CFGVAL_ENCODING)
-	add_definitions(-DTCL_CFGVAL_ENCODING="${TCL_CFGVAL_ENCODING}")
-ENDMACRO(SC_TCL_CFG_ENCODING)
-
-
-#--------------------------------------------------------------------
-# SC_TCL_CHECK_BROKEN_FUNC
-#--------------------------------------------------------------------
-MACRO(SC_TCL_CHECK_BROKEN_FUNC)
-	CHECK_FUNCTION_EXISTS(${ARGV0} HAVE_${ARGV0})
-	IF(HAVE_${ARGV0})
-		SET(COMPILE_SRC "
-		int main() {
-		${ARGV1}
-		}")
-		if(NOT DEFINED WORKING_${ARGV0})
-			CHECK_C_SOURCE_RUNS("${COMPILE_SRC}"  WORKING_${ARGV0})
-		endif(NOT DEFINED WORKING_${ARGV0})
-		IF(NOT WORKING_${ARGV0})
-			SET(COMPAT_SRCS ${COMPAT_SRCS} compat/${ARGV0}.c CACHE STRING "Compatibility srcs" FORCE)
-		ENDIF(NOT WORKING_${ARGV0})
-	ELSE(HAVE_${ARGV0})
-		SET(COMPAT_SRCS ${COMPAT_SRCS} compat/${ARGV0}.c CACHE STRING "Compatibility srcs" FORCE)
-	ENDIF(HAVE_${ARGV0})
-ENDMACRO(SC_TCL_CHECK_BROKEN_FUNC)
 
 #--------------------------------------------------------------------
 # SC_TCL_GETHOSTBYADDR_R
@@ -740,29 +501,6 @@ return 0;}
 		ENDIF(HAVE_GETHOSTBYNAME_R_6)
 	ENDIF(HAVE_GETHOSTBYNAME_R)
 ENDMACRO(SC_TCL_GETHOSTBYNAME_R)
-
-#--------------------------------------------------------------------
-# SC_TCL_IPV6
-#--------------------------------------------------------------------
-MACRO(SC_TCL_IPV6)
-	CHECK_FUNCTION_EXISTS(getaddrinfo HAVE_GETADDRINFO)
-	IF(HAVE_GETADDRINFO)
-		SET(GETADDRINFO_SRC "
-#include <netdb.h>
-int main () {
-const char *name, *port;
-struct addrinfo *aiPtr, hints;
-(void)getaddrinfo(name,port, &hints, &aiPtr);
-(void)freeaddrinfo(aiPtr);
-return 0;
-}
-		")
-		CHECK_C_SOURCE_COMPILES("${GETADDRINFO_SRC}" WORKING_GETADDRINFO)
-		IF(WORKING_GETADDRINFO)
-			add_definitions(-DHAVE_GETADDRINFO=1)
-		ENDIF(WORKING_GETADDRINFO)
-	ENDIF(HAVE_GETADDRINFO)
-ENDMACRO(SC_TCL_IPV6)
 
 #--------------------------------------------------------------------
 # SC_TCL_GETPWUID_R

@@ -153,6 +153,13 @@ if(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)
 endif(APPLE)
 
+# Embedded configuration information, encoding to use for the values, TIP #59
+if(WIN32)
+  add_definitions(-DTCL_CFGVAL_ENCODING="cp1252")
+else(WIN32)
+  add_definitions(-DTCL_CFGVAL_ENCODING="iso8859-1")
+endif(WIN32)
+
 #------------------------------------------------------------------------
 # Check if the compiler understands -pipe.  If so, use it.
 # It makes compiling go faster.  (This is only a performance feature.)
@@ -340,6 +347,14 @@ Tcl_Check_Function_Exists(wait3 NO_FLAG)
 Tcl_Check_Function_Exists(uname NO_FLAG)
 Tcl_Check_Function_Exists(realpath NO_FLAG)
 Tcl_Check_Function_Exists(fstatfs NO_FLAG)
+Tcl_Check_Function_Exists(pthread_attr_setstacksize)
+Tcl_Check_Function_Exists(pthread_attr_get_np)
+Tcl_Check_Function_Exists(pthread_getattr_np)
+if(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
+  Tcl_Check_Function_Exists(pthread_get_stacksize_np)
+endif(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
+Tcl_Check_Function_Exists(chflags)
+Tcl_Check_Function_Exists(mkstemps)
 
 # Check for early Darwin version here - realpath
 # is not threadsafe prior to Darwin 7
@@ -374,10 +389,6 @@ endif(HAVE_GETADDRINFO)
 #--------------------------------------------------------------------
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 
-#------------------------------------------------------------------------
-# Embedded configuration information, encoding to use for the values, TIP #59
-#------------------------------------------------------------------------
-SC_TCL_CFG_ENCODING()
 
 #--------------------------------------------------------------------
 # Look for libraries that we will need when compiling the Tcl shell
@@ -385,7 +396,7 @@ SC_TCL_CFG_ENCODING()
 SC_TCL_LINK_LIBS()
 
 # Add the Threading library, if we're using it
-SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${TCL_THREADS_LIB})
+SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
 
 # Same for the math library
 SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
@@ -658,16 +669,8 @@ IF(HAVE_SIGNED_CHAR)
 ENDIF(HAVE_SIGNED_CHAR)
 
 #--------------------------------------------------------------------
-# Check for support of nl_langinfo function
-#--------------------------------------------------------------------
-SC_ENABLE_LANGINFO()
-
-#--------------------------------------------------------------------
 # Check for chflags and mkstemps
 #--------------------------------------------------------------------
-TCL_CHECK_FUNCTION_EXISTS(chflags HAVE_CHFLAGS)
-TCL_CHECK_FUNCTION_EXISTS(mkstemps HAVE_MKSTEMPS)
-
 
 #--------------------------------------------------------------------
 # Check for support of isnan() function or macro
