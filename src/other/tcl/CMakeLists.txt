@@ -112,10 +112,56 @@ include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
 
 
 #-----------------------------------------------------------------------------
-# Tcl/Tk's normal build system uses autotools macros, referred to as the
-# TEA system.  An attempt to duplicate the required functionality from
-# TEA is found in tcl.cmake
-include(${TCL_CMAKE_DIR}/tcl.cmake)
+# Tcl/Tk uses definition adds rather than a config.h file.  For convenience,
+# we define a few wrappers to accomidate the patterns:
+include(CMakeParseArguments)
+
+include(CheckIncludeFiles)
+function(TCL_CHECK_INCLUDE_FILE filename)
+  CMAKE_PARSE_ARGUMENTS(OPT "NOFLAG;USABILITY" "TEST_SRC;COMPAT_SRC;DEFVAR" "")
+  string(REPLACE "." "_" var "${filename}")
+  string(REPLACE "/" "_" var "${var}")
+  string(TOUPPER "${var}" var)
+  message("var: ${var}")
+  CHECK_INCLUDE_FILES(${filename} HAVE_${var})
+  if(HAVE_${var})
+    if(OPT_USABILITY)
+      # Usability test requested - we're not done yet.
+      if(OPT_TEST_SRC)
+	CHECK_C_SOURCE_COMPILES("${OPT_TEST_SRC}" ${var}_USABLE)
+      else(OPT_TEST_SRC)
+	CHECK_C_SOURCE_COMPILES("#include <${filename}>\nmain{};" ${var}_USABLE)
+      endif(OPT_TEST_SRC)
+      if(${var}_USABLE)
+	if(OPT_DEFVAR)
+	  add_definitions(-D${OPT_DEFVAR}=1)
+	else(OPT_DEFVAR)
+	  add_definitions(-DHAVE_${var}=1)
+	endif(OPT_DEFVAR)
+      else(${var}_USABLE)
+	add_definitions(-DNO_${var}=1)
+	if(OPT_COMPAT_SRC)
+	  set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
+	endif(OPT_COMPAT_SRC)
+      endif(${var}_USABLE)
+    else(OPT_USABILITY)
+      if(OPT_DEFVAR)
+	add_definitions(-D${OPT_DEFVAR}=1)
+      else(OPT_DEFVAR)
+	add_definitions(-DHAVE_${var}=1)
+      endif(OPT_DEFVAR)
+    endif(OPT_USABILITY)
+  else(HAVE_${var})
+    if(OPT_NOFLAG)
+      add_definitions(-DNO_${var}=1)
+    endif(OPT_NOFLAG)
+    if(OPT_COMPAT_SRC)
+      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
+    endif(OPT_COMPAT_SRC)
+  endif(HAVE_${var})
+endfunction(TCL_CHECK_INCLUDE_FILE)
+
+
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
@@ -158,11 +204,64 @@ if(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)
 endif(APPLE)
 
+#--------------------------------------------------------------------
+# Header checks.
+#--------------------------------------------------------------------
+set(DIRENT_TEST_SRCS "
+#include <sys/types.h>
+#include <dirent.h>
+int main () {
+#ifndef _POSIX_SOURCE
+#   ifdef __Lynx__
+        /*
+         * Generate compilation error to make the test fail:  Lynx headers
+         * are only valid if really in the POSIX environment.
+         */
+
+        missing_procedure();
+#   endif
+#endif
+DIR *d;
+struct dirent *entryPtr;
+char *p;
+d = opendir(\"foobar\");
+entryPtr = readdir(d);
+p = entryPtr->d_name;
+closedir(d);
+return 0;
+}
+")
+set(LANG_TEST_SRCS "
+#include <langinfo.h>
+int main () {
+nl_langinfo(CODESET);
+return 0;
+}
+")
+TCL_CHECK_INCLUDE_FILE(AvailabilityMacros.h)
+TCL_CHECK_INCLUDE_FILE(copyfile.h)
+TCL_CHECK_INCLUDE_FILE(dirent.h USABILITY TEST_SRC "${DIRENT_TEST_SRCS}")
+TCL_CHECK_INCLUDE_FILE(dlfcn.h USABILITY)
+TCL_CHECK_INCLUDE_FILE(float.h USABILITY)
+TCL_CHECK_INCLUDE_FILE(langinfo.h USABILITY TEST_SRC "${LANG_TEST_SRCS}" DEFVAR HAVE_LANGINFO)
+TCL_CHECK_INCLUDE_FILE(limits.h USABILITY)
+TCL_CHECK_INCLUDE_FILE(net/errno.h)
+TCL_CHECK_INCLUDE_FILE(stdlib.h)
+TCL_CHECK_INCLUDE_FILE(string.h NOFLAG)
+TCL_CHECK_INCLUDE_FILE(sys/filio.h)
+TCL_CHECK_INCLUDE_FILE(sys/ioctl.h)
+TCL_CHECK_INCLUDE_FILE(sys/modem.h)
+TCL_CHECK_INCLUDE_FILE(sys/param.h USABILITY)
+TCL_CHECK_INCLUDE_FILE(sys/sdt.h)
+TCL_CHECK_INCLUDE_FILE(sys/time.h)
+TCL_CHECK_INCLUDE_FILE(sys/wait.h USABILITY)
+TCL_CHECK_INCLUDE_FILE(termios.h)
+TCL_CHECK_INCLUDE_FILE(values.h USABILITY)
+
+
 
 #--------------------------------------------------------------------
-# Supply substitutes for missing POSIX header files.
-#--------------------------------------------------------------------
-SC_MISSING_POSIX_HEADERS()
+include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 
 #------------------------------------------------------------------------
 # Check if the compiler understands -pipe.  If so, use it.
