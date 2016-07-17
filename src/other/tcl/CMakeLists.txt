@@ -163,6 +163,18 @@ if(PIPE_COMPILER_FLAG)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
 endif(PIPE_COMPILER_FLAG)
 
+#------------------------------------------------------------------------
+# Threads support
+#------------------------------------------------------------------------
+# Unless something really unusual is going on, we're going to want
+# support for threads.
+find_package(Threads)
+if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+  add_definitions(-DTCL_THREADS=1)
+  add_definitions(-DUSE_THREAD_ALLOC=1)
+  add_definitions(-D_REENTRANT=1)
+  add_definitions(-D_THREAD_SAFE=1)
+endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #--------------------------------------------------------------------
 # Header checks.
@@ -287,9 +299,9 @@ include(CMakeParseArguments)
 include(CheckFunctionExists)
 include(CheckCSourceCompiles)
 
-function(TCL_CHECK_FUNCTION_EXISTS fname)
-  cmake_parse_arguments(OPT "" "COMPAT_SRC;DEFVAR" "" ${ARGN})
-  string(TOUPPER "${var}" fname)
+function(Tcl_Check_Function_Exists fname)
+  cmake_parse_arguments(OPT "NO_FLAG" "COMPAT_SRC;DEFVAR" "" ${ARGN})
+  string(TOUPPER "${fname}" var)
   message("fvar: ${var}")
   CHECK_FUNCTION_EXISTS(${fname} HAVE_${var})
   if(HAVE_${var})
@@ -301,32 +313,66 @@ function(TCL_CHECK_FUNCTION_EXISTS fname)
       add_definitions(-DHAVE_${var}=1)
     endif(OPT_DEFVAR)
   else(HAVE_${var})
-    if(OPT_NOFLAG)
+    if(OPT_NO_FLAG)
       add_definitions(-DNO_${var}=1)
-    endif(OPT_NOFLAG)
+    endif(OPT_NO_FLAG)
     if(OPT_COMPAT_SRC)
       set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
     endif(OPT_COMPAT_SRC)
   endif(HAVE_${var})
-endfunction(TCL_CHECK_FUNCTION_EXISTS)
+endfunction(Tcl_Check_Function_Exists)
 
+Tcl_Check_Function_Exists(getcwd)
+if(NOT HAVE_GETCWD)
+  Tcl_Check_Function_Exists(getwd HAVE_GETWD)
+  if(NOT HAVE_GETWD)
+    add_definitions(-DNO_GETWD=1)
+  else(NOT HAVE_GETWD)
+    add_definitions(-DUSEGETWD=1)
+  endif(NOT HAVE_GETWD)
+endif(NOT HAVE_GETCWD)
 
+Tcl_Check_Function_Exists(hypot COMPAT_SRCS compat/hypot.c)
+Tcl_Check_Function_Exists(mkstemp COMPAT_SRCS compat/mkstemp.c)
+Tcl_Check_Function_Exists(opendir COMPAT_SRCS compat/opendir.c)
+Tcl_Check_Function_Exists(waitpid COMPAT_SRCS compat/waitpid.c)
+Tcl_Check_Function_Exists(wait3 NO_FLAG)
+Tcl_Check_Function_Exists(uname NO_FLAG)
+Tcl_Check_Function_Exists(realpath NO_FLAG)
+Tcl_Check_Function_Exists(fstatfs NO_FLAG)
 
+# Check for early Darwin version here - realpath
+# is not threadsafe prior to Darwin 7
+if(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND HAVE_REALPATH)
+  string(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
+  if(${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
+    message("realpath is not threadsafe in Darwin versions prior to 7, disabling")
+    set(HAVE_REALPATH)
+    remove_definitions(-DHAVE_REALPATH=1)
+    add_definitions(-DNO_REALPATH=1)
+  endif(${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
+endif(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND HAVE_REALPATH)
 
+Tcl_Check_Function_Exists(getaddrinfo HAVE_GETADDRINFO)
+if(HAVE_GETADDRINFO)
+  set(GETADDRINFO_SRC "
+#include <netdb.h>
+int main () {
+  const char *name, *port;
+  struct addrinfo *aiPtr, hints;
+  (void)getaddrinfo(name,port, &hints, &aiPtr);
+  (void)freeaddrinfo(aiPtr);
+  return 0;
+}
+")
+  CHECK_C_SOURCE_COMPILES("${GETADDRINFO_SRC}" WORKING_GETADDRINFO)
+  if(WORKING_GETADDRINFO)
+    add_definitions(-DHAVE_GETADDRINFO=1)
+  endif(WORKING_GETADDRINFO)
+endif(HAVE_GETADDRINFO)
 
 #--------------------------------------------------------------------
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
-
-#------------------------------------------------------------------------
-# Threads support
-#------------------------------------------------------------------------
-find_package(Threads)
-if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
-  add_definitions(-DTCL_THREADS=1)
-  add_definitions(-DUSE_THREAD_ALLOC=1)
-  add_definitions(-D_REENTRANT=1)
-  add_definitions(-D_THREAD_SAFE=1)
-endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #------------------------------------------------------------------------
 # Embedded configuration information, encoding to use for the values, TIP #59
@@ -444,63 +490,6 @@ ENDIF(NOT WIN32)
 #       Supply substitutes for missing POSIX library procedures, or
 #       set flags so Tcl uses alternate procedures.
 #--------------------------------------------------------------------
-TCL_CHECK_FUNCTION_EXISTS(getcwd HAVE_GETCWD)
-IF(NOT HAVE_GETCWD)
-  TCL_CHECK_FUNCTION_EXISTS(getwd HAVE_GETWD)
-  IF(NOT HAVE_GETWD)
-    add_definitions(-DNO_GETWD=1)
-  ELSE(NOT HAVE_GETWD)
-    add_definitions(-DUSEGETWD=1)
-  ENDIF(NOT HAVE_GETWD)
-ENDIF(NOT HAVE_GETCWD)
-TCL_CHECK_FUNCTION_EXISTS(hypot HAVE_HYPOT)
-IF(NOT HAVE_HYPOT)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/hypot.c)
-ENDIF()
-TCL_CHECK_FUNCTION_EXISTS(mkstemp HAVE_MKSTEMP)
-IF(NOT HAVE_MKSTEMP)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/mkstemp.c)
-ENDIF(NOT HAVE_MKSTEMP)
-TCL_CHECK_FUNCTION_EXISTS(opendir HAVE_OPENDIR)
-IF(NOT HAVE_OPENDIR)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/opendir.c)
-ENDIF(NOT HAVE_OPENDIR)
-TCL_CHECK_FUNCTION_EXISTS(strtol HAVE_STRTOL)
-IF(NOT HAVE_STRTOL)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/strtol.c)
-ENDIF(NOT HAVE_STRTOL)
-TCL_CHECK_FUNCTION_EXISTS(waitpid HAVE_WAITPID)
-IF(NOT HAVE_WAITPID)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/waitpid.c)
-ENDIF(NOT HAVE_WAITPID)
-CHECK_FUNCTION_EXISTS(strerror HAVE_STRERROR)
-IF(NOT HAVE_STRERROR)
-  add_definitions(-DNO_STRERROR=1)
-ENDIF(NOT HAVE_STRERROR)
-CHECK_FUNCTION_EXISTS(wait3 HAVE_WAIT3)
-IF(NOT HAVE_WAIT3)
-  add_definitions(-DNO_WAIT3=1)
-ENDIF(NOT HAVE_WAIT3)
-CHECK_FUNCTION_EXISTS(uname HAVE_UNAME)
-IF(NOT HAVE_UNAME)
-  add_definitions(-DNO_UNAME=1)
-ENDIF(NOT HAVE_UNAME)
-
-# Check for early Darwin version here - realpath
-# is not threadsafe prior to Darwin 7
-CHECK_FUNCTION_EXISTS(realpath HAVE_REALPATH)
-IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-  STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-  IF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-    MESSAGE("realpath is not threadsafe in Darwin versions prior to 7, disabling")
-    SET(HAVE_REALPATH)
-  ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} LESS 7)
-ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$" AND TCL_THREADS AND HAVE_REALPATH)
-IF(NOT HAVE_REALPATH)
-  add_definitions(-DNO_REALPATH=1)
-ENDIF(NOT HAVE_REALPATH)
-
-SC_TCL_IPV6()
 
 #-------------------------------------------------------------------- 
 #       Look for thread-safe variants of some library functions.
@@ -568,11 +557,6 @@ CHECK_TYPE_SIZE(blkcnt_t HAVE_BLKCNT_T)
 IF(HAVE_BLKCNT_T)
   add_definitions(-DHAVE_BLKCNT_T=1)
 ENDIF(HAVE_BLKCNT_T)
-TCL_CHECK_FUNCTION_EXISTS(fstatfs, HAVE_FSTATFS)
-IF(NOT HAVE_FSTATFS)
-  add_definitions(-DNO_FSTATFS=1)
-ENDIF(NOT HAVE_FSTATFS)
-
 #---------------------------------------------------------------------------
 # GNU manual lists AC_FUNC_MEMCMP as obsolete - just check for memcmp
 #---------------------------------------------------------------------------
@@ -610,27 +594,6 @@ TCL_CHECK_TYPE_SIZE(uintptr_t UINTPTR)
 IF(NOT HAVE_OPENDIR)
   add_definitions(-DUSE_DIRENT2_H=1)
 ENDIF(NOT HAVE_OPENDIR)
-
-# The union wait test was for HP-UX - do we still need this?
-SET(UNION_WAIT_SRC "
-#include <sys/types.h>
-#include <sys/wait.h>
-int
-main ()
-{
-
-union wait x;
-WIFEXITED(x);           /* Generates compiler error if WIFEXITED
-* uses an int. */
-return 0;
-}
-")
-if(NOT DEFINED HAVE_UNION_WAIT)
-  CHECK_C_SOURCE_RUNS("${UNION_WAIT_SRC}" HAVE_UNION_WAIT)
-endif(NOT DEFINED HAVE_UNION_WAIT)
-IF(NOT HAVE_UNION_WAIT)
-  add_definitions(-DNO_UNION_WAIT=1)
-ENDIF(NOT HAVE_UNION_WAIT)
 
 #----------------------------------------------------------------------------
 # Check for strncasecmp
