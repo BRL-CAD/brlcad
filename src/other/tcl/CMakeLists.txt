@@ -50,6 +50,7 @@ if(COMMAND CMAKE_POLICY)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
+
 # Set CMake project name
 project(TCL)
 
@@ -111,58 +112,6 @@ include("${TCL_CMAKE_DIR}/RPath_Setup.cmake")
 include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
 
 
-#-----------------------------------------------------------------------------
-# Tcl/Tk uses definition adds rather than a config.h file.  For convenience,
-# we define a few wrappers to accomidate the patterns:
-include(CMakeParseArguments)
-
-include(CheckIncludeFiles)
-function(TCL_CHECK_INCLUDE_FILE filename)
-  CMAKE_PARSE_ARGUMENTS(OPT "NOFLAG;USABILITY" "TEST_SRC;COMPAT_SRC;DEFVAR" "")
-  string(REPLACE "." "_" var "${filename}")
-  string(REPLACE "/" "_" var "${var}")
-  string(TOUPPER "${var}" var)
-  message("var: ${var}")
-  CHECK_INCLUDE_FILES(${filename} HAVE_${var})
-  if(HAVE_${var})
-    if(OPT_USABILITY)
-      # Usability test requested - we're not done yet.
-      if(OPT_TEST_SRC)
-	CHECK_C_SOURCE_COMPILES("${OPT_TEST_SRC}" ${var}_USABLE)
-      else(OPT_TEST_SRC)
-	CHECK_C_SOURCE_COMPILES("#include <${filename}>\nmain{};" ${var}_USABLE)
-      endif(OPT_TEST_SRC)
-      if(${var}_USABLE)
-	if(OPT_DEFVAR)
-	  add_definitions(-D${OPT_DEFVAR}=1)
-	else(OPT_DEFVAR)
-	  add_definitions(-DHAVE_${var}=1)
-	endif(OPT_DEFVAR)
-      else(${var}_USABLE)
-	add_definitions(-DNO_${var}=1)
-	if(OPT_COMPAT_SRC)
-	  set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
-	endif(OPT_COMPAT_SRC)
-      endif(${var}_USABLE)
-    else(OPT_USABILITY)
-      if(OPT_DEFVAR)
-	add_definitions(-D${OPT_DEFVAR}=1)
-      else(OPT_DEFVAR)
-	add_definitions(-DHAVE_${var}=1)
-      endif(OPT_DEFVAR)
-    endif(OPT_USABILITY)
-  else(HAVE_${var})
-    if(OPT_NOFLAG)
-      add_definitions(-DNO_${var}=1)
-    endif(OPT_NOFLAG)
-    if(OPT_COMPAT_SRC)
-      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
-    endif(OPT_COMPAT_SRC)
-  endif(HAVE_${var})
-endfunction(TCL_CHECK_INCLUDE_FILE)
-
-
-
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
 add_definitions(-DPACKAGE_NAME="tcl")
@@ -204,9 +153,71 @@ if(APPLE)
   add_definitions(-DMAC_OSX_TCL=1)
 endif(APPLE)
 
+#------------------------------------------------------------------------
+# Check if the compiler understands -pipe.  If so, use it.
+# It makes compiling go faster.  (This is only a performance feature.)
+#------------------------------------------------------------------------
+include(CheckCCompilerFlag)
+CHECK_C_COMPILER_FLAG(-pipe PIPE_COMPILER_FLAG)
+if(PIPE_COMPILER_FLAG)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
+endif(PIPE_COMPILER_FLAG)
+
+
 #--------------------------------------------------------------------
 # Header checks.
 #--------------------------------------------------------------------
+include(CMakeParseArguments)
+include(CheckIncludeFiles)
+include(CheckCSourceCompiles)
+
+function(Tcl_Check_Include_File filename)
+  cmake_parse_arguments(OPT "USABILITY" "TESTSRC;COMPATSRC;DEFVAR" "" ${ARGN})
+  string(REPLACE "." "_" var "${filename}")
+  string(REPLACE "/" "_" var "${var}")
+  string(TOUPPER "${var}" var)
+  message("var: ${var}")
+  CHECK_INCLUDE_FILES(${filename} HAVE_${var})
+  if(HAVE_${var})
+    if(OPT_USABILITY)
+      # Usability test requested - we're not done yet.
+      if(OPT_TESTSRC)
+	CHECK_C_SOURCE_COMPILES("${${OPT_TESTSRC}}" ${var}_USABLE)
+      else(OPT_TESTSRC)
+	CHECK_C_SOURCE_COMPILES("#include <${filename}>\nint main() {return 0;}" ${var}_USABLE)
+      endif(OPT_TESTSRC)
+      if(${var}_USABLE)
+	if(OPT_DEFVAR)
+	  set(${OPT_DEFVAR} 1 PARENT_SCOPE)
+	  add_definitions(-D${OPT_DEFVAR}=1)
+	else(OPT_DEFVAR)
+	  set(HAVE_${var} 1 PARENT_SCOPE)
+	  add_definitions(-DHAVE_${var}=1)
+	endif(OPT_DEFVAR)
+      else(${var}_USABLE)
+	add_definitions(-DNO_${var}=1)
+	if(OPT_COMPAT_SRC)
+	  set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
+	endif(OPT_COMPAT_SRC)
+      endif(${var}_USABLE)
+    else(OPT_USABILITY)
+      if(OPT_DEFVAR)
+	set(${OPT_DEFVAR} 1 PARENT_SCOPE)
+	add_definitions(-D${OPT_DEFVAR}=1)
+      else(OPT_DEFVAR)
+	set(HAVE_${var} 1 PARENT_SCOPE)
+	add_definitions(-DHAVE_${var}=1)
+      endif(OPT_DEFVAR)
+    endif(OPT_USABILITY)
+  else(HAVE_${var})
+    if(OPT_COMPATSRC)
+      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPATSRC} PARENT_SCOPE)
+    endif(OPT_COMPATSRC)
+  endif(HAVE_${var})
+endfunction(Tcl_Check_Include_File)
+
+
+
 set(DIRENT_TEST_SRCS "
 #include <sys/types.h>
 #include <dirent.h>
@@ -238,25 +249,81 @@ nl_langinfo(CODESET);
 return 0;
 }
 ")
-TCL_CHECK_INCLUDE_FILE(AvailabilityMacros.h)
-TCL_CHECK_INCLUDE_FILE(copyfile.h)
-TCL_CHECK_INCLUDE_FILE(dirent.h USABILITY TEST_SRC "${DIRENT_TEST_SRCS}")
-TCL_CHECK_INCLUDE_FILE(dlfcn.h USABILITY)
-TCL_CHECK_INCLUDE_FILE(float.h USABILITY)
-TCL_CHECK_INCLUDE_FILE(langinfo.h USABILITY TEST_SRC "${LANG_TEST_SRCS}" DEFVAR HAVE_LANGINFO)
-TCL_CHECK_INCLUDE_FILE(limits.h USABILITY)
-TCL_CHECK_INCLUDE_FILE(net/errno.h)
-TCL_CHECK_INCLUDE_FILE(stdlib.h)
-TCL_CHECK_INCLUDE_FILE(string.h NOFLAG)
-TCL_CHECK_INCLUDE_FILE(sys/filio.h)
-TCL_CHECK_INCLUDE_FILE(sys/ioctl.h)
-TCL_CHECK_INCLUDE_FILE(sys/modem.h)
-TCL_CHECK_INCLUDE_FILE(sys/param.h USABILITY)
-TCL_CHECK_INCLUDE_FILE(sys/sdt.h)
-TCL_CHECK_INCLUDE_FILE(sys/time.h)
-TCL_CHECK_INCLUDE_FILE(sys/wait.h USABILITY)
-TCL_CHECK_INCLUDE_FILE(termios.h)
-TCL_CHECK_INCLUDE_FILE(values.h USABILITY)
+# Check for strtol, strtoul and strtod in stdlib.h
+# before accepting it.
+set(STDLIB_TEST_SRCS "
+#include <stdlib.h>
+int main () {
+long l = strtol(\"123\", NULL, 10);
+unsigned long ul = strtoul(\"123\", NULL, 10);
+double d = strtod(\"123.456\", NULL);
+return 0;
+}
+")
+# Check for strstr and strerror in string.h
+# before accepting it.
+set(STRING_TEST_SRCS "
+asdfas
+#include <string.h>
+int main () {
+char *str = \"test0 test1 test2\";
+char *ss = strstr(str,\"test1\");
+char *es = strerror(1);
+return 0;
+}
+")
+Tcl_Check_Include_File(AvailabilityMacros.h)
+Tcl_Check_Include_File(copyfile.h)
+Tcl_Check_Include_File(dirent.h USABILITY TESTSRC DIRENT_TEST_SRCS)
+Tcl_Check_Include_File(dlfcn.h USABILITY)
+Tcl_Check_Include_File(float.h USABILITY)
+Tcl_Check_Include_File(langinfo.h USABILITY TESTSRC LANG_TEST_SRCS DEFVAR HAVE_LANGINFO)
+Tcl_Check_Include_File(limits.h USABILITY)
+Tcl_Check_Include_File(net/errno.h)
+Tcl_Check_Include_File(stdlib.h USABILITY TESTSRC STDLIB_TEST_SRCS)
+Tcl_Check_Include_File(string.h USABILITY TESTSRC STRING_TEST_SRCS)
+Tcl_Check_Include_File(sys/filio.h)
+Tcl_Check_Include_File(sys/ioctl.h)
+Tcl_Check_Include_File(sys/modem.h)
+Tcl_Check_Include_File(sys/param.h USABILITY)
+Tcl_Check_Include_File(sys/sdt.h)
+Tcl_Check_Include_File(sys/time.h)
+Tcl_Check_Include_File(sys/wait.h USABILITY)
+Tcl_Check_Include_File(termios.h)
+Tcl_Check_Include_File(values.h USABILITY)
+
+
+#--------------------------------------------------------------------
+# Function checks.
+#--------------------------------------------------------------------
+include(CMakeParseArguments)
+include(CheckFunctionExists)
+include(CheckCSourceCompiles)
+
+function(TCL_CHECK_FUNCTION_EXISTS fname)
+  cmake_parse_arguments(OPT "" "COMPAT_SRC;DEFVAR" "" ${ARGN})
+  string(TOUPPER "${var}" fname)
+  message("fvar: ${var}")
+  CHECK_FUNCTION_EXISTS(${fname} HAVE_${var})
+  if(HAVE_${var})
+    if(OPT_DEFVAR)
+      set(${OPT_DEFVAR} 1 PARENT_SCOPE)
+      add_definitions(-D${OPT_DEFVAR}=1)
+    else(OPT_DEFVAR)
+      set(HAVE_${var} 1 PARENT_SCOPE)
+      add_definitions(-DHAVE_${var}=1)
+    endif(OPT_DEFVAR)
+  else(HAVE_${var})
+    if(OPT_NOFLAG)
+      add_definitions(-DNO_${var}=1)
+    endif(OPT_NOFLAG)
+    if(OPT_COMPAT_SRC)
+      set(COMPAT_SRCS "${COMPAT_SRCS}" ${OPT_COMPAT_SRC} PARENT_SCOPE)
+    endif(OPT_COMPAT_SRC)
+  endif(HAVE_${var})
+endfunction(TCL_CHECK_FUNCTION_EXISTS)
+
+
 
 
 
@@ -264,19 +331,16 @@ TCL_CHECK_INCLUDE_FILE(values.h USABILITY)
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 
 #------------------------------------------------------------------------
-# Check if the compiler understands -pipe.  If so, use it.
-# It makes compiling go faster.  (This is only a performance feature.)
-#------------------------------------------------------------------------
-INCLUDE(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-pipe PIPE_COMPILER_FLAG)
-IF(PIPE_COMPILER_FLAG)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
-ENDIF(PIPE_COMPILER_FLAG)
-
-#------------------------------------------------------------------------
 # Threads support
 #------------------------------------------------------------------------
-SC_ENABLE_THREADS()
+find_package(Threads)
+if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+  add_definitions(-DTCL_THREADS=1)
+  add_definitions(-DUSE_THREAD_ALLOC=1)
+  add_definitions(-D_REENTRANT=1)
+  add_definitions(-D_THREAD_SAFE=1)
+
+endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #------------------------------------------------------------------------
 # Embedded configuration information, encoding to use for the values, TIP #59
