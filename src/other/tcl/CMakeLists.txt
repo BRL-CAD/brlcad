@@ -129,6 +129,9 @@ add_definitions(-DSTDC_HEADERS=1)
 # Get the SHLIB extension from CMake
 add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
 
+# Tom's Math Library is always enabled...
+add_definitions(-DTCL_TOMMATH=1)
+add_definitions(-DMP_PREC=4)
 
 #----------------------------------------------------------------------------
 # Define some platform specific flags - ideally we'd configure test for all
@@ -341,6 +344,7 @@ Tcl_Check_Function_Exists(hypot COMPAT_SRCS compat/hypot.c)
 Tcl_Check_Function_Exists(mkstemp COMPAT_SRCS compat/mkstemp.c)
 Tcl_Check_Function_Exists(opendir COMPAT_SRCS compat/opendir.c)
 Tcl_Check_Function_Exists(waitpid COMPAT_SRCS compat/waitpid.c)
+Tcl_Check_Function_Exists(memcmp COMPAT_SRCS compat/memcmp.c)
 Tcl_Check_Function_Exists(wait3 NO_FLAG)
 Tcl_Check_Function_Exists(uname NO_FLAG)
 Tcl_Check_Function_Exists(realpath NO_FLAG)
@@ -385,6 +389,41 @@ int main () {
 endif(HAVE_GETADDRINFO)
 
 #--------------------------------------------------------------------
+# Library checks.
+#--------------------------------------------------------------------
+include(CMakeParseArguments)
+include(CheckLibraryExists)
+include(CheckCSourceCompiles)
+
+# Note: Do we ever NOT need CoreFoundation on OSX?
+if(APPLE)
+  include(CMakeFindFrameworks)
+  CMAKE_FIND_FRAMEWORKS(CoreFoundation)
+  if(CoreFoundation_FRAMEWORKS)
+    set(CoreFoundation_LIBRARIES "-framework CoreFoundation")
+    add_definitions(-DHAVE_COREFOUNDATION=1)
+  endif(CoreFoundation_FRAMEWORKS)
+endif(APPLE)
+
+# We're going to have zlib one way or the other - always define
+# HAVE_ZLIB to be on.
+find_package(ZLIB)
+add_definitions(-DHAVE_ZLIB=1)
+
+# Need dynamic loading and unloading... always on until we find
+# a case where we need to disable it.
+CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_DL_LIBRARY)
+if(HAVE_DL_LIBRARY)
+  set(DL_LIBRARY "dl")
+endif(HAVE_DL_LIBRARY)
+add_definitions(-DTCL_UNLOAD_DLLS=1)
+
+# Add the Threading library
+SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
+# Same for the math library
+SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
+
+#--------------------------------------------------------------------
 include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 
 
@@ -392,59 +431,6 @@ include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 # Look for libraries that we will need when compiling the Tcl shell
 #--------------------------------------------------------------------
 SC_TCL_LINK_LIBS()
-
-# Add the Threading library, if we're using it
-SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-
-# Same for the math library
-SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
-
-#--------------------------------------------------------------------
-# Handle zlib
-#--------------------------------------------------------------------
-find_package(ZLIB)
-# We're going to have zlib one way or the other,
-add_definitions(-DHAVE_ZLIB=1)
-
-# TODO - look over SC_ENABLE_SHARED, SC_CONFIG_CFLAGS and SC_ENABLE_SYMBOLS
-# need to decide how much of that logic is needed.  Clearly we need SOME
-# of it.
-
-# Load and Unload
-OPTION(TCL_ENABLE_LOAD "Enable dynamic loading" ON)
-IF(TCL_ENABLE_LOAD)
-  CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_DL_LIBRARY)
-  IF(HAVE_DL_LIBRARY)
-    set(DL_LIBRARY "dl")
-  ENDIF(HAVE_DL_LIBRARY)
-ENDIF(TCL_ENABLE_LOAD)
-
-OPTION(TCL_ENABLE_DLL_UNLOADING "Allow unloading of shared libraries" ON)
-IF(TCL_ENABLE_DLL_UNLOADING)
-  add_definitions(-DTCL_UNLOAD_DLLS=1)
-ENDIF(TCL_ENABLE_DLL_UNLOADING)
-
-# CoreFoundation check.  TODO - check for 64-bit stuff at some point
-IF(APPLE)
-  OPTION(TCL_ENABLE_COREFOUNDATION "Use CoreFoundation" ON)
-  IF(TCL_ENABLE_COREFOUNDATION)
-    INCLUDE(CMakeFindFrameworks)
-    CMAKE_FIND_FRAMEWORKS(CoreFoundation)
-    IF(CoreFoundation_FRAMEWORKS)
-      SET(CoreFoundation_LIBRARIES "-framework CoreFoundation")
-      add_definitions(-DHAVE_COREFOUNDATION=1)
-    ENDIF(CoreFoundation_FRAMEWORKS)
-  ENDIF(TCL_ENABLE_COREFOUNDATION)
-ENDIF(APPLE)
-
-#----------------------------------------------------------------------------
-# Tom's math library - should MP_PREC be an option?
-#----------------------------------------------------------------------------
-OPTION(TCL_TOMMATH "Enable Tom's Math Library" ON)
-IF(TCL_TOMMATH)
-  add_definitions(-DTCL_TOMMATH=1)
-  add_definitions(-DMP_PREC=4)
-ENDIF(TCL_TOMMATH)
 
 #----------------------------------------------------------------------------
 # 64-bit support - unlike TEA, we enable by default if the platform looks
@@ -495,11 +481,6 @@ IF(NOT WIN32)
   ENDIF(WORDS_BIGENDIAN)
 ENDIF(NOT WIN32)
 
-#--------------------------------------------------------------------
-#       Supply substitutes for missing POSIX library procedures, or
-#       set flags so Tcl uses alternate procedures.
-#--------------------------------------------------------------------
-
 #-------------------------------------------------------------------- 
 #       Look for thread-safe variants of some library functions.
 #--------------------------------------------------------------------
@@ -530,14 +511,6 @@ IF(TCL_THREADS)
     ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
   ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
-  IF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-    STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-    IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-      add_definitions(-DHAVE_MTSAFE_GETHOSTBYNAME=1)
-      add_definitions(-DHAVE_MTSAFE_GETHOSTBYADDR=1)
-    ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 10)
-  ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^HP-UX$")
-
 ENDIF(TCL_THREADS)
 
 #---------------------------------------------------------------------------
@@ -559,13 +532,6 @@ CHECK_TYPE_SIZE(blkcnt_t HAVE_BLKCNT_T)
 IF(HAVE_BLKCNT_T)
   add_definitions(-DHAVE_BLKCNT_T=1)
 ENDIF(HAVE_BLKCNT_T)
-#---------------------------------------------------------------------------
-# GNU manual lists AC_FUNC_MEMCMP as obsolete - just check for memcmp
-#---------------------------------------------------------------------------
-TCL_CHECK_FUNCTION_EXISTS(memcmp HAVE_MEMCMP)
-IF(NOT HAVE_MEMCMP)
-  SET(COMPAT_SRCS ${COMPAT_SRCS} compat/memcmp.c)
-ENDIF(NOT HAVE_MEMCMP)
 
 #---------------------------------------------------------------------------
 # Check for memmove
@@ -631,12 +597,10 @@ ENDIF(NOT IS_GETTOD_DECLARED)
 # http://lists.gnu.org/archive/html/autoconf/2008-06/msg00054.html
 #----------------------------------------------------------------------------
 SET(unsigned_char_srcs "
-int
-main ()
-{
-static int test_array [1 - 2 * !(((char) -1) < 0)];
-test_array [0] = 0;
-return 0;
+int main () {
+  static int test_array [1 - 2 * !(((char) -1) < 0)];
+  test_array [0] = 0;
+  return 0;
 }
 ")
 if(NOT DEFINED CHAR_IS_UNSIGNED)
@@ -646,12 +610,10 @@ IF(CHAR_IS_UNSIGNED)
   add_definitions(-D__CHAR_UNSIGNED__)
 ENDIF(CHAR_IS_UNSIGNED)
 SET(signed_char_srcs "
-int
-main ()
-{
-signed char *p;
-p = 0;
-return 0;
+int main () {
+  signed char *p;
+  p = 0;
+  return 0;
 }
 ")
 CHECK_C_SOURCE_COMPILES("${signed_char_srcs}" HAVE_SIGNED_CHAR)
@@ -789,14 +751,8 @@ ENDIF(${TCL_TIMEZONE_DATA} STREQUAL "AUTO")
 #  Does the C stack grow upwards or downwards? Or cross-compiling?
 #--------------------------------------------------------------------
 SET(C_STACK_SRC "
-int StackGrowsUp(int *parent) {
-int here;
-return (&here < parent);
-}
-int main (int argc, char *argv[]) {
-int foo;
-return StackGrowsUp(&foo);
-}
+int StackGrowsUp(int *parent) { int here; return (&here < parent); }
+int main (int argc, char *argv[]) { int foo; return StackGrowsUp(&foo); }
 ")
 if(NOT DEFINED STACK_GROWS_UP)
   CHECK_C_SOURCE_RUNS("${C_STACK_SRC}" STACK_GROWS_UP)
@@ -902,6 +858,7 @@ SET(TCL_GENERIC_SRCS
   generic/tclThreadJoin.c
   generic/tclThreadStorage.c
   generic/tclTimer.c
+  generic/tclTomMathInterface.c
   generic/tclTrace.c
   generic/tclUtf.c
   generic/tclUtil.c
