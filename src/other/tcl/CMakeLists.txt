@@ -178,12 +178,30 @@ endif(PIPE_COMPILER_FLAG)
 #------------------------------------------------------------------------
 # Unless something really unusual is going on, we're going to want
 # support for threads.
+include(CheckFunctionExists)
+function(check_extra_pthread_funcs)
+  set(CMAKE_REQUIRED_LIBRARIES ${CMAKE_THREAD_LIBS_INIT})
+  check_function_exists(pthread_mutex_init HAVE_PTHREAD_MUTEX_INIT)
+  if(HAVE_PTHREAD_MUTEX_INIT)
+    add_definitions(-DHAVE_PTHREAD_MUTEX_INIT=1)
+  endif(HAVE_PTHREAD_MUTEX_INIT)
+  check_function_exists(pthread_attr_setstacksize HAVE_PTHREAD_ATTR_SETSTACKSIZE)
+  if(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
+    add_definitions(-DHAVE_PTHREAD_ATTR_SETSTACKSIZE=1)
+  endif(HAVE_PTHREAD_ATTR_SETSTACKSIZE)
+  check_function_exists(pthread_atfork HAVE_PTHREAD_ATFORK)
+  if(HAVE_PTHREAD_ATFORK)
+    add_definitions(-DHAVE_PTHREAD_ATFORK=1)
+  endif(HAVE_PTHREAD_ATFORK)
+endfunction(check_extra_pthread_funcs)
+
 find_package(Threads)
 if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
   add_definitions(-DTCL_THREADS=1)
   add_definitions(-DUSE_THREAD_ALLOC=1)
   add_definitions(-D_REENTRANT=1)
   add_definitions(-D_THREAD_SAFE=1)
+  check_extra_pthread_funcs()
 endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #--------------------------------------------------------------------
@@ -349,9 +367,6 @@ Tcl_Check_Function_Exists(wait3 NO_FLAG)
 Tcl_Check_Function_Exists(uname NO_FLAG)
 Tcl_Check_Function_Exists(realpath NO_FLAG)
 Tcl_Check_Function_Exists(fstatfs NO_FLAG)
-Tcl_Check_Function_Exists(pthread_attr_setstacksize)
-Tcl_Check_Function_Exists(pthread_attr_get_np)
-Tcl_Check_Function_Exists(pthread_getattr_np)
 if(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
   Tcl_Check_Function_Exists(pthread_get_stacksize_np)
 endif(NOT HAVE_PTHREAD_ATTR_GET_NP AND NOT HAVE_PTHREAD_GETATTR_NP)
@@ -652,7 +667,6 @@ IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
   IF(${CoreFoundation_LIBRARIES})
     TCL_CHECK_INCLUDE_FILE(libkern/OSAtomic.h HAVE_LIBKERN_OSATOMIC_H)
     TCL_CHECK_FUNCTION_EXISTS(OSSpinLockLock HAVE_OSSPINLOCKLOCK)
-    TCL_CHECK_FUNCTION_EXISTS(pthread_atfork HAVE_PTHREAD_ATFORK)
   ENDIF(${CoreFoundation_LIBRARIES})
   add_definitions(-DUSE_VFORK=1)
   add_definitions(-DTCL_DEFAULT_ENCODING="utf-8")
@@ -1046,25 +1060,7 @@ SET(TCL_DL_SRCS
   unix/tclLoadShl.c
   )
 
-IF(NOT ZLIB_FOUND)
-  SET(TCL_ZLIB_SRCS
-    compat/zlib/adler32.c 
-    compat/zlib/compress.c 
-    compat/zlib/crc32.c 
-    compat/zlib/deflate.c 
-    compat/zlib/infback.c 
-    compat/zlib/inffast.c 
-    compat/zlib/inflate.c 
-    compat/zlib/inftrees.c 
-    compat/zlib/trees.c 
-    compat/zlib/uncompr.c 
-    compat/zlib/zutil.c
-    )
-  SET(ZLIB_LIBRARY "")
-  SET(ZLIB_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/compat/zlib)
-ENDIF(NOT ZLIB_FOUND)
-
-SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_OO_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS} ${TCL_ZLIB_SRCS}) 
+SET(TCL_SRCS ${TCL_GENERIC_SRCS} ${TCL_OO_SRCS} ${TCL_TOMMATH_SRCS} ${TCL_STUB_SRCS})
 IF(WIN32)
   SET(TCL_SRCS ${TCL_SRCS} ${TCL_WIN_SRCS})
 ELSE(WIN32)
@@ -1101,7 +1097,7 @@ ENDIF(MINGW)
 
 add_library(tcl ${TCL_SRCS})
 target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
-install(TARGETS tcl 
+install(TARGETS tcl
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
   ARCHIVE DESTINATION ${LIB_DIR})
