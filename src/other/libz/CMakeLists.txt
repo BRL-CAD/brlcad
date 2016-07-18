@@ -17,9 +17,6 @@ if(NOT DEFINED BUILD_STATIC_LIBS)
     option(BUILD_STATIC_LIBS "Build a static library form of zlib" ON)
 endif(NOT DEFINED BUILD_STATIC_LIBS)
 
-option(ASM686 "Enable building i686 assembly implementation")
-option(AMD64 "Enable building amd64 assembly implementation")
-
 if(NOT DEFINED BIN_DIR)
 	set(BIN_DIR bin)
 endif(NOT DEFINED BIN_DIR)
@@ -134,45 +131,6 @@ set(ZLIB_SRCS
     zutil.c
 )
 
-if(NOT MINGW)
-    set(ZLIB_DLL_SRCS
-        win32/zlib1.rc # If present will override custom build rule below.
-    )
-endif()
-
-if(CMAKE_COMPILER_IS_GNUCC)
-    if(ASM686)
-        set(ZLIB_ASMS contrib/asm686/match.S)
-    elseif (AMD64)
-        set(ZLIB_ASMS contrib/amd64/amd64-match.S)
-    endif ()
-
-	if(ZLIB_ASMS)
-		add_definitions(-DASMV)
-		set_source_files_properties(${ZLIB_ASMS} PROPERTIES LANGUAGE C COMPILE_FLAGS -DNO_UNDERLINE)
-	endif()
-endif()
-
-if(MSVC)
-    if(ASM686)
-		ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-			contrib/masmx86/inffas32.asm
-			contrib/masmx86/match686.asm
-		)
-    elseif (AMD64)
-		ENABLE_LANGUAGE(ASM_MASM)
-        set(ZLIB_ASMS
-			contrib/masmx64/gvmat64.asm
-			contrib/masmx64/inffasx64.asm
-		)
-    endif()
-
-	if(ZLIB_ASMS)
-		add_definitions(-DASMV -DASMINF)
-	endif()
-endif()
-
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
 string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
@@ -250,24 +208,3 @@ if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
 	install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION ${INCLUDE_DIR})
 endif()
 
-#============================================================================
-# Example binaries
-#============================================================================
-
-add_executable(example test/example.c)
-target_link_libraries(example zlib)
-add_test(example example)
-
-add_executable(minigzip test/minigzip.c)
-target_link_libraries(minigzip zlib)
-
-if(HAVE_OFF64_T)
-    add_executable(example64 test/example.c)
-    target_link_libraries(example64 zlib)
-    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-    add_test(example64 example64)
-
-    add_executable(minigzip64 test/minigzip.c)
-    target_link_libraries(minigzip64 zlib)
-    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-endif()
