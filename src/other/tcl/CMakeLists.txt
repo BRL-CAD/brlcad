@@ -114,11 +114,6 @@ include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
-add_definitions(-DPACKAGE_NAME="tcl")
-add_definitions(-DPACKAGE_TARNAME="tcl")
-add_definitions(-DPACKAGE_VERSION="${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
-add_definitions(-DPACKAGE_STRING="tcl ${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}")
-add_definitions(-DPACKAGE_BUGREPORT="")
 
 # We're building Tcl
 add_definitions(-DBUILD_tcl)
