@@ -310,7 +310,6 @@ Tcl_Check_Include_File(stdlib.h)
 Tcl_Check_Include_File(string.h)
 Tcl_Check_Include_File(strings.h)
 Tcl_Check_Include_File(sys/filio.h)
-Tcl_Check_Include_File(sys/fstatfs.h)
 Tcl_Check_Include_File(sys/ioctl.h)
 Tcl_Check_Include_File(sys/modem.h)
 Tcl_Check_Include_File(sys/param.h USE)
@@ -322,10 +321,6 @@ Tcl_Check_Include_File(sys/wait.h USE)
 Tcl_Check_Include_File(termios.h)
 Tcl_Check_Include_File(unistd.h COMPAT_SRC compat/unistd.h)
 Tcl_Check_Include_File(values.h USE)
-
-if(NOT HAVE_SYS_FSTATFS_H)
-  add_definitions(-DNO_FSTATFS=1)
-endif(NOT HAVE_SYS_FSTATFS_H)
 
 #--------------------------------------------------------------------
 # Function checks.
