@@ -136,13 +136,13 @@ add_definitions(-DMP_PREC=4)
 if(MSVC)
   add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -MD)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
-  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  add_definitions(-Dinline=__inline)
 endif(MSVC)
 
 if(MINGW)
   add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP)
   add_definitions(-DTCL_PIPE_DLL="tclpip${TCL_VERSION_MAJOR}${TCL_VERSION_MINOR}.dll")
-  add_definitions(-Dinline=__inline -DBUILD_tcl)
+  add_definitions(-Dinline=__inline)
   remove_definitions(-w)
   add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
 endif(MINGW)
@@ -159,14 +159,19 @@ else(WIN32)
 endif(WIN32)
 
 #------------------------------------------------------------------------
+# Test compiler flags
+#------------------------------------------------------------------------
+
 # Check if the compiler understands -pipe.  If so, use it.
 # It makes compiling go faster.  (This is only a performance feature.)
-#------------------------------------------------------------------------
 include(CheckCCompilerFlag)
 check_c_compiler_flag(-pipe PIPE_COMPILER_FLAG)
 if(PIPE_COMPILER_FLAG)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
 endif(PIPE_COMPILER_FLAG)
+
+# Position independent code
+check_c_compiler_flag(-fPIC FPIC_COMPILER_FLAG)
 
 #------------------------------------------------------------------------
 # Threads support
@@ -1113,7 +1118,6 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
 target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${ZLIB_LIBRARY})
-CHECK_C_COMPILER_FLAG(-fPIC FPIC_COMPILER_FLAG)
 if(FPIC_COMPILER_FLAG)
   set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(FPIC_COMPILER_FLAG)
