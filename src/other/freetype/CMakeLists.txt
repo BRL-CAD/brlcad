@@ -80,46 +80,7 @@ cmake_minimum_required(VERSION 2.6)
 
 include(CheckIncludeFile)
 
-
-# CMAKE_TOOLCHAIN_FILE must be set before `project' is called, which
-# configures the base build environment and references the toolchain file
-if (APPLE)
-  if (DEFINED IOS_PLATFORM)
-    if (NOT "${IOS_PLATFORM}" STREQUAL "OS"
-        AND NOT "${IOS_PLATFORM}" STREQUAL "SIMULATOR")
-      message(FATAL_ERROR
-        "IOS_PLATFORM must be set to either OS or SIMULATOR")
-    endif ()
-    if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
-      message(AUTHOR_WARNING
-        "You should use Xcode generator with IOS_PLATFORM enabled to get Universal builds.")
-    endif ()
-    if (BUILD_SHARED_LIBS)
-      message(FATAL_ERROR
-        "BUILD_SHARED_LIBS can not be on with IOS_PLATFORM enabled")
-    endif ()
-    if (BUILD_FRAMEWORK)
-      message(FATAL_ERROR
-        "BUILD_FRAMEWORK can not be on with IOS_PLATFORM enabled")
-    endif ()
-
-    # iOS only uses static libraries
-    set(BUILD_SHARED_LIBS OFF)
-
-    set(CMAKE_TOOLCHAIN_FILE
-      ${CMAKE_SOURCE_DIR}/builds/cmake/iOS.cmake)
-  endif ()
-else ()
-  if (DEFINED IOS_PLATFORM)
-    message(FATAL_ERROR "IOS_PLATFORM is not supported on this platform")
-  endif ()
-endif ()
-
-
 project(freetype)
-
-# Add local cmake modules
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR}/builds/cmake)
 
 if (BUILD_FRAMEWORK)
   if (NOT "${CMAKE_GENERATOR}" STREQUAL "Xcode")
@@ -147,7 +108,7 @@ add_definitions(-DFT2_BUILD_LIBRARY)
 
 
 # Find dependencies
-foreach (d ZLIB PNG HarfBuzz)
+foreach (d ZLIB PNG) #Removed: BZip2 HarfBuzz
   string(TOUPPER "${d}" D)
 
   if (DEFINED WITH_${d} OR DEFINED WITH_${D})
@@ -159,7 +120,9 @@ foreach (d ZLIB PNG HarfBuzz)
   endif ()
 
   if (${d}_FOUND OR ${D}_FOUND)
-    message(STATUS "Building with ${d}")
+	  if(NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype/config)
+		  message(STATUS "Building with ${d}")
+	  endif(NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype/config)
   endif ()
 endforeach ()
 
@@ -213,8 +176,9 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different
 
 
 # Create the options file
-message(STATUS
-  "Creating file ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h")
+if(NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h)
+	message(STATUS "Creating file ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h")
+endif(NOT EXISTS ${PROJECT_BINARY_DIR}/include/freetype/config/ftoption.h)
 
 file(READ "${PROJECT_SOURCE_DIR}/include/freetype/config/ftoption.h"
   FTOPTION_H)
