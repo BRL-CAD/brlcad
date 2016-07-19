@@ -123,6 +123,7 @@ SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
 # FreeType Libraries
+set(FREETYPE_NO_DIST 1)
 set(freetype_ALIASES ENABLE_FREETYPE)
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
@@ -147,8 +148,10 @@ if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h-new")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h-new")
 mark_as_advanced(FREETYPE_INCLUDE_DIRS)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
@@ -158,9 +161,6 @@ mark_as_advanced(FREETYPE_LIBRARIES)
 # The incrtTcl subdirectory isn't directly referenced, but its
 # subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)
-
-# Ignore the osl subdir
-CMAKEFILES(osl)
 
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
@@ -248,11 +248,8 @@ AUTO.
 # once we know what PNG_LIB_NAME is.
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${png_ALIASES})
 if(BRLCAD_PNG_BUILD)
-  # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
-  # scoping of CMake variables - use get_directory_property to recover
-  # the value (which is later put in the CACHE)
 
-  get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
+  set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -299,6 +296,7 @@ mark_as_advanced(uname_executable)
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIR here.
 
+set(UTAHRLE_HAVE_COMMON_H 1)
 set(utahrle_ALIASES ENABLE_UTAHRLE)
 set(utahrle_DESCRIPTION "
 Option for enabling and disabling compilation of the Utah Raster
@@ -741,6 +739,26 @@ if(BRLCAD_SPR_BUILD)
   SetTargetFolder(libSPR-static "Third Party Libraries")
 endif(BRLCAD_SPR_BUILD)
 
+if(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+#=== LIBBSON ==================================================
+# Libbson needed for binary attributes, always use this local version
+set(libbson_ALIASES ENABLE_BSON)
+set(libbson_DESCRIPTION "
+Option for enabling and disabling compilation of the Libbson library
+provided with BRL-CAD's source code.  Default is BUNDLED, using
+the included other/src version.
+")
+THIRD_PARTY(libbson BSON Libbson libbson_DESCRIPTION ALIASES
+  ${libbson_ALIASES} FLAGS NOSYS UNDOCUMENTED)
+if(BRLCAD_BSON_BUILD)
+  SetTargetFolder(libBSON "Third Party Libraries")
+  SetTargetFolder(libBSON-static "Third Party Libraries")
+endif(BRLCAD_BSON_BUILD)
+#=== END LIBBSON ==================================================
+else(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+  CMAKEFILES(libbson)
+endif(BRLCAD_ENABLE_BINARY_ATTRIBUTES)
+
 # STEPcode
 # Need Lemon/Perplex to build STEP - conditionalize
 
@@ -807,6 +825,25 @@ SetTargetFolder(stepdai "Third Party Libraries")
 SetTargetFolder(stepeditor "Third Party Libraries")
 SetTargetFolder(steputils "Third Party Libraries")
 SetTargetFolder(version_string "Compilation Utilities")
+
+if(BRLCAD_ENABLE_GECODE)
+  set(gecode_ALIASES ENABLE_GECODE)
+  set(gecode_DESCRIPTION "
+  Option for enabling and disabling compilation of the Gecode Constraint
+  Solving Libraries provided with BRL-CAD's source code.  Default is AUTO,
+  responsive to the toplevel BRLCAD_BUNDLED_LIBS option and testing
+  first for a system version if BRLCAD_BUNDLED_LIBS is also AUTO.
+  ")
+  set(GECODE_USE_QT OFF)
+  mark_as_advanced(GECODE_USE_QT)
+  THIRD_PARTY(gecode GECODE gecode gecode_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL3 ALIASES ${gecode_ALIASES})
+  if(BRLCAD_GECODE_BUILD)
+    set(GECODE_LIBRARIES gecodesupport gecodekernel gecodesearch gecodeint
+      gecodeset gecodefloat gecodeminimodel gecodedriver gecodeflatzinc)
+    set(GECODE_LIBRARIES "${GECODE_LIBRARIES}"  CACHE STRING "Gecode libraries in BRL-CAD" FORCE)
+    set(GECODE_INCLUDE_DIR "${BRLCAD_BINARY_DIR}/src/other/gecode;${BRLCAD_SOURCE_DIR}/src/other/gecode"  CACHE STRING "Gecode headers in BRL-CAD" FORCE)
+  endif(BRLCAD_GECODE_BUILD)
+endif(BRLCAD_ENABLE_GECODE)
 
 # Clipper polygon clipping library - for now, we're going to use our copy
 if(BRLCAD_LEVEL2)

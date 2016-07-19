@@ -49,6 +49,7 @@ include(CMakeParseArguments)
 #             [RESET_VARS var1 var2 ...]
 #             [ALIASES alias1 alias2 ...]
 #             [FLAGS flag1 flag2 ...]
+#             [UNDOCUMENTED]
 #            )
 
 #-----------------------------------------------------------------------------
@@ -72,7 +73,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
   if(${ARGC} GREATER 3)
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${varname_root} "UNDOCUMENTED" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
   endif(${ARGC} GREATER 3)
   if(NOT ${varname_root}_FIND_NAME)
     set(${varname_root}_FIND_NAME ${varname_root})
@@ -262,8 +263,10 @@ macro(THIRD_PARTY dir varname_root build_target description)
     CMAKEFILES(${dir})
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
-  OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "${description}")
+  if(NOT ${varname_root}_UNDOCUMENTED)
+    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "ABS")
+    OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "${description}")
+  endif(NOT ${varname_root}_UNDOCUMENTED)
 
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE ${CMAKE_PROJECT_NAME}_${varname_root} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
