@@ -1494,6 +1494,9 @@ ARCHER
 ATTRIBUTES
 ----------
 
+* See src/libbu/TODO.binary_attributes for more info about
+  bson based binary attribute work.
+
 * attr command option to output to a file
 
 * attr command change to only output non-standard attributes

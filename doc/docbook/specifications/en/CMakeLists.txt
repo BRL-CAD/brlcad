@@ -3,6 +3,8 @@ set(specifications_EN
   )
 ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
 
+CMAKEFILES(BRL_CAD_g_format_V6.xml)
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
