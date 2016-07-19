@@ -37,6 +37,9 @@ cmake_policy(SET CMP0064 OLD)
 # The global property C_DEFINE_VARS will hold the list of defined variables
 # found.
 
+# TODO - Use https://sourceforge.net/p/predef/wiki/Home/ to create more
+# comprehensive and less ad-hoc lists of flags for OS, arch, etc.
+
 # A user can suppress consideration of definitions that match one or a set of
 # patterns.  There are some "standard" patterns that are automatically skipped
 # - tests matching the "header guard" pattern are skipped, as are defines

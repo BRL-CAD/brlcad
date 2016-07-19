@@ -1,12 +1,6 @@
 SET(tkhtml_ignore_files
-AUTHORS
 COPYING
-ChangeLog
-INSTALL
-NEWS
 README
-acinclude.m4
-configure.ac
 doc
 src/css.h
 src/cssInt.h
@@ -23,7 +17,5 @@ src/restrack.h
 src/swproc.h
 src/tkhtml.tcl
 src/tokenlist.txt
-tclconfig
 CMake
-Makefile.am
 )
