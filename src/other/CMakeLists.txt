@@ -123,6 +123,7 @@ SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
 # FreeType Libraries
+set(FREETYPE_NO_DIST 1)
 set(freetype_ALIASES ENABLE_FREETYPE)
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
