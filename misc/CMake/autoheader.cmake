@@ -29,24 +29,32 @@
 # OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF
 # ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+cmake_policy(SET CMP0064 OLD)
+
 # The purpose of this logic is to scan a set of C/C++ source files to identify
 # all of the variables the CMake configure process may need to set.
 
 # The global property C_DEFINE_VARS will hold the list of defined variables
 # found.
 
+# TODO - Use https://sourceforge.net/p/predef/wiki/Home/ to create more
+# comprehensive and less ad-hoc lists of flags for OS, arch, etc.
+
 # A user can suppress consideration of definitions that match one or a set of
-# patterns by appending those patterns to the C_DEFINE_SKIPVARS global
-# property.  There are some "standard" patterns that are automatically skipped
+# patterns.  There are some "standard" patterns that are automatically skipped
 # - tests matching the "header guard" pattern are skipped, as are defines
 # matching the "EXPORT" and "IMPORT" substrings, operating system and compiler
 # identifiers, and various other flags that do not typically need user-defined
 # configure stage testing.
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*EXPORT.*")
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*IMPORT.*")
+set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS ".*EXPORT.*")
+set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS ".*IMPORT.*")
 
 function(autoheader_ignore_define def)
-  set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*[ (\t]+${def}[ )\t$]*.*")
+  if("${def}" MATCHES ".*[*].*")
+    set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPPATTERNS "${def}")
+  else("${def}" MATCHES ".*[*].*")
+    set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS "${def}")
+  endif("${def}" MATCHES ".*[*].*")
 endfunction(autoheader_ignore_define)
 
 function(autoheader_ignore_defines deflist)
@@ -55,15 +63,22 @@ function(autoheader_ignore_defines deflist)
   endforeach(def ${${deflist}})
 endfunction(autoheader_ignore_defines)
 
+function(autoheader_skip_files def)
+  set_property(GLOBAL APPEND PROPERTY FILE_SKIPPATTERNS "${def}")
+endfunction(autoheader_skip_files)
+
 # OS flags.  For performance, put most common
 # comparisons first (that'll typicall be
 # Windows related tests)
 set(OS_FLAGS
   WIN32
+  WIN32_LEAN_AND_MEAN
   _WIN32
   _WIN64
-  WIN32_LEAN_AND_MEAN
+  _WINDOWS
   __WIN32__
+  __WIN64
+  __WINDOWS__
   __APPLE__
   BSD
   CRAY1
@@ -72,32 +87,82 @@ set(OS_FLAGS
   MSDOS
   SUNOS
   SYSV
+  _AIX
+  _BEOS
+  _BEOS_
+  _IBMR2
+  _SCO_SV
+  _SGI
+  _ULTRIX
   _WINSOCKAPI_
+  _XENIX
+  __AIX
+  __AIX__
+  __ANDROID__
+  __BEOS__
+  __BeOS
+  __CRAYXC
+  __CRAYXE
   __CYGWIN__
+  __DARWIN__
   __DOS__
   __FreeBSD__
+  __GNU__
+  __HAIKU__
+  __LINUX__
   __MSDOS__
   __NT__
+  __NetBSD
+  __NetBSD__
+  __OPENBSD
   __OS2__
+  __OS400__
   __OpenBSD__
+  __QNX__
+  __SCO_VERSION__
+  __TRU64__
+  __aix
+  __aix__
   __alpha
   __alpha__
   __apollo
+  __bsdos__
   __convex__NATIVE
+  __hppa
+  __hpua
   __hpux
+  __i386
   __i386__
   __ia64__
+  __linux
   __linux__
+  __minux
+  __osf
+  __osf__
+  __ppc64__
+  __ppc__
+  __riscos
+  __riscos__
   __sgi
+  __sinix
+  __sinix__
   __sp3__ # what is this? context indicates it is a platform...
   __sparc64__
+  __sun
+  __tru64
+  __ultrix
+  __ultrix__
   __x86_64__
+  _sgi
   _sun
+  _tru64
   convex_NATIVE
   eta10
+  hpux
   ibm
   linux
   mips
+  sco_sv
   sgi
   sun
   vax
@@ -158,95 +223,111 @@ macro(header_guard rdir fname ovar)
   string(REPLACE "${rdir}/" "" stage1 ${fname})
   string(REPLACE "/" "_" stage2 ${stage1})
   string(REPLACE "." "_" stage3 ${stage2})
-  string(TOUPPER "${stage3}" stage4)
-  set(${ovar} ${stage4})
+  string(REPLACE "-" "_" stage4 ${stage3})
+  string(TOUPPER "${stage4}" stage5)
+  set(${ovar} ${stage5})
 endmacro(header_guard)
 
-# Given an atom from a line (i.e. one conditional if the original line had
-# and/or branches, or the original line if there were no and/or branches),
-# extract the compile flag
-macro(compile_def_flag atom ovar)
-  string(REGEX REPLACE "^[ \t]*#*.*[!]*(ifdef|defined|elseif defined)[ \t]*[(]*" "" stage1 "${atom}")
-  string(REGEX REPLACE "[/][*].*[*][/]" "" stage2 "${stage1}")
-  string(REGEX REPLACE "[)][ \t]*" "" stage3 "${stage2}")
-  string(REGEX REPLACE "[ \t]+$" "" stage4 "${stage3}")
-  string(REGEX REPLACE "^[ \t]+" "" stage5 "${stage4}")
-  set(${ovar} ${stage5})
-endmacro(compile_def_flag)
-
-function(autoheader_scan seed_dir)
+function(autoheader_scan_internal seed_dir recurse)
   set(scan_files)
   set(extensions c h cxx cpp hxx hpp)
   get_property(C_DEFINE_SKIPVARS GLOBAL PROPERTY C_DEFINE_SKIPVARS)
+  get_property(C_DEFINE_SKIPPATTERNS GLOBAL PROPERTY C_DEFINE_SKIPPATTERNS)
+  get_property(FILE_SKIPPATTERNS GLOBAL PROPERTY FILE_SKIPPATTERNS)
 
   foreach(exten ${extensions})
     set(sfiles)
-    file(GLOB_RECURSE sfiles "${seed_dir}/*.${exten}")
+    if(recurse)
+      file(GLOB_RECURSE sfiles "${seed_dir}/*.${exten}")
+    else(recurse)
+      file(GLOB sfiles "${seed_dir}/*.${exten}")
+    endif(recurse)
     set(scan_files ${scan_files} ${sfiles})
   endforeach(exten ${extensions})
 
   #message("found files: ${scan_files}")
 
+  foreach(ptn ${FILE_SKIPPATTERNS})
+    list(FILTER scan_files EXCLUDE REGEX "${ptn}")
+  endforeach(ptn ${FILE_SKIPPATTERNS})
+
+  #message("processing files: ${scan_files}")
+
   set(unique_keys)
   foreach(sf ${scan_files})
     header_guard("${seed_dir}" "${sf}" hg)
-    set(SKIP_LIST ".*[ \t]+${hg}[ \t]*" ${C_DEFINE_SKIPVARS})
-    file(STRINGS ${sf} SRC_LINES REGEX "^[ \t]*#.*(ifdef|defined[(]).+")
-    set(def_list)
-    foreach(line ${SRC_LINES})
-      #message("line: ${line}")
-      set(lset ${line})
-      string(REPLACE "&&" ";" lset "${lset}")
-      string(REPLACE "||" ";" lset "${lset}")
-      foreach(l ${lset})
-	#message("   atom: ${l}")
-	set(skip_line 0)
-	foreach(sk ${SKIP_LIST})
-	  if(NOT skip_line)
-	    #message("testing ${l} vs ${sk}")
-	    if("${l}" MATCHES "${sk}")
-	      #message("matched ${l} vs ${sk} - skipping")
-	      set(skip_line 1)
-	    endif("${l}" MATCHES "${sk}")
-	  endif(NOT skip_line)
-	endforeach(sk ${SKIP_LIST})
-	if(NOT skip_line)
-	  set(def_list ${def_list} ${l})
-	endif(NOT skip_line)
-      endforeach(l ${lset})
-    endforeach(line ${SRC_LINES})
+    set(SKIP_LIST "${hg}" ${C_DEFINE_SKIPVARS})
+
+    # Use unifdef to get the list of conditional symbols
+    # See http://dotat.at/prog/unifdef/ and https://github.com/fanf2/unifdef
+    execute_process(COMMAND unifdef -s ${sf} OUTPUT_VARIABLE def_list)
+    string(REPLACE "\n" ";" def_list "${def_list}")
+
     if(def_list)
-      #message("file ${sf} def lines:")
-      foreach(l ${def_list})
-	set(dflag)
-	compile_def_flag(${l} dflag)
-	#message("   line: ${l}")
-	#message("   extracted: ${dflag}")
-	set(unique_keys ${unique_keys} ${dflag})
-      endforeach(l ${def_list})
+      foreach(dflag ${def_list})
+	set(skip_flag 0)
+	foreach(sk ${SKIP_LIST})
+	  if(NOT skip_flag)
+	    if("${dflag}" STREQUAL "${sk}")
+	      set(skip_flag 1)
+	    endif("${dflag}" STREQUAL "${sk}")
+	  endif(NOT skip_flag)
+	endforeach(sk ${SKIP_LIST})
+	foreach(sp ${C_DEFINE_SKIPPATTERNS})
+	  if(NOT skip_flag)
+	    if("${dflag}" MATCHES ${sp})
+	      set(skip_flag 1)
+	    endif("${dflag}" MATCHES ${sp})
+	  endif(NOT skip_flag)
+	endforeach(sp ${C_DEFINE_SKIPPATTERNS})
+	if(NOT skip_flag)
+	  #message("   ${dflag}")
+	  set(unique_keys ${unique_keys} ${dflag})
+	endif(NOT skip_flag)
+      endforeach(dflag ${def_list})
     endif(def_list)
   endforeach(sf ${scan_files})
-  list(REMOVE_DUPLICATES unique_keys)
-  foreach(k ${unique_keys})
-    set_property(GLOBAL APPEND PROPERTY C_DEFINE_VARS "${k}")
-  endforeach(k ${unique_keys})
+  list(LENGTH unique_keys UKLEN)
+  if(UKLEN)
+    list(REMOVE_DUPLICATES unique_keys)
+    foreach(k ${unique_keys})
+      set_property(GLOBAL APPEND PROPERTY C_DEFINE_VARS "${k}")
+    endforeach(k ${unique_keys})
+  endif(UKLEN)
+
+  # If we've run autoheader_scan mulitple times, we need to
+  # ensure uniqueness globally...
   get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
-  list(REMOVE_DUPLICATES C_DEFINE_VARS)
-  list(SORT C_DEFINE_VARS)
+  list(LENGTH C_DEFINE_VARS DLEN)
+  if(DLEN)
+    list(REMOVE_DUPLICATES C_DEFINE_VARS)
+    list(SORT C_DEFINE_VARS)
+  endif(DLEN)
   set_property(GLOBAL PROPERTY C_DEFINE_VARS "${C_DEFINE_VARS}")
+endfunction(autoheader_scan_internal)
+
+function(autoheader_scan seed_dir)
+  autoheader_scan_internal("${seed_dir}" 0)
 endfunction(autoheader_scan)
+
+function(autoheader_recursive_scan seed_dir)
+  autoheader_scan_internal("${seed_dir}" 1)
+endfunction(autoheader_recursive_scan)
+
 
 # For testing convenience, the following will exercise the
 # logic in cmake -P script mode.  Should be removed if/when
 # this goes "live" in the real build.
 
-set(LOCAL_SKIP DIRENT_ BRLCADBUILD BRLCAD_ DM_ FB_ NO_BOMBING_MACROS USE_BINARY_ATTRIBUTES
+set(LOCAL_SKIP DIRENT_ BRLCADBUILD ^BRLCAD_* ^DM_* ^FB_* NO_BOMBING_MACROS USE_BINARY_ATTRIBUTES
   IF_WGL IF_X IF_QT IF_OGL NO_DEBUG_CHECKING USE_OPENCL)
 autoheader_ignore_defines(LOCAL_SKIP)
 
-set_property(GLOBAL APPEND PROPERTY C_DEFINE_SKIPVARS ".*IMPORT.*")
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/include)
-autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/src/libbu)
+autoheader_skip_files(".*src/other/.*")
+
+autoheader_recursive_scan(${CMAKE_CURRENT_SOURCE_DIR}/include)
+autoheader_recursive_scan(${CMAKE_CURRENT_SOURCE_DIR}/src)
+autoheader_scan(${CMAKE_CURRENT_SOURCE_DIR}/misc/tools/perplex)
 
 get_property(C_DEFINE_VARS GLOBAL PROPERTY C_DEFINE_VARS)
 message("keys:")

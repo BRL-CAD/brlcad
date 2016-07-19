@@ -26,8 +26,8 @@
  *
  */
 
-#ifndef DB5_H
-#define DB5_H
+#ifndef RT_DB5_H
+#define RT_DB5_H
 
 #include "common.h"
 
@@ -231,7 +231,7 @@ RT_EXPORT extern const unsigned char *db5_get_raw_internal_ptr(struct db5_raw_in
 
 __END_DECLS
 
-#endif	/* DB5_H */
+#endif	/* RT_DB5_H */
 
 /** @} */
 /*
