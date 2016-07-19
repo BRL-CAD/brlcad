@@ -44,8 +44,8 @@
 /** @file bg.h */
 /** @} */
 
-#ifndef GM_H
-#define GM_H
+#ifndef BG_H
+#define BG_H
 
 #include "common.h"
 
@@ -56,7 +56,7 @@
 #include "bg/tri_ray.h"
 #include "bg/tri_tri.h"
 
-#endif /* GM_H */
+#endif /* BG_H */
 
 /*
  * Local Variables:

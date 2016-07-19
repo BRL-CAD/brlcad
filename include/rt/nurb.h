@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef NURB_H
-#define NURB_H
+#ifndef RT_NURB_H
+#define RT_NURB_H
 
 #include "common.h"
 
@@ -284,7 +284,7 @@ RT_EXPORT extern void rt_nurb_map_oslo(struct oslo_mat *oslo,
 
 __END_DECLS
 
-#endif /* NURB_H */
+#endif /* RT_NURB_H */
 
 /** @} */
 /*

@@ -22,8 +22,8 @@
 /** @file dm_xvars.h
  *
  */
-#ifndef DM_XVARS_H
-#define DM_XVARS_H
+#ifndef DM_DM_XVARS_H
+#define DM_DM_XVARS_H
 
 #include "common.h"
 
@@ -83,7 +83,7 @@ struct dm_xvars {
     int devbuttonrelease;
 };
 
-#endif /* DM_XVARS_H */
+#endif /* DM_DM_XVARS_H */
 /** @} */
 /*
  * Local Variables:

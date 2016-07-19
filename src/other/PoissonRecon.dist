@@ -1,9 +1,5 @@
 SET(PoissonRecon_ignore_files
 LICENSE
-PoissonRecon.sln
-PoissonRecon.v12.suo
-PoissonRecon.vcxproj
-PoissonRecon.vcxproj.filters
 Src/Allocator.h
 Src/Array.h
 Src/Array.inl
@@ -42,6 +38,4 @@ Src/SparseMatrix.inl
 Src/Vector.h
 Src/Vector.inl
 Src/cvertex.h
-SurfaceTrimmer.vcxproj
-SurfaceTrimmer.vcxproj.filters
 )

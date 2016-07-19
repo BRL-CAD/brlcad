@@ -80,6 +80,7 @@ set(misc_ignore_files
   mime.types
   mime_cad.types
   nsis
+  osl_shaders
   wix
   svn2git
   uncpowerplant2g.sh

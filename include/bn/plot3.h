@@ -30,8 +30,8 @@
 /** @{ */
 /** @file plot3.h */
 
-#ifndef PLOT3_H
-#define PLOT3_H
+#ifndef BN_PLOT3_H
+#define BN_PLOT3_H
 
 #include "common.h"
 
@@ -484,7 +484,7 @@ BN_EXPORT extern void BU_FORTRAN(f3vect, F3VECT)(FILE **fp,
 
 __END_DECLS
 
-#endif /* PLOT3_H */
+#endif /* BN_PLOT3_H */
 
 /** @} */
 /*
