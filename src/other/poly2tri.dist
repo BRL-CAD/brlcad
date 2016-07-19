@@ -9,5 +9,4 @@ poly2tri/sweep/advancing_front.h
 poly2tri/sweep/cdt.h
 poly2tri/sweep/sweep.h
 poly2tri/sweep/sweep_context.h
-testbed
 )

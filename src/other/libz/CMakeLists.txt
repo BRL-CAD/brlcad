@@ -8,9 +8,24 @@ endif(COMMAND CMAKE_POLICY)
 
 project(zlib C)
 
+set(VERSION "1.2.8")
+
 if(NOT DEFINED BUILD_SHARED_LIBS)
     option(BUILD_SHARED_LIBS "Build a shared library form of zlib" ON)
-endif()
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+if(NOT DEFINED BUILD_STATIC_LIBS)
+    option(BUILD_STATIC_LIBS "Build a static library form of zlib" ON)
+endif(NOT DEFINED BUILD_STATIC_LIBS)
+
+if(NOT DEFINED BIN_DIR)
+	set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+	set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
+if(NOT DEFINED INCLUDE_DIR)
+	set(INCLUDE_DIR include)
+endif(NOT DEFINED INCLUDE_DIR)
 
 include(CheckTypeSize)
 include(CheckFunctionExists)
@@ -118,13 +133,17 @@ set(ZLIB_SRCS
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
 file(READ ${CMAKE_CURRENT_SOURCE_DIR}/zlib.h _zlib_h_contents)
-string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([0-9A-Za-z.]+)\".*"
+string(REGEX REPLACE ".*#define[ \t]+ZLIB_VERSION[ \t]+\"([-0-9A-Za-z.]+)\".*"
     "\\1" ZLIB_FULL_VERSION ${_zlib_h_contents})
 
 if(MINGW)
     # This gets us DLL resource information when compiling on MinGW.
+    if(NOT CMAKE_RC_COMPILER)
+        set(CMAKE_RC_COMPILER windres.exe)
+    endif()
+
     add_custom_command(OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
-		       COMMAND windres.exe
+                       COMMAND ${CMAKE_RC_COMPILER}
 			    -D GCC_WINDRES
 			    -I ${CMAKE_CURRENT_SOURCE_DIR}
 			    -I ${CMAKE_CURRENT_BINARY_DIR}
@@ -135,19 +154,18 @@ else(MINGW)
     set(ZLIB_SRCS ${ZLIB_SRCS} win32/zlib1.rc)
 endif(MINGW)
 
-add_library(zlib ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+add_library(zlib SHARED ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_DLL_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
 
 if(BUILD_STATIC_LIBS)
-    add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
-    if(CMAKE_CL_64)
-      set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
-    elseif(MSVC)
-      set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
-    endif(CMAKE_CL_64)
+	add_library(zlibstatic STATIC ${ZLIB_SRCS} ${ZLIB_ASMS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
+	if(CMAKE_CL_64)
+		set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+	elseif(MSVC)
+		set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
+	endif(CMAKE_CL_64)
 endif(BUILD_STATIC_LIBS)
 
 set_target_properties(zlib PROPERTIES DEFINE_SYMBOL ZLIB_DLL)
-
 set_target_properties(zlib PROPERTIES SOVERSION 1)
 
 if(NOT CYGWIN)
@@ -163,47 +181,34 @@ endif()
 
 if(UNIX)
     # On unix-like platforms the library is almost always called libz
-   set_target_properties(zlib PROPERTIES OUTPUT_NAME z)
+	 if(BUILD_STATIC_LIBS)
+		 set_target_properties(zlib zlibstatic PROPERTIES OUTPUT_NAME z)
+	 endif(BUILD_STATIC_LIBS)
+	 if(NOT APPLE AND BUILD_SHARED_LIBS)
+     set_target_properties(zlib PROPERTIES LINK_FLAGS "-Wl,--version-script,\"${CMAKE_CURRENT_SOURCE_DIR}/zlib.map\"")
+   endif()
 elseif(BUILD_SHARED_LIBS AND WIN32)
     # Creates zlib1.dll when building shared library version
-    set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
+	 if(BUILD_SHARED_LIBS)
+		 set_target_properties(zlib PROPERTIES SUFFIX "1.dll")
+	 endif(BUILD_SHARED_LIBS)
 endif()
 
 if(NOT SKIP_INSTALL_LIBRARIES AND NOT SKIP_INSTALL_ALL )
+	if(BUILD_SHARED_LIBS)
     install(TARGETS zlib
-	RUNTIME DESTINATION bin
-	ARCHIVE DESTINATION lib
-	LIBRARY DESTINATION lib )
+		 RUNTIME DESTINATION "${BIN_DIR}"
+		 ARCHIVE DESTINATION "${LIB_DIR}"
+		 LIBRARY DESTINATION "${LIB_DIR}" )
+	endif(BUILD_SHARED_LIBS)
+	if(BUILD_STATIC_LIBS)
+    install(TARGETS zlibstatic
+		 RUNTIME DESTINATION "${BIN_DIR}"
+		 ARCHIVE DESTINATION "${LIB_DIR}"
+		 LIBRARY DESTINATION "${LIB_DIR}" )
+	endif(BUILD_STATIC_LIBS)
 endif()
 if(NOT SKIP_INSTALL_HEADERS AND NOT SKIP_INSTALL_ALL )
-    install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION include)
+	install(FILES ${ZLIB_PUBLIC_HDRS} DESTINATION ${INCLUDE_DIR})
 endif()
 
-IF(NOT MAN_DIR)
-  SET(MAN_DIR "share/man")
-ENDIF(NOT MAN_DIR)
-if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-    install(FILES zlib.3 DESTINATION ${MAN_DIR}/man3)
-endif()
-
-#============================================================================
-# Example binaries
-#============================================================================
-
-add_executable(example example.c)
-target_link_libraries(example zlib)
-add_test(example example)
-
-add_executable(minigzip minigzip.c)
-target_link_libraries(minigzip zlib)
-
-if(HAVE_OFF64_T)
-    add_executable(example64 example.c)
-    target_link_libraries(example64 zlib)
-    set_target_properties(example64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-    add_test(example64 example64)
-
-    add_executable(minigzip64 minigzip.c)
-    target_link_libraries(minigzip64 zlib)
-    set_target_properties(minigzip64 PROPERTIES COMPILE_FLAGS "-D_FILE_OFFSET_BITS=64")
-endif()

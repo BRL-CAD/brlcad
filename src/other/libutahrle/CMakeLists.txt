@@ -1,15 +1,68 @@
-IF(COMMAND CMAKE_POLICY)
+# Copyright (c) 2010-2016 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# *******************************************************************
+# ***                libutahrle CMakeLists.txt                     ***
+# *******************************************************************
+
+if(COMMAND CMAKE_POLICY)
   if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	CMAKE_POLICY(SET CMP0026 OLD)
+    CMAKE_POLICY(SET CMP0026 OLD)
   endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-ENDIF(COMMAND CMAKE_POLICY)
+endif(COMMAND CMAKE_POLICY)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
-INCLUDE(UTAH_CheckFunctions)
+project(UTAHRLE)
 
-IF(NOT WIN32)
-  UTAH_CHECK_LIBRARY(M m cos)
-ENDIF(NOT WIN32)
+cmake_minimum_required(VERSION 2.8)
+
+if(NOT DEFINED BUILD_SHARED_LIBS)
+  set(BUILD_SHARED_LIBS ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
+if(NOT DEFINED BUILD_STATIC_LIBS)
+  set(BUILD_STATIC_LIBS ON)
+endif(NOT DEFINED BUILD_STATIC_LIBS)
+
+if(NOT WIN32)
+  include(CheckLibraryExists)
+  check_library_exists(m cos "" HAVE_M_LIBRARY)
+  if(HAVE_M_LIBRARY)
+    set(M_LIBRARY m)
+  endif(HAVE_M_LIBRARY)
+endif(NOT WIN32)
+
+include(CheckIncludeFiles)
+check_include_files(unistd.h HAVE_UNISTD_H)
+if(HAVE_UNISTD_H)
+  add_definitions(-DHAVE_UNISTD_H=1)
+endif(HAVE_UNISTD_H)
 
 include_directories(
   ${${CMAKE_PROJECT_NAME}_SOURCE_DIR}/include
@@ -17,7 +70,19 @@ include_directories(
   ${CMAKE_CURRENT_BINARY_DIR}
   )
 
-SET(LIBUTAHRLE_PUBLIC_HDRS
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT DEFINED LIB_DIR)
+
+if(UTAHRLE_HAVE_COMMON_H)
+  add_definitions(-DHAVE_COMMON_H=1)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../../include)
+endif(UTAHRLE_HAVE_COMMON_H)
+
+set(LIBUTAHRLE_PUBLIC_HDRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/exit_status.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/pyramid.h
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle.h
@@ -27,11 +92,11 @@ SET(LIBUTAHRLE_PUBLIC_HDRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/rle_raw.h
   )
 
-SET(LIBUTAHRLE_PRIVATE_HDRS
+set(LIBUTAHRLE_PRIVATE_HDRS
   ${CMAKE_CURRENT_SOURCE_DIR}/include/colorquant.h
   )
 
-SET(LIBUTAHRLE_SOURCES
+set(LIBUTAHRLE_SOURCES
   Runput.c
   buildmap.c
   cmd_name.c
@@ -60,86 +125,45 @@ SET(LIBUTAHRLE_SOURCES
   vaxshort.c
   )
 
-IF(MSVC)
+if(MSVC)
   add_definitions(
     -DRLE_DLL_EXPORTS
     -DNO_DECLARE_MALLOC
     -DNEED_BSTRING
     -DNO_OPEN_PIPES
     )
-ENDIF(MSVC)
+endif(MSVC)
 
-add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
-target_link_libraries(utahrle ${M_LIBRARY})
-SET_TARGET_PROPERTIES(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
-install(TARGETS utahrle
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
-add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
-target_link_libraries(utahrle-static ${M_LIBRARY})
-install(TARGETS utahrle-static
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
-IF(NOT WIN32)
-  SET_TARGET_PROPERTIES(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
-ENDIF(NOT WIN32)
+if(BUILD_SHARED_LIBS)
+  add_library(utahrle SHARED ${LIBUTAHRLE_SOURCES})
+  target_link_libraries(utahrle ${M_LIBRARY})
+  set_target_properties(utahrle PROPERTIES VERSION 19.0.1 SOVERSION 19)
+  install(TARGETS utahrle
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+endif(BUILD_SHARED_LIBS)
 
-SET(LIBUTAHRLE_MAN3
-  buildmap.3
-  bwdithermap.3
-  colorquant.3
-  dither.3
-  ditherbw.3
-  dithergb.3
-  dithermap.3
-  float_to_exp.3
-  hilbert.3
-  hilbert_c2i.3
-  hilbert_i2c.3
-  inv_cmap.3
-  librle.3
-  libutahrle.3
-  make_square.3
-  rgb_to_bw.3
-  rle_addhist.3
-  rle_cp.3
-  rle_debug.3
-  rle_delcom.3
-  rle_freeraw.3
-  rle_get_error.3
-  rle_get_set.3
-  rle_get_setup.3
-  rle_get_setup_ok.3
-  rle_getcom.3
-  rle_getraw.3
-  rle_getrow.3
-  rle_getskip.3
-  rle_hdr.3
-  rle_op.3
-  rle_open_f.3
-  rle_open_f_noexit.3
-  rle_put_init.3
-  rle_put_setup.3
-  rle_putcom.3
-  rle_puteof.3
-  rle_putraw.3
-  rle_putrow.3
-  rle_raw_alloc.3
-  rle_raw_free.3
-  rle_rawtorow.3
-  rle_row_alloc.3
-  rle_row_free.3
-  rle_skiprow.3
-  scanargs.3
-  )
-IF(NOT MAN_DIR)
-  SET(MAN_DIR "share/man")
-ENDIF(NOT MAN_DIR)
+if(BUILD_STATIC_LIBS)
+  add_library(utahrle-static STATIC ${LIBUTAHRLE_SOURCES})
+  target_link_libraries(utahrle-static ${M_LIBRARY})
+  install(TARGETS utahrle-static
+    RUNTIME DESTINATION ${BIN_DIR}
+    LIBRARY DESTINATION ${LIB_DIR}
+    ARCHIVE DESTINATION ${LIB_DIR})
+  if(NOT WIN32)
+    set_target_properties(utahrle-static PROPERTIES OUTPUT_NAME "utahrle")
+  endif(NOT WIN32)
+endif(BUILD_STATIC_LIBS)
 
 if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
-  install(FILES ${LIBUTAHRLE_MAN3} DESTINATION ${MAN_DIR}/man3)
-  install(FILES rle.5 DESTINATION ${MAN_DIR}/man5)
-  INSTALL(FILES ${LIBUTAHRLE_PUBLIC_HDRS} DESTINATION include)
+  install(FILES ${LIBUTAHRLE_PUBLIC_HDRS} DESTINATION include)
 endif()
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+
