@@ -14,9 +14,14 @@
 
 @SET_MAKE@
 
-# Makefile.am:
-#   Source file for Makefile.in (and hence Makefile)
+# Makefile.am, the source file for Makefile.in (and hence Makefile), is
 #
+# Copyright (c) 2004-2016 Glenn Randers-Pehrson
+# Last changed in libpng 1.6.22 [(PENDING RELEASE)]
+#
+# This code is released under the libpng license.
+# For conditions of distribution and use, see the disclaimer
+# and license in png.h
 
 
 
@@ -96,18 +101,20 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 check_PROGRAMS = pngtest$(EXEEXT) pngunknown$(EXEEXT) \
-	pngstest$(EXEEXT) pngvalid$(EXEEXT) pngimage$(EXEEXT)
+	pngstest$(EXEEXT) pngvalid$(EXEEXT) pngimage$(EXEEXT) \
+	$(am__EXEEXT_1)
+@HAVE_CLOCK_GETTIME_TRUE@am__append_1 = timepng
 bin_PROGRAMS = pngfix$(EXEEXT) png-fix-itxt$(EXEEXT)
-@PNG_ARM_NEON_TRUE@am__append_1 = arm/arm_init.c\
+@PNG_ARM_NEON_TRUE@am__append_2 = arm/arm_init.c\
 @PNG_ARM_NEON_TRUE@	arm/filter_neon.S arm/filter_neon_intrinsics.c
 
 
 #   Versioned symbols and restricted exports
-@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_TRUE@am__append_2 = -Wl,-M -Wl,libpng.vers
-@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_FALSE@am__append_3 = -Wl,--version-script=libpng.vers
+@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_TRUE@am__append_3 = -Wl,-M -Wl,libpng.vers
+@HAVE_LD_VERSION_SCRIPT_TRUE@@HAVE_SOLARIS_LD_FALSE@am__append_4 = -Wl,--version-script=libpng.vers
 #   Only restricted exports when possible
-@HAVE_LD_VERSION_SCRIPT_FALSE@am__append_4 = -export-symbols libpng.sym
-@DO_PNG_PREFIX_TRUE@am__append_5 = -DPNG_PREFIX='@PNG_PREFIX@'
+@HAVE_LD_VERSION_SCRIPT_FALSE@am__append_5 = -export-symbols libpng.sym
+@DO_PNG_PREFIX_TRUE@am__append_6 = -DPNG_PREFIX='@PNG_PREFIX@'
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/scripts/libtool.m4 \
@@ -185,6 +192,7 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LINK = $(LIBTOOL) $(AM_V_lt) \
 	$(CCLD) $(AM_CFLAGS) $(CFLAGS) \
 	$(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS) $(LDFLAGS) -o \
 	$@
+@HAVE_CLOCK_GETTIME_TRUE@am__EXEEXT_1 = timepng$(EXEEXT)
 PROGRAMS = $(bin_PROGRAMS)
 am_png_fix_itxt_OBJECTS = contrib/tools/png-fix-itxt.$(OBJEXT)
 png_fix_itxt_OBJECTS = $(am_png_fix_itxt_OBJECTS)
@@ -207,6 +215,9 @@ pngunknown_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 am_pngvalid_OBJECTS = contrib/libtests/pngvalid.$(OBJEXT)
 pngvalid_OBJECTS = $(am_pngvalid_OBJECTS)
 pngvalid_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+am_timepng_OBJECTS = contrib/libtests/timepng.$(OBJEXT)
+timepng_OBJECTS = $(am_timepng_OBJECTS)
+timepng_DEPENDENCIES = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -256,12 +267,12 @@ SOURCES = $(libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
 	$(nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES) \
 	$(png_fix_itxt_SOURCES) $(pngfix_SOURCES) $(pngimage_SOURCES) \
 	$(pngstest_SOURCES) $(pngtest_SOURCES) $(pngunknown_SOURCES) \
-	$(pngvalid_SOURCES)
+	$(pngvalid_SOURCES) $(timepng_SOURCES)
 DIST_SOURCES =  \
 	$(am__libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES_DIST) \
 	$(png_fix_itxt_SOURCES) $(pngfix_SOURCES) $(pngimage_SOURCES) \
 	$(pngstest_SOURCES) $(pngtest_SOURCES) $(pngunknown_SOURCES) \
-	$(pngvalid_SOURCES)
+	$(pngvalid_SOURCES) $(timepng_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -664,6 +675,8 @@ pngunknown_SOURCES = contrib/libtests/pngunknown.c
 pngunknown_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 pngimage_SOURCES = contrib/libtests/pngimage.c
 pngimage_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
+timepng_SOURCES = contrib/libtests/timepng.c
+timepng_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 pngfix_SOURCES = contrib/tools/pngfix.c
 pngfix_LDADD = libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@.la
 png_fix_itxt_SOURCES = contrib/tools/png-fix-itxt.c
@@ -701,12 +714,12 @@ libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = png.c pngerror.c \
 	pngget.c pngmem.c pngpread.c pngread.c pngrio.c pngrtran.c \
 	pngrutil.c pngset.c pngtrans.c pngwio.c pngwrite.c pngwtran.c \
 	pngwutil.c png.h pngconf.h pngdebug.h pnginfo.h pngpriv.h \
-	pngstruct.h pngusr.dfa $(am__append_1)
+	pngstruct.h pngusr.dfa $(am__append_2)
 nodist_libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_SOURCES = pnglibconf.h
 libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_LDFLAGS = -no-undefined \
 	-export-dynamic -version-number \
 	@PNGLIB_MAJOR@@PNGLIB_MINOR@:@PNGLIB_RELEASE@:0 \
-	$(am__append_2) $(am__append_3) $(am__append_4)
+	$(am__append_3) $(am__append_4) $(am__append_5)
 @HAVE_LD_VERSION_SCRIPT_FALSE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.sym
 @HAVE_LD_VERSION_SCRIPT_TRUE@libpng@PNGLIB_MAJOR@@PNGLIB_MINOR@_la_DEPENDENCIES = libpng.vers
 pkginclude_HEADERS = png.h pngconf.h
@@ -742,7 +755,7 @@ SUFFIXES = .chk .out
 SYMBOL_CFLAGS = -DPNGLIB_LIBNAME='PNG@PNGLIB_MAJOR@@PNGLIB_MINOR@_0' \
 	-DPNGLIB_VERSION='@PNGLIB_VERSION@' \
 	-DSYMBOL_PREFIX='$(SYMBOL_PREFIX)' -DPNG_NO_USE_READ_MACROS \
-	-DPNG_BUILDING_SYMBOL_TABLE $(am__append_5)
+	-DPNG_BUILDING_SYMBOL_TABLE $(am__append_6)
 
 # EXT_LIST is a list of the possibly library directory extensions, this exists
 # because we can't find a good way of discovering the file extensions that are
@@ -965,6 +978,12 @@ contrib/libtests/pngvalid.$(OBJEXT): contrib/libtests/$(am__dirstamp) \
 pngvalid$(EXEEXT): $(pngvalid_OBJECTS) $(pngvalid_DEPENDENCIES) $(EXTRA_pngvalid_DEPENDENCIES) 
 	@rm -f pngvalid$(EXEEXT)
 	$(AM_V_CCLD)$(LINK) $(pngvalid_OBJECTS) $(pngvalid_LDADD) $(LIBS)
+contrib/libtests/timepng.$(OBJEXT): contrib/libtests/$(am__dirstamp) \
+	contrib/libtests/$(DEPDIR)/$(am__dirstamp)
+
+timepng$(EXEEXT): $(timepng_OBJECTS) $(timepng_DEPENDENCIES) $(EXTRA_timepng_DEPENDENCIES) 
+	@rm -f timepng$(EXEEXT)
+	$(AM_V_CCLD)$(LINK) $(timepng_OBJECTS) $(timepng_LDADD) $(LIBS)
 install-binSCRIPTS: $(bin_SCRIPTS)
 	@$(NORMAL_INSTALL)
 	@list='$(bin_SCRIPTS)'; test -n "$(bindir)" || list=; \
@@ -1034,6 +1053,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/libtests/$(DEPDIR)/pngstest.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/libtests/$(DEPDIR)/pngunknown.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/libtests/$(DEPDIR)/pngvalid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@contrib/libtests/$(DEPDIR)/timepng.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/tools/$(DEPDIR)/png-fix-itxt.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@contrib/tools/$(DEPDIR)/pngfix.Po@am__quote@
 
