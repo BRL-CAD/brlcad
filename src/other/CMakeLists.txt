@@ -123,6 +123,7 @@ SetTargetFolder(tinycthread "Third Party Libraries")
 SetTargetFolder(tinycthread-static "Third Party Libraries")
 
 # FreeType Libraries
+set(FREETYPE_NO_DIST 1)
 set(freetype_ALIASES ENABLE_FREETYPE)
 set(freetype_DESCRIPTION "
 Option for enabling and disabling compilation of the FreeType
@@ -147,8 +148,10 @@ if(BRLCAD_FREETYPE_BUILD)
   set(FREETYPE_LIBRARIES "${FREETYPE_LIBRARY}" CACHE STRING "FreeType Libraries")
   SetTargetFolder(freetype "Third Party Libraries")
 endif(BRLCAD_FREETYPE_BUILD)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/ftconfig.h")
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/freetype/include/freetype2/ftconfig.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftconfig.h-new")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h")
+DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/include/freetype/config/ftoption.h-new")
 mark_as_advanced(FREETYPE_INCLUDE_DIRS)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
@@ -158,9 +161,6 @@ mark_as_advanced(FREETYPE_LIBRARIES)
 # The incrtTcl subdirectory isn't directly referenced, but its
 # subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)
-
-# Ignore the osl subdir
-CMAKEFILES(osl)
 
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
@@ -248,11 +248,8 @@ AUTO.
 # once we know what PNG_LIB_NAME is.
 THIRD_PARTY(libpng PNG png png_DESCRIPTION REQUIRED_VARS BRLCAD_LEVEL2 ALIASES ${png_ALIASES})
 if(BRLCAD_PNG_BUILD)
-  # PNG_LIB_NAME doesn't automatically propagate to toplevel due to
-  # scoping of CMake variables - use get_directory_property to recover
-  # the value (which is later put in the CACHE)
 
-  get_directory_property(PNG_LIBRARY DIRECTORY libpng DEFINITION PNG_LIB_NAME)
+  set(PNG_LIBRARY png CACHE STRING "PNG_LIBRARY" FORCE)
 
   # On Haiku the find_library call sets this variable directly, which is not
   # how we handle things elsewhere in BRL-CAD - unset the variable in that
@@ -299,6 +296,7 @@ mark_as_advanced(uname_executable)
 # and the include directory for utahrle are different, so override the
 # macro's setting of UTAHRLE_INCLUDE_DIR here.
 
+set(UTAHRLE_HAVE_COMMON_H 1)
 set(utahrle_ALIASES ENABLE_UTAHRLE)
 set(utahrle_DESCRIPTION "
 Option for enabling and disabling compilation of the Utah Raster

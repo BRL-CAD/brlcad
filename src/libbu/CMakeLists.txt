@@ -2,7 +2,6 @@
 set(BU_INCLUDE_DIRS
   ${BRLCAD_BINARY_DIR}/include
   ${BRLCAD_SOURCE_DIR}/include
-  ${TCL_INCLUDE_DIRS}
   )
 
 # locally used but not needed by users of the library

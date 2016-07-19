@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef DVEC_H
-#define DVEC_H
+#ifndef BN_DVEC_H
+#define BN_DVEC_H
 
 #include "common.h"
 
@@ -207,7 +207,7 @@ extern "C++" {
 
 /** @} */
 
-#endif /* DVEC_H */
+#endif /* BN_DVEC_H */
 
 /*
  * Local Variables:
