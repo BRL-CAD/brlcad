@@ -162,9 +162,6 @@ mark_as_advanced(FREETYPE_LIBRARIES)
 # subdirectories are used - mark incrTcl as ignored
 CMAKEFILES(incrTcl)
 
-# Ignore the osl subdir
-CMAKEFILES(osl)
-
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
