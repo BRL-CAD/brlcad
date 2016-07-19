@@ -26,8 +26,8 @@
 /** @{ */
 /** @file spm.h */
 
-#ifndef SPM_H
-#define SPM_H
+#ifndef BN_SPM_H
+#define BN_SPM_H
 
 #include "common.h"
 #include "bn/defines.h"
@@ -135,7 +135,7 @@ BN_EXPORT extern void bn_spm_dump(bn_spm_map_t *mp, int verbose);
 
 __END_DECLS
 
-#endif /* SPM_H */
+#endif /* BN_SPM_H */
 
 /** @} */
 /*

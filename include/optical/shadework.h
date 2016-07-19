@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SHADEWORK_H
-#define SHADEWORK_H
+#ifndef OPTICAL_SHADEWORK_H
+#define OPTICAL_SHADEWORK_H
 
 #include "common.h"
 #include "bn/tabdata.h"
@@ -76,7 +76,7 @@ extern void pr_shadework(const char *str, const struct shadework *swp);
 
 __END_DECLS
 
-#endif /* SHADEWORK_H */
+#endif /* OPTICAL_SHADEWORK_H */
 
 /** @} */
 /*
