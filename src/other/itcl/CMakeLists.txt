@@ -55,6 +55,21 @@ if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH)
   find_package(TCL)
 endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH)
 
+if(NOT TCL_STUB_LIBRARY)
+  if(TARGET tclsh)
+    message(FATAL_ERROR "We're building tclsh, but TCL_STUB_LIBRARY isn't set - this is most likely due to an error in the build system logic.")
+  endif(TARGET tclsh)
+  if(NOT TCL_TCLSH)
+    find_program(TCL_TCLSH tclsh)
+  endif(NOT TCL_TCLSH)
+  if(NOT TCL_TCLSH)
+    message(FATAL_ERROR "itcl enabled, but tclsh is not available and TCL_STUB_LIBRARY is undefined.  Either specify the location of the tcl stub library (-DTCL_STUB_LIBRARY=/path/to/libtclstub86.a) or identify the location of tclsh (-DTCL_TCLSH=/path/to/tclsh)")
+  endif(NOT TCL_TCLSH)
+  get_filename_component(TCLSH_DIR "${TCL_TCLSH}" DIRECTORY)
+  get_filename_component(TCLSH_ROOT_DIR "${TCLSH_DIR}" DIRECTORY)
+  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 HINTS ${TCLSH_ROOT_DIR}/lib)
+endif(NOT TCL_STUB_LIBRARY)
+
 # version numbers
 set(ITCL_VERSION_MAJOR 4)
 set(ITCL_VERSION_MINOR 0)
@@ -163,12 +178,12 @@ endif(WIN32)
 
 set(ITCL_STUB_SRCS generic/itclStubLib.c)
 
-set(ITCL_INCLUDE_DIRS ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
-mark_as_advanced(ITCL_INCLUDE_DIRS)
+set(ITCL_INCLUDE_PATH ${ITCL_SOURCE_DIR}/generic ${ITCL_BINARY_DIR}/include)
+mark_as_advanced(ITCL_INCLUDE_PATH)
 
 include_directories(
   ${TCL_INCLUDE_PATH}
-  ${ITCL_INCLUDE_DIRS}
+  ${ITCL_INCLUDE_PATH}
   ${CMAKE_BINARY_DIR}/include
   ${CMAKE_SOURCE_DIR}/include
   )

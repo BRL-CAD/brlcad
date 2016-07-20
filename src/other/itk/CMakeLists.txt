@@ -54,17 +54,32 @@ project(ITK)
 if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
   find_package(TCL)
 endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
+
+if(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_STUB_LIBRARY)
+  if(TARGET tclsh)
+    message(FATAL_ERROR "We're building tclsh, but TCL_STUB_LIBRARY isn't set - this is most likely due to an error in the build system logic.")
+  endif(TARGET tclsh)
+  if(NOT TCL_TCLSH)
+    find_program(TCL_TCLSH tclsh)
+  endif(NOT TCL_TCLSH)
+  if(NOT TCL_TCLSH)
+    message(FATAL_ERROR "itcl enabled, but tclsh is not available and TCL_STUB_LIBRARY is undefined.  Either specify the location of the tcl stub library (-DTCL_STUB_LIBRARY=/path/to/libtclstub86.a) or identify the location of tclsh (-DTCL_TCLSH=/path/to/tclsh)")
+  endif(NOT TCL_TCLSH)
+  get_filename_component(TCLSH_DIR "${TCL_TCLSH}" DIRECTORY)
+  get_filename_component(TCLSH_ROOT_DIR "${TCLSH_DIR}" DIRECTORY)
+endif(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY OR NOT ITCL_STUB_LIBRARY)
+
 if(NOT TCL_STUB_LIBRARY)
-  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6)
+  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT TCL_STUB_LIBRARY)
 if(NOT TK_STUB_LIBRARY)
-  find_library(TK_STUB_LIBRARY tkstub NAMES tkstub86 tkstub8.6)
+  find_library(TK_STUB_LIBRARY tkstub NAMES tkstub86 tkstub8.6 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT TK_STUB_LIBRARY)
 if(NOT ITCL_LIBRARY)
-  find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.0.4)
+  find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.0.4 HINTS ${TCLSH_ROOT_DIR}/lib)
 endif(NOT ITCL_LIBRARY)
 if(NOT ITCL_STUB_LIBRARY)
-  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.0.4)
+  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.0.5 HINTS ${TCLSH_ROOT_DIR}/lib/itcl4.0.5)
 endif(NOT ITCL_STUB_LIBRARY)
 
 # version numbers
@@ -176,7 +191,7 @@ mark_as_advanced(ITK_INCLUDE_DIRS)
 include_directories(
   ${TCL_INCLUDE_PATH}
   ${TK_INCLUDE_PATH}
-  ${ITCL_INCLUDE_DIRS}
+  ${ITCL_INCLUDE_PATH}
   ${ITK_INCLUDE_DIRS}
   ${TK_X11_INCLUDE_DIRS}
   )

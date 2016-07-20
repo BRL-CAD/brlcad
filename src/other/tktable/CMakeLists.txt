@@ -36,51 +36,53 @@
 # Minimum required version of CMake
 cmake_minimum_required(VERSION 2.8)
 if(COMMAND CMAKE_POLICY)
-	cmake_policy(SET CMP0003 NEW)
-	if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-		cmake_policy(SET CMP0026 OLD)
-	endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	if("${CMAKE_VERSION}" VERSION_GREATER 3.0)
-		cmake_policy(SET CMP0048 NEW)
-	endif("${CMAKE_VERSION}" VERSION_GREATER 3.0)
+  cmake_policy(SET CMP0003 NEW)
+  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    cmake_policy(SET CMP0026 OLD)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0)
+    cmake_policy(SET CMP0048 NEW)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0)
 endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
 project(TKTABLE)
 
 if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
-	find_package(TCL)
+  find_package(TCL)
 endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
-if(NOT TCL_STUB_LIBRARY)
-	find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6)
-endif(NOT TCL_STUB_LIBRARY)
-if(NOT TK_STUB_LIBRARY)
-	find_library(TK_STUB_LIBRARY tkstub NAMES tkstub86 tkstub8.6)
-endif(NOT TK_STUB_LIBRARY)
-if(NOT ITCL_LIBRARY)
-	find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.0.4)
-endif(NOT ITCL_LIBRARY)
-if(NOT ITCL_STUB_LIBRARY)
-	find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.0.4)
-endif(NOT ITCL_STUB_LIBRARY)
+
+if(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY)
+  if(TARGET tclsh)
+    message(FATAL_ERROR "We're building tclsh, but TCL_STUB_LIBRARY isn't set - this is most likely due to an error in the build system logic.")
+  endif(TARGET tclsh)
+  if(NOT TCL_TCLSH)
+    find_program(TCL_TCLSH tclsh)
+  endif(NOT TCL_TCLSH)
+  if(NOT TCL_TCLSH)
+    message(FATAL_ERROR "tclsh is not available and one or more stub library variables is undefined.  Either specify the location of the tcl stub libraries (e.g. -DTCL_STUB_LIBRARY=/path/to/libtclstub86.a) or identify the location of tclsh (-DTCL_TCLSH=/path/to/tclsh)")
+  endif(NOT TCL_TCLSH)
+  get_filename_component(TCLSH_DIR "${TCL_TCLSH}" DIRECTORY)
+  get_filename_component(TCLSH_ROOT_DIR "${TCLSH_DIR}" DIRECTORY)
+endif(NOT TCL_STUB_LIBRARY OR NOT TK_STUB_LIBRARY)
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
 if(NOT DEFINED BIN_DIR)
-	set(BIN_DIR bin)
+  set(BIN_DIR bin)
 endif(NOT DEFINED BIN_DIR)
 if(NOT DEFINED LIB_DIR)
-	if(NOT WIN32)
-		set(LIB_DIR lib)
-	else(NOT WIN32)
-		set(LIB_DIR bin)
-	endif(NOT WIN32)
+  if(NOT WIN32)
+    set(LIB_DIR lib)
+  else(NOT WIN32)
+    set(LIB_DIR bin)
+  endif(NOT WIN32)
 endif(NOT DEFINED LIB_DIR)
 if(NOT DEFINED INCLUDE_DIR)
-	set(INCLUDE_DIR include)
+  set(INCLUDE_DIR include)
 endif(NOT DEFINED INCLUDE_DIR)
 if(NOT MAN_DIR)
-	set(MAN_DIR man)
+  set(MAN_DIR man)
 endif(NOT MAN_DIR)
 
 #----------------------------------------------------------------------------
@@ -98,25 +100,25 @@ set(TKTABLE_PKGVERSION "2.11")
 find_package(X11)
 
 add_custom_command(
-	OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-	COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
-	COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
-	COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
-	DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH}
-	)
+  OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+  COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+  COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h
+  COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h.new
+  DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/library/tkTable.tcl ${CMAKE_CURRENT_SOURCE_DIR}/misc/tkTable_header.tcl ${TCL_TCLSH}
+  )
 ADD_CUSTOM_TARGET(tktable_header_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkTable.tcl.h)
 
 SET(TKTABLE_SRCS
-	generic/tkTable.c
-	generic/tkTableCell.c
-	generic/tkTableCellSort.c
-	generic/tkTableCmds.c
-	generic/tkTableEdit.c
-	#generic/tkTablePs.c
-	generic/tkTableTag.c
-	generic/tkTableUtil.c
-	generic/tkTableWin.c
-	)
+  generic/tkTable.c
+  generic/tkTableCell.c
+  generic/tkTableCellSort.c
+  generic/tkTableCmds.c
+  generic/tkTableEdit.c
+  #generic/tkTablePs.c
+  generic/tkTableTag.c
+  generic/tkTableUtil.c
+  generic/tkTableWin.c
+  )
 
 set(TKTABLE_CFG_H_FILE ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp)
 file(WRITE ${TKTABLE_CFG_H_FILE} "/**** Variables for Tktable build - replaces -D options ****/\n")
@@ -129,21 +131,21 @@ execute_process(COMMAND ${CMAKE_COMMAND} -E copy_if_different ${CMAKE_CURRENT_BI
 execute_process(COMMAND ${CMAKE_COMMAND} -E remove ${CMAKE_CURRENT_BINARY_DIR}/tktable_cfg.h.tmp)
 
 include_directories(
-	${CMAKE_CURRENT_SOURCE_DIR}/src
-	${CMAKE_CURRENT_BINARY_DIR}
-	${TCL_INCLUDE_DIRS}
-	${TK_INCLUDE_PATH}
-	${X11_INCLUDE_DIR}
-	)
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
+  ${X11_INCLUDE_DIR}
+  )
 
 add_library(Tktable SHARED ${TKTABLE_SRCS})
 add_dependencies(Tktable tktable_header_gen)
-target_link_libraries(Tktable ${TCL_LIBRARY} ${TCL_TK_LIBRARY} ${X11_LIBRARIES})
+target_link_libraries(Tktable ${TCL_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
 set_target_properties(Tktable PROPERTIES VERSION ${TKTABLE_PKGVERSION})
 install(TARGETS Tktable
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 # Create the pkgIndex.tcl file.
 include(${CMAKE_CURRENT_SOURCE_DIR}/tcl_pkgindex.cmake)
@@ -153,17 +155,17 @@ install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/README.txt DESTINATION lib/${TKTABLE_P
 install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/license.txt DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 
 set(TKTABLE_MISC
-	library/tkTable.tcl
-	library/tktable.py
-	)
+  library/tkTable.tcl
+  library/tktable.py
+  )
 
 if(CMAKE_CONFIGURATION_TYPES)
-	foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
-		string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-		file(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
-	endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    file(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
+  endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
 else(CMAKE_CONFIGURATION_TYPES)
-	file(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
+  file(COPY ${TKTABLE_MISC} DESTINATION ${CMAKE_BINARY_DIR}/lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
 endif(CMAKE_CONFIGURATION_TYPES)
 
 install(FILES ${TKTABLE_MISC} DESTINATION lib/${TKTABLE_PKGNAME}${TKTABLE_PKGVERSION})
