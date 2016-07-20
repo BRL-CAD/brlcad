@@ -24,6 +24,10 @@
 
 #include "tkTable.h"
 
+#ifdef CMAKE_HEADERS
+#  include "tktable_cfg.h"
+#endif
+
 #ifdef DEBUG
 #include "dprint.h"
 #endif
