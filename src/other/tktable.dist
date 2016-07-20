@@ -9,6 +9,5 @@ library
 license.txt
 mac
 misc
-win
 CMake
 )
