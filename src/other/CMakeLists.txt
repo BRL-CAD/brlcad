@@ -619,21 +619,6 @@ DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
 SetTargetFolder(Tkhtml "Third Party Libraries")
 SetTargetFolder(tkhtml_n_gen "Compilation Utilities")
 
-set(tkpng_ALIASES ENABLE_TKPNG)
-set(tkpng_DESCRIPTION "
-Option for enabling and disabling compilation of the tkpng PNG image
-viewing package provided with BRL-CAD's source distribution.  Default
-is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
-testing first for a system version if BRLCAD_TCL is set to AUTO or
-SYSTEM.  If BRLCAD_TKPNG is set to BUNDLED, local copy is built even if
-a system version is present.  This package will be disabled if
-BRLCAD_ENABLE_TK is OFF.
-")
-THIRD_PARTY_TCL_PACKAGE(tkpng tkpng "${TCL_WISH_EXECUTABLE}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkpng_ALIASES tkpng_DESCRIPTION)
-DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkpng/pkgIndex.tcl")
-DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tkpng0.8")
-SetTargetFolder(tkpng "Third Party Libraries")
-
 set(tktable_ALIASES ENABLE_TKTABLE)
 set(tktable_DESCRIPTION "
 Option for enabling and disabling compilation of the Tktable graphical
