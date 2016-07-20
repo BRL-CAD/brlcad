@@ -94,7 +94,7 @@ add_definitions(-DSTDC_HEADERS=1)
 # building tkhtml
 add_definitions(-DBUILD_tkhtml)
 
-set(TKHTML_PKGNAME tkhtml)
+set(TKHTML_PKGNAME Tkhtml)
 set(TKHTML_PKGVERSION "3.0")
 
 
