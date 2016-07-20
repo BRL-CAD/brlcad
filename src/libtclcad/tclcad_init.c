@@ -103,42 +103,26 @@ tclcad_init(Tcl_Interp *interp, int init_gui, struct bu_vls *tlog)
 
 	/* Initialize [incr Tcl] */
 	Tcl_ResetResult(interp);
-	/* NOTE: Calling "package require Itcl" here is apparently
-	 * insufficient without other changes elsewhere.  The Combination
-	 * Editor in mged fails with an iwidgets class already loaded
-	 * error if we don't perform Itcl_Init() here (TODO: why??).
+	/* NOTE: Calling "package require Itcl" may be a problem - there have
+	 * been reports of the Combination Editor in mged failing with an
+	 * iwidgets class already loaded error if we don't perform Itcl_Init()
+	 * here (TODO: still true, and if so why??).
 	 */
-	if (init_itcl && Itcl_Init(interp) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		Tcl_Namespace *nsp;
-
-		try_auto_path = 1;
-		/* Itcl_Init() leaves initialization in a bad state
-		 * and can cause retry failures.  cleanup manually.
-		 */
-		Tcl_DeleteCommand(interp, "::itcl::class");
-		nsp = Tcl_FindNamespace(interp, "::itcl", NULL, 0);
-		if (nsp)
-		    Tcl_DeleteNamespace(nsp);
-		continue;
+	if (init_itcl) {
+	    ret = Tcl_Eval(interp, "package require Itcl");
+	    if (ret == TCL_ERROR) {
+		if (tlog) bu_vls_printf(tlog, "Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
+		break;
 	    }
-	    if (tlog) bu_vls_printf(tlog, "Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-	    ret = TCL_ERROR;
-	    break;
 	}
 	init_itcl = 0;
 
 #ifdef HAVE_TK
-	if (init_gui) {
+	if (init_gui && init_itk) {
 	    /* Initialize [incr Tk] */
-	    Tcl_ResetResult(interp);
-	    if (init_itk && Itk_Init(interp) == TCL_ERROR) {
-		if (!try_auto_path) {
-		    try_auto_path=1;
-		    continue;
-		}
+	    ret = Tcl_Eval(interp, "package require Itk");
+	    if (ret == TCL_ERROR) {
 		if (tlog) bu_vls_printf(tlog, "Itk_Init ERROR:\n%s\n", Tcl_GetStringResult(interp));
-		ret = TCL_ERROR;
 		break;
 	    }
 	    init_itk=0;
