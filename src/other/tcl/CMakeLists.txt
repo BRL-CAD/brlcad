@@ -815,7 +815,9 @@ IF(APPLE)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unix/tclConfig.h.in ${TCL_BINARY_DIR}/include/tclConfig.h)
 ENDIF(APPLE)
 
-#ADD_SUBDIRECTORY(library)
+#--------------------------------------------------------------------
+# At a minimum, this is needed for init.tcl setup
+ADD_SUBDIRECTORY(library)
 
 SET(TCL_GENERIC_SRCS
   generic/regcomp.c
