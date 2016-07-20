@@ -111,6 +111,21 @@ include("${TCL_CMAKE_DIR}/RPath_Setup.cmake")
 
 include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
 
+#---------------------------------------------------------------------
+# Initialize some relative variable names
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+  if(NOT WIN32)
+    set(LIB_DIR lib)
+  else(NOT WIN32)
+    set(LIB_DIR bin)
+  endif(NOT WIN32)
+endif(NOT DEFINED LIB_DIR)
+if(NOT DEFINED INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT DEFINED INCLUDE_DIR)
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
@@ -216,7 +231,7 @@ function(Tcl_Check_Include_File filename)
   string(REPLACE "." "_" var "${filename}")
   string(REPLACE "/" "_" var "${var}")
   string(TOUPPER "${var}" var)
-  CHECK_INCLUDE_FILES(${filename} HAVE_${var})
+  check_include_files(${filename} HAVE_${var})
   if(HAVE_${var})
     if(OPT_DEFVAR)
       set(CVAR ${OPT_DEFVAR})
@@ -226,9 +241,9 @@ function(Tcl_Check_Include_File filename)
     if(OPT_USE)
       # Usability test requested - we're not done yet.
       if(OPT_TEST_SRC)
-	CHECK_C_SOURCE_COMPILES("${${OPT_TEST_SRC}}" ${var}_USABLE)
+	check_c_source_compiles("${${OPT_TEST_SRC}}" ${var}_USABLE)
       else(OPT_TEST_SRC)
-	CHECK_C_SOURCE_COMPILES("#include <${filename}>\nint main() {return 0;}" ${var}_USABLE)
+	check_c_source_compiles("#include <${filename}>\nint main() {return 0;}" ${var}_USABLE)
       endif(OPT_TEST_SRC)
       if(${var}_USABLE)
 	set(HAVE_${var} 1 PARENT_SCOPE)
@@ -800,7 +815,7 @@ IF(APPLE)
   configure_file(${CMAKE_CURRENT_SOURCE_DIR}/unix/tclConfig.h.in ${TCL_BINARY_DIR}/include/tclConfig.h)
 ENDIF(APPLE)
 
-ADD_SUBDIRECTORY(library)
+#ADD_SUBDIRECTORY(library)
 
 SET(TCL_GENERIC_SRCS
   generic/regcomp.c
@@ -1022,15 +1037,6 @@ SET(TCL_WIN_SRCS
   win/tclWinTime.c
   )
 
-IF(NOT LIB_DIR)
-  IF(NOT WIN32)
-    SET(LIB_DIR lib)
-  ELSE(NOT WIN32)
-    SET(LIB_DIR bin)
-  ENDIF(NOT WIN32)
-ENDIF(NOT LIB_DIR)
-
-
 SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_LIBRARY="${CMAKE_INSTALL_PREFIX}/${LIB_DIR}/${CMAKE_SHARED_LIBRARY_PREFIX}tcl${TCL_VERSION_MAJOR}.${TCL_VERSION_MINOR}${CMAKE_SHARED_LIBRARY_SUFFIX}")
 SET_PROPERTY(SOURCE win/tclWinInit.c APPEND PROPERTY COMPILE_DEFINITIONS TCL_PACKAGE_PATH="${CMAKE_INSTALL_PREFIX}/lib")
 
@@ -1141,6 +1147,19 @@ SET(TCL_HDRS
   generic/tclOODecls.h
   )
 install(FILES ${TCL_HDRS} DESTINATION include)
+
+# Set up build directory copies of the public headers
+foreach(hdrfile ${TCL_HDRS})
+  get_filename_component(hf ${hdrfile} NAME)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+endforeach(hdrfile ${LIBRARY_FILES})
 
 MARK_AS_ADVANCED(TCL_LIBRARIES TCL_CONF_PREFIX TCL_INCLUDE_DIRS TCL_INCLUDE_PATH)
 MARK_AS_ADVANCED(TCL_STUB_LIBRARIES TCL_TCLSH TCL_TCLSH_EXECUTABLE)
