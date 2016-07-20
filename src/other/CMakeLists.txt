@@ -484,7 +484,7 @@ AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TCL_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itk "Third Party Libraries")
   SetTargetFolder(itkstub "Third Party Libraries")
@@ -514,7 +514,7 @@ SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TCL_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Iwidgets iwidgets "${TK_WISH}" "tcl;tk;itcl;itk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" iwidgets_ALIASES iwidgets_DESCRIPTION)
 if(BRLCAD_IWIDGETS_BUILD)
   set(IWIDGETS_VERSION "4.0.1" CACHE STRING "IWIDGETS_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/iwidgets/pkgIndex.tcl")
@@ -538,7 +538,7 @@ SYSTEM.  If BRLCAD_TKHTML is set to BUNDLED, local copy is built even if
 a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TCL_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tkhtml tkhtml "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tkhtml_ALIASES tkhtml_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tkhtml/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tkhtml3.0")
 SetTargetFolder(Tkhtml "Third Party Libraries")
@@ -554,7 +554,7 @@ AUTO or SYSTEM.  If BRLCAD_TKTABLE is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TCL_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Tktable tktable "${TK_WISH}" "tcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktable_ALIASES tktable_DESCRIPTION)
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/pkgIndex.tcl")
 DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktable/tktable_cfg.h")
 DISTCLEAN("${CMAKE_BINARY_DIR}/lib/Tktable2.10")
@@ -571,7 +571,7 @@ SetTargetFolder(tktable_header_gen "Compilation Utilities")
 #even if a system version is present.  This package will be disabled if
 #BRLCAD_ENABLE_TK is OFF.
 #")
-#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TCL_WISH}" "tcl;tk"
+#THIRD_PARTY_TCL_PACKAGE(tktreectrl tktreectrl "${TK_WISH}" "tcl;tk"
 #  "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "" tktreectrl_ALIASES tktreectrl_DESCRIPTION)
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
