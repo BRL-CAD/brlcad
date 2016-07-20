@@ -637,6 +637,32 @@ a system version is present.
 Aliases:  ENABLE_ITCL
 
 
+--- BRLCAD_ITK ---
+
+Option for enabling and disabling compilation of the IncrTcl itk
+package for Tk objects provided with BRL-CAD's source distribution.
+Default is AUTO, auto-enabling if the BRLCAD_TCL option is set to
+BUNDLED and testing first for a system version if BRLCAD_TCL is set to
+AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
+even if a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+
+Aliases:  ENABLE_ITK
+
+
+--- BRLCAD_IWIDGETS ---
+
+Option for enabling and disabling compilation of the IWidgets Tk
+widget package provided with BRL-CAD's source distribution.  Default
+is AUTO, auto-enabling if the BRLCAD_TCL option is set to BUNDLED and
+testing first for a system version if BRLCAD_TCL is set to AUTO or
+SYSTEM.  If BRLCAD_IWIDGETS is set to BUNDLED, local copy is built even if
+a system version is present.  This package will be disabled if
+BRLCAD_ENABLE_TK is OFF.
+
+Aliases:  ENABLE_IWIDGETS
+
+
 --- BRLCAD_OPENNURBS ---
 
 Option for enabling and disabling compilation of the openNURBS library

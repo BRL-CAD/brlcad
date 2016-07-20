@@ -1,5 +1,4 @@
 SET(itk_ignore_files
-CMake
 generic/itk.decls
 generic/itk.h
 generic/itkDecls.h

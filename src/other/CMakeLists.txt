@@ -398,6 +398,7 @@ if(BRLCAD_TK_BUILD)
   SetTargetFolder(tk "Third Party Libraries")
   SetTargetFolder(tkstub "Third Party Libraries")
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
+  set(TK_STUB_LIBRARY tkstub CACHE STRING "TK_LIBRARY" FORCE)
   set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tk include path" FORCE)
   set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
   if(WIN32)
@@ -456,21 +457,15 @@ THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCA
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
-  get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
-  set(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
   set(ITCL_VERSION "4.0.4" CACHE STRING "ITCL_VERSION" FORCE)
-  set(ITCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl4.0.4")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
-ELSE(BRLCAD_ITCL_BUILD)
+else(BRLCAD_ITCL_BUILD)
   # We have Itcl package AND Itcl library - we're good.
   set(ITCL_VERSION "${ITCL_PACKAGE_VERSION}" CACHE STRING "ITCL_VERSION" FORCE)
   set(ITCL_LIBRARY ${ITCL_LIBRARY} CACHE STRING "ITCL_LIBRARY" FORCE)
-  if(ITCL_LIBRARY)
-    get_filename_component(ITCL_BIN_PREFIX ${ITCL_LIBRARY} PATH)
-  endif(ITCL_LIBRARY)
 endif(BRLCAD_ITCL_BUILD)
 CONFIG_H_APPEND(BRLCAD "#cmakedefine ITCL_VERSION	\"${ITCL_VERSION}\"\n")
 mark_as_advanced(ITCL_LIBRARY)
@@ -478,7 +473,6 @@ mark_as_advanced(ITCL_STUB_LIBRARY)
 mark_as_advanced(ITCL_INCLUDE_DIRS)
 mark_as_advanced(ITCL_VERSION)
 
-if(0)
 # Look for IncrTcl's Itk.
 set(itk_ALIASES ENABLE_ITK)
 set(itk_DESCRIPTION "
@@ -496,10 +490,10 @@ if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itkstub "Third Party Libraries")
   # does not handle C library settings.
   set(ITK_LIBRARY itk CACHE STRING "ITK_LIBRARY" FORCE)
-  set(ITK_VERSION "3.3" CACHE STRING "ITK_VERSION" FORCE)
+  set(ITK_VERSION "4.0" CACHE STRING "ITK_VERSION" FORCE)
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itk/pkgIndex.tcl")
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itk3.4")
-ELSE(BRLCAD_ITK_BUILD)
+else(BRLCAD_ITK_BUILD)
   # We have Itcl/Itk packages AND Itcl/Itk libraries - we're good.
   set(ITK_VERSION "${ITCL_VERSION}" CACHE STRING "ITK_VERSION" FORCE)
   set(ITK_LIBRARY ${ITK_LIBRARY} CACHE STRING "ITK_LIBRARY" FORCE)
@@ -534,11 +528,7 @@ mark_as_advanced(IWIDGETS_VERSION)
 mark_as_advanced(COMPAT_SRCS)
 
 
-
-
-
-
-
+if(0)
 
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "

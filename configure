@@ -162,6 +162,14 @@ do
                                   shift;;
      --disable-itcl)                options="$options -DBRLCAD_ITCL=SYSTEM";
                                   shift;;
+     --enable-itk)                options="$options -DBRLCAD_ITK=BUNDLED";
+                                  shift;;
+     --disable-itk)                options="$options -DBRLCAD_ITK=SYSTEM";
+                                  shift;;
+     --enable-iwidgets)                options="$options -DBRLCAD_IWIDGETS=BUNDLED";
+                                  shift;;
+     --disable-iwidgets)                options="$options -DBRLCAD_IWIDGETS=SYSTEM";
+                                  shift;;
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";
