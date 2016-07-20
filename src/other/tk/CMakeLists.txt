@@ -776,10 +776,24 @@ IF(TK_ENABLE_AQUA)
   SET_PROPERTY(TARGET tk APPEND PROPERTY COMPILE_FLAGS "-std=gnu99 -x objective-c -fobjc-gc")
 ENDIF(TK_ENABLE_AQUA)
 
-include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/TCL_PKGINDEX.cmake)
-TCL_PKGINDEX(tk Tk ${TK_VERSION})
+include(${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl_pkgindex.cmake)
+tcl_pkgindex(tk Tk ${TK_VERSION})
 
 install(FILES ${TK_HDRS} DESTINATION include)
+
+# Set up build directory copies of the public headers
+foreach(hdrfile ${TK_HDRS})
+	get_filename_component(hf ${hdrfile} NAME)
+	if(NOT CMAKE_CONFIGURATION_TYPES)
+		configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
+	else(NOT CMAKE_CONFIGURATION_TYPES)
+		foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+			string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+			configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
+		endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+	endif(NOT CMAKE_CONFIGURATION_TYPES)
+endforeach(hdrfile ${LIBRARY_FILES})
+
 
 IF(WIN32)
   add_executable(wish WIN32 ${WISH_SRCS})
