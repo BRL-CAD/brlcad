@@ -213,6 +213,19 @@ set(ITCL_HDRS
   )
 install(FILES ${ITCL_HDRS} DESTINATION include)
 
+# Set up build directory copies of the public headers
+foreach(hdrfile ${ITCL_HDRS})
+  get_filename_component(hf ${hdrfile} NAME)
+  if(NOT CMAKE_CONFIGURATION_TYPES)
+    configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR}/${INCLUDE_DIR}/${hf} COPYONLY)
+  else(NOT CMAKE_CONFIGURATION_TYPES)
+    foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+      string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
+      configure_file(${CMAKE_CURRENT_SOURCE_DIR}/${hdrfile} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/${INCLUDE_DIR}/${hf} COPYONLY)
+    endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
+  endif(NOT CMAKE_CONFIGURATION_TYPES)
+endforeach(hdrfile ${ITCL_HDRS})
+
 # Local Variables:
 # tab-width: 8
 # mode: cmake
