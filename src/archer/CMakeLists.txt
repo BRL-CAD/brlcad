@@ -23,7 +23,7 @@ if(BRLCAD_ENABLE_TK)
   BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
   add_dependencies(archer archer_launch_tcl_cp)
   add_dependencies(archer rtwizard)
-  ADD_TARGET_DEPS(archer Tkhtml tkpng Tktable)
+  ADD_TARGET_DEPS(archer Tkhtml Tktable)
 
   foreach(item ${tclindex_target_list})
     add_dependencies(archer ${item})

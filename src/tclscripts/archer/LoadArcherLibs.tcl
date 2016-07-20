@@ -29,15 +29,6 @@
 proc LoadArcherCoreLibs {} {
     global tcl_platform
 
-    # load tkpng
-    if { [catch {package require tkpng} _initialized] } {
-	puts "$_initialized"
-	puts ""
-	puts "ERROR: Unable to load tkpng"
-	exit 1
-    }
-
-
     if { [catch {package require Swidgets} _initialized] } {
 	puts "$_initialized"
 	puts ""
