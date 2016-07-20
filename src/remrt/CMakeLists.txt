@@ -9,7 +9,7 @@ include_directories(${REMRTBIN_INCLUDE_DIRS})
 
 include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
-  ${TCL_INCLUDE_DIRS}
+  ${TCL_INCLUDE_PATH}
   )
 
 BRLCAD_ADDEXEC(remrt "ihost.c;remrt.c" "libremrt;liboptical;libfb")
