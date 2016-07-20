@@ -40,12 +40,6 @@
 
 #define MAX_BUF 2048
 
-/* FIXME: we utilize this Tcl internal in here */
-#if !defined(_WIN32) || defined(__CYGWIN__)
-extern Tcl_Obj *TclGetLibraryPath (void);
-#endif
-
-
 /* helper routine to determine whether the full 'path' includes a
  * directory named 'src'.  this is used to determine whether a
  * particular invocation is being run from the BRL-CAD source
@@ -162,6 +156,7 @@ tclcad_auto_path(Tcl_Interp *interp)
 
     char pathsep[2] = { BU_PATH_SEPARATOR, '\0' };
 
+    struct bu_vls initpath = BU_VLS_INIT_ZERO;
     struct bu_vls tcl = BU_VLS_INIT_ZERO;
     struct bu_vls itcl = BU_VLS_INIT_ZERO;
 #ifdef HAVE_TK
@@ -174,6 +169,16 @@ tclcad_auto_path(Tcl_Interp *interp)
 	/* nothing to do */
 	return;
     }
+
+    /* If we are using an external Tcl, we need the
+     * location of its init file */
+    bu_vls_trunc(&initpath, 0);
+#ifdef TCL_SYSTEM_INITTCL_PATH
+    bu_vls_printf(&initpath, "set tcl_library {%s}", TCL_SYSTEM_INITTCL_PATH);
+    if (Tcl_Eval(interp, bu_vls_addr(&initpath))) {
+	bu_log("Problem initializaing tcl_library to system init.tcl path: Tcl_Eval ERROR:\n%s\n", Tcl_GetStringResult(interp));
+    }
+#endif
 
     bu_vls_printf(&tcl, "tcl%s", TCL_VERSION);
     bu_vls_printf(&itcl, "itcl%s", ITCL_VERSION);
