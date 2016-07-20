@@ -158,6 +158,10 @@ do
                                   shift;;
      --disable-tk)                options="$options -DBRLCAD_TK=SYSTEM";
                                   shift;;
+     --enable-itcl)                options="$options -DBRLCAD_ITCL=BUNDLED";
+                                  shift;;
+     --disable-itcl)                options="$options -DBRLCAD_ITCL=SYSTEM";
+                                  shift;;
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";

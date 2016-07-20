@@ -315,8 +315,9 @@ if(BRLCAD_UTAHRLE_BUILD)
   mark_as_advanced(BRLCAD_UTAHRLE_INCLUDE_DIR)
 endif(BRLCAD_UTAHRLE_BUILD)
 
-
-# Tcl/Tk
+####################################################################
+#                Tcl/Tk and related extensions
+####################################################################
 
 set(tcl_ALIASES ENABLE_TCL)
 set(tcl_DESCRIPTION "
@@ -332,7 +333,8 @@ if(BRLCAD_TCL_BUILD)
   SetTargetFolder(tclstub "Third Party Libraries")
   # Set the variables ourselves since FindTCL.cmake doesn't know about our build
   set(TCL_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
-  set(TCL_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" CACHE STRING "Tcl include path" FORCE)
+  set(TCL_STUB_LIBRARY tcl CACHE STRING "TCL_LIBRARY" FORCE)
+  set(TCL_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tcl include path" FORCE)
   set(TCL_TCLSH tclsh CACHE STRING "Tcl shell" FORCE)
   set(TCL_VERSION_MAJOR "8" CACHE STRING "Tcl MAJOR version" FORCE)
   set(TCL_VERSION_MINOR "6" CACHE STRING "Tcl MINOR version" FORCE)
@@ -341,8 +343,10 @@ if(BRLCAD_TCL_BUILD)
   include("${CMAKE_CURRENT_SOURCE_DIR}/tcl.dist")
   CMAKEFILES_IN_DIR(tcl_ignore_files tcl)
   DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.5")
-ELSE(BRLCAD_TCL_BUILD)
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/tcl8.6")
+else(BRLCAD_TCL_BUILD)
+  get_filename_component(TCL_LIB_PATH "${TCL_LIBRARY}" DIRECTORY)
+  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6 PATHS ${TCL_LIB_PATH})
   BRLCAD_INCLUDE_FILE(tcl.h HAVE_TCL_H)
   # We're going to need the path to the system init.tcl for btclsh and bwish
   set(inittcl_script "
@@ -362,15 +366,6 @@ exit
   mark_as_advanced(tcl_inittcl)
   CONFIG_H_APPEND(BRLCAD "#define TCL_SYSTEM_INITTCL_PATH \"${tcl_inittcl}\"\n")
 endif(BRLCAD_TCL_BUILD)
-mark_as_advanced(TCL_COMPILE_DEBUG)
-mark_as_advanced(TCL_COMPILE_STATS)
-mark_as_advanced(TCL_DEBUG)
-mark_as_advanced(TCL_ENABLE_64BIT)
-mark_as_advanced(TCL_ENABLE_DLL_UNLOADING)
-mark_as_advanced(TCL_ENABLE_LANGINFO)
-mark_as_advanced(TCL_ENABLE_LOAD)
-mark_as_advanced(TCL_OPTIMIZED)
-mark_as_advanced(TCL_THREADS)
 mark_as_advanced(TCL_TIMEZONE_DATA)
 mark_as_advanced(M_LIBRARY)
 
@@ -400,10 +395,10 @@ endif(BRLCAD_ENABLE_AQUA)
 THIRD_PARTY_TCL_PACKAGE(Tk tk "${TCL_TCLSH_EXECUTABLE}" "tcl" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL2" "tk" tk_ALIASES tk_DESCRIPTION)
 if(BRLCAD_TK_BUILD)
   SetTargetFolder(wish "Third Party Executables")
-  SetTargetFolder(tk "Third Party Libraries") 
-  SetTargetFolder(tkstub "Third Party Libraries") 
+  SetTargetFolder(tk "Third Party Libraries")
+  SetTargetFolder(tkstub "Third Party Libraries")
   set(TK_LIBRARY tk CACHE STRING "TK_LIBRARY" FORCE)
-  set(TK_INCLUDE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" CACHE STRING "Tk include path" FORCE)
+  set(TK_INCLUDE_PATH "${CMAKE_BINARY_DIR}/${INCLUDE_DIR}" CACHE STRING "Tk include path" FORCE)
   set(TK_WISH wish CACHE STRING "Tk shell" FORCE)
   if(WIN32)
     set(TK_SYSTEM_GRAPHICS "win32" CACHE STRING "Tk system graphics" FORCE)
@@ -447,65 +442,6 @@ else(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_TK)
 mark_as_advanced(HAVE_TK)
 
-if(0)
-# Tcl/Tk extensions need a variety of settings provided for them -
-# take care of those here.  Because system Tcl/Tk installations are
-# not guaranteed to have what is needed in the way of headers, go
-# ahead and assign includedir settings based on the local sources even
-# if system versions are enabled.  Ugly, but an unfortunate
-# consequence of current Tcl/Tk coding styles
-
-set(TCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tcl")
-set(TK_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/tk")
-set(ITCL_SRC_PREFIX "${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl")
-if(WIN32)
-  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/win" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/libtommath")
-  set(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tk/xlib" "${CMAKE_CURRENT_SOURCE_DIR}/tk/win" "${CMAKE_CURRENT_SOURCE_DIR}/tk/bitmaps")
-ELSE(WIN32)
-  set(TCL_INCLUDE_DIRS ${TCL_INCLUDE_DIRS} "${CMAKE_CURRENT_SOURCE_DIR}/tcl/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/unix" "${CMAKE_CURRENT_SOURCE_DIR}/tcl/libtommath")
-  set(TK_INCLUDE_PATH ${TK_INCLUDE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/tk/generic" "${CMAKE_CURRENT_SOURCE_DIR}/tk/unix" "${CMAKE_CURRENT_SOURCE_DIR}/tk/bitmaps")
-endif(WIN32)
-set(ITCL_INCLUDE_DIRS "${CMAKE_CURRENT_SOURCE_DIR}/incrTcl/itcl/generic")
-if(BRLCAD_TCL_BUILD)
-  set(TCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-ELSE(BRLCAD_TCL_BUILD)
-  if (NOT "${TCL_LIBRARY}" STREQUAL "")
-    get_filename_component(TCL_BIN_PREFIX ${TCL_LIBRARY} PATH)
-  endif (NOT "${TCL_LIBRARY}" STREQUAL "")
-endif(BRLCAD_TCL_BUILD)
-if(BRLCAD_ENABLE_TK)
-  if(BRLCAD_TK_BUILD)
-    set(TK_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
-    get_directory_property(TK_X11_INCLUDE_DIRS DIRECTORY tk DEFINITION TK_X11_INCLUDE_DIRS)
-  ELSE(BRLCAD_TK_BUILD)
-    if(TCL_TK_LIBRARY)
-      get_filename_component(TK_BIN_PREFIX ${TCL_TK_LIBRARY} PATH)
-    endif(TCL_TK_LIBRARY)
-    if(X11_INCLUDE_DIR)
-      set(TK_X11_INCLUDE_DIRS ${X11_INCLUDE_DIR})
-    endif(X11_INCLUDE_DIR)
-    if(X11_Xft_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xft_INCLUDE_PATH})
-    endif(X11_Xft_INCLUDE_PATH)
-    if(X11_Xrender_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xrender_INCLUDE_PATH})
-    endif(X11_Xrender_INCLUDE_PATH)
-    if(X11_Xscreensaver_INCLUDE_PATH)
-      set(TK_X11_INCLUDE_DIRS ${TK_X11_INCLUDE_DIRS}
-	${X11_Xscreensaver_INCLUDE_PATH})
-    endif(X11_Xscreensaver_INCLUDE_PATH)
-  endif(BRLCAD_TK_BUILD)
-endif(BRLCAD_ENABLE_TK)
-
-
-
-
-
-
-
-
 # First up, look for IncrTcl's Itcl.
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
@@ -522,10 +458,10 @@ if(BRLCAD_ITCL_BUILD)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
   get_directory_property(ITCL_INCLUDE_DIRS DIRECTORY incrTcl/itcl DEFINITION ITCL_INCLUDE_DIRS)
   set(ITCL_INCLUDE_DIRS "${ITCL_INCLUDE_DIRS}" CACHE STRING "Itcl include paths" FORCE)
-  set(ITCL_VERSION "3.4" CACHE STRING "ITCL_VERSION" FORCE)
+  set(ITCL_VERSION "4.0.4" CACHE STRING "ITCL_VERSION" FORCE)
   set(ITCL_BIN_PREFIX "${CMAKE_BINARY_DIR}/${LIB_DIR}")
   DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/incrTcl/itcl/pkgIndex.tcl")
-  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl3.4")
+  DISTCLEAN("${CMAKE_BINARY_DIR}/lib/itcl4.0.4")
   SetTargetFolder(itcl "Third Party Libraries")
   SetTargetFolder(itclstub "Third Party Libraries")
 ELSE(BRLCAD_ITCL_BUILD)
@@ -542,6 +478,7 @@ mark_as_advanced(ITCL_STUB_LIBRARY)
 mark_as_advanced(ITCL_INCLUDE_DIRS)
 mark_as_advanced(ITCL_VERSION)
 
+if(0)
 # Look for IncrTcl's Itk.
 set(itk_ALIASES ENABLE_ITK)
 set(itk_DESCRIPTION "
