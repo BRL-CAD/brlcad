@@ -58,7 +58,7 @@ set(ITCL_VERSION_MAJOR 4)
 set(ITCL_VERSION_MINOR 0)
 set(ITCL_PATCH_LEVEL 4)
 
-set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}.${ITCL_PATCH_LEVEL}")
+set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}")
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
