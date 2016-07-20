@@ -214,7 +214,7 @@ install(TARGETS itkstub
   ARCHIVE DESTINATION ${LIB_DIR})
 
 include(tcl_pkgindex.cmake)
-tcl_pkgindex(itk Itk "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
+tcl_pkgindex(itk Itk "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}.${ITK_PATCH_LEVEL}")
 
 set(ITK_LIBRARY_FILES
   library/Archetype.itk
