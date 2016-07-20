@@ -453,7 +453,7 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itcl incrTcl/itcl "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itcl itcl "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
   set(ITCL_STUB_LIBRARY itclstub CACHE STRING "ITCL_STUB_LIBRARY" FORCE)
@@ -484,7 +484,7 @@ AUTO or SYSTEM.  If BRLCAD_ITK is set to BUNDLED, local copy is built
 even if a system version is present.  This package will be disabled if
 BRLCAD_ENABLE_TK is OFF.
 ")
-THIRD_PARTY_TCL_PACKAGE(Itk incrTcl/itk "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
+THIRD_PARTY_TCL_PACKAGE(Itk itk "${TK_WISH}" "tcl;itcl;tk" "BRLCAD_ENABLE_TK;BRLCAD_LEVEL3" "itk" itk_ALIASES itk_DESCRIPTION)
 if(BRLCAD_ITK_BUILD)
   SetTargetFolder(itk "Third Party Libraries")
   SetTargetFolder(itkstub "Third Party Libraries")
