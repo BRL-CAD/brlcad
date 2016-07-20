@@ -1,7 +1,5 @@
 SET(itcl_ignore_files
 CMake
-aclocal.m4
-doc
 generic/itcl.decls
 generic/itcl.h
 generic/itclDecls.h
@@ -12,6 +10,5 @@ itclConfig.sh.in
 library
 license.terms
 pkgIndex.tcl.in
-tests
 win
 )

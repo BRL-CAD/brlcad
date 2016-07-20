@@ -45,15 +45,7 @@ libtommath/tommath_superclass.h
 license.terms
 macosx
 unix
-unix/Makefile.in
 unix/README
-unix/aclocal.m4
-unix/configure.in
-unix/dltest
-unix/install-sh
-unix/installManPage
-unix/ldAix
-unix/tcl.m4
 unix/tclConfig.h.in
 unix/tclConfig.sh.in
 unix/tclLoadAix.c

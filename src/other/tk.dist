@@ -48,14 +48,8 @@ library
 license.terms
 macosx
 unix
-unix/Makefile.in
 unix/README
-unix/aclocal.m4
-unix/configure.in
-unix/install-sh
-unix/installManPage
 unix/license.terms
-unix/tcl.m4
 unix/tkConfig.h.in
 unix/tkConfig.sh.in
 unix/tkUnixDefault.h
