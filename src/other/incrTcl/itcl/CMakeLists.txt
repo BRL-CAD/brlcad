@@ -60,6 +60,22 @@ set(ITCL_PATCH_LEVEL 4)
 
 set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}.${ITCL_PATCH_LEVEL}")
 
+#---------------------------------------------------------------------
+# Initialize some relative variable names
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+  if(NOT WIN32)
+    set(LIB_DIR lib)
+  else(NOT WIN32)
+    set(LIB_DIR bin)
+  endif(NOT WIN32)
+endif(NOT DEFINED LIB_DIR)
+if(NOT DEFINED INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT DEFINED INCLUDE_DIR)
+
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way
 add_definitions(-DSTDC_HEADERS=1)
