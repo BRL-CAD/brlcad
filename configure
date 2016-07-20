@@ -170,6 +170,14 @@ do
                                   shift;;
      --disable-iwidgets)                options="$options -DBRLCAD_IWIDGETS=SYSTEM";
                                   shift;;
+     --enable-tkhtml)                options="$options -DBRLCAD_TKHTML=BUNDLED";
+                                  shift;;
+     --disable-tkhtml)                options="$options -DBRLCAD_TKHTML=SYSTEM";
+                                  shift;;
+     --enable-tktable)                options="$options -DBRLCAD_TKTABLE=BUNDLED";
+                                  shift;;
+     --disable-tktable)                options="$options -DBRLCAD_TKTABLE=SYSTEM";
+                                  shift;;
      --enable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=BUNDLED";
                                   shift;;
      --disable-opennurbs)                options="$options -DBRLCAD_OPENNURBS=SYSTEM";

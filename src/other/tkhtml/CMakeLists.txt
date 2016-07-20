@@ -1,67 +1,123 @@
+# Copyright (c) 2010-2016 United States Government as represented by
+# the U.S. Army Research Laboratory.
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+#
+# 1. Redistributions of source code must retain the above copyright
+# notice, this list of conditions and the following disclaimer.
+#
+# 2. Redistributions in binary form must reproduce the above
+# copyright notice, this list of conditions and the following
+# disclaimer in the documentation and/or other materials provided
+# with the distribution.
+#
+# 3. The name of the author may not be used to endorse or promote
+# products derived from this software without specific prior written
+# permission.
+#
+# THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS
+# OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED
+# WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
+# DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE
+# GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY,
+# WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
+# NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
+# SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+# *******************************************************************
+# ***                   tkhtml CMakeLists.txt                     ***
+# *******************************************************************
+
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 2.8)
+if(COMMAND CMAKE_POLICY)
+  cmake_policy(SET CMP0003 NEW)
+  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    cmake_policy(SET CMP0026 OLD)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0)
+    cmake_policy(SET CMP0048 NEW)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 3.0)
+endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(TKHTML)
+project(TKHTML)
 
-SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/CMake")
-
-IF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY OR NOT TK_LIBRARY OR NOT
-    TK_STUB_LIBRARY OR NOT TCL_INCLUDE_DIRS OR NOT TK_INCLUDE_PATH OR NOT
-    TCL_TCLSH OR NOT TCL_WISH_EXECUTABLE)
+if(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
   find_package(TCL)
-ENDIF(NOT TCL_LIBRARY OR NOT TCL_STUB_LIBRARY OR NOT TK_LIBRARY OR NOT
-  TK_STUB_LIBRARY OR NOT TCL_INCLUDE_DIRS OR NOT TK_INCLUDE_PATH OR NOT
-  TCL_TCLSH OR NOT TCL_WISH_EXECUTABLE)
+endif(NOT TCL_LIBRARY OR NOT TCL_INCLUDE_PATH OR NOT TK_LIBRARY)
+if(NOT TCL_STUB_LIBRARY)
+  find_library(TCL_STUB_LIBRARY tclstub NAMES tclstub86 tclstub8.6)
+endif(NOT TCL_STUB_LIBRARY)
+if(NOT TK_STUB_LIBRARY)
+  find_library(TK_STUB_LIBRARY tkstub NAMES tkstub86 tkstub8.6)
+endif(NOT TK_STUB_LIBRARY)
+if(NOT ITCL_LIBRARY)
+  find_library(ITCL_LIBRARY itcl NAMES itcl4 itcl4.0.4)
+endif(NOT ITCL_LIBRARY)
+if(NOT ITCL_STUB_LIBRARY)
+  find_library(ITCL_STUB_LIBRARY itclstub NAMES itclstub4 itclstub4.0.4)
+endif(NOT ITCL_STUB_LIBRARY)
 
-IF(TK_SYSTEM_GRAPHICS MATCHES "x11")
+#---------------------------------------------------------------------
+# Initialize some relative variable names
+if(NOT DEFINED BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT DEFINED BIN_DIR)
+if(NOT DEFINED LIB_DIR)
+  if(NOT WIN32)
+    set(LIB_DIR lib)
+  else(NOT WIN32)
+    set(LIB_DIR bin)
+  endif(NOT WIN32)
+endif(NOT DEFINED LIB_DIR)
+if(NOT DEFINED INCLUDE_DIR)
+  set(INCLUDE_DIR include)
+endif(NOT DEFINED INCLUDE_DIR)
+if(NOT MAN_DIR)
+  set(MAN_DIR man)
+endif(NOT MAN_DIR)
+
+if(TK_SYSTEM_GRAPHICS MATCHES "x11")
   find_package(X11)
-ENDIF(TK_SYSTEM_GRAPHICS MATCHES "x11")
+endif(TK_SYSTEM_GRAPHICS MATCHES "x11")
 
-include_directories(
-  ${CMAKE_CURRENT_SOURCE_DIR}/src
-  ${CMAKE_CURRENT_BINARY_DIR}
-  ${TCL_INCLUDE_DIRS}
-  ${TK_INCLUDE_PATH}
-  ${X11_INCLUDE_DIR}
-  )
+#----------------------------------------------------------------------------
+# First, get some standard options out of the way
+add_definitions(-DSTDC_HEADERS=1)
 
-SET(TKHTML_PKGNAME Tkhtml)
-SET(TKHTML_PKGVERSION "3.0")
+# building tkhtml
+add_definitions(-DBUILD_tkhtml)
 
-# Windows specific flags
-IF(WIN32)
-  SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEP -Ot -Oi -fp:strict -Gs -GS -GL -DUSE_TCL_STUBS -DUSE_TK_STUBS -D__WIN32__")
-  SET(TKHTML_CFLAGS "${TKHTML_CFLAGS} -Dinline=__inline -DBUILD_tkhtml")
-ENDIF(WIN32)
+set(TKHTML_PKGNAME tkhtml)
+set(TKHTML_PKGVERSION "3.0")
 
-SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${TKHTML_CFLAGS}")
 
-ADD_CUSTOM_COMMAND(
+
+add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/htmldefaultstyle.c
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/src/mkdefaultstyle.tcl > ${CMAKE_CURRENT_BINARY_DIR}/htmldefaultstyle.c
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/mkdefaultstyle.tcl ${TCL_TCLSH}
   )
 
-ADD_CUSTOM_COMMAND(
+add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/htmltokens.c ${CMAKE_CURRENT_BINARY_DIR}/htmltokens.h
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/src/tokenlist.txt
   DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/tokenlist.txt ${TCL_TCLSH}
   )
 
-ADD_CUSTOM_COMMAND(
+add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/cssprop.c ${CMAKE_CURRENT_BINARY_DIR}/cssprop.h
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/src/cssprop.tcl
   DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/htmltokens.c ${CMAKE_CURRENT_SOURCE_DIR}/src/cssprop.tcl ${TCL_TCLSH}
   )
 
-SET(TKHTML_SRCS
+set(TKHTML_SRCS
   ${CMAKE_CURRENT_BINARY_DIR}/htmldefaultstyle.c
   ${CMAKE_CURRENT_BINARY_DIR}/cssprop.c
   src/css.c
@@ -88,38 +144,44 @@ SET(TKHTML_SRCS
   src/swproc.c
   )
 
-IF(NOT LIB_DIR)
-  IF(NOT WIN32)
-    SET(LIB_DIR lib)
-  ELSE(NOT WIN32)
-    SET(LIB_DIR bin)
-  ENDIF(NOT WIN32)
-ENDIF(NOT LIB_DIR)
+include_directories(
+  ${CMAKE_CURRENT_SOURCE_DIR}/src
+  ${CMAKE_CURRENT_BINARY_DIR}
+  ${TCL_INCLUDE_PATH}
+  ${TK_INCLUDE_PATH}
+  ${X11_INCLUDE_DIR}
+  )
 
 add_library(Tkhtml SHARED ${TKHTML_SRCS})
-IF(TK_SYSTEM_GRAPHICS MATCHES "aqua")
+if(TK_SYSTEM_GRAPHICS MATCHES "aqua")
   # Need the X emulation functions from Tk when using aqua - the stubs
   # library doesn't seem to supply them
   target_link_libraries(Tkhtml ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${TK_LIBRARY} ${X11_LIBRARIES})
-ELSE(TK_SYSTEM_GRAPHICS MATCHES "aqua")
+else(TK_SYSTEM_GRAPHICS MATCHES "aqua")
   target_link_libraries(Tkhtml ${TCL_STUB_LIBRARY} ${TK_STUB_LIBRARY} ${X11_LIBRARIES})
-ENDIF(TK_SYSTEM_GRAPHICS MATCHES "aqua")
-SET_TARGET_PROPERTIES(Tkhtml PROPERTIES VERSION ${TKHTML_PKGVERSION})
-SET_PROPERTY(TARGET Tkhtml APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
-SET_PROPERTY(TARGET Tkhtml APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
-install(TARGETS Tkhtml 
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+endif(TK_SYSTEM_GRAPHICS MATCHES "aqua")
+set_target_properties(Tkhtml PROPERTIES VERSION ${TKHTML_PKGVERSION})
+set_property(TARGET Tkhtml APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
+set_property(TARGET Tkhtml APPEND PROPERTY COMPILE_DEFINITIONS USE_TK_STUBS)
+install(TARGETS Tkhtml
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
-TCL_PKGINDEX(Tkhtml ${TKHTML_PKGNAME} ${TKHTML_PKGVERSION})
+include("${CMAKE_CURRENT_SOURCE_DIR}/tcl_pkgindex.cmake")
+tcl_pkgindex(Tkhtml ${TKHTML_PKGNAME} ${TKHTML_PKGVERSION})
 
-ADD_CUSTOM_COMMAND(
+add_custom_command(
   OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n
   COMMAND ${TCL_TCLSH} ${CMAKE_CURRENT_SOURCE_DIR}/doc/macros.tcl -nroff ${CMAKE_CURRENT_SOURCE_DIR}/doc/html.man > ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n
   )
-ADD_CUSTOM_TARGET(tkhtml_n_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n)
-if(NOT MAN_DIR)
-  SET(MAN_DIR man)
-endif(NOT MAN_DIR)
+add_custom_target(tkhtml_n_gen ALL DEPENDS ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n)
 install(FILES ${CMAKE_CURRENT_BINARY_DIR}/tkhtml.n DESTINATION ${MAN_DIR}/mann)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

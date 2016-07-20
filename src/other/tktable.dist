@@ -9,5 +9,4 @@ library
 license.txt
 mac
 misc
-CMake
 )

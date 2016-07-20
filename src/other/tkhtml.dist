@@ -17,5 +17,4 @@ src/restrack.h
 src/swproc.h
 src/tkhtml.tcl
 src/tokenlist.txt
-CMake
 )

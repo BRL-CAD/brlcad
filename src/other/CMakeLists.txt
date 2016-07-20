@@ -528,8 +528,6 @@ mark_as_advanced(IWIDGETS_VERSION)
 mark_as_advanced(COMPAT_SRCS)
 
 
-if(0)
-
 set(tkhtml_ALIASES ENABLE_TKHTML)
 set(tkhtml_DESCRIPTION "
 Option for enabling and disabling compilation of the Tkhtml HTML
@@ -578,8 +576,6 @@ SetTargetFolder(tktable_header_gen "Compilation Utilities")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/pkgIndex.tcl")
 #DISTCLEAN("${CMAKE_CURRENT_BINARY_DIR}/tktreectrl/tktreectrl_cfg.h")
 #DISTCLEAN("${CMAKE_BINARY_DIR}/lib/TkTreeCtrl2.4")
-
-endif(0)
 
 
 
