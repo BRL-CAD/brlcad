@@ -35,6 +35,7 @@ __author__ = "Guilherme Polo <ggpolo@gmail.com>"
 
 __all__ = ["ArrayVar", "Table"]
 
+import os
 import Tkinter
 
 def _setup_master(master):
@@ -47,6 +48,12 @@ def _setup_master(master):
     return master
 
 class ArrayVar(Tkinter.Variable):
+    """Class for handling Tcl arrays.
+
+    An array is actually an associative array in Tcl, so this class supports
+    some dict operations.
+    """
+
     def __init__(self, master=None, name=None):
         # Tkinter.Variable.__init__ is not called on purpose! I don't wanna
         # see an ugly _default value in the pretty array.
@@ -57,21 +64,39 @@ class ArrayVar(Tkinter.Variable):
         else:
             self._name = 'PY_VAR%s' % id(self)
 
-    def get(self, index=None):
-        if index is None:
-            res = {}
-            for key in self.names():
-                res[key] = self._tk.globalgetvar(str(self), key)
-            return res
+    def __del__(self):
+        if bool(self._tk.call('info', 'exists', self._name)):
+            self._tk.globalunsetvar(self._name)
 
-        return self._tk.globalgetvar(str(self), str(index))
+    def __len__(self):
+        return int(self._tk.call('array', 'size', str(self)))
+
+    def __getitem__(self, key):
+        return self.get(key)
+
+    def __setitem__(self, key, value):
+        self.set(**{str(key): value})
 
     def names(self):
         return self._tk.call('array', 'names', self._name)
 
-    def set(self, key, value):
-        self._tk.globalsetvar(str(self), str(key), value)
+    def get(self, key=None):
+        if key is None:
+            flatten_pairs = self._tk.call('array', 'get', str(self))
+            return dict(zip(flatten_pairs[::2], flatten_pairs[1::2]))
 
+        return self._tk.globalgetvar(str(self), str(key))
+
+    def set(self, **kw):
+        self._tk.call('array', 'set', str(self), Tkinter._flatten(kw.items()))
+
+    def unset(self, pattern=None):
+        """Unsets all of the elements in the array. If pattern is given, only
+        the elements that match pattern are unset. """
+        self._tk.call('array', 'unset', str(self), pattern)
+
+
+_TKTABLE_LOADED = False
 
 class Table(Tkinter.Widget):
     """Create and manipulate tables."""
@@ -85,13 +110,14 @@ class Table(Tkinter.Widget):
 
     def __init__(self, master=None, **kw):
         master = _setup_master(master)
-        try:
+        global _TKTABLE_LOADED
+        if not _TKTABLE_LOADED:
+            tktable_lib = os.environ.get('TKTABLE_LIBRARY')
+            if tktable_lib:
+                master.tk.eval('global auto_path; '
+                                'lappend auto_path {%s}' % tktable_lib)
             master.tk.call('package', 'require', 'Tktable')
-        except Tkinter.TclError:
-            try:
-                master.tk.call('load', 'Tktable.dll', 'Tktable')
-            except Tkinter.TclError:
-                master.tk.call('load', '', 'Tktable')
+            _TKTABLE_LOADED = True
 
         Tkinter.Widget.__init__(self, master, 'table', kw)
 
@@ -127,16 +153,13 @@ class Table(Tkinter.Widget):
         e.c = tk.getint(c)
         e.i = tk.getint(i)
         e.r = tk.getint(r)
-        e.C = (e.r, e.c)
+        e.C = "%d,%d" % (e.r, e.c)
+        e.s = s
+        e.S = S
         try:
-            e.s = tk.getint(s)
-        except Tkinter.TclError:
-            e.s = s
-        try:
-            e.S = tk.getint(S)
-        except Tkinter.TclError:
-            e.S = S
-        e.W = W
+            e.W = self._nametowidget(W)
+        except KeyError:
+            e.W = None
 
         return (e,)
 
@@ -480,7 +503,7 @@ class Table(Tkinter.Widget):
         if column is None and not kwargs:
             pairs = self.tk.splitlist(self.tk.call(self._w, 'width'))
             return dict(pair.split() for pair in pairs)
-        elif column:
+        elif column is not None:
             return int(self.tk.call(self._w, 'width', str(column)))
 
         args = Tkinter._flatten(kwargs.items())
@@ -614,7 +637,7 @@ def sample_test():
     for y in range(-1, 4):
         for x in range(-1, 5):
             index = "%i,%i" % (y, x)
-            var.set(index, index)
+            var[index] = index
 
     label = Label(root, text="Proof-of-existence test for Tktable")
     label.pack(side = 'top', fill = 'x')

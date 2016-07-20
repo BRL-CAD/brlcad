@@ -22,9 +22,6 @@
  * RCS: @(#) $Id$
  */
 
-#ifdef CMAKE_HEADERS
-#  include "tktable_cfg.h"
-#endif
 #include "tkTable.h"
 
 #ifdef DEBUG
@@ -1761,8 +1758,8 @@ TableDisplay(ClientData clientdata)
     pady  = tablePtr->padY;
 
 #ifndef WIN32
-    /* 
-     * if we are using the slow drawing mode with a pixmap 
+    /*
+     * if we are using the slow drawing mode with a pixmap
      * create the pixmap and adjust x && y for offset in pixmap
      * FIX: Ignore slow mode for Win32 as the fast ClipRgn trick
      * below does not work for bitmaps.
@@ -1774,8 +1771,11 @@ TableDisplay(ClientData clientdata)
 #endif
 	window = Tk_WindowId(tkwin);
 #ifdef NO_XSETCLIP
-    clipWind = Tk_GetPixmap(display, window,
-	    invalidWidth, invalidHeight, Tk_Depth(tkwin));
+    /*
+     * Ensure clipWind is large enough for changed cell, which at the
+     * extreme is the full displayed window size.
+     */
+    clipWind = Tk_GetPixmap(display, window, boundW, boundH, Tk_Depth(tkwin));
 #endif
 
     /* set up the permanent tag styles */
@@ -1797,9 +1797,10 @@ TableDisplay(ClientData clientdata)
     tablePtr->flags &= ~AVOID_SPANS;
 
 #ifdef DEBUG
-    tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d",
+    tcl_dprintf(tablePtr->interp, "%d,%d => %d,%d  X,Y %d,%d W,H %dx%d",
 	    rowFrom+tablePtr->rowOffset, colFrom+tablePtr->colOffset,
-	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset);
+	    rowTo+tablePtr->rowOffset, colTo+tablePtr->colOffset,
+	    invalidX, invalidY, invalidWidth, invalidHeight);
 #endif
 
     /* 
@@ -2270,7 +2271,6 @@ TableDisplay(ClientData clientdata)
 		     */
 #ifdef NO_XSETCLIP
 		    /*
-		     * This code is basically for the Macintosh.
 		     * Copy the the current contents of the cell into the
 		     * clipped window area.  This keeps any fg/bg and image
 		     * data intact.
@@ -3576,6 +3576,7 @@ TableConfigCursor(register Table *tablePtr)
  *
  *----------------------------------------------------------------------
  */
+
 static int
 TableFetchSelection(clientData, offset, buffer, maxBytes)
      ClientData clientData;	/* Information about table widget. */
@@ -3588,12 +3589,21 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
     register Table *tablePtr = (Table *) clientData;
     Tcl_Interp *interp = tablePtr->interp;
     char *value, *data, *rowsep = tablePtr->rowSep, *colsep = tablePtr->colSep;
-    Tcl_DString selection;
     Tcl_HashEntry *entryPtr;
     Tcl_HashSearch search;
     int length, count, lastrow=0, needcs=0, r, c, listArgc, rslen=0, cslen=0;
     int numcols, numrows;
     CONST84 char **listArgv;
+
+    /*
+     * We keep a static selection around so we don't have to remake the
+     * selection if we are getting the selection in chunks (i.e. offset != 0).
+     * Not thread-safe, but selection happens sequentially in practice.
+     * Otherwise could move them to per-table, but then more cleanup and
+     * tracking is needed (flag bit + extended table struct).
+     */
+    static int haveSelection = 0;
+    static Tcl_DString selection;
 
     /* if we are not exporting the selection ||
      * we have no data source, return */
@@ -3602,88 +3612,101 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	return -1;
     }
 
-    /* First get a sorted list of the selected elements */
-    Tcl_DStringInit(&selection);
-    for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
-	 entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
-	Tcl_DStringAppendElement(&selection,
-				 Tcl_GetHashKey(tablePtr->selCells, entryPtr));
-    }
-    value = TableCellSort(tablePtr, Tcl_DStringValue(&selection));
-    Tcl_DStringFree(&selection);
+    if ((offset == 0) || !haveSelection) {
+	/* First Time thru, get the selection, otherwise, just use the
+	 * selection obtained before */
 
-    if (value == NULL ||
-	Tcl_SplitList(interp, value, &listArgc, &listArgv) != TCL_OK) {
-	return -1;
-    }
-    Tcl_Free(value);
+	if (haveSelection) {
+	    /* If we have fetched a selection before, free it */
+	    Tcl_DStringFree(&selection);
+	}
+	haveSelection = 1;
 
-    Tcl_DStringInit(&selection);
-    rslen = (rowsep?(strlen(rowsep)):0);
-    cslen = (colsep?(strlen(colsep)):0);
-    numrows = numcols = 0;
-    for (count = 0; count < listArgc; count++) {
-	TableParseArrayIndex(&r, &c, listArgv[count]);
-	if (count) {
-	    if (lastrow != r) {
+	/* First get a sorted list of the selected elements */
+	Tcl_DStringInit(&selection);
+	for (entryPtr = Tcl_FirstHashEntry(tablePtr->selCells, &search);
+	     entryPtr != NULL; entryPtr = Tcl_NextHashEntry(&search)) {
+	    Tcl_DStringAppendElement(&selection,
+		    Tcl_GetHashKey(tablePtr->selCells, entryPtr));
+	}
+	value = TableCellSort(tablePtr, Tcl_DStringValue(&selection));
+	Tcl_DStringFree(&selection);
+
+	if (value == NULL ||
+		Tcl_SplitList(interp, value, &listArgc, &listArgv) != TCL_OK) {
+	    return -1;
+	}
+	Tcl_Free(value);
+
+	Tcl_DStringInit(&selection);
+	rslen = (rowsep?(strlen(rowsep)):0);
+	cslen = (colsep?(strlen(colsep)):0);
+	numrows = numcols = 0;
+	for (count = 0; count < listArgc; count++) {
+	    TableParseArrayIndex(&r, &c, listArgv[count]);
+	    if (count) {
+		if (lastrow != r) {
+		    lastrow = r;
+		    needcs = 0;
+		    if (rslen) {
+			Tcl_DStringAppend(&selection, rowsep, rslen);
+		    } else {
+			Tcl_DStringEndSublist(&selection);
+			Tcl_DStringStartSublist(&selection);
+		    }
+		    ++numrows;
+		} else {
+		    if (++needcs > numcols)
+			numcols = needcs;
+		}
+	    } else {
 		lastrow = r;
 		needcs = 0;
-		if (rslen) {
-		    Tcl_DStringAppend(&selection, rowsep, rslen);
-		} else {
-		    Tcl_DStringEndSublist(&selection);
+		if (!rslen) {
 		    Tcl_DStringStartSublist(&selection);
 		}
-		++numrows;
+	    }
+	    data = TableGetCellValue(tablePtr, r, c);
+	    if (cslen) {
+		if (needcs) {
+		    Tcl_DStringAppend(&selection, colsep, cslen);
+		}
+		Tcl_DStringAppend(&selection, data, -1);
 	    } else {
-		if (++needcs > numcols)
-		    numcols = needcs;
-	    }
-	} else {
-	    lastrow = r;
-	    needcs = 0;
-	    if (!rslen) {
-		Tcl_DStringStartSublist(&selection);
+		Tcl_DStringAppendElement(&selection, data);
 	    }
 	}
-	data = TableGetCellValue(tablePtr, r, c);
-	if (cslen) {
-	    if (needcs) {
-		Tcl_DStringAppend(&selection, colsep, cslen);
-	    }
-	    Tcl_DStringAppend(&selection, data, -1);
-	} else {
-	    Tcl_DStringAppendElement(&selection, data);
+	if (!rslen && count) {
+	    Tcl_DStringEndSublist(&selection);
 	}
-    }
-    if (!rslen && count) {
-	Tcl_DStringEndSublist(&selection);
-    }
-    Tcl_Free((char *) listArgv);
+	Tcl_Free((char *) listArgv);
 
-    if (tablePtr->selCmd != NULL) {
-	Tcl_DString script;
-	Tcl_DStringInit(&script);
-	ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
-		       Tcl_DStringValue(&selection), (char *)NULL,
-		       listArgc, &script, CMD_ACTIVATE);
-	if (Tcl_GlobalEval(interp, Tcl_DStringValue(&script)) == TCL_ERROR) {
-	    Tcl_AddErrorInfo(interp,
-			     "\n    (error in table selection command)");
-	    Tcl_BackgroundError(interp);
+	if (tablePtr->selCmd != NULL) {
+	    Tcl_DString script;
+	    Tcl_DStringInit(&script);
+	    ExpandPercents(tablePtr, tablePtr->selCmd, numrows+1, numcols+1,
+		    Tcl_DStringValue(&selection), (char *)NULL,
+		    listArgc, &script, CMD_ACTIVATE);
+	    if (Tcl_EvalEx(interp, Tcl_DStringValue(&script), -1,
+			TCL_EVAL_GLOBAL) == TCL_ERROR) {
+		Tcl_AddErrorInfo(interp,
+			"\n    (error in table selection command)");
+		Tcl_BackgroundError(interp);
+		Tcl_DStringFree(&script);
+		Tcl_DStringFree(&selection);
+		haveSelection = 0;
+		return -1;
+	    } else {
+		Tcl_DStringGetResult(interp, &selection);
+	    }
 	    Tcl_DStringFree(&script);
-	    Tcl_DStringFree(&selection);
-	    return -1;
-	} else {
-	    Tcl_DStringGetResult(interp, &selection);
 	}
-	Tcl_DStringFree(&script);
     }
-
     length = Tcl_DStringLength(&selection);
 
-    if (length == 0)
+    if (length == 0) {
 	return -1;
+    }
 
     /* Copy the requested portion of the selection to the buffer. */
     count = length - offset;
@@ -3698,7 +3721,13 @@ TableFetchSelection(clientData, offset, buffer, maxBytes)
 	       (size_t) count);
     }
     buffer[count] = '\0';
-    Tcl_DStringFree(&selection);
+    if (count < maxBytes) {
+	/*
+	 * This should be the last call in this range, so free selection now.
+	 */
+	Tcl_DStringFree(&selection);
+	haveSelection = 0;
+    }
     return count;
 }
 
@@ -3807,9 +3836,11 @@ TableValidateChange(tablePtr, r, c, old, new, index)
 	return TCL_OK;
     }
 
+#if !defined(WIN32) && !defined(MAC_OSX_TK)
     /* Magic code to make this bit of code UI synchronous in the face of
      * possible new key events */
     XSync(tablePtr->display, False);
+#endif
     rstrct = Tk_RestrictEvents(TableRestrictProc, (ClientData)
 				 NextRequest(tablePtr->display), &cdata);
 
