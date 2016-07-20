@@ -448,7 +448,6 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
-message("got here")
 THIRD_PARTY_TCL_PACKAGE(Itcl itcl "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
