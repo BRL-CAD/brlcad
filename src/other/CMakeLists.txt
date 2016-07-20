@@ -157,11 +157,6 @@ mark_as_advanced(FREETYPE_INCLUDE_DIR_freetype2)
 mark_as_advanced(FREETYPE_INCLUDE_DIR_ft2build)
 mark_as_advanced(FREETYPE_LIBRARIES)
 
-# --------------------------------------------------------------------
-# The incrtTcl subdirectory isn't directly referenced, but its
-# subdirectories are used - mark incrTcl as ignored
-CMAKEFILES(incrTcl)
-
 # libtermlib Library Only on WIN32 will the combination of the build
 # search tests and libtermlib fail to find a valid term, so set
 # variables accordingly
@@ -453,6 +448,7 @@ testing first for a system version if BRLCAD_TCL is set to AUTO or
 SYSTEM.  If BRLCAD_ITCL is set to BUNDLED, local copy is built even if
 a system version is present.
 ")
+message("got here")
 THIRD_PARTY_TCL_PACKAGE(Itcl itcl "${TCL_TCLSH}" "tcl" "BRLCAD_LEVEL2" "itcl" itcl_ALIASES itcl_DESCRIPTION)
 if(BRLCAD_ITCL_BUILD)
   set(ITCL_LIBRARY itcl CACHE STRING "ITCL_LIBRARY" FORCE)
