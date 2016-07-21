@@ -2,9 +2,7 @@ SET(itk_ignore_files
 generic/itk.decls
 generic/itk.h
 generic/itkDecls.h
-itkConfig.sh.in
 library
 license.terms
-pkgIndex.tcl.in
 win
 )

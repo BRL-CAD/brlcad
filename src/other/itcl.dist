@@ -5,9 +5,7 @@ generic/itcl.decls
 generic/itclIntDecls.h
 generic/itclVarsAndCmds.h
 generic/itclVCInt.h
-itclConfig.sh.in
 library
 license.terms
-pkgIndex.tcl.in
 win
 )
