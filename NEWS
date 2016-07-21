@@ -153,6 +153,7 @@ geometry (e.g., primitives with CSG).
 * fixed memory leaks in a number of pix utilities - Cezar Elnazli
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
+* added -f vertex fuse option to obj-g importer - Jon Engbert
 * added -v verbose output option to mged 'search' command - Cliff Yapp
 * fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
 * fixed crash of extrude with special case bezier curves - huskmate13
