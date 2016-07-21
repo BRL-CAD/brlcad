@@ -438,6 +438,18 @@ else(BRLCAD_ENABLE_TK)
 endif(BRLCAD_ENABLE_TK)
 mark_as_advanced(HAVE_TK)
 
+# NOTE: we're still currently on Itcl/Itk 3 because Archer
+# is relying on a property of itcl3 that itcl4 does not
+# duplicate (indeed, it's not clear the usage in question
+# was *ever* intended to work.)  MGED and rtwizard both
+# worked with itcl4, so we should probably fix Archer...
+#
+# Issue was filed with Tcl/Tk devs here, watch to see if
+# they issue a change to itcl4 or decide this behavior
+# shouldn't have worked to begin with:
+#
+# http://core.tcl.tk/itcl/tktview/61952ca33e9e58df9e0519a0b4583a144e8ec77b
+
 # First up, look for IncrTcl's Itcl.
 set(itcl_ALIASES ENABLE_ITCL)
 set(itcl_DESCRIPTION "
