@@ -83,8 +83,8 @@ if(NOT ITCL_STUB_LIBRARY)
 endif(NOT ITCL_STUB_LIBRARY)
 
 # version numbers
-set(ITK_VERSION_MAJOR 4)
-set(ITK_VERSION_MINOR 0)
+set(ITK_VERSION_MAJOR 3)
+set(ITK_VERSION_MINOR 4)
 set(ITK_PATCH_LEVEL 2)
 set(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}.${ITK_PATCH_LEVEL}")
 
@@ -169,18 +169,15 @@ if(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 endif(TK_GRAPHICS_SYSTEM STREQUAL "x11")
 
 set(ITK_SRCS
-  generic/itkArchBase.c
-  generic/itkArchetype.c
-  generic/itkBase.c
-  generic/itkCmd.c
-  generic/itkHelpers.c
-  generic/itkOption.c
-  generic/itkUtil.c
+  generic/itk_cmds.c
+  generic/itk_option.c
+  generic/itk_archetype.c
+  generic/itk_util.c
   generic/itkStubInit.c
   )
 
 if(WIN32)
-  set(ITK_SRCS ${ITK_SRCS} dllEntryPoint.c)
+  set(ITK_SRCS ${ITK_SRCS} win/dllEntryPoint.c)
 endif(WIN32)
 
 set(ITK_STUB_SRCS generic/itkStubLib.c)

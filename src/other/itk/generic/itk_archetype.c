@@ -10,6 +10,16 @@
  *  This part adds C implementations for some of the methods in the
  *  base class itk::Archetype.
  *
+ *    Itk_ArchComponentCmd   <=> itk_component
+ *    Itk_ArchOptionCmd      <=> itk_option
+ *    Itk_ArchInitCmd        <=> itk_initialize
+ *    Itk_ArchCompAccessCmd  <=> component
+ *    Itk_ArchConfigureCmd   <=> configure
+ *    Itk_ArchCgetCmd        <=> cget
+ *
+ *    Itk_ArchInitOptsCmd    <=> _initOptionInfo (used to set things up)
+ *    Itk_ArchDeleteOptsCmd  <=> _deleteOptionInfo (used to clean things up)
+ *
  * ========================================================================
  *  AUTHOR:  Michael J. McLennan
  *           Bell Labs Innovations for Lucent Technologies
@@ -22,21 +32,165 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 #include <assert.h>
-#include "itkInt.h"
+#include "itk.h"
+
+/*
+ *  Info associated with each Archetype mega-widget:
+ */
+typedef struct ArchInfo {
+    ItclObject *itclObj;        /* object containing this info */
+    Tk_Window tkwin;            /* window representing this mega-widget */
+    Tcl_HashTable components;   /* list of all mega-widget components */
+    Tcl_HashTable options;      /* list of all mega-widget options */
+    ItkOptList order;           /* gives ordering of options */
+} ArchInfo;
+
+/*
+ *  Each component widget in an Archetype mega-widget:
+ */
+typedef struct ArchComponent {
+    ItclMember *member;         /* contains protection level for this comp */
+    Tcl_Command accessCmd;      /* access command for component widget */
+    Tk_Window tkwin;            /* Tk window for this component widget */
+    char *pathName;             /* Tk path name for this component widget.
+                                   We can't use the tkwin pointer after
+                                   the window has been destroyed so we
+                                   need to save a copy for use in
+                                   Itk_ArchCompDeleteCmd() */
+} ArchComponent;
+
+/*
+ *  Each option in an Archetype mega-widget:
+ */
+typedef struct ArchOption {
+    char *switchName;           /* command-line switch for this option */
+    char *resName;              /* resource name in X11 database */
+    char *resClass;             /* resource class name in X11 database */
+    char *init;                 /* initial value for option */
+    int flags;                  /* flags representing option state */
+    Itcl_List parts;            /* parts relating to this option */
+} ArchOption;
+
+/*
+ *  Flag bits for ArchOption state:
+ */
+#define ITK_ARCHOPT_INIT  0x01  /* option has been initialized */
+
+/*
+ *  Various parts of a composite option in an Archetype mega-widget:
+ */
+typedef int (Itk_ConfigOptionPartProc) _ANSI_ARGS_((Tcl_Interp *interp,
+    ItclObject *contextObj, ClientData cdata, CONST char* newVal));
+
+typedef struct ArchOptionPart {
+    ClientData clientData;                 /* data associated with this part */
+    Itk_ConfigOptionPartProc *configProc;  /* update when new vals arrive */
+    Tcl_CmdDeleteProc *deleteProc;         /* clean up after clientData */
+
+    ClientData from;                       /* token that indicates who
+                                            * contributed this option part */
+} ArchOptionPart;
+
+
+/*
+ *  Info kept by the itk::option-parser namespace and shared by
+ *  all option processing commands:
+ */
+typedef struct ArchMergeInfo {
+    Tcl_HashTable usualCode;      /* usual option handling code for the
+                                   * various widget classes */
+
+    ArchInfo *archInfo;           /* internal option info for mega-widget */
+    ArchComponent *archComp;      /* component being merged into mega-widget */
+    Tcl_HashTable *optionTable;   /* table of valid configuration options
+                                   * for component being merged */
+} ArchMergeInfo;
+
+/*
+ *  Used to capture component widget configuration options when a
+ *  new component is being merged into a mega-widget:
+ */
+typedef struct GenericConfigOpt {
+    char *switchName;             /* command-line switch for this option */
+    char *resName;                /* resource name in X11 database */
+    char *resClass;               /* resource class name in X11 database */
+    char *init;                   /* initial value for this option */
+    char *value;                  /* current value for this option */
+    char **storage;               /* storage for above strings */
+
+    ArchOption *integrated;       /* integrated into this mega-widget option */
+    ArchOptionPart *optPart;      /* integrated as this option part */
+} GenericConfigOpt;
+
+/*
+ *  Options that are propagated by a "configure" method:
+ */
+typedef struct ConfigCmdline {
+    Tcl_Obj *objv[4];           /* objects representing "configure" command */
+} ConfigCmdline;
+
 
 /*
  *  FORWARD DECLARATIONS
  */
+static void Itk_DelMergeInfo _ANSI_ARGS_((char* cdata));
 
+static int Itk_ArchInitOptsCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static void Itk_DelArchInfo _ANSI_ARGS_((ClientData cdata));
+static int Itk_ArchDeleteOptsCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+
+static int Itk_ArchComponentCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchCompAddCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchCompDeleteCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptKeepCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptIgnoreCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptRenameCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptUsualCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+
+static int Itk_ArchInitCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptionCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptionAddCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchOptionRemoveCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+
+static int Itk_ArchCompAccessCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchConfigureCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
+static int Itk_ArchCgetCmd _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp, int objc, Tcl_Obj *CONST objv[]));
 static int Itk_PropagateOption _ANSI_ARGS_((Tcl_Interp *interp,
+    ItclObject *contextObj, ClientData cdata, CONST char *newval));
+static int Itk_PropagatePublicVar _ANSI_ARGS_((Tcl_Interp *interp,
     ItclObject *contextObj, ClientData cdata, CONST char *newval));
 
 static int Itk_ArchSetOption _ANSI_ARGS_((Tcl_Interp *interp,
     ArchInfo *info, CONST char *name, CONST char *value));
+static int Itk_ArchConfigOption _ANSI_ARGS_((Tcl_Interp *interp,
+    ArchInfo *info, char *name, char *value));
+static void Itk_ArchOptConfigError _ANSI_ARGS_((Tcl_Interp *interp,
+    ArchInfo *info, ArchOption *archOpt));
+static void Itk_ArchOptAccessError _ANSI_ARGS_((Tcl_Interp *interp,
+    ArchInfo *info, ArchOption *archOpt));
+
+static int Itk_GetArchInfo _ANSI_ARGS_((Tcl_Interp *interp,
+    ItclObject* contextObj, ArchInfo **infoPtr));
 
 static ArchComponent* Itk_CreateArchComponent _ANSI_ARGS_((
     Tcl_Interp *interp, ArchInfo *info, char *name,
-    ItclClass *iclsPtr, Tcl_Command accessCmd));
+    ItclClass *cdefn, Tcl_Command accessCmd));
 static void Itk_DelArchComponent _ANSI_ARGS_((ArchComponent *archComp));
 
 static int Itk_GetArchOption _ANSI_ARGS_((Tcl_Interp *interp,
@@ -47,23 +201,137 @@ static void Itk_InitArchOption _ANSI_ARGS_((Tcl_Interp *interp,
     char *currVal));
 static void Itk_DelArchOption _ANSI_ARGS_((ArchOption *archOpt));
 
+static ArchOptionPart* Itk_CreateOptionPart _ANSI_ARGS_((
+    Tcl_Interp *interp, ClientData cdata, Itk_ConfigOptionPartProc* cproc,
+    Tcl_CmdDeleteProc *dproc, ClientData from));
+static int Itk_AddOptionPart _ANSI_ARGS_((Tcl_Interp *interp,
+    ArchInfo *info, char *switchName, char *resName, char *resClass,
+    CONST char *defVal, char *currVal, ArchOptionPart *optPart,
+    ArchOption **raOpt));
+static ArchOptionPart* Itk_FindArchOptionPart _ANSI_ARGS_((
+    ArchInfo *info, char *switchName, ClientData from));
 static int Itk_RemoveArchOptionPart _ANSI_ARGS_((ArchInfo *info,
     char *switchName, ClientData from));
 static int Itk_IgnoreArchOptionPart _ANSI_ARGS_((ArchInfo *info,
     GenericConfigOpt *opt));
+static void Itk_DelOptionPart _ANSI_ARGS_((ArchOptionPart *optPart));
 
 static ConfigCmdline* Itk_CreateConfigCmdline _ANSI_ARGS_((
     Tcl_Interp *interp, Tcl_Command accessCmd, char *switchName));
 static void Itk_DeleteConfigCmdline _ANSI_ARGS_((ClientData cdata));
 
 static Tcl_HashTable* Itk_CreateGenericOptTable _ANSI_ARGS_((Tcl_Interp *interp,
-    const char *options));
+    char *options));
 static void Itk_DelGenericOptTable _ANSI_ARGS_((Tcl_HashTable *tPtr));
 
 static GenericConfigOpt* Itk_CreateGenericOpt _ANSI_ARGS_((Tcl_Interp *interp,
-    const char *switchName, Tcl_Command accessCmd));
+    char *switchName, Tcl_Command accessCmd));
 static void Itk_DelGenericOpt _ANSI_ARGS_((GenericConfigOpt* opt));
 
+static Tcl_HashTable* ItkGetObjsWithArchInfo _ANSI_ARGS_((Tcl_Interp *interp));
+static void ItkFreeObjsWithArchInfo _ANSI_ARGS_((ClientData cdata,
+    Tcl_Interp *interp));
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchetypeInit()
+ *
+ *  Invoked by Itk_Init() whenever a new interpreter is created to
+ *  declare the procedures used in the itk::Archetype base class.
+ * ------------------------------------------------------------------------
+ */
+int
+Itk_ArchetypeInit(interp)
+    Tcl_Interp *interp;  /* interpreter to be updated */
+{
+    ArchMergeInfo *mergeInfo;
+    Tcl_Namespace *parserNs;
+
+    /*
+     *  Declare all of the C routines that are integrated into
+     *  the Archetype base class.
+     */
+    if (Itcl_RegisterObjC(interp,
+            "Archetype-init", Itk_ArchInitOptsCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-delete", Itk_ArchDeleteOptsCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-itk_component", Itk_ArchComponentCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-itk_option", Itk_ArchOptionCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-itk_initialize", Itk_ArchInitCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-component", Itk_ArchCompAccessCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-configure",Itk_ArchConfigureCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK ||
+
+        Itcl_RegisterObjC(interp,
+            "Archetype-cget",Itk_ArchCgetCmd,
+            (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL) != TCL_OK) {
+
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Create the namespace containing the option parser commands.
+     */
+    mergeInfo = (ArchMergeInfo*)ckalloc(sizeof(ArchMergeInfo));
+    Tcl_InitHashTable(&mergeInfo->usualCode, TCL_STRING_KEYS);
+    mergeInfo->archInfo    = NULL;
+    mergeInfo->archComp    = NULL;
+    mergeInfo->optionTable = NULL;
+
+    parserNs = Tcl_CreateNamespace(interp, "::itk::option-parser",
+        (ClientData)mergeInfo, Itcl_ReleaseData);
+
+    if (!parserNs) {
+        Itk_DelMergeInfo((char*)mergeInfo);
+        Tcl_AddErrorInfo(interp, "\n    (while initializing itk)");
+        return TCL_ERROR;
+    }
+    Itcl_PreserveData((ClientData)mergeInfo);
+    Itcl_EventuallyFree((ClientData)mergeInfo, Itk_DelMergeInfo);
+
+    Tcl_CreateObjCommand(interp, "::itk::option-parser::keep",
+        Itk_ArchOptKeepCmd,
+        (ClientData)mergeInfo, (Tcl_CmdDeleteProc*)NULL);
+
+    Tcl_CreateObjCommand(interp, "::itk::option-parser::ignore",
+        Itk_ArchOptIgnoreCmd,
+        (ClientData)mergeInfo, (Tcl_CmdDeleteProc*)NULL);
+
+    Tcl_CreateObjCommand(interp, "::itk::option-parser::rename",
+        Itk_ArchOptRenameCmd,
+        (ClientData)mergeInfo, (Tcl_CmdDeleteProc*)NULL);
+
+    Tcl_CreateObjCommand(interp, "::itk::option-parser::usual",
+        Itk_ArchOptUsualCmd,
+        (ClientData)mergeInfo, (Tcl_CmdDeleteProc*)NULL);
+
+    /*
+     *  Add the "itk::usual" command to register option handling code.
+     */
+    Tcl_CreateObjCommand(interp, "::itk::usual", Itk_UsualCmd,
+        (ClientData)mergeInfo, Itcl_ReleaseData);
+    Itcl_PreserveData((ClientData)mergeInfo);
+
+    return TCL_OK;
+}
 
 
 /*
@@ -76,9 +344,9 @@ static void Itk_DelGenericOpt _ANSI_ARGS_((GenericConfigOpt* opt));
  *  are no more uses of the data.
  * ------------------------------------------------------------------------
  */
-void
-Itk_DelMergeInfo(
-    char* cdata)  /* data to be destroyed */
+static void
+Itk_DelMergeInfo(cdata)
+    char* cdata;  /* data to be destroyed */
 {
     ArchMergeInfo *mergeInfo = (ArchMergeInfo*)cdata;
 
@@ -102,6 +370,102 @@ Itk_DelMergeInfo(
 
 /*
  * ------------------------------------------------------------------------
+ *  Itk_ArchInitOptsCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::_initOptionInfo
+ *  method.  This method should be called out in the constructor for
+ *  each object, to initialize the object so that it can be used with
+ *  the other access methods in this file.  Allocates some extra
+ *  data associated with the object at the C-language level.
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchInitOptsCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    int newEntry, result;
+    ArchInfo *info;
+    ItclClass *contextClass;
+    ItclObject *contextObj;
+    Tcl_HashTable *objsWithArchInfo;
+    Tcl_HashEntry *entry;
+    Command *cmdPtr;
+
+    if (objc != 1) {
+        Tcl_WrongNumArgs(interp, 1, objv, "");
+        return TCL_ERROR;
+    }
+
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        char *token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "cannot use \"", token, "\" without an object context",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Create some archetype info for the current object and
+     *  register it on the list of all known objects.
+     */
+    objsWithArchInfo = ItkGetObjsWithArchInfo(interp);
+
+    info = (ArchInfo*)ckalloc(sizeof(ArchInfo));
+    info->itclObj = contextObj;
+    info->tkwin = NULL;  /* not known yet */
+    Tcl_InitHashTable(&info->components, TCL_STRING_KEYS);
+    Tcl_InitHashTable(&info->options, TCL_STRING_KEYS);
+    Itk_OptListInit(&info->order, &info->options);
+
+    entry = Tcl_CreateHashEntry(objsWithArchInfo, (char*)contextObj, &newEntry);
+    if (!newEntry) {
+        Itk_DelArchInfo( Tcl_GetHashValue(entry) );
+    }
+    Tcl_SetHashValue(entry, (ClientData)info);
+
+    /*
+     *  Make sure that the access command for this object
+     *  resides in the global namespace.  If need be, move
+     *  the command.
+     */
+    result = TCL_OK;
+    cmdPtr = (Command*)contextObj->accessCmd;
+
+    if (cmdPtr->nsPtr != (Namespace*)Tcl_GetGlobalNamespace(interp)) {
+        Tcl_Obj *oldNamePtr, *newNamePtr;
+
+        oldNamePtr = Tcl_NewStringObj((char*)NULL, 0);
+        Tcl_GetCommandFullName(interp, contextObj->accessCmd, oldNamePtr);
+        Tcl_IncrRefCount(oldNamePtr);
+
+        newNamePtr = Tcl_NewStringObj("::", -1);
+        Tcl_AppendToObj(newNamePtr,
+            Tcl_GetCommandName(interp, contextObj->accessCmd), -1);
+        Tcl_IncrRefCount(newNamePtr);
+
+        result = TclRenameCommand(interp,
+            Tcl_GetStringFromObj(oldNamePtr, (int*)NULL),
+            Tcl_GetStringFromObj(newNamePtr, (int*)NULL));
+
+        Tcl_DecrRefCount(oldNamePtr);
+        Tcl_DecrRefCount(newNamePtr);
+    }
+
+    return result;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
  *  Itk_DelArchInfo()
  *
  *  Invoked when the option info associated with an itk::Archetype
@@ -110,9 +474,9 @@ Itk_DelMergeInfo(
  *  from the global list of Archetype objects.
  * ------------------------------------------------------------------------
  */
-void
-Itk_DelArchInfo(
-    ClientData cdata)    /* client data for Archetype objects */
+static void
+Itk_DelArchInfo(cdata)
+    ClientData cdata;    /* client data for Archetype objects */
 {
     ArchInfo *info = (ArchInfo*)cdata;
 
@@ -150,6 +514,140 @@ Itk_DelArchInfo(
 
 /*
  * ------------------------------------------------------------------------
+ *  Itk_ArchDeleteOptsCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::_deleteOptionInfo
+ *  method.  This method should be called out in the destructor for each
+ *  object, to clean up data allocated by Itk_ArchInitOptsCmd().
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchDeleteOptsCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    ItclClass *contextClass;
+    ItclObject *contextObj;
+    Tcl_HashTable *objsWithArchInfo;
+    Tcl_HashEntry *entry;
+
+    if (objc != 1) {
+        Tcl_WrongNumArgs(interp, 1, objv, "");
+        return TCL_ERROR;
+    }
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        char *token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "cannot use \"", token, "\" without an object context",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Find the info associated with this object.
+     *  Destroy the data and remove it from the global list.
+     */
+    objsWithArchInfo = ItkGetObjsWithArchInfo(interp);
+    entry = Tcl_FindHashEntry(objsWithArchInfo, (char*)contextObj);
+
+    if (entry) {
+        Itk_DelArchInfo( Tcl_GetHashValue(entry) );
+        Tcl_DeleteHashEntry(entry);
+    }
+    return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchComponentCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::itk_component
+ *  method.  Handles the following options:
+ *
+ *      itk_component add ?-protected? ?-private? ?--? <name> \
+ *          <createCmds> ?<optionCmds>?
+ *
+ *      itk_component delete <name> ?<name>...?
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchComponentCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    char *cmd, *token, c;
+    int length;
+
+    /*
+     *  Check arguments and handle the various options...
+     */
+    if (objc < 2) {
+        cmd = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_AppendResult(interp,
+            "wrong # args: should be one of...\n",
+            "  ", cmd, " add ?-protected? ?-private? ?--? name createCmds ?optionCmds?\n",
+            "  ", cmd, " delete name ?name name...?",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    c = *token;
+    length = strlen(token);
+
+    /*
+     *  Handle:  itk_component add...
+     */
+    if (c == 'a' && strncmp(token, "add", length) == 0) {
+        if (objc < 4) {
+            Tcl_WrongNumArgs(interp, 1, objv,
+                "add ?-protected? ?-private? ?--? name createCmds ?optionCmds?");
+            return TCL_ERROR;
+        }
+        return Itk_ArchCompAddCmd(dummy, interp, objc-1, objv+1);
+    }
+
+    /*
+     *  Handle:  itk_component delete...
+     */
+    else if (c == 'd' && strncmp(token, "delete", length) == 0) {
+        if (objc < 3) {
+            Tcl_WrongNumArgs(interp, 1, objv, "delete name ?name name...?");
+            return TCL_ERROR;
+        }
+        return Itk_ArchCompDeleteCmd(dummy, interp, objc-1, objv+1);
+    }
+
+    /*
+     *  Flag any errors.
+     */
+    cmd = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+    Tcl_AppendResult(interp,
+        "bad option \"", token,
+        "\": should be one of...\n",
+        "  ", cmd, " add name createCmds ?optionCmds?\n",
+        "  ", cmd, " delete name ?name name...?",
+        (char*)NULL);
+    return TCL_ERROR;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
  *  Itk_ArchCompAddCmd()
  *
  *  Invoked by [incr Tcl] to handle the itk::Archetype::itk_component
@@ -163,12 +661,12 @@ Itk_DelArchInfo(
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
-Itk_ArchCompAddCmd(
-    ClientData dummy,        /* unused */
-    Tcl_Interp *interp,      /* current interpreter */
-    int objc,                /* number of arguments */
-    Tcl_Obj *CONST objv[])   /* argument objects */
+static int
+Itk_ArchCompAddCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     Tcl_HashEntry *entry = NULL;
     char *path = NULL;
@@ -180,36 +678,26 @@ Itk_ArchCompAddCmd(
     Tcl_Obj *hullNamePtr = NULL;
     int pLevel = ITCL_PUBLIC;
 
-    ItclShowArgs(1, "Itk_ArchCompAddCmd", objc, objv);
-    int newEntry;
-    int result;
-    CONST char *cmd;
-    CONST char *token;
-    CONST char *resultStr;
-    Tcl_CallFrame frame;
+    int newEntry, result;
+    CONST char *cmd, *token, *resultStr;
     char *name;
     Tcl_Namespace *parserNs;
-    ItclClass *contextClass;
-    ItclClass *ownerClass;
+    ItclClass *contextClass, *ownerClass;
     ItclObject *contextObj;
     ArchInfo *info;
+    Itcl_CallFrame frame, *uplevelFramePtr, *oldFramePtr;
     Tcl_Command accessCmd;
     Tcl_Obj *objPtr;
     Tcl_DString buffer;
-    Tcl_CallFrame *uplevelFramePtr;
-    Tcl_CallFrame *oldFramePtr = NULL;
-    ItclObjectInfo *infoPtr;
-    ItclCallContext *callContextPtr;
 
     /*
      *  Get the Archetype info associated with this widget.
      */
-    contextClass = NULL;
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
         !contextObj) {
 
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot access components without an object context",
             (char*)NULL);
         return TCL_ERROR;
@@ -222,53 +710,50 @@ Itk_ArchCompAddCmd(
     /*
      *  Look for options like "-protected" or "-private".
      */
-    cmd = Tcl_GetString(objv[0]);
+    cmd = Tcl_GetStringFromObj(objv[0], (int*)NULL);
 
     while (objc > 1) {
-        token = Tcl_GetString(objv[1]);
+        token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
         if (*token != '-') {
             break;
-        } else {
-	    if (strcmp(token,"-protected") == 0) {
-                pLevel = ITCL_PROTECTED;
-            } else {
-	        if (strcmp(token,"-private") == 0) {
-                    pLevel = ITCL_PRIVATE;
-                } else {
-		    if (strcmp(token,"--") == 0) {
-                        objc--;
-                        objv++;
-                        break;
-                    } else {
-                        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                                "bad option \"", token,
-                                "\": should be -private, -protected or --",
-                                (char*)NULL);
-                            return TCL_ERROR;
-                    }
-		}
-	    }
-	}
+        }
+        else if (strcmp(token,"-protected") == 0) {
+            pLevel = ITCL_PROTECTED;
+        }
+        else if (strcmp(token,"-private") == 0) {
+            pLevel = ITCL_PRIVATE;
+        }
+        else if (strcmp(token,"--") == 0) {
+            objc--;
+            objv++;
+            break;
+        }
+        else {
+            Tcl_AppendResult(interp,
+                "bad option \"", token,
+                "\": should be -private, -protected or --",
+                (char*)NULL);
+            return TCL_ERROR;
+        }
         objc--;
         objv++;
     }
 
-    if ((objc < 3) || (objc > 4)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+    if (objc < 3 || objc > 4) {
+        Tcl_AppendResult(interp,
             "wrong # args: should be \"", cmd,
             " ?-protected? ?-private? ?--? name createCmds ?optionCmds?",
             (char*)NULL);
         return TCL_ERROR;
     }
 
-    ItclShowArgs(1, "COMPADD2", objc, objv);
     /*
      *  See if a component already exists with the symbolic name.
      */
-    name = Tcl_GetString(objv[1]);
+    name = Tcl_GetStringFromObj(objv[1], (int*)NULL);
     entry = Tcl_CreateHashEntry(&info->components, name, &newEntry);
     if (!newEntry) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "component \"", name, "\" already defined",
             (char*)NULL);
         return TCL_ERROR;
@@ -282,19 +767,20 @@ Itk_ArchCompAddCmd(
     Tcl_DStringInit(&buffer);
 
     objNamePtr = Tcl_NewStringObj((char*)NULL, 0);
-    Tcl_GetCommandFullName(contextObj->iclsPtr->interp, contextObj->accessCmd,
-            objNamePtr);
+    Tcl_GetCommandFullName(contextObj->classDefn->interp,
+        contextObj->accessCmd, objNamePtr);
     Tcl_IncrRefCount(objNamePtr);
 
     if (strcmp(name, "hull") == 0) {
         tmpNamePtr = Tcl_NewStringObj((char*)NULL, 0);
-        Tcl_GetCommandFullName(contextObj->iclsPtr->interp,
+        Tcl_GetCommandFullName(contextObj->classDefn->interp,
             contextObj->accessCmd, tmpNamePtr);
         Tcl_AppendToObj(tmpNamePtr, "-widget-", -1);
         Tcl_IncrRefCount(tmpNamePtr);
         
-        result = Itcl_RenameCommand(interp, Tcl_GetString(objNamePtr),
-                Tcl_GetString(tmpNamePtr));
+        result = TclRenameCommand(interp,
+            Tcl_GetStringFromObj(objNamePtr, (int*)NULL),
+            Tcl_GetStringFromObj(tmpNamePtr, (int*)NULL));
 
         if (result != TCL_OK) {
             goto compFail;
@@ -305,12 +791,10 @@ Itk_ArchCompAddCmd(
      *  Execute the <createCmds> to create the component widget.
      *  Do this one level up, in the scope of the calling routine.
      */
-    Itcl_SetCallFrameResolver(interp, contextClass->resolvePtr);
-    infoPtr = Tcl_GetAssocData(interp, ITCL_INTERP_DATA, NULL);
-    uplevelFramePtr = Itcl_GetUplevelCallFrame(interp, 1);
-    oldFramePtr = Itcl_ActivateCallFrame(interp, uplevelFramePtr);
-    result = Tcl_EvalObjEx(interp, objv[2], 0);
-    if (result != TCL_OK) {
+    uplevelFramePtr = _Tcl_GetCallFrame(interp, 1);
+    oldFramePtr = _Tcl_ActivateCallFrame(interp, uplevelFramePtr);
+
+    if (Tcl_EvalObj(interp, objv[2]) != TCL_OK) {
         goto compFail;
     }
 
@@ -332,50 +816,38 @@ Itk_ArchCompAddCmd(
 
     if (!accessCmd) {
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
            "cannot find component access command \"",
             path, "\" for component \"", name, "\"",
             (char*)NULL);
         goto compFail;
     }
 
-    (void) Itcl_ActivateCallFrame(interp, oldFramePtr);
-    oldFramePtr = NULL;
     winNamePtr = Tcl_NewStringObj((char*)NULL, 0);
     Tcl_GetCommandFullName(interp, accessCmd, winNamePtr);
     Tcl_IncrRefCount(winNamePtr);
 
+    (void) _Tcl_ActivateCallFrame(interp, oldFramePtr);
 
     /*
      *  Create the component record.  Set the protection level
      *  according to the "-protected" or "-private" option.
      */
     ownerClass = contextClass;
-    Tcl_Namespace *ownerNsPtr;
-    callContextPtr = Itcl_PeekStack(&infoPtr->contextStack);
-    ownerNsPtr = callContextPtr->nsPtr;
-    if (ownerNsPtr != NULL) {
-        Tcl_HashEntry *hPtr;
-	int idx = 2;
-	if (Itcl_GetStackSize(&infoPtr->contextStack) == 1) {
-	   idx = 1;
-	}
-        callContextPtr = Itcl_GetStackValue(&infoPtr->contextStack,
-	        Itcl_GetStackSize(&infoPtr->contextStack)-idx);
-        hPtr = Tcl_FindHashEntry(&infoPtr->namespaceClasses,
-                (char *)callContextPtr->nsPtr);
-        ownerClass = (ItclClass*)Tcl_GetHashValue(hPtr);
+    uplevelFramePtr = _Tcl_GetCallFrame(interp, 1);
+    if (uplevelFramePtr && Itcl_IsClassNamespace(uplevelFramePtr->nsPtr)) {
+        ownerClass = (ItclClass*)uplevelFramePtr->nsPtr->clientData;
     }
 
     archComp = Itk_CreateArchComponent(interp, info, name, ownerClass,
-            accessCmd);
+        accessCmd);
 
     if (!archComp) {
         goto compFail;
     }
 
     Tcl_SetHashValue(entry, (ClientData)archComp);
-    archComp->protection = pLevel;
+    archComp->member->protection = pLevel;
 
     /*
      *  If this component is the "hull" for the mega-widget, then
@@ -390,8 +862,9 @@ Itk_ArchCompAddCmd(
         Tcl_AppendToObj(hullNamePtr, "-itk_hull", -1);
         Tcl_IncrRefCount(hullNamePtr);
 
-        result = Itcl_RenameCommand(interp, Tcl_GetString(winNamePtr),
-                Tcl_GetString(hullNamePtr));
+        result = TclRenameCommand(interp,
+            Tcl_GetStringFromObj(winNamePtr, (int*)NULL),
+            Tcl_GetStringFromObj(hullNamePtr, (int*)NULL));
 
         if (result != TCL_OK) {
             goto compFail;
@@ -401,21 +874,23 @@ Itk_ArchCompAddCmd(
         winNamePtr = hullNamePtr;
         hullNamePtr = NULL;
 
-        result = Itcl_RenameCommand(interp, Tcl_GetString(tmpNamePtr),
-                Tcl_GetString(objNamePtr));
+        result = TclRenameCommand(interp,
+            Tcl_GetStringFromObj(tmpNamePtr, (int*)NULL),
+            Tcl_GetStringFromObj(objNamePtr, (int*)NULL));
 
         if (result != TCL_OK) {
             goto compFail;
         }
-    } else {
+    }
 
-        /*
-         *  Add a binding onto the new component, so that when its
-         *  window is destroyed, it will automatically remove itself
-         *  from its parent's component list.  Avoid doing these things
-         *  for the "hull" component, since it is a special case and
-         *  these things are not really necessary.
-         */
+    /*
+     *  Add a binding onto the new component, so that when its
+     *  window is destroyed, it will automatically remove itself
+     *  from its parent's component list.  Avoid doing these things
+     *  for the "hull" component, since it is a special case and
+     *  these things are not really necessary.
+     */
+    else {
         Tcl_DStringSetLength(&buffer, 0);
         Tcl_DStringAppend(&buffer, "bindtags ", -1);
         Tcl_DStringAppend(&buffer, path, -1);
@@ -484,7 +959,7 @@ Itk_ArchCompAddCmd(
      *  info for the mega-widget that is being updated.
      */
     mergeInfo->optionTable = Itk_CreateGenericOptTable(interp,
-            Tcl_DStringValue(&buffer));
+        Tcl_DStringValue(&buffer));
 
     if (!mergeInfo->optionTable) {
         goto compFail;
@@ -504,12 +979,12 @@ Itk_ArchCompAddCmd(
         objPtr = objv[3];
     }
 
-    result = Itcl_PushCallFrame(interp, &frame, parserNs,
-            /* isProcCallFrame */ 0);
+    result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame,
+        parserNs, /* isProcCallFrame */ 0);
 
     if (result == TCL_OK) {
         result = Tcl_EvalObj(interp, objPtr);
-        Itcl_PopCallFrame(interp);
+        Tcl_PopCallFrame(interp);
     }
 
     if (objc != 4) {
@@ -547,9 +1022,6 @@ Itk_ArchCompAddCmd(
      *  If any errors were encountered, clean up and return.
      */
 compFail:
-    if (oldFramePtr) {
-	(void) Itcl_ActivateCallFrame(interp, oldFramePtr);
-    }
     if (archComp) {
         Itk_DelArchComponent(archComp);
     }
@@ -587,7 +1059,7 @@ compFail:
     Tcl_AppendToObj(objPtr, "\n    (while creating component \"", -1);
     Tcl_AppendToObj(objPtr, name, -1);
     Tcl_AppendToObj(objPtr, "\" for widget \"", -1);
-    Tcl_GetCommandFullName(contextObj->iclsPtr->interp,
+    Tcl_GetCommandFullName(contextObj->classDefn->interp,
         contextObj->accessCmd, objPtr);
     Tcl_AppendToObj(objPtr, "\")", -1);
     Tcl_IncrRefCount(objPtr);
@@ -614,7 +1086,7 @@ compFail:
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchCompDeleteCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
@@ -635,16 +1107,14 @@ Itk_ArchCompDeleteCmd(dummy, interp, objc, objv)
     Itcl_List delOptList;
     Tcl_DString buffer;
 
-    ItclShowArgs(2, "Itk_ArchCompDeleteCmd", objc, objv);
     /*
      *  Get the Archetype info associated with this widget.
      */
-    contextClass = NULL;
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
         !contextObj) {
 
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot access components without an object context",
             (char*)NULL);
         return TCL_ERROR;
@@ -658,18 +1128,15 @@ Itk_ArchCompDeleteCmd(dummy, interp, objc, objv)
      *  one.  Make sure that each component exists.
      */
     for (i=1; i < objc; i++) {
-        token = Tcl_GetString(objv[i]);
+        token = Tcl_GetStringFromObj(objv[i], (int*)NULL);
         entry = Tcl_FindHashEntry(&info->components, token);
         if (!entry) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "name \"", token, "\" is not a component",
                 (char*)NULL);
             return TCL_ERROR;
         }
         archComp = (ArchComponent*)Tcl_GetHashValue(entry);
-if (archComp == NULL) {
-    continue;
-}
 
        /*
         *  Clean up the binding tag that causes the widget to
@@ -747,7 +1214,7 @@ if (archComp == NULL) {
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
@@ -765,7 +1232,6 @@ Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
     ArchOptionPart *optPart;
     ConfigCmdline *cmdlinePtr;
 
-    ItclShowArgs(2, "Itk_ArchOptKeepCmd", objc, objv);
     if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?option...?");
         return TCL_ERROR;
@@ -778,10 +1244,10 @@ Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
      */
     if (!mergeInfo->archInfo || !mergeInfo->optionTable) {
         token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "improper usage: \"", token,
-                "\" should only be accessed via itk_component",
-                (char*)NULL);
+        Tcl_AppendResult(interp,
+            "improper usage: \"", token,
+            "\" should only be accessed via itk_component",
+            (char*)NULL);
         return TCL_ERROR;
     }
 
@@ -794,7 +1260,7 @@ Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
         token = Tcl_GetStringFromObj(objv[i], (int*)NULL);
         entry = Tcl_FindHashEntry(mergeInfo->optionTable, token);
         if (!entry) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "option not recognized: ", token,
                 (char*)NULL);
             result = TCL_ERROR;
@@ -853,7 +1319,7 @@ Itk_ArchOptKeepCmd(clientData, interp, objc, objv)
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchOptIgnoreCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
@@ -867,7 +1333,6 @@ Itk_ArchOptIgnoreCmd(clientData, interp, objc, objv)
     Tcl_HashEntry *entry;
     GenericConfigOpt *opt;
 
-    ItclShowArgs(2, "Itk_ArchOptIgnoreCmd", objc, objv);
     if (objc < 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "option ?option...?");
         return TCL_ERROR;
@@ -880,7 +1345,7 @@ Itk_ArchOptIgnoreCmd(clientData, interp, objc, objv)
      */
     if (!mergeInfo->archInfo || !mergeInfo->optionTable) {
         token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: \"", token,
             "\" should only be accessed via itk_component",
             (char*)NULL);
@@ -928,7 +1393,7 @@ Itk_ArchOptIgnoreCmd(clientData, interp, objc, objv)
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
@@ -945,7 +1410,6 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
     ArchOptionPart *optPart;
     ConfigCmdline *cmdlinePtr;
 
-    ItclShowArgs(2, "Itk_ArchOptRenameCmd", objc, objv);
     if (objc != 5) {
         Tcl_WrongNumArgs(interp, 1, objv,
             "oldSwitch newSwitch resourceName resourceClass");
@@ -959,7 +1423,7 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
      */
     if (!mergeInfo->archInfo || !mergeInfo->optionTable) {
         char *token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: \"", token,
             "\" should only be accessed via itk_component",
             (char*)NULL);
@@ -975,14 +1439,14 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
      *  Make sure that the resource name and resource class look good.
      */
     if (!islower((int)*resName)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad resource name \"", resName,
             "\": should start with a lower case letter",
             (char*)NULL);
         return TCL_ERROR;
     }
     if (!isupper((int)*resClass)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad resource class \"", resClass,
             "\": should start with an upper case letter",
             (char*)NULL);
@@ -994,7 +1458,7 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
      */
     entry = Tcl_FindHashEntry(mergeInfo->optionTable, oldSwitch);
     if (!entry) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "option not recognized: ", oldSwitch,
             (char*)NULL);
         return TCL_ERROR;
@@ -1058,7 +1522,7 @@ Itk_ArchOptRenameCmd(clientData, interp, objc, objv)
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchOptUsualCmd(clientData, interp, objc, objv)
     ClientData clientData;   /* option merging info record */
     Tcl_Interp *interp;      /* current interpreter */
@@ -1071,7 +1535,6 @@ Itk_ArchOptUsualCmd(clientData, interp, objc, objv)
     Tcl_HashEntry *entry;
     Tcl_Obj *codePtr;
 
-    ItclShowArgs(2, "Itk_ArchOptUsualCmd", objc, objv);
     if (objc > 2) {
         Tcl_WrongNumArgs(interp, 1, objv, "?tag?");
         return TCL_ERROR;
@@ -1084,7 +1547,7 @@ Itk_ArchOptUsualCmd(clientData, interp, objc, objv)
      */
     if (!mergeInfo->archInfo || !mergeInfo->optionTable) {
         char *token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "improper usage: \"", token,
             "\" should only be accessed via itk_component",
             (char*)NULL);
@@ -1112,7 +1575,7 @@ Itk_ArchOptUsualCmd(clientData, interp, objc, objv)
         return Tcl_EvalObj(interp, codePtr);
     }
 
-    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+    Tcl_AppendResult(interp,
         "can't find usual code for tag \"", tag, "\"",
         (char*)NULL);
     return TCL_ERROR;
@@ -1157,7 +1620,6 @@ Itk_UsualCmd(clientData, interp, objc, objv)
     Tcl_HashSearch place;
     Tcl_Obj *codePtr;
 
-    ItclShowArgs(2, "Itk_UsualCmd", objc, objv);
     if (objc > 3) {
         Tcl_WrongNumArgs(interp, 1, objv, "?tag? ?commands?");
         return TCL_ERROR;
@@ -1175,27 +1637,25 @@ Itk_UsualCmd(clientData, interp, objc, objv)
             entry = Tcl_NextHashEntry(&place);
         }
         return TCL_OK;
-    } else {
+    }
 
-        /*
-         *  If a code fragment was specified, then save it in the
-         *  hash table for "usual" code.
-         */
-        if (objc == 3) {
-            token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
-            entry = Tcl_CreateHashEntry(&mergeInfo->usualCode, token,
-	            &newEntry);
-            if (!newEntry) {
-                codePtr = (Tcl_Obj*)Tcl_GetHashValue(entry);
-                Tcl_DecrRefCount(codePtr);
-            }
-    
-            codePtr = objv[2];
-            Tcl_IncrRefCount(codePtr);
-            Tcl_SetHashValue(entry, (ClientData)codePtr);
-    
-            return TCL_OK;
+    /*
+     *  If a code fragment was specified, then save it in the
+     *  hash table for "usual" code.
+     */
+    else if (objc == 3) {
+        token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+        entry = Tcl_CreateHashEntry(&mergeInfo->usualCode, token, &newEntry);
+        if (!newEntry) {
+            codePtr = (Tcl_Obj*)Tcl_GetHashValue(entry);
+            Tcl_DecrRefCount(codePtr);
         }
+
+        codePtr = objv[2];
+        Tcl_IncrRefCount(codePtr);
+        Tcl_SetHashValue(entry, (ClientData)codePtr);
+
+        return TCL_OK;
     }
 
     /*
@@ -1208,6 +1668,317 @@ Itk_UsualCmd(clientData, interp, objc, objv)
         Tcl_SetObjResult(interp, codePtr);
     }
     return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchInitCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::itk_initialize
+ *  method.  This method should be called out in the constructor for
+ *  each mega-widget class, to build the composite option list at
+ *  each class level.  Handles the following syntax:
+ *
+ *      itk_initialize ?-option val -option val...?
+ *
+ *  Integrates any class-based options into the composite option list,
+ *  handles option settings from the command line, and then configures
+ *  all options to have the proper initial value.
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchInitCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    ItclClass *contextClass, *cdefn;
+    ItclObject *contextObj;
+    ArchInfo *info;
+
+    int i, result;
+    CONST char *val;
+    char *token;
+    Itcl_CallFrame *framePtr;
+    ItkClassOption *opt;
+    ItkClassOptTable *optTable;
+    Itcl_ListElem *part;
+    ArchOption *archOpt;
+    ArchOptionPart *optPart;
+    ItclHierIter hier;
+    ItclVarDefn *vdefn;
+    Tcl_HashSearch place;
+    Tcl_HashEntry *entry;
+
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "improper usage: should be \"object ",
+            token, " ?-option value -option value...?\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    if (Itk_GetArchInfo(interp, contextObj, &info) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    /*
+     *  See what class is being initialized by getting the namespace
+     *  for the calling context.
+     */
+    framePtr = _Tcl_GetCallFrame(interp, 1);
+    if (framePtr && Itcl_IsClassNamespace(framePtr->nsPtr)) {
+        contextClass = (ItclClass*)framePtr->nsPtr->clientData;
+    }
+
+    /*
+     *  Integrate all public variables for the current class
+     *  context into the composite option list.
+     */
+    Itcl_InitHierIter(&hier, contextClass);
+    while ((cdefn=Itcl_AdvanceHierIter(&hier)) != NULL) {
+
+	for (entry = Tcl_FirstHashEntry(&cdefn->variables, &place);
+		entry; entry = Tcl_NextHashEntry(&place)) {
+	    Var *arrayPtr, *varPtr = NULL;
+
+            vdefn = (ItclVarDefn*)Tcl_GetHashValue(entry);
+
+            if (vdefn->member->protection != ITCL_PUBLIC) {
+		continue;
+	    }
+
+	    varPtr = TclLookupVar(interp, vdefn->member->fullname, NULL, 0,
+		    NULL, 0, 0, &arrayPtr);
+
+	    if (varPtr && TclIsVarArray(varPtr)) {
+		continue;
+	    }
+
+                optPart = Itk_FindArchOptionPart(info,
+                    vdefn->member->name, (ClientData)vdefn);
+
+                if (!optPart) {
+                    optPart = Itk_CreateOptionPart(interp, (ClientData)vdefn,
+                        Itk_PropagatePublicVar, (Tcl_CmdDeleteProc*)NULL,
+                        (ClientData)vdefn);
+
+                    val = Itcl_GetInstanceVar(interp, vdefn->member->fullname,
+                        contextObj, contextObj->classDefn);
+
+                    result = Itk_AddOptionPart(interp, info,
+                        vdefn->member->name, (char*)NULL, (char*)NULL,
+                        val, (char*)NULL, optPart, &archOpt);
+
+                    if (result != TCL_OK) {
+                        Itk_DelOptionPart(optPart);
+                        return TCL_ERROR;
+                    }
+                }
+        }
+    }
+    Itcl_DeleteHierIter(&hier);
+
+    /*
+     *  Integrate all class-based options for the current class
+     *  context into the composite option list.
+     */
+    optTable = Itk_FindClassOptTable(contextClass);
+    if (optTable) {
+        for (i=0; i < optTable->order.len; i++) {
+            opt = (ItkClassOption*)Tcl_GetHashValue(optTable->order.list[i]);
+
+            optPart = Itk_FindArchOptionPart(info, opt->member->name,
+                (ClientData)contextClass);
+
+            if (!optPart) {
+                optPart = Itk_CreateOptionPart(interp, (ClientData)opt,
+                    Itk_ConfigClassOption, (Tcl_CmdDeleteProc*)NULL,
+                    (ClientData)contextClass);
+
+                result = Itk_AddOptionPart(interp, info,
+                    opt->member->name, opt->resName, opt->resClass,
+                    opt->init, (char*)NULL, optPart, &archOpt);
+
+                if (result != TCL_OK) {
+                    Itk_DelOptionPart(optPart);
+                    return TCL_ERROR;
+                }
+            }
+        }
+    }
+
+    /*
+     *  If any option values were specified on the command line,
+     *  override the current option settings.
+     */
+    if (objc > 1) {
+        for (objc--,objv++; objc > 0; objc-=2, objv+=2) {
+	    char *value;
+            token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+            if (objc < 2) {
+	        /* Bug 227814
+		 * Ensure that the interp result is unshared.
+		 */
+
+	        Tcl_ResetResult(interp);
+                Tcl_AppendResult(interp,
+                    "value for \"", token, "\" missing",
+                    (char*)NULL);
+                return TCL_ERROR;
+            }
+
+            value = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+            if (Itk_ArchConfigOption(interp, info, token, value) != TCL_OK) {
+                return TCL_ERROR;
+            }
+        }
+    }
+
+    /*
+     *  If this is most-specific class, then finish constructing
+     *  the mega-widget:
+     *
+     *  Scan through all options in the composite list and
+     *  look for any that have been set but not initialized.
+     *  Invoke the parts of uninitialized options to propagate
+     *  changes and update the widget.
+     */
+    if (contextObj->classDefn == contextClass) {
+        for (i=0; i < info->order.len; i++) {
+            archOpt = (ArchOption*)Tcl_GetHashValue(info->order.list[i]);
+
+            if ((archOpt->flags & ITK_ARCHOPT_INIT) == 0) {
+                val = Tcl_GetVar2(interp, "itk_option", archOpt->switchName, 0);
+
+                if (!val) {
+                    Itk_ArchOptAccessError(interp, info, archOpt);
+                    return TCL_ERROR;
+                }
+
+                part = Itcl_FirstListElem(&archOpt->parts);
+                while (part) {
+                    optPart = (ArchOptionPart*)Itcl_GetListValue(part);
+                    result  = (*optPart->configProc)(interp, contextObj,
+                        optPart->clientData, val);
+
+                    if (result != TCL_OK) {
+                        Itk_ArchOptConfigError(interp, info, archOpt);
+                        return result;
+                    }
+                    part = Itcl_NextListElem(part);
+                }
+                archOpt->flags |= ITK_ARCHOPT_INIT;
+            }
+        }
+    }
+
+    Tcl_ResetResult(interp);
+    return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchOptionCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::itk_option
+ *  method.  Handles the following options:
+ *
+ *      itk_option define <switch> <resName> <resClass> <init> ?<config>?
+ *      itk_option add <name> ?<name>...?
+ *      itk_option remove <name> ?<name>...?
+ *
+ *  These commands customize the options list of a specific widget.
+ *  They are similar to the "itk_option" ensemble in the class definition
+ *  parser, but manipulate a single instance instead of an entire class.
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchOptionCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    char *cmd, *token, c;
+    int length;
+
+    /*
+     *  Check arguments and handle the various options...
+     */
+    if (objc < 2) {
+        cmd = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_AppendResult(interp,
+            "wrong # args: should be one of...\n",
+            "  ", cmd, " add name ?name name...?\n",
+            "  ", cmd, " define -switch resourceName resourceClass init ?config?\n",
+            "  ", cmd, " remove name ?name name...?",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    c = *token;
+    length = strlen(token);
+
+    /*
+     *  Handle:  itk_option add...
+     */
+    if (c == 'a' && strncmp(token, "add", length) == 0) {
+        if (objc < 3) {
+            Tcl_WrongNumArgs(interp, 1, objv, "add name ?name name...?");
+            return TCL_ERROR;
+        }
+        return Itk_ArchOptionAddCmd(dummy, interp, objc-1, objv+1);
+    }
+
+    /*
+     *  Handle:  itk_option remove...
+     */
+    else if (c == 'r' && strncmp(token, "remove", length) == 0) {
+        if (objc < 3) {
+            Tcl_WrongNumArgs(interp, 1, objv, "remove name ?name name...?");
+            return TCL_ERROR;
+        }
+        return Itk_ArchOptionRemoveCmd(dummy, interp, objc-1, objv+1);
+    }
+
+    /*
+     *  Handle:  itk_option define...
+     */
+    else if (c == 'd' && strncmp(token, "define", length) == 0) {
+        Tcl_AppendResult(interp,
+            "can only ", token, " options at the class level\n",
+            "(move this command into the class definition)",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Flag any errors.
+     */
+    cmd = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+    Tcl_AppendResult(interp,
+        "bad option \"", token,
+        "\": should be one of...\n",
+        "  ", cmd, " add name ?name name...?\n",
+        "  ", cmd, " define -switch resourceName resourceClass init ?config?\n",
+        "  ", cmd, " remove name ?name name...?",
+        (char*)NULL);
+    return TCL_ERROR;
 }
 
 
@@ -1231,25 +2002,19 @@ Itk_UsualCmd(clientData, interp, objc, objv)
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
-Itk_ArchOptionAddCmd(
-    ClientData dummy,        /* unused */
-    Tcl_Interp *interp,      /* current interpreter */
-    int objc,                /* number of arguments */
-    Tcl_Obj *CONST objv[])   /* argument objects */
+static int
+Itk_ArchOptionAddCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
-    ItclClass *contextClass;
-    ItclClass *iclsPtr;
+    ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
     ArchInfo *info;
 
-    int i;
-    int result;
-    char *token;
-    const char *head;
-    const char *tail;
-    char *sep;
-    char tmp;
+    int i, result;
+    char *token, *head, *tail, *sep, tmp;
     ItkClassOption *opt;
     GenericConfigOpt *generic;
     ArchOption *archOpt;
@@ -1259,16 +2024,14 @@ Itk_ArchOptionAddCmd(
     Tcl_HashEntry *entry;
     Tcl_DString buffer;
 
-    ItclShowArgs(2, "Itk_ArchOptionAddCmd", objc, objv);
     /*
      *  Get the Archetype info associated with this widget.
      */
-    contextClass = NULL;
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
         !contextObj) {
 
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot access options without an object context",
             (char*)NULL);
         return TCL_ERROR;
@@ -1283,41 +2046,40 @@ Itk_ArchOptionAddCmd(
      *  If it is not already on the option part list, add it.
      */
     for (i=1; i < objc; i++) {
-        token = Tcl_GetString(objv[i]);
+        token = Tcl_GetStringFromObj(objv[i], (int*)NULL);
         Itcl_ParseNamespPath(token, &buffer, &head, &tail);
 
         /*
          *  HANDLE:  class::option
          */
         if (head) {
-            iclsPtr = Itcl_FindClass(interp, head, /* autoload */ 1);
-            if (iclsPtr == NULL) {
+            cdefn = Itcl_FindClass(interp, head, /* autoload */ 1);
+            if (!cdefn) {
                 Tcl_DStringFree(&buffer);
                 return TCL_ERROR;
             }
 
-            opt = Itk_FindClassOption(iclsPtr, tail);
+            opt = Itk_FindClassOption(cdefn, tail);
             if (!opt) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "option \"", tail, "\" not defined in class \"",
-                    Tcl_GetString(iclsPtr->fullNamePtr), "\"",
+                    cdefn->fullname, "\"",
                     (char*)NULL);
                 Tcl_DStringFree(&buffer);
                 return TCL_ERROR;
             }
 
-            optPart = Itk_FindArchOptionPart(info, Tcl_GetString(opt->namePtr),
-                (ClientData)iclsPtr);
+            optPart = Itk_FindArchOptionPart(info, opt->member->name,
+                (ClientData)cdefn);
 
             if (!optPart) {
                 optPart = Itk_CreateOptionPart(interp, (ClientData)opt,
                     Itk_ConfigClassOption, (Tcl_CmdDeleteProc*)NULL,
-                    (ClientData)iclsPtr);
+                    (ClientData)cdefn);
 
-                result = Itk_AddOptionPart(interp, info,
-		        Tcl_GetString(opt->namePtr),
-                        opt->resName, opt->resClass, opt->init, (char*)NULL,
-                        optPart, &archOpt);
+                result = Itk_AddOptionPart(interp, info, opt->member->name,
+                    opt->resName, opt->resClass, opt->init, (char*)NULL,
+                    optPart, &archOpt);
 
                 if (result != TCL_OK) {
                     Itk_DelOptionPart(optPart);
@@ -1343,7 +2105,7 @@ Itk_ArchOptionAddCmd(
 
             entry = Tcl_FindHashEntry(&info->components, head);
             if (!entry) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "name \"", head, "\" is not a component",
                     (char*)NULL);
                 *sep = tmp;
@@ -1388,7 +2150,7 @@ Itk_ArchOptionAddCmd(
         /*
          *  Anything else is an error.
          */
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad option \"", token, "\": should be one of...\n",
             "  class::option\n",
             "  component.option",
@@ -1420,40 +2182,33 @@ Itk_ArchOptionAddCmd(
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
+static int
 Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
     ClientData dummy;        /* unused */
     Tcl_Interp *interp;      /* current interpreter */
     int objc;                /* number of arguments */
     Tcl_Obj *CONST objv[];   /* argument objects */
 {
-    ItclClass *contextClass;
-    ItclClass *iclsPtr;
+    ItclClass *contextClass, *cdefn;
     ItclObject *contextObj;
     ArchInfo *info;
 
     int i;
-    char *name;
-    const char *head;
-    const char *tail;
-    char *sep;
-    char tmp;
+    char *name, *head, *tail, *sep, tmp;
     ItkClassOption *opt;
     GenericConfigOpt *generic;
     ArchComponent *archComp;
     Tcl_HashEntry *entry;
     Tcl_DString buffer;
 
-    ItclShowArgs(2, "Itk_ArchOptionRemoveCmd", objc, objv);
     /*
      *  Get the Archetype info associated with this widget.
      */
-    contextClass = NULL;
     if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
         !contextObj) {
 
         Tcl_ResetResult(interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot access options without an object context",
             (char*)NULL);
         return TCL_ERROR;
@@ -1468,31 +2223,31 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
      *  If it is on the option list, remove it.
      */
     for (i=1; i < objc; i++) {
-        name = Tcl_GetString(objv[i]);
+        name = Tcl_GetStringFromObj(objv[i], (int*)NULL);
         Itcl_ParseNamespPath(name, &buffer, &head, &tail);
 
         /*
          *  HANDLE:  class::option
          */
         if (head) {
-            iclsPtr = Itcl_FindClass(interp, head, /* autoload */ 1);
-            if (!iclsPtr) {
+            cdefn = Itcl_FindClass(interp, head, /* autoload */ 1);
+            if (!cdefn) {
                 Tcl_DStringFree(&buffer);
                 return TCL_ERROR;
             }
 
-            opt = Itk_FindClassOption(iclsPtr, tail);
+            opt = Itk_FindClassOption(cdefn, tail);
             if (!opt) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "option \"", tail, "\" not defined in class \"",
-                    Tcl_GetString(iclsPtr->fullNamePtr), "\"",
+                    cdefn->fullname, "\"",
                     (char*)NULL);
                 Tcl_DStringFree(&buffer);
                 return TCL_ERROR;
             }
 
-            Itk_RemoveArchOptionPart(info, Tcl_GetString(opt->namePtr),
-                (ClientData)iclsPtr);
+            Itk_RemoveArchOptionPart(info, opt->member->name,
+                (ClientData)cdefn);
 
             Tcl_DStringFree(&buffer);
             continue;
@@ -1511,7 +2266,7 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
 
             entry = Tcl_FindHashEntry(&info->components, head);
             if (!entry) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                Tcl_AppendResult(interp,
                     "name \"", head, "\" is not a component",
                     (char*)NULL);
                 *sep = tmp;
@@ -1539,7 +2294,7 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
         /*
          *  Anything else is an error.
          */
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "bad option \"", name, "\": should be one of...\n",
             "  class::option\n",
             "  component.option",
@@ -1547,6 +2302,393 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
         return TCL_ERROR;
     }
 
+    return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchCompAccessCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::component method.
+ *  Finds the requested component and invokes the <command> as a method
+ *  on that component.
+ *
+ *  Handles the following syntax:
+ *
+ *      component
+ *      component <name>
+ *      component <name> <command> ?<arg> <arg>...?
+ *
+ *  With no arguments, this command returns the names of components
+ *  that can be accessed from the current context.  Note that components
+ *  respect public/protected/private declarations, so private and
+ *  protected components may not be accessible from all namespaces.
+ *
+ *  If a component name is specified, then this command returns the
+ *  window name for that component.
+ *
+ *  If a series of arguments follow the component name, they are treated
+ *  as a method invocation, and dispatched to the component.
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchCompAccessCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    int i, result;
+    char *token;
+    CONST char *name, *val;
+    Tcl_Namespace *callingNs;
+    ItclClass *contextClass;
+    ItclObject *contextObj;
+    Itcl_CallFrame *framePtr;
+    Tcl_HashEntry *entry;
+    Tcl_HashSearch place;
+    ArchInfo *info;
+    ArchComponent *archComp;
+    int cmdlinec;
+    Tcl_Obj *objPtr, *cmdlinePtr, **cmdlinev;
+
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "improper usage: should be \"object ",
+            token, " ?name option arg arg...?\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    if (Itk_GetArchInfo(interp, contextObj, &info) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    framePtr = _Tcl_GetCallFrame(interp, 1);
+    if (framePtr) {
+        callingNs = framePtr->nsPtr;
+    } else {
+        callingNs = Tcl_GetGlobalNamespace(interp);
+    }
+
+    /*
+     *  With no arguments, return a list of components that can be
+     *  accessed from the calling scope.
+     */
+    if (objc == 1) {
+        entry = Tcl_FirstHashEntry(&info->components, &place);
+        while (entry) {
+            archComp = (ArchComponent*)Tcl_GetHashValue(entry);
+            if (Itcl_CanAccess(archComp->member, callingNs)) {
+                name = Tcl_GetHashKey(&info->components, entry);
+                Tcl_AppendElement(interp, (CONST84 char *)name);
+            }
+            entry = Tcl_NextHashEntry(&place);
+        }
+        return TCL_OK;
+    }
+
+    /*
+     *  Make sure the requested component exists.
+     */
+    token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    entry = Tcl_FindHashEntry(&info->components, token);
+    if (entry) {
+        archComp = (ArchComponent*)Tcl_GetHashValue(entry);
+    } else {
+        archComp = NULL;
+    }
+
+    if (archComp == NULL) {
+        Tcl_AppendResult(interp,
+            "name \"", token, "\" is not a component",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    if (!Itcl_CanAccess(archComp->member, callingNs)) {
+        Tcl_AppendResult(interp,
+            "can't access component \"", token, "\" from context \"",
+            callingNs->fullName, "\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    /*
+     *  If only the component name is specified, then return the
+     *  window name for this component.
+     */
+    if (objc == 2) {
+        val = Tcl_GetVar2(interp, "itk_component", token, 0);
+        if (!val) {
+            Tcl_ResetResult(interp);
+            Tcl_AppendResult(interp,
+                "internal error: cannot access itk_component(", token, ")",
+                (char*)NULL);
+
+            if (contextObj->accessCmd) {
+                Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
+                Tcl_AppendToObj(resultPtr, " in widget \"", -1);
+                Tcl_GetCommandFullName(contextObj->classDefn->interp,
+                    contextObj->accessCmd, resultPtr);
+                Tcl_AppendToObj(resultPtr, "\"", -1);
+            }
+            return TCL_ERROR;
+        }
+	/*
+	 * Casting away CONST is safe because TCL_VOLATILE guarantees
+	 * CONST treatment.
+	 */
+        Tcl_SetResult(interp, (char *) val, TCL_VOLATILE);
+        return TCL_OK;
+    }
+
+    /*
+     *  Otherwise, treat the rest of the command line as a method
+     *  invocation on the requested component.  Invoke the remaining
+     *  command-line arguments as a method for that component.
+     */
+    cmdlinePtr = Tcl_NewListObj(0, (Tcl_Obj**)NULL);
+    Tcl_IncrRefCount(cmdlinePtr);
+
+    objPtr = Tcl_NewStringObj((char*)NULL, 0);
+    Tcl_GetCommandFullName(interp, archComp->accessCmd, objPtr);
+    Tcl_ListObjAppendElement((Tcl_Interp*)NULL, cmdlinePtr, objPtr);
+
+    for (i=2; i < objc; i++) {
+        Tcl_ListObjAppendElement((Tcl_Interp*)NULL, cmdlinePtr, objv[i]);
+    }
+
+    (void) Tcl_ListObjGetElements((Tcl_Interp*)NULL, cmdlinePtr,
+        &cmdlinec, &cmdlinev);
+
+    result = Itcl_EvalArgs(interp, cmdlinec, cmdlinev);
+
+    Tcl_DecrRefCount(cmdlinePtr);
+
+    return result;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchConfigureCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::configure method.
+ *  Mimics the usual Tk "configure" method for Archetype mega-widgets.
+ *
+ *      configure
+ *      configure -name
+ *      configure -name value ?-name value ...?
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchConfigureCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    int i;
+    CONST char *val;
+    char *token;
+    ItclClass *contextClass;
+    ItclObject *contextObj;
+    ArchInfo *info;
+    Tcl_HashEntry *entry;
+    ArchOption *archOpt;
+    Tcl_DString buffer;
+
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "improper usage: should be \"object ",
+            token, " ?-option? ?value -option value...?\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    if (Itk_GetArchInfo(interp, contextObj, &info) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    /*
+     *  If there are no extra arguments, then return a list of all
+     *  known configuration options.  Each option has the form:
+     *    {name resName resClass init value}
+     */
+    if (objc == 1) {
+        Tcl_DStringInit(&buffer);
+
+        for (i=0; i < info->order.len; i++) {
+            archOpt = (ArchOption*)Tcl_GetHashValue(info->order.list[i]);
+            val = Tcl_GetVar2(interp, "itk_option", archOpt->switchName, 0);
+            if (!val) {
+                Itk_ArchOptAccessError(interp, info, archOpt);
+                Tcl_DStringFree(&buffer);
+                return TCL_ERROR;
+            }
+
+            Tcl_DStringStartSublist(&buffer);
+            Tcl_DStringAppendElement(&buffer, archOpt->switchName);
+            Tcl_DStringAppendElement(&buffer,
+                (archOpt->resName) ? archOpt->resName : "");
+            Tcl_DStringAppendElement(&buffer,
+                (archOpt->resClass) ? archOpt->resClass : "");
+            Tcl_DStringAppendElement(&buffer,
+                (archOpt->init) ? archOpt->init : "");
+            Tcl_DStringAppendElement(&buffer, val);
+            Tcl_DStringEndSublist(&buffer);
+        }
+        Tcl_DStringResult(interp, &buffer);
+        Tcl_DStringFree(&buffer);
+        return TCL_OK;
+    }
+
+    /*
+     *  If there is just one argument, then query the information
+     *  for that one argument and return:
+     *    {name resName resClass init value}
+     */
+    else if (objc == 2) {
+        token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+        entry = Tcl_FindHashEntry(&info->options, token);
+        if (!entry) {
+            Tcl_AppendResult(interp,
+                "unknown option \"", token, "\"",
+                (char*)NULL);
+            return TCL_ERROR;
+        }
+
+        archOpt = (ArchOption*)Tcl_GetHashValue(entry);
+        val = Tcl_GetVar2(interp, "itk_option", archOpt->switchName, 0);
+        if (!val) {
+            Itk_ArchOptAccessError(interp, info, archOpt);
+            return TCL_ERROR;
+        }
+
+        Tcl_AppendElement(interp, archOpt->switchName);
+        Tcl_AppendElement(interp,
+            (archOpt->resName) ? archOpt->resName : "");
+        Tcl_AppendElement(interp,
+            (archOpt->resClass) ? archOpt->resClass : "");
+        Tcl_AppendElement(interp,
+            (archOpt->init) ? archOpt->init : "");
+        Tcl_AppendElement(interp, (CONST84 char *)val);
+
+        return TCL_OK;
+    }
+
+    /*
+     *  Otherwise, it must be a series of "-option value" assignments.
+     *  Look up each option and assign the new value.
+     */
+    for (objc--,objv++; objc > 0; objc-=2, objv+=2) {
+	char *value;
+        token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        if (objc < 2) {
+            Tcl_AppendResult(interp,
+                "value for \"", token, "\" missing",
+                (char*)NULL);
+            return TCL_ERROR;
+        }
+        value = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+
+        if (Itk_ArchConfigOption(interp, info, token, value) != TCL_OK) {
+            return TCL_ERROR;
+        }
+    }
+
+    Tcl_ResetResult(interp);
+    return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchCgetCmd()
+ *
+ *  Invoked by [incr Tcl] to handle the itk::Archetype::cget method.
+ *  Mimics the usual Tk "cget" method for Archetype mega-widgets.
+ *
+ *      cget -name
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+static int
+Itk_ArchCgetCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    CONST char *token, *val;
+    ItclClass *contextClass;
+    ItclObject *contextObj;
+    ArchInfo *info;
+    Tcl_HashEntry *entry;
+    ArchOption *archOpt;
+
+    if (Itcl_GetContext(interp, &contextClass, &contextObj) != TCL_OK ||
+        !contextObj) {
+
+        token = Tcl_GetStringFromObj(objv[0], (int*)NULL);
+        Tcl_ResetResult(interp);
+        Tcl_AppendResult(interp,
+            "improper usage: should be \"object ", token, " -option\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    if (Itk_GetArchInfo(interp, contextObj, &info) != TCL_OK) {
+        return TCL_ERROR;
+    }
+
+    if (objc != 2) {
+        Tcl_WrongNumArgs(interp, 1, objv, "option");
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Look up the specified option and get its current value.
+     */
+    token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    entry = Tcl_FindHashEntry(&info->options, token);
+    if (!entry) {
+        Tcl_AppendResult(interp,
+            "unknown option \"", token, "\"",
+            (char*)NULL);
+        return TCL_ERROR;
+    }
+
+    archOpt = (ArchOption*)Tcl_GetHashValue(entry);
+    val = Tcl_GetVar2(interp, "itk_option", archOpt->switchName, 0);
+    if (!val) {
+        Itk_ArchOptAccessError(interp, info, archOpt);
+        return TCL_ERROR;
+    }
+
+    /*
+     * Casting away CONST is safe because TCL_VOLATILE guarantees
+     * CONST treatment.
+     */
+    Tcl_SetResult(interp, (char *) val, TCL_VOLATILE);
     return TCL_OK;
 }
 
@@ -1566,17 +2708,17 @@ Itk_ArchOptionRemoveCmd(dummy, interp, objc, objv)
  */
 /* ARGSUSED */
 static int
-Itk_PropagateOption(
-    Tcl_Interp *interp,        /* interpreter managing the class */
-    ItclObject *contextObj,    /* itcl object being configured */
-    ClientData cdata,          /* command prefix to use for configuration */
-    CONST char *newval)        /* new value for this option */
+Itk_PropagateOption(interp, contextObj, cdata, newval)
+    Tcl_Interp *interp;        /* interpreter managing the class */
+    ItclObject *contextObj;    /* itcl object being configured */
+    ClientData cdata;          /* command prefix to use for configuration */
+    CONST char *newval;        /* new value for this option */
 {
     ConfigCmdline *cmdlinePtr = (ConfigCmdline*)cdata;
     int result;
     Tcl_Obj *objPtr;
 
-    objPtr = Tcl_NewStringObj((const char *)newval, -1);
+    objPtr = Tcl_NewStringObj((CONST84 char *)newval, -1);
     Tcl_IncrRefCount(objPtr);
 
     cmdlinePtr->objv[3] = objPtr;
@@ -1601,19 +2743,20 @@ Itk_PropagateOption(
  * ------------------------------------------------------------------------
  */
 /* ARGSUSED */
-int
-Itk_PropagatePublicVar(
-    Tcl_Interp *interp,        /* interpreter managing the class */
-    ItclObject *contextObj,    /* itcl object being configured */
-    ClientData cdata,          /* command prefix to use for configuration */
-    CONST char *newval)        /* new value for this option */
+static int
+Itk_PropagatePublicVar(interp, contextObj, cdata, newval)
+    Tcl_Interp *interp;        /* interpreter managing the class */
+    ItclObject *contextObj;    /* itcl object being configured */
+    ClientData cdata;          /* command prefix to use for configuration */
+    CONST char *newval;        /* new value for this option */
 {
-    ItclVariable *ivPtr = (ItclVariable*)cdata;
+    ItclVarDefn *vdefn = (ItclVarDefn*)cdata;
 
-    Tcl_CallFrame frame;
     int result;
     CONST char *val;
+    ItclContext context;
     ItclMemberCode *mcode;
+    Itcl_CallFrame *uplevelFramePtr, *oldFramePtr;
 
     /*
      *  Update the public variable with the new option value.
@@ -1622,26 +2765,26 @@ Itk_PropagatePublicVar(
      *  is the most-specific class, so that the public variable can
      *  be found.
      */
-    result = Itcl_PushCallFrame(interp, &frame, contextObj->iclsPtr->nsPtr,
-            /*isProcCallFrame*/0);
+    result = Itcl_PushContext(interp, (ItclMember*)NULL,
+        contextObj->classDefn, contextObj, &context);
 
     if (result == TCL_OK) {
 	/*
 	 * Casting away CONST of newval only to satisfy Tcl 8.3 and
 	 * earlier headers.
 	 */
-        val = Tcl_SetVar2(interp, Tcl_GetString(ivPtr->fullNamePtr), (char *) NULL,
+        val = Tcl_SetVar2(interp, vdefn->member->fullname, (char *) NULL,
             (char *) newval, TCL_LEAVE_ERR_MSG);
 
         if (!val) {
             result = TCL_ERROR;
         }
-        Itcl_PopCallFrame(interp);
+        Itcl_PopContext(interp, &context);
     }
 
     if (result != TCL_OK) {
         char msg[256];
-        sprintf(msg, "\n    (error in configuration of public variable \"%.100s\")", Tcl_GetString(ivPtr->fullNamePtr));
+        sprintf(msg, "\n    (error in configuration of public variable \"%.100s\")", vdefn->member->fullname);
         Tcl_AddErrorInfo(interp, msg);
         return TCL_ERROR;
     }
@@ -1652,20 +2795,22 @@ Itk_PropagatePublicVar(
      *  NOTE:  Invoke the "config" code in the class scope
      *    containing the data member.
      */
-    mcode = ivPtr->codePtr;
-    if (mcode && mcode->bodyPtr) {
+    mcode = vdefn->member->code;
+    if (mcode && mcode->procPtr->bodyPtr) {
 
-        Itcl_SetCallFrameResolver(interp, ivPtr->iclsPtr->resolvePtr);
-        Tcl_Namespace *saveNsPtr = Tcl_GetCurrentNamespace(interp);
-        Itcl_SetCallFrameNamespace(interp, ivPtr->iclsPtr->nsPtr);
-        result = Tcl_EvalObjEx(interp, mcode->bodyPtr, 0);
-        Itcl_SetCallFrameNamespace(interp, saveNsPtr);
+        uplevelFramePtr = _Tcl_GetCallFrame(interp, 1);
+        oldFramePtr = _Tcl_ActivateCallFrame(interp, uplevelFramePtr);
+
+        result = Itcl_EvalMemberCode(interp, (ItclMemberFunc*)NULL,
+            vdefn->member, contextObj, 0, (Tcl_Obj**)NULL);
+
+        (void) _Tcl_ActivateCallFrame(interp, oldFramePtr);
 
         if (result == TCL_OK) {
             Tcl_ResetResult(interp);
         } else {
             char msg[256];
-            sprintf(msg, "\n    (error in configuration of public variable \"%.100s\")", Tcl_GetString(ivPtr->fullNamePtr));
+            sprintf(msg, "\n    (error in configuration of public variable \"%.100s\")", vdefn->member->fullname);
             Tcl_AddErrorInfo(interp, msg);
         }
     }
@@ -1697,18 +2842,18 @@ Itk_PropagatePublicVar(
  * ------------------------------------------------------------------------
  */
 static int
-Itk_ArchSetOption(
-    Tcl_Interp *interp,        /* interpreter managing this widget */
-    ArchInfo *info,            /* Archetype info */
-    CONST char *name,          /* name of configuration option */
-    CONST char *value)         /* new value for configuration option */
+Itk_ArchSetOption(interp, info, name, value)
+    Tcl_Interp *interp;        /* interpreter managing this widget */
+    ArchInfo *info;            /* Archetype info */
+    CONST char *name;          /* name of configuration option */
+    CONST char *value;               /* new value for configuration option */
 {
     Tcl_HashEntry *entry;
     ArchOption *archOpt;
 
     entry = Tcl_FindHashEntry(&info->options, name);
     if (!entry) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "unknown option \"", name, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -1716,7 +2861,7 @@ Itk_ArchSetOption(
     archOpt = (ArchOption*)Tcl_GetHashValue(entry);
 
     if (!Tcl_SetVar2(interp, "itk_option", archOpt->switchName,
-	    (const char *)value, 0)) {
+	    (CONST84 char *)value, 0)) {
         Itk_ArchOptAccessError(interp, info, archOpt);
         return TCL_ERROR;
     }
@@ -1744,12 +2889,12 @@ Itk_ArchSetOption(
  *  message in the interpreter) if anything goes wrong.
  * ------------------------------------------------------------------------
  */
-int
-Itk_ArchConfigOption(
-    Tcl_Interp *interp,        /* interpreter managing this widget */
-    ArchInfo *info,            /* Archetype info */
-    char *name,          /* name of configuration option */
-    char *value)               /* new value for configuration option */
+static int
+Itk_ArchConfigOption(interp, info, name, value)
+    Tcl_Interp *interp;        /* interpreter managing this widget */
+    ArchInfo *info;            /* Archetype info */
+    char *name;          /* name of configuration option */
+    char *value;               /* new value for configuration option */
 {
     int result;
     CONST char *v; 
@@ -1770,7 +2915,7 @@ Itk_ArchConfigOption(
 	 */
 
         Tcl_ResetResult (interp);
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "unknown option \"", name, "\"",
             (char*)NULL);
         return TCL_ERROR;
@@ -1845,6 +2990,116 @@ configDone:
 
 /*
  * ------------------------------------------------------------------------
+ *  Itk_ArchOptConfigError()
+ *
+ *  Simply utility which adds error information after a option
+ *  configuration fails.  Adds traceback information to the given
+ *  interpreter.
+ * ------------------------------------------------------------------------
+ */
+static void
+Itk_ArchOptConfigError(interp, info, archOpt)
+    Tcl_Interp *interp;            /* interpreter handling this object */
+    ArchInfo *info;                /* info associated with mega-widget */
+    ArchOption *archOpt;           /* configuration option that failed */
+{
+    Tcl_Obj *objPtr;
+
+    objPtr = Tcl_NewStringObj((char*)NULL, 0);
+    Tcl_IncrRefCount(objPtr);
+
+    Tcl_AppendToObj(objPtr, "\n    (while configuring option \"", -1);
+    Tcl_AppendToObj(objPtr, archOpt->switchName, -1);
+    Tcl_AppendToObj(objPtr, "\"", -1);
+
+    if (info->itclObj && info->itclObj->accessCmd) {
+        Tcl_AppendToObj(objPtr, " for widget \"", -1);
+        Tcl_GetCommandFullName(interp, info->itclObj->accessCmd, objPtr);
+        Tcl_AppendToObj(objPtr, "\")", -1);
+    }
+    Tcl_AddErrorInfo(interp, Tcl_GetStringFromObj(objPtr, (int*)NULL));
+    Tcl_DecrRefCount(objPtr);
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ArchOptAccessError()
+ *
+ *  Simply utility which adds error information after an option
+ *  value access fails.  Adds traceback information to the given
+ *  interpreter.
+ * ------------------------------------------------------------------------
+ */
+static void
+Itk_ArchOptAccessError(interp, info, archOpt)
+    Tcl_Interp *interp;            /* interpreter handling this object */
+    ArchInfo *info;                /* info associated with mega-widget */
+    ArchOption *archOpt;           /* option that couldn't be accessed */
+{
+    Tcl_ResetResult(interp);
+
+    Tcl_AppendResult(interp,
+        "internal error: cannot access itk_option(", archOpt->switchName, ")",
+        (char*)NULL);
+
+    if (info->itclObj->accessCmd) {
+        Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
+        Tcl_AppendToObj(resultPtr, " in widget \"", -1);
+        Tcl_GetCommandFullName(interp, info->itclObj->accessCmd, resultPtr);
+        Tcl_AppendToObj(resultPtr, "\"", -1);
+    }
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_GetArchInfo()
+ *
+ *  Finds the extra Archetype info associated with the given object.
+ *  Returns TCL_OK and a pointer to the info if found.  Returns
+ *  TCL_ERROR along with an error message in interp->result if not.
+ * ------------------------------------------------------------------------
+ */
+static int
+Itk_GetArchInfo(interp, contextObj, infoPtr)
+    Tcl_Interp *interp;            /* interpreter handling this object */
+    ItclObject *contextObj;        /* object with desired data */
+    ArchInfo **infoPtr;            /* returns:  pointer to extra info */
+{
+    Tcl_HashTable *objsWithArchInfo;
+    Tcl_HashEntry *entry;
+
+    /*
+     *  If there is any problem finding the info, return an error.
+     */
+    objsWithArchInfo = ItkGetObjsWithArchInfo(interp);
+    entry = Tcl_FindHashEntry(objsWithArchInfo, (char*)contextObj);
+
+    if (!entry) {
+        Tcl_AppendResult(interp,
+            "internal error: no Archetype information for widget",
+            (char*)NULL);
+
+        if (contextObj->accessCmd) {
+            Tcl_Obj *resultPtr = Tcl_GetObjResult(interp);
+            Tcl_AppendToObj(resultPtr, " \"", -1);
+            Tcl_GetCommandFullName(interp, contextObj->accessCmd, resultPtr);
+            Tcl_AppendToObj(resultPtr, "\"", -1);
+        }
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Otherwise, return the requested info.
+     */
+    *infoPtr = (ArchInfo*)Tcl_GetHashValue(entry);
+    return TCL_OK;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
  *  Itk_CreateArchComponent()
  *
  *  Creates the data representing a component widget within an Archetype
@@ -1857,12 +3112,12 @@ configDone:
  * ------------------------------------------------------------------------
  */
 static ArchComponent*
-Itk_CreateArchComponent(
-    Tcl_Interp *interp,            /* interpreter managing the object */
-    ArchInfo *info,                /* info associated with mega-widget */
-    char *name,                    /* symbolic name for this component */
-    ItclClass *iclsPtr,            /* component created in this class */
-    Tcl_Command accessCmd)         /* access command for component */
+Itk_CreateArchComponent(interp, info, name, cdefn, accessCmd)
+    Tcl_Interp *interp;            /* interpreter managing the object */
+    ArchInfo *info;                /* info associated with mega-widget */
+    char *name;                    /* symbolic name for this component */
+    ItclClass *cdefn;              /* component created in this class */
+    Tcl_Command accessCmd;         /* access command for component */
 {
     CONST char *init;
     CONST char *wname;
@@ -1871,6 +3126,7 @@ Itk_CreateArchComponent(
     Tk_Window tkwin;
     Tcl_HashEntry *entry;
     Tcl_HashSearch place;
+    ItclMember *memPtr;
 
     /*
      *  Save this component in the itk_component() array.
@@ -1887,9 +3143,9 @@ Itk_CreateArchComponent(
 
     if (strcmp(name, "hull") == 0) {
         if (tkwin == NULL) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                    "cannot find hull window with access command \"",
-		    wname, "\"", (char*)NULL);
+            Tcl_AppendResult(interp,
+                "cannot find hull window with access command \"", wname, "\"",
+                (char*)NULL);
             return NULL;
         }
         info->tkwin = tkwin;
@@ -1905,12 +3161,11 @@ Itk_CreateArchComponent(
             archOpt = (ArchOption*)Tcl_GetHashValue(entry);
 
             init = NULL;
-            if ((archOpt->resName != NULL) && (archOpt->resClass != NULL)) {
+            if (archOpt->resName && archOpt->resClass) {
                 init = Tk_GetOption(tkwin, archOpt->resName, archOpt->resClass);
             }
 
-            if (init &&
-	            (!archOpt->init || (strcmp(init, archOpt->init) != 0))) {
+            if (init && (!archOpt->init || strcmp(init, archOpt->init) != 0)) {
                 if (!archOpt->init) {
                     ckfree(archOpt->init);
                 }
@@ -1918,7 +3173,7 @@ Itk_CreateArchComponent(
                 strcpy(archOpt->init, init);
 
                 if (Itk_ArchSetOption(interp, info,
-                        archOpt->switchName, init) != TCL_OK) {
+                    archOpt->switchName, init) != TCL_OK) {
                     return NULL;
                 }
             }
@@ -1931,11 +3186,16 @@ Itk_CreateArchComponent(
      */
     archComp = (ArchComponent*)ckalloc(sizeof(ArchComponent));
 
-    memset(archComp, 0, sizeof(ArchComponent));
-    archComp->namePtr = Tcl_NewStringObj(name, -1);
-    Tcl_IncrRefCount(archComp->namePtr);
-    archComp->iclsPtr     = iclsPtr;
-    archComp->protection  = ITCL_PUBLIC;
+    memPtr = (ItclMember*)ckalloc(sizeof(ItclMember));
+    memPtr->interp      = interp;
+    memPtr->classDefn   = cdefn;
+    memPtr->name        = NULL;
+    memPtr->fullname    = NULL;
+    memPtr->flags       = 0;
+    memPtr->protection  = ITCL_PUBLIC;
+    memPtr->code        = NULL;
+
+    archComp->member     = memPtr;
     archComp->accessCmd  = accessCmd;
     archComp->tkwin      = tkwin;
     archComp->pathName   = (char *) ckalloc((unsigned)(strlen(wname)+1));
@@ -1954,12 +3214,10 @@ Itk_CreateArchComponent(
  * ------------------------------------------------------------------------
  */
 static void
-Itk_DelArchComponent(
-    ArchComponent *archComp)  /* pointer to component data */
+Itk_DelArchComponent(archComp)
+    ArchComponent *archComp;  /* pointer to component data */
 {
-#ifdef NOTDEF
     ckfree((char*)archComp->member);
-#endif
     ckfree((char*)archComp->pathName);
     ckfree((char*)archComp);
 }
@@ -1986,15 +3244,17 @@ Itk_DelArchComponent(
  * ------------------------------------------------------------------------
  */
 static int
-Itk_GetArchOption(
-    Tcl_Interp *interp,            /* interpreter managing the object */
-    ArchInfo *info,                /* info for Archetype mega-widget */
-    char *switchName,              /* name of command-line switch */
-    char *resName,                 /* resource name in X11 database */
-    char *resClass,                /* resource class name in X11 database */
-    CONST char *defVal,            /* last-resort default value */
-    char *currVal,                 /* current option value */
-    ArchOption **aoPtr)            /* returns: option record */
+Itk_GetArchOption(interp, info, switchName, resName, resClass,
+    defVal, currVal, aoPtr)
+
+    Tcl_Interp *interp;            /* interpreter managing the object */
+    ArchInfo *info;                /* info for Archetype mega-widget */
+    char *switchName;              /* name of command-line switch */
+    char *resName;                 /* resource name in X11 database */
+    char *resClass;                /* resource class name in X11 database */
+    CONST char *defVal;            /* last-resort default value */
+    char *currVal;                 /* current option value */
+    ArchOption **aoPtr;            /* returns: option record */
 {
     int result = TCL_OK;
 
@@ -2028,7 +3288,7 @@ Itk_GetArchOption(
             strcpy(archOpt->resName, resName);
         }
         else if (resName && strcmp(archOpt->resName, resName) != 0) {
-            Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+            Tcl_AppendResult(interp,
                 "bad resource name \"", resName, "\" for option \"",
                 name, "\": should be \"", archOpt->resName, "\"",
                 (char*)NULL);
@@ -2039,15 +3299,14 @@ Itk_GetArchOption(
         if (resClass && !archOpt->resClass) {
             archOpt->resClass = (char*)ckalloc((unsigned)(strlen(resClass)+1));
             strcpy(archOpt->resClass, resClass);
-        } else {
-	    if (resClass && strcmp(archOpt->resClass, resClass) != 0) {
-                Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                    "bad resource class \"", resClass, "\" for option \"",
-                    name, "\": should be \"", archOpt->resClass, "\"",
-                    (char*)NULL);
-                result = TCL_ERROR;
-                goto getArchOptionDone;
-	    }
+        }
+        else if (resClass && strcmp(archOpt->resClass, resClass) != 0) {
+            Tcl_AppendResult(interp,
+                "bad resource class \"", resClass, "\" for option \"",
+                name, "\": should be \"", archOpt->resClass, "\"",
+                (char*)NULL);
+            result = TCL_ERROR;
+            goto getArchOptionDone;
         }
 
         if (!archOpt->init) {
@@ -2071,14 +3330,16 @@ Itk_GetArchOption(
     if (resName) {
         archOpt->resName = (char*)ckalloc((unsigned)(strlen(resName)+1));
         strcpy(archOpt->resName, resName);
-    } else {
+    }
+    else {
         archOpt->resName = NULL;
     }
 
     if (resClass) {
         archOpt->resClass = (char*)ckalloc((unsigned)(strlen(resClass)+1));
         strcpy(archOpt->resClass, resClass);
-    } else {
+    }
+    else {
         archOpt->resClass = NULL;
     }
 
@@ -2118,19 +3379,19 @@ getArchOptionDone:
  * ------------------------------------------------------------------------
  */
 static void
-Itk_InitArchOption(
-    Tcl_Interp *interp,            /* interpreter managing the object */
-    ArchInfo *info,                /* info for Archetype mega-widget */
-    ArchOption *archOpt,           /* option to initialize */
-    CONST char *defVal,            /* last-resort default value */
-    char *currVal)                 /* current option value */
+Itk_InitArchOption(interp, info, archOpt, defVal, currVal)
+    Tcl_Interp *interp;            /* interpreter managing the object */
+    ArchInfo *info;                /* info for Archetype mega-widget */
+    ArchOption *archOpt;           /* option to initialize */
+    CONST char *defVal;            /* last-resort default value */
+    char *currVal;                 /* current option value */
 {
     CONST char *init = NULL;
 
-    Tcl_CallFrame frame;
     int result;
     CONST char *ival;
     char c;
+    ItclContext context;
 
     /*
      *  If the option is already initialized, then abort.
@@ -2165,7 +3426,8 @@ Itk_InitArchOption(
         (c == 's' && strcmp(archOpt->switchName,"-screen") == 0) ||
         (c == 'v' && strcmp(archOpt->switchName,"-visual") == 0)) {
         ival = currVal;
-    } else {
+    }
+    else {
         ival = init;
     }
 
@@ -2174,7 +3436,8 @@ Itk_InitArchOption(
      *  Since this might be called from the itk::option-parser
      *  namespace, reinstall the object context.
      */
-    result = Itcl_PushCallFrame(interp, &frame, info->itclObj->iclsPtr->nsPtr, /*isProcCallFrame*/0);
+    result = Itcl_PushContext(interp, (ItclMember*)NULL,
+        info->itclObj->classDefn, info->itclObj, &context);
 
     if (result == TCL_OK) {
 	/*
@@ -2183,7 +3446,7 @@ Itk_InitArchOption(
 	 */
         Tcl_SetVar2(interp, "itk_option", archOpt->switchName,
             (char *)((ival) ? ival : ""), 0);
-    Itcl_PopCallFrame(interp);
+        Itcl_PopContext(interp, &context);
     }
 
     if (ival) {
@@ -2201,8 +3464,8 @@ Itk_InitArchOption(
  * ------------------------------------------------------------------------
  */
 static void
-Itk_DelArchOption(
-    ArchOption *archOpt)  /* pointer to option data */
+Itk_DelArchOption(archOpt)
+    ArchOption *archOpt;  /* pointer to option data */
 {
     Itcl_ListElem *elem;
     ArchOptionPart *optPart;
@@ -2253,13 +3516,13 @@ Itk_DelArchOption(
  *  Returns a pointer to the new option part.
  * ------------------------------------------------------------------------
  */
-ArchOptionPart*
-Itk_CreateOptionPart(
-    Tcl_Interp *interp,              /* interpreter handling this request */
-    ClientData cdata,                /* data representing this part */
-    Itk_ConfigOptionPartProc *cproc, /* proc used to apply config changes */
-    Tcl_CmdDeleteProc *dproc,        /* proc used to clean up ClientData */
-    ClientData from)                 /* who contributed this option */
+static ArchOptionPart*
+Itk_CreateOptionPart(interp, cdata, cproc, dproc, from)
+    Tcl_Interp *interp;              /* interpreter handling this request */
+    ClientData cdata;                /* data representing this part */
+    Itk_ConfigOptionPartProc *cproc; /* proc used to apply config changes */
+    Tcl_CmdDeleteProc *dproc;        /* proc used to clean up ClientData */
+    ClientData from;                 /* who contributed this option */
 {
     ArchOptionPart *optPart;
 
@@ -2291,26 +3554,27 @@ Itk_CreateOptionPart(
  *  in the interpreter) if anything goes wrong.
  * ------------------------------------------------------------------------
  */
-int
-Itk_AddOptionPart(
-    Tcl_Interp *interp,              /* interpreter handling this request */
-    ArchInfo *info,                  /* info for Archetype mega-widget */
-    char *switchName,                /* name of command-line switch */
-    char *resName,                   /* resource name in X11 database */
-    char *resClass,                  /* resource class name in X11 database */
-    CONST char *defVal,              /* last-resort default value */
-    char *currVal,                   /* current value (or NULL) */
-    ArchOptionPart *optPart,         /* part to be added in */
-    ArchOption **raOpt)              /* returns: option containing new part */
+static int
+Itk_AddOptionPart(interp, info, switchName, resName, resClass,
+    defVal, currVal, optPart, raOpt)
+
+    Tcl_Interp *interp;              /* interpreter handling this request */
+    ArchInfo *info;                  /* info for Archetype mega-widget */
+    char *switchName;                /* name of command-line switch */
+    char *resName;                   /* resource name in X11 database */
+    char *resClass;                  /* resource class name in X11 database */
+    CONST char *defVal;              /* last-resort default value */
+    char *currVal;                   /* current value (or NULL) */
+    ArchOptionPart *optPart;         /* part to be added in */
+    ArchOption **raOpt;              /* returns: option containing new part */
 {
     CONST char *init = NULL;
 
-    Tcl_CallFrame frame;
     int result;
     ArchOption *archOpt;
+    ItclContext context;
 
     *raOpt = NULL;
-    archOpt = NULL;
 
     /*
      *  Find or create a composite option for the mega-widget.
@@ -2332,11 +3596,12 @@ Itk_AddOptionPart(
 
     if ((archOpt->flags & ITK_ARCHOPT_INIT) != 0) {
 
-        result = Itcl_PushCallFrame(interp, &frame, info->itclObj->iclsPtr->nsPtr, /*isProcCallFrame*/0);
+        result = Itcl_PushContext(interp, (ItclMember*)NULL,
+            info->itclObj->classDefn, info->itclObj, &context);
 
         if (result == TCL_OK) {
             init = Tcl_GetVar2(interp, "itk_option", archOpt->switchName, 0);
-            Itcl_PopCallFrame(interp);
+            Itcl_PopContext(interp, &context);
         }
 
         if (!init) {
@@ -2373,11 +3638,11 @@ Itk_AddOptionPart(
  *  source, or NULL if the option is not recognized.
  * ------------------------------------------------------------------------
  */
-ArchOptionPart*
-Itk_FindArchOptionPart(
-    ArchInfo *info,                /* info for Archetype mega-widget */
-    char *switchName,              /* name of command-line switch */
-    ClientData from)               /* who contributed this option */
+static ArchOptionPart*
+Itk_FindArchOptionPart(info, switchName, from)
+    ArchInfo *info;                /* info for Archetype mega-widget */
+    char *switchName;              /* name of command-line switch */
+    ClientData from;               /* who contributed this option */
 {
     ArchOptionPart *optPart = NULL;
 
@@ -2445,10 +3710,10 @@ Itk_FindArchOptionPart(
  * ------------------------------------------------------------------------
  */
 static int
-Itk_RemoveArchOptionPart(
-    ArchInfo *info,                /* info for Archetype mega-widget */
-    char *switchName,              /* name of command-line switch */
-    ClientData from)               /* who contributed this option */
+Itk_RemoveArchOptionPart(info, switchName, from)
+    ArchInfo *info;                /* info for Archetype mega-widget */
+    char *switchName;              /* name of command-line switch */
+    ClientData from;               /* who contributed this option */
 {
     int result = 0;
 
@@ -2497,7 +3762,7 @@ Itk_RemoveArchOptionPart(
          *  from the "itk_option" array as well.
          */
         if (Itcl_GetListLength(&archOpt->parts) == 0) {
-            Tcl_UnsetVar2(info->itclObj->iclsPtr->interp,
+            Tcl_UnsetVar2(info->itclObj->classDefn->interp,
                 "itk_option", archOpt->switchName, 0);
 
             Itk_DelArchOption(archOpt);
@@ -2534,9 +3799,9 @@ Itk_RemoveArchOptionPart(
  * ------------------------------------------------------------------------
  */
 static int
-Itk_IgnoreArchOptionPart(
-    ArchInfo *info,                /* info for Archetype mega-widget */
-    GenericConfigOpt *opt)         /* part to be ignored */
+Itk_IgnoreArchOptionPart(info, opt)
+    ArchInfo *info;                /* info for Archetype mega-widget */
+    GenericConfigOpt *opt;         /* part to be ignored */
 {
     int result = 0;
 
@@ -2568,7 +3833,7 @@ Itk_IgnoreArchOptionPart(
          *  from the "itk_option" array as well.
          */
         if (Itcl_GetListLength(&opt->integrated->parts) == 0) {
-            Tcl_UnsetVar2(info->itclObj->iclsPtr->interp,
+            Tcl_UnsetVar2(info->itclObj->classDefn->interp,
                 "itk_option", opt->integrated->switchName, 0);
 
             entry = Tcl_FindHashEntry(&info->options,
@@ -2599,7 +3864,7 @@ Itk_IgnoreArchOptionPart(
  *  Itk_CreateOptionPart().
  * ------------------------------------------------------------------------
  */
-void
+static void
 Itk_DelOptionPart(optPart)
     ArchOptionPart *optPart;  /* option part data to be destroyed */
 {
@@ -2640,7 +3905,6 @@ Itk_CreateConfigCmdline(interp, accessCmd, switchName)
      *  Create the record to represent this part of the option.
      */
     cmdlinePtr = (ConfigCmdline*)ckalloc(sizeof(ConfigCmdline));
-    memset(cmdlinePtr, 0, sizeof(ConfigCmdline));
 
     objPtr = Tcl_NewStringObj((char*)NULL, 0);
     Tcl_GetCommandFullName(interp, accessCmd, objPtr);
@@ -2704,12 +3968,12 @@ Itk_DeleteConfigCmdline(cdata)
 static Tcl_HashTable*
 Itk_CreateGenericOptTable(interp, options)
     Tcl_Interp *interp;          /* interpreter handling this request */
-    const char *options;               /* string description of config options */
+    char *options;               /* string description of config options */
 {
     int confc;
-    const char **confv = NULL;
+    char **confv = NULL;
     int optc;
-    const char **optv = NULL;
+    char **optv = NULL;
 
     int i, newEntry;
     Tcl_HashTable *tPtr;
@@ -2735,12 +3999,12 @@ Itk_CreateGenericOptTable(interp, options)
             entry = Tcl_CreateHashEntry(tPtr, optv[0], &newEntry);
             if (newEntry) {
                 info = (GenericConfigOpt*)ckalloc(sizeof(GenericConfigOpt));
-                info->switchName = (char *)optv[0];
-                info->resName    = (char *)optv[1];
-                info->resClass   = (char *)optv[2];
-                info->init       = (char *)optv[3];
-                info->value      = (char *)optv[4];
-                info->storage    = (char **)optv;
+                info->switchName = optv[0];
+                info->resName    = optv[1];
+                info->resClass   = optv[2];
+                info->init       = optv[3];
+                info->value      = optv[4];
+                info->storage    = optv;
                 info->integrated = NULL;
                 info->optPart    = NULL;
                 Tcl_SetHashValue(entry, (ClientData)info);
@@ -2817,17 +4081,15 @@ Itk_DelGenericOptTable(tPtr)
 static GenericConfigOpt*
 Itk_CreateGenericOpt(interp, switchName, accessCmd)
     Tcl_Interp *interp;          /* interpreter handling this request */
-    const char *switchName;      /* command-line switch for option */
+    char *switchName;            /* command-line switch for option */
     Tcl_Command accessCmd;       /* access command for component */
 {
     GenericConfigOpt *genericOpt = NULL;
     Tcl_Obj *codePtr = NULL;
 
     int optc, result;
-    const char **optv;
-    char *name;
-    const char *my_name;
-    char *info;
+    char **optv;
+    char *name, *info;
     Tcl_Obj *resultPtr;
 
     /*
@@ -2837,9 +4099,8 @@ Itk_CreateGenericOpt(interp, switchName, accessCmd)
         name = ckalloc((unsigned)(strlen(switchName)+2));
         *name = '-';
         strcpy(name+1, switchName);
-	my_name = name;
     } else {
-        my_name = switchName;
+        name = switchName;
     }
 
     /*
@@ -2851,7 +4112,7 @@ Itk_CreateGenericOpt(interp, switchName, accessCmd)
 
     Tcl_GetCommandFullName(interp, accessCmd, codePtr);
     Tcl_AppendToObj(codePtr, " configure ", -1);
-    Tcl_AppendToObj(codePtr, my_name, -1);
+    Tcl_AppendToObj(codePtr, name, -1);
 
     if (Tcl_EvalObj(interp, codePtr) != TCL_OK) {
         goto optionDone;
@@ -2874,12 +4135,12 @@ Itk_CreateGenericOpt(interp, switchName, accessCmd)
     }
     if (optc == 5) {    /* avoid aliased options */
         genericOpt = (GenericConfigOpt*)ckalloc(sizeof(GenericConfigOpt));
-        genericOpt->switchName = (char *)optv[0];
-        genericOpt->resName    = (char *)optv[1];
-        genericOpt->resClass   = (char *)optv[2];
-        genericOpt->init       = (char *)optv[3];
-        genericOpt->value      = (char *)optv[4];
-        genericOpt->storage    = (char **)optv;
+        genericOpt->switchName = optv[0];
+        genericOpt->resName    = optv[1];
+        genericOpt->resClass   = optv[2];
+        genericOpt->init       = optv[3];
+        genericOpt->value      = optv[4];
+        genericOpt->storage    = optv;
         genericOpt->integrated = NULL;
         genericOpt->optPart    = NULL;
     }
@@ -2888,8 +4149,8 @@ Itk_CreateGenericOpt(interp, switchName, accessCmd)
     }
 
 optionDone:
-    if (my_name != switchName) {
-        ckfree(my_name);
+    if (name != switchName) {
+        ckfree(name);
     }
     if (codePtr) {
         Tcl_DecrRefCount(codePtr);
@@ -2918,3 +4179,60 @@ Itk_DelGenericOpt(opt)
     ckfree((char*)opt);
 }
 
+
+/*
+ * ------------------------------------------------------------------------
+ *  ItkGetObjsWithArchInfo()
+ *
+ *  Returns a pointer to a hash table containing the list of registered
+ *  objects in the specified interpreter.  If the hash table does not
+ *  already exist, it is created.
+ * ------------------------------------------------------------------------
+ */
+static Tcl_HashTable*
+ItkGetObjsWithArchInfo(interp)
+    Tcl_Interp *interp;  /* interpreter handling this registration */
+{
+    Tcl_HashTable* objTable;
+
+    /*
+     *  If the registration table does not yet exist, then create it.
+     */
+    objTable = (Tcl_HashTable*)Tcl_GetAssocData(interp,
+        "itk_objsWithArchInfo", (Tcl_InterpDeleteProc**)NULL);
+
+    if (!objTable) {
+        objTable = (Tcl_HashTable*)ckalloc(sizeof(Tcl_HashTable));
+        Tcl_InitHashTable(objTable, TCL_ONE_WORD_KEYS);
+        Tcl_SetAssocData(interp, "itk_objsWithArchInfo",
+            ItkFreeObjsWithArchInfo, (ClientData)objTable);
+    }
+    return objTable;
+}
+
+/*
+ * ------------------------------------------------------------------------
+ *  ItkFreeObjsWithArchInfo()
+ *
+ *  When an interpreter is deleted, this procedure is called to
+ *  free up the associated data created by ItkGetObjsWithArchInfo.
+ * ------------------------------------------------------------------------
+ */
+static void
+ItkFreeObjsWithArchInfo(clientData, interp)
+    ClientData clientData;       /* associated data */
+    Tcl_Interp *interp;          /* interpreter being freed */
+{
+    Tcl_HashTable *tablePtr = (Tcl_HashTable*)clientData;
+    Tcl_HashSearch place;
+    Tcl_HashEntry *entry;
+
+    entry = Tcl_FirstHashEntry(tablePtr, &place);
+    while (entry) {
+        Itk_DelArchInfo( Tcl_GetHashValue(entry) );
+        entry = Tcl_NextHashEntry(&place);
+    }
+
+    Tcl_DeleteHashTable(tablePtr);
+    ckfree((char*)tablePtr);
+}

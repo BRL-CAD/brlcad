@@ -48,8 +48,8 @@ proc ::itcl::local {class name args} {
 # USAGE:  itcl::class name body
 # Adds an entry for the given class declaration.
 #
-foreach __cmd {itcl::class class itcl::type type ictl::widget widget itcl::widgetadaptor widgetadaptor itcl::extendedclass extendedclass} {
-    auto_mkindex_parser::command $__cmd {name body} {
+foreach cmd {itcl::class class} {
+    auto_mkindex_parser::command $cmd {name body} {
 	variable index
 	variable scriptFile
 	append index "set [list auto_index([fullname $name])]"
@@ -67,8 +67,8 @@ foreach __cmd {itcl::class class itcl::type type ictl::widget widget itcl::widge
 # USAGE:  itcl::body name arglist body
 # Adds an entry for the given method/proc body.
 #
-foreach __cmd {itcl::body body} {
-    auto_mkindex_parser::command $__cmd {name arglist body} {
+foreach cmd {itcl::body body} {
+    auto_mkindex_parser::command $cmd {name arglist body} {
 	variable index
 	variable scriptFile
 	append index "set [list auto_index([fullname $name])]"
@@ -80,8 +80,8 @@ foreach __cmd {itcl::body body} {
 # USAGE:  itcl::configbody name arglist body
 # Adds an entry for the given method/proc body.
 #
-foreach __cmd {itcl::configbody configbody} {
-    auto_mkindex_parser::command $__cmd {name body} {
+foreach cmd {itcl::configbody configbody} {
+    auto_mkindex_parser::command $cmd {name body} {
 	variable index
 	variable scriptFile
 	append index "set [list auto_index([fullname $name])]"
@@ -93,8 +93,8 @@ foreach __cmd {itcl::configbody configbody} {
 # USAGE:  ensemble name ?body?
 # Adds an entry to the auto index list for the given ensemble name.
 #
-foreach __cmd {itcl::ensemble ensemble} {
-    auto_mkindex_parser::command $__cmd {name {body ""}} {
+foreach cmd {itcl::ensemble ensemble} {
+    auto_mkindex_parser::command $cmd {name {body ""}} {
 	variable index
 	variable scriptFile
 	append index "set [list auto_index([fullname $name])]"
@@ -110,15 +110,12 @@ foreach __cmd {itcl::ensemble ensemble} {
 # Evaluates the arguments as commands, so we can recognize proc
 # declarations within classes.
 #
-foreach __cmd {public protected private} {
-    auto_mkindex_parser::command $__cmd {args} {
+foreach cmd {public protected private} {
+    auto_mkindex_parser::command $cmd {args} {
         variable parser
         $parser eval $args
     }
 }
-
-# SF bug #246 unset variable __cmd to avoid problems in user programs!!
-unset __cmd
 
 # ----------------------------------------------------------------------
 # auto_import
@@ -147,5 +144,133 @@ proc auto_import {pattern} {
                 ::itcl::import::stub create $name
             }
         }
+    }
+}
+
+# ----------------------------------------------------------------------
+# itcl_class, itcl_info
+# ----------------------------------------------------------------------
+# Compat handling for itcl_class/info, set for auto_index loading only
+#
+# Only need to convert public/protected usage.
+# Uses Tcl 8.4+ coding style
+#
+
+if {([llength [info commands itcl_class]] == 0)
+    && [package vsatisfies $::tcl_version 8.4]} {
+    proc ::itcl::CmdSplit {body} {
+	# DGP's command split
+	set commands {}
+	set chunk ""
+	foreach line [split $body "\n"] {
+	    append chunk $line
+	    if {[info complete "$chunk\n"]} {
+		# $chunk ends in a complete Tcl command, and none of the
+		# newlines within it end a complete Tcl command.  If there
+		# are multiple Tcl commands in $chunk, they must be
+		# separated by semi-colons.
+		set cmd ""
+		foreach part [split $chunk ";"] {
+		    append cmd $part
+		    if {[info complete "$cmd\n"]} {
+			set cmd [string trimleft $cmd]
+			# Drop empty commands and comments
+			if {($cmd ne "") && ![string match #* $cmd]} {
+			    lappend commands $cmd
+			}
+			if {[string match #* $cmd]} {
+			    set cmd "#;"
+			} else {
+			    set cmd ""
+			}
+		    } else {
+			# No complete command yet.
+			# Replace semicolon and continue
+			append cmd ";"
+		    }
+		}
+		set chunk ""
+	    } else {
+		# No end of command yet.  Put the newline back and continue
+		append chunk "\n"
+	    }
+	}
+	if {[string trim $chunk] ne ""} {
+	    return -code error "Can't parse body into a\
+                sequence of commands.\n\tIncomplete command:\n$chunk"
+	}
+	return $commands
+    }
+
+    proc ::itcl::itcl_class {className body} {
+	# inherit baseClass ?baseClass...? ; # no change
+	# constructor args ?init? body     ; # no change
+	# destructor body                  ; # no change
+	# method name args body            ; # no change
+	# proc name args body              ; # no change
+	# common varName ?init?            ; # no change
+	# public varName ?init? ?config?   ; # variable ...
+	# protected varName ?init?         ; # variable ... (?)
+	set cmds [::itcl::CmdSplit $body]
+	set newcmds [list]
+	foreach cmd $cmds {
+	    if {![catch {lindex $cmd 0} firstcmd]} {
+		if {$firstcmd eq "public" || $firstcmd eq "protected"} {
+		    set cmd [linsert $cmd 1 "variable"]
+		}
+	    }
+	    append newcmds "$cmd\n"
+	}
+	return [uplevel 1 [list ::itcl::class $className $newcmds]]
+    }
+    set ::auto_index(itcl_class) [list interp alias {} ::itcl_class {} ::itcl::itcl_class]
+    set ::auto_index(itcl_info) [list interp alias {} ::itcl_info {} ::itcl::find]
+}
+
+# ----------------------------------------------------------------------
+# [namespace inscope]
+# ----------------------------------------------------------------------
+# Modify [unknown] to handle Itcl's usage of [namespace inscope]
+#
+
+namespace eval ::itcl {
+    variable UNKNOWN_ADD_84 {
+	#######################################################################
+	# ADDED BY Itcl
+	# Itcl requires special handling for [namespace inscope]
+	#
+	set cmd [lindex $args 0]
+	if {[regexp "^:*namespace\[ \t\n\]+inscope" $cmd] && [llength $cmd] == 4} {
+
+	    set arglist [lrange $args 1 end]
+	    set ret [catch {uplevel 1 ::$cmd $arglist} result]
+	    if {$ret == 0} {
+		return $result
+	    } else {
+		return -code $ret -errorcode $::errorCode $result
+	    }
+	}
+	#######################################################################
+    }
+    variable UNKNOWN_ADD_85 {
+	#######################################################################
+	# ADDED BY Itcl
+	# Itcl requires special handling for [namespace inscope]
+	#
+	set cmd [lindex $args 0]
+	if {[regexp "^:*namespace\[ \t\n\]+inscope" $cmd] && [llength $cmd] == 4} {
+	    #return -code error "You need an {*}"
+	    set arglist [lrange $args 1 end]
+	    set ret [catch {uplevel 1 ::$cmd $arglist} result opts]
+	    dict unset opts -errorinfo
+	    dict incr opts -level
+	    return -options $opts $result
+	}
+	#######################################################################
+    }
+    if {[package vsatisfies [package provide Tcl] 8.5]} {
+	proc ::unknown args "$UNKNOWN_ADD_85\n[info body ::unknown]"
+    } else {
+	proc ::unknown args "$UNKNOWN_ADD_84\n[info body ::unknown]"
     }
 }

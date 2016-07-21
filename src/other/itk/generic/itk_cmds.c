@@ -21,9 +21,8 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
-#include "itkInt.h"
+#include "itk.h"
 
-MODULE_SCOPE const ItkStubs itkStubs;
 /*  
  * The following script is used to initialize Itcl in a safe interpreter.
  */
@@ -54,7 +53,7 @@ namespace eval ::itk {\n\
     proc _find_init {} {\n\
         global env tcl_library\n\
         variable library\n\
-        variable patchLevel\n\
+        variable version\n\
         rename _find_init {}\n\
         if {[info exists library]} {\n\
             lappend dirs $library\n\
@@ -66,9 +65,9 @@ namespace eval ::itk {\n\
             if {[info exists env(ITK_LIBRARY)]} {\n\
                 lappend dirs $env(ITK_LIBRARY)\n\
             }\n\
-            lappend dirs [file join [file dirname $tcl_library] itk$patchLevel]\n\
+            lappend dirs [file join [file dirname $tcl_library] itk$version]\n\
             set bindir [file dirname [info nameofexecutable]]\n\
-            lappend dirs [file join $bindir .. lib itk$patchLevel]\n\
+            lappend dirs [file join $bindir .. lib itk$version]\n\
             lappend dirs [file join $bindir .. library]\n\
             lappend dirs [file join $bindir .. .. library]\n\
             lappend dirs [file join $bindir .. .. itk library]\n\
@@ -76,7 +75,7 @@ namespace eval ::itk {\n\
             if {[string equal $::tcl_platform(platform) \"unix\"] && \
                     [string equal $::tcl_platform(os) \"Darwin\"]} {\n\
                 foreach d $::tcl_pkgPath {\n\
-                    lappend dirs [file join $d itk$patchLevel]\n\
+                    lappend dirs [file join $d itk$version]\n\
                 }\n\
             }\n\
         }\n\
@@ -112,21 +111,34 @@ namespace eval ::itk {\n\
  * ------------------------------------------------------------------------
  */
 static int
-Initialize(
-    Tcl_Interp *interp)  /* interpreter to be updated */
+Initialize(interp)
+    Tcl_Interp *interp;  /* interpreter to be updated */
 {
     Tcl_Namespace *itkNs, *parserNs;
     ClientData parserInfo;
 
-    if (Tcl_InitStubs(interp, TCL_VERSION, 0) == NULL) {
+#ifndef USE_TCL_STUBS
+    if (Tcl_PkgRequire(interp, "Tcl", TCL_VERSION, 0) == NULL) {
       return TCL_ERROR;
     }
-    if (Tk_InitStubs(interp, TK_VERSION, 0) == NULL) {
+    if (Tcl_PkgRequire(interp, "Tk", TK_VERSION, 0) == NULL) {
+      return TCL_ERROR;
+    }
+    if (Tcl_PkgRequire(interp, "Itcl", ITCL_VERSION, 0) == NULL) {
+      return TCL_ERROR;
+    }
+#else
+    if (Tcl_InitStubs(interp, "8.1", 0) == NULL) {
+      return TCL_ERROR;
+    }
+    if (Tk_InitStubs(interp, "8.1", 0) == NULL) {
 	return TCL_ERROR;
     };
-    if (Itcl_InitStubs(interp, ITCL_VERSION, 0) == NULL) {
+    if (Itcl_InitStubs(interp, ITCL_VERSION, 1) == NULL) {
 	return TCL_ERROR;
     }
+#endif
+
 
     /*
      *  Add the "itk_option" ensemble to the itcl class definition parser.
@@ -135,7 +147,7 @@ Initialize(
         (Tcl_Namespace*)NULL, /* flags */ 0);
 
     if (!parserNs) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+        Tcl_AppendResult(interp,
             "cannot initialize [incr Tk]: [incr Tcl] has not been installed\n",
             "Make sure that Itcl_Init() is called before Itk_Init()",
             (char*)NULL);
@@ -203,9 +215,8 @@ Initialize(
     Tcl_CreateObjCommand(interp, "::itcl::configbody", Itk_ConfigBodyCmd,
         (ClientData)NULL, (Tcl_CmdDeleteProc*)NULL);
 
-    Tcl_SetVar(interp, "::itk::version", ITK_VERSION, TCL_NAMESPACE_ONLY);
-    Tcl_SetVar(interp, "::itk::patchLevel", ITK_PATCH_LEVEL,
-            TCL_NAMESPACE_ONLY);
+    Tcl_SetVar(interp, "::itk::version", ITK_VERSION, 0);
+    Tcl_SetVar(interp, "::itk::patchLevel", ITK_PATCH_LEVEL, 0);
 
     /*
      *  Signal that the package has been loaded and provide the Itk Stubs table
@@ -214,9 +225,20 @@ Initialize(
      *  end-of-the-line?
      */
 
-    Tcl_PkgProvideEx(interp, "Itk", ITK_PATCH_LEVEL, (ClientData) &itkStubs);
-    return Tcl_PkgProvideEx(interp, "itk", ITK_PATCH_LEVEL,
-            (ClientData) &itkStubs);
+#if TCL_DOES_STUBS
+    {
+	extern ItkStubs itkStubs;
+	if (Tcl_PkgProvideEx(interp, "Itk", ITK_VERSION,
+		(ClientData) &itkStubs) != TCL_OK) {
+	    return TCL_ERROR;
+	}
+    }
+#else
+    if (Tcl_PkgProvide(interp, "Itk", ITK_VERSION) != TCL_OK) {
+	return TCL_ERROR;
+    }
+#endif
+    return TCL_OK;
 }
 
 /*
@@ -234,13 +256,14 @@ Initialize(
  * ------------------------------------------------------------------------
  */
 int
-Itk_Init(
-    Tcl_Interp *interp)  /* interpreter to be updated */
+Itk_Init(interp)
+    Tcl_Interp *interp;  /* interpreter to be updated */
 {
     if (Initialize(interp) != TCL_OK) {
 	return TCL_ERROR;
     }
     return Tcl_Eval(interp, initScript);
+    return TCL_OK;
 }
 
 
@@ -259,11 +282,133 @@ Itk_Init(
  * ------------------------------------------------------------------------
  */  
 int 
-Itk_SafeInit(
-    Tcl_Interp *interp)  /* interpreter to be updated */ 
+Itk_SafeInit(interp)
+    Tcl_Interp *interp;  /* interpreter to be updated */ 
 {   
     if (Initialize(interp) != TCL_OK) {
         return TCL_ERROR;
     }
     return Tcl_Eval(interp, safeInitScript);
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itk_ConfigBodyCmd()
+ *
+ *  Replacement for the usual "itcl::configbody" command.  Recognizes
+ *  mega-widget options included in a class definition.  Options are
+ *  identified by their "switch" name, but without the "-" prefix:
+ *
+ *    itcl::configbody <class>::<itkOption> <body>
+ *
+ *  Handles bodies for public variables as well:
+ *
+ *    itcl::configbody <class>::<publicVar> <body>
+ *
+ *  If an <itkOption> is found, it has priority over public variables.
+ *  If <body> has the form "@name" then it is treated as a reference
+ *  to a C handling procedure; otherwise, it is taken as a body of
+ *  Tcl statements.
+ *
+ *  Returns TCL_OK/TCL_ERROR to indicate success/failure.
+ * ------------------------------------------------------------------------
+ */
+/* ARGSUSED */
+int
+Itk_ConfigBodyCmd(dummy, interp, objc, objv)
+    ClientData dummy;        /* unused */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
+{
+    int result = TCL_OK;
+
+    char *token, *head, *tail;
+    ItclClass *cdefn;
+    ItclMemberCode *mcode;
+    ItkClassOptTable *optTable;
+    Tcl_HashEntry *entry;
+    ItkClassOption *opt;
+    Tcl_DString buffer;
+
+    if (objc != 3) {
+        Tcl_WrongNumArgs(interp, 1, objv, "class::option body");
+        return TCL_ERROR;
+    }
+
+    /*
+     *  Parse the member name "namesp::namesp::class::option".
+     *  Make sure that a class name was specified, and that the
+     *  class exists.
+     */
+    token = Tcl_GetStringFromObj(objv[1], (int*)NULL);
+    Itcl_ParseNamespPath(token, &buffer, &head, &tail);
+
+    if (!head || *head == '\0') {
+        Tcl_AppendResult(interp,
+            "missing class specifier for body declaration \"", token, "\"",
+            (char*)NULL);
+        result = TCL_ERROR;
+        goto configBodyCmdDone;
+    }
+
+    cdefn = Itcl_FindClass(interp, head, /* autoload */ 1);
+    if (cdefn == NULL) {
+        result = TCL_ERROR;
+        goto configBodyCmdDone;
+    }
+
+    /*
+     *  Look first for a configuration option with that name.
+     *  If it is not found, assume the reference is for a public
+     *  variable, and use the usual "configbody" implementation
+     *  to handle it.
+     */
+    optTable = Itk_FindClassOptTable(cdefn);
+    opt = NULL;
+
+    if (optTable) {
+        Tcl_DString optName;
+
+        Tcl_DStringInit(&optName);
+        Tcl_DStringAppend(&optName, "-", -1);
+        Tcl_DStringAppend(&optName, tail, -1);
+        entry = Tcl_FindHashEntry(&optTable->options,
+            Tcl_DStringValue(&optName));
+
+        if (entry) {
+            opt = (ItkClassOption*)Tcl_GetHashValue(entry);
+        }
+        Tcl_DStringFree(&optName);
+    }
+
+    if (opt == NULL) {
+        result = Itcl_ConfigBodyCmd(dummy, interp, objc, objv);
+        goto configBodyCmdDone;
+    }
+
+    /*
+     *  Otherwise, change the implementation for this option.
+     */
+    token = Tcl_GetStringFromObj(objv[2], (int*)NULL);
+
+    if (Itcl_CreateMemberCode(interp, cdefn, (char*)NULL, token,
+        &mcode) != TCL_OK) {
+
+        result = TCL_ERROR;
+        goto configBodyCmdDone;
+    }
+
+    Itcl_PreserveData((ClientData)mcode);
+    Itcl_EventuallyFree((ClientData)mcode, Itcl_DeleteMemberCode);
+
+    if (opt->member->code) {
+        Itcl_ReleaseData((ClientData)opt->member->code);
+    }
+    opt->member->code = mcode;
+
+configBodyCmdDone:
+    Tcl_DStringFree(&buffer);
+    return result;
 }

@@ -21,8 +21,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *  overhauled version author: Arnulf Wiedemann
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -41,8 +39,8 @@ typedef struct ItclCfunc {
     Tcl_CmdDeleteProc *deleteProc;  /* proc called to free clientData */
 } ItclCfunc;
 
-static Tcl_HashTable* ItclGetRegisteredProcs(Tcl_Interp *interp);
-static void ItclFreeC(ClientData clientData, Tcl_Interp *interp);
+static Tcl_HashTable* ItclGetRegisteredProcs _ANSI_ARGS_((Tcl_Interp *interp));
+static void ItclFreeC _ANSI_ARGS_((ClientData clientData, Tcl_Interp *interp));
 
 
 /*
@@ -76,7 +74,7 @@ static void ItclFreeC(ClientData clientData, Tcl_Interp *interp);
 int
 Itcl_RegisterC(interp, name, proc, clientData, deleteProc)
     Tcl_Interp *interp;             /* interpreter handling this registration */
-    const char *name;               /* symbolic name for procedure */
+    CONST char *name;               /* symbolic name for procedure */
     Tcl_CmdProc *proc;              /* procedure handling Tcl command */
     ClientData clientData;          /* client data associated with proc */
     Tcl_CmdDeleteProc *deleteProc;  /* proc called to free up client data */
@@ -115,7 +113,8 @@ Itcl_RegisterC(interp, name, proc, clientData, deleteProc)
         if (cfunc->deleteProc != NULL) {
             (*cfunc->deleteProc)(cfunc->clientData);
         }
-    } else {
+    }
+    else {
         cfunc = (ItclCfunc*)ckalloc(sizeof(ItclCfunc));
         cfunc->objCmdProc = NULL;
     }
@@ -160,7 +159,7 @@ Itcl_RegisterC(interp, name, proc, clientData, deleteProc)
 int
 Itcl_RegisterObjC(interp, name, proc, clientData, deleteProc)
     Tcl_Interp *interp;     /* interpreter handling this registration */
-    const char *name;       /* symbolic name for procedure */
+    CONST char *name;       /* symbolic name for procedure */
     Tcl_ObjCmdProc *proc;   /* procedure handling Tcl command */
     ClientData clientData;          /* client data associated with proc */
     Tcl_CmdDeleteProc *deleteProc;  /* proc called to free up client data */
@@ -227,12 +226,12 @@ Itcl_RegisterObjC(interp, name, proc, clientData, deleteProc)
  * ------------------------------------------------------------------------
  */
 int
-Itcl_FindC(
-    Tcl_Interp *interp,           /* interpreter handling this registration */
-    const char *name,             /* symbolic name for procedure */
-    Tcl_CmdProc **argProcPtr,     /* returns (argc,argv) command handler */
-    Tcl_ObjCmdProc **objProcPtr,  /* returns (objc,objv) command handler */
-    ClientData *cDataPtr)         /* returns client data */
+Itcl_FindC(interp, name, argProcPtr, objProcPtr, cDataPtr)
+    Tcl_Interp *interp;           /* interpreter handling this registration */
+    CONST char *name;             /* symbolic name for procedure */
+    Tcl_CmdProc **argProcPtr;     /* returns (argc,argv) command handler */
+    Tcl_ObjCmdProc **objProcPtr;  /* returns (objc,objv) command handler */
+    ClientData *cDataPtr;         /* returns client data */
 {
     Tcl_HashEntry *entry;
     Tcl_HashTable *procTable;

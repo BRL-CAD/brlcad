@@ -20,8 +20,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *  overhauled version author: Arnulf Wiedemann
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -29,10 +27,6 @@
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
 #include "itclInt.h"
-
-#ifdef ITCL_PRESERVE_DEBUG
-#include <malloc.h>
-#endif
 
 /*
  *  POOL OF LIST ELEMENTS FOR LINKED LIST
@@ -42,6 +36,20 @@ static int listPoolLen = 0;
 
 #define ITCL_VALID_LIST 0x01face10  /* magic bit pattern for validation */
 #define ITCL_LIST_POOL_SIZE 200     /* max number of elements in listPool */
+
+
+/*
+ *  These records are used to keep track of reference-counted data
+ *  for Itcl_PreserveData and Itcl_ReleaseData.
+ */
+typedef struct ItclPreservedData {
+    ClientData data;                /* reference to data */
+    int usage;                      /* number of active uses */
+    Tcl_FreeProc *fproc;            /* procedure used to free data */
+} ItclPreservedData;
+
+static Tcl_HashTable *ItclPreservedList = NULL;
+TCL_DECLARE_MUTEX(ItclPreservedListLock)
 
 /*
  *  This structure is used to take a snapshot of the interpreter
@@ -59,11 +67,6 @@ typedef struct InterpState {
 
 #define TCL_STATE_VALID 0x01233210  /* magic bit pattern for validation */
 
-#ifdef ITCL_PRESERVE_DEBUG
-static Tcl_HashTable itclPreserveInfos;
-static int itclPreserveInfoInitted = 0;
-#endif
-
 
 /*
  * ------------------------------------------------------------------------
@@ -76,8 +79,8 @@ static int itclPreserveInfoInitted = 0;
 
 void
 Itcl_Assert(testExpr, fileName, lineNumber)
-    const char *testExpr;   /* string representing test expression */
-    const char *fileName;   /* file name containing this call */
+    CONST char *testExpr;   /* string representing test expression */
+    CONST char *fileName;   /* file name containing this call */
     int lineNumber;	    /* line number containing this call */
 {
     Tcl_Panic("Itcl Assertion failed: \"%s\" (line %d of %s)",
@@ -268,8 +271,8 @@ Itcl_DeleteList(listPtr)
  * ------------------------------------------------------------------------
  */
 Itcl_ListElem*
-Itcl_CreateListElem(
-    Itcl_List *listPtr)     /* list that will contain this new element */
+Itcl_CreateListElem(listPtr)
+    Itcl_List *listPtr;     /* list that will contain this new element */
 {
     Itcl_ListElem *elemPtr;
 
@@ -277,7 +280,8 @@ Itcl_CreateListElem(
         elemPtr = listPool;
         listPool = elemPtr->next;
         --listPoolLen;
-    } else {
+    }
+    else {
         elemPtr = (Itcl_ListElem*)ckalloc((unsigned)sizeof(Itcl_ListElem));
     }
     elemPtr->owner = listPtr;
@@ -314,19 +318,18 @@ Itcl_DeleteListElem(elemPtr)
     }
 
     listPtr = elemPtr->owner;
-    if (elemPtr == listPtr->head) {
+    if (elemPtr == listPtr->head)
         listPtr->head = elemPtr->next;
-    }
-    if (elemPtr == listPtr->tail) {
+    if (elemPtr == listPtr->tail)
         listPtr->tail = elemPtr->prev;
-    }
     --listPtr->num;
 
     if (listPoolLen < ITCL_LIST_POOL_SIZE) {
         elemPtr->next = listPool;
         listPool = elemPtr;
         ++listPoolLen;
-    } else {
+    }
+    else {
         ckfree((char*)elemPtr);
     }
     return nextPtr;
@@ -496,36 +499,11 @@ Itcl_SetListValue(elemPtr,val)
     Itcl_ListElem *elemPtr; /* list element being modified */
     ClientData val;         /* new value associated with element */
 {
-    Itcl_List *listPtr = elemPtr->owner;
-    assert(listPtr->validate == ITCL_VALID_LIST);
     assert(elemPtr != NULL);
+    assert(elemPtr->owner != NULL);
+    assert(elemPtr->owner->validate == ITCL_VALID_LIST);
 
     elemPtr->value = val;
-}
-
-
-/*
- * ------------------------------------------------------------------------
- *  Itcl_FinishList()
- *
- *  free all memory used in the list pool
- * ------------------------------------------------------------------------
- */
-void
-Itcl_FinishList()
-{
-    Itcl_ListElem *listPtr;
-    Itcl_ListElem *elemPtr;
-    
-    listPtr = listPool;
-    while (listPtr != NULL) {
-        elemPtr = listPtr;
-	listPtr = elemPtr->next;
-	ckfree((char *)elemPtr);
-        elemPtr = NULL;
-    }
-    listPool = NULL;
-    listPoolLen = 0;
 }
 
 
@@ -552,56 +530,65 @@ Itcl_FinishList()
  * ------------------------------------------------------------------------
  */
 void
-Itcl_EventuallyFree(
-    ClientData cdata,          /* data to be freed when not in use */
-    Tcl_FreeProc *fproc)       /* procedure called to free data */
+Itcl_EventuallyFree(cdata, fproc)
+    ClientData cdata;          /* data to be freed when not in use */
+    Tcl_FreeProc *fproc;       /* procedure called to free data */
 {
+    int newEntry;
+    Tcl_HashEntry *entry;
+    ItclPreservedData *chunk;
+
     /*
      *  If the clientData value is NULL, do nothing.
      */
     if (cdata == NULL) {
         return;
     }
-    Tcl_EventuallyFree(cdata, fproc);
-    return;
 
-}
-#ifdef ITCL_PRESERVE_DEBUG
-void
-Itcl_DbDumpPreserveInfo(
-    const char *fileName)
-{
-    FOREACH_HASH_DECLS;
-    FILE *fd;
-    ItclPreserveInfo *ipiPtr;
-    ItclPreserveInfoEntry *ipiePtr;
-    int j;
+    /*
+     *  If a list has not yet been created to manage bits of
+     *  preserved data, then create it.
+     */
+    Tcl_MutexLock(&ItclPreservedListLock);
+    if (!ItclPreservedList) {
+        ItclPreservedList = (Tcl_HashTable*)ckalloc(
+            (unsigned)sizeof(Tcl_HashTable)
+        );
+        Tcl_InitHashTable(ItclPreservedList, TCL_ONE_WORD_KEYS);
+    }
 
-    if (fileName == NULL) {
-        fd = stderr;
-    } else {
-        fd = fopen(fileName, "w");
+    /*
+     *  Find or create the data in the global list.
+     */
+    entry = Tcl_CreateHashEntry(ItclPreservedList,(char*)cdata, &newEntry);
+    if (newEntry) {
+        chunk = (ItclPreservedData*)ckalloc(
+            (unsigned)sizeof(ItclPreservedData)
+        );
+        chunk->data  = cdata;
+        chunk->usage = 0;
+        chunk->fproc = fproc;
+        Tcl_SetHashValue(entry, (ClientData)chunk);
     }
-    fprintf(fd, "type\taddr\tfile\tline\n");
-    FOREACH_HASH_VALUE(ipiPtr, &itclPreserveInfos) {
-	if (ipiPtr->refCount == 0) {
-	    continue;
-	}
-	fprintf(stderr, "DAT!%p!%d!\n", ipiPtr->clientData, ipiPtr->refCount);
-        for (j = 0; j < ipiPtr->numEntries; j++) {
-            ipiePtr = &ipiPtr->entries[j];
-            if (ipiePtr->type != ITCL_PRESERVE_DELETED) {
-                fprintf(fd, "%s\t%p\t%s\t%d\n", 
-                        ipiePtr->type == ITCL_PRESERVE_INCR ? "INCR" : "DECR",
-                        ipiPtr->clientData, ipiePtr->fileName, ipiePtr->line);
-            }
-        }
+    else {
+        chunk = (ItclPreservedData*)Tcl_GetHashValue(entry);
+        chunk->fproc = fproc;
     }
-    if (fd != stderr) {
-        fclose(fd);
+
+    /*
+     *  If the usage count is zero, then delete the data now.
+     */
+    if (chunk->usage == 0) {
+	chunk->usage = -1;  /* cannot preserve/release anymore */
+
+	Tcl_MutexUnlock(&ItclPreservedListLock);
+	(*chunk->fproc)((char*)chunk->data);
+	Tcl_MutexLock(&ItclPreservedListLock);
+	Tcl_DeleteHashEntry(entry);
+	ckfree((char*)chunk);
     }
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
-#endif
 
 /*
  * ------------------------------------------------------------------------
@@ -615,13 +602,13 @@ Itcl_DbDumpPreserveInfo(
  *  freed.
  * ------------------------------------------------------------------------
  */
-#ifdef ITCL_PRESERVE_DEBUG
 void
-ItclDbgPreserveData(
-    ClientData cdata,     /* data to be preserved */
-    int line,
-    const char *file)
+Itcl_PreserveData(cdata)
+    ClientData cdata;      /* data to be preserved */
 {
+    Tcl_HashEntry *entry;
+    ItclPreservedData *chunk;
+    int newEntry;
 
     /*
      *  If the clientData value is NULL, do nothing.
@@ -629,61 +616,47 @@ ItclDbgPreserveData(
     if (cdata == NULL) {
         return;
     }
-    {
-	Tcl_HashEntry *hPtr;
-        ItclPreserveInfo *ipiPtr;
-        ItclPreserveInfoEntry *ipiePtr;
-	int isNew;
-
-        if (!itclPreserveInfoInitted) {
-            Tcl_InitHashTable(&itclPreserveInfos, TCL_ONE_WORD_KEYS);
-            itclPreserveInfoInitted = 1;
-        }
-	hPtr = Tcl_CreateHashEntry(&itclPreserveInfos, cdata, &isNew);
-	if (isNew) {
-	    ipiPtr = (ItclPreserveInfo *)ckalloc(sizeof(ItclPreserveInfo));
-	    ipiPtr->refCount = 0;
-	    ipiPtr->size = ITCL_PRESERVE_BUCKET_SIZE;
-	    ipiPtr->numEntries = 0;
-	    ipiPtr->clientData = cdata;
-	    ipiPtr->entries = (ItclPreserveInfoEntry *)malloc(
-	            sizeof(ItclPreserveInfoEntry) * ipiPtr->size);
-	    Tcl_SetHashValue(hPtr, ipiPtr);
-	}
-	ipiPtr = Tcl_GetHashValue(hPtr);
-        if (ipiPtr->numEntries >= ipiPtr->size) {
-            ipiPtr->size += ITCL_PRESERVE_BUCKET_SIZE;
-            ipiPtr->entries = (ItclPreserveInfoEntry *)
-                    realloc((char *)ipiPtr->entries,
-                    sizeof(ItclPreserveInfoEntry) *
-                    ipiPtr->size);
-        }
-        ipiePtr = &ipiPtr->entries[ipiPtr->numEntries++];
-        ipiePtr->type = ITCL_PRESERVE_INCR;
-        ipiePtr->line = line;
-        ipiePtr->fileName = file;
-        ipiPtr->refCount++;
-    }
-
-    Tcl_Preserve(cdata);
-    return;
-}
-# else
-void
-Itcl_PreserveData(
-    ClientData cdata)     /* data to be preserved */
-{
 
     /*
-     *  If the clientData value is NULL, do nothing.
+     *  If a list has not yet been created to manage bits of
+     *  preserved data, then create it.
      */
-    if (cdata == NULL) {
-        return;
+    Tcl_MutexLock(&ItclPreservedListLock);
+    if (!ItclPreservedList) {
+        ItclPreservedList = (Tcl_HashTable*)ckalloc(
+            (unsigned)sizeof(Tcl_HashTable)
+        );
+        Tcl_InitHashTable(ItclPreservedList,TCL_ONE_WORD_KEYS);
     }
-    Tcl_Preserve(cdata);
-    return;
+
+    /*
+     *  Find the data in the global list and bump its usage count.
+     */
+    entry = Tcl_CreateHashEntry(ItclPreservedList,(char*)cdata, &newEntry);
+    if (newEntry) {
+        chunk = (ItclPreservedData*)ckalloc(
+            (unsigned)sizeof(ItclPreservedData)
+        );
+        chunk->data  = cdata;
+        chunk->usage = 0;
+        chunk->fproc = NULL;
+        Tcl_SetHashValue(entry, (ClientData)chunk);
+    }
+    else {
+        chunk = (ItclPreservedData*)Tcl_GetHashValue(entry);
+    }
+
+    /*
+     *  Only increment the usage if it is non-negative.
+     *  Negative numbers mean that the data is in the process
+     *  of being destroyed by Itcl_ReleaseData(), and should
+     *  not be further preserved.
+     */
+    if (chunk->usage >= 0) {
+        chunk->usage++;
+    }
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
-#endif
 
 /*
  * ------------------------------------------------------------------------
@@ -695,15 +668,12 @@ Itcl_PreserveData(
  *  automatically freed.
  * ------------------------------------------------------------------------
  */
-#ifdef ITCL_PRESERVE_DEBUG
 void
-ItclDbgReleaseData(
-    ClientData cdata,      /* data to be released */
-    int line,
-    const char *file)
+Itcl_ReleaseData(cdata)
+    ClientData cdata;      /* data to be released */
 {
-
-    int noDelete = 0;
+    Tcl_HashEntry *entry;
+    ItclPreservedData *chunk;
 
     /*
      *  If the clientData value is NULL, do nothing.
@@ -711,57 +681,44 @@ ItclDbgReleaseData(
     if (cdata == NULL) {
         return;
     }
-    {
-	Tcl_HashEntry *hPtr;
-        ItclPreserveInfo *ipiPtr;
-        ItclPreserveInfoEntry *ipiePtr;
 
-        if (!itclPreserveInfoInitted) {
-            Tcl_InitHashTable(&itclPreserveInfos, TCL_ONE_WORD_KEYS);
-            itclPreserveInfoInitted = 1;
+    /*
+     *  Otherwise, find the data in the global list and
+     *  decrement its usage count.
+     */
+    entry = NULL;
+    Tcl_MutexLock(&ItclPreservedListLock);
+    if (ItclPreservedList) {
+        entry = Tcl_FindHashEntry(ItclPreservedList,(char*)cdata);
+    }
+    if (!entry) {
+	Tcl_MutexUnlock(&ItclPreservedListLock);
+        Tcl_Panic("Itcl_ReleaseData can't find reference for 0x%p", cdata);
+    }
+
+    /*
+     *  Only decrement the usage if it is non-negative.
+     *  When the usage reaches zero, set it to a negative number
+     *  to indicate that data is being destroyed, and then
+     *  invoke the client delete proc.  When the data is deleted,
+     *  remove the entry from the preservation list.
+     */
+    chunk = (ItclPreservedData*)Tcl_GetHashValue(entry);
+    if (chunk->usage > 0 && --chunk->usage == 0) {
+
+	if (chunk->fproc) {
+	    chunk->usage = -1;  /* cannot preserve/release anymore */
+	    Tcl_MutexUnlock(&ItclPreservedListLock);
+	    (*chunk->fproc)((char*)chunk->data);
+	    Tcl_MutexLock(&ItclPreservedListLock);
         }
-	hPtr = Tcl_FindHashEntry(&itclPreserveInfos, cdata);
-	if (hPtr != NULL) {
-	    ipiPtr = Tcl_GetHashValue(hPtr);
-            if (ipiPtr->numEntries >= ipiPtr->size) {
-                ipiPtr->size += ITCL_PRESERVE_BUCKET_SIZE;
-                ipiPtr->entries = (ItclPreserveInfoEntry *)
-                        realloc((char *)ipiPtr->entries,
-                        sizeof(ItclPreserveInfoEntry) *
-                        ipiPtr->size);
-            }
-            ipiePtr = &ipiPtr->entries[ipiPtr->numEntries++];
-            ipiePtr->type = ITCL_PRESERVE_DECR;
-            ipiePtr->line = line;
-            ipiePtr->fileName = file;
-            ipiPtr->refCount--;
-            if (ipiPtr->refCount < 0) {
-                fprintf(stderr, "REFCOUNT < 0 for: %p!\n", cdata);
-                noDelete = 1;
-            }
-	}
-    }
-    if (!noDelete) {
-        Tcl_Release(cdata);
-    }
-    return;
-}
-#else
-void
-Itcl_ReleaseData(
-    ClientData cdata)      /* data to be released */
-{
 
-    /*
-     *  If the clientData value is NULL, do nothing.
-     */
-    if (cdata == NULL) {
-        return;
+        Tcl_DeleteHashEntry(entry);
+        ckfree((char*)chunk);
     }
-    Tcl_Release(cdata);
-    return;
+    Tcl_MutexUnlock(&ItclPreservedListLock);
 }
-#endif
+
 
 /*
  * ------------------------------------------------------------------------
@@ -785,7 +742,68 @@ Itcl_SaveInterpState(interp, status)
     Tcl_Interp* interp;     /* interpreter being modified */
     int status;             /* integer status code for current operation */
 {
+    Interp *iPtr = (Interp*)interp;
+
+    InterpState *info;
+    CONST char *val;
+
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
     return (Itcl_InterpState) Tcl_SaveInterpState(interp, status);
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	Itcl_InterpState (*tcl_SaveInterpState)(Tcl_Interp *, int) =
+	    (Itcl_InterpState (*)(Tcl_Interp *, int)) tclStubsPtr->reserved535;
+	return (*tcl_SaveInterpState)(interp, status);
+    }
+#endif
+
+    info = (InterpState*)ckalloc(sizeof(InterpState));
+    info->validate = TCL_STATE_VALID;
+    info->status = status;
+    info->errorInfo = NULL;
+    info->errorCode = NULL;
+
+    /*
+     *  Get the result object from the interpreter.  This synchronizes
+     *  the old-style result, so we don't have to worry about it.
+     *  Keeping the object result is enough.
+     */
+    info->objResult = Tcl_GetObjResult(interp);
+    Tcl_IncrRefCount(info->objResult);
+
+    /*
+     *  If an error is in progress, preserve its state.
+     */
+#ifdef ERR_IN_PROGRESS   /* this disappeared in 8.5a2 */
+    if ((iPtr->flags & ERR_IN_PROGRESS) != 0) {
+#else
+    if (iPtr->errorInfo != NULL) {
+#endif
+        val = Tcl_GetVar(interp, "errorInfo", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorInfo = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorInfo, val);
+        }
+
+        val = Tcl_GetVar(interp, "errorCode", TCL_GLOBAL_ONLY);
+        if (val) {
+            info->errorCode = ckalloc((unsigned)(strlen(val)+1));
+            strcpy(info->errorCode, val);
+        }
+    }
+
+    /*
+     *  Now, reset the interpreter to a clean state.
+     */
+    Tcl_ResetResult(interp);
+
+    return (Itcl_InterpState)info;
 }
 
 
@@ -807,7 +825,57 @@ Itcl_RestoreInterpState(interp, state)
     Tcl_Interp* interp;       /* interpreter being modified */
     Itcl_InterpState state;   /* token representing interpreter state */
 {
+    InterpState *info = (InterpState*)state;
+    int status;
+
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
     return Tcl_RestoreInterpState(interp, (Tcl_InterpState)state);
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	int (*tcl_RestoreInterpState)() = (int (*)()) tclStubsPtr->reserved536;
+ 	return (*tcl_RestoreInterpState)(interp, state);
+    }
+#endif
+
+    if (info->validate != TCL_STATE_VALID) {
+        Tcl_Panic("bad token in Itcl_RestoreInterpState");
+    }
+    Tcl_ResetResult(interp);
+
+    /*
+     *  If an error is in progress, restore its state.
+     *  Set the error code the hard way--set the variable directly
+     *  and fix the interpreter flags.  Otherwise, if the error code
+     *  string is really a list, it will get wrapped in extra {}'s.
+     */
+    if (info->errorInfo) {
+        Tcl_AddErrorInfo(interp, info->errorInfo);
+        ckfree(info->errorInfo);
+    }
+
+    if (info->errorCode) {
+        Tcl_SetObjErrorCode(interp, Tcl_NewStringObj(info->errorCode, -1));
+        ckfree(info->errorCode);
+    }
+
+    /*
+     *  Assign the object result back to the interpreter, then
+     *  release our hold on it.
+     */
+    Tcl_SetObjResult(interp, info->objResult);
+    Tcl_DecrRefCount(info->objResult);
+
+    status = info->status;
+    info->validate = 0;
+    ckfree((char*)info);
+
+    return status;
 }
 
 
@@ -826,9 +894,42 @@ void
 Itcl_DiscardInterpState(state)
     Itcl_InterpState state;  /* token representing interpreter state */
 {
+    InterpState *info = (InterpState*)state;
+
+    /*
+     * ERR_IN_PROGRESS was replaced by new APIs in 8.5a2.  Call them if they
+     * are available, or somehow magic them in from the stubs table.
+     * Tcl_ChannelThreadActionProc is a stubs slot higher than the APIs we
+     * need, so its existence indicates slot-y goodness.
+     */
+#ifndef ERR_IN_PROGRESS
     Tcl_DiscardInterpState((Tcl_InterpState)state);
     return;
+#elif defined(USE_TCL_STUBS) && defined(Tcl_ChannelThreadActionProc)
+    if (itclCompatFlags & ITCL_COMPAT_USE_ISTATE_API) {
+	void (* tcl_DiscardInterpState)() = (void (*)())
+	    tclStubsPtr->reserved537;
+	(*tcl_DiscardInterpState)(state);
+	return;
+    }
+#endif
+
+    if (info->validate != TCL_STATE_VALID) {
+        Tcl_Panic("bad token in Itcl_DiscardInterpState");
+    }
+
+    if (info->errorInfo) {
+        ckfree(info->errorInfo);
+    }
+    if (info->errorCode) {
+        ckfree(info->errorCode);
+    }
+    Tcl_DecrRefCount(info->objResult);
+
+    info->validate = 0;
+    ckfree((char*)info);
 }
+
 
 /*
  * ------------------------------------------------------------------------
@@ -852,27 +953,223 @@ Itcl_Protection(interp, newLevel)
     int newLevel;        /* new protection level or 0 */
 {
     int oldVal;
-    ItclObjectInfo *infoPtr;
+    ItclObjectInfo *info;
 
     /*
      *  If a new level was specified, then set the protection level.
      *  In any case, return the protection level as it stands right now.
      */
-    infoPtr = (ItclObjectInfo*) Tcl_GetAssocData(interp, ITCL_INTERP_DATA,
+    info = (ItclObjectInfo*) Tcl_GetAssocData(interp, ITCL_INTERP_DATA,
         (Tcl_InterpDeleteProc**)NULL);
 
-    assert(infoPtr != NULL);
-    oldVal = infoPtr->protection;
+    assert(info != NULL);
+    oldVal = info->protection;
 
     if (newLevel != 0) {
         assert(newLevel == ITCL_PUBLIC ||
             newLevel == ITCL_PROTECTED ||
             newLevel == ITCL_PRIVATE ||
             newLevel == ITCL_DEFAULT_PROTECT);
-        infoPtr->protection = newLevel;
+        info->protection = newLevel;
     }
     return oldVal;
 }
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_ProtectionStr()
+ *
+ *  Converts an integer protection code (ITCL_PUBLIC, ITCL_PROTECTED,
+ *  or ITCL_PRIVATE) into a human-readable character string.  Returns
+ *  a pointer to this string.
+ * ------------------------------------------------------------------------
+ */
+char*
+Itcl_ProtectionStr(pLevel)
+    int pLevel;     /* protection level */
+{
+    switch (pLevel) {
+    case ITCL_PUBLIC:
+        return "public";
+    case ITCL_PROTECTED:
+        return "protected";
+    case ITCL_PRIVATE:
+        return "private";
+    }
+    return "<bad-protection-code>";
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_CanAccess()
+ *
+ *  Checks to see if a class member can be accessed from a particular
+ *  namespace context.  Public things can always be accessed.  Protected
+ *  things can be accessed if the "from" namespace appears in the
+ *  inheritance hierarchy of the class namespace.  Private things
+ *  can be accessed only if the "from" namespace is the same as the
+ *  class that contains them.
+ *
+ *  Returns 1/0 indicating true/false.
+ * ------------------------------------------------------------------------
+ */
+int
+Itcl_CanAccess(memberPtr, fromNsPtr)
+    ItclMember* memberPtr;     /* class member being tested */
+    Tcl_Namespace* fromNsPtr;  /* namespace requesting access */
+{
+    ItclClass* fromCdPtr;
+    Tcl_HashEntry *entry;
+
+    /*
+     *  If the protection level is "public" or "private", then the
+     *  answer is known immediately.
+     */
+    if (memberPtr->protection == ITCL_PUBLIC) {
+        return 1;
+    }
+    else if (memberPtr->protection == ITCL_PRIVATE) {
+        return (memberPtr->classDefn->namesp == fromNsPtr);
+    }
+
+    /*
+     *  If the protection level is "protected", then check the
+     *  heritage of the namespace requesting access.  If cdefnPtr
+     *  is in the heritage, then access is allowed.
+     */
+    assert (memberPtr->protection == ITCL_PROTECTED);
+
+    if (Itcl_IsClassNamespace(fromNsPtr)) {
+        fromCdPtr = (ItclClass*)fromNsPtr->clientData;
+
+        entry = Tcl_FindHashEntry(&fromCdPtr->heritage,
+            (char*)memberPtr->classDefn);
+
+        if (entry) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_CanAccessFunc()
+ *
+ *  Checks to see if a member function with the specified protection
+ *  level can be accessed from a particular namespace context.  This
+ *  follows the same rules enforced by Itcl_CanAccess, but adds one
+ *  special case:  If the function is a protected method, and if the
+ *  current context is a base class that has the same method, then
+ *  access is allowed.
+ *
+ *  Returns 1/0 indicating true/false.
+ * ------------------------------------------------------------------------
+ */
+int
+Itcl_CanAccessFunc(mfunc, fromNsPtr)
+    ItclMemberFunc* mfunc;     /* member function being tested */
+    Tcl_Namespace* fromNsPtr;  /* namespace requesting access */
+{
+    ItclClass *cdPtr, *fromCdPtr;
+    ItclMemberFunc *ovlfunc;
+    Tcl_HashEntry *entry;
+
+    /*
+     *  Apply the usual rules first.
+     */
+    if (Itcl_CanAccess(mfunc->member, fromNsPtr)) {
+        return 1;
+    }
+
+    /*
+     *  As a last resort, see if the namespace is really a base
+     *  class of the class containing the method.  Look for a
+     *  method with the same name in the base class.  If there
+     *  is one, then this method overrides it, and the base class
+     *  has access.
+     */
+    if ((mfunc->member->flags & ITCL_COMMON) == 0 &&
+        Itcl_IsClassNamespace(fromNsPtr)) {
+
+        cdPtr = mfunc->member->classDefn;
+        fromCdPtr = (ItclClass*)fromNsPtr->clientData;
+
+        if (Tcl_FindHashEntry(&cdPtr->heritage, (char*)fromCdPtr)) {
+            entry = Tcl_FindHashEntry(&fromCdPtr->resolveCmds,
+                mfunc->member->name);
+
+            if (entry) {
+                ovlfunc = (ItclMemberFunc*)Tcl_GetHashValue(entry);
+                if ((ovlfunc->member->flags & ITCL_COMMON) == 0 &&
+                     ovlfunc->member->protection < ITCL_PRIVATE) {
+                    return 1;
+                }
+            }
+        }
+    }
+    return 0;
+}
+
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_GetTrueNamespace()
+ *
+ *  Returns the current namespace context.  This procedure is similar
+ *  to Tcl_GetCurrentNamespace, but it supports the notion of
+ *  "transparent" call frames installed by Itcl_HandleInstance.
+ *
+ *  Returns a pointer to the current namespace calling context.
+ * ------------------------------------------------------------------------
+ */
+Tcl_Namespace*
+Itcl_GetTrueNamespace(interp, info)
+    Tcl_Interp *interp;        /* interpreter being queried */
+    ItclObjectInfo *info;      /* object info associated with interp */
+{
+    int i, transparent;
+    Itcl_CallFrame *framePtr, *transFramePtr;
+    Tcl_Namespace *contextNs;
+
+    /*
+     *  See if the current call frame is on the list of transparent
+     *  call frames.
+     */
+    transparent = 0;
+
+    framePtr = _Tcl_GetCallFrame(interp, 0);
+    for (i = Itcl_GetStackSize(&info->transparentFrames)-1; i >= 0; i--) {
+        transFramePtr = (Itcl_CallFrame*)
+            Itcl_GetStackValue(&info->transparentFrames, i);
+
+        if (framePtr == transFramePtr) {
+            transparent = 1;
+            break;
+        }
+    }
+
+    /*
+     *  If this is a transparent call frame, return the namespace
+     *  context one level up.
+     */
+    if (transparent) {
+        framePtr = _Tcl_GetCallFrame(interp, 1);
+        if (framePtr) {
+            contextNs = framePtr->nsPtr;
+        } else {
+            contextNs = Tcl_GetGlobalNamespace(interp);
+        }
+    }
+    else {
+        contextNs = Tcl_GetCurrentNamespace(interp);
+    }
+    return contextNs;
+}
+
 
 /*
  * ------------------------------------------------------------------------
@@ -894,11 +1191,11 @@ Itcl_Protection(interp, newLevel)
  * ------------------------------------------------------------------------
  */
 void
-Itcl_ParseNamespPath(
-    const char *name,    /* path name to class member */
-    Tcl_DString *buffer, /* dynamic string buffer (uninitialized) */
-    const char **head,   /* returns "namesp::namesp::namesp" part */
-    const char **tail)   /* returns "element" part */
+Itcl_ParseNamespPath(name, buffer, head, tail)
+    CONST char *name;    /* path name to class member */
+    Tcl_DString *buffer; /* dynamic string buffer (uninitialized) */
+    char **head;         /* returns "namesp::namesp::namesp" part */
+    char **tail;         /* returns "element" part */
 {
     register char *sep, *newname;
 
@@ -933,170 +1230,15 @@ Itcl_ParseNamespPath(
         }
         *sep = '\0';
         *head = newname;
-    } else {
+    }
 
-        /*
-         *  No :: separators--the whole name is treated as a tail.
-         */
+    /*
+     *  No :: separators--the whole name is treated as a tail.
+     */
+    else {
         *tail = newname;
         *head = NULL;
     }
-}
-
-/*
- * ------------------------------------------------------------------------
- *  Itcl_CanAccess2()
- *
- *  Checks to see if a class member can be accessed from a particular
- *  namespace context.  Public things can always be accessed.  Protected
- *  things can be accessed if the "from" namespace appears in the
- *  inheritance hierarchy of the class namespace.  Private things
- *  can be accessed only if the "from" namespace is the same as the
- *  class that contains them.
- *
- *  Returns 1/0 indicating true/false.
- * ------------------------------------------------------------------------
- */
-int
-Itcl_CanAccess2(
-    ItclClass *iclsPtr,        /* class being tested */
-    int protection,            /* protection level being tested */
-    Tcl_Namespace* fromNsPtr)  /* namespace requesting access */
-{
-    ItclClass* fromIclsPtr;
-    Tcl_HashEntry *entry;
-
-    /*
-     *  If the protection level is "public" or "private", then the
-     *  answer is known immediately.
-     */
-    if (protection == ITCL_PUBLIC) {
-        return 1;
-    } else {
-        if (protection == ITCL_PRIVATE) {
-	    entry = Tcl_FindHashEntry(&iclsPtr->infoPtr->namespaceClasses,
-		fromNsPtr);
-	    if (entry == NULL) {
-		return 0;
-	    }
-	    return (iclsPtr == Tcl_GetHashValue(entry));
-        }
-    }
-
-    /*
-     *  If the protection level is "protected", then check the
-     *  heritage of the namespace requesting access.  If cdefnPtr
-     *  is in the heritage, then access is allowed.
-     */
-    assert (protection == ITCL_PROTECTED);
-
-    if (Itcl_IsClassNamespace(fromNsPtr)) {
-	entry = Tcl_FindHashEntry(&iclsPtr->infoPtr->namespaceClasses,
-		fromNsPtr);
-	if (entry == NULL) {
-	    return 0;
-	}
-	fromIclsPtr = Tcl_GetHashValue(entry);
-
-        entry = Tcl_FindHashEntry(&fromIclsPtr->heritage,
-	        (char*)iclsPtr);
-
-        if (entry) {
-            return 1;
-        }
-    }
-    return 0;
-}
-
-/*
- * ------------------------------------------------------------------------
- *  Itcl_CanAccess()
- *
- *  Checks to see if a class member can be accessed from a particular
- *  namespace context.  Public things can always be accessed.  Protected
- *  things can be accessed if the "from" namespace appears in the
- *  inheritance hierarchy of the class namespace.  Private things
- *  can be accessed only if the "from" namespace is the same as the
- *  class that contains them.
- *
- *  Returns 1/0 indicating true/false.
- * ------------------------------------------------------------------------
- */
-int
-Itcl_CanAccess(
-    ItclMemberFunc* imPtr,     /* class member being tested */
-    Tcl_Namespace* fromNsPtr)  /* namespace requesting access */
-{
-    return Itcl_CanAccess2(imPtr->iclsPtr, imPtr->protection, fromNsPtr);
-}
-
-
-/*
- * ------------------------------------------------------------------------
- *  Itcl_CanAccessFunc()
- *
- *  Checks to see if a member function with the specified protection
- *  level can be accessed from a particular namespace context.  This
- *  follows the same rules enforced by Itcl_CanAccess, but adds one
- *  special case:  If the function is a protected method, and if the
- *  current context is a base class that has the same method, then
- *  access is allowed.
- *
- *  Returns 1/0 indicating true/false.
- * ------------------------------------------------------------------------
- */
-int
-Itcl_CanAccessFunc(
-    ItclMemberFunc* imPtr,     /* member function being tested */
-    Tcl_Namespace* fromNsPtr)  /* namespace requesting access */
-{
-    ItclClass *iclsPtr;
-    ItclClass *fromIclsPtr;
-    ItclMemberFunc *ovlfunc;
-    Tcl_HashEntry *entry;
-
-    /*
-     *  Apply the usual rules first.
-     */
-    if (Itcl_CanAccess(imPtr, fromNsPtr)) {
-        return 1;
-    }
-
-    /*
-     *  As a last resort, see if the namespace is really a base
-     *  class of the class containing the method.  Look for a
-     *  method with the same name in the base class.  If there
-     *  is one, then this method overrides it, and the base class
-     *  has access.
-     */
-    if ((imPtr->flags & ITCL_COMMON) == 0 &&
-            Itcl_IsClassNamespace(fromNsPtr)) {
-        Tcl_HashEntry *hPtr;
-
-        iclsPtr = imPtr->iclsPtr;
-	hPtr = Tcl_FindHashEntry(&iclsPtr->infoPtr->namespaceClasses,
-	        (char *)fromNsPtr);
-	if (hPtr == NULL) {
-	    return 0;
-	}
-        fromIclsPtr = Tcl_GetHashValue(hPtr);
-
-        if (Tcl_FindHashEntry(&iclsPtr->heritage, (char*)fromIclsPtr)) {
-            entry = Tcl_FindHashEntry(&fromIclsPtr->resolveCmds,
-                (char *)imPtr->namePtr);
-
-            if (entry) {
-		ItclCmdLookup *clookup;
-		clookup = (ItclCmdLookup *)Tcl_GetHashValue(entry);
-		ovlfunc = clookup->imPtr;
-                if ((ovlfunc->flags & ITCL_COMMON) == 0 &&
-                     ovlfunc->protection < ITCL_PRIVATE) {
-                    return 1;
-                }
-            }
-        }
-    }
-    return 0;
 }
 
 
@@ -1118,22 +1260,19 @@ Itcl_CanAccessFunc(
  * ------------------------------------------------------------------------
  */
 int
-Itcl_DecodeScopedCommand(
-    Tcl_Interp *interp,		/* current interpreter */
-    const char *name,		/* string to be decoded */
-    Tcl_Namespace **rNsPtr,	/* returns: namespace for scoped value */
-    char **rCmdPtr)		/* returns: simple command word */
+Itcl_DecodeScopedCommand(interp, name, rNsPtr, rCmdPtr)
+    Tcl_Interp *interp;		/* current interpreter */
+    CONST char *name;		/* string to be decoded */
+    Tcl_Namespace **rNsPtr;	/* returns: namespace for scoped value */
+    char **rCmdPtr;		/* returns: simple command word */
 {
-    Tcl_Namespace *nsPtr;
-    char *cmdName;
-    const char *pos;
-    const char **listv;
-    int listc;
-    int result;
-    int len;
-    
-    nsPtr = NULL;
-    len = strlen(name);
+    Tcl_Namespace *nsPtr = NULL;
+    char *cmdName = NULL;
+    int len = strlen(name);
+    CONST char *pos;
+    int listc, result;
+    CONST char **listv;
+
     cmdName = ckalloc((unsigned)strlen(name)+1);
     strcpy(cmdName, name);
 
@@ -1144,11 +1283,11 @@ Itcl_DecodeScopedCommand(
 	if ((*pos == 'i') && ((pos + 7) <= (name + len))
 	        && (strncmp(pos, "inscope", 7) == 0)) {
 
-            result = Tcl_SplitList(interp, (const char *)name, &listc,
+            result = Tcl_SplitList(interp, name, &listc,
 		    &listv);
             if (result == TCL_OK) {
                 if (listc != 4) {
-                    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
+                    Tcl_AppendResult(interp,
                         "malformed command \"", name, "\": should be \"",
                         "namespace inscope namesp command\"",
                         (char*)NULL);
@@ -1157,10 +1296,10 @@ Itcl_DecodeScopedCommand(
                     nsPtr = Tcl_FindNamespace(interp, listv[2],
                         (Tcl_Namespace*)NULL, TCL_LEAVE_ERR_MSG);
 
-                    if (nsPtr == NULL) {
+                    if (!nsPtr) {
                         result = TCL_ERROR;
                     } else {
-		        ckfree(cmdName);
+			ckfree(cmdName);
                         cmdName = ckalloc((unsigned)(strlen(listv[3])+1));
                         strcpy(cmdName, listv[3]);
                     }
@@ -1169,10 +1308,13 @@ Itcl_DecodeScopedCommand(
             ckfree((char*)listv);
 
             if (result != TCL_OK) {
-                Tcl_AppendObjToErrorInfo(interp, Tcl_ObjPrintf(
-                        "\n    (while decoding scoped command \"%s\")",
-                        name));
-		ckfree(cmdName);
+                char msg[512];
+
+		if (cmdName) {
+		    ckfree(cmdName);
+		}
+                sprintf(msg, "\n    (while decoding scoped command \"%.400s\")", name);
+                Tcl_AddObjErrorInfo(interp, msg, -1);
                 return TCL_ERROR;
             }
 	}
@@ -1183,21 +1325,115 @@ Itcl_DecodeScopedCommand(
     return TCL_OK;
 }
 
-#ifdef ITCL_PRESERVE_DEBUG
-#undef Itcl_PreserveData
-#undef Itcl_ReleaseData
-
-void
-Itcl_PreserveData(
-    ClientData cdata)
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_EvalArgs()
+ *
+ *  This procedure invokes a list of (objc,objv) arguments as a
+ *  single command.  It is similar to Tcl_EvalObj, but it doesn't
+ *  do any parsing or compilation.  It simply treats the first
+ *  argument as a command and invokes that command in the current
+ *  context.
+ *
+ *  Returns TCL_OK if successful.  Otherwise, this procedure returns
+ *  TCL_ERROR along with an error message in the interpreter.
+ * ------------------------------------------------------------------------
+ */
+int
+Itcl_EvalArgs(interp, objc, objv)
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
-    ItclDbgPreserveData(cdata, 0, "");
+    int result;
+    Tcl_Command cmd;
+    Command *cmdPtr;
+    int cmdlinec;
+    Tcl_Obj **cmdlinev;
+    Tcl_Obj *cmdlinePtr = NULL;
+
+    /*
+     * Resolve the command by converting it to a CmdName object.
+     * This caches a pointer to the Command structure for the
+     * command, so if we need it again, it's ready to use.
+     */
+    cmd = Tcl_GetCommandFromObj(interp, objv[0]);
+    cmdPtr = (Command*)cmd;
+
+    cmdlinec = objc;
+    cmdlinev = (Tcl_Obj	**) objv;
+
+    /*
+     * If the command is still not found, handle it with the
+     * "unknown" proc.
+     */
+    if (cmdPtr == NULL) {
+        cmd = Tcl_FindCommand(interp, "unknown",
+            (Tcl_Namespace *) NULL, /*flags*/ TCL_GLOBAL_ONLY);
+
+        if (cmd == NULL) {
+            Tcl_ResetResult(interp);
+            Tcl_AppendResult(interp,
+                "invalid command name \"",
+                Tcl_GetStringFromObj(objv[0], NULL), "\"", NULL);
+            return TCL_ERROR;
+        }
+        cmdPtr = (Command*)cmd;
+
+        cmdlinePtr = Itcl_CreateArgs(interp, "unknown", objc, objv);
+        Tcl_ListObjGetElements(NULL, cmdlinePtr, &cmdlinec, &cmdlinev);
+    }
+
+    /*
+     *  Finally, invoke the command's Tcl_ObjCmdProc.  Be careful
+     *  to pass in the proper client data.
+     */
+    Tcl_ResetResult(interp);
+    result = (*cmdPtr->objProc)(cmdPtr->objClientData, interp,
+        cmdlinec, cmdlinev);
+
+    if (cmdlinePtr) {
+        Tcl_DecrRefCount(cmdlinePtr);
+    }
+    return result;
 }
 
-void
-Itcl_ReleaseData(
-    ClientData cdata)
+
+/*
+ * ------------------------------------------------------------------------
+ *  Itcl_CreateArgs()
+ *
+ *  This procedure takes a string and a list of (objc,objv) arguments,
+ *  and glues them together in a single list.  This is useful when
+ *  a command word needs to be prepended or substituted into a command
+ *  line before it is executed.  The arguments are returned in a single
+ *  list object, and they can be retrieved by calling
+ *  Tcl_ListObjGetElements.  When the arguments are no longer needed,
+ *  they should be discarded by decrementing the reference count for
+ *  the list object.
+ *
+ *  Returns a pointer to the list object containing the arguments.
+ * ------------------------------------------------------------------------
+ */
+Tcl_Obj*
+Itcl_CreateArgs(interp, string, objc, objv)
+    Tcl_Interp *interp;      /* current interpreter */
+    CONST char *string;      /* first command word */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
-    ItclDbgReleaseData(cdata, 0, "");
+    int i;
+    Tcl_Obj *listPtr;
+
+    listPtr = Tcl_NewListObj(0, (Tcl_Obj**)NULL);
+    Tcl_ListObjAppendElement((Tcl_Interp*)NULL, listPtr,
+        Tcl_NewStringObj(string, -1));
+
+    for (i=0; i < objc; i++) {
+        Tcl_ListObjAppendElement((Tcl_Interp*)NULL, listPtr, objv[i]);
+    }
+
+    Tcl_IncrRefCount(listPtr);
+    return listPtr;
 }
-#endif

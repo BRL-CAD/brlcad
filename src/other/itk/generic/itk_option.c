@@ -21,13 +21,13 @@
  * See the file "license.terms" for information on usage and redistribution
  * of this file, and for a DISCLAIMER OF ALL WARRANTIES.
  */
-#include "itkInt.h"
+#include "itk.h"
 
 /*
  *  FORWARD DECLARATIONS
  */
 static char* ItkTraceClassDestroy _ANSI_ARGS_((ClientData cdata,
-    Tcl_Interp *interp, const char *name1, const char *name2, int flags));
+    Tcl_Interp *interp, CONST char *name1, CONST char *name2, int flags));
 static Tcl_HashTable* ItkGetClassesWithOptInfo _ANSI_ARGS_((
     Tcl_Interp *interp));
 static void ItkFreeClassesWithOptInfo _ANSI_ARGS_((ClientData cdata,
@@ -55,73 +55,63 @@ static void ItkFreeClassesWithOptInfo _ANSI_ARGS_((ClientData cdata,
  */
 /* ARGSUSED */
 int
-Itk_ClassOptionDefineCmd(
-    ClientData clientData,   /* class parser info */
-    Tcl_Interp *interp,      /* current interpreter */
-    int objc,                /* number of arguments */
-    Tcl_Obj *CONST objv[])   /* argument objects */
+Itk_ClassOptionDefineCmd(clientData, interp, objc, objv)
+    ClientData clientData;   /* class parser info */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
     ItclObjectInfo *info = (ItclObjectInfo*)clientData;
-    ItclClass *iclsPtr = (ItclClass*)Itcl_PeekStack(&info->clsStack);
+    ItclClass *cdefn = (ItclClass*)Itcl_PeekStack(&info->cdefnStack);
 
     int newEntry;
-    char *switchName;
-    char *resName;
-    char *resClass;
-    char *init;
-    char *config;
+    char *switchName, *resName, *resClass, *init, *config;
     ItkClassOptTable *optTable;
     Tcl_HashEntry *entry;
     ItkClassOption *opt;
 
-    ItclShowArgs(1, "Itk_ClassOptionDefineCmd", objc, objv);
     /*
      *  Make sure that the arguments look right.  The option switch
      *  name must start with a '-'.
      */
     if (objc < 5 || objc > 6) {
         Tcl_WrongNumArgs(interp, 1, objv,
-                "-switch resourceName resourceClass init ?config?");
+            "-switch resourceName resourceClass init ?config?");
         return TCL_ERROR;
     }
 
-    switchName = Tcl_GetString(objv[1]);
+    switchName = Tcl_GetStringFromObj(objv[1], (int*)NULL);
     if (*switchName != '-') {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "bad option name \"", switchName, "\": should be -",
-		switchName, (char*)NULL);
+        Tcl_AppendResult(interp,
+            "bad option name \"", switchName, "\": should be -", switchName,
+            (char*)NULL);
         return TCL_ERROR;
     }
     if (strstr(switchName, ".")) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "bad option name \"", switchName,
-		"\": illegal character \".\"", (char*)NULL);
+        Tcl_AppendResult(interp,
+            "bad option name \"", switchName, "\": illegal character \".\"",
+            (char*)NULL);
         return TCL_ERROR;
     }
 
-    resName = Tcl_GetString(objv[2]);
+    resName = Tcl_GetStringFromObj(objv[2], (int*)NULL);
     if (!islower((int)*resName)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "bad resource name \"", resName,
-                "\": should start with a lower case letter",
-                (char*)NULL);
+        Tcl_AppendResult(interp,
+            "bad resource name \"", resName,
+            "\": should start with a lower case letter",
+            (char*)NULL);
         return TCL_ERROR;
     }
 
-    resClass = Tcl_GetString(objv[3]);
+    resClass = Tcl_GetStringFromObj(objv[3], (int*)NULL);
     if (!isupper((int)*resClass)) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-               "bad resource class \"", resClass,
-               "\": should start with an upper case letter",
-               (char*)NULL);
+        Tcl_AppendResult(interp,
+            "bad resource class \"", resClass,
+            "\": should start with an upper case letter",
+            (char*)NULL);
         return TCL_ERROR;
     }
 
-    if (iclsPtr == NULL) {
-        Tcl_AppendResult(interp, "can only handle options on class level",
-	        NULL);
-	return TCL_ERROR;
-    }
     /*
      *  Make sure that this option has not already been defined in
      *  the context of this class.  Options can be redefined in
@@ -130,14 +120,14 @@ Itk_ClassOptionDefineCmd(
      *  which option is being referenced if the configuration code
      *  is redefined by a subsequent "body" command.
      */
-    optTable = Itk_CreateClassOptTable(interp, iclsPtr);
+    optTable = Itk_CreateClassOptTable(interp, cdefn);
     entry = Tcl_CreateHashEntry(&optTable->options, switchName, &newEntry);
 
     if (!newEntry) {
-        Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-                "option \"", switchName, "\" already defined in class \"",
-                Tcl_GetString(iclsPtr->fullNamePtr), "\"",
-                (char*)NULL);
+        Tcl_AppendResult(interp,
+            "option \"", switchName, "\" already defined in class \"",
+            cdefn->fullname, "\"",
+            (char*)NULL);
         return TCL_ERROR;
     }
 
@@ -145,16 +135,16 @@ Itk_ClassOptionDefineCmd(
      *  Create a new option record and add it to the table for this
      *  class.
      */
-    init = Tcl_GetString(objv[4]);
+    init = Tcl_GetStringFromObj(objv[4], (int*)NULL);
 
     if (objc == 6) {
-        config = Tcl_GetString(objv[5]);
+        config = Tcl_GetStringFromObj(objv[5], (int*)NULL);
     } else {
         config = NULL;
     }
 
-    if (Itk_CreateClassOption(interp, iclsPtr, switchName, resName, resClass,
-            init, config, &opt) != TCL_OK) {
+    if (Itk_CreateClassOption(interp, cdefn, switchName, resName, resClass,
+        init, config, &opt) != TCL_OK) {
         return TCL_ERROR;
     }
 
@@ -176,18 +166,18 @@ Itk_ClassOptionDefineCmd(
  */
 /* ARGSUSED */
 int
-Itk_ClassOptionIllegalCmd(
-    ClientData clientData,   /* class parser info */
-    Tcl_Interp *interp,      /* current interpreter */
-    int objc,                /* number of arguments */
-    Tcl_Obj *CONST objv[])   /* argument objects */
+Itk_ClassOptionIllegalCmd(clientData, interp, objc, objv)
+    ClientData clientData;   /* class parser info */
+    Tcl_Interp *interp;      /* current interpreter */
+    int objc;                /* number of arguments */
+    Tcl_Obj *CONST objv[];   /* argument objects */
 {
-    char *op = Tcl_GetString(objv[0]);
+    char *op = Tcl_GetStringFromObj(objv[0], (int*)NULL);
 
-    Tcl_AppendStringsToObj(Tcl_GetObjResult(interp),
-            "can only ", op, " options for a specific widget\n",
-            "(move this command into the constructor)",
-            (char*)NULL);
+    Tcl_AppendResult(interp,
+        "can only ", op, " options for a specific widget\n",
+        "(move this command into the constructor)",
+        (char*)NULL);
 
     return TCL_ERROR;
 }
@@ -208,11 +198,11 @@ Itk_ClassOptionIllegalCmd(
  */
 /* ARGSUSED */
 int
-Itk_ConfigClassOption(
-    Tcl_Interp *interp,        /* interpreter managing the class */
-    ItclObject *contextObj,    /* object being configured */
-    ClientData cdata,          /* class option */
-    CONST char *newval)        /* new value for this option */
+Itk_ConfigClassOption(interp, contextObj, cdata, newval)
+    Tcl_Interp *interp;        /* interpreter managing the class */
+    ItclObject *contextObj;    /* object being configured */
+    ClientData cdata;          /* class option */
+    CONST char *newval;        /* new value for this option */
 {
     ItkClassOption *opt = (ItkClassOption*)cdata;
     int result = TCL_OK;
@@ -222,19 +212,10 @@ Itk_ConfigClassOption(
      *  If the option has any config code, execute it now.
      *  Make sure that the namespace context is set up correctly.
      */
-    mcode = opt->codePtr;
-    if (mcode && mcode->bodyPtr) {
-//fprintf(stderr, "EXE!%s!\n", Tcl_GetString(mcode->bodyPtr));
-        Itcl_SetCallFrameResolver(interp, opt->iclsPtr->resolvePtr);
-        Tcl_Namespace *saveNsPtr = Tcl_GetCurrentNamespace(interp);
-//fprintf(stderr, "MCNS!%s!\n", saveNsPtr->fullName);
-        Itcl_SetCallFrameNamespace(interp, opt->iclsPtr->nsPtr);
-        result = Tcl_EvalObjEx(interp, mcode->bodyPtr, 0);
-        Itcl_SetCallFrameNamespace(interp, saveNsPtr);
-#ifdef NOTDEF
+    mcode = opt->member->code;
+    if (mcode && mcode->procPtr->bodyPtr) {
         result = Itcl_EvalMemberCode(interp, (ItclMemberFunc*)NULL,
             opt->member, contextObj, 0, (Tcl_Obj**)NULL);
-#endif
     }
     return result;
 }
@@ -259,15 +240,15 @@ Itk_ConfigClassOption(
  * ------------------------------------------------------------------------
  */
 ItkClassOptTable*
-Itk_CreateClassOptTable(
-    Tcl_Interp *interp,        /* interpreter managing the class */
-    ItclClass *iclsPtr)        /* class definition */
+Itk_CreateClassOptTable(interp, cdefn)
+    Tcl_Interp *interp;        /* interpreter managing the class */
+    ItclClass *cdefn;          /* class definition */
 {
     int newEntry, result;
     Tcl_HashTable *itkClasses;
     Tcl_HashEntry *entry;
     ItkClassOptTable *optTable;
-    Tcl_CallFrame frame;
+    Itcl_CallFrame frame;
 
     /*
      *  Look for the specified class definition in the table.
@@ -280,7 +261,7 @@ Itk_CreateClassOptTable(
      */
     itkClasses = ItkGetClassesWithOptInfo(interp);
 
-    entry = Tcl_CreateHashEntry(itkClasses, (char*)iclsPtr, &newEntry);
+    entry = Tcl_CreateHashEntry(itkClasses, (char*)cdefn, &newEntry);
     if (newEntry) {
         optTable = (ItkClassOptTable*)ckalloc(sizeof(ItkClassOptTable));
         Tcl_InitHashTable(&optTable->options, TCL_STRING_KEYS);
@@ -288,16 +269,17 @@ Itk_CreateClassOptTable(
 
         Tcl_SetHashValue(entry, (ClientData)optTable);
 
-        result = Itcl_PushCallFrame(interp, &frame,
-             iclsPtr->nsPtr, /* isProcCallFrame */ 0);
+        result = Tcl_PushCallFrame(interp, (Tcl_CallFrame *) &frame,
+             cdefn->namesp, /* isProcCallFrame */ 0);
 
         if (result == TCL_OK) {
             Tcl_TraceVar(interp, "_itk_option_data",
-                    (TCL_TRACE_UNSETS | TCL_NAMESPACE_ONLY),
-                    ItkTraceClassDestroy, (ClientData)iclsPtr);
-            Itcl_PopCallFrame(interp);
+                (TCL_TRACE_UNSETS | TCL_NAMESPACE_ONLY),
+                (Tcl_VarTraceProc*) ItkTraceClassDestroy, (ClientData)cdefn);
+            Tcl_PopCallFrame(interp);
         }
-    } else {
+    }
+    else {
         optTable = (ItkClassOptTable*)Tcl_GetHashValue(entry);
     }
     return optTable;
@@ -319,8 +301,8 @@ Itk_CreateClassOptTable(
  * ------------------------------------------------------------------------
  */
 ItkClassOptTable*
-Itk_FindClassOptTable(
-    ItclClass *iclsPtr)          /* class definition */
+Itk_FindClassOptTable(cdefn)
+    ItclClass *cdefn;          /* class definition */
 {
     Tcl_HashTable *itkClasses;
     Tcl_HashEntry *entry;
@@ -328,8 +310,8 @@ Itk_FindClassOptTable(
     /*
      *  Look for the specified class definition in the table.
      */
-    itkClasses = ItkGetClassesWithOptInfo(iclsPtr->interp);
-    entry = Tcl_FindHashEntry(itkClasses, (char*)iclsPtr);
+    itkClasses = ItkGetClassesWithOptInfo(cdefn->interp);
+    entry = Tcl_FindHashEntry(itkClasses, (char*)cdefn);
     if (entry) {
         return (ItkClassOptTable*)Tcl_GetHashValue(entry);
     }
@@ -353,14 +335,14 @@ Itk_FindClassOptTable(
  */
 /* ARGSUSED */
 static char*
-ItkTraceClassDestroy(
-    ClientData cdata,          /* class definition data */
-    Tcl_Interp *interp,        /* interpreter managing the class */
-    const char *name1,       /* name of variable involved in trace */
-    const char *name2,       /* name of array element within variable */
-    int flags)                 /* flags describing trace */
+ItkTraceClassDestroy(cdata, interp, name1, name2, flags)
+    ClientData cdata;          /* class definition data */
+    Tcl_Interp *interp;        /* interpreter managing the class */
+    CONST char *name1;               /* name of variable involved in trace */
+    CONST char *name2;         /* name of array element within variable */
+    int flags;                 /* flags describing trace */
 {
-    ItclClass *iclsPtr = (ItclClass*)cdata;
+    ItclClass *cdefn = (ItclClass*)cdata;
 
     Tcl_HashTable *itkClasses;
     Tcl_HashEntry *entry;
@@ -373,8 +355,8 @@ ItkTraceClassDestroy(
      *  If it is found, delete all the option records and tear
      *  down the table.
      */
-    itkClasses = ItkGetClassesWithOptInfo(interp);
-    entry = Tcl_FindHashEntry(itkClasses, (char*)iclsPtr);
+    itkClasses = ItkGetClassesWithOptInfo(cdefn->interp);
+    entry = Tcl_FindHashEntry(itkClasses, (char*)cdefn);
     if (entry) {
         optTable = (ItkClassOptTable*)Tcl_GetHashValue(entry);
         Tcl_DeleteHashEntry(entry);
@@ -408,15 +390,17 @@ ItkTraceClassDestroy(
  * ------------------------------------------------------------------------
  */
 int
-Itk_CreateClassOption(
-    Tcl_Interp *interp,            /* interpreter managing the class */
-    ItclClass *iclsPtr,            /* class containing this option */
-    char *switchName,              /* name of command-line switch */
-    char *resName,                 /* resource name in X11 database */
-    char *resClass,                /* resource class name in X11 database */
-    char *defVal,                  /* last-resort default value */
-    char *config,                  /* configuration code */
-    ItkClassOption **optPtr)       /* returns: option record */
+Itk_CreateClassOption(interp, cdefn, switchName, resName, resClass,
+    defVal, config, optPtr)
+
+    Tcl_Interp *interp;            /* interpreter managing the class */
+    ItclClass *cdefn;              /* class containing this option */
+    char *switchName;              /* name of command-line switch */
+    char *resName;                 /* resource name in X11 database */
+    char *resClass;                /* resource class name in X11 database */
+    char *defVal;                  /* last-resort default value */
+    char *config;                  /* configuration code */
+    ItkClassOption **optPtr;       /* returns: option record */
 {
     ItkClassOption *opt;
     ItclMemberCode *mcode;
@@ -426,16 +410,16 @@ Itk_CreateClassOption(
      *  an implementation for it.
      */
     if (config) {
-        if (Itcl_CreateMemberCode(interp, iclsPtr, (char*)NULL, config,
+        if (Itcl_CreateMemberCode(interp, cdefn, (char*)NULL, config,
             &mcode) != TCL_OK) {
 
             return TCL_ERROR;
         }
         Itcl_PreserveData((ClientData)mcode);
-#ifdef NOTDEF
-        Itcl_EventuallyFree((ClientData)mcode, Itcl_DeleteMemberCode);
-#endif
-    } else {
+        Itcl_EventuallyFree((ClientData)mcode,
+		(Tcl_FreeProc*) Itcl_DeleteMemberCode);
+    }
+    else {
         mcode = NULL;
     }
 
@@ -443,17 +427,8 @@ Itk_CreateClassOption(
      *  Create the record to represent this option.
      */
     opt = (ItkClassOption*)ckalloc(sizeof(ItkClassOption));
-    memset(opt, 0, sizeof(ItkClassOption));
-    opt->iclsPtr      = iclsPtr;
-    opt->flags        = 0;
-    opt->protection   = Itcl_Protection(interp, 0);
-    opt->namePtr      = Tcl_NewStringObj(switchName, -1);
-    Tcl_IncrRefCount(opt->namePtr);
-    opt->fullNamePtr = Tcl_NewStringObj(Tcl_GetString(iclsPtr->fullNamePtr), -1);
-    Tcl_AppendToObj(opt->fullNamePtr, "::", 2);
-    Tcl_AppendToObj(opt->fullNamePtr, switchName, -1);
-    Tcl_IncrRefCount(opt->fullNamePtr);
-    opt->codePtr = mcode;
+    opt->member = Itcl_CreateMember(interp, cdefn, switchName);
+    opt->member->code = mcode;
 
     opt->resName = (char*)ckalloc((unsigned)(strlen(resName)+1));
     strcpy(opt->resName, resName);
@@ -483,9 +458,9 @@ Itk_CreateClassOption(
  * ------------------------------------------------------------------------
  */
 ItkClassOption*
-Itk_FindClassOption(
-    ItclClass *iclsPtr,            /* class containing this option */
-    const char *switchName)        /* name of command-line switch */
+Itk_FindClassOption(cdefn, switchName)
+    ItclClass *cdefn;              /* class containing this option */
+    char *switchName;              /* name of command-line switch */
 {
     ItkClassOption *opt = NULL;
 
@@ -507,7 +482,7 @@ Itk_FindClassOption(
      *  Look for the option table for the specified class, and check
      *  for the requested switch.
      */
-    optTable = Itk_FindClassOptTable(iclsPtr);
+    optTable = Itk_FindClassOptTable(cdefn);
     if (optTable) {
         entry = Tcl_FindHashEntry(&optTable->options, switchName);
         if (entry) {
@@ -527,12 +502,10 @@ Itk_FindClassOption(
  * ------------------------------------------------------------------------
  */
 void
-Itk_DelClassOption(
-    ItkClassOption *opt)  /* pointer to option data */
+Itk_DelClassOption(opt)
+    ItkClassOption *opt;  /* pointer to option data */
 {
-#ifdef NOTDEF
     Itcl_DeleteMember(opt->member);
-#endif
     ckfree(opt->resName);
     ckfree(opt->resClass);
     ckfree(opt->init);
@@ -551,8 +524,8 @@ Itk_DelClassOption(
  * ------------------------------------------------------------------------
  */
 static Tcl_HashTable*
-ItkGetClassesWithOptInfo(
-    Tcl_Interp *interp)  /* interpreter handling this registration */
+ItkGetClassesWithOptInfo(interp)
+    Tcl_Interp *interp;  /* interpreter handling this registration */
 {
     Tcl_HashTable* classesTable;
 
@@ -580,15 +553,13 @@ ItkGetClassesWithOptInfo(
  * ------------------------------------------------------------------------
  */
 static void
-ItkFreeClassesWithOptInfo(
-    ClientData clientData,       /* associated data */
-    Tcl_Interp *interp)          /* interpreter being freed */
+ItkFreeClassesWithOptInfo(clientData, interp)
+    ClientData clientData;       /* associated data */
+    Tcl_Interp *interp;          /* interpreter being freed */
 {
     Tcl_HashTable *tablePtr = (Tcl_HashTable*)clientData;
-    Tcl_HashSearch place;
-    Tcl_HashSearch place2;
-    Tcl_HashEntry *entry;
-    Tcl_HashEntry *entry2;
+    Tcl_HashSearch place, place2;
+    Tcl_HashEntry *entry, *entry2;
     ItkClassOptTable *optTable;
     ItkClassOption *opt;
 

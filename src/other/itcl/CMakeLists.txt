@@ -71,9 +71,9 @@ if(NOT TCL_STUB_LIBRARY)
 endif(NOT TCL_STUB_LIBRARY)
 
 # version numbers
-set(ITCL_VERSION_MAJOR 4)
-set(ITCL_VERSION_MINOR 0)
-set(ITCL_PATCH_LEVEL 4)
+set(ITCL_VERSION_MAJOR 3)
+set(ITCL_VERSION_MINOR 4)
+set(ITCL_PATCH_LEVEL 3)
 
 set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}.${ITCL_PATCH_LEVEL}")
 
@@ -151,25 +151,17 @@ Tcl_Check_Include_File(dlfcn.h USE)
 Tcl_Check_Include_File(sys/param.h USE)
 
 set(ITCL_SRCS
-  generic/itcl2TclOO.c
-  generic/itclBase.c
-  generic/itclBuiltin.c
-  generic/itclClass.c
-  generic/itclCmd.c
-  generic/itclEnsemble.c
-  generic/itclHelpers.c
-  generic/itclInfo.c
-  generic/itclLinkage.c
-  generic/itclMethod.c
-  generic/itclObject.c
-  generic/itclParse.c
-  generic/itclStubs.c
   generic/itclStubInit.c
-  generic/itclResolve.c
-  generic/itclTclIntStubsFcn.c
-  generic/itclUtil.c
-  generic/itclMigrate2TclCore.c
-  generic/itclTestRegisterC.c
+  generic/itcl_bicmds.c
+  generic/itcl_class.c
+  generic/itcl_cmds.c
+  generic/itcl_ensemble.c
+  generic/itcl_linkage.c
+  generic/itcl_methods.c
+  generic/itcl_migrate.c
+  generic/itcl_objects.c
+  generic/itcl_parse.c
+  generic/itcl_util.c
   )
 
 if(WIN32)
@@ -219,7 +211,7 @@ include(tcl_pkgindex.cmake)
 tcl_pkgindex(itcl Itcl "${ITCL_VERSION}")
 
 # Put library files where they need to go, and set up install rules
-set(LIBRARY_FILES itcl.tcl itclHullCmds.tcl itclWidget.tcl)
+set(LIBRARY_FILES itcl.tcl)
 foreach(libfile ${LIBRARY_FILES})
   if(NOT CMAKE_CONFIGURATION_TYPES)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/${libfile}
@@ -238,9 +230,6 @@ set(ITCL_HDRS
   generic/itcl.h
   generic/itclDecls.h
   generic/itclInt.h
-  generic/itclMigrate2TclCore.h
-  generic/itclTclIntStubsFcn.h
-  generic/itcl2TclOO.h
   generic/itclIntDecls.h
   )
 install(FILES ${ITCL_HDRS} DESTINATION include)

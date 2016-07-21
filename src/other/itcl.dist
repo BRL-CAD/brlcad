@@ -1,10 +1,6 @@
 set(itcl_ignore_files
-generic/clientData
-generic/itcl2TclOO.h
 generic/itcl.decls
 generic/itclIntDecls.h
-generic/itclVarsAndCmds.h
-generic/itclVCInt.h
 library
 license.terms
 win
