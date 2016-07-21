@@ -122,7 +122,6 @@ package provide Archer 1.0
 				 {_action ""} \
 				 {_xmlAction ""}}
 	proc pluginUnregister {_name}
-	proc get_html_data {}
 
 	method pluginGetMinAllowableRid {}
 	method pluginUpdateProgressBar {percent}
@@ -2528,7 +2527,7 @@ package provide Archer 1.0
 }
 
 
-proc Archer::get_html_data {helpfile} {
+proc ::get_html_data {helpfile} {
     global archer_help_data
 
     set help_fd [open $helpfile]
@@ -2630,7 +2629,7 @@ proc title_node_handler {node} {
 	set docstochtml [$docstoclist html]
 	$docstochtml configure -parsemode html
 	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] toc.html]] 0]
-	get_html_data $help_fd
+	::get_html_data $help_fd
 	$docstochtml parse $archer_help_data
 
 	grid $docstoclist -sticky nsew -in $docstoc
@@ -2658,7 +2657,7 @@ proc title_node_handler {node} {
 	$htmlviewer configure -parsemode html
 	$htmlviewer configure -imagecmd Archer::mkHelpTkImage
 	set help_fd [lindex [list [file join [bu_brlcad_data "doc/html"] books en BRL-CAD_Tutorial_Series-VolumeI.html]] 0]
-	get_html_data $help_fd
+	::get_html_data $help_fd
 	$htmlviewer parse $archer_help_data
 
 	grid $hv3htmlviewer -sticky nsew -in $sfcs
@@ -9793,7 +9792,6 @@ if {$Archer::methodImpls != ""} {
 	eval $impl
     }
 }
-
 
 Archer::initArcher
 
