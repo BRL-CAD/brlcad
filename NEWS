@@ -165,6 +165,7 @@ geometry (e.g., primitives with CSG).
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
 * added menu option to restore mged command window - Cezar Elnazli
+* improved 'search' command -params option documentation - Cliff Yapp
 * search command now recognizes hyp and metaball types - Cliff Yapp
 * added -depth option to mged 'search' command - Cliff Yapp
 * initial support for rigging joints and constrained articulation
