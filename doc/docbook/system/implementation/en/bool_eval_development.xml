@@ -109,8 +109,11 @@
     <figure>
       <title>Evaluation of a Subtraction</title>
       <mediaobject>
-        <imageobject>
+        <imageobject role="html">
           <imagedata fileref="images/evaluation_overview.png" />
+        </imageobject>
+        <imageobject role="fo">
+	    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/evaluation_overview.png" />
         </imageobject>
       </mediaobject>
       <caption>
@@ -657,8 +660,11 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
           <figure>
             <title>Curve-Curve Overlap Intersection</title>
             <mediaobject>
-              <imageobject>
+              <imageobject role="html">
                 <imagedata fileref="images/ccx_overlap_event.png" />
+              </imageobject>
+              <imageobject role="fo">
+                <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/ccx_overlap_event.png" />
               </imageobject>
             </mediaobject>
             <caption>
@@ -677,8 +683,11 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
         <figure>
           <title>Surface-Surface Overlap Intersection</title>
           <mediaobject>
-            <imageobject>
+            <imageobject role="html">
               <imagedata fileref="images/ssx_overlap_event.png" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/ssx_overlap_event.png" />
             </imageobject>
           </mediaobject>
           <caption>
@@ -699,8 +708,11 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
         <figure>
           <title>Surface-Surface Tangent Intersection</title>
           <mediaobject>
-            <imageobject>
+            <imageobject role="html">
               <imagedata fileref="images/ssx_tangent_event.png" scale="60" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/ssx_tangent_event.png" />
             </imageobject>
           </mediaobject>
           <caption>
@@ -714,8 +726,11 @@ brep->m_L[*brep->m_F[0]->m_li.Last()].m_type; // ON_BrepLoop::inner
         <figure>
           <title>Surface-Surface Transverse Intersection</title>
           <mediaobject>
-            <imageobject>
+            <imageobject role="html">
               <imagedata fileref="images/ssx_transverse_event.png" />
+            </imageobject>
+            <imageobject role="fo">
+              <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/ssx_transverse_event.png" />
             </imageobject>
           </mediaobject>
           <caption>
@@ -841,8 +856,11 @@ for (int i = 0; i < x_event.Count(); ++i) {
           <figure>
             <title>Different Traversals of the Same Curve</title>
             <mediaobject>
-              <imageobject>
+              <imageobject role="html">
                 <imagedata fileref="images/curve_traversal_directions.png" scale="60"/>
+              </imageobject>
+              <imageobject role="fo">
+                <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/curve_traversal_directions.png" />
               </imageobject>
             </mediaobject>
             <caption>
@@ -1088,8 +1106,11 @@ for (int i = 0; i < x_event.Count(); ++i) {
               <figure>
                 <title>Curve Endpoint Decoration</title>
                 <mediaobject>
-                  <imageobject>
+                  <imageobject role="html">
                     <imagedata fileref="images/compare_endpoint_style.png" />
+                  </imageobject>
+                  <imageobject role="fo">
+                    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/compare_endpoint_style.png" />
                   </imageobject>
                 </mediaobject>
                 <caption>
@@ -1190,8 +1211,11 @@ for (int i = 0; i < x_event.Count(); ++i) {
               <figure>
                 <title>Linked Curves in Context</title>
                 <mediaobject>
-                  <imageobject>
+                  <imageobject role="html">
                     <imagedata fileref="images/lcurves_with_shaded_context.png" scale="60"/>
+                  </imageobject>
+                  <imageobject role="fo">
+                    <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/lcurves_with_shaded_context.png" />
                   </imageobject>
                 </mediaobject>
                 <caption>
@@ -1626,8 +1650,11 @@ X_brep is made.
             <figure>
               <title>"X" from axis.g</title>
               <mediaobject>
-                <imageobject>
+                <imageobject role="html">
                   <imagedata fileref="images/axis_X.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/axis_X.png" />
                 </imageobject>
               </mediaobject>
             </figure>
@@ -1684,8 +1711,11 @@ Archer> dplot bool1.dplot ssx 13
             <figure>
               <title>Comparison of Surface-Surface Intersection Event 10 Versus 13</title>
               <mediaobject>
-                <imageobject>
+                <imageobject role="html">
                   <imagedata fileref="images/ssx_10_vs_13.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="3.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/ssx_10_vs_13.png" />
                 </imageobject>
               </mediaobject>
             </figure>
@@ -1915,8 +1945,11 @@ Archer> overlay linked_5_4.plot3 1
             <figure>
               <title>Overlay Visualization of Intermediate Linked Curves</title>
               <mediaobject>
-                <imageobject>
+                <imageobject role="html">
                   <imagedata fileref="images/intermediate_linked_curves.png" />
+                </imageobject>
+                <imageobject role="fo">
+                  <imagedata align="center" width="5.9in" scalefit="1" fileref="../../../../../share/doc/html/implementation/en/images/intermediate_linked_curves.png" />
                 </imageobject>
               </mediaobject>
             </figure>

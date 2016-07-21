@@ -18,7 +18,7 @@ set(implementation_EN_IMAGES
 
 ADD_DOC(implementation_EN html/implementation/en)
 ADD_DOC(implementation_EN_IMAGES html/implementation/en/images)
-ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN implementation/en "")
+ADD_DOCBOOK("HTML;PHP;PDF" implementation_EN implementation/en implementation_EN_IMAGES_cp)
 
 # Local Variables:
 # tab-width: 8
