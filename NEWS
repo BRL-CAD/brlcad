@@ -170,6 +170,7 @@ geometry (e.g., primitives with CSG).
 	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
+* improved support for sub-millimeter (tiny) meshes - Keith Bowman
 * added comb -S option to stop when object already exists - Cliff Yapp
 * improved comb command documentation with many examples - Cliff Yapp
 * implemented new 'hrt' heart-shaped primitive object - Isaac Kamga
