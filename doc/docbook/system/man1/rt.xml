@@ -290,7 +290,6 @@
 	  The
 	  <citerefentry><refentrytitle>pix-fb</refentrytitle><manvolnum>1</manvolnum></citerefentry>
 	  utility can be used later to display ".pix" files.
-	  Note that using -o disables parallel processing.
 	  </para>
 	</listitem>
       </varlistentry>
