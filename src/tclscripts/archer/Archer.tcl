@@ -76,7 +76,7 @@ namespace eval Archer {
 
 LoadArcherLibs
 package require ArcherCore 1.0
-catch {package require Tktable 2.10} tktable
+catch {package require Tktable 2.11} tktable
 package require ManBrowser 1.0
 package provide Archer 1.0
 
