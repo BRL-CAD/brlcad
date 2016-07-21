@@ -105,6 +105,7 @@ geometry (e.g., primitives with CSG).
 * updated libregex to apply a fix for CVE-2015-2305 - Cliff Yapp
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed
+* improved 'bb' command digits and units output - Keith Bowman
 * improved robustness of bb command oriented box option - Peter Amidon
 * added example NURBS B-Rep geometry files from NIST - Cliff Yapp
 * removed "high resolution" options from all commands - Carl Moore
