@@ -47,7 +47,7 @@
  * when formatting this file.  if the compile breaks here, it means
  * that spaces got inserted incorrectly.
  */
-#define COMMA ', '
+#define COMMA ','
 
 
 int rpt_dist = 0;		/* report distance to each pixel */
