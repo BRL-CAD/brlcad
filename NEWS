@@ -65,6 +65,7 @@ geometry (e.g., primitives with CSG).
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
+* fixed rtwizard edge and ghosted image bug on Windows - Bob Parker
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
 * added facetize -m marching cubes option - Erik Greenwald
