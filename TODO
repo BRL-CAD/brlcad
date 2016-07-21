@@ -40,6 +40,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   61168 - NEWS, new param option to search
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
+  60304 - src/tclscripts/archer/images/License.txt from http://ayam.cvs.sourceforge.net/viewvc/ayam/ayam/License.txt is needed
 
 * verify against 7.24.4
   63406 - NEWS, if bug was released
