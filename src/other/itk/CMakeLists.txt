@@ -199,11 +199,11 @@ include_directories(
 # Like ITcl, Itk requires private Tcl headers, which we can't assume from a system
 # install of Tcl.  The workaround is to use our local copies and hope they
 # are workable. (Ugh.)
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../tcl/generic)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/generic)
 if(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../tcl/unix)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/unix)
 else(NOT WIN32)
-  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../../tcl/win)
+  include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../tcl/win)
 endif(NOT WIN32)
 
 add_library(itk ${ITK_SRCS})
