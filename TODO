@@ -40,6 +40,7 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   61168 - NEWS, new param option to search
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
+  61494 - NEWS, extracting images embedded during 3dm-g conversion looks news
 
 * verify against 7.24.4
   63406 - NEWS, if bug was released
