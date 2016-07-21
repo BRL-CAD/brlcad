@@ -70,7 +70,9 @@ install(TARGETS qged
 
 CMAKEFILES(images)
 CMAKEFILES(fonts)
+CMAKEFILES(default.qss)
 CMAKEFILES(cadstyle.qss)
+CMAKEFILES(cadtreestyle.qss)
 CMAKEFILES(pqConsoleWidget_LICENSE.txt)
 
 # Local Variables:
