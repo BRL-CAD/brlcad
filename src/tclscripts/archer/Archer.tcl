@@ -122,6 +122,7 @@ package provide Archer 1.0
 				 {_action ""} \
 				 {_xmlAction ""}}
 	proc pluginUnregister {_name}
+	proc get_html_data {}
 
 	method pluginGetMinAllowableRid {}
 	method pluginUpdateProgressBar {percent}
@@ -596,7 +597,8 @@ package provide Archer 1.0
 		-hscrollmode dynamic \
 		-vscrollmode dynamic \
 		-labeltext "Installed Plug-ins" \
-		-labelfont [list $SystemWindowFont 10 bold] \
+		#-labelfont [list $SystemWindowFont 10 bold] \
+
 		-labelpos n]
 
     set i 0
@@ -8451,7 +8453,7 @@ proc title_node_handler {node} {
     set wplugins {}
     foreach plugin $::Archer::plugins {
 	set majorType [$plugin get -majorType]
-	if {$majorType != $pluginMajorTypeWizard} {
+	if {$majorType != "Wizard"} {
 	    continue
 	}
 

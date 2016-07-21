@@ -36,9 +36,9 @@
     itk_option define -geometryChangedCallback geometryChangedCallback GeometryChangedCallback ""
     itk_option define -prevGeometryObject prevGeometryObject PrevGeometryObject ""
 
-    itk_option define -labelFont labelFont Font [list $::ArcherCore::SystemWindowFont 12]
-    itk_option define -boldLabelFont boldLabelFont Font [list $::ArcherCore::SystemWindowFont 12 bold]
-    itk_option define -entryFont entryFont Font [list $::ArcherCore::SystemWindowFont 12]
+    itk_option define -labelFont labelFont Font [list Helvetica 12]
+    itk_option define -boldLabelFont boldLabelFont Font [list Helvetica 12 bold]
+    itk_option define -entryFont entryFont Font [list Helvetica 12]
     itk_option define -units units Units ""
     itk_option define -valueUnits valueUnits ValueUnits ""
 
@@ -58,7 +58,7 @@
 	common mEditCommand ""
 	common mEditParam1 0
 	common mEditParam2 0
-	common mEditLastTransMode $::ArcherCore::OBJECT_CENTER_MODE
+	common mEditLastTransMode "10"
 	common mEditPCommand ""
 	common mHighlightPoints 1
 	common mHighlightPointSize 1.0

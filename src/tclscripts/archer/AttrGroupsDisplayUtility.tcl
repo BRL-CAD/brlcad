@@ -33,8 +33,8 @@
 
     public {
 	# Override's for the Utility class
-	common utilityMajorType $Archer::pluginMajorTypeUtility
-	common utilityMinorType $Archer::pluginMinorTypeMged
+	common utilityMajorType "Utility" 
+	common utilityMinorType "Mged" 
 	common utilityName "AttrGroupsDisplay Utility"
 	common utilityVersion "1.0"
 	common utilityClass AttrGroupsDisplayUtility
@@ -227,8 +227,8 @@
 
     initLists
 
-    $itk_component(glistFrame) configure -labelfont [list $::ArcherCore::SystemWindowFont 12]
-    $itk_component(alistFrame) configure -labelfont [list $::ArcherCore::SystemWindowFont 12]
+    #$itk_component(glistFrame) configure -labelfont [list $::ArcherCore::SystemWindowFont 12]
+    #$itk_component(alistFrame) configure -labelfont [list $::ArcherCore::SystemWindowFont 12]
 
     if {$mHandleToplevel} {
 	set mToplevel [winfo toplevel $itk_interior]

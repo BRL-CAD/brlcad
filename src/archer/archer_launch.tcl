@@ -167,7 +167,7 @@ proc createSplashScreen {} {
     }
 
     update idletasks
-    $::ArcherCore::splash configure -background $::ArcherCore::SystemWindow
+    #$::ArcherCore::splash configure -background $::ArcherCore::SystemWindow
     $::ArcherCore::splash center
     update idletasks
     $::ArcherCore::splash activate
