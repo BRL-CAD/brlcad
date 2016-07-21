@@ -86,7 +86,7 @@ endif(NOT ITCL_STUB_LIBRARY)
 set(ITK_VERSION_MAJOR 4)
 set(ITK_VERSION_MINOR 0)
 set(ITK_PATCH_LEVEL 2)
-set(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}")
+set(ITK_VERSION "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}.${ITK_PATCH_LEVEL}")
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
@@ -229,7 +229,7 @@ install(TARGETS itkstub
   ARCHIVE DESTINATION ${LIB_DIR})
 
 include(tcl_pkgindex.cmake)
-tcl_pkgindex(itk Itk "${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR}.${ITK_PATCH_LEVEL}")
+tcl_pkgindex(itk Itk "${ITK_VERSION}")
 
 set(ITK_LIBRARY_FILES
   library/Archetype.itk
@@ -238,17 +238,16 @@ set(ITK_LIBRARY_FILES
   library/itk.tcl
   library/tclIndex
   )
-install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
+install(FILES ${ITK_LIBRARY_FILES} DESTINATION lib/itk${ITK_VERSION})
 
-set(ITK_VER ${ITK_VERSION_MAJOR}.${ITK_VERSION_MINOR})
 foreach(file ${ITK_LIBRARY_FILES})
   get_filename_component(filename ${file} NAME)
   if(NOT CMAKE_CONFIGURATION_TYPES)
-    configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_VER}/${filename} COPYONLY)
+    configure_file(${file} ${CMAKE_BINARY_DIR}/lib/itk${ITK_VERSION}/${filename} COPYONLY)
   else(NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
-      configure_file(${file} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itk${ITK_VER}/${filename} COPYONLY)
+      configure_file(${file} ${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itk${ITK_VERSION}/${filename} COPYONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
 endforeach(file ${ITK_LIBRARY_FILES})

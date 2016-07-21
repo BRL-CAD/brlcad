@@ -75,7 +75,7 @@ set(ITCL_VERSION_MAJOR 4)
 set(ITCL_VERSION_MINOR 0)
 set(ITCL_PATCH_LEVEL 4)
 
-set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}")
+set(ITCL_VERSION "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}.${ITCL_PATCH_LEVEL}")
 
 #---------------------------------------------------------------------
 # Initialize some relative variable names
@@ -216,23 +216,22 @@ install(TARGETS itclstub
 set_property(TARGET itclstub APPEND PROPERTY COMPILE_DEFINITIONS USE_TCL_STUBS)
 
 include(tcl_pkgindex.cmake)
-tcl_pkgindex(itcl Itcl "${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR}")
+tcl_pkgindex(itcl Itcl "${ITCL_VERSION}")
 
 # Put library files where they need to go, and set up install rules
-set(ITCL_VER ${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR})
 set(LIBRARY_FILES itcl.tcl itclHullCmds.tcl itclWidget.tcl)
 foreach(libfile ${LIBRARY_FILES})
   if(NOT CMAKE_CONFIGURATION_TYPES)
     configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/${libfile}
-      ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VER}/${libfile} COPYONLY)
+      ${CMAKE_BINARY_DIR}/lib/itcl${ITCL_VERSION}/${libfile} COPYONLY)
   else(NOT CMAKE_CONFIGURATION_TYPES)
     foreach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
       string(TOUPPER "${CFG_TYPE}" CFG_TYPE_UPPER)
       configure_file(${CMAKE_CURRENT_SOURCE_DIR}/library/${libfile}
-	${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itcl${ITCL_VER}/${libfile} COPYONLY)
+	${CMAKE_BINARY_DIR_${CFG_TYPE_UPPER}}/lib/itcl${ITCL_VERSION}/${libfile} COPYONLY)
     endforeach(CFG_TYPE ${CMAKE_CONFIGURATION_TYPES})
   endif(NOT CMAKE_CONFIGURATION_TYPES)
-  install(FILES library/${libfile} DESTINATION lib/itcl${ITCL_VERSION_MAJOR}.${ITCL_VERSION_MINOR})
+  install(FILES library/${libfile} DESTINATION lib/itcl${ITCL_VERSION})
 endforeach(libfile ${LIBRARY_FILES})
 
 set(ITCL_HDRS
