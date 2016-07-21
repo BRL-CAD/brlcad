@@ -1481,15 +1481,7 @@ to_cmd(ClientData clientData,
 	if (ctp->to_name[0] == argv[1][0] &&
 	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
-
-	    /* temporarily comment out the bu_log() hook due to threaded command
-	     * output being slightly tricky; Tcl_Interp objects can only be used
-	     * by the thread which created them.
-	     */
-
-	    /* bu_log_add_hook(to_log_output_handler, (void *)gedp); */
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
-	    /* bu_log_delete_hook(to_log_output_handler, (void *)gedp); */
 	    break;
 	}
     }
