@@ -41,6 +41,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
 
+* verify against 7.24.4
+  63406 - NEWS, if bug was released
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
