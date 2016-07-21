@@ -90,6 +90,7 @@ geometry (e.g., primitives with CSG).
 * added 'rhc' reporting to analyze command - Kalpit Thakkar
 * improved command option and manual page consistency - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert
+* added FASTGEN4 illegal thickness CCONE1 entity import - Cliff Yapp
 * improved option parsing and output options for gencolor - Carl Moore
 * fixed saveview usage help string and running from archer - Nick Reed
 * fixed and improved killtree man page - Nick Reed
