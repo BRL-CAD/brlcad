@@ -89,7 +89,7 @@ if {[info exists argv0]} {
 
 if {$tcl_platform(platform) == "windows"} {
     lappend auto_path ${dir}/lib/Tkhtml3.0
-    lappend auto_path ${dir}/lib/Tktable2.10
+    lappend auto_path ${dir}/lib/Tktable2.11
 }
 
 # load archer guts
