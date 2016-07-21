@@ -43,7 +43,6 @@
 #  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
-extern "C" {
 #include "tcl.h"
 #include "tk.h"
 #include "tkPlatDecls.h"
@@ -58,7 +57,7 @@ extern "C" {
 #include "fb.h"
 #include "rt/solid.h"
 #include "./dm_private.h"
-}
+
 #include "fb/fb_osgl.h"
 #include "dm-osgl.h"
 

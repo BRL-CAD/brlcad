@@ -49,15 +49,7 @@
 /* without OBJ_BREP, this entire procedural example is disabled */
 #ifdef OBJ_BREP
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "wdb.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 ON_BezierSurface *
 ON_CobbSphereFace(double rotation_x, double rotation_z)
