@@ -38,8 +38,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -65,10 +63,10 @@
 #define ITCL_MAJOR_VERSION	3
 #define ITCL_MINOR_VERSION	4
 #define ITCL_RELEASE_LEVEL	TCL_FINAL_RELEASE
-#define ITCL_RELEASE_SERIAL	0
+#define ITCL_RELEASE_SERIAL	3
 
 #define ITCL_VERSION		"3.4"
-#define ITCL_PATCH_LEVEL	"3.4.0"
+#define ITCL_PATCH_LEVEL	"3.4.3"
 
 /* 
  * A special definition used to allow this header file to be included 
@@ -125,20 +123,6 @@
 #	define TCL_EXTERN(RTYPE) TCL_EXTERNC TCL_STORAGE_CLASS RTYPE
 #   endif
 #endif
-
-
-/*
- * Starting from the 8.4 core, Tcl API is CONST'ified.  Our API is always
- * CONST, but we need to build with Tcl when it isn't CONST and fake it
- * when needed with <= 8.3
- *
- * http://wiki.tcl.tk/3669
- */
-
-#ifndef CONST84
-#   define CONST84
-#endif
-
 
 /*
  * Protection levels:

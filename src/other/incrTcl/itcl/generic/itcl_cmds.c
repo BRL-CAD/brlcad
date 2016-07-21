@@ -20,8 +20,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -166,19 +164,12 @@ Initialize(interp)
      *  to adapt dynamically regarding use of some internal structures and
      *  functions that have changed (or have been added) since 8.1.0
      */
-#if TCL_DOES_STUBS
     if (itclCompatFlags == -1) {
 	int maj, min, ptch, type;
 
 	itclCompatFlags = 0;
 	Tcl_GetVersion(&maj, &min, &ptch, &type);
 
-	/* ver >= 8.4a1 */
-	if ((maj == 8) && (min >= 4)) {
-	    /* TODO: make a TIP for exporting a Tcl_CommandIsDeleted
-	     * function in the core. */
-	    itclCompatFlags |= ITCL_COMPAT_USECMDFLAGS;
-	}
 #if USE_TCL_STUBS
 	if ((maj == 8) && (min > 4) &&
 		((type > TCL_ALPHA_RELEASE) || (ptch > 2))) {
@@ -216,7 +207,6 @@ Initialize(interp)
     if (Itcl_EnsembleInit(interp) != TCL_OK) {
         return TCL_ERROR;
     }
-#endif
     
     /*
      *  Create the top-level data structure for tracking objects.
@@ -407,7 +397,6 @@ Initialize(interp)
     /*
      *  Package is now loaded.
      */
-#if TCL_DOES_STUBS
     {
 	extern ItclStubs itclStubs;
 	if (Tcl_PkgProvideEx(interp, "Itcl", ITCL_VERSION,
@@ -415,11 +404,6 @@ Initialize(interp)
 	    return TCL_ERROR;
 	}
     }
-#else
-    if (Tcl_PkgProvide(interp, "Itcl", ITCL_VERSION) != TCL_OK) {
-	return TCL_ERROR;
-    }
-#endif
 
     return TCL_OK;
 }
@@ -622,7 +606,7 @@ Itcl_FindClassesCmd(clientData, interp, objc, objv)
                     cmdName = Tcl_GetString(objPtr);
                 } else {
                     cmdName = Tcl_GetCommandName(interp, cmd);
-                    objPtr = Tcl_NewStringObj((CONST84 char *)cmdName, -1);
+                    objPtr = Tcl_NewStringObj(cmdName, -1);
                 }
 
                 if (originalCmd) {
@@ -631,7 +615,7 @@ Itcl_FindClassesCmd(clientData, interp, objc, objv)
                 Tcl_CreateHashEntry(&unique, (char*)cmd, &newEntry);
 
                 if (newEntry &&
-			(!pattern || Tcl_StringMatch((CONST84 char *)cmdName,
+			(!pattern || Tcl_StringMatch(cmdName,
 			pattern))) {
                     Tcl_ListObjAppendElement((Tcl_Interp*)NULL,
 			    Tcl_GetObjResult(interp), objPtr);
@@ -803,14 +787,14 @@ Itcl_FindObjectsCmd(clientData, interp, objc, objv)
 		    cmdName = Tcl_GetString(objPtr);
                 } else {
                     cmdName = Tcl_GetCommandName(interp, cmd);
-                    objPtr = Tcl_NewStringObj((CONST84 char *)cmdName, -1);
+                    objPtr = Tcl_NewStringObj(cmdName, -1);
                 }
 
                 Tcl_CreateHashEntry(&unique, (char*)cmd, &newEntry);
 
                 match = 0;
 		if (newEntry &&
-			(!pattern || Tcl_StringMatch((CONST84 char *)cmdName,
+			(!pattern || Tcl_StringMatch(cmdName,
 			pattern))) {
                     if (!classDefn || (contextObj->classDefn == classDefn)) {
                         if (!isaDefn) {
@@ -913,7 +897,8 @@ Itcl_ProtectionCmd(clientData, interp, objc, objv)
     else if (result != TCL_OK) {
         char mesg[256], *name;
         name = Tcl_GetString(objv[0]);
-        sprintf(mesg, "\n    (%.100s body line %d)", name, ERRORLINE(interp));
+        sprintf(mesg, "\n    (%.100s body line %d)", name,
+		Tcl_GetErrorLine(interp));
         Tcl_AddErrorInfo(interp, mesg);
     }
 
@@ -1629,6 +1614,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
      *    Need the NULL test, or the test will fail if cmd is NULL
      */
     if (cmd == NULL || ! Itcl_IsObject(cmd)) {
+	ckfree(cmdName);
         Tcl_SetObjResult(interp, Tcl_NewBooleanObj(0));
         return TCL_OK;
     }
@@ -1642,6 +1628,7 @@ Itcl_IsObjectCmd(clientData, interp, objc, objv)
 
         if (! Itcl_ObjectIsa(contextObj, classDefn)) {
 
+	    ckfree(cmdName);
             Tcl_SetObjResult(interp, Tcl_NewBooleanObj(0));
             return TCL_OK;
         }

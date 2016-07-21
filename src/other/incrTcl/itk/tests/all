@@ -1,8 +1,6 @@
 # This file contains a top-level script to run all of the Tcl
 # tests.  Execute it by invoking "source all" when running tclTest
 # in this directory.
-#
-# SCCS: @(#) all 1.7 96/02/16 08:55:38
 # ------------------------------------------------------------------
 # THIS SCRIPT IS NOW DEPRECATED!  It is kept for older Tcl
 # installations that don't have the "tcltest" package.
