@@ -37,99 +37,119 @@
 # *******************************************************************
 
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
-  CMAKE_POLICY(SET CMP0003 NEW)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-	  CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-	  CMAKE_POLICY(SET CMP0054 NEW)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-ENDIF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 2.8)
+if(COMMAND CMAKE_POLICY)
+	CMAKE_POLICY(SET CMP0003 NEW)
+	if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+		CMAKE_POLICY(SET CMP0026 OLD)
+		CMAKE_POLICY(SET CMP0048 OLD)
+	endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+	if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+		CMAKE_POLICY(SET CMP0053 OLD)
+		CMAKE_POLICY(SET CMP0054 NEW)
+	endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+endif(COMMAND CMAKE_POLICY)
 
 # set CMake project name
-PROJECT(TK)
+project(TK)
 
 # build shared libs by default
-set(BUILD_SHARED_LIBS ON)
+if(NOT DEFINED BUILD_SHARED_LIBS)
+	option(BUILD_SHARED_LIBS "Build shared libraries" ON)
+endif(NOT DEFINED BUILD_SHARED_LIBS)
 
 # build static libs by default
-set(BUILD_STATIC_LIBS ON)
+if(NOT DEFINED BUILD_STATIC_LIBS)
+	option(BUILD_STATIC_LIBS "Build shared libraries" ON)
+endif(NOT DEFINED BUILD_STATIC_LIBS)
 
 # version numbers
-SET(TK_VERSION_MAJOR 8)
-SET(TK_VERSION_MINOR 6)
-SET(TK_PATCH_LEVEL 5)
+set(TK_VERSION_MAJOR 8)
+set(TK_VERSION_MINOR 6)
+set(TK_PATCH_LEVEL 5)
 
-SET(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_PATCH_LEVEL}")
+set(TK_VERSION "${TK_VERSION_MAJOR}.${TK_VERSION_MINOR}.${TK_PATCH_LEVEL}")
 
 # For Windows, we need the Resource Compiler language
-IF(WIN32)
-  ENABLE_LANGUAGE(RC)
-ENDIF(WIN32)
-
-#---------------------------------------------------------------------
-# The following logic is what allows binaries to run successfully in
-# the build directory AND install directory.  Thanks to plplot for
-# identifying the necessity of setting CMAKE_INSTALL_NAME_DIR on OSX.
-
-# use, i.e. don't skip the full RPATH for the build tree
-SET(CMAKE_SKIP_BUILD_RPATH  FALSE)
-
-# when building, don't use the install RPATH already
-# (but later on when installing)
-SET(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
-
-# the RPATH/INSTALL_NAME_DIR to be used when installing
-if (NOT APPLE)
-  SET(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib:\$ORIGIN/../lib")
-endif(NOT APPLE)
-SET(CMAKE_INSTALL_NAME_DIR "${CMAKE_INSTALL_PREFIX}/lib")
-
-# add the automatically determined parts of the RPATH which point to
-# directories outside the build tree to the install RPATH
-SET(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
-
-#----------------------------------------------------------------------------
-# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX 
-# hasn't been set already, to try and allow parent builds (if any) some control.
-IF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  IF(NOT WIN32)
-    IF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      SET(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
-    ELSE ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      SET(CMAKE_INSTALL_PREFIX "/usr")
-    ENDIF ("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  ENDIF(NOT WIN32)
-  SET(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
-  SET(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-ENDIF(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
-#-----------------------------------------------------------------------------
-# Output directories.
-
-IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-  SET(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all libraries.")
-ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-  SET(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib CACHE INTERNAL "Single output directory for building all archives.")
-ENDIF(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
-IF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
-  SET(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin CACHE INTERNAL "Single output directory for building all executables.")
-ENDIF(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
+if(WIN32)
+  enable_language(RC)
+endif(WIN32)
 
 #-----------------------------------------------------------------------------
 # Set CMake module path
-SET(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TK_SOURCE_DIR}/CMake")
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TK_SOURCE_DIR}/CMake")
+set(TK_CMAKE_DIR "${TCL_SOURCE_DIR}/CMake")
+
+#-----------------------------------------------------------------------------
+# The following logic is what allows binaries to run successfully in the build
+# directory AND install directory. Documentation of these options is available
+# at http://www.cmake.org/Wiki/CMake_RPATH_handling
+
+include("${TK_CMAKE_DIR}/RPath_Setup.cmake")
+
+#---------------------------------------------------------------------
+# Define relative install locations and output directories.  Don't set
+# these if they have already been set by some other means (like a
+# higher level CMakeLists.txt file including this one).
+
+include("${TK_CMAKE_DIR}/Path_Setup.cmake")
+
+#----------------------------------------------------------------------------
+# Define some standard configuration settings passed to all Tcl build targets
+
+# We're building Tk and ttk
+add_definitions(-DBUILD_tk)
+add_definitions(-DBUILD_ttk)
+
+# Assume we have STDC_HEADERS until we meet a situation where we don't
+add_definitions(-DSTDC_HEADERS=1)
+
+# Get the SHLIB extension from CMake
+add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
+
+#----------------------------------------------------------------------------
+# Define some platform specific flags
+
+if(MSVC)
+	add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+endif(MSVC)
+
+if(MINGW)
+  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
+  remove_definitions(-w)
+  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
+endif(MINGW)
+
+if(APPLE)
+  add_definitions(-DMAC_OSX_TCL=1)
+  include(CMakeFindFrameworks)
+  cmake_find_frameworks(CoreFoundation)
+  if(CoreFoundation_FRAMEWORKS)
+    set(CoreFoundation_LIBRARIES "-framework CoreFoundation")
+    add_definitions(-DHAVE_COREFOUNDATION=1)	 
+  endif(CoreFoundation_FRAMEWORKS)
+  cmake_find_frameworks(IOKit)
+  if(IOKit_FRAMEWORKS)
+    set(IOKit_LIBRARIES "-framework IOKit")
+    add_definitions(-DHAVE_COREFOUNDATION=1)	 
+  endif(IOKit_FRAMEWORKS)
+endif(APPLE)
 
 #-----------------------------------------------------------------------------
 # Check if the compiler supports pipe - if so, use it
-INCLUDE(CheckCCompilerFlag)
-CHECK_C_COMPILER_FLAG(-pipe PIPE_COMPILER_FLAG)
-IF(PIPE_COMPILER_FLAG)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
-ENDIF(PIPE_COMPILER_FLAG)
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-pipe PIPE_COMPILER_FLAG)
+if(PIPE_COMPILER_FLAG)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -pipe")
+endif(PIPE_COMPILER_FLAG)
+
+#------------------------------------------------------------------------
+# Threads support
+#------------------------------------------------------------------------
+find_package(Threads)
+if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
+	add_definitions(-DTCL_THREADS=1)
+endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
 #-----------------------------------------------------------------------------
 # Tcl/Tk's normal build system uses autotools macros, referred to as the
@@ -137,57 +157,6 @@ ENDIF(PIPE_COMPILER_FLAG)
 # TEA is found in tcl.cmake
 INCLUDE(${TK_SOURCE_DIR}/CMake/tcl.cmake)
 
-#----------------------------------------------------------------------------
-# First, get some standard options out of the way - things that are constant
-# between various platforms or pertain to specific OS definitions
-add_definitions(-DPACKAGE_NAME="tk")
-add_definitions(-DPACKAGE_TARNAME="tk")
-add_definitions(-DPACKAGE_VERSION="${TK_VERSION}")
-add_definitions(-DPACKAGE_BUGREPORT="")
-add_definitions(-DSTDC_HEADERS=1)
-
-# We're building Tk
-add_definitions(-DBUILD_tk)
-
-# First, get some standard settings out of the way
-# Assume we have STDC_HEADERS until we meet a situation where we don't
-ADD_TCL_CFLAG(STDC_HEADERS)
-# Get the SHLIB extension from CMake
-add_definitions(-DTCL_SHLIB_EXT="${CMAKE_SHARED_LIBRARY_SUFFIX}")
-
-#----------------------------------------------------------------------------
-# Define some platform specific flags
-
-IF(MSVC)
-	add_definitions(-DUNICODE -D_UNICODE -D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -Ot -Oi -fp:strict -Gs -GS -GL -MD -DBUILD_tk -BUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-ENDIF(MSVC)
-
-IF(MINGW)
-  add_definitions(-D_CRT_SECURE_NO_DEPRECATE -D_CRT_NONSTDC_NO_DEPRECATE -DBUILD_tk -DBUILD_ttk -DSUPPORT_CONFIG_EMBEDDED -DHAVE_UXTHEME_H=1)
-  remove_definitions(-w)
-  add_definitions(-DHAVE_NO_SEH -DEXCEPTION_DISPOSITION=int)
-ENDIF(MINGW)
-
-IF(APPLE)
-  add_definitions(-DMAC_OSX_TCL=1)
-  INCLUDE(CMakeFindFrameworks)
-  CMAKE_FIND_FRAMEWORKS(CoreFoundation)
-  IF(CoreFoundation_FRAMEWORKS)
-    SET(CoreFoundation_LIBRARIES "-framework CoreFoundation")
-    add_definitions(-DHAVE_COREFOUNDATION=1)	 
-  ENDIF(CoreFoundation_FRAMEWORKS)
-  CMAKE_FIND_FRAMEWORKS(IOKit)
-  IF(IOKit_FRAMEWORKS)
-    SET(IOKit_LIBRARIES "-framework IOKit")
-    add_definitions(-DHAVE_COREFOUNDATION=1)	 
-  ENDIF(IOKit_FRAMEWORKS)
-ENDIF(APPLE)
-#----------------------------------------------------------------------------
-
-#------------------------------------------------------------------------
-# Threads support
-#------------------------------------------------------------------------
-SC_ENABLE_THREADS()
 
 #------------------------------------------------------------------------
 # Call the LINK_LIBS macro to get M_LIBRARY properly defined (TEA

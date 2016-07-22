@@ -75,23 +75,6 @@ if(WIN32)
   enable_language(RC)
 endif(WIN32)
 
-#----------------------------------------------------------------------------
-# The location in which to install Tcl.  Only do this if CMAKE_INSTALL_PREFIX
-# hasn't been set already, to try and allow parent builds (if any) some control.
-if(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-  if(NOT WIN32)
-    if("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      set(CMAKE_INSTALL_PREFIX "/usr/local/tcldev-${TCL_VERSION}")
-    else("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-      set(CMAKE_INSTALL_PREFIX "/usr")
-    endif("${CMAKE_BUILD_TYPE}" MATCHES "Debug")
-  else(NOT WIN32)
-    set(CMAKE_INSTALL_PREFIX "C:/Program Files/Tcl ${TCL_VERSION}")
-  endif(NOT WIN32)
-  set(CMAKE_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX} CACHE STRING "TCL install prefix" FORCE)
-  set(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT 0)
-endif(CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
-
 #-----------------------------------------------------------------------------
 # Set CMake module path
 set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${TCL_SOURCE_DIR}/CMake")
@@ -110,22 +93,6 @@ include("${TCL_CMAKE_DIR}/RPath_Setup.cmake")
 # higher level CMakeLists.txt file including this one).
 
 include("${TCL_CMAKE_DIR}/Path_Setup.cmake")
-
-#---------------------------------------------------------------------
-# Initialize some relative variable names
-if(NOT DEFINED BIN_DIR)
-  set(BIN_DIR bin)
-endif(NOT DEFINED BIN_DIR)
-if(NOT DEFINED LIB_DIR)
-  if(NOT WIN32)
-    set(LIB_DIR lib)
-  else(NOT WIN32)
-    set(LIB_DIR bin)
-  endif(NOT WIN32)
-endif(NOT DEFINED LIB_DIR)
-if(NOT DEFINED INCLUDE_DIR)
-  set(INCLUDE_DIR include)
-endif(NOT DEFINED INCLUDE_DIR)
 
 #----------------------------------------------------------------------------
 # Define some standard configuration settings passed to all Tcl build targets
