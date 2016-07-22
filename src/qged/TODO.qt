@@ -1,0 +1,7 @@
+Investigate Qt/OSG integration to see if it's usable/workable for this setup...
+
+Work on better/more nuanced and comprehensive Qt stylesheets - right now things like button appearance depend on whether Qt is installed, for example.
+
+Appleseed's work should be helpful - also maybe look at https://github.com/ColinDuquesnoy/QDarkStyleSheet
+
+
