@@ -33,10 +33,18 @@
 # ***                libutahrle CMakeLists.txt                     ***
 # *******************************************************************
 
+# Minimum required version of CMake
+cmake_minimum_required(VERSION 2.8)
 if(COMMAND CMAKE_POLICY)
-  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  CMAKE_POLICY(SET CMP0003 NEW)
+  if("${CMAKE_VERSION}" VERSION_GREATER 2.99)
     CMAKE_POLICY(SET CMP0026 OLD)
-  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0048 OLD)
+  endif("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+  if("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+    CMAKE_POLICY(SET CMP0053 OLD)
+    CMAKE_POLICY(SET CMP0054 NEW)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
 endif(COMMAND CMAKE_POLICY)
 
 project(IWIDGETS)
