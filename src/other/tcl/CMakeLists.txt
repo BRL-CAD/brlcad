@@ -412,6 +412,11 @@ include(CMakeParseArguments)
 include(CheckLibraryExists)
 include(CheckCSourceCompiles)
 
+check_library_exists(m cos "" HAVE_M_LIBRARY)
+if(HAVE_M_LIBRARY)
+  set(M_LIBRARY "m")
+endif(HAVE_M_LIBRARY)
+
 # Note: Do we ever NOT need CoreFoundation on OSX?
 if(APPLE)
   include(CMakeFindFrameworks)
@@ -1295,8 +1300,19 @@ IF(MINGW)
   set(TCL_MINGW_LIBS ws2_32)
 ENDIF(MINGW)
 
+set(TCL_LINK_LIBS
+  ${CoreFoundation_LIBRARIES}
+  ${TCL_MINGW_LIBS}
+  ${DL_LIBRARY}
+  ${SOCKET_LIBRARY}
+  ${GHBN_LIBRARY}
+  ${ZLIB_LIBRARY}
+  ${M_LIBRARY}
+  ${CMAKE_THREAD_LIBS_INIT}
+ )
+
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${SOCKET_LIBRARY} ${GHBN_LIBRARY} ${ZLIB_LIBRARY} ${M_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
+target_link_libraries(tcl ${TCL_LINK_LIBS})
 install(TARGETS tcl
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
@@ -1312,7 +1328,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
-target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${GHBN_LIBRARY} ${SOCKET_LIBRARY} ${ZLIB_LIBRARY} ${M_LIBRARY})
+target_link_libraries(tclstub ${TCL_LINK_LIBS})
 if(FPIC_COMPILER_FLAG)
   set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(FPIC_COMPILER_FLAG)
