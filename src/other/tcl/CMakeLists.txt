@@ -141,6 +141,21 @@ else(WIN32)
 endif(WIN32)
 
 #------------------------------------------------------------------------
+# Options
+#------------------------------------------------------------------------
+option(TCL_COMPILATION_TRACING "Bytecode compilation debugging" OFF)
+if(TCL_COMPILATION_TRACING)
+  add_definitions(-DTCL_COMPILE_DEBUG=1)
+else(TCL_COMPILATION_TRACING)
+  add_definitions(-DTCL_COMPILE_DEBUG=0)
+endif(TCL_COMPILATION_TRACING)
+
+option(TCL_COMPILE_STATS "Bytecode statistics" OFF)
+if(TCL_COMPILE_STATS)
+  add_definitions(-DTCL_COMPILE_STATS=1)
+endif(TCL_COMPILE_STATS)
+
+#------------------------------------------------------------------------
 # Test compiler flags
 #------------------------------------------------------------------------
 
@@ -314,7 +329,7 @@ include(CheckCSourceCompiles)
 function(Tcl_Check_Function_Exists fname)
   cmake_parse_arguments(OPT "NEG_FLAG" "COMPAT_SRC;DEFVAR" "" ${ARGN})
   string(TOUPPER "${fname}" var)
-  CHECK_FUNCTION_EXISTS(${fname} HAVE_${var})
+  check_function_exists(${fname} HAVE_${var})
   if(HAVE_${var})
     set(HAVE_${var} 1 PARENT_SCOPE)
     if(OPT_DEFVAR)
@@ -400,7 +415,7 @@ include(CheckCSourceCompiles)
 # Note: Do we ever NOT need CoreFoundation on OSX?
 if(APPLE)
   include(CMakeFindFrameworks)
-  CMAKE_FIND_FRAMEWORKS(CoreFoundation)
+  cmake_find_frameworks(CoreFoundation)
   if(CoreFoundation_FRAMEWORKS)
     set(CoreFoundation_LIBRARIES "-framework CoreFoundation")
     add_definitions(-DHAVE_COREFOUNDATION=1)
@@ -414,110 +429,315 @@ add_definitions(-DHAVE_ZLIB=1)
 
 # Need dynamic loading and unloading... always on until we find
 # a case where we need to disable it.
-CHECK_LIBRARY_EXISTS(dl dlopen "" HAVE_DL_LIBRARY)
+check_library_exists(dl dlopen "" HAVE_DL_LIBRARY)
 if(HAVE_DL_LIBRARY)
   set(DL_LIBRARY "dl")
 endif(HAVE_DL_LIBRARY)
+
+# Support unloading dlls
 add_definitions(-DTCL_UNLOAD_DLLS=1)
 
-# Add the Threading library
-SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${CMAKE_THREAD_LIBS_INIT})
-# Same for the math library
-SET(TCL_LINK_LIBS ${TCL_LINK_LIBS} ${M_LIBRARY})
+#-----------------------------------------------------------
+# There are a number of possibilities for sockets
+Tcl_Check_Function_Exists(connect)
+if(HAVE_CONNECT)
+  set(NEED_SOCKET_LIBRARY 0)
+else(HAVE_CONNECT)
+  set(NEED_SOCKET_LIBRARY 1)
+endif(HAVE_CONNECT)
+
+# Checking for socket
+if(NEED_SOCKET_LIBRARY)
+  check_library_exists(socket conect "" HAVE_SOCKET_LIBRARY)
+  if(HAVE_SOCKET_LIBRARY)
+    set(SOCKET_LIBRARY "socket")
+    set(NEED_SOCKET_LIBRARY 0)
+  endif(HAVE_SOCKET_LIBRARY)
+endif(NEED_SOCKET_LIBRARY)
+
+# Checking for inet
+if(NEED_SOCKET_LIBRARY)
+  check_library_exists(inet main "" HAVE_INET_LIBRARY)
+  if(HAVE_INET_LIBRARY)
+    set(SOCKET_LIBRARY "inet")
+    set(NEED_SOCKET_LIBRARY 0)
+  endif(HAVE_INET_LIBRARY)
+endif(NEED_SOCKET_LIBRARY)
+
+#-----------------------------------------------------------
+# gethostbyname
+Tcl_Check_Function_Exists(gethostbyname)
+if(HAVE_GETHOSTBYNAME)
+  set(NEED_GHBN_LIBRARY 0)
+else(HAVE_GETHOSTBYNAME)
+  set(NEED_GHBN_LIBRARY 1)
+endif(HAVE_GETHOSTBYNAME)
+
+if(NEED_GHBN_LIBRARY)
+  check_library_exists(nsl gethostbyname "" HAVE_NSL_LIBRARY)
+  if(HAVE_INET_LIBRARY)
+    set(GHBN_LIBRARY "inet")
+    set(NEED_GHBN_LIBRARY 0)
+  endif(HAVE_INET_LIBRARY)
+endif(NEED_GHBN_LIBRARY)
 
 #--------------------------------------------------------------------
-include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
+# 64 bit
+#--------------------------------------------------------------------
+function(tcl_check_c_flag flag VAR)
+  if(NOT DEFINED ${VAR})
+    string(TOUPPER ${flag} UPPER_FLAG)
+    string(REGEX REPLACE " " "_" UPPER_FLAG ${UPPER_FLAG})
+    string(REGEX REPLACE "=" "_" UPPER_FLAG ${UPPER_FLAG})
+    check_c_compiler_flag(-${flag} ${UPPER_FLAG}_COMPILER_FLAG)
+    if(${UPPER_FLAG}_COMPILER_FLAG)
+      set(${VAR} "-${flag}" PARENT_SCOPE)
+    endif(${UPPER_FLAG}_COMPILER_FLAG)
+  endif(NOT DEFINED ${VAR})
+endfunction(tcl_check_c_flag flag VAR)
 
+if(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" OR CMAKE_CL_64)
+  if(NOT DEFINED 64BIT_FLAG)
+    tcl_check_c_flag("arch x86_64" 64BIT_FLAG)
+    tcl_check_c_flag("64" 64BIT_FLAG)
+    tcl_check_c_flag("mabi=64" 64BIT_FLAG)
+    tcl_check_c_flag("m64" 64BIT_FLAG)
+    tcl_check_c_flag("q64" 64BIT_FLAG)
+  endif(NOT DEFINED 64BIT_FLAG)
+  if(CMAKE_CL_64)
+    add_definitions(-D_stati64=_stat64)
+  endif(CMAKE_CL_64)
+endif(${CMAKE_SIZEOF_VOID_P} MATCHES "^8$" OR CMAKE_CL_64)
 
 #--------------------------------------------------------------------
-# Look for libraries that we will need when compiling the Tcl shell
+# optimization and debugging
 #--------------------------------------------------------------------
-SC_TCL_LINK_LIBS()
-
-#----------------------------------------------------------------------------
-# 64-bit support - unlike TEA, we enable by default if the platform looks
-# like it's 64-bit.  Can be overridden by specifying CMAKE_WORD_SIZE=32BIT
-#----------------------------------------------------------------------------
-SC_TCL_64BIT_FLAGS()
-
-#----------------------------------------------------------------------------
-# Add options for optimized and debug compile options - replaces 
-# SC_ENABLE_SYMBOLS
-#----------------------------------------------------------------------------
-OPTION(TCL_OPTIMIZED "Built optimized Tcl" ON)
-IF(TCL_OPTIMIZED)
-  add_definitions(-DTCL_CFG_OPTIMIZED=1)
-  SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -DNDEBUG -O2")
-ENDIF(TCL_OPTIMIZED)
-
-OPTION(TCL_DEBUG "Enable Debugging" ON)
-IF(TCL_DEBUG)
+check_c_compiler_flag(-g HAVE_G_FLAG)
+if(HAVE_G_FLAG)
   add_definitions(-DTCL_CFG_DEBUG=1)
-ENDIF(TCL_DEBUG)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g")
+endif(HAVE_G_FLAG)
 
-OPTION(TCL_COMPILE_DEBUG "Bytecode debugging" OFF)
-IF(TCL_COMPILE_DEBUG)
-  add_definitions(-DTCL_COMPILE_DEBUG=1)
-else(TCL_COMPILE_DEBUG)
-  add_definitions(-DTCL_COMPILE_DEBUG=0)
-ENDIF(TCL_COMPILE_DEBUG)
-
-OPTION(TCL_COMPILE_STATS "Bytecode statistics" OFF)
-IF(TCL_COMPILE_STATS)
-  add_definitions(-DTCL_COMPILE_STATS=1)
-ENDIF(TCL_COMPILE_STATS)
-
-add_definitions(-DUSE_TCLALLOC=0)
-add_definitions(-DYYENABLE_NLS=0)
+check_c_compiler_flag(-O2 HAVE_O2_FLAG)
+if(HAVE_O2_FLAG)
+  add_definitions(-DTCL_CFG_OPTIMIZED=1)
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
+endif(HAVE_O2_FLAG)
 
 #--------------------------------------------------------------------
 #       Check endianness because we can optimize comparisons of
 #       Tcl_UniChar strings to memcmp on big-endian systems.
 #--------------------------------------------------------------------
-# Test endianness 
-IF(NOT WIN32)
-  INCLUDE(TestBigEndian)
-  TEST_BIG_ENDIAN(WORDS_BIGENDIAN)
-  IF(WORDS_BIGENDIAN)
+if(NOT WIN32)
+  include(TestBigEndian)
+  test_big_endian(WORDS_BIGENDIAN)
+  if(WORDS_BIGENDIAN)
     add_definitions(-DWORDS_BIGENDIAN=1)
-  ENDIF(WORDS_BIGENDIAN)
-ENDIF(NOT WIN32)
+  endif(WORDS_BIGENDIAN)
+endif(NOT WIN32)
 
-#-------------------------------------------------------------------- 
-#       Look for thread-safe variants of some library functions.
 #--------------------------------------------------------------------
+# If we ended up enabling threads, look for thread safe variations
+# of some functions
+function(tcl_5_4_arg_functest func srcs5 srcs4)
+  string(TOUPPER "${func}" UPPERFUNC)
+  Tcl_Check_Function_Exists(${func})
+  if(HAVE_${UPPERFUNC})
+    set(HAVE_${UPPERFUNC} 1 PARENT_SCOPE)
+    # Do we have the 5 arg or the 4 arg version?
+    check_c_source_compiles("${${srcs5}}" HAVE_${UPPERFUNC}_5)
+    if(HAVE_${UPPERFUNC}_5)
+      set(HAVE_${UPPERFUNC}_5 1 PARENT_SCOPE)
+      add_definitions(-DHAVE_${UPPERFUNC}_5=1)
+    else(HAVE_${UPPERFUNC}_5)
+      check_c_source_compiles("${${srcs4}}" HAVE_${UPPERFUNC}_4)
+      if(HAVE_${UPPERFUNC}_4)
+	set(HAVE_${UPPERFUNC}_4 1 PARENT_SCOPE)
+	add_definitions(-DHAVE_${UPPERFUNC}_4=1)
+      endif(HAVE_${UPPERFUNC}_4)
+    endif(HAVE_${UPPERFUNC}_5)
+  endif(HAVE_${UPPERFUNC})
+endfunction(tcl_5_4_arg_functest)
 
-IF(TCL_THREADS)
+if(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
-  SC_TCL_GETPWUID_R()
+  #------------------------------------------------------------------
+  # getpwuid_r
+  set(getpwuid_r_5_src "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+  uid_t uid; struct passwd pw, *pwp;
+  char buf[512]; int buflen = 512;
+  (void) getpwuid_r(uid, &pw, buf, buflen, &pwp);
+return 0;}
+  ")
+  set(getpwuid_r_4_src "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+  uid_t uid; struct passwd pw;
+  char buf[512]; int buflen = 512;
+  (void) getpwuid_r(uid, &pw, buf, buflen);
+return 0;}
+  ")
+  tcl_5_4_arg_functest(getpwuid_r getpwuid_r_5_src getpwuid_r_4_src)
 
-  SC_TCL_GETPWNAM_R()
+  #------------------------------------------------------------------
+  # getpwnam_r
+  set(getpwnam_r_5_src "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+  char *name; struct passwd pw, *pwp;
+  char buf[512]; int buflen = 512;
+  (void) getpwnam_r(name, &pw, buf, buflen, &pwp);
+return 0;}
+  ")
+  set(getpwnam_r_4_src "
+#include <sys/types.h>
+#include <pwd.h>
+int main(){
+  char *name; struct passwd pw;
+  char buf[512]; int buflen = 512;
+  (void)getpwnam_r(name, &pw, buf, buflen);
+return 0;}
+  ")
+  tcl_5_4_arg_functest(getpwnam_r getpwnam_r_5_src getpwnam_r_4_src)
 
-  SC_TCL_GETGRGID_R()
+  #------------------------------------------------------------------
+  # getgrgid_r
+  set(getgrgid_r_5_src "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+  gid_t gid; struct group gr, *grp;
+  char buf[512]; int buflen = 512;
+  (void) getgrgid_r(gid, &gr, buf, buflen, &grp);
+return 0;}
+  ")
+  set(getgrgid_r_4_src "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+  gid_t gid; struct group gr;
+  char buf[512]; int buflen = 512;
+  (void)getgrgid_r(gid, &gr, buf, buflen);
+return 0;}
+  ")
+  tcl_5_4_arg_functest(getgrgid_r getgrgid_r_5_src getgrgid_r_4_src)
 
-  SC_TCL_GETGRNAM_R()
+  #------------------------------------------------------------------
+  # getgrnam_r
+  set(getgrnam_r_5_src "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+  char *name; struct group gr, *grp;
+  char buf[512]; int buflen = 512;
+  (void) getgrnam_r(name, &gr, buf, buflen, &grp);
+return 0;}
+  ")
+  set(getgrnam_r_4_src "
+#include <sys/types.h>
+#include <grp.h>
+int main(){
+  char *name; struct group gr;
+  char buf[512]; int buflen = 512;
+  (void)getgrnam_r(name, &gr, buf, buflen);
+return 0;}
+  ")
+  tcl_5_4_arg_functest(getgrnam_r getgrnam_r_5_src getgrnam_r_4_src)
 
-  IF(NOT HAVE_GETHOSTBYNAME)
-    CHECK_LIBRARY_EXISTS(GHBN lnsl "" gethostbyname)
-    SET(HAVE_GETHOSTBYNAME ${GHBN})
-  ENDIF(NOT HAVE_GETHOSTBYNAME)
+  #------------------------------------------------------------------
+  # gethostbyaddr_r
 
-  SC_TCL_GETHOSTBYADDR_R()
-  SC_TCL_GETHOSTBYNAME_R()
+  set(gethostbyaddr_r_7_src "
+#include <netdb.h>
+int main(){
+  char *addr; int length; int type; struct hostent *result;
+  char buffer[2048]; int buflen = 2048; int h_errnop;
+  (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &h_errnop);
+return 0;}
+  ")
+  set(gethostbyaddr_r_8_src "
+#include <netdb.h>
+int main(){
+  char *addr; int length; int type; struct hostent *result, *resultp;
+  char buffer[2048]; int buflen = 2048; int h_errnop;
+  (void) gethostbyaddr_r(addr, length, type, result, buffer, buflen, &resultp, &h_errnop);
+return 0;}
+  ")
+  Tcl_Check_Function_Exists(gethostbyaddr_r)
+  if(HAVE_GETHOSTBYADDR_R)
+    check_c_source_compiles("${gethostbyaddr_r_7_src}" HAVE_GETHOSTBYADDR_R_7)
+    if(HAVE_GETHOSTBYADDR_R_7)
+      add_definitions(-DHAVE_GETHOSTBYADDR_R_7=1)
+    else(HAVE_GETHOSTBYADDR_R_7)
+      check_c_source_compiles("${gethostbyaddr_r_8_src}" HAVE_GETHOSTBYADDR_R_8)
+      if(HAVE_GETHOSTBYADDR_R_8)
+	add_definitions(-DHAVE_GETHOSTBYADDR_R_8=1)
+      endif(HAVE_GETHOSTBYADDR_R_8)
+    endif(HAVE_GETHOSTBYADDR_R_7)
+  endif(HAVE_GETHOSTBYADDR_R)
 
-  IF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
-    STRING(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
-    IF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
+  #------------------------------------------------------------------
+  # gethostbyname_r
+  set(gethostbyname_r_6_src "
+#include <netdb.h>
+int main(){
+  char *name; struct hostent *he, *res; char buffer[2048];
+  int buflen = 2048; int h_errnop;
+  (void) gethostbyname_r(name, he, buffer, buflen, &res, &h_errnop);
+return 0;}
+  ")
+  set(gethostbyname_r_5_src "
+#include <netdb.h>
+int main(){
+  char *name; struct hostent *he; char buffer[2048];
+  int buflen = 2048; int h_errnop;
+  (void) gethostbyname_r(name, he, buffer, buflen, &h_errnop);
+return 0;}
+  ")
+  set(gethostbyname_r_3_src "
+#include <netdb.h>
+int main(){
+  char *name; struct hostent *he; struct hostent_data data;
+  (void) gethostbyname_r(name, he, &data);
+return 0;}
+  ")
+  Tcl_Check_Function_Exists(gethostbyname_r)
+  if(HAVE_GETHOSTBYNAME_R)
+    check_c_source_compiles("${gethostbyname_r_6_src}" HAVE_GETHOSTBYNAME_R_6)
+    if(HAVE_GETHOSTBYNAME_R_6)
+      add_definitions(-DHAVE_GETHOSTBYNAME_R_6=1)
+    else(HAVE_GETHOSTBYNAME_R_6)
+      check_c_source_compiles("${gethostbyname_r_5_src}" HAVE_GETHOSTBYNAME_R_5)
+      if(HAVE_GETHOSTBYNAME_R_5)
+	add_definitions(-DHAVE_GETHOSTBYNAME_R_5=1)
+      else(HAVE_GETHOSTBYNAME_R_5)
+	check_c_source_compiles("${gethostbyname_r_3_src}" HAVE_GETHOSTBYNAME_R_3)
+	if(HAVE_GETHOSTBYNAME_R_3)
+	  add_definitions(-DHAVE_GETHOSTBYNAME_R_3=1)
+	endif(HAVE_GETHOSTBYNAME_R_3)
+      endif(HAVE_GETHOSTBYNAME_R_5)
+    endif(HAVE_GETHOSTBYNAME_R_6)
+  endif(HAVE_GETHOSTBYNAME_R)
+
+
+  # Darwin srcs take extra flags (TODO - is this still needed in 8.6?)
+  if(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+    string(REGEX REPLACE "\\..*" "" CMAKE_SYSTEM_MAJOR_VERSION ${CMAKE_SYSTEM_VERSION})
+    if(${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
       add_definitions(-DHAVE_MTSAFE_GETHOSTBYNAME=1)
       add_definitions(-DHAVE_MTSAFE_GETHOSTBYADDR=1)
-    ENDIF (${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
-  ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
+    endif(${CMAKE_SYSTEM_MAJOR_VERSION} GREATER 5)
+  endif(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
-ENDIF(TCL_THREADS)
+endif(NOT ${CMAKE_THREAD_LIBS_INIT} STREQUAL "")
 
-#---------------------------------------------------------------------------
-# TODO - Do we need the sys/select.h check these days?
-#---------------------------------------------------------------------------
+#--------------------------------------------------------------------
+include("${CMAKE_CURRENT_SOURCE_DIR}/CMake/tcl.cmake")
 
 #------------------------------------------------------------------------------
 #       Find out all about time handling differences.
@@ -1076,7 +1296,7 @@ IF(MINGW)
 ENDIF(MINGW)
 
 add_library(tcl ${TCL_SRCS})
-target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${TCL_LINK_LIBS} ${DL_LIBRARY} ${ZLIB_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
+target_link_libraries(tcl ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${SOCKET_LIBRARY} ${GHBN_LIBRARY} ${ZLIB_LIBRARY} ${M_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${TCL_MINGW_LIBS})
 install(TARGETS tcl
   RUNTIME DESTINATION ${BIN_DIR}
   LIBRARY DESTINATION ${LIB_DIR}
@@ -1092,7 +1312,7 @@ ENDIF(${CMAKE_SYSTEM_NAME} MATCHES "^Darwin$")
 
 
 add_library(tclstub STATIC ${TCL_STUB_SRCS})
-target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${ZLIB_LIBRARY})
+target_link_libraries(tclstub ${CMAKE_THREAD_LIBS_INIT} ${CoreFoundation_LIBRARIES} ${DL_LIBRARY} ${GHBN_LIBRARY} ${SOCKET_LIBRARY} ${ZLIB_LIBRARY} ${M_LIBRARY})
 if(FPIC_COMPILER_FLAG)
   set_target_properties(tclstub PROPERTIES COMPILE_FLAGS "-fPIC")
 endif(FPIC_COMPILER_FLAG)
