@@ -203,17 +203,17 @@ do { \
     } \
 } while (false)
 
+    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
+    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
     REPLACE_UUIDS(model.m_bitmap_table, ->m_bitmap_id);
     REPLACE_UUIDS(model.m_mapping_table, .m_mapping_id);
     REPLACE_UUIDS(model.m_linetype_table, .m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
     REPLACE_UUIDS(model.m_group_table, .m_group_id);
     REPLACE_UUIDS(model.m_font_table, .m_font_id);
     REPLACE_UUIDS(model.m_dimstyle_table, .m_dimstyle_id);
     REPLACE_UUIDS(model.m_light_table, .m_attributes.m_uuid);
     REPLACE_UUIDS(model.m_hatch_pattern_table, .m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
-    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
     REPLACE_UUIDS(model.m_history_record_table, ->m_record_id);
     REPLACE_UUIDS(model.m_userdata_table, .m_uuid);
 
@@ -685,7 +685,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_Layer -or -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
+		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
 		       + std::string(gcv_options.default_name) + "* )").c_str(), 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
