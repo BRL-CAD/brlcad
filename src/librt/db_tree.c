@@ -281,7 +281,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	if (tsp->ts_sofar & TS_SOFAR_REGION) {
 	    if ((tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0) {
 		char *sofar = db_path_to_string(pathp);
-		bu_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
+		bu_log("WARNING: region unioned into region at '%s', lower region info ignored\n",
 		       sofar);
 		bu_free(sofar, "path string");
 	    }
