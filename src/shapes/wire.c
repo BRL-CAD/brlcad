@@ -145,7 +145,7 @@ main(int argc, char *argv[])
     solsub2[7] = '\0';
 
     /* Find name of mged file to be created. */
-    printf("Enter mged file name (%D char max).\n\t", NAME_LEN);
+    printf("Enter mged file name (%d char max).\n\t", NAME_LEN);
     (void)fflush(stdout);
     ret = scanf(CPP_SCAN(NAME_LEN), filemged);
     if (ret == 0)

@@ -169,7 +169,7 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	    bu_strlcpy(title, buf2, sizeof(title));
 
 	if (sscanf(buf, "geometry %" CPP_XSTR(BUF_SZ) "[^\n]s", buf2) > 0) {
-#define FMT_SZ
+#define FMT_SZ 40
 	    char dtype[FMT_SZ+1], format[FMT_SZ+1];
 
 	    if (sscanf(buf2, CPP_SCAN(FMT_SZ) CPP_SCAN(FMT_SZ) CPP_SCAN(SZ), dtype, format, geom_fname) != 3)
