@@ -128,8 +128,7 @@ extern "C++" {
 
 		const BRNode *closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const;
 
-		/** List of all children of a given node */
-		std::vector<const BRNode *> * const m_children;
+		std::vector<const BRNode *> m_children;
 
 		const ON_BrepFace *m_face;
 		ON_Interval m_u;
@@ -168,7 +167,7 @@ extern "C++" {
 		m_Horizontal(false),
 		m_Vertical(false),
 		m_innerTrim(innerTrim),
-		m_children(new std::vector<const BRNode *>),
+		m_children(),
 		m_face(face),
 		m_u(),
 		m_trim(curve),
@@ -242,7 +241,7 @@ extern "C++" {
 		m_Horizontal(false),
 		m_Vertical(false),
 		m_innerTrim(false),
-		m_children(new std::vector<const BRNode *>),
+		m_children(),
 		m_face(NULL),
 		m_u(),
 		m_trim(NULL),
@@ -271,7 +270,7 @@ extern "C++" {
 	    BRNode::addChild(BRNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children->push_back(child);
+		    m_children.push_back(child);
 		}
 	    }
 
@@ -279,10 +278,10 @@ extern "C++" {
 	    BRNode::removeChild(BRNode *child)
 	    {
 		std::vector<const BRNode *>::iterator i;
-		for (i = m_children->begin(); i != m_children->end();) {
+		for (i = m_children.begin(); i != m_children.end();) {
 		    if (*i == child) {
 			delete *i;
-			i = m_children->erase(i);
+			i = m_children.erase(i);
 		    } else {
 			++i;
 		    }
@@ -292,7 +291,7 @@ extern "C++" {
 	inline bool
 	    BRNode::isLeaf() const
 	    {
-		if (m_children->empty()) {
+		if (m_children.empty()) {
 		    return true;
 		}
 		return false;

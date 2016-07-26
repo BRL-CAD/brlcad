@@ -28,6 +28,7 @@
 
 #include "common.h"
 
+#include <arpa/inet.h>
 #include <vector>
 #include <list>
 #include <map>
@@ -55,6 +56,9 @@
 
 #include "./brep_local.h"
 #include "./brep_debug.h"
+
+#include <malloc.h>
+
 
 /* undefine "min" and "max" macros, if they exist, to prevent
  * name conflicts with functions "std::min" and "std::max".
@@ -388,6 +392,129 @@ private:
 };
 
 
+HIDDEN void
+compress_external(struct bu_external *external)
+{
+    uint8_t *buffer;
+    size_t compressed_size;
+    BU_CK_EXTERNAL(external);
+
+    compressed_size = compressBound(external->ext_nbytes);
+    buffer = (uint8_t *)bu_malloc(compressed_size + SIZEOF_NETWORK_LONG, "buffer");
+
+    *(uint32_t *)buffer = htonl(external->ext_nbytes);
+
+    if (compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size, external->ext_buf, external->ext_nbytes))
+	bu_bomb("compress() failed");
+
+    bu_free(external->ext_buf, "ext_buf");
+    external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
+    external->ext_buf = buffer;
+}
+
+
+HIDDEN void
+uncompress_external(struct bu_external *external)
+{
+    size_t uncompressed_size;
+    uint8_t *buffer;
+    BU_CK_EXTERNAL(external);
+
+    uncompressed_size = ntohl(*(uint32_t *)external->ext_buf);
+    buffer = (uint8_t *)bu_malloc(uncompressed_size, "buffer");
+    if (uncompress(buffer, &uncompressed_size, external->ext_buf + SIZEOF_NETWORK_LONG, external->ext_nbytes - SIZEOF_NETWORK_LONG))
+	bu_bomb("uncompress() failed");
+
+    bu_free(external->ext_buf, "ext_buf");
+    external->ext_nbytes = uncompressed_size;
+    external->ext_buf = buffer;
+}
+
+
+class MallocSizes
+{
+    public:
+	static void enable()
+	{
+	    save_hooks();
+	    set_hooks();
+	}
+
+
+	static void disable()
+	{
+	    restore_hooks();
+	}
+
+
+	static void print_histogram()
+	{
+	    std::cerr << "malloc() histogram: \n";
+
+	    for (std::map<std::size_t, std::size_t>::const_iterator it = histogram.begin(); it != histogram.end(); ++it)
+		std::cerr << it->first << ": " << it->second << '\n';
+	}
+
+
+    private:
+	static void save_hooks()
+	{
+	    old_malloc_hook = __malloc_hook;
+	    old_realloc_hook = __realloc_hook;
+	}
+
+
+	static void restore_hooks()
+	{
+	    __malloc_hook = old_malloc_hook;
+	    __realloc_hook = old_realloc_hook;
+	}
+
+
+	static void set_hooks()
+	{
+	    __malloc_hook = malloc_hook;
+	    __realloc_hook = realloc_hook;
+	}
+
+
+	static void *
+	    malloc_hook(std::size_t size, const void *UNUSED(caller))
+	    {
+		restore_hooks();
+		void * const result = malloc(size);
+		save_hooks();
+		++histogram[size];
+		set_hooks();
+		return result;
+	    }
+
+
+	static void *
+	    realloc_hook(void *ptr, std::size_t size, const void *UNUSED(caller))
+	    {
+		restore_hooks();
+		void * const result = realloc(ptr, size);
+		save_hooks();
+		fprintf(stderr, "realloc() called\n");
+		exit(1);
+		set_hooks();
+		return result;
+	    }
+
+
+	static void *(*old_malloc_hook)(std::size_t size, const void *caller);
+	static void *(*old_realloc_hook)(void *ptr, std::size_t size, const void *caller);
+
+	static std::map<std::size_t, uintmax_t> histogram;
+};
+
+
+void *(*MallocSizes::old_malloc_hook)(std::size_t size, const void *caller) = NULL;
+void *(*MallocSizes::old_realloc_hook)(void *ptr, std::size_t size, const void *caller) = NULL;
+std::map<std::size_t, uintmax_t> MallocSizes::histogram;
+
+
 int
 brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 {
@@ -442,7 +569,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 
     //start = bu_gettime();
 
-    if (true) {
+    if (false) {
 	std::cerr << "prepping to " << cache_path << '\n';
 
 	if (bu_file_exists(cache_path.c_str(), NULL))
@@ -452,19 +579,14 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 
 	bu_external external = BU_EXTERNAL_INIT_ZERO;
 	{
-	    ON_CompressedBuffer compressed;
 	    RT_MemoryArchive uncompressed_archive;
 
 	    for (std::size_t i = 0; i < faceCount; ++i)
 		bbbp.faces[i]->serialize(uncompressed_archive);
 
-	    uint8_t * const temp = uncompressed_archive.CreateCopy();
-	    compressed.Compress(uncompressed_archive.Size(), temp, 0);
-	    bu_free(temp, "temp");
-	    RT_MemoryArchive archive;
-	    compressed.Write(archive);
-	    external.ext_nbytes = archive.Size();
-	    external.ext_buf = archive.CreateCopy();
+	    external.ext_nbytes = uncompressed_archive.Size();
+	    external.ext_buf = uncompressed_archive.CreateCopy();
+	    compress_external(&external);
 	}
 
 	std::ofstream stream(cache_path.c_str(), std::ofstream::out);
@@ -477,36 +599,26 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	std::cerr << "loading from " << cache_path << '\n';
 	RT_MemoryArchive *archive;
 	{
+	    bu_external external = BU_EXTERNAL_INIT_ZERO;
 	    std::ifstream stream(cache_path.c_str(), std::ifstream::in);
 	    stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-
 	    stream.seekg(0, std::ios::end);
-	    const std::size_t temp_size = stream.tellg();
+	    external.ext_nbytes = stream.tellg();
 	    stream.seekg(0, std::ios::beg);
-	    uint8_t *temp = new uint8_t[temp_size];
-	    stream.read(reinterpret_cast<char *>(temp), temp_size);
+	    external.ext_buf = (uint8_t *)bu_malloc(external.ext_nbytes, "temp");
+	    stream.read(reinterpret_cast<char *>(external.ext_buf), external.ext_nbytes);
 	    stream.close();
 
-
-	    RT_MemoryArchive compressed_archive(temp, temp_size);
-	    delete[] temp;
-
-	    ON_CompressedBuffer compressed;
-
-	    if (!compressed.Read(compressed_archive))
-		bu_bomb("ON_CompressedBuffer::Read() failed");
-
-	    temp = new uint8_t[compressed.m_sizeof_uncompressed];
-	    int failed_crc;
-	    if (!compressed.Uncompress(temp, &failed_crc) || failed_crc)
-		bu_bomb("ON_CompressedBuffer::Uncompress() failed");
-
-	    archive = new RT_MemoryArchive(static_cast<const void *>(temp), compressed.m_sizeof_uncompressed);
-	    delete[] temp;
+	    uncompress_external(&external);
+	    archive = new RT_MemoryArchive(static_cast<const void *>(external.ext_buf), external.ext_nbytes);
+	    bu_free_external(&external);
 	}
 
+	//MallocSizes::enable();
 	for (std::size_t i = 0; i < faceCount; ++i)
 	    bbbp.faces[i] = new SurfaceTree(*archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
+	//MallocSizes::disable();
+	//MallocSizes::print_histogram();
 
 	delete archive;
     }
@@ -1876,9 +1988,9 @@ plot_bbnode(BBNode* node, struct bu_list* vhead, int depth, int start, int limit
 
     }
 
-    for (size_t i = 0; i < node->m_children->size(); i++) {
+    for (size_t i = 0; i < node->get_children().size(); i++) {
 	if (i < 1) {
-	    std::vector<brlcad::BBNode*> &nodes = *node->m_children;
+	    const std::vector<brlcad::BBNode*> &nodes = node->get_children();
 	    plot_bbnode(nodes[i], vhead, depth + 1, start, limit);
 	}
     }
@@ -2238,7 +2350,7 @@ plot_BBNode(struct bu_list *vhead, SurfaceTree* st, const BBNode * node, int iso
 	    return;
 	}
     } else {
-	    for (std::vector<BBNode*>::const_iterator childnode = node->m_children->begin(); childnode != node->m_children->end(); ++childnode) {
+	    for (std::vector<BBNode*>::const_iterator childnode = node->get_children().begin(); childnode != node->get_children().end(); ++childnode) {
 		plot_BBNode(vhead, st, *childnode, isocurveres, gridres);
 	    }
     }

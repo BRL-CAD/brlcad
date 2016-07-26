@@ -133,7 +133,7 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face),
     m_root(initialLoopBBox()),
-    m_sortedX(new std::vector<const BRNode *>),
+    m_sortedX(),
     m_sortedX_indices(NULL)
 {
     for (int li = 0; li < face->LoopCount(); li++) {
@@ -247,7 +247,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     std::list<const BRNode *> temp;
     getLeaves(temp);
     temp.sort(sortX);
-    m_sortedX->insert(m_sortedX->end(), temp.begin(), temp.end());
+    m_sortedX.insert(m_sortedX.end(), temp.begin(), temp.end());
 
     return;
 }
@@ -256,7 +256,6 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 CurveTree::~CurveTree()
 {
     delete m_root;
-    delete m_sortedX;
     delete m_sortedX_indices;
 }
 
@@ -264,7 +263,7 @@ CurveTree::~CurveTree()
 CurveTree::CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
     m_face(&face),
     m_root(NULL),
-    m_sortedX(new std::vector<const BRNode *>),
+    m_sortedX(),
     m_sortedX_indices(NULL)
 {
     m_root = new BRNode(archive, *m_face->Brep());
@@ -272,7 +271,7 @@ CurveTree::CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
     std::list<const BRNode *> temp;
     getLeaves(temp);
     temp.sort(sortX);
-    m_sortedX->insert(m_sortedX->end(), temp.begin(), temp.end());
+    m_sortedX.insert(m_sortedX.end(), temp.begin(), temp.end());
 }
 
 
@@ -286,7 +285,7 @@ CurveTree::serialize(ON_BinaryArchive &archive) const
 
     m_sortedX_indices = new std::map<const BRNode *, std::size_t>;
     std::size_t index = 0;
-    for (std::vector<const BRNode *>::const_iterator it = m_sortedX->begin(); it != m_sortedX->end(); ++it, ++index)
+    for (std::vector<const BRNode *>::const_iterator it = m_sortedX.begin(); it != m_sortedX.end(); ++it, ++index)
 	m_sortedX_indices->insert(std::make_pair(*it, index));
 
     // SKIP: m_sortedX
@@ -309,12 +308,12 @@ CurveTree::serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) co
 
 
 std::list<const BRNode *>
-CurveTree::serialize_get_leaves(const std::vector<std::size_t> &keys) const
+CurveTree::serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const
 {
     std::list<const BRNode *> result;
 
-    for (std::vector<std::size_t>::const_iterator it = keys.begin(); it != keys.end(); ++it)
-	result.push_back(m_sortedX->at(*it));
+    for (std::size_t i = 0; i < num_keys; ++i)
+	result.push_back(m_sortedX.at(keys[i]));
 
     return result;
 }
@@ -368,7 +367,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -388,7 +387,7 @@ void
 CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -408,7 +407,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -428,7 +427,7 @@ void
 CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 

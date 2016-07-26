@@ -31,11 +31,9 @@ namespace brlcad {
 BRNode::~BRNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_children->size(); i++) {
-	delete (*m_children)[i];
+    for (size_t i = 0; i < m_children.size(); i++) {
+	delete m_children[i];
     }
-
-    delete m_children;
 }
 
 
@@ -47,7 +45,7 @@ BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(false),
-    m_children(new std::vector<const BRNode *>),
+    m_children(),
     m_face(NULL),
     m_u(),
     m_trim(NULL),
@@ -71,8 +69,10 @@ BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
     if (!archive.ReadBigSize(&num_children))
 	bu_bomb("ON_BinaryArchive read failed");
 
-    for (std::size_t i = 0; i < num_children; ++i)
-	m_children->push_back(new BRNode(archive, brep));
+    m_children.resize(num_children);
+
+    for (std::vector<const BRNode *>::iterator it = m_children.begin(); it != m_children.end(); ++it)
+	*it = new BRNode(archive, brep);
 
     int face_index;
     if (!archive.ReadInt(&face_index))
@@ -111,10 +111,10 @@ BRNode::serialize(ON_BinaryArchive &archive) const
 	    || !archive.WriteBool(m_innerTrim))
 	bu_bomb("ON_BinaryArchive write failed");
 
-    if (!archive.WriteBigSize(m_children->size()))
+    if (!archive.WriteBigSize(m_children.size()))
 	bu_bomb("ON_BinaryArchive write failed");
 
-    for (std::vector<const BRNode *>::const_iterator it = m_children->begin(); it != m_children->end(); ++it)
+    for (std::vector<const BRNode *>::const_iterator it = m_children.begin(); it != m_children.end(); ++it)
 	(*it)->serialize(archive);
 
     if (!archive.WriteInt(m_face ? m_face->m_face_index : -1))
@@ -133,8 +133,8 @@ int
 BRNode::depth() const
 {
     int d = 0;
-    for (size_t i = 0; i < m_children->size(); i++) {
-	d = 1 + std::max(d, (*m_children)[i]->depth());
+    for (size_t i = 0; i < m_children.size(); i++) {
+	d = 1 + std::max(d, m_children[i]->depth());
     }
     return d;
 }
@@ -142,9 +142,9 @@ BRNode::depth() const
 void
 BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
 {
-    if (!m_children->empty()) {
-	for (size_t i = 0; i < m_children->size(); i++) {
-	    (*m_children)[i]->getLeaves(out_leaves);
+    if (!m_children.empty()) {
+	for (size_t i = 0; i < m_children.size(); i++) {
+	    m_children[i]->getLeaves(out_leaves);
 	}
     } else {
 	out_leaves.push_back(this);
@@ -248,10 +248,10 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (!m_children->empty()) {
-	    const BRNode *closestNode = (*m_children)[0];
-	    for (size_t i = 1; i < m_children->size(); i++) {
-		closestNode = closer(pt, closestNode, (*m_children)[i]);
+	if (!m_children.empty()) {
+	    const BRNode *closestNode = m_children[0];
+	    for (size_t i = 1; i < m_children.size(); i++) {
+		closestNode = closer(pt, closestNode, m_children[i]);
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	} else {

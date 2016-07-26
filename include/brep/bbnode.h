@@ -125,8 +125,7 @@ extern "C++" {
 		void BuildBBox();
 		bool prepTrims();
 
-		/** List of all children of a given node */
-		std::vector<BBNode *> * const m_children;
+		const std::vector<BBNode *> &get_children() const;
 
 		/** Bounding Box */
 		ON_BoundingBox m_node;
@@ -169,12 +168,12 @@ extern "C++" {
 		/** Curve Tree associated with the parent Surface Tree */
 		const CurveTree * const m_ctree;
 
-		std::list<const BRNode *> * const m_trims_above;
+		std::list<const BRNode *> m_trims_above;
+		std::vector<BBNode *> m_children;
 	};
 
 	inline
 	    BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
-		m_children(new std::vector<BBNode *>),
 		m_node(node),
 		m_face(NULL),
 		m_u(),
@@ -184,7 +183,8 @@ extern "C++" {
 		m_estimate(),
 		m_normal(),
 		m_ctree(ct),
-		m_trims_above(new std::list<const BRNode *>)
+		m_trims_above(),
+		m_children()
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
@@ -205,7 +205,6 @@ extern "C++" {
 		    const ON_Interval &v,
 		    bool checkTrim,
 		    bool trimmed):
-		m_children(new std::vector<BBNode *>),
 		m_node(node),
 		m_face(face),
 		m_u(u),
@@ -215,7 +214,8 @@ extern "C++" {
 		m_estimate(),
 		m_normal(),
 		m_ctree(ct),
-		m_trims_above(new std::list<const BRNode *>)
+		m_trims_above(),
+		m_children()
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
@@ -226,11 +226,18 @@ extern "C++" {
 	    }
 	}
 
+
+	inline const std::vector<BBNode *> &
+	BBNode::get_children() const
+	{
+	    return m_children;
+	}
+
 	inline void
 	    BBNode::addChild(BBNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children->push_back(child);
+		    m_children.push_back(child);
 		}
 	    }
 
@@ -238,10 +245,10 @@ extern "C++" {
 	    BBNode::removeChild(BBNode *child)
 	    {
 		std::vector<BBNode *>::iterator i;
-		for (i = m_children->begin(); i != m_children->end();) {
+		for (i = m_children.begin(); i != m_children.end();) {
 		    if (*i == child) {
 			delete *i;
-			i = m_children->erase(i);
+			i = m_children.erase(i);
 		    } else {
 			++i;
 		    }
@@ -251,7 +258,7 @@ extern "C++" {
 	inline bool
 	    BBNode::isLeaf() const
 	    {
-		if (m_children->empty()) {
+		if (m_children.empty()) {
 		    return true;
 		}
 		return false;

@@ -55,7 +55,7 @@ extern "C++" {
 		CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
 		void serialize(ON_BinaryArchive &archive) const;
 		std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
-		std::list<const BRNode *> serialize_get_leaves(const std::vector<std::size_t> &keys) const;
+		std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
 		void serialize_cleanup() const;
 
 		/**
@@ -92,7 +92,7 @@ extern "C++" {
 
 		const ON_BrepFace *m_face;
 		BRNode *m_root;
-		std::vector<const BRNode *> * const m_sortedX;
+		std::vector<const BRNode *> m_sortedX;
 		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
 
