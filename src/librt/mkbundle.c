@@ -215,7 +215,7 @@ int
 rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
 	       const vect_t a_vec, const vect_t b_vec,
 	       const fastf_t a_theta, const fastf_t b_theta,
-	       const fastf_t a_num, const fastf_t UNUSED(b_num))
+	       const fastf_t a_num, const fastf_t b_num)
 {
     int count = 0;
 
@@ -227,6 +227,7 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
     fastf_t a_length = tan(a_theta);
     fastf_t b_length = tan(b_theta);
     fastf_t a_inc = 2 * a_length / (a_num - 1);
+    fastf_t b_inc = 2 * b_length / (b_num - 1);
 
     vect_t a_dir, b_dir;
 
@@ -244,9 +245,8 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
      * condition because in some cases, floating-point problems can
      * make extremely close numbers compare incorrectly.
      *
-     * FIXME: the outer loop never terminates
      */
-    for (y = -b_length; y <= b_length + BN_TOL_DIST;) {
+    for (y = -b_length; y <= b_length + BN_TOL_DIST; y += b_inc) {
 	for (x = -a_length; x <= a_length + BN_TOL_DIST; x += a_inc) {
 	    BU_ALLOC(xrayp, struct xrays);
 	    VMOVE(xrayp->ray.r_pt, start);
