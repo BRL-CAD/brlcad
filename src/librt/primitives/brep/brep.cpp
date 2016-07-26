@@ -569,7 +569,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 
     //start = bu_gettime();
 
-    if (false) {
+    if (true) {
 	std::cerr << "prepping to " << cache_path << '\n';
 
 	if (bu_file_exists(cache_path.c_str(), NULL))

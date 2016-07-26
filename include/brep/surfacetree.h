@@ -99,7 +99,7 @@ extern "C++" {
 		bool m_removeTrimmed;
 		const ON_BrepFace *m_face;
 		BBNode *m_root;
-		std::queue<ON_Plane *> * const m_f_queue;
+		mutable std::queue<ON_Plane *> m_f_queue;
 	};
 
     } /* namespace brlcad */

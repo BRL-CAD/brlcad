@@ -88,10 +88,11 @@ extern "C++" {
 		bool isLinear(const ON_Curve *curve, double min, double max) const;
 		BRNode *subdivideCurve(const ON_Curve *curve, int trim_index, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
 		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
-		BRNode *initialLoopBBox() const;
+		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
+
 
 		const ON_BrepFace *m_face;
-		BRNode *m_root;
+		BRNode m_root;
 		std::vector<const BRNode *> m_sortedX;
 		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
