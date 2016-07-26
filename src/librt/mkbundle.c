@@ -211,8 +211,6 @@ rt_gen_conic(struct xrays *rays, const struct xray *center_ray,
 }
 
 
-
-
 int
 rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
 	       const vect_t a_vec, const vect_t b_vec,
@@ -244,7 +242,10 @@ rt_gen_frustum(struct xrays *rays, const struct xray *center_ray,
 
     /* This adds BN_TOL_DIST to the *_length variables in the
      * condition because in some cases, floating-point problems can
-     * make extremely close numbers compare incorrectly. */
+     * make extremely close numbers compare incorrectly.
+     *
+     * FIXME: the outer loop never terminates
+     */
     for (y = -b_length; y <= b_length + BN_TOL_DIST;) {
 	for (x = -a_length; x <= a_length + BN_TOL_DIST; x += a_inc) {
 	    BU_ALLOC(xrayp, struct xrays);
@@ -409,7 +410,7 @@ rt_pattern_rect_perspgrid(fastf_t **rays, size_t *ray_cnt, const point_t center_
 
 HIDDEN int
 rt_pattern_circ_spiral(fastf_t **rays, size_t *ray_cnt, const point_t center_pt, const vect_t dir,
-       	const double radius, const int rays_per_ring, const int nring, const double delta)
+	const double radius, const int rays_per_ring, const int nring, const double delta)
 {
     int ring;
     double fraction = 1.0;
