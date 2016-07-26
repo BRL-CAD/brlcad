@@ -48,7 +48,8 @@ int
 main(int argc, char *argv[])
 {
     struct rt_wdb *fpw;			/* File to be created. */
-    char filemged[27] = {0};		/* Mged file name. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};		/* Mged file name. */
     double numseg = -1.0;		/* Number of segments. */
     double scanseg;
     double strtpt[MAXWIRESEG][3];	/* Start point of segment. */
@@ -73,8 +74,8 @@ main(int argc, char *argv[])
 
     int i;				/* Loop counters. */
     double r;				/* Temporary variables. */
-    char temp[10];			/* Temporary char string. */
-    char temp1[10];			/* Temporary char string. */
+    char temp[NAME_LEN+1];		/* Temporary char string. */
+    char temp1[NAME_LEN+1];		/* Temporary char string. */
     int ret;
 
     bu_log(usage);
@@ -144,9 +145,9 @@ main(int argc, char *argv[])
     solsub2[7] = '\0';
 
     /* Find name of mged file to be created. */
-    printf("Enter mged file name (25 char max).\n\t");
+    printf("Enter mged file name (%D char max).\n\t", NAME_LEN);
     (void)fflush(stdout);
-    ret = scanf("%26s", filemged);
+    ret = scanf(CPP_SCAN(NAME_LEN), filemged);
     if (ret == 0)
 	perror("scanf");
 
