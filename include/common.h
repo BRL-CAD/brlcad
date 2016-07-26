@@ -441,6 +441,17 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /**
+ * Provide format specifier string tied to a size (e.g., "%123s")
+ *
+ * #define STR_LEN 10+1
+ * char str[STR_LEN] = {0};
+ * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ */
+#ifndef CPP_SCAN
+#  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"
+#endif
+
+/**
  * Provide the current filename and linenumber as a static
  * preprocessor string in "file"":""line" format (e.g., "file:123").
  */
