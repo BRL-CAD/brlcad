@@ -394,7 +394,7 @@ Dunn camera and Canon printer tools
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
 include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+	bu_argv0() -> bu_basename(bu_argv0_full_path(), NULL) [deprecated 7.16]
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
