@@ -150,9 +150,12 @@ int read_faces(struct model *m, FILE *fgeom)
 
 int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 {
-    char title[64], geom_fname[65];
-    char rname[67], sname[67];
-    char buf[200], buf2[200];
+#define SZ 64
+    char title[SZ+1], geom_fname[SZ+1];
+    char rname[SZ+1], sname[SZ+1];
+
+#define BUF_SZ 200
+    char buf[BUF_SZ], buf2[BUF_SZ];
 
     FILE *fgeom;
     struct model *m;
@@ -164,9 +167,12 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
 	/* Retrieve the important data */
 	if (sscanf(buf, "name %[^\n]s", buf2) > 0)
 	    bu_strlcpy(title, buf2, sizeof(title));
-	if (sscanf(buf, "geometry %200[^\n]s", buf2) > 0) {
-	    char dtype[41], format[41];
-	    if (sscanf(buf2, "%40s %40s %64s", dtype, format, geom_fname) != 3)
+
+	if (sscanf(buf, "geometry %" CPP_XSTR(BUF_SZ) "[^\n]s", buf2) > 0) {
+#define FMT_SZ
+	    char dtype[FMT_SZ+1], format[FMT_SZ+1];
+
+	    if (sscanf(buf2, CPP_SCAN(FMT_SZ) CPP_SCAN(FMT_SZ) CPP_SCAN(SZ), dtype, format, geom_fname) != 3)
 		bu_exit(1, "Incomplete geometry field in input file.");
 	    if (!BU_STR_EQUAL(dtype, "indexed_poly"))
 		bu_exit(1, "Unknown geometry data type. Must be \"indexed_poly\".");
@@ -189,8 +195,8 @@ int off2nmg(FILE *fpin, struct rt_wdb *fpout)
     read_faces(m, fgeom);
     fclose(fgeom);
 
-    snprintf(sname, 67, "s.%s", title);
-    snprintf(rname, 67, "r.%s", title);
+    snprintf(sname, sizeof(sname), "s.%s", title);
+    snprintf(rname, sizeof(sname), "r.%s", title);
 
     mk_id(fpout, title);
     mk_nmg(fpout, sname, m);
