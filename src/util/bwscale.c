@@ -54,7 +54,7 @@ off_t buf_start = -1000;	/* First line in buffer */
 ssize_t bufy;				/* y coordinate in buffer */
 FILE *buffp;
 static char *file_name;
-static char hyphen[] = "hyphen";
+static char hyphen[] = "-";
 
 int rflag = 0;
 int inx = 512;
