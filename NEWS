@@ -178,6 +178,8 @@ geometry (e.g., primitives with CSG).
 * added comb -S option to stop when object already exists - Cliff Yapp
 * improved comb command documentation with many examples - Cliff Yapp
 * implemented new 'hrt' heart-shaped primitive object - Isaac Kamga
+* added support for multicore / SMP ray tracing on Windows
+	- Adrián Calle, Arjun Govindjee, Daniel Roßberg, Sean Morrison
 
 
 ----------------------------------------------------------------------
