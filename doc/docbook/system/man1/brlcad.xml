@@ -285,23 +285,6 @@ and upper case for screen information.
 Here's a list of some of the common options you may encounter:</para>
 <variablelist remap='TP'>
   <varlistentry>
-  <term><option>-h</option></term>
-  <listitem>
-<para>The "high resolution" flag, increasing the default screen and file
-size of 512x512
-to 1024x1024.  Has same effect as
-<option>-s</option> 1024 (or <option>-S</option> 1024)
-but exists as a convenient shorthand held over from the simple days
-when framebuffers were square, and only came in two resolutions.
-This historical usage unfortunately preempts this letter from use
-as a height specifier, forcing that function to relocate under
-protest to
-<option>-n</option>,
-which can be thought of as "number of scanlines", which isn't
-too bad a mnemonic.</para>
-  </listitem>
-  </varlistentry>
-  <varlistentry>
   <term><option>-i</option></term>
   <listitem>
 <para>Inverse flag.  Pretend origin is in upper left corner of screen,

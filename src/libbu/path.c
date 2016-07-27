@@ -91,15 +91,19 @@ bu_dirname(const char *cp)
 }
 
 
-void
-bu_basename(char *basename, const char *path)
+char *
+bu_basename(const char *path, char *basename)
 {
     const char *p;
+    char *base;
     size_t len;
 
     if (UNLIKELY(!path)) {
-        bu_strlcpy(basename, ".", strlen(".")+1);
-        return;
+	if (basename) {
+	    bu_strlcpy(basename, ".", strlen(".")+1);
+	    return basename;
+	}
+        return bu_strdup(".");
     }
 
     /* skip the filesystem disk/drive name if we're on a DOS-capable
@@ -126,11 +130,23 @@ bu_basename(char *basename, const char *path)
     while (len > 1 && (path[len - 1] == BU_DIR_SEPARATOR || path[len - 1] == '/'))
         len--;
 
-    if (len > 0) {
-        bu_strlcpy(basename, path, len+1);
-    } else {
-        basename[0] = '.';
+    if (basename) {
+	if (len > 0) {
+	    bu_strlcpy(basename, path, len+1);
+	} else {
+	    basename[0] = '.';
+	}
+	return basename;
     }
+
+    /* Create a new string */
+    base = (char *)bu_calloc(len + 2, sizeof(char), "bu_basename alloc");
+    if (len > 0) {
+	bu_strlcpy(base, path, len+1);
+    } else {
+	base[0] = '.';
+    }
+    return base;
 }
 
 
@@ -167,7 +183,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_BASENAME:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
+	    bu_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		ret = 1;
 		if (component) {
@@ -177,7 +193,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_BASENAME_EXTLESS:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
+	    bu_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		ret = 1;
 		if (component) {
@@ -191,7 +207,7 @@ bu_path_component(struct bu_vls *component, const char *path, bu_path_component_
 	    break;
 	case BU_PATH_EXT:
 	    basename = (char *)bu_calloc(strlen(path) + 2, sizeof(char), "basename");
-	    bu_basename(basename, path);
+	    bu_basename(path, basename);
 	    if (strlen(basename) > 0) {
 		period_pos = strrchr(basename, '.');
 		if (period_pos && strlen(period_pos) > 1) {

@@ -1,0 +1,53 @@
+Using installed BRL-CAD rel version at rev 60688.
+
+To use dstep I installed the following:
+
+via git clone:
+-------------
+
+git clone https://github.com/jacob-carlborg/dstep.git
+git clone https://github.com/SiegeLord/Tango-D2.git
+
+via Debian packages:
+-------------------
+
+dub                      # see http://d-apt.sourceforge.net/
+libcurl-dev              # openssl version
+libparse-recdescent-perl
+
+via local install:
+-----------------
+
+libclang
+
+
+general data flow
+=================
+
+foreach header X.h
+  copy the file to X.h.c
+  preprocess it with gcc -e to yield a X.i file
+
+  foreach line in the X.i file
+    next if blank line
+    extract the object into an Hobj instance
+    push the Hobj->line onto the @olines array
+    push the Hobj instance onto the @objs array
+    last line if desired number of objects has neen extracted
+  end foreach line
+
+  use P::RD on the @lines array to yield the parse tree
+  
+  use Data::Dumper to dump the parse tree to a file X.i.dump.txt
+  interpret (print) the parse to a file X.i.myprint.txt
+
+  analyze the parse tree
+
+  # the objects array is available for debugging more if needed
+
+  convert the parse tree to the output X.d module
+
+end foreach header
+
+
+

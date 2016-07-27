@@ -269,7 +269,7 @@ db_fullpath_to_vls(struct bu_vls *vls, const struct db_full_path *full_path, con
     }
 
     if ((fp_flags & DB_FP_PRINT_TYPE) && !dbip) {
-	bu_log("Warning - requested object type printing, but dbip is NULL - object types will not be printed!");
+	bu_log("WARNING: requested object type printing, but database is unavailable\n\tObject types will not be printed!");
     }
 
     for (i = 0; i < full_path->fp_len; i++) {

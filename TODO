@@ -40,10 +40,16 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   61168 - NEWS, new param option to search
   64314 - NEWS, announce the new doc
   63132 - NEWS, expanded rtedge usage
+  61494 - NEWS, extracting images embedded during 3dm-g conversion looks news
+  61516 - NEWS, added fbclear to archer
 
+* verify against 7.24.4
+  63406 - NEWS, if bug was released
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* brep compilation must not be optional
 
 * update astyle
 
@@ -336,6 +342,12 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   developers, not requiring them to be aware of or adapt types or
   functions until it provides some clear advantage (e.g., portability,
   performance, and/or maintainability).
+
+* rename the "joint2" articulation command (possibly also rename the
+  "joint" command) worked on when joint objects were implemented.
+  joint2 interfaces with the old text-file based articulation
+  interface, but conceivably should get updated when joint objects can
+  describe everything in the old text files.
 
 * create a joint articulation (manually is good, automatic is better)
   for the tin woodsman so he can move his arms, legs, neck, and head.

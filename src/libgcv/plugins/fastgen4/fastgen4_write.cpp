@@ -166,7 +166,6 @@ public:
     ~DBInternal();
 
     void load(const db_i &db, const directory &dir);
-    const rt_db_internal &get() const;
     rt_db_internal &get();
 
 
@@ -228,16 +227,6 @@ DBInternal::load(const db_i &db, const directory &dir)
 
     m_valid = true;
     RT_CK_DB_INTERNAL(&m_internal);
-}
-
-
-const rt_db_internal &
-DBInternal::get() const
-{
-    if (!m_valid)
-	throw std::logic_error("invalid");
-
-    return m_internal;
 }
 
 
@@ -352,6 +341,10 @@ RecordWriter::Record &
 RecordWriter::Record::operator<<(float value)
 {
     return operator<<(truncate_float(value));
+
+    // quell warning of unused function
+    // `float` and `double` overrides provided to match `fastf_t` despite templates
+    operator<<(static_cast<double>(0.0));
 }
 
 
@@ -359,6 +352,10 @@ RecordWriter::Record &
 RecordWriter::Record::operator<<(double value)
 {
     return operator<<(truncate_float(value));
+
+    // quell warning of unused function
+    // `float` and `double` overrides provided to match `fastf_t` despite templates
+    operator<<(static_cast<float>(0.0));
 }
 
 

@@ -49,7 +49,8 @@ int
 main(int argc, char **argv)
 {
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[27] = {0};	/* Mged file create. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hd, hh;		/* Diameter & height of bolt head. */
     double wd, wh;		/* Diameter & height of washer. */
     double sd, sh;		/* Diameter & height of bolt stem. */
@@ -63,12 +64,12 @@ main(int argc, char **argv)
 				/* stem; 4=>head & stem. */
     int i, j, k;		/* Loop counters. */
     char *temp;			/* Temporary character string. */
-    char temp1[16];		/* Temporary character string. */
+    char temp1[NAME_LEN+1];	/* Temporary character string. */
 
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
     char grpnam[9];		/* Group name. */
-    int numblt;			/* Number of bolts to be created (<=26). */
+    int numblt;			/* Number of bolts to be created. */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -138,17 +139,17 @@ main(int argc, char **argv)
 	    iopt = 4;
 
 	/* Get file name of mged file to be created. */
-	printf("Enter name of mged file to be created (25 char max).\n\t");
+	printf("Enter name of mged file to be created (%d char max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
-	ret = scanf("%26s", filemged);
+	ret = scanf(CPP_SCAN(NAME_LEN), filemged);
 	if (ret == 0) {
 	    perror("scanf");
 	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "bolt.g", sizeof(filemged));
 
-	/* Find the number of bolts to be created (<=26). */
-	printf("Enter the number of bolts to be created (26 max).\n\t");
+	/* Find the number of bolts to be created. */
+	printf("Enter the number of bolts to be created (%d max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numblt);
 	if (ret == 0) {
@@ -157,8 +158,8 @@ main(int argc, char **argv)
 	}
 	else if (numblt < 1)
 	    numblt = 1;
-	else if (numblt > 26)
-	    numblt = 26;
+	else if (numblt > NAME_LEN)
+	    numblt = NAME_LEN;
 
 	/* Find dimensions of the bolt. */
 	/* Find dimensions of head first. */
@@ -220,7 +221,7 @@ main(int argc, char **argv)
 	/*	          3 => head, washer, & stem */
 	/*	          4 => head & stem */
 	/*	-fname - name = name of .g file */
-	/*  	-n# - # = number of bolts to create (<=26)  */
+	/*  	-n# - # = number of bolts to create */
 	/*	-hd# - # = head diameter */
 	/*	-hh# - # = head height */
 	/*	-wd# - # = washer diameter */
@@ -256,7 +257,7 @@ main(int argc, char **argv)
 		/* START # 5 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 6 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -271,14 +272,15 @@ main(int argc, char **argv)
 		/* Set up temporary character string, temp1. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;
 		}
 		temp1[k] = '\0';
 		sscanf(temp1, "%d", &numblt);
-		if (numblt > 26) numblt = 26;
+		if (numblt > NAME_LEN)
+		    numblt = NAME_LEN;
 	    }						/* END # 6.05 */
 
 	    /* Take care of all other arguments. */
@@ -287,7 +289,7 @@ main(int argc, char **argv)
 		/* Set temporary character string, temp1. */
 		j = 3;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    temp1[k] = temp[j];
 		    j++;
 		    k++;

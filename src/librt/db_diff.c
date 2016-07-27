@@ -524,7 +524,7 @@ db_diff(const struct db_i *dbip1,
 	/* If we're checking everything, we want a sanity check to make sure we spot it when the objects differ */
 	if (flags == DB_COMPARE_ALL && dp1 != RT_DIR_NULL && dp1->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY && dp2 != RT_DIR_NULL && dp2->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    if (db_get_external(&ext1, dp1, dbip1) || db_get_external(&ext2, dp2, dbip2)) {
-		bu_log("Warning - Error getting bu_external form when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
+		bu_log("WARNING: Unexpected failure reading serialized data for %s and %s\n", dp1->d_namep, dp2->d_namep);
 	    } else {
 		if (db_diff_external(&ext1, &ext2)) {extern_state = DIFF_CHANGED;}
 	    }
@@ -540,7 +540,7 @@ db_diff(const struct db_i *dbip1,
 	    state |= db_diff_dp(dbip1, dbip2, dp1, dp2, diff_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && state == DIFF_UNCHANGED && extern_state == DIFF_CHANGED) {
-	    bu_log("Warning - internal comparison and bu_external comparison disagree when comparing %s and %s\n", dp1->d_namep, dp2->d_namep);
+	    bu_log("WARNING: internal and bu_external comparison disagree for %s and %s\n", dp1->d_namep, dp2->d_namep);
 
 	}
 
@@ -898,7 +898,7 @@ db_diff3(const struct db_i *dbip_left,
 	       	dp_ancestor != RT_DIR_NULL && dp_ancestor->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
 	       	dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 	    if (db_get_external(&ext_left, dp_left, dbip_left) || db_get_external(&ext_ancestor, dp_ancestor, dbip_ancestor) || db_get_external(&ext_right, dp_right, dbip_right)) {
-		bu_log("Warning - Error getting bu_external form when comparing %s and %s\n", dp_left->d_namep, dp_ancestor->d_namep);
+		bu_log("WARNING: unexpected failure reading serialized data for %s and %s\n", dp_left->d_namep, dp_ancestor->d_namep);
 	    } else {
 		if (db_diff_external(&ext_left, &ext_right) || db_diff_external(&ext_left, &ext_ancestor)) {extern_state = DIFF_CHANGED;}
 	    }
@@ -915,7 +915,7 @@ db_diff3(const struct db_i *dbip_left,
 	    ancestor_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, dp_ancestor, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	}
 	if (flags == DB_COMPARE_ALL && (ancestor_state == DIFF_UNCHANGED || ancestor_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-	    bu_log("Warning - internal comparison and bu_external comparison disagree\n");
+	    bu_log("WARNING: internal and bu_external comparison disagree\n");
 	}
 
 	if (results) {
@@ -945,7 +945,7 @@ db_diff3(const struct db_i *dbip_left,
 		    dp_left != RT_DIR_NULL && dp_left->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY &&
 		    dp_right != RT_DIR_NULL && dp_right->d_major_type != DB5_MAJORTYPE_ATTRIBUTE_ONLY) {
 		if (db_get_external(&ext_left, dp_left, dbip_left) || db_get_external(&ext_right, dp_right, dbip_right)) {
-		    bu_log("Warning - Error getting bu_external form\n");
+		    bu_log("WARNING: Unexpected failure reading serialized data\n");
 		} else {
 		    if (db_diff_external(&ext_left, &ext_right)) {extern_state = DIFF_CHANGED;}
 		}
@@ -961,7 +961,7 @@ db_diff3(const struct db_i *dbip_left,
 		left_state |= db_diff3_dp(dbip_left, dbip_ancestor, dbip_right, dp_left, NULL, dp_right, diff3_tol, DB_COMPARE_ATTRS, result);
 	    }
 	    if (flags == DB_COMPARE_ALL && (left_state == DIFF_UNCHANGED || left_state == DIFF_EMPTY) && extern_state == DIFF_CHANGED) {
-		bu_log("Warning - internal comparison and bu_external comparison disagree");
+		bu_log("WARNING: internal and bu_external comparison disagree");
 	    }
 
 	    if (results) {

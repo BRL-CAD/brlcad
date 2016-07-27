@@ -46,7 +46,8 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[27] = {0};	/* Mged file create. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hgt = 0.0;       	/* Height, width, & depth of outside window */
     double wid = 0.0;
     double dpt = 0.0;
@@ -58,12 +59,12 @@ main(int argc, char **argv)
     vect_t ht;			/* Height of rcc. */
     fastf_t rad;		/* Radius of rcc. */
     char *temp;			/* Temporary character string. */
-    char temp1[16];		/* Temporary character string. */
+    char temp1[NAME_LEN+1];	/* Temporary character string. */
 
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin = 0;		/* Number of window frames to be created (<=26). */
+    int numwin = 0;		/* Number of window frames to be created. */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -108,16 +109,16 @@ main(int argc, char **argv)
 	printf("the depth of the window frame.\n\n");
 
 	/* Find name of mged file to be created. */
-	printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (%d char max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
-	ret = scanf("%26s", filemged);
+	ret = scanf(CPP_SCAN(NAME_LEN), filemged);
 	if (ret == 0)
 	    perror("scanf");
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
-	printf("Enter the number of window frames to create (26 max).\n\t");
+	printf("Enter the number of window frames to create (%d max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
 	if (ret == 0) {
@@ -126,8 +127,8 @@ main(int argc, char **argv)
 	}
 	else if (numwin < 1)
 	    numwin = 1;
-	else if (numwin > 26)
-	    numwin = 26;
+	else if (numwin > NAME_LEN)
+	    numwin = NAME_LEN;
 
 	/* Find the dimensions of the window frames. */
 	printf("Enter the height, width, and depth of the window frame.\n\t");
@@ -197,7 +198,7 @@ main(int argc, char **argv)
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -212,7 +213,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -221,7 +222,8 @@ main(int argc, char **argv)
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numwin);
-		    if (numwin > 26) numwin = 26;
+		    if (numwin > NAME_LEN)
+			numwin = NAME_LEN;
 		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {

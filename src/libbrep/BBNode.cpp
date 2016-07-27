@@ -20,10 +20,9 @@
 
 #include "common.h"
 
-extern "C" {
 #include "bu/log.h"
-}
 #include "brep.h"
+
 
 namespace brlcad {
 BBNode::~BBNode()

@@ -73,6 +73,7 @@ set(misc_ignore_files
   batch-indent-region.el
   brlcad-config.in
   brlcad.spec.in
+  d-bindings
   debian
   flawfinder
   jove.emacs

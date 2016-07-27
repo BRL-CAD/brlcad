@@ -21,8 +21,6 @@
  *           Bell Labs Innovations for Lucent Technologies
  *           mmclennan@lucent.com
  *           http://www.tcltk.com/itcl
- *
- *     RCS:  $Id$
  * ========================================================================
  *           Copyright (c) 1993-1998  Lucent Technologies, Inc.
  * ------------------------------------------------------------------------
@@ -102,7 +100,7 @@ Itcl_CreateObject(interp, name, cdefn, objc, objv, roPtr)
      *  only in the current namespace context.  Otherwise, we might
      *  find a global command, but that wouldn't be clobbered!
      */
-    cmd = Tcl_FindCommand(interp, (CONST84 char *)name,
+    cmd = Tcl_FindCommand(interp, name,
 	(Tcl_Namespace*)NULL, TCL_NAMESPACE_ONLY);
 
     if (cmd != NULL && !Itcl_IsStub(cmd)) {
@@ -668,7 +666,7 @@ Itcl_HandleInstance(clientData, interp, objc, objv)
         return TCL_ERROR;
     }
 
-    framePtr = &context.frame;
+    framePtr = (ItclCallFrame *) &context.frame;
     Itcl_PushStack((ClientData)framePtr, &info->transparentFrames);
 
     /* Bug 227824
@@ -735,7 +733,7 @@ Itcl_GetInstanceVar(interp, name, contextObj, contextClass)
         return NULL;
     }
 
-    val = Tcl_GetVar2(interp, (CONST84 char *)name, (char*)NULL,
+    val = Tcl_GetVar2(interp, name, (char*)NULL,
 	    TCL_LEAVE_ERR_MSG);
     Itcl_PopContext(interp, &context);
 
@@ -872,7 +870,7 @@ ItclTraceThisVar(cdata, interp, name1, name2, flags)
         }
 
         objName = Tcl_GetString(objPtr);
-        Tcl_SetVar(interp, (CONST84 char *)name1, objName, 0);
+        Tcl_SetVar(interp, name1, objName, 0);
 
         Tcl_DecrRefCount(objPtr);
         return NULL;
@@ -964,6 +962,8 @@ ItclFreeObject(cdata)
     ItclContext context;
     Itcl_InterpState istate;
 
+    int dataSize = contextObj->dataSize;
+
     /*
      *  Install the class namespace and object context so that
      *  the object's data members can be destroyed via simple
@@ -1015,6 +1015,8 @@ ItclFreeObject(cdata)
     }
     Itcl_DeleteHierIter(&hier);
 
+    contextObj->dataSize = -1;
+
     /*
      *  Free the memory associated with object-specific variables.
      *  For normal variables this would be done automatically by
@@ -1022,9 +1024,11 @@ ItclFreeObject(cdata)
      *  variables are protected by an extra reference count, and they
      *  must be deleted explicitly here.
      */
-    for (i=0; i < contextObj->dataSize; i++) {
-        if (contextObj->data[i]) {
-            ckfree((char*)contextObj->data[i]);
+    for (i=0; i < dataSize; i++) {
+	Var *varPtr = contextObj->data[i];
+        if (varPtr) {
+	    assert(TclIsVarUndefined(varPtr));
+            ckfree((char*)varPtr);
         }
     }
 
@@ -1154,7 +1158,7 @@ Itcl_ScopedVarResolver(interp, name, contextNs, flags, rPtr)
     Tcl_Var *rPtr;             /* returns: resolved variable */
 {
     int namec;
-    char **namev;
+    CONST char **namev;
     Tcl_Interp *errs;
     Tcl_CmdInfo cmdInfo;
     ItclObject *contextObj;
@@ -1179,7 +1183,7 @@ Itcl_ScopedVarResolver(interp, name, contextNs, flags, rPtr)
         errs = NULL;
     }
 
-    if (Tcl_SplitList(errs, (CONST84 char *)name, &namec, &namev)
+    if (Tcl_SplitList(errs, name, &namec, &namev)
 	    != TCL_OK) {
         return TCL_ERROR;
     }
@@ -1198,7 +1202,8 @@ Itcl_ScopedVarResolver(interp, name, contextNs, flags, rPtr)
      *  Look for the command representing the object and extract
      *  the object context.
      */
-    if (!Tcl_GetCommandInfo(interp, namev[1], &cmdInfo)) {
+    if (!Tcl_GetCommandInfo(interp, namev[1], &cmdInfo)
+	    || cmdInfo.objProc != Itcl_HandleInstance) {
         if (errs) {
             Tcl_AppendResult(errs,
                 "can't resolve scoped variable \"", name, "\": ",
@@ -1209,6 +1214,10 @@ Itcl_ScopedVarResolver(interp, name, contextNs, flags, rPtr)
         return TCL_ERROR;
     }
     contextObj = (ItclObject*)cmdInfo.objClientData;
+    if (contextObj->dataSize < 0) {
+	/* Don't resolve names into dying objects */
+        return TCL_ERROR;
+    }
 
     /*
      *  Resolve the variable with respect to the most-specific

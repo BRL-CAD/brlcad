@@ -55,11 +55,11 @@ get_bu_output(const char *input)
     size_t null_result_chars = sizeof(".") / sizeof(char);
     size_t max_result_chars = input ? strlen(input) + 1 : null_result_chars;
 
-    char *out = (char *)bu_calloc(max_result_chars, sizeof(char), "bu output");
+    char *output = (char *)bu_calloc(max_result_chars, sizeof(char), "bu output");
 
-    bu_basename(out, input);
+    bu_basename(input, output);
 
-    return out;
+    return output;
 }
 #endif
 

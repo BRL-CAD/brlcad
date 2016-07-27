@@ -195,7 +195,7 @@ replace_invalid_uuids(ONX_Model &model)
 
 #define REPLACE_UUIDS(array, member) \
 do { \
-    for (unsigned i = 0; i < (array).UnsignedCount(); ++i) { \
+    for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) { \
 	while (!seen.insert(at((array), i)member).second) { \
 	    at((array), i)member = generate_uuid(); \
 	    ++num_repairs; \
@@ -203,17 +203,17 @@ do { \
     } \
 } while (false)
 
+    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
+    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
+    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
     REPLACE_UUIDS(model.m_bitmap_table, ->m_bitmap_id);
     REPLACE_UUIDS(model.m_mapping_table, .m_mapping_id);
     REPLACE_UUIDS(model.m_linetype_table, .m_linetype_id);
-    REPLACE_UUIDS(model.m_layer_table, .m_layer_id);
     REPLACE_UUIDS(model.m_group_table, .m_group_id);
     REPLACE_UUIDS(model.m_font_table, .m_font_id);
     REPLACE_UUIDS(model.m_dimstyle_table, .m_dimstyle_id);
     REPLACE_UUIDS(model.m_light_table, .m_attributes.m_uuid);
     REPLACE_UUIDS(model.m_hatch_pattern_table, .m_hatchpattern_id);
-    REPLACE_UUIDS(model.m_idef_table, .m_uuid);
-    REPLACE_UUIDS(model.m_object_table, .m_attributes.m_uuid);
     REPLACE_UUIDS(model.m_history_record_table, ->m_record_id);
     REPLACE_UUIDS(model.m_userdata_table, .m_uuid);
 
@@ -274,7 +274,7 @@ load_model(const gcv_opts &gcv_options, const std::string &path,
 
 #define REPLACE_NAMES(array, member) \
 do { \
-    for (unsigned i = 0; i < (array).UnsignedCount(); ++i) \
+    for (std::size_t i = 0; i < (array).UnsignedCount(); ++i) \
 	clean_name(seen, gcv_options.default_name, at((array), i).member); \
 } while (false)
 
@@ -329,7 +329,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     std::vector<fastf_t> vertices(3 * num_vertices);
 
-    for (unsigned i = 0; i < num_vertices; ++i) {
+    for (std::size_t i = 0; i < num_vertices; ++i) {
 	fastf_t * const dest_vertex = &vertices.at(3 * i);
 	const ON_3fPoint &source_vertex = at<ON_3fPoint>(mesh.m_V, i);
 	VMOVE(dest_vertex, source_vertex);
@@ -337,7 +337,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     std::vector<int> faces(3 * num_faces);
 
-    for (unsigned i = 0; i < num_faces; ++i) {
+    for (std::size_t i = 0; i < num_faces; ++i) {
 	int * const dest_face = &faces.at(3 * i);
 	const int * const source_face = at(mesh.m_F, i).vi;
 	VMOVE(dest_face, source_face);
@@ -378,7 +378,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
     mesh.UnitizeFaceNormals();
     std::vector<fastf_t> normals(3 * mesh.m_FN.UnsignedCount());
 
-    for (unsigned i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	fastf_t * const dest_normal = &normals.at(3 * i);
 	const ON_3fVector &source_normal = at<ON_3fVector>(mesh.m_FN, i);
 	VMOVE(dest_normal, source_normal);
@@ -386,7 +386,7 @@ write_geometry(rt_wdb &wdb, const std::string &name, ON_Mesh mesh)
 
     std::vector<int> face_normals(3 * mesh.m_FN.UnsignedCount());
 
-    for (unsigned i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < mesh.m_FN.UnsignedCount(); ++i) {
 	int * const dest_face_normal = &face_normals.at(3 * i);
 	VSETALL(dest_face_normal, i);
     }
@@ -531,7 +531,7 @@ import_model_objects(const gcv_opts &gcv_options, rt_wdb &wdb,
 {
     std::size_t success_count = 0;
 
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table, i);
 	const std::string name = ON_String(object.m_attributes.m_name).Array();
 	const std::string member_name = name + ".s";
@@ -577,7 +577,7 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 {
     std::set<std::string> members;
 
-    for (unsigned i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < idef.m_object_uuid.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table,
 					    model.ObjectIndex(at(idef.m_object_uuid, i)));
 
@@ -594,7 +594,7 @@ import_idef(rt_wdb &wdb, const ON_InstanceDefinition &idef,
 HIDDEN void
 import_model_idefs(rt_wdb &wdb, const ONX_Model &model)
 {
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
+    for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i)
 	import_idef(wdb, at(model.m_idef_table, i), model);
 }
 
@@ -604,10 +604,10 @@ get_all_idef_members(const ONX_Model &model)
 {
     std::set<std::string> result;
 
-    for (unsigned i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < model.m_idef_table.UnsignedCount(); ++i) {
 	const ON_InstanceDefinition &idef = at(model.m_idef_table, i);
 
-	for (unsigned j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
+	for (std::size_t j = 0; j < idef.m_object_uuid.UnsignedCount(); ++j) {
 	    const ONX_Model_Object &object = at(model.m_object_table,
 						model.ObjectIndex(at(idef.m_object_uuid, j)));
 	    result.insert(ON_String(object.m_attributes.m_name).Array());
@@ -623,14 +623,14 @@ get_layer_members(const ON_Layer &layer, const ONX_Model &model)
 {
     std::set<std::string> members;
 
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i) {
 	const ON_Layer &current_layer = at(model.m_layer_table, i);
 
 	if (current_layer.m_parent_layer_id == layer.ModelObjectId())
 	    members.insert(ON_String(current_layer.m_name).Array());
     }
 
-    for (unsigned i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
+    for (std::size_t i = 0; i < model.m_object_table.UnsignedCount(); ++i) {
 	const ONX_Model_Object &object = at(model.m_object_table, i);
 
 	if (object.m_attributes.m_layer_index == layer.m_layer_index)
@@ -669,7 +669,7 @@ HIDDEN void
 import_model_layers(rt_wdb &wdb, const ONX_Model &model,
 		    const std::string &root_name)
 {
-    for (unsigned i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
+    for (std::size_t i = 0; i < model.m_layer_table.UnsignedCount(); ++i)
 	import_layer(wdb, at(model.m_layer_table, i), model);
 
     ON_Layer root_layer;
@@ -685,7 +685,7 @@ polish_output(const gcv_opts &gcv_options, db_i &db)
     AutoPtr<bu_ptbl, db_search_free> autofree_found(&found);
 
     if (0 > db_search(&found, DB_SEARCH_RETURN_UNIQ_DP,
-		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_Layer -or -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
+		      ("-attr rhino::type=ON_Layer -or ( ( -attr rhino::type=ON_InstanceDefinition -or -attr rhino::type=ON_InstanceRef ) -not -name IDef* -not -name "
 		       + std::string(gcv_options.default_name) + "* )").c_str(), 0, NULL, &db))
 	throw std::runtime_error("db_search() failed");
 
