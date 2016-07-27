@@ -1210,3 +1210,5 @@ s/bu_dir_list/bu_file_list/g
 	bu_dir_list -> bu_file_list [7.25]
 s/BU_FNMATCH_NOMATCH/1/g
 	don't use an explicit define for the non-matching case [7.25]
+s/bu_basename\(([^\)]*)\)/bu_basename(\1, NULL)/g
+	pass NULL argument to get a dynamically allocated buffer back [7.25]
