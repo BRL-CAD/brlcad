@@ -172,6 +172,8 @@ geometry (e.g., primitives with CSG).
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
 * added menu option to restore mged command window - Cezar Elnazli
+* improved DocBook documentation output formatting
+	- David Wood, Yatharth Agarwal
 * added 'search' -params option for geometric parameters - Cliff Yapp
 * search command now recognizes hyp and metaball types - Cliff Yapp
 * improved spec formatting, added v5 timestamp proposal - Tom Browder
