@@ -171,6 +171,7 @@ geometry (e.g., primitives with CSG).
 * added menu option to restore mged command window - Cezar Elnazli
 * added 'search' -params option for geometric parameters - Cliff Yapp
 * search command now recognizes hyp and metaball types - Cliff Yapp
+* improved spec formatting, added v5 timestamp proposal - Tom Browder
 * improved search command documentation examples - Cliff Yapp
 * improved archer interface's behavior on start-up - Nick Reed
 * added -depth option to mged 'search' command - Cliff Yapp
