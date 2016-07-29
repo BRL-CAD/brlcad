@@ -130,7 +130,7 @@ $leftprev $rightprev $totalprev"
 	totalprev=0
     fi
 
-    totalprev="`echo $totalprev $len | awk '{print $1 + $2}'`"
+    totalprev="`echo $totalprev $len | awk '{printf "%.4f", $1 + ($2 / 16)}'`"
 
 done <<EOF
 $lines
