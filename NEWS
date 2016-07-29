@@ -99,6 +99,7 @@ geometry (e.g., primitives with CSG).
 * fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
+* fixed duplicate name errors in dbconcat - Daniel Roßberg
 * modernized documents and improved infrastructure - Hitesh Sofat
 * added mirroring support for hrt primitive objects - Isaac Kamga
 * added manual page documenting the STEP geometry format - Cliff Yapp
