@@ -1,5 +1,4 @@
-#!/bin/sh
-#                      C H E C K . T C L
+#                     C H E C K E R . T C L
 # BRL-CAD
 #
 # Copyright (c) 2016 United States Government as represented by
@@ -20,43 +19,132 @@
 #
 ###
 #
-# This is the Geometry Checker main script.  It manages the loading
-# and unloading of a GeometryChecker object into mged automatically.
+# Description -
 #
-# The trailing backslash forces tcl to skip the next line \
-exec bwish "$0" "$@"
+# This is the Geometry Checker GUI.  It presents a list of geometry
+# objects that overlap or have other problems.
+#
+
+package require Tk
+package require Itcl
+package require Itk
+
+# go ahead and blow away the class if we are reloading
+catch {delete class GeometryChecker} error
+
+::itcl::class GeometryChecker {
+    inherit ::itk::Widget
+
+    constructor {args} {}
+    destructor {}
+
+    public {
+	method toggleDebug {} {}
+    }
+
+    protected {
+    }
+
+    private {
+	variable _debug
+    }
+}
 
 
-package require GeometryChecker
+###########
+# begin constructor/destructor
+###########
+
+::itcl::body GeometryChecker::constructor {args} {
+    eval itk_initialize $args
+
+    # set to 1/0 to turn call path debug messages on/off
+    set _debug 0
+
+    itk_component add checkFrame {
+	ttk::frame $itk_interior.checkFrame -padding 5
+    } {}
+
+    itk_component add checkLabel {
+    	ttk::label $itk_component(checkFrame).checkLabel \
+    	    -text "This tool checks for geometry overlaps" 
+    } {}
+
+    itk_component add checkButton {
+    	ttk::button $itk_component(checkFrame).checkButton \
+    	    -text "Check!" \
+    	    -command "rtcheck"
+    } {}
+
+    pack $itk_component(checkFrame) -expand true -fill both
+    grid $itk_component(checkFrame).checkLabel - -sticky w -padx 5 -pady 5
+    grid $itk_component(checkFrame).checkButton - -stick nesw -padx 5 -pady 5
+}
+
+
+::itcl::body GeometryChecker::destructor {} {
+    if { $_debug } {
+	puts "destructor"
+    }
+}
+
+
+###########
+# end constructor/destructor
+###########
+
+
+###########
+# begin public methods
+###########
+
+# toggleDebug
+#
+# turns debugging on/off
+#
+body GeometryChecker::toggleDebug { } {
+    if { $_debug } {
+	set _debug 0
+    } else {
+	set _debug 1
+    }
+}
+
+##########
+# end public methods
+##########
+
+
+##########
+# begin protected methods
+##########
+
+##########
+# end protected methods
+##########
+
+##########
+# begin private methods
+##########
+
+##########
+# end private methods
+##########
+
 
 # All GeometryChecker stuff is in the GeometryChecker namespace
-proc check { } {
-    global mged_gui
-    global ::tk::Priv
-    global mged_players
-
-    # determine the framebuffer window id
-    if { [ catch { set mged_players } _mgedFramebufferId ] } {
-	puts $_mgedFramebufferId
-	puts "assuming default mged framebuffer id: id_0"
-	set _mgedFramebufferId "id_0"
-    }
-    # just in case there are more than one returned
-    set _mgedFramebufferId [ lindex $_mgedFramebufferId 0 ]
-
-    set gc .$_mgedFramebufferId.checker
-
-    # see if the window is already open.  If so, just raise it up.
-    if [ winfo exists $gc ] {
-	raise $gc
+proc check {{parent ""}} {
+    if {[winfo exists $parent.checker]} {
 	return
     }
 
-    # just to quell the tk name returned and report fatal errors
-    if [ catch { GeometryChecker $gc } gbName ] {
-	puts $gbName
-    }
+    set checkerWindow [toplevel $parent.checker]
+    set checkerContents [GeometryChecker $checkerWindow.contents]
+
+    wm title $checkerWindow "Geometry Checker"
+    pack $checkerContents -expand true -fill both
 }
+
 
 # Local Variables:
 # mode: Tcl

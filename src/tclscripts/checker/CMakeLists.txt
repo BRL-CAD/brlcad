@@ -1,5 +1,4 @@
 set(checker_TCLSCRIPTS
-  GeometryChecker.tcl
   check.tcl
   )
 BRLCAD_ADDDATA(checker_TCLSCRIPTS tclscripts/checker)
