@@ -106,15 +106,15 @@ catch {delete class GeometryChecker} error
     }
 
     itk_component add checkFrame {
-    	ttk::frame $itk_interior.checkFrame -padding 0
+    	ttk::frame $itk_interior.checkFrame -padding 2 
     } {}
 
-    itk_component add checkLabel {
-    	ttk::label $itk_component(checkFrame).checkLabel -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
+    itk_component add checkLabelIntro {
+    	ttk::label $itk_component(checkFrame).checkLabelIntro -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
     } {}
 
-    itk_component add checkLabel2 {
-    	ttk::label $itk_component(checkFrame).checkLabel2 -text "Data Not Yet Loaded"
+    itk_component add checkLabelStatus {
+    	ttk::label $itk_component(checkFrame).checkLabelStatus -text "Data Not Yet Loaded"
     } {}
 
     itk_component add checkList {
@@ -124,21 +124,39 @@ catch {delete class GeometryChecker} error
 	    -yscroll [ code $itk_component(checkFrame).checkScroll set]
     } {}
 
-    itk_component add checkGrip {
-    	ttk::sizegrip $itk_component(checkFrame).checkGrip
-    } {}
-
     itk_component add checkScroll {
 	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [ code $itk_component(checkFrame).checkList yview ]
     } {}
 
+    itk_component add checkButtonFrame {
+    	ttk::frame $itk_interior.checkButtonFrame -padding 0
+    } {}
+
+    itk_component add checkGrip {
+    	ttk::sizegrip $itk_component(checkButtonFrame).checkGrip
+    } {}
+
+    itk_component add buttonLeft {
+	ttk::button $itk_component(checkButtonFrame).buttonLeft -text "Subtract Left" -padding 10
+    } {}
+    itk_component add buttonRight {
+	ttk::button $itk_component(checkButtonFrame).buttonRight -text "Subtract Right" -padding 10
+    } {}
+    itk_component add buttonBoth {
+	ttk::button $itk_component(checkButtonFrame).buttonBoth -text "Subtract Both" -padding 10 -state disabled
+    } {}
+    itk_component add buttonNext {
+	ttk::button $itk_component(checkButtonFrame).buttonNext -text "Skip to Next" -padding 10
+    } {}
+
+
     eval itk_initialize $args
 
     set _colorOdd \#ffffff
-    set _colorEven \#f0f0f0
+    set _colorEven \#f0fdf0
 
     set _ck $itk_component(checkFrame).checkList
-    set _status $itk_component(checkFrame).checkLabel2
+    set _status $itk_component(checkFrame).checkLabelStatus
 
     puts $_ck
 
@@ -152,11 +170,22 @@ catch {delete class GeometryChecker} error
     $_ck heading Size -text "Vol. Est." -image _arrowOff -anchor e -command [list $this sortBy Size 0]
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
-    pack $itk_component(checkFrame).checkGrip -side right -anchor se
-    pack $itk_component(checkFrame).checkLabel -side top -fill x -padx 10 -pady 10
-    pack $itk_component(checkFrame).checkLabel2 -side bottom -fill x -padx 10 -pady 10
-    pack $itk_component(checkFrame).checkScroll -side right -fill y
+    pack $itk_component(checkButtonFrame).checkGrip -side right -anchor se
+#    pack $itk_component(checkFrame).checkLabelIntro -fill y -padx 10 -pady 10
+    pack $itk_component(checkFrame).checkLabelStatus -side top -fill x -padx 10 -pady 10
+
+    pack $itk_component(checkButtonFrame) -side bottom -expand true -fill both
+    pack $itk_component(checkButtonFrame).buttonRight -side right -pady 10
+#    pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
+    pack $itk_component(checkButtonFrame).buttonLeft -side right -pady 10
+
+    pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
+#    pack $itk_component(checkButtonFrame).buttonNext -side bottom -fill x
+#     pack $itk_component(checkFrame).buttonLeft -side bottom -fill x -padx 10 -pady 10
+#     pack $itk_component(checkFrame).buttonBoth -side bottom -fill x -padx 10 -pady 10
+#     pack $itk_component(checkFrame).buttonRight -side bottom -fill x -padx 10 -pady 10
+#     pack $itk_component(checkFrame).buttonNext -side bottom -fill x -padx 10 -pady 10
 }
 
 
