@@ -28,7 +28,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   invisible.
 
 * check these commits for documentation:
-  58145 - NEWS, minor but technically user visible and potentially significant if the assumptions made are incorrect (improved tire command usage statement)
   58254 - NEWS, fixed bug you say? what bug?
   58325 - NEWS, improved v5 specification formatting, added timestamp proposal
   64637 - NEWS, almost certainly fixed mysterious errors during dbconcat and db_opens with duplicate names found
