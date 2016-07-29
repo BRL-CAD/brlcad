@@ -29,8 +29,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * check these commits for documentation:
   58254 - NEWS, fixed bug you say? what bug?
-  58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
-  58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
 
 * verify against 7.24.4
   63406 - NEWS, if bug was released
