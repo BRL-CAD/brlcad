@@ -137,6 +137,7 @@ geometry (e.g., primitives with CSG).
 * renamed 'make_bb' mged command name to 'bb' - Cliff Yapp
 * added g-ply exporter for Stanford PLY geometry format - Rishub Jain
 * added ply-g importer for Stanford PLY geometry format - Rishub Jain
+* improved rtedge help option output - Carl Moore
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
