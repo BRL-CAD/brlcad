@@ -57,7 +57,11 @@
 #include "./brep_local.h"
 #include "./brep_debug.h"
 
+#ifdef __GNU_LIBRARY__
 #include <malloc.h>
+#else
+#error glibc required for malloc() instrumentation
+#endif
 
 
 /* undefine "min" and "max" macros, if they exist, to prevent
@@ -457,6 +461,9 @@ class MallocSizes
 
 
     private:
+	MallocSizes();
+
+
 	static void save_hooks()
 	{
 	    old_malloc_hook = __malloc_hook;
@@ -569,7 +576,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 
     //start = bu_gettime();
 
-    if (true) {
+    if (false) {
 	std::cerr << "prepping to " << cache_path << '\n';
 
 	if (bu_file_exists(cache_path.c_str(), NULL))
@@ -589,7 +596,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	    compress_external(&external);
 	}
 
-	std::ofstream stream(cache_path.c_str(), std::ofstream::out);
+	std::ofstream stream(cache_path.c_str(), std::ofstream::out | std::ofstream::binary);
 	stream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
 	stream.write(reinterpret_cast<const char *>(external.ext_buf), external.ext_nbytes);
 	bu_free_external(&external);
@@ -600,7 +607,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	RT_MemoryArchive *archive;
 	{
 	    bu_external external = BU_EXTERNAL_INIT_ZERO;
-	    std::ifstream stream(cache_path.c_str(), std::ifstream::in);
+	    std::ifstream stream(cache_path.c_str(), std::ifstream::in | std::ifstream::binary);
 	    stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	    stream.seekg(0, std::ios::end);
 	    external.ext_nbytes = stream.tellg();
