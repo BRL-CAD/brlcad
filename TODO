@@ -31,7 +31,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   58254 - NEWS, fixed bug you say? what bug?
   58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
   58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
-  61516 - NEWS, added fbclear to archer
 
 * verify against 7.24.4
   63406 - NEWS, if bug was released

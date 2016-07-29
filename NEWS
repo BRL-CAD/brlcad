@@ -144,6 +144,7 @@ geometry (e.g., primitives with CSG).
 * fixed pix-ps -S -W -N output size options being ignored - Carl Moore
 * fixed crash exporting mixed mode merged BoT meshes - Sean Morrison
 * fixed submodel primitive crash - Cliff Yapp, Sean Morrison
+* added fbclear command to archer - Bob Parker
 * improved rtwizard command-line mode manual page docs - Cliff Yapp
 * support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
