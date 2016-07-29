@@ -30,9 +30,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * check these commits for documentation:
   58254 - NEWS, fixed bug you say? what bug?
 
-* verify against 7.24.4
-  63406 - NEWS, if bug was released
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
