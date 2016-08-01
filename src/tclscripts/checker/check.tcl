@@ -341,20 +341,26 @@ body GeometryChecker::subRight {} {
 #
 # select the previous node
 #
-# FIXME: needs to respect the sort ordering
-#
 body GeometryChecker::goPrev {} {
     set sset [$_ck selection]
     set slen [llength $sset]
-    set prev [expr [lindex $sset 0] - 1]
+    set alln [$_ck children {}]
+    set num0 [lindex $alln 0]
+    if { $slen == 0 } {
+	set curr $num0
+	set prev -1
+    } else {
+	set curr [lindex $alln [lsearch $alln [lindex $sset 0]]]
+	set prev [lindex $alln [expr [lsearch $alln [lindex $sset 0]] - 1]]
+    }
 
-    if {$prev > 0} {
+    if {$curr != $num0} {
 	$_status configure -text "$_count overlaps, drawing #$prev"
 	$_ck see $prev
 	$_ck selection set $prev
     } else {
 	$_status configure -text "$_count overlaps, at the beginning of the list"
-	$_ck see 1
+	$_ck see $num0
 	$_ck selection set {}
     }
 }
@@ -363,27 +369,28 @@ body GeometryChecker::goPrev {} {
 #
 # select the next node
 #
-# FIXME: needs to respect the sort ordering
-#
 body GeometryChecker::goNext {} {
     set sset [$_ck selection]
     set slen [llength $sset]
+    set alln [$_ck children {}]
+    set num0 [lindex $alln 0]
     if { $slen == 0 } {
-	set next 1
+	set curr -1
+	set next $num0
     } else {
-	set next [expr [lindex $sset end] + 1]
+	set curr [lindex $alln [lsearch $alln [lindex $sset end]]]
+	set next [lindex $alln [expr [lsearch $alln [lindex $sset end]] + 1]]
     }
-    set last [lindex [$_ck children {}] end]
+    set last [lindex $alln end]
 
-    if {$next <= $last} {
+    if {$curr != $last} {
 	$_status configure -text "$_count overlaps, drawing #$next"
 	$_ck see $next
 	$_ck selection set $next
     } else {
-	$_ck see $last
 	$_status configure -text "$_count overlaps, at the end of the list"
+	$_ck see $last
     }
-    $_ck yview
 }
 
 
