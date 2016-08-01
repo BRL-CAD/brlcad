@@ -20,8 +20,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 
 * quick check of CHANGES to make sure user-vis obsoletions are in NEWS
 
-* fix regressions in lc -d and -s options
-
 * regressed behavior in mged and archer: they seem to be defaulting
   objects to black instead of white/gray.  wireframes and default
   black-background rendering make newly created objects practically
