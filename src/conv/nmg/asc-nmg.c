@@ -183,8 +183,8 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
     /* Extrusion vector. */
 {
 #define MAXV	10000
-
-    char token[81] = {0};	/* Token read from ascii nmg file. */
+#define TOKEN_LEN 80
+    char token[TOKEN_LEN+1] = {0};	/* Token read from ascii nmg file. */
     double x, y, z;	/* Coordinates of a vertex. */
     int	dir = OT_NONE;	/* Direction of face. */
     int	i,
@@ -204,11 +204,11 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 	verts[i] = NULL;
     }
 
-    status = fscanf(fp, "%80s", token);	/* Get 1st token. */
+    status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);	/* Get 1st token. */
     do {
 	switch (token[0]) {
 	    case 'e':		/* Extrude face. */
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 		switch (token[0]) {
 		    case '0':
 		    case '1':
@@ -230,7 +230,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			VSET(Ext, x, y, z);
 
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 		}
 		break;
@@ -259,7 +259,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			    nmg_jv(verts[-lu_verts[i]], cur_loop[i]);
 		    n = 0;
 		}
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 
 		switch (token[0]) {
 		    case 'h':	/* Is it cw or ccw? */
@@ -268,7 +268,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			else
 			    bu_exit(EXIT_FAILURE, "descr_to_nmg: expected \"hole\"\n");
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 
 		    default:
@@ -285,7 +285,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 		    bu_log("Vertex number out of bounds: %d\nAborting\n", vert_num);
 		    return;
 		}
-		status = fscanf(fp, "%80s", token);
+		status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 		switch (token[0]) {
 		    case '0':
 		    case '1':
@@ -313,7 +313,7 @@ descr_to_nmg(struct shell *s, FILE *fp, fastf_t *Ext)
 			if (++n > MAXV)
 			    bu_exit(EXIT_FAILURE, "descr_to_nmg: too many points in loop\n");
 			/* Get token for next trip through loop. */
-			status = fscanf(fp, "%80s", token);
+			status = fscanf(fp, CPP_SCAN(TOKEN_LEN), token);
 			break;
 
 		    default:

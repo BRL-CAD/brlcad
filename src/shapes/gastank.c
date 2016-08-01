@@ -52,7 +52,8 @@ main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[27] = {0};	/* Mged file create. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hgt=0;       	/* Height, width, & depth of gas tank. */
     double wid=0;
     double dpt=0;
@@ -67,14 +68,14 @@ main(int argc, char **argv)
     /* fastf_t is a type that is machine dependent. */
 
     char *temp;			/* Temporary character string. */
-    char temp1[16];		/* Temporary character string. */
+    char temp1[NAME_LEN+1];		/* Temporary character string. */
 
     char solnam[9];		/* Solid name. */
     char regnam[9];		/* Region name. */
     char grpnam[5];		/* Group name. */
     int numtnk=0;		/* Number of gas tanks to be created */
 				/* (<=maxnumtnk). */
-    int maxnumtnk = 26;
+    int maxnumtnk = NAME_LEN;
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -115,16 +116,16 @@ main(int argc, char **argv)
 	explain();
 
 	/* Find name of mged file to be created. */
-	printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (%d char max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
-	ret = scanf("%26s", filemged);
+	ret = scanf(CPP_SCAN(NAME_LEN), filemged);
 	if (ret == 0)
 	    perror("scanf");
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "gastank.g", sizeof(filemged));
 
 	/* Find the number of gas tanks to create. */
-	printf("Enter the number of gas tanks to create (%d max).\n\t",maxnumtnk);
+	printf("Enter the number of gas tanks to create (%d max).\n\t", maxnumtnk);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numtnk);
 	if (ret == 0) {
@@ -191,7 +192,7 @@ main(int argc, char **argv)
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -206,7 +207,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;

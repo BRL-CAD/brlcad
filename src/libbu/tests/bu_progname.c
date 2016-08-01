@@ -43,7 +43,7 @@ main(int ac, char *av[])
 
     /* pre-define tests */
     printf("Performing pre-defined tests:\n");
-    bu_basename(basename, av[0]);
+    bu_basename(av[0], basename);
 
     /* CASE 0: getting unset name */
     label = "CASE 0";
@@ -103,7 +103,7 @@ main(int ac, char *av[])
     res = bu_getprogname();
     ans = bu_argv0_full_path();
     basename = (char *)bu_calloc(strlen(bu_argv0_full_path()), sizeof(char), "bu_progname basename");
-    bu_basename(basename, ans);
+    bu_basename(ans, basename);
 
     if (BU_STR_EQUAL(res, ans ? ans : "") || BU_STR_EQUAL(res, basename)) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, ans, res);
@@ -144,7 +144,7 @@ main(int ac, char *av[])
     label = "CASE 7";
     bu_setprogname(av[0]);
     res = bu_argv0_full_path();
-    bu_basename(basename, res);
+    bu_basename(res, basename);
 
     if (res[0] == BU_DIR_SEPARATOR) {
 	printf("%s: %24s -> %24s [PASSED]\n", label, basename, res);

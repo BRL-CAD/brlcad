@@ -373,7 +373,8 @@ main(int argc, char *argv[])
     int mat_flag = 0;	/* Read matrix from stdin? */
     int use_of_air = 0;
     int print_ident_flag = 1;
-    char ocastring[1025] = {0};
+#define OCASTRING_LEN 1024
+    char ocastring[OCASTRING_LEN+1] = {0};
     struct bu_list script_list;	/* For -e and -f options */
     struct script_rec *srp;
     extern outval ValTab[];
@@ -438,7 +439,7 @@ main(int argc, char *argv[])
 		mat_flag = 1;
 		break;
 	    case 'O':
-		sscanf(bu_optarg, "%1024s", ocastring);
+		sscanf(bu_optarg, CPP_SCAN(OCASTRING_LEN), ocastring);
 		break;
 	    case 's':
 		silent_flag = SILENT_YES;	/* Positively yes */

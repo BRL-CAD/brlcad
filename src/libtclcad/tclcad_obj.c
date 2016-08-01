@@ -6960,8 +6960,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_append brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7070,8 +7069,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_translate brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7724,8 +7722,7 @@ to_mouse_joint_select(
     }
 
     /* parse args */
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7832,8 +7829,7 @@ to_mouse_joint_selection_translate(
 	    break;
     }
 
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {

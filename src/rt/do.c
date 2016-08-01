@@ -90,19 +90,20 @@ int
 old_frame(FILE *fp)
 {
     register int i;
-    char number[129];
+#define NUMBER_LEN 128
+    char number[NUMBER_LEN+1];
 
     /* Visible part is from -1 to +1 in view space */
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     viewsize = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[X] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[Y] = atof(number);
-    if (fscanf(fp, "%128s", number) != 1) return -1;
+    if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1) return -1;
     eye_model[Z] = atof(number);
     for (i = 0; i < 16; i++) {
-	if (fscanf(fp, "%128s", number) != 1)
+	if (fscanf(fp, CPP_SCAN(NUMBER_LEN), number) != 1)
 	    return -1;
 	Viewrotscale[i] = atof(number);
     }

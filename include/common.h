@@ -326,16 +326,6 @@ typedef ptrdiff_t ssize_t;
 #endif
 
 /**
- * Provide macros to indicate availability of diagnostic pragmas for
- * GCC and Clang.
- */
-#define HAVE_GCC_DIAG_PRAGMAS \
-    (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
-
-#define HAVE_CLANG_DIAG_PRAGMAS \
-    (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
-
-/**
  * globally disable certain warnings.  do NOT add new warnings here
  * without discussion and research.  only warnings that cannot be
  * quieted without objectively decreasing code quality should be
@@ -438,6 +428,17 @@ typedef ptrdiff_t ssize_t;
  */
 #ifndef CPP_XGLUE
 #  define CPP_XGLUE(a, b) CPP_GLUE
+#endif
+
+/**
+ * Provide format specifier string tied to a size (e.g., "%123s")
+ *
+ * #define STR_LEN 10+1
+ * char str[STR_LEN] = {0};
+ * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ */
+#ifndef CPP_SCAN
+#  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"
 #endif
 
 /**

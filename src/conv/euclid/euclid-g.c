@@ -339,11 +339,12 @@ build_groups(struct rt_wdb *fpout)
 int
 euclid_to_brlcad(FILE *fpin, struct rt_wdb *fpout)
 {
-    char str[81] = {0};
+#define STR_SZ 80
+    char str[STR_SZ+1] = {0};
     int reg_id = -1;
 
     /* skip first string in file (what is it??) */
-    if (fscanf(fpin, "%80s", str) == EOF) {
+    if (fscanf(fpin, CPP_SCAN(STR_SZ), str) == EOF) {
 	bu_log("ERROR: euclid-g: failed on first attempt to read input\n");
 	return 1;
     }
