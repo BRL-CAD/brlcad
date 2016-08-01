@@ -43,6 +43,12 @@ catch {delete class GeometryChecker} error
     public {
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
+
+	method goPrev {} {}
+	method goNext {} {}
+
+	method subLeft {} {}
+	method subRight {} {}
     }
 
     private {
@@ -55,6 +61,11 @@ catch {delete class GeometryChecker} error
 
 	variable _colorOdd
 	variable _colorEven
+
+	variable _subLeftCommand
+	variable _subRightCommand
+	variable _drawLeftCommand
+	variable _drawRightCommand
     }
 }
 
@@ -65,20 +76,11 @@ catch {delete class GeometryChecker} error
 
 ::itcl::body GeometryChecker::constructor {args} {
 
-    # image create bitmap _arrowUp -data {
-    # #define arrowUp_width 7
-    # #define arrowUp_height 4
-    # 	static char arrowUp_bits[] = {
-    #     0x08, 0x1c, 0x3e, 0x7f
-    # 	};
-    # }
-    # image create bitmap _arrowDown -data {
-    # #define arrowDown_width 7
-    # #define arrowDown_height 4
-    # 	static char arrowDown_bits[] = {
-    #     0x7f, 0x3e, 0x1c, 0x08
-    # 	};
-    # }
+    set _subLeftCommand "puts subtract the left"
+    set _subRightCommand "puts subtract the right"
+
+    set _drawLeftCommand "puts draw -C255/0/0"
+    set _drawRightCommand "puts draw -C0/0/255"
 
     image create bitmap _arrowUp -data {
     #define up_width 11
@@ -137,16 +139,19 @@ catch {delete class GeometryChecker} error
     } {}
 
     itk_component add buttonLeft {
-	ttk::button $itk_component(checkButtonFrame).buttonLeft -text "Subtract Left" -padding 10
+	ttk::button $itk_component(checkButtonFrame).buttonLeft -text "Subtract Left" -padding 10 -command [ list $this subLeft ]
     } {}
     itk_component add buttonRight {
-	ttk::button $itk_component(checkButtonFrame).buttonRight -text "Subtract Right" -padding 10
+	ttk::button $itk_component(checkButtonFrame).buttonRight -text "Subtract Right" -padding 10 -command [ list $this subRight ]
     } {}
     itk_component add buttonBoth {
 	ttk::button $itk_component(checkButtonFrame).buttonBoth -text "Subtract Both" -padding 10 -state disabled
     } {}
+    itk_component add buttonPrev {
+	ttk::button $itk_component(checkButtonFrame).buttonPrev -text "Prev" -padding 10 -command [ list $this goPrev ]
+    } {}
     itk_component add buttonNext {
-	ttk::button $itk_component(checkButtonFrame).buttonNext -text "Skip to Next" -padding 10
+	ttk::button $itk_component(checkButtonFrame).buttonNext -text "Next" -padding 10 -command [ list $this goNext ]
     } {}
 
 
@@ -177,15 +182,12 @@ catch {delete class GeometryChecker} error
     pack $itk_component(checkButtonFrame) -side bottom -expand true -fill both
     pack $itk_component(checkButtonFrame).buttonRight -side right -pady 10
 #    pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
-    pack $itk_component(checkButtonFrame).buttonLeft -side right -pady 10
+    pack $itk_component(checkButtonFrame).buttonLeft -side right -padx 20 -pady 10
+    pack $itk_component(checkButtonFrame).buttonPrev -side left -padx 20 -pady 10
+    pack $itk_component(checkButtonFrame).buttonNext -side left -pady 10
 
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
-#    pack $itk_component(checkButtonFrame).buttonNext -side bottom -fill x
-#     pack $itk_component(checkFrame).buttonLeft -side bottom -fill x -padx 10 -pady 10
-#     pack $itk_component(checkFrame).buttonBoth -side bottom -fill x -padx 10 -pady 10
-#     pack $itk_component(checkFrame).buttonRight -side bottom -fill x -padx 10 -pady 10
-#     pack $itk_component(checkFrame).buttonNext -side bottom -fill x -padx 10 -pady 10
 }
 
 
@@ -307,6 +309,40 @@ body GeometryChecker::sortBy {column direction} {
 	$_ck item $id -tag [expr {$on ? "odd" : "even"}]
 	set on [expr !$on]
     }
+}
+
+
+# subLeft
+#
+# subtract the currently selected left nodes from the right ones
+#
+body GeometryChecker::subLeft {} {
+    puts "sutracting the left"
+}
+
+# subRight
+#
+# subtract the currently selected right nodes from the left ones
+#
+body GeometryChecker::subRight {} {
+    puts "sutracting the right"
+}
+
+
+# goPrev
+#
+# select the previous node
+#
+body GeometryChecker::goPrev {} {
+    puts "selecting the previous"
+}
+
+# goNext
+#
+# select the next node
+#
+body GeometryChecker::goNext {} {
+    puts "selecting the next node"
 }
 
 
