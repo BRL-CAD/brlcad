@@ -2480,7 +2480,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i = 6; i < argc; i += 4) {
+    for (i = 6; i + 3 < argc; i += 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	BU_ALLOC(metaballpt, struct wdb_metaballpt);

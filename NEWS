@@ -30,6 +30,7 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
+* fixed bad args crash in metaball 'in' command - Cliff Yapp
 * added manual page for lt comb child listing command - Cliff Yapp
 * added lt -c option for specifying separation character - Bob Parker
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
