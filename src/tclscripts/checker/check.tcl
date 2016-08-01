@@ -190,6 +190,11 @@ catch {delete class GeometryChecker} error
 
     pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
+
+    bind $itk_component(checkButtonFrame).buttonPrev <Up> [list $this goPrev]
+    bind $itk_component(checkButtonFrame).buttonPrev <Down> [list $this goNext]
+    bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
+    bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
 }
 
 
@@ -336,6 +341,8 @@ body GeometryChecker::subRight {} {
 #
 # select the previous node
 #
+# FIXME: needs to respect the sort ordering
+#
 body GeometryChecker::goPrev {} {
     set sset [$_ck selection]
     set slen [llength $sset]
@@ -355,6 +362,8 @@ body GeometryChecker::goPrev {} {
 # goNext
 #
 # select the next node
+#
+# FIXME: needs to respect the sort ordering
 #
 body GeometryChecker::goNext {} {
     set sset [$_ck selection]
