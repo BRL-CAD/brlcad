@@ -27,9 +27,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   black-background rendering make newly created objects practically
   invisible.
 
-* check these commits for documentation:
-  58254 - NEWS, fixed bug you say? what bug?
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
