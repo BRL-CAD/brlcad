@@ -55,6 +55,8 @@ catch {delete class GeometryChecker} error
 	variable _ck
 	variable _status
 
+	variable _count
+
 	variable _arrowUp
 	variable _arrowDown
 	variable _arrowOff
@@ -249,6 +251,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 
 	incr count
     }
+    set _count $count
     set width_count [font measure $font $count]
     set width_wm [lindex [wm maxsize .] 0]
 
@@ -334,7 +337,19 @@ body GeometryChecker::subRight {} {
 # select the previous node
 #
 body GeometryChecker::goPrev {} {
-    puts "selecting the previous"
+    set sset [$_ck selection]
+    set slen [llength $sset]
+    set prev [expr [lindex $sset 0] - 1]
+
+    if {$prev > 0} {
+	$_status configure -text "$_count overlaps, drawing #$prev"
+	$_ck see $prev
+	$_ck selection set $prev
+    } else {
+	$_status configure -text "$_count overlaps, at the beginning of the list"
+	$_ck see 1
+	$_ck selection set {}
+    }
 }
 
 # goNext
@@ -342,7 +357,24 @@ body GeometryChecker::goPrev {} {
 # select the next node
 #
 body GeometryChecker::goNext {} {
-    puts "selecting the next node"
+    set sset [$_ck selection]
+    set slen [llength $sset]
+    if { $slen == 0 } {
+	set next 1
+    } else {
+	set next [expr [lindex $sset end] + 1]
+    }
+    set last [lindex [$_ck children {}] end]
+
+    if {$next <= $last} {
+	$_status configure -text "$_count overlaps, drawing #$next"
+	$_ck see $next
+	$_ck selection set $next
+    } else {
+	$_ck see $last
+	$_status configure -text "$_count overlaps, at the end of the list"
+    }
+    $_ck yview
 }
 
 
