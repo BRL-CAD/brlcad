@@ -50,6 +50,7 @@ geometry (e.g., primitives with CSG).
 * extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
+* removed pixread.sh, pixwrite.sh; obsolete hardware - Sean Morrison
 * removed cray.sh and sgisnap.sh; obsolete hardware - Sean Morrison
 * removed cadbug.sh - use sourceforge tracker - Sean Morrison
 * removed any-png.sh - use pix tools - Sean Morrison
