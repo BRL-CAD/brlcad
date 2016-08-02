@@ -1,3 +1,693 @@
+2016-08-02 15:31  starseeker
+
+	* [r68553] NEWS:
+	  Removed pixread.sh and pixwrite.sh - obsolete hardware
+
+2016-08-02 15:30  starseeker
+
+	* [r68552] NEWS:
+	  removed cray.sh and sgisnap.sh; obsolete hardware
+
+2016-08-02 15:28  starseeker
+
+	* [r68551] NEWS:
+	  Removed cadbug.sh script - use sourceforge tracker to get this
+	  information
+
+2016-08-02 15:27  starseeker
+
+	* [r68550] NEWS:
+	  Removed any-png.sh script
+
+2016-08-02 15:15  starseeker
+
+	* [r68549] NEWS:
+	  removed the librtserver interface. The modern approach to this,
+	  if it is needed, would start with something like swig.
+
+2016-08-02 15:10  starseeker
+
+	* [r68548] NEWS:
+	  removed old bot specific per_line command
+
+2016-08-02 15:05  starseeker
+
+	* [r68547] NEWS:
+	  tops -g -u behavior is now default.
+
+2016-08-02 14:53  starseeker
+
+	* [r68546] NEWS:
+	  Removed the long deprecated -n option for mged - replaced with
+	  -c.
+
+2016-08-02 14:52  starseeker
+
+	* [r68545] NEWS:
+	  Removed obsolete MGED commands pl, pov and polybinout.
+
+2016-08-02 14:50  starseeker
+
+	* [r68544] NEWS:
+	  Removed UtahRLE image tools from BRL-CAD install - they're a 3rd
+	  party toolset for a seldom used format,and are available as
+	  external installs if needed. The part needed for BRL-CAD's tools
+	  is libutahrle.
+
+2016-08-01 20:59  starseeker
+
+	* [r68536] TODO, src/libged/lc.c:
+	  Make lc command's -d and -s options match old script behavior.
+
+2016-07-29 19:50  starseeker
+
+	* [r68524] TODO:
+	  Does not appear to be a bug in 7.24.4
+
+2016-07-29 19:39  starseeker
+
+	* [r68523] AUTHORS, TODO:
+	  Rob did indeed provide the fix for r58475. Add to authors - we
+	  haven't announced g-step yet, so not yet considered published.
+
+2016-07-29 19:33  starseeker
+
+	* [r68522] AUTHORS, NEWS:
+	  Credit Yatharth Agarwal and David Wood for improvements to
+	  DocBook image inclusion during 2013 GCI.
+
+2016-07-29 19:26  starseeker
+
+	* [r68521] NEWS, TODO:
+	  Bob added fbclear command to Archer (r61516)
+
+2016-07-29 19:24  starseeker
+
+	* [r68520] TODO:
+	  This looks like it was a debugging feature, not present in
+	  current code.
+
+2016-07-29 19:22  starseeker
+
+	* [r68518] NEWS, TODO:
+	  Minor improvement to rtedge help (r63132)
+
+2016-07-29 19:18  starseeker
+
+	* [r68517] NEWS, TODO:
+	  Per Sean, commit r64637 from drossenberg almost certainly fixed
+	  mysterious errors during dbconcat and db_opens with duplicate
+	  names found
+
+2016-07-29 18:43  starseeker
+
+	* [r68516] NEWS:
+	  Tom improved v5 specification formatting and added a timestamp
+	  proposal (r58325)
+
+2016-07-29 18:40  starseeker
+
+	* [r68515] NEWS, TODO:
+	  couple minor changes to tire's help command
+
+2016-07-29 18:31  starseeker
+
+	* [r68514] NEWS, TODO:
+	  When using a separate command window, have Archer remember its
+	  position. Added a -geometry option to ArcherCore for the archer
+	  script to use; lets us avoid excess flashing by only calling wm
+	  geometry once. (r58146)
+
+2016-07-29 18:28  starseeker
+
+	* [r68513] NEWS:
+	  Add an example for the search command - searching for color
+	  attributes on regions (r58147)
+
+2016-07-29 18:20  starseeker
+
+	* [r68512] NEWS, TODO:
+	  Added a new manual page explaining what STEP is all about.
+	  (r64314)
+
+2016-07-29 18:15  starseeker
+
+	* [r68511] NEWS, TODO:
+	  Added -param option to search that will searching based on
+	  internal parameters of an object (as opposed to general
+	  attributes) provided those internal attributes have a tcl list
+	  representation. (r61168)
+
+2016-07-29 18:08  starseeker
+
+	* [r68510] TODO:
+	  this change was evidently reverted in subsequent work - current
+	  attr set is not case insensitive.
+
+2016-07-27 13:15  brlcad
+
+	* [r68500] src/rt/CMakeLists.txt:
+	  need RT_TXT_OUTPUT on most of these tools, otherwise they crash
+	  or abort due to NULL outfp never getting initialized. found the
+	  problem with rtcheck -o crashing.
+
+2016-07-27 03:46  ejno
+
+	* [r68499] src/fb/gif-fb.c:
+	  fix warning (left-shift of negative value)
+
+2016-07-27 00:43  brlcad
+
+	* [r68498] NEWS:
+	  getting ray tracing working in parallel on windows was primarily
+	  made real by two GCI students (in 2012/2013) that implemented the
+	  critical bits in parallel and semaphore, applied and reworked by
+	  daniel and myself. never announced the change as it continued to
+	  be a topic of tweaks and debugging for a while, but now it's been
+	  in stable active use for a while and warrants broader
+	  recognition. instant visible and substantial performance
+	  improvement, depending on the number of cores available.
+
+2016-07-27 00:22  brlcad
+
+	* [r68497] CHANGES:
+	  denote the added argument on bu_basename
+
+2016-07-27 00:18  brlcad
+
+	* [r68496] include/bu/path.h, src/conv/g-dot.c,
+	  src/conv/walk_example.c, src/fb/ioutil.c, src/libbu/path.c,
+	  src/libbu/progname.c, src/libbu/tests/bu_basename.c,
+	  src/libbu/tests/bu_progname.c, src/libged/bot_flip.c,
+	  src/libged/bot_split.c, src/libged/bot_sync.c,
+	  src/libged/editit.c, src/libged/search.c, src/librt/bbox.c,
+	  src/librt/db_tree.c, src/libtclcad/tclcad_obj.c, src/nirt/if.c:
+	  heavily modify and restore the return and first arg of
+	  bu_basename() to still return the buffer and take the constant
+	  path. the gci change in r59475 introduced a non-minimally
+	  impacting change that would have needed to go through deprecation
+	  announcement. the restored sig (char*bu_basename(const char*,
+	  char*)) will cause a warning but is compatible with the prior
+	  (char*bu_basename(const char*)) and is minimally impacting with a
+	  NULL buffer argument. the real benefit with the new form is that
+	  some callers can pass a buffer (e.g., stack-allocated) instead of
+	  requiring dynamic allocation, so some are updated to take
+	  advantage of this.
+
+2016-07-26 23:38  brlcad
+
+	* [r68495] CHANGES:
+	  update the example with the second argument now that bu_basename
+	  takes two
+
+2016-07-26 22:48  brlcad
+
+	* [r68494] include/common.h:
+	  diagnostic pragmas (as generally used to disable warnings) are
+	  evil. no longer needed as the warnings were addressed in other
+	  ways.
+
+2016-07-26 16:11  starseeker
+
+	* [r68492] src/conv/off/off-g.c, src/shapes/wire.c:
+	  Fix build - gcc 4.9.2 wiped out on these two...
+
+2016-07-26 05:26  brlcad
+
+	* [r68490] src/util/bw-imp.c, src/util/bwscale.c,
+	  src/util/rle_args.c:
+	  misleading and inconsistent, set input filename to "-" as if the
+	  users specified that (even if these tools probably don't yet
+	  consistently support that syntax
+
+2016-07-26 04:58  brlcad
+
+	* [r68489] src/conv/nmg/asc-nmg.c, src/nirt/nirt.c,
+	  src/proc-db/molecule.c:
+	  last remaining scan string conversions to CPP_SCAN() so we can
+	  minimize/eliminate the chance of having sizes get out of sync
+	  over time. consolidates the size definitions into a single
+	  preprocessor define that gets reused accordingly.
+
+2016-07-26 04:45  brlcad
+
+	* [r68488] src/shapes/bolt.c, src/shapes/gastank.c,
+	  src/shapes/handle.c, src/shapes/window.c,
+	  src/shapes/window_frame.c, src/shapes/wire.c:
+	  update lots of seemingly arbitrary name size limits, similarly
+	  copy+pasted or templated off each other. promote them all to a
+	  much bigger size since we're talking somewhat arbitrary name
+	  limits, check and print that size accordingly without duplicating
+	  the actual nubmers
+
+2016-07-26 04:42  brlcad
+
+	* [r68487] src/rt/do.c, src/rt/read-rtlog.c:
+	  consolidate scanning lengths into one place
+
+2016-07-26 04:38  brlcad
+
+	* [r68486] src/libged/gqa.c:
+	  reduce magic number instances down to a single occurance.
+
+2016-07-26 04:37  brlcad
+
+	* [r68485] src/conv/euclid/euclid-g.c, src/conv/off/off-g.c:
+	  eliminate a slew of magic numbers in favor of singular defines
+	  per value and reused accordingly. increased the size of some
+	  buffers where it looked like it shouldn't matter how big they
+	  get.
+
+2016-07-26 04:35  brlcad
+
+	* [r68484] include/common.h:
+	  add a convenience macro to help with scanning into string buffers
+	  where we want to bounds-check the input by specifying in %{NUM}s
+	  form, stringified
+
+2016-07-25 04:09  brlcad
+
+	* [r68480] src/libbu/sha1.c:
+	  common includes stdint.h
+
+2016-07-25 03:58  brlcad
+
+	* [r68479] src/librt/db_diff.c, src/librt/db_fullpath.c,
+	  src/librt/db_tree.c, src/librt/primitives/nmg/nmg.c,
+	  src/librt/tests/nurbs_tests.cpp:
+	  warning message consistency, using WARNING:
+
+2016-07-25 03:49  brlcad
+
+	* [r68478] NEWS:
+	  cliff improved the rtwizard docs to better explain command line
+	  usage.
+
+2016-07-21 22:41  brlcad
+
+	* [r68467] NEWS:
+	  cliff improved the search command's manual page with a list of
+	  the -params parameters that can be specified.
+
+2016-07-21 22:32  brlcad
+
+	* [r68466] NEWS:
+	  keith added conversion timings output to the step importer,
+	  telling how long it takes to load and convert
+
+2016-07-21 22:28  brlcad
+
+	* [r68465] NEWS:
+	  keith fixed the face validation check so that it no longer tests
+	  the normal against the distance tol, instead checking the dot
+	  product against the parallel tol. this improved ray tracing and
+	  bounding boxes of really tiny triangles with edges at/near the
+	  distance tol. (r61337)
+
+2016-07-21 22:19  brlcad
+
+	* [r68464] TODO:
+	  we're all in, need brep support
+
+2016-07-21 22:17  brlcad
+
+	* [r68463] NEWS:
+	  bob fixed (in r61402) the fork+exec method being used on windows
+	  in rtwizard where edge drawing and ghosting were not working.
+
+2016-07-21 22:14  brlcad
+
+	* [r68462] NEWS:
+	  cliff made fast4-g import CCONE1 even when they have an illegal
+	  thickness. previously discarded them, but now imports as volume
+	  cones. (r61433)
+
+2016-07-21 22:05  brlcad
+
+	* [r68461] TODO:
+	  note where things left off with the joint articulation work (both
+	  the old system and the new joint objects) from the big bullet
+	  branch merge (r62451)
+
+2016-07-21 21:50  brlcad
+
+	* [r68460] NEWS:
+	  keith fixed the bb command volume reporting, which was returning
+	  mm^3 instead of the localized units. also increased precision
+	  beyond one digit past the decimal, reported by a user having
+	  problems with sub-inch boxes.
+
+2016-07-21 21:45  brlcad
+
+	* [r68459] NEWS:
+	  jon added a -f vertex fuse option to obj-g that fuses verticies
+	  within a given tolerance. this helps the solidity detection work
+	  but is slower (hence off by default).
+
+2016-07-21 16:25  starseeker
+
+	* [r68448] src/rt/opt.c:
+	  Looks like stray comma got added
+
+2016-07-21 04:31  brlcad
+
+	* [r68444] TODO:
+	  bob's addition of fbclear to archer is user vis worth mention
+
+2016-07-21 04:30  brlcad
+
+	* [r68443] TODO:
+	  looks like 61494 is user vis
+
+2016-07-21 04:27  starseeker
+
+	* [r68442] TODO:
+	  Added license file
+
+2016-07-21 04:26  starseeker
+
+	* [r68441] src/tclscripts/archer/images/CMakeLists.txt,
+	  src/tclscripts/archer/images/License.txt:
+	  Add Ayam license file. Think it's just the brep icons so far, but
+	  should check to see if there are others that improve on what
+	  we're currently using. Should probably come up with some way to
+	  use icv to autogenerate the boolean variations at build time...
+
+2016-07-21 04:23  brlcad
+
+	* [r68440] NEWS:
+	  Cliff not just removed support for old rle format, he removed the
+	  deprecated tools. thus, user visible and needing a final callout
+
+2016-07-21 04:21  brlcad
+
+	* [r68439] AUTHORS:
+	  lastname, firstname - credit gustave with his windows SMP support
+	  contributions
+
+2016-07-21 04:19  brlcad
+
+	* [r68438] TODO:
+	  added copyrighted images, but must preserve attribution and
+	  copyright notice from ayam dev
+
+2016-07-21 03:56  brlcad
+
+	* [r68436] doc/docbook/system/man1/fblabel.xml:
+	  lowercase high res flag no longer exists, so adapt to uppwercase
+	  one remaining
+
+2016-07-21 03:49  brlcad
+
+	* [r68435] doc/docbook/system/man1/brlcad.xml:
+	  high resolution flags no longer exist. -h is still reserved,
+	  albeit for help now
+
+2016-07-21 03:39  brlcad
+
+	* [r68434] src/proc-db/tube.c:
+	  clearly denote floating point
+
+2016-07-21 03:35  brlcad
+
+	* [r68433] src/rt/opt.c:
+	  ws cleanup and change >= 180 back to > 179
+
+2016-07-21 03:31  brlcad
+
+	* [r68432] doc/docbook/system/man1/rt.xml:
+	  in the process of making rt's manual page match rtedge, he
+	  incorrectly migrated a comment about -o disabling parallel
+	  processing. that's only true with rtedge because of how it seeks
+	  around the buffer and needs this in order
+
+2016-07-21 03:27  brlcad
+
+	* [r68431] TODO:
+	  63406 needs docs if 7.24.6 matrix editing doesn't work.
+
+2016-07-21 03:26  brlcad
+
+	* [r68430] NEWS:
+	  generalize carl's work to more than just help options -- he
+	  worked on overall command option consistency as well as making
+	  many manual pages more consistent.
+
+2016-07-20 15:25  starseeker
+
+	* [r68397] misc/CMake/BRLCAD_Summary.cmake:
+	  Don't print html twice.
+
+2016-07-11 20:29  starseeker
+
+	* [r68249] NEWS:
+	  random color option existed earlier in 3dm-g - has been preserved
+	  in the new setup, but not new.
+
+2016-07-11 13:45  ejno
+
+	* [r68248] NEWS:
+	  add NEWS for features that were not announced for previous
+	  releases
+
+2016-07-11 03:28  brlcad
+
+	* [r68247] src/brlman/brlman.c:
+	  make sure status is initialized for the case where gui is
+	  enabled, but compiled without MAN_GUI (an there's an exit
+	  handler). llvm-detected.
+
+2016-07-10 17:18  starseeker
+
+	* [r68246] misc/CMake/builddir_cmd.cmake.in:
+	  duh - BUILD_TYPE, not BUILD_DIR
+
+2016-07-10 17:07  starseeker
+
+	* [r68245] db/nist/CMakeLists.txt,
+	  misc/CMake/builddir_cmd.cmake.in:
+	  Give this a try for 3dm-g building.
+
+2016-06-30 23:19  starseeker
+
+	* [r68216] db/nist/CMakeLists.txt,
+	  misc/CMake/builddir_cmd.cmake.in:
+	  Untested as yet on Windows or with distcheck-full, but try to set
+	  up the run of 3dm-g with BRLCAD_ROOT set to the build directory
+	  so we don't attempt to pull in obsolete (or non-existing) GCV
+	  plugins during 3dm-g execution. This is a brute-force solution
+	  wrapping a script around the running of the executable - if we
+	  have to do this more generally we'll want one script with
+	  arguments instead of a per-target scripting setup. For now, go
+	  with the direct solution to try to alleviate the build problem
+	  many folks are having.
+
+2016-06-23 21:25  starseeker
+
+	* [r68168] TODO, src/libbu/fnmatch.c:
+	  Keep the pattern increment after the loop since we reference
+	  pattern, but don't do the assignment to c unless we uncomment the
+	  bu_log that uses it. (caught by Sean)
+
+2016-06-23 20:54  starseeker
+
+	* [r68167] NEWS, TODO, doc/docbook/system/mann/CMakeLists.txt,
+	  doc/docbook/system/mann/lt.xml:
+	  Not only option undocumented, but apparently command
+	  undocumented. Add a man page for the lt command as well as NEWS
+	  items.
+
+2016-06-23 20:33  starseeker
+
+	* [r68166] TODO:
+	  lt looks like it should fold into search, given more powerful
+	  printing options.
+
+2016-06-23 20:28  starseeker
+
+	* [r68165] TODO:
+	  We will want to replace dbfind objname with ls */objname rather
+	  than search - for that particular option, search is too slow on
+	  large models to be a reasonable replacement. dbfind, knowing it
+	  is only out to look one level deep in combs, can do its specific
+	  check much faster than search because it can limit the set of
+	  'full paths' to check - search's more general filters preclude
+	  such special-case optimizations. Fortunately, the ls command and
+	  globbing should offer another way to get at what we want.
+
+2016-06-23 20:11  starseeker
+
+	* [r68164] TODO:
+	  librtserver documented in CHANGES
+
+2016-06-23 20:10  starseeker
+
+	* [r68163] CHANGES, HACKING:
+	  Note removal of librtserver/JNI in CHANGES, remove librtserver
+	  mention from HACKING.
+
+2016-06-23 19:29  starseeker
+
+	* [r68162] TODO, include/rt/search.h, src/libged/glob.c,
+	  src/librt/CMakeLists.txt, src/librt/db_glob.c, src/mged/cmd.c:
+	  Hide db_expand_str_glob inside libged's ged_glob and have mged
+	  call ged_glob instead. Avoids introducing db_expand_str_glob as
+	  public API at all, which is good since it's not the final form we
+	  would want for a db_glob function.
+
+2016-06-23 17:26  brlcad
+
+	* [r68161] TODO:
+	  objects seem to be defaulting to black .. can't see them.
+
+2016-06-23 17:01  brlcad
+
+	* [r68160] src/libged/TODO:
+	  generalize to libged
+
+2016-06-23 16:42  brlcad
+
+	* [r68159] TODO, src/libged/TODO:
+	  consolidate the libged/command-related tasks into the libged
+	  section
+
+2016-06-23 15:14  ejno
+
+	* [r68158] src/librt/reduce.c:
+	  fix calculation of minimum length
+
+2016-06-23 06:40  brlcad
+
+	* [r68157] TODO:
+	  NEWS mention for lt too
+
+2016-06-23 06:40  brlcad
+
+	* [r68156] TODO:
+	  lt command has a new option
+
+2016-06-23 06:37  brlcad
+
+	* [r68155] TODO:
+	  settle new API, use db_glob everywhere for consistency instead of
+	  the verbose current version
+
+2016-06-23 06:34  brlcad
+
+	* [r68154] TODO:
+	  no sense deferring rm command work beyone 2 releases
+
+2016-06-23 06:32  brlcad
+
+	* [r68153] include/bu/malloc.h, src/libbu/malloc.c:
+	  revert c66571 as it is already provided by bu_realloc. also has
+	  no existing callers and no actual code (making the additional
+	  coypright statement complexity unnecessary too).
+
+2016-06-23 06:29  brlcad
+
+	* [r68152] TODO:
+	  couple more backlog items
+
+2016-06-23 05:52  brlcad
+
+	* [r68151] include/bu/defines.h, include/bu/log.h,
+	  include/bu/magic.h:
+	  simplify for release by consolidating in leu of fixing the name
+	  inconsistency. still uses the same cmake test.
+
+2016-06-23 05:40  brlcad
+
+	* [r68150] src/libged/display_list.c:
+	  looks like gdlp entries are initized via BU_ALLOC, so they should
+	  be paired with BU_FREE (or bu_free).
+
+2016-06-23 05:26  brlcad
+
+	* [r68149] NEWS:
+	  nick fixed the screengrab command so that it consistently flips
+	  images as needed for output as first quadrant images. reportedly
+	  (in r66939) only affects non-ogl platforms.
+
+2016-06-22 18:15  starseeker
+
+	* [r68147] src/other/libnetpbm/CMakeLists.txt:
+	  As long as we're not actually using the timestamp feature, an
+	  older CMake works.
+
+2016-06-22 18:07  n_reed
+
+	* [r68146] ., src/libged/polyclip.cpp:
+	  mark sync revisions as merged
+
+2016-06-22 15:31  ejno
+
+	* [r68142] src/libgcv/plugins/rhino/rhino_read.cpp,
+	  src/librt/reduce_db.cpp:
+	  add missing includes for STL headers
+
+2016-06-22 14:56  brlcad
+
+	* [r68141] CHANGES:
+	  typo
+
+2016-06-22 14:52  starseeker
+
+	* [r68139] CHANGES:
+	  Add burst termlib interface to deprecation announcements.
+
+2016-06-21 13:00  bob1961
+
+	* [r68136] src/tclscripts/archer/Archer.tcl:
+	  Set wflag if mHideSubtractions has changed.
+
+2016-06-21 12:36  bob1961
+
+	* [r68135] src/tclscripts/archer/Archer.tcl,
+	  src/tclscripts/archer/ArcherCore.tcl:
+	  Added a preference for hiding subtracted geometry.
+
+2016-06-21 12:33  bob1961
+
+	* [r68134] src/tclscripts/lib/Ged.tcl:
+	  Expose the option to hide subtracted geometry in cadwidgets::Ged
+
+2016-06-17 15:20  ejno
+
+	* [r68131] src/libgcv/plugins/rhino/rhino_read.cpp:
+	  remove unused variable
+
+2016-06-17 15:11  ejno
+
+	* [r68130] src/conv/3dm/3dm-g.c, src/libgcv/gcv.c:
+	  fix
+
+2016-06-17 15:10  ejno
+
+	* [r68129] src/libgcv/plugins/rhino/rhino_read.cpp:
+	  create regions for solids that are not within regions
+
+2016-06-16 19:06  ejno
+
+	* [r68127] src/libgcv/plugins/rhino/rhino_read.cpp:
+	  fix
+
+2016-06-16 16:36  ejno
+
+	* [r68126] src/libgcv/plugins/rhino/rhino_read.cpp:
+	  fix
+
+2016-06-16 16:10  ejno
+
+	* [r68125] src/conv/3dm/3dm-g.c,
+	  src/libgcv/plugins/rhino/rhino_read.cpp:
+	  add random colors option
+
+2016-06-16 15:02  starseeker
+
+	* [r68122] ChangeLog:
+	  Update ChangeLog
+
 2016-06-16 14:57  starseeker
 
 	* [r68121] CMakeLists.txt:
