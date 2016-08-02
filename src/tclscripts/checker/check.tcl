@@ -50,7 +50,10 @@ catch {delete class GeometryChecker} error
 	method subLeft {} {}
 	method subRight {} {}
 
-	method registerSubtractionCallback { callback } {}
+	method display {} {}
+
+	method registerDrawCallback { callback } {}
+	method registerOverlapCallback { callback } {}
     }
 
     private {
@@ -71,7 +74,8 @@ catch {delete class GeometryChecker} error
 	variable _drawLeftCommand
 	variable _drawRightCommand
 
-	variable _subtractionCallback
+	variable _drawCallback
+	variable _overlapCallback
     }
 }
 
@@ -199,6 +203,8 @@ catch {delete class GeometryChecker} error
     bind $itk_component(checkButtonFrame).buttonPrev <Down> [list $this goNext]
     bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
     bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
+
+    bind $_ck <<TreeviewSelect>> [list $this display]
 }
 
 
@@ -392,7 +398,7 @@ body GeometryChecker::subLeft {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    $_subtractionCallback $left $right
+	    $_overlapCallback $left $right
 	}
     }
 }
@@ -405,18 +411,37 @@ body GeometryChecker::subRight {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    $_subtractionCallback $right $left
+	    $_overlapCallback $right $left
 	}
     }
 }
 
 
-# registerSubtractionCallback
+# display
 #
-# 
+# draw the currently selected geometry
 #
-body GeometryChecker::registerSubtractionCallback {callback} {
-    set _subtractionCallback $callback
+body GeometryChecker::display {} {
+    set sset [$_ck selection]
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_drawCallback $left $right
+	}
+    }
+}
+
+
+# registerDrawCallback
+#
+body GeometryChecker::registerDrawCallback {callback} {
+    set _drawCallback $callback
+}
+
+
+# registerOverlapCallback
+#
+body GeometryChecker::registerOverlapCallback {callback} {
+    set _overlapCallback $callback
 }
 
 
@@ -424,8 +449,13 @@ body GeometryChecker::registerSubtractionCallback {callback} {
 # end public methods
 ##########
 
-proc subtract {left right} {
-    puts "subtracting $left from $right"
+
+proc subtractLeftFromRight {left right} {
+    puts "comb [lindex [file split $right] end-1] - [file tail $left]"
+}
+
+proc drawOverlaps {left right} {
+    puts "draw -C255/0/0 $left ; draw -C0/0/255 $right"
 }
 
 
@@ -443,7 +473,8 @@ proc check {{filename ""} {parent ""}} {
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
-    $checker registerSubtractionCallback [code subtract]
+    $checker registerDrawCallback [code drawOverlaps]
+    $checker registerOverlapCallback [code subtractLeftFromRight]
 
     if {[file exists "$filename"]} {
 	$checker loadOverlaps $filename
