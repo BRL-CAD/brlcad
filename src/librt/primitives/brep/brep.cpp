@@ -130,6 +130,7 @@ void
 brep_specific_delete(struct brep_specific* bs)
 {
     if (bs != NULL) {
+	delete bs->brep;
 	delete bs->bvh;
 	bu_free(bs, "brep_specific_delete");
     }
@@ -469,7 +470,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     RT_BREP_CK_MAGIC(bi);
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
-	BU_ALLOC(bs, struct brep_specific);
+	bs = brep_specific_new();
 	bs->brep = bi->brep;
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
