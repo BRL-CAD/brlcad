@@ -491,36 +491,26 @@ proc subtractRightFromLeft {left right} {
     }
 
     # if there's more than one union, wrap it
-    set leftsub $leftreg.c
     if { $leftunions > 1 } {
 	if [ catch { get $leftreg.c region } leftcheck ] {
 	    puts "comb -w $leftreg"
 	}
-    } else {
-	set leftsub $leftfirst
     }
 
-    # count how many unions there are on the right
+    # count how many ops there are on the right
     set rightreg [file tail $right]
-    set rightunions 0
-    set rightfirst ""
-    foreach { entry } [lt $rightreg] {
-	if [string equal [lindex $entry 0] "u"] {
-	    incr rightunions
-	    if {$rightfirst eq ""} {
-		set rightfirst [lindex $entry 1]
-	    }
-	}
-    }
+    set right_lt [lt $rightreg]
+    set rightops [llength $right_lt]
 
-    # if there's more than one union, wrap it
+    # if there's more than one op, try to wrap it (may already be wrapped)
     set rightsub $rightreg.c
-    if { $rightunions > 1 } {
+    if { $rightops > 1 } {
 	if [ catch { get $rightreg.c region } rightcheck ] {
 	    puts "comb -w $rightreg"
 	}
     } else {
-	set rightsub $rightfirst
+	# first and only entry
+	set rightsub [lindex [lindex $right_lt 0] 1]
     }
 
     puts "comb $leftreg - $rightsub"
