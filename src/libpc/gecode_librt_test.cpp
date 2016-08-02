@@ -23,6 +23,8 @@
  *
  */
 
+#include "common.h"
+
 #include <gecode/int.hh>
 #include <gecode/minimodel.hh>
 #include <gecode/search.hh>
