@@ -34,9 +34,8 @@ BBNode::~BBNode()
 }
 
 
-BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, const ON_BrepFace &face) :
+BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree) :
     m_node(),
-    m_face(&face),
     m_u(),
     m_v(),
     m_checkTrim(true),
@@ -54,7 +53,7 @@ BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, const ON_BrepF
     m_children.resize(num_children);
 
     for (std::vector<BBNode *>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-	*it = new BBNode(archive, ctree, *m_face);
+	*it = new BBNode(archive, ctree);
 
     if (!archive.ReadBoundingBox(m_node) || !archive.ReadInterval(m_u)
 	    || !archive.ReadInterval(m_v) || !archive.ReadBool(&m_checkTrim)
@@ -187,7 +186,7 @@ BBNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	    {m_u.Mid(), m_v.Mid()}
 	}; /* include the estimate */
 	ON_3dPoint corners[5];
-	const ON_Surface *surf = m_face->SurfaceOf();
+	const ON_Surface *surf = m_ctree->m_face->SurfaceOf();
 
 	u = m_u;
 	v = m_v;

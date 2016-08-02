@@ -66,6 +66,9 @@ extern "C++" {
 		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
+		const ON_BrepFace *m_face;
+
+
 	    private:
 		CurveTree(const CurveTree &source);
 		CurveTree &operator=(const CurveTree &source);
@@ -90,8 +93,6 @@ extern "C++" {
 		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
 		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
 
-
-		const ON_BrepFace *m_face;
 		BRNode m_root;
 		std::vector<const BRNode *> m_sortedX;
 		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;

@@ -283,7 +283,7 @@ plotleaf3d(const BBNode* bb,double within_distance_tol)
     point_t a, b;
     ON_3dPoint p;
     const BRNode* trimBR = NULL;
-    const ON_BrepFace* f = bb->m_face;
+    const ON_BrepFace* f = bb->m_ctree->m_face;
     const ON_Surface* surf = f->SurfaceOf();
     fastf_t uinc = (bb->m_u[1] - bb->m_u[0])/100.0;
     fastf_t vinc = (bb->m_v[1] - bb->m_v[0])/100.0;

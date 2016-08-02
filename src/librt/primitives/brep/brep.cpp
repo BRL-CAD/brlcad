@@ -1445,7 +1445,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
-	const ON_BrepFace* f = sbv->m_face;
+	const ON_BrepFace* f = sbv->m_ctree->m_face;
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
@@ -1856,7 +1856,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		bu_log("<%d>", out.sbv->m_face->m_bRev);
+		bu_log("<%d>", out.sbv->m_ctree->m_face->m_bRev);
 
 		bu_log(")");
 	    }

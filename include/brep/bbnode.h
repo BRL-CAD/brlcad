@@ -70,14 +70,13 @@ extern "C++" {
 		explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 		BBNode(const CurveTree *ct,
 			const ON_BoundingBox &node,
-			const ON_BrepFace *face,
 			const ON_Interval &u,
 			const ON_Interval &v,
 			bool checkTrim,
 			bool trimmed);
 		~BBNode();
 
-		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, const ON_BrepFace &face);
+		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree);
 		void serialize(ON_BinaryArchive &archive) const;
 
 		/** Test if this node is a leaf node in the hierarchy */
@@ -131,7 +130,6 @@ extern "C++" {
 		ON_BoundingBox m_node;
 
 		/** Surface Information */
-		const ON_BrepFace *m_face;
 		ON_Interval m_u;
 		ON_Interval m_v;
 
@@ -146,6 +144,10 @@ extern "C++" {
 
 		/* Normal at the m_estimate point */
 		ON_3dVector m_normal;
+
+		/** Curve Tree associated with the parent Surface Tree */
+		const CurveTree * const m_ctree;
+
 
 	    private:
 		BBNode(const BBNode &source);
@@ -165,9 +167,6 @@ extern "C++" {
 
 		const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
-		/** Curve Tree associated with the parent Surface Tree */
-		const CurveTree * const m_ctree;
-
 		std::list<const BRNode *> m_trims_above;
 		std::vector<BBNode *> m_children;
 	};
@@ -175,7 +174,6 @@ extern "C++" {
 	inline
 	    BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
 		m_node(node),
-		m_face(NULL),
 		m_u(),
 		m_v(),
 		m_checkTrim(true),
@@ -200,13 +198,11 @@ extern "C++" {
 	    BBNode::BBNode(
 		    const CurveTree *ct,
 		    const ON_BoundingBox &node,
-		    const ON_BrepFace *face,
 		    const ON_Interval &u,
 		    const ON_Interval &v,
 		    bool checkTrim,
 		    bool trimmed):
 		m_node(node),
-		m_face(face),
 		m_u(u),
 		m_v(v),
 		m_checkTrim(checkTrim),

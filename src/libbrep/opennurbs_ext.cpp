@@ -716,7 +716,7 @@ SurfaceTree::SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
     m_ctree(new CurveTree(archive, face)),
     m_removeTrimmed(true),
     m_face(&face),
-    m_root(new BBNode(archive, *m_ctree, *m_face)),
+    m_root(new BBNode(archive, *m_ctree)),
     m_f_queue()
 {
     if (!archive.ReadBool(&m_removeTrimmed))
@@ -783,7 +783,7 @@ SurfaceTree::getSurface() const
 int
 brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     plane_ray pr;
-    const ON_Surface *surf = node->m_face->SurfaceOf();
+    const ON_Surface *surf = node->m_ctree->m_face->SurfaceOf();
     double umin, umax;
     double vmin, vmax;
     surf->GetDomain(0, &umin, &umax);
@@ -970,7 +970,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 	*/
 	TRACE("creating leaf: u(" << u.Min() << ", " << u.Max() <<
 	      ") v(" << v.Min() << ", " << v.Max() << ")");
-	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), m_face, u, v, false, false);
+	node = new BBNode(m_ctree, ON_BoundingBox(ON_3dPoint(min), ON_3dPoint(max)), u, v, false, false);
 	node->prepTrims();
 
     } else {
@@ -979,7 +979,6 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 
     node->m_estimate = estimate;
     node->m_normal = normal;
-    node->m_face = m_face;
     node->m_u = u;
     node->m_v = v;
     return node;
@@ -987,7 +986,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 
 
 BBNode*
-initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* face, const ON_Interval& u, const ON_Interval& v)
+initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
 #ifdef _OLD_SUBDIVISION_
     ON_BoundingBox bb = surf->BoundingBox();
@@ -997,7 +996,7 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* f
 	return NULL;
     }
 #endif
-    BBNode* node = new BBNode(ctree, bb, face, u, v, false, false);
+    BBNode* node = new BBNode(ctree, bb, u, v, false, false);
     ON_3dPoint estimate;
     ON_3dVector normal;
     if (!surface_EvNormal(surf,surf->Domain(0).Mid(), surf->Domain(1).Mid(), estimate, normal)) {
@@ -1005,7 +1004,6 @@ initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_BrepFace* f
     }
     node->m_estimate = estimate;
     node->m_normal = normal;
-    node->m_face = face;
     node->m_u = u;
     node->m_v = v;
     return node;
@@ -1140,7 +1138,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #ifdef _OLD_SUBDIVISION_
 	int spanu_cnt = localsurf->SpanCount(0);
 	int spanv_cnt = localsurf->SpanCount(1);
-	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, u, v);
 	if (spanu_cnt > 1) {
 	    double *spanu = new double[spanu_cnt+1];
 	    localsurf->GetSpanVector(0, spanu);
@@ -1174,7 +1172,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 		do_v_split = 1;
 	    }
 	}
-	parent = initialBBox(m_ctree, localsurf, m_face, u, v);
+	parent = initialBBox(m_ctree, localsurf, u, v);
 #endif
     }
     // Flatness
@@ -1182,7 +1180,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	bool isUFlat = isFlatU(frames);
 	bool isVFlat = isFlatV(frames);
 
-	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, m_face, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
+	parent = (divDepth == 0) ? initialBBox(m_ctree, localsurf, u, v) : surfaceBBox(localsurf, false, frames, u, v, within_distance_tol);
 
 	if ((!isVFlat || (width/height > ratio)) && (!isUFlat || (height/width > ratio))) {
 	    do_both_splits = 1;
