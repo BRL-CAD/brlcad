@@ -18,36 +18,16 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* quick check of CHANGES to make sure user-vis obsoletions are in NEWS
-
-* fix regressions in lc -d and -s options
-
 * regressed behavior in mged and archer: they seem to be defaulting
   objects to black instead of white/gray.  wireframes and default
   black-background rendering make newly created objects practically
   invisible.
 
-* check these commits for documentation:
-  58415 - NEWS, attributes are now case-insensitive (test: any or just standard ones?)
-  58147 - NEWS, improved search command documentation examples
-  58146 - NEWS, improved archer initialization, removed startup flashing
-  58145 - NEWS, minor but technically user visible and potentially significant if the assumptions made are incorrect (improved tire command usage statement)
-  58254 - NEWS, fixed bug you say? what bug?
-  58325 - NEWS, improved v5 specification formatting, added timestamp proposal
-  64637 - NEWS, almost certainly fixed mysterious errors during dbconcat and db_opens with duplicate names found
-  58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
-  58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
-  61168 - NEWS, new param option to search
-  64314 - NEWS, announce the new doc
-  63132 - NEWS, expanded rtedge usage
-  61494 - NEWS, extracting images embedded during 3dm-g conversion looks news
-  61516 - NEWS, added fbclear to archer
-
-* verify against 7.24.4
-  63406 - NEWS, if bug was released
-
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* metaball in command input needs sanity checks and better
+  validation.
 
 * brep compilation must not be optional
 

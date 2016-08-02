@@ -30,6 +30,7 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
+* fixed bad args crash in metaball 'in' command - Cliff Yapp
 * added manual page for lt comb child listing command - Cliff Yapp
 * added lt -c option for specifying separation character - Bob Parker
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
@@ -49,6 +50,16 @@ geometry (e.g., primitives with CSG).
 * extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
+* removed pixread.sh, pixwrite.sh; obsolete hardware - Sean Morrison
+* removed cray.sh and sgisnap.sh; obsolete hardware - Sean Morrison
+* removed cadbug.sh - use sourceforge tracker - Sean Morrison
+* removed any-png.sh - use pix tools - Sean Morrison
+* removed librtserver interface - Cliff Yapp
+* removed MGED per_line command - Sean Morrison
+* updated MGED tops command: default to -g -u behavior- Sean Morrison
+* removed MGED -n option; use -c instead - Sean Morrison
+* removed MGED commands pl, pov and polybinout - Sean Morrison
+* removed UtahRLE image tools - Cliff Yapp
 * improved rcodes command feedback in the no changes case - Cliff Yapp
 * added brlman -S option to specify man page section  - Cliff Yapp
 * modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
@@ -93,13 +104,16 @@ geometry (e.g., primitives with CSG).
 * improved command option and manual page consistency - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert
 * added FASTGEN4 illegal thickness CCONE1 entity import - Cliff Yapp
+* improved help message for 'tire' command - Cliff Yapp, Carl Moore
 * improved option parsing and output options for gencolor - Carl Moore
 * fixed saveview usage help string and running from archer - Nick Reed
 * fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
+* fixed duplicate name errors in dbconcat - Daniel Roßberg
 * modernized documents and improved infrastructure - Hitesh Sofat
 * added mirroring support for hrt primitive objects - Isaac Kamga
+* added manual page documenting the STEP geometry format - Cliff Yapp
 * ported the mged Overlap Tool to Windows - Sean Morrison
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
 * fixed dbconcat -c crash when color table does not exist - Nick Reed
@@ -134,12 +148,14 @@ geometry (e.g., primitives with CSG).
 * renamed 'make_bb' mged command name to 'bb' - Cliff Yapp
 * added g-ply exporter for Stanford PLY geometry format - Rishub Jain
 * added ply-g importer for Stanford PLY geometry format - Rishub Jain
+* improved rtedge help option output - Carl Moore
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
 * fixed pix-ps -S -W -N output size options being ignored - Carl Moore
 * fixed crash exporting mixed mode merged BoT meshes - Sean Morrison
 * fixed submodel primitive crash - Cliff Yapp, Sean Morrison
+* added fbclear command to archer - Bob Parker
 * improved rtwizard command-line mode manual page docs - Cliff Yapp
 * support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
@@ -167,8 +183,13 @@ geometry (e.g., primitives with CSG).
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
 * added menu option to restore mged command window - Cezar Elnazli
-* improved 'search' command -params option documentation - Cliff Yapp
+* improved DocBook documentation output formatting
+	- David Wood, Yatharth Agarwal
+* added 'search' -params option for geometric parameters - Cliff Yapp
 * search command now recognizes hyp and metaball types - Cliff Yapp
+* improved spec formatting, added v5 timestamp proposal - Tom Browder
+* improved search command documentation examples - Cliff Yapp
+* improved archer interface's behavior on start-up - Nick Reed
 * added -depth option to mged 'search' command - Cliff Yapp
 * initial support for rigging joints and constrained articulation
 	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison

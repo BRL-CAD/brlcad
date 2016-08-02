@@ -584,29 +584,30 @@ endif(_orig_lang)
 # generated packages, the resulting packages may behave badly when installed.
 # In particular, RPM packages may improperly reset permissions on core
 # directories such as /usr.
-macro(CHECK_UMASK umask_val status_var)
+function(check_umask umask_val status_var)
   string(REGEX REPLACE "[^x]" "" umask_x "${umask_val}")
   string(REGEX REPLACE "[^r]" "" umask_r "${umask_val}")
   string(LENGTH "${umask_r}" UMASK_HAVE_R)
-  set(${status_var} 0)
+  set(${status_var} 0 PARENT_SCOPE)
   if(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-    set(${status_var} 1)
+    set(${status_var} 1 PARENT_SCOPE)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
-endmacro(CHECK_UMASK)
+endfunction(check_umask)
 # Note - umask is not always an executable, so we can't use find_program
 # to determine whether the umask check is appropriate.
-IF(NOT WIN32)
+exec_program(umask OUTPUT_VARIABLE have_umask)
+if(NOT "${have_umask}" STREQUAL "")
   exec_program(umask ARGS -S OUTPUT_VARIABLE umask_curr)
   string(STRIP "${umask_curr}" umask_curr)
-  CHECK_UMASK("${umask_curr}" UMASK_OK)
-  if (NOT UMASK_OK)
+  check_umask("${umask_curr}" UMASK_OK)
+  if(NOT UMASK_OK)
     message(" ")
     message(WARNING "umask is set to ${umask_curr} - this setting is not recommended if one of the goals of this build is to generate packages. Use 'umask 022' for improved package behavior.")
     if(SLEEP_EXEC)
       execute_process(COMMAND ${SLEEP_EXEC} 1)
     endif(SLEEP_EXEC)
-  endif (NOT UMASK_OK)
-ENDIF(NOT WIN32)
+  endif(NOT UMASK_OK)
+endif(NOT "${have_umask}" STREQUAL "")
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,

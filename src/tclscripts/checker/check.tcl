@@ -43,11 +43,26 @@ catch {delete class GeometryChecker} error
     public {
 	method loadOverlaps { args } {}
 	method sortBy { col direction } {}
+
+	method goPrev {} {}
+	method goNext {} {}
+
+	method subLeft {} {}
+	method subRight {} {}
+
+	method display {} {}
+
+	method registerWhoCallback { callback } {}
+	method registerDrawCallback { callback } {}
+	method registerEraseCallback { callback } {}
+	method registerOverlapCallback { callback } {}
     }
 
     private {
 	variable _ck
 	variable _status
+
+	variable _count
 
 	variable _arrowUp
 	variable _arrowDown
@@ -55,6 +70,18 @@ catch {delete class GeometryChecker} error
 
 	variable _colorOdd
 	variable _colorEven
+
+	variable _subLeftCommand
+	variable _subRightCommand
+	variable _drawLeftCommand
+	variable _drawRightCommand
+
+	variable _drew
+
+	variable _whoCallback
+	variable _drawCallback
+	variable _eraseCallback
+	variable _overlapCallback
     }
 }
 
@@ -65,20 +92,13 @@ catch {delete class GeometryChecker} error
 
 ::itcl::body GeometryChecker::constructor {args} {
 
-    # image create bitmap _arrowUp -data {
-    # #define arrowUp_width 7
-    # #define arrowUp_height 4
-    # 	static char arrowUp_bits[] = {
-    #     0x08, 0x1c, 0x3e, 0x7f
-    # 	};
-    # }
-    # image create bitmap _arrowDown -data {
-    # #define arrowDown_width 7
-    # #define arrowDown_height 4
-    # 	static char arrowDown_bits[] = {
-    #     0x7f, 0x3e, 0x1c, 0x08
-    # 	};
-    # }
+    set _drew {}
+
+    set _subLeftCommand "puts subtract the left"
+    set _subRightCommand "puts subtract the right"
+
+    set _drawLeftCommand "puts draw -C255/0/0"
+    set _drawRightCommand "puts draw -C0/0/255"
 
     image create bitmap _arrowUp -data {
     #define up_width 11
@@ -106,15 +126,15 @@ catch {delete class GeometryChecker} error
     }
 
     itk_component add checkFrame {
-    	ttk::frame $itk_interior.checkFrame -padding 0
+    	ttk::frame $itk_interior.checkFrame -padding 2 
     } {}
 
-    itk_component add checkLabel {
-    	ttk::label $itk_component(checkFrame).checkLabel -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
+    itk_component add checkLabelIntro {
+    	ttk::label $itk_component(checkFrame).checkLabelIntro -text "This tool is intended to help resolve geometry overlaps and is a work-in-progress"
     } {}
 
-    itk_component add checkLabel2 {
-    	ttk::label $itk_component(checkFrame).checkLabel2 -text "Data Not Yet Loaded"
+    itk_component add checkLabelStatus {
+    	ttk::label $itk_component(checkFrame).checkLabelStatus -text "Data Not Yet Loaded"
     } {}
 
     itk_component add checkList {
@@ -124,21 +144,42 @@ catch {delete class GeometryChecker} error
 	    -yscroll [ code $itk_component(checkFrame).checkScroll set]
     } {}
 
-    itk_component add checkGrip {
-    	ttk::sizegrip $itk_component(checkFrame).checkGrip
-    } {}
-
     itk_component add checkScroll {
 	ttk::scrollbar $itk_component(checkFrame).checkScroll -orient vertical -command [ code $itk_component(checkFrame).checkList yview ]
     } {}
 
+    itk_component add checkButtonFrame {
+    	ttk::frame $itk_interior.checkButtonFrame -padding 0
+    } {}
+
+    itk_component add checkGrip {
+    	ttk::sizegrip $itk_component(checkButtonFrame).checkGrip
+    } {}
+
+    itk_component add buttonLeft {
+	ttk::button $itk_component(checkButtonFrame).buttonLeft -text "Subtract Left" -padding 10 -command [ list $this subLeft ]
+    } {}
+    itk_component add buttonRight {
+	ttk::button $itk_component(checkButtonFrame).buttonRight -text "Subtract Right" -padding 10 -command [ list $this subRight ]
+    } {}
+    itk_component add buttonBoth {
+	ttk::button $itk_component(checkButtonFrame).buttonBoth -text "Subtract Both" -padding 10 -state disabled
+    } {}
+    itk_component add buttonPrev {
+	ttk::button $itk_component(checkButtonFrame).buttonPrev -text "Prev" -padding 10 -command [ list $this goPrev ]
+    } {}
+    itk_component add buttonNext {
+	ttk::button $itk_component(checkButtonFrame).buttonNext -text "Next" -padding 10 -command [ list $this goNext ]
+    } {}
+
+
     eval itk_initialize $args
 
     set _colorOdd \#ffffff
-    set _colorEven \#f0f0f0
+    set _colorEven \#f0fdf0
 
     set _ck $itk_component(checkFrame).checkList
-    set _status $itk_component(checkFrame).checkLabel2
+    set _status $itk_component(checkFrame).checkLabelStatus
 
     puts $_ck
 
@@ -152,11 +193,26 @@ catch {delete class GeometryChecker} error
     $_ck heading Size -text "Vol. Est." -image _arrowOff -anchor e -command [list $this sortBy Size 0]
 
     pack $itk_component(checkFrame) -expand true -fill both -anchor center
-    pack $itk_component(checkFrame).checkGrip -side right -anchor se
-    pack $itk_component(checkFrame).checkLabel -side top -fill x -padx 10 -pady 10
-    pack $itk_component(checkFrame).checkLabel2 -side bottom -fill x -padx 10 -pady 10
-    pack $itk_component(checkFrame).checkScroll -side right -fill y
+    pack $itk_component(checkButtonFrame).checkGrip -side right -anchor se
+#    pack $itk_component(checkFrame).checkLabelIntro -fill y -padx 10 -pady 10
+    pack $itk_component(checkFrame).checkLabelStatus -side top -fill x -padx 10 -pady 10
+
+    pack $itk_component(checkButtonFrame) -side bottom -expand true -fill both
+    pack $itk_component(checkButtonFrame).buttonRight -side right -pady 10
+#    pack $itk_component(checkButtonFrame).buttonBoth -side right -pady 10
+    pack $itk_component(checkButtonFrame).buttonLeft -side right -padx 20 -pady 10
+    pack $itk_component(checkButtonFrame).buttonPrev -side left -padx 20 -pady 10
+    pack $itk_component(checkButtonFrame).buttonNext -side left -pady 10
+
+    pack $itk_component(checkFrame).checkScroll -side right -fill y 
     pack $itk_component(checkFrame).checkList -expand 1 -fill both -padx {20 0}
+
+    bind $itk_component(checkButtonFrame).buttonPrev <Up> [list $this goPrev]
+    bind $itk_component(checkButtonFrame).buttonPrev <Down> [list $this goNext]
+    bind $itk_component(checkButtonFrame).buttonNext <Up> [list $this goPrev]
+    bind $itk_component(checkButtonFrame).buttonNext <Down> [list $this goNext]
+
+    bind $_ck <<TreeviewSelect>> [list $this display]
 }
 
 
@@ -218,6 +274,7 @@ body GeometryChecker::loadOverlaps {{filename ""}} {
 
 	incr count
     }
+    set _count $count
     set width_count [font measure $font $count]
     set width_wm [lindex [wm maxsize .] 0]
 
@@ -264,7 +321,7 @@ body GeometryChecker::sortBy {column direction} {
     set idx -1
     foreach col [$_ck cget -columns] {
 	incr idx
-	if {$col ==  $column} {
+	if {$col eq $column} {
 	    set arrow [expr {$direction ? "_arrowUp" : "_arrowDown"}]
 	    $_ck heading $idx -image $arrow
 	} else {
@@ -281,9 +338,260 @@ body GeometryChecker::sortBy {column direction} {
 }
 
 
+# goPrev
+#
+# select the previous node
+#
+body GeometryChecker::goPrev {} {
+    set sset [$_ck selection]
+    set slen [llength $sset]
+    set alln [$_ck children {}]
+    set num0 [lindex $alln 0]
+
+    if { $slen == 0 } {
+	set curr $num0
+	set prev -1
+    } else {
+	set curr [lindex $alln [lsearch $alln [lindex $sset 0]]]
+	set prev [lindex $alln [expr [lsearch $alln [lindex $sset 0]] - 1]]
+    }
+
+    if {$curr != $num0} {
+	$_status configure -text "$_count overlaps, drawing #$prev"
+	$_ck see $prev
+	$_ck selection set $prev
+    } else {
+	$_status configure -text "$_count overlaps, at the beginning of the list"
+	$_ck see $num0
+	$_ck selection set {}
+    }
+}
+
+
+# goNext
+#
+# select the next node
+#
+body GeometryChecker::goNext {} {
+    set sset [$_ck selection]
+    set slen [llength $sset]
+    set alln [$_ck children {}]
+    set num0 [lindex $alln 0]
+
+    if { $slen == 0 } {
+	set curr -1
+	set next $num0
+    } else {
+	set curr [lindex $alln [lsearch $alln [lindex $sset end]]]
+	set next [lindex $alln [expr [lsearch $alln [lindex $sset end]] + 1]]
+    }
+
+    set last [lindex $alln end]
+    if {$curr != $last} {
+	$_status configure -text "$_count overlaps, drawing #$next"
+	$_ck see $next
+	$_ck selection set $next
+    } else {
+	$_status configure -text "$_count overlaps, at the end of the list"
+	$_ck see $last
+    }
+}
+
+
+# subLeft
+#
+# subtract the currently selected left nodes from the right ones
+#
+body GeometryChecker::subLeft {} {
+    set sset [$_ck selection]
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_overlapCallback $right $left
+	}
+    }
+}
+
+# subRight
+#
+# subtract the currently selected right nodes from the left ones
+#
+body GeometryChecker::subRight {} {
+    set sset [$_ck selection]
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_overlapCallback $left $right
+	}
+    }
+}
+
+
+# display
+#
+# draw the currently selected geometry
+#
+body GeometryChecker::display {} {
+
+    set sset [$_ck selection]
+
+    # get list of what we intend to draw
+    set drawing ""
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    lappend drawing $left $right
+	}
+    }
+
+    # erase anything we drew previously that we don't still need
+    foreach obj $_drew {
+	if {[lsearch -exact $drawing $obj] == -1} {
+	    $_eraseCallback $obj
+	}
+    }
+
+    # draw them again
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_drawCallback $left $right
+	}
+    }
+    set _drew $drawing
+}
+
+
+# registerWhoCallback
+#
+body GeometryChecker::registerWhoCallback {callback} {
+    set _whoCallback $callback
+    set _who [$_whoCallback]
+}
+
+# registerDrawCallback
+#
+body GeometryChecker::registerDrawCallback {callback} {
+    set _drawCallback $callback
+}
+
+# registerEraseCallback
+#
+body GeometryChecker::registerEraseCallback {callback} {
+    set _eraseCallback $callback
+}
+
+# registerOverlapCallback
+#
+body GeometryChecker::registerOverlapCallback {callback} {
+    set _overlapCallback $callback
+}
+
+
 ##########
 # end public methods
 ##########
+
+
+proc subtractRightFromLeft {left right} {
+    if [ catch { opendb } dbname ] {
+	puts ""
+	puts "ERROR: no database seems to be open"
+	return
+    }
+    if [ exists $left ] {
+	puts ""
+	puts "ERROR: unable to find $left"
+	return
+    }
+    if [ exists $right ] {
+	puts ""
+	puts "ERROR: unable to find $right"
+	return
+    }
+    if { $left eq $right } {
+	puts ""
+	puts "ERROR: left and right are the same region"
+	set leftcomb [lindex [file split $left] end-1]
+	set rightreg [file tail $right]
+	puts ""
+	puts "There is probably a duplicate $rightreg in $leftcomb"
+	puts "You will need to resolve it manually."
+	return
+    }
+
+    # count how many unions there are on the left
+    set leftreg [file tail $left]
+    set leftunions 0
+    set leftfirst ""
+    foreach { entry } [lt $leftreg] {
+	if [string equal [lindex $entry 0] "u"] {
+	    incr leftunions
+	    if {$leftfirst eq ""} {
+		set leftfirst [lindex $entry 1]
+	    }
+	}
+    }
+
+    # if there's more than one union, wrap it
+    if { $leftunions > 1 } {
+	if [ catch { get $leftreg.c region } leftcheck ] {
+	    puts "comb -w $leftreg"
+	    comb -w $leftreg
+	}
+    }
+
+    # count how many ops there are on the right
+    set rightreg [file tail $right]
+    set right_lt [lt $rightreg]
+    set rightops [llength $right_lt]
+
+    # if there's more than one op, try to wrap it (may already be wrapped)
+    set rightsub $rightreg.c
+    if { $rightops > 1 } {
+	if [ catch { get $rightreg.c region } rightcheck ] {
+	    puts "comb -w $rightreg"
+	    comb -w $rightreg
+	}
+    } else {
+	# first and only entry
+	set rightsub [lindex [lindex $right_lt 0] 1]
+    }
+
+    # make sure it's not already subtracted
+    foreach { entry } [lt $leftreg] {
+	if [string equal [lindex $entry 0] "-"] {
+	    if [string equal [lindex $entry 1] $rightsub] {
+		puts ""
+		puts "WARNING: attempting to subtract $rightsub from $leftreg again"
+		return
+	    }
+	}
+    }
+
+    puts "comb $leftreg - $rightsub"
+    comb $leftreg - $rightsub
+}
+
+
+proc drawPair {left right} {
+    if [ catch { opendb } dbname ] {
+	puts ""
+	puts "ERROR: no database seems to be open"
+	return
+    }
+    if [ exists $left ] {
+	puts ""
+	puts "WARNING: unable to find $left"
+    }
+    if [ exists $right ] {
+	puts ""
+	puts "WARNING: unable to find $right"
+    }
+
+    if [catch {draw -C255/0/0 $left} left_error] {
+	puts "ERROR: $left_error"
+    }
+    if [catch {draw -C0/0/255 $right} right_error] {
+	puts "ERROR: $right_error"
+    }
+}
 
 
 # All GeometryChecker stuff is in the GeometryChecker namespace
@@ -299,6 +607,11 @@ proc check {{filename ""} {parent ""}} {
 
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
+
+    $checker registerWhoCallback [code who]
+    $checker registerDrawCallback [code drawPair]
+    $checker registerEraseCallback [code erase]
+    $checker registerOverlapCallback [code subtractRightFromLeft]
 
     if {[file exists "$filename"]} {
 	$checker loadOverlaps $filename
