@@ -49,6 +49,8 @@ catch {delete class GeometryChecker} error
 
 	method subLeft {} {}
 	method subRight {} {}
+
+	method registerSubtractionCallback { callback } {}
     }
 
     private {
@@ -68,6 +70,8 @@ catch {delete class GeometryChecker} error
 	variable _subRightCommand
 	variable _drawLeftCommand
 	variable _drawRightCommand
+
+	variable _subtractionCallback
     }
 }
 
@@ -320,23 +324,6 @@ body GeometryChecker::sortBy {column direction} {
 }
 
 
-# subLeft
-#
-# subtract the currently selected left nodes from the right ones
-#
-body GeometryChecker::subLeft {} {
-    puts "sutracting the left"
-}
-
-# subRight
-#
-# subtract the currently selected right nodes from the left ones
-#
-body GeometryChecker::subRight {} {
-    puts "sutracting the right"
-}
-
-
 # goPrev
 #
 # select the previous node
@@ -346,6 +333,7 @@ body GeometryChecker::goPrev {} {
     set slen [llength $sset]
     set alln [$_ck children {}]
     set num0 [lindex $alln 0]
+
     if { $slen == 0 } {
 	set curr $num0
 	set prev -1
@@ -365,6 +353,7 @@ body GeometryChecker::goPrev {} {
     }
 }
 
+
 # goNext
 #
 # select the next node
@@ -374,6 +363,7 @@ body GeometryChecker::goNext {} {
     set slen [llength $sset]
     set alln [$_ck children {}]
     set num0 [lindex $alln 0]
+
     if { $slen == 0 } {
 	set curr -1
 	set next $num0
@@ -381,8 +371,8 @@ body GeometryChecker::goNext {} {
 	set curr [lindex $alln [lsearch $alln [lindex $sset end]]]
 	set next [lindex $alln [expr [lsearch $alln [lindex $sset end]] + 1]]
     }
-    set last [lindex $alln end]
 
+    set last [lindex $alln end]
     if {$curr != $last} {
 	$_status configure -text "$_count overlaps, drawing #$next"
 	$_ck see $next
@@ -394,9 +384,49 @@ body GeometryChecker::goNext {} {
 }
 
 
+# subLeft
+#
+# subtract the currently selected left nodes from the right ones
+#
+body GeometryChecker::subLeft {} {
+    set sset [$_ck selection]
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_subtractionCallback $left $right
+	}
+    }
+}
+
+# subRight
+#
+# subtract the currently selected right nodes from the left ones
+#
+body GeometryChecker::subRight {} {
+    set sset [$_ck selection]
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    $_subtractionCallback $right $left
+	}
+    }
+}
+
+
+# registerSubtractionCallback
+#
+# 
+#
+body GeometryChecker::registerSubtractionCallback {callback} {
+    set _subtractionCallback $callback
+}
+
+
 ##########
 # end public methods
 ##########
+
+proc subtract {left right} {
+    puts "subtracting $left from $right"
+}
 
 
 # All GeometryChecker stuff is in the GeometryChecker namespace
@@ -412,6 +442,8 @@ proc check {{filename ""} {parent ""}} {
 
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
+
+    $checker registerSubtractionCallback [code subtract]
 
     if {[file exists "$filename"]} {
 	$checker loadOverlaps $filename
