@@ -532,6 +532,7 @@ proc subtractRightFromLeft {left right} {
     # if there's more than one union, wrap it
     if { $leftunions > 1 } {
 	if [ catch { get $leftreg.c region } leftcheck ] {
+	    puts "comb -w $leftreg"
 	    comb -w $leftreg
 	}
     }
@@ -545,6 +546,7 @@ proc subtractRightFromLeft {left right} {
     set rightsub $rightreg.c
     if { $rightops > 1 } {
 	if [ catch { get $rightreg.c region } rightcheck ] {
+	    puts "comb -w $rightreg"
 	    comb -w $rightreg
 	}
     } else {
@@ -563,6 +565,7 @@ proc subtractRightFromLeft {left right} {
 	}
     }
 
+    puts "comb $leftreg - $rightsub"
     comb $leftreg - $rightsub
 }
 
