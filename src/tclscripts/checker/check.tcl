@@ -313,7 +313,7 @@ body GeometryChecker::sortBy {column direction} {
     set idx -1
     foreach col [$_ck cget -columns] {
 	incr idx
-	if {$col ==  $column} {
+	if {$col eq $column} {
 	    set arrow [expr {$direction ? "_arrowUp" : "_arrowDown"}]
 	    $_ck heading $idx -image $arrow
 	} else {
@@ -398,7 +398,7 @@ body GeometryChecker::subLeft {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    $_overlapCallback $left $right
+	    $_overlapCallback $right $left
 	}
     }
 }
@@ -411,7 +411,7 @@ body GeometryChecker::subRight {} {
     set sset [$_ck selection]
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
-	    $_overlapCallback $right $left
+	    $_overlapCallback $left $right
 	}
     }
 }
@@ -450,12 +450,100 @@ body GeometryChecker::registerOverlapCallback {callback} {
 ##########
 
 
-proc subtractLeftFromRight {left right} {
-    puts "comb [lindex [file split $right] end-1] - [file tail $left]"
+proc subtractRightFromLeft {left right} {
+    if [ catch { opendb } dbname ] {
+	puts ""
+	puts "ERROR: no database seems to be open"
+	return
+    }
+    if [ exists $left ] {
+	puts ""
+	puts "ERROR: unable to find $left"
+	return
+    }
+    if [ exists $right ] {
+	puts ""
+	puts "ERROR: unable to find $right"
+	return
+    }
+    if { $left eq $right } {
+	puts ""
+	puts "ERROR: left and right are the same region"
+	set leftcomb [lindex [file split $left] end-1]
+	set rightreg [file tail $right]
+	puts ""
+	puts "There is probably a duplicate $rightreg in $leftcomb"
+	puts "You will need to resolve it manually."
+	return
+    }
+
+    # count how many unions there are on the left
+    set leftreg [file tail $left]
+    set leftunions 0
+    set leftfirst ""
+    foreach { entry } [lt $leftreg] {
+	if [string equal [lindex $entry 0] "u"] {
+	    incr leftunions
+	    if {$leftfirst eq ""} {
+		set leftfirst [lindex $entry 1]
+	    }
+	}
+    }
+
+    # if there's more than one union, wrap it
+    set leftsub $leftreg.c
+    if { $leftunions > 1 } {
+	if [ catch { get $leftreg.c region } leftcheck ] {
+	    puts "comb -w $leftreg"
+	}
+    } else {
+	set leftsub $leftfirst
+    }
+
+    # count how many unions there are on the right
+    set rightreg [file tail $right]
+    set rightunions 0
+    set rightfirst ""
+    foreach { entry } [lt $rightreg] {
+	if [string equal [lindex $entry 0] "u"] {
+	    incr rightunions
+	    if {$rightfirst eq ""} {
+		set rightfirst [lindex $entry 1]
+	    }
+	}
+    }
+
+    # if there's more than one union, wrap it
+    set rightsub $rightreg.c
+    if { $rightunions > 1 } {
+	if [ catch { get $rightreg.c region } rightcheck ] {
+	    puts "comb -w $rightreg"
+	}
+    } else {
+	set rightsub $rightfirst
+    }
+
+    puts "comb $leftreg - $rightsub"
 }
 
+
 proc drawOverlaps {left right} {
-    puts "draw -C255/0/0 $left ; draw -C0/0/255 $right"
+    if [ catch { opendb } dbname ] {
+	puts ""
+	puts "ERROR: no database seems to be open"
+	return
+    }
+    if [ exists $left ] {
+	puts ""
+	puts "WARNING: unable to find $left"
+    }
+    if [ exists $right ] {
+	puts ""
+	puts "WARNING: unable to find $right"
+    }
+
+    catch {draw -C255/0/0 $left} left_error
+    catch {draw -C0/0/255 $right} right_error
 }
 
 
@@ -474,7 +562,7 @@ proc check {{filename ""} {parent ""}} {
     set checker [GeometryChecker $checkerWindow.ck]
 
     $checker registerDrawCallback [code drawOverlaps]
-    $checker registerOverlapCallback [code subtractLeftFromRight]
+    $checker registerOverlapCallback [code subtractRightFromLeft]
 
     if {[file exists "$filename"]} {
 	$checker loadOverlaps $filename
