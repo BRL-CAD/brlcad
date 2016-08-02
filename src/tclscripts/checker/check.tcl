@@ -52,7 +52,9 @@ catch {delete class GeometryChecker} error
 
 	method display {} {}
 
+	method registerWhoCallback { callback } {}
 	method registerDrawCallback { callback } {}
+	method registerEraseCallback { callback } {}
 	method registerOverlapCallback { callback } {}
     }
 
@@ -74,7 +76,11 @@ catch {delete class GeometryChecker} error
 	variable _drawLeftCommand
 	variable _drawRightCommand
 
+	variable _drew
+
+	variable _whoCallback
 	variable _drawCallback
+	variable _eraseCallback
 	variable _overlapCallback
     }
 }
@@ -85,6 +91,8 @@ catch {delete class GeometryChecker} error
 ###########
 
 ::itcl::body GeometryChecker::constructor {args} {
+
+    set _drew {}
 
     set _subLeftCommand "puts subtract the left"
     set _subRightCommand "puts subtract the right"
@@ -422,14 +430,40 @@ body GeometryChecker::subRight {} {
 # draw the currently selected geometry
 #
 body GeometryChecker::display {} {
+
     set sset [$_ck selection]
+
+    # get list of what we intend to draw
+    set drawing ""
+    foreach item $sset {
+	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
+	    lappend drawing $left $right
+	}
+    }
+
+    # erase anything we drew previously that we don't still need
+    foreach obj $_drew {
+	if {[lsearch -exact $drawing $obj] == -1} {
+	    $_eraseCallback $obj
+	}
+    }
+
+    # draw them again
     foreach item $sset {
 	foreach {id_lbl id left_lbl left right_lbl right size_lbl size} [$_ck set $item] {
 	    $_drawCallback $left $right
 	}
     }
+    set _drew $drawing
 }
 
+
+# registerWhoCallback
+#
+body GeometryChecker::registerWhoCallback {callback} {
+    set _whoCallback $callback
+    set _who [$_whoCallback]
+}
 
 # registerDrawCallback
 #
@@ -437,6 +471,11 @@ body GeometryChecker::registerDrawCallback {callback} {
     set _drawCallback $callback
 }
 
+# registerEraseCallback
+#
+body GeometryChecker::registerEraseCallback {callback} {
+    set _eraseCallback $callback
+}
 
 # registerOverlapCallback
 #
@@ -493,7 +532,7 @@ proc subtractRightFromLeft {left right} {
     # if there's more than one union, wrap it
     if { $leftunions > 1 } {
 	if [ catch { get $leftreg.c region } leftcheck ] {
-	    puts "comb -w $leftreg"
+	    comb -w $leftreg
 	}
     }
 
@@ -506,18 +545,29 @@ proc subtractRightFromLeft {left right} {
     set rightsub $rightreg.c
     if { $rightops > 1 } {
 	if [ catch { get $rightreg.c region } rightcheck ] {
-	    puts "comb -w $rightreg"
+	    comb -w $rightreg
 	}
     } else {
 	# first and only entry
 	set rightsub [lindex [lindex $right_lt 0] 1]
     }
 
-    puts "comb $leftreg - $rightsub"
+    # make sure it's not already subtracted
+    foreach { entry } [lt $leftreg] {
+	if [string equal [lindex $entry 0] "-"] {
+	    if [string equal [lindex $entry 1] $rightsub] {
+		puts ""
+		puts "WARNING: attempting to subtract $rightsub from $leftreg again"
+		return
+	    }
+	}
+    }
+
+    comb $leftreg - $rightsub
 }
 
 
-proc drawOverlaps {left right} {
+proc drawPair {left right} {
     if [ catch { opendb } dbname ] {
 	puts ""
 	puts "ERROR: no database seems to be open"
@@ -532,8 +582,12 @@ proc drawOverlaps {left right} {
 	puts "WARNING: unable to find $right"
     }
 
-    catch {draw -C255/0/0 $left} left_error
-    catch {draw -C0/0/255 $right} right_error
+    if [catch {draw -C255/0/0 $left} left_error] {
+	puts "ERROR: $left_error"
+    }
+    if [catch {draw -C0/0/255 $right} right_error] {
+	puts "ERROR: $right_error"
+    }
 }
 
 
@@ -551,7 +605,9 @@ proc check {{filename ""} {parent ""}} {
     set checkerWindow [toplevel $parent.checker]
     set checker [GeometryChecker $checkerWindow.ck]
 
-    $checker registerDrawCallback [code drawOverlaps]
+    $checker registerWhoCallback [code who]
+    $checker registerDrawCallback [code drawPair]
+    $checker registerEraseCallback [code erase]
     $checker registerOverlapCallback [code subtractRightFromLeft]
 
     if {[file exists "$filename"]} {
