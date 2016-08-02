@@ -50,6 +50,7 @@ geometry (e.g., primitives with CSG).
 * extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
+* removed MGED -n option; use -c instead - Sean Morrison
 * removed MGED commands pl, pov and polybinout - Sean Morrison
 * removed UtahRLE image tools - Cliff Yapp
 * improved rcodes command feedback in the no changes case - Cliff Yapp
