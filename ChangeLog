@@ -8,14 +8,6 @@
         * [r68560] CHANGES:
           librtserver is gone and documented, remove 7.22 deprecation
 
-2016-08-02 17:20  starseeker
-
-        * [r68559] CMakeLists.txt:
-          Try using exec_program to check for umask. execute_process is a
-          problem on systems without an explicit umask command (i.e. those
-          that let the shell handle it) so a more elaborate test may be
-          needed if CMake removes exec_program (it is deprecated.)
-
 2016-08-02 16:26  starseeker
 
         * [r68557] regress/repository.sh:
