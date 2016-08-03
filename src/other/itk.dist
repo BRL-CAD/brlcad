@@ -5,4 +5,5 @@ generic/itkDecls.h
 library
 license.terms
 win
+tcl_pkgindex.cmake
 )

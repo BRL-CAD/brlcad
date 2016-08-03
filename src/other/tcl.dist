@@ -11,6 +11,7 @@ generic/regc_nfa.c
 generic/regcustom.h
 generic/rege_dfa.c
 generic/regerrs.h
+generic/regextcl.h
 generic/regfronts.c
 generic/regguts.h
 generic/tcl.decls
@@ -38,6 +39,11 @@ generic/tclTomMath.h
 generic/tclTomMathDecls.h
 generic/tclTomMathInt.h
 generic/tommath.h
+generic/tclOO.decls
+generic/tclOOInt.h
+generic/tclOOIntDecls.h
+generic/tclParse.h
+generic/tclStringTrim.h
 library
 libtommath/tommath.h
 libtommath/tommath_class.h

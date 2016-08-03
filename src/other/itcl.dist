@@ -1,7 +1,9 @@
 set(itcl_ignore_files
 generic/itcl.decls
+generic/itclInt.decls
 generic/itclIntDecls.h
 library
 license.terms
 win
+tcl_pkgindex.cmake
 )

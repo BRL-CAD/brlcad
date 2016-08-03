@@ -9,6 +9,7 @@ generic/ks_names.h
 generic/tk.decls
 generic/tk.h
 generic/tk3d.h
+generic/tkBusy.h
 generic/tkButton.h
 generic/tkCanvas.h
 generic/tkColor.h
@@ -17,6 +18,7 @@ generic/tkEntry.h
 generic/tkFileFilter.c
 generic/tkFileFilter.h
 generic/tkFont.h
+generic/tkImgPhoto.h
 generic/tkImgUtil.c
 generic/tkInt.decls
 generic/tkInt.h
