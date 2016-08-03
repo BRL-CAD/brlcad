@@ -1,3 +1,27 @@
+2016-08-03 19:14  brlcad
+
+        * [r68570] TODO:
+          ready to go...
+
+2016-08-02 17:45  starseeker
+
+        * [r68560] CHANGES:
+          librtserver is gone and documented, remove 7.22 deprecation
+
+2016-08-02 17:20  starseeker
+
+        * [r68559] CMakeLists.txt:
+          Try using exec_program to check for umask. execute_process is a
+          problem on systems without an explicit umask command (i.e. those
+          that let the shell handle it) so a more elaborate test may be
+          needed if CMake removes exec_program (it is deprecated.)
+
+2016-08-02 16:26  starseeker
+
+        * [r68557] regress/repository.sh:
+          The autoheader.cmake script is supposed to contain platform
+          defines, in that it catalogs them.
+
 2016-08-02 15:31  starseeker
 
 	* [r68553] NEWS:
@@ -58,6 +82,24 @@
 
 	* [r68536] TODO, src/libged/lc.c:
 	  Make lc command's -d and -s options match old script behavior.
+
+2016-08-01 20:06  starseeker
+
+        * [r68535] TODO:
+          Not a release blocker, but we need to make metaball input
+          smarter.
+
+2016-08-01 20:02  starseeker
+
+        * [r68534] NEWS, src/libged/typein.c:
+          Don't attempt to assign a metaball point unless we have enough
+          args. Reported by Josh Baker.
+
+2016-08-01 19:33  starseeker
+
+        * [r68533] TODO:
+          Can't reproduce original issue, plus over 10000 commits ago so
+          getting hard to build.
 
 2016-07-29 19:50  starseeker
 
@@ -344,6 +386,12 @@
 	  within a given tolerance. this helps the solidity detection work
 	  but is slower (hence off by default).
 
+2016-07-21 20:31  brlcad
+
+        * [r68457] AUTHORS:
+          note the 2013 doc camp team (save for sean and cliff which
+          already have core status) under documentation.
+
 2016-07-21 16:25  starseeker
 
 	* [r68448] src/rt/opt.c:
@@ -437,6 +485,18 @@
 
 	* [r68397] misc/CMake/BRLCAD_Summary.cmake:
 	  Don't print html twice.
+
+2016-07-15 18:45  starseeker
+
+        * [r68322] include/bg.h, include/bn/dvec.h, include/bn/plot3.h,
+          include/bn/spm.h, include/dm/bview.h, include/dm/dm-design.h,
+          include/dm/dm_xvars.h, include/optical/light.h,
+          include/optical/plastic.h, include/optical/shadefuncs.h,
+          include/optical/shadework.h, include/rt/arb_edit.h,
+          include/rt/db4.h, include/rt/db5.h, include/rt/func.h,
+          include/rt/nurb.h, include/rt/tie.h:
+          Fix some headers whose guards didn't match convention after
+          getting moved around.
 
 2016-07-11 20:29  starseeker
 
