@@ -39,10 +39,7 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
     size_t i;
     struct analyze_raydiff_results *results;
     struct bn_tol tol = {BN_TOL_MAGIC, BN_TOL_DIST, BN_TOL_DIST * BN_TOL_DIST, 1.0e-6, 1.0 - 1.0e-6 };
-/* these get set in the while and used immediately after, but the use is commented out.
-    int left_dbip_specified = 0;
-    int right_dbip_specified = 0;
-*/
+
     int do_diff_raytrace = 0;
     int view_left = 0;
     int view_right = 0;
@@ -126,27 +123,8 @@ ged_gdiff(struct ged *gedp, int argc, const char *argv[])
      *
      * When there is a current .g environment and two additional .g files are
      * specified, the argv environments will override use of the "current" .g environment.
-
-!!! If this is uncommented, uncomment the left_dbip_specified and right_dbip_specified
-!!! definitions, as well as where they're set in the getopt while()
-     if ((argc - bu_optind) == 2) {
-	 bu_log("left: %s", argv[bu_optind]);
-	 bu_log("right: %s", argv[bu_optind+1]);
-     } else {
-	if ((argc - bu_optind) == 1) {
-	    if (left_dbip_specified || right_dbip_specified)
-		bu_log("obj_name: %s", argv[bu_optind]);
-	} else {
-	    bu_vls_printf(gedp->ged_result_str, "Usage: %s", gdiff_usage());
-	    return GED_ERROR;
-	}
-     }
      */
 
-/*
-    bu_log("left: %s", argv[bu_optind]);
-    bu_log("right: %s", argv[bu_optind+1]);
-    */
     if (do_diff_raytrace) {
 	if (db_lookup(gedp->ged_wdbp->dbip, left_obj, LOOKUP_NOISY) == RT_DIR_NULL) {
 	    return GED_ERROR;

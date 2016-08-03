@@ -1302,7 +1302,8 @@ data_dump(struct ged *gedp, FILE *fp)
 		  bu_vls_printf(gedp->ged_result_str, "data_dump: bad FILE fp\n");
 		  return GED_ERROR;
 		}
-		break;
+
+	    break;
 	case OTYPE_SAT:
 	    break;
 	case OTYPE_STL:

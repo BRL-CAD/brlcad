@@ -281,7 +281,7 @@ db_apply_state_from_comb(struct db_tree_state *tsp, const struct db_full_path *p
 	if (tsp->ts_sofar & TS_SOFAR_REGION) {
 	    if ((tsp->ts_sofar&(TS_SOFAR_MINUS|TS_SOFAR_INTER)) == 0) {
 		char *sofar = db_path_to_string(pathp);
-		bu_log("Warning:  region unioned into region at '%s', lower region info ignored\n",
+		bu_log("WARNING: region unioned into region at '%s', lower region info ignored\n",
 		       sofar);
 		bu_free(sofar, "path string");
 	    }
@@ -2321,8 +2321,8 @@ rt_shader_mat(
     RT_CK_RTI(rtip);
     RT_CK_RESOURCE(resp);
 
-    reg_name = (char *)bu_calloc(strlen(rp->reg_name), sizeof(char), "rt_shader_mat reg_name");
-    bu_basename(reg_name, rp->reg_name);
+    reg_name = bu_basename(rp->reg_name, NULL);
+
     /* get model-to-region space mapping */
     if (db_region_mat(model_to_region, rtip->rti_dbip, rp->reg_name, resp) < 0) {
 	bu_free(reg_name, "reg_name free");

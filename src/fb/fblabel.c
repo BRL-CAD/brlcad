@@ -122,12 +122,13 @@ int
 bitx(char *bitstring, int posn)
 {
     for (; posn >= 8; posn -= 8, bitstring++);
+
 #if defined(CANT_DO_ZERO_SHIFT)
     if (posn == 0)
 	return (int) (*bitstring) & 1;
-    else
 #endif
-	return (int) (*bitstring) & (1 << posn);
+
+    return (int) (*bitstring) & (1 << posn);
 }
 
 

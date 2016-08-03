@@ -77,6 +77,7 @@ endmacro()
 # Now that the macros are defined, we can add tclscript subdirs
 add_subdirectory(archer)
 add_subdirectory(boteditor)
+add_subdirectory(checker)
 add_subdirectory(geometree)
 add_subdirectory(igraph)
 add_subdirectory(hv3)

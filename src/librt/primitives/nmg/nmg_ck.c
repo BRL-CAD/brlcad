@@ -515,15 +515,26 @@ nmg_vfu(const struct bu_list *hp, const struct shell *s)
 	    bu_bomb("nmg_vfu() faceuse mate spurns faceuse!\n");
 
 	switch (fu->orientation) {
-	    case OT_NONE	: break;
-	    case OT_SAME	: if (fu->fumate_p->orientation != OT_OPPOSITE)
-		bu_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
+	    case OT_NONE:
 		break;
-	    case OT_OPPOSITE:  if (fu->fumate_p->orientation != OT_SAME)
+
+	    case OT_SAME:
+		if (fu->fumate_p->orientation != OT_OPPOSITE)
+		    bu_bomb("nmg_vfu() faceuse of \"SAME\" orientation has mate that is not \"OPPOSITE\" orientation\n");
+
+		break;
+	    case OT_OPPOSITE:
+		if (fu->fumate_p->orientation != OT_SAME)
 		    bu_bomb("nmg_vfu() faceuse of \"OPPOSITE\" orientation has mate that is not \"SAME\" orientation\n");
+
 		break;
-	    case OT_UNSPEC	: break;
-	    default		: bu_bomb("nmg_vfu() unknown faceuse orientation\n"); break;
+
+	    case OT_UNSPEC:
+		break;
+
+	    default:
+		bu_bomb("nmg_vfu() unknown faceuse orientation\n");
+		break;
 	}
 
 	NMG_CK_FACE(fu->f_p);

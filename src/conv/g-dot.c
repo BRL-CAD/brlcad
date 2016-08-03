@@ -334,10 +334,9 @@ main(int ac, char *av[])
 	ged_title(gp, 1, title);
 	bu_vls_printf(&vp, "%s\\n", bu_vls_addr(gp->ged_result_str));
 	if (!(av[0][0] == '-' && av[0][1] == '\0')) {
-	    char *base = (char *)bu_calloc(strlen(av[0]), sizeof(char), "g-dot base");
-	    bu_basename(base, av[0]);
+	    char base[MAXPATHLEN] = {0};
+	    bu_basename(av[0], base);
 	    bu_vls_printf(&vp, "%s ", base);
-	    bu_free(base, "free basename");
 	}
 	bu_vls_printf(&vp, "BRL-CAD Geometry Database");
 	dot_header(out, bu_vls_addr(&vp));

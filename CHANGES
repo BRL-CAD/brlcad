@@ -246,8 +246,6 @@ include/raytrace.h librt
 	RT_FREE_TREE -> BU_PUT [deprecation 7.22]
 include/bu.h
 	bu_parse_mm() [deprecated 7.22]
-librtserver
-	becoming stand-alone project, removes optional java dependency [deprecated 7.22]
 mged
 	em, e_muves, l_muves, lm, read_muves, and t_muves MUVES-specific commands [deprecated 7.22]
 
@@ -394,7 +392,7 @@ Dunn camera and Canon printer tools
 genptr_t/GENPTR_NULL
 	genptr_t -> void* [deprecated 7.16]
 include/bu.h
-	bu_argv0() -> bu_basename(bu_argv0_full_path()); [deprecated 7.16]
+	bu_argv0() -> bu_basename(bu_argv0_full_path(), NULL) [deprecated 7.16]
 include/dm_color.h
 	dm_color.h -> dm.h [deprecated 7.14]
 include/fb.h
@@ -1210,3 +1208,5 @@ s/bu_dir_list/bu_file_list/g
 	bu_dir_list -> bu_file_list [7.25]
 s/BU_FNMATCH_NOMATCH/1/g
 	don't use an explicit define for the non-matching case [7.25]
+s/bu_basename\(([^\)]*)\)/bu_basename(\1, NULL)/g
+	pass NULL argument to get a dynamically allocated buffer back [7.25]

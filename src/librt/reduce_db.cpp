@@ -150,9 +150,6 @@ struct Combination {
     struct Member {
 	Member(directory &dir, int operation, const fastf_t *matrix);
 
-	bool operator==(const Member &other) const;
-	bool operator!=(const Member &other) const;
-
 	directory *m_dir;
 	int m_operation;
 	mat_t m_matrix;
@@ -292,26 +289,6 @@ Combination::Member::Member(directory &dir, int operation,
 	MAT_COPY(m_matrix, matrix);
     else
 	MAT_IDN(m_matrix);
-}
-
-
-bool
-Combination::Member::operator==(const Member &other) const
-{
-    if (m_dir != other.m_dir || m_operation != other.m_operation)
-	return false;
-
-    bn_tol tol;
-    BN_TOL_INIT(&tol);
-    rt_tol_default(&tol);
-    return bn_mat_is_equal(m_matrix, other.m_matrix, &tol);
-}
-
-
-bool
-Combination::Member::operator!=(const Member &other) const
-{
-    return !operator==(other);
 }
 
 

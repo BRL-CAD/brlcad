@@ -41,6 +41,8 @@
 #include "raytrace.h"
 #include "wdb.h"
 
+__BEGIN_DECLS
+
 /**
  * these variables control the "behavior" of this program's output:
  *
@@ -247,42 +249,32 @@
  */
 #define RADIAN(x) ((x) * DEG2RAD)
 
-/*****************/
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+extern void argumentHelp(FILE *fp, char *progname, char *message);
+extern void argumentExamples(FILE *fp, char *progname);
+extern void defaultSettings(FILE *fp);
+extern int parseArguments(int argc, char *argv[]);
+extern void printMatrix(FILE *fp, char *n, mat_t m);
+extern char *getName(const char *base, int id, const char *suffix);
+extern char *getPrePostName(char *prefix, char *base, char *suffix);
 
+extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition);
+extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, vect_t heightvector, vect_t widthvector);
 
-    extern void argumentHelp(FILE *fp, char *progname, char *message);
-    extern void argumentExamples(FILE *fp, char *progname);
-    extern void defaultSettings(FILE *fp);
-    extern int parseArguments(int argc, char *argv[]);
-    extern void printMatrix(FILE *fp, char *n, mat_t m);
-    extern char *getName(const char *base, int id, const char *suffix);
-    extern char *getPrePostName(char *prefix, char *base, char *suffix);
+extern int generatePoles_s(struct rt_wdb *fp, char *polename);
+extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);
 
-    extern int generateFence_s(struct rt_wdb *fp, char *fencename, point_t startposition, point_t endposition);
-    extern int generateFence(struct rt_wdb *fp, char *fencename, point_t startposition, vect_t heightvector, vect_t widthvector);
+extern int generateMesh_s(struct rt_wdb *fp, char *meshname);
+extern int generateMesh(struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector);
 
-    extern int generatePoles_s(struct rt_wdb *fp, char *polename);
-    extern int generatePoles(struct rt_wdb *fp, char *polename, point_t startposition, vect_t heightvector, vect_t widthvector, double radius);
+extern int generateWire_s(struct rt_wdb *fp, char *wirename, point_t position);
+extern int generateWire(struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength);
 
-    extern int generateMesh_s(struct rt_wdb *fp, char *meshname);
-    extern int generateMesh(struct rt_wdb *fp, char *meshname, point_t startposition, vect_t heightvector, vect_t widthvector);
+extern int createWire(struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation);
 
-    extern int generateWire_s(struct rt_wdb *fp, char *wirename, point_t position);
-    extern int generateWire(struct rt_wdb *fp, char *wirename, point_t position, vect_t heightvector, vect_t widthvector, double radius, double angle, double wiresegmentlength);
-
-    extern int createWire(struct rt_wdb *fp, char *segmentname, vect_t heightvector, vect_t widthvector, double radius, double angle, double segmentlength, double segmentdepthseparation);
-
-
-#ifdef __cplusplus
-}
-#endif
+__END_DECLS
 
 #endif /* SHAPES_FENCE_H */
-
 
 /*
  * Local Variables:

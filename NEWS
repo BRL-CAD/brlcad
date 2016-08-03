@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* upgraded libpng to version 1.6.23 - Cliff Yapp
 * upgraded freetype to version 2.6.5 - Cliff Yapp
 * upgraded zlib to version 1.2.8 - Cliff Yapp
 
@@ -29,6 +30,7 @@ seamless transitioning and mixing of boundary representation geometry
 (e.g., NURBS or polygonal meshes) with implicit representation
 geometry (e.g., primitives with CSG).
 
+* fixed bad args crash in metaball 'in' command - Cliff Yapp
 * added manual page for lt comb child listing command - Cliff Yapp
 * added lt -c option for specifying separation character - Bob Parker
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
@@ -48,6 +50,16 @@ geometry (e.g., primitives with CSG).
 * extended nirt to list current and available formats - Sean Morrison
 * fixed NURBS wireframe drawing crash - Cliff Yapp
 * fixed firing of single rays using the rtshot tool - Sean Morrision
+* removed pixread.sh, pixwrite.sh; obsolete hardware - Sean Morrison
+* removed cray.sh and sgisnap.sh; obsolete hardware - Sean Morrison
+* removed cadbug.sh - use sourceforge tracker - Sean Morrison
+* removed any-png.sh - use pix tools - Sean Morrison
+* removed librtserver interface - Cliff Yapp
+* removed MGED per_line command - Sean Morrison
+* updated MGED tops command: default to -g -u behavior- Sean Morrison
+* removed MGED -n option; use -c instead - Sean Morrison
+* removed MGED commands pl, pov and polybinout - Sean Morrison
+* removed UtahRLE image tools - Cliff Yapp
 * improved rcodes command feedback in the no changes case - Cliff Yapp
 * added brlman -S option to specify man page section  - Cliff Yapp
 * modified rtg3 to avoid outputting excessive LOS - Nick Gerstner
@@ -65,6 +77,7 @@ geometry (e.g., primitives with CSG).
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
 * minor rtwizard graphical user interface reorganization - Cliff Yapp
+* fixed rtwizard edge and ghosted image bug on Windows - Bob Parker
 * ported 'brlman' manual page viewer with GUI to Windows - Cliff Yapp
 * added gdiff -h help command-line option - Cliff Yapp
 * added facetize -m marching cubes option - Erik Greenwald
@@ -76,6 +89,7 @@ geometry (e.g., primitives with CSG).
 * added new algorithm to bot_decimate (via -f option) - Jon Engbert
 * fixed benchmark bug running from paths with spaces - Sean Morrison
 * fixed adjust command crash when working with BoTs - Daniel Roßberg
+* removed fb-orle, orle-fb, orle-pix, and pix-orle tools - Cliff Yapp
 * removed support for RLE v1 and v2 ('orle') image format - Cliff Yapp
 * fixed datum type 'in' command unit conversion bug - Cliff Yapp
 * fixed rpatch / patch-g line handling on Windows - Daniel Roßberg
@@ -87,15 +101,19 @@ geometry (e.g., primitives with CSG).
 * improved point cloud plot visualization - Sean Morrison
 * fixed program freezing bug in MGED grouper command - Bob Parker
 * added 'rhc' reporting to analyze command - Kalpit Thakkar
-* improved help option consistency across numerous tools - Carl Moore
+* improved command option and manual page consistency - Carl Moore
 * added prefatory FASTGEN4 geometry export support - Jon Engbert
+* added FASTGEN4 illegal thickness CCONE1 entity import - Cliff Yapp
+* improved help message for 'tire' command - Cliff Yapp, Carl Moore
 * improved option parsing and output options for gencolor - Carl Moore
 * fixed saveview usage help string and running from archer - Nick Reed
 * fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
+* fixed duplicate name errors in dbconcat - Daniel Roßberg
 * modernized documents and improved infrastructure - Hitesh Sofat
 * added mirroring support for hrt primitive objects - Isaac Kamga
+* added manual page documenting the STEP geometry format - Cliff Yapp
 * ported the mged Overlap Tool to Windows - Sean Morrison
 * improved NURBS prep performance for UV-remapped surfaces - Nick Reed
 * fixed dbconcat -c crash when color table does not exist - Nick Reed
@@ -104,6 +122,7 @@ geometry (e.g., primitives with CSG).
 * updated libregex to apply a fix for CVE-2015-2305 - Cliff Yapp
 * upgraded libpng to version 1.6.20 - Cliff Yapp
 * added command window option for pasting tree view paths - Nick Reed
+* improved 'bb' command digits and units output - Keith Bowman
 * improved robustness of bb command oriented box option - Peter Amidon
 * added example NURBS B-Rep geometry files from NIST - Cliff Yapp
 * removed "high resolution" options from all commands - Carl Moore
@@ -129,12 +148,15 @@ geometry (e.g., primitives with CSG).
 * renamed 'make_bb' mged command name to 'bb' - Cliff Yapp
 * added g-ply exporter for Stanford PLY geometry format - Rishub Jain
 * added ply-g importer for Stanford PLY geometry format - Rishub Jain
+* improved rtedge help option output - Carl Moore
 * fixed texture mapping crash with bad image dimensions - Ștefan Mirea
 * fixed g2asc and asc2g handling of dsp primitive - Cliff Yapp
 * rewrote gdiff with improved output & reporting options - Cliff Yapp
 * fixed pix-ps -S -W -N output size options being ignored - Carl Moore
 * fixed crash exporting mixed mode merged BoT meshes - Sean Morrison
 * fixed submodel primitive crash - Cliff Yapp, Sean Morrison
+* added fbclear command to archer - Bob Parker
+* improved rtwizard command-line mode manual page docs - Cliff Yapp
 * support non-.g file import in Archer's file open dialog - Cliff Yapp
 * added brep support to g2asc and asc2g - Cliff Yapp
 * fixed a CPU affinity locking bug on Linux platforms - Sean Morrison
@@ -152,22 +174,33 @@ geometry (e.g., primitives with CSG).
 * fixed memory leaks in a number of pix utilities - Cezar Elnazli
 * improved NURBS ray tracing & tessellation robustness - Keith Bowman
 * improved step-g NURBS geometry import robustness - Keith Bowman
+* added -f vertex fuse option to obj-g importer - Jon Engbert
 * added -v verbose output option to mged 'search' command - Cliff Yapp
 * fixed g_lint and pixcount red-black tree memory leaks - Tom Browder
+* added conversion time reporting to step-g importer - Keith Bowman
 * fixed crash of extrude with special case bezier curves - huskmate13
 * improved performance of 'terrain' & numerous shaders - Sean Morrison
 * new manual pages for rtexample and brep_simple - Shardul Chiplunkar
 * added key binding to reopen/focus mged command window - Emory Huff
 * added menu option to restore mged command window - Cezar Elnazli
+* improved DocBook documentation output formatting
+	- David Wood, Yatharth Agarwal
+* added 'search' -params option for geometric parameters - Cliff Yapp
 * search command now recognizes hyp and metaball types - Cliff Yapp
+* improved spec formatting, added v5 timestamp proposal - Tom Browder
+* improved search command documentation examples - Cliff Yapp
+* improved archer interface's behavior on start-up - Nick Reed
 * added -depth option to mged 'search' command - Cliff Yapp
 * initial support for rigging joints and constrained articulation
 	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
+* improved support for sub-millimeter (tiny) meshes - Keith Bowman
 * added comb -S option to stop when object already exists - Cliff Yapp
 * improved comb command documentation with many examples - Cliff Yapp
 * implemented new 'hrt' heart-shaped primitive object - Isaac Kamga
+* added support for multicore / SMP ray tracing on Windows
+	- Adrián Calle, Arjun Govindjee, Daniel Roßberg, Sean Morrison
 
 
 ----------------------------------------------------------------------

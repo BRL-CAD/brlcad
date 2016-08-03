@@ -233,7 +233,7 @@ handle_format_part(const int vp_part, vflags_t *f, const char c, const int print
 		default:
 		    if (print)
 			fprintf(stderr, "Unhandled flag '%c'.\n", c);
-			status = 0;
+		    status = 0;
 		    break;
 	    }
 	    break;

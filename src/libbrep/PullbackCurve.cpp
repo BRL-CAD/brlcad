@@ -3185,8 +3185,8 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
     const ON_Surface *surface1 = face1->SurfaceOf();
     const ON_Surface *surface2 = face2->SurfaceOf();
     bool removeTrimmed = false;
-    brlcad::SurfaceTree *st1 = new brlcad::SurfaceTree(face1, removeTrimmed);
-    brlcad::SurfaceTree *st2 = new brlcad::SurfaceTree(face2, removeTrimmed);
+    brlcad::SurfaceTree st1(face1, removeTrimmed);
+    brlcad::SurfaceTree st2(face2, removeTrimmed);
 
     ON_Curve *curve = brep->m_C3[edge->m_c3i];
     double t0, t1;
@@ -3236,9 +3236,9 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 		    double dist;
 		    while (!found) {
 			ON_2dPoint uv;
-			if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			if (st1.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 			    ps1 = surface1->PointAt(uv.x, uv.y);
-			    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			    if (st2.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 				ps2 = surface2->PointAt(uv.x, uv.y);
 			    }
 			}
@@ -3272,9 +3272,9 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 
 	    while (!found) {
 		ON_2dPoint uv;
-		if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+		if (st1.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 		    ps1 = surface1->PointAt(uv.x, uv.y);
-		    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+		    if (st2.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 			ps2 = surface2->PointAt(uv.x, uv.y);
 		    }
 		}
@@ -3311,9 +3311,9 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 
 		    while (!found) {
 			ON_2dPoint uv;
-			if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			if (st1.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 			    ps1 = surface1->PointAt(uv.x, uv.y);
-			    if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			    if (st2.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 				ps2 = surface2->PointAt(uv.x, uv.y);
 			    }
 			}
@@ -3346,9 +3346,9 @@ refit_edge(const ON_BrepEdge* edge, double UNUSED(tolerance))
 
 		while (!found) {
 		    ON_2dPoint uv;
-		    if (st1->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+		    if (st1.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 			ps1 = surface1->PointAt(uv.x, uv.y);
-			if (st2->getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
+			if (st2.getSurfacePoint((const ON_3dPoint&) point, uv, (const ON_3dPoint&) knudgepoint, edge_tolerance) > 0) {
 			    ps2 = surface2->PointAt(uv.x, uv.y);
 			}
 		    }
