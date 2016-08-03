@@ -27,8 +27,8 @@
  * this message goes away.
  *
  */
-#ifndef RTFUNC_H
-#define RTFUNC_H
+#ifndef RT_FUNC_H
+#define RT_FUNC_H
 
 #include "common.h"
 
@@ -179,7 +179,7 @@ RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *pla
 
 __END_DECLS
 
-#endif  /* RTFUNC_H */
+#endif  /* RT_FUNC_H */
 
 /** @} */
 

@@ -283,6 +283,41 @@ bolster those areas, and identifies specific actionable objectives.
      0 for tasks less than 2 days.
 
 
+* Strategic Strengths
+** project
+*** open source
+*** cross-platform
+*** free software
+*** 30-years of development
+*** massive investment
+*** extensive API
+*** extensive documentation
+** code
+*** extensively modular
+*** scalability
+*** embeddable
+*** efficient workflow
+*** flexible workflow
+*** DoD-accreddited
+*** integrated into MUVES, AJEM, COVART
+** modeling
+*** hybrid representation system
+*** wide variety of supported entities
+*** csg, nurbs, triangles, volumes, point clouds
+*** scriptable geometry
+*** procedural geometry
+*** geometry conversion
+*** geometry editing
+** analysis
+*** geometry v&v
+*** geometry preparation
+*** joint articulation system
+*** physics simulation system
+*** ray tracing performance
+*** analytic ray tracing
+*** solid ray tracing
+*** geometry visualization
+
 # Local Variables:
 # mode: org
-     # End:
+# End:

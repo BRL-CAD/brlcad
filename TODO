@@ -18,15 +18,12 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* regressed behavior in mged and archer: they seem to be defaulting
-  objects to black instead of white/gray.  wireframes and default
-  black-background rendering make newly created objects practically
-  invisible.
-
-* check these commits for documentation:
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* metaball in command input needs sanity checks and better
+  validation.
 
 * brep compilation must not be optional
 
