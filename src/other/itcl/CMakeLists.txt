@@ -100,6 +100,13 @@ add_definitions(-DSTDC_HEADERS=1)
 # We're building Itcl
 add_definitions(-DBUILD_itcl)
 
+# Use fPIC if we have it
+include(CheckCCompilerFlag)
+check_c_compiler_flag(-fPIC HAVE_PIC_COMPILER_FLAG)
+if(HAVE_PIC_COMPILER_FLAG)
+  add_definitions(-fPIC)
+endif(HAVE_PIC_COMPILER_FLAG)
+
 #--------------------------------------------------------------------
 # Header checks.
 #--------------------------------------------------------------------
