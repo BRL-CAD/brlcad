@@ -593,11 +593,24 @@ function(check_umask umask_val status_var)
     set(${status_var} 1 PARENT_SCOPE)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
 endfunction(check_umask)
+
 # Note - umask is not always an executable, so we can't use find_program
 # to determine whether the umask check is appropriate.
-exec_program(umask OUTPUT_VARIABLE have_umask)
-if(NOT "${have_umask}" STREQUAL "")
-  exec_program(umask ARGS -S OUTPUT_VARIABLE umask_curr)
+find_program(UMASK_EXEC umask)
+if(NOT UMASK_EXEC)
+  # If we don't have a umask cmd, see if sh -c "umask -S" works
+  execute_process(COMMAND sh -c "umask -S" OUTPUT_VARIABLE umask_out)
+  # Check if we've got something that looks like a umask output
+  if("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+    set(UMASK_EXEC sh)
+    set(UMASK_EXEC_ARGS -c "umask -S")
+  endif("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+else(NOT UMASK_EXEC)
+  set(UMASK_EXEC_ARGS -S)
+endif(NOT UMASK_EXEC)
+
+if(UMASK_EXEC)
+  execute_process(COMMAND ${UMASK_EXEC} ${UMASK_EXEC_ARGS} OUTPUT_VARIABLE umask_curr)
   string(STRIP "${umask_curr}" umask_curr)
   check_umask("${umask_curr}" UMASK_OK)
   if(NOT UMASK_OK)
@@ -607,7 +620,7 @@ if(NOT "${have_umask}" STREQUAL "")
       execute_process(COMMAND ${SLEEP_EXEC} 1)
     endif(SLEEP_EXEC)
   endif(NOT UMASK_OK)
-endif(NOT "${have_umask}" STREQUAL "")
+endif(UMASK_EXEC)
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
