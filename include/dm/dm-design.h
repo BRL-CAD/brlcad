@@ -204,13 +204,7 @@ DM_EXPORT extern int   dm_set_type(dm_s *dmp, int dm_t);
 DM_EXPORT extern int   dm_get_image(dm_s *dmp, icv_image_t *image);
 DM_EXPORT extern int   dm_get_obj_image(dm_s *dmp, const char *handle, icv_image_t *image);
 
-<<<<<<< .working
-#endif /* DM_H */
-||||||| .merge-left.r68321
-#endif /* DM_DESIGN_H */
-=======
 #endif /* DM_DM_DESIGN_H */
->>>>>>> .merge-right.r68322
 
 /** @} */
 /*
