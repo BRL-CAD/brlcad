@@ -22,6 +22,8 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
+* fix MGED LODdialog under Tools->LOD Configuration
+
 * metaball in command input needs sanity checks and better
   validation.
 
