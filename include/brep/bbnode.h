@@ -65,7 +65,7 @@ extern "C++" {
 	/**
 	 * Bounding Box Hierarchy Node
 	 */
-	class BREP_EXPORT BBNode {
+	class BREP_EXPORT BBNode : public Arena<BBNode>::Object {
 	    public:
 		explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 		BBNode(const CurveTree *ct,
@@ -76,7 +76,7 @@ extern "C++" {
 			bool trimmed);
 		~BBNode();
 
-		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree);
+		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, Arena<BBNode> &arena);
 		void serialize(ON_BinaryArchive &archive) const;
 
 		/** Test if this node is a leaf node in the hierarchy */

@@ -58,7 +58,7 @@ extern "C++" {
 		explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 		~SurfaceTree();
 
-		SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
+		SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face, Arena<BBNode> &bbnode_arena, Arena<BRNode> &brnode_arena);
 		void serialize(ON_BinaryArchive &archive) const;
 
 		BBNode *getRootNode() const;

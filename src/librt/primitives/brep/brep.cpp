@@ -524,7 +524,7 @@ std::map<std::size_t, uintmax_t> MallocSizes::histogram;
 
 
 int
-brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
+brep_build_bvh(struct brep_specific* bs, const std::string &cache_path, Arena<BBNode> &bbnode_arena)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -542,12 +542,16 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 #endif
     }
 
+    // experimental
+    // destroyed after prep, so the prep cannot be used
+    Arena<BRNode> brnode_arena;
+
     /* Initialize the top level Bounding Box node for the entire
      * surface tree.  The purpose of this node is to provide a parent
      * node for the trees to be built on each BREP component surface.
      * This takes no time.
      */
-    bs->bvh = new BBNode(brep->BoundingBox());
+    bs->bvh = new(bbnode_arena) BBNode(brep->BoundingBox());
 
     ON_BrepFaceArray& faces = brep->m_F;
     size_t faceCount = faces.Count();
@@ -623,8 +627,8 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
 	}
 
 	//MallocSizes::enable();
-	for (std::size_t i = 0; i < faceCount; ++i)
-	    bbbp.faces[i] = new SurfaceTree(*archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
+for (std::size_t i = 0; i < faceCount; ++i)
+	    bbbp.faces[i] = new SurfaceTree(*archive, *brep->m_F.At(static_cast<ON__UINT64>(i)), bbnode_arena, brnode_arena);
 	//MallocSizes::disable();
 	//MallocSizes::print_histogram();
 
@@ -714,7 +718,8 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
 	for (int i = 0; i < 16; ++i)
 	    cache_path << '_' << stp->st_matp[i];
 
-    if (brep_build_bvh(bs, cache_path.str()) < 0) {
+    Arena<BBNode> bbnode_arena; // destroyed after prep, so prep can't be used
+    if (brep_build_bvh(bs, cache_path.str(), bbnode_arena) < 0) {
 	return -1;
     }
     //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);

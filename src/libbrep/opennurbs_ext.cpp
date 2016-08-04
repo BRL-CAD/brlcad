@@ -259,9 +259,9 @@ CurveTree::~CurveTree()
 }
 
 
-CurveTree::CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
+CurveTree::CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face, Arena<BRNode> &brnode_arena) :
     m_face(&face),
-    m_root(archive, *m_face->Brep()),
+    m_root(archive, *m_face->Brep(), brnode_arena),
     m_sortedX(),
     m_sortedX_indices(NULL)
 {
@@ -712,11 +712,11 @@ SurfaceTree::~SurfaceTree()
 }
 
 
-SurfaceTree::SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
-    m_ctree(new CurveTree(archive, face)),
+SurfaceTree::SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face, Arena<BBNode> &bbnode_arena, Arena<BRNode> &brnode_arena) :
+    m_ctree(new CurveTree(archive, face, brnode_arena)),
     m_removeTrimmed(true),
     m_face(&face),
-    m_root(new BBNode(archive, *m_ctree)),
+    m_root(new(bbnode_arena) BBNode(archive, *m_ctree, bbnode_arena)),
     m_f_queue()
 {
     if (!archive.ReadBool(&m_removeTrimmed))

@@ -38,6 +38,7 @@
 __BEGIN_DECLS
 
 extern "C++" {
+#include <stack>
 
     BREP_EXPORT bool ON_NearZero(double x, double tolerance = ON_ZERO_TOLERANCE);
 
@@ -92,6 +93,73 @@ extern "C++" {
 
 
     BREP_EXPORT void set_key(struct bu_vls *key, int k, int *karray);
+
+
+    // placeholder Arena implementation for experimental timings
+    template <typename T>
+    class Arena
+    {
+	public:
+	    class Object
+	    {
+		public:
+		    static void *operator new(std::size_t UNUSED(size))
+		    {
+			// get things compiling; shouldn't be used in the experiments
+			throw std::bad_alloc();
+		    }
+
+
+		    static void *operator new(std::size_t size, Arena<T> &arena)
+		    {
+			if (UNLIKELY(size != sizeof(T)))
+			    throw std::bad_alloc();
+
+			return arena.get();
+		    }
+
+
+		    static void operator delete(void *UNUSED(pointer))
+		    {
+			// destructor has been called
+		    }
+	    };
+
+
+	    explicit Arena() :
+		m_current_block_size(0),
+		m_current_block_capacity(0),
+		m_blocks()
+	{}
+
+
+	    ~Arena()
+	    {
+		while (!m_blocks.empty()) {
+		    ::operator delete(m_blocks.top());
+		    m_blocks.pop();
+		}
+	    }
+
+
+	private:
+	    T *get()
+	    {
+		if (m_current_block_size == m_current_block_capacity) {
+		    m_current_block_size = 0;
+		    m_current_block_capacity = std::max(static_cast<std::size_t>(1024), 2 * m_current_block_capacity);
+		    m_blocks.push(static_cast<T *>(::operator new(sizeof(T) * m_current_block_capacity)));
+		}
+
+		return &m_blocks.top()[m_current_block_size++];
+	    }
+
+
+	    std::size_t m_current_block_size;
+	    std::size_t m_current_block_capacity;
+	    std::stack<T *> m_blocks;
+    };
+
 
 } /* extern C++ */
 
