@@ -61,22 +61,6 @@ package require Itk
 
 ::itcl::body LODDialog::constructor {args} {
 
-    if {$itk_option(-cmdprefix) != ""} {
-	set gedcmd "$itk_option(-cmdprefix) gedCmd"
-    }
-
-    set lodon [lodcmd enabled]
-
-    set pointsScale [format "%.1f" [lodcmd scale points]]
-    set curvesScale [format "%.0f" [lodcmd scale curves]]
-
-    set pointsScale 1.0
-    set curvesScale 1
-
-    if {[lodcmd redraw] == "onzoom"} {
-	set redrawOnZoom 1
-    }
-
     # CREATE WIDGETS
     itk_component add lodFrame {
 	ttk::frame $itk_interior.lodFrame \
@@ -161,7 +145,24 @@ package require Itk
 	    -command "$this redrawOnZoom"
     } {}
 
+# INITIALIZE OPTIONS AND STATE
     eval itk_initialize $args
+
+    if {$itk_option(-cmdprefix) != ""} {
+	set gedcmd "$itk_option(-cmdprefix) gedCmd"
+    }
+
+    set lodon [lodcmd enabled]
+
+    set pointsScale [format "%.1f" [lodcmd scale points]]
+    set curvesScale [format "%.0f" [lodcmd scale curves]]
+
+    set pointsScale 1.0
+    set curvesScale 1
+
+    if {[lodcmd redraw] == "onzoom"} {
+	set redrawOnZoom 1
+    }
 
     disableLODWidgets
 
