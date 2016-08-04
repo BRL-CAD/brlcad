@@ -594,8 +594,9 @@ function(check_umask umask_val status_var)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
 endfunction(check_umask)
 
-# Note - umask is not always an executable, so we can't use find_program
-# to determine whether the umask check is appropriate.
+# Note - umask is not always an executable, so find_program wont' necessarily
+# determine whether the umask check is appropriate.  If we don't find an
+# executable, follow up to see if we can use sh to get the info.
 find_program(UMASK_EXEC umask)
 if(NOT UMASK_EXEC)
   # If we don't have a umask cmd, see if sh -c "umask -S" works
