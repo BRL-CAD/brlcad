@@ -1575,8 +1575,21 @@ else()
   else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     CHECK_C_FLAG("std=gnu89")
   endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  CHECK_CXX_FLAG("std=gnu++98")
+  CHECK_CXX_FLAG("std=gnu++11" VARS CXX11_FLAG)
+  if(NOT CXX11_FLAG)
+    CHECK_CXX_FLAG("std=gnu++0x" VARS CXX11_FLAG)
+    if(NOT CXX11_FLAG)
+      CHECK_CXX_FLAG("std=c++11" VARS CXX11_FLAG)
+      if(NOT CXX11_FLAG)
+	CHECK_CXX_FLAG("std=c++0x" VARS CXX11_FLAG)
+	if(NOT MSVC AND NOT CXX11_FLAG)
+	  message(WARNING "No working C++11 flag found.")
+	endif(NOT MSVC AND NOT CXX11_FLAG)
+      endif(NOT CXX11_FLAG)
+    endif(NOT CXX11_FLAG)
+  endif(NOT CXX11_FLAG)
 endif()
+
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
