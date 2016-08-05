@@ -9256,7 +9256,6 @@ proc title_node_handler {node} {
     puts $_pfile "set mModelAxesTickColor \"$mModelAxesTickColor\""
     puts $_pfile "set mModelAxesTickMajorColor \"$mModelAxesTickMajorColor\""
 
-    puts $_pfile "set mLastSelectedDir \"$mLastSelectedDir\""
     puts $_pfile "set mPerspective $mPerspective"
     puts $_pfile "set mZClipBackMax $mZClipBackMax"
     puts $_pfile "set mZClipFrontMax $mZClipFrontMax"

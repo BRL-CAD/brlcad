@@ -2185,8 +2185,6 @@ namespace eval ArcherCore {
 
     if {$target == ""} {
 	return
-    } else {
-	set mLastSelectedDir [file dirname $target]
     }
 
     if {[file exists $target]} {
@@ -2225,8 +2223,6 @@ namespace eval ArcherCore {
 
     if {$input_target == ""} {
 	return
-    } else {
-	set mLastSelectedDir [file dirname $input_target]
     }
 
     set target [cadwidgets::geom_load $input_target 1]
@@ -5386,6 +5382,8 @@ namespace eval ArcherCore {
     gedCmd data_axes points {}
     gedCmd data_lines points {}
     gedCmd configure -primitiveLabels {}
+
+    set mLastSelectedDir [file dirname $target]
 
     return true
 }
