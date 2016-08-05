@@ -34,7 +34,7 @@ BRNode::~BRNode()
 }
 
 
-BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep, Arena<BRNode> &arena) :
+BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
     m_node(),
     m_v(),
     m_adj_face_index(-99),
@@ -69,7 +69,7 @@ BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep, Arena<BRNode> &ar
     m_children.resize(num_children);
 
     for (std::vector<const BRNode *>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-	*it = new(arena) BRNode(archive, brep, arena);
+	*it = new BRNode(archive, brep);
 
     int face_index;
     if (!archive.ReadInt(&face_index))

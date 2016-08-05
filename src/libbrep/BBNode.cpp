@@ -34,7 +34,7 @@ BBNode::~BBNode()
 }
 
 
-BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, Arena<BBNode> &arena) :
+BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree) :
     m_node(),
     m_u(),
     m_v(),
@@ -53,7 +53,7 @@ BBNode::BBNode(ON_BinaryArchive &archive, const CurveTree &ctree, Arena<BBNode> 
     m_children.resize(num_children);
 
     for (std::vector<BBNode *>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-	*it = new(arena) BBNode(archive, ctree, arena);
+	*it = new BBNode(archive, ctree);
 
     if (!archive.ReadBoundingBox(m_node) || !archive.ReadInterval(m_u)
 	    || !archive.ReadInterval(m_v) || !archive.ReadBool(&m_checkTrim)

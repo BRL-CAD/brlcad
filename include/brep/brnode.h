@@ -51,7 +51,7 @@ extern "C++" {
 	/**
 	 * Bounding Rectangle Hierarchy
 	 */
-	class BREP_EXPORT BRNode : public Arena<BRNode>::Object {
+	class BREP_EXPORT BRNode : public HeapObject<BRNode> {
 	    public:
 		explicit BRNode(const ON_BoundingBox &node);
 		BRNode(const ON_Curve *curve,
@@ -65,7 +65,7 @@ extern "C++" {
 			bool trimmed);
 		~BRNode();
 
-		BRNode(ON_BinaryArchive &archive, const ON_Brep &brep, Arena<BRNode> &arena);
+		BRNode(ON_BinaryArchive &archive, const ON_Brep &brep);
 		void serialize(ON_BinaryArchive &archive) const;
 
 		/** Node management functions */

@@ -52,7 +52,7 @@ extern "C++" {
 		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
 
-		CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face, Arena<BRNode> &brnode_arena);
+		CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
 		void serialize(ON_BinaryArchive &archive) const;
 		std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
 		std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
