@@ -1,11 +1,11 @@
-set(pl-dm_TCLSCRIPTS
+set(plot3-dm_TCLSCRIPTS
   bindings.tcl
   help.tcl
   menu.tcl
   )
-BRLCAD_ADDDATA(pl-dm_TCLSCRIPTS tclscripts/pl-dm)
-pkgIndex_BUILD(tclscripts/pl-dm)
-tclIndex_BUILD(tclscripts/pl-dm)
+BRLCAD_ADDDATA(plot3-dm_TCLSCRIPTS tclscripts/plot3-dm)
+pkgIndex_BUILD(tclscripts/plot3-dm)
+tclIndex_BUILD(tclscripts/plot3-dm)
 
 # Local Variables:
 # tab-width: 8
