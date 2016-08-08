@@ -48,7 +48,7 @@ if(NOT DEFINED SOURCE_DIR)
 endif(NOT DEFINED SOURCE_DIR)
 
 if(NOT EXISTS ${SOURCE_DIR}/include/common.h)
-  message(FATAL_ERROR "Unable to find include/common.h in ${SOURCE_DIR}, aborting")
+  message(WARNING "Unable to find include/common.h in ${SOURCE_DIR}, this scan is almost certainly not testing the full BRL-CAD source tree")
 endif(NOT EXISTS ${SOURCE_DIR}/include/common.h)
 
 
@@ -154,6 +154,10 @@ function(public_headers_test)
 	set(STOP_CHECK 0)
 	set(CURR_LINE 1)
 	file(STRINGS "${SOURCE_DIR}/${puhdr}" HDR_STRINGS)
+	string(REPLACE ";;" ";tmp;" HDR_STRINGS "${HDR_STRINGS}")
+	# https://cmake.org/pipermail/cmake/2016-March/063029.html
+	string(REPLACE "[" "--left_bracket--" HDR_STRINGS "${HDR_STRINGS}")
+	string(REPLACE "]" "--right_bracket--" HDR_STRINGS "${HDR_STRINGS}")
 	foreach(HDR_LINE ${HDR_STRINGS})
 	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
 	    message("  ${pvhdr} included in ${puhdr}, line ${CURR_LINE}")
@@ -207,6 +211,10 @@ function(redundant_headers_test phdr hdrlist)
 	set(STOP_CHECK 0)
 	set(CURR_LINE 1)
 	file(STRINGS "${SOURCE_DIR}/${bfile}" HDR_STRINGS)
+	string(REPLACE ";;" ";tmp;" HDR_STRINGS "${HDR_STRINGS}")
+	# https://cmake.org/pipermail/cmake/2016-March/063029.html
+	string(REPLACE "[" "--left_bracket--" HDR_STRINGS "${HDR_STRINGS}")
+	string(REPLACE "]" "--right_bracket--" HDR_STRINGS "${HDR_STRINGS}")
 	foreach(HDR_LINE ${HDR_STRINGS})
 	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
 	    message("  ${shdr} included in ${bfile}, line ${CURR_LINE}")
@@ -265,6 +273,10 @@ function(common_h_order_test)
 	endif(NOT HDR_PRINTED)
 
 	file(STRINGS "${SOURCE_DIR}/${cfile}" FILE_STRINGS)
+	string(REPLACE ";;" ";tmp;" FILE_STRINGS "${FILE_STRINGS}")
+	# https://cmake.org/pipermail/cmake/2016-March/063029.html
+	string(REPLACE "[" "--left_bracket--" FILE_STRINGS "${FILE_STRINGS}")
+	string(REPLACE "]" "--right_bracket--" FILE_STRINGS "${FILE_STRINGS}")
 	set(SYS_LINE 0)
 	set(COMMON_LINE 0)
 	set(CURR_LINE 0)
@@ -295,6 +307,10 @@ function(common_h_order_test)
 
       # This time, we just need to know where the first system header is.
       file(STRINGS "${SOURCE_DIR}/${cfile}" FILE_STRINGS)
+      string(REPLACE ";;" ";tmp;" FILE_STRINGS "${FILE_STRINGS}")
+      # https://cmake.org/pipermail/cmake/2016-March/063029.html
+      string(REPLACE "[" "--left_bracket--" FILE_STRINGS "${FILE_STRINGS}")
+      string(REPLACE "]" "--right_bracket--" FILE_STRINGS "${FILE_STRINGS}")
       set(SYS_LINE 0)
       set(CURR_LINE 0)
       foreach(FILE_LINE ${FILE_STRINGS})
@@ -358,10 +374,90 @@ function(api_usage_test func)
 
 endfunction(api_usage_test func)
 
+function(platform_symbol_usage_test)
+
+  CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
+
+  # We need both a list of the platform symbols to check
+  # and a regex matching them
+  set(platforms WIN32 _WIN32 WIN64 _WIN64)
+  string(REPLACE ";" "|" p_regex "${platforms}")
+  set(platforms_regex "(${p_regex})")
+
+  # Build the source and include file test set
+  set(ACTIVE_SRC_FILES ${ALLSRCFILES})
+  set(EXEMPT_FILES pstdint.h uce-dirent.h shapefil.h shpopen.c)
+  foreach(ef ${EXEMPT_FILES})
+    list(FILTER ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
+  endforeach(ef ${EXEMPT_FILES})
+
+  # Build the build file test set
+  set(ACTIVE_BLD_FILES ${BLDFILES})
+  set(EXEMPT_FILES repository.cmake)
+  foreach(ef ${EXEMPT_FILES})
+    list(FILTER ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
+  endforeach(ef ${EXEMPT_FILES})
+
+
+
+  # Check all source files
+  foreach(cfile ${ACTIVE_SRC_FILES})
+    file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
+    set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
+    if("${FILE_SRC}" MATCHES "${regex}")
+      message("matched ${cfile}")
+      # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+      set(cline 1)
+      set(working_file "${FILE_SRC}")
+      while(working_file)
+	string(FIND "${working_file}" "\n" POS)
+	math(EXPR POS "${POS} + 1")
+	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	foreach(ptfm ${platforms})
+	  set(pregex "[^a-zA-Z0-9_]${ptfm}[^a-zA-Z0-9_]|^${ptfm}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${ptfm}$")
+	  if("${FILE_LINE}" MATCHES "${pregex}")
+	    #message("  ${cfile}:${cline} ${FILE_LINE}")
+	    string(FIND "${FILE_LINE}" "\n" POS)
+	    string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
+	    list(APPEND ${ptfm}_SRCS_INSTANCES "${cfile}:${cline} ${TRIMMED_LINE}")
+	  endif("${FILE_LINE}" MATCHES "${pregex}")
+	endforeach(ptfm ${platforms})
+	math(EXPR cline "${cline} + 1")
+      endwhile(working_file)
+    endif("${FILE_SRC}" MATCHES "${regex}")
+  endforeach(cfile ${ACTIVE_SRC_FILES})
+
+  foreach(ptfm ${platforms})
+    if(${ptfm}_SRCS_INSTANCES)
+      list(LENGTH ${ptfm}_SRCS_INSTANCES ptfm_len)
+      message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the source files:\n")
+      foreach(ln ${${ptfm}_SRCS_INSTANCES})
+	message("  ${ln}")
+      endforeach(ln ${${ptfm}_SRCS_INSTANCES})
+    endif(${ptfm}_SRCS_INSTANCES)
+  endforeach(ptfm ${platforms})
+
+  # Check all build files
+  foreach(cfile ${ACTIVE_BLD_FILES})
+    file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
+    set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
+    if("${FILE_SRC}" MATCHES "${regex}")
+      message("matched ${cfile}")
+    endif("${FILE_SRC}" MATCHES "${regex}")
+  endforeach(cfile ${ACTIVE_BLD_FILES})
+
+endfunction(platform_symbol_usage_test)
+
+
+
+
+
+
 
 # Run tests
-
-# TEST - public/private header inclusion 
+if(0)
+# TEST - public/private header inclusion
 public_headers_test()
 
 # TEST: make sure bio.h isn't redundant with system headers
@@ -396,7 +492,9 @@ api_usage_test(strncat EXEMPT str.c)
 api_usage_test(strncmp EXEMPT str.c str.h)
 api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
 api_usage_test(unlink)
+endif(0)
 
+platform_symbol_usage_test()
 
 if(REPO_CHECK_FAILED)
   message(FATAL_ERROR "\nRepository check complete, errors found.")
