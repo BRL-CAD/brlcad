@@ -321,9 +321,13 @@ function(common_h_order_test)
 
     else("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+")
 
-      # This time, we just need to know where the first system header is.
+      # If a private header is included before the system header, we will
+      # assume that header handles the common.h requirement.  Otherwise,
+      # there's a problem.
       set(cline 1)
       set(STOP_CHECK 0)
+      set(SYS_LINE 0)
+      set(PRIV_HDR_FIRST 0)
       # We need to go with the while loop + substring approach because
       # file(STRINGS ...) doesn't produce accurate line numbers and has issues
       # with square brackets.  Make sure we always have a terminating newline
@@ -335,23 +339,31 @@ function(common_h_order_test)
 	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
 	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	if(NOT SYS_LINE)
-	  if("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
-	    set(SYS_LINE ${cline})
+	  if("${FILE_LINE}" MATCHES "[# ]+include[ ]+\"")
+	    set(PRIV_HDR_FIRST 1)
 	    set(STOP_CHECK 1)
-	  endif("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
+	  else("${FILE_LINE}" MATCHES "[# ]+include[ ]+\"")
+	    if("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
+	      set(SYS_LINE ${cline})
+	      set(STOP_CHECK 1)
+	    endif("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
+	  endif("${FILE_LINE}" MATCHES "[# ]+include[ ]+\"")
 	endif(NOT SYS_LINE)
 	math(EXPR cline "${cline} + 1")
       endwhile(working_file AND NOT STOP_CHECK)
 
-      if(NOT HDR_PRINTED)
+      if(NOT HDR_PRINTED AND NOT PRIV_HDR_FIRST)
 	message("\ncommon.h inclusion ordering problem(s):")
 	set(HDR_PRINTED 1)
-      endif(NOT HDR_PRINTED)
-      message("  ${cfile} need common.h before system header on line ${SYS_LINE}")
+      endif(NOT HDR_PRINTED AND NOT PRIV_HDR_FIRST)
 
-      # Let top level know about failure
-      math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
-      set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+      if(NOT PRIV_HDR_FIRST)
+	message("  ${cfile} need common.h before system header on line ${SYS_LINE}")
+
+	# Let top level know about failure
+	math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+	set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+      endif(NOT PRIV_HDR_FIRST)
 
     endif("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+")
 
@@ -401,18 +413,13 @@ function(api_usage_test func)
       # so the string searches and while loop behave
       set(working_file "${FILE_SRC}\n")
       while(working_file)
-	# Note that we deliberately don't stop at the first instance of common.h
-	# since there have been occasional instances where common.h was included
-	# multiple times in the same file with the latter inclusion being after
-	# system headers.  COMMON_LINE should be the *last* line with common.h,
-	# in cases where it is not the only line.
 	string(FIND "${working_file}" "\n" POS)
 	math(EXPR POS "${POS} + 1")
 	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
 	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	if("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
 	  if(NOT HDR_PRINTED)
-	    message("Found instance(s) of ${func}:")
+	    message("Found instance(s):")
 	    set(HDR_PRINTED 1)
 	  endif(NOT HDR_PRINTED)
 
