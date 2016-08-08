@@ -246,6 +246,8 @@ function(redundant_headers_test phdr hdrlist)
   endif(HDR_PRINTED)
 endfunction(redundant_headers_test phdr hdrlist)
 
+#######################################################################
+
 function(common_h_order_test)
   set(HDR_PRINTED 0)
 
@@ -361,6 +363,7 @@ function(common_h_order_test)
 
 endfunction(common_h_order_test)
 
+#######################################################################
 # API usage
 
 include(CMakeParseArguments)
@@ -370,6 +373,8 @@ function(api_usage_test func)
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
   set(FUNC_SRCS ${ALLSRCFILES})
+
+  message("Searching for ${func}...")
 
   CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
 
@@ -385,8 +390,42 @@ function(api_usage_test func)
     # Adapt C-comment regex from http://blog.ostermiller.org/find-comment for CMake
     # string(REGEX REPLACE "/[*]([^*]|[\r\n]|([*]+([^*/]|[\r\n])))*[*]+/" "" FILE_SRC ${FILE_SRC})
     if("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
-     if("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
-	message("file ${cfile} matches ${func}")
+
+      # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+      set(cline 1)
+      set(SYS_LINE 0)
+      set(COMMON_LINE 0)
+      # We need to go with the while loop + substring approach because
+      # file(STRINGS ...) doesn't produce accurate line numbers and has issues
+      # with square brackets.  Make sure we always have a terminating newline
+      # so the string searches and while loop behave
+      set(working_file "${FILE_SRC}\n")
+      while(working_file)
+	# Note that we deliberately don't stop at the first instance of common.h
+	# since there have been occasional instances where common.h was included
+	# multiple times in the same file with the latter inclusion being after
+	# system headers.  COMMON_LINE should be the *last* line with common.h,
+	# in cases where it is not the only line.
+	string(FIND "${working_file}" "\n" POS)
+	math(EXPR POS "${POS} + 1")
+	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	if("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+	  if(NOT HDR_PRINTED)
+	    message("Found instance(s) of ${func}:")
+	    set(HDR_PRINTED 1)
+	  endif(NOT HDR_PRINTED)
+
+	  message("  ${cfile}:${cline}: ${func}")
+
+	  # Let top level know about failure
+	  math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+	  set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+
+	endif("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+	math(EXPR cline "${cline} + 1")
+      endwhile(working_file)
+
       endif("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
     endif("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
   endforeach(cfile ${FUNC_SRCS})
@@ -521,6 +560,7 @@ api_usage_test(strncat EXEMPT str.c)
 api_usage_test(strncmp EXEMPT str.c str.h)
 api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
 api_usage_test(unlink)
+message("\nAPI checks complete.\n")
 
 # Platform symbols
 platform_symbol_usage_test()
