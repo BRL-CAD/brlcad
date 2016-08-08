@@ -25,6 +25,7 @@
 #include <ctype.h>
 #include <string.h>
 #include <stdarg.h>
+#include <errno.h>
 #include "bio.h"
 
 #include "bu/color.h"
@@ -283,6 +284,45 @@ bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 
     return 1;
 }
+
+
+int
+bu_color_from_str(struct bu_color *cp, const char *str)
+{
+    int component;
+    enum {UNKNOWN, RGB, FLOAT} mode = UNKNOWN;
+
+    if (UNLIKELY(!cp || !str))
+	return 0;
+
+    for (component = 0; component < 3; ++component) {
+	const char expected_char = component == 2 ? '\0' : '/';
+	const char *endptr;
+
+	if (mode == UNKNOWN || mode == RGB)
+	    cp->buc_rgb[component] = strtol(str, (char **)&endptr, 10) / 255.0;
+	else if (mode == FLOAT)
+	    cp->buc_rgb[component] = strtod(str, (char **)&endptr);
+
+	if (errno || endptr == str || *endptr != expected_char) {
+	    if (mode == UNKNOWN) {
+		mode = FLOAT;
+		component = -1;
+		continue;
+	    } else
+		return 0;
+	} else if (mode == UNKNOWN)
+	    mode = RGB;
+
+	if (!(0.0 <= cp->buc_rgb[component] && cp->buc_rgb[component] <= 1.0))
+	    return 0;
+
+	str = endptr + 1;
+    }
+
+    return 1;
+}
+
 
 /*
  * Local Variables:

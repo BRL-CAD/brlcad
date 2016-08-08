@@ -138,6 +138,7 @@ BU_EXPORT extern int bu_color_from_rgb_floats(struct bu_color *cp, fastf_t *rgb)
 BU_EXPORT extern int bu_color_to_rgb_floats(struct bu_color *cp, fastf_t *rgb);
 BU_EXPORT extern int bu_color_from_rgb_chars(struct bu_color *cp, unsigned char *rgb);
 BU_EXPORT extern int bu_color_to_rgb_chars(struct bu_color *cp, unsigned char *rgb);
+BU_EXPORT extern int bu_color_from_str(struct bu_color *cp, const char *str);
 
 /* UNIMPLEMENTED
  *
