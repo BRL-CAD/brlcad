@@ -124,6 +124,27 @@ list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$
 set(ALLSRCFILES ${SRCFILES} ${INCFILES})
 list(REMOVE_DUPLICATES ALLSRCFILES)
 
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
+	set(STOP_CHECK 0)
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${HDR_SRC}\n")
+	while(working_file AND NOT STOP_CHECK)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+	    message("    ${puhdr}:${cline}: ${pvhdr}")
+	    list(APPEND PVT_INC_INSTANCES "  ${puhdr}:${cline}: ${pvhdr}")
+	    set(STOP_CHECK 1)
+	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file)
+
 
 # Check if public headers are including private headers like bio.h
 function(public_headers_test)
@@ -149,22 +170,26 @@ function(public_headers_test)
 	  set(HDR_PRINTED 1)
 	endif(NOT HDR_PRINTED)
 
-	# Since we know we have a problem, zero in on the exact
-	# line number for reporting purposes
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
 	set(STOP_CHECK 0)
-	set(CURR_LINE 1)
-	file(STRINGS "${SOURCE_DIR}/${puhdr}" HDR_STRINGS)
-	string(REPLACE ";;" ";tmp;" HDR_STRINGS "${HDR_STRINGS}")
-	# https://cmake.org/pipermail/cmake/2016-March/063029.html
-	string(REPLACE "[" "--left_bracket--" HDR_STRINGS "${HDR_STRINGS}")
-	string(REPLACE "]" "--right_bracket--" HDR_STRINGS "${HDR_STRINGS}")
-	foreach(HDR_LINE ${HDR_STRINGS})
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${HDR_SRC}\n")
+	while(working_file AND NOT STOP_CHECK)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	    message("  ${pvhdr} included in ${puhdr}, line ${CURR_LINE}")
+	    message("    ${puhdr}:${cline}: ${pvhdr}")
+	    list(APPEND PVT_INC_INSTANCES "  ${puhdr}:${cline}: ${pvhdr}")
 	    set(STOP_CHECK 1)
 	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	  math(EXPR CURR_LINE "${CURR_LINE} + 1")
-	endforeach(HDR_LINE ${HDR_STRINGS})
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file AND NOT STOP_CHECK)
 
 	# We have a failure - let the global flag know
 	math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
@@ -207,21 +232,26 @@ function(redundant_headers_test phdr hdrlist)
 	  set(HDR_PRINTED 1)
 	endif(NOT HDR_PRINTED)
 
-	# Report with line number information
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
 	set(STOP_CHECK 0)
-	set(CURR_LINE 1)
-	file(STRINGS "${SOURCE_DIR}/${bfile}" HDR_STRINGS)
-	string(REPLACE ";;" ";tmp;" HDR_STRINGS "${HDR_STRINGS}")
-	# https://cmake.org/pipermail/cmake/2016-March/063029.html
-	string(REPLACE "[" "--left_bracket--" HDR_STRINGS "${HDR_STRINGS}")
-	string(REPLACE "]" "--right_bracket--" HDR_STRINGS "${HDR_STRINGS}")
-	foreach(HDR_LINE ${HDR_STRINGS})
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${HDR_SRC}\n")
+	while(working_file AND NOT STOP_CHECK)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
-	    message("  ${shdr} included in ${bfile}, line ${CURR_LINE}")
+	    message("    ${bfile}:${cline}: ${shdr}")
+	    list(APPEND PVT_INC_INSTANCES "  ${bfile}:${cline}: ${shdr}")
 	    set(STOP_CHECK 1)
 	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
-	  math(EXPR CURR_LINE "${CURR_LINE} + 1")
-	endforeach(HDR_LINE ${HDR_STRINGS})
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file AND NOT STOP_CHECK)
 
 	# Flag failure to top level
 	math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
@@ -272,21 +302,25 @@ function(common_h_order_test)
 	  set(HDR_PRINTED 1)
 	endif(NOT HDR_PRINTED)
 
-	file(STRINGS "${SOURCE_DIR}/${cfile}" FILE_STRINGS)
-	string(REPLACE ";;" ";tmp;" FILE_STRINGS "${FILE_STRINGS}")
-	# https://cmake.org/pipermail/cmake/2016-March/063029.html
-	string(REPLACE "[" "--left_bracket--" FILE_STRINGS "${FILE_STRINGS}")
-	string(REPLACE "]" "--right_bracket--" FILE_STRINGS "${FILE_STRINGS}")
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
 	set(SYS_LINE 0)
 	set(COMMON_LINE 0)
-	set(CURR_LINE 0)
-	foreach(FILE_LINE ${FILE_STRINGS})
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${FILE_SRC}\n")
+	while(working_file)
 	  # Note that we deliberately don't stop at the first instance of common.h
 	  # since there have been occasional instances where common.h was included
 	  # multiple times in the same file with the latter inclusion being after
 	  # system headers.  COMMON_LINE should be the *last* line with common.h,
 	  # in cases where it is not the only line.
-	  math(EXPR CURR_LINE "${CURR_LINE} + 1")
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	  if(NOT SYS_LINE AND "${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
 	    set(SYS_LINE ${CURR_LINE})
 	  else(NOT SYS_LINE AND "${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
@@ -294,7 +328,9 @@ function(common_h_order_test)
 	      set(COMMON_LINE ${CURR_LINE})
 	    endif("${FILE_LINE}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+")
 	  endif(NOT SYS_LINE AND "${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
-	endforeach(FILE_LINE ${FILE_STRINGS})
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file)
+
 	message("  ${cfile} common.h on line ${COMMON_LINE}, system header at line ${SYS_LINE}")
 
 	# Let top level know about failure
@@ -306,21 +342,26 @@ function(common_h_order_test)
     else("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+")
 
       # This time, we just need to know where the first system header is.
-      file(STRINGS "${SOURCE_DIR}/${cfile}" FILE_STRINGS)
-      string(REPLACE ";;" ";tmp;" FILE_STRINGS "${FILE_STRINGS}")
-      # https://cmake.org/pipermail/cmake/2016-March/063029.html
-      string(REPLACE "[" "--left_bracket--" FILE_STRINGS "${FILE_STRINGS}")
-      string(REPLACE "]" "--right_bracket--" FILE_STRINGS "${FILE_STRINGS}")
-      set(SYS_LINE 0)
-      set(CURR_LINE 0)
-      foreach(FILE_LINE ${FILE_STRINGS})
+      set(cline 1)
+      set(STOP_CHECK 0)
+      # We need to go with the while loop + substring approach because
+      # file(STRINGS ...) doesn't produce accurate line numbers and has issues
+      # with square brackets.  Make sure we always have a terminating newline
+      # so the string searches and while loop behave
+      set(working_file "${FILE_SRC}\n")
+      while(working_file AND NOT STOP_CHECK)
+	string(FIND "${working_file}" "\n" POS)
+	math(EXPR POS "${POS} + 1")
+	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	if(NOT SYS_LINE)
-	  math(EXPR CURR_LINE "${CURR_LINE} + 1")
 	  if("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
-	    set(SYS_LINE ${CURR_LINE})
+	    set(SYS_LINE ${cline})
+	    set(STOP_CHECK 1)
 	  endif("${FILE_LINE}" MATCHES "[# ]+include[ ]+<")
 	endif(NOT SYS_LINE)
-      endforeach(FILE_LINE ${FILE_STRINGS})
+	math(EXPR cline "${cline} + 1")
+      endwhile(working_file AND NOT STOP_CHECK)
 
       if(NOT HDR_PRINTED)
 	message("\ncommon.h inclusion ordering problem(s):")
@@ -332,8 +373,8 @@ function(common_h_order_test)
       math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
       set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
 
-
     endif("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+")
+
   endforeach(cfile ${COMMON_H_FILES})
 
   if(HDR_PRINTED)
@@ -374,9 +415,12 @@ function(api_usage_test func)
 
 endfunction(api_usage_test func)
 
-function(platform_symbol_usage_test)
+##########################################################################
+# Ideally, we don't want to be using WIN32, WIN64, etc. platform specific
+# logic in our code - instead, we want to feature test and use those tests
+# for conditional logic.
 
-  CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
+function(platform_symbol_usage_test)
 
   # We need both a list of the platform symbols to check
   # and a regex matching them
@@ -393,70 +437,77 @@ function(platform_symbol_usage_test)
 
   # Build the build file test set
   set(ACTIVE_BLD_FILES ${BLDFILES})
-  set(EXEMPT_FILES repository.cmake)
+  set(EXEMPT_FILES autoheader.cmake repository.cmake BRLCAD_CMakeFiles.cmake)
   foreach(ef ${EXEMPT_FILES})
     list(FILTER ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
 
+  # Check all files, but bookkeep separately for source and build files
+  set(types SRC BLD)
+  foreach(stype ${types})
+    foreach(cfile ${ACTIVE_${stype}_FILES})
+      file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
+      set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
+      if("${FILE_SRC}" MATCHES "${regex}")
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${FILE_SRC}\n")
+	while(working_file)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	  foreach(ptfm ${platforms})
+	    set(pregex "[^a-zA-Z0-9_]${ptfm}[^a-zA-Z0-9_]|^${ptfm}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${ptfm}$")
+	    if("${FILE_LINE}" MATCHES "${pregex}")
+	      #message("  ${cfile}:${cline} ${FILE_LINE}")
+	      string(FIND "${FILE_LINE}" "\n" POS)
+	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
+	      list(APPEND ${ptfm}_${stype}_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
+	    endif("${FILE_LINE}" MATCHES "${pregex}")
+	  endforeach(ptfm ${platforms})
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file)
+      endif("${FILE_SRC}" MATCHES "${regex}")
+    endforeach(cfile ${ACTIVE_${stype}_FILES})
+  endforeach(stype ${types})
 
+  set(total_cnt 0)
 
-  # Check all source files
-  foreach(cfile ${ACTIVE_SRC_FILES})
-    file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-    set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
-    if("${FILE_SRC}" MATCHES "${regex}")
-      message("matched ${cfile}")
-      # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-      set(cline 1)
-      set(working_file "${FILE_SRC}")
-      while(working_file)
-	string(FIND "${working_file}" "\n" POS)
-	math(EXPR POS "${POS} + 1")
-	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
-	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	foreach(ptfm ${platforms})
-	  set(pregex "[^a-zA-Z0-9_]${ptfm}[^a-zA-Z0-9_]|^${ptfm}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${ptfm}$")
-	  if("${FILE_LINE}" MATCHES "${pregex}")
-	    #message("  ${cfile}:${cline} ${FILE_LINE}")
-	    string(FIND "${FILE_LINE}" "\n" POS)
-	    string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
-	    list(APPEND ${ptfm}_SRCS_INSTANCES "${cfile}:${cline} ${TRIMMED_LINE}")
-	  endif("${FILE_LINE}" MATCHES "${pregex}")
-	endforeach(ptfm ${platforms})
-	math(EXPR cline "${cline} + 1")
-      endwhile(working_file)
-    endif("${FILE_SRC}" MATCHES "${regex}")
-  endforeach(cfile ${ACTIVE_SRC_FILES})
+  foreach(stype ${types})
+    foreach(ptfm ${platforms})
+      if(${ptfm}_${stype}_INSTANCES)
+	list(LENGTH ${ptfm}_${stype}_INSTANCES ptfm_len)
+	if("${stype}" STREQUAL "SRC")
+	  message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the source files:\n")
+	endif("${stype}" STREQUAL "SRC")
+	if("${stype}" STREQUAL "BLD")
+	  message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the build files:\n")
+	endif("${stype}" STREQUAL "BLD")
+	foreach(ln ${${ptfm}_${stype}_INSTANCES})
+	  message("  ${ln}")
+	  math(EXPR total_cnt "${total_cnt} + 1")
+	endforeach(ln ${${ptfm}_${stype}_INSTANCES})
+      endif(${ptfm}_${stype}_INSTANCES)
+    endforeach(ptfm ${platforms})
+  endforeach(stype ${types})
 
-  foreach(ptfm ${platforms})
-    if(${ptfm}_SRCS_INSTANCES)
-      list(LENGTH ${ptfm}_SRCS_INSTANCES ptfm_len)
-      message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the source files:\n")
-      foreach(ln ${${ptfm}_SRCS_INSTANCES})
-	message("  ${ln}")
-      endforeach(ln ${${ptfm}_SRCS_INSTANCES})
-    endif(${ptfm}_SRCS_INSTANCES)
-  endforeach(ptfm ${platforms})
+  message("\nFound ${total_cnt} platform symbols overall.")
 
-  # Check all build files
-  foreach(cfile ${ACTIVE_BLD_FILES})
-    file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-    set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
-    if("${FILE_SRC}" MATCHES "${regex}")
-      message("matched ${cfile}")
-    endif("${FILE_SRC}" MATCHES "${regex}")
-  endforeach(cfile ${ACTIVE_BLD_FILES})
+  # TODO - check if we have more than expected - if so, that's the failure case...
 
 endfunction(platform_symbol_usage_test)
 
 
 
 
-
-
-
+##############################################
 # Run tests
-if(0)
+
 # TEST - public/private header inclusion
 public_headers_test()
 
@@ -492,8 +543,8 @@ api_usage_test(strncat EXEMPT str.c)
 api_usage_test(strncmp EXEMPT str.c str.h)
 api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
 api_usage_test(unlink)
-endif(0)
 
+# Platform symbols
 platform_symbol_usage_test()
 
 if(REPO_CHECK_FAILED)
