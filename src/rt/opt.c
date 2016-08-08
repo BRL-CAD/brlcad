@@ -286,7 +286,7 @@ get_args(int argc, const char *argv[])
 		    struct bu_color color = BU_COLOR_INIT_ZERO;
 
 		    if (!bu_color_from_str(&color, bu_optarg)) {
-			bu_log("ERROR: invalid color string: %s\n", bu_optarg);
+			bu_log("ERROR: invalid color string: '%s'\n", bu_optarg);
 			return 0;
 		    }
 #if defined(_WIN32)
