@@ -124,28 +124,6 @@ list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$
 set(ALLSRCFILES ${SRCFILES} ${INCFILES})
 list(REMOVE_DUPLICATES ALLSRCFILES)
 
-	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-	set(cline 1)
-	set(STOP_CHECK 0)
-	# We need to go with the while loop + substring approach because
-	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
-	# with square brackets.  Make sure we always have a terminating newline
-	# so the string searches and while loop behave
-	set(working_file "${HDR_SRC}\n")
-	while(working_file AND NOT STOP_CHECK)
-	  string(FIND "${working_file}" "\n" POS)
-	  math(EXPR POS "${POS} + 1")
-	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
-	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	    message("    ${puhdr}:${cline}: ${pvhdr}")
-	    list(APPEND PVT_INC_INSTANCES "  ${puhdr}:${cline}: ${pvhdr}")
-	    set(STOP_CHECK 1)
-	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	  math(EXPR cline "${cline} + 1")
-	endwhile(working_file)
-
-
 # Check if public headers are including private headers like bio.h
 function(public_headers_test)
 
