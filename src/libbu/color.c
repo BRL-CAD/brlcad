@@ -299,6 +299,8 @@ bu_color_from_str(struct bu_color *cp, const char *str)
 	const char expected_char = component == 2 ? '\0' : '/';
 	const char *endptr;
 
+	errno = 0;
+
 	if (mode == UNKNOWN || mode == RGB)
 	    cp->buc_rgb[component] = strtol(str, (char **)&endptr, 10) / 255.0;
 	else if (mode == FLOAT)
