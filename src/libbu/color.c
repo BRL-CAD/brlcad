@@ -306,7 +306,8 @@ bu_color_from_str(struct bu_color *cp, const char *str)
 	else if (mode == FLOAT)
 	    cp->buc_rgb[component] = strtod(str, (char **)&endptr);
 
-	if (errno || endptr == str || *endptr != expected_char) {
+	if ((NEAR_ZERO(cp->buc_rgb[component], SMALL_FASTF) && errno)
+		|| endptr == str || *endptr != expected_char) {
 	    if (mode == UNKNOWN) {
 		mode = FLOAT;
 		component = -1;
