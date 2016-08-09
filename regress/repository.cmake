@@ -572,6 +572,9 @@ api_usage_test(unlink)
 message("\nAPI checks complete.\n")
 
 # Platform symbols
+# TODO - set this up take an argument and run just on one symbol
+# at a time.  It may be possible to set up CTest to fire off these
+# repository tests in parallel...
 platform_symbol_usage_test()
 
 if(REPO_CHECK_FAILED)
