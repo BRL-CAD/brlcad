@@ -1,5 +1,3 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <article xmlns="http://docbook.org/ns/docbook" version="5.0">
   <info><title>Assigning Material Properties to a Goblet</title>
 
@@ -37,7 +35,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mater_complete.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mater_complete.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -70,7 +71,7 @@
 	of measure. Click on OK.
       </para>
 
-      <section><info><title>Drawing the Goblet in the Graphics Window</title></info>
+      <section xml:id="Drawing_Goblet_Graphics"><info><title>Drawing the Goblet in the Graphics Window</title></info>
 
 
 	<para>
@@ -130,7 +131,7 @@
 	selections applied.
       </para>
 
-      <section><info><title>Raytracing the Goblet</title></info>
+      <section xml:id="Raytracing"><info><title>Raytracing the Goblet</title></info>
 
 	<para>
 	  To raytrace the goblet, go to the File menu and select Raytrace. The
@@ -158,7 +159,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_complete_window.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_complete_window.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -201,7 +205,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_semitransparent.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_semitransparent.png" format="PNG"/>
 	  </imageobject>
 	  <caption>
@@ -234,7 +241,10 @@
 
       <informalfigure>
 	<mediaobject>
-	  <imageobject>
+	  <imageobject role="html">
+	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mirror.png" format="PNG"/>
+	  </imageobject>
+	  <imageobject role="fo">
 	    <imagedata align="center" fileref="../../lessons/en/images/mged07_goblet_mirror.png" format="PNG"/>
 	  </imageobject>
 	  <caption>

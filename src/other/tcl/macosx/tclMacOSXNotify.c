@@ -1532,7 +1532,7 @@ Tcl_Sleep(
 		Tcl_Panic("Tcl_Sleep: CFRunLoop finished");
 		break;
 	    case kCFRunLoopRunStopped:
-		TclMacOSXNotifierDbgMsg("CFRunLoop stopped");
+		TclMacOSXNotifierDbgMsg("CFRunLoop stopped", NULL);
 		waitTime = waitEnd - CFAbsoluteTimeGetCurrent();
 		break;
 	    case kCFRunLoopRunTimedOut:

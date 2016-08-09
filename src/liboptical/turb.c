@@ -1,28 +1,23 @@
 /*                          T U R B . C
  * BRL-CAD
  *
- * Copyright (c) 1994 Gull Island Consultants, Inc.
- * All rights reserved.
- *
- * This software may be freely distributed without prior notice.
+ * This file may be freely distributed without prior notice.
+ * This data is in the public domain.
  */
 /** @file liboptical/turb.c
  *
- * Larger noise table for turbulence calculations.
+ * Noise table for turbulence calculations.
  *
- * Author -
- * Bill Laut
- *
- * Source -
- * Gull Island Consultants, Inc.
- * P.O. Box 627
- * Muskegon, MI 49440
  */
 
 #include "common.h"
 
-#include "bu.h"
+#include "bu/defines.h"
 
+/* TODO: it'd be useful to figure out which random number generator
+ * created this table so we could create a substantially bigger one
+ * while retaining these 20x20x20 values for backwards-compatibility.
+ */
 const fastf_t turb_table[20][20][20] = {
     {{ 0.105489192064851520, -0.203732953406870370, -0.001023580785840750, -0.418433680199086670,
        0.019490496721118689, -0.494057352188974620,  0.379220851697027680, -0.381280504632741210,
@@ -846,6 +841,9 @@ const fastf_t turb_table[20][20][20] = {
       -0.106474279891699550,  0.001619667280465364,  0.360994251444935800,  0.497909106314182280,
       0.086334267631173134, -0.203569611534476280, -0.487269689328968520,  0.336935559287667270},
 
+     /* FIXME: The following array of numbers has only 16 entries!
+      * Are the Remaining 4 initialized to zero?  Is that
+      * intentional? */
      {-0.299386323429644110,  0.432286161929368970,  0.484158257488161330, -0.180591955780982970,
       -0.471683348063379530,  0.256541807204484940, -0.160706320777535440,  0.273074500262737270,
       0.443456499371677640, -0.255790608935058120, -0.009335475042462349, -0.479141823947429660,

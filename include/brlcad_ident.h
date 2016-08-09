@@ -1,7 +1,7 @@
 /*                  B R L C A D _ I D E N T . H
  * BRL-CAD
  *
- * Copyright (c) 2007-2013 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,8 +28,8 @@
  *
  */
 
-#ifndef __BRLCAD_IDENT_H__
-#define __BRLCAD_IDENT_H__
+#ifndef BRLCAD_IDENT_H
+#define BRLCAD_IDENT_H
 
 #include "common.h"
 
@@ -95,7 +95,7 @@ brlcad_ident(const char *title)
 }
 
 
-#endif /* __BRLCAD_IDENT_H__ */
+#endif /* BRLCAD_IDENT_H */
 
 /*
  * Local Variables:

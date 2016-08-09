@@ -908,6 +908,38 @@ int ON_Surface::IsAtSeam(double s, double t) const
 }
 
 
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+void
+ON_Surface::UnwrapUV(double &u, double &v) const
+{
+    ON_2dPoint p2d(u,v);
+
+    for (int i = 0; i < 2; i++) {
+	if (!IsClosed(i))
+	    continue;
+
+	double length = Domain(i).Length();
+	double dom_min = Domain(i).Min() - ON_ZERO_TOLERANCE;
+	double dom_max = Domain(i).Max() + ON_ZERO_TOLERANCE; 
+
+	if (p2d[i] < dom_min) {
+	    int domains_away = (int)(((dom_min - p2d[i]) / length) + 1.0);
+	    p2d[i] += length * domains_away;
+	}
+	if (p2d[i] >= dom_max) {
+	    int domains_away = (int)(((p2d[i] - dom_max) / length) + 1.0);
+	    p2d[i] -= length * domains_away;
+	}
+	if (i == 0) {
+	    u = p2d[i];
+	} else {
+	    v = p2d[i];
+	}
+    }
+}
+#endif
+
+
 ON_3dPoint
 ON_Surface::PointAt( double s, double t ) const
 {
@@ -960,6 +992,11 @@ ON_Surface::EvPoint( // returns false if unable to evaluate
   ON_BOOL32 rc = false;
   double ws[128];
   double* v;
+
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+  UnwrapUV(s,t);
+#endif
+
   if ( Dimension() <= 3 ) {
     v = &point.x;
     point.x = 0.0;
@@ -1003,6 +1040,11 @@ ON_Surface::Ev1Der( // returns false if unable to evaluate
   const int dim = Dimension();
   double ws[3*32];
   double* v;
+
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+  UnwrapUV(s,t);
+#endif
+
   point.x = 0.0;
   point.y = 0.0;
   point.z = 0.0;
@@ -1061,6 +1103,11 @@ ON_Surface::Ev2Der( // returns false if unable to evaluate
   const int dim = Dimension();
   double ws[6*16];
   double* v;
+
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+  UnwrapUV(s,t);
+#endif
+
   point.x = 0.0;
   point.y = 0.0;
   point.z = 0.0;
@@ -1170,6 +1217,11 @@ ON_Surface::EvNormal( // returns false if unable to evaluate
                          //            repeated evaluations
          ) const
 {
+
+#ifdef BRLCAD_FEATURE_EXTEND_UV_OVER_CLOSED_SEAMS
+  UnwrapUV(s,t);
+#endif
+
   // simple cross product normal - override to support singular surfaces
   ON_BOOL32 rc = Ev1Der( s, t, point, ds, dt, side, hint );
   if ( rc ) {

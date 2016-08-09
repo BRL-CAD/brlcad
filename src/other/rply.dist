@@ -1,0 +1,4 @@
+set(rply_ignore_files
+LICENSE
+rply.h
+)

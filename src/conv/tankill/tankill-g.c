@@ -1,7 +1,7 @@
 /*                     T A N K I L L - G . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,9 +34,10 @@
 #include "bio.h"
 
 /* interface headers */
+#include "bu/getopt.h"
 #include "vmath.h"
 #include "nmg.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "raytrace.h"
 #include "wdb.h"
 
@@ -106,11 +107,10 @@ Add_solid(int comp_code_num)
     }
 }
 
-/*	T A N K I L L - G
- *
- *	Converts "tankill" format geometry to BRL-CAD model
- */
 
+/*
+ * Converts "tankill" format geometry to BRL-CAD model
+ */
 static void
 usage()
 {
@@ -169,9 +169,7 @@ main(int argc, char **argv)
     tol.para = 1 - tol.perp;
 
     in_fp = stdin;
-#if defined(_WIN32) && !defined(__CYGWIN__)
     setmode(fileno(in_fp), O_BINARY);
-#endif
     polysolids = 1;
     id_root = (struct comp_idents *)NULL;
     bu_ptbl_init( &faces, 64, " &faces ");
@@ -366,7 +364,7 @@ main(int argc, char **argv)
 	nmg_break_long_edges( s, &tol );
 
 	/* glue all the faces together */
-	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_END( &faces ), &tol );
+	nmg_gluefaces( (struct faceuse **)BU_PTBL_BASEADDR( &faces), BU_PTBL_LEN( &faces ), &tol );
 
 	/* re-initialize the face list */
 	bu_ptbl_reset( &faces );

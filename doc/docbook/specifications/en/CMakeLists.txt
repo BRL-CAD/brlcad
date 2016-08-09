@@ -1,10 +1,7 @@
-set(docbook_specifications_EN
+set(specifications_EN
   BRL_CAD_g_format_V5.xml
   )
-
-DOCBOOK_TO_HTML(specification docbook_specifications_EN html/specifications/en "")
-
-DOCBOOK_TO_PDF(specification docbook_specifications_EN pdf/specifications/en "")
+ADD_DOCBOOK("HTML;PHP;PDF" specifications_EN specifications/en "")
 
 # Local Variables:
 # tab-width: 8

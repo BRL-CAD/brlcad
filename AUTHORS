@@ -37,7 +37,7 @@ contributor credits are organized into the following general
 categories depending on the level and type of involvement:
 
   * Mathematical, Algorithmic, and Geometric Support
-  * Documentation and Website Contributors
+  * Documentation, Artwork, and Website Contributors
   * Code Contributors
   * Special Thanks
 
@@ -218,6 +218,23 @@ nicknames r_weiss
 2008 December
 U.S. Army Research Laboratory
 
+Browder, Thomas M. Jr.  **
+nicknames tbrowder2
+2008 June
+ManTech International Corporation
+Open Source
+
+Reed, Nicholas  **
+nicknames n_reed
+2008 July
+ARL Student Hire / University of Maryland, Baltimore County
+Quantum Research International, Inc.
+
+Moore, Jr., Carl G.  **
+nicknames cmoore, carlmoore
+2011 October
+U.S. Army Research Laboratory
+
 
 MATHEMATICAL, ALGORITHMIC, AND GEOMETRIC SUPPORT
 ------------------------------------------------
@@ -229,7 +246,7 @@ U.S. Army Ballistic Research Laboratory
 Davisson, Edwin O. **
 U.S. Army Research Laboratory
 
-Rodgers, David
+Rogers, David
 U.S. Naval Academy
 
 Stiller, Peter
@@ -251,8 +268,8 @@ Weaver, Stephanie 'Rain'  **
 ARL Student Hire / Bridgewater College
 
 
-DOCUMENTATION AND WEBSITE CONTRIBUTORS
---------------------------------------
+DOCUMENTATION, ARTWORK, AND WEBSITE CONTRIBUTORS
+------------------------------------------------
 
 Weaver, Earl P.
 1980
@@ -262,6 +279,7 @@ Schueler, Betty J.
 
 Edwards, Eric
 SURVICE Engineering, Inc.
+Open Source (Doc Camp)
 
 Kregel, Dwayne
 SURVICE Engineering, Inc.
@@ -316,6 +334,56 @@ Open Source (GCI)
 Perez, Alex
 2012 November
 Open Source (GCI)
+
+Singh, Harmanpreet
+nicknames harmanpreet
+2013 October
+Open Source (Doc Camp)
+
+Kamga, Isaac
+nicknames Izak, iiizzzaaakkk
+2013 October
+Open Source (Doc Camp)
+
+Check, Nyah
+nicknames Ch3ck
+2013 October
+Open Source (Doc Camp)
+
+Scott Nesbitt
+2013 October
+Open Source (Doc Camp)
+
+Wood, David
+2013 November
+Open Source (GCI)
+
+Agarwal, Yatharth
+2013 November
+Open Source (GCI)
+
+McDonald, Rob
+2013 November
+Open Source
+
+Tannous, Marc
+2014 December
+Open Source (GCI)
+
+Chiplunkar, Shardul
+nicknames microchip, shardulc
+2014 December
+Open Source (GCI)
+
+Juvekar, Mandar
+nicknames mandarj
+2014 December
+Open Source (GCI)
+
+Sofat, Hitesh
+nicknames sofat
+2015 June
+Open Source (GSoC)
 
 
 CODE CONTRIBUTIONS
@@ -445,7 +513,9 @@ nicknames mjgillich mgillich
 U.S. Army Research Laboratory
 
 Howard, Doug
+nicknames dhoward
 SURVICE Engineering, Inc.
+2006 April
 
 Silva, Prasad Prometheus
 nicknames prasad_silva
@@ -498,19 +568,8 @@ nicknames homovulgaris, madant
 2008 June
 Open Source (GSoC)
 
-Browder, Thomas M. Jr.
-nicknames tbrowder2
-2008 June
-ManTech International Corporation
-Open Source
-
-Reed, Nicholas
-nicknames n_reed
-2008 July
-ARL Student Hire / University of Maryland, Baltimore County
-
 Saunders, Benjamin
-nicknames Ralith
+nicknames Ralith, ralith
 2008 July
 Open Source
 
@@ -550,6 +609,10 @@ Jain, Sachin
 2011 April
 Open Source
 
+Gerstner, Nick
+2011 May
+SURVICE Engineering, Inc.
+
 Easterbrook, Zach
 nicknames lainiwakurax
 2011 July
@@ -559,11 +622,6 @@ Nandy, Abhijit
 nicknames abhi2011
 2011 July
 Open Source (SOCIS)
-
-Moore, Jr., Carl G.
-nicknames cmoore, carlmoore
-2011 October
-U.S. Army Research Laboratory
 
 Silvko, Ksenija
 nicknames ksuzee
@@ -651,6 +709,7 @@ Calle, Adrián Arroyo
 Open Source (GCI)
 
 Keesing, Aaron
+nicknames agkphysics
 2012 December
 Open Source (GCI)
 
@@ -662,6 +721,11 @@ Nagy, Csaba
 nicknames ncsaba
 2013 April
 Open Source
+
+Check, Nyah
+nicknames Ch3ck
+2013 July
+Open Source (GSoC)
 
 Shah, Kesha
 nicknames keshashah
@@ -679,19 +743,114 @@ nicknames avneetkhalsa
 Open Source (GSoC)
 
 Daga, Mohit
-nicknames zero_level
+nicknames zero_level, mohitdaga
 2013 June
+Open Source (GSoC)
+
+Kamga, Isaac
+nicknames Izak, iiizzzaaakkk
+2013 July
+Open Source (GSoC)
+
+Singh, Harmanpreet
+nicknames harmanpreet
+2013 May
 Open Source (GSoC)
 
 Huff, Emory
 nicknames hknoll
 2013 July
-U.S. Army Research Laboratory (SEAP)
+ARL Student Hire
 
 Engbert, Jonathan
 nicknames ejno
 2013 July
 Open Source
+ARL Student Hire / University of Maryland, Baltimore County
+
+Andrew
+2013 November
+Open Source (GCI)
+
+Schulte, Johannes
+2013 November
+Open Source (GCI)
+
+Amidon, Peter
+nicknames peter-sa, Andromeda Galaxy
+2013 November
+Open Source (GCI)
+
+Chiplunkar, Shardul
+nicknames microchip
+2013 November
+Open Source (GCI)
+
+Берегов, Станислав
+2013 December
+Open Source (GCI)
+
+nicknames huskmate13
+2014 January
+Open Source
+
+Granroth, Gustave
+2014 May
+Open Source
+
+Jain, Rishub
+2014 July
+ARL Student Hire
+
+Roberts, Mitchell
+2014 July
+ARL Student Hire
+
+Bayes, Matthew
+nicknames klinger4077
+2014 July
+ARL Student Hire / University of Maryland College Park
+
+Mirea, Ștefan-Gabriel
+2014 October
+Open Source
+
+Krishna
+2015 January
+Open Source (GCI)
+
+Konrad, Djimeli
+2015 February
+Open Source
+
+Alexandre da Silva Costa, Vasco
+nicknames vasco_costa
+2015 April
+Open Source (GSoC)
+
+Thakkar, Kalpit
+nicknames dracarys983
+2015 May
+Open Source (GSoC)
+
+Ilinca, Andrei
+nicknames andrei_il
+2015 June
+Open Source (GSoC)
+
+Sofat, Hitesh
+nicknames sofat
+2015 June
+Open Source (GSoC)
+
+Hollister, Brad
+nicknames bhollister
+2015 July
+Open Source (GSoC)
+
+Hanji, Param
+2016 March
+Open Source (GSoC)
 
 
 SPECIAL THANKS
@@ -824,7 +983,7 @@ Thomas, Balbir
 Open Source
 
 Remenak, Daniel T.
-nicknames DTRemenak, Erroneous
+nicknames DTRemenak, Erroneous, dtremenak
 2005 July
 California Institute of Technology
 Open Source
@@ -964,6 +1123,39 @@ Open Source (GCI)
 Saini, Talwinder
 nicknames talwindersaini
 2013 July
+Open Source
+
+YuGin, Tan
+2013 November
+Open Source (GCI)
+
+nicknames mandar
+2013 December
+Open Source (GCI)
+
+Lotsu, Alexander
+nicknames Alex
+2013 December
+Open Source (GCI)
+
+Hyams, Daniel
+nicknames dhyams
+2014 February
+Open Source
+
+Reddy, Raj
+nicknames raj12lnm
+2014 May
+Open Source
+
+Malhotra, Shivoam
+nicknames shiv05
+2015 March
+Open Source
+
+Chepkwony, Benson
+nicknames bchepkwny
+2015 December
 Open Source
 
 

@@ -1,0 +1,92 @@
+/*                 C S G _ P A R S E R . L E M O N
+ * BRL-CAD
+ *
+ * Copyright (c) 2013-2016 United States Government as represented by
+ * the U.S. Army Research Laboratory.
+ *
+ * This library is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU Lesser General Public License
+ * version 2.1 as published by the Free Software Foundation.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this file; see the file named COPYING for more
+ * information.
+ */
+
+%include {
+#include <assert.h>
+#include <string.h>
+#include "csg.h"
+
+#if defined(__GNUC__) && (__GNUC__ == 4 && __GNUC_MINOR__ >= 3) && !defined(__clang__)
+#  pragma GCC diagnostic ignored "-Wunused-variable"
+#  pragma GCC diagnostic ignored "-Wunused-parameter"
+
+#endif
+#if defined(__clang__)
+#  pragma clang diagnostic ignored "-Wunused-variable"
+#  pragma clang diagnostic ignored "-Wunused-parameter"
+#endif
+
+}
+
+%token_type {token_t *}
+%extra_argument {app_data_t *appData}
+
+%left LCURLY GROUP_END.
+%left LSB RSB.
+%left LB RB.
+
+start_symbol ::= code.
+code ::= groupb.
+
+groupb ::= GROUP_BEGIN  group_content GROUP_END.
+{printf("group() { something }\n");}
+group_content ::= groupb.
+group_content ::= .
+group_content ::= entry group_content.
+{printf("entry\n");}
+
+entry ::= TXT LB params RB LCURLY ceva GROUP_END.
+{printf("function_name( parameters ){smth}\n");}
+ceva ::= entry.
+{printf("{function_name( parameters ){smth}}\n");}
+ceva ::= .
+{printf("function_name( parameters ){}\n");}
+
+params ::=  param_type params.
+{printf("param\n");}
+params ::= .
+{printf("no param\n");}
+
+param_type ::= assign.
+{printf("param type = assign\n");}
+param_type ::= array_of_vectors.
+{printf("param type = array_of_vectors\n");}
+
+assign ::= TXT EQ expr.
+{printf("txt = X\n");}
+
+expr ::= array_of_vectors.
+{printf("X from the assign is array_of_vectors\n");}
+expr ::= INTEGER.
+{printf("X from the assign is INTEGER\n");}
+expr ::= TXT.
+{printf("X from the assign is txt\n");}
+
+
+array_of_vectors ::= LSB vecs.
+{printf("[ something\n");}
+vecs ::= vector vecs.
+vecs ::= RSB.
+{printf("something ]\n");}
+
+vector ::= LSB INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int ]\n");}
+vector ::= LSB INTEGER INTEGER INTEGER INTEGER RSB.
+{printf("[ int int int int ]\n");}

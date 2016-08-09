@@ -1,7 +1,7 @@
 /*                    D E N S I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,7 +23,6 @@
 #include <string.h>
 
 #include "analyze.h"
-#include "bu.h"
 
 int
 parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, struct bu_vls *result_str, int *num_densities)
@@ -95,8 +94,8 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
 	    q = last;
 
 	while (idx >= *num_densities) {
-	    densities = bu_realloc(densities, sizeof(struct density_entry)*(*num_densities)*2,
-				   "density entries");
+	    densities = (struct density_entry *)bu_realloc(densities, sizeof(struct density_entry)*(*num_densities)*2,
+							   "density entries");
 	    *num_densities *= 2;
 	}
 
@@ -114,13 +113,24 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
     }
 
 #ifdef PRINT_DENSITIES
-    for (idx = 0; idx < &num_densities; idx++)
+    for (idx = 0; idx < *num_densities; idx++)
 	if (densities[idx].magic == DENSITY_MAGIC)
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
 			  idx,
-			  densities[idx].density,
+			  densities[idx].grams_per_cu_mm,
 			  densities[idx].name);
 #endif
 
     return ANALYZE_OK;
 }
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

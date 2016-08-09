@@ -1,32 +1,40 @@
 # Minimum required version of CMake
-CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-IF(COMMAND CMAKE_POLICY)
+cmake_minimum_required(VERSION 2.8)
+if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
-ENDIF(COMMAND CMAKE_POLICY)
+endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
-PROJECT(CLIPPER)
+project(CLIPPER)
 
-INCLUDE_DIRECTORIES(
+include_directories(
   ${CMAKE_CURRENT_SOURCE_DIR}
   )
 
-IF(NOT LIB_DIR)
-    SET(LIB_DIR lib)
-ENDIF(NOT LIB_DIR)
-IF(NOT BIN_DIR)
-    SET(BIN_DIR bin)
-ENDIF(NOT BIN_DIR)
+if(NOT LIB_DIR)
+  set(LIB_DIR lib)
+endif(NOT LIB_DIR)
+if(NOT BIN_DIR)
+  set(BIN_DIR bin)
+endif(NOT BIN_DIR)
 
-IF(MSVC)
+if(MSVC)
   add_definitions("-DCLIPPER_DLL_EXPORTS")
-ENDIF(MSVC)
+endif(MSVC)
 
 add_library(clipper clipper.cpp)
 set_target_properties(clipper PROPERTIES VERSION 4.6.0 SOVERSION 4)
 install(TARGETS clipper
-	RUNTIME DESTINATION ${BIN_DIR}
-	LIBRARY DESTINATION ${LIB_DIR}
-	ARCHIVE DESTINATION ${LIB_DIR})
+  RUNTIME DESTINATION ${BIN_DIR}
+  LIBRARY DESTINATION ${LIB_DIR}
+  ARCHIVE DESTINATION ${LIB_DIR})
 
 install(FILES clipper.hpp DESTINATION include)
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

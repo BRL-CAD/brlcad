@@ -1,7 +1,7 @@
 /*                   N M G _ R T _ S E G S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2013 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -30,15 +30,15 @@
 
 #include <stdlib.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <string.h>
 #include <math.h>
 #include "bio.h"
 
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "nmg.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 
 /* EDGE-FACE correlation data
@@ -51,17 +51,23 @@ struct ef_data {
     struct edgeuse *eu;
 };
 
+#define ERR_MSG "INTERNAL ERROR:  Probably bad geometry.  Trying to continue."
 
 #define CK_SEGP(_p) if (!(_p) || !(*(_p))) {\
 	bu_log("%s[line:%d]: Bad seg_p pointer\n", __FILE__, __LINE__); \
-	nmg_rt_segs_exit("Goodbye"); }
-#define DO_LONGJMP
+	segs_error(ERR_MSG); }
+
 #ifdef DO_LONGJMP
 static jmp_buf nmg_longjump_env;
-#define nmg_rt_segs_exit(_s) {bu_log("%s\n", _s);longjmp(nmg_longjump_env, -1);}
-#else
-#define nmg_rt_segs_exit(_s) bu_bomb(_s)
 #endif
+
+HIDDEN void
+segs_error(const char *str) {
+    bu_log("%s\n", str);
+#ifdef DO_LONGJMP
+    longjmp(nmg_longjump_env, -1);}
+#endif
+}
 
 
 HIDDEN void
@@ -71,18 +77,18 @@ print_seg_list(struct seg *seghead, int seg_count, char *s)
 
     bu_log("Segment List (%d segments) (%s):\n", seg_count, s);
     /* print debugging data before returning */
-    bu_log("Seghead:\n0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n\n",
-	   seghead,
+    bu_log("Seghead:\n%p magic: %08x forw:%p back:%p\n\n",
+	   (void *)seghead,
 	   seghead->l.magic,
-	   seghead->l.forw,
-	   seghead->l.back);
+	   (void *)seghead->l.forw,
+	   (void *)seghead->l.back);
 
     for (BU_LIST_FOR(seg_p, seg, &seghead->l)) {
-	bu_log("0x%08x magic: 0x%08x forw:0x%08x back:0x%08x\n",
-	       seg_p,
+	bu_log("%p magic: %08x forw:%p back:%p\n",
+	       (void *)seg_p,
 	       seg_p->l.magic,
-	       seg_p->l.forw,
-	       seg_p->l.back);
+	       (void *)seg_p->l.forw,
+	       (void *)seg_p->l.back);
 	bu_log("dist %g  pt(%g, %g, %g) N(%g, %g, %g)  =>\n",
 	       seg_p->seg_in.hit_dist,
 	       seg_p->seg_in.hit_point[0],
@@ -177,8 +183,6 @@ pl_ray(struct ray_data *rd)
 
 
 /*
- * N E X T _ S T A T E _ T A B L E
- *
  *			Current_State
  *	Input	|  0   1     2    3    4    5    6
  *	-------------------------------------------
@@ -216,15 +220,15 @@ pl_ray(struct ray_data *rd)
 
 HIDDEN void
 set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struct application *ap)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 
 
 {
     if (!seg_p) {
-	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
-	       __FILE__, __LINE__);
-	nmg_rt_segs_exit("Goodbye");
+	bu_log("%s[line:%d]: Null pointer to segment pointer\n", __FILE__, __LINE__);
+	bu_log(ERR_MSG);
+	return;
     }
 
     /* if we don't have a seg struct yet, get one */
@@ -254,18 +258,18 @@ set_inpoint(struct seg **seg_p, struct hitmiss *a_hit, struct soltab *stp, struc
 
 HIDDEN void
 set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
-    /* The segment we're building */
-    /* The input hit point */
+/* The segment we're building */
+/* The input hit point */
 {
     if (!seg_p) {
-	bu_log("%s[line:%d]: Null pointer to segment pointer\n",
-	       __FILE__, __LINE__);
-	nmg_rt_segs_exit("Goodbye");
+	bu_log("%s[line:%d]: Null pointer to segment pointer\n", __FILE__, __LINE__);
+	bu_log(ERR_MSG);
+	return;
     }
 
     /* if we don't have a seg struct yet, get one */
     if (*seg_p == (struct seg *)NULL)
-	nmg_rt_segs_exit("bad seg pointer\n");
+	segs_error("bad seg pointer\n");
 
     /* copy the "out" hit */
     memcpy(&(*seg_p)->seg_out, &a_hit->hit, sizeof(struct hit));
@@ -296,10 +300,10 @@ set_outpoint(struct seg **seg_p, struct hitmiss *a_hit)
 
 HIDDEN int
 state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -321,8 +325,7 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	case HMG_HIT_IN_OUT:
 	case HMG_HIT_ON_OUT:
 	    /* error */
-	    bu_log("%s[line:%d]: State transition error: exit without entry.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error: exit without entry.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_OUT_OUT:
@@ -338,9 +341,8 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -350,10 +352,10 @@ state0(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *UNUSED(tol))
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -386,9 +388,8 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 	    ret_val = 1;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -398,10 +399,10 @@ state1(struct seg *UNUSED(seghead), struct seg **seg_p, int *UNUSED(seg_count), 
 
 HIDDEN int
 state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -429,8 +430,7 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	case HMG_HIT_ON_IN:
 	case HMG_HIT_IN_ON:
 	    /* Error */
-	    bu_log("%s[line:%d]: State transition error.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_ON_OUT:
@@ -482,9 +482,8 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -494,10 +493,10 @@ state2(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -535,8 +534,7 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 		ret_val = 3;
 	    } else {
 		/* Error */
-		bu_log("%s[line:%d]: State transition error.\n",
-		       __FILE__, __LINE__);
+		bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 		ret_val = -2;
 	    }
 	    break;
@@ -585,9 +583,8 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    }
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -597,10 +594,10 @@ state3(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 
 {
@@ -634,8 +631,7 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	case HMG_HIT_ON_OUT:
 	case HMG_HIT_IN_OUT:
 	    /* Error */
-	    bu_log("%s[line:%d]: State transition error.\n",
-		   __FILE__, __LINE__);
+	    bu_log("%s[line:%d]: State transition error.\n", __FILE__, __LINE__);
 	    ret_val = -2;
 	    break;
 	case HMG_HIT_OUT_OUT:
@@ -673,9 +669,8 @@ state4(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 	    ret_val = 4;
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -760,9 +755,8 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 	    }
 	    break;
 	default:
-	    bu_log("%s[line:%d]: bogus hit in/out status\n",
-		   __FILE__, __LINE__);
-	    nmg_rt_segs_exit("Goodbye\n");
+	    bu_log("%s[line:%d]: bogus hit in/out status\n", __FILE__, __LINE__);
+	    segs_error(ERR_MSG);
 	    break;
     }
 
@@ -771,10 +765,10 @@ state5and6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmi
 
 HIDDEN int
 state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 5);
@@ -783,19 +777,24 @@ state5(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *
 
 HIDDEN int
 state6(struct seg *seghead, struct seg **seg_p, int *seg_count, struct hitmiss *a_hit, struct soltab *stp, struct application *ap, struct bn_tol *tol)
-    /* intersection w/ ray */
-    /* The segment we're building */
-    /* The number of valid segments built */
-    /* The input hit point */
+/* intersection w/ ray */
+/* The segment we're building */
+/* The number of valid segments built */
+/* The input hit point */
 
 {
     return state5and6(seghead, seg_p, seg_count, a_hit, stp, ap, tol, 6);
 }
 
 
-static int (*state_table[7])() = {
-    state0, state1, state2, state3,
-    state4, state5, state6
+static int (*state_table[7])(void) = {
+    (int (*)(void))state0,
+    (int (*)(void))state1,
+    (int (*)(void))state2,
+    (int (*)(void))state3,
+    (int (*)(void))state4,
+    (int (*)(void))state5,
+    (int (*)(void))state6
 };
 
 
@@ -803,7 +802,7 @@ HIDDEN int
 nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, struct soltab *stp)
 
 
-    /* intersection w/ ray */
+/* intersection w/ ray */
 
 {
     int ray_state = 0;
@@ -814,19 +813,20 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
     int seg_count = 0;
 
     for (BU_LIST_FOR(a_hit, hitmiss, &rd->rd_hit)) {
+	int (*state_table_func)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *);
+
 	NMG_CK_HITMISS(a_hit);
 
-	new_state = state_table[ray_state](seghead, &seg_p,
-					   &seg_count, a_hit,
-					   stp, ap, rd->tol);
+	/* cast function pointers for use */
+	state_table_func = (int (*)(struct seg *, struct seg **, int *, struct hitmiss *, struct soltab *, struct application *, struct bn_tol *))state_table[ray_state];
+	new_state = state_table_func(seghead, &seg_p, &seg_count, a_hit, stp, ap, (struct bn_tol *)rd->tol);
 	if (new_state < 0) {
 	    /* state transition error.  Print out the hit list
 	     * and indicate where we were in processing it.
 	     */
 	    for (BU_LIST_FOR(hm, hitmiss, &rd->rd_hit)) {
 		if (hm == a_hit) {
-		    bu_log("======= State %d ======\n",
-			   ray_state);
+		    bu_log("======= State %d ======\n", ray_state);
 		    nmg_rt_print_hitmiss(hm);
 		    bu_log("================\n");
 		} else
@@ -840,7 +840,8 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 		   rd->ap->a_purpose);
 	    bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 		   V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
-	    nmg_rt_segs_exit("Goodbye\n");
+	    segs_error(ERR_MSG);
+	    break;
 	}
 
 	ray_state = new_state;
@@ -850,8 +851,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
      * in the state table.
      */
     if (ray_state == 1) {
-	bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n",
-	       __FILE__, __LINE__);
+	bu_log("%s[line:%d]: Input ended at non-terminal FSM state\n", __FILE__, __LINE__);
 
 	bu_log("Ray: pt:(%g %g %g) dir:(%g %g %g)\n",
 	       V3ARGS(rd->rp->r_pt), V3ARGS(rd->rp->r_dir));
@@ -860,7 +860,7 @@ nmg_bsegs(struct ray_data *rd, struct application *ap, struct seg *seghead, stru
 	       stp->st_dp->d_namep,
 	       ap->a_x, ap->a_y, ap->a_level,
 	       ap->a_purpose);
-	nmg_rt_segs_exit("Goodbye");
+	segs_error(ERR_MSG);
     }
 
     /* Insert the last segment if appropriate */
@@ -894,7 +894,7 @@ common_topo(struct bu_ptbl *a_tbl, struct bu_ptbl *next_tbl)
 
 
 HIDDEN void
-visitor(uint32_t *l_p, genptr_t tbl, int UNUSED(unused))
+visitor(uint32_t *l_p, void *tbl, int UNUSED(unused))
 {
     (void)bu_ptbl_ins_unique((struct bu_ptbl *)tbl, (long *)l_p);
 }
@@ -921,12 +921,12 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 
     if (!l_p) {
 	bu_log("%s:%d NULL l_p\n", __FILE__, __LINE__);
-	nmg_rt_segs_exit("");
+	segs_error(ERR_MSG);
     }
 
     switch (*l_p) {
 	case NMG_FACEUSE_MAGIC:
-	    nmg_visit(l_p, &htab, (genptr_t)tbl);
+	    nmg_visit(l_p, &htab, (void *)tbl);
 	    break;
 	case NMG_EDGEUSE_MAGIC:
 	    eu = eu_p = (struct edgeuse *)l_p;
@@ -977,13 +977,13 @@ build_topo_list(uint32_t *l_p, struct bu_ptbl *tbl)
 		    default:
 			bu_log("Bogus vertexuse parent magic:%s.",
 			       bu_identify_magic(*vu->up.magic_p));
-			nmg_rt_segs_exit("goodbye");
+			segs_error(ERR_MSG);
 		}
 	    }
 	    break;
 	default:
 	    bu_log("Bogus magic number pointer:%s", bu_identify_magic(*l_p));
-	    nmg_rt_segs_exit("goodbye");
+	    segs_error(ERR_MSG);
     }
 }
 
@@ -1012,13 +1012,13 @@ unresolved(struct hitmiss *next_hit, struct bu_ptbl *a_tbl, struct bu_ptbl *next
     b = &a_tbl->buffer[a_tbl->end];
     l_p = &a_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("topo table NEXT\n");
     b = &next_tbl->buffer[next_tbl->end];
     l_p = &next_tbl->buffer[0];
     for (; l_p < b; l_p ++)
-	bu_log("\t%p %s\n", **l_p, bu_identify_magic(**l_p));
+	bu_log("\t%ld %s\n", **l_p, bu_identify_magic(**l_p));
 
     bu_log("<---Unable to fix state transition\n");
     pl_ray(rd);
@@ -1062,8 +1062,7 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 	NMG_CK_HITMISS(a_hit);
 
 	/* this better be a 2-manifold face */
-	bu_log("%s[%d]: This better be a 2-manifold face\n",
-	       __FILE__, __LINE__);
+	bu_log("%s[%d]: This better be a 2-manifold face\n", __FILE__, __LINE__);
 	bu_log("Primitive: %s, pixel=%d %d,  lvl=%d %s\n",
 	       rd->stp->st_dp->d_namep,
 	       rd->ap->a_x, rd->ap->a_y, rd->ap->a_level,
@@ -1141,8 +1140,6 @@ check_hitstate(struct bu_list *hd, struct ray_data *rd)
 
 
 /**
- * N M G _ R A Y _ S E G S
- *
  * Obtain the list of ray segments which intersect with the nmg.
  * This routine does all of the "work" for rt_nmg_shot()
  *

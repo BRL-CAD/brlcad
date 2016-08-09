@@ -1,0 +1,396 @@
+Arbitrary Regular Polyhedron with up to 8 vertices : arb8 {
+  point p1
+  point p2
+  point p3
+  point p4
+  point p5
+  point p6
+  point p7
+  point p8
+  p1 != p2 && p2 != p3 && p3 != p4 && p4 != p5 && p5 != p6 && p6 != p7 && p7 != p8
+}
+
+Bounding Box (ARB8) : box {
+  point V => corner vertex
+  vector H => height vector
+  vector W => width vector
+  vector D => depth vector
+  magnitude(H) > 0.0
+  magnitude(W) > 0.0
+  magnitude(D) > 0.0
+  perpendicular(H, W) && perpendicular(W, D) && perpendicular(H, D)
+}
+
+Right Parallelepiped (ARB8) : rpp {
+  point min
+  point max
+  distance(min, max) > 0.0
+}
+
+Arbitrary Regular Polyhedron with N faces : arbn {
+  integer n => number of planes
+  array planes {
+    plane p => plane equation
+  }
+  for i in planes { magnitude(planes[i].p) > 0.0 }
+}
+
+Arbitrary Faceted Solid : ars {
+  integer p => number of points per waterline
+  integer w => number of waterlines
+  array points {
+    point V => vertex position
+  }
+  p > 0
+  w > 0
+}
+
+Bag of Triangles : bot {
+  integer c => number of vertices
+  integer t => number of triangles
+  enum orientation {unoriented, counter-clockwise, clockwise} => triangle orientation
+  point V => vertex position
+  enum facemode {center, appended}
+  float t => face thickness
+  c > 0 && 3 mod c == 0
+  t > 0
+  !(t < 0.0)
+}
+
+Boundary Representation NURBS : brep
+
+FASTGEN CLINE Cylinder : cline
+
+Displacement Map : dsp {
+  enum source {file, object} => data source
+  string name => name of the data source
+  float w => map width
+  float n => map height
+  boolean interpolate => surface normal interpolation
+  float s => square cell size
+  float e => cell height
+  w > 0.0
+  n > 0.0
+  s > 0.0
+  e > 0.0
+  (source==file && file_exists(name)) || (source==object && object_exists(name))
+}
+
+Extruded Bitmap : ebm {
+  string name => name of the data source
+  float w => width of bitmap
+  float n => height of bitmap
+  float d => extrusion distance
+  file_exists(name)
+  w > 0.0
+  n > 0.0
+  d > 0.0
+}
+
+Elliptical Hyperboloid : ehy
+  point V => vertex
+  vector H => height vector
+  vector A => ellipse base width vector
+  float b => magnitude of ellipse base depth vector
+  float c => apex to asymptotes distance
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  perpendicular(H, A)
+  b > 0.0
+  c > 0.0
+}
+
+Ellipsoid : ell {
+  point V => vertex point
+  vector A
+  vector B
+  vector C
+  perpendicular(A, B)
+  perpendicular(B, C)
+}
+
+Elliptical Paraboloid : epa {
+  point V => vertex
+  vector H => height vector
+  vector A => ellipse base width vector
+  float b => magnitude of ellipse base depth vector
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  perpendicular(H, A)
+  b > 0.0
+}
+
+Elliptical Torus : eto {
+  point V => center point
+  vector H => normal height vector
+  float r => radius of revolution
+  vector C => perpendicular ellipse orientation
+  float d => magnitude of elliptical semi-minor axis
+  magnitude(H) > 0.0
+  r > 0.0
+  d > 0.0
+}
+
+Solid of Extrusion : extrude {
+  point V => vertex position
+  vector H => height vector
+  vector A => sketch plane primary vector
+  vector B => sketch plane secondary vector
+  string name => name of the sketch object
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  magnitude(B) > 0.0
+  object_exists(name)
+}
+
+Pseudo Solid Grip : grip {
+  point V => vertex point
+  vector H => height vector
+  float m => magnitude
+  magnitude(H) > 0.0
+  m > 0.0
+}
+
+Halfspace : half {
+  vector H => outward pointing normal vector
+  float d => distance from the origin
+  magnitude(H) > 0.0
+}
+
+Hyperboloid of One Sheet : hyp {
+  point V => center vertex
+  vector H => height vector
+  vector A => ellipse base vector
+  float b => magnitude of ellipse base depth vector
+  float c => neck to base ratio
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  perpendicular(H, A)
+  b > 0.0
+  c > 0.0
+  !(c > 1.0)
+}
+
+Metaball : metaball {
+  enum method {0, 1, 2} => render method
+  float t => threshold
+  integer c => number of points
+  array points {
+    vector F => field strength vector
+    float f => field strength
+  }
+  t > 0.0
+  c > 0
+  for i in points { magnitude(points[i].F) > 0.0 && points[i].f > 0.0 }
+}
+
+n-Manifold Geometry : nmg
+
+Particle System : part {
+  point V => center point
+  vector H => height vector
+  float rV => V end radius
+  float rH => H end radius
+  magnitude(H) > 0.0
+  rV > 0.0
+  rH > 0.0
+  !(rV + rH > magnitude(H))
+}
+
+Pipe (wire) Solid : pipe {
+  integer n => number of pipe points
+  array points {
+    point V => vertex point
+    float i => inner diameter
+    float o => outer diameter
+    float r => bend radius
+  }
+  n > 1
+  for i in points { points[i].o > 0.0 && points[i].i < points[i].o && !(points[i].r < 0.0) }
+  // Bend section bends through more than 180 degrees
+  for i in points { acos(vdot(points[i].V, points[i+1].V)) > 0.0 }
+}
+
+Point Cloud : pnts {
+  boolean file => points stored in a file
+  integer n => number of points
+  boolean oriented => points have orientation
+  boolean color => points have color
+  boolean size => points have size
+  array points {
+    point V => point position
+    vector N => point normal vector
+    integer C[3] => point color
+    float s => point size
+  }
+  string pathname => name to source file data
+  enum format { px, py, pz, cr, cg, cb, s, nx, ny, nz }
+  enum units { mm, cm, m, in, ft }
+  for i in points { oriented && magnitude(points[i].N) > 0.0 }
+  for i in points { color && !(points[i].C[R] < 0 || points[i].C[R] > 255) && !(points[i].C[G] < 0 && points[i].C[G] > 255) && !(points[i].C[B] < 0 && points[i].C[B] > 255) }
+  for i in points { size && !(points[i].s < 0.0) }
+  file_exists(pathname)
+}
+
+Right Elliptical Cylinder (TGC) : rec {
+  point V => base center point
+  vector H => height vector
+  vector A => base ellipse primary axis
+  vector B => base ellipse secondary axis
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  magnitude(B) > 0.0
+  perpendicular(H, A) && perpendicular(H, B) && perpendicular(A, B)
+}
+
+Right Circular Cylinder (TGC) : rcc {
+  point V => base center point
+  vector H => height vector
+  float r => cylinder radius
+  magnitude(H) > 0.0
+  r > 0
+}
+
+Tapered Elliptical Cone (TGC) : tec {
+  point V => base center point
+  vector H => height vector
+  vector A => base ellipse primary axis
+  vector B => base ellipse secondary axis
+  float r => ratio of base to top ellipse
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  magnitude(B) > 0.0
+  perpendicular(H, A) && perpendicular(H, B) && perpendicular(A, B)
+  r > 0.0 || r < 0.0
+}
+
+Tapered Right Cone (TGC) : trc {
+  point V => base center point
+  vector H => height vector
+  float b => radius of base
+  float t => radius of top
+  magnitude(H) > 0.0
+  b > 0.0
+  t > 0.0
+}
+
+Solid of Revolution : revolve {
+  point V => vertex position
+  vector R => axis of revolution
+  vector S => vector in start plane
+  float a => angle
+  string name => name of 2D sketch
+  magnitude(R) > 0.0
+  magnitude(S) > 0.0
+  a > 0.0
+  object_exists(name)
+}
+
+Right Hyperbolic Cone : rhc {
+  point V => vertex
+  vector H => height vector
+  vector B => width vector
+  float r => rectangular half-width
+  float c => apex to asymptotes distance
+  magnitude(H) > 0.0
+  magnitude(B) > 0.0
+  perpendicular(H, B)
+  r > 0.0
+  c > 0.0
+  !(magnitude(B) < c)
+}
+
+Right Parabolic Cone : rpc {
+  point V => vertex
+  vector H => height vector
+  vector B => width vector
+  float r => rectangular half-width
+  magnitude(H) > 0.0
+  magnitude(B) > 0.0
+  perpendicular(H, B)
+  r > 0.0
+}
+
+2D Sketch : sketch {
+}
+
+Sphere (ELL) : sph {
+  point V => vertex point
+  float r => radius
+  r > 0.0
+}
+
+Superquadratic Ellipsoid : superell {
+  point V => center vertex point
+  vector A => height vector
+  vector B => width vector
+  vector C => depth vector
+  float n => north-south power
+  float e => east-west power
+  magnitude(A) > 0.0
+  magnitude(B) > 0.0
+  magnitude(C) > 0.0
+  n > 0.0
+  e > 0.0
+}
+
+Generalized Truncated General Cone : tgc {
+  point V => base center point
+  vector H => height vector
+  vector A => base ellipse primary axis
+  vector B => base ellipse secondary axis
+  float c => ratio of base A vector to top ellipse
+  float d => ratio of base B vector to top ellipse
+  magnitude(H) > 0.0
+  magnitude(A) > 0.0
+  magnitude(B) > 0.0
+  perpendicular(A, B)
+  c > 0.0
+  d > 0.0
+}
+
+Torus : tor {
+  point V => center point
+  vector H => normal height vector
+  float r1 => outer radius from V to centerline
+  float r2 => inner radius in direction of H
+  r1 > 0.0
+  r2 > 0.0
+  !(r1 < r2)
+  magnitude(H) > 0.0
+}
+
+3D Volume : vol {
+  string name => name of data source file
+  integer f[3] => dimensions of file (number of cells)
+  float l => lower threshold value
+  float u => upper threshold value
+  vector c => cell dimensions (width, height, depth)
+  file_exists(name)
+  f[X] > 0 && f[Y] > 0 && f[Z] > 0
+  c[X] > 0.0 && c[Y] > 0.0 && c[Z] > 0.0
+  l > 0.0
+  u > 0.0
+  u > l
+}
+
+
+DEPRECATED:
+// Bezier Spline : bspline
+// Height Field : hf
+// Polygonal Facets : poly
+// Instanced Submodel : submodel
+
+
+NON-PARAMETRIC:
+Uniform Binary Array : binunif {
+  enum type {f, d, c, s, i, L, C, S, I, L} => minor type
+  string name => source data file
+  integer n => number of values to read
+  file_exists(name)
+  n > 0 || n == -1
+}
+// joint
+// combination
+// constraint
+// annotation

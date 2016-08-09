@@ -1,7 +1,7 @@
 /*                        C O M M O N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,13 +17,8 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup fixme */
-/** @{ */
-/** @file common.h
- *
- * @brief
- *  Header file for the BRL-CAD common definitions.
- *
+
+/** @addtogroup common
  *  This header wraps the system-specific encapsulation of
  *  brlcad_config.h and removes need to conditionally include
  *  brlcad_config.h everywhere based on HAVE_CONFIG_H.  The common
@@ -32,18 +27,26 @@
  *  for the win32 platform.
  *
  */
+/** @{ */
+/** @brief Header file for the BRL-CAD common definitions. */
+/** @file common.h */
 
-#ifndef __COMMON_H__
-#define __COMMON_H__
+#ifndef COMMON_H
+#define COMMON_H
 
 /* include the venerable config.h file.  use a pregenerated one for
- * windows when we cannot autogenerate it easily. do not include
+ * windows when we cannot auto-generate it easily. do not include
  * config.h if this file has been installed.  (public header files
  * should not use config defines)
  */
 #if defined(BRLCADBUILD) && defined(HAVE_CONFIG_H)
 
-#include "brlcad_config.h"
+#  if defined(_WIN32) && !defined(__CYGWIN__) && !defined(__MINGW32__) && !defined(CMAKE_HEADERS)
+#    include "config_win.h"
+#    include "brlcad_config.h"
+#  else
+#    include "brlcad_config.h"
+#  endif  /* _WIN32 */
 
 /* Simulates drand48() functionality using rand() which is assumed to
  * exist everywhere. The range is [0, 1).
@@ -51,21 +54,33 @@
 #  ifndef HAVE_DRAND48
 #    define drand48() ((double)rand() / (double)(RAND_MAX + 1))
 #    define HAVE_DRAND48 1
-#	 define srand48(seed) (srand(seed))
+#    define srand48(seed) (srand(seed))
+#  endif
+
+/* make sure lrint() is provided */
+#  if !defined(__cplusplus) && !defined(HAVE_LRINT) && defined(HAVE_WORKING_LRINT_MACRO)
+#    define lrint(_x) (((_x) < 0.0) ? (long int)ceil((_x)-0.5) : (long int)floor((_x)+0.5))
+#    define HAVE_LRINT 1
+#  elif !defined(__cplusplus) && defined(HAVE_LRINT) && !defined(HAVE_DECL_LRINT)
+long int lrint(double x);
+#    define HAVE_LRINT 1
 #  endif
 
 #endif  /* BRLCADBUILD & HAVE_CONFIG_H */
 
 /* provide declaration markers for header externals */
-#ifdef __cplusplus
-#  define __BEGIN_DECLS   extern "C" {
-#  define __END_DECLS     }
-#else
-#  define __BEGIN_DECLS
-#  define __END_DECLS
+#ifndef __BEGIN_DECLS
+#  ifdef __cplusplus
+#    define __BEGIN_DECLS   extern "C" {   /**< if C++, set to extern "C" { */
+#    define __END_DECLS     }              /**< if C++, set to } */
+#  else
+#    define __BEGIN_DECLS /**< if C++, set to extern "C" { */
+#    define __END_DECLS   /**< if C++, set to } */
+#  endif
 #endif
 
-/* Functions local to one file IN A LIBRARY should be declared HIDDEN.
+/**
+ * Functions local to one file IN A LIBRARY should be declared HIDDEN.
  * Disabling the static classifier is sometimes helpful for debugging.
  * It can help prevent some compilers from inlining functions that one
  * might want to set a breakpoint on.  Do not use on variables.
@@ -78,7 +93,7 @@
 #  endif
 #endif
 
-/* ansi c89 does not allow the 'inline' keyword, check if GNU inline
+/* ANSI c89 does not allow the 'inline' keyword, check if GNU inline
  * rules are in effect.
  *
  * TODO: test removal of __STRICT_ANSI__ on Windows.
@@ -89,14 +104,17 @@
 #  endif
 #endif
 
+/** Find and return the maximum value */
 #ifndef FMAX
 #  define FMAX(a, b)	(((a)>(b))?(a):(b))
 #endif
+/** Find and return the minimum value */
 #ifndef FMIN
 #  define FMIN(a, b)	(((a)<(b))?(a):(b))
 #endif
 
-/* C99 does not provide a ssize_t even though it is provided by SUS97.
+/**
+ * C99 does not provide a ssize_t even though it is provided by SUS97.
  * regardless, we use it so make sure it's declared by using the
  * similar POSIX ptrdiff_t type.
  */
@@ -130,12 +148,15 @@ typedef ptrdiff_t ssize_t;
 #  endif
 #endif
 
-/* Provide a means to conveniently test the version of the GNU
+/**
+ * Provide a means to conveniently test the version of the GNU
  * compiler.  Use it like this:
  *
+ * @code
  * #if GCC_PREREQ(2,8)
  * ... code requiring gcc 2.8 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -150,12 +171,15 @@ typedef ptrdiff_t ssize_t;
 #  define GCC_PREREQ(major, minor) 0
 #endif
 
-/* Provide a means to conveniently test the version of the Intel
+/**
+ * Provide a means to conveniently test the version of the Intel
  * compiler.  Use it like this:
  *
+ * @code
  * #if ICC_PREREQ(800)
  * ... code requiring icc 8.0 or later ...
  * #endif
+ * @endcode
  *
  * WARNING: THIS MACRO IS CONSIDERED PRIVATE AND SHOULD NOT BE USED
  * OUTSIDE OF THIS HEADER FILE.  DO NOT RELY ON IT.
@@ -212,45 +236,15 @@ typedef ptrdiff_t ssize_t;
 #  undef UNUSED
 #endif
 #if GCC_PREREQ(2, 5)
-   /* GCC-style */
+   /* GCC-style compilers have an attribute */
 #  define UNUSED(parameter) UNUSED_ ## parameter __attribute__((unused))
+#elif defined(__cplusplus)
+   /* C++ allows the name to go away */
+#  define UNUSED(parameter) /* parameter */
 #else
-   /* MSVC/C++ */
-#  ifdef __cplusplus
-#    if defined(NDEBUG)
-#      define UNUSED(parameter) /* parameter */
-#    else /* some of them are asserted */
-#       define UNUSED(parameter) (parameter)
-#    endif
-#  else
-#    if defined(_MSC_VER)
-     /* disable reporting an "unreferenced formal parameter" */
-#      pragma warning( disable : 4100 )
-#    endif
-#    define UNUSED(parameter) (parameter)
-#  endif
+   /* some are asserted when !NDEBUG */
+#  define UNUSED(parameter) (parameter)
 #endif
-
-/**
- * IGNORE provides a common mechanism for innocuously ignoring a
- * parameter that is sometimes used and sometimes not.  It should
- * "practically" result in nothing of concern happening.  It's
- * commonly used by macros that disable functionality based on
- * compilation settings (e.g., BU_ASSERT()) and shouldn't normally
- * need to be used directly by code.
- *
- * We can't use (void)(sizeof((parameter)) because MSVC2010 will
- * reportedly issue a warning about the value being unused.
- * (Consequently calls into question (void)(parameter) but untested.)
- *
- * Possible alternative:
- * ((void)(1 ? 0 : sizeof((parameter)) - sizeof((parameter))))
- */
-#ifdef IGNORE
-#  undef IGNORE
-#  warning "IGNORE unexpectedly defined.  Ensure common.h is included first."
-#endif
-#define IGNORE(parameter) (void)(parameter)
 
 /**
  * LIKELY provides a common mechanism for providing branch prediction
@@ -319,7 +313,7 @@ typedef ptrdiff_t ssize_t;
  * have to add it for them
  */
 #if defined(_MSC_VER) && defined(__STDC__)
-   #include <tchar.h>
+#  include <tchar.h>
    /* MSVC++ misses this. */
    typedef _TCHAR TCHAR;
 #endif
@@ -331,7 +325,133 @@ typedef ptrdiff_t ssize_t;
 #  define __STDC_VERSION__ 0
 #endif
 
-#endif  /* __COMMON_H__ */
+/**
+ * globally disable certain warnings.  do NOT add new warnings here
+ * without discussion and research.  only warnings that cannot be
+ * quieted without objectively decreasing code quality should be
+ * added!  even warnings that are innocuous or produce false-positive
+ * should be quelled when possible.
+ *
+ * any warnings added should include a description and justification.
+ */
+#if defined(_MSC_VER)
+
+/* /W1 warning C4351: new behavior: elements of array '...' will be default initialized
+ *
+ * i.e., this is the "we now implement constructor member
+ * initialization correctly" warning that tells the user an
+ * initializer like this:
+ *
+ * Class::Class() : some_array() {}
+ *
+ * will now initialize all members of some_array.  previous to
+ * MSVC2005, behavior was to not initialize in some cases...
+ */
+#  pragma warning( disable : 4351 )
+
+/* dubious warnings that are not yet intentionally disabled:
+ *
+ * /W3 warning C4800: 'int' : forcing value to bool 'true' or 'false' (performance warning)
+ *
+ * this warning is caused by assigning an int (or other non-boolean
+ * value) to a bool like this:
+ *
+ * int i = 1; bool b = i;
+ *
+ * there is something to be said for making such assignments explicit,
+ * e.g., "b = (i != 0);", but this arguably decreases readability or
+ * clarity and the fix has potential for introducing logic errors.
+ */
+/*#  pragma warning( disable : 4800 ) */
+
+#endif
+
+/**
+ * Provide a macro for different treatment of initialized extern const
+ * variables between C and C++.  In C the following initialization
+ * (definition) is acceptable for external linkage:
+ *
+ *   const int var = 10;
+ *
+ * but in C++ const is implicitly internal linkage so it must have
+ * extern qualifier:
+ *
+ *   extern const int var = 10;
+ */
+#if defined(__cplusplus)
+  #define EXTERNVARINIT extern
+#else
+  #define EXTERNVARINIT
+#endif
+
+/**
+ * Provide canonical preprocessor stringification.
+ *
+ * #define abc 123
+ * CPP_STR(abc) => "abc"
+ */
+#ifndef CPP_STR
+#  define CPP_STR(x) # x
+#endif
+
+/**
+ * Provide canonical preprocessor expanded stringification.
+ *
+ * #define abc 123
+ * CPP_XSTR(abc) => "123"
+ */
+#ifndef CPP_XSTR
+#  define CPP_XSTR(x) CPP_STR(x)
+#endif
+
+/**
+ * Provide canonical preprocessor concatenation.
+ *
+ * #define abc 123
+ * CPP_GLUE(abc, 123) => abc123
+ * CPP_STR(CPP_GLUE(abc, 123)) => "CPP_GLUE(abc, 123)"
+ * CPP_XSTR(CPP_GLUE(abc, 123)) => "abc123"
+ * #define abc123 "xyz"
+ * CPP_GLUE(abc, 123) => abc123 => "xyz"
+ */
+#ifndef CPP_GLUE
+#  define CPP_GLUE(a, b) a ## b
+#endif
+
+/**
+ * Provide canonical preprocessor expanded concatenation.
+ *
+ * #define abc 123
+ * CPP_XGLUE(abc, 123) => 123123
+ * CPP_STR(CPP_XGLUE(abc, 123)) => "CPP_XGLUE(abc, 123)"
+ * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
+ */
+#ifndef CPP_XGLUE
+#  define CPP_XGLUE(a, b) CPP_GLUE
+#endif
+
+/**
+ * Provide format specifier string tied to a size (e.g., "%123s")
+ *
+ * #define STR_LEN 10+1
+ * char str[STR_LEN] = {0};
+ * scanf(CPP_SCANSIZE(STR_LEN) "\n", str);
+ */
+#ifndef CPP_SCAN
+#  define CPP_SCAN(sz) "%" CPP_XSTR(sz) "s"
+#endif
+
+/**
+ * Provide the current filename and linenumber as a static
+ * preprocessor string in "file"":""line" format (e.g., "file:123").
+ */
+#ifndef CPP_FILELINE
+#  define CPP_FILELINE __FILE__ ":" CPP_XSTR(__LINE__)
+#endif
+
+
+#endif  /* COMMON_H */
+
 /** @} */
 /*
  * Local Variables:

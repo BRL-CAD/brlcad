@@ -1,7 +1,7 @@
 #               B R L C A D _ U T I L . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2013 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -62,11 +62,11 @@ macro(BRLCAD_TARGET_NAME input_string outputvar)
   # the odds are very good it'll be a unique target name
   # and the string will be short enough, which is what we need.
   if ("${STRLEN}" GREATER 30)
-    file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS "${targetstr}")
-    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS OUTPUT_VARIABLE targetname)
+    file(WRITE "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "${targetstr}")
+    execute_process(COMMAND ${CMAKE_COMMAND} -E md5sum "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" OUTPUT_VARIABLE targetname)
     string(REPLACE " ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS" "" targetname "${targetname}")
     string(STRIP "${targetname}" targetname)
-    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS)
+    file(REMOVE "${CMAKE_BINARY_DIR}/CMakeTmp/MD5CONTENTS")
     set(${outpvar} ${targetname})
   else ("${STRLEN}" GREATER 30)
     set(${outputvar} "${targetstr}")
@@ -88,9 +88,9 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
   # First, figure out whether we have list contents or a list name
   set(havevarname 0)
   foreach(maybefilename ${inlist})
-    if(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    if(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
       set(havevarname 1)
-    endif(NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename})
+    endif(NOT EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${maybefilename}")
   endforeach(maybefilename ${${targetvar}})
 
   # Put the list contents in the targetvar variable and
@@ -123,28 +123,6 @@ macro(NORMALIZE_FILE_LIST inlist targetvar fullpath_targetvar)
   endif(NOT "${ARGV3}" STREQUAL "")
 
 endmacro(NORMALIZE_FILE_LIST)
-
-#-----------------------------------------------------------------------------
-# Some of the more advanced build system features in BRL-CAD's CMake build
-# need to know whether symlink support is present on the current OS - go
-# ahead and do this test up front, caching the results.
-if(NOT DEFINED HAVE_SYMLINK)
-  message("--- Checking operating system support for file symlinking")
-  file(WRITE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src "testing for symlink ability")
-  execute_process(COMMAND ${CMAKE_COMMAND} -E create_symlink ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-  if(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-    message("--- Checking operating system support for file symlinking - Supported")
-    set(HAVE_SYMLINK 1 CACHE BOOL "Platform supports creation of symlinks" FORCE)
-    mark_as_advanced(HAVE_SYMLINK)
-    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-  else(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-    message("--- Checking operating system support for file symlinking - Unsupported")
-    set(HAVE_SYMLINK 0 CACHE BOOL "Platform does not support creation of symlinks" FORCE)
-    mark_as_advanced(HAVE_SYMLINK)
-    file(REMOVE ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_src)
-  endif(EXISTS ${CMAKE_BINARY_DIR}/CMakeTmp/link_test_dest)
-endif(NOT DEFINED HAVE_SYMLINK)
-
 
 #-----------------------------------------------------------------------------
 # It is sometimes necessary for build logic to be aware of all instances
@@ -261,6 +239,18 @@ macro(SRCS_LANG sourceslist resultvar targetname)
   endif(has_C AND has_CXX)
 endmacro(SRCS_LANG)
 
+#---------------------------------------------------------------------------
+# Add dependencies to a target, but only if they are defined as targets in
+# CMake
+macro(ADD_TARGET_DEPS tname)
+  if(TARGET ${tname})
+    foreach(target ${ARGN})
+      if(TARGET ${target})
+	add_dependencies(${tname} ${target})
+      endif(TARGET ${target})
+    endforeach(target ${ARGN})
+  endif(TARGET ${tname})
+endmacro(ADD_TARGET_DEPS tname)
 
 # Local Variables:
 # tab-width: 8

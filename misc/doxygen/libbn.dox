@@ -1,0 +1,60 @@
+
+/* Top level library group */
+/** @defgroup libbn libbn (Numerical Functions) */
+
+/* Second tier groups */
+ /** @ingroup libbn */
+ /**  @defgroup bn_defines Definitions*/
+ /** @ingroup libbn */
+ /**  @defgroup bn_anim Animation */
+ /** @ingroup libbn */
+ /**  @defgroup bn_clip Clipping */
+ /** @ingroup libbn */
+ /**  @defgroup bn_complex Complex Numbers */
+ /** @ingroup libbn */
+ /**  @defgroup bn_vlist Display Lists */
+ /** @ingroup libbn */
+ /**  @defgroup plot Plot/Draw */
+ /** @ingroup libbn */
+ /**  @defgroup bn_vfont Vector Fonts*/
+ /** @ingroup libbn */
+ /**  @defgroup noise Fractal Noise */
+ /** @ingroup libbn */
+ /**  @defgroup bn_mat Matrix/Vector Math */
+ /** @ingroup libbn */
+ /**  @defgroup bn_quat Quaternion Math */
+ /* Random Numbers */
+ /** @ingroup libbn */
+ /**  @defgroup bn_rand Random Numbers */
+ /**  @addtogroup bn_rand
+      LIBBN support for random number generation.
+  */
+ /** @ingroup libbn */
+ /**  @defgroup bn_vectormath Accelerated Vector Math */
+
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_msr Minimal Standard Random Numbers */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_rmt Mersenne Twister */
+ /** @ingroup bn_rand */
+ /**  @defgroup bn_rnt Random Number Tables */
+ /** @ingroup libbn */
+ /**  @defgroup bn_plane Point/Line/Plane Geometry Math */
+ /** @ingroup libbn */
+ /**  @defgroup bn_poly Polynomials */
+ /** @ingroup libbn */
+ /**  @defgroup bn_sphmap Spherical Maps */
+ /** @ingroup libbn */
+ /**  @defgroup bn_str String Data Encoding/Decoding */
+ /** @ingroup libbn */
+ /**  @defgroup bn_tabdata Tabulated Data */
+ /** @ingroup libbn */
+ /**  @defgroup bn_tol Tolerances */
+ /** @ingroup libbn */
+ /**  @defgroup bn_vtree Vertex Trees */
+ /** @ingroup libbn */
+ /**  @defgroup bn_wavelet Wavelets */
+ /** @ingroup libbn */
+ /**  @defgroup bn_version Version */
+
+

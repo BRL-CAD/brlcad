@@ -1,0 +1,49 @@
+set(CBDIR "@CMAKE_CURRENT_BINARY_DIR@")
+set(CSDIR "@CMAKE_CURRENT_SOURCE_DIR@")
+
+set(SBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY@")
+set(DBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG@")
+set(RBDIR "@CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE@")
+# Use the mechanism created to allow multiconfig builds to
+# know what the current build type is.
+if(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${RBDIR}")
+elseif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Debug")
+  set(BDIR "${DBDIR}")
+else(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+  set(BDIR "${SBDIR}")
+endif(EXISTS "@CMAKE_BINARY_DIR@/CMakeTmp/CURRENT_PATH/Release")
+
+get_filename_component(EXE "@CMAKE_COMMAND@" EXT)
+set(DEMG "${BDIR}/dem-g${EXE}")
+
+# Unpack
+execute_process(COMMAND "@CMAKE_COMMAND@" -E tar xjf "${CSDIR}/hawaii-c.tar.bz2" WORKING_DIRECTORY "${CBDIR}")
+
+# Run the converter
+execute_process(COMMAND "${DEMG}" "${CBDIR}/hawaii-c" OUTPUT_VARIABLE dem_g_log ERROR_VARIABLE dem_g_log)
+file(WRITE "${CBDIR}/regress-dem.log" "${dem_g_log}")
+
+# Known "good" md5sum of output for comparision
+set(EXPECTED_MD5 "cf87c3b174840f18f5653c677af1f433")
+
+# get and clean up md5sum from generated output
+execute_process(COMMAND "@CMAKE_COMMAND@" -E md5sum "${CBDIR}/hawaii-c.dsp" OUTPUT_VARIABLE genmd5)
+string(REPLACE " ${CBDIR}/hawaii-c.dsp" "" genmd5 "${genmd5}")
+string(STRIP "${genmd5}" genmd5)
+
+# Check md5sum for a match
+if("${EXPECTED_MD5}" STREQUAL "${genmd5}")
+  execute_process(COMMAND "@CMAKE_COMMAND@" -E touch "${CBDIR}/dem.done")
+else("${EXPECTED_MD5}" STREQUAL "${genmd5}")
+  file(APPEND "${CBDIR}/regress-dem.log" "\n\ndem results differ for ${CBDIR}/hawaii-c.dsp: expected ${EXPECTED_MD5}, got ${genmd5}")
+  message(FATAL_ERROR "[dem-g] Failure while converting ${CBDIR}/hawaii-c, see ${CBDIR}/regress-dem.log for more info.\n")
+endif("${EXPECTED_MD5}" STREQUAL "${genmd5}")
+
+# Local Variables:
+# tab-width: 8
+# mode: cmake
+# indent-tabs-mode: t
+# End:
+# ex: shiftwidth=2 tabstop=8
+

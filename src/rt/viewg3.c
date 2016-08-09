@@ -1,7 +1,7 @@
 /*                        V I E W G 3 . C
  * BRL-CAD
  *
- * Copyright (c) 1989-2013 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -46,9 +46,11 @@
 #include <math.h>
 #include <string.h>
 
+#include "bu/debug.h"
+#include "bu/parallel.h"
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 #include "./rtuif.h"
 #include "./ext.h"
@@ -63,24 +65,21 @@ void part_compact(register struct application *ap, register struct partition *Pa
 extern fastf_t gift_grid_rounding;
 extern point_t viewbase_model;
 
-extern int npsw;			/* number of worker PSWs to run */
-
 extern int rpt_overlap;
 
-extern struct bu_vls ray_data_file;	/* file name for ray data output (declared in do.c) */
+struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
 FILE *shot_fp;				/* FILE pointer for ray data output */
 static long line_num;			/* count of lines output to shotline file */
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
+    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,	0,		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
 
 static mat_t model2hv;			/* model coords to GIFT h, v in inches */
-
 static FILE *plotfp;			/* optional plotting file */
-static long line_num;			/* count of lines output to shotline file */
 
 const char title[] = "RTG3";
 
@@ -89,19 +88,23 @@ usage(const char *argv0)
 {
     bu_log("Usage:  %s [options] model.g objects... >file.ray\n", argv0);
     bu_log("Options:\n");
-    bu_log(" -s #		Grid size in pixels, default 512\n");
-    bu_log(" -a Az		Azimuth in degrees	(conflicts with -M)\n");
-    bu_log(" -e Elev	Elevation in degrees	(conflicts with -M)\n");
-    bu_log(" -M		Read model2view matrix on stdin (conflicts with -a, -e)\n");
-    bu_log(" -g #		Grid cell width in millimeters (conflicts with -s)\n");
-    bu_log(" -G #		Grid cell height in millimeters (conflicts with -s)\n");
-    bu_log(" -J #		Jitter.  Default is off.  Any non-zero number is on\n");
-    bu_log(" -o model.g3	Specify output file, GIFT-3 format (default=stdout)\n");
-    bu_log(" -U #		Set use_air boolean to # (default=1)\n");
-    bu_log(" -c \"set ray_data_file=ray_file_name\"         Specify ray data output file (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n");
-    bu_log(" -c \"set save_overlaps=1\"     Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
-    bu_log(" -c \"set rt_cline_radius=radius\"      Additional radius to be added to CLINE solids\n");
-    bu_log(" -x #		Set librt debug flags\n");
+    bu_log(" -s #          Grid size in pixels, default 512\n");
+    bu_log(" -a Az         Azimuth in degrees (conflicts with -M)\n");
+    bu_log(" -e Elev       Elevation in degrees (conflicts with -M)\n");
+    bu_log(" -M            Read model2view matrix on stdin (conflicts with -a, -e)\n");
+    bu_log(" -g #          Grid cell width in millimeters (conflicts with -s)\n");
+    bu_log(" -G #          Grid cell height in millimeters (conflicts with -s)\n");
+    bu_log(" -J #          Jitter.  Default is off.  Any non-zero number is on\n");
+    bu_log(" -o model.g3   Specify output file, GIFT-3 format (default=stdout)\n");
+    bu_log(" -U #          Set use_air boolean to # (default=1)\n");
+    bu_log(" -c \"set ray_data_file=ray_file_name\"\n"
+	   "               Specify ray data output file\n"
+	   "               (az el x_start y_start z_start x_dir y_dir z_dir line_number_in_shotline_file ray_first_hit_x ray_first_hit_y ray_first_hit_z)\n");
+    bu_log(" -c \"set save_overlaps=1\"\n"
+	   "               Reproduce FASTGEN behavior for regions flagged as FASTGEN regions\n");
+    bu_log(" -c \"set rt_cline_radius=radius\"\n"
+	   "              Additional radius to be added to CLINE solids\n");
+    bu_log(" -x #         Set librt debug flags\n");
 }
 
 
@@ -110,8 +113,6 @@ int raymiss(register struct application *ap);
 
 
 /*
- * V I E W _ I N I T
- *
  * This routine is called by main().  It prints the overall shotline
  * header. Furthermore, pointers to rayhit() and raymiss() are set up
  * and are later called from do_run().
@@ -134,11 +135,12 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
     save_file = file;
     save_obj = obj;
 
-    if (ray_data_file.vls_magic == BU_VLS_MAGIC) {
-	if ((shot_fp=fopen(bu_vls_addr(&ray_data_file), "w")) == NULL) {
-	    perror("RTG3");
-	    bu_log("Cannot open ray data output file %s\n", bu_vls_addr(&ray_data_file));
-	    bu_exit(EXIT_FAILURE, "Cannot open ray data output file\n");
+    if (bu_vls_strlen(&ray_data_file)) {
+	shot_fp = fopen(bu_vls_addr(&ray_data_file), "w");
+	if (shot_fp == NULL) {
+	    perror("ERROR - fopen() failed");
+	    bu_log("Cannot open ray data output file [%s]\n", bu_vls_addr(&ray_data_file));
+	    bu_exit(EXIT_FAILURE, "See usage for help setting the ray_data_file variable.\n");
 	}
     }
 
@@ -175,8 +177,6 @@ view_init(register struct application *ap, char *file, char *obj, int minus_o, i
 
 
 /*
- * V I E W _ 2 I N I T
- *
  * View_2init is called by do_frame(), which in turn is called by
  * main() in rt.c.  It writes the view-specific COVART header.
  *
@@ -235,8 +235,6 @@ view_2init(struct application *UNUSED(ap), char *UNUSED(framename))
 
 
 /*
- * R A Y M I S S
- *
  * Null function -- handle a miss
  * This function is called by rt_shootray(), which is called by
  * do_frame().
@@ -249,8 +247,6 @@ raymiss(register struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ P I X E L
- *
  * This routine is called from do_run(), and in this case does
  * nothing.
  */
@@ -262,8 +258,6 @@ view_pixel(struct application *UNUSED(ap))
 
 
 /*
- * R A Y H I T
- *
  * Rayhit() is called by rt_shootray() when the ray hits one or more
  * objects.  A per-shotline header record is written, followed by
  * information about each object hit.
@@ -409,6 +403,9 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	bn_ae_vec(&azimuth, &elevation, ap->a_ray.r_dir);
     }
 
+    if (dfirst > 250000) dfirst = 250000;
+    if (dlast < -250000) dlast = -250000;
+
     bu_vls_printf(&str, SHOT_FMT,
 		  hvcen[0], hvcen[1],
 		  hv[0], hv[1],
@@ -551,7 +548,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	in_obliq = acos(-dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 	RT_HIT_NORMAL(normal, pp->pt_outhit, pp->pt_outseg->seg_stp, &(ap->a_ray), pp->pt_outflip);
 	dot_prod = VDOT(ap->a_ray.r_dir, normal);
 	if (dot_prod > 1.0)
@@ -560,7 +557,7 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	    dot_prod = (-1.0);
 
 	out_obliq = acos(dot_prod) *
-	    bn_radtodeg;
+	    RAD2DEG;
 
 	/* Check for exit obliquities greater than 90 degrees. */
 
@@ -582,10 +579,14 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 	}
 	comp_thickness *= MM2IN;
 	/* Check thickness fields for format overflow */
-	if (comp_thickness > 999.99 || air_thickness*MM2IN > 999.9)
-	    fmt = "%4d%6.1f%5.1f%5.1f%1d%5.0f";
-	else
-	    fmt = "%4d%6.2f%5.1f%5.1f%1d%5.1f";
+
+	/* TODO - Are the old limit checks comp_thickness > 999.99
+	 * or air_thickness*MM2IN > 999.9 not valid?  This clamps their
+	 * values to well below those limits... */
+	if (comp_thickness > 99.99) comp_thickness = 99.99;
+	if (air_thickness*MM2IN > 999.9) air_thickness = 999.9;
+	fmt = "%5d%5.2f%5.1f%5.1f%1d%5.1f";
+
 #ifdef SPRINTF_NOT_PARALLEL
 	bu_semaphore_acquire(BU_SEM_SYSCALL);
 #endif
@@ -681,8 +682,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 
 
 /*
- * V I E W _ E O L
- *
  * View_eol() is called by rt_shootray() in do_run().  In this case,
  * it does nothing.
  */
@@ -693,8 +692,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /*
- * V I E W _ E N D
- *
  * View_end() is called by rt_shootray in do_run().  It outputs a
  * special 999.9 "end of view" marker, composed of a "999.9" shotline
  * header, with one all-zero component record.  This is the way GIFT
@@ -725,8 +722,6 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- * P A R T _ C O M P A C T
- *
  * This routine takes a partition-head pointer, an application
  * structure pointer, and a tolerance.  It goes through the partition
  * list shot-line by shot-line and checks for regions with identical

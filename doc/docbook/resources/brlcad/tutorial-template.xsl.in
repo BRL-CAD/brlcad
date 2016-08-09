@@ -18,6 +18,9 @@
   <!-- common param inputs, etc. -->
   <xsl:import href="file:///@DOCBOOK_BINARY_DIR@/doc/docbook/resources/brlcad/brlcad-common.xsl"/>
 
+  <!-- table centering -->
+  <xsl:import href="file:///@DOCBOOK_SOURCE_DIR@/doc/docbook/resources/brlcad/center-table-print.xsl"/>
+
   <!-- these are used in place of stringparam inputs to xsltproc -->
   <!-- pdf bookmarks -->
   <xsl:param name="fop1.extensions">1</xsl:param>
@@ -68,7 +71,7 @@
   </xsl:attribute-set>
 
   <!-- center table titles, thanks to Dean Nelson <deannelson@aol.com>,
-    2010-11-09, from the docbook-apps mailing list> 
+    2010-11-09, from the docbook-apps mailing list>
   -->
   <xsl:attribute-set name="formal.title.properties">
     <xsl:attribute name="text-align">

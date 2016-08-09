@@ -1,32 +1,37 @@
-if(WIN32)
-  BRLCAD_MANAGE_FILES("archer.bat" ${BIN_DIR} EXEC)
-endif(WIN32)
-BRLCAD_MANAGE_FILES("archer" ${BIN_DIR} EXEC)
+set(BRLMAN_INCLUDE_DIRS
+  ${BU_INCLUDE_DIRS}
+  ${TCLCAD_INCLUDE_DIRS}
+  ${TCL_INCLUDE_DIRS}
+  ${TK_INCLUDE_DIRS}
+  )
+list(REMOVE_DUPLICATES BRLMAN_INCLUDE_DIRS)
+include_directories(${BRLMAN_INCLUDE_DIRS})
 
-# archer depends on the creation/installation of all the
-# tclscripts.
-add_custom_target(archer ALL DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/archer)
-add_dependencies(archer bwish rtwizard)
-foreach(item ${tclindex_target_list})
-  add_dependencies(archer ${item})
-endforeach(item ${tclindex_target_list})
+BRLCAD_ADDDATA(archer_launch.tcl tclscripts/archer)
 
-# other archer dependencies
+set(archer_libs libtclcad libbu ${ITCL_LIBRARY} ${ITK_LIBRARY} ${TCL_LIBRARIES})
+
+if(CPP_DLL_DEFINES)
+  set(archer_libs ${archer_libs} imm32.lib comctl32.lib)
+endif(CPP_DLL_DEFINES)
+
+# NOTE: Building "GUI" doesn't matter except on Windows, but on Windows archer
+# currently works only in graphical mode - might as well behave "nicely" there.
+# If/when we add MGED's ability to work in "classic" mode, Archer will have
+# to be built as a non-GUI application (or we'll have to build too executables)
 if(BRLCAD_ENABLE_TK)
-  add_dependencies(archer bwish ${ITCL_LIBRARY} ${ITK_LIBRARY})
-  get_directory_property(BRLCAD_BUILD_TKHTML DIRECTORY ${CMAKE_SOURCE_DIR}/src/other DEFINITION BRLCAD_TKHTML_BUILD)
-  if(BRLCAD_BUILD_TKHTML)
-    add_dependencies(archer Tkhtml)
-  endif(BRLCAD_BUILD_TKHTML)
-  get_directory_property(BRLCAD_BUILD_TKPNG DIRECTORY ${CMAKE_SOURCE_DIR}/src/other DEFINITION BRLCAD_TKPNG_BUILD)
-  if(BRLCAD_BUILD_TKPNG)
-    add_dependencies(archer tkpng)
-  endif(BRLCAD_BUILD_TKPNG)
-  get_directory_property(BRLCAD_BUILD_TKTABLE DIRECTORY ${CMAKE_SOURCE_DIR}/src/other	DEFINITION BRLCAD_TKTABLE_BUILD)
-  if(BRLCAD_BUILD_TKTABLE)
-    add_dependencies(archer Tktable)
-  endif(BRLCAD_BUILD_TKTABLE)
+  BRLCAD_ADDEXEC(archer archer.c "${archer_libs}" GUI)
+  add_dependencies(archer archer_launch_tcl_cp)
+  add_dependencies(archer rtwizard)
+  ADD_TARGET_DEPS(archer Tkhtml tkpng Tktable)
+
+  foreach(item ${tclindex_target_list})
+    add_dependencies(archer ${item})
+  endforeach(item ${tclindex_target_list})
 endif(BRLCAD_ENABLE_TK)
+
+
+# Archer plugins
 
 BRLCAD_ADDDATA(plugins/Core/README plugins/archer/Core)
 BRLCAD_ADDDATA(plugins/Commands/README plugins/archer/Command)
@@ -57,16 +62,7 @@ BRLCAD_ADDDATA(plugins/Wizards/tirewizard/TireWizard.tcl plugins/archer/Wizards/
 
 set(archer_ignore_files
   TODO
-  archer
-  archer.bat
-  plugins/Commands
-  plugins/Core
-  plugins/Utility/attrGroupsDisplayUtilityP
-  plugins/Utility/botUtilityP
-  plugins/Utility/lodUtilityP
-  plugins/Wizards/humanwizard
-  plugins/Wizards/tankwizard
-  plugins/Wizards/tirewizard
+  archer.c
   )
 CMAKEFILES(${archer_ignore_files})
 

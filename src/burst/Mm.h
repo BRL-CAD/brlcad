@@ -1,7 +1,7 @@
 /*                            M M . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -22,8 +22,8 @@
  *
  */
 
-#ifndef __MM_H__
-#define __MM_H__
+#ifndef BURST_MM_H
+#define BURST_MM_H
 
 /* Emulate MUVES Mm package using malloc. */
 
@@ -32,16 +32,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bu.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
-#define MmAllo(typ)		(typ *) bu_malloc(sizeof(typ), BU_FLSTR)
-#define MmFree(typ, ptr) bu_free((char *) ptr, BU_FLSTR)
-#define MmVAllo(ct, typ)	(typ *) bu_malloc((ct)*sizeof(typ), BU_FLSTR)
-#define MmVFree(ct, typ, ptr) bu_free((char *) ptr, BU_FLSTR)
+#define MmAllo(typ)		(typ *) bu_malloc(sizeof(typ), CPP_FILELINE)
+#define MmFree(typ, ptr) bu_free((char *) ptr, CPP_FILELINE)
+#define MmVAllo(ct, typ)	(typ *) bu_malloc((ct)*sizeof(typ), CPP_FILELINE)
+#define MmVFree(ct, typ, ptr) bu_free((char *) ptr, CPP_FILELINE)
 #define MmStrDup(str) bu_strdup(str)
-#define MmStrFree(str) bu_free(str, BU_FLSTR)
+#define MmStrFree(str) bu_free(str, CPP_FILELINE)
 
-#endif  /* __MM_H__ */
+#endif  /* BURST_MM_H */
 
 /*
  * Local Variables:

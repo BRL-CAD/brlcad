@@ -1,7 +1,7 @@
 /*                           B I O . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,54 +17,57 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file bio.h
+/** @addtogroup bu_bio
  *
- * BRL-CAD private system compatibility wrapper header that provides
- * declarations for native and standard system INPUT/OUTPUT routines.
+ * @brief
+ * BRL-CAD system compatibility wrapper header that provides declarations for
+ * native and standard system INPUT/OUTPUT routines.
  *
- * This header is commonly used in lieu of including the following:
- * stdio.h, io.h, fcntl, unistd.h, and windows.h
+ * This header is commonly used in lieu of including the following: stdio.h,
+ * io.h, fcntl, unistd.h, and windows.h
  *
- * This header does not belong to any BRL-CAD library but may used by
- * all of them.  Consider this header PRIVATE and subject to change,
- * NOT TO BE USED BY THIRD PARTIES.
- *
+ * The logic in this header should not rely on common.h's HAVE_* defines and
+ * should not be including the common.h header.  This is intended to be a
+ * stand-alone portability header intended to be independent of build system,
+ * reusable by external projects.
  */
 
-#ifndef __BIO_H__
-#define __BIO_H__
+/** @{ */
+/** @file bio.h */
 
-/* Do not rely on common.h's HAVE_* defines.  Do not include the
- * common.h header.  This is a stand-alone portability header intended
- * to be independent of BRL-CAD and the BRL-CAD build system, reusable
- * by external projects.
- */
+#ifndef BIO_H
+#define BIO_H
 
 #include <stdio.h>
 
 #if defined(_WIN32) && !defined(__CYGWIN__)
-#  define NOMINMAX
-#  ifdef IGNORE
-#    define _BIO_IGNORE(x) IGNORE(x)
-#    undef IGNORE
+
+#  ifdef WIN32_LEAN_AND_MEAN
+#    undef WIN32_LEAN_AND_MEAN
 #  endif
+#  define WIN32_LEAN_AND_MEAN 434144 /* don't want winsock.h */
+
+#  ifdef NOMINMAX
+#    undef NOMINMAX
+#  endif
+#  define NOMINMAX 434144 /* don't break std::min and std::max */
+
 #  include <windows.h>
+
+#  undef WIN32_LEAN_AND_MEAN /* unset to not interfere with calling apps */
+#  undef NOMINMAX
 #  include <io.h>
 
 #  undef rad1 /* Win32 radio button 1 */
 #  undef rad2 /* Win32 radio button 2 */
 #  undef small /* defined as part of the Microsoft Interface Definition Language (MIDL) */
-#  undef IN
-#  undef OUT
-/* In case windows.h squashed our ignore, reinstate it - see common.h */
-#  ifdef _BIO_IGNORE
-#    ifdef IGNORE
-#      undef IGNORE
-#    endif
-#    define IGNORE(x) _BIO_IGNORE(x)
-#  endif
+
 #else
+
 #  include <unistd.h>
+
+/* provide a stub so we don't need to wrap all setmode() calls */
+#  define setmode(a, b) /* poof */
 #endif
 
 /* needed for testing O_TEMPORARY and O_BINARY */
@@ -87,7 +90,9 @@
 #   define S_ISDIR(_st_mode) (((_st_mode) & S_IFMT) == S_IFDIR)
 #endif
 
-#endif /* __BIO_H__ */
+#endif /* BIO_H */
+
+/** @} */
 
 /*
  * Local Variables:

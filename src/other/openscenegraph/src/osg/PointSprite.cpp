@@ -1,0 +1,109 @@
+/* -*-c++-*- OpenSceneGraph - Copyright (C) 1998-2006 Robert Osfield
+ *
+ * This library is open source and may be redistributed and/or modified under
+ * the terms of the OpenSceneGraph Public License (OSGPL) version 0.0 or
+ * (at your option) any later version.  The full license is in LICENSE file
+ * included with this distribution, and on the openscenegraph.org website.
+ *
+ * This library is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * OpenSceneGraph Public License for more details.
+ */
+
+#include <osg/GLExtensions>
+#include <osg/GL>
+#include <osg/PointSprite>
+#include <osg/Point>
+#include <osg/State>
+#include <osg/buffered_value>
+#include <osg/Notify>
+
+using namespace osg;
+
+PointSprite::PointSprite()
+    : _coordOriginMode(UPPER_LEFT)
+{
+}
+
+PointSprite::~PointSprite()
+{
+}
+
+int PointSprite::compare(const StateAttribute& sa) const
+{
+    COMPARE_StateAttribute_Types(PointSprite,sa)
+
+    COMPARE_StateAttribute_Parameter(_coordOriginMode)
+
+    return 0; // passed all the above comparison macros, must be equal.
+}
+
+
+bool PointSprite::checkValidityOfAssociatedModes(osg::State& state) const
+{
+
+    bool modeValid = isPointSpriteSupported(state.getContextID());
+
+#if defined( OSG_GLES1_AVAILABLE ) //point sprites don't exist on es 2.0
+    state.setModeValidity(GL_POINT_SPRITE_OES, modeValid);
+#else
+    state.setModeValidity(GL_POINT_SPRITE_ARB, modeValid);
+#endif
+    
+    return modeValid;
+}
+
+void PointSprite::apply(osg::State& state) const
+{
+#if defined( OSG_GL3_AVAILABLE )
+    
+    const Point::Extensions* extensions = Point::getExtensions(state.getContextID(),true);
+    extensions->glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,_coordOriginMode);
+
+#elif defined( OSG_GLES1_AVAILABLE ) //point sprites don't exist on es 2.0
+    
+    if(!isPointSpriteSupported(state.getContextID())) return;
+    
+    glTexEnvi(GL_POINT_SPRITE_OES, GL_COORD_REPLACE_OES, 1);
+    
+#elif defined( OSG_GL_FIXED_FUNCTION_AVAILABLE )
+
+    if(!isPointSpriteSupported(state.getContextID())) return;
+
+    glTexEnvi(GL_POINT_SPRITE_ARB, GL_COORD_REPLACE_ARB, 1);
+
+    const Point::Extensions* extensions = Point::getExtensions(state.getContextID(),true);
+
+    if (extensions->isPointSpriteCoordOriginSupported())
+        extensions->glPointParameteri(GL_POINT_SPRITE_COORD_ORIGIN,_coordOriginMode);
+
+#else
+    OSG_NOTICE<<"Warning: PointSprite::apply(State&) - not supported."<<std::endl;
+
+#endif
+}
+
+struct IntializedSupportedPair
+{
+    IntializedSupportedPair():
+        initialized(false),
+        supported(false) {}
+
+    bool initialized;
+    bool supported;
+};
+
+typedef osg::buffered_object< IntializedSupportedPair > BufferedExtensions;
+static BufferedExtensions s_extensions;
+
+bool PointSprite::isPointSpriteSupported(unsigned int contextID)
+{
+    if (!s_extensions[contextID].initialized)
+    {
+        s_extensions[contextID].initialized = true;
+        s_extensions[contextID].supported = OSG_GL3_FEATURES || isGLExtensionSupported(contextID, "GL_ARB_point_sprite") || isGLExtensionSupported(contextID, "GL_OES_point_sprite") || isGLExtensionSupported(contextID, "GL_NV_point_sprite");
+    }
+
+    return s_extensions[contextID].supported;
+}

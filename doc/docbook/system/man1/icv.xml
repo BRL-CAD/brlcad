@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='icv1'>
+  <refmeta>
+    <refentrytitle>ICV</refentrytitle>
+    <manvolnum>1</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>icv</refname>
+    <refpurpose>Convert images to and from various formats</refpurpose>
+  </refnamediv>
+
+  <refsynopsisdiv xml:id='synopsis'>
+    <cmdsynopsis>
+      <command>icv</command>
+      <arg choice='opt'>-h</arg>
+      <arg choice='opt'>-i <replaceable>file</replaceable></arg>
+      <arg choice='opt'>--input-format <replaceable>fmt</replaceable></arg>
+      <arg choice='opt'>-o <replaceable>file</replaceable></arg>
+      <arg choice='opt'>--output-format <replaceable>fmt</replaceable></arg>
+      <arg choice='opt'>-w <replaceable>width</replaceable></arg>
+      <arg choice='opt'><replaceable>input_file</replaceable></arg>
+      <arg choice='opt'><replaceable>output_file</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+
+  <refsection xml:id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <command>icv</command> is a tool to convert images to and from a variety of
+      image formats.  Currently support formats include:
+
+      <table>
+	<title>Supported ICV Image Formats</title>
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Format</entry>
+	      <entry>Extension</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry>PIX - pixel sequence of R/G/B values stored as unsigned chars.</entry>
+	      <entry>pix</entry>
+	    </row>
+	    <row>
+	      <entry>Double PIX - double precision pixel sequence</entry>
+	      <entry>dpix</entry>
+	    </row>
+	    <row>
+	      <entry>Portable Network Graphics</entry>
+	      <entry>png</entry>
+	    </row>
+	    <row>
+	      <entry>PPM - "lowest common denominator" Netbpm color iamge format</entry>
+	      <entry>ppm</entry>
+	    </row>
+	    <row>
+	      <entry>BW - black and white image data</entry>
+	      <entry>bw</entry>
+	    </row>
+	    <row>
+	      <entry>(TODO) Utah Raster Toolkit Run-Length Encoded (RLE)</entry>
+	      <entry>rle</entry>
+	    </row>
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+  </refsection>
+
+  <refsection xml:id='options'>
+    <title>OPTIONS</title>
+    <para>
+      File types will be deduced unless explicitly specfied with the <option>input-format</option>
+      and/or <option>output-format</option> options.
+
+      For file types like PIX that do not encode dimensional information, <command>icv</command>
+      will attempt to guess the image size based on various assumptions (a square image, known sizes
+      for image displays, paper sizes at various dots-per-inch, etc.).  If the users does know
+      the correct image width and height, they may be specified with the <option>w</option> and
+      <option>n</option> options.
+    </para>
+
+    <variablelist remap='TP'>
+      <varlistentry>
+	<term><option>-h</option>, <option>--help</option></term>
+	<listitem>
+	  <para>
+	    Print help and exit.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-i</option> <replaceable>file</replaceable>, <option>--input</option> <replaceable>file</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify an input file.  If none is specified, the first non-option-related argument will be used as the input file name.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-o</option> <replaceable>file</replaceable>, <option>--output</option> <replaceable>file</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify an input file.  If none is specified, the second non-option-related argument will be used as the output file name.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-w</option> <replaceable>#</replaceable>, <option>--width</option> <replaceable>#</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify the width of the input image.  Useful for file types such as PIX that do not encode explicit size information.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>-n</option> <replaceable>#</replaceable>, <option>--height</option> <replaceable>#</replaceable></term>
+	<listitem>
+	  <para>
+	    Specify the height of the input image.  Useful for file types such as PIX that do not encode explicit size information.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--input-format</option> <replaceable>fmt</replaceable></term>
+	<listitem>
+	  <para>
+	    Explicitly specify input file format.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><option>--output-format</option> <replaceable>fmt</replaceable></term>
+	<listitem>
+	  <para>
+	    Explicitly specify output file format.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection xml:id='example'>
+    <title>EXAMPLE</title>
+    <literallayout remap='RS'>
+      icv -w 1024 -n 512 tank.pix tank.png
+    </literallayout>
+  </refsection>
+
+  <refsection xml:id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+      <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+    </para>
+  </refsection>
+
+  <refsection xml:id='author'>
+    <title>AUTHOR</title>
+    <para>
+      Clifford Yapp
+    </para>
+  </refsection>
+
+  <refsection xml:id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1989-2016 by the United States
+      Government as represented by U.S. Army Research Laboratory.
+    </para>
+  </refsection>
+
+  <refsection xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.
+    </para>
+  </refsection>
+</refentry>
+

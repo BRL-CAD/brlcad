@@ -1,7 +1,7 @@
 /*                           C - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -27,27 +27,30 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
 #include "vmath.h"
 
 
-static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
-
-int rflag = 0;
-int iflag = 0;
-int mflag = 0;
-int pflag = 0;
-int zflag = 0;
-
-double ibuf[512];
-double obuf[512];
-double *obp;
-
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
+    static const char usage[] = "Usage: c-d -r -i -m -p -z < complex_data > doubles\n";
+
+    int rflag = 0;
+    int iflag = 0;
+    int mflag = 0;
+    int pflag = 0;
+    int zflag = 0;
+
+    double ibuf[512];
+    double obuf[512];
+    double *obp;
+
     int i, num, onum;
     size_t ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc <= 1 || isatty(fileno(stdin))) {
 	bu_exit(1, "%s", usage);

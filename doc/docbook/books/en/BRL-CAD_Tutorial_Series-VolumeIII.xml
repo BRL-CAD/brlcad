@@ -1,11 +1,9 @@
-<!-- Converted by db4-upgrade version 1.0 -->
-
 <book xmlns="http://docbook.org/ns/docbook" version="5.0"
       xmlns:xi="http://www.w3.org/2001/XInclude"
 >
   <info><title><application>BRL-CAD</application> Tutorial Series: Volume III - Principles of Effective Modeling</title>
 
-    <xi:include href="./tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
+    <xi:include href="../../books/en/tutorial_series_authors.xml" xpointer="Intro_MGED_Tutorial_Series_III_authors"/>
 
     <publishername>Army Research Laboratory</publishername>
     <biblioid class="pubsnumber">ARL-SR-119</biblioid>
@@ -31,7 +29,7 @@
 
   </info>
 
-  <preface><info><title>Acknowledgements</title></info>
+  <preface><info><title>Acknowledgments</title></info>
 
 
     <para>
@@ -99,7 +97,7 @@
 
   <chapter xml:id="volIIImodelprocess"><info><title>The Model Process</title></info>
 
-    <section><info><title>The Importance of the Model Mission</title></info>
+    <section xml:id="The_Importance_of_the_Model_Mission"><info><title>The Importance of the Model Mission</title></info>
 
       <para>
 	The key to knowing how to build successful, effective models in BRL-CAD is
@@ -169,7 +167,7 @@
 
     </section>
 
-    <section><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
+    <section xml:id="M_O_D_E_L_A_Five-Step_Approach_to_Creating_Effective_Models"><info><title>M-O-D-E-L: A Five-Step Approach to Creating Effective Models</title></info>
 
 
       <para>
@@ -523,7 +521,7 @@
        smaller, more manageable pieces. Also, this step can often reveal a
        logical building order (e.g., the drywall does not get installed until the
        wiring inside the walls has been run) as well as identify important
-       interconnectivities among parts.
+       interconnections among parts.
      </para>
      <para>
        The following list provides some tips to achieve good model structuring:
@@ -1583,7 +1581,7 @@ mvall oldname newname
 	    model.
 	  </para>
 	  <para>
-	    As shown in Table 7, there are tradeoffs to be considered when using each
+	    As shown in Table 7, there are trade-offs to be considered when using each
 	    of these approaches. Construction effort is one of them. If the prototype
 	    consists of many objects or layers of structure, replication could be a
 	    tedious task. In the box of pencils, for example, all of the structure of

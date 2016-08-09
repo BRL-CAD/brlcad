@@ -2,6 +2,9 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
 if(COMMAND CMAKE_POLICY)
   CMAKE_POLICY(SET CMP0003 NEW)
+  if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+    CMAKE_POLICY(SET CMP0026 OLD)
+  endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
 endif(COMMAND CMAKE_POLICY)
 
 # Set CMake project name
@@ -74,7 +77,7 @@ install(TARGETS ${P2T_LIB_NAME}
   ARCHIVE DESTINATION ${LIB_DIR})
 
 if(BUILD_STATIC_LIBS)
-  set(P2T_LIB_NAME_STATIC ${P2T_LIB_NAME}_static)
+  set(P2T_LIB_NAME_STATIC ${P2T_LIB_NAME}-static)
   add_library(${P2T_LIB_NAME_STATIC} STATIC ${LIBP2T_SOURCES})
   if(MSVC)
     # msvc does not append 'lib' - do it here to have consistent name

@@ -1,7 +1,7 @@
 /*                          P T B L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -23,8 +23,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "bu.h"
-
+#include "bu/debug.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/ptbl.h"
 
 void
 bu_ptbl_init(struct bu_ptbl *b, size_t len, const char *str)
@@ -74,7 +76,7 @@ bu_ptbl_ins(struct bu_ptbl *b, long int *p)
 					"bu_ptbl.buffer[] (ins)");
     }
 
-    i=b->end++;
+    i = b->end++;
     b->buffer[i] = p;
     return i;
 }
@@ -226,7 +228,7 @@ bu_ptbl_free(struct bu_ptbl *b)
     BU_CK_PTBL(b);
 
     if (b->buffer) {
-	bu_free((genptr_t)b->buffer, "bu_ptbl.buffer[]");
+	bu_free((void *)b->buffer, "bu_ptbl.buffer[]");
     }
     memset((char *)b, 0, sizeof(struct bu_ptbl));	/* sanity */
 
@@ -262,13 +264,16 @@ bu_pr_ptbl(const char *title, const struct bu_ptbl *tbl, int verbose)
 
 
 void
-bu_ptbl_trunc(struct bu_ptbl *tbl, int end)
+bu_ptbl_trunc(struct bu_ptbl *tbl, size_t end)
 {
     BU_CK_PTBL(tbl);
 
-    if (tbl->end <= end)
+    if (end > tbl->blen) {
+	/* TODO: expand the allocation? */
 	return;
+    }
 
+    /* expand or reduce accordingly */
     tbl->end = end;
     return;
 }

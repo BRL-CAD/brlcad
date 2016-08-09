@@ -1,7 +1,7 @@
 /*                     V I E W R A N G E . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,7 +35,7 @@
 
 #include "vmath.h"
 #include "raytrace.h"
-#include "plot3.h"
+#include "bn/plot3.h"
 
 /* private */
 #include "./rtuif.h"
@@ -50,7 +50,6 @@ struct cell {
 };
 
 extern size_t   width;			/* # of pixels in X; picture width */
-extern int	npsw;			/* number of worker PSWs to run */
 float		max_dist;
 struct cell	*cellp;
 
@@ -82,8 +81,6 @@ int	raymiss(register struct application *ap);
 
 
 /*
- *  			V I E W _ I N I T
- *
  *  This routine is called by main().  It initializes the entire run, i.e.,
  *  it does things such as opening files, etc., which must be done before
  *  any other computations take place.  It is called only once per run.
@@ -95,6 +92,9 @@ int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNUSED(minus_o), int UNUSED(minus_F))
 {
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     ap->a_hit = rayhit;
     ap->a_miss = raymiss;
     ap->a_onehit = 1;
@@ -105,8 +105,6 @@ view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int UNU
 }
 
 /*
- *			V I E W _ 2 I N I T
- *
  *  A null-function.
  *  View_2init is called by do_frame(), which in turn is called by
  *  main() in rt.c.  This routine is called once per frame.  Static
@@ -150,7 +148,7 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
     pdv_3space(outfp, ap->a_rt_i->rti_pmin, ap->a_rt_i->rti_pmax);
 
-    /* Find the max dist fron emanation plane to end of model
+    /* Find the max dist from emanation plane to end of model
      * space.  This can be twice the radius of the bounding
      * sphere.
      */
@@ -160,8 +158,6 @@ view_2init(struct application *ap, char *UNUSED(framename))
 
 
 /*
- *			R A Y M I S S
- *
  *  This function is called by rt_shootray(), which is called by
  *  do_frame(). Records coordinates where a miss is detected.
  */
@@ -188,8 +184,6 @@ raymiss(register struct application *ap)
 }
 
 /*
- *			V I E W _ P I X E L
- *
  *  This routine is called from do_run(), and in this case does nothing.
  */
 
@@ -204,8 +198,6 @@ void view_cleanup(struct rt_i *UNUSED(rtip)) {}
 
 
 /*
- *			R A Y H I T
- *
  *  Rayhit() is called by rt_shootray() when a hit is detected.  It
  *  computes the hit distance, the distance traveled by the
  *  ray, and the direction vector.
@@ -252,8 +244,6 @@ rayhit(struct application *ap, register struct partition *PartHeadp, struct seg 
 }
 
 /*
- *			V I E W _ E O L
- *
  *  View_eol() is called by rt_shootray() in do_run().
  *  This routine is called by worker.c whenever there is a full scanline.
  *  worker.c figures out what is a full scanline.  Whenever there
@@ -302,8 +292,6 @@ view_eol(struct application *UNUSED(ap))
 
 
 /*
- *			V I E W _ E N D
- *
  *  View_end() is called by rt_shootray in do_run().
  */
 

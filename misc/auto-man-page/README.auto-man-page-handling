@@ -169,7 +169,7 @@ Usage: %s port_num\n\
 
     other_refs:
 
-      ...list of other refences, if any,
+      ...list of other references, if any,
       semicolon-separated, no other embellishments...
 
     ...both lists will go in the SEE ALSO section...

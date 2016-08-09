@@ -1,7 +1,7 @@
 /*                    P L O T 3 - H P G L . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,27 +29,40 @@
 
 #include "common.h"
 
-#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
+#include "bu/cv.h"
 
 
 #define ASPECT (9.8/7.1)
 #define geti(x) { (x) = getchar(); (x) |= (short)(getchar()<<8); }
 #define getb(x)	((x) = getchar())
 
+void printusage (const char *name)
+{
+	bu_exit(1, "Usage: %s < infile > outfile\n", name);
+}
 
 int
 main(int argc, char **argv)
 {
     char colors[8][3];
     int numcolors = 0;
-    int c, i, x, y, x_1, x_2, y_1, y_2, r, g, b;
+    int c, i, x, y, x1, x2, y1, y2, r, g, b;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc != 1) {
-	bu_exit(1, "Usage: %s < infile > outfile\n", argv[0]);
+	printusage(argv[0]);
+    }
+
+    if (isatty(fileno(stdin)) || isatty(fileno(stdout))) {
+	printusage(argv[0]);
     }
 
     getb(c);
@@ -63,14 +76,14 @@ main(int argc, char **argv)
 		printf("PD;\n");
 		break;
 	    case 'l':		/* line */
-		geti(x_1);
-		geti(y_1);
-		geti(x_2);
-		geti(y_2);
+		geti(x1);
+		geti(y1);
+		geti(x2);
+		geti(y2);
 		printf("PU;\n");
-		printf("PA %d %d;\n", x_1, y_1);
+		printf("PA %d %d;\n", x1, y1);
 		printf("PD;\n");
-		printf("PA %d %d;\n", x_2, y_2);
+		printf("PA %d %d;\n", x2, y2);
 		break;
 	    case 'f':		/* line style */
 		while (getchar() != '\n');
@@ -93,21 +106,21 @@ main(int argc, char **argv)
 		/* draw text ignored */
 		break;
 	    case 's':		/* space */
-		geti(x_1);
-		geti(y_1);
-		geti(x_2);
-		geti(y_2);
-		x_1 *= ASPECT;
-		x_2 *= ASPECT;
-		printf("SC %d %d %d %d;\n", x_1, x_2, y_1, y_2);
+		geti(x1);
+		geti(y1);
+		geti(x2);
+		geti(y2);
+		x1 *= ASPECT;
+		x2 *= ASPECT;
+		printf("SC %d %d %d %d;\n", x1, x2, y1, y2);
 		printf("SP 1;\n");
 		printf("PU;\n");
-		printf("PA %d %d;\n", x_1, y_1);
+		printf("PA %d %d;\n", x1, y1);
 		printf("PD;\n");
-		printf("PA %d %d;\n", x_1, y_2);
-		printf("PA %d %d;\n", x_2, y_2);
-		printf("PA %d %d;\n", x_2, y_1);
-		printf("PA %d %d;\n", x_1, y_1);
+		printf("PA %d %d;\n", x1, y2);
+		printf("PA %d %d;\n", x2, y2);
+		printf("PA %d %d;\n", x2, y1);
+		printf("PA %d %d;\n", x1, y1);
 		break;
 	    case 'C':		/* color */
 		r = getchar();

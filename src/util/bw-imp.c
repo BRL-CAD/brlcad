@@ -1,7 +1,7 @@
 /*                        B W - I M P . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -33,7 +33,8 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 
 #define true 1
 #define false 0
@@ -67,7 +68,8 @@ static int dither[8][8] =		/* dither pattern */
 static int (*pattern)[8] = dither;	/* -> dither or halftone */
 
 static FILE *infp;			/* input file handle */
-static char *file_name = "-";	/* name of input file, for banner */
+static const char hyphen[] = "-";
+static const char *file_name = hyphen;	/* name of input file, for banner */
 
 static size_t height;			/* input height */
 static size_t width;			/* input width */
@@ -134,7 +136,7 @@ get_args(int argc, char **argv)
     if (bu_optind >= argc) {
 	if (isatty(fileno(stdin)))
 	    return false;
-	file_name = "-";
+	file_name = hyphen;
 	infp = stdin;
     } else {
 	file_name = argv[bu_optind];
@@ -157,6 +159,9 @@ int
 main(int argc, char **argv)
 {
     size_t y;
+
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     height = width = 512;		/* Defaults */
 
@@ -234,10 +239,10 @@ im_header(void)
 void
 im_write(int y)
 {
-    size_t y_1;
+    size_t y1;
 
     /* Process one 32-bit high output swath */
-    for (y_1 = 0; y_1 < 32; y_1 += im_mag) {
+    for (y1 = 0; y1 < 32; y1 += im_mag) {
 	size_t x;
 
 	/* Obtain a single line of 8-bit pixels */
@@ -251,11 +256,11 @@ im_write(int y)
 
 	    for (my = 0; my < im_mag; ++my) {
 		long b = 0L;	/* image bits */
-		int x_1;
+		int x1;
 
-		for (x_1 = 0; x_1 < 32; x_1 += im_mag) {
+		for (x1 = 0; x1 < 32; x1 += im_mag) {
 		    int level =
-			line[width-1-((x + x_1) / im_mag)];
+			line[width-1-((x + x1) / im_mag)];
 		    int mx;
 
 		    if (im_mag <= 1) {
@@ -269,8 +274,8 @@ im_write(int y)
 			b <<= 1;
 
 			/* Compute Dither */
-			pgx = x + x_1 + mx;
-			pgy = y + y_1 + my;
+			pgx = x + x1 + mx;
+			pgy = y + y1 + my;
 			/* ameliorate grid regularity */
 			if (pattern == halftone &&
 			    (pgy % 16) >= 8)
@@ -280,7 +285,7 @@ im_write(int y)
 			    b |= 1L;
 		    }
 		}
-		swath[y_1 + my][x / 32] = b;
+		swath[y1 + my][x / 32] = b;
 	    }
 	}
     }

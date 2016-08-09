@@ -1,7 +1,7 @@
 /*                         V M A T H . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,27 +17,26 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup mat */
+/** @addtogroup vmath */
 /** @{ */
 /** @file vmath.h
  *
- * @brief vector/matrix math
+ * @brief vector/matrix math, matrix representation
  *
  * This header file defines many commonly used 3D vector math macros,
  * and operates on vect_t, point_t, mat_t, and quat_t objects.
  *
- * @brief matrix representation
  * 4 x 4 Matrix manipulation functions...
  *
  * Matrix array elements have the following positions in the matrix:
- @code
+ * @code
  *			|  0  1  2  3 |		| 0 |
  *	[ 0 1 2 3 ]	|  4  5  6  7 |		| 1 |
  *			|  8  9 10 11 |		| 2 |
  *			| 12 13 14 15 |		| 3 |
  *
  * preVector (vect_t) Matrix (mat_t) postVector (vect_t)
- @endcode
+ * @endcode
  *
  * Note that while many people in the computer graphics field use
  * post-multiplication with row vectors (i.e., vector * matrix * matrix
@@ -52,20 +51,20 @@
  * Furthermore, additional transformations are multiplied on the left,
  * i.e.:
  *
- <tt> @code
+ * @code
  * vec'  =  T1 * vec
  * vec'' =  T2 * T1 * vec  =  T2 * vec'
- @endcode </tt>
+ * @endcode
  *
  * The most notable implication of this is the location of the "delta"
  * (translation) values in the matrix, i.e.:
  *
- <tt> @code
+ * @code
  * x'   (R0  R1  R2 Dx) x
  * y' = (R4  R5  R6 Dy) * y
  * z'   (R8  R9 R10 Dz) z
  * w'   (0   0   0  1/s) w
- @endcode </tt>
+ * @endcode
  *
  * Note -
  *@n  vect_t objects are 3-tuples
@@ -79,7 +78,9 @@
  * underscore in order to (hopefully) minimize any name conflicts with
  * user-provided parameters, such as _f in the following example:
  *
+ * @code
  * #define ABC() do { register double _f; do stuff; } while (0)
+ * @endcode
  *
  * All of the macros that introduce a scope like the preceding
  * example are written as do { } while (0) loops in order to require
@@ -87,21 +88,22 @@
  * preserve source code formatting.
  */
 
-#ifndef __VMATH_H__
-#define __VMATH_H__
+#ifndef VMATH_H
+#define VMATH_H
 
 #include "common.h"
 
-/* for sqrt(), sin(), cos(), rint(), M_PI and more on Windows */
+/* needed for additional math defines on Windows when including math.h */
 #define _USE_MATH_DEFINES 1
 
+/* for sqrt(), sin(), cos(), rint(), M_PI, INFINITY (HUGE_VAL), and more */
 #include <math.h>
 
 /* for floating point tolerances and other math constants */
 #include <float.h>
 
 /* for fastf_t */
-#include "bu.h"
+#include "bu/defines.h"
 
 
 __BEGIN_DECLS
@@ -110,6 +112,9 @@ __BEGIN_DECLS
 #  define M_		XXX /**< all with 36-digits of precision */
 #endif
 
+#ifndef M_1_2PI
+#  define M_1_2PI	0.159154943091895335768883763372514362  /**< 1/(2*pi) */
+#endif
 #ifndef M_1_PI
 #  define M_1_PI	0.318309886183790671537767526745028724  /**< 1/pi */
 #endif
@@ -143,6 +148,9 @@ __BEGIN_DECLS
 #ifndef M_PI
 #  define M_PI		3.14159265358979323846264338327950288   /**< pi */
 #endif
+#ifndef M_2PI
+#  define M_2PI		6.28318530717958647692528676655900576   /**< 2*pi */
+#endif
 #ifndef M_PI_2
 #  define M_PI_2	1.57079632679489661923132169163975144   /**< pi/2 */
 #endif
@@ -153,7 +161,7 @@ __BEGIN_DECLS
 #  define M_PI_4	0.785398163397448309615660845819875721  /**< pi/4 */
 #endif
 #ifndef M_SQRT1_2
-#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< 1/sqrt(2) */
+#  define M_SQRT1_2	0.707106781186547524400844362104849039  /**< sqrt(1/2) */
 #endif
 #ifndef M_SQRT2
 #  define M_SQRT2	1.41421356237309504880168872420969808   /**< sqrt(2) */
@@ -170,6 +178,41 @@ __BEGIN_DECLS
 #endif
 #ifndef RAD2DEG
 #  define RAD2DEG	57.2957795130823208767981548141051703   /**< 180/pi */
+#endif
+
+
+/**
+ * It is necessary to have a representation of 1.0/0.0 or log(0),
+ * i.e., "infinity" that fits within the dynamic range of the machine
+ * being used.  This constant places an upper bound on the size object
+ * which can be represented in the model.  With IEEE 754 floating
+ * point, this may print as 'inf' and is represented with all 1 bits
+ * in the biased-exponent field and all 0 bits in the fraction with
+ * the sign indicating positive (0) or negative (1) infinity.
+ * However, we do not assume or rely on IEEE 754 floating point.
+ */
+#ifndef INFINITY
+#  if defined(DBL_MAX)
+#    define INFINITY ((fastf_t)DBL_MAX)
+#  elif defined(HUGE_VAL)
+#    define INFINITY ((fastf_t)HUGE_VAL)
+#  elif defined(MAXDOUBLE)
+#    define INFINITY ((fastf_t)MAXDOUBLE)
+#  elif defined(HUGE)
+#    define INFINITY ((fastf_t)HUGE)
+/* fall back to a single-precision limit */
+#  elif defined(FLT_MAX)
+#    define INFINITY ((fastf_t)FLT_MAX)
+#  elif defined(HUGE_VALF)
+#    define INFINITY ((fastf_t)HUGE_VALF)
+#  elif defined(MAXFLOAT)
+#    define INFINITY ((fastf_t)MAXFLOAT)
+#  else
+     /* all else fails, just pick something big slightly under the
+      * 32-bit single-precision floating point limit for IEEE 754.
+      */
+#    define INFINITY ((fastf_t)1.0e38)
+#  endif
 #endif
 
 
@@ -190,28 +233,28 @@ __BEGIN_DECLS
 #  endif
 #endif
 
-/** @brief # of fastf_t's per vect2d_t */
+/** @brief number of fastf_t's per vect2d_t */
 #define ELEMENTS_PER_VECT2D	2
 
-/** @brief # of fastf_t's per point2d_t */
+/** @brief number of fastf_t's per point2d_t */
 #define ELEMENTS_PER_POINT2D	2
 
-/** @brief # of fastf_t's per vect_t */
+/** @brief number of fastf_t's per vect_t */
 #define ELEMENTS_PER_VECT	3
 
-/** @brief # of fastf_t's per point_t */
+/** @brief number of fastf_t's per point_t */
 #define ELEMENTS_PER_POINT	3
 
-/** @brief # of fastf_t's per hvect_t (homogeneous vector) */
+/** @brief number of fastf_t's per hvect_t (homogeneous vector) */
 #define ELEMENTS_PER_HVECT	4
 
-/** @brief # of fastf_t's per hpt_t (homogeneous point) */
+/** @brief number of fastf_t's per hpt_t (homogeneous point) */
 #define ELEMENTS_PER_HPOINT	4
 
-/** @brief # of fastf_t's per plane_t */
+/** @brief number of fastf_t's per plane_t */
 #define ELEMENTS_PER_PLANE	4
 
-/** @brief # of fastf_t's per mat_t */
+/** @brief number of fastf_t's per mat_t */
 #define ELEMENTS_PER_MAT	(ELEMENTS_PER_PLANE*ELEMENTS_PER_PLANE)
 
 /*
@@ -306,24 +349,24 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /**
  * Evaluates truthfully whether a number is not within valid range of
- * INFINITY to -INFINITY inclusive.
+ * INFINITY to -INFINITY exclusive (open set).
  */
-#define INVALID(n) (!((n) >= -INFINITY && (n) <= INFINITY))
+#define INVALID(n) (!((n) > -INFINITY && (n) < INFINITY))
 
 /**
- * Evaluates truthfully whether all components of a vector are not
+ * Evaluates truthfully whether any components of a vector are not
  * within a valid range.
  */
 #define VINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]))
 
 /**
- * Evaluates truthfully whether all components of a 2D vector are not
+ * Evaluates truthfully whether any components of a 2D vector are not
  * within a valid range.
  */
 #define V2INVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]))
 
 /**
- * Evaluates truthfully whether all components of a 4D vector are not
+ * Evaluates truthfully whether any components of a 4D vector are not
  * within a valid range.
  */
 #define HINVALID(v) (INVALID((v)[X]) || INVALID((v)[Y]) || INVALID((v)[Z]) || INVALID((v)[W]))
@@ -332,7 +375,23 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * Return truthfully whether a value is within a specified epsilon
  * distance from zero.
  */
-#define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#ifdef KEITH_WANTS_THIS
+/* this is a proposed change to equality/zero testing.  prior behavior
+ * evaluated as an open set.  this would change the behavior to that
+ * of a closed set so that you can perform exact comparisons against
+ * the tolerance and get a match.  examples that fail with the current
+ * macro: tol=0.1; 1.1 == 1.0 or tol=0; 1==1
+ *
+ * these need to be tested carefully to make sure we pass ALL
+ * regression and integration tests, which will require some
+ * concerted effort to coordinate prior to a release.  first step is
+ * to evaluate impact on performance and behavior of our tests.
+ */
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon) || ((val) > epsilon)))
+#  define NEAR_ZERO(val, epsilon)	(!(((val) < -epsilon)) && !(((val) > epsilon)))
+#else
+#  define NEAR_ZERO(val, epsilon)	(((val) > -epsilon) && ((val) < epsilon))
+#endif
 
 /**
  * Return truthfully whether all elements of a given vector are within
@@ -456,29 +515,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define HEQUAL(_a, _b)  HNEAR_EQUAL((_a), (_b), SMALL_FASTF)
 
 
-/**
- * clamp a value to a low/high number.
- */
-#define CLAMP(_v, _l, _h) if ((_v) < (_l)) _v = _l; else if ((_v) > (_h)) _v = _h
-
-
-/** Clamp a 3D vector to zero if within tolerance of zero. */
-#define VCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-    } while (0)
-
-
-/** Clamp a 4D vector to zero if within tolerance of zero. */
-#define HCLAMP(a) do { \
-	if (ZERO((a)[X])) (a)[X] = 0.0; \
-	if (ZERO((a)[Y])) (a)[Y] = 0.0; \
-	if (ZERO((a)[Z])) (a)[Z] = 0.0; \
-	if (ZERO((a)[H])) (a)[H] = 0.0; \
-    } while (0)
-
-
 /** @brief Compute distance from a point to a plane. */
 #define DIST_PT_PLANE(_pt, _pl) (VDOT(_pt, _pl) - (_pl)[W])
 
@@ -488,6 +524,12 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y]) + \
 	((_a)[Z]-(_b)[Z])*((_a)[Z]-(_b)[Z])
 #define DIST_PT_PT(_a, _b) sqrt(DIST_PT_PT_SQ(_a, _b))
+
+/** @brief Compute distance between two 2D points. */
+#define DIST_PT2_PT2_SQ(_a, _b) \
+	((_a)[X]-(_b)[X])*((_a)[X]-(_b)[X]) + \
+	((_a)[Y]-(_b)[Y])*((_a)[Y]-(_b)[Y])
+#define DIST_PT2_PT2(_a, _b) sqrt(DIST_PT2_PT2_SQ(_a, _b))
 
 /** @brief set translation values of 4x4 matrix with x, y, z values. */
 #define MAT_DELTAS(_m, _x, _y, _z) do { \
@@ -749,8 +791,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Set all elements of N-vector to same scalar value. */
 #define VSETALLN(v, s, n) do { \
-	register int _j; \
-	for (_j=0; _j<n; _j++) v[_j]=(s); \
+	register size_t _j; \
+	for (_j=0; _j < (size_t)(n); _j++) v[_j]=(s); \
     } while (0)
 
 
@@ -777,9 +819,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Transfer vector of length `n' at `b' to vector at `a'. */
 #define VMOVEN(a, b, n) do { \
-	register int _vmove; \
-	for (_vmove = 0; _vmove < (n); _vmove++) { \
-		(a)[_vmove] = (b)[_vmove]; \
+	register size_t _vmove; \
+	for (_vmove = 0; _vmove < (size_t)(n); _vmove++) { \
+	    (a)[_vmove] = (b)[_vmove]; \
 	} \
     } while (0)
 
@@ -834,8 +876,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * `a'.
  */
 #define VADD2N(a, b, c, n) do { \
-	register int _vadd2; \
-	for (_vadd2 = 0; _vadd2 < (n); _vadd2++) { \
+	register size_t _vadd2; \
+	for (_vadd2 = 0; _vadd2 < (size_t)(n); _vadd2++) { \
 		(a)[_vadd2] = (b)[_vadd2] + (c)[_vadd2]; \
 	} \
     } while (0)
@@ -876,8 +918,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `a'.
  */
 #define VSUB2N(a, b, c, n) do { \
-	register int _vsub2; \
-	for (_vsub2 = 0; _vsub2 < (n); _vsub2++) { \
+	register size_t _vsub2; \
+	for (_vsub2 = 0; _vsub2 < (size_t)(n); _vsub2++) { \
 		(a)[_vsub2] = (b)[_vsub2] - (c)[_vsub2]; \
 	} \
     } while (0)
@@ -906,8 +948,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Vectors:  A = B - C - D for vectors of length `n'. */
 #define VSUB3N(a, b, c, d, n) do { \
-	register int _vsub3; \
-	for (_vsub3 = 0; _vsub3 < (n); _vsub3++) { \
+	register size_t _vsub3; \
+	for (_vsub3 = 0; _vsub3 < (size_t)(n); _vsub3++) { \
 		(a)[_vsub3] = (b)[_vsub3] - (c)[_vsub3] - (d)[_vsub3]; \
 	} \
     } while (0)
@@ -939,8 +981,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `a'.
  */
 #define VADD3N(a, b, c, d, n) do { \
-	register int _vadd3; \
-	for (_vadd3 = 0; _vadd3 < (n); _vadd3++) { \
+	register size_t _vadd3; \
+	for (_vadd3 = 0; _vadd3 < (size_t)(n); _vadd3++) { \
 		(a)[_vadd3] = (b)[_vadd3] + (c)[_vadd3] + (d)[_vadd3]; \
 	} \
     } while (0)
@@ -981,8 +1023,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `a'.
  */
 #define VADD4N(a, b, c, d, e, n) do { \
-	register int _vadd4; \
-	for (_vadd4 = 0; _vadd4 < (n); _vadd4++) { \
+	register size_t _vadd4;		   \
+	for (_vadd4 = 0; _vadd4 < (size_t)(n); _vadd4++) { \
 		(a)[_vadd4] = (b)[_vadd4] + (c)[_vadd4] + (d)[_vadd4] + (e)[_vadd4]; \
 	} \
     } while (0)
@@ -1014,8 +1056,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * result at `a'
  */
 #define VSCALEN(a, b, c, n) do { \
-	register int _vscale; \
-	for (_vscale = 0; _vscale < (n); _vscale++) { \
+	register size_t _vscale; \
+	for (_vscale = 0; _vscale < (size_t)(n); _vscale++) { \
 		(a)[_vscale] = (b)[_vscale] * (c); \
 	} \
     } while (0)
@@ -1034,6 +1076,20 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	} \
     } while (0)
 
+/** @brief Normalize 2D vector `a' to be a unit vector. */
+#define V2UNITIZE(a) do { \
+	register double _f = MAG2SQ(a); \
+	if (! NEAR_EQUAL(_f, 1.0, VUNITIZE_TOL)) { \
+		_f = sqrt(_f); \
+		if (_f < VDIVIDE_TOL) { \
+			V2SETALL((a), 0.0); \
+		} else { \
+			_f = 1.0/_f; \
+			(a)[X] *= _f; (a)[Y] *= _f; \
+		} \
+	} \
+    } while (0)
+
 /**
  * @brief Find the sum of two points, and scale the result.  Often
  * used to find the midpoint.
@@ -1045,11 +1101,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VADD2SCALEN(o, a, b, s, n) do { \
-	register int _vadd2scale; \
+	register size_t _vadd2scale; \
 	for (_vadd2scale = 0; \
-	_vadd2scale < (n); \
-	_vadd2scale++) { \
-		(o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
+	     _vadd2scale < (size_t)(n); \
+	     _vadd2scale++) { \
+	    (o)[_vadd2scale] = ((a)[_vadd2scale] + (b)[_vadd2scale]) * (s); \
 	} \
     } while (0)
 
@@ -1064,11 +1120,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VSUB2SCALEN(o, a, b, s, n) do { \
-	register int _vsub2scale; \
+	register size_t _vsub2scale; \
 	for (_vsub2scale = 0; \
-	_vsub2scale < (n); \
-	_vsub2scale++) { \
-		(o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
+	     _vsub2scale < (size_t)(n); \
+	     _vsub2scale++) { \
+	    (o)[_vsub2scale] = ((a)[_vsub2scale] - (b)[_vsub2scale]) * (s); \
 	} \
     } while (0)
 
@@ -1081,11 +1137,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VCOMB3N(o, a, b, c, d, e, f, n) do { \
-	register int _vcomb3; \
+	register size_t _vcomb3; \
 	for (_vcomb3 = 0; \
-	_vcomb3 < (n); \
-	_vcomb3++) { \
-		(o)[_vcomb3] = (a) * (b)[_vcomb3] + (c) * (d)[_vcomb3] + (e) * (f)[_vcomb3]; \
+	     _vcomb3 < (size_t)(n); \
+	     _vcomb3++) { \
+	    (o)[_vcomb3] = (a) * (b)[_vcomb3] + (c) * (d)[_vcomb3] + (e) * (f)[_vcomb3]; \
 	} \
     } while (0)
 
@@ -1096,11 +1152,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VCOMB2N(o, a, b, c, d, n) do { \
-	register int _vcomb2; \
+	register size_t _vcomb2; \
 	for (_vcomb2 = 0; \
-	_vcomb2 < (n); \
-	_vcomb2++) { \
-		(o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
+	     _vcomb2 < (size_t)(n); \
+	     _vcomb2++) { \
+	    (o)[_vcomb2] = (a) * (b)[_vcomb2] + (c) * (d)[_vcomb2]; \
 	} \
     } while (0)
 
@@ -1154,11 +1210,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VJOIN2N(a, b, c, d, e, f, n) do { \
-	register int _vjoin2; \
+	register size_t _vjoin2; \
 	for (_vjoin2 = 0; \
-	_vjoin2 < (n); \
-	_vjoin2++) { \
-		(a)[_vjoin2] = (b)[_vjoin2] + (c) * (d)[_vjoin2] + (e) * (f)[_vjoin2]; \
+	     _vjoin2 < (size_t)(n); \
+	     _vjoin2++) { \
+	    (a)[_vjoin2] = (b)[_vjoin2] + (c) * (d)[_vjoin2] + (e) * (f)[_vjoin2]; \
 	} \
     } while (0)
 
@@ -1210,11 +1266,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * This is basically a shorthand for VSCALEN();VADD2N();.
  */
 #define VJOIN1N(a, b, c, d, n) do { \
-	register int _vjoin1; \
+	register size_t _vjoin1; \
 	for (_vjoin1 = 0; \
-	_vjoin1 < (n); \
-	_vjoin1++) { \
-		(a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
+	     _vjoin1 < (size_t)(n); \
+	     _vjoin1++) { \
+	    (a)[_vjoin1] = (b)[_vjoin1] + (c) * (d)[_vjoin1]; \
 	} \
     } while (0)
 
@@ -1231,11 +1287,11 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
     } while (0)
 
 #define VBLEND2N(a, b, c, d, e, n) do { \
-	register int _vblend2; \
+	register size_t _vblend2; \
 	for (_vblend2 = 0; \
-	_vblend2 < (n); \
-	_vblend2++) { \
-		(a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
+	     _vblend2 < (size_t)(n); \
+	     _vblend2++) { \
+	    (a)[_vblend2] = (b) * (c)[_vblend2] + (d) * (e)[_vblend2]; \
 	} \
     } while (0)
 
@@ -1244,6 +1300,8 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * @brief Project vector `a' onto `b'
  * vector `c' is the component of `a' parallel to `b'
  *     "    `d' "   "     "      "   "  orthogonal "   "
+ *
+ * FIXME: consistency, the result should come first
  */
 #define VPROJECT(a, b, c, d) do { \
     VSCALE(c, b, VDOT(a, b) / VDOT(b, b)); \
@@ -1254,9 +1312,18 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 #define MAGSQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y] + (a)[Z]*(a)[Z])
 #define MAG2SQ(a)	((a)[X]*(a)[X] + (a)[Y]*(a)[Y])
 
-/** @brief Return scalar magnitude of vector at `a' */
+
+/**
+ * @brief Return scalar magnitude of the 3D vector `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
 #define MAGNITUDE(a) sqrt(MAGSQ(a))
 
+/**
+ * @brief Return scalar magnitude of the 2D vector at `a'.  This is
+ * otherwise known as the Euclidean norm of the provided vector..
+ */
+#define MAGNITUDE2(a) sqrt(MAG2SQ(a))
 
 /**
  * Store cross product of 3D vectors at `b' and `c' in vector at `a'.
@@ -1324,7 +1391,22 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
  * replaced universally with fastf_t's since their epsilon is
  * considerably less than that of a double.
  */
-#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? (double)(long)rint(_a) : (_a))
+#define INTCLAMP(_a) (NEAR_EQUAL((_a), rint(_a), VUNITIZE_TOL) ? rint(_a) : (_a))
+
+/** Clamp a 3D vector to nearby integer values. */
+#define VINTCLAMP(_v) do { \
+	(_v)[X] = INTCLAMP((_v)[X]); \
+	(_v)[Y] = INTCLAMP((_v)[Y]); \
+	(_v)[Z] = INTCLAMP((_v)[Z]); \
+    } while (0)
+
+
+/** Clamp a 4D vector to nearby integer values. */
+#define HINTCLAMP(_v) do { \
+	VINTCLAMP(_v); \
+	(_v)[H] = INTCLAMP((_v)[H]); \
+    } while (0)
+
 
 /** @brief integer clamped versions of the previous arg macros. */
 #define V2INTCLAMPARGS(a) INTCLAMP((a)[X]), INTCLAMP((a)[Y])
@@ -1377,9 +1459,9 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 /** @brief Similar to VELMUL. */
 #define VELDIV(a, b, c) do { \
-	(a)[0] = (b)[0] / (c)[0]; \
-	(a)[1] = (b)[1] / (c)[1]; \
-	(a)[2] = (b)[2] / (c)[2]; \
+	(a)[X] = (b)[X] / (c)[X]; \
+	(a)[Y] = (b)[Y] / (c)[Y]; \
+	(a)[Z] = (b)[Z] / (c)[Z]; \
     } while (0)
 
 /**
@@ -1524,17 +1606,49 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 #define V_MAX(r, s) if ((r) < (s)) r = (s)
 
+#ifdef VMIN
+#  undef VMIN
+#endif
 #define VMIN(r, s) do { \
 	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); V_MIN((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMAX
+#  undef VMAX
+#endif
 #define VMAX(r, s) do { \
 	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); V_MAX((r)[Z], (s)[Z]); \
     } while (0)
 
+#ifdef VMINMAX
+#  undef VMINMAX
+#endif
 #define VMINMAX(min, max, pt) do { \
 	VMIN((min), (pt)); VMAX((max), (pt)); \
     } while (0)
+
+/**
+ * @brief Included below are macros to update min and max X, Y
+ * values to contain a point
+ */
+
+#define V2MIN(r, s) do { \
+	V_MIN((r)[X], (s)[X]); V_MIN((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MAX(r, s) do { \
+	V_MAX((r)[X], (s)[X]); V_MAX((r)[Y], (s)[Y]); \
+    } while (0)
+
+#define V2MINMAX(min, max, pt) do { \
+	V2MIN((min), (pt)); V2MAX((max), (pt)); \
+    } while (0)
+
+/**
+ * clamp a value to a low/high number.
+ */
+#define CLAMP(_v, _l, _h) V_MAX((_v), (_l)); else V_MIN((_v), (_h))
+
 
 /**
  * @brief Divide out homogeneous parameter from hvect_t, creating
@@ -1545,25 +1659,6 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 	(a)[Y] = (b)[Y] / (b)[H]; \
 	(a)[Z] = (b)[Z] / (b)[H]; \
     } while (0)
-
-/**
- * @brief Some 2-D versions of the 3-D macros given above.
- *
- * A better naming convention is V2MOVE() rather than VMOVE_2D().
- *
- * DEPRECATED: These xxx_2D names are slated to go away, use the
- * others.
- *
- * THESE ARE ALL DEPRECATED.
- */
-#define VADD2_2D(a, b, c) V2ADD2(a, b, c)
-#define VSUB2_2D(a, b, c) V2SUB2(a, b, c)
-#define MAGSQ_2D(a) MAG2SQ(a)
-#define VDOT_2D(a, b) V2DOT(a, b)
-#define VMOVE_2D(a, b) V2MOVE(a, b)
-#define VSCALE_2D(a, b, c) V2SCALE(a, b, c)
-#define VJOIN1_2D(a, b, c, d) V2JOIN1(a, b, c, d)
-
 
 /**
  * @brief Quaternion math definitions.
@@ -1941,7 +2036,7 @@ typedef fastf_t plane_t[ELEMENTS_PER_PLANE];
 
 __END_DECLS
 
-#endif /* __VMATH_H__ */
+#endif /* VMATH_H */
 
 /** @} */
 /*

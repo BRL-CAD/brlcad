@@ -1,7 +1,7 @@
 /*                  W I N D O W _ F R A M E . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2013 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -19,11 +19,11 @@
  */
 /** @file shapes/window_frame.c
  *
- * Program to make a window frame using libwdb.  The objects will be
- * in millimeters.  The window frames are composed of four arb8s and *
- * eight cylinders.  The front of the window frame is centered at *
- * (0, 0, 0) and extends in the negative x-direction the depth of the
- * * window frame.
+ * Program to make a window frame using libwdb.  The objects will be in
+ * millimeters.  The window frames are composed of four arb8s and eight
+ * cylinders.  The front of the window frame is centered at (0, 0, 0) and
+ * extends in the negative x-direction the depth of the window frame.
+ *
  */
 
 #include "common.h"
@@ -33,18 +33,21 @@
 #include <string.h>
 #include <math.h>
 
-#include "db.h"
+#include "rt/db4.h"
 #include "vmath.h"
 #include "raytrace.h"
 #include "wdb.h"
 
+static const char explain[]   = "This program constructs a window frame with all\n\
+edges and corners rounded.\n";
 
 int
 main(int argc, char **argv)
 {
     /* START # 1 */
     struct rt_wdb *fpw;		/* File to be written to. */
-    char filemged[26] = {0};	/* Mged file create. */
+#define NAME_LEN 256
+    char filemged[NAME_LEN+1] = {0};	/* Mged file create. */
     double hgt = 0.0;       	/* Height, width, & depth of outside window */
     double wid = 0.0;
     double dpt = 0.0;
@@ -56,12 +59,12 @@ main(int argc, char **argv)
     vect_t ht;			/* Height of rcc. */
     fastf_t rad;		/* Radius of rcc. */
     char *temp;			/* Temporary character string. */
-    char temp1[16];		/* Temporary character string. */
+    char temp1[NAME_LEN+1];	/* Temporary character string. */
 
     char solnam[9];		/* Solid name. */
     char regnam[8];		/* Region name. */
     char grpnam[5];		/* Group name. */
-    int numwin = 0;		/* Number of windows to be created (<=26). */
+    int numwin = 0;		/* Number of window frames to be created. */
 
     struct wmember comb;	/* Used to make regions. */
     struct wmember comb1;	/* Used to make groups. */
@@ -97,34 +100,35 @@ main(int argc, char **argv)
     if (argc == 1) {
 	/* START # 3 */
 
-	/* Print info about the window. */
-	printf("\nThe window frames are composed of 4 arb8s and 8\n");
+	/* Print info about the window frame. */
+	printf("Usage: window_frame [-f name.g] [-n #] [-H #] [-w #] [-d #] [-r #] [-i #]\n");
+	printf("\n%s\n",explain);
+	printf("The window frames are composed of 4 arb8s and 8\n");
 	printf("cylinders.  The front of the window frame is centered\n");
 	printf("at (0, 0, 0) and extends in the negative x-direction\n");
 	printf("the depth of the window frame.\n\n");
 
 	/* Find name of mged file to be created. */
-	printf("Enter the mged file to be created (25 char max).\n\t");
+	printf("Enter the mged file to be created (%d char max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
-	ret = scanf("%26s", filemged);
-	if (ret == 0) {
+	ret = scanf(CPP_SCAN(NAME_LEN), filemged);
+	if (ret == 0)
 	    perror("scanf");
-	}
 	if (BU_STR_EQUAL(filemged, ""))
 	    bu_strlcpy(filemged, "window_frame.g", sizeof(filemged));
 
 	/* Find the number of window frames to create. */
-	printf("Enter the number of window frames to create (26 max).\n\t");
+	printf("Enter the number of window frames to create (%d max).\n\t", NAME_LEN);
 	(void)fflush(stdout);
 	ret = scanf("%d", &numwin);
 	if (ret == 0) {
 	    perror("scanf");
 	    numwin = 1;
 	}
-	if (numwin < 1)
+	else if (numwin < 1)
 	    numwin = 1;
-	if (numwin > 26)
-	    numwin = 26;
+	else if (numwin > NAME_LEN)
+	    numwin = NAME_LEN;
 
 	/* Find the dimensions of the window frames. */
 	printf("Enter the height, width, and depth of the window frame.\n\t");
@@ -168,25 +172,33 @@ main(int argc, char **argv)
     else {
 	/* START # 4 */
 	/* List options. */
+	/* -h or -? help page */
 	/* -fname - name = mged file name. */
 	/* -n# - # = number of window frames. */
-	/* -h# - # = height of window frame in mm. */
+	/* -H# - # = height of window frame in mm. */
 	/* -w# - # = width of window frame in mm. */
 	/* -d# - # = depth of window frame in mm. */
 	/* -r# - # = radius of window frame corner in mm. */
 	/* -i# - # = width of frame itself in mm. */
 
-	for (i = 1; i < argc; i++) {
+	for (i=1; i<argc; i++) {
 	    /* START # 5 */
 	    /* Put argument in temporary character string. */
 	    temp = argv[i];
+
+	    if (temp[1] == 'h' || temp[1] == '?') {
+	    	fprintf(stderr,"%s",explain);
+		fprintf(stderr,"Usage: window_frame -fname [-f mged_file_name] [-n #_of_window_frames] [-H window_frame_height]\n");
+		fprintf(stderr,"       [-w window_frame_width] [-d window_frame_depth] [-r radius_of_corners][-i width_of_frame_itself");
+		bu_exit(2,     "       (units of mm)\n");
+	    }
 
 	    /* -f - mged file. */
 	    if (temp[1] == 'f') {
 		/* START # 6 */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 25)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 7 */
 		    filemged[k] = temp[j];
 		    j++;
@@ -201,7 +213,7 @@ main(int argc, char **argv)
 		/* Set up temporary character string. */
 		j = 2;
 		k = 0;
-		while ((temp[j] != '\0') && (k < 15)) {
+		while ((temp[j] != '\0') && (k < NAME_LEN)) {
 		    /* START # 9 */
 		    temp1[k] = temp[j];
 		    j++;
@@ -210,8 +222,9 @@ main(int argc, char **argv)
 		temp1[k] = '\0';
 		if (temp[1] == 'n') {
 		    sscanf(temp1, "%d", &numwin);
-		    if (numwin > 26) numwin = 26;
-		} else if (temp[1] == 'h') {
+		    if (numwin > NAME_LEN)
+			numwin = NAME_LEN;
+		} else if (temp[1] == 'H') {
 		    sscanf(temp1, "%lf", &hgt);
 		} else if (temp[1] == 'w') {
 		    sscanf(temp1, "%lf", &wid);
@@ -492,6 +505,7 @@ main(int argc, char **argv)
 
     /* Close file. */
     wdb_close(fpw);
+
     return 0;
 }							/* END # 1 */
 

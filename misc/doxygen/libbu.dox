@@ -1,0 +1,142 @@
+/* Top level library group */
+/** @defgroup libbu libbu (Utility Functions) */
+
+/* Second tier groups */
+/** @ingroup libbu */
+/**  @defgroup bu_defines Definitions*/
+
+/** @ingroup libbu */
+/**  @defgroup bu_container Data Containers */
+/**  @addtogroup bu_container
+     @brief Containers for holding various kinds of information.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_memory Memory Management */
+/**  @addtogroup bu_memory
+     @brief Wrappers for memory allocation and release, and mapping.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_io Input/Output */
+/**  @addtogroup bu_io
+     @brief Support for file and string handling, as well as debugging, path manipulation, logging and vector fonts.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_data Data Management */
+/**  @addtogroup bu_data
+     @brief Routines for command processing, network byte order conversion, sorting algorithms, time, endian support, units, etc.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_parallel  Parallel Processing */
+/**  @addtogroup bu_parallel
+     @brief Cross platform API for parallel processing, handling issues like threads and semaphores.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_env  Environment Management */
+/**  @addtogroup bu_env
+     @brief Cross platform API for interacting with the operating system environment.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_wrangle System Header Management*/
+/**  @addtogroup bu_wrangle
+     @brief Convenience headers that manage the correct inclusion of various types of system functionality.
+
+     These headers are not part of the LIBBU API, but serve to handle commonly encountered cross platform patterns when including system dependent headers for tasks such as networking and resource limits.
+ */
+/** @ingroup libbu */
+/**  @defgroup bu_version Version */
+
+/* Data Containers */
+/** @ingroup bu_container */
+/**   @defgroup bu_avs Attribute/Value Sets */
+/** @ingroup bu_container */
+/**   @defgroup bu_bitv Bit Vectors */
+/** @ingroup bu_container */
+/**   @defgroup bu_color Color */
+/** @ingroup bu_container */
+/**   @defgroup bu_hash Hash Tables */
+/** @ingroup bu_container */
+/**   @defgroup bu_list Linked Lists */
+/** @ingroup bu_container */
+/**   @defgroup bu_parse Structure Parsing */
+/** @ingroup bu_container */
+/**   @defgroup bu_ptbl Pointer Tables */
+/** @ingroup bu_container */
+/**   @defgroup bu_rb Red-Black Trees */
+/** @ingroup bu_container */
+/**   @defgroup bu_vlb Variable-length Byte Buffers */
+/** @ingroup bu_container */
+/**   @defgroup bu_vls Variable-length Strings */
+
+/* Memory Management */
+/** @ingroup bu_memory */
+/**   @defgroup bu_magic Magic Numbers */
+/** @ingroup bu_memory */
+/**   @defgroup bu_malloc Allocation & Deallocation */
+/** @ingroup bu_memory */
+/**   @defgroup bu_mf Memory-mapped Files */
+
+/* I/O */
+/** @ingroup bu_io */
+/**   @defgroup bu_getopt Basic Command-line Option Parsing*/
+/** @ingroup bu_io */
+/**   @defgroup bu_opt Generalized Command-line Option Parsing*/
+/**   @ingroup bu_opt */
+/**     @defgroup bu_opt_arg_process Pre-Defined Option Parsers*/
+/** @ingroup bu_io */
+/**   @defgroup bu_cmd Sub-Command Processing */
+/** @ingroup bu_io */
+/**   @defgroup bu_path Path Processing */
+/** @ingroup bu_io */
+/**   @defgroup bu_file File Processing */
+/** @ingroup bu_io */
+/**   @defgroup bu_log Logging */
+/** @ingroup bu_io */
+/**   @defgroup bu_observer Observer*/
+/** @ingroup bu_io */
+/**   @defgroup bu_vfont Vector Fonts */
+/** @ingroup bu_io */
+/**   @defgroup bu_debug Debugging */
+
+/* Data Management */
+/** @ingroup bu_data */
+/**   @defgroup bu_conv Data Conversion */
+/** @ingroup bu_data */
+/**   @defgroup bu_hist Histogram Handling */
+/** @ingroup bu_data */
+/**   @defgroup bu_sort Sorting Algorithms */
+/** @ingroup bu_data */
+/**   @defgroup bu_endian Endian Support */
+/** @ingroup bu_data */
+/**   @defgroup bu_time Time Support */
+/** @ingroup bu_data */
+/**   @defgroup bu_str Strings */
+/** @ingroup bu_data */
+/**   @defgroup bu_units Units */
+
+
+/* Parallel Processing */
+/** @ingroup bu_parallel */
+/**   @defgroup bu_thread Multithreading */
+/** @ingroup bu_parallel */
+/**   @defgroup bu_simd Single Instruction Multiple Data*/
+
+/* System Header Management */
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bio System I/O Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bnetwork System Network Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_resource System Resource Limit Header Wrangler*/
+/** @ingroup bu_wrangle */
+/**  @defgroup bu_bsocket System Socket Header Wrangler*/
+
+
+/*
+ * Local Variables:
+ * mode: C
+ * tab-width: 8
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

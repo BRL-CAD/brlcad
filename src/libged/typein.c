@@ -1,7 +1,7 @@
 /*                        T Y P E I N . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,9 +29,8 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
-#include "bio.h"
 
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -589,6 +588,20 @@ static char *p_hrt[] = {
     "Enter distance to cusps: "
 };
 
+static char *p_joint[] = {
+    "Enter X, Y, Z of the joint location: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector1: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter X, Y, Z of vector2: ",
+    "Enter Y: ",
+    "Enter Z: ",
+    "Enter joint value: ",
+    "Reference Path 1: ",
+    "Reference Path 2: "
+};
 
 static char *p_datum[] = {
     "Enter a datum type ([point|line|plane]): ",
@@ -716,8 +729,7 @@ binunif_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* E B M _ I N
- *
+/*
  * Read EBM solid from keyboard
  *
  */
@@ -730,7 +742,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_EBM;
     intern->idb_meth = &OBJ[ID_EBM];
-    intern->idb_ptr = (genptr_t)ebm;
+    intern->idb_ptr = (void *)ebm;
     ebm->magic = RT_EBM_INTERNAL_MAGIC;
 
     bu_strlcpy(ebm->file, cmd_argvs[3], RT_EBM_NAME_LEN);
@@ -743,8 +755,7 @@ ebm_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S U B M O D E L _ I N
- *
+/*
  * Read submodel from keyboard
  *
  */
@@ -757,7 +768,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_SUBMODEL;
     intern->idb_meth = &OBJ[ID_SUBMODEL];
-    intern->idb_ptr = (genptr_t)sip;
+    intern->idb_ptr = (void *)sip;
     sip->magic = RT_SUBMODEL_INTERNAL_MAGIC;
 
     bu_vls_init(&sip->treetop);
@@ -770,8 +781,7 @@ submodel_in(struct ged *UNUSED(gedp), const char **cmd_argvs, struct rt_db_inter
 }
 
 
-/* D S P _ I N
- *
+/*
  * Read DSP solid from keyboard
  */
 static int
@@ -783,7 +793,8 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
+    intern->idb_ptr = (void *)dsp;
+
     dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
@@ -792,14 +803,20 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[4]);
     dsp->dsp_ycnt = atoi(cmd_argvs[5]);
     dsp->dsp_smooth = atoi(cmd_argvs[6]);
+    dsp->dsp_cuttype = DSP_CUT_DIR_ULlr;
+
     MAT_IDN(dsp->dsp_stom);
 
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[7]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[8]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    dsp->dsp_datasrc = RT_DSP_SRC_FILE;
 
     return GED_OK;
 }
@@ -807,8 +824,7 @@ dsp_in_v4(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
 
 extern void dsp_dump(struct rt_dsp_internal *dsp);
 
-/* D S P _ I N
- *
+/*
  * Read DSP solid from keyboard
  */
 static int
@@ -820,15 +836,9 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_DSP;
     intern->idb_meth = &OBJ[ID_DSP];
-    intern->idb_ptr = (genptr_t)dsp;
-    dsp->magic = RT_DSP_INTERNAL_MAGIC;
+    intern->idb_ptr = (void *)dsp;
 
-    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
-	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
-    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
-	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
-    else
-	return GED_ERROR;
+    dsp->magic = RT_DSP_INTERNAL_MAGIC;
 
     bu_vls_init(&dsp->dsp_name);
     bu_vls_strcpy(&dsp->dsp_name, cmd_argvs[4]);
@@ -836,6 +846,7 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     dsp->dsp_xcnt = atoi(cmd_argvs[5]);
     dsp->dsp_ycnt = atoi(cmd_argvs[6]);
     dsp->dsp_smooth = atoi(cmd_argvs[7]);
+
     switch (*cmd_argvs[8]) {
 	case 'a':	/* adaptive */
 	case 'A':
@@ -854,20 +865,27 @@ dsp_in_v5(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inter
     }
 
     MAT_IDN(dsp->dsp_stom);
-
-    dsp->dsp_stom[0] = dsp->dsp_stom[5] =
-	atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
-
+    dsp->dsp_stom[0] = dsp->dsp_stom[5] = atof(cmd_argvs[9]) * gedp->ged_wdbp->dbip->dbi_local2base;
     dsp->dsp_stom[10] = atof(cmd_argvs[10]) * gedp->ged_wdbp->dbip->dbi_local2base;
 
     bn_mat_inv(dsp->dsp_mtos, dsp->dsp_stom);
+
+    dsp->dsp_buf = NULL;
+    dsp->dsp_mp = NULL;
+    dsp->dsp_bip = NULL;
+
+    if (*cmd_argvs[3] == 'f' || *cmd_argvs[3] == 'F')
+	dsp->dsp_datasrc = RT_DSP_SRC_FILE;
+    else if (*cmd_argvs[3] == 'O' || *cmd_argvs[3] == 'o')
+	dsp->dsp_datasrc = RT_DSP_SRC_OBJ;
+    else
+	return GED_ERROR;
 
     return GED_OK;
 }
 
 
-/* H F _ I N
- *
+/*
  * Read HF solid from keyboard
  *
  */
@@ -880,7 +898,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_HF;
     intern->idb_meth = &OBJ[ID_HF];
-    intern->idb_ptr = (genptr_t)hf;
+    intern->idb_ptr = (void *)hf;
     hf->magic = RT_HF_INTERNAL_MAGIC;
 
     bu_strlcpy(hf->cfile, cmd_argvs[3], sizeof(hf->cfile));
@@ -927,8 +945,7 @@ hf_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* V O L _ I N
- *
+/*
  * Read VOL solid from keyboard
  *
  */
@@ -941,7 +958,7 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
     intern->idb_major_type = DB5_MAJORTYPE_BRLCAD;
     intern->idb_type = ID_VOL;
     intern->idb_meth = &OBJ[ID_VOL];
-    intern->idb_ptr = (genptr_t)vol;
+    intern->idb_ptr = (void *)vol;
     vol->magic = RT_VOL_INTERNAL_MAGIC;
 
     bu_strlcpy(vol->file, cmd_argvs[3], sizeof(vol->file));
@@ -959,9 +976,6 @@ vol_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/*
- * B O T _ I N
- */
 static int
 bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1025,7 +1039,7 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     intern->idb_meth = &OBJ[ID_BOT];
 
     BU_ALLOC(bot, struct rt_bot_internal);
-    intern->idb_ptr = (genptr_t)bot;
+    intern->idb_ptr = (void *)bot;
     bot->magic = RT_BOT_INTERNAL_MAGIC;
     bot->num_vertices = num_verts;
     bot->num_faces = num_faces;
@@ -1071,9 +1085,6 @@ bot_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 }
 
 
-/*
- * A R B N _ I N
- */
 static int
 arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1115,9 +1126,6 @@ arbn_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 }
 
 
-/*
- * P I P E _ I N
- */
 static int
 pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1176,9 +1184,6 @@ pipe_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
 }
 
 
-/*
- * A R S _ I N
- */
 static int
 ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -1206,7 +1211,7 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
     if (vals_present > 1) {
 	num_curves = atoi(argv[4]);
 	if (num_curves < 3) {
-	    bu_vls_printf(gedp->ged_result_str, "points per waterline must be >= 3\n");
+	    bu_vls_printf(gedp->ged_result_str, "number of waterlines must be >= 3\n");
 	    intern->idb_meth = &OBJ[ID_ARS];
 	    return GED_ERROR;
 	}
@@ -1330,7 +1335,9 @@ ars_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *int
 }
 
 
-/* H A L F _ I N () :   	reads halfspace parameters from keyboard
+/*
+ * reads halfspace parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1360,7 +1367,9 @@ half_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 }
 
 
-/* A R B _ I N () :   	reads arb parameters from keyboard
+/*
+ * reads arb parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1404,7 +1413,9 @@ arb_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S P H _ I N () :   	reads sph parameters from keyboard
+/*
+ * reads sph parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1433,7 +1444,9 @@ sph_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 }
 
 
-/* E L L _ I N () :   	reads ell parameters from keyboard
+/*
+ * reads ell parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1510,7 +1523,9 @@ ell_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T O R _ I N () :   	reads tor parameters from keyboard
+/*
+ * reads tor parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1548,7 +1563,9 @@ tor_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T G C _ I N () :   	reads tgc parameters from keyboard
+/*
+ * reads tgc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1597,7 +1614,9 @@ tgc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R C C _ I N () :   	reads rcc parameters from keyboard
+/*
+ * reads rcc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1640,7 +1659,9 @@ rcc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T E C _ I N () :   	reads tec parameters from keyboard
+/*
+ * reads tec parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1680,7 +1701,9 @@ tec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R E C _ I N () :   	reads rec parameters from keyboard
+/*
+ * reads rec parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1718,7 +1741,9 @@ rec_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* T R C _ I N () :   	reads trc parameters from keyboard
+/*
+ * reads trc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1765,7 +1790,9 @@ trc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* B O X _ I N () :   	reads box parameters from keyboard
+/*
+ * reads box parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1821,7 +1848,9 @@ box_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R P P _ I N () :   	reads rpp parameters from keyboard
+/*
+ * reads rpp parameters from keyboard
+ *
  * returns GED_OK if successful read
  * GED_ERROR if unsuccessful read
  */
@@ -1860,8 +1889,6 @@ rpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern, 
 
 
 /*
- * O R P P _ I N ()
- *
  * Reads origin-min rpp (box) parameters from keyboard
  * returns 0 if successful read
  * 1 if unsuccessful read
@@ -1898,7 +1925,9 @@ orpp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern,
 }
 
 
-/* P A R T _ I N () :	reads particle parameters from keyboard
+/*
+ * reads particle parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1933,7 +1962,9 @@ part_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R P C _ I N () :   	reads rpc parameters from keyboard
+/*
+ * reads rpc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -1968,7 +1999,9 @@ rpc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* R H C _ I N () :   	reads rhc parameters from keyboard
+/*
+ * reads rhc parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2004,7 +2037,9 @@ rhc_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E P A _ I N () :   	reads epa parameters from keyboard
+/*
+ * reads epa parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2045,7 +2080,9 @@ epa_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E H Y _ I N () :   	reads ehy parameters from keyboard
+/*
+ * reads ehy parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2093,7 +2130,9 @@ ehy_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* H Y P _ I N () :   	reads hyp parameters from keyboard
+/*
+ * reads hyp parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2160,7 +2199,9 @@ hyp_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E T O _ I N () :   	reads eto parameters from keyboard
+/*
+ * reads eto parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2201,7 +2242,9 @@ eto_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* E X T R U D E _ I N () :   	reads extrude parameters from keyboard
+/*
+ * reads extrude parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2248,7 +2291,9 @@ extrude_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* R E V O L V E _ I N () :   	reads extrude parameters from keyboard
+/*
+ * reads extrude parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2299,7 +2344,9 @@ revolve_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *inte
 }
 
 
-/* G R I P _ I N () :   	reads grip parameters from keyboard
+/*
+ * reads grip parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2327,7 +2374,9 @@ grip_in(struct ged *gedp, const char **cmd_argvs, struct rt_db_internal *intern)
 }
 
 
-/* S U P E R E L L _ I N () :   	reads superell parameters from keyboard
+/*
+ * reads superell parameters from keyboard
+ *
  * returns 0 if successful read
  * 1 if unsuccessful read
  */
@@ -2366,8 +2415,6 @@ superell_in(struct ged *gedp, char *cmd_argvs[], struct rt_db_internal *intern)
 
 
 /*
- * M E T A B A L L _ I N
- *
  * This is very much not reentrant, and probably a good deal uglier than it
  * should be.
  */
@@ -2433,7 +2480,7 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
      * MORE points than the value in the num_points field if it's all on one
      * line. Is that a bug, or a feature?
      */
-    for (i = 6; i < argc; i += 4) {
+    for (i = 6; i + 3 < argc; i += 4) {
 	struct wdb_metaballpt *metaballpt;
 
 	BU_ALLOC(metaballpt, struct wdb_metaballpt);
@@ -2450,7 +2497,6 @@ metaball_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal
 }
 
 
-/* P N T S _ I N */
 static int
 pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *intern, char **prompt)
 {
@@ -2570,7 +2616,7 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     valuesPerPoint = ELEMENTS_PER_POINT;
     type = RT_PNT_TYPE_PNT;
     if (hasColor) {
-	/* R G B */
+	/* RGB color */
 	type = (rt_pnt_type)((int)type | (int)RT_PNT_TYPE_COL);
 	valuesPerPoint += 3;
     }
@@ -2811,7 +2857,10 @@ pnts_in(struct ged *gedp, int argc, const char **argv, struct rt_db_internal *in
     return GED_OK;
 }
 
-/* H R T _ I N () :   	reads heart parameters from keyboard
+
+/*
+ * reads heart parameters from keyboard
+ *
  * returns 0 if successfully read
  * returns 1 if unsuccessful read
  */
@@ -2829,7 +2878,7 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     hip = (struct rt_hrt_internal *)intern->idb_ptr;
     hip->hrt_magic = RT_HRT_INTERNAL_MAGIC;
 
-    for(i = 0; i < n - 1; i++) {
+    for (i = 0; i < n - 1; i++) {
 	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
     }
     vals[12] = atof(cmd_argv[3 + 12]);
@@ -2839,6 +2888,43 @@ hrt_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
     VMOVE(hip->ydir, &vals[6]);
     VMOVE(hip->zdir, &vals[9]);
     hip->d = vals[12];
+
+    return GED_OK;
+}
+
+/*
+ * reads joint parameters from keyboard
+ *
+ * returns 0 if successfully read
+ * returns 1 if unsuccessful read
+ */
+static int
+joint_in(struct ged *gedp, char *cmd_argv[], struct rt_db_internal *intern)
+{
+    fastf_t vals[10];
+    int i, n;
+    struct rt_joint_internal *jip;
+    n = 10;
+
+    intern->idb_type = ID_JOINT;
+    intern->idb_meth = &OBJ[ID_JOINT];
+    intern->idb_ptr = bu_malloc(sizeof(struct rt_joint_internal), "rt_joint_internal");
+    jip = (struct rt_joint_internal *)intern->idb_ptr;
+    jip->magic = RT_JOINT_INTERNAL_MAGIC;
+
+    for (i = 0; i < n - 1; i++) {
+	vals[i] = atof(cmd_argv[3 + i]) * gedp->ged_wdbp->dbip->dbi_local2base;
+    }
+    vals[n-1] = atof(cmd_argv[3 + n - 1]);
+
+    VMOVE(jip->location, &vals[0]);
+    VMOVE(jip->vector1, &vals[3]);
+    VMOVE(jip->vector2, &vals[6]);
+    jip->value = vals[9];
+    bu_vls_init(&jip->reference_path_1);
+    bu_vls_strcpy(&jip->reference_path_1, cmd_argv[3 + n]);
+    bu_vls_init(&jip->reference_path_2);
+    bu_vls_strcpy(&jip->reference_path_2, cmd_argv[3 + n + 1]);
 
     return GED_OK;
 }
@@ -2951,31 +3037,31 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
 	    datums = datum; /* and so it begins */
 
 	if (BU_STR_EQUIV(argv[idx], "point")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    VMOVE(datum->pnt, vals);
 	    VSETALL(datum->dir, 0.0);
 	    datum->w = 0.0;
 	    idx += ARGS_PER_POINT;
 	} else if (BU_STR_EQUIV(argv[idx], "line")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
-	    (vals+3)[X] = strtod(argv[idx+4], NULL);
-	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
-	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    VMOVE(datum->pnt, vals);
 	    VMOVE(datum->dir, vals+3);
 	    datum->w = 0.0;
 	    idx += ARGS_PER_LINE;
 	} else if (BU_STR_EQUIV(argv[idx], "plane")) {
-	    vals[X] = strtod(argv[idx+1], NULL);
-	    vals[Y] = strtod(argv[idx+2], NULL);
-	    vals[Z] = strtod(argv[idx+3], NULL);
-	    (vals+3)[X] = strtod(argv[idx+4], NULL);
-	    (vals+3)[Y] = strtod(argv[idx+5], NULL);
-	    (vals+3)[Z] = strtod(argv[idx+6], NULL);
+	    vals[X] = strtod(argv[idx+1], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Y] = strtod(argv[idx+2], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    vals[Z] = strtod(argv[idx+3], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[X] = strtod(argv[idx+4], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Y] = strtod(argv[idx+5], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
+	    (vals+3)[Z] = strtod(argv[idx+6], NULL) * gedp->ged_wdbp->dbip->dbi_local2base;
 	    VMOVE(datum->pnt, vals);
 	    VMOVE(datum->dir, vals+3);
 	    datum->w = 1.0;
@@ -2993,6 +3079,9 @@ argc 1       2     3     4 5 6 7    8 9 10 11 12 13 14    15 16 17 18 19 20 21
     intern->idb_ptr = datums;
     intern->idb_meth = &OBJ[ID_DATUM];
     intern->idb_type = ID_DATUM;
+
+    /* Set a default color for datum objects */
+    bu_avs_add(&intern->idb_avs, "color", "255/255/0");
 
     return GED_OK;
 }
@@ -3259,6 +3348,10 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 	nvals = 3*4 + 1;
 	menu = p_hrt;
 	fn_in = hrt_in;
+    }else if (BU_STR_EQUAL(argv[2], "joint")) {
+	nvals = 3*3 + 1 + 2;
+	menu = p_joint;
+	fn_in = joint_in;
     } else if (BU_STR_EQUAL(argv[2], "pnts")) {
 	switch (pnts_in(gedp, argc, argv, &internal, p_pnts)) {
 	    case GED_ERROR:
@@ -3313,7 +3406,7 @@ ged_in(struct ged *gedp, int argc, const char *argv[])
 do_new_update:
     /* The function may have already written via LIBWDB */
     if (internal.idb_ptr != NULL) {
-	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type);
+	dp=db_diradd(gedp->ged_wdbp->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type);
 	if (dp == RT_DIR_NULL) {
 	    rt_db_free_internal(&internal);
 	    bu_vls_printf(gedp->ged_result_str, "%s: Cannot add '%s' to directory\n", argv[0], name);

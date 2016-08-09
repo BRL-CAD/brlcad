@@ -1,7 +1,7 @@
 /*                    C A D _ B O U N D P . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -41,8 +41,10 @@
 #include <string.h>
 #include <stdarg.h>
 
-#include "bu.h"
 #include "vmath.h"
+#include "bu/getopt.h"
+#include "bu/str.h"
+#include "bu/log.h"
 
 
 typedef struct
@@ -132,11 +134,6 @@ GetArgs(int argc, const char *argv[])	/* process command arguments */
     static int oflag = 0;	/* set if "-o" option found */
     static int tflag = 0;	/* set if "-t" option found */
     int c;		/* option letter */
-
-if (argc==1) {
-    Usage();
-    fprintf(stderr,"       Program continues running:\n");
-}
 
 #ifdef DEBUG
     fprintf(stderr, "\n\t\tGetArgs\n");

@@ -1,7 +1,7 @@
 /*                   E C O S Y S T E M . D O T
  * BRL-CAD
  *
- * Copyright (c) 2011-2013 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Redistribution and use in source (Graphviz format) and 'compiled'
@@ -58,7 +58,6 @@ digraph BRLCADDeps{
 	incrTcl [color = "blue", style = bold, shape = box, label = "IncrTcl"];
 
 
-	boost [color = "blue", style = bold, shape = box, label = "Boost"];
 	libpng [color = "blue", style = bold, shape = box, label = "libpng"];
 	libregex [color = "blue", style = bold, shape = box, label = "libregex"];
 	libtermlib [color = "blue", style = bold, shape = box, label = "libtermlib"];
@@ -73,8 +72,8 @@ digraph BRLCADDeps{
 	//re2clemon [color = "orange", style = bold, shape = box, label = "re2c + lemon"];
 	re2c [color = "orange", style = bold, shape = box, label = "re2c"];
 	lemon [color = "orange", style = bold, shape = box, label = "lemon"];
-	//{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2clemon; }
-	{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; boost; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2c; lemon; }
+	//{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2clemon; }
+	{ rank = same; "3rd Party Resources"; tcltk; tkhtml; tkpng; tktable; togl; incrTcl; libpng; libregex; libtermlib; libutahrle; opennurbs; scl; tnt; xsl; zlib; re2c; lemon; }
 	// GSoC
 	osl [color = "purple", style = bold, shape = box, label = "Open Shader Language (GSoC)"];
 	oiio [color = "purple", style = bold, shape = box, label = "OpenImageIO (GSoC)"];
@@ -95,18 +94,15 @@ digraph BRLCADDeps{
 
 	// System (not bundled)
 	X11 [color = "red", style = bold, shape = box, label = "X11"];
-	autotools [color = "red", style = bold, shape = box, label = "GNU Autotools"];
 	cmake [color = "red", style = bold, shape = box, label = "CMake"];
 	fop [color = "red", style = bold, shape = box, label = "Apache FOP (Docbook->pdf)"];
-	lex [color = "red", style = bold, shape = box, label = "Lex (flex)"];
 	make [color = "red", style = bold, shape = box, label = "Make"];
 	mesa [color = "red", style = bold, shape = box, label = "Mesa 3D library"];
 	unixtools [color = "red", style = bold, shape = box, label = "Unix tools (sed, grep, awk, etc.)"];
 	xsltproc [color = "red", style = bold, shape = box, label = "XSLT processor (xsltproc)"];
-	yacc [color = "red", style = bold, shape = box, label = "Yacc (GNU Bison/byacc)"];
 	crun [color = "red", style = bold, shape = box, label = "C/C++ Runtime"];
 
-	{ rank = same; "System Requirements"; X11; autotools; cmake; crun; fop; lex; make; mesa; unixtools; xsltproc; yacc; }
+	{ rank = same; "System Requirements"; X11; cmake; crun; fop; make; mesa; unixtools; xsltproc; }
 
 	// BRL-CAD components
 	libbu [color = "green", style = bold, shape = box, label = "BRL-CAD Utility Library (libbu)"];
@@ -135,7 +131,6 @@ digraph BRLCADDeps{
 	libbu -> libpng;
 	libbu -> zlib;
 
-	libpc -> boost;
 	libpc -> opennurbs;
 
 	librt -> libregex;
@@ -183,7 +178,6 @@ digraph BRLCADDeps{
 	geomconv -> libtclcad;
 	geomconv -> libged;
 	geomconv -> scl;
-	geomconv -> boost;
 	geomconv -> lemon;
 	geomconv -> re2c;
 

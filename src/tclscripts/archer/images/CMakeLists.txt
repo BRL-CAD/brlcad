@@ -59,6 +59,11 @@ set(archer_images
   bot_subtract.png
   bot_union.png
   bug.png
+  brep.png
+  brep_intersect.png
+  brep_labeled.png
+  brep_subtract.png
+  brep_union.png
   checkpoint.png
   closeall.png
   closedf.gif
@@ -305,6 +310,8 @@ set(archer_images
   )
 
 BRLCAD_ADDDATA(archer_images tclscripts/archer/images)
+
+CMAKEFILES(License.txt)
 
 # Local Variables:
 # tab-width: 8

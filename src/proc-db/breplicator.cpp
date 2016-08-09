@@ -1,7 +1,7 @@
 /*                 B R E P L I C A T O R . C P P
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,11 +28,10 @@
 #include "common.h"
 
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/geom.h"
 #include "wdb.h"
+#include "bu/log.h"
 #include "bn.h"
-#include "bu.h"
-
 
 static ON_Brep *
 generate_brep(int count, ON_3dPoint *points)
@@ -385,9 +384,11 @@ generate_brep(int count, ON_3dPoint *points)
 
 
 static void
-printusage(void){
-	printf("Usage: breplicator (takes no arguments)\n");
+printusage(void)
+{
+    fprintf(stderr,"Usage: breplicator (takes no arguments)\n");
 }
+
 
 int
 main(int argc, char *argv[])
@@ -397,13 +398,13 @@ main(int argc, char *argv[])
     ON_Brep *brep = NULL;
     int ret;
 
-    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")){
+    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) {
     	printusage();
     	return 0;
     }
-    if (argc >= 1){
+    if (argc > 1) {
     	printusage();
-    	printf("       Program continues running (will create file breplicator.g):\n");
+	return 1;
     }
 
     bu_log("Breplicating...please wait...\n");
@@ -422,9 +423,8 @@ main(int argc, char *argv[])
     };
 
     brep = generate_brep(8, points);
-    if (!brep) {
+    if (!brep)
 	bu_exit(1, "ERROR: We don't have a BREP\n");
-    }
 
     ON_TextLog log(stdout);
 

@@ -9,3 +9,4 @@ lazyDataSectionReader::lazyDataSectionReader( lazyFileReader * parent, std::ifst
     _sectionIdentifier = ""; //FIXME set _sectionIdentifier from the data section identifier (2002 rev of Part 21), if present
     _error = false;
 }
+

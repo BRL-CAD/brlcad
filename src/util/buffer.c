@@ -1,7 +1,7 @@
 /*                        B U F F E R . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -35,8 +35,9 @@
 
 #include <stdlib.h>
 #include "bio.h"
-
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/file.h"
+#include "bu/str.h"
 
 
 #define SIZE (1024*1024)
@@ -45,7 +46,7 @@
 int
 main(int argc, char *argv[])
 {
-    char template[512] = {0};
+    char _template[512] = {0};
     char buf[SIZE] = {0};
 
     FILE *fp = NULL;
@@ -53,14 +54,15 @@ main(int argc, char *argv[])
     int tfd = 0;
     int ret = 0;
 
-    if ( (BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2){
-	bu_log("Usage: %s (takes no arguments)\n",argv[0]);
-	exit(1);
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
+    if ((BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")) && argc == 2) {
+	bu_exit(1, "Usage: %s (takes no arguments)\n", argv[0]);
     }
 
-    if (argc > 1){
-	bu_log("%s: unrecognized argument(s)\n", argv[0]);
-	bu_log("        Program continues running:\n", argv[0]);
+    if (argc > 1) {
+	bu_exit(1, "%s: unrecognized argument(s)\n", argv[0]);
     }
 
     if ((count = bu_mread(0, buf, sizeof(buf))) < (long)sizeof(buf)) {
@@ -77,9 +79,9 @@ main(int argc, char *argv[])
     }
 
     /* Create temporary file to hold data, get r/w file descriptor */
-    fp = bu_temp_file(template, 512);
+    fp = bu_temp_file(_template, 512);
     if (fp == NULL || (tfd = fileno(fp)) < 0) {
-	perror(template);
+	perror(_template);
 	goto err;
     }
 
@@ -127,7 +129,7 @@ clean:
 	fclose(fp);
 	fp = NULL;
     }
-    bu_file_delete(template);
+    bu_file_delete(_template);
 
     return ret;
 }

@@ -1,5 +1,10 @@
 cmake_minimum_required(VERSION 2.4.4)
 set(CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS ON)
+if(COMMAND CMAKE_POLICY)
+	if ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+		CMAKE_POLICY(SET CMP0026 OLD)
+	endif ("${CMAKE_VERSION}" VERSION_GREATER 2.99)
+endif(COMMAND CMAKE_POLICY)
 
 project(zlib C)
 
@@ -109,7 +114,6 @@ set(ZLIB_SRCS
     trees.c
     uncompr.c
     zutil.c
-    win32/zlib1.rc
 )
 
 # parse the full version number from zlib.h and include in ZLIB_FULL_VERSION
@@ -127,6 +131,8 @@ if(MINGW)
 			    -o ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj
 			    -i ${CMAKE_CURRENT_SOURCE_DIR}/win32/zlib1.rc)
     set(ZLIB_SRCS ${ZLIB_SRCS} ${CMAKE_CURRENT_BINARY_DIR}/zlib1rc.obj)
+else(MINGW)
+    set(ZLIB_SRCS ${ZLIB_SRCS} win32/zlib1.rc)
 endif(MINGW)
 
 add_library(zlib ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
@@ -135,6 +141,8 @@ if(BUILD_STATIC_LIBS)
     add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
     if(CMAKE_CL_64)
       set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+    elseif(MSVC)
+      set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
     endif(CMAKE_CL_64)
 endif(BUILD_STATIC_LIBS)
 

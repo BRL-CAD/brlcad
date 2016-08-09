@@ -1,3 +1,8 @@
+# Define high level features of BRL-CAD
+DOXYGEN_FEATURE("Portability Library" DESCRIPTION "Portability layer that makes sure basic low level system functionality is present across all platforms via a uniform API.")
+DOXYGEN_FEATURE("Solid Raytracing" DESCRIPTION "Ray/geometry intersection calculations that report not just first surface hits but in/out pairs of hits to support the characterization of closed geometric volumes.")
+
+
 # Minimal directories required for any BRL-CAD functionality
 
 # Define some common definitions here that are used
@@ -31,46 +36,29 @@ endif(MSVC)
 set(level_1_dirs
   libbu
   libbn
-  libsysv
+  libbg
   libbrep
   librt
+  libwdb
   )
 
 # Level 2 directories are the remainder of BRL-CAD's libraries.  Setting
 # the BRLCAD_ENABLE_TARGETS level to 2 will enable all libraries but no
 # programs.
 
-# The interaction of MSVC and Boost looks problematic -
-# since we're not using libpc at the moment, conditionalize
-if(NOT MSVC)
-  set(LIBPC_DIR libpc)
-else(NOT MSVC)
-  CMAKEFILES(libpc)
-endif(NOT MSVC)
-
-# Only add librtserver if it's enabled
-if(BRLCAD_ENABLE_RTSERVER)
-  set(LIBRTSERVER_DIR librtserver)
-else(BRLCAD_ENABLE_RTSERVER)
-  CMAKEFILES(librtserver)
-endif(BRLCAD_ENABLE_RTSERVER)
-
 set(level_2_dirs
   libpkg
   libfb
-  libwdb
   libgcv
   libanalyze
   libged
   liboptical
-  liborle
   libcursor
   libdm
   libfft
   libicv
   libmultispectral
-  ${LIBPC_DIR}
-  ${LIBRTSERVER_DIR}
+  libpc
   libtclcad
   libtermio
   )
@@ -89,7 +77,6 @@ set(level_3_dirs
   brlman
   burst
   bwish
-  canon
   conv
   fb
   fbed
@@ -105,7 +92,6 @@ set(level_3_dirs
   sig
   tab
   util
-  vfont
   ${non_win32_dirs}
   # tclscripts must come before applications like
   # mged and archer that need the scripts in place to
@@ -114,6 +100,7 @@ set(level_3_dirs
   # as dependencies for the targets in these directories
   tclscripts
   adrt
+  rtwizard
   archer
   mged
   )
@@ -152,7 +139,7 @@ while(${current_level} LESS ${HIGHEST_TARGET_LEVEL})
   math(EXPR current_level "${current_level} + 1")
   foreach(subdir ${level_${current_level}_dirs})
     if(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
-      add_subdirectory(${subdir})
+      verbose_add_subdirectory(src ${subdir})
     else(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )
       CMAKEFILES(${subdir})
     endif(${current_level} LESS ${BRLCAD_ENABLE_TARGETS} OR ${current_level} EQUAL ${BRLCAD_ENABLE_TARGETS} )

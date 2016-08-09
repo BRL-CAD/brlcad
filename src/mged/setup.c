@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2013 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,14 +28,10 @@
 /* system headers */
 #include <stdlib.h>
 #include <tcl.h>
-#include <itcl.h>
 #include <string.h>
 
 /* common headers */
-#include "bio.h"
-#include "bu.h"
 #include "bn.h"
-#include "dg.h"
 #include "vmath.h"
 #include "tclcad.h"
 #include "ged.h"
@@ -43,7 +39,6 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
-
 
 /* catch auto-formatting errors in this file.  be careful as there are
  * mged_display() vars that use comma too.
@@ -109,6 +104,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"color", cmd_ged_plain_wrapper, ged_color},
     {"comb", cmd_ged_plain_wrapper, ged_comb},
     {"comb_color", cmd_ged_plain_wrapper, ged_comb_color},
+    {"constraint", cmd_ged_plain_wrapper, ged_constraint},
     {"copyeval", cmd_ged_plain_wrapper, ged_copyeval},
     {"copymat", cmd_ged_plain_wrapper, ged_copymat},
     {"cp", cmd_ged_plain_wrapper, ged_copy},
@@ -159,6 +155,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"fracture", cmd_ged_plain_wrapper, ged_fracture},
     {"front", f_bv_front, GED_FUNC_PTR_NULL},
     {"g", cmd_ged_plain_wrapper, ged_group},
+    {"gdiff", cmd_ged_plain_wrapper, ged_gdiff},
     {"get", cmd_ged_plain_wrapper, ged_get},
     {"get_autoview", cmd_ged_plain_wrapper, ged_get_autoview},
     {"get_comb", cmd_ged_plain_wrapper, ged_get_comb},
@@ -183,6 +180,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"inside", cmd_ged_inside, ged_inside},
     {"item", cmd_ged_plain_wrapper, ged_item},
     {"joint", cmd_ged_plain_wrapper, ged_joint},
+    {"joint2", cmd_ged_plain_wrapper, ged_joint2},
     {"journal", f_journal, GED_FUNC_PTR_NULL},
     {"keep", cmd_ged_plain_wrapper, ged_keep},
     {"keypoint", f_keypoint, GED_FUNC_PTR_NULL},
@@ -194,6 +192,8 @@ static struct cmdtab mged_cmdtab[] = {
     {"l", cmd_ged_info_wrapper, ged_list},
     {"l_muves", f_l_muves, GED_FUNC_PTR_NULL},
     {"labelvert", f_labelvert, GED_FUNC_PTR_NULL},
+    {"labelface", f_labelface, GED_FUNC_PTR_NULL},
+    {"lc", cmd_ged_plain_wrapper, ged_lc},
     {"left", f_bv_left, GED_FUNC_PTR_NULL},
     {"listeval", cmd_ged_plain_wrapper, ged_pathsum},
     {"lm", cmd_lm, GED_FUNC_PTR_NULL},
@@ -206,7 +206,6 @@ static struct cmdtab mged_cmdtab[] = {
     {"M", f_mouse, GED_FUNC_PTR_NULL},
     {"m2v_point", cmd_ged_plain_wrapper, ged_m2v_point},
     {"make", f_make, GED_FUNC_PTR_NULL},
-    {"make_bb", cmd_ged_plain_wrapper, ged_make_bb},
     {"make_name", cmd_ged_plain_wrapper, ged_make_name},
     {"make_pnts", cmd_ged_more_wrapper, ged_make_pnts},
     {"match", cmd_ged_plain_wrapper, ged_match},
@@ -229,6 +228,7 @@ static struct cmdtab mged_cmdtab[] = {
     {"nmg_collapse", cmd_nmg_collapse, GED_FUNC_PTR_NULL},
     {"nmg_fix_normals", cmd_ged_plain_wrapper, ged_nmg_fix_normals},
     {"nmg_simplify", cmd_ged_plain_wrapper, ged_nmg_simplify},
+    {"nmg", cmd_ged_plain_wrapper, ged_nmg},
     {"o_rotate", f_be_o_rotate, GED_FUNC_PTR_NULL},
     {"o_scale", f_be_o_scale, GED_FUNC_PTR_NULL},
     {"oed", cmd_oed, GED_FUNC_PTR_NULL},
@@ -248,15 +248,11 @@ static struct cmdtab mged_cmdtab[] = {
     {"oyscale", f_be_o_yscale, GED_FUNC_PTR_NULL},
     {"ozscale", f_be_o_zscale, GED_FUNC_PTR_NULL},
     {"p", f_param, GED_FUNC_PTR_NULL},
-    {"parse_points", cmd_parse_points, GED_FUNC_PTR_NULL},
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
     {"paths", cmd_ged_plain_wrapper, ged_pathsum},
     {"permute", f_permute, GED_FUNC_PTR_NULL},
-    {"pl", f_pl, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
-    {"polybinout", f_polybinout, GED_FUNC_PTR_NULL},
-    {"pov", cmd_pov, GED_FUNC_PTR_NULL},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},
@@ -387,8 +383,6 @@ static struct cmdtab mged_cmdtab[] = {
 
 
 /**
- * C M D _ S E T U P
- *
  * Register all MGED commands.
  */
 HIDDEN void
@@ -396,8 +390,6 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    const char *pathname;
-    char buffer[1024];
 
     /* from cmd.c */
     extern int glob_compat_mode;
@@ -413,23 +405,11 @@ cmd_setup(void)
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
-    /* overrides/wraps the built-in tree command */
-
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("tclscripts", 1);
-    snprintf(buffer, sizeof(buffer), "%s", pathname);
-
     /* link some tcl variables to these corresponding globals */
     Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
     Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
-    /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-    if (Bu_Init(INTERP) == TCL_ERROR) {
-      bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(INTERP));
-    }
-    Bn_Init(INTERP);
-    Rt_Init(INTERP);
-    Go_Init(INTERP);
+    /* Init mged's Tcl interface to libwdb */
     Wdb_Init(INTERP);
 
     tkwin = NULL;
@@ -444,11 +424,8 @@ cmd_setup(void)
 void
 mged_setup(Tcl_Interp **interpreter)
 {
-    int try_auto_path = 0;
-
-    int init_tcl = 1;
-    int init_itcl = 1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls tlog = BU_VLS_INIT_ZERO;
     const char *name = bu_argv0_full_path();
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
@@ -469,104 +446,18 @@ mged_setup(Tcl_Interp **interpreter)
     /* Create the interpreter */
     *interpreter = Tcl_CreateInterp();
 
-    /* a two-pass init loop.  the first pass just tries default init
-     * routines while the second calls tclcad_auto_path() to help it
-     * find other, potentially uninstalled, resources.
-     */
-    while (1) {
-
-	/* not called first time through, give Tcl_Init() a chance */
-	if (try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	    tclcad_auto_path(*interpreter);
-	}
-
-	/* Initialize Tcl */
-	Tcl_ResetResult(*interpreter);
-	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path = 1;
-		continue;
-	    }
-	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-	init_tcl = 0;
-
-	/* Initialize [incr Tcl] */
-	Tcl_ResetResult(*interpreter);
-	/* NOTE: Calling "package require Itcl" here is apparently
-	 * insufficient without other changes elsewhere.  The
-	 * Combination Editor in mged fails with an iwidgets class
-	 * already loaded error if we don't perform Itcl_Init() here.
-	 */
-	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		Tcl_Namespace *nsp;
-
-		try_auto_path = 1;
-		/* Itcl_Init() leaves initialization in a bad state
-		 * and can cause retry failures.  cleanup manually.
-		 */
-		Tcl_DeleteCommand(*interpreter, "::itcl::class");
-		nsp = Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0);
-		if(nsp)
-		    Tcl_DeleteNamespace(nsp);
-		continue;
-	    }
-	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-	init_itcl = 0;
-
-	/* don't actually want to loop forever */
-	break;
-
-    } /* end iteration over Init() routines that need auto_path */
-    Tcl_ResetResult(*interpreter);
-
-    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
-    if (!try_auto_path) {
-	/* Locate the BRL-CAD-specific Tcl scripts */
-	tclcad_auto_path(*interpreter);
+    /* Do basic Tcl initialization - note that Tk
+     * is not initialized at this point. */
+    if (tclcad_init(*interpreter, 0, &tlog) == TCL_ERROR) {
+	bu_log("tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
     }
+    bu_vls_free(&tlog);
 
-    /*XXX FIXME: Should not be importing Itcl into the global namespace */
-    /* Import [incr Tcl] commands into the global namespace. */
-    if (Tcl_Import(*interpreter, Tcl_GetGlobalNamespace(*interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libbu */
-    if (Bu_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libbn */
-    if (Bn_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize librt */
-    if (Rt_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libged */
-    if (Go_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    BU_ALLOC(view_state->vs_gvp, struct ged_view);
+    BU_ALLOC(view_state->vs_gvp, struct bview);
     ged_view_init(view_state->vs_gvp);
 
     view_state->vs_gvp->gv_callback = mged_view_callback;
-    view_state->vs_gvp->gv_clientData = (genptr_t)view_state;
+    view_state->vs_gvp->gv_clientData = (void *)view_state;
     MAT_DELTAS_GET_NEG(view_state->vs_orig_pos, view_state->vs_gvp->gv_center);
 
     if (gedp) {
@@ -583,6 +474,7 @@ mged_setup(Tcl_Interp **interpreter)
     history_setup();
     mged_global_variable_setup(*interpreter);
     mged_variable_setup(*interpreter);
+    gedp->ged_interp = (void *)*interpreter;
 
     /* Tcl needs to write nulls onto subscripted variable names */
     bu_vls_printf(&str, "%s(state)", MGED_DISPLAY_VAR);

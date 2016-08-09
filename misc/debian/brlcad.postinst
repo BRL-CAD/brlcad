@@ -2,7 +2,7 @@
 
 file="/usr/share/applications/mimeapps.list"
 section="Added Associations"
-app="mged.desktop;archer.desktop;rtwizard.desktop;"
+app="archer.desktop;mged.desktop;rtwizard.desktop;"
 key_v4="application/brlcad-v4=$app"
 key_v5="application/brlcad-v5=$app"
 

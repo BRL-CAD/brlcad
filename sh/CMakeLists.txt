@@ -1,22 +1,12 @@
+# Note: elapsed.sh is installed because it is used by benchmark
 set(sh_SCRIPTS
   elapsed.sh
-  any-png.sh
-  cadbug.sh
   cmp.sh
   conversion.sh
-  cray.sh
   facetall.sh
-  indent.sh
-  ios-icons.sh
-  news2tracker.sh
   orbit.sh
   pixinfo.sh
-  pixread.sh
-  pixwrite.sh
-  sgisnap.sh
   show.sh
-  tracker.sh
-  trimconfig.sh
   )
 foreach(script ${sh_SCRIPTS})
   if(NOT CMAKE_CONFIGURATION_TYPES)
@@ -33,21 +23,17 @@ install(PROGRAMS ${sh_SCRIPTS} DESTINATION ${BIN_DIR})
 
 set(noinst_SCRIPTS
   copyright.sh
-  distcheck_screen.sh
   enumerate.sh
   footer.sh
+  fs2org.sh
   header.sh
+  indent.sh
+  ios-icons.sh
   linkroot.sh
-  libtoolfilename.sh
   make_deb.sh
   make_dmg.sh
-  make_pkg.sh
   make_rpm.sh
-  make_tar.sh
-  make_bz2.sh
-  make_tgz.sh
-  make_zip.sh
-  shtool
+  news2tracker.sh
   template.sh
   ws.sh
   )

@@ -1,7 +1,7 @@
 /*                       F B C M R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,10 +32,10 @@
 #ifdef HAVE_SYS_TIME_H
 #  include <sys/time.h>		/* For struct timeval */
 #endif
-#include "bselect.h"
-#include "bio.h"
+#include "bsocket.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
+#include "bu/log.h"
 #include "fb.h"
 #include "vmath.h"
 
@@ -47,7 +47,7 @@ double fps = 0.0;	/* frames per second */
 int increment = 1;
 int onestep = 0;
 
-FBIO *fbp;
+fb *fbp;
 
 static char usage[] = "\
 Usage: fbcmrot [-H -i increment] steps_per_second\n";
@@ -98,14 +98,16 @@ main(int argc, char **argv)
     int i;
     struct timeval tv;
 
-    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
-	printusage();
-	fprintf(stderr, "       Program continues running:\n");
-    }
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (!get_args(argc, argv)) {
     	printusage();
 	bu_exit(1, NULL);
+    }
+
+    if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
+	fprintf(stderr, "Opening a window to work with\n");
     }
 
     if (fps > 0.0) {
@@ -113,7 +115,7 @@ main(int argc, char **argv)
 	tv.tv_usec = (long) (((1.0 / fps) - tv.tv_sec) * 1000000);
     }
 
-    if ((fbp = fb_open(NULL, size, size)) == FBIO_NULL) {
+    if ((fbp = fb_open(NULL, size, size)) == FB_NULL) {
 	fprintf(stderr, "fbcmrot:  fb_open failed\n");
 	return 1;
     }

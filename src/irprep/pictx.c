@@ -1,7 +1,7 @@
 /*                         P I C T X . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -25,28 +25,31 @@
  */
 
 #include "common.h"
+#include "bio.h"
 
-#include<stdio.h>
 #include<string.h>
 #include<math.h>
 #include<stdlib.h>
 #include<X11/Xlib.h>
 #include<X11/Xutil.h>
 
-#include "bu.h"
+#include "bu/log.h"
 
 
 int
 main(void)
 {
     int ichoice;			/* Choice.  */
-    char *irX = "ir-X";		/* Calls ir-X program.  */
+    const char irX[] = "ir-X";		/* Calls ir-X program.  */
     char showtherm[125];		/* Calls showtherm program.  */
     char gfile[16];		/*  .g file.  */
     char group[26];		/* Group names.  */
     int ngrp;			/* Number of groups.  */
     int i, j, k;			/* Loop counters.  */
     int matched;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* Find option.  */
     printf("This takes a BRL-CAD mged model with a PRISM\n");

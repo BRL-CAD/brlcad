@@ -23,6 +23,15 @@
 #ifndef  __GDIAM__H
 #define  __GDIAM__H
 
+/* for g++ to quell warnings */
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic push /* start new diagnostic pragma */
+#  pragma GCC diagnostic ignored "-Wfloat-equal"
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic push /* start new diagnostic pragma */
+#  pragma clang diagnostic ignored "-Wfloat-equal"
+#endif
+
 #ifndef GDIAM_EXPORT
 #  if defined(GDIAM_DLL_EXPORTS) && defined(GDIAM_DLL_IMPORTS)
 #    error "Only GDIAM_DLL_EXPORTS or GDIAM_DLL_IMPORTS can be defined, not both."
@@ -34,6 +43,8 @@
 #    define GDIAM_EXPORT
 #  endif
 #endif
+
+#define GDIAM_FLOAT_ZERO(val) (((val) > -1.0e-37) && ((val) < 1.0e-37))
 
 #define  GDIAM_DIM   3
 typedef  double  gdiam_real;
@@ -47,6 +58,7 @@ typedef  const gdiam_real  * gdiam_point_cnt;
 #define __MINMAX_DEFINED
 
 #include<algorithm>
+#include<assert.h>
 #define min std::min
 #define max std::max
 
@@ -70,7 +82,7 @@ inline gdiam_real   pnt_length( const gdiam_point  pnt )
 inline void  pnt_normalize( gdiam_point  pnt )
 {
     gdiam_real  len = pnt_length( pnt );
-    if  ( len == 0.0 )
+    if  ( GDIAM_FLOAT_ZERO(len) )
         return;
 
     pnt[ 0 ] /= len;
@@ -173,9 +185,9 @@ inline bool  pnt_isEqual( const gdiam_point  p,
                           const gdiam_point  q ) 
 {
     // Assuming here the GDIAM_DIM == 3 !!!!
-    return  ( ( p[ 0 ] == q[ 0 ] )
-              &&  ( p[ 1 ] == q[ 1 ] )
-              &&  ( p[ 2 ] == q[ 2 ] ) );
+    return  ( ( GDIAM_FLOAT_ZERO(p[0] - q[0]) )
+              &&  ( GDIAM_FLOAT_ZERO(p[0] - q[0]) )
+              &&  ( GDIAM_FLOAT_ZERO(p[0] - q[0]) ) );
 }
 
 inline void  pnt_scale_and_add( gdiam_point  dest,
@@ -694,6 +706,12 @@ GDIAM_EXPORT gdiam_bbox   gdiam_approx_mvbb_grid_sample( gdiam_real  * start, in
 GDIAM_EXPORT void  gdiam_generate_orthonormal_base( gdiam_point  in,
                                        gdiam_point  out1,
                                        gdiam_point  out2 );
+
+#if (defined(__GNUC__) && (__GNUC__ > 4 || (__GNUC__ == 4 && __GNUC_MINOR__ >= 6)) && !defined(__clang__))
+#  pragma GCC diagnostic pop /* end ignoring warnings */
+#elif (defined(__clang__) && (__clang_major__ > 2 || (__clang_major__ == 2 && __clang_minor__ >= 8)))
+#  pragma clang diagnostic pop /* end ignoring warnings */
+#endif
 
 #else   /* __GDIAM__H */
 #error  Header file gdiam.h included twice

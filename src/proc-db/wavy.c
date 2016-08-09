@@ -1,7 +1,7 @@
 /*                          W A V Y . C
  * BRL-CAD
  *
- * Copyright (c) 1991-2013 United States Government as represented by
+ * Copyright (c) 1991-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,15 +29,15 @@
 #include <math.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/getopt.h"
 #include "vmath.h"		/* BRL-CAD Vector macros */
-#include "nurb.h"		/* BRL-CAD Spline data structures */
 #include "raytrace.h"
+#include "rt/nurb.h"		/* BRL-CAD Spline data structures */
 #include "wdb.h"
 
 
 /* Interpolate the data using b-splines */
-struct face_g_snurb **
+static struct face_g_snurb **
 interpolate_data(fastf_t *grid)
 {
     struct face_g_snurb **surfs;
@@ -58,6 +58,13 @@ interpolate_data(fastf_t *grid)
 }
 
 
+static void
+printusage()
+{
+    bu_log("Usage: wavy [-d] [-H hscale]\n");
+}
+
+
 int
 main(int argc, char **argv)
 {
@@ -69,25 +76,28 @@ main(int argc, char **argv)
     fastf_t grid[10][10][3];
     struct face_g_snurb **surfaces;
 
-    outfp = wdb_fopen("wavy.g");
-
     hscale = 2.5;
 
-    while ((i=bu_getopt(argc, argv, "dh:")) != -1) {
+    while ((i=bu_getopt(argc, argv, "dH:h?")) != -1) {
 	switch (i) {
 	    case 'd':
 		RTG.debug |= DEBUG_MEM | DEBUG_MEM_FULL;
 		break;
-	    case 'h':
+	    case 'H':
 		hscale = atof(bu_optarg);
 		break;
 	    default:
-		bu_exit(1, "Usage: %s [-d]\n", *argv);
+		printusage();
+		bu_exit(1, NULL);
 	}
     }
 
-    /* Create the database header record.  this solid will consist of
-     * three surfaces a top surface, bottom surface, and the sides (so
+    bu_log("Writing out geometry to file [wavy.g] ...");
+
+    outfp = wdb_fopen("wavy.g");
+
+    /* Create the database header record.  This solid will consist of
+     * three surfaces: a top surface, bottom surface, and the sides (so
      * that it will be closed).
      */
 
@@ -110,7 +120,8 @@ main(int argc, char **argv)
     mk_bspline(outfp, nurb_name, surfaces);
 
     wdb_close(outfp);
-    bu_log("Geometry saved to 'wavy.g'\n");
+
+    bu_log(" done.\n");
 
     return 0;
 }

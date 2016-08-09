@@ -1,7 +1,7 @@
 /*                          D 2 - C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -26,15 +26,13 @@
 #include "common.h"
 
 #include <string.h>
-#include <stdio.h>
-#ifdef HAVE_UNISTD_H
-#  include <unistd.h>
-#endif
+#include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 
 
-void
+static void
 open_file(FILE **fp, char *name)
 {
     /* check for special names */
@@ -62,6 +60,9 @@ main(int argc, char *argv[])
     FILE *rfp, *ifp;
     double real[1024], imag[1024];
     size_t ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc != 3 || isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: d2-c real_file imag_file > complex (- stdin, . skip)\n");

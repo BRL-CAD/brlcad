@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,29 +27,30 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include "bio.h"
 
-#include "cmd.h"
-#include "rtgeom.h"
+#include "bu/cmd.h"
+#include "bu/str.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 
 #include "./ged_private.h"
 
 HIDDEN int
-move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
+move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new_name)
 {
     int i;
-    struct ged_display_list *gdlp;
+    struct display_list *gdlp;
     struct directory *dp;
     struct rt_db_internal intern;
     struct rt_comb_internal *comb;
     struct bu_ptbl stack;
 
     /* rename the record itself */
-    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old, LOOKUP_NOISY)) == RT_DIR_NULL)
+    if ((dp = db_lookup(gedp->ged_wdbp->dbip, old_name, LOOKUP_NOISY)) == RT_DIR_NULL)
 	return GED_ERROR;
 
-    if (db_lookup(gedp->ged_wdbp->dbip, new, LOOKUP_QUIET) != RT_DIR_NULL) {
-	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new);
+    if (db_lookup(gedp->ged_wdbp->dbip, new_name, LOOKUP_QUIET) != RT_DIR_NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: already exists", new_name);
 	return GED_ERROR;
     }
 
@@ -79,13 +80,13 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		    extrude = (struct rt_extrude_internal *)intern.idb_ptr;
 		    RT_EXTRUDE_CK_MAGIC(extrude);
 
-		    if (BU_STR_EQUAL(extrude->sketch_name, old)) {
+		    if (BU_STR_EQUAL(extrude->sketch_name, old_name)) {
 			if (nflag) {
 			    bu_vls_printf(gedp->ged_result_str, "%s ", dirp->d_namep);
 			    rt_db_free_internal(&intern);
 			} else {
 			    bu_free(extrude->sketch_name, "sketch name");
-			    extrude->sketch_name = bu_strdup(new);
+			    extrude->sketch_name = bu_strdup(new_name);
 
 			    if (rt_db_put_internal(dirp, gedp->ged_wdbp->dbip, &intern, &rt_uniresource) < 0) {
 				bu_log("oops\n");
@@ -100,8 +101,8 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
     if (!nflag) {
 	/* Change object name in the directory. */
-	if (db_rename(gedp->ged_wdbp->dbip, dp, new) < 0) {
-	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new);
+	if (db_rename(gedp->ged_wdbp->dbip, dp, new_name) < 0) {
+	    bu_vls_printf(gedp->ged_result_str, "error in rename to %s, aborting", new_name);
 	    return GED_ERROR;
 	}
 
@@ -140,15 +141,15 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 			    comb_leaf = comb_leaf->tr_b.tb_left;
 			}
 
-			if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old)) {
+			if (BU_STR_EQUAL(comb_leaf->tr_l.tl_name, old_name)) {
 			    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 			}
 
-			if (BU_PTBL_END(&stack) < 1) {
+			if (BU_PTBL_LEN(&stack) < 1) {
 			    done = 1;
 			    break;
 			}
-			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
+			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);
 			if (comb_leaf->tr_op != OP_DB_LEAF) {
 			    bu_ptbl_rm(&stack, (long *)comb_leaf);
 			    comb_leaf = comb_leaf->tr_b.tb_right;
@@ -157,7 +158,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 		}
 		rt_db_free_internal(&intern);
 	    } else {
-		int comb_mvall_status = db_comb_mvall(dp, gedp->ged_wdbp->dbip, old, new, &stack);
+		int comb_mvall_status = db_comb_mvall(dp, gedp->ged_wdbp->dbip, old_name, new_name, &stack);
 		if (!comb_mvall_status) continue;
 		if (comb_mvall_status == 2) {
 		    bu_ptbl_free(&stack);
@@ -172,22 +173,22 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 
     if (!nflag) {
 	/* Change object name anywhere in the display list path. */
-	for (BU_LIST_FOR(gdlp, ged_display_list, gedp->ged_gdp->gd_headDisplay)) {
+	for (BU_LIST_FOR(gdlp, display_list, gedp->ged_gdp->gd_headDisplay)) {
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	    char *dupstr = strdup(bu_vls_addr(&gdlp->gdl_path));
+	    char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	    char *tok = strtok(dupstr, "/");
 
 	    while (tok) {
-		if (BU_STR_EQUAL(tok, old)) {
+		if (BU_STR_EQUAL(tok, old_name)) {
 		    found = 1;
 
 		    if (first) {
 			first = 0;
-			bu_vls_printf(&new_path, "%s", new);
+			bu_vls_printf(&new_path, "%s", new_name);
 		    } else
-			bu_vls_printf(&new_path, "/%s", new);
+			bu_vls_printf(&new_path, "/%s", new_name);
 		} else {
 		    if (first) {
 			first = 0;
@@ -200,8 +201,8 @@ move_all_func(struct ged *gedp, int nflag, const char *old, const char *new)
 	    }
 
 	    if (found) {
-		bu_vls_free(&gdlp->gdl_path);
-		bu_vls_printf(&gdlp->gdl_path, "%s", bu_vls_addr(&new_path));
+		bu_vls_free(&gdlp->dl_path);
+		bu_vls_printf(&gdlp->dl_path, "%s", bu_vls_addr(&new_path));
 	    }
 
 	    free((void *)dupstr);

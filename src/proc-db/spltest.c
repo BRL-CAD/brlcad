@@ -1,7 +1,7 @@
 /*                       S P L T E S T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -30,9 +30,9 @@
 #include <math.h>
 
 #include "vmath.h"
-#include "nurb.h"
 #include "raytrace.h"
-#include "rtgeom.h"
+#include "rt/nurb.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 
@@ -91,23 +91,37 @@ make_face(struct rt_nurb_internal *s, fastf_t *a, fastf_t *b, fastf_t *c, fastf_
 }
 
 
+void
+printusage(char *argv[]) {
+    bu_log("Usage: %s [filename, default to spltest.g]\n", argv[0]);
+}
+
+
 int
 main(int argc, char *argv[])
 {
     point_t a, b, c, d;
     struct rt_wdb *fp;
     struct rt_nurb_internal *si;
-    char *filename;
+    char *filename = "spltest.g";
+    int helpflag;
 
     if (argc < 1 || argc > 2) {
-	bu_exit(1, "Usage: %s [spltest.g]", argv[0]);
+    	printusage(argv);
+	bu_exit(1,NULL);
     }
 
-    if (argc == 2) {
-	filename = argv[1];
-    } else {
-	filename = "spltest.g";
+    helpflag = (argc == 2 && ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?")));
+    if (helpflag) {
+    	printusage(argv);
+	if (helpflag)
+		bu_exit(1,NULL);
     }
+
+    if (argc == 2)
+	filename = argv[1];
+
+    bu_log("Writing out geometry to file [%s] ...", filename);
 
     if ((fp = wdb_fopen(filename)) == NULL) {
 	perror("unable to open geometry database for writing");
@@ -129,7 +143,9 @@ main(int argc, char *argv[])
     make_face(si, a, b, c, d, 2);
 
     /* wdb_export */
-    mk_export_fwrite(fp, "spltest", (genptr_t)si, ID_BSPLINE);
+    mk_export_fwrite(fp, "spltest", (void *)si, ID_BSPLINE);
+
+    bu_log(" done.\n");
 
     return 0;
 }

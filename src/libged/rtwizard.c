@@ -1,7 +1,7 @@
 /*                         R T W I Z A R D . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -32,15 +32,11 @@
 #  include <sys/types.h>
 #endif
 
-#ifdef HAVE_SYS_WAIT_H
-#  include <sys/wait.h>
-#endif
-
-#include "bio.h"
+#include "bresource.h"
 
 #include "tcl.h"
-#include "cmd.h"
-#include "solid.h"
+#include "bu/cmd.h"
+
 
 #include "./ged_private.h"
 
@@ -230,7 +226,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     struct bu_vls eye_vls = BU_VLS_INIT_ZERO;
 
     const char *bin;
-    char rt[256] = {0};
+    char rtscript[256] = {0};
 
     GED_CHECK_DATABASE_OPEN(gedp, GED_ERROR);
     GED_CHECK_DRAWABLE(gedp, GED_ERROR);
@@ -242,20 +238,18 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
 
     if (gedp->ged_gvp->gv_perspective > 0)
 	/* rtwizard --no_gui -perspective p -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2 + 2;
     else
 	/* rtwizard --no_gui -i db.g --viewsize size --orientation "A B C D} --eye_pt "X Y Z" */
-	args = argc + 1 + 1 + 2 + 2 + 2 + 2;
+	args = argc + 1 + 1 + 1 + 2 + 2 + 2 + 2;
 
     gedp->ged_gdp->gd_rt_cmd = (char **)bu_calloc(args, sizeof(char *), "alloc gd_rt_cmd");
 
     bin = bu_brlcad_root("bin", 1);
     if (bin) {
-#ifdef _WIN32
-	snprintf(rt, 256, "%s/rtwizard.bat", bin);
-#else
-	snprintf(rt, 256, "%s/rtwizard", bin);
-#endif
+	snprintf(rtscript, 256, "%s/rtwizard", bin);
+    } else {
+	snprintf(rtscript, 256, "rtwizard");
     }
 
     _ged_rt_set_eye_model(gedp, eye_model);
@@ -266,7 +260,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     bu_vls_printf(&eye_vls, "%.15e %.15e %.15e", V3ARGS(eye_model));
 
     vp = &gedp->ged_gdp->gd_rt_cmd[0];
-    *vp++ = rt;
+    *vp++ = rtscript;
     *vp++ = "--no-gui";
     *vp++ = "--viewsize";
     *vp++ = bu_vls_addr(&size_vls);
@@ -282,17 +276,7 @@ ged_rtwizard(struct ged *gedp, int argc, const char *argv[])
     }
 
     *vp++ = "-i";
-    /* XXX why is this different for win32 only? */
-#ifdef _WIN32
-    {
-	char buf[512];
-
-	snprintf(buf, 512, "\"%s\"", gedp->ged_wdbp->dbip->dbi_filename);
-	*vp++ = buf;
-    }
-#else
     *vp++ = gedp->ged_wdbp->dbip->dbi_filename;
-#endif
 
     /* Append all args */
     for (i = 1; i < argc; i++)

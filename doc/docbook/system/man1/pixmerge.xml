@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!-- lifted from troff+man by doclifter -->
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='pixmerge1'>
+<refmeta>
+    <refentrytitle>PIXMERGE
+</refentrytitle>
+<manvolnum>1</manvolnum>
+<refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+<refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+</refmeta>
+
+<refnamediv>
+<refname>pixmerge</refname>
+<refpurpose>merge two pix(5) or bw(5) images by a formula</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv xml:id='synopsis'>
+<cmdsynopsis>
+  <command>pixmerge</command>
+    <arg choice='opt'>-glen </arg>
+    <arg choice='opt'>-w <replaceable>bytes_wide</replaceable></arg>
+    <arg choice='opt'>-C <replaceable>r/g/b</replaceable></arg>
+    <arg choice='plain'><replaceable>foreground.pix</replaceable></arg>
+    <arg choice='opt'> <replaceable>background.pix</replaceable></arg>
+    <arg choice='plain'>&gt;</arg>
+    <arg choice='plain'><replaceable>out.pix</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 xml:id='description'><title>DESCRIPTION</title>
+<para><command>pixmerge</command>,
+given two streams of data, typically
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+or
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+images,
+generates an output stream of the same size, where the value of
+the output is determined by a formula involving the first
+(foreground) stream and the second (background) stream,
+with the option of using a constant in place of the background stream.
+This routine operates on a pixel-by-pixel basis, and thus
+is independent of the resolution of the image.
+More sophisticated processing can be performed by
+<command>pixmatte</command> .</para>
+
+<para>If a constant is to be used in place of the background stream, it is supplied via the
+<option>-C r/g/b</option>
+option, with the constant color specified by r/g/b .
+(Exception: see below for default zeroes
+being used with default <option>-g</option> .)
+It is expected that there will be up to
+<replaceable>bytes_wide</replaceable>
+slash-separated constants given as a single parameter here.
+If <option>-C</option> is used, the <replaceable>background.pix</replaceable> argument is omitted.
+</para>
+
+<para>The formula can be any combination of
+<option>-g</option>
+(fg greater than bg),
+<option>-l</option>
+(fg less than bg),
+<option>-e</option>
+(fg equal to bg),
+<option>-n</option>
+(fg not equal to bg).
+For example,
+<option>-le</option>
+selects the foreground pixel when it
+is lexically less than or equal to the background pixel,
+that is, when each byte of the foreground pixel is less than
+or equal to the corresponding byte of the background pixel; if said
+relationship is found to be false, the background pixel is selected.</para>
+
+<para>The
+<option>-w#</option>
+flag specifies the width (in bytes) of each "pixel";  the default is
+3, <emphasis remap='I'>i.e.</emphasis>
+<citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+file format.  A width of 1 is used for processing
+<citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry>
+files.  It is unclear if other widths are useful.</para>
+
+<para>If no formula is specified, the default is to use <option>-g</option>, taking all foreground
+pixels greater than a constant (<option>-C</option> parameter if that option is used, otherwise
+defaulting to black, which is specified with all bytes zero).  If the default formula and constant
+are used (and <option>-a</option> was NOT used), this is the same as:</para>
+<para>
+   pixmerge -g -C 0/0/0 fg.pix</para>
+</refsect1>
+
+<refsect1 xml:id='examples'><title>EXAMPLES</title>
+<para>   gencolor 200 0 200 |
+      pixmerge -g fg.pix - &gt; out.pix</para>
+
+<para>   pixbackgnd -t0 160 200 |
+      pixmerge -n fg.pix - | pix-fb</para>
+<para>The second example is used to composite an
+<citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+generated image on top of a shaded background.</para>
+</refsect1>
+
+<refsect1 xml:id='see_also'><title>SEE ALSO</title>
+<para><citerefentry><refentrytitle>brlcad</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>gencolor</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixbackgnd</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pixmatte</refentrytitle><manvolnum>1</manvolnum></citerefentry>, <citerefentry><refentrytitle>pix</refentrytitle><manvolnum>5</manvolnum></citerefentry>, <citerefentry><refentrytitle>bw</refentrytitle><manvolnum>5</manvolnum></citerefentry></para>
+
+</refsect1>
+
+<refsect1 xml:id='author'><title>AUTHOR</title>
+<para>BRL-CAD Team</para>
+
+</refsect1>
+
+<refsect1 xml:id='copyright'><title>COPYRIGHT</title>
+<para>This software is Copyright (c) 1989-2016 by the United States
+Government as represented by U.S. Army Research Laboratory.</para>
+</refsect1>
+
+<refsect1 xml:id='bug_reports'><title>BUG REPORTS</title>
+<para>Reports of bugs or problems should be submitted via electronic
+mail to &lt;devs@brlcad.org&gt;.</para>
+</refsect1>
+</refentry>
+

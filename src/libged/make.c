@@ -1,7 +1,7 @@
 /*                         M A K E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2013 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,9 +29,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "bio.h"
 
-#include "rtgeom.h"
+#include "bu/getopt.h"
+#include "rt/geom.h"
 #include "wdb.h"
 
 #include "./ged_private.h"
@@ -90,7 +90,8 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     bu_optind = 1;
 
     /* Process arguments */
-    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT")) != -1) {
+    while ((k = bu_getopt(argc, (char * const *)argv, "hHo:O:s:S:tT?")) != -1) {
+	if (bu_optopt == '?') k='h';
 	switch (k) {
 	    case 'o':
 	    case 'O':
@@ -572,7 +573,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_NMG;
 	internal.idb_meth = &OBJ[ID_NMG];
-	internal.idb_ptr = (genptr_t)m;
+	internal.idb_ptr = (void *)m;
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "pipe")) {
 	struct wdb_pipept *ps;
 
@@ -604,7 +605,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_PNTS;
 	internal.idb_meth = &OBJ[ID_PNTS];
-	internal.idb_ptr = (genptr_t) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
+	internal.idb_ptr = (void *) bu_malloc(sizeof(struct rt_pnts_internal), "rt_pnts_internal");
 
 	pnts_ip = (struct rt_pnts_internal *) internal.idb_ptr;
 	pnts_ip->magic = RT_PNTS_INTERNAL_MAGIC;
@@ -613,7 +614,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	pnts_ip->scale = 0;
 
 	BU_ALLOC(pnts_ip->point, struct pnt);
-	headPoint = pnts_ip->point;
+	headPoint = (struct pnt *)pnts_ip->point;
 	BU_LIST_INIT(&headPoint->l);
 	BU_ALLOC(point, struct pnt);
 	VSET(point->v, origin[X], origin[Y], origin[Z]);
@@ -624,7 +625,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_type = ID_BOT;
 	internal.idb_meth = &OBJ[ID_BOT];
 	BU_ALLOC(bot_ip, struct rt_bot_internal);
-	internal.idb_ptr = (genptr_t)bot_ip;
+	internal.idb_ptr = (void *)bot_ip;
 	bot_ip = (struct rt_bot_internal *)internal.idb_ptr;
 	bot_ip->magic = RT_BOT_INTERNAL_MAGIC;
 	bot_ip->mode = RT_BOT_SOLID;
@@ -714,10 +715,10 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    sketch_ip->verts[6][1] = 0.125*scale;
 	    sketch_ip->curve.count = 6;
 	    sketch_ip->curve.reverse = (int *)bu_calloc(sketch_ip->curve.count, sizeof(int), "sketch_ip->curve.reverse");
-	    sketch_ip->curve.segment = (genptr_t *)bu_calloc(sketch_ip->curve.count, sizeof(genptr_t), "sketch_ip->curve.segment");
+	    sketch_ip->curve.segment = (void **)bu_calloc(sketch_ip->curve.count, sizeof(void *), "sketch_ip->curve.segment");
 
 	    BU_ALLOC(csg, struct carc_seg);
-	    sketch_ip->curve.segment[0] = (genptr_t)csg;
+	    sketch_ip->curve.segment[0] = (void *)csg;
 	    csg->magic = CURVE_CARC_MAGIC;
 	    csg->start = 4;
 	    csg->end = 0;
@@ -726,31 +727,31 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    csg->orientation = 0;
 
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[1] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[1] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 0;
 	    lsg->end = 1;
 
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[2] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[2] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 1;
 	    lsg->end = 2;
 
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[3] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[3] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 2;
 	    lsg->end = 3;
 
 	    BU_ALLOC(lsg, struct line_seg);
-	    sketch_ip->curve.segment[4] = (genptr_t)lsg;
+	    sketch_ip->curve.segment[4] = (void *)lsg;
 	    lsg->magic = CURVE_LSEG_MAGIC;
 	    lsg->start = 3;
 	    lsg->end = 4;
 
 	    BU_ALLOC(csg, struct carc_seg);
-	    sketch_ip->curve.segment[5] = (genptr_t)csg;
+	    sketch_ip->curve.segment[5] = (void *)csg;
 	    csg->magic = CURVE_CARC_MAGIC;
 	    csg->start = 6;
 	    csg->end = 5;
@@ -766,7 +767,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	    sketch_ip->verts = (point2d_t *)NULL;
 	    sketch_ip->curve.count = 0;
 	    sketch_ip->curve.reverse = (int *)NULL;
-	    sketch_ip->curve.segment = (genptr_t *)NULL;
+	    sketch_ip->curve.segment = (void **)NULL;
 	}
     } else if (BU_STR_EQUAL(argv[bu_optind+1], "superell")) {
 
@@ -835,6 +836,10 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
 	internal.idb_major_type = DB5_MAJORTYPE_BRLCAD;
 	internal.idb_type = ID_DATUM;
 	internal.idb_meth = &OBJ[ID_DATUM];
+
+	/* Set a default color for datum objects */
+	bu_avs_add(&internal.idb_avs, "color", "255/255/0");
+
 	BU_ALLOC(internal.idb_ptr, struct rt_datum_internal);
 	datum_ip = (struct rt_datum_internal *)internal.idb_ptr;
 	datum_ip->magic = RT_DATUM_INTERNAL_MAGIC;
@@ -899,7 +904,7 @@ ged_make(struct ged *gedp, int argc, const char *argv[])
     /* no interrupts */
     (void)signal(SIGINT, SIG_IGN);
 
-    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (genptr_t)&internal.idb_type, GED_ERROR);
+    GED_DB_DIRADD(gedp, dp, argv[save_bu_optind], RT_DIR_PHONY_ADDR, 0, RT_DIR_SOLID, (void *)&internal.idb_type, GED_ERROR);
     GED_DB_PUT_INTERNAL(gedp, dp, &internal, &rt_uniresource, GED_ERROR);
 
     return GED_OK;

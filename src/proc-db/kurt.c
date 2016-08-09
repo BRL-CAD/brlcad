@@ -1,7 +1,7 @@
 /*                          K U R T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2013 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -28,15 +28,11 @@
 #include <stdio.h>
 #include <math.h>
 
-#include "bu.h"
 #include "vmath.h"
 #include "bn.h"
 #include "raytrace.h"
 #include "wdb.h"
 
-
-mat_t identity;
-double degtorad = 0.0174532925199433;
 
 struct val {
     double v_z[3];
@@ -61,14 +57,17 @@ main(int argc, char **argv)
     double base;
     int quant;
 
-    if (argc > 0)
-	bu_log("Usage: %s\n", argv[0]);
+    if (argc > 1) {
+	bu_exit(1, "Usage: %s\n", argv[0]);
+    }
+
+    bu_log("Writing out geometry to file [kurt.g] ...");
 
     outfp = wdb_fopen("kurt.g");
     mk_id(outfp, "Kurt's multi-valued function");
 
     /* Create the detail cells */
-    size = 10;	/* mm */
+    size = 10.0; /* mm */
     quant = 18;
     base = -size*(quant/2);
     for (ix=quant-1; ix>=0; ix--) {
@@ -78,6 +77,8 @@ main(int argc, char **argv)
 	    do_cell(&val[ix][iy], x, y);
 	}
     }
+
+    bu_log(" done.\n");
 
     return 0;
 }
@@ -131,7 +132,6 @@ do_cell(struct val *vp, double xc, double yc)
 void
 pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
 
-
 /* hopefully points outwards */
 
 {
@@ -145,20 +145,17 @@ pnorms(fastf_t (*norms)[3], fastf_t (*verts)[3], fastf_t *out, int npts)
     VUNITIZE(n);
 
     /* If normal points inwards, flip it */
-    if (VDOT(n, out) < 0) {
+    if (VDOT(n, out) < 0)
 	VREVERSE(n, n);
-    }
 
     /* Use same normal for all vertices (flat shading) */
-    for (i=0; i<npts; i++) {
+    for (i=0; i<npts; i++)
 	VMOVE(norms[i], n);
-    }
 }
 
 
 void
 do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsigned char *rgb)
-
 
 /* direction or aim point */
 /* 0 = direction, !0 = aim point */
@@ -176,9 +173,8 @@ do_light(char *name, fastf_t *pos, fastf_t *dir_at, int da_flag, double r, unsig
     if (da_flag) {
 	VSUB2(dir, dir_at, pos);
 	VUNITIZE(dir);
-    } else {
+    } else
 	VMOVE(dir, dir_at);
-    }
 
     snprintf(nbuf, 64, "%s.s", name);
     VSETALL(center, 0);

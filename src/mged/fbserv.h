@@ -1,7 +1,7 @@
 /*                        F B S E R V . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -20,10 +20,10 @@
 /** @file mged/fbserv.h
  * Package Handlers.
  */
-#ifndef __FBSERV_H__
-#define __FBSERV_H__
+#ifndef MGED_FBSERV_H
+#define MGED_FBSERV_H
 
-#include "fbmsg.h"
+#include "fb.h"
 
 void rfbopen(struct pkg_conn *pcp, char *buf), rfbclose(struct pkg_conn *pcp, char *buf), rfbclear(struct pkg_conn *pcp, char *buf), rfbread(struct pkg_conn *pcp, char *buf), rfbwrite(struct pkg_conn *pcp, char *buf);
 void rfbcursor(struct pkg_conn *pcp, char *buf), rfbgetcursor(struct pkg_conn *pcp, char *buf);
@@ -73,7 +73,7 @@ static struct pkg_switch pkg_switch[] = {
 };
 
 
-#endif  /* __FBSERV_H__ */
+#endif  /* MGED_FBSERV_H */
 /*
  * Local Variables:
  * mode: C

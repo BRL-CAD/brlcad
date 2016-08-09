@@ -1,0 +1,39 @@
+#
+# Declare the repositories we know about:
+#
+
+create repository myproject
+end repository
+
+#
+# Declare the rules
+# Note: rules must end in a slash
+#
+
+# Ignore this particular revision in trunk
+# See ignore-branch.rules first
+# Note that rules are applied in order of appearance, so this rule
+# must appear before the generic trunk rule
+match /trunk/
+  min revision 123
+  max revision 123
+end match
+
+# Stop importing trunk
+# If we don't specify a max revision, then there is no limit
+# The same applies to min revision (i.e., min revision is 0)
+match /trunk/
+  min revision 1234
+end match
+
+match /trunk/
+  repository myproject
+  branch master
+end match
+
+match /branches/([^/]+)/
+  repository myproject
+  branch \1
+end match
+
+# No tag processing

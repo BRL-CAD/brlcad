@@ -1,7 +1,7 @@
 /*                           D - U . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -34,21 +34,25 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
+#include "bu/log.h"
+#include "bu/str.h"
 #include "vmath.h"
 
 
-double ibuf[512];
-unsigned short obuf[512];
-
-
-int main(int argc, char **argv)
+int
+main(int argc, char *argv[])
 {
+    double ibuf[512];
+    unsigned short obuf[512];
+
     int i, num;
     double scale = 1.0;
     double value;
     int clip_high, clip_low;
     size_t ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-n"))

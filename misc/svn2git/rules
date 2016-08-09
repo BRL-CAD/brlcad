@@ -1,0 +1,151 @@
+# First, create all the repositories
+# BRL-CAD is the main project, but there
+# have been and are other sub-projects
+# that aren't BRL-CAD branches
+create repository brlcad
+end repository
+
+create repository rt_3
+end repository
+
+create repository geomcore
+end repository
+
+create repository iBME
+end repository
+
+create repository isst
+end repository
+
+create repository jbrlcad
+end repository
+
+create repository ova
+end repository
+
+create repository osl
+end repository
+
+create repository rtcmp
+end repository
+
+create repository web
+end repository
+
+create repository webcad
+end repository
+
+create repository unknown
+end repository
+
+# For sufficiently old revisions,
+# it's all BRL-CAD
+match /trunk/
+   min revision 1
+   max revision 22796
+   repository brlcad
+   branch master
+end match
+
+match /brlcad/trunk/
+   repository brlcad
+   branch master
+end match
+
+# Make BRL-CAD branches
+
+# Put these where they belong in git
+match /brlcad/framebuffer-experiment/
+   repository brlcad
+   branch dm-work
+end match
+match /brlcad/branches/framebuffer-experiment/
+   repository brlcad
+   branch dm-work
+end match
+
+# General rule for well-behaved branches
+match /brlcad/branches/([^/]+)/
+   repository brlcad
+   branch \1
+end match
+
+# Make BRL-CAD tags
+match /brlcad/tags/([^/]+)/
+   repository brlcad
+   branch tag--\1
+end match
+
+
+# Non BRL-CAD repos - for most of
+# these it's not worth bothering
+# with branches and tags - at least,
+# not yet.
+match /osl/
+   repository osl
+   branch osl
+end match
+
+match /rt\^3/branches/([^/]+)/
+   repository rt_3
+   branch \1
+   substitute branch s/\^/_/
+end match
+match /rt\^3/tags/([^/]+)/
+   repository rt_3
+   branch tag--\1
+   substitute branch s/\^/_/
+end match
+match /rt\^3/
+   repository rt_3
+   branch master
+end match
+
+match /ova/
+   repository ova
+   branch master
+end match
+
+match /iBME/
+   repository iBME
+   branch master
+end match
+
+match /isst/
+   repository isst
+   branch master
+end match
+
+match /jbrlcad/
+   repository jbrlcad
+   branch master
+end match
+
+match /web/
+   repository web
+   branch master
+end match
+
+match /webcad/
+   repository webcad
+   branch master
+end match
+
+match /rtcmp/
+   repository rtcmp
+   branch master
+end match
+
+match /geomcore/
+   repository geomcore
+   branch master
+end match
+
+# Finally, create an unknown repo that lets us see
+# what the above filters didn't handle - ideally
+# everything should be handled
+match /
+   repository unknown
+   branch master
+end match
+

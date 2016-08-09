@@ -1,7 +1,7 @@
 /*                           A - D . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -31,18 +31,20 @@
 #include <string.h>
 #include "bio.h"
 
-#include "bu.h"
-
+#include "bu/log.h"
 
 #define COMMENT_CHAR '#'
 
 
 int
-main(int argc, char **argv)
+main(int argc, char *argv[])
 {
     double d;
     int i;
     size_t ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (isatty(fileno(stdout))) {
 	bu_exit(1, "Usage: a-d [values] < ascii > doubles\n");

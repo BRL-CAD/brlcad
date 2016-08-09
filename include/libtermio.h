@@ -1,7 +1,7 @@
 /*                     L I B T E R M I O . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2013 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,31 +17,72 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup libtermio */
-/** @{ */
-/** @file libtermio.h
+/** @addtogroup libtermio
  *
- *  Externs for the BRL-CAD library LIBTERMIO
+ * @brief
+ * Externs for the BRL-CAD library LIBTERMIO
  *
  */
+/** @{ */
+/** @file libtermio.h */
 
-void clr_Cbreak( int fd );
-void set_Cbreak( int fd );
-void clr_Raw( int fd );
-void set_Raw( int fd );
-void set_Echo( int fd );
-void clr_Echo( int fd );
-void set_Tabs( int fd );
-void clr_Tabs( int fd );
-void set_HUPCL( int fd );
-void clr_CRNL( int fd );
-unsigned short get_O_Speed( int fd );
-void save_Tty( int fd );
-void reset_Tty( int fd );
-int save_Fil_Stat( int fd );
-int reset_Fil_Stat( int	fd );
-int set_O_NDELAY( int fd );
-void prnt_Tio();	/* misc. types of args */
+#ifndef LIBTERMIO_H
+#define LIBTERMIO_H
+
+#include "common.h"
+
+#if defined(HAVE_TERMIOS_H)
+#  undef SYSV
+#  undef BSD
+#  include <termios.h>
+#else	/* !defined(HAVE_TERMIOS_H) */
+#  ifdef SYSV
+#    undef BSD
+#    include <termio.h>
+#    include <memory.h>
+#  endif /* SYSV */
+#  ifdef BSD
+#    undef SYSV
+#    include <sys/ioctl.h>
+#  endif /* BSD */
+#endif /* HAVE_TERMIOS_H */
+
+
+__BEGIN_DECLS
+
+void clr_Cbreak(int fd);
+void set_Cbreak(int fd);
+void clr_Raw(int fd);
+void set_Raw(int fd);
+void set_Echo(int fd);
+void clr_Echo(int fd);
+void set_Tabs(int fd);
+void clr_Tabs(int fd);
+void set_HUPCL(int fd);
+void clr_CRNL(int fd);
+unsigned short get_O_Speed(int fd);
+void save_Tty(int fd);
+void reset_Tty(int fd);
+int save_Fil_Stat(int fd);
+int reset_Fil_Stat(int fd);
+int set_O_NDELAY(int fd);
+void prnt_Tio(
+    char *msg,
+#if defined(BSD)
+    struct sgttyb *tio_ptr
+#elif defined(SYSV)
+    struct termio *tio_ptr
+#elif defined(HAVE_TERMIOS_H)
+    struct termios *tio_ptr
+#else
+    void *tio_ptr
+#endif
+    );
+
+__END_DECLS
+
+#endif /* LIBTERMIO_H */
+
 /** @} */
 /*
  * Local Variables:
