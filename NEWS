@@ -31,20 +31,23 @@ enhancements including new manual pages, improved command usage,
 better help facilities, and more.
 
 This release introduces the 'gcv' and 'icv' tools for geometry and
-image file conversion respectively.  These plugin-architecture tools
-are intended to eventually consolidate and replace all of BRL-CAD's
+image conversion respectively.  These plugin-architecture tools are
+intended to eventually consolidate and replace all of BRL-CAD's
 conversion and processing functionality into an easy universal
 interface for users and application developers.  GCV currently
 supports import and export of STL, 3DM, OBJ, VRML, and FASTGEN
 geometry as well as mesh decimation, facetization, and solidity
-testing.  The new FASTGEN exporter does extensive compatibility
-feature mapping for comprehensive round-trip geometry conversion.
+testing.  The new FASTGEN exporter implements extensive compatibility
+feature mapping for round-trip geometry conversion.
 
-Modeling of datum points, lines, and planes is now available as a new
-entity.  Ray tracing performance on Windows is vastly improved for
-multi-CPU systems.  Major features still under experimental
-development include an OpenCL-accelerated high performance ray tracing
-pipeline and a new marching cubes method for polygonal mesh export.
+Ray tracing performance on Windows is vastly improved on symmetric
+multiprocessing (SMP) multicore and multiple CPU systems.  Implemented
+as 'datum' objects, BRL-CAD provides new modeling support for
+reference points, lines (axes), and planes.  Major features still
+under experimental development include NURBS Boolean evaluation, a new
+marching cubes method for polygonal mesh export, rigging joints for
+constrained geometry articulation, and an OpenCL-accelerated high
+performance ray tracing pipeline.
 
 * mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * fixed bad args crash in metaball 'in' command - Cliff Yapp
