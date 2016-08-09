@@ -26,6 +26,7 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "rt/db5.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
