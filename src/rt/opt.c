@@ -197,8 +197,8 @@ get_args(int argc, const char *argv[])
     ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
-    	if (bu_optopt == '?')
-    	    c = 'h';
+	if (bu_optopt == '?')
+	    c = 'h';
 	switch (c) {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -283,38 +283,18 @@ get_args(int argc, const char *argv[])
 		break;
 	    case 'C':
 		{
-		    int r, g, b;
-		    register char *cp = bu_optarg;
+		    struct bu_color color = BU_COLOR_INIT_ZERO;
 
-		    r = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    g = atoi(cp);
-		    while ((*cp >= '0' && *cp <= '9')) cp++;
-		    while (*cp && (*cp < '0' || *cp > '9')) cp++;
-		    b = atoi(cp);
-
-		    if (r < 0 || r > 255) r = 255;
-		    if (g < 0 || g > 255) g = 255;
-		    if (b < 0 || b > 255) b = 255;
-
+		    if (!bu_color_from_str(&color, bu_optarg)) {
+			bu_log("ERROR: invalid color string: '%s'\n", bu_optarg);
+			return 0;
+		    }
 #if defined(_WIN32)
-		    if (r == 0)
-			background[0] = 0.0;
-		    else
-			background[0] = r / 255.0;
-		    if (g == 0)
-			background[1] = 0.0;
-		    else
-			background[1] = g / 255.0;
-		    if (b == 0)
-			background[2] = 0.0;
-		    else
-			background[2] = b / 255.0;
+		    VMOVE(background, color.buc_rgb);
 #else
 		    {
 			char buf[128] = {0};
-			sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
+			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
 			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
 		    }
 #endif

@@ -585,10 +585,18 @@ proc drawPair {left right} {
 	puts "WARNING: unable to find $right"
     }
 
-    if [catch {draw -C255/0/0 $left} left_error] {
+    # utilize colorblind-reviewed diff colors used by GitLab
+    # #ddfbe6 (light green)
+    # #f9d7dc (light red)
+    # #dcecfb (light blue)
+    # #fbf2d9 (light yellow)
+
+    # light red
+    if [catch {draw -C249/215/220 $left} left_error] {
 	puts "ERROR: $left_error"
     }
-    if [catch {draw -C0/0/255 $right} right_error] {
+    # light blue
+    if [catch {draw -C220/236/251 $right} right_error] {
 	puts "ERROR: $right_error"
     }
 }
