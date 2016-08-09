@@ -21,21 +21,48 @@ changes made.  See document footer for additional details.
 
 
 ----------------------------------------------------------------------
---- 2016-06-XX  Release 7.26.0                                     ---
+--- 2016-08-08  Release 7.26.0                                     ---
 ----------------------------------------------------------------------
 
-This major release update of BRL-CAD culminates several years of
-development efforts to provide robust boundary representation (BREP)
-NURBS import and ray tracing support.  Our NURBS capability gets us a
-step closer to full hybrid representation modeling, supporting
-seamless transitioning and mixing of boundary representation geometry
-(e.g., NURBS or polygonal meshes) with implicit representation
-geometry (e.g., primitives with CSG).
+This major release of BRL-CAD culminates several years of development
+effort to provide robust explicit boundary representation (BREP)
+Non-uniform Rational Basis Spline (NURBS) import and ray tracing
+analysis support.  Compared to previous polygonal mesh (BoT) methods,
+NURBS offer superior interoperability with other CAD systems, faithful
+shape-preserving import, and significantly reduced model sizes.  NURBS
+may be imported from the ISO STEP (AP203) and Rhino 3DM file formats,
+both with improved hierarchy preservation and entity support.
 
+Unprecedented in BRL-CAD's history, this release initiates steps to
+significantly reduce complexity and improve usability.  Many features
+are being consolidated, reorganized, and removed via BRL-CAD's
+deprecation process.  There are widespread documentation system
+enhancements including new manual pages, improved command usage,
+better help facilities, and more.
+
+This release introduces the 'gcv' and 'icv' tools for geometry and
+image conversion respectively.  These plugin-architecture tools are
+intended to eventually consolidate and replace all of BRL-CAD's
+conversion and processing functionality into an easy universal
+interface for users and application developers.  GCV currently
+supports import and export of STL, 3DM, OBJ, VRML, and FASTGEN
+geometry as well as mesh decimation, facetization, and solidity
+testing.  The new FASTGEN exporter implements extensive compatibility
+feature mapping for round-trip geometry conversion.
+
+Ray tracing performance on Windows is vastly improved on symmetric
+multiprocessing (SMP) multicore and multiple CPU systems.  Implemented
+as 'datum' objects, BRL-CAD provides new modeling support for
+reference points, lines (axes), and planes.  Major features still
+under experimental development include NURBS Boolean evaluation, a new
+marching cubes method for polygonal mesh export, rigging joints for
+constrained geometry articulation, and an OpenCL-accelerated high
+performance ray tracing pipeline.
+
+* mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * fixed bad args crash in metaball 'in' command - Cliff Yapp
 * added manual page for lt comb child listing command - Cliff Yapp
 * added lt -c option for specifying separation character - Bob Parker
-* mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * improved hierarchy preservation in 3dm-g importer - Jon Engbert
 * fixed upside down 'screengrab' images on some platforms - Nick Reed
 * updated wireframe drawing to respect primitive colors - Cliff Yapp
