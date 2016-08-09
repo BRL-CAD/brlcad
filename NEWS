@@ -46,10 +46,10 @@ multi-CPU systems.  Major features still under experimental
 development include an OpenCL-accelerated high performance ray tracing
 pipeline and a new marching cubes method for polygonal mesh export.
 
+* mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * fixed bad args crash in metaball 'in' command - Cliff Yapp
 * added manual page for lt comb child listing command - Cliff Yapp
 * added lt -c option for specifying separation character - Bob Parker
-* mass-deprecation of 121 command-line utilities - BRL-CAD Developers
 * improved hierarchy preservation in 3dm-g importer - Jon Engbert
 * fixed upside down 'screengrab' images on some platforms - Nick Reed
 * updated wireframe drawing to respect primitive colors - Cliff Yapp
