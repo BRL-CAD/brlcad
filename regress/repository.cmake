@@ -418,12 +418,14 @@ function(api_usage_test func)
 	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
 	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
 	if("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+
 	  if(NOT HDR_PRINTED)
 	    message("Found instance(s):")
 	    set(HDR_PRINTED 1)
 	  endif(NOT HDR_PRINTED)
-
-	  message("  ${cfile}:${cline}: ${func}")
+	  string(FIND "${FILE_LINE}" "\n" POS)
+	  string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
+	  message("  ${cfile}:${cline}: ${TRIMMED_LINE}")
 
 	  # Let top level know about failure
 	  math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
