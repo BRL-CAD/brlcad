@@ -446,11 +446,10 @@ endfunction(api_usage_test func)
 # logic in our code - instead, we want to feature test and use those tests
 # for conditional logic.
 
-function(platform_symbol_usage_test)
+function(platform_symbol_usage_test symb expected)
 
   # We need both a list of the platform symbols to check
   # and a regex matching them
-  set(platforms WIN32 _WIN32 WIN64 _WIN64)
   string(REPLACE ";" "|" p_regex "${platforms}")
   set(platforms_regex "(${p_regex})")
 
@@ -473,60 +472,64 @@ function(platform_symbol_usage_test)
   foreach(stype ${types})
     foreach(cfile ${ACTIVE_${stype}_FILES})
       file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-      set(regex "[^a-zA-Z0-9_]${platforms_regex}[^a-zA-Z0-9_]|^${platforms_regex}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${platforms_regex}$")
-      if("${FILE_SRC}" MATCHES "${regex}")
-	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-	set(cline 1)
-	# We need to go with the while loop + substring approach because
-	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
-	# with square brackets.  Make sure we always have a terminating newline
-	# so the string searches and while loop behave
-	set(working_file "${FILE_SRC}\n")
-	while(working_file)
-	  string(FIND "${working_file}" "\n" POS)
-	  math(EXPR POS "${POS} + 1")
-	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
-	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	  foreach(ptfm ${platforms})
-	    set(pregex "[^a-zA-Z0-9_]${ptfm}[^a-zA-Z0-9_]|^${ptfm}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${ptfm}$")
-	    if("${FILE_LINE}" MATCHES "${pregex}")
+      if("${FILE_SRC}" MATCHES "${symb}")
+	set(regex "[^a-zA-Z0-9_]${symb}[^a-zA-Z0-9_]|^${symb}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${symb}$")
+	if("${FILE_SRC}" MATCHES "${regex}")
+	  # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	  set(cline 1)
+	  # We need to go with the while loop + substring approach because
+	  # file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	  # with square brackets.  Make sure we always have a terminating newline
+	  # so the string searches and while loop behave
+	  set(working_file "${FILE_SRC}\n")
+	  while(working_file)
+	    string(FIND "${working_file}" "\n" POS)
+	    math(EXPR POS "${POS} + 1")
+	    string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	    string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	    if("${FILE_LINE}" MATCHES "${regex}")
 	      #message("  ${cfile}:${cline} ${FILE_LINE}")
 	      string(FIND "${FILE_LINE}" "\n" POS)
 	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
-	      list(APPEND ${ptfm}_${stype}_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
-	    endif("${FILE_LINE}" MATCHES "${pregex}")
-	  endforeach(ptfm ${platforms})
-	  math(EXPR cline "${cline} + 1")
-	endwhile(working_file)
-      endif("${FILE_SRC}" MATCHES "${regex}")
+	      list(APPEND ${symb}_${stype}_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
+	    endif("${FILE_LINE}" MATCHES "${regex}")
+	    math(EXPR cline "${cline} + 1")
+	  endwhile(working_file)
+	endif("${FILE_SRC}" MATCHES "${regex}")
+      endif("${FILE_SRC}" MATCHES "${symb}")
     endforeach(cfile ${ACTIVE_${stype}_FILES})
   endforeach(stype ${types})
 
   set(total_cnt 0)
 
   foreach(stype ${types})
-    foreach(ptfm ${platforms})
-      if(${ptfm}_${stype}_INSTANCES)
-	list(LENGTH ${ptfm}_${stype}_INSTANCES ptfm_len)
-	if("${stype}" STREQUAL "SRC")
-	  message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the source files:\n")
-	endif("${stype}" STREQUAL "SRC")
-	if("${stype}" STREQUAL "BLD")
-	  message("\nFIXME: Found ${ptfm_len} instances of ${ptfm} usage in the build files:\n")
-	endif("${stype}" STREQUAL "BLD")
-	foreach(ln ${${ptfm}_${stype}_INSTANCES})
-	  message("  ${ln}")
-	  math(EXPR total_cnt "${total_cnt} + 1")
-	endforeach(ln ${${ptfm}_${stype}_INSTANCES})
-      endif(${ptfm}_${stype}_INSTANCES)
-    endforeach(ptfm ${platforms})
+    if(${symb}_${stype}_INSTANCES)
+      list(LENGTH ${symb}_${stype}_INSTANCES symb_len)
+      if("${stype}" STREQUAL "SRC")
+	message("\nFIXME: Found ${symb_len} instances of ${symb} usage in the source files:\n")
+      endif("${stype}" STREQUAL "SRC")
+      if("${stype}" STREQUAL "BLD")
+	message("\nFIXME: Found ${symb_len} instances of ${symb} usage in the build files:\n")
+      endif("${stype}" STREQUAL "BLD")
+      foreach(ln ${${symb}_${stype}_INSTANCES})
+	message("  ${ln}")
+	math(EXPR total_cnt "${total_cnt} + 1")
+      endforeach(ln ${${symb}_${stype}_INSTANCES})
+    endif(${symb}_${stype}_INSTANCES)
   endforeach(stype ${types})
 
-  message("\nFound ${total_cnt} platform symbols overall.")
 
-  # TODO - check if we have more than expected - if so, that's the failure case...
+  if(${total_cnt} GREATER ${expected})
+    # Let top level know about failure
+    math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+    set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+    message("\nError: expected ${expected} instances of ${symb}, found ${total_cnt}")
+  endif(${total_cnt} GREATER ${expected})
+  if(${total_cnt} LESS ${expected})
+    message("\nNote: expected ${expected} instances of ${symb}, found ${total_cnt} - update expected value.")
+  endif(${total_cnt} LESS ${expected})
 
-endfunction(platform_symbol_usage_test)
+endfunction(platform_symbol_usage_test symb expected)
 
 
 
@@ -572,10 +575,10 @@ api_usage_test(unlink)
 message("\nAPI checks complete.\n")
 
 # Platform symbols
-# TODO - set this up take an argument and run just on one symbol
-# at a time.  It may be possible to set up CTest to fire off these
-# repository tests in parallel...
-platform_symbol_usage_test()
+platform_symbol_usage_test(WIN32 0)
+platform_symbol_usage_test(_WIN32 0)
+platform_symbol_usage_test(WIN64 0)
+platform_symbol_usage_test(_WIN64 0)
 
 if(REPO_CHECK_FAILED)
   message(FATAL_ERROR "\nRepository check complete, errors found.")
