@@ -49,6 +49,12 @@ set(XSLTPROC_EXECUTABLE "@XSLTPROC_EXEC@")
 set(XMLLINT_EXECUTABLE "@XMLLINT_EXEC@")
 
 macro(XSLTPROC stylesheet filename outfile extras)
+
+  # If we're trying to do this but XSLTPROC_EXECUTABLE was unset somehow, fatal error
+  if ("${XSLTPROC_EXECUTABLE}" STREQUAL "")
+    message(FATAL_ERROR "xsltproc processing requested, but XSLTPROC_EXECUTABLE is not set.")
+  endif ("${XSLTPROC_EXECUTABLE}" STREQUAL "")
+
   set(ENV{XML_DEBUG_CATALOG} 1)
   # It is necessary to ensure that the target directory exists *before* calling xsltproc
   # when building in parallel, due to a bug/limitation in xsltproc
@@ -211,6 +217,11 @@ foreach(fmt ${CURRENT_OUTPUT_FORMATS})
     # Make sure the target directory exists
     get_filename_component(output_dir "${PDF_OUTFILE}" PATH)
     execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}")
+
+    # If we're trying to do this but APACHE_FOP was unset somehow, fatal error
+    if ("${APACHE_FOP}" STREQUAL "")
+      message(FATAL_ERROR "Apache FOP processing requested, but APACHE_FOP is not set.")
+    endif ("${APACHE_FOP}" STREQUAL "")
 
     # Run FOP to actually generate the PDF
     execute_process(COMMAND "@APACHE_FOP@" -c "@CMAKE_BINARY_DIR@/doc/docbook/fop.xconf" "${fo_outfile}" -pdf "${PDF_OUTFILE}" RESULT_VARIABLE CMDRESULT)
