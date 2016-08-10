@@ -1414,7 +1414,7 @@ Release steps are as follows:
     scp brlcad-$MAJOR.$MINOR.$PATCH* "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
 
     # extract and upload release notes to source dir
-    cat ../NEWS | tr '\n' '@' | perl -pi -e "s/.*?(@---[[:space:]@-]*[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.${PATCH}[[:space:]@-]*.*?)@---.*/\1/" | tr '@' '\n' > README-${MAJOR}-${MINOR}-${PATCH}.txt
+    cat ../NEWS | tr '\n' '@' | perl -p -e "s/.*?(@---[[:space:]@-]*[0-9]{4}-[0-9]{2}-[0-9]{2}[[:space:]]*Release[[:space:]]*${MAJOR}\.${MINOR}\.${PATCH}[[:space:]@-]*.*?)@---.*/\1/" | tr '@' '\n' > README-${MAJOR}-${MINOR}-${PATCH}.txt
     echo "Release notes for $MAJOR.$MINOR.$PATCH" && echo "==="
     cat README-$MAJOR-$MINOR-$PATCH.txt && echo "==="
     scp README-$MAJOR-$MINOR-$PATCH.txt "$SFUSERNAME,brlcad@shell.sf.net:/home/frs/project/brlcad/BRL-CAD\ Source/$MAJOR.$MINOR.$PATCH/."
