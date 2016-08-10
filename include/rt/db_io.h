@@ -26,13 +26,13 @@
 
 #include "common.h"
 #include "vmath.h"
+#include "bu/avs.h"
 #include "rt/db5.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
 
 
-struct bu_attribute_value_set; /* forward declaration */
 struct rt_db_internal; /* forward declaration */
 
 

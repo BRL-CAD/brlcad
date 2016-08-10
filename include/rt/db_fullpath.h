@@ -22,11 +22,11 @@
 #define RT_DB_FULLPATH_H
 
 #include "common.h"
+#include "bu/vls.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS
 
-struct bu_vls;    /* forward declaration */
 struct resource;  /* forward declaration */
 struct db_i;      /* forward declaration */
 struct directory; /* forward declaration */
