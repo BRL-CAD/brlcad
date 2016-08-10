@@ -31,6 +31,11 @@
 
 __BEGIN_DECLS
 
+
+struct bu_attribute_value_set; /* forward declaration */
+struct rt_db_internal; /* forward declaration */
+
+
 /* db_open.c */
 /**
  * Ensure that the on-disk database has been completely written out of
