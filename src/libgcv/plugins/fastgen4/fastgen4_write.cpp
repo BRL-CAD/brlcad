@@ -480,7 +480,7 @@ public:
     void write_section_color(const SectionID &section_id, const Color &color);
     SectionID write_compsplt(const SectionID &id, fastf_t z_coordinate);
 
-    enum class BooleanType {hole, wall};
+    enum BooleanType {bool_hole, bool_wall};
     void write_boolean(BooleanType type, const SectionID &section_a,
 		       const SectionID &section_b, const SectionID *section_c = NULL,
 		       const SectionID *section_d = NULL);
@@ -592,12 +592,12 @@ FastgenWriter::write_boolean(BooleanType type, const SectionID &section_a,
 {
     Record record(*this);
 
-    if (type == BooleanType::hole) {
+    if (type == bool_hole) {
 	if (++m_num_holes > max_bools)
 	    throw InvalidModelError("maximum HOLE records exceeded");
 
 	record << "HOLE";
-    } else if (type == BooleanType::wall) {
+    } else if (type == bool_wall) {
 	if (++m_num_walls > max_bools)
 	    throw InvalidModelError("maximum WALL records exceeded");
 
@@ -1799,7 +1799,7 @@ get_subtracted(const db_i &db, const tree *tree, LeafMap &results)
 // Identifies which half of a COMPSPLT a given region represents.
 // Assumes that `half_dir` represents a COMPSPLT-compatible halfspace.
 // Returns the partition type and the halfspace's matrix within the region.
-enum class CompspltPartitionType {none, intersected, subtracted};
+enum CompspltPartitionType {partition_none, partition_intersected, partition_subtracted};
 typedef std::pair<CompspltPartitionType, Matrix> CompspltID;
 
 HIDDEN CompspltID
@@ -1823,16 +1823,16 @@ identify_compsplt(const db_i &db, const directory &parent_region_dir,
     LeafMap::const_iterator found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(CompspltPartitionType::intersected, found->second);
+	return CompspltID(partition_intersected, found->second);
 
     leaves.clear();
     get_subtracted(db, parent_region.tree, leaves);
     found = leaves.find(&half_dir);
 
     if (found != leaves.end())
-	return CompspltID(CompspltPartitionType::subtracted, found->second);
+	return CompspltID(partition_subtracted, found->second);
 
-    return CompspltID(CompspltPartitionType::none, Matrix(NULL));
+    return CompspltID(partition_none, Matrix(NULL));
 }
 
 
@@ -2043,8 +2043,7 @@ const
 		 m_walls.first.begin(); wall_dir_it != m_walls.first.end(); ++wall_dir_it)
 	    for (IDVector::const_iterator target_id_it = ids.at(*wall_dir_it).begin();
 		 target_id_it != ids.at(*wall_dir_it).end(); ++target_id_it)
-		writer.write_boolean(FastgenWriter::BooleanType::wall, *this_id_it,
-				     *target_id_it);
+		writer.write_boolean(FastgenWriter::bool_wall, *this_id_it, *target_id_it);
 }
 
 
@@ -2146,7 +2145,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     const CompspltID this_compsplt = identify_compsplt(data.m_db,
 				     *parent_region_dir, *DB_FULL_PATH_CUR_DIR(&half_path));
 
-    if (this_compsplt.first == CompspltPartitionType::none)
+    if (this_compsplt.first == partition_none)
 	return false;
 
     // find the other half
@@ -2163,8 +2162,7 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
 	    const CompspltID current = identify_compsplt(data.m_db, *region_dirs.ptr[i],
 				       *DB_FULL_PATH_CUR_DIR(&half_path));
 
-	    if (current.first != CompspltPartitionType::none
-		&& current.first != this_compsplt.first)
+	    if (current.first != partition_none && current.first != this_compsplt.first)
 		if (current.second.equal(this_compsplt.second, data.m_tol)) {
 		    other_half_dir = region_dirs.ptr[i];
 		    break;
@@ -2175,9 +2173,9 @@ find_compsplt(FastgenConversion &data, const db_full_path &half_path,
     if (!other_half_dir)
 	return false;
 
-    if (this_compsplt.first == CompspltPartitionType::intersected)
+    if (this_compsplt.first == partition_intersected)
 	data.get_region(*parent_region_dir).set_compsplt(half.eqn[3]);
-    else if (this_compsplt.first == CompspltPartitionType::subtracted)
+    else if (this_compsplt.first == partition_subtracted)
 	data.get_region(*parent_region_dir).disable();
     else
 	throw std::invalid_argument("unknown COMPSPLT partition type");
