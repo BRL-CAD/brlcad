@@ -352,22 +352,24 @@ RecordWriter::Record::operator<<(const T &value)
 RecordWriter::Record &
 RecordWriter::Record::operator<<(float value)
 {
-    return operator<<(truncate_float(value));
-
-    // quell warning of unused function
-    // `float` and `double` overrides provided to match `fastf_t` despite templates
-    operator<<(static_cast<double>(0.0));
+    return operator<<(static_cast<double>(value));
 }
 
 
 RecordWriter::Record &
 RecordWriter::Record::operator<<(double value)
 {
-    return operator<<(truncate_float(value));
+    std::string string_value = truncate_float(value);
+
+    if (string_value == "-0.0")
+	string_value.erase(0, 1);
+
+    return operator<<(string_value);
 
     // quell warning of unused function
     // `float` and `double` overrides provided to match `fastf_t` despite templates
-    operator<<(static_cast<float>(0.0));
+    bu_bomb("shouldn't reach here");
+    return operator<<(static_cast<float>(0.0));
 }
 
 
@@ -380,9 +382,6 @@ RecordWriter::Record::non_zero(fastf_t value)
     if (result.find_first_not_of("-0.") == std::string::npos) {
 	result.resize(field_width, '0');
 	result.at(result.size() - 1) = '1';
-
-	if (value < 0.0)
-	    result.insert(0, 1, '-');
     }
 
     return operator<<(result);
@@ -415,9 +414,6 @@ RecordWriter::Record::truncate_float(fastf_t value)
 
     if (end_point >= result.size() - 1)
 	throw InvalidModelError("value exceeds width of field");
-
-    if (result == "-0.0")
-	result.erase(0, 1);
 
     return result;
 }
