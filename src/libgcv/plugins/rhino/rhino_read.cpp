@@ -41,11 +41,6 @@
 #include <stdexcept>
 
 
-#ifndef OBJ_BREP
-#error OBJ_BREP is not defined
-#endif
-
-
 namespace
 {
 

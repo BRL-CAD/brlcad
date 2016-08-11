@@ -40,7 +40,6 @@ set(libwdb_DEFINES "")
 
 # Set libwdb compile definitions
 get_property(libwdb_DEFINES GLOBAL PROPERTY libwdb_DEFINES)
-LIST(APPEND libwdb_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
   LIST(APPEND libwdb_DLL_DEFINES "ON_DLL_IMPORTS")
   set_property(GLOBAL PROPERTY libwdb_DLL_DEFINES "${libwdb_DLL_DEFINES}")

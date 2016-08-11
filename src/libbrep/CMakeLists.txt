@@ -56,7 +56,6 @@ set(libbrep_DEFINES "")
 
 # Set libbrep compile definitions
 get_property(libbrep_DEFINES GLOBAL PROPERTY libbrep_DEFINES)
-list(APPEND libbrep_DEFINES "OBJ_BREP=1")
 if(CPP_DLL_DEFINES)
   list(APPEND libbrep_DLL_DEFINES "ON_DLL_IMPORTS")
   set_property(GLOBAL PROPERTY libbrep_DLL_DEFINES "${libbrep_DLL_DEFINES}")

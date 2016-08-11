@@ -46,10 +46,8 @@
 
 #include "bio.h"
 
-/* without OBJ_BREP, this entire procedural example is disabled */
-#ifdef OBJ_BREP
-
 #include "wdb.h"
+
 
 ON_BezierSurface *
 ON_CobbSphereFace(double rotation_x, double rotation_z)
@@ -310,19 +308,6 @@ main(int argc, char** argv)
     return 0;
 }
 
-
-#else /* !OBJ_BREP */
-
-    int
-main(int argc, char *argv[])
-{
-    bu_log("ERROR: Boundary Representation object support is not available with\n"
-	    "       this compilation of BRL-CAD.\n");
-    return 1;
-}
-
-
-#endif /* OBJ_BREP */
 
 /*
  * Local Variables:
