@@ -23,10 +23,6 @@
 
 #include "common.h"
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <signal.h>

@@ -31,9 +31,6 @@
 
 __BEGIN_DECLS
 
-#define TIE_SINGLE_PRECISION 0
-#define TIE_DOUBLE_PRECISION 1
-
 #ifndef RT_EXPORT
 #  if defined(RT_DLL_EXPORTS) && defined(RT_DLL_IMPORTS)
 #    error "Only RT_DLL_EXPORTS or RT_DLL_IMPORTS can be defined, not both."
@@ -48,12 +45,11 @@ __BEGIN_DECLS
 
 /*
  * define which precision to use, 0 is 'float' and 1 is 'double'.
- * Default to double precision to protect those not familiar.
  * Horrible macros wrap functions and values to build a library
  * capable of doing either without recompilation.
  */
 #ifndef TIE_PRECISION
-# define TIE_PRECISION TIE_SINGLE_PRECISION
+#  define TIE_PRECISION 1
 #endif
 
 #define TIE_CHECK_DEGENERATE	1
@@ -62,14 +58,14 @@ __BEGIN_DECLS
 #define TIE_KDTREE_OPTIMAL	0x1
 
 /* Type to use for floating precision */
-#if TIE_PRECISION == TIE_SINGLE_PRECISION
+#if TIE_PRECISION == 0
 typedef float TFLOAT;
-# define TIE_VAL(x) CPP_GLUE(x, _single)
-#elif TIE_PRECISION == TIE_DOUBLE_PRECISION
+#  define TIE_VAL(x) CPP_GLUE(x, _single)
+#elif TIE_PRECISION == 1
 typedef double TFLOAT;
-# define TIE_VAL(x) CPP_GLUE(x, _double)
+#  define TIE_VAL(x) CPP_GLUE(x, _double)
 #else
-# error "Unknown precision"
+#  error "Unknown precision"
 #endif
 
 

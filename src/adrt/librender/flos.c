@@ -21,10 +21,6 @@
  *
  */
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include "adrt_struct.h"
 
 #include <stdio.h>

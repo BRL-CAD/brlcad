@@ -27,17 +27,11 @@
  * be silently ignored for now. No KD-TREE caching is assumed. I like tacos.
  */
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
 
 #include "gcv.h"
 

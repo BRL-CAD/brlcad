@@ -25,6 +25,9 @@
 
 #include "common.h"
 
+#ifdef TIE_PRECISION
+#  undef TIE_PRECISION
+#endif
 #define TIE_PRECISION 0
 
 #include "raytrace.h"
