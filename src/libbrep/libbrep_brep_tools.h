@@ -184,7 +184,7 @@ int ON_Curve_Has_Tangent(const ON_Curve* curve, double ct_min, double ct_max, do
   @param f_tol Flatness tolerance - 0 always evaluates to flat, 1 would be a perfectly flat surface. Generally something in the range 0.8-0.9 should suffice in raytracing subdivision (per <a href="http://www.uni-koblenz.de/~cg/Diplomarbeiten/DA_Oliver_Abert.pdf">Abert, 2005</a>)
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat(const ON_Plane frames[9], double f_tol);
 
 /**
   \brief Perform flatness test of surface in U only
@@ -195,7 +195,7 @@ bool ON_Surface_IsFlat(ON_Plane *frames, double f_tol);
   @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat_U(const ON_Plane frames[9], double f_tol);
 
 
 /**
@@ -207,7 +207,7 @@ bool ON_Surface_IsFlat_U(ON_Plane *frames, double f_tol);
   @param f_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
+bool ON_Surface_IsFlat_V(const ON_Plane frames[9], double f_tol);
 
 
 /**
@@ -221,7 +221,7 @@ bool ON_Surface_IsFlat_V(ON_Plane *frames, double f_tol);
   @param s_tol Straightness tolerance - 0 always evaluates to straight, 1 requires perfect straightness
 */
 BREP_EXPORT
-bool ON_Surface_IsStraight(ON_Plane *frames, double s_tol);
+bool ON_Surface_IsStraight(const ON_Plane frames[9], double s_tol);
 
 
 #endif /* LIBBREP_LIBBREP_BREP_TOOLS_H */

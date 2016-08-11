@@ -269,7 +269,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	}
 
 	// Degenerate - no triangulation
-	if (vert_array.size() == 0) return 0;
+	if (vert_array.empty()) return 0;
 
 	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
 	for (unsigned int i = 0; i < vert_array.size(); i++) {
@@ -319,7 +319,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	}
 
 	// Degenerate - no triangulation
-	if (vert_array.size() == 0) return 0;
+	if (vert_array.empty()) return 0;
 
 	int *vert_map = (int *)bu_calloc(vert_array.size(), sizeof(int), "vertex map");
 	for (unsigned int i = 0; i < vert_array.size(); i++) {
@@ -468,7 +468,7 @@ shoal_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_shoal_data *data, 
 	//bu_log("x,y: %f,%f\n", xcoord, ycoord);
     }
 
-    if (polygon_verts.size() == 0) return 0;
+    if (polygon_verts.empty()) return 0;
 
     int *vert_map = (int *)bu_calloc(polygon_verts.size(), sizeof(int), "vertex map");
     for (unsigned int i = 0; i < polygon_verts.size(); i++) {

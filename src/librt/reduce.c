@@ -37,7 +37,7 @@ _determine_bot_min_edge_length(const struct rt_bot_internal *bot,
 			       fastf_t reduction_level)
 {
     size_t i;
-    fastf_t min_len_sq = 0.0, max_len_sq = 0.0;
+    fastf_t min_len_sq = INFINITY, max_len_sq = -INFINITY;
 
     RT_BOT_CK_MAGIC(bot);
 

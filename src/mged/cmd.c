@@ -48,6 +48,7 @@
 #include "bu/path.h"
 #include "bn.h"
 #include "rt/geom.h"
+#include "ged.h"
 #include "tclcad.h"
 
 #include "./mged.h"
@@ -999,11 +1000,41 @@ cmdline(struct bu_vls *vp, int record)
     */
 
     if (glob_compat_mode) {
-	int flags = 0;
-	flags |= DB_GLOB_HIDDEN;
-	flags |= DB_GLOB_NON_GEOM;
-	flags |= DB_GLOB_SKIP_FIRST;
-	(void)db_expand_str_glob(&globbed, bu_vls_addr(vp), dbip, flags);
+	const char **av;
+	struct bu_vls tmpstr = BU_VLS_INIT_ZERO;
+	struct rt_wdb *tmpwdbp;
+	if (gedp == GED_NULL)
+	    return CMD_BAD;
+
+	/* Cache the state bits we might change in gedp */
+	tmpwdbp = gedp->ged_wdbp;
+	bu_vls_sprintf(&tmpstr, "%s", bu_vls_addr(gedp->ged_result_str));
+
+	/* Make sure wdbp and gedp->ged_wdbp agree - if we're
+	 * in non-GUI mode gedp may not be properly initialized */
+	if (wdbp != gedp->ged_wdbp) gedp->ged_wdbp = wdbp;
+
+	/* Run ged_glob */
+	av = (const char **)bu_malloc(sizeof(char *)*3, "ged_glob argv");
+
+	av[0] = "glob";
+	av[1] = bu_vls_addr(vp);
+	av[2] = NULL;
+
+	(void)ged_glob(gedp, 2, (const char **)av);
+	if (bu_vls_strlen(gedp->ged_result_str) > 0) {
+	    bu_vls_sprintf(&globbed, "%s", bu_vls_addr(gedp->ged_result_str));
+	} else {
+	    bu_vls_vlscat(&globbed, vp);
+	}
+
+	/* put gedp back where it was */
+	bu_vls_sprintf(gedp->ged_result_str, "%s", bu_vls_addr(&tmpstr));
+	gedp->ged_wdbp = tmpwdbp;
+
+	/* cleanup */
+	bu_vls_free(&tmpstr);
+	bu_free((void *)av, "ged_glob argv");
     } else {
 	bu_vls_vlscat(&globbed, vp);
     }

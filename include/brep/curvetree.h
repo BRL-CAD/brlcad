@@ -46,39 +46,44 @@ extern "C++" {
 	 */
 	class BREP_EXPORT CurveTree {
 	    public:
-		CurveTree(const ON_BrepFace *face);
+		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
 
-		BRNode *getRootNode() const;
+		/**
+		 * Return just the leaves of the surface tree
+		 */
+		void getLeaves(std::list<const BRNode *> &out_leaves) const;
+		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_Interval &u, const ON_Interval &v) const;
+		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
+		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
+
+	    private:
+		CurveTree(const CurveTree &source);
+		CurveTree &operator=(const CurveTree &source);
+
+		const BRNode *getRootNode() const;
 
 		/**
 		 * Calculate, using the surface bounding volume hierarchy, a uv
 		 * estimate for the closest point on the surface to the point in
 		 * 3-space.
 		 */
-		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt);
-		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v);
+		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt) const;
+		ON_2dPoint getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interval &v) const;
 
-		/**
-		 * Return just the leaves of the surface tree
-		 */
-		void getLeaves(std::list<BRNode *> &out_leaves);
-		void getLeavesAbove(std::list<BRNode *> &out_leaves, const ON_Interval &u, const ON_Interval &v);
-		void getLeavesAbove(std::list<BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol);
-		void getLeavesRight(std::list<BRNode *> &out_leaves, const ON_Interval &u, const ON_Interval &v);
-		void getLeavesRight(std::list<BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol);
-		int depth();
+		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_Interval &u, const ON_Interval &v) const;
 
-	    private:
-		bool getHVTangents(const ON_Curve *curve, ON_Interval &t, std::list<fastf_t> &list);
-		bool isLinear(const ON_Curve *curve, double min, double max);
-		BRNode *subdivideCurve(const ON_Curve *curve, int adj_face_index, double min, double max, bool innerTrim, int depth);
-		BRNode *curveBBox(const ON_Curve *curve, int adj_face_index, ON_Interval &t, bool leaf, bool innerTrim, const ON_BoundingBox &bb);
-		BRNode *initialLoopBBox();
+		int depth() const;
 
-		const ON_BrepFace *m_face;
-		BRNode *m_root;
-		std::list<BRNode *> *m_sortedX;
+		bool getHVTangents(const ON_Curve *curve, const ON_Interval &t, std::list<fastf_t> &list) const;
+		bool isLinear(const ON_Curve *curve, double min, double max) const;
+		BRNode *subdivideCurve(const ON_Curve *curve, int adj_face_index, double min, double max, bool innerTrim, int depth) const;
+		BRNode *curveBBox(const ON_Curve *curve, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
+		BRNode *initialLoopBBox() const;
+
+		const ON_BrepFace * const m_face;
+		BRNode * const m_root;
+		std::list<const BRNode *> * const m_sortedX;
 	};
 
 
