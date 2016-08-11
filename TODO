@@ -18,14 +18,30 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* update astyle
+
+* bundle primary rays in rt front end into postage stamps, shoot via
+  rt_shootrays(), modify to pass all rays down through the spatial
+  partitioning simultaneously
+
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them get created.  integrate into testing.
+
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
+
+* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
 * metaball in command input needs sanity checks and better
   validation.
-
-* update astyle
 
 * integrate gen-registered-attributes-html output into website
 
@@ -45,30 +61,14 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
 * invoke graphical with console, play nicely
 
-* sync tgc/rec shot() behavior, sort results for proper normal.
-  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
-  and z=1524 (was hit/overlap, now misses).
-
 * reinstate 'stat' and search -size, see r67636 through r67646
 
 * turn on Bullet code (simulate command) unconditionally
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
-
-* bundle primary rays in rt front end into postage stamps, shoot via
-  rt_shootrays(), modify to pass all rays down through the spatial
-  partitioning simultaneously
 
 * resolve bot bin sort optimization crash, disabled during release
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
-
-* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
