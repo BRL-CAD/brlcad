@@ -53,7 +53,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
     rd = (struct render_flos_s *)render->data;
 
-    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
+    if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
 	VSET(*pixel, 0.0, 0.5, 0.0);
     } else
 	return;
@@ -67,7 +67,7 @@ render_flos_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     VSUB2(ray->dir, id.pos, rd->frag_pos);
     VUNITIZE(ray->dir);
 
-    if (tie_work(tie, ray, &tid, render_hit, NULL)) {
+    if (TIE_WORK(tie, ray, &tid, render_hit, NULL)) {
 	if (fabs (id.pos[0] - tid.pos[0]) < TIE_PREC
 	    && fabs (id.pos[1] - tid.pos[1]) < TIE_PREC
 	    && fabs (id.pos[2] - tid.pos[2]) < TIE_PREC)

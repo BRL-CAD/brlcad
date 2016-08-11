@@ -47,7 +47,7 @@ bottie_allocn_double(unsigned long long ntri)
 {
     struct tie_s *tie;
     BU_ALLOC(tie, struct tie_s);
-    tie_init1(tie, ntri, TIE_KDTREE_FAST);
+    tie_init_double(tie, ntri, TIE_KDTREE_FAST);
     return tie;
 }
 
@@ -56,7 +56,7 @@ bottie_push_double(void *vtie, TIE_3 **tri, unsigned int ntri, void *u, unsigned
 {
     struct tie_s *tie = (struct tie_s *)vtie;
 
-    tie_push1(tie, tri, ntri, u, pstride);
+    tie_push_double(tie, tri, ntri, u, pstride);
 }
 
 int
@@ -97,11 +97,11 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
     }
 
     if ((tribuf = (TIE_3 *)bu_malloc(sizeof(TIE_3) * 3 * bot_ip->num_faces, "triangle tribuffer")) == NULL) {
-	tie_free(tie);
+	tie_free_double(tie);
 	return -1;
     }
     if ((tribufp = (TIE_3 **)bu_malloc(sizeof(TIE_3*) * 3 * bot_ip->num_faces, "triangle tribuffer pointer")) == NULL) {
-	tie_free(tie);
+	tie_free_double(tie);
 	bu_free(tribuf, "tribuf");
 	return -1;
     }
@@ -117,12 +117,12 @@ bottie_prep_double(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt
      *                 void *,
      *                 unsigned int);
      */
-    tie_push1((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
+    tie_push_double((struct tie_s *)bot_ip->tie, tribufp, bot_ip->num_faces, bot, 0);
 
     bu_free(tribuf, "tribuffer");
     bu_free(tribufp, "tribufp");
 
-    tie_prep1((struct tie_s *)bot->tie);
+    tie_prep_double((struct tie_s *)bot->tie);
 
     VMOVE(stp->st_min, tie->amin);
     VMOVE(stp->st_max, tie->amax);
@@ -215,7 +215,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
     VMOVE(ray.dir, rp->r_dir);
     ray.depth = ray.kdtree_depth = 0;
 
-    tie_work1(tie, &ray, &id, hitfunc, &hitdata);
+    tie_work_double(tie, &ray, &id, hitfunc, &hitdata);
 
     /* use hitfunc to build the hit list */
     if (hitdata.nhits == 0)
@@ -235,7 +235,7 @@ bottie_shot_double(struct soltab *stp, struct xray *rp, struct application *ap, 
 void
 bottie_free_double(void *vtie)
 {
-    tie_free((struct tie_s *)vtie);
+    tie_free_double((struct tie_s *)vtie);
 }
 
 /*

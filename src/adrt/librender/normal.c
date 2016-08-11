@@ -45,7 +45,7 @@ render_normal_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s
     struct tie_id_s id;
     float one[3] = { 1, 1, 1 };
 
-    if (tie_work(tie, ray, &id, normal_hit, NULL))
+    if (TIE_WORK(tie, ray, &id, normal_hit, NULL))
 	VADD2SCALE(*pixel, id.norm, one, 0.5);
     return;
 }

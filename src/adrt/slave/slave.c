@@ -198,7 +198,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	{
 #if 0
 	    tie_ray_t ray;
-	    tfloat angle;
+	    TFLOAT angle;
 	    void *mesg;
 	    int dlen;
 
@@ -213,8 +213,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	    ind += sizeof (TIE_3);
 
 	    /* angle */
-	    TCOPY(tfloat, data, ind, &angle, 0);
-	    ind += sizeof (tfloat);
+	    TCOPY(TFLOAT, data, ind, &angle, 0);
+	    ind += sizeof (TFLOAT);
 
 	    /* Fire the shot */
 	    ray.depth = 0;
@@ -256,15 +256,15 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	{
 	    camera_tile_t tile;
 	    uint8_t type;
-	    tfloat fov;
+	    TFLOAT fov;
 
 	    /* Camera type */
 	    TCOPY(uint8_t, work->data, ind, &type, 0);
 	    ind += 1;
 
 	    /* Camera fov */
-	    TCOPY(tfloat, work->data, ind, &fov, 0);
-	    ind += sizeof (tfloat);
+	    TCOPY(TFLOAT, work->data, ind, &fov, 0);
+	    ind += sizeof (TFLOAT);
 
 	    /* Camera position */
 	    TCOPY(TIE_3, work->data, ind, &pos, 0);
@@ -328,7 +328,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 		    case RENDER_METHOD_SPALL:
 		    {
 			TIE_3 shot_pos, shot_dir;
-			tfloat angle;
+			TFLOAT angle;
 			char buf[BUFSIZ];
 
 			/* Extract shot position and direction */
@@ -338,8 +338,8 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 			TCOPY(TIE_3, work->data, ind, &shot_dir, 0);
 			ind += sizeof (TIE_3);
 
-			TCOPY(tfloat, work->data, ind, &angle, 0);
-			ind += sizeof (tfloat);
+			TCOPY(TFLOAT, work->data, ind, &angle, 0);
+			ind += sizeof (TFLOAT);
 
 			snprintf(buf, BUFSIZ, "(%g %g %g) (%g %g %g) %g", V3ARGS(shot_pos.v), V3ARGS(shot_dir.v), angle);
 
@@ -399,7 +399,7 @@ adrt_slave_work(tienet_buffer_t *work, tienet_buffer_t *result)
 	gettimeofday(&tv, NULL);
 	printf("\t[Work Units Completed: %.6d  Rays: %.5d k/sec %lld]\n",
 		++adrt_slave_completed,
-		(int) ((tfloat) adrt_workspace_list[wid].tie.rays_fired / (tfloat) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))),
+		(int) ((TFLOAT) adrt_workspace_list[wid].tie.rays_fired / (TFLOAT) (1000 * (tv.tv_sec - adrt_slave_startsec + 1))),
 		adrt_workspace_list[wid].tie.rays_fired);
 	fflush(stdout);
     }
