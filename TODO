@@ -36,16 +36,6 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 * create a catalog of all possible/distinct/useful shader settings.
   see regress/shaders.sh for a basic start.
 
-* sync tgc/rec shot() behavior, sort results for proper normal.
-  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
-  and z=1524 (was hit/overlap, now misses).
-
-* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
-
-* obsd stack crashers
-
 * readd support for vrml v1 to g-vrml so that users can select whether
   they want v2 (default) or previous v1 output format via a
   command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
@@ -71,9 +61,30 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
+* OpenCL for enhanced performance boolweave sorting
+
+* create boolweave+boolfinal unit tests to validate weaving behavior
+  and performance.
+
+* make sure we can run db_dirbuild() multiple times without creating
+  duplicate entries.
+
+* heap unit test needs to actually compare performance against system
+  allocation, not just do some work
+
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
+
+* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
+  one hit point is being returned.  to reproduce:
+  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
+
+* obsd stack crashers
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
@@ -97,11 +108,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
   account and colors set correctly.
 
 * implement unit tests for bu dirent / stat API
-
-* OpenCL for enhanced performance boolweave sorting
-
-* create boolweave+boolfinal unit tests to validate weaving behavior
-  and performance.
 
 * convert src/util/terrain.c to src/shapes/terrain.c writing out the
   datafile to a binunif along with a referencing dsp.  perhaps add
@@ -351,12 +357,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * convert all calls to BU_SETJUMP/BU_UNSETJUMP into familiar try/catch
   logic layout using if/else.
-
-* heap unit test needs to actually compare performance against system
-  allocation, not just do some work
-
-* make sure we can run db_dirbuild() multiple times without creating
-  duplicate entries.
 
 * re-do the sh/enumerate.sh script for CMake
 
