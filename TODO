@@ -36,6 +36,10 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
+* reinstate 'stat' and search -size, see r67636 through r67646
+
+* obsd stack crashers
+
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
@@ -53,24 +57,18 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
-* obsd stack crashers
-
-* rt moss.g facetize rt bot bug
-
-* invoke graphical with console, play nicely
-
-* reinstate 'stat' and search -size, see r67636 through r67646
-
 * turn on Bullet code (simulate command) unconditionally
-
-* resolve bot bin sort optimization crash, disabled during release
-
-* closing the graphics window brings down X11 on Mac due to a bad
-  context.  fix or revert recent close window behavior.
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
 -----------------------------------
+
+* closing the graphics window brings down X11 on Mac due to a bad
+  context.  fix or revert recent close window behavior.
+
+* resolve bot bin sort optimization crash, disabled during release
+
+* rt moss.g facetize rt bot bug
 
 * evaluate OpenMesh (http://www.openmesh.org) and OpenFlipper
   (http://www.openflipper.org) for smoothing, decimation, and
