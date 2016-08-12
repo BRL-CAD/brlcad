@@ -1215,3 +1215,5 @@ s/bu_basename\(([^\)]*)\)/bu_basename(\1, NULL)/g
 ----
 s/bu_free_array/bu_free_args/g
         fixed misleading name [7.26]
+s/(#[[:space:]]*include[[:space:]]+["<])bu\/rb\.h/\1bu\/redblack.h/g
+	clearer header name [7.26]
