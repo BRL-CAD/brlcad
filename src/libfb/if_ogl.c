@@ -253,7 +253,7 @@ HIDDEN struct modeflags {
       "Lingering window" },
     { 't',	MODE_2MASK, MODE_2TRANSIENT,
       "Transient window" },
-    { 'd',  MODE_4MASK, MODE_4NODITH,
+    { 'd',	MODE_4MASK, MODE_4NODITH,
       "Suppress dithering - else dither if not 24-bit buffer" },
     { 'c',	MODE_7MASK, MODE_7SWCMAP,
       "Perform software colormap - else use hardware colormap if possible" },
@@ -261,7 +261,7 @@ HIDDEN struct modeflags {
       "Single buffer -  else double buffer if possible" },
     { 'b',	MODE_11MASK, MODE_11COPY,
       "Fast pan and zoom using backbuffer copy -  else normal " },
-    { 'D',	MODE_12DELAY_WRITES_TILL_FLUSH, MODE_12DELAY_WRITES_TILL_FLUSH,
+    { 'D',	MODE_12MASK, MODE_12DELAY_WRITES_TILL_FLUSH,
       "Don't update screen until fb_flush() is called.  (Double buffer sim)" },
     { 'z',	MODE_15MASK, MODE_15ZAP,
       "Zap (free) shared memory.  Can also be done with fbfree command" },
@@ -1077,7 +1077,7 @@ fb_ogl_open(fb *ifp, const char *file, int width, int height)
      * based upon the "unit number" or flags.
      * file = "/dev/ogl###"
      */
-    mode = MODE_2LINGERING;
+    mode = MODE_2LINGERING | MODE_12DELAY_WRITES_TILL_FLUSH;
 
     if (file != NULL) {
 	const char *cp;
