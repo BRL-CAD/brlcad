@@ -23,12 +23,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
- 
+
 #include "bu/defines.h"
+
+/* Normally, we mark bu_badmagic as a non-returning function for
+ * static analyzers.  In this case, because we *do* return after
+ * calling it due to the testing, we need to avoid assigning that
+ * attribute (it causes interesting crashing behaviors if we leave
+ * it in place with some compiler settings.)*/
 #ifdef _BU_ATTR_NORETURN
 #  undef _BU_ATTR_NORETURN
 #  define _BU_ATTR_NORETURN
 #endif
+
 #include "bu/magic.h"
 #include "bu/log.h"
 #include "bu/malloc.h"
