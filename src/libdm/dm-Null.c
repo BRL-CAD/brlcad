@@ -262,9 +262,10 @@ null_getDisplayImage(struct dm_internal *UNUSED(dmp), unsigned char **UNUSED(ima
 }
 
 
-void
+int
 null_reshape(struct dm_internal *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
+    return 0;
 }
 
 

@@ -315,10 +315,11 @@ txt_getDisplayImage(dm *UNUSED(dmp), unsigned char **UNUSED(image))
 }
 
 
-HIDDEN void
+HIDDEN int
 txt_reshape(dm *UNUSED(dmp), int UNUSED(width), int UNUSED(height))
 {
     bu_log("reshape called\n");
+    return 0;
 }
 
 

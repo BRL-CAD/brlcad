@@ -344,6 +344,7 @@ DM_EXPORT extern unsigned char *dm_get_bg(dm *dmp);
 DM_EXPORT extern int dm_set_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 DM_EXPORT extern unsigned char *dm_get_fg(dm *dmp);
 DM_EXPORT extern int dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict, fastf_t transparency);
+DM_EXPORT extern int dm_reshape(dm *dmp, int width, int height);
 DM_EXPORT extern int dm_make_current(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmin(dm *dmp);
 DM_EXPORT extern vect_t *dm_get_clipmax(dm *dmp);

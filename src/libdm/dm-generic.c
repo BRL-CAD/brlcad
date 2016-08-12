@@ -445,6 +445,13 @@ dm_set_fg(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int strict
 }
 
 int
+dm_reshape(dm *dmp, int width, int height)
+{
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->dm_reshape(dmp, width, height);
+}
+
+int
 dm_make_current(dm *dmp)
 {
     if (UNLIKELY(!dmp)) return 0;

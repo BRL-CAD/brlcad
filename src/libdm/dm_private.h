@@ -97,7 +97,7 @@ struct dm_internal {
     int (*dm_genDLists)(struct dm_internal *dmp, size_t range);
     int (*dm_draw_obj)(struct dm_internal *dmp, struct display_list *obj);
     int (*dm_getDisplayImage)(struct dm_internal *dmp, unsigned char **image);  /**< @brief (0,0) is upper left pixel */
-    void (*dm_reshape)(struct dm_internal *dmp, int width, int height);
+    int (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
     int (*dm_openFb)(struct dm_internal *dmp);
     void (*dm_get_internal)(struct dm_internal *dmp);

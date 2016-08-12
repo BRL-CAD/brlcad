@@ -133,7 +133,7 @@ HIDDEN void ogl_drawDList(unsigned int list);
 HIDDEN int ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
 HIDDEN int ogl_genDLists(struct dm_internal *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
-HIDDEN void ogl_reshape(struct dm_internal *dmp, int width, int height);
+HIDDEN int ogl_reshape(struct dm_internal *dmp, int width, int height);
 HIDDEN int ogl_makeCurrent(struct dm_internal *dmp);
 
 
@@ -351,7 +351,7 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
 }
 
 
-HIDDEN void
+HIDDEN int
 ogl_reshape(struct dm_internal *dmp, int width, int height)
 {
     GLint mm;
@@ -381,6 +381,8 @@ ogl_reshape(struct dm_internal *dmp, int width, int height)
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
+
+    return 0;
 }
 
 

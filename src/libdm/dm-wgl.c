@@ -72,7 +72,7 @@ HIDDEN int	wgl_drawString2D();
 HIDDEN int	wgl_configureWin_guts();
 HIDDEN int	wgl_setLight();
 HIDDEN int	wgl_setZBuffer();
-HIDDEN void	wgl_reshape(dm *dmp, int width, int height);
+HIDDEN int	wgl_reshape(dm *dmp, int width, int height);
 
 static fastf_t default_viewscale = 1000.0;
 static double	xlim_view = 1.0;	/* args for glOrtho*/
@@ -1882,7 +1882,7 @@ wgl_configureWin_guts(dm *dmp,
 }
 
 
-HIDDEN void
+HIDDEN int
 wgl_reshape(dm *dmp, int width, int height)
 {
     GLint mm;
@@ -1909,6 +1909,8 @@ wgl_reshape(dm *dmp, int width, int height)
     glLoadIdentity();
     glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
     glMatrixMode(mm);
+
+    return 0;
 }
 
 
