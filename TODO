@@ -24,9 +24,17 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   rt_shootrays(), modify to pass all rays down through the spatial
   partitioning simultaneously
 
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them get created.  integrate into testing.
+* create a catalog of all possible entity types.  including distinct
+  parameterizations with sufficient variety that conveys the object's
+  parameterization options (e.g. ell as sphere, flat disc, long spike,
+  etc.).  this is necessarily defined per object type and possibly
+  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
+
+  create a BRL-CAD .g with all possible object types embedded.
+  integrate into testing.
+
+* create a catalog of all possible/distinct/useful shader settings.
+  see regress/shaders.sh for a basic start.
 
 * sync tgc/rec shot() behavior, sort results for proper normal.
   inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
@@ -36,13 +44,19 @@ THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
   one hit point is being returned.  to reproduce:
   e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
-* reinstate 'stat' and search -size, see r67636 through r67646
-
 * obsd stack crashers
+
+* readd support for vrml v1 to g-vrml so that users can select whether
+  they want v2 (default) or previous v1 output format via a
+  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
+
+* reinstate 'stat' and search -size, see r67636 through r67646
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
+
+* turn on Bullet code (simulate command) unconditionally
 
 * metaball in command input needs sanity checks and better
   validation.
@@ -56,8 +70,6 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
-
-* turn on Bullet code (simulate command) unconditionally
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS
@@ -270,15 +282,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 * Document a GUI feature list (prioritized).
 
 * Document a CLI feature list (prioritized).
-
-* create a catalog of all possible entity types.  including distinct
-  parameterizations with sufficient variety that conveys the object's
-  parameterization options (e.g. ell as sphere, flat disc, long spike,
-  etc.).  this is necessarily defined per object type and possibly
-  programmable.  see src/proc-db/csgbrep.cpp for a basic start.
-
-* create a catalog of all possible/distinct/useful shader settings.
-  see regress/shaders.sh for a basic start.
 
 * high-performance VOL for medical data visualization.  consider
   leveraging OpenVDB, PCL, Paraview/VTK, etc.
@@ -728,9 +731,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * fix the "(type)(size_t)val" hacks (using ints like ptrs, etc.)
 
-* Mac OS X mouse input binding problem seems to be back with rotations
-  stalling during interactive use.
-
 * pixdiff reports bytes, but reports incorrect (off-by-one) bytes for
   .bw input files.  cause is due to tool assuming input is rgb triplets
   (even though output is bytes, wtf?).  should probably report pixels
@@ -910,10 +910,6 @@ THESE ARE UNSCHEDULED BACKLOG TASKS
 
 * refactor mged's signal handling to make it possible to safely
   interrupt long-running commands
-
-* readd support for vrml v1 to g-vrml so that users can select whether
-  they want v2 (default) or previous v1 output format via a
-  command-line switch.  see http://brlcad.svn.sf.net/viewvc/brlcad/brlcad/trunk/conv/g-vrml.c?view=diff&pathrev=22798&r1=16900&r2=16901
 
 * make Mac OS X universal binaries actually work.
 
@@ -1350,7 +1346,9 @@ LIBGED
   optionally list everything
 
 * improve performance of these commands that seem to have exponential
-  cost: bot_split, killtree
+  cost: bot_split, killtree, and
+  make s sph; make a arb8; sed a; e a; tra 0 0 500; r hemi u s - a; tol norm 1 ; facetize hemi.bot hemi
+  # compared to tol norm 2, # triangles is up ~20% but facetize is >200%
 
 * translate lc command to libged (discovered in Feb. 2015 to have already
   been done -- need information regarding when this was done and committed).
