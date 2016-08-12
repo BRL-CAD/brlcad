@@ -21,9 +21,18 @@
 #include "common.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-
-#include "bu.h"
+ 
+#include "bu/defines.h"
+#ifdef _BU_ATTR_NORETURN
+#  undef _BU_ATTR_NORETURN
+#  define _BU_ATTR_NORETURN
+#endif
+#include "bu/magic.h"
+#include "bu/log.h"
+#include "bu/malloc.h"
+#include "bu/str.h"
 
 static int
 bomb_callback(const void *data, const char *str)
