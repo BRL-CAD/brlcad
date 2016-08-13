@@ -164,37 +164,41 @@ function(public_headers_test)
 
     foreach(pvhdr ${PRIVATE_HEADERS})
       # If we found an improperly used header, report it
-      if("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	if(NOT HDR_PRINTED)
-	  message("\nPrivate header inclusion in public headers:")
-	  set(HDR_PRINTED 1)
-	endif(NOT HDR_PRINTED)
+      if("${HDR_SRC}" MATCHES "${pvhdr}")
+	if("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+	  if(NOT HDR_PRINTED)
+	    message("\nPrivate header inclusion in public headers:")
+	    set(HDR_PRINTED 1)
+	  endif(NOT HDR_PRINTED)
 
-	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-	set(cline 1)
-	set(STOP_CHECK 0)
-	# We need to go with the while loop + substring approach because
-	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
-	# with square brackets.  Make sure we always have a terminating newline
-	# so the string searches and while loop behave
-	set(working_file "${HDR_SRC}\n")
-	while(working_file AND NOT STOP_CHECK)
-	  string(FIND "${working_file}" "\n" POS)
-	  math(EXPR POS "${POS} + 1")
-	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
-	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	    message("    ${puhdr}:${cline}: ${pvhdr}")
-	    list(APPEND PVT_INC_INSTANCES "  ${puhdr}:${cline}: ${pvhdr}")
-	    set(STOP_CHECK 1)
-	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
-	  math(EXPR cline "${cline} + 1")
-	endwhile(working_file AND NOT STOP_CHECK)
+	  # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	  set(cline 1)
+	  set(STOP_CHECK 0)
+	  # We need to go with the while loop + substring approach because
+	  # file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	  # with square brackets.  Make sure we always have a terminating newline
+	  # so the string searches and while loop behave
+	  set(working_file "${HDR_SRC}\n")
+	  while(working_file AND NOT STOP_CHECK)
+	    string(FIND "${working_file}" "\n" POS)
+	    math(EXPR POS "${POS} + 1")
+	    string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
+	    string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	    if("${HDR_LINE}" MATCHES "${pvhdr}")
+	      if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+		message("    ${puhdr}:${cline}: ${pvhdr}")
+		list(APPEND PVT_INC_INSTANCES "  ${puhdr}:${cline}: ${pvhdr}")
+		set(STOP_CHECK 1)
+	      endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+	    endif("${HDR_LINE}" MATCHES "${pvhdr}")
+	    math(EXPR cline "${cline} + 1")
+	  endwhile(working_file AND NOT STOP_CHECK)
 
-	# We have a failure - let the global flag know
-	math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
-	set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
-      endif("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+	  # We have a failure - let the global flag know
+	  math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+	  set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+	endif("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
+      endif("${HDR_SRC}" MATCHES "${pvhdr}")
     endforeach(pvhdr ${PRIVATE_HEADERS})
 
   endforeach(puhdr ${PUBLIC_HEADERS})
@@ -214,9 +218,11 @@ function(redundant_headers_test phdr hdrlist)
   # Start with all source files and find those that include ${phdr}
   foreach(cfile ${ALLSRCFILES})
     file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-    if("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${phdr}[\">]+")
-      set(PHDR_FILES ${PHDR_FILES} ${cfile})
-    endif("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${phdr}[\">]+")
+    if("${FILE_SRC}" MATCHES "${phdr}")
+      if("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${phdr}[\">]+")
+	set(PHDR_FILES ${PHDR_FILES} ${cfile})
+      endif("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${phdr}[\">]+")
+    endif("${FILE_SRC}" MATCHES "${phdr}")
   endforeach(cfile ${ALLSRCFILES})
 
   # Now we have our working file list - start looking for includes
@@ -226,38 +232,42 @@ function(redundant_headers_test phdr hdrlist)
 
     # The caller told us which headers to look for - do so.
     foreach(shdr ${${hdrlist}})
-      if("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
-	if(NOT HDR_PRINTED)
-	  message("\nRedundant system header inclusion in file(s) with bio.h included:")
-	  set(HDR_PRINTED 1)
-	endif(NOT HDR_PRINTED)
+      if("${HDR_SRC}" MATCHES "${shdr}")
+	if("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
+	  if(NOT HDR_PRINTED)
+	    message("\nRedundant system header inclusion in file(s) with bio.h included:")
+	    set(HDR_PRINTED 1)
+	  endif(NOT HDR_PRINTED)
 
-	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-	set(cline 1)
-	set(STOP_CHECK 0)
-	# We need to go with the while loop + substring approach because
-	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
-	# with square brackets.  Make sure we always have a terminating newline
-	# so the string searches and while loop behave
-	set(working_file "${HDR_SRC}\n")
-	while(working_file AND NOT STOP_CHECK)
-	  string(FIND "${working_file}" "\n" POS)
-	  math(EXPR POS "${POS} + 1")
-	  string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
-	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	  if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
-	    message("    ${bfile}:${cline}: ${shdr}")
-	    list(APPEND PVT_INC_INSTANCES "  ${bfile}:${cline}: ${shdr}")
-	    set(STOP_CHECK 1)
-	  endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
-	  math(EXPR cline "${cline} + 1")
-	endwhile(working_file AND NOT STOP_CHECK)
+	  # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	  set(cline 1)
+	  set(STOP_CHECK 0)
+	  # We need to go with the while loop + substring approach because
+	  # file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	  # with square brackets.  Make sure we always have a terminating newline
+	  # so the string searches and while loop behave
+	  set(working_file "${HDR_SRC}\n")
+	  while(working_file AND NOT STOP_CHECK)
+	    string(FIND "${working_file}" "\n" POS)
+	    math(EXPR POS "${POS} + 1")
+	    string(SUBSTRING "${working_file}" 0 ${POS} HDR_LINE)
+	    string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	    if("${HDR_LINE}" MATCHES "${shdr}")
+	      if("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
+		message("    ${bfile}:${cline}: ${shdr}")
+		list(APPEND PVT_INC_INSTANCES "  ${bfile}:${cline}: ${shdr}")
+		set(STOP_CHECK 1)
+	      endif("${HDR_LINE}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
+	    endif("${HDR_LINE}" MATCHES "${shdr}")
+	    math(EXPR cline "${cline} + 1")
+	  endwhile(working_file AND NOT STOP_CHECK)
 
-	# Flag failure to top level
-	math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
-	set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+	  # Flag failure to top level
+	  math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+	  set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
 
-      endif("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
+	endif("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
+      endif("${HDR_SRC}" MATCHES "${shdr}")
 
     endforeach(shdr ${${hdrlist}})
 
@@ -423,42 +433,45 @@ function(api_usage_test func)
     file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
     # Adapt C-comment regex from http://blog.ostermiller.org/find-comment for CMake
     # string(REGEX REPLACE "/[*]([^*]|[\r\n]|([*]+([^*/]|[\r\n])))*[*]+/" "" FILE_SRC ${FILE_SRC})
-    if("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+    if("${FILE_SRC}" MATCHES "${func}")
+      if("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
 
-      # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-      set(cline 1)
-      set(SYS_LINE 0)
-      set(COMMON_LINE 0)
-      # We need to go with the while loop + substring approach because
-      # file(STRINGS ...) doesn't produce accurate line numbers and has issues
-      # with square brackets.  Make sure we always have a terminating newline
-      # so the string searches and while loop behave
-      set(working_file "${FILE_SRC}\n")
-      while(working_file)
-	string(FIND "${working_file}" "\n" POS)
-	math(EXPR POS "${POS} + 1")
-	string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
-	string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	if("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
+	set(SYS_LINE 0)
+	set(COMMON_LINE 0)
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${FILE_SRC}\n")
+	while(working_file)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	  if("${FILE_LINE}" MATCHES "${func}")
+	    if("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
 
-	  if(NOT HDR_PRINTED)
-	    message("Found instance(s):")
-	    set(HDR_PRINTED 1)
-	  endif(NOT HDR_PRINTED)
-	  string(FIND "${FILE_LINE}" "\n" POS)
-	  string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
-	  message("  ${cfile}:${cline}: ${TRIMMED_LINE}")
+	      if(NOT HDR_PRINTED)
+		message("Found instance(s):")
+		set(HDR_PRINTED 1)
+	      endif(NOT HDR_PRINTED)
+	      string(FIND "${FILE_LINE}" "\n" POS)
+	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
+	      message("  ${cfile}:${cline}: ${TRIMMED_LINE}")
 
-	  # Let top level know about failure
-	  math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
-	  set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
+	      # Let top level know about failure
+	      math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
+	      set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
 
-	endif("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
-	math(EXPR cline "${cline} + 1")
-      endwhile(working_file)
+	    endif("${FILE_LINE}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+	  endif("${FILE_LINE}" MATCHES "${func}")
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file)
 
       endif("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
-    endif("${FILE_SRC}" MATCHES "[^a-zA-Z0-9_:]${func}[(]")
+    endif("${FILE_SRC}" MATCHES "${func}")
   endforeach(cfile ${FUNC_SRCS})
 
 endfunction(api_usage_test func)
@@ -469,11 +482,6 @@ endfunction(api_usage_test func)
 # for conditional logic.
 
 function(platform_symbol_usage_test symb expected)
-
-  # We need both a list of the platform symbols to check
-  # and a regex matching them
-  string(REPLACE ";" "|" p_regex "${platforms}")
-  set(platforms_regex "(${p_regex})")
 
   # Build the source and include file test set
   set(ACTIVE_SRC_FILES ${ALLSRCFILES})
@@ -597,10 +605,10 @@ api_usage_test(unlink)
 message("\nAPI checks complete.\n")
 
 # Platform symbols
-platform_symbol_usage_test(WIN32 0)
-platform_symbol_usage_test(_WIN32 0)
-platform_symbol_usage_test(WIN64 0)
-platform_symbol_usage_test(_WIN64 0)
+platform_symbol_usage_test(WIN32 50)
+platform_symbol_usage_test(_WIN32 107)
+platform_symbol_usage_test(WIN64 1)
+platform_symbol_usage_test(_WIN64 1)
 
 if(REPO_CHECK_FAILED)
   message(FATAL_ERROR "\nRepository check complete, errors found.")
