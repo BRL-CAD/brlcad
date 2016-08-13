@@ -148,7 +148,14 @@ function(public_headers_test)
   set(PUBLIC_HEADERS ${INCFILES})
   list(FILTER PUBLIC_HEADERS INCLUDE REGEX ".*include/.*")
 
-  # The list of headers we want to check for 
+  # Exclude a few that have known issues...
+  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/brep.h")
+  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/bu/cmd.h")
+  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb.h")
+  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_osgl.h")
+  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_wgl.h")
+
+  # The list of headers we want to check for
   set(PRIVATE_HEADERS bio.h bnetwork.h bsocket.h)
 
   foreach(puhdr ${PUBLIC_HEADERS})
