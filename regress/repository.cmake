@@ -98,12 +98,18 @@ list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]svn.*")
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*src/other.*")
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/tools.*")
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/svn2git.*")
+list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*/shapelib/.*")
+list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/macosx/openUp.c")
 
 # Documentation files
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*doc/parsers/templates/.*")
 
 # Test srcs
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/compat/.*")
+
+# Misc. test and demo files
+list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/Bullet_Box_Chain_Demo.cpp")
+list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/opencl-raytracer-tests/.*")
 
 # We aren't interested in temporary files, log files, make
 # files, or cache files
