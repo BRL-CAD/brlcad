@@ -284,10 +284,11 @@ txt_endDList(dm *UNUSED(dmp))
 }
 
 
-HIDDEN void
+HIDDEN int
 txt_drawDList(unsigned int UNUSED(list))
 {
     bu_log("drawDList called\n");
+    return 0;
 }
 
 

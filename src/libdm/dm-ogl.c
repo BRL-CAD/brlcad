@@ -129,7 +129,7 @@ HIDDEN int ogl_debug(struct dm_internal *dmp, int vl);
 HIDDEN int ogl_logfile(struct dm_internal *dmp, const char *filename);
 HIDDEN int ogl_beginDList(struct dm_internal *dmp, unsigned int list);
 HIDDEN int ogl_endDList(struct dm_internal *dmp);
-HIDDEN void ogl_drawDList(unsigned int list);
+HIDDEN int ogl_drawDList(unsigned int list);
 HIDDEN int ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
 HIDDEN int ogl_genDLists(struct dm_internal *dmp, size_t range);
 HIDDEN int ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
@@ -2194,10 +2194,11 @@ ogl_endDList(struct dm_internal *dmp)
 }
 
 
-HIDDEN void
+HIDDEN int
 ogl_drawDList(unsigned int list)
 {
     glCallList((GLuint)list);
+    return TCL_OK;
 }
 
 
@@ -2293,7 +2294,7 @@ ogl_openFb(struct dm_internal *dmp)
     return 0;
 }
 
-void
+int
 ogl_get_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2303,9 +2304,10 @@ ogl_get_internal(struct dm_internal *dmp)
 	mvars->this_dm = dmp;
 	bu_vls_init(&(mvars->log));
     }
+    return 0;
 }
 
-void
+int
 ogl_put_internal(struct dm_internal *dmp)
 {
     struct modifiable_ogl_vars *mvars = NULL;
@@ -2314,6 +2316,7 @@ ogl_put_internal(struct dm_internal *dmp)
 	bu_vls_free(&(mvars->log));
 	BU_PUT(dmp->m_vars, struct modifiable_ogl_vars);
     }
+    return 0;
 }
 
 void

@@ -92,7 +92,7 @@ struct dm_internal {
     int (*dm_logfile)(struct dm_internal *dmp, const char *filename); /**< @brief Set DM log file */
     int (*dm_beginDList)(struct dm_internal *dmp, unsigned int list);
     int (*dm_endDList)(struct dm_internal *dmp);
-    void (*dm_drawDList)(unsigned int list);
+    int (*dm_drawDList)(unsigned int list);
     int (*dm_freeDLists)(struct dm_internal *dmp, unsigned int list, int range);
     int (*dm_genDLists)(struct dm_internal *dmp, size_t range);
     int (*dm_draw_obj)(struct dm_internal *dmp, struct display_list *obj);
@@ -100,8 +100,8 @@ struct dm_internal {
     int (*dm_reshape)(struct dm_internal *dmp, int width, int height);
     int (*dm_makeCurrent)(struct dm_internal *dmp);
     int (*dm_openFb)(struct dm_internal *dmp);
-    void (*dm_get_internal)(struct dm_internal *dmp);
-    void (*dm_put_internal)(struct dm_internal *dmp);
+    int (*dm_get_internal)(struct dm_internal *dmp);
+    int (*dm_put_internal)(struct dm_internal *dmp);
     unsigned long dm_id;          /**< @brief window id */
     int dm_displaylist;		/**< @brief !0 means device has displaylist */
     int dm_stereo;                /**< @brief stereo flag */

@@ -2067,10 +2067,11 @@ wgl_endDList(dm *dmp)
 }
 
 
-void
+int
 wgl_drawDList(unsigned int list)
 {
     glCallList((GLuint)list);
+    return TCL_OK;
 }
 
 

@@ -378,7 +378,7 @@ DM_EXPORT extern void dm_set_perspective(dm *dmp, fastf_t perspective);
 DM_EXPORT extern int dm_get_display_image(dm *dmp, unsigned char **image);
 DM_EXPORT extern int dm_gen_dlists(dm *dmp, size_t range);
 DM_EXPORT extern int dm_begin_dlist(dm *dmp, unsigned int list);
-DM_EXPORT extern void dm_draw_dlist(dm *dmp, unsigned int list);
+DM_EXPORT extern int dm_draw_dlist(dm *dmp, unsigned int list);
 DM_EXPORT extern int dm_end_dlist(dm *dmp);
 DM_EXPORT extern int dm_free_dlists(dm *dmp, unsigned int list, int range);
 DM_EXPORT extern int dm_draw_vlist(dm *dmp, struct bn_vlist *vp);

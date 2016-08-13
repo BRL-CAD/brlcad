@@ -235,9 +235,10 @@ null_endDList(struct dm_internal *UNUSED(dmp))
 }
 
 
-void
+int
 null_drawDList(unsigned int UNUSED(list))
 {
+    return 0;
 }
 
 

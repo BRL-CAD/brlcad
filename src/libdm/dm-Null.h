@@ -146,7 +146,7 @@ DM_EXPORT extern int
 null_endDList(dm *dmp);
 
 
-DM_EXPORT extern void
+DM_EXPORT extern int
 null_drawDList(unsigned int list);
 
 

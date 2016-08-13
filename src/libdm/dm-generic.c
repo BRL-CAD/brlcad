@@ -676,11 +676,11 @@ dm_begin_dlist(struct dm_internal *dmp, unsigned int list)
     if (UNLIKELY(!dmp)) return 0;
     return dmp->dm_beginDList(dmp, list);
 }
-void
+int
 dm_draw_dlist(struct dm_internal *dmp, unsigned int list)
 {
-    if (UNLIKELY(!dmp)) return;
-    dmp->dm_drawDList(list);
+    if (UNLIKELY(!dmp)) return 0;
+    return dmp->dm_drawDList(list);
 }
 int
 dm_end_dlist(struct dm_internal *dmp)

@@ -2467,10 +2467,11 @@ rtgl_endDList(dm *dmp)
 }
 
 
-void
+int
 rtgl_drawDList(dm *dmp, unsigned int list)
 {
     glCallList((GLuint)list);
+    return TCL_OK;
 }
 
 
