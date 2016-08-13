@@ -78,9 +78,18 @@ file(GLOB_RECURSE FILE_SYSTEM_FILES
   RELATIVE ${SOURCE_DIR}
   "${SOURCE_DIR}/*")
 
-# Before we build our source, include and build file lists
-# we do some preliminary filtering to remove files we don't
-# want in any of those categories
+# Before we build our source, include and build file lists we do some
+# preliminary filtering to remove files we don't want in any of those
+# categories
+
+# If a build directory is defined and is distinct from the source directory,
+# filter out anything in that directory.
+if(DEFINED BUILD_DIR)
+  if(NOT "${SOURCE_DIR}" STREQUAL "${BUILD_DIR}")
+    string(REPLACE "${SOURCE_DIR}/" "" REL_BUILD "${BUILD_DIR}")
+    list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX "^${REL_BUILD}/.*")
+  endif(NOT "${SOURCE_DIR}" STREQUAL "${BUILD_DIR}")
+endif(DEFINED BUILD_DIR)
 
 # We don't want any .svn files
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]svn.*")
