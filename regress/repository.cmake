@@ -129,21 +129,34 @@ list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*cache$")
 # the various categories
 
 # Source files
-set(SRCFILES ${FILE_SYSTEM_FILES})
-list(FILTER SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]h$|.*[.]hpp$|.*[.]hxx$|.*[.]y$|.*[.]yy$|.*[.]l$")
+macro(define_src_files)
+  set(SRCFILES ${FILE_SYSTEM_FILES})
+  list(FILTER SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]y$|.*[.]yy$|.*[.]l$")
+endmacro(define_src_files)
 
 # Include files
-# TODO - same initial set as src files?
-set(INCFILES ${FILE_SYSTEM_FILES})
-list(FILTER INCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]h$|.*[.]hpp$|.*[.]hxx$|.*[.]y$|.*[.]yy$|.*[.]l$")
+macro(define_inc_files)
+  set(INCFILES ${FILE_SYSTEM_FILES})
+  list(FILTER INCFILES INCLUDE REGEX ".*[.]h$|.*[.]hpp$|.*[.]hxx$")
+endmacro(define_inc_files)
 
 # Build files
-set(BLDFILES ${FILE_SYSTEM_FILES})
-list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
+macro(define_bld_files)
+  set(BLDFILES ${FILE_SYSTEM_FILES})
+  list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
+endmacro(define_bld_files)
 
 # All source files
-set(ALLSRCFILES ${SRCFILES} ${INCFILES})
-list(REMOVE_DUPLICATES ALLSRCFILES)
+macro(define_allsrc_files)
+  if(NOT SRCFILES)
+    define_src_files()
+  endif(NOT SRCFILES)
+  if(NOT INCFILES)
+    define_inc_files()
+  endif(NOT INCFILES)
+  set(ALLSRCFILES ${SRCFILES} ${INCFILES})
+  list(REMOVE_DUPLICATES ALLSRCFILES)
+endmacro(define_allsrc_files)
 
 # Check if public headers are including private headers like bio.h
 function(public_headers_test)
@@ -151,6 +164,7 @@ function(public_headers_test)
   set(HDR_PRINTED 0)
 
   # Start with all include files
+  define_inc_files()
   set(PUBLIC_HEADERS ${INCFILES})
   list(FILTER PUBLIC_HEADERS INCLUDE REGEX ".*include/.*")
 
@@ -220,6 +234,7 @@ function(redundant_headers_test phdr hdrlist)
 
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
+  define_allsrc_files()
 
   # Start with all source files and find those that include ${phdr}
   foreach(cfile ${ALLSRCFILES})
@@ -291,6 +306,7 @@ function(common_h_order_test)
 
   # Build the test file set
   set(COMMON_H_FILES)
+  define_allsrc_files()
   foreach(cfile ${ALLSRCFILES})
     file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
     if("${FILE_SRC}" MATCHES "[# ]+include[ ]+[\"<]+common.h[\">]+|[# ]+include[ ]+<")
@@ -422,6 +438,7 @@ function(api_usage_test func)
 
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
+  define_allsrc_files()
   set(FUNC_SRCS ${ALLSRCFILES})
 
   message("Searching for ${func}...")
@@ -490,6 +507,7 @@ endfunction(api_usage_test func)
 function(platform_symbol_usage_test symb expected)
 
   # Build the source and include file test set
+  define_allsrc_files()
   set(ACTIVE_SRC_FILES ${ALLSRCFILES})
   set(EXEMPT_FILES pstdint.h uce-dirent.h shapefil.h shpopen.c)
   foreach(ef ${EXEMPT_FILES})
@@ -497,6 +515,7 @@ function(platform_symbol_usage_test symb expected)
   endforeach(ef ${EXEMPT_FILES})
 
   # Build the build file test set
+  define_bld_files()
   set(ACTIVE_BLD_FILES ${BLDFILES})
   set(EXEMPT_FILES autoheader.cmake repository.cmake BRLCAD_CMakeFiles.cmake)
   foreach(ef ${EXEMPT_FILES})
