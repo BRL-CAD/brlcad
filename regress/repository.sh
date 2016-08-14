@@ -67,6 +67,8 @@ BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -r
 CMakeLists.txt"
 
 
+if test "test" = "xxx" ; then
+
 ###
 # TEST: make sure nobody includes private headers like bio.h in a
 # public header
@@ -255,6 +257,7 @@ else
     FAILED="`expr $FAILED + 1`"
 fi
 
+fi # !!!xxx
 
 ###
 # TEST: make sure we don't get worse when it comes to testing for a
@@ -262,73 +265,105 @@ fi
 # have some characteristic feature.
 
 echo "running platform symbol usage check"
-PLATFORMS="WIN32 _WIN32 WIN64 _WIN64"
+PLATFORMS="
+AIX
+APPLE
+CYGWIN
+DARWIN
+FREEBSD
+HIAKU
+HPUX
+LINUX
+MACH
+MINGW
+MSDOS
+QNX
+SGI
+SOLARIS
+SUN
+SUNOS
+SVR4
+SYSV
+ULTRIX
+UNIX
+VMS
+WIN16
+WIN32
+WIN64
+WINE
+WINNT
+"
+# this old version assumes we've tokenized the file
+regex="[^a-zA-Z0-9_]\$platform[^a-zA-Z0-9_]\|^\$platform[^a-zA-Z0-9_]\|[^a-zA-Z0-9_]\$platform\\\$"
+# just find lines that look like non-comment logic
+regex="^[[:space:]#]*if.*[^A-Z]\$platform[^A-Z]"
 FOUND=0
+grepcmd="grep -n -i -E"
+
+MATCHES=
 for platform in $PLATFORMS ; do
     echo "Searching headers for $platform ..."
-    MATCH=
     for file in $INCFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -E $regex $file /dev/null | grep -v pstdint.h`"
+	this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h`"
 	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+	    MATCHES="$MATCHES
 $this"
 	fi
     done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt header instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + 1`
-    fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt header instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
 
 
+MATCHES=
 for platform in $PLATFORMS ; do
     echo "Searching sources for $platform ..."
-    MATCH=
     for file in $SRCFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -E $regex $file /dev/null | grep -v uce-dirent.h`"
+	this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h`"
 	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+	    MATCHES="$MATCHES
 $this"
 	fi
     done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt source instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + $cnt`
-    fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt source instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
 
+
+MATCHES=
 for platform in $PLATFORMS ; do
     echo "Searching build files for $platform ..."
-    MATCH=
     for file in $BLDFILES /dev/null ; do
-	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -E $regex $file /dev/null`"
+	this="`eval $grepcmd $regex $file /dev/null`"
 	if test "x$this" != "x" ; then
-	    MATCH="$MATCH
+	    MATCHES="$MATCHES
 $this"
 	fi
     done
-    if test "x$MATCH" != "x" ; then
-	cnt="`echo \"$MATCH\" | tail -n +2 | wc -l | awk '{print $1}'`"
-	echo "FIXME: Found $cnt build system instances of $platform ..."
-	echo "$MATCH
-"
-	FOUND=`expr $FOUND + $cnt`
-    fi
 done
+if test "x$MATCHES" != "x" ; then
+    cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
+    echo "FIXME: Found $cnt build system instances ..."
+    echo "$MATCHES
+" | sort | uniq
+    FOUND=`expr $FOUND + $cnt`
+fi
+
 
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=160
+NEED_FIXING=1000
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"
