@@ -67,8 +67,6 @@ BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -r
 CMakeLists.txt"
 
 
-if test "test" = "xxx" ; then
-
 ###
 # TEST: make sure nobody includes private headers like bio.h in a
 # public header
@@ -257,7 +255,6 @@ else
     FAILED="`expr $FAILED + 1`"
 fi
 
-fi # !!!xxx
 
 ###
 # TEST: make sure we don't get worse when it comes to testing for a
