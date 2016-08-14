@@ -293,23 +293,28 @@ WIN64
 WINE
 WINNT
 "
-# this old version assumes we've tokenized the file
-regex="[^a-zA-Z0-9_]\$platform[^a-zA-Z0-9_]\|^\$platform[^a-zA-Z0-9_]\|[^a-zA-Z0-9_]\$platform\\\$"
-# just find lines that look like non-comment logic
-regex="^[[:space:]#]*if.*[^A-Z]\$platform[^A-Z]"
+# build up a single regex that matches all platforms.
+# looks for cpp-style lines like "#if defined(PLATFORM)" or cmake-style "IF(PLATFORM)"
+regex=
+for platform in $PLATFORMS ; do
+    if test "x$regex" = "x" ; then
+	regex="^[[:space:]#]*if.*[^A-Z]$platform[^A-Z]"
+    else
+	regex="$regex\|^[[:space:]#]*if.*[^A-Z]$platform[^A-Z]"
+    fi
+done
+
 FOUND=0
 grepcmd="grep -n -i -E"
 
 MATCHES=
-for platform in $PLATFORMS ; do
-    echo "Searching headers for $platform ..."
-    for file in $INCFILES /dev/null ; do
-	this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h`"
-	if test "x$this" != "x" ; then
-	    MATCHES="$MATCHES
+echo "Searching headers ..."
+for file in $INCFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null | grep -v pstdint.h`"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
+    fi
 done
 if test "x$MATCHES" != "x" ; then
     cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
@@ -321,15 +326,13 @@ fi
 
 
 MATCHES=
-for platform in $PLATFORMS ; do
-    echo "Searching sources for $platform ..."
-    for file in $SRCFILES /dev/null ; do
-	this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h`"
-	if test "x$this" != "x" ; then
-	    MATCHES="$MATCHES
+echo "Searching sources ..."
+for file in $SRCFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null | grep -v uce-dirent.h`"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
+    fi
 done
 if test "x$MATCHES" != "x" ; then
     cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
@@ -341,15 +344,13 @@ fi
 
 
 MATCHES=
-for platform in $PLATFORMS ; do
-    echo "Searching build files for $platform ..."
-    for file in $BLDFILES /dev/null ; do
-	this="`eval $grepcmd $regex $file /dev/null`"
-	if test "x$this" != "x" ; then
-	    MATCHES="$MATCHES
+echo "Searching build files ..."
+for file in $BLDFILES /dev/null ; do
+    this="`eval $grepcmd $regex $file /dev/null`"
+    if test "x$this" != "x" ; then
+	MATCHES="$MATCHES
 $this"
-	fi
-    done
+    fi
 done
 if test "x$MATCHES" != "x" ; then
     cnt="`echo \"$MATCHES\" | sort | uniq | tail -n +2 | wc -l | awk '{print $1}'`"
