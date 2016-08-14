@@ -111,6 +111,12 @@ list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/compat/.*")
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/Bullet_Box_Chain_Demo.cpp")
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/opencl-raytracer-tests/.*")
 
+# CMake find modules - often these are convenience inclusions of a 3rd
+# party module not yet incorporated into CMake, and given the number of
+# times they end up needing to contend with platform specific irregularities
+# it doesn't make much sense to police them.
+list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/Find.*")
+
 # We aren't interested in temporary files, log files, make
 # files, or cache files
 list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*~")
