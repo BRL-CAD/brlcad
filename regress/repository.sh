@@ -294,15 +294,16 @@ WINNT
 # looks for cpp-style lines like "#if defined(PLATFORM)" or cmake-style "IF(PLATFORM)"
 regex=
 for platform in $PLATFORMS ; do
+    platformupper="`echo $platform | tr 'a-z' 'A-Z'`"
     if test "x$regex" = "x" ; then
-	regex="^[[:space:]#]*if.*[^A-Z]$platform[^A-Z]"
+	regex="^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)[^A-Z]"
     else
-	regex="$regex\|^[[:space:]#]*if.*[^A-Z]$platform[^A-Z]"
+	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)[^A-Z]"
     fi
 done
 
 FOUND=0
-grepcmd="grep -n -i -E"
+grepcmd="grep -n -E"
 
 MATCHES=
 echo "Searching headers ..."
