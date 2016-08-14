@@ -269,7 +269,7 @@ for platform in $PLATFORMS ; do
     MATCH=
     for file in $INCFILES /dev/null ; do
 	regex="[^a-zA-Z0-9_]$platform[^a-zA-Z0-9_]|^$platform[^a-zA-Z0-9_]|[^a-zA-Z0-9_]$platform\$"
-	this="`grep -n -e $regex $file /dev/null | grep -v pstdint.h`"
+	this="`grep -n -E $regex $file /dev/null | grep -v pstdint.h`"
 	if test "x$this" != "x" ; then
 	    MATCH="$MATCH
 $this"
