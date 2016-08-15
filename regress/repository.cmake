@@ -171,7 +171,7 @@ endif(RUN_ALL_TESTS)
 function(public_headers_test)
 
   set(HDR_PRINTED 0)
-  message("\nRunning public/private header test...")
+  message("running public header private header checks...")
 
   # Start with all include files
   define_inc_files()
@@ -187,6 +187,9 @@ function(public_headers_test)
 
   # The list of headers we want to check for
   set(PRIVATE_HEADERS bio.h bnetwork.h bsocket.h)
+  foreach(pvhdr ${PRIVATE_HEADERS})
+    set(${pvhdr}_check_succeeded 1)
+  endforeach(pvhdr ${PRIVATE_HEADERS})
 
   foreach(puhdr ${PUBLIC_HEADERS})
 
@@ -199,6 +202,7 @@ function(public_headers_test)
 	  if(NOT HDR_PRINTED)
 	    message("\nPrivate header inclusion in public headers:")
 	    set(HDR_PRINTED 1)
+	    set(${pvhdr}_check_succeeded 0)
 	  endif(NOT HDR_PRINTED)
 
 	  # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
@@ -230,6 +234,8 @@ function(public_headers_test)
 	endif("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${pvhdr}[\">]+")
       endif("${HDR_SRC}" MATCHES "${pvhdr}")
     endforeach(pvhdr ${PRIVATE_HEADERS})
+      if(check_succeeded)
+      endif(check_succeeded)
 
   endforeach(puhdr ${PUBLIC_HEADERS})
 
@@ -237,7 +243,11 @@ function(public_headers_test)
     message("")
   endif(HDR_PRINTED)
 
-  message("Public/private header test complete.")
+  foreach(pvhdr ${PRIVATE_HEADERS})
+    if(${pvhdr}_check_succeeded)
+      message("-> ${pvhdr} header check succeeded")
+    endif(${pvhdr}_check_succeeded)
+  endforeach(pvhdr ${PRIVATE_HEADERS})
 
 endfunction(public_headers_test)
 
@@ -245,9 +255,10 @@ endfunction(public_headers_test)
 function(redundant_headers_test phdr hdrlist)
 
   set(HDR_PRINTED 0)
+  set(check_succeeded 1)
   set(PHDR_FILES)
   define_allsrc_files()
-  message("\nRunning redundant header test for ${phdr}...")
+  message("running ${phdr} redundancy check...")
 
   # Start with all source files and find those that include ${phdr}
   foreach(cfile ${ALLSRCFILES})
@@ -270,6 +281,7 @@ function(redundant_headers_test phdr hdrlist)
 	if("${HDR_SRC}" MATCHES "[# ]+include[ ]+[\"<]+${shdr}[\">]+")
 	  if(NOT HDR_PRINTED)
 	    message("\nRedundant system header inclusion in file(s) with bio.h included:")
+	    set(check_succeeded 0)
 	    set(HDR_PRINTED 1)
 	  endif(NOT HDR_PRINTED)
 
@@ -311,15 +323,19 @@ function(redundant_headers_test phdr hdrlist)
     message("")
   endif(HDR_PRINTED)
 
-  message("Redundant header test for ${phdr} complete.")
+  if(check_succeeded)
+    message("-> ${phdr} header check succeeded")
+  endif(check_succeeded)
 
 endfunction(redundant_headers_test phdr hdrlist)
 
 #######################################################################
 
 function(common_h_order_test)
+
+  set(check_succeeded 1)
   set(HDR_PRINTED 0)
-  message("\nRunning common.h inclusion test...")
+  message("running common.h inclusion order check...")
 
   # Build the test file set
   set(COMMON_H_FILES)
@@ -350,6 +366,7 @@ function(common_h_order_test)
 
 	if(NOT HDR_PRINTED)
 	  message("\ncommon.h inclusion ordering problem(s):")
+	  set(check_succeeded 0)
 	  set(HDR_PRINTED 1)
 	endif(NOT HDR_PRINTED)
 
@@ -444,7 +461,9 @@ function(common_h_order_test)
     message("")
   endif(HDR_PRINTED)
 
-  message("common.h inclusion test complete.")
+  if(check_succeeded)
+    message("-> common.h check succeeded")
+  endif(check_succeeded)
 
 endfunction(common_h_order_test)
 
@@ -457,10 +476,11 @@ function(api_usage_test func)
 
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
+  set(cnt 0)
   define_allsrc_files()
   set(FUNC_SRCS ${ALLSRCFILES})
 
-  message("\nSearching for function ${func}...")
+  message("Searching for ${func}...")
 
   CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
 
@@ -502,6 +522,7 @@ function(api_usage_test func)
 	      string(FIND "${FILE_LINE}" "\n" POS)
 	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
 	      message("  ${cfile}:${cline}: ${TRIMMED_LINE}")
+	      math(EXPR cnt "${cnt} + 1")
 
 	      # Let top level know about failure
 	      math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
@@ -516,7 +537,8 @@ function(api_usage_test func)
     endif("${FILE_SRC}" MATCHES "${func}")
   endforeach(cfile ${FUNC_SRCS})
 
-  message("${func} function search complete.")
+  math(EXPR api_uses_cnt "${api_uses_cnt} + ${cnt}")
+  set(api_uses_cnt ${api_uses_cnt} PARENT_SCOPE)
 
 endfunction(api_usage_test func)
 
@@ -526,14 +548,6 @@ endfunction(api_usage_test func)
 # for conditional logic.
 
 function(platform_symbol_usage_test symb stype expected)
-
-  if("${stype}" STREQUAL "SRC")
-    message("\nSearching for platform symbol ${symb} in source files...")
-  endif("${stype}" STREQUAL "SRC")
-
-  if("${stype}" STREQUAL "BLD")
-    message("\nSearching for platform symbol ${symb} in build files...")
-  endif("${stype}" STREQUAL "BLD")
 
   # Build the source and include file test set
   if("${stype}" STREQUAL "SRC")
@@ -623,14 +637,6 @@ function(platform_symbol_usage_test symb stype expected)
     message("\nNote: expected ${expected} instances of ${symb}, found ${total_cnt} - update expected value.")
   endif(${total_cnt} LESS ${expected})
 
-  if("${stype}" STREQUAL "SRC")
-    message("Platform symbol ${symb} in source files complete.")
-  endif("${stype}" STREQUAL "SRC")
-
-  if("${stype}" STREQUAL "BLD")
-    message("Platform symbol ${symb} in build files complete.")
-  endif("${stype}" STREQUAL "BLD")
-
 endfunction(platform_symbol_usage_test symb expected)
 
 
@@ -669,6 +675,7 @@ if(API_USAGE_TEST)
   endif(API_USAGE_EXEMPT)
 endif(API_USAGE_TEST)
 if(RUN_ALL_TESTS)
+  set(api_uses_cnt 0)
   api_usage_test(abort EXEMPT bomb.c log.h pkg.c)
   api_usage_test(dirname EXEMPT bu_dirname.c bu/path.h)
   api_usage_test(fgets)
@@ -689,6 +696,11 @@ if(RUN_ALL_TESTS)
   api_usage_test(strncmp EXEMPT str.c str.h)
   api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
   api_usage_test(unlink)
+  if(NOT api_uses_cnt)
+    message("-> API usage check succeeded")
+  else(NOT api_uses_cnt)
+    message("-> found ${api_uses_cnt} instances of incorrect API usage.")
+  endif(NOT api_uses_cnt)
 endif(RUN_ALL_TESTS)
 
 # Platform symbols
