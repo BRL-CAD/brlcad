@@ -271,7 +271,6 @@ FREEBSD
 HAIKU
 HPUX
 LINUX
-MACH
 MINGW
 MSDOS
 QNX
@@ -296,9 +295,9 @@ regex=
 for platform in $PLATFORMS ; do
     platformupper="`echo $platform | tr 'a-z' 'A-Z'`"
     if test "x$regex" = "x" ; then
-	regex="^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)[^A-Z]"
+	regex="^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
     else
-	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)[^A-Z]"
+	regex="$regex\|^[[:space:]#]*\(if\|IF\).*[^A-Z]\($platform\|$platformupper\)\([^A-Z]\|\$\)"
     fi
 done
 
@@ -362,7 +361,7 @@ fi
 # make sure no more WIN32 issues are introduced than existed
 # previously.  for cases where it "seems" necessary, can find and fix
 # a case that is not before adding another.  lets not increase this.
-NEED_FIXING=160
+NEED_FIXING=197
 if test $FOUND -lt `expr $NEED_FIXING + 1` ; then
     if test $FOUND -ne $NEED_FIXING ; then
 	echo "********************************************************"
