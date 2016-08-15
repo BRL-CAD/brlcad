@@ -40,6 +40,10 @@
 #
 ###
 
+if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+  CMAKE_POLICY(SET CMP0054 NEW)
+endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+
 # Set this if any test fails
 set(REPO_CHECK_FAILED 0)
 
@@ -695,84 +699,88 @@ if(SYMBOL_USAGE_TEST)
   endif(SYMBOL_USAGE_EXPECTED)
 endif(SYMBOL_USAGE_TEST)
 
-if(RUN_ALL_TESTS)
-  set(SRC_PLATFORMS
-    "AIX:0"
-    "APPLE:0"
-    "CYGWIN:0"
-    "DARWIN:0"
-    "FREEBSD:0"
-    "HIAKU:0"
-    "HPUX:0"
-    "LINUX:0"
-    "MACH:0"
-    "MINGW:0"
-    "MSDOS:0"
-    "QNX:0"
-    "SGI:0"
-    "SOLARIS:0"
-    "SUN:0"
-    "SUNOS:0"
-    "SVR4:0"
-    "SYSV:0"
-    "ULTRIX:0"
-    "UNIX:0"
-    "VMS:0"
-    "WIN16:0"
-    "WIN32:0"
-    "WIN64:0"
-    "WINE:0"
-    "WINNT:0"
-    )
-  set(total_SRC_cnt 0)
-  foreach(ptfm ${SRC_PLATFORMS})
-    string(REPLACE ":" ";" ptlist ${ptfm})
-    list(GET ptlist 0 plat)
-    list(GET ptlist 1 expect)
+set(SRC_PLATFORMS
+  "AIX:0"
+  "APPLE:0"
+  "CYGWIN:0"
+  "DARWIN:0"
+  "FREEBSD:0"
+  "HAIKU:0"
+  "HPUX:0"
+  "LINUX:0"
+  "MACH:0"
+  "MINGW:0"
+  "MSDOS:0"
+  "QNX:0"
+  "SGI:0"
+  "SOLARIS:0"
+  "SUN:0"
+  "SUNOS:0"
+  "SVR4:0"
+  "SYSV:0"
+  "ULTRIX:0"
+  "UNIX:0"
+  "VMS:0"
+  "WIN16:0"
+  "WIN32:0"
+  "WIN64:0"
+  "WINE:0"
+  "WINNT:0"
+  )
+set(total_SRC_cnt 0)
+foreach(ptfm ${SRC_PLATFORMS})
+  string(REPLACE ":" ";" ptlist ${ptfm})
+  list(GET ptlist 0 plat)
+  list(GET ptlist 1 expect)
+  if("${SYMBOL_USAGE_TEST_SYS}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
     platform_symbol_usage_test(${plat} SRC ${expect})
-  endforeach(ptfm ${SRC_PLATFORMS})
+  endif("${SYMBOL_USAGE_TEST_SYS}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
+endforeach(ptfm ${SRC_PLATFORMS})
 
+if(RUN_ALL_TESTS)
   message("\nTotal symbol count (srcs): ${total_SRC_cnt}\n")
+endif(RUN_ALL_TESTS)
 
-  set(BLD_PLATFORMS
-    "AIX:0"
-    "APPLE:0"
-    "CYGWIN:0"
-    "DARWIN:0"
-    "FREEBSD:0"
-    "HIAKU:0"
-    "HPUX:0"
-    "LINUX:0"
-    "MACH:0"
-    "MINGW:0"
-    "MSDOS:0"
-    "QNX:0"
-    "SGI:0"
-    "SOLARIS:0"
-    "SUN:0"
-    "SUNOS:0"
-    "SVR4:0"
-    "SYSV:0"
-    "ULTRIX:0"
-    "UNIX:0"
-    "VMS:0"
-    "WIN16:0"
-    "WIN32:0"
-    "WIN64:0"
-    "WINE:0"
-    "WINNT:0"
-    )
-
-  set(total_BLD_cnt 0)
-  foreach(ptfm ${BLD_PLATFORMS})
-    string(REPLACE ":" ";" ptlist ${ptfm})
-    list(GET ptlist 0 plat)
-    list(GET ptlist 1 expect)
+set(BLD_PLATFORMS
+  "AIX:0"
+  "APPLE:0"
+  "CYGWIN:0"
+  "DARWIN:0"
+  "FREEBSD:0"
+  "HAIKU:0"
+  "HPUX:0"
+  "LINUX:0"
+  "MACH:0"
+  "MINGW:0"
+  "MSDOS:0"
+  "QNX:0"
+  "SGI:0"
+  "SOLARIS:0"
+  "SUN:0"
+  "SUNOS:0"
+  "SVR4:0"
+  "SYSV:0"
+  "ULTRIX:0"
+  "UNIX:0"
+  "VMS:0"
+  "WIN16:0"
+  "WIN32:0"
+  "WIN64:0"
+  "WINE:0"
+  "WINNT:0"
+  )
+set(total_BLD_cnt 0)
+foreach(ptfm ${BLD_PLATFORMS})
+  string(REPLACE ":" ";" ptlist ${ptfm})
+  list(GET ptlist 0 plat)
+  list(GET ptlist 1 expect)
+  if("${SYMBOL_USAGE_TEST_BLD}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
     platform_symbol_usage_test(${plat} BLD ${expect})
-  endforeach(ptfm ${BLD_PLATFORMS})
+  endif("${SYMBOL_USAGE_TEST_BLD}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
+endforeach(ptfm ${BLD_PLATFORMS})
 
+if(RUN_ALL_TESTS)
   message("\nTotal symbol count (build files): ${total_BLD_cnt}\n")
-
 endif(RUN_ALL_TESTS)
 
 if(REPO_CHECK_FAILED)
