@@ -37,6 +37,12 @@ foreach(ITEM ${dlists})
 endforeach(ITEM ${dlists})
 
 
+# For the moment, our unifdef is a fork of the upstream version and
+# OS native versions won't have the option we've added - unconditionally
+# add the local version
+add_subdirectory(unifdef)
+
+
 # For those wanting to use a system version of the LEMON parser
 # generator from sqlite, remember that the presence of /usr/bin/lemon
 # is not enough.  LEMON needs a template file, lempar.c, and by
