@@ -70,8 +70,6 @@ set(LEXERS
   script.c
   )
 
-
-
 # To start, recurse once to get the full list
 file(GLOB_RECURSE FILE_SYSTEM_FILES
   LIST_DIRECTORIES false
@@ -130,38 +128,46 @@ list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*cache$")
 
 # Source files
 macro(define_src_files)
-  set(SRCFILES ${FILE_SYSTEM_FILES})
-  list(FILTER SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]y$|.*[.]yy$|.*[.]l$")
+  if(NOT SRCFILES)
+    set(SRCFILES ${FILE_SYSTEM_FILES})
+    list(FILTER SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]y$|.*[.]yy$|.*[.]l$")
+  endif(NOT SRCFILES)
 endmacro(define_src_files)
 
 # Include files
 macro(define_inc_files)
-  set(INCFILES ${FILE_SYSTEM_FILES})
-  list(FILTER INCFILES INCLUDE REGEX ".*[.]h$|.*[.]hpp$|.*[.]hxx$")
+  if(NOT INCFILES)
+    set(INCFILES ${FILE_SYSTEM_FILES})
+    list(FILTER INCFILES INCLUDE REGEX ".*[.]h$|.*[.]hpp$|.*[.]hxx$")
+  endif(NOT INCFILES)
 endmacro(define_inc_files)
 
 # Build files
 macro(define_bld_files)
-  set(BLDFILES ${FILE_SYSTEM_FILES})
-  list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
+  if(NOT BLDFILES)
+    set(BLDFILES ${FILE_SYSTEM_FILES})
+    list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
+  endif(NOT BLDFILES)
 endmacro(define_bld_files)
 
 # All source files
 macro(define_allsrc_files)
-  if(NOT SRCFILES)
-    define_src_files()
-  endif(NOT SRCFILES)
-  if(NOT INCFILES)
-    define_inc_files()
-  endif(NOT INCFILES)
+  define_src_files()
+  define_inc_files()
   set(ALLSRCFILES ${SRCFILES} ${INCFILES})
-  list(REMOVE_DUPLICATES ALLSRCFILES)
 endmacro(define_allsrc_files)
+
+# If we're running all tests, we need all the lists - handle it explicitly up front
+if(RUN_ALL_TESTS)
+  define_allsrc_files()
+  define_bld_files()
+endif(RUN_ALL_TESTS)
 
 # Check if public headers are including private headers like bio.h
 function(public_headers_test)
 
   set(HDR_PRINTED 0)
+  message("Running public/private header test...")
 
   # Start with all include files
   define_inc_files()
@@ -227,6 +233,8 @@ function(public_headers_test)
     message("")
   endif(HDR_PRINTED)
 
+  message("Public/private header test complete.")
+
 endfunction(public_headers_test)
 
 # There is a pattern for redundant header tests - encode it in a function
@@ -235,6 +243,7 @@ function(redundant_headers_test phdr hdrlist)
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
   define_allsrc_files()
+  message("Running redundant header test for ${phdr}...")
 
   # Start with all source files and find those that include ${phdr}
   foreach(cfile ${ALLSRCFILES})
@@ -297,12 +306,16 @@ function(redundant_headers_test phdr hdrlist)
   if(HDR_PRINTED)
     message("")
   endif(HDR_PRINTED)
+
+  message("Redundant header test for ${phdr} complete.")
+
 endfunction(redundant_headers_test phdr hdrlist)
 
 #######################################################################
 
 function(common_h_order_test)
   set(HDR_PRINTED 0)
+  message("Running common.h inclusion test...")
 
   # Build the test file set
   set(COMMON_H_FILES)
@@ -427,6 +440,8 @@ function(common_h_order_test)
     message("")
   endif(HDR_PRINTED)
 
+  message("common.h inclusion test complete.")
+
 endfunction(common_h_order_test)
 
 #######################################################################
@@ -441,7 +456,7 @@ function(api_usage_test func)
   define_allsrc_files()
   set(FUNC_SRCS ${ALLSRCFILES})
 
-  message("Searching for ${func}...")
+  message("Searching for function ${func}...")
 
   CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
 
@@ -497,6 +512,8 @@ function(api_usage_test func)
     endif("${FILE_SRC}" MATCHES "${func}")
   endforeach(cfile ${FUNC_SRCS})
 
+  message("${func} function search complete.")
+
 endfunction(api_usage_test func)
 
 ##########################################################################
@@ -504,81 +521,90 @@ endfunction(api_usage_test func)
 # logic in our code - instead, we want to feature test and use those tests
 # for conditional logic.
 
-function(platform_symbol_usage_test symb expected)
+function(platform_symbol_usage_test symb stype expected)
+
+  if("${stype}" STREQUAL "SRC")
+    message("Searching for platform symbol ${symb} in source files...")
+  endif("${stype}" STREQUAL "SRC")
+
+  if("${stype}" STREQUAL "BLD")
+    message("Searching for platform symbol ${symb} in build files...")
+  endif("${stype}" STREQUAL "BLD")
 
   # Build the source and include file test set
-  define_allsrc_files()
-  set(ACTIVE_SRC_FILES ${ALLSRCFILES})
-  set(EXEMPT_FILES pstdint.h uce-dirent.h shapefil.h shpopen.c)
-  foreach(ef ${EXEMPT_FILES})
-    list(FILTER ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
-  endforeach(ef ${EXEMPT_FILES})
+  if("${stype}" STREQUAL "SRC")
+    define_allsrc_files()
+    set(ACTIVE_SRC_FILES ${ALLSRCFILES})
+    set(EXEMPT_FILES pstdint.h uce-dirent.h shapefil.h shpopen.c)
+    foreach(ef ${EXEMPT_FILES})
+      list(FILTER ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
+    endforeach(ef ${EXEMPT_FILES})
+  endif("${stype}" STREQUAL "SRC")
 
   # Build the build file test set
-  define_bld_files()
-  set(ACTIVE_BLD_FILES ${BLDFILES})
-  set(EXEMPT_FILES autoheader.cmake repository.cmake BRLCAD_CMakeFiles.cmake)
-  foreach(ef ${EXEMPT_FILES})
-    list(FILTER ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
-  endforeach(ef ${EXEMPT_FILES})
+  if("${stype}" STREQUAL "BLD")
+    define_bld_files()
+    set(ACTIVE_BLD_FILES ${BLDFILES})
+    set(EXEMPT_FILES autoheader.cmake repository.cmake BRLCAD_CMakeFiles.cmake)
+    foreach(ef ${EXEMPT_FILES})
+      list(FILTER ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
+    endforeach(ef ${EXEMPT_FILES})
+  endif("${stype}" STREQUAL "BLD")
 
   # Check all files, but bookkeep separately for source and build files
-  set(types SRC BLD)
-  foreach(stype ${types})
-    foreach(cfile ${ACTIVE_${stype}_FILES})
-      file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-      if("${FILE_SRC}" MATCHES "${symb}")
-	set(regex "[^a-zA-Z0-9_]${symb}[^a-zA-Z0-9_]|^${symb}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${symb}$")
-	if("${FILE_SRC}" MATCHES "${regex}")
-	  # Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
-	  set(cline 1)
-	  # We need to go with the while loop + substring approach because
-	  # file(STRINGS ...) doesn't produce accurate line numbers and has issues
-	  # with square brackets.  Make sure we always have a terminating newline
-	  # so the string searches and while loop behave
-	  set(working_file "${FILE_SRC}\n")
-	  set(HAVE_MATCH 1)
-	  while(working_file AND HAVE_MATCH)
-	    string(FIND "${working_file}" "\n" POS)
-	    math(EXPR POS "${POS} + 1")
-	    string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
-	    string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	    if("${FILE_LINE}" MATCHES "${symb}")
-	      if("${FILE_LINE}" MATCHES "${regex}")
-		string(FIND "${FILE_LINE}" "\n" POS)
-		string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
-		list(APPEND ${symb}_${stype}_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
-	      endif("${FILE_LINE}" MATCHES "${regex}")
-	    endif("${FILE_LINE}" MATCHES "${symb}")
-	    if(NOT "${working_file}" MATCHES "${symb}")
-	      set(HAVE_MATCH 0)
-	    endif(NOT "${working_file}" MATCHES "${symb}")
-	    math(EXPR cline "${cline} + 1")
-	  endwhile(working_file AND HAVE_MATCH)
-	endif("${FILE_SRC}" MATCHES "${regex}")
-      endif("${FILE_SRC}" MATCHES "${symb}")
-    endforeach(cfile ${ACTIVE_${stype}_FILES})
-  endforeach(stype ${types})
+  foreach(cfile ${ACTIVE_${stype}_FILES})
+    file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
+    if("${FILE_SRC}" MATCHES "${symb}")
+      set(regex "[^a-zA-Z0-9_]${symb}[^a-zA-Z0-9_]|^${symb}[^a-zA-Z0-9_]|[^a-zA-Z0-9_]${symb}$")
+      if("${FILE_SRC}" MATCHES "${regex}")
+	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
+	set(cline 1)
+	# We need to go with the while loop + substring approach because
+	# file(STRINGS ...) doesn't produce accurate line numbers and has issues
+	# with square brackets.  Make sure we always have a terminating newline
+	# so the string searches and while loop behave
+	set(working_file "${FILE_SRC}\n")
+	set(HAVE_MATCH 1)
+	while(working_file AND HAVE_MATCH)
+	  string(FIND "${working_file}" "\n" POS)
+	  math(EXPR POS "${POS} + 1")
+	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
+	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
+	  if("${FILE_LINE}" MATCHES "${symb}")
+	    if("${FILE_LINE}" MATCHES "${regex}")
+	      string(FIND "${FILE_LINE}" "\n" POS)
+	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
+	      list(APPEND ${symb}_${stype}_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
+	    endif("${FILE_LINE}" MATCHES "${regex}")
+	  endif("${FILE_LINE}" MATCHES "${symb}")
+	  if(NOT "${working_file}" MATCHES "${symb}")
+	    set(HAVE_MATCH 0)
+	  endif(NOT "${working_file}" MATCHES "${symb}")
+	  math(EXPR cline "${cline} + 1")
+	endwhile(working_file AND HAVE_MATCH)
+      endif("${FILE_SRC}" MATCHES "${regex}")
+    endif("${FILE_SRC}" MATCHES "${symb}")
+  endforeach(cfile ${ACTIVE_${stype}_FILES})
 
   set(total_cnt 0)
-  foreach(stype ${types})
-    set(msg)
-    if(${symb}_${stype}_INSTANCES)
-      list(LENGTH ${symb}_${stype}_INSTANCES symb_len)
-      if("${stype}" STREQUAL "SRC")
-	set(msg "\nFIXME: Found ${symb_len} instances of ${symb} usage in the source files:\n")
-      endif("${stype}" STREQUAL "SRC")
-      if("${stype}" STREQUAL "BLD")
-	set(msg "\nFIXME: Found ${symb_len} instances of ${symb} usage in the build files:\n")
-      endif("${stype}" STREQUAL "BLD")
-      foreach(ln ${${symb}_${stype}_INSTANCES})
-	set(msg "${msg}\n  ${ln}")
-	math(EXPR total_cnt "${total_cnt} + 1")
-      endforeach(ln ${${symb}_${stype}_INSTANCES})
-    endif(${symb}_${stype}_INSTANCES)
-    message("${msg}")
-  endforeach(stype ${types})
-
+  set(total_${stype}_cnt ${total_${stype}_cnt})
+  set(msg)
+  if(${symb}_${stype}_INSTANCES)
+    list(LENGTH ${symb}_${stype}_INSTANCES symb_len)
+    if("${stype}" STREQUAL "SRC")
+      set(msg "\nFIXME: Found ${symb_len} instances of ${symb} usage in the source files:\n")
+    endif("${stype}" STREQUAL "SRC")
+    if("${stype}" STREQUAL "BLD")
+      set(msg "\nFIXME: Found ${symb_len} instances of ${symb} usage in the build files:\n")
+    endif("${stype}" STREQUAL "BLD")
+    foreach(ln ${${symb}_${stype}_INSTANCES})
+      set(msg "${msg}\n  ${ln}")
+      math(EXPR total_cnt "${total_cnt} + 1")
+    endforeach(ln ${${symb}_${stype}_INSTANCES})
+  endif(${symb}_${stype}_INSTANCES)
+  message("${msg}")
+  math(EXPR total_${stype}_cnt "${total_${stype}_cnt} + ${total_cnt}")
+  set(total_${stype}_cnt ${total_${stype}_cnt} PARENT_SCOPE)
 
   if(${total_cnt} GREATER ${expected})
     # Let top level know about failure
@@ -590,6 +616,14 @@ function(platform_symbol_usage_test symb expected)
     message("\nNote: expected ${expected} instances of ${symb}, found ${total_cnt} - update expected value.")
   endif(${total_cnt} LESS ${expected})
 
+  if("${stype}" STREQUAL "SRC")
+    message("Platform symbol ${symb} in source files complete.")
+  endif("${stype}" STREQUAL "SRC")
+
+  if("${stype}" STREQUAL "BLD")
+    message("Platform symbol ${symb} in build files complete.")
+  endif("${stype}" STREQUAL "BLD")
+
 endfunction(platform_symbol_usage_test symb expected)
 
 
@@ -598,26 +632,26 @@ endfunction(platform_symbol_usage_test symb expected)
 
 # TODO - this should probably be per-header...
 # TEST - public/private header inclusion
-if(PUBLIC_PRIVATE_HEADER_TEST)
+if(PUBLIC_PRIVATE_HEADER_TEST OR RUN_ALL_TESTS)
   public_headers_test()
-endif(PUBLIC_PRIVATE_HEADER_TEST)
+endif(PUBLIC_PRIVATE_HEADER_TEST OR RUN_ALL_TESTS)
 
 # TEST: make sure bio.h isn't redundant with system headers
 set(BIO_INC_HDRS stdio.h windows.h io.h unistd.h fcntl.h)
-if(BIO_REDUNDANT_HEADER_TEST)
+if(BIO_REDUNDANT_HEADER_TEST OR RUN_ALL_TESTS)
   redundant_headers_test(bio.h BIO_INC_HDRS)
-endif(BIO_REDUNDANT_HEADER_TEST)
+endif(BIO_REDUNDANT_HEADER_TEST OR RUN_ALL_TESTS)
 
 # TEST: make sure bnetwork.h isn't redundant with system headers
 set(BNETWORK_INC_HDRS winsock2.h netinet/in.h netinet/tcp.h  arpa/inet.h)
-if(BNETWORK_REDUNDANT_HEADER_TEST)
+if(BNETWORK_REDUNDANT_HEADER_TEST OR RUN_ALL_TESTS)
   redundant_headers_test(bnetwork.h BNETWORK_INC_HDRS)
-endif(BNETWORK_REDUNDANT_HEADER_TEST)
+endif(BNETWORK_REDUNDANT_HEADER_TEST OR RUN_ALL_TESTS)
 
 # TEST - make sure common.h is always included first when included
-if(COMMON_H_ORDER_TEST)
+if(COMMON_H_ORDER_TEST OR RUN_ALL_TESTS)
   common_h_order_test()
-endif(COMMON_H_ORDER_TEST)
+endif(COMMON_H_ORDER_TEST OR RUN_ALL_TESTS)
 
 # TESTS - api usage
 if(API_USAGE_TEST)
@@ -627,26 +661,28 @@ if(API_USAGE_TEST)
     api_usage_test(${API_USAGE_TEST})
   endif(API_USAGE_EXEMPT)
 endif(API_USAGE_TEST)
-#api_usage_test(abort EXEMPT bomb.c log.h pkg.c)
-#api_usage_test(dirname EXEMPT bu_dirname.c bu/path.h)
-#api_usage_test(fgets)
-#api_usage_test(getopt)
-#api_usage_test(qsort)
-#api_usage_test(remove EXEMPT safileio.c file.c)
-#api_usage_test(rmdir)
-#api_usage_test(strcasecmp EXEMPT str.c str.h)
-#api_usage_test(strcat EXEMPT str.c)
-#api_usage_test(strcmp EXEMPT str.c str.h pkg.c)
-#api_usage_test(strcpy)
-#api_usage_test(strdup EXEMPT str.c)
-#api_usage_test(stricmp EXEMPT str.h)
-#api_usage_test(strlcat EXEMPT str.c)
-#api_usage_test(strlcpy EXEMPT str.c)
-#api_usage_test(strncasecmp EXEMPT str.c str.h)
-#api_usage_test(strncat EXEMPT str.c)
-#api_usage_test(strncmp EXEMPT str.c str.h)
-#api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
-#api_usage_test(unlink)
+if(RUN_ALL_TESTS)
+  api_usage_test(abort EXEMPT bomb.c log.h pkg.c)
+  api_usage_test(dirname EXEMPT bu_dirname.c bu/path.h)
+  api_usage_test(fgets)
+  api_usage_test(getopt)
+  api_usage_test(qsort)
+  api_usage_test(remove EXEMPT safileio.c file.c)
+  api_usage_test(rmdir)
+  api_usage_test(strcasecmp EXEMPT str.c str.h)
+  api_usage_test(strcat EXEMPT str.c)
+  api_usage_test(strcmp EXEMPT str.c str.h pkg.c)
+  api_usage_test(strcpy)
+  api_usage_test(strdup EXEMPT str.c)
+  api_usage_test(stricmp EXEMPT str.h)
+  api_usage_test(strlcat EXEMPT str.c)
+  api_usage_test(strlcpy EXEMPT str.c)
+  api_usage_test(strncasecmp EXEMPT str.c str.h)
+  api_usage_test(strncat EXEMPT str.c)
+  api_usage_test(strncmp EXEMPT str.c str.h)
+  api_usage_test(strncpy EXEMPT str.c vlc.c rt/db4.h cursor.c wfobj/obj_util.cpp pkg.c ttcp.c)
+  api_usage_test(unlink)
+endif(RUN_ALL_TESTS)
 
 # Platform symbols
 if(SYMBOL_USAGE_TEST)
@@ -657,10 +693,85 @@ if(SYMBOL_USAGE_TEST)
   endif(SYMBOL_USAGE_EXPECTED)
 endif(SYMBOL_USAGE_TEST)
 
-#platform_symbol_usage_test(WIN32 51)
-#platform_symbol_usage_test(_WIN32 123)
-#platform_symbol_usage_test(WIN64 1)
-#platform_symbol_usage_test(_WIN64 1)
+if(RUN_ALL_TESTS)
+  set(SRC_PLATFORMS
+    "AIX:0"
+    "APPLE:0"
+    "CYGWIN:0"
+    "DARWIN:0"
+    "FREEBSD:0"
+    "HIAKU:0"
+    "HPUX:0"
+    "LINUX:0"
+    "MACH:0"
+    "MINGW:0"
+    "MSDOS:0"
+    "QNX:0"
+    "SGI:0"
+    "SOLARIS:0"
+    "SUN:0"
+    "SUNOS:0"
+    "SVR4:0"
+    "SYSV:0"
+    "ULTRIX:0"
+    "UNIX:0"
+    "VMS:0"
+    "WIN16:0"
+    "WIN32:0"
+    "WIN64:0"
+    "WINE:0"
+    "WINNT:0"
+    )
+  set(total_SRC_cnt 0)
+  foreach(ptfm ${SRC_PLATFORMS})
+    string(REPLACE ":" ";" ptlist ${ptfm})
+    list(GET ptlist 0 plat)
+    list(GET ptlist 1 expect)
+    platform_symbol_usage_test(${plat} SRC ${expect})
+  endforeach(ptfm ${SRC_PLATFORMS})
+
+  message("\nTotal symbol count (srcs): ${total_SRC_cnt}\n")
+
+  set(BLD_PLATFORMS
+    "AIX:0"
+    "APPLE:0"
+    "CYGWIN:0"
+    "DARWIN:0"
+    "FREEBSD:0"
+    "HIAKU:0"
+    "HPUX:0"
+    "LINUX:0"
+    "MACH:0"
+    "MINGW:0"
+    "MSDOS:0"
+    "QNX:0"
+    "SGI:0"
+    "SOLARIS:0"
+    "SUN:0"
+    "SUNOS:0"
+    "SVR4:0"
+    "SYSV:0"
+    "ULTRIX:0"
+    "UNIX:0"
+    "VMS:0"
+    "WIN16:0"
+    "WIN32:0"
+    "WIN64:0"
+    "WINE:0"
+    "WINNT:0"
+    )
+
+  set(total_BLD_cnt 0)
+  foreach(ptfm ${BLD_PLATFORMS})
+    string(REPLACE ":" ";" ptlist ${ptfm})
+    list(GET ptlist 0 plat)
+    list(GET ptlist 1 expect)
+    platform_symbol_usage_test(${plat} BLD ${expect})
+  endforeach(ptfm ${BLD_PLATFORMS})
+
+  message("\nTotal symbol count (build files): ${total_BLD_cnt}\n")
+
+endif(RUN_ALL_TESTS)
 
 if(REPO_CHECK_FAILED)
   message(FATAL_ERROR "\ncheck complete, errors found.")
