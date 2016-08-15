@@ -167,7 +167,7 @@ endif(RUN_ALL_TESTS)
 function(public_headers_test)
 
   set(HDR_PRINTED 0)
-  message("Running public/private header test...")
+  message("\nRunning public/private header test...")
 
   # Start with all include files
   define_inc_files()
@@ -243,7 +243,7 @@ function(redundant_headers_test phdr hdrlist)
   set(HDR_PRINTED 0)
   set(PHDR_FILES)
   define_allsrc_files()
-  message("Running redundant header test for ${phdr}...")
+  message("\nRunning redundant header test for ${phdr}...")
 
   # Start with all source files and find those that include ${phdr}
   foreach(cfile ${ALLSRCFILES})
@@ -315,7 +315,7 @@ endfunction(redundant_headers_test phdr hdrlist)
 
 function(common_h_order_test)
   set(HDR_PRINTED 0)
-  message("Running common.h inclusion test...")
+  message("\nRunning common.h inclusion test...")
 
   # Build the test file set
   set(COMMON_H_FILES)
@@ -456,7 +456,7 @@ function(api_usage_test func)
   define_allsrc_files()
   set(FUNC_SRCS ${ALLSRCFILES})
 
-  message("Searching for function ${func}...")
+  message("\nSearching for function ${func}...")
 
   CMAKE_PARSE_ARGUMENTS(FUNC "" "" "EXEMPT" ${ARGN})
 
@@ -524,11 +524,11 @@ endfunction(api_usage_test func)
 function(platform_symbol_usage_test symb stype expected)
 
   if("${stype}" STREQUAL "SRC")
-    message("Searching for platform symbol ${symb} in source files...")
+    message("\nSearching for platform symbol ${symb} in source files...")
   endif("${stype}" STREQUAL "SRC")
 
   if("${stype}" STREQUAL "BLD")
-    message("Searching for platform symbol ${symb} in build files...")
+    message("\nSearching for platform symbol ${symb} in build files...")
   endif("${stype}" STREQUAL "BLD")
 
   # Build the source and include file test set
@@ -602,7 +602,9 @@ function(platform_symbol_usage_test symb stype expected)
       math(EXPR total_cnt "${total_cnt} + 1")
     endforeach(ln ${${symb}_${stype}_INSTANCES})
   endif(${symb}_${stype}_INSTANCES)
-  message("${msg}")
+  if(msg)
+    message("${msg}")
+  endif(msg)
   math(EXPR total_${stype}_cnt "${total_${stype}_cnt} + ${total_cnt}")
   set(total_${stype}_cnt ${total_${stype}_cnt} PARENT_SCOPE)
 
