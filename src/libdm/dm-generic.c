@@ -172,7 +172,7 @@ dm_interp(dm *dmp)
 int
 dm_share_dlist(dm *dmp1, dm *dmp2)
 {
-    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return TCL_ERROR;
+    if (UNLIKELY(!dmp1) || UNLIKELY(!dmp2)) return BRLCAD_ERROR;
 
     /*
      * Only display managers of the same type and using the
@@ -183,7 +183,7 @@ dm_share_dlist(dm *dmp1, dm *dmp2)
     if (dmp2 != DM_NULL)
 	if (dmp1->dm_type != dmp2->dm_type ||
 	    bu_vls_strcmp(&dmp1->dm_dName, &dmp2->dm_dName))
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 
     switch (dmp1->dm_type) {
 #ifdef DM_OGL
@@ -201,7 +201,7 @@ dm_share_dlist(dm *dmp1, dm *dmp2)
 	    return wgl_share_dlist(dmp1, dmp2);
 #endif
 	default:
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
     }
 }
 
@@ -915,7 +915,7 @@ dm_drawSolid(dm *dmp,
         sp->s_flag = UP;
         ndrawn++;
     } else {
-        if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+        if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
             sp->s_flag = UP;
             ndrawn++;
         }
@@ -981,7 +981,7 @@ dm_draw_display_list(dm *dmp,
 		    ndrawn++;
 		} else {
 		    /* draw in immediate mode */
-		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == TCL_OK) {
+		    if (dm_draw_vlist(dmp, (struct bn_vlist *)&sp->s_vlist) == BRLCAD_OK) {
 			sp->s_flag = UP;
 			ndrawn++;
 		    }

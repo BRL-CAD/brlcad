@@ -325,7 +325,7 @@ rtgl_open(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)rtgl_close(dmp);
@@ -507,7 +507,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
     GLXContext old_glxContext;
 
     if (dmp1 == (dm *)NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp2 == (dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
@@ -521,7 +521,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("rtgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
@@ -530,7 +530,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("rtgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
@@ -538,7 +538,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("dm-rtgl: Can't make display lists for font.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* This is the applications display list offset */
@@ -602,7 +602,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("rtgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
@@ -611,7 +611,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("rtgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	((struct rtgl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct rtgl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
@@ -661,7 +661,7 @@ rtgl_share_dlist(dm *dmp1, dm *dmp2)
 	glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -716,7 +716,7 @@ rtgl_close(dm *dmp)
     rtgljob.currItem = NULL;
     rtgljob.currJob = NULL;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -762,7 +762,7 @@ rtgl_drawBegin(dm *dmp)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_drawBegin: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* clear back buffer */
@@ -796,7 +796,7 @@ rtgl_drawBegin(dm *dmp)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -842,7 +842,7 @@ rtgl_drawEnd(dm *dmp)
     }
 
     rtgl_actively_drawing = 0;
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -976,7 +976,7 @@ rtgl_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
     /* transpose to OpenGL format before applying view */
     glMultTransposeMatrixd(newm);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1391,19 +1391,19 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
     struct ged *gedp = RTGL_GEDP;
 
     if (gedp == GED_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get database instance */
     dbip = gedp->ged_wdbp->dbip;
 
     if (dbip == DBI_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get new ray trace instance */
     rtip = rt_new_rti(dbip);
 
     if (rtip == RTI_NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* get view dimension information */
     if (dmp->dm_height > dmp->dm_width) {
@@ -1494,7 +1494,7 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 	maxSpan = 0.0;
 	numShot = rtgljob.numJobs = 0;
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* look for new trees in need of ray tracing */
@@ -1545,7 +1545,7 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 	if (new) {
 	    /* will ray trace new tree*/
 	    if (rt_gettree(rtip, currTree) < 0)
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 
 	    /* add new tree to list of displayed */
 	    numNew++;
@@ -1591,7 +1591,7 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 		if (new) {
 		    /* will ray trace new tree*/
 		    if (rt_gettree(rtip, currTree) < 0)
-			return TCL_ERROR;
+			return BRLCAD_ERROR;
 
 		    /* add new tree to list of displayed */
 		    numNew++;
@@ -1715,7 +1715,7 @@ rtgl_drawVList(dm *dmp, struct bn_vlist *UNUSED(vp))
 
     rtgljob.calls++;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1730,12 +1730,12 @@ rtgl_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    vp = callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1764,7 +1764,7 @@ rtgl_normal(dm *dmp)
 	    glDisable(GL_LIGHTING);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1776,7 +1776,7 @@ HIDDEN int
 rtgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(size), int use_aspect)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel)
 	bu_log("rtgl_drawString2D()\n");
@@ -1789,7 +1789,7 @@ rtgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int UNUSED(siz
     glListBase(((struct rtgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1805,8 +1805,8 @@ HIDDEN int
 rtgl_drawLine3D(dm *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
-	return TCL_ERROR;
-    return TCL_OK;
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
@@ -1814,8 +1814,8 @@ HIDDEN int
 rtgl_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
-    return TCL_OK;
+	return BRLCAD_ERROR;
+    return BRLCAD_OK;
 }
 
 
@@ -1832,7 +1832,7 @@ rtgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
     glVertex2f(x, y);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1840,7 +1840,7 @@ HIDDEN int
 rtgl_drawPoint3D(dm *dmp, point_t point)
 {
     if (!dmp || !point)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint3D():\n");
@@ -1852,7 +1852,7 @@ rtgl_drawPoint3D(dm *dmp, point_t point)
     glVertex3dv(point);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1862,7 +1862,7 @@ rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
     register int i;
 
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("rtgl_drawPoint3D():\n");
@@ -1874,7 +1874,7 @@ rtgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	glVertex3dv(points[i]);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1925,7 +1925,7 @@ rtgl_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int 
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1948,7 +1948,7 @@ rtgl_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 			    ((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			    ((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	    bu_log("rtgl_setBGColor: Couldn't make context current\n");
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	glXSwapBuffers(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -1960,7 +1960,7 @@ rtgl_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1980,7 +1980,7 @@ rtgl_setLineAttr(dm *dmp, int width, int style)
     else
 	glDisable(GL_LINE_STIPPLE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1990,7 +1990,7 @@ rtgl_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2012,7 +2012,7 @@ rtgl_setWinBounds(dm *dmp, fastf_t *w)
     else
 	dmp->dm_bound = GED_MAX / dmp->dm_clipmax[2];
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2185,7 +2185,7 @@ rtgl_configureWin_guts(dm *dmp, int force)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_configureWin_guts: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     XGetWindowAttributes(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
@@ -2195,7 +2195,7 @@ rtgl_configureWin_guts(dm *dmp, int force)
     if (!force &&
 	dmp->dm_height == xwa.height &&
 	dmp->dm_width == xwa.width)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     dmp->dm_height = xwa.height;
     dmp->dm_width = xwa.width;
@@ -2236,7 +2236,7 @@ rtgl_configureWin_guts(dm *dmp, int force)
 		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				FONTBACK)) == NULL) {
 		bu_log("rtgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
@@ -2304,7 +2304,7 @@ rtgl_configureWin_guts(dm *dmp, int force)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2328,7 +2328,7 @@ rtgl_setLight(dm *dmp, int lighting_on)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setLight: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (!dmp->dm_light) {
@@ -2348,7 +2348,7 @@ rtgl_setLight(dm *dmp, int lighting_on)
 	glEnable(GL_LIGHT0);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2366,7 +2366,7 @@ rtgl_setTransparency(dm *dmp,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setTransparency: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (transparency_on) {
@@ -2378,7 +2378,7 @@ rtgl_setTransparency(dm *dmp,
 	glDisable(GL_BLEND);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2394,7 +2394,7 @@ rtgl_setDepthMask(dm *dmp,
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setDepthMask: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (enable)
@@ -2402,7 +2402,7 @@ rtgl_setDepthMask(dm *dmp,
     else
 	glDepthMask(GL_FALSE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2419,7 +2419,7 @@ rtgl_setZBuffer(dm *dmp, int zbuffer_on)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_setZBuffer: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (((struct rtgl_vars *)dmp->dm_vars.priv_vars)->mvars.zbuf == 0) {
@@ -2434,7 +2434,7 @@ rtgl_setZBuffer(dm *dmp, int zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2448,11 +2448,11 @@ rtgl_beginDList(dm *dmp, unsigned int list)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_beginDList: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     glNewList((GLuint)list, GL_COMPILE);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2463,7 +2463,7 @@ rtgl_endDList(dm *dmp)
 	bu_log("rtgl_endDList()\n");
 
     glEndList();
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2471,7 +2471,7 @@ int
 rtgl_drawDList(dm *dmp, unsigned int list)
 {
     glCallList((GLuint)list);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2485,11 +2485,11 @@ rtgl_freeDLists(dm *dmp, unsigned int list, int range)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     glDeleteLists((GLuint)list, (GLsizei)range);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2503,7 +2503,7 @@ rtgl_genDLists(dm *dmp, size_t range)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct rtgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("rtgl_freeDLists: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return glGenLists((GLsizei)range);

@@ -155,7 +155,7 @@ wgl_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int s
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -186,7 +186,7 @@ wgl_setBGColor(dm *dmp,
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN void
@@ -308,7 +308,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->dm_pathName), -1);
 	Tcl_DStringAppend(&ds, "; wm deiconify ", -1);
 	Tcl_DStringAppend(&ds, bu_vls_addr(&dmp->dm_pathName), -1);
-	if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != TCL_OK) {
+	if (Tcl_Eval(interp, Tcl_DStringValue(&ds)) != BRLCAD_OK) {
 	    Tcl_DStringFree(&ds);
 	    return DM_NULL;
 	}
@@ -352,7 +352,7 @@ wgl_open(Tcl_Interp *interp, int argc, char *argv[])
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_log("open_wgl: _init_dm failed\n");
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
@@ -497,7 +497,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	struct modifiable_ogl_vars *mvars = (struct modifiable_ogl_vars *)dmp1->m_vars;
 
     if (dmp1 == (dm *)NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp2 == (dm *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
@@ -508,7 +508,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	     wglCreateContext(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->hdc))==NULL) {
 	    bu_log("wgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!wglMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->hdc,
@@ -516,7 +516,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("wgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
@@ -524,7 +524,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("dm-wgl: Can't make display lists for font.\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* This is the applications display list offset */
@@ -585,7 +585,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("wgl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!wglMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->hdc,
@@ -593,7 +593,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	    bu_log("wgl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct wgl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	((struct wgl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct wgl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
@@ -643,7 +643,7 @@ wgl_share_dlist(dm *dmp1, dm *dmp2)
 	wglDeleteContext(old_glxContext);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -677,7 +677,7 @@ wgl_close(dm *dmp)
     bu_free(dmp->dm_vars.pub_vars, "wgl_close: dm_xvars");
     bu_free(dmp, "wgl_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -716,7 +716,7 @@ wgl_drawBegin(dm *dmp)
 	bu_log("wgl_drawBegin: %s", buf);
 	LocalFree(buf);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* clear back buffer */
@@ -750,7 +750,7 @@ wgl_drawBegin(dm *dmp)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -796,7 +796,7 @@ wgl_drawEnd(dm *dmp)
     }
 
     wgl_actively_drawing = 0;
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -871,7 +871,7 @@ wgl_loadMatrix(dm *dmp, mat_t mat, int which_eye)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -899,7 +899,7 @@ wgl_loadPMatrix(dm *dmp, fastf_t *mat)
 	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	}
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     mptr = mat;
@@ -927,7 +927,7 @@ wgl_loadPMatrix(dm *dmp, fastf_t *mat)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1102,7 +1102,7 @@ wgl_drawVListHiddenLine(dm *dmp, register struct bn_vlist *vp)
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1255,7 +1255,7 @@ wgl_drawVList(dm *dmp, struct bn_vlist *vp)
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1270,12 +1270,12 @@ wgl_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    vp = callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1305,7 +1305,7 @@ wgl_normal(dm *dmp)
 	    glDisable(GL_LIGHTING);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1327,7 +1327,7 @@ wgl_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int u
     glListBase(((struct wgl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     glCallLists((GLuint)strlen(str), GL_UNSIGNED_BYTE,  str);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1360,7 +1360,7 @@ wgl_drawLine2D(dm *dmp, fastf_t x1, fastf_t y1, fastf_t x2, fastf_t y2)
     glVertex2f(x2, y2);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1391,7 +1391,7 @@ wgl_drawPoint2D(dm *dmp, fastf_t x, fastf_t y)
     glVertex2f(x, y);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1399,7 +1399,7 @@ HIDDEN int
 wgl_drawPoint3D(dm *dmp, point_t point)
 {
     if (!dmp || !point)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("wgl_drawPoint3D():\n");
@@ -1411,7 +1411,7 @@ wgl_drawPoint3D(dm *dmp, point_t point)
     glVertex3dv(point);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1421,7 +1421,7 @@ wgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
     register int i;
 
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("wgl_drawPoint3D():\n");
@@ -1433,7 +1433,7 @@ wgl_drawPoints3D(dm *dmp, int npoints, point_t *points)
 	glVertex3dv(points[i]);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1453,7 +1453,7 @@ wgl_setLineAttr(dm *dmp, int width, int style)
     else
 	glDisable(GL_LINE_STIPPLE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1463,7 +1463,7 @@ wgl_debug(dm *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1490,7 +1490,7 @@ wgl_setWinBounds(dm *dmp, fastf_t w[6])
     glPushMatrix();
     glMatrixMode(mm);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1578,7 +1578,7 @@ wgl_configureWin_guts(dm *dmp,
     if (!force &&
 	dmp->dm_height == (xwa.bottom-xwa.top) &&
 	dmp->dm_width == (xwa.right-xwa.left))
-	return TCL_OK;
+	return BRLCAD_OK;
 
     wgl_reshape(dmp, xwa.right-xwa.left, xwa.bottom-xwa.top);
 
@@ -1607,7 +1607,7 @@ wgl_configureWin_guts(dm *dmp,
 		   (HFONT *)CreateFontIndirect(&logfont)) == NULL) */
 	    {
 		bu_log("wgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
@@ -1640,7 +1640,7 @@ wgl_configureWin_guts(dm *dmp,
 	if ((((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct =
 	     CreateFontIndirect(&logfont)) == NULL) {
 	    bu_log("wgl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	oldfont = SelectObject(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc, ((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct);
@@ -1878,7 +1878,7 @@ wgl_configureWin_guts(dm *dmp,
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1923,10 +1923,10 @@ wgl_makeCurrent(dm *dmp)
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("wgl_makeCurrent: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1936,7 +1936,7 @@ wgl_configureWin(dm *dmp, int force)
     if (!wglMakeCurrent(((struct dm_xvars *)dmp->dm_vars.pub_vars)->hdc,
 			((struct wgl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("wgl_configureWin: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return wgl_configureWin_guts(dmp, force);
@@ -1974,7 +1974,7 @@ wgl_setLight(dm *dmp, int lighting_on)
 	glEnable(GL_LIGHT0);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1998,7 +1998,7 @@ wgl_setTransparency(dm *dmp,
 	glDisable(GL_BLEND);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2015,7 +2015,7 @@ wgl_setDepthMask(dm *dmp,
     else
 	glDepthMask(GL_FALSE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2041,7 +2041,7 @@ wgl_setZBuffer(dm *dmp, int zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2052,7 +2052,7 @@ wgl_beginDList(dm *dmp, unsigned int list)
 	bu_log("wgl_beginDList()\n");
 
     glNewList((GLuint)list, GL_COMPILE);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2063,7 +2063,7 @@ wgl_endDList(dm *dmp)
 	bu_log("wgl_endDList()\n");
 
     glEndList();
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2071,7 +2071,7 @@ int
 wgl_drawDList(unsigned int list)
 {
     glCallList((GLuint)list);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2082,7 +2082,7 @@ wgl_freeDLists(dm *dmp, unsigned int list, int range)
 	bu_log("wgl_freeDLists()\n");
 
     glDeleteLists((GLuint)list, (GLsizei)range);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 

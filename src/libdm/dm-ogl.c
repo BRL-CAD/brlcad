@@ -204,7 +204,7 @@ ogl_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsign
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -231,7 +231,7 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
     if (!force &&
 	dmp->dm_height == xwa.height &&
 	dmp->dm_width == xwa.width)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     ogl_reshape(dmp, xwa.width, xwa.height);
 
@@ -245,7 +245,7 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
 		 XLoadQueryFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy,
 				FONTBACK)) == NULL) {
 		bu_log("ogl_configureWin_guts: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	glXUseXFont(((struct dm_xvars *)dmp->dm_vars.pub_vars)->fontstruct->fid,
@@ -347,7 +347,7 @@ ogl_configureWin_guts(struct dm_internal *dmp, int force)
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -396,10 +396,10 @@ ogl_makeCurrent(struct dm_internal *dmp)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_makeCurrent: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -410,7 +410,7 @@ ogl_configureWin(struct dm_internal *dmp, int force)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_configureWin: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return ogl_configureWin_guts(dmp, force);
@@ -448,7 +448,7 @@ ogl_setLight(struct dm_internal *dmp, int lighting_on)
 	glEnable(GL_LIGHT0);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -625,7 +625,7 @@ ogl_close(struct dm_internal *dmp)
     bu_free(dmp->dm_vars.pub_vars, "ogl_close: dm_xvars");
     bu_free(dmp, "ogl_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -822,7 +822,7 @@ ogl_open(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&init_proc_vls);
 	bu_vls_free(&str);
 	(void)ogl_close(dmp);
@@ -998,7 +998,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
     GLXContext old_glxContext;
 
     if (dmp1 == (struct dm_internal *)NULL)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp2 == (struct dm_internal *)NULL) {
 	/* create a new graphics context for dmp1 with private display lists */
@@ -1012,7 +1012,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp1->dm_vars.pub_vars)->dpy,
@@ -1021,7 +1021,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* display list (fontOffset + char) will display a given ASCII char */
@@ -1029,7 +1029,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	    bu_log("dm-ogl: Can't make display lists for font.\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	/* This is the applications display list offset */
@@ -1092,7 +1092,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	    bu_log("ogl_share_dlist: couldn't create glXContext.\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (!glXMakeCurrent(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy,
@@ -1101,7 +1101,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	    bu_log("ogl_share_dlist: Couldn't make context current\nUsing old context\n.");
 	    ((struct ogl_vars *)dmp2->dm_vars.priv_vars)->glxc = old_glxContext;
 
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	((struct ogl_vars *)dmp2->dm_vars.priv_vars)->fontOffset = ((struct ogl_vars *)dmp1->dm_vars.priv_vars)->fontOffset;
@@ -1150,7 +1150,7 @@ ogl_share_dlist(struct dm_internal *dmp1, struct dm_internal *dmp2)
 	glXDestroyContext(((struct dm_xvars *)dmp2->dm_vars.pub_vars)->dpy, old_glxContext);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1189,7 +1189,7 @@ ogl_drawBegin(struct dm_internal *dmp)
 			((struct dm_xvars *)dmp->dm_vars.pub_vars)->win,
 			((struct ogl_vars *)dmp->dm_vars.priv_vars)->glxc)) {
 	bu_log("ogl_drawBegin: Couldn't make context current\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* clear back buffer */
@@ -1239,7 +1239,7 @@ ogl_drawBegin(struct dm_internal *dmp)
     }
 
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1312,7 +1312,7 @@ ogl_drawEnd(struct dm_internal *dmp)
     }
 
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1411,7 +1411,7 @@ ogl_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
 	bu_vls_free(&tmp_vls);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1439,7 +1439,7 @@ ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
 	    glOrtho(-xlim_view, xlim_view, -ylim_view, ylim_view, dmp->dm_clipmin[2], dmp->dm_clipmax[2]);
 	}
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     mptr = mat;
@@ -1467,7 +1467,7 @@ ogl_loadPMatrix(struct dm_internal *dmp, fastf_t *mat)
     glLoadIdentity();
     glLoadMatrixf(gtmat);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1641,7 +1641,7 @@ ogl_drawVListHiddenLine(struct dm_internal *dmp, register struct bn_vlist *vp)
 
     glDisable(GL_POLYGON_OFFSET_FILL);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1792,7 +1792,7 @@ ogl_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
     glPointSize(originalPointSize);
     glLineWidth(originalLineWidth);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1807,12 +1807,12 @@ ogl_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *),
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    (void)callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1867,7 +1867,7 @@ ogl_normal(struct dm_internal *dmp)
 	bu_vls_free(&tmp_vls);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1889,7 +1889,7 @@ ogl_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y,
     glListBase(((struct ogl_vars *)dmp->dm_vars.priv_vars)->fontOffset);
     glCallLists(strlen(str), GL_UNSIGNED_BYTE,  str);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1927,7 +1927,7 @@ ogl_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
     glVertex2f(x, y);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1937,7 +1937,7 @@ ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
     GLdouble dpt[3];
 
     if (!dmp || !point)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint3D():\n");
@@ -1952,7 +1952,7 @@ ogl_drawPoint3D(struct dm_internal *dmp, point_t point)
     glVertex3dv(dpt);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1963,7 +1963,7 @@ ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
     register int i;
 
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmp->dm_debugLevel) {
 	bu_log("ogl_drawPoint3D():\n");
@@ -1978,7 +1978,7 @@ ogl_drawPoints3D(struct dm_internal *dmp, int npoints, point_t *points)
     }
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2038,7 +2038,7 @@ ogl_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsign
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2058,7 +2058,7 @@ ogl_setLineAttr(struct dm_internal *dmp, int width, int style)
     else
 	glDisable(GL_LINE_STIPPLE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2067,7 +2067,7 @@ ogl_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -2075,7 +2075,7 @@ ogl_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -2101,7 +2101,7 @@ ogl_setWinBounds(struct dm_internal *dmp, fastf_t *w)
     glPushMatrix();
     glMatrixMode(mm);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2125,7 +2125,7 @@ ogl_setTransparency(struct dm_internal *dmp,
 	glDisable(GL_BLEND);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2142,7 +2142,7 @@ ogl_setDepthMask(struct dm_internal *dmp,
     else
 	glDepthMask(GL_FALSE);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2168,7 +2168,7 @@ ogl_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 	glDisable(GL_DEPTH_TEST);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2179,7 +2179,7 @@ ogl_beginDList(struct dm_internal *dmp, unsigned int list)
 	bu_log("ogl_beginDList()\n");
 
     glNewList((GLuint)list, GL_COMPILE);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2190,7 +2190,7 @@ ogl_endDList(struct dm_internal *dmp)
 	bu_log("ogl_endDList()\n");
 
     glEndList();
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2198,7 +2198,7 @@ HIDDEN int
 ogl_drawDList(unsigned int list)
 {
     glCallList((GLuint)list);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2209,7 +2209,7 @@ ogl_freeDLists(struct dm_internal *dmp, unsigned int list, int range)
 	bu_log("ogl_freeDLists()\n");
 
     glDeleteLists((GLuint)list, (GLsizei)range);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2265,10 +2265,10 @@ ogl_getDisplayImage(struct dm_internal *dmp, unsigned char **image)
 	flip_display_image_vertically(*image, width, height);
     } else {
 	bu_log("ogl_getDisplayImage: Display type not set as OGL or WGL\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK; /* caller will need to bu_free(idata, "image data"); */
+    return BRLCAD_OK; /* caller will need to bu_free(idata, "image data"); */
 }
 
 int
