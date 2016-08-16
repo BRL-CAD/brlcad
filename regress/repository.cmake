@@ -40,10 +40,34 @@
 #
 ###
 
-CMAKE_POLICY(SET CMP0007 NEW)
+cmake_policy(SET CMP0007 NEW)
 if ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
-  CMAKE_POLICY(SET CMP0054 NEW)
+  cmake_policy(SET CMP0054 NEW)
 endif ("${CMAKE_VERSION}" VERSION_GREATER 3.0.9)
+
+
+# Wrapper for pre-3.6 CMake - once we can require
+# 3.6 as a minimum, replace these with
+#
+# list(FILTER working_list ${mode} REGEX "${pattern}")
+#
+# when we can require 3.6.
+macro(list_FILTER working_list mode matchmode pattern)
+  set(tmp_list)
+  foreach(line ${${working_list}})
+    if("${mode}" STREQUAL "EXCLUDE")
+      if(NOT "${line}" MATCHES "${pattern}")
+	list(APPEND tmp_list "${line}")
+      endif(NOT "${line}" MATCHES "${pattern}")
+    else("${mode}" STREQUAL "EXCLUDE")
+      if("${line}" MATCHES "${pattern}")
+	list(APPEND tmp_list "${line}")
+      endif("${line}" MATCHES "${pattern}")
+    endif("${mode}" STREQUAL "EXCLUDE")
+  endforeach(line ${${working_list}})
+  set(${working_list} ${tmp_list})
+endmacro(list_FILTER)
+
 
 # Set this if any test fails
 set(REPO_CHECK_FAILED 0)
@@ -90,43 +114,43 @@ file(GLOB_RECURSE FILE_SYSTEM_FILES
 if(DEFINED BUILD_DIR)
   if(NOT "${SOURCE_DIR}" STREQUAL "${BUILD_DIR}")
     string(REPLACE "${SOURCE_DIR}/" "" REL_BUILD "${BUILD_DIR}")
-    list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX "^${REL_BUILD}/.*")
+    list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX "^${REL_BUILD}/.*")
   endif(NOT "${SOURCE_DIR}" STREQUAL "${BUILD_DIR}")
 endif(DEFINED BUILD_DIR)
 
 # We don't want any .svn files
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]svn.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]svn.*")
 
 # Skip 3rd party files
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*src/other.*")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/tools.*")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/svn2git.*")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*/shapelib/.*")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/macosx/openUp.c")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*src/other.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/tools.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/svn2git.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*/shapelib/.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/macosx/openUp.c")
 
 # Documentation files
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*doc/parsers/templates/.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*doc/parsers/templates/.*")
 
 # Test srcs
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/compat/.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/compat/.*")
 
 # Misc. test and demo files
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/Bullet_Box_Chain_Demo.cpp")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/opencl-raytracer-tests/.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/Bullet_Box_Chain_Demo.cpp")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/opencl-raytracer-tests/.*")
 
 # CMake find modules - often these are convenience inclusions of a 3rd
 # party module not yet incorporated into CMake, and given the number of
 # times they end up needing to contend with platform specific irregularities
 # it doesn't make much sense to police them.
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/Find.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*misc/CMake/Find.*")
 
 # We aren't interested in temporary files, log files, make
 # files, or cache files
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*~")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]swp")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]log")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*Makefile.*")
-list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*cache$")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*~")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]swp")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*[.]log")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*Makefile.*")
+list_FILTER(FILE_SYSTEM_FILES EXCLUDE REGEX ".*cache$")
 
 # Now, build up lists of files we *do* want consider for
 # the various categories
@@ -135,7 +159,7 @@ list(FILTER FILE_SYSTEM_FILES EXCLUDE REGEX ".*cache$")
 macro(define_src_files)
   if(NOT SRCFILES)
     set(SRCFILES ${FILE_SYSTEM_FILES})
-    list(FILTER SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]y$|.*[.]yy$|.*[.]l$")
+    list_FILTER(SRCFILES INCLUDE REGEX ".*[.]c$|.*[.]cpp$|.*[.]cxx$|.*[.]cc$|.*[.]y$|.*[.]yy$|.*[.]l$")
   endif(NOT SRCFILES)
 endmacro(define_src_files)
 
@@ -143,7 +167,7 @@ endmacro(define_src_files)
 macro(define_inc_files)
   if(NOT INCFILES)
     set(INCFILES ${FILE_SYSTEM_FILES})
-    list(FILTER INCFILES INCLUDE REGEX ".*[.]h$|.*[.]hpp$|.*[.]hxx$")
+    list_FILTER(INCFILES INCLUDE REGEX ".*[.]h$|.*[.]hpp$|.*[.]hxx$")
   endif(NOT INCFILES)
 endmacro(define_inc_files)
 
@@ -151,7 +175,7 @@ endmacro(define_inc_files)
 macro(define_bld_files)
   if(NOT BLDFILES)
     set(BLDFILES ${FILE_SYSTEM_FILES})
-    list(FILTER BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
+    list_FILTER(BLDFILES INCLUDE REGEX ".*[.]cmake$|.*CMakeLists.txt$|.*[.]cmake.in$")
   endif(NOT BLDFILES)
 endmacro(define_bld_files)
 
@@ -177,14 +201,14 @@ function(public_headers_test)
   # Start with all include files
   define_inc_files()
   set(PUBLIC_HEADERS ${INCFILES})
-  list(FILTER PUBLIC_HEADERS INCLUDE REGEX ".*include/.*")
+  list_FILTER(PUBLIC_HEADERS INCLUDE REGEX ".*include/.*")
 
   # Exclude a few that have known issues...
-  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/brep.h")
-  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/bu/cmd.h")
-  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb.h")
-  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_osgl.h")
-  list(FILTER PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_wgl.h")
+  list_FILTER(PUBLIC_HEADERS EXCLUDE REGEX ".*include/brep.h")
+  list_FILTER(PUBLIC_HEADERS EXCLUDE REGEX ".*include/bu/cmd.h")
+  list_FILTER(PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb.h")
+  list_FILTER(PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_osgl.h")
+  list_FILTER(PUBLIC_HEADERS EXCLUDE REGEX ".*include/fb/fb_wgl.h")
 
   # The list of headers we want to check for
   set(PRIVATE_HEADERS bio.h bnetwork.h bsocket.h)
@@ -349,10 +373,10 @@ function(common_h_order_test)
   endforeach(cfile ${ALLSRCFILES})
   set(EXEMPT_FILES bnetwork.h bio.h common.h config_win.h pstdint.h uce-dirent.h ttcp.c optionparser.h ${LEXERS})
   foreach(ef ${EXEMPT_FILES})
-    list(FILTER COMMON_H_FILES EXCLUDE REGEX ".*${ef}")
+    list_FILTER(COMMON_H_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
   # Skip files in CMake directory
-  list(FILTER COMMON_H_FILES EXCLUDE REGEX ".*misc/CMake/.*")
+  list_FILTER(COMMON_H_FILES EXCLUDE REGEX ".*misc/CMake/.*")
 
   # Have candidate files, start processing
   foreach(cfile ${COMMON_H_FILES})
@@ -487,7 +511,7 @@ function(api_usage_test func)
 
   if(FUNC_EXEMPT)
     foreach(fname ${FUNC_EXEMPT})
-      list(FILTER FUNC_SRCS EXCLUDE REGEX ".*/${fname}")
+      list_FILTER(FUNC_SRCS EXCLUDE REGEX ".*/${fname}")
     endforeach(fname ${FUNC_EXEMPT})
   endif(FUNC_EXEMPT)
 
@@ -557,7 +581,7 @@ function(sources_platform_symbol_usage_test expected)
   set(ACTIVE_SRC_FILES ${ALLSRCFILES})
   set(EXEMPT_FILES pstdint.h uce-dirent.h)
   foreach(ef ${EXEMPT_FILES})
-    list(FILTER ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
+    list_FILTER(ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
 
   # Check all files
@@ -614,7 +638,7 @@ function(build_files_platform_symbol_usage_test symb expected)
   set(ACTIVE_BLD_FILES ${BLDFILES})
   set(EXEMPT_FILES autoheader.cmake repository.cmake BRLCAD_CMakeFiles.cmake)
   foreach(ef ${EXEMPT_FILES})
-    list(FILTER ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
+    list_FILTER(ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
 
   # Check all files, but bookkeep separately for source and build files
