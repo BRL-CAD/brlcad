@@ -887,7 +887,7 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
 	bu_log("| Order | Compare Function |  Unique?  |     Root     |   Package    |     Data     |\n");
 	bu_log("+-------+------------------+-----------+--------------+--------------+--------------+\n");
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {
-	    bu_log("| %3d   |   <%010p>   |    %-3.3s    | <%010p> | <%010p> | <%010p> |\n",
+	    bu_log("| %3d   |   <%p>   |    %-3.3s    | <%p> | <%p> | <%p> |\n",
 		   i,
 		   RB_COMPARE_FUNC(tree, i),
 		   RB_GET_UNIQUENESS(tree, i) ? "Yes" : "No",
