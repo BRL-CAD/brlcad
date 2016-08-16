@@ -576,13 +576,19 @@ endfunction(api_usage_test func)
 # logic in our code - instead, we want to feature test and use those tests
 # for conditional logic.
 
-function(sources_platform_symbol_usage_test expected)
+function(sources_platform_symbol_usage_test inputtype expected)
 
-  message("Searching source files for platform symbols...")
+  message("Searching ${inputtype} files for platform symbols...")
 
   # Build the source and include file test set
-  define_allsrc_files()
-  set(ACTIVE_SRC_FILES ${ALLSRCFILES})
+  if("${inputtype}" STREQUAL "source")
+    define_src_files()
+    set(ACTIVE_SRC_FILES ${SRCFILES})
+  endif("${inputtype}" STREQUAL "source")
+  if("${inputtype}" STREQUAL "header")
+    define_inc_files()
+    set(ACTIVE_SRC_FILES ${INCFILES})
+  endif("${inputtype}" STREQUAL "header")
   set(EXEMPT_FILES pstdint.h uce-dirent.h)
   foreach(ef ${EXEMPT_FILES})
     list_FILTER(ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
@@ -610,7 +616,7 @@ function(sources_platform_symbol_usage_test expected)
     string(REPLACE ";" "\n" report "${report_list}")
 
     # Final report
-    message("\nFIXME: Found ${symbol_cnt} instances Operating System specific symbol usage in the build files:\n")
+    message("\nFIXME: Found ${symbol_cnt} instances Operating System specific symbol usage in the ${inputtype} files:\n")
     message("${report}\n")
 
     # Based on symbol count, report appropriately
@@ -623,19 +629,19 @@ function(sources_platform_symbol_usage_test expected)
       if("${symbol_cnt}" LESS "${expected}")
 	message("Note: expected ${expected} symbols, found ${symbol_cnt} - need to update expected total.")
       endif("${symbol_cnt}" LESS "${expected}")
-      message("-> sources platform symbol check succeeded")
+      message("-> ${inputtype} platform symbol check succeeded")
     endif("${symbol_cnt}" GREATER "${expected}")
 
   else(report)
 
-    message("-> sources platform symbol check succeeded")
+    message("-> ${inputtype} platform symbol check succeeded")
 
   endif(report)
 
 endfunction(sources_platform_symbol_usage_test)
 
 
-function(build_files_platform_symbol_usage_test symb expected)
+function(build_files_platform_symbol_usage_test symlist expected)
 
   # Build the build file test set
   define_bld_files()
@@ -645,13 +651,17 @@ function(build_files_platform_symbol_usage_test symb expected)
     list_FILTER(ACTIVE_BLD_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
 
+  string(REPLACE ";" "|" pcore "${${symlist}}")
+  set(platform_regex "(${pcore})")
+  message("platform_regex: ${platform_regex}")
+
   # Check all files, but bookkeep separately for source and build files
   # CMake variables are case sensitive, so we only need to check for upper
   # case:  http://public.kitware.com/pipermail/cmake/2009-November/033080.html
   foreach(cfile ${ACTIVE_BLD_FILES})
     file(READ "${SOURCE_DIR}/${cfile}" FILE_SRC)
-    if("${FILE_SRC}" MATCHES "${symb}")
-      set(regex "[# \t]*(if|IF).*[^A-Z](${symb})_*([^A-Z]|\n|\r)")
+    if("${FILE_SRC}" MATCHES "${platform_regex}")
+      set(regex "[# \t]*(if|IF).*[^A-Z](${pcore})_*([^A-Z]|\n|\r)")
       if("${FILE_SRC}" MATCHES "${regex}")
 	# Since we know we have a problem, zero in on the exact line number(s) for reporting purposes
 	set(cline 1)
@@ -666,47 +676,45 @@ function(build_files_platform_symbol_usage_test symb expected)
 	  math(EXPR POS "${POS} + 1")
 	  string(SUBSTRING "${working_file}" 0 ${POS} FILE_LINE)
 	  string(SUBSTRING "${working_file}" ${POS} -1 working_file)
-	  if("${FILE_LINE}" MATCHES "${symb}")
+	  if("${FILE_LINE}" MATCHES "${platform_regex}")
 	    if("${FILE_LINE}" MATCHES "^${regex}")
 	      string(FIND "${FILE_LINE}" "\n" POS)
 	      string(SUBSTRING "${FILE_LINE}" 0 ${POS} TRIMMED_LINE)
-	      list(APPEND ${symb}_BLD_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
+	      list(APPEND BLD_INSTANCES "${cfile}:${cline}: ${TRIMMED_LINE}")
 	    endif("${FILE_LINE}" MATCHES "^${regex}")
-	  endif("${FILE_LINE}" MATCHES "${symb}")
-	  if(NOT "${working_file}" MATCHES "${symb}")
+	  endif("${FILE_LINE}" MATCHES "${platform_regex}")
+	  if(NOT "${working_file}" MATCHES "${platform_regex}")
 	    set(HAVE_MATCH 0)
-	  endif(NOT "${working_file}" MATCHES "${symb}")
+	  endif(NOT "${working_file}" MATCHES "${platform_regex}")
 	  math(EXPR cline "${cline} + 1")
 	endwhile(working_file AND HAVE_MATCH)
       endif("${FILE_SRC}" MATCHES "${regex}")
-    endif("${FILE_SRC}" MATCHES "${symb}")
+    endif("${FILE_SRC}" MATCHES "${platform_regex}")
   endforeach(cfile ${ACTIVE_BLD_FILES})
 
   set(total_cnt 0)
-  set(total_BLD_cnt ${total_BLD_cnt})
   set(msg)
-  if(${symb}_BLD_INSTANCES)
-    list(LENGTH ${symb}_BLD_INSTANCES symb_len)
-    set(msg "\nFIXME: Found ${symb_len} instances of ${symb} usage in the build files:\n")
-    foreach(ln ${${symb}_BLD_INSTANCES})
+  if(BLD_INSTANCES)
+    list(LENGTH BLD_INSTANCES symb_len)
+    list(SORT BLD_INSTANCES)
+    set(msg "\nFIXME: Found ${symb_len} instances of platform symbol usage in the build files:\n")
+    foreach(ln ${BLD_INSTANCES})
       set(msg "${msg}\n  ${ln}")
       math(EXPR total_cnt "${total_cnt} + 1")
-    endforeach(ln ${${symb}_BLD_INSTANCES})
-  endif(${symb}_BLD_INSTANCES)
+    endforeach(ln ${BLD_INSTANCES})
+  endif(BLD_INSTANCES)
   if(msg)
     message("${msg}")
   endif(msg)
-  math(EXPR total_BLD_cnt "${total_BLD_cnt} + ${total_cnt}")
-  set(total_BLD_cnt ${total_BLD_cnt} PARENT_SCOPE)
 
   if(${total_cnt} GREATER ${expected})
     # Let top level know about failure
     math(EXPR REPO_CHECK_FAILED "${REPO_CHECK_FAILED} + 1")
     set(REPO_CHECK_FAILED ${REPO_CHECK_FAILED} PARENT_SCOPE)
-    message("\nError: expected ${expected} instances of ${symb}, found ${total_cnt}")
+    message("\nError: expected ${expected} instances, found ${total_cnt}")
   endif(${total_cnt} GREATER ${expected})
   if(${total_cnt} LESS ${expected})
-    message("\nNote: expected ${expected} instances of ${symb}, found ${total_cnt} - update expected value.")
+    message("\nNote: expected ${expected} instances, found ${total_cnt} - update expected value.")
   endif(${total_cnt} LESS ${expected})
 
 endfunction(build_files_platform_symbol_usage_test)
@@ -785,53 +793,40 @@ if(SYMBOL_USAGE_TEST)
 endif(SYMBOL_USAGE_TEST)
 
 if(RUN_SRCS_PLATFORM_SYMBOLS OR RUN_ALL_TESTS)
-  sources_platform_symbol_usage_test(0)
+  sources_platform_symbol_usage_test(header 0)
+  sources_platform_symbol_usage_test(source 0)
 endif(RUN_SRCS_PLATFORM_SYMBOLS OR RUN_ALL_TESTS)
 
-if(RUN_ALL_TESTS)
-  message("\nTotal symbol count (srcs): ${total_SRC_cnt}\n")
-endif(RUN_ALL_TESTS)
-
 set(BLD_PLATFORMS
-  "AIX:0"
-  "APPLE:0"
-  "CYGWIN:0"
-  "DARWIN:0"
-  "FREEBSD:0"
-  "HAIKU:0"
-  "HPUX:0"
-  "LINUX:0"
-  "MINGW:0"
-  "MSDOS:0"
-  "QNX:0"
-  "SGI:0"
-  "SOLARIS:0"
-  "SUN:0"
-  "SUNOS:0"
-  "SVR4:0"
-  "SYSV:0"
-  "ULTRIX:0"
-  "UNIX:0"
-  "VMS:0"
-  "WIN16:0"
-  "WIN32:0"
-  "WIN64:0"
-  "WINE:0"
-  "WINNT:0"
+  AIX
+  APPLE
+  CYGWIN
+  DARWIN
+  FREEBSD
+  HAIKU
+  HPUX
+  LINUX
+  MINGW
+  MSDOS
+  QNX
+  SGI
+  SOLARIS
+  SUN
+  SUNOS
+  SVR4
+  SYSV
+  ULTRIX
+  UNIX
+  VMS
+  WIN16
+  WIN32
+  WIN64
+  WINE
+  WINNT
   )
-set(total_BLD_cnt 0)
-foreach(ptfm ${BLD_PLATFORMS})
-  string(REPLACE ":" ";" ptlist ${ptfm})
-  list(GET ptlist 0 plat)
-  list(GET ptlist 1 expect)
-  if("${SYMBOL_USAGE_TEST_BLD}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
-    build_files_platform_symbol_usage_test(${plat} ${expect})
-  endif("${SYMBOL_USAGE_TEST_BLD}" STREQUAL "${plat}" OR RUN_ALL_TESTS)
-endforeach(ptfm ${BLD_PLATFORMS})
-
-if(RUN_ALL_TESTS)
-  message("\nTotal symbol count (build files): ${total_BLD_cnt}\n")
-endif(RUN_ALL_TESTS)
+if(RUN_BLD_PLATFORM_SYMBOLS OR RUN_ALL_TESTS)
+  build_files_platform_symbol_usage_test(BLD_PLATFORMS 0)
+endif(RUN_BLD_PLATFORM_SYMBOLS OR RUN_ALL_TESTS)
 
 if(REPO_CHECK_FAILED)
   message(FATAL_ERROR "\ncheck complete, errors found.")
