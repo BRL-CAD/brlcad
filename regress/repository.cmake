@@ -653,7 +653,6 @@ function(build_files_platform_symbol_usage_test symlist expected)
 
   string(REPLACE ";" "|" pcore "${${symlist}}")
   set(platform_regex "(${pcore})")
-  message("platform_regex: ${platform_regex}")
 
   # Check all files, but bookkeep separately for source and build files
   # CMake variables are case sensitive, so we only need to check for upper
