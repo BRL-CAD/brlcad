@@ -560,28 +560,32 @@ function(sources_platform_symbol_usage_test expected)
     list(FILTER ACTIVE_SRC_FILES EXCLUDE REGEX ".*${ef}")
   endforeach(ef ${EXEMPT_FILES})
 
-  # Initialize "collectors"
-  set(symbol_cnt 0)
-  set(report)
-
   # Check all files
   foreach(cfile ${ACTIVE_SRC_FILES})
     execute_process(COMMAND ${UNIFDEF_EXEC} -P ${cfile} WORKING_DIRECTORY ${SOURCE_DIR} OUTPUT_VARIABLE FILE_REPORT)
     if(FILE_REPORT)
       set(report "${report}\n${FILE_REPORT}")
-      string(REPLACE "\n" ";" report_list "${FILE_REPORT}")
-      list(LENGTH report_list LIST_LEN)
-      math(EXPR symbol_cnt "${symbol_cnt} + ${LIST_LEN}")
     endif(FILE_REPORT)
   endforeach(cfile ${ACTIVE_SRC_FILES})
 
-  if(symbol_cnt)
-    message("\nFIXME: Found ${symbol_cnt} instances Operating System specific symbol usage in the build files:\n")
+  # If we found anything, we have some reporting to do
+  if(report)
+
+    # unifdef will report each line for each symbol on that line - we only want
+    # one report per line, so convert to list form and process
     string(REPLACE "\n" ";" report_list "${report}")
     list(SORT report_list)
     list(REMOVE_DUPLICATES report_list)
+    list(LENGTH report_list symbol_cnt)
+
+    # Back to string format
     string(REPLACE ";" "\n" report "${report_list}")
+
+    # Final report
+    message("\nFIXME: Found ${symbol_cnt} instances Operating System specific symbol usage in the build files:\n")
     message("${report}\n")
+
+    # Based on symbol count, report appropriately
     if("${symbol_cnt}" GREATER "${expected}")
       message("Error: expected ${expected} symbols, found ${symbol_cnt}\n")
       # Let top level know about failure
@@ -593,9 +597,12 @@ function(sources_platform_symbol_usage_test expected)
       endif("${symbol_cnt}" LESS "${expected}")
       message("-> sources platform symbol check succeeded")
     endif("${symbol_cnt}" GREATER "${expected}")
-  else(symbol_cnt)
+
+  else(report)
+
     message("-> sources platform symbol check succeeded")
-  endif(symbol_cnt)
+
+  endif(report)
 
 endfunction(sources_platform_symbol_usage_test)
 
