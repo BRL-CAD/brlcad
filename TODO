@@ -18,6 +18,9 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
+* sean: check if bu_str_true/false need the t/f shorthand anywhere,
+  check on empty==false
+
 * update astyle
 
 * bundle primary rays in rt front end into postage stamps, shoot via
