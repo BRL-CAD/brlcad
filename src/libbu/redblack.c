@@ -889,7 +889,7 @@ bu_rb_summarize_tree(struct bu_rb_tree *tree)
 	for (i = 0; i < tree->rbt_nm_orders; ++i) {
 	    bu_log("| %3d   |   <%p>   |    %-3.3s    | <%p> | <%p> | <%p> |\n",
 		   i,
-		   (void *)RB_COMPARE_FUNC(tree, i),
+		   (void *)(uintptr_t)RB_COMPARE_FUNC(tree, i),
 		   RB_GET_UNIQUENESS(tree, i) ? "Yes" : "No",
 		   (void *)RB_ROOT(tree, i),
 		   (RB_ROOT(tree, i) == BU_RB_NODE_NULL) ? NULL : (void *)(RB_ROOT(tree, i)->rbn_package)[i],
