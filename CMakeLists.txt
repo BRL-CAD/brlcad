@@ -670,6 +670,9 @@ endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL 
 # We want to check /usr/local by default, so add it
 set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
 set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+if (IS_DIRECTORY /usr/local/include)
+  include_directories(/usr/local/include)
+endif (IS_DIRECTORY /usr/local/include)
 
 #---------------------------------------------------------------------
 
