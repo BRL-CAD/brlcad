@@ -233,7 +233,7 @@ rt_nurb_c_xsplit(struct edge_g_cnurb *crv, fastf_t param)
 
     NMG_CK_CNURB(crv);
 
-    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type),
+    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
 	k_index = crv->order;
     rt_nurb_kvmult(&new_kv, &crv->k, crv->order, param, (struct resource *)NULL);

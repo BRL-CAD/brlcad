@@ -141,7 +141,7 @@ nmg_rt_isect_plfu(struct faceuse *fu, fastf_t *pt, fastf_t *plane_pt)
 
     bu_log("overlay %s\n", name);
     b = (long *)bu_calloc(fu->s_p->r_p->m_p->maxindex,
-			  sizeof(long), "bit vec"),
+			  sizeof(long), "bit vec");
 
 	pl_erase(fp);
     pd_3space(fp,

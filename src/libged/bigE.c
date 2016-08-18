@@ -1729,8 +1729,8 @@ free_etree(union E_tree *eptr,
 		eptr->l.m = (struct model *)NULL;
 	    }
 	    if (BU_LIST_NON_EMPTY(&eptr->l.seghead)) {
-		MY_FREE_SEG_LIST(&eptr->l.seghead, dgcdp->ap->a_resource);
-	    }
+		MY_FREE_SEG_LIST(&eptr->l.seghead, dgcdp->ap->a_resource)
+		}
 	    if (BU_LIST_NON_EMPTY(&eptr->l.edge_list.l)) {
 		bu_ptbl_free(&eptr->l.edge_list);
 	    }

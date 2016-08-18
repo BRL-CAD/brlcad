@@ -253,7 +253,7 @@ bubblesort(void)
 	    BU_LIST_INSERT(&a->l, &b->l);
 	    if (b->l.back != &head) {
 		a = (struct frame *)b->l.back;
-	    };
+	    }
 	} else {
 	    a=(struct frame *)a->l.forw;
 	}
