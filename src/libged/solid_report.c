@@ -1,4 +1,4 @@
-/*                         R E P O R T . C
+/*                    S O L I D _ R E P O R T . C
  * BRL-CAD
  *
  * Copyright (c) 2008-2016 United States Government as represented by
@@ -17,9 +17,9 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file libged/report.c
+/** @file libged/solid_report.c
  *
- * The report command.
+ * The solid_report command.
  *
  */
 
@@ -33,11 +33,11 @@
  * Returns the solid table & vector list as a string
  *
  * Usage:
- * report [lvl]
+ * solid_report [lvl]
  *
  */
 int
-ged_report(struct ged *gedp, int argc, const char *argv[])
+ged_solid_report(struct ged *gedp, int argc, const char *argv[])
 {
     int lvl = 0;
     static const char *usage = "lvl";
