@@ -1217,5 +1217,3 @@ s/bu_free_array/bu_free_args/g
         fixed misleading name [7.26]
 s/(#[[:space:]]*include[[:space:]]+["<])bu\/rb\.h/\1bu\/redblack.h/g
 	clearer header name [7.26]
-s/ged_report/ged_solid_report/g
-	less ambiguous function name [7.26]
