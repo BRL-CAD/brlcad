@@ -672,7 +672,7 @@ if (IS_DIRECTORY /usr/local)
   set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
   if (IS_DIRECTORY /usr/local/include)
     set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
-    include_directories(/usr/local/include)
+    include_directories(AFTER SYSTEM /usr/local/include)
   endif (IS_DIRECTORY /usr/local/include)
 endif (IS_DIRECTORY /usr/local)
 
