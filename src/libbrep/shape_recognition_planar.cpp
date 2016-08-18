@@ -285,7 +285,7 @@ subbrep_polygon_tri(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *dat
 	 * islands. */
 	ON_2dPointArray on2dpts;
 	std::vector<int> vert_array;
-	int *loop_starts = (int *)bu_calloc(loop_cnt, sizeof(int), "start of loop indicies");
+	int *loop_starts = (int *)bu_calloc(loop_cnt, sizeof(int), "start of loop indices");
 	// Ensure the outer loop is first
 	std::vector<int> ordered_loops;
 	int outer_loop = brep->m_L[loops[0]].Face()->OuterLoop()->m_loop_index;

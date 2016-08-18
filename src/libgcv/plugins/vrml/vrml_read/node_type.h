@@ -35,7 +35,7 @@
 
 using namespace std;
 
-class NODE;  //foward declaration of class
+class NODE;  //forward declaration of class
 
 class NODETYPE
 {

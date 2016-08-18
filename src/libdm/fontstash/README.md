@@ -7,7 +7,7 @@ The code is split in two parts, the font atlas and glyph quad generator [fontsta
 
 ## Screenshot
 
-![screenshot of some text rendered witht the sample program](/example/example.png?raw=true)
+![screenshot of some text rendered with the sample program](/example/example.png?raw=true)
 
 ## Example
 ``` C

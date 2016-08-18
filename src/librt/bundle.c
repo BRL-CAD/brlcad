@@ -398,7 +398,7 @@ rt_shootray_bundle(register struct application *ap, struct xray *rays, int nrays
 	    /* Weave these segments into partition list */
 	    rt_boolweave(&finished_segs, &waiting_segs, &InitialPart, ap);
 
-	    /* Evaluate regions upto box_end */
+	    /* Evaluate regions up to box_end */
 	    done = rt_boolfinal(&InitialPart, &FinalPart,
 				last_bool_start, ss.box_end, regionbits, ap, solidbits);
 	    last_bool_start = ss.box_end;

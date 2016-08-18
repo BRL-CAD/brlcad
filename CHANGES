@@ -163,7 +163,7 @@ infrared & shapefactor tools
 misc tools
 	fix_polysolids' : obsolete primitive
 	remapid : superseded by reid+remat
-	buffer : unnecesary network/stream buffering tool
+	buffer : unnecessary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h

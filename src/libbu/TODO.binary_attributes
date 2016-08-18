@@ -28,7 +28,7 @@ of a chunk of binary attributes (BAs) which we will define as a BSON
 collection of BSON documents (??? check BSON terminology).  At that
 point we use libbson to RW the BAs.
 
-As a minumum, a BA must have an ASCII key and a binary value.
+As a minimum, a BA must have an ASCII key and a binary value.
 Following the BSON specification, the user can add other objects in
 the BA if desired.
 
