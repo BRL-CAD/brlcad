@@ -757,7 +757,7 @@ void tienet_master_shutdown()
 	}
     }
 
-    printf("Total data transferred: %.1f MiB\n", (tfloat)tienet_master_transfer/(tfloat)(1024*1024));
+    printf("Total data transferred: %.1f MiB\n", (TFLOAT)tienet_master_transfer/(TFLOAT)(1024*1024));
 }
 
 

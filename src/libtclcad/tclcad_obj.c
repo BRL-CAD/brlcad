@@ -1276,7 +1276,7 @@ static struct to_cmdtab to_cmds[] = {
     {"refresh_on",	"[0|1]", TO_UNLIMITED, to_refresh_on, GED_FUNC_PTR_NULL},
     {"regdef",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_regdef},
     {"regions",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tables},
-    {"report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_report},
+    {"solid_report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
     {"rfarb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rfarb},
     {"rm",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_remove},
     {"rmap",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rmap},
@@ -1366,7 +1366,7 @@ static struct to_cmdtab to_cmds[] = {
     {"whichid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_which},
     {"who",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_who},
     {"wmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_wmater},
-    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_report},
+    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
     {"xpush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_xpush},
     {"ypr",	"yaw pitch roll", 5, to_view_func_plus, ged_ypr},
     {"zap",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
@@ -1481,15 +1481,7 @@ to_cmd(ClientData clientData,
 	if (ctp->to_name[0] == argv[1][0] &&
 	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
-
-	    /* temporarily comment out the bu_log() hook due to threaded command
-	     * output being slightly tricky; Tcl_Interp objects can only be used
-	     * by the thread which created them.
-	     */
-
-	    /* bu_log_add_hook(to_log_output_handler, (void *)gedp); */
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
-	    /* bu_log_delete_hook(to_log_output_handler, (void *)gedp); */
 	    break;
 	}
     }
@@ -6960,8 +6952,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_append brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7070,8 +7061,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_translate brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7724,8 +7714,7 @@ to_mouse_joint_select(
     }
 
     /* parse args */
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7832,8 +7821,7 @@ to_mouse_joint_selection_translate(
 	    break;
     }
 
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {

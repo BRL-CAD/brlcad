@@ -117,10 +117,7 @@ RT_DECLARE_INTERFACE(constraint);
 RT_DECLARE_INTERFACE(pnts);
 RT_DECLARE_INTERFACE(hrt);
 RT_DECLARE_INTERFACE(datum);
-
-#if OBJ_BREP
 RT_DECLARE_INTERFACE(brep);
-#endif
 RT_DECLARE_INTERFACE(joint);
 
 
@@ -1869,7 +1866,6 @@ const struct rt_functab OBJ[] = {
 	NULL
     },
 
-#if OBJ_BREP
     {
 	/* 37 */
 	RT_FUNCTAB_MAGIC, "ID_BREP", "brep",
@@ -1914,52 +1910,6 @@ const struct rt_functab OBJ[] = {
 	NULL,
 	RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(rt_brep_process_selection)
     },
-#else
-    {
-	/* 37 this entry for placeholder (so table offsets are correct) */
-	RT_FUNCTAB_MAGIC, "ID_BREP_PLCHLDR", "brep",
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	0,
-	0,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL,
-	NULL
-    },
-#endif
 
     {
 	/* 38 (but "should" be 34) Hyperboloid */

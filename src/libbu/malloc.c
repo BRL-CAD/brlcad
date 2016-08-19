@@ -245,12 +245,12 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 #endif
 
 /* align allocations to what address multiple */
-#define ALIGN 8
+#define ALIGNMENT 8
 
     switch (type) {
 	case MALLOC:
 #ifdef HAVE_POSIX_MEMALIGN
-	    if (posix_memalign(&ptr, ALIGN, cnt*size))
+	    if (posix_memalign(&ptr, ALIGNMENT, cnt*size))
 		ptr = NULL;
 #else
 	    ptr = malloc(cnt*size);
@@ -258,7 +258,7 @@ alloc(alloc_t type, size_t cnt, size_t sz, const char *str)
 	    break;
 	case CALLOC:
 #ifdef HAVE_POSIX_MEMALIGN
-	    if (posix_memalign(&ptr, ALIGN, cnt*size))
+	    if (posix_memalign(&ptr, ALIGNMENT, cnt*size))
 		ptr = NULL;
 	    else
 		memset(ptr, 0, cnt*size);

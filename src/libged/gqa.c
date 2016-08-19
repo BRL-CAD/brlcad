@@ -409,11 +409,12 @@ int
 read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
 {
     double a;
-    char units_string[257] = {0};
+#define UNITS_STRING_SZ 256
+    char units_string[UNITS_STRING_SZ+1] = {0};
     int i;
 
 
-    i = sscanf(buf, "%lg%256s", &a, units_string);
+    i = sscanf(buf, "%lg" CPP_SCAN(UNITS_STRING_SZ), &a, units_string);
 
     if (i < 0) return 1;
 
@@ -425,7 +426,7 @@ read_units_double(double *val, char *buf, const struct cvt_tab *cvt)
     if (i == 2) {
 	*val = a;
 	for (; cvt->name[0] != '\0';) {
-	    if (!bu_strncmp(cvt->name, units_string, 256)) {
+	    if (!bu_strncmp(cvt->name, units_string, sizeof(units_string))) {
 		goto found_units;
 	    } else {
 		cvt++;

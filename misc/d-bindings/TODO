@@ -1,0 +1,117 @@
+Limitations
+===========
+
+Currently, neither nested, curly-braced expressions nor function
+bodies are explicitly handled, but they are not normally expected to
+appear in a C library API header.
+
+Some subtleties
+===============
+
+During object extraction and conversion, determine need for some D
+modules, e.g., the ptrdiff_t is known but a special module module must
+be explicitly imported.
+
+Likewise, file pointers and other C stdio kinds of things.
+
+Simple converter
+================
+
+
+Grammar converter
+=================
+
+Use successful program 'extract-grammar.pl' to convert P::RD grammar
+to R::G grammar.
+
+D grammar parser
+================
+
+Make a D grammar parser that creates a Perl class hierarchy to
+interpret and instantiate the C syntax tree (derived with R::G):
+
+C grammar parser
+================
+
+Make a C grammar parser that creates a Perl class hierarchy to
+interpret and instantiate the C syntax tree (derived with P::RD):
+
+  CC/
+   CC.pm # base class
+
+Try parsing individual chunks to fit individual classes by type.
+
+Also don't forget saving state of files (or freezing them) and hash
+checking to eliminate unnecessary rebuilds.
+
+status
+------
+
+Basically working--now convert to use better module Regex::Grammers
+(R::G).
+
+Decide how the D interface system fits into the build system
+============================================================
+
+1.  We need to know some system characteristics to properly create
+    modules.
+
+2.  Is completely-automatic generation of interface modules possible?
+
+3.  What is the status of D standard modules vs. the C library?
+
+Proposed layout in the build directory
+======================================
+  # all public api (for headers found in installed dir
+  # "$BRLCAD_ROOT/include/brlcad" and its sub-dirs)
+  ./di/X.d       # module: brlcad.X (includes all X/* headers)
+  ...
+
+  # other brlcad-specific, private installed headers
+
+  # "$BRLCAD_ROOT/include"
+  ./di/other/X.d  # module: brlcad.other.X
+  ...
+
+  # for subdirs
+  # "$BRLCAD_ROOT/include/X"
+  ./di/X/Y.d      # module: brlcad.X.Y
+  ...
+
+  # for external headers found, we attempt to generate F files for
+  # them and put them in a separate sub-dir
+  ./di/external/X.d      # module: brlcad.external.X
+  ./di/external/X/Y.d    # module: brlcad.external.X.Y
+  ...
+
+Note that for eventual installation the contents of directory "./di"
+will be recursively installed to:
+
+   $BRLCAD_ROOT/d
+
+Current librt dependencies
+==========================
+
+To be successful, the BRL-CAD core library librt must be available,
+and its current, external dependencies on my system are (from ldd):
+
+  linux-vdso.so.1
+  libz.so.1
+  libdl.so.2
+  libpthread.so.0
+  libm.so.6
+  libstdc++.so.6
+  libgcc_s.so.1
+  libc.so.6
+  /lib64/ld-linux-x86-64.so.2
+
+libbu and its external dependencies are only one less:
+
+  linux-vdso.so.1
+  libpthread.so.0
+  libdl.so.2
+  libm.so.6
+  libstdc++.so.6
+  libgcc_s.so.1
+  libc.so.6
+  /lib64/ld-linux-x86-64.so.2

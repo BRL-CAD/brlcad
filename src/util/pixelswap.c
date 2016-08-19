@@ -69,12 +69,16 @@ parse_args(int ac, char **av)
     /* get all the option flags from the command line */
     while ((c=bu_getopt(ac, av, options)) != -1) {
 	switch (c) {
-	    case 'd'	: if ((c=atoi(bu_optarg)) > 0)
-		depth = c;
-	    else
-		fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+	    case 'd':
+		if ((c=atoi(bu_optarg)) > 0)
+		    depth = c;
+		else
+		    fprintf(stderr, "bad # of bytes per pixel (%d)\n", c);
+
 		break;
-	    default	: usage(""); break;
+
+	    default:
+		usage(""); break;
 	}
     }
 

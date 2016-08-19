@@ -134,7 +134,7 @@ rt_reduce_obj(struct rt_db_internal *dest,
 
 	    default:
 		break;
-	};
+	}
 
     bu_log("rt_reduce_obj(): no reduction function for the given object\n");
 }

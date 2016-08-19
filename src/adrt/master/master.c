@@ -267,7 +267,7 @@ master_result(tienet_buffer_t *result)
 		    tind += c;
 
 		    /* skip over the thickness */
-		    tind += sizeof(tfloat);
+		    tind += sizeof(TFLOAT);
 
 		    /* pack the mesh name length and name */
 		    TCOPY(uint8_t, &c, 0, selection_buf.data, selection_buf.ind);

@@ -52,10 +52,6 @@
 #include "./bot_edge.h"
 
 
-#define GLUE(_a, _b) _a ## _b
-#define XGLUE(_a, _b) GLUE(_a, _b)
-
-
 #define MAXHITS 128
 
 #define BOT_MIN_DN 1.0e-9

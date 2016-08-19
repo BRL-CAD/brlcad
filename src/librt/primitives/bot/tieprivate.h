@@ -50,8 +50,8 @@ struct tie_geom_s {
 
 struct tie_stack_s {
     struct tie_kdtree_s *node; /* 4-bytes or 8-bytes */
-    tfloat near; /* 4-bytes or 8-bytes */
-    tfloat far; /* 4-bytes or 8-bytes */
+    TFLOAT near; /* 4-bytes or 8-bytes */
+    TFLOAT far; /* 4-bytes or 8-bytes */
 };
 
 #ifdef __cplusplus

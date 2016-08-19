@@ -34,7 +34,7 @@
 #define	ADRT_USE_COMPRESSION	1
 #define ADRT_MAX_WORKSPACE_NUM	64
 
-/* Pixel Format: 0 = unsigned char, 1 =  tfloat */
+/* Pixel Format: 0 = unsigned char, 1 =  TFLOAT */
 #define	ADRT_PIXEL_FMT		0
 
 /* these are contained in an ADRT_NETOP_WORK message */

@@ -105,11 +105,11 @@ HIDDEN int
 dmo_openFb(struct dm_obj *dmop)
 {
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* already open */
     if (dmop->dmo_fbs.fbs_fbp != FB_NULL)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     dmop->dmo_fbs.fbs_fbp = dm_get_fb(dmop->dmo_dmp);
 
@@ -123,10 +123,10 @@ dmo_openFb(struct dm_obj *dmop)
 	Tcl_AppendStringsToObj(obj, "openfb: failed to allocate framebuffer memory\n", (char *)NULL);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -141,14 +141,14 @@ HIDDEN int
 dmo_closeFb(struct dm_obj *dmop)
 {
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     fb_flush(dmop->dmo_fbs.fbs_fbp);
     fb_close_existing(dmop->dmo_fbs.fbs_fbp);
 
     dmop->dmo_fbs.fbs_fbp = FB_NULL;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -169,7 +169,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -181,7 +181,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* return the port number */
@@ -191,7 +191,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 3) {
@@ -200,7 +200,7 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
 	if (sscanf(argv[2], "%d", &port) != 1) {
 	    Tcl_AppendStringsToObj(obj, "listen: bad value - ", argv[2], "\n", (char *)NULL);
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (port >= 0)
@@ -213,14 +213,14 @@ dmo_listen_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_listen %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -238,7 +238,7 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
     struct bu_vls vls = BU_VLS_INIT_ZERO;
 
     if (!dmop || !dmop->interp || argc < 1 ||  !argv)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmop->dmo_fbs.fbs_fbp == FB_NULL) {
 	Tcl_Obj *obj;
@@ -252,13 +252,13 @@ dmo_refreshFb_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     fb_refresh(dmop->dmo_fbs.fbs_fbp, 0, 0,
 	       dmop->dmo_dmp->dm_width, dmop->dmo_dmp->dm_height);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 #endif
 
@@ -281,24 +281,24 @@ dmo_parseAxesArgs(int argc,
 
     if (argc < 3 || sscanf(argv[2], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad view size - %s\n", argv[2]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     *viewSize = scan;
 
     if (argc < 4 || bn_decode_mat(rmat, argv[3]) != 16) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad rmat - %s\n", argv[3]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 5 || bn_decode_vect(axesPos, argv[4]) != 3) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad axes position - %s\n", argv[4]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 6 || sscanf(argv[5], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad axes size - %s\n", argv[5]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     *axesSize = scan;
@@ -309,7 +309,7 @@ dmo_parseAxesArgs(int argc,
 			   &axesColor[2]) != 3) {
 
 	bu_vls_printf(vlsp, "parseAxesArgs: bad axes color - %s\n", argv[6]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate color */
@@ -318,7 +318,7 @@ dmo_parseAxesArgs(int argc,
 	axesColor[2] < 0 || 255 < axesColor[2]) {
 
 	bu_vls_printf(vlsp, "parseAxesArgs: bad axes color - %s\n", argv[6]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[7], "%d %d %d",
@@ -327,7 +327,7 @@ dmo_parseAxesArgs(int argc,
 	       &labelColor[2]) != 3) {
 
 	bu_vls_printf(vlsp, "parseAxesArgs: bad label color - %s\n", argv[7]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate color */
@@ -336,45 +336,45 @@ dmo_parseAxesArgs(int argc,
 	labelColor[2] < 0 || 255 < labelColor[2]) {
 
 	bu_vls_printf(vlsp, "parseAxesArgs: bad label color - %s\n", argv[7]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[8], "%d", lineWidth) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad line width - %s\n", argv[8]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate lineWidth */
     if (*lineWidth < 0) {
 	bu_vls_printf(vlsp, "parseAxesArgs: line width must be greater than 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse positive only flag */
     if (sscanf(argv[9], "%d", posOnly) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad positive only flag - %s\n", argv[9]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate tick enable flag */
     if (*posOnly < 0) {
 	bu_vls_printf(vlsp, "parseAxesArgs: positive only flag must be >= 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse three color flag */
     if (sscanf(argv[10], "%d", tripleColor) != 1) {
 	bu_vls_printf(vlsp, "parseAxesArgs: bad three color flag - %s\n", argv[10]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate tick enable flag */
     if (*tripleColor < 0) {
 	bu_vls_printf(vlsp, "parseAxesArgs: three color flag must be >= 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -402,24 +402,24 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 11) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawViewAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     memset(&bnas, 0, sizeof(struct bview_axes_state));
 
     if (dmo_parseAxesArgs(argc, argv, &viewSize, rmat, axesPos, &axesSize,
 			  axesColor, labelColor, &lineWidth,
-			  &posOnly, &tripleColor, &vls) == TCL_ERROR) {
+			  &posOnly, &tripleColor, &vls) == BRLCAD_ERROR) {
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     VMOVE(bnas.axes_pos, axesPos);
@@ -433,7 +433,7 @@ dmo_drawViewAxes_tcl(void *clientData, int argc, const char **argv)
     dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -452,7 +452,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
     int color[3];
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -460,7 +460,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 	bu_vls_printf(&vls, "helplib_alias dm_drawCenterDot %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[1], "%d %d %d",
@@ -473,7 +473,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate color */
@@ -486,7 +486,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dm_set_fg(dmop->dmo_dmp,
@@ -496,7 +496,7 @@ dmo_drawCenterDot_cmd(struct dm_obj *dmop,
 
     dm_draw_point_2d(dmop->dmo_dmp, 0.0, 0.0);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -513,7 +513,7 @@ dmo_drawCenterDot_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     return dmo_drawCenterDot_cmd(dmop, argc-1, argv+1);
 }
@@ -535,30 +535,30 @@ dmo_parseDataAxesArgs(int argc,
 
     if (argc < 3 || sscanf(argv[2], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad view size - %s\n", argv[2]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     *viewSize = scan;
 
     if (argc < 4 || bn_decode_mat(rmat, argv[3]) != 16) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad rmat - %s\n", argv[3]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* parse model to view matrix */
     if (argc < 5 || bn_decode_mat(model2view, argv[4]) != 16) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad model2view - %s\n", argv[4]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 6 || bn_decode_vect(axesPos, argv[5]) != 3) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes position - %s\n", argv[5]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (argc < 7 || sscanf(argv[6], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes size - %s\n", argv[6]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     *axesSize = scan;
@@ -568,7 +568,7 @@ dmo_parseDataAxesArgs(int argc,
 			   &axesColor[1],
 			   &axesColor[2]) != 3) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes color - %s\n", argv[7]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate color */
@@ -577,21 +577,21 @@ dmo_parseDataAxesArgs(int argc,
 	axesColor[2] < 0 || 255 < axesColor[2]) {
 
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad axes color - %s\n", argv[7]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[8], "%d", lineWidth) != 1) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: bad line width - %s\n", argv[8]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate lineWidth */
     if (*lineWidth < 0) {
 	bu_vls_printf(vlsp, "parseDataAxesArgs: line width must be greater than 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -618,14 +618,14 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 9) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawDataAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmo_parseDataAxesArgs(argc,
@@ -637,10 +637,10 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 			      &axesSize,
 			      axesColor,
 			      &lineWidth,
-			      &vls) == TCL_ERROR) {
+			      &vls) == BRLCAD_ERROR) {
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     memset(&bndas, 0, sizeof(struct bview_data_axes_state));
@@ -654,7 +654,7 @@ dmo_drawDataAxes_tcl(void *clientData, int argc, const char **argv)
 		      &bndas);
 
     bu_vls_free(&vls);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -685,55 +685,55 @@ dmo_parseModelAxesArgs(int argc,
 
     if (dmo_parseAxesArgs(argc, argv, viewSize, rmat, axesPos, axesSize,
 			  axesColor, labelColor, lineWidth,
-			  posOnly, tripleColor, vlsp) == TCL_ERROR)
-	return TCL_ERROR;
+			  posOnly, tripleColor, vlsp) == BRLCAD_ERROR)
+	return BRLCAD_ERROR;
 
     /* parse model to view matrix */
     if (bn_decode_mat(model2view, argv[11]) != 16) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad model2view - %s\n", argv[11]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse tick enable flag */
     if (sscanf(argv[12], "%d", tickEnable) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick enable flag - %s\n", argv[12]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate tick enable flag */
     if (*tickEnable < 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick enable flag must be >= 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse tick length */
     if (sscanf(argv[13], "%d", tickLength) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick length - %s\n", argv[13]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate tick length */
     if (*tickLength < 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick length must be >= 1\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse major tick length */
     if (sscanf(argv[14], "%d", majorTickLength) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad major tick length - %s\n", argv[14]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate major tick length */
     if (*majorTickLength < 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: major tick length must be >= 1\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse tick interval */
     if (sscanf(argv[15], "%lf", &scan) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick interval must be > 0");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     *tickInterval = scan;
@@ -741,19 +741,19 @@ dmo_parseModelAxesArgs(int argc,
 /* validate tick interval */
     if (*tickInterval <= 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick interval must be > 0");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse ticks per major */
     if (sscanf(argv[16], "%d", ticksPerMajor) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad ticks per major - %s\n", argv[16]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate ticks per major */
     if (*ticksPerMajor < 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: ticks per major must be >= 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse tick color */
@@ -763,7 +763,7 @@ dmo_parseModelAxesArgs(int argc,
 	       &tickColor[2]) != 3) {
 
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick color - %s\n", argv[17]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate tick color */
@@ -772,7 +772,7 @@ dmo_parseModelAxesArgs(int argc,
 	tickColor[2] < 0 || 255 < tickColor[2]) {
 
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick color - %s\n", argv[17]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse major tick color */
@@ -782,7 +782,7 @@ dmo_parseModelAxesArgs(int argc,
 	       &majorTickColor[2]) != 3) {
 
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad major tick color - %s\n", argv[18]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate tick color */
@@ -791,22 +791,22 @@ dmo_parseModelAxesArgs(int argc,
 	majorTickColor[2] < 0 || 255 < majorTickColor[2]) {
 
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad major tick color - %s\n", argv[18]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* parse tick threshold */
     if (sscanf(argv[19], "%d", tickThreshold) != 1) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: bad tick threshold - %s\n", argv[19]);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 /* validate tick threshold */
     if (*tickThreshold <= 0) {
 	bu_vls_printf(vlsp, "parseModelAxesArgs: tick threshold must be > 0\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -844,14 +844,14 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 20) {
 	/* return help message */
 	bu_vls_printf(&vls, "helplib_alias dm_drawModelAxes %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmo_parseModelAxesArgs(argc, argv,
@@ -863,10 +863,10 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
 			       &tickLength, &majorTickLength,
 			       &tickInterval, &ticksPerMajor,
 			       tickColor, majorTickColor,
-			       &tickThreshold, &vls) == TCL_ERROR) {
+			       &tickThreshold, &vls) == BRLCAD_ERROR) {
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     MAT4X3PNT(viewAxesPos, model2view, modelAxesPos);
@@ -891,7 +891,7 @@ dmo_drawModelAxes_tcl(void *clientData, int argc, const char **argv)
     dm_draw_axes(dmop->dmo_dmp, viewSize, rmat, &bnas);
 
     bu_vls_free(&vls);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -908,7 +908,7 @@ dmo_drawBegin_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     return dm_draw_begin(dmop->dmo_dmp);
 }
@@ -920,7 +920,7 @@ dmo_drawEnd_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     return dm_draw_end(dmop->dmo_dmp);
 }
@@ -940,9 +940,9 @@ dmo_clear_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     int status;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    if ((status = dm_draw_begin(dmop->dmo_dmp)) != TCL_OK)
+    if ((status = dm_draw_begin(dmop->dmo_dmp)) != BRLCAD_OK)
 	return status;
 
     return dm_draw_end(dmop->dmo_dmp);
@@ -962,7 +962,7 @@ dmo_normal_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     return dm_normal(dmop->dmo_dmp);
 }
@@ -983,7 +983,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
     int which_eye;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 4) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -991,12 +991,12 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_loadmat %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
 
     if (bn_decode_mat(mat, argv[2]) != 16)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (sscanf(argv[3], "%d", &which_eye) != 1) {
 	Tcl_Obj *obj;
@@ -1007,7 +1007,7 @@ dmo_loadmat_tcl(void *clientData, int argc, const char **argv)
 
 	Tcl_AppendStringsToObj(obj, "bad eye value - ", argv[3], (char *)NULL);
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     MAT_COPY(dmop->viewMat, mat);
@@ -1032,7 +1032,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
     int use_aspect;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 7) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1040,7 +1040,7 @@ dmo_drawString_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_drawString %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*XXX use sscanf */
@@ -1060,7 +1060,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
     fastf_t x, y;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 4) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1068,7 +1068,7 @@ dmo_drawPoint_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_drawPoint %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*XXX use sscanf */
@@ -1093,7 +1093,7 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
     fastf_t xpos1, ypos1, xpos2, ypos2;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 6) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1101,7 +1101,7 @@ dmo_drawLine_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_drawLine %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /*XXX use sscanf */
@@ -1127,7 +1127,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
     struct bn_vlist *vp;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1135,7 +1135,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_drawVList %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lu", (unsigned long *)&vp) != 1) {
@@ -1147,7 +1147,7 @@ dmo_drawVList_tcl(void *clientData, int argc, const char **argv)
 
 	Tcl_AppendStringsToObj(obj, "invalid vlist pointer - ", argv[2], (char *)NULL);
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     BN_CK_VLIST(vp);
@@ -1192,7 +1192,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	bu_vls_printf(&vls, "helplib_alias dm_drawScale %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[1], "%lf", &scan) != 1) {
@@ -1200,7 +1200,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     /* convert double to fastf_t */
     viewSize = scan;
@@ -1213,7 +1213,7 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* validate color */
@@ -1226,12 +1226,12 @@ dmo_drawScale_cmd(struct dm_obj *dmop,
 	Tcl_AppendResult(dmop->interp, bu_vls_addr(&vls), (char *)NULL);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     dm_draw_scale(dmop->dmo_dmp, viewSize, color, color);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1245,7 +1245,7 @@ dmo_drawScale_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     return dmo_drawScale_cmd(dmop, argc-1, argv+1);
 }
@@ -1263,7 +1263,7 @@ dmo_drawSList(struct dm_obj *dmop,
     int linestyle = -1;
 
     if (!dmop)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (dmop->dmo_dmp->dm_transparency) {
 	/* First, draw opaque stuff */
@@ -1310,7 +1310,7 @@ dmo_drawSList(struct dm_obj *dmop,
 	}
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1325,7 +1325,7 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
     struct bu_list *hsp;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1333,7 +1333,7 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_drawSList %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%lu", (unsigned long *)&hsp) != 1) {
@@ -1347,11 +1347,11 @@ dmo_drawSList_tcl(void *clientData, int argc, const char **argv)
 			       argv[2], "\n", (char *)NULL);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
     dmo_drawSList(dmop, hsp);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -1370,7 +1370,7 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1386,7 +1386,7 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set foreground color */
@@ -1412,7 +1412,7 @@ dmo_fg_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_fg %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 
 bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
@@ -1420,7 +1420,7 @@ bad_color:
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(dmop->interp, obj);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1439,7 +1439,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1455,7 +1455,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set background color */
@@ -1477,7 +1477,7 @@ dmo_bg_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_bg %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 
 bad_color:
     bu_vls_printf(&vls, "bad rgb color - %s\n", argv[2]);
@@ -1485,7 +1485,7 @@ bad_color:
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(dmop->interp, obj);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1504,7 +1504,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1517,7 +1517,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set lineWidth */
@@ -1537,7 +1537,7 @@ dmo_lineWidth_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_linewidth %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 
 bad_lineWidth:
     bu_vls_printf(&vls, "bad linewidth - %s\n", argv[2]);
@@ -1545,7 +1545,7 @@ bad_lineWidth:
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(dmop->interp, obj);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1564,7 +1564,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1577,7 +1577,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set linestyle */
@@ -1597,7 +1597,7 @@ dmo_lineStyle_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_linestyle %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 
 bad_linestyle:
     bu_vls_printf(&vls, "bad linestyle - %s\n", argv[2]);
@@ -1605,7 +1605,7 @@ bad_linestyle:
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(dmop->interp, obj);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1623,7 +1623,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
     int status;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 2) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -1631,7 +1631,7 @@ dmo_configure_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_configure %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* configure the display manager window */
@@ -1664,7 +1664,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1677,7 +1677,7 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set zclip flag */
@@ -1686,17 +1686,17 @@ dmo_zclip_tcl(void *clientData, int argc, const char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_zclip: invalid zclip value - ",
 				   argv[2], "\n", (char *)NULL);
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dmop->dmo_dmp->dm_zclip = zclip;
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_zclip %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1715,7 +1715,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1728,7 +1728,7 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set zbuffer flag */
@@ -1737,17 +1737,17 @@ dmo_zbuffer_tcl(void *clientData, int argc, const char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_zbuffer: invalid zbuffer value - ",
 				   argv[2], "\n", (char *)NULL);
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dm_set_zbuffer(dmop->dmo_dmp, zbuffer);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_zbuffer %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1766,7 +1766,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1779,7 +1779,7 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set light flag */
@@ -1789,17 +1789,17 @@ dmo_light_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	(void)dm_set_light(dmop->dmo_dmp, light);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_light %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1818,7 +1818,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1831,7 +1831,7 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set transparency flag */
@@ -1841,17 +1841,17 @@ dmo_transparency_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	(void)dm_set_transparency(dmop->dmo_dmp, transparency);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_transparency %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1870,7 +1870,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1883,7 +1883,7 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set depthMask flag */
@@ -1893,17 +1893,17 @@ dmo_depthMask_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dm_set_depth_mask(dmop->dmo_dmp, depthMask);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_depthMask %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -1925,7 +1925,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
     double clipmax[3];
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -1944,7 +1944,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set window bounds */
@@ -1957,7 +1957,7 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	VMOVE(dmop->dmo_dmp->dm_clipmin, clipmin);
@@ -1974,14 +1974,14 @@ dmo_bounds_tcl(void *clientData, int argc, const char **argv)
 	else
 	    dmop->dmo_dmp->dm_bound = GED_MAX / dmop->dmo_dmp->dm_clipmax[2];
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_bounds %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
 
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -2000,7 +2000,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -2013,7 +2013,7 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set perspective mode */
@@ -2024,17 +2024,17 @@ dmo_perspective_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dmop->dmo_dmp->dm_perspective = perspective;
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_perspective %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -2069,26 +2069,26 @@ dmo_png_cmd(struct dm_obj *dmop,
 	bu_vls_printf(&vls, "helplib_alias dm_png %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if ((fp = fopen(argv[1], "wb")) == NULL) {
 	Tcl_AppendResult(dmop->interp, "png: cannot open \"", argv[1], " for writing\n", (char *)NULL);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     png_p = png_create_write_struct(PNG_LIBPNG_VER_STRING, NULL, NULL, NULL);
     if (!png_p) {
 	Tcl_AppendResult(dmop->interp, "png: could not create PNG write structure\n", (char *)NULL);
 	fclose(fp);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     info_p = png_create_info_struct(png_p);
     if (!info_p) {
 	Tcl_AppendResult(dmop->interp, "png: could not create PNG info structure\n", (char *)NULL);
 	fclose(fp);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     ximage_p = XGetImage(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy,
@@ -2100,7 +2100,7 @@ dmo_png_cmd(struct dm_obj *dmop,
     if (!ximage_p) {
 	Tcl_AppendResult(dmop->interp, "png: could not get XImage\n", (char *)NULL);
 	fclose(fp);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     bytes_per_pixel = ximage_p->bytes_per_line / ximage_p->width;
@@ -2219,7 +2219,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 	fclose(fp);
 	bu_vls_free(&vls);
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     rows = (unsigned char **)bu_calloc(ximage_p->height, sizeof(unsigned char *), "rows");
@@ -2287,7 +2287,7 @@ dmo_png_cmd(struct dm_obj *dmop,
 	    fclose(fp);
 
 	    Tcl_AppendResult(dmop->interp, "png: not supported for this platform\n", (char *)NULL);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -2306,7 +2306,7 @@ dmo_png_cmd(struct dm_obj *dmop,
     bu_free(idata, "image data");
     fclose(fp);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2330,7 +2330,7 @@ dmo_png_tcl(void *clientData, int UNUSED(argc), const char **UNUSED(argv))
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
 #if defined(DM_X) || defined(DM_OGL)
     return dmo_png_cmd(dmop, argc-1, argv+1);
@@ -2357,7 +2357,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -2370,7 +2370,7 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set clearBufferAfter flag */
@@ -2379,17 +2379,17 @@ dmo_clearBufferAfter_tcl(void *clientData, int argc, const char **argv)
 	    Tcl_AppendStringsToObj(obj, "dmo_clearBufferAfter: invalid clearBufferAfter value - ",
 				   argv[2], "\n", (char *)NULL);
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	dmop->dmo_dmp->dm_clearBufferAfter = clearBufferAfter;
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_clearBufferAfter %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -2408,7 +2408,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -2421,7 +2421,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set debug level */
@@ -2431,7 +2431,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
 				   argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	return dm_debug(dmop->dmo_dmp, level);
@@ -2440,7 +2440,7 @@ dmo_debug_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 /*
@@ -2457,7 +2457,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -2470,7 +2470,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* set log file */
@@ -2481,7 +2481,7 @@ dmo_logfile_tcl(void *clientData, int argc, const char **argv)
     bu_vls_printf(&vls, "helplib_alias dm_debug %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -2504,12 +2504,12 @@ dmo_flush_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(ar
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     XFlush(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy);
 #endif
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2531,12 +2531,12 @@ dmo_sync_tcl(void *UNUSED(clientData), int UNUSED(argc), const char **UNUSED(arg
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     XSync(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->dpy, 0);
 #endif
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2555,7 +2555,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmop->interp);
     if (Tcl_IsShared(obj))
@@ -2567,7 +2567,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_free(&vls);
 
 	Tcl_SetObjResult(dmop->interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     if (argc == 3 || argc == 4) {
@@ -2577,7 +2577,7 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	    Tcl_AppendStringsToObj(obj, "size: bad width - ", argv[2], "\n", (char *)NULL);
 
 	    Tcl_SetObjResult(dmop->interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	if (argc == 3)
@@ -2586,24 +2586,24 @@ dmo_size_tcl(void *clientData, int argc, const char **argv)
 	    if (sscanf(argv[3], "%d", &height) != 1) {
 		Tcl_AppendStringsToObj(obj, "size: bad height - ", argv[3], "\n", (char *)NULL);
 		Tcl_SetObjResult(dmop->interp, obj);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 
 #if defined(DM_X) || defined(DM_OGL) || defined(DM_OGL) || defined(DM_WGL)
 	Tk_GeometryRequest(((struct dm_xvars *)dmop->dmo_dmp->dm_vars.pub_vars)->xtkwin,
 			   width, height);
-	return TCL_OK;
+	return BRLCAD_OK;
 #else
 	bu_log("Sorry, support for 'size' command is unavailable.\n");
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 #endif
     }
 
     bu_vls_printf(&vls, "helplib_alias dm_size %s", argv[1]);
     Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
     bu_vls_free(&vls);
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -2622,13 +2622,13 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
     Tcl_Obj *obj;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 2) {
 	bu_vls_printf(&vls, "helplib_alias dm_getaspect %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     obj = Tcl_GetObjResult(dmop->interp);
@@ -2640,7 +2640,7 @@ dmo_get_aspect_tcl(void *clientData, int argc, const char **argv)
     bu_vls_free(&vls);
 
     Tcl_SetObjResult(dmop->interp, obj);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2657,7 +2657,7 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
     struct dm_obj *dmop = (struct dm_obj *)clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc < 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2666,7 +2666,7 @@ dmo_observer_tcl(void *clientData, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_observer %s", argv[1]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     return bu_observer_cmd((ClientData)&dmop->dmo_observers, argc-2, (const char **)argv+2);
@@ -2699,7 +2699,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     Tcl_DString ds;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 1) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2707,7 +2707,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_getDrawLabelsHook %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* FIXME: the standard forbids this kind of crap.  candidate for removal. */
@@ -2718,7 +2718,7 @@ dmo_getDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     Tcl_DStringAppend(&ds, buf, -1);
     Tcl_DStringResult(dmop->interp, &ds);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2738,7 +2738,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     void *clientData;
 
     if (!dmop || !dmop->interp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (argc != 3) {
 	struct bu_vls vls = BU_VLS_INIT_ZERO;
@@ -2746,7 +2746,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 	bu_vls_printf(&vls, "helplib_alias dm_setDrawLabelsHook %s", argv[0]);
 	Tcl_Eval(dmop->interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[1], "%p", (void **)((unsigned char *)&hook)) != 1) {
@@ -2759,7 +2759,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 
 	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (sscanf(argv[2], "%p", &clientData) != 1) {
@@ -2772,7 +2772,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
 
 	dmop->dmo_drawLabelsHook = (int (*)(dm *, struct rt_wdb *, const char *, mat_t, int *, ClientData))0;
 
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* FIXME: standard prohibits casting between function pointers and
@@ -2781,7 +2781,7 @@ dmo_setDrawLabelsHook_cmd(struct dm_obj *dmop, int argc, const char **argv)
     dmop->dmo_drawLabelsHook = hook;
     dmop->dmo_drawLabelsHookClientData = clientData;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -2914,14 +2914,14 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    Tcl_AppendStringsToObj(obj, bu_vls_addr(&dmop->dmo_name), " ", (char *)NULL);
 
 	Tcl_SetObjResult(interp, obj);
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     if (argc < 3) {
 	bu_vls_printf(&vls, "helplib_alias dm_open %s", argv[1]);
 	Tcl_Eval(interp, bu_vls_addr(&vls));
 	bu_vls_free(&vls);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     /* check to see if display manager object exists */
@@ -2930,7 +2930,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    Tcl_AppendStringsToObj(obj, "dmo_open: ", argv[name_index],
 				   " exists.", (char *)NULL);
 	    Tcl_SetObjResult(interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
     }
 
@@ -2962,7 +2962,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 			       "The supported types are: X, ogl, wgl, and nu",
 			       (char *)NULL);
 	Tcl_SetObjResult(interp, obj);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     {
@@ -3003,7 +3003,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 	    bu_free((void *)av, "dmo_open_tcl: av");
 
 	    Tcl_SetObjResult(interp, obj);
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	}
 
 	bu_free((void *)av, "dmo_open_tcl: av");
@@ -3054,7 +3054,7 @@ dmo_open_tcl(ClientData UNUSED(clientData), Tcl_Interp *interp, int argc, char *
 
     /* Return new function name as result */
     Tcl_SetResult(interp, bu_vls_addr(&dmop->dmo_name), TCL_VOLATILE);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -3065,7 +3065,7 @@ Dmo_Init(Tcl_Interp *interp)
     BU_VLS_INIT(&HeadDMObj.dmo_name);
     (void)Tcl_CreateCommand(interp, "dm_open", (Tcl_CmdProc *)dmo_open_tcl, (ClientData)NULL, (Tcl_CmdDeleteProc *)NULL);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 

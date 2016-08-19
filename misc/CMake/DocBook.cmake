@@ -53,13 +53,15 @@
 
 
 # Handle default exec and sanity checking for XML validation
-if(NOT DEFINED VALIDATE_EXECUTABLE)
-  set(VALIDATE_EXECUTABLE "xmllint")
-else(NOT DEFINED VALIDATE_EXECUTABLE)
-  if(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in")
-    message(FATAL_ERROR "Specified ${VALIDATE_EXECUTABLE} for DocBook validation, but \"${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in\" does not exist.  To use ${VALIDATE_EXECUTABLE} a ${VALIDATE_EXECUTABLE}.cmake.in file must be defined.")
-  endif(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in")
-endif(NOT DEFINED VALIDATE_EXECUTABLE)
+if(BRLCAD_ENABLE_STRICT)
+  if(NOT DEFINED VALIDATE_EXECUTABLE)
+    set(VALIDATE_EXECUTABLE "xmllint")
+  else(NOT DEFINED VALIDATE_EXECUTABLE)
+    if(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in")
+      message(FATAL_ERROR "Specified ${VALIDATE_EXECUTABLE} for DocBook validation, but \"${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in\" does not exist.  To use ${VALIDATE_EXECUTABLE} a ${VALIDATE_EXECUTABLE}.cmake.in file must be defined.")
+    endif(NOT EXISTS "${BRLCAD_SOURCE_DIR}/misc/CMake/${VALIDATE_EXECUTABLE}.cmake.in")
+  endif(NOT DEFINED VALIDATE_EXECUTABLE)
+endif(BRLCAD_ENABLE_STRICT)
 
 # Handle default exec and sanity checking for XSLT
 if(NOT DEFINED XSLT_EXECUTABLE)

@@ -50,7 +50,8 @@ struct sphere *s_head = (struct sphere *) 0;
 
 struct atoms  {
     int a_id;
-    char a_name[129];
+#define NAME_LEN 128
+    char a_name[NAME_LEN+1];
     unsigned char red, green, blue;
 };
 
@@ -130,7 +131,7 @@ read_data(void)
 		    fprintf(stderr, "Atom index value %d is out of bounds [0, %d]\n", i, MAX_ATOMS - 1);
 		    return;
 		}
-		ret = scanf("%128s", atom_list[i].a_name);
+		ret = scanf(CPP_SCAN(NAME_LEN), atom_list[i].a_name);
 		if (ret == 0)
 		    perror("scanf");
 		ret = scanf("%d", &red);
@@ -189,7 +190,7 @@ void
 process_sphere(int id, fastf_t *center, double rad, int sph_type)
 {
     struct sphere *newsph;
-    char nm[128], nm1[128];
+    char nm[NAME_LEN+1], nm1[NAME_LEN+1];
     unsigned char rgb[3];
     struct wmember reg_head;
 
@@ -234,7 +235,7 @@ make_bond(int sp1, int sp2)
     struct sphere * s1, *s2, *s_ptr;
     point_t base;
     vect_t height;
-    char nm[128], nm1[128];
+    char nm[NAME_LEN+1], nm1[NAME_LEN+1];
     unsigned char rgb[3];
     struct wmember reg_head;
 

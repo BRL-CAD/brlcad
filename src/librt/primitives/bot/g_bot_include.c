@@ -40,7 +40,7 @@
  * Returns # pts (3) if a valid plane resulted.
  */
 int
-XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
+CPP_XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 				       struct bot_specific *bot,
 				       fastf_t *ap,
 				       fastf_t *bp,
@@ -49,13 +49,13 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 				       size_t face_no,
 				       const struct bn_tol *tol)
 {
-    register XGLUE(tri_specific_, TRI_TYPE) *trip;
+    register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
     vect_t work;
     fastf_t m1, m2, m3, m4;
     vect_t BA_N, CA_N;
     size_t i;
 
-    BU_GET(trip, XGLUE(tri_specific_, TRI_TYPE));
+    BU_GET(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
     VMOVE(trip->tri_A, ap);
     VSUB2(trip->tri_BA, bp, ap);
     VSUB2(trip->tri_CA, cp, ap);
@@ -78,7 +78,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	|| m3 < tol->dist_sq
 	|| m4 >= tol->para)
     {
-	BU_PUT(trip, XGLUE(tri_specific_, TRI_TYPE));
+	BU_PUT(trip, CPP_XGLUE(tri_specific_, TRI_TYPE));
 
 	if (RT_G_DEBUG & DEBUG_SHOOT) {
 	    bu_log("%s: degenerate facet #%zu\n",
@@ -112,7 +112,7 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
 	VREVERSE(trip->tri_N, trip->tri_N);
 
     /* Add this face onto the linked list for this solid */
-    trip->tri_forw = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
+    trip->tri_forw = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     bot->bot_facelist = (void *)trip;
     return 3;				/* OK */
 }
@@ -122,14 +122,14 @@ XGLUE(rt_botface_w_normals_, TRI_TYPE)(struct soltab *stp,
  * Do the prep to support pieces for a BOT/ARS
  */
 void
-XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
+CPP_XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 				     struct soltab *stp,
 				     size_t ntri,
 				     const struct bn_tol *tol)
 {
     struct bound_rpp *minmax = (struct bound_rpp *)NULL;
-    XGLUE(tri_specific_, TRI_TYPE) **fap;
-    register XGLUE(tri_specific_, TRI_TYPE) *trip;
+    CPP_XGLUE(tri_specific_, TRI_TYPE) **fap;
+    register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
     point_t b, c;
     point_t d, e, f;
     vect_t offset;
@@ -145,8 +145,8 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
     stp->st_npieces = num_rpps;
 
-    fap = (XGLUE(tri_specific_, TRI_TYPE) **)
-	bu_malloc(sizeof(XGLUE(tri_specific_, TRI_TYPE) *) * ntri,
+    fap = (CPP_XGLUE(tri_specific_, TRI_TYPE) **)
+	bu_malloc(sizeof(CPP_XGLUE(tri_specific_, TRI_TYPE) *) * ntri,
 		  "bot_facearray");
     bot->bot_facearray = (void **)fap;
 
@@ -156,7 +156,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
 
 
     tpp_m1 = tri_per_piece - 1;
-    trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
+    trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     minmax = &stp->st_piece_rpps[num_rpps-1];
     minmax->min[X] = minmax->max[X] = trip->tri_A[X];
     minmax->min[Y] = minmax->max[Y] = trip->tri_A[Y];
@@ -237,7 +237,7 @@ XGLUE(rt_bot_prep_pieces_, TRI_TYPE)(struct bot_specific *bot,
  * stp->st_specific for use by bot_shot().
  */
 int
-XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
+CPP_XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip, struct rt_i *rtip)
 {
     register struct bot_specific *bot;
     const struct bn_tol *tol = &rtip->rti_tol;
@@ -264,7 +264,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
     }
     if (bot_ip->face_mode)
 	bot->bot_facemode = bu_bitv_dup(bot_ip->face_mode);
-    bot->bot_facelist = (XGLUE(tri_specific_, TRI_TYPE) *)NULL;
+    bot->bot_facelist = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)NULL;
 
     for (tri_index = 0; tri_index < bot_ip->num_faces; tri_index++) {
 	point_t p1, p2, p3;
@@ -322,7 +322,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 	}
     }
 
-    if (bot->bot_facelist == (XGLUE(tri_specific_, TRI_TYPE) *)0) {
+    if (bot->bot_facelist == (CPP_XGLUE(tri_specific_, TRI_TYPE) *)0) {
 	bu_log("bot(%s):  no faces\n", stp->st_name);
 	return -1;             /* BAD */
     }
@@ -379,7 +379,7 @@ XGLUE(rt_bot_prep_, TRI_TYPE)(struct soltab *stp, struct rt_bot_internal *bot_ip
 
 
 static int
-XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
+CPP_XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 				    size_t nhits,
 				    struct soltab *stp,
 				    struct xray *rp,
@@ -397,7 +397,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
     if (rp) RT_CK_RAY(rp);
 
     for (i = 0; i < nhits; i++) {
-	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
+	CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 
 	surfno = hits[i].hit_surfno;
 
@@ -461,7 +461,7 @@ XGLUE(rt_bot_plate_segs_, TRI_TYPE)(struct hit *hits,
 
 
 static int
-XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
+CPP_XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
 					 size_t nhits,
 					 struct soltab *stp,
 					 struct xray *rp,
@@ -480,7 +480,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     static const int OUT_SEG = 1;
 
     if (nhits == 1) {
-	XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[0].hit_private;
+	CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[0].hit_private;
 
 	/* make a zero length partition */
 	RT_GET_SEG(segp, ap->a_resource);
@@ -534,19 +534,19 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
     }
 
     for (i = 0; i < (nhits&~1); i += 2) {
-	XGLUE(tri_specific_, TRI_TYPE) *trip;
+	CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 
 	/* set in hit */
 	segp->seg_in = hits[i];
-	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
+	trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 	BOT_UNORIENTED_NORM(ap, &segp->seg_in, IN_SEG);
 
 	/* set out hit */
 	segp->seg_out = hits[i+1];
-	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
+	trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
 	BOT_UNORIENTED_NORM(ap, &segp->seg_out, OUT_SEG);
 
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
@@ -569,7 +569,7 @@ XGLUE(rt_bot_unoriented_segs_, TRI_TYPE)(struct hit *hits,
  * this is to be done depends on the mode of the BoT.
  */
 HIDDEN int
-XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab *stp,
+CPP_XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab *stp,
 				  struct xray *rp, struct application *ap,
 				  struct seg *seghead, struct rt_piecestate *psp)
 {
@@ -586,7 +586,7 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
     if (bot->bot_mode == RT_BOT_SURFACE) {
 	for (i = 0; i < snhits; i++) {
-	    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
+	    CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 
 	    RT_GET_SEG(segp, ap->a_resource);
 	    segp->seg_stp = stp;
@@ -998,15 +998,15 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
 
     /* snhits is even, build segments */
     for (i = 0; i < snhits; i += 2) {
-	XGLUE(tri_specific_, TRI_TYPE) *trip;
+	CPP_XGLUE(tri_specific_, TRI_TYPE) *trip;
 
 	RT_GET_SEG(segp, ap->a_resource);
 	segp->seg_stp = stp;
 	segp->seg_in = hits[i];	/* struct copy */
-	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
+	trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i].hit_private;
 	BOT_UNORIENTED_NORM(ap, &segp->seg_in, IN_SEG);
 	segp->seg_out = hits[i+1];	/* struct copy */
-	trip = (XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
+	trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)hits[i+1].hit_private;
 	BOT_UNORIENTED_NORM(ap, &segp->seg_out, OUT_SEG);
 	BU_LIST_INSERT(&(seghead->l), &(segp->l));
     }
@@ -1028,10 +1028,10 @@ XGLUE(rt_bot_makesegs_, TRI_TYPE)(struct hit *hits, size_t nhits, struct soltab 
  * >0 HIT
  */
 int
-XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
+CPP_XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct bot_specific *bot = (struct bot_specific *)stp->st_specific;
-    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
+    register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     struct hit hits[MAXHITS];
     register struct hit *hp;
     size_t nhits;
@@ -1128,7 +1128,7 @@ XGLUE(rt_bot_shot_, TRI_TYPE)(struct soltab *stp, struct xray *rp, struct applic
  * Generally the hits are stashed between invocations in psp.
  */
 int
-XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_piecelist *plp,
+CPP_XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_piecelist *plp,
 				    double dist_corr, struct xray *rp, struct application *ap, struct seg *seghead)
 {
     struct resource *resp;
@@ -1202,7 +1202,7 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
 	    tris_in_piece = bot->bot_tri_per_piece;
 	}
 	for (trinum = 0; trinum < tris_in_piece; trinum++) {
-	    register XGLUE(tri_specific_, TRI_TYPE) *trip = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facearray[face_array_index+trinum];
+	    register CPP_XGLUE(tri_specific_, TRI_TYPE) *trip = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facearray[face_array_index+trinum];
 	    fastf_t dN, abs_dN;
 	    /*
 	     * Ray Direction dot N.  (N is outward-pointing normal) wn
@@ -1280,10 +1280,10 @@ XGLUE(rt_bot_piece_shot_, TRI_TYPE)(struct rt_piecestate *psp, struct rt_pieceli
  * Given ONE ray distance, return the normal and entry/exit point.
  */
 void
-XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
+CPP_XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct soltab *stp, struct xray *rp)
 {
     vect_t old_norm;
-    XGLUE(tri_specific_, TRI_TYPE) *trip=(XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
+    CPP_XGLUE(tri_specific_, TRI_TYPE) *trip=(CPP_XGLUE(tri_specific_, TRI_TYPE) *)hitp->hit_private;
 
     if (stp) RT_CK_SOLTAB(stp);
 
@@ -1341,9 +1341,9 @@ XGLUE(rt_bot_norm_, TRI_TYPE)(struct bot_specific *bot, struct hit *hitp, struct
 
 
 void
-XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
+CPP_XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 {
-    register XGLUE(tri_specific_, TRI_TYPE) *tri, *ptr;
+    register CPP_XGLUE(tri_specific_, TRI_TYPE) *tri, *ptr;
 
     if (bot->bot_facearray) {
 	bu_free((char *)bot->bot_facearray, "bot_facearray");
@@ -1358,14 +1358,14 @@ XGLUE(rt_bot_free_, TRI_TYPE)(struct bot_specific *bot)
 	bot->bot_facemode = NULL;
     }
 
-    ptr = (XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
+    ptr = (CPP_XGLUE(tri_specific_, TRI_TYPE) *)bot->bot_facelist;
     while (ptr) {
 	tri = ptr->tri_forw;
 	if (ptr) {
 	    if (ptr->tri_normals) {
 		bu_free((char *)ptr->tri_normals, "bot tri_specific normals");
 	    }
-	    BU_PUT(ptr, XGLUE(tri_specific_, TRI_TYPE));
+	    BU_PUT(ptr, CPP_XGLUE(tri_specific_, TRI_TYPE));
 	}
 	ptr = tri;
     }

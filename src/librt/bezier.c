@@ -131,7 +131,7 @@ control_polygon_flat_enough(
     for (i = 1; i < degree; i++) {
 	if (distance[i] < 0.0) {
 	    max_distance_below = FMIN(max_distance_below, distance[i]);
-	};
+	}
 	if (distance[i] > 0.0) {
 	    max_distance_above = FMAX(max_distance_above, distance[i]);
 	}

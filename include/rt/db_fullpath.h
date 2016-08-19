@@ -22,6 +22,7 @@
 #define RT_DB_FULLPATH_H
 
 #include "common.h"
+#include "bu/vls.h"
 #include "rt/defines.h"
 
 __BEGIN_DECLS

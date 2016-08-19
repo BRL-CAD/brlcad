@@ -20,10 +20,7 @@
 
 #include "common.h"
 
-/* library headers */
-extern "C" {
 #include "bu/log.h"
-}
 #include "brep.h"
 
 
@@ -139,7 +136,7 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	    !surf->EvPoint(uvs[2][0], uvs[2][1], corners[2]) ||
 	    !surf->EvPoint(uvs[3][0], uvs[3][1], corners[3]))
 	{
-	    throw new std::exception(); /* FIXME */
+	    throw std::exception(); /* FIXME */
 	}
 	corners[4] = BRNode::m_estimate;
 
@@ -165,7 +162,7 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	} else {
-	    throw new std::exception();
+	    throw std::exception();
 	}
     }
 }

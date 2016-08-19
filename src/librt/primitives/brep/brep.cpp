@@ -130,6 +130,7 @@ void
 brep_specific_delete(struct brep_specific* bs)
 {
     if (bs != NULL) {
+	delete bs->brep;
 	delete bs->bvh;
 	bu_free(bs, "brep_specific_delete");
     }
@@ -469,7 +470,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     RT_BREP_CK_MAGIC(bi);
 
     if ((bs = (struct brep_specific*)stp->st_specific) == NULL) {
-	BU_ALLOC(bs, struct brep_specific);
+	bs = brep_specific_new();
 	bs->brep = bi->brep;
 	bi->brep = NULL;
 	stp->st_specific = (void *)bs;
@@ -4118,20 +4119,14 @@ rt_brep_adaptive_plot(struct rt_db_internal *ip, const struct rt_view_info *info
 	if (surf->IsClosed(0) || surf->IsClosed(1)) {
 	    ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 	    if (sumsurf != NULL) {
-		SurfaceTree* st = new SurfaceTree(&face, true, 2);
-
-		plot_face_from_surface_tree(info->vhead, st, isocurveres, gridres);
-
-		delete st;
+		SurfaceTree st(&face, true, 2);
+		plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
 	    } else {
 		ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		if (revsurf != NULL) {
-		    SurfaceTree* st = new SurfaceTree(&face, true, 0);
-
-		    plot_face_from_surface_tree(info->vhead, st, isocurveres, gridres);
-
-		    delete st;
+		    SurfaceTree st(&face, true, 0);
+		    plot_face_from_surface_tree(info->vhead, &st, isocurveres, gridres);
 		}
 	    }
 	}
@@ -4240,20 +4235,14 @@ rt_brep_plot(struct bu_list *vhead, struct rt_db_internal *ip, const struct rt_t
 	    if (surf->IsClosed(0) || surf->IsClosed(1)) {
 		ON_SumSurface *sumsurf = const_cast<ON_SumSurface *>(ON_SumSurface::Cast(surf));
 		if (sumsurf != NULL) {
-		    SurfaceTree* st = new SurfaceTree(&face, true, 2);
-
-		    plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
-
-		    delete st;
+		    SurfaceTree st(&face, true, 2);
+		    plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
 		} else {
 		    ON_RevSurface *revsurf = const_cast<ON_RevSurface *>(ON_RevSurface::Cast(surf));
 
 		    if (revsurf != NULL) {
-			SurfaceTree* st = new SurfaceTree(&face, true, 0);
-
-			plot_face_from_surface_tree(vhead, st, isocurveres, gridres);
-
-			delete st;
+			SurfaceTree st(&face, true, 0);
+			plot_face_from_surface_tree(vhead, &st, isocurveres, gridres);
 		    }
 		}
 	    }
@@ -4367,11 +4356,8 @@ int rt_brep_plot_poly(struct bu_list *vhead, const struct db_full_path *pathp, s
 #else /* TESTIT */
     for (int index = 0; index < brep->m_F.Count(); index++) {
 	const ON_BrepFace& face = brep->m_F[index];
-	SurfaceTree* st = new SurfaceTree(&face, true, 10);
-
-	plot_poly_from_surface_tree(vhead, st, face.m_bRev);
-
-	delete st;
+	SurfaceTree st(&face, true, 10);
+	plot_poly_from_surface_tree(vhead, &st, face.m_bRev);
     }
 #endif /* TESTIT */
 #ifdef WATERTIGHT

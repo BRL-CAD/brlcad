@@ -97,7 +97,7 @@ to avoid having to create a font converter.</para>
 </refsection>
 
 <refsection xml:id="example"><title>EXAMPLE</title>
-<para>fblabel -f "oldenglish.14" `fbpoint -h` "Hello"</para>
+<para>fblabel -f "oldenglish.14" `fbpoint -H` "Hello"</para>
 </refsection>
 
 <refsection xml:id="see_also"><title>SEE ALSO</title>

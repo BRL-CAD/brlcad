@@ -209,7 +209,6 @@ set(LIBGED_SOURCES
   regdef.c
   region.c
   remove.c
-  report.c
   rfarb.c
   rmap.c
   rmat.c
@@ -262,6 +261,7 @@ set(LIBGED_SOURCES
   simulate/world_object.cpp
   size.c
   slew.c
+  solid_report.c
   solids_on_ray.c
   sphgroup.c
   summary.c

@@ -29,8 +29,10 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef HAVE_UUID_UUID_H
+#if defined(HAVE_UUID_UUID_H)
 #  include <uuid/uuid.h>
+#elif defined(HAVE_UUID_H)
+#  include <uuid.hh>
 #endif
 
 /* implementation headers */

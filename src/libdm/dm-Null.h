@@ -146,7 +146,7 @@ DM_EXPORT extern int
 null_endDList(dm *dmp);
 
 
-DM_EXPORT extern void
+DM_EXPORT extern int
 null_drawDList(unsigned int list);
 
 
@@ -174,7 +174,7 @@ DM_EXPORT extern int
 null_bg(dm *dmp, unsigned char r, unsigned char g, unsigned char b);
 
 
-DM_EXPORT extern void
+DM_EXPORT extern int
 null_reshape(dm *dmp, int width, int height);
 
 

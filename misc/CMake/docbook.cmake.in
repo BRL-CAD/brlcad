@@ -49,6 +49,12 @@ set(XSLTPROC_EXECUTABLE "@XSLTPROC_EXEC@")
 set(XMLLINT_EXECUTABLE "@XMLLINT_EXEC@")
 
 macro(XSLTPROC stylesheet filename outfile extras)
+
+  # If we're trying to do this but XSLTPROC_EXECUTABLE was unset somehow, fatal error
+  if ("${XSLTPROC_EXECUTABLE}" STREQUAL "")
+    message(FATAL_ERROR "xsltproc processing requested, but XSLTPROC_EXECUTABLE is not set.")
+  endif ("${XSLTPROC_EXECUTABLE}" STREQUAL "")
+
   set(ENV{XML_DEBUG_CATALOG} 1)
   # It is necessary to ensure that the target directory exists *before* calling xsltproc
   # when building in parallel, due to a bug/limitation in xsltproc
@@ -89,31 +95,38 @@ get_filename_component(filename_root "${filename}" NAME_WE)
 set(VE "@VALIDATE_EXECUTABLE@")
 set(SCHEMA_DIR "@BRLCAD_BINARY_DIR@/doc/docbook/resources/other/docbook-schema")
 
-if ("xmllint" MATCHES "${VE}")
+if (NOT "${VE}" STREQUAL "")
+  if ("xmllint" MATCHES "${VE}")
 
-  execute_process(COMMAND "${XMLLINT_EXECUTABLE}" --xinclude --schema "${SCHEMA_DIR}/xsd/docbook.xsd" --noout --nonet "${filename}"
-    RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
+    if ("${XMLLINT_EXECUTABLE}" STREQUAL "")
+      message(FATAL_ERROR "Validation failure: xmllint validation requested, but XMLLINT_EXECUTABLE is not set.")
+    endif ("${XMLLINT_EXECUTABLE}" STREQUAL "")
 
-elseif ("rnv" MATCHES "${VE}")
+    execute_process(COMMAND "${XMLLINT_EXECUTABLE}" --xinclude --schema "${SCHEMA_DIR}/xsd/docbook.xsd" --noout --nonet "${filename}"
+      RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
-  execute_process(COMMAND rnv "${SCHEMA_DIR}/rng/docbookxi.rnc" "${filename}"
-    RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
+  elseif ("rnv" MATCHES "${VE}")
 
-elseif ("msv" MATCHES "${VE}")
+    execute_process(COMMAND rnv "${SCHEMA_DIR}/rng/docbookxi.rnc" "${filename}"
+      RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
-  execute_process(COMMAND msv -warning "${SCHEMA_DIR}/rng/docbookxi.rng" "@filename@"
-    RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
+  elseif ("msv" MATCHES "${VE}")
 
-else ("xmllint" MATCHES "${VE}")
+    execute_process(COMMAND msv -warning "${SCHEMA_DIR}/rng/docbookxi.rng" "@filename@"
+      RESULT_VARIABLE CMDRESULT OUTPUT_VARIABLE CMDOUT ERROR_VARIABLE CMDERR)
 
-  message(FATAL_ERROR "Unsupported XML validator specified: ${VE}")
+  else ("xmllint" MATCHES "${VE}")
 
-endif("xmllint" MATCHES "${VE}")
+    message(FATAL_ERROR "Unsupported XML validator specified: ${VE}")
 
-# If we're not valid, we're done.
-if(CMDRESULT)
-  message(FATAL_ERROR "${VE} validation failure on file ${filename}: ${CMDRESULT}\n${CMDOUT}\n${CMDERR}")
-endif(CMDRESULT)
+  endif("xmllint" MATCHES "${VE}")
+
+  # If we're not valid, we're done.
+  if(CMDRESULT)
+    message(FATAL_ERROR "${VE} validation failure on file ${filename}: ${CMDRESULT}\n${CMDOUT}\n${CMDERR}")
+  endif(CMDRESULT)
+
+endif (NOT "${VE}" STREQUAL "")
 
 # Reset result variables.
 set(CMDRESULT)
@@ -204,6 +217,11 @@ foreach(fmt ${CURRENT_OUTPUT_FORMATS})
     # Make sure the target directory exists
     get_filename_component(output_dir "${PDF_OUTFILE}" PATH)
     execute_process(COMMAND "@CMAKE_COMMAND@" -E make_directory "${output_dir}")
+
+    # If we're trying to do this but APACHE_FOP was unset somehow, fatal error
+    if ("${APACHE_FOP}" STREQUAL "")
+      message(FATAL_ERROR "Apache FOP processing requested, but APACHE_FOP is not set.")
+    endif ("${APACHE_FOP}" STREQUAL "")
 
     # Run FOP to actually generate the PDF
     execute_process(COMMAND "@APACHE_FOP@" -c "@CMAKE_BINARY_DIR@/doc/docbook/fop.xconf" "${fo_outfile}" -pdf "${PDF_OUTFILE}" RESULT_VARIABLE CMDRESULT)

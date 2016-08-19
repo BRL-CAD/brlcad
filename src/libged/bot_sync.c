@@ -59,8 +59,7 @@ ged_bot_sync(struct ged *gedp, int argc, const char *argv[])
 
     for (i = 1; i < argc; ++i) {
 	/* Skip past any path elements */
-	char *obj = (char *)bu_calloc(strlen(argv[i]), sizeof(char), "ged_bot_sync obj");
-	bu_basename(obj, argv[i]);
+	char *obj = bu_basename(argv[i], NULL);
 
 	if (BU_STR_EQUAL(obj, ".")) {
 	    /* malformed path, lookup using exactly what was provided */

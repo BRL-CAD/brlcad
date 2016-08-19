@@ -43,7 +43,6 @@
 #  include <osgViewer/api/X11/GraphicsWindowX11>
 #endif
 
-extern "C" {
 #include "tcl.h"
 #include "tk.h"
 #include "tkPlatDecls.h"
@@ -58,7 +57,7 @@ extern "C" {
 #include "fb.h"
 #include "rt/solid.h"
 #include "./dm_private.h"
-}
+
 #include "fb/fb_osgl.h"
 #include "dm-osgl.h"
 
@@ -113,11 +112,11 @@ HIDDEN int osgl_debug(struct dm_internal *dmp, int vl);
 HIDDEN int osgl_logfile(struct dm_internal *dmp, const char *filename);
 HIDDEN int osgl_beginDList(struct dm_internal *dmp, unsigned int list);
 HIDDEN int osgl_endDList(struct dm_internal *dmp);
-HIDDEN void osgl_drawDList(unsigned int list);
+HIDDEN int osgl_drawDList(unsigned int list);
 HIDDEN int osgl_freeDLists(struct dm_internal *dmp, unsigned int list, int range);
 HIDDEN int osgl_genDLists(struct dm_internal *dmp, size_t range);
 HIDDEN int osgl_getDisplayImage(struct dm_internal *dmp, unsigned char **image);
-HIDDEN void osgl_reshape(struct dm_internal *dmp, int width, int height);
+HIDDEN int osgl_reshape(struct dm_internal *dmp, int width, int height);
 HIDDEN int osgl_makeCurrent(struct dm_internal *dmp);
 
 
@@ -216,7 +215,7 @@ osgl_configureWin_guts(struct dm_internal *dmp, int force)
 }
 
 
-HIDDEN void
+HIDDEN int
 osgl_reshape(struct dm_internal *dmp, int width, int height)
 {
     GLint mm;
@@ -272,6 +271,7 @@ osgl_reshape(struct dm_internal *dmp, int width, int height)
 
     }
 #endif
+    return 0;
 }
 
 
@@ -2097,10 +2097,11 @@ osgl_endDList(struct dm_internal *dmp)
 }
 
 
-HIDDEN void
+HIDDEN int
 osgl_drawDList(unsigned int list)
 {
     glCallList((GLuint)list);
+    return TCL_OK;
 }
 
 
