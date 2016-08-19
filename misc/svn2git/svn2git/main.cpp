@@ -130,11 +130,13 @@ static const CommandLineOption options[] = {
     {"--identity-domain DOMAIN", "provide user domain if no map was given"},
     {"--revisions-file FILENAME", "provide a file with revision number that should be processed"},
     {"--rules FILENAME[,FILENAME]", "the rules file(s) that determines what goes where"},
+    {"--msg-filter FILENAME", "External program / script to modify svn log message"},
     {"--add-metadata", "if passed, each git commit will have svn commit info"},
     {"--add-metadata-notes", "if passed, each git commit will have notes with svn commit info"},
     {"--resume-from revision", "start importing at svn revision number"},
     {"--max-rev revision", "stop importing at svn revision number"},
     {"--dry-run", "don't actually write anything"},
+    {"--create-dump", "don't create the repository but a dump file suitable for piping into fast-import"},
     {"--debug-rules", "print what rule is being used for each file"},
     {"--commit-interval NUMBER", "if passed the cache will be flushed to git every NUMBER of commits"},
     {"--stats", "after a run print some statistics about the rules"},
@@ -199,7 +201,7 @@ int main(int argc, char **argv)
  retry:
     int min_rev = 1;
     foreach (Rules::Repository rule, rulesList.allRepositories()) {
-        Repository *repo = new Repository(rule);
+        Repository *repo = createRepository(rule, repositories);
         if (!repo)
             return EXIT_FAILURE;
         repositories.insert(rule.name, repo);
