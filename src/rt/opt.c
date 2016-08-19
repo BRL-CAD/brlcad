@@ -315,7 +315,6 @@ get_args(int argc, const char *argv[])
 		    {
 			char buf[128] = {0};
 			sprintf(buf, "set background=%f/%f/%f", r/255.0, g/255.0, b/255.0);
-			sprintf(buf, "set background=%f/%f/%f", color.buc_rgb[RED], color.buc_rgb[GRN], color.buc_rgb[BLU]);
 			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
 		    }
 #endif
