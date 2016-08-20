@@ -13,6 +13,7 @@ branches=(
 	"d-binding"
 	"dmtogl"
 	"dm-work"
+	"embree"
 	"framebuffer-experiment"
 	"gct"
 	"gecode"
