@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* changed window name for rtwizard gui to "RtWizard" - Cliff Yapp
 * brep command attaches .brep suffix instead of _brep - Sean Morrison
 * changed ogl & wgl framebuffer delayed write behavior - Sean Morrison
 * upgraded libpng to version 1.6.23 - Cliff Yapp
