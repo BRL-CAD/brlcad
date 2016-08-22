@@ -41,7 +41,7 @@
 
 
 int
-bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])
 {
     int type = 4; /* random */
 
