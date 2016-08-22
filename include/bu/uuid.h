@@ -42,11 +42,11 @@ __BEGIN_DECLS
  * Create a UUID (a 128-bit identifier) that conforms with RFC4122,
  * version 4 or 5, in big endian network order.  Version 4 UUIDs are
  * suitable for a random object identifier (with 122 bits of random
- * entropy).  Providing a byte array will create a (SHA1-based)
+ * entropy).  Providing a byte array and namespace will create a (SHA1-based)
  * version 5 UUID suitable for repeatable identifier hashing.
  */
 int
-bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes);
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const char namespace_uuid[STATIC_ARRAY(37)]);
 
 /**
  * This is a convenience UUID comparison routine compatible with
