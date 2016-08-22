@@ -174,7 +174,11 @@ int SvnPrivate::openRepository(const QString &pathToRepository)
     QString path = pathToRepository;
     while (path.endsWith('/')) // no trailing slash allowed
         path = path.mid(0, path.length()-1);
+#ifndef USE_SVN_REPOS_OPEN
     SVN_ERR(svn_repos_open3(&repos, QFile::encodeName(path), NULL, global_pool, scratch_pool));
+#else
+    SVN_ERR(svn_repos_open(&repos, QFile::encodeName(path), global_pool));
+#endif
     fs = svn_repos_fs(repos);
 
     return EXIT_SUCCESS;
@@ -266,7 +270,11 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
         if (!CommandLineParser::instance()->contains("dry-run")) {
             QByteArray buf;
             buf.reserve(len);
-            SVN_ERR(svn_stream_read_full(in_stream, buf.data(), &len));
+#ifndef USE_SVN_STREAM_READ
+	    SVN_ERR(svn_stream_read_full(in_stream, buf.data(), &len));
+#else
+	    SVN_ERR(svn_stream_read(in_stream, buf.data(), &len));
+#endif
             if (len == strlen("link ") && strncmp(buf, "link ", len) == 0) {
                 mode = 0120000;
                 stream_length -= len;
@@ -285,7 +293,13 @@ static int dumpBlob(Repository::Transaction *txn, svn_fs_root_t *fs_root,
     if (!CommandLineParser::instance()->contains("dry-run")) {
         // open a generic svn_stream_t for the QIODevice
         out_stream = streamForDevice(io, dumppool);
+#ifndef USE_SVN_STREAM_COPY
         SVN_ERR(svn_stream_copy3(in_stream, out_stream, NULL, NULL, dumppool));
+#else
+	SVN_ERR(svn_stream_copy(in_stream, out_stream, dumppool));
+	svn_stream_close(out_stream);
+	svn_stream_close(in_stream);
+#endif
 
         // print an ending newline
         io->putChar('\n');

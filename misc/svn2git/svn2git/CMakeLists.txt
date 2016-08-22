@@ -21,6 +21,36 @@ include_directories(
 	${APR_INCLUDE_DIRS}
 	)
 
+include(CheckFunctionExists)
+cmake_push_check_state(RESET)
+set(CMAKE_REQUIRED_INCLUDES ${SUBVERSION_INCLUDE_DIRS})
+set(CMAKE_REQUIRED_LIBRARIES ${SUBVERSION_LIBRARIES})
+check_function_exists(svn_repos_open3 HAVE_SVN_REPOS_OPEN3)
+if(NOT HAVE_SVN_REPOS_OPEN3)
+	check_function_exists(svn_repos_open HAVE_SVN_REPOS_OPEN)
+	if(HAVE_SVN_REPOS_OPEN)
+		add_definitions(-DUSE_SVN_REPOS_OPEN=1)
+		add_definitions(-Wno-deprecated-declarations)
+	endif(HAVE_SVN_REPOS_OPEN)
+endif(NOT HAVE_SVN_REPOS_OPEN3)
+check_function_exists(svn_stream_read_full HAVE_SVN_STREAM_READ_FULL)
+if(NOT HAVE_SVN_STREAM_READ_FULL)
+	check_function_exists(svn_stream_read HAVE_SVN_STREAM_READ)
+	if(HAVE_SVN_STREAM_READ)
+		add_definitions(-DUSE_SVN_STREAM_READ=1)
+		add_definitions(-Wno-deprecated-declarations)
+	endif(HAVE_SVN_STREAM_READ)
+endif(NOT HAVE_SVN_STREAM_READ_FULL)
+check_function_exists(svn_stream_copy3 HAVE_SVN_STREAM_COPY3)
+if(NOT HAVE_SVN_STREAM_COPY3)
+	check_function_exists(svn_stream_copy HAVE_SVN_STREAM_COPY)
+	if(HAVE_SVN_STREAM_COPY)
+		add_definitions(-DUSE_SVN_STRAM_COPY=1)
+		add_definitions(-Wno-deprecated-declarations)
+	endif(HAVE_SVN_STREAM_COPY)
+endif(NOT HAVE_SVN_STREAM_COPY3)
+cmake_pop_check_state()
+
 set(SVN2GIT_SRCS
 	ruleparser.cpp
 	repository.cpp
