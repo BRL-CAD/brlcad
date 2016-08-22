@@ -46,7 +46,7 @@ __BEGIN_DECLS
  * version 5 UUID suitable for repeatable identifier hashing.
  */
 int
-bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const char namespace_uuid[STATIC_ARRAY(37)]);
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)]);
 
 /**
  * This is a convenience UUID comparison routine compatible with

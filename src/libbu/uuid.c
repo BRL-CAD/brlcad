@@ -41,7 +41,7 @@
 
 
 int
-bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const char namespace_uuid[STATIC_ARRAY(37)])
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])
 {
     int type = 4; /* random */
 
@@ -74,7 +74,7 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes, co
 	    SHA1_CTX context;
 
 	    SHA1Init(&context);
-	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 37);
+	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 16);
 	    SHA1Update(&context, (const unsigned char *)bytes, nbytes);
 	    SHA1Final(buffer, &context);
 
