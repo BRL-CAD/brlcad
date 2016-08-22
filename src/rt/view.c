@@ -199,6 +199,7 @@ int a_onehit = -1;
  */
 static int overlay = 0;
 
+
 /* Viewing module specific "set" variables:
  *
  * Note: The actual byte offsets will get set at run time in
@@ -212,7 +213,7 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "bounces", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ireflect", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "a_onehit", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", ELEMENTS_PER_VECT, "background", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", ELEMENTS_PER_VECT, "background", 0, color_hook, NULL, NULL},
     {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ambSamples", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
