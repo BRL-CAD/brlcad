@@ -5079,6 +5079,8 @@ rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, stru
 	    specific->bvh->addChild(new BBNode(deserializer, *ctree));
 	}
 
+	specific->bvh->BuildBBox();
+
 	{
 	    /* Once a proper SurfaceTree is built, finalize the bounding
 	     * volumes.  This takes no time. */
