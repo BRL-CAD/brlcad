@@ -782,6 +782,8 @@ rt_gettrees_muves(struct rt_i *rtip, const char **attrs, int argc, const char **
 			 _rt_gettree_region_end,
 			 _rt_gettree_leaf, (void *)&data);
 	bu_avs_free(&tree_state.ts_attrs);
+
+	rt_cache_close(data.cache);
     }
 
     /* DEBUG:  Ensure that all region trees are valid */
