@@ -306,6 +306,26 @@ extern "C++" {
     };
 
 
+    template <typename T>
+	class PooledObject
+	{
+	    public:
+		static void *operator new(std::size_t size)
+		{
+		    if (UNLIKELY(size != sizeof(T)))
+			throw std::bad_alloc();
+
+		    return bu_heap_get(size);
+		}
+
+
+		static void operator delete(void *pointer)
+		{
+		    bu_heap_put(pointer, sizeof(T));
+		}
+	};
+
+
 } /* extern C++ */
 
 __END_DECLS
