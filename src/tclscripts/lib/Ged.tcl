@@ -752,6 +752,7 @@ package provide cadwidgets::Ged 1.0
 	method init_find_metaballpt {_obj {_button 1} {_callback {}}}
 	method init_find_pipept {_obj {_button 1} {_callback {}}}
 	method init_prepend_pipept {_obj {_button 1} {_callback {}}}
+	method fit_png_image {args}
 	method init_view_bindings {{_type default}}
 	method init_view_center {{_button 1}}
 	method init_view_measure {{_button 1} {_part2_button 2}}
@@ -5047,6 +5048,11 @@ package provide cadwidgets::Ged 1.0
 	bind $itk_component($dm) <$_button> "[::itcl::code $this pane_mouse_prepend_pipept $dm $_obj %x %y]; focus %W; break"
 	bind $itk_component($dm) <ButtonRelease-$_button> ""
     }
+}
+
+
+::itcl::body cadwidgets::Ged::fit_png_image {args} {
+    eval $mGed fit_png_image $args
 }
 
 
