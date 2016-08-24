@@ -34,6 +34,7 @@ set(LIBRT_SOURCES
   binunif/db5_bin.c
   bool.c
   bundle.c
+  cache.c
   cmd.c
   comb/comb.c
   comb/comb_brep.cpp

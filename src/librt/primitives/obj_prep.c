@@ -51,6 +51,31 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
+int rt_obj_prep_serialize(struct soltab *stp, struct bu_external *external, uint32_t *version)
+{
+    const struct rt_functab *ft;
+
+    if (!stp || !external || !version)
+	return -1;
+
+    RT_CK_SOLTAB(stp);
+    BU_CK_EXTERNAL(external);
+
+    if (stp->st_id < 0)
+	return -2;
+
+    ft = &OBJ[stp->st_id];
+
+    if (!ft)
+	return -3;
+
+    if (!ft->ft_prep_serialize)
+	return -4;
+
+    return ft->ft_prep_serialize(stp, external, version);
+}
+
+
 /*
  * Local Variables:
  * mode: C
