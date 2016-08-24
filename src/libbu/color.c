@@ -291,12 +291,12 @@ bu_color_from_str(struct bu_color *color, const char *str)
 {
     size_t i;
     char separator;
-    enum {RGB, FLOAT, UNKNOWN} mode;
+    int mode = 0;
 
     BU_COLOR_INIT(color);
 
-    /* determine the format */
-    for (mode = 0; mode <= UNKNOWN; ++mode) {
+    /* determine the format - 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
+    for (mode = 0; mode <= 2; ++mode) {
 	const char * const allowed_separators = "/,";
 	const char *endptr;
 	float result;
@@ -304,15 +304,15 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	errno = 0;
 
 	switch (mode) {
-	    case RGB:
+	    case 0: /*RGB*/
 		result = strtol(str, (char **)&endptr, 10);
 		break;
 
-	    case FLOAT:
+	    case 1: /*FLOAT*/
 		result = strtod(str, (char **)&endptr);
 		break;
 
-	    case UNKNOWN:
+	    case 2:
 		return 0;
 	}
 
@@ -323,6 +323,7 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	}
     }
 
+    /* 0 = RGB, 1 = FLOAT, 2 = UNKNOWN */
     for (i = 0; i < 3; ++i) {
 	const char expected_char = i == 2 ? '\0' : separator;
 	const char *endptr;
@@ -330,15 +331,15 @@ bu_color_from_str(struct bu_color *color, const char *str)
 	errno = 0;
 
 	switch (mode) {
-	    case RGB:
+	    case 0: /*RGB*/
 		color->buc_rgb[i] = strtol(str, (char **)&endptr, 10) / 255.0;
 		break;
 
-	    case FLOAT:
+	    case 1: /*FLOAT*/
 		color->buc_rgb[i] = strtod(str, (char **)&endptr);
 		break;
 
-	    case UNKNOWN:
+	    case 2: /*UNKNOWN*/
 		bu_bomb("error");
 	}
 
