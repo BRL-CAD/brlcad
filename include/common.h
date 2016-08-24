@@ -427,7 +427,7 @@ typedef ptrdiff_t ssize_t;
  * CPP_XSTR(CPP_XGLUE(abc, 123)) => "123123"
  */
 #ifndef CPP_XGLUE
-#  define CPP_XGLUE(a, b) CPP_GLUE
+#  define CPP_XGLUE(a, b) CPP_GLUE(a, b)
 #endif
 
 /**

@@ -238,34 +238,34 @@ struct application **occlusion_apps;
 
 /* Viewing module specific "set" variables */
 struct bu_structparse view_parse[] = {
-    {"%d", 1, "detect_regions", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dr", bu_byteoffset(detect_regions), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_distance", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dd", bu_byteoffset(detect_distance), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_normals", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "foreground", bu_byteoffset(float_fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "fg", bu_byteoffset(float_fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "background", bu_byteoffset(background[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 3, "bg", bu_byteoffset(background[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "bl", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "region_color", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "rc", bu_byteoffset(region_colors), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "occlusion_objects", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%V", 1, "oo", bu_byteoffset(occlusion_objects), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "occlusion_mode", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "om", bu_byteoffset(occlusion_mode), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "max_dist", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%f", 1, "md", bu_byteoffset(max_dist), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "antialias", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "aa", bu_byteoffset(antialias), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "both_sides", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 1, "bs", bu_byteoffset(both_sides), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_regions", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dr", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_distance", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dd", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_normals", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "dn", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "detect_ids", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "di", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "foreground", 0, color_hook, NULL, NULL},
+    {"%f", 3, "fg", 0, color_hook, NULL, NULL},
+    {"%f", 3, "background", 0, color_hook, NULL, NULL},
+    {"%f", 3, "bg", 0, color_hook, NULL, NULL},
+    {"%d", 1, "overlay", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "ov", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "blend", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bl", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "region_color", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "rc", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "occlusion_objects", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%V", 1, "oo", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "occlusion_mode", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "om", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "max_dist", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 1, "md", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "antialias", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "aa", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "both_sides", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%d", 1, "bs", 0, BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"",	0, (char *)0,	0,	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
 };
 
@@ -1442,6 +1442,36 @@ handle_main_ray(struct application *ap, register struct partition *PartHeadp,
 
 void application_init(void) {
     bu_vls_trunc(&occlusion_objects, 0);
+
+    /* Set the byte offsets at run time */
+    view_parse[ 0].sp_offset = bu_byteoffset(detect_regions);
+    view_parse[ 1].sp_offset = bu_byteoffset(detect_regions);
+    view_parse[ 2].sp_offset = bu_byteoffset(detect_distance);
+    view_parse[ 3].sp_offset = bu_byteoffset(detect_distance);
+    view_parse[ 4].sp_offset = bu_byteoffset(detect_normals);
+    view_parse[ 5].sp_offset = bu_byteoffset(detect_normals);
+    view_parse[ 6].sp_offset = bu_byteoffset(detect_ids);
+    view_parse[ 7].sp_offset = bu_byteoffset(detect_ids);
+    view_parse[ 8].sp_offset = bu_byteoffset(float_fgcolor[0]);
+    view_parse[ 9].sp_offset = bu_byteoffset(float_fgcolor[0]);
+    view_parse[10].sp_offset = bu_byteoffset(background[0]);
+    view_parse[11].sp_offset = bu_byteoffset(background[0]);
+    view_parse[12].sp_offset = bu_byteoffset(overlay);
+    view_parse[13].sp_offset = bu_byteoffset(overlay);
+    view_parse[14].sp_offset = bu_byteoffset(blend);
+    view_parse[15].sp_offset = bu_byteoffset(blend);
+    view_parse[16].sp_offset = bu_byteoffset(region_colors);
+    view_parse[17].sp_offset = bu_byteoffset(region_colors);
+    view_parse[18].sp_offset = bu_byteoffset(occlusion_objects);
+    view_parse[19].sp_offset = bu_byteoffset(occlusion_objects);
+    view_parse[20].sp_offset = bu_byteoffset(occlusion_mode);
+    view_parse[21].sp_offset = bu_byteoffset(occlusion_mode);
+    view_parse[22].sp_offset = bu_byteoffset(max_dist);
+    view_parse[23].sp_offset = bu_byteoffset(max_dist);
+    view_parse[24].sp_offset = bu_byteoffset(antialias);
+    view_parse[25].sp_offset = bu_byteoffset(antialias);
+    view_parse[26].sp_offset = bu_byteoffset(both_sides);
+    view_parse[27].sp_offset = bu_byteoffset(both_sides);
 }
 
 

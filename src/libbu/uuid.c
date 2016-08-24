@@ -29,20 +29,23 @@
 #include <string.h>
 #include <stdlib.h>
 #include <ctype.h>
-#ifdef HAVE_UUID_UUID_H
+#if defined(HAVE_UUID_UUID_H)
 #  include <uuid/uuid.h>
+#elif defined(HAVE_UUID_H)
+#  include <uuid.hh>
 #endif
 
 /* implementation headers */
 #include "bu/log.h"
+#include "sha1.h"
 
 
 int
-bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
+bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, const uint8_t *bytes, const uint8_t namespace_uuid[STATIC_ARRAY(16)])
 {
     int type = 4; /* random */
 
-    if (nbytes > 0 && bytes)
+    if (nbytes > 0 && bytes && namespace_uuid)
 	type = 5;
 
     memset(uuid, 0, sizeof(uint8_t) * 16);
@@ -65,9 +68,27 @@ bu_uuid_create(uint8_t uuid[STATIC_ARRAY(16)], size_t nbytes, uint8_t *bytes)
 #endif /* HAVE_UUID_GENERATE */
 	    break;
 	}
-    }
 
-    /* FIXME: create v5 UUIDs */
+	case 5: {
+	    unsigned char buffer[20];
+	    SHA1_CTX context;
+
+	    SHA1Init(&context);
+	    SHA1Update(&context, (const unsigned char *)namespace_uuid, 16);
+	    SHA1Update(&context, (const unsigned char *)bytes, nbytes);
+	    SHA1Final(buffer, &context);
+
+	    memcpy(uuid, buffer, 16);
+
+	    /* set the UUIDv5 reserved bits */
+	    uuid[6] = (uuid[6] & 0x0F) | 0x5F; /* version */
+	    uuid[8] = (uuid[8] & 0x3F) | 0x80; /* 0b10 high-order byte */
+	    break;
+	}
+
+	default:
+	    bu_bomb("bu_uuid_create(): invalid uuid type");
+    }
 
     return type;
 }

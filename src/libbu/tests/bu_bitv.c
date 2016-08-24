@@ -464,7 +464,7 @@ dump_bitv(const struct bu_bitv *b)
     /* we want even output lines (lengths in multiples of BITS_PER_BYTE) */
     if (len % x) {
 	ipad = jpad = x - (len % x);
-    };
+    }
 
     if (ipad > 0)
 	i = j = -ipad;

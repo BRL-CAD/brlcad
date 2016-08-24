@@ -21,7 +21,7 @@
  *
  *
  *  This is a program will compute and plot an appropriate scale in the lower
- *  left corner of a given image.  The scale is layed out in view
+ *  left corner of a given image.  The scale is laid out in view
  *  space coordinates and then translated into model coordinates, where it is
  *  plotted.  This plot can be overlaid onto any other UNIX-Plot file of onto
  *  a pix file.

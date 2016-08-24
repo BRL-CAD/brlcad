@@ -112,7 +112,7 @@ tk_close(struct dm_internal *dmp)
     bu_free(dmp->dm_vars.pub_vars, "tk_close: dm_tkvars");
     bu_free(dmp, "tk_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -146,7 +146,7 @@ tk_drawBegin(struct dm_internal *dmp)
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      GCForeground, &gcv);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -171,7 +171,7 @@ tk_drawEnd(struct dm_internal *dmp)
     /* Prevent lag between events and updates */
     XSync(((struct dm_xvars *)dmp->dm_vars.pub_vars)->dpy, 0);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -198,7 +198,7 @@ tk_loadMatrix(struct dm_internal *dmp, fastf_t *mat, int which_eye)
     }
 
     MAT_COPY(((struct x_vars *)dmp->dm_vars.priv_vars)->xmat, mat);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -441,7 +441,7 @@ tk_drawVList(struct dm_internal *dmp, struct bn_vlist *vp)
 		      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, segbuf, nseg);
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -456,12 +456,12 @@ tk_draw(struct dm_internal *dmp, struct bn_vlist *(*callback_function)(void *), 
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    (void)callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -475,7 +475,7 @@ tk_normal(struct dm_internal *dmp)
     if (dmp->dm_debugLevel)
 	bu_log("tk_normal()\n");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -515,7 +515,7 @@ tk_drawString2D(struct dm_internal *dmp, const char *str, fastf_t x, fastf_t y, 
 		 ((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct,
 		 str, strlen(str), sx, sy);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -543,7 +543,7 @@ tk_drawLine2D(struct dm_internal *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpo
 	      ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 	      sx1, sy1, sx2, sy2);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -551,9 +551,9 @@ HIDDEN int
 tk_drawLine3D(struct dm_internal *dmp, point_t UNUSED(pt1), point_t UNUSED(pt2))
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -561,9 +561,9 @@ HIDDEN int
 tk_drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || (npoints > 0 && !points))
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -585,7 +585,7 @@ tk_drawPoint2D(struct dm_internal *dmp, fastf_t x, fastf_t y)
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->pix,
 	       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc, sx, sy);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -598,7 +598,7 @@ tk_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigne
 
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmp->dm_debugLevel)
@@ -619,7 +619,7 @@ tk_setFGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigne
 		   ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 		   ((struct x_vars *)dmp->dm_vars.priv_vars)->fg);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -632,7 +632,7 @@ tk_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigne
 
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b==%d/%d/%d)\n", r, g, b);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     if (dmp->dm_debugLevel)
@@ -651,7 +651,7 @@ tk_setBGColor(struct dm_internal *dmp, unsigned char r, unsigned char g, unsigne
 		   Tk_GetColorByValue(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin,
 				      &color)->pixel);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -678,7 +678,7 @@ tk_setLineAttr(struct dm_internal *dmp, int width, int style)
 		       ((struct x_vars *)dmp->dm_vars.priv_vars)->gc,
 		       width, linestyle, CapButt, JoinMiter);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -688,7 +688,7 @@ tk_debug(struct dm_internal *dmp, int lvl)
 {
     dmp->dm_debugLevel = lvl;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -696,7 +696,7 @@ tk_logfile(struct dm_internal *dmp, const char *filename)
 {
     bu_vls_sprintf(&dmp->dm_log, "%s", filename);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -714,7 +714,7 @@ tk_setWinBounds(struct dm_internal *dmp, fastf_t *w)
     dmp->dm_clipmax[1] = w[3];
     dmp->dm_clipmax[2] = w[5];
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -728,7 +728,7 @@ tk_configureWin_guts(struct dm_internal *dmp, int force)
     w = Tk_Width(((struct dm_xvars *)dmp->dm_vars.pub_vars)->xtkwin);
 
     if (!force && dmp->dm_width==w && dmp->dm_height == h)
-	return TCL_OK;
+	return BRLCAD_OK;
 
     dmp->dm_width=w;
     dmp->dm_width=h;
@@ -763,7 +763,7 @@ tk_configureWin_guts(struct dm_internal *dmp, int force)
 
 	    if (((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontstruct == NULL) {
 		bu_log("dm-Tk: Can't open font '%s' or '%s'\n", FONT9, FONTBACK);
-		return TCL_ERROR;
+		return BRLCAD_ERROR;
 	    }
 	}
 	((struct dm_xvars *)dmp->dm_vars.pub_vars)->tkfontset = 1;
@@ -772,7 +772,7 @@ tk_configureWin_guts(struct dm_internal *dmp, int force)
     /* XXX:  I removed the font-sizing routine from dm-X from here.  Something
        should be devised to replace it.  --TJM*/
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -792,7 +792,7 @@ tk_setLight(struct dm_internal *dmp, int light_on)
 
     dmp->dm_light = light_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -804,7 +804,7 @@ tk_setZBuffer(struct dm_internal *dmp, int zbuffer_on)
 
     dmp->dm_zbuffer = zbuffer_on;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 struct bu_structparse Tk_vparse[] = {
@@ -1009,7 +1009,7 @@ tk_open_dm(Tcl_Interp *interp, int argc, char **argv)
 		  bu_vls_addr(&init_proc_vls),
 		  bu_vls_addr(&dmp->dm_pathName));
 
-    if (Tcl_Eval(interp, bu_vls_addr(&str)) == TCL_ERROR) {
+    if (Tcl_Eval(interp, bu_vls_addr(&str)) == BRLCAD_ERROR) {
 	bu_vls_free(&str);
 	(void)tk_close(dmp);
 

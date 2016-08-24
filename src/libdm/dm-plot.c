@@ -65,7 +65,7 @@ HIDDEN int
 plot_close(dm *dmp)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
@@ -78,7 +78,7 @@ plot_close(dm *dmp)
     bu_free((void *)dmp->dm_vars.priv_vars, "plot_close: plot_vars");
     bu_free((void *)dmp, "plot_close: dmp");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -89,11 +89,11 @@ HIDDEN int
 plot_drawBegin(dm *dmp)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     /* We expect the screen to be blank so far, from last frame flush */
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -101,13 +101,13 @@ HIDDEN int
 plot_drawEnd(dm *dmp)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     pl_flush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* BRL-specific command */
     pl_erase(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp); /* forces drawing */
     (void)fflush(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -121,7 +121,7 @@ plot_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
     Tcl_Obj *obj;
 
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     obj = Tcl_GetObjResult(dmp->dm_interp);
     if (Tcl_IsShared(obj))
@@ -145,7 +145,7 @@ plot_loadMatrix(dm *dmp, fastf_t *mat, int which_eye)
 
     MAT_COPY(plotmat, mat);
     Tcl_SetObjResult(dmp->dm_interp, obj);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -170,7 +170,7 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
     if (((struct plot_vars *)dmp->dm_vars.priv_vars)->floating) {
 	rt_vlist_to_uplot(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, &vp->l);
 
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
     /* delta is used in clipping to insure clipped endpoint is
@@ -294,9 +294,9 @@ plot_drawVList(dm *dmp, struct bn_vlist *vp)
     }
 
     if (useful)
-	return TCL_OK;
+	return BRLCAD_OK;
 
-    return TCL_ERROR;
+    return BRLCAD_ERROR;
 }
 
 
@@ -311,12 +311,12 @@ plot_draw(dm *dmp, struct bn_vlist *(*callback_function)(void *), void **data)
 	}
     } else {
 	if (!data) {
-	    return TCL_ERROR;
+	    return BRLCAD_ERROR;
 	} else {
 	    (void)callback_function(data);
 	}
     }
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -328,9 +328,9 @@ HIDDEN int
 plot_normal(dm *dmp)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -344,7 +344,7 @@ plot_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int 
     int sx, sy;
 
     if (!dmp || !str || size < 0) {
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     sx = x * 2047;
@@ -352,7 +352,7 @@ plot_drawString2D(dm *dmp, const char *str, fastf_t x, fastf_t y, int size, int 
     pl_move(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx, sy);
     pl_label(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, str);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -369,7 +369,7 @@ plot_drawLine2D(dm *dmp, fastf_t xpos1, fastf_t ypos1, fastf_t xpos2, fastf_t yp
     pl_move(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx1, sy1);
     pl_cont(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, sx2, sy2);
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -384,9 +384,9 @@ HIDDEN int
 plot_drawLines3D(dm *dmp, int npoints, point_t *points, int UNUSED(sflag))
 {
     if (!dmp || npoints < 0 || !points)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -402,21 +402,21 @@ plot_setFGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b, int 
 {
     if (!dmp) {
 	bu_log("WARNING: NULL display (r/g/b => %d/%d/%d; strict => %d; transparency => %f)\n", r, g, b, strict, transparency);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
     pl_color(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, (int)r, (int)g, (int)b);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 HIDDEN int
 plot_setBGColor(dm *dmp, unsigned char r, unsigned char g, unsigned char b)
 {
     if (!dmp) {
 	bu_log("WARNING: Null display (r/g/b==%d/%d/%d)\n", r, g, b);
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -431,7 +431,7 @@ plot_setLineAttr(dm *dmp, int width, int style)
     else
 	pl_linmod(((struct plot_vars *)dmp->dm_vars.priv_vars)->up_fp, "solid");
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -449,7 +449,7 @@ plot_debug(dm *dmp, int lvl)
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 HIDDEN int
@@ -466,7 +466,7 @@ plot_logfile(dm *dmp, const char *filename)
     Tcl_AppendStringsToObj(obj, "flushed\n", (char *)NULL);
 
     Tcl_SetObjResult(dmp->dm_interp, obj);
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 
@@ -488,7 +488,7 @@ plot_setWinBounds(dm *dmp, fastf_t *w)
 	dmp->dm_clipmax[2] = 1.0e20;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 

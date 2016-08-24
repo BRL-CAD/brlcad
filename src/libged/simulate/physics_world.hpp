@@ -27,9 +27,8 @@
 #ifndef PHYSICS_WORLD_H
 #define PHYSICS_WORLD_H
 
-
+#include "common.h"
 #include <btBulletDynamicsCommon.h>
-
 
 namespace simulate
 {
@@ -54,9 +53,7 @@ protected:
     btDiscreteDynamicsWorld m_world;
 };
 
-
 }
-
 
 #endif
 

@@ -89,16 +89,16 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     struct render_spall_hit_s hit;
     vect_t color;
     struct tie_id_s id;
-    tfloat t, dot;
+    TFLOAT t, dot;
 
 
     rd = (struct render_spall_s *)render->data;
 
     /* Draw spall Cone */
-    if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
-	*pixel[0] = (tfloat)0.4;
-	*pixel[1] = (tfloat)0.4;
-	*pixel[2] = (tfloat)0.4;
+    if (TIE_WORK(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
+	*pixel[0] = (TFLOAT)0.4;
+	*pixel[1] = (TFLOAT)0.4;
+	*pixel[2] = (TFLOAT)0.4;
     }
 
     /*
@@ -135,7 +135,7 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     hit.plane[3] = rd->plane[3];
 
     /* Render Geometry */
-    if (!tie_work(tie, ray, &id, render_spall_hit, &hit))
+    if (!TIE_WORK(tie, ray, &id, render_spall_hit, &hit))
 	return;
 
 
@@ -175,9 +175,9 @@ render_spall_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, ve
     }
 #endif
 
-    *pixel[0] += (tfloat)0.1;
-    *pixel[1] += (tfloat)0.1;
-    *pixel[2] += (tfloat)0.1;
+    *pixel[0] += (TFLOAT)0.1;
+    *pixel[1] += (TFLOAT)0.1;
+    *pixel[2] += (TFLOAT)0.1;
 }
 
 
@@ -211,7 +211,7 @@ render_spall_init(render_t *render, const char *buf)
     VMOVE(d->ray_pos, ray_pos);
     VMOVE(d->ray_dir, ray_dir);
 
-    tie_init(&d->tie, TESSELLATION, TIE_KDTREE_FAST);
+    TIE_INIT(&d->tie, TESSELLATION, TIE_KDTREE_FAST);
 
     /* Calculate the normal to be used for the plane */
     up[0] = 0;
@@ -252,8 +252,8 @@ render_spall_init(render_t *render, const char *buf)
 	}
     }
 
-/*  tie_push(&d->tie, tri_list, TESSELLATION, NULL, 0);   */
-    tie_prep(&d->tie);
+/*  TIE_PUSH(&d->tie, tri_list, TESSELLATION, NULL, 0);   */
+    TIE_PREP(&d->tie);
 
     bu_free(vec_list, "vec_list");
     bu_free(tri_list, "tri_list");

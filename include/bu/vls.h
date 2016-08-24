@@ -427,7 +427,7 @@ BU_EXPORT extern void bu_vls_vprintf(struct bu_vls *vls,
  * a subset of characters that must be escaped or otherwise identified.
  *
  * Given the large set of possible scenarios, it definitely makes sense
- * to allow an encoding specifiying variable, and probably other optional
+ * to allow an encoding specifying variable, and probably other optional
  * variables (which may be NULL, depending on the encoding type) specifying
  * active characters (that need quoting) and an escape character (or
  * characters?  does it take more than one in some scenarios?  perhaps start

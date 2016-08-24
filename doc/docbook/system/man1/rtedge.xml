@@ -61,7 +61,7 @@
 	<term><option>-. #</option></term>
 	<listitem>
 	  <para>
-            selects the factor used in NUgrid algorithm. Default is 1.5 .
+	    selects the factor used in NUgrid algorithm. Default is 1.5 .
 	  </para>
 	</listitem>
       </varlistentry>
@@ -70,7 +70,7 @@
 	<term><option>-, #</option></term>
 	<listitem>
 	  <para>
-           selects which space partitioning algorithm to use
+	   selects which space partitioning algorithm to use
 	  </para>
 	</listitem>
       </varlistentry>
@@ -106,7 +106,7 @@
 	<term><option>-d #</option></term>
 	<listitem>
 	  <para>sets flag for reporting of pixel distances: 1 for on, 0 (default) for off.
-          (Each pixel is represented by 3 bytes of color information followed by 8 bytes
+	  (Each pixel is represented by 3 bytes of color information followed by 8 bytes
 	  for a double, in IEEE format, which gives the distance to the ray's first hit.
 	  If the ray doesn't hit, a zero distance is reported by default
 	  which causes <citerefentry><refentrytitle>rt</refentrytitle><manvolnum>1</manvolnum></citerefentry>
@@ -388,7 +388,7 @@
 	<term><option>-D #</option></term>
 	<listitem>
 	  <para>This is the "desired frame" flag, specifying the frame number to start with.
-           Used with animation scripts; specify the desired ending (kill-after) frame with
+	   Used with animation scripts; specify the desired ending (kill-after) frame with
 	  <option>-K #</option> .</para>
 	</listitem>
       </varlistentry>
@@ -397,7 +397,7 @@
 	<term><option>-E #</option></term>
 	<listitem>
 	  <para>sets the distance from the eye point to the center of the model RPP; default is
-          the square root of 2.
+	  the square root of 2.
 	  Only useful with auto-sizing, and conflicts with
 	  <option>-M</option> .</para>
 	</listitem>
@@ -425,10 +425,10 @@
       <varlistentry>
 	<term><option>-H #</option></term>
 	<listitem>
-          <para>This is the "hypersample" flag, specifying number of extra rays to fire for each pixel to
-          obtain more accurate results without needing to store the extra pixels. Automatically invokes
+	  <para>This is the "hypersample" flag, specifying number of extra rays to fire for each pixel to
+	  obtain more accurate results without needing to store the extra pixels. Automatically invokes
 	  <option>-J 1</option>. The final colors of all rays are averaged together. Better results can be
-         obtained by simply increasing the resolution, and decimating the results with a filter such as
+	 obtained by simply increasing the resolution, and decimating the results with a filter such as
 	  <citerefentry><refentrytitle>pixhalve</refentrytitle><manvolnum>1</manvolnum></citerefentry>.</para>
 	</listitem>
       </varlistentry>
@@ -621,7 +621,7 @@
 	<term><option>-+ #</option></term>
 	<listitem>
 	  <para>specifies (setting argument to "t") that output is NOT binary (default is that it is).
-          <option>-+</option> is otherwise not implemented.
+	  <option>-+</option> is otherwise not implemented.
 	  </para>
 	</listitem>
       </varlistentry>
@@ -672,8 +672,8 @@
 	<listitem>
 	  <para>
 	    set the color of the foreground (edges) to the
-            given  r,g,b triple, where each of r,g,b, is in the range 0.0 to 1.0.
-            The default is white (1.0,1.0,1.0).
+	    given  r,g,b triple, where each of r,g,b, is in the range 0 to 255 or 0.0 to 1.0.
+	    The default is white (255/255/255).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -688,8 +688,8 @@
 	<listitem>
 	  <para>
 	    set the color of the background to the r,g,b
-            triple, where each of r,g,b is in the range 0.0 to 1.0.
-            The default is near-black (0.0,0.0,1.0).
+	    triple, where each of r,g,b is in the range 0 to 255 or 0.0 to 1.0.
+	    The default is near-black (0,0,1).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -944,7 +944,7 @@
 
       <para>
 	The command
-	<userinput>rtedge -s1024 -o new.pix -c"set fg=0,1.0,0 bg=1.0,0,0" havoc.g havoc</userinput>
+	<userinput>rtedge -s1024 -o new.pix -c"set fg=0/255/0 bg=255/0/0" havoc.g havoc</userinput>
 	changes the edge color to be green and the background color to be red.
       </para>
 
@@ -987,7 +987,7 @@ EOF
 
 rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 ov=1"\
- -c"set fg=1.0,0.78,0" \
+ -c"set fg=255,200,0" \
  $*\
  havoc.g\
  havoc\
@@ -1030,7 +1030,7 @@ EOF
 
 rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 om=3"\
- -c"set fg=0,0,0 bg=0.78,0.78,0.78"\
+ -c"set fg=0,0,0 bg=200,200,200"\
  -c"set oo=\"weapons\" "\
  $*\
  havoc.g\

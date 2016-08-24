@@ -75,7 +75,7 @@ drawLine3D(struct dm_internal *dmp, point_t pt1, point_t pt2, const char *log_bu
     glVertex3dv(pt);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -105,7 +105,7 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, co
     }
 
     if (npoints < 2 || (!lflag && npoints%2))
-	return TCL_OK;
+	return BRLCAD_OK;
 
     if (dmp->dm_light) {
 	glMaterialfv(GL_FRONT_AND_BACK, GL_EMISSION, wireColor);
@@ -130,7 +130,7 @@ drawLines3D(struct dm_internal *dmp, int npoints, point_t *points, int lflag, co
 
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 int
@@ -161,7 +161,7 @@ drawLine2D(struct dm_internal *dmp, fastf_t X1, fastf_t Y1, fastf_t X2, fastf_t 
     glVertex2f(X2, Y2);
     glEnd();
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 #endif
 
@@ -169,14 +169,14 @@ int
 draw_Line3D(struct dm_internal *dmp, point_t pt1, point_t pt2)
 {
     if (!dmp)
-	return TCL_ERROR;
+	return BRLCAD_ERROR;
 
     if (bn_pt3_pt3_equal(pt1, pt2, NULL)) {
 	/* nothing to do for a singular point */
-	return TCL_OK;
+	return BRLCAD_OK;
     }
 
-    return TCL_OK;
+    return BRLCAD_OK;
 }
 
 

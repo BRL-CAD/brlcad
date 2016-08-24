@@ -29,6 +29,8 @@
 #ifndef PKG_H
 #define PKG_H
 
+#include "common.h"
+
 /* for size_t */
 #include <stddef.h>
 

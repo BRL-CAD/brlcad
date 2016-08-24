@@ -129,7 +129,6 @@ CMAKEFILES(
   nurbs/brep-3dm.tar.bz2
   red.sh
   repository.sh
-  repository.cmake
   shaders.sh
   shaderspix.asc
   slave_build.sh

@@ -651,6 +651,25 @@ get_args(int argc, const char *argv[])
 }
 
 
+void
+color_hook(const struct bu_structparse *sp, const char *name, void *base, const char *value, void *UNUSED(data))
+{
+    struct bu_color color = BU_COLOR_INIT_ZERO;
+
+    BU_CK_STRUCTPARSE(sp);
+
+    if (!sp || !name || !value || sp->sp_count != 3 || bu_strcmp("%f", sp->sp_fmt))
+	bu_bomb("color_hook(): invalid arguments");
+
+    if (!bu_color_from_str(&color, value)) {
+	bu_log("ERROR: invalid color string: '%s'\n", value);
+	VSETALL(color.buc_rgb, 0.0);
+    }
+
+    VMOVE((fastf_t *)((char *)base + sp->sp_offset), color.buc_rgb);
+}
+
+
 /*
  * Local Variables:
  * mode: C

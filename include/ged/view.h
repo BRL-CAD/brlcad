@@ -117,11 +117,8 @@ GED_EXPORT extern int ged_ps(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Returns the solid table & vector list as a string
- *
- * @todo - there's no way this function should be limited to the
- * documented purpose above...
  */
-GED_EXPORT extern int ged_report(struct ged *gedp, int argc, const char *argv[]);
+GED_EXPORT extern int ged_solid_report(struct ged *gedp, int argc, const char *argv[]);
 
 /**
  * Save the view

@@ -27,17 +27,11 @@
  * be silently ignored for now. No KD-TREE caching is assumed. I like tacos.
  */
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include "common.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-
 
 #include "gcv.h"
 
@@ -127,7 +121,7 @@ nmg_to_adrt_internal(struct adrt_mesh_s *mesh, struct nmgregion *r)
 		else if (vert_count < 3)
 		    continue;
 
-		tie_push(cur_tie, tribuf, 1, mesh, 0);
+		TIE_VAL(tie_push)(cur_tie, tribuf, 1, mesh, 0);
 		region_polys++;
 	    }
 	}
@@ -202,7 +196,7 @@ nmg_to_adrt_regstart(struct db_tree_state *ts, const struct db_full_path *path, 
 	    VSCALE((*tribuf[1]).v, (bot->vertices+3*bot->faces[3*i+1]), 1.0/1000.0);
 	    VSCALE((*tribuf[2]).v, (bot->vertices+3*bot->faces[3*i+2]), 1.0/1000.0);
 
-	    tie_push(cur_tie, tribuf, 1, mesh, 0);
+	    TIE_VAL(tie_push)(cur_tie, tribuf, 1, mesh, 0);
 	}
 	return -1;
     }
@@ -296,7 +290,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     BN_CK_TOL(tree_state.ts_tol);
     RT_CK_TESS_TOL(tree_state.ts_ttol);
 
-    tie_init(cur_tie, 4096, TIE_KDTREE_FAST);
+    TIE_VAL(tie_init)(cur_tie, 4096, TIE_KDTREE_FAST);
 
     /* FIXME: where is this released? */
     BU_ALLOC(*meshes, struct adrt_mesh_s);
@@ -328,7 +322,7 @@ load_g(struct tie_s *tie, const char *db, int argc, const char **argv, struct ad
     bu_free(tribuf[2], "vert");
     bu_free(tribuf, "tri");
 
-    tie_prep(cur_tie);
+    TIE_VAL(tie_prep)(cur_tie);
 
     return 0;
 }

@@ -2505,7 +2505,7 @@ bn_isect_lseg_rpp(fastf_t *a,
 	     * check against the boundaries.
 	     */
 	    if ((*min > *pt) || (*max < *pt))
-		return 0;	/* MISS */;
+		return 0;	/* MISS */
 	}
     }
     if (mindist >= maxdist)

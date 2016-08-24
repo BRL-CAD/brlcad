@@ -64,6 +64,18 @@ match /brlcad/branches/framebuffer-experiment/
    branch dm-work
 end match
 
+# Skip later aspects of embree commits - revision 68309 resulted in corruption
+# of the subversion repository (probably due to a bug in subversion itself) and
+# subsequent efforts to repair things ended up introducing other problems that
+# triggered svnadmin verify failures.  Scary hand editing of first 68309's rev
+# file (and later 68307 (??) and the attempted re-sync commit 68383) got
+# svnadmin verify running again, but the results don't seem to translate well
+# to git...  just skip this mess.
+match /brlcad/branches/embree/
+   min revision 68306
+   max revision 68900
+end match
+
 # General rule for well-behaved branches
 match /brlcad/branches/([^/]+)/
    repository brlcad

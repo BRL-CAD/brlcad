@@ -476,7 +476,7 @@ tgcin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick[6])
     VSUB2(h, top, v);
 
     if (!ZERO(thick[2])) {
-	/* ther is a side thickness */
+	/* there is a side thickness */
 	vect_t ctoa;	/* unit vector from tip of C to tip of A */
 	vect_t dtob;	/* unit vector from tip of D to tip of B */
 	point_t pt_a, pt_b, pt_c, pt_d;	/* points at tips of semi radii */

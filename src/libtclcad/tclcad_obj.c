@@ -59,7 +59,9 @@
 #include "dm/bview.h"
 
 #include "ged.h"
-
+#include "icv/io.h"
+#include "icv/ops.h"
+#include "icv/crop.h"
 #include "fb.h"
 
 #include "dm/dm_xvars.h"
@@ -265,6 +267,12 @@ HIDDEN int to_get_prev_mouse(struct ged *gedp,
 			     ged_func_ptr func,
 			     const char *usage,
 			     int maxargs);
+HIDDEN int to_fit_png_image(struct ged *gedp,
+		  int argc,
+		  const char *argv[],
+		  ged_func_ptr func,
+		  const char *usage,
+		  int maxargs);
 HIDDEN int to_init_view_bindings(struct ged *gedp,
 				 int argc,
 				 const char *argv[],
@@ -1092,6 +1100,7 @@ static struct to_cmdtab to_cmds[] = {
     {"find_bot_edge",	"bot vx vy", 5, to_view_func, ged_find_bot_edge_nearest_pt},
     {"find_botpt",	"bot vx vy", 5, to_view_func, ged_find_botpt_nearest_pt},
     {"find_pipept",	"pipe x y z", 6, to_view_func, ged_find_pipept_nearest_pt},
+    {"fit_png_image",	"image_file_in req_width req_height scale image_file_out", 6, to_fit_png_image, GED_FUNC_PTR_NULL},
     {"fontsize",	"[fontsize]", 3, to_fontsize, GED_FUNC_PTR_NULL},
     {"form",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_form},
     {"fracture",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_fracture},
@@ -1276,7 +1285,7 @@ static struct to_cmdtab to_cmds[] = {
     {"refresh_on",	"[0|1]", TO_UNLIMITED, to_refresh_on, GED_FUNC_PTR_NULL},
     {"regdef",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_regdef},
     {"regions",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_tables},
-    {"report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_report},
+    {"solid_report",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
     {"rfarb",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rfarb},
     {"rm",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_remove},
     {"rmap",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_rmap},
@@ -1366,7 +1375,7 @@ static struct to_cmdtab to_cmds[] = {
     {"whichid",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_which},
     {"who",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_who},
     {"wmater",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_wmater},
-    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_report},
+    {"x",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_solid_report},
     {"xpush",	(char *)0, TO_UNLIMITED, to_pass_through_func, ged_xpush},
     {"ypr",	"yaw pitch roll", 5, to_view_func_plus, ged_ypr},
     {"zap",	(char *)0, TO_UNLIMITED, to_pass_through_and_refresh_func, ged_zap},
@@ -5887,6 +5896,112 @@ to_get_prev_mouse(struct ged *gedp,
     }
 
     bu_vls_printf(gedp->ged_result_str, "%d %d", (int)gdvp->gdv_view->gv_prevMouseX, (int)gdvp->gdv_view->gv_prevMouseY);
+    return GED_OK;
+}
+
+
+HIDDEN int
+to_fit_png_image(struct ged *gedp,
+       int argc,
+       const char *argv[],
+       ged_func_ptr UNUSED(func),
+       const char *usage,
+       int UNUSED(maxargs))
+{
+    icv_image_t *img;
+    size_t i_w, i_n;
+    size_t o_w_requested, o_n_requested;
+    size_t o_w_used, o_n_used;
+    size_t x_offset, y_offset;
+    fastf_t ar_w;
+    fastf_t sf;
+
+    /* initialize result */
+    bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* must be wanting help */
+    if (argc == 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_HELP;
+    }
+
+    if (argc != 6 ||
+	bu_sscanf(argv[2], "%lu", &o_w_requested) != 1 ||
+	bu_sscanf(argv[3], "%lu", &o_n_requested) != 1 ||
+	bu_sscanf(argv[4], "%lf", &sf) != 1) {
+	bu_vls_printf(gedp->ged_result_str, "Usage: %s %s", argv[0], usage);
+	return GED_ERROR;
+    }
+
+    img = icv_read(argv[1], BU_MIME_IMAGE_PNG, 0, 0);
+    if (img == NULL) {
+	bu_vls_printf(gedp->ged_result_str, "%s: %s does not exist or is not a png file", argv[0], argv[1]);
+	return GED_ERROR;
+    }
+
+    i_w = img->width;
+    i_n = img->height;
+    ar_w = o_w_requested / (fastf_t)i_w;
+
+    o_w_used = (size_t)(i_w * ar_w * sf);
+    o_n_used = (size_t)(i_n * ar_w * sf);
+
+    if (icv_resize(img, ICV_RESIZE_BINTERP, o_w_used, o_n_used, 1) < 0) {
+	bu_vls_printf(gedp->ged_result_str, "%s: icv_resize failed", argv[0]);
+	icv_destroy(img);
+	return GED_ERROR;
+    }
+
+    if (NEAR_EQUAL(sf, 1.0, BN_TOL_DIST)) {
+	fastf_t ar_n = o_n_requested / (fastf_t)i_n;
+
+	if (ar_w > ar_n && !NEAR_EQUAL(ar_w, ar_n, BN_TOL_DIST)) {
+	    /* need to crop final image height so that we keep the center of the image */
+	    size_t x_orig = 0;
+	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
+
+	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
+		icv_destroy(img);
+		return GED_ERROR;
+	    }
+
+	    x_offset = 0;
+	    y_offset = 0;
+	} else {
+	    /* user needs to offset final image in the window */
+	    x_offset = 0;
+	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
+	}
+    } else {
+	if (sf > 1.0) {
+	    size_t x_orig = (o_w_used - o_w_requested) * 0.5;
+	    size_t y_orig = (o_n_used - o_n_requested) * 0.5;
+
+	    if (icv_rect(img, x_orig, y_orig, o_w_requested, o_n_requested) < 0) {
+		bu_vls_printf(gedp->ged_result_str, "%s: icv_rect failed", argv[0]);
+		icv_destroy(img);
+		return GED_ERROR;
+	    }
+
+	    x_offset = 0;
+	    y_offset = 0;
+	} else {
+	    /* user needs to offset final image in the window */
+	    x_offset = (size_t)((o_w_requested - o_w_used) * 0.5);
+	    y_offset = (size_t)((o_n_requested - o_n_used) * 0.5);
+	}
+    }
+
+    bu_vls_printf(gedp->ged_result_str, "%lu %lu %lu %lu", img->width, img->height, x_offset, y_offset);
+
+    /* icv_write should return < 0 for errors but doesn't */
+    if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {
+	icv_destroy(img);
+	return GED_ERROR;
+    }
+
+    icv_destroy(img);
     return GED_OK;
 }
 

@@ -267,7 +267,7 @@ rt_nurb_c_split(struct bu_list *split_hd, const struct edge_g_cnurb *crv)
 
     NMG_CK_CNURB(crv);
 
-    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type),
+    coords = RT_NURB_EXTRACT_COORDS(crv->pt_type);
 
 	value = crv->k.knots[(crv->k.k_size -1)/2];
 

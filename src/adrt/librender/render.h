@@ -26,17 +26,17 @@
 
 #include "render_internal.h"
 
-RENDER_SHADER(component);
-RENDER_SHADER(cut);
-RENDER_SHADER(depth);
-RENDER_SHADER(flat);
-RENDER_SHADER(flos);
-RENDER_SHADER(grid);
-RENDER_SHADER(normal);
-RENDER_SHADER(path);
-RENDER_SHADER(phong);
-RENDER_SHADER(spall);
-RENDER_SHADER(surfel);
+RENDER_EXPORT extern int render_component_init(render_t *, const char *);
+RENDER_EXPORT extern int render_cut_init(render_t *, const char *);
+RENDER_EXPORT extern int render_depth_init(render_t *, const char *);
+RENDER_EXPORT extern int render_flat_init(render_t *, const char *);
+RENDER_EXPORT extern int render_flos_init(render_t *, const char *);
+RENDER_EXPORT extern int render_grid_init(render_t *, const char *);
+RENDER_EXPORT extern int render_normal_init(render_t *, const char *);
+RENDER_EXPORT extern int render_path_init(render_t *, const char *);
+RENDER_EXPORT extern int render_phong_init(render_t *, const char *);
+RENDER_EXPORT extern int render_spall_init(render_t *, const char *);
+RENDER_EXPORT extern int render_surfel_init(render_t *, const char *);
 
 RENDER_EXPORT void* render_hit(struct tie_ray_s *ray, struct tie_id_s *id, struct tie_tri_s *tri, void *ptr);
 

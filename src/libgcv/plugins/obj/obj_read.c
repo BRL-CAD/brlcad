@@ -248,16 +248,16 @@ collect_global_obj_file_attributes(struct ga_t *ga)
 
     /* release unused */
     count = obj_materiallibs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "materiallibs");
+    bu_free_args(count, (char **)lib_arr, "materiallibs");
 
     count = obj_texmaplibs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "texmaplibs");
+    bu_free_args(count, (char **)lib_arr, "texmaplibs");
 
     count = obj_shadow_objs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "shadow_objs");
+    bu_free_args(count, (char **)lib_arr, "shadow_objs");
 
     count = obj_trace_objs(ga->contents, &lib_arr);
-    bu_free_array(count, (char **)lib_arr, "trace_objs");
+    bu_free_args(count, (char **)lib_arr, "trace_objs");
 
     ga->numGroups = obj_groups(ga->contents, &ga->str_arr_obj_groups);
     bu_log("\tTotal number of groups in OBJ file; numGroups = (%zu)\n", ga->numGroups);
@@ -3528,10 +3528,10 @@ obj_read(struct gcv_context *context, const struct gcv_opts *gcv_options, const 
 
     /* cleanup */
 
-    bu_free_array(ga.numGroups, (char **)ga.str_arr_obj_groups, "str_arr_obj_groups");
-    bu_free_array(ga.numObjects, (char **)ga.str_arr_obj_objects, "str_arr_obj_objects");
-    bu_free_array(ga.numMaterials, (char **)ga.str_arr_obj_materials, "str_arr_obj_materials");
-    bu_free_array(ga.numTexmaps, (char **)ga.str_arr_obj_texmaps, "str_arr_obj_texmaps");
+    bu_free_args(ga.numGroups, (char **)ga.str_arr_obj_groups, "str_arr_obj_groups");
+    bu_free_args(ga.numObjects, (char **)ga.str_arr_obj_objects, "str_arr_obj_objects");
+    bu_free_args(ga.numMaterials, (char **)ga.str_arr_obj_materials, "str_arr_obj_materials");
+    bu_free_args(ga.numTexmaps, (char **)ga.str_arr_obj_texmaps, "str_arr_obj_texmaps");
 
     obj_contents_destroy(ga.contents);
     obj_parser_destroy(ga.parser);
