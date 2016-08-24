@@ -322,8 +322,6 @@ int cm_tree(const int argc, const char **argv)
     if (rt_verbosity & VERBOSE_STATS)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
-
-    exit(0);
     return 0;
 }
 
@@ -502,8 +500,6 @@ def_tree(register struct rt_i *rtip)
 	bu_log("GETTREE: %s\n", bu_vls_addr(&times));
     bu_vls_free(&times);
     memory_summary();
-
-    exit(0);
 }
 
 
