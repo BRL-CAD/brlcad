@@ -51,14 +51,15 @@ rt_obj_prep(struct soltab *stp, struct rt_db_internal *ip, struct rt_i *rtip)
 }
 
 
-int rt_obj_prep_serialize(struct soltab *stp, struct bu_external *external, uint32_t *version)
+int rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version)
 {
     const struct rt_functab *ft;
 
-    if (!stp || !external || !version)
+    if (!stp || !ip || !external || !version)
 	return -1;
 
     RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
     BU_CK_EXTERNAL(external);
 
     if (stp->st_id < 0)
@@ -72,7 +73,7 @@ int rt_obj_prep_serialize(struct soltab *stp, struct bu_external *external, uint
     if (!ft->ft_prep_serialize)
 	return -4;
 
-    return ft->ft_prep_serialize(stp, external, version);
+    return ft->ft_prep_serialize(stp, ip, external, version);
 }
 
 

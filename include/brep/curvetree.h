@@ -28,8 +28,8 @@
 #define BREP_CURVETREE_H
 
 #include "common.h"
-#include "brep/defines.h"
-#include "brep/brnode.h"
+
+#include "brep.h"
 
 /** @{ */
 /** @file brep/curvetree.h */
@@ -41,7 +41,6 @@ __BEGIN_DECLS
 extern "C++" {
 #include <map>
 
-
     namespace brlcad {
 
 	/**
@@ -52,10 +51,10 @@ extern "C++" {
 		explicit CurveTree(const ON_BrepFace *face);
 		~CurveTree();
 
-		CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
-		void serialize(ON_BinaryArchive &archive) const;
+		CurveTree(Deserializer &deserializer, const ON_BrepFace &face);
+		void serialize(Serializer &serializer) const;
 		std::vector<std::size_t> serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const;
-		std::list<const BRNode *> serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
+		std::list<const BRNode *> *serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const;
 		void serialize_cleanup() const;
 
 		/**
@@ -66,10 +65,9 @@ extern "C++" {
 		void getLeavesAbove(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 		void getLeavesRight(std::list<const BRNode *> &out_leaves, const ON_2dPoint &pt, fastf_t tol) const;
 
-		const ON_BrepFace *m_face;
-
-
 	    private:
+		friend class BBNode;
+
 		CurveTree(const CurveTree &source);
 		CurveTree &operator=(const CurveTree &source);
 
@@ -93,8 +91,9 @@ extern "C++" {
 		BRNode *curveBBox(const ON_Curve *curve, int trim_index, int adj_face_index, const ON_Interval &t, bool isLeaf, bool innerTrim, const ON_BoundingBox &bb) const;
 		static ON_BoundingBox initialLoopBBox(const ON_BrepFace &face);
 
-		BRNode m_root;
-		std::vector<const BRNode *> m_sortedX;
+		const ON_BrepFace * const m_face;
+		BRNode *m_root;
+		std::vector<const BRNode *> * const m_sortedX;
 		mutable std::map<const BRNode *, std::size_t> *m_sortedX_indices;
 	};
 

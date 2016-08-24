@@ -58,9 +58,6 @@ extern "C++" {
 		explicit SurfaceTree(const ON_BrepFace *face, bool removeTrimmed = true, int depthLimit = BREP_MAX_FT_DEPTH, double within_distance_tol = BREP_EDGE_MISS_TOLERANCE);
 		~SurfaceTree();
 
-		SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face);
-		void serialize(ON_BinaryArchive &archive) const;
-
 		BBNode *getRootNode() const;
 
 		/**
@@ -96,10 +93,10 @@ extern "C++" {
 		BBNode *subdivideSurface(const ON_Surface *localsurf, const ON_Interval &u, const ON_Interval &v, ON_Plane frames[9], int depth, int depthLimit, int prev_knot, double within_distance_tol) const;
 		BBNode *surfaceBBox(const ON_Surface *localsurf, bool leaf, const ON_Plane frames[9], const ON_Interval &u, const ON_Interval &v, double within_distance_tol) const;
 
-		bool m_removeTrimmed;
-		const ON_BrepFace *m_face;
+		const bool m_removeTrimmed;
+		const ON_BrepFace * const m_face;
 		BBNode *m_root;
-		mutable std::queue<ON_Plane *> m_f_queue;
+		std::queue<ON_Plane *> * const m_f_queue;
 	};
 
     } /* namespace brlcad */

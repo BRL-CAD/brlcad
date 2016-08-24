@@ -132,8 +132,8 @@ distribute(const int count, const ON_3dVector* v, double x[], double y[], double
 // CurveTree
 CurveTree::CurveTree(const ON_BrepFace* face) :
     m_face(face),
-    m_root(initialLoopBBox(*face)),
-    m_sortedX(),
+    m_root(new BRNode(initialLoopBBox(*face))),
+    m_sortedX(new std::vector<const BRNode *>),
     m_sortedX_indices(NULL)
 {
     for (int li = 0; li < face->LoopCount(); li++) {
@@ -141,7 +141,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	const ON_BrepLoop* loop = face->Loop(li);
 	// for each trim
 	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
-	    int adj_face_index = -99;
+	    int adj_face_index = -1;
 	    const int trim_index = loop->m_ti[ti];
 	    const ON_BrepTrim& trim = face->Brep()->m_T[trim_index];
 
@@ -218,7 +218,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (std::list<fastf_t>::const_iterator l = splitlist.begin(); l != splitlist.end(); l++) {
 		    double xmax = *l;
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
-			m_root.addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
+			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
 		}
@@ -231,7 +231,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 		for (int knot_index = 1; knot_index <= knotcnt; knot_index++) {
 		    double xmax = knots[knot_index];
 		    if (!NEAR_EQUAL(xmax, min, TOL)) {
-			m_root.addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
+			m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, xmax, innerLoop, 0));
 		    }
 		    min = xmax;
 		}
@@ -239,7 +239,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 	    }
 
 	    if (!NEAR_EQUAL(max, min, TOL)) {
-		m_root.addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
+		m_root->addChild(subdivideCurve(trimCurve, trim_index, adj_face_index, min, max, innerLoop, 0));
 	    }
 	}
     }
@@ -247,7 +247,7 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
     std::list<const BRNode *> temp;
     getLeaves(temp);
     temp.sort(sortX);
-    m_sortedX.insert(m_sortedX.end(), temp.begin(), temp.end());
+    m_sortedX->insert(m_sortedX->end(), temp.begin(), temp.end());
 
     return;
 }
@@ -255,45 +255,44 @@ CurveTree::CurveTree(const ON_BrepFace* face) :
 
 CurveTree::~CurveTree()
 {
+    delete m_root;
+    delete m_sortedX;
     delete m_sortedX_indices;
 }
 
 
-CurveTree::CurveTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
+CurveTree::CurveTree(Deserializer &deserializer, const ON_BrepFace &face) :
     m_face(&face),
-    m_root(archive, *m_face->Brep()),
-    m_sortedX(),
+    m_root(NULL),
+    m_sortedX(new std::vector<const BRNode *>),
     m_sortedX_indices(NULL)
 {
+    m_root = new BRNode(deserializer, *m_face->Brep());
+
     std::list<const BRNode *> temp;
     getLeaves(temp);
     temp.sort(sortX);
-    m_sortedX.insert(m_sortedX.end(), temp.begin(), temp.end());
+    m_sortedX->insert(m_sortedX->end(), temp.begin(), temp.end());
 }
 
 
 void
-CurveTree::serialize(ON_BinaryArchive &archive) const
+CurveTree::serialize(Serializer &serializer) const
 {
-    m_root.serialize(archive);
-
-    if (m_sortedX_indices)
-	bu_bomb("m_sortedX_indices is not null");
-
-    m_sortedX_indices = new std::map<const BRNode *, std::size_t>;
-    std::size_t index = 0;
-    for (std::vector<const BRNode *>::const_iterator it = m_sortedX.begin(); it != m_sortedX.end(); ++it, ++index)
-	m_sortedX_indices->insert(std::make_pair(*it, index));
-
-    // SKIP: m_sortedX
+    m_root->serialize(serializer);
 }
 
 
 std::vector<std::size_t>
 CurveTree::serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) const
 {
-    if (!m_sortedX_indices)
-	bu_bomb("m_sortedX_indices is null");
+    if (!m_sortedX_indices) {
+	m_sortedX_indices = new std::map<const BRNode *, std::size_t>;
+	std::size_t index = 0;
+
+	for (std::vector<const BRNode *>::const_iterator it = m_sortedX->begin(); it != m_sortedX->end(); ++it, ++index)
+	    m_sortedX_indices->insert(std::make_pair(*it, index));
+    }
 
     std::vector<std::size_t> result;
 
@@ -304,13 +303,13 @@ CurveTree::serialize_get_leaves_keys(const std::list<const BRNode *> &leaves) co
 }
 
 
-std::list<const BRNode *>
+std::list<const BRNode *> *
 CurveTree::serialize_get_leaves(const std::size_t *keys, std::size_t num_keys) const
 {
-    std::list<const BRNode *> result;
+    std::list<const BRNode *> *result = new std::list<const BRNode *>;
 
     for (std::size_t i = 0; i < num_keys; ++i)
-	result.push_back(m_sortedX.at(keys[i]));
+	result->push_back(m_sortedX->at(keys[i]));
 
     return result;
 }
@@ -327,35 +326,35 @@ CurveTree::serialize_cleanup() const
 const BRNode*
 CurveTree::getRootNode() const
 {
-    return &m_root;
+    return m_root;
 }
 
 
 int
 CurveTree::depth() const
 {
-    return m_root.depth();
+    return m_root->depth();
 }
 
 
 ON_2dPoint
 CurveTree::getClosestPointEstimate(const ON_3dPoint& pt) const
 {
-    return m_root.getClosestPointEstimate(pt);
+    return m_root->getClosestPointEstimate(pt);
 }
 
 
 ON_2dPoint
 CurveTree::getClosestPointEstimate(const ON_3dPoint& pt, ON_Interval& u, ON_Interval& v) const
 {
-    return m_root.getClosestPointEstimate(pt, u, v);
+    return m_root->getClosestPointEstimate(pt, u, v);
 }
 
 
 void
 CurveTree::getLeaves(std::list<const BRNode*>& out_leaves) const
 {
-    m_root.getLeaves(out_leaves);
+    m_root->getLeaves(out_leaves);
 }
 
 
@@ -364,7 +363,7 @@ CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -384,7 +383,7 @@ void
 CurveTree::getLeavesAbove(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -404,7 +403,7 @@ CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_Interva
 {
     point_t bmin, bmax;
     double dist;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -424,7 +423,7 @@ void
 CurveTree::getLeavesRight(std::list<const BRNode*>& out_leaves, const ON_2dPoint& pt, fastf_t tol) const
 {
     point_t bmin, bmax;
-    for (std::vector<const BRNode*>::const_iterator i = m_sortedX.begin(); i != m_sortedX.end(); i++) {
+    for (std::vector<const BRNode*>::const_iterator i = m_sortedX->begin(); i != m_sortedX->end(); i++) {
 	const BRNode* br = *i;
 	br->GetBBox(bmin, bmax);
 
@@ -510,6 +509,7 @@ CurveTree::initialLoopBBox(const ON_BrepFace &face)
 	    break;
 	}
     }
+
     return bb;
 }
 
@@ -623,7 +623,7 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     m_removeTrimmed(removeTrimmed),
     m_face(face),
     m_root(NULL),
-    m_f_queue()
+    m_f_queue(new std::queue<ON_Plane *>)
 {
     // build the surface bounding volume hierarchy
     const ON_Surface* surf = face->SurfaceOf();
@@ -698,9 +698,9 @@ SurfaceTree::SurfaceTree(const ON_BrepFace* face, bool removeTrimmed, int depthL
     TRACE("u: [" << u[0] << ", " << u[1] << "]");
     TRACE("v: [" << v[0] << ", " << v[1] << "]");
     TRACE("m_root: " << m_root);
-    while (!m_f_queue.empty()) {
-	bu_free(m_f_queue.front(), "free subsurface frames array");
-	m_f_queue.pop();
+    while (!m_f_queue->empty()) {
+	bu_free(m_f_queue->front(), "free subsurface frames array");
+	m_f_queue->pop();
     }
 }
 
@@ -709,32 +709,7 @@ SurfaceTree::~SurfaceTree()
 {
     delete m_ctree;
     delete m_root;
-}
-
-
-SurfaceTree::SurfaceTree(ON_BinaryArchive &archive, const ON_BrepFace &face) :
-    m_ctree(new CurveTree(archive, face)),
-    m_removeTrimmed(true),
-    m_face(&face),
-    m_root(new BBNode(archive, *m_ctree)),
-    m_f_queue()
-{
-    if (!archive.ReadBool(&m_removeTrimmed))
-	bu_bomb("ON_BinaryArchive read failed");
-}
-
-
-void
-SurfaceTree::serialize(ON_BinaryArchive &archive) const
-{
-    m_ctree->serialize(archive);
-    m_root->serialize(archive);
-    m_ctree->serialize_cleanup();
-
-    if (!archive.WriteBool(m_removeTrimmed))
-	bu_bomb("ON_BinaryArchive write failed");
-
-    // SKIP: m_f_queue
+    delete m_f_queue;
 }
 
 
@@ -783,7 +758,7 @@ SurfaceTree::getSurface() const
 int
 brep_getSurfacePoint(const ON_3dPoint& pt, ON_2dPoint& uv, const BBNode* node) {
     plane_ray pr;
-    const ON_Surface *surf = node->m_ctree->m_face->SurfaceOf();
+    const ON_Surface *surf = node->get_face().SurfaceOf();
     double umin, umax;
     double vmin, vmax;
     surf->GetDomain(0, &umin, &umax);
@@ -985,7 +960,7 @@ SurfaceTree::surfaceBBox(const ON_Surface *localsurf,
 }
 
 
-BBNode*
+HIDDEN BBNode*
 initialBBox(const CurveTree* ctree, const ON_Surface* surf, const ON_Interval& u, const ON_Interval& v)
 {
 #ifdef _OLD_SUBDIVISION_
@@ -1294,8 +1269,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	if (prev_knot) localsurf->FrameAt(usplit, vsplit, frames[4]);
 
 	ON_Plane *newframes;
-	if (!m_f_queue.empty()) {
-	    newframes = m_f_queue.front(); m_f_queue.pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1336,7 +1311,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	delete q3surf;
 #endif
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	m_f_queue.push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1483,8 +1458,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(usplit, v.Max(), sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!m_f_queue.empty()) {
-	    newframes = m_f_queue.front(); m_f_queue.pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1523,7 +1498,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	m_f_queue.push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;
@@ -1653,8 +1628,8 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 	localsurf->FrameAt(u.Max(), vsplit, sharedframes[1]);
 
 	ON_Plane *newframes;
-	if (!m_f_queue.empty()) {
-	    newframes = m_f_queue.front(); m_f_queue.pop();
+	if (!m_f_queue->empty()) {
+	    newframes = m_f_queue->front(); m_f_queue->pop();
 	} else {
 	    newframes = (ON_Plane *)bu_malloc(9*sizeof(ON_Plane), "new frames");
 	}
@@ -1692,7 +1667,7 @@ SurfaceTree::subdivideSurface(const ON_Surface *localsurf,
 #endif
 
 	memset(newframes, 0, 9 * sizeof(ON_Plane *));
-	m_f_queue.push(newframes);
+	m_f_queue->push(newframes);
 
 	parent->m_trimmed = true;
 	parent->m_checkTrim = false;

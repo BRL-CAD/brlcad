@@ -262,8 +262,8 @@ struct rt_functab {
 				const struct rt_selection_operation *);
 #define RTFUNCTAB_FUNC_PROCESS_SELECTION_CAST(_func) ((int (*)(struct rt_db_internal *, struct db_i *, const struct rt_selection *, const struct rt_selection_operation *))_func)
 
-    int (*ft_prep_serialize)(struct soltab *stp, struct bu_external *external, uint32_t *version);
-#define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, struct bu_external *, uint32_t *))_func)
+    int (*ft_prep_serialize)(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
+#define RTFUNCTAB_FUNC_PREP_SERIALIZE_CAST(_func) ((int (*)(struct soltab *, const struct rt_db_internal *, struct bu_external *, uint32_t *))_func)
 };
 
 

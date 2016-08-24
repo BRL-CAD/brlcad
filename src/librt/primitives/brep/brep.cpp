@@ -28,16 +28,13 @@
 
 #include "common.h"
 
-#include <arpa/inet.h>
 #include <vector>
 #include <list>
 #include <map>
 #include <stack>
 #include <iostream>
-#include <fstream>
 #include <algorithm>
 #include <set>
-#include <sstream>
 #include <utility>
 
 #include "poly2tri/poly2tri.h"
@@ -56,13 +53,6 @@
 
 #include "./brep_local.h"
 #include "./brep_debug.h"
-
-#ifdef __GNU_LIBRARY__
-#include <malloc.h>
-#else
-#error glibc required for malloc() instrumentation
-#endif
-
 
 /* undefine "min" and "max" macros, if they exist, to prevent
  * name conflicts with functions "std::min" and "std::max".
@@ -107,6 +97,7 @@ RT_EXPORT extern int rt_brep_boolean(struct rt_db_internal *out, const struct rt
 struct rt_selection_set *rt_brep_find_selections(const struct rt_db_internal *ip, const struct rt_selection_query *query);
 int rt_brep_process_selection(struct rt_db_internal *ip, const struct rt_selection *selection, const struct rt_selection_operation *op);
 int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log);
+int rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
 #ifdef __cplusplus
 }
 #endif
@@ -359,172 +350,8 @@ brep_build_bvh_surface_tree(int cpu, void *data)
 }
 
 
-/**
- * XXX In order to facilitate exporting the ON_Brep object without a
- * whole lot of effort, we're going to (for now) extend the
- * ON_BinaryArchive to support an "in-memory" representation of a
- * binary archive. Currently, the openNURBS library only supports
- * file-based archiving operations. This implies the
- */
-class RT_MemoryArchive : public ON_BinaryArchive
-{
-public:
-    RT_MemoryArchive();
-    RT_MemoryArchive(const void *memory, size_t len);
-    virtual ~RT_MemoryArchive();
-
-    // ON_BinaryArchive overrides
-    size_t CurrentPosition() const;
-    bool SeekFromCurrentPosition(int);
-    bool SeekFromStart(size_t);
-    bool AtEnd() const;
-
-    size_t Size() const;
-    /**
-     * Generate a byte-array copy of this memory archive.  Allocates
-     * memory using bu_malloc, so must be freed with bu_free
-     */
-    uint8_t* CreateCopy() const;
-
-protected:
-    size_t Read(size_t, void*);
-    size_t Write(size_t, const void*);
-    bool Flush();
-
-private:
-    size_t pos;
-    std::vector<char> m_buffer;
-};
-
-
-HIDDEN void
-compress_external(struct bu_external *external)
-{
-    uint8_t *buffer;
-    size_t compressed_size;
-    BU_CK_EXTERNAL(external);
-
-    compressed_size = compressBound(external->ext_nbytes);
-    buffer = (uint8_t *)bu_malloc(compressed_size + SIZEOF_NETWORK_LONG, "buffer");
-
-    *(uint32_t *)buffer = htonl(external->ext_nbytes);
-
-    if (compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size, external->ext_buf, external->ext_nbytes))
-	bu_bomb("compress() failed");
-
-    bu_free(external->ext_buf, "ext_buf");
-    external->ext_nbytes = compressed_size + SIZEOF_NETWORK_LONG;
-    external->ext_buf = buffer;
-}
-
-
-HIDDEN void
-uncompress_external(struct bu_external *external)
-{
-    size_t uncompressed_size;
-    uint8_t *buffer;
-    BU_CK_EXTERNAL(external);
-
-    uncompressed_size = ntohl(*(uint32_t *)external->ext_buf);
-    buffer = (uint8_t *)bu_malloc(uncompressed_size, "buffer");
-    if (uncompress(buffer, &uncompressed_size, external->ext_buf + SIZEOF_NETWORK_LONG, external->ext_nbytes - SIZEOF_NETWORK_LONG))
-	bu_bomb("uncompress() failed");
-
-    bu_free(external->ext_buf, "ext_buf");
-    external->ext_nbytes = uncompressed_size;
-    external->ext_buf = buffer;
-}
-
-
-class MallocSizes
-{
-    public:
-	static void enable()
-	{
-	    save_hooks();
-	    set_hooks();
-	}
-
-
-	static void disable()
-	{
-	    restore_hooks();
-	}
-
-
-	static void print_histogram()
-	{
-	    std::cerr << "malloc() histogram: \n";
-
-	    for (std::map<std::size_t, std::size_t>::const_iterator it = histogram.begin(); it != histogram.end(); ++it)
-		std::cerr << it->first << ": " << it->second << '\n';
-	}
-
-
-    private:
-	MallocSizes();
-
-
-	static void save_hooks()
-	{
-	    old_malloc_hook = __malloc_hook;
-	    old_realloc_hook = __realloc_hook;
-	}
-
-
-	static void restore_hooks()
-	{
-	    __malloc_hook = old_malloc_hook;
-	    __realloc_hook = old_realloc_hook;
-	}
-
-
-	static void set_hooks()
-	{
-	    __malloc_hook = malloc_hook;
-	    __realloc_hook = realloc_hook;
-	}
-
-
-	static void *
-	    malloc_hook(std::size_t size, const void *UNUSED(caller))
-	    {
-		restore_hooks();
-		void * const result = malloc(size);
-		save_hooks();
-		++histogram[size];
-		set_hooks();
-		return result;
-	    }
-
-
-	static void *
-	    realloc_hook(void *ptr, std::size_t size, const void *UNUSED(caller))
-	    {
-		restore_hooks();
-		void * const result = realloc(ptr, size);
-		save_hooks();
-		fprintf(stderr, "realloc() called\n");
-		exit(1);
-		set_hooks();
-		return result;
-	    }
-
-
-	static void *(*old_malloc_hook)(std::size_t size, const void *caller);
-	static void *(*old_realloc_hook)(void *ptr, std::size_t size, const void *caller);
-
-	static std::map<std::size_t, uintmax_t> histogram;
-};
-
-
-void *(*MallocSizes::old_malloc_hook)(std::size_t size, const void *caller) = NULL;
-void *(*MallocSizes::old_realloc_hook)(void *ptr, std::size_t size, const void *caller) = NULL;
-std::map<std::size_t, uintmax_t> MallocSizes::histogram;
-
-
 int
-brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
+brep_build_bvh(struct brep_specific* bs)
 {
     // First, run the openNURBS validity check on the brep in question
     ON_TextLog tl(stderr);
@@ -576,60 +403,7 @@ brep_build_bvh(struct brep_specific* bs, const std::string &cache_path)
      */
 
     //start = bu_gettime();
-
-    if (false) {
-	std::cerr << "prepping to " << cache_path << '\n';
-
-	if (bu_file_exists(cache_path.c_str(), NULL))
-	    bu_bomb("cache file exists");
-
-	bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
-
-	bu_external external = BU_EXTERNAL_INIT_ZERO;
-	{
-	    RT_MemoryArchive uncompressed_archive;
-
-	    for (std::size_t i = 0; i < faceCount; ++i)
-		bbbp.faces[i]->serialize(uncompressed_archive);
-
-	    external.ext_nbytes = uncompressed_archive.Size();
-	    external.ext_buf = uncompressed_archive.CreateCopy();
-	    compress_external(&external);
-	}
-
-	std::ofstream stream(cache_path.c_str(), std::ofstream::out | std::ofstream::binary);
-	stream.exceptions(std::ofstream::failbit | std::ofstream::badbit);
-	stream.write(reinterpret_cast<const char *>(external.ext_buf), external.ext_nbytes);
-	bu_free_external(&external);
-	stream.flush();
-	stream.close();
-    } else {
-	std::cerr << "loading from " << cache_path << '\n';
-	RT_MemoryArchive *archive;
-	{
-	    bu_external external = BU_EXTERNAL_INIT_ZERO;
-	    std::ifstream stream(cache_path.c_str(), std::ifstream::in | std::ifstream::binary);
-	    stream.exceptions(std::ifstream::failbit | std::ifstream::badbit);
-	    stream.seekg(0, std::ios::end);
-	    external.ext_nbytes = stream.tellg();
-	    stream.seekg(0, std::ios::beg);
-	    external.ext_buf = (uint8_t *)bu_malloc(external.ext_nbytes, "temp");
-	    stream.read(reinterpret_cast<char *>(external.ext_buf), external.ext_nbytes);
-	    stream.close();
-
-	    uncompress_external(&external);
-	    archive = new RT_MemoryArchive(static_cast<const void *>(external.ext_buf), external.ext_nbytes);
-	    bu_free_external(&external);
-	}
-
-	//MallocSizes::enable();
-	for (std::size_t i = 0; i < faceCount; ++i)
-	    bbbp.faces[i] = new SurfaceTree(*archive, *brep->m_F.At(static_cast<ON__UINT64>(i)));
-	//MallocSizes::disable();
-	//MallocSizes::print_histogram();
-
-	delete archive;
-    }
+    bu_parallel(brep_build_bvh_surface_tree, 0, &bbbp);
 
     for (int i = 0; (size_t)i < faceCount; i++) {
 	ON_BrepFace& face = faces[i];
@@ -707,15 +481,7 @@ rt_brep_prep(struct soltab *stp, struct rt_db_internal* ip, struct rt_i* rtip)
     /* The workhorse routines of BREP prep are called by brep_build_bvh
      */
     //start = bu_gettime();
-
-    std::ostringstream cache_path;
-    cache_path << "cache" << BU_DIR_SEPARATOR << stp->st_dp->d_un.file_offset;
-
-    if (stp->st_matp)
-	for (int i = 0; i < 16; ++i)
-	    cache_path << '_' << stp->st_matp[i];
-
-    if (brep_build_bvh(bs, cache_path.str()) < 0) {
+    if (brep_build_bvh(bs) < 0) {
 	return -1;
     }
     //bu_log("!!! BUILD BVH: %.2f sec\n", (bu_gettime() - start) / 1000000.0);
@@ -1447,7 +1213,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 
     for (std::list<const BBNode*>::const_iterator i = inters.begin(); i != inters.end(); i++) {
 	const BBNode* sbv = (*i);
-	const ON_BrepFace* f = sbv->m_ctree->m_face;
+	const ON_BrepFace* f = &sbv->get_face();
 	const ON_Surface* surf = f->SurfaceOf();
 	pt2d_t uv = {sbv->m_u.Mid(), sbv->m_v.Mid()};
 	utah_brep_intersect(sbv, f, surf, uv, r, all_hits);
@@ -1858,7 +1624,7 @@ rt_brep_shot(struct soltab *stp, register struct xray *rp, struct application *a
 		if (out.hit == brep_hit::NEAR_MISS) bu_log("_NM_(%d)", out.face.m_face_index);
 		if (out.direction == brep_hit::ENTERING) bu_log("+");
 		if (out.direction == brep_hit::LEAVING) bu_log("-");
-		bu_log("<%d>", out.sbv->m_ctree->m_face->m_bRev);
+		bu_log("<%d>", out.sbv->get_face().m_bRev);
 
 		bu_log(")");
 	    }
@@ -4648,6 +4414,44 @@ rt_brep_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, c
 }
 
 
+/**
+ * XXX In order to facilitate exporting the ON_Brep object without a
+ * whole lot of effort, we're going to (for now) extend the
+ * ON_BinaryArchive to support an "in-memory" representation of a
+ * binary archive. Currently, the openNURBS library only supports
+ * file-based archiving operations. This implies the
+ */
+class RT_MemoryArchive : public ON_BinaryArchive
+{
+public:
+    RT_MemoryArchive();
+    RT_MemoryArchive(const void *memory, size_t len);
+    virtual ~RT_MemoryArchive();
+
+    // ON_BinaryArchive overrides
+    size_t CurrentPosition() const;
+    bool SeekFromCurrentPosition(int);
+    bool SeekFromStart(size_t);
+    bool AtEnd() const;
+
+    size_t Size() const;
+    /**
+     * Generate a byte-array copy of this memory archive.  Allocates
+     * memory using bu_malloc, so must be freed with bu_free
+     */
+    uint8_t* CreateCopy() const;
+
+protected:
+    size_t Read(size_t, void*);
+    size_t Write(size_t, const void*);
+    bool Flush();
+
+private:
+    size_t pos;
+    std::vector<char> m_buffer;
+};
+
+
 RT_MemoryArchive::RT_MemoryArchive()
     : ON_BinaryArchive(ON::write3dm), pos(0), m_buffer()
 {
@@ -5226,6 +5030,81 @@ int rt_brep_valid(struct rt_db_internal *ip, struct bu_vls *log)
     }
     return 0;
 }
+
+
+int
+rt_brep_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version)
+{
+    RT_CK_SOLTAB(stp);
+    RT_CK_DB_INTERNAL(ip);
+    BU_CK_EXTERNAL(external);
+
+    const uint32_t current_version = 0;
+
+    RT_CK_SOLTAB(stp);
+    BU_CK_EXTERNAL(external);
+
+    if (stp->st_specific) {
+	/* export to external */
+
+	const brep_specific &specific = *static_cast<brep_specific *>(stp->st_specific);
+
+	Serializer serializer;
+	serializer.write_uint32(specific.bvh->get_children().size());
+
+	for (std::vector<BBNode *>::const_iterator it = specific.bvh->get_children().begin(); it != specific.bvh->get_children().end(); ++it) {
+	    (*it)->m_ctree->serialize(serializer);
+	    (*it)->serialize(serializer);
+	}
+
+	*version = current_version;
+	*external = serializer.take();
+	return 0;
+    } else {
+	/* load from external */
+
+	if (*version != current_version)
+	    return 1;
+
+	brep_specific * const specific = brep_specific_new();
+	stp->st_specific = specific;
+	std::swap(specific->brep, static_cast<rt_brep_internal *>(ip->idb_ptr)->brep);
+	specific->bvh = new BBNode(specific->brep->BoundingBox());
+
+	Deserializer deserializer(*external);
+	const uint32_t num_children = deserializer.read_uint32();
+
+	for (uint32_t i = 0; i < num_children; ++i) {
+	    const CurveTree * const ctree = new CurveTree(deserializer, *specific->brep->m_F.At(i));
+	    specific->bvh->addChild(new BBNode(deserializer, *ctree));
+	}
+
+	{
+	    /* Once a proper SurfaceTree is built, finalize the bounding
+	     * volumes.  This takes no time. */
+	    specific->bvh->GetBBox(stp->st_min, stp->st_max);
+
+	    // expand outer bounding box just a little bit
+	    const struct bn_tol *tol = &stp->st_rtip->rti_tol;
+	    point_t adjust;
+	    VSETALL(adjust, tol->dist < SMALL_FASTF ? SMALL_FASTF : tol->dist);
+	    VSUB2(stp->st_min, stp->st_min, adjust);
+	    VADD2(stp->st_max, stp->st_max, adjust);
+
+	    VADD2SCALE(stp->st_center, stp->st_min, stp->st_max, 0.5);
+	    vect_t work;
+	    VSUB2SCALE(work, stp->st_max, stp->st_min, 0.5);
+	    fastf_t f = work[X];
+	    V_MAX(f, work[Y]);
+	    V_MAX(f, work[Z]);
+	    stp->st_aradius = f;
+	    stp->st_bradius = MAGNITUDE(work);
+	}
+
+	return 0;
+    }
+}
+
 
 /** @} */
 

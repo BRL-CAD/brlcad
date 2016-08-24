@@ -28,27 +28,29 @@ namespace brlcad {
 BRNode::~BRNode()
 {
     /* delete the children */
-    for (size_t i = 0; i < m_children.size(); i++) {
-	delete m_children[i];
+    for (size_t i = 0; i < m_children->size(); i++) {
+	delete (*m_children)[i];
     }
+
+    delete m_children;
 }
 
 
-BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
+BRNode::BRNode(Deserializer &deserializer, const ON_Brep &brep) :
     m_node(),
     m_v(),
-    m_adj_face_index(-99),
+    m_adj_face_index(-1),
     m_XIncreasing(false),
     m_Horizontal(false),
     m_Vertical(false),
     m_innerTrim(false),
-    m_children(),
+    m_children(new std::vector<const BRNode *>),
     m_face(NULL),
     m_u(),
     m_trim(NULL),
     m_trim_index(-1),
     m_t(),
-    m_checkTrim(true),
+    m_checkTrim(false),
     m_trimmed(false),
     m_estimate(),
     m_slope(0.0),
@@ -56,73 +58,74 @@ BRNode::BRNode(ON_BinaryArchive &archive, const ON_Brep &brep) :
     m_start(ON_3dPoint::UnsetPoint),
     m_end(ON_3dPoint::UnsetPoint)
 {
-    if (!archive.ReadBoundingBox(m_node) || !archive.ReadInterval(m_v)
-	    || !archive.ReadInt(&m_adj_face_index) || !archive.ReadBool(&m_XIncreasing)
-	    || !archive.ReadBool(&m_Horizontal) || !archive.ReadBool(&m_Vertical)
-	    || !archive.ReadBool(&m_innerTrim))
-	bu_bomb("ON_BinaryArchive read failed");
+    deserializer.read(m_node);
+    deserializer.read(m_u);
+    deserializer.read(m_v);
+    deserializer.read(m_t);
+    deserializer.read(m_start);
+    deserializer.read(m_end);
+    deserializer.read(m_estimate);
 
-    std::size_t num_children;
-    if (!archive.ReadBigSize(&num_children))
-	bu_bomb("ON_BinaryArchive read failed");
+    m_slope = deserializer.read_double();
+    m_bb_diag = deserializer.read_double();
 
-    m_children.resize(num_children);
+    const uint8_t bool_flags = deserializer.read_uint8();
+    const int face_index = deserializer.read_int32();
+    m_trim_index = deserializer.read_int32();
+    m_adj_face_index = deserializer.read_uint32();
+    const std::size_t num_children = deserializer.read_uint32();
 
-    for (std::vector<const BRNode *>::iterator it = m_children.begin(); it != m_children.end(); ++it)
-	*it = new BRNode(archive, brep);
+    m_XIncreasing = bool_flags & (1 << 0);
+    m_Horizontal = bool_flags & (1 << 1);
+    m_Vertical = bool_flags & (1 << 2);
+    m_innerTrim = bool_flags & (1 << 3);
+    m_checkTrim = bool_flags & (1 << 4);
+    m_trimmed = bool_flags & (1 << 5);
 
-    int face_index;
-    if (!archive.ReadInt(&face_index))
-	bu_bomb("ON_BinaryArchive read failed");
+    if (face_index != -1) {
+	if (const ON_BrepFace * const face = brep.m_F.At(face_index))
+	    m_face = face;
+	else
+	    bu_bomb("invalid face index");
+    }
 
-    if (face_index != -1 && !(m_face = brep.m_F.At(face_index)))
-	bu_bomb("invalid face index");
+    if (m_trim_index != -1) {
+	if (const ON_BrepTrim * const trim = brep.m_T.At(m_trim_index))
+	    m_trim = trim->TrimCurveOf();
+	else
+	    bu_bomb("invalid face index");
+    }
 
-    if (!archive.ReadInterval(m_u) || !archive.ReadInt(&m_trim_index))
-	bu_bomb("ON_BinaryArchive read failed");
-
-    if (m_trim_index != -1 && !brep.m_T.At(m_trim_index))
-	bu_bomb("invalid trim index");
-
-    if (m_trim_index != -1) m_trim = brep.m_T[m_trim_index].TrimCurveOf();
-
-    double temp_slope, temp_bb_diag;
-
-    if (!archive.ReadInterval(m_t) || !archive.ReadBool(&m_checkTrim)
-	    || !archive.ReadBool(&m_trimmed) || !archive.ReadPoint(m_estimate)
-	    || !archive.ReadDouble(&temp_slope) || !archive.ReadDouble(&temp_bb_diag)
-	    || !archive.ReadPoint(m_start) || !archive.ReadPoint(m_end))
-	bu_bomb("ON_BinaryArchive read failed");
-
-    m_slope = temp_slope;
-    m_bb_diag = temp_bb_diag;
+    m_children->resize(num_children);
+    for (std::vector<const BRNode *>::iterator it = m_children->begin(); it != m_children->end(); ++it)
+	*it = new BRNode(deserializer, brep);
 }
 
 
 void
-BRNode::serialize(ON_BinaryArchive &archive) const
+BRNode::serialize(Serializer &serializer) const
 {
-    if (!archive.WriteBoundingBox(m_node) || !archive.WriteInterval(m_v)
-	    || !archive.WriteInt(m_adj_face_index) || !archive.WriteBool(m_XIncreasing)
-	    || !archive.WriteBool(m_Horizontal) || !archive.WriteBool(m_Vertical)
-	    || !archive.WriteBool(m_innerTrim))
-	bu_bomb("ON_BinaryArchive write failed");
+    const uint8_t bool_flags = (m_XIncreasing << 0) | (m_Horizontal << 1) | (m_Vertical << 2) | (m_innerTrim << 3) | (m_checkTrim << 4) | (m_trimmed << 5);
 
-    if (!archive.WriteBigSize(m_children.size()))
-	bu_bomb("ON_BinaryArchive write failed");
+    serializer.write(m_node);
+    serializer.write(m_u);
+    serializer.write(m_v);
+    serializer.write(m_t);
+    serializer.write(m_start);
+    serializer.write(m_end);
+    serializer.write(m_estimate);
 
-    for (std::vector<const BRNode *>::const_iterator it = m_children.begin(); it != m_children.end(); ++it)
-	(*it)->serialize(archive);
+    serializer.write_double(m_slope);
+    serializer.write_double(m_bb_diag);
 
-    if (!archive.WriteInt(m_face ? m_face->m_face_index : -1))
-	bu_bomb("ON_BinaryArchive write failed");
+    serializer.write_uint8(bool_flags);
+    serializer.write_int32(m_face ? m_face->m_face_index : -1);
+    serializer.write_int32(m_trim_index);
+    serializer.write_uint32(m_adj_face_index);
+    serializer.write_uint32(m_children->size());
 
-    if (!archive.WriteInterval(m_u) || !archive.WriteInt(m_trim_index)
-	    || !archive.WriteInterval(m_t) || !archive.WriteBool(m_checkTrim)
-	    || !archive.WriteBool(m_trimmed) || !archive.WritePoint(m_estimate)
-	    || !archive.WriteDouble(m_slope) || !archive.WriteDouble(m_bb_diag)
-	    || !archive.WritePoint(m_start) || !archive.WritePoint(m_end))
-	bu_bomb("ON_BinaryArchive write failed");
+    for (std::vector<const BRNode *>::const_iterator it = m_children->begin(); it != m_children->end(); ++it)
+	(*it)->serialize(serializer);
 }
 
 
@@ -130,8 +133,8 @@ int
 BRNode::depth() const
 {
     int d = 0;
-    for (size_t i = 0; i < m_children.size(); i++) {
-	d = 1 + std::max(d, m_children[i]->depth());
+    for (size_t i = 0; i < m_children->size(); i++) {
+	d = 1 + std::max(d, (*m_children)[i]->depth());
     }
     return d;
 }
@@ -139,9 +142,9 @@ BRNode::depth() const
 void
 BRNode::getLeaves(std::list<const BRNode *> &out_leaves) const
 {
-    if (!m_children.empty()) {
-	for (size_t i = 0; i < m_children.size(); i++) {
-	    m_children[i]->getLeaves(out_leaves);
+    if (!m_children->empty()) {
+	for (size_t i = 0; i < m_children->size(); i++) {
+	    (*m_children)[i]->getLeaves(out_leaves);
 	}
     } else {
 	out_leaves.push_back(this);
@@ -245,10 +248,10 @@ BRNode::getClosestPointEstimate(const ON_3dPoint &pt, ON_Interval &u, ON_Interva
 	TRACE("Closest: " << mindist << "; " << PT2(uvs[mini]));
 	return ON_2dPoint(uvs[mini][0], uvs[mini][1]);
     } else {
-	if (!m_children.empty()) {
-	    const BRNode *closestNode = m_children[0];
-	    for (size_t i = 1; i < m_children.size(); i++) {
-		closestNode = closer(pt, closestNode, m_children[i]);
+	if (!m_children->empty()) {
+	    const BRNode *closestNode = (*m_children)[0];
+	    for (size_t i = 1; i < m_children->size(); i++) {
+		closestNode = closer(pt, closestNode, (*m_children)[i]);
 	    }
 	    return closestNode->getClosestPointEstimate(pt, u, v);
 	} else {

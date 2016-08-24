@@ -28,11 +28,8 @@
 #define BREP_BBNODE_H
 
 #include "common.h"
-#include "brep/defines.h"
-#include "brep/ray.h"
-#include "brep/brnode.h"
-#include "brep/curvetree.h"
-#include "brep/util.h"
+
+#include "brep.h"
 
 /** @{ */
 /** @file brep/bbnode.h */
@@ -65,7 +62,7 @@ extern "C++" {
 	/**
 	 * Bounding Box Hierarchy Node
 	 */
-	class BREP_EXPORT BBNode : public HeapObject<BBNode> {
+	class BREP_EXPORT BBNode {
 	    public:
 		explicit BBNode(const ON_BoundingBox &node, const CurveTree *ct = NULL);
 		BBNode(const CurveTree *ct,
@@ -76,8 +73,10 @@ extern "C++" {
 			bool trimmed);
 		~BBNode();
 
-		BBNode(ON_BinaryArchive &archive, const CurveTree &ctree);
-		void serialize(ON_BinaryArchive &archive) const;
+		BBNode(Deserializer &deserieralizer, const CurveTree &ctree);
+		void serialize(Serializer &serializer) const;
+
+		const ON_BrepFace &get_face() const;
 
 		/** Test if this node is a leaf node in the hierarchy */
 		bool isLeaf() const;
@@ -167,8 +166,8 @@ extern "C++" {
 
 		const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
-		std::list<const BRNode *> m_trims_above;
-		std::vector<BBNode *> m_children;
+		std::vector<BBNode *> * const m_children;
+		std::list<const BRNode *> *m_trims_above;
 	};
 
 	inline
@@ -181,8 +180,8 @@ extern "C++" {
 		m_estimate(),
 		m_normal(),
 		m_ctree(ct),
-		m_trims_above(),
-		m_children()
+		m_children(new std::vector<BBNode *>),
+		m_trims_above(new std::list<const BRNode *>)
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
@@ -194,7 +193,6 @@ extern "C++" {
 	}
 
 	inline
-	    _BU_ATTR_ALWAYS_INLINE
 	    BBNode::BBNode(
 		    const CurveTree *ct,
 		    const ON_BoundingBox &node,
@@ -210,8 +208,8 @@ extern "C++" {
 		m_estimate(),
 		m_normal(),
 		m_ctree(ct),
-		m_trims_above(),
-		m_children()
+		m_children(new std::vector<BBNode *>),
+		m_trims_above(new std::list<const BRNode *>)
 	{
 	    for (int i = 0; i < 3; i++) {
 		double d = m_node.m_max[i] - m_node.m_min[i];
@@ -222,18 +220,11 @@ extern "C++" {
 	    }
 	}
 
-
-	inline const std::vector<BBNode *> &
-	BBNode::get_children() const
-	{
-	    return m_children;
-	}
-
 	inline void
 	    BBNode::addChild(BBNode *child)
 	    {
 		if (LIKELY(child != NULL)) {
-		    m_children.push_back(child);
+		    m_children->push_back(child);
 		}
 	    }
 
@@ -241,20 +232,33 @@ extern "C++" {
 	    BBNode::removeChild(BBNode *child)
 	    {
 		std::vector<BBNode *>::iterator i;
-		for (i = m_children.begin(); i != m_children.end();) {
+		for (i = m_children->begin(); i != m_children->end();) {
 		    if (*i == child) {
 			delete *i;
-			i = m_children.erase(i);
+			i = m_children->erase(i);
 		    } else {
 			++i;
 		    }
 		}
 	    }
 
+
+	inline const ON_BrepFace &
+	    BBNode::get_face() const
+	    {
+		return *m_ctree->m_face;
+	    }
+
+	inline const std::vector<BBNode *> &
+	    BBNode::get_children() const
+	{
+	    return *m_children;
+	}
+
 	inline bool
 	    BBNode::isLeaf() const
 	    {
-		if (m_children.empty()) {
+		if (m_children->empty()) {
 		    return true;
 		}
 		return false;

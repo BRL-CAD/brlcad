@@ -460,10 +460,10 @@ _rt_gettree_leaf(struct db_tree_state *tsp, const struct db_full_path *pathp, st
     RT_CK_RESOURCE(tsp->ts_resp);
     dp = DB_FULL_PATH_CUR_DIR(pathp);
 
-    if (!client_data)
+    data = (struct rt_gettree_data *)client_data;
+
+    if (!data)
 	bu_bomb("missing argument");
-    else
-	data = (struct rt_gettree_data *)client_data;
 
     if (!dp)
 	return TREE_NULL;

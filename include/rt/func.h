@@ -180,7 +180,7 @@ RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *pla
 /**
  * if `stp` is prepped, serialize; otherwise, deserialize from `external`
  */
-RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, struct bu_external *external, uint32_t *version);
+RT_EXPORT extern int rt_obj_prep_serialize(struct soltab *stp, const struct rt_db_internal *ip, struct bu_external *external, uint32_t *version);
 
 __END_DECLS
 
