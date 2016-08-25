@@ -25,6 +25,124 @@
 
 
 namespace brlcad {
+
+
+BRNode::BRNode(
+	const ON_Curve *curve,
+	int trim_index,
+	int adj_face_index,
+	const ON_BoundingBox &node,
+	const ON_BrepFace *face,
+	const ON_Interval &t,
+	bool innerTrim,
+	bool checkTrim,
+	bool trimmed) :
+    m_node(node),
+    m_v(),
+    m_adj_face_index(adj_face_index),
+    m_XIncreasing(false),
+    m_Horizontal(false),
+    m_Vertical(false),
+    m_innerTrim(innerTrim),
+    m_stl(new Stl),
+    m_face(face),
+    m_u(),
+    m_trim(curve),
+    m_trim_index(trim_index),
+    m_t(t),
+    m_checkTrim(checkTrim),
+    m_trimmed(trimmed),
+    m_estimate(),
+    m_slope(0.0),
+    m_bb_diag(0.0),
+    m_start(curve->PointAt(m_t[0])),
+    m_end(curve->PointAt(m_t[1]))
+{
+    /* check for vertical segments they can be removed from trims
+     * above (can't tell direction and don't need
+     */
+    m_Horizontal = false;
+    m_Vertical = false;
+
+    /*
+     * should be okay since we split on Horz/Vert tangents
+     */
+    if (m_end[X] < m_start[X]) {
+	m_u[0] = m_end[X];
+	m_u[1] = m_start[X];
+    } else {
+	m_u[0] = m_start[X];
+	m_u[1] = m_end[X];
+    }
+    if (m_end[Y] < m_start[Y]) {
+	m_v[0] = m_end[Y];
+	m_v[1] = m_start[Y];
+    } else {
+	m_v[0] = m_start[Y];
+	m_v[1] = m_end[Y];
+    }
+
+    if (NEAR_EQUAL(m_end[X], m_start[X], 0.000001)) {
+	m_Vertical = true;
+	if (m_innerTrim) {
+	    m_XIncreasing = false;
+	} else {
+	    m_XIncreasing = true;
+	}
+    } else if (NEAR_EQUAL(m_end[Y], m_start[Y], 0.000001)) {
+	m_Horizontal = true;
+	if ((m_end[X] - m_start[X]) > 0.0) {
+	    m_XIncreasing = true;
+	} else {
+	    m_XIncreasing = false;
+	}
+	m_slope = 0.0;
+    } else {
+	if ((m_end[X] - m_start[X]) > 0.0) {
+	    m_XIncreasing = true;
+	} else {
+	    m_XIncreasing = false;
+	}
+	m_slope = (m_end[Y] - m_start[Y]) / (m_end[X] - m_start[X]);
+    }
+    m_bb_diag = DIST_PT_PT(m_start, m_end);
+}
+
+
+BRNode::BRNode(const ON_BoundingBox &node) :
+    m_node(node),
+    m_v(),
+    m_adj_face_index(-1),
+    m_XIncreasing(false),
+    m_Horizontal(false),
+    m_Vertical(false),
+    m_innerTrim(false),
+    m_stl(new Stl),
+    m_face(NULL),
+    m_u(),
+    m_trim(NULL),
+    m_trim_index(-1),
+    m_t(),
+    m_checkTrim(true),
+    m_trimmed(false),
+    m_estimate(),
+    m_slope(0.0),
+    m_bb_diag(0.0),
+    m_start(ON_3dPoint::UnsetPoint),
+    m_end(ON_3dPoint::UnsetPoint)
+{
+	for (int i = 0; i < 3; i++) {
+	    double d = m_node.m_max[i] - m_node.m_min[i];
+	    if (NEAR_ZERO(d, ON_ZERO_TOLERANCE)) {
+		m_node.m_min[i] -= 0.001;
+		m_node.m_max[i] += 0.001;
+	    }
+	}
+	m_start = m_node.m_min;
+	m_end = m_node.m_max;
+}
+
+
 BRNode::~BRNode()
 {
     /* delete the children */

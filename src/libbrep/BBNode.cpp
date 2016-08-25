@@ -25,6 +25,56 @@
 
 
 namespace brlcad {
+
+
+BBNode::BBNode(const ON_BoundingBox &node, const CurveTree *ct) :
+    m_node(node),
+    m_u(),
+    m_v(),
+    m_checkTrim(true),
+    m_trimmed(false),
+    m_estimate(),
+    m_normal(),
+    m_ctree(ct),
+    m_stl(new Stl)
+{
+    for (int i = 0; i < 3; i++) {
+	double d = m_node.m_max[i] - m_node.m_min[i];
+	if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+	    m_node.m_min[i] -= 0.001;
+	    m_node.m_max[i] += 0.001;
+	}
+    }
+}
+
+
+BBNode::BBNode(
+	const CurveTree *ct,
+	const ON_BoundingBox &node,
+	const ON_Interval &u,
+	const ON_Interval &v,
+	bool checkTrim,
+	bool trimmed):
+    m_node(node),
+    m_u(u),
+    m_v(v),
+    m_checkTrim(checkTrim),
+    m_trimmed(trimmed),
+    m_estimate(),
+    m_normal(),
+    m_ctree(ct),
+    m_stl(new Stl)
+{
+    for (int i = 0; i < 3; i++) {
+	double d = m_node.m_max[i] - m_node.m_min[i];
+	if (ON_NearZero(d, ON_ZERO_TOLERANCE)) {
+	    m_node.m_min[i] -= 0.001;
+	    m_node.m_max[i] += 0.001;
+	}
+    }
+}
+
+
 BBNode::~BBNode()
 {
     /* delete the children */
