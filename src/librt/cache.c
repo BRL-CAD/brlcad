@@ -315,14 +315,16 @@ rt_cache_prep(struct rt_cache *cache, struct soltab *stp,
     } else {
 	char type = 0;
 
-	if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
-			      (void *)&type)))
-	    bu_bomb("db_diradd() failed");
-
 	if (rt_obj_prep(stp, internal, stp->st_rtip))
 	    bu_bomb("rt_obj_prep() failed");
 
-	rt_cache_try_store(cache, dir, stp, internal);
+	if (OBJ[stp->st_id].ft_prep_serialize) {
+	    if (!(dir = db_diradd(cache->dbip, name, RT_DIR_PHONY_ADDR, 0, RT_DIR_NON_GEOM,
+				  (void *)&type)))
+		bu_bomb("db_diradd() failed");
+
+	    rt_cache_try_store(cache, dir, stp, internal);
+	}
     }
 
     return 1;

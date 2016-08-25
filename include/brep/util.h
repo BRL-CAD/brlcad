@@ -144,7 +144,7 @@ extern "C++" {
 	    {
 		uint8_t * const dest = extend(SIZEOF_NETWORK_LONG);
 		const uint32_t out_value = htonl(value);
-		std::memcpy(dest, &out_value, sizeof(out_value));
+		std::memcpy(dest, &out_value, SIZEOF_NETWORK_LONG);
 	    }
 
 
