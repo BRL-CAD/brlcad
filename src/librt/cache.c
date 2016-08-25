@@ -63,7 +63,8 @@ rt_cache_check(const struct rt_cache *cache)
 HIDDEN void
 rt_cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 {
-    struct bu_external external = BU_EXTERNAL_INIT_ZERO;
+    struct bu_external raw_external;
+    struct db5_raw_internal raw_internal;
     uint8_t namespace_uuid[16];
     uint8_t uuid[16];
 
@@ -82,17 +83,20 @@ rt_cache_generate_name(char name[STATIC_ARRAY(37)], const struct soltab *stp)
 	    bu_bomb("bu_uuid_create() failed");
     }
 
-    if (db_get_external(&external, stp->st_dp, stp->st_rtip->rti_dbip))
+    if (db_get_external(&raw_external, stp->st_dp, stp->st_rtip->rti_dbip))
 	bu_bomb("db_get_external() failed");
 
-    if (5 != bu_uuid_create(uuid, external.ext_nbytes, external.ext_buf,
-			    namespace_uuid))
+    if (db5_get_raw_internal_ptr(&raw_internal, raw_external.ext_buf) == NULL)
+	bu_bomb("rt_db_external5_to_internal5() failed");
+
+    if (5 != bu_uuid_create(uuid, raw_internal.body.ext_nbytes,
+			    raw_internal.body.ext_buf, namespace_uuid))
 	bu_bomb("bu_uuid_create() failed");
 
     if (bu_uuid_encode(uuid, (uint8_t *)name))
 	bu_bomb("bu_uuid_encode() failed");
 
-    bu_free_external(&external);
+    bu_free_external(&raw_external);
 }
 
 
@@ -139,8 +143,8 @@ compress_external(struct bu_external *external)
 
     *(uint32_t *)buffer = htonl(external->ext_nbytes);
 
-    if (compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size, external->ext_buf,
-		 external->ext_nbytes))
+    if (Z_OK != compress(buffer + SIZEOF_NETWORK_LONG, &compressed_size,
+			 external->ext_buf, external->ext_nbytes))
 	bu_bomb("compress() failed");
 
     bu_free(external->ext_buf, "ext_buf");
@@ -162,9 +166,9 @@ uncompress_external(const struct bu_external *external,
     dest->ext_nbytes = ntohl(*(uint32_t *)external->ext_buf);
     buffer = (uint8_t *)bu_malloc(dest->ext_nbytes, "buffer");
 
-    if (uncompress(buffer, &dest->ext_nbytes,
-		   external->ext_buf + SIZEOF_NETWORK_LONG,
-		   external->ext_nbytes - SIZEOF_NETWORK_LONG))
+    if (Z_OK != uncompress(buffer, &dest->ext_nbytes,
+			   external->ext_buf + SIZEOF_NETWORK_LONG,
+			   external->ext_nbytes - SIZEOF_NETWORK_LONG))
 	bu_bomb("uncompress() failed");
 
     dest->ext_buf = buffer;
