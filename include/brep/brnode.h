@@ -122,13 +122,8 @@ extern "C++" {
 		/** Test if this node is a leaf node (i.e. m_children is empty) */
 		bool isLeaf() const;
 
-		bool doTrimming() const;
-
 		fastf_t getLinearEstimateOfV(fastf_t u) const;
-
 		const BRNode *closer(const ON_3dPoint &pt, const BRNode *left, const BRNode *right) const;
-
-		/** List of all children of a given node */
 
 		struct Stl : public PooledObject<Stl> {
 		    Stl() : m_children() {}
@@ -138,16 +133,12 @@ extern "C++" {
 
 		const ON_BrepFace *m_face;
 		ON_Interval m_u;
-
 		const ON_Curve *m_trim;
 		int m_trim_index;
 		ON_Interval m_t;
-
 		bool m_checkTrim;
 		bool m_trimmed;
-
 		ON_3dPoint m_estimate;
-
 		fastf_t m_slope;
 		fastf_t m_bb_diag;
 		ON_3dPoint m_start;
@@ -196,12 +187,6 @@ extern "C++" {
 		if (m_end != ON_3dPoint::UnsetPoint) {
 		    VMINMAX(min, max, m_end);
 		}
-	    }
-
-	inline bool
-	    BRNode::doTrimming() const
-	    {
-		return m_checkTrim;
 	    }
 
 	extern bool sortX(const BRNode *first, const BRNode *second);

@@ -153,7 +153,6 @@ extern "C++" {
 		BBNode &operator=(const BBNode &source);
 
 		void removeChild(BBNode *child);
-
 		bool intersectedBy(const ON_Ray &ray, double *tnear = NULL, double *tfar = NULL) const;
 
 		/** Report if a given uv point is within the uv boundaries defined
@@ -161,9 +160,7 @@ extern "C++" {
 		 */
 		bool containsUV(const ON_2dPoint &uv) const;
 
-		bool doTrimming() const;
 		void getTrimsAbove(const ON_2dPoint &uv, std::list<const BRNode *> &out_leaves) const;
-
 		const BBNode *closer(const ON_3dPoint &pt, const BBNode *left, const BBNode *right) const;
 
 		struct Stl : public PooledObject<Stl> {
@@ -212,10 +209,7 @@ extern "C++" {
 	inline bool
 	    BBNode::isLeaf() const
 	    {
-		if (m_stl->m_children.empty()) {
-		    return true;
-		}
-		return false;
+		return m_stl->m_children.empty();
 	    }
 
 	inline void
@@ -238,54 +232,6 @@ extern "C++" {
 		max[0] = m_node.m_max[0];
 		max[1] = m_node.m_max[1];
 		max[2] = m_node.m_max[2];
-	    }
-
-	inline bool
-	    BBNode::intersectedBy(const ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_opt /* = NULL */) const
-	    {
-		double tnear = -DBL_MAX;
-		double tfar = DBL_MAX;
-		bool untrimmedresult = true;
-		for (int i = 0; i < 3; i++) {
-		    if (UNLIKELY(ON_NearZero(ray.m_dir[i]))) {
-			if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
-			    untrimmedresult = false;
-			}
-		    } else {
-			double t1 = (m_node.m_min[i] - ray.m_origin[i]) / ray.m_dir[i];
-			double t2 = (m_node.m_max[i] - ray.m_origin[i]) / ray.m_dir[i];
-			if (t1 > t2) {
-			    double tmp = t1;    /* swap */
-			    t1 = t2;
-			    t2 = tmp;
-			}
-
-			V_MAX(tnear, t1);
-			V_MIN(tfar, t2);
-
-			if (tnear > tfar) { /* box is missed */
-			    untrimmedresult = false;
-			}
-			/* go ahead and solve hits behind us
-			   if (tfar < 0) untrimmedresult = false;
-			   */
-		    }
-		}
-		if (LIKELY(tnear_opt != NULL && tfar_opt != NULL)) {
-		    *tnear_opt = tnear;
-		    *tfar_opt = tfar;
-		}
-		if (isLeaf()) {
-		    return !m_trimmed && untrimmedresult;
-		} else {
-		    return untrimmedresult;
-		}
-	    }
-
-	inline bool
-	    BBNode::doTrimming() const
-	    {
-		return m_checkTrim;
 	    }
 
 

@@ -154,6 +154,49 @@ BBNode::serialize(Serializer &serializer) const
 
 
 bool
+BBNode::intersectedBy(const ON_Ray &ray, double *tnear_opt /* = NULL */, double *tfar_opt /* = NULL */) const
+{
+    double tnear = -DBL_MAX;
+    double tfar = DBL_MAX;
+    bool untrimmedresult = true;
+    for (int i = 0; i < 3; i++) {
+	if (UNLIKELY(ON_NearZero(ray.m_dir[i]))) {
+	    if (ray.m_origin[i] < m_node.m_min[i] || ray.m_origin[i] > m_node.m_max[i]) {
+		untrimmedresult = false;
+	    }
+	} else {
+	    double t1 = (m_node.m_min[i] - ray.m_origin[i]) / ray.m_dir[i];
+	    double t2 = (m_node.m_max[i] - ray.m_origin[i]) / ray.m_dir[i];
+	    if (t1 > t2) {
+		double tmp = t1;    /* swap */
+		t1 = t2;
+		t2 = tmp;
+	    }
+
+	    V_MAX(tnear, t1);
+	    V_MIN(tfar, t2);
+
+	    if (tnear > tfar) { /* box is missed */
+		untrimmedresult = false;
+	    }
+	    /* go ahead and solve hits behind us
+	       if (tfar < 0) untrimmedresult = false;
+	       */
+	}
+    }
+    if (LIKELY(tnear_opt != NULL && tfar_opt != NULL)) {
+	*tnear_opt = tnear;
+	*tfar_opt = tfar;
+    }
+    if (isLeaf()) {
+	return !m_trimmed && untrimmedresult;
+    } else {
+	return untrimmedresult;
+    }
+}
+
+
+bool
 BBNode::intersectsHierarchy(const ON_Ray &ray, std::list<const BBNode *> &results_opt) const
 {
     double tnear, tfar;
