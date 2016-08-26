@@ -89,6 +89,9 @@ main(int argc, char **argv)
 	}
     }
 
+    setmode(fileno(stdin), O_BINARY);
+    setmode(fileno(stdout), O_BINARY);
+
     if (argc > ++bu_optind)
 	fprintf(stderr, "png-pix: excess argument(s) ignored\n");
 
