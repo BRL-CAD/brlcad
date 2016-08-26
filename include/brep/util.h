@@ -222,6 +222,13 @@ extern "C++" {
 	}
 
 
+	    ~Deserializer()
+	    {
+		if (m_position != m_external.ext_nbytes)
+		    bu_bomb("did not deserialize entire stream");
+	    }
+
+
 	    uint8_t read_uint8()
 	    {
 		return *get(1);
@@ -288,6 +295,7 @@ extern "C++" {
 	private:
 	    Deserializer(const Deserializer &source);
 	    Deserializer &operator=(const Deserializer &source);
+
 
 	    const uint8_t *get(std::size_t size)
 	    {
