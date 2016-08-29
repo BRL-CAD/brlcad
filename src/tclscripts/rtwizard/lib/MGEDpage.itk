@@ -404,6 +404,11 @@ namespace eval RtWizard {
 
 	eval itk_initialize $args
 
+	# Set initial width for hierarchy pane
+	if {![info exists ::gpane]} {
+	    set ::gpane [list 250 1]
+	}
+
     }
 
     #
@@ -445,6 +450,9 @@ namespace eval RtWizard {
 	set isSelected true
 
 	updateStatus
+
+	# set the pane to the global pane setting
+	$itk_component(midFrame) sash place 0 [lindex $::gpane 0] [lindex $::gpane 1]
 
 	#
 	# Restore the view
@@ -530,6 +538,13 @@ namespace eval RtWizard {
 	# Capture the current view
 	#
 	captureView
+
+	# Stash pane settings, as long as the width is greater
+	# than three pixels
+	set tgpane [$itk_component(midFrame) sash coord 0]
+	if { [lindex $tgpane 0] > 3 } {
+	    set ::gpane $tgpane
+	}
 
 	#
 	# Unpack the mged object from my mgedFrame so that

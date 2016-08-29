@@ -13,6 +13,7 @@ changes made.  See document footer for additional details.
 --- 2016-07-XX  Release 7.26.2                                     ---
 ----------------------------------------------------------------------
 
+* keep window sizing consistent on rtwizard pages - Cliff Yapp
 * improved keep error message when file not created - Cliff Yapp
 * changed window name for rtwizard gui to "RtWizard" - Cliff Yapp
 * brep command attaches .brep suffix instead of _brep - Sean Morrison
