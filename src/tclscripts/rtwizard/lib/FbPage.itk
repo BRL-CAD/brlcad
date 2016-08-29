@@ -132,6 +132,8 @@ namespace eval RtWizard {
 	    common topSpot 8
 	    variable rbvar
 
+	    variable hard_set 0
+
 	    variable width
 	    variable height
 
@@ -229,7 +231,8 @@ namespace eval RtWizard {
 	}
 
 	set widthIndex 5
-	updateWidth
+	$itk_component(width) clear
+	$itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
 
 	itk_component add height {
 	    iwidgets::spinint $szCs.height \
@@ -243,7 +246,8 @@ namespace eval RtWizard {
 	}
 
 	set heightIndex 5
-	updateHeight
+	$itk_component(height) clear
+	$itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
 
 	#
 	# Build the contents of the right-hand-size
@@ -381,9 +385,11 @@ namespace eval RtWizard {
     # Cleans up when the page is deselected
     #
     ::itcl::body FbPage::onDeselect {} {
-	#
-	# Nothing yet!
-	#
+	if { ![$itk_component(width) get] == 0 || ![$itk_component(width) get] == 0 } {
+	    set hard_set 1
+	} else {
+	    set hard_set 0
+	}
     }
 
     #
@@ -403,14 +409,22 @@ namespace eval RtWizard {
     # getWidth - returns the current width
     #
     ::itcl::body FbPage::getWidth {} {
-	return [$itk_component(width) get]
+	if { $hard_set > 0 } {
+	    return [$itk_component(width) get]
+	} else {
+	    return [winfo width $::mgedObj]
+	}
     }
 
     #
     # getHeight - returns the current height
     #
     ::itcl::body FbPage::getHeight {} {
-	return [$itk_component(height) get]
+	if { $hard_set > 0 } {
+	    return [$itk_component(height) get]
+	} else {
+	    return [winfo height $::mgedObj]
+	}
     }
 
     #
@@ -532,6 +546,7 @@ namespace eval RtWizard {
     #               current value.
     #
     ::itcl::body FbPage::updateWidth { } {
+	set hard_set 1
 	$itk_component(width) clear
 	$itk_component(width) insert 0 [ lindex $sizes $widthIndex ]
     }
@@ -563,6 +578,7 @@ namespace eval RtWizard {
     #                current value.
     #
     ::itcl::body FbPage::updateHeight { } {
+	set hard_set 1
 	$itk_component(height) clear
 	$itk_component(height) insert 0 [ lindex $sizes $heightIndex ]
     }
