@@ -154,6 +154,7 @@ fastf_t max_dist = -1;
 fastf_t maxangle;
 
 typedef int color[3];
+fastf_t float_fgcolor[3] = {1.0, 1.0, 1.0};
 color fgcolor = {255, 255, 255};
 color bgcolor = {0, 0, 0};
 
@@ -245,10 +246,10 @@ struct bu_structparse view_parse[] = {
     {"%d", 1, "dn", bu_byteoffset(detect_normals), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "detect_ids", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "di", bu_byteoffset(detect_ids), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "foreground", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "fg", bu_byteoffset(fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "background", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
-    {"%d", 3, "bg", bu_byteoffset(bgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "foreground", bu_byteoffset(float_fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "fg", bu_byteoffset(float_fgcolor), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "background", bu_byteoffset(background[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
+    {"%f", 3, "bg", bu_byteoffset(background[0]), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "overlay", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "ov", bu_byteoffset(overlay), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
     {"%d", 1, "blend", bu_byteoffset(blend), BU_STRUCTPARSE_FUNC_NULL, NULL, NULL},
@@ -572,6 +573,13 @@ view_init(struct application *ap, char *file, char *UNUSED(obj), int minus_o, in
 	bu_vls_strlen(&occlusion_objects) == 0) {
 	bu_exit(EXIT_FAILURE, "rtedge: occlusion mode set, but no objects were specified.\n");
     }
+
+    bgcolor[0] = background[0] * 255.0 + 0.5;
+    bgcolor[1] = background[1] * 255.0 + 0.5;
+    bgcolor[2] = background[2] * 255.0 + 0.5;
+    fgcolor[0] = float_fgcolor[0] * 255.0 + 0.5;
+    fgcolor[1] = float_fgcolor[1] * 255.0 + 0.5;
+    fgcolor[2] = float_fgcolor[2] * 255.0 + 0.5;
 
     /* if non-default/inverted background was requested, swap the
      * foreground and background colors.

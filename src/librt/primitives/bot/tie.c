@@ -46,7 +46,7 @@
  *************************************************************/
 
 static void
-TIE_VAL(tie_tri_prep)(struct tie_s *tie)
+TIE_VAL(tri_prep)(struct tie_s *tie)
 {
     TIE_3 v1, v2, u, v;
     unsigned int i, i1, i2;
@@ -158,7 +158,7 @@ TIE_VAL(tie_free)(struct tie_s *tie)
     bu_free(tie->tri_list, "tie_free");
 
     /* Free KDTREE Nodes */
-    tie_kdtree_free(tie);
+    TIE_KDTREE_FREE(tie);
 }
 
 
@@ -176,10 +176,10 @@ void
 TIE_VAL(tie_prep)(struct tie_s *tie)
 {
     /* Build the kd-tree */
-    tie_kdtree_prep (tie);
+    TIE_KDTREE_PREP(tie);
 
     /* Prep all the triangles */
-    TIE_VAL(tie_tri_prep) (tie);
+    TIE_VAL(tri_prep)(tie);
 }
 
 
@@ -217,7 +217,7 @@ TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id,
     struct tie_tri_s *hit_list[256], *tri;
     struct tie_geom_s *data;
     struct tie_kdtree_s *node, *temp[2];
-    tfloat near, far, dirinv[3], dist;
+    TFLOAT near, far, dirinv[3], dist;
     unsigned int i, n;
     uint8_t hit_count;
     int ab[3], split, stack_ind;
@@ -314,7 +314,7 @@ TIE_VAL(tie_work)(struct tie_s *tie, struct tie_ray_s *ray, struct tie_id_s *id,
 	    /*
 	     * Triangle Intersection Code
 	     */
-	    tfloat u0, v0, *v;
+	    TFLOAT u0, v0, *v;
 	    int i1, i2;
 
 	    tri = data->tri_list[i];

@@ -51,22 +51,22 @@ render_component_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ra
     adrt_mesh_t *mesh;
     vect_t vec;
 
-    if ((mesh = (adrt_mesh_t *)tie_work(tie, ray, &id, component_hit, NULL))) {
+    if ((mesh = (adrt_mesh_t *)TIE_WORK(tie, ray, &id, component_hit, NULL))) {
 	/* Flip normal to face ray origin (via dot product check) */
 	if (ray->dir[0] * id.norm[0] + ray->dir[1] * id.norm[1] + ray->dir[2] * id.norm[2] > 0)
 	    VSCALE(id.norm,  id.norm,  -1.0);
 
 	/* shade solid */
 	*pixel[0] = mesh->flags & ADRT_MESH_HIT ? 0.8 : 0.2;
-	*pixel[1] = (tfloat)0.2;
+	*pixel[1] = (TFLOAT)0.2;
 	*pixel[2] = mesh->flags & ADRT_MESH_SELECT ? 0.8 : 0.2;
 	VSUB2(vec,  ray->pos,  id.pos);
 	VUNITIZE(vec);
 	VSCALE((*pixel), (*pixel), VDOT(vec, id.norm) * 0.8);
     } else if (ray->depth) {
-	*pixel[0] += (tfloat)0.2;
-	*pixel[1] += (tfloat)0.2;
-	*pixel[2] += (tfloat)0.2;
+	*pixel[0] += (TFLOAT)0.2;
+	*pixel[1] += (TFLOAT)0.2;
+	*pixel[2] += (TFLOAT)0.2;
     }
 }
 

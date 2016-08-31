@@ -18,28 +18,28 @@ tasks as they are completed.
 THESE TASKS SHOULD HAPPEN BEFORE THE NEXT RELEASE
 -------------------------------------------------
 
-* quick check of CHANGES to make sure user-vis obsoletions are in NEWS
+* update astyle
 
-* fix regressions in lc -d and -s options
+* bundle primary rays in rt front end into postage stamps, shoot via
+  rt_shootrays(), modify to pass all rays down through the spatial
+  partitioning simultaneously
 
-* regressed behavior in mged and archer: they seem to be defaulting
-  objects to black instead of white/gray.  wireframes and default
-  black-background rendering make newly created objects practically
-  invisible.
+* create a BRL-CAD .g with all possible object types embedded.  The
+  csgbrep command is a good starting point, but only about half of
+  them get created.  integrate into testing.
 
-* check these commits for documentation:
-  58254 - NEWS, fixed bug you say? what bug?
-  58475 - AUTHORS if user identified the fix (not just the bug), NEWS if g-step considered published
-  58594, 58608 - AUTHORS for mged tutorial fixes (doc or code contrib section), NEWS if user-vis
+* sync tgc/rec shot() behavior, sort results for proper normal.
+  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
+  and z=1524 (was hit/overlap, now misses).
   61516 - NEWS, added fbclear to archer
+
 
 
 THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
 -------------------------------------------------------
 
-* brep compilation must not be optional
-
-* update astyle
+* metaball in command input needs sanity checks and better
+  validation.
 
 * integrate gen-registered-attributes-html output into website
 
@@ -51,38 +51,20 @@ THESE TASKS SHOULD HAPPEN WITHIN TWO RELEASE ITERATIONS
   $ /usr/brlcad/rel-7.18.0/bin/brlcad-config rt
   -L/usr/brlcad/rel-7.18.0/lib -m64 -L/usr/local/lib64 -L/usr/local/lib -pipe -fno-strict-aliasing -fno-common -fexceptions -ggdb3 -D_FORTIFY_SOURCE=2 -O3 -w -L/usr/brlcad/rel-7.18.0/lib -lrt -lbn -lbu -ltcl8.5 -ldl -lm -lpng14 -lz -lc -lpthread -lregex -lsysv -lopenNURBS
 
-* bu_*_argv -> bu_argv_*
-
 * obsd stack crashers
 
 * rt moss.g facetize rt bot bug
 
 * invoke graphical with console, play nicely
 
-* sync tgc/rec shot() behavior, sort results for proper normal.
-  inspect t62 grazing with r653,r735 (tgc on an arb8) looking at ae0,0
-  and z=1524 (was hit/overlap, now misses).
-
 * reinstate 'stat' and search -size, see r67636 through r67646
 
 * turn on Bullet code (simulate command) unconditionally
-
-* create a BRL-CAD .g with all possible object types embedded.  The
-  csgbrep command is a good starting point, but only about half of
-  them.
-
-* bundle primary rays in rt front end into postage stamps, shoot via
-  rt_shootrays(), modify to pass all rays down through the spatial
-  partitioning simultaneously
 
 * resolve bot bin sort optimization crash, disabled during release
 
 * closing the graphics window brings down X11 on Mac due to a bad
   context.  fix or revert recent close window behavior.
-
-* havoc.g s.nos5g reliably exhibits the grazing edge bug where only
-  one hit point is being returned.  to reproduce:
-  e s.nos5g ; ae 35 25 ; units mm ; center 26912.4 7089.08 7168.96 ; nirt
 
 
 THESE ARE UNSCHEDULED BACKLOG TASKS

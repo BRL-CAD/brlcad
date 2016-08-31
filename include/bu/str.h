@@ -313,7 +313,7 @@ BU_EXPORT extern void bu_argv_free(size_t argc, char *argv[]);
  * free up to argc elements of memory allocated to an array without
  * free'ing the array itself.
  */
-BU_EXPORT extern void bu_free_array(size_t argc, char *argv[], const char *str);
+BU_EXPORT extern void bu_free_args(size_t argc, char *argv[], const char *str);
 
 /**
  * Dynamically duplicate an argv array and all elements in the array

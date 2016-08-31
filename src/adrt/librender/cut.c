@@ -31,10 +31,6 @@
 #include "bu/log.h"
 #include "vmath.h"
 
-#ifndef TIE_PRECISION
-#  define TIE_PRECISION 0
-#endif
-
 #include "adrt.h"
 #include "adrt_struct.h"
 #include "render.h"
@@ -49,15 +45,15 @@ void render_cut(struct tie_s *tie, struct tie_ray_s *ray, TIE_3 *pixel);
 typedef struct render_cut_s {
     point_t ray_pos;
     vect_t ray_dir;
-    tfloat plane[4];
+    TFLOAT plane[4];
     struct tie_s tie;
 } render_cut_t;
 
 typedef struct render_cut_hit_s {
     struct tie_id_s id;
     adrt_mesh_t *mesh;
-    tfloat plane[4];
-    tfloat mod;
+    TFLOAT plane[4];
+    TFLOAT mod;
 } render_cut_hit_t;
 
 
@@ -75,7 +71,7 @@ render_cut_free(render_t *render)
     render_cut_t *d;
 
     d = (render_cut_t *)render->data;
-    tie_free(&d->tie);
+    TIE_FREE(&d->tie);
     bu_free(render->data, "render_cut_free");
 }
 
@@ -105,12 +101,12 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     render_cut_hit_t hit;
     vect_t color;
     struct tie_id_s id;
-    tfloat t, dot;
+    TFLOAT t, dot;
 
     rd = (render_cut_t *)render->data;
 
     /* Draw Arrow - Blue */
-    if (tie_work(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
+    if (TIE_WORK(&rd->tie, ray, &id, render_arrow_hit, NULL)) {
 	VSET(*pixel, 0.0, 0.0, 1.0);
 	return;
     }
@@ -143,7 +139,7 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     HMOVE(hit.plane, rd->plane);
 
     /* Render Geometry */
-    if (!tie_work(tiep, ray, &id, render_cut_hit, &hit))
+    if (!TIE_WORK(tiep, ray, &id, render_cut_hit, &hit))
 	return;
 
     /*
@@ -155,17 +151,17 @@ render_cut_work(render_t *render, struct tie_s *tiep, struct tie_ray_s *ray, vec
     dot = fabs(VDOT(ray->dir, hit.id.norm));
 
     if (hit.mesh->flags & (ADRT_MESH_SELECT|ADRT_MESH_HIT)) {
-	VSET(color, hit.mesh->flags & ADRT_MESH_HIT ? (tfloat)0.9 : (tfloat)0.2, (tfloat)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (tfloat)0.9 : (tfloat)0.2);
+	VSET(color, hit.mesh->flags & ADRT_MESH_HIT ? (TFLOAT)0.9 : (TFLOAT)0.2, (TFLOAT)0.2, hit.mesh->flags & ADRT_MESH_SELECT ? (TFLOAT)0.9 : (TFLOAT)0.2);
     } else {
-	VSET(color, (tfloat)0.8, (tfloat)0.8, (tfloat)0.7);
+	VSET(color, (TFLOAT)0.8, (TFLOAT)0.8, (TFLOAT)0.7);
     }
 
     /* Shade using inhit */
     VSCALE((*pixel), color, (dot*0.90));
 
-    *pixel[0] += (tfloat)0.1;
-    *pixel[1] += (tfloat)0.1;
-    *pixel[2] += (tfloat)0.1;
+    *pixel[0] += (TFLOAT)0.1;
+    *pixel[1] += (TFLOAT)0.1;
+    *pixel[2] += (TFLOAT)0.1;
 }
 
 
@@ -207,7 +203,7 @@ render_cut_init(render_t *render, const char *buf)
     VMOVE(ray.pos, ray_pos);
     VMOVE(ray.dir, ray_dir);
     ray.depth = 0;
-    tie_work(render->tie, &ray, &id, render_cut_hit_cutline, &step);
+    TIE_WORK(render->tie, &ray, &id, render_cut_hit_cutline, &step);
 
     /* prepare cut stuff */
     tlist = (TIE_3 **)bu_malloc(sizeof(TIE_3 *) * 6, "cutting plane triangles");
@@ -230,7 +226,7 @@ render_cut_init(render_t *render, const char *buf)
     d->plane[3] = -VDOT(d->plane, ray_pos); /* up is really new ray_pos */
 
     /* generate the shtuff for the blue line */
-    tie_init(&d->tie, 2, TIE_KDTREE_FAST);
+    TIE_INIT(&d->tie, 2, TIE_KDTREE_FAST);
 
     /* Triangle 1 */
     VSET(list[0].v, ray_pos[0], ray_pos[1], ray_pos[2] - shot_width);
@@ -249,9 +245,9 @@ render_cut_init(render_t *render, const char *buf)
     for (i=0;i<6;i++)
 	tlist[i] = &list[i];
 
-    tie_push(&d->tie, tlist, 2, NULL, 0);
+    TIE_PUSH(&d->tie, tlist, 2, NULL, 0);
 
-    tie_prep(&d->tie);
+    TIE_PREP(&d->tie);
     bu_free(tlist, "cutting plane triangles");
     return 0;
 }

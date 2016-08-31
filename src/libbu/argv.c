@@ -183,7 +183,7 @@ bu_argv_free(size_t argc, char *argv[])
 
 
 void
-bu_free_array(size_t argc, char *argv[], const char *str)
+bu_free_args(size_t argc, char *argv[], const char *str)
 {
     size_t count = 0;
 

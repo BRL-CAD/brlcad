@@ -379,7 +379,7 @@
 	<term><option>-C #/#/#</option></term>
 	<listitem>
 	  <para>sets the background color to the RGB value #/#/#, where each #
-	  is in the range of 0 to 255.
+	  is in the range of 0 to 255 or 0.0 to 1.0.
 	  All non-background colors will be dithered away from this value.</para>
 	</listitem>
       </varlistentry>
@@ -672,8 +672,8 @@
 	<listitem>
 	  <para>
 	    set the color of the foreground (edges) to the
-	    given  r,g,b triple. The default is white
-	    (255,255,255).
+            given  r,g,b triple, where each of r,g,b, is in the range 0.0 to 1.0.
+            The default is white (1.0,1.0,1.0).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -688,7 +688,8 @@
 	<listitem>
 	  <para>
 	    set the color of the background to the r,g,b
-	    triple. The default is near-black (0,0,1).
+            triple, where each of r,g,b is in the range 0.0 to 1.0.
+            The default is near-black (0.0,0.0,1.0).
 	  </para>
 	</listitem>
       </varlistentry>
@@ -943,7 +944,7 @@
 
       <para>
 	The command
-	<userinput>rtedge -s1024 -o new.pix -c"set fg=0,255,0 bg=255,0,0" havoc.g havoc</userinput>
+	<userinput>rtedge -s1024 -o new.pix -c"set fg=0,1.0,0 bg=1.0,0,0" havoc.g havoc</userinput>
 	changes the edge color to be green and the background color to be red.
       </para>
 
@@ -986,7 +987,7 @@ EOF
 
 rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 ov=1"\
- -c"set fg=255,200,0" \
+ -c"set fg=1.0,0.78,0" \
  $*\
  havoc.g\
  havoc\
@@ -1029,7 +1030,7 @@ EOF
 
 rtedge -M -s1280 -o new.pix \
  -c"set dr=1 dn=1 om=3"\
- -c"set fg=0,0,0 bg=200,200,200"\
+ -c"set fg=0,0,0 bg=0.78,0.78,0.78"\
  -c"set oo=\"weapons\" "\
  $*\
  havoc.g\

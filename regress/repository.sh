@@ -63,7 +63,7 @@ SRCFILES="`find src -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -na
 INCFILES="`find include -type f \( -name \*.c -o -name \*.cpp -o -name \*.cxx -o -name \*.cc -o -name \*.h -o -name \*.y -o -name \*.l \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*\.log' -not -regex '.*Makefile.*' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*pkg.h'`"
 
 BLDFILES="`find src -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
-`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*'`
+`find misc -type f \( -name \*.cmake -o -name CMakeLists.txt \) -not -regex '.*src/other.*' -not -regex '.*misc/tools.*' -not -regex '.*misc/svn2git.*' -not -regex '.*~' -not -regex '.*cache.*' -not -regex '.*\.svn.*' -not -regex '.*autoheader.*'`
 CMakeLists.txt"
 
 

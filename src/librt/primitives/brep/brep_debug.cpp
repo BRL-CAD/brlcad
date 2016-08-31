@@ -2389,8 +2389,7 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	    ON_BrepFace& face = brep->m_F[index];
 	    SurfaceTree* st = new SurfaceTree(&face, true, 0);
 	    plottrim(face, vbp, plotres, true);
-	    plotFaceFromSurfaceTree(st, vbp, plotres, plotres);
-	    delete st;
+	    plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
 	}
     } else if (index < brep->m_F.Count()) {
 	ON_BrepFaceArray& faces = brep->m_F;
@@ -2398,8 +2397,7 @@ brep_isosurface_plot(struct bu_vls *vls, struct brep_specific* bs, struct rt_bre
 	    ON_BrepFace& face = faces[index];
 	    SurfaceTree* st = new SurfaceTree(&face, true, 0);
 	    plottrim(face, vbp, plotres, true);
-	    plotFaceFromSurfaceTree(st, vbp, plotres, plotres);
-	    delete st;
+	    plotFaceFromSurfaceTree(&st, vbp, plotres, plotres);
 	}
     }
 

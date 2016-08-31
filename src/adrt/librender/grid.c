@@ -39,19 +39,19 @@ render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
 {
     struct tie_id_s id;
     vect_t vec;
-    tfloat angle;
+    TFLOAT angle;
 
 
-    if (tie_work(tie, ray, &id, render_hit, NULL) != NULL) {
+    if (TIE_WORK(tie, ray, &id, render_hit, NULL) != NULL) {
 	/* if X or Y lie in the grid paint it white else make it gray */
 	if (fabs(GRID*id.pos[0] - (int)(GRID*id.pos[0])) < 0.2*LINE || fabs(GRID*id.pos[1] - (int)(GRID*id.pos[1])) < 0.2*LINE) {
-	    *pixel[0] = (tfloat)0.9;
-	    *pixel[1] = (tfloat)0.9;
-	    *pixel[2] = (tfloat)0.9;
+	    *pixel[0] = (TFLOAT)0.9;
+	    *pixel[1] = (TFLOAT)0.9;
+	    *pixel[2] = (TFLOAT)0.9;
 	} else {
-	    *pixel[0] = (tfloat)0.1;
-	    *pixel[1] = (tfloat)0.1;
-	    *pixel[2] = (tfloat)0.1;
+	    *pixel[0] = (TFLOAT)0.1;
+	    *pixel[1] = (TFLOAT)0.1;
+	    *pixel[2] = (TFLOAT)0.1;
 	}
     } else {
 	return;
@@ -62,9 +62,9 @@ render_grid_work(render_t *UNUSED(render), struct tie_s *tie, struct tie_ray_s *
     angle = VDOT(vec, id.norm);
     VSCALE(*pixel, *pixel, (angle*0.9));
 
-    *pixel[0] += (tfloat)0.1;
-    *pixel[1] += (tfloat)0.1;
-    *pixel[2] += (tfloat)0.1;
+    *pixel[0] += (TFLOAT)0.1;
+    *pixel[1] += (TFLOAT)0.1;
+    *pixel[2] += (TFLOAT)0.1;
 }
 
 
