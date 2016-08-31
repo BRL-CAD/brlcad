@@ -296,7 +296,6 @@ SOFTWARE ORGANIZATION</H1>
 <tr></tr>
 <tr><td>librt</td><td>A solid-model ray-tracing library</td></tr>
 <tr><td>libspl</td><td>A B-spline library</td></tr>
-<tr><td>libsysv</td><td>Some System-V compatibility routines</td></tr>
 <tr><td>libpkg</td><td>A "message-passing" interface to TCP network links</td></tr>
 <tr><td>libfb</td><td>A generic frame-buffer library</td></tr>
 <tr><td>libtermio</td><td>A library to handle terminal mode setting</td></tr>
@@ -653,7 +652,7 @@ and then to conduct the actual benchmark test, run:
 </pre>
 The <b>cake benchmark</b> will process just the directories
 that are needed to run the benchmark:
-libsysv, libmalloc, conv, db, libpkg (if HAS_TCP==1),
+libmalloc, conv, db, libpkg (if HAS_TCP==1),
 libfb, libplot3, libspl, librt, rt.
 If any fatal errors occur during this process,
 consult the section on <a href="porting">SUPPORTING A NEW MACHINE</a>.
@@ -1151,7 +1150,7 @@ your machine is a "Little-Endian" machine and your machine is not
 a VAX.  "Big-Endian" machines will work without modification.
 A Big-Endian machine has byte [0] on the left of the word, like IBM,
 while a Little-Endian machine has byte [0] on the right side of the word,
-like DEC.  Some of the <b>liborle</b> code needs to know.
+like DEC.
 <H2>
 libplot3/htond.c</H2>
 <P>
@@ -1451,8 +1450,6 @@ the SGI loader will produce the following warning(s):
 ld:
 The shared object /usr/lib/libm.so did not resolve any symbols.
         You may want to remove it from your link line.
-The shared object ../libsysv/libsysv.so did not resolve any symbols.
-        You may want to remove it from your link line.
 </pre>
 This warning can safely be ignored.
 The documentation states that the <b>-S</b> option given to the loader
@@ -1556,22 +1553,6 @@ try running <b>csh</b> before starting <b>mged</b>.
 <H2>
 DEC ALPHA PROBLEMS</H2>
 <P>
-The DEC Alpha system running DEC OSF/1 V3.0 has a bug in /bin/sh
-which causes the Shell to segmentation fault when executing this line:
-<pre>
-              eval `grep '^RELEASE=' ../gen.sh`
-</pre>
-in the files newvers.sh and sharedlibvers.sh, which is of course a
-perfectly good shell command.  The error message is a bit cryptic and
-will look like this:
-<pre>
- ../newvers.sh libsysv_version "BRL-CAD System V Compatibility Library"
- ../newvers.sh: no space
-</pre>
-There are workarounds included in both shell scripts, simply comment out
-the defective line and uncomment the workaround, and all will be well.
-A bug report has been filed with the vendor.
-<P>
 When the DEC loader builds a shared library, it insists on printout out
 a list of all the external symbols referenced by that library, even
 though the -S flag has been given.  These messages are unsightly
@@ -1631,10 +1612,6 @@ All earlier editions of the BRL-CAD package used Version 2 of the Utah
 The Utah Raster Toolkit uses Version 3, which is incompatible.
 In BRL-CAD Release 3.0, this latest Utah RLE format is adopted,
 to permit complete interoperability with all the Utah Toolkit software.
-For sites that may have stored images in the old RLE format,
-the old library now exists as <b>liborle</b>,
-and all the programs have had an "o" added to their name, e.g.,
-the version of <b>rle-fb</b> which uses the old library is now <b>orle-fb</b>.
 <H1>
 UPGRADING FROM RELEASE 3.0 to 3.7</H1>
 <P>

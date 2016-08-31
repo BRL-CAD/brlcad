@@ -1,7 +1,7 @@
 /*                          M E M . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,7 +48,7 @@ struct mem_map {
  * size.
  *
  * Returns:     NULL Error
- * <addr> Otherwise
+ * address Otherwise
  *
  * Comments:
  * Algorithm is first fit.
@@ -61,7 +61,7 @@ RT_EXPORT extern size_t rt_memalloc(struct mem_map **pp,
  * size.
  *
  * Returns:     NULL Error
- * <addr> Otherwise
+ * address Otherwise
  *
  * Comments:
  * Algorithm is BEST fit.
@@ -71,7 +71,7 @@ RT_EXPORT extern struct mem_map * rt_memalloc_nosplit(struct mem_map **pp,
 
 /**
  * Returns:     NULL Error
- * <addr> Otherwise
+ * address Otherwise
  *
  * Comments:
  * Algorithm is first fit.

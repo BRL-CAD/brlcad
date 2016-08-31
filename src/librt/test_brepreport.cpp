@@ -1,7 +1,7 @@
 /*              T E S T _ B R E P R E P O R T . C P P
  * BRL-CAD
  *
- * Copyright (c) 2015 United States Government as represented by
+ * Copyright (c) 2015-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -55,7 +55,7 @@ characterize_faces(struct type_counts *cnts, const char *name, ON_Brep *brep)
 
     for (int i = 0; i < brep->m_F.Count(); i++) {
 	ON_Surface *s = brep->m_F[i].SurfaceOf()->Duplicate();
-	int surface_type = (int)GetSurfaceType(s, NULL);
+	int surface_type = (int)GetSurfaceType(s);
         switch (surface_type) {
             case SURFACE_PLANE:
                 planar++;
@@ -147,10 +147,8 @@ main(int argc, char *argv[])
     size_t i;
     struct db_i *dbip;
     struct directory *dp;
-    struct rt_brep_internal *brep_ip = NULL;
     struct rt_wdb *wdbp;
     int brep_cnt = 0;
-    int brep_path_cnt = 0;
     int convertable = 0;
     int maybeconvertable = 0;
     int unlikelyconvertable = 0;
@@ -169,7 +167,7 @@ main(int argc, char *argv[])
 
 
     if (argc != 2) {
-	bu_exit(1, "Usage: %s file.g object", argv[0]);
+	bu_exit(1, "Usage: %s file.g", argv[0]);
     }
 
     dbip = db_open(argv[1], DB_OPEN_READONLY);
@@ -195,6 +193,7 @@ main(int argc, char *argv[])
     */
 
     bu_log("%40s\t%5s\t%5s\t%5s\t%5s\t%5s\t%5s\t%s\n", "Totals", "Plane", "Sph", "Cyl", "Cone", "Torus", "NURB", "Convertable");
+    int valid_breps = 0;
     for (i = 0; i < BU_PTBL_LEN(&unique_breps); i++) {
 	struct rt_db_internal intern;
 	struct rt_brep_internal* bi;
@@ -212,6 +211,17 @@ main(int argc, char *argv[])
 	}
 	bi = (struct rt_brep_internal*)intern.idb_ptr;
 	brep = bi->brep;
+	int have_boundary = 0;
+	for (int j = 0; j < brep->m_T.Count(); j++) {
+	    if (brep->m_T[j].m_type == ON_BrepTrim::boundary) {
+		have_boundary = 1;
+		break;
+	    }
+	}
+	if (have_boundary) continue;
+	if (!brep->IsValid()) continue;
+	valid_breps++;
+
 	int cf = characterize_faces(&cnts, dp->d_namep, brep);
 
 	switch (cf) {
@@ -233,10 +243,10 @@ main(int argc, char *argv[])
 
     bu_log("%40s\t%5s\t%5s\t%5s\t%5s\t%5s\t%5s\n", "Objects", "Plane", "Sph", "Cyl", "Cone", "Torus", "NURB");
     bu_log("%40s\t%5d\t%5d\t%5d\t%5d\t%5d\t%5d\n", " ", cnts.planar, cnts.spherical, cnts.cylindrical, cnts.cone, cnts.torus, cnts.general);
-    bu_log("Convertable: %d of %d (%.1f percent)\n", convertable, BU_PTBL_LEN(&unique_breps), 100*(double)convertable/(double)BU_PTBL_LEN(&unique_breps));
-    bu_log("Maybe convertable: %d of %d (%.1f percent)\n", maybeconvertable, BU_PTBL_LEN(&unique_breps), 100*(double)maybeconvertable/(double)BU_PTBL_LEN(&unique_breps));
-    bu_log("Unlikely convertable: %d of %d (%.1f percent)\n", unlikelyconvertable, BU_PTBL_LEN(&unique_breps), 100*(double)unlikelyconvertable/(double)BU_PTBL_LEN(&unique_breps));
-    bu_log("Non-convertable: %d of %d (%.1f percent)\n", nonconvertable, BU_PTBL_LEN(&unique_breps), 100*(double)nonconvertable/(double)BU_PTBL_LEN(&unique_breps));
+    bu_log("Convertable: %d of %d (%.1f percent)\n", convertable, valid_breps, 100*(double)convertable/(double)valid_breps);
+    bu_log("Maybe convertable: %d of %d (%.1f percent)\n", maybeconvertable, valid_breps, 100*(double)maybeconvertable/(double)valid_breps);
+    bu_log("Unlikely convertable: %d of %d (%.1f percent)\n", unlikelyconvertable, valid_breps, 100*(double)unlikelyconvertable/(double)valid_breps);
+    bu_log("Non-convertable: %d of %d (%.1f percent)\n", nonconvertable, valid_breps, 100*(double)nonconvertable/(double)valid_breps);
 #if 0
 
 

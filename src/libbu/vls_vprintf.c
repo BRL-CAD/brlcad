@@ -1,7 +1,7 @@
 /*                        V L S _ V P R I N T F . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -27,16 +27,12 @@
 #include <assert.h>
 #include <math.h>
 
-#ifdef HAVE_STDINT_H
-#   include <stdint.h>
-#endif
-
 #include "bio.h"
 
 #include "bu/log.h"
 #include "bu/vls.h"
 
-#include "./vls_internals.h"
+#include "./vls_vprintf.h"
 
 /* private constants */
 
@@ -398,8 +394,6 @@ bu_vls_vprintf(struct bu_vls *vls, const char *fmt, va_list ap)
     }
 
     BU_CK_VLS(vls);
-
-    bu_vls_extend(vls, (unsigned int)_VLS_ALLOC_STEP);
 
     sp = fmt;
     while (*sp) {

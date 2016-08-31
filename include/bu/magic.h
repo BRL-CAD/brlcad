@@ -1,7 +1,7 @@
 /*                         M A G I C . H
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -233,7 +233,7 @@ __BEGIN_DECLS
  * first entry in the structure is a magic number. ((void)(1?0:((_ptr), void(), 0)))
  */
 #ifdef NO_BOMBING_MACROS
-#  define BU_CKMAG(_ptr, _magic, _str) BU_IGNORE((_ptr))
+#  define BU_CKMAG(_ptr, _magic, _str) (void)(_ptr)
 #else
 #  define BU_CKMAG(_ptr, _magic, _str) { \
         const uintptr_t _ptrval = (const uintptr_t)(_ptr); \
@@ -247,7 +247,7 @@ __BEGIN_DECLS
 /**
  *  Support routine for BU_CKMAG macro.
  */
-BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line);
+BU_EXPORT extern void bu_badmagic(const uint32_t *ptr, uint32_t magic, const char *str, const char *file, int line) _BU_ATTR_NORETURN;
 
 
 /** @brief Routines involved with handling "magic numbers" used to identify various in-memory data structures. */

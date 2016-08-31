@@ -2,7 +2,7 @@ if(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
   add_subdirectory(win32-msvc)
 endif(BUILD_STATIC_LIBS AND BRLCAD_ENABLE_BRLCAD_LIBRARY)
 
-set(prefix ${CMAKE_INSTALL_PREFIX})
+set(prefix "${CMAKE_INSTALL_PREFIX}")
 set(exec_prefix "\${prefix}")
 set(libdir "\${exec_prefix}/lib")
 set(includedir "\${prefix}/include")
@@ -59,6 +59,7 @@ endif(DOXYGEN_FOUND)
 set(misc_ignore_files
   ${misc_ignore_files}
   Bullet_Box_Chain_Demo.cpp
+  clang-static-analyzer-run.sh
   CMake
   Description.txt
   profont/LICENSE

@@ -1,7 +1,7 @@
 #                          D B . T C L
 # BRL-CAD
 #
-# Copyright (c) 1998-2014 United States Government as represented by
+# Copyright (c) 1998-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -639,7 +639,7 @@
     $help add whichair	{{air_codes(s)} {lists all regions with given air code}}
     $help add whichid	{{[-s] ident(s)} {lists all regions with given ident code}}
     $help add wmater	{{file comb1 [comb2 ...]} {write material properties to a file for the specified combinations}}
-    $help add xpush	{{object} {Experimental Push Command}}
+    $help add xpush	{{object} {push matrices onto primitives, creating copies as needed}}
 }
 
 # Local Variables:

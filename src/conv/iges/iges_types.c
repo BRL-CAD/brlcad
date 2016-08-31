@@ -1,7 +1,7 @@
 /*                    I G E S _ T Y P E S . C
  * BRL-CAD
  *
- * Copyright (c) 1995-2014 United States Government as represented by
+ * Copyright (c) 1995-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -24,8 +24,8 @@
 char *
 iges_type(int type)
 {
-    int i;
-    int type_no = 0;
+    size_t i;
+    size_t type_no = 0;
 
     for (i = 1; i < ntypes; i++) {
 	if (typecount[i].type == type) {

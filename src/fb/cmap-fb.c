@@ -1,7 +1,7 @@
 /*                       C M A P - F B . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -98,6 +98,9 @@ main(int argc, char **argv)
     int idx, ret;
     char line[512], buf[512], *str;
 
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     while (argc > 1) {
 	if (BU_STR_EQUAL(argv[1], "-H")) {
 	    fbsize = 1024;
@@ -120,8 +123,7 @@ main(int argc, char **argv)
 	}
     } else {
 	fp = stdin;
-	if (isatty(fileno(fp)))
-	    fprintf(stderr, "%s       Program continues running:\n", usage);
+	fprintf(stderr, "Reading a colormap from user input:\n");
     }
 
     if ((fbp = fb_open(NULL, fbsize, fbsize)) == FB_NULL)

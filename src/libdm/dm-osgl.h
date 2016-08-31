@@ -1,7 +1,7 @@
 /*                        D M -  O S G . H
  * BRL-CAD
  *
- * Copyright (c) 2014 United States Government as represented by
+ * Copyright (c) 2014-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -84,6 +84,7 @@ struct osgl_vars {
     struct FONScontext *fs;
     int fontNormal;
     int ovec;		/* Old color map entry number */
+    int is_init;
 #ifdef __cplusplus
     GLclampf r, g, b;
 #endif

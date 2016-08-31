@@ -1,7 +1,7 @@
 /*                           T E A . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -109,10 +109,7 @@ main(int argc, char **argv)
 	}
     }
 
-    if (argc == 1) {
-	bu_log("Usage: %s [-d]\n", *argv);
-    	bu_log("       Program continues running:\n");
-    }
+    bu_log("Writing out geometry to file [teapot.g] ...");
 
     outfp = wdb_fopen("teapot.g");
 
@@ -136,6 +133,8 @@ main(int argc, char **argv)
     surfaces[PATCH_COUNT] = NULL;
 
     mk_bspline(outfp, tea_name, surfaces);
+
+    bu_log(" done.\n");
 
     return 0;
 }

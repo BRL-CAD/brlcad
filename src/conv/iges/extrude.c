@@ -1,7 +1,7 @@
 /*                       E X T R U D E . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -32,7 +32,7 @@ extrude(int entityno)
     int sol_num;		/* IGES solid type number */
     int curve;			/* pointer to directory entry for base curve */
     struct ptlist *curv_pts;		/* List of points along curve */
-    int i;
+    size_t i;
 
     /* Default values */
     VSET(edir, 0.0, 0.0, 1.0);
@@ -139,9 +139,13 @@ extrude(int entityno)
 	    return 1;
 	}
 	default:
-	    i = (-1);
-	    while (dir[curve]->type != typecount[++i].type && i < ntypes);
-	    bu_log("Extrusions of %s are not allowed\n", typecount[i].name);
+	    i = 0;
+	    while (dir[curve]->type != typecount[i].type && i < ntypes)
+		i++;
+	    if (dir[curve]->type == typecount[++i].type)
+		bu_log("Extrusions of %s are not allowed\n", typecount[i].name);
+	    else
+		bu_log("Extrusions of unknown type are not allowed\n");
 	    break;
     }
     return 0;

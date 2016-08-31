@@ -1,7 +1,7 @@
 /*                       W H E R E I S . C
  * BRL-CAD
  *
- * Copyright (c) 2005-2014 United States Government as represented by
+ * Copyright (c) 2005-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,7 +31,7 @@
 #  ifdef HAVE_SYS_PARAM_H
 #    include <sys/param.h>
 #  endif
-#  include <sys/sysctl.h>
+/* #  include <sys/sysctl.h> -- CSM: test removal on more platforms */
 #endif
 
 /* common headers */

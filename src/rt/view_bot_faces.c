@@ -1,7 +1,7 @@
 /*                V I E W _ B O T _ F A C E S . C
  * BRL-CAD
  *
- * Copyright (c) 2003-2014 United States Government as represented by
+ * Copyright (c) 2003-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -53,7 +53,6 @@ extern point_t viewbase_model;
 
 extern int rpt_overlap;
 
-extern struct bu_vls ray_data_file;  /* file name for ray data output (declared in do.c) */
 extern FILE *outfp;
 
 static Tcl_HashTable bots;		/* hash table with a bot_face_list entry for each BOT primitive hit */
@@ -146,6 +145,9 @@ raymiss(struct application *UNUSED(ap))
 int
 view_init(struct application *ap, char *UNUSED(file), char *UNUSED(obj), int minus_o, int UNUSED(minus_F))
 {
+    bu_log("DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
+
     /* report air regions */
     use_air = 1;
 

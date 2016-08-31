@@ -1,7 +1,7 @@
 /*                       U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2013-2014 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * Copyright 2001 softSurfer, 2012 Dan Sunday
@@ -23,6 +23,31 @@
 #include "vmath.h"
 #include "bn/plane.h"
 #include "bn/tol.h"
+
+/* TODO - need routines for 2D and 3D point sets that check for degeneracy - (dimension < 2 for a 2D
+ * set, dimension < 3 for a 3D set.  Probably want to use Eigen's matrix routines and a rank check:
+ * https://en.wikipedia.org/wiki/Coplanarity#Coplanarity_of_points_whose_coordinates_are_given
+ * http://stackoverflow.com/questions/31041921/how-to-get-rank-of-a-matrix-in-eigen-library
+ *
+ * Try both of these - if the slow-down isn't extreme, may be worth using FullPiv for numerical
+ * stability:
+ * http://eigen.tuxfamily.org/dox/classEigen_1_1ColPivHouseholderQR.html
+ * http://eigen.tuxfamily.org/dox/classEigen_1_1FullPivHouseholderQR.html
+ *
+ * Algorithms like QuickHull (which we need to implement to replace chull3d - that implementation has
+ * been found to not be robust) need degeneracy checks, and we really should be using such checks generally
+ * for all of these sorts of routines.
+ *
+ * See src/librt/test_bot2nurbs.cpp for an example of using Eigen to do calculations.  Probably
+ * can make do with Matrix2d and Matrix3d rather than MatrixXd...
+ *
+ * I don't think it's relevant in this case (if we operate on 3D points as a matrix, the result
+ * won't be what the original BoT expects...) but when it comes to Eigen pay attention to Map,
+ * which may allow us to apply Eigen operations to BRL-CAD's libbn matricies:
+ *
+ * https://eigen.tuxfamily.org/dox/group__TutorialMapClass.html
+ */
+
 
 int
 coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const point_t *points_3d, int n)
@@ -60,6 +85,7 @@ coplanar_2d_coord_sys(point_t *origin_pnt, vect_t *u_axis, vect_t *v_axis, const
     /* Step 3 - find normal vector of plane holding points */
     i = 0;
     dist_pt_pt = DIST_PT_PT(*origin_pnt, p_farthest);
+    if (NEAR_ZERO(dist_pt_pt, VUNITIZE_TOL)) return -1;
     while (i < n) {
 	if (i != p_farthest_index) {
 	    vect_t temp_vect;

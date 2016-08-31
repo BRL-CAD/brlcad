@@ -1,4 +1,4 @@
-set(docbook_lessons_ES
+set(lessons_ES
   mged01_crear_figuras_primitivas.xml
   mged02_opciones_vistas.xml
   mged03_utilizar_comando_in.xml
@@ -17,7 +17,7 @@ set(docbook_lessons_ES
   mged16_mod_tech_struct.xml
   )
 
-set(docbook_lessons_ES_IMAGES
+set(lessons_ES_IMAGES
   images/mged01_commandwindow.png
   images/mged01_graphicswindow.png
   images/mged01_terminal.png
@@ -126,11 +126,8 @@ set(docbook_lessons_ES_IMAGES
   images/mged16_radio_wireframe_circ_board.png
   images/mged16_radio_with_mater_props.png
   )
-ADD_DOC(docbook_lessons_ES_IMAGES html/lessons/es/images)
-
-DOCBOOK_TO_HTML(lesson_ES docbook_lessons_ES html/lessons/es docbook_lessons_ES_IMAGES_cp)
-DOCBOOK_TO_PHP(lesson_ES docbook_lessons_ES html/lessons/es docbook_lessons_ES_IMAGES_cp)
-DOCBOOK_TO_PDF(lesson_ES docbook_lessons_ES pdf/lessons/es docbook_lessons_ES_IMAGES_cp)
+ADD_DOC(lessons_ES_IMAGES html/lessons/es/images)
+ADD_DOCBOOK("HTML;PHP;PDF" lessons_ES lessons/es lessons_ES_IMAGES_cp)
 
 # Local Variables:
 # tab-width: 8

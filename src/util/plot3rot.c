@@ -1,7 +1,7 @@
 /*                      P L O T 3 R O T . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -584,7 +584,7 @@ three_coord_out(FILE *fp, fastf_t *m)
 void
 two_dcoord_out(FILE *fp, fastf_t *m)
 {
-    unsigned char buf[2*8];
+    unsigned char buf[3*8];
     double p1[3];
     double p2[3];
     size_t ret;

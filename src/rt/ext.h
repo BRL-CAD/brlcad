@@ -1,7 +1,7 @@
 /*                           E X T . H
  * BRL-CAD
  *
- * Copyright (c) 1989-2014 United States Government as represented by
+ * Copyright (c) 1989-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -119,7 +119,6 @@ extern fastf_t frame_delta_t;		/* 1.0 / frames_per_second_playback */
 extern int benchmark;			/* No random numbers:  benchmark */
 extern int curframe;			/* current frame number */
 extern int desiredframe;		/* frame to start at */
-extern int interactive;			/* human is watching results */
 extern int matflag;			/* read matrix from stdin */
 extern int nobjs;			/* Number of cmd-line treetops */
 extern int pix_end;			/* pixel to end at */

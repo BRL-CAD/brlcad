@@ -37,7 +37,7 @@
 #include "common.h"
 
 
-#if defined(__SSE2__) && (defined(__GNUC__) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
+#if defined(__SSE2__) && ((defined(__GNUC__) && !defined(__OpenBSD__)) || defined(__INTEL_COMPILER) || defined(_MSC_VER))
 
 #include "auxiliary/mm.h"
 

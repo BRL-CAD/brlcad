@@ -1,7 +1,7 @@
 /*                          P R E P . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -88,7 +88,7 @@ rt_new_rti(struct db_i *dbip)
 
     /* This table is used for discovering the per-cpu resource structures */
     bu_ptbl_init(&rtip->rti_resources, MAX_PSW, "rti_resources ptbl");
-    BU_PTBL_END(&rtip->rti_resources) = MAX_PSW;	/* Make 'em all available */
+    bu_ptbl_trunc(&rtip->rti_resources, MAX_PSW); /* Make 'em all available */
 
     rt_uniresource.re_magic = RESOURCE_MAGIC;
 
@@ -739,14 +739,13 @@ rt_init_resource(struct resource *resp,
 
     /* Ensure that this CPU's resource structure is registered in rt_i */
     /* It may already be there when we're called from rt_clean_resource */
-    {
+    if (resp != &rt_uniresource) {
 	struct resource *ores = (struct resource *)BU_PTBL_GET(&rtip->rti_resources, cpu_num);
 	if (ores != NULL && ores != resp) {
 	    bu_log("rt_init_resource(cpu=%d) re-registering resource, had %p, new=%p\n",
 		   cpu_num,
 		   (void *)ores,
 		   (void *)resp);
-	    return;
 	}
 	BU_PTBL_SET(&rtip->rti_resources, cpu_num, resp);
     }
@@ -1170,12 +1169,39 @@ rt_solid_bitfinder(const union tree_rpn *rtree, size_t rlen,
 
     RT_CK_REGION(regp);
 
-    for (i=0; i<rlen; i++) {
-	st_bit = rtree[i].st_bit;
-	if (st_bit >= 0L && st_bit < (long)nsolids) {
-	    stp = solids[st_bit];
-	    RT_CK_SOLTAB(stp);
-	    bu_ptbl_ins(&stp->st_regions, (long *)regp);
+    while ((sp = resp->re_boolstack) == (union tree **)0)
+	rt_bool_growstack(resp);
+    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+
+    *sp++ = TREE_NULL;
+    *sp++ = treep;
+    while ((treep = *--sp) != TREE_NULL) {
+	RT_CK_TREE(treep);
+	switch (treep->tr_op) {
+	    case OP_NOP:
+		break;
+	    case OP_SOLID:
+		stp = treep->tr_a.tu_stp;
+		RT_CK_SOLTAB(stp);
+		bu_ptbl_ins(&stp->st_regions, (long *)regp);
+		break;
+	    case OP_UNION:
+	    case OP_INTERSECT:
+	    case OP_SUBTRACT:
+		/* BINARY type */
+		/* push both nodes - search left first */
+		*sp++ = treep->tr_b.tb_right;
+		*sp++ = treep->tr_b.tb_left;
+		if (sp >= stackend) {
+		    register int off = sp - resp->re_boolstack;
+		    rt_bool_growstack(resp);
+		    sp = &(resp->re_boolstack[off]);
+		    stackend = &(resp->re_boolstack[resp->re_boolslen-1]);
+		}
+		break;
+	    default:
+		bu_log("rt_solid_bitfinder:  op=x%x\n", treep->tr_op);
+		break;
 	}
     }
 }

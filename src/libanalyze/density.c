@@ -1,7 +1,7 @@
 /*                    D E N S I T Y . C
  * BRL-CAD
  *
- * Copyright (c) 2009-2014 United States Government as represented by
+ * Copyright (c) 2009-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -113,11 +113,11 @@ parse_densities_buffer(char *buf, size_t len, struct density_entry *densities, s
     }
 
 #ifdef PRINT_DENSITIES
-    for (idx = 0; idx < &num_densities; idx++)
+    for (idx = 0; idx < *num_densities; idx++)
 	if (densities[idx].magic == DENSITY_MAGIC)
 	    bu_vls_printf(&_ged_current_gedp->ged_result_str, "%4d %6g %s\n",
 			  idx,
-			  densities[idx].density,
+			  densities[idx].grams_per_cu_mm,
 			  densities[idx].name);
 #endif
 

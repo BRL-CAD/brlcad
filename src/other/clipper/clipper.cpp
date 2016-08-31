@@ -781,12 +781,15 @@ ClipperBase::ClipperBase() //constructor
   m_MinimaList = 0;
   m_CurrentLM = 0;
   m_UseFullRange = true;
+  m_edges = new EdgeList();
 }
 //------------------------------------------------------------------------------
 
 ClipperBase::~ClipperBase() //destructor
 {
   Clear();
+  delete m_edges;
+  m_edges = NULL;
 }
 //------------------------------------------------------------------------------
 
@@ -844,7 +847,7 @@ bool ClipperBase::AddPolygon( const Polygon &pg, PolyType polyType)
 
   //create a new edge array ...
   TEdge *edges = new TEdge [len];
-  m_edges.push_back(edges);
+  m_edges->push_back(edges);
 
   //convert vertices to a double-linked-list of edges and initialize ...
   edges[0].xcurr = p[0].X;
@@ -971,8 +974,8 @@ bool ClipperBase::AddPolygons(const Polygons &ppg, PolyType polyType)
 void ClipperBase::Clear()
 {
   DisposeLocalMinimaList();
-  for (EdgeList::size_type i = 0; i < m_edges.size(); ++i) delete [] m_edges[i];
-  m_edges.clear();
+  for (EdgeList::size_type i = 0; i < m_edges->size(); ++i) delete [] m_edges->at(i);
+  m_edges->clear();
   m_UseFullRange = false;
 }
 //------------------------------------------------------------------------------
@@ -1082,6 +1085,9 @@ Clipper::Clipper() : ClipperBase() //constructor
   m_ExecuteLocked = false;
   m_UseFullRange = false;
   m_ReverseOutput = false;
+  m_PolyOuts = new PolyOutList();
+  m_Joins = new JoinList();
+  m_HorizJoins = new HorzJoinList();
 }
 //------------------------------------------------------------------------------
 
@@ -1089,12 +1095,15 @@ Clipper::~Clipper() //destructor
 {
   Clear();
   DisposeScanbeamList();
+  delete m_PolyOuts;
+  delete m_Joins;
+  delete m_HorizJoins;
 }
 //------------------------------------------------------------------------------
 
 void Clipper::Clear()
 {
-  if (m_edges.size() == 0) return; //avoids problems with ClipperBase destructor
+  if (m_edges->size() == 0) return; //avoids problems with ClipperBase destructor
   DisposeAllPolyPts();
   ClipperBase::Clear();
 }
@@ -1197,7 +1206,7 @@ void Clipper::FixHoleLinkage(OutRec *outRec)
 {
   OutRec *tmp;
   if (outRec->bottomPt)
-    tmp = m_PolyOuts[outRec->bottomPt->idx]->FirstLeft;
+    tmp = m_PolyOuts->at(outRec->bottomPt->idx)->FirstLeft;
   else
     tmp = outRec->FirstLeft;
   if (outRec == tmp) throw clipperException("HoleLinkage error");
@@ -1243,9 +1252,9 @@ bool Clipper::ExecuteInternal(bool fixHoleLinkages)
   if (succeeded)
   {
     //tidy up output polygons and fix orientations where necessary ...
-    for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
+    for (PolyOutList::size_type i = 0; i < m_PolyOuts->size(); ++i)
     {
-      OutRec *outRec = m_PolyOuts[i];
+      OutRec *outRec = m_PolyOuts->at(i);
       if (!outRec->pts) continue;
       FixupOutPolygon(*outRec);
       if (!outRec->pts) continue;
@@ -1257,7 +1266,7 @@ bool Clipper::ExecuteInternal(bool fixHoleLinkages)
 
     JoinCommonEdges(fixHoleLinkages);
     if (fixHoleLinkages)
-      std::sort(m_PolyOuts.begin(), m_PolyOuts.end(), PolySort);
+      std::sort(m_PolyOuts->begin(), m_PolyOuts->end(), PolySort);
   }
 
   ClearJoins();
@@ -1304,18 +1313,18 @@ long64 Clipper::PopScanbeam()
 //------------------------------------------------------------------------------
 
 void Clipper::DisposeAllPolyPts(){
-  for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
+  for (PolyOutList::size_type i = 0; i < m_PolyOuts->size(); ++i)
     DisposeOutRec(i);
-  m_PolyOuts.clear();
+  m_PolyOuts->clear();
 }
 //------------------------------------------------------------------------------
 
 void Clipper::DisposeOutRec(PolyOutList::size_type index, bool ignorePts)
 {
-  OutRec *outRec = m_PolyOuts[index];
+  OutRec *outRec = m_PolyOuts->at(index);
   if (!ignorePts && outRec->pts) DisposeOutPts(outRec->pts);
   delete outRec;
-  m_PolyOuts[index] = 0;
+  m_PolyOuts->at(index) = 0;
 }
 //------------------------------------------------------------------------------
 
@@ -1554,15 +1563,15 @@ void Clipper::AddJoin(TEdge *e1, TEdge *e2, int e1OutIdx, int e2OutIdx)
     jr->poly2Idx = e2->outIdx;
   jr->pt2a = IntPoint(e2->xcurr, e2->ycurr);
   jr->pt2b = IntPoint(e2->xtop, e2->ytop);
-  m_Joins.push_back(jr);
+  m_Joins->push_back(jr);
 }
 //------------------------------------------------------------------------------
 
 void Clipper::ClearJoins()
 {
-  for (JoinList::size_type i = 0; i < m_Joins.size(); i++)
-    delete m_Joins[i];
-  m_Joins.resize(0);
+  for (JoinList::size_type i = 0; i < m_Joins->size(); i++)
+    delete m_Joins->at(i);
+  m_Joins->resize(0);
 }
 //------------------------------------------------------------------------------
 
@@ -1571,15 +1580,15 @@ void Clipper::AddHorzJoin(TEdge *e, int idx)
   HorzJoinRec* hj = new HorzJoinRec;
   hj->edge = e;
   hj->savedIdx = idx;
-  m_HorizJoins.push_back(hj);
+  m_HorizJoins->push_back(hj);
 }
 //------------------------------------------------------------------------------
 
 void Clipper::ClearHorzJoins()
 {
-  for (HorzJoinList::size_type i = 0; i < m_HorizJoins.size(); i++)
-    delete m_HorizJoins[i];
-  m_HorizJoins.resize(0);
+  for (HorzJoinList::size_type i = 0; i < m_HorizJoins->size(); i++)
+    delete m_HorizJoins->at(i);
+  m_HorizJoins->resize(0);
 }
 //------------------------------------------------------------------------------
 
@@ -1630,10 +1639,10 @@ void Clipper::InsertLocalMinimaIntoAEL( const long64 botY)
     {
       if (NEAR_EQUAL(rb->dx, HORIZONTAL))
       {
-        for (HorzJoinList::size_type i = 0; i < m_HorizJoins.size(); ++i)
+        for (HorzJoinList::size_type i = 0; i < m_HorizJoins->size(); ++i)
         {
           IntPoint pt, pt2; //returned by GetOverlapSegment() but unused here.
-          HorzJoinRec* hj = m_HorizJoins[i];
+          HorzJoinRec* hj = m_HorizJoins->at(i);
           //if horizontals rb and hj.edge overlap, flag for joining later ...
           if (GetOverlapSegment(IntPoint(hj->edge->xbot, hj->edge->ybot),
             IntPoint(hj->edge->xtop, hj->edge->ytop),
@@ -1853,7 +1862,7 @@ void Clipper::SetHoleState(TEdge *e, OutRec *outRec)
     {
       isHole = !isHole;
       if (! outRec->FirstLeft)
-        outRec->FirstLeft = m_PolyOuts[e2->outIdx];
+        outRec->FirstLeft = m_PolyOuts->at(e2->outIdx);
     }
     e2 = e2->prevInAEL;
   }
@@ -1902,8 +1911,8 @@ OutRec* GetLowermostRec(OutRec *outRec1, OutRec *outRec2)
 void Clipper::AppendPolygon(TEdge *e1, TEdge *e2)
 {
   //get the start and ends of both output polygons ...
-  OutRec *outRec1 = m_PolyOuts[e1->outIdx];
-  OutRec *outRec2 = m_PolyOuts[e2->outIdx];
+  OutRec *outRec1 = m_PolyOuts->at(e1->outIdx);
+  OutRec *outRec2 = m_PolyOuts->at(e2->outIdx);
   OutRec *holeStateRec = GetLowermostRec(outRec1, outRec2);
 
   //fixup hole status ...
@@ -1992,16 +2001,16 @@ void Clipper::AppendPolygon(TEdge *e1, TEdge *e2)
     e = e->nextInAEL;
   }
 
-  for (JoinList::size_type i = 0; i < m_Joins.size(); ++i)
+  for (JoinList::size_type i = 0; i < m_Joins->size(); ++i)
   {
-      if (m_Joins[i]->poly1Idx == ObsoleteIdx) m_Joins[i]->poly1Idx = OKIdx;
-      if (m_Joins[i]->poly2Idx == ObsoleteIdx) m_Joins[i]->poly2Idx = OKIdx;
+      if (m_Joins->at(i)->poly1Idx == ObsoleteIdx) m_Joins->at(i)->poly1Idx = OKIdx;
+      if (m_Joins->at(i)->poly2Idx == ObsoleteIdx) m_Joins->at(i)->poly2Idx = OKIdx;
   }
 
-  for (HorzJoinList::size_type i = 0; i < m_HorizJoins.size(); ++i)
+  for (HorzJoinList::size_type i = 0; i < m_HorizJoins->size(); ++i)
   {
-      if (m_HorizJoins[i]->savedIdx == ObsoleteIdx)
-        m_HorizJoins[i]->savedIdx = OKIdx;
+      if (m_HorizJoins->at(i)->savedIdx == ObsoleteIdx)
+        m_HorizJoins->at(i)->savedIdx = OKIdx;
   }
 
 }
@@ -2025,8 +2034,8 @@ void Clipper::AddOutPt(TEdge *e, TEdge *altE, const IntPoint &pt)
   if(  e->outIdx < 0 )
   {
     OutRec *outRec = CreateOutRec();
-    m_PolyOuts.push_back(outRec);
-    outRec->idx = (int)m_PolyOuts.size()-1;
+    m_PolyOuts->push_back(outRec);
+    outRec->idx = (int)m_PolyOuts->size()-1;
     e->outIdx = outRec->idx;
     OutPt* op = new OutPt;
     outRec->pts = op;
@@ -2040,7 +2049,7 @@ void Clipper::AddOutPt(TEdge *e, TEdge *altE, const IntPoint &pt)
     SetHoleState(e, outRec);
   } else
   {
-    OutRec *outRec = m_PolyOuts[e->outIdx];
+    OutRec *outRec = m_PolyOuts->at(e->outIdx);
     OutPt* op = outRec->pts;
     if ((ToFront && PointsEqual(pt, op->pt)) ||
       (!ToFront && PointsEqual(pt, op->prev->pt))) return;
@@ -2527,10 +2536,10 @@ void Clipper::ProcessEdgesAtTopOfScanbeam(const long64 topY)
         {
           AddOutPt(e, 0, IntPoint(e->xtop, e->ytop));
 
-          for (HorzJoinList::size_type i = 0; i < m_HorizJoins.size(); ++i)
+          for (HorzJoinList::size_type i = 0; i < m_HorizJoins->size(); ++i)
           {
             IntPoint pt, pt2;
-            HorzJoinRec* hj = m_HorizJoins[i];
+            HorzJoinRec* hj = m_HorizJoins->at(i);
             if (GetOverlapSegment(IntPoint(hj->edge->xbot, hj->edge->ybot),
               IntPoint(hj->edge->xtop, hj->edge->ytop),
               IntPoint(e->nextInLML->xbot, e->nextInLML->ybot),
@@ -2640,19 +2649,19 @@ void Clipper::FixupOutPolygon(OutRec &outRec)
 void Clipper::BuildResult(Polygons &polys)
 {
   int k = 0;
-  polys.resize(m_PolyOuts.size());
-  for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
+  polys.resize(m_PolyOuts->size());
+  for (PolyOutList::size_type i = 0; i < m_PolyOuts->size(); ++i)
   {
-    if (m_PolyOuts[i]->pts)
+    if (m_PolyOuts->at(i)->pts)
     {
       Polygon* pg = &polys[k];
       pg->clear();
-      OutPt* p = m_PolyOuts[i]->pts;
+      OutPt* p = m_PolyOuts->at(i)->pts;
       do
       {
         pg->push_back(p->pt);
         p = p->next;
-      } while (p != m_PolyOuts[i]->pts);
+      } while (p != m_PolyOuts->at(i)->pts);
       //make sure each polygon has at least 3 vertices ...
       if (pg->size() < 3) pg->clear(); else k++;
     }
@@ -2666,27 +2675,27 @@ void Clipper::BuildResultEx(ExPolygons &polys)
   PolyOutList::size_type i = 0;
   int k = 0;
   polys.resize(0);
-  polys.reserve(m_PolyOuts.size());
-  while (i < m_PolyOuts.size() && m_PolyOuts[i]->pts)
+  polys.reserve(m_PolyOuts->size());
+  while (i < m_PolyOuts->size() && m_PolyOuts->at(i)->pts)
   {
     ExPolygon epg;
-    OutPt* p = m_PolyOuts[i]->pts;
+    OutPt* p = m_PolyOuts->at(i)->pts;
     do {
       epg.outer.push_back(p->pt);
       p = p->next;
-    } while (p != m_PolyOuts[i]->pts);
+    } while (p != m_PolyOuts->at(i)->pts);
     i++;
     //make sure polygons have at least 3 vertices ...
     if (epg.outer.size() < 3) continue;
-    while (i < m_PolyOuts.size()
-      && m_PolyOuts[i]->pts && m_PolyOuts[i]->isHole)
+    while (i < m_PolyOuts->size()
+      && m_PolyOuts->at(i)->pts && m_PolyOuts->at(i)->isHole)
     {
       Polygon pg;
-      p = m_PolyOuts[i]->pts;
+      p = m_PolyOuts->at(i)->pts;
       do {
         pg.push_back(p->pt);
         p = p->next;
-      } while (p != m_PolyOuts[i]->pts);
+      } while (p != m_PolyOuts->at(i)->pts);
       epg.holes.push_back(pg);
       i++;
     }
@@ -2818,9 +2827,9 @@ void Clipper::CheckHoleLinkages1(OutRec *outRec1, OutRec *outRec2)
 {
   //when a polygon is split into 2 polygons, make sure any holes the original
   //polygon contained link to the correct polygon ...
-  for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
+  for (PolyOutList::size_type i = 0; i < m_PolyOuts->size(); ++i)
   {
-    OutRec *orec = m_PolyOuts[i];
+    OutRec *orec = m_PolyOuts->at(i);
     if (orec->isHole && orec->bottomPt && orec->FirstLeft == outRec1 &&
       !PointInPolygon(orec->bottomPt->pt, outRec1->pts, m_UseFullRange))
         orec->FirstLeft = outRec2;
@@ -2831,21 +2840,21 @@ void Clipper::CheckHoleLinkages1(OutRec *outRec1, OutRec *outRec2)
 void Clipper::CheckHoleLinkages2(OutRec *outRec1, OutRec *outRec2)
 {
   //if a hole is owned by outRec2 then make it owned by outRec1 ...
-  for (PolyOutList::size_type i = 0; i < m_PolyOuts.size(); ++i)
-    if (m_PolyOuts[i]->isHole && m_PolyOuts[i]->bottomPt &&
-      m_PolyOuts[i]->FirstLeft == outRec2)
-        m_PolyOuts[i]->FirstLeft = outRec1;
+  for (PolyOutList::size_type i = 0; i < m_PolyOuts->size(); ++i)
+    if (m_PolyOuts->at(i)->isHole && m_PolyOuts->at(i)->bottomPt &&
+      m_PolyOuts->at(i)->FirstLeft == outRec2)
+        m_PolyOuts->at(i)->FirstLeft = outRec1;
 }
 //----------------------------------------------------------------------
 
 void Clipper::JoinCommonEdges(bool fixHoleLinkages)
 {
-  for (JoinList::size_type i = 0; i < m_Joins.size(); i++)
+  for (JoinList::size_type i = 0; i < m_Joins->size(); i++)
   {
-    JoinRec* j = m_Joins[i];
-    OutRec *outRec1 = m_PolyOuts[j->poly1Idx];
+    JoinRec* j = m_Joins->at(i);
+    OutRec *outRec1 = m_PolyOuts->at(j->poly1Idx);
     OutPt *pp1a = outRec1->pts;
-    OutRec *outRec2 = m_PolyOuts[j->poly2Idx];
+    OutRec *outRec2 = m_PolyOuts->at(j->poly2Idx);
     OutPt *pp2a = outRec2->pts;
     IntPoint pt1 = j->pt2a, pt2 = j->pt2b;
     IntPoint pt3 = j->pt1a, pt4 = j->pt1b;
@@ -2916,8 +2925,8 @@ void Clipper::JoinCommonEdges(bool fixHoleLinkages)
       outRec1->bottomPt = outRec1->pts;
       outRec1->bottomPt->idx = outRec1->idx;
       outRec2 = CreateOutRec();
-      m_PolyOuts.push_back(outRec2);
-      outRec2->idx = (int)m_PolyOuts.size()-1;
+      m_PolyOuts->push_back(outRec2);
+      outRec2->idx = (int)m_PolyOuts->size()-1;
       j->poly2Idx = outRec2->idx;
       outRec2->pts = PolygonBottom(p2);
       outRec2->bottomPt = outRec2->pts;
@@ -2946,9 +2955,9 @@ void Clipper::JoinCommonEdges(bool fixHoleLinkages)
       }
 
       //now fixup any subsequent joins that match this polygon
-      for (JoinList::size_type k = i+1; k < m_Joins.size(); k++)
+      for (JoinList::size_type k = i+1; k < m_Joins->size(); k++)
       {
-        JoinRec* j2 = m_Joins[k];
+        JoinRec* j2 = m_Joins->at(k);
         if (j2->poly1Idx == j->poly1Idx && PointIsVertex(j2->pt1a, p2))
           j2->poly1Idx = j->poly2Idx;
         if (j2->poly2Idx == j->poly1Idx && PointIsVertex(j2->pt2a, p2))
@@ -2975,9 +2984,9 @@ void Clipper::JoinCommonEdges(bool fixHoleLinkages)
       if (outRec1->isHole && !outRec2->isHole) outRec1->isHole = false;
 
       //now fixup any subsequent Joins that match this polygon
-      for (JoinList::size_type k = i+1; k < m_Joins.size(); k++)
+      for (JoinList::size_type k = i+1; k < m_Joins->size(); k++)
       {
-        JoinRec* j2 = m_Joins[k];
+        JoinRec* j2 = m_Joins->at(k);
         if (j2->poly1Idx == ObsoleteIdx) j2->poly1Idx = OKIdx;
         if (j2->poly2Idx == ObsoleteIdx) j2->poly2Idx = OKIdx;
       }

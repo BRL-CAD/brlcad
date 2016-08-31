@@ -1,7 +1,7 @@
 /*                        S K E T C H . C
  * BRL-CAD
  *
- * Copyright (c) 2000-2014 United States Government as represented by
+ * Copyright (c) 2000-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -74,14 +74,16 @@ main(int argc, char **argv)
     /* bezier */
     int ctrl_points[5] = {0, 0, 0, 0, 0};
 
-    bu_log("Usage: %s\n",argv[0]);
-    if (argc > 1) {
-	if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
-	    bu_exit(1, NULL);
-	bu_log("Warning - ignored unsupported argument \"%s\"\n",argv[1]);
-    } else
-	bu_log("       Program continues running:\n");
+    if (argc > 1)
+	bu_exit(0, "Usage: %s\n", argv[0]);
 
+    if (argc > 1) {
+	if ( BU_STR_EQUAL(argv[1], "-h") || BU_STR_EQUAL(argv[1], "-?"))
+	    bu_exit(1, NULL);
+	bu_log("Warning - ignored unsupported argument \"%s\"\n", argv[1]);
+    }
+
+    bu_log("Writing out geometry to file [sketch.g] ...");
 
     VSET(V, 10, 20, 30);
     VSET(u_vec, 1, 0, 0);
@@ -141,6 +143,8 @@ main(int argc, char **argv)
 
     /* cleanup */
     wdb_close(outfp);
+
+    bu_log(" done.\n");
 
     return 0;
 }

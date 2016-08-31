@@ -1,7 +1,7 @@
 /*                          T U B E . C
  * BRL-CAD
  *
- * Copyright (c) 1986-2014 United States Government as represented by
+ * Copyright (c) 1986-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -132,8 +132,6 @@ main(int argc, char **argv)
 	    if ( BU_STR_EQUAL(argv[1],"-h") || BU_STR_EQUAL(argv[1],"-?"))
 		bu_exit(1,NULL);
     	}
-	else if (argc == 1)
-	    bu_log("       Program continues running:\n");
     }
 
     BU_LIST_INIT(&head.l);

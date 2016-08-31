@@ -1,7 +1,7 @@
 /*                         G L O B . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,16 +28,23 @@
 #include <stdlib.h>
 #include <ctype.h>
 #include <string.h>
+#include "bio.h"
 
 #include "bu/path.h"
-#include "./ged_private.h"
+#include "bu/vls.h"
+#include "raytrace.h"
+#include "ged.h"
 
+/* These are general globbing flags. */
+#define _GED_GLOB_HIDDEN       0x1    /**< @brief include hidden objects in results */
+#define _GED_GLOB_NON_GEOM     0x2    /**< @brief include non-geometry objects in results */
+#define _GED_GLOB_SKIP_FIRST   0x4    /**< @brief do not expand the first item */
 
 /**
  * unescapes various special characters
  */
-static void
-debackslash(struct bu_vls *dest, struct bu_vls *src)
+HIDDEN void
+_debackslash(struct bu_vls *dest, struct bu_vls *src)
 {
     char *ptr;
 
@@ -51,12 +58,11 @@ debackslash(struct bu_vls *dest, struct bu_vls *src)
     }
 }
 
-
 /**
  * escapes various special characters
  */
-static void
-backslash(struct bu_vls *dest, struct bu_vls *src)
+HIDDEN void
+_backslash_specials(struct bu_vls *dest, struct bu_vls *src)
 {
     int backslashed;
     char *ptr, buf[2];
@@ -64,42 +70,155 @@ backslash(struct bu_vls *dest, struct bu_vls *src)
     buf[1] = '\0';
     backslashed = 0;
     for (ptr = bu_vls_addr(src); *ptr; ptr++) {
-	if (*ptr == '[' && !backslashed)
-	    bu_vls_strcat(dest, "\\[");
-	else if (*ptr == ']' && !backslashed)
-	    bu_vls_strcat(dest, "\\]");
-	else if (backslashed) {
-	    bu_vls_strcat(dest, "\\");
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	    backslashed = 0;
-	} else if (*ptr == '\\')
-	    backslashed = 1;
-	else {
-	    buf[0] = *ptr;
-	    bu_vls_strcat(dest, buf);
-	}
+        if (*ptr == '[' && !backslashed)
+            bu_vls_strcat(dest, "\\[");
+        else if (*ptr == ']' && !backslashed)
+            bu_vls_strcat(dest, "\\]");
+        else if (backslashed) {
+            bu_vls_strcat(dest, "\\");
+            buf[0] = *ptr;
+            bu_vls_strcat(dest, buf);
+            backslashed = 0;
+        } else if (*ptr == '\\')
+            backslashed = 1;
+        else {
+            buf[0] = *ptr;
+            bu_vls_strcat(dest, buf);
+        }
     }
 }
 
+HIDDEN int
+_ged_expand_str_glob(struct bu_vls *dest, const char *input, struct db_i *dbip, int flags)
+{
+    char *start, *end;          /* Start and ends of words */
+    int is_fnmatch;                 /* Set to TRUE when word is a is_fnmatch */
+    int backslashed;
+    int match_cnt = 0;
+    int firstword = 1;
+    int skip_first = (flags & _GED_GLOB_SKIP_FIRST) ? 1 : 0;
+    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
+    struct bu_vls temp = BU_VLS_INIT_ZERO;
+    char *src = NULL;
+
+    if (dbip == DBI_NULL) {
+        bu_vls_sprintf(dest, "%s", input);
+        return 0;
+    }
+
+    src = bu_strdup(input);
+
+    start = end = src;
+    while (*end != '\0') {
+        /* Run through entire string */
+
+        /* First, pass along leading whitespace. */
+
+        start = end;                   /* Begin where last word ended */
+        while (*start != '\0') {
+            if (*start == ' '  ||
+                    *start == '\t' ||
+                    *start == '\n')
+                bu_vls_putc(dest, *start++);
+            else
+                break;
+        }
+        if (*start == '\0')
+            break;
+        /* Next, advance "end" pointer to the end of the word, while
+         * adding each character to the "word" vls.  Also make a note
+         * of any unbackslashed wildcard characters.
+         */
+
+        end = start;
+        bu_vls_trunc(&word, 0);
+        is_fnmatch = 0;
+        backslashed = 0;
+        while (*end != '\0') {
+            if (*end == ' '  ||
+                    *end == '\t' ||
+                    *end == '\n')
+                break;
+            if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
+                is_fnmatch = 1;
+            if (*end == '\\' && !backslashed)
+                backslashed = 1;
+            else
+                backslashed = 0;
+            bu_vls_putc(&word, *end++);
+        }
+
+        /* If the client told us not to do expansion on the first word
+         * in the stream, disable matching */
+        if (firstword && skip_first) {
+            is_fnmatch = 0;
+        }
+
+        /* Now, if the word was suspected of being a wildcard, try to
+         * match it to the database.
+         */
+        /* Now, if the word was suspected of being a wildcard, try to
+         * match it to the database.
+         */
+        if (is_fnmatch) {
+            register int i, num;
+            register struct directory *dp;
+            bu_vls_trunc(&temp, 0);
+            for (i = num = 0; i < RT_DBNHASH; i++) {
+                for (dp = dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
+                    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0) continue;
+                    if (!(flags & _GED_GLOB_HIDDEN) && (dp->d_flags & RT_DIR_HIDDEN)) continue;
+                    if (!(flags & _GED_GLOB_NON_GEOM) && (dp->d_flags & RT_DIR_NON_GEOM)) continue;
+                    if (num == 0)
+                        bu_vls_strcat(&temp, dp->d_namep);
+                    else {
+                        bu_vls_strcat(&temp, " ");
+                        bu_vls_strcat(&temp, dp->d_namep);
+                    }
+                    match_cnt++;
+                    ++num;
+                }
+            }
+
+            if (num == 0) {
+                _debackslash(&temp, &word);
+                _backslash_specials(dest, &temp);
+            } else
+                bu_vls_vlscat(dest, &temp);
+        } else {
+            _debackslash(dest, &word);
+        }
+
+        firstword = 0;
+    }
+
+    bu_vls_free(&temp);
+    bu_vls_free(&word);
+    bu_free(src, "free input cpy");
+    return match_cnt;
+}
 
 int
 ged_glob(struct ged *gedp, int argc, const char *argv[])
 {
-    char *start, *end;          /* Start and ends of words */
-    int regexp;                 /* Set to TRUE when word is a regexp */
-    int backslashed;
-    struct bu_vls word = BU_VLS_INIT_ZERO;         /* Current word being processed */
-    struct bu_vls temp = BU_VLS_INIT_ZERO;
-    struct bu_vls src = BU_VLS_INIT_ZERO;
     static const char *usage = "expression";
+    int flags = 0;
+    flags |= _GED_GLOB_HIDDEN;
+    flags |= _GED_GLOB_NON_GEOM;
+    flags |= _GED_GLOB_SKIP_FIRST;
 
     /* Silently return */
     if (gedp == GED_NULL)
 	return GED_ERROR;
 
-    /* initialize result */
+    /* Initialize result. This behavior is depended upon by mged - apparently
+     * the interpretation is that if no database is open, all expressions match
+     * nothing and the empty string is returned. */
     bu_vls_trunc(gedp->ged_result_str, 0);
+
+    /* No database to match against, so return. */
+    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
+	return GED_OK;
 
     /* must be wanting help */
     if (argc == 1) {
@@ -112,86 +231,9 @@ ged_glob(struct ged *gedp, int argc, const char *argv[])
 	return GED_ERROR;
     }
 
-    bu_vls_strcat(&src, argv[1]);
 
-    start = end = bu_vls_addr(&src);
-    while (*end != '\0') {
-	/* Run through entire string */
+    (void)_ged_expand_str_glob(gedp->ged_result_str, argv[1], gedp->ged_wdbp->dbip, flags);
 
-	/* First, pass along leading whitespace. */
-
-	start = end;                   /* Begin where last word ended */
-	while (*start != '\0') {
-	    if (*start == ' '  ||
-		*start == '\t' ||
-		*start == '\n')
-		bu_vls_putc(gedp->ged_result_str, *start++);
-	    else
-		break;
-	}
-	if (*start == '\0')
-	    break;
-
-	/* Next, advance "end" pointer to the end of the word, while adding
-	   each character to the "word" vls.  Also make a note of any
-	   unbackslashed wildcard characters. */
-
-	end = start;
-	bu_vls_trunc(&word, 0);
-	regexp = 0;
-	backslashed = 0;
-	while (*end != '\0') {
-	    if (*end == ' '  ||
-		*end == '\t' ||
-		*end == '\n')
-		break;
-	    if ((*end == '*' || *end == '?' || *end == '[') && !backslashed)
-		regexp = 1;
-	    if (*end == '\\' && !backslashed)
-		backslashed = 1;
-	    else
-		backslashed = 0;
-	    bu_vls_putc(&word, *end++);
-	}
-
-	/* Now, if the word was suspected of being a wildcard, try to match
-	   it to the database. */
-
-	if (regexp) {
-	    register int i, num;
-	    register struct directory *dp;
-	    /* No database to match against, so return. */
-	    if (gedp->ged_wdbp == RT_WDB_NULL || gedp->ged_wdbp->dbip == DBI_NULL)
-		return GED_OK;
-
-	    bu_vls_trunc(&temp, 0);
-	    for (i = num = 0; i < RT_DBNHASH; i++) {
-		for (dp = gedp->ged_wdbp->dbip->dbi_Head[i]; dp != RT_DIR_NULL; dp = dp->d_forw) {
-		    if (bu_fnmatch(bu_vls_addr(&word), dp->d_namep, 0) != 0)
-			continue;
-		    if (num == 0)
-			bu_vls_strcat(&temp, dp->d_namep);
-		    else {
-			bu_vls_strcat(&temp, " ");
-			bu_vls_strcat(&temp, dp->d_namep);
-		    }
-		    ++num;
-		}
-	    }
-
-	    if (num == 0) {
-		debackslash(&temp, &word);
-		backslash(gedp->ged_result_str, &temp);
-	    } else
-		bu_vls_vlscat(gedp->ged_result_str, &temp);
-	} else {
-	    debackslash(gedp->ged_result_str, &word);
-	}
-    }
-
-    bu_vls_free(&temp);
-    bu_vls_free(&word);
-    bu_vls_free(&src);
 
     return GED_OK;
 }

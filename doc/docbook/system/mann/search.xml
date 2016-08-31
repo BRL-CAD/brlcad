@@ -1,0 +1,962 @@
+<refentry xmlns="http://docbook.org/ns/docbook" version="5.0" xml:id="search1">
+
+  <refmeta>
+    <refentrytitle>SEARCH</refentrytitle>
+    <manvolnum>nged</manvolnum>
+    <refmiscinfo class="source">BRL-CAD</refmiscinfo>
+    <refmiscinfo class="manual">BRL-CAD User Commands</refmiscinfo>
+  </refmeta>
+
+  <refnamediv xml:id="name">
+    <refname>search</refname>
+    <refpurpose>
+      find and list objects in a BRL-CAD database
+    </refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv xml:id="synopsis">
+    <cmdsynopsis sepchar=" ">
+      <command>search</command>
+      <arg choice="opt" rep="repeat"><replaceable>options</replaceable></arg>
+      <arg choice="opt" rep="norepeat"><replaceable>path1</replaceable></arg>
+      <arg choice="opt" rep="repeat"><replaceable>path2</replaceable></arg>
+      <arg choice="opt" rep="repeat"><replaceable>search plan</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsection xml:id="description"><title>DESCRIPTION</title>
+
+    <para>
+      <command>search</command> works in a fashion similar to Unix-style
+      find commands (internally it is based on OpenBSD's and NetBSD's find
+      code) but searches <emphasis remap="I">objects</emphasis> in the
+      current open database in MGED rather than files in a file system.
+      One or more search paths are specified for searching, and a search
+      plan specifies filters through which objects in the search paths are
+      tested.  The names of objects satisfying all of the filters are
+      returned as the command output.
+    </para>
+
+    <para>
+      Search Inputs are specified using
+      <link linkend="primitives">PATHS</link> and
+      matching of objects is done according to boolean
+      expressions formed using the
+      <link linkend="primitives">PRIMITIVES</link> and
+      <link linkend="operators">OPERATORS</link>
+      described below.
+
+    </para>
+  </refsection>
+
+  <refsection xml:id="search_options"><title>OPTIONS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-a</emphasis></term>
+	<listitem>
+	  <para>
+	    Overrides the hidden flag when assembling path lists, if a generic toplevel path has been specified.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-Q</emphasis></term>
+	<listitem>
+	  <para>
+	    Exit quietly without printing error messages if the search plan contains errors.  Primarily
+	    used in situations where programs automatically generate search invocations.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-v</emphasis></term>
+	<listitem>
+	  <para>
+	    Prints extra information in full path results.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="paths"><title>PATHS:</title>
+    <para>
+      By default, only the "top level" objects in any search are used as starting
+      points in the search.  The default mode if no path is explicitly specified returns a list of all objects
+      found matching the criteria using the top level objects as inputs.  Specifying paths is done as follows:
+    </para>
+
+    <para>
+
+      <table><title>Path Specifiers</title>
+
+	<tgroup cols="2">
+	  <thead>
+	    <row>
+	      <entry>Form</entry>
+	      <entry>Results</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+	    <row>
+	      <entry align="center" valign='middle'>/</entry>
+	      <entry>Search using top level objects in database as starting points, return list of matching full paths.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>.</entry>
+	      <entry>Search using top level objects in database as starting points, return list of all matching objects.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>|</entry>
+	      <entry>Iterate over all objects in the database without doing a tree walk, return list of all matching objects.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>|/</entry>
+	      <entry>Search using every object in the database as a starting point, return list of matching full paths.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>|.</entry>
+	      <entry>Search using every object in the database as a starting point, return list of all matching objects.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>/objname</entry>
+	      <entry>Use object <emphasis>objname</emphasis> as the starting point, return list of matching full paths.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>objname</entry>
+	      <entry>Use object <emphasis>objname</emphasis> as the starting point, return list of all matching objects.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>|/objname</entry>
+	      <entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of matching full paths.</entry>
+	    </row>
+	    <row>
+	      <entry align="center" valign='middle'>|objname</entry>
+	      <entry>Use every object below <emphasis>objname</emphasis> as starting points, return list of all matching objects.</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
+
+      One search command may use multiple paths, each of which can specify its own mode - such
+      a "mixed mode" search will return a list of full paths and objects in the order
+      paths were supplied to search.
+    </para>
+    <para>
+      The "flat" searches that are specified by using '|' as a modifier to other paths will use every object in the database as starting points for full tree walks and consequently will be significantly more expensive for complex tree hierarchies.  The "truly flat" iterative search triggered by the the stand-alone '|' path specifier will be faster, but because it does not walk the tree hierarchy depth-related options (-above, -below, -depth, etc.) will not function.
+    </para>
+
+  </refsection>
+
+  <refsection xml:id="primitives"><title>PRIMITIVES:</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-attr</emphasis> <emphasis remap="I">attrib[&gt;/&lt;/=val]</emphasis></term>
+	<listitem>
+	  <para>
+	    Returns TRUE if the object has attribute
+	    <emphasis remap="I">attrib</emphasis>. If a specific value is
+	    also supplied for the attribute with an equal condition, TRUE is returned if
+	    the object both has the attribute and the attribute is set to value
+	    <emphasis remap="I">val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
+	    there are two possibilities - if <emphasis remap="I">val</emphasis> is numerical
+	    a numerical comparison is performed, otherwise a string comparison is performed.
+	    Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis>
+	    are treated as patterns under shell pattern matching rules when a string comparison
+	    is performed, but in numerical mode only the attribute name is pattern matched.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-bool</emphasis> <emphasis remap="I">u/+/-</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object in question is being combined into the local hierarchy with the
+	    specified boolean operation.  Recognized types are Union (u), Intersection (+), and
+	    Subtraction (-).
+	  </para>
+	  <para>
+	    Note that by convention, top level objects are implicitly "unioned" into the database. To
+	    see only objects that have been unioned into a comb tree without returning the top level
+	    comb object as well, use the <option>-mindepth</option> option to filter for returns deeper in the tree.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-depth</emphasis> <emphasis remap="I">[&gt;/&lt;/=]depth</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the depth of the object in the tree is within the range specified.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-iname</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    Like <emphasis remap="B" role="bold">name</emphasis> except the match is
+	    case insensitive.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-iregex</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    Like <emphasis remap="B" role="bold">regex</emphasis>
+	    except the match is case insensitive.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-maxdepth</emphasis> <emphasis remap="I">n</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the depth of the object in the tree is less than
+	    or equal to <emphasis remap="I">n</emphasis>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-mindepth</emphasis> <emphasis remap="I">n</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the depth of the object in the tree is greater than
+	    or equal to <emphasis remap="I">n</emphasis>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-name</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object name (not the full path, just the name) matches
+	    <emphasis remap="I">pattern</emphasis>. The evaluation is done according
+	    to shell pattern matching rules.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-nnodes</emphasis> <emphasis remap="I">n</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object is a combination and has <emphasis remap="I">n</emphasis> nodes.  This
+	    option also supports supplying &lt;, &gt;, &lt;=, and &gt;= in front of the number to support
+	    returning true for objects with node counts less than, greater than, less than or equal to,
+	    and greater than or equal to <emphasis remap="I">n</emphasis>.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-param</emphasis> <emphasis remap="I">param[&gt;/&lt;/=val]</emphasis></term>
+	<listitem>
+	  <para>
+	    Returns TRUE if the object has parameter <emphasis remap="I">param</emphasis>.  Unlike <option>-attr</option>,
+	    which looks only at general attributes stored as metadata on objects, the <option>-param</option>
+	    filters based only on the internal geometric object's characteristics. If a specific value is
+	    also supplied for the parameter with an equal condition, TRUE is returned if
+	    the object both has the parameter and the parameter is set to value
+	    <emphasis remap="I">val.</emphasis>  In the case of &gt;, &lt;, &gt;=, and &lt;=
+	    there are two possibilities - if <emphasis remap="I">val</emphasis> is numerical
+	    a numerical comparison is performed, otherwise a string comparison is performed.
+	    Both <emphasis remap="I">attrib</emphasis> and <emphasis remap="I">val</emphasis>
+	    are treated as patterns under shell pattern matching rules when a string comparison
+	    is performed, but in numerical mode only the parameter name is pattern matched.
+	  </para>
+	  <para>
+	    The following table outlines what parameters are visible to the <option>-param</option> option.  Because
+	    BRL-CAD uses the same internal containers for some types, some parameters will be present even when
+	    they do not make sense for the specific subtype.  Examples include using arb8's container for arb4
+	    and tgc for rcc.  Note:  there are also a number of primitives whose parameters are not exposed in a way that
+	    that <option>-param</option> can access them: arbn, ars, brep, bspline, dsp, metaball, nmg, pipe,
+	    pnts, and poly.
+
+	    <table><title>Primitive Parameters</title>
+
+	      <tgroup cols="2">
+		<thead>
+		  <row>
+		    <entry>Primitive</entry>
+		    <entry>Available Parameters</entry>
+		  </row>
+		</thead>
+		<tbody>
+		  <row>
+		    <entry>arb8 (arb4, arb5, arb6, arb7)</entry>
+		    <entry>V1, V2, V3, V4, V5, V6, V7, V8</entry>
+		  </row>
+		  <row>
+		    <entry>bot</entry>
+		    <entry>mode, orient, V, F, T</entry>
+		  </row>
+		  <row>
+		    <entry>cline</entry>
+		    <entry>V, H, R, T</entry>
+		  </row>
+		  <row>
+		    <entry>ebm</entry>
+		    <entry>F, W, N, H, M</entry>
+		  </row>
+		  <row>
+		    <entry>ehy</entry>
+		    <entry>V, H, A, r_1, r_2, c</entry>
+		  </row>
+		  <row>
+		    <entry>ell (sph)</entry>
+		    <entry>V, A, B, C</entry>
+		  </row>
+		  <row>
+		    <entry>epa</entry>
+		    <entry>V, H, A, r_1, r_2</entry>
+		  </row>
+		  <row>
+		    <entry>eto</entry>
+		    <entry>V, N, C, r, r_d</entry>
+		  </row>
+		  <row>
+		    <entry>extrude</entry>
+		    <entry>V, H, A, B, S, K</entry>
+		  </row>
+		  <row>
+		    <entry>grip</entry>
+		    <entry>V, N, L</entry>
+		  </row>
+		  <row>
+		    <entry>half</entry>
+		    <entry>N, d</entry>
+		  </row>
+		  <row>
+		    <entry>hf</entry>
+		    <entry>cfile, dfile, fmt, w, n, shorts, file2mm, v, x, y, xlen, ylen, zscale</entry>
+		  </row>
+		  <row>
+		    <entry>hyp</entry>
+		    <entry>V, H, A, b, bnr</entry>
+		  </row>
+		  <row>
+		    <entry>part</entry>
+		    <entry>V, H, r_v, r_h</entry>
+		  </row>
+		  <row>
+		    <entry>revolve</entry>
+		    <entry>V, axis, R, ang, sk_name</entry>
+		  </row>
+		  <row>
+		    <entry>rhc</entry>
+		    <entry>V, H, B, r, c</entry>
+		  </row>
+		  <row>
+		    <entry>rpc</entry>
+		    <entry>V, H, B, r</entry>
+		  </row>
+		  <row>
+		    <entry>sketch</entry>
+		    <entry>V, A, B, VL, SL</entry>
+		  </row>
+		  <row>
+		    <entry>submodel</entry>
+		    <entry>file, treetop, meth</entry>
+		  </row>
+		  <row>
+		    <entry>tgc (rcc, rec, tec, trc)</entry>
+		    <entry>V, H, A, B, C, D</entry>
+		  </row>
+		  <row>
+		    <entry>tor</entry>
+		    <entry>V, H, r_a, r_h</entry>
+		  </row>
+		  <row>
+		    <entry>vol</entry>
+		    <entry>file, w, n, d, lo, hi, size, mat</entry>
+		  </row>
+		</tbody>
+	      </tgroup>
+	    </table>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-path</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object path matches <emphasis remap="I">pattern.</emphasis>
+	    The evaluation is done according to shell pattern matching rules.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-print</emphasis></term>
+	<listitem>
+	  <para>
+	    Evaluates to TRUE - used to print out the path and name of the object.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-regex</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    True if the object path matches <emphasis remap="I">pattern.</emphasis>
+	    Pattern evaluation is done using Regular Expression matching.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-stdattr</emphasis></term>
+	<listitem>
+	  <para>
+	    Returns TRUE if an object has ONLY standard attributes associated with it.
+	    Standard attributes in BRL-CAD are:
+	    <table><title>Standard Attributes</title>
+
+	      <tgroup cols="2">
+		<tbody>
+		  <row><entry>GIFTmater</entry><entry>inherit</entry></row>
+		  <row><entry>material_id</entry><entry>oshader</entry></row>
+		  <row><entry>region_id</entry><entry>rgb</entry></row>
+		</tbody>
+	      </tgroup>
+	    </table>
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-type</emphasis> <emphasis remap="I">pattern</emphasis></term>
+	<listitem>
+	  <para>
+	    Returns TRUE if the type of the object matches <emphasis remap="I">pattern.</emphasis>
+	    Pattern evaluation is done using shell pattern matching.  Types recognized include:
+	    <table><title>Primitives</title>
+
+	      <tgroup cols="6">
+		<tbody>
+		  <row>
+		    <entry>arb4</entry>
+		    <entry>arb5</entry>
+		    <entry>arb6</entry>
+		    <entry>arb7</entry>
+		    <entry>arb8</entry>
+		    <entry>arbn</entry>
+		  </row>
+		  <row>
+		    <entry>ars</entry>
+		    <entry>bot</entry>
+		    <entry>brep</entry>
+		    <entry>cline</entry>
+		    <entry>dsp</entry>
+		    <entry>ebm</entry>
+		  </row>
+		  <row>
+		    <entry>ehy</entry>
+		    <entry>ell</entry>
+		    <entry>epa</entry>
+		    <entry>eto</entry>
+		    <entry>extrude</entry>
+		    <entry>grip</entry>
+		  </row>
+		  <row>
+		    <entry>half</entry>
+		    <entry>hf</entry>
+		    <entry>hyp</entry>
+		    <entry>joint</entry>
+		    <entry>metaball</entry>
+		    <entry>nmg</entry>
+		  </row>
+		  <row>
+		    <entry>part</entry>
+		    <entry>pipe</entry>
+		    <entry>poly</entry>
+		    <entry>rec</entry>
+		    <entry>rhc</entry>
+		    <entry>rpc</entry>
+		  </row>
+		  <row>
+		    <entry>sketch</entry>
+		    <entry>sph</entry>
+		    <entry>spline</entry>
+		    <entry>submodel</entry>
+		    <entry>tgc</entry>
+		    <entry>tor</entry>
+		  </row>
+		  <row>
+		    <entry>vol</entry>
+		    <entry></entry>
+		    <entry></entry>
+		    <entry></entry>
+		    <entry></entry>
+		    <entry></entry>
+		  </row>
+
+		</tbody>
+	      </tgroup>
+	    </table>
+
+	    <table><title>Combinations</title>
+
+	      <tgroup cols="2">
+		<thead>
+		  <row>
+		    <entry>Type</entry>
+		    <entry>Abbreviations Recognized</entry>
+		  </row>
+		</thead>
+		<tbody>
+		  <row>
+		    <entry>combination</entry>
+		    <entry>c, comb, combination</entry>
+		  </row>
+		  <row>
+		    <entry>region</entry>
+		    <entry>r, reg, region</entry>
+		  </row>
+		</tbody>
+	      </tgroup>
+	    </table>
+	  </para>
+	  <para></para>
+	  <para>
+
+	    As a convenience, the <option>-type</option> option will also recognize
+	    the pattern <emphasis remap="B">shape</emphasis>, which will match any
+	    object that is <emphasis remap="I">not</emphasis> a combination, region,
+	    annotation, constraint, grip or joint.
+
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+
+  </refsection>
+
+  <refsection xml:id="operators"><title>OPERATORS</title>
+
+    <variablelist remap="TP">
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">(</emphasis> <emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">)</emphasis></term>
+	<listitem>
+	  <para>
+	    Evaluates to true if the expression inside the parentheses evaluates to true.
+	    Used to establish order of operations.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-below[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
+	<listitem>
+	  <para>
+	    The below operator applies the expression to every
+	    object below the matching object in the tree
+	    hierarchy.  E.g. searching with -below -name start\*
+	    on /component/region.r/start_comb.c/prim1.s would
+	    return prim1.s, as the object below start_comb.c
+	  </para>
+	  <para>
+	    Optionally, inequality and equality constraints on
+	    depth can be appended to the operator to limit what
+	    relative depths are accepted as matches.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-and</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. -a)</term>
+	<listitem>
+	  <para>
+	    The and operator operates like the logical AND operator - TRUE only if both
+	    expressions are true.  AND is the default operator assumed if two expressions
+	    are present with no operator explicitly defined.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-above[&gt;/&lt;/=val]</emphasis> <emphasis remap="I">expression</emphasis></term>
+	<listitem>
+	  <para>
+	    The above operator applies the expression to every
+	    object above the current full path to that object,
+	    and returns TRUE if one or more of them satisfies
+	    the expression.  E.g., searching with -above -name
+	    s\* on /component/region.r/start_comb.c/prim1.s
+	    would return TRUE for /component and
+	    /component/region.r as start_comb.c is below both of
+	    them, but would return FALSE for any deeper objects
+	    (i.e., prim1.s in this example).
+	  </para>
+	  <para>
+	    Optionally, inequality and equality constraints on
+	    depth can be appended to the operator to limit what
+	    relative depths are accepted as matches.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="B" role="bold">-not</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. !)</term>
+	<listitem>
+	  <para>
+	    The logical NOT operator - returns the opposite of the evaluation result of
+	    expression.
+	  </para>
+	</listitem>
+      </varlistentry>
+      <varlistentry>
+	<term><emphasis remap="I">expression</emphasis> <emphasis remap="B" role="bold">-or</emphasis> <emphasis remap="I">expression</emphasis> (a.k.a. -o)</term>
+	<listitem>
+	  <para>
+	    The logical OR operator - true if either expression is true.
+	  </para>
+	</listitem>
+      </varlistentry>
+    </variablelist>
+  </refsection>
+
+  <refsection xml:id="a_note_on_expressions"><title>A Note on Expressions</title>
+
+    <para>
+      All primaries and operands must be expressed as separate arguments to search.
+      In practice, this means that there must be a space between each element in a
+      search expression.  E.g. !(-name [a-z] -or -name [0-9]) must be written as:
+    </para>
+
+    <para>! ( -name [a-z] -or -name [0-9] )</para>
+
+    <para>
+      While this may seem like a rather verbose way of writing the expression, it greatly
+      simplifies the parsing of the expression and is standard for virtually all
+      <emphasis remap="B" role="bold">find</emphasis> type commands. Because [a-z] and [0-9] are atomic
+      arguments as far as search is concerned, they should NOT be expanded in a similar fashion.
+    </para>
+  </refsection>
+
+  <refsection xml:id="examples"><title>EXAMPLES</title>
+
+    <para>
+      The following are run from the MGED command prompt:
+    </para>
+    <example><title>Shell Globbing Based Pattern Match of Object Name</title>
+
+      <para>
+	<userinput>search -name *.s</userinput>
+      </para>
+      <para>
+	Find all objects in the database with names ending in ".s".
+      </para>
+    </example>
+
+    <example><title>Full Path Instance Reporting of Search Results</title>
+
+      <para>
+	<userinput>search / -name *.s</userinput>
+      </para>
+      <para>
+	Find all instances of objects in the database with names ending in ".s".
+      </para>
+    </example>
+
+
+    <example><title>Name Pattern Matching at Depth &gt;= 3</title>
+
+      <para>
+	<userinput>search / -name *.s -mindepth 3</userinput>
+      </para>
+      <para>
+	Find all instances of objects in the database with names ending in ".s"
+	that are 3 or more levels deep in their tree.
+      </para>
+    </example>
+
+    <example><title>Finding all Objects in a Subtree</title>
+
+      <para>
+	<userinput>search group1 -name *.r</userinput>
+      </para>
+      <para>
+	Find all objects within group1 in the database that have names ending in ".r"
+	Note that this will return a list of objects, not the full path information
+	associated with each instance of the objects matched.
+      </para>
+    </example>
+
+    <example><title>Finding all Instances of Objects in a Subtree</title>
+
+      <para>
+	<userinput>search /group1 -name *.r</userinput>
+      </para>
+      <para>
+	Find all instances of objects within group1 in the database that have names ending in ".r"
+	Note that, unlike the previous example,  this will return the full path information
+	associated with each instance of the objects matched.
+      </para>
+    </example>
+
+    <example><title>Finding all Instances of a Sub-Path</title>
+
+      <para>
+	<userinput>search / -path \*r245</userinput>
+      </para>
+      <para>
+	Find all paths which end with the object r245.  Note that all paths generated by
+	objects <emphasis>below</emphasis> r245 will not match this pattern.  To find
+	all paths with r245 in them, use the following pattern:
+      </para>
+      <para>
+	<userinput>search / -path \*r245\*</userinput>
+      </para>
+      <para>
+	If you need to match an object path that is potentially ambiguous (say, r1 when there
+	are lots of regions that match the r1* globbing rule) add the trailing slash to
+	the expression:
+      </para>
+      <para>
+	<userinput>search / -path \*r1\/\*</userinput>
+      </para>
+    </example>
+
+
+    <example><title>Searching by Type</title>
+
+      <para>
+	<userinput>search . -type eto</userinput>
+      </para>
+      <para>
+	Find all objects in the database that are elliptical tori.  Note that a path of "."
+	produces the same search behavior as the default behavior for an unspecified path.
+      </para>
+    </example>
+
+    <example><title>Finding all Instances of Nested Regions</title>
+
+      <para>
+	<userinput>search / -type region -below -type region</userinput>
+      </para>
+      <para>
+	Find all instances of objects of type region that contain a
+	region.  This searches for regions being used within the
+	subtrees of other regions, which is considered bad practice
+	in BRL-CAD.
+      </para>
+    </example>
+
+    <example><title>Finding all Assemblies</title>
+
+      <para>
+	<userinput>search / -type comb ! -below -type region ! -type region</userinput>
+      </para>
+      <para>
+	Find all instances of objects of type combination that are not below regions
+	and are not themselves regions.  These are regarded as "assemblies" in BRL-CAD.
+      </para>
+    </example>
+
+    <example><title>Finding all Combinations below Regions</title>
+
+      <para>
+	<userinput>search / -type comb -below -type region ! -type region</userinput>
+      </para>
+      <para>
+	Find all instances of combinations that are not regions and
+	do not contain regions.
+      </para>
+    </example>
+
+    <example><title>Finding all Empty Combinations</title>
+
+      <para>
+	<userinput>search -nnodes 0</userinput>
+      </para>
+      <para>
+	Find all combinations containing zero nodes.
+      </para>
+    </example>
+
+    <example><title>Finding all Combinations With 10 or More Nodes</title>
+
+      <para>
+	<userinput>search -nnodes &gt;=10</userinput>
+      </para>
+      <para>
+	Find all combinations with 10 or more nodes.
+      </para>
+    </example>
+
+    <example><title>Finding all Intersected Objects</title>
+
+      <para>
+	<userinput>search -bool +</userinput>
+      </para>
+      <para>
+	Find all objects that are combined into one or more trees using the
+	Intersect boolean operation somewhere in the .g file. This
+	approach only identifies which objects are intersected somewhere in
+	the tree, not where specifically they are intersected.
+      </para>
+    </example>
+
+    <example><title>Finding all Instances of Object Intersection</title>
+
+      <para>
+	<userinput>search / -bool +</userinput>
+      </para>
+      <para>
+	Find all boolean operations that use the Intersect boolean operation
+	and report the full paths to those objects. This approach
+	reports all individual cases where an object has been combined into a
+	hierarchy by intersection, not just which objects have
+	been included with the intersection operator.
+      </para>
+    </example>
+
+    <example><title>Finding all Unions Within a Comb's Tree</title>
+
+      <para>
+	<userinput>search /all.g -mindepth 1 -bool u</userinput>
+      </para>
+      <para>
+	Find all unions within the all.g tree hierarchy, excluding all.g itself.
+      </para>
+    </example>
+
+    <example><title>Finding all Non-Subtracted Regions below Regions</title>
+
+      <para>
+	<userinput>search / -type region -below -type region ! -bool -</userinput>
+      </para>
+      <para>
+	A more nuanced variation on finding nested regions that adds
+	a check to make sure that the regions aren't being
+	subtracted.  While not ideal, using a subtraction does avoid
+	the modeling error of two volumes claiming the three
+	dimensional space and is arguably acceptable - the below
+	command finds nested region instances that are considered
+	errors.
+      </para>
+    </example>
+
+    <example><title>Finding all Regions with RGB color 180 180 180</title>
+
+      <para>
+	<userinput>search -type region ( -attr color=180/180/180 -or -attr rgb=180/180/180 ) </userinput>
+      </para>
+      <para>
+	Prints all regions with their color attribute set to 180/180/180.  Some
+	files may use <emphasis>rgb</emphasis> instead of color, so to be
+	comprehensive an <emphasis>-or</emphasis> option is used to check
+	both possibilities.
+      </para>
+    </example>
+
+    <example><title>Find All Combs Containing At Least One of Two Objects (dbfind)</title>
+
+      <para>
+	<userinput>search |. ( -depth 0 -above=1 -name obj1 ) -or ( -depth 0 -above=1 -name obj2 ) </userinput>
+      </para>
+      <para>
+	Prints all combs immediately above either obj1 or obj2.  This more or less mimics the results of
+	the dbfind command, although it will be somewhat slower (noticably so on large databases.)
+      </para>
+    </example>
+
+    <example><title>Finding all Plate-Mode BoT Objects</title>
+
+      <para>
+	<userinput>search -type bot -param mode=plate </userinput>
+      </para>
+      <para>
+	Prints all BoT primitives using "plate" mode, instead of the closed-mesh-requiring "volume" mode.
+      </para>
+    </example>
+
+    <example><title>Using <command>search</command> Results</title>
+      <para>
+	While the <command>search</command> command as currently implemented
+	in BRL-CAD does not support a <command>find</command> command style
+	<option>exec</option> option, it is possible
+	to collect <command>search</command> results in a Tcl variable and
+	use Tcl scripting to operate on the resulting object set.
+	<literallayout>
+	  <computeroutput>
+	    <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
+	    <prompt>mged&gt;</prompt><userinput> set search_results [search all.g -type region ! -below -bool - -and ! -below -bool +]</userinput>
+	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {draw $i}</userinput>
+	  </computeroutput>
+	</literallayout>
+	The above set of commands finds all regions below the <emphasis>all.g</emphasis>
+	object that contain only unioned objects and draws those regions in the MGED
+	display manager window.
+      </para>
+      <para>
+	Another common operation to apply to a set of results is to set
+	their colors to random RGB values (here we use random numbers and avoid any value less than 30 to keep objects more visible):
+	<literallayout>
+	  <computeroutput>
+	    <prompt>mged&gt;</prompt><userinput> set glob_compat_mode 0</userinput>
+	    <prompt>mged&gt;</prompt><userinput> set search_results [search -type region]</userinput>
+	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i color [expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]/[expr {int(rand()*225)+30}]}</userinput>
+	  </computeroutput>
+	</literallayout>
+	This approach uses Tcl's random number generator to generate different RGB strings to use for each object in the results list.
+	If we also want to add transparency to the resulting model, an additional foreach line on the same results set can do the job:
+	<literallayout>
+	  <computeroutput>
+	    <prompt>mged&gt;</prompt><userinput> foreach i $search_results {attr set $i shader {glass {tr 0.7 ri 1}}}</userinput>
+	  </computeroutput>
+	</literallayout>
+      </para>
+      <note>
+	<para>
+	  Remember when setting region colors to check for the presence of a <emphasis>regionid_colortable</emphasis> attribute on the _GLOBAL object - if such a table is present (the m35.g sample model has one, for example) you need to remove that table before the colors on the individual regions will "take":
+	  <literallayout>
+	    <computeroutput>
+	      <prompt>mged&gt;</prompt><userinput> attr rm _GLOBAL regionid_colortable</userinput>
+	    </computeroutput>
+	  </literallayout>
+	</para>
+      </note>
+    </example>
+
+
+  </refsection>
+
+  <refsection xml:id="diagnostics"><title>DIAGNOSTICS</title>
+
+    <para>
+      Errors will be returned if parsing of the arguments fails, or one of the primaries'
+      evaluation functions returns an error.
+    </para>
+  </refsection>
+
+  <refsection xml:id="author"><title>AUTHOR</title>
+    <para>Clifford Yapp</para>
+  </refsection>
+
+  <refsection xml:id="copyright"><title>COPYRIGHT</title>
+
+    <para>
+      This software is Copyright (c) 2008-2016 United States Government as
+      represented by the U.S. Army Research Laboratory.
+      Portions Copyright 1990, 1993, 1994 The Regents of the University of California,
+      per copyright and license information from OpenBSD and NetBSD.  For more details
+      see the copyright statements in search.c and search.h.
+    </para>
+  </refsection>
+
+  <refsection xml:id="bugs"><title>BUGS</title>
+
+    <para>
+      Bugs resulting from incorrect parsing of shell pattern expressions are the
+      result of libbu's fnmatch.
+    </para>
+  </refsection>
+
+  <refsection xml:id="bug_reports"><title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;, or via the "cadbug.sh" script.
+    </para>
+  </refsection>
+</refentry>
+
+<!-- vim: set shiftwidth=2 : -->

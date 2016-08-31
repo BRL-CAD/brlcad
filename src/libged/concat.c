@@ -1,7 +1,7 @@
 /*                         C O N C A T . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -521,6 +521,9 @@ ged_concat(struct ged *gedp, int argc, const char *argv[])
     }
 
     db_sync(gedp->ged_wdbp->dbip);	/* force changes to disk */
+
+    /* Update references. */
+    db_update_nref(gedp->ged_wdbp->dbip, &rt_uniresource);
 
     /* Free the Hash tables */
     ptr = Tcl_FirstHashEntry(&name_tbl, &search);

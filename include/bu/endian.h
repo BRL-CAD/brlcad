@@ -1,7 +1,7 @@
 /*                         E N D I A N . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -48,6 +48,16 @@ typedef enum {
 BU_EXPORT extern bu_endian_t bu_byteorder(void);
 
 /** @} */
+
+
+/**
+ * Get the current operating host's name.  This is usually also the
+ * network name of the current host.  The name is written into the
+ * provided hostname buffer of at least len size.  The hostname is
+ * always null-terminated and should be sized accordingly.
+ */
+BU_EXPORT extern int bu_gethostname(char *hostname, size_t len);
+
 
 __END_DECLS
 

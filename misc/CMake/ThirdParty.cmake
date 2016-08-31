@@ -1,7 +1,7 @@
 #                T H I R D P A R T Y . C M A K E
 # BRL-CAD
 #
-# Copyright (c) 2011-2014 United States Government as represented by
+# Copyright (c) 2011-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -49,6 +49,7 @@ include(CMakeParseArguments)
 #             [RESET_VARS var1 var2 ...]
 #             [ALIASES alias1 alias2 ...]
 #             [FLAGS flag1 flag2 ...]
+#             [UNDOCUMENTED]
 #            )
 
 #-----------------------------------------------------------------------------
@@ -72,7 +73,7 @@ macro(THIRD_PARTY dir varname_root build_target description)
 
   if(${ARGC} GREATER 3)
     # Parse extra arguments
-    CMAKE_PARSE_ARGUMENTS(${varname_root} "" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
+    CMAKE_PARSE_ARGUMENTS(${varname_root} "UNDOCUMENTED" "FIND_NAME;FIND_VERSION" "FIND_COMPONENTS;REQUIRED_VARS;RESET_VARS;ALIASES;FLAGS" ${ARGN})
   endif(${ARGC} GREATER 3)
   if(NOT ${varname_root}_FIND_NAME)
     set(${varname_root}_FIND_NAME ${varname_root})
@@ -251,19 +252,21 @@ macro(THIRD_PARTY dir varname_root build_target description)
   if(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
     add_subdirectory(${dir})
     set(${varname_root}_LIBRARY "${build_target}" CACHE STRING "${varname_root}_LIBRARY" FORCE)
-    set(${varname_root}_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/${dir};${CMAKE_CURRENT_BINARY_DIR}/${dir} CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
-    if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-      include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+    set(${varname_root}_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/${dir}" "${CMAKE_CURRENT_BINARY_DIR}/${dir}" CACHE STRING "set by THIRD_PARTY_SUBDIR macro" FORCE)
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+      include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
       CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-    else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-      message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-    endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+    else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+      message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+    endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
   else(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
     CMAKEFILES(${dir})
   endif(${CMAKE_PROJECT_NAME}_${varname_root}_BUILD)
 
-  OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "ABS")
-  OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "${description}")
+  if(NOT ${varname_root}_UNDOCUMENTED)
+    OPTION_ALIASES("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "ABS")
+    OPTION_DESCRIPTION("${CMAKE_PROJECT_NAME}_${varname_root}" "${varname_root}_ALIASES" "${description}")
+  endif(NOT ${varname_root}_UNDOCUMENTED)
 
   # For drop-down menus in CMake gui - set STRINGS property
   set_property(CACHE ${CMAKE_PROJECT_NAME}_${varname_root} PROPERTY STRINGS AUTO BUNDLED SYSTEM)
@@ -515,23 +518,23 @@ macro(THIRD_PARTY_EXECUTABLE lower dir required_vars aliases description)
 	list(REMOVE_DUPLICATES SRC_OTHER_ADDED_DIRS)
 	set(SRC_OTHER_ADDED_DIRS ${SRC_OTHER_ADDED_DIRS} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
 	mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-	if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	  include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	  include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
 	  CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-	else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	  message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-	endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+	else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	  message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+	endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
       endif("${ADDED_RESULT}" STREQUAL "-1")
     else(SRC_OTHER_ADDED_DIRS)
       add_subdirectory(${dir})
       set(SRC_OTHER_ADDED_DIRS ${dir} CACHE STRING "Enabled 3rd party sub-directories" FORCE)
       mark_as_advanced(SRC_OTHER_ADDED_DIRS)
-      if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	include(${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	include("${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
 	CMAKEFILES_IN_DIR(${dir}_ignore_files ${dir})
-      else(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
-	message("Bundled build, but file ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist not found")
-      endif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist)
+      else(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
+	message("Bundled build, but file \"${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist\" not found")
+      endif(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${dir}.dist")
     endif(SRC_OTHER_ADDED_DIRS)
     if(CMAKE_CONFIGURATION_TYPES)
       set(${upper}_EXECUTABLE "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}/${BIN_DIR}/${lower}" CACHE STRING "${upper}_EXECUTABLE" FORCE)

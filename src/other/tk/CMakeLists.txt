@@ -165,7 +165,9 @@ INCLUDE(${TK_SOURCE_DIR}/CMake/tcl.cmake)
 
 #-----------------------------------------------------------------------------
 # Our replacement for SC_CONFIG_MANPAGES
-ADD_SUBDIRECTORY(doc)
+if(NOT TK_DISABLE_MANPAGES)
+  ADD_SUBDIRECTORY(doc)
+endif(NOT TK_DISABLE_MANPAGES)
 
 #----------------------------------------------------------------------------
 # First, get some standard options out of the way - things that are constant
@@ -772,7 +774,10 @@ IF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 ENDIF(NOT CMAKE_LIBRARY_OUTPUT_DIRECTORY)
 
 add_library(tkstub STATIC ${TK_STUB_SRCS} ${TTK_STUB_SRCS})
-SET_TARGET_PROPERTIES(tkstub PROPERTIES COMPILE_FLAGS "-fPIC")
+CHECK_C_COMPILER_FLAG(-fPIC PIC_COMPILER_FLAG)
+IF(PIC_COMPILER_FLAG)
+  SET_TARGET_PROPERTIES(tkstub PROPERTIES COMPILE_FLAGS "-fPIC")
+ENDIF(PIC_COMPILER_FLAG)
 install(TARGETS tkstub 
 	RUNTIME DESTINATION ${BIN_DIR}
 	LIBRARY DESTINATION ${LIB_DIR}

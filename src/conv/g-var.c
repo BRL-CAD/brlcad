@@ -1,7 +1,7 @@
 /*                     G - V A R . C
  * BRL-CAD
  *
- * Copyright (c) 2002-2014 United States Government as represented by
+ * Copyright (c) 2002-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -31,10 +31,6 @@
 #include <string.h>
 #include "bio.h"
 
-#ifdef HAVE_STDINT_H
-#  include <stdint.h>
-#endif
-
 #include <math.h>
 
 /* interface headers */
@@ -61,6 +57,7 @@ print_usage(const char *progname)
 {
     bu_exit(1, "Usage: %s %s", progname, usage);
 }
+
 
 static int verbose = 0;
 static int yup = 0;

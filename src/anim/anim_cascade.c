@@ -1,7 +1,7 @@
 /*                  A N I M _ C A S C A D E . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -176,6 +176,9 @@ main (int argc, char *argv[])
     vect_t rad_ang_ans, cen_ans, ang_ans, rotated = VINIT_ZERO;
     mat_t m_rot1, m_rot2, m_ans;
     int one_time, read_cen1, read_cen2, read_rot1, read_rot2;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

@@ -1,7 +1,7 @@
 /*                           A R S . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -625,7 +625,7 @@ rt_ars_tess(struct nmgregion **r, struct model *m, struct rt_db_internal *ip, co
     bu_free((char *)verts, "rt_ars_tess *verts[]");
 
     /* kill any degenerate faces that may have been created */
-    for (i = 0; i < (size_t)BU_PTBL_END(&kill_fus); i++) {
+    for (i = 0; i < (size_t)BU_PTBL_LEN(&kill_fus); i++) {
 	fu = (struct faceuse *)BU_PTBL_GET(&kill_fus, i);
 	NMG_CK_FACEUSE(fu);
 	(void)nmg_kfu(fu);

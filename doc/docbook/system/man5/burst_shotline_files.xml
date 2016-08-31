@@ -1,0 +1,198 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<refentry xmlns='http://docbook.org/ns/docbook' version='5.0' xml:lang='en' xml:id='burst_shotline_5'>
+  <refmeta>
+    <refentrytitle>Burst Shotline File Format</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class='source'>BRL-CAD</refmiscinfo>
+    <refmiscinfo class='manual'>BRL-CAD</refmiscinfo>
+  </refmeta>
+
+  <refnamediv>
+    <refname>burst_shotline_files</refname>
+    <refpurpose>Data output by the <command>shotline-file</command> command from the burst tool.</refpurpose>
+  </refnamediv>
+
+  <refsection xml:id='format'>
+    <title>FORMAT</title>
+    <para>
+
+      Burst shotline files are composed of single-line records. Each line begins with a
+      digit that identifies the type of record it represents. The file is composed of one or more runs that
+      begin with a run header. Each shotline that intersects the target will result in a shotline header that is
+      followed by one or more shotline intersection records.
+
+      <table>
+	<title>Shotline File Format</title>
+	<tgroup cols="3">
+	  <thead>
+	    <row>
+	      <entry>Record Description</entry>
+	      <entry>Field Format</entry>
+	      <entry>Field Description</entry>
+	    </row>
+	  </thead>
+	  <tbody>
+
+	    <row>
+	      <entry>run header</entry>
+	      <entry>'1'</entry>
+	      <entry>record number 1</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f9.4</entry>
+	      <entry>attack azimuth (degrees)</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.4</entry>
+	      <entry>attack elevation (degrees)</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>shotline separation</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>maximum Y' coordinate of target</entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>minimum Y' coordinate of target</entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>maximum Z' coordinate of target</entry>
+	    </row>
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>minimum Z' coordinate of target</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,6a</entry>
+	      <entry>units (mm,cm,inches,feet,meters)</entry>
+	    </row>
+
+	    <row>
+	      <entry>shotline header</entry>
+	      <entry>'2'</entry>
+	      <entry>record number 2</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.3</entry>
+	      <entry>Y' coordinate of shotline</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.3</entry>
+	      <entry>Z' coordinate of shotline</entry>
+	    </row>
+
+	    <row>
+	      <entry>shotline intersections</entry>
+	      <entry>'3'</entry>
+	      <entry>record number 3</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.2</entry>
+	      <entry>X' coordinate of component intersection</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.3</entry>
+	      <entry>sine of fallback angle of exit normal</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>rotation angle of exit normal in degrees</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,i4</entry>
+	      <entry>component code number</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.2</entry>
+	      <entry>normal thickness of component</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f8.2</entry>
+	      <entry>line-of-sight thickness of component</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,i2</entry>
+	      <entry>space code following component</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>obliquity angle at entry to component in degrees</entry>
+	    </row>
+
+	    <row>
+	      <entry></entry>
+	      <entry>1x,f7.2</entry>
+	      <entry>obliquity angle at exit from component in degrees</entry>
+	    </row>
+
+	  </tbody>
+	</tgroup>
+      </table>
+    </para>
+  </refsection>
+  <refsection xml:id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>burst</refentrytitle><manvolnum>1</manvolnum></citerefentry>
+    </para>
+  </refsection>
+
+  <refsection xml:id='author'>
+    <title>AUTHOR</title>
+    <para>BRL-CAD Team</para>
+  </refsection>
+
+  <refsection xml:id='copyright'>
+    <title>COPYRIGHT</title>
+    <para>
+      This software is Copyright (c) 1989-2016 by the United States
+      Government as represented by U.S. Army Research Laboratory.
+    </para>
+
+  </refsection>
+
+  <refsection xml:id='bug_reports'>
+    <title>BUG REPORTS</title>
+    <para>
+      Reports of bugs or problems should be submitted via electronic
+      mail to &lt;devs@brlcad.org&gt;.
+    </para>
+  </refsection>
+</refentry>

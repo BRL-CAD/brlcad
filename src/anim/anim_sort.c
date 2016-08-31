@@ -1,7 +1,7 @@
 /*                     A N I M _ S O R T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -84,6 +84,9 @@ main(int argc, char *argv[])
     off_t last_pos;
     char line[MAXLEN];
     char pbuffer[MAXLEN*MAXLINES];
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     if (argc == 1 && isatty(fileno(stdin)) && isatty(fileno(stdout))) {
 	usage();

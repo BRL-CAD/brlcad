@@ -37,7 +37,6 @@
 
 #include "meshdecimation.h"
 
-#include "auxiliary/cpuinfo.h"
 #include "auxiliary/cc.h"
 #include "auxiliary/mm.h"
 #include "auxiliary/mmhash.h"
@@ -46,6 +45,7 @@
 #include "bu/log.h"
 #include "bu/malloc.h"
 #include "bu/parallel.h"
+#include "bu/simd.h"
 #include "bu/time.h"
 #include "vmath.h"
 
@@ -53,9 +53,7 @@
 
 
 /* Define to use double floating point precision */
-/*
 #define MD_CONF_DOUBLE_PRECISION
-*/
 
 
 /* Define to use double precision just quadric maths. Very strongly recommended. */
@@ -84,8 +82,9 @@
 #define MD_CONFIG_DELAYED_OP_REDIRECT
 
 
-#if defined(CPUCONF_ARCH_AMD64) || defined(CPUCONF_ARCH_IA32)
-#define MD_CONFIG_SSE_SUPPORT
+#if defined(__x86_64__) || defined(__i386__)
+/* disabled pending testing */
+/* #define MD_CONFIG_SSE_SUPPORT */
 #endif
 
 
@@ -99,8 +98,13 @@
 
 
 #if defined(__GNUC__) || defined(__INTEL_COMPILER)
+#if !defined(__OpenBSD__)
 #define RF_ALIGN16 __attribute__((aligned(16)))
 #define RF_ALIGN64 __attribute__((aligned(64)))
+#else
+#define RF_ALIGN16
+#define RF_ALIGN64
+#endif
 #elif defined(_MSC_VER)
 #define RF_ALIGN16 __declspec(align(16))
 #define RF_ALIGN64 __declspec(align(64))
@@ -131,42 +135,55 @@ double mdEdgeCollapsePenaltyTriangleSSE2d(double *newpoint, double *oldpoint, do
 
 static int mdInitFlag = 0;
 
-static cpuInfo mdCpuInfo;
-
 
 /**/
 
 
 #ifdef MD_CONF_DOUBLE_PRECISION
+
 typedef double mdf;
-#define mdfmin(x,y) fmin((x),(y))
-#define mdfmax(x,y) fmax((x),(y))
-#define mdffloor(x) floor(x)
-#define mdfceil(x) ceil(x)
-#define mdfround(x) round(x)
-#define mdfsqrt(x) sqrt(x)
-#define mdfcbrt(x) cbrt(x)
-#define mdfabs(x) fabs(x)
-#define mdflog2(x) log2(x)
-#define mdfacos(x) acos(x)
+#  define mdfabs(x) fabs(x)
+#  define mdfacos(x) acos(x)
+#  define mdfcbrt(x) cbrt(x)
+#  define mdfceil(x) ceil(x)
+#  define mdffloor(x) floor(x)
+#  define mdfmax(x,y) FMAX((x),(y))
+#  define mdfsqrt(x) sqrt(x)
+
+#  ifdef HAVE_LOG2
+#    define mdflog2(x) log2(x)
+#  else
+#    define mdflog2(x) (log(x) / log(2))
+#  endif
+#  define mdfmin(x,y) FMIN((x),(y))
+/* or round() or nearbyint() or lrint() -- see lrint in common.h */
+#  define mdfround(x) rint(x)
+
 #else
+
 typedef float mdf;
-#define mdfmin(x,y) fminf((x),(y))
-#define mdfmax(x,y) fmaxf((x),(y))
-#define mdffloor(x) floorf(x)
-#define mdfceil(x) ceilf(x)
-#define mdfround(x) roundf(x)
-#define mdfsqrt(x) sqrtf(x)
-#define mdfcbrt(x) cbrtf(x)
-#define mdfabs(x) fabsf(x)
-#define mdflog2(x) log2f(x)
-#define mdfacos(x) acosf(x)
+#  define mdfabs(x) fabsf(x)
+#  define mdfacos(x) acosf(x)
+#  define mdfcbrt(x) cbrtf(x)
+#  define mdfceil(x) ceilf(x)
+#  define mdffloor(x) floorf(x)
+#  define mdfmax(x,y) fmaxf((x),(y))
+#  define mdfsqrt(x) sqrtf(x)
+
+#  ifdef HAVE_LOG2F
+#    define mdflog2(x) log2f(x)
+#  else
+#    define mdflog2(x) (logf(x) / logf(2))
+#  endif
+#  define mdfmin(x,y) fminf((x),(y))
+#  define mdfround(x) roundf(x)
+
 #endif
 
 #ifdef MD_CONF_DOUBLE_PRECISION
-#ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
-#define MD_CONF_QUADRICS_DOUBLE_PRECISION
-#endif
+#  ifndef MD_CONF_QUADRICS_DOUBLE_PRECISION
+#    define MD_CONF_QUADRICS_DOUBLE_PRECISION
+#  endif
 #endif
 
 
@@ -180,7 +197,7 @@ typedef float mdqf;
 
 
 #ifdef MD_CONFIG_HIGH_QUADRICS
-#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined CPUCONF_ARCH_AMD64 || defined(CPUCONF_ARCH_IA32) || defined(__ia64__))
+#if ( __GNUC__ > 4 || ( __GNUC__ == 4 && __GNUC_MINOR__ >= 6 ) ) && !defined(__INTEL_COMPILER) && (defined __x86_64__ || defined(__i386__) || defined(__ia64__))
 typedef __float128 mdqfhigh;
 #else
 #undef MD_CONFIG_HIGH_QUADRICS
@@ -1126,7 +1143,7 @@ static mdf mdEdgeCollapsePenaltyTriangle(mdf *newpoint, mdf *oldpoint, mdf *left
 	newcompactness /= norm;
 	VSUB2(oldvectc, oldpoint, rightpoint);
 	oldcompactness = (MD_COMPACTNESS_NORMALIZATION_FACTOR * mdfsqrt(VDOT(oldnormal, oldnormal))) / (vecta2 + VDOT(oldvectb, oldvectb) + VDOT(oldvectc, oldvectc));
-	compactness = fmin(compactnesstarget, oldcompactness) - newcompactness;
+	compactness = mdfmin(compactnesstarget, oldcompactness) - newcompactness;
 
 	if (compactness > 0.0)
 	    penalty = compactness;
@@ -3576,7 +3593,7 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 	else if (status->stage == MD_STATUS_STAGE_BUILDTRIREFS)
 	    subprogress = (double)buildrefcount / (double)mesh->tricount;
 
-	subprogress = fmax(0.0, fmin(1.0, subprogress));
+	subprogress = mdfmax(0.0, mdfmin(1.0, subprogress));
     }
 
     progress = 0.0;
@@ -3598,7 +3615,6 @@ static void mdUpdateStatus(mdMesh *mesh, mdThreadInit *threadinit, int stage, md
 void mdInit()
 {
     mmInit();
-    cpuGetInfo(&mdCpuInfo);
     mdInitFlag = 1;
 }
 
@@ -3711,8 +3727,6 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 	mdInitFlag = 1;
 	/* Initialization of the memory manager, filling struct mmcontext with info about CPUs and NUMA */
 	mmInit();
-	/* Retrieve processor capability */
-	cpuGetInfo(&mdCpuInfo);
     }
 
     threadcount = bu_avail_cpus();
@@ -3818,21 +3832,21 @@ int mdMeshDecimation(mdOperation *operation, int flags)
 #ifdef MD_CONFIG_SSE_SUPPORT
 #ifndef MD_CONF_DOUBLE_PRECISION
 
-    if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x1)) {
+    if (bu_simd_supported(BU_SIMD_SSE4_1) && (mdPathSSE4p1 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1f;
-    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x1)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE3) && (mdPathSSE3 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3f;
-    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x1)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE2) && (mdPathSSE2 & 0x1)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2f;
     }
 
 #else
 
-    if ((mdCpuInfo.capsse4p1) && (mdPathSSE4p1 & 0x2)) {
+    if (bu_simd_supported(BU_SIMD_SSE4_1) && (mdPathSSE4p1 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE4p1d;
-    } else if ((mdCpuInfo.capsse3) && (mdPathSSE3 & 0x2)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE3) && (mdPathSSE3 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE3d;
-    } else if ((mdCpuInfo.capsse2) && (mdPathSSE2 & 0x2)) {
+    } else if (bu_simd_supported(BU_SIMD_SSE2) && (mdPathSSE2 & 0x2)) {
 	mesh.collapsepenalty = mdEdgeCollapsePenaltyTriangleSSE2d;
     }
 

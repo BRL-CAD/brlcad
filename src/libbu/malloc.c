@@ -1,7 +1,7 @@
 /*                        M A L L O C . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -476,16 +476,26 @@ bu_realloc(register void *ptr, size_t siz, const char *str)
 	    fprintf(stderr, "%p realloc%6d %s [grew in place]\n",
 		    ptr, (int)siz, str);
 	} else {
-	    fprintf(stderr, "%p realloc%6d %s [moved from %p]\n",
-		    ptr, (int)siz, str, original_ptr);
+	    /* Not using %p to print original_ptr's pointer value here in order
+	     * to avoid clang static analyzer complaining about use of memory
+	     * after memory is freed.  If/when clang can recognize that this is
+	     * not an actual problem, switch it back to the %p form */
+	    fprintf(stderr, "%p realloc%6d %s [moved from 0x%lx]\n",
+		    ptr, (int)siz, str, (unsigned long)original_ptr);
 	}
     }
 
     if (UNLIKELY(bu_debug&BU_DEBUG_MEM_CHECK && ptr)) {
 	/* Even if ptr didn't change, need to update siz & barrier */
 	bu_semaphore_acquire(BU_SEM_MALLOC);
-	mp->mdb_addr = ptr;
-	mp->mdb_len = siz;
+
+	/* If memdebug_check returned MEMDEBUG_NULL, we can't do these
+	 * assignments.  In that situation the error condition was already
+	 * reported earlier, so just skip the assignments here and continue */
+	if (mp != MEMDEBUG_NULL) {
+	    mp->mdb_addr = ptr;
+	    mp->mdb_len = siz;
+	}
 
 	/* Install a barrier word at the new end of the dynamic
 	 * arena. Correct location depends on 'siz' being rounded up,
@@ -754,7 +764,7 @@ bu_pool_alloc(struct bu_pool *pool, size_t nelem, size_t elsize)
     void *ret;
 
     if (pool->block_pos + n_bytes > pool->alloc_size) {
-    	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
+	pool->alloc_size += (n_bytes < pool->block_size ? pool->block_size : n_bytes);
 	pool->block = (uint8_t*)bu_realloc(pool->block, pool->alloc_size, "bu_pool_alloc");
     }
 

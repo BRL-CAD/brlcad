@@ -141,6 +141,8 @@ if(BUILD_STATIC_LIBS)
     add_library(zlib-static STATIC ${ZLIB_SRCS} ${ZLIB_PUBLIC_HDRS} ${ZLIB_PRIVATE_HDRS})
     if(CMAKE_CL_64)
       set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x64")
+    elseif(MSVC)
+      set_target_properties(zlib-static PROPERTIES STATIC_LIBRARY_FLAGS "/machine:x86")
     endif(CMAKE_CL_64)
 endif(BUILD_STATIC_LIBS)
 

@@ -1,7 +1,7 @@
 /*                            D O . C
  * BRL-CAD
  *
- * Copyright (c) 1987-2014 United States Government as represented by
+ * Copyright (c) 1987-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -70,10 +70,6 @@ extern char *string_pix_end;	/* string spec of ending pixel */
 extern int finalframe;		/* frame to halt at */
 /***** end variables shared with rt.c *****/
 
-/***** variables shared with viewg3.c *****/
-struct bu_vls ray_data_file = BU_VLS_INIT_ZERO;  /* file name for ray data output */
-/***** end variables shared with viewg3.c *****/
-
 /***** variables for frame buffer black pixel rendering *****/
 unsigned char *pixmap = NULL; /* Pixel Map for rerendering of black pixels */
 
@@ -94,7 +90,7 @@ int
 old_frame(FILE *fp)
 {
     register int i;
-    char number[128];
+    char number[129];
 
     /* Visible part is from -1 to +1 in view space */
     if (fscanf(fp, "%128s", number) != 1) return -1;
@@ -428,7 +424,6 @@ struct bu_structparse set_parse[] = {
     {"%d",	1, "rt_bot_tri_per_piece",	bu_byteoffset(rt_bot_tri_per_piece),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"%f",	1, "rt_cline_radius",		bu_byteoffset(rt_cline_radius),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
 #endif
-    {"%V",	1, "ray_data_file",		bu_byteoffset(ray_data_file),		BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     /* daisy-chain to additional app-specific parameters */
     {"%p",	1, "Application-Specific Parameters", bu_byteoffset(view_parse[0]),	BU_STRUCTPARSE_FUNC_NULL, NULL, NULL },
     {"",	0, (char *)0,		0,						BU_STRUCTPARSE_FUNC_NULL, NULL, NULL }
@@ -518,7 +513,7 @@ extern double airdensity;
 static unsigned int clt_mode;           /* Active render buffers */
 static uint8_t clt_o[3];		/* Sub buffer offsets in bytes: {CLT_COLOR, CLT_DEPTH, MAX} */
 
-static fb *clt_fbp;
+static fb *clt_fbp = FB_NULL;
 
 
 void
@@ -605,11 +600,11 @@ clt_run(int cur_pixel, int last_pixel)
 
     pixelp = pixels + cur_pixel*clt_o[2];
 
-    if (clt_fbp) {
+    if (clt_fbp != FB_NULL) {
         bu_semaphore_acquire(BU_SEM_SYSCALL);
-        count = fb_write(clt_fbp, a_x, a_y, pixelp, size);
+        count = fb_write(clt_fbp, a_x, a_y, pixelp, npix);
         bu_semaphore_release(BU_SEM_SYSCALL);
-        if (count < size)
+        if (count < npix)
             bu_exit(EXIT_FAILURE, "pixel fb_write error");
     }
     if (outfp) {
@@ -710,7 +705,6 @@ do_frame(int framenumber)
     double utime = 0.0;			/* CPU time used */
     double nutime = 0.0;		/* CPU time used, normalized by ncpu */
     double wallclock = 0.0;		/* # seconds of wall clock time */
-    int npix = 0;			/* # of pixel values to be done */
     vect_t work, temp;
     quat_t quat;
 
@@ -826,17 +820,6 @@ do_frame(int framenumber)
     /* Allocate data for pixel map for rerendering of black pixels */
     if (pixmap == NULL) {
 	pixmap = (unsigned char*)bu_calloc(sizeof(RGBpixel), width*height, "pixmap allocate");
-    }
-
-    /*
-     * If this image is unlikely to be for debugging,
-     * be gentle to the machine.
-     */
-    if (!interactive) {
-	if (npix > 512*512)
-	    bu_nice_set(14);
-	else if (npix > 256*256)
-	    bu_nice_set(10);
     }
 
     /*
@@ -1079,7 +1062,7 @@ do_frame(int framenumber)
 	       wallclock, ((double)(rtip->rti_nrays))/wallclock);
     }
     if (bif != NULL) {
-	icv_write(bif, framename, MIME_IMAGE_AUTO);
+	icv_write(bif, framename, BU_MIME_IMAGE_AUTO);
 	icv_destroy(bif);
 	bif = NULL;
     }

@@ -1,7 +1,7 @@
 /*                    D I S P A T C H E R . C
  * BRL-CAD / ADRT
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,17 +25,6 @@
 
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_PTHREAD_H
-#  include <pthread.h>
-#endif
-#include "bio.h"
-
-#include "rt/tie.h"
-#include "adrt.h"
-
-#include "tienet_master.h"
-#include "dispatcher.h"
-#include "camera.h"
 
 #ifdef HAVE_SYS_SYSINFO_H
 #  include <sys/sysinfo.h>
@@ -45,6 +34,18 @@
 #  endif
 #  include <sys/sysctl.h>
 #endif
+
+#include "bio.h"
+
+#include "bu/malloc.h"
+#include "rt/tie.h"
+#include "adrt.h"
+
+#include "tienet.h"
+#include "tienet_master.h"
+#include "dispatcher.h"
+#include "camera.h"
+
 
 uint16_t dispatcher_frame;
 tienet_buffer_t dispatcher_mesg;
@@ -78,7 +79,7 @@ master_dispatcher_generate (void *data, int data_len, int image_w, int image_h, 
     tienet_master_begin ();
 
     /* Copy data payload to front */
-    bcopy(data, dispatcher_mesg.data, data_len);
+    memcpy(dispatcher_mesg.data, data, data_len);
 
     tile.size_x = image_w / DISPATCHER_TILE_NUM;
     tile.size_y = image_h / DISPATCHER_TILE_NUM;

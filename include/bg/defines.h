@@ -1,7 +1,7 @@
 /*                        D E F I N E S . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -42,6 +42,10 @@
 #    define BG_EXPORT
 #  endif
 #endif
+
+/* Definitions for clockwise and counter-clockwise loop directions */
+#define BG_CW 1
+#define BG_CCW -1
 
 #endif  /* BG_DEFINES_H */
 /** @} */

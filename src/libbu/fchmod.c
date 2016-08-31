@@ -1,7 +1,7 @@
 /*                        F C H M O D . C
  * BRL-CAD
  *
- * Copyright (c) 2007-2014 United States Government as represented by
+ * Copyright (c) 2007-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -33,7 +33,9 @@
 #  include <tchar.h>
 #  include <string.h>
 #  include <psapi.h>
-#  include <strsafe.h>
+#  ifdef HAVE_STRSAFE_H
+#    include <strsafe.h>
+#  endif
 #endif
 
 #include "bu/file.h"

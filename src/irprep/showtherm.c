@@ -1,7 +1,7 @@
 /*                     S H O W T H E R M . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -125,6 +125,9 @@ int main(int argc, char **argv)
     double calpha, salpha;	/* Cosine & sine of alpha.  */
     double cbeta, sbeta;	/* Cosine & sine of beta.  */
     int ret;
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n");
+    sleep(1);
 
     /* Check to see if arguments implemented correctly.  */
     if (argc < 3 || argv[1]==NULL || argv[2]==NULL) {

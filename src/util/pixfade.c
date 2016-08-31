@@ -1,7 +1,7 @@
 /*                       P I X F A D E . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -158,14 +158,14 @@ main(int argc, char **argv)
         return 1;
     }
 
-    img = icv_read(in_file, MIME_IMAGE_PIX, inx, iny);
+    img = icv_read(in_file, BU_MIME_IMAGE_PIX, inx, iny);
     if (img == NULL)
         return 1;
     if (max < 0 )
 	icv_fade(img, multiplier);
     else
 	icv_ceiling(img, max);
-    icv_write(img, out_file, MIME_IMAGE_PIX);
+    icv_write(img, out_file, BU_MIME_IMAGE_PIX);
 
     icv_destroy(img);
     return 0;

@@ -1,7 +1,7 @@
 /*                         F I L E . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -133,7 +133,7 @@ BU_EXPORT extern int bu_file_delete(const char *path);
  * 'matches' array, and followed by a terminating NULL entry.
  *
  * If '*matches' is NULL, the caller is expected to free the matches
- * array with bu_free_argv() If '*matches' is non-NULL (i.e., string
+ * array with bu_argv_free() If '*matches' is non-NULL (i.e., string
  * array is already allocated or on the stack), the caller is expected
  * to ensure adequate entries are allocated and call bu_free_array()
  * to clean up.  If 'matches' is NULL, no entries will be allocated or
@@ -178,7 +178,7 @@ BU_EXPORT extern size_t bu_file_glob(const char *pattern, char ***matches);
  * was found.  It is the responsibility of the caller to cast
  * the return int to the correct mime_CONTEXT_t type.
  */
-BU_EXPORT extern int bu_file_mime(const char *ext, mime_context_t context);
+BU_EXPORT extern int bu_file_mime(const char *ext, bu_mime_context_t context);
 
 /**
  * Given a mime type and a context, return the file extension(s)
@@ -188,7 +188,7 @@ BU_EXPORT extern int bu_file_mime(const char *ext, mime_context_t context);
  * containing the extensions if a result was found.
  * It is the responsibility of the caller to free the returned string.
  */
-BU_EXPORT extern const char *bu_file_mime_ext(int t, mime_context_t context);
+BU_EXPORT extern const char *bu_file_mime_ext(int t, bu_mime_context_t context);
 
 /**
  * Given a mime type and a context, return a human readable string
@@ -198,7 +198,7 @@ BU_EXPORT extern const char *bu_file_mime_ext(int t, mime_context_t context);
  * returns NULL if no match was found, or a string if a result was found.
  * It is the responsibility of the caller to free the returned string.
  */
-BU_EXPORT extern const char *bu_file_mime_str(int t, mime_context_t context);
+BU_EXPORT extern const char *bu_file_mime_str(int t, bu_mime_context_t context);
 
 /**
  * Given a string produced by bu_file_mime_str, convert it back into
@@ -219,13 +219,14 @@ BU_EXPORT extern int bu_file_mime_int(const char *str);
 /**
  * Returns the number of directory entries for a given path matching
  * an optional glob pattern.  If the caller provides a pointer to an
- * argv-style 'files' array, this function will allocate the array
- * with dynamically allocated strings for any matching file(s).
+ * argv-style 'files' array, this function will dynamically allocate
+ * an array of strings, filled with the sorted listing of matching
+ * file(s).
  *
- * It is the caller's responsibility to free a non-NULL 'files' array
- * with bu_free_argv().
+ * It is the caller's responsibility to free a non-NULL array with
+ * bu_argv_free().
  */
-BU_EXPORT extern size_t bu_dir_list(const char *path, const char *pattern, char ***files);
+BU_EXPORT extern size_t bu_file_list(const char *path, const char *pattern, char ***files);
 
 /**
  * Call canonicalization routines to both expand and validate

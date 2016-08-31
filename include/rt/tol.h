@@ -1,7 +1,7 @@
 /*                          T O L . H
  * BRL-CAD
  *
- * Copyright (c) 1993-2015 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,7 +28,7 @@
 
 __BEGIN_DECLS
 
-/** @addtogroup librt
+/** @addtogroup rt_tol
  *
  * @brief
  * librt specific tolerance information.
@@ -41,7 +41,7 @@ __BEGIN_DECLS
 
  */
 /** @{ */
-/** @file tol.h */
+/** @file rt/tol.h */
 
 /*
  * Unfortunately, to prevent divide-by-zero, some tolerancing needs to

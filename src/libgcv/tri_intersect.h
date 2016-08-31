@@ -1,7 +1,7 @@
 /*                 T R I _ I N T E R S E C T . H
  * BRL-CAD
  *
- * Copyright (c) 2011-2014 United States Government as represented by
+ * Copyright (c) 2011-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -28,14 +28,9 @@
 
 __BEGIN_DECLS
 
-int gcv_tri_tri_intersect_with_isectline(
-		struct soup_s *UNUSED(left),
-		struct soup_s *UNUSED(right),
-		struct face_s *lf,
-		struct face_s *rf,
-		int *coplanar,
-		point_t *isectpt,
-		const struct bn_tol *tol);
+/* FIXME: need not be public API */
+GCV_EXPORT int
+gcv_tri_tri_intersect_with_isectline(struct soup_s *UNUSED(left), struct soup_s *UNUSED(right), struct face_s *lf, struct face_s *rf, int *coplanar, point_t *isectpt, const struct bn_tol *tol);
 
 __END_DECLS
 

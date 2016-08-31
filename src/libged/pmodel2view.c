@@ -1,7 +1,7 @@
 /*                         P M O D E L 2 V I E W . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -44,7 +44,7 @@ ged_pmodel2view(struct ged *gedp, int argc, const char *argv[])
 
     /* get the pmodel2view matrix */
     if (argc == 1) {
-	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view);
+	bn_encode_mat(gedp->ged_result_str, gedp->ged_gvp->gv_pmodel2view, 1);
 	return GED_OK;
     }
 

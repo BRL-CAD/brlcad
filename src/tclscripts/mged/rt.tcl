@@ -1,7 +1,7 @@
 #                          R T . T C L
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # This library is free software; you can redistribute it and/or
@@ -1409,7 +1409,7 @@ proc rt_check_dest {id win} {
 	    set dm_list [split [dm_list] ',']
 	    set devtype "/dev/"
 	    append devtype [lindex $dm_list 0]
-	    rt_force_cook_dest %id $devtype
+	    rt_force_cook_dest $id $devtype
 	}
     }
 }

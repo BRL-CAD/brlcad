@@ -30,6 +30,7 @@ set(documentation_DATA
   code_review.txt
   cvs.txt
   description.txt
+  editors.txt
   ged.tr
   history.txt
   hypot.txt
@@ -217,16 +218,17 @@ set(documentation_mged_old_DATA
   )
 ADD_DOC(documentation_mged_old_DATA mged_old)
 
-configure_file(pad_file.xml.in ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml DESTINATION ${DOC_DIR})
+configure_file(pad_file.xml.in "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" @ONLY)
+install(FILES "${CMAKE_CURRENT_BINARY_DIR}/pad_file.xml" DESTINATION ${DOC_DIR})
 
 CMAKEFILES(
   README.OSCON-2014
   STARTERS
-  burst
+  STRATEGY
   csv_to_comgeom.txt
   implicit_constraints.txt
   pad_file.xml.in
+  trunk_hierarchy.org
   )
 
 # Local Variables:

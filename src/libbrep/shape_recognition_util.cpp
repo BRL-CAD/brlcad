@@ -6,9 +6,195 @@
 #include "bu/log.h"
 #include "bu/str.h"
 #include "bu/malloc.h"
+#include "bn/tol.h"
 #include "brep.h"
 #include "shape_recognition.h"
 
+void
+set_key(struct bu_vls *key, int k_cnt, int *k_array)
+{
+    for (int i = 0; i < k_cnt; i++) {
+	bu_vls_printf(key, "%d", k_array[i]);
+	if (i != k_cnt - 1) bu_vls_printf(key, ",");
+    }
+}
+
+void
+set_to_array(int **array, int *array_cnt, std::set<int> *set)
+{
+    std::set<int>::iterator s_it;
+    int i = 0;
+    if (*array) bu_free((*array), "free old array");
+    (*array_cnt) = set->size();
+    if ((*array_cnt) > 0) {
+	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
+	for (s_it = set->begin(); s_it != set->end(); s_it++) {
+	    (*array)[i] = *s_it;
+	    i++;
+	}
+    }
+}
+
+void
+array_to_set(std::set<int> *set, int *array, int array_cnt)
+{
+    for (int i = 0; i < array_cnt; i++) {
+	set->insert(array[i]);
+    }
+}
+
+
+void
+csg_object_params_init(struct csg_object_params *csg, struct subbrep_shoal_data *d)
+{
+    csg->s = d;
+    csg->csg_type = 0;
+    csg->negative = 0;
+    csg->csg_id = -1;
+    csg->bool_op = '\0';
+    csg->planes = NULL;
+    csg->csg_faces = NULL;
+    csg->csg_verts = NULL;
+}
+
+void
+csg_object_params_free(struct csg_object_params *csg)
+{
+    if (!csg) return;
+    if (csg->planes) bu_free(csg->planes, "free planes");
+    if (csg->csg_faces) bu_free(csg->csg_faces , "free faces");
+    if (csg->csg_verts) bu_free(csg->csg_verts , "free verts");
+}
+
+
+void
+subbrep_shoal_init(struct subbrep_shoal_data *data, struct subbrep_island_data *i)
+{
+    data->i = i;
+    BU_GET(data->params, struct csg_object_params);
+    csg_object_params_init(data->params, data);
+    BU_GET(data->shoal_children , struct bu_ptbl);
+    bu_ptbl_init(data->shoal_children, 8, "sub_params table");
+    data->shoal_loops = NULL;
+    data->shoal_loops_cnt = 0;
+}
+
+void
+subbrep_shoal_free(struct subbrep_shoal_data *data)
+{
+    if (!data) return;
+    csg_object_params_free(data->params);
+    BU_PUT(data->params, struct csg_object_params);
+    data->params = NULL;
+    for (unsigned int i = 0; i < BU_PTBL_LEN(data->shoal_children); i++) {
+	struct csg_object_params *c = (struct csg_object_params *)BU_PTBL_GET(data->shoal_children, i);
+	csg_object_params_free(c);
+	BU_PUT(c, struct csg_object_params);
+    }
+    bu_ptbl_free(data->shoal_children);
+    BU_PUT(data->shoal_children, struct bu_ptbl);
+    if (data->shoal_loops) bu_free(data->shoal_loops, "free loop array");
+}
+
+void
+subbrep_island_init(struct subbrep_island_data *obj, const ON_Brep *brep)
+{
+    if (!obj) return;
+
+    /* We're a B-Rep until proven otherwise */
+    obj->island_type = BREP;
+
+    obj->brep = brep;
+    obj->local_brep = NULL;
+    obj->local_brep_bool_op = '\0';
+
+    obj->bbox = new ON_BoundingBox();
+    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
+
+    BU_GET(obj->nucleus, struct subbrep_shoal_data);
+    subbrep_shoal_init(obj->nucleus, obj);
+
+    BU_GET(obj->island_children, struct bu_ptbl);
+    bu_ptbl_init(obj->island_children, 8, "children table");
+
+    BU_GET(obj->subtractions, struct bu_ptbl);
+    bu_ptbl_init(obj->subtractions, 8, "children table");
+
+    BU_GET(obj->key, struct bu_vls);
+    bu_vls_init(obj->key);
+
+    obj->obj_cnt = NULL;
+    obj->island_faces = NULL;
+    obj->island_loops = NULL;
+    obj->fol = NULL;
+    obj->fil = NULL;
+    obj->null_verts = NULL;
+    obj->null_edges = NULL;
+}
+
+void
+subbrep_island_free(struct subbrep_island_data *obj)
+{
+    if (!obj) return;
+
+    obj->brep = NULL;
+    if (obj->local_brep) delete obj->local_brep;
+    obj->local_brep = NULL;
+
+    delete obj->bbox;
+
+    subbrep_shoal_free(obj->nucleus);
+    if (obj->nucleus) BU_PUT(obj->nucleus, struct csg_obj_params);
+    obj->nucleus = NULL;
+
+    bu_vls_free(obj->key);
+    BU_PUT(obj->key, struct bu_vls);
+    obj->key = NULL;
+
+    for (unsigned int i = 0; i < BU_PTBL_LEN(obj->island_children); i++){
+	struct subbrep_shoal_data *cobj = (struct subbrep_shoal_data *)BU_PTBL_GET(obj->island_children, i);
+	subbrep_shoal_free(cobj);
+	BU_PUT(cobj, struct subbrep_shoal_data);
+    }
+    bu_ptbl_free(obj->island_children);
+    BU_PUT(obj->island_children, struct bu_ptbl);
+    obj->island_children = NULL;
+
+    /* Anything in here will be freed elsewhere */
+    if (obj->subtractions) {
+	bu_ptbl_free(obj->subtractions);
+	BU_PUT(obj->subtractions, struct bu_ptbl);
+    }
+    obj->subtractions = NULL;
+
+    if (obj->island_faces) bu_free(obj->island_faces, "obj faces");
+    obj->island_faces = NULL;
+    if (obj->island_loops) bu_free(obj->island_loops, "obj loops");
+    obj->island_loops = NULL;
+    if (obj->fol) bu_free(obj->fol, "obj fol");
+    obj->fol = NULL;
+    if (obj->fil) bu_free(obj->fil, "obj fil");
+    obj->fil = NULL;
+    if (obj->null_verts) bu_free(obj->null_verts, "ignore verts");
+    obj->null_verts = NULL;
+    if (obj->null_edges) bu_free(obj->null_edges, "ignore edges");
+    obj->null_edges = NULL;
+}
+
+/* Geometry utilities */
+
+void
+ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
+{
+    min->x = ON_DBL_MAX;
+    min->y = ON_DBL_MAX;
+    min->z = ON_DBL_MAX;
+    max->x = -ON_DBL_MAX;
+    max->y = -ON_DBL_MAX;
+    max->z = -ON_DBL_MAX;
+}
+
+#define LN_DOTP_TOL 0.000001
 ON_3dPoint
 ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
 {
@@ -24,131 +210,66 @@ ON_LinePlaneIntersect(ON_Line &line, ON_Plane &plane)
     ON_3dVector p0l0 = p0 - l0;
     double p0l0n = ON_DotProduct(p0l0, n);
     double ln = ON_DotProduct(l, n);
-    if (NEAR_ZERO(ln, 0.000001) && NEAR_ZERO(p0l0n, 0.000001)) {
+    if (NEAR_ZERO(ln, LN_DOTP_TOL) && NEAR_ZERO(p0l0n, LN_DOTP_TOL)) {
 	result.x = -ON_DBL_MAX;
 	result.y = -ON_DBL_MAX;
 	result.z = -ON_DBL_MAX;
 	return result;
     }
-    if (NEAR_ZERO(ln, 0.000001)) return result;
-
+    if (NEAR_ZERO(ln, LN_DOTP_TOL)) return result;
     double d = p0l0n/ln;
 
     result = d*l + l0;
     return result;
 }
 
-curve_t
-GetCurveType(ON_Curve *curve)
-{
-    /* First, see if the curve is planar */
-/*    if (!curve->IsPlanar()) {
-	return CURVE_GENERAL;
-    }*/
-
-    /* Check types in order of increasing complexity - simple
-     * is better, so try simple first */
-    ON_BoundingBox c_bbox;
-    curve->GetTightBoundingBox(c_bbox);
-    if (c_bbox.IsDegenerate() == 3) return CURVE_POINT;
-
-    if (curve->IsLinear()) return CURVE_LINE;
-
-    ON_Arc arc;
-    if (curve->IsArc(NULL, &arc, BREP_CYLINDRICAL_TOL)) {
-	if (arc.IsCircle()) return CURVE_CIRCLE;
-	ON_Circle circ(arc.StartPoint(), arc.MidPoint(), arc.EndPoint());
-	bu_log("arc's circle: center %f, %f, %f   radius %f\n", circ.Center().x, circ.Center().y, circ.Center().z, circ.Radius());
-       	return CURVE_ARC;
-    }
-
-    // TODO - looks like we need a better test for this...
-    if (curve->IsEllipse(NULL, NULL, BREP_ELLIPSOIDAL_TOL)) return CURVE_ELLIPSE;
-
-    return CURVE_GENERAL;
-}
-
 surface_t
-GetSurfaceType(const ON_Surface *in_surface, struct filter_obj *obj)
+GetSurfaceType(const ON_Surface *orig_surface)
 {
+    ON_Surface *surface;
     surface_t ret = SURFACE_GENERAL;
-    ON_Surface *surface = in_surface->Duplicate();
+    ON_Surface *in_surface = orig_surface->Duplicate();
     // Make things a bit larger so small surfaces can be identified
     ON_Xform sf(1000);
-    surface->Transform(sf);
-    if (obj) {
-	filter_obj_init(obj);
-	if (surface->IsPlanar(obj->plane, BREP_PLANAR_TOL)) {
-	    ret = SURFACE_PLANE;
-	    obj->stype = SURFACE_PLANE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsSphere(obj->sphere , BREP_SPHERICAL_TOL)) {
-	    ret = SURFACE_SPHERE;
-	    obj->stype = SURFACE_SPHERE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCylinder(obj->cylinder , BREP_CYLINDRICAL_TOL)) {
-	    ret = SURFACE_CYLINDER;
-	    obj->stype = SURFACE_CYLINDER;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCone(obj->cone, BREP_CONIC_TOL)) {
-	    ret = SURFACE_CONE;
-	    obj->stype = SURFACE_CONE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsTorus(obj->torus, BREP_TOROIDAL_TOL)) {
-	    ret = SURFACE_TORUS;
-	    obj->stype = SURFACE_TORUS;
-	    goto st_done;
-	}
-    } else {
-	if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
-	    ret = SURFACE_PLANE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
-	    ret = SURFACE_SPHERE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
-	    ret = SURFACE_CYLINDER;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
-	    ret = SURFACE_CONE;
-	    goto st_done;
-	}
-	delete surface;
-	surface = in_surface->Duplicate();
-	if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
-	    ret = SURFACE_TORUS;
-	    goto st_done;
-	}
+    in_surface->Transform(sf);
+    surface = in_surface->Duplicate();
+    if (surface->IsPlanar(NULL, BREP_PLANAR_TOL)) {
+	ret = SURFACE_PLANE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsSphere(NULL, BREP_SPHERICAL_TOL)) {
+	ret = SURFACE_SPHERE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsCylinder(NULL, BREP_CYLINDRICAL_TOL)) {
+	ret = SURFACE_CYLINDER;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsCone(NULL, BREP_CONIC_TOL)) {
+	ret = SURFACE_CONE;
+	goto st_done;
+    }
+    delete surface;
+    surface = in_surface->Duplicate();
+    if (surface->IsTorus(NULL, BREP_TOROIDAL_TOL)) {
+	ret = SURFACE_TORUS;
+	goto st_done;
     }
 st_done:
     delete surface;
+    delete in_surface;
     return ret;
 }
 
 
 surface_t
-highest_order_face(struct subbrep_object_data *data)
+subbrep_highest_order_face(struct subbrep_island_data *data)
 {
     int planar = 0;
     int spherical = 0;
@@ -156,14 +277,11 @@ highest_order_face(struct subbrep_object_data *data)
     int cone = 0;
     int torus = 0;
     int general = 0;
+    surface_t *fstypes = (surface_t *)data->face_surface_types;
     surface_t hofo = SURFACE_PLANE;
-    std::set<int> faces;
-    std::set<int>::iterator f_it;
-    array_to_set(&faces, data->faces, data->faces_cnt);
-    for (f_it = faces.begin(); f_it != faces.end(); f_it++) {
-	int ind = *f_it;
-	ON_Surface *s = data->brep->m_F[ind].SurfaceOf()->Duplicate();
-	int surface_type = (int)GetSurfaceType(s, NULL);
+    for (int i = 0; i < data->island_faces_cnt; i++) {
+	int ind = data->island_faces[i];
+	int surface_type = (int)fstypes[ind];
 	switch (surface_type) {
 	    case SURFACE_PLANE:
 		planar++;
@@ -206,86 +324,7 @@ highest_order_face(struct subbrep_object_data *data)
 }
 
 void
-filter_obj_init(struct filter_obj *obj)
-{
-    if (!obj) return;
-    if (!obj->plane) obj->plane = new ON_Plane;
-    if (!obj->sphere) obj->sphere = new ON_Sphere;
-    if (!obj->cylinder) obj->cylinder = new ON_Cylinder;
-    if (!obj->cone) obj->cone = new ON_Cone;
-    if (!obj->torus) obj->torus = new ON_Torus;
-    obj->type = BREP;
-}
-
-void
-filter_obj_free(struct filter_obj *obj)
-{
-    if (!obj) return;
-    delete obj->plane;
-    delete obj->sphere;
-    delete obj->cylinder;
-    delete obj->cone;
-    delete obj->torus;
-}
-
-int
-filter_objs_equal(struct filter_obj *obj1, struct filter_obj *obj2)
-{
-    ON_Line l1;
-    ON_3dPoint p1, p2;
-    double d1, d2;
-    int ret = 0;
-    if (obj1->stype != obj2->stype) return 0;
-    switch (obj1->stype) {
-	case SURFACE_PLANE:
-	    break;
-	case SURFACE_CYLINDRICAL_SECTION:
-	case SURFACE_CYLINDER:
-	    if (NEAR_ZERO(obj1->cylinder->circle.Radius() - obj2->cylinder->circle.Radius(), 0.001)) {
-		l1 = ON_Line(obj1->cylinder->Center(), obj1->cylinder->Center() + obj1->cylinder->Axis());
-		d1 = l1.DistanceTo(obj2->cylinder->Center());
-		d2 = l1.DistanceTo(obj2->cylinder->Center() + obj2->cylinder->Axis());
-		if (NEAR_ZERO(d1, 0.001) && NEAR_ZERO(d2, 0.001)) ret = 1;
-	    }
-	    break;
-	case SURFACE_CONE:
-	    break;
-	case SURFACE_SPHERICAL_SECTION:
-	case SURFACE_SPHERE:
-	    break;
-	case SURFACE_ELLIPSOIDAL_SECTION:
-	case SURFACE_ELLIPSOID:
-	    break;
-	case SURFACE_TORUS:
-	    break;
-	default:
-	    break;
-    }
-    return ret;
-}
-
-volume_t
-subbrep_shape_recognize(struct bu_vls *msgs, struct subbrep_object_data *data)
-{
-    if (subbrep_is_planar(msgs, data)) return PLANAR_VOLUME;
-    if (subbrep_is_cylinder(msgs, data, BREP_CYLINDRICAL_TOL)) return CYLINDER;
-    if (subbrep_is_cone(msgs, data, BREP_CONIC_TOL)) return CONE;
-    return BREP;
-}
-
-void
-ON_MinMaxInit(ON_3dPoint *min, ON_3dPoint *max)
-{
-    min->x = ON_DBL_MAX;
-    min->y = ON_DBL_MAX;
-    min->z = ON_DBL_MAX;
-    max->x = -ON_DBL_MAX;
-    max->y = -ON_DBL_MAX;
-    max->z = -ON_DBL_MAX;
-}
-
-void
-subbrep_bbox(struct subbrep_object_data *obj)
+subbrep_bbox(struct subbrep_island_data *obj)
 {
     for (int i = 0; i < obj->fol_cnt; i++) {
 	ON_3dPoint min, max;
@@ -301,7 +340,7 @@ subbrep_bbox(struct subbrep_object_data *obj)
 	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
     }
     std::set<int> loops;
-    array_to_set(&loops, obj->loops, obj->loops_cnt);
+    array_to_set(&loops, obj->island_loops, obj->island_loops_cnt);
     for (int i = 0; i < obj->fil_cnt; i++) {
 	ON_3dPoint min, max;
 	ON_MinMaxInit(&min, &max);
@@ -326,459 +365,357 @@ subbrep_bbox(struct subbrep_object_data *obj)
 	ON_Interval v(min.y, max.y);
 	surface_GetBoundingBox(face->SurfaceOf(), u, v, *(obj->bbox), true);
     }
-    obj->bbox_set = 1;
-}
-
-void
-subbrep_object_init(struct subbrep_object_data *obj, const ON_Brep *brep)
-{
-    if (!obj) return;
-    BU_GET(obj->key, struct bu_vls);
-    BU_GET(obj->name_root, struct bu_vls);
-    BU_GET(obj->children, struct bu_ptbl);
-    BU_GET(obj->subtraction_candidates, struct bu_ptbl);
-    BU_GET(obj->params, struct csg_object_params);
-    BU_GET(obj->obj_name, struct bu_vls);
-    obj->params->planes = NULL;
-    obj->params->bool_op = '\0';
-    obj->planar_obj = NULL;
-    bu_vls_init(obj->key);
-    bu_vls_init(obj->name_root);
-    bu_vls_init(obj->obj_name);
-    bu_ptbl_init(obj->children, 8, "children table");
-    bu_ptbl_init(obj->subtraction_candidates, 8, "children table");
-    obj->parent = NULL;
-    obj->brep = brep;
-    obj->local_brep = NULL;
-    obj->type = BREP;
-    obj->is_island = 0;
-    obj->negative_shape = 0;
-    obj->bbox = new ON_BoundingBox();
-    ON_MinMaxInit(&(obj->bbox->m_min), &(obj->bbox->m_max));
-    obj->bbox_set = 0;
-    obj->obj_cnt = NULL;
-}
-
-void
-subbrep_object_free(struct subbrep_object_data *obj)
-{
-    if (!obj) return;
-    if (obj->params && obj->params->planes) bu_free(obj->params->planes, "csg planes");
-    if (obj->params) BU_PUT(obj->params, struct csg_object_params);
-    obj->params = NULL;
-    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
-    if (obj->planar_obj) {
-	subbrep_object_free(obj->planar_obj);
-	BU_PUT(obj->planar_obj, struct subbrep_object_data);
-    }
-    obj->planar_obj = NULL;
-    if (obj->key) {
-	bu_vls_free(obj->key);
-	BU_PUT(obj->key, struct bu_vls);
-    }
-    if (obj->name_root) {
-	bu_vls_free(obj->name_root);
-	BU_PUT(obj->name_root, struct bu_vls);
-    }
-    if (obj->children) {
-	for (unsigned int i = 0; i < BU_PTBL_LEN(obj->children); i++){
-	    struct subbrep_object_data *cobj = (struct subbrep_object_data *)BU_PTBL_GET(obj->children, i);
-	    subbrep_object_free(cobj);
-	    BU_PUT(cobj, struct subbrep_object_data);
-	}
-	bu_ptbl_free(obj->children);
-	BU_PUT(obj->children, struct bu_ptbl);
-    }
-    obj->children = NULL;
-    if (obj->subtraction_candidates) {
-	bu_ptbl_free(obj->subtraction_candidates);
-	BU_PUT(obj->subtraction_candidates, struct bu_ptbl);
-    }
-    obj->subtraction_candidates = NULL;
-
-    if (obj->faces) bu_free(obj->faces, "obj faces");
-    obj->faces = NULL;
-    if (obj->loops) bu_free(obj->loops, "obj loops");
-    obj->loops = NULL;
-    if (obj->edges) bu_free(obj->edges, "obj edges");
-    obj->edges = NULL;
-    if (obj->fol) bu_free(obj->fol, "obj fol");
-    obj->fol = NULL;
-    if (obj->fil) bu_free(obj->fil, "obj fil");
-    obj->fil = NULL;
-    if (obj->planar_obj_vert_map) bu_free(obj->planar_obj_vert_map, "obj fil");
-    obj->planar_obj_vert_map = NULL;
-    if (obj->planar_obj && (obj->local_brep == obj->planar_obj->local_brep)) obj->local_brep = NULL;
-    if (obj->parent && (obj->parent->local_brep == obj->local_brep)) obj->parent->local_brep = NULL;
-    if (obj->local_brep) delete obj->local_brep;
-    obj->local_brep = NULL;
-
-    if (obj->obj_name) {
-	bu_vls_free(obj->obj_name);
-	BU_PUT(obj->obj_name, struct bu_vls);
-    }
-
-    obj->parent = NULL;
 }
 
 
-std::string
-face_set_key(std::set<int> fset)
+/* This routine is used when there is uncertainty about whether a particular
+ * solid or combination is to be subtracted or unioned into a parent.  For
+ * planar on planar cases, the check is whether every vertex of the candidate
+ * solid is either on or one of above/below the shared face plane.  If some
+ * vertices are above and some are below, the candidate solid is self
+ * intersecting.
+ *
+ * We've filtered out non-planar connecting loop situations elsewhere in the
+ * pipeline - they aren't handled here. */
+int
+subbrep_brep_boolean(struct subbrep_island_data *data)
 {
-    std::set<int>::iterator s_it;
-    std::set<int>::iterator s_it2;
-    std::string key;
-    struct bu_vls vls_key = BU_VLS_INIT_ZERO;
-    for (s_it = fset.begin(); s_it != fset.end(); s_it++) {
-	bu_vls_printf(&vls_key, "%d", (*s_it));
-	s_it2 = s_it;
-	s_it2++;
-	if (s_it2 != fset.end()) bu_vls_printf(&vls_key, ",");
-    }
-    key.append(bu_vls_addr(&vls_key));
-    bu_vls_free(&vls_key);
-    return key;
-}
+    const ON_Brep *brep = data->brep;
+    int pos_cnt = 0;
+    int neg_cnt = 0;
 
-void
-set_to_array(int **array, int *array_cnt, std::set<int> *set)
-{
-    std::set<int>::iterator s_it;
-    int i = 0;
-    (*array_cnt) = set->size();
-    if ((*array_cnt) > 0) {
-	(*array) = (int *)bu_calloc((*array_cnt), sizeof(int), "array");
-	for (s_it = set->begin(); s_it != set->end(); s_it++) {
-	    (*array)[i] = *s_it;
-	    i++;
+    /* Top level breps are unions */
+    if (data->fil_cnt == 0) return 1;
+
+    std::set<int> island_loops;
+    array_to_set(&island_loops, data->island_loops, data->island_loops_cnt);
+
+    // Collecte midpoints from all edges in the island
+    ON_3dPointArray mid_points;
+    std::set<int> verts;
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    if (trim->m_ei != -1) {
+		ON_3dPoint midpt = edge->EdgeCurveOf()->PointAt(edge->EdgeCurveOf()->Domain().Mid());
+		mid_points.Append(midpt);
+	    }
 	}
     }
-}
-
-void
-array_to_set(std::set<int> *set, int *array, int array_cnt)
-{
-    for (int i = 0; i < array_cnt; i++) {
-	set->insert(array[i]);
-    }
-}
 
 
-void
-map_to_array(int **array, int *array_cnt, std::map<int,int> *map)
-{
-    std::map<int,int>::iterator m_it;
-    int i = 0;
-    (*array_cnt) = map->size();
-    if ((*array_cnt) > 0) {
-	(*array) = (int *)bu_calloc((*array_cnt)*2, sizeof(int), "array");
-	for (m_it = map->begin(); m_it != map->end(); m_it++) {
-	    (*array)[i] = m_it->first;
-	    (*array)[i+*array_cnt] = m_it->second;
-	    i++;
-	}
-    }
-}
-
-void
-array_to_map(std::map<int,int> *map, int *array, int array_cnt)
-{
-    for (int i = 0; i < array_cnt; i++) {
-	(*map)[array[i]] = array[array_cnt+i];
-    }
-}
-
-void
-print_subbrep_object(struct subbrep_object_data *data, const char *offset)
-{
-    struct bu_vls log = BU_VLS_INIT_ZERO;
-    bu_vls_printf(&log, "\n");
-    bu_vls_printf(&log, "%sObject %s:\n", offset, bu_vls_addr(data->key));
-    bu_vls_printf(&log, "%sType: ", offset);
-    switch (data->type) {
-	case COMB:
-	    bu_vls_printf(&log, "comb\n");
-	    break;
-	case PLANAR_VOLUME:
-	    bu_vls_printf(&log, "planar\n");
-	    break;
-	case CYLINDER:
-	    bu_vls_printf(&log, "cylinder\n");
-	    break;
-	case CONE:
-	    bu_vls_printf(&log, "cone\n");
-	    break;
-	case SPHERE:
-	    bu_vls_printf(&log, "sphere\n");
-	    break;
-	case ELLIPSOID:
-	    bu_vls_printf(&log, "ellipsoid\n");
-	    break;
-	case TORUS:
-	    bu_vls_printf(&log, "torus\n");
-	    break;
-	default:
-	    bu_vls_printf(&log, "brep\n");
-    }
-    bu_vls_printf(&log, "%sFace set: ", offset);
-    for (int i = 0; i < data->faces_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->faces[i]);
-	if (i + 1 != data->faces_cnt) bu_vls_printf(&log, ",");
-    }
-    bu_vls_printf(&log, "\n");
-    bu_vls_printf(&log, "%sLoop set: ", offset);
-    for (int i = 0; i < data->loops_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->loops[i]);
-	if (i + 1 != data->loops_cnt) bu_vls_printf(&log, ",");
-    }
-    bu_vls_printf(&log, "\n");
-    bu_vls_printf(&log, "%sEdge set: ", offset);
-    for (int i = 0; i < data->edges_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->edges[i]);
-	if (i + 1 != data->edges_cnt) bu_vls_printf(&log, ",");
-    }
-    bu_vls_printf(&log, "\n");
-    bu_vls_printf(&log, "%sFaces with outer loop set: ", offset);
-    for (int i = 0; i < data->fol_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->fol[i]);
-	if (i + 1 != data->fol_cnt) bu_vls_printf(&log, ",");
-    }
-    bu_vls_printf(&log, "\n");
-    bu_vls_printf(&log, "%sFaces with only inner loops set: ", offset);
     for (int i = 0; i < data->fil_cnt; i++) {
-	bu_vls_printf(&log, "%d", data->fil[i]);
-	if (i + 1 != data->fil_cnt) bu_vls_printf(&log, ",");
-    }
-    bu_vls_printf(&log, "\n");
+	std::set<int> active_loops;
+	// Get face with inner loop
+	const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
+	const ON_Surface *surf = face->SurfaceOf();
+	surface_t stype = ((surface_t *)data->face_surface_types)[face->m_face_index];
+	if (stype != SURFACE_PLANE) return -2;
 
-    bu_log("%s\n", bu_vls_addr(&log));
-    bu_vls_free(&log);
-}
-
-/* This routine is used when there is uncertainty about whether a
- * particular solid or combination is to be subtracted or unioned
- * into a parent.  For planar on planar cases, the check is whether every
- * vertex of the candidate solid is either on or one of above/below
- * the shared face plane.  If some vertices are above and some
- * are below, the candidate solid is self intersecting and must be
- * further subdivided.
- *
- * For non-planar situations, we're probably looking at a surface
- * surface intersection test.  A possible test short of that might
- * be vertices of bounding boxes, but that will result in situations
- * reporting subdivision necessity when there isn't any unless we
- * follow up with a more rigorous test.  This needs more thought. */
-int
-subbrep_determine_boolean(struct subbrep_object_data *data)
-{
-   int pos_cnt = 0;
-   int neg_cnt = 0;
-
-   if (data->fil_cnt == 0) return 1;
-
-   for (int i = 0; i < data->fil_cnt; i++) {
-       // Get face with inner loop
-       const ON_BrepFace *face = &(data->brep->m_F[data->fil[i]]);
-       const ON_Surface *surf = face->SurfaceOf();
-       surface_t stype = GetSurfaceType(surf, NULL);
-       ON_Plane face_plane;
-       if (stype == SURFACE_PLANE) {
-	   ON_Surface *ts = surf->Duplicate();
-	   (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
-	   delete ts;
-	   if (face->m_bRev) face_plane.Flip();
-       }
-       std::set<int> verts;
-       for (int j = 0; j < data->edges_cnt; j++) {
-	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(0)->m_vertex_index);
-	   verts.insert(data->brep->m_E[data->edges[j]].Vertex(1)->m_vertex_index);
-       }
-       for (std::set<int>::iterator s_it = verts.begin(); s_it != verts.end(); s_it++) {
-	   // For each vertex in the subbrep, determine
-	   // if it is above, below or on the face
-	   if (stype == SURFACE_PLANE) {
-	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
-	       double distance = face_plane.DistanceTo(p);
-	       if (distance > BREP_PLANAR_TOL) pos_cnt++;
-	       if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
-	   } else {
-	       // TODO - this doesn't seem to work...
-	       if (face->m_bRev) {
-		   // do something...
-	       }
-	       double current_distance = 0;
-	       ON_3dPoint p = data->brep->m_V[*s_it].Point();
-	       ON_3dPoint p3d;
-	       ON_2dPoint p2d;
-	       if (surface_GetClosestPoint3dFirstOrder(surf,p,p2d,p3d,current_distance)) {
-		   if (current_distance > 0.001) pos_cnt++;
-	       } else {
-		   neg_cnt++;
-	       }
-	   }
-       }
-   }
-
-   // Determine what we have.  If we have both pos and neg counts > 0,
-   // the proposed brep needs to be broken down further.  all pos
-   // counts is a union, all neg counts is a subtraction
-   if (pos_cnt && neg_cnt) return -2;
-   if (pos_cnt) return 1;
-   if (neg_cnt) return -1;
-   if (!pos_cnt && !neg_cnt) return 2;
-
-   return -1;
-}
-
-/* Find corners that can be used to construct a planar face
- *
- * Collect all of the vertices in the data that are connected
- * to one and only one non-linear edge in the set.
- *
- * Failure cases are:
- *
- * More than four vertices that are mated with exactly one
- * non-linear edge in the data set
- * Four vertices meeting previous criteria that are non-planar
- * Any vertex on a linear edge that is not coplanar with the
- * plane described by the vertices meeting the above criteria
- *
- * return -1 if failed, number of corner verts if successful
- */
-int
-subbrep_find_corners(struct subbrep_object_data *data, int **corner_verts_array, ON_Plane *pcyl)
-{
-    std::set<int> candidate_verts;
-    std::set<int> corner_verts;
-    std::set<int> linear_verts;
-    std::set<int>::iterator v_it, e_it;
-    std::set<int> edges;
-    if (!data || !corner_verts_array || !pcyl) return -1;
-    array_to_set(&edges, data->edges, data->edges_cnt);
-    // collect all candidate vertices
-    for (int i = 0; i < data->edges_cnt; i++) {
-	int ei = data->edges[i];
-	const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
-	candidate_verts.insert(edge->Vertex(0)->m_vertex_index);
-	candidate_verts.insert(edge->Vertex(1)->m_vertex_index);
-    }
-    for (v_it = candidate_verts.begin(); v_it != candidate_verts.end(); v_it++) {
-        const ON_BrepVertex *vert = &(data->brep->m_V[*v_it]);
-        int curve_cnt = 0;
-        int line_cnt = 0;
-        for (int i = 0; i < vert->m_ei.Count(); i++) {
-            int ei = vert->m_ei[i];
-            const ON_BrepEdge *edge = &(data->brep->m_E[ei]);
-            if (edges.find(edge->m_edge_index) != edges.end()) {
-                ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
-                if (ecv->IsLinear()) {
-                    line_cnt++;
-                } else {
-                    curve_cnt++;
-                }
-                delete ecv;
-            }
-        }
-        if (curve_cnt == 1) {
-            corner_verts.insert(*v_it);
-            //std::cout << "found corner vert: " << *v_it << "\n";
-        }
-        if (line_cnt > 1 && curve_cnt == 0) {
-            linear_verts.insert(*v_it);
-            //std::cout << "found linear vert: " << *v_it << "\n";
-        }
-    }
-
-    // First, check corner count
-    if (corner_verts.size() > 4) {
-        //std::cout << "more than 4 corners - complex\n";
-        return -1;
-    }
-    if (corner_verts.size() == 0) return 0;
-    // Second, create the candidate face plane.  Verify coplanar status of points if we've got 4.
-    std::set<int>::iterator s_it = corner_verts.begin();
-    ON_3dPoint p1 = data->brep->m_V[*s_it].Point();
-    s_it++;
-    ON_3dPoint p2 = data->brep->m_V[*s_it].Point();
-    s_it++;
-    ON_3dPoint p3 = data->brep->m_V[*s_it].Point();
-    ON_Plane tmp_plane(p1, p2, p3);
-    if (corner_verts.size() == 4) {
-        s_it++;
-        ON_3dPoint p4 = data->brep->m_V[*s_it].Point();
-        if (tmp_plane.DistanceTo(p4) > BREP_PLANAR_TOL) {
-            //std::cout << "planar tol fail\n";
-            return -1;
-        } else {
-            (*pcyl) = tmp_plane;
-        }
-    } else {
-        // TODO - If we have less than four corner points and no additional curve planes, we
-        // must have a face subtraction that tapers to a point at the edge of the
-        // cylinder.  Pull the linear edges from the two corner points to find the third point -
-        // this is a situation where a simpler arb (arb6?) is adequate to make the subtraction.
-	(*pcyl) = tmp_plane;
-    }
-
-    // Third, if we had vertices with only linear edges, check to make sure they are in fact
-    // on the candidate plane for the face (if not, we've got something more complex going on).
-    if (linear_verts.size() > 0) {
-        std::set<int>::iterator ls_it;
-        for (ls_it = linear_verts.begin(); ls_it != linear_verts.end(); ls_it++) {
-            ON_3dPoint pnt = data->brep->m_V[*ls_it].Point();
-            if ((*pcyl).DistanceTo(pnt) > BREP_PLANAR_TOL) {
-                //std::cout << "stray verts fail\n";
-                return -1;
-            }
-        }
-    }
-
-    // If we've made it here, package up the verts and return
-    int verts_cnt = 0;
-    if (corner_verts.size() > 0)
-	set_to_array(corner_verts_array, &verts_cnt, &corner_verts);
-    return verts_cnt;
-}
-
-/* Return 1 if determination fails, else return 0 and top_pnts and bottom_pnts */
-int
-subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_verts, ON_Plane *top_plane, ON_Plane *bottom_plane, ON_SimpleArray<const ON_BrepVertex *> *top_pnts, ON_SimpleArray<const ON_BrepVertex *> *bottom_pnts)
-{
-    double offset = 0.0;
-    double pdist = INT_MAX;
-    ON_SimpleArray<const ON_BrepVertex *> corner_pnts(4);
-    std::set<int>::iterator s_it;
-    /* Get a sense of how far off the planes the vertices are, and how
-     * far it is from one plane to the other */
-    for (s_it = corner_verts->begin(); s_it != corner_verts->end(); s_it++) {
-	ON_3dPoint p = data->brep->m_V[*s_it].Point();
-	corner_pnts.Append(&(data->brep->m_V[*s_it]));
-	double d1 = fabs(bottom_plane->DistanceTo(p));
-	double d2 = fabs(top_plane->DistanceTo(p));
-	double d = (d1 > d2) ? d2 : d1;
-	if (d > offset) offset = d;
-	double dp = (d1 > d2) ? d1 : d2;
-	if (dp < pdist) pdist = dp;
-    }
-    for (int p = 0; p < corner_pnts.Count(); p++) {
-	double poffset1 = bottom_plane->DistanceTo(corner_pnts[p]->Point());
-	double poffset2 = top_plane->DistanceTo(corner_pnts[p]->Point());
-	int identified = 0;
-	if (NEAR_ZERO(poffset1, 0.01 * pdist + offset)) {
-	    bottom_pnts->Append(corner_pnts[p]);
-	    identified = 1;
+	// An island with both inner and outer loops in a single face
+	// is defined to be self intersecting in this context
+	for (int j = 0; j < face->LoopCount(); j++) {
+	    if (island_loops.find(face->m_li[j]) != island_loops.end()) active_loops.insert(face->m_li[j]);
 	}
-	if (NEAR_ZERO(poffset2, 0.01 * pdist + offset)) {
-	    top_pnts->Append(corner_pnts[p]);
-	    identified = 1;
+	if (active_loops.size() > 1) return -2;
+
+	// Get face plane
+	ON_Plane face_plane;
+	ON_Surface *ts = surf->Duplicate();
+	(void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	delete ts;
+	if (face->m_bRev) face_plane.Flip();
+
+	// For each vertex in the subbrep, determine if it is above, below or on the face
+	for (int j = 0; j < mid_points.Count(); j++) {
+	    double distance = face_plane.DistanceTo(mid_points[j]);
+	    if (distance > BREP_PLANAR_TOL) pos_cnt++;
+	    if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
 	}
-	if (!identified) return 1;
     }
-    // TODO - probably doesn't always have to be 2 and 2...
-    if (bottom_pnts->Count() < 2) return 1;
-    if (top_pnts->Count() < 2) return 1;
+
+    // If we didn't get *anything* from the edge midpoints, as a last resort try the control
+    // points of the surfaces included in the island via their outer loops.
+    if (!pos_cnt && !neg_cnt) {
+	for (int i = 0; i < data->fil_cnt; i++) {
+	    std::set<int> active_loops;
+	    // Get face with inner loop
+	    const ON_BrepFace *face = &(brep->m_F[data->fil[i]]);
+	    const ON_Surface *surf = face->SurfaceOf();
+	    // Get face plane
+	    ON_Plane face_plane;
+	    ON_Surface *ts = surf->Duplicate();
+	    (void)ts->IsPlanar(&face_plane, BREP_PLANAR_TOL);
+	    delete ts;
+	    if (face->m_bRev) face_plane.Flip();
+
+	    for (int fo = 0; fo < data->fol_cnt; fo++) {
+		const ON_BrepFace *oface = &(brep->m_F[data->fol[fo]]);
+		const ON_Surface *osurf = oface->SurfaceOf();
+		ON_NurbsSurface onsurf;
+		if (!osurf->GetNurbForm(onsurf)) continue;
+		for (int j = 0; j < onsurf.m_cv_count[0]; j++) {
+		    for (int k = 0; k < onsurf.m_cv_count[1]; k++) {
+			ON_3dPoint cp;
+			onsurf.GetCV(j, k, cp);
+			double distance = face_plane.DistanceTo(cp);
+			if (distance > BREP_PLANAR_TOL) pos_cnt++;
+			if (distance < -1*BREP_PLANAR_TOL) neg_cnt++;
+		    }
+		}
+	    }
+	}
+    }
+
+    // Determine what we have.  If we have both pos and neg counts > 0,
+    // the proposed brep needs to be broken down further.  all pos
+    // counts is a union, all neg counts is a subtraction
+    if (pos_cnt && neg_cnt) return -2;
+    if (pos_cnt) return 1;
+    if (neg_cnt) return -1;
+
+    // If we couldn't deduce anything, return zero - caller will have to decide what to do.
     return 0;
 }
+
+int
+subbrep_make_brep(struct bu_vls *UNUSED(msgs), struct subbrep_island_data *data)
+{
+    if (data->local_brep) return 0;
+    data->local_brep = ON_Brep::New();
+    const ON_Brep *brep = data->brep;
+    ON_Brep *nbrep = data->local_brep;
+
+    // We only want the subset of data that is part of this particular
+    // subobject - to do that, we need to map elements from their indices in
+    // the old Brep to their locations in the new.
+    std::map<int, int> face_map;
+    std::map<int, int> surface_map;
+    std::map<int, int> edge_map;
+    std::map<int, int> vertex_map;
+    std::map<int, int> c3_map;
+    std::map<int, int> trim_map;
+
+    std::set<int> faces;
+    std::set<int> fil;
+    array_to_set(&faces, data->island_faces, data->island_faces_cnt);
+    array_to_set(&fil, data->fil, data->fil_cnt);
+
+    // Use the set of loops to collect loops, trims, vertices, edges, faces, 2D
+    // and 3D curves
+    for (int i = 0; i < data->island_loops_cnt; i++) {
+	const ON_BrepLoop *loop = &(brep->m_L[data->island_loops[i]]);
+	const ON_BrepFace *face = loop->Face();
+	// Face
+	if (face_map.find(face->m_face_index) == face_map.end()) {
+	    // Get Surface of Face
+	    ON_Surface *ns = face->SurfaceOf()->Duplicate();
+	    int nsid = nbrep->AddSurface(ns);
+	    surface_map[face->SurfaceIndexOf()] = nsid;
+	    // Get Face
+	    ON_BrepFace &new_face = nbrep->NewFace(nsid);
+	    face_map[face->m_face_index] = new_face.m_face_index;
+	    if (fil.find(face->m_face_index) != fil.end()) nbrep->FlipFace(new_face);
+	    if (face->m_bRev) nbrep->FlipFace(new_face);
+	}
+	// Loop
+	ON_BrepLoop &nl = nbrep->NewLoop(ON_BrepLoop::outer, nbrep->m_F[face_map[face->m_face_index]]);
+	if (loop->m_type != ON_BrepLoop::outer && loop->m_type != ON_BrepLoop::inner)
+	    nl.m_type = loop->m_type;
+	// Trims, etc.
+	for (int ti = 0; ti < loop->m_ti.Count(); ti++) {
+	    int v0i, v1i;
+	    int c2i, c3i;
+	    const ON_BrepTrim *trim = &(brep->m_T[loop->m_ti[ti]]);
+	    const ON_BrepEdge *edge = &(brep->m_E[trim->m_ei]);
+	    const ON_BrepEdge *nedge = NULL;
+
+	    // Get the 2D curve from the trim.
+	    ON_Curve *nc = trim->TrimCurveOf()->Duplicate();
+	    c2i = nbrep->AddTrimCurve(nc);
+
+	    // Edges, etc.
+	    if (trim->m_ei != -1 && edge) {
+		// Get the 3D curve from the edge
+		if (c3_map.find(edge->EdgeCurveIndexOf()) == c3_map.end()) {
+		    ON_Curve *nec = edge->EdgeCurveOf()->Duplicate();
+		    c3i = nbrep->AddEdgeCurve(nec);
+		    c3_map[edge->EdgeCurveIndexOf()] = c3i;
+		} else {
+		    c3i = c3_map[edge->EdgeCurveIndexOf()];
+		}
+
+		// Get the vertices from the edges
+		if (vertex_map.find(edge->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newv0 = nbrep->NewVertex(edge->Vertex(0)->Point(), edge->Vertex(0)->m_tolerance);
+		    v0i = newv0.m_vertex_index;
+		    vertex_map[edge->Vertex(0)->m_vertex_index] = v0i;
+		} else {
+		    v0i = vertex_map[edge->Vertex(0)->m_vertex_index];
+		}
+		if (vertex_map.find(edge->Vertex(1)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newv1 = nbrep->NewVertex(edge->Vertex(1)->Point(), edge->Vertex(1)->m_tolerance);
+		    v1i = newv1.m_vertex_index;
+		    vertex_map[edge->Vertex(1)->m_vertex_index] = v1i;
+		} else {
+		    v1i = vertex_map[edge->Vertex(1)->m_vertex_index];
+		}
+
+		// Edge
+		if (edge_map.find(edge->m_edge_index) == edge_map.end()) {
+		    ON_BrepEdge& new_edge = nbrep->NewEdge(nbrep->m_V[v0i], nbrep->m_V[v1i], c3i, NULL ,0);
+		    edge_map[edge->m_edge_index] = new_edge.m_edge_index;
+		}
+		nedge = &(nbrep->m_E[edge_map[edge->m_edge_index]]);
+	    }
+
+	    // Now set up the Trim
+	    if (trim->m_ei != -1 && nedge) {
+		ON_BrepEdge &n_edge = nbrep->m_E[nedge->m_edge_index];
+		ON_BrepTrim &nt = nbrep->NewTrim(n_edge, trim->m_bRev3d, nl, c2i);
+		nt.m_tolerance[0] = trim->m_tolerance[0];
+		nt.m_tolerance[1] = trim->m_tolerance[1];
+		nt.m_type = trim->m_type;
+		nt.m_iso = trim->m_iso;
+	    } else {
+		if (vertex_map.find(trim->Vertex(0)->m_vertex_index) == vertex_map.end()) {
+		    ON_BrepVertex& newvs = nbrep->NewVertex(trim->Vertex(0)->Point(), trim->Vertex(0)->m_tolerance);
+		    vertex_map[trim->Vertex(0)->m_vertex_index] = newvs.m_vertex_index;
+		    ON_BrepTrim &nt = nbrep->NewSingularTrim(newvs, nl, trim->m_iso, c2i);
+		    nt.m_type = trim->m_type;
+		    nt.m_tolerance[0] = trim->m_tolerance[0];
+		    nt.m_tolerance[1] = trim->m_tolerance[1];
+		} else {
+		    ON_BrepTrim &nt = nbrep->NewSingularTrim(nbrep->m_V[vertex_map[trim->Vertex(0)->m_vertex_index]], nl, trim->m_iso, c2i);
+		    nt.m_type = trim->m_type;
+		    nt.m_tolerance[0] = trim->m_tolerance[0];
+		    nt.m_tolerance[1] = trim->m_tolerance[1];
+		}
+
+	    }
+	}
+    }
+
+    // Make sure all the loop directions and types are correct
+    for (int f = 0; f < nbrep->m_F.Count(); f++) {
+	ON_BrepFace *face = &(nbrep->m_F[f]);
+	if (face->m_li.Count() == 1) {
+	    ON_BrepLoop& loop = nbrep->m_L[face->m_li[0]];
+	    if (nbrep->LoopDirection(loop) != 1) {
+		nbrep->FlipLoop(loop);
+	    }
+	    loop.m_type = ON_BrepLoop::outer;
+	} else {
+	    int i1 = 0;
+	    int tmp;
+	    ON_BoundingBox o_bbox, c_bbox;
+	    int outer_loop_ind = face->m_li[0];
+	    nbrep->m_L[outer_loop_ind].GetBoundingBox(o_bbox);
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		ON_BrepLoop& loop = nbrep->m_L[face->m_li[l]];
+		loop.GetBoundingBox(c_bbox);
+
+		if (c_bbox.Includes(o_bbox)) {
+		    if (nbrep->m_L[outer_loop_ind].m_type == ON_BrepLoop::outer) {
+			nbrep->m_L[outer_loop_ind].m_type = ON_BrepLoop::inner;
+		    }
+		    o_bbox = c_bbox;
+		    outer_loop_ind = face->m_li[l];
+		    i1 = l;
+		}
+	    }
+	    if (nbrep->m_L[outer_loop_ind].m_type != ON_BrepLoop::outer)
+		nbrep->m_L[outer_loop_ind].m_type = ON_BrepLoop::outer;
+	    tmp = face->m_li[0];
+	    face->m_li[0] = face->m_li[i1];
+	    face->m_li[i1] = tmp;
+	    for (int l = 1; l < face->m_li.Count(); l++) {
+		if (nbrep->m_L[face->m_li[l]].m_type != ON_BrepLoop::inner && nbrep->m_L[face->m_li[l]].m_type != ON_BrepLoop::slit) {
+		    nbrep->m_L[face->m_li[l]].m_type = ON_BrepLoop::inner;
+		}
+	    }
+	}
+    }
+
+    nbrep->ShrinkSurfaces();
+    nbrep->CullUnusedSurfaces();
+
+    //std::cout << "new brep done: " << bu_vls_addr(data->key) << "\n";
+
+    return 1;
+}
+
+// Tikz LaTeX output from B-Rep wireframes
+int
+ON_BrepTikz(ON_String& s, const ON_Brep *brep, const char *c, const char *pre)
+{
+    struct bu_vls color = BU_VLS_INIT_ZERO;
+    struct bu_vls output = BU_VLS_INIT_ZERO;
+    struct bu_vls prefix = BU_VLS_INIT_ZERO;
+    if (c) {
+	bu_vls_sprintf(&color, "%s", c);
+    } else {
+	bu_vls_sprintf(&color, "gray", c);
+    }
+    if (pre) {
+	bu_vls_sprintf(&prefix, "%s", pre);
+    } else {
+	bu_vls_trunc(&prefix, 0);
+    }
+
+    for (int i = 0; i < brep->m_V.Count(); i++) {
+	bu_vls_printf(&output, "\\coordinate (%sV%d) at (%f, %f, %f);\n", bu_vls_addr(&prefix), i, brep->m_V[i].Point().x, brep->m_V[i].Point().y, brep->m_V[i].Point().z);
+    }
+
+    for (int i = 0; i < brep->m_E.Count(); i++) {
+	const ON_BrepEdge *edge = &(brep->m_E[i]);
+	//int ei = edge->m_edge_index;
+	ON_Curve *ecv = edge->EdgeCurveOf()->Duplicate();
+	if (ecv->IsLinear()) {
+	    bu_vls_printf(&output, "\\draw[%s] (%sV%d) -- (%sV%d);\n", bu_vls_addr(&color), bu_vls_addr(&prefix), edge->Vertex(0)->m_vertex_index, bu_vls_addr(&prefix), edge->Vertex(1)->m_vertex_index);
+	    delete ecv;
+	    continue;
+	}
+	ecv = edge->EdgeCurveOf()->Duplicate();
+	ON_Polyline poly;
+	ON_Curve *ncv = edge->EdgeCurveOf()->Duplicate();
+	int pnt_cnt = ON_Curve_PolyLine_Approx(&poly, ncv, BN_TOL_DIST);
+	if (pnt_cnt) {
+	    if (ecv->IsPolyline()) {
+		ON_3dPoint p = poly[0];
+		if (pnt_cnt) {
+		    bu_vls_printf(&output, "\\draw[%s] (%f, %f, %f)", bu_vls_addr(&color), p.x, p.y, p.z);
+		    for (int si = 1; si < poly.Count(); si++) {
+			p = poly[si];
+			bu_vls_printf(&output, " -- (%f, %f, %f)", p.x, p.y, p.z);
+			if (si+1 == poly.Count()) {
+			    bu_vls_printf(&output, ";\n");
+			}
+		    }
+		}
+	    } else {
+		bu_vls_printf(&output, "\\draw[%s] plot [smooth] coordinates {", bu_vls_addr(&color));
+		for (int si = 0; si < poly.Count(); si++) {
+		    ON_3dPoint p = poly[si];
+		    bu_vls_printf(&output, "(%f,%f,%f) ", p.x, p.y, p.z);
+		}
+		bu_vls_printf(&output, "};\n", bu_vls_addr(&color));
+	    }
+	}
+	delete ecv;
+	delete ncv;
+    }
+
+    s.Append(bu_vls_addr(&output), bu_vls_strlen(&output));
+    bu_vls_free(&color);
+    bu_vls_free(&output);
+    bu_vls_free(&prefix);
+    return 1;
+}
+
+
 
 // Local Variables:
 // tab-width: 8
@@ -788,3 +725,4 @@ subbrep_top_bottom_pnts(struct subbrep_object_data *data, std::set<int> *corner_
 // c-file-style: "stroustrup"
 // End:
 // ex: shiftwidth=4 tabstop=8
+

@@ -1,7 +1,7 @@
 /*                           C M D . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -75,8 +75,6 @@ extern int cmd_nop(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_oed(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_output_hook(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_overlay(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_parse_points(ClientData, Tcl_Interp *, int, const char *[]);
-extern int cmd_pov(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_put(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rot(ClientData, Tcl_Interp *, int, const char *[]);
 extern int cmd_rrt(ClientData, Tcl_Interp *, int, const char *[]);
@@ -147,9 +145,7 @@ extern int f_oedit_reset(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_opendb(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_param(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_permute(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_pl(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_plot(ClientData, Tcl_Interp *, int, const char *[]);
-extern int f_polybinout(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_prefix(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_press(ClientData, Tcl_Interp *, int, const char *[]);
 extern int f_ps(ClientData, Tcl_Interp *, int, const char *[]);

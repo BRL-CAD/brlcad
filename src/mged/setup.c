@@ -1,7 +1,7 @@
 /*                         S E T U P . C
  * BRL-CAD
  *
- * Copyright (c) 1985-2014 United States Government as represented by
+ * Copyright (c) 1985-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -39,10 +39,6 @@
 /* local headers */
 #include "./mged.h"
 #include "./cmd.h"
-
-/* avoid including itcl.h due to their usage of internal headers */
-extern int Itcl_Init(Tcl_Interp *);
-
 
 /* catch auto-formatting errors in this file.  be careful as there are
  * mged_display() vars that use comma too.
@@ -252,15 +248,11 @@ static struct cmdtab mged_cmdtab[] = {
     {"oyscale", f_be_o_yscale, GED_FUNC_PTR_NULL},
     {"ozscale", f_be_o_zscale, GED_FUNC_PTR_NULL},
     {"p", f_param, GED_FUNC_PTR_NULL},
-    {"parse_points", cmd_parse_points, GED_FUNC_PTR_NULL},
     {"pathlist", cmd_ged_plain_wrapper, ged_pathlist},
     {"paths", cmd_ged_plain_wrapper, ged_pathsum},
     {"permute", f_permute, GED_FUNC_PTR_NULL},
-    {"pl", f_pl, GED_FUNC_PTR_NULL},
     {"plot", cmd_ged_plain_wrapper, ged_plot},
     {"png", cmd_ged_plain_wrapper, ged_png},
-    {"polybinout", f_polybinout, GED_FUNC_PTR_NULL},
-    {"pov", cmd_pov, GED_FUNC_PTR_NULL},
     {"prcolor", cmd_ged_plain_wrapper, ged_prcolor},
     {"prefix", cmd_ged_plain_wrapper, ged_prefix},
     {"press", f_press, GED_FUNC_PTR_NULL},
@@ -398,8 +390,6 @@ cmd_setup(void)
 {
     struct cmdtab *ctp;
     struct bu_vls temp = BU_VLS_INIT_ZERO;
-    const char *pathname;
-    char buffer[1024];
 
     /* from cmd.c */
     extern int glob_compat_mode;
@@ -415,23 +405,11 @@ cmd_setup(void)
 				(ClientData)ctp, (Tcl_CmdDeleteProc *)NULL);
     }
 
-    /* overrides/wraps the built-in tree command */
-
-    /* Locate the BRL-CAD-specific Tcl scripts */
-    pathname = bu_brlcad_data("tclscripts", 1);
-    snprintf(buffer, sizeof(buffer), "%s", pathname);
-
     /* link some tcl variables to these corresponding globals */
     Tcl_LinkVar(INTERP, "glob_compat_mode", (char *)&glob_compat_mode, TCL_LINK_BOOLEAN);
     Tcl_LinkVar(INTERP, "output_as_return", (char *)&output_as_return, TCL_LINK_BOOLEAN);
 
-    /* Provide Tcl interfaces to the fundamental BRL-CAD libraries */
-    if (Bu_Init(INTERP) == TCL_ERROR) {
-      bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(INTERP));
-    }
-    Bn_Init(INTERP);
-    Rt_Init(INTERP);
-    Go_Init(INTERP);
+    /* Init mged's Tcl interface to libwdb */
     Wdb_Init(INTERP);
 
     tkwin = NULL;
@@ -446,11 +424,8 @@ cmd_setup(void)
 void
 mged_setup(Tcl_Interp **interpreter)
 {
-    int try_auto_path = 0;
-
-    int init_tcl = 1;
-    int init_itcl = 1;
     struct bu_vls str = BU_VLS_INIT_ZERO;
+    struct bu_vls tlog = BU_VLS_INIT_ZERO;
     const char *name = bu_argv0_full_path();
 
     /* locate our run-time binary (must be called before Tcl_CreateInterp()) */
@@ -471,98 +446,12 @@ mged_setup(Tcl_Interp **interpreter)
     /* Create the interpreter */
     *interpreter = Tcl_CreateInterp();
 
-    /* a two-pass init loop.  the first pass just tries default init
-     * routines while the second calls tclcad_auto_path() to help it
-     * find other, potentially uninstalled, resources.
-     */
-    while (1) {
-
-	/* not called first time through, give Tcl_Init() a chance */
-	if (try_auto_path) {
-	    /* Locate the BRL-CAD-specific Tcl scripts, set the auto_path */
-	    tclcad_auto_path(*interpreter);
-	}
-
-	/* Initialize Tcl */
-	Tcl_ResetResult(*interpreter);
-	if (init_tcl && Tcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		try_auto_path = 1;
-		continue;
-	    }
-	    bu_log("Tcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-	init_tcl = 0;
-
-	/* Initialize [incr Tcl] */
-	Tcl_ResetResult(*interpreter);
-	/* NOTE: Calling "package require Itcl" here is apparently
-	 * insufficient without other changes elsewhere.  The
-	 * Combination Editor in mged fails with an iwidgets class
-	 * already loaded error if we don't perform Itcl_Init() here.
-	 */
-	if (init_itcl && Itcl_Init(*interpreter) == TCL_ERROR) {
-	    if (!try_auto_path) {
-		Tcl_Namespace *nsp;
-
-		try_auto_path = 1;
-		/* Itcl_Init() leaves initialization in a bad state
-		 * and can cause retry failures.  cleanup manually.
-		 */
-		Tcl_DeleteCommand(*interpreter, "::itcl::class");
-		nsp = Tcl_FindNamespace(*interpreter, "::itcl", NULL, 0);
-		if (nsp)
-		    Tcl_DeleteNamespace(nsp);
-		continue;
-	    }
-	    bu_log("Itcl_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	    break;
-	}
-	init_itcl = 0;
-
-	/* don't actually want to loop forever */
-	break;
-
-    } /* end iteration over Init() routines that need auto_path */
-    Tcl_ResetResult(*interpreter);
-
-    /* if we haven't loaded by now, load auto_path so we find our tclscripts */
-    if (!try_auto_path) {
-	/* Locate the BRL-CAD-specific Tcl scripts */
-	tclcad_auto_path(*interpreter);
+    /* Do basic Tcl initialization - note that Tk
+     * is not initialized at this point. */
+    if (tclcad_init(*interpreter, 0, &tlog) == TCL_ERROR) {
+	bu_log("tclcad_init error:\n%s\n", bu_vls_addr(&tlog));
     }
-
-    /*XXX FIXME: Should not be importing Itcl into the global namespace */
-    /* Import [incr Tcl] commands into the global namespace. */
-    if (Tcl_Import(*interpreter, Tcl_GetGlobalNamespace(*interpreter), "::itcl::*", /* allowOverwrite */ 1) != TCL_OK) {
-	bu_log("Tcl_Import ERROR: %s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libbu */
-    if (Bu_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Bu_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libbn */
-    if (Bn_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Bn_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize librt */
-    if (Rt_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Rt_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
-
-    /* Initialize libged */
-    if (Go_Init(*interpreter) == TCL_ERROR) {
-	bu_log("Ged_Init ERROR:\n%s\n", Tcl_GetStringResult(*interpreter));
-	Tcl_ResetResult(*interpreter);
-    }
+    bu_vls_free(&tlog);
 
     BU_ALLOC(view_state->vs_gvp, struct bview);
     ged_view_init(view_state->vs_gvp);

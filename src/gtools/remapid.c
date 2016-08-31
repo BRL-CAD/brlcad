@@ -1,7 +1,7 @@
 /*                       R E M A P I D . C
  * BRL-CAD
  *
- * Copyright (c) 1997-2014 United States Government as represented by
+ * Copyright (c) 1997-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -800,6 +800,9 @@ main(int argc, char **argv)
     int tankill = 0;	/* TANKILL format (vs. BRL-CAD)? */
 
     bu_stdin->file_ptr = stdin;		/* LINUX-required init */
+
+    fprintf(stderr,"DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.  It is considered superseded by reid+remat\n\n");
+    sleep(1);
 
     while ((ch = bu_getopt(argc, argv, "gth?")) != -1)
 	switch (ch) {

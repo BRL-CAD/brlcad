@@ -1,7 +1,7 @@
 /*                          M A I N . C
  * BRL-CAD
  *
- * Copyright (c) 1990-2014 United States Government as represented by
+ * Copyright (c) 1990-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -36,7 +36,8 @@
 int do_projection = 1;
 char eor, eof, card[256];
 fastf_t scale, inv_scale, conv_factor;
-int units, counter, pstart, dstart, totentities, dirarraylen;
+int units, counter, pstart, dstart;
+size_t totentities, dirarraylen;
 FILE *fd;
 struct rt_wdb *fdout;
 char brlcad_file[256];

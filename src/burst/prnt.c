@@ -1,7 +1,7 @@
 /*                          P R N T . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -48,8 +48,13 @@
 
 
 int
+#ifdef HAVE_TERMLIB
 doMore(int *linesp)
+#else
+doMore(int *UNUSED(linesp))
+#endif
 {
+#ifdef HAVE_TERMLIB
     int ret = 1;
     if (! tty)
 	return 1;
@@ -75,6 +80,9 @@ doMore(int *linesp)
     }
     reset_Tty(HmTtyFd);
     return ret;
+#else
+    return 1;
+#endif
 }
 
 
@@ -130,8 +138,13 @@ locPerror(char *msg)
 
 
 int
+#ifdef HAVE_TERMLIB
 notify(char *str, int mode)
+#else
+notify(char *UNUSED(str), int UNUSED(mode))
+#endif
 {
+#ifdef HAVE_TERMLIB
     int i;
     static int lastlen = -1;
     int len;
@@ -173,6 +186,9 @@ notify(char *str, int mode)
     (void) fflush(stdout);
     lastlen = len;
     return 1;
+#else
+    return 0;
+#endif
 }
 
 
@@ -271,7 +287,7 @@ prntBurstHdr(fastf_t *bpt /* burst point in model coords */, fastf_t *shotdir /*
     }
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			vec[X]*unitconv, /* X' coordinate of burst point */
 			0.0,		/* LOS thickness of component */
@@ -435,7 +451,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
 
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.2f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.2f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			(standoff - cpp->pt_inhit->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */
@@ -473,7 +489,7 @@ prntSeg(struct application *ap, struct partition *cpp /* component partition */,
     exitangle = NEAR_EQUAL(ocosobliquity, 1.0, COS_TOL) ?
 	0.0 : acos(ocosobliquity) * RAD2DEG;
     if (fprintf(shotlnfp,
-		"%c % 8.2f % 7.3f % 7.2f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+		"%c % 8.2f % 7.3f % 7.2f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 		PS_SHOT_INTERSECT,
 		(standoff - cpp->pt_inhit->hit_dist)*unitconv,
 		/* X'-coordinate of intersection */
@@ -602,7 +618,7 @@ prntRegionHdr(struct application *ap, struct partition *pt_headp, struct partiti
     normthickness = getNormThickness(ap, pp, cosobliquity, entrynorm);
     bu_semaphore_acquire(BU_SEM_SYSCALL);		/* lock */
     if (fprintf(outfp,
-		"%c % 10.3f % 9.3f % 9.3f %4d %4d % 6.3f\n",
+		"%c % 10.3f % 9.3f % 9.3f %4d %5d % 6.3f\n",
 		PB_REGION_HEADER,
 		ihitp->hit_dist*unitconv, /* distance from burst pt. */
 		(ohitp->hit_dist - ihitp->hit_dist)*unitconv, /* LOS */
@@ -708,8 +724,13 @@ prntFiringCoords(fastf_t *vec)
 
 
 void
+#ifdef HAVE_TERMLIB
 prntGridOffsets(int x, int y)
+#else
+prntGridOffsets(int UNUSED(x), int UNUSED(y))
+#endif
 {
+#ifdef HAVE_TERMLIB
     if (! tty)
 	return;
     (void) ScMvCursor(GRID_X, GRID_Y);
@@ -718,6 +739,9 @@ prntGridOffsets(int x, int y)
 	);
     (void) fflush(stdout);
     return;
+#else
+    return;
+#endif
 }
 
 
@@ -742,6 +766,7 @@ prntIdents(Ids *idp, char *str)
 void
 prntPagedMenu(char **menu)
 {
+#ifdef HAVE_TERMLIB
     int done = 0;
     int lines =	(PROMPT_Y-SCROLL_TOP);
     if (! tty) {
@@ -758,6 +783,11 @@ prntPagedMenu(char **menu)
     }
     (void) fflush(stdout);
     return;
+#else
+    for (; *menu != NULL; menu++)
+	brst_log("%s\n", *menu);
+    return;
+#endif
 }
 
 
@@ -774,7 +804,7 @@ prntPhantom(struct hit *hitp /* ptr. to phantom's intersection information */, i
 {
     if (outfile[0] != NUL
 	&&	fprintf(outfp,
-			"%c % 8.2f % 8.2f %4d %2d % 7.3f % 7.3f % 7.3f %c\n",
+			"%c % 8.2f % 8.2f %5d %2d % 7.3f % 7.3f % 7.3f %c\n",
 			PB_RAY_INTERSECT,
 			(standoff-hitp->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */
@@ -793,7 +823,7 @@ prntPhantom(struct hit *hitp /* ptr. to phantom's intersection information */, i
     }
     if (shotlnfile[0] != NUL
 	&&	fprintf(shotlnfp,
-			"%c % 8.2f % 7.3f % 7.3f %4d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
+			"%c % 8.2f % 7.3f % 7.3f %5d % 8.2f % 8.2f %2d % 7.2f % 7.2f\n",
 			PS_SHOT_INTERSECT,
 			(standoff-hitp->hit_dist)*unitconv,
 			/* X'-coordinate of intersection */
@@ -822,7 +852,7 @@ prntScr(const char *format, ...)
 
     va_start(ap, format);
     format  = va_arg(ap, const char *);
-
+#ifdef HAVE_TERMLIB
     if (tty) {
 	clr_Tabs(HmTtyFd);
 	if (ScDL != NULL) {
@@ -849,9 +879,12 @@ prntScr(const char *format, ...)
 	    }
 	(void) fflush(stdout);
     } else {
+#endif
 	(void) vfprintf(stderr, format, ap);
 	(void) fputs("\n", stderr);
+#ifdef HAVE_TERMLIB
     }
+#endif
     va_end(ap);
     return;
 }
@@ -864,6 +897,7 @@ void
 prntTimer(char *str)
 {
     (void) rt_read_timer(timer, TIMER_LEN-1);
+#ifdef HAVE_TERMLIB
     if (tty) {
 	(void) ScMvCursor(TIMER_X, TIMER_Y);
 	if (str == NULL)
@@ -873,6 +907,7 @@ prntTimer(char *str)
 	(void) ScClrEOL();
 	(void) fflush(stdout);
     } else
+#endif
 	brst_log("%s:\t%s\n", str == NULL ? "(null)" : str, timer);
 }
 
@@ -933,9 +968,11 @@ qFree(Pt_Queue *qp)
 void
 warning(char *str)
 {
+#ifdef HAVE_TERMLIB
     if (tty)
 	HmError(str);
     else
+#endif
 	prntScr(str);
 }
 

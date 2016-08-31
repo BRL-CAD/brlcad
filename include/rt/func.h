@@ -1,7 +1,7 @@
 /*                        R T F U N C . H
  * BRL-CAD
  *
- * Copyright (c) 2010-2014 United States Government as represented by
+ * Copyright (c) 2010-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,7 +17,7 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @addtogroup librt
+/** @addtogroup rt_obj
  *
  * @brief Primitive manipulation functions from former functab
  * callback table.
@@ -27,9 +27,6 @@
  * this message goes away.
  *
  */
-/** @{ */
-/** @file rt/func.h */
-
 #ifndef RTFUNC_H
 #define RTFUNC_H
 
@@ -54,6 +51,9 @@
 #include "rt/rt_instance.h"
 #include "rt/xray.h"
 #include "pc.h"
+
+/** @{ */
+/** @file rt/func.h */
 
 __BEGIN_DECLS
 
@@ -176,13 +176,6 @@ RT_EXPORT extern int rt_obj_params(struct pc_pc_set *ps, const struct rt_db_inte
  * mirror an object about a plane
  */
 RT_EXPORT extern int rt_obj_mirror(struct rt_db_internal *ip, const plane_t *plane);
-
-/**
- * reduce an object into some form of simpler representation
- */
-RT_EXPORT extern void rt_obj_reduce(struct rt_db_internal *dest, const struct rt_db_internal *ip, fastf_t reduction_level, unsigned flags);
-
-#define RT_OBJ_REDUCE_PRESERVE_VOLUME 0x1
 
 __END_DECLS
 

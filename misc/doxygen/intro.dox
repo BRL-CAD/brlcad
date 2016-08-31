@@ -1,10 +1,9 @@
 /** @mainpage
  *
- * Documentation of BRL-CAD<sup>tm</sup> libraries.
+ * BRL-CAD<sup>tm</sup> Application Programming Interface Documentation.
  *
- * This is the second iteration of the documentation.  Pages have been subdivided
- * and should load much more quickly in your browser now.
+ * BRL-CAD is comprised of a collection of libraries, which organize a broad
+ * range of functionality relating to geometry and image processing.
  *
- * At this point, only the libbu module has been fully converted to the
- * new format.  Other modules should follow soon.
+ * TODO - need introduction/overview.
  */

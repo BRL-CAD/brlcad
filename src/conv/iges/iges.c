@@ -1,7 +1,7 @@
 /*                          I G E S . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -795,7 +795,7 @@ nmgregion_to_iges(char *name,
 	    tmp_name = NULL;
 	    tmp_dependent = 1;
 
-	    for (j = BU_PTBL_END(shells[i])-1; j >= 0; j--) {
+	    for (j = BU_PTBL_LEN(shells[i])-1; j >= 0; j--) {
 		s = (struct shell *)BU_PTBL_GET(shells[i], j);
 		nmg_mv_shell_to_region(s, new_r);
 	    }
@@ -1085,7 +1085,7 @@ write_vertex_list(struct nmgregion *r,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     NMG_CK_REGION(r);
 
@@ -1097,9 +1097,9 @@ write_vertex_list(struct nmgregion *r,
     nmg_vertex_tabulate(vtab, &r->l.magic);
 
     /* write parameter data for vertex list entity */
-    bu_vls_printf(&str, "502,%ld", (long int)BU_PTBL_END(vtab));
+    bu_vls_printf(&str, "502,%ld", (long int)BU_PTBL_LEN(vtab));
 
-    for (i = 0; i < BU_PTBL_END(vtab); i++) {
+    for (i = 0; i < BU_PTBL_LEN(vtab); i++) {
 	struct vertex *v;
 	struct vertex_g *vg;
 
@@ -1235,7 +1235,7 @@ write_edge_list(struct nmgregion *r,
 {
     struct bu_vls str = BU_VLS_INIT_ZERO;
     int dir_entry[21];
-    int i;
+    size_t i;
 
     NMG_CK_REGION(r);
 
@@ -1246,10 +1246,10 @@ write_edge_list(struct nmgregion *r,
     /* Build list of edge structures */
     nmg_edge_tabulate(etab, &r->l.magic);
 
-    bu_vls_printf(&str, "504,%ld", (long int)BU_PTBL_END(etab));
+    bu_vls_printf(&str, "504,%ld", (long int)BU_PTBL_LEN(etab));
 
     /* write parameter data for edge list entity */
-    for (i = 0; i < BU_PTBL_END(etab); i++) {
+    for (i = 0; i < BU_PTBL_LEN(etab); i++) {
 	struct edge *e;
 	struct edgeuse *eu;
 	struct vertexuse *vu;

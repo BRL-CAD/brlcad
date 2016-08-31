@@ -21,6 +21,7 @@ set(RT_LOCAL_INCLUDE_DIRS
   ${REGEX_INCLUDE_DIR}
   ${VDS_INCLUDE_DIR}
   ${GDIAM_INCLUDE_DIR}
+  ${TINYCTHREAD_INCLUDE_DIR}
   )
 
 BRLCAD_LIB_INCLUDE_DIRS(rt RT_INCLUDE_DIRS RT_LOCAL_INCLUDE_DIRS)
@@ -67,7 +68,6 @@ set(LIBRT_SOURCES
   globals.c
   htbl.c
   ls.c
-  many.c
   mater.c
   memalloc.c
   mkbundle.c
@@ -93,7 +93,6 @@ set(LIBRT_SOURCES
   primitives/bot/bot_oriented_bbox.cpp
   primitives/bot/btg.c
   primitives/bot/btgf.c
-  primitives/bot/gct_decimation/auxiliary/tinycthread.c
   primitives/bot/gct_decimation/auxiliary/mmbinsort.c
   primitives/bot/gct_decimation/auxiliary/mmbitmap.c
   primitives/bot/gct_decimation/auxiliary/mm.c
@@ -265,6 +264,7 @@ set(LIBRT_SOURCES
   primitives/vol/vol_mirror.c
   primitives/xxx/xxx.c
   reduce.c
+  reduce_db.cpp
   regionfix.c
   roots.c
   screened_poisson.cpp
@@ -283,7 +283,6 @@ set(LIBRT_SOURCES
 set(librt_ignored_files
   columnparse.c
   librt_private.h
-  namegen.c
   prcomb.c
   primitives/arb8/arb8_shot.cl
   primitives/bot/bot_edge.h
@@ -292,15 +291,12 @@ set(librt_ignored_files
   primitives/bot/btg.h
   primitives/bot/g_bot_include.c
   primitives/bot/gct_decimation/auxiliary/cc.h
-  primitives/bot/gct_decimation/auxiliary/cpuconfig.h
-  primitives/bot/gct_decimation/auxiliary/cpuinfo.h
   primitives/bot/gct_decimation/auxiliary/mm.h
   primitives/bot/gct_decimation/auxiliary/mmatomic.h
   primitives/bot/gct_decimation/auxiliary/mmbinsort.h
   primitives/bot/gct_decimation/auxiliary/mmbitmap.h
   primitives/bot/gct_decimation/auxiliary/mmhash.h
   primitives/bot/gct_decimation/auxiliary/mmthread.h
-  primitives/bot/gct_decimation/auxiliary/tinycthread.h
   primitives/bot/gct_decimation/meshdecimation.h
   primitives/bot/gct_decimation/meshoptimization.h
   primitives/bot/gct_decimation/meshoptimizer.h
@@ -314,9 +310,12 @@ set(librt_ignored_files
   primitives/dsp/dsp.h
   primitives/ehy/ehy_shot.cl
   primitives/ell/ell_shot.cl
+  primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
   primitives/fixpt.h
   primitives/metaball/metaball.h
   primitives/nmg/nmg_junk.c
+  primitives/part/part_shot.cl
   primitives/rec/rec_shot.cl
   primitives/revolve/revolve.h
   primitives/rt.cl
@@ -339,8 +338,27 @@ set(librt_ignored_files
   )
 CMAKEFILES(${librt_ignored_files})
 
+set(CL_FILES
+  primitives/common.cl
+  primitives/rt.cl
+  primitives/solver.cl
+
+  primitives/arb8/arb8_shot.cl
+  primitives/bot/bot_shot.cl
+  primitives/ehy/ehy_shot.cl
+  primitives/ell/ell_shot.cl
+  primitives/epa/epa_shot.cl
+  primitives/eto/eto_shot.cl
+  primitives/sph/sph_shot.cl
+  primitives/part/part_shot.cl
+  primitives/rec/rec_shot.cl
+  primitives/tgc/tgc_shot.cl
+  primitives/tor/tor_shot.cl
+  )
+
 BRLCAD_ADDDATA(nurb_example.c sample_applications)
 BRLCAD_ADDDATA(raydebug.tcl sample_applications)
+BRLCAD_ADDDATA(CL_FILES opencl)
 
 if(MSVC)
   set(LIBRT_SOURCES ${LIBRT_SOURCES} timer-nt.c)
@@ -356,7 +374,7 @@ if(BRLCAD_ENABLE_SPR)
   set(SPR_LIB libSPR)
 endif(BRLCAD_ENABLE_SPR)
 
-BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${ZLIB_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
+BRLCAD_ADDLIB(librt "${LIBRT_SOURCES}" "${OPENCL_LIBS};${GDIAM_LIBRARY};${VDS_LIBRARY};libbrep;libbg;libbn;libbu;${OPENNURBS_LIBRARY};${P2T_LIBRARY};${SPR_LIB};${REGEX_LIBRARY};${ZLIB_LIBRARY};${TINYCTHREAD_LIBRARY};${WINSOCK_LIB};${RPCRT_LIB};${STDCXX_LIBRARIES}")
 
 SET_TARGET_PROPERTIES(librt PROPERTIES VERSION 20.0.1 SOVERSION 20)
 if(CPP_DLL_DEFINES)
@@ -365,6 +383,7 @@ if(CPP_DLL_DEFINES)
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "VDS_DLL_IMPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "GDIAM_DLL_IMPORTS")
   SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "SPR_DLL_IMPORTS")
+  SET_PROPERTY(TARGET librt APPEND PROPERTY COMPILE_DEFINITIONS "TINYCTHREAD_DLL_IMPORTS")
 endif(CPP_DLL_DEFINES)
 
 # The following is build code for test applications used during

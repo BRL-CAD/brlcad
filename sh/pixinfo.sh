@@ -2,7 +2,7 @@
 #                      P I X I N F O . S H
 # BRL-CAD
 #
-# Copyright (c) 2004-2014 United States Government as represented by
+# Copyright (c) 2004-2016 United States Government as represented by
 # the U.S. Army Research Laboratory.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -47,6 +47,9 @@
 #
 #       eval `pixinfo.sh $FILE`         # Sets BASE, SUFFIX, WIDTH, HEIGHT
 #
+
+echo "DEPRECATION WARNING:  This command is scheduled for removal.  Please contact the developers if you use this command.\n\n"
+sleep 1
 
 if test "$1" = "" ; then
     echo "Usage: pixinfo.sh filename"

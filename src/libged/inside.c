@@ -1,7 +1,7 @@
 /*                        I N S I D E . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -142,14 +142,14 @@ static int
 arbin(struct ged *gedp,
       struct rt_db_internal *ip,
       fastf_t thick[6],
-      int nface,
+      size_t nface,
       int cgtype,		/* # of points, 4..8 */
       plane_t planes[6])
 {
     struct rt_arb_internal *arb = (struct rt_arb_internal *)ip->idb_ptr;
     point_t center_pt = VINIT_ZERO;
-    int num_pts=8;	/* number of points to solve using rt_arb_3face_intersect */
-    int i;
+    size_t num_pts=8;	/* number of points to solve using rt_arb_3face_intersect */
+    size_t i;
 
     RT_ARB_CK_MAGIC(arb);
 
@@ -327,7 +327,7 @@ arbin(struct ged *gedp,
 	 */
 	bu_ptbl_init(&vert_tab, 64, "vert_tab");
 	nmg_vertex_tabulate(&vert_tab, &m->magic);
-	for (i = 0; i < BU_PTBL_END(&vert_tab); i++) {
+	for (i = 0; i < BU_PTBL_LEN(&vert_tab); i++) {
 	    struct vertex *v;
 
 	    v = (struct vertex *)BU_PTBL_GET(&vert_tab, i);
@@ -895,10 +895,10 @@ nmgin(struct ged *gedp, struct rt_db_internal *ip, fastf_t thick)
 int
 ged_inside_internal(struct ged *gedp, struct rt_db_internal *ip, int argc, const char *argv[], int arg, char *o_name)
 {
-    int i;
+    size_t i;
     struct directory *dp;
     int cgtype = 8;		/* cgtype ARB 4..8 */
-    int nface;
+    size_t nface;
     fastf_t thick[6];
     plane_t planes[6];
     char *newname;

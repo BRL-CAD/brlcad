@@ -1,7 +1,7 @@
 /*                       C S G . C
  * BRL-CAD
  *
- * Copyright (c) 2013 United States Government as represented by
+ * Copyright (c) 2013-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -17,22 +17,19 @@
  * License along with this file; see the file named COPYING for more
  * information.
  */
-/** @file csg.c
- *
- * Brief description
- *
- */
 
 #include "common.h"
 #include <stdlib.h>
 #include <stdio.h>
 #include "csg.h"
 
+
 static void *
 parse_alloc(size_t size)
 {
     return bu_malloc(size, "parse_alloc");
 }
+
 
 int
 main(int argc, char *argv[])
@@ -80,3 +77,14 @@ main(int argc, char *argv[])
 
     return 0;
 }
+
+
+/*
+ * Local Variables:
+ * tab-width: 8
+ * mode: C
+ * indent-tabs-mode: t
+ * c-file-style: "stroustrup"
+ * End:
+ * ex: shiftwidth=4 tabstop=8
+ */

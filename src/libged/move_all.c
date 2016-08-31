@@ -1,7 +1,7 @@
 /*                         M O V E _ A L L . C
  * BRL-CAD
  *
- * Copyright (c) 2008-2014 United States Government as represented by
+ * Copyright (c) 2008-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -29,6 +29,7 @@
 #include <string.h>
 
 #include "bu/cmd.h"
+#include "bu/str.h"
 #include "bu/getopt.h"
 #include "rt/geom.h"
 
@@ -144,11 +145,11 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 			    bu_vls_printf(gedp->ged_result_str, "%s ", dp->d_namep);
 			}
 
-			if (BU_PTBL_END(&stack) < 1) {
+			if (BU_PTBL_LEN(&stack) < 1) {
 			    done = 1;
 			    break;
 			}
-			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_END(&stack)-1);
+			comb_leaf = (union tree *)BU_PTBL_GET(&stack, BU_PTBL_LEN(&stack)-1);
 			if (comb_leaf->tr_op != OP_DB_LEAF) {
 			    bu_ptbl_rm(&stack, (long *)comb_leaf);
 			    comb_leaf = comb_leaf->tr_b.tb_right;
@@ -176,7 +177,7 @@ move_all_func(struct ged *gedp, int nflag, const char *old_name, const char *new
 	    int first = 1;
 	    int found = 0;
 	    struct bu_vls new_path = BU_VLS_INIT_ZERO;
-	    char *dupstr = strdup(bu_vls_addr(&gdlp->dl_path));
+	    char *dupstr = bu_strdup(bu_vls_addr(&gdlp->dl_path));
 	    char *tok = strtok(dupstr, "/");
 
 	    while (tok) {

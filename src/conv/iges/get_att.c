@@ -1,7 +1,7 @@
 /*                       G E T _ A T T . C
  * BRL-CAD
  *
- * Copyright (c) 1993-2014 United States Government as represented by
+ * Copyright (c) 1993-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -29,7 +29,8 @@
 void
 Get_att()
 {
-    int i, j;
+    size_t i;
+    int j;
     char *str;
 
     for (i = 0; i < totentities; i++) {

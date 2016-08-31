@@ -1,7 +1,7 @@
 /*                 B R E P _ S I M P L E . C P P
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -258,9 +258,9 @@ main(int argc, char** argv)
     	printusage();
     	return 0;
     }
-    if (argc >= 1) {
+    if (argc > 1) {
     	printusage();
-    	fprintf(stderr,"       Program continues running (will create file brep_simple.g):\n");
+	return 1;
     }
 
     ON::Begin();

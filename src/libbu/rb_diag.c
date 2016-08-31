@@ -1,7 +1,7 @@
 /*                       R B _ D I A G . C
  * BRL-CAD
  *
- * Copyright (c) 1998-2014 United States Government as represented by
+ * Copyright (c) 1998-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,7 +25,7 @@
 #include <math.h>
 
 #include "bu/rb.h"
-#include "./rb_internals.h"
+#include "./rb.h"
 
 
 static int d_order;	/* Used by describe_node() */

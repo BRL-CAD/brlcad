@@ -1,7 +1,7 @@
 /*                        J A C K - G . C
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This program is free software; you can redistribute it and/or
@@ -59,8 +59,6 @@ struct vlist {
 static struct bn_tol	tol;
 
 static const char *usage = "[-r region] [-g group] [jack_db] [brlcad_db]\n";
-
-extern fastf_t nmg_loop_plane_area(const struct loopuse *lu, plane_t pl);
 
 int	psurf_to_nmg(struct model *m, FILE *fp, char *jfile);
 int	create_brlcad_db(struct rt_wdb *fpout, struct model *m, char *reg_name, char *grp_name);

@@ -1,6 +1,18 @@
 # Because the exp2cxx outputs are used by both step-g and g-step,
 # the logic both commands need is the same and is defined up front.
 
+
+# Quiet MSVC warnings for all step converters due to SDAI sources and
+# STEPcode headers used pervasively.  We intentionally do not quell
+# all warnings since there are plenty of valid detectable issues also
+# getting reported.
+#
+# FIXME: make STEPcode sources compile free of warnings
+CHECK_CXX_FLAG("wd4065") # switch contains default but no case labels
+CHECK_CXX_FLAG("wd4251") # exporting STL objects
+CHECK_CXX_FLAG("wd4800") # implicit conversions to bool
+
+
 set(STEPCODE_DIR ${BRLCAD_SOURCE_DIR}/src/other/stepcode)
 set(STEP_INCLUDE_DIRS
   ${CMAKE_CURRENT_BINARY_DIR}
@@ -99,7 +111,7 @@ if(BRLCAD_ENABLE_AP242)
   add_subdirectory(g-ap242)
 endif(BRLCAD_ENABLE_AP242)
 
-# IFC work is experimental
+# FIXME: the IFC converter is incomplete
 if(BRLCAD_ENABLE_IFC)
   add_subdirectory(ifc-g)
 endif(BRLCAD_ENABLE_IFC)

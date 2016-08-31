@@ -1,7 +1,7 @@
 /*                        V L I S T . H
  * BRL-CAD
  *
- * Copyright (c) 2004-2014 United States Government as represented by
+ * Copyright (c) 2004-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -25,6 +25,7 @@
 #include "vmath.h"
 #include "bu/magic.h"
 #include "bu/list.h"
+#include "bu/vls.h"
 #include "bn/defines.h"
 
 __BEGIN_DECLS

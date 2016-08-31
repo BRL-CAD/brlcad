@@ -1,7 +1,7 @@
 /*               P R I M I T I V E _ U T I L . C
  * BRL-CAD
  *
- * Copyright (c) 2012-2014 United States Government as represented by
+ * Copyright (c) 2012-2016 United States Government as represented by
  * the U.S. Army Research Laboratory.
  *
  * This library is free software; you can redistribute it and/or
@@ -441,6 +441,11 @@ _rt_tcl_list_to_fastf_array(const char *list, fastf_t **array, int *array_len)
 
 
 #ifdef USE_OPENCL
+
+#ifndef BRLCAD_OPENCL_DIR
+#  define BRLCAD_OPENCL_DIR "opencl"
+#endif
+
 const int clt_semaphore = 12; /* FIXME: for testing; this isn't our semaphore */
 
 static int clt_initialized = 0;
@@ -521,10 +526,15 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
     cl_program *programs;
     cl_int error;
     cl_uint i;
+    char file[MAXPATHLEN] = {0};
+    char path[MAXPATHLEN] = {0};
 
     programs = (cl_program*)bu_calloc(count, sizeof(cl_program), "programs");
     for (i=0; i<count; i++) {
-        pc_string = clt_read_code(filenames[i], &pc_length);
+	snprintf(file, MAXPATHLEN, "%s%c%s", BRLCAD_OPENCL_DIR, BU_DIR_SEPARATOR, filenames[i]);
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(file, 0));
+
+        pc_string = clt_read_code(path, &pc_length);
         programs[i] = clCreateProgramWithSource(context, 1, &pc_string, &pc_length, &error);
         bu_free((char*)pc_string, "code");
         if (error != CL_SUCCESS) bu_bomb("failed to create OpenCL program");
@@ -536,7 +546,7 @@ clt_get_program(cl_context context, cl_device_id device, cl_uint count, const ch
             clGetProgramBuildInfo(programs[i], device, CL_PROGRAM_BUILD_LOG, 0, NULL, &log_size);
             log_data = (char*)bu_malloc(log_size*sizeof(char), "failed to allocate memory for log");
             clGetProgramBuildInfo(programs[i], device, CL_PROGRAM_BUILD_LOG, log_size, log_data, NULL);
-            bu_log("BUILD LOG (%s):\n%s\n", filenames[i], log_data);
+            bu_log("BUILD LOG (%s):\n%s\n", path, log_data);
             bu_bomb("failed to compile OpenCL program");
         }
     }
@@ -588,13 +598,18 @@ clt_init(void)
             "bot_shot.cl",
             "ehy_shot.cl",
             "ell_shot.cl",
+            "epa_shot.cl",
+            "eto_shot.cl",
             "sph_shot.cl",
+	    "part_shot.cl",
             "rec_shot.cl",
             "tgc_shot.cl",
             "tor_shot.cl",
 
             "rt.cl",
         };
+	char path[MAXPATHLEN] = {0};
+	char args[MAXPATHLEN] = {0};
 
         clt_initialized = 1;
         atexit(clt_cleanup);
@@ -607,8 +622,14 @@ clt_init(void)
         clt_queue = clCreateCommandQueue(clt_context, clt_device, 0, &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL command queue");
 
-        clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=1");
-        clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, "-I. -DRT_SINGLE_HIT=0");
+	/* locate opencl directory */
+	snprintf(path, MAXPATHLEN, "%s", bu_brlcad_data(BRLCAD_OPENCL_DIR, 0));
+
+	/* compile opencl programs */
+	snprintf(args, MAXPATHLEN, "-I %s -D RT_SINGLE_HIT=1", path);
+        clt_sh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, args);
+	snprintf(args, MAXPATHLEN, "-I %s -D RT_SINGLE_HIT=0", path);
+        clt_mh_program = clt_get_program(clt_context, clt_device, sizeof(main_files)/sizeof(*main_files), main_files, args);
 
         clt_frame_kernel = clCreateKernel(clt_sh_program, "do_pixel", &error);
         if (error != CL_SUCCESS) bu_bomb("failed to create an OpenCL kernel");
@@ -634,16 +655,19 @@ clt_solid_pack(struct bu_pool *pool, struct soltab *stp)
     size_t size;
 
     switch (stp->st_id) {
-	case ID_TOR:    size = clt_tor_pack(pool, stp);	break;
-	case ID_TGC:    size = clt_tgc_pack(pool, stp);	break;
-	case ID_ELL:    size = clt_ell_pack(pool, stp);	break;
-	case ID_ARB8:   size = clt_arb_pack(pool, stp);	break;
-	case ID_REC:    size = clt_rec_pack(pool, stp);	break;
-	case ID_SPH:    size = clt_sph_pack(pool, stp);	break;
-	case ID_EHY:    size = clt_ehy_pack(pool, stp);	break;
+	case ID_TOR:		size = clt_tor_pack(pool, stp);	break;
+	case ID_TGC:		size = clt_tgc_pack(pool, stp);	break;
+	case ID_ELL:		size = clt_ell_pack(pool, stp);	break;
+	case ID_ARB8:		size = clt_arb_pack(pool, stp);	break;
+	case ID_REC:		size = clt_rec_pack(pool, stp);	break;
+	case ID_SPH:		size = clt_sph_pack(pool, stp);	break;
+	case ID_PARTICLE:	size = clt_part_pack(pool, stp);break;
+	case ID_EHY:		size = clt_ehy_pack(pool, stp);	break;
 	case ID_ARS:
-	case ID_BOT:    size = clt_bot_pack(pool, stp);	break;
-	default:	size = 0;			break;
+	case ID_BOT:		size = clt_bot_pack(pool, stp);	break;
+	case ID_EPA:		size = clt_epa_pack(pool, stp);	break;
+	case ID_ETO:		size = clt_eto_pack(pool, stp); break;
+	default:		size = 0;			break;
     }
     return size;
 }
