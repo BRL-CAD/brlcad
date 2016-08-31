@@ -117,12 +117,9 @@ struct ged_run_rt {
     HANDLE fd;
     HANDLE hProcess;
     DWORD pid;
-
-#  ifdef TCL_OK
-    Tcl_Channel chan;
-#  else
-    void *chan;
-#  endif
+    void *chan; /* FIXME: uses communication channel instead of file
+		 * descriptor to get output from rt.
+		 */
 #else
     int fd;
     int pid;

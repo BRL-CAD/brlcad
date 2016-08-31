@@ -593,11 +593,25 @@ function(check_umask umask_val status_var)
     set(${status_var} 1 PARENT_SCOPE)
   endif(UMASK_HAVE_R AND "${umask_x}" STREQUAL "xxx")
 endfunction(check_umask)
-# Note - umask is not always an executable, so we can't use find_program
-# to determine whether the umask check is appropriate.
-exec_program(umask OUTPUT_VARIABLE have_umask)
-if(NOT "${have_umask}" STREQUAL "")
-  exec_program(umask ARGS -S OUTPUT_VARIABLE umask_curr)
+
+# Note - umask is not always an executable, so find_program wont' necessarily
+# determine whether the umask check is appropriate.  If we don't find an
+# executable, follow up to see if we can use sh to get the info.
+find_program(UMASK_EXEC umask)
+if(NOT UMASK_EXEC)
+  # If we don't have a umask cmd, see if sh -c "umask -S" works
+  execute_process(COMMAND sh -c "umask -S" OUTPUT_VARIABLE umask_out)
+  # Check if we've got something that looks like a umask output
+  if("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+    set(UMASK_EXEC sh)
+    set(UMASK_EXEC_ARGS -c "umask -S")
+  endif("${umask_out}" MATCHES "^u=.*g=.*o=.*")
+else(NOT UMASK_EXEC)
+  set(UMASK_EXEC_ARGS -S)
+endif(NOT UMASK_EXEC)
+
+if(UMASK_EXEC)
+  execute_process(COMMAND ${UMASK_EXEC} ${UMASK_EXEC_ARGS} OUTPUT_VARIABLE umask_curr)
   string(STRIP "${umask_curr}" umask_curr)
   check_umask("${umask_curr}" UMASK_OK)
   if(NOT UMASK_OK)
@@ -607,7 +621,7 @@ if(NOT "${have_umask}" STREQUAL "")
       execute_process(COMMAND ${SLEEP_EXEC} 1)
     endif(SLEEP_EXEC)
   endif(NOT UMASK_OK)
-endif(NOT "${have_umask}" STREQUAL "")
+endif(UMASK_EXEC)
 
 #---------------------------------------------------------------------
 # Unfortunately, CMake doesn't give you variables with current day,
@@ -653,9 +667,14 @@ if(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "De
 endif(CMAKE_CONFIGURATION_TYPES AND NOT "${CMAKE_CONFIGURATION_TYPES}" STREQUAL "Debug;Release")
 
 #---------------------------------------------------------------------
-# We want to check /usr/local by default, so add it
-set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
-set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+# We want to check /usr/local by default, so add it if it exists
+if (IS_DIRECTORY /usr/local)
+  set(CMAKE_PREFIX_PATH ${CMAKE_PREFIX_PATH} /usr/local)
+  if (IS_DIRECTORY /usr/local/include)
+    set(CMAKE_REQUIRED_INCLUDES ${CMAKE_REQUIRED_INCLUDES} /usr/local/include)
+    include_directories(AFTER SYSTEM /usr/local/include)
+  endif (IS_DIRECTORY /usr/local/include)
+endif (IS_DIRECTORY /usr/local)
 
 #---------------------------------------------------------------------
 
@@ -1561,8 +1580,21 @@ else()
   else("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
     CHECK_C_FLAG("std=gnu89")
   endif("${CMAKE_BUILD_TYPE}" STREQUAL "Release")
-  CHECK_CXX_FLAG("std=gnu++98")
+  CHECK_CXX_FLAG("std=gnu++11" VARS CXX11_FLAG)
+  if(NOT CXX11_FLAG)
+    CHECK_CXX_FLAG("std=gnu++0x" VARS CXX11_FLAG)
+    if(NOT CXX11_FLAG)
+      CHECK_CXX_FLAG("std=c++11" VARS CXX11_FLAG)
+      if(NOT CXX11_FLAG)
+	CHECK_CXX_FLAG("std=c++0x" VARS CXX11_FLAG)
+	if(NOT MSVC AND NOT CXX11_FLAG)
+	  message(WARNING "No working C++11 flag found.")
+	endif(NOT MSVC AND NOT CXX11_FLAG)
+      endif(NOT CXX11_FLAG)
+    endif(NOT CXX11_FLAG)
+  endif(NOT CXX11_FLAG)
 endif()
+
 # TODO - should be using this with MSVC, but it breaks the BUILD_SLEEP
 # try_compile below with errors that appear to be coming from Windows
 # headers??
@@ -1977,8 +2009,9 @@ BRLCAD_INCLUDE_FILE(termios.h HAVE_TERMIOS_H)
 BRLCAD_INCLUDE_FILE(termlib.h HAVE_TERMLIB_H)
 BRLCAD_INCLUDE_FILE(tinfo.h HAVE_TINFO_H)
 BRLCAD_INCLUDE_FILE(ulocks.h HAVE_ULOCKS_H)
+BRLCAD_INCLUDE_FILE(uuid.h HAVE_UUID_H) # for uuid_generate() on BSD
 BRLCAD_INCLUDE_FILE(unistd.h HAVE_UNISTD_H)
-BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux */
+BRLCAD_INCLUDE_FILE(uuid/uuid.h HAVE_UUID_UUID_H) # for uuid_generate() on Mac & Linux
 BRLCAD_INCLUDE_FILE(windows.h HAVE_WINDOWS_H) # for QueryPerformanceCounter() on Windows
 
 # C++
@@ -2963,6 +2996,7 @@ if(NOT BRLCAD_IS_SUBBUILD)
   # CREATE_DISTCHECK(TARGET_SUFFIX CMAKE_OPTS source_dir build_dir install_dir [custom_template])
   CREATE_DISTCHECK(default_build_type "-DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(no_tk "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_TK=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
+  CREATE_DISTCHECK(no_strict "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED -DBRLCAD_ENABLE_STRICT=OFF" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_debug "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(autodetect_release "-DCMAKE_BUILD_TYPE=Release -DBRLCAD_BUNDLED_LIBS=AUTO" "${CPACK_SOURCE_PACKAGE_FILE_NAME}" "build" "install")
   CREATE_DISTCHECK(odd_pathnames "-DCMAKE_BUILD_TYPE=Debug -DBRLCAD_BUNDLED_LIBS=BUNDLED" "1 Odd_ source dir ++" "1 Odd_ build dir ++" "1 Odd_ install dir ++")

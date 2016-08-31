@@ -25,14 +25,6 @@
 #ifndef ADRT_ADRT_STRUCT_H
 #define ADRT_ADRT_STRUCT_H
 
-#ifdef TIE_PRECISION
-# if defined(TIE_SINGLE_PRECISION) && TIE_PRECISION != TIE_SINGLE_PRECISION
-#  error "Need single floating point precision out of tie"
-# endif
-#else
-# define TIE_PRECISION 0
-#endif
-
 #include "bu/list.h"
 
 #include "rt/tie.h"

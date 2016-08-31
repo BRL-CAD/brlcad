@@ -197,8 +197,8 @@ get_args(int argc, const char *argv[])
     ".:, :@:a:b:c:d:e:f:g:m:ij:k:l:n:o:p:q:rs:tu:v:w:x:z:A:BC:D:E:F:G:H:IJ:K:MN:O:P:Q:RST:U:V:WX:!:+:h?"
 
     while ((c=bu_getopt(argc, (char * const *)argv, GETOPT_STR)) != -1) {
-    	if (bu_optopt == '?')
-    	    c = 'h';
+	if (bu_optopt == '?')
+	    c = 'h';
 	switch (c) {
 	    case 'q':
 		i = atoi(bu_optarg);
@@ -318,6 +318,7 @@ get_args(int argc, const char *argv[])
 			(void)rt_do_cmd((struct rt_i *)0, buf, rt_cmdtab);
 		    }
 #endif
+
 		}
 		break;
 	    case 'T':

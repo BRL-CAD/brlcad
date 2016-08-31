@@ -459,7 +459,7 @@ brep_to_csg(struct bu_vls *msgs, const ON_Brep *brep)
 	// of fil loops - needed for processing.
 	int planar_fils = island_faces_characterize(sb);
 
-	// Get key based on loop indicies
+	// Get key based on loop indices
 	set_key(sb->key, sb->island_loops_cnt, sb->island_loops);
 
 	if (!planar_fils) {

@@ -85,16 +85,7 @@ set(LIBBU_SOURCES
   process.c
   progname.c
   ptbl.c
-  rb_create.c
-  rb_delete.c
-  rb_diag.c
-  rb_extreme.c
-  rb_free.c
-  rb_insert.c
-  rb_order_stats.c
-  rb_rotate.c
-  rb_search.c
-  rb_walk.c
+  redblack.c
   realpath.c
   semaphore.c
   sha1.c
@@ -134,7 +125,6 @@ set(bu_ignore_files
   charclass.h
   mime.cmake
   parallel.h
-  rb.h
   sha1.h
   uce-dirent.h
   vfont.h

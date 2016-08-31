@@ -163,7 +163,7 @@ bn_ray_vclip(vect_t a, vect_t b, fastf_t *min, fastf_t *max)
              * merely check against the boundaries.
              */
             if ((*min > *pt) || (*max < *pt))
-                return 0;       /* MISS */;
+                return 0;       /* MISS */
         }
     }
     if (mindist >= maxdist)

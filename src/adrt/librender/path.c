@@ -21,10 +21,6 @@
  *
  */
 
-#ifndef TIE_PRECISION
-# define TIE_PRECISION 0
-#endif
-
 #include "common.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -39,7 +35,7 @@
 
 typedef struct render_path_s {
     int samples;
-    tfloat inv_samples;
+    TFLOAT inv_samples;
 } render_path_t;
 
 
@@ -66,7 +62,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
     struct tie_id_s new_id;
     vect_t new_pix, accum, T, ref, bax, bay;
     adrt_mesh_t *new_mesh;
-    tfloat sin_theta, cos_theta, sin_phi, cos_phi;
+    TFLOAT sin_theta, cos_theta, sin_phi, cos_phi;
     int i, n, propogate;
     render_path_t *rd;
 
@@ -84,7 +80,7 @@ render_path_work(render_t *render, struct tie_s *tie, struct tie_ray_s *ray, vec
 
 	/* Terminate if depth is too great. */
 	while (propogate) {
-	    if ((new_mesh = (adrt_mesh_t *)tie_work(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
+	    if ((new_mesh = (adrt_mesh_t *)TIE_WORK(tie, &new_ray, &new_id, render_hit, NULL)) && new_ray.depth < RENDER_MAX_DEPTH) {
 		if (!EQUAL(new_mesh->attributes->ior, 1.0)) {
 		    /* Refractive Caustic */
 		    /* Deal with refractive-fu */

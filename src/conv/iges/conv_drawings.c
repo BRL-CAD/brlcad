@@ -149,7 +149,7 @@ Note_to_vlist(int entno, struct bu_list *vhead)
 	Readcnv(&tmp[Z], "");
 	Getstrg(&str, "");
 
-	/* apply any tranform */
+	/* apply any transform */
 	MAT4X3PNT(loc, *dir[entno]->rot, tmp);
 
 

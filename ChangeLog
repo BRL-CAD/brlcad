@@ -657,7 +657,7 @@
 	* [r67988] src/librt/primitives/nmg/nmg_misc.c:
 	  this logic is quite complex. possibly not a proper fix, but we
 	  were looping infinitely over an edgeuse list when trying to close
-	  it when working with fuzing fewer than 3 edges. this successfull
+	  it when working with fuzing fewer than 3 edges. this successful
 	  avoids infinite looping by removing the edge from our remaining
 	  edge list once we tried to process it. problem observed on
 	  patch-g with ch53 model.
@@ -828,7 +828,7 @@
 2016-05-24 18:54  starseeker
 
 	* [r67956] NEWS, src/libged/clone.c:
-	  If you accidently tell clone to copy 0 objects it crashed. Return
+	  If you accidentally tell clone to copy 0 objects it crashed. Return
 	  RT_DIR_NULL instead.
 
 2016-05-24 18:06  bob1961
@@ -1841,7 +1841,7 @@
 	  src/shapes/wire.c, src/util/azel.c, src/util/bary.c,
 	  src/util/double-asc.c, src/util/gencolor.c:
 	  remove the various 'program continues running statements. while
-	  some that are preceeded by a usage statement may be confusing
+	  some that are preceded by a usage statement may be confusing
 	  when the program doesn't exit, it's similarly redundant to tell
 	  them that the program is running when that is evident (by the
 	  program still running). maybe need to review these to see why
@@ -2752,7 +2752,7 @@
 	  src/librt/search.c, src/librt/search.h:
 	  Add -size and -fsize filters to the search command. The -size
 	  option will filter based on individual object sizes. -fsize, by
-	  comparison, filters based on the 'full' defintion of the object
+	  comparison, filters based on the 'full' definition of the object
 	  based on its hierarchy - i.e., for a comb, it will filter based
 	  on that combs size summed with the sizes of all the objects below
 	  the comb in the hierarchy. These options are intended to help
@@ -3704,7 +3704,7 @@
 2016-03-24 16:26  starseeker
 
 	* [r67487] src/brlman/CMakeLists.txt, src/brlman/brlman.c:
-	  Checkpoint work on C application verison of brlman
+	  Checkpoint work on C application version of brlman
 
 2016-03-24 15:11  brlcad
 
@@ -5936,7 +5936,7 @@
 2016-03-01 11:40  d_rossberg
 
 	* [r67202] regress/icv/CMakeLists.txt:
-	  there is no m35.bw.tbz2 (should it be created/commited in?)
+	  there is no m35.bw.tbz2 (should it be created/committed in?)
 
 2016-03-01 10:09  d_rossberg
 
@@ -6424,7 +6424,7 @@
 2016-02-24 20:47  starseeker
 
 	* [r67130] src/libtclcad/tclcad_obj.c:
-	  Not sure if argv[2] is persistant in memory for all uses of
+	  Not sure if argv[2] is persistent in memory for all uses of
 	  go_edited_paths entries - make a copy of the key to be sure and
 	  free it when the values are freed.
 
@@ -6970,7 +6970,7 @@
 	* [r67043] doc/trunk_heirarchy.org, sh/CMakeLists.txt,
 	  sh/fs2org.sh:
 	  add script to generate an emacs org mode file representing a file
-	  heirarchy along with the output for trunk
+	  hierarchy along with the output for trunk
 
 2016-02-03 18:57  brlcad
 
@@ -10597,7 +10597,7 @@
 	  src/tclscripts/helpcomm.tcl, src/tclscripts/helplib.tcl,
 	  src/tclscripts/hoc.tcl, src/tclscripts/igraph/GraphEditor.tcl,
 	  src/tclscripts/igraph/igraph.tcl,
-	  src/tclscripts/lib/Accordian.tcl,
+	  src/tclscripts/lib/Accordion.tcl,
 	  src/tclscripts/lib/CellPlot.tcl,
 	  src/tclscripts/lib/ColorEntry.tcl,
 	  src/tclscripts/lib/ComboBox.tcl, src/tclscripts/lib/Command.tcl,
@@ -11825,7 +11825,7 @@
 2015-11-18 15:52  starseeker
 
 	* [r66589] include/bu/path.h:
-	  Checkpoint glob work so it doesn't accidently get committed with
+	  Checkpoint glob work so it doesn't accidentally get committed with
 	  other stuff.
 
 2015-11-18 15:30  starseeker
@@ -12645,7 +12645,7 @@
 	  per line and a label with a convention implied for each label
 	  type (e.g., PLATE was n planar points that formed a closed loop
 	  followed by a triple-repeated depth point). to be really useful,
-	  this interface needed to be integrated during aquisition (e.g.,
+	  this interface needed to be integrated during acquisition (e.g.,
 	  with mged running on a tablet) so that error points could be
 	  deleted (instead of having a delete/undo convention in the point
 	  stream) and progress viewed interactively.
@@ -14089,7 +14089,7 @@
 2015-09-15 16:18  brlcad
 
 	* [r66224] CMakeLists.txt:
-	  sync ; removal, although suprisingly worked
+	  sync ; removal, although surprisingly worked
 
 2015-09-15 16:17  brlcad
 
@@ -16751,7 +16751,7 @@
 
 	* [r65753] src/libanalyze/find_subtracted_shapes.cpp,
 	  src/libanalyze/util.cpp:
-	  This undoubtely needs a lot of refinement, but get a
+	  This undoubtedly needs a lot of refinement, but get a
 	  subtract/no-subtract decision from the ray tracing. Need more
 	  context - for example, need to distinguish when a solid in a
 	  candidate is removing positive material it shouldn't vs.
@@ -17280,7 +17280,7 @@
 	  db/nist/pdf/8.pdf, db/nist/pdf/9.pdf:
 	  NIST has released a number of additional public domain NURBS CAD
 	  files - incorporate into build. The 7-10 assembly files are
-	  currenly too slow as STEP files, so they've been added as a
+	  currently too slow as STEP files, so they've been added as a
 	  single 3dm file which attemps to place them in assembly
 	  positions.
 
@@ -19734,7 +19734,7 @@
 2015-06-15 00:54  starseeker
 
 	* [r65292] src/other/libz/CMakeLists.txt:
-	  Don't add zlib1.rc if we're doing the custom command verison.
+	  Don't add zlib1.rc if we're doing the custom command version.
 
 2015-06-15 00:40  starseeker
 
@@ -23619,7 +23619,7 @@
 	  Code up a proposed replacement for icv_guess_file_format with two
 	  more special purpose functions. It seems cleaner to me to have
 	  the image type identification and the path scrubber as separate
-	  API components, but maybe all possibile applications will want
+	  API components, but maybe all possible applications will want
 	  the filename extracted - needs discussion.
 
 2015-04-27 16:39  starseeker
@@ -23633,7 +23633,7 @@
 	* [r64736] include/bu/path.h, src/libbu/path.c,
 	  src/libbu/tests/CMakeLists.txt,
 	  src/libbu/tests/bu_path_component.c:
-	  Add the ability to get protocal and address components from
+	  Add the ability to get protocol and address components from
 	  paths, based on the ':' character.
 
 2015-04-27 14:18  carlmoore
@@ -25264,7 +25264,7 @@
 	  functionality (like hostname reporting). plus, they introduce a
 	  new convention in the caller code that complicates usage (HAVE_*
 	  is already supposed to imply whether it's available for use,
-	  i.e., working). we may need to introduce HAVE_DECL_* ammendments
+	  i.e., working). we may need to introduce HAVE_DECL_* amendments
 	  where an interface is available but not declared due to mode of
 	  compilation.
 
@@ -25306,7 +25306,7 @@
 
 	* [r64568] misc/CMake/DiffCache.cmake:
 	  The issue of reconfiguration pops up every now and then - write
-	  out the reaons to a text file when it happens rather than
+	  out the reasons to a text file when it happens rather than
 	  requiring the dev to know to go into DiffCache.cmake and
 	  uncomment the message lines.
 
@@ -30913,7 +30913,7 @@
 
 	* [r63660] src/libged/bot.c:
 	  Checkpoint work done to add a chull option to the bot command
-	  before I accidently commit it or revert it...
+	  before I accidentally commit it or revert it...
 
 2014-12-10 18:58  starseeker
 
@@ -33047,7 +33047,7 @@
 
 	* [r63151] include/bu/defines.h, include/vmath.h:
 	  move INFINITY from libbu to libbn (vmath.h more specifically)
-	  where it seems more apropriate. reviewing all the uses, they
+	  where it seems more appropriate. reviewing all the uses, they
 	  pertain to vmath in nearly all instances.
 
 2014-10-10 19:59  brlcad
@@ -33350,7 +33350,7 @@
 2014-10-03 15:31  brlcad
 
 	* [r63102] src/burst/grid.c:
-	  use more robust VNEAR_EQUAL instead of the custom and mispelled
+	  use more robust VNEAR_EQUAL instead of the custom and misspelled
 	  'aproximation'
 
 2014-10-03 15:29  brlcad
@@ -36344,7 +36344,7 @@
 	  related to lower-level database handling than it is ray tracing
 	  (arguably should go even lower level but we don't currently have
 	  anything in-between and libbu feels too low. resort the unicode
-	  handling in order of likely occurence.
+	  handling in order of likely occurrence.
 
 2014-09-15 17:46  brlcad
 
@@ -36515,7 +36515,7 @@
 	  Adding this work for two reasons - 1) even though it is not a
 	  major functionality boost, it does have the potential to collapse
 	  the ogl and wgl dm/fb systems into a single, portable dm/fb and
-	  2) it makes other efforts to actually use the scenegraph simplier
+	  2) it makes other efforts to actually use the scenegraph simpler
 	  from a changeset management perspective. Controlled by the
 	  BRLCAD_ENABLE_OSG flag, which is off by default.
 
@@ -40400,7 +40400,7 @@
 2014-07-24 14:04  vladbogo
 
 	* [r61909] src/libfb/if_qt.cpp:
-	  Fixed the display problem that occured when the window wasn't a
+	  Fixed the display problem that occurred when the window wasn't a
 	  square.
 
 2014-07-23 21:55  carlmoore
@@ -40683,7 +40683,7 @@
 
 	* [r61840] include/fb.h, src/libdm/dm-qt.cpp, src/libfb/if_qt.cpp:
 	  Implemented a first version of the qt_open_existing function -
-	  raytraced content can be displayed but it dissapears when
+	  raytraced content can be displayed but it disappears when
 	  raytracing is done.
 
 2014-07-18 17:44  carlmoore
@@ -41167,7 +41167,7 @@
 
 	* [r61668] src/librt/primitives/brep/brep.cpp:
 	  In crack checking code added additional handling for faces that
-	  are truely adjacent in the BREP topology. Noticed crack issues
+	  are truly adjacent in the BREP topology. Noticed crack issues
 	  when dealing with tiny geometries where near misses with
 	  non-adjacent faces more frequent.
 

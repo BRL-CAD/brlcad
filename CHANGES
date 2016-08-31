@@ -163,7 +163,7 @@ infrared & shapefactor tools
 misc tools
 	fix_polysolids' : obsolete primitive
 	remapid : superseded by reid+remat
-	buffer : unnecesary network/stream buffering tool
+	buffer : unnecessary network/stream buffering tool
 	hex : superseded by hexdump
 	Removed as part of distillation effort [deprecated 7.26]
 include/bu/ptbl.h
@@ -1210,3 +1210,10 @@ s/BU_FNMATCH_NOMATCH/1/g
 	don't use an explicit define for the non-matching case [7.25]
 s/bu_basename\(([^\)]*)\)/bu_basename(\1, NULL)/g
 	pass NULL argument to get a dynamically allocated buffer back [7.25]
+
+7.28
+----
+s/bu_free_array/bu_free_args/g
+        fixed misleading name [7.26]
+s/(#[[:space:]]*include[[:space:]]+["<])bu\/rb\.h/\1bu\/redblack.h/g
+	clearer header name [7.26]

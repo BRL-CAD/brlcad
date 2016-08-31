@@ -30,6 +30,10 @@
 
 __BEGIN_DECLS
 
+
+struct rt_comb_internal;      /* forward declaration */
+
+
 /* db5_attr.c */
 /**
  * Define standard attribute types in BRL-CAD geometry.  (See the

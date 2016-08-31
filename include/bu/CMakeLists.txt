@@ -23,7 +23,7 @@ set(bu_headers
   parse.h
   path.h
   ptbl.h
-  rb.h
+  redblack.h
   simd.h
   sort.h
   str.h

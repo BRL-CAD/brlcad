@@ -23,18 +23,14 @@
  *
  */
 
+#include "common.h"
+#include "ged.h"
 
 #ifdef HAVE_BULLET
 
-
-#include "common.h"
-
 #include "simulation.hpp"
-
 #include <sstream>
 #include <stdexcept>
-
-#include "ged.h"
 
 
 namespace
@@ -97,12 +93,6 @@ ged_simulate(ged *gedp, int argc, const char **argv)
 
 
 #else
-
-
-#include "common.h"
-
-#include "ged.h"
-
 
 int
 ged_simulate(ged *gedp, int argc, const char **argv)

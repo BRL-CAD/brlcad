@@ -1,4 +1,4 @@
-/*                            R B . H
+/*                      R E D B L A C K . H
  * BRL-CAD
  *
  * Copyright (c) 2004-2016 United States Government as represented by
@@ -18,8 +18,8 @@
  * information.
  */
 
-#ifndef BU_RB_H
-#define BU_RB_H
+#ifndef BU_REDBLACK_H
+#define BU_REDBLACK_H
 
 #include "common.h"
 
@@ -64,7 +64,7 @@ __BEGIN_DECLS
  * Algorithms."
  */
 /** @{ */
-/** @file bu/rb.h */
+/** @file bu/redblack.h */
 
 
 /**
@@ -530,7 +530,7 @@ BU_EXPORT extern void bu_rb_walk(struct bu_rb_tree *tree, int order, void (*visi
 
 __END_DECLS
 
-#endif  /* BU_RB_H */
+#endif  /* BU_REDBLACK_H */
 
 /*
  * Local Variables:

@@ -158,7 +158,6 @@ struct Combination {
 
     Combination();
     Combination(db_i &db, directory &dir);
-    Combination(const Combination &source);
     Combination &operator=(const Combination &source);
 
     bool is_unions() const;
@@ -345,14 +344,6 @@ Combination::Combination(db_i &db, directory &dir) :
     for (std::size_t i = 0; i < avs.count; ++i)
 	m_attributes[avs.avp[i].name] = avs.avp[i].value;
 }
-
-
-Combination::Combination(const Combination &source) :
-    m_db(source.m_db),
-    m_dir(source.m_dir),
-    m_members(source.m_members),
-    m_attributes(source.m_attributes)
-{}
 
 
 Combination &

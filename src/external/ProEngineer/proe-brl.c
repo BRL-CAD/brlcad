@@ -62,7 +62,7 @@
 #include "bu/ptbl.h"
 #include "bu/malloc.h"
 #include "bu/log.h"
-#include "bu/rb.h"
+#include "bu/redblack.h"
 #include "bu/str.h"
 #include "bu/vls.h"
 #include "bn.h"

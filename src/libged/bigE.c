@@ -55,12 +55,12 @@ union E_tree *build_etree(union tree *tp, struct _ged_client_data *dgcdp);
 #define NOT_SEG_OVERLAP(_a, _b)	((_a->seg_out.hit_dist <= _b->seg_in.hit_dist) || (_b->seg_out.hit_dist <= _a->seg_in.hit_dist))
 
 /* RT_FREE_SEG_LIST assumed list head is a "struct seg" */
-#define MY_FREE_SEG_LIST(_segheadp, _res) { \
+#define MY_FREE_SEG_LIST(_segheadp, _res) do { \
 	struct seg *_a; \
 	while (BU_LIST_WHILE (_a, seg, (_segheadp))) { \
 	    BU_LIST_DEQUEUE(&(_a->l)); \
 	    RT_FREE_SEG(_a, _res); \
-	} }
+	} } while (0)
 
 /* stolen from g_half.c */
 struct half_specific {

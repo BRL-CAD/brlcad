@@ -33,7 +33,6 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <string.h>
-#include <stdio.h>
 #include "bio.h"
 
 #include "bu/file.h"

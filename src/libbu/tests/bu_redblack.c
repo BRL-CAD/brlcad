@@ -29,8 +29,6 @@
 
 /* interface headers */
 #include "bu.h"
-#include "./rb.h"
-
 
 /**
  * Generic Comparison function that internally casts
