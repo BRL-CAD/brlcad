@@ -1,6 +1,6 @@
 // astyle.h
 // Copyright (c) 2016 by Jim Pattee <jimp03@email.com>.
-// Licensed under the MIT license.
+// This code is licensed under the MIT License.
 // License.txt describes the conditions under which this software may be distributed.
 
 #ifndef ASTYLE_H
@@ -27,12 +27,11 @@
 //-----------------------------------------------------------------------------
 
 #ifdef __GNUC__
-	#include <string.h>		// need both string and string.h for GCC
+	#include <string.h>             // need both string and string.h for GCC
 #endif
 
 #ifdef _MSC_VER
 	#pragma warning(disable: 4267)  // conversion from size_t to int
-	#pragma warning(disable: 4996)  // secure version deprecation warnings
 #endif
 
 #ifdef __BORLANDC__
@@ -45,7 +44,6 @@
 #endif
 
 #ifdef __clang__
-	#pragma clang diagnostic ignored "-Wdeprecated-declarations"  // strcpy, getenv
 	#pragma clang diagnostic ignored "-Wshorten-64-to-32"
 #endif
 
@@ -690,6 +688,7 @@ private:  // functions
 	bool isSharpStyleWithParen(const string* header) const;
 	bool isStructAccessModified(string& firstLine, size_t index) const;
 	bool isIndentablePreprocessorBlock(string& firstLine, size_t index);
+	bool isNDefPreprocStatement(string& firstLine, string& preproc) const;
 	bool isUnaryOperator() const;
 	bool isUniformInitializerBracket() const;
 	bool isImmediatelyPostCast() const;
