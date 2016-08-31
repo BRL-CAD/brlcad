@@ -78,8 +78,10 @@ nurbs_test(long int test_number, struct db_i *dbip)
 		    std::cout << std::setprecision(std::numeric_limits<double>::digits10) << "         2d Point 2: " << pt_2d_2.x << "," << pt_2d_2.y << "\n";
 		    return -1;
 		}
-		if (p1_result == false) std::cout << "Warning - p1 pullback failed\n";
-		if (p2_result == false) std::cout << "Warning - p2 pullback failed\n";
+		if (p1_result == false)
+		    std::cout << "WARNING: p1 pullback failed\n";
+		if (p2_result == false)
+		    std::cout << "WARNING: p2 pullback failed\n";
                 return 0;
 	    }
 	default:

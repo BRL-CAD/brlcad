@@ -58,16 +58,8 @@
 
 #include "bio.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "vmath.h"		/* BRL-CAD Vector macros */
 #include "wdb.h"
-
-#ifdef __cplusplus
-}
-#endif
 
 
 /* Prevent enum conflict with vmath.h */

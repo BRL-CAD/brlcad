@@ -20,10 +20,7 @@
 
 #include "common.h"
 
-/* library headers */
-extern "C" {
 #include "bu/log.h"
-}
 #include "brep.h"
 
 

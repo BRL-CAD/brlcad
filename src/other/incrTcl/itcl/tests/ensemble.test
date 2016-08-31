@@ -5,18 +5,15 @@
 #            Bell Labs Innovations for Lucent Technologies
 #            mmclennan@lucent.com
 #            http://www.tcltk.com/itcl
-#
-#      RCS:  $Id$
 # ----------------------------------------------------------------------
 #            Copyright (c) 1993-1998  Lucent Technologies, Inc.
 # ======================================================================
 # See the file "license.terms" for information on usage and
 # redistribution of this file, and for a DISCLAIMER OF ALL WARRANTIES.
 
-if {[lsearch [namespace children] ::tcltest] == -1} {
-    package require tcltest 2.1
-    namespace import -force ::tcltest::test
-}
+package require Tcl 8.4
+package require tcltest 2.1
+namespace import ::tcltest::test
 
 ::tcltest::loadTestedCommands
 
@@ -46,11 +43,7 @@ test ensemble-1.4 {invoking ensemble parts} {
 
 test ensemble-1.5 {invoking parts with improper arguments} {
     set res [catch "test_numbers three x" msg]
-    if {[package vsatisfies [package provide Tcl] 8.4]} {
-	lappend res [string match "wrong # args*" $msg]
-    } else {
-	lappend res [string match "no value given*" $msg]
-    }
+    lappend res [string match "wrong # args*" $msg]
 } {1 1}
 
 test ensemble-1.6 {errors trigger a usage summary} {
@@ -96,9 +89,9 @@ test ensemble-1.10 {part errors are handled gracefully} {
     invoked from within
 "itcl::ensemble test_numbers {part foo}"}}
 
-test ensemble-1.11 {part argument errors are handled gracefully} {
+test ensemble-1.11 {part argument errors are handled gracefully} -body {
     list [catch "itcl::ensemble test_numbers {part foo {{}} {}}" msg] $msg $errorInfo
-} {1 {procedure "foo" has argument with no name} {procedure "foo" has argument with no name
+} -match glob -result {1 {*argument with no name} {*argument with no name
     while executing
 "part foo {{}} {}"
     ("ensemble" body line 1)

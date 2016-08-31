@@ -1488,15 +1488,7 @@ to_cmd(ClientData clientData,
 	if (ctp->to_name[0] == argv[1][0] &&
 	    BU_STR_EQUAL(ctp->to_name, argv[1])) {
 	    struct ged *gedp = top->to_gop->go_gedp;
-
-	    /* temporarily comment out the bu_log() hook due to threaded command
-	     * output being slightly tricky; Tcl_Interp objects can only be used
-	     * by the thread which created them.
-	     */
-
-	    /* bu_log_add_hook(to_log_output_handler, (void *)gedp); */
 	    ret = (*ctp->to_wrapper_func)(gedp, argc-1, (const char **)argv+1, ctp->to_func, ctp->to_usage, ctp->to_maxargs);
-	    /* bu_log_delete_hook(to_log_output_handler, (void *)gedp); */
 	    break;
 	}
     }
@@ -7101,8 +7093,7 @@ to_mouse_brep_selection_append(struct ged *gedp,
     }
 
     /* parse args */
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_append brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7211,8 +7202,7 @@ to_mouse_brep_selection_translate(struct ged *gedp,
 	    break;
     }
 
-    brep_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "to_mouse_brep_selection_translate brep_name");
-    bu_basename(brep_name, argv[2]);
+    brep_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7865,8 +7855,7 @@ to_mouse_joint_select(
     }
 
     /* parse args */
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_pt[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {
@@ -7973,8 +7962,7 @@ to_mouse_joint_selection_translate(
 	    break;
     }
 
-    joint_name = (char *)bu_calloc(strlen(argv[2]), sizeof(char), "joint_name");
-    bu_basename(joint_name, argv[2]);
+    joint_name = bu_basename(argv[2], NULL);
 
     screen_end[X] = strtol(argv[3], &end, 10);
     if (*end != '\0') {

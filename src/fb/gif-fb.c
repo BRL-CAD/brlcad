@@ -102,7 +102,7 @@ static int left, top, right, bottom;	/* image boundary */
 static bool_t M_bit;			/* set if color map provided */
 static bool_t I_bit;			/* set if image interlaced */
 static int cr;			/* # bits of color resolution */
-static int cr_mask;		/* mask to strip all but high cr bits */
+static unsigned cr_mask;		/* mask to strip all but high cr bits */
 static int g_pixel;		/* global # bits/pixel in image */
 static int pixel;			/* local # bits/pixel in image */
 static int background;		/* color index of screen background */
@@ -635,7 +635,7 @@ main(int argc, char **argv)
 	if (cr == 8)
 	    cr_mask = ~0;	/* shift by 0 can tickle compiler bug */
 	else
-	    cr_mask = ~0 << (8 - cr);
+	    cr_mask = ~(unsigned)0 << (8 - cr);
 
 	expand = 255.0 / (double)(0xFF & cr_mask);
 

@@ -60,7 +60,6 @@ package require Itk
 }
 
 ::itcl::body LODDialog::constructor {args} {
-    eval itk_initialize $args
 
     if {$itk_option(-cmdprefix) != ""} {
 	set gedcmd "$itk_option(-cmdprefix) gedCmd"
@@ -161,6 +160,8 @@ package require Itk
 	    -variable [::itcl::scope redrawOnZoom] \
 	    -command "$this redrawOnZoom"
     } {}
+
+    eval itk_initialize $args
 
     disableLODWidgets
 

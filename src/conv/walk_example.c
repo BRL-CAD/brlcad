@@ -88,7 +88,7 @@ int parse_args(int ac, char *av[])
 {
     int c;
     char *strrchr();
-    char *tmp_basename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "parse_args");;
+    char tmp_basename[MAXPATHLEN] = {0};
 
     /* Turn off bu_getopt's error messages */
     bu_opterr = 0;
@@ -102,12 +102,12 @@ int parse_args(int ac, char *av[])
 	    case '?':
 	    case 'h':
 	    default:
-		bu_basename(tmp_basename, av[0]);
+		bu_basename(av[0], tmp_basename);
 		usage(tmp_basename, "Bad or help flag specified\n");
 		break;
 	}
     }
-    bu_free(tmp_basename, "tmp_basename free");
+
     return bu_optind;
 }
 
@@ -238,7 +238,7 @@ int main(int ac, char *av[])
     struct db_tree_state init_state; /* state table for the hierarchy walker */
     char idbuf[1024] = {0};		/* Database title */
     int arg_count;
-    char *tmp_basename = (char *)bu_calloc(strlen(av[0]), sizeof(char), "walk_example tmp_basename");
+    char tmp_basename[MAXPATHLEN] = {0};
 
     /** @struct user_data
      * This is an example structure.
@@ -248,14 +248,12 @@ int main(int ac, char *av[])
 	int stuff;
     } user_data;
 
-
     arg_count = parse_args(ac, av);
 
     if ((ac - arg_count) < 1) {
-	bu_basename(tmp_basename, av[0]);
+	bu_basename(av[0], tmp_basename);
 	usage(tmp_basename, "bad argument count");
     }
-    bu_free(tmp_basename, "tmp_basename free");
 
     /*
      * Build an index of what's in the database.

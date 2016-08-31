@@ -987,7 +987,8 @@ reindex(void *p, struct nmg_exp_counts *ecnt)
 #define INDEX(o, i, elem) *(uint32_t *)(o)->elem = htonl(reindex((void *)((i)->elem), ecnt))
 #define INDEXL(oo, ii, elem) {						\
 	uint32_t _f = reindex((void *)((ii)->elem.forw), ecnt);	\
-	if (_f == DISK_INDEX_NULL) bu_log("Warning rt_nmg_edisk: reindex forw to null?\n"); \
+	if (_f == DISK_INDEX_NULL) \
+	    bu_log("INTERNAL WARNING: rt_nmg_edisk() reindex forw to null?\n"); \
 	*(uint32_t *)((oo)->elem.forw) = htonl(_f);			\
 	*(uint32_t *)((oo)->elem.back) = htonl(reindex((void *)((ii)->elem.back), ecnt)); }
 #define PUTMAGIC(_magic) *(uint32_t *)d->magic = htonl(_magic)
