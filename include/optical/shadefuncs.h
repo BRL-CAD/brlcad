@@ -23,8 +23,8 @@
  *
  */
 
-#ifndef SHADEFUNCS_H
-#define SHADEFUNCS_H
+#ifndef OPTICAL_SHADEFUNCS_H
+#define OPTICAL_SHADEFUNCS_H
 
 #include "common.h"
 
@@ -96,7 +96,7 @@ OPTICAL_EXPORT extern struct mfuncs *load_dynamic_shader(const char *material);
 
 __END_DECLS
 
-#endif /* SHADEFUNCS_H */
+#endif /* OPTICAL_SHADEFUNCS_H */
 
 
 /** @} */

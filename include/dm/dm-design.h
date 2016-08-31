@@ -25,8 +25,8 @@
  *
  */
 
-#ifndef DM_DESIGN_H
-#define DM_DESIGN_H
+#ifndef DM_DM_DESIGN_H
+#define DM_DM_DESIGN_H
 
 /* Display Manager Types */
 #define DM_TYPE_BAD     -1
@@ -204,7 +204,7 @@ DM_EXPORT extern int   dm_set_type(dm_s *dmp, int dm_t);
 DM_EXPORT extern int   dm_get_image(dm_s *dmp, icv_image_t *image);
 DM_EXPORT extern int   dm_get_obj_image(dm_s *dmp, const char *handle, icv_image_t *image);
 
-#endif /* DM_DESIGN_H */
+#endif /* DM_DM_DESIGN_H */
 
 /** @} */
 /*
