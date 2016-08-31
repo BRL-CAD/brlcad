@@ -40,8 +40,9 @@ geometry (e.g., primitives with CSG).
 * fixed running archer from read-only filesystems - Cliff Yapp
 * fixed patch-g tool and E command infinite loop bug - Sean Morrison
 * improved NMG ray tracing fault tolerance - Sean Morrison
-* fixed color preservation issue with 3dm-g importer - Jon Engbert
-* added 3dm-g support for layers, names, & random colors - Jon Engbert
+* added 3dm-g support for layers and names - Keith Bowman
+* fixed color/shader preservation issue with 3dm-g importer - Jon Engbert
+* added 3dm-g support for mesh objects - Jon Engbert
 * added csg implicit hierarchy conversion to brep command - Cliff Yapp
 * fixed crash in clone when told to make zero copies - Cliff Yapp
 * fixed crash in search when using -above option - Cliff Yapp
@@ -60,6 +61,7 @@ geometry (e.g., primitives with CSG).
 * removed mged pl command, use plot command instead - Sean Morrison
 * improved datum wireframes (yellow) and fixed arrowheads - Cliff Yapp
 * added initial manual page for 'burst' ray dispatch tool - Cliff Yapp
+* improved wireframe display list performance - Keith Bowman
 * added draw -S for simplied wireframes, no subtractions - Cliff Yapp
 * added draw -L# to draw bounding boxes for large objects - Cliff Yapp
 * added 3dm-g instance reference and definition import - Jon Engbert
@@ -93,7 +95,7 @@ geometry (e.g., primitives with CSG).
 * added FASTGEN4 illegal thickness CCONE1 entity import - Cliff Yapp
 * improved help message for 'tire' command - Cliff Yapp, Carl Moore
 * improved option parsing and output options for gencolor - Carl Moore
-* fixed saveview usage help string - Nick Reed
+* fixed saveview usage help string and running from archer - Nick Reed
 * fixed and improved killtree man page - Nick Reed
 * fixed composition bugs in pixmatte and pixmerge - Carl Moore
 * fixed definition of "light year" in unit conversions - Cliff Yapp
@@ -175,6 +177,8 @@ geometry (e.g., primitives with CSG).
 * improved search command documentation examples - Cliff Yapp
 * improved archer interface's behavior on start-up - Nick Reed
 * added -depth option to mged 'search' command - Cliff Yapp
+* initial support for rigging joints and constrained articulation
+	- Nick Reed, Keith Bowman, Cliff Yapp, Sean Morrison
 * improved 'search' with 'flat' search path modifier - Cliff Yapp
 * improved 'search' with above/equal/below depth limits - Cliff Yapp
 * improved support for sub-millimeter (tiny) meshes - Keith Bowman

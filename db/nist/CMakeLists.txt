@@ -33,8 +33,6 @@ macro(ADD_NIST_STEP_TARGET step_model folder)
   DISTCLEAN(${log_file})
 endmacro(ADD_NIST_STEP_TARGET step_model folder)
 
-
-
 # Get our root path
 if(CMAKE_CONFIGURATION_TYPES)
   set(bin_root "${CMAKE_BINARY_DIR}/${CMAKE_CFG_INTDIR}")
@@ -48,7 +46,9 @@ endif(CMAKE_CONFIGURATION_TYPES)
 # for handling this situation, and we need to update the executable paths
 # accordingly if they are configuration dependent.
 if(CMAKE_CONFIGURATION_TYPES)
-  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" bin_root "${bin_root}")
+  string(REPLACE "${CMAKE_CFG_INTDIR}" "\${BUILD_TYPE}" rbin_root "${bin_root}")
+else(CMAKE_CONFIGURATION_TYPES)
+  set(rbin_root "${bin_root}")
 endif(CMAKE_CONFIGURATION_TYPES)
 
 # Use the CMake executable to figure out if we need an extension
@@ -56,14 +56,15 @@ get_filename_component(EXE_EXT "${CMAKE_COMMAND}" EXT)
 
 
 macro(ADD_NIST_3DM_TARGET rhino_model folder)
-  set(CMD_EXEC ${bin_root}/${BIN_DIR}/3dm-g${EXE_EXT})
+  set(CMD_EXEC ${rbin_root}/${BIN_DIR}/3dm-g${EXE_EXT})
   string(REGEX REPLACE "([0-9a-z]*).3dm" "\\1" rhino_model_root "${rhino_model}")
-  set(output_file ${bin_root}/${DATA_DIR}/db/${rhino_model_root}.g)
+  set(output_file ${rbin_root}/${DATA_DIR}/db/${rhino_model_root}.g)
   set(log_file ${CMAKE_CURRENT_BINARY_DIR}/${rhino_model_root}.log)
   set(STDOUT_LOG "${log_file}")
   set(STDERR_LOG "${log_file}")
   set(CMD_ARGS "-o \"${output_file}\" \"${CMAKE_CURRENT_SOURCE_DIR}/${rhino_model}\"")
   configure_file(${BRLCAD_CMAKE_DIR}/builddir_cmd.cmake.in ${CMAKE_CURRENT_BINARY_DIR}/3dm-g.cmake @ONLY)
+  set(output_file ${bin_root}/${DATA_DIR}/db/${rhino_model_root}.g)
   add_custom_command(
     OUTPUT ${output_file}
     COMMAND ${CMAKE_COMMAND} -P ${CMAKE_CURRENT_BINARY_DIR}/3dm-g.cmake
