@@ -5993,7 +5993,7 @@ to_fit_png_image(struct ged *gedp,
 	}
     }
 
-    bu_vls_printf(gedp->ged_result_str, "%lu %lu %lu %lu", img->width, img->height, x_offset, y_offset);
+    bu_vls_printf(gedp->ged_result_str, "%zu %zu %zu %zu", img->width, img->height, x_offset, y_offset);
 
     /* icv_write should return < 0 for errors but doesn't */
     if (icv_write(img, argv[5], BU_MIME_IMAGE_PNG) == 0) {
